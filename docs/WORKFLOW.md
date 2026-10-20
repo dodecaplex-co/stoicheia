@@ -303,8 +303,8 @@ python3 scripts/check_links.py
 ```
 
 Review the generated differences and commit them with their sources, so that regenerating
-leaves them unchanged and the `git status` line prints nothing. Three more jobs run on
-their own, each in isolation:
+leaves them unchanged and the `git status` line prints nothing. Four more jobs run on
+their own, each in isolation. Three have direct local commands:
 
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
@@ -313,10 +313,25 @@ grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cac
                                        # CI's `formal-model` job: the formal model, with Mathlib
 ```
 
-`scripts/safe_push.py` runs the first two groups on the head commit of every pull request
-(section 10), so a change to them is made there too, and in the CI workflow. It leaves the
-`formal-model` job to CI on purpose, since it fetches Mathlib's prebuilt files; its merge
-gate still waits for that job, like every other ([model/README.md](../model/README.md#the-ci-job)).
+The fourth, CI-only job is `acceptance`; its executable definitions are the
+[CI workflow](../.github/workflows/ci.yml) and
+[`scripts/check_acceptance.py`](../scripts/check_acceptance.py). Until the consolidation
+release, it runs the checklist on the pull request, checks main with the pull request's
+check code while preserving main's pinned values, and compares the two: an item that passes
+on main may not fail on the pull request, except P10 and E6, whose staging failures are the
+workflow's expected result of staging a statement before its proof. The consolidation
+release's pull request changes `ACCEPTANCE_GATE` from `ratchet` to `full`; after that, any
+checklist failure fails the job.
+
+`scripts/safe_push.py` runs `check`, `negative` and `model` on the head commit of every
+pull request (section 10), so a change to them is made there too, and in the CI workflow.
+It leaves `formal-model` and `acceptance` to CI; at merge it watches the reported jobs and
+waits while either is pending, and refuses either when failed. GitHub requires both jobs,
+as well as `check`, `model` and `negative`. The merge gate in `scripts/safe_push.py` still
+requires the presence of a passing run only for `check`, `model` and `negative`; aligning
+that local test with the five-check ruleset needs a separate protected-check change. The
+formal model stays in CI because it fetches Mathlib's prebuilt files
+([model/README.md](../model/README.md#the-ci-job)).
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
@@ -407,11 +422,14 @@ looked into.
 7. **Review records** completed: each record written in step 3 is read again against its
    finished proof (section 6), and every one reaches the stage `full` before acceptance.
    Books I–III, whose records came after their proofs, reach it in brief 0005's stage 5.
-8. **A read-through.** Before every release and at the end of each programme stage,
-   the coordinator assigns an independent reviewer a read for stale content: every
-   hand-written repository file, the wiki pages and open issues, oldest untouched first,
-   excluding generated output, which is regenerated, and dated history (crew logs and
-   dated review responses), which records its day and is not brought up to date.
+8. **The page read-through and the stale-content audit.** Before every release or
+   consolidation, readers go through the rendered pages as visitors, as section 7 requires.
+   Separately, before every release and at the end of each programme stage, the coordinator
+   assigns an independent reviewer a stale-content audit: every hand-written repository
+   file, the wiki pages and open issues, oldest untouched first. Generated output is
+   excluded only from this audit, because it is regenerated; it remains part of the page
+   read-through. Dated history (crew logs and dated review responses) records its day and
+   is not brought up to date.
    Keep a dated report under `docs/reports/`, naming the revision read and indexing the
    files by last change; each finding gives `file:line` (or wiki page/issue), the stale
    text, evidence on main, what it should say, and its train or pull request.
@@ -419,11 +437,30 @@ looked into.
    the train or pull request that makes them true; future findings are checklist rows
    for that work, not edits now. Wiki and issue reading is read-only; changes need the
    owner's OK.
+   Each finding falls in one of four tiers, which say when it is fixed:
+   - **Tier 0, defects:** a merge-conflict marker, a broken link, the owner's name, a
+     claim the Lean contradicts, a failing check. Never on main: fixed at once, and
+     refused by a check wherever a check can see it.
+   - **Tier 1, generated facts:** counts, status tables, the acceptance report, the
+     certificate. Never written by hand: generated from their source, and refused when
+     stale.
+   - **Tier 2, reader prose:** true at release. Fixed in the train that changes the fact,
+     or at the latest in the release's own pull request.
+   - **Tier 3, working records:** briefs, reports, issues and the tracker. Dated: a record
+     that later work overtakes gains a dated status note, never a quiet rewrite, and the
+     issues and the tracker are kept current.
 9. **Acceptance:** from brief 0005's stage 6, the checklist passes in CI with no failures,
    the independent audit agrees, and a cold outside reading scores the book.
-10. **Release.** The notes are drafted from the generated summaries, the owner approves
-    them, and the tag (`book-I`, `book-II`, …) is made. PROGRAM.md is brought up to date:
-    the status board, the lessons, the costs.
+10. **Release.** A release waits for its gate: both the page read-through and the
+    stale-content audit of step 8 on the release candidate, with every Tier 0 to 2 finding
+    from the audit fixed in the release's pull request and every Tier 3 record given its
+    status note; no open issue labelled `blocks-release`
+    (unfinished work, a prototype or a provisional answer may be on main only as such an
+    issue, and holds every release until it closes); and the wiki refreshed, so that it is
+    reasonably correct as of its date, as its pages say, and is not expected to be more
+    current than that. Then the notes are drafted from the generated summaries, the owner
+    approves them, and the tag (`book-I`, `book-II`, …) is made. PROGRAM.md is brought up
+    to date: the status board, the lessons, the costs.
 
 A released book is not frozen. Its tag keeps the released text, and main carries the
 corrections and the common voice, as Books I and II have since their tags.
@@ -431,7 +468,8 @@ corrections and the common voice, as Books I and II have since their tags.
 ### Landing work: pull requests
 
 Work reaches main only as a pull request, merged with a merge commit. On GitHub, a ruleset
-on main requires a pull request and the checks `check`, `model` and `negative`, and blocks
+on main requires a pull request and the checks `check`, `model`, `negative`,
+`formal-model` and `acceptance`, and blocks
 force pushes and deletion; locally, the pre-push hook refuses every push to main. Agents
 never open, merge or approve a pull request: the coordinator does. The account cannot
 approve its own pull requests, so a merge is gated by the checks and by the review
@@ -617,8 +655,10 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    they run again too. The body's summary is written afresh when the full checks ran
    again or when it is not of this head and origin/main, and the other parts safe_push
    wrote whenever they are out of date. It merges only when those pass; CI on that head
-   is green (`check`, `model` and `negative` pass, and nothing fails or is still
-   running); no box marked **Required** in its checklist is unticked, nor one marked
+   is green: GitHub's ruleset requires `check`, `model`, `negative`, `formal-model` and
+   `acceptance`, while `scripts/safe_push.py` currently tests for a reported passing run
+   of the first three and refuses every reported failure or running check; no box marked
+   **Required** in its checklist is unticked, nor one marked
    **Required if protected** when a protected path changes, and none of the template's
    required boxes is missing (origin/main's template, or the head's while origin/main
    has none; the pre-flight's notes, such as a check that failed with origin/main's

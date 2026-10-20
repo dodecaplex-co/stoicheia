@@ -513,12 +513,9 @@ downloading again. After a restore, `lake exe cache get` downloads nothing and u
 nothing. The job stops after 30 minutes, since without Mathlib's prebuilt files
 `lake build` would compile Mathlib from source for hours.
 
-It is not yet a required check: the ruleset on main requires `check`, `model` and
-`negative`, and making this one required is the owner's call
-([decisions](../docs/briefs/0002-decisions.md#18-october-2026), 18 October). Even so,
-`git safe-push --merge`, which lands every pull request, refuses one while any of its
-checks fails or is still running, this one among them
-([WORKFLOW](../docs/WORKFLOW.md#landing-work-pull-requests), section 10).
+`formal-model` is a required check. The five checks required by GitHub, and the present
+distinction between that ruleset and the merge gate's local presence test, are kept in
+[WORKFLOW](../docs/WORKFLOW.md#landing-work-pull-requests), section 10.
 
 ## Thanks
 
