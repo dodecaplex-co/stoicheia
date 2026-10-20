@@ -539,11 +539,9 @@ rather than `Elements.BookI.Staging.Prop4`, because they belong to the rule's pr
 take the rule as a hypothesis, not to a stage of Book I. WORKFLOW, section 2, allows "the
 proofs of a prototype the coordinator has approved"; the owner directed this prototype on
 18 October, and we ask the coordinator to approve it and to add a line to `Staging.lean`, as
-the mixed-angle prototype has. `check_fidelity.py`'s scan for forbidden commands does not
-cover `Staging/` (FORMALIZATION, section 7), so that the six files declare no axiom and use
-none of the forbidden commands rests on review: a search of them finds no `axiom`
-declaration, `sorry`, `native_decide`, `set_option`, `elab`, `macro`, `extern`, `unsafe`,
-`opaque` or `implemented_by`.
+the mixed-angle prototype has. The forbidden-command policy and the trees its source scan
+reads are owned by [FORMALIZATION](../FORMALIZATION.md), section 7. The six files declare no
+axiom and use none of the forbidden commands.
 
 ## What the prototype proves, and what it does not
 

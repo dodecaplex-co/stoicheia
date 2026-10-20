@@ -2,7 +2,7 @@
 
 # Book I
 
-**All 48 propositions proved in Lean**, every one as Euclid states it. 46 proofs follow Euclid's argument and 2 follow it with one step changed ([I.39](39.md), [I.40](40.md)); each page says how. In [I.23](23.md) one of our tacit rules supplies a step of a proof of the proposition, and our proof rests on it. In [I.2](02.md) and [I.3](03.md) our tacit rules supply a step of a proof of each proposition, but our proofs never use those rules. [The overlap catalogue](../../docs/reports/overlaps.md) gives each. Our proofs of 29 propositions do not use the parallel postulate: I.1–I.28 and I.31. The first proof that does is I.29's, just where Euclid first calls on it.
+**All 48 propositions proved in Lean**, every one as Euclid states it. Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences. In [I.23](23.md) one of our tacit rules supplies a step of a proof of the proposition, and our proof rests on it. In [I.2](02.md) and [I.3](03.md) our tacit rules supply a step of a proof of each proposition, but our proofs never use those rules. [The overlap catalogue](../../docs/reports/overlaps.md) gives each. Our proofs of 29 propositions do not use the parallel postulate: I.1–I.28 and I.31. The first proof that does is I.29's, just where Euclid first calls on it.
 
 Key to the table: ✅ proved. The Lean statement is *whole*, as Euclid states it; *restricted*, with hypotheses that leave out cases his words admit; or *in part*, leaving a clause to his words. Each page says how.
 

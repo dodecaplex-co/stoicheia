@@ -363,6 +363,13 @@ What remains of stages 1 and 1b is kept in [docs/PROGRAM.md](../PROGRAM.md), sec
 - `Prop40.general`: four base ends on one line L, equal bases, equal areas, same side ⇒ ∃ M parallel to L through A and D. Plus `Prop40.join` (A ≠ D ⇒ AD ∥ BC) and `Prop40.special` (the current statement as a corollary).
 - Proof: Euclid's own argument (`Prop31.line`, `Prop30.meet`, I.38 already general, `OnRay.eq_of_area_eq`). It covers separated, touching, overlapping and oppositely named bases.
 
+Reconciled 19 October 2026: `Prop40` and `Prop40.general` now retain Euclid's closing
+reductio. The contrary supposition makes the constructed intersection differ from D.
+I.38 and Common Notion 1 give equal areas; `between_cases` and `area_lt_of_cut`
+contradict them in either order on the ray. Neither proof calls `OnRay.eq_of_area_eq`.
+The route is `euclid`; the statements, admitted configurations and companion registration
+are unchanged, including the general companion's coverage of coincident vertices.
+
 *I.45 for a figure given by its corners* (revised 18 October, to the owner's decision later on 17 October)
 
 *Overtaken later on 18 October by brief 0006, as revised and frozen: I.45 is `full`, by `Prop45.apart`, for any figure given with triangles that lie apart, beside `Prop45.figure`, for a figure with one boundary glued together, and `Prop45.fan`, the main companion, for the division from one corner with its two conditions checked; `Rectilineal`, `Fitted` and `Prop45.sum` are restored. The design below is kept as it stood.*

@@ -200,7 +200,7 @@ III.23–III.37:
 proves of the angle in a semicircle: III.28 and III.29 need it first. It argues at the
 point that measures the circumference, so it needs only I.5 and I.32, not III.21.
 
-**Porisms.** Two corollaries are cited by later propositions, and are theorems of their
+**Porisms.** Two porisms are cited by later propositions, and are theorems of their
 own, after their propositions: `Prop1.porism` (the centre lies on a straight line
 bisecting a straight line in the circle at right angles; III.9, III.10) and
 `Prop16.porism` (the straight line at right angles to a radius at its end touches the
@@ -330,6 +330,16 @@ worth naming. The first mate's report has a note on every statement.
   III.21.
 - **III.33, III.34** construct the circle with its centre, so that what they make can be
   used.
+- **III.36, III.37 (19 October 2026).** III.36's first branch carries the diameter
+  calculation under Euclid's sentences through cancellation. `Prop36.through_centre`
+  follows III.36 as a corollary proved from it, used by `Prop37.centre_on_secant`. III.37
+  now selects the centre-on-AC case explicitly, then retains its general argument in the
+  other branch, including III.17 and III.1. This makes an already covered case explicit;
+  both statements retain full scope. The corollary and case helper require no companion
+  registration. The statements of `Prop36.through_centre` and `Prop37.centre_on_secant`
+  were challenged by an independent reader who wrote neither statement, and approved as
+  written by the coordinator. On 19 October 2026 the layout was changed after a review
+  finding under FORMALIZATION section 5, with all statements unchanged.
 
 ## Book I and II's rules, in Book III
 

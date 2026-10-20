@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 270" font-family="Georgia, 'Times New Roman', serif" font-size="17" width="400" height="270">
+  <title>I.35: the modern way</title>
+  <rect x="0" y="0" width="400" height="270" rx="10" fill="#fbf7ee" />
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#a0522d" /></marker>
+  </defs>
+  <polygon points="50,75 85,215 225,215 190,75" fill="#e9dcc0" fill-opacity="0.55" />
+  <polygon points="225,75 85,215 225,215 365,75" fill="#e9dcc0" fill-opacity="0.55" />
+  <line x1="50" y1="75" x2="365" y2="75" stroke="#3b2f2f" stroke-width="1.6" />
+  <line x1="225" y1="215" x2="190" y2="75" stroke="#3b2f2f" stroke-width="1.6" />
+  <line x1="225" y1="215" x2="365" y2="75" stroke="#3b2f2f" stroke-width="1.6" />
+  <line x1="85" y1="215" x2="225" y2="215" stroke="#a0522d" stroke-width="2.4" marker-end="url(#head)" />
+  <line x1="85" y1="215" x2="50" y2="75" stroke="#a0522d" stroke-width="2.4" marker-end="url(#head)" />
+  <line x1="85" y1="215" x2="225" y2="75" stroke="#a0522d" stroke-width="2.4" marker-end="url(#head)" />
+  <line x1="50" y1="75" x2="213.8" y2="75" stroke="#a0522d" stroke-width="2.4" marker-end="url(#head)" />
+  <circle cx="50" cy="75" r="2.6" fill="#3b2f2f" />
+  <circle cx="190" cy="75" r="2.6" fill="#3b2f2f" />
+  <circle cx="225" cy="75" r="2.6" fill="#3b2f2f" />
+  <circle cx="365" cy="75" r="2.6" fill="#3b2f2f" />
+  <circle cx="85" cy="215" r="2.6" fill="#3b2f2f" />
+  <circle cx="225" cy="215" r="2.6" fill="#3b2f2f" />
+  <g fill="#3b2f2f">
+    <text x="50" y="57" text-anchor="middle" font-size="17">A</text>
+    <text x="190" y="57" text-anchor="middle" font-size="17">D</text>
+    <text x="225" y="57" text-anchor="middle" font-size="17">E</text>
+    <text x="365" y="57" text-anchor="middle" font-size="17">F</text>
+    <text x="85" y="243" text-anchor="middle" font-size="17">B</text>
+    <text x="225" y="243" text-anchor="middle" font-size="17">C</text>
+  </g>
+</svg>

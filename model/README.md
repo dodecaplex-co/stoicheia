@@ -401,9 +401,10 @@ Three things make sure of that.
   metaprogramming, so it lives in `Check/`, apart from the proofs, and nothing under
   `Model/` imports it; it runs as `Certificate/Facts.lean` does, with `run_cmd`, and uses
   none of the commands that get round the kernel (`native_decide`, `implemented_by`,
-  `extern`, `unsafe`, `set_option debug.…`). That `Model/` and `Check/` keep to this rests
-  on review today: `check_fidelity.py` scans `Elements/` alone, and a `set_option debug.…`
-  would not show in `#print axioms`.
+  `extern`, `unsafe`, `set_option debug.…`). The source scan in `check_fidelity.py` reads
+  `Model/` and `Check/` too, with the one generator allowance in `Check/` described in
+  [FORMALIZATION, section 7](../docs/FORMALIZATION.md#7-the-foundations-and-the-policies-the-checks-enforce);
+  review still reads what a word scan cannot see.
 
 The claim this package supports is: Lean checks that the
 ordinary Euclidean plane satisfies every law in this revision's foundations, relative to
