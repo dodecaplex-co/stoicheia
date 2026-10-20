@@ -67,6 +67,14 @@ needs a fact the axioms lack. The lock's `[axioms]` table stays at 87, and its
 
 ## Conventions
 
+**19 October 2026, after brief 0008's step 6.** The statements below now live in
+`Elements/BookIII/`; their stage 4b and centre staging files have been retired.
+`Prop8.partner`, `Prop8.general` and `Prop17.general` no longer take centre-existence
+inputs. III.7 keeps its geometric centre E, and III.8 its universal diameter condition.
+The record notes no longer use `centre-given`. The frozen declarations, construction
+inputs and representation notes below record the earlier convention; the dated notes
+after their blocks give the current forms.
+
 **Companions.** `Prop7.general`, `Prop8.general` and `Prop17.general` are companions, as
 [FORMALIZATION.md](../FORMALIZATION.md), section 2, "Companions beside Euclid's worked
 configuration", defines them and lists what each gets; their certificate entries are named
@@ -186,6 +194,10 @@ theorem Prop7.general {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD)
   ray FA. F is a point strictly within the diameter, not the centre. Tag: `centre-given`, as
   today (the centre E is named); no new tag.
 
+  **19 October 2026, step 6:** `centre-given` has left III.7's record. E remains
+  because its position on the diameter is part of the geometry; the statements of
+  `Prop7.partner` and `Prop7.general` stay.
+
 ## III.8, compared on either side, within each class
 
 `Staging/Stage4b/Prop08.lean`. Companion "III.8 general", with the step `Prop8.partner`.
@@ -219,6 +231,11 @@ theorem Prop8.general {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Cent
       OppositeSidesOf B K D A ∧ ‖D B‖ = ‖D K‖ ∧
       ∀ N : Point, OnCircle N ABC → ‖D N‖ = ‖D K‖ → N = K ∨ N = B)
 ```
+
+**19 October 2026, step 6.** In `Elements/BookIII/Prop08.lean`, `Prop8.partner`
+and `Prop8.general` each drop only `hABC : ∃ M : Point, Centre M ABC` from the frozen
+declarations above. Their universal condition `hGA` and every conclusion stay. This
+supersedes the call for `centre-given` in the historical representation note below.
 
 - **In plain words.** D is outside the circle ABC, and the straight line DA passes through
   the centre, meeting the circle first at G and again at A. DA is greater than every other
@@ -287,6 +304,21 @@ theorem Prop17.general {A : Point} {BCD : Circle} (hBCD : ∃ E : Point, Centre 
 theorem Prop17.inside {A : Point} {BCD : Circle} (hA : InsideCircle A BCD) :
     ¬ ∃ X : Point, Touches A X BCD
 ```
+
+**19 October 2026, step 6.** `Prop17.general` in `Elements/BookIII/Prop17.lean`
+now has this declaration:
+
+```lean
+theorem Prop17.general {A : Point} {BCD : Circle}
+    (hA : ¬ InsideCircle A BCD) :
+    ∃ X : Point, Touches A X BCD
+```
+
+`Prop17.inside` is unchanged. The given data in the plain-word and construction
+accounts below are now the circle BCD and A not within it, with no supplied centre.
+The outside case takes its centre through `Prop1.of_circle`, and the on-circle case
+through `exists_centre`. Thus being outside or on the circle is exactly the condition
+for a solution for any given circle, and the former `centre-given` tag is absent.
 
 - **In plain words.** Given a circle BCD with a centre, and a point A not within it, there is
   a point X such that the straight line AX touches the circle: it meets the circle and does

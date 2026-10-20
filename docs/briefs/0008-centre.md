@@ -7,6 +7,10 @@
 replaces the frozen construction, guard, porism, overlap and order claims it names below,
 by the owner's decision D1. The frozen text is retained as history.*
 
+*19 October 2026: [step 6 is implemented](#completion-step6-19-october-2026) at
+`17987153`. The completion note records the current declarations and certificate counts;
+the earlier plans and reviews below remain dated records.*
+
 *The brief settles, before any proof work and as [WORKFLOW.md](../WORKFLOW.md), section 2,
 requires, the rule the owner approved, that every circle has a centre, and every statement
 the rule changes. Each new statement is written with `sorry` in the `Staging` library, in
@@ -255,6 +259,72 @@ the frozen text that follows is kept, not silently rewritten.
   interfaces. The construction guard waits for its separate landing; the restated
   III.1 and its circle-only entry point wait for step 6.
 
+<a id="completion-step6-19-october-2026"></a>
+
+### Dated completion, 19 October 2026: step 6
+
+Step 6's centre restatements are done in both halves at `17987153`, under the approval
+of 18 October and the correction of 19 October above. This is completion of the source
+changes, not a claim that the outstanding reviews, tooling and generated edition have
+been completed. The earlier plans in sections 4 and 6 and Appendix A remain historical.
+
+- **Main statements.** `Prop1`, `Prop2`, `Prop4`, `Prop8`, `Prop9`, `Prop10`, `Prop13`,
+  `Prop17`, `Prop21`, `Prop22`, `Prop23`, `Prop24`, `Prop30`, `Prop32`, `Prop34`, `Prop35`,
+  `Prop36` and `Prop37` have no centre-existence inputs. `Prop34` takes its circle
+  explicitly. `Prop33` no longer returns a centre-existence clause. III.25 was already
+  restated as a construction from the segment's points; its core still constructs a
+  circle with centre E, and the changes here are to its companions. Named centres stay
+  wherever another hypothesis or conclusion uses them geometrically. `Prop1.within`
+  retains its approved given-centre interface for the confined construction step.
+- **Shared declarations and companions.** `Prop1.of_circle` now applies the restated
+  III.1 to two points chosen on the given circle. `Prop2.within`, `Prop2.triangle`,
+  `Prop2.oppositeSide`, `Prop2.sameSide`, `Prop8.partner`, `Prop8.general`,
+  `Prop17.general`, `Prop23.point`, `Prop24.chord_cases`, `Prop24.equalCircles`,
+  `Prop25.complete`, `Prop25.of_circle`, `Prop32.sameSide`, `Circumference.eq`,
+  `Circumference.standing`, `Circumference.whole` and `Circumference.add` take no
+  centre-existence input. `Prop25.complete` also drops its unused point parameter E
+  and the hypothesis that E is the constructed circle's centre, obtaining a centre
+  internally instead. `EqualCircles.refl` takes just its circle. The two projections
+  `Prop13.internally` and `Prop13.externally` and Book Zero's `Centre.every` are in
+  their homes. The dated notes in briefs [0006](0006-statements.md) and
+  [0007](0007-stage-4b.md) describe their current interfaces after the frozen blocks.
+- **Arcs.** `Arc.Drawn` now consists of endpoint incidence and non-collinearity of
+  the side marker with the base, without a centre clause. Its consumers use that
+  meaning, including `Arc.eq_of_aligned`, `Prop25.meets` (the planned `Arc.meets`),
+  `Prop24.image`, `Prop24.equalMeasure`, `Arc.measure_eq_iff` and `Arc.congruent_iff`.
+  Centres with geometric roles in `EqualCircles` and the three arc kinds remain.
+- **Routes and coverage.** III.24 still proves congruence; its alternative companion
+  `Prop24.equalCircles` takes two centres from the rule. III.25 has full coverage in
+  its record with the proved, registered companions `complete`, `kind` and `of_circle`;
+  the construction and `kind` keep E. III.30 takes no local centre witness:
+  `EqualCircles.refl` uses the rule internally. III.35–III.37 use `exists_centre` at
+  their unbracketed centre-taking steps, and their direct citations of III.1 are gone.
+  III.28 and III.29 continue to take their centres from their equal-circle data.
+- **Audit bridges.** `cut_point`, `CirclesCut.of_meet`, `within_point`, `III_13_today`
+  and `Audit.III_24_measure` take no supplied centres. The crossing bridge still uses
+  III.7 and III.8; the contact bridge still uses III.10. These comparisons with the
+  earlier readings do not enter III.5's or III.6's proofs. `lake build Audit` passes at
+  this revision, including all 26 axiom pins.
+- **Certificate and guard.** After `lake build` and
+  `lake env lean Certificate/Facts.lean` at `17987153`, fresh `facts.json` has
+  **44 entries** whose full axiom lists contain `Tacit.exists_centre`: **28
+  propositions and 16 companions, no porisms**, among 99 propositions, 3 porisms and
+  33 companions. These are dependency counts, not counts of restated statements.
+  III.1 Por. neither cites III.1 nor uses `exists_centre` or `centre_unique`.
+  `Audit/Centre.lean` is unchanged by step 6: its construction type and complete axiom
+  pin still pass. The guard does not replace the semantic review of how the witness
+  is confined in `Prop1.construction`.
+- **Staging and the separate proposal.** All files under `Staging/Centre/` have been
+  retired, with no live import of that directory. `Prop30.halves` is a separate
+  proposal staged with `sorry` in `Staging/Halves/Prop30.lean`, awaiting the owner's
+  approval. It is unproved, unregistered and absent from the certificate; its proof
+  is not assigned.
+- **Remaining work.** The source and statement stamps still need independent review
+  at the revision to be delivered. The scaffold's Book III types and the screen's
+  circle-rule set need a separate tooling pull request, followed by a fresh screen.
+  The integrator regenerates the edition after review. Step 7 still removes the
+  unused `centre-given` definition from `review/terms.toml`.
+
 ### The text frozen on 18 October
 
 `Staging/Centre/Prop01.lean`.
@@ -277,6 +347,12 @@ theorem Prop1.of_circle (ABC : Circle) :
       Between A D B ∧ ‖A D‖ = ‖D B‖ ∧ OnCircle C ABC ∧ OnCircle E ABC ∧ Between C D E ∧
       ∠ A D C = ∟ ∧ Between C F E ∧ ‖C F‖ = ‖F E‖
 ```
+
+**19 October 2026, step 6.** `Prop1`, `Prop1.construction` and `Prop1.of_circle`
+now have the declarations above in `Elements/BookIII/Prop01.lean`. The construction
+was already home under the earlier correction; the two entry points now use the
+restated interfaces. The correction above, not the frozen claim below, describes
+the confined use of `exists_centre` in the construction.
 
 - **The statement** is Astra's signature: today's, with `hABC : ∃ G, Centre G ABC` dropped
   and nothing else changed. A citer that passed `hABC` passes nothing.
@@ -512,6 +588,11 @@ theorem Centre.every {O : Point} {α : Circle} {p : Point → Prop}
     (hO : Centre O α) (h : p O) : ∀ F : Point, Centre F α → p F
 ```
 
+**19 October 2026, step 6.** `Prop13.internally` and `Prop13.externally` are now
+proved in `Elements/BookIII/Prop13.lean` with the declarations above. `Centre.every`
+is proved in `Elements/Figure/OnCircles.lean` with its written type unchanged. Their
+centre staging files are retired.
+
 The first two are III.13's clauses, each with only the two circles it speaks of, lemmas
 after III.13 with no certificate entry, resting on what III.13 rests on; a check shows that
 together they give III.13 back, which keeps its paired statement as Astra recommends. Making
@@ -571,6 +652,15 @@ porism through III.1. III.3, III.7, III.11, III.12, III.16, III.18 and III.20 do
 the rule, nor do III.5, III.6 and III.19.
 
 ### Records, Lean files and pages
+
+**19 October 2026, inventory after step 6.** The counts and predictions below belong
+to the frozen plan. At `17987153`, `check_fidelity.py` reports 50 stale-stamp findings:
+30 Lean-file stamps and 20 statement stamps, including every record from III.23 to
+III.37. They await a reader; this documentation change stamps none. `centre-given`
+is absent from the Book III records but remains defined in `review/terms.toml` until
+step 7. The [completion note](#completion-step6-19-october-2026) gives the measured
+certificate counts and current routes, including III.1 Por.'s independence from the
+rule and III.25's full coverage with its three companions.
 
 - **The tag.** `centre-given` says that "a circle in Lean has a centre only when a
   hypothesis or Postulate 3 gives it one", which the rule makes false, so it leaves all 31
@@ -1569,6 +1659,12 @@ marked with its decision.
     the staged file, and goes with it.
 
 ## Appendix A: what is staged, and why
+
+**19 October 2026, after step 6.** This appendix records the former staging layout.
+All centre restatements now live in `Elements/` or `Audit/`; the last two files,
+`Staging/Centre/Restated.lean` and `Staging/Centre/Brief0006.lean`, are deleted, and
+there is no live import of that directory. `Staging/Halves/Prop30.lean` is a separate
+proposal awaiting the owner's approval, with `sorry` and no companion registration.
 
 The rule cannot be added before its pull request, so no staged statement can be proved from
 it. Each new statement is staged with `sorry`, and the rule's content enters only as a

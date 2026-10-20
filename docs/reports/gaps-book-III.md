@@ -51,7 +51,8 @@ semicircle, less or greater, as the centre lies on its straight line, beyond it 
 its side (`Circumference.semicircle`, `Circumference.lt_semicircle`,
 `Circumference.gt_semicircle`). A lemma named after a proposition, such as
 `Prop8.within`, lives in its file. Our foundations give every circle a centre
-(`exists_centre`); most statements still supply one, and the proofs take it by III.1, as
+(`exists_centre`); proofs take a centre by III.1 where Heath cites it, by the rule where
+none is supplied, or from geometric data such as equal circles, as
 [Book III's introduction](../../book/III/index.md)
 tells. These steps, with those below that Euclid takes with no bracket in Heath or without a
 word, are why [CERTIFICATE.md](../../CERTIFICATE.md) shows the Lean citing more than
@@ -59,11 +60,11 @@ Heath's brackets give in most of the propositions of Book III.
 
 ## III.1
 - "Let it be bisected at the point D; from D let DC be drawn at right angles to AB": Heath gives no bracket for either step. They are I.10 and I.11 (`BookI.Prop10`, `BookI.Prop11`).
-- "Let it be drawn through to E" asks that the straight line through D meet the circle on both sides of D. Todhunter observes that D is taken to be within the circle, which Euclid proves only in III.2, and Heath that the straight line must meet the circle twice, "an assumption which we are not entitled to make on the basis of what has gone before only" (vol. 2, p. 7). `Prop1.within` puts D within the circle by III.2's own argument (I.5, I.16, I.19), from the centre our statement gives, rather than by Circle 2 (`inside_of_between`), which already contains III.2 (see III.2); Intersections 5 (`line_circle_beyond`), used twice, finds C and E.
+- "Let it be drawn through to E" asks that the straight line through D meet the circle on both sides of D. Todhunter observes that D is taken to be within the circle, which Euclid proves only in III.2, and Heath that the straight line must meet the circle twice, "an assumption which we are not entitled to make on the basis of what has gone before only" (vol. 2, p. 7). `Prop1.within` puts D within the circle by III.2's own argument (I.5, I.16, I.19), from a centre that III.1's construction takes from `exists_centre` and passes to the helper, rather than by Circle 2 (`inside_of_between`), which already contains III.2 (see III.2); Intersections 5 (`line_circle_beyond`), used twice, finds C and E.
 - G, the supposed centre, must be off AB as well as off CE, or there are no triangles DAG, DBG for I.8. A centre on AB would be its middle point D (`Prop1.middle`), which is on CE.
 - "The angle FDB is equal to the angle GDB, the greater to the less": if AB passes through the centre, F falls on D and there is no angle FDB. Our proof sets the right angle CDB beside GDB, and `Prop1.perpendicular`, that at D only one straight line is at right angles to DB, says what "the greater to the less" stands for, on whichever side of CE G lies.
 - "Therefore the point F is the centre": the reductio shows only that the centre is on CE. Heath: "It is however taken for granted rather than proved that the centre must be the middle point of CE" (vol. 2, p. 8). The centre is within the circle (`centre_inside`), so between C and E (Circle 1, `between_of_inside_chord`), and its equal radii make it the middle point, which is F (`Prop1.middle`).
-- That a circle has one centre, which Heath says "may be added to III. 1 as a corollary" (vol. 2, p. 8), is System E's Generalities 2 (`centre_unique`). The Porism, proved from III.1 (`Prop1.porism`), uses it.
+- That a circle has one centre, which Heath says "may be added to III. 1 as a corollary" (vol. 2, p. 8), is System E's Generalities 2 (`centre_unique`). The porism (`Prop1.porism`) instead proves its claim directly from the given centre by the reductio argument, without III.1, `centre_unique` or `exists_centre`.
 
 ## III.2
 - "Let it fall outside, as AEB", and then "Similarly we can prove that neither will it fall on the circumference itself": the two suppositions Heath calls "the destruction of two hypotheses" (vol. 2, p. 9). One comparison serves both. The angles make DE less than DB (I.5, I.16, I.19); outside the circle DE would be greater than the radius DF, and on it equal to the radius.
@@ -207,7 +208,7 @@ Heath's brackets give in most of the propositions of Book III.
 - "Let DB be drawn through to E": in the first case Euclid takes for granted that AE meets DB produced. The angle ABD is less than a right angle (I.17, ADB being right), so the angles BAE, ABD are less than two right angles, and Postulate 5 gives E (`Postulate5`), beyond D.
 - In the third case "the centre will fall on DB within the segment ABC": the constructed straight line falls within the angle BAD (`BookI.Prop24.within`) and crosses BD between B and D (`crossbar`).
 - Heath gives no bracket for the bisection, the right angle, the angle BAE or "the base AE is equal to the base CE": they are I.10, I.11, I.23 and I.4.
-- Heath's bracket gives [III. 9] for E, which in the first case nothing yet shows to be within the circle; our III.9 does not ask it. The step stands apart from the construction, in the companion `Prop25.complete`: a circle with a centre through A, B and C, three points of the given circle, is that circle.
+- Heath's bracket gives [III. 9] for E, which in the first case nothing yet shows to be within the circle; our III.9 does not ask it. The step stands apart from the construction, in the companion `Prop25.complete`: any circle through A, B and C, three distinct points of the given circle, is that circle; `Prop25.complete` obtains its centre internally for III.9.
 
 ## III.26
 - "As in III. 21, if Euclid's proof is to cover all cases, it requires us to take cognisance of 'angles at the centre' which are equal to or greater than two right angles. Otherwise we must deal separately with the cases where the angle at the circumference is equal to or greater than a right angle" (vol. 2, p. 57). Our angles are never straight or reflex, so our proof takes Heath's separate cases, sorted as in III.24 (`Prop24.angle_type`): acute, by III.20; right, where BC and EF are diameters; obtuse, by III.22, which passes to the acute angles in the other segments, as Heath proposes.
@@ -257,26 +258,26 @@ Heath's brackets give in most of the propositions of Book III.
 - Which side of AB each point lies on is left to the three figures: G across AB from D when the angle is acute, on D's side when it is obtuse. In the second case E stays on D's side, as in Euclid's figure, so III.31 is used and not III.32, as Heath observes (vol. 2, p. 70).
 
 ## III.34
-- "Let EF be drawn touching ABC at the point B": Heath gives no bracket for it. It is the porism to III.16, at right angles to the radius at B (I.11), and for that our statement gives the circle its centre.
+- "Let EF be drawn touching ABC at the point B": Heath gives no bracket for it. It is the porism to III.16, at right angles to the radius at B (I.11), and for that the proof takes a centre from `exists_centre`.
 - "Let the angle FBC be constructed equal to the angle at D [I. 23]" leaves the side of EF to the figure. On the side away from the centre the arm never meets the circle, so the angle is laid on the centre's side.
 - C is read off the figure. III.16 puts a point of the new straight line within the circle, so it meets the circle again (`line_circle_beyond`). C lies on the centre's side of EF, for otherwise the straight line from C to the centre would cross EF within the circle (`Touches.not_inside`).
 - Euclid names A first, as a letter of the circle; our proof takes it last, any point of the alternate segment, which III.32 allows.
 
 ## III.35
-- "Let the centre of ABCD be taken, and let it be F; from F let FG, FH be drawn perpendicular": Heath gives no bracket for either: they are III.1 and I.12.
+- "Let the centre of ABCD be taken, and let it be F; from F let FG, FH be drawn perpendicular": Heath gives no bracket for either: `exists_centre` supplies F, and I.12 supplies the perpendiculars.
 - III.3 needs G between A and C, and H between D and B: `foot_between`, by I.17 and I.19.
 - Simson, following Johannes Campanus, adds the cases where one straight line passes through the centre and the other does not (Heath, vol. 2, p. 73). Our proof gives Euclid's argument once, for any straight line through E (`Prop35.cut`), and it covers them, and serves for DB as "For the same reason".
 - When E is the foot G, AC is cut equally at E and II.5 has nothing to give; the square on EG is then nothing, and the argument holds all the same.
 - I.47 is said of squares on straight lines (`BookI.Prop47.sq`), as in III.14.
 
 ## III.36
-- "Let F be the centre", and in the second case "let the centre E be taken", have no bracket, nor has "from E let EF be drawn perpendicular to AC": they are III.1 and I.12.
+- "Let F be the centre", and in the second case "let the centre E be taken", have no bracket, nor has "from E let EF be drawn perpendicular to AC": `exists_centre` supplies the centre in each case, and I.12 supplies the perpendicular.
 - III.3 needs F between A and C (`foot_between`).
 - I.47 needs FBD a triangle, and EBD in the second case: the centre is within the circle (`centre_inside`), and no point of DB, which touches it, is within (`Touches.not_inside`), so the centre is off DB.
 - I.47 is said of squares on straight lines here too (`BookI.Prop47.sq`).
 
 ## III.37
-- "Let DE be drawn touching ABC; let the centre of the circle ABC be taken, and let it be F": Heath gives no bracket for either: they are III.17 and III.1.
+- "Let DE be drawn touching ABC; let the centre of the circle ABC be taken, and let it be F": Heath gives no bracket for either: III.17 supplies DE, and `exists_centre` supplies F.
 - "Therefore DE is equal to DB": equal squares are on equal straight lines (`BookI.Prop46.sq`), as in III.14.
 - I.8 needs DBF to be a triangle, which Euclid reads off his figure. Were B on DF, either D would be within the circle, or two sides of the triangle DEF would together equal the third, against I.20 (`Prop37.triangle`).
 - De Morgan finds here "the same defect as in I. 48, i.e. an apparent avoidance of indirect demonstration by drawing the tangent DE on the opposite side of DF from DB" (Heath, vol. 2, pp. 76–77). III.17 does not say which straight line it draws. Our proof holds for either, even with E at B, for our I.8 does not ask on which side of DF the triangles lie.

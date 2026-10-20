@@ -963,6 +963,13 @@ division):
   note credits Gérard and F. Schur (1892 and 1898) with like theories and refers to an
   article by O. Stolz (1894)."
 
+**19 October 2026, after brief 0008's step 6.** The original declarations and
+planning notes below remain the record of their freeze; later dated additions stand. The dated notes after the affected
+blocks describe their current forms in `Elements/` at `17987153`. Centre restatements
+are no longer staged. `centre-given` has left the Book III records; the proposed
+`Prop30.halves` remains staged separately, awaiting the owner's approval, with no proof
+or companion registration.
+
 ## Stage 3: arcs and segments
 
 ### The words
@@ -1012,6 +1019,18 @@ def Arc.Congruent (a b : Arc) : Prop :=
   ∃ f : Point → Point, f a.B = b.B ∧ f a.C = b.C ∧
     Places f (InSegment · a) (InSegment · b) ∧ Places f (OnArc · a) (OnArc · b)
 ```
+
+**19 October 2026, step 6.** `Arc.Drawn` now lives in
+`Elements/Foundations/DefinitionsIII.lean` as:
+
+```lean
+def Arc.Drawn (a : Arc) : Prop :=
+  OnCircle a.B a.circle ∧ OnCircle a.C a.circle ∧ ¬ Collinear a.B a.C a.K
+```
+
+This supersedes the centre clause in the plain-word account below: B and C lie on
+the circle and K is off BC. The centres in `Arc.Less`, `Arc.Semicircle` and `Arc.Greater`
+stay, since their positions distinguish the kinds.
 
 - **In plain words.** An arc (Definition III.6) is a circle, the ends B, C of its base,
   and a point K naming the side, which need not be on the circle. It is drawn when its
@@ -1210,6 +1229,15 @@ theorem Prop23.point {A B E P : Point} {α : Circle} (hα : ∃ O : Point, Centr
     (OnCircle P α ↔ ∠ A P B = ∠ A E B) ∧ (InsideCircle P α ↔ ∠ A E B < ∠ A P B)
 ```
 
+**19 October 2026, step 6.** `Prop23.point` is proved in `Elements/BookIII/`
+with no centre-existence input. Its current declaration is:
+
+```lean
+theorem Prop23.point {A B E P : Point} {α : Circle} (hA : OnCircle A α) (hB : OnCircle B α)
+    (hE : OnCircle E α) (hPE : SameSideOf P E A B) :
+    (OnCircle P α ↔ ∠ A P B = ∠ A E B) ∧ (InsideCircle P α ↔ ∠ A E B < ∠ A P B)
+```
+
 - **In plain words.** On E's side of a chord AB of a circle through E, a point is on the
   circle exactly when the chord subtends at it the angle AEB, and within it exactly when it
   subtends a greater angle. It is III.23's content ("there cannot be constructed two
@@ -1256,6 +1284,16 @@ theorem Circumference.add {B C D K X Y : Point} {α : Circle} (hα : ∃ O : Poi
     circumference α B X C + circumference α C Y D = circumference α B K D
 ```
 
+**19 October 2026, step 6.** `Circumference.add` is proved in `Elements/BookIII/`
+with no centre-existence input. Its current declaration is:
+
+```lean
+theorem Circumference.add {B C D K X Y : Point} {α : Circle} (hB : OnCircle B α)
+    (hC : OnCircle C α) (hD : OnCircle D α) (hCK : SameSideOf C K B D)
+    (hX : OppositeSidesOf X D B C) (hY : OppositeSidesOf Y B C D) :
+    circumference α B X C + circumference α C Y D = circumference α B K D
+```
+
 - **In plain words.** With C on the arc BD on K's side, the circumferences BC and CD make up
   BD. **Plan:** the measures at D and B, the whole at a point beyond BD [III. 21], the angles
   of BCD [I. 32], and the quadrilateral in the circle [III. 22].
@@ -1284,6 +1322,14 @@ theorem Prop24.equalCircles {A B C D E F : Point} {AEB CFD : Circle}
 theorem Prop24.equalMeasure {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
     (h : Arc.Congruent a b) : a.measure = b.measure
 ```
+
+**19 October 2026, step 6.** `Prop24` and `Prop24.equalCircles`, now in
+`Elements/BookIII/Prop24.lean`, each drop `hAEB` and `hCFD`; every other input and
+conclusion in their frozen declarations stays. `Prop24` still concludes congruence,
+while `Prop24.equalCircles` takes its centres internally from `exists_centre` for the
+alternative proof. `Prop24.equalMeasure` keeps its written type but its `Drawn` inputs
+no longer contain centres. The historical comparison with `type_of% @Prop24` was with
+the main theorem before stage 3, not the current congruence statement.
 
 - **In plain words.** Similar segments AEB, CFD on equal bases AB, CD are congruent: one
   map puts A on C and B on D, the segment on the segment and the arc on the arc, keeping
@@ -1585,6 +1631,24 @@ theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Cen
       (∠ A B D < ∠ B A D → SameSideOf E B A C)
 ```
 
+**19 October 2026, step 6.** `Prop25.complete` in `Elements/BookIII/Prop25.lean`
+drops the point parameter E and both `hα` and `hE`; its current declaration is:
+
+```lean
+theorem Prop25.complete {A C P B : Point} {α γ : Circle} (hA : OnCircle A α)
+    (hC : OnCircle C α) (hB : OnArc B ⟨α, A, C, P⟩) (hBP : SameSideOf B P A C)
+    (hAγ : OnCircle A γ) (hBγ : OnCircle B γ) (hCγ : OnCircle C γ) :
+    γ = α ∧ ∀ X : Point, OnArc X ⟨α, A, C, P⟩ → OnCircle X γ
+```
+
+`Prop25.of_circle` drops only `hABC : ∃ E : Point, Centre E ABC` from the frozen
+declaration above. Any circle through the three points is the segment's circle;
+`complete` takes a centre internally for III.9. `of_circle` is the former whole-circle
+statement with its centre-existence input removed, proved from the construction,
+`Prop25.meets` and `Prop25.complete`. The references to `Arc.meets` and the old
+`type_of% @Prop25` check in the account below record the earlier plan. The meeting fact
+is now `Prop25.meets`; the construction still returns its geometric centre E.
+
 - **In plain words.** The core is given only the segment's base AC, a point P on its side,
   and its points as a predicate S, with the fact Euclid reads off the figure: every ray from
   a point within AC towards P's side meets S. It never sees a circle or a centre. It
@@ -1618,6 +1682,13 @@ theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Cen
 
 #### Addition, 19 October 2026: III.25's segment kinds
 
+**19 October 2026, implementation after step 6.** `Prop25.kind` is proved and
+registered as "III.25 kind" in `Elements/Companions.lean`; fresh `facts.json` at
+`17987153` lists it as proved. III.25's record declares full coverage with `complete`,
+`kind` and `of_circle`. The construction and `kind` retain their geometric centre E;
+`complete` and `of_circle` take no centre input. The approval and plan below are kept
+as history; the record's changed statement and Lean stamps still await renewed review.
+
 Approved by the owner on 19 October 2026; reviewed unchanged by both first mates.
 Brief 0006 freezes III.25; this is the addition to its frozen statements requested in plan lane 9.
 The construction core and its existing companions keep their statements. The new
@@ -1643,6 +1714,11 @@ theorem Prop25.kind {A B C D E P : Point} {γ : Circle}
           ∟ + ∟ < circumference γ A P C) := by
   sorry
 ```
+
+**19 October 2026, step 6.** `Prop25.kind` has the written type above in
+`Elements/BookIII/Prop25.lean`, now proved, with `Arc.Drawn` in its new meaning. The
+`by sorry` block records the approved statement before its proof; it is not the
+implementation.
 
 In plain words, take the points and circle returned by III.25’s construction. The arc AC on P’s side is drawn. When ABD exceeds BAD, that arc is less than a semicircle and measures less than two right angles. When the angles are equal, it is a semicircle and measures two right angles. When ABD is smaller, it is greater than a semicircle and measures more than two right angles. The displayed circumference is exactly this arc’s `Arc.measure`.
 
@@ -1687,6 +1763,10 @@ changed from brief 0005's in these ways:
 - **Five case files,** so that parallel provers never share one, and a policy check over
   the whole `Placement` namespace.
 - **A drawn arc has a centre** (`Arc.Drawn`), because `Prop23.point` needs one.
+
+  **19 October 2026, step 6:** that was the spike's requirement. `Arc.Drawn` now
+  contains only endpoint incidence and the side marker off the base, and `Prop23.point`
+  has no centre input.
 - **III.24 uses only** `placement`, `Prop23.point`, `chord_cases` (proved) and I.8. III.10 is
   not needed.
 - **III.25's interfaces fit:** today's statement follows from the core, `Arc.meets` and
