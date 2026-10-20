@@ -186,8 +186,8 @@ BOOK_II = {
 
 
 # The statements of Book III. A circle takes Heath's letters (`ABC` for the circle ABC).
-# A centre is named where the statement uses it. Otherwise the proof takes a centre
-# by III.1 where Heath cites it, and from the rule `exists_centre` otherwise
+# A centre is named where the statement uses it. Where a proof needs an unnamed centre,
+# it takes one by III.1 where Heath cites it, and from `exists_centre` otherwise
 # (docs/briefs/0008-centre.md, step 6). "Equal circles" is `EqualCircles`; a straight
 # line touching a circle is `Touches`; circles touching one another are
 # `TouchesInternally`, `TouchesExternally` or `CirclesTouch`.

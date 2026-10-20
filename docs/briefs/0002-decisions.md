@@ -1536,8 +1536,11 @@ findings:
   [brief 0008](0008-centre.md), step 6's restated signatures from `b260c826` for III.1,
   III.2, III.4, III.8, III.9, III.10, III.13, III.17, III.21, III.22, III.23, III.24,
   III.25, III.26, III.28, III.30, III.32, III.33, III.34, III.35, III.36 and III.37.
-  Its comment now names a centre where the statement uses it; otherwise the proof takes
-  one by III.1 where Heath cites it, and from `exists_centre` otherwise. A search of
+  22 signatures change; 19 lose centre-existence hypotheses, and III.33
+  loses a centre-existence conclusion clause. III.26 retains G/H; III.28 had no centre
+  clause; both gain [brief 0006](0006-statements.md)'s congruence conclusions. Its comment
+  now names a centre where the statement uses it. Where a proof needs an unnamed centre,
+  it takes one by III.1 where Heath cites it, and from `exists_centre` otherwise. A search of
   `scripts/` and `tests/` confirms that no check reads the scaffold's Book III strings.
   The scaffold creates only missing files, so it never rewrites a proof. This change
   lands before the content it describes, in a pull request of its own, since `scripts/`
