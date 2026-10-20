@@ -305,6 +305,8 @@ def enforced_check_commands(job: WorkflowCheckJob, required: list[str]) -> list[
     generated_body = (RENDER_COMMAND, FRESHNESS_COMMAND, FRESHNESS_ASSERTION)
     simple = set(required) - {RENDER_COMMAND, FRESHNESS_COMMAND}
     required_set = set(required)
+    setup_order = (*SETUP_ACTIONS, None)  # The actions, then the elan install.
+    setup_index = 0
     commands = []
     for step in job.steps:
         if step.has_condition:
@@ -318,10 +320,17 @@ def enforced_check_commands(job: WorkflowCheckJob, required: list[str]) -> list[
         if step.environment:
             raise AssertionError(f"CI check step {step.name!r} has an environment override")
         if is_modeled_setup(step):
+            if commands:
+                raise AssertionError(f"CI check step {step.name!r} is setup after the first check")
+            if setup_index == len(setup_order) or step.uses != setup_order[setup_index]:
+                raise AssertionError("CI check setup sequence differs from the required prefix")
+            setup_index += 1
             continue
         if step.uses is not None or not any(command in required_set for command in step.run):
             raise AssertionError(
                 f"CI check step {step.name!r} is neither a required check nor the modeled setup")
+        if setup_index != len(setup_order):
+            raise AssertionError("CI check setup prefix is incomplete before the first check")
         if step.run == generated_body:
             commands.extend((RENDER_COMMAND, FRESHNESS_COMMAND))
         elif len(step.run) == 1 and step.run[0] in simple:
@@ -3891,10 +3900,35 @@ class Units(unittest.TestCase):
                 job["steps"].insert(job["steps"].index(step_running(job, certificate)), step)
             return insert
 
+        def checkout_before_render(workflow, job):
+            index = next(index for index, step in enumerate(job["steps"])
+                         if RENDER_COMMAND in step.get("run", "").splitlines())
+            job["steps"].insert(index, {"uses": "actions/checkout@v5"})
+
+        def reverse_setup_actions(workflow, job):
+            job["steps"][:2] = reversed(job["steps"][:2])
+
         cases = (
             ("BASH_ENV through GITHUB_ENV", before_certificate(stub), unmodeled),
             ("unlisted action", before_certificate({"uses": "example/setup-shell@v1"}),
              unmodeled),
+            ("checkout before rendering", checkout_before_render,
+             "setup after the first check"),
+            ("Python setup after checks begin",
+             before_certificate({"uses": "actions/setup-python@v5",
+                                 "with": {"python-version": "3.12"}}),
+             "setup after the first check"),
+            ("duplicate checkout",
+             lambda workflow, job: job["steps"].insert(1, job["steps"][0].copy()),
+             "setup sequence differs"),
+            ("duplicate Python setup",
+             lambda workflow, job: job["steps"].insert(2, job["steps"][1].copy()),
+             "setup sequence differs"),
+            ("reversed setup actions", reverse_setup_actions, "setup sequence differs"),
+            ("missing checkout", lambda workflow, job: job["steps"].pop(0),
+             "setup sequence differs"),
+            ("missing elan install", lambda workflow, job: job["steps"].pop(2),
+             "setup prefix is incomplete"),
             ("checkout of another ref",
              lambda workflow, job: step_using(job, "actions/checkout@v5").update(
                  {"with": {"ref": "other"}}), unmodeled),

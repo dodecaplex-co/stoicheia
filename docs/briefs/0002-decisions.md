@@ -2166,3 +2166,12 @@ findings:
   container are refused, and the actual workflow, whose other jobs keep their `env`, still
   passes. Protected file changed in this round: `scripts/test_safe_push.py`. No check is
   weakened, and main's facts and pages are unchanged.
+
+  A further review found that another checkout before rendering could restore the
+  committed `facts.json`, discarding the freshly computed certificate before the
+  freshness assertion. `scripts/test_safe_push.py` now requires the setup to form one
+  initial prefix: checkout, Python setup, then the elan install, each exactly once in
+  that order, before the first check. Mutations insert a checkout before rendering,
+  insert Python setup after checks begin, repeat either action, reverse the actions or
+  omit setup; each is refused. Protected file changed in this round:
+  `scripts/test_safe_push.py`. No check is weakened.
