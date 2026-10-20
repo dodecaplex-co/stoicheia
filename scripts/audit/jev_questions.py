@@ -4,9 +4,11 @@ The questions compare Heath's enunciations with the Lean statements and their de
 scope; inspect citation and hypothesis use in individual proof units; ask whether the
 representation bridges state the conditional connections; compare the commentary with
 its named declarations and declared route; and inspect the Heath figures and captions.
+Bridge dependency placement is supplied as context in bridge_placement but is not itself
+adjudicated; a bridge-stated answer does not establish all of P13.
 They do not check proofs in Lean, verify historical quotations, or inspect the figures
 at a glance. Helper signatures expose their use, not the work inside their proofs.
-Ten synthetic defect controls change generated states only. Expectations report the
+Ten synthetic defect controls change generated rows only. Expectations report the
 review records' claims and remain local, as do provenance, mutations and coverage.
 
 Run from anywhere with Python 3.11 or later, using only the standard library and the
@@ -19,9 +21,13 @@ repository's heath.py and jev.py, imported by path:
 Generation reads no credentials and sends nothing. Every evidence file is compared with
 `git show REV:path`; every excerpt records its exact source slice and hash. Failure to read
 the committed evidence, missing evidence, ambiguous names and differences from the revision
-are errors. Both outputs are assembled
-and validated before either is written. --check regenerates twice in memory and compares
-the bytes with both files on disk. The manifest stays beside this script's default output,
+are errors. Evidence paths must be relative, without parent traversal or symlinks, and
+resolve inside the repository. Both output paths reject symlinks, evidence files, tracked
+files other than the two default outputs, and collisions with each other; an output may
+be outside the repository. Both outputs are assembled and validated before either is
+written, using temporary files and replacement without following a final symlink.
+--commit REV --check regenerates twice in memory and compares the bytes with both files
+on disk. The manifest stays beside this script's default output,
 including when --out selects another questions file. States over 12,000 characters are
 labelled locally, never shortened; option orders rotate independently for ordinary rows
 and controls. Keep the input and manifest beside any later answers: the client does not
@@ -35,9 +41,12 @@ import copy
 import hashlib
 import importlib.util
 import json
+import os
 import re
+import stat
 import subprocess
 import sys
+import tempfile
 import tomllib
 from collections import Counter
 from dataclasses import dataclass
@@ -48,6 +57,7 @@ sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[2]
 OUTPUT = ROOT / 'docs/reports/acceptance/jev/audit-books-I-II.jsonl'
 MANIFEST = OUTPUT.with_name('audit-books-I-II-manifest.json')
+DEFAULT_OUTPUTS = (OUTPUT, MANIFEST)
 LIMIT = 12000
 
 
@@ -85,6 +95,35 @@ def relative(path: Path) -> str:
     return path.relative_to(ROOT).as_posix()
 
 
+def checked_path(path: Path) -> Path:
+    """Reject symlinks throughout a path before resolving it, including missing leaves."""
+    path = path.absolute()
+    current = Path(path.anchor)
+    for part in path.parts[1:]:
+        current /= part
+        try:
+            mode = current.lstat().st_mode
+        except FileNotFoundError:
+            continue
+        require(not stat.S_ISLNK(mode), f'{path}: symlink component {current}')
+    return path.resolve()
+
+
+def evidence_path(path: str) -> Path:
+    local = Path(path)
+    require(not local.is_absolute() and '..' not in local.parts,
+            f'{path}: evidence path must be relative with no .. component')
+    resolved = checked_path(ROOT / local)
+    require(resolved.is_relative_to(ROOT), f'{path}: evidence path resolves outside the repository')
+    return resolved
+
+
+def read_no_follow(path: Path) -> bytes:
+    """Refuse a final symlink even if it appeared after the component checks."""
+    with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW), 'rb') as stream:
+        return stream.read()
+
+
 class Evidence:
     def __init__(self, commit: str):
         require(re.fullmatch(r'[0-9a-f]{40}', commit), '--commit requires a full commit hash')
@@ -93,7 +132,7 @@ class Evidence:
 
     def read(self, path: str) -> str:
         if path not in self.data:
-            raw = (ROOT / path).read_bytes()
+            raw = read_no_follow(evidence_path(path))
             try:
                 result = subprocess.run(['git', 'show', f'{self.commit}:{path}'], cwd=ROOT,
                                         capture_output=True, check=False)
@@ -124,7 +163,7 @@ class Evidence:
 
     def unchanged(self) -> None:
         for path, raw in self.data.items():
-            require((ROOT / path).read_bytes() == raw, f'{path}: changed during generation')
+            require(read_no_follow(evidence_path(path)) == raw, f'{path}: changed during generation')
 
 
 # A small source lexer, not a Lean elaborator. Masking preserves offsets and line breaks.
@@ -1085,9 +1124,11 @@ class Generator:
             self.evidence.read(wrong)
             row['source']['control_figure'] = wrong
         row = control('12-I.39-commentary', 'conflicts')
-        change(row, ['state', 'commentary'], 'E is D', 'E is not D')
+        change(row, ['state', 'commentary'], 'EBC is a part of DBC and the less',
+               'EBC is a part of DBC and the greater')
         row = control('12-I.40-commentary', 'conflicts')
-        change(row, ['state', 'commentary'], 'The areas then put F at D', 'The areas then put F away from D')
+        change(row, ['state', 'commentary'], 'our I.38 makes ABC equal to FCE',
+               'our I.38 makes ABC greater than FCE')
         require(dict(counts) == {9: 2, 10: 2, 11: 2, 13: 2, 12: 2}, 'control coverage changed')
 
     def finish(self) -> tuple[bytes, bytes, dict]:
@@ -1155,8 +1196,8 @@ class Generator:
                         'Citation questions inspect one unit body and helper signatures, not helper bodies.',
                         'Reachable helper calls are reconciled locally; their bodies receive no independent question.',
                         'Representation questions inspect conditional statements, not premise discharge or kernel checks.',
-                        'Representation rows record dependency placement locally in bridge_placement; a bridge-stated '
-                        'answer does not establish correct placement or all of P13.',
+                        'Representation rows supply dependency placement as context in bridge_placement, but do not '
+                        'adjudicate it; a bridge-stated answer does not establish correct placement or all of P13.',
                         'Commentary questions exclude quotation accuracy, attribution and voice.',
                         'Figure questions inspect the Heath figure only.',
                         'Record expectations are claims to test, not independent findings.',
@@ -1172,6 +1213,58 @@ class Generator:
         return rows_bytes, manifest_bytes, manifest
 
 
+def file_identity(path: Path) -> tuple[int, int] | None:
+    try:
+        info = path.stat()
+    except FileNotFoundError:
+        return None
+    return info.st_dev, info.st_ino
+
+
+def output_paths(paths: list[Path], evidence_files: dict[str, str]) -> list[Path]:
+    """Validate both destinations before reading or writing either one."""
+    resolved = [checked_path(path) for path in paths]
+    left, right = resolved
+    identities = [file_identity(path) for path in resolved]
+    # Treat names differing only in case as a collision even before either file exists,
+    # so the same invocation is safe on both case-sensitive and case-insensitive volumes.
+    same_name = (left.name.casefold() == right.name.casefold()
+                 and file_identity(left.parent) is not None
+                 and file_identity(left.parent) == file_identity(right.parent))
+    require(left != right and not same_name
+            and not (identities[0] is not None and identities[0] == identities[1]),
+            'questions and manifest destinations must differ')
+    evidence = {evidence_path(path) for path in evidence_files}
+    evidence_ids = {file_identity(path) for path in evidence} - {None}
+    result = subprocess.run(['git', 'ls-files', '-z'], cwd=ROOT, capture_output=True, check=False)
+    require(result.returncode == 0,
+            'cannot list tracked files: ' + result.stderr.decode('utf-8', errors='replace').strip())
+    tracked = {ROOT / os.fsdecode(name) for name in result.stdout.split(b'\0') if name}
+    protected = {path.resolve() for path in tracked if path not in DEFAULT_OUTPUTS}
+    protected_ids = {file_identity(path) for path in protected} - {None}
+    for path, identity in zip(resolved, identities):
+        require(path not in evidence and identity not in evidence_ids,
+                f'{path}: destination would replace an evidence file')
+        require(path not in protected and identity not in protected_ids,
+                f'{path}: destination would replace a tracked input')
+    return resolved
+
+
+def write_output(path: Path, data: bytes) -> None:
+    """Replace the destination itself, never the target of a final symlink."""
+    checked_path(path)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=path.parent, prefix=f'.{path.name}.', delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(data)
+        checked_path(path)
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--commit', required=True)
@@ -1183,14 +1276,15 @@ def main(argv: list[str] | None = None) -> int:
         second = Generator(args.commit).finish()
         require(first[:2] == second[:2], 'two generations differ')
         rows, manifest_bytes, manifest = first
-        destinations = [(args.out, rows), (MANIFEST, manifest_bytes)]
-        require(args.out.resolve() != MANIFEST.resolve(), '--out cannot replace the manifest')
+        paths = output_paths([args.out, MANIFEST], manifest['evidence_files'])
+        destinations = list(zip(paths, (rows, manifest_bytes)))
         if args.check:
-            different = [str(p) for p, data in destinations if not p.is_file() or p.read_bytes() != data]
+            different = [str(p) for p, data in destinations
+                         if not checked_path(p).is_file() or read_no_follow(p) != data]
             require(not different, 'generated files differ: ' + ', '.join(different))
         else:
             for path, data in destinations:
-                path.write_bytes(data)
+                write_output(path, data)
         print(('Checked' if args.check else 'Wrote') + f' {manifest["rows"]} rows; two generations identical.')
         for item, count in manifest['rows_by_item'].items():
             print(f'Item {item}: {count["not_seeded"]} not seeded, {count["seeded"]} seeded.')

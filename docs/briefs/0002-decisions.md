@@ -1934,13 +1934,21 @@ findings:
   sends, for review items P11 to P15 of [ACCEPTANCE](../ACCEPTANCE.md): the statement's
   scope, with its companions and porism; whether each proposition a proof unit calls does
   work, and whether any hypothesis is used only for show; whether a representation's bridge
-  is stated, while recording its dependency placement locally rather than treating that
-  answer as all of P13; whether the commentary's account of the scope, the route and the Lean
-  it names agrees with them; and whether the Heath figure, sent as an image, agrees with the
-  proof and its caption. Every state quotes its files exactly, checked byte for byte against
-  `git show` of a named commit, and the expected answers, taken from the records, stay on
-  this machine. Ten seeded controls, each a planted defect in a generated state only,
-  measure whether the questions can find a fault. It uses the standard library alone,
-  reads no key and sends nothing; `--check` regenerates the rows twice and compares them
-  with the files. It lands on its own, before the rows, results and report it produces
-  (`text/jev-audit-I-II`), as keep_apart asks. No check, schema or expected value changes.
+  is stated, with its dependency placement supplied as context but not itself adjudicated,
+  and a bridge-stated answer not all of P13; whether the commentary's account of the scope,
+  the route and the Lean it names agrees with them; and whether the Heath figure, sent as
+  an image, agrees with the proof and its caption. Production states quote their files
+  exactly, checked byte for byte against `git show` of a named commit, and the expected
+  answers, taken from the records, stay on this machine. Ten seeded controls, each a planted
+  defect in a generated row only, measure whether the questions can find a fault. It
+  refuses absolute evidence paths, parent traversal or evidence resolving outside the
+  repository, symlinks in evidence or either output path, and output collisions with
+  evidence, tracked files other than the two default outputs, or each other; an output
+  outside the repository is allowed, and replacement never follows a final symlink.
+  It uses the standard library alone, reads no key and sends nothing;
+  `--commit REV --check` regenerates the rows twice and compares them with both files.
+  [`tests/test_jev_questions.py`](../../tests/test_jev_questions.py) (new) tests the file
+  containment and all ten controls, including the two commentary mutations, with no Lean,
+  network or key; CI does not run it yet. The generator lands on its own, before the rows,
+  results and report it produces (`text/jev-audit-I-II`), as keep_apart asks. No existing
+  check is weakened, and no schema or record expectation changes.
