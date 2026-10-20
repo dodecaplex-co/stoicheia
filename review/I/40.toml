@@ -41,9 +41,9 @@ note = "Heath draws AD level and AF sloping; our drawing puts AF level, as the p
 
 [review]
 stage = "full"
-commit = "0e133256"
+commit = "b62518e5"
 reviewer = "GPT-6 Astra (Codex), records re-read"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "brief 0005 stage 5, ship T re-read"
 lean = "sha256:26f3e7e66e5dc512"
 
 [review.items]
