@@ -40,10 +40,10 @@ case = "BA and AC together greater than BC, with D on BA produced beyond A in Eu
 
 [review]
 stage = "full"
-commit = "267d8d2f"
+commit = "07bdc4df"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:143bf867e071afbd"
-run = "Q watch, independent re-read at 267d8d2f"
+run = "Q watch, independent re-read at 07bdc4df"
 
 [review.items]
 statement = "pass"
