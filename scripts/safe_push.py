@@ -2,7 +2,7 @@
 """The pre-flight of a pull request, and its merge: the way work reaches main.
 
     git safe-push --branch <name> [--label L]... [--title T] [--body-file F] [--ready]
-                  [--commit <sha>] [--dry-run]
+                  [--commit <sha>] [--dry-run] [--full]
     git safe-push --merge <pr-number> [--dry-run]
     git safe-push --dry-run [--commit <sha>]                      # the checks alone
 
@@ -18,8 +18,10 @@ and --dry-run, the script refuses, and says to use --branch.
 
 The pre-flight (--branch) checks one commit (HEAD unless --commit names another) from end
 to end, reading nothing from the working tree, and only then pushes it to
-refs/heads/<name> and opens the pull request, or updates the open one. The steps run in
-order, and the first that fails stops it with a message saying why:
+refs/heads/<name> and opens the pull request, or updates the open one. A passing full-check
+record of this commit against this origin/main, made by origin/main's harness, stands in
+for step 4 alone, unless --dry-run or --full is given. The steps run in order, and the
+first that fails stops it with a message saying why:
 
 Branches named train/* require --body-file. Step "3. train" runs origin/main's
 check_train.py before the full checks, or reports a skip while main has no such module.
@@ -95,7 +97,7 @@ check_train.py before the full checks, or reports a skip while main has no such 
    before the checks; a dry run, which does not ask GitHub, notes a missing one.
 6. A summary, printed and appended to `~/.cache/stoicheia/pushes.log`, outside the
    repository (`STOICHEIA_PUSH_LOG` names another file); each step's output is kept
-   beside it in `logs/`, and the pre-flight's record in `preflight/`, for --merge.
+   beside it in `logs/`, and the pre-flight's record in `preflight/`, for --branch and --merge.
 
 --merge <n> merges a pull request only when its head passes the secret scan and the
 guards against the current origin/main, run again then (a record of the pre-flight is a
@@ -2168,8 +2170,8 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool,
                  checked: dict | None = None, train_body: str | None = None) -> Preflight:
     """Steps 2 to 4 on the commit: the secret scan, the guards and the full checks.
     `checked`, a record of the full checks of this commit against this origin/main by
-    origin/main's harness, stands in for step 4 alone (--merge); steps 2 and 3 always
-    run."""
+    origin/main's harness, stands in for step 4 alone; steps 2 and 3, including the
+    train check when given, always run."""
     secret_scan(ctx.repo, ctx.base, ctx.sha, rep, allow_rev=ctx.base)
     with tempfile.TemporaryDirectory(prefix="stoicheia-push-") as tmp:
         parent = Path(tmp)
@@ -2917,7 +2919,7 @@ def watch_checks(ctx: Context, pr: PR, rep: Report) -> str:
 
 
 # --------------------------------------------------------------------------------------
-# The pre-flight's record, for --merge
+# The pre-flight's record, for --branch and --merge
 
 
 def log_path() -> Path:
@@ -2932,7 +2934,7 @@ def record_path(sha: str, base: str) -> Path:
 def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool,
                 checked: dict | None = None) -> dict:
     """The pre-flight's record. `checked`, the earlier record whose full checks stood in
-    for step 4 (--merge), gives its step 4 and its notes."""
+    for step 4, gives its step 4 and its notes."""
     steps = [[s.stage, s.name, s.outcome, s.seconds] for s in rep.steps
              if s.outcome in ("ok", "FAIL", "skip") and s.stage in ("2", "3", "4")]
     notes = [[s.name, (s.detail.splitlines() or [""])[0]] for s in rep.steps
@@ -2940,7 +2942,10 @@ def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool,
     if checked is not None:
         steps = [s for s in steps if s[0] != "4"] + \
             [list(s) for s in checked.get("steps", []) if s and s[0] == "4"]
-        notes += [list(n) for n in checked.get("notes", []) if list(n) not in notes]
+        notes += [[s.name, f"{s.outcome}, {s.detail}"] for s in rep.steps
+                  if s.stage == "4" and s.outcome == "skip"]
+        notes += [list(n) for n in checked.get("notes", [])
+                  if n[0] != "full local checks" and list(n) not in notes]
     return {
         "sha": ctx.sha, "base": ctx.base, "branch": ctx.branch,
         "full": full or bool(checked and checked.get("full")),
@@ -2952,13 +2957,33 @@ def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool,
 
 
 def checks_record(record: dict | None, test_mode: bool) -> dict | None:
-    """The record, if its full checks may stand in for step 4 at the merge: they were run
+    """The record, if its passing full checks may stand in for step 4: they were run
     (or skipped by the internal test flag, under it) by origin/main's harness, the one
     running now. The record is a local file anything run as the user could write, so it
     never stands in for the secret scan or the guards, and CI runs the same checks."""
-    if record is None or HARNESS_BLOB is None:
+    if not isinstance(record, dict) or HARNESS_BLOB is None:
         return None
-    if record.get("harness_blob") != HARNESS_BLOB or not (record.get("full") or test_mode):
+    if record.get("harness_blob") != HARNESS_BLOB or \
+            not (record.get("full") is True or test_mode):
+        return None
+    steps = record.get("steps")
+    if not isinstance(steps, list) or any(
+            not isinstance(s, list) or len(s) != 4 or s[0] not in ("2", "3", "4")
+            or not isinstance(s[1], str) or not s[1] or s[2] not in ("ok", "skip")
+            or (s[3] is not None and (type(s[3]) not in (int, float)
+                                     or not math.isfinite(s[3]) or s[3] < 0))
+            for s in steps):
+        return None
+    full_steps = [s for s in steps if s[0] == "4"]
+    if not full_steps or any(s[2] != "ok" and not test_mode for s in full_steps):
+        return None
+    notes = record.get("notes")
+    if not isinstance(notes, list) or any(
+            not isinstance(n, list) or len(n) != 2
+            or any(not isinstance(x, str) for x in n) for n in notes):
+        return None
+    if any(not isinstance(record.get(k), str) or not record[k].strip()
+           for k in ("harness", "time")):
         return None
     return record
 
@@ -2972,9 +2997,10 @@ def save_record(record: dict) -> None:
 def load_record(sha: str, base: str) -> dict | None:
     try:
         record = json.loads(record_path(sha, base).read_text())
-    except (OSError, json.JSONDecodeError):
+    except (OSError, UnicodeError, json.JSONDecodeError):
         return None
-    return record if record.get("sha") == sha and record.get("base") == base else None
+    return record if isinstance(record, dict) and record.get("sha") == sha \
+        and record.get("base") == base else None
 
 
 # --------------------------------------------------------------------------------------
@@ -3834,8 +3860,12 @@ def preflight_main(repo: Path, args) -> int:
         if ctx.branch:
             check_kind_label(ctx, args, rep)
         logs = logs_dir(sha)
-        pre = check_commit(ctx, rep, logs, args.test_mode, train_body=train_input(ctx, args))
-        record = make_record(ctx, pre, rep, full=not args.test_mode)
+        checked = checks_record(load_record(sha, base), args.test_mode) \
+            if not args.dry_run and not args.full else None
+        pre = check_commit(ctx, rep, logs, args.test_mode, checked=checked,
+                           train_body=train_input(ctx, args))
+        record = make_record(ctx, pre, rep, full=not args.test_mode and checked is None,
+                             checked=checked)
         save_record(record)
         if args.dry_run:
             rep.heading("5. Push")
@@ -4088,6 +4118,8 @@ def main(argv=None) -> int:
     parser.add_argument("--commit", default="HEAD", help="the commit to check (default HEAD)")
     parser.add_argument("--dry-run", action="store_true",
                         help="everything but the push, the pull request and the merge")
+    parser.add_argument("--full", action="store_true",
+                        help="run the full local checks again with --branch")
     # The pre-push hook's entry point: the secret scan of one ref's push.
     parser.add_argument("--scan-push", nargs=3, metavar=("LOCAL", "REMOTE", "REF"),
                         help=argparse.SUPPRESS)
@@ -4097,8 +4129,10 @@ def main(argv=None) -> int:
                         help=argparse.SUPPRESS)
     args = parser.parse_args(ARGV)
     if args.merge is not None and (args.branch or args.title or args.body_file or args.ready
-                                   or args.label or args.commit != "HEAD"):
+                                   or args.label or args.commit != "HEAD" or args.full):
         parser.error("--merge takes only --dry-run")
+    if args.full and not args.branch:
+        parser.error("--full goes with --branch")
     if not args.branch and (args.title or args.body_file or args.ready or args.label):
         parser.error("--title, --body-file, --ready and --label go with --branch")
     if args.body_file and not Path(args.body_file).is_file():

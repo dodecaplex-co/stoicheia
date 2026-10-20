@@ -20,6 +20,9 @@ one commit and runs safe_push.py against that origin:
 - a good commit passes, by a dry run and then the pre-flight, from a dirty working tree:
   pushed to its branch, never to main, and its pull request opened with the template's
   body and the pre-flight's summary; then updated, keeping the coordinator's words;
+- --branch reuses passing full checks of the same commit and base by main's harness,
+  with the scan, guards and train check still run; another harness, base, failed or
+  unreadable record, --dry-run and --full each cause the full checks to run again;
 - --merge refuses a draft, an unticked or missing required box, red or missing CI, and a
   protected change without its label; reruns the pre-flight for a head it has not seen;
   and merges with a merge commit, deleting the branch, its subject naming the owner
@@ -1078,6 +1081,121 @@ class Edge(Clone):
         return self.commit(message)
 
 
+class ReusedChecks(Edge):
+    """Step 4 runs small commands in its two worktrees; the guards and gh stand-in run
+    as usual. Only preconditions uses test mode, to require a local origin and fake gh."""
+
+    DRIVER = r"""
+import sys
+sys.path.insert(0, sys.argv[1])
+import safe_push
+real_preconditions = safe_push.preconditions
+def preconditions(repo, commit, branch, dry_run, test_mode, rep, title=None):
+    return real_preconditions(repo, commit, branch, dry_run, True, rep, title)
+safe_push.preconditions = preconditions
+safe_push.CHECKS = [("test full checks", [sys.executable, "-c", "print('checked')"])]
+safe_push.NEGATIVE = [("test negative checks", [sys.executable, "-c", "print('checked')"])]
+sys.exit(safe_push.main(sys.argv[2:]))
+"""
+
+    def preflight(self, *args):
+        return subprocess.run([sys.executable, "-c", self.DRIVER, str(UNDER_TEST),
+                               *with_branch(args)], cwd=WORK, env=clean_env(),
+                              capture_output=True, text=True)
+
+    def checked(self):
+        sha = self.good_commit()
+        r = self.preflight("--dry-run")
+        self.assertRanChecks(r)
+        self.assertIsNone(self.origin_branch())
+        self.assertEqual(self.gh_state()["calls"], [])
+        path = LOG.parent / "preflight" / f"{sha}-{BASE}.json"
+        record = json.loads(path.read_text())
+        self.assertIs(record["full"], True)
+        self.assertEqual(record["harness_blob"],
+                         git(WORK, "rev-parse", f"{BASE}:scripts/safe_push.py").strip())
+        return sha, path, record
+
+    def assertRanChecks(self, r):
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        for name in ("test full checks", "test negative checks"):
+            self.assertEqual(self.step(out, name), "ok", out)
+        self.assertIsNone(self.step(out, "full local checks"), out)
+        return out
+
+    def test_dry_run_then_push_reuses_full_checks(self):
+        sha, path, record = self.checked()
+        r = self.preflight()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.step(out, "full local checks"), "skip", out)
+        self.assertIsNone(self.step(out, "test full checks"), out)
+        self.assertIsNone(self.step(out, "test negative checks"), out)
+        for name in ("commit", "fetch", "fast-forward", "harness", "secrets", "statements",
+                     "axiom lock", "protected paths", "heath/", "directories",
+                     "review records", "generated pages"):
+            self.assertEqual(self.guard(out, name), "ok", f"{name}:\n{out}")
+        self.assertEqual(self.origin_branch(), sha)
+        self.assertEqual(self.origin_main(), BASE)
+        body = self.gh_state()["prs"][0]["body"]
+        self.assertIn(f"full local checks: skip, run on {sha[:12]} against origin/main "
+                      f"{BASE[:12]} by {record['harness']}, {record['time']}", body)
+        saved = json.loads(path.read_text())
+        self.assertIs(saved["full"], True)
+        self.assertEqual([s for s in saved["steps"] if s[0] == "4"],
+                         [s for s in record["steps"] if s[0] == "4"])
+        r = self.preflight()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.step(r.stdout, "full local checks"), "skip", r.stdout)
+        self.assertEqual(self.gh_state()["prs"][0]["body"].count("full local checks: skip"), 1)
+
+    def test_another_harness_does_not_supply_full_checks(self):
+        sha, path, record = self.checked()
+        record.update(harness="another copy of safe_push.py", harness_blob="0" * 40)
+        path.write_text(json.dumps(record))
+        self.assertRanChecks(self.preflight())
+        self.assertEqual(self.origin_branch(), sha)
+
+    def test_another_base_does_not_supply_full_checks(self):
+        sha, path, record = self.checked()
+        other = git(WORK, "rev-parse", f"{BASE}^").strip()
+        record["base"] = other
+        other_path = path.with_name(f"{sha}-{other}.json")
+        other_path.write_text(json.dumps(record))
+        path.unlink()
+        self.assertRanChecks(self.preflight())
+        # The base in the file must match too, even at the expected path.
+        path.write_text(json.dumps(record))
+        self.assertRanChecks(self.preflight())
+
+    def test_failed_step_does_not_supply_full_checks(self):
+        sha, path, record = self.checked()
+        next(s for s in record["steps"] if s[0] == "4")[2] = "FAIL"
+        path.write_text(json.dumps(record))
+        self.assertRanChecks(self.preflight())
+        self.assertEqual(self.origin_branch(), sha)
+
+    def test_unreadable_record_does_not_supply_full_checks(self):
+        sha, path, record = self.checked()
+        for data in (b"{", b"[]", b"\xff"):
+            with self.subTest(data=data):
+                path.write_bytes(data)
+                self.assertRanChecks(self.preflight())
+        self.assertEqual(self.origin_branch(), sha)
+
+    def test_full_runs_the_checks_again(self):
+        sha, path, record = self.checked()
+        self.assertRanChecks(self.preflight("--full"))
+        self.assertEqual(self.origin_branch(), sha)
+
+    def test_dry_run_always_runs_the_checks(self):
+        self.checked()
+        self.assertRanChecks(self.preflight("--dry-run"))
+        self.assertIsNone(self.origin_branch())
+        self.assertEqual(self.gh_state()["calls"], [])
+
+
 class SplitSecrets(Edge):
     """(1) A credential-like value split over two added lines."""
 
@@ -1646,6 +1764,7 @@ class PullRequests(Edge):
 
     def test_usage_errors(self):
         for args in (["--merge", "1", "--branch", "x"], ["--title", "T"],
+                     ["--merge", "1", "--full"], ["--full"], ["--dry-run", "--full"],
                      ["--branch", "x", "--label", "nonsense"], ["--branch", "x", "--body-file",
                                                                  str(TMP / "none.md")]):
             with self.subTest(args=args):
@@ -2593,6 +2712,28 @@ class Trains(Edge):
         out = r.stdout + r.stderr
         self.assertEqual(r.returncode, 1, out)
         self.assertIn("unreadable problem list", out)
+        self.assertEqual(self.origin_main(), base)
+
+    def test_reused_checks_do_not_skip_the_train_check(self):
+        base = self.new_base("Main's train checker", {
+            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
+                                      "    return [] if body == 'Good.\\n' else ['bad body']\n"})
+        sha = self.good_commit()
+        body = self.body_file()
+        body.write_text("Good.\n")
+        args = ("--branch", "train/docs-1", "--label", "docs", "--body-file", str(body))
+        r = self.safe_push(*args, "--dry-run")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        path = LOG.parent / "preflight" / f"{sha}-{base}.json"
+        self.assertTrue(path.is_file())
+        body.write_text("Bad.\n")
+        r = self.safe_push(*args)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.step(out, "train"), "FAIL", out)
+        self.assertIn("bad body", out)
+        self.assertNotIn("4. The full local checks", out)
+        self.assertIsNone(self.origin_branch("train/docs-1"))
         self.assertEqual(self.origin_main(), base)
 
 
