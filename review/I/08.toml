@@ -6,7 +6,7 @@ fingerprint = "sha256:dd20d32592101253"
 [route]
 kind = "euclid"
 # Brief 0009, question 4: the owner approved this reading, as prototyped, on 20 October 2026
-# (docs/briefs/0002-decisions.md, 20 October 2026).
+# (docs/briefs/0002-decisions.md, 20 October 2026); its finishing is tracked in #150.
 note = "I.7 is cited inside the hypothetical placement as a proved statement asserting no existence, although its proof uses constructions."
 
 [[passage]]

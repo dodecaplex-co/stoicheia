@@ -28,7 +28,8 @@ theorems; part 4 is read off the statement of `Rule.infer`, and its one theorem 
    step needs a point or a straight line the symbols do not already stand for. Every law is
    a universal statement, with nothing to construct. And every law I.4 cites is proved with
    no rule that constructs (`Cited.holds_of_drawsNothing`, `Prop4.cites_drawNothing`); I.8
-   cites I.7, whose proof draws (brief 0009, question 4, approved on 20 October 2026).
+   cites I.7, whose proof draws (brief 0009, question 4, approved as prototyped on
+   20 October 2026; its finishing is tracked in #150).
 4. **No hypothesis of the rule speaks of the placement.** The rule's hypotheses are the cited
    laws (from a fixed list, each a universal statement over its letters), the given facts
    and the conclusion (data over the figure's numbered symbols: no point, no straight line,

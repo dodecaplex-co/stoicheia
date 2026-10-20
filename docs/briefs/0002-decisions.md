@@ -2738,3 +2738,22 @@ findings:
   The two identity fixtures for `List.filterMap` and `Model.Kind.rec` add their stand-in
   module to the production boundary, since the laws now reach the real calculus.
   Their success expectations and the production boundary itself are unchanged.
+
+- **The prototyped answers to brief 0009's questions 2, 4 and 5 are finished in
+  [#150](https://github.com/jackChallis/stoicheia/issues/150).** The owner approved those
+  answers "as prototyped" (the entry above) and, as #150 records, said: "prototyped work
+  needs to be finalized - that opens an issue". #150 carries the label `blocks-release`, so
+  no release is made until it closes. The replacement lands on the prototyped answers. Until
+  #150 finishes them, part 4 of the restriction is an inspection of `Rule.infer` as locked
+  in `Certificate/axioms.lock`, not a theorem; `Cited.drawsNothing` is a classification set
+  by hand, whose meaning is judged by eye from the audit's pinned axiom closures; and the cost of the kept side is
+  checked by reading the model's proof. Non-derivability stays unclaimed. The landing order
+  with the retirement waves (#119) is the first wave, `lean/retire-axioms`, then the
+  replacement, then the second wave, `lean/retire-axioms-2`, whose landing carries the
+  review of `drawsNothing` and of the audit pins. [Brief 0009](0009-superposition.md)
+  records this in its round 4. The docstrings that cite question 4 in
+  `Elements/Foundations/Superposition/Syntax.lean` and
+  `Elements/Foundations/Superposition/Restriction.lean`, and the comment beside I.8's route
+  note in `review/I/08.toml`, now say "as prototyped" and cite #150; these are comments
+  only, and change no statement, declaration, stamp or check. The 19 October entry stays as
+  written.

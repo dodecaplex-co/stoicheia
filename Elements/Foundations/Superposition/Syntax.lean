@@ -192,7 +192,8 @@ axioms). The law of one ray for one angle names all three of its straight lines,
 the one through the point it speaks of, so that its proof draws nothing: in I.4 that straight line
 is the side AC laid down, which the placement supplies. I.7's proof draws the six straight
 lines joining its points, produces two and cites I.5; Euclid's I.8 uses I.7 inside the
-placement (brief 0009, question 4, approved on 20 October 2026).
+placement (brief 0009, question 4, approved as prototyped on 20 October 2026; its
+finishing is tracked in #150).
 
 `Derives.sound` shows that every step holds of the very points its symbols stand for, under
 any valuation that makes the context true: the derivation needs no point and no straight

@@ -1,16 +1,31 @@
 # Brief 0009: a restricted rule of superposition
 
-*20 October 2026, round 3: the owner approved the restricted rule delivered on
-`lean/superposition-restricted`, with questions 2, 4 and 5 answered as prototyped,
-the model's import of the four pure modules and the page claim
-"a restricted inference in System E's style". This revision of
-brief 0009 follows [WORKFLOW.md](../WORKFLOW.md), section 2, "Correcting a frozen brief".
-It records the replacement first delivered at `aa96ab8`, from `origin/main` at `39ae65c`,
-and the approval after main was merged at `bccc3f52`. Landing remains conditional on the
-tooling pull requests landing first, /no-mistakes and an independent Codex read of the
-model lane. The code states what we formalised; the brief, the review
-records and the pages must agree with it ([FORMALIZATION.md](../FORMALIZATION.md),
-section 1).*
+*20 October 2026, round 4: the replacement lands on the answers to questions 2, 4 and 5
+that the owner approved "as prototyped", and their finishing is tracked in #150, which
+holds every release until it closes. This revision of brief 0009 follows
+[WORKFLOW.md](../WORKFLOW.md), section 2, "Correcting a frozen brief". It changes no
+statement, definition or interface: it says where each approved answer still rests on a
+reading, a flag set by hand or a sentence checked by eye, and it gives the landing order
+with the two retirement waves. Round 3, the same day, recorded the owner's approval of the
+restricted rule delivered on `lean/superposition-restricted`, with questions 2, 4 and 5
+answered as prototyped, the model's import of the four pure modules and the page claim
+"a restricted inference in System E's style". It records the replacement first delivered
+at `aa96ab8`, from `origin/main` at `39ae65c`, and the approval after main was merged at
+`bccc3f52`. Landing remains conditional on the tooling pull requests landing first,
+/no-mistakes and an independent Codex read of the model lane. The code states what we
+formalised; the brief, the review records and the pages must agree with it
+([FORMALIZATION.md](../FORMALIZATION.md), section 1).*
+
+**Round 4's correction.** The owner approved questions 2, 4 and 5 "as prototyped", and
+asked that the prototyped work be finished in an issue of its own, #150. There each answer
+that is still a reading, a flag set by hand or an unchecked sentence becomes a theorem, a
+computed check or a true record. Until then, part 4 of the restriction is an inspection of
+`Rule.infer` as locked in `Certificate/axioms.lock`, not a theorem; `Cited.drawsNothing` is
+a classification set by hand, whose values `Prop4.cites_drawNothing` evaluates but whose
+meaning is judged by eye from the audit's pinned axiom closures; and the cost of the kept
+side is checked by reading the model's proof. Non-derivability stays unclaimed. "Landing"
+gives the order: the first retirement wave, then this replacement, then the second wave,
+whose landing carries the review of `drawsNothing` and the audit pins.
 
 **Round 3's correction.** Round 2 described a hypothesis in six prototype files; the branch
 now declares `Tacit.superposition : Superposition.Rule primitives` in the foundations.
@@ -23,7 +38,8 @@ its law in the plane.
 The owner approved questions 2, 4 and 5 as prototyped on 20 October 2026: the branch
 follows the five-part restriction, permits I.7 inside I.8's placement, and keeps the
 side laid down. The model's import of the four pure modules and the page claim
-"a restricted inference in System E's style" are approved too.
+"a restricted inference in System E's style" are approved too. Finishing the three
+answers is tracked in #150.
 
 **Prototype history.** `lean/superposition-prototype` began at `f17b427` and merged main at
 `e04f318`. Its six files in `Staging/Superposition/` comprised 1,697 lines and passed
@@ -54,7 +70,8 @@ The prerequisite #40, the model's law names as a pinned data file, is now met by
 On 20 October 2026 the owner approved the completed replacement with questions 2, 4
 and 5 answered as prototyped, the model's import of the four pure modules and the page
 claim "a restricted inference in System E's style". The exact approval is recorded in
-[the decisions entry](0002-decisions.md#20-october-2026). The tooling pull requests land
+[the decisions entry](0002-decisions.md#20-october-2026); finishing the answers to
+questions 2, 4 and 5 is tracked in #150. The tooling pull requests land
 first; landing also requires /no-mistakes and an independent Codex read of the model
 lane. The read at `cdcf3b9e` found no weakening and one older relative-path defect in
 `model/Check/Generator.lean`. A second read, at `0085b443`, found that an escaped module
@@ -253,7 +270,8 @@ speaks of the side AC as it falls. With it, the law of one ray for one angle can
 three of its straight lines and be proved without drawing any (below), and nothing is drawn
 inside the placement. Its model obligation is now proved: wherever the triangle can be laid
 down, the straight line through D and C′ must exist too, which Postulate 1 gives, since D is
-not C′. The owner approved this kept side under question 5 on 20 October 2026.
+not C′. The owner approved this kept side, as prototyped, under question 5 on 20 October
+2026. That cost is checked by reading the model's proof; #150 tracks a theorem for it.
 
 Astra asked that the incidence and nondegeneracy facts the arguments need be retained
 explicitly. They are, as steps rather than as assumptions: that B′, C′ and D are three
@@ -328,8 +346,10 @@ points (Postulate 1), finds where AD and CB cross (an intersection rule), produc
 Inside I.8's placement, I.7's point C is G, the laid-down corner. The I.7 *statement* asserts
 no existence, and citing it draws nothing in the placement. Every law I.4's derivation
 cites draws nothing (`Prop4.cites_drawNothing`); I.8's cites I.7, where Euclid's argument
-uses it ("But they cannot be so constructed. [I. 7]", the reference Heath's). Open question 4
-asks which reading the rule adopts.
+uses it ("But they cannot be so constructed. [I. 7]", the reference Heath's). The owner
+approved this permissive reading, as prototyped, under question 4 on 20 October 2026.
+`Cited.drawsNothing` is set by hand; #150 tracks checking it against the laws' proofs, or
+retiring it.
 
 **After the retirement branches merge.** The claim about the laws' proofs above is tied to
 `aa96ab8`, before `lean/retire-axioms-2`. That branch proves `triple_incidence2` using
@@ -337,7 +357,8 @@ Postulate 2 and `eq_of_len_eq_zero` using Postulate 3. The cited-law proofs whic
 results will then use construction rules too. `Cited.drawsNothing` is a classification,
 not a proof-term inspection; it and its supporting prose and audit pins must be reviewed
 again. Under the stricter reading of question 4, this would affect I.4 as well as I.8.
-Retired axioms must not be restored to preserve the earlier classification.
+Retired axioms must not be restored to preserve the earlier classification. That review
+belongs to the second wave's landing ("Landing"), and #150 tracks it.
 
 ## How I.4 and I.8 keep Euclid's arguments
 
@@ -435,8 +456,10 @@ expectations from before the replacement are retained unchanged, making 25 in al
 syntax-only exportability results in
 [`Syntax.lean`](../../Elements/Foundations/Superposition/Syntax.lean) and `Rule.of_placement`
 in [`Soundness.lean`](../../Elements/Foundations/Superposition/Soundness.lean). The restriction, in five parts: parts 1, 2, 3 and 5
-are theorems; part 4 is read off the statement of `Rule.infer`, and its one theorem is
-`Metric.holds_const`.
+are theorems; part 4 is read off the statement of `Rule.infer` as locked in
+`Certificate/axioms.lock`, and its one theorem is `Metric.holds_const`. The owner approved
+this statement, as prototyped, under question 2 on 20 October 2026; #150 tracks part 4 as
+a theorem.
 
 1. **No symbol of the placement is exported.** `exportable_iff`: a formula of the placement
    is the image of an exportable conclusion exactly when every symbol in it is the figure's.
@@ -453,8 +476,8 @@ are theorems; part 4 is read off the statement of `Rule.infer`, and its one theo
    under every valuation of exactly those symbols that makes its context true, so no step
    needs an object the symbols do not stand for. `Derives.map`: every rule is a scheme.
    `Cited.holds_iff`: every law asserts no existence. The separate claim about what a cited
-   law's proof constructs is tied to the revision above; the owner accepted that reading
-   under question 4 on 20 October 2026.
+   law's proof constructs is tied to the revision above; the owner accepted that reading,
+   as prototyped, under question 4 on 20 October 2026, and #150 tracks its check.
 4. **No hypothesis of the rule speaks of the placement.** The rule's hypotheses are the
    cited laws (a fixed list, each a universal statement over its letters), the given facts
    and the conclusion (data over the figure's numbered symbols, holding no point, no straight
@@ -583,8 +606,9 @@ Astra names three kinds. Their state on the delivered branch:
    the restated axiom and the I.4, I.5, I.7, I.8 dependency chain rebuilt.
 2. **A restriction theorem.** The represented system cannot export the placement's objects
    as witnesses, nor take construction steps in the placement. *Done in the five parts
-   above*, for the symbolic calculus. The owner accepted this statement of the restriction
-   under question 2 on 20 October 2026, with part 4's limits retained.
+   above*, for the symbolic calculus. The owner accepted this statement of the restriction,
+   as prototyped, under question 2 on 20 October 2026, with part 4's limits retained;
+   #150 tracks part 4 as a theorem.
 3. **A carefully scoped non-derivability result, if claimed.** *Not claimed.* A route, for
    whoever takes it up. Besides its hypotheses about the figure, an instance of `Rule`
    assumes that each cited law holds, `∀ c ∈ cites, c.Holds I`; that hypothesis quantifies
@@ -673,7 +697,8 @@ It does not prove equivalence with System E's two-rule presentation, or non-deri
 placement in the whole theory. Part 4 of the restriction remains chiefly an inspection of
 the rule's hypotheses; `Metric.holds_const` does not settle classical recovery of witnesses.
 The owner approved questions 2, 4 and 5 as prototyped on 20 October 2026, together with the
-four pure module imports and the page claim. Landing has the conditions below.
+four pure module imports and the page claim; finishing the three answers is tracked in
+#150. Landing has the conditions below.
 
 ## Landing
 
@@ -690,13 +715,17 @@ model lane. The remaining integration and validation work is:
   `Prop47.within`), which survives this rule and the axiom retirements. The model check changes, including the
   older relative-path defect fixed on `tooling/superposition-model-check`, land first
   too. No check may be loosened.
-- **Merge the retirement branches.** `lean/retire-axioms` reduces 87 axioms to 79 and
-  `lean/retire-axioms-2` reduces 79 to 48. Reconcile their edits to the lock, model,
-  numerical laws, audit and overlap catalogue. Resolve the modify/delete conflict in
+- **The landing order with the retirement waves (#119).** The first wave,
+  `lean/retire-axioms`, which reduces 87 axioms to 79, lands before the replacement; it
+  reached main on 20 October 2026. The replacement merges main, reconciling that wave's
+  edits to the lock, model, numerical laws, audit and overlap catalogue, and then lands.
+  The second wave, `lean/retire-axioms-2`, which reduces 79 to 48, lands after the
+  replacement. Its landing carries the review of `drawsNothing` and of the audit pins once
+  the construction dependencies change (#150); question 4 now permits cited laws whose
+  proofs use constructions. Resolve its modify/delete conflict in
   `Staging/Superposition/Derivations.lean` by carrying needed geometric support into
   `Elements/Figure/Superposition.lean`, not by restoring the prototype. Preserve both
-  branches' root imports. Review `drawsNothing` after the construction dependencies
-  change; question 4 now permits cited laws whose proofs use constructions.
+  waves' root imports, and restore no retired axiom.
 - **Regenerate from the combined sources.** The integrator regenerates the lock, both model
   hashes, model laws and assembly, `facts.json`, certificate, graph and pages, and reconciles
   pinned counts without dropping or loosening expectations. Recheck affected records and
@@ -768,10 +797,11 @@ orders to break it, and its findings are answered in `6aa4192`:
 
 It left staging approval and the interface questions to their owners. Staging approval was
 subsequently recorded; the owner answered questions 2, 4 and 5 as prototyped on
-20 October 2026. It hunted for escapes along the routes that Astra's answer and round 1's
-verification name (a given fact encoding a proposition through the valuation, an opaque
-predicate among the atoms, an argument by contradiction, a cited law that constructs in
-its proof, a conclusion naming a placement symbol) and found no way out of the restriction.
+20 October 2026, and #150 tracks their finishing. It hunted for escapes along the routes
+that Astra's answer and round 1's verification name (a given fact encoding a proposition
+through the valuation, an opaque predicate among the atoms, an argument by contradiction, a
+cited law that constructs in its proof, a conclusion naming a placement symbol) and found
+no way out of the restriction.
 
 **Round 3's independent record reader.** At `bda0636`, a reader who had not written the
 proofs checked the statements, Heath lines, represented derivations, I.7 adapter and page
@@ -795,9 +825,9 @@ The reviews' scratch files are not committed.
 
 ## Open questions for the owner and the coordinator
 
-The owner answered questions 2, 4 and 5 as prototyped on 20 October 2026. Their numbers
-are retained from round 2. The other items record the delivered design or the continuing
-process.
+The owner answered questions 2, 4 and 5 as prototyped on 20 October 2026, and #150 tracks
+their finishing; none of the three remains open for the owner. Their numbers are retained
+from round 2. The other items record the delivered design or the continuing process.
 
 1. **Cited laws.** The branch asks for a proof of each cited law, keeping its dependencies
    visible. Building laws into the derivation instead would hide those dependencies from
@@ -806,7 +836,8 @@ process.
    statement as prototyped: parts 1, 2, 3 and 5 are theorems; part 4 is a reading of
    `Rule.infer`, with `Metric.holds_const` its limited satisfiability theorem.
    No further formal statement or separating model is a condition of this approval;
-   whole-theory non-derivability is not claimed.
+   whole-theory non-derivability is not claimed. Until #150 proves part 4, it stays an
+   inspection of `Rule.infer` as locked.
 3. **The symbols' front end.** The delivered rule uses `Fin n` and `Fin m`; `Symbols` and
    `Rule.apply` let proofs name their letters. The alternative would quantify over any
    vocabulary with `Symbols` in the axiom itself. No such change is proposed here.
@@ -819,19 +850,23 @@ process.
    classification agrees with the actual proofs. It would reject this I.8 route, requiring
    another argument labelled as such. At `aa96ab8` I.4's cited laws pass that classification;
    after `lean/retire-axioms-2`, their use of `triple_incidence2` through Postulate 2 and
-   `eq_of_len_eq_zero` through Postulate 3 brings I.4 within this decision too.
+   `eq_of_len_eq_zero` through Postulate 3 brings I.4 within this decision too. The
+   classification is set by hand; #150 tracks checking it against the proofs, or retiring
+   it, and the review at the second wave's landing.
 5. **The side laid down, approved 20 October 2026.** The owner accepted the prototype's
    kept side AC as a straight line through D and C′, so the angle-to-ray argument draws no
    line inside the placement. The model proves
    that this side exists. The alternative draws the line inside the placement, which
    would require a construction step there, or changes the argument and its calculus to
-   avoid that line. The approved design keeps it.
+   avoid that line. The approved design keeps it; #150 tracks pinning its cost by a
+   theorem rather than by reading the model's proof.
 6. **More citable propositions.** `Cited` holds I.7 alone among the propositions. Another
    joins only by a revision of this brief, with its reason.
 7. **Timing.** The replacement is approved and unlanded. The tooling pull requests land
-   first. Landing the replacement also requires /no-mistakes and the independent Codex
-   read of the model lane, with evidence tied to the revision delivered as described
-   under "Landing".
+   first, and the first retirement wave lands before it, the second after it. Landing the
+   replacement also requires /no-mistakes and the independent Codex read of the model
+   lane, with evidence tied to the revision delivered as described under "Landing". #150
+   stays open after the landing and holds every release until it closes.
 
 ## Checks
 
