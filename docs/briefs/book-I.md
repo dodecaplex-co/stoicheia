@@ -146,15 +146,15 @@ supposition makes the constructed intersection differ from D; either order on th
 ray contradicts equal areas. I.40's general companion uses the same argument for equal
 bases anywhere on one straight line, including coincident vertices.
 
-The [overlap catalogue](../reports/overlaps.md) also records rules supplying a step in
-audit proofs of I.2, I.3, I.7 and I.23:
+For four propositions a rule supplies a step, as the
+[overlap catalogue](../reports/overlaps.md) records:
 
 | Proposition | Rule | What the proof does |
 |---|---|---|
 | I.2 | superposition | Euclid's construction, by I.1 and two circles; it never uses the rule |
 | I.3 | superposition | Euclid's construction, by I.2 and a circle; it never uses the rule |
 | I.7 | Circle 4 (`not_same_side_of_circles_meet`) | Euclid's argument, by I.5; it never uses the rule |
-| I.23 | superposition | Euclid's construction, by I.22 and I.8; it rests on the rule through I.8, which with I.4 alone may call on it directly |
+| I.23 | superposition | Euclid's construction, by I.22 and I.8; it rests on the rule through I.8, which with I.4 alone may call on it directly, and through I.20 |
 
 The stage-5 review will give the hardest formal blocks (I.7, I.35, I.47) a paragraph of
 their own in the mishnah.

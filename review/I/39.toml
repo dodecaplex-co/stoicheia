@@ -27,12 +27,19 @@ kind = "grouped"
 note = "The preceding strict-area contradiction rules out the proposed parallel meeting BD away from D."
 
 [[passage]]
+at = "and let EC be joined"
+kind = "helper"
+helper = "Prop30.meet"
+note = "Euclid takes E where the parallel through A meets BD. The Lean proves that this meeting exists by I.30 (`Prop30.meet`), then joins EC by Postulate 1."
+
+[[passage]]
 at = "Similarly we can prove that neither is any other straight line except AD"
 kind = "grouped"
 note = "The same contradiction excludes any proposed parallel through A meeting BD away from D, discharging the supposition that AD is not parallel to BC. The final step returns this conclusion."
 
 [figure]
-note = "AE is drawn level, as the proof supposes; Heath draws AD level."
+case = "E on BD between B and D, as in Heath's figure"
+note = "AE is drawn level, as the proof supposes; Heath draws AD level. Like Heath's, this figure draws Euclid's impossible supposition: AE parallel to BC with E strictly between B and D, while the triangles ABC and DBC are assumed equal in area. Their drawn areas are unequal."
 
 [review]
 stage = "exceptions"

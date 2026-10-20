@@ -25,13 +25,19 @@ kind = "grouped"
 note = "The preceding contradiction rules out the supposed parallel through A meeting CD away from D."
 
 [[passage]]
+at = "For, if not, let AF be drawn through A parallel to BE"
+kind = "helper"
+helper = "Prop30.meet"
+note = "Euclid draws AF parallel to BE and takes its meeting with CD at F from the figure. The Lean draws the parallel by I.31 (`Prop31.line`), proves the meeting by I.30 (`Prop30.meet`), and joins FE by Postulate 1."
+
+[[passage]]
 at = "Similarly we can prove that neither is any other straight line except AD"
 kind = "grouped"
 note = "The same reductio excludes any proposed parallel through A meeting CD away from D, in either order. The local conclusion is used beneath the closing sentences."
 
 [figure]
-case = "the bases BC and CE meeting at C, as in Heath's figure"
-note = "F is drawn between C and D, with AF level, as the proof supposes; Heath draws AD level and AF sloping."
+case = "the bases BC and CE meeting at C, with F on CD between C and D, as in Heath's figure"
+note = "Heath draws AD level and AF sloping; our drawing puts AF level, as the proof supposes. Like Heath's, this figure draws Euclid's impossible supposition: AF parallel to BE with F strictly between C and D, while the triangles ABC and DCE on equal bases BC and CE are assumed equal in area. Their drawn areas are unequal."
 
 [review]
 stage = "exceptions"
