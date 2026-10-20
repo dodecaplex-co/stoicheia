@@ -734,10 +734,18 @@ def cmd_score(args) -> int:
     except (OSError, ValueError) as e:
         raise Failure(f"cannot read {Path(args.file).name}: {e}") from None
     for r in rows:
+        answers = [(r, "")]
         if "reversed" in r and (not isinstance(r["reversed"], dict)
                                 or not isinstance(r["reversed"].get("choice"), str)):
             raise Failure(f"{r.get('id')}: its reversed asking is not an answer; score reads "
                           "only lines that `run` wrote")
+        if "reversed" in r:
+            answers.append((r["reversed"], "reversed asking's "))
+        for answer, asking in answers:
+            confidence = answer.get("confidence")
+            if confidence is not None and not (_number(confidence) and 0 <= confidence <= 1):
+                raise Failure(f"{r.get('id')}: its {asking}confidence is not a number from "
+                              "0 to 1; score reads only lines that `run` wrote")
     answered = [r for r in rows if "error" not in r and ("choice" in r or "noul" in r)]
     labelled = [r for r in answered if "agrees" in r]
     agree = [r for r in labelled if r["agrees"]]
@@ -1132,6 +1140,55 @@ def cmd_self_test(args) -> int:
               and "no confidence given with the options reversed" in out,
               "score checks confidence in each asking and keeps the threshold exclusive",
               out + err)
+
+        bad_confidences = (True, "0.9", -0.01, 1.01, float("nan"), float("inf"), float("-inf"))
+        for asking in ("original", "reversed"):
+            for bad in bad_confidences:
+                valid = json.loads(first[1])
+                valid["id"] = "valid-before-bad-confidence"
+                row = json.loads(first[0])
+                row["id"] = f"{asking}-bad-confidence"
+                row["expected"] = row["choice"]
+                row["agrees"] = True
+                row["confidence"] = 0.9
+                row["reversed"]["confidence"] = 0.9
+                if asking == "original":
+                    row["confidence"] = bad
+                else:
+                    row["reversed"]["confidence"] = bad
+                bad_file = tmp / "bad-confidence.jsonl"
+                bad_file.write_text(json.dumps(valid) + "\n" + json.dumps(row) + "\n")
+                for extra in ((), ("--bar", "0")):
+                    code, out, err = run("score", str(bad_file), *extra)
+                    check(code == 1 and out == "" and "confidence is not a number from 0 to 1" in err
+                          and "Traceback" not in err,
+                          f"score refuses {asking} confidence {bad!r}"
+                          + (" under a bar" if extra else ""), out + err)
+
+        boundary_cases = []
+        for name, confidence, reversed_confidence in (("original-zero", 0, 1),
+                                                       ("original-one", 1, 1),
+                                                       ("reversed-zero", 1, 0),
+                                                       ("reversed-one", 1, 1)):
+            row = json.loads(first[0])
+            row["id"] = name
+            row["input_rows"] = 4
+            row["expected"] = row["choice"]
+            row["agrees"] = True
+            row["confidence"] = confidence
+            row["reversed"]["confidence"] = reversed_confidence
+            row["reversed"]["consistent"] = True
+            boundary_cases.append(row)
+        boundary_file = tmp / "confidence-boundaries.jsonl"
+        boundary_file.write_text("".join(json.dumps(row) + "\n" for row in boundary_cases))
+        for extra in ((), ("--bar", "1")):
+            code, out, err = run("score", str(boundary_file), *extra)
+            listed = {row["id"] for row in boundary_cases if f"  {row['id']}:" in out}
+            check(code == 0 and listed == {"original-zero", "reversed-zero"}
+                  and (not extra or "at or above the bar of 100%" in out),
+                  "score accepts confidence boundaries in both askings"
+                  + (" under a bar" if extra else ""), out + err)
+
         for broken in (None, [], "reversed", 1, True, {},
                        {"confidence": 0.9, "consistent": True}):
             valid = json.loads(first[1])
