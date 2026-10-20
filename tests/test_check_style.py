@@ -1929,8 +1929,42 @@ class Modern(unittest.TestCase):
                              [])
 
     def test_all_repository_modern_figures_pass(self):
+        required = (
+            "I/01-modern.svg",
+            "I/02-modern.svg",
+            "I/05-modern.svg",
+            "I/06-modern.svg",
+            "I/07-modern.svg",
+            "I/09-modern.svg",
+            "I/11-modern.svg",
+            "I/12-modern.svg",
+            "I/13-modern.svg",
+            "I/14-modern.svg",
+            "I/15-modern.svg",
+            "I/16-modern.svg",
+            "I/19-modern.svg",
+            "I/20-modern.svg",
+            "I/21-modern.svg",
+            "I/22-modern.svg",
+            "I/24-modern.svg",
+            "I/27-modern.svg",
+            "I/31-modern.svg",
+            "I/34-modern.svg",
+            "I/35-modern.svg",
+            "I/37-modern.svg",
+            "I/43-modern.svg",
+            "I/44-modern.svg",
+            "II/03-modern.svg",
+            "II/04-modern.svg",
+            "II/07-modern.svg",
+            "II/09-modern.svg",
+            "II/11-modern.svg",
+            "II/14-modern.svg",
+        )
         paths = sorted((style.ROOT / "figures").glob("*/*-modern.svg"))
-        self.assertEqual(len(paths), 30)
+        for relative in required:
+            with self.subTest(path=relative):
+                self.assertIn(style.ROOT / "figures" / relative, paths)
         with patch.object(style, "fail") as fail:
             for path in paths:
                 style.check_modern(path, style.ref_of(path))
