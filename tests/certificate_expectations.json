@@ -68,6 +68,84 @@
       "field": "axioms",
       "excludes": ["Tacit.inside_of_between", "Tacit.outside_of_between"],
       "why": "II.14 puts E within the circle by Definition I.15 and the order of the points (InsideCircle.of_between_centre), and rests on neither Circle 2 nor Circle 3 (#60)."
+    },
+    {
+      "ref": "I.4",
+      "field": "direct_axioms",
+      "includes": ["Tacit.superposition"],
+      "why": "I.4 uses the restricted rule directly for its hypothetical placement (#75); the certificate policy forbids direct use outside I.4 and I.8."
+    },
+    {
+      "ref": "I.8",
+      "field": "direct_axioms",
+      "includes": ["Tacit.superposition"],
+      "why": "I.8 uses the restricted rule directly for its hypothetical placement (#75); the certificate policy forbids direct use outside I.4 and I.8."
+    },
+    {
+      "ref": "I.8",
+      "field": "cites",
+      "includes": ["I.7"],
+      "why": "I.8 cites I.7 inside the hypothetical placement to identify the laid-down corner with D (#75)."
+    },
+    {
+      "ref": "I.23",
+      "field": "cites",
+      "includes": ["I.20", "I.22", "I.8"],
+      "why": "I.23 keeps Euclid's construction: I.20 supplies the triangle inequalities, I.22 constructs the triangle and I.8 proves the angle equality (#75)."
+    },
+    {
+      "ref": "I.23",
+      "field": "axioms",
+      "includes": ["Tacit.superposition"],
+      "why": "I.23 still rests on the restricted rule through the earlier propositions it cites (#75)."
+    },
+    {
+      "ref": "I.23",
+      "field": "direct_axioms",
+      "excludes": ["Tacit.superposition"],
+      "why": "I.23 constructs by I.22 and uses superposition only through cited propositions; the restricted rule returns no placement witnesses (#75)."
+    },
+    {
+      "ref": "I.1",
+      "field": "axioms",
+      "excludes": ["Tacit.superposition"],
+      "why": "I.1's construction does not rest on superposition (#75)."
+    },
+    {
+      "ref": "I.2",
+      "field": "axioms",
+      "excludes": ["Tacit.superposition"],
+      "why": "I.2's construction does not rest on superposition; its former audit shortcut is retired (#75)."
+    },
+    {
+      "ref": "I.3",
+      "field": "axioms",
+      "excludes": ["Tacit.superposition"],
+      "why": "I.3's construction does not rest on superposition; its former audit shortcut is retired (#75)."
+    },
+    {
+      "ref": "I.22",
+      "field": "axioms",
+      "excludes": ["Tacit.superposition"],
+      "why": "I.22 constructs a triangle from its sides without resting on superposition (#75)."
+    },
+    {
+      "ref": "III.5",
+      "field": "axioms",
+      "excludes": ["Tacit.superposition"],
+      "why": "III.5 does not rest on superposition (#75)."
+    },
+    {
+      "ref": "III.6",
+      "field": "axioms",
+      "excludes": ["Tacit.superposition"],
+      "why": "III.6 does not rest on superposition (#75)."
+    },
+    {
+      "ref": "I.4",
+      "field": "common_notions",
+      "includes": ["C.N. 4"],
+      "why": "I.4's len_congr, angle_congr and area_congr derivation steps express Common Notion 4, including the base equality under Heath's reference (#75)."
     }
   ]
 }
