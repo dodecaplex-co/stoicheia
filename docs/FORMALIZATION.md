@@ -528,6 +528,11 @@ proof to the assumptions it uses.
 | `triple_incidence3` | Triple incidence 3 | Angle addition and positivity, Intersection 1, and the order and side rules locate a crossing and carry its side relation to the given point. Proved in `Circles.lean`. |
 | `inside_of_angle_add` | Diagram-angle 2, converse | I.13, angle addition, positivity and the side rules exclude each way the point could lie outside the angle. Proved after I.13 in `Prop13.lean`; the forward rule, `angle_add_of_inside`, stays an axiom. |
 
+The current proofs of Points 9 (`exists_point_outside_circle`) and Intersection 2
+(`line_meets_circle_of_opposite_sides`) both depend on Circle 3. The certificate applies
+the Circle 2 and Circle 3 ban transitively, so no proposition, porism or companion may
+depend on either proved rule.
+
 A client that previously imported only the foundations must now import the theorem's
 home. Book Zero still imports no proposition. I.7 cannot be established independently
 through Circle 4, since that theorem now uses I.7. III.2 still has an overlap with the
