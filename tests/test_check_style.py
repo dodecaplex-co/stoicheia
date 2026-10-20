@@ -1633,6 +1633,24 @@ sys.exit(not result.wasSuccessful())
                         root.set(attr, value)
                         self.assert_refused(root, idea, attr)
 
+    def test_dasharray_requires_a_positive_component(self):
+        for idea in (False, True):
+            path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+            for value in ("0", "0 0", "0.0", "0, 0.00"):
+                with self.subTest(idea=idea, value=value):
+                    root = figure_fixture(idea)
+                    group = svg_sub(root, "g", {"stroke-dasharray": value})
+                    self.assertEqual(
+                        [f for f in figure_findings(root, idea) if f[0] == "S26"],
+                        [("S26", path, 0,
+                          svg_refusal(style.tag(group), "stroke-dasharray", value))])
+            for value in ("none", "1", "0 2", "1, 2 3,4"):
+                with self.subTest(idea=idea, value=value):
+                    root = figure_fixture(idea)
+                    svg_sub(root, "g", {"stroke-dasharray": value})
+                    self.assertEqual(
+                        [f for f in figure_findings(root, idea) if f[0] == "S26"], [])
+
     def test_zero_opacity_on_shapes_and_ancestor_groups(self):
         """Invisible paint is refused where set, while main's positive values remain."""
         for idea in (False, True):

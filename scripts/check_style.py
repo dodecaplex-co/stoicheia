@@ -3130,7 +3130,8 @@ def supported_svg(path: Path, root) -> bool:
                 elif attr == "points":
                     ok = ok and len(v) % 2 == 0
                 else:
-                    ok = value == "none" or (ok and all(float(n) >= 0 for n in v))
+                    ok = value == "none" or (ok and all(float(n) >= 0 for n in v)
+                                                  and any(float(n) > 0 for n in v))
             elif attr == "transform":
                 ok = transform_of(value) is not None
             elif attr == "d":
