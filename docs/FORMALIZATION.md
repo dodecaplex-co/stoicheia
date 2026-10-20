@@ -381,13 +381,13 @@ dependencies.
 - **Nothing gets round the kernel:** no `native_decide`, `decide +native`,
   or any other command of the kinds below, in any Lean file the edition builds: under
   `Elements/`, `Staging/` and `Audit/`, and in their roots, `Elements.lean`,
-  `Staging.lean` and `Audit.lean`, and under `model/`, except paths with a `.lake` part,
-  which the scan never enters. Mathlib imports are allowed in the model. Only in
-  `model/Check.lean` and `model/Check/`, `run_cmd` may be the first word on its line
-  followed by `Check.Generator.<ident>` or `(Check.Generator.<ident>`, since those files
-  run the generator. Every other forbidden command or attribute is still refused there,
-  and an `axiom` is refused everywhere under `model/`. `check_fidelity.py` matches each
-  as a whole word, in
+  `Staging.lean` and `Audit.lean`, and under `model/`, except the package's own
+  `model/.lake`, which the scan never enters. Mathlib imports are allowed in the model.
+  Only in `model/Check.lean` and `model/Check/`, `run_cmd` may be the first word on its
+  line followed by `Check.Generator.<ident>` or `(Check.Generator.<ident>`, since those
+  files run the generator. Every other forbidden command or attribute is still refused
+  there, and an `axiom` is refused everywhere under `model/`. `check_fidelity.py` matches
+  each as a whole word, in
   the Lean with its comments and the text of its string and character literals taken
   out, read as Lean reads them, raw strings and escapes among them (`native_decide` even
   in a comment or a string). The code in an interpolated string's `{…}` holes is read
@@ -471,15 +471,17 @@ symbolic links to files or directories in the scanned trees and root files, whic
 refused by their paths and never followed. A complete book's missing figure or mishnah
 has no planted break yet. The tests also check that
 generator calls first on their line are allowed in `model/Check.lean` and `model/Check/`,
-and that the unplanted tree passes. They plant source files in place and copy only
-`facts.json`, never `model/.lake`.
+that an axiom in a `.lake` folder of `model/Model/` or `model/Check/` is caught while one
+in `model/.lake` is not read, and that the unplanted tree passes. They plant source
+files in place and copy only `facts.json`, never `model/.lake`.
 
 The first two policies hold in `Staging/` (section 6), `Audit/` and `model/` as well,
 with the model's Check allowance above. Nothing there reaches the certificate, so the
 source scan is what enforces them:
 `check_fidelity.py`'s `check_rules` reads every `.lean` file under `Elements/`,
 `Staging/` and `Audit/`, and the three roots, and every `.lean` file under `model/`,
-without entering any directory named `.lake`. It refuses an `axiom` anywhere outside
+without entering `model/.lake`; a `.lake` folder deeper in the model is read like any
+other. It refuses an `axiom` anywhere outside
 `Elements/Foundations/` and every command and attribute the list above names, with only
 the generator `run_cmd` allowance in `model/Check.lean` and `model/Check/`.
 `MODEL_CHECK_RUN_CMD` names that allowance in the script; it exempts only `run_cmd`,

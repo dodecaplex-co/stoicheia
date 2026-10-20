@@ -38,7 +38,8 @@ records current; CI runs it on every push.
    with other commands still caught on that line and in their arguments. The files are
    read, not built; no tree is copied, so model/.lake is never copied either.
    Symbolic links to a directory in model/Model/ and a file in model/Check/ are refused
-   by their own paths, without following them.
+   by their own paths, without following them. An axiom in a `.lake` folder of
+   model/Model/ and of model/Check/ is caught, and one in model/.lake is not read.
 9. A lemma of the `Placement` namespace named in Book III's shared steps
    (`Squares.lean`), outside placement's own files, III.24's and `Arcs.lean`, read from
    the source, is caught; the word in a comment there is not.
@@ -452,10 +453,39 @@ def symbolic_links() -> None:
         result = fidelity()
         for rel, _ in links:
             expect_failure(f"a symbolic link at {rel}", result,
-                           f"{rel}: a symbolic link, which the source scan does not follow;")
+                           f"{rel}: a symbolic link, which the source scan does not follow;",
+                           unwanted=("model/Model/PlantedLink/",))
     finally:
         for path in planted:
             path.unlink(missing_ok=True)
+
+
+def model_lake() -> None:
+    """An axiom in a `.lake` folder of model/Model/ and of model/Check/ is caught, and one
+    in the package's own model/.lake is not read."""
+    plants = ("model/Model/.lake/Planted.lean", "model/Check/.lake/Planted.lean",
+              "model/.lake/Planted.lean")
+    planted: list[Path] = []          # files, then the folders made for them
+    try:
+        for rel in plants:
+            path = ROOT / rel
+            assert not path.exists() and not path.is_symlink(), f"{rel} exists; update this test"
+            if not path.parent.exists():
+                path.parent.mkdir()
+                planted.append(path.parent)
+            path.write_text("axiom planted_axiom : True\n")
+            planted.insert(0, path)
+        result = fidelity()
+        for rel in plants[:2]:
+            expect_failure(f"an axiom in {rel}", result,
+                           f"{rel}:1: declares an axiom outside Elements/Foundations/",
+                           unwanted=("model/.lake/",))
+    finally:
+        for path in planted:
+            if path.is_dir():
+                path.rmdir()
+            else:
+                path.unlink(missing_ok=True)
 
 
 def placement_named() -> None:
@@ -657,6 +687,7 @@ def main() -> int:
     native_decide()
     forbidden_commands()
     symbolic_links()
+    model_lake()
     placement_named()
     planted_assumptions()
     restored = fidelity()
