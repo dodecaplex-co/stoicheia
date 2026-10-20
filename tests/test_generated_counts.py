@@ -20,6 +20,7 @@ class CountTests(unittest.TestCase):
 [axioms]
 Postulate1 = "first"
 Postulate2 = "second"
+Postulate5 = "parallels"
 "Definition1.15" = "definition"
 "Tacit.first" = "rule"
 "Tacit.second" = "rule"
@@ -64,7 +65,8 @@ def Elements.companions : List (Lean.Name × String) := [
 
     def test_every_count_on_small_files(self):
         self.assertEqual({name: fn(self.root) for name, fn in counts.COUNTS.items()}, {
-            "axioms": 6, "tacit-rules": 2, "postulates": 2, "vocabulary": 3,
+            "axioms": 7, "tacit-rules": 2, "postulates": 3, "axioms-but-postulate-5": 6,
+            "vocabulary": 3,
             "companions": 3, "companion-propositions": 2,
             "reviews:I": 2, "reviews:II": 1, "reviews:III": 3,
             "reviews:I:full": 1, "reviews:II:full": 0, "reviews:III:full": 3,

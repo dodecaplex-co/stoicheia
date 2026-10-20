@@ -1837,7 +1837,8 @@ findings:
   shown with its opening brackets escaped in [STYLE](../STYLE.md), section 4, is distinct
   from the existing scope and status regions and leaves no visible delimiters in Markdown.
   Only counts computed exactly from files are generated: the lock's axioms, tacit rules
-  and postulates, using the renderer's existing classification, and its vocabulary; the
+  and postulates, using the renderer's existing classification, the axioms other than
+  Postulate 5, and its vocabulary; the
   listed companions and the propositions they widen; each book's records and those at
   stage `full`; and the acceptance report's failing items and propositions passing every
   own item, read from its generated summary at that report's revision. Surrounding prose

@@ -56,6 +56,12 @@ def postulates(root):
     return len(axiom_groups({"axioms": lock_table(root, "axioms")})[0])
 
 
+def axioms_but_postulate_5(root):
+    """Count locked axioms other than Postulate5, as in "the other 86" beside the
+    parallel postulate."""
+    return len(set(lock_table(root, "axioms")) - {"Postulate5"})
+
+
 def vocabulary(root):
     """Count entries in Certificate/axioms.lock's [vocabulary] table."""
     return len(lock_table(root, "vocabulary"))
@@ -188,6 +194,7 @@ COUNTS = {
     "axioms": axioms,
     "tacit-rules": tacit_rules,
     "postulates": postulates,
+    "axioms-but-postulate-5": axioms_but_postulate_5,
     "vocabulary": vocabulary,
     "companions": companions,
     "companion-propositions": companion_propositions,
