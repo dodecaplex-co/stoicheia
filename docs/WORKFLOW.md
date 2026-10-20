@@ -410,7 +410,8 @@ looked into.
 8. **A read-through.** Before every release and at the end of each programme stage,
    the coordinator assigns an independent reviewer a read for stale content: every
    hand-written repository file, the wiki pages and open issues, oldest untouched first,
-   excluding generated output and dated history (crew logs and dated review responses).
+   excluding generated output, which is regenerated, and dated history (crew logs and
+   dated review responses), which records its day and is not brought up to date.
    Keep a dated report under `docs/reports/`, naming the revision read and indexing the
    files by last change; each finding gives `file:line` (or wiki page/issue), the stale
    text, evidence on main, what it should say, and its train or pull request.
