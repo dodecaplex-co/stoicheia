@@ -727,6 +727,22 @@ def answered_lines(path: Path, made: dict[str, Any]) -> list[str]:
     return kept
 
 
+def _scored_choice(answer: Any, row_id: Any, asking: str = "") -> dict:
+    probabilities = answer.get("probabilities") if isinstance(answer, dict) else None
+    if not isinstance(probabilities, dict) or not 2 <= len(probabilities) <= 255:
+        which = f" {asking}" if asking else ""
+        raise Failure(f"{row_id}: its{which} answer is not a valid choice (probabilities need "
+                      "2 to 255 options); score reads only lines that `run` wrote")
+    criteria = dict.fromkeys(probabilities)
+    try:
+        return answer_of({"answers": {"q": answer}}, "q",
+                         {"type": "choice", "criteria": criteria})
+    except (ValueError, TypeError, AttributeError, ArithmeticError) as e:
+        which = f" {asking}" if asking else ""
+        raise Failure(f"{row_id}: its{which} answer is not a valid choice ({e}); score reads "
+                      "only lines that `run` wrote") from None
+
+
 def cmd_score(args) -> int:
     try:
         rows = [json.loads(l) for l in Path(args.file).read_text(encoding="utf-8").splitlines()
@@ -735,29 +751,16 @@ def cmd_score(args) -> int:
         raise Failure(f"cannot read {Path(args.file).name}: {e}") from None
     answered = []
     agreements: dict[int, bool] = {}
+    seen_ids = set()
     for n, r in enumerate(rows, 1):
         if not isinstance(r, dict):
             raise Failure(f"{Path(args.file).name}:{n} is not a JSON object; score reads "
                           "only lines that `run` wrote")
-        answers = [(r, "")]
-        if ("error" not in r and "choice" in r and r.get("order_check") is True
-                and "reversed" not in r):
-            raise Failure(f"{r.get('id')}: its reversed asking is not an answer; score reads "
-                          "only lines that `run` wrote")
-        if "reversed" in r and (not isinstance(r["reversed"], dict)
-                                or not isinstance(r["reversed"].get("choice"), str)):
-            raise Failure(f"{r.get('id')}: its reversed asking is not an answer; score reads "
-                          "only lines that `run` wrote")
-        if "reversed" in r:
-            answers.append((r["reversed"], "reversed asking's "))
-        for answer, asking in answers:
-            confidence = answer.get("confidence")
-            if confidence is not None and not (_number(confidence) and 0 <= confidence <= 1):
-                raise Failure(f"{r.get('id')}: its {asking}confidence is not a number from "
-                              "0 to 1; score reads only lines that `run` wrote")
-            if "noul" in answer and not (_number(answer["noul"]) and 0 <= answer["noul"] <= 1):
-                raise Failure(f"{r.get('id')}: its {asking}noul is not a number from 0 to 1; "
-                              "score reads only lines that `run` wrote")
+        row_id = r.get("id")
+        if not isinstance(row_id, str) or not row_id or row_id in seen_ids:
+            raise Failure(f"{Path(args.file).name}:{n} has a missing, malformed or duplicate "
+                          "id; score reads only lines that `run` wrote")
+        seen_ids.add(row_id)
         if "error" in r:
             continue
         has_choice, has_noul = "choice" in r, "noul" in r
@@ -767,6 +770,32 @@ def cmd_score(args) -> int:
         if has_choice and not isinstance(r["choice"], str):
             raise Failure(f"{r.get('id')}: its choice is not a string; score reads only lines "
                           "that `run` wrote")
+        if not isinstance(r.get("order_check"), bool):
+            raise Failure(f"{row_id}: its order check is not boolean; score reads only lines "
+                          "that `run` wrote")
+        if has_choice:
+            checked = _scored_choice(r, row_id)
+            has_reversed = "reversed" in r
+            if r["order_check"] != has_reversed:
+                raise Failure(f"{row_id}: its reversed asking does not match its order check; "
+                              "score reads only lines that `run` wrote")
+            if has_reversed:
+                reversed_checked = _scored_choice(r["reversed"], row_id, "reversed")
+                if set(checked["probabilities"]) != set(reversed_checked["probabilities"]):
+                    raise Failure(f"{row_id}: its reversed asking has different options; score "
+                                  "reads only lines that `run` wrote")
+                consistent = r["reversed"].get("consistent")
+                recomputed = reversed_checked["choice"] == checked["choice"]
+                if not isinstance(consistent, bool) or consistent != recomputed:
+                    raise Failure(f"{row_id}: its reversed consistency does not match its "
+                                  "choices; score reads only lines that `run` wrote")
+        else:
+            if not (_number(r["noul"]) and 0 <= r["noul"] <= 1):
+                raise Failure(f"{row_id}: its noul is not a number from 0 to 1; score reads "
+                              "only lines that `run` wrote")
+            if "confidence" in r or "probabilities" in r or "reversed" in r:
+                raise Failure(f"{row_id}: its noul answer has choice-only fields; score reads "
+                              "only lines that `run` wrote")
         answered.append(r)
         if "expected" not in r:
             if "agrees" in r:
@@ -778,6 +807,9 @@ def cmd_score(args) -> int:
             if not isinstance(expected, str):
                 raise Failure(f"{r.get('id')}: its expected choice is not a string; score reads "
                               "only lines that `run` wrote")
+            if expected not in checked["probabilities"]:
+                raise Failure(f"{row_id}: its expected choice is not one of its options; score "
+                              "reads only lines that `run` wrote")
             computed = r["choice"] == expected
         else:
             if not isinstance(expected, bool):
@@ -824,9 +856,10 @@ def cmd_score(args) -> int:
         if "reversed" in r:
             answers.append((r["reversed"], " with the options reversed"))
         for answer, order in answers:
-            confidence = answer.get("confidence")
-            if confidence is None and isinstance(answer.get("noul"), (int, float)):
+            if "noul" in answer:
                 confidence = abs(2 * answer["noul"] - 1)
+            else:
+                confidence = answer.get("confidence")
             if confidence is None:
                 why.append("no confidence given" + order)
             elif confidence < args.low:
@@ -852,9 +885,13 @@ def cmd_score(args) -> int:
                   "bar is met only when every row of the input is answered (--resume sends "
                   "them again)")
             return 1
-        if not total or len(done) < total:
-            why = (f"{total - len(done)} of the input's {total} row(s) have no answer" if total
-                   else "the lines do not all carry one input and its row count")
+        if not total or len(done) != total:
+            if total and len(done) < total:
+                why = f"{total - len(done)} of the input's {total} row(s) have no answer"
+            elif total:
+                why = f"the output has {len(done)} answers for the input's {total} row(s)"
+            else:
+                why = "the lines do not all carry one input and its row count"
             print(f"below the bar of {args.bar:.0%}: {why}, and a bar is met only when every "
                   "row of the input is answered (--resume sends the rows not yet answered)")
             return 1
@@ -1151,6 +1188,8 @@ def cmd_self_test(args) -> int:
         other_choice = next(choice for choice in agreement_base["probabilities"]
                             if choice != agreement_base["choice"])
         forged_choice = dict(agreement_base, id="forged-choice", choice=other_choice)
+        forged_choice.pop("reversed")
+        forged_choice["order_check"] = False
         missing_choice_agreement = dict(agreement_base, id="missing-choice-agreement")
         del missing_choice_agreement["agrees"]
         malformed_choice_agreement = dict(agreement_base, id="malformed-choice-agreement",
@@ -1165,7 +1204,7 @@ def cmd_self_test(args) -> int:
         no_answer.pop("reversed")
         forged_noul = {"id": "forged-noul", "noul": 0.9, "expected": False,
                        "agrees": True, "input_sha256": "self-test-agreement",
-                       "input_rows": 1}
+                       "input_rows": 1, "order_check": False}
         missing_noul_agreement = dict(forged_noul, id="missing-noul-agreement",
                                       expected=True)
         del missing_noul_agreement["agrees"]
@@ -1202,7 +1241,7 @@ def cmd_self_test(args) -> int:
                                          choice=other_choice, agrees=False)
         valid_noul = {"id": "valid-noul", "noul": 0.75, "expected": True,
                       "agrees": True, "input_sha256": "self-test-agreement",
-                      "input_rows": 1}
+                      "input_rows": 1, "order_check": False}
         valid_noul_disagreement = dict(valid_noul, id="valid-noul-disagreement",
                                        expected=False, agrees=False)
         for row in (valid_choice, valid_noul):
@@ -1223,6 +1262,81 @@ def cmd_self_test(args) -> int:
             code, out, err = run("score", str(agreement_file), "--bar", "1")
             check(code == 1 and "below the bar of 100%" in out,
                   f"score applies a bar to {row['id']}", out + err)
+
+        duplicate_file = tmp / "duplicate-id.jsonl"
+        duplicate_file.write_text(json.dumps(valid_choice) + "\n"
+                                  + json.dumps(valid_choice) + "\n")
+        for extra in ((), ("--bar", "1")):
+            code, out, err = run("score", str(duplicate_file), *extra)
+            check(code == 1 and out == "" and "duplicate id" in err,
+                  "score refuses duplicate output ids" + (" under a bar" if extra else ""),
+                  out + err)
+
+        bad_order = dict(valid_choice, id="bad-order-check", order_check="true")
+        order_file = tmp / "bad-order-check.jsonl"
+        order_file.write_text(json.dumps(bad_order) + "\n")
+        for extra in ((), ("--bar", "1")):
+            code, out, err = run("score", str(order_file), *extra)
+            check(code == 1 and out == "" and "order check is not boolean" in err,
+                  "score refuses a non-boolean order check"
+                  + (" under a bar" if extra else ""), out + err)
+
+        forged_noul_confidence = dict(valid_noul, id="forged-noul-confidence",
+                                      noul=0.51, confidence=1)
+        forged_noul_file = tmp / "forged-noul-confidence.jsonl"
+        forged_noul_file.write_text(json.dumps(forged_noul_confidence) + "\n")
+        for extra in ((), ("--bar", "1")):
+            code, out, err = run("score", str(forged_noul_file), *extra)
+            check(code == 1 and out == "" and "choice-only fields" in err,
+                  "score refuses explicit noul confidence"
+                  + (" under a bar" if extra else ""), out + err)
+        derived_noul = dict(valid_noul, id="derived-noul-confidence", noul=0.51)
+        derived_noul_file = tmp / "derived-noul-confidence.jsonl"
+        derived_noul_file.write_text(json.dumps(derived_noul) + "\n")
+        code, out, err = run("score", str(derived_noul_file))
+        check(code == 0 and "confidence 0.02" in out and "for adjudication: 1" in out,
+              "score derives noul confidence unconditionally", out + err)
+
+        probability_failures = []
+        for name, probabilities in (("missing", None), ("list", [1]), ("empty", {}),
+                                    ("boolean", {agreement_base["choice"]: True,
+                                                 other_choice: 0}),
+                                    ("string", {agreement_base["choice"]: "1",
+                                                other_choice: 0}),
+                                    ("range", {agreement_base["choice"]: 1.1,
+                                               other_choice: 0}),
+                                    ("nonfinite", {agreement_base["choice"]: float("nan"),
+                                                   other_choice: 0})):
+            row = json.loads(json.dumps(valid_choice))
+            row["id"] = f"probabilities-{name}"
+            if probabilities is None:
+                row.pop("probabilities")
+            else:
+                row["probabilities"] = probabilities
+            probability_failures.append((row, "not a valid choice"))
+        wrong_sum = json.loads(json.dumps(valid_choice))
+        wrong_sum["id"] = "probabilities-wrong-sum"
+        wrong_sum["probabilities"] = {choice: 0.1 for choice in wrong_sum["probabilities"]}
+        probability_failures.append((wrong_sum, "do not sum to 1"))
+        outside_options = json.loads(json.dumps(valid_choice))
+        outside_options["id"] = "choice-outside-probabilities"
+        outside_options["choice"] = "not-an-option"
+        outside_options["expected"] = "not-an-option"
+        probability_failures.append((outside_options, "options are not the question's"))
+        reversed_options = json.loads(json.dumps(agreement_base))
+        reversed_options["id"] = "reversed-different-options"
+        reversed_options["reversed"]["choice"] = "different"
+        reversed_options["reversed"]["probabilities"] = {"different": 0.5, "else": 0.5}
+        reversed_options["reversed"]["consistent"] = False
+        probability_failures.append((reversed_options, "different options"))
+        for row, message in probability_failures:
+            probability_file = tmp / "bad-probabilities.jsonl"
+            probability_file.write_text(json.dumps(row) + "\n")
+            for extra in ((), ("--bar", "1")):
+                code, out, err = run("score", str(probability_file), *extra)
+                check(code == 1 and out == "" and message in err and "Traceback" not in err,
+                      f"score refuses {row['id']}" + (" under a bar" if extra else ""),
+                      out + err)
 
         confidence_cases = []
         for name, reversed_confidence in (("reversed-low", 0.49),
@@ -1253,8 +1367,8 @@ def cmd_self_test(args) -> int:
         single_order["order_check"] = False
         confidence_cases.append(single_order)
         confidence_cases.extend([
-            {"id": "noul-low", "noul": 0.74},
-            {"id": "noul-boundary", "noul": 0.75},
+            {"id": "noul-low", "noul": 0.74, "order_check": False},
+            {"id": "noul-boundary", "noul": 0.75, "order_check": False},
         ])
         confidence_file = tmp / "confidence.jsonl"
         confidence_file.write_text("".join(json.dumps(row) + "\n" for row in confidence_cases))
@@ -1322,6 +1436,7 @@ def cmd_self_test(args) -> int:
             valid = json.loads(first[1])
             valid["id"] = "valid-before-bad-noul"
             row = {"id": "bad-noul", "noul": bad, "confidence": 0.9,
+                   "order_check": False,
                    "input_sha256": valid["input_sha256"], "input_rows": 2}
             bad_file = tmp / "bad-noul.jsonl"
             bad_file.write_text(json.dumps(valid) + "\n" + json.dumps(row) + "\n")
@@ -1339,7 +1454,7 @@ def cmd_self_test(args) -> int:
                                      ("noul-threshold", 0.75, True)):
             noul_cases.append({"id": name, "noul": noul, "expected": expected,
                                "agrees": True, "input_sha256": "self-test-noul",
-                               "input_rows": 4})
+                               "input_rows": 4, "order_check": False})
         noul_file = tmp / "noul-boundaries.jsonl"
         noul_file.write_text("".join(json.dumps(row) + "\n" for row in noul_cases))
         for extra in ((), ("--bar", "1")):
@@ -1364,7 +1479,7 @@ def cmd_self_test(args) -> int:
             broken_file.write_text(json.dumps(valid) + "\n" + json.dumps(row) + "\n")
             for extra in ((), ("--bar", "1")):
                 code, out, err = run("score", str(broken_file), *extra)
-                check(code == 1 and out == "" and "reversed asking is not an answer" in err,
+                check(code == 1 and out == "" and "reversed answer is not a valid choice" in err,
                       f"score refuses a reversed asking of {broken!r}"
                       + (" under a bar" if extra else ""), out + err)
 
@@ -1380,7 +1495,7 @@ def cmd_self_test(args) -> int:
         missing_reversed_file.write_text(json.dumps(missing_reversed) + "\n")
         for extra in ((), ("--bar", "1")):
             code, out, err = run("score", str(missing_reversed_file), *extra)
-            check(code == 1 and out == "" and "reversed asking is not an answer" in err,
+            check(code == 1 and out == "" and "does not match its order check" in err,
                   "score refuses an absent reversed asking"
                   + (" under a bar" if extra else ""), out + err)
 
@@ -1392,13 +1507,39 @@ def cmd_self_test(args) -> int:
               "score accepts a successful choice made without the order check", out + err)
 
         order_cases = []
-        for name, differs, consistent in (("different-without-flag", True, None),
-                                          ("different-with-true-flag", True, True),
-                                          ("matching-without-flag", False, None),
-                                          ("matching-with-false-flag", False, False)):
+        for name, differs in (("different-consistent", True), ("matching-consistent", False)):
             row = json.loads(first[0])
             row["id"] = name
-            row["input_rows"] = 4
+            row["input_rows"] = 2
+            row["expected"] = row["choice"]
+            row["agrees"] = True
+            row["confidence"] = 0.9
+            row["reversed"]["confidence"] = 0.9
+            if differs:
+                row["reversed"]["choice"] = next(
+                    choice for choice in row["probabilities"] if choice != row["choice"])
+            else:
+                row["reversed"]["choice"] = row["choice"]
+            row["reversed"]["consistent"] = not differs
+            order_cases.append(row)
+        order_file = tmp / "order-consistency.jsonl"
+        order_file.write_text("".join(json.dumps(row) + "\n" for row in order_cases))
+        for extra in ((), ("--bar", "1")):
+            code, out, err = run("score", str(order_file), *extra)
+            listed = {row["id"] for row in order_cases if f"  {row['id']}:" in out}
+            check(code == 0 and listed == {"different-consistent"}
+                  and (not extra or "at or above the bar of 100%" in out),
+                  "score validates reversed consistency and compares the choices"
+                  + (" under a bar" if extra else ""), out + err)
+
+        consistency_failures = []
+        for name, differs, consistent in (("different-with-true-flag", True, True),
+                                          ("matching-with-false-flag", False, False),
+                                          ("matching-without-flag", False, None),
+                                          ("matching-with-string-flag", False, "true")):
+            row = json.loads(first[0])
+            row["id"] = name
+            row["input_rows"] = 1
             row["expected"] = row["choice"]
             row["agrees"] = True
             row["confidence"] = 0.9
@@ -1412,18 +1553,21 @@ def cmd_self_test(args) -> int:
                 row["reversed"].pop("consistent", None)
             else:
                 row["reversed"]["consistent"] = consistent
-            order_cases.append(row)
-        order_file = tmp / "order-consistency.jsonl"
-        order_file.write_text("".join(json.dumps(row) + "\n" for row in order_cases))
-        for extra in ((), ("--bar", "1")):
-            code, out, err = run("score", str(order_file), *extra)
-            listed = {row["id"] for row in order_cases if f"  {row['id']}:" in out}
-            check(code == 0
-                  and listed == {"different-without-flag", "different-with-true-flag",
-                                 "matching-with-false-flag"}
-                  and (not extra or "at or above the bar of 100%" in out),
-                  "score compares reversed choices and keeps explicit false conservative"
-                  + (" under a bar" if extra else ""), out + err)
+            consistency_failures.append(row)
+        single_with_reversed = json.loads(first[0])
+        single_with_reversed["id"] = "single-order-with-reversed"
+        single_with_reversed["input_rows"] = 1
+        single_with_reversed["order_check"] = False
+        consistency_failures.append(single_with_reversed)
+        for row in consistency_failures:
+            consistency_file = tmp / "bad-order-consistency.jsonl"
+            consistency_file.write_text(json.dumps(row) + "\n")
+            for extra in ((), ("--bar", "1")):
+                code, out, err = run("score", str(consistency_file), *extra)
+                check(code == 1 and out == ""
+                      and ("reversed consistency" in err or "does not match its order check" in err),
+                      f"score refuses {row['id']}" + (" under a bar" if extra else ""),
+                      out + err)
 
         def one(name: str, row: dict) -> Path:
             p = tmp / name
