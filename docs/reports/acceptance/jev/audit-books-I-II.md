@@ -2,13 +2,14 @@
 
 Brief 0005's stage 6 ([#36](https://github.com/jackChallis/stoicheia/issues/36)) asks a model family that wrote none of Stoicheia to audit the review records. This is that audit for Books I and II, whose 62 records are at the stage `full`. The cold reviewers' finding it answers: "No record in any book is signed off by a human or a model family outside the authoring Claude/Codex crews." Jev is TypeSafe's decision model, and we thank TypeSafe warmly for it.
 
-**In short.** Jev agreed with the records on 251 of 293 questions (86%), and on 243 (83%) in both orders of the options. It agreed on all 79 citation questions, and found both defects planted among them. Of the 83 answers sent to adjudication, the adjudicators found the record right in 81. The two others are figure captions, I.6 and I.26, which draw Euclid's impossible supposition without saying so. Those two readings are provisional, and their fixes are not yet made (see [Open](#open)). The representation and commentary questions missed every defect planted in them, so Jev's agreement on those items is not evidence.
+**In short.** Jev agreed with the records on 251 of 293 questions (86%), and on 243 (83%) in both orders of the options. It agreed on all 79 citation questions, and found both defects planted among them. The original audit sent 83 production answers to adjudication; this review added the 18 high-confidence scope answers that the calibration decision required, for 101 production adjudications. The adjudicators found the record right in 99. The two others are figure captions, I.6 and I.26, which draw Euclid's impossible supposition without saying so. Those two readings are provisional, and their fixes are not yet made (see [Open](#open)). The representation and commentary questions missed every defect planted in them, so Jev's agreement on those items is not evidence.
 
 ## What was asked, of which model, when
 
-- **Model.** `jev-1.13.0`, a pinned id, which answered every request. The calibration of 19 October 2026 with this model got 12 of 14 right, and found its scope answers could change when the options were reversed.
+- **Model.** `jev-1.13.0`, a pinned id, which answered every request. The owner [reported in #36](https://github.com/jackChallis/stoicheia/issues/36) that the calibration of 19 October 2026 got 12 of 14 right and found that its scope answers could change when the options were reversed. The original redacted calibration answers are not in this tree or its branch history, so the score cannot yet be checked against the raw output.
 - **When.** 19 October 2026, Pacific time: 303 requests between 03:56:48 and 03:57:29 UTC on 20 October. The client was [`scripts/audit/jev.py`](../../../../scripts/audit/jev.py), with its order check on, so each choice was asked twice in one request, the second time with its options reversed. The requests carried 1,683,107 input tokens, at most 24,740 in one, and the median latency was 0.13 s.
-- **What.** The 303 rows of [audit-books-I-II.jsonl](audit-books-I-II.jsonl), written by `scripts/audit/jev_questions.py` (on `tooling/jev-questions`, which lands first) from commit `39ae65c2`. Every state quotes its files exactly, and the generator checks each byte against `git show` of that commit. The record's expected answer stays on this machine: Jev saw the state, the question and, for figures, the image. [The manifest](audit-books-I-II-manifest.json) lists, for each proposition, its rows, proof units, calls and state sizes. Jev's answers are in [audit-books-I-II-jev-1.13.0-2026-10-19.jsonl](audit-books-I-II-jev-1.13.0-2026-10-19.jsonl).
+- **Cost.** The committed responses record 1,683,107 input tokens and 30,915 output tokens. At TypeSafe's [published price](https://typesafe.ai/) of USD 0.042 per million input tokens and free output, their list-price equivalent is USD 0.070690494. This is not an account charge: no billing receipt or console export was preserved, so the actual charged amount remains unverified.
+- **What.** The 303 rows of [audit-books-I-II.jsonl](audit-books-I-II.jsonl), written by the historical `scripts/audit/jev_questions.py` at `aca67cc385df6134272613c60c803b2aa9c2f398` from evidence commit `39ae65c21c6b8188c0fa53bf91b6fde3ce3b11a3`. Every state quotes its files exactly, and the generator checks each byte against `git show` of that commit. The record's expected answer stays on this machine: Jev saw the state, the question and, for figures, the image. [The manifest](audit-books-I-II-manifest.json) lists, for each proposition, its rows, proof units, calls and state sizes. Jev's answers are in [audit-books-I-II-jev-1.13.0-2026-10-19.jsonl](audit-books-I-II-jev-1.13.0-2026-10-19.jsonl). The later reviewed generator at `e5fb40fcb550ac688f6bd16f0d0c735bc6447e39` corrects evidence and bridge placement; it is not the generator of these preserved audit bytes.
 
 | Item | Question | Rows | Seeded |
 |---|---|---:|---:|
@@ -45,50 +46,68 @@ What the figures support:
 
 - **Citations: strong evidence.** All 79 agree, in both orders and with confidence of 0.5 or more, and both planted defects were found. No proof unit in Books I and II has a dummy citation or an artificial hypothesis use, on Jev's reading of the proofs and the signatures of what they call. The helpers' own proofs were not sent.
 - **Figures: good evidence.** Both planted wrong figures were found. Eleven answers disagreed, and nine of those were Jev's mistakes; the other two are the captions under [Fixes](#fixes).
-- **Scope: weak evidence alone.** Both planted restrictions were found, but Jev disagreed with 23 records and changed its answer on 10 when the options were reversed. On adjudication every one of those records was right. The adjudicated rows carry this item, not Jev's agreement.
+- **Scope: weak evidence alone.** Both planted restrictions were found, but Jev disagreed with 23 records and changed its answer on 10 when the options were reversed. On adjudication all 62 records were right. The adjudicated rows carry this item, not Jev's agreement.
 - **Representations and commentary: no evidence from agreement.** Jev called all four planted defects agreement, so its 62 agreements on commentary and 20 on representations show nothing. Those items rest on the adjudicated rows and on the records' own reviews.
 
 ## Adjudication
 
-An answer went to adjudication when it disagreed with the record, had a confidence under 0.5, or changed when the options were reversed. That was 83 of the record rows, and 5 seeded rows.
+The original audit sent an answer to adjudication when it disagreed with the record, had a confidence under 0.5, or changed when the options were reversed. That selected 83 production rows and 5 seeded rows. The owner's calibration decision in [#36](https://github.com/jackChallis/stoicheia/issues/36) required every scope answer to go to an adjudicator, so this review also adjudicated the 18 high-confidence scope agreements the trigger had bypassed. The production total is now 101 rows; all 62 scope rows cross the adjudication boundary.
 
-The adjudicators were fresh, read-only runs of OpenAI's Codex (GPT-6 Astra), which wrote none of the records. Six readers took the rows in groups. Each was told to decide from `heath/`, the Lean, the figures and the commentary alone, and not to open `review/`; it saw the record's claim only as the answer under test. Where a reader disagreed with Jev, the captain (Claude) decided. The captain read the files in full for I.30, recomputed the SVG coordinates for I.46, I.48, II.7 and II.13, and read the statements for I.14, I.27, I.45, II.1 and II.14. For the other rows the captain accepted the reader's cited evidence.
+The original adjudicators were fresh, read-only runs of OpenAI's Codex (GPT-6 Astra), which wrote none of the records. Six readers took the rows in groups. Each was told to decide from `heath/`, the Lean, the figures and the commentary alone, and not to open `review/`; it saw the record's claim only as the answer under test. Where a reader disagreed with Jev, the captain (Claude) decided. The captain read the files in full for I.30, recomputed the SVG coordinates for I.46, I.48, II.7 and II.13, and read the statements for I.14, I.27, I.45, II.1 and II.14. For the other rows the captain accepted the reader's cited evidence. A7 is OpenAI Codex (GPT-5) in the later no-mistakes review. It wrote none of the records and read Heath's whole proposition and the whole Lean file for each of the 18 scope rows the trigger omitted.
 
 The reader for eleven figure rows (I.6 to I.42) did not run: its service had reached its usage limit, which resets on 26 October 2026. The captain read those eleven from the files instead: the SVG's coordinates, Heath's text, the Lean statement and the caption. Those readings are marked provisional, and a Codex reader is still owed them.
 
 | Verdict | Rows |
 |---|---:|
-| both right | 41 |
+| both right | 59 |
 | record right, Jev wrong | 40 |
 | Jev right, record wrong | 2 |
 | both wrong | 0 |
 
 Of the 40 rows marked "record right, Jev wrong", 36 are a reader's verdict, which the captain accepted. Three are the captain's provisional figure readings (I.14, I.27 and I.33). The last, I.30, is the captain's decision against both Jev and the reader, and its row says why. The two rows marked "Jev right, record wrong" are both provisional.
 
+The 18 rows added in the later review are all "both right": Jev and the record say `fully`, and A7 confirmed that answer from the complete Heath and Lean files.
+
 ### Every adjudication
 
-Jev's answer is given as chosen, then (after the slash) as chosen with the options reversed, with its confidence. A1 to A6 are the six Codex readers.
+Jev's answer is given as chosen, then (after the slash) as chosen with the options reversed, with its confidence. A1 to A6 are the original Codex readers; A7 is the later Codex reviewer described above.
 
 #### Scope (P11)
 
 | Row | Jev | Record | Adjudicator: answer | Verdict | Evidence |
 |---|---|---|---|---|---|
+| `09-I.1-scope` | fully / fully (0.53) | fully | A7: fully | both right | `Prop1` constructs an equilateral triangle on arbitrary distinct A and B; P only chooses a side and restricts no given object (`Elements/BookI/Prop01.lean:45`). |
 | `09-I.2-scope` | fully / beyond (0.40) | fully | A1: fully | both right | `Prop2` takes A anywhere (`Elements/BookI/Prop02.lean:18`); the case A = B is proved at lines 22 to 23. |
 | `09-I.3-scope` | beyond / beyond (0.33) | fully | A1: fully | record right, Jev wrong | `hC` and `h` name a genuine lesser straight line; no relative position of the two lines is assumed (`Elements/BookI/Prop03.lean:21`). |
+| `09-I.4-scope` | fully / fully (0.87) | fully | A7: fully | both right | `Prop4` concludes equality of the base and triangle and both remaining angles (`Elements/BookI/Prop04.lean:23`). |
 | `09-I.5-scope` | fully / fully (0.31) | fully | A1: fully | both right | Both conclusions, with the setting-out's angle pairs (`Elements/BookI/Prop05.lean:19`); D and E exist for every triangle by `produce`. |
+| `09-I.6-scope` | fully / fully (0.88) | fully | A7: fully | both right | For any triangle whose angles at B and C are equal, `Prop6` concludes AB = AC; its exchanged case covers whichever side is supposed greater (`Elements/BookI/Prop06.lean:57`). |
 | `09-I.7-scope` | fully / fully (0.21) | fully | A1: fully | both right | The positive uniqueness form of the enunciation (`Elements/BookI/Prop07.lean:256`); every placement of D handled by `Prop7.cases`. |
+| `09-I.8-scope` | fully / fully (0.73) | fully | A7: fully | both right | The three side equalities of the two triangles give equality of the contained angles (`Elements/BookI/Prop08.lean:24`). |
+| `09-I.9-scope` | fully / fully (0.59) | fully | A7: fully | both right | `Prop9` constructs F within BAC and proves both equal halves and that they compose the given angle (`Elements/BookI/Prop09.lean:145`). |
+| `09-I.10-scope` | fully / fully (0.72) | fully | A7: fully | both right | For every finite straight line AB, `Prop10` constructs D strictly between its ends with AD = DB (`Elements/BookI/Prop10.lean:22`). |
 | `09-I.11-scope` | fully / fully (0.25) | fully | A1: fully | both right | C anywhere on AB, the case C = A proved at lines 43 to 47 (`Elements/BookI/Prop11.lean:25`). |
+| `09-I.12-scope` | fully / fully (0.72) | fully | A7: fully | both right | `Prop12` constructs H on AB and proves CH makes a right angle with every other point of the infinite straight line (`Elements/BookI/Prop12.lean:26`). |
 | `09-I.13-scope` | fully / fully (0.45) | fully | A1: fully | both right | The sum covers Euclid's disjunction; the equal case is proved right at lines 119 to 122 (`Elements/BookI/Prop13.lean:99`). |
 | `09-I.14-scope` | beyond / beyond (0.63) | fully | A1: fully | record right, Jev wrong | `OppositeSidesOf C D A B` formalises "not lying on the same side" for adjacent angles, which Definition I.8 puts off AB (`Elements/BookI/Prop14.lean:26`, `heath/I/front.md:13`). |
 | `09-I.15-scope` | fully / fully (0.45) | fully | A1: fully | both right | Both vertical-angle equalities and the porism, `Prop15.porism` (`Elements/BookI/Prop15.lean:44`, `:101`). |
+| `09-I.16-scope` | fully / fully (0.61) | fully | A7: fully | both right | With BC produced through C to D, `Prop16` concludes ACD is greater than both opposite interior angles (`Elements/BookI/Prop16.lean:61`). |
+| `09-I.17-scope` | fully / fully (0.84) | fully | A7: fully | both right | `Prop17` states all three choices of two interior angles, not only the pair drawn in Euclid's figure (`Elements/BookI/Prop17.lean:25`). |
 | `09-I.18-scope` | fully / fully (0.40) | fully | A1: fully | both right | Arbitrary triangle, conclusion in the right direction (`Elements/BookI/Prop18.lean:24`). |
+| `09-I.19-scope` | fully / fully (0.57) | fully | A7: fully | both right | The hypothesis makes ABC greater than BCA and the conclusion makes the opposite side AC greater than AB (`Elements/BookI/Prop19.lean:25`). |
+| `09-I.20-scope` | fully / fully (0.87) | fully | A7: fully | both right | `Prop20` states all three strict triangle inequalities for an arbitrary triangle (`Elements/BookI/Prop20.lean:25`). |
+| `09-I.21-scope` | fully / fully (0.52) | fully | A7: fully | both right | `InsideTriangle D A B C` is Euclid's meeting within ABC, and `Prop21` gives both the side-sum inequality and the greater contained angle (`Elements/BookI/Prop21.lean:55`). |
 | `09-I.22-scope` | beyond / beyond (0.31) | fully | A1: fully | record right, Jev wrong | The three inequalities are Euclid's own condition; `F ≠ E` and P only place the construction (`Elements/BookI/Prop22.lean:121`). |
 | `09-I.23-scope` | exactly / exactly (0.28) | fully | A1: fully | record right, Jev wrong | `Triangle D C E` names a rectilineal angle (Definitions I.8 and I.9, `heath/I/front.md:13`); P chooses a side and always exists (`Elements/BookI/Prop23.lean:31`). |
+| `09-I.24-scope` | fully / fully (0.61) | fully | A7: fully | both right | `Prop24` takes arbitrary triangles and handles F on EG, within DEG, or beyond EG, so its base inequality is not confined to Euclid's drawn case (`Elements/BookI/Prop24.lean:88`). |
+| `09-I.25-scope` | fully / fully (0.79) | fully | A7: fully | both right | Equal corresponding sides and the greater base give the greater contained angle for arbitrary triangles (`Elements/BookI/Prop25.lean:26`). |
+| `09-I.26-scope` | fully / fully (0.72) | fully | A7: fully | both right | The disjunction covers a side adjoining the equal angles or a side subtending one of them, and the conclusion includes all remaining sides and the remaining angle (`Elements/BookI/Prop26.lean:22`). |
 | `09-I.27-scope` | beyond / beyond (0.56) | fully | A1: fully | record right, Jev wrong | E and F on the transversal, A and D on opposite sides name the alternate angles; meeting is excluded on both sides (`Elements/BookI/Prop27.lean:25`, `:98`, `:107`). |
 | `09-I.28-scope` | beyond / beyond (0.56) | fully | A1: fully | record right, Jev wrong | The exact disjunction of the enunciation, each disjunct proved (`Elements/BookI/Prop28.lean:21`, `:33`). |
 | `09-I.29-scope` | beyond / beyond (0.47) | fully | A1: fully | record right, Jev wrong | All three conclusions; the auxiliary points exist for any configuration by `AreParallel.figure_alternate` and `AreParallel.figure_interior` (`Elements/BookI/Prop29.lean:30`, `Elements/Figure/Parallels.lean:167`, `:195`). |
 | `09-I.30-scope` | beyond / beyond (0.61) | fully | A1, then captain: fully | record right, Jev wrong | The reader chose "restricted beyond": `hC : ¬ Collinear A B C` excludes AB and CD on one straight line, and no convention in the row excuses it. The captain decided otherwise from the files: two straight lines that are one straight line when produced are not two lines parallel to one another, so `hC` names what Euclid's words presuppose (`Elements/BookI/Prop30.lean:75`; the record's comment, `review/I/30.toml:2`, says the same, but a comment is not carried by the audit or the page). |
 | `09-I.31-scope` | beyond / beyond (0.36) | fully | A2: fully | record right, Jev wrong | `hA` names the setting a parallel through A needs: a point on BC has none (`Elements/BookI/Prop31.lean:27`). |
+| `09-I.32-scope` | fully / fully (0.57) | fully | A7: fully | both right | `Prop32` gives both conclusions: the exterior angle equals the two opposite interior angles, and all three interior angles sum to two right angles (`Elements/BookI/Prop32.lean:48`). |
 | `09-I.33-scope` | exactly / fully (0.27) | fully | A2: fully | record right, Jev wrong | `hdir : SameSideOf B D A C` formalises "in the same directions" (`Elements/BookI/Prop33.lean:20`). |
 | `09-I.34-scope` | fully / fully (0.23) | fully | A2: fully | both right | All five conclusions on the parallelogram ACDB (`Elements/BookI/Prop34.lean:20`). |
 | `09-I.35-scope` | beyond / beyond (0.36) | fully | A2: fully | record right, Jev wrong | No order of the opposite sides is assumed; separate, overlapping and touching placements are proved (`Elements/BookI/Prop35.lean:172`, cases at lines 260 to 283). |
@@ -113,7 +132,9 @@ Jev's answer is given as chosen, then (after the slash) as chosen with the optio
 | `09-II.6-scope` | exactly / exactly (0.44) | fully | A3: fully | record right, Jev wrong | Adding beyond A is the theorem with A and B exchanged; no restriction on the added length (`Elements/BookII/Prop06.lean:26`). |
 | `09-II.7-scope` | fully / beyond (0.36) | fully | A3: fully | both right | Statement and conclusion as Euclid's (`Elements/BookII/Prop07.lean`). |
 | `09-II.8-scope` | fully / fully (0.39) | fully | A3: fully | both right | Statement and conclusion as Euclid's (`Elements/BookII/Prop08.lean`). |
+| `09-II.9-scope` | fully / fully (0.56) | fully | A7: fully | both right | C is the equal cut, D is any distinct interior cut, and the proof exchanges A and B to cover either order of C and D (`Elements/BookII/Prop09.lean:33`). |
 | `09-II.10-scope` | fully / fully (0.25) | fully | A3: fully | both right | Statement and conclusion as Euclid's (`Elements/BookII/Prop10.lean`). |
+| `09-II.11-scope` | fully / fully (0.56) | fully | A7: fully | both right | For arbitrary distinct A and B, `Prop11` constructs H strictly between them and proves the required rectangle equals the square on AH (`Elements/BookII/Prop11.lean:31`). |
 | `09-II.12-scope` | beyond / beyond (0.32) | fully | A3: fully | record right, Jev wrong | The foot's external position is proved, not assumed (`Elements/BookII/Prop12.lean:23`, `:50`). |
 | `09-II.13-scope` | beyond / exactly (0.33) | fully | A3: fully | record right, Jev wrong | Acute angles at B and C are given in an acute-angled triangle; D within BC is proved (`Elements/BookII/Prop13.lean:47`, `:77`). |
 | `09-II.14-scope` | exactly / beyond (0.19) | fully | A3: fully | record right, Jev wrong | `Prop14.apart` and `Prop14.square` take any figure in the declared representation (`Elements/BookII/Prop14.lean:324`, `:364`). |
@@ -195,7 +216,7 @@ Two figure captions are wrong, on the captain's provisional reading. Each draws 
 - **I.6** ([review/I/06.toml](../../../../review/I/06.toml), `[figure]`): "Like Heath's, this figure draws Euclid's impossible supposition: with the angles at B and C equal, AB cannot be greater than AC, so the drawn DB is shorter than AC."
 - **I.26** ([review/I/26.toml](../../../../review/I/26.toml), `[figure]`): "Like Heath's, this figure draws Euclid's impossible suppositions on triangles drawn equal, so the drawn BG is shorter than DE and BH shorter than EF."
 
-Neither fix is made yet. A record's fix is made through Codex in this branch, and the record is then re-read and stamped by a Codex reader who wrote none of it. Codex reached its usage limit during this audit and cannot run before 26 October 2026, so both fixes wait for it, after a Codex reader has confirmed or overturned the provisional readings.
+Neither fix is made here. Both are listed for a later branch, after an independent Codex reader has confirmed or overturned all eleven provisional figure readings. That later branch must have each changed record re-read and stamped by a reviewer who wrote none of it.
 
 One improvement, not a fault: the reason I.30's record is `full` lives in a TOML comment ([review/I/30.toml](../../../../review/I/30.toml), lines 2 and 3), which neither the page nor this audit carries. Both Jev and its reader read `hC` as a restriction for want of it. A `[statement]` `note` saying the same would put the reason where a reader looks.
 
@@ -208,17 +229,44 @@ One improvement, not a fault: the reason I.30's record is `full` lives in a TOML
 
 ## Open
 
-1. A Codex reader for the eleven figure rows read provisionally by the captain, then the I.6 and I.26 fixes through Codex, with each record re-read and stamped by a Codex reader who wrote none of it. Codex can run again from 26 October 2026.
-2. The I.30 note, if the editors want it.
-3. Sharper representation and commentary questions, which must find their planted defects before their agreement counts, then a new calibration for both.
-4. Book III's audit, after Book III's records reach the stage `full` (train C6).
+1. Recover and commit the original redacted calibration response, then verify the reported 12 of 14 score against its 14 raw answers. Repository history and #36 preserve only the question set and the owner's summary.
+2. Recover the account's billing evidence and record the actual audit charge in its billed currency. The committed usage proves only the USD 0.070690494 public-list-price equivalent.
+3. An independent Codex reader for the eleven figure rows read provisionally by the captain, then the I.6 and I.26 caption fixes in a later branch, with each changed record re-read and stamped by a reviewer who wrote none of it.
+4. The I.30 note, if the editors want it.
+5. Sharper representation and commentary questions, which must find their planted defects before their agreement counts, then a new calibration for both.
+6. Book III's audit, after Book III's records reach the stage `full` (train C6).
 
 ## Reproducing it
 
 ```sh
-python3 scripts/audit/jev_questions.py --commit 39ae65c21c6b8188c0fa53bf91b6fde3ce3b11a3 --check
+python3 -c '
+import pathlib, subprocess
+root = pathlib.Path.cwd().resolve()
+revision = "aca67cc385df6134272613c60c803b2aa9c2f398"
+path = "scripts/audit/jev_questions.py"
+source = subprocess.run(
+    ["git", "show", f"{revision}:{path}"], cwd=root, check=True, capture_output=True
+).stdout
+scope = {"__file__": str(root / path), "__name__": "__main__"}
+exec(compile(source, str(root / path), "exec"), scope)
+' --commit 39ae65c21c6b8188c0fa53bf91b6fde3ce3b11a3 --check
 python3 scripts/audit/jev.py run docs/reports/acceptance/jev/audit-books-I-II.jsonl --dry-run
 python3 scripts/audit/jev.py score docs/reports/acceptance/jev/audit-books-I-II-jev-1.13.0-2026-10-19.jsonl
+python3 - <<'PY'
+import hashlib, json, pathlib
+
+directory = pathlib.Path("docs/reports/acceptance/jev")
+questions = (directory / "audit-books-I-II.jsonl").read_bytes()
+digest = hashlib.sha256(questions).hexdigest()
+manifest = json.loads((directory / "audit-books-I-II-manifest.json").read_text())
+answers = [json.loads(line) for line in
+           (directory / "audit-books-I-II-jev-1.13.0-2026-10-19.jsonl").read_text().splitlines()]
+assert digest == "01b71b7481e4a97e47632456ccf5689c7799fbcaadc53723ffe5e27009dfbc90"
+assert manifest["questions_sha256"] == "sha256:" + digest
+assert {row["input_sha256"] for row in answers} == {digest}
+assert {row["input_rows"] for row in answers} == {303}
+print("Questions, manifest and 303 answers share", digest)
+PY
 ```
 
-The first regenerates the rows twice and compares them with the files. The second builds every request and sends nothing. The third needs no key. Sending the questions needs TypeSafe's key, as the client's docstring explains.
+The first executes the historical generator directly from its pinned commit, regenerates the rows twice and compares both generated files byte for byte with the committed artifacts. The second builds every request and sends nothing. The third needs no key. The fourth ties the question bytes and manifest to every answer's `input_sha256`. Sending the questions needs TypeSafe's key, as the client's docstring explains. Running the later generator at `e5fb40fcb550ac688f6bd16f0d0c735bc6447e39` is a new audit input, not a reproduction of this one.
