@@ -18,6 +18,10 @@ Derives constructor (I.8), transforming or eliminating a given derivation (I.9, 
 I.16), or passing a bound marker (I.14) reports no C.N. 4. A helper that names the step
 counts even when that branch is not taken (I.15). Every case keeps the same axiom fields.
 
+Separately compiled helpers in Staging.Hidden must be refused by their declaring module,
+even when their names begin with Elements. They supply a step, a Common Notion or an
+existing axiom, or appear only in an entry's type.
+
 The foundation modules must be built first. CI's check job and the pre-flight run this
 immediately after Certificate/Facts.lean, as in docs/WORKFLOW.md, section 8.
 Standard library only.
@@ -36,39 +40,47 @@ ROOT = Path(__file__).resolve().parent.parent
 AXIOM_FIELDS = ("axioms", "direct_axioms", "own_axioms", "inherited", "lean_foundations")
 
 
+def prepare_package(work):
+    (work / "lakefile.toml").write_text('name = "certificate_fixture"\n')
+    (work / "lean-toolchain").write_bytes((ROOT / "lean-toolchain").read_bytes())
+    shutil.copyfile(ROOT / "Certificate/Facts.lean", work / "Facts.lean")
+    env = os.environ.copy()
+    repository_modules = str(ROOT / ".lake/build/lib/lean")
+    if inherited_modules := env.get("LEAN_PATH"):
+        repository_modules += os.pathsep + inherited_modules
+    fixture_modules = work / ".lake/build/lib/lean"
+    fixture_modules.mkdir(parents=True)
+    shutil.copytree(
+        ROOT / ".lake/build/lib/lean/Elements/Foundations",
+        fixture_modules / "Elements/Foundations",
+    )
+    env["LEAN_PATH"] = str(fixture_modules) + os.pathsep + repository_modules
+    return env, fixture_modules
+
+
+def compile_module(work, env, modules, name):
+    source = Path(*name.split(".")).with_suffix(".lean")
+    output = (modules / source).with_suffix(".olean")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    result = subprocess.run(
+        ["lake", "env", "lean", str(source), "-o", str(output)],
+        cwd=work, env=env, capture_output=True, text=True, timeout=120,
+    )
+    if result.returncode:
+        raise AssertionError(
+            f"fixture {name}: lake env lean exited {result.returncode}\n"
+            + result.stdout + result.stderr
+        )
+
+
 class CommonNotion4Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         with tempfile.TemporaryDirectory(prefix="stoicheia-cn4-") as tmp:
             work = Path(tmp)
-            (work / "lakefile.toml").write_text('name = "certificate_fixture"\n')
-            (work / "lean-toolchain").write_bytes((ROOT / "lean-toolchain").read_bytes())
+            env, fixture_modules = prepare_package(work)
             shutil.copyfile(ROOT / "tests/fixtures/CertificateCN4.lean", work / "Elements.lean")
-            shutil.copyfile(ROOT / "Certificate/Facts.lean", work / "Facts.lean")
-            env = os.environ.copy()
-            repository_modules = str(ROOT / ".lake/build/lib/lean")
-            if inherited_modules := env.get("LEAN_PATH"):
-                repository_modules += os.pathsep + inherited_modules
-            env["LEAN_PATH"] = repository_modules
-            fixture_modules = work / ".lake/build/lib/lean"
-            fixture_modules.mkdir(parents=True)
-            shutil.copytree(
-                ROOT / ".lake/build/lib/lean/Elements/Foundations",
-                fixture_modules / "Elements/Foundations",
-            )
-            fixture_result = subprocess.run(
-                [
-                    "lake", "env", "lean", "Elements.lean",
-                    "-o", str(fixture_modules / "Elements.olean"),
-                ],
-                cwd=work, env=env, capture_output=True, text=True, timeout=120,
-            )
-            if fixture_result.returncode:
-                raise AssertionError(
-                    f"fixture: lake env lean exited {fixture_result.returncode}\n"
-                    + fixture_result.stdout + fixture_result.stderr
-                )
-            env["LEAN_PATH"] = str(fixture_modules) + os.pathsep + repository_modules
+            compile_module(work, env, fixture_modules, "Elements")
             certificate_result = subprocess.run(
                 ["lake", "env", "lean", "Facts.lean"],
                 cwd=work, env=env, capture_output=True, text=True, timeout=120,
@@ -130,6 +142,72 @@ class CommonNotion4Tests(unittest.TestCase):
                 for field in AXIOM_FIELDS:
                     with self.subTest(field=field):
                         self.assertEqual(entry[field], control[field])
+
+
+class ModuleBoundaryTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        tmp = tempfile.TemporaryDirectory(prefix="stoicheia-modules-")
+        cls.addClassCleanup(tmp.cleanup)
+        cls.work = Path(tmp.name)
+        cls.env, cls.modules = prepare_package(cls.work)
+        (cls.work / "Elements").mkdir()
+        shutil.copyfile(
+            ROOT / "tests/fixtures/CertificateCN4.lean",
+            cls.work / "Elements/CertificateFixture.lean",
+        )
+        compile_module(cls.work, cls.env, cls.modules, "Elements.CertificateFixture")
+        (cls.work / "Staging").mkdir()
+        (cls.work / "Staging/Hidden.lean").write_text(
+            "import Elements.CertificateFixture\n"
+            "namespace Elements.Hidden\n"
+            "theorem step : Superposition.Coincidence := .step\n"
+            "theorem notion (a b c : Length) (h : a = c) (k : b = c) : a = b :=\n"
+            "  CommonNotion1 h k\n"
+            "theorem rule (a b : Length) : a + b = b + a := Tacit.add_comm a b\n"
+            "end Elements.Hidden\n"
+        )
+        compile_module(cls.work, cls.env, cls.modules, "Staging.Hidden")
+
+    def certificate(self, declaration):
+        (self.work / "Elements.lean").write_text(
+            "import Staging.Hidden\n" + declaration + "\n"
+        )
+        compile_module(self.work, self.env, self.modules, "Elements")
+        (self.work / "facts.json").unlink(missing_ok=True)
+        return subprocess.run(
+            ["lake", "env", "lean", "Facts.lean"],
+            cwd=self.work, env=self.env, capture_output=True, text=True, timeout=120,
+        )
+
+    def test_foreign_helpers_are_rejected(self):
+        cases = (
+            ("step", "theorem Prop17 : Superposition.Coincidence := Hidden.step"),
+            ("notion", "theorem Prop17 (a b c : Length) (h : a = c) (k : b = c) : "
+             "a = b := Hidden.notion a b c h k"),
+            ("rule", "theorem Prop17 (a b : Length) : a + b = b + a := Hidden.rule a b"),
+            ("rule", "theorem Prop17 (a b : Length) : "
+             "a + b = b + a ∧ a + b = b + a := ⟨Tacit.add_comm a b, Hidden.rule a b⟩"),
+            ("step", "theorem Prop17 : (fun _ => True) Hidden.step := True.intro"),
+        )
+        for helper, declaration in cases:
+            with self.subTest(helper=helper, declaration=declaration):
+                result = self.certificate(
+                    f"namespace Elements.BookI\n{declaration}\nend Elements.BookI"
+                )
+                output = result.stdout + result.stderr
+                self.assertNotEqual(result.returncode, 0, output)
+                self.assertIn(
+                    f"certificate: declaration Elements.Hidden.{helper} is declared in "
+                    "unsupported module Staging.Hidden; expected Elements, Init, Std or Lean",
+                    output,
+                )
+                self.assertFalse((self.work / "facts.json").exists())
+
+    def test_unused_foreign_helpers_do_not_fail(self):
+        result = self.certificate("")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertTrue((self.work / "facts.json").is_file())
 
 
 if __name__ == "__main__":

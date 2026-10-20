@@ -78,8 +78,19 @@ supplies `Coincidence.step` (`.step` and `⟨⟩` elaborate to that constant too
 such as `Derives.map` or `Derives.sound` that only passes a derivation's own marker along
 as a bound variable adds no step. If a helper itself names the constant, it counts even
 when evaluation would not take that branch. Merely reaching an inductive type's constructor
-list counts neither its congruence constructors nor the marker. No transformer is skipped,
-and the walks' boundaries are unchanged.
+list counts neither its congruence constructors nor the marker. No transformer is skipped.
+
+Every walk checks the declaring module of each constant it reaches, before stopping at
+an entry, axiom, Common Notion or shared step. A declaration in `Elements` or a module
+below it is local, as is a declaration in the emitter itself. Only declarations from
+Lean's own module roots `Init`, `Std` and `Lean` may be treated as external leaves.
+These are exactly the roots, besides `Elements`, imported by the environment that
+Facts.lean loads with Lean 4.35. Any other reached module fails the certificate before
+it writes `facts.json`, with a message naming the declaration and its module. The module
+comes from Lean's environment, regardless of the declaration's namespace: a helper named
+`Elements.Hidden.step` in `Staging.Hidden` is refused. This applies to dependencies in
+types as well as values, and to the vocabulary walk. An imported helper that no walk
+reaches does not fail the certificate.
 
 `own_axioms` comes from the walk that gives `direct_axioms`, stopped at each lemma
 the proof's own declarations call, as the walk for `shared_steps` is; what a lemma brings
@@ -134,8 +145,9 @@ entry: the propositions, the porisms and the companions. Take every constant the
 mention; for each word found, every constant in its type; for a definition or instance,
 also every constant in its value; and for an inductive type or structure, its
 constructors; and go on until nothing new appears. Keep what this project declares, apart
-from the axioms themselves (they are in `axiom_types`). Stop at anything from outside the
-project (`Eq`, `Exists`, `HAdd.hAdd`): Lean's own constants are fixed by the toolchain.
+from the axioms themselves (they are in `axiom_types`). Stop at Lean's own constants
+(`Eq`, `Exists`, `HAdd.hAdd`), fixed by the toolchain, under `Init`, `Std` and `Lean`.
+Refuse a reached declaration from any other module outside `Elements`, as above.
 
 So the vocabulary holds the words the assumptions are stated in and the words the claims
 are stated in. A word that only the entries' statements use, as `Touches`,

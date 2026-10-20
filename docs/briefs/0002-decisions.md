@@ -1943,10 +1943,10 @@ findings:
   `#print axioms`, the report follows what proof terms name, through the local declarations
   they name, without evaluating them. Passing a bound marker adds no step; a helper that
   names the constant counts even when evaluation would take another branch. Merely
-  reaching an inductive type's constructor list does not count. The walk's boundaries and
-  every axiom walk stay unchanged. A single backtick names the marker without requiring it
-  to exist, so the tooling runs on main before the calculus exists and leaves main's facts
-  unchanged.
+  reaching an inductive type's constructor list does not count. The marker changes no
+  axiom walk; the module boundary is strengthened below. A single backtick names the
+  marker without requiring it to exist, so the tooling runs on main before the calculus
+  exists and leaves main's facts unchanged.
 
   `tests/fixtures/CertificateCN4.lean` declares exact-name stand-ins for the marker and
   the three congruence constructors, a `Derives.map` that rebuilds every constructor and
@@ -1982,3 +1982,33 @@ findings:
   `.github/workflows/ci.yml`.
   The later content branch must supply the marker interface and pin I.4's and I.8's
   `common_notions` in `tests/certificate_expectations.json` when its proofs land.
+
+  The security review's fix round closes the inherited module boundary gap. Listing
+  `env.header.moduleNames` by root in the environment loaded by Facts.lean gives
+  `Init`, `Lean`, `Std` and `Elements`. The walks may stop at Lean's three module roots,
+  whose declarations belong to the pinned toolchain. They walk local declarations in
+  `Elements` and the emitter itself, and refuse any reached declaration from another
+  imported module, naming both declaration and module before writing any certificate.
+  All five walks apply this check before their stopping rules, including the vocabulary
+  walk. The module is read from the environment, not inferred from the declaration's
+  namespace.
+
+  The regression compiles `Staging.Hidden` separately from its temporary `Elements`
+  entry module. Its helpers supply `Coincidence.step`, Common Notion 1 and the existing
+  `Tacit.add_comm` axiom, with another case naming the helper only in the entry's type.
+  The axiom case also covers an entry that already uses the same axiom directly, which
+  the old axiom comparison could not distinguish. Reached helpers fail with the module
+  diagnostic; unused imported helpers remain allowed. The old emitter accepts the
+  hidden step, notion and type-only cases, and gives only the axiom mismatch for the
+  helper supplying an otherwise absent axiom. These regressions require the new
+  diagnostic and no certificate output.
+
+  The constructor-counting plant now saves the source bytes before entering `try`,
+  mutates inside it and restores those bytes in `finally`. Its restoration regression
+  covers interruption during the check, interruption during mutation and a partial
+  write error; the mutation cases also preserve CRLF bytes exactly. The other plants
+  retain their target checks: the compiled assumption plant is an `Elements` module,
+  and the `Staging`, `Audit` and model command plants are checked by the source scan.
+  Protected files changed in this fix round: `Certificate/Facts.lean`,
+  `Certificate/FIELDS.md`, `tests/test_certificate.py`, `scripts/negative_tests.py`
+  and `tests/test_negative_tests.py`. No foundation or expected value changes.

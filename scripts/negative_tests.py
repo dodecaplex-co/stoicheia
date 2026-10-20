@@ -975,13 +975,15 @@ def planted_assumptions() -> None:
 def certificate_constructor_counting() -> None:
     """Rebuilding constructors must not invent a coincidence step."""
     rel = "Certificate/Facts.lean"
-    saved = replace_once(
-        rel, "used.contains coincidenceStep",
-        "([`Elements.Superposition.Derives.len_congr,\n"
-        "           `Elements.Superposition.Derives.angle_congr,\n"
-        "           `Elements.Superposition.Derives.area_congr]).any used.contains",
-    )
+    path = ROOT / rel
+    saved = path.read_bytes()
     try:
+        replace_once(
+            rel, "used.contains coincidenceStep",
+            "([`Elements.Superposition.Derives.len_congr,\n"
+            "           `Elements.Superposition.Derives.angle_congr,\n"
+            "           `Elements.Superposition.Derives.area_congr]).any used.contains",
+        )
         expect_failure(
             "constructor counting reports a step in a transformer",
             run(sys.executable, "-I", "tests/test_certificate.py"),
@@ -989,7 +991,7 @@ def certificate_constructor_counting() -> None:
             "AssertionError: Lists differ: ['C.N. 4'] != []",
         )
     finally:
-        (ROOT / rel).write_text(saved)
+        path.write_bytes(saved)
     expect_success("the restored certificate regression",
                    run(sys.executable, "-I", "tests/test_certificate.py"))
 
