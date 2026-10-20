@@ -2428,6 +2428,132 @@ class Merge(Edge):
 # B: the review's findings, each with a planted commit
 
 
+class DecisionEntries(Clone):
+    """Dated entry files supply new mentions to every decision guard."""
+
+    ENTRY = "docs/decisions/2026-10-20-test.md"
+    PATH = "scripts/check_style.py"
+
+    def check_guard(self, guard, base, sha, *args):
+        rep = safe_push.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            guard(WORK, base, sha, *args, rep)
+        return rep
+
+    def protected_change(self, mention, entry=ENTRY):
+        return self.commit("Name a protected change in an entry", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+            entry: mention + "\n",
+        })
+
+    def test_new_entry_names_a_protected_path(self):
+        sha = self.protected_change(f"`{self.PATH}` changes.")
+        rep = self.check_guard(safe_push.guard_protected, BASE, sha)
+        self.assertFalse(rep.failed(), rep.steps)
+        self.assertEqual(rep.steps[-1].outcome, "ok")
+        self.assertIn(self.PATH, rep.steps[-1].detail)
+        self.assertEqual(self.text(DECISIONS), safe_push.show(WORK, BASE, DECISIONS))
+        self.assertEqual(safe_push.judged_files(WORK, BASE, sha), [])
+
+    def test_editing_an_old_entry_line_adds_no_mention(self):
+        base = self.commit("An earlier decision", {self.ENTRY: f"`{self.PATH}` changes.\n"})
+        sha = self.protected_change(f"`{self.PATH}` changes again.")
+        rep = self.check_guard(safe_push.guard_protected, base, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL")
+        self.assertIn(f"naming them: {self.PATH}", rep.failed()[0].detail)
+
+    def test_relative_entry_links_resolve_from_the_entry_folder(self):
+        for prefix, outcome in (("../../", "ok"), ("./../../", "ok"),
+                                ("../", "FAIL"), ("../../../", "FAIL"), ("./", "FAIL")):
+            with self.subTest(prefix=prefix):
+                base = git(WORK, "rev-parse", "HEAD").strip()
+                sha = self.protected_change(f"[the file]({prefix}{self.PATH}) changes.",
+                                            f"docs/decisions/2026-10-20-case-{len(prefix)}-"
+                                            f"{outcome.lower()}.md")
+                rep = self.check_guard(safe_push.guard_protected, base, sha)
+                self.assertEqual(rep.steps[-1].outcome, outcome, rep.steps)
+
+    def test_readme_and_undated_files_supply_no_approval(self):
+        for name in ("README.md", "notes.md", "2026-02-30-test.md", "0000-01-01-test.md"):
+            with self.subTest(name=name):
+                base = git(WORK, "rev-parse", "HEAD").strip()
+                sha = self.protected_change(f"`{self.PATH}` changes.",
+                                            f"docs/decisions/{name}")
+                rep = self.check_guard(safe_push.guard_protected, base, sha)
+                self.assertEqual(rep.steps[-1].outcome, "FAIL")
+                self.assertIn(f"naming them: {self.PATH}", rep.failed()[0].detail)
+
+    def test_symlink_entry_supplies_no_approval(self):
+        path = WORK / self.ENTRY
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.symlink_to("../../" + self.PATH)
+        git(WORK, "add", "--", self.ENTRY)
+        sha = self.commit("A link is not a decision entry", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+        })
+        rep = self.check_guard(safe_push.guard_protected, BASE, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL")
+        self.assertIn(f"naming them: {self.PATH}", rep.failed()[0].detail)
+
+    def test_lock_named_in_an_entry_passes(self):
+        sha = self.commit("Name the lock in an entry", {
+            safe_push.LOCK: self.text(safe_push.LOCK) + "\n# A comment for the test.\n",
+            self.ENTRY: "`Certificate/axioms.lock` gains a comment.\n",
+        })
+        for guard in (safe_push.guard_lock, safe_push.guard_protected):
+            with self.subTest(guard=guard.__name__):
+                rep = self.check_guard(guard, BASE, sha)
+                self.assertFalse(rep.failed(), rep.steps)
+                self.assertEqual(rep.steps[-1].outcome, "ok")
+
+    def test_lock_mentioned_only_in_an_edited_old_entry_is_refused(self):
+        base = self.commit("An earlier lock decision", {
+            self.ENTRY: "`Certificate/axioms.lock` gains a comment.\n",
+        })
+        sha = self.commit("Edit the old decision", {
+            safe_push.LOCK: self.text(safe_push.LOCK) + "\n# A comment for the test.\n",
+            self.ENTRY: "`Certificate/axioms.lock` gains another comment.\n",
+        })
+        rep = self.check_guard(safe_push.guard_lock, base, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL")
+        self.assertIn("no new line", rep.failed()[0].detail)
+
+    def test_statement_named_in_an_entry_passes(self):
+        path = "Elements/BookI/Prop01.lean"
+        sha = self.commit("Name a statement change in an entry", {
+            path: self.replaced(path, SIGNATURE_OLD, SIGNATURE_NEW),
+            self.ENTRY: "I.1 changes its statement.\n",
+        })
+        rep = self.check_guard(safe_push.guard_statements, BASE, sha, WORK)
+        self.assertFalse(rep.failed(), rep.steps)
+        self.assertIn("I.1 (the Lean statement changed)", rep.steps[-1].detail)
+        self.assertIn("named in the docs/decisions/ lines added", rep.steps[-1].detail)
+
+    def test_deleted_directory_named_in_an_entry_passes(self):
+        base = self.commit("A directory for the test", {"mishnah/test/note.md": "A note.\n"})
+        sha = self.commit("Name a directory deletion in an entry", {
+            self.ENTRY: "`mishnah/test/` is removed.\n",
+        }, remove=["mishnah/test"])
+        rep = self.check_guard(safe_push.guard_directories, base, sha)
+        self.assertFalse(rep.failed(), rep.steps)
+        self.assertIn("mishnah/test/", rep.steps[-1].detail)
+
+    def test_decisions_page_has_a_generated_region(self):
+        begin = "<!-- decisions:entries begin -->\n"
+        end = "<!-- decisions:entries end -->\n"
+        base = self.commit("Mark the decisions page", {
+            DECISIONS: self.text(DECISIONS) + "\n" + begin + end,
+        })
+        sha = self.commit("Assemble an entry", {
+            DECISIONS: self.text(DECISIONS).replace(begin, begin + "\nAn entry.\n\n"),
+        })
+        self.assertEqual(safe_push.generated_parts(WORK, base, sha, DECISIONS), (True, False))
+        newer = self.commit("Change the historical text", {
+            DECISIONS: "# Historical text changed.\n" + self.text(DECISIONS),
+        })
+        self.assertEqual(safe_push.generated_parts(WORK, sha, newer, DECISIONS), (False, True))
+
+
 class ProtectedPaths(Edge):
     """(1) The guards and the check scripts are origin/main's; a protected path changes
     only with a decisions entry naming it, and the label."""

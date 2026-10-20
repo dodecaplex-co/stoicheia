@@ -65,8 +65,8 @@ jobs:
         # and PROGRAM.md's status table.
         run: |
           python3 scripts/render.py
-          git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md
-          test -z "$(git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md)"
+          git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md docs/briefs/0002-decisions.md
+          test -z "$(git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md docs/briefs/0002-decisions.md)"
 
       - name: Check every relative link and anchor
         run: python3 scripts/check_links.py

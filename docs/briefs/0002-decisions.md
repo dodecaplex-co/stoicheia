@@ -1905,3 +1905,23 @@ findings:
   (WORKFLOW, section 10, step 4), and a regression runs the shared helper and the certificate
   checks to show that an updated definition or expected count cannot hide a pull request's
   E2 failure.
+
+- **Decision entries, one file each (tooling).** Nearly every pull request appends to this
+  page, so any two queued together collide at its end: of the last 30 merged pull requests
+  (#98 to #148), 24 changed it, and of 29 consecutive pairs, 16 would have conflicted had
+  they been queued together, 13 of them on this page alone. So a decisions entry may now be a
+  file of its own, `docs/decisions/<YYYY-MM-DD>-<slug>.md` ([its folder's note](../decisions/README.md)),
+  and `scripts/render.py` assembles the entries, in file-name order, between the
+  `decisions:entries` markers at the end of this page, under their date headings, leaving out
+  a heading that would repeat the one before it. Readers see the same page; the entries
+  between the markers are generated output, the integrator's (WORKFLOW, section 4), and CI's
+  freshness check now reads this page as well. With no entry files the page is unchanged.
+  Every guard that asks for a new line in this page (a statement changed, the axiom lock, a
+  protected path, a deleted directory) also accepts a new line in a dated entry file, a
+  relative link in an entry resolving from `docs/decisions/`; an old line edited in place
+  still does not count. The entries already on this page stay where they are. The protected
+  files changed: `scripts/render.py`, `scripts/safe_push.py`, `scripts/test_safe_push.py`,
+  `tests/test_render_decisions.py` and `.github/workflows/ci.yml`.
+
+<!-- decisions:entries begin -->
+<!-- decisions:entries end -->

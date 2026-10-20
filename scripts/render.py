@@ -17,6 +17,9 @@ every book in `heath.BOOKS`:
     docs/PROGRAM.md    only the status table between `<!-- status -->` and
                        `<!-- /status -->`, with the stage, the outside score and the
                        release read from `docs/program.toml`
+    docs/briefs/0002-decisions.md
+                       only the final `decisions:entries` region, assembled from the
+                       dated files in `docs/decisions/`
 
 A page of a later book links each proposition it cites from an earlier one, as
 [I.47](../I/47.md) on a page of Book II, and a porism to its anchor, as
@@ -41,6 +44,7 @@ later for the review records (tomllib).
 import functools
 import json
 import re
+from datetime import date
 
 import check_fidelity
 import heath
@@ -2182,6 +2186,56 @@ def program_page(text, facts, records, program):
                               count=1)
 
 
+DECISIONS = ROOT / "docs" / "briefs" / "0002-decisions.md"
+DECISION_ENTRIES = ROOT / "docs" / "decisions"
+DECISION_BEGIN = "<!-- decisions:entries begin -->"
+DECISION_END = "<!-- decisions:entries end -->"
+DECISION_FILE = re.compile(r"([0-9]{4}-[0-9]{2}-[0-9]{2})-[a-z0-9]+(?:-[a-z0-9]+)*\.md")
+DECISION_DATE = re.compile(r"(?m)^ {0,3}##[ \t]+\d{1,2} [A-Za-z]+ \d{4}(?:[ \t]+#+)?[ \t]*$")
+MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August",
+          "September", "October", "November", "December")
+
+
+def decisions_page(text, folder):
+    """Fill the page's final marked region with decision entries in filename order.
+    The filename supplies the date; entries supply the text without a date heading.
+    A date already heading the preceding text is not repeated. Invalid inputs stop
+    the render; the historical text and the markers stay as they are."""
+    pattern = re.compile(r"(?m)^(" + re.escape(DECISION_BEGIN) + r"\n).*?^("
+                         + re.escape(DECISION_END) + r")\n?\Z", re.S)
+    markers = pattern.search(text)
+    if text.count(DECISION_BEGIN) != 1 or text.count(DECISION_END) != 1 or not markers:
+        raise SystemExit("docs/briefs/0002-decisions.md needs one pair of decisions:entries "
+                         "markers on separate lines at the page's end")
+    headings = re.findall(r"(?m)^## ([^\n]+)$", text[:markers.start()])
+    previous = headings[-1].strip() if headings else None
+    parts = []
+    for path in sorted(folder.iterdir()):
+        if path.name == "README.md":
+            continue
+        match = DECISION_FILE.fullmatch(path.name)
+        if not match or path.is_symlink() or not path.is_file():
+            raise SystemExit(f"docs/decisions/{path.name}: expected YYYY-MM-DD-slug.md, "
+                             "a regular file")
+        try:
+            day = date.fromisoformat(match.group(1))
+        except ValueError:
+            raise SystemExit(f"docs/decisions/{path.name}: invalid date") from None
+        entry = path.read_text(encoding="utf-8").strip("\n")
+        if not entry.strip() or DECISION_DATE.search(entry):
+            raise SystemExit(f"docs/decisions/{path.name}: expected entry text without "
+                             "a date heading")
+        if DECISION_BEGIN in entry or DECISION_END in entry:
+            raise SystemExit(f"docs/decisions/{path.name}: entry text contains page markers")
+        heading = f"{day.day} {MONTHS[day.month - 1]} {day.year:04d}"
+        if heading != previous:
+            parts.append(f"## {heading}")
+            previous = heading
+        parts.append(entry)
+    body = "\n" + "\n\n".join(parts) + "\n\n" if parts else ""
+    return text[:markers.start()] + markers.group(1) + body + text[markers.start(2):]
+
+
 def heath_edges(book, count):
     """The arrows of a book's graph from Heath's references: a (cited, citing) pair of
     propositions for each earlier proposition that a proposition's enunciation or proof
@@ -2434,6 +2488,8 @@ def main() -> None:
                          "is used, or of a record's order of companions; nothing was "
                          "rendered:\n" + "\n".join("  ✗ " + f for f in faults))
     print(f"self-check: the listing and the Proof row read {count} cases rightly")
+    decisions = DECISIONS.read_bytes().decode("utf-8")
+    filled_decisions = decisions_page(decisions, DECISION_ENTRIES)
     facts = load_facts()
     docs = load_axiom_docs()
     records = load_records()
@@ -2457,8 +2513,10 @@ def main() -> None:
     filled = program_page(text, facts, records, load_program())
     if filled != text:
         PROGRAM.write_text(filled)
+    if filled_decisions != decisions:
+        DECISIONS.write_bytes(filled_decisions.encode("utf-8"))
     print("rendered book pages, the table of names, CERTIFICATE.md, GRAPH.md, README.md's "
-          "scope summaries and PROGRAM.md's status table")
+          "scope summaries, PROGRAM.md's status table and the decision entries")
 
 
 if __name__ == "__main__":

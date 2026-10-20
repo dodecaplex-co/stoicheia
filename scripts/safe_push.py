@@ -241,6 +241,8 @@ GENERATED = ("facts.json", "book/", "CERTIFICATE.md", "GRAPH.md", "README.md", "
 GENERATED_REGIONS = {
     "README.md": re.compile(r"<!-- scope:([IVX]+) -->.*?<!-- /scope:\1 -->", re.S),
     "docs/PROGRAM.md": re.compile(r"<!-- status -->\n.*?<!-- /status -->", re.S),
+    DECISIONS: re.compile(r"<!-- decisions:entries begin -->\n.*?"
+                          r"<!-- decisions:entries end -->", re.S),
 }
 CI_APPEAR_TIMEOUT = 300   # seconds to wait for the checks to appear after the push
 CI_POLL = 10              # seconds between looks for them (both shortened by the tests)
@@ -1205,6 +1207,35 @@ def names_ref(text: str, ref: str) -> bool:
     return ref_count(text, ref) > 0
 
 
+def decision_hunks(repo, base, sha) -> list[Hunk]:
+    """The decisions page's changes and those of dated entry files. The folder's
+    README, invalid dates and files outside the entry filename form supply no
+    approval. An entry must be a regular file at the revision being checked."""
+    entries = {}
+    found = []
+    for h in diff_hunks(repo, base, sha, DECISIONS, "docs/decisions/"):
+        if h.path == DECISIONS:
+            found.append(h)
+            continue
+        match = re.fullmatch(
+            r"docs/decisions/([0-9]{4}-[0-9]{2}-[0-9]{2})-[a-z0-9]+(?:-[a-z0-9]+)*\.md",
+            h.path or "")
+        if not match:
+            continue
+        try:
+            datetime.date.fromisoformat(match.group(1))
+        except ValueError:
+            continue
+        if h.path not in entries:
+            fields = git(repo, "ls-tree", sha, "--", h.path).split()
+            if len(fields) != 4 or fields[3] != h.path:
+                raise Refusal(f"could not read the decision entry {h.path} at {sha}")
+            entries[h.path] = fields[0] in ("100644", "100755") and fields[1] == "blob"
+        if entries[h.path]:
+            found.append(h)
+    return found
+
+
 def guard_statements(repo, base, sha, wt: Path, rep: Report) -> list[str]:
     """The statements changed with a brief or decision naming them, for the body."""
     t = time.time()
@@ -1222,6 +1253,7 @@ def guard_statements(repo, base, sha, wt: Path, rep: Report) -> list[str]:
             if re.search(r"(?m)^theorem Prop%d\.porism\s" % n, src):
                 refs.add(f"{book}.{n} Por.")
     briefs = diff_hunks(repo, base, sha, BRIEFS)
+    entries = [h for h in decision_hunks(repo, base, sha) if h.path != DECISIONS]
     changed, approved, new = [], [], []
     for ref in sorted(refs, key=lambda r: (heath.prop_key(r), r)):
         r = heath.parse_ref(ref)
@@ -1243,10 +1275,14 @@ def guard_statements(repo, base, sha, wt: Path, rep: Report) -> list[str]:
             if old_sig is None and ref not in old_facts:
                 new.append(ref)
             continue
-        if gains(briefs, lambda text: ref_count(text, ref)):
-            approved.append(f"{ref} ({'; '.join(why)}), named in the docs/briefs/ lines added")
+        brief_named = gains(briefs, lambda text: ref_count(text, ref))
+        entry_named = gains(entries, lambda text: ref_count(text, ref))
+        if brief_named or entry_named:
+            source = BRIEFS if brief_named else "docs/decisions/"
+            approved.append(f"{ref} ({'; '.join(why)}), named in the {source} lines added")
         else:
             changed.append(f"{ref}: {'; '.join(why)}, and no new line in docs/briefs/ "
+                           "or docs/decisions/ "
                            f"(a brief's revision or a decisions entry) names {r.parent}; "
                            "the push must add a mention: an old line that already named "
                            "it, edited in place, does not count")
@@ -1273,27 +1309,28 @@ def guard_lock(repo, base, sha, rep: Report) -> None:
     if git_ok(repo, "diff", "--quiet", f"{base}..{sha}", "--", LOCK):
         rep.add("3", "axiom lock", "ok", f"{LOCK} unchanged")
         return
-    if gains(diff_hunks(repo, base, sha, DECISIONS), lambda t: len(LOCK_MENTION.findall(t))):
-        rep.add("3", "axiom lock", "ok", f"{LOCK} changed, and {DECISIONS} gains a line "
-                "mentioning the lock")
+    if gains(decision_hunks(repo, base, sha), lambda t: len(LOCK_MENTION.findall(t))):
+        rep.add("3", "axiom lock", "ok", f"{LOCK} changed, and {DECISIONS} or an entry in "
+                "docs/decisions/ gains a line mentioning the lock")
     else:
         rep.add("3", "axiom lock", "FAIL", f"{LOCK} changed, and no new line in {DECISIONS} "
-                "mentions the lock (\"axioms.lock\" or \"axiom lock\"; the push must add a "
+                "or an entry in docs/decisions/ mentions the lock (\"axioms.lock\" or "
+                "\"axiom lock\"; the push must add a "
                 "mention: an old line that already mentioned it, edited in place, does not "
                 "count)")
 
 
 def guard_protected(repo, base, sha, rep: Report) -> list[str]:
-    """A protected path changes only with a new line in the decisions page naming the
-    file; the pull request then carries the label security-review. The files, for the
-    body and the merge."""
+    """A protected path changes only with a new line in the decisions page or an entry
+    naming the file; the pull request then carries the label security-review.
+    The files, for the body and the merge."""
     files = protected_files(repo, base, sha)
     if not files:
         rep.add("3", "protected paths", "ok", "none changed")
         return []
-    decisions = diff_hunks(repo, base, sha, DECISIONS)
+    decisions = decision_hunks(repo, base, sha)
 
-    # The path whole, from the repository's root, or from the decisions page by a relative
+    # The path whole, from the repository's root, or from the decision's file by a relative
     # link resolved from its folder (../../), or anchored at the root (/model/lock.sha256), as
     # check_links.py reads one; never the tail of a longer path, so that a line naming
     # tests/model/lock.sha256 names no model/lock.sha256, nor one naming
@@ -1304,24 +1341,27 @@ def guard_protected(repo, base, sha, rep: Report) -> list[str]:
         pattern = re.compile(r"(?<![\w/.-])(?P<prefix>/|(?:\.\.?/)*)%s(?!\.?[\w/-])"
                              % re.escape(path))
 
-        def count(text):
+        def count(text, source):
             return sum(
                 not m.group("prefix").startswith(".")
-                or posixpath.normpath(posixpath.join(posixpath.dirname(DECISIONS), m.group()))
+                or posixpath.normpath(posixpath.join(posixpath.dirname(source), m.group()))
                 == path
                 for m in pattern.finditer(text))
 
-        return gains(decisions, count)
+        return any(gains([h], lambda text: count(text, h.path)) for h in decisions)
 
     unnamed = [p for p in files if not named(p)]
     if unnamed:
         rep.add("3", "protected paths", "FAIL",
-                f"changed with no new line in {DECISIONS} naming them: {', '.join(unnamed)} "
+                f"changed with no new line in {DECISIONS} or an entry in docs/decisions/ "
+                f"naming them: {', '.join(unnamed)} "
                 f"(a protected change is named file by file in a decisions entry, and its "
                 f"pull request carries the label {SECURITY_LABEL})")
     else:
+        source = DECISIONS if not any(h.path != DECISIONS for h in decisions) \
+            else f"{DECISIONS} or docs/decisions/"
         rep.add("3", "protected paths", "ok",
-                f"changed, each named in {DECISIONS}: {', '.join(files)}; the pull request "
+                f"changed, each named in {source}: {', '.join(files)}; the pull request "
                 f"carries the label {SECURITY_LABEL}, and needs /security-review")
     return files
 
@@ -1404,7 +1444,7 @@ def guard_directories(repo, base, sha, rep: Report) -> None:
     if not top:
         rep.add("3", "directories", "ok", f"none deleted under {', '.join(GUARDED_DIRS)}")
         return
-    decisions = diff_hunks(repo, base, sha, DECISIONS)
+    decisions = decision_hunks(repo, base, sha)
 
     def named(d):
         pattern = re.compile(r"(?<![\w/.-])%s/?(?![\w./-])" % re.escape(d))
@@ -1413,9 +1453,11 @@ def guard_directories(repo, base, sha, rep: Report) -> None:
     unnamed = [d for d in top if not named(d)]
     if unnamed:
         rep.add("3", "directories", "FAIL", f"deleted with no new line in {DECISIONS} "
+                "or an entry in docs/decisions/ "
                 f"naming them: {', '.join(d + '/' for d in unnamed)}")
     else:
-        rep.add("3", "directories", "ok", f"deleted, each named in {DECISIONS}: "
+        rep.add("3", "directories", "ok", f"deleted, each named in {DECISIONS} or "
+                "docs/decisions/: "
                 f"{', '.join(d + '/' for d in top)}")
 
 
@@ -1533,7 +1575,8 @@ def passes(repo, base, wt: Path, changes: list[tuple[str, str]]):
 # page and the briefs among them. The edition itself stays judged: the Lean, Heath's text,
 # the commentary, the records, the figures, the reports and the reading list.
 GUIDES = ("AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "docs/WORKFLOW.md",
-          "docs/FORMALIZATION.md", "docs/STYLE.md", "docs/briefs/", "docs/templates/")
+          "docs/FORMALIZATION.md", "docs/STYLE.md", "docs/briefs/", "docs/templates/",
+          "docs/decisions/")
 # A review record's stamp: its reviewer's reading of a statement and a Lean file, as a
 # change to the certificate's output asks for (WORKFLOW, section 6). Not its stage.
 STAMP_LINE = re.compile(r'(?m)^(?:fingerprint|commit|lean|reviewer)\s*=\s*"[^"]*"[ \t]*$')

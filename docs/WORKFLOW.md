@@ -163,6 +163,8 @@ files working in parallel, the renderers, and an integrator followed by blind re
   with `docs/program.toml`, and the CI workflow, and may hand the lock, the decisions page,
   PROGRAM.md and the CI workflow to a wave's integrator. The integrator
   owns the generated edition: `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`,
+  the entries in `docs/briefs/0002-decisions.md` between the
+  `<!-- decisions:entries begin -->` and `<!-- decisions:entries end -->` markers,
   README.md's rows between the `<!-- scope:… -->` markers and PROGRAM.md's status table
   between the `<!-- status -->` markers, which `render.py` fills; the rest of README.md has
   an owner of its own, named in the orders. The integrator also owns the companions list,
@@ -298,7 +300,7 @@ python3 scripts/check_fidelity.py
 python3 -I tests/test_check_style.py
 python3 scripts/check_style.py
 python3 scripts/render.py
-git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md   # prints nothing
+git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md docs/briefs/0002-decisions.md   # prints nothing
 python3 scripts/check_links.py
 ```
 
@@ -512,20 +514,21 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    3. *Invariant guards,* against origin/main, in the temporary worktree:
       - no statement changed (facts.json's `statement`, and the Lean source of the
         theorem, its porism and its companions, to its own `:=`, whitespace aside) unless
-        the push adds a new line to `docs/briefs/`, a brief's revision or a decisions
-        entry, that names the proposition (section 2);
+        the push adds a new line to `docs/briefs/` or a dated entry in `docs/decisions/`,
+        a brief's revision or a decisions entry, that names the proposition (section 2);
       - `Certificate/axioms.lock` unchanged unless
-        [0002-decisions.md](briefs/0002-decisions.md) gains a new line mentioning the
-        lock;
-      - no protected path changed unless 0002-decisions.md gains a new line naming each
-        file changed (below);
+        [0002-decisions.md](briefs/0002-decisions.md) or a dated entry in
+        [docs/decisions/](decisions/README.md) gains a new line mentioning the lock;
+      - no protected path changed unless 0002-decisions.md or a dated entry in
+        docs/decisions/ gains a new line naming each file changed (below);
       - every change to `heath/` carries a comment naming a scan leaf of its own pages, as
         origin/main's copy of the file lists them ([STYLE.md](STYLE.md), section 5);
       - no review record stale (`check_fidelity.py`, on the commit as committed);
       - the generated pages current (`render.py`, on the commit as committed, changes
         nothing);
       - no whole directory of `Elements/`, `heath/`, `review/`, `figures/` or `mishnah/`
-        deleted unless the decisions page gains a new line naming it.
+        deleted unless the decisions page or a dated entry in docs/decisions/ gains a
+        new line naming it.
 
       For each of these, the push must add a mention: an old line that already named the
       thing, edited in place, does not count.
@@ -655,9 +658,10 @@ and the formal model's build files (`model/lakefile.toml`, `model/lakefile.lean`
 the lock the model was last checked against). Since 19 October, `model/Model/Audit.lean`
 and `model/Model.lean` join them, because they pin the model's proofs to `propext`,
 `Classical.choice` and `Quot.sound` with `Elements` absent, and include that audit in the
-build. A change to any of them needs a new line in the decisions page naming each file
-changed, by its whole path (from the root, or by a relative link that resolves from
-`docs/briefs/`, the decisions page's folder, to exactly that path: for
+build. A change to any of them needs a new line in the decisions page or a dated entry
+in `docs/decisions/` naming each file changed, by its whole path (from the root, or by a
+relative link that resolves from the file's folder, `docs/briefs/` for the page or
+`docs/decisions/` for an entry, to exactly that path: for
 `model/Model/Audit.lean`, `../../model/Model/Audit.lean` counts, but
 `../model/Model/Audit.lean`, `../../../model/Model/Audit.lean` and
 `./model/Model/Audit.lean` do not; a line naming `tests/model/lock.sha256` does not name
