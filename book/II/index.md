@@ -2,7 +2,7 @@
 
 # Book II
 
-**All 14 propositions proved in Lean**, every one as Euclid states it. Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences. Every proof uses the parallel postulate: II.10's directly, where Euclid calls on it, and the others through the propositions they cite.
+**All 14 propositions proved in Lean**: 13 as Euclid states them and 1 for a restricted statement ([II.14](14.md)). Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences. Every proof uses the parallel postulate: II.10's directly, where Euclid calls on it, and the others through the propositions they cite.
 
 Key to the table: ✅ proved. The Lean statement is *whole*, as Euclid states it; *restricted*, with hypotheses that leave out cases his words admit; or *in part*, leaving a clause to his words. Each page says how.
 
@@ -41,4 +41,4 @@ Books and papers to read alongside, from Proclus to Lean, are gathered by theme 
 | ✅ | [II.11](11.md) **A straight line cut so that the rectangle equals the square** | whole | To cut a given straight line so that the rectangle contained by the whole and one of the segments is equal… |
 | ✅ | [II.12](12.md) **The square on the side subtending the obtuse angle** | whole | In obtuse-angled triangles the square on the side subtending the obtuse angle is greater than the squares… |
 | ✅ | [II.13](13.md) **The square on the side subtending the acute angle** | whole | In acute-angled triangles the square on the side subtending the acute angle is less than the squares on… |
-| ✅ | [II.14](14.md) **A square equal to a given rectilineal figure** | whole | To construct a square equal to a given rectilineal figure. |
+| ✅ | [II.14](14.md) **A square equal to a given rectilineal figure** | restricted | To construct a square equal to a given rectilineal figure. |
