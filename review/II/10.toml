@@ -15,7 +15,7 @@ note = "Euclid cuts CE equal to AC on the perpendicular, taking enough room for 
 at = "and through D let FD be drawn parallel to CE"
 kind = "helper"
 helper = "Prop31.parallelogram"
-note = "Euclid draws the parallel through D and takes its meeting F with EF from the figure. `Prop31.parallelogram` carries I.31's construction together with that meeting, using I.30, and proves that ECDF is a parallelogram."
+note = "Euclid draws the parallel through D and takes its meeting F with EF from the figure. `BookI.Prop31.parallelogram` carries I.31's construction together with that meeting, using I.30, and proves that ECDF is a parallelogram."
 
 [[passage]]
 at = "therefore the angles FEB, EFD are less than two right angles"

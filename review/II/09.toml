@@ -21,19 +21,19 @@ note = "Euclid draws CE perpendicular to AB and equal to AC, without a reference
 at = "let DF be drawn through D parallel to EC"
 kind = "helper"
 helper = "Prop30.meet"
-note = "Euclid draws the parallel through D and reads F between E and B from the figure. The Lean draws it by I.31, finds F by `Prop30.meet` and proves its position with `Between.of_sameSide`."
+note = "Euclid draws the parallel through D and reads F between E and B from the figure. The Lean draws it by I.31, finds F by `BookI.Prop30.meet` and proves its position with `Between.of_sameSide`."
 
 [[passage]]
 at = "and FG through F parallel to AB"
 kind = "helper"
 helper = "Prop31.parallelogram"
-note = "Euclid draws FG parallel to AB and takes G on EC. `Prop31.parallelogram` finds G and proves that CDFG is a parallelogram, and `Between.of_sameSide` places G between E and C."
+note = "Euclid draws FG parallel to AB and takes G on EC. `BookI.Prop31.parallelogram` finds G and proves that CDFG is a parallelogram, and `Between.of_sameSide` places G between E and C."
 
 [[passage]]
 at = "the angle EAC is also equal to the angle AEC"
 kind = "helper"
 helper = "Prop5.base"
-note = "Euclid infers equal angles at A and E from AC equal to CE. The Lean uses I.5 in its base-angle form, `Prop5.base`; Heath gives no reference here."
+note = "Euclid infers equal angles at A and E from AC equal to CE. The Lean uses I.5 in its base-angle form, `BookI.Prop5.base`; Heath gives no reference here."
 
 [[passage]]
 at = "therefore the whole angle AEB is right"

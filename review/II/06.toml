@@ -10,13 +10,13 @@ kind = "euclid"
 at = "and let DE be joined"
 kind = "grouped"
 helper = "Parallelogram.figure"
-note = "Euclid joins DE and draws the parallels through B and H; `between_inner`, beneath the setting-out, puts B between C and D. `Parallelogram.figure` carries the three constructions together, drawing the parallels by I.31, finding their meetings by `Prop30.meet`, proving the further parallels by I.30 and ordering their points by `Parallel.between`."
+note = "Euclid joins DE and draws the parallels through B and H; `between_inner`, beneath the setting-out, puts B between C and D. `Parallelogram.figure` carries the three constructions together, drawing the parallels by I.31, finding their meetings by `BookI.Prop30.meet`, proving the further parallels by I.30 and ordering their points by `Parallel.between`."
 
 [[passage]]
 at = "and further through A let AK be drawn parallel"
 kind = "helper"
 helper = "Prop31.parallelogram"
-note = "Euclid draws AK parallel to CL and takes K on KM from the figure; `Prop31.parallelogram` draws the parallel by I.31, finds K by `Prop30.meet` and proves that LCAK is a parallelogram. `Parallelogram.complements` uses I.30 to prove CH and HF are parallelograms; CH is then used by I.36, in the division of CM, and by I.34 to identify the side HL of LG with BC."
+note = "Euclid draws AK parallel to CL and takes K on KM from the figure; `BookI.Prop31.parallelogram` draws the parallel by I.31, finds K by `BookI.Prop30.meet` and proves that LCAK is a parallelogram. `Parallelogram.complements` uses I.30 to prove CH and HF are parallelograms; CH is then used by I.36, in the division of CM, and by I.34 to identify the side HL of LG with BC."
 
 [[passage]]
 at = "Let CM be added to each"
@@ -34,7 +34,7 @@ note = "Euclid takes AM as AL and CM together. The Lean uses the order A, C, D p
 at = "But AM is the rectangle AD, DB"
 kind = "helper"
 helper = "Square.about_diameter"
-note = "Euclid takes DM equal to DB from the square BM and treats AM as a rectangle. `Square.about_diameter` proves BM a square, `Prop30.parallel` (I.30, for which Heath gives no reference here) makes AK parallel to DM, and `Rectangle.of_right` (I.29) and `Rectangle.eq_rect` identify AM."
+note = "Euclid takes DM equal to DB from the square BM and treats AM as a rectangle. `Square.about_diameter` proves BM a square, `BookI.Prop30.parallel` (I.30, for which Heath gives no reference here) makes AK parallel to DM, and `Rectangle.of_right` (I.29) and `Rectangle.eq_rect` identify AM."
 
 [[passage]]
 at = "Let LG, which is equal to the square on BC"
