@@ -1773,3 +1773,50 @@ findings:
   protected files changed. The overlap catalogue and the guides say what the check
   covers: Book Zero lemmas are not entries, so it covers them only through entries that
   use them. Nothing is loosened.
+
+- **The merge commit names the owner GitHub names
+  ([#41](https://github.com/jackChallis/stoicheia/issues/41)).** `git safe-push --merge`
+  gives the merge commit GitHub's own subject, "Merge pull request #N from owner/branch",
+  and took the owner from origin's URL, which after a transfer or a rename, both of which
+  GitHub redirects, would name the old one. It now takes the owner GitHub reports for the
+  pull request's head (`headRepositoryOwner`), read by the gates with the branch name and
+  the title, and a new gate, "subject", shows the subject before the merge and refuses the
+  merge when GitHub names no owner, or none an account could have (a login of letters,
+  digits and hyphens), before gh is asked. Nothing the merge checked before is loosened.
+  The files changed are [`scripts/safe_push.py`](../../scripts/safe_push.py)
+  (`merge_subject`, beside `gates` and `merge`, and its docstring) and
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) (a test, with the
+  stand-in for gh naming no owner, five owners no account could have, then a new one,
+  which fails before the change), with
+  [WORKFLOW](../WORKFLOW.md), section 10, "Landing work: pull requests", step 4.
+- **A merge is GitHub's word, never gh's exit alone
+  ([#42](https://github.com/jackChallis/stoicheia/issues/42)).** With a merge queue or
+  auto-merge on, `gh pr merge` exits 0 having only queued the pull request; `--merge` took
+  that for a merge, judged origin/main's last commit as the merge commit, and would then
+  have advised reverting the wrong commit. Neither is on today. Whatever gh's exit, GitHub
+  is now asked, and success is reported only when GitHub says the pull request is merged
+  and origin/main holds the merge commit GitHub names (a full object name). gh exiting 0
+  with the pull request not merged, GitHub naming no merge commit or one origin/main does
+  not hold, GitHub not to be asked, or giving no state, is "merge state unknown", exit 3,
+  with no revert advised, since nothing on main is known to be the merge. Nothing is
+  loosened: a merge that happened, or may have, is still never exit 1, and three cases are
+  now more cautious than before: GitHub giving no state after gh failed, once "nothing was
+  merged", exit 1; GitHub not to be asked after gh exited 0, once a merge; and an
+  interruption while GitHub is asked after gh exited 0, once "merged", exit 3. One test's
+  expectation moves with the last, the more cautious way:
+  `test_interrupted_after_gh_merged_is_merged` is now
+  `test_interrupted_after_gh_exits_0_is_unknown`, still exit 3, and expects "merge state
+  unknown" where it expected "merged". The change's independent review found four answers
+  GitHub could give that the merge misread or crashed on, and we thank it: an owner that
+  is no account's name (above), a state that is none of OPEN, CLOSED and MERGED (once
+  "nothing was merged", exit 1, though gh had merged), and a merge commit named by
+  something other than its full object name, or by nothing, which was fetched and judged
+  before the merge state was settled. Each is now refused by the gate, or "merge state
+  unknown" before anything is fetched, with tests. The files changed are
+  [`scripts/safe_push.py`](../../scripts/safe_push.py) (`merge_outcome`, `verify_merge`,
+  `merge_main`, a new refusal `MergeUnknown`, and its docstring) and
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) (three ways for the
+  stand-in for gh to exit 0 with no merge on main that GitHub vouches for, a way for
+  GitHub to give any answer a test needs, and six new tests, each failing before the
+  change), with
+  [WORKFLOW](../WORKFLOW.md), section 10, "Landing work: pull requests", step 4.
