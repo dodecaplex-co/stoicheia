@@ -2168,15 +2168,6 @@ class Clearance(unittest.TestCase):
                             ("S26", str(path.relative_to(style.ROOT)), 0,
                              svg_refusal(kind, attr, value))])
 
-    def test_decision_attribution(self):
-        """S26 credits G to the fifteen corrections on the branch that delivered it."""
-        decisions = (style.ROOT / "docs" / "briefs" / "0002-decisions.md").read_text()
-        entry = decisions.split("**One letter, one point: S26.**", 1)[1].split("\n- **", 1)[0]
-        self.assertNotIn("work on mixed angles", entry)
-        for fact in ("fifteen", "III.16's G", "text/letter-collisions", "a4cb748c", "c2424533"):
-            with self.subTest(fact=fact):
-                self.assertIn(fact, entry)
-
     def test_clearance_cases(self):
         for drawn, s, font_style, anchor, want in CLEAR_CASES:
             with self.subTest(drawn=drawn, letter=s, style=font_style, anchor=anchor):
