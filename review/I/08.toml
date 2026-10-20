@@ -40,15 +40,23 @@ note = "This figure draws the impossible supposition: G distinct from D on the s
 
 [review]
 stage = "full"
-commit = "bda0636"
-reviewer = "Codex (gpt-6-astra), independent reader"
-run = "brief 0009, superposition replacement, ship S"
-lean = "sha256:aee71423ac8b5639"
+commit = "0085b443"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+run = "brief 0009, coincidence marker and approval, ship S2"
+lean = "sha256:357daf55d17591d1"
 
 [review.items]
 statement = "pass"
 passages = "pass"
-representations = "n/a"
+# P13 applies to the represented derivation. Checked the six point symbols against A to F,
+# the line symbol against EF, and every given literal and guard against its proof.
+# Checked Atom/Lit/Metric.Holds, their holds_map bridges, Derives.sound and Rule.apply.
+# The BCA placement is EC'G, with C' on the ray EF, G on D's side of EF, all three lengths
+# and angles kept, and BA kept as the side through E and G. Checked the cited laws,
+# including holds_prop7 and SameSideOf.of_line for that EF,
+# after I.7 in the dependency order. Only the equality of BAC and EDF is exported as an
+# angle equality about the given figure, with no C', G or kept side.
+representations = "pass"
 commentary = "pass"
 figures = "pass"
 signoff = "pass"

@@ -53,15 +53,23 @@ note = "The two remaining angle equalities follow inside the placement from the 
 
 [review]
 stage = "full"
-commit = "bda0636"
-reviewer = "Codex (gpt-6-astra), independent reader"
-lean = "sha256:60f0b567d585498a"
-run = "brief 0009, superposition replacement, ship S"
+commit = "0085b443"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:6c1e94da2ef25d4e"
+run = "brief 0009, coincidence marker and approval, ship S2"
 
 [review.items]
 statement = "pass"
 passages = "pass"
-representations = "n/a"
+# P13 applies to the represented derivation. Checked the six point symbols against A to F,
+# the line symbols against DE and DF, and every given literal and guard against its proof.
+# Checked Atom/Lit/Metric.Holds, their holds_map bridges, Derives.sound and Rule.apply.
+# The ABC placement is DB'C', with B' on the ray DE and C' on F's side of DE; all three
+# kept lengths and angles match their originals, with distinctness derived from lengths.
+# The kept side AC supplies the line through D and C' for the angle-to-ray laws; the cited
+# laws have their geometric proofs before I.4. Checked all four exported metric formulas:
+# only the base, area and two remaining angle equalities leave, with no B', C' or kept side.
+representations = "pass"
 commentary = "pass"
 figures = "pass"
 signoff = "pass"
