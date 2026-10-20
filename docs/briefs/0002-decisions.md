@@ -1538,3 +1538,10 @@ findings:
   the keys and when an item counts, so the schema's `items` row and the sentence after the
   table now say so and link it. Wording only: no field, rule or check of the schema changes.
   This entry names the protected file `review/SCHEMA.md`.
+
+- **III.37 leaves the grouped-case example.** The example in the `uncarried_runs` docstring
+  of [scripts/check_fidelity.py](../../scripts/check_fidelity.py) drops III.37, whose case
+  with the centre on AC gets a proof of its own, `Prop37.centre_on_secant`, on ship R1's
+  train. The docstring holds before and after that train lands. I.14 remains as the example
+  of a "similarly" that one argument already covers. The docstring is the only change to
+  the script; the check is unchanged.

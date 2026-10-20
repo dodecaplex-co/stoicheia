@@ -819,7 +819,7 @@ def uncarried_runs(src: str, n: int) -> list:
 
     In Books I-III this finds runs of several kinds, among them the closing sentences of
     reductios (III.4, III.5, III.6, III.7, III.19), a "similarly" that one argument
-    already covers (I.14, III.37), a sentence that the Lean above it carries (II.10,
+    already covers (I.14), a sentence that the Lean above it carries (II.10,
     III.14), a setting-out or an "I say that" that the statement gives (I.13, I.21,
     I.23), a join that needs no object of its own (I.6), and III.16's last part: its
     conclusion, then the angle of the semicircle and the horn-like angle."""
