@@ -535,10 +535,12 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       copies; when the pull request changes any of them, the checks run again with its own
       copies, which must pass. A check that fails with origin/main's copies is noted in
       the pull request for the security review, and refuses the pull request if it also
-      changes what the checks judge (anything but the protected paths, the guides and
-      briefs, the generated pages and a review record's stamp): the check change goes
-      first, in a pull request of its own. Two kinds of failure are only noted. Pages gone
-      stale under origin/main's `render.py`, or `facts.json` rewritten by origin/main's
+      changes what the checks judge (anything but the guides and briefs, the generated
+      pages, a review record's stamp, and the protected paths other than `Audit/`,
+      `Audit.lean`, `model/Model/Audit.lean`, `model/Model.lean` and the model's build
+      files): the check change goes first, in a pull request of its own. Two kinds of
+      failure are only noted. Pages gone stale under origin/main's `render.py`, or
+      `facts.json` rewritten by origin/main's
       certificate, show the generator's change in the pages' diff; a failure of
       `render.py` itself, its check of `docs/program.toml` among them, is a verdict. And
       the values pinned to the edition move with the content they pin (a re-proof that
@@ -635,12 +637,28 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
 **Protected paths.** `scripts/` (the hook and the launcher included), `.github/`,
 `Certificate/` (the lock included), `tests/`, `review/SCHEMA.md`, `review/terms.toml`,
 `.gitattributes`, `.gitignore` (a rule added there hides untracked files from
-`git status`, and so from the check that the generated pages are current), and the
+`git status`, and so from the check that the generated pages are current), the
 toolchain files (`lakefile.toml`, `lakefile.lean`, which Lake reads in preference to
-`lakefile.toml` and runs, `lean-toolchain`, `lake-manifest.json`). A change to any of them
-needs a new line in the decisions page naming each file changed, the label
-`security-review`, and a `/security-review` recorded in the pull request; weakening a
-check stays a decision of the owner's ([FORMALIZATION.md](FORMALIZATION.md), section 1).
+`lakefile.toml` and runs, `lean-toolchain`, `lake-manifest.json`), and, since 18 October
+(#96), `Audit/`, the audit lemmas whose pinned axiom lists back the overlap catalogue's
+claims, with `Audit.lean`, the root that decides which of them `lake build Audit` checks,
+and the formal model's build files (`model/lakefile.toml`, `model/lakefile.lean`,
+`model/lean-toolchain`, `model/lake-manifest.json`, and `model/lock.sha256`, the hash of
+the lock the model was last checked against). Since 19 October, `model/Model/Audit.lean`
+and `model/Model.lean` join them, because they pin the model's proofs to `propext`,
+`Classical.choice` and `Quot.sound` with `Elements` absent, and include that audit in the
+build. A change to any of them needs a new line in the decisions page naming each file
+changed, by its whole path (from the root, or by a relative link that resolves from
+`docs/briefs/`, the decisions page's folder, to exactly that path: for
+`model/Model/Audit.lean`, `../../model/Model/Audit.lean` counts, but
+`../model/Model/Audit.lean`, `../../../model/Model/Audit.lean` and
+`./model/Model/Audit.lean` do not; a line naming `tests/model/lock.sha256` does not name
+`model/lock.sha256`), the label `security-review`, and a `/security-review` recorded in
+the pull request; weakening a check stays a decision of the owner's
+([FORMALIZATION.md](FORMALIZATION.md), section 1). `Audit/`, `Audit.lean`,
+`model/Model/Audit.lean`, `model/Model.lean` and the model's build files are content the
+checks judge, not checks, so they stay judged when a check fails with origin/main's copies
+(step 4).
 
 **A pull request from a fork** is not merged by `--merge`: the coordinator brings its
 commits to a branch of origin with the pre-flight, which opens a pull request of its own,

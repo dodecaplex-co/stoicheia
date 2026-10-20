@@ -195,9 +195,11 @@ BOOK_II = {
 # Contact within includes a point of the inner circle within the outer and none outside;
 # contact without has no point within both. `CirclesCut` means meeting at two points with
 # a point of each circle within the other. The circumference BKC is
-# `circumference α B K C`, and the circumference on which the angle BAC stands is `standing α B A C` (Elements/Foundations/DefinitionsIII.lean).
-# Perpendiculars take I.12's form, as in II.12. The design is in
-# docs/briefs/0004-book-III.md.
+# `circumference α B K C`, and the circumference on which the angle BAC stands is
+# `standing α B A C` (Elements/Foundations/DefinitionsIII.lean). Perpendiculars take
+# I.12's form, as in II.12. The design is in docs/briefs/0004-book-III.md; III.5's
+# statement, and the readings of cutting and of contact within and without, are as
+# docs/briefs/0008-centre.md, section 7, restates them.
 BOOK_III = {
     1: "{A B : Point} {ABC : Circle} (hABC : ∃ G : Point, Centre G ABC) (hA : OnCircle A ABC)\n"
        "    (hB : OnCircle B ABC) (hAB : A ≠ B) :\n"
