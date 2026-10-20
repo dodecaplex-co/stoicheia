@@ -36,7 +36,7 @@
       "ref": "III.2",
       "field": "inherited",
       "excludes": ["Tacit.inside_of_between"],
-      "why": "No lemma III.2 calls uses Circle 2 (#65). Since Circle 2 is now a theorem, excluding its name from inherited no longer checks for such a use; the separate axioms pin excludes its underlying Circle 3."
+      "why": "No lemma that III.2 calls uses Circle 2 (#65). Since Circle 2 is now a theorem, excluding its name from inherited no longer checks for such a use; the separate axioms pin excludes its underlying Circle 3."
     },
     {
       "ref": "I.5",

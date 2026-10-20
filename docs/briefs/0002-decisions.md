@@ -2175,10 +2175,15 @@ findings:
   Circle 2 plant deliberately puts a theorem's name in an axiom list, and that the Circle 3
   rename also invalidates III.2's `[overlap]`, although the plant does not rely on that
   failure; the plants stay unchanged.
-  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) corrects the introduction
-  to its expectation-drop test: the test injects the retired theorem name
-  `Tacit.centre_unique` into III.1's axiom list and drops the corresponding expectation to
-  verify that the check change stays separate from content changes.
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) repairs its
+  expectation-drop test, which the retirement broke: it injected the retired name
+  `Tacit.centre_unique` into III.1's axiom list, and the commit's own pass refuses a name
+  that is no axiom. It now injects `Tacit.circle_eq`, a locked tacit rule III.1 does not
+  use, caught by III.1's count of tacit rules, and still drops III.1's axioms expectations
+  in the same commit to verify that the check change stays separate from content changes;
+  its introduction says so. The test now first asserts that III.1 does not already use the
+  rule, and looks in origin/main's failure for the count instead of the excluded name; its
+  other assertions stay.
   [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json)
   changes only its reasons: exclusions of retired names do not detect uses of the
   theorems, while the existing Circle 3 exclusions still constrain dependencies.

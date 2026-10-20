@@ -2697,30 +2697,35 @@ class ProtectedPaths(Edge):
     EXPECT = "tests/certificate_expectations.json"
 
     def test_expectation_dropped_with_its_regression_kept_apart(self):
-        # The test deliberately injects the retired theorem name Tacit.centre_unique into
-        # III.1's axiom list and drops the corresponding expectation. It verifies that this
-        # check change must remain separate from content changes.
+        # The test injects a locked tacit rule III.1 does not use, circle_eq, into III.1's
+        # axiom list, the regression its count exists to catch, and drops III.1's axioms
+        # expectations in the same commit. check_fidelity.py checks only what each
+        # expectation says, so the commit's own pass holds: the drop is a check change, kept
+        # apart. (A retired name such as centre_unique would fail that pass: it is no axiom.)
         lean, record = "Elements/BookIII/Prop01.lean", "review/III/01.toml"
-        new_lean = self.text(lean) + "\n-- A re-proof that uses centre_unique.\n"
+        new_lean = self.text(lean) + "\n-- A re-proof that uses circle_eq.\n"
         stamped = re.sub(r'(?m)^lean = "[^"]*"',
                          f'lean = "{safe_push.heath._sha(new_lean.encode())}"', self.text(record))
         stamped = re.sub(r'(?m)^commit = "[^"]*"', 'commit = "abc1234"', stamped)
         facts = json.loads(self.text("facts.json"))
         for p in facts["propositions"]:
             if p["ref"] == "III.1":
-                p["axioms"] = sorted(p["axioms"] + ["Tacit.centre_unique"])
+                self.assertNotIn("Tacit.circle_eq", p["axioms"])
+                p["axioms"] = sorted(p["axioms"] + ["Tacit.circle_eq"])
         data = json.loads(self.text(self.EXPECT))
+        count = next(x["count"]["is"] for x in data["expectations"]
+                     if (x["ref"], x["field"]) == ("III.1", "axioms") and "count" in x)
         data["expectations"] = [x for x in data["expectations"]
                                 if (x["ref"], x["field"]) != ("III.1", "axioms")]
         changes = {lean: new_lean, record: stamped,
                    "facts.json": json.dumps(facts, indent=2, ensure_ascii=False) + "\n",
                    self.EXPECT: json.dumps(data, indent=2, ensure_ascii=False) + "\n"}
         changes.update(self.decision(f"`{self.EXPECT}`: tidied."))
-        self.regenerated_commit("III.1 uses centre_unique, its expectation dropped", changes)
+        self.regenerated_commit("III.1 uses circle_eq, its expectation dropped", changes)
         out = self.assertRefused(self.safe_push("--dry-run"), "check change kept apart",
                                  "drops or loosens an expectation")
         self.assertEqual(self.guard(out, "review records (origin/main's checks)"), "note", out)
-        self.assertIn("should not include Tacit.centre_unique", out)
+        self.assertIn(f"has {count + 1} names beginning 'Tacit.', not {count}", out)
         self.assertEqual(self.guard(out, "review records (the commit's checks)"), "ok", out)
         self.assertEqual(self.guard(out, "check change kept apart"), "FAIL", out)
         self.assertIsNone(self.guard(out, "pinned values"), out)
