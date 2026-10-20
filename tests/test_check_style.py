@@ -1481,6 +1481,76 @@ for idea in (False, True):
 class Clearance(unittest.TestCase):
     """The clearance cases, and a letter drawn more than once."""
 
+    def test_curve_join_figure_entry_points(self):
+        """True curve tangents put mitres near E; round joins clear it."""
+        paths = (
+            # The reviewer's cubic; its last control point is almost its endpoint.
+            "M150 90 C150 95 149.9999 100 150 100 L141.339746 105",
+            # Reversed, and with one or both endpoint controls coincident.
+            "M141.339746 105 L150 100 C149.9999 100 150 95 150 90",
+            "M150 90 C149.9999 100 150 100 150 100 L141.339746 105",
+            "M141.339746 105 L150 100 C150 100 149.9999 100 150 90",
+            "M140 100 C150 100 150 100 150 100 L141.339746 105",
+            "M141.339746 105 L150 100 C150 100 150 100 140 100",
+            # An arc with the same end tangent, reversed, rotated and enlarged.
+            "M140 90 A10 10 0 0 0 150 100 L141.339746 105",
+            "M141.339746 105 L150 100 A10 10 0 0 1 140 90",
+            "M140 80 A20 10 90 0 0 150 100 L141.339746 105",
+            "M150 98 A0.1 0.1 0 0 0 150 100 L141.339746 105",
+            # The outgoing segment can itself be a curve.
+            "M140 90 A10 10 0 0 0 150 100 C147 101.7320508 144 105 141.339746 105",
+            # Z supplies a segment, and joins the last segment to the first.
+            "M141.339746 105 L140 90 A10 10 0 0 0 150 100 Z",
+            "M150 100 C150 100 149.9999 100 150 90 L141.339746 105 Z",
+            # A directionless segment or an omitted arc does not break a join.
+            "M150 90 C150 95 149.9999 100 150 100 L150 100 "
+            "C150 100 150 100 150 100 A10 10 0 0 0 150 100 L141.339746 105",
+        )
+        for idea in (False, True):
+            for d in paths:
+                for join in (None, "miter", "round"):
+                    with self.subTest(idea=idea, d=d, join=join):
+                        root = figure_fixture(idea)
+                        curve = ET.SubElement(root, "path", {
+                            "d": d, "fill": "none",
+                            "stroke": "#222222" if idea else "#3b2f2f",
+                            "stroke-width": "1.6"})
+                        if join is not None:
+                            curve.set("stroke-linejoin", join)
+                        e = next(el for el in root.iter()
+                                 if style.tag(el) == "text" and style.text_of(el) == "E")
+                        for label in root.iter():
+                            if style.tag(label) == "text":
+                                label.set("font-style", "normal")
+                        e.attrib.update(x="154.3" if idea and "A" in d else "154.2", y="99.4",
+                                        **{"text-anchor": "start", "font-family": "Georgia"})
+                        found = figure_findings(root, idea)
+                        if join == "round":
+                            self.assertEqual(found, [])
+                        else:
+                            self.assertEqual(len(found), 1, found)
+                            self.assertEqual(found[0][0], "S26")
+                            self.assertIn("letter E", found[0][3])
+                            self.assertIn("from a path, under 2", found[0][3])
+
+    def test_curve_subdivisions_have_no_joins(self):
+        """A single curve has no joins at its sampled chords, nor across a moveto."""
+        shapes = (
+            '<path d="M100 100 C100 50 150 50 150 100"/>',
+            '<path d="M140 90 A10 10 0 0 0 150 100"/>',
+            '<rect x="100" y="100" width="50" height="50" rx="10"/>',
+            '<path d="M100 100 C100 50 150 50 150 100 M150 100 L140 110"/>',
+        )
+        for shape in shapes:
+            with self.subTest(shape=shape):
+                root = ET.fromstring(
+                    '<svg stroke="#3b2f2f" stroke-width="1.6" fill="none">'
+                    + shape + '</svg>')
+                pieces = list(style.strokes(style.ROOT / "figures" / "case.svg", root))
+                self.assertTrue(any(len(run) > 3 for _, run, _ in pieces), pieces)
+                self.assertTrue(all(half is not None for _, _, half in pieces),
+                                "flattening or moveto introduced a filled join")
+
     def test_width_spellings(self):
         """Plain widths keep their clearance; CSS, units and exponents are refused."""
         for width in ("3", "3e0", "+3", "3px", "+3e0px"):

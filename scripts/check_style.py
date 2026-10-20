@@ -2494,15 +2494,36 @@ def bezier_points(ps, depth: int = 0) -> list[tuple[float, float]]:
     return bezier_points(left, depth + 1) + bezier_points(right[::-1], depth + 1)
 
 
+class StrokeSegment(NamedTuple):
+    """An original segment and its endpoint directions, before flattening."""
+    start: tuple[float, float]
+    end: tuple[float, float]
+    start_tangent: tuple[float, float]
+    end_tangent: tuple[float, float]
+
+
+def stroke_segment(points) -> StrokeSegment:
+    """A straight or Bézier segment, using the next distinct control point at each end."""
+    a, b = points[0], points[-1]
+    p = next((p for p in points[1:] if p != a), a)
+    q = next((q for q in reversed(points[:-1]) if q != b), b)
+    return StrokeSegment(a, b, (p[0] - a[0], p[1] - a[1]),
+                         (b[0] - q[0], b[1] - q[1]))
+
+
 def arc_points(x1: float, y1: float, rx: float, ry: float, phi: float, large: float,
                sweep: float, x2: float, y2: float,
-               errors: list[float] | None = None) -> list[tuple[float, float]]:
+               errors: list[float] | None = None,
+               segments: list[StrokeSegment] | None = None) -> list[tuple[float, float]]:
     """An elliptical arc of a path, from (x1, y1) to (x2, y2), as the points along it after
-    the first, its centre found from its ends as SVG's implementation notes find it."""
+    the first, its centre found from its ends as SVG's implementation notes find it.
+    Given `segments`, retain the endpoint tangents from that centre parametrisation."""
     if (x1, y1) == (x2, y2):
         return []
     rx, ry = abs(rx), abs(ry)
     if rx == 0 or ry == 0:
+        if segments is not None:
+            segments.append(stroke_segment([(x1, y1), (x2, y2)]))
         return [(x2, y2)]
     c, s = math.cos(math.radians(phi)), math.sin(math.radians(phi))
     dx, dy = (x1 - x2) / 2, (y1 - y2) / 2
@@ -2527,6 +2548,13 @@ def arc_points(x1: float, y1: float, rx: float, ry: float, phi: float, large: fl
     cx, cy = c * qx - s * qy + (x1 + x2) / 2, s * qx + c * qy + (y1 + y2) / 2
     ax, ay, bx, by = (px - qx) / rx, (py - qy) / ry, (-px - qx) / rx, (-py - qy) / ry
     finite_geometry(qx, qy, cx, cy, ax, ay, bx, by)
+    if segments is not None:
+        direction = 1 if sweep else -1
+        tangents = [(direction * (-c * rx * y - s * ry * x),
+                     direction * (-s * rx * y + c * ry * x))
+                    for x, y in ((ax, ay), (bx, by))]
+        finite_geometry(*(v for tangent in tangents for v in tangent))
+        segments.append(StrokeSegment((x1, y1), (x2, y2), *tangents))
     start = math.atan2(ay, ax)
     turn = (math.atan2(by, bx) - start) % math.tau
     if not sweep and turn > 0:
@@ -2546,21 +2574,27 @@ def arc_points(x1: float, y1: float, rx: float, ry: float, phi: float, large: fl
 
 
 def path_rings(d: str, closed: list[bool] | None = None,
-               errors: list[float] | None = None) -> list[list[tuple[float, float]]]:
+               errors: list[float] | None = None,
+               segments: list[list[StrokeSegment]] | None = None) -> list[list[tuple[float, float]]]:
     """A path's subpaths as the rings of points its fill closes: straight segments as they
     are, arcs and curves in short straight pieces. A path is read as far as it is well
     formed, as SVG draws it. Given a list `closed`, it gains a flag for each ring: whether
     a Z closes it, as its stroke is drawn (S26), retaining a single point closed by Z
     for its caps. A moveto alone draws nothing. Given `errors`, append a conservative
-    chord error for each elliptical arc or Bézier curve, before transforms."""
+    chord error for each elliptical arc or Bézier curve, before transforms. Given
+    `segments`, retain each ring's original segments and tangents for stroke joins."""
     rings: list[list[tuple[float, float]]] = []
     ring: list[tuple[float, float]] = []
+    run_segments: list[StrokeSegment] = []
 
     def keep(shut: bool) -> None:
         if len(ring) > 1 or (closed is not None and shut and ring):
             rings.append(ring)
             if closed is not None:
                 closed.append(shut)
+            if segments is not None:
+                segments.append(run_segments + [stroke_segment([ring[-1], ring[0]])]
+                                if shut else run_segments)
 
     x = y = sx = sy = 0.0
     cmd, ctrl, pos = "", None, 0
@@ -2574,6 +2608,7 @@ def path_rings(d: str, closed: list[bool] | None = None,
         if kind == "z":
             keep(True)
             ring, x, y, ctrl = [(sx, sy)], sx, sy, None
+            run_segments = []
             continue
         args = []
         for i in range(PATH_ARITY[kind]):
@@ -2590,6 +2625,7 @@ def path_rings(d: str, closed: list[bool] | None = None,
             keep(False)
             (x, y), ctrl = pairs[0], None
             sx, sy, ring = x, y, [(x, y)]
+            run_segments = []
             cmd = "l" if cmd == "m" else "L"
             continue
         if kind == "h":
@@ -2599,7 +2635,8 @@ def path_rings(d: str, closed: list[bool] | None = None,
         elif kind == "l":
             pts, ctrl = pairs, None
         elif kind == "a":
-            pts = arc_points(x, y, *args[:5], ox + args[5], oy + args[6], errors)
+            pts = arc_points(x, y, *args[:5], ox + args[5], oy + args[6], errors,
+                             run_segments if segments is not None else None)
             ctrl = None
         else:
             if kind in "st":
@@ -2607,9 +2644,13 @@ def path_rings(d: str, closed: list[bool] | None = None,
                 pairs.insert(0, (2 * x - ctrl[1][0], 2 * y - ctrl[1][1]) if same else (x, y))
             curve = [(x, y)] + pairs
             pts = bezier_points(curve)
+            if segments is not None:
+                run_segments.append(stroke_segment(curve))
             if errors is not None:
                 errors.append(CURVE_ERROR)
             ctrl = ("c" if kind in "cs" else "q", curve[-2])
+        if kind in "hlv" and segments is not None:
+            run_segments.append(stroke_segment([(x, y), pts[-1]]))
         ring += pts
         x, y = ring[-1]
     keep(False)
@@ -3072,16 +3113,19 @@ def rect_outline(own, errors: list[float] | None = None) -> list[tuple[float, fl
     return out + out[:1]
 
 
-def miter_joins(run, half: float, limit: float, closed: bool):
+def miter_joins(segments, half: float, limit: float, closed: bool):
     """The filled corners beyond a round join, before transforms, up to the mitre limit.
-    Repeated points give no direction; a closed run joins at its first point too."""
-    points = [p for i, p in enumerate(run) if i == 0 or p != run[i - 1]]
-    if closed and len(points) > 2 and points[0] == points[-1]:
-        points = points[-2:-1] + points
-    for a, b, c in zip(points, points[1:], points[2:]):
-        ab, bc = math.dist(a, b), math.dist(b, c)
-        ux, uy = (b[0] - a[0]) / ab, (b[1] - a[1]) / ab
-        vx, vy = (c[0] - b[0]) / bc, (c[1] - b[1]) / bc
+    Only original segment boundaries join; directionless segments are skipped, and a
+    closed subpath joins its last segment back to its first."""
+    directed = [s for s in segments
+                if s.start_tangent != (0, 0) and s.end_tangent != (0, 0)]
+    if closed and directed:
+        directed = directed + directed[:1]
+    for a, c in zip(directed, directed[1:]):
+        b = a.end
+        ab, bc = math.hypot(*a.end_tangent), math.hypot(*c.start_tangent)
+        ux, uy = (v / ab for v in a.end_tangent)
+        vx, vy = (v / bc for v in c.start_tangent)
         turn, den = ux * vy - uy * vx, 1 + ux * vx + uy * vy
         if turn == 0 or den <= 0:
             continue
@@ -3094,26 +3138,6 @@ def miter_joins(run, half: float, limit: float, closed: bool):
                (b[0] + half * mx, b[1] + half * my), b]
 
 
-def square_caps(run, half: float, closed: bool):
-    """The filled rectangles at open ends, before transforms. A run of no length,
-    open or closed, paints a square centred on its point."""
-    points = [p for i, p in enumerate(run) if i == 0 or p != run[i - 1]]
-    if len(points) == 1:
-        x, y = points[0]
-        corners = [(x - half, y - half), (x + half, y - half),
-                   (x + half, y + half), (x - half, y + half)]
-        yield corners + corners[:1]
-    elif not closed:
-        for a, b in ((points[0], points[1]), (points[-1], points[-2])):
-            k = half / math.dist(a, b)
-            dx, dy = (a[0] - b[0]) * k, (a[1] - b[1]) * k
-            corners = [(a[0] - dy, a[1] + dx),
-                       (a[0] + dx - dy, a[1] + dy + dx),
-                       (a[0] + dx + dy, a[1] + dy - dx),
-                       (a[0] + dy, a[1] - dx)]
-            yield corners + corners[:1]
-
-
 def strokes(path: Path, root):
     """(what it is, its points, half its width plus chord error) for each stroke, as a run
     of straight pieces: a line, a polyline, a polygon or a rect's outline (its corners
@@ -3121,7 +3145,7 @@ def strokes(path: Path, root):
     a circle or an ellipse in short straight pieces; transforms applied, the width taken
     at the most the transform stretches it, a dashed stroke read whole, and a stroke SVG
     does not draw (a circle of no radius, a rect of no width, a run of no length with
-    butt caps) left out (S26). Mitre joins and square caps add closed filled outlines
+    butt caps) left out (S26). Mitre joins add closed filled outlines
     with None in place of half the width: their outlines already include it."""
     for el, own, eff, m, _ in placed(root):
         t = tag(el)
@@ -3136,6 +3160,7 @@ def strokes(path: Path, root):
             continue
         closed = []
         errors = []
+        segment_runs = []
         if t == "line":
             runs = [[(coord(own.get("x1")), coord(own.get("y1"))),
                      (coord(own.get("x2")), coord(own.get("y2")))]]
@@ -3144,7 +3169,7 @@ def strokes(path: Path, root):
             run = list(zip(v[0::2], v[1::2]))
             runs = [run + run[:1] if t == "polygon" else run]
         elif t == "path":
-            rings = path_rings(own.get("d", ""), closed, errors)
+            rings = path_rings(own.get("d", ""), closed, errors, segment_runs)
             runs = [ring + ring[:1] if shut else ring for ring, shut in zip(rings, closed)]
         elif t == "rect":
             outline = rect_outline(own, errors)
@@ -3170,14 +3195,15 @@ def strokes(path: Path, root):
         limit = 4.0 if limit is None else limit
         if t != "path":
             closed = [t in ("polygon", "rect", "circle", "ellipse")] * len(runs)
-        for run, shut in zip(runs, closed):
+            # Rounded rectangles join their sides tangentially to their corners.
+            segment_runs = [[stroke_segment([a, b]) for a, b in zip(run, run[1:])]
+                            if t in ("polyline", "polygon", "rect") and not errors else []
+                            for run in runs]
+        for run, shut, segments in zip(runs, closed, segment_runs):
             if len(run) > 1 and not (cap == "butt" and all(p == run[0] for p in run)):
                 yield kind, [at(m, x, y) for x, y in run], half
-                if cap == "square":
-                    for outline in square_caps(run, w / 2, shut):
-                        yield kind, [at(m, x, y) for x, y in outline], None
-                if miter and t in ("polyline", "polygon", "path", "rect"):
-                    for join in miter_joins(run, w / 2, limit, shut):
+                if miter:
+                    for join in miter_joins(segments, w / 2, limit, shut):
                         yield kind, [at(m, x, y) for x, y in join], None
 
 
@@ -3221,7 +3247,7 @@ def hull_gap(hull, a, b) -> float:
 
 
 def nearest(hull, pieces, spots) -> tuple[float, str] | None:
-    """How near a stroke (less half its width), its filled joins and caps, or a dot (less
+    """How near a stroke (less half its width), its filled joins, or a dot (less
     its radius) comes to a letter's hull, and what it is; None if none comes within CLEAR."""
     xs, ys = [p[0] for p in hull], [p[1] for p in hull]
     best = None

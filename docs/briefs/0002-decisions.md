@@ -1866,6 +1866,8 @@ findings:
   call. Both entry points have regressions requiring the next figure's finding after an
   arithmetic or encoding failure. Subdivision is bounded for each cubic; these limits do
   not bound the input's length or its number of elements or path commands.
+  Mitre joins now use original segments' endpoint tangents, with no joins between a
+  curve's flattened chords.
   Both figure entry points have cases requiring an S26 finding. And
   [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
   files its findings under P8, the figures. The matching words in
