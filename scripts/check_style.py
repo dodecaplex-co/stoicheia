@@ -1,6 +1,6 @@
 """Check the house style's hard rules, and report its defaults.
 
-The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S23
+The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S26
 fail the script, and D4 to D11 and D14 to D16 are listed for a reader to judge and fail
 nothing. Run from anywhere; the paths are the repository's.
 
@@ -43,7 +43,10 @@ What the scopes cover (STYLE, section 8):
   (`render.load_axiom_docs`, `render.axiom_groups`).
 * Generated: CERTIFICATE.md, GRAPH.md, book/<book>/index.md, book/<book>/front.md and
   book/names.md. A failure here is mended in scripts/render.py or in the source it reads.
-* Idea figures, figures/<book>/NN-idea.svg; Euclid's figures, figures/<book>/NN.svg.
+* Idea figures, figures/<book>/NN-idea.svg; Euclid's figures, figures/<book>/NN.svg;
+  the figures of the modern way, figures/<book>/NN-modern.svg (S24, S25), each drawn to
+  stand under its page's paragraph "**The modern way.**", with Euclid's figure's letters
+  and the paragraph's own names.
 
 S12 reads the Prose, the Review notes, the Catalogues, the Other reports, the Rendered
 docstrings and the front pages (book/<book>/front.md). A text of one book gets that book's
@@ -99,12 +102,16 @@ idea figure, "Euclid I.N: …" on Euclid's (STYLE, section 7). A known departure
 cannot see is right is listed below with its reason, and printed on every run; one that
 no longer applies fails. An idea figure marks a point Heath leaves without a letter in the
 figure itself, with `data-unlettered` and its reason (S21), and those are printed too.
-S20 judges a letter's ink by the fill under it, an angle's wedge included.
+S20 judges a letter's ink by the fill under it, an angle's wedge included. S26 measures
+a letter as Georgia draws its capital, upright or italic, by the convex hull of its
+outline's points (GLYPHS_UPRIGHT, GLYPHS_ITALIC), against every stroke and dot of its
+figure and the canvas's edge.
 
-How the rules read a phrase, S10's boundary for TeX, and how S20 reads a letter on and
-beside an angle's wedge are tested case by case in tests/test_check_style.py, which needs
-no Lean. CI runs it just before this script, in the order of docs/WORKFLOW.md, section 8;
-a defect fixed in that reading comes with a case there. Standard library only.
+How the rules read a phrase, S10's boundary for TeX, how S20 reads a letter on and beside
+an angle's wedge, and how S26 measures a letter against the strokes beside it are tested
+case by case in tests/test_check_style.py, which needs no Lean. CI runs it just before
+this script, in the order of docs/WORKFLOW.md, section 8; a defect fixed in that reading
+comes with a case there. Standard library only.
 """
 
 from __future__ import annotations
@@ -269,6 +276,9 @@ RULES = {
     "S21": "a point of an idea figure without its letter",
     "S22": "letters in backticks, where they are plain",
     "S23": "a merge-conflict marker",
+    "S24": "a modern figure's canvas, colours, strokes, title, or paragraph to stand under",
+    "S25": "a modern figure's text not Euclid's figure's letters, upright, or the modern way's names, italic",
+    "S26": "one letter, one point: a letter drawn twice in a figure, or near a stroke, a dot or the edge",
 }
 
 REPORTS = {
@@ -576,10 +586,18 @@ QUOTATION = re.compile(r'"[^"]*"')
 SQUARE = re.compile(r"\[[^\[\]\n]*\](?![(\[])")
 
 
-def blank_code(text: str, *, indented_code: bool = True) -> str:
+def blank_blocks(text: str) -> str:
+    """HTML comments and fenced blocks blanked, code spans kept: the text whose paragraphs
+    S10 reads, so that a line holding only a code span goes on with its paragraph."""
+    return blank_html_comments(blank_fences(text))
+
+
+def blank_code(text: str, *, indented_code: bool = True,
+               reference_labels: set[str] | None = None, inline_html: bool = False) -> str:
     """Fenced blocks, code spans and HTML comments blanked: what a reader reads as prose,
     quotations included."""
-    syntax = markdown_syntax(text, indented_code=indented_code)
+    syntax = markdown_syntax(text, indented_code=indented_code,
+                             reference_labels=reference_labels, inline_html=inline_html)
     ranges = (syntax.comments + syntax.destinations
               + [(span.start, span.end) for span in syntax.spans]
               + markdown_blocks(text, indented_code=indented_code).fences)
@@ -895,8 +913,9 @@ def review_texts(raw: str, terms: bool = False) -> list[ReviewText]:
 
 
 def ref_of(path: Path) -> str | None:
-    """"I.5" for mishnah/I/05.md, reading/I/05.md or figures/I/05-idea.svg."""
-    m = re.fullmatch(r"(\d\d)(?:-idea)?\.(?:md|svg)", path.name)
+    """"I.5" for mishnah/I/05.md, reading/I/05.md, figures/I/05-idea.svg or
+    figures/I/05-modern.svg."""
+    m = re.fullmatch(r"(\d\d)(?:-idea|-modern)?\.(?:md|svg)", path.name)
     if m and path.parent.name in heath.ROMAN:
         return f"{path.parent.name}.{int(m.group(1))}"
     return None
@@ -1148,10 +1167,35 @@ SETEXT_LINE = re.compile(r"^ {0,3}(?:=+|-+)[ \t]*$")
 TABLE_DELIMITER_CELL = re.compile(r":?-+:?")
 
 
+HTML_BLOCK_TAGS = ("address|article|aside|base|basefont|blockquote|body|caption|center|col|"
+                     "colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|"
+                     "form|frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|"
+                     "menu|menuitem|nav|noframes|ol|optgroup|option|p|param|search|section|"
+                     "summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul")
+# The first six HTML block kinds interrupt a paragraph; a complete tag on its own
+# line, the seventh kind, opens a block only when no paragraph is open.
+HTML_BLOCKS = (
+    (re.compile(r"<(?:pre|script|style|textarea)(?:[ \t>]|$)", re.I),
+     re.compile(r"</(?:pre|script|style|textarea)>", re.I)),
+    (re.compile(r"<!--"), re.compile(r"-->")),
+    (re.compile(r"<\?"), re.compile(r"\?>")),
+    (re.compile(r"<![A-Za-z]"), re.compile(r">")),
+    (re.compile(r"<!\[CDATA\["), re.compile(r"\]\]>")),
+    (re.compile(rf"</?(?:{HTML_BLOCK_TAGS})(?:[ \t>]|/>|$)", re.I), None),
+)
+HTML_TAG_LINE = re.compile(r"(?:<[A-Za-z][A-Za-z0-9-]*(?:[ \t]+[A-Za-z_:][\w.:-]*"
+                             r"(?:[ \t]*=[ \t]*(?:[^\s\"'=<>`]+|'[^']*'|\"[^\"]*\"))?)*"
+                             r"[ \t]*/?>|</[A-Za-z][A-Za-z0-9-]*[ \t]*>)[ \t]*$")
+INLINE_HTML_TAG = re.compile(
+    r"(?:<[A-Za-z][A-Za-z0-9-]*(?:\s+[A-Za-z_:][\w.:-]*"
+    r"(?:\s*=\s*(?:\"[^\"]*\"|'[^']*'|[^\s\"'=<>`]+))?)*\s*/?>"
+    r"|</[A-Za-z][A-Za-z0-9-]*\s*>)")
+
 class InlineBlock(NamedTuple):
     text: str
     offsets: list[int]
     references: bool = True
+    paragraph: bool = False
 
 
 class CodeSpan(NamedTuple):
@@ -1226,7 +1270,7 @@ def table_inline_blocks(block: InlineBlock) -> list[InlineBlock]:
     prefix_end = max(0, header_start - 1)
     if prefix_end:
         found.append(InlineBlock(block.text[:prefix_end], block.offsets[:prefix_end],
-                                 block.references))
+                                 block.references, block.paragraph))
     for row_number, row in enumerate([lines[table]] + lines[table + 2:]):
         start, _, text = row
         cells, _ = table_cell_ranges(text)
@@ -1242,9 +1286,14 @@ def table_inline_blocks(block: InlineBlock) -> list[InlineBlock]:
     return found
 
 
-def markdown_blocks(text: str, *, indented_code: bool = True) -> MarkdownBlocks:
+def markdown_blocks(text: str, *, indented_code: bool = True,
+                    raw_html: bool = False) -> MarkdownBlocks:
     """The inline leaf blocks, fences and comment blocks of a Markdown text, with source
-    offsets retained after block quote and list markers are removed."""
+    offsets retained after block quote and list markers are removed.
+
+    Mark top-level paragraphs for modern_span. With `raw_html`, leave raw HTML blocks
+    out of that selection, with their contents inert, including any apparent fences;
+    the wording rules retain their existing reading of text inside HTML by default."""
     blocks: list[InlineBlock] = []
     fences = []
     comments = []
@@ -1257,11 +1306,13 @@ def markdown_blocks(text: str, *, indented_code: bool = True) -> MarkdownBlocks:
     fence_start = 0
     comment = None
     comment_start = 0
+    html = None
 
-    def flush() -> None:
+    def flush(paragraph: bool = True) -> None:
         nonlocal chars, offsets, container
         if chars:
-            blocks.append(InlineBlock("".join(chars), offsets))
+            blocks.append(InlineBlock("".join(chars), offsets,
+                                      paragraph=paragraph and container == (0, None)))
         chars, offsets, container = [], [], None
 
     def emit(body: str, source: list[int], own, newline: int) -> None:
@@ -1301,7 +1352,7 @@ def markdown_blocks(text: str, *, indented_code: bool = True) -> MarkdownBlocks:
         consumed = False
         while True:
             body, source = base_body, base_source
-            literal = fence is not None or comment is not None
+            literal = fence is not None or comment is not None or html is not None
             listed = LIST_LINE.match(body)
             interrupts = (container is not None
                           and not (list_item and list_item[0] == quote))
@@ -1369,15 +1420,39 @@ def markdown_blocks(text: str, *, indented_code: bool = True) -> MarkdownBlocks:
                         continue
                 consumed = True
                 break
+            if html is not None:
+                end, owner = html
+                if own != owner:
+                    html = None
+                    continue
+                if (end is None and not body.strip()) or (end is not None and end.search(body)):
+                    html = None
+                consumed = True
+                break
             break
         if consumed:
             continue
 
-        indented = body.startswith("    ") or body.startswith("\t")
+        leading = body[:len(body) - len(body.lstrip(" \t"))]
+        indented = len(leading.expandtabs(4)) >= 4
         if indented_code and body.strip() and indented and not (chars and container == own):
             flush()
             fences.append((line_start, line_end))
             continue
+
+        if raw_html:
+            content = body.lstrip(" \t")
+            indent = body[:len(body) - len(content)]
+            if len(indent.expandtabs(4)) <= 3:
+                end = next((e for s, e in HTML_BLOCKS if s.match(content)), False)
+                if (end is False and not (chars and container == own)
+                        and HTML_TAG_LINE.fullmatch(content)):
+                    end = None
+                if end is not False:
+                    flush()
+                    if end is None or not end.search(content):
+                        html = (end, own)
+                    continue
 
         opened_comment = re.match(r"^ {0,3}<!--", body)
         if opened_comment and "-->" not in body[opened_comment.end():]:
@@ -1398,7 +1473,10 @@ def markdown_blocks(text: str, *, indented_code: bool = True) -> MarkdownBlocks:
         if not body.strip():
             flush()
             continue
-        if THEMATIC_LINE.fullmatch(body) or SETEXT_LINE.fullmatch(body):
+        if SETEXT_LINE.fullmatch(body):
+            flush(paragraph=False)
+            continue
+        if THEMATIC_LINE.fullmatch(body):
             flush()
             continue
         if ATX_LINE.match(body):
@@ -1664,18 +1742,49 @@ def matching_link_label(text: str, close: int) -> int | None:
     return None
 
 
-def link_destination_ranges(text: str, *, references: bool = True) -> list[LinkDestination]:
+def reference_key(label: str) -> str:
+    """A reference label with case and whitespace normalised for matching."""
+    return " ".join(label.split()).casefold()
+
+
+def document_reference_labels(text: str) -> set[str]:
+    """Reference definitions throughout the document, excluding code and raw HTML."""
+    labels = set()
+    for block in markdown_blocks(text, raw_html=True).inline:
+        if block.references:
+            for definition in reference_destination_ranges(block.text):
+                match = REFERENCE_LABEL.match(block.text[definition.start:definition.end])
+                if match:
+                    labels.add(reference_key(match.group(1)))
+    return labels
+
+
+def link_destination_ranges(text: str, *, references: bool = True,
+                            reference_labels: set[str] | None = None,
+                            inline_html: bool = False) -> list[LinkDestination]:
     """Link destinations and their label starts in one inline block."""
     found = reference_destination_ranges(text) if references else []
     found += [LinkDestination(m.start(), m.end(), m.start(), False)
               for m in AUTOLINK.finditer(text)
               if backslashes_before(text, m.start()) % 2 == 0]
-    for match in re.finditer(r"\]\(", text):
+    if inline_html:
+        found += [LinkDestination(m.start(), m.end(), m.start(), False)
+                  for m in INLINE_HTML_TAG.finditer(text)
+                  if backslashes_before(text, m.start()) % 2 == 0]
+    for match in re.finditer(r"\]", text):
         close = match.start()
         label = matching_link_label(text, close)
         if backslashes_before(text, close) % 2 or label is None:
             continue
-        end = inline_destination_end(text, close + 1)
+        end = (inline_destination_end(text, close + 1)
+               if text[close + 1:close + 2] == "(" else None)
+        if end is None and reference_labels:
+            identifier = re.match(r"\[((?:\\.|[^\[\]\\]){0,999})\]", text[close + 1:])
+            key = identifier.group(1) if identifier else ""
+            if not key:
+                key = text[label + 1:close]
+            if reference_key(key) in reference_labels:
+                end = close + 1 + (identifier.end() if identifier else 0)
         if end is not None:
             image = (label > 0 and text[label - 1] == "!"
                      and backslashes_before(text, label - 1) % 2 == 0)
@@ -1683,7 +1792,9 @@ def link_destination_ranges(text: str, *, references: bool = True) -> list[LinkD
     return sorted(found)
 
 
-def markdown_syntax(text: str, *, indented_code: bool = True) -> MarkdownSyntax:
+def markdown_syntax(text: str, *, indented_code: bool = True,
+                    reference_labels: set[str] | None = None,
+                    inline_html: bool = False) -> MarkdownSyntax:
     """The CommonMark code spans and HTML comments of a Markdown text, with source offsets.
     Comments are the container-bounded comment blocks and the closed inline comments. In
     each inline leaf block, a code span and an inline comment are read in source order:
@@ -1697,7 +1808,9 @@ def markdown_syntax(text: str, *, indented_code: bool = True) -> MarkdownSyntax:
         ticks = [(m.start(), m.end()) for m in BACKTICKS.finditer(block.text)]
         openers = [m.start() for m in re.finditer("<!--", block.text)
                    if backslashes_before(block.text, m.start()) % 2 == 0]
-        links = link_destination_ranges(block.text, references=block.references)
+        links = link_destination_ranges(block.text, references=block.references,
+                                        reference_labels=reference_labels,
+                                        inline_html=inline_html)
         active = {link.label: True for link in links}
         consumed: list[tuple[int, int]] = []
         i, pos = 0, 0
@@ -2098,7 +2211,7 @@ def lean_names(text: str, binders: bool = True) -> list[str]:
 
 def check_mishnah(path: Path, raw: str) -> None:
     ref = ref_of(path)
-    text = blank_html_comments(blank_fences(raw))
+    text = blank_blocks(raw)
     for a, b, msg in tex_findings(text):
         fail("S10", path, line_of(text, a), f"{msg}: {excerpt(raw, a, b)}")
     for pattern, allowed in REFRAINS:
@@ -2261,7 +2374,7 @@ def report_non_declaration(t: NamedText, occurrence: LeanName,
             and re.search(r'(?:\bscans?|\bvol\.\s*\d+(?:\s*\([^)]*\))?\s+is)\s*$', before)):
         return 'an Internet Archive scan identifier, identified as such in the prose'
     if (heath.COMMIT.fullmatch(name)
-            and re.search(r'\b(?:commit|revision|read|reviewed|verification)\b', paragraph)):
+            and re.search(r'\b(?:commit|(?i:revision)|read|reviewed|verification)\b', paragraph)):
         return 'a commit identifier in an account of a revision or review'
     values = set(heath.SCOPES + heath.ROUTES + heath.PASSAGES + heath.OVERLAPS
                  + heath.STAGES + heath.VERDICTS + heath.TAG_KINDS)
@@ -2378,8 +2491,10 @@ def lean_probe(groups: Groups, imports: list[str]) -> int:
 
 def check_lean_names(texts: list[NamedText]) -> tuple[int, list[str]]:
     """S12: every backticked name in the texts is one Lean knows, with each text's
-    namespaces open (s12_plan says how each is asked). Returns how many names were put to
-    Lean, and the audit lemmas left unchecked because the Audit library is not built."""
+    namespaces open (s12_plan says how each is asked). The mishnah keeps `Elements`,
+    `Elements.Book<book>` and `Elements.Tacit` open, with every book checked in its own
+    section of one Lean run. Returns how many names were put to Lean, and the audit
+    lemmas left unchecked because the Audit library is not built."""
     old, new, unchecked, used = s12_plan(texts, AUDIT_OLEAN.exists(), report_vocabulary(texts))
     for name in sorted(set(NOT_DECLARED) - used):
         fail("S12", SCRIPT, 0, f"`{name}` is in NOT_DECLARED, but no text S12 reads uses it "
@@ -2437,9 +2552,36 @@ EUCLID_COLOURS = {"#fbf7ee", "#3b2f2f", "#8c7b62", "#a0522d", "#e9dcc0"}
 COLOUR_ATTRS = ("fill", "stroke", "stop-color", "color", "flood-color", "lighting-color")
 DRAWN = {"line", "path", "polyline", "polygon", "circle", "ellipse", "rect"}
 FILLED = DRAWN - {"line"}
-INHERITED = ("fill", "fill-rule", "stroke", "stroke-width", "font-size", "font-style",
-             "text-anchor")
+INHERITED = ("fill", "fill-rule", "stroke", "stroke-width", "stroke-linecap",
+             "stroke-linejoin", "stroke-miterlimit", "stroke-dasharray",
+             "font-family", "font-size", "font-style", "font-weight", "text-anchor")
 LETTER = re.compile(r"[A-Z][′'₀-₉]*")
+
+# Inventory of all 198 checked figures at 209d71fd, plus explicit initial keyword
+# values. No style, definitions, references, relative paths, quadratic curves or scales
+# occur there. Keep this language closed before any traversal can measure a figure.
+SVG_ELEMENTS = {"svg", "title", "desc", "g", "line", "polyline", "polygon", "rect",
+                "circle", "ellipse", "path", "text"}
+SVG_NUMBERS = {"x", "y", "x1", "y1", "x2", "y2", "cx", "cy", "r", "rx", "ry",
+               "width", "height", "font-size", "stroke-width", "fill-opacity", "stroke-opacity"}
+SVG_KEYWORDS = {
+    "fill": {"none", "black", "#1f5aa6", "#222222", "#3b2f2f", "#d0312d", "#e9dcc0",
+             "#f2b705", "#fbf7ee", "#fff"},
+    "stroke": {"none", "#1f5aa6", "#222222", "#3b2f2f", "#8c7b62", "#a0522d", "#d0312d",
+               "#f2b705", "#fbf7ee", "#fff"},
+    "font-family": {"Georgia", "Georgia, serif", "Georgia, 'Times New Roman', serif"},
+    "font-style": {"normal", "italic"},
+    "font-weight": {"normal", "bold"},
+    "text-anchor": {"start", "middle", "end"},
+    "stroke-linecap": {"butt", "round"},
+    "stroke-linejoin": {"miter", "round"},
+}
+SVG_SPACE = " \t\r\n"
+# Main's largest numeric input at 209d71fd is 440. This admits ample room around
+# its canvases while keeping coordinates, lengths, radii and path arithmetic bounded.
+SVG_NUMBER_LIMIT = 10_000
+# Main's deepest checked figure at c6ff6817 is 3 levels below its root.
+SVG_MAX_DEPTH = 16
 
 # The letters of a figure at a glance (S20, S21; STYLE, section 7). Lengths are in the
 # canvas's units, 400 × 300.
@@ -2463,7 +2605,118 @@ PATH_NUMBER = re.compile(r"[\s,]*(" + NUM.pattern + ")")
 PATH_FLAG = re.compile(r"[\s,]*([01])")
 PATH_ARITY = {"m": 2, "l": 2, "h": 1, "v": 1, "c": 6, "s": 4, "q": 4, "t": 2, "a": 7}
 ARC_STEP = math.radians(3)   # an arc, in a straight piece to each 3 degrees of its sweep
-CURVE_STEPS = 32             # a Bézier curve, in this many straight pieces
+CURVE_ERROR = 0.001          # the maximum Bézier chord error, before transforms
+CURVE_MAX_DEPTH = 16         # at most 2**16 chords per curve; refuse if still not flat
+
+# One letter, one point (S26; STYLE, sections 7 and 8). A letter names one thing: a figure
+# draws it once, or once in each of Heath's figures where they stand side by side, and it
+# stands clear of every stroke, every dot and the canvas's edge, so that no line runs
+# through it and it is not read as another point's. A letter is measured as Georgia, the
+# figures' font, draws its capital, upright or italic as the figure sets it: by the convex
+# hull of the points of the capital's outline, on its curves and off them, which holds the
+# ink. GLYPHS_UPRIGHT and GLYPHS_ITALIC give each capital's advance and that hull's
+# corners, x and y in turn with y up, in the font's units, EM to the em: a coarse shape,
+# read from the fonts with fontTools once, so that the script needs neither. The hull
+# misses no stroke that comes near the ink; it also spans a letter's hollows (an L's
+# corner, a K's notch), so a stroke that ends in one is found while the ink is clear. A
+# prime or a subscript after the capital is not measured, but its advance (SUFFIXES, the
+# same upright and italic) places the capital when the label is anchored at its middle or
+# its end.
+CLEAR = 2.0     # the least room between a letter's hull and a stroke, a dot or the edge
+EM = 2048
+SUFFIXES = {"′": 658, "'": 441, **{chr(0x2080 + i): 1024 for i in range(10)}}
+# The figures where two or three of Heath's figures stand side by side, one to a case
+# (STYLE, section 7): the x of each straight cut between two of them, in the canvas's
+# units. A letter belongs to the case its hull's middle stands in, is drawn once in each,
+# and stands wholly on one side of every cut.
+SIDE_BY_SIDE = {
+    ("III", 25): (150.0, 275.0),
+    ("III", 33): (147.0, 290.0),
+    ("III", 35): (222.0,),
+    ("III", 36): (190.0,),
+}
+GLYPHS_UPRIGHT = {
+    "A": (1374, (-41, 0, 1421, 0, 1421, 71, 739, 1439, 659, 1439, -41, 71)),
+    "B": (1339, (95, 0, 857, 0, 1026, 48, 1162, 141, 1248, 287, 1248, 483, 1170, 1196,
+            1094, 1316, 972, 1389, 833, 1419, 102, 1419, 95, 71)),
+    "C": (1315, (78, 526, 184, 255, 273, 161, 363, 67, 596, -33, 919, -33, 1203, 148, 1289,
+            359, 1227, 1419, 859, 1450, 613, 1450, 365, 1342, 182, 1143, 78, 866)),
+    "D": (1534, (94, 0, 828, 0, 1102, 84, 1212, 169, 1321, 254, 1457, 520, 1457, 896, 1315,
+            1184, 1098, 1340, 850, 1419, 102, 1419, 94, 71)),
+    "E": (1338, (86, 0, 1264, 0, 1291, 418, 1184, 1419, 86, 1419)),
+    "F": (1227, (86, 0, 701, 0, 983, 444, 1199, 1064, 1199, 1419, 86, 1419)),
+    "G": (1485, (78, 530, 190, 258, 379, 69, 631, -33, 894, -33, 1158, 31, 1291, 91, 1471,
+            567, 1471, 640, 1278, 1419, 911, 1450, 641, 1450, 378, 1339, 185, 1137, 78,
+            860)),
+    "H": (1669, (98, 0, 1567, 0, 1567, 1419, 98, 1419)),
+    "I": (798, (79, 0, 718, 0, 718, 1419, 79, 1419)),
+    "J": (1060, (11, 149, 214, -34, 482, -34, 645, 42, 755, 168, 808, 316, 1006, 1348,
+            1006, 1419, 380, 1419, 11, 372)),
+    "K": (1422, (102, 0, 1475, 0, 1475, 71, 1393, 1419, 102, 1419)),
+    "L": (1236, (98, 0, 1207, 0, 1237, 422, 697, 1419, 98, 1419)),
+    "M": (1899, (48, 0, 1806, 0, 1806, 71, 1804, 1419, 57, 1419, 48, 71)),
+    "N": (1571, (24, 1348, 48, 0, 1237, -14, 1324, -14, 1554, 1348, 1554, 1419, 24, 1419)),
+    "O": (1524, (80, 550, 183, 273, 363, 77, 614, -34, 901, -34, 1147, 70, 1336, 263, 1444,
+            539, 1444, 876, 1338, 1153, 1153, 1347, 903, 1453, 626, 1453, 377, 1349, 188,
+            1152, 80, 881)),
+    "P": (1249, (91, 1348, 98, 0, 707, 0, 1184, 958, 1184, 1228, 937, 1419, 91, 1419)),
+    "Q": (1524, (80, 550, 178, 283, 353, 86, 923, -346, 1051, -385, 1238, -385, 1373, -356,
+            1418, -343, 1444, 574, 1444, 876, 1338, 1153, 1153, 1347, 903, 1453, 626, 1453,
+            377, 1349, 188, 1152, 80, 881)),
+    "R": (1437, (98, 0, 1480, 0, 1480, 71, 1201, 1172, 1127, 1301, 1065, 1341, 1001, 1382,
+            843, 1419, 98, 1419)),
+    "S": (1149, (94, 485, 108, -1, 490, -29, 791, -29, 1069, 215, 1069, 482, 1001, 1419,
+            661, 1451, 477, 1451, 319, 1392, 261, 1340, 200, 1285, 134, 1145)),
+    "T": (1267, (15, 1034, 298, 0, 968, 0, 1251, 1034, 1251, 1419, 15, 1419)),
+    "U": (1549, (74, 1348, 260, 294, 328, 147, 395, 90, 463, 33, 663, -34, 871, -34, 1046,
+            13, 1125, 67, 1205, 123, 1303, 297, 1533, 1348, 1533, 1419, 74, 1419)),
+    "V": (1365, (-38, 1348, 628, -18, 711, -18, 1407, 1348, 1407, 1419, -38, 1419)),
+    "W": (1998, (-4, 1348, 536, -18, 1447, -18, 2028, 1348, 2028, 1419, -4, 1419)),
+    "X": (1455, (13, 0, 1457, 0, 1457, 71, 1410, 1419, 27, 1419, 13, 71)),
+    "Y": (1260, (-44, 1348, 292, 0, 956, 0, 1314, 1348, 1314, 1419, -44, 1419)),
+    "Z": (1232, (27, 0, 1167, 0, 1214, 443, 1190, 1419, 127, 1419, 84, 1018, 27, 35)),
+}
+GLYPHS_ITALIC = {
+    "A": (1374, (-160, 0, 1302, 0, 1317, 66, 952, 1439, 872, 1439, -145, 66)),
+    "B": (1339, (-29, 0, 768, 0, 965, 55, 1051, 113, 1131, 167, 1236, 340, 1298, 1077,
+            1298, 1234, 1236, 1333, 1126, 1394, 1003, 1419, 306, 1419, 290, 1353)),
+    "C": (1315, (100, 400, 183, 190, 328, 43, 522, -33, 830, -33, 1140, 143, 1266, 358,
+            1427, 1419, 1041, 1452, 751, 1452, 448, 1302, 340, 1178, 228, 1049, 100, 721)),
+    "D": (1534, (-29, 0, 769, 0, 1096, 116, 1229, 229, 1357, 338, 1515, 669, 1515, 1024,
+            1398, 1241, 1209, 1368, 997, 1419, 306, 1419, -14, 66)),
+    "E": (1338, (-37, 0, 1141, 0, 1264, 418, 1388, 1419, 290, 1419, -22, 66)),
+    "F": (1227, (-35, 0, 583, 0, 963, 444, 1322, 1064, 1404, 1419, 291, 1419, 275, 1353)),
+    "G": (1485, (100, 403, 187, 191, 341, 43, 547, -33, 745, -33, 874, -13, 1021, 24, 1124,
+            64, 1190, 91, 1481, 572, 1496, 640, 1482, 1419, 1093, 1452, 781, 1452, 467,
+            1311, 235, 1064, 100, 733)),
+    "H": (1669, (-25, 0, 1444, 0, 1756, 1353, 1771, 1419, 302, 1419, -10, 66)),
+    "I": (798, (-44, 0, 595, 0, 907, 1353, 922, 1419, 283, 1419, -29, 66)),
+    "J": (1060, (-50, 106, 118, -34, 373, -34, 545, 44, 679, 166, 762, 315, 1194, 1353,
+            1209, 1419, 579, 1419, -50, 329)),
+    "K": (1422, (-21, 0, 1336, 0, 1353, 66, 1597, 1419, 306, 1419, -6, 66)),
+    "L": (1236, (-25, 0, 1084, 0, 1211, 422, 901, 1419, 302, 1419, -10, 66)),
+    "M": (1899, (-76, 0, 1682, 0, 1698, 66, 1993, 1353, 2008, 1419, 260, 1419)),
+    "N": (1571, (-75, 0, 1109, -14, 1199, -14, 1743, 1353, 1759, 1419, 229, 1419, 213,
+            1353)),
+    "O": (1496, (100, 288, 404, -34, 811, -34, 1108, 107, 1224, 229, 1337, 348, 1477, 683,
+            1477, 1138, 1169, 1453, 766, 1453, 465, 1311, 240, 1067, 100, 734)),
+    "P": (1249, (-25, 0, 584, 0, 1205, 822, 1312, 1012, 1312, 1266, 1097, 1419, 295, 1419,
+            280, 1353)),
+    "Q": (1496, (100, 290, 393, -24, 780, -386, 1000, -386, 1171, -357, 1232, -338, 1477,
+            683, 1477, 1138, 1169, 1453, 766, 1453, 465, 1311, 240, 1067, 100, 734)),
+    "R": (1437, (-26, 0, 1354, 0, 1370, 66, 1330, 1219, 1269, 1323, 1168, 1385, 1026, 1419,
+            302, 1419)),
+    "S": (1149, (-9, -1, 370, -29, 614, -29, 815, 41, 973, 169, 1065, 353, 1199, 1419, 825,
+            1451, 641, 1451, 448, 1383, 380, 1326, 310, 1267, 225, 1105, 89, 485)),
+    "T": (1267, (130, 1034, 174, 0, 844, 0, 1366, 1034, 1455, 1419, 219, 1419)),
+    "U": (1549, (212, 144, 449, -34, 749, -34, 931, 8, 1016, 57, 1104, 108, 1245, 289,
+            1721, 1353, 1737, 1419, 278, 1419, 262, 1353, 212, 313)),
+    "V": (1365, (151, 1353, 501, -18, 584, -18, 1599, 1353, 1614, 1419, 166, 1419)),
+    "W": (1998, (182, 1353, 408, -18, 1322, -18, 2217, 1353, 2232, 1419, 197, 1419)),
+    "X": (1455, (-110, 0, 1321, 0, 1336, 66, 1614, 1419, 243, 1419, -95, 66)),
+    "Y": (1260, (143, 1353, 169, 0, 833, 0, 1501, 1353, 1517, 1419, 159, 1419)),
+    "Z": (1232, (-90, 0, 1048, 0, 1198, 443, 1387, 1419, 326, 1419, 190, 1018, -81, 35)),
+}
 
 # data-unlettered marks in the idea figures, printed on every run:
 # {(file, reason): [elements, points]}
@@ -2520,8 +2773,12 @@ def style_of(el) -> dict[str, str]:
 
 def walk(el, inherited=None):
     """(element, its own attributes, its effective inherited ones) for the whole tree."""
-    for el, own, eff, _, _ in placed(el, IDENTITY, inherited):
-        yield el, own, eff
+    own = style_of(el)
+    eff = dict(inherited or {})
+    eff.update({k: own[k] for k in INHERITED if k in own})
+    yield el, own, eff
+    for child in el:
+        yield from walk(child, eff)
 
 
 def placed(el, m=IDENTITY, inherited=None, exempt=None):
@@ -2529,10 +2786,10 @@ def placed(el, m=IDENTITY, inherited=None, exempt=None):
     ones, its transform composed with its ancestors', and the data-unlettered in force as
     (the element that carries it, its reason), or None)."""
     inherited = dict(inherited or {})
-    own = style_of(el)
+    own = dict(el.attrib)
     eff = dict(inherited)
     eff.update({k: own[k] for k in INHERITED if k in own})
-    m = compose(m, transform_of(own.get("transform")))
+    m = compose(m, letter_transform_of(own.get("transform")))
     if UNLETTERED in el.attrib:
         exempt = (el, " ".join(el.attrib[UNLETTERED].split()))
     yield el, own, eff, m, exempt
@@ -2541,14 +2798,17 @@ def placed(el, m=IDENTITY, inherited=None, exempt=None):
 
 
 def text_of(el) -> str:
-    return "".join(el.itertext()).strip()
+    raw = "".join(el.itertext())
+    if tag(el) == "text":
+        # SVG's default white-space handling removes newlines, changes tabs to
+        # spaces, then collapses spaces. Unicode spaces retain their advance.
+        raw = raw.replace("\r", "").replace("\n", "").replace("\t", " ")
+        return re.sub(" +", " ", raw).strip(" ")
+    return raw.strip()
 
 
 def number(value: str | None) -> float | None:
-    if value is None:
-        return None
-    m = re.fullmatch(r"\s*([0-9.]+)\s*(?:px)?\s*", value)
-    return float(m.group(1)) if m else None
+    return length(value)
 
 
 def coord(value: str | None) -> float:
@@ -2594,6 +2854,27 @@ def transform_of(value: str | None):
     return m
 
 
+def letter_transform_of(value: str | None):
+    """The complete transform forms in main's figures; None for any other spelling."""
+    if value is None:
+        return IDENTITY
+    name, opening, tail = value.partition("(")
+    if not opening or not tail.endswith(")"):
+        return None
+    args = decimal_list(tail[:-1])
+    if args is None:
+        return None
+    v = [float(x) for x in args]
+    if name == "translate" and len(v) == 2:
+        return (1.0, 0.0, 0.0, 1.0, v[0], v[1])
+    if name == "rotate" and len(v) == 3:
+        c, s = math.cos(math.radians(v[0])), math.sin(math.radians(v[0]))
+        return compose(compose((1.0, 0.0, 0.0, 1.0, v[1], v[2]),
+                               (c, s, -s, c, 0.0, 0.0)),
+                       (1.0, 0.0, 0.0, 1.0, -v[1], -v[2]))
+    return None
+
+
 def at(m, x: float, y: float) -> tuple[float, float]:
     return (m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5])
 
@@ -2607,53 +2888,136 @@ def back(m, x: float, y: float) -> tuple[float, float] | None:
     return ((m[3] * x - m[2] * y) / det, (m[0] * y - m[1] * x) / det)
 
 
-def bezier(ps, t: float) -> tuple[float, float]:
-    """The point at t of the Bézier curve with control points ps (de Casteljau)."""
+class SvgMeasurementError(Exception):
+    """A figure whose geometry cannot be measured within S26's numerical limits."""
+
+
+def finite_geometry(*values: float) -> None:
+    if not all(math.isfinite(v) for v in values):
+        raise SvgMeasurementError("non-finite intermediate result")
+
+
+def bezier_points(ps, depth: int = 0) -> list[tuple[float, float]]:
+    """Subdivide until the control polygon lies within CURVE_ERROR of the chord.
+    The curve lies in that polygon's convex hull, so the chord's CURVE_ERROR tube
+    contains the curve, including a reversal or a closed curve with coincident ends."""
+    finite_geometry(*(v for p in ps for v in p))
+    gaps = [point_gap(p, ps[0], ps[-1]) for p in ps[1:-1]]
+    finite_geometry(*gaps)
+    if max(gaps) <= CURVE_ERROR:
+        return [ps[-1]]
+    if depth >= CURVE_MAX_DEPTH:
+        raise SvgMeasurementError("cubic subdivision limit reached")
+    left, right = [ps[0]], [ps[-1]]
     while len(ps) > 1:
-        ps = [(a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])) for a, b in zip(ps, ps[1:])]
-    return ps[0]
+        ps = [((a[0] + b[0]) / 2, (a[1] + b[1]) / 2) for a, b in zip(ps, ps[1:])]
+        left.append(ps[0])
+        right.append(ps[-1])
+    return bezier_points(left, depth + 1) + bezier_points(right[::-1], depth + 1)
+
+
+class StrokeSegment(NamedTuple):
+    """An original segment and its endpoint directions, before flattening."""
+    start: tuple[float, float]
+    end: tuple[float, float]
+    start_tangent: tuple[float, float]
+    end_tangent: tuple[float, float]
+
+
+def stroke_segment(points) -> StrokeSegment:
+    """A straight or Bézier segment, using the next distinct control point at each end."""
+    a, b = points[0], points[-1]
+    p = next((p for p in points[1:] if p != a), a)
+    q = next((q for q in reversed(points[:-1]) if q != b), b)
+    return StrokeSegment(a, b, (p[0] - a[0], p[1] - a[1]),
+                         (b[0] - q[0], b[1] - q[1]))
 
 
 def arc_points(x1: float, y1: float, rx: float, ry: float, phi: float, large: float,
-               sweep: float, x2: float, y2: float) -> list[tuple[float, float]]:
+               sweep: float, x2: float, y2: float,
+               errors: list[float] | None = None,
+               segments: list[StrokeSegment] | None = None) -> list[tuple[float, float]]:
     """An elliptical arc of a path, from (x1, y1) to (x2, y2), as the points along it after
-    the first, its centre found from its ends as SVG's implementation notes find it."""
+    the first, its centre found from its ends as SVG's implementation notes find it.
+    Given `segments`, retain the endpoint tangents from that centre parametrisation."""
     if (x1, y1) == (x2, y2):
         return []
     rx, ry = abs(rx), abs(ry)
     if rx == 0 or ry == 0:
+        if segments is not None:
+            segments.append(stroke_segment([(x1, y1), (x2, y2)]))
         return [(x2, y2)]
     c, s = math.cos(math.radians(phi)), math.sin(math.radians(phi))
     dx, dy = (x1 - x2) / 2, (y1 - y2) / 2
     px, py = c * dx + s * dy, -s * dx + c * dy
-    grow = (px / rx) ** 2 + (py / ry) ** 2
+    u, v = px / rx, py / ry
+    grow = u * u + v * v
+    finite_geometry(u, v, grow)
     if grow > 1:
         rx, ry = rx * math.sqrt(grow), ry * math.sqrt(grow)
-    num = (rx * ry) ** 2 - (rx * py) ** 2 - (ry * px) ** 2
-    k = math.sqrt(max(0.0, num / ((rx * py) ** 2 + (ry * px) ** 2)))
+    rxy, rxpy, rypx = rx * ry, rx * py, ry * px
+    num = rxy * rxy - rxpy * rxpy - rypx * rypx
+    den = rxpy * rxpy + rypx * rypx
+    finite_geometry(rx, ry, num, den)
+    if den == 0:
+        raise SvgMeasurementError("arc centre calculation underflowed")
+    ratio = num / den
+    finite_geometry(ratio)
+    k = math.sqrt(max(0.0, ratio))
     if large == sweep:
         k = -k
     qx, qy = k * rx * py / ry, -k * ry * px / rx
     cx, cy = c * qx - s * qy + (x1 + x2) / 2, s * qx + c * qy + (y1 + y2) / 2
-    start = math.atan2((py - qy) / ry, (px - qx) / rx)
-    turn = (math.atan2((-py - qy) / ry, (-px - qx) / rx) - start) % math.tau
+    ax, ay, bx, by = (px - qx) / rx, (py - qy) / ry, (-px - qx) / rx, (-py - qy) / ry
+    finite_geometry(qx, qy, cx, cy, ax, ay, bx, by)
+    if segments is not None:
+        direction = 1 if sweep else -1
+        tangents = [(direction * (-c * rx * y - s * ry * x),
+                     direction * (-s * rx * y + c * ry * x))
+                    for x, y in ((ax, ay), (bx, by))]
+        finite_geometry(*(v for tangent in tangents for v in tangent))
+        segments.append(StrokeSegment((x1, y1), (x2, y2), *tangents))
+    start = math.atan2(ay, ax)
+    turn = (math.atan2(by, bx) - start) % math.tau
     if not sweep and turn > 0:
         turn -= math.tau
     n = max(1, math.ceil(abs(turn) / ARC_STEP))
+    if errors is not None:
+        # Use the radii after SVG enlarges them to reach the endpoints.
+        errors.append(max(rx, ry) * (1 - math.cos(abs(turn) / (2 * n))))
     pts = []
     for i in range(1, n):
         a = start + turn * i / n
         ex, ey = rx * math.cos(a), ry * math.sin(a)
-        pts.append((cx + c * ex - s * ey, cy + s * ex + c * ey))
+        p = (cx + c * ex - s * ey, cy + s * ex + c * ey)
+        finite_geometry(*p)
+        pts.append(p)
     return pts + [(x2, y2)]
 
 
-def path_rings(d: str) -> list[list[tuple[float, float]]]:
+def path_rings(d: str, closed: list[bool] | None = None,
+               errors: list[float] | None = None,
+               segments: list[list[StrokeSegment]] | None = None) -> list[list[tuple[float, float]]]:
     """A path's subpaths as the rings of points its fill closes: straight segments as they
     are, arcs and curves in short straight pieces. A path is read as far as it is well
-    formed, as SVG draws it."""
+    formed, as SVG draws it. Given a list `closed`, it gains a flag for each ring: whether
+    a Z closes it, as its stroke is drawn (S26), retaining a single point closed by Z
+    for its caps. A moveto alone draws nothing. Given `errors`, append a conservative
+    chord error for each elliptical arc or Bézier curve, before transforms. Given
+    `segments`, retain each ring's original segments and tangents for stroke joins."""
     rings: list[list[tuple[float, float]]] = []
     ring: list[tuple[float, float]] = []
+    run_segments: list[StrokeSegment] = []
+
+    def keep(shut: bool) -> None:
+        if len(ring) > 1 or (closed is not None and shut and ring):
+            rings.append(ring)
+            if closed is not None:
+                closed.append(shut)
+            if segments is not None:
+                segments.append(run_segments + [stroke_segment([ring[-1], ring[0]])]
+                                if shut else run_segments)
+
     x = y = sx = sy = 0.0
     cmd, ctrl, pos = "", None, 0
     while True:
@@ -2664,9 +3028,9 @@ def path_rings(d: str) -> list[list[tuple[float, float]]]:
             break
         kind = cmd.lower()
         if kind == "z":
-            if len(ring) > 1:
-                rings.append(ring)
+            keep(True)
             ring, x, y, ctrl = [(sx, sy)], sx, sy, None
+            run_segments = []
             continue
         args = []
         for i in range(PATH_ARITY[kind]):
@@ -2680,10 +3044,10 @@ def path_rings(d: str) -> list[list[tuple[float, float]]]:
         ox, oy = (x, y) if cmd.islower() else (0.0, 0.0)
         pairs = [(ox + args[i], oy + args[i + 1]) for i in range(0, len(args) - 1, 2)]
         if kind == "m":
-            if len(ring) > 1:
-                rings.append(ring)
+            keep(False)
             (x, y), ctrl = pairs[0], None
             sx, sy, ring = x, y, [(x, y)]
+            run_segments = []
             cmd = "l" if cmd == "m" else "L"
             continue
         if kind == "h":
@@ -2693,19 +3057,25 @@ def path_rings(d: str) -> list[list[tuple[float, float]]]:
         elif kind == "l":
             pts, ctrl = pairs, None
         elif kind == "a":
-            pts = arc_points(x, y, *args[:5], ox + args[5], oy + args[6])
+            pts = arc_points(x, y, *args[:5], ox + args[5], oy + args[6], errors,
+                             run_segments if segments is not None else None)
             ctrl = None
         else:
             if kind in "st":
                 same = ctrl is not None and ctrl[0] == ("c" if kind == "s" else "q")
                 pairs.insert(0, (2 * x - ctrl[1][0], 2 * y - ctrl[1][1]) if same else (x, y))
             curve = [(x, y)] + pairs
-            pts = [bezier(curve, i / CURVE_STEPS) for i in range(1, CURVE_STEPS + 1)]
+            pts = bezier_points(curve)
+            if segments is not None:
+                run_segments.append(stroke_segment(curve))
+            if errors is not None:
+                errors.append(CURVE_ERROR)
             ctrl = ("c" if kind in "cs" else "q", curve[-2])
+        if kind in "hlv" and segments is not None:
+            run_segments.append(stroke_segment([(x, y), pts[-1]]))
         ring += pts
         x, y = ring[-1]
-    if len(ring) > 1:
-        rings.append(ring)
+    keep(False)
     return rings
 
 
@@ -2735,8 +3105,11 @@ def inside(el, own, x: float, y: float, evenodd: bool = False) -> bool:
         return math.dist((x, y), (coord(own.get("cx")), coord(own.get("cy")))) <= coord(own.get("r"))
     if t == "ellipse":
         rx, ry = coord(own.get("rx")), coord(own.get("ry"))
-        return rx > 0 and ry > 0 and ((x - coord(own.get("cx"))) / rx) ** 2 + (
-            (y - coord(own.get("cy"))) / ry) ** 2 <= 1
+        if rx <= 0 or ry <= 0:
+            return False
+        u, v = (x - coord(own.get("cx"))) / rx, (y - coord(own.get("cy"))) / ry
+        finite_geometry(u, v)
+        return math.hypot(u, v) <= 1
     return False
 
 
@@ -2759,12 +3132,22 @@ def fill_under(root, x: float, y: float) -> str:
     return under
 
 
-def svg_root(path: Path):
+def svg_root(path: Path, source: bytes | None = None, *, missing_ok: bool = False):
     try:
-        return ET.parse(path).getroot()
-    except ET.ParseError as e:
-        fail("S14" if path.stem.endswith("-idea") else "S15", path, 0, f"not well-formed SVG: {e}")
+        if source is not None:
+            return ET.fromstring(source)
+        tree = ET.parse(path)
+    except OSError:
+        if missing_ok:
+            return None
+        raise
+    except (ET.ParseError, LookupError, UnicodeDecodeError, ValueError) as e:
+        rule = ("S14" if path.stem.endswith("-idea") else
+                "S24" if path.stem.endswith("-modern") else "S15")
+        fail(rule, path, 0, f"not well-formed SVG: {e}")
         return None
+    # Only the parser call is inside the decoder exception boundary.
+    return tree.getroot()
 
 
 def caption_text_rules(path: Path, el, kind: str) -> None:
@@ -2790,11 +3173,19 @@ def colours(path: Path, root, allowed: set[str], rule: str) -> None:
 
 
 def check_idea(path: Path, ref: str, required: bool) -> int:
-    """S13, S14, S20 and S21 for one idea figure. Returns how many of its points wait for
-    a letter while it is in the transition (no letter yet, the switch off), else 0."""
+    """S13, S14, S20, S21 and S26 for one idea figure. Returns how many of its points wait
+    for a letter while it is in the transition (no letter yet, the switch off), else 0."""
     root = svg_root(path)
-    if root is None:
+    if root is None or not supported_svg(path, root):
         return 0
+    try:
+        return measure_idea(path, ref, required, root)
+    except SvgMeasurementError as e:
+        fail("S26", path, 0, f"cannot measure SVG: {e}")
+        return 0
+
+
+def measure_idea(path: Path, ref: str, required: bool, root) -> int:
     vb = " ".join(root.get("viewBox", "").replace(",", " ").split())
     if vb != "0 0 400 300":
         fail("S14", path, 0, f"viewBox {vb or 'missing'}, not 0 0 400 300")
@@ -2819,15 +3210,15 @@ def check_idea(path: Path, ref: str, required: bool) -> int:
         if n > 40 or ends > 2:
             report("D5", path, 0, f"caption of {n} words, {ends} sentence(s)")
     colours(path, root, IDEA_COLOURS | WHITE, "S14")
+    one_letter_one_point(path, root)
     return check_idea_letters(path, root, required)
 
 
 def drawn_letters(path: Path) -> set[str] | None:
     """The letters Euclid's figure draws, which S16 holds to Heath's text; None when there
     is no figure to read (S15 says why)."""
-    try:
-        root = ET.parse(path).getroot()
-    except (OSError, ET.ParseError):
+    root = svg_root(path, missing_ok=True)
+    if root is None:
         return None
     return {text_of(el) for el in root.iter() if tag(el) == "text" and LETTER.fullmatch(text_of(el))}
 
@@ -2953,6 +3344,425 @@ def check_idea_letters(path: Path, root, required: bool) -> int:
     return 0
 
 
+def glyph_hull(own, eff, m, s: str) -> list[tuple[float, float]]:
+    """The corners of the hull of letter s's capital (S26), upright or italic as its
+    font-style sets it, where the text element puts it: x and y give the start of its
+    baseline (its middle or its end, by text-anchor, the whole label's advance counted,
+    a prime or a subscript after the capital included), at its font-size, with dx and dy
+    applied before transforms."""
+    glyphs = GLYPHS_ITALIC if letter_style(eff) == "italic" else GLYPHS_UPRIGHT
+    advance, corners = glyphs[s[0]]
+    whole = advance + sum(SUFFIXES.get(c, 0) for c in s[1:])
+    k = (number(eff.get("font-size")) or 16.0) / EM
+    x = coord(own.get("x")) + coord(own.get("dx")) + {
+        "middle": -whole * k / 2, "end": -whole * k}.get(
+        (eff.get("text-anchor") or "start").strip(), 0.0)
+    y = coord(own.get("y")) + coord(own.get("dy"))
+    return [at(m, x + corners[i] * k, y - corners[i + 1] * k)
+            for i in range(0, len(corners), 2)]
+
+
+def stretch(m) -> float:
+    """The most an affine map m lengthens any length: its larger singular value. A
+    stroke's width and a dot's radius are taken at this, so that a map that stretches one
+    way more than another never makes them seem thinner than they are (S26)."""
+    a, b, c, d = m[:4]
+    t, det = a * a + b * b + c * c + d * d, a * d - b * c
+    return math.sqrt((t + math.sqrt(max(0.0, t * t - 4 * det * det))) / 2)
+
+
+
+def decimal_end(value: str, pos: int) -> int | None:
+    """Read an optional sign, digits, and an optional point followed by digits, linearly."""
+    if pos < len(value) and value[pos] in "+-":
+        pos += 1
+    start = pos
+    while pos < len(value) and "0" <= value[pos] <= "9":
+        pos += 1
+    if pos == start:
+        return None
+    if pos < len(value) and value[pos] == ".":
+        pos += 1
+        start = pos
+        while pos < len(value) and "0" <= value[pos] <= "9":
+            pos += 1
+        if pos == start:
+            return None
+    return pos
+
+
+def length(value: str | None) -> float | None:
+    """One bounded plain decimal, with no unit, exponent or internal white space."""
+    v = (value or "").strip(SVG_SPACE)
+    if not v or decimal_end(v, 0) != len(v):
+        return None
+    n = float(v)
+    if n == 0 and any(c in "123456789" for c in v):
+        return None  # A positive radius rounded to zero would silently lose its arc.
+    return n if math.isfinite(n) and abs(n) <= SVG_NUMBER_LIMIT else None
+
+
+def decimal_list(value: str) -> list[str] | None:
+    """Plain decimals separated by a comma with optional white space, or white space.
+    Retain the spelling so path flags can require exactly 0 or 1."""
+    v = value.strip(SVG_SPACE)
+    parts, pos = [], 0
+    while pos < len(v):
+        end = decimal_end(v, pos)
+        if end is None or length(v[pos:end]) is None:
+            return None
+        parts.append(v[pos:end])
+        pos = end
+        while pos < len(v) and v[pos] in SVG_SPACE:
+            pos += 1
+        if pos == len(v):
+            return parts
+        if v[pos] == ",":
+            pos += 1
+            while pos < len(v) and v[pos] in SVG_SPACE:
+                pos += 1
+            if pos == len(v):
+                return None
+        elif pos == end:
+            return None
+    return None
+
+
+def supported_path(value: str) -> bool:
+    """Whole paths in main's command language, including counts, separators and flags."""
+    parts = re.split(r"([A-Za-z])", value.strip(SVG_SPACE))
+    if len(parts) < 3 or parts[0] or parts[1] != "M":
+        return False
+    for cmd, args in zip(parts[1::2], parts[2::2]):
+        if cmd not in "MLHVACZ":
+            return False
+        if cmd == "Z":
+            if args.strip(SVG_SPACE):
+                return False
+            continue
+        v = decimal_list(args)
+        arity = PATH_ARITY[cmd.lower()]
+        if v is None or len(v) % arity:
+            return False
+        if cmd == "A" and any(float(v[i]) < 0 or float(v[i + 1]) < 0
+                              or v[i + 3] not in ("0", "1") or v[i + 4] not in ("0", "1")
+                              for i in range(0, len(v), arity)):
+            return False
+    return True
+
+
+def supported_svg(path: Path, root) -> bool:
+    """Refuse deep trees and unsupported SVG before recursive walks or measurements.
+    Read raw XML attributes only; CSS is neither accepted nor interpreted."""
+    pending = [(root, 0)]
+    while pending:
+        el, depth = pending.pop()
+        if depth > SVG_MAX_DEPTH:
+            fail("S26", path, 0, f"SVG nesting exceeds {SVG_MAX_DEPTH} levels below the root")
+            return False
+        pending.extend((child, depth + 1) for child in el)
+
+    valid = True
+    for el in root.iter():
+        t = tag(el)
+        if t not in SVG_ELEMENTS or (t == "svg" and el is not root):
+            fail("S26", path, 0, f"<{t}> is outside S26's SVG allow-list")
+            valid = False
+            continue
+        if t == "ellipse" and not {"rx", "ry"} <= el.attrib.keys():
+            fail("S26", path, 0, "<ellipse> needs explicit rx and ry in S26's SVG allow-list")
+            valid = False
+        for attr, value in el.attrib.items():
+            if attr in SVG_NUMBERS:
+                n = length(value)
+                ok = n is not None
+                if ok and attr in ("r", "rx", "ry", "width", "height", "font-size", "stroke-width"):
+                    ok = n >= 0
+                if ok and attr in ("fill-opacity", "stroke-opacity"):
+                    ok = 0 <= n <= 1
+            elif attr in SVG_KEYWORDS:
+                ok = value in SVG_KEYWORDS[attr]
+            elif attr in ("points", "viewBox", "stroke-dasharray"):
+                v = decimal_list(value)
+                ok = v is not None
+                if attr == "viewBox":
+                    ok = ok and len(v) == 4 and float(v[2]) > 0 and float(v[3]) > 0
+                elif attr == "points":
+                    ok = ok and len(v) % 2 == 0
+                else:
+                    ok = value == "none" or (ok and all(float(n) >= 0 for n in v))
+            elif attr == "transform":
+                ok = letter_transform_of(value) is not None
+            elif attr == "d":
+                ok = supported_path(value)
+            else:
+                ok = attr == UNLETTERED
+            if not ok:
+                fail("S26", path, 0, f"<{t}> {attr} {value!r} is outside S26's SVG allow-list")
+                valid = False
+    if not valid:
+        return False
+    # Attribute spellings are now safe to traverse. Only point labels need the
+    # regular outlines: main also uses bold numerical annotations.
+    for el, _, eff in walk(root):
+        if tag(el) != "text":
+            continue
+        s = text_of(el)
+        if not LETTER.fullmatch(s):
+            continue
+        if eff.get("font-family") not in SVG_KEYWORDS["font-family"]:
+            fail("S26", path, 0, f"letter {s} has effective font-family "
+                 f"{eff.get('font-family')!r}: outside S26's SVG allow-list")
+            valid = False
+        if eff.get("stroke", "none") != "none":
+            fail("S26", path, 0, f"letter {s} has an effective stroke: outside S26's SVG allow-list")
+            valid = False
+        if eff.get("font-weight", "normal") != "normal":
+            fail("S26", path, 0, f"letter {s} has effective font-weight "
+                 f"{eff['font-weight']!r}: outside S26's SVG allow-list")
+            valid = False
+    return valid
+
+
+def rect_outline(own, errors: list[float] | None = None) -> list[tuple[float, float]] | None:
+    """A rect's outline, its corners rounded by rx and ry as SVG rounds them (one given
+    stands for both, and each is at most half the side), in short straight pieces; None
+    when it has no width or no height, and SVG draws nothing. Given `errors`, append the
+    corners' conservative chord error, before transforms."""
+    x0, y0 = coord(own.get("x")), coord(own.get("y"))
+    w, h = coord(own.get("width")), coord(own.get("height"))
+    if w <= 0 or h <= 0:
+        return None
+    rx, ry = length(own.get("rx")), length(own.get("ry"))
+    rx = ry if rx is None else rx
+    ry = rx if ry is None else ry
+    rx, ry = min(rx or 0.0, w / 2), min(ry or 0.0, h / 2)
+    if rx <= 0 or ry <= 0:
+        return [(x0, y0), (x0 + w, y0), (x0 + w, y0 + h), (x0, y0 + h), (x0, y0)]
+    out = []
+    quarter = max(1, round(math.pi / 2 / ARC_STEP))
+    if errors is not None:
+        errors.append(max(rx, ry) * (1 - math.cos(math.pi / (4 * quarter))))
+    for cx, cy, start in ((x0 + w - rx, y0 + ry, -90), (x0 + w - rx, y0 + h - ry, 0),
+                          (x0 + rx, y0 + h - ry, 90), (x0 + rx, y0 + ry, 180)):
+        for i in range(quarter + 1):
+            a = math.radians(start + 90 * i / quarter)
+            out.append((cx + rx * math.cos(a), cy + ry * math.sin(a)))
+    return out + out[:1]
+
+
+def miter_joins(segments, half: float, limit: float, closed: bool):
+    """The filled corners beyond a round join, before transforms, up to the mitre limit.
+    Only original segment boundaries join; directionless segments are skipped, and a
+    closed subpath joins its last segment back to its first."""
+    directed = [s for s in segments
+                if s.start_tangent != (0, 0) and s.end_tangent != (0, 0)]
+    if closed and directed:
+        directed = directed + directed[:1]
+    for a, c in zip(directed, directed[1:]):
+        b = a.end
+        ab, bc = math.hypot(*a.end_tangent), math.hypot(*c.start_tangent)
+        ux, uy = (v / ab for v in a.end_tangent)
+        vx, vy = (v / bc for v in c.start_tangent)
+        turn, den = ux * vy - uy * vx, 1 + ux * vx + uy * vy
+        if turn == 0 or den <= 0:
+            continue
+        if math.sqrt(2 / den) > limit:
+            continue
+        side = 1 if turn > 0 else -1
+        nx, ny, mx, my = side * uy, -side * ux, side * vy, -side * vx
+        yield [b, (b[0] + half * nx, b[1] + half * ny),
+               (b[0] + half * (nx + mx) / den, b[1] + half * (ny + my) / den),
+               (b[0] + half * mx, b[1] + half * my), b]
+
+
+def strokes(path: Path, root):
+    """(what it is, its points, half its width plus chord error) for each stroke, as a run
+    of straight pieces: a line, a polyline, a polygon or a rect's outline (its corners
+    rounded as rx and ry round them), each subpath of a path (closed where a Z closes it),
+    a circle or an ellipse in short straight pieces; transforms applied, the width taken
+    at the most the transform stretches it, a dashed stroke read whole, and a stroke SVG
+    does not draw (a circle of no radius, a rect of no width, a run of no length with
+    butt caps) left out (S26). Mitre joins add closed filled outlines
+    with None in place of half the width: their outlines already include it."""
+    for el, own, eff, m, _ in placed(root):
+        t = tag(el)
+        if t not in DRAWN or (eff.get("stroke") or "none").strip().lower() == "none":
+            continue
+        w = length(eff.get("stroke-width", "1"))
+        if w is None or not math.isfinite(w):
+            fail("S26", path, 0, f"<{t}> stroke-width {eff.get('stroke-width')!r} is not "
+                 "a finite plain decimal")
+            continue
+        if w <= 0:
+            continue
+        closed = []
+        errors = []
+        segment_runs = []
+        if t == "line":
+            runs = [[(coord(own.get("x1")), coord(own.get("y1"))),
+                     (coord(own.get("x2")), coord(own.get("y2")))]]
+        elif t in ("polyline", "polygon"):
+            v = [float(n) for n in NUM.findall(own.get("points", ""))]
+            run = list(zip(v[0::2], v[1::2]))
+            runs = [run + run[:1] if t == "polygon" else run]
+        elif t == "path":
+            rings = path_rings(own.get("d", ""), closed, errors, segment_runs)
+            runs = [ring + ring[:1] if shut else ring for ring, shut in zip(rings, closed)]
+        elif t == "rect":
+            outline = rect_outline(own, errors)
+            runs = [outline] if outline else []
+        else:
+            cx, cy = coord(own.get("cx")), coord(own.get("cy"))
+            rx = coord(own.get("r")) if t == "circle" else coord(own.get("rx"))
+            ry = coord(own.get("r")) if t == "circle" else coord(own.get("ry"))
+            steps = round(math.tau / ARC_STEP)
+            runs = [] if rx <= 0 or ry <= 0 else [
+                [(cx + rx * math.cos(i * math.tau / steps),
+                  cy + ry * math.sin(i * math.tau / steps))
+                 for i in range(steps + 1)]]
+            # An ellipse stretches the unit circle by at most its greater radius.
+            errors.append(max(rx, ry) * (1 - math.cos(math.pi / steps)))
+        half = (w / 2 + max(errors, default=0.0)) * stretch(m)
+        dashed = (eff.get("stroke-dasharray") or "none").strip().lower() != "none"
+        kind = "a dashed line" if dashed and t == "line" else \
+            ("an " if t == "ellipse" else "a ") + t
+        cap = (eff.get("stroke-linecap") or "butt").strip()
+        miter = (eff.get("stroke-linejoin") or "miter").strip() == "miter"
+        limit = length(eff.get("stroke-miterlimit"))
+        limit = 4.0 if limit is None else limit
+        if t != "path":
+            closed = [t in ("polygon", "rect", "circle", "ellipse")] * len(runs)
+            # Rounded rectangles join their sides tangentially to their corners.
+            segment_runs = [[stroke_segment([a, b]) for a, b in zip(run, run[1:])]
+                            if t in ("polyline", "polygon", "rect") and not errors else []
+                            for run in runs]
+        for run, shut, segments in zip(runs, closed, segment_runs):
+            if len(run) > 1 and not (cap == "butt" and all(p == run[0] for p in run)):
+                yield kind, [at(m, x, y) for x, y in run], half
+                if miter:
+                    for join in miter_joins(segments, w / 2, limit, shut):
+                        yield kind, [at(m, x, y) for x, y in join], None
+
+
+def dots(root):
+    """(where, radius) for each dot a figure draws: a filled circle of radius DOT at most,
+    transforms applied, its radius taken at the most the transform stretches it (S26, as
+    S21 reads a dot)."""
+    for el, own, eff, m, _ in placed(root):
+        r = coord(own.get("r"))
+        filled = (eff.get("fill") or "black").strip().lower() != "none"
+        if tag(el) == "circle" and 0 < r <= DOT and filled:
+            yield at(m, coord(own.get("cx")), coord(own.get("cy"))), r * stretch(m)
+
+
+def point_gap(p, a, b) -> float:
+    """How far the point p stands from the straight piece ab."""
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    n = dx * dx + dy * dy
+    t = 0.0 if n == 0 else max(0.0, min(1.0, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / n))
+    return math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy)
+
+
+def crosses(a, b, c, d) -> bool:
+    """Whether the straight pieces ab and cd cross."""
+    def side(p, q, r):
+        return (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])
+    return side(a, b, c) * side(a, b, d) < 0 and side(c, d, a) * side(c, d, b) < 0
+
+
+def hull_gap(hull, a, b) -> float:
+    """How far the straight piece ab stands from the convex polygon `hull`: 0 if it meets
+    it."""
+    if enclosed([hull], *a, False) or enclosed([hull], *b, False):
+        return 0.0
+    gap = math.inf
+    for c, d in zip(hull, hull[1:] + hull[:1]):
+        if crosses(a, b, c, d):
+            return 0.0
+        gap = min(gap, point_gap(c, a, b), point_gap(a, c, d), point_gap(b, c, d))
+    return gap
+
+
+def nearest(hull, pieces, spots) -> tuple[float, str] | None:
+    """How near a stroke (less half its width), its filled joins, or a dot (less
+    its radius) comes to a letter's hull, and what it is; None if none comes within CLEAR."""
+    xs, ys = [p[0] for p in hull], [p[1] for p in hull]
+    best = None
+    for kind, run, half in pieces:
+        if half is None and enclosed([run], *hull[0], False):
+            if best is None or best[0] > 0:
+                best = (0.0, kind)
+        reach = CLEAR + (half or 0.0)
+        lo_x, hi_x = min(xs) - reach, max(xs) + reach
+        lo_y, hi_y = min(ys) - reach, max(ys) + reach
+        for a, b in zip(run, run[1:]):
+            if max(a[0], b[0]) < lo_x or min(a[0], b[0]) > hi_x \
+                    or max(a[1], b[1]) < lo_y or min(a[1], b[1]) > hi_y:
+                continue
+            gap = hull_gap(hull, a, b) - (half or 0.0)
+            if gap < CLEAR and (best is None or gap < best[0]):
+                best = (gap, kind)
+    for p, r in spots:
+        gap = (0.0 if enclosed([hull], *p, False) else
+               min(point_gap(p, c, d) for c, d in zip(hull, hull[1:] + hull[:1]))) - r
+        if gap < CLEAR and (best is None or gap < best[0]):
+            best = (gap, "a dot")
+    return best
+
+
+def one_letter_one_point(path: Path, root, cuts: tuple[float, ...] = ()) -> None:
+    """S26: a figure draws each letter once, or, where Heath's figures stand side by side
+    with `cuts` between them, once in each, every letter wholly on one side of every cut;
+    and each letter stands CLEAR of every stroke, every dot and the canvas's edge,
+    measured by the hull of its capital as Georgia draws it, upright or italic."""
+    if not supported_svg(path, root):
+        return
+    vb = [float(v) for v in NUM.findall(root.get("viewBox", ""))]
+    pieces, spots = list(strokes(path, root)), list(dots(root))
+    count: dict[tuple[int, str], int] = defaultdict(int)
+    for el, own, eff, m, _ in placed(root):
+        if tag(el) != "text":
+            continue
+        unsupported = False
+        if len(el):
+            fail("S26", path, 0, "<text> has an element child: draw each label in a "
+                 "separate <text>")
+            unsupported = True
+        s = text_of(el)
+        if not LETTER.fullmatch(s):
+            if re.search(r"[A-Z]", s):
+                fail("S26", path, 0, f"<text> {s!r} has unmeasured capitals: draw each "
+                     "label in a separate <text>")
+            continue
+        if unsupported:
+            continue
+        hull = glyph_hull(own, eff, m, s)
+        xs, ys = [p[0] for p in hull], [p[1] for p in hull]
+        where = f"letter {s} at ({coord(own.get('x')):g}, {coord(own.get('y')):g})"
+        count[(sum(1 for c in cuts if (min(xs) + max(xs)) / 2 > c), s)] += 1
+        for c in cuts:
+            if min(xs) < c < max(xs):
+                fail("S26", path, 0, f"{where} stands across the cut at x {c:g} between two "
+                     "of the figures side by side (SIDE_BY_SIDE)")
+        near = nearest(hull, pieces, spots)
+        if near:
+            gap, kind = near
+            fail("S26", path, 0, f"{where} meets {kind}" if gap <= 0 else
+                 f"{where} stands {gap:.1f} from {kind}, under {CLEAR:g}: move it clear")
+        if len(vb) == 4:
+            edge = min(min(xs) - vb[0], vb[0] + vb[2] - max(xs),
+                       min(ys) - vb[1], vb[1] + vb[3] - max(ys))
+            if edge < CLEAR:
+                fail("S26", path, 0, f"{where} stands {max(edge, 0):.1f} from the canvas's "
+                     f"edge, under {CLEAR:g}")
+    for (case, s), k in sorted(count.items()):
+        if k > 1:
+            fail("S26", path, 0, f"letter {s} drawn {k} times"
+                 + (f" in the figure {case + 1} of {len(cuts) + 1} side by side" if cuts else "")
+                 + ": one letter names one point")
+
+
 def heath_letters(book: str, n: int) -> set[str]:
     """The capital letters of Heath's text, as STYLE section 8 gives the command: comments,
     headings, Heath's references, "Q. E. D.", "Q. E. F.", "I say" and "PORISM." taken out,
@@ -2972,8 +3782,15 @@ def heath_letters(book: str, n: int) -> set[str]:
 
 def check_euclid(path: Path, ref: str) -> None:
     root = svg_root(path)
-    if root is None:
+    if root is None or not supported_svg(path, root):
         return
+    try:
+        measure_euclid(path, ref, root)
+    except SvgMeasurementError as e:
+        fail("S26", path, 0, f"cannot measure SVG: {e}")
+
+
+def measure_euclid(path: Path, ref: str, root) -> None:
     book, n = ref.split(".")
     n = int(n)
     vb = root.get("viewBox", "").replace(",", " ").split()
@@ -3009,8 +3826,9 @@ def check_euclid(path: Path, ref: str) -> None:
             continue
         stroke = (eff.get("stroke") or "none").lower()
         if stroke != "none":
-            w = number(eff.get("stroke-width"))
-            w = 1.0 if w is None else w
+            w = length(eff.get("stroke-width", "1"))
+            if w is None or not math.isfinite(w):
+                continue  # S26 names unsupported widths, without assuming a default.
             if w < 1.2:
                 thin[w] += 1
             elif w > 3.2:
@@ -3046,6 +3864,479 @@ def check_euclid(path: Path, ref: str) -> None:
         if stale:
             fail("S16", path, 0, f"the exception for {', '.join(sorted(stale))} in "
                  "LETTER_EXCEPTIONS no longer applies; remove it")
+    one_letter_one_point(path, root, SIDE_BY_SIDE.get((book, n), ()))
+
+
+# ---------------------------------------------------------------------------------------
+# The figure of the modern way (S24, S25; STYLE, section 7): figures/<book>/NN-modern.svg,
+# intended for the page's paragraph "**The modern way.**". It is drawn as Euclid's figure
+# is, on its canvas and in its palette, with its letters, upright, at the same points,
+# and with the paragraph's own names for what the modern way measures (a, b, θ, u),
+# italic, so that a reader moves between the two figures by the same names.
+
+MODERN_SUFFIX = "-modern.svg"
+MODERN_TEXT_SIZE = 17
+# Main's deepest modern figure at c6ff6817 has three levels below its root.
+MODERN_MAX_DEPTH = 16
+# What the text of a modern figure may hold besides one of Heath's letters: the
+# paragraph's lower-case Latin and Greek names, digits, and the signs of an expression.
+MODERN_TEXT = re.compile(r"[a-zα-ωϑϕ0-9 +\-−·×()/√²³⁰¹⁴-⁹⁻½=,.|′'₀-₉<>≤≥±]+")
+# TeX's Greek letters, as the paragraph writes them, and the letter each names.
+TEX_GREEK = {"alpha": "α", "beta": "β", "gamma": "γ", "delta": "δ", "epsilon": "ε",
+             "varepsilon": "ε", "zeta": "ζ", "eta": "η", "theta": "θ", "vartheta": "θ",
+             "iota": "ι", "kappa": "κ", "lambda": "λ", "mu": "μ", "nu": "ν", "xi": "ξ",
+             "pi": "π", "varpi": "π", "rho": "ρ", "varrho": "ρ", "sigma": "σ",
+             "varsigma": "σ", "tau": "τ", "upsilon": "υ", "phi": "φ", "varphi": "φ",
+             "chi": "χ", "psi": "ψ", "omega": "ω"}
+# The variant letters, each read as the letter it is a form of, in the paragraph and in
+# the figure alike: ϑ as θ, ϕ as φ, ς as σ, ϖ as π, ϱ as ρ.
+GREEK_VARIANTS = str.maketrans({"ϑ": "θ", "ϕ": "φ", "ς": "σ", "ϖ": "π", "ϱ": "ρ"})
+TEX_SPAN = re.compile(r"\$([^$\n]+)\$")
+# A command whose argument TeX sets upright, as words or Heath's letters: the argument,
+# braces balanced, is no name of the modern way.
+TEX_UPRIGHT = re.compile(r"\\(?:mathrm|text|textrm|textup|operatorname)\s*\{")
+TEX_COMMAND = re.compile(r"\\([A-Za-z]+)")
+# A lower-case letter standing alone in the paragraph's words, not the s of "A's" or
+# "Euclid’s" after an apostrophe.
+LONE_LOWER = re.compile(r"(?<![A-Za-z'’])[a-z](?![A-Za-z])")
+# The abbreviations whose letters are no names.
+ABBREVIATION = re.compile(r"(?<![A-Za-z])(?:[eE]\.g|[iI]\.e)\.")
+# What stands beside the article "a", spaces between, when it is a name, as in "AC = a"
+# or "(a + b)²": a sign of an expression, a digit, raised or lowered, or a bracket.
+BESIDE_A_NAME = set("=+-−×·/<>≤≥()[]0123456789⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉")
+
+
+
+def without_upright(body: str) -> str:
+    """A TeX span with each upright argument (\\mathrm{…}, \\text{…}) taken out, its
+    braces balanced, so that nested braces end where TeX ends them."""
+    out, pos = [], 0
+    for m in TEX_UPRIGHT.finditer(body):
+        if m.start() < pos:
+            continue
+        out.append(body[pos:m.start()])
+        depth, i = 1, m.end()
+        while i < len(body) and depth:
+            depth += {"{": 1, "}": -1}.get(body[i], 0)
+            i += 1
+        out.append(" ")
+        pos = i
+    return "".join(out) + body[pos:]
+
+
+def modern_span(text: str) -> tuple[int, int] | None:
+    """Where the paragraph that opens "**The modern way.**" stands in a mishnah, as
+    (start, end) source offsets. Read blocks in the original text, before masking any
+    comments or code. Four columns of indentation start code, but cannot interrupt an
+    open paragraph. Fences and HTML blocks keep their contents out of the search;
+    inline comments leave the paragraph's line boundaries intact. Leading reference
+    definitions are excluded without moving the offsets into the original text.
+    These offsets also let a renderer put the figure after the whole paragraph."""
+    for block in markdown_blocks(text, raw_html=True).inline:
+        if not block.paragraph:
+            continue
+        definitions = reference_destination_ranges(block.text)
+        start = definitions[-1].end if definitions else 0
+        content = block.text[start:].lstrip(" \t\n")
+        if content.startswith(MODERN_WAY):
+            first = len(block.text) - len(content)
+            return block.offsets[first], block.offsets[-1] + 1
+    return None
+
+
+def modern_paragraph(text: str) -> str | None:
+    """The paragraph of a mishnah that opens "**The modern way.**" (modern_span), as a
+    reader sees it: its HTML tags and comments and code blanked afterwards.
+    Inline links keep their labels, with brackets and targets removed so that visible
+    word boundaries stay intact and a link's bracket cannot turn the article a into a name.
+    Reference links resolve against the whole document before their identifiers are
+    blanked. None when there is no such paragraph."""
+    span = modern_span(text)
+    if span is None:
+        return None
+    source = text[span[0]:span[1]]
+    syntax = markdown_syntax(source, indented_code=False,
+                             reference_labels=document_reference_labels(text), inline_html=True)
+    visible = blank_ranges(source, syntax.comments + syntax.destinations
+                           + [(s.start, s.end) for s in syntax.spans])
+    removed = set()
+    for link in link_destination_ranges(source, references=False):
+        if link.label < link.start and (link.start, link.end) in syntax.destinations:
+            removed.add(link.label)
+            removed.update(range(link.start, link.end))
+    return "".join(c for i, c in enumerate(visible) if i not in removed)
+
+
+def modern_markup_findings(text: str) -> list[str]:
+    """Refuse unsupported markup before it can supply names to a modern figure."""
+    blocks = markdown_blocks(text, raw_html=True).inline
+    span = modern_span(text)
+    # A leading multiline reference definition can hide the paragraph from modern_span.
+    # Refuse its syntax here without trying to resolve its destination.
+    if span is None and not any(
+            block.paragraph and any(line.lstrip(" \t").startswith(MODERN_WAY)
+                                    for line in block.text.splitlines())
+            for block in blocks):
+        return []
+    found = []
+    if any(REFERENCE_LABEL.match(line) for block in blocks if block.references
+           for line in block.text.splitlines()):
+        found.append("unsupported reference definition beside the modern paragraph")
+    if span is None:
+        return found
+    source = text[span[0]:span[1]]
+    syntax = markdown_syntax(source, indented_code=False, inline_html=True)
+    visible = blank_ranges(source, [(s.start, s.end) for s in syntax.spans])
+    # Main uses no character references. Refuse their spellings, even after an escaped
+    # ampersand, instead of letting the spelling supply names the reader does not see.
+    if re.search(r"&(?:#[xX][0-9a-fA-F]+|#[0-9]+|[A-Za-z][A-Za-z0-9]*);", visible):
+        found.append("unsupported character reference in the modern paragraph")
+    # Refuse emphasis touching a word, also through an apostrophe or full stop.
+    # Removing link syntax first also catches e[*x*](/reference)ponent.
+    if re.search(r"\w(?:\*+|['’.][*_]+|[*_]+['’.])\w", modern_paragraph(text)):
+        found.append("unsupported intraword emphasis in the modern paragraph")
+    if syntax.comments or any(backslashes_before(visible, m.start()) % 2 == 0
+                              for m in INLINE_HTML_TAG.finditer(visible)):
+        found.append("unsupported inline HTML tag or comment in the modern paragraph")
+    # Inline links are supported; any remaining bracketed label could be a reference.
+    links = link_destination_ranges(visible, references=False)
+    visible = blank_ranges(visible, [(link.label, link.end) for link in links])
+    if re.search(r"(?<!\\)\[[^\]\n]*\]", visible):
+        found.append("unsupported reference-style link in the modern paragraph")
+    return found
+
+
+def modern_names(paragraph: str) -> set[str]:
+    """The names a modern-way paragraph uses: each lower-case Latin or Greek letter of a
+    $…$ span, its commands taken out (\\vec, \\frac, \\sin) and its Greek ones read as
+    their letters (\\theta, θ), what \\mathrm{…} sets upright left aside (Heath's points);
+    and, outside the spans, each Greek letter, and each lower-case letter that stands
+    alone, save the letters of English: one after an apostrophe (A's), those of e.g. and
+    i.e., and the article "a" when no sign of an expression, digit or bracket stands
+    beside it (BESIDE_A_NAME)."""
+    names: set[str] = set()
+
+    def span(m: re.Match) -> str:
+        body = without_upright(m.group(1))
+        body = TEX_COMMAND.sub(lambda c: " " + TEX_GREEK.get(c.group(1), "") + " ", body)
+        names.update(c for c in body.translate(GREEK_VARIANTS) if c.isalpha() and c.islower())
+        return " "
+
+    rest = TEX_SPAN.sub(span, paragraph).translate(GREEK_VARIANTS)
+    rest = ABBREVIATION.sub(_blank, rest)
+    for m in LONE_LOWER.finditer(rest):
+        before, after = rest[:m.start()].rstrip()[-1:], rest[m.end():].lstrip()[:1]
+        if m.group(0) != "a" or {before, after} & BESIDE_A_NAME:
+            names.add(m.group(0))
+    names.update(c for c in rest if "α" <= c <= "ω")
+    return names
+
+
+# Derived from all 30 figures at 209d71fd: no CSS, units or exponent notation.
+MODERN_ELEMENTS = {"svg", "title", "defs", "marker", "g", "rect", "line", "circle",
+                   "ellipse", "path", "polygon", "polyline", "text"}
+MODERN_NUMBERS = {"x", "y", "x1", "x2", "y1", "y2", "cx", "cy", "r", "rx", "ry",
+                  "width", "height", "fill-opacity", "markerWidth", "markerHeight",
+                  "refX", "refY", "font-size", "stroke-width"}
+# Exact values from those figures, plus explicit SVG initial values, never CSS-wide
+# keywords. The palette and text checks still apply after this syntax gate.
+MODERN_VALUES = {
+    "fill": EUCLID_COLOURS | {"none", "black"},
+    "stroke": {"#3b2f2f", "#8c7b62", "#a0522d", "none"},
+    "font-family": {"Georgia", "Georgia, serif", "Georgia, 'Times New Roman', serif"},
+    "font-style": {"italic", "normal"},
+    "text-anchor": {"middle", "start"},
+    "stroke-linejoin": {"round", "miter"},
+    "markerUnits": {"userSpaceOnUse", "strokeWidth"},
+    "orient": {"auto-start-reverse", "0"},
+    "marker-end": {"url(#axis)", "url(#head)", "none"},
+    "id": {"axis", "head"},
+}
+MODERN_ATTRIBUTES = MODERN_NUMBERS | MODERN_VALUES.keys() | {
+    "viewBox", "points", "stroke-dasharray", "transform", "d"}
+# Marker viewports have their own exact spellings, from the same 30 figures.
+# None uses text or strokes inside a marker, so those are refused below rather than
+# measured without the marker's scale. An omitted markerUnits keeps SVG's default.
+MODERN_MARKER_VALUES = {
+    "id": {"axis", "head"},
+    "markerUnits": {"userSpaceOnUse"},
+    "markerWidth": {"5", "7", "12"},
+    "markerHeight": {"5", "6", "10"},
+    "viewBox": {"0 0 10 10", "0 0 7 6", "0 0 12 10"},
+    "refX": {"9", "6", "11"},
+    "refY": {"5", "3"},
+    "orient": {"auto-start-reverse"},
+}
+
+
+def modern_number(value: str | None) -> float | None:
+    """A finite plain decimal, scanned once without regex backtracking or units."""
+    if not value:
+        return None
+    i = int(value[0] in "+-")
+    start = i
+    while i < len(value) and "0" <= value[i] <= "9":
+        i += 1
+    if i == start:
+        return None
+    if i < len(value) and value[i] == ".":
+        i += 1
+        start = i
+        while i < len(value) and "0" <= value[i] <= "9":
+            i += 1
+        if i == start:
+            return None
+    if i != len(value):
+        return None
+    result = float(value)
+    return result if math.isfinite(result) else None
+
+
+def modern_numbers(value: str) -> list[float] | None:
+    """Space-separated plain decimals, as main spells lists and transform arguments."""
+    values = [modern_number(part) for part in value.split(" ")]
+    return None if None in values else values
+
+
+def modern_transform(value: str) -> bool:
+    """Main uses one rotation about an explicit centre, with nothing trailing."""
+    if not value.startswith("rotate(") or not value.endswith(")"):
+        return False
+    args = modern_numbers(value[7:-1])
+    return (args is not None and len(args) == 3
+            and all(math.isfinite(n) for n in transform_of(value)))
+
+
+def modern_path(value: str) -> bool:
+    """Main's paths use explicit M, L, A and final z, with space-separated decimals."""
+    parts, i = value.split(" "), 0
+    if parts[0] != "M":
+        return False
+    while i < len(parts):
+        command = parts[i]
+        if command == "z":
+            return i == len(parts) - 1
+        count = {"M": 2, "L": 2, "A": 7}.get(command)
+        if count is None:
+            return False
+        args = parts[i + 1:i + 1 + count]
+        if len(args) != count or any(modern_number(arg) is None for arg in args):
+            return False
+        if command == "A" and (any(modern_number(arg) < 0 for arg in args[:2])
+                               or any(arg not in {"0", "1"} for arg in args[3:5])):
+            return False
+        i += count + 1
+    return True
+
+
+def modern_svg_findings(root) -> list[tuple[str, str]]:
+    """Close the input before walk() reads any presentation attributes or text."""
+    # Bound the tree iteratively before any recursive helper sees it.
+    pending = [(root, 0)]
+    while pending:
+        el, depth = pending.pop()
+        if depth > MODERN_MAX_DEPTH:
+            return [("S24", f"modern figure nesting exceeds {MODERN_MAX_DEPTH} levels "
+                      "below <svg>")]
+        pending.extend((child, depth + 1) for child in el)
+    found = []
+    for el in root.iter():
+        t = tag(el)
+        if (el.tag != SVG + t or t not in MODERN_ELEMENTS
+                or (el is root) != (t == "svg")):
+            rule = "S25" if t == "tspan" else "S24"
+            found.append((rule, f"unsupported <{t}> in a modern figure"))
+        if t == "text":
+            for child in el:
+                found.append(("S24", f"unsupported <{tag(child)}> child of <text>: "
+                              "use plain text"))
+        for key, value in el.attrib.items():
+            valid = False
+            if t == "marker":
+                valid = value in MODERN_MARKER_VALUES.get(key, set())
+            elif key in MODERN_NUMBERS:
+                valid = modern_number(value) is not None
+            elif key in MODERN_VALUES:
+                valid = value in MODERN_VALUES[key]
+            elif key == "transform":
+                valid = modern_transform(value)
+            elif key == "d":
+                valid = modern_path(value)
+            elif key == "points":
+                pairs = [pair.split(",") for pair in value.split(" ")]
+                valid = all(len(pair) == 2 and all(modern_number(n) is not None for n in pair)
+                            for pair in pairs)
+            elif key in {"viewBox", "stroke-dasharray"}:
+                values = modern_numbers(value)
+                valid = (values is not None and (len(values) == 4 if key == "viewBox"
+                                                 else all(n >= 0 for n in values)))
+                if key == "stroke-dasharray" and value == "none":
+                    valid = True
+            if not valid:
+                rule = "S25" if key in {"font-size", "font-style"} else "S24"
+                what = "malformed or unsupported" if key in MODERN_ATTRIBUTES else "unsupported"
+                found.append((rule, f"{what} {key} {value!r} on <{t}>"))
+    if found:
+        return found
+    # Read inheritance only after the syntax gate has excluded CSS. Include ancestors
+    # outside the marker: a stroke on <defs> or the root still reaches its shapes.
+    in_markers = {child for marker in root.iter(SVG + "marker") for child in marker.iter()}
+    for el, _, eff in walk(root):
+        if el not in in_markers:
+            continue
+        t = tag(el)
+        if t == "text":
+            found.append(("S24", "unsupported <text> inside <marker>"))
+        elif t in DRAWN and eff.get("stroke", "none") != "none":
+            found.append(("S24", f"unsupported stroke on <{t}> inside <marker>"))
+    return found
+
+
+def modern_findings(root, ref: str, heaths: set[str] | None,
+                    names: set[str] | None) -> list[tuple[str, str]]:
+    """(rule, message) for each fault of a modern figure (S24, S25), given the letters its
+    Euclid's figure draws (None: no Euclid's figure) and the names its page's modern way
+    uses (None: no such paragraph)."""
+    found = modern_svg_findings(root)
+    if found:
+        return found
+    for dimension in ("width", "height"):
+        value = root.get(dimension)
+        if value is not None and modern_number(value) <= 0:
+            found.append(("S24", f"root {dimension} {value!r}, not positive"))
+    vb = root.get("viewBox", "").split(" ")
+    values = [modern_number(value) for value in vb]
+    width = values[2] if len(values) == 4 else None
+    if len(values) != 4 or None in values:
+        found.append(("S24", f"malformed viewBox {root.get('viewBox')!r}: "
+                      "expected four finite SVG numbers"))
+    else:
+        if not 400 <= width <= 440:
+            found.append(("S24", f"viewBox width {width}, not 400 to 440, as Euclid's figure"))
+        if values[3] <= 0:
+            found.append(("S24", f"viewBox height {values[3]}, not positive"))
+    title = root.find(f"{SVG}title")
+    if title is None or " ".join(text_of(title).split()) != f"{ref}: the modern way":
+        got = "no <title>" if title is None else f"title \"{text_of(title)}\""
+        found.append(("S24", f"{got}, not \"{ref}: the modern way\""))
+    if root.find(f".//{SVG}desc") is not None:
+        found.append(("S24", "a caption (<desc>): the modern-way paragraph serves as its caption"))
+    if heaths is None:
+        found.append(("S24", "no Euclid's figure to take the letters from"))
+    if names is None:
+        found.append(("S24", "the page's mishnah has no paragraph opening "
+                      f"{MODERN_WAY} for the figure to stand under"))
+    bad = defaultdict(int)
+    for el, own, eff in walk(root):
+        t = tag(el)
+        for k in COLOUR_ATTRS:
+            v = own.get(k)
+            if v is not None and v.lower() != "none" and v.lower() not in EUCLID_COLOURS:
+                bad[f"{k}={v}"] += 1
+        if (t in FILLED or t == "text") and eff.get("fill") is None:
+            found.append(("S24", f"a <{t}> with no fill, which SVG paints black: give it "
+                          "a colour of the palette, or fill=\"none\""))
+        if (t in DRAWN or t == "text") and (eff.get("stroke") or "none").lower() != "none":
+            raw_width = eff.get("stroke-width")
+            w = 1.0 if raw_width is None else modern_number(raw_width)
+            if w is None:
+                found.append(("S24", f"malformed stroke-width {raw_width!r} on a <{t}>"))
+            elif not 1.2 <= w <= 3.2:
+                found.append(("S24", f"stroke-width {w:g} on a <{t}>, not 1.2 to 3.2"))
+        if t != "text":
+            continue
+        raw = "".join(el.itertext())
+        odd = "".join(sorted({c for c in raw if c not in " \t\r\n"
+                             and not ("A" <= c <= "Z")
+                             and not MODERN_TEXT.fullmatch(c.translate(GREEK_VARIANTS))}))
+        if odd:
+            found.append(("S25", f"<text>{raw}</text> holds {odd!r}: a modern figure's text is "
+                          "Heath's letters, or the modern way's names, numbers and signs"))
+            continue
+        s = re.sub(r"[ \t\r\n]+", " ", raw).strip(" ").translate(GREEK_VARIANTS)
+        if not s:
+            continue
+        if eff.get("font-family") not in MODERN_VALUES["font-family"]:
+            found.append(("S25", f"<text>{s}</text> has no allowed effective font-family: "
+                          "declare Georgia on the text or an ancestor"))
+        if modern_number(eff.get("font-size")) != MODERN_TEXT_SIZE:
+            found.append(("S25", f"<text>{s}</text> at font-size {eff.get('font-size')}, "
+                          f"not {MODERN_TEXT_SIZE}"))
+        style = letter_style(eff)
+        if LETTER.fullmatch(s):
+            if heaths is not None and s not in heaths:
+                found.append(("S25", f"letter {s} is not one Euclid's figure draws "
+                              f"({', '.join(sorted(heaths))})"))
+            if style != "normal":
+                found.append(("S25", f"letter {s} in font-style {style}: Heath's letters are "
+                              "upright (STYLE, section 4)"))
+            continue
+        if re.search(r"[A-Z]", s):
+            found.append(("S25", f"<text>{s}</text>: a capital stands alone, as one of Heath's "
+                          "letters; a length or a vector takes the modern way's own name"))
+            continue
+        if not MODERN_TEXT.fullmatch(s):
+            odd = "".join(sorted({c for c in s if not MODERN_TEXT.fullmatch(c)}))
+            found.append(("S25", f"<text>{s}</text> holds {odd!r}: a modern figure's text is "
+                          "Heath's letters, or the modern way's names, numbers and signs"))
+            continue
+        letters = sorted({c for c in s if c.isalpha()})
+        if not letters:
+            continue
+        if style != "italic":
+            found.append(("S25", f"<text>{s}</text> in font-style {style}: the modern way's "
+                          "names are italic, as its mathematics sets them"))
+        unknown = [c for c in letters if names is not None and c not in names]
+        if unknown:
+            found.append(("S25", f"<text>{s}</text>: {', '.join(unknown)} is no name of the "
+                          "page's modern way"))
+    for what, k in sorted(bad.items()):
+        found.append(("S24", f"colour {what} ({k}×) is not in Euclid's figure's palette"))
+    return found
+
+
+def check_modern(path: Path, ref: str) -> None:
+    """S24 and S25 for one figure of the modern way."""
+    data = path.read_bytes()
+    root = svg_root(path, data)
+    if root is None:
+        return
+    # Scan exactly the bytes parsed above. Keep decoding errors separate from checker
+    # defects, and refuse UTF-16 without a BOM too, whose ASCII bytes decode with NULs.
+    try:
+        source = data.decode("utf-8")
+    except UnicodeDecodeError as e:
+        fail("S24", path, 0, f"unsupported SVG encoding: {e}")
+        return
+    if "\0" in source:
+        fail("S24", path, 0, "unsupported SVG encoding: expected UTF-8")
+        return
+    refused = modern_svg_findings(root)
+    for rule, message in refused:
+        fail(rule, path, 0, message)
+    if refused:
+        return
+    # ElementTree drops processing instructions, including those before the root.
+    for pattern, what in ((r"<\?xml-stylesheet\b", "stylesheet reference"),
+                          (r"@import\b", "@import")):
+        if re.search(pattern, source, re.I):
+            fail("S24", path, 0, f"unsupported {what} in a modern figure")
+            return
+    book, n = ref.split(".")
+    heaths = drawn_letters(path.with_name(f"{int(n):02d}.svg"))
+    mishnah = ROOT / "mishnah" / book / f"{int(n):02d}.md"
+    raw = mishnah.read_text(encoding="utf-8") if mishnah.exists() else ""
+    markup = modern_markup_findings(raw)
+    for message in markup:
+        fail("S25", path, 0, f"mishnah/{book}/{int(n):02d}.md: {message}")
+    # Refused markup supplies no names, and is not a claim that the paragraph is absent.
+    para = modern_paragraph(raw) if not markup else None
+    names = set() if markup else modern_names(para) if para is not None else None
+    title = root.find(f"{SVG}title")
+    if title is not None:
+        caption_text_rules(path, title, "title")
+    for rule, message in modern_findings(root, ref, heaths, names):
+        fail(rule, path, 0, message)
 
 
 def check_figures(required: bool) -> None:
@@ -3058,6 +4349,8 @@ def check_figures(required: bool) -> None:
                 waiting.append(f"{path.name[:2]} ({left})")
         for path in numbered(d, ".svg"):
             check_euclid(path, ref_of(path))
+        for path in numbered(d, MODERN_SUFFIX):
+            check_modern(path, ref_of(path))
         if waiting:
             report("D14", d, 0, f"{len(waiting)} without letters, with the points each "
                    f"has to letter: {', '.join(waiting)}")
@@ -3206,7 +4499,7 @@ def main() -> int:
         print("  by rule: " + ", ".join(f"{r} {RULES[r]} ({k})"
                                        for r, k in sorted(by_rule.items(), key=lambda x: int(x[0][1:]))))
         return 1
-    rules = "S1–S23" if not args.no_lean else "S1–S11 and S13–S23"
+    rules = "S1–S26" if not args.no_lean else "S1–S11 and S13–S26"
     print(f"\n✓ style: the hard rules hold ({rules})")
     return 0
 
