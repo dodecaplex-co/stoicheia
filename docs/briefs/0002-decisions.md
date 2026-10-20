@@ -1541,7 +1541,9 @@ findings:
 
 - **The source scan reads the formal model too (#121).** On 19 October 2026 the scan in
   `scripts/check_fidelity.py` is extended to every `.lean` file under `model/`, without
-  entering any directory named `.lake`, where Mathlib and the build live. Mathlib imports
+  entering any directory named `.lake`, where Mathlib and the build live.
+  Outside those pruned paths, symbolic links to files or directories in every scanned
+  tree and its root file are refused by their paths and never followed. Mathlib imports
   are allowed there, but the forbidden commands and attributes stay the same, and an
   `axiom` is refused anywhere in the model. Only `model/Check.lean` and `model/Check/`
   may use `run_cmd` first on its line followed by `Check.Generator.<ident>` or

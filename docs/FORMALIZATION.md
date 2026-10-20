@@ -466,8 +466,10 @@ a proposition imported by Book Zero; a `sorry` in a
 complete book; and a primitive word no longer opaque. Some of the forbidden commands
 stand after a string, a raw string or a character literal holding `/-`, `-/`, `]` or `"`,
 and one in an interpolated string's hole, and a string whose braces Lean could read as
-code is planted too. Each finding of the source scan names its file and line. A complete
-book's missing figure or mishnah has no planted break yet. The tests also check that
+code is planted too. The source scan names each finding's file and line, except for
+symbolic links to files or directories in the scanned trees and root files, which are
+refused by their paths and never followed. A complete book's missing figure or mishnah
+has no planted break yet. The tests also check that
 generator calls first on their line are allowed in `model/Check.lean` and `model/Check/`,
 and that the unplanted tree passes. They plant source files in place and copy only
 `facts.json`, never `model/.lake`.

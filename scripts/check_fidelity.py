@@ -21,7 +21,8 @@
    literal's text never opens a comment or ends an attribute's brackets, and is not read
    as code, while the code in an interpolated string's `{…}` holes is; a string whose
    braces Lean could read either way is refused. Each finding of 2, 3 and 4 names its
-   file and line. Under `model/`, paths with a `.lake` part are never entered or read;
+   file and line; symbolic links are refused by their paths and never followed.
+   Under `model/`, paths with a `.lake` part are never entered or read;
    Mathlib imports are allowed. Only in `model/Check.lean` and `model/Check/`, `run_cmd`
    may be the first word on its line followed by `Check.Generator.<ident>` or
    `(Check.Generator.<ident>`, since those files run the generator. Every other command
@@ -344,17 +345,23 @@ def _read_interpolated(src: str, i: int, marks: list) -> int | None:
 
 
 def lean_sources() -> list[Path]:
-    """Every `.lean` file of LEAN_TREES: each folder's root file, then the folder."""
+    """Every `.lean` file and symbolic link of LEAN_TREES, excluding model's .lake paths."""
     paths = []
     for tree in LEAN_TREES:
         root = ROOT / f"{tree}.lean"
-        paths += [root] if root.exists() else []
-        if tree == "model":
-            for folder, dirs, files in os.walk(ROOT / tree):
+        paths += [root] if root.is_symlink() or root.exists() else []
+        folder_root = ROOT / tree
+        if folder_root.is_symlink():
+            paths.append(folder_root)
+            continue
+        for folder, dirs, files in os.walk(folder_root, followlinks=False):
+            if tree == "model":
                 dirs[:] = [name for name in dirs if name != ".lake"]
-                paths += sorted(Path(folder) / name for name in files if name.endswith(".lean"))
-        else:
-            paths += sorted((ROOT / tree).rglob("*.lean"))
+                files = [name for name in files if name != ".lake"]
+            links = [name for name in dirs if (Path(folder) / name).is_symlink()]
+            dirs[:] = [name for name in dirs if name not in links]
+            paths += sorted(Path(folder) / name for name in links + files
+                            if name.endswith(".lean") or (Path(folder) / name).is_symlink())
     return paths
 
 
@@ -365,6 +372,10 @@ def line_of(text: str, offset: int) -> int:
 def check_rules() -> None:
     for path in lean_sources():
         rel = path.relative_to(ROOT).as_posix()
+        if path.is_symlink():
+            fail(f"{rel}: a symbolic link, which the source scan does not follow; "
+                 "use a regular file or directory (docs/FORMALIZATION.md, section 7)")
+            continue
         src = path.read_text()
         code, unsure = read_lean(src)
         generator_calls = ({m.start("command") for m in MODEL_CHECK_RUN_CMD.finditer(src)}

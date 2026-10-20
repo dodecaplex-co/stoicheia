@@ -37,6 +37,8 @@ records current; CI runs it on every push.
    outside the model's Check files; there they are allowed only first on their line,
    with other commands still caught on that line and in their arguments. The files are
    read, not built; no tree is copied, so model/.lake is never copied either.
+   Symbolic links to a directory in model/Model/ and a file in model/Check/ are refused
+   by their own paths, without following them.
 9. A lemma of the `Placement` namespace named in Book III's shared steps
    (`Squares.lean`), outside placement's own files, III.24's and `Arcs.lean`, read from
    the source, is caught; the word in a comment there is not.
@@ -435,6 +437,27 @@ def forbidden_commands() -> None:
                 path.unlink(missing_ok=True)
 
 
+def symbolic_links() -> None:
+    """Refuse a directory link and a file link by their own paths."""
+    links = (("model/Model/PlantedLink", ROOT / "model/Check"),
+             ("model/Check/PlantedLink.lean", ROOT / "Elements.lean"))
+    planted: list[Path] = []
+    try:
+        for rel, target in links:
+            path = ROOT / rel
+            assert not path.exists() and not path.is_symlink(), f"{rel} exists; update this test"
+            assert target.exists(), f"{target.relative_to(ROOT)} is missing; update this test"
+            path.symlink_to(target, target_is_directory=target.is_dir())
+            planted.append(path)
+        result = fidelity()
+        for rel, _ in links:
+            expect_failure(f"a symbolic link at {rel}", result,
+                           f"{rel}: a symbolic link, which the source scan does not follow;")
+    finally:
+        for path in planted:
+            path.unlink(missing_ok=True)
+
+
 def placement_named() -> None:
     """A lemma of the `Placement` namespace named in Squares.lean, Book III's shared steps,
     read from the source: caught on its line. The word in a comment on the line before
@@ -633,6 +656,7 @@ def main() -> int:
     remark_ends_run()
     native_decide()
     forbidden_commands()
+    symbolic_links()
     placement_named()
     planted_assumptions()
     restored = fidelity()
