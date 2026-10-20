@@ -18,4 +18,8 @@
 # below with the output of
 #     shasum -a 256 Certificate/axioms.lock
 # run from the repository root (keep these comment lines).
-9c8b3b8cb1020c3cbe6680c562e0dd65fa6b75676ab4da8695545c9d0dde6d52  Certificate/axioms.lock
+#
+# Renewed on 19 October 2026, when the restricted rule of superposition (brief 0009, #75)
+# replaced the existential one: the generated law, its hand translation and its proof in
+# the plane were brought to it (model/README.md), and the other 86 laws are unchanged.
+815fd9c4408b2f51fada91938a3b97ef3743483e9943111d7086b19fb79c98df  Certificate/axioms.lock

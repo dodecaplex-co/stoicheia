@@ -16,4 +16,11 @@
 # vocabulary: 30 new words, the definitions and their auxiliary declarations; the 87 axioms
 # and every word already locked are unchanged, byte for byte, so MODEL.md's account stands
 # as it was.
-9c8b3b8cb1020c3cbe6680c562e0dd65fa6b75676ab4da8695545c9d0dde6d52  Certificate/axioms.lock
+#
+# Renewed on 19 October 2026, when the restricted rule of superposition (brief 0009, #75)
+# replaced the existential one: the axiom Tacit.superposition is restated as
+# Superposition.Rule primitives, and the lock's vocabulary gains the calculus's words. The
+# harness's superposition law now checks the placement the rule reduces to
+# (Rule.of_placement) with its kept side, as MODEL.md says; the other 86 axioms are
+# unchanged, byte for byte.
+815fd9c4408b2f51fada91938a3b97ef3743483e9943111d7086b19fb79c98df  Certificate/axioms.lock
