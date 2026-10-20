@@ -268,6 +268,8 @@ def fields(pr, wanted):
     full = dict(pr, headRefOid=head, labels=[{"name": n} for n in pr["labels"]],
                 isCrossRepository=fork,
                 headRepositoryOwner=pr.get("headRepositoryOwner", {"login": "test"}))
+    if "raw_labels" in pr:
+        full["labels"] = pr["raw_labels"]
     return {k: full.get(k) for k in wanted.split(",")}
 
 
@@ -1849,6 +1851,36 @@ class PullRequests(Edge):
         self.assertIn("failing: negative", out)
         self.assertEqual(self.origin_main(), BASE)
 
+    def stale_release_check(self, bucket):
+        sha = self.good_commit()
+        check = {"name": "release-gate", "workflow": "Release gate", "bucket": bucket,
+                 "state": "FAILURE" if bucket == "fail" else "IN_PROGRESS"}
+        self.set_gh(lambda s: s["checks"].update({sha: PASSING + [check]}))
+        return sha
+
+    def test_watcher_ignores_failed_stale_release_check(self):
+        self.stale_release_check("fail")
+        r = self.safe_push()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "CI"), "ok", r.stdout)
+
+    def test_watcher_ignores_pending_stale_release_check(self):
+        self.stale_release_check("pending")
+        r = self.safe_push()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "CI"), "ok", r.stdout)
+
+    def test_watcher_keeps_release_check_for_given_and_carried_labels(self):
+        self.stale_release_check("fail")
+        r = self.safe_push("--label", "release", "--label", "tooling")
+        self.assertEqual(r.returncode, 3, r.stdout + r.stderr)
+        self.assertIn("failing: release-gate", r.stdout)
+        # The next pre-flight gives no release label; the open pull request carries it.
+        self.set_gh(lambda s: s["prs"][0].update(labels=["tooling", "Release"]))
+        r = self.safe_push()
+        self.assertEqual(r.returncode, 3, r.stdout + r.stderr)
+        self.assertIn("failing: release-gate", r.stdout)
+
 
 class Merge(Edge):
     def unfinished_body(self, text):
@@ -1870,7 +1902,7 @@ class Merge(Edge):
         out = r.stdout + r.stderr
         self.assertEqual(r.returncode, 1, out)
         self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
-        self.assertIn('not written: the section "Unfinished work"', out)
+        self.assertIn("Unfinished work must say None", out)
         self.assertEqual(self.merges(), [])
 
     def test_unfinished_work_closed_and_unlabelled_refused(self):
@@ -1919,7 +1951,7 @@ class Merge(Edge):
         self.set_gh(lambda s: s.update(issues=[self.blocker()]))
         cases = (
             ("- Prototype [section](#38)", "bracket"),
-            ("- Prototype https://example.invalid/page?x=#38", "names no local issue"),
+            ("- Prototype https://example.invalid/page?x=#38", "URL"),
             ("- Prototype `code\n  #38`", "backtick"),
             ("- ```\n  #38\n  ```", "backtick"),
             ('- Prototype <span title="#38">later</span>', "HTML"),
@@ -1927,6 +1959,13 @@ class Merge(Edge):
             ("> - Prototype #38\n> - Deferred page to come", "block quote"),
             ("- Prototype #38\n  - Deferred page", "nested list"),
             ("1. Prototype #38", "plain list"),
+            ("None\n<div><ul><li>Deferred page</li></ul></div>", "HTML"),
+            ("None\n```\n- Deferred page to come\n```", "backtick"),
+            ("None\n~~~\n- Deferred page to come\n~~~", "tilde"),
+            ("None\n<!-- safe_push:custom begin -->\n- Prototype with no issue\n"
+             "<!-- safe_push:custom end -->", "names no local issue"),
+            ("-     Prototype #38", "plain list"),
+            ("-\tPrototype #38", "tab"),
         )
         for text, reason in cases:
             with self.subTest(text=text):
@@ -1941,13 +1980,27 @@ class Merge(Edge):
 
     def test_duplicate_unfinished_sections_refuse_the_merge(self):
         self.opened()
-        self.unfinished_body("None\n\n## Unfinished work\n- Prototype #38")
+        self.unfinished_body("None\n\n## Unfinished work ##\n- Deferred page")
         self.set_gh(lambda s: s.update(issues=[self.blocker()]))
         r = self.merge()
         out = r.stdout + r.stderr
         self.assertEqual(r.returncode, 1, out)
         self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
         self.assertIn("exactly one", out)
+        self.assertEqual(self.merges(), [])
+
+    def test_malformed_labels_refuse_release_without_stale_check_exemption(self):
+        sha = self.opened()
+        self.unfinished_body("None")
+        self.set_gh(lambda s: s["prs"][0].update(raw_labels=[{"name": "tooling"}, {}]))
+        self.set_gh(lambda s: s["checks"].update({sha: PASSING + [
+            {"name": "release-gate", "workflow": "Release gate", "bucket": "fail"}]}))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("the pull request's labels are unreadable", out)
+        self.assertEqual(self.guard(out, "release"), "FAIL", out)
+        self.assertEqual(self.guard(out, "CI"), "FAIL", out)
         self.assertEqual(self.merges(), [])
 
     def test_transferred_or_unbound_unfinished_issue_refuses_the_merge(self):
@@ -2309,7 +2362,6 @@ class Merge(Edge):
         self.assertEqual(r.returncode, 1, out)
         self.assertEqual(self.guard(out, "sections"), "FAIL", out)
         for problem in ('not written: the section "What and why"',
-                        'not written: the section "Unfinished work"',
                         "not written: the review /code-review",
                         "not written: the review /no-mistakes",
                         'not written: the section "Needs the owner\'s OK"'):
@@ -2880,6 +2932,12 @@ class ProtectedPaths(Edge):
         self.assertIsNone(self.guard(out, "check change kept apart"), out)
         self.assertEqual(self.origin_branch(), sha)
 
+    def first_stage(self) -> str:
+        """docs/program.toml's first `stage = "released …"` line, whatever its words, so
+        the test does not pin a book's next step."""
+        return next(line for line in self.text("docs/program.toml").splitlines()
+                    if line.startswith('stage = "released'))
+
     def test_renderer_validation_loosened_with_content_is_kept_apart(self):
         # render.py checks docs/program.toml: a stage it did not know, allowed in render.py
         # and used in program.toml in one commit, makes origin/main's render.py fail
@@ -2888,9 +2946,7 @@ class ProtectedPaths(Edge):
         changes = {path: self.replaced(path, 'PROGRAM_STAGES = ("brief",',
                                        'PROGRAM_STAGES = ("anything", "brief",'),
                    "docs/program.toml": self.replaced(
-                       "docs/program.toml",
-                       'stage = "released (next: I.40 and I.45 in full generality)"',
-                       'stage = "anything"')}
+                       "docs/program.toml", self.first_stage(), 'stage = "anything"')}
         changes.update(self.decision(f"`{path}` is changed for the test."))
         self.regenerated_commit("Loosen render.py's check of program.toml, and use it", changes)
         out = self.assertRefused(self.safe_push("--dry-run"), "check change kept apart",
@@ -3996,8 +4052,12 @@ class Units(unittest.TestCase):
 
     def test_sections(self):
         template = (SOURCE / ".github" / "pull_request_template.md").read_text()
-        self.assertEqual(len(safe_push.section_problems(template, template, False)), 5)
-        self.assertEqual(len(safe_push.section_problems(template, template, True)), 6)
+        self.assertEqual(len(safe_push.section_problems(template, template, False)), 4)
+        self.assertEqual(len(safe_push.section_problems(template, template, True)), 5)
+        # Unfinished work is now judged separately, against the raw text.
+        text, problems = safe_push.unfinished_section(template)
+        self.assertEqual(problems, [])
+        self.assertTrue(safe_push.unfinished_refs(text)[1])
         self.assertEqual(safe_push.section_problems(ticked(template), template, True), [])
         # safe_push's own lines are not the coordinator's words.
         body = template.replace("<!-- safe_push: commits -->", "<!-- safe_push:commits begin "
@@ -4008,7 +4068,8 @@ class Units(unittest.TestCase):
         self.assertEqual(safe_push.section_problems(ticked(template), None, False), [])
         # A fenced block of filled-in headings at the end does not write the sections.
         fenced = template + "\n```\n" + ticked(template) + "\n```\n"
-        self.assertEqual(len(safe_push.section_problems(fenced, template, False)), 5)
+        self.assertEqual(len(safe_push.section_problems(fenced, template, False)), 4)
+        self.assertTrue(safe_push.unfinished_section(fenced)[1])
         # Backticked review names are read; a dash holds a place.
         rows = ticked(template).replace("| /code-review |", "| `/code-review` |")
         self.assertEqual(safe_push.section_problems(rows, template, False), [])

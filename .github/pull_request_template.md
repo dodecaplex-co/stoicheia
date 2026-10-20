@@ -8,8 +8,9 @@ changes, while a required box of this template is missing from the body, and whi
 and why", a row of the Reviews table (the security review's when a protected path
 changes), "Unfinished work" or "Needs the owner's OK" is unwritten, or an issue named
 under "Unfinished work" is not open with blocks-release. A pull request labelled release
-is refused while any blocks-release issue is open. A box or a section counts only where
-GitHub shows it, as docs/WORKFLOW.md says under "The merge".
+is refused while any blocks-release issue is open. Boxes and other sections count where
+GitHub shows them; "Unfinished work" is checked as raw text, as docs/WORKFLOW.md says
+under "The merge".
 -->
 
 ## What and why
@@ -33,8 +34,11 @@ or "None". -->
 <!-- Each piece of unfinished work this pull request lands: a prototype, a provisional
 answer, a restricted or partial scope awaiting a proof, a deferred page, a test not yet
 in CI, anything a disclosure calls "to come". Name each with its open issue labelled
-blocks-release, as #N; or write "None". Use a plain list, one item per piece, each naming
-its issue as #N; no links, code or HTML. -->
+blocks-release, as #N; or write "None", with an optional final full stop. Keep exactly one
+heading for this section. Use a plain list with - or * at the left edge and one following space;
+wrap an item with 2 to 5 spaces and no intervening blank line. Each item names its issue
+as a separate #N token, optionally in parentheses or followed by punctuation. No links,
+URLs, code, HTML, nested lists or headings; this comment may stay. -->
 
 ## Review records
 

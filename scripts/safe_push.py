@@ -102,14 +102,17 @@ check, model and negative pass, nothing fails or waits), no required box of its
 checklist is unticked (the template's own required boxes included, so deleting one does
 not help; origin/main's template, or the head's while origin/main has none), the
 coordinator has written its "What and why", its reviews (each with its commit and its
-findings), its "Unfinished work" (None, or issues open with blocks-release) and its "Needs
-the owner's OK", each read as GitHub shows it by CommonMark's
-rules (not in a comment, an HTML block or code, and a box only as a list item), its title
+findings) and its "Needs the owner's OK", read as GitHub shows them by CommonMark's
+rules (not in a comment, an HTML block or code, and a box only as a list item), and its
+"Unfinished work", checked as raw text (None, or a plain list of #N references to issues
+open with blocks-release). The title
 and branch name, which go into main's merge commit, hold nothing the scan refuses, it
 carries a label for its kind and `security-review` when a protected path changes, and it
 is not a draft; a pull request labelled release waits until no blocks-release issue or
 pull request is open, read from GitHub at the gate, with any unreadable response refusing
-the merge. The pre-flight's notes are shown beside the checklist. Then
+the merge. Malformed labels refuse; the merge and pre-flight watcher ignore a stale
+release-gate job from Release gate only on an ordinary pull request with readable labels.
+The pre-flight's notes are shown beside the checklist. Then
 `gh pr merge <n> --merge --delete-branch --match-head-commit <head>` with the merge
 commit's subject and body given (GitHub's own words: the owner GitHub names for the head,
 never origin's URL's, which names the old owner after a transfer, and refused when GitHub
@@ -2673,6 +2676,7 @@ class PRPlan(NamedTuple):
     body: str
     labels: set
     title: str
+    check_labels: set[str]
 
 
 def own_prs(ctx: Context, prs: list[dict]) -> list[dict]:
@@ -2705,6 +2709,17 @@ def kind_problem(labels) -> str | None:
             "(docs/WORKFLOW.md, \"Landing work: pull requests\")")
 
 
+def pr_labels(value) -> set[str]:
+    """Read gh's label objects strictly; missing labels mean an empty set."""
+    if value is None:
+        return set()
+    if not isinstance(value, list) or any(
+            not isinstance(label, dict) or not isinstance(label.get("name"), str)
+            or not label["name"].strip() for label in value):
+        raise ValueError("the pull request's labels are unreadable")
+    return {label["name"].lower() for label in value}
+
+
 def check_kind_label(ctx: Context, args, rep: Report) -> None:
     """The label for the pull request's kind, given or on the open one, settled before
     the checks, so that a forgotten --label costs no Lean run. A dry run does not ask
@@ -2716,7 +2731,10 @@ def check_kind_label(ctx: Context, args, rep: Report) -> None:
                 "the open pull request has one")
         return
     existing = find_own_pr(ctx)
-    problem = kind_problem({item.get("name") for item in (existing or {}).get("labels") or []})
+    try:
+        problem = kind_problem(pr_labels((existing or {}).get("labels")))
+    except ValueError as e:
+        raise Refusal(str(e)) from None
     if problem:
         rep.add("1", "kind label", "FAIL", f"the pull request has {problem}")
         raise Refusal(f"the pull request has {problem}")
@@ -2729,6 +2747,11 @@ def plan_pr(ctx: Context, pre: Preflight, record: dict, args) -> PRPlan:
     new pull request's body, or --body-file, is known in full; an open one's is fetched."""
     labels = set(args.label) | ({SECURITY_LABEL} if pre.protected else set())
     existing = find_own_pr(ctx)
+    try:
+        check_labels = {label.lower() for label in labels} | pr_labels(
+            (existing or {}).get("labels"))
+    except ValueError as e:
+        raise Refusal(str(e)) from None
     if args.body_file:
         body = fill_body(ctx, pre, record, Path(args.body_file).read_text())
     elif existing:
@@ -2739,7 +2762,7 @@ def plan_pr(ctx: Context, pre: Preflight, record: dict, args) -> PRPlan:
         body = generated_body(ctx, pre, record)
     check_body(body)
     title = args.title or git(ctx.repo, "log", "-1", "--format=%s", ctx.sha).strip()
-    return PRPlan(existing, body, labels, title)
+    return PRPlan(existing, body, labels, title, check_labels)
 
 
 def open_pr(ctx: Context, plan: PRPlan, args, rep: Report, logs: Path) -> PR:
@@ -2817,6 +2840,15 @@ def judge_checks(checks: list[dict]) -> tuple[str, str]:
     return "success", shown
 
 
+def judged_checks(checks: list[dict], labels: set[str] | None) -> list[dict]:
+    """Ignore only the known release job on an ordinary pull request. None means
+    unreadable labels, so every check still counts."""
+    if labels is None or RELEASE_LABEL in {label.lower() for label in labels}:
+        return checks
+    return [c for c in checks if not (
+        c.get("name") == "release-gate" and c.get("workflow") == "Release gate")]
+
+
 def pr_checks(ctx: Context, number: int) -> list[dict]:
     r = gh_run(ctx, "pr", "checks", str(number), "--json", "name,bucket,state,workflow")
     try:
@@ -2825,7 +2857,7 @@ def pr_checks(ctx: Context, number: int) -> list[dict]:
         return []
 
 
-def watch_checks(ctx: Context, pr: PR, rep: Report) -> str:
+def watch_checks(ctx: Context, pr: PR, rep: Report, labels: set[str]) -> str:
     """Wait for the pull request's checks on the commit and follow them; return the
     verdict."""
     rep.heading("CI")
@@ -2841,9 +2873,19 @@ def watch_checks(ctx: Context, pr: PR, rep: Report) -> str:
                 f"{CI_APPEAR_TIMEOUT} s: `gh pr checks {pr.number}`")
         return "unknown"
     print(f"  following the checks of #{pr.number}: {pr.url}", flush=True)
-    subprocess.run([*ctx.gh, "pr", "checks", str(pr.number), "--watch", "--interval",
-                    CI_WATCH_INTERVAL, "-R", ctx.github], cwd=ctx.repo)
-    verdict, detail = judge_checks(pr_checks(ctx, pr.number))
+    while True:
+        timed_out = False
+        try:
+            # gh watches all jobs. Recheck our selection every interval so a stale
+            # release job can delay an ordinary pull request by at most 30 seconds.
+            subprocess.run([*ctx.gh, "pr", "checks", str(pr.number), "--watch", "--interval",
+                            CI_WATCH_INTERVAL, "-R", ctx.github], cwd=ctx.repo,
+                           timeout=float(CI_WATCH_INTERVAL))
+        except subprocess.TimeoutExpired:
+            timed_out = True
+        verdict, detail = judge_checks(judged_checks(pr_checks(ctx, pr.number), labels))
+        if not timed_out or verdict != "pending":
+            break
     rep.add("6", "CI", "ok" if verdict == "success" else "FAIL", f"{verdict}: {detail}",
             time.time() - t)
     return verdict
@@ -2950,7 +2992,7 @@ def checklist_problems(body: str, template: str | None, protected: bool) -> list
 
 SECTION = re.compile(r"(?m)^## +(.+?) *$")
 # The sections the coordinator writes, which --merge needs written when the template has them.
-WRITTEN = ("What and why", "Unfinished work", "Reviews", "Needs the owner's OK")
+WRITTEN = ("What and why", "Reviews", "Needs the owner's OK")
 # CommonMark's blocks, read from a line less the indentation of its containers (shown,
 # below). A fence opens with three or more backticks or tildes, and, after backticks, an
 # info string with no backtick in it; it closes with the same character, at least as
@@ -3130,9 +3172,7 @@ def written(cell: str) -> bool:
 
 
 def section_problems(body: str, template: str | None, protected: bool) -> list[str]:
-    """What the coordinator has still to write: "What and why", "Unfinished work", each
-    review's commit and findings (the security review's only when a protected path
-    changes), and "Needs the owner's OK"."""
+    """The coordinator's Markdown sections. Unfinished work has its own raw-text gate."""
     wanted, have = sections(template or ""), sections(body)
     problems = []
     for name in (n for n in WRITTEN if n in wanted):
@@ -3151,51 +3191,95 @@ def section_problems(body: str, template: str | None, protected: bool) -> list[s
     return problems
 
 
-ISSUE_REF = re.compile(
-    r"https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/issues/([1-9]\d*)\b"
-    r"|(?<![\w/.-])([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)#([1-9]\d*)\b"
-    r"|(?:^|(?<=[\s(,]))#([1-9]\d*)\b", re.I)
+RAW_ATX = re.compile(r" {0,3}(#{1,6})(?:[ \t]+(.*)|[ \t]*)")
+RAW_SETEXT = re.compile(r" {0,3}(?:=+|-+) *")
+ISSUE_REF = re.compile(r"\(?#([1-9][0-9]*)[).,;:]*")
 
 
-def unfinished_refs(text: str, slug: str) -> tuple[list[int], list[str]]:
-    """Read a section already passed through visible: None, or a plain list with an
-    issue per item. Preserve indentation and join wrapped lines before reading refs."""
-    if re.fullmatch(r"None\.?", text.strip(), re.I):
-        return [], []
+def unfinished_headings(lines: list[str]) -> list[tuple[int, bool]]:
+    """Count all candidate headings in raw text, including comments and code.
+    The boolean says whether the candidate uses the required ATX ## form."""
+    found = []
+    for i, line in enumerate(lines):
+        heading = RAW_ATX.fullmatch(line)
+        if heading:
+            text = re.sub(r"[ \t]+#+[ \t]*$", "", heading[2] or "")
+            if " ".join(text.split()).lower() == "unfinished work":
+                found.append((i, heading[1] == "##" and line.lstrip(" ").startswith("## ")))
+        if " ".join(line.split()).lower() == "unfinished work" and i + 1 < len(lines) \
+                and RAW_SETEXT.fullmatch(lines[i + 1]):
+            found.append((i, False))
+    return found
+
+
+def unfinished_section(body: str) -> tuple[str, list[str]]:
+    """Extract the raw section, refusing ambiguous headings before removing anything."""
+    lines = body.splitlines()
+    headings = unfinished_headings(lines)
+    if len(headings) != 1 or not headings[0][1]:
+        return "", ["the body must have exactly one ## Unfinished work heading"]
+    start = headings[0][0] + 1
+    end = len(lines)
+    for i in range(start, end):
+        heading = RAW_ATX.fullmatch(lines[i])
+        if heading and len(heading[1]) <= 2:
+            end = i
+            break
+        if heading or RAW_SETEXT.fullmatch(lines[i]):
+            return "", ["Unfinished work forbids a heading or setext underline in its section"]
+    return "\n".join(lines[start:end]), []
+
+
+def unfinished_refs(text: str) -> tuple[list[int], list[str]]:
+    """Validate raw section text as None or a plain list. Only complete comments go;
+    safe_push marker contents, code and HTML remain subject to every check."""
+    text = re.sub(r"<!--.*?-->", "", text, flags=re.S)
     for token, reason in (("`", "a backtick (code)"), ("<", "HTML"),
                           (">", "HTML or a block quote"), ("[", "a bracket (link)"),
-                          ("]", "a bracket (link)"), ("~~~", "a ~~~ code fence")):
+                          ("]", "a bracket (link)"), ("~", "a tilde"), ("|", "a pipe"),
+                          ("\\", "a backslash escape"), ("://", "a URL"),
+                          ("www.", "a URL"), ("\t", "a tab")):
         if token in text:
             return [], [f"Unfinished work must be a plain list: {reason} is forbidden"]
+    if re.fullmatch(r"None\.?", text.strip(), re.I):
+        return [], []
     refs, problems = set(), []
     items = []
+    can_continue = False
     for line in text.splitlines():
         if not line.strip():
+            can_continue = False
             continue
-        content = line.lstrip()
-        if line.startswith(("- ", "* ")):
-            content = line[2:].lstrip()
+        item = re.fullmatch(r"[-*] (\S.*)", line)
+        continuation = re.fullmatch(r" {2,5}(\S.*)", line)
+        if item:
+            content = item[1]
             items.append(content)
-        elif line[0] in " \t" and items:
+        elif continuation and can_continue:
+            content = continuation[1]
             items[-1] += " " + content
         else:
             problems.append(f"Unfinished work must be a plain list: invalid line: {line}")
+            can_continue = False
             continue
-        if LIST_ITEM.match(content):
+        can_continue = True
+        if re.match(r"(?:[-*+]|[0-9]+[.)])\s", content):
             problems.append(f"Unfinished work forbids a nested list: {line}")
-        elif HEADING.match(content) or re.fullmatch(r"(?:=+|-+|\*+|_+)", content):
+        elif re.match(r"#{1,6}(?:\s|$)", content) \
+                or re.fullmatch(r"(?:[-*_] *){3,}|=+", content):
             problems.append(f"Unfinished work forbids a heading or rule: {line}")
 
     for item in items:
         local = []
-        for match in ISSUE_REF.finditer(item):
-            repo = match.group(1)
-            if repo and repo.lower() != slug.lower():
-                problems.append(f"another repository's reference: {match.group(0)}")
-            elif match.group(3):
-                problems.append(f"owner/repo#N is forbidden; use #N: {match.group(0)}")
-            else:
-                local.append(int(match.group(2) or match.group(5)))
+        for token in item.split():
+            match = ISSUE_REF.fullmatch(token)
+            if match:
+                try:
+                    local.append(int(match[1]))
+                except ValueError:
+                    problems.append("Unfinished work has an unreadable issue number")
+            elif re.search(r"#[0-9]", token):
+                problems.append(f"write the issue as #N on its own: {token}")
         refs.update(local)
         if not local:
             problems.append(f"list item names no local issue: {item}")
@@ -3305,14 +3389,12 @@ def read_issues(ctx: Context, path: str, *, paginate=False):
 
 def unfinished_gate(ctx: Context, body: str, template: str | None) -> tuple[str, str]:
     """The section is required only once the template in force has it."""
-    if "Unfinished work" not in sections(template or ""):
+    if not unfinished_headings((template or "").splitlines()):
         return "skip", "the template in force has no Unfinished work section"
-    parts = SECTION.split(visible(body))
-    texts = [parts[i + 1] for i in range(1, len(parts) - 1, 2)
-             if parts[i].strip() == "Unfinished work"]
-    if len(texts) != 1:
-        return "FAIL", "the body must have exactly one visible ## Unfinished work heading"
-    refs, problems = unfinished_refs(texts[0], ctx.github)
+    text, problems = unfinished_section(body)
+    if problems:
+        return "FAIL", "\n".join(problems)
+    refs, problems = unfinished_refs(text)
     if problems:
         return "FAIL", "\n".join(problems)
     if not refs:
@@ -3335,9 +3417,11 @@ def unfinished_gate(ctx: Context, body: str, template: str | None) -> tuple[str,
         "ok", ", ".join(f"#{n}" for n in refs) or "None")
 
 
-def release_gate(ctx: Context, labels: set[str]) -> tuple[str, str]:
+def release_gate(ctx: Context, labels: set[str] | None) -> tuple[str, str]:
     """Only a release pull request reads the open blockers; an ordinary one may land
     unfinished work. Every read failure holds the release."""
+    if labels is None:
+        return "FAIL", "the pull request's labels are unreadable"
     if RELEASE_LABEL not in {label.lower() for label in labels}:
         return "skip", "not a release pull request"
     try:
@@ -3458,23 +3542,22 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
     if notes:
         rep.add("G", "pre-flight notes", "note", f"{plural(len(notes), 'note')} of the "
                 "pre-flight, for the reviews:\n" + "\n".join(f"{n}: {d}" for n, d in notes))
-    labels = {(item.get("name") or "").lower() for item in view.get("labels") or []}
+    try:
+        labels = pr_labels(view.get("labels"))
+    except ValueError as e:
+        labels = None
+        rep.add("G", "labels", "FAIL", str(e))
     verdict, detail = release_gate(ctx, labels)
     rep.add("G", "release", verdict, detail)
-    if protected and SECURITY_LABEL not in labels:
+    if protected and SECURITY_LABEL not in (labels or set()):
         rep.add("G", "label", "FAIL", f"protected paths change ({', '.join(protected)}), and "
                 f"#{number} lacks the label {SECURITY_LABEL}")
     elif protected:
         rep.add("G", "label", "ok", f"{SECURITY_LABEL}, for {', '.join(protected)}")
-    problem = kind_problem(labels)
+    problem = kind_problem(labels or set())
     rep.add("G", "kind label", "FAIL" if problem else "ok", f"#{number} has {problem}"
             if problem else ", ".join(sorted(labels & set(KIND_LABELS))))
-    checks = pr_checks(ctx, number)
-    if RELEASE_LABEL not in labels:
-        # A run left from before the release label was removed cannot hold ordinary work.
-        checks = [c for c in checks if not (
-            c.get("name") == "release-gate" and c.get("workflow") == "Release gate")]
-    verdict, detail = judge_checks(checks)
+    verdict, detail = judge_checks(judged_checks(pr_checks(ctx, number), labels))
     rep.add("G", "CI", "ok" if verdict == "success" else "FAIL",
             f"{verdict} on {ctx.sha[:12]}: {detail}")
     failed = [s.name for s in rep.failed() if s.stage == "G"]
@@ -3723,7 +3806,7 @@ def preflight_main(repo: Path, args) -> int:
             pr = open_pr(ctx, plan, args, rep, logs)
             result = f"pushed to {ctx.branch}; pull request #{pr.number} " \
                      f"{'opened' if pr.created else 'updated'}"
-            ci = watch_checks(ctx, pr, rep)
+            ci = watch_checks(ctx, pr, rep, plan.check_labels)
             if ci == "success" and not rep.failed():
                 code = 0
             else:
@@ -3800,7 +3883,7 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
                              checked=checked)
         save_record(record)
         view = gates(ctx, number, rep, record)
-        labels = {item.get("name") for item in view.get("labels") or []}
+        labels = pr_labels(view.get("labels"))
         kind = next((k for k in KIND_LABELS if k in labels), None)
         # The body's summary is written afresh when the full checks ran again or when it
         # is not of this head and origin/main; the parts safe_push wrote, whenever they

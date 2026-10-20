@@ -2045,8 +2045,12 @@ findings:
   that cannot be trusted. A pull request labelled `release` is refused while any issue
   or pull request labelled `blocks-release` is open; ordinary pull requests make no
   read of that list.
-  Exactly one visible "Unfinished work" section is required: "None", or a plain list
-  with an issue per item, wrapped lines allowed, and no links, code or HTML.
+  The raw text must have exactly one "Unfinished work" heading in `## ` form, counting
+  even headings in comments or code, followed by "None" or a plain list with a separate
+  `#N` per item, wrapped lines allowed as WORKFLOW specifies, and no links, URLs, code or
+  HTML apart from complete comments. Malformed pull request labels refuse; both the merge
+  gate and pre-flight watcher ignore a stale `release-gate` job from "Release gate" only
+  when readable labels establish an ordinary pull request.
   Label comparisons ignore case, and each named issue is bound to this repository by
   its canonical API URL, so a rename is allowed but a transfer elsewhere is refused.
   `scripts/check_release_gate.py` makes the same release check, with an offline JSON

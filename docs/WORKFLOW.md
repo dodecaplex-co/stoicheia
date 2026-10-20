@@ -627,9 +627,11 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       draft with `gh pr create --base main --draft` (or `gh pr edit` of the open one; `--ready`
       opens it ready, or marks the open one ready), with the labels given and
       `security-review` when a protected path changes. Then its CI is followed to its
-      conclusion. Once `git push` succeeds, an interruption, a failure to follow CI or a
-      refusal is reported as "pushed; CI not followed", exit 3, never as a refusal before
-      the push.
+      conclusion, using the same label-aware verdict as the merge gate (step 4). A stale
+      pending release job can delay that verdict by at most one 30-second watch interval,
+      plus the time to read the checks. Once `git push` succeeds, an interruption, a failure
+      to follow CI or a refusal is reported as "pushed; CI not followed", exit 3, never as
+      a refusal before the push.
 3. **Reviews,** recorded in the pull request, in the template's table: `/code-review`
    always; `/security-review` when a protected path changes; `/no-mistakes` before the
    merge, run without its push and pull request steps, since `git safe-push` alone
@@ -647,31 +649,31 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    is green (`check`, `model` and `negative` pass, and nothing fails or is still
    running, apart from the `release-gate` job of the "Release gate" workflow on an
    ordinary pull request, even if a run remains from before its `release` label was
-   removed); no box marked **Required** in its checklist is unticked, nor one marked
-   **Required if protected** when a protected path changes, and none of the template's
+   removed, in the pre-flight watcher too); no box marked **Required** is unticked, nor one
+   marked **Required if protected** when a protected path changes, and none of the template's
    required boxes is missing (origin/main's template, or the head's while origin/main
    has none; the pre-flight's notes, such as a check that failed with origin/main's
    copies, are shown beside the checklist); the coordinator has written "What and why",
    "Unfinished work" (once the template in force has that section),
    each review's commit and findings in the Reviews table (the security review's when a
-   protected path changes) and "Needs the owner's OK"; boxes and sections count only
-   where GitHub shows them, by CommonMark's rules: not in a comment, an HTML block or
-   code, and a box only as a list item (a `<!--` in a code span is text, and hides
-   nothing); exactly one visible "Unfinished work" heading is present, and its section
-   says "None" (case aside, with an optional final full stop), or is a plain list,
-   one item per piece, each naming its issue as `#N`; no links, code or HTML.
-   Each non-blank line starts with `- ` or `* ` at the left edge, or is an indented
-   continuation of the item above; wrapped lines join their item before its references
-   are read. Paragraphs outside the list, numbered or nested lists and headings are
-   refused, as are backticks, angle or square brackets and `~~~` in the visible section.
-   A `#N` reference starts the item's text or follows whitespace, `(` or `,`; a bare
-   `https://github.com/<owner>/<repo>/issues/N` URL also counts for this repository
-   (case aside), but `owner/repo#N` and another repository's issue URL are refused.
+   protected path changes) and "Needs the owner's OK". Boxes and other sections follow
+   CommonMark visibility; "Unfinished work" is validated as raw text:
+   exactly one heading named "Unfinished work" (case and spacing aside), using `## `,
+   even counting headings inside comments or code. Its section ends at the next level
+   1 or 2 ATX heading; subheadings and setext underlines are refused. After complete HTML
+   comments are removed, write "None" or "None." (case aside), or a plain list.
+   Each item starts with `- ` or `* ` at the left edge, exactly one space after the marker;
+   continuation lines have 2 to 5 spaces and no intervening blank line. No paragraphs,
+   nested or numbered lists, rules, links, URLs, code or HTML; backticks, angle and square
+   brackets, tildes, pipes, backslashes and tabs are refused. Every item names an issue
+   as a separate `#N` token, optionally preceded by `(` and followed by `)`, `.`, `,`, `;`
+   or `:`; `owner/repo#N` and other embedded references are refused.
    Each issue is open with `blocks-release`, and its `repository_url` must match the
    canonical URL read once from GitHub for this repository, case aside, so a rename
    is allowed but an issue transferred elsewhere is refused.
    A pull request labelled `release` has no open issue or pull request labelled
-   `blocks-release`; label comparisons ignore case. Both issue gates read from
+   `blocks-release`; label comparisons ignore case. Malformed pull request labels refuse
+   the release gate and retain every CI check. Both issue gates read from
    GitHub and fail closed on a failed read, malformed JSON or missing fields; the
    release gate makes no issue-list read for an ordinary pull request. The title and
    the branch name, which go into main's merge commit, hold

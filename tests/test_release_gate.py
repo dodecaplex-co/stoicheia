@@ -89,9 +89,66 @@ class Fixtures(unittest.TestCase):
 
 class UnfinishedWork(unittest.TestCase):
     def refs(self, text):
-        body = "## Unfinished work\n\n" + text + "\n\n## Review records\n\n#99"
-        return safe_push.unfinished_refs(safe_push.SECTION.split(safe_push.visible(body))[2],
-                                         "example/edition")
+        return safe_push.unfinished_refs(text)
+
+    def test_raw_heading_count_and_form(self):
+        for heading in ("# Unfinished work", "### Unfinished work", "###### Unfinished work",
+                        "unfinished work\n===", "Unfinished   work\n  ---  ",
+                        "##\tUnfinished work"):
+            with self.subTest(heading=heading):
+                self.assertIn("exactly one ## Unfinished work heading",
+                              "\n".join(safe_push.unfinished_section(heading + "\nNone")[1]))
+        for duplicate in ("## Unfinished work ##", "### Unfinished work",
+                          "## unfinished work", "unfinished work\n---",
+                          "   ###### UNFINISHED   WORK ###"):
+            for wrapper in ("{}", "<!--\n{}\n-->", "```\n{}\n```", "~~~\n{}\n~~~"):
+                with self.subTest(duplicate=duplicate, wrapper=wrapper):
+                    body = "## Unfinished work\nNone\n\n## Elsewhere\n" + wrapper.format(duplicate)
+                    self.assertIn("exactly one ## Unfinished work heading",
+                                  "\n".join(safe_push.unfinished_section(body)[1]))
+
+    def test_raw_section_boundaries_and_subheadings(self):
+        for heading in ("## Unfinished work", "  ## UNFINISHED   work ##"):
+            with self.subTest(heading=heading):
+                text, problems = safe_push.unfinished_section(heading + "\nNone")
+                self.assertEqual(problems, [])
+                self.assertEqual(self.refs(text), ([], []))
+        for heading in ("# Next", "  ## Next ##", "##"):
+            with self.subTest(heading=heading):
+                text, problems = safe_push.unfinished_section(
+                    "## Unfinished work\nNone\n" + heading + "\n`outside`")
+                self.assertEqual(problems, [])
+                self.assertEqual(self.refs(text), ([], []))
+        for line in ("### Next", "   ###### Next ###", "---", "   ===  "):
+            for wrapper in ("{}", "<!--\n{}\n-->"):
+                with self.subTest(line=line, wrapper=wrapper):
+                    self.assertTrue(safe_push.unfinished_section(
+                        "## Unfinished work\nNone\n" + wrapper.format(line))[1])
+
+    def test_raw_hidden_content_is_refused_at_the_gate(self):
+        ctx = safe_push.Context(ROOT, "", "", 0, "", "example/edition", {})
+        for tail in ("<div><ul><li>Deferred page</li></ul></div>",
+                     "```\n- Deferred page to come\n```",
+                     "~~~\n- Deferred page to come\n~~~",
+                     "<!-- safe_push:custom begin -->\n- Prototype with no issue\n"
+                     "<!-- safe_push:custom end -->",
+                     "## Unfinished work ##\n- Deferred page"):
+            with self.subTest(tail=tail), mock.patch.object(safe_push, "read_issues") as read:
+                verdict, _ = safe_push.unfinished_gate(
+                    ctx, "## Unfinished work\nNone\n\n" + tail, "## Unfinished work")
+                self.assertEqual(verdict, "FAIL")
+                read.assert_not_called()
+
+    def test_template_comment_and_forged_markers(self):
+        template = (ROOT / safe_push.TEMPLATE).read_text()
+        text, problems = safe_push.unfinished_section(template)
+        self.assertEqual(problems, [])
+        self.assertEqual(self.refs(text + "\nNone"), ([], []))
+        self.assertEqual(self.refs("<!-- safe_push:custom begin -->\n- Prototype #38\n"
+                                   "<!-- safe_push:custom end -->"), ([38], []))
+        self.assertIn("names no local issue", "\n".join(self.refs(
+            "<!-- safe_push:custom begin -->\n- Prototype with no issue\n"
+            "<!-- safe_push:custom end -->")[1]))
 
     def test_template_and_required_box(self):
         template = (ROOT / safe_push.TEMPLATE).read_text()
@@ -101,8 +158,9 @@ class UnfinishedWork(unittest.TestCase):
         self.assertTrue(any(kind == "Required" and '"Unfinished work"' in text
                             and "blocks-release" in text
                             for _, kind, text in safe_push.boxes(template)))
-        self.assertIn('not written: the section "Unfinished work"',
-                      safe_push.section_problems(template, template, False))
+        text, problems = safe_push.unfinished_section(template)
+        self.assertEqual(problems, [])
+        self.assertTrue(self.refs(text)[1])
 
     def test_empty_section_refused(self):
         refs, problems = self.refs("")
@@ -119,12 +177,17 @@ class UnfinishedWork(unittest.TestCase):
 
     def test_local_references_collected_once(self):
         self.assertEqual(self.refs(
-            "- Prototype #38\n- Page https://github.com/EXAMPLE/Edition/issues/39\n"
-            "* Test (#38),#39"), ([38, 39], []))
+            "- Prototype #38\n- Page #39\n* Test (#38), #39"), ([38, 39], []))
+        self.assertEqual(self.refs("- Prototype awaiting a proof (#38)"), ([38], []))
+        self.assertEqual(self.refs("* Two pieces #38, #39"), ([38, 39], []))
+        # An item may begin with its issue: "#38" followed by a word is no heading.
+        self.assertEqual(self.refs("- #38, the prototype"), ([38], []))
+        self.assertEqual(self.refs("- #38: a deferred page"), ([38], []))
 
     def test_wrapped_item_can_name_its_issue_on_the_continuation(self):
         self.assertEqual(self.refs("- Prototype awaiting a proof,\n  tracked by #38."),
                          ([38], []))
+        self.assertEqual(self.refs("- Prototype awaiting a proof\n  #38"), ([38], []))
 
     def test_anchor_and_url_fragment_do_not_name_issues(self):
         for text in ("[section](#38)", "https://example.invalid/page?x=#38", "page#38"):
@@ -140,7 +203,7 @@ class UnfinishedWork(unittest.TestCase):
                 ('- Prototype <span title="#38">later</span>', "HTML"),
                 ("[prototype]: https://github.com/example/edition/issues/38", "bracket"),
                 ("> - Prototype #38\n> - Deferred page to come", "block quote"),
-                ("- Prototype ~~~ #38", "~~~")):
+                ("- Prototype ~~~ #38", "tilde")):
             with self.subTest(text=text):
                 refs, problems = self.refs(text)
                 self.assertEqual(refs, [])
@@ -151,21 +214,40 @@ class UnfinishedWork(unittest.TestCase):
                      " - Prototype #38", "- Prototype #38\n  - Deferred #39",
                      "- Prototype #38\n  1. Deferred #39",
                      "- Prototype #38\n  ### Deferred #39",
-                     "- Prototype #38\nDeferred #39", "  Wrapped #38"):
+                     "- Prototype #38\nDeferred #39", "  Wrapped #38",
+                     "-     Prototype #38", "-\tPrototype #38",
+                     "- Prototype #38\n\n  Detached #39", "- Prototype #38\n      Code #39",
+                     "- Prototype #38\n One space #39", "- + Nested #38",
+                     "- 1) Nested #38", "- # Heading #38", "- ---", "* * * *",
+                     "- Prototype #38\n  _ _ _"):
             with self.subTest(text=text):
                 self.assertTrue(self.refs(text)[1])
 
     def test_qualified_shorthand_is_refused_even_for_this_repository(self):
         refs, problems = self.refs("- Prototype example/edition#38 and #39")
         self.assertEqual(refs, [39])
-        self.assertIn("owner/repo#N", "\n".join(problems))
+        self.assertIn("write the issue as #N on its own", "\n".join(problems))
 
     def test_foreign_references_refused_even_beside_local(self):
-        for text, reason in (("other/repo#38", "owner/repo#N"),
-                             ("https://github.com/other/repo/issues/38", "another repository")):
+        for text in ("other/repo#38", "x=#38", "page#38", "(#38)extra", "#0", "#038",
+                     "#38,#39"):
             with self.subTest(text=text):
-                refs, problems = self.refs("- Prototype " + text + " and #39")
-                self.assertEqual(refs, [39])
+                refs, problems = self.refs("- Prototype " + text + " and #40")
+                self.assertEqual(refs, [40])
+                self.assertIn("write the issue as #N on its own", "\n".join(problems))
+
+    def test_urls_and_forbidden_characters_are_refused(self):
+        for text, reason in (
+                ("https://example.invalid/page(#38)", "URL"),
+                ("https://elsewhere.invalid/?next=https://github.com/example/edition/issues/38", "URL"),
+                ("https://elsewhere.invalid/#https://github.com/example/edition/issues/38", "URL"),
+                ("https://github.com/example/edition/issues/38/garbage", "URL"),
+                ("https://github.com/other/repo/issues/38", "URL"),
+                ("www.example.invalid", "URL"), ("~", "tilde"), ("|", "pipe"),
+                ("\\", "backslash"), ("\t", "tab"), ("<!-- unclosed", "HTML")):
+            with self.subTest(text=text):
+                refs, problems = self.refs("- Prototype " + text + " #38")
+                self.assertEqual(refs, [])
                 self.assertIn(reason, "\n".join(problems))
 
     def test_each_list_item_needs_its_issue(self):
@@ -251,7 +333,7 @@ class ReleaseReads(unittest.TestCase):
                 self.assertEqual(verdict, "FAIL")
                 self.assertIn("unreadable", detail)
 
-    def test_exactly_one_visible_unfinished_section_is_required(self):
+    def test_exactly_one_raw_unfinished_section_is_required(self):
         for body in ("", "## Unfinished work\nNone\n## Unfinished work\n- Prototype #38"):
             with self.subTest(body=body), mock.patch.object(safe_push, "read_issues") as read:
                 verdict, detail = safe_push.unfinished_gate(self.ctx, body, "## Unfinished work")
@@ -261,7 +343,7 @@ class ReleaseReads(unittest.TestCase):
         body = ("<!-- ## Unfinished work -->\n```\n## Unfinished work\n```\n"
                 "## Unfinished work\nNone")
         self.assertEqual(safe_push.unfinished_gate(
-            self.ctx, body, "## Unfinished work"), ("ok", "None"))
+            self.ctx, body, "## Unfinished work")[0], "FAIL")
 
     def test_issues_are_bound_to_the_canonical_repository_read_once(self):
         renamed = "https://api.github.com/repos/example/renamed"
@@ -420,7 +502,13 @@ class ReleaseReads(unittest.TestCase):
 
 
 class MergeChecks(unittest.TestCase):
-    def judge(self, label, extra):
+    def test_valid_and_missing_labels(self):
+        for labels in (None, []):
+            self.assertEqual(safe_push.pr_labels(labels), set())
+        self.assertEqual(safe_push.pr_labels([{"name": "tooling"}, {"name": "Release"}]),
+                         {"tooling", "release"})
+
+    def judge(self, label, extra, **changes):
         ctx = safe_push.Context(ROOT, "head", "", 0, "", "example/edition", {},
                                 branch="test-gates")
         template = "## Unfinished work\n\n## Checklist\n- [ ] **Required:** Reviewed."
@@ -428,6 +516,7 @@ class MergeChecks(unittest.TestCase):
                 "headRepositoryOwner": {"login": "example"}, "title": "Check the gates",
                 "body": template.replace("\n\n", "\nNone\n").replace("[ ]", "[x]"),
                 "labels": [{"name": name} for name in ["tooling", *([label] if label else [])]]}
+        view.update(changes)
         checks = [{"name": name, "bucket": "pass"} for name in safe_push.REQUIRED_CHECKS]
         report = safe_push.Report()
         with mock.patch.object(safe_push, "gh_json", return_value=view), \
@@ -462,6 +551,36 @@ class MergeChecks(unittest.TestCase):
             with self.subTest(name=name, workflow=workflow):
                 report = self.judge(None, {"name": name, "workflow": workflow, "bucket": "fail"})
                 self.assertEqual([s.name for s in report.failed()], ["CI"])
+
+    def test_malformed_labels_refuse_release_and_keep_stale_check(self):
+        for labels in ([{"name": "tooling"}, {}], {}, "release", ["tooling"],
+                       [{"name": ""}], [{"name": None}], [{"name": 2}], [None],
+                       [{"name": "   "}], False):
+            for bucket in ("fail", "pending"):
+                with self.subTest(labels=labels, bucket=bucket):
+                    report = self.judge(None, {"name": "release-gate", "workflow": "Release gate",
+                                               "bucket": bucket}, labels=labels)
+                    failed = {step.name: step.detail for step in report.failed()}
+                    self.assertIn("the pull request's labels are unreadable", failed["release"])
+                    self.assertIn("CI", failed)
+
+
+class WatchChecks(unittest.TestCase):
+    def test_timed_watch_rechecks_selected_jobs(self):
+        ctx = safe_push.Context(ROOT, "head", "", 0, "", "example/edition", {}, gh=("stand-in",))
+        pr = safe_push.PR(1, "https://example.invalid/pull/1", False)
+        passing = [{"name": name, "bucket": "pass"} for name in safe_push.REQUIRED_CHECKS]
+        stale = {"name": "release-gate", "workflow": "Release gate", "bucket": "pending"}
+        pending = [dict(c, bucket="pending") for c in passing]
+        with mock.patch.object(safe_push, "pr_checks",
+                               side_effect=[pending + [stale], pending + [stale], passing + [stale]]), \
+                mock.patch.object(safe_push.subprocess, "run",
+                                  side_effect=subprocess.TimeoutExpired("stand-in", 30)) as run, \
+                redirect_stdout(io.StringIO()):
+            self.assertEqual(safe_push.watch_checks(ctx, pr, safe_push.Report(), {"tooling"}),
+                             "success")
+        self.assertEqual(run.call_count, 2)
+        self.assertTrue(all(call.kwargs["timeout"] == 30 for call in run.call_args_list))
 
 
 if __name__ == "__main__":
