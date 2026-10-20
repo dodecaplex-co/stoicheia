@@ -31,7 +31,8 @@ to the library's axiom. The [README](../README.md) says why, and how the pieces 
   hash and the axioms; `checkRoundTrip` (run by `Check/RoundTrip.lean`) takes the laws and
   words as Lean elaborated them from the committed `Model/Laws.lean`, translates them back,
   and compares each with the library's declaration, binder by binder. `checkModelImports`,
-  also run by `Check/RoundTrip.lean`, checks the import headers of Model and the pure modules.
+  also run by `Check/RoundTrip.lean`, checks the import headers of Model and the pure modules;
+  `checkModelImportClosure` checks the graph of compiled imports rooted at `Model`.
 
 This file is a metaprogram, so it lives in `Check/`, apart from the proofs: nothing under
 `Model/` imports it, and it imports nothing but Lean.
@@ -1217,11 +1218,12 @@ def pureModuleFile (m : Name) : String :=
 
 /-- The permitted external module roots, recorded here alone. Package names come from
 `model/lake-manifest.json`; roots come from their pinned Lake library configurations.
-`stoicheia` is deliberately excluded. Lean itself supplies only `Init`, `Std` and `Lean`.
+`stoicheia` is deliberately excluded. Lean's toolchain supplies `Init`, `Std`, `Lean` and
+`Lake`; Mathlib's compiled closure reaches `Lake.Util.Version` through ImportGraph.
 The other entries include the packages' test and auxiliary libraries as well as their
 main libraries; ProofWidgets.Demos has the same root as ProofWidgets. -/
 def modelImportPackages : Array (String × Array Name) := #[
-  ("lean", #[`Init, `Std, `Lean]),
+  ("lean", #[`Init, `Std, `Lean, `Lake]),
   ("mathlib", #[`Mathlib, `Cache, `MathlibTest, `Archive, `Counterexamples, `Wanted, `docs]),
   ("plausible", #[`Plausible, `PlausibleTest]),
   ("LeanSearchClient", #[`LeanSearchClient, `LeanSearchClientTest]),
@@ -1231,6 +1233,11 @@ def modelImportPackages : Array (String × Array Name) := #[
   ("Qq", #[`Qq, `QqTest]),
   ("batteries", #[`Batteries, `BatteriesTest]),
   ("Cli", #[`Cli, `CliTest])]
+
+/-- The Model boundary, shared by the source and compiled-import checks. -/
+def isModelImport (m : Name) : Bool :=
+  isCanonicalModuleName m && (m.getRoot == `Model || pureModules.contains m ||
+    modelImportPackages.any (fun (_, roots) => roots.contains m.getRoot))
 
 /-- Check imports recorded for source files, with paths relative to the repository.
 Model files may import only `Model`, its submodules, the four pure modules and the external
@@ -1249,8 +1256,7 @@ def checkModelImportsWith (files : List (String × List Name)) : Except String U
           throw s!"{file}: pure module imports `{m}`, outside the four pure modules and `Init`"
       else if m.getRoot == `Elements && !pureModules.contains m then
         throw s!"{file}: Model imports `{m}`, outside the four pure modules"
-      else unless m.getRoot == `Model || pureModules.contains m ||
-          modelImportPackages.any (fun (_, roots) => roots.contains m.getRoot) do
+      else unless isModelImport m do
         throw s!"{file}: Model imports `{m}`, outside the approved import roots"
 
 /-- Read just the header with Lean's own parser. It handles comments, blank lines,
@@ -1273,27 +1279,120 @@ def checkModelImportFixture (files : List (String × String)) : CommandElabM Uni
   | .ok () => pure ()
   | .error e => throwError "{e}"
 
-/-- Audit every Lean source under `Model/`, its root file, and each pure module present
-in the repository. Lake 4.35 defaults the Model library's roots to `#[Model]` and its
-globs to `#[Glob.one Model]`: it builds `Model.lean` and follows local imports. The root
-outside `Model/` is therefore included, and scanning the entire directory also checks
-unimported Model sources. The import whitelist refuses any other local module root.
-The four pure modules need not exist yet. -/
+/-- Check directory listings before selecting sources. Case variants of `.lean` are
+errors, not files to ignore: a case-insensitive filesystem can resolve them as sources.
+Distinct paths equal after lowercasing are refused too, including directory components.
+The input is data so the same regressions run on case-sensitive filesystems. -/
+def checkModelSourceListing (files : Array String) : Except String Unit := do
+  let mut seen : Array String := #[]
+  for file in files do
+    if let some other := seen.find? (fun s => s != file && s.toLower == file.toLower) then
+      throw s!"source paths differ only in case: `{other}` and `{file}`"
+    seen := seen.push file
+  for file in files do
+    if let some ext := (System.FilePath.mk file).extension then
+      if ext.toLower == "lean" && ext != "lean" then
+        throw s!"{file}: non-canonical source extension (expected `.lean`)"
+    for m in pureModules do
+      let expected := pureModuleFile m
+      if file != expected && file.toLower == expected.toLower then
+        throw s!"{file}: non-canonical pure source path (expected `{expected}`)"
+
+/-- The production listing decision, exercised without creating files. -/
+def checkModelSourceListingFixture (files : List String) : CommandElabM Unit := do
+  match checkModelSourceListing files.toArray with
+  | .ok () => pure ()
+  | .error e => throwError "{e}"
+
+/-- Collect source paths once for both import audits. Validate the actual listings under
+`Model/` and `Elements/Foundations/`, and the spelling of the Model root file. The latter
+directory exists before the pure modules arrive and is also Lake's input directory.
+Only Model sources and the four pure sources have their import headers read. -/
+def modelSourceFiles (dir : System.FilePath) : CommandElabM (Array String) := do
+  let root ← repoRoot dir
+  let mut files ← System.FilePath.walkDir (dir / "Model")
+  files := files ++ (← System.FilePath.walkDir (root / "Elements" / "Foundations"))
+  for entry in ← dir.readDir do
+    if entry.fileName.toLower == "model.lean" then files := files.push entry.path
+  let relative := (files.map fun file =>
+    "/".intercalate (file.components.drop root.components.length)).qsort (· < ·)
+  match checkModelSourceListing relative with
+  | .ok () => pure ()
+  | .error e => throwError "{e}"
+  unless relative.contains "model/Model.lean" do
+    throwError "model/Model.lean: missing canonical source path"
+  return relative.filter fun file =>
+    (System.FilePath.mk file).extension == some "lean" &&
+      (file == "model/Model.lean" || file.startsWith "model/Model/" ||
+        pureModules.any (pureModuleFile · == file))
+
+/-- Audit every Model source, including files nothing imports, and each pure module
+present in the repository. This source check complements the compiled-import graph. -/
 def checkModelImports : CommandElabM Unit := do
   let dir ← modelDir
   let root ← repoRoot dir
-  let files ← System.FilePath.walkDir (dir / "Model")
   let mut sources := []
-  for file in (files.push (dir / "Model.lean")).qsort (·.toString < ·.toString) do
-    unless file.extension == some "lean" do continue
-    let relative := "/".intercalate (file.components.drop root.components.length)
-    sources := sources ++ [(relative, ← IO.FS.readFile file)]
-  for m in pureModules do
-    let relative := pureModuleFile m
-    let file := root / relative
-    if ← file.pathExists then
-      sources := sources ++ [(relative, ← IO.FS.readFile file)]
+  for file in ← modelSourceFiles dir do
+    sources := sources ++ [(file, ← IO.FS.readFile (root / file))]
   checkModelImportFixture sources
+
+/-- Decide the compiled-import boundary from a closure supplied as data. Every source
+module must be covered too: the Model library currently builds only the root and its
+imports, so an unimported source has no compiled graph to audit and is refused. -/
+def checkModelImportClosureWith (closure : Array Name) (sources : Array Name := #[]) :
+    Except String Unit := do
+  for m in closure do
+    unless isCanonicalModuleName m do
+      throw s!"Model compiled import closure: non-canonical module name `{m}`"
+    unless isModelImport m do
+      throw s!"Model compiled import closure reaches `{m}`, outside the approved import roots"
+  for m in sources do
+    unless closure.contains m do
+      throw s!"Model source `{m}` is not in the compiled import closure of `Model`"
+
+/-- Exercise the same decision on planted closures, without installing any modules. -/
+def checkModelImportClosureFixture (closure : Array Name) (sources : Array Name := #[]) :
+    CommandElabM Unit := do
+  match checkModelImportClosureWith closure sources with
+  | .ok () => pure ()
+  | .error e => throwError "{e}"
+
+/-- Traverse the graph recorded in compiled module headers, starting at `Model`.
+`findOLean` resolves each module on the current search path; `readModuleData` reads its
+imports, including non-public imports. Names are checked before file lookup. A visited
+set handles repeated imports and cycles. This proves the permitted names in that graph;
+it does not authenticate the files on the search path or the files an earlier environment
+loaded with explicit import artefacts. It neither imports declarations nor runs module
+initialisers. Lake must build the Model library before this check runs. -/
+def modelImportClosure : IO (Array Name) := do
+  let mut todo := #[#[`Model]]
+  let mut seen : NameSet := {}
+  let mut closure := #[]
+  while !todo.isEmpty do
+    let path := todo.back!
+    let m := path.back!
+    todo := todo.pop
+    if seen.contains m then continue
+    match checkModelImportClosureWith #[m] with
+    | .ok () => pure ()
+    | .error e =>
+      let route := " -> ".intercalate (path.toList.map toString)
+      throw <| IO.userError s!"{e}\ncompiled import path: {route}"
+    seen := seen.insert m
+    closure := closure.push m
+    let (data, _) ← readModuleData (← findOLean m)
+    todo := todo ++ data.imports.map (fun i => path.push i.module)
+  return closure
+
+/-- Check the real compiled graph and compare it with the source audit's Model list.
+Lake's Model library has root `Model` and default glob `Glob.one Model`, so all built
+Model modules are in this closure. If its globs ever grow, the starting modules and this
+coverage check must grow with them. The four pure sources need not yet exist or be used. -/
+def checkModelImportClosure : CommandElabM Unit := do
+  let files ← modelSourceFiles (← modelDir)
+  let sources := (files.filter (·.startsWith "model/")).map fun file =>
+    ((file.dropEnd 5).toString.splitOn "/").drop 1 |>.foldl Name.str .anonymous
+  checkModelImportClosureFixture (← modelImportClosure) sources
 
 /-- The hash `model/lock.sha256` holds: its one line that is not a comment, before the file
 name. -/

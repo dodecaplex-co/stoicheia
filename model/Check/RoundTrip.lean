@@ -307,6 +307,96 @@ first body command is not part of the header. -/
 #guard_msgs in
 run_cmd Check.Generator.checkModelImports
 
+/-- error: model/Model/Uppercase.LEAN: non-canonical source extension (expected `.lean`) -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "model/Model.lean", "model/Model/Uppercase.LEAN"])
+
+/-- error: source paths differ only in case: `model/Model/A.lean` and `model/Model/a.lean` -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "model/Model/A.lean", "model/Model/a.lean"])
+
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "model/Model.lean", "model/Model/Laws/areas-p5.lean", "model/Model/notes.txt",
+  "Elements/Foundations/Superposition/Syntax.lean"])
+
+/-- error: model/Model/Mixed.LeAn: non-canonical source extension (expected `.lean`) -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture ["model/Model/Mixed.LeAn"])
+
+/--
+error: Elements/Foundations/Superposition/Syntax.lEaN: non-canonical source extension (expected `.lean`)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "Elements/Foundations/Superposition/Syntax.lEaN"])
+
+/-- error: model/Model.LEAN: non-canonical source extension (expected `.lean`) -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture ["model/Model.LEAN"])
+
+/--
+error: source paths differ only in case: `model/Model/A.lean` and `model/Model/A.LEAN`
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "model/Model/A.lean", "model/Model/A.LEAN"])
+
+/--
+error: source paths differ only in case: `model/Model/Sub/A.lean` and `model/Model/sub/A.lean`
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "model/Model/Sub/A.lean", "model/Model/sub/A.lean"])
+
+/--
+error: source paths differ only in case: `Elements/Foundations/Superposition/Syntax.lean` and `Elements/Foundations/Superposition/syntax.lean`
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "Elements/Foundations/Superposition/Syntax.lean",
+  "Elements/Foundations/Superposition/syntax.lean"])
+
+/--
+error: Elements/Foundations/Superposition/syntax.lean: non-canonical pure source path (expected `Elements/Foundations/Superposition/Syntax.lean`)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "Elements/Foundations/Superposition/syntax.lean"])
+
+/-! The compiled graph is checked separately from source headers. The real closure is
+required to pass; planted closures need no compiled fixture files. -/
+
+#guard_msgs in
+run_cmd Check.Generator.checkModelImportClosure
+
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportClosureFixture
+  #[`Model, `Model.Signature, `Elements.Foundations.Superposition.Syntax,
+    `Init, `Std, `Lean, `Mathlib, `Batteries, `Aesop, `Qq, `Plausible,
+    `LeanSearchClient, `ImportGraph, `ProofWidgets, `Cli]
+  #[`Model, `Model.Signature])
+
+/-- error: Model compiled import closure reaches `Check.Original`, outside the approved import roots -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportClosureFixture #[`Model, `Check.Original])
+
+/--
+error: Model compiled import closure reaches `Elements.Foundations.Words`, outside the approved import roots
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportClosureFixture #[`Model, `Elements.Foundations.Words])
+
+/-- error: Model compiled import closure: non-canonical module name `Model.«..».Check.Original` -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportClosureFixture #[`Model, `Model.«..».Check.Original])
+
+/-- error: Model source `Model.Unused` is not in the compiled import closure of `Model` -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportClosureFixture #[`Model, `Init] #[`Model, `Model.Unused])
+
 #guard_msgs in
 run_cmd Check.Generator.checkCanonicalModuleNames
 
