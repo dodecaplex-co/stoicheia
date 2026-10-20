@@ -388,8 +388,9 @@ strikethrough (write a space or `\sim`), and no backtick, which opens code; and 
 stands straight after a letter or a digit: `x_{1}^{2}`, not `x^{2}_{1}`, and
 `\mathrm{A_1}`, not `\mathrm{A}_1`. A shape not yet found may still break, so the reviewer
 sees each span rendered on GitHub (section 8, the reviewer's checklist, item 5).
-`scripts/render.py` copies the mishnah onto its page unchanged but for its count comments,
-so the page shows the same mathematics.
+`scripts/render.py` copies the mishnah onto its page unchanged but for its count comments
+and the insertion of its modern figure beneath "The modern way", so the page shows the
+same mathematics.
 
 **System E and LeanEuclid** are thanked by name in every page's footer, so the mishnah
 does not thank them again; a particular debt is still said where it falls (Intersection 4

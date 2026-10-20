@@ -35,7 +35,8 @@ own proofs, or a lemma beside the proposition; and the Proof row names the compa
 the order the review record lists them. On every run, before anything else, the script
 checks both against the cases of USE_CASES and ORDER_CASES (`use_self_check`), and stops
 if one is read wrongly; MODERN_FIGURE_CASES (`modern_figure_self_check`) checks that a
-modern figure follows its whole paragraph, before any page is written.
+modern figure follows its whole paragraph, or is refused if that paragraph is missing,
+before any page is written.
 
 Run after `lake env lean Certificate/Facts.lean`. Standard library, and Python 3.11 or
 later for the review records (tomllib).
@@ -1405,28 +1406,31 @@ def with_modern_figure(text, book, n):
     """The mishnah, with the figure of the modern way, `figures/<book>/NN-modern.svg`,
     where there is one, set under the paragraph that opens "**The modern way.**", at the
     end of that paragraph as check_style.py reads it (`modern_span`), with a blank line on
-    each side (docs/STYLE.md, section 7). S24 fails such a figure on a page with no such
-    paragraph, so none is left out unseen."""
+    each side (docs/STYLE.md, section 7). A missing paragraph stops the render with a
+    diagnostic naming the proposition and figure, as S24 also requires the paragraph."""
     figure = optional_path(ROOT / "figures" / book / f"{n:02d}-modern.svg")
     if figure is None:
         return text
     img = (f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}-modern.svg\" "
            f"alt=\"The modern way for Proposition {book}.{n}, with Heath's letters\" "
            f"width=\"360\"></p>")
-    return insert_modern_figure(text, img)
+    return insert_modern_figure(text, img, book, n)
 
 
-def insert_modern_figure(text, img):
+def insert_modern_figure(text, img, book, n):
     """Insert the figure after the source paragraph selected by the figure rules."""
     span = check_style.modern_span(text)
     if span is None:
-        return text
+        raise SystemExit(f"{book}.{n}: figures/{book}/{n:02d}-modern.svg exists but the "
+                         "mishnah has no paragraph 'The modern way'")
     _, end = span
     rest = text[end:].lstrip("\n")
     return text[:end] + "\n\n" + img + ("\n\n" + rest if rest else "")
 
 
 MODERN_FIGURE_CASES = [   # (text before, the paragraph or None, text after)
+    ("", None, ""),
+    ("", None, "Ordinary commentary."),
     ("", None, "    **The modern way.** Put $b$ here."),
     ("Before.\n\n", None, "    **The modern way.** Put $b$ here."),
     ("", None, "\t**The modern way.** Put $b$ here."),
@@ -1440,14 +1444,24 @@ MODERN_FIGURE_CASES = [   # (text before, the paragraph or None, text after)
 
 
 def modern_figure_self_check():
-    """Check the figure's placement against source text, comments and code included."""
+    """Check placement and refusal against source text, comments and code included."""
     faults = []
     img = '<p align="center"><img src="modern.svg"></p>'
     for before, paragraph, after in MODERN_FIGURE_CASES:
         text = before + (paragraph or "") + after
         want = (before + paragraph + "\n\n" + img
-                + ("\n\n" + after.lstrip("\n") if after else "")) if paragraph else text
-        got = insert_modern_figure(text, img)
+                + ("\n\n" + after.lstrip("\n") if after else "")) if paragraph else None
+        try:
+            got = insert_modern_figure(text, img, "I", 1)
+        except SystemExit as error:
+            if paragraph is not None or str(error) != (
+                    "I.1: figures/I/01-modern.svg exists but the mishnah has no paragraph "
+                    "'The modern way'"):
+                faults.append(f"modern figure in {text!r}: unexpected refusal: {error}")
+            continue
+        if paragraph is None:
+            faults.append(f"modern figure in {text!r}: missing paragraph was not refused")
+            continue
         if got != want:
             faults.append(f"modern figure in {text!r}: got {got!r}, not {want!r}")
     return len(MODERN_FIGURE_CASES), faults
@@ -1509,8 +1523,9 @@ def page(book, n, count, titles, facts, docs, records):
     out += [lean_listing(book, n, facts), "",
             "## What it rests on", "", rests_on(p, docs, 2, book, refs, attached_refs)]
     out += ["## Mishnah", ""]
+    commentary = with_modern_figure(read_text(mishnah).strip("\r\n")
+                                    if mishnah is not None else "", book, n)
     if mishnah is not None:
-        commentary = with_modern_figure(read_text(mishnah).strip("\r\n"), book, n)
         out += [MISHNAH_LEAD, "", generated_counts.without_markers(commentary), ""]
     else:
         out += ["_Commentary to come._", ""]
@@ -2522,7 +2537,7 @@ def main() -> None:
     if faults:
         raise SystemExit(f"{len(faults)} fault(s) in the modern figure's placement; "
                          "nothing was rendered:\n" + "\n".join("  ✗ " + f for f in faults))
-    print(f"self-check: the modern figure follows its paragraph in {count} cases rightly")
+    print(f"self-check: the modern figure is placed or refused rightly in {count} cases")
     changes, errors = generated_counts.updates(ROOT)
     if errors:
         raise SystemExit("count markers: nothing was rendered:\n" + "\n".join(errors))

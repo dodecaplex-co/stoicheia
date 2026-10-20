@@ -2158,12 +2158,19 @@ findings:
   immediately after its whole modern way paragraph, with a blank line on each side;
   [STYLE](../STYLE.md), sections 2 and 7, now describes that placement as present.
   It uses `check_style.modern_span`, preserving source indentation, comments and code,
-  and checks the placement against eight cases before writing pages.
+  and checks placement and refusal against ten cases before writing pages. An existing
+  modern figure with no valid paragraph stops the render with a diagnostic naming the
+  proposition, the figure and the missing paragraph, including when the mishnah file
+  is absent. With no modern figure, rendering is unchanged.
   [tests/test_check_style.py](../../tests/test_check_style.py) gains the two renderer
-  regression tests, for placement and the page caller. The renderer change is content:
+  regression tests for an absent mishnah and an absent modern figure; its placement and
+  page caller tests now require refusal when the paragraph is missing or invalid, while
+  keeping the positive cases. The original placement change was content:
   [WORKFLOW](../WORKFLOW.md), section 10, says, "A change to what `render.py` writes is
   not a check change in this sense, since the pages it regenerates show it".
   These orders keep the output regression tests with that content; they add checks of
   the output, while the source figure rules S24 and S25 precede it in train H10.
+  The refusal changes what the renderer accepts: `scripts/render.py` and
+  `tests/test_check_style.py` are the guard changes for `security-review`.
   Train F1 carries the regenerated pages and [ACCEPTANCE](../ACCEPTANCE.md)'s P8 words
   for S24 and S25 and for the letter rule S26, supplied by H10's letter branch.
