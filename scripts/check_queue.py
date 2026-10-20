@@ -6,8 +6,9 @@
     python3 scripts/check_queue.py --tree <dir> [--render]
 
 Group commands require a checkout of the supplied head. CI builds its certificate
-before this check runs render.py. --tree scans only tracked text for conflict
-markers and repeated dated decisions headings, adding freshness with --render.
+before this check runs render.py. --tree checks for repeated dated decisions
+headings, adding freshness with --render. Conflict markers are checked by S23 in
+check_style.py, in the check job on the same merge group.
 
 GitHub reads use gh api and gh api graphql, with GH_TOKEN inherited and never
 printed. --github-json replaces that boundary completely: an object with
@@ -52,7 +53,6 @@ from check_train import members_table, declared_new, derive_new, undeclared, bod
 OID = re.compile(r"[0-9a-f]{40}")
 SLUG = re.compile(r"[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+")
 SUBJECT = re.compile(r"Merge pull request #([1-9][0-9]*) from \S+")
-MARKER = re.compile(rb"^(?:<<<<<<< |=======\r?$|>>>>>>> |\|\|\|\|\|\|\| )")
 MONTHS = ("January", "February", "March", "April", "May", "June", "July",
           "August", "September", "October", "November", "December")
 GENERATED = (*safe_push.GENERATED, "book/", safe_push.DECISIONS)
@@ -409,7 +409,7 @@ def dated_heading(line: str):
 
 
 def tree_problems(repo: Path, render: bool = False) -> list[str]:
-    """Scan the checkout's tracked bytes and optionally require fresh renderer output."""
+    """Check dated decisions headings and optionally require fresh renderer output."""
     root = Path(safe_push.git(repo, "rev-parse", "--show-toplevel").strip()).resolve()
     if root != repo.resolve():
         raise ValueError("--tree must name the repository root")
@@ -428,9 +428,6 @@ def tree_problems(repo: Path, render: bool = False) -> list[str]:
             if rel == safe_push.DECISIONS:
                 raise ValueError("the decisions page is not text")
             continue
-        for number, line in enumerate(data.split(b"\n"), 1):
-            if MARKER.match(line):
-                problems.append(f"{rel}:{number}: conflict marker")
         if rel == safe_push.DECISIONS:
             for number, line in enumerate(data.decode("utf-8").splitlines(), 1):
                 date = dated_heading(line)

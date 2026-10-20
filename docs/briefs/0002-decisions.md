@@ -2075,9 +2075,11 @@ findings:
   main and the trains ahead. `queue-integrity` runs `scripts/check_queue.py` on the
   group: (a) every train's change survives; (b) the exact head has a pre-flight from
   the harness at its recorded base; (c) plain merges preserve queue order and add no
-  content; (d) the generated tree is current, with no conflict markers or repeated
-  dated decisions heading. The `check` job also runs `check_queue.py --tree .`, which
-  scans tracked text; its preceding render step checks freshness. The queue check's
+  content; (d) the generated tree is current, with no repeated dated decisions
+  heading. Conflict markers in tracked text are checked by S23 in
+  `scripts/check_style.py`, in the `check` job on the same group. That job also runs
+  `check_queue.py --tree .` for repeated dated headings; its preceding render step
+  checks freshness. The queue check's
   `--gaps` runs the tests selected by the derived and declared changes, reports the
   changed propositions' acceptance items, and leaves foundations to the model jobs.
   Member review is not repeated. With "only merge non-failing pull requests", a train

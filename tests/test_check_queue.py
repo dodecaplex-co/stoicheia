@@ -356,22 +356,14 @@ class QueueTests(unittest.TestCase):
         self.snapshot["pull_requests"]["1"]["state"] = "closed"
         self.verdict(self.cli(), 1, "only a merged prefix")
 
-    def test_conflict_markers_refuse_in_tracked_text(self):
-        for marker in ("<<<<<<< branch\n", "=======\n", ">>>>>>> other\n", "||||||| base\n"):
-            with self.subTest(marker=marker):
-                one = self.train(1, {TEXT: marker})
-                first = self.merge(self.base, one, 1)
-                group = self.merge(first, self.two, 2)
-                self.verdict(self.cli(head=group), 1, TEXT, "conflict marker")
-
-    def test_tree_only_scans_without_rendering(self):
+    def test_tree_only_checks_headings_without_rendering(self):
         self.checkout(self.head)
-        lean = self.repo / "Elements/BookI/Prop01.lean"
-        lean.write_text("-- fixture\n<<<<<<< branch\n", encoding="utf-8")
+        page = self.repo / PAGE
+        original = page.read_text(encoding="utf-8")
+        page.write_text(original + "\n## 20 October 2026\n", encoding="utf-8")
         (self.repo / "scripts/render.py").write_text("raise SystemExit(9)\n", encoding="utf-8")
-        self.verdict(self.cli(tree=True, prepare=False), 1, str(lean.relative_to(self.repo)),
-                     "conflict marker")
-        lean.write_text("-- fixture\n", encoding="utf-8")
+        self.verdict(self.cli(tree=True, prepare=False), 1, PAGE, "repeated dated heading")
+        page.write_text(original, encoding="utf-8")
         self.verdict(self.cli(tree=True, prepare=False), 0, "queue: PASS")
         self.verdict(self.cli("--render", tree=True, prepare=False), 1, "render.py failed")
 

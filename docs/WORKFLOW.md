@@ -340,10 +340,11 @@ runs it runs the offline cases in `tests/test_check_queue.py`, `tests/test_check
 and `tests/test_auto_revert.py`, each with `python3 -I`. On a merge group it builds the
 certificate, reads acceptance's verdicts, and runs `scripts/check_queue.py` with the
 event's head, base and repository, then again with `--gaps`. Section 10 gives its four
-rules and its focused tests. The `check` job's `--tree .` command above scans tracked
-text for conflict markers and repeated dated decisions headings; it does not render.
-The preceding render step checks freshness. Adding `--render` to `--tree .` checks
-freshness too. The group check renders as well.
+rules and its focused tests. The `check` job's `--tree .` command above checks for
+repeated dated decisions headings; it does not render. Conflict markers in tracked
+text are checked by S23 in `scripts/check_style.py`, in the `check` job on the same
+merge group. The preceding render step checks freshness. Adding `--render` to
+`--tree .` checks freshness too. The group check renders as well.
 
 `scripts/safe_push.py` runs the local checks above, the model tests and the isolated
 negative tests on the committed head (section 10), except that its `CHECKS` list does not
@@ -553,8 +554,9 @@ record or GitHub answer. Its four rules are:
   merge content, squash or rebase refuses. If a queue merge has no standard pull
   request subject, its second parent must uniquely identify a queued head; that
   fallback is not allowed for the already merged prefix.
-- **(d) A clean tree.** Rendering the group changes no generated file. Tracked text has
-  no conflict markers, and the decisions page has no repeated dated heading.
+- **(d) A clean tree.** Rendering the group changes no generated file, and the decisions
+  page has no repeated dated heading. Conflict markers are checked by S23 in
+  `scripts/check_style.py`, in the `check` job on the same group.
 
 **The gaps of what is new.** After those rules, `check_queue.py --gaps` takes the union
 of the entries' derived changes and their declarations. A changed `tests/test_*.py`
@@ -697,7 +699,7 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
 
       For `train/*`, step "3. train" then runs origin/main's train checker against the
       committed head and the supplied body, as described above.
-   4. *The full local checks* of section 8 in that worktree, and `negative_tests.py` in a
+   4. *The full checks* of section 8 in that worktree, and `negative_tests.py` in a
       second, each step timed. On `--branch`, a dry run's record of the full checks of
       the same SHA against the same origin/main, made by the same origin/main harness,
       stands in for this step alone on a push, as a matching record does on `--merge`.

@@ -317,11 +317,11 @@ def api(s, args):
         print(json.dumps(s.get("issues", [[]])))
         return s.get("issues_exit", 0)
     if "/actions/workflows/post-merge.yml/runs?" in endpoint:
-        if "runs" not in s:
+        if s.get("runs_404"):
             print(json.dumps({"message": "Not Found", "status": "404"}))
             print("gh: Not Found (HTTP 404)", file=sys.stderr)
             return 1
-        print(json.dumps(s["runs"]))
+        print(json.dumps(s.get("runs", [{"total_count": 0, "workflow_runs": []}])))
         return s.get("runs_exit", 0)
     if "/check-runs?" in endpoint:
         print(json.dumps(s.get("group_checks", [{"total_count": 1, "check_runs": [
@@ -2909,11 +2909,32 @@ class Queue(Edge):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertIn("run 2 concluded success", r.stdout)
 
-    def test_missing_workflow_is_not_red_but_other_unreadable_answers_refuse(self):
+    def test_no_post_merge_run_yet_is_not_red(self):
         self.opened()
+        for queued in (False, True):
+            with self.subTest(queued=queued):
+                self.set_gh(lambda s: s.update(
+                    rules=[[{"type": "merge_queue"}]] if queued else [[]]))
+                r = self.safe_push("--merge", "1", "--dry-run")
+                self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+                self.assertIn("no completed post-merge run at main's tip", r.stdout)
+                self.assertEqual(self.origin_main(), BASE)
+                self.assertEqual(self.merges(), [])
+                self.assertEqual(self.enqueues(), [])
+
+    def test_missing_workflow_is_not_red(self):
+        base = self.commit("Main without the post-merge workflow",
+                           remove=(".github/workflows/post-merge.yml",))
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{base}:refs/heads/main")
+        git(WORK, "fetch", "--quiet", "origin")
+        self.opened()
+        self.set_gh(lambda s: s.update(runs_404=True))
         r = self.safe_push("--merge", "1", "--dry-run")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertIn("no post-merge workflow", r.stdout)
+
+    def test_unreadable_post_merge_answers_refuse(self):
+        self.opened()
         for pages in ({}, [], [None], [self.run_page(None)],
                       [self.run_page(head_sha="f" * 40)]):
             with self.subTest(pages=pages):
@@ -2926,6 +2947,7 @@ class Queue(Edge):
         base = self.new_base("Main has the post-merge workflow", {
             ".github/workflows/post-merge.yml": "name: post-merge\n"})
         self.opened()
+        self.set_gh(lambda s: s.update(runs_404=True))
         r = self.safe_push("--merge", "1")
         out = r.stdout + r.stderr
         self.assertEqual(r.returncode, 1, out)
