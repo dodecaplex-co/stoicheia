@@ -21747,7 +21747,7 @@
       "file": "Elements/Figure/Lengths.lean"}],
     "Tacit.line_meets_circle_of_inside":
     [{"name": "Touches.not_inside",
-      "line": 163,
+      "line": 162,
       "file": "Elements/Figure/OnCircles.lean"}],
     "Tacit.len_add_of_between":
     [{"name": "len_lt_of_between",
@@ -21911,7 +21911,7 @@
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.line_meets_circle_of_inside":
     [{"name": "Touches.not_inside",
-      "line": 163,
+      "line": 162,
       "file": "Elements/Figure/OnCircles.lean"}],
     "Tacit.exists_point":
     [{"name": "BookIII.Prop1.perpendicular",
@@ -23681,7 +23681,7 @@
       "file": "Elements/Figure/Triangles.lean"}],
     "Tacit.centre_unique":
     [{"name": "EqualCircles.radii",
-      "line": 134,
+      "line": 133,
       "file": "Elements/Figure/OnCircles.lean"}],
     "Tacit.centre_inside":
     [{"name": "BookIII.Prop24.angle_type",
@@ -23742,7 +23742,7 @@
       "line": 191,
       "file": "Elements/BookIII/Prop24.lean"},
      {"name": "EqualCircles.radii",
-      "line": 134,
+      "line": 133,
       "file": "Elements/Figure/OnCircles.lean"}]},
    "enunciation":
    "In equal circles equal angles stand on equal circumferences, whether they stand at the centres\nor at the circumferences. ",
@@ -24590,7 +24590,7 @@
       "file": "Elements/Figure/Triangles.lean"}],
     "Tacit.centre_unique":
     [{"name": "EqualCircles.radii",
-      "line": 134,
+      "line": 133,
       "file": "Elements/Figure/OnCircles.lean"}],
     "Tacit.between_symm":
     [{"name": "BookIII.Circumference.semicircle",
@@ -25107,7 +25107,7 @@
       "file": "Elements/Figure/Triangles.lean"}],
     "Tacit.centre_unique":
     [{"name": "EqualCircles.radii",
-      "line": 134,
+      "line": 133,
       "file": "Elements/Figure/OnCircles.lean"}],
     "Tacit.between_symm":
     [{"name": "BookIII.Circumference.semicircle",
@@ -25176,7 +25176,7 @@
       "line": 109,
       "file": "Elements/BookIII/Circumferences.lean"},
      {"name": "EqualCircles.radii",
-      "line": 134,
+      "line": 133,
       "file": "Elements/Figure/OnCircles.lean"}]},
    "enunciation":
    "In equal circles equal circumferences are subtended by equal straight lines. ",
@@ -25388,7 +25388,7 @@
       "file": "Elements/Figure/Sides.lean"}],
     "Tacit.exists_point_on_circle":
     [{"name": "EqualCircles.refl",
-      "line": 154,
+      "line": 153,
       "file": "Elements/Figure/OnCircles.lean"}],
     "Tacit.exists_point_between":
     [{"name": "BookIII.Circumference.whole",
@@ -25415,7 +25415,7 @@
       "file": "Elements/Figure/Sides.lean"}],
     "Tacit.exists_centre":
     [{"name": "EqualCircles.refl",
-      "line": 154,
+      "line": 153,
       "file": "Elements/Figure/OnCircles.lean"}],
     "Tacit.angle_eq_of_same_rays":
     [{"name": "angle_onRay_left",
@@ -25812,7 +25812,7 @@
      {"name": "crossbar", "line": 130, "file": "Elements/Figure/Angles.lean"}],
     "Tacit.line_meets_circle_of_inside":
     [{"name": "Touches.not_inside",
-      "line": 163,
+      "line": 162,
       "file": "Elements/Figure/OnCircles.lean"}],
     "Tacit.inside_not_on":
     [{"name": "BookIII.Prop2.triangle",
@@ -26346,7 +26346,7 @@
       "file": "Elements/Figure/Sides.lean"}],
     "Tacit.line_meets_circle_of_inside":
     [{"name": "Touches.not_inside",
-      "line": 163,
+      "line": 162,
       "file": "Elements/Figure/OnCircles.lean"}],
     "Tacit.len_add_of_between":
     [{"name": "InsideCircle.of_between_centre",
@@ -26894,7 +26894,7 @@
       "line": 380,
       "file": "Elements/BookII/Rectangles.lean"},
      {"name": "Touches.not_inside",
-      "line": 163,
+      "line": 162,
       "file": "Elements/Figure/OnCircles.lean"},
      {"name": "Triangle.of_line",
       "line": 82,
@@ -26904,7 +26904,7 @@
       "file": "Elements/BookIII/Squares.lean"}],
     "Tacit.line_meets_circle_of_inside":
     [{"name": "Touches.not_inside",
-      "line": 163,
+      "line": 162,
       "file": "Elements/Figure/OnCircles.lean"}],
     "Tacit.inside_of_len_lt":
     [{"name": "foot_between",
@@ -27236,14 +27236,14 @@
       "line": 59,
       "file": "Elements/BookIII/Squares.lean"},
      {"name": "Touches.not_inside",
-      "line": 163,
+      "line": 162,
       "file": "Elements/Figure/OnCircles.lean"},
      {"name": "Touches.of_collinear",
-      "line": 182,
+      "line": 181,
       "file": "Elements/Figure/OnCircles.lean"}],
     "Tacit.line_meets_circle_of_inside":
     [{"name": "Touches.not_inside",
-      "line": 163,
+      "line": 162,
       "file": "Elements/Figure/OnCircles.lean"}],
     "Tacit.len_self":
     [{"name": "BookI.Prop46.sq",
