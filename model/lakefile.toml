@@ -31,6 +31,8 @@ name = "Model"
 # check regardless of these local cache traces.
 # The compiled-import audit reads Model's artefacts without importing Mathlib into Check.
 # Build the whole Model library first, including when building a Check module directly.
+# This is a build prerequisite, not a Lean import. Model has no Check imports, so the
+# normal build is acyclic; a Model import of Check makes Lake refuse a build cycle.
 [[lean_lib]]
 name = "Check"
 needs = ["Model:leanArts", "axiomsLock", "lockHash", "generatedLaws", "generatedChecks", "generatedAssembly",

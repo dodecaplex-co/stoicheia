@@ -2318,8 +2318,8 @@ findings:
   `model/README.md` documents the graph check, build ordering and provenance limits.
   The files changed are `model/Check/Generator.lean`, `model/Check/RoundTrip.lean`,
   `model/README.md`, `model/lakefile.toml` and `docs/briefs/0002-decisions.md`.
-  `model/lakefile.toml` is the only protected path changed by the branch and still needs
-  the independent security review before landing. All three generated sources remain
+  `model/lakefile.toml` is the only protected path changed in this model-check round and
+  still needs the independent security review before landing. All three generated sources remain
   byte for byte unchanged. No proposition review record is made stale.
   On `356b62ab` with these uncommitted changes, `python3 scripts/check_fidelity.py`,
   `python3 -I tests/model/run.py --fast`, `python3 -I tests/test_negative_tests.py` (eight
@@ -2329,3 +2329,77 @@ findings:
   artefacts; `lake build Audit` passed (139 jobs), then `python3 scripts/check_style.py`
   passed. Every Lake invocation exported the elan path first. No full repository CI or
   independent security review was run, and no commit, push or GitHub action was made.
+
+- **Seventh-round verification of the model import boundary (brief 0009, #75).** The
+  supplied worktree was clean at `8e7d22f1`, with the previous model-check changes and
+  the certificate-tooling branch already committed. The captain's permission for `Lake`
+  was already recorded in `modelImportPackages`, the single list used by the new source
+  and compiled-import checks. `Lake` is shipped with Lean, alongside `Init`, `Std` and
+  `Lean`; its admission here does not loosen an existing check. No further root is added.
+  `isLeanCore` still requires a canonical `Init` name and no package identifier, and the
+  shared-definition boundary remains exactly the four pure modules.
+
+  `model/Check/Generator.lean` clarifies that distinction and extends the core-decision
+  regression to `Std`, `Lean` and `Lake.Util.Version`. `model/Check/RoundTrip.lean` now
+  explicitly accepts `Lake.Util.Version` in Model source headers and compiled closures,
+  and pins its refusal in a pure source. The existing planted closures still refuse
+  `Check.Original`, `Elements.Foundations.Words` and `Model.«..».Check.Original` with
+  their exact diagnostics. The real compiled closure and source-module coverage pass.
+  Reading the compiled graph finds 4,224 Model-closure modules, all within the approved
+  roots. A separate temporary graph probe finds 2,416 modules in Check's closure, with
+  roots `Check`, `Elements`, `Init`, `Lean`, `Model` and `Std`: no Mathlib, dependency
+  package, Model root or Euclidean proof module enters Check through the prerequisite.
+
+  **The protected path `model/lakefile.toml` changes again**, to explain that
+  `Model:leanArts` is a build prerequisite and adds no Lean import. The normal build has
+  no cycle because Model imports no Check module. `model/README.md` records the same
+  boundary, the regressions and the distinction between the two fixture refusals.
+  On this case-insensitive filesystem, `Model/Uppercase.LEAN` containing exactly
+  `import Check.Original` and a newline, unimported, makes `cd model && lake build`
+  exit 1 with:
+  ```text
+  model/Model/Uppercase.LEAN: non-canonical source extension (expected `.lean`)
+  ```
+  Adding `public import Model.Uppercase` to `Model.lean` makes the same command exit 1
+  with Lake's refusal, before either audit runs:
+  ```text
+  error: build cycle detected:
+    model/+Model.Uppercase:leanArts
+    [anonymous]/Model:leanArts
+    model/Check:extraDep
+    model/+Check.Original:presetup
+    model/+Check.Original:leanArts
+    model/+Check.Original:exportInfo
+    model/+Model.Uppercase:importInfo
+    model/+Model.Uppercase:presetup
+    model/Model:leanArts
+    model/Model:default
+    model/+Model.Uppercase:leanArts
+  ```
+  The fixture was removed and `model/Model.lean` restored byte for byte. Lake had produced
+  no `Uppercase.*` build outputs; the cleanup checked that none remained. The restored
+  `cd model && lake build` passes (2625 jobs). No generated source was written.
+
+  The complete protected-file list for the branch against origin/main now includes the
+  merged certificate tooling. Each full path is named here on an added line:
+  `.github/workflows/ci.yml`, `Certificate/FIELDS.md`, `Certificate/Facts.lean`,
+  `model/lakefile.toml`, `review/SCHEMA.md`, `scripts/heath.py`,
+  `scripts/negative_tests.py`, `scripts/safe_push.py`, `scripts/test_safe_push.py`,
+  `tests/fixtures/CertificateCN4.lean`, `tests/test_certificate.py`,
+  `tests/test_negative_tests.py`.
+  Only `model/Check/Generator.lean`, `model/Check/RoundTrip.lean`, `model/README.md`,
+  `model/lakefile.toml` and `docs/briefs/0002-decisions.md` change in this round.
+  No proposition, foundation, lock, expected value or review record changes.
+
+  Validation on `8e7d22f1` plus this round's uncommitted changes: `cd model && lake build`
+  passes (2625 jobs), as does the direct `cd model && lake build Check.RoundTrip`
+  (2610 jobs). `python3 scripts/check_fidelity.py`, `python3 -I tests/model/run.py --fast`,
+  `python3 -I tests/test_negative_tests.py` (ten tests), `python3 scripts/check_style.py`
+  and `git diff --check` pass. The generated-file command
+  `git diff --exit-code -- model/Model/Laws.lean model/Check/Laws.lean model/Model/Assembly.lean`
+  passes; comparison with saved bytes and HEAD confirms all three are unchanged.
+  A local check of the protected-path definitions confirms all twelve changed protected
+  files appear on added decisions lines. Every Lean and Lake invocation exported
+  `PATH=$HOME/.elan/bin:$PATH` first. No full repository CI, independent kernel replay
+  or independent security review was run. The changes remain uncommitted; no push or
+  GitHub action was taken. Security review before landing remains open.

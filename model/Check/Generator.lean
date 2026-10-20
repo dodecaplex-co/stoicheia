@@ -1220,6 +1220,7 @@ def pureModuleFile (m : Name) : String :=
 `model/lake-manifest.json`; roots come from their pinned Lake library configurations.
 `stoicheia` is deliberately excluded. Lean's toolchain supplies `Init`, `Std`, `Lean` and
 `Lake`; Mathlib's compiled closure reaches `Lake.Util.Version` through ImportGraph.
+This import permission does not change the Init-only core or the four-module sharing boundary.
 The other entries include the packages' test and auxiliary libraries as well as their
 main libraries; ProofWidgets.Demos has the same root as ProofWidgets. -/
 def modelImportPackages : Array (String × Array Name) := #[
@@ -1772,7 +1773,8 @@ def checkCanonicalModuleNames : CommandElabM Unit := do
   let env ← getEnv
   unless isLeanCore env ``Nat && isLeanCore env ``List && isLeanCore env ``propext do
     throwError "installed Init declarations failed the core decision"
-  for m in pureModules ++ #[`Init, `Init.Data.List.Basic, `Model.Laws.«areas-p5»,
+  for m in pureModules ++ #[`Init, `Init.Data.List.Basic, `Std, `Lean, `Lake.Util.Version,
+      `Model.Laws.«areas-p5»,
       `Model.«αβ», `Model.«v1.2», `Model.«123»] do
     unless isCanonicalModuleName m do throwError "canonical module refused: `{m}`"
     unless isLeanCoreModule m none == (m.getRoot == `Init) do

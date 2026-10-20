@@ -327,7 +327,9 @@ boundary for the pure modules.
 The compiled closure reaches `Lake.Util.Version`, through the pinned Mathlib and
 ImportGraph imports. `Lake` ships with Lean's toolchain, as `Init`, `Std` and `Lean` do, so
 it is among the permitted roots of both import checks; it is not trusted as Lean's own by
-`isLeanCore`, which still admits only `Init`.
+`isLeanCore`, which still requires a canonical `Init` name with no package identifier.
+The regression cases accept `Lake.Util.Version` in Model source headers and compiled
+closures, refuse it in a pure source, and keep it outside the core translation boundary.
 
 A passing check establishes that names in the resolved compiled-import graph stay within the permitted
 boundary. **It does not authenticate the files on the search path.** It does not establish
@@ -357,8 +359,13 @@ Check continues to import only Lean, the edition and the plain-Lean part of Mode
 no Mathlib imports. Its Lake `needs` now includes `Model:leanArts`, so the whole Model
 library is built before any Check module runs, even when a Check module is built directly.
 The graph reader examines those compiled files without importing their declarations or
-running their initialisers. A forbidden Model import of Check creates a build dependency
-cycle and is refused by Lake before the audits run.
+running their initialisers. This prerequisite adds no Lean import edge: Check's compiled
+closure still contains only `Check`, `Elements`, `Init`, `Lean`, `Model` and `Std` modules.
+The normal build is acyclic because Model imports no Check module. A forbidden Model import
+of Check creates a build dependency cycle and is refused by Lake before the audits run.
+With an unimported `Model/Uppercase.LEAN` containing `import Check.Original`, the source
+audit refuses the non-canonical extension. Importing that fixture from `Model.lean` instead
+produces Lake's `build cycle detected` refusal on a case-insensitive filesystem.
 
 The Check library registers `Model.lean` and every case variant of the `.lean` extension
 under `Model/` and `../Elements/Foundations/` as text inputs in
