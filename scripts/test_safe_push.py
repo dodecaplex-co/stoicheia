@@ -26,6 +26,9 @@ one commit and runs safe_push.py against that origin:
   GitHub names for the head (issue #41); and believes gh's exit 0 only once GitHub says
   the pull request merged and origin/main holds the merge commit GitHub names, the merge
   state otherwise unknown, with no revert advised (issue #42);
+- trains require a body and run main's train module, with an explicit skip before that
+  module lands; queue rules and main health fail closed, and a queued head is pinned,
+  followed to merge or ejection, and checked on main;
 - the pre-push hook refuses every push to main and scans a push to any other branch;
 - the review's findings: the harness and the check scripts are origin/main's, an
   allow-list entry the push adds does not count, the heath/ leaves are origin/main's, an
@@ -141,6 +144,7 @@ BASE: str
 GH: Path
 GH_STATE: Path
 UNDER_TEST: Path      # the harness committed at BASE, which DRIVER runs (setUpModule)
+TEST_PATH = os.environ.get("PATH", "")
 BRANCH = "test-pr"
 DECISIONS = "docs/briefs/0002-decisions.md"
 # The files of the harness under test, committed on top of HEAD as origin's main.
@@ -166,7 +170,7 @@ def git(cwd, *args, env=None, check=True) -> str:
 def clean_env() -> dict:
     env = dict(os.environ, STOICHEIA_PUSH_LOG=str(LOG), STOICHEIA_TEST_GH=str(GH),
                STOICHEIA_FAKE_GH_STATE=str(GH_STATE), STOICHEIA_FAKE_GH_ORIGIN=str(ORIGIN),
-               STOICHEIA_PYTHON=sys.executable)
+               STOICHEIA_PYTHON=sys.executable, PATH=TEST_PATH)
     for name in ("STOICHEIA_SAFE_PUSH", "STOICHEIA_HARNESS", "STOICHEIA_TAG_PUSH",
                  "STOICHEIA_FAKE_GH_KILL", "STOICHEIA_FAKE_GH_MERGE", "STOICHEIA_TEST_CI_POLL",
                  "STOICHEIA_TEST_CI_APPEAR", "STOICHEIA_TEST_CLOCK"):
@@ -282,6 +286,78 @@ def kill_on_watch():
     time.sleep(60)
 
 
+def queue_merge(s, pr):
+    """Make the queue's automatic merge in the local origin."""
+    sha, base = head_of(pr["headRefName"]), head_of("main")
+    tree = subprocess.run(["git", "merge-tree", "--write-tree", base, sha], cwd=ORIGIN,
+                          capture_output=True, text=True, check=True).stdout.splitlines()[0]
+    env = dict(os.environ, GIT_AUTHOR_NAME="GitHub", GIT_AUTHOR_EMAIL="noreply@github.com",
+               GIT_COMMITTER_NAME="GitHub", GIT_COMMITTER_EMAIL="noreply@github.com")
+    second = base if s.get("queue_result") == "wrong-parent" else sha
+    oid = subprocess.run(["git", "commit-tree", tree, "-p", base, "-p", second,
+                          "-m", "Merge pull request #%d" % pr["number"]], cwd=ORIGIN,
+                         env=env, capture_output=True, text=True, check=True).stdout.strip()
+    if s.get("queue_result") != "off-main":
+        subprocess.run(["git", "update-ref", "refs/heads/main", oid, base], cwd=ORIGIN,
+                       check=True)
+    pr.update(state="MERGED", mergedHead=sha, mergeQueueEntry=None,
+              mergeCommit=None if s.get("queue_result") == "no-commit" else {"oid": oid})
+
+
+def api(s, args):
+    """REST pages and GraphQL queue responses, with each fault supplied by a test."""
+    endpoint = args[1]
+    if endpoint.endswith("/rules/branches/main"):
+        print(json.dumps(s.get("rules", [[]])))
+        return s.get("rules_exit", 0)
+    if "/issues?" in endpoint:
+        print(json.dumps(s.get("issues", [[]])))
+        return s.get("issues_exit", 0)
+    if "/actions/workflows/post-merge.yml/runs?" in endpoint:
+        if "runs" not in s:
+            print(json.dumps({"message": "Not Found", "status": "404"}))
+            print("gh: Not Found (HTTP 404)", file=sys.stderr)
+            return 1
+        print(json.dumps(s["runs"]))
+        return s.get("runs_exit", 0)
+    if "/check-runs?" in endpoint:
+        print(json.dumps(s.get("group_checks", [{"total_count": 1, "check_runs": [
+            {"name": "queue-integrity", "status": "completed", "conclusion": "failure"}]}])))
+        return 0
+    if endpoint != "graphql":
+        print("fake gh: unknown API endpoint", file=sys.stderr)
+        return 1
+    values = dict(value.split("=", 1) for value in opts(args, "-f") + opts(args, "-F"))
+    query = values.get("query", "")
+    pr = s["prs"][0]
+    sha = head_of(pr["headRefName"]) or pr.get("mergedHead")
+    if "enqueuePullRequest" in query:
+        if "expectedHeadOid:$head" not in query or values.get("head") != sha \
+                or values.get("id") != "PR_1":
+            print(json.dumps({"errors": [{"message": "head moved or missing pin"}]}))
+            return 1
+        pr["mergeQueueEntry"] = {"id": "MQ_1", "headCommit": {"oid": sha}}
+        s["enqueued"] = True
+        save(s)
+        entry = dict(pr["mergeQueueEntry"], pullRequest={"id": "PR_1", "headRefOid": sha})
+        print(json.dumps({"data": {"enqueuePullRequest": {"mergeQueueEntry": entry}}}))
+        return 0
+    if s.get("enqueued"):
+        outcome = s.get("queue_result", "merged")
+        if outcome == "ejected":
+            pr["mergeQueueEntry"] = None
+        elif outcome == "unknown":
+            print(json.dumps({"data": {"repository": None}}))
+            return 0
+        elif outcome != "waiting":
+            queue_merge(s, pr)
+        save(s)
+    view = fields(pr, "state,headRefOid,headRefName,baseRefName,mergeCommit,mergeQueueEntry")
+    view["id"] = "PR_1"
+    print(json.dumps({"data": {"repository": {"pullRequest": view}}}))
+    return 0
+
+
 def main(argv):
     s = load()
     s["calls"].append(argv)
@@ -291,6 +367,8 @@ def main(argv):
         i = args.index("-R")
         del args[i:i + 2]
     cmd = args[:2]
+    if args[0] == "api":
+        return api(s, args)
     if cmd == ["auth", "status"]:
         return 0
     if cmd == ["label", "list"]:
@@ -454,7 +532,13 @@ def reset_gh() -> None:
 
 
 def setUpModule():
-    global TMP, ORIGIN, WORK, LOG, BASE, GH, GH_STATE, UNDER_TEST
+    global TMP, ORIGIN, WORK, LOG, BASE, GH, GH_STATE, UNDER_TEST, TEST_PATH
+    if sys.platform == "darwin" and shutil.which("git") == "/usr/bin/git":
+        # The system shim leaves xcrun_db in TMPDIR. Use the selected Git directly so
+        # that dry-run cleanup still requires an empty temporary directory.
+        selected = subprocess.run(["xcrun", "--find", "git"], capture_output=True,
+                                  text=True, check=True).stdout.strip()
+        TEST_PATH = str(Path(selected).parent) + os.pathsep + TEST_PATH
     TMP = Path(tempfile.mkdtemp(prefix="stoicheia-safe-push-test-"))
     ORIGIN, WORK, LOG = TMP / "origin.git", TMP / "work", TMP / "cache" / "pushes.log"
     GH, GH_STATE = TMP / "fake-gh", TMP / "fake-gh.json"
@@ -463,13 +547,15 @@ def setUpModule():
     reset_gh()
     common = git(SOURCE, "rev-parse", "--path-format=absolute", "--git-common-dir").strip()
     head = git(SOURCE, "rev-parse", "HEAD").strip()
-    git(TMP, "clone", "--quiet", "--bare", "--local", common, str(ORIGIN))
+    # Copy source objects: the shared repository may be read-only in the sandbox.
+    git(TMP, "clone", "--quiet", "--bare", "--local", "--no-hardlinks", common, str(ORIGIN))
     git(ORIGIN, "update-ref", "refs/heads/main", head)
     git(ORIGIN, "symbolic-ref", "HEAD", "refs/heads/main")
     git(TMP, "clone", "--quiet", "--local", str(ORIGIN), str(WORK))
     git(WORK, "config", "user.name", "safe_push test")
     git(WORK, "config", "user.email", "safe-push-test@example.invalid")
     git(WORK, "config", "commit.gpgsign", "false")
+    git(WORK, "config", "core.abbrev", "7")
     git(WORK, "checkout", "--quiet", "--detach", head)
     for rel in HARNESS_FILES:
         if (SOURCE / rel).exists():
@@ -489,6 +575,9 @@ def setUpModule():
         (UNDER_TEST / name).write_bytes(subprocess.run(
             ["git", "show", f"{BASE}:scripts/{name}"], cwd=WORK, capture_output=True,
             check=True).stdout)
+    train = safe_push.show_bytes(WORK, BASE, "scripts/check_train.py")
+    if train is not None:
+        (UNDER_TEST / "check_train.py").write_bytes(train)
     git(WORK, "fetch", "--quiet", "origin")
     r = subprocess.run(["sh", str(INSTALL_HOOKS)], cwd=WORK, capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
@@ -2426,6 +2515,283 @@ class Merge(Edge):
 
 # --------------------------------------------------------------------------------------
 # B: the review's findings, each with a planted commit
+
+
+class Trains(Edge):
+    """The train checker is main's public function, including through a hand-over."""
+
+    def body_file(self) -> Path:
+        path = TMP / "train-body.md"
+        path.write_text("A train body for the test.\n")
+        return path
+
+    def test_train_requires_body_file(self):
+        self.good_commit()
+        for branch in ("train/tooling-1", "refs/heads/train/tooling-1"):
+            with self.subTest(branch=branch):
+                r = self.safe_push("--branch", branch, "--label", "tooling")
+                self.assertRefused(r, "a train/* branch requires --body-file")
+                self.assertIsNone(self.origin_branch("train/tooling-1"))
+
+    def test_main_without_train_module_skips(self):
+        if safe_push.show_bytes(WORK, BASE, "scripts/check_train.py") is not None:
+            base = self.commit("Main before the train checker", remove=("scripts/check_train.py",))
+            git(WORK, "push", "--quiet", "--no-verify", "origin", f"{base}:refs/heads/main")
+        self.good_commit()
+        r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
+                           "--body-file", str(self.body_file()), "--dry-run")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.step(out, "train"), "skip")
+        self.assertIn("origin/main has no scripts/check_train.py yet", out)
+        self.assertIsNone(self.origin_branch("train/docs-1"))
+
+    def test_origin_train_failure_refuses_even_if_candidate_passes(self):
+        base = self.new_base("Main's train checker", {
+            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
+                                      "    return ['planted train refusal']\n"})
+        self.commit("A candidate checker", {
+            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
+                                      "    return []\n",
+            **self.decision("scripts/check_train.py: the proposed checker.")})
+        r = self.safe_push("--branch", "train/tooling-1", "--label", "tooling",
+                           "--body-file", str(self.body_file()))
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.step(out, "train"), "FAIL")
+        self.assertIn("planted train refusal", out)
+        self.assertEqual(self.origin_main(), base)
+        self.assertIsNone(self.origin_branch("train/tooling-1"))
+        self.assertNotIn("4. The full local checks", out)
+
+    def test_main_train_function_receives_the_checked_commit_and_body(self):
+        base = self.new_base("Main's train checker", {
+            "scripts/check_train.py":
+                "from pathlib import Path\n"
+                "def check_train(repo, base, sha, body):\n"
+                "    if not isinstance(repo, Path) or len(base) != 40 or len(sha) != 40:\n"
+                "        return ['wrong train arguments']\n"
+                "    if body != 'A train body for the test.\\n':\n"
+                "        return ['wrong train body']\n"
+                "    return []\n"})
+        sha = self.good_commit()
+        r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
+                           "--body-file", str(self.body_file()))
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.step(out, "train"), "ok")
+        self.assertEqual(self.origin_main(), base)
+        self.assertEqual(self.origin_branch("train/docs-1"), sha)
+
+    def test_unreadable_train_result_refuses(self):
+        base = self.new_base("An unreadable train checker result", {
+            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
+                                      "    return None\n"})
+        self.good_commit()
+        r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
+                           "--body-file", str(self.body_file()), "--dry-run")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("unreadable problem list", out)
+        self.assertEqual(self.origin_main(), base)
+
+
+class Queue(Edge):
+    """A stand-in queue, with no network and a deterministic clock for the timeout."""
+
+    def opened(self, queued=True) -> str:
+        sha = self.good_commit()
+        r = self.safe_push("--ready")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        self.set_gh(lambda s: s.update(rules=[[{"type": "merge_queue"}]] if queued else [[]]))
+        return sha
+
+    def enqueues(self) -> list[list[str]]:
+        return [c for c in self.gh_state()["calls"] if c[:2] == ["api", "graphql"]
+                and any("enqueuePullRequest" in arg for arg in c)]
+
+    def run_entry(self, outcome="merged") -> subprocess.CompletedProcess:
+        self.set_gh(lambda s: s.update(queue_result=outcome))
+        env = dict(clean_env(), STOICHEIA_TEST_CLOCK="leap")
+        return subprocess.run([sys.executable, "-c", DRIVER, str(UNDER_TEST), "queue",
+                               str(ORIGIN), "", "--_test-skip-checks", "--merge", "1"],
+                              cwd=WORK, env=env, capture_output=True, text=True)
+
+    def assertNoLanding(self, r, *messages):
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        for message in messages:
+            self.assertIn(message, out)
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.enqueues(), [])
+
+    def test_queue_pins_head_and_reports_verified_merge(self):
+        sha = self.opened()
+        r = self.run_entry()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertIn("merged #1", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(len(self.enqueues()), 1)
+        self.assertIn(f"head={sha}", self.enqueues()[0])
+        self.assertTrue(any("expectedHeadOid:$head" in a for a in self.enqueues()[0]))
+        self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
+        self.assertEqual(self.guard(out, "main"), "ok")
+
+    def test_queue_checks_a_head_behind_main_against_its_merge_base(self):
+        sha = self.opened()
+        git(WORK, "checkout", "--quiet", "--detach", BASE)
+        main = self.new_base("Main advanced", {"docs/queue-test.md": "Another change.\n"})
+        r = self.run_entry()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertIn("the full checks are not repeated", out)
+        self.assertEqual(git(ORIGIN, "rev-list", "--parents", "-n", "1", "main").split()[1:],
+                         [main, sha])
+        self.assertNotEqual(git(ORIGIN, "rev-parse", "main^{tree}").strip(),
+                            git(ORIGIN, "rev-parse", f"{sha}^{{tree}}").strip())
+
+    def test_queue_dry_run_does_not_enqueue(self):
+        self.opened()
+        r = self.safe_push("--merge", "1", "--dry-run")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("would enqueue", r.stdout)
+        self.assertEqual(self.enqueues(), [])
+        self.assertEqual(self.origin_main(), BASE)
+
+    def test_ejected_reports_group_checks(self):
+        self.opened()
+        r = self.run_entry("ejected")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("ejected #1", out)
+        self.assertIn("queue-integrity: failure", out)
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertEqual(len(self.enqueues()), 1)
+
+    def test_timeout_is_exit_3(self):
+        self.opened()
+        r = self.run_entry("waiting")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("queued; verdict not followed", out)
+        self.assertIn("timed out", out)
+        self.assertEqual(self.origin_main(), BASE)
+
+    def test_unreadable_verdict_is_exit_3(self):
+        self.opened()
+        r = self.run_entry("unknown")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("queued; verdict not followed", out)
+        self.assertNotIn("git revert", out)
+
+    def test_named_merge_must_be_on_main_with_the_head_as_second_parent(self):
+        for outcome in ("wrong-parent", "off-main", "no-commit"):
+            with self.subTest(outcome=outcome):
+                self.setUp()
+                self.opened()
+                r = self.run_entry(outcome)
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 3, out)
+                self.assertIn("queued; verdict not followed", out)
+                self.assertNotIn("git revert", out)
+
+    def test_queue_off_keeps_direct_merge(self):
+        sha = self.opened(queued=False)
+        r = self.safe_push("--merge", "1")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(len(self.merges()), 1)
+        self.assertEqual(self.enqueues(), [])
+        self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
+        self.assertIsNone(self.origin_branch())
+
+    def test_unreadable_rules_refuse(self):
+        self.opened()
+        for rules in (None, [], {}, [[{"type": "merge_queue"}, None]],
+                      [[{}]], [[{"type": "merge_queue", "parameters": None}]]):
+            with self.subTest(rules=rules):
+                self.set_gh(lambda s: s.update(rules=rules))
+                self.assertNoLanding(self.safe_push("--merge", "1"), "REFUSED")
+        self.set_gh(lambda s: s.update(rules=[[]], rules_exit=1))
+        self.assertNoLanding(self.safe_push("--merge", "1"), "could not read GitHub")
+
+    def test_main_red_issue_refuses_in_both_modes(self):
+        self.opened()
+        issue = {"number": 12, "state": "open", "labels": [{"name": "main-red"}]}
+        for queued in (False, True):
+            with self.subTest(queued=queued):
+                self.set_gh(lambda s: s.update(
+                    rules=[[{"type": "merge_queue"}]] if queued else [[]], issues=[[], [issue]]))
+                self.assertNoLanding(self.safe_push("--merge", "1"), "main is red", "#12")
+        calls = [c for c in self.gh_state()["calls"] if "/issues?" in c[1]]
+        self.assertTrue(calls)
+        self.assertTrue(all("--paginate" in c and "--slurp" in c for c in calls))
+
+    def test_every_main_red_entry_is_validated(self):
+        self.opened()
+        issue = {"number": 12, "state": "open", "labels": [{"name": "main-red"}]}
+        for invalid in (None, {}, dict(issue, number=True), dict(issue, state="closed"),
+                        dict(issue, labels=[None]), dict(issue, labels=[])):
+            with self.subTest(entry=invalid):
+                self.set_gh(lambda s: s.update(issues=[[issue], [invalid]]))
+                self.assertNoLanding(self.safe_push("--merge", "1"), "unreadable main-red")
+
+    def run_page(self, conclusion="failure", number=1, **fields) -> dict:
+        entry = dict(id=number, run_number=number, run_attempt=1, head_sha=BASE,
+                     head_branch="main", status="completed", conclusion=conclusion)
+        entry.update(fields)
+        return {"total_count": 1, "workflow_runs": [entry]}
+
+    def test_failed_post_merge_refuses_in_both_modes(self):
+        self.opened()
+        for queued in (False, True):
+            with self.subTest(queued=queued):
+                self.set_gh(lambda s: s.update(
+                    rules=[[{"type": "merge_queue"}]] if queued else [[]],
+                    runs=[self.run_page()]))
+                self.assertNoLanding(self.safe_push("--merge", "1"), "main is red",
+                                     "post-merge run", "concluded failure")
+        calls = [c for c in self.gh_state()["calls"] if "/runs?" in c[1]]
+        self.assertTrue(all(f"head_sha={BASE}" in c[1] for c in calls))
+
+    def test_latest_completed_post_merge_run_is_used(self):
+        self.opened()
+        page = self.run_page("success", number=2)
+        page["workflow_runs"] += self.run_page()["workflow_runs"]
+        page["workflow_runs"] += self.run_page(None, number=3, status="in_progress")["workflow_runs"]
+        page["total_count"] = 3
+        self.set_gh(lambda s: s.update(runs=[page]))
+        r = self.safe_push("--merge", "1", "--dry-run")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("run 2 concluded success", r.stdout)
+
+    def test_missing_workflow_is_not_red_but_other_unreadable_answers_refuse(self):
+        self.opened()
+        r = self.safe_push("--merge", "1", "--dry-run")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("no post-merge workflow", r.stdout)
+        for pages in ({}, [], [None], [self.run_page(None)],
+                      [self.run_page(head_sha="f" * 40)]):
+            with self.subTest(pages=pages):
+                self.set_gh(lambda s: s.update(runs=pages))
+                self.assertNoLanding(self.safe_push("--merge", "1"), "unreadable post-merge")
+        self.set_gh(lambda s: s.update(runs=[self.run_page("success")], runs_exit=1))
+        self.assertNoLanding(self.safe_push("--merge", "1"), "could not read GitHub")
+
+    def test_workflow_present_on_main_makes_404_a_refusal(self):
+        base = self.new_base("Main has the post-merge workflow", {
+            ".github/workflows/post-merge.yml": "name: post-merge\n"})
+        self.opened()
+        r = self.safe_push("--merge", "1")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("could not read GitHub", out)
+        self.assertNotIn("no post-merge workflow", out)
+        self.assertEqual(self.origin_main(), base)
+        self.assertEqual(self.enqueues(), [])
 
 
 class ProtectedPaths(Edge):

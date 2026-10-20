@@ -21,6 +21,9 @@ to end, reading nothing from the working tree, and only then pushes it to
 refs/heads/<name> and opens the pull request, or updates the open one. The steps run in
 order, and the first that fails stops it with a message saying why:
 
+Branches named train/* require --body-file. Step "3. train" runs origin/main's
+check_train.py before the full checks, or reports a skip while main has no such module.
+
 1. Preconditions. The commit exists; `git fetch origin`; origin/main is an ancestor of
    the commit, so that the merge commit will hold exactly the tree checked; the branch,
    if origin has it, is an ancestor too, for nothing is ever forced; the branch is not
@@ -124,6 +127,12 @@ or GitHub not to be asked, or answering with no state of its own, is "merge stat
 unknown", with no revert advised. Afterwards that merge commit is checked to join the
 base and the head checked, with the head's tree.
 
+When main's rules require a merge queue, --merge keeps these gates, checks the head
+against its merge base with origin/main, and enqueues it with expectedHeadOid pinned.
+It follows the queue to a verified merge or an ejection; an unreadable or timed out
+verdict is exit 3. In both modes, open main-red issues or a failed completed post-merge
+run at main's tip refuse the merge. Unreadable rules or main-health answers refuse too.
+
 `--dry-run` does everything but the push, the pull request and the merge. The temporary
 worktrees are removed at the end, on a failure too. The pre-push hook,
 `scripts/hooks/pre-push` (installed by `scripts/install_hooks.sh`), runs origin/main's
@@ -148,6 +157,7 @@ import binascii
 import contextlib
 import datetime
 import hashlib
+import importlib.util
 import json
 import math
 import os
@@ -2155,7 +2165,7 @@ class Preflight(NamedTuple):
 
 
 def check_commit(ctx, rep: Report, logs: Path, test_mode: bool,
-                 checked: dict | None = None) -> Preflight:
+                 checked: dict | None = None, train_body: str | None = None) -> Preflight:
     """Steps 2 to 4 on the commit: the secret scan, the guards and the full checks.
     `checked`, a record of the full checks of this commit against this origin/main by
     origin/main's harness, stands in for step 4 alone (--merge); steps 2 and 3 always
@@ -2165,6 +2175,8 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool,
         parent = Path(tmp)
         with worktree(ctx.repo, ctx.sha, parent, "check") as wt:
             g = guards(ctx, wt, rep, logs)
+            if train_body is not None:
+                train_check(ctx, train_body, rep)
             rep.heading("4. The full local checks (docs/WORKFLOW.md, section 8)")
             if checked is not None:
                 rep.add("4", "full local checks", "skip", f"run on {ctx.sha[:12]} against "
@@ -2192,6 +2204,7 @@ class Context(NamedTuple):
     branch: str | None = None
     gh: tuple = ("gh",)
     remote_branch: str | None = None    # the branch on origin before the push
+    queue: bool = False
 
 
 def is_local(url: str) -> bool:
@@ -2248,14 +2261,29 @@ def check_installed(repo, base: str, rep: Report) -> None:
                     "(sh scripts/install_hooks.sh --force)")
 
 
-def harness_copy(theirs: bytes, theirs_heath: bytes) -> Path:
-    """origin/main's safe_push.py and heath.py, written to a directory named by their
-    blobs, beside the log (~/.cache/stoicheia/harness/<blob>-<blob>/): it needs no
+def harness_train(repo: Path, base: str) -> bytes | None:
+    """Read main's train module, distinguishing an absent file from an unreadable one."""
+    entry = git(repo, "ls-tree", base, "--", "scripts/check_train.py").strip()
+    if not entry:
+        return None
+    if not re.fullmatch(r"100(?:644|755) blob [0-9a-f]{40,64}\tscripts/check_train\.py", entry):
+        raise Refusal("origin/main's scripts/check_train.py is not a regular file")
+    return git(repo, "cat-file", "blob", f"{base}:scripts/check_train.py", binary=True)
+
+
+def harness_copy(theirs: bytes, theirs_heath: bytes, theirs_train: bytes | None = None) -> Path:
+    """origin/main's harness modules, written to a directory named by their
+    blobs, beside the log (~/.cache/stoicheia/harness/): it needs no
     cleaning up, since the same harness always lands in the same place, and each file is
     written afresh, through a rename, so that nothing left there earlier is run."""
-    path = log_path().parent / "harness" / f"{blob_id(theirs)}-{blob_id(theirs_heath)}"
+    train_id = blob_id(theirs_train) if theirs_train is not None else "no-train"
+    path = log_path().parent / "harness" / f"{blob_id(theirs)}-{blob_id(theirs_heath)}-{train_id}"
     path.mkdir(parents=True, exist_ok=True)
-    for name, data in (("safe_push.py", theirs), ("heath.py", theirs_heath)):
+    for name, data in (("safe_push.py", theirs), ("heath.py", theirs_heath),
+                       ("check_train.py", theirs_train)):
+        if data is None:
+            (path / name).unlink(missing_ok=True)
+            continue
         fd, tmp = tempfile.mkstemp(prefix=f".{name}.", dir=path)
         with os.fdopen(fd, "wb") as f:
             f.write(data)
@@ -2264,8 +2292,9 @@ def harness_copy(theirs: bytes, theirs_heath: bytes) -> Path:
 
 
 def harness(repo, base: str, rep: Report) -> None:
-    """origin/main's safe_push.py and heath.py judge the commit. When this copy differs
-    from them, origin/main's replaces this process (os.execve), with the same arguments:
+    """origin/main's safe_push.py, heath.py and optional check_train.py judge the commit.
+    When this copy differs from them, origin/main's replaces this process (os.execve),
+    with the same arguments:
     its signals, its summary and its exit status are the run's own, so an interruption
     after its push is still "pushed; CI not followed". A copy of origin/main's that
     predates the marker is not run: this copy runs, once, while the harness that runs
@@ -2276,11 +2305,17 @@ def harness(repo, base: str, rep: Report) -> None:
     own, own_heath = (here / "safe_push.py").read_bytes(), (here / "heath.py").read_bytes()
     theirs = show_bytes(repo, base, "scripts/safe_push.py")
     theirs_heath = show_bytes(repo, base, "scripts/heath.py")
-    same = (theirs, theirs_heath) == (own, own_heath)
+    theirs_train = harness_train(repo, base)
+    own_train = (here / "check_train.py").read_bytes() if (here / "check_train.py").exists() \
+        else None
+    # Older launchers carry only the first two modules. train_check copies main's train
+    # module afresh before importing it, so an absent local copy needs no hand-over.
+    same = (theirs, theirs_heath) == (own, own_heath) and \
+        (own_train is None or own_train == theirs_train)
     if os.environ.get("STOICHEIA_HARNESS"):
         if not same:
             raise Refusal("STOICHEIA_HARNESS says this is origin/main's harness, but this "
-                          "copy of scripts/safe_push.py or heath.py is not origin/main's "
+                          "copy of safe_push.py, heath.py or check_train.py is not origin/main's "
                           f"(blob {blob_id(own)[:12]}): origin/main moved since the hand-over, "
                           "or the variable was set by hand. Run safe_push again, with the "
                           "variable unset.")
@@ -2301,13 +2336,53 @@ def harness(repo, base: str, rep: Report) -> None:
         rep.add("1", "harness", "ok", f"origin/main's scripts/safe_push.py "
                 f"(blob {blob_id(own)[:12]})")
         return
-    print("  this copy of safe_push.py or heath.py differs from origin/main's: running "
+    print("  this copy of safe_push.py, heath.py or check_train.py differs from origin/main's: running "
           "origin/main's in its place", flush=True)
-    path = harness_copy(theirs, theirs_heath) / "safe_push.py"
+    path = harness_copy(theirs, theirs_heath, theirs_train) / "safe_push.py"
     env = dict(os.environ, STOICHEIA_HARNESS="origin/main")
     sys.stdout.flush()
     sys.stderr.flush()
     os.execve(PY, [PY, str(path), *ARGV], env)
+
+
+def train_input(ctx: Context, args) -> str | None:
+    """A train needs an explicit body, including on a dry run or an update."""
+    if not (ctx.branch or "").startswith("train/"):
+        return None
+    if not args.body_file:
+        raise Refusal("a train/* branch requires --body-file")
+    try:
+        return Path(args.body_file).read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as e:
+        raise Refusal(f"could not read the train's --body-file: {e}") from e
+
+
+def train_check(ctx: Context, body: str, rep: Report) -> None:
+    """Run the public train check from main's harness copy, never the proposed tree."""
+    rep.heading("3. train")
+    started = time.time()
+    try:
+        source = harness_train(ctx.repo, ctx.base)
+        if source is None:
+            rep.add("3", "train", "skip", "origin/main has no scripts/check_train.py yet")
+            return
+        here = Path(__file__).resolve().parent
+        path = harness_copy((here / "safe_push.py").read_bytes(),
+                            (here / "heath.py").read_bytes(), source)
+        spec = importlib.util.spec_from_file_location("check_train", path / "check_train.py")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        problems = module.check_train(ctx.repo, ctx.base, ctx.sha, body)
+        if not isinstance(problems, list) or any(not isinstance(p, str) or not p.strip()
+                                                 for p in problems):
+            raise Refusal("check_train returned an unreadable problem list")
+        if problems:
+            raise Refusal("\n".join(problems))
+    except Exception as e:
+        rep.add("3", "train", "FAIL", str(e), time.time() - started)
+        raise Refusal(f"the train check refused: {e}") from e
+    rep.add("3", "train", "ok", "origin/main's check_train passed", time.time() - started)
 
 
 def gh_command(test_mode: bool) -> tuple:
@@ -3160,6 +3235,8 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report):
     gh = gh_command(test_mode)
     gh_ready(gh, repo, test_mode)
     ctx = Context(repo, "", base, 0, origin, slug, {}, None, gh)
+    queued = queue_enabled(ctx, rep)
+    main_health(ctx, rep)
     view = gh_json(ctx, "pr", "view", str(number), "--json",
                    "number,state,isDraft,headRefName,headRefOid,baseRefName,body,labels,url,"
                    "isCrossRepository,title")
@@ -3174,6 +3251,9 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report):
         run(["git", "fetch", "origin", f"refs/heads/{branch}"], repo)
     if rev_parse(repo, f"{head}^{{commit}}") is None:
         raise Refusal(f"the head {head[:12]} of #{number} is not here after `git fetch origin`")
+    if queued:
+        base = queue_base(ctx, head)
+        ctx = ctx._replace(base=base, queue=True)
     if not git_ok(repo, "merge-base", "--is-ancestor", base, head):
         raise Refusal(f"origin/main ({base[:12]}) is not an ancestor of #{number}'s head "
                       f"({head[:12]}): merge origin/main into {branch} (a merge commit), run "
@@ -3418,6 +3498,284 @@ def verify_merge(ctx: Context, rep: Report, number: int, merged: str) -> str | N
     return commit
 
 
+def api_json(ctx: Context, endpoint: str, *args, missing: bool = False):
+    """Read the API strictly. `gh api` takes a full endpoint, not the pr command's -R."""
+    try:
+        r = run([*ctx.gh, "api", endpoint, *args], ctx.repo)
+    except (OSError, UnicodeError) as e:
+        raise Refusal(f"could not read GitHub's {endpoint}: {e}") from e
+    try:
+        answer = json.loads(r.stdout)
+    except (ValueError, TypeError):
+        answer = None
+    if r.returncode:
+        absent = (isinstance(answer, dict) and answer.get("status") in (404, "404")) or \
+            re.search(r"\bHTTP 404\b", r.stderr)
+        if missing and absent:
+            return None
+        raise Refusal(f"could not read GitHub's {endpoint}: {r.stderr.strip() or r.stdout[:200]}")
+    if answer is None:
+        raise Refusal(f"GitHub's {endpoint} did not give a readable JSON answer")
+    if isinstance(answer, dict) and answer.get("errors"):
+        raise Refusal(f"GitHub's {endpoint} reported errors")
+    return answer
+
+
+def api_pages(answer, name: str) -> list:
+    """Flatten a paginated, slurped array only after validating every page."""
+    if not isinstance(answer, list) or not answer or any(not isinstance(p, list) for p in answer):
+        raise Refusal(f"unreadable {name}: expected pages of entries")
+    return [entry for page in answer for entry in page]
+
+
+def queue_enabled(ctx: Context, rep: Report) -> bool:
+    """Read main's effective rules, refusing an unreadable rule even after a queue rule."""
+    rules = api_pages(api_json(ctx, f"repos/{ctx.github}/rules/branches/main",
+                               "--paginate", "--slurp"), "main rules")
+    for rule in rules:
+        if not isinstance(rule, dict) or not isinstance(rule.get("type"), str) \
+                or not rule["type"].strip() or \
+                ("parameters" in rule and not isinstance(rule["parameters"], dict)):
+            raise Refusal("unreadable main rules: each rule must name its type")
+    queued = any(rule["type"] == "merge_queue" for rule in rules)
+    rep.add("1", "merge queue", "ok", "required by main's rules" if queued else
+            "not required by main's rules")
+    return queued
+
+
+def main_health(ctx: Context, rep: Report) -> None:
+    """Refuse red or unreadable main: open issues and completed post-merge runs at its tip."""
+    issues = api_pages(api_json(
+        ctx, f"repos/{ctx.github}/issues?state=open&labels=main-red&per_page=100",
+        "--paginate", "--slurp"), "main-red issues")
+    red = []
+    for issue in issues:
+        if not isinstance(issue, dict) or type(issue.get("number")) is not int \
+                or issue["number"] < 1 or issue.get("state") != "open" \
+                or not isinstance(issue.get("labels"), list) \
+                or any(not isinstance(label, dict) or not isinstance(label.get("name"), str)
+                       or not label["name"].strip() for label in issue["labels"]) \
+                or "main-red" not in {label["name"] for label in issue["labels"]} \
+                or ("pull_request" in issue and not isinstance(issue["pull_request"], dict)):
+            raise Refusal("unreadable main-red issue entry")
+        if "pull_request" not in issue:
+            red.append(f"#{issue['number']}")
+    if red:
+        raise Refusal("main is red: open main-red issues " + ", ".join(red))
+    workflow = ".github/workflows/post-merge.yml"
+    absent = not git(ctx.repo, "ls-tree", ctx.base, "--", workflow).strip()
+    pages = api_json(ctx, f"repos/{ctx.github}/actions/workflows/post-merge.yml/runs"
+                     f"?branch=main&head_sha={ctx.base}&per_page=100",
+                     "--paginate", "--slurp", missing=absent)
+    if pages is None:
+        rep.add("1", "main health", "ok", "no main-red issues; no post-merge workflow")
+        return
+    if not isinstance(pages, list) or not pages:
+        raise Refusal("unreadable post-merge runs: expected pages")
+    completed, seen = [], set()
+    total = None
+    for page in pages:
+        if not isinstance(page, dict) or type(page.get("total_count")) is not int \
+                or page["total_count"] < 0 or not isinstance(page.get("workflow_runs"), list):
+            raise Refusal("unreadable post-merge runs page")
+        if total is not None and page["total_count"] != total:
+            raise Refusal("unreadable post-merge runs: the count changed between pages")
+        total = page["total_count"]
+        for entry in page["workflow_runs"]:
+            if not isinstance(entry, dict) or any(type(entry.get(key)) is not int
+                    or entry[key] < 1 for key in ("id", "run_number", "run_attempt")) \
+                    or entry.get("head_sha") != ctx.base or entry.get("head_branch") != "main" \
+                    or entry.get("status") not in ("completed", "queued", "in_progress",
+                                                   "waiting", "requested", "pending"):
+                raise Refusal("unreadable post-merge run entry")
+            if entry["id"] in seen:
+                raise Refusal("unreadable post-merge runs: a run appears twice")
+            seen.add(entry["id"])
+            if entry["status"] == "completed":
+                if entry.get("conclusion") not in ("success", "failure", "neutral", "cancelled",
+                        "skipped", "timed_out", "action_required", "stale", "startup_failure"):
+                    raise Refusal("unreadable post-merge run conclusion")
+                completed.append(entry)
+            elif entry.get("conclusion") is not None:
+                raise Refusal("unreadable unfinished post-merge run conclusion")
+    if len(seen) != total:
+        raise Refusal("unreadable post-merge runs: the pages do not cover the reported count")
+    if completed:
+        latest = max(completed, key=lambda entry: (entry["run_number"], entry["run_attempt"]))
+        if latest["conclusion"] not in ("success", "neutral", "skipped"):
+            raise Refusal(f"main is red: post-merge run {latest['id']} at {ctx.base[:12]} "
+                          f"concluded {latest['conclusion']}")
+        detail = f"latest completed post-merge run {latest['id']} concluded {latest['conclusion']}"
+    else:
+        detail = "no completed post-merge run at main's tip"
+    rep.add("1", "main health", "ok", "no main-red issues; " + detail)
+
+
+def queue_base(ctx: Context, head: str) -> str:
+    """A queued head is checked against its unique merge base with current main."""
+    bases = git(ctx.repo, "merge-base", "--all", head, ctx.base).split()
+    if len(bases) != 1 or not FULL_OID.fullmatch(bases[0]):
+        raise Refusal("the queued head has no unique merge base with origin/main")
+    return bases[0]
+
+
+QUEUE_POLL = 10
+QUEUE_TIMEOUT = 1800
+
+
+def queue_view(ctx: Context, number: int) -> dict:
+    """Read the pull request and its queue entry in one GraphQL snapshot."""
+    owner, name = ctx.github.split("/")
+    query = """query($owner:String!, $name:String!, $number:Int!) {
+      repository(owner:$owner, name:$name) { pullRequest(number:$number) {
+        id state headRefOid headRefName baseRefName mergeCommit { oid }
+        mergeQueueEntry { id headCommit { oid } }
+      } }
+    }"""
+    answer = api_json(ctx, "graphql", "-f", f"query={query}", "-f", f"owner={owner}",
+                      "-f", f"name={name}", "-F", f"number={number}")
+    try:
+        view = answer["data"]["repository"]["pullRequest"]
+        if not isinstance(view, dict) or not isinstance(view.get("id"), str) or not view["id"] \
+                or view.get("state") not in PR_STATES or view.get("headRefOid") != ctx.sha \
+                or view.get("headRefName") != ctx.branch or view.get("baseRefName") != "main" \
+                or "mergeQueueEntry" not in view:
+            raise ValueError("missing or changed pull request fields")
+        entry = view["mergeQueueEntry"]
+        if entry is not None and (not isinstance(entry, dict)
+                or not isinstance(entry.get("id"), str) or not entry["id"]):
+            raise ValueError("malformed queue entry")
+        if entry is not None:
+            queue_group(entry)
+    except (KeyError, TypeError, ValueError) as e:
+        raise Refusal(f"unreadable queue state for #{number}: {e}") from e
+    return view
+
+
+def enqueue(ctx: Context, view: dict) -> dict:
+    """Pin the checked head in the enqueue mutation and validate its acknowledgement."""
+    query = """mutation($id:ID!, $head:GitObjectID!) {
+      enqueuePullRequest(input:{pullRequestId:$id, expectedHeadOid:$head}) {
+        mergeQueueEntry { id headCommit { oid } pullRequest { id headRefOid } }
+      }
+    }"""
+    answer = api_json(ctx, "graphql", "-f", f"query={query}", "-f", f"id={view['id']}",
+                      "-f", f"head={ctx.sha}")
+    try:
+        entry = answer["data"]["enqueuePullRequest"]["mergeQueueEntry"]
+        if not isinstance(entry["id"], str) or not entry["id"] \
+                or entry["pullRequest"]["id"] != view["id"] \
+                or entry["pullRequest"]["headRefOid"] != ctx.sha:
+            raise ValueError("the acknowledgement does not name the checked head")
+        queue_group(entry)
+    except (KeyError, TypeError, ValueError) as e:
+        raise Refusal(f"unreadable enqueue acknowledgement: {e}") from e
+    return entry
+
+
+def queue_group(entry: dict) -> str | None:
+    """Read a queue entry's current group head, which may not have been made yet."""
+    commit = entry.get("headCommit")
+    if commit is None:
+        return None
+    if not isinstance(commit, dict) or not isinstance(commit.get("oid"), str) \
+            or not FULL_OID.fullmatch(commit["oid"]):
+        raise Refusal("unreadable queue group head")
+    return commit["oid"]
+
+
+def queue_checks(ctx: Context, group: str | None) -> str:
+    """Include checks of the last observed group, if readable, after its entry is gone."""
+    if group is None:
+        return "the failing group's checks are not readable"
+    try:
+        pages = api_json(ctx, f"repos/{ctx.github}/commits/{group}/check-runs?per_page=100",
+                         "--paginate", "--slurp")
+        if not isinstance(pages, list) or not pages:
+            raise ValueError("missing check pages")
+        checks = []
+        for page in pages:
+            if not isinstance(page, dict) or not isinstance(page.get("check_runs"), list):
+                raise ValueError("unreadable check page")
+            for check in page["check_runs"]:
+                if not isinstance(check, dict) or not isinstance(check.get("name"), str) \
+                        or check.get("status") not in ("queued", "in_progress", "completed") \
+                        or not isinstance(check.get("conclusion"), (str, type(None))):
+                    raise ValueError("unreadable check entry")
+                checks.append(f"{check['name']}: {check.get('conclusion') or check['status']}")
+        return f"group {group[:12]} checks: " + "; ".join(checks) if checks else \
+            "the failing group's checks are not readable"
+    except Exception:
+        return "the failing group's checks are not readable"
+
+
+def verify_queue_merge(ctx: Context, number: int, view: dict, rep: Report) -> str:
+    """The named merge must be on main, with exactly two parents and the checked head second."""
+    merged = view.get("mergeCommit")
+    oid = merged.get("oid") if isinstance(merged, dict) else None
+    if not isinstance(oid, str) or not FULL_OID.fullmatch(oid):
+        raise Refusal(f"GitHub names no full merge commit for queued #{number}")
+    git(ctx.repo, "fetch", "origin")
+    main = rev_parse(ctx.repo, "refs/remotes/origin/main^{commit}")
+    if not main or rev_parse(ctx.repo, f"{oid}^{{commit}}") is None \
+            or not git_ok(ctx.repo, "merge-base", "--is-ancestor", oid, main):
+        raise Refusal(f"origin/main does not hold the merge commit GitHub names for #{number}")
+    parents = git(ctx.repo, "rev-list", "--parents", "-n", "1", oid).split()[1:]
+    if len(parents) != 2 or parents[1] != ctx.sha:
+        raise Refusal(f"queued merge {oid[:12]} does not have the checked head as second parent")
+    rep.add("5", "main", "ok", f"{oid[:12]} on origin/main, with {ctx.sha[:12]} as second parent")
+    return oid
+
+
+def queue_main(ctx: Context, number: int, rep: Report, dry_run: bool, test_mode: bool) -> int:
+    """Enqueue once, then follow a known entry to merge or ejection, with bounded polling."""
+    asked = False
+    result, code = "refused", 1
+    try:
+        if dry_run:
+            rep.add("4", "enqueue", "skip", f"dry run: would enqueue #{number}, head {ctx.sha}")
+            result, code = "passed every gate (dry run, not queued)", 0
+        else:
+            tip = fetch_base(ctx.repo, ctx.origin, test_mode, rep)
+            main_health(ctx._replace(base=tip), rep)
+            view = queue_view(ctx, number)
+            if view["state"] != "OPEN":
+                raise Refusal(f"#{number} is no longer open")
+            entry = view["mergeQueueEntry"]
+            asked = True
+            if entry is None:
+                entry = enqueue(ctx, view)
+            group = queue_group(entry)
+            rep.add("4", "enqueue", "ok", f"#{number} queued with head {ctx.sha}")
+            deadline = time.time() + QUEUE_TIMEOUT
+            while True:
+                view = queue_view(ctx, number)
+                if view["state"] == "MERGED":
+                    oid = verify_queue_merge(ctx, number, view, rep)
+                    result, code = f"merged #{number} as {oid[:12]}", 0
+                    break
+                if view["state"] == "OPEN" and view["mergeQueueEntry"] is None:
+                    detail = queue_checks(ctx, group)
+                    rep.add("4", "merge queue", "FAIL", f"#{number} ejected; {detail}")
+                    result, code = f"ejected #{number}; {detail}", 1
+                    break
+                if view["state"] != "OPEN":
+                    raise Refusal(f"#{number} is {view['state']}; no queue verdict is known")
+                group = queue_group(view["mergeQueueEntry"]) or group
+                if time.time() >= deadline:
+                    raise Refusal(f"timed out following #{number}")
+                time.sleep(QUEUE_POLL)
+    except (Exception, KeyboardInterrupt) as e:
+        if asked:
+            result, code = f"queued; verdict not followed ({e})", 3
+            print(f"\nQueued; verdict not followed: {e}")
+        else:
+            result, code = f"refused ({e})", 1
+            print(f"\nREFUSED: {e}")
+    summary(rep, "queue dry run" if dry_run else "queue", ctx.sha, ctx.base, result, "")
+    return code
+
+
 # --------------------------------------------------------------------------------------
 # Step 6: the summary and the log outside the repository
 
@@ -3476,7 +3834,7 @@ def preflight_main(repo: Path, args) -> int:
         if ctx.branch:
             check_kind_label(ctx, args, rep)
         logs = logs_dir(sha)
-        pre = check_commit(ctx, rep, logs, args.test_mode)
+        pre = check_commit(ctx, rep, logs, args.test_mode, train_body=train_input(ctx, args))
         record = make_record(ctx, pre, rep, full=not args.test_mode)
         save_record(record)
         if args.dry_run:
@@ -3603,12 +3961,15 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         if rep.failed():
             raise Refusal("the pull request's body could not be brought up to date")
         rep.heading("4. Merge")
+        if ctx.queue:
+            return queue_main(ctx, number, rep, dry_run, test_mode)
         if dry_run:
             rep.add("4", "gh pr merge", "skip", f"dry run: would merge #{number} "
                     f"({ctx.sha[:12]}) with a merge commit, and delete {ctx.branch}")
             result, code = "passed every gate (dry run, not merged)", 0
         else:
             main_unmoved(ctx)
+            main_health(ctx, rep)
             merging, started = "asked", time.time()
             r = merge(ctx, number, view)
             oid = merge_outcome(ctx, number, rep, r, started)
