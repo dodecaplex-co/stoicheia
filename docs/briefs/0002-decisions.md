@@ -2087,8 +2087,8 @@ findings:
   on an angle in `Prop47.within`, for its overlap self-test, with the same acceptance of
   a complete `step` record and rejection when its note is missing. No check is weakened.
   For the same reason `review/SCHEMA.md` gives the same overlap as its example of the kind
-  `step`, in place of I.2, I.3, I.7 and I.23: the restricted rule retires the first three
-  shortcuts and the axiom retirements make the fourth circular, while I.13's in I.47
+  `step`, in place of I.2, I.3, I.7 and I.23: the restricted rule retires the shortcuts for
+  I.2, I.3 and I.23, and the axiom retirements make I.7's audit circular, while I.13's in I.47
   survives both. Wording only: no field, kind or rule of the schema changes.
   Protected files changed, each named here on a line added relative to origin/main:
   `Certificate/Facts.lean`, `Certificate/FIELDS.md`,
