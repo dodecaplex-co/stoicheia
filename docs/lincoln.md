@@ -131,18 +131,6 @@ sovereignty and the right to enslave another person (Basler, ed.,
 Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
 *Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, p. 44).
 
-Some readers hear Euclid in the Gettysburg Address itself. Its first sentence speaks of a
-nation "dedicated to the proposition that all men are created equal", and its second of a
-war "testing whether that nation, or any nation so conceived and so dedicated, can long
-endure" (Basler, ed., [*Collected Works*](#basler1953collected), vol. 7, pp. 17–23, the
-Address and its five copies). In Euclid a proposition is a claim set out to be demonstrated,
-and Allen C. Guelzo finds the Address's Euclidean character in that word (*Abraham Lincoln:
-Redeemer President*, Grand Rapids, Mich.: W. B. Eerdmans, 1999, pp. 370–72). Other writers
-have found Euclid's pattern in the House Divided speech, the Cooper Institute speech and the
-Second Inaugural (readings and sources found through Glenn W. LaFantasie,
-["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
-*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, p. 44 and note 43).
-
 These passages show Lincoln putting Euclid to use. How far Euclid shaped his other
 speeches is harder to establish: LaFantasie reminds us of the many sources of his
 rhetoric, and finds no evidence that the study improved his performance as a lawyer.
