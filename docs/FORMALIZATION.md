@@ -431,6 +431,11 @@ dependencies.
   - `implemented_by`, `extern` and `unsafe` put code in place of a definition;
   - `#exit` stops Lean reading the file, though a reader and the checks here read on.
 - **Superposition** only in I.4 and I.8.
+- **Placement,** Euclid's application of one figure to another, only in III.24 and the
+  bridge theorems of `Elements/BookIII/Arcs.lean` (brief 0006): outside its own files,
+  `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`, no other Lean under
+  `Elements/` names `placement` or a lemma of the `Placement` namespace, and no entry but
+  III.24 calls on one.
 - **Postulate 5.** No proof before I.29 uses Postulate 5 or a rule declared in
   `Elements.Tacit.Euclidean`; Books II and III come after Book I and may use it throughout.
 - **No later citations:** no proof cites a proposition that does not come before it.
@@ -443,15 +448,16 @@ included. `negative_tests.py` plants a break of these kinds to show each is caug
 axiom declared outside the foundations, in each of `Elements/`, `Staging/` and `Audit/`,
 one of them after another command on its line; an axiom missing from the lock, and one
 weakened; Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4
-and I.8; a later citation, one of them named only in a helper's statement; every
-forbidden command, and an attribute for each ending and prefix the scan knows, in each of
-`Elements/`, `Staging/` and `Audit/`, and `#exit` at the end of each root; a proposition
-imported by Book Zero; a `sorry` in a complete book; and a primitive word no longer
-opaque. Some of the forbidden commands stand after a string, a raw string or a character
-literal holding `/-`, `-/`, `]` or `"`, and one in an interpolated string's hole, and a
-string whose braces Lean could read as code is planted too. Each finding of the source
-scan names its file and line. A complete book's missing figure or mishnah has no planted
-break yet.
+and I.8; placement among the shared steps of an entry other than III.24, and a lemma of
+its namespace named in another file under `Elements/`; a later citation, one of them
+named only in a helper's statement; every forbidden command, and an attribute for each
+ending and prefix the scan knows, in each of `Elements/`, `Staging/` and `Audit/`, and
+`#exit` at the end of each root; a proposition imported by Book Zero; a `sorry` in a
+complete book; and a primitive word no longer opaque. Some of the forbidden commands
+stand after a string, a raw string or a character literal holding `/-`, `-/`, `]` or `"`,
+and one in an interpolated string's hole, and a string whose braces Lean could read as
+code is planted too. Each finding of the source scan names its file and line. A complete
+book's missing figure or mishnah has no planted break yet.
 
 The first two policies hold in `Staging/` (section 6) and in `Audit/` as well: a staged
 file or an audit lemma declares no axiom and uses none of the forbidden commands. Nothing
