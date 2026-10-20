@@ -163,9 +163,10 @@ files working in parallel, the renderers, and an integrator followed by blind re
   with `docs/program.toml`, and the CI workflow, and may hand the lock, the decisions page,
   PROGRAM.md and the CI workflow to a wave's integrator. The integrator
   owns the generated edition: `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`,
-  README.md's rows between the `<!-- scope:… -->` markers and PROGRAM.md's status table
-  between the `<!-- status -->` markers, which `render.py` fills; the rest of README.md has
-  an owner of its own, named in the orders. The integrator also owns the companions list,
+  README.md's rows between the `<!-- scope:… -->` markers, PROGRAM.md's status table
+  between the `<!-- status -->` markers and inline `count:` values in tracked Markdown,
+  which `render.py` fills; the rest of README.md has an owner of its own, named in the
+  orders. The integrator also owns the companions list,
   `Elements/Companions.lean`, which the certificate reads and checks, and adds a
   companion's entry in the commit that moves the companion beside its proposition, so
   that the listing travels with the proof and its record's stamp
@@ -177,8 +178,9 @@ files working in parallel, the renderers, and an integrator followed by blind re
   ([template](templates/proposition.md)). That is far easier to integrate than "something
   about circles".
 - **Generated files.** Contributors may render previews; only the integrator commits the
-  generated edition, regenerated from the integrated sources. This avoids merging separately
-  generated copies of the same pages.
+  generated edition, including inline `count:` values in tracked Markdown, regenerated
+  from the integrated sources. This avoids merging separately generated copies of the
+  same pages.
 - **Commit by name** (`git add` the files you own), never `git add -A` in a tree others use.
   Do not push, open, merge or approve a pull request, or rebase a shared branch: the
   coordinator lands work, as pull requests (section 10, "Landing work: pull requests").
@@ -338,14 +340,22 @@ gate still waits for that job, like every other ([model/README.md](../model/READ
 - **A guard defect gets a regression.** When a certificate or check defect is fixed, add a
   focused test that shows the defect would now be caught (a negative test, an entry in
   `tests/certificate_expectations.json`, or, for the style check's reading of a phrase or
-  of a letter's ink, a case in `tests/test_check_style.py`). Tests that only repeat a
-  trivial prose change are not added.
-- **The style check's cases run before it.** `tests/test_check_style.py` puts the
-  wording rules of `scripts/check_style.py`, and S20's reading of a letter's ink, to short
-  texts and small figures, each with the finding the rule should make, and needs no Lean.
+  of a figure, a case in `tests/test_check_style.py`). Tests that only repeat a trivial
+  prose change are not added.
+- **The style check's cases run before it.** `tests/test_check_style.py` puts the readings
+  of `scripts/check_style.py` that [STYLE.md](STYLE.md), section 8, names to short texts
+  and small figures, including S20's ink and S26's clearance and repeated letters, each
+  with the finding the rule should make, and needs no Lean.
   It runs just before the script, so a rule that reads a case wrongly stops the checks
   before the script's findings are read. The script does not run them itself: whoever
   changes it runs the file too.
+- **Counts in prose.** A count a script knows exactly goes between count markers and is
+  rendered; the surrounding prose stays human ([STYLE](STYLE.md), section 4).
+  `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`
+  tests the counts and markers without Lean. Count markers do not overlap README.md's
+  generated scope regions or PROGRAM.md's generated status region. `negative_tests.py` runs
+  the tests before planting; its `--counts-only` option runs these plants and the file-only
+  regressions without a build.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that
   branch; if integration changes the mathematics, the dependencies or a public description,

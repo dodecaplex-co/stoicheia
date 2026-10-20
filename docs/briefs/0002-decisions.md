@@ -1826,6 +1826,233 @@ findings:
 
 ## 20 October 2026
 
+- **The Jev scorer checks confidence in both askings
+  ([#36](https://github.com/jackChallis/stoicheia/issues/36)).** Each Jev choice is asked
+  twice, the second time with its options reversed, unless the run is made with
+  `--no-order-check`; a noul is asked once. `score` in
+  [`scripts/audit/jev.py`](../../scripts/audit/jev.py) sent an answer to adjudication when
+  its first asking had a confidence under the threshold or none, and read the reversed
+  asking only for a changed choice; it now applies the same confidence rule to the reversed
+  asking too, and says which asking fell short. A line whose reversed asking is not an answer
+  at all stops `score` with a failure, as it stopped it with an error before. The
+  threshold stays 0.5 and exclusive. The self-test gains cases for a low, a missing and a
+  null confidence in the reversed asking, a refused reversed asking that is not an answer
+  (with and without a bar), a single asking, and the boundary. More answers go to adjudication, none fewer. The audit of Books
+  I and II found this while scoring, and its report, on `text/jev-audit-I-II`, follows this
+  change, as a check lands before the content it judges. The protected file this changes is
+  `scripts/audit/jev.py`. Neither CI nor `safe_push` runs its self-test: whoever changes the
+  client runs `python3 -I scripts/audit/jev.py self-test`.
+
+- **The source scan reads the formal model too (#121).** On 19 October 2026 the scan in
+  `scripts/check_fidelity.py` is extended to every `.lean` file under `model/`, without
+  entering the package's own `model/.lake`, where Mathlib and the build live; a `.lake`
+  folder deeper in the model is read like any other, since git tracks it and Lean can
+  build it. Symbolic links to files or directories in every scanned tree and its root
+  file are refused by their own paths and never followed, a link at `model/.lake` among
+  them: the scan skips only what lies inside a real `model/.lake` directory, links there
+  included, and never the link that stands in its place. Mathlib imports are allowed
+  there, but the forbidden commands and attributes stay the same, and
+  an `axiom` is refused anywhere in the model. Only `model/Check.lean` and `model/Check/`
+  may use `run_cmd` first on its line followed by `Check.Generator.<ident>` or
+  `(Check.Generator.<ident>`: running the generator is those files' job. The named
+  allowance exempts that command alone, so its arguments and any further command are
+  still scanned. The one string in the model the scan could not read for certain, the
+  implicit binder's in `model/Check/Generator.lean`, line 600, became an interpolated
+  string with an escaped opening brace and exactly the same output in a pull request of
+  its own (`tooling/model-generator-brace`), landed before this one, since a check is
+  never changed in the same pull request as the code it checks.
+  `scripts/negative_tests.py` plants axioms, forbidden commands and attributes in the model's Model and Check files, tests
+  the allowance's boundary and the `.lake` boundary both ways, refuses a link named
+  `.lake` to a directory, a file or nothing in `model/`, `model/Model/` and
+  `model/Check/`, and checks that the unplanted tree passes; it copies only `facts.json`,
+  never `model/.lake`. These are the two protected files changed:
+  `scripts/check_fidelity.py` and `scripts/negative_tests.py`.
+  [FORMALIZATION](../FORMALIZATION.md), section 7, records the scope and the tests.
+  Nothing is loosened in `Elements/`, `Staging/` or `Audit/`; Book Zero's import rule
+  and the placement policy still apply only in `Elements/`. The model's independent
+  kernel replay, the other half of #121, is still open.
+- **The acceptance checklist in CI, held to what main passes
+  ([#35](https://github.com/jackChallis/stoicheia/issues/35)).** A new job, `acceptance`, in
+  [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), runs
+  [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py) on every pull request,
+  with the whole history for the records' commits, and keeps its reports as an artifact of
+  the run. Until the consolidation release it fails only for an item that already passes on
+  main and does not pass on the pull request: a pass may not turn into a fail, while the
+  failures main still has (742 at #111) are reported and hold nothing back. Main is checked
+  beside the pull request, in a worktree of the merge commit's first parent, with the pull
+  request's own checks copied in (`scripts/`, `tests/`, `Certificate/`, `review/SCHEMA.md`
+  and `review/terms.toml`), keeping main's own values pinned to its content. The new
+  `scripts/copy_acceptance_checks.sh` is the helper that CI and the behavioural tests share
+  to copy the pull request's checker code while preserving those pinned values, so that one
+  copy of the checks judges both, and a check made stricter, which lands on its own before
+  the content it judges, holds nothing back. Main's
+  run leaves out the kernel replay and the model tests (E1 and E4), which the `check` and
+  `model` jobs hold on every pull request. The script gains two options: `--json`, which
+  writes every item's verdict beside the report, and `--compare MAIN PR`, which runs no
+  check and exits 1 for each item that passes in MAIN and does not pass in PR (a fail, a
+  check not run, or an item missing), and 2 for a file `--json` did not write, or for two
+  files written by different copies of the script. A staging item, P10 or E6, that turns
+  into a fail is listed and not held: both read `Staging/` alone, and a statement that a
+  stage adds or changes is staged before its proof ([WORKFLOW](../WORKFLOW.md), section 2),
+  so they turn into a fail exactly when a pull request stages one, as I.20's degenerate
+  case was staged after I.20 was proved; only the full gate holds them. The lane's
+  independent review found that the ratchet would have held such a pull request back, and
+  that a misspelt gate turned the job off; we thank it for both.
+  [`tests/test_check_acceptance.py`](../../tests/test_check_acceptance.py) (new) puts the
+  comparison to small files of verdicts, and the job runs it before the checker. The full
+  gate is one line of the workflow, `ACCEPTANCE_GATE: ratchet`, which the consolidation
+  release's pull request sets to `full`: from then on the job skips main, and any failure
+  fails it, as step 9 of [WORKFLOW](../WORKFLOW.md), section 10, asks; any other value
+  fails the job at once. Nothing is loosened:
+  no other job, check, test or expectation changes, and without the new options the
+  script's verdicts, report and exit status are as before. The job is not a required check:
+  the ruleset on main and `REQUIRED_CHECKS` in
+  [`scripts/safe_push.py`](../../scripts/safe_push.py), unchanged, still name `check`,
+  `model` and `negative`, and making `acceptance` one is the owner's call; even so,
+  `git safe-push --merge` refuses a pull request while any of its checks fails, is cancelled
+  or is still running, but a skipped or missing `acceptance` does not hold it when the
+  three required jobs pass and no other check fails, is cancelled or is still running.
+  The pre-flight's `CHECKS` are unchanged too, since the job builds main beside the
+  pull request: like `formal-model`, it is CI's alone. The follow-up pull request
+  `docs/acceptance-ci-page` will add the new section "In CI" to
+  [ACCEPTANCE](../ACCEPTANCE.md) and update [WORKFLOW](../WORKFLOW.md), sections 8 and 10;
+  those reader-facing documentation changes are deliberately deferred from this one.
+  The review's correction changes `.github/workflows/ci.yml`,
+  `scripts/copy_acceptance_checks.sh` and `tests/test_check_acceptance.py`: main keeps its
+  axiom lock, certificate expectations, model hash, law names and account of the laws
+  (WORKFLOW, section 10, step 4), and a regression runs the shared helper and the certificate
+  checks to show that an updated definition or expected count cannot hide a pull request's
+  E2 failure.
+
+- **I.45 and II.14 are allowed as restricted while the outline proof is to come (#116).**
+  On 20 October 2026 the owner approved ship G's decisions for #116, including:
+  "**Interim disclosure.** Approve the restricted-scope entries in section 7 and keep
+  `figure-with-dissection` until all bridges are proved and reviewed."
+  This supersedes the 18 October decision to call both full under the convention of a
+  figure supplied with a checked finite division. The figure is given with its checked
+  division into triangles, and its area is relative to that division; existence of a
+  division from the outline and independence of area from the division chosen remain to
+  be proved under #116.
+  `scripts/check_acceptance.py` adds I.45 and II.14 to `ALLOWED_LIMITS`, each as
+  `("restricted", "figure-with-dissection")`, and [ACCEPTANCE's table](../ACCEPTANCE.md#the-limitations-allowed)
+  gains the same two rows. They go when the outline proof is proved and reviewed.
+  The record change follows on a text branch of its own, stacked on this tooling change.
+  The protected files changed are `scripts/check_acceptance.py`, whose only change is
+  those entries and their comment, and `tests/test_acceptance_limits.py` (new), which checks
+  the list against the table and exercises P3 with and without the required tag. CI does
+  not run it yet; whoever changes the limitations runs it.
+
+- **Exact counts in prose are rendered and checked.** The stale-content audit found the
+  vocabulary still given as 61 where the lock held 91, and companions as nineteen across
+  seven propositions where the list held twenty across eight. The owner asked for a rule
+  that catches such drift. Inline HTML comments, `count:name` and `/count`, delimit just
+  the number; `:word` spells it out and `:Word` capitalises its first letter. The syntax,
+  shown with its opening brackets escaped in [STYLE](../STYLE.md), section 4, is distinct
+  from the existing scope and status regions and leaves no visible delimiters in Markdown.
+  Only counts computed exactly from files are generated: the lock's axioms, tacit rules
+  and postulates, using the renderer's existing classification, the axioms other than
+  Postulate 5, and its vocabulary; the
+  listed companions and the propositions they widen; each book's records and those at
+  stage `full`; and the acceptance report's failing items and propositions passing every
+  own item, read from its generated summary at that report's revision. Surrounding prose
+  stays human. No Lean run is needed to compute or check a count.
+  `render.py` fills markers in tracked Markdown before copying introductions and other
+  prose into book pages, where it removes the count comments. Whole renderer outputs are
+  excluded. Markers that overlap README.md's generated scope regions or PROGRAM.md's
+  generated status region, including their delimiters, are refused before rendering,
+  since those regions are replaced. Markers are refused in this decisions log and throughout `docs/reports/`,
+  except the living `gaps-book-*.md` and `overlaps.md` catalogues, so dated evidence stays
+  at its revision. Unknown, malformed, nested and unclosed markers fail with file and
+  line. `check_fidelity.py`, already run before rendering, also refuses a stale value,
+  giving the name, stated and computed values, and the command to regenerate.
+  Small fixtures test each count and the marker boundaries; negative tests plant wrong,
+  unknown and correct counts in a source copy under `/tmp`, without a build. Their
+  `--counts-only` option runs those plants and the file-only regressions; the default
+  suite still runs every plant. This is the tooling branch only. A later content branch
+  adds markers to the prose. The protected files changed are
+  `scripts/generated_counts.py`, `scripts/render.py`, `scripts/check_fidelity.py`,
+  `scripts/negative_tests.py` and `tests/test_generated_counts.py`.
+- **Count discovery and rendering refuse unsafe inputs.** Following the code and
+  security reviews, Git's resolved work tree must match the supplied root, including
+  copies using `GIT_DIR` and `GIT_WORK_TREE`. Missing or mismatched metadata fails with
+  a diagnostic. Symlinks in every component below the repository root, and paths resolving
+  outside the root, are refused before an optional input is tested for presence, or a path
+  is read or written; a symlink supplied as the root itself remains a supported alias.
+  Whole renderer outputs are now scanned and any count marker there is refused; this
+  supersedes their exclusion in the entry above.
+  Review counts use tracked records alone and check proposition numbers. Regressions
+  cover these boundaries and run rendering from a stale marked introduction through
+  to its updated source and copied page without count comments. The protected paths
+  changed by this branch are `scripts/generated_counts.py`, `scripts/render.py`,
+  `scripts/check_fidelity.py`, `scripts/negative_tests.py` and
+  `tests/test_generated_counts.py`.
+
+- **A check for merge-conflict markers.** Pull request #138 left a diff3 base marker and a
+  duplicated, outdated fragment on this page, and nothing caught it; the owner asked for a
+  rule to catch such residue. S23 of `scripts/check_style.py` ([STYLE](../STYLE.md),
+  section 8) reads every tracked text file, fenced code and comments included, and refuses
+  an opening, base or closing marker (exactly seven characters, then a space or the line's
+  end), and a seven-equals middle between markers or where it cannot underline a Markdown
+  paragraph, since a resolver can delete the outer markers and leave a middle, as #138
+  left a base. Setext headings stay allowed, including paragraphs of several lines.
+  The check tracks comments, fences, HTML blocks, GFM tables, completed headings,
+  indented code and link reference definitions; a fence inside a comment or HTML block
+  opens no block. It skips symlinks,
+  and traversal errors name their path and stop the check. The walk without Git serves
+  S23 alone; S12 loads its strictly Git-backed index only when needed. The updated S23
+  finds no marker in origin/main's 1,100 text files at `d95125f0`.
+  The style check is its home because it
+  already holds the repository's file-and-line rules and runs in CI and the pre-flight
+  with its cases; `check_fidelity.py` judges the Lean, Heath's text and the certificate,
+  and the Jev audit is an independent model's reading, not a mechanical check. Planted
+  markers in `scripts/negative_tests.py` (item 16) and cases in `tests/test_check_style.py`
+  show each kind refused, the block boundaries held, traversal errors raised, symlinks
+  skipped and valid setext headings allowed. By keep_apart (WORKFLOW, section 10),
+  the rule lands apart from the content fix, `text/decisions-marker` (#140), which removed
+  the marker first; on main since #140 it finds none. The protected files changed are `scripts/check_style.py`,
+  `scripts/negative_tests.py` and `tests/test_check_style.py`.
+- **S23 errs toward refusal for possible reference definitions.** A lone Markdown middle
+  is allowed only when every line of the preceding block is ordinary paragraph text;
+  any line beginning with up to three spaces, a bracketed label (escaped brackets
+  included) and a colon disqualifies the block until its next boundary, as does a block
+  quote or list item, since an underline is never a lazy continuation. Within a
+  paragraph, as in GFM, only a list item that can interrupt it counts: a bullet, or an
+  ordered item numbered 1, with some text. `2. item`, `1.` or a bare `*` goes on with
+  the paragraph, which a seven-equals line may underline; at a block's start any list
+  item disqualifies the block.
+  S23 examines only middles of exactly seven equals and errs toward refusal in doubtful
+  contexts, so an author whose heading is refused can use eight, since other lengths are
+  never examined as middles.
+  This deliberately refuses `[label]: destination extra words` with seven equals even
+  though it is paragraph text. `scripts/check_style.py` retains the possible definition
+  across destination and title continuations. `tests/test_check_style.py` covers the
+  three reported escapes, the conservative refusal, the eight-equals alternative,
+  list markers that cannot interrupt a paragraph and ordinary headings across block
+  boundaries; `scripts/negative_tests.py` adds a two-line
+  definition to item 16. These are the three protected paths changed; [STYLE](../STYLE.md)
+  states the rule. No mathematical statement or review record changes.
+
+- **The stage test reads the program's words.**
+  `test_renderer_validation_loosened_with_content_is_kept_apart` in
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py), a protected file,
+  quoted Book I's stage words from [`docs/program.toml`](../program.toml) to plant a
+  stage [`render.py`](../../scripts/render.py) does not know. It now reads the first
+  stage line from the file, so that the program's words can change without changing
+  this test. It plants the same fault and expects the same refusal; nothing it checks
+  is loosened. This test change lands on its own, in train H10, before the stage words
+  change in train D4 ([WORKFLOW](../WORKFLOW.md), section 10: a check lands first). The
+  protected file changed is `scripts/test_safe_push.py`.
+
+- **S12 reads "Revision" as "revision".** The acceptance report's "Revision" header
+  sent the commit identifier `d95125f0` to Lean as a name.
+  [scripts/check_style.py](../../scripts/check_style.py) now reads "Revision" as
+  "revision"; all other context words keep their case-sensitive matching. The
+  commit-shape test is unchanged and nothing else is excused.
+  [tests/test_check_style.py](../../tests/test_check_style.py) covers that
+  header, the same hex word without revision context and a non-commit word beside
+  "Revision", and keeps the unknown Lean name in sentences beginning "Read", "Reviewed"
+  and "Verification" subject to Lean checking. These are the two protected files changed.
+
 - **The modern figure's checks precede its place on the page.** The owner asked for
   figures for the modern mathematics, drawn to match Euclid's figure and carrying the
   same letters (#49). S24 checks `figures/<book>/NN-modern.svg`: Euclid's figure's canvas
@@ -1841,9 +2068,10 @@ findings:
   code supplies no paragraph, multiline inline comments preserve its boundaries, and
   code spans across lines supply no names. Its regression cases stay with these checks.
   The rules are S24 and S25, formerly S23 and S24 on this branch; S22 remains letters in
-  backticks, S23 is reserved for `tooling/no-conflict-markers`, and S26 for
-  `tooling/letter-check` (#68). No contiguous range including the reserved rules is
-  claimed. Acceptance assigns both modern rules to P8 and each modern figure's findings
+  backticks, S23 checks merge-conflict markers (`tooling/no-conflict-markers`), and S26
+  checks one letter, one point (`tooling/letter-check`, #68). The hard rules now run from
+  S1 to S26.
+  Acceptance assigns both modern rules to P8 and each modern figure's findings
   to its proposition; S22 remains a text rule.
   These checks read the source paragraph and SVGs, not the generated page, and apply to
   the thirty modern figures already on main. Train H10 carries the checks; the page
@@ -1854,3 +2082,73 @@ findings:
   [scripts/check_acceptance.py](../../scripts/check_acceptance.py) and
   [tests/test_check_style.py](../../tests/test_check_style.py).
   [STYLE](../STYLE.md), sections 2, 7 and 8, describes the figure and its rules.
+  The reviews' fixes close S24 and S25's input: the modern figure may use only the elements,
+  attributes and spellings the modern figures on main use, so no CSS is read; a malformed
+  figure is reported on its file and checking goes on; and a modern paragraph with inline
+  HTML or reference-link syntax is refused, its indentation counted in columns.
+  After merge `ce98e710`, `scripts/check_style.py` restores `93d61b6c`'s table reading
+  as `modern_table_columns` and `modern_table_cell_ranges`, keeping S23's helpers
+  unchanged, with the S24 and S25 refusals covered in `tests/test_check_style.py`.
+
+- **One letter, one point: S26.** Argon's second review of the book-III release found seven
+  letters of Euclid's figures crossed or all but touched by strokes: III.17's D, III.16's G,
+  III.8's K and L, III.33's F in two of its three figures, and I.2's E. We thank Argon
+  warmly for so careful an audit
+  ([#68](https://github.com/jackChallis/stoicheia/issues/68)). The issue read the seven as
+  letters naming two points; what Argon measured was strokes through letters, and the rule
+  holds a figure to both. [`scripts/check_style.py`](../../scripts/check_style.py) gains a
+  rule, S26, which fails a figure, Euclid's or at a glance, that draws a letter twice (save
+  once in each of Heath's figures side by side, in III.25, III.33, III.35 and III.36, split
+  at straight cuts the script gives), or that lets a stroke, a dot or the canvas's edge come
+  within 2 of a letter. A letter is measured as Georgia draws its capital, upright or italic
+  as the figure sets it, by the convex hull of its outline's points, which the script
+  carries as numbers (`GLYPHS_UPRIGHT`, `GLYPHS_ITALIC`), read once from the fonts, so that
+  it still needs only Python's standard library; `path_rings` now also says which subpaths a
+  Z closes, and what S20 reads is unchanged.
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains cases of S26,
+  among them one or more for each of seven faults that two reviews of the rule found: a
+  stroke's width taken at a transform's mean stretch, a rect's rounded corners read as
+  square, a circle of no radius read as drawn, an anchored label with a prime placed by its
+  capital alone, a letter drawn twice in one of the figures side by side counted as once in
+  each, a corner's radius spelled 5e1 read as none, and a line of no length with butt caps
+  read as drawn; and, from the independent review, cases for what none of them had pinned:
+  an ellipse, a polyline, a dot or a stroke wholly within a letter, the canvas's right, top
+  and foot, a letter's size and transform, and a prime; and, from a later review, three on
+  what a line through a letter is called: two dashed by itself or by its group, called a
+  dashed line, and one whose dasharray is none, called a line. A corner's radius is now
+  read in one pass, so reading a malformed radius takes time linear in its length.
+  Later reviews found, one after another, SVG spellings that a renderer reads one way and
+  S26 another; S26 now reads only the elements, attributes and spellings that the figures
+  on main use and refuses any other, so no CSS is read, and it measures circles, ellipses,
+  arcs, rounded corners and curves with a conservative allowance for their chords. The
+  final review's fixes in `scripts/check_style.py`, with regressions in
+  `tests/test_check_style.py`, refuse effective strokes and bold weights on point labels
+  (main's bold numbers remain allowed), retain significant Unicode spaces for refusal, and
+  require both ellipse radii and an effective `font-family` on point labels of `Georgia`,
+  `Georgia, serif` or `Georgia, 'Times New Roman', serif`, inherited or explicit.
+  Numeric inputs are limited to magnitude 10,000, against
+  main's largest input of 440 at `209d71fd`; cubic subdivision has a depth limit, and
+  non-finite intermediate results fail the figure; an iterative gate limits nesting to
+  16 levels below the root before recursive helpers run. Decoder errors are caught at the
+  parser call. Both entry points have regressions requiring the next figure's finding after an
+  arithmetic or encoding failure. Subdivision is bounded for each cubic; these limits do
+  not bound the input's length or its number of elements or path commands.
+  Mitre joins now use original segments' endpoint tangents, with no joins between a
+  curve's flattened chords.
+  Both figure entry points have cases requiring an S26 finding. And
+  [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
+  files its findings under P8, the figures. The matching words in
+  [ACCEPTANCE](../ACCEPTANCE.md) follow in the content train; this branch keeps that
+  page exactly as it is on origin/main.
+  [STYLE](../STYLE.md), sections 7 and 8, gives the rule, and the reviewer's checklist, item
+  16, asks that a letter naming one of Heath's points name no straight line or circle in the
+  Lean. A rule is added and nothing is weakened. The earlier figure work for #68 corrects
+  fifteen labels, III.16's G among them, through `text/letter-collisions`. G's correction
+  is in `a4cb748c`, brought into train D3 by `c2424533`.
+
+  This check change lands in train H10 before the content it judges, with the checklist's
+  words following in the content train, as H9b followed H8b for style everywhere. Its number
+  is S26: S22 is "letters in backticks, where they are plain"; S23 checks merge-conflict
+  markers, and S24 and S25 check the modern figure. All four rules are included in train
+  H10. Main's checks, cases, REACH_PENDING and
+  reports, including D15 for italic figures and D16 for the pending reach, stay whole.

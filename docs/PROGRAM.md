@@ -20,9 +20,12 @@ questions at once:
 A book meets the standard when its acceptance checklist (`ACCEPTANCE.md`)
 passes with no failures, an independent audit by a model family that wrote none of it
 agrees, and a cold outside reading scores it about 95. A few deliberate limitations are
-allowed when they are stated plainly where they occur: in Book III, the mixed angles of
-III.16 and III.31, and the places where a System E rule already contains a proposition
-(III.2).
+allowed when they are stated plainly where they occur. For I.45 and II.14, the figure is
+supplied with its checked division into triangles and area is relative to that division; a
+proof of a division from the outline, and independence of area from the division chosen,
+remain pending under [#116](https://github.com/jackChallis/stoicheia/issues/116). In Book
+III, the limitations are the mixed angles of III.16 and III.31, and the places where a
+System E rule already contains a proposition (III.2).
 
 ## 2. How a book is made, in parallel
 
@@ -54,8 +57,8 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 
 | Book | Propositions | Stage | Records | Acceptance | Outside score | Release |
 |---|---|---|---|---|---|---|
-| I | 48 of 48 proved, and I.15's porism and nine companion theorems | released (next: I.40 and I.45 in full generality) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
-| II | 14 of 14 proved, and eight companion theorems | released (next: II.1 and II.14 in full generality) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
+| I | 48 of 48 proved, and I.15's porism and nine companion theorems | released (next: I.45 outline coverage and independence of division) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
+| II | 14 of 14 proved, and eight companion theorems | released (next: II.14 outline coverage and independence of division) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
 | III | 37 of 37 proved, and the porisms of III.1 and III.16 and three companion theorems | released (next: arcs and segments) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
 | IV–XIII | not begun | — | — | — | — | — |
 
@@ -78,7 +81,7 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 1 | Precision: certificate, review records, wording, layout, evidence, overlaps, Book III's reading | done, 17 Oct |
 | 1b | Standards: AGENTS.md, STYLE, FORMALIZATION, WORKFLOW, templates, `check_style.py` | done, 17 Oct |
 | — | Release of Book III | [done, 17 Oct](https://github.com/jackChallis/stoicheia/releases/tag/book-III); Book I and II notes corrected |
-| 2 | I.40, I.45, II.1, II.14 in full generality | done, 19 Oct: proved in Staging ([#88]), and in the edition with their records ([#19], [#102](https://github.com/jackChallis/stoicheia/pull/102)) |
+| 2 | I.40, I.45, II.1, II.14 in full generality | done, 19 Oct: proved in Staging ([#88]), and in the edition with their records ([#19], [#102](https://github.com/jackChallis/stoicheia/pull/102)); I.45 and II.14 restricted from 20 Oct, for figures supplied with a checked division, until the proof from the outline ([#116](https://github.com/jackChallis/stoicheia/issues/116)) |
 | 3 | Arcs and segments; III.24 | proved in Staging ([#89]); the move into `Elements/` next ([#25]) |
 | 4 | III.14, III.15, III.25 | proved in Staging ([#90]); the move into `Elements/` next ([#28]) |
 | 5 | Consolidation review of all 99 | |
@@ -132,11 +135,12 @@ own, the figure letters as three:
 What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), section 10,
 "Landing work: pull requests".
 
-- **The scope of the I.45 and II.14 records** is decided: `full`, by the checked fan and
-  any supplied division (the owner, 18 October; brief 0006, decision 1 as revised, [#13]).
+- **The current scope decision for I.45 and II.14** is the owner's interim disclosure of
+  20 October under #116; the [decision entry](briefs/0002-decisions.md#20-october-2026)
+  supersedes the earlier full-scope call, and both records say so.
 - **Stage 2 is in the edition** (#19): I.40, I.45, II.1 and II.14 with their companions
-  beside them, certified, their records full and re-stamped, the words in the foundations
-  with the lock, and the gap entries for I.45's and II.14's tacit step.
+  beside them, certified, their records at the stage `full` and re-stamped, the words in
+  the foundations with the lock, and the gap entries for I.45's and II.14's tacit step.
 - **Stage 3's proofs** are done in `Staging/Stage3`, every statement of brief 0006's stage 3
   proved with no new axiom: placement in all its cases, with superposition not among its
   direct axioms, III.23 point by point, III.24 restated to conclude congruence by Euclid's
@@ -146,8 +150,6 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
   clauses for every straight line, the foot of the perpendicular, and III.25's construction
   core, which never sees a circle or a centre, with its correctness (#26, #27). Next is the
   move into `Elements/` with the records (#28).
-- **`check_fidelity.py`'s forbidden-command scan** reaches neither `Staging/` nor
-  `Audit/`, and does not list `#eval`: a check change of its own.
 - **Whether `check_style.py`'s self-check cases belong in `tests/`** is left for a pull
   request of its own ([#3]).
 - **The Lean notes of I.6, I.14 and I.24** still make Lean the subject: a later pass, with
