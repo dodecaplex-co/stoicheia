@@ -2614,11 +2614,12 @@ class ProtectedPaths(Edge):
         # The first book's stage line is read from the file, so that the program's own
         # words can change without this test.
         path, program = "scripts/render.py", "docs/program.toml"
-        stage = re.search(r'(?m)^stage = "[^"\n]*"$', self.text(program))
+        text = self.text(program)
+        stage = re.search(r'(?m)^stage = "[^"\n]*"$', text)
         self.assertIsNotNone(stage, f"{program}: no stage line")
         changes = {path: self.replaced(path, 'PROGRAM_STAGES = ("brief",',
                                        'PROGRAM_STAGES = ("anything", "brief",'),
-                   program: self.text(program).replace(stage[0], 'stage = "anything"', 1)}
+                   program: text[:stage.start()] + 'stage = "anything"' + text[stage.end():]}
         changes.update(self.decision(f"`{path}` is changed for the test."))
         self.regenerated_commit("Loosen render.py's check of program.toml, and use it", changes)
         out = self.assertRefused(self.safe_push("--dry-run"), "check change kept apart",
