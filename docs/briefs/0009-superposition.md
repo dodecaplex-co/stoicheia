@@ -2,7 +2,7 @@
 
 *Status, 20 October 2026 (main at d95125f0):*
 
-Prototype approval and its [`Staging.lean` entry](../../Staging.lean) landed in #102; its six files remain in [`Staging/Superposition/`](../../Staging/Superposition/).
+Prototype approval landed in #102, and its [`Staging.lean` entry](../../Staging.lean) followed in #108; its six files remain in [`Staging/Superposition/`](../../Staging/Superposition/).
 The [pinned model-law names](../../tests/model/laws.toml) are in place (#40, landed in #103), and the [forbidden-command scan](../../scripts/check_fidelity.py) covers staging and audit files (#39).
 The interim disclosures are in the [foundations](../../Elements/Foundations/Tacit/Superposition.lean), [overlap catalogue](../reports/overlaps.md#i23), [I.4](../../mishnah/I/04.md) and [I.8](../../mishnah/I/08.md) (#104, #134).
 The [formal model](../../model/Model/Euclidean/Superposition.lean) proves the current placement axiom (#109); the restricted rule still needs its own translation and model justification.
