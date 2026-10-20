@@ -1869,8 +1869,10 @@ findings:
   or is still running, but a skipped or missing `acceptance` does not hold it when the
   three required jobs pass and no other check fails, is cancelled or is still running.
   The pre-flight's `CHECKS` are unchanged too, since the job builds main beside the
-  pull request: like `formal-model`, it is CI's alone. [ACCEPTANCE](../ACCEPTANCE.md), in a
-  new section, "In CI", and [WORKFLOW](../WORKFLOW.md), sections 8 and 10, say so.
+  pull request: like `formal-model`, it is CI's alone. The follow-up pull request
+  `docs/acceptance-ci-page` will add the new section "In CI" to
+  [ACCEPTANCE](../ACCEPTANCE.md) and update [WORKFLOW](../WORKFLOW.md), sections 8 and 10;
+  those reader-facing documentation changes are deliberately deferred from this one.
   The review's correction changes `.github/workflows/ci.yml`,
   `scripts/copy_acceptance_checks.sh` and `tests/test_check_acceptance.py`: main keeps its
   axiom lock, certificate expectations, model hash, law names and account of the laws

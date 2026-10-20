@@ -154,7 +154,8 @@ jobs:
         run: lake build
 
   acceptance:
-    # The acceptance checklist, docs/ACCEPTANCE.md, on every pull request ("In CI" there):
+    # The acceptance checklist, docs/ACCEPTANCE.md, on every pull request, as this
+    # `acceptance` job and docs/briefs/0002-decisions.md describe:
     # scripts/check_acceptance.py checks the pull request and keeps its report as an
     # artifact. Until the consolidation release the job fails only when an item that
     # passes on main does not pass here: a pass may not turn into a fail (save P10 and E6,

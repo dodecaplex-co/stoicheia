@@ -6,8 +6,8 @@
 CI's `acceptance` job holds a pull request to every item that passes on main: it runs the
 checker on main and on the pull request, each writing its verdicts with --json, and then
 `--compare MAIN PR`, which fails when an item that passes on main does not pass on the
-pull request (docs/ACCEPTANCE.md, "In CI"). These cases put that comparison to small
-files of verdicts, each with the outcome it should give:
+pull request. The `acceptance` job in `.github/workflows/ci.yml` runs that comparison;
+these cases put it to small files of verdicts, each with the outcome it should give:
 
 * a pass that turns into a fail, into "not run" (a check not run is not a pass), or that
   the pull request's verdicts lack, is held; a fail that stays a fail, or turns into a

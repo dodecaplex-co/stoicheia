@@ -43,7 +43,7 @@ one does not, each such item listed with why; and 2 when either file is not this
 verdicts, or the two were written by different copies of it, which would not judge alike.
 P10 and E6 turning into a fail are listed and not held (STAGING_ITEMS): they read Staging/
 alone, and staging a statement before its proof is the workflow's own way in. CI's
-`acceptance` job runs it on every pull request (docs/ACCEPTANCE.md, "In CI").
+`acceptance` job in `.github/workflows/ci.yml` runs it on every pull request.
 """
 
 from __future__ import annotations
@@ -1008,7 +1008,7 @@ def report(output: Path, facts: dict, quick: bool, more: tuple = ()) -> str:
 
 # ---------------------------------------------------------------------------------------
 # The verdicts as JSON (--json), and the comparison of two runs (--compare), which CI's
-# `acceptance` job makes between main and a pull request (docs/ACCEPTANCE.md, "In CI").
+# `acceptance` job in .github/workflows/ci.yml makes between main and a pull request.
 
 VERDICTS_FORMAT = 1
 VERDICT_WORDS = ("pass", "fail", "not run")
