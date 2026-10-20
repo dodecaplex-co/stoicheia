@@ -2091,6 +2091,9 @@ findings:
   companion lookup as `modern_drawn_letters`, with `modern_text_of` preserving internal
   newlines, keeping S23, S26 and the idea-figure checks' helpers unchanged, with the S24
   and S25 refusals covered in `tests/test_check_style.py`.
+  The fixes through `12667af1` retain these separate readers while tightening modern
+  SVG input and modern-paragraph markup checks; S23, S26 and the idea-figure checks
+  keep their existing readings.
 
 - **One letter, one point: S26.** Argon's second review of the book-III release found seven
   letters of Euclid's figures crossed or all but touched by strokes: III.17's D, III.16's G,
