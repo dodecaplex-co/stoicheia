@@ -60,6 +60,9 @@ records current; CI runs it on every push.
     `check_kernel.py`, fails naming the file and its invalid header. The original
     bytes are restored, a rebuild is required, and on success the whole environment
     is replayed.
+16. Without a build, in a disposable source copy: a stale inline vocabulary count
+    and an unknown count name are refused by check_fidelity.py, and a correct count
+    passes. Run just these plants and the file-only regressions with --counts-only.
 
 These faults exercise the style and link checks, page freshness, an audit pin and
 leanchecker's loading of compiled files as well as the earlier checks. They do not
@@ -80,15 +83,20 @@ an opportunity for `finally` to finish; a forced process kill cannot provide it.
 Standard library only; Python 3.11 or later, for the review records.
 """
 
+import argparse
 import json
+import os
+import shutil
 import subprocess
 import sys
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 from time import perf_counter
 
 import check_fidelity
 import check_kernel
+import generated_counts
 import heath
 
 ROOT = heath.ROOT
@@ -219,6 +227,11 @@ def generated_files() -> set[Path]:
         if path.is_dir():
             paths.update(p for p in path.rglob("*") if p.is_file())
         elif path.exists():
+            paths.add(path)
+    for rel in generated_counts.tracked_markdown(ROOT):
+        path = ROOT / rel
+        if (not generated_counts.whole_output(rel) and not generated_counts.historical(rel)
+                and generated_counts.START.search(path.read_text())):
             paths.add(path)
     return paths
 
@@ -828,16 +841,80 @@ def planted_assumptions() -> None:
             planted_outputs.restore()
 
 
-def main() -> int:
+@contextmanager
+def count_source_copy():
+    """Copy tracked sources plus current Python tools under /tmp, with no build or .git.
+
+    Git reads the original index through GIT_DIR; GIT_WORK_TREE points only at the
+    copy. No Git command writes. Include new Python sources before they are committed.
+    """
+    tracked = run("git", "ls-files", "-z")
+    tracked.check_returncode()
+    git_dir = run("git", "rev-parse", "--absolute-git-dir")
+    git_dir.check_returncode()
+    paths = {Path(p) for p in tracked.stdout.split("\0") if p}
+    paths.update(p.relative_to(ROOT) for p in (ROOT / "scripts").glob("*.py"))
+    with tempfile.TemporaryDirectory(prefix="stoicheia-counts-", dir="/tmp") as tmp:
+        copy = Path(tmp)
+        for rel in paths:
+            target = copy / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(ROOT / rel, target)
+        yield copy, {**os.environ, "GIT_DIR": git_dir.stdout.strip(),
+                     "GIT_WORK_TREE": str(copy)}
+
+
+def count_markers() -> None:
+    """Plant wrong, unknown and correct count markers in a copy, without Lean."""
+    with count_source_copy() as (copy, env):
+        path = copy / "docs/PROGRAM.md"
+        original = path.read_text()
+        line = original.count("\n") + 2
+        computed = generated_counts.vocabulary(copy)
+        for name, stated in (("vocabulary", str(computed + 1)),
+                             ("unknown-count", "0"), ("vocabulary", str(computed))):
+            path.write_text(original + f"\nVocabulary: <!-- count:{name} -->"
+                            f"{stated}<!-- /count -->.\n")
+            result = subprocess.run([sys.executable, "scripts/check_fidelity.py"],
+                                    cwd=copy, env=env, capture_output=True, text=True)
+            where = f"docs/PROGRAM.md:{line}:"
+            if name == "unknown-count":
+                expect_failure("an unknown count name", result, where,
+                               "unknown count name 'unknown-count'")
+            elif stated != str(computed):
+                expect_failure("a stale inline count", result, where, "count 'vocabulary'",
+                               f"stated '{stated}'", f"computed '{computed}'",
+                               "run python3 scripts/render.py")
+            elif expect_success("a correct inline count", result):
+                print("✓ a correct inline count: passed (without Lean)")
+
+
+def main(argv=()) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--counts-only", action="store_true",
+                        help="only the count plants and file-only regressions; no build needed")
+    args = parser.parse_args(argv)
     if not expect_success("restoration regressions",
                           run(sys.executable, "-I", "tests/test_negative_tests.py")):
         return 1
     print("✓ restoration regressions passed (without Lean)")
+    if not expect_success("count regressions",
+                          run(sys.executable, "-I", "tests/test_generated_counts.py")):
+        return 1
+    print("✓ count regressions passed (without Lean)")
+    if args.counts_only:
+        count_markers()
+        if failures:
+            print("\n".join(failures))
+            return 1
+        print("✓ count plants passed; other plants were not run (--counts-only)")
+        return 0
     before = run("git", "status", "--porcelain")
     if not expect_success("entry Git status", before):
         return 1
     try:
         heath_word()
+        count_markers()
         wrong_radii()
         weakened_postulate()
         changed_word()
@@ -887,4 +964,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))

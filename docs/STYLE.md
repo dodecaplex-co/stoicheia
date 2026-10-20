@@ -333,6 +333,13 @@ docstring label, "System E, Intersection 5" (a diagram rule, §3.4 of System E) 
 E, Intersections 8" (a construction rule, §3.3), or by its Lean name. Titles and foreign
 words are in italics: *pons asinorum*, *reductio ad absurdum*.
 
+For an exact count from [scripts/generated_counts.py](../scripts/generated_counts.py),
+write &lt;!-- count:vocabulary -->91&lt;!-- /count -->; `render.py` fills only the
+number. Append `:word` to the name for words, or `:Word` for a sentence's first word.
+The module lists the names and prints their current values when run. Literal examples
+escape `<`, even in code spans. Markers are refused in the decisions log and in
+`docs/reports/`, except the living `gaps-book-*.md` and `overlaps.md` catalogues.
+
 **Heath's letters, one style.** Heath's letters name points, straight lines and figures,
 and a reader meets them in the text, in both figures, in the Lean and in the modern way.
 They look the same in each: upright, never italic. Heath's page sets them in italic, but a

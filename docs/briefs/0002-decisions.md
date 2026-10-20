@@ -1826,3 +1826,33 @@ findings:
   the screen unfolds every defined word, tries each statement bare, and has its cases, as the
   entry for #78 describes; it declares nothing Lean checks, and no audit lemma, pin or
   statement changes.
+
+## 20 October 2026
+
+- **Exact counts in prose are rendered and checked.** The stale-content audit found the
+  vocabulary still given as 61 where the lock held 91, and companions as nineteen across
+  seven propositions where the list held twenty across eight. The owner asked for a rule
+  that catches such drift. Inline HTML comments, `count:name` and `/count`, delimit just
+  the number; `:word` spells it out and `:Word` capitalises its first letter. The syntax,
+  shown with its opening brackets escaped in [STYLE](../STYLE.md), section 4, is distinct
+  from the existing scope and status regions and leaves no visible delimiters in Markdown.
+  Only counts computed exactly from files are generated: the lock's axioms, tacit rules
+  and postulates, using the renderer's existing classification, and its vocabulary; the
+  listed companions and the propositions they widen; each book's records and those at
+  stage `full`; and the acceptance report's failing items and propositions passing every
+  own item, read from its generated summary at that report's revision. Surrounding prose
+  stays human. No Lean run is needed to compute or check a count.
+  `render.py` fills markers in tracked Markdown before copying introductions and other
+  prose into book pages, where it removes the count comments. Whole renderer outputs are
+  excluded. Markers are refused in this decisions log and throughout `docs/reports/`,
+  except the living `gaps-book-*.md` and `overlaps.md` catalogues, so dated evidence stays
+  at its revision. Unknown, malformed, nested and unclosed markers fail with file and
+  line. `check_fidelity.py`, already run before rendering, also refuses a stale value,
+  giving the name, stated and computed values, and the command to regenerate.
+  Small fixtures test each count and the marker boundaries; negative tests plant wrong,
+  unknown and correct counts in a source copy under `/tmp`, without a build. Their
+  `--counts-only` option runs those plants and the file-only regressions; the default
+  suite still runs every plant. This is the tooling branch only. A later content branch
+  adds markers to the prose. The protected files changed are
+  `scripts/generated_counts.py`, `scripts/render.py`, `scripts/check_fidelity.py`,
+  `scripts/negative_tests.py` and `tests/test_generated_counts.py`.

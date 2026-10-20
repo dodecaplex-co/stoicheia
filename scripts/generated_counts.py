@@ -1,0 +1,340 @@
+"""Exact counts for inline prose, shared by render.py and check_fidelity.py.
+
+Syntax: <!-- count:vocabulary -->91<!-- /count -->. Append :word or :Word to
+spell a number in lower case or with its first letter capitalised. Only the value
+belongs to the generator. Literal examples must escape '<', even in code spans.
+
+Only tracked Markdown is read. Whole renderer outputs are excluded. The decisions
+log and reports are history, except the living gap and overlap catalogues; markers
+there are refused. Counts use files alone, never a Lean run or build outputs.
+Run this module to print every available count and its current value.
+"""
+
+from dataclasses import dataclass
+from functools import partial
+from pathlib import Path
+import re
+import subprocess
+import tomllib
+
+import heath
+
+
+def lock_table(root, table):
+    """Read one of the lock's two tables, requiring the lock's declared shape."""
+    path = root / "Certificate/axioms.lock"
+    data = tomllib.loads(path.read_text())
+    if set(data) != {"axioms", "vocabulary"} or not all(
+            isinstance(t, dict) and all(isinstance(v, str) for v in t.values())
+            for t in data.values()):
+        raise ValueError("Certificate/axioms.lock: expected axioms and vocabulary tables of strings")
+    return data[table]
+
+
+def axiom_groups(entry):
+    """The renderer's classification by name: postulates, definitions, tacit, other."""
+    axioms = entry["axioms"]
+    posts = [a for a in axioms if a.startswith("Postulate")]
+    defs = [a for a in axioms if a.startswith("Definition")]
+    tacit = [a for a in axioms if a.startswith("Tacit.")]
+    other = [a for a in axioms if a not in posts + defs + tacit]
+    return posts, defs, tacit, other
+
+
+def axioms(root):
+    """Count entries in Certificate/axioms.lock's [axioms] table."""
+    return len(lock_table(root, "axioms"))
+
+
+def tacit_rules(root):
+    """Count locked axioms classified as tacit rules by the renderer."""
+    return len(axiom_groups({"axioms": lock_table(root, "axioms")})[2])
+
+
+def postulates(root):
+    """Count locked axioms classified as postulates by the renderer."""
+    return len(axiom_groups({"axioms": lock_table(root, "axioms")})[0])
+
+
+def vocabulary(root):
+    """Count entries in Certificate/axioms.lock's [vocabulary] table."""
+    return len(lock_table(root, "vocabulary"))
+
+
+def companion_entries(root):
+    """Read the literal companions list; refuse syntax this reader cannot count exactly."""
+    # Reuse the source scanner, including nested comments and strings. Import locally
+    # because check_fidelity imports this module too; neither import runs a check.
+    from check_fidelity import read_lean
+
+    path = root / "Elements/Companions.lean"
+    source = path.read_text()
+    code, unsure = read_lean(source)
+    start = re.search(r"\bdef\s+Elements\.companions\s*:\s*"
+                      r"List\s*\(\s*Lean\.Name\s*×\s*String\s*\)\s*:=\s*\[", code)
+    if unsure or start is None:
+        raise ValueError("Elements/Companions.lean: cannot read the literal companions list")
+    end = code.find("]", start.end())
+    if end < 0:
+        raise ValueError("Elements/Companions.lean: unclosed companions list")
+    if code[end + 1:].strip():
+        raise ValueError("Elements/Companions.lean: unsupported code after companions list")
+    body = source[start.end():end]
+    blank = code[start.end():end]
+    entry = re.compile(r'\(\s*``Elements\.Book([IVX]+)\.Prop([1-9][0-9]*)'
+                       r'\.([A-Za-z_][A-Za-z_0-9.]*)\s*,\s*"([^"\n]*)"\s*\)')
+    entries = []
+    cursor = 0
+    while blank[cursor:].strip():
+        gap = re.match(r"\s*", blank[cursor:]).end()
+        cursor += gap
+        # Locate tokens in the blanked code, then read the reference from the source.
+        match = entry.match(blank, cursor)
+        if match is None:
+            raise ValueError("Elements/Companions.lean: unsupported companion entry")
+        stop = match.end()
+        raw = body[cursor:stop]
+        # Comments between tokens are deliberately refused, rather than miscounted.
+        item = entry.fullmatch(raw)
+        if item is None:
+            raise ValueError("Elements/Companions.lean: unsupported companion entry")
+        book, n, name, ref = item.groups()
+        if ref != f"{book}.{n} {name}":
+            raise ValueError(f"Elements/Companions.lean: companion reference disagrees: {ref!r}")
+        entries.append((book, int(n), name))
+        cursor = stop + re.match(r"\s*", blank[stop:]).end()
+        if cursor < len(blank):
+            if blank[cursor] != ",":
+                raise ValueError("Elements/Companions.lean: expected a comma between companions")
+            cursor += 1
+    if len(entries) != len(set(entries)):
+        raise ValueError("Elements/Companions.lean: duplicate companion")
+    return entries
+
+
+def companions(root):
+    """Count listed companion theorems in Elements/Companions.lean, excluding comments."""
+    return len(companion_entries(root))
+
+
+def companion_propositions(root):
+    """Count distinct (book, proposition) pairs widened by the listed companions."""
+    return len({(book, n) for book, n, _ in companion_entries(root)})
+
+
+def review_stages(root, book):
+    """Read [review].stage from review/<book>/NN.toml, requiring a schema stage."""
+    stages = []
+    directory = root / "review" / book
+    if not directory.is_dir():
+        raise ValueError(f"review/{book}: missing record directory")
+    for path in sorted(directory.glob("[0-9][0-9].toml")):
+        data = tomllib.loads(path.read_text())
+        review = data.get("review")
+        stage = review.get("stage") if isinstance(review, dict) else None
+        if stage not in heath.STAGES:
+            raise ValueError(f"{path.relative_to(root)}: invalid [review].stage {stage!r}")
+        stages.append(stage)
+    return stages
+
+
+def reviews(root, book):
+    """Count review/<book>/NN.toml records, irrespective of stage or stamp freshness."""
+    return len(review_stages(root, book))
+
+
+def full_reviews(root, book):
+    """Count records whose [review].stage is full, irrespective of stamp freshness."""
+    return review_stages(root, book).count("full")
+
+
+ACCEPTANCE = "docs/reports/acceptance-books-I-III.md"
+
+
+def acceptance_summary(root):
+    """Read the generated report's summary at its own revision, never rerun acceptance."""
+    text = (root / ACCEPTANCE).read_text()
+    sections = re.findall(r"^## Summary\n(.*?)(?=^## |\Z)", text, re.M | re.S)
+    if len(sections) != 1:
+        raise ValueError(f"{ACCEPTANCE}: expected one generated Summary")
+    summary = sections[0].strip().split("\n\n", 1)[0]
+    match = re.fullmatch(r"\*\*([0-9]+) failing items?\*\*(?:, and [0-9]+ not run)?"
+                      r"\. ([0-9]+) of the ([0-9]+) propositions pass every item of their own\.$",
+                      summary)
+    if match:
+        failing, passing, total = map(int, match.groups())
+        if passing <= total:
+            return failing, passing
+    if summary == "**No failures.** Every item of the checklist passes.":
+        # The all-pass form omits the total in the summary; the generated preamble
+        # still states the number of propositions checked.
+        totals = re.findall(r"for each of the ([0-9]+) propositions", text)
+        if len(totals) == 1:
+            return 0, int(totals[0])
+    raise ValueError(f"{ACCEPTANCE}: cannot read the generated acceptance counts")
+
+
+def acceptance_failing(root):
+    """Count failing items stated in the acceptance report's generated summary."""
+    return acceptance_summary(root)[0]
+
+
+def acceptance_passing(root):
+    """Count propositions passing every own item in the report's generated summary."""
+    return acceptance_summary(root)[1]
+
+
+COUNTS = {
+    "axioms": axioms,
+    "tacit-rules": tacit_rules,
+    "postulates": postulates,
+    "vocabulary": vocabulary,
+    "companions": companions,
+    "companion-propositions": companion_propositions,
+    **{f"reviews:{book}": partial(reviews, book=book) for book in heath.BOOKS},
+    **{f"reviews:{book}:full": partial(full_reviews, book=book) for book in heath.BOOKS},
+    "acceptance:failing": acceptance_failing,
+    "acceptance:passing": acceptance_passing,
+}
+
+
+def number_word(n):
+    """Spell a non-negative integer in British English, including zero and hundreds."""
+    small = ("zero one two three four five six seven eight nine ten eleven twelve "
+             "thirteen fourteen fifteen sixteen seventeen eighteen nineteen").split()
+    tens = "zero ten twenty thirty forty fifty sixty seventy eighty ninety".split()
+    if n < 0:
+        raise ValueError("a count cannot be negative")
+    if n < 20:
+        return small[n]
+    if n < 100:
+        return tens[n // 10] + ("-" + small[n % 10] if n % 10 else "")
+    for scale, word in ((10**12, "trillion"), (10**9, "billion"),
+                        (10**6, "million"), (1000, "thousand"), (100, "hundred")):
+        if n >= scale:
+            quotient, rest = divmod(n, scale)
+            return (number_word(quotient) + " " + word
+                    + ((" and " if rest < 100 else " ") + number_word(rest) if rest else ""))
+
+
+START = re.compile(r"<!--\s*/?\s*count\b", re.I)
+OPEN = re.compile(r"<!-- count:([A-Za-z0-9]+(?:[-:][A-Za-z0-9]+)*) -->")
+CLOSE = "<!-- /count -->"
+
+
+@dataclass(frozen=True)
+class Marker:
+    name: str
+    start: int
+    value_start: int
+    value_end: int
+    end: int
+
+
+def markers(text, path):
+    """Read every reserved count comment, refusing malformed, nested or unpaired ones."""
+    opened = None
+    found = []
+    for token in START.finditer(text):
+        line = text.count("\n", 0, token.start()) + 1
+        where = f"{path}:{line}"
+        end = text.find("-->", token.end())
+        comment = text[token.start():end + 3] if end >= 0 else ""
+        match = OPEN.fullmatch(comment)
+        if match:
+            if opened is not None:
+                raise ValueError(f"{where}: nested count marker")
+            opened = (match[1], token.start(), end + 3)
+        elif comment == CLOSE:
+            if opened is None:
+                raise ValueError(f"{where}: count closing marker has no opening marker")
+            name, start, value_start = opened
+            if "\n" in text[value_start:token.start()]:
+                raise ValueError(f"{path}:{text.count(chr(10), 0, start) + 1}: "
+                                 "count marker must be inline")
+            found.append(Marker(name, start, value_start, token.start(), end + 3))
+            opened = None
+        else:
+            raise ValueError(f"{where}: malformed count marker")
+    if opened is not None:
+        name, start, _ = opened
+        raise ValueError(f"{path}:{text.count(chr(10), 0, start) + 1}: "
+                         f"unclosed count marker {name!r}")
+    return found
+
+
+def whole_output(path):
+    """Whether render.py owns the whole Markdown file."""
+    return path.parts[0] == "book" or path.as_posix() in {"CERTIFICATE.md", "GRAPH.md"}
+
+
+def historical(path):
+    """Protect decisions and all reports except living gap and overlap catalogues."""
+    return (path.as_posix() == "docs/briefs/0002-decisions.md"
+            or (path.parts[:2] == ("docs", "reports")
+                and not (path.parent == Path("docs/reports")
+                         and (path.name == "overlaps.md"
+                              or re.fullmatch(r"gaps-book-[IVX]+\.md", path.name)))))
+
+
+def tracked_markdown(root):
+    """List tracked Markdown with Git's index, including names with spaces or newlines."""
+    result = subprocess.run(["git", "ls-files", "-z", "--", "*.md"],
+                            cwd=root, capture_output=True, check=True)
+    return [Path(name.decode()) for name in result.stdout.split(b"\0") if name]
+
+
+def value(root, name, cache):
+    """Resolve a registered count and its optional word form, with per-run caching."""
+    base, _, form = name.rpartition(":")
+    if form not in {"word", "Word"}:
+        base, form = name, ""
+    if base not in COUNTS:
+        raise ValueError(f"unknown count name {name!r}")
+    if base not in cache:
+        cache[base] = COUNTS[base](root)
+    rendered = number_word(cache[base]) if form else str(cache[base])
+    return rendered.capitalize() if form == "Word" else rendered
+
+
+def updates(root, *, check=False):
+    """Plan all replacements before writing; report stale text only when checking."""
+    changes, errors, cache = {}, [], {}
+    for path in tracked_markdown(root):
+        if whole_output(path):
+            continue
+        text = (root / path).read_text()
+        try:
+            spans = markers(text, path)
+        except ValueError as error:
+            errors.append(str(error))
+            continue
+        filled = text
+        for span in reversed(spans):
+            where = f"{path}:{text.count(chr(10), 0, span.start) + 1}"
+            if historical(path):
+                errors.append(f"{where}: count marker {span.name!r} is forbidden in dated history")
+                continue
+            try:
+                computed = value(root, span.name, cache)
+            except (ValueError, OSError) as error:
+                errors.append(f"{where}: {error}")
+                continue
+            stated = text[span.value_start:span.value_end]
+            if check and stated != computed:
+                errors.append(f"{where}: count {span.name!r}: stated {stated!r}, "
+                              f"computed {computed!r}; run python3 scripts/render.py")
+            filled = filled[:span.value_start] + computed + filled[span.value_end:]
+        if filled != text:
+            changes[root / path] = filled
+    return changes, errors
+
+
+def without_markers(text):
+    """Copy already validated prose into a book page with values but no count comments."""
+    return OPEN.sub("", text).replace(CLOSE, "")
+
+
+if __name__ == "__main__":
+    for name, count in COUNTS.items():
+        print(f"{name}: {count(heath.ROOT)}")

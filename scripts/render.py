@@ -17,6 +17,8 @@ every book in `heath.BOOKS`:
     docs/PROGRAM.md    only the status table between `<!-- status -->` and
                        `<!-- /status -->`, with the stage, the outside score and the
                        release read from `docs/program.toml`
+    tracked Markdown  inline count values, as generated_counts.py defines; whole
+                       outputs above are excluded and markers in history are refused
 
 A page of a later book links each proposition it cites from an earlier one, as
 [I.47](../I/47.md) on a page of Book II, and a porism to its anchor, as
@@ -43,6 +45,8 @@ import json
 import re
 
 import check_fidelity
+import generated_counts
+from generated_counts import axiom_groups
 import heath
 
 ROOT = heath.ROOT
@@ -650,18 +654,6 @@ def rules_summary(names, book):
     if other:
         parts.append(f"{len(other)} other axiom" + ("" if len(other) == 1 else "s"))
     return "; ".join(parts) if parts else "none"
-
-
-def axiom_groups(entry):
-    """An entry's axioms by kind: postulates, definitions, tacit rules, and any other
-    axiom, which is shown under "Other", never dropped (check_fidelity.py fails on any
-    axiom declared outside Elements/Foundations/)."""
-    axioms = entry["axioms"]
-    posts = [a for a in axioms if a.startswith("Postulate")]
-    defs = [a for a in axioms if a.startswith("Definition")]
-    tacit = [a for a in axioms if a.startswith("Tacit.")]
-    other = [a for a in axioms if a not in posts + defs + tacit]
-    return posts, defs, tacit, other
 
 
 def rests_on(p, docs, depth, book, refs, attached=()):
@@ -1430,12 +1422,12 @@ def page(book, n, count, titles, facts, docs, records):
             "## What it rests on", "", rests_on(p, docs, 2, book, refs, attached_refs)]
     out += ["## Mishnah", ""]
     if mishnah.exists():
-        out += [MISHNAH_LEAD, "", mishnah.read_text().strip(), ""]
+        out += [MISHNAH_LEAD, "", generated_counts.without_markers(mishnah.read_text().strip()), ""]
     else:
         out += ["_Commentary to come._", ""]
     # A line or three from docs/reading.md, chosen for this proposition; no file, no section.
     reading = ROOT / "reading" / book / f"{n:02d}.md"
-    further = reading.read_text().strip() if reading.exists() else ""
+    further = generated_counts.without_markers(reading.read_text().strip()) if reading.exists() else ""
     if further:
         out += ["## Further reading", "", further, ""]
     out += [nav, ""]
@@ -1463,7 +1455,7 @@ def book_intro(book):
     and where Postulate 5 comes in), so that no page has to say it again. Empty if the
     book has none yet."""
     path = ROOT / "mishnah" / "intro" / f"{book}.md"
-    return path.read_text().strip() if path.exists() else ""
+    return generated_counts.without_markers(path.read_text().strip()) if path.exists() else ""
 
 
 def ref_ranges(refs):
@@ -2434,9 +2426,14 @@ def main() -> None:
                          "is used, or of a record's order of companions; nothing was "
                          "rendered:\n" + "\n".join("  ✗ " + f for f in faults))
     print(f"self-check: the listing and the Proof row read {count} cases rightly")
+    changes, errors = generated_counts.updates(ROOT)
+    if errors:
+        raise SystemExit("count markers: nothing was rendered:\n" + "\n".join(errors))
     facts = load_facts()
     docs = load_axiom_docs()
     records = load_records()
+    for path, text in changes.items():
+        path.write_text(text)
     for book, (count, titles) in BOOKS.items():
         out_dir = ROOT / "book" / book
         out_dir.mkdir(parents=True, exist_ok=True)
