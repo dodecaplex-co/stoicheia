@@ -81,7 +81,7 @@ equilateral triangle of I.1 and two circles, I.3 by I.2 and a circle. Our Postul
 Euclid's collapsing compass, and leaves carrying a distance to I.2.
 
 These two overlap rows are retired. Under the former existential superposition rule,
-`Audit.I_2` and `Audit.I_3` drew a triangle, laid it down and returned one of its placed
+Audit.I_2 and Audit.I_3 drew a triangle, laid it down and returned one of its placed
 corners. The restricted rule permits hypothetical placement within a derivation over
 symbols and exports only an equality of lengths, angles or triangles about the given
 figure. No exported formula names a placed corner, and no derivation step constructs
@@ -119,7 +119,7 @@ I.20 supplies the triangle inequalities, and I.8 proves the angle equality. It r
 superposition through I.8 and I.20: I.8 calls the restricted rule itself, while I.20
 rests on it through I.5 and I.4. Only I.4 and I.8 may call it directly.
 
-The former overlap row and its lemma `Audit.I_23` are retired. That lemma used the
+The former overlap row and its lemma Audit.I_23 are retired. That lemma used the
 existential rule to lay down the triangle DCE and return its placed corners. The
 [restricted rule](../../Elements/Foundations/Tacit/Superposition.lean) is an inference
 in System E's style: a represented derivation returns an equality about the given figure,
