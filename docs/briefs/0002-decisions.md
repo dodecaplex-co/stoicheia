@@ -2094,23 +2094,27 @@ findings:
 
   - *Before the queue.* A train's body gains `Members` (each member's head and its three
     reviews) and `What is new` (the checks, propositions and foundations it changes).
-    `scripts/check_train.py`, origin/main's copy run by the pre-flight, checks that each
-    member is merged once as a merge commit with its evidence, that no merge or
-    coordinator commit adds anything outside the generated files and the decisions
-    page, that checks and the content they judge travel apart, and that `What is new`
+    `scripts/check_train.py`, origin/main's copy run by the pre-flight, reads the train's
+    own first-parent chain and checks that each member is merged once as a merge commit
+    with its evidence, that none of the train's merges or own commits adds anything
+    outside the generated files (README.md and PROGRAM.md only between their markers) and
+    the decisions page, that checks and the content they judge travel apart, and that `What is new`
     covers the diff. A train is refused while origin/main has no train check, unless it
     adds one (the bootstrap, noted for the security review); `--merge` checks the
     current body again.
   - *The queue.* CI runs on `pull_request` and `merge_group` (and is called by the
     post-merge workflow on main), no longer on every branch push, which ran the same
-    checks twice for each push. The new required job `queue-integrity` runs main's copy
-    of `scripts/check_queue.py` on each group, never the group's: (a) no train's change
-    overwritten, by reverting and reapplying it; (b) every head is the commit its
-    pre-flight checked, by a harness that was main's, with every check that harness runs
+    checks twice for each push. The new job `queue-integrity` runs main's copy of
+    `scripts/check_queue.py` on each group, in a job that runs no code of the group:
+    (a) no train's change overwritten, by reverting and reapplying it (the hand-written
+    parts of README.md and PROGRAM.md included); (b) every head is the commit its
+    pre-flight checked, by a harness that was main, with every check that harness runs
     passing, and each train's Members still its actual merges; (c) the group is main and
-    the queued trains ahead, in order, as plain merge commits; (d) the generated pages
-    current and no dated heading repeated (conflict markers are S23's, in the `check`
-    job). Then the gaps of what is new: the tests of each changed check run. With "only
+    the queued trains ahead, in order, as plain merge commits; (d) no dated heading
+    repeated (the pages' freshness and conflict markers are the `check` job's, on the same
+    group); and no entry but an automatic revert written, queued or edited by the revert
+    App's bot, or from another repository. Then `queue-gaps` runs the tests of each
+    changed check, with no token in their environment. With "only
     merge non-failing pull requests", a train merges only when its own group passed;
     GitHub removes a failing group's last train and rebuilds the groups after it.
   - *After the merge.* `.github/workflows/post-merge.yml` runs the integration tests on
@@ -2119,9 +2123,13 @@ findings:
     App's key (in the `auto-revert` environment, main only), the previous main's
     `scripts/auto_revert.py`, trusted only when its own post-merge run passed, reverts
     the push's merges on a `revert/` branch and queues the revert, which the queue admits
-    only as the exact revert of a failed push's merges. The workflow that holds the key
-    is read from main, so the App is bounded instead: no bypass, a ruleset keeping it to
-    `revert/**`, and the queue's check of its pull request.
+    only as the exact revert of a failed push's merges, while an open `main-red` issue
+    names that run. The workflow that holds the key is read from main, so code that has
+    landed there could take it; the App is bounded instead: no bypass, rulesets keeping it
+    to `revert/**` branches and from tags, and the queue's refusal of anything else it
+    writes, queues or edits. `--merge` no longer lets a record stand in for the full
+    checks of a head that changes the checks, since only the pre-flight runs
+    origin/main's copies on it.
 
   The measurements. Of the last 30 merged pull requests (#98 to #148), 24 changed this
   page, 14 `book/`, 13 `README.md`, 11 `docs/PROGRAM.md`, 8 `facts.json`, 7
@@ -2139,8 +2147,10 @@ findings:
   CI on the pull request stays; the group's run is the only one on the exact tree that
   merges; and the post-merge run is the owner's auto-revert.
 
-  Nothing is weakened: every existing refusal of `scripts/safe_push.py` stays, and with
-  the queue off `--merge` merges as before, save the new pause while main is red. The
+  Nothing is weakened: every existing refusal of `scripts/safe_push.py` stays, save that
+  in queue mode a head need not contain the latest main (the queue builds each group on
+  it), and is judged against its merge base with main; with the queue off `--merge`
+  merges as before, save the new pause while main is red. The
   queue stays off until the owner turns it on, with the steps the coordinator holds.
   The protected files this change adds or changes: `.github/workflows/ci.yml`,
   `.github/workflows/post-merge.yml`, `scripts/auto_revert.py`, `scripts/check_queue.py`,

@@ -222,25 +222,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          script=$(mktemp "$RUNNER_TEMP/auto-revert-clear.XXXXXX")
-          if [[ "$BEFORE" =~ ^[0-9a-f]{40}$ ]] && [[ "$BEFORE" != 0000000000000000000000000000000000000000 ]] \
-            && git show "$BEFORE:scripts/auto_revert.py" > "$script" && test -s "$script"; then
-            python3 -I "$script" --clear --repo "$REPOSITORY" --after "$AFTER"
-          else
-            # The first successful run can precede the trusted script's presence.
-            # This fallback also uses no repository code.
-            tip=$(gh api "repos/$REPOSITORY/git/ref/heads/main" --jq '.object.sha')
-            test "$tip" = "$AFTER"
-            issues=$(mktemp "$RUNNER_TEMP/main-red-issues.XXXXXX")
-            gh api --paginate --slurp "repos/$REPOSITORY/issues?state=open&labels=main-red&per_page=100" \
-              | jq -r '
-                  if type != "array" or length == 0 or any(.[]; type != "array") then error("Unreadable issues")
-                  else [.[][] | select(has("pull_request") | not)
-                    | if .state == "open" and (.number | type) == "number" and .number > 0
-                        and any(.labels[]; .name == "main-red") then .number
-                      else error("Unreadable issue") end] | .[] end' > "$issues"
-            while IFS= read -r number; do
-              gh api --method DELETE "repos/$REPOSITORY/issues/$number/labels/main-red" \
-                | jq -e 'type == "array" and all(.[]; (.name | type) == "string" and .name != "main-red")' > /dev/null
-            done < "$issues"
-          fi
+          # No repository code runs here, not even the previous main's: a fix that lands
+          # after a failed push must not run the failed push's script with issues: write.
+          tip=$(gh api "repos/$REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          test "$tip" = "$AFTER"
+          issues=$(mktemp "$RUNNER_TEMP/main-red-issues.XXXXXX")
+          gh api --paginate --slurp "repos/$REPOSITORY/issues?state=open&labels=main-red&per_page=100" \
+            | jq -r '
+                if type != "array" or length == 0 or any(.[]; type != "array") then error("Unreadable issues")
+                else [.[][] | select(has("pull_request") | not)
+                  | if .state == "open" and (.number | type) == "number" and .number > 0
+                      and any(.labels[]; .name == "main-red") then .number
+                    else error("Unreadable issue") end] | .[] end' > "$issues"
+          while IFS= read -r number; do
+            gh api --method DELETE "repos/$REPOSITORY/issues/$number/labels/main-red" \
+              | jq -e 'type == "array" and all(.[]; (.name | type) == "string" and .name != "main-red")' > /dev/null
+          done < "$issues"

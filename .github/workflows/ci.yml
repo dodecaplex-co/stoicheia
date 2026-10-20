@@ -318,13 +318,16 @@ jobs:
           path: ${{ runner.temp }}/acceptance/
 
   queue-integrity:
-    needs: acceptance
-    if: always()
+    # The judge of each merge group. It runs no code of the group: it checks out the
+    # group, takes scripts/ from the group's base (main) and runs that check_queue.py,
+    # which reads git and GitHub only; it builds nothing and renders nothing (the check
+    # job renders the same group). GitHub reads this workflow file itself from the
+    # group, so a change to .github/ is held by the pre-flight, which origin/main's
+    # harness runs, and by the security review, not by this job.
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: read
-      actions: read
     steps:
       - uses: actions/checkout@v5
         with:
@@ -335,35 +338,68 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Check the queue and train checks, and automatic reverts, case by case
+        # On a pull request and on main: the offline cases, which need no network.
+        if: github.event_name != 'merge_group'
+        run: |
+          python3 -I tests/test_check_queue.py
+          python3 -I tests/test_check_train.py
+          python3 -I tests/test_auto_revert.py
+
+      - name: Check the group with main's copy of check_queue.py
+        if: github.event_name == 'merge_group'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
+          GROUP_BASE: ${{ github.event.merge_group.base_sha }}
+          REPOSITORY: ${{ github.repository }}
+          # The revert App's bot login (a repository variable, the owner's steps): only its
+          # pull requests may stand in a group as automatic reverts.
+          STOICHEIA_REVERT_BOT: ${{ vars.STOICHEIA_REVERT_BOT }}
+        run: |
+          test -n "$GROUP_HEAD"
+          test -n "$GROUP_BASE"
+          test "$(git rev-parse HEAD)" = "$GROUP_HEAD"
+          if ! git cat-file -e "$GROUP_BASE:scripts/check_queue.py"; then
+            echo "The group base has no queue judge."
+            exit 2
+          fi
+          mkdir "$RUNNER_TEMP/judge"
+          git archive --format=tar "$GROUP_BASE:scripts" > "$RUNNER_TEMP/queue-judge.tar"
+          tar -xf "$RUNNER_TEMP/queue-judge.tar" -C "$RUNNER_TEMP/judge"
+          test -f "$RUNNER_TEMP/judge/check_queue.py" || exit 2
+          python3 -I "$RUNNER_TEMP/judge/check_queue.py" --head "$GROUP_HEAD" --base "$GROUP_BASE" --repo "$REPOSITORY"
+
+  queue-gaps:
+    # The gaps of what is new, on each merge group: the tests of each check the group
+    # changes, chosen by main's copy of check_queue.py and run with no token in their
+    # environment, and the changed propositions' acceptance items, from the acceptance
+    # job's verdicts. These are the group's own tests: they test, they do not judge.
+    needs: acceptance
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read
+    steps:
       - name: Require a completed acceptance check
         env:
           ACCEPTANCE_RESULT: ${{ needs.acceptance.result }}
         run: test "$ACCEPTANCE_RESULT" = success
 
-      - name: Check the queue and train checks on pull requests and main
-        if: github.event_name == 'pull_request' || github.event_name == 'push'
-        run: |
-          python3 -I tests/test_check_queue.py
-          python3 -I tests/test_check_train.py
-
-      - name: Check automatic reverts without network access
-        if: github.event_name == 'pull_request' || github.event_name == 'push'
-        run: python3 -I tests/test_auto_revert.py
-
-      - name: Install Lean for the queue tree's freshness check
+      - uses: actions/checkout@v5
         if: github.event_name == 'merge_group'
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
-          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
-      - name: Build and compute the queue certificate
+      - uses: actions/setup-python@v5
         if: github.event_name == 'merge_group'
-        run: |
-          export PATH=$HOME/.elan/bin:$PATH
-          lake build
-          lake env lean Certificate/Facts.lean
+        with:
+          python-version: "3.12"
 
-      - name: Read acceptance's verdicts for the queue's gap report
+      - name: Read acceptance's verdicts
         if: github.event_name == 'merge_group'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -373,38 +409,19 @@ jobs:
           gh run download "$RUN_ID" --repo "$REPOSITORY" --name acceptance --dir "$RUNNER_TEMP/acceptance"
           test -s "$RUNNER_TEMP/acceptance/verdicts.json"
 
-      - name: Check the queue's integrity and the gaps of what is new
+      - name: Run the tests of what is new
+        if: github.event_name == 'merge_group'
         env:
-          GITHUB_TOKEN: ${{ github.token }}
           GH_TOKEN: ${{ github.token }}
           GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
           GROUP_BASE: ${{ github.event.merge_group.base_sha }}
           REPOSITORY: ${{ github.repository }}
           ACCEPTANCE_VERDICTS: ${{ runner.temp }}/acceptance/verdicts.json
-          # The revert App's bot login (a repository variable, the owner's steps): only its
-          # pull requests may stand in a group as automatic reverts.
           STOICHEIA_REVERT_BOT: ${{ vars.STOICHEIA_REVERT_BOT }}
-        # GitHub reads this workflow from the group. Changes to .github/ are held
-        # by the pre-flight using origin/main's harness and the security review,
-        # not by this job. The judge's scripts below come from the group's base;
-        # --gaps still executes the group's tests, which test rather than judge.
         run: |
-          case "$GITHUB_EVENT_NAME" in
-            merge_group)
-              test -n "$GROUP_HEAD"
-              test -n "$GROUP_BASE"
-              test "$(git rev-parse HEAD)" = "$GROUP_HEAD"
-              if ! git cat-file -e "$GROUP_BASE:scripts/check_queue.py"; then
-                echo "The group base has no queue judge."
-                exit 2
-              fi
-              mkdir "$RUNNER_TEMP/judge"
-              git archive --format=tar "$GROUP_BASE:scripts" > "$RUNNER_TEMP/queue-judge.tar"
-              tar -xf "$RUNNER_TEMP/queue-judge.tar" -C "$RUNNER_TEMP/judge"
-              test -f "$RUNNER_TEMP/judge/check_queue.py" || exit 2
-              python3 -I "$RUNNER_TEMP/judge/check_queue.py" --head "$GROUP_HEAD" --base "$GROUP_BASE" --repo "$REPOSITORY"
-              python3 -I "$RUNNER_TEMP/judge/check_queue.py" --gaps --head "$GROUP_HEAD" --base "$GROUP_BASE" --repo "$REPOSITORY"
-              ;;
-            pull_request|push) ;;
-            *) echo "No queue check is defined for this event."; exit 2 ;;
-          esac
+          test "$(git rev-parse HEAD)" = "$GROUP_HEAD"
+          git cat-file -e "$GROUP_BASE:scripts/check_queue.py" || exit 2
+          mkdir "$RUNNER_TEMP/judge"
+          git archive --format=tar "$GROUP_BASE:scripts" > "$RUNNER_TEMP/queue-judge.tar"
+          tar -xf "$RUNNER_TEMP/queue-judge.tar" -C "$RUNNER_TEMP/judge"
+          python3 -I "$RUNNER_TEMP/judge/check_queue.py" --gaps --head "$GROUP_HEAD" --base "$GROUP_BASE" --repo "$REPOSITORY"

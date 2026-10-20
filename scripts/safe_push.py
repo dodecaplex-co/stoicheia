@@ -3975,7 +3975,9 @@ def queue_base(ctx: Context, head: str) -> str:
 
 
 QUEUE_POLL = 10
-QUEUE_TIMEOUT = 1800
+# A group's CI can take as long as the queue's status check timeout (60 minutes, the
+# acceptance job's own limit), and a train may wait behind the groups ahead of it.
+QUEUE_TIMEOUT = 5400
 
 
 def queue_view(ctx: Context, number: int) -> dict:
@@ -4268,6 +4270,16 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         sha, base = ctx.sha, ctx.base
         earlier = load_record(ctx.sha, ctx.base)
         checked = checks_record(earlier, test_mode)
+        # The record is a file the checks it ran could have written. When the head
+        # changes the checks themselves, CI runs the head's copies, never origin/main's,
+        # so only the pre-flight can find that origin/main's checks fail on it: the full
+        # checks run again here rather than trust the record.
+        if checked is not None and any(under(p, CHECK_INPUTS)
+                                       for _, p in changed_files(repo, ctx.base, ctx.sha)):
+            rep.add("3", "full checks record", "note", "the head changes the checks "
+                    f"({', '.join(CHECK_INPUTS)}), so the full checks run again, not the "
+                    "record of the pre-flight")
+            checked = None
         if checked is None:
             view = gates(ctx, number, rep)   # before long checks, so a draft fails at once
         rep.heading("3. The pre-flight of the head")

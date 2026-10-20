@@ -251,7 +251,8 @@ def installation_token(api: GitHub, app_id: str, key: str, repo: str,
     if (not isinstance(installation, dict) or type(installation.get("id")) is not int
             or installation["id"] <= 0):
         raise Refusal("GitHub did not identify the App installation.")
-    permissions = {"contents": "write", "pull_requests": "write"}
+    # merge_queues: write, to put the revert in the queue (enqueuePullRequest).
+    permissions = {"contents": "write", "pull_requests": "write", "merge_queues": "write"}
     if workflows:
         permissions["workflows"] = "write"
     data = app.call("POST", f"/app/installations/{installation['id']}/access_tokens",

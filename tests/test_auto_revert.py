@@ -265,7 +265,8 @@ class AutoRevert(unittest.TestCase):
         self.assertIn("was enqueued", self.body())
         self.assertEqual(self.rev(), merge)
         self.assertEqual(self.git("status", "--porcelain"), "")
-        self.assertEqual(self.api.issued_permissions, {"contents": "write", "pull_requests": "write"})
+        self.assertEqual(self.api.issued_permissions, {
+            "contents": "write", "pull_requests": "write", "merge_queues": "write"})
 
     def test_two_trains_reverted_newest_first_in_one_pull_request(self):
         first = self.train()

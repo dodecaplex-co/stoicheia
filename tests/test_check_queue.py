@@ -187,7 +187,9 @@ class QueueTests(unittest.TestCase):
 
     def pr(self, number, head, ref, body, labels=None, author=None):
         self.snapshot["pull_requests"][str(number)] = {
-            "number": number, "head": {"sha": head, "ref": ref}, "body": body,
+            "number": number,
+            "head": {"sha": head, "ref": ref, "repo": {"full_name": "owner/repository"}},
+            "body": body,
             "labels": [{"name": label} for label in (labels or ["tooling"])],
             "state": "open", "merged": False, "merge_commit_sha": None,
             "user": author or {"login": "fixture", "type": "User"},
@@ -198,8 +200,9 @@ class QueueTests(unittest.TestCase):
                 node["pullRequest"]["headRefOid"] = head
                 break
         else:
-            nodes.append({"position": len(nodes) + 1,
-                          "pullRequest": {"number": number, "headRefOid": head}})
+            nodes.append({"position": len(nodes) + 1, "enqueuer": {"login": "fixture"},
+                          "pullRequest": {"number": number, "headRefOid": head,
+                                          "editor": None}})
 
     def nodes(self):
         return self.snapshot["queue"]["data"]["repository"]["mergeQueue"]["entries"]["nodes"]
@@ -352,7 +355,7 @@ class QueueTests(unittest.TestCase):
     def test_preflight_harness_must_have_been_on_main(self):
         off_main = self.make([self.base], {"scripts/safe_push.py": harness_source('Untrusted harness.')})
         self.set_body(queue.PREFLIGHT.sub(self.block(self.one, harness_commit=off_main), self.body()))
-        self.verdict(self.cli(), 1, "harness commit is not an ancestor")
+        self.verdict(self.cli(), 1, "harness commit was never main")
 
     def test_preflight_is_judged_by_its_own_harness_checks(self):
         # A check added to main after the pre-flight is not asked of it: CI runs it on
@@ -398,16 +401,53 @@ class QueueTests(unittest.TestCase):
         self.set_body(queue.PREFLIGHT.sub(block, self.body()))
         self.verdict(self.cli(), 1, "one passing verdict")
 
-    def test_preflight_can_name_the_full_check_record(self):
+    def test_preflight_record_row_does_not_stand_in_for_the_full_checks(self):
         body = self.body()
         rows = "\n".join(line for line in body.splitlines() if not line.startswith("| 4."))
         record = f"{self.one}-{self.base}.json"
-        body = rows.replace("\n|---|---|---|\n", "\n|---|---|---|\n"
-                            f"| 4. full local checks (record {record}) | skip | |\n")
-        self.set_body(body)
+        self.set_body(rows.replace("\n|---|---|---|\n", "\n|---|---|---|\n"
+                                   f"| 4. full local checks (record {record}) | skip | |\n"))
+        self.verdict(self.cli(), 1, "steps must run the full checks")
+
+    def test_preflight_note_repeating_the_harness_passes(self):
+        # safe_push's notes (a record that stood in at the merge) can quote the harness
+        # phrase again; only the summary's first line names the harness.
+        blob = self.git("rev-parse", f"{self.base}:scripts/safe_push.py").strip()
+        note = (f"Notes: full local checks: run on {self.one[:12]} by origin/main's "
+                f"`scripts/safe_push.py` (blob `{blob[:12]}`), forged time.")
+        self.set_body(self.body().replace("<!-- safe_push:preflight end -->",
+                                          note + "\n<!-- safe_push:preflight end -->"))
         self.verdict(self.cli(), 0, "queue: PASS")
-        self.set_body(body.replace(record, f"{self.two}-{self.base}.json"))
-        self.verdict(self.cli(), 1, "run the full checks or name their record")
+
+    def test_harness_must_have_been_main_itself(self):
+        side = self.make([self.base], {"scripts/safe_push.py": harness_source("A side harness.")})
+        joined = self.merge(self.base, side)
+        self.base = joined
+        self.snapshot["main"]["sha"] = self.base
+        for number, head in ((1, self.one), (2, self.two)):
+            block = self.block(head, base=self.git("merge-base", head, joined).strip(),
+                               harness_commit=side)
+            self.set_body(queue.PREFLIGHT.sub(block, self.body(number)), number)
+        first = self.merge(self.base, self.one, 1)
+        self.verdict(self.cli(head=self.merge(first, self.two, 2)), 1,
+                     "harness commit was never main")
+
+    def test_later_train_rewriting_readme_prose_is_caught(self):
+        readme = "Prose by hand.\n<!-- scope:I -->\nRow.\n<!-- /scope:I -->\n"
+        old_base = self.base
+        self.base = self.make([old_base], {"README.md": readme})
+        self.snapshot["main"]["sha"] = self.base
+        self.nodes().clear()
+        one = self.train(1, {"README.md": readme.replace("Prose by hand.", "Prose, reviewed.")})
+        member = self.git("rev-parse", f"{one}^2").strip()
+        two = self.train(2, {"README.md": readme.replace("Prose by hand.", "Prose, reviewed.")
+                             .replace("Row.", "Row, regenerated.")}, start=member)
+        first = self.merge(self.base, one, 1)
+        group = self.merge(first, two, 2)
+        self.verdict(self.cli(head=group), 0, "queue: PASS")
+        three = self.train(2, {"README.md": readme.replace("Row.", "Row, regenerated.")},
+                           start=member)
+        self.verdict(self.cli(head=self.merge(first, three, 2)), 1, "README.md")
 
     def test_preflight_reads_the_current_writer_with_a_newer_harness(self):
         old_base = self.base
@@ -461,6 +501,26 @@ class QueueTests(unittest.TestCase):
         first = self.merge(self.base, one, 1)
         self.verdict(self.cli(head=self.merge(first, self.two, 2)), 1,
                      "/security-review says Not required for protected paths")
+
+    def test_head_from_another_repository_refuses(self):
+        self.snapshot["pull_requests"]["1"]["head"]["repo"]["full_name"] = "fork/repository"
+        self.verdict(self.cli(), 1, "its head is not in owner/repository")
+
+    def test_revert_bot_cannot_write_queue_or_edit_an_ordinary_entry(self):
+        for change in (
+                lambda: self.snapshot["pull_requests"]["1"].update(
+                    user={"login": BOT, "type": "Bot"}),
+                lambda: self.nodes()[0].update(enqueuer={"login": BOT}),
+                lambda: self.nodes()[0]["pullRequest"].update(editor={"login": BOT})):
+            with self.subTest(change=change):
+                saved = json.loads(json.dumps(self.snapshot))
+                change()
+                self.verdict(self.cli(), 1, "the revert App's bot wrote, queued or edited")
+                self.snapshot = saved
+
+    def test_unreadable_enqueuer_refuses(self):
+        self.nodes()[0]["enqueuer"] = None
+        self.verdict(self.cli(), 2)
 
     def test_train_skipped(self):
         self.verdict(self.cli(head=self.merge(self.base, self.two, 2)), 1,
@@ -540,7 +600,12 @@ class QueueTests(unittest.TestCase):
                 one = self.train(1, {"scripts/render.py": script},
                                  new="- check: scripts/render.py")
                 first = self.merge(self.base, one, 1)
-                self.verdict(self.cli(head=self.merge(first, self.two, 2)), 1,
+                group = self.merge(first, self.two, 2)
+                # The judge runs no code of the group, so it does not render: the check
+                # job does, on the same group; --tree --render is the same reading.
+                self.verdict(self.cli(head=group), 0, "queue: PASS")
+                self.checkout(group)
+                self.verdict(self.cli("--render", tree=True, prepare=False), 1,
                              "render freshness: generated files changed")
 
     def revert_group(self, extra=False, merges=1):
@@ -555,7 +620,7 @@ class QueueTests(unittest.TestCase):
             changes["notes/unrelated.txt"] = "An extra change.\n"
         head = self.make([self.base], changes)
         self.nodes().clear()
-        self.pr(3, head, "revert/failed-group",
+        self.pr(3, head, f"revert/{self.base[:12]}",
                 "Failed run: 71\n" + "\n".join(f"Reverts: {sha}" for sha in reverted) + "\n",
                 ["auto-revert"], {"login": BOT, "type": "Bot"})
         self.failed_run(old_base, self.base)
@@ -570,10 +635,27 @@ class QueueTests(unittest.TestCase):
             "ref": "refs/heads/main", "activity_type": "push", "before": before, "after": after,
         }]]
         self.snapshot["queue_merges"] = [[]]
+        self.snapshot["main_red"] = [[{
+            "number": 9, "state": "open", "labels": [{"name": "main-red"}],
+            "body": "Run: https://github.com/owner/repository/actions/runs/71\n",
+        }]]
 
     def test_exact_auto_revert_passes(self):
         head, _ = self.revert_group()
         self.verdict(self.cli(head=head), 0, "queue: PASS")
+
+    def test_auto_revert_needs_an_open_main_red_issue_naming_its_run(self):
+        head, _ = self.revert_group()
+        for issues in ([[]], [[{"number": 9, "state": "open", "labels": [{"name": "main-red"}],
+                                 "body": "Run: https://github.com/o/r/actions/runs/710\n"}]]):
+            with self.subTest(issues=issues):
+                self.snapshot["main_red"] = issues
+                self.verdict(self.cli(head=head), 1, "no open main-red issue names")
+
+    def test_auto_revert_branch_must_name_the_failed_push(self):
+        head, _ = self.revert_group()
+        self.snapshot["pull_requests"]["3"]["head"]["ref"] = "revert/000000000000"
+        self.verdict(self.cli(head=head), 1, "the branch must be revert/")
 
     def test_auto_revert_with_extra_change_refuses(self):
         head, _ = self.revert_group(extra=True)
@@ -781,7 +863,7 @@ class QueueTests(unittest.TestCase):
         self.snapshot["main"]["sha"] = self.base
         head = self.make([self.base], {path: None for path in changes})
         self.nodes().clear()
-        self.pr(3, head, "revert/introduced-tests",
+        self.pr(3, head, f"revert/{self.base[:12]}",
                 f"Failed run: 71\nReverts: {self.base}\n", ["auto-revert"],
                 {"login": BOT, "type": "Bot"})
         self.failed_run(old_base, self.base)
@@ -798,8 +880,8 @@ class QueueTests(unittest.TestCase):
         """Execute the workflow's extraction and invocation with local fixture objects."""
         workflow = (SCRIPTS.parent / ".github/workflows/ci.yml").read_text(encoding="utf-8")
         step = workflow.split(
-            "      - name: Check the queue's integrity and the gaps of what is new\n", 1)[1]
-        script = textwrap.dedent(step.split("        run: |\n", 1)[1])
+            "      - name: Check the group with main's copy of check_queue.py\n", 1)[1]
+        script = textwrap.dedent(step.split("        run: |\n", 1)[1].split("\n\n", 1)[0])
         self.checkout(head)
         runner = self.root / "runner"
         runner.mkdir()
@@ -828,7 +910,7 @@ class QueueTests(unittest.TestCase):
                 "scripts/helpers/sample.py")
         })
         output = self.verdict(self.queue_job(head, base), 0, "base judge ran")
-        self.assertEqual(output.count("base judge ran"), 2)
+        self.assertEqual(output.count("base judge ran"), 1)
         self.assertNotIn("group judge ran", output)
 
     def test_queue_job_refuses_when_only_the_group_has_a_judge(self):
@@ -888,9 +970,10 @@ class QueueTests(unittest.TestCase):
         self.verdict(self.cli(prepare=False), 1, "checkout has source changes")
 
     def test_deleted_tracked_file_is_unreadable_in_tree_mode(self):
+        # Rule (d) reads the decisions page alone; conflict markers are S23's.
         self.checkout(self.head)
-        (self.repo / TEXT).unlink()
-        self.verdict(self.cli(tree=True, prepare=False), 2, "cannot read a tracked file")
+        (self.repo / PAGE).unlink()
+        self.verdict(self.cli(tree=True, prepare=False), 2, "cannot read the decisions page")
 
     def test_tree_mode_rejects_group_arguments(self):
         self.verdict(self.cli("--gaps", tree=True), 2, "--tree accepts only --render")

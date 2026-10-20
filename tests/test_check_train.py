@@ -227,6 +227,30 @@ class TrainChecks(Repository):
                      f"{LEAN}", head=head,
                      text=body([self.row, member_row(member, "content/two")]))
 
+    def test_member_s_own_merge_of_main_with_a_resolution_is_the_member_s(self):
+        # WORKFLOW, section 10: a branch merges main, never rebases. Its resolution is in
+        # the member's reviewed diff, judged by its reviews, not again by the train.
+        main = self.commit([self.base], {LEAN: "-- main moved on\n"})
+        work = self.commit([self.base], {LEAN: "-- the member's first version\n"})
+        resolved = self.commit([work, main], {LEAN: "-- the member's resolution\n"})
+        head = self.merge(main, resolved)
+        self.assertEqual(self.problems(head=head, base=main,
+                                       text=body([member_row(resolved)])), [])
+
+    def test_readme_prose_is_not_the_coordinator_s(self):
+        readme = ("Prose by hand.\n<!-- scope:I -->\nGenerated row.\n<!-- /scope:I -->\n")
+        base = self.commit([self.base], {"README.md": readme})
+        member = self.commit([base], {LEAN: "-- reviewed source\n"})
+        merged = self.merge(base, member)
+        text = body([member_row(member)])
+        rows = self.commit([merged], {"README.md": readme.replace("Generated row.",
+                                                                  "A new generated row.")})
+        self.assertEqual(self.problems(head=rows, base=base, text=text), [])
+        prose = self.commit([merged], {"README.md": readme.replace("Prose by hand.",
+                                                                   "Prose rewritten.")})
+        self.assertTrue(any("changes forbidden path: README.md" in problem for problem in
+                            self.problems(head=prose, base=base, text=text)))
+
     def test_coordinator_changes_lean(self):
         head = self.commit([self.head], {LEAN: "-- unchecked coordinator source\n"})
         self.refused("coordinator commit", head=head)

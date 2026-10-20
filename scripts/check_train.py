@@ -18,7 +18,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from safe_push import (
-    CHECK_INPUTS, DECISIONS, GENERATED, SECTION, Refusal, changed_files, git,
+    CHECK_INPUTS, DECISIONS, GENERATED, GENERATED_REGIONS, SECTION, Refusal, changed_files,
+    generated_parts, git,
     is_protected, judged_files, pinned, run, sections, shown, under, visible, written,
 )
 
@@ -218,8 +219,13 @@ def _decision_path(path: str) -> bool:
         re.fullmatch(r"docs/decisions/[^/]+\.md", path))
 
 
-def _coordinator_path(path: str) -> bool:
-    """Generated files and the decisions page or a Markdown decision entry."""
+def _coordinator_path(path: str, repo: Path | None = None, old: str | None = None,
+                      new: str | None = None) -> bool:
+    """Generated files and the decisions page or a Markdown decision entry. README.md and
+    docs/PROGRAM.md are generated only between their markers: given the two revisions,
+    a change to them counts only when it leaves the rest, written by hand, as it was."""
+    if path in GENERATED_REGIONS:
+        return repo is not None and not generated_parts(repo, old, new, path)[1]
     return under(path, (*GENERATED, "book/")) or _decision_path(path)
 
 
@@ -240,7 +246,8 @@ def _merge_problems(repo: Path, merge: str, parents: list[str]) -> list[str]:
         raise ValueError(f"could not read conflicted paths for merge {merge}")
     paths = set(conflicts) | {p for _, p in changed_files(repo, tree, merge)}
     return [f"merge {merge[:12]}: resolution or added content outside generated files "
-            f"and decisions: {path}" for path in sorted(paths) if not _coordinator_path(path)]
+            f"and decisions: {path}" for path in sorted(paths)
+            if not _coordinator_path(path, repo, tree, merge)]
 
 
 def _merge_base(repo: Path, left: str, right: str) -> str:
@@ -274,8 +281,12 @@ def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
         return ["train head does not contain the supplied base"]
     problems = _evidence(rows)
     history = _commits(repo, base)
+    # Rules 1 to 3 read the train's own first-parent chain: its merges of members and of
+    # main, and its own commits. A member's history inside it, merges of main with their
+    # resolutions included, is the member's, judged by the member's own reviews.
     graph = []
-    for line in git(repo, "rev-list", "--parents", f"{base}..{sha}").splitlines():
+    for line in git(repo, "rev-list", "--first-parent", "--parents",
+                    f"{base}..{sha}").splitlines():
         fields = line.split()
         if not fields or not all(OID.fullmatch(field) for field in fields):
             raise ValueError("could not read the train's parents")
@@ -321,7 +332,7 @@ def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
             if len(parents) != 1:
                 raise ValueError(f"could not read a parent for coordinator commit {commit}")
             for _, path in changed_files(repo, parents[0], commit):
-                if not _coordinator_path(path):
+                if not _coordinator_path(path, repo, parents[0], commit):
                     problems.append(f"coordinator commit {commit[:12]} changes forbidden "
                                     f"path: {path}")
     inputs = sorted(p for _, p in changed_files(repo, base, sha)

@@ -102,11 +102,14 @@ class GitHub:
             query = (
                 "query($owner:String!,$name:String!){repository(owner:$owner,name:$name){"
                 'mergeQueue(branch:"main"){entries(first:100){'
-                "nodes{position pullRequest{number headRefOid}} "
+                "nodes{position enqueuer{login} pullRequest{number headRefOid editor{login}}} "
                 "pageInfo{hasNextPage}}}}}"
             )
             command = ["gh", "api", "graphql", "-f", f"query={query}",
                        "-f", f"owner={owner}", "-f", f"name={name}"]
+        elif kind == "main_red":
+            endpoint = f"repos/{self.repo}/issues?state=open&labels=main-red&per_page=100"
+            command = ["gh", "api", "--method", "GET", "--paginate", "--slurp", endpoint]
         elif kind in ("pushes", "queue_merges"):
             activity = "push" if kind == "pushes" else "merge_queue_merge"
             endpoint = (f"repos/{self.repo}/activity?ref=refs/heads/main"
@@ -204,6 +207,41 @@ def queue_entries(answer) -> list[tuple[int, str]]:
         raise ValueError("GitHub: could not read a complete queue in position order") from None
 
 
+def queue_actors(answer) -> dict[int, tuple[str, str | None]]:
+    """Who put each queued pull request in the queue, and who last edited its body (None
+    when nobody has): read so that the revert App's bot can stand in a group only as the
+    exact revert it is allowed to make. Missing or malformed data refuses."""
+    try:
+        actors = {}
+        for node in answer["data"]["repository"]["mergeQueue"]["entries"]["nodes"]:
+            enqueuer, editor = node["enqueuer"], node["pullRequest"]["editor"]
+            if not isinstance(enqueuer, dict) or not isinstance(enqueuer["login"], str) \
+                    or not enqueuer["login"]:
+                raise ValueError
+            if editor is not None and (not isinstance(editor, dict)
+                                       or not isinstance(editor["login"], str)
+                                       or not editor["login"]):
+                raise ValueError
+            actors[node["pullRequest"]["number"]] = (
+                enqueuer["login"], editor["login"] if editor else None)
+        return actors
+    except (KeyError, TypeError, ValueError):
+        raise ValueError("GitHub: could not read who queued and edited each entry") from None
+
+
+def ordinary_entry(pr: dict, actors: dict, repo_slug: str) -> None:
+    """An entry that is not an automatic revert: its head is in this repository, and the
+    revert App's bot neither wrote, queued nor last edited it, so the App's key cannot
+    land anything but the revert the queue checks it to be."""
+    if pr["head_repo"] != repo_slug:
+        raise Refused(f"#{pr['number']}: its head is not in {repo_slug}")
+    bot = os.environ.get("STOICHEIA_REVERT_BOT", "")
+    enqueuer, editor = actors.get(pr["number"], (None, None))
+    if bot and bot in (pr["author"]["login"], enqueuer, editor):
+        raise Refused(f"#{pr['number']}: the revert App's bot wrote, queued or edited a "
+                      "pull request that is not an automatic revert")
+
+
 def pull_request(answer, number: int) -> dict:
     """Read the required fields of a REST pull request without defaulting missing data."""
     try:
@@ -211,6 +249,9 @@ def pull_request(answer, number: int) -> dict:
             raise ValueError
         head = oid(answer["head"]["sha"], "pull request head")
         ref, body = answer["head"]["ref"], answer["body"]
+        head_repo = answer["head"]["repo"]["full_name"]
+        if not isinstance(head_repo, str) or not head_repo:
+            raise ValueError
         author = answer["user"]
         if not all(isinstance(v, str) and v for v in
                    (ref, author["login"], author["type"])) \
@@ -225,6 +266,7 @@ def pull_request(answer, number: int) -> dict:
                 isinstance(label["name"], str) and label["name"] for label in labels):
             raise ValueError
         return dict(number=number, head=head, ref=ref, body=body, author=author,
+                    head_repo=head_repo,
                     labels={label["name"] for label in labels},
                     state="MERGED" if answer["merged"] else answer["state"].upper(),
                     merged=oid(answer["merge_commit_sha"], "merged commit")
@@ -349,12 +391,8 @@ def preflight_steps(inner: str, head: str, base: str,
     passed = {name for name, outcome in steps if outcome in {"ok", "pass"}}
     complete = any({name + suffix for name in expected} <= passed
                    for suffix in ("", " (the commit's checks)"))
-    record = f"{head}-{base}.json"
-    reused = any(name.startswith("4. full local checks") and "record" in name
-                 and record in name and outcome in {"ok", "pass", "skip"}
-                 for name, outcome in steps)
-    if not complete and not reused:
-        raise Refused("pre-flight: steps must run the full checks or name their record")
+    if not complete:
+        raise Refused("pre-flight: steps must run the full checks")
 
 
 def preflight(repo: Path, base: str, pr: dict) -> None:
@@ -377,13 +415,19 @@ def preflight(repo: Path, base: str, pr: dict) -> None:
     if not ancestor(repo, against, base) or not ancestor(repo, against, checked):
         raise Refused("pre-flight: recorded base is not an ancestor of the head and group base")
     commit(repo, harness_commit)
-    if not ancestor(repo, harness_commit, base):
-        raise Refused("pre-flight: harness commit is not an ancestor of the group base")
+    if harness_commit not in safe_push.git(repo, "rev-list", "--first-parent",
+                                           base).split():
+        raise Refused("pre-flight: harness commit was never main (not on the first-parent "
+                      "chain of the group base)")
     inner = "\n".join(block.group().splitlines()[1:-1])
+    # The harness is named by the summary's first line, which safe_push writes; a note
+    # further down (a record that stood in, say) may quote the same words again.
+    summary = next((line for line in safe_push.visible(inner).splitlines() if line.strip()),
+                   "")
     harness = re.findall(
-        r"origin/main's `scripts/safe_push\.py` \(blob `([0-9a-f]{12,40})`\)",
-        safe_push.visible(inner))
-    if len(harness) != 1 or "full checks skipped" in inner:
+        r"origin/main's `scripts/safe_push\.py` \(blob `([0-9a-f]{12,40})`\)", summary)
+    if len(harness) != 1 or not summary.startswith("Pre-flight of ") \
+            or "full checks skipped" in inner:
         raise Refused("pre-flight: missing origin/main harness or full checks skipped")
     actual = oid(safe_push.git(repo, "rev-parse",
                               f"{harness_commit}:scripts/safe_push.py").strip(), "harness blob")
@@ -405,6 +449,37 @@ def preflight(repo: Path, base: str, pr: dict) -> None:
             raise Refused("; ".join(problems))
 
 
+def hand_written_intact(repo: Path, path: str, group: str, mb: str, train: str) -> bool:
+    """Revert and reapply a train's change to the hand-written part of `path`, the file
+    less its generated regions, by git merge-file; true when the group keeps it whole."""
+    pattern = safe_push.GENERATED_REGIONS[path]
+
+    def text(rev):
+        return pattern.sub("", safe_push.show(repo, rev, path) or "")
+
+    g, b, t = text(group), text(mb), text(train)
+    if t == b:
+        return True
+
+    def merge3(ours, ancestor, theirs):
+        with tempfile.TemporaryDirectory(prefix="queue-merge-") as tmp:
+            files = []
+            for name, value in (("ours", ours), ("base", ancestor), ("theirs", theirs)):
+                file = Path(tmp) / name
+                file.write_text(value, encoding="utf-8")
+                files.append(str(file))
+            result = safe_push.run(["git", "merge-file", "-p", "-q", *files], repo)
+        if result.returncode < 0 or result.returncode > 127:
+            raise ValueError(f"could not merge the hand-written part of {path}")
+        return result.returncode == 0, result.stdout
+
+    clean, reverted = merge3(g, t, b)
+    if not clean:
+        return False
+    clean, reapplied = merge3(reverted, b, t)
+    return clean and reapplied == g
+
+
 def intact(repo: Path, base: str, head: str, pr: dict) -> None:
     """Require reversal then reapplication to preserve the non-exempt group tree."""
     mb = merge_base(repo, pr["head"], base)
@@ -418,6 +493,11 @@ def intact(repo: Path, base: str, head: str, pr: dict) -> None:
     changed = {path for _, path in safe_push.changed_files(repo, head, reapplied)}
     lost = [path for path in set(conflicts) | set(forward_conflicts) | changed
             if not safe_push.under(path, GENERATED)]
+    # README.md and docs/PROGRAM.md are generated only between their markers: the rest,
+    # written by hand, is held to the same revert and reapply, read with the markers'
+    # regions taken out.
+    lost += [path for path in safe_push.GENERATED_REGIONS
+             if not hand_written_intact(repo, path, head, mb, pr["head"])]
     if lost:
         raise Refused(f"not overwriting: #{pr['number']} changed lines were overwritten: "
                       + ", ".join(sorted(lost)))
@@ -494,6 +574,27 @@ def failed_push(api: GitHub, run_id: int) -> tuple[str, str]:
     return found.pop()
 
 
+def red_issue_names(pages, run_id: int) -> None:
+    """Require an open issue labelled main-red that names the failed run: the issue the
+    post-merge workflow opened, which landing waits on; so an old failure, whose issue
+    was closed or whose label was cleared when main passed again, admits no revert."""
+    try:
+        if not isinstance(pages, list) or not all(isinstance(page, list) for page in pages):
+            raise ValueError
+        named = False
+        pattern = re.compile(r"/actions/runs/%d(?![0-9])" % run_id)
+        for issue in (issue for page in pages for issue in page):
+            if not isinstance(issue["body"] or "", str) or issue["state"] != "open" \
+                    or not any(label["name"] == "main-red" for label in issue["labels"]):
+                raise ValueError
+            if "pull_request" not in issue and pattern.search(issue["body"] or ""):
+                named = True
+    except (KeyError, TypeError, ValueError):
+        raise ValueError("GitHub: could not read the open main-red issues") from None
+    if not named:
+        raise Refused("auto-revert: no open main-red issue names the failed run")
+
+
 def exact_revert(repo: Path, pr: dict, api: GitHub) -> None:
     """Require the configured bot and exactly the failed run's main merge reversals."""
     expected = os.environ.get("STOICHEIA_REVERT_BOT", "")
@@ -509,7 +610,8 @@ def exact_revert(repo: Path, pr: dict, api: GitHub) -> None:
     runs = [line for line in text.splitlines() if line.startswith("Failed run:")]
     if len(runs) != 1 or not re.fullmatch(r"Failed run: [1-9][0-9]*", runs[0]):
         raise Refused("auto-revert: expected exactly one Failed run line")
-    before, after = failed_push(api, int(runs[0].split()[2]))
+    run_id = int(runs[0].split()[2])
+    before, after = failed_push(api, run_id)
     main = safe_push.git(repo, "rev-list", "--first-parent", pr["main"]).splitlines()
     start = merge_base(repo, pr["head"], pr["main"])
     if len(set(named)) != len(named) or any(sha not in main for sha in named):
@@ -530,6 +632,9 @@ def exact_revert(repo: Path, pr: dict, api: GitHub) -> None:
             expected_merges.append(sha)
     if named != expected_merges:
         raise Refused("auto-revert: Reverts lines do not equal the failed push's merges")
+    if pr["ref"] != f"revert/{after[:12]}":
+        raise Refused("auto-revert: the branch must be revert/<the failed push's 12 hex>")
+    red_issue_names(api.read("main_red"), run_id)
     with revert_checkout(repo, start) as (root, env, git):
         for sha in named:
             result = safe_push.run(["git", "-c", "core.hooksPath=/dev/null", "revert",
@@ -567,30 +672,23 @@ def tree_problems(repo: Path, render: bool = False) -> list[str]:
     root = Path(safe_push.git(repo, "rev-parse", "--show-toplevel").strip()).resolve()
     if root != repo.resolve():
         raise ValueError("--tree must name the repository root")
-    paths = safe_push.git(repo, "ls-files", "-z").split("\0")
-    if not paths or paths[-1] != "" or not any(paths):
-        raise ValueError("could not read tracked files")
-    problems, dates = [], set()
-    for rel in paths[:-1]:
-        path = repo / rel
-        if path.is_symlink():
-            raise ValueError(f"{rel}: cannot scan a symbolic link as tracked text")
-        if not path.resolve().is_relative_to(root) or not path.is_file():
-            raise ValueError(f"{rel}: cannot read a tracked file")
-        data = path.read_bytes()
-        if b"\0" in data:
-            if rel == safe_push.DECISIONS:
-                raise ValueError("the decisions page is not text")
-            continue
-        if rel == safe_push.DECISIONS:
-            for number, line in enumerate(data.decode("utf-8").splitlines(), 1):
-                date = dated_heading(line)
-                if date is not None:
-                    if date in dates:
-                        problems.append(f"{rel}:{number}: repeated dated heading: {line}")
-                    dates.add(date)
-    if safe_push.DECISIONS not in paths:
+    tracked = safe_push.git(repo, "ls-files", "-z", "--", safe_push.DECISIONS).split("\0")
+    if tracked != [safe_push.DECISIONS, ""]:
         raise ValueError("the tracked decisions page is missing")
+    path = repo / safe_push.DECISIONS
+    if path.is_symlink() or not path.resolve().is_relative_to(root) or not path.is_file():
+        raise ValueError("cannot read the decisions page")
+    data = path.read_bytes()
+    if b"\0" in data:
+        raise ValueError("the decisions page is not text")
+    problems, dates = [], set()
+    for number, line in enumerate(data.decode("utf-8").splitlines(), 1):
+        date = dated_heading(line)
+        if date is not None:
+            if date in dates:
+                problems.append(f"{safe_push.DECISIONS}:{number}: repeated dated heading: "
+                                f"{line}")
+            dates.add(date)
     if render:
         result = safe_push.run(["python3", "scripts/render.py"], repo)
         if result.returncode:
@@ -677,7 +775,9 @@ def gaps(repo: Path, base: str, entries: list[dict]) -> list[str]:
     tracked = set(safe_push.git(repo, "ls-tree", "-r", "--name-only", "-z", "HEAD").split("\0"))
     for command in gap_commands(repo, checks, deleted - tracked):
         print("gaps: " + shlex.join(command), flush=True)
-        result = safe_push.run(command, repo)
+        # The group's tests run with no token of the job in their environment.
+        env = {k: v for k, v in os.environ.items() if "TOKEN" not in k.upper()}
+        result = safe_push.run(command, repo, env=env)
         print(result.stdout, end="", flush=True)
         print(result.stderr, end="", file=sys.stderr, flush=True)
         if result.returncode:
@@ -713,13 +813,20 @@ def main(argv=None) -> int:
             checkout(repo, head)
             api = GitHub(args.repo, args.github_json)
             entries = chain(repo, base, head, api)
+            actors = queue_actors(api.read("queue"))
             for pr in entries:
                 if "auto-revert" in pr["labels"] or pr["ref"].startswith("revert/"):
+                    if pr["head_repo"] != args.repo:
+                        raise Refused(f"#{pr['number']}: its head is not in {args.repo}")
                     exact_revert(repo, pr, api)
                 else:
+                    ordinary_entry(pr, actors, args.repo)
                     preflight(repo, base, pr)
                     intact(repo, base, head, pr)
-            problems = gaps(repo, base, entries) if args.gaps else tree_problems(repo, True)
+            # The judge runs no code of the group: the generated pages' freshness is the
+            # check job's (render.py and git status, on the same group), so rule (d) here
+            # reads files only.
+            problems = gaps(repo, base, entries) if args.gaps else tree_problems(repo, False)
     except Refused as error:
         problems = [str(error)]
     except (OSError, UnicodeError, ValueError, safe_push.Refusal) as error:

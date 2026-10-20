@@ -235,7 +235,7 @@ print(json.dumps([run.judge(runs('structured total counterexamples: 0\n')),
 # A stand-in for gh: pull requests in a JSON file; checks as each test sets them; a merge
 # made in the bare origin with a merge commit, as GitHub makes it.
 FAKE_GH = r'''#!@PYTHON@
-import json, os, subprocess, sys, time
+import json, os, re, subprocess, sys, time
 
 STATE = os.environ["STOICHEIA_FAKE_GH_STATE"]
 ORIGIN = os.environ["STOICHEIA_FAKE_GH_ORIGIN"]
@@ -2300,8 +2300,11 @@ class Merge(Edge):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertEqual(self.guard(r.stdout, "unfinished work"), "ok", r.stdout)
         self.assertEqual(self.step(r.stdout, "release"), "skip", r.stdout)
+        # The merge's other reads (main's rules, and whether main is red) are not reads
+        # of the release's blockers.
         self.assertFalse([c for c in json.loads(GH_STATE.read_text())["calls"]
-                          if c[0] == "api"])
+                          if c[0] == "api" and ("blocks-release" in c[-1]
+                                                or "/issues/" in c[-1])])
         self.assertEqual(len(self.merges()), 1)
 
     def opened(self, *args, ready=True, **write) -> str:
@@ -2457,6 +2460,16 @@ class Merge(Edge):
         r = self.merge("--dry-run")
         self.assertIn("is not of the full checks by origin/main's harness", r.stdout)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_record_never_stands_in_for_a_head_that_changes_the_checks(self):
+        # CI runs a head's own copies of the checks, so only the pre-flight finds that
+        # origin/main's fail on it: the merge does not let a record stand in for that.
+        self.opened(**{"scripts/notes_check.py": "print('a new check')\n",
+                       **self.decision("`scripts/notes_check.py` is added for the test.")})
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        r = self.merge("--dry-run")
+        self.assertIn("so the full checks run again, not the record", r.stdout,
+                      r.stdout + r.stderr)
 
     def test_bad_new_head_refused_at_the_merge(self):
         self.opened()
