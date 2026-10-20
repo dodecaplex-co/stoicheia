@@ -1860,9 +1860,10 @@ findings:
   security reviews, Git's resolved work tree must match the supplied root, including
   copies using `GIT_DIR` and `GIT_WORK_TREE`. Missing or mismatched metadata fails with
   a diagnostic. Symlinks in every component below the repository root, and paths resolving
-  outside the root, are refused before reading or writing; a symlink supplied as the root
-  itself remains a supported alias. Whole renderer outputs are now scanned and any
-  count marker there is refused; this supersedes their exclusion in the entry above.
+  outside the root, are refused before an optional input is tested for presence, or a path
+  is read or written; a symlink supplied as the root itself remains a supported alias.
+  Whole renderer outputs are now scanned and any count marker there is refused; this
+  supersedes their exclusion in the entry above.
   Review counts use tracked records alone and check proposition numbers. Regressions
   cover these boundaries and run rendering from a stale marked introduction through
   to its updated source and copied page without count comments. The protected paths

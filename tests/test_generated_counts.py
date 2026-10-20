@@ -337,6 +337,27 @@ def Elements.companions : List (Lean.Name × String) := [
         self.assertEqual(target.read_text(), "[tag.example]\nkind = \"representation\"\n"
                          "meaning = \"example\"\n")
 
+    def test_optional_paths_preserve_missing_fallbacks_and_refuse_escapes(self):
+        with patch.object(render, "ROOT", self.root):
+            self.assertEqual(render.load_facts(), {})
+            self.assertEqual(render.book_intro("IV"), "")
+            self.assertIsNone(render.optional_path(self.root / "missing.md"))
+            with tempfile.TemporaryDirectory() as outside_dir:
+                with self.assertRaisesRegex(ValueError, "path is outside repository root"):
+                    render.optional_path(Path(outside_dir) / "outside.md")
+
+    def test_names_page_refuses_dangling_lean_and_accepts_missing_lean(self):
+        lean = self.root / "Elements/BookI/Prop01.lean"
+        lean.parent.mkdir(parents=True, exist_ok=True)
+        with patch.object(render, "ROOT", self.root), \
+                patch.object(render, "BOOKS", {"I": (1, {1: "Test proposition"})}), \
+                patch.object(render.heath, "lean_path", return_value=lean):
+            page = render.names_page({}, {})
+            self.assertIn("Test proposition", page)
+            lean.symlink_to(self.root / "missing-lean.lean")
+            with self.assertRaisesRegex(ValueError, "Elements/BookI/Prop01.lean: symlink"):
+                render.names_page({}, {})
+
     def test_all_other_tracked_markdown_can_hold_counts(self):
         paths = ["docs/reports/gaps-book-I.md", "docs/reports/overlaps.md",
                  "Certificate/FIELDS.md", "tests/model/MODEL.md", "a folder/notes.md"]
@@ -548,6 +569,33 @@ class GitCountTests(unittest.TestCase):
                                 or "outside repository root" in message, message)
                 self.assertEqual({output: output.read_bytes() for output in outputs}, before)
                 self.assertEqual(target.read_bytes() if target.exists() else None, target_before)
+
+    def test_render_refuses_dangling_optional_inputs(self):
+        from negative_tests import count_source_copy
+
+        paths = ("facts.json", "figures/I/01-idea.svg", "figures/I/01.svg",
+                 "mishnah/I/01.md", "reading/I/01.md", "mishnah/intro/I.md",
+                 "docs/reports/overlaps.md", "docs/reports/gaps-book-I.md")
+        for rel in paths:
+            with self.subTest(path=rel), count_source_copy() as (root, env), \
+                    tempfile.TemporaryDirectory() as outside_dir:
+                path = root / rel
+                path.unlink()
+                target = (Path(outside_dir) / "missing-input"
+                          if rel == "facts.json" else root / "missing-input")
+                path.symlink_to(target)
+                outputs = [root / name for name in
+                           ("README.md", "docs/PROGRAM.md", "CERTIFICATE.md", "GRAPH.md")]
+                outputs.extend((root / "book").rglob("*.md"))
+                before = {output: output.read_bytes() for output in outputs}
+                result = subprocess.run([sys.executable, "scripts/render.py"], cwd=root,
+                                        env=env, capture_output=True, text=True)
+                message = result.stdout + result.stderr
+                self.assertNotEqual(result.returncode, 0, message)
+                self.assertIn(rel, message)
+                self.assertTrue("symlink is forbidden" in message
+                                or "outside repository root" in message, message)
+                self.assertEqual({output: output.read_bytes() for output in outputs}, before)
 
 
 if __name__ == "__main__":

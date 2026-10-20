@@ -211,6 +211,11 @@ def write_text(path, text):
     generated_counts.repository_path(ROOT, path).write_text(text)
 
 
+def optional_path(path):
+    path = generated_counts.repository_path(ROOT, path)
+    return path if path.exists() else None
+
+
 def guarded_review_path(book, n):
     return generated_counts.repository_path(ROOT, heath.review_path(book, n))
 
@@ -231,8 +236,8 @@ def load_review(book, n, *, require_stamp=True):
 
 
 def load_facts():
-    path = ROOT / "facts.json"
-    if not path.exists():
+    path = optional_path(ROOT / "facts.json")
+    if path is None:
         return {}
     return {p["ref"]: p for p in json.loads(read_text(path))["propositions"]}
 
@@ -245,7 +250,7 @@ def load_records():
     records = {}
     for book, count in heath.BOOKS.items():
         for n in range(1, count + 1):
-            exists = guarded_review_path(book, n).exists()
+            exists = optional_path(heath.review_path(book, n)) is not None
             records[f"{book}.{n}"] = (load_review(book, n, require_stamp=False)
                                       if exists else None)
     return records
@@ -996,7 +1001,7 @@ def field_table(book, n, p, record, attached, docs):
                         "proposition.")
             else:
                 text = f"{name} already {'contains' if one else 'contain'} this proposition."
-            if (ROOT / "docs" / "reports" / "overlaps.md").exists():
+            if optional_path(ROOT / "docs" / "reports" / "overlaps.md") is not None:
                 text += " See [the overlap catalogue](../../docs/reports/overlaps.md)."
             rows.append(("Overlap", text))
         rv = record["review"]
@@ -1407,9 +1412,9 @@ def page(book, n, count, titles, facts, docs, records):
     attached_refs = [(a, heath_refs(porism_text, book) if a.get("kind") == "porism"
                       else heath_refs([], book)) for a in attached]
     nav = page_nav(book, n, count)
-    figure = ROOT / "figures" / book / f"{n:02d}.svg"
-    mishnah = ROOT / "mishnah" / book / f"{n:02d}.md"
-    idea = ROOT / "figures" / book / f"{n:02d}-idea.svg"
+    figure = optional_path(ROOT / "figures" / book / f"{n:02d}.svg")
+    mishnah = optional_path(ROOT / "mishnah" / book / f"{n:02d}.md")
+    idea = optional_path(ROOT / "figures" / book / f"{n:02d}-idea.svg")
     # A proposition Heath prints in square brackets (III.12) opens its bracket before
     # the enunciation, to close after "Q. E. D." at the end of the proof.
     opening = "[" if heath.bracketed(book, n) else ""
@@ -1418,14 +1423,14 @@ def page(book, n, count, titles, facts, docs, records):
     if opening:
         out += [BRACKET_NOTES.get((book, n), BRACKET_DEFAULT), ""]
     out += [in_lean_line(p, record, book, n), ""]
-    if idea.exists():
+    if idea is not None:
         caption = svg_desc(idea)
         alt = caption.replace('"', "&quot;")
         out += [f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}-idea.svg\" "
                 f"alt=\"{alt}\" width=\"420\"></p>", "",
                 f"<p align=\"center\"><em>{caption}</em></p>", ""]
     out += ["## Euclid's proof", ""]
-    if figure.exists():
+    if figure is not None:
         note = figure_note(record)
         alt = (f"Euclid's figure for Proposition {ref}, with Heath's letters" + (
             f". {note}" if note else "")).replace('"', "&quot;")
@@ -1450,13 +1455,14 @@ def page(book, n, count, titles, facts, docs, records):
     out += [lean_listing(book, n, facts), "",
             "## What it rests on", "", rests_on(p, docs, 2, book, refs, attached_refs)]
     out += ["## Mishnah", ""]
-    if mishnah.exists():
+    if mishnah is not None:
         out += [MISHNAH_LEAD, "", generated_counts.without_markers(read_text(mishnah).strip()), ""]
     else:
         out += ["_Commentary to come._", ""]
     # A line or three from docs/reading.md, chosen for this proposition; no file, no section.
-    reading = ROOT / "reading" / book / f"{n:02d}.md"
-    further = generated_counts.without_markers(read_text(reading).strip()) if reading.exists() else ""
+    reading = optional_path(ROOT / "reading" / book / f"{n:02d}.md")
+    further = (generated_counts.without_markers(read_text(reading).strip())
+               if reading is not None else "")
     if further:
         out += ["## Further reading", "", further, ""]
     out += [nav, ""]
@@ -1483,8 +1489,9 @@ def book_intro(book):
     the book is about, and, once, what its pages share (the house words, the shared steps
     and where Postulate 5 comes in), so that no page has to say it again. Empty if the
     book has none yet."""
-    path = ROOT / "mishnah" / "intro" / f"{book}.md"
-    return generated_counts.without_markers(read_text(path).strip()) if path.exists() else ""
+    path = optional_path(ROOT / "mishnah" / "intro" / f"{book}.md")
+    return (generated_counts.without_markers(read_text(path).strip())
+            if path is not None else "")
 
 
 def ref_ranges(refs):
@@ -1662,7 +1669,7 @@ def book_summary(book, facts, records, href, postulate5=True, up=""):
 
 def index(book, count, titles, facts, records):
     start = f"Start with the [{in_words(front_sections(book))}](front.md)."
-    if (ROOT / "docs" / "reports" / f"gaps-book-{book}.md").exists():
+    if optional_path(ROOT / "docs" / "reports" / f"gaps-book-{book}.md") is not None:
         start += (" What Euclid takes for granted along the way is gathered in "
                   f"[a catalogue](../../docs/reports/gaps-book-{book}.md).")
     # The key names only the marks the table uses: a finished book shows ✅ alone.
@@ -1850,7 +1857,7 @@ def certificate_intro(facts, records):
     else:
         shared += "."
     gaps = [f"[Book {b}](docs/reports/gaps-book-{b}.md)" for b in BOOKS
-            if (ROOT / "docs" / "reports" / f"gaps-book-{b}.md").exists()]
+            if optional_path(ROOT / "docs" / "reports" / f"gaps-book-{b}.md") is not None]
     catalogues = (f", and the steps Euclid takes without a word are gathered, proposition "
                   f"by proposition, in the catalogues for {and_list(gaps)}" if gaps else "")
     assumed = and_list(assumed_definitions(facts)) or "none"
@@ -2404,10 +2411,11 @@ def names_page(facts, records):
             p = facts.get(ref)
             record = records.get(ref)
             page = f"{book}/{n:02d}.md"
-            path = heath.lean_path(book, n)
-            here = set(DECLARATION.findall(read_text(path))) if path.exists() else set()
+            path = optional_path(heath.lean_path(book, n))
+            here = set(DECLARATION.findall(read_text(path))) if path is not None else set()
+            module_path = path or heath.lean_path(book, n)
             module = (f"[`Elements.Book{book}.Prop{n:02d}`]"
-                      f"(../{path.relative_to(ROOT).as_posix()})")
+                      f"(../{module_path.relative_to(ROOT).as_posix()})")
             rests = f"[what it rests on]({page}#what-it-rests-on)"
             scope = SCOPE_WORD[record["statement"]["scope"]] if record else ""
             entries = [(p or {"name": f"Book{book}.Prop{n}", "status": "sketched"},
