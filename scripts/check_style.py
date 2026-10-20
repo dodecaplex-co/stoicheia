@@ -2897,6 +2897,26 @@ def miter_joins(run, half: float, limit: float, closed: bool):
                (b[0] + half * mx, b[1] + half * my), b]
 
 
+def square_caps(run, half: float, closed: bool):
+    """The filled rectangles at open ends, before transforms. A run of no length,
+    open or closed, paints a square centred on its point."""
+    points = [p for i, p in enumerate(run) if i == 0 or p != run[i - 1]]
+    if len(points) == 1:
+        x, y = points[0]
+        corners = [(x - half, y - half), (x + half, y - half),
+                   (x + half, y + half), (x - half, y + half)]
+        yield corners + corners[:1]
+    elif not closed:
+        for a, b in ((points[0], points[1]), (points[-1], points[-2])):
+            k = half / math.dist(a, b)
+            dx, dy = (a[0] - b[0]) * k, (a[1] - b[1]) * k
+            corners = [(a[0] - dy, a[1] + dx),
+                       (a[0] + dx - dy, a[1] + dy + dx),
+                       (a[0] + dx + dy, a[1] + dy - dx),
+                       (a[0] + dy, a[1] - dx)]
+            yield corners + corners[:1]
+
+
 def strokes(root):
     """(what it is, its points, half its width) for each stroke a figure draws, as a run
     of straight pieces: a line, a polyline, a polygon or a rect's outline (its corners
@@ -2904,8 +2924,8 @@ def strokes(root):
     a circle or an ellipse in short straight pieces; transforms applied, the width taken
     at the most the transform stretches it, a dashed stroke read whole, and a stroke SVG
     does not draw (a circle of no radius, a rect of no width, a run of no length with
-    butt caps) left out (S26). Mitre joins add closed filled outlines with None in place
-    of half the width: their outlines already include it."""
+    butt caps) left out (S26). Mitre joins and square caps add closed filled outlines
+    with None in place of half the width: their outlines already include it."""
     for el, own, eff, m, _ in placed(root):
         t = tag(el)
         w = length(eff.get("stroke-width"))
@@ -2938,15 +2958,18 @@ def strokes(root):
         dashed = (eff.get("stroke-dasharray") or "none").strip().lower() != "none"
         kind = "a dashed line" if dashed and t == "line" else \
             ("an " if t == "ellipse" else "a ") + t
-        butt = (eff.get("stroke-linecap") or "butt").strip() == "butt"
+        cap = (eff.get("stroke-linecap") or "butt").strip()
         miter = (eff.get("stroke-linejoin") or "miter").strip() == "miter"
         limit = length(eff.get("stroke-miterlimit"))
         limit = 4.0 if limit is None else limit
         if t != "path":
             closed = [t in ("polygon", "rect", "circle", "ellipse")] * len(runs)
         for run, shut in zip(runs, closed):
-            if len(run) > 1 and not (butt and all(p == run[0] for p in run)):
+            if len(run) > 1 and not (cap == "butt" and all(p == run[0] for p in run)):
                 yield kind, [at(m, x, y) for x, y in run], half
+                if cap == "square":
+                    for outline in square_caps(run, w / 2, shut):
+                        yield kind, [at(m, x, y) for x, y in outline], None
                 if miter and t in ("polyline", "polygon", "path", "rect"):
                     for join in miter_joins(run, w / 2, limit, shut):
                         yield kind, [at(m, x, y) for x, y in join], None
@@ -2992,7 +3015,7 @@ def hull_gap(hull, a, b) -> float:
 
 
 def nearest(hull, pieces, spots) -> tuple[float, str] | None:
-    """How near a stroke (less half its width), its filled mitre joins, or a dot (less
+    """How near a stroke (less half its width), its filled joins and caps, or a dot (less
     its radius) comes to a letter's hull, and what it is; None if none comes within CLEAR."""
     xs, ys = [p[0] for p in hull], [p[1] for p in hull]
     best = None

@@ -28,8 +28,9 @@ it, put to the script's own patterns and functions:
   letter, taking a width and a radius at the most it stretches them; measures a letter
   upright or italic, and at its size, as its figure sets it, and places it by its anchor
   and the whole label's advance, with dx and dy before transforms; reads equivalent
-  widths alike, mitre joins with their inherited style and limit, and round-capped
-  single-point closed subpaths. Both figure entry points require its findings.
+  widths alike, mitre joins with their inherited style and limit, square caps by their
+  corners before transforms, and caps on single-point closed subpaths. Both figure entry
+  points require its findings.
   And it finds a letter drawn twice, or twice in one of
   several figures side by side, or across the cut between them, and reads A and A′ as two
   letters; and it names a line dashed by itself or by its group as a dashed line.
@@ -997,6 +998,78 @@ class Clearance(unittest.TestCase):
                         self.assertEqual(bool(found), want, found)
                         if want:
                             self.assertIn("stands 0.3 from", found[0])
+
+    def test_square_caps(self):
+        """A square cap's corner approaches H; round and butt caps clear it."""
+        shapes = (
+            '<line x1="163.2" y1="102.5" x2="183.2" y2="102.5" {attrs}/>',
+            '<line x1="183.2" y1="102.5" x2="163.2" y2="102.5" {attrs}/>',
+            '<polyline points="163.2,102.5 163.2,102.5 183.2,102.5" {attrs}/>',
+            '<path d="M163.2 102.5 L183.2 102.5" {attrs}/>',
+            '<line x1="163.2" y1="102.5" x2="163.2" y2="102.5" {attrs}/>',
+            '<path d="M163.2 102.5 L163.2 102.5" {attrs}/>',
+            '<path d="M163.2 102.5 Z" {attrs}/>',
+            '<path d="M250 200 L260 200 M163.2 102.5 Z" {attrs}/>',
+        )
+        for shape in shapes:
+            for cap in ("square", "round", "butt"):
+                for placement in ("attribute", "style", "inherited"):
+                    for transform in ("", "rotate(30,150,100)",
+                                      "translate(10,10) scale(1.1,1.2)"):
+                        with self.subTest(shape=shape, cap=cap, placement=placement,
+                                          transform=transform):
+                            caps = (f'style="stroke-linecap:{cap}"' if placement == "style"
+                                    else f'stroke-linecap="{cap}"')
+                            attrs = 'stroke="#222222" stroke-width="3" fill="none"'
+                            drawn = (f'<g {caps}>{shape.format(attrs=attrs)}</g>'
+                                     if placement == "inherited"
+                                     else shape.format(attrs=f"{attrs} {caps}"))
+                            found = s26_findings(
+                                f'<g transform="{transform}">{drawn}'
+                                + letter("H", font_style="normal", size=14) + '</g>', "")
+                            self.assertEqual(bool(found), cap == "square", found)
+                            if cap == "square":
+                                gap = "1.6" if "scale" in transform else "1.4"
+                                self.assertIn(f"stands {gap} from", found[0])
+
+    def test_square_cap_boundaries(self):
+        """Caps respect local style and open ends; a moveto alone paints nothing."""
+        shape = ('<line x1="163.2" y1="102.5" x2="183.2" y2="102.5" '
+                 'style="stroke-linecap:{cap}"/>')
+        for drawn, want in (
+                (shape.format(cap="round"), False),
+                (shape.format(cap="butt"), False),
+                ('<g stroke-linecap="butt">' + shape.format(cap="square") + '</g>', True),
+                ('<path d="M163.2 102.5"/>', False),
+                ('<path d="M163.2 102.5 L183.2 102.5 L183.2 122.5 Z"/>', False),
+                ('<path d="M163.2 102.5 L183.2 102.5 L183.2 122.5 L163.2 102.5"/>', True),
+                ('<polygon points="163.2,102.5 183.2,102.5 183.2,122.5"/>', False)):
+            with self.subTest(drawn=drawn):
+                found = s26_findings(
+                    '<g stroke="#222222" stroke-width="3" stroke-linecap="square" '
+                    f'stroke-linejoin="round" fill="none">{drawn}</g>',
+                    letter("H", font_style="normal", size=14))
+                self.assertEqual(bool(found), want, found)
+
+    def test_square_caps_idea(self):
+        """The reviewer's square cap fails the complete idea-figure check alone."""
+        for cap in ("square", "round", "butt"):
+            with self.subTest(cap=cap):
+                root = ET.fromstring(
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+                    '<title>I.1 at a glance</title><desc>A straight line [black].</desc>'
+                    '<text x="150" y="100" font-size="14" font-style="normal" '
+                    'fill="#222222">H</text>'
+                    '<line x1="163.2" y1="102.5" x2="183.2" y2="102.5" '
+                    f'stroke="#222222" stroke-width="3" stroke-linecap="{cap}"/></svg>')
+                with patch.object(style, "svg_root", return_value=root), \
+                        patch.object(style, "drawn_letters", return_value={"H"}), \
+                        patch.object(style, "failures", []), \
+                        patch.object(style, "reports", defaultdict(list)):
+                    style.check_idea(style.ROOT / "figures" / "I" / "01-idea.svg", "I.1", True)
+                    want = [("S26", "letter H at (150, 100) stands 1.4 from a line, "
+                             "under 2: move it clear")] if cap == "square" else []
+                    self.assertEqual([(r, m) for r, _, _, m in style.failures], want)
 
     def test_zero_length_subpaths(self):
         """A closed point with round caps is drawn like a zero-length line."""
