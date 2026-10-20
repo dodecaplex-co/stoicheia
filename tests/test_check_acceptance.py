@@ -237,6 +237,8 @@ class BaselineCopy(unittest.TestCase):
               "tests/test_check_acceptance.py", "tests/model/run.py",
               "tests/model/search.py", "tests/model/hyperbolic.py",
               "Certificate/Facts.lean", "review/SCHEMA.md", "review/terms.toml")
+    # The lock must contain each forbidden circle rule, with the same type in the facts.
+    axiom_types = {name: "fixture statement" for name in ca.cf.FORBIDDEN_CIRCLE_RULES}
 
     @staticmethod
     def write(root: Path, name: str, text: str) -> None:
@@ -289,7 +291,7 @@ class BaselineCopy(unittest.TestCase):
                     self.assertEqual((main / name).exists(), absent != "main", name)
 
     def certificate(self, root: Path, word: str, count: int) -> dict:
-        facts = {"axiom_types": {}, "vocabulary": {"word": word}}
+        facts = {"axiom_types": self.axiom_types, "vocabulary": {"word": word}}
         entries = {"I.1": (None, {"axioms": [f"rule{i}" for i in range(count)]})}
         _, errors = ca.captured(ca.cf.check_lock, facts, root / "Certificate/axioms.lock")
         _, more = ca.captured(ca.cf.check_expectations, entries,
@@ -308,7 +310,7 @@ class BaselineCopy(unittest.TestCase):
                 for tree, word, count in ((main, "main definition", 1),
                                           (pr, pr_word, pr_count)):
                     self.write(tree, "Certificate/axioms.lock",
-                               f'[axioms]\n[vocabulary]\nword = "{word}"\n')
+                               ca.cf.render_lock(self.axiom_types, {"word": word}))
                     self.write(tree, "tests/certificate_expectations.json", json.dumps({
                         "expectations": [{"ref": "I.1", "field": "axioms",
                                           "count": {"prefix": "rule", "is": count},
