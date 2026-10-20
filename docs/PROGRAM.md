@@ -78,7 +78,7 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 1 | Precision: certificate, review records, wording, layout, evidence, overlaps, Book III's reading | done, 17 Oct |
 | 1b | Standards: AGENTS.md, STYLE, FORMALIZATION, WORKFLOW, templates, `check_style.py` | done, 17 Oct |
 | — | Release of Book III | [done, 17 Oct](https://github.com/jackChallis/stoicheia/releases/tag/book-III); Book I and II notes corrected |
-| 2 | I.40, I.45, II.1, II.14 in full generality | done, 19 Oct: proved in Staging ([#88]), and in the edition with their records ([#19], [#102](https://github.com/jackChallis/stoicheia/pull/102)) |
+| 2 | I.40, I.45, II.1, II.14 in full generality | done, 19 Oct: proved in Staging ([#88]), and in the edition with their records ([#19], [#102](https://github.com/jackChallis/stoicheia/pull/102)); I.45 and II.14 restricted from 20 Oct, for figures supplied with a checked division, until the proof from the outline ([#116](https://github.com/jackChallis/stoicheia/issues/116)) |
 | 3 | Arcs and segments; III.24 | proved in Staging ([#89]); the move into `Elements/` next ([#25]) |
 | 4 | III.14, III.15, III.25 | proved in Staging ([#90]); the move into `Elements/` next ([#28]) |
 | 5 | Consolidation review of all 99 | |
@@ -134,7 +134,7 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
 
 - **The current scope decision for I.45 and II.14** is the owner's interim disclosure of
   20 October under #116; the [decision entry](briefs/0002-decisions.md#20-october-2026)
-  supersedes the earlier full-scope call. The record changes follow on a stacked text branch.
+  supersedes the earlier full-scope call, and both records say so.
 - **Stage 2 is in the edition** (#19): I.40, I.45, II.1 and II.14 with their companions
   beside them, certified, their records full and re-stamped, the words in the foundations
   with the lock, and the gap entries for I.45's and II.14's tacit step.
