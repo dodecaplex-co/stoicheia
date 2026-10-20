@@ -9,7 +9,7 @@ kind = "euclid"
 at = "and let the figure be drawn"
 kind = "helper"
 helper = "Parallelogram.figure"
-note = "Euclid leaves the diameter and two parallels to the familiar figure; `Parallelogram.figure` draws them by Postulate 1 and I.31, finds their meetings by `Prop30.meet`, proves the further parallels by I.30 and orders the points by `Parallel.between`. `Parallelogram.complements` uses I.30 to prove AG and GE are parallelograms; the divisions of AF and CE use them, and I.34 uses AG to identify HG with AC for the square DG."
+note = "Euclid leaves the diameter and two parallels to the familiar figure; `Parallelogram.figure` draws them by Postulate 1 and I.31, finds their meetings by `BookI.Prop30.meet`, proves the further parallels by I.30 and orders the points by `Parallel.between`. `Parallelogram.complements` uses I.30 to prove AG and GE are parallelograms; the divisions of AF and CE use them, and I.34 uses AG to identify HG with AC for the square DG."
 
 [[passage]]
 at = "therefore the whole AF is equal to the whole CE"

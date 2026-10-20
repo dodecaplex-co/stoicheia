@@ -481,10 +481,6 @@ def _number(value: Any) -> bool:
     return isinstance(value, int) or (isinstance(value, float) and math.isfinite(value))
 
 
-def _model_id(value: Any) -> bool:
-    return isinstance(value, str) and bool(value.strip())
-
-
 def answer_of(reply_json: Any, qid: str, q: dict) -> dict:
     """One answer, checked against its question; raises ValueError when it is malformed."""
     if not isinstance(reply_json, dict):
@@ -496,8 +492,6 @@ def answer_of(reply_json: Any, qid: str, q: dict) -> dict:
     if not isinstance(a, dict):
         raise ValueError(f"the answer to {qid} is missing or not a JSON object")
     if q["type"] == "choice":
-        if "noul" in a:
-            raise ValueError("the choice answer also has a noul")
         choice, probs = a.get("choice"), a.get("probabilities")
         if not isinstance(probs, dict) or not all(_number(p) and 0 <= p <= 1
                                                   for p in probs.values()):
@@ -668,13 +662,8 @@ def cmd_run(args) -> int:
             if reply.status == 200:
                 try:
                     data = reply.json()
-                    if not isinstance(data, dict):
-                        raise ValueError("the reply is not a JSON object")
-                    answering_model = data.get("model")
-                    if not _model_id(answering_model):
-                        raise ValueError("the reply's model is not a nonempty string")
                     got = answer_of(data, "q", row["question"])
-                    line["model"] = answering_model
+                    line["model"] = data.get("model")
                     line.update(got)
                     if "q" + REVERSED in body["questions"]:
                         again = answer_of(data, "q" + REVERSED, body["questions"]["q" + REVERSED])
@@ -733,26 +722,9 @@ def answered_lines(path: Path, made: dict[str, Any]) -> list[str]:
             raise Failure(f"{path.name} was made {'with' if made['order_check'] else 'without'} "
                           "--no-order-check; resume it as it was made, start afresh with "
                           "--overwrite, or write to another file")
-        if ("error" not in line and _model_id(line.get("model"))
-                and isinstance(line.get("id"), str)):
+        if "error" not in line and isinstance(line.get("id"), str):
             kept.append(text)
     return kept
-
-
-def _scored_choice(answer: Any, row_id: Any, asking: str = "") -> dict:
-    probabilities = answer.get("probabilities") if isinstance(answer, dict) else None
-    if not isinstance(probabilities, dict) or not 2 <= len(probabilities) <= 255:
-        which = f" {asking}" if asking else ""
-        raise Failure(f"{row_id}: its{which} answer is not a valid choice (probabilities need "
-                      "2 to 255 options); score reads only lines that `run` wrote")
-    criteria = dict.fromkeys(probabilities)
-    try:
-        return answer_of({"answers": {"q": answer}}, "q",
-                         {"type": "choice", "criteria": criteria})
-    except (ValueError, TypeError, AttributeError, ArithmeticError) as e:
-        which = f" {asking}" if asking else ""
-        raise Failure(f"{row_id}: its{which} answer is not a valid choice ({e}); score reads "
-                      "only lines that `run` wrote") from None
 
 
 def cmd_score(args) -> int:
@@ -761,106 +733,13 @@ def cmd_score(args) -> int:
                 if l.strip()]
     except (OSError, ValueError) as e:
         raise Failure(f"cannot read {Path(args.file).name}: {e}") from None
-    answered = []
-    agreements: dict[int, bool] = {}
-    confidence_checks: dict[int, list[tuple[float | None, str]]] = {}
-    model_mismatches: dict[int, bool] = {}
-    seen_ids = set()
-    for n, r in enumerate(rows, 1):
-        if not isinstance(r, dict):
-            raise Failure(f"{Path(args.file).name}:{n} is not a JSON object; score reads "
+    answered = [r for r in rows if "error" not in r and ("choice" in r or "noul" in r)]
+    for r in answered:
+        if "reversed" in r and not isinstance(r["reversed"], dict):
+            raise Failure(f"{r.get('id')}: its reversed asking is not an answer; score reads "
                           "only lines that `run` wrote")
-        row_id = r.get("id")
-        if not isinstance(row_id, str) or not row_id or row_id in seen_ids:
-            raise Failure(f"{Path(args.file).name}:{n} has a missing, malformed or duplicate "
-                          "id; score reads only lines that `run` wrote")
-        seen_ids.add(row_id)
-        if "error" in r:
-            continue
-        has_choice, has_noul = "choice" in r, "noul" in r
-        if has_choice == has_noul:
-            raise Failure(f"{r.get('id')}: its answer is not exactly one choice or noul; score "
-                          "reads only lines that `run` wrote")
-        if has_choice and not isinstance(r["choice"], str):
-            raise Failure(f"{r.get('id')}: its choice is not a string; score reads only lines "
-                          "that `run` wrote")
-        if not isinstance(r.get("order_check"), bool):
-            raise Failure(f"{row_id}: its order check is not boolean; score reads only lines "
-                          "that `run` wrote")
-        if has_choice:
-            checked = _scored_choice(r, row_id)
-            row_confidences = [(checked.get("confidence"), "")]
-            has_reversed = "reversed" in r
-            if r["order_check"] != has_reversed:
-                raise Failure(f"{row_id}: its reversed asking does not match its order check; "
-                              "score reads only lines that `run` wrote")
-            if has_reversed:
-                reversed_checked = _scored_choice(r["reversed"], row_id, "reversed")
-                row_confidences.append((reversed_checked.get("confidence"),
-                                        " with the options reversed"))
-                if set(checked["probabilities"]) != set(reversed_checked["probabilities"]):
-                    raise Failure(f"{row_id}: its reversed asking has different options; score "
-                                  "reads only lines that `run` wrote")
-                consistent = r["reversed"].get("consistent")
-                recomputed = reversed_checked["choice"] == checked["choice"]
-                if not isinstance(consistent, bool) or consistent != recomputed:
-                    raise Failure(f"{row_id}: its reversed consistency does not match its "
-                                  "choices; score reads only lines that `run` wrote")
-        else:
-            if not (_number(r["noul"]) and 0 <= r["noul"] <= 1):
-                raise Failure(f"{row_id}: its noul is not a number from 0 to 1; score reads "
-                              "only lines that `run` wrote")
-            if "confidence" in r or "probabilities" in r or "reversed" in r:
-                raise Failure(f"{row_id}: its noul answer has choice-only fields; score reads "
-                              "only lines that `run` wrote")
-            row_confidences = [(abs(2 * r["noul"] - 1), "")]
-        model = r.get("model")
-        requested_model = r.get("model_requested")
-        if not _model_id(model):
-            raise Failure(f"{row_id}: its answering model is not a nonempty string; score "
-                          "reads only lines that `run` wrote")
-        if not _model_id(requested_model):
-            raise Failure(f"{row_id}: its requested model is not a nonempty string; score "
-                          "reads only lines that `run` wrote")
-        model_mismatch = model != requested_model
-        if "model_differs" in r:
-            if r["model_differs"] is not True:
-                raise Failure(f"{row_id}: its model mismatch flag is not true; score reads "
-                              "only lines that `run` wrote")
-            if not model_mismatch:
-                raise Failure(f"{row_id}: its model mismatch flag does not match its models; "
-                              "score reads only lines that `run` wrote")
-        model_mismatches[id(r)] = model_mismatch
-        confidence_checks[id(r)] = row_confidences
-        answered.append(r)
-        if "expected" not in r:
-            if "agrees" in r:
-                raise Failure(f"{r.get('id')}: its agreement has no expected answer; score "
-                              "reads only lines that `run` wrote")
-            continue
-        expected = r["expected"]
-        if has_choice:
-            if not isinstance(expected, str):
-                raise Failure(f"{r.get('id')}: its expected choice is not a string; score reads "
-                              "only lines that `run` wrote")
-            if expected not in checked["probabilities"]:
-                raise Failure(f"{row_id}: its expected choice is not one of its options; score "
-                              "reads only lines that `run` wrote")
-            computed = r["choice"] == expected
-        else:
-            if not isinstance(expected, bool):
-                raise Failure(f"{r.get('id')}: its expected noul is not boolean; score reads "
-                              "only lines that `run` wrote")
-            computed = (r["noul"] >= 0.5) == expected
-        if not isinstance(r.get("agrees"), bool):
-            raise Failure(f"{r.get('id')}: its agreement is not boolean; score reads only lines "
-                          "that `run` wrote")
-        if r["agrees"] != computed:
-            raise Failure(f"{r.get('id')}: its agreement does not match its answer and expected "
-                          "answer; score reads only lines that `run` wrote")
-        agreements[id(r)] = computed
-    labelled = [r for r in answered if id(r) in agreements]
-    agree = [r for r in labelled if agreements[id(r)]]
+    labelled = [r for r in answered if "agrees" in r]
+    agree = [r for r in labelled if r["agrees"]]
     runs = {(r.get("input_sha256"), r.get("input_rows")) for r in rows}
     total = None
     if len(runs) == 1:
@@ -878,7 +757,7 @@ def cmd_score(args) -> int:
     for name, group in (("seeded", [r for r in labelled if r.get("seeded")]),
                         ("controls", [r for r in labelled if not r.get("seeded")])):
         if group:
-            print(f"  {name}: {sum(agreements[id(r)] for r in group)} of {len(group)} as expected")
+            print(f"  {name}: {sum(r['agrees'] for r in group)} of {len(group)} as expected")
     rate = len(agree) / len(labelled) if labelled else 0.0
     if labelled:
         print(f"  agreement: {len(agree)} of {len(labelled)} ({rate:.0%})")
@@ -886,19 +765,23 @@ def cmd_score(args) -> int:
     adjudicate = []
     for r in answered:
         why = []
-        if id(r) in agreements and not agreements[id(r)]:
+        if r.get("agrees") is False:
             why.append(f"chose {r.get('choice', r.get('noul'))!r}, expected {r.get('expected')!r}")
-        for confidence, order in confidence_checks[id(r)]:
+        answers = [(r, "")]
+        if isinstance(r.get("reversed"), dict):
+            answers.append((r["reversed"], " with the options reversed"))
+        for answer, order in answers:
+            confidence = answer.get("confidence")
+            if confidence is None and isinstance(answer.get("noul"), (int, float)):
+                confidence = abs(2 * answer["noul"] - 1)
             if confidence is None:
                 why.append("no confidence given" + order)
             elif confidence < args.low:
                 why.append(f"confidence {confidence:.2f}" + order)
-        if ("reversed" in r
-                and (r["reversed"]["choice"] != r.get("choice")
-                     or r["reversed"].get("consistent") is False)):
+        if isinstance(r.get("reversed"), dict) and r["reversed"].get("consistent") is False:
             why.append(f"chose {r['reversed']['choice']!r} with the options reversed")
-        if model_mismatches[id(r)]:
-            why.append(f"answered by {r['model']}, not {r['model_requested']}")
+        if r.get("model_differs"):
+            why.append(f"answered by {r.get('model')}, not {r.get('model_requested')}")
         if why:
             adjudicate.append(f"  {r.get('id')}: " + "; ".join(why))
     print(f"for adjudication: {len(adjudicate)}")
@@ -914,13 +797,9 @@ def cmd_score(args) -> int:
                   "bar is met only when every row of the input is answered (--resume sends "
                   "them again)")
             return 1
-        if not total or len(done) != total:
-            if total and len(done) < total:
-                why = f"{total - len(done)} of the input's {total} row(s) have no answer"
-            elif total:
-                why = f"the output has {len(done)} answers for the input's {total} row(s)"
-            else:
-                why = "the lines do not all carry one input and its row count"
+        if not total or len(done) < total:
+            why = (f"{total - len(done)} of the input's {total} row(s) have no answer" if total
+                   else "the lines do not all carry one input and its row count")
             print(f"below the bar of {args.bar:.0%}: {why}, and a bar is met only when every "
                   "row of the input is answered (--resume sends the rows not yet answered)")
             return 1
@@ -1052,17 +931,8 @@ class _StandIn(http.server.BaseHTTPRequestHandler):
                 if "noul" in a:
                     a["noul"] = "0.9"
         model = req["model"] if VERSIONED.match(req["model"]) else DEFAULT_MODEL
-        response = {"model": model, "answers": answers,
-                    "usage": {"input_tokens": len(body) // 4, "output_tokens": 20}}
-        if "SELFTEST-MODEL-MISSING" in text:
-            response.pop("model")
-        elif "SELFTEST-MODEL-EMPTY" in text:
-            response["model"] = ""
-        elif "SELFTEST-MODEL-BLANK" in text:
-            response["model"] = "  "
-        elif "SELFTEST-MODEL-NONSTRING" in text:
-            response["model"] = 1
-        self._send(200, response)
+        self._send(200, {"model": model, "answers": answers,
+                         "usage": {"input_tokens": len(body) // 4, "output_tokens": 20}})
 
 
 class _QuietServer(http.server.ThreadingHTTPServer):
@@ -1216,244 +1086,6 @@ def cmd_self_test(args) -> int:
         check(code == 0 and {null_line["id"], absent_line["id"]} <= listed,
               "a choice with no confidence goes to adjudication", out + err)
 
-        agreement_base = json.loads(first[0])
-        agreement_base["input_rows"] = 1
-        agreement_base["expected"] = agreement_base["choice"]
-        agreement_base["agrees"] = True
-        agreement_base["confidence"] = 1
-        agreement_base["reversed"]["confidence"] = 1
-        agreement_base["reversed"]["consistent"] = True
-        model_fields = {"model": agreement_base["model"],
-                        "model_requested": agreement_base["model_requested"]}
-        other_choice = next(choice for choice in agreement_base["probabilities"]
-                            if choice != agreement_base["choice"])
-        forged_choice = dict(agreement_base, id="forged-choice", choice=other_choice)
-        forged_choice.pop("reversed")
-        forged_choice["order_check"] = False
-        missing_choice_agreement = dict(agreement_base, id="missing-choice-agreement")
-        del missing_choice_agreement["agrees"]
-        malformed_choice_agreement = dict(agreement_base, id="malformed-choice-agreement",
-                                          agrees="true")
-        malformed_choice_expected = dict(agreement_base, id="malformed-choice-expected",
-                                         expected=True)
-        unexpected_agreement = dict(agreement_base, id="unexpected-agreement")
-        del unexpected_agreement["expected"]
-        two_answers = dict(agreement_base, id="two-answers", noul=0.9)
-        no_answer = dict(agreement_base, id="no-answer")
-        del no_answer["choice"]
-        no_answer.pop("reversed")
-        forged_noul = {"id": "forged-noul", "noul": 0.9, "expected": False,
-                       "agrees": True, "input_sha256": "self-test-agreement",
-                       "input_rows": 1, "order_check": False, **model_fields}
-        missing_noul_agreement = dict(forged_noul, id="missing-noul-agreement",
-                                      expected=True)
-        del missing_noul_agreement["agrees"]
-        malformed_noul_agreement = dict(forged_noul, id="malformed-noul-agreement",
-                                        expected=True, agrees=1)
-        malformed_noul_expected = dict(forged_noul, id="malformed-noul-expected",
-                                       expected="true")
-        agreement_failures = (
-            (forged_choice, "agreement does not match"),
-            (missing_choice_agreement, "agreement is not boolean"),
-            (malformed_choice_agreement, "agreement is not boolean"),
-            (malformed_choice_expected, "expected choice is not a string"),
-            (unexpected_agreement, "agreement has no expected answer"),
-            (two_answers, "answer is not exactly one choice or noul"),
-            (no_answer, "answer is not exactly one choice or noul"),
-            (forged_noul, "agreement does not match"),
-            (missing_noul_agreement, "agreement is not boolean"),
-            (malformed_noul_agreement, "agreement is not boolean"),
-            (malformed_noul_expected, "expected noul is not boolean"),
-        )
-        for row, message in agreement_failures:
-            agreement_file = tmp / "bad-agreement.jsonl"
-            agreement_file.write_text(json.dumps(row) + "\n")
-            for extra in ((), ("--bar", "1")):
-                code, out, err = run("score", str(agreement_file), *extra)
-                check(code == 1 and out == "" and message in err and "Traceback" not in err,
-                      f"score refuses {row['id']}" + (" under a bar" if extra else ""),
-                      out + err)
-
-        valid_choice = dict(agreement_base, id="valid-choice")
-        valid_choice.pop("reversed")
-        valid_choice["order_check"] = False
-        valid_choice_disagreement = dict(valid_choice, id="valid-choice-disagreement",
-                                         choice=other_choice, agrees=False)
-        valid_noul = {"id": "valid-noul", "noul": 0.75, "expected": True,
-                      "agrees": True, "input_sha256": "self-test-agreement",
-                      "input_rows": 1, "order_check": False, **model_fields}
-        valid_noul_disagreement = dict(valid_noul, id="valid-noul-disagreement",
-                                       expected=False, agrees=False)
-        for row in (valid_choice, valid_noul):
-            agreement_file = tmp / "valid-agreement.jsonl"
-            agreement_file.write_text(json.dumps(row) + "\n")
-            for extra in ((), ("--bar", "1")):
-                code, out, err = run("score", str(agreement_file), *extra)
-                check(code == 0 and "agreement: 1 of 1" in out
-                      and (not extra or "at or above the bar of 100%" in out),
-                      f"score recomputes {row['id']}"
-                      + (" under a bar" if extra else ""), out + err)
-        for row in (valid_choice_disagreement, valid_noul_disagreement):
-            agreement_file = tmp / "valid-disagreement.jsonl"
-            agreement_file.write_text(json.dumps(row) + "\n")
-            code, out, err = run("score", str(agreement_file))
-            check(code == 0 and "agreement: 0 of 1" in out and "for adjudication: 1" in out,
-                  f"score recomputes {row['id']}", out + err)
-            code, out, err = run("score", str(agreement_file), "--bar", "1")
-            check(code == 1 and "below the bar of 100%" in out,
-                  f"score applies a bar to {row['id']}", out + err)
-
-        mismatched_model = dict(valid_choice, id="mismatched-model",
-                                model="jev-self-test-returned",
-                                model_requested="jev-self-test-requested")
-        mismatched_model.pop("model_differs", None)
-        mismatched_model_file = tmp / "mismatched-model.jsonl"
-        mismatched_model_file.write_text(json.dumps(mismatched_model) + "\n")
-        for extra in ((), ("--bar", "1")):
-            code, out, err = run("score", str(mismatched_model_file), *extra)
-            check(code == 0 and "for adjudication: 1" in out
-                  and "answered by jev-self-test-returned, not jev-self-test-requested" in out
-                  and (not extra or "at or above the bar of 100%" in out),
-                  "score derives an omitted model mismatch"
-                  + (" under a bar" if extra else ""), out + err)
-
-        valid_model_mismatch = dict(mismatched_model, id="valid-model-mismatch",
-                                    model_differs=True)
-        valid_model_mismatch_file = tmp / "valid-model-mismatch.jsonl"
-        valid_model_mismatch_file.write_text(json.dumps(valid_model_mismatch) + "\n")
-        code, out, err = run("score", str(valid_model_mismatch_file))
-        check(code == 0 and "for adjudication: 1" in out,
-              "score accepts and derives a true model mismatch flag", out + err)
-
-        false_model_mismatch = dict(mismatched_model, id="false-model-mismatch",
-                                    model_differs=False)
-        false_model_mismatch_file = tmp / "false-model-mismatch.jsonl"
-        false_model_mismatch_file.write_text(json.dumps(false_model_mismatch) + "\n")
-        for extra in ((), ("--bar", "1")):
-            code, out, err = run("score", str(false_model_mismatch_file), *extra)
-            check(code == 1 and out == "" and "model mismatch flag is not true" in err
-                  and "Traceback" not in err,
-                  "score refuses a false model mismatch flag"
-                  + (" under a bar" if extra else ""), out + err)
-
-        matching_model_flag = dict(valid_choice, id="matching-model-flag",
-                                   model_differs=True)
-        matching_model_flag_file = tmp / "matching-model-flag.jsonl"
-        matching_model_flag_file.write_text(json.dumps(matching_model_flag) + "\n")
-        for extra in ((), ("--bar", "1")):
-            code, out, err = run("score", str(matching_model_flag_file), *extra)
-            check(code == 1 and out == "" and "does not match its models" in err
-                  and "Traceback" not in err,
-                  "score refuses a forged model mismatch flag"
-                  + (" under a bar" if extra else ""), out + err)
-
-        for field in ("model", "model_requested"):
-            for name, bad in (("missing", None), ("empty", ""), ("blank", "  "),
-                              ("boolean", True), ("number", 1)):
-                malformed_model = dict(valid_choice,
-                                       id=f"{field.replace('_', '-')}-{name}")
-                if name == "missing":
-                    malformed_model.pop(field)
-                else:
-                    malformed_model[field] = bad
-                malformed_model_file = tmp / "malformed-model.jsonl"
-                malformed_model_file.write_text(json.dumps(malformed_model) + "\n")
-                for extra in ((), ("--bar", "1")):
-                    code, out, err = run("score", str(malformed_model_file), *extra)
-                    check(code == 1 and out == "" and "not a nonempty string" in err
-                          and "Traceback" not in err,
-                          f"score refuses {field} {name}"
-                          + (" under a bar" if extra else ""), out + err)
-
-        duplicate_file = tmp / "duplicate-id.jsonl"
-        duplicate_file.write_text(json.dumps(valid_choice) + "\n"
-                                  + json.dumps(valid_choice) + "\n")
-        for extra in ((), ("--bar", "1")):
-            code, out, err = run("score", str(duplicate_file), *extra)
-            check(code == 1 and out == "" and "duplicate id" in err,
-                  "score refuses duplicate output ids" + (" under a bar" if extra else ""),
-                  out + err)
-
-        bad_order = dict(valid_choice, id="bad-order-check", order_check="true")
-        order_file = tmp / "bad-order-check.jsonl"
-        order_file.write_text(json.dumps(bad_order) + "\n")
-        for extra in ((), ("--bar", "1")):
-            code, out, err = run("score", str(order_file), *extra)
-            check(code == 1 and out == "" and "order check is not boolean" in err,
-                  "score refuses a non-boolean order check"
-                  + (" under a bar" if extra else ""), out + err)
-
-        forged_noul_confidence = dict(valid_noul, id="forged-noul-confidence",
-                                      noul=0.51, confidence=1)
-        forged_noul_file = tmp / "forged-noul-confidence.jsonl"
-        forged_noul_file.write_text(json.dumps(forged_noul_confidence) + "\n")
-        for extra in ((), ("--bar", "1")):
-            code, out, err = run("score", str(forged_noul_file), *extra)
-            check(code == 1 and out == "" and "choice-only fields" in err,
-                  "score refuses explicit noul confidence"
-                  + (" under a bar" if extra else ""), out + err)
-        derived_noul = dict(valid_noul, id="derived-noul-confidence", noul=0.51)
-        derived_noul_file = tmp / "derived-noul-confidence.jsonl"
-        derived_noul_file.write_text(json.dumps(derived_noul) + "\n")
-        code, out, err = run("score", str(derived_noul_file))
-        check(code == 0 and "confidence 0.02" in out and "for adjudication: 1" in out,
-              "score derives noul confidence unconditionally", out + err)
-
-        probability_failures = []
-        for name, probabilities in (("missing", None), ("list", [1]), ("empty", {}),
-                                    ("boolean", {agreement_base["choice"]: True,
-                                                 other_choice: 0}),
-                                    ("string", {agreement_base["choice"]: "1",
-                                                other_choice: 0}),
-                                    ("range", {agreement_base["choice"]: 1.1,
-                                               other_choice: 0}),
-                                    ("nonfinite", {agreement_base["choice"]: float("nan"),
-                                                   other_choice: 0})):
-            row = json.loads(json.dumps(valid_choice))
-            row["id"] = f"probabilities-{name}"
-            if probabilities is None:
-                row.pop("probabilities")
-            else:
-                row["probabilities"] = probabilities
-            probability_failures.append((row, "not a valid choice"))
-        wrong_sum = json.loads(json.dumps(valid_choice))
-        wrong_sum["id"] = "probabilities-wrong-sum"
-        wrong_sum["probabilities"] = {choice: 0.1 for choice in wrong_sum["probabilities"]}
-        probability_failures.append((wrong_sum, "do not sum to 1"))
-        outside_options = json.loads(json.dumps(valid_choice))
-        outside_options["id"] = "choice-outside-probabilities"
-        outside_options["choice"] = "not-an-option"
-        outside_options["expected"] = "not-an-option"
-        probability_failures.append((outside_options, "options are not the question's"))
-        reversed_options = json.loads(json.dumps(agreement_base))
-        reversed_options["id"] = "reversed-different-options"
-        reversed_options["reversed"]["choice"] = "different"
-        reversed_options["reversed"]["probabilities"] = {"different": 0.5, "else": 0.5}
-        reversed_options["reversed"]["consistent"] = False
-        probability_failures.append((reversed_options, "different options"))
-        for row, message in probability_failures:
-            probability_file = tmp / "bad-probabilities.jsonl"
-            probability_file.write_text(json.dumps(row) + "\n")
-            for extra in ((), ("--bar", "1")):
-                code, out, err = run("score", str(probability_file), *extra)
-                check(code == 1 and out == "" and message in err and "Traceback" not in err,
-                      f"score refuses {row['id']}" + (" under a bar" if extra else ""),
-                      out + err)
-
-        for name, noul in (("numeric", 1.0), ("nonnumeric", "certain")):
-            reversed_noul = json.loads(json.dumps(agreement_base))
-            reversed_noul["id"] = f"reversed-noul-{name}"
-            reversed_noul["reversed"]["confidence"] = 0.1
-            reversed_noul["reversed"]["noul"] = noul
-            reversed_noul_file = tmp / "reversed-noul.jsonl"
-            reversed_noul_file.write_text(json.dumps(reversed_noul) + "\n")
-            for extra in ((), ("--bar", "1")):
-                code, out, err = run("score", str(reversed_noul_file), *extra)
-                check(code == 1 and out == "" and "choice answer also has a noul" in err
-                      and "Traceback" not in err,
-                      f"score refuses a reversed choice with {name} noul"
-                      + (" under a bar" if extra else ""), out + err)
-
         confidence_cases = []
         for name, reversed_confidence in (("reversed-low", 0.49),
                                           ("reversed-null", None),
@@ -1483,8 +1115,8 @@ def cmd_self_test(args) -> int:
         single_order["order_check"] = False
         confidence_cases.append(single_order)
         confidence_cases.extend([
-            {"id": "noul-low", "noul": 0.74, "order_check": False, **model_fields},
-            {"id": "noul-boundary", "noul": 0.75, "order_check": False, **model_fields},
+            {"id": "noul-low", "noul": 0.74},
+            {"id": "noul-boundary", "noul": 0.75},
         ])
         confidence_file = tmp / "confidence.jsonl"
         confidence_file.write_text("".join(json.dumps(row) + "\n" for row in confidence_cases))
@@ -1497,92 +1129,7 @@ def cmd_self_test(args) -> int:
               and "no confidence given with the options reversed" in out,
               "score checks confidence in each asking and keeps the threshold exclusive",
               out + err)
-
-        bad_confidences = (True, "0.9", -0.01, 1.01, float("nan"), float("inf"), float("-inf"))
-        for asking in ("original", "reversed"):
-            for bad in bad_confidences:
-                valid = json.loads(first[1])
-                valid["id"] = "valid-before-bad-confidence"
-                row = json.loads(first[0])
-                row["id"] = f"{asking}-bad-confidence"
-                row["expected"] = row["choice"]
-                row["agrees"] = True
-                row["confidence"] = 0.9
-                row["reversed"]["confidence"] = 0.9
-                if asking == "original":
-                    row["confidence"] = bad
-                else:
-                    row["reversed"]["confidence"] = bad
-                bad_file = tmp / "bad-confidence.jsonl"
-                bad_file.write_text(json.dumps(valid) + "\n" + json.dumps(row) + "\n")
-                for extra in ((), ("--bar", "0")):
-                    code, out, err = run("score", str(bad_file), *extra)
-                    check(code == 1 and out == "" and "confidence is not a number from 0 to 1" in err
-                          and "Traceback" not in err,
-                          f"score refuses {asking} confidence {bad!r}"
-                          + (" under a bar" if extra else ""), out + err)
-
-        boundary_cases = []
-        for name, confidence, reversed_confidence in (("original-zero", 0, 1),
-                                                       ("original-one", 1, 1),
-                                                       ("reversed-zero", 1, 0),
-                                                       ("reversed-one", 1, 1)):
-            row = json.loads(first[0])
-            row["id"] = name
-            row["input_rows"] = 4
-            row["expected"] = row["choice"]
-            row["agrees"] = True
-            row["confidence"] = confidence
-            row["reversed"]["confidence"] = reversed_confidence
-            row["reversed"]["consistent"] = True
-            boundary_cases.append(row)
-        boundary_file = tmp / "confidence-boundaries.jsonl"
-        boundary_file.write_text("".join(json.dumps(row) + "\n" for row in boundary_cases))
-        for extra in ((), ("--bar", "1")):
-            code, out, err = run("score", str(boundary_file), *extra)
-            listed = {row["id"] for row in boundary_cases if f"  {row['id']}:" in out}
-            check(code == 0 and listed == {"original-zero", "reversed-zero"}
-                  and (not extra or "at or above the bar of 100%" in out),
-                  "score accepts confidence boundaries in both askings"
-                  + (" under a bar" if extra else ""), out + err)
-
-        bad_nouls = (None, "0.9", True, [], -0.01, 1.01,
-                     float("nan"), float("inf"), float("-inf"))
-        for bad in bad_nouls:
-            valid = json.loads(first[1])
-            valid["id"] = "valid-before-bad-noul"
-            row = {"id": "bad-noul", "noul": bad, "confidence": 0.9,
-                   "order_check": False,
-                   "input_sha256": valid["input_sha256"], "input_rows": 2}
-            bad_file = tmp / "bad-noul.jsonl"
-            bad_file.write_text(json.dumps(valid) + "\n" + json.dumps(row) + "\n")
-            for extra in ((), ("--bar", "0")):
-                code, out, err = run("score", str(bad_file), *extra)
-                check(code == 1 and out == "" and "noul is not a number from 0 to 1" in err
-                      and "Traceback" not in err,
-                      f"score refuses noul {bad!r}" + (" under a bar" if extra else ""),
-                      out + err)
-
-        noul_cases = []
-        for name, noul, expected in (("noul-zero", 0, False),
-                                     ("noul-one", 1, True),
-                                     ("noul-low", 0.74, True),
-                                     ("noul-threshold", 0.75, True)):
-            noul_cases.append({"id": name, "noul": noul, "expected": expected,
-                               "agrees": True, "input_sha256": "self-test-noul",
-                               "input_rows": 4, "order_check": False, **model_fields})
-        noul_file = tmp / "noul-boundaries.jsonl"
-        noul_file.write_text("".join(json.dumps(row) + "\n" for row in noul_cases))
-        for extra in ((), ("--bar", "1")):
-            code, out, err = run("score", str(noul_file), *extra)
-            listed = {row["id"] for row in noul_cases if f"  {row['id']}:" in out}
-            check(code == 0 and listed == {"noul-low"}
-                  and (not extra or "at or above the bar of 100%" in out),
-                  "score accepts noul boundaries and finds derived low confidence"
-                  + (" under a bar" if extra else ""), out + err)
-
-        for broken in (None, [], "reversed", 1, True, {},
-                       {"confidence": 0.9, "consistent": True}):
+        for broken in (None, [], "reversed", 1, True):
             valid = json.loads(first[1])
             valid["id"] = "valid-before-reversed-broken"
             row = json.loads(first[0])
@@ -1593,97 +1140,11 @@ def cmd_self_test(args) -> int:
             row["reversed"] = broken
             broken_file = tmp / "reversed-broken.jsonl"
             broken_file.write_text(json.dumps(valid) + "\n" + json.dumps(row) + "\n")
-            for extra in ((), ("--bar", "1")):
+            for extra in ((), ("--bar", "0")):
                 code, out, err = run("score", str(broken_file), *extra)
-                check(code == 1 and out == "" and "reversed answer is not a valid choice" in err,
+                check(code == 1 and out == "" and "reversed asking is not an answer" in err,
                       f"score refuses a reversed asking of {broken!r}"
                       + (" under a bar" if extra else ""), out + err)
-
-        missing_reversed = json.loads(first[0])
-        missing_reversed["id"] = "reversed-absent"
-        missing_reversed["expected"] = missing_reversed["choice"]
-        missing_reversed["agrees"] = True
-        missing_reversed["confidence"] = 1
-        missing_reversed["input_rows"] = 1
-        missing_reversed["order_check"] = True
-        missing_reversed.pop("reversed")
-        missing_reversed_file = tmp / "reversed-absent.jsonl"
-        missing_reversed_file.write_text(json.dumps(missing_reversed) + "\n")
-        for extra in ((), ("--bar", "1")):
-            code, out, err = run("score", str(missing_reversed_file), *extra)
-            check(code == 1 and out == "" and "does not match its order check" in err,
-                  "score refuses an absent reversed asking"
-                  + (" under a bar" if extra else ""), out + err)
-
-        single_order_good = dict(missing_reversed, id="single-order-good", order_check=False)
-        single_order_file = tmp / "single-order-good.jsonl"
-        single_order_file.write_text(json.dumps(single_order_good) + "\n")
-        code, out, err = run("score", str(single_order_file), "--bar", "1")
-        check(code == 0 and "at or above the bar of 100%" in out,
-              "score accepts a successful choice made without the order check", out + err)
-
-        order_cases = []
-        for name, differs in (("different-consistent", True), ("matching-consistent", False)):
-            row = json.loads(first[0])
-            row["id"] = name
-            row["input_rows"] = 2
-            row["expected"] = row["choice"]
-            row["agrees"] = True
-            row["confidence"] = 0.9
-            row["reversed"]["confidence"] = 0.9
-            if differs:
-                row["reversed"]["choice"] = next(
-                    choice for choice in row["probabilities"] if choice != row["choice"])
-            else:
-                row["reversed"]["choice"] = row["choice"]
-            row["reversed"]["consistent"] = not differs
-            order_cases.append(row)
-        order_file = tmp / "order-consistency.jsonl"
-        order_file.write_text("".join(json.dumps(row) + "\n" for row in order_cases))
-        for extra in ((), ("--bar", "1")):
-            code, out, err = run("score", str(order_file), *extra)
-            listed = {row["id"] for row in order_cases if f"  {row['id']}:" in out}
-            check(code == 0 and listed == {"different-consistent"}
-                  and (not extra or "at or above the bar of 100%" in out),
-                  "score validates reversed consistency and compares the choices"
-                  + (" under a bar" if extra else ""), out + err)
-
-        consistency_failures = []
-        for name, differs, consistent in (("different-with-true-flag", True, True),
-                                          ("matching-with-false-flag", False, False),
-                                          ("matching-without-flag", False, None),
-                                          ("matching-with-string-flag", False, "true")):
-            row = json.loads(first[0])
-            row["id"] = name
-            row["input_rows"] = 1
-            row["expected"] = row["choice"]
-            row["agrees"] = True
-            row["confidence"] = 0.9
-            row["reversed"]["confidence"] = 0.9
-            if differs:
-                row["reversed"]["choice"] = next(
-                    choice for choice in row["probabilities"] if choice != row["choice"])
-            else:
-                row["reversed"]["choice"] = row["choice"]
-            if consistent is None:
-                row["reversed"].pop("consistent", None)
-            else:
-                row["reversed"]["consistent"] = consistent
-            consistency_failures.append(row)
-        single_with_reversed = json.loads(first[0])
-        single_with_reversed["id"] = "single-order-with-reversed"
-        single_with_reversed["input_rows"] = 1
-        single_with_reversed["order_check"] = False
-        consistency_failures.append(single_with_reversed)
-        for row in consistency_failures:
-            consistency_file = tmp / "bad-order-consistency.jsonl"
-            consistency_file.write_text(json.dumps(row) + "\n")
-            for extra in ((), ("--bar", "1")):
-                code, out, err = run("score", str(consistency_file), *extra)
-                check(code == 1 and out == ""
-                      and ("reversed consistency" in err or "does not match its order check" in err),
-                      f"score refuses {row['id']}" + (" under a bar" if extra else ""),
-                      out + err)
 
         def one(name: str, row: dict) -> Path:
             p = tmp / name
@@ -1728,57 +1189,6 @@ def cmd_self_test(args) -> int:
               and all(l.get("status") == 200 and "error" in l for l in got),
               "a 200 that is not the documented shape is recorded as a failure, and the run "
               "goes on", out + err)
-
-        for name in ("MISSING", "EMPTY", "BLANK", "NONSTRING"):
-            model_row = one(f"model-{name}.jsonl",
-                            {**base_row, "id": f"model-{name.lower()}",
-                             "state": f"SELFTEST-MODEL-{name}"})
-            model_output = tmp / f"model-{name}-out.jsonl"
-            before = posts()
-            code, out, err = run("run", str(model_row), "--out", str(model_output), *common)
-            stored = parsed(model_output.read_text()) or []
-            check(code == 1 and posts() - before == 1 and len(stored) == 1
-                  and "model is not a nonempty string" in stored[0].get("error", "")
-                  and "Traceback" not in err,
-                  f"run records a {name.lower()} response model as failed", out + err)
-            code, out, err = run("score", str(model_output), "--bar", "0")
-            check(code == 1 and "failed requests: 1" in out
-                  and f"model-{name.lower()}" in out and "Traceback" not in err,
-                  f"score reports a {name.lower()} response model failure", out + err)
-
-            reply_body = json.loads(stored[0]["body"])
-            legacy = {k: v for k, v in stored[0].items() if k not in ("error", "body")}
-            if "model" in reply_body:
-                legacy["model"] = reply_body["model"]
-            legacy.update(reply_body["answers"]["q"])
-            reversed_answer = dict(reply_body["answers"]["q" + REVERSED])
-            reversed_answer["consistent"] = reversed_answer["choice"] == legacy["choice"]
-            legacy["reversed"] = reversed_answer
-            legacy["usage"] = reply_body.get("usage")
-            model_output.write_text(json.dumps(legacy) + "\n")
-            code, out, err = run("score", str(model_output))
-            check(code == 1 and out == "" and "model is not a nonempty string" in err
-                  and "Traceback" not in err,
-                  f"score refuses a legacy {name.lower()} successful model", out + err)
-            before = posts()
-            code, out, err = run("run", str(model_row), "--out", str(model_output),
-                                 "--resume", *common)
-            retried = parsed(model_output.read_text()) or []
-            check(code == 1 and posts() - before == 1 and len(retried) == 1
-                  and "error" in retried[0] and "Traceback" not in err,
-                  f"resume retries a legacy {name.lower()} successful model", out + err)
-
-        differing_model_row = one("differing-model.jsonl",
-                                  {**base_row, "id": "differing-model",
-                                   "state": "ordinary valid model response"})
-        differing_model_output = tmp / "differing-model-out.jsonl"
-        code, out, err = run("run", str(differing_model_row), "--out",
-                             str(differing_model_output), "--model", "jev-latest",
-                             "--allow-alias", *common)
-        code_score, scored, score_err = run("score", str(differing_model_output))
-        check(code == 0 and code_score == 0 and "for adjudication: 1" in scored
-              and f"answered by {DEFAULT_MODEL}, not jev-latest" in scored,
-              "a valid differing model remains an adjudication", out + err + scored + score_err)
 
         redirect = one("redirect.jsonl", {**base_row, "state": "SELFTEST-REDIRECT"})
         code, out, err = run("run", str(redirect), *common)

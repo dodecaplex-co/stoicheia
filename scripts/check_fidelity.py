@@ -5,11 +5,11 @@
    order, must be exactly Heath's proof (whitespace aside). Euclid's words go in
    `--` comments; our own remarks go in `/- … -/` blocks.
 2. Every `axiom` lives in `Elements/Foundations/`: a first look in the source here,
-   which reads `Staging/` and `Audit/` too, and the real check from Lean's own
+   which reads `Staging/`, `Audit/` and `model/` too, and the real check from Lean's own
    environment in 6.
 3. Book Zero (`Elements/Figure/`) never imports a proposition.
 4. None of the commands that `docs/FORMALIZATION.md`, section 7, forbids under
-   `Elements/`, `Staging/` or `Audit/` (LEAN_TREES), since they get round the kernel,
+   `Elements/`, `Staging/`, `Audit/` or `model/` (LEAN_TREES), since they get round the kernel,
    bring in an axiom without the word, run a program when a file is built or imported,
    or stop Lean reading a file: `native_decide`, `bv_decide`, the word `native`,
    `(config := …)`, `set_option debug.…` and `set_option doc.…` (or `«debug».…` and
@@ -21,7 +21,14 @@
    literal's text never opens a comment or ends an attribute's brackets, and is not read
    as code, while the code in an interpolated string's `{…}` holes is; a string whose
    braces Lean could read either way is refused. Each finding of 2, 3 and 4 names its
-   file and line.
+   file and line; symbolic links are refused by their paths and never followed.
+   Under `model/`, the package's own `model/.lake` directory is never entered or read
+   (a link there is refused like any other), while a `.lake` folder deeper in the model
+   is read like any other; Mathlib imports are allowed. Only in `model/Check.lean` and `model/Check/`, `run_cmd` may be the first
+   word on its line followed by `Check.Generator.<ident>` or
+   `(Check.Generator.<ident>`, since those files run the generator. Every other command
+   and attribute on the list is still refused there. The model's independent kernel
+   replay, the other half of #121, remains open.
 5. Placement, Euclid's application of one figure to another (brief 0006): outside its
    own files, `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`, no
    Lean under `Elements/` names `placement` or the `Placement` namespace but III.24's
@@ -45,7 +52,8 @@
    - for every entry, propositions, porisms and companions alike: none cites one that
      does not come before it; only I.4 and I.8 use superposition directly; none
      before I.29 rests on Postulate 5 or any Euclidean-only rule (a later book comes
-     after I.29, and may); only III.24 has placement, or a lemma of the `Placement`
+     after I.29, and may); none rests on Circle 2 or Circle 3, both of which the lock
+     must hold by their names; only III.24 has placement, or a lemma of the `Placement`
      namespace or of placement's files, among its shared steps;
    - every proposition of a completed book is proved, and so is everything attached
      to it, with both figures and a mishnah;
@@ -56,6 +64,10 @@
      helpers that exist; and every run of `--` lines with no Lean beneath it before
      the next run, a `/- … -/` remark ending a run and carrying none, is declared as a
      passage (`uncarried_runs`).
+7. Inline count markers in tracked Markdown match the exact file-derived counts in
+   generated_counts.py, and stand only where that module allows. Unknown and
+   malformed markers are refused, as are unsafe paths and a missing or mismatched Git
+   work tree.
 
 `--facts PATH` checks another copy of facts.json (scripts/negative_tests.py uses it);
 `--write-lock` writes `Certificate/axioms.lock` from facts.json and stops.
@@ -67,12 +79,14 @@ Exits non-zero on any failure. Standard library only; the review records need Py
 import argparse
 import functools
 import json
+import os
 import re
 import sys
 from pathlib import Path
 from typing import NamedTuple
 
 import heath
+import generated_counts
 
 ROOT = heath.ROOT
 BOOKS = heath.BOOKS
@@ -88,6 +102,12 @@ EUCLIDEAN_ONLY = re.compile(r"^(Postulate5|Tacit\.Euclidean\..*)$")
 # postulate from their first proposition on, as II.10 does by name. A book missing here
 # may use it throughout. A porism or companion goes with its proposition.
 FIRST_EUCLIDEAN = {"I": 29, "II": 1, "III": 1}
+# These rules contain III.2; no certificate entry may rest on either, even through a
+# helper. Certificate names omit the leading `Elements.`.
+FORBIDDEN_CIRCLE_RULES = {
+    "Tacit.inside_of_between": "Circle 2",
+    "Tacit.outside_of_between": "Circle 3",
+}
 # The words Euclid leaves undefined, and the magnitudes. Each must stay `opaque`: Lean
 # then knows only what the axioms say of them, and the axioms stay true in the plane.
 PRIMITIVES = {
@@ -99,9 +119,17 @@ PRIMITIVES = {
 # Lean's own logical foundations, which every proof may use.
 LEAN_FOUNDATIONS = {"propext", "Classical.choice", "Quot.sound"}
 # The Lean the edition builds, which the source scan (check_rules) reads: the library, the
-# statements staged before their proofs, and the audit lemmas, each folder with its root
-# file (`Staging.lean`). The checks' own Lean, `Certificate/Facts.lean`, is not among them.
-LEAN_TREES = ("Elements", "Staging", "Audit")
+# statements staged before their proofs, the audit lemmas, and model/, each folder with
+# its root file (`Staging.lean`). The model allows Mathlib and skips its own model/.lake
+# directory without entering it. Its Check files alone allow the generator calls named below.
+# The checks' own Lean, `Certificate/Facts.lean`, is not among them.
+LEAN_TREES = ("Elements", "Staging", "Audit", "model")
+# Only model/Check.lean and model/Check/ may run the generator: run_cmd must be the first
+# word on its source line, followed by Check.Generator.<ident> or (Check.Generator.<ident>.
+# Match just that command, never exempt its arguments or another command on the line.
+MODEL_CHECK_RUN_CMD = re.compile(
+    r"^[ \t]*(?P<command>run_cmd)[ \t]+(?:\([ \t]*)?Check\.Generator\."
+    r"[^\W\d][\w'!?]*(?=[ \t\r\n()]|$)", re.M)
 # Commands that could get round the kernel (`native_decide` and the `debug.` options, among
 # them `debug.skipKernelTC`, spelled `debug.` or `«debug».`), bring in an axiom without the
 # keyword, run a program when the file is built or imported (`#eval`, `run_cmd` and their
@@ -330,12 +358,26 @@ def _read_interpolated(src: str, i: int, marks: list) -> int | None:
 
 
 def lean_sources() -> list[Path]:
-    """Every `.lean` file of LEAN_TREES: each folder's root file, then the folder."""
+    """Every `.lean` file and symbolic link of LEAN_TREES, excluding what lies inside the
+    directory model/.lake: each folder's root file, then the folder in sorted order. A
+    link is listed before anything is pruned, so a link at model/.lake is refused too."""
     paths = []
     for tree in LEAN_TREES:
         root = ROOT / f"{tree}.lean"
-        paths += [root] if root.exists() else []
-        paths += sorted((ROOT / tree).rglob("*.lean"))
+        paths += [root] if root.is_symlink() or root.exists() else []
+        folder_root = ROOT / tree
+        if folder_root.is_symlink():
+            paths.append(folder_root)
+            continue
+        found = []
+        for folder, dirs, files in os.walk(folder_root, followlinks=False):
+            here = Path(folder)
+            links = {name for name in dirs + files if (here / name).is_symlink()}
+            dirs[:] = sorted(name for name in dirs if name not in links
+                             and not (here == ROOT / "model" and name == ".lake"))
+            found += sorted(here / name for name in links | set(files)
+                            if name in links or name.endswith(".lean"))
+        paths += sorted(found)
     return paths
 
 
@@ -346,8 +388,15 @@ def line_of(text: str, offset: int) -> int:
 def check_rules() -> None:
     for path in lean_sources():
         rel = path.relative_to(ROOT).as_posix()
+        if path.is_symlink():
+            fail(f"{rel}: a symbolic link, which the source scan does not follow; "
+                 "use a regular file or directory (docs/FORMALIZATION.md, section 7)")
+            continue
         src = path.read_text()
         code, unsure = read_lean(src)
+        generator_calls = ({m.start("command") for m in MODEL_CHECK_RUN_CMD.finditer(src)}
+                           if rel == "model/Check.lean" or rel.startswith("model/Check/")
+                           else set())
         if not rel.startswith("Elements/Foundations/"):
             for m in AXIOM.finditer(code):
                 fail(f"{rel}:{line_of(code, m.start())}: declares an axiom outside "
@@ -355,6 +404,8 @@ def check_rules() -> None:
         for m in re.finditer("native_decide", src):
             fail(f"{rel}:{line_of(src, m.start())}: uses native_decide")
         for m in FORBIDDEN.finditer(code):
+            if m.group(0) == "run_cmd" and m.start() in generator_calls:
+                continue
             if m.group(0) != "native_decide":
                 word = f"@[{m['attr']}]" if m["attr"] else " ".join(m.group(0).split())
                 fail(f"{rel}:{line_of(code, m.start())}: uses `{word}`, which could get round "
@@ -458,6 +509,10 @@ def check_lock(facts, path: Path = LOCK):
         fail(f"{rel(path)} is missing: with a decisions entry, write it with "
              "`python3 scripts/check_fidelity.py --write-lock`")
         return None
+    for name, rule in FORBIDDEN_CIRCLE_RULES.items():
+        if name not in lock[0]:
+            fail(f"{name} ({rule}): not an axiom in {rel(path)}, so no entry can be refused "
+                 "it (if the axiom was renamed, rename it in FORBIDDEN_CIRCLE_RULES too)")
     types, vocabulary = facts.get("axiom_types"), facts.get("vocabulary")
     if types is None or vocabulary is None:
         fail("facts.json has no axiom_types or vocabulary: rerun `lake env lean Certificate/Facts.lean`")
@@ -575,7 +630,7 @@ def entries_by_ref(facts) -> dict:
 
 
 def check_entries(facts, by_ref) -> None:
-    """Which entries there are, how they hang together, and the three policies, for
+    """Which entries there are, how they hang together, and the policies, for
     every entry."""
     if any("kind" not in p or "statement" not in p for p in facts["propositions"]):
         fail("facts.json predates Certificate/FIELDS.md (an entry has no `kind` or "
@@ -639,6 +694,9 @@ def check_entries(facts, by_ref) -> None:
             bad = [a for a in p["axioms"] if EUCLIDEAN_ONLY.match(a)]
             if bad:
                 fail(f"{ref}: rests on {', '.join(bad)} before {r.book}.{first}")
+        for axiom, rule in FORBIDDEN_CIRCLE_RULES.items():
+            if axiom in p["axioms"]:
+                fail(f"{ref}: rests on {axiom} ({rule}), forbidden for every entry")
         if ref not in PLACEMENT_ENTRIES:
             for step in p.get("shared_steps", []):
                 if placement_step(step):
@@ -819,7 +877,7 @@ def uncarried_runs(src: str, n: int) -> list:
 
     In Books I-III this finds runs of several kinds, among them the closing sentences of
     reductios (III.4, III.5, III.6, III.7, III.19), a "similarly" that one argument
-    already covers (I.14, III.37), a sentence that the Lean above it carries (II.10,
+    already covers (I.14), a sentence that the Lean above it carries (II.10,
     III.14), a setting-out or an "I say that" that the statement gives (I.13, I.21,
     I.23), a join that needs no object of its own (I.6), and III.16's last part: its
     conclusion, then the angle of the semicircle and the horn-like angle."""
@@ -1003,6 +1061,9 @@ def main(argv=None) -> int:
         return write_lock(json.loads(args.facts.read_text()))
     check_fidelity()
     check_rules()
+    _, count_errors = generated_counts.updates(ROOT, check=True)
+    for error in count_errors:
+        fail(error)
     check_facts(args.facts)
     if errors:
         print(f"{len(errors)} problem(s):")
