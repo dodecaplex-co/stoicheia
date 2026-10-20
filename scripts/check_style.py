@@ -3078,15 +3078,31 @@ def supported_path(value: str) -> bool:
 def supported_svg(path: Path, root) -> bool:
     """Refuse deep trees and unsupported SVG before recursive walks or measurements.
     Read raw XML attributes only; CSS is neither accepted nor interpreted."""
+    if root.tag != SVG + "svg":
+        fail("S26", path, 0, f"<{tag(root)}> root is not an SVG-namespaced <svg> in "
+             "S26's SVG allow-list")
+        return False
+
+    valid = True
     pending = [(root, 0)]
     while pending:
         el, depth = pending.pop()
         if depth > SVG_MAX_DEPTH:
             fail("S26", path, 0, f"SVG nesting exceeds {SVG_MAX_DEPTH} levels below the root")
             return False
-        pending.extend((child, depth + 1) for child in el)
+        children = list(el)
+        pending.extend((child, depth + 1) for child in children)
+        t = tag(el)
+        if not el.tag.startswith(SVG):
+            fail("S26", path, 0, f"<{t}> is outside S26's SVG namespace")
+            valid = False
+        if children and t not in ("svg", "g"):
+            fail("S26", path, 0,
+                 f"<{t}> may not contain element children in S26's SVG allow-list")
+            valid = False
+    if not valid:
+        return False
 
-    valid = True
     for el in root.iter():
         t = tag(el)
         if t not in SVG_ELEMENTS or (t == "svg" and el is not root):
@@ -3143,6 +3159,10 @@ def supported_svg(path: Path, root) -> bool:
         if eff.get("font-family") not in SVG_KEYWORDS["font-family"]:
             fail("S26", path, 0, f"letter {s} has effective font-family "
                  f"{eff.get('font-family')!r}: outside S26's SVG allow-list")
+            valid = False
+        if eff.get("fill", "black") == "none":
+            fail("S26", path, 0,
+                 f"letter {s} has effective fill 'none': outside S26's SVG allow-list")
             valid = False
         if eff.get("stroke", "none") != "none":
             fail("S26", path, 0, f"letter {s} has an effective stroke: outside S26's SVG allow-list")

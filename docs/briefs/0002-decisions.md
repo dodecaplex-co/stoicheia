@@ -1893,7 +1893,9 @@ findings:
   unseen. Zero fill and stroke opacity are refused on shapes and ancestor groups, while
   main's positive opacity spellings remain admitted. Each path subpath now keeps its own
   conservative chord allowance, so a remote arc cannot widen an unrelated straight
-  subpath's clearance measure.
+  subpath's clearance measure. The gate also requires the SVG namespace and the figures'
+  container-and-leaf structure before measuring anything. A point label with effective
+  fill none is refused, while a visible explicit fill still overrides an ancestor's none.
   Both figure entry points have cases requiring an S26 finding. And
   [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
   files its findings under P8, the figures. The matching words in
