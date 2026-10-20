@@ -407,7 +407,17 @@ looked into.
 7. **Review records** completed: each record written in step 3 is read again against its
    finished proof (section 6), and every one reaches the stage `full` before acceptance.
    Books I–III, whose records came after their proofs, reach it in brief 0005's stage 5.
-8. **A read-through.**
+8. **A read-through.** Before every release and at the end of each programme stage,
+   the coordinator assigns an independent reviewer a read for stale content: every
+   hand-written repository file, the wiki pages and open issues, oldest untouched first,
+   excluding generated output and dated history (crew logs and dated review responses).
+   Keep a dated report under `docs/reports/`, naming the revision read and indexing the
+   files by last change; each finding gives `file:line` (or wiki page/issue), the stale
+   text, evidence on main, what it should say, and its train or pull request.
+   Separate claims false now from those queued work will make false: fixes belong in
+   the train or pull request that makes them true; future findings are checklist rows
+   for that work, not edits now. Wiki and issue reading is read-only; changes need the
+   owner's OK.
 9. **Acceptance:** from brief 0005's stage 6, the checklist passes in CI with no failures,
    the independent audit agrees, and a cold outside reading scores the book.
 10. **Release.** The notes are drafted from the generated summaries, the owner approves

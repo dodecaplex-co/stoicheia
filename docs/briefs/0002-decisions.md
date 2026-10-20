@@ -1826,3 +1826,16 @@ findings:
   the screen unfolds every defined word, tries each statement bare, and has its cases, as the
   entry for #78 describes; it declares nothing Lean checks, and no audit lemma, pin or
   statement changes.
+
+## 20 October 2026
+
+- **A standing read for stale content.** The A0 read of 20 October found claims false on
+  main and others that queued work would make false, beyond what mechanical checks can
+  judge. Before every release and at the end of each programme stage, the coordinator
+  assigns an independent reviewer the read set out in
+  [docs/WORKFLOW.md](../WORKFLOW.md#10-how-a-book-is-made-and-released), section 10,
+  step 8; [docs/PROGRAM.md](../PROGRAM.md#5-lessons), section 5, records its first
+  instance and the conflict marker and stale counts that prompted separate checks.
+  Findings go in dated reports under `docs/reports/`, and fixes in the trains or pull
+  requests that make them true. The existing step numbers stay, preserving ACCEPTANCE's
+  citation of step 9. No check changes.
