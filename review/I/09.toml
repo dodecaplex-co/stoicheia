@@ -1,7 +1,7 @@
 # review/I/09.toml
 [statement]
 scope = "full"
-note = "The angle is given as the triangle BAC, its arms not in one straight line, as Definition 8 asks; the bisector AF is proved to fall within it."
+note = "The angle is given as the triangle BAC, its arms not in one straight line, as Definition I.8 asks; the bisector AF is proved to fall within it."
 fingerprint = "sha256:615a25d41eb9d01a"
 
 [route]
