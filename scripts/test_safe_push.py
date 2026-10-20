@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tests for scripts/safe_push.py, on a throwaway clone with a bare origin.
 
+    python3 -m pip install -r scripts/requirements-test_safe_push.txt
     python3 scripts/test_safe_push.py        # seven minutes or so; no Lean, no network
     STOICHEIA_SLOW_TESTS=1 python3 scripts/test_safe_push.py FullChecks   # Lean, minutes
 
@@ -104,7 +105,7 @@ The long checks of step 4 (the build and the rest) are skipped by the internal f
 local origin, and with it calls only the gh stand-in. The checks the guards run
 themselves (check_fidelity.py and render.py on the commit as committed) still run. The
 opt-in FullChecks test runs step 4 for real, once, on a good commit, as a dry run of the
-pre-flight. Python 3.11 or later; standard library and git.
+pre-flight. Python 3.11 or later; PyYAML at the version pinned beside this file, and git.
 """
 
 from __future__ import annotations
@@ -123,8 +124,11 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from dataclasses import dataclass
 from pathlib import Path
 from unittest import mock
+
+import yaml
 
 HERE = Path(__file__).resolve().parent
 SAFE_PUSH = HERE / "safe_push.py"
@@ -147,6 +151,84 @@ DECISIONS = "docs/briefs/0002-decisions.md"
 HARNESS_FILES = ("scripts/safe_push.py", "scripts/heath.py", "scripts/test_safe_push.py",
                  "scripts/hooks/pre-push", "scripts/hooks/safe-push", "scripts/install_hooks.sh",
                  "scripts/safe_push_allow.toml", ".github/pull_request_template.md")
+
+
+@dataclass(frozen=True)
+class WorkflowStep:
+    name: str
+    run: tuple[str, ...]
+    has_condition: bool
+    has_continue_on_error: bool
+    continue_on_error: object
+
+
+@dataclass(frozen=True)
+class WorkflowCheckJob:
+    steps: tuple[WorkflowStep, ...]
+    has_condition: bool
+    has_continue_on_error: bool
+    continue_on_error: object
+
+
+def normalized_check_job(source: str) -> WorkflowCheckJob:
+    try:
+        workflow = yaml.safe_load(source)
+    except yaml.YAMLError as exc:
+        raise AssertionError(f"CI workflow is not valid YAML: {exc}") from exc
+    if not isinstance(workflow, dict) or not isinstance(workflow.get("jobs"), dict):
+        raise AssertionError("CI workflow has no jobs mapping")
+    job = workflow["jobs"].get("check")
+    if not isinstance(job, dict):
+        raise AssertionError("CI workflow has no check job")
+    raw_steps = job.get("steps")
+    if not isinstance(raw_steps, list):
+        raise AssertionError("CI check job has no steps list")
+    steps = []
+    for index, step in enumerate(raw_steps, 1):
+        if not isinstance(step, dict):
+            raise AssertionError(f"CI check step {index} is not a mapping")
+        name = step.get("name", "")
+        if not isinstance(name, str):
+            raise AssertionError(f"CI check step {index} has a non-string name")
+        run = step.get("run")
+        if run is None:
+            commands = ()
+        elif isinstance(run, str):
+            commands = tuple(line.strip() for line in run.splitlines() if line.strip())
+        else:
+            raise AssertionError(f"CI check step {name or index} has a non-string run value")
+        steps.append(WorkflowStep(
+            name=name,
+            run=commands,
+            has_condition="if" in step,
+            has_continue_on_error="continue-on-error" in step,
+            continue_on_error=step.get("continue-on-error"),
+        ))
+    return WorkflowCheckJob(
+        steps=tuple(steps),
+        has_condition="if" in job,
+        has_continue_on_error="continue-on-error" in job,
+        continue_on_error=job.get("continue-on-error"),
+    )
+
+
+def enforced_check_commands(job: WorkflowCheckJob) -> list[str]:
+    if job.has_condition:
+        raise AssertionError("CI check job has an if condition")
+    if job.has_continue_on_error and job.continue_on_error is not False:
+        raise AssertionError("CI check job can continue on error")
+    commands = []
+    for step in job.steps:
+        selected = [command for command in step.run
+                    if command.startswith(("lake ", "python3 ", "git status "))]
+        if not selected:
+            continue
+        if step.has_condition:
+            raise AssertionError(f"CI check step {step.name!r} has an if condition")
+        if step.has_continue_on_error and step.continue_on_error is not False:
+            raise AssertionError(f"CI check step {step.name!r} can continue on error")
+        commands.extend(selected)
+    return commands
 
 
 def with_branch(args) -> tuple:
@@ -3625,13 +3707,8 @@ class Units(unittest.TestCase):
                       if line.strip() and not line.startswith("export ")]
         freshness = ("git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md "
                      "README.md docs/PROGRAM.md")
-        check_job = (SOURCE / ".github/workflows/ci.yml").read_text()
-        check_job = check_job.split("  check:\n", 1)[1].split("\n  negative:", 1)[0]
-        ci_commands = []
-        for line in check_job.splitlines():
-            command = line.strip().removeprefix("run: ")
-            if command.startswith(("lake ", "python3 ", "git status ")):
-                ci_commands.append(command)
+        ci_commands = enforced_check_commands(normalized_check_job(
+            (SOURCE / ".github/workflows/ci.yml").read_text()))
         checks = []
         for name, command in safe_push.CHECKS:
             if name == "python3 -I tests/model/run.py --fast":
@@ -3647,6 +3724,45 @@ class Units(unittest.TestCase):
         self.assertEqual(checks, ci_commands)
         certificate = checks.index("lake env lean Certificate/Facts.lean")
         self.assertEqual(checks[certificate + 1], "python3 -I tests/test_certificate.py")
+
+    def test_ci_check_job_rejects_skip_and_failure_suppression(self):
+        source = (SOURCE / ".github/workflows/ci.yml").read_text()
+        cases = (
+            ("job if", "job", "if", False, "check job has an if condition"),
+            ("step if", "step", "if", False, "has an if condition"),
+            ("job continue", "job", "continue-on-error", True,
+             "check job can continue on error"),
+            ("step continue", "step", "continue-on-error", True,
+             "can continue on error"),
+        )
+        for label, scope, field, value, message in cases:
+            with self.subTest(label=label):
+                workflow = yaml.safe_load(source)
+                job = workflow["jobs"]["check"]
+                target = job if scope == "job" else next(
+                    step for step in job["steps"]
+                    if step.get("run") == "python3 -I tests/test_certificate.py")
+                target[field] = value
+                changed = yaml.safe_dump(workflow, sort_keys=False)
+                with self.assertRaisesRegex(AssertionError, message):
+                    enforced_check_commands(normalized_check_job(changed))
+
+    def test_ci_check_job_accepts_equivalent_yaml_formatting(self):
+        source = (SOURCE / ".github/workflows/ci.yml").read_text()
+        expected = normalized_check_job(source)
+        equivalent = yaml.safe_dump(yaml.safe_load(source), default_flow_style=True,
+                                    sort_keys=True, width=1_000_000)
+        self.assertEqual(normalized_check_job(equivalent), expected)
+        self.assertEqual(enforced_check_commands(normalized_check_job(equivalent)),
+                         enforced_check_commands(expected))
+
+        workflow = yaml.safe_load(source)
+        job = workflow["jobs"]["check"]
+        step = next(step for step in job["steps"]
+                    if step.get("run") == "python3 -I tests/test_certificate.py")
+        job["continue-on-error"] = False
+        step["continue-on-error"] = False
+        enforced_check_commands(normalized_check_job(yaml.safe_dump(workflow)))
 
     def flagged(self, line: str) -> list[str]:
         return [f.rule for f in safe_push.scan_text("x", 1, line)]

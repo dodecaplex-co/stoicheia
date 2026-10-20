@@ -2070,11 +2070,14 @@ findings:
   With the coordinator's approval, `.github/workflows/ci.yml` and `scripts/safe_push.py`
   run `python3 -I tests/test_certificate.py` immediately after
   `lake env lean Certificate/Facts.lean`, as does [WORKFLOW](../WORKFLOW.md), section 8's
-  command block. `scripts/test_safe_push.py` compares all three command sequences and pins
-  that position. `scripts/negative_tests.py` plants constructor counting, requires the
-  focused test to reject its false report, restores the source in `finally`, and requires
-  the restored regression to pass. This fits the harness's existing pattern of a source
-  fault caught by a separate check; it runs only in a disposable tree.
+  command block. `scripts/test_safe_push.py` parses the workflow with PyYAML 6.0.3, pinned
+  in `scripts/requirements-test_safe_push.txt`, and compares all three command sequences
+  through a normalized `jobs.check` model. It pins that position and rejects job or step
+  conditions that could skip a check, or continuation settings that could suppress its
+  failure. `scripts/negative_tests.py` plants constructor counting, requires the focused
+  test to reject its false report, restores the source in `finally`, and requires the
+  restored regression to pass. This fits the harness's existing pattern of a source fault
+  caught by a separate check; it runs only in a disposable tree.
   `tests/test_negative_tests.py` checks restoration on interruption.
 
   `scripts/heath.py` uses `Tacit.angle_le_two_right`, which supplies I.13's upper bound
@@ -2087,6 +2090,7 @@ findings:
   Protected files changed, each named here on a line added relative to origin/main:
   `Certificate/Facts.lean`, `Certificate/FIELDS.md`,
   `scripts/heath.py`, `scripts/safe_push.py`, `scripts/test_safe_push.py`,
+  `scripts/requirements-test_safe_push.txt`, `review/SCHEMA.md`,
   `scripts/negative_tests.py`, `tests/test_negative_tests.py`,
   `tests/test_certificate.py`, `tests/fixtures/CertificateCN4.lean`,
   `.github/workflows/ci.yml`.
