@@ -64,7 +64,7 @@ rule's Lean name finds the same calls.
 | [I.2](#i2-and-i3) | Superposition (`superposition`): a triangle can be laid down on a given ray, on a given side, keeping its sides and angles | Supplies a step, in `Audit.I_2`: laid down at A along AB, a triangle on BC carries the length of BC to A, and drawing that triangle and a point off AB takes nine axioms more | I.4 | `Audit.I_2` |
 | [I.3](#i2-and-i3) | Superposition (`superposition`) | Supplies a step, in `Audit.I_3`: laid down at A along the ray AB, a triangle on the less straight line carries its length onto the ray, and drawing the figure and placing the new point between A and B takes twenty-one axioms more | I.4 | `Audit.I_3` |
 | [I.7](#i7) | Circle 4 (`not_same_side_of_circles_meet`): two circles cut one another on opposite sides of the straight line through their centres | Supplies a step, in `Audit.I_7`: I.7 is the rule with its two circles left undrawn, and drawing them and telling them apart takes six rules more | Nowhere: no proof uses it | `Audit.I_7` |
-| [I.13, a case of it, in 17 proofs from II.1 on](#i13-in-17-proofs) | Diagram-angle 3 (`adjacent_eq_of_right`): the angle beside a right angle is right | Supplies a step: I.13 makes the two angles two right angles, so the second is right | II.1 | `Audit.adjacent_eq_of_right` runs the other way: the rule, proved from I.13 |
+| [I.13, a case of it, in 19 proofs from II.1 on](#i13-in-19-proofs) | Diagram-angle 3 (`adjacent_eq_of_right`): the angle beside a right angle is right | Supplies a step: I.13 makes the two angles two right angles, so the second is right | II.1 | `Audit.adjacent_eq_of_right` runs the other way: the rule, proved from I.13 |
 | [I.13, a consequence of it, in I.47](#i13-in-i47) | Metric 5 (`angle_le_two_right`): no angle exceeds two right angles | Supplies a step: for an angle between two straight lines, I.13 gives it | I.47, its only user | None |
 | [I.23](#i23) | Superposition (`superposition`): a triangle can be laid down on a given ray, on a given side, keeping its sides and angles | Supplies a step, in `Audit.I_23`: laid down at A along AB, the triangle DCE carries its angle at C to A, and naming the ray and the side takes seven axioms more | I.4 | `Audit.I_23` |
 | [III.1's corollary, in III.1 Por.](#iii1-por) | Generalities 2 (`centre_unique`): a circle has only one centre | Supplies a step: "a proposition which, if thought necessary, may be added to III. 1 as a corollary" (Heath, vol. 2, p. 8) | III.1's porism; of the propositions themselves, III.14 | None |
@@ -98,17 +98,18 @@ argument, by I.5, with D in each of its four places (`Prop7.cases`). `Audit.I_7`
 Circle 4, with Postulates 1 and 3, Diagram-segment 3, Same side 3, Metric 3 and
 Generalities 2 to draw the circles and tell them apart.
 
-#### I.13 in 17 proofs
+#### I.13 in 19 proofs
 
-Sixteen of the 17 proofs call the rule themselves: II.1, II.3, II.4, II.5, II.9, II.11,
-II.14, III.3, III.10, III.15, III.16, III.17 and III.25 in their own Lean; III.9 in its
-helper `Prop9.apart`; and III.1 and its porism in III.1's helper `Prop1.perpendicular`,
-which shows that at a point of a straight line only one straight line is at right angles
-to it. III.19 reaches the rule only through `Prop1.perpendicular`, which III.16 uses as
-well as calling the rule itself. Twenty-five more entries (24 propositions and III.16's
-porism) rest on it through these 17. I.13 does not rest on it. The rule gives the right
-angles Euclid reads off his figure, as for the rectangles of II.1, where his text says
-nothing of them.
+Eighteen of the 19 proofs call Diagram-angle 3 (`adjacent_eq_of_right`) themselves:
+II.1 and its companion `BookII.Prop1.two`, II.3, II.4, II.5, II.9, II.11,
+II.14 and its companion `BookII.Prop14.rectangle`, III.3, III.10, III.15, III.16, III.17
+and III.25 in their own Lean; III.9 in its helper `Prop9.apart`; and III.1 and its porism
+in III.1's helper `Prop1.perpendicular`, which shows that at a point of a straight line
+only one straight line is at right angles to it. III.19 reaches the rule only through
+`Prop1.perpendicular`, which III.16 uses as well as calling the rule itself. Thirty-four
+more entries (24 propositions, III.16's porism and nine companions) rest on it through
+these 19. I.13 does not rest on it. The rule gives the right angles Euclid reads off his
+figure, as for the rectangles of II.1, where his text says nothing of them.
 
 #### I.13 in I.47
 
@@ -234,8 +235,8 @@ both circles, and circles that touch without have none.
 
 **What the project already says.** The [gap catalogue for Book III](gaps-book-III.md) says
 that Circle 2 "already contains III.2", in its introduction and under III.1, where it also
-gives Generalities 2 as the corollary Heath would add to III.1. III.2's commentary has a
-paragraph headed "A rule that contains III.2", and III.5's and III.6's name `circle_eq` as
+gives Generalities 2 as the corollary Heath would add to III.1. III.2's commentary explains
+how Circle 2 and Circle 3 give III.2, and III.5's and III.6's name `circle_eq` as
 the rule that supplies the step Euclid leaves tacit there. The axiom docstrings name one
 more of Euclid's steps: Intersection 5 is "the step Euclid takes for granted in I.1". That
 is a gap Euclid leaves and the rule fills, not a proposition he proves later, and it
@@ -267,8 +268,8 @@ rest of the attempt, so that Postulates 4 and 5, for instance, were never tried 
 diagram rules.
 
 The revised screen of `tooling/overlap-screen-unfold` (commit `760b974`) was run against
-library revision `89c5da4`. The linked `Audit/screen.py` gains the behaviours described here
-when that tooling lands. In the revised screen, every definition a statement or a rule
+library revision `89c5da4`. The linked `Audit/screen.py` has had these behaviours on main
+since #138. In the revised screen, every definition a statement or a rule
 reaches is unfolded, but for the kinds of magnitude, with their sum, order and zero, in
 which the rules are stated, and the magnitudes Lean chooses (`circumference`, `standing` and
 the rectangle `rect`), which are given by what their definitions say; each try leaves out
@@ -299,7 +300,7 @@ holds of I.7's circles, and they are rows now, with `Audit.I_2` and `Audit.I_3`.
 **How each rule enters.** Argon's second review pointed out that `direct_axioms` counts a
 rule a proof reaches through a lemma as well as one its own Lean names, and found that
 II.14 and III.15 called Circle 2 on two points of a circle. The account of "First enters"
-above the table and the notes on I.13 in 17 proofs, III.1's porism and III.2 rest on that
+above the table and the notes on I.13 in 19 proofs, III.1's porism and III.2 rest on that
 reading, each point checked against Lean's proof terms. The certificate now keeps the two
 apart, as `own_axioms` and `inherited`, and agrees with every one of those points.
 
