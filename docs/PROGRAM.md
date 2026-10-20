@@ -182,10 +182,10 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
   captures what Euclid meant. The independence of Postulate 5 still rests on the
   numerical hyperbolic check in [tests/model](../tests/model/), until a hyperbolic model
   is built. Making `formal-model` a required check of the ruleset is the owner's call.
-- **The statements' vocabulary** (settled 17 Oct). The lock holds every word that the
-  axioms' statements or the entries' statements reach: 61, the 37 of the axioms and 24
-  that only the statements use (`Touches`, `EqualCircles`, `circumference`, `rect`,
-  `Parallel` and others). A change to one is a decision, as a changed axiom is
+- **The statements' vocabulary** (settled 17 Oct). The lock's `[vocabulary]` holds every
+  word that the axioms' statements or the entries' statements reach: those of the axioms,
+  and those that only the statements use (`Touches`, `EqualCircles`, `circumference`,
+  `rect`, `Parallel` and others). A change to one is a decision, as a changed axiom is
   ([0002](briefs/0002-decisions.md), [FIELDS.md](../Certificate/FIELDS.md#the-vocabulary)).
   Each later book's definitions join the lock with its statements.
 

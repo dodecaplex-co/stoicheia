@@ -5,8 +5,8 @@ refers to the catalogue before [eight axiom retirements](../FORMALIZATION.md#rul
 Circle 4 is now a corollary of I.7, so the former I.7 shortcut is circular;
 Diagram-angle 3 follows I.13, and Generalities 2 is proved in Book Zero. Circle 2 is
 proved from Circle 3, which remains III.2's axiom overlap. The superposition work
-still leaves those rows to the retirement work. The baseline is now 79 axioms,
-including 73 tacit rules; thirty-one more
+still leaves those rows to the retirement work. The eight took the baseline to 79
+axioms, including 73 tacit rules; thirty-one more
 rules became theorems the same day, so the baseline is now 48 axioms, including 42 tacit
 rules. No superposition statement changes
 here.

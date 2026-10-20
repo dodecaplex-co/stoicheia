@@ -3,7 +3,7 @@
 19 October 2026: the frozen plan below uses the former baseline of 87 axioms.
 [Eight rules are now theorems](../FORMALIZATION.md#rules-now-proved), keeping their
 names and exact types, so the baseline is 79, including 73 tacit rules. Adding the
-proposed centre-existence axiom would now take 79 to 80, and 73 tacit rules to 74.
+proposed centre-existence axiom would then have taken 79 to 80, and 73 tacit rules to 74.
 Thirty-one more
 rules became theorems the same day, so the baseline is now 48 axioms, including 42 tacit
 rules. With them, the

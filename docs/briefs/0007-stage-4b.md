@@ -1,6 +1,6 @@
 # Brief 0007: the statements of stage 4b, III.7, III.8 and III.17
 
-19 October 2026: the frozen requirement below that `[axioms]` stay at 87 now has a
+19 October 2026: the frozen requirement below that `[axioms]` stay at 87 first took a
 baseline of 79, including 73 tacit rules, after [eight rules became theorems](../FORMALIZATION.md#rules-now-proved)
 with their names and exact types unchanged. Thirty-one more
 rules became theorems the same day, so the baseline is now 48 axioms, including 42 tacit
