@@ -20,9 +20,12 @@ questions at once:
 A book meets the standard when its acceptance checklist (`ACCEPTANCE.md`)
 passes with no failures, an independent audit by a model family that wrote none of it
 agrees, and a cold outside reading scores it about 95. A few deliberate limitations are
-allowed when they are stated plainly where they occur: in Book III, the mixed angles of
-III.16 and III.31, and the places where a System E rule already contains a proposition
-(III.2).
+allowed when they are stated plainly where they occur. For I.45 and II.14, the figure is
+supplied with its checked division into triangles and area is relative to that division; a
+proof of a division from the outline, and independence of area from the division chosen,
+remain pending under [#116](https://github.com/jackChallis/stoicheia/issues/116). In Book
+III, the limitations are the mixed angles of III.16 and III.31, and the places where a
+System E rule already contains a proposition (III.2).
 
 ## 2. How a book is made, in parallel
 
@@ -54,8 +57,8 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 
 | Book | Propositions | Stage | Records | Acceptance | Outside score | Release |
 |---|---|---|---|---|---|---|
-| I | 48 of 48 proved, and I.15's porism and nine companion theorems | released (next: I.45 representation, #116; acceptance in CI, #35) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
-| II | 14 of 14 proved, and eight companion theorems | released (next: II.14 representation, #116; acceptance in CI, #35) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
+| I | 48 of 48 proved, and I.15's porism and nine companion theorems | released (next: I.45 outline coverage and independence of division, #116) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
+| II | 14 of 14 proved, and eight companion theorems | released (next: II.14 outline coverage and independence of division, #116) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
 | III | 37 of 37 proved, and the porisms of III.1 and III.16 and three companion theorems | released (next: stage 3/4 migrations; mixed angles; centre rule; full records) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
 | IV | not stated | brief (draft, awaiting approval) | — | — | — | — |
 | V–XIII | not begun | — | — | — | — | — |
@@ -69,8 +72,9 @@ statements and the Lean files, at the stage `exceptions` or `full`
 release from [program.toml](program.toml), which the coordinator keeps with this page.
 The outside scores are Astra's reading of 17 October at `676244a`. The
 [acceptance report](reports/acceptance-books-I-III.md) exists, but acceptance has not
-passed. The Acceptance column stays a dash until it passes; running the check in CI is
-still pending ([#35]). The scope of each book's statements, whole, restricted or in part,
+passed. The Acceptance column stays a dash until it passes. CI now checks every pull
+request against main ([#148]); full acceptance remains the consolidation release gate.
+The scope of each book's statements, whole, restricted or in part,
 stands in the [README](../README.md) and on [the certificate](../CERTIFICATE.md).
 
 Book IV has a [draft brief](briefs/0012-book-IV.md), draft Lean statements and
@@ -85,11 +89,11 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 1 | Precision: certificate, review records, wording, layout, evidence, overlaps, Book III's reading | done, 17 Oct |
 | 1b | Standards: AGENTS.md, STYLE, FORMALIZATION, WORKFLOW, templates, `check_style.py` | done, 17 Oct |
 | — | Release of Book III | [done, 17 Oct](https://github.com/jackChallis/stoicheia/releases/tag/book-III); Book I and II notes corrected |
-| 2 | I.40 and II.1 general; I.45 and II.14 with supplied divisions | done, 19 Oct: proved in Staging ([#88]), and in the edition with their records ([#19], [#102](https://github.com/jackChallis/stoicheia/pull/102)) |
+| 2 | I.40 and II.1 general; I.45 and II.14 with supplied divisions | done, 19 Oct: proved in Staging ([#88]), and in the edition with their records ([#19], [#102](https://github.com/jackChallis/stoicheia/pull/102)); I.45 and II.14 restricted from 20 Oct, for figures supplied with a checked division, until the proof from the outline ([#116]) |
 | 3 | Arcs and segments; III.24 | proved in Staging ([#89]); the move into `Elements/` next ([#25]) |
 | 4 | III.14, III.15, III.25 | proved in Staging ([#90]); the move into `Elements/` next ([#28]) |
 | 5 | Consolidation review of all 99 | Books I and II: all 62 records at `full` ([#115]); Book III: 37 at `exceptions`, full review after its migrations ([#29]) |
-| 6 | Acceptance, then a consolidation release of Books I–III | report exists; acceptance has not passed, and CI integration remains pending ([#35]) |
+| 6 | Acceptance, then a consolidation release of Books I–III | report exists; acceptance has not passed; CI checks regressions against main ([#148]) |
 
 ### Landed on 18 October
 
@@ -143,7 +147,9 @@ How work lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull re
 - **I.45 and II.14's representation** still takes a supplied division into triangles.
   The remaining work is to give the figure by its outline, prove that a division exists
   and covers exactly its region, and prove that the area does not depend on the division
-  ([#116]). Their review records are at `full`; that review stage does not settle this
+  ([#116]). The owner's [20 October decision](briefs/0002-decisions.md#20-october-2026)
+  supersedes the earlier full-scope call: both scopes are `restricted`, while their
+  records remain at review stage `full`. That review stage does not settle this
   representation work.
 - **Stage 3's proofs** are done in `Staging/Stage3`, every statement of brief 0006's stage 3
   proved with no new axiom: placement in all its cases, with superposition not among its
@@ -160,8 +166,8 @@ How work lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull re
 - **Book III's 37 review records** remain at `exceptions`; they reach `full` after the
   migrations and review ([#29]). Books I and II's 48 and 14 records are already at `full`
   ([#115]).
-- **Acceptance** still has failing items in its report, and its CI integration remains
-  pending ([#35]).
+- **Acceptance** still has failing items in its report. CI now checks every pull request
+  against main ([#148]); the consolidation release must pass every item.
 - **Two that are not pull requests:** the finished worktrees and their merged branches are
   removed, and the fleet script, kept outside the repository, is rebuilt from the orders
   template, without "every hypothesis should be used" and without the rule that every one
@@ -290,9 +296,9 @@ in the voyage logs).
 [#25]: https://github.com/jackChallis/stoicheia/issues/25
 [#28]: https://github.com/jackChallis/stoicheia/issues/28
 [#29]: https://github.com/jackChallis/stoicheia/issues/29
-[#35]: https://github.com/jackChallis/stoicheia/issues/35
 [#57]: https://github.com/jackChallis/stoicheia/issues/57
 [#59]: https://github.com/jackChallis/stoicheia/issues/59
 [#115]: https://github.com/jackChallis/stoicheia/pull/115
 [#116]: https://github.com/jackChallis/stoicheia/issues/116
 [#134]: https://github.com/jackChallis/stoicheia/pull/134
+[#148]: https://github.com/jackChallis/stoicheia/pull/148
