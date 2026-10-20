@@ -31,8 +31,8 @@ note = "Euclid treats AD as a rectangle, with DC equal to CB. The Lean gets the 
 
 [review]
 stage = "full"
-commit = "7285f05"
-reviewer = "Claude Opus 5.5, records review"
+commit = "f3b45b70"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:ff9c599209c8485f"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 

@@ -70,8 +70,8 @@ case = "D between C and B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "29cd78e"
-reviewer = "GPT-6 Astra (Codex), records re-read"
+commit = "f3b45b70"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:d341a1520792f8c3"
 run = "brief 0005 stage 5, ship C5 re-read"
 
