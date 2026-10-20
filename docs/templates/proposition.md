@@ -203,8 +203,8 @@ commit = "…"
 lean = "sha256:…"
 reviewer = "…"                 # from stage "full": the model or person, and the role
 # run = "brief …, stage …, workflow …"   # from stage "full"
-# [review.items]               # once docs/ACCEPTANCE.md fixes the keys:
-# statement, passages, representations, commentary, figures, signoff = "pass" / "fail" / "n/a"
+# [review.items]               # keys, verdicts and conditions: docs/ACCEPTANCE.md,
+#                              # "Recording a review item"
 ```
 
 ## 5. Correcting a frozen brief
