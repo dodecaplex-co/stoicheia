@@ -3028,8 +3028,9 @@ def shown(body: str, keep_own: bool = False) -> list[tuple[str, bool]]:
     """The lines of the body GitHub shows as Markdown, less what is not the coordinator's,
     each with whether it starts a list item: CommonMark's blocks, read line by line. The
     parts safe_push wrote go first, unless keep_own: GitHub shows them too, so whether a
-    line is shown at all is read with them in place. Then fenced code (closed only by its own character, at
-    least as many, and nothing after them; never closed, it runs to the end), indented code
+    line is shown at all is read with them in place. Then fenced code (closed only by its
+    own character, at least as many, and nothing after them; never closed, it runs to the
+    end), indented code
     (four spaces or more past its container, unless it goes on with a paragraph) and HTML
     blocks, a comment among them: a line that starts with "<!--", three spaces in at most,
     hides the lines to the one that holds "-->", or to the end. A list item starts three
@@ -3190,10 +3191,10 @@ def section_problems(body: str, template: str | None, protected: bool) -> list[s
 # or show differently is refused, so that what the gate reads is what a reader sees. The
 # one heading is this line exactly, outside the parts safe_push writes, and `shown`, which
 # reads those parts in place as GitHub does, must find it too, so that one in a comment,
-# an HTML block, code or such a part cannot stand in for the section, which GitHub would
-# not show; the section runs to the next of the template's own
-# headings; only the template's own comment for it may stay, and nothing else but plain
-# ASCII: "None", or a list whose items each name an issue as #N.
+# an HTML block, code or such a part, which GitHub would not show, cannot stand in for the
+# section. The section runs to the next of the template's own headings; only the
+# template's own comment for it may stay, and nothing else but plain ASCII: "None", or a
+# list whose items each name an issue as #N.
 UNFINISHED_HEADING = "## Unfinished work"
 # A token naming an issue: #N, perhaps in parentheses or before punctuation.
 ISSUE_TOKEN = re.compile(r"\(?#([1-9][0-9]*)[).,;:]*")
