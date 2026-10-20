@@ -453,7 +453,7 @@ run('superposition', gen_sup())
 run('derived.exists_point_outside_circle', (dict(al=c) for c in CIRCS))
 
 
-# The existence rules retired on 19 October 2026, checked on the grid as derived properties.
+# The existence rules prepared for retirement, checked on the grid as derived properties.
 run('derived.exists_point_same_side', gen_ptsline('B'))
 run('derived.exists_point_opposite_side', gen_ptsline('B'))
 run('derived.exists_point_between', gen_ptsline('BC'))

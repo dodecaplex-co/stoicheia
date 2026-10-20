@@ -236,14 +236,14 @@ theorem InsideCircle.of_between_centre_of_inside {O P R : Point} (hO : Centre O 
   exact inside_of_len_lt hO hR
     (lt_trans (len_lt_of_between h) (len_lt_of_inside hO hR hP))
 
-/-- A chance point, but not too far out. If `P` is nearer to `O` than `C` is, and `Q`
-lies beyond `P` as seen from `O` (or `O` is `P` itself), there is a point `F` between
-`P` and `Q` that is nearer to `O` than `C` is, too. Euclid takes a point "at random" on
+/-- A chance point, but not too far out. If P is nearer to O than C is, and Q
+lies beyond P as seen from O (or O is P itself), there is a point F between
+P and Q that is nearer to O than C is, too. Euclid takes a point "at random" on
 a straight line and in the next breath needs it near enough (I.5, I.9). A circle about
-`O` through `C` keeps it in: `P` is inside that circle; if `Q` is not outside it, any
-point between `P` and `Q` will do; if `Q` is outside, take a point between `P` and the
-place `X` where `PQ` leaves the circle (Intersections 4). Either way `F` lies between
-`O` and a point no farther from `O` than `C` is, `Q` or `X`, so `OF` is the less, as
+O through C keeps it in: P is inside that circle; if Q is not outside it, any
+point between P and Q will do; if Q is outside, take a point between P and the
+place X where PQ leaves the circle (Intersections 4). Either way F lies between
+O and a point no farther from O than C is, Q or X, so OF is the less, as
 the part is less than the whole. This proof uses the order of the points and neither
 Circle 2 nor Circle 3; I.5 and I.9 therefore inherit neither through this lemma. -/
 theorem exists_between_nearer {O P Q C : Point} (hPQ : P ≠ Q)
@@ -253,8 +253,8 @@ theorem exists_between_nearer {O P Q C : Point} (hPQ : P ≠ Q)
   have hP_α : InsideCircle P α := inside_of_len_lt hO_α hC_α h
   obtain ⟨L, hP_L, hQ_L⟩ := Postulate1 P Q hPQ
   by_cases hQ_α : InsideCircle Q α ∨ OnCircle Q α
-  · /- `Q` is not outside the circle: `F`, taken between `P` and `Q`, lies between `O`
-       and `Q`, so `OF` is less than `OQ`, which is not greater than `OC`. -/
+  · /- Q is not outside the circle: F, taken between P and Q, lies between O
+       and Q, so OF is less than OQ, which is not greater than OC. -/
     obtain ⟨F, -, hPFQ, -⟩ := exists_point_between hP_L hQ_L hPQ []
     have hOFQ : Between O F Q := by
       rcases hO with rfl | hOPQ
@@ -266,8 +266,8 @@ theorem exists_between_nearer {O P Q C : Point} (hPQ : P ≠ Q)
     · exact lt_trans (len_lt_of_between hOFQ) (len_lt_of_inside hO_α hC_α hQ_in)
     · rw [Definition15 hO_α hC_α hQ_on]
       exact len_lt_of_between hOFQ
-  · /- `Q` is outside: `PQ` leaves the circle at `X`, and `F` is taken between `P` and
-       `X`. `F` lies between `O` and `X`, so `OF` is less than the radius `OX`. -/
+  · /- Q is outside: PQ leaves the circle at X, and F is taken between P and
+       X. F lies between O and X, so OF is less than the radius OX. -/
     have hQ_out : OutsideCircle Q α := ⟨fun h => hQ_α (Or.inl h), fun h => hQ_α (Or.inr h)⟩
     obtain ⟨X, hX_α, hX_L, hPXQ⟩ := line_circle_between hP_α hP_L hQ_out hQ_L
     obtain ⟨F, -, hPFX, -⟩ := exists_point_between hP_L hX_L (ne_of_between hPXQ) []

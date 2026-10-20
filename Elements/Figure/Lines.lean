@@ -39,8 +39,8 @@ theorem collinear_of_between (h : Between A B C) : Collinear A B C := by
   obtain ⟨L, hA, hC⟩ := Postulate1 A C (ne_of_between_ends h)
   exact ⟨L, hA, on_line_of_between_ends h hA hC, hC⟩
 
-/-- Order on a straight line: if `B` is between `A` and `C`, and `C` is between `A`
-and `D`, then `C` is between `B` and `D`. -/
+/-- Order on a straight line: if B is between A and C, and C is between A
+and D, then C is between B and D. -/
 theorem between_inner (h₁ : Between A B C) (h₂ : Between A C D) : Between B C D := by
   obtain ⟨L, hA, hC⟩ := Postulate1 A C (ne_of_between_ends h₁)
   have hB : OnLine B L := on_line_of_between_ends h₁ hA hC
@@ -58,27 +58,27 @@ theorem between_inner (h₁ : Between A B C) (h₂ : Between A C D) : Between B 
   · exact absurd (between_of_between_left (between_symm h₁) (between_symm h))
       (not_between_of_between (between_symm h₂))
 
-/-- Cutting off beyond a point: if `B` is between `A` and `C`, and `D` between `B` and
-`C`, then `B` is between `A` and `D`. This is the step after "let CE be made equal to
-CD [I. 3]" on a straight line produced: what is cut off from `BC` still lies beyond
-`B`. -/
+/-- Cutting off beyond a point: if B is between A and C, and D between B and
+C, then B is between A and D. This is the step after "let CE be made equal to
+CD [I. 3]" on a straight line produced: what is cut off from BC still lies beyond
+B. -/
 theorem between_cut (h₁ : Between A B C) (h₂ : Between B D C) : Between A B D :=
   between_symm (between_inner (between_symm h₂) (between_symm h₁))
 
-/-- A finite straight line `AB` can be produced beyond `B`. [Post. 1, Post. 2] -/
+/-- A finite straight line AB can be produced beyond B. [Post. 1, Post. 2] -/
 theorem produce (h : A ≠ B) : ∃ C : Point, Between A B C := by
   obtain ⟨L, hA, hB⟩ := Postulate1 A B h
   obtain ⟨C, -, hC, -⟩ := Postulate2 hA hB h []
   exact ⟨C, hC⟩
 
-/-- Room to cut off. A finite straight line `AB` can be produced beyond `B` further
-than a given straight line `BC` from `B`. Postulate 2 produces a straight line but
+/-- Room to cut off. A finite straight line AB can be produced beyond B further
+than a given straight line BC from B. Postulate 2 produces a straight line but
 never says how far, and I.3 cuts off only from a *greater* straight line; so Euclid's
 "let CE be made equal to CD [I. 3]", on a straight line produced, needs this first
-(I.11, I.16, I.20, I.22). Describe the circle with centre `B` and distance `BC`
-[Post. 3]; the straight line `AB`, produced beyond the centre, cuts it at some `Y`
-(System E, Intersections 5); and `BY`, produced a little further still to `X`
-[Post. 2], is greater than `BY`, that is, than `BC` [Def. 15, C.N. 5]. -/
+(I.11, I.16, I.20, I.22). Describe the circle with centre B and distance BC
+[Post. 3]; the straight line AB, produced beyond the centre, cuts it at some Y
+(System E, Intersections 5); and BY, produced a little further still to X
+[Post. 2], is greater than BY, that is, than BC [Def. 15, C.N. 5]. -/
 theorem produce_longer (hAB : A ≠ B) (hBC : B ≠ C) :
     ∃ X : Point, Between A B X ∧ ‖B C‖ < ‖B X‖ := by
   obtain ⟨α, hB_α, hC_α⟩ := Postulate3 B C hBC

@@ -149,7 +149,7 @@ propositions, as the [overlap catalogue](../reports/overlaps.md) records:
 |---|---|---|
 | I.2 | superposition | Euclid's construction, by I.1 and two circles; it never uses the rule |
 | I.3 | superposition | Euclid's construction, by I.2 and a circle; it never uses the rule |
-| I.23 | superposition | Euclid's construction, by I.22 and I.8; it rests on the rule through I.8, which with I.4 alone may call on it directly |
+| I.23 | superposition | Euclid's construction, by I.22 and I.8; it rests on the rule through I.8, which with I.4 alone may call on it directly, and through I.20 |
 
 19 October 2026: I.7's former overlap with Circle 4 is retired. Circle 4 is now a
 corollary after I.7 in `Elements/BookI/Prop07.lean`, proved from I.7, Definition I.15

@@ -40,8 +40,12 @@ kind = "carried"
 helper = "Prop1.porism"
 note = "Proved as its own theorem, III.1 Por., from this construction. It uses `Tacit.centre_unique`, now proved from the foundations in `Elements/Figure/Circles.lean` using circle intersections, equal radii (Definition I.15) and the order of lengths; III.1 itself does not use this theorem."
 
+[figure]
+case = "the supposed centre G off AB and off CE, as in Heath's figure"
+note = "Like Heath's, this figure draws the impossible supposition: G, off CE, as a centre of the circle ABC."
+
 [review]
 stage = "exceptions"
-commit = "2c3686e"
-reviewer = "Claude Opus 5.5"
+commit = "890032f"
+reviewer = "Codex, independent reader Aw2-reader-k"
 lean = "sha256:fd968c0c90a4b364"

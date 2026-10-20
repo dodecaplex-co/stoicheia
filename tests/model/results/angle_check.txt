@@ -1,7 +1,7 @@
 # angle_check: a second, independent angle and area check
 # command: python3 -I tests/model/angle_check.py
 # seeds: 1
-# commit: b739f109fa86cafdc1ac5891feb13149750db312 (harness files differ from this commit)
+# commit: 37bcd05a7db2787db9d2543e268c3300c2de9f30 (harness files as committed)
 # harness sha256: 327ea3cc5944688cff19c0e04e2829e766cfb03447a2a93ab83f9045955cae27
 # python: 3.11.9 (CPython, Darwin arm64)
 # date: 2026-10-19

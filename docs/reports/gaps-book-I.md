@@ -79,7 +79,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 - I.3 needs a greater line to cut from, and Postulate 2 gives no length; room is found with a circle (`produce_longer`, used again in I.16, I.20 and I.22).
 - C lies between D and E, which makes the angles DCF and FCE adjacent (`between_cut`).
 - "At right angles to AB" means at right angles to every point of AB, not only D and E (`OnRay.cases_of_between`).
-- Turning Definition 10's "right" into the one magnitude of all right angles takes Postulate 4, which no bracket names here.
+- Turning Definition I.10's "right" into the one magnitude of all right angles takes Postulate 4, which no bracket names here.
 
 ## I.12
 - The circle about C through D cuts AB twice. `OppositeSides.exists_between` finds X on AB between C and D; CX is less than the radius CD, so `InsideCircle.of_between_centre` puts X within the circle. The theorem `line_meets_circle_of_inside` (System E, Intersection 3) then gives the two distinct crossings E and G, proved in `Elements/Figure/Incidence.lean` by applying `line_circle_beyond` in both directions.
@@ -152,7 +152,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 - Heath: "the construction of the triangle assumed in this proposition is not exactly the construction given in I. 22" (vol. 1, p. 295). Our I.22 is stated with its corner at a given point, a side along a given ray and its third corner on a given side, which is what I.23 asks of it.
 - AFG is a triangle, as I.8 needs: G is on AB and is not A, and F is off AB (`OnRay.onLine`, `SameSideOf.triangle`, `Triangle.off_line`, `Triangle.of_line`).
 - D and E are taken "at random", and the choice does not matter because an angle depends only on its rays (`angle_eq_of_onRay`).
-- DCE must be a triangle for I.20 and I.8, so D and E are not on one straight line with C. Definition 8 already asks this of a plane angle, whose lines "do not lie in a straight line"; a flat angle could not be copied this way, having no triangle to carry. The statement takes the given angle as the triangle DCE.
+- DCE must be a triangle for I.20 and I.8, so D and E are not on one straight line with C. Definition I.8 already asks this of a plane angle, whose lines "do not lie in a straight line"; a flat angle could not be copied this way, having no triangle to carry. The statement takes the given angle as the triangle DCE.
 - Which ray from A, and which side of AB, the new angle takes are left to the figure. The statement settles both, as I.24, I.31 and I.42 need.
 
 ## I.24
@@ -272,7 +272,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 - "Let the angle ABC be added to each" needs C within the angle DBA, and A within the angle FBC. Euclid reads both off his figure. The angles at B and C are less than right angles (I.17), and the squares are described outward, so `Prop47.within` puts each point where the figure does, by I.13, and `angle_add_of_within` adds the angles.
 - "Through A let AL be drawn parallel to either BD or CE" is I.31, though no bracket names it, and "either" is I.30 (`Prop30.parallel`). AL meets DE at L, and BC at a point Heath leaves without a letter (`Prop30.meet`).
 - "The whole square BDEC" is the parallelograms BL and CL together only if the foot of AL lies between B and C, and L between D and E. A lies between BD and CE, so AL, parallel to both, crosses BC and DE between them (`Between.of_inside`), and `quadArea_add_of_parallelograms` puts the pieces together.
-- Euclid's squares are described by I.46, so they are parallelograms, as I.41 needs. Ours are given in the statement as squares (Def. 22), and `Prop28.square` (I.28) shows them parallelograms.
+- Euclid's squares are described by I.46, so they are parallelograms, as I.41 needs. Ours are given in the statement as squares (Def. I.22), and `Prop28.square` (I.28) shows them parallelograms.
 
 ## I.48
 - "Let AD be drawn from the point A at right angles to the straight line AC" is I.11, though no bracket names it, and "let AD be made equal to BA" is a circle about A (`OnRay.exists_len_eq`, Post. 3).
@@ -305,7 +305,7 @@ over a postulate, the reason is one of these.
   proved rules, including `OnRay.between_of_len_lt` through `between_of_between_right`
   and `area_swap`. I.4 reaches it through `onRay_of_angle_eq`, and I.6 through
   `area_swap` as well as I.4.
-- **Postulate 3 and Definition 15**: circles Euclid does not draw, which keep a
+- **Postulate 3 and Definition I.15**: circles Euclid does not draw, which keep a
   chance point near enough (`exists_between_nearer`, I.5 and I.9), give a straight
   line room to be cut from (`produce_longer`), or lay a length along a ray
   (`OnRay.exists_len_eq`, I.24, I.44, I.46 and I.48); and circles he does draw, but
@@ -313,7 +313,7 @@ over a postulate, the reason is one of these.
   Proved order and length rules also carry these assumptions: I.4 reaches them through
   `OnRay.eq_of_len_eq`, `ne_of_len_eq` and `onRay_of_angle_eq`, although its own
   construction draws no circle.
-- **Postulate 4**: turning Definition 10's right angles into the one magnitude `∟`
+- **Postulate 4**: turning Definition I.10's right angles into the one magnitude `∟`
   that all right angles share.
 - **Postulate 5**: no difference. The Lean uses it directly just where Euclid
   calls on it, in I.29 and I.44, and elsewhere only through the propositions cited:

@@ -442,7 +442,7 @@ def g_two_pts():
     return dict(A=A, B=A if rng.random() < 0.3 else any_pt([A]), C=any_pt([A]))
 
 
-# The rules retired on 19 October 2026 that this search did not yet sample, as derived properties.
+# The rules prepared for retirement that this search did not yet sample, as derived properties.
 for n in ['derived.ne_of_between', 'derived.ne_of_between_ends']:
     run(n, g_between)
 for n in ['derived.same_side_refl', 'derived.same_side_symm']:

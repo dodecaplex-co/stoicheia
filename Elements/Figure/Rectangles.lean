@@ -8,8 +8,8 @@ import Elements.Foundations.DefinitionsII
 
 Book II names a rectangle by the two straight lines that contain it, and a square by
 the straight line it is described on, and Euclid never doubts that the names follow
-the lengths: that the rectangle contained by `AB`, `BC` is the rectangle contained by
-`BA`, `BC`, or by `BC`, `AB`; that "since AC is equal to CE, the square on AC is also
+the lengths: that the rectangle contained by AB, BC is the rectangle contained by
+BA, BC, or by BC, AB; that "since AC is equal to CE, the square on AC is also
 equal to the square on CE" (II.9); or that a rectangle with a side that is nothing is
 nothing. Nor does he doubt that a rectangle or a square may be named from any corner,
 either way round. These are those facts.
@@ -31,10 +31,10 @@ Book II's figures begin with points on one straight line, and the first square o
 perpendicular must stand on one side of it. Euclid never doubts that there is a
 side to stand on. -/
 
-/-- There is a point off the straight line `AB`, avoiding any points already in the
-figure. The circles with centres `A` and `B` through each other cut one another
-(System E, Intersection 5), and a point where they cut is off `AB`: on `AB` it would be
-as far from `A` as `B` is, and as far from `B` as `A` is, and one of the three points
+/-- There is a point off the straight line AB, avoiding any points already in the
+figure. The circles with centres A and B through each other cut one another
+(System E, Intersection 5), and a point where they cut is off AB: on AB it would be
+as far from A as B is, and as far from B as A is, and one of the three points
 would lie between the other two (Definition 15; System E, Between 6 and Diagram-segment
 1). Then any point on its side will do (System E, Points 5). -/
 theorem exists_off_line (hAB : A ≠ B) (avoid : List Point) :
@@ -66,7 +66,7 @@ theorem exists_off_line (hAB : A ≠ B) (avoid : List Point) :
 
 /-! ## The rectangle contained by two straight lines -/
 
-/-- The rectangle contained by `AB`, `CD` depends only on the lengths of `AB` and `CD`:
+/-- The rectangle contained by AB, CD depends only on the lengths of AB and CD:
 straight lines equal to them contain the same rectangle. -/
 theorem rect_congr (h₁ : ‖A B‖ = ‖A' B'‖) (h₂ : ‖C D‖ = ‖C' D'‖) :
     rect A B C D = rect A' B' C' D' := by
@@ -78,11 +78,11 @@ AC is also equal to the square on CE" (II.9). -/
 theorem sq_congr (h : ‖A B‖ = ‖C D‖) : sq A B = sq C D :=
   rect_congr h h
 
-/-- The square on `AB` is the square on `BA`. -/
+/-- The square on AB is the square on BA. -/
 theorem sq_symm (A B : Point) : sq A B = sq B A :=
   sq_congr (len_symm A B)
 
-/-- The rectangle `ABCD`, read the other way round from `A`, is the rectangle `ADCB`. -/
+/-- The rectangle ABCD, read the other way round from A, is the rectangle ADCB. -/
 theorem Rectangle.reverse (h : Rectangle A B C D) : Rectangle A D C B := by
   obtain ⟨hp, hA, hB, hC, hD⟩ := h
   have hAB : A ≠ B := hp.1.1
@@ -95,43 +95,43 @@ theorem Rectangle.reverse (h : Rectangle A B C D) : Rectangle A D C B := by
   · rw [angle_symm hCD.symm hBC]; exact hC
   · rw [angle_symm hBC.symm hAB]; exact hB
 
-/-- The rectangle `ABCD`, named from `B`, is the rectangle `BCDA`. -/
+/-- The rectangle ABCD, named from B, is the rectangle BCDA. -/
 theorem Rectangle.rotate (h : Rectangle A B C D) : Rectangle B C D A :=
   ⟨h.1.rotate, h.2.2.1, h.2.2.2.1, h.2.2.2.2, h.2.1⟩
 
-/-- Read either way round, two lengths contain the same areas: the rectangle `PQRS`
-read as `PSRQ` has its sides about the angle at `P` in the other order. -/
+/-- Read either way round, two lengths contain the same areas: the rectangle PQRS
+read as PSRQ has its sides about the angle at P in the other order. -/
 theorem Contain.symm (h : Contain a b x) : Contain b a x := by
   rcases h with ⟨h0, hx⟩ | ⟨P, Q, R, S, hr, hPQ, hPS, hx⟩
   · exact Or.inl ⟨h0.symm, hx⟩
   · exact Or.inr ⟨P, S, R, Q, hr.reverse, hPS, hPQ, (quadArea_reverse P Q R S).trans hx⟩
 
-/-- The rectangle contained by `AB`, `CD` is the rectangle contained by `CD`, `AB`. -/
+/-- The rectangle contained by AB, CD is the rectangle contained by CD, AB. -/
 theorem rect_comm (A B C D : Point) : rect A B C D = rect C D A B := by
   unfold rect
   have : Contain ‖A B‖ ‖C D‖ = Contain ‖C D‖ ‖A B‖ :=
     funext fun _ => propext ⟨Contain.symm, Contain.symm⟩
   rw [this]
 
-/-- A rectangle with a side that is nothing is nothing: the rectangle contained by `AA`,
-`CD` has no area. -/
+/-- A rectangle with a side that is nothing is nothing: the rectangle contained by AA,
+CD has no area. -/
 theorem rect_self_left (A C D : Point) : rect A A C D = 0 := by
   have hex : ∃ x, Contain ‖A A‖ ‖C D‖ x := ⟨0, Or.inl ⟨Or.inl (len_self A), rfl⟩⟩
   rcases Classical.epsilon_spec hex with ⟨-, hx⟩ | ⟨P, Q, R, S, hr, hPQ, -, -⟩
   · exact hx
   · exact absurd (eq_of_len_eq_zero (hPQ.trans (len_self A))) hr.1.1.1
 
-/-- The rectangle contained by `AB`, `CC` has no area. -/
+/-- The rectangle contained by AB, CC has no area. -/
 theorem rect_self_right (A B C : Point) : rect A B C C = 0 :=
   (rect_comm A B C C).trans (rect_self_left C A B)
 
-/-- The square on `AA` has no area. -/
+/-- The square on AA has no area. -/
 theorem sq_self (A : Point) : sq A A = 0 :=
   rect_self_left A A A
 
 /-! ## Squares -/
 
-/-- The square `ABCD`, read the other way round from `A`, is the square `ADCB`. -/
+/-- The square ABCD, read the other way round from A, is the square ADCB. -/
 theorem Square.reverse (h : Square A B C D) (hp : Parallelogram A B C D) :
     Square A D C B := by
   obtain ⟨h₁, h₂, h₃, hA, hB, hC, hD⟩ := h
@@ -155,8 +155,8 @@ theorem Square.rectangle (h : Square A B C D) (hp : Parallelogram A B C D) :
     Rectangle A B C D :=
   ⟨hp, h.2.2.2⟩
 
-/-- The four sides of the square `ABCD` are equal: `AD`, the side at `A` other than
-`AB`, is equal to `AB`. -/
+/-- The four sides of the square ABCD are equal: AD, the side at A other than
+AB, is equal to AB. -/
 theorem Square.len_eq (h : Square A B C D) : ‖A D‖ = ‖A B‖ := by
   rw [len_symm A D, ← h.2.2.1, ← h.2.1, ← h.1]
 
