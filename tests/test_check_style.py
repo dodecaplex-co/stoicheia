@@ -1019,6 +1019,15 @@ class ConflictMarkers(unittest.TestCase):
         self.assertEqual(style.conflict_markers(text, markdown=True),
                          [(1, "opening"), (3, "base"), (5, "middle"), (7, "closing")])
 
+    def test_nested_conflicts_keep_the_outer_block_open(self):
+        text = "\n".join(("<" * 7 + " outer", "<" * 7 + " inner", "=" * 7,
+                          ">" * 7 + " inner", "Outer text", "=" * 7,
+                          ">" * 7 + " outer"))
+        self.assertEqual(style.conflict_markers(text, markdown=True), [
+            (1, "opening"), (2, "opening"), (3, "middle"), (4, "closing"),
+            (6, "middle"), (7, "closing"),
+        ])
+
     def test_middle_needs_both_edges_to_override_setext(self):
         for text, expected in (
             ("\n".join(("<" * 7, "A heading", "=" * 7)), [(1, "opening")]),
@@ -1081,7 +1090,8 @@ class ConflictMarkers(unittest.TestCase):
     def test_middle_in_html_blocks(self):
         for html in ("<div>", "<div>\nbody", "<div>\nbody\n</div>",
                      "<script>\ncode\n</script>", "<?instruction?>", "<!DOCTYPE html>",
-                     "<![CDATA[text]]>", '<x title="a>b">', "<source src=x"):
+                     "<![CDATA[text]]>", '<x title="a>b">', "<source src=x",
+                     "<div\fclass=x>", "<x\vtitle=y>"):
             with self.subTest(html=html):
                 text = html + "\n" + "=" * 7
                 self.assertEqual(style.conflict_markers(text, markdown=True),
@@ -1173,6 +1183,8 @@ class ConflictMarkers(unittest.TestCase):
                     text = indent + "[label]: " + destination + "\n" + "=" * 7
                     self.assertEqual(style.conflict_markers(text, markdown=True),
                                      [(2, "middle")])
+        self.assertEqual(style.conflict_markers(
+            "[\\ ]: /url\n" + "=" * 7, markdown=True), [(2, "middle")])
         text = "[label]: destination\nHeading\ncontinued\n" + "=" * 7
         self.assertEqual(style.conflict_markers(text, markdown=True), [(4, "middle")])
 
@@ -1287,8 +1299,13 @@ class ConflictMarkers(unittest.TestCase):
                                                markdown=True), [])
 
     def test_lines_are_counted_by_newlines(self):
-        text = "Text with a Unicode separator \u2028 here.\r\n" + "|" * 7 + "\r\n"
-        self.assertEqual(style.conflict_markers(text, markdown=True), [(2, "base")])
+        for newline in ("\n", "\r\n", "\r"):
+            with self.subTest(newline=repr(newline)):
+                text = "Text with Unicode separators \u2028 and \u2029 here." + newline
+                text += "|" * 7 + " base" + newline
+                self.assertEqual(style.conflict_markers(text, markdown=True), [(2, "base")])
+        text = "First\r\nSecond\r" + ">" * 7 + " last\n"
+        self.assertEqual(style.conflict_markers(text, markdown=True), [(3, "closing")])
 
     def test_raw_files_and_binary_detection(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -328,7 +328,9 @@ LINK_REFERENCE_OPEN = re.compile(r"^ {0,3}\[")
 # A block quote or list item: a seven-equals line after one cannot underline a
 # paragraph (a setext underline is never a lazy continuation), so S23 refuses it.
 CONTAINER_START = re.compile(r"^ {0,3}(?:>|[-+*](?:[ \t]|$)|[0-9]{1,9}[.)](?:[ \t]|$))")
-HTML_RAW_START = re.compile(r"^ {0,3}<(script|pre|style|textarea)(?:[ \t]|>|$)", re.I)
+GFM_WHITESPACE = r"[ \t\n\v\f\r]"
+HTML_RAW_START = re.compile(
+    rf"^ {{0,3}}<(script|pre|style|textarea)(?:{GFM_WHITESPACE}|>|$)", re.I)
 HTML_CDATA_START = re.compile(r"^ {0,3}<!\[CDATA\[")
 HTML_DECLARATION_START = re.compile(r"^ {0,3}<![A-Z]")
 HTML_INSTRUCTION_START = re.compile(r"^ {0,3}<\?")
@@ -337,14 +339,15 @@ HTML_BLOCK_TAG_START = re.compile(
     r"colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|"
     r"frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|"
     r"nav|noframes|ol|optgroup|option|p|param|search|section|source|summary|table|tbody|td|"
-    r"tfoot|th|thead|title|tr|track|ul)(?:[ \t]|/?>|$)", re.I)
+    rf"tfoot|th|thead|title|tr|track|ul)(?:{GFM_WHITESPACE}|/?>|$)", re.I)
 HTML_TAG_NAME = r"[A-Za-z][A-Za-z0-9-]*"
 HTML_ATTRIBUTE_NAME = r"[A-Za-z_:][A-Za-z0-9_.:-]*"
-HTML_ATTRIBUTE_VALUE = r'''(?:[^ \t\n\f\r"'=<>`]+|'[^']*'|"[^"]*")'''
-HTML_ATTRIBUTE = rf"(?:[ \t]+{HTML_ATTRIBUTE_NAME}(?:[ \t]*=[ \t]*{HTML_ATTRIBUTE_VALUE})?)"
+HTML_ATTRIBUTE_VALUE = r'''(?:[^ \t\n\v\f\r"'=<>`]+|'[^']*'|"[^"]*")'''
+HTML_ATTRIBUTE = (rf"(?:{GFM_WHITESPACE}+{HTML_ATTRIBUTE_NAME}"
+                  rf"(?:{GFM_WHITESPACE}*={GFM_WHITESPACE}*{HTML_ATTRIBUTE_VALUE})?)")
 HTML_COMPLETE_TAG = re.compile(
-    rf"^ {{0,3}}(?:<{HTML_TAG_NAME}{HTML_ATTRIBUTE}*[ \t]*/?>|"
-    rf"</{HTML_TAG_NAME}[ \t]*>)[ \t]*$")
+    rf"^ {{0,3}}(?:<{HTML_TAG_NAME}{HTML_ATTRIBUTE}*{GFM_WHITESPACE}*/?>|"
+    rf"</{HTML_TAG_NAME}{GFM_WHITESPACE}*>){GFM_WHITESPACE}*$")
 
 
 def possible_reference_label(line: str, active: bool | None) -> tuple[bool | None, bool]:
@@ -359,7 +362,7 @@ def possible_reference_label(line: str, active: bool | None) -> tuple[bool | Non
         at = 0
     while at < len(line):
         if line[at] == "\\" and at + 1 < len(line):
-            active = active or not line[at + 1].isspace()
+            active = True
             at += 2
         elif line[at] == "[":
             return None, False
@@ -425,12 +428,12 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
     fence inside a comment, or a comment inside a fence, opens no block. This is
     not a full CommonMark parser.
     """
-    lines = [line.removesuffix("\r") for line in text.split("\n")]
+    lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
     edges = [CONFLICT_EDGE.match(line) for line in lines]
     last_close = max((i for i, edge in enumerate(edges)
                       if edge and edge[1][0] == ">"), default=-1)
     found = []
-    opened = False
+    conflict_depth = 0
     fence = html_end = ""
     comment = paragraph = False
     table = False
@@ -498,11 +501,11 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
             char = edge[1][0]
             kind = CONFLICT_KINDS[char]
             if char == "<":
-                opened = True
+                conflict_depth += 1
             elif char == ">":
-                opened = False
+                conflict_depth = max(0, conflict_depth - 1)
         elif CONFLICT_MIDDLE.fullmatch(line):
-            if (opened and i < last_close or not markdown or block or not paragraph
+            if (conflict_depth and i < last_close or not markdown or block or not paragraph
                     or reference_definition):
                 kind = "middle"
         if kind:
