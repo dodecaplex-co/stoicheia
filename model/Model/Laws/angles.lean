@@ -8,8 +8,7 @@ public import Model.Signature
 **This file is hand-translated.** It holds the ten laws about angles that the model proves
 in the plane. The generator described in the [README](../../README.md) writes every
 law from the library's elaborated declarations, and `Check/Angles.lean` compares every
-translation here by the route that README describes, including the two hand-translated
-words.
+translation here with its generated field, including the two hand-translated words.
 
 The ten are the angle rules of the library:
 

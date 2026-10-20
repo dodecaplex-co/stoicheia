@@ -1,12 +1,9 @@
-import Elements.BookI.Prop07
-import Elements.Figure.Circles
 import Elements.Foundations.Postulates
 import Elements.Foundations.Definitions
 import Elements.Foundations.Tacit.Constructions
 import Elements.Foundations.Tacit.Diagram
 import Elements.Foundations.Tacit.Transfer
 import Check.Hand
-import Check.Generator
 import Model.Laws.circles
 
 /-!
@@ -14,16 +11,13 @@ import Model.Laws.circles
 
 `Model/Laws/circles.lean` translates the circle rules by hand. As in `Check/Hand.lean`, the
 library's own words are put in for the signature's fields (`original`), and the kernel is
-asked whether each translated law then is the library's declaration. Each kernel check is `rfl`:
+asked whether each translated law then is the library's declaration. Each check is `rfl`:
 a translation that drops a guard, swaps two arguments or changes the order of the binders
 fails here, and the build fails with it. The defined words these laws reach,
 `OutsideCircle`, `OppositeSides` and `CirclesMeet`, are checked in `Check/Hand.lean`.
 
-The kernel comparisons read the library's declarations through `type_of%`. For the
-properties retained through axiom retirement, `comparePlanted` also translates the
-hand definition back and compares it directly with the declaration's type, including
-binder kinds. Both checks read only the statement, whether it is an axiom or a theorem.
-Nothing in `Model/` imports this file.
+This file reads the library's axioms only through `type_of%`, which takes a declaration's
+statement and does not use it. Nothing in `Model/` imports this file.
 -/
 
 namespace Check
@@ -68,14 +62,14 @@ example : exists_point_outside_circle original =
 example : exists_point_on_circle original = type_of% @Elements.Tacit.exists_point_on_circle :=
   rfl
 
-/-! ## The hand translations against generated laws or declaration types -/
+/-! ## The hand translations against the generated laws -/
 
 example (S : Model.Signature) : Model.Hand.Postulate3 S =
     Model.Law.Postulate3 S := rfl
 example (S : Model.Signature) : Model.Hand.Definition15 S =
     Model.Law.Definition15 S := rfl
-run_cmd (Check.Generator.comparePlanted ``Model.Hand.centre_unique_circles
-  ``Elements.Tacit.centre_unique)
+example (S : Model.Signature) : Model.Hand.centre_unique_circles S =
+    Model.Law.Tacit.centre_unique S := rfl
 example (S : Model.Signature) : Model.Hand.centre_inside_circles S =
     Model.Law.Tacit.centre_inside S := rfl
 example (S : Model.Signature) : Model.Hand.inside_not_on_circles S =
@@ -90,12 +84,12 @@ example (S : Model.Signature) : Model.Hand.on_circle_of_len_eq_circles S =
     Model.Law.Tacit.on_circle_of_len_eq S := rfl
 example (S : Model.Signature) : Model.Hand.between_of_inside_chord S =
     Model.Law.Tacit.between_of_inside_chord S := rfl
-run_cmd (Check.Generator.comparePlanted ``Model.Hand.inside_of_between
-  ``Elements.Tacit.inside_of_between)
+example (S : Model.Signature) : Model.Hand.inside_of_between S =
+    Model.Law.Tacit.inside_of_between S := rfl
 example (S : Model.Signature) : Model.Hand.outside_of_between S =
     Model.Law.Tacit.outside_of_between S := rfl
-run_cmd (Check.Generator.comparePlanted ``Model.Hand.not_same_side_of_circles_meet
-  ``Elements.Tacit.not_same_side_of_circles_meet)
+example (S : Model.Signature) : Model.Hand.not_same_side_of_circles_meet S =
+    Model.Law.Tacit.not_same_side_of_circles_meet S := rfl
 example (S : Model.Signature) : Model.Hand.exists_point_circles S =
     Model.Law.Tacit.exists_point S := rfl
 example (S : Model.Signature) : Model.Hand.exists_point_same_side S =
@@ -104,8 +98,8 @@ example (S : Model.Signature) : Model.Hand.exists_point_opposite_side S =
     Model.Law.Tacit.exists_point_opposite_side S := rfl
 example (S : Model.Signature) : Model.Hand.exists_point_inside_circle S =
     Model.Law.Tacit.exists_point_inside_circle S := rfl
-run_cmd (Check.Generator.comparePlanted ``Model.Hand.exists_point_outside_circle
-  ``Elements.Tacit.exists_point_outside_circle)
+example (S : Model.Signature) : Model.Hand.exists_point_outside_circle S =
+    Model.Law.Tacit.exists_point_outside_circle S := rfl
 example (S : Model.Signature) : Model.Hand.exists_point_on_circle S =
     Model.Law.Tacit.exists_point_on_circle S := rfl
 

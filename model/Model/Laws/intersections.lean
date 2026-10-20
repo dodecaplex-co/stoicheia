@@ -9,8 +9,8 @@ public import Model.Hand
 intersection rules beyond `Model/Hand.lean`, and separate hand copies of the two defined
 words they reach in `Hand.Intersections`. The generator described in the
 [README](../../README.md) writes every law from its elaborated declaration.
-`Check/Intersections.lean` compares each statement and hand word here by the route described
-there. Overlapping translations keep their statements under distinct names.
+`Check/Intersections.lean` compares each statement and hand word here with its generated
+counterpart. Overlapping translations keep their statements under distinct names.
 
 Each declaration is the library's, word for word, with `S.Point` for `Elements.Point`,
 `S.OnLine` for `Elements.OnLine`, and so on. The printed original is quoted above each

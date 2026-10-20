@@ -11,8 +11,8 @@ public import Model.Hand
 `Certificate/axioms.lock`. `Check/Circles.lean` puts the library's own words in for `S` and
 asks the kernel whether each result is the original declaration; the build fails if it is
 not. The generator described in the [README](../../README.md) writes the laws from the
-elaborated declarations, and `Check/Circles.lean` also compares each translation by the
-route described there. Overlapping translations keep their statements under distinct names.
+elaborated declarations, and `Check/Circles.lean` also compares each translation here with
+its generated field. Overlapping translations keep their statements under distinct names.
 
 The laws here are those about a single circle, or about where a circle and its points lie:
 

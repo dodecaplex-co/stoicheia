@@ -1826,9 +1826,8 @@ findings:
 - **The checks, made ready for retiring axioms (proposed, pending the evidence).** The owner
   asked, "Fewer axioms is better. Any more that can go?", and approved retiring axioms in
   principle on 19 October 2026, pending the evidence; nothing lands until the owner has seen
-  it. A search found eight that can go with no choice of basis, listed in
-  [`model/README.md`](../../model/README.md#how-the-translation-is-checked).
-  Since a check never changes in the pull request of the content it judges,
+  it. A search found eight that can go with no choice of basis (the retirement's own entry
+  names them). Since a check never changes in the pull request of the content it judges,
   this change prepares the checks first, with all 87 axioms in place and the pin change
   recorded below. Main already reads the expected axiom count from
   the lock in its negative tests, and that count stays as main has it; the further
@@ -1846,14 +1845,9 @@ findings:
   [`tests/model/run.py`](../../tests/model/run.py) run, count and enforce as strongly as the
   laws, [`tests/model/MODEL.md`](../../tests/model/MODEL.md) records that independent
   contract, and [`tests/model/mutations.py`](../../tests/model/mutations.py) changes only
-  a description. The five files
-  [`model/Check/Angles.lean`](../../model/Check/Angles.lean),
-  [`model/Check/Circles.lean`](../../model/Check/Circles.lean),
-  [`model/Check/Incidence.lean`](../../model/Check/Incidence.lean),
-  [`model/Check/Intersections.lean`](../../model/Check/Intersections.lean) and
-  [`model/Check/Sides.lean`](../../model/Check/Sides.lean) compare eleven hand translations
-  of the eight properties directly with the Elements declarations, so the comparisons
-  hold whether those are axioms or theorems; `model/README.md` describes these checks.
+  a description. The formal model's comparison of the eight hand translations directly
+  with the library's declarations goes with the retirement, since the model is content
+  the checks judge.
 - **One certificate pin dropped, with the owner's approval.** The retirement makes
   `Tacit.centre_unique` a theorem, so no certificate can list it, and the first expectation
   in [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json),

@@ -9,7 +9,7 @@ public import Model.Signature
 translations of the five same-side rules, four Pasch rules and three triple-incidence rules of
 `Elements/Foundations/Tacit/Diagram.lean`. The generator described in the
 [README](../../README.md) writes every law from its elaborated declaration, and
-`Check/Sides.lean` compares each translation here by the route described there.
+`Check/Sides.lean` compares each translation here with its generated field.
 
 Each law is the library's, word for word, with `S.Point` for `Elements.Point`, `S.OnLine`
 for `Elements.OnLine`, `S.SameSide` for `Elements.SameSide`, `S.Between` for

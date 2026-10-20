@@ -1,7 +1,5 @@
-import Elements.Figure.Circles
 import Elements.Foundations.Postulates
 import Check.Hand
-import Check.Generator
 import Model.Laws.incidence
 
 /-!
@@ -10,14 +8,11 @@ import Model.Laws.incidence
 `Model/Laws/incidence.lean` translates the incidence and line laws by hand. Here, as in
 `Check/Hand.lean`, the library's own words are put in for the signature's fields
 (`original`), and the kernel is asked whether each translated law, and the one new defined
-word, then is the library's declaration. Each kernel check is `rfl`, and a dropped guard, two
+word, then is the library's declaration. Each check is `rfl`, and a dropped guard, two
 swapped arguments or a change in the order of the binders fails it, and the build with it.
 
-The kernel comparisons read the library's declarations through `type_of%`. For the
-properties retained through axiom retirement, `comparePlanted` also translates the
-hand definition back and compares it directly with the declaration's type, including
-binder kinds. Both checks read only the statement, whether it is an axiom or a theorem.
-Nothing in `Model/` imports this file.
+This file reads the library's axioms only through `type_of%`, which takes a declaration's
+statement and does not use it. Nothing in `Model/` imports this file.
 -/
 
 namespace Check
@@ -54,15 +49,14 @@ example : Model.Hand.exists_point_between original =
 
 example : Model.Hand.Postulate2 original = type_of% @Elements.Postulate2 := rfl
 
-/-! ## The hand translations against generated laws or declaration types -/
+/-! ## The hand translations against the generated laws -/
 
 example (S : Model.Signature) : Model.Hand.LinesMeet S = S.LinesMeet := rfl
 example : Model.Hand.LinesMeet original = Elements.LinesMeet := rfl
 
 example (S : Model.Signature) : Model.Hand.Postulate1 S = Model.Law.Postulate1 S := rfl
 example (S : Model.Signature) : Model.Hand.line_unique S = Model.Law.Tacit.line_unique S := rfl
-run_cmd (Check.Generator.comparePlanted ``Model.Hand.centre_unique
-  ``Elements.Tacit.centre_unique)
+example (S : Model.Signature) : Model.Hand.centre_unique S = Model.Law.Tacit.centre_unique S := rfl
 example (S : Model.Signature) : Model.Hand.centre_inside S = Model.Law.Tacit.centre_inside S := rfl
 example (S : Model.Signature) : Model.Hand.inside_not_on S = Model.Law.Tacit.inside_not_on S := rfl
 example (S : Model.Signature) : Model.Hand.lines_meet_of_opposite_sides S = Model.Law.Tacit.lines_meet_of_opposite_sides S := rfl

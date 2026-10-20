@@ -1,6 +1,4 @@
-import Elements.Figure.Circles
 import Check.Hand
-import Check.Generator
 import Model.Laws.sides
 
 /-!
@@ -12,12 +10,6 @@ in for the signature's fields (`Check.original`), and Lean is asked whether each
 law then is the library's declaration, read through `type_of%`, which takes a declaration's statement and
 does not use it. Each check is `rfl`; a dropped guard, two swapped arguments or a change in
 the order of the binders fails it, and the build with it.
-
-The kernel comparisons read the library's declarations through `type_of%`. For
-`triple_incidence3`, `comparePlanted` also translates the hand definition back and
-compares it directly with the declaration's type, including binder kinds. Both checks
-read only the statement, whether it is an axiom or a theorem.
-Nothing in `Model/` imports this file.
 -/
 
 namespace Check
@@ -49,7 +41,7 @@ example : Model.Hand.triple_incidence2 original =
 example : Model.Hand.triple_incidence3 original =
     type_of% @Elements.Tacit.triple_incidence3 := rfl
 
-/-! ## The hand translations against generated laws or declaration types -/
+/-! ## The hand translations against the generated laws -/
 
 example (S : Model.Signature) : Model.Hand.same_side_refl S =
     Model.Law.Tacit.same_side_refl S := rfl
@@ -74,7 +66,7 @@ example (S : Model.Signature) : Model.Hand.triple_incidence1 S =
     Model.Law.Tacit.triple_incidence1 S := rfl
 example (S : Model.Signature) : Model.Hand.triple_incidence2 S =
     Model.Law.Tacit.triple_incidence2 S := rfl
-run_cmd (Check.Generator.comparePlanted ``Model.Hand.triple_incidence3
-  ``Elements.Tacit.triple_incidence3)
+example (S : Model.Signature) : Model.Hand.triple_incidence3 S =
+    Model.Law.Tacit.triple_incidence3 S := rfl
 
 end Check
