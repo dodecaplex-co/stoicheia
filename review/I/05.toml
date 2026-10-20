@@ -61,7 +61,7 @@ stage = "full"
 commit = "07bdc4df"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:434da0bb3337847c"
-run = "Q watch, independent re-read at 07bdc4df"
+run = "ship Q orders, item (a): the Postulate 1 joins; stage full, independent re-read at 07bdc4df; workflow wf_012f714f-e1a (stoicheia-ship-q); reader run Q-read-p1c, Codex exec session 01a159fa-c971-7500-92b3-91e0f702bc1e, which wrote only this record's [review] lines and ran review_stamp.py itself; ship Q's lead (Claude Opus 5.5) committed them unchanged; this run text later amended with that provenance, no restamp"
 
 [review.items]
 statement = "pass"
