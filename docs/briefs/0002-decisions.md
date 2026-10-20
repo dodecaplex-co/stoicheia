@@ -2011,4 +2011,15 @@ findings:
   the counts for III.1 and its porism because `centre_unique` and Circle 2 are now theorems.
   [`review/SCHEMA.md`](../../review/SCHEMA.md) updates its overlap examples to distinguish
   current axioms from proved rules; its fields, requirements and worked TOML examples stay
-  unchanged. No check, field or requirement changes.
+  unchanged.
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) also marks I.5's inherited
+  Postulate 3 example as an excerpt and gives the current vocabulary count, 91.
+  [`scripts/heath.py`](../../scripts/heath.py) uses the retained Circle 3 axiom in its
+  overlap error message's example.
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) explains that its
+  Circle 2 plant deliberately puts a theorem's name in an axiom list; the plants stay
+  unchanged.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json)
+  changes only its reasons: exclusions of retired names do not detect uses of the
+  theorems, while the existing Circle 3 exclusions still constrain dependencies.
+  Every expectation value stays unchanged. No check, field or requirement changes.
