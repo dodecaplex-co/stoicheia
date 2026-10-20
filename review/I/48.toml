@@ -9,7 +9,8 @@ kind = "euclid"
 
 [[passage]]
 at = "For let AD be drawn from the point A at right angles"
-kind = "carried"
+kind = "helper"
+helper = "Prop11"
 note = "Euclid draws AD perpendicular to AC, and Heath gives no reference here. The Lean draws AD by I.11 on the other side of AC from B, as in Heath's figure."
 
 [[passage]]
@@ -44,10 +45,10 @@ note = "Euclid assumes the converse too, that equal squares stand on equal strai
 
 [review]
 stage = "full"
-commit = "68e9276"
-reviewer = "Claude Opus 5.5, records review"
+commit = "570e6fa"
+reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:538a031257fe1dd2"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "brief 0005 stage 5, ship C5 re-read"
 
 [review.items]
 statement = "pass"

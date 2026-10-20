@@ -265,7 +265,8 @@ what it writes.
    assembly stands apart from `Model/Laws.lean`, which the proofs import, so that no import
    goes round in a circle and the laws stay free of Mathlib. The proofs are stated with the
    hand-translated laws of `Model/Hand.lean` and `Model/Laws/`, and the files of `Check/`
-   compare every one of those with its generated field.
+   compare them with the generated laws or directly with the library declarations, as
+   described below.
 
 The library's 99 proofs do not change. Rewriting the library over a signature, with
 wrappers that keep its present names, is a later and separate decision, and it would need
@@ -399,9 +400,10 @@ Three things make sure of that.
   metaprogramming, so it lives in `Check/`, apart from the proofs, and nothing under
   `Model/` imports it; it runs as `Certificate/Facts.lean` does, with `run_cmd`, and uses
   none of the commands that get round the kernel (`native_decide`, `implemented_by`,
-  `extern`, `unsafe`, `set_option debug.…`). That `Model/` and `Check/` keep to this rests
-  on review today: `check_fidelity.py` scans `Elements/` alone, and a `set_option debug.…`
-  would not show in `#print axioms`.
+  `extern`, `unsafe`, `set_option debug.…`). The source scan in `check_fidelity.py` reads
+  `Model/` and `Check/` too, with the one generator allowance in `Check/` described in
+  [FORMALIZATION, section 7](../docs/FORMALIZATION.md#7-the-foundations-and-the-policies-the-checks-enforce);
+  review still reads what a word scan cannot see.
 
 The claim this package supports is: Lean checks that the
 ordinary Euclidean plane satisfies every law in this revision's foundations, relative to

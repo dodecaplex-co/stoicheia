@@ -9,7 +9,7 @@ kind = "euclid"
 at = "through C let CF be drawn parallel"
 kind = "grouped"
 helper = "Parallelogram.figure"
-note = "Euclid draws CF through C and HK through G, where CF meets BD. `Parallelogram.figure` carries the two constructions together: I.31 draws the parallels, `Prop30.meet` finds their meetings, `Prop30.parallel` proves the further parallels, and `Parallel.between` puts the points in order; the lemma then proves CK and HF to be parallelograms about BD."
+note = "Euclid draws CF through C and HK through G, where CF meets BD. `Parallelogram.figure` carries the two constructions together: I.31 draws the parallels, `BookI.Prop30.meet` finds their meetings, `BookI.Prop30.parallel` proves the further parallels, and `Parallel.between` puts the points in order; the lemma then proves CK and HF to be parallelograms about BD."
 
 [[passage]]
 at = "and BD has fallen on them"
@@ -32,7 +32,7 @@ note = "Euclid takes AG as a parallelogram when he applies I.34 to identify HG w
 [[passage]]
 at = "Now, since AG is equal to GE"
 kind = "helper"
-helper = "BookI.Prop43"
+helper = "Prop43"
 note = "Euclid takes the complements AG and GE to be equal. The Lean applies I.43, for which Heath gives no reference here."
 
 [[passage]]
@@ -49,10 +49,10 @@ note = "Euclid takes the four areas as the whole square ADEB. `Parallelogram.abo
 
 [review]
 stage = "full"
-commit = "50b595b"
-reviewer = "Claude Opus 5.5, records review"
+commit = "570e6fa"
+reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:24f85c7951a63055"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "brief 0005 stage 5, ship C5 re-read"
 
 [review.items]
 statement = "pass"
