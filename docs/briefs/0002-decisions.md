@@ -1532,3 +1532,9 @@ findings:
   with #96 (train H6, #113), so this entry names the file: `Audit/Overlaps.lean` gains one
   lemma and its docstring, and no pin, statement or check changes. No proposition rests on
   the new lemma; it records what a rule already gives.
+- **The review schema points to the acceptance checklist that now exists.**
+  [`review/SCHEMA.md`](../../review/SCHEMA.md) said that `docs/ACCEPTANCE.md` "will fix the item
+  keys" and that `items` stays empty until it exists. The checklist landed with #111 and fixes
+  the keys and when an item counts, so the schema's `items` row and the sentence after the
+  table now say so and link it. Wording only: no field, rule or check of the schema changes.
+  This entry names the protected file `review/SCHEMA.md`.
