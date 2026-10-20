@@ -120,15 +120,16 @@ proof where a later citer needs it.
   why.
 - **The record, and what the page makes of it.** The review record, `review/III/31.toml`,
   declares the statement partial, quotes the two omitted clauses, tags them
-  `mixed-angles-omitted`, and says how "in the segment" is put in Lean: a point on the circle,
-  on B's side of AC, or on the other side. It declares two passages: the further case, where
-  the Lean reaches every point of the greater segment through III.22, and the closing
-  sentences, left in Euclid's words. The page says the exception in a few words in its
-  status line, says it in full once, in the clause map before the Lean, and points to that
-  map from the table and from the notes; the reason, that our angles are made by two straight
-  lines, is given in the Representation row and in the mishnah, and the Lean has a short
-  remark where the clause is left. The sentence above the listing names the passage the Lean
-  does not carry out, which is the defect Astra found in the page's old, generic sentence.
+  `mixed-angles-omitted`, and describes the segments by their side of AC: B's side, or the
+  other side. The Lean theorem additionally requires each point to lie on the circle. The
+  record declares two passages: the further case, where the Lean reaches every point of the
+  greater segment through III.22, and the closing sentences, left in Euclid's words. The page
+  says the exception in a few words in its status line, says it in full once, in the clause
+  map before the Lean, and points to that map from the table and from the notes; the reason,
+  that our angles are made by two straight lines, is given in the Representation row and in
+  the mishnah, and the Lean has a short remark where the clause is left. The sentence above
+  the listing names the passage the Lean does not carry out, which is the defect Astra found
+  in the page's old, generic sentence.
 
 After stage 3, III.24, with its alternative proof by the radii displayed as an alternative,
 may join or replace this example.
