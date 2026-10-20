@@ -2031,3 +2031,11 @@ findings:
   boundaries; `scripts/negative_tests.py` adds a two-line
   definition to item 16. These are the three protected paths changed; [STYLE](../STYLE.md)
   states the rule. No mathematical statement or review record changes.
+
+## 20 October 2026
+
+- **Review schema wording.** [review/SCHEMA.md](../../review/SCHEMA.md) now describes the
+  style check's reading of review notes, distinguishes items the schema permits from
+  verdicts that count for acceptance, and records I.40's completed stage-2 change, to match
+  the checks and records on main. The TOML fixtures read by `scripts/heath.py` and the
+  checks' requirements are unchanged.

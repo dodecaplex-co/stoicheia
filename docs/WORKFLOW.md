@@ -415,7 +415,9 @@ looked into.
 6. **One voice** (section 7).
 7. **Review records** completed: each record written in step 3 is read again against its
    finished proof (section 6), and every one reaches the stage `full` before acceptance.
-   Books I–III, whose records came after their proofs, reach it in brief 0005's stage 5.
+   Books I and II have reached `full` in all 62 records; Book III's 37 remain at
+   `exceptions` and reach `full` in brief 0005's stage 5, after the moves from Staging
+   into Elements in stages 3 and 4 (#25, #28; the records are #29).
 8. **A read-through.**
 9. **Acceptance:** from brief 0005's stage 6, the checklist passes in CI with no failures,
    the independent audit agrees, and a cold outside reading scores the book.
