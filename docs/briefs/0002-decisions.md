@@ -1448,6 +1448,12 @@ findings:
   unchanged. The added samples let the unchanged `tests/model/run.py` requirement hold
   for every derived property: each exhaustive or structured run must report it with its
   hypotheses met and no counterexample, independently of the axiom registry.
+- **The safe-push harness, made ready for the second axiom retirement.**
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) now plants its added law
+  beside `Tacit.line_unique`, uses that surviving law for mutation and expected-failure
+  fixtures in both numerical models, and uses the same surviving dependency for its III.1
+  re-proof and certificate-expectation fixtures. Every test case, exact replacement,
+  count decrement and rejection expectation remains in place.
 - **Thirty-one more axioms retired, 79 to 48 (proposed, pending the evidence).** The owner
   decided on 19 October 2026: "Please do both. 79 is rather large with so many books in
   front of us." That is, the eight above, and then the largest further set of
