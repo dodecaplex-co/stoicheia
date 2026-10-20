@@ -36,7 +36,7 @@ case = "EF between AB and CD, so that GK crosses it, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "570e6fa"
+commit = "dc6e21f7"
 reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:2da81b72e5448168"
 run = "brief 0005 stage 5, ship C5 re-read"
