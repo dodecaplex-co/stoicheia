@@ -78,6 +78,11 @@ definition; that reading is set aside.) III.11's statement says which circle is 
 (`TouchesInternally ABC ADE A`, `ADE` within `ABC`); III.13 asks for either. III.11's
 mishnah owns Heath's note on Definition 3 and says all this.
 
+**19 October 2026, local contact.** The claim above that Lean has no neighbourhoods is
+superseded: predicates for regions near a vertex now serve the mixed-angle comparisons.
+Contact read locally, at the point of contact, and its equivalence to the whole-circle
+reading have not been formalised.
+
 **19 October 2026, contact within.** The whole-circle reading remains ours. The point
 of the inner circle within the outer now belongs to `TouchesInternally`, expressing the
 passage within that Heath says Definition III.3 must imply. It lets III.6 draw FEB through
@@ -92,6 +97,10 @@ new tacit rules, among them a rule of superposition for segments, and System E h
 none, and we add no axiom for Book III. So a circumference is measured, by a
 definition, as Definition 9 suggests: by the angle that stands on it at the
 circumference, taken twice.
+
+**19 October 2026, circumferences.** No axiom is added for circumferences. The earlier
+decision to add none for Book III is superseded by the approved rule `Tacit.exists_centre`,
+which gives every circle a centre ([brief 0008](0008-centre.md), approved 18 October).
 
 `circumference α B K C` is `∠ B A C + ∠ B A C` for a point `A` of `α` on the other side of
 `BC` from `K`; Lean chooses one such angle (`Classical.epsilon`), as `rect` chooses one
@@ -397,6 +406,9 @@ worth naming. The first mate's report has a note on every statement.
 - **Superposition** stays with I.4 and I.8. III.24 is proved without it: `placement`,
   which lays one segment on another, rests on I.4, I.7 and I.8 as propositions, and only
   III.24 and `Elements/BookIII/Arcs.lean` may cite it, which `check_fidelity.py` checks.
+  **19 October 2026, correction.** III.24 makes no direct call to the rule; `placement`
+  uses it through I.4 and I.8. Its certificate includes superposition through those
+  propositions, so the earlier phrase "without it" does not describe all its dependencies.
 - **Citing earlier books.** A Book III proof cites `BookI.PropN` and `BookII.PropN`; a bare
   `Prop4` in a Book III file means III.4.
 - **The scripts.** `heath.BOOKS` has Book III, 37 propositions, and `heath.parse_ref`
