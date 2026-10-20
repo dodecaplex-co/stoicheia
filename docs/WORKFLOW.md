@@ -303,8 +303,8 @@ python3 scripts/check_links.py
 ```
 
 Review the generated differences and commit them with their sources, so that regenerating
-leaves them unchanged and the `git status` line prints nothing. Three more jobs run on
-their own, each in isolation:
+leaves them unchanged and the `git status` line prints nothing. Four more jobs run on
+their own, each in isolation. Three have direct local commands:
 
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
@@ -313,14 +313,25 @@ grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cac
                                        # CI's `formal-model` job: the formal model, with Mathlib
 ```
 
-`scripts/safe_push.py` runs the first two groups on the head commit of every pull request
-(section 10), so a change to them is made there too, and in the CI workflow. It leaves the
-`formal-model` job to CI on purpose, since it fetches Mathlib's prebuilt files
-([model/README.md](../model/README.md#the-ci-job)). GitHub requires that job and
-`acceptance`, as well as `check`, `model` and `negative`. The merge gate in
-`scripts/safe_push.py` refuses any reported failure or pending check, but its own presence
-test still requires a passing run only for `check`, `model` and `negative`; aligning it
-with the five-check ruleset needs a separate protected-check change.
+The fourth, CI-only job is `acceptance`; its executable definitions are the
+[CI workflow](../.github/workflows/ci.yml) and
+[`scripts/check_acceptance.py`](../scripts/check_acceptance.py). Until the consolidation
+release, it runs the checklist on the pull request, checks main with the pull request's
+check code while preserving main's pinned values, and compares the two: an item that passes
+on main may not fail on the pull request, except P10 and E6, whose staging failures are the
+workflow's expected result of staging a statement before its proof. The consolidation
+release's pull request changes `ACCEPTANCE_GATE` from `ratchet` to `full`; after that, any
+checklist failure fails the job.
+
+`scripts/safe_push.py` runs `check`, `negative` and `model` on the head commit of every
+pull request (section 10), so a change to them is made there too, and in the CI workflow.
+It leaves `formal-model` and `acceptance` to CI; at merge it watches the reported jobs and
+waits while either is pending, and refuses either when failed. GitHub requires both jobs,
+as well as `check`, `model` and `negative`. The merge gate in `scripts/safe_push.py` still
+requires the presence of a passing run only for `check`, `model` and `negative`; aligning
+that local test with the five-check ruleset needs a separate protected-check change. The
+formal model stays in CI because it fetches Mathlib's prebuilt files
+([model/README.md](../model/README.md#the-ci-job)).
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
