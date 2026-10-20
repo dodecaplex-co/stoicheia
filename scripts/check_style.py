@@ -1,6 +1,6 @@
 """Check the house style's hard rules, and report its defaults.
 
-The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S22
+The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S23
 fail the script, and D4 to D11 and D14 to D16 are listed for a reader to judge and fail
 nothing. Run from anywhere; the paths are the repository's.
 
@@ -15,6 +15,14 @@ built tree (`lake build`) and `lake` on the PATH; without them the script fails 
 so, unless `--no-lean` is given. The overlap catalogue's audit lemmas are Lean's only
 once `lake build Audit` has run: until then they are listed as not checked. CI runs the
 script after both.
+
+S23 reads every tracked text file, including comments and Markdown fences: it refuses
+seven-character opening, base and closing merge markers, and seven-equals separators
+between opening and closing markers or where they cannot be Markdown setext underlines.
+Text has no NUL and decodes as UTF-8; without Git it walks the tree, omitting the build
+and cache directories named in MARKER_SKIP_DIRS (including every .lake, model's too).
+Traversal errors stop the check. Symlinks are skipped: Git stores a link's target path,
+not the contents it points to. The walk is for S23 alone; S12 requires Git's index.
 
 What the scopes cover (STYLE, section 8):
 
@@ -105,6 +113,7 @@ import argparse
 import fnmatch
 import json
 import math
+import os
 import re
 import shutil
 import string
@@ -259,6 +268,7 @@ RULES = {
     "S20": "an idea figure's letter not Heath's, or not in the figure's one style, at 14 and in the ink of what it stands on",
     "S21": "a point of an idea figure without its letter",
     "S22": "letters in backticks, where they are plain",
+    "S23": "a merge-conflict marker",
 }
 
 REPORTS = {
@@ -305,6 +315,250 @@ def excerpt(text: str, start: int, end: int, width: int = 50) -> str:
     b = min(len(text), end + width)
     s = " ".join(text[a:b].split())
     return ("…" if a else "") + s + ("…" if b < len(text) else "")
+
+
+MARKER_SKIP_DIRS = {
+    ".git", ".lake", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache",
+    ".tox", ".venv", "venv", "node_modules", "build", "dist", "_build",
+}
+CONFLICT_EDGE = re.compile(r"^(<{7}|\|{7}|>{7})(?: |$)")
+CONFLICT_MIDDLE = re.compile(r"={7}[ \t]*")
+CONFLICT_KINDS = {"<": "opening", "|": "base", ">": "closing"}
+LINK_REFERENCE_OPEN = re.compile(r"^ {0,3}\[")
+GFM_WHITESPACE_CHARS = " \t\n\v\f\r"
+GFM_WHITESPACE = r"[ \t\n\v\f\r]"
+# A block quote or list item: a seven-equals line after one cannot underline a
+# paragraph (a setext underline is never a lazy continuation), so S23 refuses it.
+CONTAINER_START = re.compile(r"^ {0,3}(?:>|[-+*](?:[ \t]|$)|[0-9]{1,9}[.)](?:[ \t]|$))")
+# Of those, the ones that may interrupt a paragraph: a block quote, a bullet item with
+# some text, or an ordered one numbered 1 with some text. Any other goes on with it.
+PARAGRAPH_CONTAINER_START = re.compile(
+    rf"^ {{0,3}}(?:>|(?:[-+*]|0{{0,8}}1[.)])[ \t]{GFM_WHITESPACE}*[^ \t\n\v\f\r])")
+HTML_RAW_NAMES = r"script|pre|style|textarea"
+HTML_RAW_START = re.compile(
+    rf"^ {{0,3}}<({HTML_RAW_NAMES})(?:{GFM_WHITESPACE}|>|$)", re.I)
+HTML_RAW_END = rf"</(?:{HTML_RAW_NAMES})>"
+HTML_CDATA_START = re.compile(r"^ {0,3}<!\[CDATA\[")
+HTML_DECLARATION_START = re.compile(r"^ {0,3}<![A-Z]")
+HTML_INSTRUCTION_START = re.compile(r"^ {0,3}<\?")
+HTML_BLOCK_TAG_START = re.compile(
+    r"^ {0,3}</?(?:address|article|aside|base|basefont|blockquote|body|caption|center|col|"
+    r"colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|"
+    r"frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|"
+    r"nav|noframes|ol|optgroup|option|p|param|search|section|source|summary|table|tbody|td|"
+    rf"tfoot|th|thead|title|tr|track|ul)(?:{GFM_WHITESPACE}|/?>|$)", re.I)
+HTML_TAG_NAME = r"[A-Za-z][A-Za-z0-9-]*"
+HTML_ATTRIBUTE_NAME = r"[A-Za-z_:][A-Za-z0-9_.:-]*"
+HTML_ATTRIBUTE_VALUE = r'''(?:[^ \t\n\v\f\r"'=<>`]+|'[^']*'|"[^"]*")'''
+HTML_ATTRIBUTE = (rf"(?:{GFM_WHITESPACE}+{HTML_ATTRIBUTE_NAME}"
+                  rf"(?:{GFM_WHITESPACE}*={GFM_WHITESPACE}*{HTML_ATTRIBUTE_VALUE})?)")
+HTML_COMPLETE_TAG = re.compile(
+    rf"^ {{0,3}}(?:<(?!(?i:{HTML_RAW_NAMES})(?![A-Za-z0-9-])){HTML_TAG_NAME}"
+    rf"{HTML_ATTRIBUTE}*{GFM_WHITESPACE}*/?>|"
+    rf"</{HTML_TAG_NAME}{GFM_WHITESPACE}*>){GFM_WHITESPACE}*$")
+
+
+def possible_reference_label(line: str, active: bool | None) -> tuple[bool | None, bool]:
+    """Carry a possible link-reference label across lines and recognize its colon."""
+    if active is None:
+        match = LINK_REFERENCE_OPEN.match(line)
+        if not match:
+            return None, False
+        active = False
+        at = match.end()
+    else:
+        at = 0
+    while at < len(line):
+        if line[at] == "\\" and at + 1 < len(line):
+            active = True
+            at += 2
+        elif line[at] == "[":
+            return None, False
+        elif line[at] == "]":
+            return None, bool(active and line[at + 1:at + 2] == ":")
+        else:
+            active = active or line[at] not in GFM_WHITESPACE_CHARS
+            at += 1
+    return active, False
+
+
+def spaces_or_tabs_only(text: str) -> bool:
+    """Whether text is empty or consists only of Markdown blank-line characters."""
+    return not text.strip(" \t")
+
+
+def table_block_boundary(line: str) -> bool:
+    """Whether a line ends a GFM table instead of becoming its next row."""
+    return (spaces_or_tabs_only(line) or ATX_LINE.match(line) is not None
+            or THEMATIC_LINE.fullmatch(line) is not None
+            or CONTAINER_START.match(line) is not None
+            or line.expandtabs(4).startswith("    "))
+
+
+def repository_files(root: Path):
+    """S23's paths: Git's tracked paths, or a pruned walk in a copy without Git.
+
+    Do not consult ignore rules or prune tracked paths. In a checkout, Git missing or
+    failing stops the check, rather than silently leaving tracked files unread or
+    reading untracked ones. A traversal error raises with its path. The walk never
+    follows symlinks, and the scanner skips any that Git lists.
+    """
+    if (root / ".git").exists():
+        result = subprocess.run(["git", "ls-files", "-z"], cwd=root,
+                                capture_output=True, check=True)
+        for name in result.stdout.split(b"\0"):
+            if name:
+                yield root / os.fsdecode(name)
+        return
+    def walk_error(error: OSError) -> None:
+        raise OSError(f"could not scan {error.filename}: {error}") from error
+
+    for folder, dirs, files in os.walk(root, onerror=walk_error):
+        dirs[:] = sorted(d for d in dirs if d not in MARKER_SKIP_DIRS
+                         and not (Path(folder) / d).is_symlink())
+        for name in sorted(files):
+            path = Path(folder) / name
+            if path.name != ".git" and not path.is_symlink() and path.is_file():
+                yield path
+
+
+def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
+    """Return (line, kind), without blanking comments, strings or fenced code.
+
+    Edges begin with exactly seven identical characters followed by a space or
+    the line's end. A middle has exactly seven equals, with optional trailing
+    horizontal space. No other length is examined as a middle, so S23 errs toward
+    refusal in doubtful contexts: an author whose heading is refused can use eight
+    equals. Outside a conflict, a lone Markdown middle is allowed only when every
+    line of the preceding block is ordinary paragraph text. The block ends at a
+    blank line, marker, ATX or completed setext heading, thematic break, fence, HTML
+    block or GFM table. Any possible link reference definition prefix (up to three
+    spaces, a bracketed label allowing escaped brackets and line breaks, then a colon)
+    disqualifies the whole block, even with no destination yet or extra words after it.
+    Thus "[label]: destination extra words" is refused with seven equals despite
+    being paragraph text. An indented line (four columns, tabs expanded) cannot
+    start a paragraph, but may continue one. Paragraphs may span several lines. A
+    fence inside a comment, or a comment inside a fence, opens no block. This is
+    not a full CommonMark parser.
+    """
+    lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    edges = [CONFLICT_EDGE.match(line) for line in lines]
+    last_close = max((i for i, edge in enumerate(edges)
+                      if edge and edge[1][0] == ">"), default=-1)
+    found = []
+    conflict_depth = 0
+    fence = html_end = ""
+    comment = paragraph = False
+    table = False
+    reference_definition = False
+    reference_label: bool | None = None
+    for i, (line, edge) in enumerate(zip(lines, edges)):
+        block = False
+        if markdown:
+            match = FENCE_LINE.fullmatch(line)
+            if fence:
+                block = True
+                if (match and match[1][0] == fence[0] and len(match[1]) >= len(fence)
+                        and spaces_or_tabs_only(match[2])):
+                    fence = ""
+            elif comment:
+                block = True
+                comment = "-->" not in line
+            elif html_end:
+                block = True
+                if html_end == "\n":
+                    block = not spaces_or_tabs_only(line)
+                    if not block:
+                        html_end = ""
+                elif re.search(html_end, line, re.I):
+                    html_end = ""
+            elif re.match(r"^ {0,3}<!--", line):
+                block = True
+                comment = "-->" not in line
+            else:
+                if HTML_RAW_START.match(line):
+                    block = True
+                    html_end = HTML_RAW_END
+                elif HTML_CDATA_START.match(line):
+                    block = True
+                    html_end = r"\]\]>"
+                elif HTML_DECLARATION_START.match(line):
+                    block = True
+                    html_end = ">"
+                elif HTML_INSTRUCTION_START.match(line):
+                    block = True
+                    html_end = r"\?>"
+                elif HTML_BLOCK_TAG_START.match(line) or (
+                        not paragraph and HTML_COMPLETE_TAG.fullmatch(line)):
+                    block = True
+                    html_end = "\n"
+                elif match and (match[1][0] != "`" or "`" not in match[2]):
+                    fence = match[1]
+                    block = True
+                if block and html_end != "\n" and re.search(html_end, line, re.I):
+                    html_end = ""
+            if block:
+                table = False
+            elif table:
+                if table_block_boundary(line):
+                    table = False
+                else:
+                    block = True
+            if (not block and paragraph and i
+                    and gfm_table_columns(lines[i - 1], line) is not None):
+                table = True
+                block = True
+        kind = None
+        if edge:
+            char = edge[1][0]
+            kind = CONFLICT_KINDS[char]
+            if char == "<":
+                conflict_depth += 1
+            elif char == ">":
+                conflict_depth = max(0, conflict_depth - 1)
+        elif CONFLICT_MIDDLE.fullmatch(line):
+            if (conflict_depth and i < last_close or not markdown or block or not paragraph
+                    or reference_definition):
+                kind = "middle"
+        if kind:
+            found.append((i + 1, kind))
+        if (kind or block or spaces_or_tabs_only(line) or ATX_LINE.match(line)
+                or THEMATIC_LINE.fullmatch(line)
+                or paragraph and SETEXT_LINE.fullmatch(line)):
+            paragraph = False
+            reference_definition = False
+            reference_label = None
+        else:
+            reference_label, completed_reference = possible_reference_label(
+                line, reference_label)
+            if completed_reference or (PARAGRAPH_CONTAINER_START if paragraph
+                                       else CONTAINER_START).match(line):
+                reference_definition = True
+                paragraph = False
+            elif not paragraph and line.expandtabs(4).startswith("    "):
+                paragraph = False
+            else:
+                paragraph = True
+    return found
+
+
+def check_conflict_markers() -> None:
+    """S23 covers raw text independently of prose scopes, skipping symlinks.
+
+    A tracked symlink's text is its target path, not the bytes of its target.
+    """
+    for path in repository_files(ROOT):
+        if path.is_symlink() or not path.is_file():
+            continue
+        data = path.read_bytes()
+        if b"\0" in data:
+            continue
+        try:
+            text = data.decode("utf-8")
+        except UnicodeDecodeError:
+            continue
+        for line, kind in conflict_markers(text, markdown=path.suffix.lower() == ".md"):
+            fail("S23", path, line, f"{kind} merge-conflict marker")
 
 
 # ---------------------------------------------------------------------------------------
@@ -928,11 +1182,24 @@ def table_cell_ranges(line: str) -> tuple[list[tuple[int, int]], bool]:
         return [(0, len(line))], False
     edges = [-1] + pipes + [len(line)]
     cells = [(edges[k] + 1, edges[k + 1]) for k in range(len(edges) - 1)]
-    if not line[:pipes[0]].strip():
+    if spaces_or_tabs_only(line[:pipes[0]]):
         cells.pop(0)
-    if cells and not line[pipes[-1] + 1:].strip():
+    if cells and spaces_or_tabs_only(line[pipes[-1] + 1:]):
         cells.pop()
     return cells, True
+
+
+def gfm_table_columns(header: str, delimiter: str) -> int | None:
+    """Return a GFM table's column count when these lines start one."""
+    header_cells, header_has_pipe = table_cell_ranges(header)
+    delimiter_cells, delimiter_has_pipe = table_cell_ranges(delimiter)
+    if ((header_has_pipe or delimiter_has_pipe)
+            and len(header_cells) == len(delimiter_cells)
+            and delimiter_cells
+            and all(TABLE_DELIMITER_CELL.fullmatch(delimiter[a:b].strip(" \t"))
+                    for a, b in delimiter_cells)):
+        return len(header_cells)
+    return None
 
 
 def table_inline_blocks(block: InlineBlock) -> list[InlineBlock]:
@@ -946,14 +1213,9 @@ def table_inline_blocks(block: InlineBlock) -> list[InlineBlock]:
     for k in range(len(lines) - 1):
         _, _, header = lines[k]
         _, _, delimiter = lines[k + 1]
-        header_cells, header_has_pipe = table_cell_ranges(header)
-        delimiter_cells, delimiter_has_pipe = table_cell_ranges(delimiter)
-        if ((header_has_pipe or delimiter_has_pipe)
-                and len(header_cells) == len(delimiter_cells)
-                and delimiter_cells
-                and all(TABLE_DELIMITER_CELL.fullmatch(delimiter[a:b].strip())
-                        for a, b in delimiter_cells)):
-            table = (k, len(header_cells))
+        columns = gfm_table_columns(header, delimiter)
+        if columns is not None:
+            table = (k, columns)
             break
     if table is None:
         return [block]
@@ -1799,7 +2061,7 @@ def tracked_file_index() -> tuple[frozenset[str], frozenset[str]]:
     return paths, frozenset(Path(path).name for path in paths)
 
 
-TRACKED_FILE_PATHS, TRACKED_FILE_NAMES = tracked_file_index()
+TRACKED_FILE_INDEX: tuple[frozenset[str], frozenset[str]] | None = None
 
 
 # A backticked hypothesis or variable with its type, `hBCE : Between B C E`: the name
@@ -1956,6 +2218,10 @@ def report_non_declaration(t: NamedText, occurrence: LeanName,
     of failed names. A typed binder still names a hypothesis; a numeric file location
     does not. A name the prose calls a declaration is put to Lean whatever else it could
     be. These rules apply only to reports newly read by S12."""
+    global TRACKED_FILE_INDEX
+    if TRACKED_FILE_INDEX is None:
+        TRACKED_FILE_INDEX = tracked_file_index()
+    tracked_paths, tracked_names = TRACKED_FILE_INDEX
     name, at, binder, span = occurrence
     if binder and not re.fullmatch(re.escape(name) + r":\d+(?:-\d+)?", span.content.strip()):
         return None
@@ -1969,7 +2235,7 @@ def report_non_declaration(t: NamedText, occurrence: LeanName,
                    or re.match(rf'\s*{FILE_WORDS}s?\b', after, re.I))
     exts = ('', '.md', '.py') if called_file else ('',) if '.' in name.strip('.') else ()
     candidates = {name + ext for ext in exts}
-    if any(candidate in TRACKED_FILE_PATHS or Path(candidate).name in TRACKED_FILE_NAMES
+    if any(candidate in tracked_paths or Path(candidate).name in tracked_names
            for candidate in candidates):
         return 'a repository file or a numeric location in it'
     if binder:
@@ -2828,6 +3094,7 @@ def main() -> int:
     args = parser.parse_args()
     required = IDEA_LETTERS_REQUIRED or args.require_idea_letters
 
+    check_conflict_markers()
     named: list[NamedText] = []   # the texts S12 reads
     for path in mishnah_files():
         raw = path.read_text(encoding="utf-8")
@@ -2939,7 +3206,7 @@ def main() -> int:
         print("  by rule: " + ", ".join(f"{r} {RULES[r]} ({k})"
                                        for r, k in sorted(by_rule.items(), key=lambda x: int(x[0][1:]))))
         return 1
-    rules = "S1–S22" if not args.no_lean else "S1–S11 and S13–S22"
+    rules = "S1–S23" if not args.no_lean else "S1–S11 and S13–S23"
     print(f"\n✓ style: the hard rules hold ({rules})")
     return 0
 
