@@ -752,8 +752,8 @@ OVERLAPS = ROOT / "docs" / "reports" / "overlaps.md"
 def overlap_table() -> list[tuple[str, str]]:
     """(the proposition, the row) for each row of the overlap catalogue's table whose first
     cell is the reference alone: that proposition's own overlap. The rows on a rule's use
-    in other proofs ("I.13, a case of it, in 17 proofs from II.1 on") are read by no record,
-    and not counted."""
+    in other proofs, as the overlap catalogue describes for I.13, are read by no record and
+    not counted."""
     rows = []
     for line in OVERLAPS.read_text(encoding="utf-8").splitlines():
         m = re.match(r"^\| \[([IVX]+\.\d+)\]\([^)]*\) \|(.*)$", line)

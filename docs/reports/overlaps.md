@@ -268,8 +268,8 @@ rest of the attempt, so that Postulates 4 and 5, for instance, were never tried 
 diagram rules.
 
 The revised screen of `tooling/overlap-screen-unfold` (commit `760b974`) was run against
-library revision `89c5da4`. The linked `Audit/screen.py` now implements these behaviours,
-following #138. In the revised screen, every definition a statement or a rule
+library revision `89c5da4`. The linked `Audit/screen.py` has had these behaviours on main
+since #138. In the revised screen, every definition a statement or a rule
 reaches is unfolded, but for the kinds of magnitude, with their sum, order and zero, in
 which the rules are stated, and the magnitudes Lean chooses (`circumference`, `standing` and
 the rectangle `rect`), which are given by what their definitions say; each try leaves out
