@@ -1530,3 +1530,15 @@ findings:
   the new lock makes main's checks fail, and `scripts/safe_push.py` keeps such content
   apart from an accompanying change to `scripts/render.py`. No check, statement, lock
   or review record changes here, apart from the approved signature in the scaffold.
+
+- **The scaffold follows the restated Book III statements.** The protected file
+  [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes
+  [brief 0008](0008-centre.md), step 6's restated signatures from `b260c826` for III.1,
+  III.2, III.4, III.8, III.9, III.10, III.13, III.17, III.21, III.22, III.23, III.24,
+  III.25, III.26, III.28, III.30, III.32, III.33, III.34, III.35, III.36 and III.37.
+  Its comment now names a centre where the statement uses it; otherwise the proof takes
+  one by III.1 where Heath cites it, and from `exists_centre` otherwise. A search of
+  `scripts/` and `tests/` confirms that no check reads the scaffold's Book III strings.
+  The scaffold creates only missing files, so it never rewrites a proof. This change
+  lands before the content it describes, in a pull request of its own, since `scripts/`
+  is a check input.
