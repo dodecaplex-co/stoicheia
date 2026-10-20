@@ -137,7 +137,7 @@ PLACEMENT_HOMES = ("Elements/BookIII/Placement.lean", "Elements/BookIII/Placemen
 
 # The check_style rules each item reads; the rest belong to P9 (or B1, B2 and E5).
 TEXT_RULES = {"S8", "S9", "S17"}
-FIGURE_RULES = {"S13", "S14", "S15", "S16", "S20", "S21", "S24", "S25"}
+FIGURE_RULES = {"S13", "S14", "S15", "S16", "S20", "S21", "S24", "S25", "S26"}
 
 # B2. Backticked words of a catalogue that are not Lean declarations, and need none: the
 # placeholder of a pattern, a field of facts.json, a tactic.

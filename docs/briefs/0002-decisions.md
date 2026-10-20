@@ -2069,7 +2069,8 @@ findings:
   code spans across lines supply no names. Its regression cases stay with these checks.
   The rules are S24 and S25, formerly S23 and S24 on this branch; S22 remains letters in
   backticks, S23 checks merge-conflict markers (`tooling/no-conflict-markers`), and S26
-  is reserved for `tooling/letter-check` (#68). The hard rules now run from S1 to S25.
+  checks one letter, one point (`tooling/letter-check`, #68). The hard rules now run from
+  S1 to S26.
   Acceptance assigns both modern rules to P8 and each modern figure's findings
   to its proposition; S22 remains a text rule.
   These checks read the source paragraph and SVGs, not the generated page, and apply to
@@ -2085,3 +2086,66 @@ findings:
   attributes and spellings the modern figures on main use, so no CSS is read; a malformed
   figure is reported on its file and checking goes on; and a modern paragraph with inline
   HTML or reference-link syntax is refused, its indentation counted in columns.
+
+- **One letter, one point: S26.** Argon's second review of the book-III release found seven
+  letters of Euclid's figures crossed or all but touched by strokes: III.17's D, III.16's G,
+  III.8's K and L, III.33's F in two of its three figures, and I.2's E. We thank Argon
+  warmly for so careful an audit
+  ([#68](https://github.com/jackChallis/stoicheia/issues/68)). The issue read the seven as
+  letters naming two points; what Argon measured was strokes through letters, and the rule
+  holds a figure to both. [`scripts/check_style.py`](../../scripts/check_style.py) gains a
+  rule, S26, which fails a figure, Euclid's or at a glance, that draws a letter twice (save
+  once in each of Heath's figures side by side, in III.25, III.33, III.35 and III.36, split
+  at straight cuts the script gives), or that lets a stroke, a dot or the canvas's edge come
+  within 2 of a letter. A letter is measured as Georgia draws its capital, upright or italic
+  as the figure sets it, by the convex hull of its outline's points, which the script
+  carries as numbers (`GLYPHS_UPRIGHT`, `GLYPHS_ITALIC`), read once from the fonts, so that
+  it still needs only Python's standard library; `path_rings` now also says which subpaths a
+  Z closes, and what S20 reads is unchanged.
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains cases of S26,
+  among them one or more for each of seven faults that two reviews of the rule found: a
+  stroke's width taken at a transform's mean stretch, a rect's rounded corners read as
+  square, a circle of no radius read as drawn, an anchored label with a prime placed by its
+  capital alone, a letter drawn twice in one of the figures side by side counted as once in
+  each, a corner's radius spelled 5e1 read as none, and a line of no length with butt caps
+  read as drawn; and, from the independent review, cases for what none of them had pinned:
+  an ellipse, a polyline, a dot or a stroke wholly within a letter, the canvas's right, top
+  and foot, a letter's size and transform, and a prime; and, from a later review, three on
+  what a line through a letter is called: two dashed by itself or by its group, called a
+  dashed line, and one whose dasharray is none, called a line. A corner's radius is now
+  read in one pass, so reading a malformed radius takes time linear in its length.
+  Later reviews found, one after another, SVG spellings that a renderer reads one way and
+  S26 another; S26 now reads only the elements, attributes and spellings that the figures
+  on main use and refuses any other, so no CSS is read, and it measures circles, ellipses,
+  arcs, rounded corners and curves with a conservative allowance for their chords. The
+  final review's fixes in `scripts/check_style.py`, with regressions in
+  `tests/test_check_style.py`, refuse effective strokes and bold weights on point labels
+  (main's bold numbers remain allowed), retain significant Unicode spaces for refusal, and
+  require both ellipse radii and an effective `font-family` on point labels of `Georgia`,
+  `Georgia, serif` or `Georgia, 'Times New Roman', serif`, inherited or explicit.
+  Numeric inputs are limited to magnitude 10,000, against
+  main's largest input of 440 at `209d71fd`; cubic subdivision has a depth limit, and
+  non-finite intermediate results fail the figure; an iterative gate limits nesting to
+  16 levels below the root before recursive helpers run. Decoder errors are caught at the
+  parser call. Both entry points have regressions requiring the next figure's finding after an
+  arithmetic or encoding failure. Subdivision is bounded for each cubic; these limits do
+  not bound the input's length or its number of elements or path commands.
+  Mitre joins now use original segments' endpoint tangents, with no joins between a
+  curve's flattened chords.
+  Both figure entry points have cases requiring an S26 finding. And
+  [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
+  files its findings under P8, the figures. The matching words in
+  [ACCEPTANCE](../ACCEPTANCE.md) follow in the content train; this branch keeps that
+  page exactly as it is on origin/main.
+  [STYLE](../STYLE.md), sections 7 and 8, gives the rule, and the reviewer's checklist, item
+  16, asks that a letter naming one of Heath's points name no straight line or circle in the
+  Lean. A rule is added and nothing is weakened. The earlier figure work for #68 corrects
+  fifteen labels, III.16's G among them, through `text/letter-collisions`. G's correction
+  is in `a4cb748c`, brought into train D3 by `c2424533`.
+
+  This check change lands in train H10 before the content it judges, with the checklist's
+  words following in the content train, as H9b followed H8b for style everywhere. Its number
+  is S26: S22 is "letters in backticks, where they are plain"; S23 checks merge-conflict
+  markers, and S24 and S25 check the modern figure. All four rules are included in train
+  H10. Main's checks, cases, REACH_PENDING and
+  reports, including D15 for italic figures and D16 for the pending reach, stay whole.
