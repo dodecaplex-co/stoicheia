@@ -1316,6 +1316,109 @@ findings:
   `negative`, and making `formal-model` required, as the decision of 18 October foresees
   once the package builds, is the owner's call.
 
+- **A representation tag for the mixed angles.**
+  [`review/terms.toml`](../../review/terms.toml) gains `mixed-angles-local`, the tag that
+  brief 0011, which lands with them, gives the records of III.16 and III.31 once their
+  companions state the angle clauses, in the move of the mixed angles into the edition
+  ([#57](https://github.com/jackChallis/stoicheia/issues/57)): an angle contained by a
+  straight line and a circumference is read as the region it opens near its vertex, and
+  compared with a rectilineal angle placed at that vertex, along its straight arm and on its
+  side, by containment near the vertex. Its last clause carries Astra's wording, as the
+  prototype's report gives it (its condition 4): the comparisons use local containment of
+  curved angular regions, and no general arithmetic or ratio theory of mixed angles is
+  claimed. The tag adds that no motion of a mixed angle is claimed either, as the
+  coordinator's approval of the prototype, above, says. It is a tag of kind
+  `representation`, with no badge, since the certificate's sentence on badges speaks of a
+  measure with no radius in it. It lands on its own, before the records that use it, since
+  safe_push keeps a check's data apart from the content it judges, as
+  `figure-with-dissection` did; `mixed-angles-omitted` stays while a record uses it. The
+  protected file this changes is `review/terms.toml`.
+
+- **The negative test of an undeclared run reads the passage of any kind.**
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py)'s fifth test drops the
+  passages that declare III.16's runs of `--` lines with no Lean beneath them, and expects
+  `check_fidelity.py` to catch the run of the angle clauses. It required that run's passage
+  to be `unformalized`; once the companions of III.16 state those clauses (brief 0011, in
+  the move of the mixed angles,
+  [#57](https://github.com/jackChallis/stoicheia/issues/57)), the record declares the run
+  as argued another way, and the test would fail on a precondition while the check it
+  tests still works. It now requires only that a dropped passage begins that run, of
+  whatever kind, and expects the same failure, so it plants the same break and catches it
+  on today's record and on the record to come; nothing is loosened. It lands on its own,
+  before the records it reads, since safe_push keeps a check apart from the content it
+  judges. The protected file this changes is `scripts/negative_tests.py`.
+
+- **Placement: only III.24 and `Arcs.lean` may cite it.** [Brief 0006](0006-statements.md)
+  ("Placement", the policy) asks for a check, with a negative test, that outside
+  `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/` only III.24 and
+  `Elements/BookIII/Arcs.lean` cite `placement` or any declaration of the `Placement`
+  namespace: the lemmas of the namespace carry the same distance-keeping content as the
+  whole, so a check of `placement` alone could be got round through them.
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) gains it in two parts. Read
+  from the source as its scan of forbidden commands reads it (`read_lean`), comments and
+  literals taken out, no Lean file under `Elements/` but those four names `placement` or
+  `Placement`, each finding naming its file and line; `Staging/` and `Audit/`, which that
+  scan reads too, are outside the policy, which is the edition's, and `Staging/` holds
+  placement's staged statements until they move. And, from facts.json, no entry but III.24
+  has placement, a lemma of the `Placement` namespace or anything declared in placement's
+  files among its shared steps, so that a proof that reaches it without naming it is caught
+  too. [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains two tests: a
+  lemma of the namespace named in `Elements/BookIII/Squares.lean` is caught on its line,
+  and the word in a comment there is not (test 9, the build test becoming 10); placement
+  among III.26's shared steps, on a copy of facts.json, is caught, and III.24, given it
+  too, is not blamed (in test 3). The superposition check that the brief rewords needs no
+  new code: the policy that only I.4 and I.8 use superposition directly reads III.24's
+  `direct_axioms`, whose walk passes through placement and its lemmas and stops at I.4, I.7
+  and I.8 as entries, and the lock check covers every axiom III.24 rests on. The check is
+  added, and nothing is loosened; with nothing under `Elements/` naming placement yet, it
+  passes on main. It is a check change, and lands in a pull request of its own, before the
+  stage 3 statements it checks (WORKFLOW, section 10). FORMALIZATION, section 7, lists the
+  policy and the two tests.
+
+- **`Audit/` and the formal model's build files are protected paths.** `Audit/` holds the
+  audit lemmas whose pinned axiom lists (`#guard_msgs`) back the overlap catalogue's
+  claims, so a change there could weaken what the catalogue asserts without a security
+  review or a decisions entry. The work on brief 0008 raised it, and the coordinator
+  decided it as a check strengthened, never weakened (#96).
+  [`scripts/safe_push.py`](../../scripts/safe_push.py)'s protected list now holds `Audit/`;
+  `Audit.lean`, the root that decides which audit lemmas `lake build Audit` checks; and
+  the model's build files, `model/lakefile.toml`, `model/lakefile.lean` (which Lake would
+  read in preference to the toml, as at the root), `model/lean-toolchain`,
+  `model/lake-manifest.json` and `model/lock.sha256`. [WORKFLOW](../WORKFLOW.md), section
+  10, "Protected paths", names each. A change to any of them needs a new line here naming
+  it, the label `security-review` and a `/security-review`. They are content the checks
+  judge, not checks, so they stay judged: a check change is still kept apart from them, as
+  it was before they were protected. A protected path is now named only whole, from the
+  root (with or without a leading slash) or by a relative link, so a line naming
+  `tests/model/lock.sha256` no longer counts for `model/lock.sha256`, nor one naming
+  `model/lakefile.toml` for the root's `lakefile.toml`. Nor is a path named by a longer
+  one at its other end, so a line naming `Audit.lean.orig` does not count for
+  `Audit.lean`; and a line edited in place so that it names a different file now counts
+  for the file it newly names (from `model/lakefile.toml` to `lakefile.toml`, say), which
+  the old pattern refused, because it read the root's `lakefile.toml` in the removed line
+  too. [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) gains the cases:
+  each new path refused without its line, a longer path's mention refused, a relative
+  link accepted, and the new paths still judged. None of the cases it held before is
+
+- **The tests of an interruption after the push depend on nothing but the run.** Two tests
+  of `InterruptedAfterThePush` had failed once beside a Lean build (#95, found during the
+  work on #40). Under load alone they never failed here: eleven runs of the class, eight
+  of them at load averages of 23 to 32 with four from-scratch builds of the library
+  running alongside, and three more with git's background gc forced. They did fail,
+  exactly the two that follow CI while the third passed, when the checkout's
+  `scripts/safe_push.py` changed after the suite had committed it as origin/main's, as an
+  edit in a shared checkout would change it while the suite runs: the copy run then
+  differs from origin/main's and hands over to it, the hand-over leaves behind the
+  stand-ins the tests put in place of following CI, and the run follows the stand-in CI to
+  success, exit 0. So [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) now
+  runs every driven test from a copy of the harness as the suite committed it, and the
+  three tests of the class run on a clock of their own, which never reads the wall clock
+  and never waits, twice: with time standing still, and with each reading an hour after
+  the last, past every deadline `safe_push.py` keeps. Each run must still end in "pushed;
+  CI not followed", exit 3, and must now show origin/main's harness, never handed over,
+  and a total that is the clock's. `scripts/safe_push.py` is unchanged, and no test is
+  loosened.
+
 ## 19 October 2026
 
 - **The edition does not name its owner.** The owner asked that Stoicheia not be presented
@@ -1334,6 +1437,107 @@ findings:
   `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
+
+- **A new tag, `touching-whole-circles`.** [`review/terms.toml`](../../review/terms.toml)
+  gains the tag, of kind `representation`, with the meaning [brief 0008](0008-centre.md)
+  gives it, word for word (section 4, "Records, Lean files and pages", and question 9):
+  "Circles touching one another are read of the whole circles: touching within, no point
+  of the inner is outside the outer; touching without, no point is within both; so touching
+  circles cross nowhere, the reading Heath reports as Todhunter's (III.6, III.11–III.13)."
+  It is a representation, not a centre: when `centre-given` leaves the records, those of
+  III.11, III.12 and III.13 keep their `[representation]` with this tag, and III.6 takes it
+  too. It lands here, in a pull request of its own, before any record uses it, as
+  [FORMALIZATION](../FORMALIZATION.md), section 3, asks and as step 1 of the brief's
+  section 6 orders; no record carries it yet, so no page changes. When the definition of
+  contact within changes, in the brief's step 6, the meaning gains that the inner circle has
+  passed within the outer (question 16). Protected file changed: `review/terms.toml`.
+
+- **An overlap always names its kind.** The last part of
+  [#93](https://github.com/jackChallis/stoicheia/issues/93), as its comments list it. The
+  decision of 18 October, "An overlap is worded by its kind, as the catalogue gives it",
+  made `kind` optional so that the check could land before the records named their kinds,
+  and worded a record with no kind as one whose rule contains the proposition. Every
+  record on main now names its kind (I.2, I.3, I.7 and I.23 `step`, III.2 `states`, III.5
+  and III.6 `gives`), so the key is required, and a new `[overlap]` without it, as III.1's
+  might be under brief 0008, can no longer render "contains" by default, the defect #93
+  fixes. [`review/SCHEMA.md`](../../review/SCHEMA.md) marks `kind` required, and its list
+  of what the machine checks says so. [`scripts/heath.py`](../../scripts/heath.py) rejects
+  an `[overlap]` with no `kind` ("`kind` is missing"), and its self-test case
+  `{rule: Tacit.circle_eq}`, which it accepted, is now a rejection; the other five cases
+  stand. [`scripts/render.py`](../../scripts/render.py) drops its fallback to "contains":
+  `overlap_steps` reads the record's `kind`, which every record it is given now carries.
+  The proposition template's `[overlap]` lines say the key is always named. Nothing a
+  reader sees changes: the pages render the same at the branch's base. This is a check
+  change on its own; it changes no record.
+
+- **The negative tests read the count of assumptions from the lock.** The planted-assumption
+  test of [`scripts/negative_tests.py`](../../scripts/negative_tests.py) expected
+  `check_fidelity.py` to say "declares 88 axioms, not 87", a count fixed in the script. It
+  now reads the number of axioms in
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock) before it plants anything, and
+  expects one more than that, so the test keeps its meaning when an approved rule joins the
+  lock. This is step 1's third item in [brief 0008](0008-centre.md), section 6: without it,
+  the pull request that adds the rule that every circle has a centre could not pass. Today
+  the lock holds 87, so the test expects what it expected before; nothing else in the
+  script, and no check, changes. The one protected file it changes is
+  `scripts/negative_tests.py`.
+
+- **The model's audit and its root are protected too (#96).** `model/Model/Audit.lean`
+  pins the model's proofs to `propext`, `Classical.choice` and `Quot.sound` alone and
+  checks that `Elements` is absent; `model/Model.lean` imports that audit, so the build
+  checks it. They join `Audit/` and `Audit.lean` in the protected paths of
+  [`scripts/safe_push.py`](../../scripts/safe_push.py), and remain content the checks
+  judge, so a check change is still kept apart from them. A change to either needs its
+  own whole path named here, the label `security-review` and a `/security-review`.
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) gains cases for each:
+  refused without that line, a longer path's mention refused, a relative link accepted,
+  and still judged. The cases also keep similarly named paths, `model/Model/Hand.lean`
+  and `model/Check/Hand.lean` unprotected. [WORKFLOW](../WORKFLOW.md), section 10, names
+  the two files and their reason. Nothing is loosened; no model proof or audit changes.
+  In `scripts/safe_push.py`, with regression cases in `scripts/test_safe_push.py`, a
+  relative link must resolve from the decisions page's folder to the protected file,
+  so routine edits to `model/Model.lean` (a new import) and `model/Model/Audit.lean`
+  (a new pinned law) now need such a line too.
+
+- **The overlap wording and the table of stages are brought up to date.** The two text
+  follow-ups to #93 update the [README](../../README.md)'s row for `Audit/` and the
+  [Book I brief](book-I.md)'s account of its four overlaps: a rule supplies a step of
+  I.2, I.3, I.7 and I.23, and I.23 rests on superposition through I.20 as well as I.8.
+  Brief 0005's table of stages in [PROGRAM](../PROGRAM.md) marks stage 2 done and names
+  #90 in stage 4's row as the pull request that proved its propositions in Staging.
+  The next steps in [`docs/program.toml`](../program.toml), which supply PROGRAM's
+  status table, keep their words for now. A protected test in
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) quotes Book I's stage
+  words. The next steps are reworded after the test's own change on
+  `tooling/safe-push-stage-line` lands separately, as [WORKFLOW](../WORKFLOW.md),
+  section 10, requires.
+- **Stoicheia Team is the edition's copyright holder and cited author.** On 19 October 2026
+  the owner decided that [NOTICE](../../NOTICE) reads "Copyright 2026 Stoicheia Team and
+  contributors" and [CITATION.cff](../../CITATION.cff) names one author, the entity
+  "Stoicheia Team". The credit that [LICENSE-PROSE.md](../../LICENSE-PROSE.md) asks for now
+  names that author beside the title. [README.md](../../README.md) has no citation block or
+  text asking readers to cite the project; [references.bib](../references.bib) has no entry
+  for Stoicheia itself, so neither changes. [LICENSE](../../LICENSE) keeps the Apache
+  template's copyright line. A repository-wide search for the surname and copyright lines
+  found no other project attribution to change; third-party credits and notices stay as they
+  are. The sample name in `scripts/test_safe_push.py` still waits for its own tooling pull
+  request. This settles two of the three things "The edition does not name its owner" left
+  to the owner. The repository's address on GitHub remains the owner's to decide, and its
+  links stay unchanged. No statement, check or protected path changes.
+- **The screen's new near misses are pinned in the audit.** The overlap screen, as #78 widened
+  it, finds that III.30 can be proved from its angle measure alone, without III.28. The
+  catalogue lists it among the near misses of representation, and
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) gains the proof that shows it,
+  `Audit.III_30_measure`, beside the other audit lemmas. `Audit/` became a protected path
+  with #96 (train H6, #113), so this entry names the file: `Audit/Overlaps.lean` gains one
+  lemma and its docstring, and no pin, statement or check changes. No proposition rests on
+  the new lemma; it records what a rule already gives.
+- **The review schema points to the acceptance checklist that now exists.**
+  [`review/SCHEMA.md`](../../review/SCHEMA.md) said that `docs/ACCEPTANCE.md` "will fix the item
+  keys" and that `items` stays empty until it exists. The checklist landed with #111 and fixes
+  the keys and when an item counts, so the schema's `items` row and the sentence after the
+  table now say so and link it. Wording only: no field, rule or check of the schema changes.
+  This entry names the protected file `review/SCHEMA.md`.
 
 - **No certificate entry may rest on Circle 2 or Circle 3.** Plan lane 1 keeps
   [brief 0008](0008-centre.md)'s III.1 construction from reaching Circle 2, which states

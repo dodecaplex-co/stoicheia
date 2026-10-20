@@ -12,12 +12,37 @@ kind = "given"
 note = "The statement gives the goal; the note under the sentence says how our Lean puts it."
 
 [[passage]]
+at = "the less to the greater"
+kind = "helper"
+helper = "onRay_of_angle_eq"
+note = "Euclid reads off his figure that the angle ABE is a part of the angle ABD; the Lean also takes BD within ABE. `OppositeSidesOf.of_between` and `OppositeSidesOf.sameSideOf` put E and D on one side of AB, and `onRay_of_angle_eq` rules out either placement by making an angle equal to a proper part of itself."
+
+[[passage]]
 at = "Similarly we can prove that neither is any other straight line"
 kind = "grouped"
 note = "No second argument is needed: E was any point on CB produced, and the one argument already puts D on CB produced, beyond B."
 
+[[passage]]
+at = "Therefore CB is in a straight line with BD"
+kind = "helper"
+helper = "OnRay.between"
+note = "Euclid concludes that CB and BD form one straight line; `OnRay.between` turns D's lying on the ray from B through E, with B between C and E, into B's lying between C and D."
+
+[figure]
+case = "BE within the angle ABD, as in Heath's figure"
+note = "Like Heath's, this figure draws the impossible supposition: BE in a straight line with CB while BD is not. BE is drawn rising away from the straight line CBD, so the drawn C, B and E are not in a straight line."
+
 [review]
-stage = "exceptions"
-commit = "6237881"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "7397642"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:0bb35e43d7174b8c"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

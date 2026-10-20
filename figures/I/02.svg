@@ -18,7 +18,7 @@
     <circle cx="291.7" cy="238.1" r="2.6"/><circle cx="267.5" cy="266.9" r="2.6"/><circle cx="132.5" cy="266.9" r="2.6"/>
     <text x="194" y="140">D</text><text x="142" y="216">A</text><text x="246" y="212">B</text>
     <text x="303" y="256">C</text><text x="284" y="273">G</text><text x="108" y="272">L</text>
-    <text x="110" y="292">E</text><text x="284" y="292">F</text>
+    <text x="105" y="291">E</text><text x="284" y="292">F</text>
     <text x="270" y="166">H</text><text x="340" y="150">K</text>
   </g>
 </svg>
