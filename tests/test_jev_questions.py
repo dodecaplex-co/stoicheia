@@ -16,6 +16,7 @@ import importlib.util
 import io
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -541,16 +542,53 @@ class FileContainment(unittest.TestCase):
 
 
 class Controls(unittest.TestCase):
-    def test_anchors_at_evidence_commit_and_head(self):
-        for revision in ('39ae65c21c6b8188c0fa53bf91b6fde3ce3b11a3', 'HEAD'):
-            for rid, (old, new) in COMMENTARY_CHANGES.items():
-                ref = rid.split('-')[1]
-                path = f'mishnah/I/{ref.split(".")[1]}.md'
-                text = subprocess.check_output(
-                    ['git', 'show', f'{revision}:{path}'], cwd=REPOSITORY, text=True)
-                with self.subTest(revision=revision, ref=ref):
-                    self.assertEqual(text.count(old), 1)
-                    self.assertNotIn(new, text)
+    def assert_commentary_controls(self, rows):
+        originals = {row['id']: row for row in rows if not row['seeded']}
+        controls = {row['mutation']['base_id']: row for row in rows
+                    if row['seeded'] and row['item'] == 12}
+        self.assertEqual(set(controls), set(COMMENTARY_CHANGES))
+        for base_id, (old, new) in COMMENTARY_CHANGES.items():
+            row = controls[base_id]
+            state = copy.deepcopy(originals[base_id]['state'])
+            before = state['commentary']
+            self.assertEqual(before.count(old), 1)
+            state['commentary'] = before.replace(old, new)
+            self.assertEqual(row['state'], state)
+            self.assertEqual(row['expected'], 'conflicts')
+            self.assertEqual(row['mutation']['changes'], [{
+                'operation': 'replace', 'field': ['state', 'commentary'],
+                'old': old, 'new': new, 'before_sha256': questions.sha(before),
+                'after_sha256': questions.sha(state['commentary']),
+            }])
+
+    def generated_rows_at(self, revision):
+        with tempfile.TemporaryDirectory() as directory:
+            checkout = Path(directory) / 'checkout'
+            subprocess.run(['git', 'clone', '--no-local', '--quiet', str(REPOSITORY), str(checkout)],
+                           check=True, capture_output=True)
+            subprocess.run(['git', 'checkout', '--quiet', '--detach', revision], cwd=checkout,
+                           check=True, capture_output=True)
+            generator_path = checkout / 'scripts/audit/jev_questions.py'
+            shutil.copyfile(REPOSITORY / 'scripts/audit/jev_questions.py', generator_path)
+            name = 'jev_questions_at_' + revision[:12]
+            spec = importlib.util.spec_from_file_location(name, generator_path)
+            self.assertIsNotNone(spec)
+            self.assertIsNotNone(spec.loader)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[name] = module
+            try:
+                spec.loader.exec_module(module)
+                rows_bytes, _, _ = module.Generator(revision).finish()
+            finally:
+                del sys.modules[name]
+            return [json.loads(line) for line in rows_bytes.splitlines()]
+
+    def test_commentary_controls_at_evidence_commit_and_head(self):
+        head = subprocess.check_output(
+            ['git', 'rev-parse', 'HEAD'], cwd=REPOSITORY, text=True).strip()
+        for revision in ('39ae65c21c6b8188c0fa53bf91b6fde3ce3b11a3', head):
+            with self.subTest(revision=revision):
+                self.assert_commentary_controls(self.generated_rows_at(revision))
 
     def test_full_generation_has_ten_controls_and_exact_commentary_changes(self):
         commit = subprocess.check_output(
@@ -591,22 +629,7 @@ class Controls(unittest.TestCase):
         self.assertNotIn('representation', first['state']['record'])
         self.assertEqual(first['source']['record'], 'review/I/01.toml')
         self.assertIn('review/I/01.toml', first['source']['files'])
-        commentary = [row for row in seeded if row['item'] == 12]
-        self.assertEqual(len(commentary), 2)
-        for row in commentary:
-            base_id = row['mutation']['base_id']
-            old, new = COMMENTARY_CHANGES[base_id]
-            state = copy.deepcopy(originals[base_id]['state'])
-            before = state['commentary']
-            self.assertEqual(before.count(old), 1)
-            state['commentary'] = before.replace(old, new)
-            self.assertEqual(row['state'], state)
-            self.assertEqual(row['expected'], 'conflicts')
-            self.assertEqual(row['mutation']['changes'], [{
-                'operation': 'replace', 'field': ['state', 'commentary'],
-                'old': old, 'new': new, 'before_sha256': questions.sha(before),
-                'after_sha256': questions.sha(state['commentary']),
-            }])
+        self.assert_commentary_controls(rows)
         print(f'\nFull HEAD generation: {len(rows)} rows, {len(seeded)} seeded, {elapsed:.2f}s.')
 
 
