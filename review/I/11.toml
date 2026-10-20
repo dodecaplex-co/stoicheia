@@ -34,10 +34,10 @@ case = "C between A and B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "a9bca05"
-reviewer = "Claude Opus 5.5, records review"
-lean = "sha256:04349025e77f5b9a"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+commit = "267d8d2f"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:6aad9ce1223a6e05"
+run = "Q watch, independent re-read at 267d8d2f"
 
 [review.items]
 statement = "pass"
