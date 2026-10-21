@@ -29,5 +29,7 @@ restatements have also moved home, and so has III.30's halves (brief 0006), prov
   the draft angle at the centre, and wait for its approval), and drafts for the owner's
   approval of Definition III.3 read at the point, the angle at the centre of any size with
   III.20 in general (`Elements.BookIII.Staging.Prop20`), and the angle of contact after
-  III.18 (`docs/reports/routes-book-III.md`).
+  III.18. The coordinator's orders of 21 October 2026 directed these proofs here; whether
+  they are recorded as the approval of a prototype is the coordinator's to confirm. The
+  report is `docs/reports/routes-book-III.md`.
 -/
