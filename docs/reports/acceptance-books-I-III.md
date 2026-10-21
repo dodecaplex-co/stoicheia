@@ -186,8 +186,8 @@ Failing propositions, item by item:
   - docs/reports/overlaps.md names `Audit.III_2_outside`, which Lean does not know, with Audit built: the catalogue has fallen behind the Lean
   - docs/reports/overlaps.md names `Audit.III_30_measure`, which Lean does not know, with Audit built: the catalogue has fallen behind the Lean
   - docs/reports/overlaps.md names `Audit.III_5_crossing`, which Lean does not know, with Audit built: the catalogue has fallen behind the Lean
-  - docs/reports/overlaps.md names Audit.I_2 (now retired), which Lean does not know, with Audit built: the catalogue has fallen behind the Lean
-  - docs/reports/overlaps.md names Audit.I_3 (now retired), which Lean does not know, with Audit built: the catalogue has fallen behind the Lean
+  - docs/reports/overlaps.md names `Audit.I_2`, which Lean does not know, with Audit built: the catalogue has fallen behind the Lean
+  - docs/reports/overlaps.md names `Audit.I_3`, which Lean does not know, with Audit built: the catalogue has fallen behind the Lean
   - docs/reports/overlaps.md names `Audit.inside_of_between`, which Lean does not know, with Audit built: the catalogue has fallen behind the Lean
   - docs/reports/overlaps.md names `Audit.outside_of_between`, which Lean does not know, with Audit built: the catalogue has fallen behind the Lean
 - **E6 staging:**
