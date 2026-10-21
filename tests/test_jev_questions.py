@@ -48,7 +48,8 @@ IMPORTED = ('Base.lean', 'areas-p5.lean', 'areas.p5.lean', 'a"b.lean')
 # Each Lean file, with the imports read from it as (imported file, the import's words to the
 # end of its line), or None where it is refused as an unsupported import. Lean 4.35 accepts
 # each file read, and refuses each file refused but those with `import all`, `prelude`, two
-# imports on one line or a `/` in a module name, which the generator does not read.
+# imports on one line, a `/` in a module name or a block comment running on from an import's
+# line, which the generator does not read.
 HEADERS = (
     ('import Elements.Base\n' + BODY, [('Base', 'import Elements.Base\n')]),
     ('module\n\npublic import Elements.Base\n' + BODY,
@@ -66,6 +67,13 @@ HEADERS = (
     ('module public import Elements.Base\n' + BODY, [('Base', 'public import Elements.Base\n')]),
     ('module\n\npublic import Elements.«a"b»\n' + BODY, [('a"b', 'public import Elements.«a"b»\n')]),
     ('module\n\npublic import Elements.Base', [('Base', 'public import Elements.Base')]),
+    ('module\n\npublic import Elements.Base -- the end',
+     [('Base', 'public import Elements.Base -- the end')]),
+    ('module\n\nimport Elements.Base /- closed here -/\n/- opened on\n  a later line -/\n' + BODY,
+     [('Base', 'import Elements.Base /- closed here -/\n')]),
+    ('module\n\npublic import Elements.Base\n\n'
+     'def named («an import here» : Nat) : Nat := «an import here»\n' + BODY,
+     [('Base', 'public import Elements.Base\n')]),
     ('module\n\n/- a /- nested -/ comment -/\n  public import Elements.Base\n'
      'import Elements.«areas-p5» -- the figure\n\n/-! The file. -/\n\npublic section\n' + BODY,
      [('Base', 'public import Elements.Base\n'),
@@ -79,7 +87,8 @@ HEADERS = (
         'import all\n  Elements.Base', 'all\nimport Elements.Base',
         'public /-- doc -/ import Elements.Base', '/-! The file. -/\nimport Elements.Base',
         'prelude\nimport Elements.Base', 'import Elements.Base import Elements.«areas-p5»',
-        'public import Elements.«a/b»', 'theorem t : True := trivial\nimport Elements.Base')),
+        'public import Elements.«a/b»', 'theorem t : True := trivial\nimport Elements.Base',
+        'import Elements.Base /- opened here\n  closed on a later line -/')),
 )
 HELPER_NAMES = ('jev_questions_test_first', 'jev_questions_test_second')
 
@@ -631,7 +640,8 @@ class Imports(LeanFiles):
 
 
 class CallReconciler(LeanFiles):
-    """The forms of I.4's and I.8's proofs on the superposition branch."""
+    """The forms of I.4's and I.8's proofs on the superposition branch, and bars within a
+    constructor."""
 
     def test_every_constructor_on_a_line_is_a_member(self):
         calls = self.calls('namespace Elements\n\ninductive Pt where\n  | a | b | c\n\n'
@@ -661,6 +671,23 @@ class CallReconciler(LeanFiles):
         calls = self.calls('namespace Elements\n\ninductive Pt where\n  | a | b\n\n'
                            'abbrev a : Pt := .a\nabbrev b : Pt := .b\n\nend Elements\n')
         self.assertEqual(calls.direct('Elements.Pt'), [])
+
+    def test_a_bar_within_a_constructor_begins_no_constructor(self):
+        # Only a `|` outside brackets, and not of `||`, begins a constructor; each
+        # Known.bar after another bar is a use.
+        text = ('namespace Elements\n\ndef Known.bar (n : Nat) : Bool := n == 1\n\n'
+                'inductive Pt where\n  | a | b | c\n'
+                '  | mk (n : Nat) (h : (n == 0 || Known.bar n) = true)\n'
+                '  | odd (n : Nat) (h : match n with | 0 => True | k => Known.bar k = true)\n'
+                '  | even : (n : Nat) → n == 0 || Known.bar n → Pt\n\nend Elements\n')
+        calls = self.calls(text)
+        self.assertEqual({member for member, owners in calls.members.items()
+                          if 'Elements.Pt' in owners}, {'a', 'b', 'c', 'mk', 'odd', 'even'})
+        uses = [i for i in range(text.index('inductive'), len(text))
+                if text.startswith('Known.bar', i)]
+        self.assertEqual([c['start'] for c in calls.direct('Elements.Pt')
+                          if c['name'] == 'Elements.Known.bar'], uses)
+        self.assertEqual(len(uses), 3)
 
 
 class HelperModules(unittest.TestCase):

@@ -27,8 +27,9 @@ files, before either helper runs. Each Lean file's header is read by a small par
 Lean 4.35's grammar, before any masking: an optional `module`, then imports in the four forms
 `import`, `public import`, `meta import` and `public meta import`, each naming one module of
 plain or «...» components and ending its line, with ordinary comments between the words. A
-doc comment or any other word before an import, `prelude`, `import all`, and any `import`
-after the header are refused. Both output paths reject symlinks,
+doc comment or any other word before an import, `prelude`, `import all`, a block comment
+running on from an import's line, and any `import` after the header outside a «...» name are
+refused. Both output paths reject symlinks,
 evidence files, tracked files other than the two default outputs, Git metadata, protected
 paths independently of the index, and collisions with each other; an output may be
 outside the repository.
@@ -216,6 +217,7 @@ COMMAND = re.compile(
 # generator reads the subset without `prelude` and `all`, each import ending its line.
 HEADER_WORDS = frozenset({'module', 'prelude', 'public', 'meta', 'all', 'import'})
 IMPORT_WORD = re.compile(r"(?<![\w'.«])import(?![\w'»])")
+QUOTED_NAME = re.compile(r'«[^»\n]*»')
 
 
 def comment_end(src: str, i: int) -> int:
@@ -329,9 +331,10 @@ def lean_source(path: str, raw: str) -> tuple[str, list[tuple[int, int]], list[t
     The header is an optional `module`, then any number of `[public] [meta] import M`, each
     ending its line, with ordinary comments between the words. As in Lean, an import is read
     only whole, so `public section` after the header ends it. An import naming anything but one
-    module, and an `import` anywhere after the header, are refused: so is any other word before
-    an import, `prelude`, `import all` or a doc comment among the imports. The header is blank
-    in the masked text.
+    module, and an `import` anywhere after the header unless within a whole «...» name, are
+    refused: so is any other word before an import, `prelude`, `import all`, a doc comment
+    among the imports or a block comment that opens on an import's line and closes on a later
+    one. The header is blank in the masked text.
     """
     comments: list[tuple[int, int]] = []
     stream = header_tokens(raw, comments)
@@ -352,17 +355,22 @@ def lean_source(path: str, raw: str) -> tuple[str, list[tuple[int, int]], list[t
             break
         name, _, end = token(j + 1)
         following = token(j + 2)
-        line_end = raw.find('\n', end)
-        line_end = len(raw) if line_end < 0 else line_end + 1
+        newline = raw.find('\n', end)
+        line_end = len(raw) if newline < 0 else newline + 1
         file = module_path(name) if MODULE_NAME.fullmatch(name) else None
+        # A block comment opening on the import's line must close there, so that the
+        # import's span ends outside it.
         require(file and name not in HEADER_WORDS
-                and (not following[0] or '\n' in raw[end:following[1]]),
+                and (not following[0] or '\n' in raw[end:following[1]])
+                and not any(a < newline < b for a, b in comments),
                 f'{path}: unsupported import {raw[token(k)[1]:line_end].rstrip()!r}')
         imports.append((file, token(k)[1], line_end))
         k = j + 2
     rest, rest_comments = mask(raw[end:])
     clean = re.sub(r'[^\n]', ' ', raw[:end]) + rest
-    later = IMPORT_WORD.search(clean, end)
+    # A whole «...» name is one identifier, so an `import` within it is no import.
+    names = QUOTED_NAME.sub(lambda found: ' ' * len(found.group()), clean)
+    later = IMPORT_WORD.search(names, end)
     if later:
         line_end = raw.find('\n', later.start())
         line = raw[raw.rfind('\n', 0, later.start()) + 1:len(raw) if line_end < 0 else line_end]
@@ -619,9 +627,9 @@ class Calls:
     restrict these conservative candidates, and no receiver type is guessed. Constructors
     and named structure projections are quoted through their enclosing declaration, which
     contains their exact signatures and docstrings. An inductive's constructors are each
-    named after a `|` on a line that opens `  |`, several to a line as `| a | b | c`; there
-    they are declared, not called. The glossary's supplied definitions also expose their
-    underlying types, including AreParallel within Parallelogram.
+    named after a `|` outside any bracket on a line that opens `  |`, several to a line as
+    `| a | b | c`; there they are declared, not called. The glossary's supplied definitions
+    also expose their underlying types, including AreParallel within Parallelogram.
 
     The fixed core/projection allowlist is: 1, 2, symm, trans, refl, mp, mpr, elim, left, right,
     ne, imp, inl, inr, resolve_left, resolve_right, map, Pairwise, mem_append, mem_cons,
@@ -665,8 +673,24 @@ class Calls:
                 self.members.setdefault(member, set()).add(name)
 
     def constructors(self, clean: str, d: Declaration) -> list[re.Match]:
-        return [found for line in self.CONSTRUCTOR_LINE.finditer(clean, d.name_end, d.end)
-                for found in self.CONSTRUCTOR.finditer(clean, line.start(), line.end())]
+        """Return each constructor name of inductive d: the name after a `|` at bracket depth
+        zero on a line that opens `  |`. A bar within brackets, or of `||`, `<|` or `|>`,
+        separates no constructors, so a name after it stays a use."""
+        found = []
+        for line in self.CONSTRUCTOR_LINE.finditer(clean, d.name_end, d.end):
+            depth = 0
+            for i in range(line.start(), line.end()):
+                c = clean[i]
+                if c in '([{':
+                    depth += 1
+                elif c in ')]}':
+                    depth -= 1
+                elif (c == '|' and depth == 0 and clean[i - 1] not in '|<'
+                      and clean[i + 1:i + 2] not in ('|', '>')):
+                    match = self.CONSTRUCTOR.match(clean, i, line.end())
+                    if match:
+                        found.append(match)
+        return found
 
     def type_names(self, text: str, consumer: Declaration) -> set[str]:
         found = set()

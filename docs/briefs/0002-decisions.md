@@ -3062,11 +3062,12 @@ findings:
   whole, so `public section` after the imports ends the header. Refused as an unsupported
   import: a doc comment or any other word before an import (`all`, `private`, `partial`,
   `nonrec`, an attribute, a second name), `prelude`, `import all`, two imports on one line,
-  a component holding `/`, and any `import` after the header has ended. Running the
-  toolchain's `lean` on sample headers confirmed that Lean reads the imports of each header
-  the generator reads; of those refused, Lean accepts only the ones with `prelude`,
-  `import all`, two imports on one line or a `/` in a name, which the generator does not
-  read.
+  a component holding `/`, a block comment that opens on an import's line and closes on a
+  later one, and any `import` after the header has ended, outside a whole `«...»` name.
+  Running the toolchain's `lean` on sample headers confirmed that Lean reads the imports of
+  each header the generator reads; of those refused, Lean accepts only the ones with
+  `prelude`, `import all`, two imports on one line, a `/` in a name or a block comment
+  running on from an import's line, which the generator does not read.
 
   Second, the generator ran `scripts/heath.py` and `scripts/audit/jev.py` as it loaded
   them, before any check of their paths, so a check that should refuse first came
@@ -3083,7 +3084,11 @@ findings:
   `open Prop4 in` from the root and from `Elements.`, never from the current namespace;
   each namespace enclosing the declaration now counts too. It read an inductive's own
   constructor names as uses, so I.4's constructor `a` was taken for the abbreviation `a`
-  declared after it. And `List.mem_nil_iff` and `List.forall_mem_cons` were not on its core
+  declared after it. A name is taken for a constructor only after a `|` outside every
+  bracket on its line, and never after one of `||`, `<|` or `|>`, so a bar within a
+  constructor's type, as in `| mk (n : Nat) (h : (n == 0 || Known.bar n) = true)`, cannot
+  hide the use after it from the refusals of a name not imported, used before its
+  declaration or unresolved. And `List.mem_nil_iff` and `List.forall_mem_cons` were not on its core
   allowlist. **The core allowlist gains these two names, `mem_nil_iff` and
   `forall_mem_cons`.** The list names lemmas of Lean core so that a call to one is not taken
   for a missing project name; the coordinator ruled that adding a name which really is a
@@ -3101,14 +3106,16 @@ findings:
   Only these two are added, the names the superposition branch needs, and the manifest's
   `core_projection_allowlist` lists them.
 
-  `tests/test_jev_questions.py` now has 43 cases. One table-driven case reads 11 headers,
+  `tests/test_jev_questions.py` now has 44 cases. One table-driven case reads 14 headers,
   each with its imports' exact spans, an `import_text` excerpt the excerpt check accepts
   (an import ending the file without a newline among them) and every imported file
-  visible, and refuses 18 others as unsupported imports; ten of its rows fail on the
-  generator before the parser: the five forms above, an indented import, a module doc
-  comment before an import, `prelude`, `«a/b»` and an import after a declaration. Four
-  cases test the reconciler on small files in the shape of I.4's proof, and each fails with
-  its own fix removed. While the second helper's path is a symlink, behind a symlinked
+  visible, and refuses 19 others as unsupported imports; twelve of its rows fail on the
+  generator before the parser: the five forms above (the last twice, with and without a
+  comment after the import), an indented import, a module doc comment before an import,
+  `prelude`, `«a/b»`, an import after a declaration, and a block comment running on from an
+  import's line. Five cases test the reconciler on small files, four in the shape of I.4's
+  proof and one with bars within a constructor's type, and each fails with its own fix
+  removed. While the second helper's path is a symlink, behind a symlinked
   folder, absolute, traversing, missing or a folder, neither planted helper runs, the
   first included; both run once both paths pass. A copy of the generator beside a
   symlinked `jev.py` refuses, and neither planted helper runs.
@@ -3118,7 +3125,7 @@ findings:
   declarations as before. On main (`2e8aecf8`) the parser alone generates questions and a
   manifest byte for byte those of the old generator; with the reconciler's changes the
   questions are still byte for byte the same, and the manifest differs only by the two
-  names in `core_projection_allowlist`. All 43 cases pass on main with this change, and on
+  names in `core_projection_allowlist`. All 44 cases pass on main with this change, and on
   `lean/superposition-restricted` at `99ba29d5`, a fresh clone with the two changed files
   copied in, so the issue's third condition is met. The protected files changed are
   `scripts/audit/jev_questions.py` and `tests/test_jev_questions.py`. No check is
