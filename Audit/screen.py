@@ -120,7 +120,10 @@ committed, and stops before the run otherwise. `--check-current` refuses any oth
 computes the parts again, without Lean, and exits 1, naming each part that changed, when
 the record is missing or the inputs differ. The run needs Lean and takes the time above,
 so this is a release step (docs/WORKFLOW.md, section 10, step 10), not one of CI's
-checks. The record is written only by a run, never by hand.
+checks. The record is written only by a run, never by hand. `--check-current` reads the
+record, not the run: a record written by hand, or by `write_record` with no run, passes it,
+and the record holds only hashes. The run's closing lines, quoted in the release's pull
+request, are its evidence.
 """
 
 import argparse

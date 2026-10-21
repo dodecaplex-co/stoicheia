@@ -5,9 +5,10 @@
 `run.py --full --write` heads each file it writes in results/ with the commit it ran at and
 the sha256 of the harness (HARNESS in run.py), and names the same commit in the counts of
 MODEL.md. This check runs no harness. It fails, naming each file, unless
-* the files in results/ are exactly those --write writes, each a regular file;
+* the files in results/ are exactly those --write writes, each a regular file that reads;
 * each names, once, a commit whose harness files its run read as committed, and the harness
-  as it hashes now, and all name the same commit;
+  as it hashes now, and all name the same commit; summary.txt names, once, the Python and
+  the date its counts were written with;
 * MODEL.md has one block of counts, and it names that commit; and
 * summary.txt and the counts in MODEL.md are what --write makes of the runs' output in
   results/.
@@ -28,6 +29,7 @@ import re
 import shutil
 import sys
 import tempfile
+from unittest import mock
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -50,22 +52,32 @@ def safe(name):
     return name if re.fullmatch(r'[\w.+-]+', name, re.A) else ascii(name)
 
 
+class Unreadable(Exception):
+    """a file of results/, or MODEL.md, that does not read: a problem, not a traceback"""
+
+
 def header_of(path):
     """{key: [values]} from the `# key: value` lines that head a results file"""
     fields = {}
-    with open(path, encoding='utf-8', errors='replace') as f:
-        for line in f:
-            if not line.startswith('# '):
-                break
-            key, sep, value = line[2:].rstrip('\n').partition(': ')
-            if sep:
-                fields.setdefault(key, []).append(value)
+    try:
+        with open(path, encoding='utf-8', errors='replace') as f:
+            for line in f:
+                if not line.startswith('# '):
+                    break
+                key, sep, value = line[2:].rstrip('\n').partition(': ')
+                if sep:
+                    fields.setdefault(key, []).append(value)
+    except OSError:
+        raise Unreadable(f'{shown(path)} does not read') from None
     return fields
 
 
 def read(path):
-    with open(path, encoding='utf-8', errors='replace') as f:
-        return f.read()
+    try:
+        with open(path, encoding='utf-8', errors='replace') as f:
+            return f.read()
+    except OSError:
+        raise Unreadable(f'{shown(path)} does not read') from None
 
 
 def body_of(text):
@@ -117,11 +129,12 @@ def made_again(results, model_md):
 
 def check_results(results=RESULTS, model_md=MODEL_MD, harness=None):
     """(the problems, the commits the results name). A problem is a file of results/ that is
-    missing, or one --write does not write, or one that is not a regular file; a file that
-    names no commit or harness, or one twice, or a commit its run did not read as committed,
-    or a harness other than `harness` (by default the harness now); files that name more than
-    one commit or harness between them; a MODEL.md that is not a regular file, or whose
-    counts are not one block naming the results' commit; and, when there is no other,
+    missing, or one --write does not write, or one that is not a regular file or does not
+    read; a file that names no commit or harness, or one twice, or a commit its run did not
+    read as committed, or a harness other than `harness` (by default the harness now); a
+    summary.txt that names no Python or date, or one twice; files that name more than one
+    commit or harness between them; a MODEL.md that is not a regular file or does not read,
+    or whose counts are not one block naming the results' commit; and, when there is no other,
     summary.txt or MODEL.md's counts not what --write makes of the runs' output. Runs no
     harness."""
     harness = harness or harness_hash()
@@ -142,11 +155,18 @@ def check_results(results=RESULTS, model_md=MODEL_MD, harness=None):
         if not os.path.isfile(path):
             problems.append(f'{where}/{name} is not a regular file: --write writes one')
             continue
-        fields = header_of(path)
-        for key, label, form, named in (
-                ('commit', 'commit', r'([0-9a-f]{40}) \(([^()]*)\)', commits),
-                ('harness' if name == SUMMARY else HARNESS_LINE, 'harness', r'([0-9a-f]{64})',
-                 harnesses)):
+        try:
+            fields = header_of(path)
+        except Unreadable as e:
+            problems.append(str(e))
+            continue
+        wanted = [('commit', 'commit', r'([0-9a-f]{40}) \(([^()]*)\)', commits),
+                  ('harness' if name == SUMMARY else HARNESS_LINE, 'harness', r'([0-9a-f]{64})',
+                   harnesses)]
+        if name == SUMMARY:   # made_again writes the counts from these
+            wanted += [('python', 'Python', r'([0-9]+\.[0-9]+\.[0-9]+\S*) \(.+\)', {}),
+                       ('date', 'date', r'([0-9]{4}-[0-9]{2}-[0-9]{2})', {})]
+        for key, label, form, named in wanted:
             values = fields.get(key, [])
             if len(values) > 1:
                 problems.append(f'{where}/{name} names its {label} {len(values)} times')
@@ -172,7 +192,11 @@ def check_results(results=RESULTS, model_md=MODEL_MD, harness=None):
     if os.path.islink(model_md) or not os.path.isfile(model_md):
         problems.append(f'{page} is not a regular file')
         return problems, sorted(commits)
-    blocks = [m.group(0) for m in COUNTS.finditer(read(model_md))]
+    try:
+        blocks = [m.group(0) for m in COUNTS.finditer(read(model_md))]
+    except Unreadable as e:
+        problems.append(str(e))
+        return problems, sorted(commits)
     if len(blocks) != 1:
         problems.append(f'{page} has {len(blocks) or "no"} counts blocks, not one')
     elif not (m := re.search(re.escape(COUNTS_FROM) + r'([0-9a-f]{12})`', blocks[0])):
@@ -184,7 +208,10 @@ def check_results(results=RESULTS, model_md=MODEL_MD, harness=None):
                                 + ('the commit of the results' if len(commits) == 1
                                    else f'the commit of {", ".join(names)}'))
     if not problems:
-        problems = made_again(results, model_md)
+        try:
+            problems = made_again(results, model_md)
+        except Unreadable as e:
+            problems = [str(e)]
     return problems, sorted(commits)
 
 
@@ -299,6 +326,20 @@ def self_test():
         os.makedirs(os.path.join(results, SUMMARY))
         expect('a folder for a file', results, md, f'{SUMMARY} is not a regular file')
 
+        # A file that does not read: open refuses it, as it refuses a file with no read
+        # permission to anyone but root, so that the plant holds whoever runs the check.
+        real_open = open
+        for name in (runs[3], 'MODEL.md'):
+            results, md = fresh()
+            locked = md if name == 'MODEL.md' else os.path.join(results, name)
+
+            def refusing(path, *args, **kwargs):
+                if path == locked:
+                    raise PermissionError(13, 'Permission denied', path)
+                return real_open(path, *args, **kwargs)
+            with mock.patch('builtins.open', refusing):
+                expect(f'{name} that does not read', results, md, f'{name} does not read')
+
         results, md = fresh()
         edit(os.path.join(results, runs[2]), r'\A(?:# .*\n)+', '')
         expect('a file with no header', results, md,
@@ -307,6 +348,16 @@ def self_test():
         results, md = fresh()
         edit(os.path.join(results, runs[3]), r'^(# commit: )[0-9a-f]+', r'\g<1>' + '1' * 40)
         expect('a changed commit line', results, md, 'the results name 2 commits')
+
+        for key, label in (('python', 'Python'), ('date', 'date')):
+            results, md = fresh()
+            edit(os.path.join(results, SUMMARY), rf'^# {key}: .*\n', '')
+            expect(f'summary.txt with no {label}', results, md, f'{SUMMARY} names no {label}')
+
+        results, md = fresh()
+        edit(os.path.join(results, SUMMARY), r'^(# date: .*\n)', r'\1\1')
+        expect('summary.txt with its date twice', results, md,
+               f'{SUMMARY} names its date 2 times')
 
         for state in ('harness files differ from this commit', 'state unknown'):
             results, md = fresh()

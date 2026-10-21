@@ -3407,11 +3407,12 @@ findings:
   release makes both again ([#160](https://github.com/jackChallis/stoicheia/issues/160)).**
   `python3 -I tests/model/results_check.py` runs no harness. It fails, naming each file,
   when the files in `tests/model/results/` are not exactly those `--write` writes, each a
-  regular file; when a file names no commit or harness, or one twice; when a file names
-  its commit without "(harness files as committed)", so that its run read other harness
-  files; when a file names a harness hash other than the harness's now, computed by the
-  code that writes the results' headers (`harness_hash`, which `provenance` calls); when
-  the files name more than one commit or harness; when the counts in
+  regular file that reads; when a file names no commit or harness, or one twice, or
+  `summary.txt` no Python or date, or one twice; when a file names its commit without
+  "(harness files as committed)", so that its run read other harness files; when a file
+  names a harness hash other than the harness's now, computed by the code that writes the
+  results' headers (`harness_hash`, which `provenance` calls); when the files name more
+  than one commit or harness; when the counts in
   `tests/model/MODEL.md` are not one block naming the results' commit; or when
   `summary.txt` and those counts are not what `--write` makes of the runs' output in
   `results/`. Its self-test runs first: it writes results as `--write` does, from made-up
@@ -3420,15 +3421,15 @@ findings:
   it cannot tell a header written by hand from a run's; the security review, which every
   change under `tests/` gets, reads the results' diff. It is not a file of the harness
   (`HARNESS` in `tests/model/run.py`), so a later fix to it needs no new run and can land
-  on its own, as a change to a check does. `run.py` keeps only what the check imports
-  (`harness_hash`, `written`, `result_file` and the names of what `--write` writes), and
-  writes
-  each file through a new one renamed over it, so that a symbolic link in its place is
-  replaced, not followed. CI's `model` job runs the check after `--fast`, so a pull
-  request that changes the harness commits the change, runs `--full --write` on it and
-  commits what it writes, in the same pull request: generated facts are refused when stale
-  (WORKFLOW, section 10, step 8, Tier 1). `scripts/safe_push.py` does not run the check
-  yet, and WORKFLOW, section 8, says so until the command joins its `CHECKS`.
+  on its own, as a change to a check does. Of the check, `run.py` keeps only the helpers it
+  shares with `--write`: `harness_hash`, `written`, `result_file`, `short_commit` and the
+  names of what `--write` writes. `--write` writes each file through a new one renamed
+  over it, so that a symbolic link in its place is replaced, not followed. CI's `model` job
+  runs the check after `--fast`, so a pull request that changes the harness commits the
+  change, runs `--full --write` on it and commits what it writes, in the same pull
+  request: generated facts are refused when stale (WORKFLOW, section 10, step 8, Tier 1).
+  `scripts/safe_push.py` does not run the check yet, and WORKFLOW, section 8, says so
+  until the command joins its `CHECKS`.
 - **The screen's record.** The overlap screen gains `--write`, with which a run that ends
   with every known row closed by a rule records, in `Audit/screen-run.toml`, the commit,
   the number of statements in `facts.json` and a sha256 of each part of what decides its
@@ -3449,20 +3450,23 @@ findings:
   `--check-current` refuses any other record. Every try imports the build, not the
   sources, so a run stops before any Lean when `lake build --no-build Elements` finds the
   build stale. The screen's check needs no Lean, but any change to the library makes it
-  fail, and only a run, with Lean and about an hour and a half of processor time, makes
-  it pass again; so it is a release step, not one of CI's. Until the screen runs on the
-  candidate, `--check-current` fails, as it should, and nobody writes the record by hand.
-  `tests/test_screen.py` gains the cases of the record and of what stops a run before
-  Lean. WORKFLOW, section 10, step 10, lists both runs and both checks on the release
-  candidate, and the files the release's decisions entry names; section 8 lists the new
-  command.
+  fail, and only a run, with Lean and about an hour and a half of processor time, may make
+  it pass again; so it is a release step, not one of CI's. The check reads the record, not
+  the run, so it cannot tell a record written by hand from a run's, and the security
+  review reads the run's closing lines, which the pull request quotes. Until the screen
+  runs on the candidate, `--check-current` fails, as it should, and nobody writes the
+  record by hand. `tests/test_screen.py` gains the cases of the record and of what stops a
+  run before Lean. WORKFLOW, section 10, step 10, lists both runs, made at the head of the
+  release's pull request before `--merge`, both checks and when each runs, and the files
+  the release's decisions entry names; section 8 lists the new command.
 - **The run here.** The screen is not run again here. The model's full run is, because
   `tests/model/run.py` is a file of the harness:
-  `python3 -I tests/model/run.py --full --write` was made at 4649d519, with this change's
-  files not yet committed, so its results name that commit with "(harness files differ
-  from this commit)", which the check refuses. It is made again on the commit that
-  carries the change, and what it writes is committed after it. Its results are recorded
-  in
+  `python3 -I tests/model/run.py --full --write` was made at the commit that carries the
+  change, with its harness files as committed, after main's superposition change
+  ([#191](https://github.com/jackChallis/stoicheia/pull/191)) was merged in, and what it
+  wrote was committed after it. Its counts were compared with main's own run, and any
+  count that differs from those this branch recorded before the merge is a consequence of
+  main's change to the harness, not of this one. Its results are recorded in
   [`tests/model/results/angle_check.txt`](../../tests/model/results/angle_check.txt),
   [`tests/model/results/exhaustive.txt`](../../tests/model/results/exhaustive.txt),
   [`tests/model/results/grid_check.txt`](../../tests/model/results/grid_check.txt),
@@ -3480,3 +3484,6 @@ findings:
   `Audit/screen.py`; and `scripts/safe_push.py` (a comment, which said that no check reads
   the model's results). `Audit/screen-run.toml` joins them when the screen first writes
   it.
+- **Open.** A hardening not made here: when git has the commit the results name, the check
+  could confirm that it is an ancestor of `HEAD` and that its harness files hash to the
+  hash named, and say in a shallow clone that it could not.

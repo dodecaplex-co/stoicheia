@@ -536,22 +536,28 @@ looked into.
     labelled `blocks-release` is open, or when GitHub cannot be read. The job runs on the
     pull request's events, not the issues', so once the last blocker closes it is run
     again (or `release` removed and given again) before `--merge`, which counts its failed
-    run on a release pull request. Two generated accounts are then made again, both at
-    the release candidate's commit. The model's full run,
+    run on a release pull request. Before that `--merge`, and after every other change the
+    release's pull request carries, two generated accounts are made again at its head, and
+    what they write is committed to it. The model's full run,
     `python3 -I tests/model/run.py --full --write`, writes `tests/model/results/` and
-    MODEL.md's counts. The overlap screen, `python3 -I Audit/screen.py OUTDIR --write`,
-    runs on the candidate's statements and rules and writes `Audit/screen-run.toml`; then
-    [overlaps.md](reports/overlaps.md) and the screen's docstring record the revision
-    screened, the number of statements in `facts.json` and what closed. With what they
-    write committed, `python3 -I tests/model/results_check.py` and
-    `python3 -I Audit/screen.py --check-current` both pass. CI runs the first on every pull
-    request. The screen's check needs no Lean, but any change to the library makes it
-    fail, and only a run, with Lean and about an hour and a half of processor time, makes
-    it pass again; so it is a release step, not one of CI's. `Audit/` and `tests/` are
-    protected, so the release's decisions entry names each file the runs change: the ten
-    files of `tests/model/results/`, `tests/model/MODEL.md`, `Audit/screen-run.toml` and
-    `Audit/screen.py`. Then the notes are drafted from the generated summaries, the owner
-    approves them, and the tag (`book-I`, `book-II`, …) is made.
+    MODEL.md's counts. After `lake build`, the overlap screen,
+    `python3 -I Audit/screen.py OUTDIR --write`, runs on the candidate's statements and
+    rules and writes `Audit/screen-run.toml`; then [overlaps.md](reports/overlaps.md) and
+    the screen's docstring record the revision screened, the number of statements in
+    `facts.json` and what closed. Then `python3 -I tests/model/results_check.py` and
+    `python3 -I Audit/screen.py --check-current` both pass: CI runs the first on every pull
+    request, and the coordinator runs the second on the head that `--merge` merges and
+    again just before the tag, and the pull request quotes the screen's closing lines. The
+    screen's check needs no Lean, but any change to the library makes it fail, and only a
+    run, with Lean and about an hour and a half of processor time, may make it pass again;
+    so it is a release step, not one of CI's. The check reads the record, not the run, so
+    it cannot tell a record written by hand from a run's, and the security review reads the
+    run's closing lines, which the pull request quotes. `Audit/` and `tests/` are
+    protected, so the release's decisions entry names each file the runs and their records
+    change: the ten files of `tests/model/results/`, `tests/model/MODEL.md`,
+    `Audit/screen-run.toml` and `Audit/screen.py`. Then the notes are drafted from the
+    generated summaries, the owner approves them, and the tag (`book-I`, `book-II`, …) is
+    made.
     `python3 scripts/check_release_gate.py` runs once more just before the tag, since the
     hold rests on the labels. PROGRAM.md is brought up to date: the status board, the
     lessons, the costs.

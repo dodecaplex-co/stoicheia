@@ -532,7 +532,7 @@ class Record(unittest.TestCase):
 
     def test_code_on_the_docstrings_last_line_counts(self):
         self.assertEqual(self.changed(screen.SCREEN, lambda t: t.replace(
-            'never by hand.\n"""\n', 'never by hand.\n"""; KNOWN_EXTRA = 1\n', 1)), ["screen"])
+            '\n"""\n', '\n"""; KNOWN_EXTRA = 1\n', 1)), ["screen"])
         for text, kept in (('"""Doc."""; x = 1\ny = 2\n', '"""Doc."""; x = 1\ny = 2\n'),
                            ('"""Doc,\nlonger."""\nx = 1\n', "x = 1\n"),
                            ("x = 1\n", "x = 1\n")):
