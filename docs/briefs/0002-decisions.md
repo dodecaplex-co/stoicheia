@@ -3961,17 +3961,6 @@ findings:
   lands in a pull request of its own, before train C6a. Protected file changed:
   `review/terms.toml`.
 
-- **The protected explanations follow the delivered centre and contact rules.** Review of
-  the integrated train found two old descriptions left beside the new definitions.
-  [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) now says that
-  `Tacit.exists_centre` supplies every circle with a centre while the current III.1
-  statement still explicitly takes an existential centre hypothesis and proves that its
-  constructed point is the centre. [`review/terms.toml`](../../review/terms.toml) now says
-  that touching within requires a point of the inner circle within the outer as well as no
-  point of the inner circle outside the outer. Heath's words, the scaffold declarations,
-  every frozen statement and every proof are unchanged. Protected files changed:
-  `scripts/scaffold_book.py` and `review/terms.toml`.
-
 - **Train C6a meets axiom wave one: the lock is main's 79 axioms and the centre rule.**
   Train C6a, which carries stage 3, the mixed angles, the rule that every circle has a
   centre and brief 0008's section 7, was merged with main at `2e8aecf`, after the eight
