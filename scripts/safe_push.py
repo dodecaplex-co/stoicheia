@@ -3225,8 +3225,9 @@ UNFINISHED_FORBIDDEN = (("`", "a backtick (code)"), ("<", "HTML or a comment"),
                         ("://", "a URL"),
                         ("www.", "a URL"), ("&", "an entity"))
 SCHEMELESS_URL = re.compile(
-    r"(?i)(?<![A-Za-z0-9_.-])(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,62}[A-Za-z0-9])?\.)+"
-    r"[A-Za-z]{2,63}(?::[0-9]{1,5})?(?:/\S*)?")
+    r"(?i)(?<![A-Za-z0-9_.-])(?:(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,62}"
+    r"[A-Za-z0-9])?\.)+[A-Za-z]{2,63}|(?:[0-9]{1,3}\.){3}[0-9]{1,3})"
+    r"(?::[0-9]{1,5})?(?:/\S*)?")
 
 
 def raw_lines(text: str) -> list[str]:

@@ -233,6 +233,7 @@ class UnfinishedWork(unittest.TestCase):
                      "- Prototype #38, example/edition/issues/39",
                      "- Prototype #38, example/edition/pull/40",
                      "- Prototype #38 example.org/ticket/39",
+                     "- Prototype #38 192.0.2.1/ticket/39",
                      "- **Prototype** #38", "- Prototype *later* #38",
                      "- _Prototype_ #38"):
             with self.subTest(text=text):

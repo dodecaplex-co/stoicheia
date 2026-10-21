@@ -2147,6 +2147,18 @@ class Merge(Edge):
                 self.assertEqual(self.merges(), [])
                 self.assertEqual(self.origin_main(), BASE)
 
+    def test_unfinished_ipv4_url_refuses_the_merge(self):
+        self.opened()
+        self.unfinished_body("- Prototype #38 192.0.2.1/ticket/39")
+        self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
+        self.assertIn("URL", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+
     def test_duplicate_unfinished_sections_refuse_the_merge(self):
         self.opened()
         self.unfinished_body("None\n\n## Unfinished work ##\n- Deferred page")
