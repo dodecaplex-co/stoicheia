@@ -45,8 +45,9 @@ Hypotheses come from the setting-out, conclusions from "I say that".
 
 - **A straight line is whole.** A `Line` is the whole straight line, named by any two of its
   points. I.2 finds its points on those lines without Postulate 2. I.5 takes its produced
-  sides as given, but still rests on Postulate 2 through proved rules, including
-  `OnRay.between_of_len_lt` through `Tacit.between_of_between_right`.
+  sides as given, but still rests on Postulate 2 through proved rules, in its own Lean the
+  order rule `Tacit.between_of_between_right`, beneath `OnRay.between_of_len_lt`, and
+  Metric 8, `Tacit.area_swap`, and through I.4, which it cites.
   Where a proof must cut off from a straight line produced, `produce_longer`
   first makes it long enough.
 - **Magnitudes, not numbers.** Lengths, angles and areas are separate kinds that add and
@@ -105,8 +106,8 @@ The rule of [FORMALIZATION.md](../FORMALIZATION.md), section 6, as Book I applie
   (`area_lt_of_cut`, the strict area comparison in I.39 and I.40), `Sums.lean` (the sums
   of lists, and `InOrder.between_end`) and `Rectilineal.lean` (a fitted figure's triangles
   lie apart, `Fitted.inside_pairwise`). `Superposition.lean`, imported separately by I.4
-  and I.8, proves the geometric laws their hypothetical placements cite, without
-  construction rules.
+  and I.8, proves the laws their placements cite, one theorem each; the certificate lists the
+  construction rules beneath each (`cited_laws`).
 - **Shared steps that cite a proposition:** `Elements/BookI/Helpers.lean`, with
   `Prop5.base` (I.5's angles at the base, with the sides produced anywhere); and
   `Elements/BookI/HelpersParallels.lean`, for those that cite I.28, I.30 or I.31, with

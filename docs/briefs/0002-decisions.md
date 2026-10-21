@@ -3778,8 +3778,8 @@ findings:
   retirements under two constraints: Euclid's six (Postulates 1 to 5 and Definition 15)
   stay explicit assumptions even where they are derivable, and no certificate entry may
   rest on Circle 2 or Circle 3 (`Tacit.inside_of_between`, `Tacit.outside_of_between`).
-  On 20 October the owner approved landing each retirement as three pull requests; this is
-  the second of the second, after the three preparations above. An exact search over every
+  Like the first retirement (its entries of 20 October above), this one lands as three pull
+  requests; this is the second of the second, after the four preparation entries above. An exact search over every
   checked derivation, the earlier search's and a second search's that avoids Circle 3, found a
   largest set of 31; it is a maximum over the derivations found, not a proof that no
   smaller foundation exists. Among the maximum sets, this one keeps the most of System E's
@@ -3927,9 +3927,9 @@ findings:
   to a sentence, its mutations table's header no longer speaks of a guard, and its example
   limits search.py to `pasch2`, still a law. `docs/reports/gaps-book-I.md`,
   `docs/STYLE.md`, `mishnah/intro/I.md` and `mishnah/I/05.md` name what this revision's
-  certificate shows: the lemmas through which I.4 reaches Postulates 2 and 3, and both of
-  I.5's routes to Postulate 2, the order rule beneath `OnRay.between_of_len_lt` and
-  Metric 8 (`area_swap`). `docs/FORMALIZATION.md` counts the model's planted mutations as
+  certificate shows: the lemmas through which I.4 reaches Postulates 2 and 3, and I.5's
+  routes to Postulate 2: in its own Lean, the order rule beneath `OnRay.between_of_len_lt`
+  and Metric 8 (`area_swap`), and through I.4, which it cites. `docs/FORMALIZATION.md` counts the model's planted mutations as
   MODEL.md does.
   `model/Model/Laws.lean`, `model/Check/Laws.lean` and `model/Model/Assembly.lean` were
   written again by the generator: the 48 laws reach 152 words of the vocabulary, the 153
