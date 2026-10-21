@@ -879,13 +879,22 @@ def check_book_record(book: str) -> None:
 # ---------------------------------------------------------------------------------------
 # The report.
 
+# The digits of the report's revision: heath.COMMIT's form (7 to 40), which the style
+# check's S12 reads as a commit beside the word "Revision" (STYLE, section 8). Git's own
+# short form varies with the clone and with core.abbrev, and under 7 digits it is a name
+# that S12 puts to Lean (issue #178).
+REVISION_DIGITS = 12
+
+
 def revision(output: Path, *more: Path) -> str:
-    """The commit whose files were read: HEAD, or, while HEAD's commits change nothing
-    but the report, the commit before them, so that regenerating the report on the same
-    files writes the same report. Any other change, staged, unstaged or untracked (a new
-    book record, say), is noted as not yet committed; the files this run writes (`output`
-    and `more`, the verdicts of --json) are not."""
-    head = run(["git", "rev-parse", "--short", "HEAD"])
+    """The commit whose files were read, with REVISION_DIGITS digits: HEAD, or, while
+    HEAD's commits change nothing but the report, the commit before them, so that
+    regenerating the report on the same files writes the same report. Any other change,
+    staged, unstaged or untracked (a new book record, say), is noted as not yet
+    committed; the files this run writes (`output` and `more`, the verdicts of --json)
+    are not."""
+    short = f"--short={REVISION_DIGITS}"
+    head = run(["git", "rev-parse", short, "HEAD"])
     if head.returncode != 0:
         return "not a git checkout"
     reports = {REPORT.relative_to(ROOT).as_posix()}
@@ -897,7 +906,7 @@ def revision(output: Path, *more: Path) -> str:
     commit = head.stdout.strip()
     while True:
         changed = run(["git", "diff", "--name-only", f"{commit}^", commit])
-        parent = run(["git", "rev-parse", "--short", f"{commit}^"])
+        parent = run(["git", "rev-parse", short, f"{commit}^"])
         if changed.returncode or parent.returncode or not changed.stdout.split() \
                 or not set(changed.stdout.split()) <= reports:
             break

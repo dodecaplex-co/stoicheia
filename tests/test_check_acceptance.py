@@ -17,6 +17,9 @@ these cases put it to small files of verdicts, each with the outcome it should g
   that --json did not write, cannot be compared, exit 2;
 * --json writes a verdict for every item of every proposition, book and the edition, with
   each failure's messages and why an item was not run;
+* the report, written by the generator in a small repository under several widths of
+  Git's short hashes, gives one revision, which the style check's S12 reads as a commit,
+  and no name for S12 to put to Lean (issue #178);
 * CI copies the pull request's checks into main but keeps main's content pins, so an
   updated definition or expected count cannot hide a later E2 failure.
 
@@ -29,11 +32,14 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import os
+import re
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import check_acceptance as ca  # noqa: E402
@@ -222,6 +228,70 @@ class Verdicts(unittest.TestCase):
             out = io.StringIO()
             with contextlib.redirect_stdout(out):
                 self.assertEqual(ca.compare(path, path), 0, out.getvalue())
+
+
+class Report(unittest.TestCase):
+    """The report as the generator writes it, read by the style check's S12 (issue #178)."""
+
+    def setUp(self):
+        ca.failures.clear()
+        ca.not_run.clear()
+
+    tearDown = setUp
+
+    def test_a_regenerated_report_passes_s12(self):
+        # A small repository whose HEAD begins with a letter, so that a short form of it
+        # reads as a name. Git's own width is seven digits there; under core.abbrev 4 it
+        # is four, which is not a commit to S12 (heath.COMMIT) but a name it puts to Lean.
+        # Whatever the width, the report gives one revision, in heath.COMMIT's form
+        # beside the word "Revision", and S12 asks Lean about nothing in it.
+        import check_style as style
+        self.assertTrue(style.is_report(ca.REPORT), ca.REPORT)
+        where = ca.REPORT.relative_to(ca.ROOT)
+        fixture = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+        who, when = ("Fixture", "fixture@example.invalid"), "2026-10-21T00:00:00Z"
+        fixture.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1",
+                       GIT_AUTHOR_NAME=who[0], GIT_AUTHOR_EMAIL=who[1], GIT_AUTHOR_DATE=when,
+                       GIT_COMMITTER_NAME=who[0], GIT_COMMITTER_EMAIL=who[1],
+                       GIT_COMMITTER_DATE=when)
+        texts = {}
+        with tempfile.TemporaryDirectory() as d, patch.dict(os.environ, fixture, clear=True):
+            root = Path(d).resolve()
+
+            def git(*args: str) -> str:
+                return subprocess.run(["git", *args], cwd=root, capture_output=True,
+                                      text=True, check=True).stdout.strip()
+
+            git("init", "-q")
+            git("commit", "-q", "--allow-empty", "-m", "A fixture")
+            for n in range(64):
+                if not git("rev-parse", "HEAD")[0].isdigit():
+                    break
+                git("commit", "-q", "--amend", "--allow-empty", "-m", f"A fixture, {n}")
+            head = git("rev-parse", "HEAD")
+            self.assertFalse(head[0].isdigit(), head)
+            for abbrev in ("4", "9", None):
+                if abbrev:
+                    git("config", "core.abbrev", abbrev)
+                else:
+                    git("config", "--unset", "core.abbrev")
+                with patch.object(ca, "ROOT", root), patch.object(ca, "REPORT", root / where):
+                    texts[abbrev or "Git's own"] = ca.report(
+                        ca.REPORT, {"lean_version": "4.35.0"}, quick=False)
+        revisions = set()
+        for abbrev, text in texts.items():
+            with self.subTest(abbrev=abbrev):
+                line = re.search(r"(?m)^- \*\*Revision:\*\* `([^`\n]*)`\.$", text)
+                self.assertIsNotNone(line, text[:800])
+                revision = line.group(1)
+                revisions.add(revision)
+                named = style.NamedText(ca.REPORT, text, style.every_book_opens())
+                _, asked, _, _ = style.s12_plan([named], True, (set(), set()))
+                self.assertEqual(sorted(n for group in asked.values() for n in group), [],
+                                 "names S12 would put to Lean")
+                self.assertTrue(ca.heath.COMMIT.fullmatch(revision), revision)
+                self.assertTrue(head.startswith(revision), (revision, head))
+        self.assertEqual(len(revisions), 1, revisions)
 
 
 class BaselineCopy(unittest.TestCase):
