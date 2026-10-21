@@ -4097,3 +4097,22 @@ findings:
   caught. Neither file pinned the list of plants or its count.
   [FORMALIZATION](../FORMALIZATION.md), section 7, and the README's row for the negative
   tests now describe both plants. No check is weakened.
+
+- **The decision entries' render test counts the entries in the folder
+  ([#242](https://github.com/jackChallis/stoicheia/issues/242)).**
+  [`tests/test_decision_entries.py`](../../tests/test_decision_entries.py), whose
+  `RenderLeavesTheRecord` test runs `render.py` on a copy of the sources with two entries
+  planted in `docs/decisions/`, required "decision entries: 2 checked", the planted entries
+  alone. `render.py` checks every entry in the folder, so the first pull request to bring a
+  real entry failed the test, and with it `scripts/negative_tests.py`, which runs it: on
+  `tooling/book-zero-imports`, with one entry moved to the folder, `render.py` reported 3
+  and the test failed. Standing order 11, that a new decision is an entry file, waited on
+  this. The test now reads the entries the folder already holds before it plants its own,
+  requires the count `render.py` reports to be exactly those and the planted ones, and
+  holds the existing entries' bytes to stay as they were, with the README and the page. It
+  runs twice: as the folder stands, and with a real entry written into the copy besides
+  the two planted ones, where it requires 3. With the old assertion, the second run fails
+  with "decision entries: 2 checked" not found where `render.py` reported 3; now both pass.
+  The assertion stays exact. The coordinator, assigning the issue on 21 October 2026,
+  wrote: "I approve it as a correction, not a weakening." The protected file changed is
+  `tests/test_decision_entries.py`.
