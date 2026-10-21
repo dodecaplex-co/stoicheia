@@ -3770,6 +3770,140 @@ findings:
   lands in a pull request of its own, before train C6a. Protected file changed:
   `review/terms.toml`.
 
+- **The formal model's compiled proofs replayed by Lean's kernel, apart from the build
+  ([#121](https://github.com/jackChallis/stoicheia/issues/121)).** The other half of
+  #121, which the source scan's entry of 19 October left open: after `lake build`, CI's
+  `formal-model` job runs [`scripts/check_model_kernel.py`](../../scripts/check_model_kernel.py)
+  (new), in which leanchecker, from the pinned toolchain, replays through Lean's kernel
+  every declaration of every compiled module of the model's own two libraries, `Model`
+  and `Check`, private declarations included. The script lists the modules from the
+  files, the two roots and every `.lean` file under `model/Model/` and `model/Check/`,
+  walks the package's build folder (`model/.lake/build/lib/lean`) for every compiled
+  module, and fails unless leanchecker reports replaying exactly those listed, so a new
+  module is never missed; a source with no compiled file, a module compiled outside the
+  two libraries (from a new root or a new library in `model/lakefile.toml`), a build not
+  up to date with its sources and a compiled module whose source is gone each fail it, and
+  a rejection names the module and the declaration leanchecker names. The freshness check
+  gives `lake build --no-build` every compiled source as an explicit target, including a
+  module its library root does not import, so an old compiled file cannot hide a later edit
+  to that source. And what is replayed is the package's own compiled files, not a copy of
+  them: each module root lies in one folder of Lean's search path, since Lean loads a
+  module from the first folder that holds its root. So before either replay the script
+  reads the search path that leanchecker gets through `lake env`, and a root (a folder, or
+  an `.olean` file, at the top of one of its folders) found in two folders, its name
+  compared without case as macOS's file system compares it, fails the check, naming both: a
+  copy of `Check` in the build folder of a package that the model requires, earlier on the
+  path (the repository root's `.lake/build/lib/lean`, which Git ignores), would otherwise
+  be replayed in place of the package's own.
+  `Check/Write.lean` alone is not replayed, by name: it writes the generated files
+  whenever Lean elaborates it, so `lake build` never compiles it, and the check fails if
+  that file goes. It runs first as `scripts/check_kernel.py` runs leanchecker for
+  `Elements`, but without `--fresh`, so each module's imports are loaded from their
+  compiled files, not replayed. Then it runs with `--fresh` on `Check`, which never
+  imports Mathlib (`model/lakefile.toml`), and replays `Check`'s whole environment from
+  nothing: Lean's own library as `Check` loads it (`Init`, `Std` and `Lean`, through
+  `Check/Generator.lean`'s `import Lean`), the library's modules that `Check` imports, the
+  plain-Lean part of `Model`, and `Check`. The first replay is kept for `Check` as well,
+  rather than replaced: it accounts for every compiled module by name, and a module
+  compiled but not imported by `Check.lean` is one that `--fresh Check` would never load;
+  for `Check` it costs about half a minute. What that leaves: the declarations of Mathlib
+  and of the packages it requires are left to Mathlib's own checks, a daily job
+  (`.github/workflows/daily.yml` in Mathlib) that replays Mathlib and Batteries from
+  nothing with leanchecker and checks Mathlib with nanoda, on Mathlib's master branch
+  rather than the release pinned here. Of Lean's own library, everything that `Check`
+  loads is replayed here from nothing, on the pinned toolchain, all 1,227 of its `Lean`
+  modules among it: so the 435 of them that lie outside Mathlib's environment, which
+  Mathlib's daily job does not reach, are no longer a gap. All that `Model` loads lies
+  within it but five of `Lake`'s modules, which `Model` loads through Mathlib
+  (`Lake.Build.Trace`, `Lake.Config.Glob`, `Lake.Util.Date`, `Lake.Util.String`,
+  `Lake.Util.Version`); those lie within Mathlib's environment, which Mathlib's daily job
+  replays, on Mathlib's toolchain rather than the one pinned here. `Init`, and the
+  library's declarations that `Check` imports, are replayed from nothing by
+  `check_kernel.py` as well, in the `check` job, from that job's own build. leanchecker runs
+  the same kernel as `lake build`, so the replay catches a declaration that reached a
+  compiled file without the kernel's check, not a fault in the kernel, and it replays any
+  axiom it meets: which axioms the model's proofs rest on stays `model/Model/Audit.lean`'s
+  check. The planted fault: its `--self-test`, which runs first in the job and needs no
+  Mathlib, builds with `lake build`, in a temporary directory outside the repository,
+  small packages of the model's shape that import only Lean, and adds a theorem of
+  `False`, proved by `True.intro`, from a `run_cmd` with the kernel's check switched off
+  (`debug.skipKernelTC`, under which `addDecl` calls `addDeclWithoutChecking`), once in a
+  `Check` file and once in a `Model` module. `lake build` accepts both; the check must
+  fail on each, naming the module and the declaration, and must pass the control, which
+  adds a true theorem the same way. Two more theorems of `False` are planted outside the
+  libraries' names, where leanchecker, given the two roots, would never look: in a second
+  root of `Model` (`roots = ["Model", "Helper"]`) and in a third library that `Check`
+  imports. The check must fail on each at its walk of the build folder, naming the module;
+  without the walk, both passed. Another theorem of `False` is planted in a package of its
+  own that `Check` requires and imports, as the model's `Check` requires the edition: the
+  walk and the first replay pass it, and the replay from nothing must fail on it, naming
+  the declaration; without that replay, the check passed it. A last theorem of `False` is
+  planted in a `Check` file after a copy of `Check`, compiled without it, is put in the
+  build folder of such a required package, earlier on the search path: both replays replay
+  the copy and pass it, and the check must fail before them, naming `Check` and both
+  folders; without the search path's check, the check passed it. A source never compiled
+  and a compiled module without its source are planted too. The control also compiles a
+  module that its library root does not import; after that source is edited without another
+  build, the check must reject it by name.
+  leanchecker runs on two threads, since each module it replays loads its imports'
+  environment afresh, Mathlib's for each module that imports it: unthrottled on sixteen
+  threads one run reached a 49 GB footprint, and on two it peaked near 2.6 GB and took
+  about a minute. The replay from nothing is one task, which more threads do not speed:
+  it took 95 seconds on two threads and 112 on four, with a resident peak of 1.5 GB, on a
+  machine busy with other builds; with it the whole script took 205 seconds and the
+  self-test 162, in a job that stops at 30 minutes. The script stops the replay from
+  nothing after 15 minutes and fails, asking whether `Check` now imports Mathlib, so that
+  the job ends with a named cause rather than at its limit. Every command runs in a process
+  group of its own; on interruption or termination the script stops that whole group and
+  waits for its command before temporary-directory cleanup, as it does on the replay's
+  timeout. The self-test times out a command, interrupts an untimed one and terminates
+  another, after each starts a descendant, and requires each descendant to stop.
+  Kim Morrison and Sebastian Ullrich wrote leanchecker, which began as Kim Morrison's
+  [lean4checker](https://github.com/leanprover/lean4checker) and now ships with Lean; we
+  are warmly grateful to them both. `safe_push` still leaves the `formal-model` job to CI
+  ([WORKFLOW](../WORKFLOW.md), section 8). The sentences that called the replay open, in
+  `scripts/check_fidelity.py`'s docstring and [FORMALIZATION](../FORMALIZATION.md),
+  section 7, now say what is true;
+  [model/README.md](../../model/README.md#the-ci-job), "The CI job", lists the step. The
+  protected files changed are:
+  `.github/workflows/ci.yml`,
+  `scripts/check_fidelity.py`,
+  `scripts/check_model_kernel.py`.
+
+- **Two guards gain their planted faults
+  ([#158](https://github.com/jackChallis/stoicheia/issues/158)).** The check that a
+  complete book has every figure and mishnah, and leanchecker's kernel replay, each said it
+  had no planted fault to show that it works. Each now has one, in the protected file
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py), as new items 19 and 20,
+  each a function of its own with one call. Item 19 removes I.1's `figures/I/01.svg`, then
+  `figures/I/01-idea.svg`, then `mishnah/I/01.md`, one at a time. Book I is complete, so
+  `check_fidelity.py` must fail each time with "I.1: … is missing", naming that file and
+  not the other two; each file is put back byte for byte in `finally`. Item 20 plants
+  `True.intro` as a proof of `False` in I.1's compiled module, the way the first
+  read-through named ([read-through 01](../reports/read-through-01.md)):
+  `set_option debug.skipKernelTC true` and a `run_cmd` that calls `addDecl`. The source
+  scan refuses both, so I.1 is compiled with them by `lake env lean -o`, over its own
+  `.olean`, from a copy in a temporary folder outside the tree, importing
+  `Lean.Elab.Command`, which defines the monad `run_cmd` runs in and brings `addDecl`
+  with it. Then
+  `leanchecker --fresh Elements`, the command `scripts/check_kernel.py` runs, must fail
+  with "while replaying declaration 'Elements.BookI.planted_ill_typed'" and the kernel's
+  type mismatch, and not with a file it cannot read or an invalid header. The build is
+  restored as item 15 restores it: the original bytes, a forced rebuild, and on success
+  the whole environment replayed; no file is left in the tree. Tried by hand first with
+  Lean 4.35: without the option, the kernel refuses the same plant when I.1 compiles, so
+  the proof is ill-typed and the option is what lets it past. With the missing-file check
+  commented out in a scratch copy of `check_fidelity.py`, item 19 reports each of the three
+  files not caught; with a leanchecker that checks nothing, item 20 reports the proof not
+  caught. Item 20 takes about a minute, restoration included. The protected regression
+  test [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) gains three
+  tests, without Lean: the three files return byte for byte whether the check names them,
+  misses them or is interrupted; the build returns when the restoration build fails or is
+  interrupted; and a replay that fails on a header, not on the proof, is not counted as
+  caught. Neither file pinned the list of plants or its count.
+  [FORMALIZATION](../FORMALIZATION.md), section 7, and the README's row for the negative
+  tests now describe both plants. No check is weakened.
+
 - **Book Zero's imports are read as Lean reads them
   ([#200](https://github.com/jackChallis/stoicheia/issues/200)).** Rule 3 of
   [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py), that Book Zero
@@ -3813,9 +3947,8 @@ findings:
   in Lean too, are refused by the rule as well. On main the rule reads the 42 imports of
   Book Zero's 16 files, exactly their header lines, and refuses none.
 
-  A new item of [`scripts/negative_tests.py`](../../scripts/negative_tests.py), 20, the
-  next after main's highest, plants a new Book Zero file for each of 19 forms, the
-  reviewer's five and the fourteen above, and requires each refused on its file and line,
+  A new item of [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants a
+  new Book Zero file for each of 19 forms, the reviewer's five and the fourteen above, and requires each refused on its file and line,
   while a file holding the import only in a comment, a remark, a string and a «…» name,
   beside an import of Book Zero, is not named at all.
   [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py), whose
