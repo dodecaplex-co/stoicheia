@@ -3032,3 +3032,21 @@ findings:
   hold. `git safe-push --label release` creates the `release` label, with its
   description, the first time it is given; the consolidation release (#38) lands through
   a pull request carrying it. Tags and releases stay manual, by the owner.
+
+## 21 October 2026
+
+- **Euclid's routes in Book III staged; their statements await approval (#125, #126, #127,
+  #129, #130, #131).** Seven Lean files under `Staging/Routes/`, committed at 1265f23c,
+  give Euclid's own arguments where main's proofs of Book III take another way, and drafts
+  where his words, or Heath's reading of them, ask for more than our Lean says. The proofs
+  of main's statements (III.8, III.21, III.26, III.27 and III.20's special case) are staged
+  to replace main's proofs at the next move of Book III's files; those of III.20's special
+  case, III.21 and III.26 rest on the draft angle at the centre, and wait for its approval
+  too. The new definitions and statements are drafts awaiting the owner's approval: the
+  point reading of Definition III.3 (`Staging/Routes/Touching.lean`), the angle at the
+  centre of any size and III.20 in general (`Staging/Routes/Prop20.lean`), and the angle of
+  contact after III.18 (`Staging/Routes/AngleOfContact.lean`). None of them is approved,
+  and no file of `Elements/` changes. #131 is an analysis, and changes no file: the five
+  calls of III.1 under Heath's "[III. 1]" do no work, and whether they stay under brief
+  0008's rule or go as dummy citations is the coordinator's question. The report is
+  [docs/reports/routes-book-III.md](../reports/routes-book-III.md).

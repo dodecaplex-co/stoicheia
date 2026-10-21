@@ -22,36 +22,47 @@ statements:
   produced beyond the centre to B, so that AB lies along the diameter through the point of
   contact. By III.18, AE is at right angles to AB, which is III.16's figure, and III.16's two
   parts hold for AE.
+* `Prop18.branch`, the section's one helper: let AE touch the circle about D at A; a point B′
+  that names a branch of the angle of contact along AE is on the diameter's side of AE, and
+  near A the angle of contact it names is the diameter's.
 * `Prop18.contact_locallyEqual`: the angle of contact, read near A, does not depend on the
   straight line from A into the circle that names its branch of the circumference.
 * `Prop18.contact_lt`, `Prop18.semicircle_gt` and `Prop18.acute`: the angle of contact is
   less than every acute rectilineal angle placed at A along AE on the circle's side, and the
   angle of the semicircle greater than every acute rectilineal angle placed along the
-  diameter on E's side; and every acute rectilineal angle can be so placed [I. 23].
+  diameter on E's side; and every acute rectilineal angle can be so placed [I. 23]. For the
+  angle of the semicircle, the touching straight line AE only names the side of AB, and the
+  angle of the semicircle does not depend on it: on any side of the diameter its comparison
+  follows from III.16, with the perpendicular to AB at A drawn on that side by I.11.
 
 Main has none of these. The prototype of the mixed angles, `Staging/Stage4b/MixedAngles.lean`,
-whose words this file uses, proves III.16's comparisons in III.16's figure only, and says
-that for a touching straight line in general the angle of contact is not proved there. The
-route is Euclid's order: III.18 makes the touching straight line III.16's, and III.16's
-comparisons do the rest. Nothing later is cited. Those comparisons are argued as the mixed
-angles argue them, directly from III.16's second part, where Euclid argues by reductio: the
-straight line of an acute angle falls within the circle, so near A the acute angle lies
-within the angle of the semicircle, with room to spare, and the angle of contact within the
-acute angle.
+whose words, and those of its facts it needs that rest on neither Circle 2 nor Circle 3, this
+file uses, proves III.16's comparisons in III.16's figure only, and says that for a touching
+straight line in general the angle of contact is not proved there. The route is Euclid's
+order: III.18 makes the touching straight line III.16's, and III.16's comparisons do the
+rest. Nothing later is cited. Those comparisons are argued as the mixed angles argue them,
+directly from III.16's second part, where Euclid argues by reductio: the straight line of an
+acute angle falls within the circle, so near A the acute angle lies within the angle of the
+semicircle, with room to spare, and the angle of contact within the acute angle.
 
-Nothing here rests on Circle 2 or Circle 3. Most of the prototype's theorems do, through
-Circle 2, so the first section proves again the steps of III.16's comparisons that these
-statements need, citing III.2 (`Prop2.within`) where the prototype uses Circle 2 or 3, as the
-move of the mixed angles into `Elements` proves them (branch `lean/c6c-step6`,
-`Elements/BookIII/MixedAngles.lean` and `Elements/BookIII/Prop16.lean`). They keep the names
-they have there. The steps in III.16's figure keep their statements as well; the general
-steps beneath them take the circle's centre as a hypothesis, which III.2 asks for. That
-section goes when the move lands, and the statements after it then cite the moved steps by
-the same names.
+Nothing here rests on Circle 2 or Circle 3. Many of the prototype's theorems do, through
+Circle 2 or Circle 3 itself: among them its steps in a circle (`exists_onRay_inside`,
+`near_inside_of_angle`, `exists_near_across`, `near_inside_of_ray` and
+`Prop16.sameSideOf_of_inside`) and those built on them. So the first section proves again the
+steps of III.16's comparisons that these statements need, following the move of the mixed
+angles into `Elements` (issue #57), which proves them in `Elements/Figure/Regions.lean`,
+`Elements/BookIII/MixedAngles.lean` and `Elements/BookIII/Prop16.lean`. Where the prototype
+uses Circle 2 or 3, they argue by III.2 (`Prop2.within`), except `exists_onRay_inside`, which
+replaces Circle 2 by comparing radii (`inside_of_len_lt`), as the move does. They keep the
+names they have there. The steps in III.16's figure keep their statements as well. The
+general steps that argue by III.2 take the circle's centre as a hypothesis, which main's
+III.2 asks for; the move's III.2 takes none, and its steps cite III.2 as
+`InsideCircle.of_between`, without a centre. That section goes when the move lands, and the
+statements after it then cite the moved steps by the same names.
 
-Status: the statements after III.18 are new, a draft for the owner's approval; not approved.
-The steps before them are the prototype's and the move's, proved again, and go when the move
-lands.
+Status: the statements after III.18, and the section's one helper, are new, a draft for the
+owner's approval; not approved. The steps before them are the prototype's and the move's,
+proved again, and go when the move lands.
 -/
 
 namespace Elements.BookIII.Routes
@@ -61,9 +72,14 @@ open Elements.MixedAngles
 
 /-! ## The steps of III.16's comparisons, by III.2
 
-Each is proved as `lean/c6c-step6` proves it, citing III.2 (`Prop2.within`) where the
-prototype uses Circle 2 or 3. The general steps take the circle's centre, which III.2 asks
-for; the steps in III.16's figure have it already, as D. -/
+Each is proved as the move (issue #57) proves it, save for two things. Where the prototype
+uses Circle 2 or 3, these steps cite III.2 as main states it (`Prop2.within`), with the
+circle's centre, where the move cites `InsideCircle.of_between`, without one;
+`exists_onRay_inside` cites neither, and compares radii (`inside_of_len_lt`), as in the move's
+`Elements/Figure/Regions.lean`. And they use the prototype's facts where the move has its own:
+`exists_centre` for `exists_circle_about`, and `surrounds_inside` and `surrounds_outside`,
+which take the circle's centre. The general steps that cite III.2 take the circle's centre,
+which main's III.2 asks for; the steps in III.16's figure have it already, as D. -/
 
 /-- **A straight line that has left the circle does not come back.** If C, not within the
 circle, lies between A, on or within it, and B, then B is without the circle: were B on or
@@ -469,11 +485,13 @@ theorem Prop18.parts {A B D E : Point} {ABC : Circle} (hD : Centre D ABC)
   have h := Prop18.diameter hD hA hAE hADB
   Prop16 hD hA hADB h.1 h.2
 
-/-- **Every straight line from A into the circle names the diameter's angle of contact.** Let
-AB be the diameter through A, and B′ name a branch: the ray AB′ passes within the circle.
-Then B′ is on B's side of AE, the side the whole circle is on, and near A the angle of
-contact named by B′ is the one named by the diameter (`Prop16.horn_locallyEqual`).
-[III. 18, III. 16] -/
+/-- Let AE touch the circle about D at A, and AB be the diameter through A: **every straight
+line from A into the circle names the diameter's angle of contact.** The touching is carried
+by the hypothesis that the angle of contact named by B′ is as Euclid draws it
+(`MixedAngle.WellFormed`): A is on the circle, AE touches it there, and B′, off AE, names a
+branch, the ray AB′ passing within the circle. Then B′ is on B's side of AE, the side the
+whole circle is on, and near A the angle of contact named by B′ is the one named by the
+diameter (`Prop16.horn_locallyEqual`). [III. 18, III. 16] -/
 theorem Prop18.branch {A B B' D E : Point} {ABC : Circle} (hD : Centre D ABC)
     (hADB : Between A D B) (hm : (MixedAngle.ofContact A E ABC B').WellFormed) :
     SameSideOf B' B A E ∧
@@ -518,11 +536,15 @@ theorem Prop18.contact_lt {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC)
   obtain ⟨γ₀, hγ₀, hwithin⟩ := heq.1
   exact ⟨h.1, h.2.1.mono_near hγ₀ hwithin, LocallyLess.congr_left heq h.2.2⟩
 
-/-- **The angle of the semicircle is greater than any acute rectilineal angle**, for every
-straight line touching a circle. Let AE touch the circle ABC, about D, at A, and AB be the
-diameter through A. For every acute angle BAF placed at A along AB, on E's side, the angle
-of the semicircle, contained by the straight line BA and the circumference on E's side,
-exceeds it: by III.18 this is III.16's figure (`Prop16.semicircle_gt`). -/
+/-- **The angle of the semicircle is greater than any acute rectilineal angle**, on the side
+of the diameter that a touching straight line names. Let AE touch the circle ABC, about D, at
+A, and AB be the diameter through A. For every acute angle BAF placed at A along AB, on E's
+side, the angle of the semicircle, contained by the straight line BA and the circumference on
+E's side, exceeds it: by III.18 this is III.16's figure (`Prop16.semicircle_gt`). The
+touching straight line AE only names the side of AB. The angle of the semicircle does not
+depend on it, and on any side of the diameter the comparison follows from III.16, with the
+perpendicular to AB at A drawn on that side by I.11. The move states that form, with AE at
+right angles to AB, as `Prop16.semicircle`. -/
 theorem Prop18.semicircle_gt {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC)
     (hA : OnCircle A ABC) (hAE : Touches A E ABC) (hADB : Between A D B)
     (hF : SameSideOf F E A B) (hBAF : ∠ B A F < ∟) :
@@ -532,7 +554,8 @@ theorem Prop18.semicircle_gt {A B D E F : Point} {ABC : Circle} (hD : Centre D A
   exact Prop16.semicircle_gt hD hA hADB hE hBAE hout hin hF hBAF
 
 /-- **III.16's last clause, for every straight line touching a circle.** Let AE touch the
-circle ABC, about D, at A, and AB be the diameter through A. The angle of the semicircle and
+circle ABC, about D, at A, and AB be the diameter through A; for the angle of the semicircle,
+AE only names the side of AB (`Prop18.semicircle_gt`). The angle of the semicircle and
 the angle of contact are angles as Euclid draws them, and every acute rectilineal angle XYZ
 can be placed at A [I. 23]: along AB on E's side, where the angle of the semicircle exceeds
 it, and along AE on the circle's side, where the angle of contact falls short of it. -/
