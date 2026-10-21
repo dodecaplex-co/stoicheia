@@ -560,6 +560,14 @@ def publish(outputs):
     stops = {getattr(signal, name) for name in ('SIGTERM', 'SIGHUP') if hasattr(signal, name)}
     previous_mask = (signal.pthread_sigmask(signal.SIG_BLOCK, stops)
                      if stops and hasattr(signal, 'pthread_sigmask') else None)
+
+    def restore():
+        for path, backup in reversed(journal):
+            if os.path.lexists(path):
+                os.unlink(path)
+            if backup is not None:
+                os.replace(backup, path)
+
     try:
         try:
             for path, text in outputs:
@@ -580,14 +588,16 @@ def publish(outputs):
                     os.replace(path, backup)
                 journal.append((path, backup))
                 os.replace(new, path)
-            if previous_mask is not None and signal.sigpending() & stops:
-                raise InterruptedError('publication interrupted')
+            if previous_mask is not None:
+                deliverable = stops - set(previous_mask)
+                pending = signal.sigpending() & deliverable
+                signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
+                if pending:
+                    raise InterruptedError('publication interrupted')
+                previous_mask = None
+                previous_mask = signal.pthread_sigmask(signal.SIG_BLOCK, stops)
         except BaseException:
-            for path, backup in reversed(journal):
-                if os.path.lexists(path):
-                    os.unlink(path)
-                if backup is not None:
-                    os.replace(backup, path)
+            restore()
             raise
         else:
             for _, backup in journal:

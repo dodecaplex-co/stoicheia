@@ -31,8 +31,8 @@ each fault the check exists to catch, and checks that each is caught and that th
 unchanged pass. It drives --write's guards too, and runs `run.py --full --write` for real,
 in a git repository of its own, on a made-up harness that changes and restores the
 checkout's harness while the run goes on, and on one stopped by SIGTERM partway. For each
-of SIGTERM and SIGHUP, it also stops publication after a replacement and checks that the
-whole previous output set remains.
+of SIGTERM and SIGHUP, it also stops publication after a replacement and immediately after
+its pending-signal check, and checks that the whole previous output set remains.
 """
 import contextlib
 import hashlib
@@ -593,7 +593,7 @@ def snapshot_self_test():
 
 
 def publication_signal_self_test():
-    """Interrupt publication after MODEL.md is replaced and require its whole prior tree back."""
+    """Interrupt after MODEL.md is replaced or signals are sampled; require the prior tree."""
     stops = [getattr(signal, name) for name in ('SIGTERM', 'SIGHUP') if hasattr(signal, name)]
     if not stops:
         return
@@ -614,55 +614,70 @@ def publication_signal_self_test():
         return entries
 
     for stop in stops:
-        with tempfile.TemporaryDirectory() as tmp:
-            results = os.path.join(tmp, 'results')
-            model_md = os.path.join(tmp, 'MODEL.md')
-            with open(model_md, 'w', encoding='utf-8') as f:
-                f.write(PAGE)
-            old = dict(commit='a' * 40 + f' ({COMMITTED})', harness='b' * 64,
-                       python=f'{platform.python_version()} (self-test)', date='2000-01-01')
-            old_runs = made_up_runs()
-            write(old_runs, old, results, model_md)
-            linked = os.path.join(results, result_file(old_runs[0]))
-            link_target = os.path.join(tmp, 'linked-result.txt')
-            os.replace(linked, link_target)
-            os.symlink(link_target, linked)
-            missing = os.path.join(results, result_file(old_runs[1]))
-            os.unlink(missing)
-            before = tree(tmp)
-            new = dict(old, commit='c' * 40 + f' ({COMMITTED})', date='2000-01-02')
-            real_replace = os.replace
-            sent = False
+        for timing in ('after replacement', 'after pending check'):
+            with tempfile.TemporaryDirectory() as tmp:
+                results = os.path.join(tmp, 'results')
+                model_md = os.path.join(tmp, 'MODEL.md')
+                with open(model_md, 'w', encoding='utf-8') as f:
+                    f.write(PAGE)
+                old = dict(commit='a' * 40 + f' ({COMMITTED})', harness='b' * 64,
+                           python=f'{platform.python_version()} (self-test)', date='2000-01-01')
+                old_runs = made_up_runs()
+                write(old_runs, old, results, model_md)
+                linked = os.path.join(results, result_file(old_runs[0]))
+                link_target = os.path.join(tmp, 'linked-result.txt')
+                os.replace(linked, link_target)
+                os.symlink(link_target, linked)
+                missing = os.path.join(results, result_file(old_runs[1]))
+                os.unlink(missing)
+                before = tree(tmp)
+                new = dict(old, commit='c' * 40 + f' ({COMMITTED})', date='2000-01-02')
+                real_replace = os.replace
+                real_pending = signal.sigpending
+                sent = False
 
-            def interrupting_replace(source, destination):
-                nonlocal sent
-                real_replace(source, destination)
-                if destination == model_md and not sent:
-                    sent = True
-                    if not os.path.isfile(destination):
-                        raise AssertionError('publication signal preceded the replacement')
-                    os.kill(os.getpid(), stop)
+                def interrupting_replace(source, destination):
+                    nonlocal sent
+                    real_replace(source, destination)
+                    if timing == 'after replacement' and destination == model_md and not sent:
+                        sent = True
+                        if not os.path.isfile(destination):
+                            raise AssertionError('publication signal preceded the replacement')
+                        os.kill(os.getpid(), stop)
 
-            previous = {sig: signal.getsignal(sig) for sig in stops}
-            runner.stop_as_exit()
-            stopped = None
-            try:
-                with mock.patch.object(runner.os, 'replace', side_effect=interrupting_replace):
-                    write(made_up_runs(), new, results, model_md)
-            except SystemExit as e:
-                stopped = e.code
-            finally:
-                for sig, handler in previous.items():
-                    signal.signal(sig, handler)
-            after = tree(tmp)
-            if not sent or stopped != 128 + stop or after != before:
-                raise AssertionError(f'model publication self-test: {signal.Signals(stop).name} '
-                                     'after a replacement did not restore the previous output set '
-                                     f'without temporary files: stopped {stopped}; '
-                                     f'added {sorted(after.keys() - before.keys())}; '
-                                     f'removed {sorted(before.keys() - after.keys())}')
-    print('model publication self-test: SIGTERM and SIGHUP after a replacement restore the '
-          'previous output set without temporary files')
+                def interrupting_pending():
+                    nonlocal sent
+                    pending = real_pending()
+                    if timing == 'after pending check' and not sent:
+                        sent = True
+                        os.kill(os.getpid(), stop)
+                    return pending
+
+                previous = {sig: signal.getsignal(sig) for sig in stops}
+                runner.stop_as_exit()
+                stopped = None
+                try:
+                    with contextlib.ExitStack() as stack:
+                        stack.enter_context(mock.patch.object(
+                            runner.os, 'replace', side_effect=interrupting_replace))
+                        stack.enter_context(mock.patch.object(
+                            runner.signal, 'sigpending', side_effect=interrupting_pending))
+                        write(made_up_runs(), new, results, model_md)
+                except SystemExit as e:
+                    stopped = e.code
+                finally:
+                    for sig, handler in previous.items():
+                        signal.signal(sig, handler)
+                after = tree(tmp)
+                if not sent or stopped != 128 + stop or after != before:
+                    raise AssertionError(f'model publication self-test: '
+                                         f'{signal.Signals(stop).name} {timing} did not restore '
+                                         'the previous output set without temporary files: '
+                                         f'stopped {stopped}; '
+                                         f'added {sorted(after.keys() - before.keys())}; '
+                                         f'removed {sorted(before.keys() - after.keys())}')
+    print('model publication self-test: SIGTERM and SIGHUP after a replacement or the pending '
+          'check restore the previous output set without temporary files')
 
 
 def self_test():
