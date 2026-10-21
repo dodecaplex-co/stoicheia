@@ -433,6 +433,14 @@ class TrainChecks(Repository):
             f"[x]( [Reviewed](https://example.invalid/{self.member})",
             f'[Reviewed](https://example.invalid "note ) {self.member}")',
             f"x][[Reviewed](https://example.invalid/{self.member})",
+            f'[Reviewed](a"b "c) {self.member}")',
+            f"[Reviewed](</) {self.member}>)",
+            f"[Reviewed][x](https://example.invalid/{self.member})",
+            f"[Reviewed](https://example.invalid/<b(>){self.member})",
+            f"<?x {self.member} ?>Reviewed",
+            f"<!X {self.member}>Reviewed",
+            f"<![CDATA[ {self.member} ]]>Reviewed",
+            f"![{self.member}](review.png) Reviewed",
         )
         for cell in cells:
             for key, label in (("code_review", "/code-review"),
@@ -442,7 +450,9 @@ class TrainChecks(Repository):
                                  text=body([dict(self.row, **{key: cell})]))
         for cell in (
                 f'<" <span title="note">Reviewed {self.member}: no findings</span>',
-                f"x][[Reviewed {self.member}: no findings](https://example.invalid/review)"):
+                f"x][[Reviewed {self.member}: no findings](https://example.invalid/review)",
+                f"[Elements](https://en.wikipedia.org/wiki/Euclid's_Elements) reviewed "
+                f"at {self.member}: no findings"):
             with self.subTest(visible=cell):
                 self.assertEqual(self.problems(text=body(
                     [dict(self.row, code_review=cell)])), [])

@@ -267,7 +267,7 @@ def _html_tag_end(text: str, start: int) -> tuple[bool, int | None]:
 
 
 def _without_html(text: str) -> str:
-    """Remove HTML comments and syntactically recognizable tags."""
+    """Remove raw HTML constructs that CommonMark does not show as text."""
     visible = []
     at = 0
     while at < len(text):
@@ -281,6 +281,25 @@ def _without_html(text: str) -> str:
                 break
             at = end + 3
             continue
+        if text.startswith("<?", at):
+            end = text.find("?>", at + 2)
+            if end < 0:
+                break
+            at = end + 2
+            continue
+        if text.startswith("<![CDATA[", at):
+            end = text.find("]]>", at + 9)
+            if end < 0:
+                break
+            at = end + 3
+            continue
+        if at + 2 < len(text) and text.startswith("<!", at) \
+                and text[at + 2].isascii() and text[at + 2].isalpha():
+            end = text.find(">", at + 3)
+            if end < 0:
+                break
+            at = end + 1
+            continue
         recognized, end = _html_tag_end(text, at)
         if not recognized:
             visible.append("<")
@@ -292,19 +311,94 @@ def _without_html(text: str) -> str:
     return "".join(visible)
 
 
+def _inline_link_end(text: str, start: int) -> int | None:
+    """The end after a complete inline link beginning with `](`, or None."""
+    at = start + 2
+    before_space = at
+    while at < len(text) and text[at] in " \t\r\n":
+        at += 1
+    spaced = at != before_space
+
+    if at < len(text) and text[at] == "<":
+        at += 1
+        while at < len(text):
+            if text[at] == "\\" and at + 1 < len(text):
+                at += 2
+            elif text[at] == ">":
+                at += 1
+                break
+            elif text[at] in "\r\n<":
+                return None
+            else:
+                at += 1
+        else:
+            return None
+    elif spaced and at < len(text) and text[at] in "\"'(":
+        pass
+    else:
+        depth = 0
+        while at < len(text):
+            if text[at] == "\\" and at + 1 < len(text):
+                at += 2
+                continue
+            if text[at] in " \t\r\n":
+                break
+            if text[at] == "(":
+                depth += 1
+            elif text[at] == ")":
+                if depth == 0:
+                    return at + 1
+                depth -= 1
+            at += 1
+        if depth:
+            return None
+
+    while at < len(text) and text[at] in " \t\r\n":
+        at += 1
+    if at < len(text) and text[at] == ")":
+        return at + 1
+    if at == len(text) or text[at] not in "\"'(":
+        return None
+    close = ")" if text[at] == "(" else text[at]
+    at += 1
+    while at < len(text):
+        if text[at] == "\\" and at + 1 < len(text):
+            at += 2
+        elif text[at] == close:
+            at += 1
+            break
+        else:
+            at += 1
+    else:
+        return None
+    while at < len(text) and text[at] in " \t\r\n":
+        at += 1
+    return at + 1 if at < len(text) and text[at] == ")" else None
+
+
 def _without_link_targets(text: str) -> str:
-    """Remove inline link destinations, their titles, and valid reference labels."""
+    """Remove inline destinations, titles, reference labels and image descriptions."""
     visible = []
+    labels: list[tuple[int, bool]] = []
     at = 0
     while at < len(text):
         if text[at] == "\\" and at + 1 < len(text):
             visible.append(text[at:at + 2])
             at += 2
             continue
-        if not text.startswith(("](", "]["), at):
-            visible.append(text[at])
+        if text[at] == "[":
+            image = at > 0 and text[at - 1] == "!" and visible and visible[-1] == "!"
+            labels.append((len(visible) - 1 if image else len(visible), image))
+            visible.append("[")
             at += 1
             continue
+        if not text.startswith(("](", "]["), at):
+            visible.append(text[at])
+            if text[at] == "]" and labels:
+                labels.pop()
+            at += 1
+            continue
+        label = labels.pop() if labels else None
         if text[at + 1] == "[":
             end = at + 2
             valid = False
@@ -322,32 +416,20 @@ def _without_link_targets(text: str) -> str:
                 visible.append("]")
                 at += 1
                 continue
-            visible.append("]")
-            at = end + 1
+            if label and label[1]:
+                del visible[label[0]:]
+            else:
+                visible.append("]")
+            at = end
             continue
-        end = at + 2
-        depth = 1
-        quote = None
-        while end < len(text):
-            if text[end] == "\\" and end + 1 < len(text):
-                end += 2
-                continue
-            if quote is not None:
-                if text[end] == quote:
-                    quote = None
-            elif text[end] in "\"'":
-                quote = text[end]
-            elif text[end] == "(":
-                depth += 1
-            elif text[end] == ")":
-                depth -= 1
-                if depth == 0:
-                    break
-            end += 1
-        visible.append("]")
-        if end == len(text):
+        end = _inline_link_end(text, at)
+        if label and label[1]:
+            del visible[label[0]:]
+        else:
+            visible.append("]")
+        if end is None:
             break
-        at = end + 1
+        at = end
     return "".join(visible)
 
 
@@ -356,7 +438,7 @@ def _review_text(cell: str) -> str:
     inline link destinations or reference labels, then with character references decoded
     and NFKC applied to the visible text. The reviewed commit is read here, never in the
     raw cell, so a commit no reader sees names none."""
-    text = _without_link_targets(_without_html(cell))
+    text = _without_html(_without_link_targets(cell))
     return unicodedata.normalize("NFKC", html.unescape(text))
 
 

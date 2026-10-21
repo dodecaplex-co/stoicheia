@@ -127,6 +127,7 @@ NUMBER = re.compile(r"[0-9]{1,2}")
 YEAR = re.compile(r"[0-9]{4}")
 YEARLIKE = re.compile(r"(?<![0-9])(?:19|20|21)[0-9]{2}(?![0-9])")
 ORDERED_TEXT = re.compile(r"(?:^| )([0-9]+)[.)]$")
+TOP_ORDERED = re.compile(r" {0,3}[0-9]+[.)](?=[ \t]|$)")
 # An HTML heading tag of level one or two, which this reading refuses rather than reads.
 RAW_HEADING = re.compile(r"(?i)<h[12](?=[\s/>]|$)")
 GENERATED = (*safe_push.GENERATED, "book/", safe_push.DECISIONS)
@@ -841,11 +842,13 @@ def _indent(line: str) -> int:
     return column
 
 
-def _continues_paragraph(line: str, stripped: str, opening: bool) -> bool:
+def _continues_paragraph(line: str, stripped: str, active: bool) -> bool:
     """Whether the line can leave a paragraph open for the following source line."""
+    prefix = line[:len(line) - len(line.lstrip(" \t"))]
+    top_level = "\t" not in prefix and line[len(prefix):] == stripped
     return bool(stripped.rstrip(" \t")) and not ANY_OPENER.match(stripped) \
         and not _underline(stripped, line) and not THEMATIC.fullmatch(line) \
-        and not (opening and _indent(line) >= 4)
+        and top_level and not (not active and _indent(line) >= 4)
 
 
 def _month(word: str) -> int | None:
@@ -976,8 +979,7 @@ def heading_problems(page: str) -> list[str]:
             continues = False
             continue
         kept, stripped = _stripped(line)
-        opening = start is None
-        paragraph = continues
+        paragraph = bool(continues and TOP_ORDERED.match(line))
         if opener := OPENER.match(stripped):
             text = _atx_text(stripped[opener.end():])
             readable(number, text)
@@ -1013,7 +1015,7 @@ def heading_problems(page: str) -> list[str]:
                     dates.append(date)
         if not kept and len(found) >= 2:
             own_words = words
-        continues = _continues_paragraph(line, stripped, opening)
+        continues = _continues_paragraph(line, stripped, continues)
     return problems
 
 
