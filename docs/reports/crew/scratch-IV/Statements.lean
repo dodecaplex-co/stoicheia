@@ -1,5 +1,4 @@
 import Elements
-import Staging.Stage3.Definitions
 
 /-!
 # Book IV, scratch: the words and the statements (a draft)
@@ -8,8 +7,9 @@ The words that brief 0012 proposes for `Elements/Foundations/DefinitionsIV.lean`
 coordinator's file, and every statement of Book IV as the brief drafts it, each with
 `sorry`. Nothing imports this file, and nothing in the edition builds it: from the root of
 a checkout that has built `Elements`, `lake env lean docs/reports/crew/scratch-IV/Statements.lean`
-checks it, once `Staging` is built too: the bridge `Polygon.arcs_measure` speaks of stage
-3's arcs, still staged. The prototypes beside it (`Prototype*.lean`) repeat the words,
+checks it. The bridge `Polygon.arcs_measure` speaks of stage 3's arcs, staged when this
+draft was written and now in `Elements/Foundations/DefinitionsIII.lean`, which
+`import Elements` brings. The prototypes beside it (`Prototype*.lean`) repeat the words,
 unchanged, and prove one statement each.
 
 The statements are written as they will stand once brief 0008's rule, that every circle has

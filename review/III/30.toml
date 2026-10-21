@@ -10,8 +10,11 @@ kind = "euclid"
 tags = ["segment-with-circle", "angle-measure", "centre-given"]
 note = "The given circumference is put as a given segment is: its circle, the straight line AB and a point P on its side, with `∃ O, Centre O ADB` for the measure. Its halves are equal measures in one circle, by III.28."
 
+[figure]
+case = "the given circumference ADB less than a semicircle"
+
 [review]
 stage = "exceptions"
-commit = "66e9871"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:9ffaa25c2c2ec6fd"
+commit = "7f4fba99"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:333b962d9d9223c8"

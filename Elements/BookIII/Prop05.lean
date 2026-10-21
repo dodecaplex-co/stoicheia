@@ -14,22 +14,20 @@ namespace Elements.BookIII
 open Tacit
 
 /-- If two circles cut one another, they will not have the same centre. -/
-theorem Prop5 {E : Point} {ABC CDG : Circle} (hne : ABC ≠ CDG) (hcut : CirclesMeet ABC CDG) :
+theorem Prop5 {E : Point} {ABC CDG : Circle} (hcut : CirclesCut ABC CDG) :
     ¬ (Centre E ABC ∧ Centre E CDG) := by
   -- For let the circles ABC, CDG cut one another at the points B, C;
-  obtain ⟨B, C, -, -, -, hC_ABC, hC_CDG⟩ := hcut
+  obtain ⟨⟨B, C, -, -, -, hC_ABC, hC_CDG⟩, ⟨F, hF_ABC, hF_in⟩, -⟩ := hcut
   -- I say that they will not have the same centre.
   -- For, if possible, let it be E; let EC be joined, and let EFG be drawn through at random.
   rintro ⟨hE_ABC, hE_CDG⟩
-  /- EC is drawn for the eye; our proof uses only its ends. An unlettered point
-     chooses the direction of EFG, which meets both circles beyond E. -/
-  obtain ⟨P, hP⟩ := exists_point [E]
-  have hPE : P ≠ E := fun h => hP (h ▸ List.mem_singleton_self P)
-  obtain ⟨EFG, hE_EFG, hP_EFG⟩ := Postulate1 E P hPE.symm
-  obtain ⟨F, hF_ABC, hF_EFG, hFEP⟩ :=
-    line_circle_beyond (centre_inside hE_ABC) hE_EFG hP_EFG hPE
-  obtain ⟨G, hG_CDG, hG_EFG, hGEP⟩ :=
-    line_circle_beyond (centre_inside hE_CDG) hE_EFG hP_EFG hPE
+  /- EC is drawn for the eye; our proof uses only its ends. EFG is drawn through F, a point
+     of ABC within CDG, where the circles cut one another; produced beyond F, it meets CDG
+     at G. One straight line from E meeting the circles at two points is all the argument
+     needs, as Heath says under III.6. -/
+  have hFE : F ≠ E := ne_of_centre_of_on hE_ABC hF_ABC
+  obtain ⟨EFG, hE_EFG, hF_EFG⟩ := Postulate1 E F hFE.symm
+  obtain ⟨G, hG_CDG, -, hGFE⟩ := line_circle_beyond hF_in hF_EFG hE_EFG hFE.symm
   -- Then, since the point E is the centre of the circle ABC,
   -- EC is equal to EF. [I. Def. 15]
   have hECF : ‖E C‖ = ‖E F‖ := Definition15 hE_ABC hC_ABC hF_ABC
@@ -39,21 +37,10 @@ theorem Prop5 {E : Point} {ABC CDG : Circle} (hne : ABC ≠ CDG) (hcut : Circles
   -- But EC was proved equal to EF also;
   -- therefore EF is also equal to EG, the less to the greater: which is impossible.
   have hEFG : ‖E F‖ = ‖E G‖ := hECF.symm.trans hECG
-  /- That F and G are two points is the step Euclid leaves tacit. Were they one, the
-     circles ABC and CDG, about the one centre E, would pass through one point, and a
-     centre and a radius fix a circle (`circle_eq`, System E, Diagram-segment 2): they
-     would be one circle, and they are two. -/
-  have hFG : F ≠ G := by
-    rintro rfl
-    exact hne (circle_eq hE_ABC hE_CDG hF_ABC hG_CDG rfl)
-  /- F and G both lie beyond E from the unlettered point, so G is on the ray from E
-     through F. On a ray only one point is at a given distance from its start, by Henry
-     Savile's argument (`OnRay.eq_of_len_eq` in Book Zero): whichever is the nearer, the
-     less would be equal to the greater. Euclid's figure has F the nearer. -/
-  have hG_ray : OnRay G E F := ⟨(ne_of_between hFEP).symm, ne_of_between hGEP,
-    ⟨EFG, hE_EFG, hF_EFG, hG_EFG⟩,
-    not_between_of_between_between (between_symm hGEP) (between_symm hFEP)⟩
-  exact hFG (OnRay.eq_of_len_eq hG_ray hEFG.symm).symm
+  /- F lies between E and G, so EF is the less, as in Euclid's figure. -/
+  have hlt : ‖E F‖ < ‖E G‖ := len_lt_of_between (between_symm hGFE)
+  rw [hEFG] at hlt
+  exact lt_irrefl _ hlt
   -- Therefore the point E is not the centre of the circles ABC, CDG.
   -- Therefore etc.
   -- Q. E. D.

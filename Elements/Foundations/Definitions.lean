@@ -12,7 +12,9 @@ them.
 
 Definition 15 is special: it is a definition that carries content ("all the
 straight lines falling upon it from one point ... are equal"), so it is an
-`axiom`, and it shows up in `#print axioms` wherever a proof uses it.
+`axiom`, and it shows up in `#print axioms` wherever a proof uses it. That
+every circle has such a point, its centre (Definition 16), is a tacit rule of
+our own, `exists_centre`, in `Tacit/Constructions.lean`.
 -/
 
 namespace Elements
