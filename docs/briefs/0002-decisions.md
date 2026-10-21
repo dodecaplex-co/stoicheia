@@ -4145,7 +4145,6 @@ findings:
   name do not change, no record changes, and no page changes. It is a check input, so it
   lands in a pull request of its own, before train C6a. Protected file changed:
   `review/terms.toml`.
-
 - **Train C6a meets axiom wave one: the lock is main's 79 axioms and the centre rule.**
   Train C6a, which carries stage 3, the mixed angles, the rule that every circle has a
   centre and brief 0008's section 7, was merged with main at `2e8aecf`, after the eight
@@ -4156,7 +4155,10 @@ findings:
   `980569da`, after main had landed the restricted rule of superposition (#191), the check
   train (#192), train Tw2 (#193), Heath's letters upright (#194) and the twenty entries out
   of `REACH_PENDING` (#195); and again with that branch at `4aadad20`, after its review,
-  which brings main at `cba27afa` (#196, the switch for upright letters).
+  which brings main at `0a05f96f` (#196, the switch for upright letters, and #198, short
+  hashes read from Git); with main at `001620f1` (#199, the carried helper's kind, and
+  #201, the five required checks); and last with main at `e7ffaf68` (#202, the gaps of S24
+  to S26, and #204, tooling/centre-given-meaning itself).
   The counts in this train's entries of 19 October above ("The mixed-angle move integrated
   with the Circle 2 proofs", "Every circle has a centre: the rule lands" and "III.5 and
   III.6: section 7 lands before step 6": 88 axioms and 82 tacit rules, "the other 87", a
@@ -4185,12 +4187,12 @@ findings:
   `III_11_today`, `III_13_today`, `cut_point`, `CirclesCut.of_meet` and `within_point`,
   were renewed from Lean's output, and change only by losing `Tacit.adjacent_eq_of_right`
   and `Tacit.centre_unique`, now theorems; every other name in each list is unchanged. On
-  the merges of `756bdbae` and `cba27afa` no pin was renewed: `lake build Audit` passes with every pin of
+  the merges of `756bdbae`, `0a05f96f`, `001620f1` and `e7ffaf68` no pin was renewed: `lake build Audit` passes with every pin of
   `Audit/Overlaps.lean`, `Audit/Crossing.lean` and main's `Audit/Superposition.lean` as
   written.
   The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`, `model/`, `scripts/`,
   `review/SCHEMA.md`, `lakefile.toml` and `lean-toolchain` that differ from main at
-  `cba27afa`, each named whole:
+  `e7ffaf68`, each named whole:
   `Audit.lean`,
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
@@ -4235,8 +4237,10 @@ findings:
 - **Train C6b reconciled after axiom wave one.** Train C6b carries III.1's construction
   and porism and stage 4, merged with C6a after axiom wave one, at `4db10cf2`, and again
   at `529c93f7`, which brings main's restricted rule of superposition (#191) and main at
-  `cba27afa`, and III.1's record and commentary saying the centre the statement takes
-  without the edition's history (`996b3f8f`). The 19 October stage 4 and III.25 entries'
+  `0a05f96f`, and III.1's record and commentary saying the centre the statement takes
+  without the edition's history (`996b3f8f`); at `d58ac22d`, which brings main at
+  `001620f1` (#199 and #201); and last at `ba839370`, which brings main at `e7ffaf68`
+  (#202 and #204); neither of the last two changes the lock or any pin. The 19 October stage 4 and III.25 entries'
   88 axioms and vocabulary counts, and D1's 57 tacit rules for III.1, are their historical
   pre-wave-one measurements; they stand as written. On the integrated tree the lock holds
   train C6a's 80 axioms, of them 74 tacit rules, byte for byte, and 242 vocabulary words:
@@ -4274,7 +4278,7 @@ findings:
   `Audit/Superposition.lean` afresh and passes with every pin as written.
   The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`, `model/`, `scripts/`,
   `.github/`, `review/SCHEMA.md`, `review/terms.toml`, `lakefile.toml` and
-  `lean-toolchain` that differ from train C6a at `529c93f7`, each named whole:
+  `lean-toolchain` that differ from train C6a at `ba839370`, each named whole:
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
   `Certificate/FIELDS.md`,
@@ -4315,6 +4319,27 @@ findings:
   excludes Circle 2 through Circle 3, on which its proof rests; a call to
   `centre_unique` is left to the reader, as `Audit/Centre.lean` now says. The pinned
   list itself is unchanged by the merge.
+
+- **The scaffold follows the restated Book III statements.** The protected file
+  [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes [brief
+  0008](0008-centre.md), step 6's restated signatures from `b260c826` for III.1, III.2,
+  III.4, III.8, III.9, III.10, III.13, III.17, III.21, III.22, III.23, III.24, III.25,
+  III.26, III.28, III.30, III.32, III.33, III.34, III.35, III.36 and III.37. 22 signatures
+  change; 19 lose centre-existence hypotheses, and III.33 loses a centre-existence
+  conclusion clause. III.24 also takes brief 0006's `Arc.Congruent` conclusion and III.25
+  becomes the restated core, their former statements moving to `Prop24.equalCircles` and
+  `Prop25.of_circle`; III.34's circle is made explicit. III.26 retains G/H; III.28 had no
+  centre clause; both gain [brief 0006](0006-statements.md)'s congruence conclusions. Its
+  comment now says that a centre is named where the statement uses it. Where a proof needs
+  an unnamed centre, it takes one by III.1 where Heath cites it, and from `exists_centre`
+  otherwise. The shared follow-up mapping emits `Prop24.equalCircles`,
+  `Prop24.equalMeasure`, `Prop25.complete` and `Prop25.of_circle` after their
+  propositions. `Prop24.equalCircles`, `Prop25.complete` and `Prop25.of_circle` take
+  [brief 0008](0008-centre.md)'s approved post-centre signatures; `Prop24.equalMeasure`
+  retains [brief 0006](0006-statements.md)'s approved signature. A search of `scripts/`
+  and `tests/` confirms that no check reads the scaffold's Book III strings. The scaffold
+  creates only missing files, so it never rewrites a proof. This change lands before the
+  content it describes, in a pull request of its own, since `scripts/` is a check input.
 
 - **Brief 0008, step 6: a drawn arc needs no centre (19 October 2026).** As
   [brief 0008](0008-centre.md), section 4, approved, `Arc.Drawn` in the foundations file
@@ -4376,7 +4401,11 @@ findings:
   tooling/centre-given-meaning and main at `0a05f96f`: axiom wave one, the restricted rule
   of superposition (#191), the check train (#192), train Tw2 (#193), Heath's letters
   upright (#194, #196), the twenty entries out of `REACH_PENDING` (#195) and short hashes
-  read from Git (#198). The restated Book III of this train is kept whole; III.1's record
+  read from Git (#198); and again with the guard at `0d77f885`, which brings train C6b's
+  review fixes (III.1's figure note from main, the current overlap row of III.1's centre
+  rule, and the historical row of III.1's corollary as it stood), train C6a at `ba839370`
+  and main at `e7ffaf68` (#199, #201, #202 and #204), and changes neither the lock nor any
+  pin. The restated Book III of this train is kept whole; III.1's record
   and commentary are this train's, since its statement no longer takes a centre.
   `Certificate/axioms.lock`, written again by `python3 scripts/check_fidelity.py
   --write-lock` after `lake build` and `Certificate/Facts.lean`, holds the guard side's 80
@@ -4399,7 +4428,7 @@ findings:
   superposition. The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`,
   `model/`, `scripts/`, `.github/`, `review/SCHEMA.md`, `review/terms.toml`,
   `lakefile.toml` and `lean-toolchain` that differ from `lean/centre-guard` at
-  `6b51608a`, each named whole:
+  `0d77f885`, each named whole:
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
   `Audit/screen.py`,
@@ -4424,7 +4453,9 @@ findings:
   value changes in this merge.
 
 - **III.30's halves, approved, proved and registered (#67).** The owner approved
-  `Prop30.halves` on 20 October 2026. Its statement, staged in [brief 0006](0006-statements.md) ("Addition, 19
+  `Prop30.halves` on 20 October 2026: asked "Also approve the smaller items?
+  Prop30.halves (#67); III.36's corollary layout; ...", the owner answered "Approve all".
+  Its statement, staged in [brief 0006](0006-statements.md) ("Addition, 19
   October 2026"), is proved with its type unchanged, after `Prop30` in
   [`Elements/BookIII/Prop30.lean`](../../Elements/BookIII/Prop30.lean), with three
   helpers of its own, `Prop30.on_chord`, `Prop30.not_within` and `Prop30.not_vertical`.

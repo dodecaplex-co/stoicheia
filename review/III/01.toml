@@ -49,6 +49,7 @@ note = "Proved as its own theorem, III.1 Por., by the argument of Euclid's reduc
 
 [figure]
 case = "AB not through F, with the supposed centre G off CE in the reductio"
+note = "Like Heath's, this figure draws the impossible supposition: G, off CE, as a centre of the circle ABC."
 
 [review]
 stage = "exceptions"

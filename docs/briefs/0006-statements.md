@@ -1559,7 +1559,8 @@ unproved obligation. The staged `sorry` establishes only that the proposed type 
 it proves none of these claims. No proof or certificate is assigned before approval.
 
 **21 October 2026: approved, proved and registered.** The owner approved this statement on
-20 October 2026. It is proved, with the type above unchanged, in
+20 October 2026: asked "Also approve the smaller items? Prop30.halves (#67); III.36's
+corollary layout; ...", the owner answered "Approve all". It is proved, with the type above unchanged, in
 `Elements/BookIII/Prop30.lean`, after `Prop30` and the three helpers below, and registered in `Elements/Companions.lean` as the
 companion "III.30 halves", which the record `review/III/30.toml` lists.
 `Staging/Halves/Prop30.lean` and its import in `Staging.lean` are deleted. The route
