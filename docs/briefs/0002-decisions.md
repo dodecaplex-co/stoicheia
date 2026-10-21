@@ -3294,3 +3294,12 @@ findings:
   `radius_ne_zero`), and the fixture needs a locked rule that III.1 uses neither before nor
   after it. Every test case, exact replacement, count decrement and rejection expectation
   remains in place.
+- **The style check's scope test, made ready for the second axiom retirement.**
+  [`tests/test_check_style.py`](../../tests/test_check_style.py)'s case that a rule no
+  proposition page shows is outside the rendered-docstring scope used
+  `Tacit.exists_point_inside_circle`; after the second retirement I.1 and every entry
+  after it rest on that rule, so the page shows it and the case would fail. The case now
+  names Circle 3, `Tacit.outside_of_between`, which has a docstring and on which
+  `scripts/check_fidelity.py` forbids every entry to rest, so no page can show it before
+  the retirement or after. The case still asserts that a rule with a docstring is left out
+  of the scope when no page shows it; nothing else changes.
