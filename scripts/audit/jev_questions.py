@@ -846,18 +846,18 @@ class Calls:
         constructors or stands beside another, as in `||`, which separates none; any other
         bar is refused, as are constructors at four spaces or on the inductive's own line.
 
-        So that the masked text, and the words in it, are those Lean reads, the declaration's
-        raw text may hold no string, char literal, «...» name or `»` (LITERAL), no number
-        glued to a word or a quote (GLUED), and no comment opening after anything but
-        whitespace or a name character, where Lean may read the dash or slash within a token
-        (OPENER); a comment in it may hold no `{`, and a line comment no `-/`, at which Lean,
-        put within a comment, a «...» name or an interpolated string by something earlier
-        such as `'"'`, would leave it; and the index refuses, in any file it reads, `/--/`, after which Lean's doc comment runs
-        on to a later `-/` where the masking's ends at once, and a notation token holding
-        `--` or `/-`, which Lean reads whole where the masking opens a comment. Some forms
-        outside the plain forms are refused first, with a reason of their own: those
-        FOREIGN and DOT name, anywhere in the declaration, and a bar after a word
-        ALTERNATIVES names.
+        So that the masked text, and the words in it, are those Lean reads, the
+        declaration's raw text may hold no string, char literal, «...» name or `»`
+        (LITERAL), no number glued to a word or a quote (GLUED), and no comment opening
+        after anything but whitespace or a name character, where Lean may read the dash or
+        slash within a token (OPENER); a comment in it may hold no `{`, and a line comment
+        no `-/`, at which Lean, put within a comment, a «...» name or an interpolated string
+        by something earlier such as `'"'`, would leave it; and the index refuses, in any
+        file it reads, `/--/`, after which Lean's doc comment runs on to a later `-/` where
+        the masking's ends at once, and a notation token holding `--` or `/-`, which Lean
+        reads whole where the masking opens a comment. Some forms outside the plain forms
+        are refused first, with a reason of their own: those FOREIGN and DOT name, anywhere
+        in the declaration, and a bar after a word ALTERNATIVES names.
 
         The constructors end before the first line outside every bracket that is not blank
         and opens neither `  |` nor three spaces, where a deriving clause or a command

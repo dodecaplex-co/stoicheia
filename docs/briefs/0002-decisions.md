@@ -3904,21 +3904,21 @@ findings:
   [FORMALIZATION](../FORMALIZATION.md), section 7, and the README's row for the negative
   tests now describe both plants. No check is weakened.
 
-- **The Jev question generator reads Lean's module header with a parser, checks its helpers'
-  paths before running them, reads an inductive only in the plain forms main writes, and
-  passes its test on the superposition branch (#185).** Two defects in
+- **The Jev question generator reads Lean's module header with a parser, checks its
+  helpers' paths before running them, reads an inductive only in the plain forms main
+  writes, and passes its test on the superposition branch (#185).** Two defects in
   `scripts/audit/jev_questions.py` (#179) were found while merging the superposition
   replacement. First, the generator read an import only from a line beginning `import`, so
   the `public import` of `Elements/Foundations/Superposition/` went unread, and on that
-  branch, as on main since it landed, `tests/test_jev_questions.py` refused I.4: "Elements.Superposition.Lit is not
-  imported". Line patterns misread header after header in review, so a small parser now
-  reads the header by Lean 4.35's grammar (`Lean/Parser/Module/Syntax.lean`): an optional
-  `module`, then any number of `[public] [meta] import M`, each component of M a plain
-  identifier or a whole `«...»` one, with comments between the words. Each import ends its
-  line, and `public section` ends the header. Refused: a doc comment or any other word
-  before an import, `prelude`, `import all`, two imports on a line, a `/` in a component, a
-  block comment running on from an import's line, and an `import`, outside a `«...»` name,
-  after the header.
+  branch, as on main since it landed, `tests/test_jev_questions.py` refused I.4:
+  "Elements.Superposition.Lit is not imported". Line patterns misread header after header
+  in review, so a small parser now reads the header by Lean 4.35's grammar
+  (`Lean/Parser/Module/Syntax.lean`): an optional `module`, then any number of
+  `[public] [meta] import M`, each component of M a plain identifier or a whole `«...»`
+  one, with comments between the words. Each import ends its line, and `public section`
+  ends the header. Refused: a doc comment or any other word before an import, `prelude`,
+  `import all`, two imports on a line, a `/` in a component, a block comment running on
+  from an import's line, and an `import`, outside a `«...»` name, after the header.
 
   Second, the generator ran `scripts/heath.py` and `scripts/audit/jev.py` as it loaded
   them, before checking their paths (found by an independent security review). Both paths
@@ -3951,25 +3951,25 @@ findings:
   name Lean opened before the inductive; no comment holding `{`, nor a line comment
   holding `-/`, at which Lean, put within a comment, a `«...»` name or an interpolated
   string by something earlier such as `'"'`, would leave it while the masking reads no
-  code; no number glued to a word or
-  a quote, as in `0x5matches`, where Lean reads `matches`, nor a quote after a bare `!` or
-  `?`; and no comment opening after anything but a name character or Lean's whitespace (a
-  space or a line break), as in `False \/-(1 : Int)`, where Lean reads `\/` whole. The
-  index refuses, in any file it reads, `/--/`, after which Lean's doc comment, opening with
-  all of `/--`, runs on to a later `-/` where the masking's ends at once; and a notation
-  token holding `--` or `/-`, such as `/--+`, which Lean reads whole. It also refuses a
-  notation with a bar before `=>`, or whose token holds a name character and is no name,
-  and every macro, elaborator and binder-predicate command; `scripts/check_fidelity.py`
-  refuses the elaborator and parser attributes in `Elements/`.
+  code; no number glued to a word or a quote, as in `0x5matches`, where Lean reads
+  `matches`, nor a quote after a bare `!` or `?`; and no comment opening after anything
+  but a name character or Lean's whitespace (a space or a line break), as in
+  `False \/-(1 : Int)`, where Lean reads `\/` whole. The index refuses, in any file it
+  reads, `/--/`, after which Lean's doc comment, opening with all of `/--`, runs on to a
+  later `-/` where the masking's ends at once; and a notation token holding `--` or `/-`,
+  such as `/--+`, which Lean reads whole. It also refuses a notation with a bar before
+  `=>`, or whose token holds a name character and is no name, and every macro, elaborator
+  and binder-predicate command; `scripts/check_fidelity.py` refuses the elaborator and
+  parser attributes in `Elements/`.
 
   Four forms hide a use from main's generator too, a limit shared with main and outside
-  #185, left for a follow-up issue: `open Nat in` at column 0 within a constructor; a `'"'`
-  beside a use, which the masking reads as a string (before an inductive it is refused, as
-  above); an anonymous `instance … where` with
-  equations, which the index does not record; and, in any declaration but an inductive, a
-  comment the masking opens within a token, as in `\/-`. Nor does the index check a
-  `syntax` command's tokens; with every macro and elaborator refused, none is known to
-  take a meaning in `Elements/`, but that is untested.
+  #185, left for a follow-up issue: `open Nat in` at column 0 within a constructor; a
+  `'"'` beside a use, which the masking reads as a string (inside an inductive it is
+  refused, as above); an anonymous `instance … where` with equations, which the index does
+  not record; and, in any declaration but an inductive, a comment the masking opens within
+  a token, as in `\/-`. Nor does the index check a `syntax` command's tokens; with every
+  macro and elaborator refused, none is known to take a meaning in `Elements/`, but that
+  is untested.
 
   Fourth, those proofs call `List.mem_nil_iff` and `List.forall_mem_cons`, so **the core
   allowlist gains these two names, `mem_nil_iff` and `forall_mem_cons`,** which the
@@ -3988,9 +3988,9 @@ findings:
   `tests/test_jev_questions.py` now has 58 cases, and Lean compiles all 95 texts its
   reconciler cases build. On fresh clones of main (`73b97ab1`) and of the superposition
   branch (`4c579527`), the generator gives 338 rows with no unresolved name, byte for byte
-  those of the generator before the last two rules, and all 58 cases pass with the two
-  changed files copied in, so the issue's third condition is met. Before the superposition
-  code (`8e9a1879`), the questions are byte for byte those of main's own generator, and the
-  manifest differs only by the two allowlist names. Protected files changed:
-  `scripts/audit/jev_questions.py` and `tests/test_jev_questions.py`. No expected value,
-  schema or review record changes; CI does not run the test yet (#157).
+  those of the generator before the `/--/` and notation-token rules, and all 58 cases pass
+  with the two changed files copied in, so the issue's third condition is met. Before the
+  superposition code (`8e9a1879`), the questions are byte for byte those of main's own
+  generator, and the manifest differs only by the two allowlist names. Protected files
+  changed: `scripts/audit/jev_questions.py` and `tests/test_jev_questions.py`. No expected
+  value, schema or review record changes; CI does not run the test yet (#157).
