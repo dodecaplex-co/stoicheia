@@ -793,7 +793,8 @@ class Calls:
                               + r'(?:fun|match|match_expr|matches|let|let_expr|have|by'
                               + r'|do|with|haveI|letI|let_fun|let_delayed|let_tmp)'
                               + KEYWORD_RIGHT + '|λ')
-    # A line that is blank, opens `  |` or opens with three spaces continues the constructors.
+    # A line that is blank, opens `  |` or opens with three spaces continues the constructors;
+    # a line opening with a bar after fewer spaces is refused, not taken as their end.
     CONSTRUCTORS_END = re.compile(r'(?! *$|  \||   )', re.M)
     # A declaration's keyword, or `recall`, begins a command wherever it stands on its line,
     # and ends the constructors.

@@ -4009,12 +4009,12 @@ findings:
   of the 282 tokens beginning with a letter or `_` in Lean 4.35's token table
   (`KEYWORD_TOKENS`, from `Lean.Parser.getTokenTable` at commit `eb6cafb7`), only `Type`,
   `Prop`, `Sort`, `where` and `_`. Each bar outside every bracket must then separate
-  constructors or stand beside another, as in `||`, and constructors at four spaces or on
-  the inductive's own line are refused. The constructors end at the first line outside
-  every bracket that is not blank and opens neither `  |` nor three spaces, and at a
-  declaration's keyword or `recall` outside every bracket, wherever it stands. A refusal
-  names the first form outside the plain forms, and some, such as a bar after `fun` or
-  `match`, are refused first with a reason of their own.
+  constructors or stand beside another, as in `||`, and constructors at no space, one space
+  or four spaces, or on the inductive's own line, are refused. The constructors end at the
+  first line outside every bracket that is not blank and opens neither `  |` nor three
+  spaces, and at a declaration's keyword or `recall` outside every bracket, wherever it
+  stands. A refusal names the first form outside the plain forms, and some, such as a bar
+  after `fun` or `match`, are refused first with a reason of their own.
 
   Six rules keep the masked text, and its words, those Lean reads, since the plain forms
   cannot refuse what the masking hides. An inductive may hold no string, char literal,
@@ -4058,14 +4058,13 @@ findings:
 
   At the revisions tested then, `tests/test_jev_questions.py` had 58 cases, and Lean
   compiled all 95 texts its reconciler cases built. On fresh clones of main (`73b97ab1`) and
-  of the superposition branch (`4c579527`), the generator gives 338 rows with no unresolved
+  of the superposition branch (`4c579527`), the generator gave 338 rows with no unresolved
   name, byte for byte those of the generator before the `/--/` and notation-token rules, and
-  all 58 cases pass
-  with the two changed files copied in, so the issue's third condition is met. Before the
-  superposition code (`8e9a1879`), the questions are byte for byte those of main's own
-  generator, and the manifest differs only by the two allowlist names. The delivered
-  revision adds behavioral regressions for suffixed Lean identifiers, dedented constructors
-  and multiline comments within import headers; the focused module has 60 test methods, and
-  all 60 pass. Protected files changed: `scripts/audit/jev_questions.py`,
-  `tests/test_jev_questions.py` and this decision entry. No expected value, schema or review
-  record changes; CI does not run the test yet (#157).
+  all 58 cases passed with the two changed files copied in, so the issue's third condition
+  was met. Before the superposition code (`8e9a1879`), the questions were byte for byte
+  those of main's own generator, and the manifest differed only by the two allowlist names.
+  The delivered revision adds cases for suffixed Lean identifiers, `import!` and `def!`
+  among them, dedented constructors and multiline comments within import headers; the
+  module has 60 cases, and all 60 pass. Protected files changed:
+  `scripts/audit/jev_questions.py` and `tests/test_jev_questions.py`. No expected value,
+  schema or review record changes; CI does not run the test yet (#157).
