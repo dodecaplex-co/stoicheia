@@ -257,6 +257,7 @@ CHECKS = [
     ("lake build Audit", ["lake", "build", "Audit"]),
     ("lake build Staging", ["lake", "build", "Staging"]),
     ("lake env lean Certificate/Facts.lean", ["lake", "env", "lean", "Certificate/Facts.lean"]),
+    ("python3 -I tests/test_certificate.py", [PY, "-I", "tests/test_certificate.py"]),
     ("python3 scripts/check_kernel.py --self-test",
      [PY, "scripts/check_kernel.py", "--self-test"]),
     ("python3 scripts/heath.py", [PY, "scripts/heath.py"]),
@@ -1781,8 +1782,8 @@ LAW_GLOBALS = {
             "roots_along", "same_side", "triangle", "unit_toward"}),
         "table": frozenset({"SEEDS"}),
         "generator": frozenset({
-            "gs_adj", "gs_angle", "gs_area_line", "gs_between", "gs_chord", "gs_circ_pts",
-            "gs_cong", "gs_lc", "gs_lines_meet", "gs_lmc_opp", "gs_p4", "gs_p5", "gs_pasch",
+            "gs_angle", "gs_area_line", "gs_between", "gs_chord", "gs_circ_pts",
+            "gs_cong", "gs_lc", "gs_lines_meet", "gs_p4", "gs_p5", "gs_pasch",
             "gs_pasch4", "gs_rays", "gs_sup"}),
         "generator maker": frozenset({"gs_cm", "gs_convex", "gs_ti"}),
     },

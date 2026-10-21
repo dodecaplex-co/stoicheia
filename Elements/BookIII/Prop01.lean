@@ -1,9 +1,11 @@
 import Elements.Figure.Basics
+import Elements.Figure.Circles
 import Elements.BookIII.Squares
 import Elements.BookI.Helpers
 import Elements.BookI.Prop08
 import Elements.BookI.Prop10
 import Elements.BookI.Prop11
+import Elements.BookI.Prop13
 import Elements.BookI.Prop16
 import Elements.BookI.Prop19
 

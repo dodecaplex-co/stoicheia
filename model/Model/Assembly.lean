@@ -13,7 +13,6 @@ public import Model.Euclidean.Circles
 public import Model.Euclidean.Incidence
 public import Model.Euclidean.Lengths
 public import Model.Euclidean.LineCircle
-public import Model.Euclidean.LineSides
 public import Model.Euclidean.Magnitudes
 public import Model.Euclidean.Order
 public import Model.Euclidean.OrderLines
@@ -35,7 +34,7 @@ A theorem of `Model/Euclidean/` named as a field of `Laws` (`Euclidean.circles_m
 field `circles_meet`) proves that law in the plane, and `euclidean_laws` gathers them; Lean
 checks here that each proves the law the generator wrote.
 
-All 87 laws are proved in the plane, so `euclidean_laws` has no hypothesis, and
+All 79 laws are proved in the plane, so `euclidean_laws` has no hypothesis, and
 `model_exists` follows from it.
 -/
 
@@ -55,7 +54,6 @@ theorem euclidean_laws : Laws Euclidean.plane where
   add_comm := Euclidean.add_comm
   add_lt_add_right := Euclidean.add_lt_add_right
   add_zero := Euclidean.add_zero
-  adjacent_eq_of_right := Euclidean.adjacent_eq_of_right
   angle_add_of_inside := Euclidean.angle_add_of_inside
   angle_eq_of_same_rays := Euclidean.angle_eq_of_same_rays
   angle_eq_zero_of_same_ray := Euclidean.angle_eq_zero_of_same_ray
@@ -74,7 +72,6 @@ theorem euclidean_laws : Laws Euclidean.plane where
   between_of_inside_chord := Euclidean.between_of_inside_chord
   between_symm := Euclidean.between_symm
   centre_inside := Euclidean.centre_inside
-  centre_unique := Euclidean.centre_unique
   circle_eq := Euclidean.circle_eq
   circles_meet := Euclidean.circles_meet
   circles_meet_of_on_inside_outside := Euclidean.circles_meet_of_on_inside_outside
@@ -88,11 +85,8 @@ theorem euclidean_laws : Laws Euclidean.plane where
   exists_point_on_line := Euclidean.exists_point_on_line
   exists_point_on_line_off_line := Euclidean.exists_point_on_line_off_line
   exists_point_opposite_side := Euclidean.exists_point_opposite_side
-  exists_point_outside_circle := Euclidean.exists_point_outside_circle
   exists_point_same_side := Euclidean.exists_point_same_side
   inside_not_on := Euclidean.inside_not_on
-  inside_of_angle_add := Euclidean.inside_of_angle_add
-  inside_of_between := Euclidean.inside_of_between
   inside_of_len_lt := Euclidean.inside_of_len_lt
   len_add_of_between := Euclidean.len_add_of_between
   len_lt_of_inside := Euclidean.len_lt_of_inside
@@ -101,7 +95,6 @@ theorem euclidean_laws : Laws Euclidean.plane where
   line_circle_between := Euclidean.line_circle_between
   line_circle_beyond := Euclidean.line_circle_beyond
   line_meets_circle_of_inside := Euclidean.line_meets_circle_of_inside
-  line_meets_circle_of_opposite_sides := Euclidean.line_meets_circle_of_opposite_sides
   line_unique := Euclidean.line_unique
   lines_meet_of_opposite_sides := Euclidean.lines_meet_of_opposite_sides
   lt_irrefl := Euclidean.lt_irrefl
@@ -113,7 +106,6 @@ theorem euclidean_laws : Laws Euclidean.plane where
   not_between_of_between_between := Euclidean.not_between_of_between_between
   not_lt_zero := Euclidean.not_lt_zero
   not_on_line_of_same_side := Euclidean.not_on_line_of_same_side
-  not_same_side_of_circles_meet := Euclidean.not_same_side_of_circles_meet
   on_circle_of_len_eq := Euclidean.on_circle_of_len_eq
   on_line_of_area_eq_zero := Euclidean.on_line_of_area_eq_zero
   on_line_of_between := Euclidean.on_line_of_between
@@ -131,7 +123,6 @@ theorem euclidean_laws : Laws Euclidean.plane where
   superposition := Euclidean.superposition
   triple_incidence1 := Euclidean.triple_incidence1
   triple_incidence2 := Euclidean.triple_incidence2
-  triple_incidence3 := Euclidean.triple_incidence3
 
 /-- **The laws have a model:** the ordinary plane. -/
 theorem model_exists : ∃ S : Signature, Laws S :=
