@@ -279,7 +279,8 @@ HEAD_TIMEOUT = 60         # seconds to wait for GitHub to see the branch's new h
 TAIL = 40                 # lines of a failed step's output to print
 
 # The full local check sequence, exactly as docs/WORKFLOW.md, section 8, and CI's `check`
-# job run it, then the `model` job. Change it with them.
+# job run it, then the `model` job, but for the model job's `results_check.py`, which only
+# CI runs until it joins this list (WORKFLOW, section 8). Change it with them.
 CHECKS = [
     ("lake build", ["lake", "build"]),
     ("lake build Audit", ["lake", "build", "Audit"]),
