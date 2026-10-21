@@ -144,7 +144,7 @@ One table for each passage declared, in the order of the proof.
 |---|---|---|---|
 | `at` | string | yes | The passage's first words, quoted exactly from Heath's proof, enough of them to occur there once. For a run of `--` lines with no Lean beneath it, the run's first words. |
 | `kind` | see below | yes | How the Lean carries the passage. |
-| `helper` | a Lean name | for `helper` | The declaration that does the work: `"Prop1.middle"`. In a carried passage, the proposition's porism or one of its companions, proved on its own: `"Prop16.porism"`. |
+| `helper` | a Lean name | for `helper` | The declaration that does the work: `"Prop1.middle"`. In a carried passage, the proposition's porism or one of its companions, proved on its own, written in one of three ways: `"Prop16.porism"`, `"BookIII.Prop16.porism"` or `"Elements.BookIII.Prop16.porism"`. |
 | `note` | string | unless carried | One or two plain sentences, shown on the page under "How the Lean follows the text". |
 
 - **carried**: the Lean beneath carries out the inference or construction. Declared only
@@ -171,7 +171,9 @@ word for its kind: "Done by `Prop6.less`", "Carried together", "A further case",
 companion proved on its own, "Proved separately, as `Prop16.porism`". The sentence above
 the list names such a step by the kind of theorem that proves it: "where a porism is
 proved as a theorem of its own", or "where a companion is proved as a theorem of its
-own".
+own", or, for several, "where a porism and two companions are proved as theorems of their
+own". It counts theorems, not passages: a companion that carries two passages is one
+companion.
 
 ### `[figure]`
 

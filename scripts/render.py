@@ -34,7 +34,7 @@ comments aside: one of the theorems later propositions use, a lemma for the prop
 own proofs, or a lemma beside the proposition; the Proof row names the companions in the
 order the review record lists them; and the sentence on how to read the listing names a
 step proved as a theorem of its own by that theorem's kind, a porism or a companion, and
-stops on any other (`carried_kind`). On every run, before anything else, the script
+stops on any other (`carried_ref`). On every run, before anything else, the script
 checks all three against the cases of USE_CASES, ORDER_CASES and CARRIED_CASES
 (`use_self_check`), and stops if one is read wrongly; MODERN_FIGURE_CASES
 (`modern_figure_self_check`) checks that a modern figure follows its whole paragraph, or
@@ -1077,7 +1077,7 @@ def clause_map(record):
 # The plain words that lead each note under "How the Lean follows the text", one for each
 # kind of passage in review/SCHEMA.md. A helper's word names it ("Done by `Prop6.less`"),
 # and a porism or a companion proved as its own theorem is "Proved separately, as
-# `Prop16.porism`"; the sentence above the list names it by its kind (`carried_kind`).
+# `Prop16.porism`"; the sentence above the list names it by its kind (`carried_ref`).
 PASSAGE_WORD = {"carried": "Carried", "helper": "Done by a lemma", "grouped": "Carried together",
                 "case": "A further case", "given": "Already given",
                 "different": "Argued another way", "unformalized": "Left in Euclid's words"}
@@ -1133,20 +1133,23 @@ def passage_notes(record, proof_text=""):
     return "\n".join(out)
 
 
-def carried_kind(p, helper):
-    """What a carried passage of the proposition entry p is proved separately as,
-    "porism" or "companion": the kind `heath.parse_ref` reads from the entry of p's
-    `attached` that `helper` names, as `Prop16.porism`, `BookIII.Prop16.porism` or
-    `Elements.BookIII.Prop16.porism`. Any other helper stops the render: a lemma or a
-    proposition that does a step makes a `helper` passage, "Done by" it, and has no entry
-    of its own under p to be proved separately as (review/SCHEMA.md)."""
+def carried_ref(p, helper):
+    """The theorem a carried passage of the proposition entry p is proved separately as:
+    the entry of p's `attached` that `helper` names, as `Prop16.porism`,
+    `BookIII.Prop16.porism` or `Elements.BookIII.Prop16.porism`, taken apart by
+    `heath.parse_ref`, so that its `kind` is "porism" or "companion" and two names for one
+    theorem give one Ref. Any other helper stops the render: a lemma or a proposition that
+    does a step makes a `helper` passage, "Done by" it, and has no entry of its own under p
+    to be proved separately as (review/SCHEMA.md)."""
     for ref in p.get("attached", []):
         r = heath.parse_ref(ref)
         if helper in (f"Prop{r.n}.{r.name}", f"Book{r.book}.Prop{r.n}.{r.name}", r.lean):
-            return r.kind
+            return r
     raise SystemExit(f"{p['ref']}: a carried passage names `{helper}`, which is not its "
-                     "porism or one of its companions in facts.json; a lemma or a proposition "
-                     "that does a step makes a `helper` passage (review/SCHEMA.md)")
+                     "porism or one of its companions in facts.json, in one of the three ways "
+                     "render.py reads such a name: `Prop16.porism`, `BookIII.Prop16.porism` or "
+                     "`Elements.BookIII.Prop16.porism`. A lemma or a proposition that does a "
+                     "step makes a `helper` passage (review/SCHEMA.md)")
 
 
 def how_to_read(p, record, proof_text=""):
@@ -1175,7 +1178,9 @@ def how_to_read(p, record, proof_text=""):
     carried = [q for q in passages if q["kind"] == "carried"]
     if any(not q.get("helper") for q in carried):
         marks.append(PASSAGE_PHRASE["carried"])
-    kinds = [carried_kind(p, q["helper"]) for q in carried if q.get("helper")]
+    # Counted by theorem, not by passage: one companion carrying two passages, or named two
+    # ways, is still one companion.
+    kinds = [r.kind for r in {carried_ref(p, q["helper"]) for q in carried if q.get("helper")}]
     if kinds:
         each = [f"a {k}" if kinds.count(k) == 1 else f"{number_word(kinds.count(k))} {k}s"
                 for k in heath.KINDS if k in kinds]
@@ -1349,8 +1354,9 @@ ORDER_CASES = [   # (the record's `companions`, as written; the order the row na
 ]
 
 # And the sentence on how to read the listing names a step proved as a theorem of its own
-# by that theorem's kind (`carried_kind`), a porism or a companion, and stops on any other
-# helper. CARRIED_ATTACHED is facts.json's `attached` for I.9.
+# by that theorem's kind (`carried_ref`), a porism or a companion, counting each theorem
+# once however many passages it carries, and stops on any other helper. CARRIED_ATTACHED is
+# a made-up `attached` for I.9, in facts.json's form.
 
 CARRIED_ATTACHED = ["I.9 Por.", "I.9 whole", "I.9 part"]
 
@@ -1360,6 +1366,12 @@ CARRIED_CASES = [   # (the helpers of the carried passages; how the sentence mar
     (["Prop9.whole"], "a companion is proved as a theorem of its own"),
     (["Prop9.porism", "BookI.Prop9.whole", "Elements.BookI.Prop9.part"],
      "a porism and two companions are proved as theorems of their own"),
+    (["Prop9.whole", "BookI.Prop9.whole"],         # one companion, named two ways
+     "a companion is proved as a theorem of its own"),
+    (["Prop9.porism", "Prop9.porism"],             # one porism carrying two passages
+     "a porism is proved as a theorem of its own"),
+    (["Prop9.porism", "Prop9.whole", "Prop9.porism"],
+     "a porism and a companion are proved as theorems of their own"),
     (["Prop9.helper"], None),     # a lemma: a `helper` passage, "Done by" it
     (["Prop10"], None),           # another proposition
     (["Prop40.general"], None),   # another proposition's companion
@@ -2041,7 +2053,7 @@ def certificate_intro(facts, records):
     bracketed = [f"{b}.{n}" for b, (count, _) in BOOKS.items() for n in range(1, count + 1)
                  if heath.bracketed(b, n)]
     # What the pages prove a step separately as: a porism, a companion, or either.
-    kinds = {carried_kind(facts[ref], q["helper"]) for ref, r in records.items()
+    kinds = {carried_ref(facts[ref], q["helper"]).kind for ref, r in records.items()
              if r and ref in facts for q in r["passage"]
              if q["kind"] == "carried" and q.get("helper")}
     separately = (" or ".join(f"a {k}" for k in heath.KINDS if k in kinds)
