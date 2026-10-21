@@ -19,9 +19,12 @@ it, put to the script's own patterns and functions:
   wherever a transform moves it;
 * the modern cases: S24 and S25 read a figure of the modern way against its Euclid's
   figure's letters and its paragraph's names, which `modern_names` takes from TeX and
-  from plain words alike, save the letters of English (A's, e.g., the article "a") and
-  what a reader does not see, in a comment or in code; the paragraph selection keeps
-  its source offsets and indentation.
+  from plain words alike, save the letters of English (A's, e.g. however its full stops
+  are spelled and spaced, the p of Heath's page and the letters of a Roman page number,
+  the article "a") and what a reader does not see, in a comment or in code; a letter
+  beside a letter of any script or a mark is in its word; emphasis or an invisible
+  character that would let a letter of one word stand alone is refused; the paragraph
+  selection keeps its source offsets and indentation.
 * the wording cases: render.py names the rules of an overlap that a proof leaves unused
   as "does not use" for one, "neither … nor" for two and "none of" for more, and words
   III.24's application of one segment to another by `placement` only from what its
@@ -44,7 +47,9 @@ it, put to the script's own patterns and functions:
   several figures side by side, or across the cut between them, and reads A and A′ as two
   letters; and it names a line dashed by itself or by its group as a dashed line.
 * the input cases: both complete figure checks refuse elements, attributes, numbers,
-  transforms, keywords and path commands outside main's SVG language before measuring;
+  transforms, keywords and path commands outside main's SVG language before measuring,
+  and an arc that SVG draws as no arc (its ends one point, or a radius of 0), while every
+  choice of an arc's two flags draws;
   cases using CSS, scale transforms, units, exponents or other excluded features require
   their exact refusal, separately from admitted geometry cases. Point labels require an
   effective supported Georgia declaration; effective
@@ -53,6 +58,9 @@ it, put to the script's own patterns and functions:
   are bounded; non-finite geometry and decoder failures report the figure and leave
   subsequent figures checked. Cubic subdivision includes its chord error, and malformed
   lists take linear time;
+* the upright cases: S15 and S20 fail an italic letter planted in a copy of Euclid's figure
+  and of the figure at a glance, one letter or every one, as the figures were drawn until
+  21 October, and D15 lists nothing;
 * the scope cases (#66): which texts of a review record the rules read, and on which
   lines; the docstring render.py shows, found again in its file; S12's reading of a
   `name : type`; S22's reading of letters in backticks, one code span at a time; and the
@@ -77,6 +85,7 @@ from __future__ import annotations
 
 import io
 import json
+import math
 import os
 import runpy
 import subprocess
@@ -268,6 +277,22 @@ NAMES_CASES = [   # (a paragraph, names it must give, names it must not)
      "i.e. two; E.g. three.", {"θ"}, {"a", "s", "e", "g", "i"}),
     (style.MODERN_WAY + " Twice it is 2a, a² is its square, a/2 its half and\na − 1 less.",
      {"a"}, set()),
+    # The letters of e.g. and i.e. with a full stop escaped, or a space after the first,
+    # and the p of Heath's page, are no names; a p before anything but a page's number
+    # is one (#172).
+    (style.MODERN_WAY + r" One, e\.g\. two, i\.e\. three; e. g. four, i. e. five.",
+     set(), {"e", "g", "i"}),
+    (style.MODERN_WAY + " As Heath says (vol. 1, p. 383; vol. 2, pp. 63–64), p\\. 384 and"
+     "\np.\n385.", set(), {"p"}),
+    (style.MODERN_WAY + " Its side is p. Then (vol. 1, p. 383) it is twice q.",
+     {"p", "q"}, set()),
+    # A letter beside a letter of any script or a mark is in its word, whatever the reader
+    # takes it for; spaces after a stop are one space to the reader; and a Roman page
+    # number's letters are no names, nor its p (#172).
+    (style.MODERN_WAY + " The éxponent, the eхponent with a Cyrillic х, déjà vu, "
+     "2πr and aⁿ.", {"π"}, {"e", "d", "j", "r", "a"}),
+    (style.MODERN_WAY + " One, e.  g. two, i.\n  e. three; Heath's preface (vol. 1, p. ix; "
+     "pp. v–vii, p\\. x) and p. ivy.", {"p"}, {"e", "g", "i", "v", "x"}),
 ]
 LEAN_NAME = "`Elements.BookI.prop05_converse`"
 COMMENT_PARAGRAPH = (style.MODERN_WAY + " Put $b$ here <!--\nnotes x and y\n--> "
@@ -543,9 +568,9 @@ def figure_fixture(idea: bool):
         '<rect width="400" height="300" rx="10" fill="#fbf7ee"/>'
         f'<line x1="145" y1="150" x2="165" y2="150" stroke="{ink}" stroke-width="1.6"/>'
         f'<g fill="{ink}">'
-        + letter("A", x=132, y=172, size=size, anchor=anchor)
-        + letter("C", x=cx, y=cy, size=size, anchor=anchor)
-        + letter("E", x=ex, y=ey, size=size, anchor=anchor)
+        + letter("A", x=132, y=172, font_style="normal", size=size, anchor=anchor)
+        + letter("C", x=cx, y=cy, font_style="normal", size=size, anchor=anchor)
+        + letter("E", x=ex, y=ey, font_style="normal", size=size, anchor=anchor)
         + '</g></svg>')
 
 
@@ -1345,7 +1370,17 @@ class Modern(unittest.TestCase):
                     (f"e.{emphasis}g{emphasis}.", "g"),
                     (f"{emphasis}e{emphasis}.g.", "g"),
                     (f"i.{emphasis}e{emphasis}.", "e"),
-                    (f"{emphasis}i{emphasis}.e.", "e")):
+                    (f"{emphasis}i{emphasis}.e.", "e"),
+                    # Emphasis on both sides of the stop or the apostrophe, and a stop
+                    # escaped, as Markdown shows it, a full stop (#172).
+                    (f"{emphasis}e{emphasis}.{emphasis}g{emphasis}.", "e"),
+                    (f"{emphasis}e{emphasis}.{emphasis}g{emphasis}.", "g"),
+                    (f"{emphasis}i{emphasis}.{emphasis}e{emphasis}.", "i"),
+                    (f"{emphasis}A{emphasis}'{emphasis}s{emphasis}", "s"),
+                    (f"{emphasis}A{emphasis}’{emphasis}s{emphasis}", "s"),
+                    (f"{emphasis}e{emphasis}\\.{emphasis}g{emphasis}\\.", "e"),
+                    (f"e\\.{emphasis}g{emphasis}\\.", "g"),
+                    (f"{emphasis}e{emphasis}\\.g\\.", "g")):
                 with self.subTest(word=word):
                     findings = self.check_refused_modern(
                         MODERN_GOOD.replace(">c<", f">{name}<"),
@@ -1355,11 +1390,49 @@ class Modern(unittest.TestCase):
                     self.assertTrue(any(r == "S25" and f"{name} is no name" in m
                                         for r, m in findings), findings)
         for words in ("The name *x*.", "The name _x_.", "The name '*x*'.",
-                      "The name '_x_'."):
+                      "The name '_x_'.", "The name *x*. *Then* it is given."):
             with self.subTest(words=words):
                 self.assertEqual(self.check_refused_modern(
                     MODERN_GOOD.replace(">c<", ">x<"),
                     paragraph=MODERN_PARAGRAPH + " " + words), [])
+
+    def test_modern_invisible_characters_are_refused(self):
+        # A format character (Unicode's Cf) shows nothing, so the reader sees one word,
+        # e.g. or exponent, where the names would find a letter standing alone (#172);
+        # nor do the rest of Unicode's default-ignorable characters, a Hangul filler (a
+        # letter to Unicode), a variation selector or the grapheme joiner (marks to it).
+        for invisible in ("​", "‍", "­", "⁠", "﻿", "ᅟ", "ㅤ", "ﾠ",
+                          "️", "\U000e0100", "͏", "᠋"):
+            for word, name in ((f"e{invisible}.g.", "g"), (f"e{invisible}xponent", "e")):
+                with self.subTest(invisible=repr(invisible), word=word):
+                    findings = self.check_refused_modern(
+                        MODERN_GOOD.replace(">c<", f">{name}<"),
+                        paragraph=MODERN_PARAGRAPH + " Consider the " + word + ".")
+                    self.assertTrue(any(r == "S25" and "invisible character" in m
+                                        and f"U+{ord(invisible):04X}" in m
+                                        for r, m in findings), findings)
+                    self.assertTrue(any(r == "S25" and f"{name} is no name" in m
+                                        for r, m in findings), findings)
+        # In code, which a reader sees as code and the names do not read, it is not refused.
+        self.assertEqual(self.check_refused_modern(
+            paragraph=MODERN_PARAGRAPH + " Code `e​.g.` here."), [])
+
+    def test_modern_arcs_draw_as_arcs(self):
+        # SVG omits an arc whose ends are one point and draws one with a radius of 0 as a
+        # straight line (F.6.2), so the modern figures' language refuses both (#172).
+        for value in ("M 0 0 A 0 1 0 0 0 2 2", "M 0 0 A 1 0 0 0 0 2 2",
+                      "M 0 0 A -0 1 0 0 0 2 2", "M 2 2 A 1 1 0 0 0 2 2",
+                      "M 0 0 L 2 2 A 1 1 0 1 1 2 2",
+                      "M 0 0 A 1 1 0 0 0 2 2 L 3 3 A 1 1 0 0 1 3.0 3"):
+            with self.subTest(path=value):
+                findings = self.check_refused_modern(
+                    MODERN_GOOD + f'<path d="{value}" fill="none"/>')
+                self.assertTrue(any(r == "S24" and " d " in m and "<path>" in m
+                                    for r, m in findings), findings)
+        for value in ("M 0 0 A 1 1 0 1 1 9 0", "M 0 0 L 2 2 A 1 1 0 0 0 0 0 z"):
+            with self.subTest(path=value):
+                self.assertEqual(self.check_refused_modern(
+                    MODERN_GOOD + f'<path d="{value}" fill="none"/>'), [])
 
     def test_modern_nested_svg_is_refused(self):
         for content in ('<line x2="20" stroke="#3b2f2f" stroke-width="1.6"/>',
@@ -2956,6 +3029,67 @@ sys.exit(not result.wasSuccessful())
                     svg_sub(root, "path", {"d": value})
                     self.assert_refused(root, idea, "<path>", "d")
 
+    def test_arcs_that_draw_no_arc(self):
+        """SVG's implementation notes (F.6.2) omit an arc whose ends are one point, and draw
+        one with a radius of 0 as a straight line; S26 refuses both, wherever the path
+        stands when the arc begins (#172)."""
+        for idea in (False, True):
+            for value, why in (
+                    ("M100 100 A10 10 0 0 1 100 100", "draws nothing"),
+                    ("M100 100 A10 10 0 1 0 100.0 100", "draws nothing"),
+                    ("M100 100 L120 100 A10 10 0 0 1 120 100", "draws nothing"),
+                    ("M100 100 H120 V110 A10 10 0 0 1 120 110", "draws nothing"),
+                    ("M100 100 L120 100 Z A10 10 0 0 1 100 100", "draws nothing"),
+                    ("M90 90 100 100 A10 10 0 0 1 100 100", "draws nothing"),
+                    ("M100 100 C110 90 120 90 130 100 A10 10 0 0 1 130 100", "draws nothing"),
+                    ("M100 100 A10 10 0 0 1 120 100 10 10 0 0 1 120 100", "draws nothing"),
+                    ("M100 100 A0 10 0 0 1 100 100", "draws nothing"),
+                    ("M100 100 A0 10 0 0 1 120 100", "straight line"),
+                    ("M100 100 A10 0 0 1 1 120 100", "straight line"),
+                    ("M100 100 A-0 10 0 0 1 120 100", "straight line"),
+                    ("M100 100 L120 100 A0.0 0 0 0 1 140 100", "straight line")):
+                with self.subTest(idea=idea, d=value):
+                    root = figure_fixture(idea)
+                    svg_sub(root, "path", {"d": value})
+                    self.assert_refused(root, idea, "<path>", "d", why)
+            for value in ("M100 100 A10 10 0 0 1 100.5 100", "M100 100 A1 1 0 1 1 120 100",
+                          "M100 100 L120 100 A10 10 0 0 1 100 100",
+                          "M100 100 L120 100 Z A10 10 0 0 1 120 100",
+                          "M90 90 100 100 A10 10 0 0 1 90 90"):
+                with self.subTest(idea=idea, d=value):
+                    root = figure_fixture(idea)
+                    svg_sub(root, "path", {"d": value})
+                    self.assertEqual([f for f in figure_findings(root, idea) if f[0] == "S26"], [])
+
+    def test_arc_flags_always_draw(self):
+        """Why S26 need not refuse a choice of the large-arc and sweep flags: two distinct
+        ends and positive radii, enlarged when they cannot reach the ends (F.6.6), lie on
+        two ellipses, or on one when the radii only just reach; each choice of the flags
+        takes one arc of them, from the one end to the other (F.6.5). On one ellipse both
+        arcs are halves and the large-arc flag changes nothing."""
+        # (the radii, whether they reach the ends with room to spare): 1 is enlarged to
+        # 10, and 10 only just reaches the ends, 20 apart.
+        for rx, ry, ample in ((1, 1, False), (10, 10, False), (30, 5, True), (12, 40, True)):
+            arcs = {}
+            for large in (0, 1):
+                for sweep in (0, 1):
+                    with self.subTest(rx=rx, ry=ry, large=large, sweep=sweep):
+                        points = style.arc_points(100, 100, rx, ry, 0, large, sweep, 120, 100)
+                        self.assertEqual(points[-1], (120, 100))
+                        # The sweep flag takes the side of the chord: in SVG's y, which
+                        # runs down, 1 above it and 0 below.
+                        self.assertEqual({y < 100 for _, y in points[:-1]}, {sweep == 1})
+                        arcs[large, sweep] = points
+            for sweep in (0, 1):
+                with self.subTest(rx=rx, ry=ry, sweep=sweep):
+                    small, large_arc = arcs[0, sweep], arcs[1, sweep]
+                    if ample:
+                        self.assertGreater(len(large_arc), len(small))
+                    else:
+                        self.assertEqual(len(large_arc), len(small))
+                        for p, q in zip(small, large_arc):
+                            self.assertAlmostEqual(math.dist(p, q), 0, places=9)
+
     def test_supported_spellings_and_continuation(self):
         for idea in (False, True):
             root = figure_fixture(idea)
@@ -3173,9 +3307,9 @@ class Clearance(unittest.TestCase):
             # Z supplies a segment, and joins the last segment to the first.
             "M141.339746 105 L140 90 A10 10 0 0 0 150 100 Z",
             "M150 100 C150 100 149.9999 100 150 90 L141.339746 105 Z",
-            # A directionless segment or an omitted arc does not break a join.
+            # A directionless segment does not break a join.
             "M150 90 C150 95 149.9999 100 150 100 L150 100 "
-            "C150 100 150 100 150 100 A10 10 0 0 0 150 100 L141.339746 105",
+            "C150 100 150 100 150 100 L141.339746 105",
         )
         for idea in (False, True):
             for d in paths:
@@ -3203,6 +3337,29 @@ class Clearance(unittest.TestCase):
                             self.assertEqual(found[0][0], "S26")
                             self.assertIn("letter E", found[0][3])
                             self.assertIn("from a path, under 2", found[0][3])
+        # Nor does an omitted arc, whose ends are one point: it is measured as the path
+        # without it, the last case above. The figure entry points refuse it, since SVG
+        # draws nothing for it (#172).
+        omitted = ("M150 90 C150 95 149.9999 100 150 100 L150 100 "
+                   "C150 100 150 100 150 100 A10 10 0 0 0 150 100 L141.339746 105")
+        for join in (None, "miter", "round"):
+            with self.subTest(d=omitted, join=join):
+                linejoin = "" if join is None else f' stroke-linejoin="{join}"'
+                measured = [
+                    list(style.strokes(style.ROOT / "figures" / "case.svg", ET.fromstring(
+                        f'<svg stroke="#3b2f2f" stroke-width="1.6" fill="none"{linejoin}>'
+                        f'<path d="{d}"/></svg>')))
+                    for d in (omitted, paths[-1])]
+                self.assertTrue(measured[0])
+                self.assertEqual(measured[0], measured[1])
+        for idea in (False, True):
+            with self.subTest(idea=idea, d=omitted):
+                root = figure_fixture(idea)
+                svg_sub(root, "path", {"d": omitted, "fill": "none", "stroke-width": "1.6",
+                                       "stroke": "#222222" if idea else "#3b2f2f"})
+                found = figure_findings(root, idea)
+                self.assertTrue(any(f[0] == "S26" and "<path> d" in f[3]
+                                    and "draws nothing" in f[3] for f in found), found)
 
     def test_curve_subdivisions_have_no_joins(self):
         """A single curve has no joins at its sampled chords, nor across a moveto."""
@@ -3641,7 +3798,7 @@ class Clearance(unittest.TestCase):
                         curve.append(svg_element(markup))
                         e = next(el for el in root.iter()
                                  if style.tag(el) == "text" and style.text_of(el) == "E")
-                        e.attrib.update(x="268.13", y=("47.38" if idea else "48.93")
+                        e.attrib.update(x="268.13", y=("47.49" if idea else "49.12")
                                         if near else "47")
                         found = figure_findings(root, idea)
                         if shape.startswith("transformed") or shape == "relative path":
@@ -3836,6 +3993,44 @@ class Clearance(unittest.TestCase):
 
     test_twice_cases.__doc__ = (f"S26 reads {len(TWICE_CASES)} figures drawing a letter "
                                 "once or more rightly")
+
+
+class Upright(unittest.TestCase):
+    """The upright cases: an italic letter planted in a copy of each of I.1's figures."""
+
+    def test_italic_letter_fails(self):
+        """S15 and S20 fail an italic letter, one or every one, and D15 lists nothing."""
+        folder = style.ROOT / "figures" / "I"
+        euclid = (folder / "01.svg").read_text(encoding="utf-8")
+        idea = (folder / "01-idea.svg").read_text(encoding="utf-8")
+        plants = (   # (where font-style="italic" goes, the letters it sets italic)
+            ("<text ", "A"),                    # on the first letter alone
+            ("<svg ", "A, B, C, D, E"),         # on the root, so every letter inherits it
+        )
+        for name, rule in (("01.svg", "S15"), ("01-idea.svg", "S20")):
+            for at, letters in ((None, None),) + plants:
+                with self.subTest(figure=name, at=at), \
+                        tempfile.TemporaryDirectory() as tmp, ExitStack() as stack:
+                    root = Path(tmp)
+                    copies = root / "figures" / "I"
+                    copies.mkdir(parents=True)
+                    for copy, raw in (("01.svg", euclid), ("01-idea.svg", idea)):
+                        if copy == name and at is not None:
+                            raw = raw.replace(at, at + 'font-style="italic" ', 1)
+                        (copies / copy).write_text(raw, encoding="utf-8")
+                    stack.enter_context(patch.object(style, "ROOT", root))
+                    stack.enter_context(patch.object(style, "books_with_pages",
+                                                     return_value=["I"]))
+                    stack.enter_context(patch.object(style, "failures", []))
+                    reports = stack.enter_context(patch.object(style, "reports",
+                                                               defaultdict(list)))
+                    stack.enter_context(patch.object(style, "italic_figures",
+                                                     defaultdict(lambda: defaultdict(list))))
+                    style.check_figures(True)
+                    self.assertEqual(style.failures, [] if at is None else [
+                        (rule, f"figures/I/{name}", 0, f"letter(s) {letters} italic: Heath's "
+                         "letters are upright (STYLE, section 4)")])
+                    self.assertNotIn("D15", reports)
 
 
 class Scopes(unittest.TestCase):

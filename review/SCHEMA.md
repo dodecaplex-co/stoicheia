@@ -144,11 +144,14 @@ One table for each passage declared, in the order of the proof.
 |---|---|---|---|
 | `at` | string | yes | The passage's first words, quoted exactly from Heath's proof, enough of them to occur there once. For a run of `--` lines with no Lean beneath it, the run's first words. |
 | `kind` | see below | yes | How the Lean carries the passage. |
-| `helper` | a Lean name | for `helper` | The declaration that does the work: `"Prop1.middle"`, or `"Prop16.porism"` for a porism proved on its own. |
+| `helper` | a Lean name | for `helper` | The declaration that does the work: `"Prop1.middle"`. In a carried passage, the proposition's porism or one of its companions, proved on its own, written in one of three ways: `"Prop16.porism"`, `"BookIII.Prop16.porism"` or `"Elements.BookIII.Prop16.porism"`. |
 | `note` | string | unless carried | One or two plain sentences, shown on the page under "How the Lean follows the text". |
 
 - **carried**: the Lean beneath carries out the inference or construction. Declared only
-  where that needs saying, as for a porism proved as its own theorem.
+  where that needs saying, as for a step proved as its own theorem, which the passage
+  names as its `helper`: the proposition's porism, or one of its companions. Nothing else
+  is carried this way: a lemma or another proposition that does a step makes a `helper`
+  passage.
 - **helper**: a lemma supplies a step Euclid takes for granted; the note says which step.
 - **grouped**: several sentences carried by one argument, or a "similarly" by one lemma.
 - **case**: a case Euclid's figure leaves aside, or leaves to the reader, which the Lean
@@ -164,8 +167,13 @@ One table for each passage declared, in the order of the proof.
 
 The page lists the passages under "How the Lean follows the text", each led by a plain
 word for its kind: "Done by `Prop6.less`", "Carried together", "A further case",
-"Already given", "Argued another way", "Left in Euclid's words", or, for a porism,
-"Proved separately, as `Prop16.porism`".
+"Already given", "Argued another way", "Left in Euclid's words", or, for a porism or a
+companion proved on its own, "Proved separately, as `Prop16.porism`". The sentence above
+the list names such a step by the kind of theorem that proves it: "where a porism is
+proved as a theorem of its own", or "where a companion is proved as a theorem of its
+own", or, for several, "where a porism and two companions are proved as theorems of their
+own". It counts theorems, not passages: a companion that carries two passages is one
+companion.
 
 ### `[figure]`
 
@@ -227,6 +235,9 @@ require_stamp=False)` reads a record without them.
 `scripts/check_fidelity.py` adds what needs facts.json and the Lean files: that every
 proposition has a record, that the stamps are current (if not, "statement changed since
 reviewed"), and that every run of `--` lines with no Lean beneath it is declared.
+`scripts/render.py` reads a carried passage's `helper` as the porism or a companion
+facts.json attaches to the proposition, and stops, naming the proposition and the helper,
+on any other.
 
 `scripts/check_style.py` reads as "Review notes" the statement's `note`, `short` and
 `hypotheses`, the route, representation, overlap and passage notes, the figure's `case`
