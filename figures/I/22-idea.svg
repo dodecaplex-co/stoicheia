@@ -12,7 +12,7 @@
   <circle cx="131.0" cy="150.0" r="4.5" fill="#222222"/>
   <circle cx="261.0" cy="150.0" r="4.5" fill="#222222"/>
   <!-- Heath's letters -->
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="25" y="155.6">D</text><text x="131" y="172.6">F</text><text x="261" y="172.6">G</text><text x="375" y="155.6">H</text><text x="190.1" y="65.6">K</text><text x="190.1" y="245.6">L</text>
   </g>
 </svg>

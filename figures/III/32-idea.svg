@@ -15,7 +15,7 @@
   <polyline points="270.2,75.8 264.8,86.5 275.4,91.9" fill="none" stroke="#222222" stroke-width="1.6"/>
   <line x1="35.0" y1="240.0" x2="365.0" y2="240.0" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
   <circle cx="200.0" cy="240.0" r="4.5" fill="#222222"/>
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="200.0" y="28.0">A</text>
     <text x="200.0" y="261.9">B</text>
     <text x="302.5" y="197.1">C</text>
