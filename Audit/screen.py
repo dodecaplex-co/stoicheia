@@ -19,8 +19,8 @@ The rules `grind` refuses. Given a rule in which it finds nothing to match, `gri
 refuses the whole list, and the try fails with no search at all. So a pass before the
 attempts gives `grind` each rule alone, in each of the two ways, and each try leaves out
 the rules refused in its way; a try left with none is not made. Refused both ways are the
-eleven rules that only say that a point, a straight line or a circle exists (Postulates 1
-to 3 and the eight `exists_point` rules); refused forward as well are fourteen with no
+twelve rules that only say that a point, a straight line or a circle exists (Postulates 1
+to 3, the eight `exists_point` rules and `exists_centre`); refused forward as well are fourteen with no
 hypothesis `grind` can start from (`len_symm`, `add_comm` and the like), plus the restricted
 superposition rule, whose conclusion is the structure `Superposition.Rule`. Such a rule gives
 `grind` nothing to work with in any case (see below); but while it stayed in, as in the
