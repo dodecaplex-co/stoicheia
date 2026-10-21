@@ -91,6 +91,16 @@ one commit and runs safe_push.py against that origin:
   entry naming them, a protected path is named only whole (a line naming
   tests/model/lock.sha256 names no model/lock.sha256), and those
   paths stay what the checks judge, so a check change is still kept apart from them;
+- the count markers of T1 (#177): a new word in the lock, with Certificate/FIELDS.md's
+  count of the words moved with it, lands as content, origin/main's failure noted and the
+  commit's own pass holding the count to the lock; while that page changed beyond the
+  values between its count markers (a line, a byte beside a marker, a marker added,
+  removed or renamed, the file deleted or its mode changed) is a check change, kept apart;
+  so is prose between two markers, the markers swapped, a page added, a page either side
+  cannot read, a symbolic link, or origin/main's reader missing or not loading; a count
+  moved to a value the lock does not give is refused by the commit's own
+  check_fidelity.py; a count moved in scripts/, or in code under tests/, is never a pinned
+  value; and the markers are read by origin/main's reader, never the commit's;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -3488,6 +3498,8 @@ class ProtectedPaths(Edge):
                        if (x["ref"], x["field"]) == (ref, "axioms") and "count" in x)
             self.assertEqual(pin["count"]["prefix"], "Tacit.")
             pin["count"]["is"] -= 1
+            if "equals" in pin:
+                pin["equals"].remove("Tacit.area_swap")
         changes = {lean: new_lean, record: stamped,
                    "facts.json": json.dumps(facts, indent=2, ensure_ascii=False) + "\n",
                    expect: json.dumps(expectations, indent=2, ensure_ascii=False) + "\n"}
@@ -3628,6 +3640,216 @@ class ProtectedPaths(Edge):
                                                "python3 scripts/check_fidelity.py")
                 self.assertFalse(refused, out)
                 self.assertIn("pinned values", out)
+
+    # The count markers of T1 (#177): Certificate/FIELDS.md gives the lock's count of its
+    # words between count markers, which render.py fills and check_fidelity.py checks.
+    FIELDS = "Certificate/FIELDS.md"
+    WORD_COUNT = re.compile(r"(<!-- count:vocabulary -->)([0-9]+)(<!-- /count -->)")
+
+    def word_added(self) -> dict:
+        """A new word in the vocabulary, as a change to the library leaves it, Lean aside:
+        facts.json with the word, and the lock written from it by `check_fidelity.py
+        --write-lock`."""
+        facts = json.loads(self.text("facts.json"))
+        self.assertNotIn("PlantedWord", facts["vocabulary"])
+        facts["vocabulary"]["PlantedWord"] = "def : Prop := True"
+        changes = {"facts.json": json.dumps(facts, indent=2, ensure_ascii=False) + "\n"}
+        (WORK / "facts.json").write_text(changes["facts.json"])
+        r = subprocess.run([sys.executable, "scripts/check_fidelity.py", "--write-lock"],
+                           cwd=WORK, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        changes[self.LOCK] = self.text(self.LOCK)
+        self.assertIn('"PlantedWord" = "def : Prop := True"', changes[self.LOCK])
+        return changes
+
+    def word_count(self, text: str) -> int:
+        (match,) = self.WORD_COUNT.finditer(text)
+        return int(match[2])
+
+    def test_count_values_move_with_their_content(self):
+        # The content branch of #75 could land in no order: a new word in the lock moves
+        # FIELDS.md's count of the words, and origin/main's checks fail on the lock. The
+        # count is a pinned value: it changes with the content, origin/main's failure is
+        # noted, and the commit's own pass holds the count to the lock.
+        changes = self.word_added()
+        changes.update(self.decision(f"A word joins `{self.LOCK}`, and `{self.FIELDS}` "
+                                     "counts it."))
+        sha = self.regenerated_commit("A new word, with its count", changes)
+        self.assertEqual(self.word_count(git(WORK, "show", f"{sha}:{self.FIELDS}")),
+                         self.word_count(git(WORK, "show", f"{BASE}:{self.FIELDS}")) + 1)
+        self.assertNotEqual(safe_push.judged_files(WORK, BASE, sha), [])
+        r = self.safe_push("--dry-run")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.guard(out, "review records (origin/main's checks)"), "note", out)
+        self.assertIn("PlantedWord: a word of the statements", out)
+        self.assertEqual(self.guard(out, "review records (the commit's checks)"), "ok", out)
+        self.assertEqual(self.guard(out, "pinned values"), "note", out)
+        note = out[out.index("pinned values"):]
+        for path in (self.LOCK, self.FIELDS):
+            self.assertIn(path, note)
+        self.assertIsNone(self.guard(out, "check change kept apart"), out)
+
+    def test_count_moved_wrongly_refused_by_its_own_pass(self):
+        # The count pinned is the count check_fidelity.py computes: moved to any other
+        # value, the commit's own pass refuses it, pinned values or not.
+        changes = self.word_added()
+        changes.update(self.decision(f"A word joins `{self.LOCK}`, and `{self.FIELDS}` "
+                                     "miscounts it."))
+        self.regenerated_commit("A new word, with its count", changes)
+        moved = self.text(self.FIELDS)
+        wrong = self.WORD_COUNT.sub(lambda m: f"{m[1]}{int(m[2]) + 1}{m[3]}", moved)
+        self.commit("The count moved too far", {self.FIELDS: wrong})
+        out = self.assertRefused(self.safe_push("--dry-run"),
+                                 "review records (the commit's checks)")
+        self.assertEqual(self.guard(out, "review records (origin/main's checks)"), "note", out)
+        self.assertEqual(self.guard(out, "review records (the commit's checks)"), "FAIL", out)
+        self.assertIn("count 'vocabulary': stated", out)
+        self.assertEqual(self.guard(out, "pinned values"), "note", out)
+
+    def fields_changed(self, change, mode: int | None = None) -> str:
+        """A commit from origin/main of a new word in the lock, a line of the foundations,
+        which the checks judge, and FIELDS.md with its count of the words moved, then
+        changed by `change`, given its text (None deletes the file); `mode`, if given, is
+        the file's new mode."""
+        git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+        write = self.word_added()
+        text = self.text(self.FIELDS)
+        moved = self.WORD_COUNT.sub(lambda m: f"{m[1]}{int(m[2]) + 1}{m[3]}", text)
+        self.assertEqual(self.word_count(moved), self.word_count(text) + 1)
+        result = change(moved)
+        write[self.METRIC] = self.text(self.METRIC) + "\n-- A line for the test.\n"
+        if result is not None:
+            write[self.FIELDS] = result
+        if mode is not None:
+            (WORK / self.FIELDS).write_text(result)
+            os.chmod(WORK / self.FIELDS, mode)
+        return self.commit("A new word, its count and a Lean line", write,
+                           remove=[self.FIELDS] if result is None else ())
+
+    def test_only_count_values_moved_are_pinned_values(self):
+        # FIELDS.md is a check input: its change is a pinned value while nothing but the
+        # values between its count markers moves. Anything else is a check change.
+        def renamed(text):
+            self.assertEqual(text.count("<!-- count:vocabulary -->"), 1)
+            return text.replace("<!-- count:vocabulary -->", "<!-- count:axioms -->")
+        weakened = {
+            "a line added": lambda t: t + "\nA line for the test.\n",
+            "a byte beside the marker changed": lambda t: t.replace(
+                "<!-- count:vocabulary -->", " <!-- count:vocabulary -->", 1),
+            "the marker renamed": renamed,
+            "a marker added": lambda t: t + "\nAnd: <!-- count:axioms -->79<!-- /count -->.\n",
+            "the marker removed": lambda t: self.WORD_COUNT.sub(lambda m: m[2], t),
+            "the file deleted": lambda t: None,
+        }
+        beyond = f"it changes {self.FIELDS} beyond the values between count markers"
+        for name, change in weakened.items():
+            with self.subTest(name):
+                refused, out = self.kept_apart(self.fields_changed(change),
+                                               "python3 scripts/check_fidelity.py")
+                self.assertTrue(refused, out)
+                self.assertIn(beyond, out)
+                self.assertNotIn("pinned values", out)
+        with self.subTest("the file made executable"):
+            refused, out = self.kept_apart(self.fields_changed(lambda t: t, mode=0o755),
+                                           "python3 scripts/check_fidelity.py")
+            self.assertTrue(refused, out)
+            self.assertIn(beyond, out)
+            self.assertNotIn("pinned values", out)
+        with self.subTest("the count moved"):
+            refused, out = self.kept_apart(self.fields_changed(lambda t: t),
+                                           "python3 scripts/check_fidelity.py")
+            self.assertFalse(refused, out)
+            self.assertIn("pinned values", out)
+            self.assertIn(self.FIELDS, out[out.index("pinned values"):])
+
+    def test_counts_in_check_code_are_never_pinned_values(self):
+        # The same count moved, and nothing else, is a pinned value in the Markdown of the
+        # check inputs that are not code, and never in scripts/ or in code under tests/.
+        line = "The vocabulary: <!-- count:vocabulary -->{}<!-- /count --> words.\n"
+        schema = self.text("review/SCHEMA.md")
+        pages = {"Certificate/counted.md": "", "tests/counted.md": "",
+                 "review/SCHEMA.md": schema, "scripts/counted.md": "",
+                 "scripts/counted.py": "# ", "tests/counted.py": "# ",
+                 "review/counted.md": ""}
+        before = self.commit("Pages with a count", {p: t + line.format(91)
+                                                    for p, t in pages.items()})
+        after = self.commit("Their counts moved", {p: t + line.format(92)
+                                                   for p, t in pages.items()})
+        for path in pages:
+            with self.subTest(path):
+                self.assertEqual(safe_push.pinned(WORK, before, after, path),
+                                 safe_push.under(path, ("Certificate/", "tests/counted.md",
+                                                        "review/SCHEMA.md")))
+        self.assertTrue(all(safe_push.under(p, safe_push.CHECK_INPUTS)
+                            and not safe_push.under(p, ("scripts/",))
+                            for p in safe_push.COUNTED_PROSE))
+        # And the reader is origin/main's: the commit's own, made to read a whole page as
+        # a count's value, is not the one read.
+        reader = safe_push.COUNT_READER
+        loose = self.replaced(reader, "def markers(text, path):\n",
+                              "def markers(text, path):\n    return [Marker('vocabulary', "
+                              "0, 0, len(text), len(text))]\n\n\ndef _markers(text, path):\n")
+        sha = self.commit("A loose reader, and FIELDS.md rewritten", {
+            reader: loose, self.FIELDS: "A page for the test.\n"})
+        self.assertFalse(safe_push.pinned(WORK, BASE, sha, self.FIELDS))
+        # Had origin/main held that reader, the page rewritten would have been one value.
+        again = self.commit("FIELDS.md rewritten again", {self.FIELDS: "Another page.\n"})
+        self.assertTrue(safe_push.pinned(WORK, sha, again, self.FIELDS))
+
+    def test_counts_between_two_markers_and_pages_added(self):
+        # Every byte outside the values stands, between two markers as around them, and
+        # in their order; and a page added with a count is a check change.
+        page = "Certificate/counted.md"
+        line = ("The lock: <!-- count:vocabulary -->{}<!-- /count --> words and "
+                "<!-- count:axioms -->{}<!-- /count --> axioms.\n")
+        before = self.commit("A page with two counts", {page: line.format(91, 79)})
+        self.assertFalse(safe_push.pinned(WORK, BASE, before, page))
+        after = self.commit("Both counts moved", {page: line.format(92, 80)})
+        self.assertTrue(safe_push.pinned(WORK, before, after, page))
+        between = self.commit("A word between them", {
+            page: line.format(92, 80).replace(" words and ", " words or ")})
+        self.assertFalse(safe_push.pinned(WORK, before, between, page))
+        swapped = self.commit("The markers swapped", {page: line.format(91, 79).replace(
+            "count:vocabulary", "count:SWAP").replace("count:axioms", "count:vocabulary")
+            .replace("count:SWAP", "count:axioms")})
+        self.assertFalse(safe_push.pinned(WORK, before, swapped, page))
+
+    def test_counts_unreadable_are_no_pinned_values(self):
+        # A page either side cannot read, or a reader of origin/main's that does not load,
+        # pins nothing: refused, never a crash.
+        page = "Certificate/counted.md"
+        line = "The vocabulary: <!-- count:vocabulary -->{}<!-- /count --> words.\n"
+        before = self.commit("A page with a count", {page: line.format(91)})
+        unreadable = {
+            "a marker unclosed": line.format(92).replace("<!-- /count -->", ""),
+            "not UTF-8": line.format(92).encode() + b"\xff\n",
+        }
+        for name, text in unreadable.items():
+            with self.subTest(name):
+                git(WORK, "checkout", "--quiet", "--force", "--detach", before)
+                sha = self.commit(name, {page: text})
+                self.assertFalse(safe_push.pinned(WORK, before, sha, page))
+        reader = safe_push.COUNT_READER
+        for name, write, remove in (
+                ("the reader not loading", {reader: "raise ImportError('for the test')\n"}, ()),
+                ("the reader missing", {}, (reader,))):
+            with self.subTest(name):
+                git(WORK, "checkout", "--quiet", "--force", "--detach", before)
+                base = self.commit(name, write, remove=remove)
+                sha = self.commit("Its count moved", {page: line.format(92)})
+                self.assertFalse(safe_push.pinned(WORK, base, sha, page))
+        with self.subTest("a symbolic link"):
+            git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+            link = WORK / "Certificate" / "linked.md"
+            link.symlink_to(line.format(91).strip())
+            git(WORK, "add", "--", "Certificate/linked.md")
+            first = self.commit("A link with a count")
+            link.unlink()
+            link.symlink_to(line.format(92).strip())
+            git(WORK, "add", "--", "Certificate/linked.md")
+            second = self.commit("Its count moved")
+            self.assertFalse(safe_push.pinned(WORK, first, second, "Certificate/linked.md"))
 
     # The model's laws (issue #40): an axiom moves with its law, in one pull request.
     LOCK, HASH = "Certificate/axioms.lock", "tests/model/lock.sha256"
