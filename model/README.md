@@ -748,7 +748,10 @@ compiled module, so a new module is never missed. It compares the list with the 
 leanchecker reports replaying in the first replay: a source with no compiled file, a module
 compiled outside the two libraries (from a new root or a new library in `lakefile.toml`), a
 build not up to date with its sources, and a compiled module whose source is gone each fail
-it. Only `Check/Write.lean` is not replayed, by name, since `lake build` never compiles it.
+it. For the freshness check, every compiled source is an explicit `lake build --no-build`
+target, including a module its library root does not import: an old compiled file cannot
+hide a later edit to that source. Only `Check/Write.lean` is not replayed, by name, since
+`lake build` never compiles it.
 And what is replayed is the package's own compiled files, not a copy of them: each module
 root lies in one folder of Lean's search path, since Lean loads a module from the first
 folder that holds its root. So before either replay the script reads the search path that
@@ -774,10 +777,15 @@ replay from nothing must fail on it, naming the declaration. A last plant, in a 
 file, comes after a copy of `Check`, compiled without it, is put in the build folder of
 such a required package, earlier on the search path: both replays would replay the copy and
 pass it, so the check must fail before them, naming `Check` and both folders. A control, a
-source never compiled and a compiled module without its source are tested the same way. We
-thank Kim Morrison and Sebastian Ullrich warmly for leanchecker, which began as Kim
-Morrison's [lean4checker](https://github.com/leanprover/lean4checker) and now ships with
-Lean.
+source never compiled and a compiled module without its source are tested the same way. A
+second control compiles a module that its root does not import; an edit to the same source
+without another build must then fail, naming the module. Every command runs in a process
+group of its own. On interruption or termination the script stops and reaps the group
+before its temporary directory is removed, as it does when the replay from nothing reaches
+its time limit; the self-test checks both an interrupted untimed command and a timeout with
+a descendant. We thank Kim Morrison and Sebastian Ullrich warmly for leanchecker, which
+began as Kim Morrison's [lean4checker](https://github.com/leanprover/lean4checker) and now
+ships with Lean.
 
 On the machine that built this package, from a fresh clone, `lake exe cache get` took about
 65 seconds (cloning the pinned Mathlib and its dependencies, downloading 9,031 files, 452 MB,
