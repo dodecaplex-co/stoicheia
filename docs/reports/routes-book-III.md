@@ -698,8 +698,36 @@ not built from changed Lean. How far the audit pins shrink is inferred, for they
 
 ## Checks
 
-**The Lean, at 86c5748d.** The seven files were built (`lake build Staging`, which imports
-all seven), with no warning from any of them, and every theorem they declare, other than
+**Fresh validation, at a7724676.** This is the pipeline-owned revision that names the
+general replacement `Elements.BookIII.Staging.Prop20` and changes its consumers. The
+focused commands were:
+
+```sh
+export PATH=$HOME/.elan/bin:$PATH
+lake build Staging.Routes.Prop08 Staging.Routes.Prop20 Staging.Routes.Prop21 \
+  Staging.Routes.Prop26 Staging.Routes.Prop27 Staging.Routes.Touching \
+  Staging.Routes.AngleOfContact Elements.BookIII.Prop21 Elements.BookIII.Prop26 \
+  Elements.BookIII.Prop27
+lake env lean RoutesReviewCheck.lean
+```
+
+The build completed successfully (102 jobs). It repeated the two existing unused-variable
+warnings in `Elements/Figure/Circles.lean`, and gave no warning from a Routes module. The
+second command used a temporary scratch module, deleted after the run. Lean closed by `rfl`
+the five type equalities for III.8, III.20's special case, III.21, III.26 and III.27 against
+their declarations in `Elements/`. The module then applied `Lean.collectAxioms` to all 38
+public theorems in the seven files, rejecting `sorryAx`, an axiom outside
+`Elements/Foundations/` other than `propext`, `Classical.choice` and `Quot.sound`, and
+Circle 2 or Circle 3. A proof-term dependency walk also rejected a proposition of Book III
+later than III.18 beneath any of the seven angle-of-contact theorems. It reported:
+
+```text
+routes_check: 38 theorems, 5 type equalities, 7 contact cutoffs, 0 findings
+```
+
+**Earlier Routes validation, at 86c5748d.** The seven files were built with `lake build
+Staging`, which imports all seven, with no warning from any of them. Every theorem they
+declare, other than
 the private steps the others use, was put to Lean's collectAxioms. The check looks for
 `sorryAx`, for an axiom declared outside `Elements/Foundations/` other than Lean's own three
 (`propext`, `Classical.choice`, `Quot.sound`), and for Circle 3, which Circle 2 now rests
@@ -719,9 +747,11 @@ closed by `rfl`); the file for III.8 carries that check itself. And it checked t
 beneath the seven theorems for the angle of contact, statement or proof, is a proposition of
 Book III later than III.18.
 
-**The certificate, at 9f8c8adb.** `lake build` and `lake env lean Certificate/Facts.lean`
-wrote a `facts.json` identical to the one committed, which the figures of #131 read; the
-walk behind the computed figures agrees with it on all 137 entries.
+**The historical certificate measurement, at 9f8c8adb.** `lake build` and `lake env lean
+Certificate/Facts.lean` wrote a `facts.json` identical to the one committed, which the
+figures of #131 read; the walk behind the computed figures agrees with it on all 137
+entries. This measurement supplies #131's baseline; it is separate from the fresh
+validation of the delivered Routes Lean above.
 
 **Who read what.** Independent readers, who wrote none of it, read the port at 4a6d9a49,
 against Heath's text where a file has his sentences and against train C6c's tree: one read
