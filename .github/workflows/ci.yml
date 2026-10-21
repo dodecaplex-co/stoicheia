@@ -163,7 +163,8 @@ jobs:
       - name: Check the model's compiled proofs again, by Lean's kernel, apart from the build
         # leanchecker replays every declaration of every compiled module of Model and Check
         # into the environment of the module's imports, which it loads, Mathlib's among them,
-        # without replaying (model/README.md, "The CI job"). --self-test runs first and needs
+        # without replaying; then it replays Check's whole environment, which has no Mathlib,
+        # from nothing (model/README.md, "The CI job"). --self-test runs first and needs
         # no Mathlib: lake build must accept a theorem of False added without the kernel's
         # check, and the replay must reject it, naming it.
         run: |

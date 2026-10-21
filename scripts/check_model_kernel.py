@@ -15,26 +15,36 @@ with one; it is asked which modules it replayed, and the check fails unless they
 exactly the modules listed, so a compiled module whose source is gone fails it too. A
 rejection names the module and the declaration that leanchecker names.
 
-leanchecker runs as `check_kernel.py` runs it for `Elements`, but without `--fresh`: each
-module's own declarations are replayed into the environment of its imports, and that
-environment is loaded from the compiled files, not replayed. So the declarations of Mathlib
-and of the packages it requires are not checked here again. That is left to Mathlib's own
-checks: a daily job (`.github/workflows/daily.yml` in Mathlib) replays Mathlib and
-Batteries from nothing with leanchecker, and checks Mathlib with nanoda, on Mathlib's master
-branch as it stands each day, not on the release this package pins. The library's
-declarations that `Check` imports, and Lean's core library beneath them (`Init`), are
-replayed from nothing by `check_kernel.py`, in CI's `check` job, from that job's own build
-of the same sources. The rest of Lean's own library that the model loads (`Std`, `Lean` and
-a few of `Lake`'s modules, through Mathlib and through `Check/Generator.lean`'s
-`import Lean`) is loaded here, not replayed. Mathlib's daily job replays the part of it
-that Mathlib imports, within Mathlib's environment and on Mathlib's toolchain rather than
-the one pinned here. At the pinned release that part holds all that `Model` loads, and all
-of `Std`, but only 792 of the 1,227 `Lean` modules that `Check` loads: the other 435 lie
-outside Mathlib's environment, and no check here replays them. As in `check_kernel.py`, it
-is the same kernel that `lake build` runs, so this catches a declaration that reached a
-compiled file without the kernel's check, not a fault in the kernel; and it replays any
-axiom it meets, so which axioms the proofs rest on is `model/Model/Audit.lean`'s check, not
-this one's.
+leanchecker runs first as `check_kernel.py` runs it for `Elements`, but without `--fresh`:
+each module's own declarations are replayed into the environment of its imports, and that
+environment is loaded from the compiled files, not replayed. Then it runs with `--fresh` on
+`Check`, which never imports Mathlib (`model/lakefile.toml`), and replays every declaration
+of `Check`'s whole environment from nothing, into an empty one: Lean's own library as
+`Check` loads it (`Init`, `Std` and `Lean`, through `Check/Generator.lean`'s
+`import Lean`), the library's modules that `Check` imports, the plain-Lean part of `Model`,
+and `Check`. So `Model`'s modules over Mathlib are replayed once, into an environment
+loaded with Mathlib's, and `Check`, with all it loads, is replayed from nothing. The first
+replay is kept for `Check` as well: it accounts for every compiled module by name, so a
+module compiled but not imported by `Check.lean`, which `--fresh Check` would never load,
+is replayed all the same, and a rejection there names its module; the replay from nothing
+names only the declaration.
+
+What neither replays: the declarations of Mathlib and of the packages it requires. They are
+left to Mathlib's own checks: a daily job (`.github/workflows/daily.yml` in Mathlib) replays
+Mathlib and Batteries from nothing with leanchecker, and checks Mathlib with nanoda, on
+Mathlib's master branch as it stands each day, not on the release this package pins. Of
+Lean's own library, everything that `Check` loads is replayed here from nothing, on the
+pinned toolchain, the 1,227 `Lean` modules among it, 435 of which lie outside Mathlib's
+environment. It holds all of Lean's library that `Model` loads but five of `Lake`'s
+modules, which `Model` loads through Mathlib (`Lake.Build.Trace`, `Lake.Config.Glob`,
+`Lake.Util.Date`, `Lake.Util.String`, `Lake.Util.Version`): those lie within Mathlib's
+environment, which Mathlib's daily job replays, on Mathlib's toolchain rather than the one
+pinned here. Lean's core library (`Init`) and the library's declarations that `Check`
+imports are replayed from nothing by `check_kernel.py` too, in CI's `check` job, from that
+job's own build. As in `check_kernel.py`, it is the same kernel that `lake build` runs, so
+this catches a declaration that reached a compiled file without the kernel's check, not a
+fault in the kernel; and it replays any axiom it meets, so which axioms the proofs rest on
+is `model/Model/Audit.lean`'s check, not this one's.
 
 One source is not replayed, by name (NOT_COMPILED): `model/Check/Write.lean` writes the
 generated files whenever Lean elaborates it, so `lake build` never compiles it, and it
@@ -60,14 +70,20 @@ compiled file comes in three parts. `lake build` accepts both, and the check mus
 each, naming its module and its declaration. Two more plants lie outside the libraries'
 names, where leanchecker, given the two roots, would never look: one in a second root of
 `Model` (`roots = ["Model", "Helper"]`), one in a third library that `Check` imports. On
-each, the check must fail at its walk of the build folder, naming the module. A source the
-build never compiled, and a compiled module whose source is gone, must each fail too,
-naming the module. Exits 1 on any failure. Standard library only.
+each, the check must fail at its walk of the build folder, naming the module. A last plant
+lies in a package of its own that `Check` requires and imports, as the model's `Check`
+requires the edition: the walk and the first replay never look there, and pass it, and the
+replay from nothing must fail on it, naming the declaration. A source the build never
+compiled, and a compiled module whose source is gone, must each fail too, naming the module.
+Exits 1 on any failure. Standard library only.
 
-leanchecker replays its modules in parallel, and each loads its imports' environment afresh,
-Mathlib's for each module that imports it: on a machine with sixteen threads one run reached
-a 49 GB footprint. So it runs on two threads (LEAN_NUM_THREADS, unless that is set already),
-which peaked near 2.6 GB and took about a minute for the whole model.
+The first replay runs its modules in parallel, and each loads its imports' environment
+afresh, Mathlib's for each module that imports it: on a machine with sixteen threads one run
+reached a 49 GB footprint. So it runs on two threads (LEAN_NUM_THREADS, unless that is set
+already), which peaked near 2.6 GB and took about a minute for the whole model. The replay
+from nothing is one task, which more threads do not speed: on two threads and on four it
+took 95 and 112 seconds, with a resident peak of 1.5 GB, on a machine busy with other
+builds.
 """
 
 from __future__ import annotations
@@ -83,6 +99,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 MODEL = ROOT / "model"
 LIBRARIES = ("Model", "Check")
+# The library whose whole environment is replayed from nothing as well: it never imports
+# Mathlib, so that environment is Lean's own library and the edition's, not Mathlib's.
+FRESH = "Check"
 # Sources that `lake build` never compiles, by design, each with the reason.
 NOT_COMPILED = {
     ("Check", "Write"): "it writes the generated files whenever Lean elaborates it, so "
@@ -241,18 +260,21 @@ def to_replay(package: Path, modules: dict[tuple[str, ...], Path]) -> list[tuple
     return listed
 
 
+def leanchecker(package: Path, bin_: Path, *args: str) -> subprocess.CompletedProcess:
+    env = dict(os.environ)
+    env.setdefault("LEAN_NUM_THREADS", THREADS)
+    return run(["lake", "env", str(bin_ / "leanchecker"), "-v", *args], package, env=env)
+
+
 def replay(package: Path, bin_: Path, modules: list[tuple[str, ...]]) -> None:
     """Have leanchecker replay every declaration of each module, and check that it
     replayed exactly these modules."""
-    env = dict(os.environ)
-    env.setdefault("LEAN_NUM_THREADS", THREADS)
     # Without --fresh, leanchecker replays every compiled module whose name begins with a
     # name it is given, and it searches every compiled file on the path, Mathlib's
     # thousands, once for each: so it is given the two roots, not each module (fifty-five
     # names took eleven minutes, not one), and its own account of what it replayed is
     # checked against the list below.
-    done = run(["lake", "env", str(bin_ / "leanchecker"), "-v", *LIBRARIES], package,
-               env=env)
+    done = leanchecker(package, bin_, *LIBRARIES)
     said = done.stdout + done.stderr
     if done.returncode != 0:
         module = re.search(r"leanchecker found a problem in (.+)", said)
@@ -277,9 +299,27 @@ def replay(package: Path, bin_: Path, modules: list[tuple[str, ...]]) -> None:
                        "sources are")
 
 
+def replay_fresh(package: Path, bin_: Path) -> None:
+    """Have leanchecker replay every declaration of FRESH's whole environment, Lean's own
+    library among it, from nothing, into an empty environment."""
+    done = leanchecker(package, bin_, "--fresh", FRESH)
+    said = done.stdout + done.stderr
+    whole = f"the whole environment of {FRESH} from nothing"
+    if done.returncode != 0:
+        declaration = re.search(r"while replaying declaration '(.+?)':\n", said)
+        if declaration:
+            raise Rejected(f"leanchecker, replaying {whole}, rejects the declaration "
+                           f"{declaration.group(1)}: "
+                           f"{tail(said[declaration.end():].strip())}")
+        raise Rejected(f"leanchecker failed, replaying {whole}:\n{tail(said)}")
+    if not re.search(rf"^replaying {FRESH} with --fresh$", done.stdout, re.M):
+        raise Rejected(f"leanchecker passed without replaying {whole}:\n{tail(said)}")
+
+
 def check(package: Path, bin_: Path) -> list[tuple[str, ...]]:
     modules = to_replay(package, sources(package))
     replay(package, bin_, modules)
+    replay_fresh(package, bin_)
     return modules
 
 
@@ -299,6 +339,9 @@ name = "Check"
 SECOND_ROOT = LAKEFILE.replace('name = "Model"\n',
                                'name = "Model"\nroots = ["Model", "Helper"]\n')
 THIRD_LIBRARY = LAKEFILE + '\n[[lean_lib]]\nname = "Extra"\n'
+# The same, with a package of its own that `Check` requires and imports, as the model's
+# `Check` requires the edition: its build folder is its own, not this package's.
+REQUIRED = LAKEFILE + '\n[[require]]\nname = "required"\npath = "required"\n'
 
 
 def unchecked(name: str, statement: str, proof: str, module: bool) -> str:
@@ -348,6 +391,14 @@ CASES = [
       "Check.lean": "import Check.Sound\nimport Extra\n",
       "Extra.lean": unchecked("Planted.extraFalse", "False", "True.intro", module=False)},
      [], [], ["Extra", "neither Model nor Check"]),
+    ("a theorem of False added without the kernel's check, in a package that Check "
+     "requires and imports",
+     {"lakefile.toml": REQUIRED,
+      "Check.lean": "import Check.Sound\nimport Required\n",
+      "required/lakefile.toml": 'name = "required"\n\n[[lean_lib]]\nname = "Required"\n',
+      "required/Required.lean": unchecked("Planted.requiredFalse", "False", "True.intro",
+                                          module=False)},
+     [], [], ["Planted.requiredFalse", "from nothing"]),
     ("a source the build never compiled",
      {"Model/Unbuilt.lean": "module\n\npublic theorem Unbuilt.holds : True := trivial\n"},
      [], [], ["Model.Unbuilt", "no compiled file"]),
@@ -406,8 +457,9 @@ def main() -> None:
         print(f"✓ model kernel self-test: lake build accepts each theorem of False added "
               f"without the kernel's check, and the check rejects each, naming it: the "
               f"replay in Model and in Check, the build folder's walk in a second root and "
-              f"in a third library; the control passes, and a module without a compiled "
-              f"file or a source fails")
+              f"in a third library, the replay from nothing in a package that Check "
+              f"requires; the control passes, and a module without a compiled file or a "
+              f"source fails")
         return
 
     try:
@@ -418,8 +470,9 @@ def main() -> None:
                       for parts, reason in NOT_COMPILED.items() if parts not in modules)
     print(f"✓ model kernel: Lean's kernel accepts again every declaration of the "
           f"{len(modules)} compiled modules of Model and Check, replayed by leanchecker "
-          f"into their imports' environments, which are loaded, Mathlib's among them"
-          f"{excused}")
+          f"into their imports' environments, which are loaded, Mathlib's among them, "
+          f"and every declaration of the whole environment of {FRESH}, Lean's own "
+          f"library among it, replayed from nothing{excused}")
 
 
 if __name__ == "__main__":

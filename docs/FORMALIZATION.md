@@ -508,15 +508,17 @@ from Lean itself as well. In `model/`, the scan reads words and the replay reads
 after `lake build`, CI's `formal-model` job runs `scripts/check_model_kernel.py`, in which
 leanchecker replays every compiled declaration of the model's `Model` and `Check` libraries
 through Lean's kernel again, apart from the build (#121); a module compiled in the package
-outside those two libraries is an error, by name. It runs without `--fresh`, so what those
-modules import is loaded, not replayed: Mathlib's declarations are left to Mathlib's own
-checks, and the library's, with Lean's core library beneath them (`Init`), are
-`check_kernel.py`'s. The rest of Lean's own library that the model loads, `Std` and `Lean`
-among it (`Check/Generator.lean` has `import Lean`), is replayed by no check here: Mathlib's
-daily job replays the part of it that Mathlib imports, on Mathlib's toolchain, and about a
-third of the `Lean` modules that `Check` loads lie outside that part. Its self-test plants a
-theorem of `False` added without the kernel's check, which `lake build` accepts and the
-check must reject by name
+outside those two libraries is an error, by name. That replay runs without `--fresh`, so
+what those modules import is loaded, not replayed; then leanchecker replays the whole
+environment of `Check`, which has no Mathlib, from nothing (`--fresh`). So Lean's own
+library is replayed here as far as `Check` loads it, `Std` and every `Lean` module among it
+(`Check/Generator.lean` has `import Lean`), and so are the library's declarations that
+`Check` imports, which, with `Init`, are `check_kernel.py`'s as well. What `Model` loads
+through Mathlib is loaded, not replayed: Mathlib's declarations, and five of `Lake`'s
+modules outside `Check`'s environment, are left to Mathlib's own checks, on Mathlib's
+toolchain. Its self-test plants a theorem of `False` added without the kernel's check,
+which `lake build` accepts and the check must reject by name, in the model's libraries and
+in a package that `Check` requires
 ([model/README.md](../model/README.md#the-ci-job), "The CI job").
 The checks' own Lean, `Certificate/Facts.lean`, which writes `facts.json`, is not
 scanned: it is a protected path ([WORKFLOW.md](WORKFLOW.md), section 10), changed only
