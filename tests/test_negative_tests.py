@@ -457,30 +457,6 @@ class RestorationTests(unittest.TestCase):
                 self.assertEqual(source.read_bytes(), original)
                 self.assertEqual(self.files(), saved)
 
-    def test_cited_law_plant_marks_the_flag_only_where_it_stands(self):
-        source = self.root / negative.SYNTAX
-        with_flag = (REPO / negative.SYNTAX).read_text()
-        flag = "def Cited.drawsNothing : Cited → Bool\n"
-        without = re.sub(r"/-- The laws whose proofs[^\n]*\n[^\n]*\n" + re.escape(flag)
-                         + r"(  \|[^\n]*\n)*", "", with_flag) if flag in with_flag else with_flag
-        self.assertNotIn(flag, without)
-        for text, marked in ((with_flag, flag in with_flag), (without, False)):
-            with self.subTest(marked=marked):
-                negative.failures.clear()
-                self.write(source, text.encode())
-                calls = []
-                def run(*cmd):
-                    calls.append(source.read_text())
-                    if len(calls) == 2:
-                        return subprocess.CompletedProcess(cmd, 0, "", "")
-                    self.assertEqual("  | planted => false\n" in calls[0], marked)
-                    return subprocess.CompletedProcess(cmd, 1, "", f"error: {negative.HOLDS_ALL}"
-                                                       ":84:2: Missing cases:\nCited.planted\n")
-                with patch.object(negative, "run", side_effect=run):
-                    negative.cited_law_unproved()
-                self.assertEqual(negative.failures, [])
-                self.assertEqual(source.read_text(), text)
-
     def test_cited_law_refused_elsewhere_is_not_holds_all(self):
         source = self.root / negative.SYNTAX
         source.parent.mkdir(parents=True, exist_ok=True)

@@ -415,11 +415,17 @@ The ruleset and the remaining merge requirements are in
   `python3 -I scripts/check_superposition_pins.py` checks that every theorem brief 0009's
   section "The restriction theorem" names has a statement pin in
   `Audit/Superposition.lean`: an `info:` docstring, a bare `#guard_msgs in`, then `#check`,
-  or `#print` for a definition. A pin Lean never runs, in a comment or after `#exit`, or
-  one whose `#guard_msgs` has options, does not count. `lake build Audit` checks that each
-  pin is what Lean prints; the script checks that the pins exist, so that a theorem the
-  brief names cannot be weakened under the same name with only its axioms pinned. Its
-  cases, `python3 -I tests/test_check_superposition_pins.py`, need no Lean and run first.
+  or `#print` for a definition. A pin in a comment, which Lean never runs, does not count.
+  The file may hold nothing but its leading imports, comments and pins (a docstring, a
+  bare `#guard_msgs in`, then `#check @`, `#print` or `#print axioms`); anything else is
+  refused with its line, such as a `set_option` of any kind (some shorten what Lean
+  prints), a namespace (a theorem in it can take a pinned name), any declaration, `#eval`,
+  `#exit` or a `#guard_msgs` with options. `Audit.lean` must import the file, or
+  `lake build Audit` does not run its pins. That build checks that each pin is what Lean
+  prints; the script checks that the pins exist and that nothing in the file changes what
+  they print or name, so that a theorem the brief names cannot be weakened under the same
+  name with only its axioms pinned. Its cases,
+  `python3 -I tests/test_check_superposition_pins.py`, need no Lean and run first.
 - **Counts in prose.** A count a script knows exactly goes between count markers and is
   rendered; the surrounding prose stays human ([STYLE](STYLE.md), section 4).
   `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`

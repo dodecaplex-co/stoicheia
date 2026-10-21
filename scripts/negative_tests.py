@@ -107,9 +107,8 @@ records current; CI runs it on every push.
     points and straight line, compiles, and the theorem rests on no `sorryAx`. The
     plant, a guard over every point (the straight line through D and G holds no other
     point), fails inside the theorem's proof and nowhere else. Read, not built.
-22. A new law in `Cited` with no proof (were a hand-set flag such as the retired
-    `Cited.drawsNothing` present, it would be marked as drawing): the build of I.8 fails
-    at `Cited.holds_all`, naming the missing case, and nowhere else.
+22. A new law in `Cited` with no proof: the build of I.8 fails at `Cited.holds_all`,
+    naming the missing case, and nowhere else.
 
 These faults exercise the style and link checks, page freshness, an audit pin,
 leanchecker's loading of compiled files, part 4 of the restriction and the proof of
@@ -1433,10 +1432,8 @@ HOLDS_ALL = "Elements/BookI/Prop08.lean"
 
 def cited_law_unproved() -> None:
     """A new law in `Cited`, with its statement and no proof: `Cited.holds_all` in I.8's file
-    must fail, naming the missing case, and nothing else may. Where the hand-set flag
-    `Cited.drawsNothing` still stands, the planted law is marked as drawing, as I.7 is, so
-    that `Cited.holds_of_drawsNothing` passes it: left to the flag's wildcard, it would fail
-    there first, which says nothing of `holds_all`. Built to I.8, then restored and rebuilt."""
+    must fail, naming the missing case, and nothing else may. Built to I.8, then restored
+    and rebuilt."""
     path = ROOT / SYNTAX
     saved = path.read_bytes()
     text = saved.decode()
@@ -1451,9 +1448,6 @@ def cited_law_unproved() -> None:
           "  | planted\n  deriving DecidableEq")
     law = "def Cited.law : Cited → Law\n"
     plant(law, law + "  | planted => ⟨[], pos (.eq .A .A)⟩\n")
-    flag = "def Cited.drawsNothing : Cited → Bool\n"
-    if flag in text:
-        plant(flag, flag + "  | planted => false\n")
     outputs = BuildOutputs()
     try:
         path.write_text(text)

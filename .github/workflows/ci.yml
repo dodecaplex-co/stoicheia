@@ -68,7 +68,8 @@ jobs:
 
       - name: Check every theorem brief 0009's restriction section names has a statement pin in Audit/Superposition.lean
         # lake build Audit checks that each pin is what Lean prints; this checks that the
-        # pins exist, under a bare #guard_msgs.
+        # pins exist, under a bare #guard_msgs, in a file of only imports, comments and pins
+        # that Audit.lean imports.
         run: python3 -I scripts/check_superposition_pins.py
 
       - name: Check the house style's hard rules
