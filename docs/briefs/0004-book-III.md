@@ -75,16 +75,20 @@ it", passed through points within it, and one touching externally through points
 Lean takes the whole-circle reading, Todhunter's as Heath reports it, and makes "do not
 cut" precise by Heath's inside and outside: touching within, no point of the inner circle
 falls outside the outer (`TouchesInternally`); touching without, no point lies within both
-(`TouchesExternally`). Heath's own reading is local, at the point of contact, and our
-circle-contact definition does not express that local reading. So the definition carries
-what Heath says Euclid leaves tacit in III.11–III.13: touching circles do not cross
-anywhere. III.13 keeps its content, for the definition does not say that the circles meet
-at one point only: two
+(`TouchesExternally`). Heath's own reading is local, at the point of contact, and Lean
+has no neighbourhoods to say it in. So the definition carries what Heath says Euclid
+leaves tacit in III.11–III.13: touching circles do not cross anywhere. III.13 keeps its
+content, for the definition does not say that the circles meet at one point only: two
 points of contact, within or without, are what III.13 refutes, by III.11 and III.2. (Read
 "do not cut one another" as "have only one point in common", and III.13 would be the
 definition; that reading is set aside.) III.11's statement says which circle is within
 (`TouchesInternally ABC ADE A`, `ADE` within `ABC`); III.13 asks for either. III.11's
 mishnah owns Heath's note on Definition 3 and says all this.
+
+**19 October 2026, local contact.** The claim above that Lean has no neighbourhoods is
+superseded: predicates for regions near a vertex now serve the mixed-angle comparisons.
+Contact read locally, at the point of contact, and its equivalence to the whole-circle
+reading have not been formalised.
 
 **19 October 2026, contact within.** The whole-circle reading remains ours. The point
 of the inner circle within the outer now belongs to `TouchesInternally`, expressing the
@@ -437,10 +441,12 @@ worth naming. The first mate's report has a note on every statement.
 
 - **Postulate 5.** Every proposition of Book III comes after I.29, so any may rest on it.
   `check_fidelity.py` sets `FIRST_EUCLIDEAN` for Book III as for Book II.
-- **Superposition** stays with I.4 and I.8. III.24 does not invoke the superposition rule
-  directly: `placement`, which lays one segment on another, rests on I.4, I.7 and I.8 as
-  propositions, and only III.24 and `Elements/BookIII/Arcs.lean` may cite it, which
-  `check_fidelity.py` checks.
+- **Superposition** stays with I.4 and I.8. III.24 is proved without it: `placement`,
+  which lays one segment on another, rests on I.4, I.7 and I.8 as propositions, and only
+  III.24 and `Elements/BookIII/Arcs.lean` may cite it, which `check_fidelity.py` checks.
+  **19 October 2026, correction.** III.24 makes no direct call to the rule; `placement`
+  uses it through I.4 and I.8. Its certificate includes superposition through those
+  propositions, so the earlier phrase "without it" does not describe all its dependencies.
 - **Citing earlier books.** A Book III proof cites `BookI.PropN` and `BookII.PropN`; a bare
   `Prop4` in a Book III file means III.4.
 - **The scripts.** `heath.BOOKS` has Book III, 37 propositions, and `heath.parse_ref`

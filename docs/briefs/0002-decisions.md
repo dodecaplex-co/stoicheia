@@ -4578,8 +4578,6 @@ findings:
   treatment of unsuccessful attempts are unchanged. The generated certificate is
   restored after the run.
 
-## 21 October 2026
-
 - **Train C6c meets the guard, trains C6a and C6b and axiom wave one.** Train C6c, which
   carries brief 0008's step 6 (every Book III centre taken inside its proof), III.30's
   halves and the companions of III.24 and III.25, was merged with `lean/centre-guard` at
@@ -4629,6 +4627,7 @@ findings:
   `Certificate/axioms.lock`,
   `model/Model/Laws.lean`,
   `model/lock.sha256`,
+  `scripts/scaffold_book.py`,
   `tests/model/MODEL.md`,
   `tests/model/lock.sha256`,
   `tests/model/results/angle_check.txt`,
@@ -4644,8 +4643,9 @@ findings:
   `Audit/Crossing.lean`, `Audit/Overlaps.lean` and `Audit/screen.py` differ by this train's
   restated calls and its screen account, which its 19 October entries give; the rest by
   the lock's one changed word and what follows from it. `scripts/scaffold_book.py` differs
-  by tooling/c6c-scaffold's comment, which lands before this train with its own entry. No
-  statement, check or expected value changes in this merge.
+  by tooling/c6c-scaffold's change, its restated Book III signatures, the companions it
+  emits after III.24 and III.25, and its comment, which lands before this train with its
+  own entry. No statement, check or expected value changes in this merge.
 
 - **III.30's halves, approved, proved and registered (#67).** The owner approved
   `Prop30.halves` on 20 October 2026: asked "Also approve the smaller items?
@@ -4662,5 +4662,5 @@ findings:
   `Circumference.add`, and the division point by point by plane separation and III.2.
   The proof rests on neither Circle 2 nor Circle 3, through any lemma (#152), and adds no
   axiom.
-  `Staging/Halves/Prop30.lean` and its import in `Staging.lean` are deleted. The record's
-  stamps are left for an independent reader.
+  `Staging/Halves/Prop30.lean` and its import in `Staging.lean` are deleted. An
+  independent reader read the record afresh and stamped it at `05b34dc0`.
