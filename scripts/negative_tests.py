@@ -13,13 +13,13 @@ records current; CI runs it on every push.
    statements use, given another meaning no longer matches it either; a changed
    statement of III.1's porism makes III.1's review record stale; `Centre`, no
    longer among the opaque primitives (as if it had been made a `def`), is caught;
-   Circle 2 added to III.3's axioms, and Circle 3 to I.15's porism or II.1's general
-   companion, are each refused by the entry's name; Circle 3 renamed in the axiom lock
-   (restored after) and in the copy alike is caught as missing from the lock;
-   Circle 2 proved without a forbidden axiom beneath it is refused by name, while
-   Circle 2 proved from Circle 3 still in the lock passes; and
-   placement among III.26's shared steps is caught, while III.24, given it too, is not
-   blamed.
+   the name of Circle 2, now a theorem, is deliberately added to III.3's axioms, and
+   Circle 3 to I.15's porism or II.1's general companion; all three are refused by the
+   entry's name. Circle 3 renamed in the axiom lock (restored after) and in the copy
+   alike is caught as missing from the lock; Circle 2 proved without a forbidden axiom
+   beneath it is refused by name, while Circle 2 proved from Circle 3 still in the lock
+   passes; and placement among III.26's shared steps is caught, while III.24, given it
+   too, is not blamed.
 4. A changed Lean file makes its review record stale (I.1).
 5. III.16's review record without the passage that declares its angle clauses, of
    whatever kind, leaves a run of `--` lines with no Lean beneath it undeclared.
@@ -545,8 +545,8 @@ def circle_dependencies() -> None:
 
 def circle_renamed() -> None:
     """Circle 3 renamed in the lock and in a copy of facts.json alike: the two still agree,
-    and no review record names the rule, so only the missing name shows that the check no
-    longer refuses it."""
+    so the missing name is what must show that the check no longer refuses it. (III.2's
+    [overlap] names the rule and is refused as well; the plant does not rely on that.)"""
     old, new = "Tacit.outside_of_between", "Tacit.Circle.outside_of_between"
     rel = "Certificate/axioms.lock"
     saved = replace_once(rel, f'"{old}" =', f'"{new}" =')

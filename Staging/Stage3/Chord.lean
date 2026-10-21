@@ -1,4 +1,5 @@
 import Elements.Figure.Basics
+import Elements.Figure.Circles
 import Staging.Stage3.Definitions
 
 /-!
@@ -21,7 +22,7 @@ open Tacit
 /-- **A straight line in a circle, along its own line.** For two different points A, B of a
 circle and a point P of the straight line AB: P is on the circle exactly when it is A or B,
 and within the circle exactly when it lies between them. Proved from `Triangle.of_onCircle`
-and System E's rules for a straight line in a circle (Circle 1 and 2). III.24 uses it for the
+and Circle 1 with Circle 2, which is now proved from Circle 3. III.24 uses it for the
 points of the base. -/
 theorem chord_cases {A B P : Point} {α : Circle} (hA : OnCircle A α) (hB : OnCircle B α)
     (hAB : A ≠ B) (hP : Collinear A B P) :
@@ -39,13 +40,13 @@ theorem chord_cases {A B P : Point} {α : Circle} (hA : OnCircle A α) (hB : OnC
 /-- **A straight line from within the base meets the arc.** For a drawn arc, a ray from a point
 X between the ends of the base, through a point Y on the arc's side, meets the arc.
 
-Proved: X is within the circle (System E, Circle 2), so the straight line XY, produced
+Proved: X is within the circle (Circle 2, proved from Circle 3), so the straight line XY, produced
 beyond X backwards and then forwards, meets the circle on Y's side (Intersections 5, with
 Pasch 3 for the side). III.25's construction core reads this off the segment it is given. -/
 theorem Arc.meets {a : Arc} (ha : a.Drawn) {X Y : Point} (hX : Between a.B X a.C)
     (hY : SameSideOf Y a.K a.B a.C) : ∃ Q : Point, OnArc Q a ∧ OnRay Q X Y := by
-  /- X lies within the circle, since it is between the ends of the base (System E,
-     Circle 2), and Y is off the straight line BC. -/
+  /- X lies within the circle, since it is between the ends of the base (Circle 2,
+     proved from Circle 3), and Y is off the straight line BC. -/
   have hX_in : InsideCircle X a.circle :=
     inside_of_between (Or.inr ha.2.1) (Or.inr ha.2.2.1) hX
   obtain ⟨L, hB_L, hC_L⟩ := Postulate1 a.B a.C hY.1
