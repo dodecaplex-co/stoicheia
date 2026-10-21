@@ -3500,11 +3500,21 @@ findings:
   default, switched on, so that a hypothesis `assumption`, `simp_all`, `omega` or `grind`
   uses without naming it counts as used. A file that sets one of the linter's options
   itself, as `set_option linter.unusedVariables false in` or its `.analyzeTactics`, in
-  any spelling, would silence it there, and so would a `#guard_msgs` around anything but
-  `#print`, which swallows the linter's report with `(drop warning)`, `(drop all)` or a
-  docstring that expects the warning, as a review found; so the sweep refuses that file,
-  exit 2, by its name and line. The `#guard_msgs` that Audit and Staging put around
-  `#print axioms`, to pin what a proof rests on, are not refused. The sweep refuses a file
+  any spelling or spacing (`set_option«linter».unusedVariables`), would silence it
+  there, and so would any `#guard_msgs` but a pin of `#print`, which swallows the
+  linter's report with `(drop warning)`, `(drop all)` or a docstring that expects the
+  warning, as a review found; so would a `sorry` or `admit`, even one that never runs,
+  as `first | rfl | sorry`, since Lean's linter passes over the whole declaration that
+  holds one (its `hasSorry` reads the syntax, not the proof), as a later review found.
+  So the sweep refuses that file, exit 2, by its name and line; a `sorry` or `admit`
+  only outside Staging, whose statements await their proofs. The `#guard_msgs` that
+  Audit and Staging put around `#print axioms`, to pin what a proof rests on, are not
+  refused. The sweep reads the code through `check_fidelity.py`'s reader, which now
+  begins a doc comment's body after `/--` or `/-!`, as Lean does: it began a character
+  early, so that in `/--/ " -/` it closed the comment at `/--/` and opened a string at
+  the `"`, which hid the lines after it from the sweep and from check_fidelity's own
+  scan for forbidden commands. Its reading of every Lean file in the repository is
+  unchanged by the fix. The sweep refuses a file
   that does not elaborate too, since Lean reports the rest of such a file and drops the
   hits of what fails. The linter cannot see three things: a name that begins with `_`,
   which it never checks; an anonymous `have`, whose `this` it passes over; and the kept
@@ -3575,22 +3585,28 @@ findings:
   excluded middle), behind a reductio's opening, a cast, a `show` or metadata, through
   `.1`, `.2` (as Lean's primitive projection too), `.symm`, `.mp` and `.mpr`, as a field
   of a figure, through a step bound to its result, or a part of it or of one of its parts
-  taken apart, and stated exactly. Its controls must pass, among them a binding used
-  later, one used by `assumption` or `simp_all`, a pattern's `_` part, a statement's
-  unused hypothesis, a helper fed by a step, a helper's parts put together again, an
-  entry citing an entry, an iff applied to the proof's own step, a case split of that
-  step, a field of a figure the statement gives, an `if` whose other branch is a rule of
-  the foundations, a proved rule of the foundations, and a class's law; a declared join
+  taken apart, or of it through `id`, fed only by a part of a hypothesis taken apart, and
+  stated exactly. Its controls must pass, among them a binding used later, one used by
+  `assumption` or `simp_all`, a pattern's `_` part, a statement's unused hypothesis, a
+  helper fed by a step, a helper's parts put together again, a part of a helper's result
+  taken apart and its part fed to another helper (once listed: a split of a field of a
+  citation is now the proof's own step, as a split of the citation was), an entry citing
+  an entry, an iff applied to the proof's own step, a case split of that step, a field of
+  a figure the statement gives, an `if` whose other branch is a rule of the foundations,
+  a proved rule of the foundations, and a class's law; a declared join
   is reported as declared. Its record is read as TOML, and in it a name in a note or a
   `#` comment, or in the `unused` of a passage over another run, declares nothing, and
   `check_fidelity.py` must report that last name as unbound; nor does one name declare a
   hit that keeps two, and no helper hit is declared. The sweep must refuse two files,
-  exit 2: one that silences the linter in six ways, four settings of its options and two
-  `#guard_msgs`, naming each line, and one that does not elaborate; it must not refuse a
-  remark that quotes them, nor a `#guard_msgs` around `#print`; and a run of Lean that
-  fails with no error at a line must fail the sweep too. The self-test needs the library
+  exit 2: one that silences the linter in ten ways, six settings of its options (one of
+  them behind a `/--/`), three `#guard_msgs` and a `sorry` that never runs, naming each
+  line, and one that does not elaborate; it must not refuse a remark that quotes them,
+  nor a `#guard_msgs` around `#print`; and a run of Lean that fails with no error at a
+  line must fail the sweep too. Read without Lean, `admit` must be refused as `sorry` is,
+  but not in Staging, and the shared reader must take `/--/ x -/` and `/-/- -/ x -/` each
+  for one comment. The self-test needs the library
   built. CI's `negative` job runs it after its build, then the sweep over `Elements/` as
-  a report (139 files in 7 to 13 seconds on a 16-core laptop), and safe_push's
+  a report (139 files in 6 to 13 seconds on a 16-core laptop), and safe_push's
   `NEGATIVE` list runs the same two; the
   release gate ([WORKFLOW](../WORKFLOW.md), section 10, step 10) runs it with
   `--fail-on-undeclared` on the release candidate. On main's Lean at `09bc89f3` it lists

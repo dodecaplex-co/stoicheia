@@ -291,7 +291,8 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
             j = _find(src, "\n", i)
             marks.append(("text", i, j))
         elif src.startswith("/-", i):
-            j, nested = i + 2, 1
+            # a doc comment's body begins after `/--` or `/-!`, as Lean reads it
+            j, nested = i + (3 if src.startswith(("/--", "/-!"), i) else 2), 1
             while j < len(src) and nested:
                 pair = src[j:j + 2]
                 nested += (pair == "/-") - (pair == "-/")
