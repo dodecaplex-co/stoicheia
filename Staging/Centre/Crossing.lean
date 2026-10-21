@@ -7,16 +7,17 @@ import Elements.BookIII.Prop06
 Brief 0008, section 7. Today's III.5 reads "cut" as meeting at two points (`CirclesMeet`),
 with the circles two (`ABC ≠ CDG`), and a circle drawn twice over, as two circles with one
 centre and one radius, satisfies that, as it satisfies today's contact within. So any proof
-of today's III.5 and III.6 must use Diagram-segment 2 (`circle_eq`), on which they rest, or
-Circle 4, the two rules that tell two circles apart (the overlap catalogue, under III.5 and
-III.6). Definition III.3 sets cutting against
-touching: "Circles are said to touch one another which, meeting one another, do not cut one
+of today's III.5 and III.6 must distinguish the two circles. Their proofs use
+Diagram-segment 2 (`circle_eq`); Circle 4, formerly a second assumption that did so, is
+now proved from I.7 using `circle_eq` (19 October 2026). Definition III.3 sets cutting
+against touching: "Circles are said to touch one another which, meeting one another, do not cut one
 another." Read so, circles that cut one another cross, each passing within the other, and
 circles touching within have the inner circle passing within the outer, as Heath says the
 definition must imply. Then III.5 and III.6 follow by Euclid's own argument, with neither
 rule. In the intended plane the old and the new hypotheses agree; the circle drawn twice
-over shows that they differ in an interpretation without those two rules, not every way in
-which they could. The rules still give the restated statements in a line or two, so the
+over shows that they differ in an interpretation without `circle_eq` and its consequence
+Circle 4, not every way in which they could. The rules still give the restated statements
+in a line or two, so the
 overlap catalogue keeps its rows: the proofs avoid the rules, which still contain the
 propositions (brief 0008, section 7, after Astra's challenge).
 
@@ -37,8 +38,9 @@ Here, with proofs, which the freeze approved as staged facts resting on no stub 
   the only lines of III.11 and III.13 that read the definition of contact within go through
   as they are written today;
 * at the end, the axioms Lean reports for the restated III.5 and III.6, pinned with
-  `#guard_msgs` as `Audit/Overlaps.lean` pins its lemmas: neither `circle_eq` nor Circle 4
-  is among them, nor an admitted proof, and the build fails if one enters.
+  `#guard_msgs` as `Audit/Overlaps.lean` pins its lemmas: neither `circle_eq` nor an
+  admitted proof is among them, and the build fails if one enters. Circle 4 is now a
+  theorem whose proof uses `circle_eq`, so the guards also exclude that route.
 
 When the restatements land (step 6), the definitions go to
 `Elements/Foundations/DefinitionsIII.lean`, the proofs to `Elements/BookIII/Prop05.lean` and
@@ -275,11 +277,11 @@ end Elements.BookIII.Staging.Centre
 
 /-! ## What the restated III.5 and III.6 rest on
 
-Neither rule that tells two circles apart, Diagram-segment 2 (`circle_eq`) and Circle 4
-(`not_same_side_of_circles_meet`), nor an admitted proof: Definition I.15, Postulate 1 and
+Neither Diagram-segment 2 (`circle_eq`) nor an admitted proof: Definition I.15, Postulate 1 and
 thirteen tacit rules, the same for each (checked by Lean, as `lake build Staging` builds
 the file; the default `lake build` does not). The pins check the names of these two
-declarations' axioms and nothing more: not the reading of the statements, nor the
+declarations' axioms. They also exclude the route through Circle 4, now proved using
+`circle_eq`. They do not check the reading of the statements, nor the
 statements of the axioms, nor the other declarations here, nor whether a shorter proof
 from other rules exists. Shorter proofs do exist, from Diagram-segment 2 among others, as
 the overlap catalogue will record (brief 0008, section 7). -/

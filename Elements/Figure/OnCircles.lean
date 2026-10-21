@@ -13,10 +13,14 @@ straight line that cuts it off; equal circles have equal radii; and a straight l
 touches a circle meets it at a point of contact and has no point within it. They follow
 from Definition 15, System E's rules for circles, and the definitions of Book III.
 
-The first two, proved here for any circle, rest on System E's Circle 2, which contains
-III.2. The propositions take them from III.2 instead, for a circle with a centre
-(`BookIII.Prop2.triangle`, `BookIII.Prop2.oppositeSide`, `BookIII.Prop2.sameSide`), and so
-rest on neither Circle 2 nor Circle 3.
+The first two, proved here for any circle, use Circle 2, now proved from System E's
+Circle 3 in `Elements.Figure.Circles`. Circle 3 therefore still gives III.2 at once.
+The propositions take these facts from III.2 instead, for a circle with a centre.
+Its corollaries `BookIII.Prop2.triangle`, `BookIII.Prop2.oppositeSide` and
+`BookIII.Prop2.sameSide`, like III.2 itself, avoid Circle 3. No certificate entry
+currently rests on Circle 3. I.12 puts the crossing of CD with AB inside the circle
+by comparing its distance from the centre with the radius, then uses the assumed
+Intersection 3. The proved Intersection 2 has no user in the published proofs.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is an
 axiom.
@@ -31,8 +35,8 @@ variable {A B C D K P Q : Point} {α β : Circle}
 /-! ## Points of a circle -/
 
 /-- Three points of a circle are not on one straight line. Were they, one would lie
-between the other two, and so within the circle (System E, Circle 2), not on it. For a
-circle with a centre, `BookIII.Prop2.triangle` gives the same by III.2. -/
+between the other two, and so within the circle (Circle 2, proved from Circle 3), not on
+it. For a circle with a centre, `BookIII.Prop2.triangle` gives the same by III.2. -/
 theorem Triangle.of_onCircle (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hAB : A ≠ B) (hBC : B ≠ C) (hAC : A ≠ C) : Triangle A B C := by
   rintro ⟨L, hA_L, hB_L, hC_L⟩
@@ -42,8 +46,8 @@ theorem Triangle.of_onCircle (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnC
   · exact inside_not_on (inside_of_between (Or.inr hA) (Or.inr hB) h) hC
 
 /-- A straight line BC in a circle has a point of the circle on the other side of it
-from any point K off it. Take M between B and C; it is within the circle (System
-E, Circle 2), so the straight line KM, produced beyond M, meets the circle
+from any point K off it. Take M between B and C; it is within the circle
+(Circle 2, proved from Circle 3), so the straight line KM, produced beyond M, meets the circle
 (Intersections 5), on the other side of BC from K (Pasch 3). For a circle with a
 centre, `BookIII.Prop2.oppositeSide` gives the same by III.2. -/
 theorem exists_onCircle_oppositeSidesOf (hB : OnCircle B α) (hC : OnCircle C α)
@@ -121,8 +125,9 @@ theorem standing_congr {A' : Point} (hA : SameSideOf A A' B C) :
 /-! ## Equal circles -/
 
 /-- In equal circles the radii are equal: any radius GP of the one is equal to any
-radius HQ of the other. A circle has only one centre (System E, Generalities 2), and
-its radii are equal to one another (Definition 15). -/
+radius HQ of the other. A circle has only one centre
+(`centre_unique`, proved in `Elements.Figure.Circles`), and its radii are equal to one
+another (Definition I.15). -/
 theorem EqualCircles.radii {G H : Point} (h : EqualCircles α β) (hG : Centre G α)
     (hH : Centre H β) (hP : OnCircle P α) (hQ : OnCircle Q β) : ‖G P‖ = ‖H Q‖ := by
   obtain ⟨G', H', P', Q', hG', hH', hP', hQ', hr⟩ := h

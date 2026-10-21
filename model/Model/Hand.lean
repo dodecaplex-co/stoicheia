@@ -20,7 +20,9 @@ binder kinds and names included. The build fails if any of these fails. The proo
 plane of these laws are stated with them, and Lean checks, where `Model/Assembly.lean`
 gathers them, that each proves its field of `Laws`. The other laws are stated the same way,
 with the hand translations of `Model/Laws/`, each checked against its generated law in
-`Check/`. A proof may instead be stated with the generated law itself,
+`Check/`, or directly against its library declaration for a retired axiom. The retired
+rules keep their concrete plane proofs and audits as derived facts, with no generated
+assumption fields. A proof may instead be stated with the generated law itself,
 `Law.Tacit.line_unique plane`, and then needs no hand translation.
 
 The laws here are the circle-intersection rules: Intersection 5, the step Euclid takes for

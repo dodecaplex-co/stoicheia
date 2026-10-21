@@ -21,14 +21,14 @@ note = "Euclid cuts off BG equal to A by I.3, taking enough room on BF for grant
 [[passage]]
 at = "and through D, E, C let DK, EL, CH be drawn parallel to BG"
 kind = "helper"
-helper = "Prop31.parallelogram"
-note = "Euclid draws DK, EL and CH and reads their meetings with GH from the figure. `Prop31.parallelogram` draws each parallel by I.31 and finds K, L and H by `Prop30.meet`, using I.30."
+helper = "BookI.Prop31.parallelogram"
+note = "Euclid draws DK, EL and CH and reads their meetings with GH from the figure. `BookI.Prop31.parallelogram` draws each parallel by I.31 and finds K, L and H by `BookI.Prop30.meet`, using I.30."
 
 [[passage]]
 at = "Then BH is equal to BK, DL, EH"
 kind = "helper"
 helper = "quadArea_add_of_parallelograms"
-note = "Euclid reads BH as BK, DL and EH together. The Lean proves the uprights parallel by `Prop30.parallel` (I.30), orders G, K, L and H by `Parallel.between`, and uses `quadArea_add_of_parallelograms` twice to join the three pieces."
+note = "Euclid reads BH as BK, DL and EH together. The Lean proves the uprights parallel by `BookI.Prop30.parallel` (I.30), orders G, K, L and H by `Parallel.between`, and uses `quadArea_add_of_parallelograms` twice to join the three pieces."
 
 [[passage]]
 at = "Now BH is the rectangle A, BC"
@@ -46,22 +46,22 @@ note = "Euclid likewise treats BK as a rectangle. The Lean transfers the right a
 at = "and DL is the rectangle A, DE"
 kind = "helper"
 helper = "Rectangle.of_right"
-note = "Euclid takes DL to be right-angled, with DK equal to A by I.34. The Lean gets its angle at D from the adjacent right angle of BK by `Tacit.adjacent_eq_of_right`, a rule we assume (System E, Diagram-angle 3), then uses `Rectangle.of_right` and `Rectangle.eq_rect` to identify DL."
+note = "Euclid takes DL to be right-angled, with DK equal to A by I.34. The Lean gets its angle at D from the adjacent right angle of BK by `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, then uses `Rectangle.of_right` and `Rectangle.eq_rect` to identify DL."
 
 [[passage]]
 at = "Similarly also EH is the rectangle A, EC"
 kind = "helper"
 helper = "Rectangle.of_right"
-note = "Euclid gives EH the same justification as DL. The Lean repeats I.34 for EL equal to A, makes BL a rectangle by `Rectangle.of_right`, and uses `Tacit.adjacent_eq_of_right`, a rule we assume (System E, Diagram-angle 3), for the angle at E before `Rectangle.of_right` and `Rectangle.eq_rect` identify EH."
+note = "Euclid gives EH the same justification as DL. The Lean repeats I.34 for EL equal to A, makes BL a rectangle by `Rectangle.of_right`, and uses `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, for the angle at E before `Rectangle.of_right` and `Rectangle.eq_rect` identify EH."
 
 [figure]
 case = "BC cut at two points, D and E, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "570e6fa"
-reviewer = "GPT-6 Astra (Codex), records re-read"
-lean = "sha256:2642bf8e58a5ea62"
+commit = "f3b45b70"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:dca5badf15c0dfbd"
 run = "brief 0005 stage 5, ship C5 re-read"
 
 [review.items]
