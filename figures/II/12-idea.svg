@@ -13,7 +13,7 @@
   <line x1="260.0" y1="196.0" x2="260.0" y2="138.0" stroke="#222222" stroke-width="2" stroke-linecap="butt"/>
   <polyline points="250.0,196.0 250.0,186.0 260.0,186.0" fill="none" stroke="#222222" stroke-width="1.6"/>
   <polygon points="226.0,196.0 260.0,138.0 148.0,196.0" fill="none" stroke="#222222" stroke-width="3" stroke-linejoin="round"/>
-  <g font-style="italic" font-size="14" fill="#222222">
+  <g font-size="14" fill="#222222">
     <text x="265" y="131">B</text>
     <text x="135" y="190" text-anchor="end">C</text>
     <text x="219" y="190" text-anchor="end">A</text>
