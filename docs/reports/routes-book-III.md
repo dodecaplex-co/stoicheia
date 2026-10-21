@@ -24,14 +24,18 @@ new drafts. No rule names a namespace for them, and the coordinator may rename t
 **The statements the files stand on.** [Brief 0008](../briefs/0008-centre.md) restates
 Book III so that every circle has a centre (`Tacit.exists_centre`). The trains C6a, C6b and
 C6c carry the next move of Book III's files into `Elements/`, those restatements among it,
-with main as at 2e8aecf. This branch merged their head, train C6c, twice: as at 80292b0a
-(the merge is 9679f978), and as at e8a375b7, which carries main as at 0a05f96f (the merge
-is 60dc26e0). The second merge brings to `Elements/` main's change between 2e8aecf and
-0a05f96f, and nothing else: the foundations' rule of superposition restated as a restricted
-rule, with its home in `Elements/Foundations/Superposition/` and the laws its derivations
-cite proved in `Elements/Figure/Superposition.lean`; I.4 and I.8 proved by it; and words in
-the files of I.11 and I.44. It changes no file of `Elements/BookIII/`. Then 9a0f8ba1 merged
-main as at e7ffaf68, and changed no file of `Elements/`. As their head, train C6c carries
+with main as at 2e8aecf. This branch merged their head, train C6c, three times: as at
+80292b0a (the merge is 9679f978); as at e8a375b7, which carries main as at 0a05f96f (the
+merge is 60dc26e0); and as at 50162c79, whose later work lies outside `Elements/`, the
+scaffold's restated statements of Book III among it (the merge is 33236005). The second
+merge brings to `Elements/` main's change between 2e8aecf and 0a05f96f, and nothing else:
+the foundations' rule of superposition restated as a restricted rule, with its home in
+`Elements/Foundations/Superposition/` and the laws its derivations cite proved in
+`Elements/Figure/Superposition.lean`; I.4 and I.8 proved by it; and words in the files of
+I.11 and I.44. It changes no file of `Elements/BookIII/`. Then 9a0f8ba1 merged main as at
+e7ffaf68, and bd69bb9b main as at 6e0cdd27 (#208, the formal model's proofs replayed by
+Lean's kernel). Neither of these two, nor the third merge of train C6c, changes a file of
+`Elements/` or of `Staging/`, or `facts.json`. As their head, train C6c carries
 the other two, and in this report it stands for all three. Main did not have the
 restatements when this report was written, and these files land after train C6c. In this
 report, **the statement in `Elements/`** or **the proof in `Elements/`** of a proposition is
@@ -619,15 +623,15 @@ exactly its `axioms` in `facts.json`. An earlier version of this section measure
 that merge, and its measurements replace the estimate.
 
 **At 9a0f8ba1, the `Elements/` these files land on.** Of the later commits on this branch,
-only the merge 60dc26e0 changes `Elements/` or `facts.json` (see the opening of this
-report). It changes no file of `Elements/BookIII/`, and every one of the 137 entries of
-`facts.json` keeps exactly the `axioms` it had at 9f8c8adb. What changes in `facts.json` is
-the vocabulary (125 words, now 242), the type of the rule of superposition, and, for I.4
-and I.8 alone, the record of which rules each proof calls itself and through which steps it
-reaches the others. The certificate built afresh at 9a0f8ba1 is, byte for byte, the
-`facts.json` committed there, and every figure below was found again on it: the measured
-numbers read from it, the computed ones by the walk run again, and the count of Heath's
-references by the page generator's functions ("Checks", at the end).
+up to bd69bb9b, only the merge 60dc26e0 changes `Elements/` or `facts.json` (see the
+opening of this report). It changes no file of `Elements/BookIII/`, and every one of the
+137 entries of `facts.json` keeps exactly the `axioms` it had at 9f8c8adb. What changes in
+`facts.json` is the vocabulary (125 words, now 242), the type of the rule of superposition,
+and, for I.4 and I.8 alone, the record of which rules each proof calls itself and through
+which steps it reaches the others. The certificate built afresh at 9a0f8ba1 is, byte for
+byte, the `facts.json` committed there, and every figure below was found again on it: the
+measured numbers read from it, the computed ones by the walk run again, and the count of
+Heath's references by the page generator's functions ("Checks", at the end).
 
 **The finding.** On main as at 2e8aecf, III.1 is called nine times in eight proofs: III.2,
 III.4, III.8, III.14, III.17, III.35, III.36 (twice) and III.37. Train C6c removes four of
@@ -761,13 +765,193 @@ not built from changed Lean. How far the audit pins shrink is inferred, for they
 
 ## Checks
 
-Each check below names the revision it ran on. No file under `Staging/Routes/` changed from
-80e85ec6 to 9a0f8ba1. The commit that carries this text changes one of them,
-`Touching.lean`, in an import and its docstring, and no declaration. The first paragraph
-below is for the revision delivered; the others are its history.
+Each check below names the revision it ran on. The first part, headed by bd69bb9b's full
+hash and ending with the checks of style and links, is the fresh evidence for the revision
+delivered; the parts after it are its history, as they were run, and none of them was run
+again here. No file under `Staging/Routes/` changed from 80e85ec6 to 9a0f8ba1; e786ffc3
+changes one of them, `Touching.lean`, in an import and its docstring, and no declaration;
+and from e786ffc3 to bd69bb9b no file of `Elements/`, `Staging/`, `Certificate/` or
+`Audit/` changes, nor `facts.json`, `Staging.lean` or the toolchain. The commit that
+carries this text changes this report alone: it is a follow-up to bd69bb9b in
+documentation only, and the Lean it reports on is bd69bb9b's.
 
-**At 9a0f8ba1, with the edits of the commit that carries this text.** That is this
-paragraph's revision. The edits change no declaration: they delete from `Touching.lean` its
+**At bd69bb9b5e6790e00e9c25d8417b6d1898446733, the revision delivered.** The commands below
+were run in this order from the root of a clean checkout of that commit, with nothing
+uncommitted and no build of its own before them. The module the last of them elaborates
+was saved outside the repository, as `/tmp/routes-check-bd69bb9b/RoutesCheck.lean`, and is
+given whole below (SHA-256
+`358bcbd39808bfa4b690395d8b183a53ddbf8240bd07fdc92b548a7ad8846a0c`).
+
+```sh
+export PATH=$HOME/.elan/bin:$PATH
+git rev-parse HEAD            # bd69bb9b5e6790e00e9c25d8417b6d1898446733
+git status --porcelain        # nothing
+lake build Staging.Routes.Prop08 Staging.Routes.Prop20 Staging.Routes.Prop21 \
+  Staging.Routes.Prop26 Staging.Routes.Prop27 Staging.Routes.Touching \
+  Staging.Routes.AngleOfContact
+for f in Prop08 Prop20 Prop21 Prop26 Prop27 Touching AngleOfContact; do
+  lake env lean Staging/Routes/$f.lean
+done
+lake build Staging
+lake env lean /tmp/routes-check-bd69bb9b/RoutesCheck.lean
+```
+
+The build of the seven modules completed, with no warning from `Staging/Routes/`; its only
+warnings are the two unused variables at lines 165 and 166 of
+`Elements/Figure/Circles.lean`. Each of the seven files, elaborated alone, exited 0 and
+gave no message at all, so the five type equalities they end with hold. `lake build
+Staging` completed with the same two warnings and no other. The two builds and the module,
+which exited 0, reported, in that order:
+
+```text
+Build completed successfully (107 jobs).
+Build completed successfully (109 jobs).
+routes_check: 7 modules, 51 declarations, 38 theorems, 5 type equalities, 7 contact roots, 1476 constants walked beneath them, 0 findings
+Book III modules reached from the contact roots: [Elements.BookIII.Prop16,
+ Elements.BookIII.Prop02,
+ Elements.BookIII.Prop01,
+ Elements.BookIII.Prop18,
+ Elements.BookIII.MixedAngles]
+```
+
+The module takes its list from Lean's environment, not from a list written by hand: every
+declaration of the seven modules, 51, and among them the 38 theorems, those neither private
+nor internal. Each finding is an error, so that `lake env lean` fails on any. It finds any
+of the 51 declared as an axiom, and puts each to Lean's collectAxioms, finding `sorryAx`,
+Circle 3 (`Tacit.outside_of_between`), and any axiom that is neither one of Lean's three
+nor declared under `Elements/Foundations/`. It walks every constant beneath the 38
+theorems, statements and proofs, and finds Circle 2 (`Tacit.inside_of_between`, a theorem
+proved from Circle 3) or Circle 3 if either is reached. It finds any of the five
+staged theorems, for III.8, III.20's special case, III.21, III.26 and III.27, whose type is
+not identical to that of the theorem in `Elements/`, binder names and binder kinds
+included, with the same universe parameters: a stricter test than the `rfl` that closes
+each file. And it walks every constant beneath the seven theorems of `AngleOfContact.lean`,
+finding any of a proposition of Book III later than III.18 (in its module, or under its
+name) or staged in another file, and lists the modules of Book III reached. So, at
+bd69bb9b, none of the 38 theorems uses `sorry`, none of the seven files declares an axiom,
+nothing in them rests on an axiom beyond the foundations and Lean's three, or on Circle 2
+or Circle 3, the five staged theorems have exactly the types of the theorems in
+`Elements/`, and nothing beneath the angle of contact is later than III.18: the modules of
+Book III reached are those of III.1, III.2, III.16, III.18 and the mixed angles. The count
+of 1476 constants is this module's own. The scratch modules of the runs below were not
+kept, and counted 1462 beneath the same seven roots on the same Lean at 9a0f8ba1, so the
+two counts are of different walks, not of a change.
+
+Three copies of the module, run on the same build after it and then deleted, showed what
+it finds. The first printed the names of the 38 theorems: one each in `Prop08.lean` and
+`Prop21.lean`, two each in `Prop26.lean` and `Prop27.lean`, eleven in `Prop20.lean`, four
+of them in the namespace of a changed main theorem, fourteen in `Touching.lean` and seven
+in `AngleOfContact.lean`. The second added Circle 2 to the theorems walked and III.20 of
+`Elements/` to the roots of the angle of contact, Circle 2 and Circle 3 to the
+declarations put to collectAxioms, and paired the staged III.8 with III.8's general
+companion. It gave the seven findings those seeds call for: Circle 2 and Circle 3 beneath
+the theorems, Circle 3 declared as an axiom, Circle 3 beneath each of the two, the types
+unlike, and III.20 later than III.18. The third added a theorem resting on a new axiom and
+one proved by `sorry`, and gave a finding for each.
+
+```lean
+import Lean
+import Staging.Routes.Prop08
+import Staging.Routes.Prop20
+import Staging.Routes.Prop21
+import Staging.Routes.Prop26
+import Staging.Routes.Prop27
+import Staging.Routes.Touching
+import Staging.Routes.AngleOfContact
+
+open Lean Elab Command
+
+/-- Every constant beneath `n`, statement and proof, walked as Lean's collectAxioms walks. -/
+partial def walk (env : Environment) (n : Name) : StateM NameSet Unit := do
+  if (← get).contains n then return
+  modify (·.insert n)
+  let some ci := env.find? n | return
+  let mut next := ci.type.getUsedConstants
+  if let some v := ci.value? (allowOpaque := true) then next := next ++ v.getUsedConstants
+  if let .inductInfo v := ci then next := next ++ v.ctors.toArray
+  for c in next do walk env c
+
+def beneath (env : Environment) (roots : Array Name) : NameSet :=
+  ((roots.forM (walk env)).run {}).2
+
+def moduleOf (env : Environment) (n : Name) : Name :=
+  match env.getModuleIdxFor? n with
+  | some i => env.header.moduleNames[i.toNat]!
+  | none => .anonymous
+
+/-- `k`, when `n` is `Elements.BookIII.Propk` or a name under it. -/
+def bookIIIProp? (n : Name) : Option Nat :=
+  match n.components with
+  | e :: b :: p :: _ =>
+    let s := p.toString
+    if e == `Elements && b == `BookIII && s.startsWith "Prop" then (s.drop 4).toNat? else none
+  | _ => none
+
+run_cmd do
+  let env ← getEnv
+  let circle2 := `Elements.Tacit.inside_of_between
+  let circle3 := `Elements.Tacit.outside_of_between
+  let pairs : List (Name × Name) :=
+    [(`Elements.BookIII.Routes.Prop8, `Elements.BookIII.Prop8),
+     (`Elements.BookIII.Staging.Prop20.special, `Elements.BookIII.Prop20),
+     (`Elements.BookIII.Routes.Prop21, `Elements.BookIII.Prop21),
+     (`Elements.BookIII.Routes.Prop26, `Elements.BookIII.Prop26),
+     (`Elements.BookIII.Routes.Prop27, `Elements.BookIII.Prop27)]
+  for n in [circle2, circle3] ++ pairs.map (·.1) ++ pairs.map (·.2) do
+    unless env.contains n do throwError "{n} is not declared"
+  let mods := env.header.moduleNames.filter (`Staging.Routes).isPrefixOf
+  let mut decls : Array Name := #[]
+  for m in mods do
+    let some i := env.getModuleIdx? m | throwError "{m} is not imported"
+    decls := decls ++ env.header.moduleData[i.toNat]!.constNames
+  let theorems := decls.filter fun n =>
+    !isPrivateName n && !n.isInternal && env.find? n matches some (.thmInfo _)
+  let mut findings : Array MessageData := #[]
+  for n in decls do
+    if env.find? n matches some (.axiomInfo _) then
+      findings := findings.push m!"{n} is declared as an axiom"
+    for a in ← collectAxioms n do
+      if a == ``sorryAx then findings := findings.push m!"{n} uses sorry"
+      else if a == circle3 then findings := findings.push m!"{n} rests on Circle 3"
+      else unless [``propext, ``Classical.choice, ``Quot.sound].contains a ||
+          (`Elements.Foundations).isPrefixOf (moduleOf env a) do
+        findings := findings.push m!"{n} rests on {a}, outside the foundations"
+  let under := beneath env theorems
+  for n in [circle2, circle3] do
+    if under.contains n then findings := findings.push m!"{n} lies beneath the theorems"
+  for (s, e) in pairs do
+    let some a := env.find? s | unreachable!
+    let some b := env.find? e | unreachable!
+    unless a.type.equal b.type && a.levelParams == b.levelParams do
+      findings := findings.push m!"{s} and {e} differ in type"
+  let contact := theorems.filter (moduleOf env · == `Staging.Routes.AngleOfContact)
+  let below := beneath env contact
+  let mut reached : NameSet := {}
+  for n in below.toList do
+    let m := moduleOf env n
+    if (`Elements.BookIII).isPrefixOf m then reached := reached.insert m
+    if (bookIIIProp? m).any (· > 18) || (bookIIIProp? n).any (· > 18) then
+      findings := findings.push m!"{n}, in {m}, is later than III.18"
+    if (`Staging).isPrefixOf m && m != `Staging.Routes.AngleOfContact then
+      findings := findings.push m!"{n}, in {m}, is staged elsewhere"
+  for f in findings do logError f
+  logInfo m!"routes_check: {mods.size} modules, {decls.size} declarations, \
+    {theorems.size} theorems, {pairs.length} type equalities, {contact.size} contact roots, \
+    {below.size} constants walked beneath them, {findings.size} findings\n\
+    Book III modules reached from the contact roots: {reached.toList}"
+```
+
+Then, with this text in place, `lake build Elements` completed (153 jobs), for the style
+check's S12 asks Lean about the names in backticks, and `scripts/check_style.py` and
+`scripts/check_links.py` passed:
+
+```text
+✓ style: the hard rules hold (S1–S26)
+✓ links: all 14071 relative links and anchors in 484 Markdown files resolve
+```
+
+**At 9a0f8ba1, with the edits that e786ffc3 commits.** The edits change no declaration:
+they delete from `Touching.lean` its
 import of I.12, which nothing in the file used; correct a sentence of its docstring and one
 of the doc comment of `Staging.lean`; and change this report. On that tree the seven modules
 were built, and the scratch module described at 80e85ec6, below, put the 38 theorems to
@@ -913,7 +1097,7 @@ and seven with III.1 taken from the citations of the five proofs.
   four of its findings on the Lean (that fact, now cited from `Elements/`; "main's" in the
   Lean; Heath's note on III.26 quoted on III.27's page; and the type checks), and 7d9ffaed
   those on the report and the decisions entry. Two of its minor findings, both in the
-  Lean, were left open then. The commit that carries this text answers one: the header of
+  Lean, were left open then. e786ffc3 answers one: the header of
   `Touching.lean` called Intersections 8 and 9, which are construction rules, diagram
   rules, and now names both kinds. The other is kept by choice: the staged III.21 takes the
   centre F under Euclid's sentence, as III.21 in `Elements/` does, and uses it nowhere
@@ -930,8 +1114,15 @@ and seven with III.1 taken from the citations of the five proofs.
   7d9ffaed, and the merge 60dc26e0. It found the earlier findings answered, but for the two
   minor ones above, and the renaming of III.20 in general and its three theorems
   consistent, with no type changed. Its own findings, one material and four minor, are
-  answered by the commit that carries this text: three sentences of this report that the
+  answered by e786ffc3: three sentences of this report that the
   merge had made false, with checks that all predated the merge (the opening, #131 and
   "Checks"); the import of I.12 in `Touching.lean`, which nothing used; two sentences of
   this list; and a sentence of `Staging.lean` on its folders.
-- **Not yet read independently.** The commit that carries this text.
+- **The pre-merge validation at bd69bb9b** (WORKFLOW, section 10). Its review found that
+  "Checks" tied the evidence for the revision delivered to 9a0f8ba1 and to edits it did not
+  name, with no command of its scratch checks written out. The commit that carries this
+  text answers it, and changes this report alone: the checks above at bd69bb9b, with the
+  module they ran, and the account of the merges after 9a0f8ba1 in this report's opening
+  and under #131.
+- **Not yet read independently.** e786ffc3, which the review of the pre-merge validation at
+  bd69bb9b read with the rest of the branch, and the commit that carries this text.
