@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tests for scripts/safe_push.py, on a throwaway clone with a bare origin.
 
+    python3 -m pip install -r scripts/requirements-test_safe_push.txt
     python3 scripts/test_safe_push.py        # seven minutes or so; no Lean, no network
     STOICHEIA_SLOW_TESTS=1 python3 scripts/test_safe_push.py FullChecks   # Lean, minutes
 
@@ -104,7 +105,7 @@ The long checks of step 4 (the build and the rest) are skipped by the internal f
 local origin, and with it calls only the gh stand-in. The checks the guards run
 themselves (check_fidelity.py and render.py on the commit as committed) still run. The
 opt-in FullChecks test runs step 4 for real, once, on a good commit, as a dry run of the
-pre-flight. Python 3.11 or later; standard library and git.
+pre-flight. Python 3.11 or later; PyYAML at the version pinned beside this file, and git.
 """
 
 from __future__ import annotations
@@ -123,8 +124,11 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from dataclasses import dataclass
 from pathlib import Path
 from unittest import mock
+
+import yaml
 
 HERE = Path(__file__).resolve().parent
 SAFE_PUSH = HERE / "safe_push.py"
@@ -148,6 +152,195 @@ HARNESS_FILES = ("scripts/safe_push.py", "scripts/heath.py", "scripts/test_safe_
                  "scripts/hooks/pre-push", "scripts/hooks/safe-push", "scripts/install_hooks.sh",
                  "scripts/safe_push_allow.toml", ".github/pull_request_template.md",
                  "tests/certificate_expectations.json", "tests/model/hyperbolic.py")
+
+
+@dataclass(frozen=True)
+class WorkflowStep:
+    name: str
+    uses: str | None
+    inputs: tuple[tuple[str, object], ...]
+    run: tuple[str, ...]
+    environment: tuple[tuple[str, object], ...]
+    has_condition: bool
+    has_continue_on_error: bool
+    continue_on_error: object
+    has_shell_override: bool
+    has_working_directory: bool
+
+
+@dataclass(frozen=True)
+class WorkflowCheckJob:
+    steps: tuple[WorkflowStep, ...]
+    environment: tuple[tuple[str, object], ...]
+    unmodeled_settings: tuple[str, ...]
+    has_condition: bool
+    has_continue_on_error: bool
+    continue_on_error: object
+    has_dependencies: bool
+    has_shell_override: bool
+    has_working_directory: bool
+
+
+CHECK_JOB_SETTINGS = frozenset({"runs-on", "steps", "if", "continue-on-error", "needs",
+                                "defaults", "env"})
+
+
+def default_run_settings(mapping: dict, place: str) -> frozenset[str]:
+    defaults = mapping.get("defaults")
+    if defaults is None:
+        return frozenset()
+    if not isinstance(defaults, dict):
+        raise AssertionError(f"{place} defaults are not a mapping")
+    run = defaults.get("run")
+    if run is None:
+        return frozenset()
+    if not isinstance(run, dict):
+        raise AssertionError(f"{place} run defaults are not a mapping")
+    return frozenset(run)
+
+
+def mapping_items(mapping: dict, key: str, place: str) -> tuple[tuple[str, object], ...]:
+    value = mapping.get(key)
+    if value is None:
+        return ()
+    if not isinstance(value, dict):
+        raise AssertionError(f"{place} {key} is not a mapping")
+    return tuple(sorted((str(name), item) for name, item in value.items()))
+
+
+def normalized_check_job(source: str) -> WorkflowCheckJob:
+    try:
+        workflow = yaml.safe_load(source)
+    except yaml.YAMLError as exc:
+        raise AssertionError(f"CI workflow is not valid YAML: {exc}") from exc
+    if not isinstance(workflow, dict) or not isinstance(workflow.get("jobs"), dict):
+        raise AssertionError("CI workflow has no jobs mapping")
+    job = workflow["jobs"].get("check")
+    if not isinstance(job, dict):
+        raise AssertionError("CI workflow has no check job")
+    raw_steps = job.get("steps")
+    if not isinstance(raw_steps, list):
+        raise AssertionError("CI check job has no steps list")
+    steps = []
+    for index, step in enumerate(raw_steps, 1):
+        if not isinstance(step, dict):
+            raise AssertionError(f"CI check step {index} is not a mapping")
+        name = step.get("name", "")
+        if not isinstance(name, str):
+            raise AssertionError(f"CI check step {index} has a non-string name")
+        place = f"CI check step {name or index}"
+        uses = step.get("uses")
+        if uses is not None and not isinstance(uses, str):
+            raise AssertionError(f"{place} has a non-string uses value")
+        run = step.get("run")
+        if run is None:
+            commands = ()
+        elif isinstance(run, str):
+            commands = tuple(line.strip() for line in run.splitlines() if line.strip())
+        else:
+            raise AssertionError(f"{place} has a non-string run value")
+        steps.append(WorkflowStep(
+            name=name or str(index),
+            uses=uses,
+            inputs=mapping_items(step, "with", place),
+            run=commands,
+            environment=mapping_items(step, "env", place),
+            has_condition="if" in step,
+            has_continue_on_error="continue-on-error" in step,
+            continue_on_error=step.get("continue-on-error"),
+            has_shell_override="shell" in step,
+            has_working_directory="working-directory" in step,
+        ))
+    defaults = (default_run_settings(workflow, "CI workflow") |
+                default_run_settings(job, "CI check job"))
+    return WorkflowCheckJob(
+        steps=tuple(steps),
+        environment=(mapping_items(workflow, "env", "CI workflow") +
+                     mapping_items(job, "env", "CI check job")),
+        unmodeled_settings=tuple(sorted(str(key) for key in job
+                                        if key not in CHECK_JOB_SETTINGS)),
+        has_condition="if" in job,
+        has_continue_on_error="continue-on-error" in job,
+        continue_on_error=job.get("continue-on-error"),
+        has_dependencies="needs" in job,
+        has_shell_override="shell" in defaults,
+        has_working_directory="working-directory" in defaults,
+    )
+
+
+FRESHNESS_COMMAND = ("git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md "
+                     "README.md docs/PROGRAM.md")
+RENDER_COMMAND = "python3 scripts/render.py"
+FRESHNESS_ASSERTION = f'test -z "$({FRESHNESS_COMMAND})"'
+SETUP_ACTIONS = {"actions/checkout@v5": frozenset(),
+                 "actions/setup-python@v5": frozenset({"python-version"})}
+ELAN_INSTALL = (
+    "curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh"
+    " | sh -s -- -y --default-toolchain none",
+    'echo "$HOME/.elan/bin" >> "$GITHUB_PATH"',
+)
+
+
+def is_modeled_setup(step: WorkflowStep) -> bool:
+    if step.uses is None:
+        return step.run == ELAN_INSTALL
+    inputs = {name for name, _ in step.inputs}
+    return not step.run and step.uses in SETUP_ACTIONS and inputs <= SETUP_ACTIONS[step.uses]
+
+
+def enforced_check_commands(job: WorkflowCheckJob, required: list[str]) -> list[str]:
+    if job.unmodeled_settings:
+        raise AssertionError(f"CI check job has unmodeled settings {list(job.unmodeled_settings)}")
+    if job.has_condition:
+        raise AssertionError("CI check job has an if condition")
+    if job.has_continue_on_error and job.continue_on_error is not False:
+        raise AssertionError("CI check job can continue on error")
+    if job.has_dependencies:
+        raise AssertionError("CI check job has dependencies")
+    if job.has_shell_override:
+        raise AssertionError("CI check job has a default shell override")
+    if job.has_working_directory:
+        raise AssertionError("CI check job has a default working directory")
+    if job.environment:
+        raise AssertionError("CI check job has an environment override")
+    generated_body = (RENDER_COMMAND, FRESHNESS_COMMAND, FRESHNESS_ASSERTION)
+    simple = set(required) - {RENDER_COMMAND, FRESHNESS_COMMAND}
+    required_set = set(required)
+    setup_order = (*SETUP_ACTIONS, None)  # The actions, then the elan install.
+    setup_index = 0
+    commands = []
+    for step in job.steps:
+        if step.has_condition:
+            raise AssertionError(f"CI check step {step.name!r} has an if condition")
+        if step.has_continue_on_error and step.continue_on_error is not False:
+            raise AssertionError(f"CI check step {step.name!r} can continue on error")
+        if step.has_shell_override:
+            raise AssertionError(f"CI check step {step.name!r} has a shell override")
+        if step.has_working_directory:
+            raise AssertionError(f"CI check step {step.name!r} has a working directory")
+        if step.environment:
+            raise AssertionError(f"CI check step {step.name!r} has an environment override")
+        if is_modeled_setup(step):
+            if commands:
+                raise AssertionError(f"CI check step {step.name!r} is setup after the first check")
+            if setup_index == len(setup_order) or step.uses != setup_order[setup_index]:
+                raise AssertionError("CI check setup sequence differs from the required prefix")
+            setup_index += 1
+            continue
+        if step.uses is not None or not any(command in required_set for command in step.run):
+            raise AssertionError(
+                f"CI check step {step.name!r} is neither a required check nor the modeled setup")
+        if setup_index != len(setup_order):
+            raise AssertionError("CI check setup prefix is incomplete before the first check")
+        if step.run == generated_body:
+            commands.extend((RENDER_COMMAND, FRESHNESS_COMMAND))
+        elif len(step.run) == 1 and step.run[0] in simple:
+            commands.append(step.run[0])
+        else:
+            raise AssertionError(f"CI check step {step.name!r} has an unsupported run body")
+    if commands != required:
+        raise AssertionError("CI check command sequence differs from the required checks")
+    return commands
 
 
 def with_branch(args) -> tuple:
@@ -3636,6 +3829,174 @@ class FullChecks(Edge):
 
 class Units(unittest.TestCase):
     """The scanner and the helpers, without git."""
+
+    def configured_check_commands(self):
+        checks = []
+        for name, command in safe_push.CHECKS:
+            if name == "python3 -I tests/model/run.py --fast":
+                continue  # CI runs the model in its own job.
+            if command is None:
+                self.assertEqual(name, "git status --porcelain is empty")
+                checks.append(FRESHNESS_COMMAND)
+            else:
+                argv = ["python3" if part == safe_push.PY else part for part in command]
+                self.assertEqual(name, " ".join(argv))
+                checks.append(name)
+        return checks
+
+    def test_check_sequence_matches_workflow_and_ci(self):
+        workflow = (SOURCE / "docs/WORKFLOW.md").read_text()
+        block = workflow.split("## 8. Validation on the integrated revision", 1)[1]
+        block = block.split("```sh\n", 1)[1].split("```", 1)[0]
+        documented = [line.split("#", 1)[0].strip() for line in block.splitlines()
+                      if line.strip() and not line.startswith("export ")]
+        checks = self.configured_check_commands()
+        ci_commands = enforced_check_commands(normalized_check_job(
+            (SOURCE / ".github/workflows/ci.yml").read_text()), checks)
+        self.assertEqual(checks, documented)
+        self.assertEqual(checks, ci_commands)
+        certificate = checks.index("lake env lean Certificate/Facts.lean")
+        self.assertEqual(checks[certificate + 1], "python3 -I tests/test_certificate.py")
+
+    def test_ci_check_job_rejects_skip_and_failure_suppression(self):
+        source = (SOURCE / ".github/workflows/ci.yml").read_text()
+        certificate = "python3 -I tests/test_certificate.py"
+        cases = (
+            ("job if", "job", "if", False, "check job has an if condition"),
+            ("step if", "step", "if", False, "has an if condition"),
+            ("job continue", "job", "continue-on-error", True,
+             "check job can continue on error"),
+            ("step continue", "step", "continue-on-error", True,
+             "can continue on error"),
+            ("job dependency", "job", "needs", "acceptance", "has dependencies"),
+            ("workflow shell", "workflow", "defaults", {"run": {"shell": "bash {0}"}},
+             "default shell override"),
+            ("job shell", "job", "defaults", {"run": {"shell": "bash {0}"}},
+             "default shell override"),
+            ("step shell", "step", "shell", "bash {0}", "has a shell override"),
+            ("workflow working directory", "workflow", "defaults",
+             {"run": {"working-directory": "bypass"}}, "default working directory"),
+            ("job working directory", "job", "defaults",
+             {"run": {"working-directory": "bypass"}}, "default working directory"),
+            ("step working directory", "step", "working-directory", "bypass",
+             "has a working directory"),
+            ("wrapped run", "step", "run", f"set +e\n{certificate}\nexit 0",
+             "unsupported run body"),
+            ("missing freshness assertion", "render", "run",
+             f"{RENDER_COMMAND}\n{FRESHNESS_COMMAND}", "unsupported run body"),
+        )
+        for label, scope, field, value, message in cases:
+            with self.subTest(label=label):
+                workflow = yaml.safe_load(source)
+                job = workflow["jobs"]["check"]
+                target = workflow if scope == "workflow" else job if scope == "job" else next(
+                    step for step in job["steps"] if
+                    (scope == "step" and step.get("run") == certificate) or
+                    (scope == "render" and RENDER_COMMAND in step.get("run", ""))
+                )
+                target[field] = value
+                changed = yaml.safe_dump(workflow, sort_keys=False)
+                with self.assertRaisesRegex(AssertionError, message):
+                    enforced_check_commands(normalized_check_job(changed),
+                                            self.configured_check_commands())
+
+    def test_ci_check_job_rejects_unmodeled_setup_and_environment(self):
+        source = (SOURCE / ".github/workflows/ci.yml").read_text()
+        certificate = "python3 -I tests/test_certificate.py"
+        stub = {"name": "Prepare the shell", "run": (
+            "printf 'python3() { return 0; }\\n' > \"$RUNNER_TEMP/stub.sh\"\n"
+            "echo \"BASH_ENV=$RUNNER_TEMP/stub.sh\" >> \"$GITHUB_ENV\"\n")}
+        override = {"BASH_ENV": "stub.sh"}
+        unmodeled = "neither a required check nor the modeled setup"
+
+        def step_running(job, command):
+            return next(step for step in job["steps"] if step.get("run") == command)
+
+        def step_using(job, action):
+            return next(step for step in job["steps"] if step.get("uses") == action)
+
+        def before_certificate(step):
+            def insert(workflow, job):
+                job["steps"].insert(job["steps"].index(step_running(job, certificate)), step)
+            return insert
+
+        def checkout_before_render(workflow, job):
+            index = next(index for index, step in enumerate(job["steps"])
+                         if RENDER_COMMAND in step.get("run", "").splitlines())
+            job["steps"].insert(index, {"uses": "actions/checkout@v5"})
+
+        def reverse_setup_actions(workflow, job):
+            job["steps"][:2] = reversed(job["steps"][:2])
+
+        cases = (
+            ("BASH_ENV through GITHUB_ENV", before_certificate(stub), unmodeled),
+            ("unlisted action", before_certificate({"uses": "example/setup-shell@v1"}),
+             unmodeled),
+            ("checkout before rendering", checkout_before_render,
+             "setup after the first check"),
+            ("Python setup after checks begin",
+             before_certificate({"uses": "actions/setup-python@v5",
+                                 "with": {"python-version": "3.12"}}),
+             "setup after the first check"),
+            ("duplicate checkout",
+             lambda workflow, job: job["steps"].insert(1, job["steps"][0].copy()),
+             "setup sequence differs"),
+            ("duplicate Python setup",
+             lambda workflow, job: job["steps"].insert(2, job["steps"][1].copy()),
+             "setup sequence differs"),
+            ("reversed setup actions", reverse_setup_actions, "setup sequence differs"),
+            ("missing checkout", lambda workflow, job: job["steps"].pop(0),
+             "setup sequence differs"),
+            ("missing elan install", lambda workflow, job: job["steps"].pop(2),
+             "setup prefix is incomplete"),
+            ("checkout of another ref",
+             lambda workflow, job: step_using(job, "actions/checkout@v5").update(
+                 {"with": {"ref": "other"}}), unmodeled),
+            ("workflow environment", lambda workflow, job: workflow.update(env=override),
+             "check job has an environment override"),
+            ("job environment", lambda workflow, job: job.update(env=override),
+             "check job has an environment override"),
+            ("certificate step environment",
+             lambda workflow, job: step_running(job, certificate).update(env=override),
+             "has an environment override"),
+            ("setup step environment",
+             lambda workflow, job: step_using(job, "actions/setup-python@v5").update(
+                 env=override), "has an environment override"),
+            ("job container", lambda workflow, job: job.update(container="example/stub"),
+             "unmodeled settings"),
+        )
+        for label, mutate, message in cases:
+            with self.subTest(label=label):
+                workflow = yaml.safe_load(source)
+                mutate(workflow, workflow["jobs"]["check"])
+                changed = yaml.safe_dump(workflow, sort_keys=False)
+                with self.assertRaisesRegex(AssertionError, message):
+                    enforced_check_commands(normalized_check_job(changed),
+                                            self.configured_check_commands())
+
+    def test_ci_check_job_accepts_equivalent_yaml_formatting(self):
+        source = (SOURCE / ".github/workflows/ci.yml").read_text()
+        expected = normalized_check_job(source)
+        equivalent = yaml.safe_dump(yaml.safe_load(source), default_flow_style=True,
+                                    sort_keys=True, width=1_000_000)
+        self.assertEqual(normalized_check_job(equivalent), expected)
+        checks = self.configured_check_commands()
+        self.assertEqual(enforced_check_commands(normalized_check_job(equivalent), checks),
+                         enforced_check_commands(expected, checks))
+
+        workflow = yaml.safe_load(source)
+        job = workflow["jobs"]["check"]
+        step = next(step for step in job["steps"]
+                    if step.get("run") == "python3 -I tests/test_certificate.py")
+        job["continue-on-error"] = False
+        step["continue-on-error"] = False
+        enforced_check_commands(normalized_check_job(yaml.safe_dump(workflow)), checks)
+
+        workflow = yaml.safe_load(source)
+        formal_model = workflow["jobs"]["formal-model"]
+        self.assertIn("model", {step.get("working-directory") for step in formal_model["steps"]})
+        formal_model["defaults"] = {"run": {"working-directory": "model"}}
+        enforced_check_commands(normalized_check_job(yaml.safe_dump(workflow)), checks)
 
     def flagged(self, line: str) -> list[str]:
         return [f.rule for f in safe_push.scan_text("x", 1, line)]
