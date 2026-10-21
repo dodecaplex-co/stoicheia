@@ -13,7 +13,7 @@
   <line x1="200.0" y1="160.0" x2="200.0" y2="42.0" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
   <path d="M92.2,112.0 A118.0,118.0 0 0,1 307.8,112.0" fill="none" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
   <circle cx="200.0" cy="160.0" r="4.5" fill="#222222"/>
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="77.6" y="110.4">A</text>
     <text x="200.0" y="31.9">B</text>
     <text x="322.4" y="110.4">C</text>
