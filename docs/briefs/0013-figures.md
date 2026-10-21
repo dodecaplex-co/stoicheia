@@ -4,7 +4,7 @@
 
 This brief proposes the missing ground beneath I.45 and II.14: a figure described by its boundary, a proved division into triangles covering exactly its region, and a proof that every such division gives the same area. The constructions then apply to that area.
 
-The proposal follows [WORKFLOW, section 2](../WORKFLOW.md), and [FORMALIZATION, sections 2, 3, 6 and 7](../FORMALIZATION.md). The accompanying statements are staged in `Staging/Figures/`, and all of them are now proved there. On 20 October 2026 the coordinator assigned their proofs, in place, as an approved prototype (decision 6; WORKFLOW, section 2), and on 21 October every one was proved, with no new axiom and no statement changed. The derivations written first, which tested the interfaces, now rest on proved statements. Some proofs take another route than section 8 proposed; each departure is described in its Lean file and recorded in section 8, "The routes taken". What remains is the owner's approval to promote the statements and proofs into `Elements/` (section 7), and the edition work that follows it (section 10, "Progress, 21 October 2026").
+The proposal follows [WORKFLOW, section 2](../WORKFLOW.md), and [FORMALIZATION, sections 2, 3, 6 and 7](../FORMALIZATION.md). The accompanying statements are staged in `Staging/Figures/`, and all of them are now proved there. On 20 October 2026 the coordinator assigned their proofs, in place, as an approved prototype (decision 6; WORKFLOW, section 2), and on 21 October every one was proved, with no new axiom and no statement changed. The derivations written first, which tested the interfaces, now rest on proved statements. Some proofs take another route than section 8 proposed; each departure is described in its Lean file and recorded in section 8, "The routes taken". What remains is the owner's approval of their promotion into `Elements/` and of the changes that go with it, listed together in section 10, "Progress, 21 October 2026", and the edition work that follows.
 
 Base of the draft of 19 October: main at `39ae65c`; this revision merges main at `756bdbae`.
 Two agents drafted the statements and the proof route, one each;
@@ -301,7 +301,7 @@ definitions.
 
 The reachable vocabulary and generated auxiliaries join `Certificate/axioms.lock` through the existing lock procedure, with a decisions entry when approved statements use them. The axioms remain unchanged. Any required model and lock synchronisation follows the existing checks.
 
-Book Zero imports no proposition. In particular, it does not call `Fitted.fan`, II.14's area-positivity helper, I.21 or I.23. The checked fan bridge stays beside I.45, and `outline_bounded` goes to its Book I home. In `Staging/`, `Outline.lean` imports `OutlineBound.lean`, and so I.23, for `outline_bounded` alone; the promoted outline module drops that import when `outline_bounded` leaves it. No other staged theorem uses `outline_bounded`.
+Book Zero imports no proposition. In particular, it does not call `Fitted.fan`, II.14's area-positivity helper, I.21 or I.23. The checked fan bridge stays beside I.45, and `outline_bounded` goes to its Book I home. Until it moves, `Outline.lean` imports I.23 for `outline_bounded` alone, and every file that imports `Outline.lean` imports I.23 with it; the move is among the owner's approvals (section 10, "Progress, 21 October 2026").
 
 The integrator owns `Elements/Companions.lean` and generated output. An independent reviewer owns the renewed semantic reviews. The edition contributor owns the assigned commentary and gap-account changes. The approved orders must give each file exactly one writer.
 
@@ -309,19 +309,47 @@ The proposed vocabulary does not replace brief 0012's convex `Polygon`. Any shar
 
 ### Before promotion
 
-These points are for the change that moves the work into `Elements/`, most of them raised
-by the readers of the proofs; none is a defect of a statement:
+These points are for the change that moves the work into `Elements/`. They were raised by
+the readers of the proofs and by a code review of the whole of `Staging/Figures/` at
+`b2c0580a`, recorded outside the repository, and each was checked against the Lean at that
+revision. None is a defect of a statement:
 
 - General lemmas about lists, sums and order sit in helper namespaces (`Extract`, `Diag`,
-  `Parity`, `LoopFacts`, `Arr`, `Tiling`), and want shared homes.
+  `Parity`, `LoopFacts`, `Arr`, `Tiling`), and want shared homes. `Arr`, `Diag` and `Ext`
+  are terse names for a namespace, and `OutlineBound.lean` declares its lemmas into
+  `OutlineFacts`, another file's namespace.
 - Some names want settling. `CoverFacts.cell_apart` and `CoverFacts.cells_apart` keep a
   point clear of the cells whose closed regions miss it; they do not keep cells apart.
   `Arr.tangent`, `Parity.parity_of_triangle` and `Extract.loc` are to be renamed or
   confirmed. `Diag.not_both` and `Diag.corner_off` repeat names of `Pieces`, and
   `Diag.count_split` one of `CellFacts`; `OutlineFacts.count_split` is a third
-  `count_split`.
-- `Diag.corner_boundary` duplicates `OutlineFacts.vertex_boundary`, statement and proof;
-  promotion keeps one.
+  `count_split`. Twelve predicates are named in lower camel case: `loopInside`,
+  `loopBoundary`, `loopRegion`, `Outline.inside`, `Outline.region`, `Outline.boundary`,
+  `cellCore`, `cellRegion`, `ConvexCell.core`, `ConvexCell.region`, `Extract.cls` and
+  `Extract.tcls`, beside their siblings `ConvexRegion` and `RegionBoundary`, in the
+  UpperCamelCase that FORMALIZATION, section 2, asks of a predicate. The names belong to
+  the definitions, so they are renamed, or kept as a recorded departure, with the approval.
+  `Avoid.inside_of_between` shares its short name with `Tacit.inside_of_between`, the
+  Circle 2 rule that FORMALIZATION, section 7, bars from every certificate entry: it is a
+  proved lemma of its own and harmless in the build, but wants a name no reader can take
+  for the barred rule.
+- Twelve pairs of declarations have identical statements, their types equal in Lean;
+  promotion keeps one of each, and cites it (FORMALIZATION, section 6). Four are aliases,
+  the first of each pair proved by citing the second: `cut_convex_rotate_append` and
+  `Ext.convex_rotate_prefix`, `cut_fan_rotate_append` and `Ext.fanSum_rotate_prefix`,
+  `cut_remove_third` and `ConvexOutline.erase_third`, and `cut_inside_crossbar` and
+  `inside_between` (`ConvexFacts.lean`). Three pair a staged statement with a helper:
+  `crossing_parity_independent` applies `Parity.parity_independent`, `region_with_holes`
+  applies `OutlineFacts.region_holes`, and `OutlineFacts.inside_iff` proves the statement
+  of `loop_inside_iff` again, since the helpers that use it come before `Outline.lean` and
+  cannot cite it. Five are proved twice: `Tiling.core_region` and `CoverFacts.core_region`,
+  `OutlineFacts.good_of_line` and `CoverFacts.goodRay_of_line`, `LoopFacts.convex_side_ne`
+  and `Pieces.side_ne`, `OutlineFacts.vertex_boundary` and `Diag.corner_boundary`, and
+  `Diag.sides_snd_inj` and `Extract.sides_snd_inj`.
+- Six helpers are used by nothing, and promotion drops them: `Extract.rot_corner` and
+  `Extract.vert_not_inside` (`ExtractEdges.lean`), `Extract.same_swap_left` and
+  `Extract.same_pair` (`ExtractLists.lean`), and `cut_side_at` and `cut_corner_not_closed`
+  (`CutHelpers.lean`).
 - The helper definitions `CoverFacts.corners`, `CoverFacts.joins` and `Diag.OnChain` are
   definitions outside the foundations: they go to the foundations' owner, the coordinator,
   or are inlined.
@@ -330,14 +358,31 @@ by the readers of the proofs; none is a defect of a statement:
 - Some hypotheses go unused. `Pieces.side_third` carries one its proof does not use, and
   `lake build Staging` warns that the proofs of `convex_diagonal_separates` and
   `outline_cells_cover`, in `Arrangement.lean`, leave hypotheses of their statements unused:
-  that both chains have a corner (the binders `hu` and `hv`), and that the cells' insides
-  lie apart (`ha`). The statements keep them, since changing a statement needs approval.
+  that both chains have a corner (the binders `hu` and `hv`), which is vacuous, since the
+  conclusion ranges over the corners of the two chains, and that the cells' insides lie
+  apart (`ha`), which the proof never uses. The statements keep them, since changing a
+  statement needs approval; at approval each is dropped, or recorded as redundant, and none
+  is silenced by a name beginning with `_`.
+- The Lean notes of `Staging/Figures/` pass `scripts/check_style.py` only because it reads
+  the notes of `Elements/` and not those of `Staging/`; promoted unchanged, they would fail
+  it. By S22's own reading they hold 317 code spans of letters alone, such as AB or B₂ in
+  backticks (STYLE, section 1, "Lean notes"), most of them in `OutlineBound.lean`,
+  `ArrangementFacts.lean`, `CutPieces.lean` and `Cells.lean`; and a note of
+  `ExtractLists.lean` (line 421) names a hypothesis by its local name in backticks, `hgrow`,
+  where STYLE, section 1, "Hypotheses in words", asks for words.
+- `Diagonal.lean`, of 2,225 lines, proves the optional D5 and D6, and nothing outside it
+  rests on them: `division_exists` takes the arrangement route, and D7 is proved by D9.
+  Whether to keep it, in the Book Zero home of the table above, or to retire it with the
+  statements D5 and D6 is decided at approval (decision 8).
 - Notes in `Elements/` that say a figure's boundary, or its division into triangles, is not
   stated in Lean go stale when the bridges are promoted: in `Elements/BookI/Prop45.lean`,
   the docstring of `Fitted.fan`, the note on Euclid's and Byrne's division before it and the
   docstring of `Prop45.fan`; in `Elements/BookII/Prop14.lean`, the docstring of
   `Prop14.fan`; and in `Elements/Foundations/Phrases.lean`, the coordinator's, the docstring
   of `Apart`.
+- The docstring of `Staging.lean` lists the folders `Stage3/`, `Stage4/`, `Stage4b/` and
+  `Centre/`, but not `Figures/`. That file is outside this work, and the line is for its
+  owner to add while `Figures/` stands.
 
 The Lean notes of `Staging/Figures/` were brought up to date with the proofs, so that none
 says a proof is due, awaits approval or rests on stubs.
@@ -856,7 +901,8 @@ and decisions 7 and 8 are open; the status of each follows it.
    are now the homes of proved work. Section 7 adds two for approval: `outline_bounded`,
    with `OutlineBound.lean`, in a Book I module of its own after I.29, for its proof cites
    I.23 and uses Postulate 5; and the optional diagonal route in Book Zero, beside the
-   arrangement, since its proof cites no proposition.
+   arrangement, since its proof cites no proposition, if it is kept. Every approval the
+   work waits for is listed in section 10, "Progress, 21 October 2026".
 8. **Acceptance.** Close issue #116 only after the whole boundary domain, exact
    division, arbitrary content and construction companions pass section 10.
    Recommended. The convex prototype is an intermediate result, and D5 to D7 are
@@ -985,26 +1031,57 @@ axioms of exactly five staged theorems:
 
 Every other staged theorem, `division_exists`, `area_eq` and `apart_has_outline` among
 them, shows neither, and cites no proposition of the *Elements*. No other staged theorem
-uses `outline_bounded`. So on promotion it must follow I.23 (FORMALIZATION, section 6);
-section 7 proposes, for the owner's approval, a Book I module of its own after I.29, where
-Euclid first uses Postulate 5.
+uses `outline_bounded`. So on promotion it must follow I.23 (FORMALIZATION, section 6), and
+its home, a Book I module of its own after I.29, where Euclid first uses Postulate 5, is
+the second of the owner's approvals below.
 
 **What these checks do not show.** Lean checks the formal derivations, and the readings
 judged them against the statements and the route. Neither is the independent semantic
 review of the promoted records and pages, the integrated validation pipeline at the
 promoted revision, a scan comparison or a kernel replay; those come with promotion.
 
-**What remains for #116.** The owner's approval to promote. Promotion moves the statements
-and proofs from `Staging/Figures/` into `Elements/`, to the homes of section 7, with a
-Book I module of its own after I.29 for `outline_bounded` and its citation of I.23, and
-deletes the staged copies in the same change (WORKFLOW, section 2). The outline companions
-become the edition's general claim for I.45 and II.14 (section 5). The records of I.45 and II.14
-return from restricted (`figure-with-dissection`) to full, through the companions, once
-reviewed (section 7, "Records and tags"); and the two `ALLOWED_LIMITS` entries for them in
-`scripts/check_acceptance.py` go, with the two rows of
-[ACCEPTANCE's table](../ACCEPTANCE.md#the-limitations-allowed). Until then I.45 and II.14
-stay restricted, and the staged copies in `BookI.lean` and `BookII.lean` hold P10 for
-them, so the release gate holds: the intended `blocks-release` state under #116.
+**What remains for #116: the owner's approvals.** These are the approvals the work waits
+for, all of them, listed here alone; the sections named give the detail.
+
+1. **Promotion.** The statements and proofs move from `Staging/Figures/` into `Elements/`,
+   to the homes of section 7, with the points of section 7, "Before promotion", and the
+   staged copies are deleted in the same change (WORKFLOW, section 2).
+2. **`outline_bounded` in Book I.** Its proof cites I.23 and uses Postulate 5, so it goes
+   to a Book I module of its own after I.29 (section 7), moved unchanged out of
+   `Outline.lean`. Today `Outline.lean` imports `OutlineBound.lean`, and so I.23, for that
+   theorem alone, so every file that imports `Outline.lean` imports I.23 too:
+   `Arrangement.lean`, `CoverFacts.lean`, `Diagonal.lean`, `Division.lean`, `Extract.lean`,
+   `ExtractEdges.lean`, `ExtractRay.lean`, `FanBoundary.lean`, `OutlineArea.lean`,
+   `BookI.lean` and `BookII.lean`. Nothing else uses `outline_bounded`, or a lemma of
+   `OutlineBound.lean`, and Lean accepts its proof unchanged in a scratch file, outside the
+   repository, that imports `OutlineBound.lean` and not `Outline.lean`. Once it moves,
+   `Outline.lean` and the files that import it, all but the companions' `BookI.lean` and
+   `BookII.lean`, which import I.45 and II.14 themselves, cite and import no proposition,
+   and can go to Book Zero, as FORMALIZATION, section 6, and `scripts/check_fidelity.py`
+   require. The notes that say a file imports I.23 for `outline_bounded`, in `Outline.lean`
+   and in the nine files listed here before `BookI.lean`, change with it.
+3. **The companions as the general claim.** `Prop45.outline`, `Prop14.outline` and
+   `Prop14.outline_side` become the edition's general claim for I.45 and II.14, registered
+   and displayed as section 5 describes: decision 4's policy, approved on 20 October,
+   applied to the proved companions.
+4. **The records.** The records of I.45 and II.14 return from restricted
+   (`figure-with-dissection`) to full, through the companions, once reviewed (section 7,
+   "Records and tags").
+5. **The acceptance check.** The two `ALLOWED_LIMITS` entries for I.45 and II.14 in
+   `scripts/check_acceptance.py` go, with the two rows of
+   [ACCEPTANCE's table](../ACCEPTANCE.md#the-limitations-allowed).
+6. **Counts in statements.** [FORMALIZATION, section 2](../FORMALIZATION.md), says: "No
+   numbers, coordinates or real numbers appear in a statement or a proof." Decision 3,
+   approved on 20 October, recommends that "finite counts use natural numbers while
+   lengths, angles and areas remain magnitudes". The staged statements and proofs count in
+   natural numbers: the sides a ray crosses (`crossingCount`), the contours round a point
+   (`Outline.depth`), and corners, rotation steps and tiles; `crossing_parity_independent`
+   compares two crossing counts modulo two. For such counts the two contradict each other,
+   so with the approval the sentence is amended, or the exception recorded.
+
+Until these are given and the work promoted, I.45 and II.14 stay restricted, and the
+staged copies in `BookI.lean` and `BookII.lean` hold P10 for them, so the release gate
+holds: the intended `blocks-release` state under #116.
 
 Of the acceptance list above, the first six items are proved in `Staging/`, free of
 `sorry` and with no new axiom. The rest come with promotion: no later citation in the

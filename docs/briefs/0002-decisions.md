@@ -3561,11 +3561,20 @@ findings:
   revision before the work lands. Where a proof departs from the brief's route, the brief
   records it (section 8, "The routes taken"), and the Lean says how the proof goes. Nothing
   moves into `Elements/`, and I.45 and II.14 stay restricted (`figure-with-dissection`),
-  until the owner approves promotion. The approval asked for would cover moving the
-  statements and proofs into `Elements/`, to the homes of the brief's section 7, among them
-  a Book I module of its own after I.29 for `outline_bounded` and its citation of I.23; the
-  outline companions as the edition's general claim for I.45 and II.14; the two records'
-  return from restricted to full, once reviewed; and the removal of the two
-  `ALLOWED_LIMITS` entries in `scripts/check_acceptance.py`, with the two rows of
-  [ACCEPTANCE's table](../ACCEPTANCE.md#the-limitations-allowed). Until then the staged
-  copies hold P10 for I.45 and II.14, so the release gate holds, as #116 intends.
+  until the owner approves promotion. The approvals asked for are listed together in the
+  brief's section 10, "Progress, 21 October 2026": moving the statements and proofs into
+  `Elements/`, to the homes of the brief's section 7; `outline_bounded`, with its citation
+  of I.23 and its use of Postulate 5, moved unchanged out of `Outline.lean` to a Book I
+  module of its own after I.29, so that `Outline.lean` and the files that import it, the
+  companions aside, import no proposition and can go to Book Zero; the outline companions
+  as the edition's general claim for I.45 and II.14; the two records' return from
+  restricted to full, once reviewed; the removal of the two `ALLOWED_LIMITS` entries in
+  `scripts/check_acceptance.py`, with the two rows of
+  [ACCEPTANCE's table](../ACCEPTANCE.md#the-limitations-allowed); and, for the natural-number
+  counts of the brief's decision 3, the amendment of the sentence of
+  [FORMALIZATION](../FORMALIZATION.md), section 2, "No numbers, coordinates or real numbers
+  appear in a statement or a proof.", or the exception recorded. The points for the change
+  that promotes the work, the code review of the whole of `Staging/Figures/` at `b2c0580a`
+  among their sources, are in the brief's section 7, "Before promotion". Until promotion
+  the staged copies hold P10 for I.45 and II.14, so the release gate holds, as #116
+  intends.
