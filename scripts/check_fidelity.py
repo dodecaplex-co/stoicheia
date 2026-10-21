@@ -175,11 +175,11 @@ FORBIDDEN = re.compile(
 # planted : False` as two commands, the second an axiom.
 AXIOM = re.compile(r"\baxiom\b")
 # A lone carriage return: a `\r` not followed by `\n` (#207). Lean reads `\r\n` as `\n`,
-# refuses a lone `\r` between tokens but accepts one inside a comment or a literal, so
-# CRLF files are allowed (no tracked .lean file has a `\r` today) but a lone one is not.
-# A `--` comment does not end at it, so, read as Lean reads the bytes, it can sit between
-# a comment's words and a quote and hide the code after that quote; check_rules refuses it
-# in every scanned file.
+# so CRLF files are allowed (no tracked .lean file has a `\r` today). It refuses a lone
+# `\r` between tokens but accepts one inside a comment or a literal, and a `--` comment
+# does not end at it, so, read as Lean reads the bytes, it can sit between a comment's
+# words and a quote and hide the code after that quote; check_rules refuses it in every
+# scanned file.
 LONE_CR = re.compile(r"\r(?!\n)")
 # Placement (brief 0006, "Placement", the policy). `placement` carries the points on one
 # side of a straight line, and the line, onto those on one side of an equal straight line,
@@ -211,9 +211,9 @@ def rel(path: Path) -> str:
 
 
 def lean_text(path: Path) -> str:
-    """A Lean source file's bytes, decoded as UTF-8, with no newline translation, as Lean
-    reads them (#207). `Path.read_text()` uses Python's universal newlines, which turn a
-    lone carriage return into a line feed; Lean does not. Lean reads `\\r\\n` as `\\n`,
+    """A Lean source file's bytes, decoded as UTF-8, with no newline translation (#207).
+    `Path.read_text()` uses Python's universal newlines, which turn a lone carriage return
+    into a line feed; Lean does not. Lean reads `\\r\\n` as `\\n`,
     refuses a lone `\\r` between tokens but accepts one inside a comment or a literal, and
     a `--` comment ends only at a line feed, so a scan that let `read_text()` shorten
     `-- a remark\\r"` to a comment ending at the `\\r` would see a string open on the next
