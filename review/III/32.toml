@@ -37,6 +37,6 @@ case = "D on F's side of BA and apart from A, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "d0508d6c"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "b9f6a766"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:c66a4535c2813f36"
