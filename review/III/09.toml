@@ -13,6 +13,6 @@ note = "The circle comes with a centre, which the proof shows is D. Euclid's pro
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
+commit = "2c3686e"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:81664e305ab4ab7b"
+lean = "sha256:5f94f9834e18273e"

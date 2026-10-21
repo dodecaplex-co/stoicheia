@@ -1,4 +1,4 @@
-"""Run the model evidence for the axioms.
+"""Run the model evidence for the axioms and retained derived properties.
 
     python3 -I tests/model/run.py --fast           # CI: well under two minutes
     python3 -I tests/model/run.py --full [--write] # about seven minutes
@@ -25,9 +25,12 @@ seeds and the Python; writes the axiom-by-axiom table to results/summary.txt; an
 the counts in MODEL.md up to date.
 
 The run passes when every harness runs to its last line, no harness finds a counterexample
-in the plane or reports a law twice, every mutation is caught, every axiom's hypotheses
-are met somewhere, and in the hyperbolic plane every axiom holds except those laws.toml
-says must fail there (Postulate 5), which must fail.
+in the plane or reports a law or derived property twice, every mutation is caught,
+every axiom's hypotheses are met somewhere, and every retained derived property is
+reported and exercised by each exhaustive or structured run. In the hyperbolic plane
+every axiom holds except those laws.toml says must fail there (Postulate 5), which must fail.
+Derived-property totals are reported separately. While a property is still an axiom,
+its unchanged predicate also supplies evidence that the axiom's hypotheses were met.
 """
 import datetime
 import hashlib
@@ -45,7 +48,7 @@ RESULTS = os.path.join(HERE, 'results')
 LOCK = os.path.join(ROOT, 'Certificate', 'axioms.lock')
 LOCK_HASH = os.path.join(HERE, 'lock.sha256')
 MODEL_MD = os.path.join(HERE, 'MODEL.md')
-HARNESS = ['model.py', 'search.py', 'exhaustive.py', 'structured.py', 'mutations.py',
+HARNESS = ['model.py', 'search.py', 'derived.py', 'exhaustive.py', 'structured.py', 'mutations.py',
            'grid_check.py', 'angle_check.py', 'hyperbolic.py', 'run.py', 'laws.toml']
 PLACEHOLDER = 'TODO'
 
@@ -53,6 +56,7 @@ sys.path.insert(0, HERE)
 _argv, sys.argv = sys.argv, sys.argv[:1]   # the harness modules read sys.argv when imported
 import search  # noqa: E402
 import hyperbolic  # noqa: E402
+from derived import PROPERTIES  # noqa: E402
 from model import read_laws  # noqa: E402
 sys.argv = _argv
 
@@ -150,6 +154,26 @@ def check_lock():
 
 # ---------------------------------------------------------------- running the harnesses
 
+def parse_results(out, axiom_names):
+    """Read axiom and derived-property rows without relying on registry overlap."""
+    laws, properties, twice = {}, {}, set()
+    for line in out.splitlines():
+        m = re.match(r'^(\S+)\s+(\d+)\s+(\d+)\s+(\d+)\b', line)
+        if not m:
+            continue
+        name = m.group(1)
+        if name.startswith('derived.'):
+            rows = properties
+        elif name in axiom_names:
+            rows = laws
+        else:
+            continue
+        if name in rows:
+            twice.add(name)
+        rows[name] = tuple(int(m.group(i)) for i in (2, 3, 4))
+    return laws, properties, twice
+
+
 class Run:
     def __init__(self, key, script, args=(), env=None, seeds='', what=''):
         self.key, self.script, self.args, self.env = key, script, [str(a) for a in args], env
@@ -162,13 +186,7 @@ class Run:
         p = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT, env=env)
         self.seconds = time.time() - t
         self.code, self.out, self.err = p.returncode, p.stdout, p.stderr
-        self.laws, self.twice = {}, set()
-        for line in self.out.splitlines():
-            m = re.match(r'^(\S+)\s+(\d+)\s+(\d+)\s+(\d+)\b', line)
-            if m and m.group(1) in search_names:
-                if m.group(1) in self.laws:
-                    self.twice.add(m.group(1))
-                self.laws[m.group(1)] = (int(m.group(2)), int(m.group(3)), int(m.group(4)))
+        self.laws, self.derived, self.twice = parse_results(self.out, search_names)
         envs = ' '.join(f'{k}={v}' for k, v in (self.env or {}).items())
         self.command = ' '.join(filter(None, [envs, 'python3 -I', 'tests/model/' + self.script, *self.args]))
         return self
@@ -184,12 +202,12 @@ def plan(full):
         runs += [Run('exhaustive', 'exhaustive.py', seeds='7 (for area_congruent\'s isometries)',
                      what='every configuration on small grids'),
                  Run('structured', 'structured.py', [100000, 11], seeds='11',
-                     what='structured search, 100,000 samples per axiom')]
+                     what='structured search, 100,000 samples per axiom or derived property')]
     else:
         runs = [Run('search-seed1', 'search.py', [2000, 1], seeds='1', what='random search, 2,000 samples per axiom'),
                 Run('structured', 'structured.py', [5000, 11], seeds='11',
-                    what='structured search, 5,000 samples per axiom')]
-    runs += [Run('mutations', 'mutations.py', what='15 deliberately weakened axioms'),
+                    what='structured search, 5,000 samples per axiom or derived property')]
+    runs += [Run('mutations', 'mutations.py', what='15 deliberately weakened statements'),
              Run('grid_check', 'grid_check.py', what='a second, independent exact grid check'),
              Run('angle_check', 'angle_check.py', seeds='1', what='a second, independent angle and area check'),
              Run('hyperbolic', 'hyperbolic.py', [20000 if full else 300, 1], seeds='1',
@@ -213,6 +231,16 @@ def judge(runs):
         last = next((v for k, v in LAST_LINE.items() if r.key.startswith(k)), None)
         if last and not re.search('^' + re.escape(last), r.out, re.M):
             bad.append(f'{r.key} stopped before its last line')
+        expected = set(PROPERTIES) if r.key in ('exhaustive', 'structured') else set()
+        for name in sorted(expected - set(r.derived)):
+            bad.append(f'{r.key} did not report derived property {name}')
+        for name in sorted(set(r.derived) - expected):
+            bad.append(f'{r.key} reported unexpected derived property {name}')
+        for name, (_, hits, cex) in r.derived.items():
+            if not hits:
+                bad.append(f'{r.key}: the hypotheses of {name} were never met')
+            if cex:
+                bad.append(f'{r.key}: a counterexample to {name} in the plane')
     plane = [r for r in runs if r.key.startswith(EUCLIDEAN)]
     for r in plane:
         for law, (_, _, cex) in r.laws.items():
@@ -221,7 +249,8 @@ def judge(runs):
         if r.key.startswith('search') and len(r.laws) != len(LAWS):
             bad.append(f'{r.key} reported {len(r.laws)} laws, not {len(LAWS)}')
     for law in LAWS:
-        if not any(r.laws.get(law, (0, 0, 0))[1] for r in plane):
+        if not any(r.laws.get(law, (0, 0, 0))[1]
+                   or r.derived.get('derived.' + law, (0, 0, 0))[1] for r in plane):
             bad.append(f'no harness in this run met the hypotheses of {law}')
     by = {r.key: r for r in runs}
     m = re.search(r'^(\d+)/(\d+) mutations caught', by['mutations'].out, re.M)
@@ -246,6 +275,57 @@ def judge(runs):
         if not hits:
             bad.append(f'hyperbolic: the hypotheses of {law} were never met')
     return bad
+
+
+def self_test():
+    """Plant reporting faults, including after the axiom names have disappeared."""
+    from types import SimpleNamespace
+
+    def fixture(key, out):
+        laws, properties, twice = parse_results(out, search_names)
+        return SimpleNamespace(key=key, out=out, err='', code=0,
+                               laws=laws, derived=properties, twice=twice)
+
+    # The re-keyed checks still witness coverage while these declarations are axioms.
+    axioms = '\n'.join(f'{name} 1 {int("derived." + name not in PROPERTIES)} 0' for name in LAWS)
+    hyp = '\n'.join(f'{name} 1 1 {int(name in EXPECTED_TO_FAIL)}' for name in LAWS)
+    properties = '\n'.join(f'{name} 1 1 0' for name in PROPERTIES)
+    laws, rows, twice = parse_results(properties, set())
+    if laws or set(rows) != set(PROPERTIES) or twice:
+        raise AssertionError('derived rows depend on the axiom registry')
+    base = [fixture('search-seed1', axioms + '\naxioms checked:'),
+            fixture('mutations', '15/15 mutations caught'),
+            fixture('grid_check', 'failures 0'),
+            fixture('angle_check', 'triple incidence grid failures: 0 ; float failures: {}'),
+            fixture('hyperbolic', hyp + '\nself-test:\naxioms checked:')]
+    checked = 0
+    for key in ('exhaustive', 'structured'):
+        good = properties + '\n' + LAST_LINE[key]
+        runs = base + [fixture(key, good)]
+        if judge(runs):
+            raise AssertionError(f'{key}: valid derived-property report refused')
+        faults = [('completion', properties, 'stopped before its last line')]
+        for name in PROPERTIES:
+            row = f'{name} 1 1 0'
+            faults += [
+                ('missing', good.replace(row, ''), f'did not report derived property {name}'),
+                ('duplicate', good + '\n' + row, f'reported {name} twice'),
+                ('unexercised', good.replace(row, f'{name} 1 0 0'), f'hypotheses of {name} were never met'),
+                ('counterexample', good.replace(row, f'{name} 1 1 1'), f'counterexample to {name} in the plane'),
+            ]
+        faults.append(('unknown', good + '\nderived.unknown 1 1 0',
+                       'reported unexpected derived property derived.unknown'))
+        for kind, out, message in faults:
+            bad = judge(base + [fixture(key, out)])
+            if not any(message in problem for problem in bad):
+                raise AssertionError(f'{key}: {kind} reporting fault escaped')
+            checked += 1
+        failed = fixture(key, good)
+        failed.code = 1
+        if not any('exited with status 1' in p for p in judge(base + [failed])):
+            raise AssertionError(f'{key}: failed process accepted')
+        checked += 1
+    print(f'derived-property self-test: {checked} reporting faults caught; registry-independent parsing passed')
 
 
 # ---------------------------------------------------------------- writing the results
@@ -283,10 +363,21 @@ def header(r, prov):
     return ''.join(f'# {x}\n' for x in lines) + '\n'
 
 
-def totals(runs):
+def totals(runs, derived=False):
     plane = [r for r in runs if r.key.startswith(EUCLIDEAN)]
-    met = {k: sum(h for _, h, _ in r.laws.values()) for k, r in ((r.key, r) for r in plane)}
+    met = {r.key: sum(h for _, h, _ in (r.derived if derived else r.laws).values()) for r in plane}
     return met, sum(met.values())
+
+
+def derived_table(runs):
+    """Separate evidence for the retained properties, also when writing results."""
+    by = {r.key: r for r in runs}
+    rows = ['| Derived property | Exhaustive | Structured |', '|---|--:|--:|']
+    for name in PROPERTIES:
+        cells = [f'{by[key].derived[name][1]:,}' if key in by and name in by[key].derived else '·'
+                 for key in ('exhaustive', 'structured')]
+        rows.append('| `' + name + '` | ' + ' | '.join(cells) + ' |')
+    return '\n'.join(rows)
 
 
 def law_table(runs, markdown):
@@ -314,6 +405,7 @@ def law_table(runs, markdown):
 
 def counts_block(runs, prov):
     met, total = totals(runs)
+    _, derived_total = totals(runs, derived=True)
     h = {r.key: r for r in runs}['hyperbolic']
     hyp_met = sum(x[1] for x in h.laws.values())
     fails = '; '.join(f'`{lean_name(law)}` failed {h.laws.get(law, (0, 0, 0))[2]:,} times'
@@ -331,7 +423,12 @@ def counts_block(runs, prov):
         f'{hyp_met:,} configurations met an axiom\'s hypotheses; '
         + (f'{fails} and every other axiom held.' if fails else 'every axiom held.'),
         '',
-        law_table(runs, markdown=True)])
+        law_table(runs, markdown=True),
+        '',
+        f'Separately, **{derived_total:,}** configurations met a retained derived property\'s '
+        'hypotheses, with no counterexample. These do not count toward the axiom totals.',
+        '',
+        derived_table(runs)])
 
 
 def write(runs, prov):
@@ -347,6 +444,12 @@ def write(runs, prov):
             f.write(f'  {k}: {v:,}\n')
         f.write('counterexamples in the plane: 0; mutations caught: 15 of 15\n\n')
         f.write(law_table(runs, markdown=False) + '\n')
+        derived_met, derived_total = totals(runs, derived=True)
+        f.write(f'\nconfigurations meeting a derived property\'s hypotheses: {derived_total:,}\n')
+        for k, v in derived_met.items():
+            if v:
+                f.write(f'  {k}: {v:,}\n')
+        f.write(derived_table(runs) + '\n')
     with open(MODEL_MD) as f:
         md = f.read()
     new, n = re.subn(r'(<!-- counts:begin -->\n).*?(\n<!-- counts:end -->)',
@@ -366,6 +469,7 @@ def main():
                                or ('--write' in args and '--full' not in args)):
         sys.exit(__doc__)
     full = '--full' in args
+    self_test()
     n, problems = check_names()
     print(f'names: laws.toml names {len(LAW_OF)} laws; facts.json declares {n} axioms'
           + (' -- they agree, with the lock and the harness' if not problems else ''))
@@ -384,11 +488,18 @@ def main():
         r.go()
         runs.append(r)
         hits = sum(h for _, h, _ in r.laws.values())
-        print(f' {r.seconds:6.1f} s' + (f', {hits:,} configurations met a hypothesis' if r.laws else ''))
+        derived_hits = sum(h for _, h, _ in r.derived.values())
+        print(f' {r.seconds:6.1f} s'
+              + (f', {hits:,} configurations met an axiom hypothesis' if r.laws else '')
+              + (f'; {derived_hits:,} met a derived-property hypothesis' if r.derived else ''))
     bad = judge(runs)
     met, total = totals(runs)
     print(f'plane: {total:,} configurations met an axiom\'s hypotheses; counterexamples: '
           f'{sum(c for r in runs if r.key.startswith(EUCLIDEAN) for *_, c in r.laws.values())}')
+    _, derived_total = totals(runs, derived=True)
+    print(f'derived properties: {derived_total:,} configurations met a hypothesis; counterexamples: '
+          f'{sum(c for r in runs for *_, c in r.derived.values())}')
+    print(derived_table(runs))
     h = {r.key: r for r in runs}['hyperbolic']
     failed = '; '.join(f'{law} failed {h.laws.get(law, (0, 0, 0))[2]:,} times'
                        for law in sorted(EXPECTED_TO_FAIL))
