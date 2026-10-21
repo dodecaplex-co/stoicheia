@@ -4113,6 +4113,40 @@ findings:
   `scripts/check_fidelity.py`,
   `scripts/check_model_kernel.py`.
 
+- **Two guards gain their planted faults
+  ([#158](https://github.com/jackChallis/stoicheia/issues/158)).** The check that a
+  complete book has every figure and mishnah, and leanchecker's kernel replay, each said it
+  had no planted fault to show that it works. Each now has one, in the protected file
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py), as new items 19 and 20,
+  each a function of its own with one call. Item 19 removes I.1's `figures/I/01.svg`, then
+  `figures/I/01-idea.svg`, then `mishnah/I/01.md`, one at a time. Book I is complete, so
+  `check_fidelity.py` must fail each time with "I.1: … is missing", naming that file and
+  not the other two; each file is put back byte for byte in `finally`. Item 20 plants
+  `True.intro` as a proof of `False` in I.1's compiled module, the way the first
+  read-through named ([read-through 01](../reports/read-through-01.md)):
+  `set_option debug.skipKernelTC true` and a `run_cmd` that calls `addDecl`. The source
+  scan refuses both, so I.1 is compiled with them by `lake env lean -o`, over its own
+  `.olean`, from a copy in a temporary folder outside the tree, importing
+  `Lean.Elab.Command`, which defines the monad `run_cmd` runs in and brings `addDecl`
+  with it. Then
+  `leanchecker --fresh Elements`, the command `scripts/check_kernel.py` runs, must fail
+  with "while replaying declaration 'Elements.BookI.planted_ill_typed'" and the kernel's
+  type mismatch, and not with a file it cannot read or an invalid header. The build is
+  restored as item 15 restores it: the original bytes, a forced rebuild, and on success
+  the whole environment replayed; no file is left in the tree. Tried by hand first with
+  Lean 4.35: without the option, the kernel refuses the same plant when I.1 compiles, so
+  the proof is ill-typed and the option is what lets it past. With the missing-file check
+  commented out in a scratch copy of `check_fidelity.py`, item 19 reports each of the three
+  files not caught; with a leanchecker that checks nothing, item 20 reports the proof not
+  caught. Item 20 takes about a minute, restoration included. The protected regression
+  test [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) gains three
+  tests, without Lean: the three files return byte for byte whether the check names them,
+  misses them or is interrupted; the build returns when the restoration build fails or is
+  interrupted; and a replay that fails on a header, not on the proof, is not counted as
+  caught. Neither file pinned the list of plants or its count.
+  [FORMALIZATION](../FORMALIZATION.md), section 7, and the README's row for the negative
+  tests now describe both plants. No check is weakened.
+
 - **Train C6a meets axiom wave one: the lock is main's 79 axioms and the centre rule.**
   Train C6a, which carries stage 3, the mixed angles, the rule that every circle has a
   centre and brief 0008's section 7, was merged with main at `2e8aecf`, after the eight
@@ -4126,8 +4160,9 @@ findings:
   which brings main at `0a05f96f` (#196, the switch for upright letters, and #198, short
   hashes read from Git); with main at `001620f1` (#199, the carried helper's kind, and
   #201, the five required checks); with main at `e7ffaf68` (#202, the gaps of S24 to S26,
-  and #204, tooling/centre-given-meaning itself); and last with main at `6e0cdd27` (#208,
-  the model's kernel replay). The 19 October entry "A new tag, `touching-whole-circles`"
+  and #204, tooling/centre-given-meaning itself); with main at `6e0cdd27` (#208, the
+  model's kernel replay); and last with main at `73b97ab1` (#219, planted faults for two
+  guards). The 19 October entry "A new tag, `touching-whole-circles`"
   expected the definition of contact within to change in step 6: it changes in this
   train, with section 7, and the tag's meaning gains the point within in a check change
   of its own after this train (question 16).
@@ -4159,12 +4194,13 @@ findings:
   `III_11_today`, `III_13_today`, `cut_point`, `CirclesCut.of_meet` and `within_point`,
   were renewed from Lean's output, and change only by losing `Tacit.adjacent_eq_of_right`
   and `Tacit.centre_unique`, now theorems; every other name in each list is unchanged. On
-  the merges of `756bdbae`, `0a05f96f`, `001620f1`, `e7ffaf68` and `6e0cdd27` no pin was
-  renewed: `lake build Audit` passes with every pin of `Audit/Overlaps.lean`,
-  `Audit/Crossing.lean` and main's `Audit/Superposition.lean` as written.
+  the merges of `756bdbae`, `0a05f96f`, `001620f1`, `e7ffaf68`, `6e0cdd27` and
+  `73b97ab1` no pin was renewed: `lake build Audit` passes with every pin of
+  `Audit/Overlaps.lean`, `Audit/Crossing.lean` and main's `Audit/Superposition.lean` as
+  written.
   The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`, `model/`, `scripts/`,
   `review/SCHEMA.md`, `lakefile.toml` and `lean-toolchain` that differ from main at
-  `6e0cdd27`, each named whole:
+  `73b97ab1`, each named whole:
   `Audit.lean`,
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
