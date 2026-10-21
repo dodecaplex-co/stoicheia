@@ -1064,6 +1064,14 @@ SET_OPTION_SPELLINGS = (
      "set_option\t«debug».skipKernelTC true in theorem planted_tab : True := trivial"),
     ("set_option «debug».",
      "set_option\n  «debug».skipKernelTC true in theorem planted_break : True := trivial"),
+    ("set_option«debug».", "/-/- -/\nset_option«debug».skipKernelTC true in "
+     "theorem planted_after_plain_slash : True := trivial"),
+    ("set_option«debug».", "/--/ x -/\nset_option«debug».skipKernelTC true in "
+     "theorem planted_after_doc_slash : True := trivial"),
+)
+SET_OPTION_KEPT = (
+    "/- /- -/ set_option«debug».skipKernelTC true in "
+    "theorem planted_nested : True := trivial -/",
 )
 # `#guard_msgs` with `drop`, in Lean 4.35's forms (#197): each kind of message and `all`,
 # the brackets closed up or spaced, `drop` after another filter or an option, twice, and a
@@ -1233,7 +1241,7 @@ def set_option_spellings() -> None:
     """`set_option«debug».skipKernelTC true in`, and the other SET_OPTION_SPELLINGS, in a
     scratch copy of I.1's file: each refused by its file, line and spelling."""
     scratch_plants("set_option«debug».… and its kin, with no space before the option",
-                   SET_OPTION_SPELLINGS)
+                   SET_OPTION_SPELLINGS, SET_OPTION_KEPT)
 
 
 def guard_msgs_drop() -> None:
