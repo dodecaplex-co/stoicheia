@@ -1,44 +1,26 @@
 module
 
 public import Model.Signature
+public import Elements.Foundations.Superposition.Semantics
 
 /-!
 # Superposition, translated by hand
 
-**Hand-translated.** This file holds the translation of one law, the rule of
-superposition (`Elements.Tacit.superposition`), and of the two defined words it reaches,
-`Collinear` and `Triangle`. The generator described in the [README](../../README.md)
-writes every law from its elaborated declaration. `Check/Superposition.lean` compares
-this translation and both hand words with their generated counterparts, as well as with
-the library's declarations.
+The law is the generic restricted `Elements.Superposition.Rule` applied to an
+interpretation built from the signature. Only the four pure calculus modules may be
+shared with the library. They define symbols, derivations and their semantics, and
+assume no geometry. `Check/Generator.lean` audits their transitive dependencies and
+translates them by identity, preserving universe arguments.
 
-The translation is the lock's statement, word for word, with `S.Point` for
-`Elements.Point`, `S.OnLine` for `Elements.OnLine`, `S.len` for `Elements.len`, and so on:
-the same binders, in the same order and of the same kinds, and every guard. The lock prints
-the law as
+`Check/Superposition.lean` checks the interpretation and the law by `rfl`, both against
+the library under `Check.original` and against the generated definitions. The explicit
+placement proposition below is supporting mathematics, not a field of `Laws`.
+`Rule.of_placement` reduces the restricted law to that placement with its side drawn.
 
-```text
-∀ {A B C D G H : Elements.Point} {L : Elements.Line}, Elements.Triangle A B C →
-Elements.OnLine D L → Elements.OnLine G L → Ne D G → Not (Elements.OnLine H L) →
-Exists fun (B' : Elements.Point) => Exists fun (C' : Elements.Point) => And
-(Elements.OnLine B' L) (And (Not (Elements.Between B' D G)) (And (Elements.SameSide C' H L)
-(And (Eq (Elements.len D B') (Elements.len A B)) (And (Eq (Elements.len B' C')
-(Elements.len B C)) (And (Eq (Elements.len C' D) (Elements.len C A)) (And (Eq
-(Elements.ang B' D C') (Elements.ang B A C)) (And (Eq (Elements.ang D C' B') (Elements.ang
-A C B)) (Eq (Elements.ang C' B' D) (Elements.ang C B A)))))))))
-```
-
-and `facts.json` gives the same text as its `axiom_types` entry. `Check/Superposition.lean`
-puts the library's own words in for `S` and asks the kernel whether the result is the
-library's declaration; the build fails if it is not.
-
-The words are kept in a namespace of their own, `Model.Hand.Superposition`, so that this
-file can stand beside other hand translations, and beside the generated laws, without two
-definitions of `Triangle` meeting.
-
-The rule is the one we owe to LeanEuclid (Logan Murphy, Kaiyu Yang, Jialiang Sun, Zhaoyu
-Li, Anima Anandkumar and Xujie Si), which joins System E's two superposition rules into one;
-our thanks to them, and to Jeremy Avigad, Edward Dean and John Mumma for System E.
+The combined placement follows LeanEuclid, by Logan Murphy, Kaiyu Yang, Jialiang Sun,
+Zhaoyu Li, Anima Anandkumar and Xujie Si, with thanks. The restriction follows the style
+of System E, by Jeremy Avigad, Edward Dean and John Mumma. Equivalence with its two-rule
+presentation is not claimed.
 -/
 
 @[expose] public section
@@ -58,11 +40,28 @@ Not (Elements.Collinear A B C)`. -/
 def Triangle (A B C : S.Point) : Prop :=
   ¬ Collinear S A B C
 
-/-- `Elements.Tacit.superposition`, by hand: the triangle ABC can be laid down with A on
-the point D of the line L, B on the ray from D through G, and C on the side of L where H
-is, with every side and angle kept. The lock's statement is quoted in the module's
-docstring. -/
+/-- The primitive words of the signature, interpreted by the shared calculus. -/
+def primitives : Elements.Superposition.Interpretation where
+  Point := S.Point
+  Line := S.Line
+  OnLine := S.OnLine
+  Between := S.Between
+  SameSide := S.SameSide
+  Length := S.Length
+  Angle := S.Angle
+  Area := S.Area
+  len := S.len
+  ang := S.ang
+  area := S.area
+
+/-- `Elements.Tacit.superposition`, by hand: a restricted inference of metric equalities
+about the given figure from a hypothetical placement. -/
 def superposition : Prop :=
+  Elements.Superposition.Rule (primitives S)
+
+/-- Supporting placement mathematics: lay ABC on the ray DG, on H's side of L,
+keeping all three sides and angles. This existential is not the superposition law. -/
+def placement : Prop :=
   ∀ {A B C D G H : S.Point} {L : S.Line}, Triangle S A B C → S.OnLine D L → S.OnLine G L →
     D ≠ G → ¬ S.OnLine H L →
     ∃ B' C' : S.Point, S.OnLine B' L ∧ ¬ S.Between B' D G ∧ S.SameSide C' H L ∧

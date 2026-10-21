@@ -75,9 +75,11 @@ order, and the first that fails stops it with a message saying why:
    only check inputs changed are values pinned to the edition (PINNED, below; the
    certificate's expectations only while none of origin/main's is dropped or loosened;
    the model's law names, and a law's code in the two harnesses that check every law
-   (MODEL_LAW_CODE), only while each law changed moves with its axiom), which move with
-   the content they pin. A crash of origin/main's render.py, its check of
-   docs/program.toml among them, is a verdict. Step 3's two checks run the same way.
+   (MODEL_LAW_CODE), only while each law changed moves with its axiom; the Markdown of
+   the check inputs that are not code (COUNTED_PROSE) only while nothing but the values
+   between its count markers changes), which move with the content they pin. A crash of
+   origin/main's render.py, its check of docs/program.toml among them, is a verdict.
+   Step 3's two checks run the same way.
 5. The pull request settled first: our open one for the branch (a fork's of the same
    name is never touched), or a new one; its body, --body-file or generated from
    .github/pull_request_template.md (the commits, the statements, the review records
@@ -166,6 +168,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import types
 import unicodedata
 from pathlib import Path
 from typing import NamedTuple
@@ -211,15 +214,18 @@ CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "revie
 # Of those, the values pinned to the edition, not code. The lock and the model's hash of it
 # are compared exactly, both ways: check_fidelity.py the lock with facts.json, and the
 # model's run its hash with the lock. The model's page and results are its account of the
-# laws, which no check reads. The certificate's expectations are checked one way only, each
-# for what it says, so a change to them is a pinned value only while it keeps every
-# expectation origin/main has (kept_expectations). The model's law names are compared with
-# the lock both ways, but a line of them changed while its axiom stands would loosen the
-# model's check of that axiom, so a change to them is a pinned value only while each line
-# changed moves with its axiom's entry in the lock (laws_move_with_axioms). A change to
-# the content they pin moves them with it, in the same pull request; they stay protected
-# (a decisions line, security-review, the lock's guard), and the commit's own checks must
-# pass.
+# laws, which no check reads but for the page's count markers. The certificate's
+# expectations are checked one way only, each for what it says, so a change to them is a
+# pinned value only while it keeps every expectation origin/main has (kept_expectations).
+# The model's law names are compared with the lock both ways, but a line of them changed
+# while its axiom stands would loosen the model's check of that axiom, so a change to them
+# is a pinned value only while each line changed moves with its axiom's entry in the lock
+# (laws_move_with_axioms). The values between count markers in the Markdown of
+# COUNTED_PROSE, below, are compared exactly with the files they count (check_fidelity.py),
+# so a change to that Markdown is a pinned value only while nothing but those values
+# changes (counts_moved). A change to the content they pin moves them with it, in the same
+# pull request; they stay protected (a decisions line, security-review, the lock's guard),
+# and the commit's own checks must pass.
 EXPECTATIONS = "tests/certificate_expectations.json"
 MODEL_HASH = "tests/model/lock.sha256"
 MODEL_LAWS = "tests/model/laws.toml"
@@ -231,6 +237,15 @@ PINNED = (EXPECTATIONS, LOCK, MODEL_HASH, MODEL_LAWS, MODEL_PAGE, MODEL_RESULTS)
 # itself, the laws that stay keep their order, and the rest of the file stays as it was
 # (laws_move_with_axioms).
 MODEL_LAW_CODE = ("tests/model/search.py", "tests/model/hyperbolic.py")
+# The check inputs that are not code: Certificate/FIELDS.md and review/SCHEMA.md say what
+# the certificate and the records hold, and Markdown under tests/ is prose too
+# (tests/model/MODEL.md, the only one today, is pinned whole). render.py fills the count
+# markers in their Markdown, as COUNT_READER defines them, and check_fidelity.py holds
+# each value to the files it counts: a new word in the lock moves FIELDS.md's count of
+# the words with it, in no other order. scripts/ is check code: a count there is never
+# pinned.
+COUNTED_PROSE = ("Certificate/", "review/SCHEMA.md", "tests/")
+COUNT_READER = "scripts/generated_counts.py"
 SECURITY_LABEL = "security-review"
 RELEASE_LABEL = "release"
 BLOCKS_RELEASE = "blocks-release"
@@ -274,6 +289,7 @@ CHECKS = [
     ("python3 scripts/check_fidelity.py", [PY, "scripts/check_fidelity.py"]),
     ("python3 -I tests/test_check_style.py", [PY, "-I", "tests/test_check_style.py"]),
     ("python3 -I tests/test_release_gate.py", [PY, "-I", "tests/test_release_gate.py"]),
+    ("python3 -I tests/test_jev_models.py", [PY, "-I", "tests/test_jev_models.py"]),
     ("python3 scripts/check_style.py", [PY, "scripts/check_style.py"]),
     ("python3 scripts/render.py", [PY, "scripts/render.py"]),
     ("git status --porcelain is empty", None),
@@ -2018,17 +2034,68 @@ def laws_move_with_axioms(repo, base, sha, path: str) -> bool:
     return True
 
 
+def count_markers(repo, base):
+    """origin/main's reader of count markers, generated_counts.markers, or None when its
+    copy is missing or does not load. The harness is safe_push.py and heath.py alone, so
+    the module is read from origin/main's tree, never the commit's or the checkout's. It
+    is the reader render.py and check_fidelity.py use, and the commit's own pass reads
+    with the same one, since a commit that changes it changes scripts/, which is never
+    pinned."""
+    source = show_bytes(repo, base, COUNT_READER)
+    if source is None:
+        return None
+    module = types.ModuleType("generated_counts")
+    try:        # compiled as an import compiles it, without this file's __future__ import
+        exec(compile(source, f"origin/main:{COUNT_READER}", "exec", dont_inherit=True),
+             vars(module))
+    except Exception:       # a copy that does not load reads no marker: nothing is pinned
+        return None
+    return getattr(module, "markers", None)
+
+
+def counts_moved(repo, base, sha, path: str) -> bool:
+    """Is the commit's change to `path`, Markdown of COUNTED_PROSE, confined to the values
+    between its count markers, as origin/main's generated_counts reads them
+    (count_markers)? The file stays a regular file of the same mode, the same markers stand
+    by name and in order, every byte outside their values is as it was, and a value moves.
+    A marker added, removed or renamed, any other byte changed, a file added or deleted, or
+    one either side cannot read, is not. The commit's own check_fidelity.py holds each
+    value to the files it counts."""
+    if not (path.endswith(".md") and under(path, COUNTED_PROSE)):
+        return False
+    raw = git(repo, "diff", "--raw", "-z", "--no-renames", base, sha, "--", f":(literal){path}")
+    modes = raw.split("\0")[0].lstrip(":").split()[:2]
+    if len(modes) != 2 or modes[0] != modes[1] or modes[0] not in ("100644", "100755"):
+        return False
+    old, new = show_bytes(repo, base, path), show_bytes(repo, sha, path)
+    read = count_markers(repo, base)
+    if old is None or new is None or old == new or read is None:
+        return False
+    try:
+        texts = old.decode(), new.decode()
+        found = [read(text, path) for text in texts]
+    except (UnicodeDecodeError, ValueError):
+        return False
+
+    def outside(text: str, markers) -> list[str]:
+        cuts = [0, *(i for m in markers for i in (m.value_start, m.value_end)), len(text)]
+        return [text[a:b] for a, b in zip(cuts[0::2], cuts[1::2])]
+    return outside(texts[0], found[0]) == outside(texts[1], found[1])
+
+
 def pinned(repo, base, sha, path: str) -> bool:
     """Is the commit's change to the check input `path` a value pinned to the edition? The
     lock, the model's hash of it, and its page and results, always; the certificate's
     expectations, while the change keeps every one origin/main has (kept_expectations);
     the model's law names, and a law's code in the two harnesses that check every law,
-    while each law changed moves with its axiom (laws_move_with_axioms)."""
+    while each law changed moves with its axiom (laws_move_with_axioms); and the Markdown
+    of the check inputs that are not code, while nothing but the values between its count
+    markers changes (counts_moved). A file under scripts/ never is."""
     if path == EXPECTATIONS:
         return kept_expectations(show(repo, base, path), show(repo, sha, path))
     if path == MODEL_LAWS or path in MODEL_LAW_CODE:
         return laws_move_with_axioms(repo, base, sha, path)
-    return under(path, PINNED)
+    return under(path, PINNED) or counts_moved(repo, base, sha, path)
 
 
 def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
@@ -2040,13 +2107,16 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     origin/main's copies (FRESHNESS): a renderer's change shows in the pages it
     regenerates, and the commit's own pass still needs them current. And any failure on a
     commit whose only check inputs changed are pinned values (pinned): a re-proof that
-    moves an expected count, or a new word in the lock, changes the value with the
+    moves an expected count, or a new word in the lock and the count of the words that
+    Certificate/FIELDS.md gives between its count markers, changes the value with the
     content, in no other order, and the commit's own pass still needs them to agree. An
     expectation dropped or loosened is no pinned value: check_fidelity.py checks only
-    what each expectation says, so the commit's own pass could never catch it. Check code
-    changed with judged content is kept apart, pinned values or not; and so is a law of
-    the model changed while its axiom stands, for the commit's own pass could not catch
-    that either. True when it refuses."""
+    what each expectation says, so the commit's own pass could never catch it. Nor is a
+    count marker added, removed or renamed, or any other byte of that Markdown changed:
+    the commit's own pass checks the values alone. Check code changed with judged content
+    is kept apart, pinned values or not; and so is a law of the model changed while its
+    axiom stands, for the commit's own pass could not catch that either. True when it
+    refuses."""
     failed = [name for s in rep.steps
               if s.stage == stage and s.outcome == "note" and s.name.endswith(BASE_PASS)
               and (name := s.name.removesuffix(BASE_PASS)) not in FRESHNESS]
@@ -2058,7 +2128,8 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
         if not any(s.stage == stage and s.name == "pinned values" for s in rep.steps):
             rep.add(stage, "pinned values", "note", f"origin/main's checks fail on the commit "
                     f"({', '.join(failed)}), and the only check inputs it changes are values "
-                    f"pinned to the edition, and laws of the model that move with their axioms "
+                    f"pinned to the edition, the values between count markers, and laws of "
+                    f"the model that move with their axioms "
                     f"({', '.join(inputs)}), which move with the content they pin: for the "
                     "security review, which reads each law's code")
         return False
@@ -2066,6 +2137,8 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     loosened = EXPECTATIONS in inputs and not pinned(repo, base, sha, EXPECTATIONS)
     laws = [p for p in inputs if (p == MODEL_LAWS or p in MODEL_LAW_CODE)
             and not pinned(repo, base, sha, p)]
+    counted = [p for p in inputs if p.endswith(".md") and under(p, COUNTED_PROSE)
+               and not pinned(repo, base, sha, p)]
     rep.add(stage, "check change kept apart", "FAIL",
             f"origin/main's checks fail on the commit ({', '.join(failed)}), and it changes "
             f"what they judge as well as the checks: {shown}"
@@ -2074,10 +2147,14 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
             + (f"; and it changes the model's laws in {', '.join(laws)} beyond the laws that "
                "move with their axioms (or a law's code uses what its allow-list does not "
                "name), which is a check change" if laws else "")
+            + (f"; and it changes {', '.join(counted)} beyond the values between count "
+               "markers, which is a check change" if counted else "")
             + ". Land the check change first, in a pull request of its own (the check code, "
             "the guides, the regenerated pages and the records' stamps), and the rest after "
             f"it; values pinned to the edition ({LOCK}, {MODEL_HASH}, the counts and values "
-            f"of {EXPECTATIONS}, none of its expectations dropped or loosened, and the "
+            f"of {EXPECTATIONS}, none of its expectations dropped or loosened, the values "
+            f"between count markers in the Markdown of {', '.join(COUNTED_PROSE[:-1])} and "
+            f"{COUNTED_PROSE[-1]}, nothing else of it changed, and the "
             f"model's account, {MODEL_PAGE} and {MODEL_RESULTS}) move with the content they "
             f"pin, and so does a law of the model, its line of {MODEL_LAWS} and its code in "
             f"{' and '.join(MODEL_LAW_CODE)}, with its axiom (docs/WORKFLOW.md, \"Landing "
