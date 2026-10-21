@@ -2616,7 +2616,7 @@ BLOCK = re.compile(r"(?ms)^<!-- safe_push:preflight begin(?: sha=(\w+) base=(\w+
                    r"[ \t\r]*$(?:(?!<!-- safe_push:preflight begin).)*?"
                    r"^<!-- safe_push:preflight end -->[ \t\r]*$")
 PLACEHOLDER = re.compile(r"(?m)^<!-- safe_push: (\w+) -->[ \t\r]*$")
-STAMP_FIELD = re.compile(r'(?m)^(fingerprint|commit|lean)\s*=\s*"([^"]*)"')
+STAMP_FIELD = re.compile(r'(?m)^(fingerprint|commit|lean|text)\s*=\s*"([^"]*)"')
 
 
 def sanitized(text: str) -> str:
@@ -2686,8 +2686,15 @@ def describe(ctx: Context, pre: Preflight) -> dict[str, str]:
             continue
         old = dict(STAMP_FIELD.findall(show(repo, base, path) or ""))
         new = dict(STAMP_FIELD.findall(show(repo, sha, path) or ""))
+        lost = sorted(old.keys() - new.keys())
         if status == "D":
             records.append(f"- `{path}`: deleted")
+        elif lost:
+            records.append(f"- `{path}`: {'a stamp' if len(lost) == 1 else 'stamps'} taken "
+                           f"away ({', '.join(f'`{key}`' for key in lost)})")
+        elif old != new and new.get("commit") and new["commit"] == old.get("commit"):
+            records.append(f"- `{path}`: its stamps written, its commit kept at "
+                           f"`{new['commit'][:12]}`")
         elif old != new and new.get("commit"):
             records.append(f"- `{path}`: re-stamped at `{new['commit'][:12]}`")
         else:

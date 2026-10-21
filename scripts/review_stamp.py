@@ -194,9 +194,7 @@ def stamp(facts: dict, book: str, n: int, commit: str | None, dry_run: bool) -> 
                              f"{rv['commit']}, so it needs a reader, who reads it and stamps "
                              "it with --commit (docs/WORKFLOW.md, section 6)")
         raise ValueError(why + ask)
-    if commit is not None and (changes or commit != rv.get("commit")):
-        # Whatever the stamps record, the commit named is in the history of HEAD, and the
-        # files at it are the files now.
+    if commit is not None:
         full = resolve(commit)
         if full is None or not in_history(full):
             raise ValueError(f"{ref}: {commit} "

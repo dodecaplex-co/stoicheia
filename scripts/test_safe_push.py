@@ -150,6 +150,7 @@ INSTALL_HOOKS = HERE / "install_hooks.sh"
 SOURCE = HERE.parent
 sys.path.insert(0, str(HERE))
 import safe_push  # noqa: E402
+import review_stamp  # noqa: E402
 
 TMP: Path
 ORIGIN: Path
@@ -4725,7 +4726,92 @@ class FullChecks(Edge):
 
 
 class Units(unittest.TestCase):
-    """The scanner and the helpers, without git."""
+    """The scanner and helpers, with temporary Git only where history is the subject."""
+
+    def test_review_stamp_checks_an_unchanged_commit_in_head_history(self):
+        facts = {"propositions": [{"ref": "I.1", "statement": "A test statement."}]}
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            lean = repo / "Elements/BookI/Prop01.lean"
+            source = repo / "heath/I/01.md"
+            record = repo / "review/I/01.toml"
+            for path in (lean, source, record):
+                path.parent.mkdir(parents=True, exist_ok=True)
+            lean.write_text("theorem Prop1 : True := by trivial\n")
+            source.write_text("A test enunciation.\n\nA test proof.\n")
+            fingerprint = review_stamp.heath.review_fingerprint(facts, "I.1")
+            lean_hash = review_stamp.heath.file_hash(lean)
+            text = (f'[statement]\nscope = "full"\nfingerprint = "{fingerprint}"\n\n'
+                    '[route]\nkind = "euclid"\n\n[review]\nstage = "exceptions"\n'
+                    f'reviewer = "Test reader"\nlean = "{lean_hash}"\n'
+                    'text = "sha256:0000000000000000"\n')
+            own = review_stamp.heath.text_hash(text)
+            record.write_text(text.replace("sha256:0000000000000000", own))
+            git(repo, "init", "-q")
+            git(repo, "config", "user.name", "review stamp test")
+            git(repo, "config", "user.email", "review-stamp-test@example.invalid")
+            git(repo, "config", "commit.gpgsign", "false")
+            git(repo, "add", ".")
+            git(repo, "commit", "-q", "-m", "The files read")
+            read_commit = git(repo, "rev-parse", "HEAD").strip()[:12]
+            current = record.read_text().replace("[review]\n",
+                                                 f'[review]\ncommit = "{read_commit}"\n', 1)
+            record.write_text(current)
+            git(repo, "add", "review/I/01.toml")
+            git(repo, "commit", "-q", "-m", "Record the reading")
+            with mock.patch.object(review_stamp, "ROOT", repo), \
+                    mock.patch.object(review_stamp.heath, "ROOT", repo), \
+                    mock.patch.object(review_stamp.heath, "REVIEW", repo / "review"):
+                self.assertEqual(review_stamp.stamp(facts, "I", 1, read_commit, False),
+                                 (False, "I.1: current"))
+                self.assertEqual(record.read_text(), current)
+                git(repo, "checkout", "--quiet", "--orphan", "unrelated")
+                git(repo, "add", ".")
+                git(repo, "commit", "-q", "-m", "The same files on another history")
+                with self.assertRaisesRegex(ValueError, "is not in the history of HEAD"):
+                    review_stamp.stamp(facts, "I", 1, read_commit, False)
+                self.assertEqual(record.read_text(), current)
+
+    def test_describe_distinguishes_review_record_changes(self):
+        commit = "1234567890abcdef"
+        newer = "fedcba0987654321"
+        paths = {
+            "review/I/01.toml": (
+                f'[review]\ncommit = "{commit}"\nlean = "old"\n',
+                f'[review]\ncommit = "{commit}"\nlean = "old"\ntext = "new"\n'),
+            "review/I/02.toml": (
+                f'[review]\ncommit = "{commit}"\nlean = "old"\ntext = "old"\n',
+                f'[review]\ncommit = "{commit}"\nlean = "old"\n'),
+            "review/I/03.toml": (
+                f'[review]\ncommit = "{commit}"\nlean = "old"\ntext = "old"\n',
+                f'[review]\ncommit = "{commit}"\nlean = "new"\ntext = "old"\n'),
+            "review/I/04.toml": (
+                f'[review]\ncommit = "{commit}"\nlean = "old"\ntext = "old"\n',
+                f'[review]\ncommit = "{newer}"\nlean = "new"\ntext = "old"\n'),
+            "review/I/05.toml": (
+                f'note = "old"\n[review]\ncommit = "{commit}"\nlean = "old"\ntext = "old"\n',
+                f'note = "new"\n[review]\ncommit = "{commit}"\nlean = "old"\ntext = "old"\n'),
+        }
+        ctx = safe_push.Context(Path("."), "b" * 40, "a" * 40, 1, "", None, {})
+
+        def changed_files(_repo, _base, _sha, prefix=None):
+            return [("M", path) for path in paths] if prefix in (None, "review") else []
+
+        def show(_repo, revision, path):
+            return paths[path][0 if revision == ctx.base else 1]
+
+        with mock.patch.object(safe_push, "changed_files", changed_files), \
+                mock.patch.object(safe_push, "show", show), \
+                mock.patch.object(safe_push, "git", return_value=""):
+            records = safe_push.describe(ctx, safe_push.Preflight([], []))["records"]
+        self.assertIn("`review/I/01.toml`: its stamps written, its commit kept at "
+                      "`1234567890ab`", records)
+        self.assertIn("`review/I/02.toml`: a stamp taken away (`text`)", records)
+        self.assertNotIn("`review/I/02.toml`: its stamps written", records)
+        self.assertIn("`review/I/03.toml`: its stamps written, its commit kept at "
+                      "`1234567890ab`", records)
+        self.assertIn("`review/I/04.toml`: re-stamped at `fedcba098765`", records)
+        self.assertIn("`review/I/05.toml`: touched, not re-stamped", records)
 
     def configured_check_commands(self):
         checks = []
