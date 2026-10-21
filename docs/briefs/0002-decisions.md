@@ -2382,6 +2382,103 @@ findings:
   [ACCEPTANCE](../ACCEPTANCE.md)'s P8 words for S24 and S25 and for the letter rule S26
   follow in train F2, with the eight further figures of the modern way.
 
+- **A standing read for stale content.** The A0 read of 20 October found claims false on
+  main and others that queued work would make false, beyond what mechanical checks can
+  judge. Before every release and at the end of each programme stage, the coordinator
+  assigns an independent reviewer the read set out in
+  [docs/WORKFLOW.md](../WORKFLOW.md#10-how-a-book-is-made-and-released), section 10,
+  step 8; [docs/PROGRAM.md](../PROGRAM.md#5-lessons), section 5, records its first
+  instance and the conflict marker and stale counts that prompted separate checks.
+  Findings go in dated reports under `docs/reports/`, and fixes in the trains or pull
+  requests that make them true. The existing step numbers stay, preserving ACCEPTANCE's
+  citation of step 9. No check changes.
+- **Content kept fresh in four tiers, and the release gate (#164).** On 20 October 2026
+  the owner approved a process for keeping hand-written content true: defects (a conflict
+  marker, a broken link, the owner's name, a claim the Lean contradicts, a failing check)
+  are never on main; facts (counts, status tables, the acceptance report, the certificate)
+  are generated, never written by hand; reader prose is true at release, fixed in the train
+  that changes the fact or at the latest in the release's pull request; working records
+  (briefs, reports, issues, the tracker) are dated, with status notes when overtaken, and
+  the issues and tracker kept current. A release waits for its gate: a read for stale
+  content on the candidate, its Tier 0 to 2 findings fixed and its Tier 3 records noted;
+  the wiki refreshed, reasonably correct as of its date and not expected to be more
+  current; the notes approved before the tag. The same day the owner ruled that
+  unfinished or prototype work may be on main only as an open issue labelled
+  `blocks-release`, and that no release goes out while one is open; the check that holds
+  a release on that label comes in its own pull request. WORKFLOW, section 10 (steps 8
+  and 10, and the landing section's list of required checks, which the owner extended on
+  20 October to `formal-model` and `acceptance`), and PROGRAM, section 2, now say so.
+  GitHub's ruleset requires all five checks. `scripts/safe_push.py` still tests for the
+  presence of a passing run only for `check`, `model` and `negative`, while refusing any
+  reported failure or pending check; aligning that local test is a separate follow-up
+  requiring its own protected-check change. No check changes here.
+- **Current lock totals carry inline count markers.** The owner asked for the current
+  totals in handwritten prose to follow the lock. The markers surround the number alone:
+  `README.md` has the total in the formal-model row; `Certificate/FIELDS.md` has the
+  current vocabulary total; `docs/FORMALIZATION.md` has the tacit-rule and axiom totals
+  in the foundations policy and the axiom total in the model row; `docs/PROGRAM.md` has
+  the model's axiom total and the vocabulary total; `docs/briefs/book-I.md` has the
+  tacit-rule total; `model/README.md` has the lock totals in its introduction,
+  translation and dependency accounts, the total apart from Postulate 5, and only the
+  denominator of the assembly's coverage; `tests/model/MODEL.md` has the axiom and
+  tacit-rule totals in its introduction and model account, and the totals apart from
+  Postulate 5 in its hyperbolic and formal-model accounts. There are 29 markers.
+  The two current vocabulary totals change from 61 to 91. PROGRAM's statement-only
+  subset changes by hand from 24 to 54: the generated vocabulary table in
+  `model/Model/Laws.lean` has 37 distinct names, all in the lock's 91-entry vocabulary,
+  and its recorded SHA-256 matches the current lock. Subtracting those names leaves
+  54. The 37 stays, and neither subset gets a marker, since the tooling computes
+  neither subset.
+  Euclid's five postulates, historical counts, primitive-word and proof-coverage counts
+  stay human. In particular, the assembly's first 87 stays human, as does "all 87" in
+  `model/Model/Audit.lean`: the tooling reads tracked Markdown only, so that Lean comment
+  remains an open manual count. A grep of `mishnah/intro/` found no eligible lock total.
+  The existing block between `counts:begin` and `counts:end` in `tests/model/MODEL.md`
+  is written by `tests/model/run.py --full --write`: its dated numerical results and
+  axiom-by-axiom table stay untouched. README's scope rows and PROGRAM's status table
+  stay untouched too.
+  The tooling that reads the markers landed first, in #166: `scripts/render.py` fills
+  them, and `scripts/check_fidelity.py` checks them against the lock. The protected files changed here are `Certificate/FIELDS.md` and
+  `tests/model/MODEL.md`; no check, declaration, lock or review record changes.
+
+- **The Jev audit's question generator.** On 19 October 2026 the owner approved running Jev,
+  TypeSafe's decision model, as the independent audit of brief 0005's stage 6
+  ([#36](https://github.com/jackChallis/stoicheia/issues/36)) on Books I and II, whose 62
+  records are at the stage `full`.
+  [`scripts/audit/jev_questions.py`](../../scripts/audit/jev_questions.py) (new) writes that
+  audit's questions, in the rows that [`scripts/audit/jev.py`](../../scripts/audit/jev.py)
+  sends, for review items P11 to P15 of [ACCEPTANCE](../ACCEPTANCE.md): the statement's
+  scope, with its companions and porism; whether each proposition a proof unit calls does
+  work, and whether any hypothesis is used only for show; whether each record's
+  representation claim is right, including `n/a` as the claim that no bridge is required,
+  and, for a supplied bridge, whether it is stated. Every one of the 62 propositions gets
+  this question. Dependency placement is supplied as context but not itself adjudicated,
+  and a bridge-stated answer is not all of P13. The questions also ask whether the
+  commentary's account of the scope, the route and the Lean it names agrees with them; and
+  whether the Heath figure, sent as an image, agrees with the proof and its caption.
+  Production states quote their files exactly, checked byte for byte against `git show`
+  of a named commit, and the expected answers, taken from the records, stay on this machine.
+  Ten seeded controls, each a planted defect in a generated row only, measure whether the
+  questions can find a fault. It
+  refuses absolute evidence paths, parent traversal or evidence resolving outside the
+  repository, symlinks in evidence or either output path, and output collisions with
+  evidence, tracked files other than the two default outputs, case-only aliases of tracked
+  files even when the tracked path is missing, or each other.
+  `scripts/audit/jev_questions.py` also refuses Git metadata and protected paths from
+  AGENTS.md and the lists in `scripts/safe_push.py`, independently of the index, including
+  their aliases, and guards every input before a Heath helper opens it.
+  An output outside the repository is allowed, and replacement never follows a final
+  symlink; the checks cover existing links and aliases, excluding a concurrent writer
+  racing them in the same tree.
+  It uses the standard library alone, reads no key and sends nothing;
+  `--commit REV --check` regenerates the rows twice and compares them with both files.
+  [`tests/test_jev_questions.py`](../../tests/test_jev_questions.py) (new) tests the file
+  containment and all ten controls, including the two commentary mutations, with no Lean,
+  network or key; CI does not run it yet. The added cases in `tests/test_jev_questions.py`
+  verify protection without index entries and refusal before an outside target is opened.
+  The generator lands on its own, before the rows,
+  results and report it produces (`text/jev-audit-I-II`), as keep_apart asks. No existing
+  check is weakened, and no schema or record expectation changes.
 - **Unfinished work may land with its issue, and holds the release until it is finished.**
   The owner set the rule: "I don't mind incomplete work, prototypes, whatever so long as
   those are flagged issues and releases are held up until those are finalized."

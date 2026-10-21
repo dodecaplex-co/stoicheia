@@ -320,21 +320,45 @@ python3 scripts/check_links.py
 ```
 
 Review the generated differences and commit them with their sources, so that regenerating
-leaves them unchanged and the `git status` line prints nothing. Three more jobs run on
-their own, each in isolation:
+leaves them unchanged and the `git status` line prints nothing. Four more jobs run on
+their own, each in isolation. The first three have direct local commands; the last two
+commands below run the acceptance job's tests and checklist without its CI comparison:
 
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
                                        # CI's `formal-model` job: the formal model, with Mathlib
+python3 -I tests/test_check_acceptance.py   # CI's `acceptance` job: the comparison tests
+# After lake build, lake build Audit and Facts.lean, the checklist run:
+python3 scripts/check_acceptance.py --output "${RUNNER_TEMP:-/tmp}/acceptance/report.md" --json "${RUNNER_TEMP:-/tmp}/acceptance/verdicts.json"
 ```
 
-Three further jobs are `acceptance`, `queue-integrity` and `queue-gaps`. Acceptance runs on each event,
-with the comparison base above. While `ACCEPTANCE_GATE` is `ratchet`, the same checker
-judges that base and the checked tree, keeping each tree's values pinned to its content:
-an item that passed may not stop passing, apart from the staging items P10 and E6.
-The `full` gate holds every item. The reports are kept as an artifact.
+`RUNNER_TEMP` supplies GitHub Actions' temporary directory; the fallback writes under
+`/tmp` when the command is run locally.
+
+The full `acceptance` job runs only in CI. Its ratchet before the consolidation release,
+the switch to the full gate at that release, the reports and the executable definitions
+are in [ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci), the account of how CI runs the
+[acceptance checklist](ACCEPTANCE.md).
+
+`scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on
+the head commit of every pull request (section 10), so a change to them is made there too,
+and in the CI workflow. It leaves the `formal-model` job to CI on purpose, since it
+fetches Mathlib's prebuilt files
+([model/README.md](../model/README.md#the-ci-job)), and the `acceptance` job, since it builds
+main beside the pull request. Its merge gate refuses when any reported check fails, is
+cancelled or is still running. It requires a passing
+run of `check`, `model` and `negative`, the three names still in its `REQUIRED_CHECKS`;
+its local check judgement does not reject a skipped or missing `formal-model` or
+`acceptance` when those three pass and no other check fails, is cancelled or is still
+running. Main's ruleset requires all five checks; aligning the local presence test with it
+needs a separate protected-check change, tracked by #142. GitHub uses the ruleset when
+merging. The workflow no longer runs on branch pushes, and `acceptance` runs on every
+event it does run on; GitHub would still accept a skipped job even when it is required
+([GitHub documentation](https://docs.github.com/en/pull-requests/reference/status-checks)).
+The ruleset and the remaining merge requirements are in
+[section 10, "Landing work: pull requests"](#landing-work-pull-requests).
 
 On pull requests and post-merge main runs, `queue-integrity` runs the offline cases in
 `tests/test_check_queue.py`, `tests/test_check_train.py` and `tests/test_auto_revert.py`,
@@ -347,10 +371,6 @@ the same group and checks the pages are current, and its `check_queue.py --tree 
 checks that no dated decisions heading repeats; conflict markers in tracked text are
 S23's, in `scripts/check_style.py`.
 
-`scripts/safe_push.py` runs the first two groups on the head commit of every pull request
-(section 10), so a change to them is made there too, and in the CI workflow. It leaves the
-`formal-model` job to CI on purpose, since it fetches Mathlib's prebuilt files; its merge
-gate still waits for that job, like every other ([model/README.md](../model/README.md#the-ci-job)).
 The separate `release-gate` workflow runs its job only on pull requests labelled
 `release`, reading the open issues labelled `blocks-release` with `python3
 scripts/check_release_gate.py`; ordinary pull requests skip it. It runs main's copy of the
@@ -464,24 +484,54 @@ looked into.
    Books I and II have reached `full` in all their records; Book III's remain at
    `exceptions` and reach `full` in brief 0005's stage 5, after the moves from Staging
    into Elements in stages 3 and 4 (#25, #28; the records are #29).
-8. **A read-through.**
+8. **The page read-through and the stale-content audit.** Before every release or
+   consolidation, readers go through the rendered pages as visitors, as section 7 requires.
+   Separately, before every release and at the end of each programme stage, the coordinator
+   assigns an independent reviewer a stale-content audit: every hand-written repository
+   file, the wiki pages and open issues, oldest untouched first. Generated output is
+   excluded only from this audit, because it is regenerated; it remains part of the page
+   read-through. Dated history (crew logs and dated review responses) records its day and
+   is not brought up to date.
+   Keep a dated report under `docs/reports/`, naming the revision read and indexing the
+   files by last change; each finding gives `file:line` (or wiki page/issue), the stale
+   text, evidence on main, what it should say, and its train or pull request.
+   Separate claims false now from those queued work will make false: fixes belong in
+   the train or pull request that makes them true; future findings are checklist rows
+   for that work, not edits now. Wiki and issue reading is read-only; changes need the
+   owner's OK.
+   Each finding falls in one of four tiers, which say when it is fixed:
+   - **Tier 0, defects:** a merge-conflict marker, a broken link, the owner's name, a
+     claim the Lean contradicts, a failing check. Never on main: fixed at once, and
+     refused by a check wherever a check can see it.
+   - **Tier 1, generated facts:** counts, status tables, the acceptance report, the
+     certificate. Never written by hand: generated from their source, and refused when
+     stale.
+   - **Tier 2, reader prose:** true at release. Fixed in the train that changes the fact,
+     or at the latest in the release's own pull request.
+   - **Tier 3, working records:** briefs, reports, issues and the tracker. Dated: a record
+     that later work overtakes gains a dated status note, never a quiet rewrite, and the
+     issues and the tracker are kept current.
 9. **Acceptance:** from brief 0005's stage 6, the checklist passes in CI with no failures,
-   the independent audit agrees, and a cold outside reading scores the book.
-   The release pull request sets `ACCEPTANCE_GATE` from `ratchet` to `full` in the
-   [`acceptance` job](../.github/workflows/ci.yml), so every failing item fails the job.
-10. **Release.** No issue labelled `blocks-release` may be open, checked by
-    `python3 scripts/check_release_gate.py`, by the `release-gate` job on the release
-    pull request (labelled `release`), and by `git safe-push --merge`, which refuses a
-    pull request labelled `release` while one is open, and refuses when GitHub cannot
-    be read. Pull requests carrying `blocks-release` count too. The release lands
-    through that release pull request; the notes are drafted from the generated
-    summaries, the owner approves them, and the owner makes the tag
-    (`book-I`, `book-II`, …) and release manually, running
-    `python3 scripts/check_release_gate.py` once more just before the tag, since the hold
-    rests on the labels. The job runs on the pull request's events, not the issues', so
+   the independent audit agrees, and a cold outside reading scores the book. The switch
+   from the ratchet to the full gate is described in
+   [ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci).
+10. **Release.** A release waits for its gate: both the page read-through and the
+    stale-content audit of step 8 on the release candidate, with every Tier 0 to 2 finding
+    from the audit fixed in the release's pull request and every Tier 3 record given its
+    status note; no open issue labelled `blocks-release`
+    (unfinished work, a prototype or a provisional answer may be on main only as such an
+    issue, and holds every release until it closes); and the wiki refreshed, so that it is
+    reasonably correct as of its date, as its pages say, and is not expected to be more
+    current than that. Then the notes are drafted from the generated summaries, the owner
+    approves them, and the tag (`book-I`, `book-II`, …) is made. The hold is checked by
+    `python3 scripts/check_release_gate.py`, by the `release-gate` job on the release pull
+    request (labelled `release`), and by `git safe-push --merge`, which refuses a pull
+    request labelled `release` while one is open, or when GitHub cannot be read; pull
+    requests carrying `blocks-release` count too, and the owner runs the script once more
+    just before the tag. The job runs on the pull request's events, not the issues', so
     once the last blocker closes it is run again (or `release` removed and given again)
-    before `--merge`, which counts its failed run on a release pull request. PROGRAM.md
-    is brought up to date: the status board, the lessons, the costs.
+    before `--merge`. PROGRAM.md is brought up to date: the status board, the lessons, the
+    costs.
 
 A released book is not frozen. Its tag keeps the released text, and main carries the
 corrections and the common voice, as Books I and II have since their tags.
@@ -489,12 +539,13 @@ corrections and the common voice, as Books I and II have since their tags.
 ### Landing work: pull requests
 
 Work reaches main only as a pull request, merged with a merge commit. On GitHub, a ruleset
-on main requires a pull request and the checks `check`, `model` and `negative`, and blocks
-force pushes and deletion. When the owner enables the merge queue, the owner adds
-`formal-model`, `acceptance`, `queue-integrity` and `queue-gaps` to those required checks. The queue is
-off until then; the coordinator holds the setup steps below. Locally, the pre-push hook
-refuses every push to main. Agents never open, merge or approve a pull request: the
-coordinator does. The account cannot
+on main requires a pull request and the checks `check`, `model`, `negative`,
+`formal-model` and `acceptance` (the last two added on 20 October 2026), and blocks force
+pushes and deletion. When the owner enables the merge queue, the owner adds
+`queue-integrity` and `queue-gaps` to those required checks; the queue is off until then,
+and the coordinator holds the setup steps below. Locally, the pre-push hook refuses
+every push to main. Agents
+never open, merge or approve a pull request: the coordinator does. The account cannot
 approve its own pull requests, so a merge is gated by the checks and by the review
 findings recorded in the pull request, not by approvals. Tags, releases, release notes,
 the GitHub description and anything sent outside the repository still need the owner's
@@ -874,14 +925,14 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    and every other part safe_push wrote must be up to date. `--merge` never writes the
    pull request body: when one of those parts is stale, it refuses before writing, and
    the coordinator runs the pre-flight to refresh the body before starting a fresh merge
-   attempt. It merges only when those pass; CI on that head is green
-   (`check`, `model` and `negative` pass, and nothing fails or is still
-   running, apart from the `release-gate` job of the "Release gate" workflow on an
-   ordinary pull request, even if a run remains from before its `release` label was
-   removed, in the pre-flight watcher too); no box marked **Required** is unticked, nor
-   one marked **Required if protected** when a protected path changes, and none of the
-   template's required boxes is missing (origin/main's template, or the head's while
-   origin/main
+   attempt. It merges only when those pass; CI on that head is green, subject to the
+   ruleset and the local check judgement described in
+   [section 8](#8-validation-on-the-integrated-revision) (the `release-gate` job of the
+   "Release gate" workflow on an ordinary pull request is not counted, even if a run
+   remains from before its `release` label was removed, in the pre-flight watcher too);
+   no box marked **Required** in its checklist is unticked, nor one marked
+   **Required if protected** when a protected path changes, and none of the template's
+   required boxes is missing (origin/main's template, or the head's while origin/main
    has none; the pre-flight's notes, such as a check that failed with origin/main's
    copies, are shown beside the checklist); the coordinator has written "What and why",
    "Unfinished work" (once the template in force has that section),
