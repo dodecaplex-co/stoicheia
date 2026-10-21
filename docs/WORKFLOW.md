@@ -330,7 +330,9 @@ commands below run the acceptance job's tests and checklist without its CI compa
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
-                                       # CI's `formal-model` job: the formal model, with Mathlib
+python3 scripts/check_model_kernel.py --self-test && python3 scripts/check_model_kernel.py
+                                       # CI's `formal-model` job: the formal model, with Mathlib,
+                                       # then its compiled proofs replayed by Lean's kernel
 python3 -I tests/test_check_acceptance.py   # CI's `acceptance` job: the comparison tests
 # After lake build, lake build Audit and Facts.lean, the checklist run:
 python3 scripts/check_acceptance.py --output "${RUNNER_TEMP:-/tmp}/acceptance/report.md" --json "${RUNNER_TEMP:-/tmp}/acceptance/verdicts.json"
@@ -359,15 +361,15 @@ fetches Mathlib's prebuilt files
 main beside the pull request. Its merge gate refuses when any reported check fails, is
 cancelled or is still running, apart from the `release-gate` job of the "Release gate"
 workflow on an ordinary pull request, even if a run remains from before its `release`
-label was removed. It requires a passing
-run of `check`, `model` and `negative`, the three names still in its `REQUIRED_CHECKS`;
-its local check judgement does not reject a skipped or missing `formal-model` or
-`acceptance` when those three pass and no other check fails, is cancelled or is still
-running. Main's ruleset requires all five checks; aligning the local presence test with it
-needs a separate protected-check change, tracked by #142. GitHub uses the ruleset when
-merging. The workflow no longer runs on branch pushes, and `acceptance` runs on every
-event it does run on; GitHub would still accept a skipped job even when it is required
+label was removed. It requires a passing run of each of the five checks that main's
+ruleset requires, `check`, `model`, `negative`, `formal-model` and `acceptance`, the names
+in its `REQUIRED_CHECKS`: a required check that is missing, or whose every run was
+skipped, holds the merge. GitHub uses the ruleset when merging. The workflow no longer
+runs on branch pushes, and `acceptance` runs on every event it does run on; GitHub would
+still accept a skipped job even when it is required
 ([GitHub documentation](https://docs.github.com/en/pull-requests/reference/status-checks)).
+The merge gate does not count a skipped run as a pass, so it waits for the pull request's
+own run of `acceptance` to pass.
 The ruleset and the remaining merge requirements are in
 [section 10, "Landing work: pull requests"](#landing-work-pull-requests).
 
@@ -630,7 +632,8 @@ pull request sections and two more, `Members` and `What is new`. `Members` is a 
 with the columns `Branch`, `Head`, `/code-review`, `/security-review` and `/no-mistakes`,
 one row per member. `Head` is 12 to 40 lower-case hexadecimal digits naming the member
 head merged. Each `/code-review` and `/security-review` cell names the commit its review
-read, by 7 to 40 lower-case hexadecimal digits, with the findings, and that commit must
+read, by 7 to 40 lower-case hexadecimal digits that a reader sees (not in an HTML tag or
+comment, or a link's destination), with the findings, and that commit must
 be one of the member's own: the member's head, or an ancestor of it not on origin/main,
 named unambiguously by digits that begin its name (as `git rev-parse --verify
 <digits>^{commit}` resolves them; a ref whose name is hex digits does not count). Other
@@ -785,22 +788,28 @@ are:
 - **(d) A clean tree.** The decisions page has no repeated dated heading. The check reads
   lines, not the page as it renders, so it can only over-approximate: a line that could
   render as a level-one or level-two heading counts, in code, HTML and every container
-  too; its text must be plain; and no date may stand in two such headings. Each line is
-  read in time linear in its length. In full:
+  too; its text must be plain; every year in it must stand in a date the check reads; and
+  no date may stand in two such headings. Each line is read in time linear in its
+  length. In full:
   - Lines end at a line feed, a carriage return or both, as in CommonMark, and a byte
-    order mark that opens the page is skipped. Each line is read without its leading
-    whitespace, block quote markers (`>`) and list markers (`-`, `*` or `+`, or digits
-    followed by `.` or `)`, each followed by whitespace or the line's end), taken off
-    again and again. A line that holds only spaces, tabs and `>` is blank.
+    order mark that opens the page is skipped. A line of spaces and tabs is blank; a line
+    that holds anything else, a `>` among them, is not. Each line is read without its
+    leading whitespace and its container markers, taken off again and again: block quote
+    markers (`>`); list markers (`-`, `*` or `+`, or digits followed by `.` or `)`, each
+    followed by whitespace or the line's end); GFM's task markers (`[ ]`, `[x]` or `[X]`,
+    followed by whitespace or the line's end); and GFM's footnote markers (`[^label]:`).
   - A line that then begins with one or two `#` followed by a space, a tab or its end is
     a heading. Its text is what follows, without the spaces and tabs around it and
     without a closing run of `#` after a space or a tab.
   - A line that is then a run of `=` or of `-`, of any length from one, as in CommonMark
     (a lone `-` among them), with whitespace after it, underlines a heading when one or
     more lines that are not blank stand above it. Its text is every line back to the
-    previous blank line, each read as above, joined by spaces. So a later underline's
-    text holds an earlier one's: two headings underlined in one stretch of lines need a
-    blank line between them.
+    previous blank line, each read as above, joined by spaces, with the line's list
+    numbers and footnote markers before it: a list number that cannot open a list inside
+    a paragraph (any but a 1 followed by text) is the paragraph's own text, so `Notes`,
+    `20. October 2026` and `===` make the heading "Notes 20. October 2026". So a later
+    underline's text holds an earlier one's: two headings underlined in one stretch of
+    lines need a blank line between them.
   - Every heading's text is plain: ASCII letters, digits, spaces and `. , : ; ' ( ) - /`
     only. Any other character (`<`, `&`, `[`, `*`, `_`, a backtick, `\`, `#`, `=`, a
     tab, any character outside ASCII) refuses the page, naming the line: the page writes
@@ -810,6 +819,13 @@ are:
     name or its first three letters (or `Sept`), in any case, and a year of four digits,
     day first or month first; or the year, month and day in numbers, as `2026-10-20`.
     Two dated headings with the same date refuse the page, naming both.
+  - Every year in a heading's text, four digits from 1900 to 2199 standing apart from
+    other digits, must be the year of such a date, read within the year's own line (a
+    heading's text may begin at any of its lines), and a year in a list number or
+    footnote marker never is. Any other refuses the page, naming the line: so a date
+    written in a way the check does not read (`20/10/2026`, `the 20th of October 2026`,
+    `2026 October 20`) refuses rather than passes, and so does a heading of a year or a
+    month alone (`October 2026`).
   - An HTML `<h1>` or `<h2>` tag anywhere in the page, code included, refuses: the page
     quotes such a tag only in prose, as character references (`&lt;h2&gt;`), since a
     code span shows a reference as written.
@@ -817,16 +833,26 @@ are:
     group, and conflict markers are S23's of `scripts/check_style.py`, in the same job.
 
 Every merge the judge computes reads merge attributes from the group's base, main,
-never from the group's checkout, so an entry's `.gitattributes` cannot change a verdict.
+never from the group's checkout. And judging a group, it reads every file from Git's
+objects, the decisions page among them (its blob, a regular file), never from the
+checkout, which the group's own attributes shape (`working-tree-encoding` or a
+`filter`, say). So an entry's `.gitattributes` cannot change what is judged: it can
+shape only the checkout, and no verdict reads the checkout. `--tree` reads the
+page in the checkout it is given, so it refuses as unreadable (exit 2) a page to which
+Git gives an attribute that can change how a checkout writes it: `working-tree-encoding`,
+`filter`, `ident`, `text`, `eol` or `crlf`, set, unset or with a value.
 
 Every entry other than an automatic revert must have its head in this repository, and no
-bot, the revert App's above all, may have written it, put it in the queue, last edited
-its body or last renamed it (the last rename is read from its timeline; the title goes
-into main's merge commit): trains are written, named and queued by people. GraphQL names
-a bot by a login without the "[bot]" that REST adds, so the actor's type is read, not
-its login. And while an issue labelled `main-red` is open, an entry in the queue lands
-only as main's fix: its body must declare, as `--merge` reads it, every open `main-red`
-issue and no other ("Out of a red main", below), or the judge refuses it.
+bot, the revert App's above all, may have written it: trains are written, named and
+queued by people. Of an entry still in the queue, no bot may have put it there, last
+edited its body or last renamed it (the last rename is read from its timeline; the title
+goes into main's merge commit); of one already merged, the merged prefix of the group,
+the judge reads only its head's repository and who wrote it, since GitHub's queue no
+longer lists it and its own group judged it when it merged. GraphQL names a bot by a
+login without the "[bot]" that REST adds, so the actor's type is read, not its login.
+And while an issue labelled `main-red` is open, an entry in the queue lands only as
+main's fix: its body must declare, as `--merge` reads it, every open `main-red` issue
+and no other ("Out of a red main", below), or the judge refuses it.
 
 **The gaps of what is new.** In the `queue-gaps` job, `check_queue.py --gaps` takes the
 union of the entries' derived changes and their declarations. A changed

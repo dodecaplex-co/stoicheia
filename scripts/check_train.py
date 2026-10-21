@@ -46,9 +46,10 @@ PLACEHOLDER = re.compile(
 # over more than one run of separators.
 PLACEHOLDER_WORD = re.compile(
     r"\b(?:pending|tbd|to[\W_]*come|not[\W_]*needed|n(?:[^\w/]|_)*/(?:[^\w/]|_)*a)\b")
-# A review cell names the commit it reviewed, by 7 to 40 lower-case hex digits, and with
-# a repository that commit must be one of the member's own (check_train); on
-# /security-review, "Not required" stands instead, where no protected path changed.
+# A review cell names the commit it reviewed, by 7 to 40 lower-case hex digits that a
+# reader sees (_review_text), and with a repository that commit must be one of the
+# member's own (check_train); on /security-review, "Not required" stands instead, where
+# no protected path changed.
 COMMIT = re.compile(r"(?<![0-9A-Za-z])[0-9a-f]{7,40}(?![0-9A-Za-z])")
 NOT_REQUIRED = re.compile(r"(?i)not required\b")
 # "Not required" anywhere in the cell, however spelt: in any case, with any separators or
@@ -193,11 +194,14 @@ def _placeholder(cell: str) -> bool:
 
 
 def _normal(cell: str) -> str:
-    """A cell's text as it reads: character references decoded, after NFKC, without
-    format characters and combining marks, in one case."""
+    """A cell's text as it reads: character references decoded, then NFKC, casefolding
+    and NFKC again, then without format characters and combining marks. NFKC comes
+    before casefolding as well as after, since a compatibility capital (the black-letter
+    R) folds only once NFKC has made it a letter; and the marks are dropped last, since
+    casefolding the dotted capital I adds one."""
     text = unicodedata.normalize("NFKC", html.unescape(cell))
-    return "".join(c for c in text
-                   if unicodedata.category(c) not in ("Cf", "Mn", "Me")).casefold()
+    text = unicodedata.normalize("NFKC", text.casefold())
+    return "".join(c for c in text if unicodedata.category(c) not in ("Cf", "Mn", "Me"))
 
 
 def _placeholder_word(cell: str) -> str | None:
@@ -231,15 +235,20 @@ def _cut(text: str, opener: str, spans: tuple[tuple[str, str], ...], keep: int) 
     return "".join(parts)
 
 
-def _review_content(cell: str) -> bool:
-    """Whether a review cell says something visible beyond commit names and markup: read
-    without HTML comments and tags (<!-- to -->, < to >) and a link's destination or
-    label (]( to ), ][ to ]), each to its nearest closing."""
+def _review_text(cell: str) -> str:
+    """A review cell's text as a reader sees it: character references decoded, after
+    NFKC, without HTML comments and tags (<!-- to -->, < to >) and a link's destination
+    or label (]( to ), ][ to ]), each to its nearest closing. The reviewed commit is
+    read here, never in the raw cell, so a commit no reader sees names none."""
     text = unicodedata.normalize("NFKC", html.unescape(cell))
     text = _cut(text, "<", (("<!--", "-->"), ("<", ">")), keep=0)
-    text = _cut(text, "]", (("](", ")"), ("][", "]")), keep=1)
-    text = COMMIT.sub("", text)
-    return any(character.isalpha() for character in text)
+    return _cut(text, "]", (("](", ")"), ("][", "]")), keep=1)
+
+
+def _review_content(cell: str) -> bool:
+    """Whether a review cell says something visible beyond commit names and markup, read
+    in its text as a reader sees it (_review_text)."""
+    return any(character.isalpha() for character in COMMIT.sub("", _review_text(cell)))
 
 
 def _evidence(rows: list[dict]) -> list[str]:
@@ -266,7 +275,7 @@ def _evidence(rows: list[dict]) -> list[str]:
                                     "cell may not say a review is pending, to come, TBD, "
                                     "not needed or N/A, even beside the member's commit")
                 not_required = key == "security_review" and NOT_REQUIRED.match(cell)
-                if not COMMIT.search(cell) and not not_required:
+                if not COMMIT.search(_review_text(cell)) and not not_required:
                     problems.append(f"Members: {branch}: {label} names no reviewed commit "
                                     "(7 to 40 lower-case hex digits)")
                 elif not not_required and not _review_content(cell):
@@ -476,7 +485,7 @@ def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
                          for _, p in changed_files(repo, member_base, head) if is_protected(p)}
             # The member's own history: its head and every ancestor not on origin/main.
             own = _commits(repo, head, "--not", base)
-            named = {key: _named_commits(repo, [row[key]])
+            named = {key: _named_commits(repo, [_review_text(row[key])])
                      for key in ("code_review", "security_review")}
         except (ValueError, Refusal) as error:
             raise ValueError(f"Members: {row['branch']} ({head[:12]}): {error}") from None

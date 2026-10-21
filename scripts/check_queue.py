@@ -21,20 +21,28 @@ design: queue-gaps has contents, pull-requests, actions and issues read, and no 
 
 --tree checks the decisions page line by line (heading_problems): a line that could
 render as a level-one or level-two heading counts, in code too; its text must be plain;
-no two of them may contain the same date; and no HTML <h1> or <h2> tag may stand
-anywhere. --render adds the generated pages' freshness. Conflict markers are checked by
-S23 in check_style.py, in the check job on the same merge group.
+every year in it must stand in a date the check reads; no two of them may contain the
+same date; and no HTML <h1> or <h2> tag may stand anywhere. --render adds the generated
+pages' freshness. Conflict markers are checked by S23 in check_style.py, in the check
+job on the same merge group.
 
 Every merge-tree reads merge attributes from the group's base, main, never from the
-group's checkout (git --attr-source), so an entry's .gitattributes cannot change a
-verdict. Git 2.42 or later: merge-tree --write-tree came in 2.38, its --merge-base in
-2.40 and --attr-source in 2.42; an older Git makes every group unreadable.
+group's checkout (git --attr-source). Judging a group, every file read comes from Git's
+objects, the decisions page among them (page_blob), never from the checkout, which the
+group's attributes shape (working-tree-encoding or a filter, say): an entry's
+.gitattributes cannot change what is judged; it can shape only the checkout, and no
+verdict reads the checkout. --tree reads the page in the checkout it is given,
+so it exits 2 when Git gives the page an attribute that can change how a checkout writes
+it (CHECKOUT_ATTRIBUTES). --gaps runs the group's own tests, in its checkout. Git 2.42 or
+later: merge-tree --write-tree came in 2.38, its --merge-base in 2.40 and --attr-source
+in 2.42; an older Git makes every group unreadable.
 
 GitHub reads use gh api and gh api graphql, with GH_TOKEN inherited and never
 printed. --github-json replaces that boundary completely: an object with
 pull_requests and runs (REST responses keyed by number), queue (the GraphQL response),
-main (the REST commits/main response), and pushes and queue_merges (lists of REST
-activity pages, as returned by gh api --paginate --slurp). Queue entries include
+main (the REST commits/main response), and pushes, queue_merges and main_red (lists of
+REST pages, as returned by gh api --paginate --slurp: main's push and queue merge
+activity, and the open issues labelled main-red). Queue entries include
 pageInfo so a truncated answer cannot pass. The subject's number and the queue's
 headRefOid must agree. A different queue merge subject is accepted only when its
 second parent uniquely identifies a queue entry; no subject fallback is allowed
@@ -121,25 +129,34 @@ MONTHS = ("January", "February", "March", "April", "May", "June", "July",
           "August", "September", "October", "November", "December")
 # Rule (d) reads the decisions page line by line, never as blocks, so it can only
 # over-approximate what renders (heading_problems). Lines end as CommonMark's do, and a
-# line that holds only spaces, tabs and > is blank. Before a line is read, its leading
-# whitespace, block quote markers and list markers are taken off, again and again; a
-# list marker is -, * or +, or digits then . or ), each followed by whitespace or the
-# end. No pattern here backtracks over a line: each match starts where the last ended,
-# and a closing run of # is taken off with str.rstrip (_atx_text).
+# line of spaces and tabs is blank. Before a line is read, its leading whitespace and
+# container markers are taken off, again and again: block quote markers (>), list
+# markers (-, * or +, or digits then . or ), each followed by whitespace or the end),
+# task markers ([ ], [x] or [X], followed by whitespace or the end) and footnote markers
+# ([^label]:). A list number that cannot open a list there, or a footnote marker, may be
+# a paragraph's own text, so the words and characters of those two (CONTAINER's group
+# text) are read with the rest of the line too, wherever the line is part of an
+# underlined heading's text. No pattern here backtracks over a line: each match starts
+# where the last ended, and a closing run of # is taken off with str.rstrip (_atx_text).
 LINE_END = re.compile(r"\r\n|\r|\n")
 BOM = "\N{BYTE ORDER MARK}"  # which a renderer skips at the start of a page
-BLANK = re.compile(r"[ \t>]*")
-CONTAINER = re.compile(r"\s+|>|[-*+](?=\s|$)|[0-9]+[.)](?=\s|$)")
+BLANK = re.compile(r"[ \t]*")
+CONTAINER = re.compile(r"\s+|>|[-*+](?=\s|$)|\[[ xX]\](?=\s|$)"
+                       r"|(?P<text>[0-9]+[.)](?=\s|$)|\[\^[^\]]*\]:)")
 OPENER = re.compile(r"#{1,2}(?=[ \t]|$)")
 # A heading's text is plain: ASCII letters, digits, spaces and . , : ; ' ( ) - / only.
 PLAIN = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
                   " .,:;'()-/")
+NOT_PLAIN = re.compile("[^" + re.escape("".join(sorted(PLAIN))) + "]")
 # A date is three neighbouring words: a day (with st, nd, rd or th, or not), a month
-# and a year, day first or month first; or the year, month and day in numbers.
+# and a year, day first or month first; or the year, month and day in numbers. A year a
+# heading might be dated by is four digits from 1900 to 2199, standing apart from other
+# digits, inside a word or alone; each must be a date's year, read in its own line.
 WORD = re.compile(r"[A-Za-z0-9]+")
 DAY = re.compile(r"(?i)([0-9]{1,2})(?:st|nd|rd|th)?")
 NUMBER = re.compile(r"[0-9]{1,2}")
 YEAR = re.compile(r"[0-9]{4}")
+YEARLIKE = re.compile(r"(?<![0-9])(?:19|20|21)[0-9]{2}(?![0-9])")
 # An HTML heading tag of level one or two, which this reading refuses rather than reads.
 RAW_HEADING = re.compile(r"(?i)<h[12](?=[\s/>]|$)")
 GENERATED = (*safe_push.GENERATED, "book/", safe_push.DECISIONS)
@@ -153,6 +170,9 @@ RUN_POLL = 15
 RUN_WAIT = 600
 # A test file --gaps runs for itself: test_*.py directly under tests/ or scripts/.
 GAP_TEST = re.compile(r"(?:tests|scripts)/test_[^/]+\.py")
+# The attributes with which Git may write a file to a checkout other than as its blob
+# holds it; --tree, which reads the checkout, refuses to read a page that has any of them.
+CHECKOUT_ATTRIBUTES = ("working-tree-encoding", "filter", "ident", "text", "eol", "crlf")
 PREFLIGHT = re.compile(
     r"(?ms)^<!-- safe_push:preflight begin sha=([0-9a-f]{40}) base=([0-9a-f]{40})"
     r"(?: harness=([0-9a-f]{40}))? -->[ \t\r]*$"
@@ -889,13 +909,16 @@ def exact_revert(repo: Path, pr: dict, api: GitHub) -> None:
                       "only where the reverts changed it, and nothing else")
 
 
-def _stripped(line: str) -> str:
-    """A line without its leading whitespace, block quote markers and list markers, taken
-    off again and again, each match starting where the last ended."""
-    position = 0
+def _stripped(line: str) -> tuple[str, str]:
+    """A line without its leading whitespace and container markers, taken off again and
+    again, each match starting where the last ended; and before it, the list numbers and
+    footnote markers taken off, joined by spaces, which may be the line's own text."""
+    position, kept = 0, []
     while (match := CONTAINER.match(line, position)) and match.end() > position:
+        if match.group("text"):
+            kept.append(match.group())
         position = match.end()
-    return line[position:]
+    return " ".join(kept), line[position:]
 
 
 def _atx_text(rest: str) -> str:
@@ -951,6 +974,21 @@ def heading_dates(text: str) -> list[datetime.date]:
     return list(dict.fromkeys(date for date in found if date))
 
 
+def undated_year(text: str) -> str | None:
+    """The first word of the text that holds a year (YEARLIKE) but is no date's year, as
+    heading_dates reads the text's dates, or None: so that a date written in a way this
+    check does not read (20/10/2026, the 20th of October 2026) refuses, never passes."""
+    if not YEARLIKE.search(text):
+        return None
+    words = WORD.findall(text)
+    years = set()
+    for at in range(len(words) - 2):
+        if _date(*words[at:at + 3]):
+            years.add(at if YEAR.fullmatch(words[at]) else at + 2)
+    return next((word for at, word in enumerate(words)
+                 if at not in years and YEARLIKE.search(word)), None)
+
+
 def heading_problems(page: str) -> list[str]:
     """Rule (d), read line by line, never as the page renders, so that it can only
     over-approximate: a line that could render as a level-one or level-two heading
@@ -960,13 +998,18 @@ def heading_problems(page: str) -> list[str]:
     by a space, a tab or the end is a heading, its text what follows (_atx_text). One
     that is a run of = or of - (_underline), under one or more lines that are not blank,
     underlines a heading whose text is every line back to the previous blank line, each
-    stripped, joined by spaces. Every heading's text must be plain (PLAIN): any other
-    character refuses the page, naming the line. A heading is dated when its text
-    contains a date (heading_dates), and two headings with the same date refuse the page,
-    naming both. A later underline's text holds an earlier one's, so two underlines
-    in one stretch of lines repeat the first's dates. An HTML <h1> or <h2> tag anywhere
-    refuses too. Each line is read a bounded number of times, and a stretch's text is
-    never joined: its dates are read word by word as it grows."""
+    stripped, with its list numbers and footnote markers before it, joined by spaces.
+    Every heading's text must be plain (PLAIN): any other character refuses the page,
+    naming the line. Every year in it must be a date's year (undated_year), read in the
+    year's own line as stripped, since a heading's text may begin at any of its lines and
+    a list number or footnote marker may be a container; a year in one of those is no
+    date's. Any other year refuses the page, naming the line. A heading is dated when its
+    text contains a date (heading_dates), read in the lines both as stripped and with
+    their list numbers and footnote markers, and two headings with the same date refuse
+    the page, naming both. A later underline's text holds an earlier one's, so two
+    underlines in one stretch of lines repeat the first's dates. An HTML <h1> or <h2> tag
+    anywhere refuses too. Each line is read a bounded number of times, and a stretch's
+    text is never joined: its dates are read word by word as it grows."""
     problems: list[str] = []
     first: dict[datetime.date, str] = {}
 
@@ -982,23 +1025,35 @@ def heading_problems(page: str) -> list[str]:
             else:
                 first[date] = where
 
-    def plain(number: int, text: str) -> None:
-        if (odd := next((c for c in text if c not in PLAIN), None)) is not None:
+    def readable(number: int, text: str, kept: str = "") -> None:
+        # `kept`, the line's list numbers and footnote markers, may be its own text or
+        # its containers': it is read as text for plainness, and no year in it is dated.
+        if odd := NOT_PLAIN.search(f"{kept} {text}" if kept else text):
             problems.append(f"{safe_push.DECISIONS}:{number}: a line that could render as a "
-                            f"heading, or as part of one, holds {odd!r} "
-                            f"(U+{ord(odd):04X}), which is not plain: write it with ASCII "
-                            "letters, digits, spaces and . , : ; ' ( ) - / only")
+                            f"heading, or as part of one, holds {odd.group()!r} "
+                            f"(U+{ord(odd.group()):04X}), which is not plain: write it with "
+                            "ASCII letters, digits, spaces and . , : ; ' ( ) - / only")
+        year = next((word for word in WORD.findall(kept) if YEARLIKE.search(word)), None)
+        if (year := year or undated_year(text)) is not None:
+            problems.append(f"{safe_push.DECISIONS}:{number}: a line that could render as a "
+                            f"heading, or as part of one, holds {year!r}, a year in no date "
+                            "this check reads: write a heading's date in its line as 20 "
+                            "October 2026, October 20, 2026 or 2026-10-20")
 
     # The stretch of lines that are not blank since the last blank one: its first line,
-    # its last two words, its dates in order and as a set, how many an underline has
-    # noted, its lines since its last underline (not yet read as a heading's), and its
-    # last underline, with whether that underline's text was dated.
+    # the last words of its lines as stripped and of its lines with their list numbers
+    # and footnote markers (one list, until such a marker makes them differ, and again
+    # once a line without one has given both its last two words), its dates in order
+    # and as a set, how many an underline has noted, its lines since its last underline
+    # (not yet read as a heading's), and its last underline, with whether that
+    # underline's text was dated.
     start = last = None
     words: list[str] = []
+    own_words = words
     dates: list[datetime.date] = []
     held: set[datetime.date] = set()
     noted = 0
-    unread: list[tuple[int, str]] = []
+    unread: list[tuple[int, str, str]] = []
     for number, line in enumerate(LINE_END.split(page.removeprefix(BOM)), 1):
         if RAW_HEADING.search(line):
             problems.append(f"{safe_push.DECISIONS}:{number}: an HTML heading tag (<h1> or "
@@ -1007,16 +1062,17 @@ def heading_problems(page: str) -> list[str]:
         if BLANK.fullmatch(line):
             start = last = None
             words, dates, held, noted, unread = [], [], set(), 0, []
+            own_words = words
             continue
-        stripped = _stripped(line)
+        kept, stripped = _stripped(line)
         if opener := OPENER.match(stripped):
             text = _atx_text(stripped[opener.end():])
-            plain(number, text)
+            readable(number, text)
             dated(heading_dates(text), str(number))
         elif start is not None and _underline(stripped, line):
             where = f"{start}-{number}"
             for read in unread:
-                plain(*read)
+                readable(*read)
             unread = []
             if last is not None and last[1]:
                 problems.append(f"{safe_push.DECISIONS}:{where}: repeated dated heading: "
@@ -1027,30 +1083,82 @@ def heading_problems(page: str) -> list[str]:
         if start is None:
             start = number
         text = stripped.rstrip(" \t")
-        unread.append((number, text))
-        for word in WORD.findall(text):
-            words = [*words[-2:], word]
-            if len(words) == 3 and (date := _date(*words)) and date not in held:
-                held.add(date)
-                dates.append(date)
+        unread.append((number, text, kept))
+        found = WORD.findall(text)
+        streams = [(words, found)]
+        if kept or own_words is not words:
+            if own_words is words:
+                own_words = list(words)
+            streams.append((own_words, WORD.findall(kept) + found if kept else found))
+        for stream, new in streams:
+            for word in new:
+                if len(stream) == 3:
+                    del stream[0]
+                stream.append(word)
+                if len(stream) == 3 and (date := _date(*stream)) and date not in held:
+                    held.add(date)
+                    dates.append(date)
+        if not kept and len(found) >= 2:
+            own_words = words
     return problems
 
 
+def _page_text(data: bytes) -> str:
+    """The decisions page's text, which must be UTF-8 without a NUL."""
+    if b"\0" in data:
+        raise ValueError("the decisions page is not text")
+    return data.decode("utf-8")
+
+
+def page_blob(repo: Path, head: str) -> str:
+    """The decisions page at `head` as its blob holds it: a regular file (100644), read
+    from the object store by cat-file, so that no attribute of the group's checkout
+    (working-tree-encoding, a filter) stands between the rule and what GitHub shows."""
+    entry = safe_push.git(repo, "ls-tree", "-z", "--full-tree", head, "--",
+                          safe_push.DECISIONS)
+    match = re.fullmatch(r"100644 blob ([0-9a-f]{40,64})\t" + re.escape(safe_push.DECISIONS)
+                         + "\0", entry)
+    if not match:
+        raise ValueError("the decisions page at the group head is not a regular file")
+    return _page_text(safe_push.git(repo, "cat-file", "blob", match.group(1), binary=True))
+
+
+def checkout_attributes(repo: Path) -> list[str]:
+    """Each attribute of CHECKOUT_ATTRIBUTES that Git gives the decisions page, set, unset
+    or with a value, as attribute=value; an unreadable answer raises ValueError."""
+    out = safe_push.git(repo, "check-attr", "-z", *CHECKOUT_ATTRIBUTES, "--",
+                        safe_push.DECISIONS)
+    fields = out.split("\0")
+    if len(fields) != 3 * len(CHECKOUT_ATTRIBUTES) + 1 or fields[-1] != "":
+        raise ValueError("could not read the decisions page's attributes")
+    found = []
+    for at, name in enumerate(CHECKOUT_ATTRIBUTES):
+        path, attribute, value = fields[3 * at:3 * at + 3]
+        if path != safe_push.DECISIONS or attribute != name or not value:
+            raise ValueError("could not read the decisions page's attributes")
+        if value != "unspecified":
+            found.append(f"{name}={value}")
+    return found
+
+
 def tree_problems(repo: Path, render: bool = False) -> list[str]:
-    """Check dated decisions headings and optionally require fresh renderer output."""
+    """Check dated decisions headings and optionally require fresh renderer output. The
+    page is read in the checkout, so a page Git may write there other than as its blob
+    holds it (checkout_attributes) is unreadable."""
     root = Path(safe_push.git(repo, "rev-parse", "--show-toplevel").strip()).resolve()
     if root != repo.resolve():
         raise ValueError("--tree must name the repository root")
     tracked = safe_push.git(repo, "ls-files", "-z", "--", safe_push.DECISIONS).split("\0")
     if tracked != [safe_push.DECISIONS, ""]:
         raise ValueError("the tracked decisions page is missing")
+    if attributes := checkout_attributes(repo):
+        raise ValueError(f"the decisions page has {', '.join(attributes)}, with which Git may "
+                         "write it to the checkout other than as its blob holds it: --tree "
+                         "reads the checkout, so take the attribute off the page")
     path = repo / safe_push.DECISIONS
     if path.is_symlink() or not path.resolve().is_relative_to(root) or not path.is_file():
         raise ValueError("cannot read the decisions page")
-    data = path.read_bytes()
-    if b"\0" in data:
-        raise ValueError("the decisions page is not text")
-    problems = heading_problems(data.decode("utf-8"))
+    problems = heading_problems(_page_text(path.read_bytes()))
     if render:
         result = safe_push.run(["python3", "scripts/render.py"], repo)
         if result.returncode:
@@ -1269,10 +1377,11 @@ def main(argv=None) -> int:
                     intact(repo, base, head, pr)
             # The judge runs none of the group's scripts: the generated pages' freshness
             # is the check job's (render.py and git status, on the same group), so rule
-            # (d) here reads files only. The tests --gaps chooses are the group's own
-            # code: with --plan they are only recorded, for --run-plan to run.
+            # (d) here reads the page's blob only, never the checkout. The tests --gaps
+            # chooses are the group's own code: with --plan they are only recorded, for
+            # --run-plan to run.
             if not args.gaps:
-                problems = tree_problems(repo, False)
+                problems = heading_problems(page_blob(repo, head))
             elif args.plan is not None:
                 write_plan(args.plan, head, gaps(repo, base, entries))
                 problems = []
