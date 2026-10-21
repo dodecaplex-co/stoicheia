@@ -890,4 +890,4 @@ issues, the release held by an open blocker or an unreadable reply, and an ordin
 request merging without reading the blockers;
 `STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and all. CI's
 `safe-push-tests` job runs the tests, without that run, on each pull request that changes
-`scripts/`, `tests/`, `.github/` or this page (section 8).
+one of the paths section 8 lists.
