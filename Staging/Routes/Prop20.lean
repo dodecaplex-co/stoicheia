@@ -106,7 +106,7 @@ private theorem diameter_cases (hE : Centre E α) (hB : OnCircle B α) (hC : OnC
   /- AF crosses BC at X, within the circle, and so between B and C. -/
   obtain ⟨X, hX_L, hAXF⟩ := hAF_L.exists_between
   have hBXC : Between B X C :=
-    between_of_inside_chord hX_L hB_L hC_L (Prop2 ⟨E, hE⟩ hA hF X hAXF) hB hC hBC
+    between_of_inside_chord hX_L hB_L hC_L (Prop2 hA hF X hAXF) hB hC hBC
   have hBE : B ≠ E := ne_of_centre_of_on hE hB
   have hCE : C ≠ E := ne_of_centre_of_on hE hC
   have hAE : A ≠ E := ne_of_between hAEF
@@ -225,7 +225,7 @@ the circumference BKC (`Prop2.sameSide`, from III.2) and the diameter through it
 at Q on the centre's side, divide it into BEP and PEC. [I. 13, III. 2] -/
 theorem angleAtCentre.within (hE : Centre E α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hEK : OppositeSidesOf E K B C) : angleAtCentre α B K C = ∠ B E C := by
-  obtain ⟨P, hP, hPK⟩ := Prop2.sameSide ⟨E, hE⟩ hB hC hEK.symm.triangle
+  obtain ⟨P, hP, hPK⟩ := Prop2.sameSide hB hC hEK.symm.triangle
   have hPE : P ≠ E := ne_of_centre_of_on hE hP
   obtain ⟨N, hP_N, hE_N⟩ := Postulate1 P E hPE
   obtain ⟨Q, hQ, -, hQEP⟩ := line_circle_beyond (centre_inside hE) hE_N hP_N hPE
@@ -239,7 +239,7 @@ angles: the diameter through a point A of the other circumference (`Prop2.opposi
 from III.2) makes with BC two angles equal to two right angles. [I. 13, III. 2] -/
 theorem angleAtCentre.semicircle (hE : Centre E α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hBEC : Between B E C) (hK : Triangle B C K) : angleAtCentre α B K C = ∟ + ∟ := by
-  obtain ⟨A, hA, hAK⟩ := Prop2.oppositeSide ⟨E, hE⟩ hB hC hK
+  obtain ⟨A, hA, hAK⟩ := Prop2.oppositeSide hB hC hK
   have hAE : A ≠ E := ne_of_centre_of_on hE hA
   obtain ⟨N, hA_N, hE_N⟩ := Postulate1 A E hAE
   obtain ⟨F, hF, -, hFEA⟩ := line_circle_beyond (centre_inside hE) hE_N hA_N hAE
@@ -263,7 +263,7 @@ III.2) ends on K's side. [I. 13, III. 2] -/
 theorem angleAtCentre.reflex (hE : Centre E α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hEK : SameSideOf E K B C) :
     angleAtCentre α B K C + ∠ B E C = ∟ + ∟ + (∟ + ∟) := by
-  obtain ⟨A, hA, hAK⟩ := Prop2.oppositeSide ⟨E, hE⟩ hB hC hEK.symm.triangle
+  obtain ⟨A, hA, hAK⟩ := Prop2.oppositeSide hB hC hEK.symm.triangle
   have hAE : A ≠ E := ne_of_centre_of_on hE hA
   obtain ⟨N, hA_N, hE_N⟩ := Postulate1 A E hAE
   obtain ⟨F, hF, -, hFEA⟩ := line_circle_beyond (centre_inside hE) hE_N hA_N hAE
@@ -344,7 +344,7 @@ theorem Prop20.across_side {B C D E : Point} {ABC : Circle} (hE : Centre E ABC)
 
 /-- In a circle the angle at the centre is double of the angle at the circumference, when the angles
 have the same circumference as base. -/
-theorem Prop20 {A B C E K : Point} {ABC : Circle} (hE : Centre E ABC) (hA : OnCircle A ABC)
+theorem Prop20 {A B C K : Point} {ABC : Circle} (hA : OnCircle A ABC)
     (hB : OnCircle B ABC) (hC : OnCircle C ABC) (hAK : OppositeSidesOf A K B C) :
     angleAtCentre ABC B K C = ∠ B A C + ∠ B A C := by
   -- Let ABC be a circle, let the angle BEC be an angle at its centre, and the angle BAC an
@@ -354,6 +354,7 @@ theorem Prop20 {A B C E K : Point} {ABC : Circle} (hE : Centre E ABC) (hA : OnCi
      BC from A. "The angle BEC" at the centre is the angle standing on it, `angleAtCentre`:
      the angle BEC itself when E is on A's side of BC, two right angles when E is on BC, and
      more when E lies beyond BC (`angleAtCentre.size`). -/
+  obtain ⟨E, hE⟩ := exists_centre ABC
   have hBCA : Triangle B C A := hAK.triangle
   have hAE : A ≠ E := ne_of_centre_of_on hE hA
   have hAB : A ≠ B := hBCA.ne₁₃.symm
@@ -398,7 +399,7 @@ theorem Prop20 {A B C E K : Point} {ABC : Circle} (hE : Centre E ABC) (hA : OnCi
        his angles at the centre could not reach. -/
     obtain ⟨X, hBXC, hX⟩ := crossbar hEC hEB
     have hAXF : Between A X F :=
-      between_of_inside_chord (hX.onLine hA_AE hE_AE) hA_AE hF_AE (Prop2 ⟨E, hE⟩ hB hC X hBXC)
+      between_of_inside_chord (hX.onLine hA_AE hE_AE) hA_AE hF_AE (Prop2 hB hC X hBXC)
         hA hF (ne_of_between_ends hAEF)
     obtain ⟨N, hB_N, hC_N⟩ := Postulate1 B C hBCA.ne₁₂
     have hX_N : OnLine X N := on_line_of_between_ends hBXC hB_N hC_N
@@ -524,7 +525,7 @@ theorem Prop20.special {A B C E : Point} {ABC : Circle} (hE : Centre E ABC) (hA 
     (hB : OnCircle B ABC) (hC : OnCircle C ABC) (hEA : SameSideOf E A B C) :
     ∠ B E C = ∠ B A C + ∠ B A C := by
   obtain ⟨K, hK, -⟩ := exists_oppositeSidesOf hEA.symm.triangle []
-  rw [← angleAtCentre.within hE hB hC (hEA.trans_opposite hK.symm), Prop20 hE hA hB hC hK.symm]
+  rw [← angleAtCentre.within hE hB hC (hEA.trans_opposite hK.symm), Prop20 hA hB hC hK.symm]
 
 /-- **The circumference is its angle at the centre.** Our measure of the circumference
 BKC, `circumference`, is twice the angle at some point of the circle on the other side of
@@ -532,13 +533,13 @@ BC. That is the angle at the centre standing on it, in every case: less than a
 semicircle, a semicircle, or greater. Of III.20–III.22 it needs III.20 alone, where
 `Circumference.eq` needs III.21; `Circumference.centre`, for the circumference beyond
 which the centre lies, is a case of it. [III. 2, III. 20] -/
-theorem Prop20.circumference (hE : Centre E α) (hB : OnCircle B α) (hC : OnCircle C α)
+theorem Prop20.circumference (hB : OnCircle B α) (hC : OnCircle C α)
     (hK : Triangle B C K) : circumference α B K C = angleAtCentre α B K C := by
-  obtain ⟨A₀, hA₀, hA₀K⟩ := Prop2.oppositeSide ⟨E, hE⟩ hB hC hK
+  obtain ⟨A₀, hA₀, hA₀K⟩ := Prop2.oppositeSide hB hC hK
   obtain ⟨A, hA, hAK, hx⟩ := Classical.epsilon_spec
     (p := fun x => ∃ A : Point, OnCircle A α ∧ OppositeSidesOf A K B C ∧
       x = ∠ B A C + ∠ B A C) ⟨_, A₀, hA₀, hA₀K, rfl⟩
   unfold Elements.circumference
-  rw [hx, Prop20 hE hA hB hC hAK]
+  rw [hx, Prop20 hA hB hC hAK]
 
 end Elements.BookIII.Routes

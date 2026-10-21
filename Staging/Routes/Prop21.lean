@@ -28,7 +28,7 @@ namespace Elements.BookIII.Routes
 open Tacit
 
 /-- In a circle the angles in the same segment are equal to one another. -/
-theorem Prop21 {A B D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centre F ABCD)
+theorem Prop21 {A B D E : Point} {ABCD : Circle}
     (hA : OnCircle A ABCD) (hB : OnCircle B ABCD) (hD : OnCircle D ABCD)
     (hE : OnCircle E ABCD) (hAE : SameSideOf A E B D) :
     ∠ B A D = ∠ B E D := by
@@ -39,7 +39,7 @@ theorem Prop21 {A B D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centre 
      (System E, Points 6). -/
   obtain ⟨C, hCA, -⟩ := exists_oppositeSidesOf hAE.triangle []
   -- For let the centre of the circle ABCD be taken, and let it be F; let BF, FD be joined.
-  obtain ⟨F, hF⟩ := hABCD
+  obtain ⟨F, hF⟩ := exists_centre ABCD
   -- Now, since the angle BFD is at the centre,
   -- and the angle BAD at the circumference,
   -- and they have the same circumference BCD as base,
@@ -51,11 +51,11 @@ theorem Prop21 {A B D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centre 
      than two right angles, covers only the greater segment (vol. 2, p. 49). With the
      angle at the centre of any size, the general III.20 carries his two steps to the
      semicircle and the less segment too, the cases his figure leaves aside. -/
-  have h₁ : angleAtCentre ABCD B C D = ∠ B A D + ∠ B A D := Prop20 hF hA hB hD hCA.symm
+  have h₁ : angleAtCentre ABCD B C D = ∠ B A D + ∠ B A D := Prop20 hA hB hD hCA.symm
   -- For the same reason
   -- the angle BFD is also double of the angle BED;
   have h₂ : angleAtCentre ABCD B C D = ∠ B E D + ∠ B E D :=
-    Prop20 hF hE hB hD (hAE.symm.trans_opposite hCA.symm)
+    Prop20 hE hB hD (hAE.symm.trans_opposite hCA.symm)
   -- therefore the angle BAD is equal to the angle BED.
   exact Magnitude.eq_of_add_self_eq (h₁.symm.trans h₂)
   -- Therefore etc.
