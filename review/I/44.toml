@@ -54,10 +54,10 @@ note = "Euclid concludes that LB, equal to C, has been applied to AB in the angl
 
 [review]
 stage = "full"
-commit = "bd86a7b6"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "78fb461d"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:60fe314a429e1bf5"
-run = "brief 0009 stage full, ship S3 A1-integration re-read"
+run = "card 220, cross-family sign-off: Prop44's proof by OpenAI Codex, read by Claude Opus 5.5 (Prop44.place by the Claude first mate, read by GPT-6 Astra at bd86a7b6); ship XS, reader XS-r-I44-I47, independent re-read at 78fb461d"
 
 [review.items]
 statement = "pass"

@@ -43,9 +43,9 @@ note = "AE is drawn level, as the proof supposes; Heath draws AD level. Like Hea
 
 [review]
 stage = "full"
-commit = "3ddb107d"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-run = "Q watch, independent re-read on train/Tw2 at 3ddb107d"
+commit = "78fb461d"
+reviewer = "Claude Opus 5.5, independent reader"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-I37-I39, independent re-read at 78fb461d"
 lean = "sha256:ed110b7f428be948"
 
 [review.items]

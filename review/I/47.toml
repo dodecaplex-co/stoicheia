@@ -54,9 +54,9 @@ case = "the three squares standing outward from the right-angled triangle, as in
 
 [review]
 stage = "full"
-commit = "adbf6993"
-reviewer = "GPT-6 Astra, independent reader"
-run = "ship R1 wave 2, independent re-read of the merged record at adbf6993"
+commit = "78fb461d"
+reviewer = "Claude Opus 5.5, independent reader"
+run = "card 220, cross-family sign-off: Prop47's proof by OpenAI Codex, read by Claude Opus 5.5 (Prop47.within by the Claude first mate, read by GPT-6 Astra at adbf6993); ship XS, reader XS-r-I44-I47, independent re-read at 78fb461d"
 lean = "sha256:0120b11abdd14b1b"
 
 [review.items]
