@@ -24,10 +24,10 @@ as Euclid would draw it, and with no numbers (`Touching.Near`), as the mixed ang
 (`TouchesInternallyAt`): the circles meet at C, they are two circles, and near C no point of
 the inner circle falls outside the outer. Touching without at C (`TouchesExternallyAt`): they
 meet at C, and near C no point is within both. Each is the whole-circle definition with
-"every point" narrowed to "every point near C", except that where `TouchesInternally` now asks
-for a point of the inner circle within the outer (brief 0008, section 7), contact within at C
-asks, as `TouchesInternally` asked before, that the circles be two; nothing new is assumed,
-and no axiom is added.
+"every point" narrowed to "every point near C", save one clause: where `TouchesInternally`
+asks for a point of the inner circle within the outer (brief 0008, section 7), contact within
+at C asks that the circles be two, and the agreement below shows that the readings still say
+the same. Nothing new is assumed, and no axiom is added.
 
 Then the agreement: since every circle has a centre (`Tacit.exists_centre`), the reading at
 the point and the reading of the whole circles say the same (`touchesInternally_iff`,
@@ -91,10 +91,9 @@ def CirclesTouchAt (α β : Circle) (C : Point) : Prop :=
 
 /-! ## Small facts the agreement needs
 
-Four others are in `Elements`, where the move of the mixed angles put them, and are cited
-from there: `exists_circle_about` and `onLine_of_collinear`, in
-`Elements/Figure/Regions.lean`, and `foot_nearest` and `len_lt_of_add_lt`, in
-`Elements/BookIII/MixedAngles.lean`. -/
+Four others are in `Elements`, and are cited from there: `exists_circle_about` and
+`onLine_of_collinear`, in `Elements/Figure/Regions.lean`, and `foot_nearest` and
+`len_lt_of_add_lt`, in `Elements/BookIII/MixedAngles.lean`. -/
 
 /-- A point outside a circle is farther from the centre than the circumference: were it
 nearer, it would be within; at the same distance, on it (System E, Diagram-segment 3
@@ -130,7 +129,8 @@ theorem Touching.sameSide_of_near {C F G : Point} (hGFC : Triangle G F C) :
   exact hnot Y hY_L (lt_trans (len_lt_of_between (between_symm hXYC)) hX)
 
 /-- **A small circle about the point of contact.** Within any circle `γ` about a point C of
-the circle `β`, whose centre is G, a circle `δ` about C can be drawn that cuts `β`, and whose
+the circle `β`, with G its centre, which every circle has (`Tacit.exists_centre`), a circle
+`δ` about C can be drawn that cuts `β`, and whose
 points are all within `γ` and nearer C than a given point N. Its radius is CA, for a point A
 of CG taken near C (`exists_between_nearer`, twice). A is within `β`, being between its
 centre and C, and C, the centre of `δ`, is within `δ` and on `β`; so the circles cut
@@ -349,8 +349,8 @@ X of `β` off the straight line FG, where a straight line through G meets `β` (
 Intersections 5), is within `α`: FX is less than FG, GX together [I. 20], which are FG, GC
 again. -/
 theorem Touching.internally_of_between {α β : Circle} {C F G : Point} (hF : Centre F α)
-    (hG : Centre G β) (hCα : OnCircle C α) (hCβ : OnCircle C β) (hαβ : α ≠ β)
-    (h : Between F G C) : TouchesInternally α β C := by
+    (hG : Centre G β) (hCα : OnCircle C α) (hCβ : OnCircle C β) (h : Between F G C) :
+    TouchesInternally α β C := by
   refine ⟨hCα, hCβ, ?_, fun P hP hout => ?_⟩
   · /- The straight line from G to a point B off FG meets `β` at X, off FG (System E,
        Intersections 5); FX is less than FG, GX [I. 20], that is FG, GC, which make FC. -/
@@ -399,7 +399,7 @@ theorem TouchesInternallyAt.whole {α β : Circle} {C : Point} (h : TouchesInter
     TouchesInternally α β C := by
   obtain ⟨F, hF⟩ := exists_centre α
   obtain ⟨G, hG⟩ := exists_centre β
-  exact Touching.internally_of_between hF hG h.1 h.2.1 h.2.2.1 (h.between hF hG)
+  exact Touching.internally_of_between hF hG h.1 h.2.1 (h.between hF hG)
 
 /-- **Contact without at a point is contact without of the whole circles**, the centres taken
 by the rule that every circle has one (`Tacit.exists_centre`): the point lies between the

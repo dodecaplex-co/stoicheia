@@ -40,6 +40,9 @@ theorem Prop21 {A B D E : Point} {ABCD : Circle}
   obtain ⟨C, hCA, -⟩ := exists_oppositeSidesOf hAE.triangle []
   -- For let the centre of the circle ABCD be taken, and let it be F; let BF, FD be joined.
   obtain ⟨F, hF⟩ := exists_centre ABCD
+  /- The general III.20 takes the centre itself (`Routes.Prop20`), and the angle at the
+     centre is made up of angles there (`angleAtCentre.diameter`). F is that centre, for a
+     circle has one centre (`centre_unique`), and nothing below needs it named. -/
   -- Now, since the angle BFD is at the centre,
   -- and the angle BAD at the circumference,
   -- and they have the same circumference BCD as base,

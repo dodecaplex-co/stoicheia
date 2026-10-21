@@ -146,6 +146,8 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
       obtain ⟨X, hX, hXG⟩ := Prop2.sameSide hB hK hGBK.bca
       obtain ⟨Y, hY, hYH⟩ := Prop2.sameSide hE hF hHR.triangle
       -- therefore the circumference BK is equal to the circumference EF.
+      /- III.26 gives BK and EF equal in measure and congruent; the comparison with BC
+         below is by measure, so we take the measures. -/
       have hBK : circumference ABC B P K = circumference DEF E R F :=
         ((Prop26 hcircles hG hH hX hB hK hY hE hF (hXG.trans_opposite hPG.symm)
           (hYH.trans_opposite hHR)).1 hPG.symm hHR hBGK).1

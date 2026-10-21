@@ -33,7 +33,7 @@ statements:
   angle of the semicircle does not depend on it: on any side of the diameter its comparison
   follows from III.16, with the perpendicular to AB at A drawn on that side by I.11.
 
-Main has none of these. The mixed angles, moved into `Elements` (issue #57), whose words and
+Main has none of these. The mixed angles of `Elements` (issue #57), whose words and
 facts this file uses, prove III.16's comparisons in III.16's figure, where AE is drawn at right
 angles to the diameter, and do not prove the angle of contact's comparisons for a touching
 straight line in general. The route is Euclid's order: III.18 makes the touching straight
@@ -43,12 +43,14 @@ directly from III.16's second part, where Euclid argues by reductio: the straigh
 acute angle falls within the circle, so near A the acute angle lies within the angle of the
 semicircle, with room to spare, and the angle of contact within the acute angle.
 
-Nothing here rests on Circle 2 or Circle 3. The steps of III.16's comparisons that these
-statements need are the move's, cited by the names they have in
+Nothing here rests on Circle 2 or Circle 3. All but `Prop18.diameter` and `Prop18.parts` rest
+on the rule that every circle has a centre (`Tacit.exists_centre`), through III.2 and the
+steps they cite, and `Prop18.contact_locallyEqual` and `Prop18.contact_lt` take their centre
+from it. The steps of III.16's comparisons that these statements need are cited from
 `Elements/Figure/Regions.lean`, `Elements/BookIII/MixedAngles.lean` and
-`Elements/BookIII/Prop16.lean`. Where the prototype of the mixed angles used Circle 2 or 3,
-the move argues by III.2 (`InsideCircle.of_between`), except `exists_onRay_inside`, which
-replaces Circle 2 by comparing radii (`inside_of_len_lt`).
+`Elements/BookIII/Prop16.lean`. In place of Circle 2 and Circle 3, they argue by III.2
+(`InsideCircle.of_between`), and `exists_onRay_inside` by comparing radii
+(`inside_of_len_lt`).
 
 Status: the statements after III.18, and the section's one helper, are new, a draft for the
 owner's approval; not approved.
@@ -115,7 +117,8 @@ theorem Prop18.branch {A B B' D E : Point} {ABC : Circle} (hD : Centre D ABC)
   exact ⟨hB', Prop16.horn_locallyEqual hD hA hADB hE hout hin hB'⟩
 
 /-- **The angle of contact does not depend on the straight line that names its branch.** Let
-AE touch a circle about D at A. Any two angles of contact along AE, each with its branch
+AE touch a circle at A, and let D be its centre (`Tacit.exists_centre`). Any two angles of
+contact along AE, each with its branch
 named by a straight line from A into the circle, are equal near A: each is, near A, the
 angle of contact of III.16's figure, named by the diameter through A. -/
 theorem Prop18.contact_locallyEqual {A B B' E : Point} {ABC : Circle}
@@ -129,8 +132,9 @@ theorem Prop18.contact_locallyEqual {A B B' E : Point} {ABC : Circle}
   exact (Prop18.branch hD hADB₀ hm).2.symm.trans (Prop18.branch hD hADB₀ hm').2
 
 /-- **The angle of contact is less than any acute rectilineal angle**, for every straight line
-touching a circle. Let AE touch a circle about D at A, and B name the branch of the angle of
-contact by a straight line from A into the circle. For every acute angle EAF placed at A
+touching a circle. Let AE touch a circle at A, let D be its centre (`Tacit.exists_centre`),
+and let B name the branch of the angle of contact by a straight line from A into the circle.
+For every acute angle EAF placed at A
 along AE, on the circle's side, the angle of contact falls short of it. By III.18 the
 diameter AB₀ through A is at right angles to AE, and III.16's remaining angle, named by B₀,
 falls short of EAF (`Prop16.horn_lt`); the angle named by B is the same near A
@@ -155,7 +159,7 @@ side, the angle of the semicircle, contained by the straight line BA and the cir
 E's side, exceeds it: by III.18 this is III.16's figure (`Prop16.semicircle_gt`). The
 touching straight line AE only names the side of AB. The angle of the semicircle does not
 depend on it, and on any side of the diameter the comparison follows from III.16, with the
-perpendicular to AB at A drawn on that side by I.11. The move states that form, with AE at
+perpendicular to AB at A drawn on that side by I.11. `Elements` states that form, with AE at
 right angles to AB, as `Prop16.semicircle`. -/
 theorem Prop18.semicircle_gt {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC)
     (hA : OnCircle A ABC) (hAE : Touches A E ABC) (hADB : Between A D B)
