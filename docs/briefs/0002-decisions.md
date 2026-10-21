@@ -4244,10 +4244,59 @@ findings:
 
 ## 21 October 2026
 
-PLACEHOLDER, for the integrator to replace with this day's entry: the merge of
-`lean/centre-guard` (axiom wave one, main at `0a05f96f`, and trains C6a and C6b) into
-train C6c, recording each protected path that the merge changes, as the integrator
-lists them.
+- **Train C6c meets the guard, trains C6a and C6b and axiom wave one.** Train C6c, which
+  carries brief 0008's step 6 (every Book III centre taken inside its proof), III.30's
+  halves and the companions of III.24 and III.25, was merged with `lean/centre-guard` at
+  `6b51608a`, which carries train C6b at `12f6fe9d`, train C6a at `529c93f7`,
+  tooling/centre-given-meaning and main at `0a05f96f`: axiom wave one, the restricted rule
+  of superposition (#191), the check train (#192), train Tw2 (#193), Heath's letters
+  upright (#194, #196), the twenty entries out of `REACH_PENDING` (#195) and short hashes
+  read from Git (#198). The restated Book III of this train is kept whole; III.1's record
+  and commentary are this train's, since its statement no longer takes a centre.
+  `Certificate/axioms.lock`, written again by `python3 scripts/check_fidelity.py
+  --write-lock` after `lake build` and `Certificate/Facts.lean`, holds the guard side's 80
+  axioms, of them 74 tacit rules, each byte for byte, and its 242 words, with this train's
+  `Arc.Drawn` without its centre clause; no other word changes. Both
+  [`model/lock.sha256`](../../model/lock.sha256) and
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) keep every dated comment of
+  both sides, gain one for this merge, and hash the lock,
+  `8ecd3bade891a4c222a2c9037357e401bb116f52dc96e90e041f8102be908b5f`.
+  `model/Model/Laws.lean` was written again by `lake lean Check/Write.lean`, its line of
+  the hash alone changing, and [`tests/model/MODEL.md`](../../tests/model/MODEL.md) and
+  the model results by `python3 tests/model/run.py --full --write`: 80 laws, no
+  counterexample in the plane, all 15 mutations caught, and in the hyperbolic plane no
+  counterexample to any axiom but Postulate 5. No pin was renewed: `lake build Audit`
+  passes with every pin of `Audit/Overlaps.lean`, `Audit/Crossing.lean`,
+  `Audit/Centre.lean` and `Audit/Superposition.lean` as written, and `Audit/Centre.lean`'s
+  pin of `Prop1.construction` is Lean's own list, which this train does not change.
+  [`Audit/screen.py`](../../Audit/screen.py) keeps both sides' accounts: this train's
+  `exists_centre` among the screened circle rules, and the guard side's restricted rule of
+  superposition. The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`,
+  `model/`, `scripts/`, `.github/`, `review/SCHEMA.md`, `review/terms.toml`,
+  `lakefile.toml` and `lean-toolchain` that differ from `lean/centre-guard` at
+  `6b51608a`, each named whole:
+  `Audit/Crossing.lean`,
+  `Audit/Overlaps.lean`,
+  `Audit/screen.py`,
+  `Certificate/axioms.lock`,
+  `model/Model/Laws.lean`,
+  `model/lock.sha256`,
+  `tests/model/MODEL.md`,
+  `tests/model/lock.sha256`,
+  `tests/model/results/angle_check.txt`,
+  `tests/model/results/exhaustive.txt`,
+  `tests/model/results/grid_check.txt`,
+  `tests/model/results/hyperbolic.txt`,
+  `tests/model/results/mutations.txt`,
+  `tests/model/results/search-seed1.txt`,
+  `tests/model/results/search-seed2.txt`,
+  `tests/model/results/search-seed3.txt`,
+  `tests/model/results/structured.txt` and
+  `tests/model/results/summary.txt`.
+  `Audit/Crossing.lean`, `Audit/Overlaps.lean` and `Audit/screen.py` differ by this train's
+  restated calls and its screen account, which its 19 October entries give; the rest by
+  the lock's one changed word and what follows from it. No statement, check or expected
+  value changes in this merge.
 
 - **III.30's halves, approved, proved and registered (#67).** The owner approved
   `Prop30.halves` on 20 October 2026. Its statement, staged in [brief 0006](0006-statements.md) ("Addition, 19
