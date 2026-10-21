@@ -429,10 +429,11 @@ class RenderLeavesTheRecord(unittest.TestCase):
             self.assertTrue(all(path.is_file() for path in record))
             before = {path: path.read_bytes() for path in record}
             names = sorted(os.listdir(folder))
+            entry_count = len(names) - ("README.md" in names)
             result = subprocess.run([sys.executable, "scripts/render.py"], cwd=root, env=env,
                                     capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn(f"decision entries: {len(entries)} checked in docs/decisions/",
+            self.assertIn(f"decision entries: {entry_count} checked in docs/decisions/",
                           result.stdout)
             self.assertIn("rendered book pages", result.stdout)
             self.assertEqual({path: path.read_bytes() for path in record}, before)
