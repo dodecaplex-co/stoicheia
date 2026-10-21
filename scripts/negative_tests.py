@@ -84,7 +84,10 @@ records current; CI runs it on every push.
     and an unknown count name are refused by check_fidelity.py, and a correct count
     passes. Missing or mismatched Git work trees and a Markdown symlink are refused
     with diagnostics. Run just these plants and the file-only regressions with --counts-only.
-18. A repeated dated heading in the decisions page makes `check_queue.py --tree .`
+18. Counting congruence constructors instead of `Coincidence.step` in the certificate:
+    `tests/test_certificate.py` fails on transformers with no step. The restored
+    certificate must pass the same regression, including its real-step cases.
+19. A repeated dated heading in the decisions page makes `check_queue.py --tree .`
     refuse with exit 1.
 
 These faults exercise the style and link checks, page freshness, an audit pin and
@@ -97,10 +100,10 @@ all renderer outputs.
 Tests 10, 14 and 15 attempt a restoration build; if it fails or is interrupted, every
 file in `.lake/build` returns to its saved contents and presence or absence before
 the plant, including dependent modules, hashes and traces. Test 10 always restores or
-removes `Planted.*` outputs in a nested `finally`. Tests 11 to 15 and the proved Circle 2
-plant report elapsed time, restoration included. An outer `finally` compares Git status
-with the entry status, including on interruption, without replacing an exception already
-in flight.
+removes `Planted.*` outputs in a nested `finally`. Tests 11 to 15, the proved Circle 2
+plant and test 18 report elapsed time, restoration included. An outer `finally` compares
+Git status with the entry status, including on interruption, without replacing an
+exception already in flight.
 Temporary-directory regressions run first, without Lean. Exits non-zero if a fault
 goes unnoticed or a restoration check fails. Restoration needs writable files and
 an opportunity for `finally` to finish; a forced process kill cannot provide it.
@@ -1133,6 +1136,30 @@ def planted_assumptions() -> None:
             planted_outputs.restore()
 
 
+def certificate_constructor_counting() -> None:
+    """Rebuilding constructors must not invent a coincidence step."""
+    rel = "Certificate/Facts.lean"
+    path = ROOT / rel
+    saved = path.read_bytes()
+    try:
+        replace_once(
+            rel, "used.contains coincidenceStep",
+            "([`Elements.Superposition.Derives.len_congr,\n"
+            "           `Elements.Superposition.Derives.angle_congr,\n"
+            "           `Elements.Superposition.Derives.area_congr]).any used.contains",
+        )
+        expect_failure(
+            "constructor counting reports a step in a transformer",
+            run(sys.executable, "-I", "tests/test_certificate.py"),
+            "FAIL: test_transformers_without_step_do_not_count",
+            "AssertionError: Lists differ: ['C.N. 4'] != []",
+        )
+    finally:
+        path.write_bytes(saved)
+    expect_success("the restored certificate regression",
+                   run(sys.executable, "-I", "tests/test_certificate.py"))
+
+
 @contextmanager
 def count_source_copy():
     """Copy tracked sources plus current Python tools under /tmp, with no build or .git.
@@ -1255,7 +1282,7 @@ def main(argv=()) -> int:
         queue_repeated_heading()
         planted_assumptions()
         for test in (circle_proved, style_error, broken_link, stale_page,
-                     changed_audit_pin, corrupt_olean):
+                     changed_audit_pin, corrupt_olean, certificate_constructor_counting):
             started = perf_counter()
             try:
                 test()
