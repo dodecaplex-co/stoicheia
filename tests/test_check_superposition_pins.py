@@ -26,16 +26,19 @@ comment, a doc comment opened by `/--/`, a string or after `#exit`) and for quot
 hide nothing, since the file may no longer hold the `#eval`s that carry those cases.
 
 A definition is pinned by `#print`. In copies of the real file, a `#check` pin of
-`Interpretation.Embedding` or of `Rule.Figure`, each with the docstring Lean prints for
-it, is refused with its line and does not count. `Placed`, `Val.place` and `Metric.names`
-must each have a `#print` pin: removed, or turned into a `#check`, each fails, and each is
-read by a theorem the section names, as the script says. A statement pin whose docstring
-holds `⋯` or `[...]`, as Lean prints a statement cut short, is refused with no option in
-the file, as if set outside it, and so is a proof printed as `⋯`. What shows a
-definition in Lean's print of a type is tested on the five definitions' prints, on
-propositions that only look like definitions' types, and on types that show neither sign,
-definitions' among them; every `#check` pin in the real file shows nothing.
-Every docstring below said to be what Lean prints was printed by Lean 4.35.
+`Interpretation.Embedding` or of `Rule.Figure`, the two the section names, is refused by
+name with its line and does not count: with the docstring Lean prints for it, and, for
+`Embedding` declared `: id Type`, with one that shows neither sign. `Embedding` must keep
+its `#print` pin even with the section no longer naming it. A `#check` pin of a definition
+the section might name later is refused by the signs. `Placed`, `Val.place` and
+`Metric.names` must each have a `#print` pin: removed, or turned into a `#check`, each
+fails, and each is read by a theorem the section names, as the script says. A statement
+pin whose docstring holds `⋯` or `[...]`, as Lean prints a statement cut short, is
+refused with no option in the file, as if set outside it, and so is a proof printed as
+`⋯`. What shows a definition in Lean's print of a type is tested on the five
+definitions' prints, on propositions that only look like definitions' types, and on types
+that show neither sign, definitions' among them; every `#check` pin in the real file
+shows nothing. Every docstring below said to be what Lean prints was printed by Lean 4.35.
 """
 
 import io
@@ -81,6 +84,10 @@ CHECKED = {
     f"{S}.Metric.names":
         f"@{S}.Metric.names : {{P : Type}} → {S}.Metric P → List P",
 }
+# What Lean prints for `#check @name` of `Interpretation.Embedding` declared `: id Type`,
+# a sort spelt through a name: its print shows neither sign.
+ID_EMBEDDING = (f"{S}.Interpretation.Embedding : {S}.Interpretation →\n  "
+                f"{S}.Interpretation → id Type")
 # What Lean prints for `Rule.Figure.restrict` and `Metric.names` cut short: under
 # `pp.deepTerms false` with threshold 0, under `pp.oneline`, and under `pp.maxSteps 1`.
 DEEP_RESTRICT = f"@{RESTRICT} : ∀ {{I J : {S}.Interpretation}}, ⋯"
@@ -89,14 +96,21 @@ ONELINE_RESTRICT = (f"@{RESTRICT} : ∀ {{I J : {S}.Interpretation}} (e : J.Embe
 STEPS_NAMES = f"def {S}.Metric.names : {{P : ⋯}} → ⋯ :=\nfun {{P}} x => ⋯"
 
 
-# The three definitions the script requires `#print` pins of, each printed as if it were
-# `True`, for the cases that do not copy the real file.
-PRINTS = "".join(f"\n/--\ninfo: def {name} : Prop :=\nTrue\n-/\n#guard_msgs in\n#print {name}\n"
-                 for name in pins.PRINTED)
+def prints(names) -> str:
+    """A `#print` pin of each of `names`, each printed as if it were `True`."""
+    return "".join(f"\n/--\ninfo: def {name} : Prop :=\nTrue\n-/\n#guard_msgs in\n#print {name}\n"
+                   for name in names)
 
 
-def check_pin(name: str) -> str:
-    return f"/--\ninfo: {CHECKED[name]}\n-/\n#guard_msgs in\n#check @{name}\n"
+# The five definitions the script requires `#print` pins of, for the cases that do not copy
+# the real file.
+HELD = (*pins.DEFINITIONS, *pins.PRINTED)
+PRINTS = prints(HELD)
+
+
+def check_pin(name: str, printed: str | None = None) -> str:
+    """A `#check` pin of `name`, with what Lean prints for it, or with `printed`."""
+    return f"/--\ninfo: {printed or CHECKED[name]}\n-/\n#guard_msgs in\n#check @{name}\n"
 
 
 def pin_span(audit: str, command: str) -> tuple[int, int]:
@@ -197,7 +211,9 @@ class PinTests(unittest.TestCase):
     def test_a_print_pin_counts_for_a_definition(self):
         audit = ("/--\ninfo: def Elements.Superposition.Rule.Figure : Prop :=\nTrue\n-/\n"
                  "#guard_msgs in\n#print Elements.Superposition.Rule.Figure\n")
-        code, out = self.run_check(self.brief("`Rule.Figure` is a definition."), audit)
+        others = prints(name for name in HELD if name != f"{S}.Rule.Figure")
+        code, out = self.run_check(self.brief("`Rule.Figure` is a definition."),
+                                   audit + others, printed=False)
         self.assertEqual(code, 0, out)
 
     def test_an_axiom_pin_is_not_a_statement_pin(self):
@@ -319,8 +335,7 @@ class PinTests(unittest.TestCase):
                    + RESTRICT_GUARD + closing + audit[end:])
         # In the namespace, Lean's pin names the new theorem, and the reader alone counts it.
         self.assertIn(RESTRICT, pins.statement_pins(planted)[0])
-        code, out = self.run_check((REPO / pins.BRIEF).read_text(), planted,
-                                           printed=False)
+        code, out = self.run_check((REPO / pins.BRIEF).read_text(), planted, printed=False)
         self.assertEqual(code, 1, out)
         self.assertNotIn("has no statement pin", out)
         self.assert_refused(out, numbered(planted, opening) + numbered(planted, closing))
@@ -328,25 +343,84 @@ class PinTests(unittest.TestCase):
     def test_a_check_pin_of_a_definition_the_section_names_is_refused(self):
         real = (REPO / pins.AUDIT).read_text()
         brief = (REPO / pins.BRIEF).read_text()
-        for short, sort in (("Interpretation.Embedding", "Type"), ("Rule.Figure", "Prop")):
-            name = f"{S}.{short}"
-            with self.subTest(short):
+        section = {span for _, span in pins.names(pins.section(brief))}
+        embedding = f"{S}.Interpretation.Embedding"
+        # The two the section names, each with the print Lean gives its `#check`; and
+        # `Embedding` declared `: id Type`, whose print shows neither sign, so that only
+        # its name refuses it.
+        self.assertIsNone(pins.definition_sign(ID_EMBEDDING.split(" : ", 1)[1]))
+        cases = {"Interpretation.Embedding": (embedding, CHECKED[embedding]),
+                 "Rule.Figure": (f"{S}.Rule.Figure", CHECKED[f"{S}.Rule.Figure"]),
+                 "Interpretation.Embedding, : id Type": (embedding, ID_EMBEDDING)}
+        self.assertEqual(set(pins.DEFINITIONS), {name for name, _ in cases.values()})
+        for label, (name, printed) in cases.items():
+            short = name.removeprefix(f"{S}.")
+            with self.subTest(label):
+                self.assertIn(short, section)
                 start, end = pin_span(real, f"#print {name}")
-                planted = real[:start] + check_pin(name) + real[end:]
-                line = numbered(planted, check_pin(name))[-1][0]
+                pin = check_pin(name, printed)
+                planted = real[:start] + pin + real[end:]
+                line = numbered(planted, pin)[-1][0]
                 # The reader does not count the `#check`; it shows only the type.
                 self.assertNotIn(name, pins.statement_pins(planted)[0])
                 code, out = self.run_check(brief, planted, printed=False)
                 self.assertEqual(code, 1, out)
                 self.assert_refused(out, [], ((
                     line, f"#check @{name}",
-                    "pins a definition by `#check`, which shows only its type (Lean prints "
-                    f"the type ending in the sort `{sort}`); only `#print {name}` pins a "
-                    "definition"),))
+                    f"pins a definition by `#check`, which shows only its type (`{name}` is "
+                    "held to `#print` by name, whatever its print shows); only "
+                    f"`#print {name}` pins a definition"),))
                 self.assertIn(f"brief.md:{self.brief_line(short)}: `{short}` has no "
                               f"statement pin in {self.root / 'Audit.lean'}: its pin at "
-                              f"{self.root / 'Audit.lean'}:{line} is a `#check`, but Lean "
-                              f"prints the type ending in the sort `{sort}`", out)
+                              f"{self.root / 'Audit.lean'}:{line} is a `#check` of a "
+                              "definition held to `#print` by name, whatever its print "
+                              "shows", out)
+                # Reported once, as a name the section names.
+                self.assertNotIn("no longer named", out)
+
+    def test_a_definition_held_by_name_needs_its_print_though_the_section_drops_it(self):
+        real = (REPO / pins.AUDIT).read_text()
+        brief = (REPO / pins.BRIEF).read_text()
+        name = f"{S}.Interpretation.Embedding"
+        dropped = brief.replace("in I (`Interpretation.Embedding`), keeping",
+                                "in I (an embedding), keeping")
+        self.assertNotIn("Interpretation.Embedding",
+                         {span for _, span in pins.names(pins.section(dropped))})
+        code, out = self.run_check(dropped, real, printed=False)
+        self.assertEqual(code, 0, out)
+        start, end = pin_span(real, f"#print {name}")
+        cases = {
+            "removed": (real[:start] + real[end + 1:], " (an `info:` docstring"),
+            "a #check": (real[:start] + check_pin(name, ID_EMBEDDING) + real[end:],
+                         ": its pin at"),
+        }
+        for label, (planted, then) in cases.items():
+            with self.subTest(label):
+                code, out = self.run_check(dropped, planted, printed=False)
+                self.assertEqual(code, 1, out)
+                self.assertIn(f"Audit.lean: `{name}`, held to `#print` by name, though the "
+                              f"section no longer names it, has no `#print` pin{then}", out)
+                self.assertIn("✗ 1 of the 2 definitions held to `#print` by name have no "
+                              "`#print` pin and are no longer named", out)
+                self.assertNotIn("has no statement pin", out)
+
+    def test_the_signs_refuse_a_definition_the_section_names_later(self):
+        # A name not held by name, whose `#check` shows a sign in its type.
+        name = f"{S}.Later.kind"
+        for printed, sign in (
+                (f"{name} : Nat → Type", "ending in the sort `Type`"),
+                (f"@{name} : {{P : Type}} → P → List P",
+                 "with `{P : Type} →`, where a proposition has `∀ {P : Type},`")):
+            with self.subTest(printed):
+                audit = f"/--\ninfo: {printed}\n-/\n#guard_msgs in\n#check @{name}\n"
+                code, out = self.run_check(self.brief("`Later.kind` is a definition."), audit)
+                self.assertEqual(code, 1, out)
+                self.assert_refused(out, [], ((
+                    5, f"#check @{name}", "pins a definition by `#check`, which shows only "
+                                          f"its type (Lean prints the type {sign});"),))
+                self.assertIn(f"`Later.kind` has no statement pin in {self.root / 'Audit.lean'}"
+                              f": its pin at {self.root / 'Audit.lean'}:5 is a `#check`, but "
+                              f"Lean prints the type {sign}", out)
 
     def test_the_definitions_pinned_theorems_read_must_be_printed(self):
         real = (REPO / pins.AUDIT).read_text()
@@ -440,9 +514,9 @@ class PinTests(unittest.TestCase):
             with self.subTest(name):
                 self.assertEqual(pins.definition_sign(CHECKED[name].split(" : ", 1)[1]), sign)
         # Other types as Lean prints them: definitions' types; propositions, some only
-        # looking like definitions' (a sort after an arrow inside a `fun` or after `have`, a
-        # function type in brackets); and types that show neither sign, propositions and
-        # definitions alike (the last two are definitions' types).
+        # looking like definitions' (a sort after an arrow inside a `fun` or after `have`, an
+        # equation of sorts, a function type in brackets); and types that show neither sign,
+        # propositions and definitions alike (the last two are definitions' types).
         prints = {
             "{α : Type u_1} → [Inhabited α] → List α": "with `{α : Type u_1} →`",
             "Sort u_1 → Sort (max 1 u_1)": "ending in the sort `Sort (max 1 u_1)`",
@@ -450,6 +524,7 @@ class PinTests(unittest.TestCase):
             "((fun n => Nat) = fun n => Nat → Prop) → (fun n => Nat) = fun n => Nat → Prop":
                 None,
             "1 = 1 →\n  have T := Prop;\n  T = Prop": None,
+            "Sort (max u_1 u_2) = Sort (max u_2 u_1)": None,
             "(∀ (x : Nat), x = x) → Nonempty Prop": None,
             "∀ (a : (x : Nat) → Fin (x + 1)), True": None,
             "1 = 1 → 2 = 2": None,

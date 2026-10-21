@@ -3638,26 +3638,34 @@ findings:
   restriction theorem" has a statement pin in `Audit/Superposition.lean`, a bare
   `#guard_msgs in` over `#check @` for a theorem or `#print` for a definition, under its
   full name; a pin in a comment does not count, and a section that names nothing fails. The
-  audit file may hold nothing but its leading
-  imports, comments and pins, each a docstring, a bare `#guard_msgs in`, then `#check @`,
-  `#print` or `#print axioms`. Anything else is refused with its line. An independent
-  review showed why: `set_option pp.deepTerms false` with a threshold of 0 shortens what
-  Lean prints, so that a docstring cut down to match passes `lake build Audit` and pins
-  almost nothing (`pp.oneline` and a small `pp.maxSteps` shorten it too), and in a
-  namespace a new theorem can take a pinned name. So a `set_option` of any kind,
-  `namespace`, `section`, `open`, any declaration, `#eval`, `#exit` and a `#guard_msgs`
-  with options (`substring := true`, `drop` and the like) are all refused. A later review
-  showed that a `#check` pin shows a definition's type and not its body, so that a field
-  added to `Interpretation.Embedding` passed under one. So a `#check` pin is refused when
-  Lean's print of its type, in the docstring, shows a definition, by ending in a sort or by
-  opening a binder with an arrow where a proposition has `∀`; the docstring is read
-  because it is Lean's own account of the declaration, held exact by the build, and the
-  brief marks no name as a definition. `Placed`, `Val.place` and `Metric.names`, which
-  theorems the section names read, must have `#print` pins too, and a statement pin whose
-  docstring holds `⋯` or `[...]`, where Lean cut its print short, is refused, wherever the
-  option was set (the lakefile, say, or the default `pp.maxSteps` on a long statement).
-  `Audit.lean` must import the audit file, since the `Audit` library builds only what its
-  root imports. Its cases are in the new
+  audit file may hold nothing but its leading imports, comments and pins, each a docstring,
+  a bare `#guard_msgs in`, then `#check @`, `#print` or `#print axioms`. Anything else is
+  refused with its line. An independent review showed why: `set_option pp.deepTerms false`
+  with a threshold of 0 shortens what Lean prints, so that a docstring cut down to match
+  passes `lake build Audit` and pins almost nothing (`pp.oneline` and a small `pp.maxSteps`
+  shorten it too), and in a namespace a new theorem can take a pinned name. So a
+  `set_option` of any kind, `namespace`, `section`, `open`, any declaration, `#eval`,
+  `#exit` and a `#guard_msgs` with options (`substring := true`, `drop` and the like) are
+  all refused. A later review showed that a `#check` pin shows a definition's type and not
+  its body, so that a field added to `Interpretation.Embedding` passed under one. So a
+  `#check` pin is refused when Lean's print of its type, in the docstring, shows a
+  definition, by ending in a sort or by opening a binder with an arrow where a proposition
+  has `∀`; the docstring is read because it is Lean's own account of the declaration, held
+  exact by the build, and the brief marks no name as a definition. A further review showed
+  that the signs can be got past: the type of a structure declared `: id Type`, a sort
+  spelt through a name, prints as `… → id Type`, which shows neither, so a field added to
+  `Interpretation.Embedding` passed again under a `#check`. So the two definitions the
+  section names, `Rule.Figure` and `Interpretation.Embedding`, are held to `#print` by
+  name: each must have a `#print` pin, and a `#check` pin of either is refused whatever it
+  prints. The signs stay, as the backstop for a definition the section names later.
+  `Placed`, `Val.place` and `Metric.names`, which theorems the section names read, must
+  have `#print` pins too, and a statement pin whose docstring holds `⋯` or `[...]`, where
+  Lean cut its print short, is refused, wherever the option was set (the lakefile, say, or
+  the default `pp.maxSteps` on a long statement). An option that hides part of a print with
+  no mark, such as `pp.piBinderTypes false`, is another matter: since the audit file may
+  set no option, it could be set only in the lakefile, a protected file, and that
+  protection holds it off, not this check. `Audit.lean` must import the audit file, since
+  the `Audit` library builds only what its root imports. Its cases are in the new
   [`tests/test_check_superposition_pins.py`](../../tests/test_check_superposition_pins.py).
   Both run in CI's check job ([`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)),
   in [`scripts/safe_push.py`](../../scripts/safe_push.py)'s list of checks and in WORKFLOW,
