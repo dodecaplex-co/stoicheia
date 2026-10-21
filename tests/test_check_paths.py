@@ -180,14 +180,16 @@ class Rules(unittest.TestCase):
                      "Elements/BookI/prop01.lean", "Elements/BookI/Prop_01.lean",
                      "Staging/stage5/A.lean", "Audit/overlaps.lean", "Elements/angles.lean",
                      "model/lakefile.lean", "docs/lakefile.lean", "tests/Lakefile.lean",
-                     "scripts/check-paths.py", "scripts/Check.py", "tests/model/2d.py"):
+                     "scripts/check-paths.py", "scripts/Check.py", "tests/model/2d.py",
+                     "scripts/class.py"):
             with self.subTest(name=name):
                 self.refused(5, entries(name), name)
         # Outside the edition's Lean libraries, a Lean file is named as its folder wants.
         self.accepted(*entries("docs/reports/crew/scratch-IV/PrototypeIV1.lean",
                                "tests/fixtures/CertificateCN4.lean",
                                "Staging/Stage3/Prop23Point.lean", "model/Model.lean",
-                               "Elements/Figure/OnCircles.lean"))
+                               "Elements/Figure/OnCircles.lean", "scripts/a.py",
+                               "scripts/match.py", "tests/case.py"))
 
     def test_p5_the_model_laws(self):
         # The nine laws keep the model's own lower-case names, and a new law would fit; the
@@ -294,7 +296,7 @@ def git_env(**extra: str) -> dict[str, str]:
 BASE = (*((PLAIN, name) for name in ("README.md", "LICENSE", "docs/a.md", "book/I/01.md",
                                       "review/I/01.toml", "Elements/BookI/Prop01.lean",
                                       "model/Model.lean", "model/Model/Laws/areas-p5.lean",
-                                      "scripts/a.py")),
+                                      "scripts/a.py", "scripts/match.py")),
         *((EXECUTABLE, name) for name in sorted(paths.EXECUTABLES)))
 
 
@@ -371,6 +373,7 @@ class Index(unittest.TestCase):
             ("lakefile.lean at the root", [(PLAIN, "lakefile.lean")], 4, "lakefile.lean"),
             ("lakefile.lean in model/", [(PLAIN, "model/lakefile.lean")], 5,
              "model/lakefile.lean"),
+            ("a Python keyword", [(PLAIN, "scripts/class.py")], 5, "scripts/class.py"),
             ("a .gitattributes", [(PLAIN, ".gitattributes")], 4, ".gitattributes"),
         )
         for label, planted, rule, names in cases:
@@ -454,7 +457,8 @@ class Index(unittest.TestCase):
         # cannot be planted, and its case is skipped.
         self.plant(PLAIN, "docs/two words.md")
         env = {k: v for k, v in git_env().items() if not k.startswith("PYTHON")}
-        for name in ("unicodedata", "argparse", "subprocess", "pathlib", "__future__"):
+        for name in ("unicodedata", "argparse", "keyword", "subprocess", "pathlib",
+                     "__future__"):
             with self.subTest(name):
                 marker = self.root / f"{name}.ran"
                 plant = self.root / "scripts" / f"{name}.py"
@@ -497,6 +501,17 @@ class Index(unittest.TestCase):
         # Both naming this repository, as negative_tests.py's copies name theirs, judge it.
         result = self.check(env=git_env(GIT_DIR=gitdir, GIT_WORK_TREE=str(self.root)))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_a_foreign_git_dir_cannot_supply_the_index(self):
+        self.plant("120000", "docs/link.md")
+        foreign = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+        self.git("-C", str(foreign), "init", "-q", "-b", "main", ".")
+        self.git("-C", str(foreign), "commit", "-q", "--allow-empty", "-m", "Clean")
+        result = self.check(env=git_env(GIT_DIR=str(foreign / ".git"),
+                                        GIT_WORK_TREE=str(self.root)))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("not the script's repository Git directory", result.stderr)
+        self.assertNotIn("✓", result.stdout)
 
     def test_self_test_runs_before_the_index(self):
         self.plant(PLAIN, "readme.md")

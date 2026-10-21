@@ -64,6 +64,7 @@ if __name__ == "__main__":
                    != os.path.dirname(os.path.realpath(__file__))]
 
 import argparse  # noqa: E402
+import keyword  # noqa: E402
 import re  # noqa: E402
 import subprocess  # noqa: E402
 import unicodedata  # noqa: E402
@@ -361,9 +362,14 @@ def names(path: str) -> list[str]:
     if path.startswith("docs/briefs/") and not BRIEF.fullmatch(path):
         reasons.append("not a brief's name: docs/briefs/NNNN-<slug>.md, four digits and "
                        "words of letters and digits joined by hyphens, or docs/briefs/book-R.md")
-    if base.endswith(".py") and not PYTHON.fullmatch(base):
-        reasons.append("not an importable Python name: a lower-case letter, then lower-case "
-                       "letters, digits and underscores")
+    if base.endswith(".py"):
+        stem = base[:-len(".py")]
+        if not PYTHON.fullmatch(base):
+            reasons.append("not an importable Python name: a lower-case letter, then "
+                           "lower-case letters, digits and underscores")
+        elif keyword.iskeyword(stem):
+            reasons.append(f"not an importable Python name: {quoted(stem)} is a Python "
+                           "keyword")
     if base.endswith(".lean") and (len(parts) == 1 or top in LEAN_TREES):
         reasons += module(parts)
     return reasons
@@ -475,6 +481,7 @@ PLANTED: tuple[tuple[int, tuple[tuple[str, str], ...], str], ...] = (
     (5, ((PLAIN, "model/Model/Laws/lakefile.lean"),), "model/Model/Laws/lakefile.lean"),
     (5, ((PLAIN, "Elements/angles.lean"),), "Elements/angles.lean"),
     (5, ((PLAIN, "scripts/check-paths.py"),), "scripts/check-paths.py"),
+    (5, ((PLAIN, "scripts/class.py"),), "scripts/class.py"),
     (6, (("120000", "docs/link.md"),), "docs/link.md"),
     (6, (("160000", "docs/sub"),), "docs/sub"),
     (6, ((EXECUTABLE, "scripts/heath.py"),), "scripts/heath.py"),
@@ -518,26 +525,47 @@ def self_test() -> list[str]:
 
 
 def repository() -> Path:
-    """The repository the script stands in, as Git names its work tree. An inherited
-    GIT_DIR or GIT_WORK_TREE that names another is refused, saying what to do: a Git alias
-    run from a linked worktree sets GIT_DIR, and the check would judge the wrong index."""
+    """The repository the script stands in, as Git names its work tree and Git directory.
+    An inherited GIT_DIR or GIT_WORK_TREE that names another is refused, saying what to do:
+    a Git alias run from a linked worktree sets GIT_DIR, and the check would judge the wrong
+    index."""
     inherited = [name for name in ("GIT_DIR", "GIT_WORK_TREE") if name in os.environ]
     remedy = ((f"; {' and '.join(inherited)} {'is' if len(inherited) == 1 else 'are'} set "
                "(a Git alias run from a linked worktree sets GIT_DIR): run the check with "
                "neither (env -u GIT_DIR -u GIT_WORK_TREE python3 scripts/check_paths.py)")
               if inherited else "")
-    try:
-        done = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=SCRIPT.parent,
-                              capture_output=True, text=True)
-    except OSError as e:
-        fail(f"cannot run Git ({e})")
-    if done.returncode != 0:
-        fail(f"cannot find the repository from {SCRIPT.parent}: {done.stderr.strip()}"
-             + remedy)
-    top = Path(done.stdout.strip()).resolve()
-    if top != SCRIPT.parent.parent:
-        fail(f"Git's work tree is {top}, not the script's repository {SCRIPT.parent.parent}"
+    discovery_env = os.environ.copy()
+    discovery_env.pop("GIT_DIR", None)
+    discovery_env.pop("GIT_WORK_TREE", None)
+
+    def location(env: dict[str, str] | None) -> tuple[Path, Path]:
+        try:
+            done = subprocess.run(
+                ["git", "rev-parse", "--show-toplevel", "--absolute-git-dir"],
+                cwd=SCRIPT.parent, env=env, capture_output=True, text=True)
+        except OSError as e:
+            fail(f"cannot run Git ({e})")
+        if done.returncode != 0:
+            fail(f"cannot find the repository from {SCRIPT.parent}: {done.stderr.strip()}"
+                 + remedy)
+        lines = done.stdout.splitlines()
+        if len(lines) != 2:
+            fail(f"cannot read Git's repository location from {SCRIPT.parent}" + remedy)
+        return Path(lines[0]).resolve(), Path(lines[1]).resolve()
+
+    expected_top, expected_git_dir = location(discovery_env)
+    script_root = SCRIPT.parent.parent
+    if expected_top != script_root:
+        fail(f"Git's work tree is {expected_top}, not the script's repository {script_root}; "
+             "run the check from the repository's own work tree")
+    top, git_dir = location(None)
+    if top != script_root:
+        fail(f"Git's work tree is {top}, not the script's repository {script_root}"
              + (remedy or "; run the check from the repository's own work tree"))
+    if git_dir != expected_git_dir:
+        fail(f"Git's directory is {git_dir}, not the script's repository Git directory "
+             f"{expected_git_dir}" + (remedy or "; run the check from the repository's "
+                                         "own work tree"))
     return top
 
 
