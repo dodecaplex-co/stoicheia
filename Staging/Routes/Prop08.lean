@@ -41,7 +41,7 @@ but, of the straight lines falling on the convex circumference, that between the
 diameter is least, while of the rest the nearer to the least is always less than the more
 remote, and only two equal straight lines will fall on the circle from the point, one on each
 side of the least. -/
-theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC)
+theorem Prop8 {A D G : Point} {ABC : Circle}
     (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hG : OnCircle G ABC)
     (hDGA : Between D G A) (hGA : ∀ M : Point, Centre M ABC → Between G M A) :
     (∀ E : Point, OnCircle E ABC → E ≠ A → ‖D E‖ < ‖D A‖) ∧
@@ -68,7 +68,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
   -- For let the centre of the circle ABC be taken [III. 1], and let it be M; let ME, MF, MC,
   -- MK, ML, MH be joined.
   have hAG : A ≠ G := ne_of_between (between_symm hDGA)
-  obtain ⟨M, -, -, -, hM, -⟩ := Prop1 hABC hA hG hAG
+  obtain ⟨M, -, -, -, hM, -⟩ := Prop1 hA hG hAG
   have hGMA : Between G M A := hGA M hM
   have hDGM : Between D G M := between_cut hDGA hGMA
   have hDMA : Between D M A :=
@@ -92,7 +92,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
     intro E hE hEA
     /- On DA, E must be G: the part DG is less than the whole DA. -/
     by_cases hE_Ld : OnLine E Ld
-    · rcases Prop8.on_diameter hABC hA hG hE hAG hA_Ld hG_Ld hE_Ld with rfl | rfl
+    · rcases Prop8.on_diameter hA hG hE hAG hA_Ld hG_Ld hE_Ld with rfl | rfl
       · exact absurd rfl hEA
       · exact len_lt_of_between hDGA
     -- Then, since AM is equal to EM,
@@ -137,7 +137,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
     intro K hK hKG
     /- On DA, K must be A, and DG is a part of DA. -/
     by_cases hK_Ld : OnLine K Ld
-    · rcases Prop8.on_diameter hABC hA hG hK hAG hA_Ld hG_Ld hK_Ld with rfl | rfl
+    · rcases Prop8.on_diameter hA hG hK hAG hA_Ld hG_Ld hK_Ld with rfl | rfl
       · exact len_lt_of_between hDGA
       · exact absurd rfl hKG
     -- Next, since MK, KD are greater than MD, [I. 20]
@@ -284,7 +284,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
     /- On DA itself, N is A or G, and DA is the greatest and DG the least, as proved above,
        so neither is as far from D as K. -/
     by_cases hN_Ld : OnLine N Ld
-    · rcases Prop8.on_diameter hABC hA hG hN hAG hA_Ld hG_Ld hN_Ld with rfl | rfl
+    · rcases Prop8.on_diameter hA hG hN hAG hA_Ld hG_Ld hN_Ld with rfl | rfl
       · have hlt := greatest K hK (fun e => hK_Ld (e ▸ hA_Ld))
         rw [← hDN] at hlt
         exact absurd hlt (lt_irrefl _)

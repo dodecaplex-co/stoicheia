@@ -143,12 +143,12 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
       /- For III.26 we name the circumference BK by a point P beyond it, and take a point of
          each circle on the centre's side. -/
       obtain ⟨P, hPG, -⟩ := exists_oppositeSidesOf hGBK.bca []
-      obtain ⟨X, hX, hXG⟩ := Prop2.sameSide ⟨G, hG⟩ hB hK hGBK.bca
-      obtain ⟨Y, hY, hYH⟩ := Prop2.sameSide ⟨H, hH⟩ hE hF hHR.triangle
+      obtain ⟨X, hX, hXG⟩ := Prop2.sameSide hB hK hGBK.bca
+      obtain ⟨Y, hY, hYH⟩ := Prop2.sameSide hE hF hHR.triangle
       -- therefore the circumference BK is equal to the circumference EF.
       have hBK : circumference ABC B P K = circumference DEF E R F :=
-        (Prop26 hcircles hG hH hX hB hK hY hE hF (hXG.trans_opposite hPG.symm)
-          (hYH.trans_opposite hHR)).1 hPG.symm hHR hBGK
+        ((Prop26 hcircles hG hH hX hB hK hY hE hF (hXG.trans_opposite hPG.symm)
+          (hYH.trans_opposite hHR)).1 hPG.symm hHR hBGK).1
       -- But EF is equal to BC;
       have hEF_BC := hBC.symm
       -- therefore BK is also equal to BC, the less to the greater: which is impossible.
@@ -209,16 +209,16 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
          remain, BAC and EDF, as III.26 passes to "the circumference BKC which remains", and
          to the angles BXC, EYF standing on them at points X, Y of the circles on the
          centres' sides. -/
-      obtain ⟨X, hX, hXG⟩ := Prop2.sameSide ⟨G, hG⟩ hB hC hGA.triangle
-      obtain ⟨Y, hY, hYH⟩ := Prop2.sameSide ⟨H, hH⟩ hE hF hHD.triangle
+      obtain ⟨X, hX, hXG⟩ := Prop2.sameSide hB hC hGA.triangle
+      obtain ⟨Y, hY, hYH⟩ := Prop2.sameSide hE hF hHD.triangle
       have hXA : OppositeSidesOf X A B C := hXG.trans_opposite hGA
       have hYD : OppositeSidesOf Y D E F := hYH.trans_opposite hHD
       /- X and Y lie on the circumferences BC, EF, and the whole circles are four right
          angles each (`Circumference.whole`); so the circumferences BAC, EDF which remain
          are equal [C.N. 3]. -/
       have hst : standing ABC B X C = standing DEF E Y F := by
-        have w₁ := Circumference.whole ⟨G, hG⟩ hB hC hXA.symm
-        have w₂ := Circumference.whole ⟨H, hH⟩ hE hF hYD.symm
+        have w₁ := Circumference.whole hB hC hXA.symm
+        have w₂ := Circumference.whole hE hF hYD.symm
         rw [standing_eq_circumference hXA, standing_eq_circumference hYD]
         refine CommonNotion3 (c := circumference ABC B X C) (d := circumference DEF E Y F)
           ?_ ?_
@@ -233,10 +233,10 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
          equal angles at X and Y are taken away, the angles at A and D which remain are
          equal [C.N. 3]. -/
       have q₁ : ∠ B A C + ∠ B X C = ∟ + ∟ := by
-        have := (Prop22 ⟨G, hG⟩ hA hB hX hC hXA.symm).2
+        have := (Prop22 hA hB hX hC hXA.symm).2
         rwa [angle_symm hXA.triangle.ne₂₃ hXA.triangle.ne₁₃] at this
       have q₂ : ∠ E D F + ∠ E Y F = ∟ + ∟ := by
-        have := (Prop22 ⟨H, hH⟩ hD hE hY hF hYD.symm).2
+        have := (Prop22 hD hE hY hF hYD.symm).2
         rwa [angle_symm hYD.triangle.ne₂₃ hYD.triangle.ne₁₃] at this
       exact CommonNotion3 (c := ∠ B X C) (d := ∠ E Y F) (by rw [q₁, q₂]) hXY
   -- Therefore etc.

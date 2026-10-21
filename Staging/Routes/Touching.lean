@@ -1,10 +1,9 @@
 import Elements.Figure.Basics
 import Elements.BookI.Prop12
-import Elements.BookI.Prop17
-import Elements.BookI.Prop19
 import Elements.BookI.Prop20
 import Elements.BookI.Prop24
 import Elements.BookIII.Prop02
+import Elements.BookIII.MixedAngles
 
 /-!
 # Staging: touching at a point, as Heath reads Definition III.3
@@ -21,16 +20,20 @@ point do not intersect anywhere else".
 
 This file stages Heath's reading, said at the point. "Near C" is said with a circle about C,
 as Euclid would draw it, and with no numbers (`Touching.Near`), as the mixed angles of
-`Staging/Stage4b/MixedAngles.lean` say "near the vertex". Touching within at C
+`Elements/Foundations/DefinitionsIII.lean` say "near the vertex". Touching within at C
 (`TouchesInternallyAt`): the circles meet at C, they are two circles, and near C no point of
 the inner circle falls outside the outer. Touching without at C (`TouchesExternallyAt`): they
 meet at C, and near C no point is within both. Each is the whole-circle definition with
-"every point" narrowed to "every point near C"; nothing new is assumed, and no axiom is added.
+"every point" narrowed to "every point near C", except that where `TouchesInternally` now asks
+for a point of the inner circle within the outer (brief 0008, section 7), contact within at C
+asks, as `TouchesInternally` asked before, that the circles be two; nothing new is assumed,
+and no axiom is added.
 
-Then the agreement: for circles with centres, the reading at the point and the reading of the
-whole circles say the same (`touchesInternally_iff`, `touchesExternally_iff`,
-`circlesTouch_iff`). That the whole-circle reading gives the local one is immediate. The
-other way is the content, and it goes through the straight line joining the centres. Were
+Then the agreement: since every circle has a centre (`Tacit.exists_centre`), the reading at
+the point and the reading of the whole circles say the same (`touchesInternally_iff`,
+`touchesExternally_iff`, `circlesTouch_iff`). That the whole-circle reading gives the local
+one is immediate. The other way is the content, and it goes through the straight line
+joining the centres. Were
 the point of contact C off that straight line, a small circle about C would cut the inner
 circle at a point on the far side of the radius GC from the outer centre F, and the angle at
 G would put that point farther from F than C is [I. 24], as III.7 compares straight lines
@@ -41,7 +44,8 @@ So C lies on the straight line through the centres, beyond the inner centre with
 (`TouchesInternallyAt.between`) and between the centres without
 (`TouchesExternallyAt.between`); and from there I.20 and Definition I.15 give the whole
 circles. The proofs use Book I, III.2 and System E's diagram rules, Intersections 8 and 9
-among them, and nothing that rests on Circle 2 or Circle 3.
+among them, with the rule that every circle has a centre, and nothing that rests on Circle 2
+or Circle 3.
 
 These two lemmas reach the conclusions of III.11 and III.12 by a route that is not
 Euclid's. They are not meant to replace his proofs: the agreement belongs beside
@@ -60,8 +64,8 @@ open Tacit
 
 /-- **Near C, every point has the property `p`.** Every point within some circle about C
 has it. This says "near the point" with a circle about it, as Euclid would draw one (Post.
-3), and with no numbers, as `LocallyWithin` in `Staging/Stage4b/MixedAngles.lean` says "near
-the vertex". -/
+3), and with no numbers, as `LocallyWithin` in `Elements/Foundations/DefinitionsIII.lean`
+says "near the vertex". -/
 def Touching.Near (C : Point) (p : Point → Prop) : Prop :=
   ∃ γ : Circle, Centre C γ ∧ ∀ P : Point, InsideCircle P γ → p P
 
@@ -87,24 +91,10 @@ def CirclesTouchAt (α β : Circle) (C : Point) : Prop :=
 
 /-! ## Small facts the agreement needs
 
-Four of them are proved in `Staging/Stage4b/MixedAngles.lean` too (`exists_centre`, here
-`Touching.exists_circle`, `onLine_of_collinear`, `foot_nearest`, `len_lt_of_add_lt`), and
-are proved again here, in the same way, so that this file imports nothing from
-`Staging/`. On adoption each should be cited from one home. -/
-
-/-- Every point is the centre of some circle [Post. 3]. -/
-theorem Touching.exists_circle (C : Point) : ∃ γ : Circle, Centre C γ := by
-  obtain ⟨B, hB⟩ := exists_point [C]
-  have hCB : C ≠ B := fun h => hB (h ▸ List.mem_singleton_self C)
-  obtain ⟨γ, hγ, -⟩ := Postulate3 C B hCB
-  exact ⟨γ, hγ⟩
-
-/-- A point of the straight line AB (named as collinear with A and B) lies on every straight
-line through A and B. -/
-theorem Touching.onLine_of_collinear {A B C : Point} {L : Line} (hAB : A ≠ B)
-    (h : Collinear A B C) (hA : OnLine A L) (hB : OnLine B L) : OnLine C L := by
-  obtain ⟨M, hAM, hBM, hCM⟩ := h
-  exact line_unique hAB hAM hBM hA hB ▸ hCM
+Four others are in `Elements`, where the move of the mixed angles put them, and are cited
+from there: `exists_circle_about` and `onLine_of_collinear`, in
+`Elements/Figure/Regions.lean`, and `foot_nearest` and `len_lt_of_add_lt`, in
+`Elements/BookIII/MixedAngles.lean`. -/
 
 /-- A point outside a circle is farther from the centre than the circumference: were it
 nearer, it would be within; at the same distance, on it (System E, Diagram-segment 3
@@ -116,76 +106,19 @@ theorem Touching.len_lt_of_outside {F C P : Point} {α : Circle} (hF : Centre F 
   · exact absurd (on_circle_of_len_eq hF hC h) hP.2
   · exact h
 
-/-- **Two sides of a triangle are greater than the third**, said so that it holds when the
-three points are not a triangle too: if OP and PQ together are less than a length `x`, so is
-OQ. For a triangle this is I.20; for three points of one straight line, one lies between the
-other two (System E, Between 6), and the whole is the sum of its parts or less than it. -/
-theorem Touching.len_lt_of_add_lt {O P Q : Point} {x : Length} (h : ‖O P‖ + ‖P Q‖ < x) :
-    ‖O Q‖ < x := by
-  by_cases hOP : O = P
-  · subst hOP
-    rw [len_self, add_comm, add_zero] at h
-    exact h
-  by_cases hPQ : P = Q
-  · subst hPQ
-    rw [len_self, add_zero] at h
-    exact h
-  by_cases hOQ : O = Q
-  · subst hOQ
-    rw [len_self]
-    rcases lt_trichotomy 0 x with h0 | h0 | h0
-    · exact h0
-    · subst h0; exact absurd h (not_lt_zero _)
-    · exact absurd h0 (not_lt_zero _)
-  by_cases hcol : Collinear O P Q
-  · obtain ⟨L, hO, hP, hQ⟩ := hcol
-    rcases between_cases hOP hPQ hOQ hO hP hQ with hb | hb | hb
-    · rw [len_add_of_between hb] at h; exact h
-    · have h₁ : ‖O Q‖ < ‖P Q‖ := by
-        rw [len_symm O Q, len_symm P Q]; exact len_lt_of_between (between_symm hb)
-      have h₂ : ‖P Q‖ < ‖O P‖ + ‖P Q‖ := by
-        rw [add_comm]; exact CommonNotion5 (len_pos hOP)
-      exact lt_trans h₁ (lt_trans h₂ h)
-    · exact lt_trans (len_lt_of_between hb) (lt_trans (CommonNotion5 (len_pos hPQ)) h)
-  · have hOPQ : Triangle O P Q := hcol
-    exact lt_trans (BookI.Prop20 hOPQ.bac).1 h
-
-/-- **The perpendicular is the least straight line to a straight line.** If N is the foot of
-the perpendicular from A to the straight line BC, every other point X of BC is farther from
-A: the angle at N is right, so the angle at X is less [I. 17], and the greater side is
-opposite the greater angle [I. 19]. -/
-theorem Touching.foot_nearest {A B C N : Point} (hBC : B ≠ C) (hA : ¬ Collinear B C A)
-    (hN : Collinear B C N) (hright : ∀ X : Point, Collinear B C X → X ≠ N → ∠ A N X = ∟) :
-    ∀ X : Point, Collinear B C X → X = N ∨ ‖A N‖ < ‖A X‖ := by
-  obtain ⟨L, hB_L, hC_L⟩ := Postulate1 B C hBC
-  have hA_L : ¬ OnLine A L := fun h => hA ⟨L, hB_L, hC_L, h⟩
-  have hN_L : OnLine N L := Touching.onLine_of_collinear hBC hN hB_L hC_L
-  intro X hX
-  by_cases hXN : X = N
-  · exact Or.inl hXN
-  · right
-    have hX_L : OnLine X L := Touching.onLine_of_collinear hBC hX hB_L hC_L
-    have hANX : Triangle A N X := (Triangle.of_line hN_L hX_L (Ne.symm hXN) hA_L).cab
-    have hANX' : ∠ A N X = ∟ := hright X hX hXN
-    have h17 := (BookI.Prop17 hANX).1
-    rw [hANX'] at h17
-    have hNXA : ∠ N X A < ∠ A N X := by
-      rw [hANX']; exact Magnitude.lt_of_add_lt_add_left h17
-    exact BookI.Prop19 hANX hNXA
-
 /-- **Near a point off a straight line, every point is on its side.** If C is off the
 straight line GF, take N, the foot of the perpendicular from C to GF [I. 12]: every point
 nearer C than N is on C's side of GF. On GF, it would be a point of GF nearer C than N;
 across GF, the straight line joining it to C would cross GF nearer still (System E,
-Intersection 1). Both are against `Touching.foot_nearest`. -/
+Intersection 1). Both are against `foot_nearest`. -/
 theorem Touching.sameSide_of_near {C F G : Point} (hGFC : Triangle G F C) :
     ∃ N : Point, N ≠ C ∧ ∀ X : Point, ‖C X‖ < ‖C N‖ → SameSideOf X C G F := by
   have hGF : G ≠ F := hGFC.ne₁₂
   obtain ⟨N, hN, hright⟩ := BookI.Prop12 hGF hGFC
-  have hnear := Touching.foot_nearest hGF hGFC hN hright
+  have hnear := foot_nearest hGF hGFC hN hright
   obtain ⟨L, hG_L, hF_L⟩ := Postulate1 G F hGF
   have hC_L : ¬ OnLine C L := hGFC.off_line hG_L hF_L
-  have hN_L : OnLine N L := Touching.onLine_of_collinear hGF hN hG_L hF_L
+  have hN_L : OnLine N L := onLine_of_collinear hGF hN hG_L hF_L
   refine ⟨N, fun e => hC_L (e ▸ hN_L), fun X hX => ?_⟩
   have hnot : ∀ Y : Point, OnLine Y L → ‖C Y‖ < ‖C N‖ → False := fun Y hY hlt => by
     rcases hnear Y ⟨L, hG_L, hF_L, hY⟩ with e | h'
@@ -202,10 +135,11 @@ points are all within `γ` and nearer C than a given point N. Its radius is CA, 
 of CG taken near C (`exists_between_nearer`, twice). A is within `β`, being between its
 centre and C, and C, the centre of `δ`, is within `δ` and on `β`; so the circles cut
 (System E, Intersection 5). -/
-theorem Touching.small {β γ : Circle} {C G N : Point} (hG : Centre G β) (hC : OnCircle C β)
+theorem Touching.small {β γ : Circle} {C N : Point} (hC : OnCircle C β)
     (hγ : Centre C γ) (hCN : C ≠ N) :
     ∃ δ : Circle, Centre C δ ∧ CirclesMeet δ β ∧
       ∀ X : Point, OnCircle X δ → InsideCircle X γ ∧ ‖C X‖ < ‖C N‖ := by
+  obtain ⟨G, hG⟩ := exists_centre β
   obtain ⟨K, hK, -⟩ := exists_point_on_circle γ []
   have hCK : C ≠ K := (ne_of_centre_of_on hγ hK).symm
   have hCG : C ≠ G := ne_of_centre_of_on hG hC
@@ -228,15 +162,18 @@ theorem Touching.small {β γ : Circle} {C G N : Point} (hG : Centre G β) (hC :
 every point of `β` holds of those near C. -/
 theorem TouchesInternallyAt.of_whole {α β : Circle} {C : Point}
     (h : TouchesInternally α β C) : TouchesInternallyAt α β C := by
-  obtain ⟨hCα, hCβ, hαβ, hall⟩ := h
-  obtain ⟨γ, hγ⟩ := Touching.exists_circle C
+  obtain ⟨hCα, hCβ, ⟨Q, hQβ, hQα⟩, hall⟩ := h
+  /- They are two circles: the point Q of `β` within `α` is not on `α` (System E,
+     Generalities 4). -/
+  have hαβ : α ≠ β := fun e => inside_not_on hQα (e ▸ hQβ)
+  obtain ⟨γ, hγ⟩ := exists_circle_about C
   exact ⟨hCα, hCβ, hαβ, γ, hγ, fun P _ => hall P⟩
 
 /-- Contact without, read of the whole circles, is contact without at the point. -/
 theorem TouchesExternallyAt.of_whole {α β : Circle} {C : Point}
     (h : TouchesExternally α β C) : TouchesExternallyAt α β C := by
   obtain ⟨hCα, hCβ, hall⟩ := h
-  obtain ⟨γ, hγ⟩ := Touching.exists_circle C
+  obtain ⟨γ, hγ⟩ := exists_circle_about C
   exact ⟨hCα, hCβ, γ, hγ, fun P _ => hall P⟩
 
 /-! ## From the point to the straight line through the centres -/
@@ -274,7 +211,7 @@ theorem TouchesInternallyAt.between {α β : Circle} {C F G : Point} (hF : Centr
   by_cases hC_L : OnLine C L
   · /- C on the straight line FG, but not beyond G. A small circle about C cuts `β` off FG,
        at X; GX is equal to GC. -/
-    obtain ⟨δ, hδ, hmeet, hsmall⟩ := Touching.small (N := G) hG hCβ hγ hGC.symm
+    obtain ⟨δ, hδ, hmeet, hsmall⟩ := Touching.small (N := G) hCβ hγ hGC.symm
     obtain ⟨B, hB, -⟩ := exists_off_line hFG []
     obtain ⟨X, hXδ, hXβ, hXB⟩ :=
       circles_meet_same_side hmeet hδ hG hC_L hG_L (hB.off_line hF_L hG_L)
@@ -296,7 +233,7 @@ theorem TouchesInternallyAt.between {α β : Circle} {C F G : Point} (hF : Centr
   · /- C off the straight line FG. -/
     have hGFC : Triangle G F C := Triangle.of_line hG_L hF_L hFG.symm hC_L
     obtain ⟨N, hNC, hside⟩ := Touching.sameSide_of_near hGFC
-    obtain ⟨δ, hδ, hmeet, hsmall⟩ := Touching.small hG hCβ hγ hNC.symm
+    obtain ⟨δ, hδ, hmeet, hsmall⟩ := Touching.small hCβ hγ hNC.symm
     obtain ⟨M, hC_M, hG_M⟩ := Postulate1 C G hGC.symm
     have hF_M : ¬ OnLine F M := fun hF_M =>
       hC_L (line_unique hFG hF_M hG_M hF_L hG_L ▸ hC_M)
@@ -376,7 +313,7 @@ theorem TouchesExternallyAt.between {α β : Circle} {C F G : Point} (hF : Centr
   /- C off the straight line FG. -/
   have hGFC : Triangle G F C := Triangle.of_line hG_L hF_L (Ne.symm hFG) hC_L
   obtain ⟨N, hNC, hside⟩ := Touching.sameSide_of_near hGFC
-  obtain ⟨δ, hδ, hmeet, hsmall⟩ := Touching.small hG hCβ hγ hNC.symm
+  obtain ⟨δ, hδ, hmeet, hsmall⟩ := Touching.small hCβ hγ hNC.symm
   obtain ⟨M, hC_M, hG_M⟩ := Postulate1 C G hGC.symm
   have hF_M : ¬ OnLine F M := fun hF_M =>
     hC_L (line_unique hFG hF_M hG_M hF_L hG_L ▸ hC_M)
@@ -401,21 +338,39 @@ theorem TouchesExternallyAt.between {α β : Circle} {C F G : Point} (hF : Centr
   obtain ⟨T, hC_T, hX_T⟩ := Postulate1 C X hCX
   obtain ⟨P, -, hCPX, -⟩ := exists_point_between hC_T hX_T hCX []
   exact ⟨P, InsideCircle.of_between_centre_of_inside hγ hK hXγ hCPX,
-    Prop2.within ⟨F, hF⟩ (Or.inr hCα) (Or.inl hXα) hCPX, Prop2 ⟨G, hG⟩ hCβ hXβ P hCPX⟩
+    Prop2.within (Or.inr hCα) (Or.inl hXα) hCPX, Prop2 hCβ hXβ P hCPX⟩
 
 /-! ## From the straight line through the centres to the whole circles -/
 
 /-- **Contact within, from the line of the centres.** If the centre G of `β` lies between the
 centre F of `α` and a common point C, no point P of `β` is outside `α`: FP is not greater than
-FG, GP together [I. 20], and these are FG, GC (Definition I.15), which make FC. -/
+FG, GP together [I. 20], and these are FG, GC (Definition I.15), which make FC. And a point
+X of `β` off the straight line FG, where a straight line through G meets `β` (System E,
+Intersections 5), is within `α`: FX is less than FG, GX together [I. 20], which are FG, GC
+again. -/
 theorem Touching.internally_of_between {α β : Circle} {C F G : Point} (hF : Centre F α)
     (hG : Centre G β) (hCα : OnCircle C α) (hCβ : OnCircle C β) (hαβ : α ≠ β)
     (h : Between F G C) : TouchesInternally α β C := by
-  refine ⟨hCα, hCβ, hαβ, fun P hP hout => ?_⟩
+  refine ⟨hCα, hCβ, ?_, fun P hP hout => ?_⟩
+  · /- The straight line from G to a point B off FG meets `β` at X, off FG (System E,
+       Intersections 5); FX is less than FG, GX [I. 20], that is FG, GC, which make FC. -/
+    have hFG : F ≠ G := ne_of_between h
+    obtain ⟨L, hF_L, hG_L⟩ := Postulate1 F G hFG
+    obtain ⟨B, hB, -⟩ := exists_off_line hFG []
+    have hB_L : ¬ OnLine B L := hB.off_line hF_L hG_L
+    have hGB : G ≠ B := fun e => hB_L (e ▸ hG_L)
+    obtain ⟨M, hG_M, hB_M⟩ := Postulate1 G B hGB
+    obtain ⟨X, hXβ, hX_M, -⟩ := line_circle_beyond (centre_inside hG) hG_M hB_M hGB.symm
+    have hX_L : ¬ OnLine X L := fun hX_L =>
+      hB_L (line_unique (ne_of_centre_of_on hG hXβ) hX_M hG_M hX_L hG_L ▸ hB_M)
+    have h20 : ‖F X‖ < ‖F G‖ + ‖G X‖ :=
+      (BookI.Prop20 (Triangle.of_line hF_L hG_L hFG hX_L).bac).1
+    rw [Definition15 hG hXβ hCβ, len_add_of_between h] at h20
+    exact ⟨X, hXβ, inside_of_len_lt hF hCα h20⟩
   have hlt : ‖F G‖ + ‖G P‖ < ‖F P‖ := by
     rw [Definition15 hG hP hCβ, len_add_of_between h]
     exact Touching.len_lt_of_outside hF hCα hout
-  exact lt_irrefl _ (Touching.len_lt_of_add_lt hlt)
+  exact lt_irrefl _ (len_lt_of_add_lt hlt)
 
 /-- **Contact without, from the line of the centres.** If a common point C lies between the
 centres F and G, no point P is within both circles: FP, PG together would be less than FC,
@@ -432,54 +387,54 @@ theorem Touching.externally_of_between {α β : Circle} {C F G : Point} (hF : Ce
     refine lt_trans (add_lt_add_right _ h₁) ?_
     rw [add_comm ‖F C‖, add_comm ‖F C‖]
     exact add_lt_add_right _ h₂
-  exact lt_irrefl _ (Touching.len_lt_of_add_lt hlt)
+  exact lt_irrefl _ (len_lt_of_add_lt hlt)
 
-/-- **Contact within at a point is contact within of the whole circles**, for circles with
-centres: the point lies on the straight line through the centres, beyond the inner centre
-(`TouchesInternallyAt.between`), and then no point of the inner circle is outside the outer
+/-- **Contact within at a point is contact within of the whole circles**, the centres taken
+by the rule that every circle has one (`Tacit.exists_centre`): the point lies on the straight
+line through the centres, beyond the inner centre (`TouchesInternallyAt.between`), and then no
+point of the inner circle is outside the outer, and some point of it is within
 (`Touching.internally_of_between`). This is what Heath says Euclid "does practically assume"
 in III.11 to III.13, proved. -/
-theorem TouchesInternallyAt.whole {α β : Circle} {C F G : Point} (hF : Centre F α)
-    (hG : Centre G β) (h : TouchesInternallyAt α β C) : TouchesInternally α β C :=
-  Touching.internally_of_between hF hG h.1 h.2.1 h.2.2.1 (h.between hF hG)
+theorem TouchesInternallyAt.whole {α β : Circle} {C : Point} (h : TouchesInternallyAt α β C) :
+    TouchesInternally α β C := by
+  obtain ⟨F, hF⟩ := exists_centre α
+  obtain ⟨G, hG⟩ := exists_centre β
+  exact Touching.internally_of_between hF hG h.1 h.2.1 h.2.2.1 (h.between hF hG)
 
-/-- **Contact without at a point is contact without of the whole circles**, for circles with
-centres: the point lies between the centres (`TouchesExternallyAt.between`), and then no point
-is within both (`Touching.externally_of_between`). -/
-theorem TouchesExternallyAt.whole {α β : Circle} {C F G : Point} (hF : Centre F α)
-    (hG : Centre G β) (h : TouchesExternallyAt α β C) : TouchesExternally α β C :=
-  Touching.externally_of_between hF hG h.1 h.2.1 (h.between hF hG)
+/-- **Contact without at a point is contact without of the whole circles**, the centres taken
+by the rule that every circle has one (`Tacit.exists_centre`): the point lies between the
+centres (`TouchesExternallyAt.between`), and then no point is within both
+(`Touching.externally_of_between`). -/
+theorem TouchesExternallyAt.whole {α β : Circle} {C : Point} (h : TouchesExternallyAt α β C) :
+    TouchesExternally α β C := by
+  obtain ⟨F, hF⟩ := exists_centre α
+  obtain ⟨G, hG⟩ := exists_centre β
+  exact Touching.externally_of_between hF hG h.1 h.2.1 (h.between hF hG)
 
 /-! ## The agreement, in the form Book III uses
 
-Book III gives a circle its centre as `∃ O, Centre O α` where the setting-out does not name
-it (III.2). In that form the two readings are one, so that every statement of Book III that
-speaks of circles touching may be read either way. -/
+Every circle has a centre (`Tacit.exists_centre`), and Book III states its propositions
+without one where the setting-out does not name it (III.2). So the two readings are one for
+every circle, and every statement of Book III that speaks of circles touching may be read
+either way. -/
 
-/-- **The two readings of contact within agree**, for circles with centres. -/
-theorem touchesInternally_iff {α β : Circle} {C : Point} (hα : ∃ F : Point, Centre F α)
-    (hβ : ∃ G : Point, Centre G β) :
-    TouchesInternally α β C ↔ TouchesInternallyAt α β C := by
-  obtain ⟨F, hF⟩ := hα
-  obtain ⟨G, hG⟩ := hβ
-  exact ⟨TouchesInternallyAt.of_whole, TouchesInternallyAt.whole hF hG⟩
+/-- **The two readings of contact within agree**, for any two circles. -/
+theorem touchesInternally_iff {α β : Circle} {C : Point} :
+    TouchesInternally α β C ↔ TouchesInternallyAt α β C :=
+  ⟨TouchesInternallyAt.of_whole, TouchesInternallyAt.whole⟩
 
-/-- **The two readings of contact without agree**, for circles with centres. -/
-theorem touchesExternally_iff {α β : Circle} {C : Point} (hα : ∃ F : Point, Centre F α)
-    (hβ : ∃ G : Point, Centre G β) :
-    TouchesExternally α β C ↔ TouchesExternallyAt α β C := by
-  obtain ⟨F, hF⟩ := hα
-  obtain ⟨G, hG⟩ := hβ
-  exact ⟨TouchesExternallyAt.of_whole, TouchesExternallyAt.whole hF hG⟩
+/-- **The two readings of contact without agree**, for any two circles. -/
+theorem touchesExternally_iff {α β : Circle} {C : Point} :
+    TouchesExternally α β C ↔ TouchesExternallyAt α β C :=
+  ⟨TouchesExternallyAt.of_whole, TouchesExternallyAt.whole⟩
 
-/-- **The two readings of Definition III.3 agree**, for circles with centres: the circles
-touch at C, read of the whole circles, exactly when they touch at C, read at the point. -/
-theorem circlesTouch_iff {α β : Circle} {C : Point} (hα : ∃ F : Point, Centre F α)
-    (hβ : ∃ G : Point, Centre G β) :
+/-- **The two readings of Definition III.3 agree**, for any two circles: the circles touch at
+C, read of the whole circles, exactly when they touch at C, read at the point. -/
+theorem circlesTouch_iff {α β : Circle} {C : Point} :
     CirclesTouch α β C ↔ CirclesTouchAt α β C := by
-  have h₁ := touchesInternally_iff (C := C) hα hβ
-  have h₂ := touchesInternally_iff (C := C) hβ hα
-  have h₃ := touchesExternally_iff (C := C) hα hβ
+  have h₁ := touchesInternally_iff (α := α) (β := β) (C := C)
+  have h₂ := touchesInternally_iff (α := β) (β := α) (C := C)
+  have h₃ := touchesExternally_iff (α := α) (β := β) (C := C)
   exact or_congr h₁ (or_congr h₂ h₃)
 
 end Elements.BookIII.Routes
