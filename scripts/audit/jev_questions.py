@@ -219,9 +219,22 @@ HEADER_WORDS = frozenset({'module', 'prelude', 'public', 'meta', 'all', 'import'
 IMPORT_WORD = re.compile(r"(?<![\w'.«])import(?![\w'»])")
 QUOTED_NAME = re.compile(r'«[^»\n]*»')
 # A command that can declare a token: a notation whose words before `=>` hold a bar could make
-# a bar an operator, and a macro or an elaborator can give any syntax a meaning.
+# a bar an operator, and one whose token joins a name character to another, as `-x` does,
+# could end a word where the patterns below see none; a macro, an elaborator or a binder
+# predicate can give any syntax a meaning.
 SYNTAX_WORD = re.compile(r"(?<![\w'.«])(?:notation|infixl|infixr|infix|prefix|postfix"
-                         r"|(macro_rules|macro|elab_rules|elab))(?![\w'»])")
+                         r"|(macro_rules|macro|elab_rules|elab|binder_predicate))(?![\w'»])")
+# Lean 4.35's name characters (Init/Meta/Defs.lean, isIdFirst and isIdRest): a name begins
+# with an ASCII letter, `_` or a letter-like character, and goes on with these, ASCII digits,
+# `'`, `!`, `?` and subscripts. The ranges are written as `re` escapes, in Lean's hex values.
+LETTER_LIKE = ('\\u03b1-\\u03ba\\u03bc-\\u03c9\\u0391-\\u039f\\u03a1\\u03a2\\u03a4-\\u03a9'
+               '\\u03ca-\\u03fb\\u1f00-\\u1ffe\\u2100-\\u214f\\U0001d49c-\\U0001d59f'
+               '\\u00c0-\\u00d6\\u00d8-\\u00f6\\u00f8-\\u00ff\\u0100-\\u017f')
+SUBSCRIPTS = '\\u2080-\\u2089\\u2090-\\u209c\\u1d62-\\u1d6a\\u2c7c'
+NAME_REST = 'A-Za-z_' + LETTER_LIKE + "0-9'!?" + SUBSCRIPTS
+LEAN_NAME = re.compile('[A-Za-z_' + LETTER_LIKE + '][' + NAME_REST + ']*')
+# A character of a name, to Lean or to the patterns' \w.
+NAME_CHARACTER = re.compile(r'[\w' + NAME_REST + ']')
 
 
 def comment_end(src: str, i: int) -> int:
@@ -242,6 +255,25 @@ def comment_end(src: str, i: int) -> int:
             i += 1
     require(depth == 0, 'unterminated Lean comment')
     return i
+
+
+def string_literals(src: str, start: int, end: int) -> list[str]:
+    """Return the contents of the strings that open in src[start:end], outside comments;
+    start must stand outside every string and comment."""
+    found = []
+    i = start
+    while i < end:
+        if src.startswith(('--', '/-'), i):
+            i = comment_end(src, i)
+        elif src[i] == '"':
+            j = i + 1
+            while j < len(src) and src[j] != '"':
+                j += 2 if src[j] == '\\' else 1
+            found.append(src[i + 1:j])
+            i = j + 1
+        else:
+            i += 1
+    return found
 
 
 def mask(src: str) -> tuple[str, list[tuple[int, int]]]:
@@ -420,12 +452,19 @@ class Index:
         self.clean[path] = clean
         self.raw[path] = raw
         # Wherever one stands, local or scoped included. The bar is sought in the raw text, so
-        # within the notation's strings; the `=>` in the masked text, so outside them.
+        # within the notation's strings; the `=>` in the masked text, so outside them. Each
+        # string is a token, read without its spaces: it may be a name, or hold no character
+        # of a name, as `‖` and `∠` do, and is refused otherwise.
         for found in SYNTAX_WORD.finditer(clean):
             require(not found.group(1), f'{path}: unsupported command {found.group()}')
             arrow = clean.find('=>', found.end())
-            require('|' not in raw[found.start():len(raw) if arrow < 0 else arrow],
+            stop = len(raw) if arrow < 0 else arrow
+            require('|' not in raw[found.start():stop],
                     f'{path}: unsupported {found.group()} with a bar')
+            for atom in string_literals(raw, found.start(), stop):
+                atom = atom.strip()
+                require(LEAN_NAME.fullmatch(atom) or not NAME_CHARACTER.search(atom),
+                        f'{path}: unsupported {found.group()} token {atom!r}')
         commands = list(COMMAND.finditer(clean))
         namespace = ''
         frames: list[tuple[str, int, int]] = []
@@ -680,6 +719,16 @@ class Calls:
                               r"|structure|class|inductive|deriving|mutual)(?![\w'»])")
     # A string, a char literal or a «...» name, whose brackets and bars the masking may misread.
     LITERAL = re.compile(r"[\"«]|(?<![\w'₀-₉!?])'")
+    # Where Lean ends a token within what these patterns read as one word, a keyword after it
+    # goes unseen and a quote may open a literal: after a number glued to a word or a quote,
+    # as in `5matches`, `0x5def`, `p.1def` or `0'a'`, and at a quote after a bare `!` or `?`,
+    # as in `!'a'matches`.
+    GLUED = re.compile(r"(?<![\w'₀-₉!?])(?:[0-9]+(?:[^\W\d]|['!?])|[!?]+')")
+    # So too after a word character Lean reads in no name, such as `²` or `ж` (but `λ`, which
+    # ALTERNATIVES reads), and after a token ending in a subscript, such as `→ₑ`, where a
+    # subscript begins a word; and after `#`, which begins Lean's commands, each read whole,
+    # as `#where` is in `#wheredef`.
+    FOREIGN = re.compile('[^\\W' + NAME_REST + 'λ]|(?<![\\w\'!?])[' + SUBSCRIPTS + ']|#')
 
     def __init__(self, index: Index, facts: dict):
         self.index = index
@@ -704,23 +753,37 @@ class Calls:
         """Return each constructor name of inductive d: the name after a `|` outside every
         bracket in the declaration, on a line that opens `  |`.
 
-        The masking may misread the brackets and bars within a string, a char literal or a
-        «...» name, so an inductive whose raw text holds one is refused. The index refuses a
-        notation whose words before `=>` hold a bar, and any macro or elaborator, so each bar
-        here is one of Lean's own. Brackets are counted from the declaration's name across
-        lines to the end of its constructors, and an unbalanced one is refused. The
-        constructors end before the first line outside every bracket that is not blank and
-        opens neither `  |` nor three spaces, where a deriving clause or a command begins, and
-        before a declaration's keyword outside every bracket wherever it stands on its line,
-        as in `| mk def f`; what follows is read for uses. A bar within brackets, or of `||`,
-        `<|` or `|>`, separates no constructors, so a name after it stays a use: in a family
-        `Q : Nat → Type`, Lean accepts `| mk : Q <| Known.bar 0`. Every other bar must
+        The reading is lexical: patterns over the masked text find the words, brackets and
+        bars, and Lean's parser is not run. Where the patterns could read the text otherwise
+        than Lean does, the inductive is refused. Its raw text may hold no string and no
+        «...» name, whose brackets and bars the masking may misread, and no quote but one
+        after a word character, `'`, `!` or `?`, which may continue a name; its masked text
+        may hold none of the forms GLUED and FOREIGN name, where Lean ends a token within what
+        the patterns read as one word, so that a keyword after it would go unseen and a quote
+        after it would open a char literal. The index refuses a notation whose words before
+        `=>` hold a bar, or whose token joins a name character to another, and every macro,
+        elaborator and binder-predicate command; `scripts/check_fidelity.py`, not this
+        generator, refuses in `Elements/` the attributes that make a declaration an
+        elaborator or a parser, such as `@[term_elab k]`. Brackets
+        are counted from the declaration's name across lines to the end of its constructors,
+        and an unbalanced one is refused. The constructors end before the first line outside
+        every bracket that is not blank and opens neither `  |` nor three spaces, where a
+        deriving clause or a command begins, and before a declaration's keyword outside every
+        bracket, as in `| mk def f`, wherever it stands on its line, when the keyword begins a
+        word to the patterns; what follows is read for uses. A bar within brackets, or of
+        `||`, `<|` or `|>`, separates no constructors, so a name after it stays a use: in a
+        family `Q : Nat → Type`, Lean accepts `| mk : Q <| Known.bar 0`. Every other bar must
         separate constructors, standing on a line that opens `  |` before a name, and is
         refused otherwise. It is refused too after one of the words ALTERNATIVES names, such
         as `match`, where it may begin an alternative, as in
         `| mk : Q <| match 0 with | Known.bar n => n | _ => 0`, which Lean also accepts."""
         require(not self.LITERAL.search(self.index.raw[d.path], d.name_end, d.end),
                 f'{d.path}: unsupported string, char literal or quoted name in {d.name}')
+        require(not self.GLUED.search(clean, d.name_end, d.end),
+                f'{d.path}: unsupported number or literal glued to a word in {d.name}')
+        foreign = self.FOREIGN.search(clean, d.name_end, d.end)
+        if foreign:
+            raise Refusal(f'{d.path}: unsupported character {foreign.group()!r} in {d.name}')
         lines = {line.start(): line.end()
                  for line in self.CONSTRUCTOR_LINE.finditer(clean, d.name_end, d.end)}
         words = {found.start(): found.group()

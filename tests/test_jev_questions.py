@@ -813,6 +813,85 @@ class CallReconciler(LeanFiles):
                 with self.assertRaisesRegex(questions.Refusal, refused + 'Elements.Pt'):
                     self.calls(self.known('inductive Pt where' + inductive))
 
+    def assert_refused(self, text, message):
+        with self.assertRaises(questions.Refusal) as caught:
+            self.calls(text)
+        self.assertIn(message, str(caught.exception))
+
+    CHARS = ("@[match_pattern] def Known.c : Char := 'x'\n\n"
+             "@[match_pattern] def Known.d : Char := 'y'\n\n")
+    BOOL = 'inductive Q : Bool → Type where\n  | mk : Q <| '
+    EQUATIONS = '\n  | Known.bar n => n\n  | _ => 0'
+
+    def test_a_number_or_a_bare_bang_glued_to_a_word_or_quote_is_refused(self):
+        # Lean ends a number before a letter, so `5matches` is `5` and then `matches`, and
+        # `5def` is `5` and then a command; `!'a'matches` is `!`, a char literal and then
+        # `matches`. Each Known after a bar here is a use the patterns would drop.
+        nat, pair = 'inductive Q : Nat → Type where\n  | mk : Q ', 'def p : Nat × Nat := (5, 6)\n\n'
+        for text in (self.BOOL + '5matches 0 | Known.bar 0',
+                     self.BOOL + '0x5matches 0 | Known.bar 0',
+                     pair + self.BOOL + 'p.1matches 0 | Known.bar 0',
+                     nat + '5def f : Nat → Nat' + self.EQUATIONS,
+                     nat + '5def f : Nat → Nat | Known.bar n => n | _ => 0',
+                     pair + nat + 'p.1def f : Nat → Nat' + self.EQUATIONS,
+                     nat + '5instance : Inhabited (Nat → Nat) where default' + self.EQUATIONS,
+                     self.CHARS + self.BOOL + "!'a'matches Known.c | Known.d"):
+            with self.subTest(text=text):
+                self.assert_refused(self.known(text), 'unsupported number or literal glued to '
+                                    'a word in Elements.Q')
+
+    def test_a_digit_quote_or_letter_within_a_name_is_read_as_the_name(self):
+        self.assert_uses(self.known("def x2 : Nat := 2\n\ndef h' : Nat := 2\n\n"
+                                    "def x₁ : Nat := 1\n\ndef é : Nat := 1\n\n"
+                                    "inductive Q : Nat → Type where\n"
+                                    "  | mk : Q x2\n  | a : Q h'\n  | s : Q x₁\n  | e : Q é\n"
+                                    "  | b : Q (Known.bar 0)"),
+                         'Elements.Q', {'mk', 'a', 's', 'e', 'b'})
+
+    def test_a_character_lean_reads_in_no_name_and_a_hash_are_refused(self):
+        # Lean's own postfix `⁻¹` ends before `matches`, though `¹` is a word character to the
+        # patterns; Lean's commands `#where` and `#version` are read whole, so each is followed
+        # by a `def` whose equations hold a use; and a subscript cannot begin a name, so after
+        # `∧ₑ`, a token of Std.Do, it begins a word Lean does not read.
+        pt = 'inductive Pt where\n  | mk '
+        for text, character, name in (
+                ('instance : Inv Nat := ⟨Nat.succ⟩\n\ndef x : Nat := 3\n\n' + self.BOOL
+                 + 'x⁻¹matches 0 | Known.bar 0', '¹', 'Q'),
+                (pt + '#wheredef f : Nat → Nat' + self.EQUATIONS, '#', 'Pt'),
+                (pt + '#versiondef f : Nat → Nat' + self.EQUATIONS, '#', 'Pt'),
+                ('inductive Q : Std.Do.ExceptConds .pure → Type where\n'
+                 '  | mk : Q <| Std.Do.ExceptConds.true ∧ₑ Std.Do.ExceptConds.true', 'ₑ', 'Q')):
+            with self.subTest(text=text):
+                header = 'import Std.Do\n\n' if 'Std.Do' in text else ''
+                self.assert_refused(header + self.known(text),
+                                    f'unsupported character {character!r} in Elements.{name}')
+
+    def test_a_token_joining_a_name_character_to_another_and_a_binder_predicate_are_refused(self):
+        # Each token ends a word where the patterns see none, so the Known after a bar is a use
+        # they would drop; a binder predicate declares its token as a macro does. A token that
+        # is a name, such as `nine`, is read as a name.
+        for text, refused in (
+                ('postfix:max "²" => fun n : Nat => n * n\n\ndef x : Nat := 3\n\n' + self.BOOL
+                 + 'x²matches 0 | Known.bar 0', "postfix token '²'"),
+                ('postfix:max "ж" => Nat.succ\n\ndef y : Nat := 3\n\n' + self.BOOL
+                 + 'yжmatches 0 | Known.bar 0', "postfix token 'ж'"),
+                ('notation "-x" => (5 : Nat)\n\n' + self.BOOL + '-xmatches 0 | Known.bar 0',
+                 "notation token '-x'"),
+                (self.CHARS + 'prefix:max "-x" => Char.toNat\n\n' + self.BOOL
+                 + "-x'a'matches 0 | Known.bar 96", "prefix token '-x'"),
+                ('infixl:65 "+x" => Nat.add\n\n' + self.BOOL + '1 +x0matches 0 | Known.bar 0',
+                 "infixl token '+x'"),
+                ('notation "→ₑ" => (5 : Nat)\n\n' + self.BOOL + '→ₑmatches 0 | Known.bar 0',
+                 "notation token '→ₑ'"),
+                (self.CHARS + 'binder_predicate x " -x " y:term => `($x = $y)\n\n'
+                 "inductive Q where\n  | mk : ∀ x -x'a'matches Known.c | Known.d, Q",
+                 'command binder_predicate')):
+            with self.subTest(refused=refused):
+                self.assert_refused(self.known(text), 'Elements/Proof.lean: unsupported ' + refused)
+        self.assert_uses(self.known('notation "nine" => (9 : Nat)\n\n'
+                                    'inductive Q : Nat → Type where\n  | mk : Q nine\n'
+                                    '  | b : Q (Known.bar 0)'), 'Elements.Q', {'mk', 'b'})
+
 
 class HelperModules(unittest.TestCase):
     def setUp(self):

@@ -3592,9 +3592,12 @@ findings:
   reads with the inductive, such as `partial def`. They end too at a declaration's keyword
   outside every bracket (`def`, `theorem`, `abbrev`, `instance`, `example`, `opaque`,
   `axiom`, `structure`, `class`, `inductive`, `deriving` or `mutual`), wherever it stands
-  on its line: Lean reads `| mk def f : Nat → Nat` as a constructor and then a command, and
-  so with `def f` at three spaces. Ending the constructors refuses nothing, since what
-  follows is read for uses. Outside every bracket, a bar after a word that opens
+  on its line, when it begins a word: Lean reads `| mk def f : Nat → Nat` as a constructor
+  and then a command, and so with `def f` at three spaces. A keyword glued to what comes
+  before it, as in `5def` or `#wheredef`, begins no word to the patterns; the rules for
+  lexical reading below refuse each such form but one after `λ`, which the patterns read
+  as opening alternatives. Ending the constructors refuses nothing, since what follows is
+  read for uses. Outside every bracket, a bar after a word that opens
   alternatives or patterns (`fun`, `λ`, `match`, `matches`, `let`, `have`, `by`, `do`,
   `with`, `match_expr`, `let_expr`, `haveI`, `letI`, `let_fun`, `let_delayed` or
   `let_tmp`) may begin one, not a constructor, and is refused. Any other bar outside every
@@ -3606,15 +3609,24 @@ findings:
   misread the brackets and bars within a string, a char literal or a `«...»` name: in
   `| mk (f : Nat → Nat := fun | 0 => g ')' 0 | Known.bar n => g '(' n) : Pt`, the quoted
   brackets would pair, and leave the second bar outside every bracket. So an inductive
-  whose text holds a string, a char literal or a `«...»` name is refused. A notation can
+  whose raw text holds a string or a `«...»` name is refused, and so is one holding a quote
+  that follows no word character, `'`, `!` or `?`, after which the quote may continue a
+  name, as in `h'`. A char literal can still open where Lean ends a token just before the
+  quote: after a number, a bare `!` or `?`, or a token such as `-x`, `#where` or `λ`, as
+  in `!'a'`. The rules for lexical reading below refuse each of these but the one after
+  `λ`, which the patterns read as opening alternatives, so that any bar after it outside
+  every bracket is refused; within a bracket the patterns read only brackets, and a
+  literal holding a bracket or a bar is refused at its closing quote. A notation can
   make a bar an operator: after `infixl:65 " | " => Nat.add`, the constructor
   `| mk : Q <| 0 | Known.bar 0` has the type `Q (Nat.add 0 (Known.bar 0))`. So a
   `notation`, `infix`, `infixl`, `infixr`, `prefix` or `postfix` command, local or not,
   whose words before `=>` hold a bar is refused; and so is every `macro`, `macro_rules`,
   `elab` and `elab_rules`, which can give any syntax a meaning, with a bar or without one,
   as a macro taking alternatives does. `scripts/check_fidelity.py` already refuses those
-  four in `Elements/`. No file on main or on the superposition branch holds a form refused
-  here, and main's four notations hold no bar.
+  four in `Elements/`, and, there too, the attributes that make a declaration an
+  elaborator or a parser, such as `@[term_elab k]`, which the generator does not refuse
+  itself. No file on main or on the superposition branch holds a form refused here, and
+  main's four notations hold no bar.
 
   Each of these, a form Lean 4.35 accepts, keeps its use: `||`, in
   `| mk (n : Nat) (h : (n == 0 || Known.bar n) = true)`; a bar within a bracket opened on an
@@ -3636,6 +3648,55 @@ findings:
   constructor's bar stands before its line's end repeated the match of the name after it,
   which stops there, and is gone.
 
+  The reader these rules make is lexical: patterns over the masked text find its words,
+  brackets and bars, and Lean's parser is not run. It fails closed: where the patterns
+  could read a word otherwise than Lean, the inductive is refused, and no more is claimed
+  for the reader than the cases below show. The fifth review found two places where Lean
+  ends a token within what the patterns read as one word, so that a keyword after it went
+  unseen; in each, a form Lean 4.35 accepts, this branch dropped a use that main's
+  generator records. In `| mk : Q <| 5matches 0 | Known.bar 0`, Lean ends the number
+  before the letter and reads `matches`; in `!'a'matches Known.c | Known.d`, a bare `!`
+  opens a char literal whose closing quote hid `matches`. Probing the same seam with the
+  toolchain's `lean` found more of the kind, each accepted by Lean, kept by main's
+  generator and dropped here: Lean's own commands `#where` and `#version`, read whole, so
+  that `| mk #wheredef f : Nat → Nat` is a constructor, `#where` and a `def` whose
+  equations follow; Lean's own postfix `⁻¹`, whose `¹` the patterns read as a word
+  character, in `x⁻¹matches`; the tokens of notations without a bar, `²`, `ж`, `-x`, `+x`
+  and `→ₑ`, in `x²matches`, `yжmatches`, `-xmatches`, `-x'a'matches`, `1 +x0matches` and
+  `→ₑmatches`; and a `binder_predicate`, which declares such a token as a macro would, in
+  `∀ x -x'a'matches Known.c | Known.d, Q`. So these are refused as well:
+
+  - in an inductive's masked text, a number glued to a word or a quote (`5matches`,
+    `0x5def`, `p.1def`, `0'a'`), which refuses hex and scientific literals there too, and
+    a quote after a bare `!` or `?` (`!'a'`): the fifth review's own fix;
+  - there, a word character that Lean 4.35 reads in no name (`Init/Meta/Defs.lean`,
+    `isIdFirst` and `isIdRest`), such as `¹`, `²`, `ж`, `Σ` or `Π`, but `λ`, which the
+    patterns read as opening alternatives; a subscript that begins a word, as after `∧ₑ`,
+    since no name begins with one; and `#`, which begins Lean's commands and the literals
+    `#[` and `#v[`;
+  - in any file the index reads, a token of a `notation`, `infix`, `infixl`, `infixr`,
+    `prefix` or `postfix` command, read without its spaces, that holds a character of a
+    name and is not itself a name: `-x`, `²` and `→ₑ` are refused, and `nine`, `‖` and `∠`
+    are not;
+  - there too, every `binder_predicate`, as the macros are.
+
+  Lean's own tokens were checked against its table: the toolchain's `lean`, on a scratch
+  file outside the repository that imports `Lean`, lists 505 (`Lean.Parser.getTokenTable`).
+  Of those that are not names but hold a character of one, each ends in a character that
+  is no word character to the patterns (`binop%`, `trace[`, `!=`, `?`), or is refused by
+  one of the rules above (the 28 commands beginning with `#`; `⁻¹`, `Σ`, `Σ'`; the eight
+  ending in a subscript, such as `→ₑ` and `:=ₐ`; `]'`, `×'` and `⊕'`, whose quote follows
+  a symbol), or is `λ` or `let_λ`, read through `λ`. One form the probing turned up needs no
+  rule: `pat ← e | alt` puts a bar after no keyword, and `initialize` and `by_elab` take a
+  do-sequence without `do`, but there Lean refuses the bar: "reassignment with `|` (i.e.,
+  "else clause") is not supported". None of the new rules refuses anything on the five
+  trees below. Three forms the fifth review found hide a use with main's generator too, a
+  known limit shared with main and outside #185, left for a follow-up issue: `open Nat in`
+  at column 0 within a constructor, which ends the inductive for the index; a `'"'` beside
+  a use in any declaration, as in `g '"' (Known.bar 0) '"'`, which the masking reads as a
+  string; and an anonymous `instance … where` with equations, which the index does not
+  record.
+
   The fourth reason: `List.mem_nil_iff` and
   `List.forall_mem_cons` were not on its core allowlist. **The core allowlist gains these
   two names, `mem_nil_iff` and `forall_mem_cons`.** The list names lemmas of Lean core so
@@ -3655,24 +3716,34 @@ findings:
   Only these two are added, the names the superposition branch needs, and the manifest's
   `core_projection_allowlist` lists them.
 
-  `tests/test_jev_questions.py` now has 50 cases. One table-driven case reads 14 headers,
+  `tests/test_jev_questions.py` now has 54 cases. One table-driven case reads 14 headers,
   each with its imports' exact spans, an `import_text` excerpt the excerpt check accepts (an
   import ending the file without a newline among them) and every imported file visible, and
   refuses 19 others as unsupported imports; twelve of its rows fail on the generator before
   the parser: the five forms above (the last twice, with and without a comment after the
   import), an indented import, a module doc comment before an import, `prelude`, `«a/b»`, an
-  import after a declaration, and a block comment running on from an import's line. Eleven
-  cases test the reconciler on small files: four in the shape of I.4's proof, and seven
-  with the forms above, each in a file Lean 4.35 accepts. Among the seven, one case has a
+  import after a declaration, and a block comment running on from an import's line. Fifteen
+  cases test the reconciler on small files: four in the shape of I.4's proof, and eleven
+  with the forms above, each in a file Lean 4.35 accepts. Among the eleven, one case has a
   row for each of the sixteen words; one has the two forms of `def`; one has five pairs of
   quoted brackets, in char literals, `«...»` names, raw strings, `'"'` beside strings and
   interpolated strings; one has the two notations and a command for each of the four
   macro and elaborator words; and one has the two bars the reconciler does not read and a
-  `⦃` left open where `open ... in` begins a line within it. Removing any one rule fails a
-  case, but for the two kept above, and removing any one word fails its own row. The new
-  rows fail on the generator the fourth review read (`68aa0f53`, the same at `520bc68e`),
-  but for the eleven words it already refused and the open bracket, which test rules it
-  had. While the second helper's path is a symlink, behind a symlinked folder,
+  `⦃` left open where `open ... in` begins a line within it. Four cases test the rules for
+  lexical reading: one has the eight glued forms (`5matches`, `0x5matches`, `p.1matches`,
+  `5def` with its equations on the lines after it and on the same line, `p.1def`,
+  `5instance` and `!'a'matches`); one has `x⁻¹matches`, `#wheredef`, `#versiondef` and a
+  constructor using `∧ₑ`, from `Std.Do`; one has the six notation tokens above and the
+  `binder_predicate`, with `nine` as a token kept; and one keeps a name holding a digit, a
+  prime, a subscript and `é`. Removing any one rule fails a case, but for the two kept
+  above, and removing any one word fails its own row; this holds for the new rules, for
+  each part of the two patterns and for the exceptions of `λ`, of a subscript within a
+  name, of a name as a token and of Lean's Latin letters. The round-five rows fail on the
+  generator the fourth review read (`68aa0f53`, the same at `520bc68e`), but for the
+  eleven words it already refused and the open bracket, which test rules it had. The
+  nineteen new rows that refuse fail on the generator the fifth review read (`8640a0f5`,
+  the same at `69f44687`); the case that keeps a name, and the check that keeps `nine`,
+  pass on both. While the second helper's path is a symlink, behind a symlinked folder,
   absolute, traversing, missing or a folder, neither planted helper runs, the first
   included; both run once both paths pass. A copy of the generator beside a symlinked
   `jev.py` refuses, and neither planted helper runs.
@@ -3690,10 +3761,15 @@ findings:
   generator gives all 338 rows there with no unresolved name. The rules for literals,
   notations, keywords and other bars refuse nothing at `8e9a1879`, at `17ae8e2a`, on main
   (`ac6e5389`) or on the superposition branch (`4c579527`): at each, the questions and the
-  manifest are byte for byte those of the generator before them (`520bc68e`). All 50
-  cases pass on fresh clones of main and of the superposition branch with the two changed
-  files copied in, so the issue's third condition is met. The protected files changed are
+  manifest are byte for byte those of the generator before them (`520bc68e`). Nor do the
+  rules for lexical reading: on fresh clones of `8e9a1879`, `17ae8e2a`, `756bdbae`, main at
+  `cba27afa` and the superposition branch at `4c579527`, the questions and the manifest are
+  byte for byte those of the generator at `69f44687`, with 338 rows at each and no
+  unresolved name. All 54 cases pass on fresh clones of main (`cba27afa` and `756bdbae`)
+  and of the superposition branch with the two changed files copied in, so the issue's
+  third condition is met. The protected files changed are
   `scripts/audit/jev_questions.py` and `tests/test_jev_questions.py`. Every form the
-  reviews found to hide a use on this branch now keeps its use or is refused, and no
+  reviews and this round's probes found to hide a use on this branch now keeps its use or
+  is refused; that is what the cases show, and nothing more is claimed for the reader. No
   expected value, schema or review record changes; the one allowlist change is the two
   Lean core names above. CI does not run the test yet (#157).
