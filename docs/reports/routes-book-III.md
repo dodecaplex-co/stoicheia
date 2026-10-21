@@ -151,9 +151,9 @@ GB, so that it is on the circle, and "the less to the greater" is read from the 
 (`Circumference.centre`). The obtuse and right cases lie within Euclid's statement, so the
 route stays modified. Its note changes from the measure to III.22 for the obtuse case, and
 keeps the measure for the right case, which still rests on it through `Prop24.angle_type`.
-The measure still compares the circumferences in every case: `Prop27.sides` sorts the
-centres by it, calling `Prop24.angle_type` for where they lie, and the reductio reads "the
-less to the greater" from it, so `Circumference.eq` [III. 21] lies beneath the acute and
+The measure still compares the circumferences in every case: the staged file's first
+theorem sorts the centres by it, calling `Prop24.angle_type` for where they lie, and the
+reductio reads "the less to the greater" from it, so `Circumference.eq` [III. 21] lies beneath the acute and
 obtuse cases too. What the note records is where the angles at A and D are read off the
 measure: now the right case alone.
 
