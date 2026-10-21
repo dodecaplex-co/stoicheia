@@ -2441,6 +2441,45 @@ findings:
   them, and `scripts/check_fidelity.py` checks them against the lock. The protected files changed here are `Certificate/FIELDS.md` and
   `tests/model/MODEL.md`; no check, declaration, lock or review record changes.
 
+- **The Jev audit's question generator.** On 19 October 2026 the owner approved running Jev,
+  TypeSafe's decision model, as the independent audit of brief 0005's stage 6
+  ([#36](https://github.com/jackChallis/stoicheia/issues/36)) on Books I and II, whose 62
+  records are at the stage `full`.
+  [`scripts/audit/jev_questions.py`](../../scripts/audit/jev_questions.py) (new) writes that
+  audit's questions, in the rows that [`scripts/audit/jev.py`](../../scripts/audit/jev.py)
+  sends, for review items P11 to P15 of [ACCEPTANCE](../ACCEPTANCE.md): the statement's
+  scope, with its companions and porism; whether each proposition a proof unit calls does
+  work, and whether any hypothesis is used only for show; whether each record's
+  representation claim is right, including `n/a` as the claim that no bridge is required,
+  and, for a supplied bridge, whether it is stated. Every one of the 62 propositions gets
+  this question. Dependency placement is supplied as context but not itself adjudicated,
+  and a bridge-stated answer is not all of P13. The questions also ask whether the
+  commentary's account of the scope, the route and the Lean it names agrees with them; and
+  whether the Heath figure, sent as an image, agrees with the proof and its caption.
+  Production states quote their files exactly, checked byte for byte against `git show`
+  of a named commit, and the expected answers, taken from the records, stay on this machine.
+  Ten seeded controls, each a planted defect in a generated row only, measure whether the
+  questions can find a fault. It
+  refuses absolute evidence paths, parent traversal or evidence resolving outside the
+  repository, symlinks in evidence or either output path, and output collisions with
+  evidence, tracked files other than the two default outputs, case-only aliases of tracked
+  files even when the tracked path is missing, or each other.
+  `scripts/audit/jev_questions.py` also refuses Git metadata and protected paths from
+  AGENTS.md and the lists in `scripts/safe_push.py`, independently of the index, including
+  their aliases, and guards every input before a Heath helper opens it.
+  An output outside the repository is allowed, and replacement never follows a final
+  symlink; the checks cover existing links and aliases, excluding a concurrent writer
+  racing them in the same tree.
+  It uses the standard library alone, reads no key and sends nothing;
+  `--commit REV --check` regenerates the rows twice and compares them with both files.
+  [`tests/test_jev_questions.py`](../../tests/test_jev_questions.py) (new) tests the file
+  containment and all ten controls, including the two commentary mutations, with no Lean,
+  network or key; CI does not run it yet. The added cases in `tests/test_jev_questions.py`
+  verify protection without index entries and refusal before an outside target is opened.
+  The generator lands on its own, before the rows,
+  results and report it produces (`text/jev-audit-I-II`), as keep_apart asks. No existing
+  check is weakened, and no schema or record expectation changes.
+
 - **The restricted-superposition certificate tooling lands before the Lean replacement.**
   For issue #75 and [brief 0009](0009-superposition.md), the coordinator approves this
   strengthening before the content branch lands. `Certificate/Facts.lean` counts C.N. 4
