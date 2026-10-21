@@ -3064,3 +3064,25 @@ findings:
   the new lock makes main's checks fail, and `scripts/safe_push.py` keeps such content
   apart from an accompanying change to `scripts/render.py`. No check, statement, lock
   or review record changes here, apart from the approved signature in the scaffold.
+- **III.1's porism has its whole axiom list pinned.** The first expectation in
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json), a
+  protected file, gains `equals` holding the porism's full list regenerated from main at
+  `2e8aecf` (21 October 2026, after axiom wave one), in `facts.json`'s order. The porism's
+  own entry carries every assumption its proof uses: Definition I.15, Postulates 1 to 4
+  and the reviewed 55 tacit rules. `Tacit.centre_unique` is a theorem since wave one, so
+  the list holds the axioms beneath it. The `ref`, `field` and count of 55 tacit rules
+  stay as they are; no other expectation changes. This makes the check stricter on its
+  own, before the content it describes: an existing `equals` value and `count.is` may
+  move with that content, as pinned values. Train C6b can then reprove the porism by
+  Euclid's reductio and move the pinned list and count to that proof's assumptions in
+  its content pull request.
+  The `axioms` row of [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md), a protected
+  file, gave III.1's and its porism's counts as fixed; it now says that the list follows
+  each proof's dependencies and that the expectations pin what those two must hold, which
+  stays true when a re-proof moves the pinned values. The protected regression test
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) keeps its checks of
+  growing and emptying an `includes` list by exercising the still-list-shaped I.5
+  expectation, and its simulated future re-proof moves the porism's exact list together
+  with the counts. It reads III.1's tacit count from
+  `tests/certificate_expectations.json`, so it holds before and after the content it
+  describes. No guard is weakened.
