@@ -4101,45 +4101,47 @@ findings:
 - **Book Zero's imports are read as Lean reads them
   ([#200](https://github.com/jackChallis/stoicheia/issues/200)).** Rule 3 of
   [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py), that Book Zero
-  (`Elements/Figure/`) never imports a proposition, matched `^import Elements\.Book` in the
-  raw source: `import`, one space and `Elements.Book` at the start of a line. An
+  (`Elements/Figure/`) never imports a proposition, matched `^import Elements\.Book` in
+  the raw source: `import`, one space and `Elements.Book` at the start of a line. An
   independent reviewer on ship TT showed five other spellings of that import passing it in
-  a planted file, all of which Lean 4.35 accepts: two spaces, a line break between `import`
-  and the module, a remark between them, `«Elements»` and `«BookI»`. Tried on Lean 4.35
-  itself, more pass as well: nothing between `import` and a «…» part or a remark, a line
-  comment or a nested remark between the words, and a second import on the same line. The
-  rule also passed the five other forms of an import that Lean's header allows after
-  `module` (the toolchain's `Lean/Parser/Module/Syntax.lean`): `public import`,
-  `meta import`, `public meta import`, `import all` and `meta import all`. Lean refuses
-  each of them on this edition ("cannot import non-`module` Elements.BookI.Prop01 from
-  `module`", checked with Lean 4.35 against the built I.1), since the edition's files are
-  not modules, so none can import a proposition today; the rule refuses them all the same,
-  and their plants keep it ready for when the files are modules. The rule now reads every
-  `import` in the Lean as rule 4 reads it, through `read_lean`, so that a comment never
-  hides one and a string, a raw string or a «…» name never makes one, save a string whose
-  braces `read_lean` keeps as code. It takes the module named after each import, past
-  `all`, and refuses the import when that module, in NFKC and case-folded, begins
-  `Elements.Book`. The exception fails closed: rule 4 keeps a string's braces as code when
-  its two readings, plain and with holes, end in one place, so an `import` inside them is
-  read too. `def s := "{ import Elements.BookI.Prop01 }"`, which Lean reads as text, is
-  refused as an import of a proposition, and `"{import Elements.BookI.Prop01}"` as an
-  import the scan cannot read; a subtest of the Book Zero tests pins the first. Two more
-  ways in came to light in the testing. Lean joins a name's parts into a path:
+  a planted file, all of which Lean 4.35 accepts: two spaces, a line break between
+  `import` and the module, a remark between them, `«Elements»` and `«BookI»`. Tried on
+  Lean 4.35 itself, more pass as well: nothing between `import` and a «…» part or a
+  remark, a line comment or a nested remark between the words, and a second import on the
+  same line. The rule also passed the five other forms of an import that Lean's header
+  allows after `module` (of the seven that the toolchain's
+  `Lean/Parser/Module/Syntax.lean` accepts, Lean's header refuses `public import all` and
+  `public meta import all`): `public import`, `meta import`, `public meta import`,
+  `import all` and `meta import all`. Lean refuses each of them on this edition ("cannot
+  import non-`module` Elements.BookI.Prop01 from `module`", checked with Lean 4.35 against
+  the built I.1), since the edition's files are not modules, so none can import a
+  proposition today; the rule refuses them all the same, and their plants keep it ready
+  for when the files are modules. The rule now reads every `import` in the Lean as rule 4
+  reads it, through `read_lean`, so that a comment never hides one and a string, a raw
+  string or a «…» name never makes one, save a string whose braces `read_lean` keeps as
+  code. It takes the module named after each import, past `all`, and refuses the import
+  when that module, in NFKC and case-folded, begins `Elements.Book`. The exception fails
+  closed: rule 4 keeps a string's braces as code when its two readings, plain and with
+  holes, end in one place, so an `import` inside them is read too.
+  `def s := "{ import Elements.BookI.Prop01 }"`, which Lean reads as text, is refused as
+  an import of a proposition, and `"{import Elements.BookI.Prop01}"` as an import the scan
+  cannot read; a subtest of the Book Zero tests pins the first. Two more ways in came to
+  light in the testing. Lean joins a name's parts into a path:
   `import «Init/Data».List.Basic` loaded `Init/Data/List/Basic`, so
   `«Elements/BookI».Prop01` could load a built proposition. And on a disk that ignores
-  case, as macOS's does, `import lean.data.json`, a Kelvin sign for a `k` and a long s
-  for an `s` each loaded the module they stand for. So a part that is not a plain name
-  once its «…» are off, or a name that whitespace does not follow, is refused as unread,
+  case, as macOS's does, `import lean.data.json`, a Kelvin sign for a `k` and a long s for
+  an `s` each loaded the module they stand for. So a part that is not a plain name once
+  its «…» are off, or a name that whitespace does not follow, is refused as unread,
   failing closed, and modules are compared case-folded. Last, an import of one of the
   edition's own files that brings a proposition in, as `Elements.Companions` does, is
-  refused too: the rule follows the edition's files breadth first (`brought_in`) and
-  names the file that imports the proposition. Two forms pass the rule, and Lean refuses
-  each with an error and imports no proposition: a second module after one `import` (the
-  reviewer's I5, "unexpected identifier; expected command", which imports the first
-  module alone) and a name beginning `_root_.` ("unknown module prefix"). A tab, a
-  no-break space, a «…» part holding a dot and an import after a command, each an error
-  in Lean too, are refused by the rule as well. On main the rule reads the 42 imports of
-  Book Zero's 16 files, exactly their header lines, and refuses none.
+  refused too: the rule follows the edition's files breadth first (`brought_in`) and names
+  the file that imports the proposition. Two forms pass the rule, and Lean refuses each
+  with an error and imports no proposition: a second module after one `import` (the
+  reviewer's I5, "unexpected identifier; expected command", which imports the first module
+  alone) and a name beginning `_root_.` ("unknown module prefix"). A tab, a no-break
+  space, a «…» part holding a dot and an import after a command, each an error in Lean
+  too, are refused by the rule as well. On main the rule reads the 42 imports of Book
+  Zero's 16 files, exactly their header lines, and refuses none.
 
   A new item of [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants a
   new Book Zero file for each of 19 forms, the reviewer's five and the fourteen above, and
@@ -4157,15 +4159,15 @@ findings:
   being refused; now all 19 are refused. In following the edition's files, `brought_in`
   refuses a module whose path beneath the repository passes through a symbolic link,
   inside the scanned trees or not, without reading its target, and names the link; the
-  three symbolic-link tests fail against the rule as it stood at the first review
-  (`a3f1f33f`) and pass now. Since rule 3 now reads through the reader rule 4 uses, it
-  lands after #197 and #207, which correct that reader: #197 for a comment opened as
-  `/-/`, which Lean closes at the next `-/`, and #207 for a lone carriage return, at which
-  Python's universal newlines end a `--` comment that Lean does not. Before them,
-  `/-/- -/` on one line and an import on the next, and `-- remark`, a lone carriage return
-  and a quote before an import, would each hide from the reader an import that the old
-  rule, matching raw lines, refused. With the three branches merged, each is refused,
-  directly and through the edition's files, so nothing is loosened. This change leaves the
-  shared reader and how files are read to those two issues. The protected files changed
-  are `scripts/check_fidelity.py`, `scripts/negative_tests.py` and
+  three symbolic-link tests fail against the rule as it stood at both earlier reviews
+  (`3ea0d609` and `a3f1f33f`) and pass now. Since rule 3 now reads through the reader rule
+  4 uses, it lands after #197 and #207, which correct that reader: #197 for a comment
+  opened as `/-/`, which Lean closes at the next `-/`, and #207 for a lone carriage
+  return, at which Python's universal newlines end a `--` comment that Lean does not.
+  Before them, `/-/- -/` on one line and an import on the next, and `-- remark`, a lone
+  carriage return and a quote before an import, would each hide from the reader an import
+  that the old rule, matching raw lines, refused. With the three branches merged, each is
+  refused, directly and through the edition's files, so nothing is loosened. This change
+  leaves the shared reader and how files are read to those two issues. The protected files
+  changed are `scripts/check_fidelity.py`, `scripts/negative_tests.py` and
   `tests/test_negative_tests.py`.
