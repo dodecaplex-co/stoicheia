@@ -360,8 +360,9 @@ For an exact count from [scripts/generated_counts.py](../scripts/generated_count
 write &lt;!-- count:vocabulary -->91&lt;!-- /count -->; `render.py` fills only the
 number. Append `:word` to the name for words, or `:Word` for a sentence's first word.
 The module lists the names and prints their current values when run. Literal examples
-escape `<`, even in code spans. Markers are refused in the decisions log and in
-`docs/reports/`, except the living `gaps-book-*.md` and `overlaps.md` catalogues.
+escape `<`, even in code spans. Markers are refused in the decisions log, its page and
+the files of `docs/decisions/` alike, and in `docs/reports/`, except the living
+`gaps-book-*.md` and `overlaps.md` catalogues.
 They are also refused in `book/`, `CERTIFICATE.md` and `GRAPH.md`: copied prose keeps
 the computed value but loses the count comments. A marker may stand elsewhere in
 README.md or PROGRAM.md, but may not overlap README.md's `scope` regions or PROGRAM.md's
