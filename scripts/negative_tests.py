@@ -1044,8 +1044,8 @@ def edited_note() -> None:
         result = fidelity()
         out = result.stdout + result.stderr
         # On a contributor's branch the baseline may name I.1 too, say for a changed
-        # Prop01.lean: only a line it does not print, or one it prints that is now
-        # missing, is the doing of the comment or the moved stamp.
+        # Prop01.lean: the lines naming I.1 must then be the same lines, as many times and
+        # in the same order.
         after = naming_i1(out)
         added = list((Counter(after) - Counter(before)).elements())
         missing = list((Counter(before) - Counter(after)).elements())
@@ -1055,11 +1055,11 @@ def edited_note() -> None:
                 detail.append(f"exit {result.returncode}, not {baseline.returncode} as with "
                               "the record unchanged")
             if added:
-                detail.append(f"has added line occurrences {added!r}")
+                detail.append(f"also says {added!r}")
             if missing:
-                detail.append(f"has missing line occurrences {missing!r}")
+                detail.append(f"no longer says {missing!r}")
             if after != before and not added and not missing:
-                detail.append("has the same lines in a different order")
+                detail.append("says the same lines in another order")
             if "Traceback" in out:
                 detail.append("a traceback")
             failures.append("a comment and a moved stamp in I.1's record: not as the record "

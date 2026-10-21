@@ -4772,6 +4772,39 @@ class Units(unittest.TestCase):
                     review_stamp.stamp(facts, "I", 1, read_commit, False)
                 self.assertEqual(record.read_text(), current)
 
+    def test_review_stamp_migration_counts_an_unresolved_commit_a_problem(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            for name, body in {"Elements/BookI/Prop01.lean": "theorem P : True := trivial\n",
+                               "heath/I/01.md": "A test enunciation.\n\nA test proof.\n"}.items():
+                (repo / name).parent.mkdir(parents=True, exist_ok=True)
+                (repo / name).write_text(body)
+            record = repo / "review/I/01.toml"
+            record.parent.mkdir(parents=True)
+            # Its stamp commit is one this clone never fetched, as in a shallow clone.
+            text = ('[statement]\nscope = "full"\nfingerprint = "sha256:0123456789abcdef"\n\n'
+                    '[route]\nkind = "euclid"\n\n[review]\nstage = "exceptions"\n'
+                    'reviewer = "Test reader"\ncommit = "abcdef1"\n'
+                    'lean = "sha256:0123456789abcdef"\n')
+            record.write_text(text)
+            git(repo, "init", "-q")
+            git(repo, "config", "user.name", "review stamp test")
+            git(repo, "config", "user.email", "review-stamp-test@example.invalid")
+            git(repo, "config", "commit.gpgsign", "false")
+            git(repo, "add", ".")
+            git(repo, "commit", "-q", "-m", "A record whose stamp commit is not here")
+            out = io.StringIO()
+            with mock.patch.object(review_stamp, "ROOT", repo), \
+                    mock.patch.object(review_stamp.heath, "ROOT", repo), \
+                    mock.patch.object(review_stamp.heath, "REVIEW", repo / "review"), \
+                    contextlib.redirect_stdout(out):
+                code = review_stamp.migrate([("I", 1)], dry_run=True)
+            self.assertEqual(code, 1, out.getvalue())
+            self.assertIn(f"✗ I.1: its stamp commit abcdef1 {review_stamp.NOT_ONE}",
+                          out.getvalue())
+            self.assertIn("0 need(s) a reader; 1 problem(s)", out.getvalue())
+            self.assertEqual(record.read_text(), text)
+
     def test_describe_distinguishes_review_record_changes(self):
         commit = "1234567890abcdef"
         newer = "fedcba0987654321"
@@ -4791,6 +4824,9 @@ class Units(unittest.TestCase):
             "review/I/05.toml": (
                 f'note = "old"\n[review]\ncommit = "{commit}"\nlean = "old"\ntext = "old"\n',
                 f'note = "new"\n[review]\ncommit = "{commit}"\nlean = "old"\ntext = "old"\n'),
+            "review/I/06.toml": (
+                f'note = "old"\n[review]\ncommit = "{commit}"\nlean = "old"\ntext = "old"\n',
+                f'note = "new"\n[review]\ncommit = "{commit}"\nlean = "old"\ntext = "new"\n'),
         }
         ctx = safe_push.Context(Path("."), "b" * 40, "a" * 40, 1, "", None, {})
 
@@ -4812,6 +4848,7 @@ class Units(unittest.TestCase):
                       "`1234567890ab`", records)
         self.assertIn("`review/I/04.toml`: re-stamped at `fedcba098765`", records)
         self.assertIn("`review/I/05.toml`: touched, not re-stamped", records)
+        self.assertIn("`review/I/06.toml`: touched, not re-stamped", records)
 
     def configured_check_commands(self):
         checks = []

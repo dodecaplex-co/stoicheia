@@ -3489,9 +3489,9 @@ findings:
   comments and layout aside ([`review/SCHEMA.md`](../../review/SCHEMA.md#stamps), "Stamps",
   whose two worked examples now carry it as test values).
   [`scripts/review_stamp.py`](../../scripts/review_stamp.py) writes it with the other
-  stamps, and, whenever a stamp changes, checks that the commit named is in the history of
-  HEAD, and both the Lean file and the record at that commit (before, it checked the Lean
-  file only, and only when the commit changed).
+  stamps, and, whenever `--commit` names a commit, checks that the commit named is in the
+  history of HEAD, and both the Lean file and the record at that commit (before, it checked
+  the Lean file only, and only when the commit changed).
   [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) fails on a record whose
   text no longer matches its stamp: "its record has changed since it was reviewed".
   [`scripts/heath.py`](../../scripts/heath.py) knows the key and checks the examples'
@@ -3508,16 +3508,20 @@ findings:
   [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) tests both: no stamp key
   is taken away, and the record as TOML reads it, its stamps set aside, is unchanged, so
   that a line shaped as a stamp inside a multi-line string, which changes the record's
-  words, is judged. Its account of the records in a pull request's body is unchanged, so a
-  record that gains `text` alone, its commit kept, is listed as "touched, not re-stamped",
-  which is what the migration below does to it. The required box on the review records
+  words, is judged. Its account of the records in a pull request's body counts `text` as a
+  stamp: a record whose stamps alone change, its commit kept, is listed as "its stamps
+  written, its commit kept at …", which is what the migration below does to it; one that
+  loses a stamp, as "a stamp taken away"; and one whose words change under a kept commit,
+  as "touched, not re-stamped". The required box on the review records
   in [`.github/pull_request_template.md`](../../.github/pull_request_template.md), and its
   comment under "Review records", therefore now admit a record that "gained only its
   `text` stamp from `scripts/review_stamp.py --migrate-text`", so that the migration's
   pull request can tick that box truly. Once this lands, any pull request open with the
   box's old words must have that box rewritten in its body before `--merge`, which
-  otherwise refuses it as missing the box's new words. This is a check change on its own:
-  it changes no record.
+  otherwise refuses it as missing the box's new words. After this lands, an open pull
+  request whose body's records part was written with the old words is refreshed with
+  `git safe-push --branch` before `--merge`, which otherwise fails its body as out of date.
+  This is a check change on its own: it changes no record.
 - **The `text` stamps' migration, and what it does not do.** The existing records are not
   stamped as read. `review_stamp.py --migrate-text` writes `text` alone, and only where a
   record's stamp commit is in the history of HEAD and its text at that commit (`git show

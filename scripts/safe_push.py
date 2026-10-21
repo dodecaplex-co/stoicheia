@@ -2694,7 +2694,8 @@ def describe(ctx: Context, pre: Preflight) -> dict[str, str]:
                            f"away ({', '.join(f'`{key}`' for key in lost)})")
         elif old != new and new.get("commit") and new["commit"] == old.get("commit"):
             records.append(f"- `{path}`: its stamps written, its commit kept at "
-                           f"`{new['commit'][:12]}`")
+                           f"`{new['commit'][:12]}`" if stamp_only(repo, base, sha, path)
+                           else f"- `{path}`: touched, not re-stamped")
         elif old != new and new.get("commit"):
             records.append(f"- `{path}`: re-stamped at `{new['commit'][:12]}`")
         else:

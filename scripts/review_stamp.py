@@ -243,8 +243,8 @@ def migrate_text(book: str, n: int, dry_run: bool) -> tuple[str, str]:
     """Write the `text` stamp of a record stamped before it, when its own stamp commit is
     in the history of HEAD and its text at that commit is its text now. Returns (outcome,
     what was found): "written", "current", or "reader" for a record that needs a reader;
-    an unresolved stamp commit is "reader", with the steps for making its history
-    available. Raises ValueError when the record cannot be read."""
+    raises ValueError when the record cannot be read, or its commit is not one commit of
+    this clone (resolve)."""
     ref, path = f"{book}.{n}", heath.review_path(book, n)
     if not path.exists():
         raise ValueError(f"{ref}: there is no record {rel(path)}")
@@ -263,8 +263,8 @@ def migrate_text(book: str, n: int, dry_run: bool) -> tuple[str, str]:
     commit = rv["commit"]
     full = resolve(commit)
     if full is None:
-        return "reader", (f"{ref}: its stamp commit {commit} {NOT_ONE}: fetch the history, "
-                          "or rename the branch or tag of that name, then run this again")
+        raise ValueError(f"{ref}: its stamp commit {commit} {NOT_ONE}: fetch the history, or "
+                         "rename the branch or tag of that name, then run this again")
     if not in_history(full):
         return "reader", f"{ref}: its stamp commit {commit} is not in the history of HEAD"
     then = text_at(full, path)
