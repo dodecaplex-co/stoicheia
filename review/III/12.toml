@@ -27,6 +27,6 @@ note = "Like Heath's, this figure draws the impossible supposition: FG passing a
 
 [review]
 stage = "exceptions"
-commit = "e707d55"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "0130b26c"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:8420eb7838a02329"
