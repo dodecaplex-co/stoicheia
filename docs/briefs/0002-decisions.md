@@ -3183,10 +3183,9 @@ findings:
   20 October approval "as prototyped" and round 4 remain in force, with finishing tracked
   in #150.
 
-  The required independent review of the integrated revision remains unresolved. The
-  repository has no attributable handback identifying the review stage and workflow for
-  the claimed reading at `bd86a7b6`; the six records retain their earlier attributable
-  review events and are not restamped for this integration.
+  The six records the restricted rule changes, for I.2, I.3, I.4, I.8, I.23 and I.44, were
+  read in full at `bd86a7b6` by an independent Codex reader, who found every item true,
+  and were stamped there (run "brief 0009 stage full, ship S3 A1-integration re-read").
 
   The protected paths this merge changes from both of its parents are these. Reconciled by
   hand: `Audit/Overlaps.lean`, `Audit/screen.py`, `tests/certificate_expectations.json` (29

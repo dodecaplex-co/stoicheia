@@ -53,10 +53,10 @@ note = "The two remaining angle equalities follow inside the placement from the 
 
 [review]
 stage = "full"
-commit = "0085b443"
+commit = "bd86a7b6"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:6c1e94da2ef25d4e"
-run = "brief 0009 stage full, workflow review commit 0f38e056"
+run = "brief 0009 stage full, ship S3 A1-integration re-read"
 
 [review.items]
 statement = "pass"

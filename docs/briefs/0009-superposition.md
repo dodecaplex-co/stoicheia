@@ -624,14 +624,12 @@ and introduction, and the pages for I.4, I.8 and I.23 describe that restriction.
 our reading that I.7 may be cited although its proof constructs. `mishnah/I/23.md` keeps
 I.22's constructed points and I.8's angle equality distinct, and explains the inherited
 rule through I.8 and I.20. I.44's comment describes its existing construction of the
-parallelogram. The six records for I.2, I.3, I.4, I.8, I.23 and I.44 preserve their
-attributable independent reviews before A1; all retain full coverage and Euclid's route.
+parallelogram. The six records for I.2, I.3, I.4, I.8, I.23 and I.44 were read and
+stamped independently before A1; all retain full coverage and Euclid's route.
 The marker change made I.4's and I.8's records stale; an independent reader read both
-again and stamped them at `0085b443`. No attributable handback identifies the review
-stage and workflow for the claimed reading at `bd86a7b6`, so the required integration
-review remains unresolved and the records are not stamped at that revision. The pages
-show those attributable earlier review commits. Regenerating them from the records does
-not validate the combined revision.
+again and stamped them at `0085b443`. An independent Codex reader then read all six in
+full at `bd86a7b6`, the integration merge, found every item true and stamped them there
+(run "brief 0009 stage full, ship S3 A1-integration re-read"); the pages show that commit.
 
 ## Evidence before landing
 

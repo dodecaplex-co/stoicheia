@@ -14,10 +14,10 @@ note = "Euclid takes E where the circle DEF cuts AB. After Postulate 3 draws the
 
 [review]
 stage = "full"
-commit = "bda0636"
-reviewer = "Codex (gpt-6-astra), independent reader"
+commit = "bd86a7b6"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:5d88634ef13cd7a4"
-run = "brief 0009 stage full, workflow review commit f5bccaa4"
+run = "brief 0009 stage full, ship S3 A1-integration re-read"
 
 [review.items]
 statement = "pass"
