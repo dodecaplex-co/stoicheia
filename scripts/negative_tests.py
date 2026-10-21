@@ -87,28 +87,33 @@ records current; CI runs it on every push.
 18. Counting congruence constructors instead of `Coincidence.step` in the certificate:
     `tests/test_certificate.py` fails on transformers with no step. The restored
     certificate must pass the same regression, including its real-step cases.
-19. Without a build, in a scratch copy of I.1's file in a temporary tree, read by the
+19. Without a build, names and arcs in real figures (#172): `*e*.*g*.` in II.7's modern
+    way, with an italic e planted in its figure, fails S25 for the emphasis and for e,
+    no name of the modern way; an italic p planted there fails S25 too, though Heath's
+    "p. 389" stands in the paragraph; and an arc whose ends are one point and one with a
+    radius of 0, planted in I.1's figure, fail S26 with what SVG draws for each.
+20. Without a build, in a scratch copy of I.1's file in a temporary tree, read by the
     source scan alone: `set_option«debug».skipKernelTC true in`, which Lean reads with no
     space before the guillemet, and the other spellings of `set_option debug.…` and
     `doc.…` with none, guillemets around one part or each, in a command and in a tactic
     block, and after a space, a tab or a line break: each refused by its file, line and
     spelling, and the unplanted copy passes (#197).
-20. Likewise, `#guard_msgs` with `drop`, in each of its forms: `(drop all)`, closed up
+21. Likewise, `#guard_msgs` with `drop`, in each of its forms: `(drop all)`, closed up
     and spaced, `(drop error)`, `(drop warning)`, `(drop info)`, `drop` after another
     filter or an option, twice, and with a remark or a line break inside: each refused by
     its file and line, while a `#guard_msgs` that checks its messages or passes them on,
     and the words in a comment or a string, are not (#197).
-21. Likewise, `#eval`, `#exit` and `#guard_panic` closed up to the word after them, which
+22. Likewise, `#eval`, `#exit` and `#guard_panic` closed up to the word after them, which
     Lean reads as the command and that word (`#evalIO.println`, `#guard_panicin`), and
     `#guard_panic` after a remark or a line break: each refused by its file, line and
     command, while the words in a comment or a string are not (#197). `#guard_panic`
     spaced is among item 8's commands.
-22. Likewise, `#guard_msgs` with `substring`: `(substring := true)`, closed up and
+23. Likewise, `#guard_msgs` with `substring`: `(substring := true)`, closed up and
     spaced, after a filter or an option, with a remark or a line break inside, under a
     docstring that is only part of the error, and `(substring := false)`: each refused by
     its file and line, while a `#guard_msgs` with other options, and the words in a
     comment or a string, are not (#197).
-23. Likewise, `#guard_msgs` under a docstring that pins an error: closed up, with a remark
+24. Likewise, `#guard_msgs` under a docstring that pins an error: closed up, with a remark
     or a comment between the two, under a filter or an option, with positions, two errors
     at once, and `error:` alone on its line: each refused by its file and line. Not
     refused: a docstring that pins only an info message or a warning, a theorem's own
@@ -274,6 +279,41 @@ def style_error() -> None:
                        f"S1 {rel}:", "S1 an em dash")
     finally:
         path.write_bytes(saved)
+
+
+def figure_names_and_arcs() -> None:
+    label = ('<text font-family="Georgia, serif" font-size="17" x="30" y="30" '
+             'font-style="italic" fill="#3b2f2f">{}</text></svg>')
+    modern = "figures/II/07-modern.svg"
+    arcs = ('<path d="M 20 20 A 5 5 0 0 1 20 20" fill="none" stroke="#3b2f2f" '
+            'stroke-width="1.6"/><path d="M 30 20 A 0 5 0 0 1 40 20" fill="none" '
+            'stroke="#3b2f2f" stroke-width="1.6"/></svg>')
+    plants = (
+        ("*e*.*g*. in II.7's modern way, and e in its figure",
+         (("mishnah/II/07.md", "beside II.4's square on a sum.",
+           "beside II.4's square on a sum, *e*.*g*. a planted one."),
+          (modern, "</svg>", label.format("e"))),
+         (f"S25 {modern}: mishnah/II/07.md: unsupported intraword emphasis",
+          f"S25 {modern}: <text>e</text>: e is no name of the page's modern way")),
+        ("p in II.7's modern figure, beside Heath's page, p. 389",
+         ((modern, "</svg>", label.format("p")),),
+         (f"S25 {modern}: <text>p</text>: p is no name of the page's modern way",)),
+        ("an arc whose ends are one point, and one of radius 0, in I.1's figure",
+         (("figures/I/01.svg", "</svg>", arcs),),
+         ("S26 figures/I/01.svg: <path> d 'M 20 20 A 5 5 0 0 1 20 20': SVG draws nothing",
+          "S26 figures/I/01.svg: <path> d 'M 30 20 A 0 5 0 0 1 40 20': SVG draws a "
+          "straight line")),
+    )
+    for name, changes, wanted in plants:
+        saved = {}
+        try:
+            for rel, old, new in changes:
+                saved[rel] = replace_once(rel, old, new)
+            expect_failure(name, run(sys.executable, "scripts/check_style.py", "--no-lean"),
+                           *wanted)
+        finally:
+            for rel, text in saved.items():
+                (ROOT / rel).write_text(text)
 
 
 def absent_tracked(rels: list[str | Path]) -> list[str | Path]:
@@ -1583,6 +1623,7 @@ def main(argv=()) -> int:
         guard_msgs_substring()
         guard_error_pins()
         placement_named()
+        figure_names_and_arcs()
         planted_assumptions()
         for test in (circle_proved, style_error, broken_link, stale_page,
                      changed_audit_pin, corrupt_olean, certificate_constructor_counting):
