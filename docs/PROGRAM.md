@@ -205,10 +205,11 @@ either side of each base, followed in [#134]. How work lands is in
   `formal-model` and `acceptance`. The merge gate in `scripts/safe_push.py` requires a
   passing run of the same five, and refuses any reported failure or pending check
   ([WORKFLOW](WORKFLOW.md#8-validation-on-the-integrated-revision), section 8).
-- **The statements' vocabulary** (settled 17 Oct). The lock holds every word that the
-  axioms' statements or the entries' statements reach: <!-- count:vocabulary -->91<!-- /count -->, the 37 of the axioms and 54
-  that only the statements use (`Touches`, `EqualCircles`, `circumference`, `rect`,
-  `Parallel` and others). A change to one is a decision, as a changed axiom is
+- **The statements' vocabulary** (settled 17 Oct; extended for restricted superposition).
+  The lock holds every word that the axioms' statements or the entries' statements
+  reach: <!-- count:vocabulary -->208<!-- /count -->, including the restricted calculus and its interpretation,
+  as well as `Touches`, `EqualCircles`, `circumference`, `rect`, `Parallel` and others.
+  A change to one is a decision, as a changed axiom is
   ([0002](briefs/0002-decisions.md), [FIELDS.md](../Certificate/FIELDS.md#the-vocabulary)).
   Each later book's definitions join the lock with its statements.
 

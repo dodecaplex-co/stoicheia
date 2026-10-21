@@ -301,6 +301,24 @@ first use in each book (in Book III it is the circle's). Gloss "applied" (I.44) 
 "gnomon" (II.5). Modern words stay in the modern way, and a Lean word gets a plain gloss
 the first time it appears.
 
+**Tightening the language.** Section 1 sets the voice and the rule for vague hedges.
+These examples show what the language passes cut or replaced:
+
+- Repeated openings: the reading lines' "For algebra drawn as rectangles" gives way to
+  what Nelsen's book shows (II.1). Section 6 gives the reading lines their shape.
+- Announcing sentences: "The proof is short" gives way to "Euclid joins BC" (I.33);
+  "The proposition is old" goes, leaving Heath's evidence from Aristotle (I.27).
+- Sweeping closings: "Book II leans on it again and again" becomes "II.2 to II.8, II.11
+  and II.14 use it again", with a link to the introduction (II.1).
+- Recaps in threes: I.41 drops the closing "greater than, equal to or less than" summary
+  and keeps Proclus' construction. A list that supplies necessary cases stays.
+- Padded phrases: "does its multiplying" becomes "multiplies" (II.1); "has a name for
+  this cut" becomes "names the cut" (II.11).
+- Unsupported certainty: "Heron, whose proof for circles touching without became III.12"
+  gives way to "Heath thinks a later editor made III.12 out of Heron's proof for circles
+  touching without" (III.12's reading). This qualification belongs to the claim, as
+  section 1 requires.
+
 **Tacit rules,** never "tacit assumptions" or "tacit laws", outside Heath's words
 **[checked]**.
 
@@ -391,6 +409,16 @@ sees each span rendered on GitHub (section 8, the reviewer's checklist, item 5).
 `scripts/render.py` copies the mishnah onto its page unchanged but for its count comments
 and the insertion of its modern figure beneath "The modern way", so the page shows the
 same mathematics.
+
+**The modern way's notation.** In a `$…$` span, a vector is a bold lower-case letter,
+`$\mathbf{u}$`, never `$\vec{u}$`. A vector between Heath's points is written
+`$\mathrm{C - B}$` or with an arrow over the point letters, `$\overrightarrow{\mathrm{AC}}$`,
+as in Books II and III. A length or an absolute value takes plain bars, `$|\mathbf{u}|$`
+or `$|y|$`, never `\lvert` and `\rvert`. Write the dot product
+`$\mathbf{u} \cdot \mathbf{v}$` and the plane's cross product
+`$\mathbf{u} \times \mathbf{v}$`; the components `$u_{1}$`, `$u_{2}$` stay italic.
+For Heath's upright letters, see "Heath's letters, one style" above; for radians and
+the rules every span must obey, see "Mathematics".
 
 **System E and LeanEuclid** are thanked by name in every page's footer, so the mishnah
 does not thank them again; a particular debt is still said where it falls (Intersection 4
@@ -711,7 +739,7 @@ empty. The switch is never turned back to quiet a figure: the figure is set upri
 ([#66](https://github.com/jackChallis/stoicheia/issues/66)): the Review notes, the overlap
 catalogue, the Other reports, the Rendered docstrings, the front pages and the table of
 names, with S7 in the gap catalogues and the Generated files, S12 beyond the mishnah (and
-the name of a `name : type`), and S22. A file that had findings of that reach on the day is
+the name of a `name : type`), and S22. A file that had findings of that reach on the day was
 listed in `REACH_PENDING` in `scripts/check_style.py`, with the rules it had findings of
 and whoever mends them; while it is listed, its findings of those rules are reported (D16)
 and fail nothing. Every other finding of the reach fails at once, in a listed file as in

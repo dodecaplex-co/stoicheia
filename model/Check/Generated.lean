@@ -12,6 +12,7 @@ import Elements.Foundations.Tacit.Metric
 import Elements.Foundations.Tacit.Superposition
 import Elements.Foundations.Tacit.Transfer
 import Elements.Foundations.Words
+import Elements.Foundations.Superposition.Restriction
 import Model.Signature
 import Check.Generator
 
