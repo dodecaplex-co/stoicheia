@@ -84,6 +84,8 @@ records current; CI runs it on every push.
     and an unknown count name are refused by check_fidelity.py, and a correct count
     passes. Missing or mismatched Git work trees and a Markdown symlink are refused
     with diagnostics. Run just these plants and the file-only regressions with --counts-only.
+18. A repeated dated heading in the decisions page makes `check_queue.py --tree .`
+    refuse with exit 1.
 
 These faults exercise the style and link checks, page freshness, an audit pin and
 leanchecker's loading of compiled files as well as the earlier checks. They do not
@@ -323,6 +325,23 @@ def broken_link() -> None:
         expect_failure("a relative link to a missing page",
                        run(sys.executable, "scripts/check_links.py"),
                        f"README.md:{line}: {target}: no such file: {target}")
+    finally:
+        path.write_bytes(saved)
+
+
+def queue_repeated_heading() -> None:
+    """The tree scan must refuse a date heading repeated in the decisions page."""
+    rel = "docs/briefs/0002-decisions.md"
+    path = ROOT / rel
+    saved = path.read_bytes()
+    heading = next(line for line in saved.splitlines() if line.startswith(b"## "))
+    try:
+        path.write_bytes(saved + b"\n" + heading + b"\n")
+        result = run(sys.executable, "scripts/check_queue.py", "--tree", ".")
+        expect_failure("a repeated dated heading in the decisions page", result,
+                       rel, "repeated dated heading")
+        if result.returncode != 1:
+            failures.append(f"queue repeated heading: expected exit 1, got {result.returncode}")
     finally:
         path.write_bytes(saved)
 
@@ -1233,6 +1252,7 @@ def main(argv=()) -> int:
         model_lake()
         lake_links()
         placement_named()
+        queue_repeated_heading()
         planted_assumptions()
         for test in (circle_proved, style_error, broken_link, stale_page,
                      changed_audit_pin, corrupt_olean):
