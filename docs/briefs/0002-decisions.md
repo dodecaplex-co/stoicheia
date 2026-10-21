@@ -4320,6 +4320,27 @@ findings:
   `centre_unique` is left to the reader, as `Audit/Centre.lean` now says. The pinned
   list itself is unchanged by the merge.
 
+- **The scaffold follows the restated Book III statements.** The protected file
+  [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes [brief
+  0008](0008-centre.md), step 6's restated signatures from `b260c826` for III.1, III.2,
+  III.4, III.8, III.9, III.10, III.13, III.17, III.21, III.22, III.23, III.24, III.25,
+  III.26, III.28, III.30, III.32, III.33, III.34, III.35, III.36 and III.37. 22 signatures
+  change; 19 lose centre-existence hypotheses, and III.33 loses a centre-existence
+  conclusion clause. III.24 also takes brief 0006's `Arc.Congruent` conclusion and III.25
+  becomes the restated core, their former statements moving to `Prop24.equalCircles` and
+  `Prop25.of_circle`; III.34's circle is made explicit. III.26 retains G/H; III.28 had no
+  centre clause; both gain [brief 0006](0006-statements.md)'s congruence conclusions. Its
+  comment now says that a centre is named where the statement uses it. Where a proof needs
+  an unnamed centre, it takes one by III.1 where Heath cites it, and from `exists_centre`
+  otherwise. The shared follow-up mapping emits `Prop24.equalCircles`,
+  `Prop24.equalMeasure`, `Prop25.complete` and `Prop25.of_circle` after their
+  propositions. `Prop24.equalCircles`, `Prop25.complete` and `Prop25.of_circle` take
+  [brief 0008](0008-centre.md)'s approved post-centre signatures; `Prop24.equalMeasure`
+  retains [brief 0006](0006-statements.md)'s approved signature. A search of `scripts/`
+  and `tests/` confirms that no check reads the scaffold's Book III strings. The scaffold
+  creates only missing files, so it never rewrites a proof. This change lands before the
+  content it describes, in a pull request of its own, since `scripts/` is a check input.
+
 - **Brief 0008, step 6: a drawn arc needs no centre (19 October 2026).** As
   [brief 0008](0008-centre.md), section 4, approved, `Arc.Drawn` in the foundations file
   [`Elements/Foundations/DefinitionsIII.lean`](../../Elements/Foundations/DefinitionsIII.lean)
