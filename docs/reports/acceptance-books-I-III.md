@@ -3,13 +3,13 @@
 
 What [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py) finds against [the acceptance checklist](../ACCEPTANCE.md), item by item: for each of the 99 propositions, for each book and for the edition as a whole. A [machine] item is checked by the script; a [review] item is read from the records, and passes only when a reviewer has recorded it. The checklist says what each item asks. ✓ passes; ✗ fails, and every failure is listed at the end.
 
-- **Revision:** `a2e0f02a`.
+- **Revision:** `a87ff6bf`.
 - **Lean:** facts.json as Lean 4.35.0 wrote it.
 - **Run:** every item.
 
 ## Summary
 
-**302 failing items**. 61 of the 99 propositions pass every item of their own.
+**303 failing items**. 61 of the 99 propositions pass every item of their own.
 
 Failing propositions, item by item:
 
@@ -40,7 +40,7 @@ Failing propositions, item by item:
 | E2 | certificate: the lock, the axioms, the entries and the pinned facts | machine | ✓ |
 | E3 | contracts: the shared contracts (`heath.py`) | machine | ✓ |
 | E4 | model: the model tests | machine | ✓ |
-| E5 | edition: the edition's other pages, links and style | machine | ✓ |
+| E5 | edition: the edition's other pages, links and style | machine | ✗ |
 | E6 | staging: nothing else staged | machine | ✗ |
 
 ## Book I
@@ -182,6 +182,7 @@ Failing propositions, item by item:
 
 ### The whole edition
 
+- **E5 edition:** S12 docs/reports/acceptance-books-I-III.md:6: `a2e0f02a`: Unknown identifier `a2e0f02a`
 - **E6 staging:**
   - Staging/Stage3/Aligned.lean still stages 3 declaration(s), for no one proposition: move them to Elements/ or retire them
   - Staging/Stage3/Arcs.lean still stages 2 declaration(s), for no one proposition: move them to Elements/ or retire them
