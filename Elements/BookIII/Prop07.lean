@@ -263,6 +263,8 @@ theorem Prop7.partner {A D E F G H : Point} {ABCD : Circle} (hE : Centre E ABCD)
   obtain ⟨P, hPG, -⟩ := exists_point_opposite_side hG_L []
   have hP_EF : ¬ Collinear E F P := Triangle.of_line hE_L hF_L hEF hPG.1
   obtain ⟨X, F', hF', hX, hang⟩ := BookI.Prop23 hEF hEFG.cab hP_EF
+  /- H' is where the straight line EX meets the circle on the side of E where X is
+     (System E, Intersections 5, with XE produced to a point Q). -/
   obtain ⟨N, hE_N, hX_N⟩ := Postulate1 E X hX.triangle.ne₁₃
   obtain ⟨Q, hXEQ⟩ := produce hX.triangle.ne₁₃.symm
   have hQ_N : OnLine Q N := on_line_of_between hXEQ hX_N hE_N
@@ -271,6 +273,7 @@ theorem Prop7.partner {A D E F G H : Point} {ABCD : Circle} (hE : Centre E ABCD)
       (ne_of_between (between_symm hXEQ))
   have hH'_ray : OnRay H' E X :=
     OnRay.of_between_between (between_symm hXEQ) (between_symm hH'EQ)
+  /- H' is on the other side of AD from G. -/
   have hH'G_EF : OppositeSidesOf H' G E F :=
     (SameSideOf.of_onRay hH'_ray hX).trans_opposite
       (OppositeSidesOf.of_line hEF hE_L hF_L hPG)

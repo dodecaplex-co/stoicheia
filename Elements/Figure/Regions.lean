@@ -353,8 +353,8 @@ theorem WithinAngle.of_not_sameSideOf {R T : Point} (hRT : SameSideOf R T A C)
 
 /-! ## The comparison near a vertex -/
 
-/-- If the region `S` lies within the region `R` near A, then `S` cannot have points outside
-`R` as near A as we please. -/
+/-- If the region S lies within the region R near A, then S cannot have points outside
+R as near A as we please. -/
 theorem not_locallyWithin {R S : Point → Prop} (hW : LocallyWithin A S R)
     (hN : NearVertex A (fun P => S P ∧ ¬ R P)) : False := by
   obtain ⟨γ, hγ, h⟩ := hW
@@ -370,9 +370,9 @@ theorem locallyLess_congr {R R' S S' : Point → Prop} (hR : ∀ P, R P ↔ R' P
   subst e₁; subst e₂
   exact Iff.rfl
 
-/-- **Equal angles placed alike compare alike.** Compared with any region `S`, a rectilineal
+/-- **Equal angles placed alike compare alike.** Compared with any region S, a rectilineal
 angle placed along AB depends only on its size: if D and C are on the same side of AB and
-the angles BAD, BAC are equal, BAD is locally less than `S` exactly when BAC is, and `S`
+the angles BAD, BAC are equal, BAD is locally less than S exactly when BAC is, and S
 locally less than BAD exactly when it is less than BAC. -/
 theorem WithinAngle.locallyLess_placement {S : Point → Prop} (hDC : SameSideOf D C A B)
     (h : ∠ B A D = ∠ B A C) :

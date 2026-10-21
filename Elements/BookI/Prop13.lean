@@ -182,4 +182,116 @@ theorem Prop13 {A B C D : Point} (hCBD : Between C B D) (hA : ¬ Collinear C D A
     exact two_right (between_symm hCBD) hDBE hEBC hAE_BD hAD
   -- Q. E. D.
 
+/-- A right angle is equal to the angle adjacent to it (System E, Diagram-angle 3).
+This was an assumption until 19 October 2026 and is now proved from I.13 and Common
+Notion 3: the two adjacent angles together equal two right angles, and taking the
+given right angle away leaves one right angle. -/
+theorem _root_.Elements.Tacit.adjacent_eq_of_right
+    {A B C D : Point} {L : Line}
+    (hA : OnLine A L) (hB : OnLine B L) (h : Between A C B)
+    (hD : ¬ OnLine D L) (hright : ∠ A C D = ∟) : ∠ A C D = ∠ D C B := by
+  have hABD : Triangle A B D :=
+    Triangle.of_line hA hB (ne_of_between_ends h) hD
+  have h13 := Prop13 h hABD
+  rw [hright, add_comm ∟] at h13
+  rw [hright]
+  exact (CommonNotion3 h13 rfl).symm
+
+/-- When one side condition holds, angle addition and positivity force the other. -/
+private theorem inside_of_angle_add_one_side {A B C D : Point} {L M : Line}
+    (hAL : OnLine A L) (hAM : OnLine A M) (hB : OnLine B L)
+    (hC : OnLine C M) (hAB : A ≠ B) (hAC : A ≠ C)
+    (hDL : ¬ OnLine D L) (hDM : ¬ OnLine D M) (hLM : L ≠ M)
+    (h : ∠ B A C = ∠ B A D + ∠ D A C) (hCD : SameSide C D L) :
+    SameSide B D M := by
+  apply Classical.byContradiction
+  intro hn
+  have hAD : A ≠ D := fun e => hDL (e ▸ hAL)
+  obtain ⟨N, hAN, hDN⟩ := Postulate1 A D hAD
+  have hCL : ¬ OnLine C L := fun hc => hLM (line_unique hAC hAL hc hAM hC)
+  have hCN : ¬ OnLine C N := fun hc =>
+    hDM (line_unique hAC hAN hc hAM hC ▸ hDN)
+  have hLN : L ≠ N := fun e => hDL (e ▸ hDN)
+  have hBC : SameSide B C N :=
+    triple_incidence2 hAL hAM hAN hB hC hDN hCD hn hDM hAB.symm
+  have hadd := angle_add_of_inside hAL hAN hB hDN hAB hAD hCL hCN hLN
+    hBC (same_side_symm hCD)
+  have hp : 0 < ∠ D A C := (Triangle.of_line hC hAM hAC.symm hDM).cba.angle_pos
+  rw [angle_symm hAC.symm hAD.symm] at hadd
+  have hlt := CommonNotion5 (a := ∠ B A C) hp
+  rw [← hadd] at hlt
+  have hlt' := CommonNotion5 (a := ∠ B A D) hp
+  rw [← h] at hlt'
+  exact lt_irrefl _ (lt_trans hlt hlt')
+
+/-- I.13 and positivity make a triangle angle less than two right angles. -/
+private theorem triangle_angle_lt_two_right {A B C : Point} (h : Triangle B A C) :
+    ∠ B A C < ∟ + ∟ := by
+  obtain ⟨L, hB, hA⟩ := Postulate1 B A h.ne₁₂
+  obtain ⟨E, hE, hBAE, _⟩ := Postulate2 hB hA h.ne₁₂ []
+  have hC := h.off_line hB hA
+  have h13 := Prop13 hBAE
+    (Triangle.of_line hB hE (ne_of_between_ends hBAE) hC)
+  have hp : 0 < ∠ C A E :=
+    (Triangle.of_line hE hA (ne_of_between (between_symm hBAE)) hC).cba.angle_pos
+  have hlt := CommonNotion5 (a := ∠ B A C) hp
+  rw [h13] at hlt
+  exact hlt
+
+/-- If the angle BAC is made up of BAD and DAC, then D lies within it (System E,
+Diagram-angle 2, converse). This was an assumption until 19 October 2026 and is now
+proved from I.13, angle addition and positivity, and the side rules. If just one side
+condition fails, one angle would be less than itself. If both fail, producing DA
+through A gives two decompositions whose sum forces BAC to equal two right angles,
+contrary to I.13 and the positive adjacent angle. -/
+theorem _root_.Elements.Tacit.inside_of_angle_add {A B C D : Point} {L M : Line}
+    (hAL : OnLine A L) (hAM : OnLine A M) (hB : OnLine B L)
+    (hC : OnLine C M) (hAB : A ≠ B) (hAC : A ≠ C) (hDL : ¬ OnLine D L) (hDM : ¬ OnLine D M)
+    (hLM : L ≠ M) (h : ∠ B A C = ∠ B A D + ∠ D A C) : SameSide B D M ∧ SameSide C D L := by
+  have hAD : A ≠ D := fun e => hDL (e ▸ hAL)
+  have hflip : ∠ C A B = ∠ C A D + ∠ D A B := by
+    rw [angle_symm hAC.symm hAB.symm, angle_symm hAC.symm hAD.symm,
+      angle_symm hAD.symm hAB.symm, add_comm]
+    exact h
+  by_cases hCD : SameSide C D L
+  · exact ⟨inside_of_angle_add_one_side hAL hAM hB hC hAB hAC hDL hDM hLM h hCD, hCD⟩
+  by_cases hBD : SameSide B D M
+  · exact ⟨hBD, inside_of_angle_add_one_side hAM hAL hC hB hAC hAB hDM hDL
+      hLM.symm hflip hBD⟩
+  have hCL : ¬ OnLine C L := fun hc => hLM (line_unique hAC hAL hc hAM hC)
+  have hBM : ¬ OnLine B M := fun hb => hLM (line_unique hAB hAL hB hAM hb)
+  obtain ⟨N, hAN, hDN⟩ := Postulate1 A D hAD
+  obtain ⟨E, hEN, hDAE, _⟩ := Postulate2 hDN hAN hAD.symm []
+  have hEL : ¬ OnLine E L := fun he =>
+    hDL (on_line_of_between (between_symm hDAE) he hAL)
+  have hEM : ¬ OnLine E M := fun he =>
+    hDM (on_line_of_between (between_symm hDAE) he hAM)
+  have hCE : SameSide C E L := by
+    rcases same_side_or hCL hDL hEL hCD with hs | hs
+    · exact hs
+    · exact False.elim (pasch3 hDAE hAL hs)
+  have hBE : SameSide B E M := by
+    rcases same_side_or hBM hDM hEM hBD with hs | hs
+    · exact hs
+    · exact False.elim (pasch3 hDAE hAM hs)
+  have he := angle_add_of_inside hAL hAM hB hC hAB hAC hEL hEM hLM hBE hCE
+  have hBN : ¬ OnLine B N := fun hb =>
+    hDL (line_unique hAB hAN hb hAL hB ▸ hDN)
+  have hCN : ¬ OnLine C N := fun hc =>
+    hDM (line_unique hAC hAN hc hAM hC ▸ hDN)
+  have hb13 := Prop13 hDAE
+    (Triangle.of_line hDN hEN (ne_of_between_ends hDAE) hBN)
+  have hc13 := Prop13 hDAE
+    (Triangle.of_line hDN hEN (ne_of_between_ends hDAE) hCN)
+  rw [angle_symm hAD.symm hAB.symm] at hb13
+  rw [angle_symm hAC.symm (ne_of_between (between_symm hDAE))] at hc13
+  have heq : ∠ B A C + ∠ B A C = (∟ + ∟) + (∟ + ∟) := calc
+    ∠ B A C + ∠ B A C =
+        (∠ B A D + ∠ D A C) + (∠ B A E + ∠ E A C) := CommonNotion2 h he
+    _ = (∠ B A D + ∠ B A E) + (∠ D A C + ∠ E A C) := by ac_rfl
+    _ = (∟ + ∟) + (∟ + ∟) := CommonNotion2 hb13 hc13
+  have hequal := Magnitude.eq_of_add_self_eq heq
+  have hlt := triangle_angle_lt_two_right (Triangle.of_line hB hAL hAB.symm hCL)
+  exact False.elim (Magnitude.ne_of_lt hlt hequal)
+
 end Elements.BookI

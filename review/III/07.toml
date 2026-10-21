@@ -1,7 +1,7 @@
 # review/III/07.toml
 [statement]
 scope = "full"
-note = "The centre E is given; F lies strictly between E and D. `Prop7.general` compares all the rest; `Prop7` keeps two on one side of AD."
+note = "With its companion: `Prop7.general` compares any two of the rest, on one side of AD or on opposite sides; `Prop7` keeps two on one side."
 companions = ["III.7 general"]
 fingerprint = "sha256:089a6993dc3354e9"
 

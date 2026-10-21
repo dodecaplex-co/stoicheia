@@ -1,9 +1,11 @@
 import Elements.Figure.Basics
+import Elements.Figure.Circles
 import Elements.BookIII.Squares
 import Elements.BookI.Prop04
 import Elements.BookI.Prop11
 import Elements.BookIII.Prop01
 import Elements.BookIII.Prop16
+import Elements.BookI.Prop13
 
 /-!
 # Book III, Proposition 17
@@ -100,7 +102,7 @@ theorem Prop17 {A : Point} {BCD : Circle} (hA : OutsideCircle A BCD) :
   have hEDF_EBA : ∠ E D F = ∠ E B A := hEBA_EDF.symm
   -- But the angle EDF is right;
   /- F lies on the other side of D from F'; the angle adjacent to a right angle
-     is right (System E, Diagram-angle 3). -/
+     is right (I.13, `adjacent_eq_of_right`). -/
   have hEDF : ∠ E D F = ∟ := by
     have hF'DE : ∠ F' D E = ∟ := by
       rw [angle_symm hDF'.symm hED]

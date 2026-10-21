@@ -38,7 +38,7 @@ Every proposition file imports this one, and through it:
   any point behind it; on a ray, one point at a given distance from its start,
   and only one.
 * `Sides`: "on the same side of AB" and "on the other side of AB"; a straight
-  line has only two sides; a straight line crossing `GH` at `G` carries a point to
+  line has only two sides; a straight line crossing GH at G carries a point to
   the other side.
 * `Angles`: an angle depends only on its rays; an angle of a triangle is
   something; adding angles, and the part less than the whole; a straight line

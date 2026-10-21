@@ -5,7 +5,7 @@ fingerprint = "sha256:3fa81505760e369a"
 
 [route]
 kind = "euclid"
-note = "The proof takes F from the rule where Euclid takes the centre without a bracket for III.1. III.17 supplies the touching straight line, and III.36 the equality of squares, as before."
+note = "The proof first splits on whether a centre lies on AC. In Euclid's case, the centre off AC, it takes F from the rule where Euclid takes the centre without a bracket for III.1; III.17 supplies the touching straight line, and III.36 the equality of squares. The case with the centre on AC names that centre F from the split."
 
 [[passage]]
 at = "and FD is the common base of the triangles"
@@ -20,11 +20,12 @@ note = "Our porism to III.16 is said at the end of a radius, so the Lean applies
 
 [[passage]]
 at = "Similarly this can be proved to be the case even if the centre be on AC"
-kind = "grouped"
-note = "No second case is needed: III.36 is cited by its statement, which holds wherever the centre lies, and nothing else in the argument looks at AC."
+kind = "case"
+helper = "Prop37.centre_on_secant"
+note = "Euclid leaves the case with the centre on AC to the reader; `Prop37.centre_on_secant` proves it in the first branch. It uses `Prop36.through_centre`, proved from III.36, and the given equality to obtain equal squares on DE and DB, and Euclid's argument with the two triangles finishes the proof."
 
 [figure]
-case = "F off AC, with distinct contacts B and E on opposite sides of DF"
+case = "the centre F off AC, with distinct contacts B and E on opposite sides of DF"
 
 [review]
 stage = "exceptions"

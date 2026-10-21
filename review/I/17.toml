@@ -7,8 +7,28 @@ fingerprint = "sha256:83511090f6555959"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "Let the angle ACB be added to each"
+kind = "helper"
+helper = "Tacit.add_lt_add_right"
+note = "Euclid adds the same angle to a greater and a less, keeping their order. The Lean uses `Tacit.add_lt_add_right`, an assumed rule of magnitudes (System E §3.5)."
+
+[[passage]]
+at = "Similarly we can prove that the angles BAC, ACB"
+kind = "grouped"
+note = "Euclid leaves the argument for the other two pairs to the reader. The Lean proves his argument once over any letters, with BC produced in ABC, and applies it again to the triangles BAC and CAB, producing AC and AB respectively."
+
 [review]
-stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "570e6fa"
+reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:f35da40349c54986"
+run = "brief 0005 stage 5, ship C5 re-read"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

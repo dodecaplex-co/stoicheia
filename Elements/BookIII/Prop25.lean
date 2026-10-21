@@ -5,6 +5,7 @@ import Elements.BookI.Prop04
 import Elements.BookI.Prop06
 import Elements.BookI.Prop10
 import Elements.BookI.Prop11
+import Elements.BookI.Prop13
 import Elements.BookI.Prop17
 import Elements.BookI.Prop23
 import Elements.BookI.Prop24
@@ -21,15 +22,15 @@ carries it out.
 III.25 is a construction, and its statement keeps apart the construction core and the
 argument that it is correct (FORMALIZATION, section 4, of which it is the pilot). `Prop25`,
 the core, is given only the segment's base AC, a point P on its side, and its points as a
-predicate `S`, with the fact Euclid reads off the figure: a straight line drawn from a point
+predicate S, with the fact Euclid reads off the figure: a straight line drawn from a point
 within the base towards P's side meets the segment's circumference. It never sees a circle
-or a centre. It returns B in `S`, the point D bisecting AC with the angle ADB right, and the
+or a centre. It returns B in S, the point D bisecting AC with the angle ADB right, and the
 circle γ described with centre E through A (Postulate 3), which passes through B and C; E
 lies beyond AC, at D, or on B's side, as the angles at A and B decide: Euclid's three cases.
 
 **The statement is the pair.** The core does not say that γ is the circle the segment came
-from: `S` need not lie on any circle, and nothing puts it on γ. Heath's "the complete circle
-of which it is a segment" is carried by the companion `Prop25.complete`: for `S` the arc of
+from: S need not lie on any circle, and nothing puts it on γ. Heath's "the complete circle
+of which it is a segment" is carried by the companion `Prop25.complete`: for S the arc of
 a circle α, any circle through A, B and C is α, and holds every point of the arc. Euclid's
 step "[III. 9]", which finds the centre of the given circle, is there.
 

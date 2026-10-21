@@ -36,6 +36,9 @@ jobs:
         # Facts.lean exits 1 if any entry's axioms differ from its own and its citations'.
         run: lake env lean Certificate/Facts.lean
 
+      - name: Check coincidence steps and module boundaries, rejecting reached Staging.Hidden and Lean.Hidden helpers and allowing unused foreign imports
+        run: python3 -I tests/test_certificate.py
+
       - name: Check every proof again, by Lean's kernel, and by nanoda admitting only the locked axioms and Lean's three
         # leanchecker --fresh replays the whole environment of Elements, Lean's own
         # included, through Lean's kernel; nanoda, written separately, checks the whole
@@ -54,8 +57,13 @@ jobs:
         # reading its cases wrongly stops the job before the style check's verdict.
         run: python3 -I tests/test_check_style.py
 
+      - name: Check the unfinished work and release gates, case by case
+        # These cases need no Lean and no network; unreadable issues must hold a release.
+        run: python3 -I tests/test_release_gate.py
+
       - name: Check the house style's hard rules
-        # S12 asks Lean about the names in the mishnah, so it runs on the built tree.
+        # S12 asks Lean about the names in every text it reads, the audit lemmas of the
+        # overlap catalogue among them, so it runs on the built tree, after Audit.
         run: python3 scripts/check_style.py
 
       - name: Check the generated pages are up to date
@@ -151,3 +159,99 @@ jobs:
         # fails the build.
         working-directory: model
         run: lake build
+
+  acceptance:
+    # The acceptance checklist, docs/ACCEPTANCE.md, on every pull request, as this
+    # `acceptance` job and docs/briefs/0002-decisions.md describe:
+    # scripts/check_acceptance.py checks the pull request and keeps its report as an
+    # artifact. Until the consolidation release the job fails only when an item that
+    # passes on main does not pass here: a pass may not turn into a fail (save P10 and E6,
+    # which turn when a statement is staged before its proof). Main is checked
+    # beside the pull request with the pull request's own checks (scripts/, tests/,
+    # Certificate/, review/SCHEMA.md, review/terms.toml), keeping main's values pinned to
+    # its content (WORKFLOW, section 10, step 4), so that both are judged alike and a
+    # check made stricter, in a pull request of its own, holds nothing back.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      # `ratchet`: fail only when a pass on main turns into a fail. The consolidation
+      # release's pull request sets `full`, and from then on any failure fails the job.
+      # Any other value fails the job at once, so that no misspelling turns the gate off.
+      ACCEPTANCE_GATE: ratchet
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # The review records name their commits, which the checker finds in the history.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Lean (elan)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Check the checker's comparison of two runs, case by case
+        # tests/test_check_acceptance.py needs no Lean; a comparison read wrongly stops
+        # the job before its verdict.
+        run: python3 -I tests/test_check_acceptance.py
+
+      - name: Build, and compute the certificate
+        run: |
+          lake build
+          lake build Audit
+          lake env lean Certificate/Facts.lean
+
+      - name: Check the pull request against the acceptance checklist, and write its report
+        # Exit 1 is a failing item, which the ratchet weighs in the last step; 2 or more is
+        # a checker that could not run, which fails at once.
+        run: |
+          case "$ACCEPTANCE_GATE" in
+            ratchet|full) ;;
+            *) echo "ACCEPTANCE_GATE is '$ACCEPTANCE_GATE', neither ratchet nor full"; exit 2 ;;
+          esac
+          mkdir -p "$RUNNER_TEMP/acceptance"
+          status=0
+          python3 scripts/check_acceptance.py --output "$RUNNER_TEMP/acceptance/report.md" --json "$RUNNER_TEMP/acceptance/verdicts.json" || status=$?
+          if [ "$ACCEPTANCE_GATE" = full ]; then exit "$status"; fi
+          test "$status" -le 1
+
+      - name: Check main against the checklist, with the pull request's checks
+        # The merge commit CI checks out has main as its first parent. The kernel replay
+        # and the model tests (E1, E4) are left out here (--quick): the `check` and
+        # `model` jobs hold them on every pull request.
+        if: env.ACCEPTANCE_GATE == 'ratchet'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "$(git rev-list --parents -n 1 HEAD | wc -w)" -eq 3 ]; then main_sha=$(git rev-parse HEAD^1); else main_sha="$BASE_SHA"; fi
+          main="$RUNNER_TEMP/main"
+          git worktree add --detach "$main" "$main_sha"
+          # An updated pin belongs to the content it pins. Copying it from the pull
+          # request could make unchanged main fail, hiding a real acceptance regression.
+          # rsync excludes also protect main's pins from deletion when absent in the PR.
+          scripts/copy_acceptance_checks.sh . "$main"
+          cp -R .lake "$main/"
+          cd "$main"
+          lake build
+          lake build Audit
+          lake env lean Certificate/Facts.lean
+          status=0
+          python3 scripts/check_acceptance.py --quick --output "$RUNNER_TEMP/acceptance/main-report.md" --json "$RUNNER_TEMP/acceptance/main.json" || status=$?
+          test "$status" -le 1
+
+      - name: No item that passes on main fails on the pull request
+        if: env.ACCEPTANCE_GATE == 'ratchet'
+        run: python3 scripts/check_acceptance.py --compare "$RUNNER_TEMP/acceptance/main.json" "$RUNNER_TEMP/acceptance/verdicts.json"
+
+      - name: Keep the reports
+        # report.md and verdicts.json are the pull request's; main-report.md and
+        # main.json, main's, judged by the same checks.
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: acceptance
+          path: ${{ runner.temp }}/acceptance/

@@ -20,9 +20,12 @@ questions at once:
 A book meets the standard when its acceptance checklist (`ACCEPTANCE.md`)
 passes with no failures, an independent audit by a model family that wrote none of it
 agrees, and a cold outside reading scores it about 95. A few deliberate limitations are
-allowed when they are stated plainly where they occur: in Book III, the mixed angles of
-III.16 and III.31, and the places where a System E rule already contains a proposition
-(III.2).
+allowed when they are stated plainly where they occur. For I.45 and II.14, the figure is
+supplied with its checked division into triangles and area is relative to that division; a
+proof of a division from the outline, and independence of area from the division chosen,
+remain pending under [#116](https://github.com/jackChallis/stoicheia/issues/116). In Book
+III, the limitations are the mixed angles of III.16 and III.31, and the places where a
+System E rule already contains a proposition (III.2).
 
 ## 2. How a book is made, in parallel
 
@@ -43,10 +46,18 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 5. **Records.** A review record for every proposition, keyed to the commit it read; the
    gap and overlap catalogues; the book's introduction; further reading from the verified
    list only.
-6. **Acceptance.** The checklist passes in CI, the independent audit agrees, a reader goes
-   through the book start to finish.
-7. **Release.** Release notes drafted from the generated summaries, approved by the
-   owner, then the tag.
+6. **Acceptance.** The five required checks (`check`, `model`, `negative`, `formal-model`
+   and `acceptance`) pass in CI, the independent audit agrees, and a reader goes through
+   the book start to finish.
+7. **Release.** An independent reviewer reads the candidate for stale content and assigns
+   every finding to one of four tiers: **Tier 0, defects,** never on main; **Tier 1,
+   generated facts,** regenerated rather than written by hand; **Tier 2, reader prose,**
+   true at release; and **Tier 3, working records,** dated rather than quietly rewritten.
+   The release waits until every Tier 0 to 2 finding is fixed in the release change, every
+   Tier 3 finding has a dated status note, no open issue is labelled `blocks-release`, and
+   the wiki is refreshed and reasonably correct as of its stated date. Release notes are
+   drafted from the generated summaries and approved by the owner before the tag
+   ([WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10, steps 8 and 10).
 
 ## 3. Status
 
@@ -54,10 +65,11 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 
 | Book | Propositions | Stage | Records | Acceptance | Outside score | Release |
 |---|---|---|---|---|---|---|
-| I | 48 of 48 proved, and I.15's porism and eight companion theorems | released (next: I.40 and I.45 in full generality) | 48 of 48 current: 0 at "full", 48 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
-| II | 14 of 14 proved, and eight companion theorems | released (next: II.1 and II.14 in full generality) | 14 of 14 current: 0 at "full", 14 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
-| III | 37 of 37 proved, and the porisms of III.1 and III.16 and 17 companion theorems | released (next: arcs and segments) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
-| IV–XIII | not begun | — | — | — | — | — |
+| I | 48 of 48 proved, and I.15's porism and nine companion theorems | released (next: I.45 outline coverage and independence of division, #116) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
+| II | 14 of 14 proved, and eight companion theorems | released (next: II.14 outline coverage and independence of division, #116) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
+| III | 37 of 37 proved, and the porisms of III.1 and III.16 and 17 companion theorems | released (next: stage 3/4 migrations; mixed angles; centre rule; full records) | 37 of 37, 24 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
+| IV | not stated | brief (draft, awaiting approval) | — | — | — | — |
+| V–XIII | not begun | — | — | — | — | — |
 
 <!-- /status -->
 
@@ -66,9 +78,16 @@ from `facts.json`; the records from `review/`, current when their stamps match t
 statements and the Lean files, at the stage `exceptions` or `full`
 ([review/SCHEMA.md](../review/SCHEMA.md)); and the stage, the outside score and the
 release from [program.toml](program.toml), which the coordinator keeps with this page.
-Acceptance stays "—" until brief 0005's stage 6 gives the acceptance report. The scope of
-each book's statements, whole, restricted or in part, stands in the
-[README](../README.md) and on [the certificate](../CERTIFICATE.md).
+The outside scores are Astra's reading of 17 October at `676244a`. The
+[acceptance report](reports/acceptance-books-I-III.md) exists, but acceptance has not
+passed. The Acceptance column stays a dash until it passes. CI now checks every pull
+request against main ([#148]); full acceptance remains the consolidation release gate.
+The scope of each book's statements, whole, restricted or in part,
+stands in the [README](../README.md) and on [the certificate](../CERTIFICATE.md).
+
+Book IV has a [draft brief](briefs/0012-book-IV.md), draft Lean statements and
+[scratch prototypes](reports/crew/scratch-IV/). It is not yet in the edition: work there
+awaits approval and Books I–III each reaching 95, as the brief's gate requires.
 
 The work under way is [brief 0005](briefs/0005-astra-review.md):
 
@@ -78,11 +97,11 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 1 | Precision: certificate, review records, wording, layout, evidence, overlaps, Book III's reading | done, 17 Oct |
 | 1b | Standards: AGENTS.md, STYLE, FORMALIZATION, WORKFLOW, templates, `check_style.py` | done, 17 Oct |
 | — | Release of Book III | [done, 17 Oct](https://github.com/jackChallis/stoicheia/releases/tag/book-III); Book I and II notes corrected |
-| 2 | I.40, I.45, II.1, II.14 in full generality | proved in Staging ([#88]); the move into `Elements/` next ([#19]) |
+| 2 | I.40 and II.1 general; I.45 and II.14 with supplied divisions | done, 18 Oct: proved in Staging ([#88]), and in the edition with their records ([#19], [#102](https://github.com/jackChallis/stoicheia/pull/102)); I.45 and II.14 restricted from 20 Oct, for figures supplied with a checked division, until the proof from the outline ([#116]) |
 | 3 | Arcs and segments; III.24 | proved in Staging ([#89]); the move into `Elements/` next ([#25]) |
-| 4 | III.14, III.15, III.25 | proved in Staging (this pull request); the move into `Elements/` next ([#28]) |
-| 5 | Consolidation review of all 99 | |
-| 6 | Acceptance, then a consolidation release of Books I–III | |
+| 4 | III.14, III.15, III.25 | proved in Staging ([#90]); the move into `Elements/` next ([#28]) |
+| 5 | Consolidation review of all 99 | Books I and II: all records at `full` ([#115]); Book III: all at `exceptions`, full review after its migrations ([#29]) |
+| 6 | Acceptance, then a consolidation release of Books I–III | report exists; acceptance has not passed; CI checks regressions against main ([#148]) |
 
 ### Landed on 18 October
 
@@ -129,14 +148,17 @@ own, the figure letters as three:
 
 ### Open items
 
-What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), section 10,
-"Landing work: pull requests".
+What remains on 20 October. Stage 2 is in the edition; I.47 general, for squares on
+either side of each base, followed in [#134]. How work lands is in
+[WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull requests".
 
-- **The scope of the I.45 and II.14 records** is decided: `full`, by the checked fan and
-  any supplied division (the owner, 18 October; brief 0006, decision 1 as revised, [#13]).
-- **Stage 2 is in the edition** (#19): I.40, I.45, II.1 and II.14 with their companions
-  beside them, certified, their records full and re-stamped, the words in the foundations
-  with the lock, and the gap entries for I.45's and II.14's tacit step.
+- **I.45 and II.14's representation** still takes a supplied division into triangles.
+  The remaining work is to give the figure by its outline, prove that a division exists
+  and covers exactly its region, and prove that the area does not depend on the division
+  ([#116]). The owner's [20 October decision](briefs/0002-decisions.md#20-october-2026)
+  supersedes the earlier full-scope call: both scopes are `restricted`, while their
+  records remain at review stage `full`. That review stage does not settle this
+  representation work.
 - **Stage 3's proofs** are done in `Staging/Stage3`, every statement of brief 0006's stage 3
   proved with no new axiom: placement in all its cases, with superposition not among its
   direct axioms, III.23 point by point, III.24 restated to conclude congruence by Euclid's
@@ -146,16 +168,14 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
   clauses for every straight line, the foot of the perpendicular, and III.25's construction
   core, which never sees a circle or a centre, with its correctness (#26, #27). Next is the
   move into `Elements/` with the records (#28).
-- **`check_fidelity.py`'s forbidden-command scan** reaches neither `Staging/` nor
-  `Audit/`, and does not list `#eval`: a check change of its own.
-- **Whether `check_style.py`'s self-check cases belong in `tests/`** is left for a pull
-  request of its own ([#3]).
-- **The merge commit's subject** takes the owner from origin's URL, which after a transfer
-  would name the old owner (cosmetic).
-- **A guard for `gh` exiting 0 without merging,** needed if a merge queue or auto-merge is
-  ever turned on; neither is.
-- **The Lean notes of I.6, I.14 and I.24** still make Lean the subject: a later pass, with
-  their records re-read.
+- **Mixed angles and the centre rule** await migration into the edition: the approved
+  mixed-angle prototype supplies III.16 and III.31's comparisons ([#57]), and frozen
+  [brief 0008](briefs/0008-centre.md) settles the centre rule and its restatements ([#59]).
+- **Book III's review records** remain at `exceptions`; they reach `full` after the
+  migrations and review ([#29]). Books I and II's records are already at `full`
+  ([#115]).
+- **Acceptance** still has failing items in its report. CI now checks every pull request
+  against main ([#148]); the consolidation release must pass every item.
 - **Two that are not pull requests:** the finished worktrees and their merged branches are
   removed, and the fleet script, kept outside the repository, is rebuilt from the orders
   template, without "every hypothesis should be used" and without the rule that every one
@@ -176,14 +196,18 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
 - **Solids** (Books XI–XIII): planes as primitives; one statement prototyped first.
 - **A formal model** of the axioms in Lean with Mathlib: done. Begun on 18 October 2026 in
   a package of its own, [`model/`](../model/README.md), with CI's `formal-model` job (#73,
-  a gate for the consolidation release), it proves all 88 locked laws in the ordinary
+  a gate for the consolidation release), it proves all <!-- count:axioms -->80<!-- /count --> locked laws in the ordinary
   plane, and `model_exists` has no hypothesis left: a model relative to Lean's logic and
   Mathlib's construction of the real numbers. It does not show that a formal statement
   captures what Euclid meant. The independence of Postulate 5 still rests on the
   numerical hyperbolic check in [tests/model](../tests/model/), until a hyperbolic model
-  is built. Making `formal-model` a required check of the ruleset is the owner's call.
+  is built. GitHub now requires all five checks: `check`, `model`, `negative`,
+  `formal-model` and `acceptance`. The merge gate in `scripts/safe_push.py` still tests
+  for the presence of a passing run only for the first three, while refusing any reported
+  failure or pending check; aligning that local test needs a separate protected-check
+  change.
 - **The statements' vocabulary** (settled 17 Oct). The lock holds every word that the
-  axioms' statements or the entries' statements reach: 61, the 37 of the axioms and 24
+  axioms' statements or the entries' statements reach: <!-- count:vocabulary -->125<!-- /count -->, the 37 of the axioms and 84
   that only the statements use (`Touches`, `EqualCircles`, `circumference`, `rect`,
   `Parallel` and others). A change to one is a decision, as a changed axiom is
   ([0002](briefs/0002-decisions.md), [FIELDS.md](../Certificate/FIELDS.md#the-vocabulary)).
@@ -257,6 +281,11 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
 - **18 Oct. A stricter rule that today's content fails lands with a switch.** The figure
   letters came as three pull requests: the rule with its switch off, the letters, then the
   switch on, so that no check travelled with what it judges ([#8], [#9], [#10]).
+- **20 Oct. What a check cannot judge needs a standing read.** The first read for stale
+  content (A0) found claims false on main and others that queued work would make false;
+  the merge-conflict marker and the stale counts among them prompted checks of their own.
+  The read now comes before every release and at the end of each programme stage
+  ([WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10, step 8).
 
 ## 6. Cost and time
 
@@ -279,6 +308,14 @@ in the voyage logs).
 | The night of 18 October: pull requests #1 to #11 | not logged | not logged | one night |
 [#88]: https://github.com/jackChallis/stoicheia/pull/88
 [#89]: https://github.com/jackChallis/stoicheia/pull/89
+[#90]: https://github.com/jackChallis/stoicheia/pull/90
 [#19]: https://github.com/jackChallis/stoicheia/issues/19
 [#25]: https://github.com/jackChallis/stoicheia/issues/25
 [#28]: https://github.com/jackChallis/stoicheia/issues/28
+[#29]: https://github.com/jackChallis/stoicheia/issues/29
+[#57]: https://github.com/jackChallis/stoicheia/issues/57
+[#59]: https://github.com/jackChallis/stoicheia/issues/59
+[#115]: https://github.com/jackChallis/stoicheia/pull/115
+[#116]: https://github.com/jackChallis/stoicheia/issues/116
+[#134]: https://github.com/jackChallis/stoicheia/pull/134
+[#148]: https://github.com/jackChallis/stoicheia/pull/148

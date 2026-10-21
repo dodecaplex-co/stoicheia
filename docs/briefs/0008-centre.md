@@ -1,7 +1,42 @@
 # Brief 0008: every circle has a centre
 
+19 October 2026: the frozen plan below uses the former baseline of 87 axioms.
+[Eight rules are now theorems](../FORMALIZATION.md#rules-now-proved), keeping their
+names and exact types, so the baseline is 79, including 73 tacit rules. Adding the
+proposed centre-existence axiom would now take 79 to 80, and 73 tacit rules to 74.
+This note adds no axiom and grants no approval to add one.
+
+`centre_unique` is now proved in `Elements/Figure/Circles.lean`; Circle 4 is proved
+after I.7 from I.7, Definition I.15 and `circle_eq`; Circle 2 is proved from Circle 3,
+which stays an axiom. The old dependency counts must be measured again. A pin excluding
+a retired name from an axiom list no longer detects calls to that theorem; any intended
+restriction on its use needs a separate check proposal. The historical readings and
+frozen statements below are preserved.
+
 *Frozen 18 October 2026 by the coordinator, after Astra's challenges of `afe0ee9` and
 `3f00ebf` and the Claude challenger's; decisions Q1 to Q16 as recorded in section 8.*
+
+*Status, 20 October 2026, after the eight axiom retirements:*
+
+No certified proof uses Circle 2 or rests on Circle 3. The [guard](../../scripts/check_fidelity.py) now forbids the proved Circle 2 through its dependence on the retained Circle 3 axiom.
+The [overlap kind](../../review/SCHEMA.md) is required (#93); the [negative test](../../scripts/negative_tests.py) reads the lock and [`touching-whole-circles`](../../review/terms.toml) exists (#113).
+The [forbidden-command scan](../../scripts/check_fidelity.py) covers `Staging/` and `Audit/` (#39).
+The [formal model](../../model/Model/Assembly.lean) proves all 79 locked laws, with [generated laws](../../model/Model/Laws.lean) (#109).
+Stage 2's proofs are in [`Elements/`](../../Elements/) (#102).
+Stage 4b's III.8 and III.17 companions are in [`Elements/BookIII/Prop08.lean`](../../Elements/BookIII/Prop08.lean) and [`Prop17.lean`](../../Elements/BookIII/Prop17.lean) (#111); stages 3 and 4 remain in `Staging/`.
+[Staged III.1](../../Staging/Centre/Prop01.lean) still calls Circle 2, now a theorem resting on Circle 3; its construction must be reconciled with [main's III.1](../../Elements/BookIII/Prop01.lean) before migration.
+Still to do under #59: the prototype rename, centre rule, construction guard, restatements, tag revision and record migration.
+The frozen text below is kept as history.
+
+*Status, 21 October 2026, trains C6a and C6b:* the centre rule `exists_centre` is in the
+lock, by the owner's decision of 18 October (80 axioms, 74 tacit rules after wave one).
+Stages 3 and 4 and the mixed angles are in `Elements/`, and their staged copies are
+deleted. III.1's construction is at home in `Elements/BookIII/Prop01.lean` and takes a
+centre from the rule only inside the proof that D is within, as the dated correction in
+section 3 records; [staged III.1](../../Staging/Centre/Prop01.lean) now checks the
+restated III.1 against it and calls neither Circle 2 nor Circle 3. Still to do under #59:
+the construction guard, in a pull request of its own, then step 6's restatements, the tag
+revision and the record migration.
 
 *19 October 2026: the [dated correction in section 3](#correction-iii1-19-october-2026)
 replaces the frozen construction, guard, porism, overlap and order claims it names below,
