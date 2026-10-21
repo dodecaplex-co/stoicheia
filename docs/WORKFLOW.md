@@ -322,9 +322,10 @@ python3 scripts/check_links.py
 ```
 
 Review the generated differences and commit them with their sources, so that regenerating
-leaves them unchanged and the `git status` line prints nothing. Four more jobs run on
-their own, each in isolation. The first three have direct local commands; the last two
-commands below run the acceptance job's tests and checklist without its CI comparison:
+leaves them unchanged and the `git status` line prints nothing. The `negative`, `model`,
+`formal-model` and `acceptance` jobs run on their own, each in isolation. The first three
+have direct local commands; the last two commands below run the acceptance job's tests and
+checklist without its CI comparison:
 
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
@@ -802,14 +803,14 @@ are:
     a heading. Its text is what follows, without the spaces and tabs around it and
     without a closing run of `#` after a space or a tab.
   - A line that is then a run of `=` or of `-`, of any length from one, as in CommonMark
-    (a lone `-` among them), with whitespace after it, underlines a heading when one or
-    more lines that are not blank stand above it. Its text is every line back to the
-    previous blank line, each read as above, joined by spaces, with the line's list
-    numbers and footnote markers before it: a list number that cannot open a list inside
-    a paragraph (any but a 1 followed by text) is the paragraph's own text, so `Notes`,
-    `20. October 2026` and `===` make the heading "Notes 20. October 2026". So a later
-    underline's text holds an earlier one's: two headings underlined in one stretch of
-    lines need a blank line between them.
+    (a lone `-` among them), with whitespace after it, underlines an open paragraph in
+    the same container. An ATX heading of any level and a block or container boundary
+    close that paragraph; a list item's underline must remain indented within the item,
+    so an outdented thematic break does not promote the item's text. The heading's text
+    is the open paragraph's lines, read as above and joined by spaces, with the lines'
+    list numbers and footnote markers before them: a list number that cannot open a list
+    inside a paragraph (any but a 1 followed by text) is the paragraph's own text, so
+    `Notes`, `20. October 2026` and `===` make the heading "Notes 20. October 2026".
   - Every heading's text is plain: ASCII letters, digits, spaces and `. , : ; ' ( ) - /`
     only. Any other character (`<`, `&`, `[`, `*`, `_`, a backtick, `\`, `#`, `=`, a
     tab, any character outside ASCII) refuses the page, naming the line: the page writes

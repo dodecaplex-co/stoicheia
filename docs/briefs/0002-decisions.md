@@ -3406,8 +3406,10 @@ findings:
     container markers taken off (`>`, list markers, and GFM's task markers and footnote
     markers); a line of spaces and tabs is blank, and no other; its text must be plain,
     ASCII letters, digits, spaces and `. , : ; ' ( ) - /` only, or the page is refused,
-    naming the line; an underline's text is every line back to the previous blank one,
-    each with its list numbers and footnote markers, which may be a paragraph's own text;
+    naming the line. Correction: an underline promotes only an open paragraph in its
+    compatible quote and list content column; ATX headings, thematic breaks and other
+    block or container boundaries close that paragraph. Its text is the open paragraph's
+    lines, each with its list numbers and footnote markers, which may be its own text;
     a heading is dated when its text contains a date, and two with the same date are
     refused, naming both; every year from 1900 to 2199 in a heading must be the year of a
     date the check reads, in its own line, so that a date written another way

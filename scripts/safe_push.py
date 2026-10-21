@@ -3285,13 +3285,129 @@ HTML_BLOCKS = (
 HTML_TAG_LINE = re.compile(r"(?:<[A-Za-z][A-Za-z0-9-]*(?:\s+[A-Za-z_:][\w.:-]*"
                            r"(?:\s*=\s*(?:[^\s\"'=<>`]+|'[^']*'|\"[^\"]*\"))?)*\s*/?>"
                            r"|</[A-Za-z][A-Za-z0-9-]*\s*>)[ \t]*$")
-# Inline, in a paragraph (CommonMark, section 6), left to right, whichever starts first: a
-# backslash escape; a code span, a run of backticks to the next run of as many; a run of
-# backticks left unmatched, which is text; an HTML comment closed within the paragraph.
-# So "<!--" in a code span is code, and an unclosed "<!--" is text.
-INLINE = re.compile(r"\\[!-/:-@\[-`{-~]|(`+)(?!`).*?(?<!`)\1(?!`)|`+|<!--.*?-->", re.S)
 # Cells that hold a place, not a review's commit or findings.
 EMPTY_CELL = {"", "-", "–", "—", "...", "…", "tbd", "todo"}
+
+
+def html_tag_end(text: str, start: int) -> tuple[bool, int | None]:
+    """Whether `start` opens an HTML tag, and its end when the tag is complete."""
+    at = start + 1
+    closing = at < len(text) and text[at] == "/"
+    if closing:
+        at += 1
+    if at == len(text) or not text[at].isascii() or not text[at].isalpha():
+        return False, None
+    at += 1
+    while at < len(text) and text[at].isascii() \
+            and (text[at].isalnum() or text[at] == "-"):
+        at += 1
+    if closing:
+        while at < len(text) and text[at] in " \t\r\n":
+            at += 1
+        if at < len(text) and text[at] == ">":
+            return True, at + 1
+        return (True, None) if at == len(text) else (False, None)
+    if at < len(text) and text[at] not in " \t\r\n>/":
+        return False, None
+    while at < len(text):
+        spaced = False
+        while at < len(text) and text[at] in " \t\r\n":
+            spaced = True
+            at += 1
+        if at == len(text):
+            return True, None
+        if text.startswith("/>", at):
+            return True, at + 2
+        if text[at] == ">":
+            return True, at + 1
+        if not spaced or not text[at].isascii() or text[at] not in \
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_:" :
+            return False, None
+        at += 1
+        while at < len(text) and text[at].isascii() \
+                and (text[at].isalnum() or text[at] in "_.:-"):
+            at += 1
+        while at < len(text) and text[at] in " \t\r\n":
+            at += 1
+        if at < len(text) and text[at] == "=":
+            at += 1
+            while at < len(text) and text[at] in " \t\r\n":
+                at += 1
+            if at == len(text):
+                return True, None
+            if text[at] in "\"'":
+                quote = text[at]
+                at += 1
+                end = text.find(quote, at)
+                if end < 0:
+                    return True, None
+                at = end + 1
+            else:
+                value = at
+                while at < len(text) and text[at] not in " \t\r\n\"'=<>`":
+                    at += 1
+                if at == value:
+                    return False, None
+    return True, None
+
+
+def inline_visible(text: str) -> str:
+    """A paragraph without raw inline HTML, with code spans and escapes left literal."""
+    runs = []
+    at = 0
+    while at < len(text):
+        if text[at] != "`":
+            at += 1
+            continue
+        end = at + 1
+        while end < len(text) and text[end] == "`":
+            end += 1
+        escapes = 0
+        before = at
+        while before and text[before - 1] == "\\":
+            escapes += 1
+            before -= 1
+        runs.append((at, end, end - at, escapes % 2 == 1))
+        at = end
+    next_run = {}
+    following = {}
+    for start, end, length, _ in reversed(runs):
+        next_run[start] = following.get(length)
+        following[length] = (start, end)
+    run_at = {start: (end, escaped) for start, end, _, escaped in runs}
+
+    result = []
+    at = 0
+    while at < len(text):
+        if text[at] == "\\" and at + 1 < len(text):
+            result.append(text[at:at + 2])
+            at += 2
+            continue
+        if at in run_at:
+            end, escaped = run_at[at]
+            close = None if escaped else next_run[at]
+            if close:
+                result.append(text[at:close[1]])
+                at = close[1]
+            else:
+                result.append(text[at:end])
+                at = end
+            continue
+        if text.startswith("<!--", at):
+            end = text.find("-->", at + 4)
+            if end < 0:
+                result.append(text[at:])
+                break
+            at = end + 3
+            continue
+        if text[at] == "<":
+            recognized, end = html_tag_end(text, at)
+            if recognized and end is not None:
+                at = end
+                continue
+        result.append(text[at])
+        at += 1
+    return "".join(result)
 
 
 def shown(body: str, keep_own: bool = False) -> list[tuple[str, bool]]:
@@ -3316,8 +3432,7 @@ def shown(body: str, keep_own: bool = False) -> list[tuple[str, bool]]:
     def close() -> None:
         """The paragraph ends: its lines as GitHub shows them."""
         if para:
-            text = INLINE.sub(lambda m: "" if m.group(0).startswith("<!--") else m.group(0),
-                              "\n".join(t for t, _ in para)).split("\n")
+            text = inline_visible("\n".join(t for t, _ in para)).split("\n")
             lines.append((text[0], para[0][1]))
             lines.extend((t, False) for t in text[1:])
             para.clear()
