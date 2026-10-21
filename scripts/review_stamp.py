@@ -32,11 +32,12 @@ writes `text` alone, and only for a record whose own stamp `commit` is in the hi
 HEAD and whose text at that commit is its text now: what the reviewer read is then what
 the record says, so the stamp records no new reading. A record whose text cannot be
 confirmed is listed as needing a reader. A stamp commit absent from this clone,
-abbreviating more than one commit, or separated from HEAD by a shallow-history boundary
-is instead a problem: fetch the missing history, or identify the intended commit without
-guessing and record enough of its id to distinguish it, then run the migration again. It
-changes nothing it cannot confirm, and it can be run again at any time, as at landing,
-after branches that change records.
+abbreviating more than one commit, or not to be confirmed in the history of HEAD in a
+shallow clone is instead a problem: fetch the missing history; or, for an ambiguous id, a
+reader identifies the intended commit without guessing, reads the record and stamps it
+with --commit and enough of the id to name that commit alone; then run the migration
+again. It changes nothing it cannot confirm, and it can be run again at any time, as at
+landing, after branches that change records.
 
 Run it after `lake env lean Certificate/Facts.lean`. Standard library only; reading
 the records needs Python 3.11 or later (tomllib).
@@ -45,6 +46,7 @@ the records needs Python 3.11 or later (tomllib).
 import argparse
 import functools
 import json
+import os
 import re
 import subprocess
 import sys
@@ -90,14 +92,23 @@ AMBIGUOUS_COMMIT = "abbreviates more than one commit of this clone"
 GIT = ("git", "--no-replace-objects")
 
 
+def git_env() -> dict[str, str]:
+    """The environment for every git command run here: this process's, with no graft file,
+    since `--no-replace-objects` does not switch off a legacy .git/info/grafts."""
+    return {**os.environ, "GIT_GRAFT_FILE": os.devnull}
+
+
 @functools.lru_cache
 def commit_objects(root: Path) -> tuple[str, ...]:
-    """The full ids of all commit objects in the object store at `root`."""
+    """The full ids of all commit objects in the object store at `root`.
+
+    Read once per process: a commit made later in the same process is not seen until
+    `commit_objects.cache_clear()`."""
     try:
         out = subprocess.run(
             [*GIT, "cat-file", "--batch-all-objects",
              "--batch-check=%(objectname) %(objecttype)", "--unordered"],
-            cwd=root, capture_output=True, text=True, check=True)
+            cwd=root, env=git_env(), capture_output=True, text=True, check=True)
     except (OSError, subprocess.CalledProcessError):
         return ()
     return tuple(line.split()[0] for line in out.stdout.splitlines()
@@ -122,7 +133,7 @@ def in_history(commit: str) -> bool:
     """Is `commit`, a full id, HEAD or an ancestor of HEAD?"""
     try:
         return subprocess.run([*GIT, "merge-base", "--is-ancestor", commit, "HEAD"],
-                              cwd=ROOT, capture_output=True).returncode == 0
+                              cwd=ROOT, env=git_env(), capture_output=True).returncode == 0
     except OSError:
         return False
 
@@ -131,7 +142,7 @@ def is_shallow() -> bool:
     """Does Git report that this repository has a shallow history?"""
     try:
         out = subprocess.run([*GIT, "rev-parse", "--is-shallow-repository"], cwd=ROOT,
-                             capture_output=True, text=True)
+                             env=git_env(), capture_output=True, text=True)
     except OSError:
         return False
     return out.returncode == 0 and out.stdout.strip() == "true"
@@ -145,7 +156,7 @@ def show_at(commit: str, path: Path) -> bytes | None:
         return None
     try:
         out = subprocess.run([*GIT, "show", f"{full}:{rel(path)}"], cwd=ROOT,
-                             capture_output=True, check=True)
+                             env=git_env(), capture_output=True, check=True)
     except (OSError, subprocess.CalledProcessError):
         return None
     return out.stdout
@@ -233,8 +244,11 @@ def stamp(facts: dict, book: str, n: int, commit: str | None, dry_run: bool) -> 
             raise ValueError(f"{ref}: {commit} {problem}: {recovery}, then stamp with the "
                              "commit whose files you read, on this branch")
         if not in_history(full):
-            raise ValueError(f"{ref}: {commit} is not in the history of HEAD: stamp with the "
-                             "commit whose files you read, on this branch")
+            why = ("cannot be confirmed in the incomplete history of this shallow clone: fetch "
+                   "complete history, then stamp" if is_shallow() else
+                   "is not in the history of HEAD: stamp")
+            raise ValueError(f"{ref}: {commit} {why} with the commit whose files you read, "
+                             "on this branch")
         at = hash_at(full, heath.lean_path(book, n))
         if at != lean:
             raise ValueError(f"{ref}: {rel(heath.lean_path(book, n))} at {commit} "
@@ -295,8 +309,9 @@ def migrate_text(book: str, n: int, dry_run: bool) -> tuple[str, str]:
         full, problem = resolve(commit)
         if full is None:
             recovery = ("fetch the missing history, then run this again" if problem == NO_COMMIT
-                        else "identify the intended commit without guessing, record enough of "
-                             "its id to distinguish it, then run this again")
+                        else "a reader identifies the intended commit without guessing and "
+                             "stamps the record with --commit and enough of its id to name it "
+                             "alone; then run this again")
             raise ValueError(f"{ref}: its stamp commit {commit} {problem}: {recovery}")
     if "text" in rv:
         if rv["text"] == own:
@@ -357,9 +372,10 @@ def main(argv=None) -> int:
     parser.add_argument("--dry-run", action="store_true", help="say what would change; write nothing")
     parser.add_argument("--migrate-text", action="store_true",
                         help="write `text` alone, for each record whose text at its stamp commit, "
-                        "in the history of HEAD, is its text now; list confirmed edits as needing "
-                        "a reader, and report absent, ambiguous or shallow-history stamp commits "
-                        "as problems")
+                        "in the history of HEAD, is its text now; list each record it cannot "
+                        "confirm as needing a reader, and report a stamp commit that is absent, "
+                        "ambiguous, or not to be placed in HEAD's history in a shallow clone, as "
+                        "a problem")
     args = parser.parse_args(argv)
     if args.commit and not heath.COMMIT.fullmatch(args.commit):
         parser.error("--commit is a git commit, 7 to 40 lower-case hex digits")

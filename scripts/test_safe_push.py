@@ -4812,10 +4812,19 @@ class Units(unittest.TestCase):
             self.assertEqual(subprocess.run(
                 ["git", "merge-base", "--is-ancestor", unrelated, "HEAD"], cwd=repo,
                 capture_output=True).returncode, 0)
+            # A legacy graft, which --no-replace-objects does not switch off.
+            grafted = git(repo, "commit-tree", current_tree, "-m", "A grafted commit").strip()
+            head = git(repo, "rev-parse", "HEAD").strip()
+            (repo / ".git/info").mkdir(exist_ok=True)
+            (repo / ".git/info/grafts").write_text(f"{head} {read_full} {grafted}\n")
+            self.assertEqual(subprocess.run(
+                ["git", "--no-replace-objects", "merge-base", "--is-ancestor", grafted, "HEAD"],
+                cwd=repo, capture_output=True).returncode, 0)
             with mock.patch.object(review_stamp, "ROOT", repo), \
                     mock.patch.object(review_stamp.heath, "ROOT", repo), \
                     mock.patch.object(review_stamp.heath, "REVIEW", repo / "review"):
                 self.assertFalse(review_stamp.in_history(unrelated))
+                self.assertFalse(review_stamp.in_history(grafted))
                 self.assertEqual(review_stamp.migrate_text("I", 1, False),
                                  ("reader", f"I.1: edited since its stamp commit {read_commit}"))
                 self.assertEqual(record.read_text(), current)
@@ -4975,7 +4984,8 @@ class Units(unittest.TestCase):
             self.assertEqual(code, 1, out.getvalue())
             self.assertIn(f"its stamp commit {prefix} {review_stamp.AMBIGUOUS_COMMIT}",
                           out.getvalue())
-            self.assertIn("identify the intended commit without guessing", out.getvalue())
+            self.assertIn("a reader identifies the intended commit without guessing",
+                          out.getvalue())
             self.assertIn("0 need(s) a reader; 1 problem(s)", out.getvalue())
             self.assertEqual(record.read_text(), text)
 

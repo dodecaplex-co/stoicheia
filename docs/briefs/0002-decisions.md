@@ -3587,19 +3587,19 @@ findings:
   <commit>:review/<book>/NN.toml`, its `[review]` table and fingerprint aside) is its text
   now: the hash then records what its reviewer read, and no new reading. It reads the
   commit by its full id, so a branch or tag named as the commit is never read in its
-  place. A record whose commit resolves but whose text cannot be confirmed is listed as
-  needing a reader, and is never stamped by the migration. An absent or ambiguous stamp
-  commit is instead a problem, and the command exits 1 without listing that record for a
-  reader. Missing history is fetched before running it again; an ambiguous abbreviation
-  requires identifying the intended commit without guessing and recording enough of its
-  id to distinguish it before running it again. On main at `756bdbae` it would write 92
-  records; seven were
-  edited after their stamp commit and need a reader: II.2, II.6, II.7, II.8 and II.10,
-  whose passages name Book I's helpers as `BookI.…` since the renaming of 19 October;
-  III.4, whose notes changed their quotation marks and a word; and III.13, whose
-  `[figure]` note was written after the commit its page names. The migration waits for
-  the branches in flight that re-stamp records, the Book III cascade's re-stamps (ship C7)
-  and axiom wave two, as it waited for train Tw2 (Book I's Postulate 1 joins), landed as
+  place. A record whose text it cannot confirm is listed as needing a reader, and is never
+  stamped by the migration. A stamp commit that is absent or ambiguous, or that a shallow
+  clone cannot place in the history of HEAD, is instead a problem, and the command exits 1
+  without listing that record for a reader. Missing history is fetched, or, for an
+  ambiguous id, a reader identifies the intended commit without guessing, reads the record
+  and stamps it with enough of the id to name that commit alone, before running it again.
+  On main at `756bdbae` it would write 92 records; seven were edited after their stamp
+  commit and need a reader: II.2, II.6, II.7, II.8 and II.10, whose passages name Book I's
+  helpers as `BookI.…` since the renaming of 19 October; III.4, whose notes changed their
+  quotation marks and a word; and III.13, whose `[figure]` note was written after the
+  commit its page names. The migration waits for the branches in flight that re-stamp
+  records, the Book III cascade's re-stamps (ship C7) and axiom wave two, as it waited for
+  train Tw2 (Book I's Postulate 1 joins), landed as
   [#193](https://github.com/jackChallis/stoicheia/pull/193).
   It reads each record's own stamp commit, so it treats their stamps as any other, and it
   runs on main after them, in a records pull request of its own. Then a reader reads and
