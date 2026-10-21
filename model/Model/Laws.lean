@@ -1,6 +1,8 @@
 module
 
 public import Model.Signature
+public import Elements.Foundations.Superposition.Syntax
+public import Elements.Foundations.Superposition.Semantics
 
 /-!
 # The laws
@@ -11,8 +13,8 @@ differs from what the generator writes. To write it again, run `lake lean Check/
 `model/`. The [README](../README.md) says how the laws are translated and checked.
 
 It was written from the lock, `Certificate/axioms.lock`, whose sha256 is
-`cc810b56bb730b231d1b0682e2f210c92bc088640ad386ca25e6656a490e4497`,
-the hash that `model/lock.sha256` holds. The lock has 80 laws, and they reach 37 words of its
+`761e616d7bd1b535fa84085af023ae489a8f427986f06955cf2650034465198a`,
+the hash that `model/lock.sha256` holds. The lock has 80 laws, and they reach 153 words of its
 vocabulary. Each law here is the library's axiom with the words of a signature `S` put for the
 library's words:
 
@@ -46,7 +48,122 @@ library's words:
 | `Elements.OutsideCircle` | `S.OutsideCircle`, below |
 | `Elements.Point` | `S.Point`, a field of `Signature` |
 | `Elements.SameSide` | `S.SameSide`, a field of `Signature` |
-| `Elements.Triangle` | `S.Triangle`, below |
+| `Elements.Superposition.Atom` | `Elements.Superposition.Atom`, shared unchanged from its pure module |
+| `Elements.Superposition.Atom.Holds` | `Elements.Superposition.Atom.Holds`, shared unchanged from its pure module |
+| `Elements.Superposition.Atom.Holds.match_1` | `Elements.Superposition.Atom.Holds.match_1`, shared unchanged from its pure module |
+| `Elements.Superposition.Atom.angle` | `Elements.Superposition.Atom.angle`, shared unchanged from its pure module |
+| `Elements.Superposition.Atom.area` | `Elements.Superposition.Atom.area`, shared unchanged from its pure module |
+| `Elements.Superposition.Atom.between` | `Elements.Superposition.Atom.between`, shared unchanged from its pure module |
+| `Elements.Superposition.Atom.casesOn` | `Elements.Superposition.Atom.casesOn`, shared unchanged from its pure module |
+| `Elements.Superposition.Atom.eq` | `Elements.Superposition.Atom.eq`, shared unchanged from its pure module |
+| `Elements.Superposition.Atom.len` | `Elements.Superposition.Atom.len`, shared unchanged from its pure module |
+| `Elements.Superposition.Atom.map` | `Elements.Superposition.Atom.map`, shared unchanged from its pure module |
+| `Elements.Superposition.Atom.map.match_1` | `Elements.Superposition.Atom.map.match_1`, shared unchanged from its pure module |
+| `Elements.Superposition.Atom.onLine` | `Elements.Superposition.Atom.onLine`, shared unchanged from its pure module |
+| `Elements.Superposition.Atom.rec` | `Elements.Superposition.Atom.rec`, shared unchanged from its pure module |
+| `Elements.Superposition.Atom.sameSide` | `Elements.Superposition.Atom.sameSide`, shared unchanged from its pure module |
+| `Elements.Superposition.Cited` | `Elements.Superposition.Cited`, shared unchanged from its pure module |
+| `Elements.Superposition.Cited.Holds` | `Elements.Superposition.Cited.Holds`, shared unchanged from its pure module |
+| `Elements.Superposition.Cited.angleSymm` | `Elements.Superposition.Cited.angleSymm`, shared unchanged from its pure module |
+| `Elements.Superposition.Cited.areaCongruent` | `Elements.Superposition.Cited.areaCongruent`, shared unchanged from its pure module |
+| `Elements.Superposition.Cited.casesOn` | `Elements.Superposition.Cited.casesOn`, shared unchanged from its pure module |
+| `Elements.Superposition.Cited.law` | `Elements.Superposition.Cited.law`, shared unchanged from its pure module |
+| `Elements.Superposition.Cited.law.match_1` | `Elements.Superposition.Cited.law.match_1`, shared unchanged from its pure module |
+| `Elements.Superposition.Cited.lenSymm` | `Elements.Superposition.Cited.lenSymm`, shared unchanged from its pure module |
+| `Elements.Superposition.Cited.neOfLen` | `Elements.Superposition.Cited.neOfLen`, shared unchanged from its pure module |
+| `Elements.Superposition.Cited.prop7` | `Elements.Superposition.Cited.prop7`, shared unchanged from its pure module |
+| `Elements.Superposition.Cited.rayOfAngle` | `Elements.Superposition.Cited.rayOfAngle`, shared unchanged from its pure module |
+| `Elements.Superposition.Cited.rayOfAngleSide` | `Elements.Superposition.Cited.rayOfAngleSide`, shared unchanged from its pure module |
+| `Elements.Superposition.Cited.rayUnique` | `Elements.Superposition.Cited.rayUnique`, shared unchanged from its pure module |
+| `Elements.Superposition.Cited.rec` | `Elements.Superposition.Cited.rec`, shared unchanged from its pure module |
+| `Elements.Superposition.Coincidence` | `Elements.Superposition.Coincidence`, shared unchanged from its pure module |
+| `Elements.Superposition.Coincidence.step` | `Elements.Superposition.Coincidence.step`, shared unchanged from its pure module |
+| `Elements.Superposition.Collinear` | `Elements.Superposition.Collinear`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives` | `Elements.Superposition.Derives`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives.angle_congr` | `Elements.Superposition.Derives.angle_congr`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives.angle_refl` | `Elements.Superposition.Derives.angle_refl`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives.angle_symm` | `Elements.Superposition.Derives.angle_symm`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives.angle_trans` | `Elements.Superposition.Derives.angle_trans`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives.area_congr` | `Elements.Superposition.Derives.area_congr`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives.area_refl` | `Elements.Superposition.Derives.area_refl`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives.area_symm` | `Elements.Superposition.Derives.area_symm`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives.area_trans` | `Elements.Superposition.Derives.area_trans`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives.cite` | `Elements.Superposition.Derives.cite`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives.eq_refl` | `Elements.Superposition.Derives.eq_refl`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives.eq_symm` | `Elements.Superposition.Derives.eq_symm`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives.given` | `Elements.Superposition.Derives.given`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives.len_congr` | `Elements.Superposition.Derives.len_congr`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives.len_refl` | `Elements.Superposition.Derives.len_refl`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives.len_symm` | `Elements.Superposition.Derives.len_symm`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives.len_trans` | `Elements.Superposition.Derives.len_trans`, shared unchanged from its pure module |
+| `Elements.Superposition.Derives.ne_symm` | `Elements.Superposition.Derives.ne_symm`, shared unchanged from its pure module |
+| `Elements.Superposition.Interpretation` | `Elements.Superposition.Interpretation`, shared unchanged from its pure module |
+| `Elements.Superposition.Interpretation.Angle` | `Elements.Superposition.Interpretation.Angle`, shared unchanged from its pure module |
+| `Elements.Superposition.Interpretation.Area` | `Elements.Superposition.Interpretation.Area`, shared unchanged from its pure module |
+| `Elements.Superposition.Interpretation.Between` | `Elements.Superposition.Interpretation.Between`, shared unchanged from its pure module |
+| `Elements.Superposition.Interpretation.Length` | `Elements.Superposition.Interpretation.Length`, shared unchanged from its pure module |
+| `Elements.Superposition.Interpretation.Line` | `Elements.Superposition.Interpretation.Line`, shared unchanged from its pure module |
+| `Elements.Superposition.Interpretation.OnLine` | `Elements.Superposition.Interpretation.OnLine`, shared unchanged from its pure module |
+| `Elements.Superposition.Interpretation.Point` | `Elements.Superposition.Interpretation.Point`, shared unchanged from its pure module |
+| `Elements.Superposition.Interpretation.SameSide` | `Elements.Superposition.Interpretation.SameSide`, shared unchanged from its pure module |
+| `Elements.Superposition.Interpretation.ang` | `Elements.Superposition.Interpretation.ang`, shared unchanged from its pure module |
+| `Elements.Superposition.Interpretation.area` | `Elements.Superposition.Interpretation.area`, shared unchanged from its pure module |
+| `Elements.Superposition.Interpretation.len` | `Elements.Superposition.Interpretation.len`, shared unchanged from its pure module |
+| `Elements.Superposition.Interpretation.mk` | `Elements.Superposition.Interpretation.mk`, shared unchanged from its pure module |
+| `Elements.Superposition.Law` | `Elements.Superposition.Law`, shared unchanged from its pure module |
+| `Elements.Superposition.Law.Holds` | `Elements.Superposition.Law.Holds`, shared unchanged from its pure module |
+| `Elements.Superposition.Law.conclusion` | `Elements.Superposition.Law.conclusion`, shared unchanged from its pure module |
+| `Elements.Superposition.Law.mk` | `Elements.Superposition.Law.mk`, shared unchanged from its pure module |
+| `Elements.Superposition.Law.premises` | `Elements.Superposition.Law.premises`, shared unchanged from its pure module |
+| `Elements.Superposition.Letter` | `Elements.Superposition.Letter`, shared unchanged from its pure module |
+| `Elements.Superposition.Letter.A` | `Elements.Superposition.Letter.A`, shared unchanged from its pure module |
+| `Elements.Superposition.Letter.B` | `Elements.Superposition.Letter.B`, shared unchanged from its pure module |
+| `Elements.Superposition.Letter.C` | `Elements.Superposition.Letter.C`, shared unchanged from its pure module |
+| `Elements.Superposition.Letter.D` | `Elements.Superposition.Letter.D`, shared unchanged from its pure module |
+| `Elements.Superposition.Letter.E` | `Elements.Superposition.Letter.E`, shared unchanged from its pure module |
+| `Elements.Superposition.Letter.F` | `Elements.Superposition.Letter.F`, shared unchanged from its pure module |
+| `Elements.Superposition.Letter.P` | `Elements.Superposition.Letter.P`, shared unchanged from its pure module |
+| `Elements.Superposition.LineLetter` | `Elements.Superposition.LineLetter`, shared unchanged from its pure module |
+| `Elements.Superposition.LineLetter.L` | `Elements.Superposition.LineLetter.L`, shared unchanged from its pure module |
+| `Elements.Superposition.LineLetter.M` | `Elements.Superposition.LineLetter.M`, shared unchanged from its pure module |
+| `Elements.Superposition.LineLetter.N` | `Elements.Superposition.LineLetter.N`, shared unchanged from its pure module |
+| `Elements.Superposition.LineName` | `Elements.Superposition.LineName`, shared unchanged from its pure module |
+| `Elements.Superposition.LineName.given` | `Elements.Superposition.LineName.given`, shared unchanged from its pure module |
+| `Elements.Superposition.LineName.side` | `Elements.Superposition.LineName.side`, shared unchanged from its pure module |
+| `Elements.Superposition.Lit` | `Elements.Superposition.Lit`, shared unchanged from its pure module |
+| `Elements.Superposition.Lit.Holds` | `Elements.Superposition.Lit.Holds`, shared unchanged from its pure module |
+| `Elements.Superposition.Lit.Holds.match_1` | `Elements.Superposition.Lit.Holds.match_1`, shared unchanged from its pure module |
+| `Elements.Superposition.Lit.casesOn` | `Elements.Superposition.Lit.casesOn`, shared unchanged from its pure module |
+| `Elements.Superposition.Lit.map` | `Elements.Superposition.Lit.map`, shared unchanged from its pure module |
+| `Elements.Superposition.Lit.map.match_1` | `Elements.Superposition.Lit.map.match_1`, shared unchanged from its pure module |
+| `Elements.Superposition.Lit.neg` | `Elements.Superposition.Lit.neg`, shared unchanged from its pure module |
+| `Elements.Superposition.Lit.pos` | `Elements.Superposition.Lit.pos`, shared unchanged from its pure module |
+| `Elements.Superposition.Lit.rec` | `Elements.Superposition.Lit.rec`, shared unchanged from its pure module |
+| `Elements.Superposition.Metric` | `Elements.Superposition.Metric`, shared unchanged from its pure module |
+| `Elements.Superposition.Metric.Holds` | `Elements.Superposition.Metric.Holds`, shared unchanged from its pure module |
+| `Elements.Superposition.Metric.angle` | `Elements.Superposition.Metric.angle`, shared unchanged from its pure module |
+| `Elements.Superposition.Metric.area` | `Elements.Superposition.Metric.area`, shared unchanged from its pure module |
+| `Elements.Superposition.Metric.casesOn` | `Elements.Superposition.Metric.casesOn`, shared unchanged from its pure module |
+| `Elements.Superposition.Metric.len` | `Elements.Superposition.Metric.len`, shared unchanged from its pure module |
+| `Elements.Superposition.Metric.map` | `Elements.Superposition.Metric.map`, shared unchanged from its pure module |
+| `Elements.Superposition.Metric.rec` | `Elements.Superposition.Metric.rec`, shared unchanged from its pure module |
+| `Elements.Superposition.Metric.toAtom` | `Elements.Superposition.Metric.toAtom`, shared unchanged from its pure module |
+| `Elements.Superposition.Metric.toAtom.match_1` | `Elements.Superposition.Metric.toAtom.match_1`, shared unchanged from its pure module |
+| `Elements.Superposition.Name` | `Elements.Superposition.Name`, shared unchanged from its pure module |
+| `Elements.Superposition.Name.given` | `Elements.Superposition.Name.given`, shared unchanged from its pure module |
+| `Elements.Superposition.Name.second` | `Elements.Superposition.Name.second`, shared unchanged from its pure module |
+| `Elements.Superposition.Name.third` | `Elements.Superposition.Name.third`, shared unchanged from its pure module |
+| `Elements.Superposition.Rule` | `Elements.Superposition.Rule`, shared unchanged from its pure module |
+| `Elements.Superposition.Rule.mk` | `Elements.Superposition.Rule.mk`, shared unchanged from its pure module |
+| `Elements.Superposition.Triangle` | `Elements.Superposition.Triangle`, shared unchanged from its pure module |
+| `Elements.Superposition.Val` | `Elements.Superposition.Val`, shared unchanged from its pure module |
+| `Elements.Superposition.Val.line` | `Elements.Superposition.Val.line`, shared unchanged from its pure module |
+| `Elements.Superposition.Val.mk` | `Elements.Superposition.Val.mk`, shared unchanged from its pure module |
+| `Elements.Superposition.Val.pt` | `Elements.Superposition.Val.pt`, shared unchanged from its pure module |
+| `Elements.Superposition.branch` | `Elements.Superposition.branch`, shared unchanged from its pure module |
+| `Elements.Superposition.guards` | `Elements.Superposition.guards`, shared unchanged from its pure module |
+| `Elements.Superposition.kept` | `Elements.Superposition.kept`, shared unchanged from its pure module |
+| `Elements.Superposition.rayOfAnglePremises` | `Elements.Superposition.rayOfAnglePremises`, shared unchanged from its pure module |
 | `Elements.ang` | `S.ang`, a field of `Signature` |
 | `Elements.area` | `S.area`, a field of `Signature` |
 | `Elements.instAddMagnitude` | `S.instAddMagnitude`, in `Model/Signature.lean` |
@@ -54,6 +171,7 @@ library's words:
 | `Elements.instLTMagnitude` | `S.instLTMagnitude`, in `Model/Signature.lean` |
 | `Elements.instOfNatMagnitudeOfNatNat` | `S.instOfNatMagnitude`, in `Model/Signature.lean` |
 | `Elements.len` | `S.len`, a field of `Signature` |
+| `Elements.primitives` | `S.primitives`, below |
 | `Elements.rightAngle` | `S.rightAngle`, a field of `Signature` |
 
 Each law is a definition named as in the lock: `Law.Postulate1 S` for `Postulate1`. A model of
@@ -102,9 +220,9 @@ def OppositeSides (A B : S.Point) (L : S.Line) : Prop :=
 def OutsideCircle (A : S.Point) (α : S.Circle) : Prop :=
   ¬S.InsideCircle A α ∧ ¬S.OnCircle A α
 
-/-- `Elements.Triangle`, translated. -/
-def Triangle (A B C : S.Point) : Prop :=
-  ¬S.Collinear A B C
+/-- `Elements.primitives`, translated. -/
+noncomputable def primitives : Elements.Superposition.Interpretation :=
+  { Point := S.Point, Line := S.Line, OnLine := S.OnLine, Between := S.Between, SameSide := S.SameSide, Length := S.Length, Angle := S.Angle, Area := S.Area, len := S.len, ang := S.ang, area := S.area }
 
 end Signature
 
@@ -473,10 +591,7 @@ def same_side_trans : Prop :=
 
 /-- `Elements.Tacit.superposition`, translated. -/
 def superposition : Prop :=
-  ∀ {A B C D G H : S.Point} {L : S.Line}, S.Triangle A B C → S.OnLine D L → S.OnLine G L → D ≠ G →
-    ¬S.OnLine H L → ∃ B' C' : S.Point, S.OnLine B' L ∧ ¬S.Between B' D G ∧ S.SameSide C' H L ∧
-    S.len D B' = S.len A B ∧ S.len B' C' = S.len B C ∧ S.len C' D = S.len C A ∧
-    S.ang B' D C' = S.ang B A C ∧ S.ang D C' B' = S.ang A C B ∧ S.ang C' B' D = S.ang C B A
+  Elements.Superposition.Rule S.primitives
 
 /-- `Elements.Tacit.triple_incidence1`, translated. -/
 def triple_incidence1 : Prop :=

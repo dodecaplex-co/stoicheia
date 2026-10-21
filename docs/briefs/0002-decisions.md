@@ -2160,6 +2160,89 @@ findings:
   (the entry below) lists for each rule. A pin on the proved rules an entry uses would
   need a field of its own, which this change does not add.
 
+- **Restricted superposition prepared for the owner's final word, not landed.** On
+  19 October 2026, [brief 0009, round 3](0009-superposition.md) records the replacement
+  prepared on `lean/superposition-restricted`, at `aa96ab8`, from `origin/main` at
+  `39ae65c`. The owner's decision of 18 October authorised the prototype and preparation;
+  the finished branch awaits the owner's final word. `Tacit.superposition` now has type
+  `Superposition.Rule primitives`: a represented derivation may export one equality of
+  lengths, angles or triangles about the given figure, and may neither introduce objects
+  inside the placement nor export its hypothetical corners or side. I.4 and I.8 alone use
+  it directly. Their statements and Heath lines are unchanged, their coincidence
+  arguments are retained, and every dependent proof has rebuilt. The same 115 of 121
+  certificate entries rest on the rule. I.23 keeps its construction through I.22 and
+  inherits the rule through I.8 and I.20.
+
+  The four new pure modules under `Elements/Foundations/Superposition/` are `Syntax.lean`,
+  `Semantics.lean`, `Soundness.lean` and `Restriction.lean`. They use Lean's `module` format
+  with public imports and sections so that the model's modules can import them. Their
+  words include `Atom`, `Lit`, `Metric`, `Letter`, `LineLetter`, `Law`, `Cited`, `Derives`,
+  `Name`, `LineName`, `Interpretation`, `Val`, `Collinear`, `Triangle`, `Rule`, `guards`,
+  `kept`, `branch` and `rayOfAnglePremises`, with the reached constructors, fields,
+  recursors, matchers, renamings, law data and interpretations. The library's `primitives`
+  reads them in its own geometric words. `Elements/Figure/Superposition.lean` proves the
+  geometric cited laws; I.8 supplies I.7's adapter. The deleted directory
+  `Staging/Superposition/` held the six prototype files; its proofs and restriction evidence
+  now have these production homes. The old-axiom compatibility example is removed.
+
+  `Certificate/axioms.lock` restates one axiom, keeps all 87, and adds 115 vocabulary
+  entries, from 91 to 206, with no former word removed or otherwise changed.
+  `Certificate/Facts.lean` recognises actual uses of the calculus's three congruence
+  constructors as C.N. 4; all 121 common-notion lists match the baseline.
+  `tests/certificate_expectations.json` keeps its eleven existing expectations unchanged
+  and adds thirteen for the restricted rule, its citations and C.N. 4.
+  `Audit.lean` imports the new superposition audit.
+  `Audit/Superposition.lean` pins 27 dependency closures, including both propositions,
+  soundness, restriction evidence and the cited-law proofs.
+  `Audit/Overlaps.lean` retires `I_2`, `I_3` and `I_23`, preserving the thirteen surviving
+  overlap proofs and their pins.
+  `Audit/screen.py` describes those construction shortcuts as retired.
+  `review/SCHEMA.md` replaces the obsolete overlap example with I.7, without changing a
+  field or validation rule.
+  `scripts/heath.py` uses I.7's surviving overlap in two self-test cases, preserving their
+  accepted and rejected outcomes.
+
+  The model generator gives declarations from the four pure modules a checked identity
+  translation, retaining universe arguments, lock coverage, syntactic correspondence and
+  all previous rejection tests. It translates `primitives` over the model signature. The
+  plane's proved isometry and reflection supply placement, its proved Postulate 1 supplies
+  the kept side, and `Rule.of_placement` proves the restricted law. `model_exists` remains
+  unconditional, resting only on `propext`, `Classical.choice` and `Quot.sound`.
+  `model/Model/Audit.lean` retains the existing closure pins and the unknown-`Elements.Point`
+  sentinel, and checks that Model may import from Elements exactly these four modules:
+  `Elements.Foundations.Superposition.Syntax`, `Elements.Foundations.Superposition.Semantics`,
+  `Elements.Foundations.Superposition.Soundness` and
+  `Elements.Foundations.Superposition.Restriction`, including transitive imports. Their
+  declarations are checked to use only the pure modules and `Init`, with no geometric
+  words, project axioms or `sorryAx`.
+  `model/lakefile.toml` documents that precise import boundary; Mathlib stays in `model/`.
+  `model/lock.sha256` is renewed against the regenerated lock.
+  `tests/model/lock.sha256` is renewed against the same lock.
+  `tests/model/laws.toml` describes placement with its kept side as the sampled sufficient
+  condition for the restricted law.
+  `tests/model/MODEL.md` explains the reduction, the proved model and the import boundary.
+  `tests/model/search.py` retains its placement checks and checks the kept side too.
+  `tests/model/hyperbolic.py` retains its placement checks and checks the kept side too.
+
+  The I.4, I.8 and I.23 pages and the overlap catalogue now describe an inference in
+  System E's style. An independent reader has read and stamped the six records for I.2,
+  I.3, I.4, I.8, I.23 and I.44, retaining full coverage and Euclid's route. No equivalence
+  with System E's two rules or whole-theory non-derivability is claimed. Questions 2, 4
+  and 5 of the brief remain the owner's: accept the five-part restriction or require
+  another formal statement; permit I.7 inside the placement despite constructions in its
+  proof or require construction-free cited proofs; retain the laid-down side or revise
+  the calculus and argument. The branch follows the first reading in each case. After
+  `lean/retire-axioms-2`, the proofs of `triple_incidence2` from Postulate 2 and
+  `eq_of_len_eq_zero` from Postulate 3 bring I.4's cited laws within question 4 too;
+  `drawsNothing` and the audit pins must be reviewed again.
+
+  Before landing, the check changes in `Certificate/Facts.lean` and `scripts/heath.py`
+  must be split into a tooling pull request that lands first, as WORKFLOW, section 10,
+  requires. The retirement branches must be reconciled, generated outputs regenerated,
+  and the finished revision validated and independently reviewed, including the model
+  and the protected paths named above. This entry records preparation, not landing
+  approval; no check, expectation, lock or schema is loosened.
+
 ## 20 October 2026
 
 - **The Jev scorer checks confidence in both askings
@@ -3257,6 +3340,100 @@ findings:
   independent kernel replay and independent security review were not run in this round;
   security review before landing remains open.
 
+- **The owner approves the restricted superposition replacement.** The owner's exact
+  approval is: "replace the superposition rule as ship S built it, with brief 0009 questions 2, 4 and 5 as prototyped, the model's import of the four pure modules, the page claim 'a restricted inference in System E's style', tooling PR first. Lands after /no-mistakes and an independent Codex read of the model lane."
+
+  [Brief 0009](0009-superposition.md) and the code agree on those answers. Question 2
+  accepts the five-part restriction: parts 1, 2, 3 and 5 are theorems; part 4 is a reading
+  of `Rule.infer`, with the limited theorem `Metric.holds_const`. Question 4 permits a
+  proved law whose statement asserts no existence inside the placement, even when its
+  proof uses constructions; I.8 therefore cites I.7 on its hypothetical corner.
+  Question 5 keeps the side AC as a straight line through D and C′. The approved model
+  imports are exactly the four pure modules `Elements.Foundations.Superposition.Syntax`,
+  `Elements.Foundations.Superposition.Semantics`, `Elements.Foundations.Superposition.Soundness`
+  and `Elements.Foundations.Superposition.Restriction`; the approved page claim is
+  "a restricted inference in System E's style". Neither equivalence with System E's
+  two printed rules nor whole-theory non-derivability is claimed.
+
+  The approval covers restating `Tacit.superposition`, the pure calculus and its use in
+  I.4 and I.8, the corresponding update of `Certificate/axioms.lock`, and the model's
+  translation and proof. The tooling pull requests must land first. Landing the
+  replacement also requires /no-mistakes and an independent Codex read of the model lane.
+  The read at `cdcf3b9e`
+  found no weakening and one older relative-path defect in `model/Check/Generator.lean`;
+  the read at `0085b443` found that an escaped module name passed the Model import audit.
+  Both are fixed on `tooling/superposition-model-check`. That evidence is tied to the
+  revisions read; the revision that lands still needs its own read and validation.
+
+  Common Notion 4 is marked at its actual steps by the pure proposition
+  `Elements.Superposition.Coincidence`, with its sole constructor
+  `Elements.Superposition.Coincidence.step`. The three congruence constructors of
+  `Derives` take the marker as their first explicit argument. Renaming passes the
+  received marker along and soundness binds it; neither creates one. I.4 and I.8 supply
+  it at their congruence steps. The tooling certificate counts this constructor instead
+  of the congruence constructors, so merely reaching `Derives.map` no longer reports
+  C.N. 4. This adds no axiom and changes no derivable conclusion, proposition statement,
+  Heath line or route. Integration with `tooling/superposition-certificate` regenerates
+  `Certificate/axioms.lock`, both model hashes, the model outputs, certificate and pages.
+  The 87 axiom statements stay unchanged; the vocabulary grows from 206 to 208, adding
+  `Superposition.Coincidence` and `Superposition.Coincidence.step` and changing only
+  `Superposition.Derives.len_congr`, `Superposition.Derives.angle_congr` and
+  `Superposition.Derives.area_congr` to take the marker. `Derives` still has seventeen
+  constructors. The certificate has 122 entries: 99 propositions, 3 porisms and 20
+  companions. Of these, 116 reach the calculus and its marker; none reaches the calculus
+  without taking or inheriting a congruence step, so all Common Notion lists stay
+  unchanged. I.4 has C.N. 4 and C.N. 5; I.8 has C.N. 1, C.N. 3, C.N. 4 and C.N. 5.
+  `tests/certificate_expectations.json` keeps all 24 existing expectations and adds
+  I.8's inclusion of C.N. 4 beside I.4's existing expectation. The fixture tests cover
+  derivations that reach transformers without a step. I.4's and I.8's review records
+  were read again by an independent reader after the marker change and stamped at
+  `0085b443`.
+
+  Once the two tooling branches have landed, the protected files this branch changes are
+  `Audit.lean`, `Audit/Overlaps.lean`, `Audit/Superposition.lean`, `Audit/screen.py`,
+  `Certificate/axioms.lock`, `model/Model/Audit.lean`, `model/lakefile.toml`,
+  `model/lock.sha256`, `tests/certificate_expectations.json`, `tests/model/MODEL.md`,
+  `tests/model/hyperbolic.py`, `tests/model/laws.toml`, `tests/model/lock.sha256` and
+  `tests/model/search.py`. `Certificate/Facts.lean`, `scripts/heath.py` and the example in
+  `review/SCHEMA.md` now arrive with `tooling/superposition-certificate`, which lands
+  first, so this branch changes no check input other than values pinned to it and the
+  superposition law's code in the two numerical harnesses. The content change in `Audit/screen.py` unfolds
+  `primitives`, the edition's interpretation of the restricted calculus, without
+  changing its coverage check or returning placement witnesses. No check, expected
+  value, lock or schema is weakened; the check changes land in tooling first.
+
+  Integration with the model tooling moves the import-boundary check out of
+  `model/Model/Audit.lean`: `Check.Generator.checkModelImports`, called from
+  `model/Check/RoundTrip.lean`, checks every Model source and the four pure modules on
+  each build. The unknown-`Elements.Point` sentinel and every axiom pin remain in
+  `model/Model/Audit.lean`. The real-calculus regressions use the tooling's generator
+  helpers, retaining every case and expected rejection; `model/lakefile.toml` keeps
+  all tooling inputs and `needs` unchanged and describes the boundary now in use.
+  The two identity fixtures for `List.filterMap` and `Model.Kind.rec` add their stand-in
+  module to the production boundary, since the laws now reach the real calculus.
+  Their success expectations and the production boundary itself are unchanged.
+
+- **Finishing the prototyped answers to brief 0009's questions 2, 4 and 5 is tracked in
+  [#150](https://github.com/jackChallis/stoicheia/issues/150).** The owner approved those
+  answers "as prototyped" (the entry above) and, as #150 records, said: "prototyped work
+  needs to be finalized - that opens an issue". #150 carries the label `blocks-release`, so
+  no release is made until it closes. The replacement lands on the prototyped answers. Until
+  #150 finishes them, part 4 of the restriction is an inspection of `Rule.infer` as locked
+  in `Certificate/axioms.lock`, not a theorem; `Cited.drawsNothing` is a classification set
+  by hand, whose meaning is judged by eye from the audit's pinned axiom closures; and the cost of the kept side is
+  checked by reading the model's proof. Non-derivability stays unclaimed. The landing order
+  with the retirement waves (#119) is the first wave, `lean/retire-axioms`, then the
+  replacement, then the second wave, `lean/retire-axioms-2`, whose landing carries the
+  review of `drawsNothing` and of the audit pins. [Brief 0009](0009-superposition.md)
+  records this in its round 4. The docstrings that cite question 4 in
+  `Elements/Foundations/Superposition/Syntax.lean` and
+  `Elements/Foundations/Superposition/Restriction.lean`, and the comment beside I.8's route
+  note in `review/I/08.toml`, now say "as prototyped" and cite #150; these are comments
+  only, and change no statement, declaration, stamp or check. The 19 October superposition
+  entry is restored verbatim from `bccc3f52`, as #150 requires. The approval and the
+  correction to Common Notion 4 counting belong to the 20 October entry above; they do
+  not revise that earlier record of preparation.
+
 - **The model-check branch's reviews closed, and Model/Audit.lean's heading corrected.**
   Six independent Codex code and security reviews of `tooling/superposition-model-check`
   ended with both verdicts passing at `bc4e6574`; the round entries above that say a
@@ -3326,6 +3503,139 @@ findings:
   hold. `git safe-push --label release` creates the `release` label, with its
   description, the first time it is given; the consolidation release (#38) lands through
   a pull request carrying it. Tags and releases stay manual, by the owner.
+- **The joins by Postulate 1 stay wherever Euclid writes them (part of
+  [#32](https://github.com/jackChallis/stoicheia/issues/32)).** Train Tw2 first removed the
+  joins by Postulate 1 from I.5, I.11, I.16, I.20 and I.26, since the later steps of those
+  proofs do not use the segment the join names. The coordinator ruled that a join stays
+  wherever a sentence of Euclid's stands over it, and goes only where none does: he writes
+  "let ... be joined" over each of these steps (`heath/I/05.md`, line 16; `heath/I/11.md`,
+  line 16; `heath/I/16.md`, line 12; `heath/I/20.md`, line 18; `heath/I/26.md`, lines 12
+  and 54). So all five joins stay, the five Lean files are as they were, and the records of
+  I.5 and I.11 now declare their joins as passages carried from the text. This is not a
+  dummy citation in the sense of [FORMALIZATION](../FORMALIZATION.md), section 5: the step
+  is Euclid's own, written where he writes it. A later sweep for unused steps keeps a join
+  that a sentence of Euclid's stands over, on this ground.
+
+- **The checks read a tree without the files a commit adds to them (#178).** The
+  pre-flight's pass with origin/main's checks (`scripts/safe_push.py`, steps 3 and 4)
+  takes the files a commit adds under the check inputs out of the work tree, while Git's
+  index still lists them. `scripts/negative_tests.py`, which runs in that pass in step 4,
+  copied every tracked path for its count plants, so on such a commit it stopped with
+  `FileNotFoundError` in `tests/test_generated_counts.py`, which uses the same copy,
+  before any count plant ran; the count plants, run alone, stopped the same way. A
+  tracked Markdown file taken out stopped the freshness plant's list of generated outputs
+  too, and the merge-marker copy passed such files over without a word.
+  `check_fidelity.py` and `render.py` read every tracked Markdown file for count markers
+  (`generated_counts.updates`), and both run in that pass in step 3 and again in step 4,
+  so a Markdown file the commit adds there, as `tests/notes.md`, failed both in that pass
+  with `No such file or directory`. A failure in that pass is only a note, but
+  `keep_apart` counts it, so a content pull request with a new test beside it was refused
+  as a check changed together with what it checks: the second item of #178.
+
+  One rule, `generated_counts.absent_tracked`, now holds wherever these checks list
+  tracked files: a tracked file absent from the work tree under the check inputs is named
+  on stdout as a note, and the check goes on with what is present; one absent anywhere
+  else, where the pre-flight takes nothing out, is a failure that names it.
+  `generated_counts.updates`, which `check_fidelity.py` and `render.py` share, follows
+  it, and so do the negative suite's two copies and its list of generated outputs; no
+  plant is skipped. A file is absent only when `lstat` raises `FileNotFoundError`. Any
+  other error, such as a permission error in a directory of mode 000, is raised to the
+  caller and fails the check: `generated_counts.updates` reports it as its one error
+  (before the rule, reading the file failed with the same error), and the negative suite
+  stops on it. `Path.exists()` would not do: on Python 3.14 it returns False for such an
+  error. Each name in a note or a failure is printed as `repr` writes it, so a control
+  character in a name cannot forge a line of the terminal. A path that is or passes
+  through a symlink is not absent, and each reader treats it as before:
+  `generated_counts.updates` refuses it by name; the negative suite's marker copy skips a
+  symlink and follows a symlinked directory; and its source copy (`shutil.copy2`)
+  follows both, copying the target, and stops with `FileNotFoundError` on a dangling
+  one. The check inputs stay listed once, as `scripts/safe_push.py`'s `CHECK_INPUTS`,
+  which `generated_counts.py` imports only when a tracked file is absent, so an ordinary
+  run of a check never loads the harness.
+
+  `tests/test_negative_tests.py` builds the case in a temporary repository: a commit
+  adding a check, its test and a Markdown note, each then unlinked as the pre-flight
+  unlinks it. It checks both copies, the list of generated outputs, a tracked file
+  absent outside the check inputs, and a directory of mode 000, whose permission error
+  both copies raise with nothing noted; against origin/main's `negative_tests.py`, four
+  of its five tests stop with that error and the fifth finds no file named.
+  `tests/test_generated_counts.py` does the same for the counts, in a temporary
+  repository: a Markdown file absent under the check inputs is noted while a stale count
+  beside it is still refused, one absent elsewhere is refused by name, a name with
+  control characters is printed escaped, a directory of mode 000 fails the run with its
+  permission error and is not noted, and a symlink in place of one is still refused as
+  a symlink. In the negative suite's source copy, `check_fidelity.py` and `render.py`
+  pass with the first tracked Markdown file under `tests/` taken out, noting it, and fail
+  naming the first one outside the check inputs taken out; both are chosen at run time
+  from Git's list, among the files present. Against origin/main's `generated_counts.py`
+  every one of these fails but the symlink case.
+
+  No other reader of Git's tracked files in that pass crashes or fails on such a file:
+  `check_style.py`'s S23 passes over a tracked path that is not a file, and its S12 reads
+  the names alone; `check_links.py` reads the Markdown files present; and
+  `generated_counts.review_stages` reads review records, which are never check inputs. A
+  link to a file the commit adds under the check inputs still fails `check_links.py` in
+  that pass, rightly: the content then depends on the check change, which lands first.
+  `scripts/safe_push.py` is unchanged: dropping the added files from the worktree's index
+  as well would change what every check in that pass reads, `check_style.py`'s list of
+  tracked files for S12 among them. This is a check change alone. Protected files
+  changed: `scripts/negative_tests.py`, `tests/test_negative_tests.py`,
+  `scripts/generated_counts.py` and `tests/test_generated_counts.py`.
+
+- **A count moved with its content is a pinned value (#177, #75).** Train T1 (#177) put
+  the lock's count of its words in [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md)
+  between count markers, which `scripts/render.py` fills and `scripts/check_fidelity.py`
+  holds to the lock. FIELDS.md is a check input, and `pinned` in `scripts/safe_push.py`
+  did not count a change to it as a value pinned to the edition. A content change that
+  adds words to the lock, as the restricted rule of superposition (#75) does, must move
+  that count in the same commit, while origin/main's own `check_fidelity.py` fails on the
+  lock it changes; so `keep_apart` refused the content branch as a check change kept
+  apart, and it could land in no order. A dry run of the pre-flight for
+  `lean/superposition-restricted` found it. `pinned` now counts a change to the Markdown
+  of the check inputs that are not code, `Certificate/`, `review/SCHEMA.md` and Markdown
+  under `tests/` (`COUNTED_PROSE`), as a pinned value while nothing but the values
+  between its count markers changes: the same markers stand, by name and in order, every
+  byte outside their values is as it was, the file's mode is as it was, and a value
+  moves. The markers are read by origin/main's own `scripts/generated_counts.py`, loaded
+  from origin/main's tree, since the harness carries only `safe_push.py` and `heath.py`;
+  a commit that changes that reader changes `scripts/`, and is kept apart in any case, so
+  the commit's own `check_fidelity.py` reads the same markers and holds every value to
+  the files it counts. A marker added, removed or renamed, any other byte changed, or the
+  file added, deleted or given another mode, is still a check change, and the refusal now
+  names such a file. Check code is never pinned by this rule: nothing under `scripts/`,
+  and no code under `tests/`. `tests/model/MODEL.md` was already pinned whole, and stays
+  so: a count marker in it may still be added, removed or renamed with the model's
+  account, as before; holding its markers to stand is a check change of its own, for the
+  owner (#187). This is not a weakening: every check still runs, origin/main's failure is
+  still noted for the security review, and the commit's own `check_fidelity.py` must still
+  pass, holding each moved value exactly to the files it counts; the rule lets through
+  only a value that check already pins, and a change it could not judge (a marker added,
+  removed or renamed, any other byte, the file's mode, anything under `scripts/`) is still
+  kept apart. The docstrings, the comment on the pinned values, the module docstring and
+  the refusal's list of pinned values say so. `scripts/test_safe_push.py` gains six tests
+  beside the expectations' own: a new word in the lock, with FIELDS.md's count moved,
+  lands as content, with origin/main's failure noted and the commit's own pass holding;
+  FIELDS.md changed beyond those values (a line, a byte beside the marker, a marker added,
+  removed or renamed, the file deleted or made executable) is kept apart; and the same
+  count moved is a pinned value under `Certificate/`, `tests/` and `review/SCHEMA.md` and
+  never in `scripts/`, in code under `tests/` or elsewhere in `review/`, read by
+  origin/main's reader and never the commit's. Three more hold the rest: the text between
+  two markers, and their order, stands, and a page added with a count is a check change; a
+  page either side cannot read, a symbolic link, and origin/main's reader missing or not
+  loading pin nothing; and a count moved to a value the lock does not give is refused by
+  the commit's own `check_fidelity.py`, with the pinned values noted. No negative plant is
+  added: [WORKFLOW](../WORKFLOW.md), section 8, asks for a focused regression for a guard
+  defect, and the harness's own are in its suite. WORKFLOW, section 10, step 4, which
+  lists the pinned values, gains a sentence saying a count between count markers in such
+  Markdown is one, on the same terms. The protected files changed are
+  `scripts/safe_push.py` and `scripts/test_safe_push.py`; `docs/WORKFLOW.md` and this page
+  are not protected. A note for the security review: on a file system that ignores case,
+  as macOS's does, a case-twin path such as `certificate/FIELDS.md` escapes the
+  protected-path rule and `keep_apart`, and its text overwrites the real file in the
+  pre-flight's worktree; CI, on Linux, is the backstop. That gap is already on main, and
+  this change does not open it (#186). The owner approved this change on 20 October 2026,
+  on condition that its reviews and /no-mistakes pass with no blocking finding; the
+  independent review judged that it is not a weakening of keep_apart.
 
 - **Stage 4 integrated with the centre and mixed-angle work (19 October 2026).** The stage 4
   entry above records its migration from stage 3 alone. In this combined revision,
@@ -3408,6 +3718,79 @@ findings:
   dated notes and the new hash; `model/Model/Laws.lean` is regenerated offline. No axiom
   or model law changes. The statement approval does not replace the independent review or
   the protected-path security review, which remain part of integration.
+
+## 21 October 2026
+- **The Jev client keeps no answer without its model's identifier
+  ([#181](https://github.com/jackChallis/stoicheia/issues/181)).** `run` in
+  [`scripts/audit/jev.py`](../../scripts/audit/jev.py) wrote a reply with no `model` as a
+  successful answer, `score` counted it towards `--bar`, and a resumed run kept it. Each of
+  the three now asks for the answering model's identifier, a nonempty string: `run` writes
+  such a reply as an error line with the reason, `score` stops with a failure naming the
+  answer's id and the reason, and a resumed run reports the output file, line and reason
+  before asking the question again. The self-test's two noul cases gain the model they
+  lacked. The new `tests/test_jev_models.py` (three tests, twenty-one cases) uses in-process
+  replies and no key or network; it fails on the client before this change and passes after
+  it, and it runs in CI's `check` job and safe_push's check sequence, immediately after
+  `tests/test_release_gate.py`. The audit of Books I and II scores as committed: `score` on
+  its answers gives the same output, line for line, before and after, with 95 rows for
+  adjudication. The protected files this changes are
+  `.github/workflows/ci.yml`, `scripts/audit/jev.py`, `scripts/safe_push.py` and
+  `tests/test_jev_models.py`; [WORKFLOW](../WORKFLOW.md), section 8, lists the command.
+
+- **The restricted rule is integrated after axiom wave one (A1).** On 20 October 2026,
+  the integration merge at `bd86a7b6` has the restricted-rule revision `9fc4bdc9` as one
+  parent and `tooling/superposition-model-check` at `5a848389` as the other. The tooling
+  parent already contains main at `7834e3a7`, A1 and both superposition tooling branches.
+  This brings the eight proved rules into the restricted-rule branch without restoring
+  any retired axiom. A1 has landed; the landing order is A1, then this restricted-rule
+  replacement, then wave two (A2, `lean/retire-axioms-2`). A2's landing carries the review
+  of `drawsNothing`, its
+  supporting prose and the audit pins when cited-law proofs gain construction
+  dependencies, as #119 and #150 require. A1 alone does not make that change: I.4's
+  cited laws still use the retained `triple_incidence2`, `eq_of_len_eq_zero` and
+  `angle_add_of_inside`, not the retired `triple_incidence3` or `inside_of_angle_add`.
+
+  The fuller A2 account, checked against its source at `d2c45450`, includes
+  `same_side_symm` and `pasch3` as well as `triple_incidence2` and `eq_of_len_eq_zero`.
+  Their proofs use circle intersections and Postulate 3, Postulate 1, Postulate 2 and
+  Postulate 3 respectively, with points on straight lines where needed. The laws affected
+  in I.4 are `neOfLen`, `rayUnique`, `rayOfAngle` and `rayOfAngleSide`; I.8 also cites
+  the first two. This expands the earlier warning in a new entry, leaving the 19 October
+  entry as written. Brief 0009 also makes part 4's inspection precise: the fresh symbols
+  receive no objects in a hypothesis, but the cited laws quantify over all points and
+  straight lines, and the triangle guard over straight lines. No new restriction theorem
+  or completion of #150 is claimed here.
+
+  Regenerated on the merge, the lock has 79 axioms (five postulates, Definition I.15 and
+  73 tacit rules), with `"Tacit.superposition" = "Elements.Superposition.Rule Elements.primitives"`
+  restated, and 208 words of vocabulary: `check_fidelity.py --write-lock` wrote the lock
+  exactly as Git had merged it. The earlier 87-axiom and 206/208-word reports above remain
+  evidence for their dated revisions; the 19 October preparation entry is unchanged. The
+  20 October approval "as prototyped" and round 4 remain in force, with finishing tracked
+  in #150.
+
+  The six records the restricted rule changes, for I.2, I.3, I.4, I.8, I.23 and I.44, were
+  read in full at `bd86a7b6` by an independent Codex reader, who found every item to pass
+  or not to apply, and were stamped there (run "brief 0009 stage full, ship S3
+  A1-integration re-read"). After that reading, /no-mistakes removed from
+  `mishnah/I/08.md` its sentence on the former, existential rule; an independent review of
+  `84a306e0..3ad74e04` found that I.8's commentary item still holds, every remaining
+  sentence being as read.
+
+  The protected paths this merge changes from both of its parents are these. Reconciled by
+  hand: `Audit/Overlaps.lean`, `Audit/screen.py`, `tests/certificate_expectations.json` (29
+  expectations, every one of both sides) and `model/Model/Audit.lean`; merged without
+  conflict and kept from both sides: `tests/model/laws.toml`, `tests/model/search.py` and
+  `tests/model/hyperbolic.py`. Regenerated: `Certificate/axioms.lock`, the count in
+  `Certificate/FIELDS.md` and the model's results, `tests/model/results/angle_check.txt`,
+  `tests/model/results/exhaustive.txt`, `tests/model/results/grid_check.txt`,
+  `tests/model/results/hyperbolic.txt`, `tests/model/results/mutations.txt`,
+  `tests/model/results/search-seed1.txt`, `tests/model/results/search-seed2.txt`,
+  `tests/model/results/search-seed3.txt`, `tests/model/results/structured.txt` and
+  `tests/model/results/summary.txt`; reconciled by hand with its counts regenerated:
+  `tests/model/MODEL.md`; renewed from the lock: `model/lock.sha256` and
+  `tests/model/lock.sha256`. Every check and pin of both sides stays.
+
 - **The renderer's words follow the content.** The protected file
   [`scripts/render.py`](../../scripts/render.py) selects its Book III wording from
   `facts.json`, read once for each root through the renderer's guarded paths, as its
@@ -3481,102 +3864,208 @@ findings:
   `tests/certificate_expectations.json`, so it holds before and after the content it
   describes. No guard is weakened.
 
-- **The checks read a tree without the files a commit adds to them (#178).** The
-  pre-flight's pass with origin/main's checks (`scripts/safe_push.py`, steps 3 and 4)
-  takes the files a commit adds under the check inputs out of the work tree, while Git's
-  index still lists them. `scripts/negative_tests.py`, which runs in that pass in step 4,
-  copied every tracked path for its count plants, so on such a commit it stopped with
-  `FileNotFoundError` in `tests/test_generated_counts.py`, which uses the same copy,
-  before any count plant ran; the count plants, run alone, stopped the same way. A
-  tracked Markdown file taken out stopped the freshness plant's list of generated outputs
-  too, and the merge-marker copy passed such files over without a word.
-  `check_fidelity.py` and `render.py` read every tracked Markdown file for count markers
-  (`generated_counts.updates`), and both run in that pass in step 3 and again in step 4,
-  so a Markdown file the commit adds there, as `tests/notes.md`, failed both in that pass
-  with `No such file or directory`. A failure in that pass is only a note, but
-  `keep_apart` counts it, so a content pull request with a new test beside it was refused
-  as a check changed together with what it checks: the second item of #178.
+- **Heath's letters upright in both figures (#159).** The owner decided on 18 October
+  that Heath's letters take one style in the text and in both figures, which the voice
+  rules' check change, above, reads as upright. The figures are now set upright. Every
+  `figures/<book>/NN.svg` and `NN-idea.svg` of Books I to III, 198 in all, drew the letters
+  italic: 83 of Euclid's figures set `font-style="italic"` on the root `<svg>`, and the
+  other 16, with all 99 figures at a glance, on the `<g>` that holds the letters. That one
+  attribute is removed from each, so the letters take SVG's default, upright. Nothing else
+  in a figure changes, and no letter moves. Every text the attribute set italic was one of
+  Heath's letters, so nothing italic on purpose is lost. S26 now measures each letter by
+  the hull of the upright capital, and every letter still stands 2 clear of every stroke
+  and dot: the closest is III.33's F, at 2.05. `scripts/check_style.py` reports no D15.
+  The modern figures (`NN-modern.svg`) do not change: their capitals were upright already,
+  and the paragraph's own names stay italic, as S25 requires. The switch follows in a
+  change of its own to the check
+  ([#159](https://github.com/jackChallis/stoicheia/issues/159)):
+  `UPRIGHT_LETTERS_REQUIRED` set to `True`, a test that plants an italic letter, and
+  STYLE's wording for the switch. Until then S15 and S20 still accept a figure whose
+  letters are all italic. No protected file changes.
 
-  One rule, `generated_counts.absent_tracked`, now holds wherever these checks list
-  tracked files: a tracked file absent from the work tree under the check inputs is named
-  on stdout as a note, and the check goes on with what is present; one absent anywhere
-  else, where the pre-flight takes nothing out, is a failure that names it.
-  `generated_counts.updates`, which `check_fidelity.py` and `render.py` share, follows
-  it, and so do the negative suite's two copies and its list of generated outputs; no
-  plant is skipped. A file is absent only when `lstat` raises `FileNotFoundError`. Any
-  other error, such as a permission error in a directory of mode 000, is raised to the
-  caller and fails the check: `generated_counts.updates` reports it as its one error
-  (before the rule, reading the file failed with the same error), and the negative suite
-  stops on it. `Path.exists()` would not do: on Python 3.14 it returns False for such an
-  error. Each name in a note or a failure is printed as `repr` writes it, so a control
-  character in a name cannot forge a line of the terminal. A path that is or passes
-  through a symlink is not absent, and each reader treats it as before:
-  `generated_counts.updates` refuses it by name; the negative suite's marker copy skips a
-  symlink and follows a symlinked directory; and its source copy (`shutil.copy2`)
-  follows both, copying the target, and stops with `FileNotFoundError` on a dangling
-  one. The check inputs stay listed once, as `scripts/safe_push.py`'s `CHECK_INPUTS`,
-  which `generated_counts.py` imports only when a tracked file is absent, so an ordinary
-  run of a check never loads the harness.
+- **Twenty entries come out of `REACH_PENDING`
+  ([#159](https://github.com/jackChallis/stoicheia/issues/159)).** Run on `8e9a1879` with
+  Lean, after `lake build` and `lake build Audit`, `scripts/check_style.py` reported 19 of
+  the list's 38 entries done, with no finding of any of their rules left, and this change
+  takes exactly those out: the fourteen notes of Book Zero, `Elements/Figure/*.lean`
+  (S22); `docs/reports/gaps-book-I.md` (S7); `docs/reports/gaps-book-II.md` and
+  `docs/reports/read-through-01.md` (S7 and S12); `review/I/09.toml` (S7); and
+  `review/II/14.toml` (S12), the two that the progress check of 20 October on #159 named.
+  Under `--no-lean` the same check reported 18 of them, the two "S7 S12" entries for S7
+  alone and `review/II/14.toml` not at all, since S12 alone asks Lean; with Lean their S12
+  is done too, so each of the 19 comes out whole and no entry is left with a rule fewer.
+  No rule of the 19 entries that remain was reported done, and none of them changes. D16
+  goes from 364 lines to 345 with Lean, and from 202 to 184 under `--no-lean`: the 19 and
+  18 done lines go, the findings are line for line the same, and both runs pass with no
+  "done" line. The comment over the reports' entries gave the S12 inventory of two of them
+  on `bd3b72a`, 147 and 2; it now gives the one left,
+  `docs/reports/mixed-angles-prototype.md`. The paragraphs on the list, in the script's
+  docstring and in [STYLE](../STYLE.md), section 8, now say that a file with findings on
+  19 October "was" listed, since a mended file no longer is; neither holds a count, and no
+  count marker counts the list. Of the 19 entries that remain, one names the closed #66
+  as its mender and nine name no issue. The protected file changed is
+  `scripts/check_style.py`; `tests/test_check_style.py` is unchanged, since
+  `test_done_cases` and `test_done_without_lean` already test the done report.
+  After origin/main was merged at `17ae8e2a`, where the restricted rule of superposition
+  rewrote I.8's Lean, the check reported one entry more done, `Elements/BookI/Prop08.lean`
+  (S22, which named #29), both with Lean and without; it comes out too, so 20 entries
+  come out and 18 remain, and both runs again pass with no "done" line.
 
-  `tests/test_negative_tests.py` builds the case in a temporary repository: a commit
-  adding a check, its test and a Markdown note, each then unlinked as the pre-flight
-  unlinks it. It checks both copies, the list of generated outputs, a tracked file
-  absent outside the check inputs, and a directory of mode 000, whose permission error
-  both copies raise with nothing noted; against origin/main's `negative_tests.py`, four
-  of its five tests stop with that error and the fifth finds no file named.
-  `tests/test_generated_counts.py` does the same for the counts, in a temporary
-  repository: a Markdown file absent under the check inputs is noted while a stale count
-  beside it is still refused, one absent elsewhere is refused by name, a name with
-  control characters is printed escaped, a directory of mode 000 fails the run with its
-  permission error and is not noted, and a symlink in place of one is still refused as
-  a symlink. In the negative suite's source copy, `check_fidelity.py` and `render.py`
-  pass with the first tracked Markdown file under `tests/` taken out, noting it, and fail
-  naming the first one outside the check inputs taken out; both are chosen at run time
-  from Git's list, among the files present. Against origin/main's `generated_counts.py`
-  every one of these fails but the symlink case.
+- **Heath's letters upright: required, the switch on
+  ([#159](https://github.com/jackChallis/stoicheia/issues/159)).** Every one of the 198
+  figures now sets Heath's letters upright (above), so the switch `UPRIGHT_LETTERS_REQUIRED`
+  in [`scripts/check_style.py`](../../scripts/check_style.py) is `True`: S15 fails an
+  italic letter in Euclid's figure, and S20 one in a figure at a glance, whether one letter
+  is italic or every one, and D15 is empty. D15 stays, empty, as D14 did when
+  `IDEA_LETTERS_REQUIRED` went `True`: the switch keeps its off position, and D15 is what
+  that position reports, so its description and STYLE's row say "while the switch for
+  upright letters is off". `GLYPHS_ITALIC` stays too: S26 still measures an italic letter
+  as Georgia draws it, and measuring it upright would change two of S26's clearance cases.
+  A new case in [`tests/test_check_style.py`](../../tests/test_check_style.py), `Upright`,
+  sets `font-style="italic"` in temporary copies of I.1's two figures, on one letter and on
+  the root, and requires S15's or S20's finding and no D15; on origin/main's check, where
+  the switch is `False`, its four planted cases fail. The figure fixture that the S26 and
+  SVG input cases share drew its letters italic, and now draws them upright; the sagitta
+  cases placed their near E by its italic hull, and now place the upright E at the same
+  clearance (1.975 and 1.981, against 1.979), still nearer 2 than a three-degree chord's
+  sagitta. No case is removed or loosened. [STYLE](../STYLE.md), sections 7 and 8,
+  describes the finished state: the switch clauses of S15 and S20, the D15 row and the
+  switch paragraph; its **[checked]** for upright letters, in Euclid's figure and at a
+  glance, now holds whole. The switch is never turned back to quiet a figure: the figure is
+  set upright. #159's items on `REACH_PENDING` are untouched. The protected files this
+  changes are `scripts/check_style.py` and `tests/test_check_style.py`.
 
-  No other reader of Git's tracked files in that pass crashes or fails on such a file:
-  `check_style.py`'s S23 passes over a tracked path that is not a file, and its S12 reads
-  the names alone; `check_links.py` reads the Markdown files present; and
-  `generated_counts.review_stages` reads review records, which are never check inputs. A
-  link to a file the commit adds under the check inputs still fails `check_links.py` in
-  that pass, rightly: the content then depends on the check change, which lands first.
-  `scripts/safe_push.py` is unchanged: dropping the added files from the worktree's index
-  as well would change what every check in that pass reads, `check_style.py`'s list of
-  tracked files for S12 among them. This is a check change alone. Protected files
-  changed: `scripts/negative_tests.py`, `tests/test_negative_tests.py`,
-  `scripts/generated_counts.py` and `tests/test_generated_counts.py`.
+- **Short hashes are read from Git, and the acceptance report's revision has twelve
+  digits (#178, items one and three).** `scripts/test_safe_push.py` looked for the commits
+  a pull request's body lists by the first seven digits of each hash, and its clone
+  pinned `core.abbrev` to 7 to make that so. Git reads `core.abbrev` as a minimum width,
+  and its own width grows with the object count: eight digits on a clone of main today.
+  The pin is gone. A new helper, `short_sha`, asks the clone under test for a commit's
+  short form with `git log -1 --format=%h`, as `scripts/safe_push.py` writes the body,
+  and the three tests that sliced seven digits use it; any later test that needs a short
+  hash can too. Nothing they check is loosened. The other half of item one was already
+  done: the stage test reads the first stage line from `docs/program.toml` (the entry of
+  20 October above).
+  `scripts/check_acceptance.py` wrote the report's revision with `git rev-parse --short`.
+  Since the entry of 20 October on S12 and the word "Revision", S12 takes a hash of 7 to
+  40 digits beside "Revision" as a commit, so a regenerated report passed at Git's
+  usual widths. Under a `core.abbrev` of 4 to 6, though, the revision is shorter than
+  `heath.COMMIT` allows, and when it begins with a letter S12 puts it to Lean as a name;
+  and its width differs from one clone to another, so the same files gave different
+  reports. The generator now writes twelve digits (`REVISION_DIGITS`, with
+  `git rev-parse --short=12`), the width `safe_push.py`'s pre-flight summary gives
+  commits, in the form S12 already reads. S12, its exemptions and `REACH_PENDING` are
+  unchanged. A new test in
+  `tests/test_check_acceptance.py`, `Report.test_a_regenerated_report_passes_s12`, writes
+  the report through the generator in a small repository under `core.abbrev` 4, 9 and
+  Git's own width, and puts each report to S12's plan: on the old generator, S12 would
+  put the four-digit revision to Lean, and the three revisions differ; now each is the
+  same twelve digits, and S12 asks Lean about nothing. The committed report's revision,
+  `33602846`, is all digits, which S12 does not read as a name, so it passes as it
+  stands; its next regeneration writes twelve digits.
+  A review of that change found a second way for the report to fail S12, one that no
+  regeneration cleared. The style check reads the report a run replaces, and E5 quoted
+  each of its findings in the new report with the message's backticks. So a finding on
+  the old report, on a revision S12 put to Lean or on a name Lean does not know (B2 and
+  E2 quote such names on purpose), came back in the new report away from the word
+  "Revision"; S12 put it to Lean again, and each regeneration quoted the last finding
+  back. `check_style_rules` now quotes each of the style check's findings whole, as one
+  code span whose fence is one backtick longer than the longest run of backticks in it,
+  with a space inside each end. E5 still fails, once, with the whole finding, and a
+  reader sees it exactly as the check printed it. S12 reads a span as a name only when
+  the span is one name or opens with `name :`, and a quoted finding opens with its rule
+  and file, so S12 finds no name in it; S1, S7, S8 and S22, the style check's other
+  rules for a report, read it outside code and find nothing in it either. So the report
+  after a fixed finding passes every rule, not S12 alone. Taking the backticks away, as
+  a first version of this change did, closed S12's loop alone: GitHub would read a quoted
+  excerpt's `<book>` as an HTML tag and drop it, and set `2*a*b` in italic, and an em
+  dash or a curly quotation mark in a quoted excerpt's code would come out of code,
+  where S1 or S8 finds it in the next report, and every regeneration quotes it back. The
+  code span closes as well an older loop of the same kind, which main's generator has:
+  an S1, S8 or S22 finding on the report itself. B2's and E2's own messages are unchanged. A
+  second test, `Report.test_a_finding_on_the_old_report_is_not_quoted_back_to_s12`,
+  gives the generator three such findings through a stand-in for the style check (the
+  old report's four-digit revision, the twelve-digit one and an unknown name) and puts
+  the regenerated report to S12's plan: on the previous generator S12 would put all
+  three to Lean; now it asks about none, and E5 gives each finding as one code span. Two
+  more tests hold the rest. The first,
+  `Report.test_quoted_code_is_shown_as_the_style_check_printed_it`, quotes findings
+  whose excerpts hold `figures/<book>/NN.svg`, `h : 2*a*b = c` and a name in double
+  backticks, and reads each back, as CommonMark reads a code span, exactly as printed.
+  The second,
+  `Report.test_a_finding_on_the_old_report_is_not_quoted_back_to_the_text_rules`, puts
+  an old report with an em dash, a definition without its book and curly quotation
+  marks to the style check's rules for a report, quotes their findings through the
+  generator with one whose excerpt holds an em dash only in code, and finds that those
+  rules and S12's plan find nothing in the regenerated report. Both fail on the
+  generator that took the backticks away, whose regenerated report fails S1, S7 and S8
+  nineteen times over, and pass now. The protected files changed are
+  `scripts/test_safe_push.py`, `scripts/check_acceptance.py` and
+  `tests/test_check_acceptance.py`.
 
-## 21 October 2026
+- **The centre-given tag says what the statement does, not why (#59).** The meaning of
+  `centre-given` in the protected file [`review/terms.toml`](../../review/terms.toml)
+  gave a reason: "a circle in Lean has a centre only when a hypothesis or Postulate 3
+  gives it one". Train C6a adds the owner's rule `Tacit.exists_centre`, which gives every
+  circle a centre, and the reason then becomes false under every record that carries the
+  tag, until step 6 of [brief 0008](0008-centre.md) retires their uses. The meaning now
+  says what the tag records, which holds before and after the rule: the statement
+  gives the circle its centre as a hypothesis, where Euclid's setting-out takes the centre
+  or a proof needs one. It also says what the rule makes true: once the rule is in the
+  lock, every circle has a centre, so the hypothesis asks only for a centre the circle
+  already has and excludes no circle. This is not the new meaning that brief 0008 rejected
+  (section 4, and question 9 in section 8), which would have kept the tag on the twelve
+  records that name a centre: the tag still leaves all 31 records in step 6, and the term
+  leaves `review/terms.toml` in step 7; until then its meaning stays true. The term's kind and
+  name do not change, no record changes, and no page changes. It is a check input, so it
+  lands in a pull request of its own, before train C6a. Protected file changed:
+  `review/terms.toml`.
 
 - **Train C6a meets axiom wave one: the lock is main's 79 axioms and the centre rule.**
   Train C6a, which carries stage 3, the mixed angles, the rule that every circle has a
   centre and brief 0008's section 7, was merged with main at `2e8aecf`, after the eight
-  retirements of axiom wave one (87 to 79), and then with the check train at `9c83d79`.
+  retirements of axiom wave one (87 to 79), and then with the check train at `9c83d79`,
+  with main again at `8e9a187`, `68b365c` and `f9017e1`, and with
+  tooling/centre-given-meaning, whose `review/terms.toml` lands before this train with its
+  own entry above. Last, it was merged with main at `756bdbae`, through that branch's head
+  `980569da`, after main had landed the restricted rule of superposition (#191), the check
+  train (#192), train Tw2 (#193), Heath's letters upright (#194) and the twenty entries out
+  of `REACH_PENDING` (#195); and again with that branch at `4aadad20`, after its review,
+  which brings main at `cba27afa` (#196, the switch for upright letters).
   The counts in this train's entries of 19 October above ("The mixed-angle move integrated
   with the Circle 2 proofs", "Every circle has a centre: the rule lands" and "III.5 and
   III.6: section 7 lands before step 6": 88 axioms and 82 tacit rules, "the other 87", a
   model over 88 laws, "still 87 axioms") predate wave one; they stand as written, and this
   entry gives the counts after the merge. The lock, written by
   `python3 scripts/check_fidelity.py --write-lock`, holds main's 79 axioms, each unchanged,
+  `Tacit.superposition` among them as main restates it, `Superposition.Rule primitives`,
   and `Tacit.exists_centre`: 80 axioms, of them 74 tacit rules, main's 73 and the rule, as
-  `facts.json` and the count markers say. Its vocabulary holds 121 words: main's 91 and this
-  train's 30 (the arcs and segments of stage 3, the mixed angles, and `CirclesCut`), with
+  `facts.json` and the count markers say. Its vocabulary holds 238 words: main's 208, among
+  them the restricted calculus's 116 and its interpretation `primitives`, and this train's
+  30 (the arcs and segments of stage 3, the mixed angles, and `CirclesCut`), with
   `TouchesInternally` redefined as brief 0008, section 7, approved, asking for a point of
   the inner circle within the outer; no other word of main's changes. Both
   [`tests/model/lock.sha256`](../../tests/model/lock.sha256) and
   [`model/lock.sha256`](../../model/lock.sha256) were renewed on 21 October 2026 to hash
-  the regenerated lock, `46d2f009922f16cf4fe011630291b0ef99c4dd683adb19af5f1f69323207b9b1`.
+  the regenerated lock, `e3c5d7123a3b973dd79436c07409c30858acc2ac8c6507cb6805205fcb373296`,
+  and `model/Model/Laws.lean`, `model/Check/Laws.lean` and `model/Model/Assembly.lean` were
+  written again by `lake lean Check/Write.lean`: main's laws, the restricted superposition
+  law among them, and the law of `exists_centre`, 80 in all.
   [`tests/model/MODEL.md`](../../tests/model/MODEL.md) and the model results were written
   again by `python3 tests/model/run.py --full --write`, on the merged tree (harness
-  sha256 `2a8771abcd95266d2253431e7b704cfff0bfffad4b9b567f5e9544586d9b7161`): 80 laws, no
-  counterexample in the plane, and all 15 mutations caught. The seven exact pins of
+  sha256 `9ec5d9c4a18dbbef546b8dd2bf2bea4d69a3f1326fb526a0001d62285ea487ac`): 80 laws, no
+  counterexample in the plane, all 15 mutations caught, and in the hyperbolic plane no
+  counterexample to any axiom but Postulate 5. The seven exact pins of
   [`Audit/Crossing.lean`](../../Audit/Crossing.lean), for `III_5_today`, `III_6_today`,
   `III_11_today`, `III_13_today`, `cut_point`, `CirclesCut.of_meet` and `within_point`,
   were renewed from Lean's output, and change only by losing `Tacit.adjacent_eq_of_right`
-  and `Tacit.centre_unique`, now theorems; every other name in each list is unchanged.
+  and `Tacit.centre_unique`, now theorems; every other name in each list is unchanged. On
+  the merges of `756bdbae` and `cba27afa` no pin was renewed: `lake build Audit` passes with every pin of
+  `Audit/Overlaps.lean`, `Audit/Crossing.lean` and main's `Audit/Superposition.lean` as
+  written.
   The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`, `model/`, `scripts/`,
-  `lakefile.toml` and `lean-toolchain` that differ from main at `2e8aecf`, each named whole:
+  `review/SCHEMA.md`, `lakefile.toml` and `lean-toolchain` that differ from main at
+  `cba27afa`, each named whole:
   `Audit.lean`,
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
@@ -3592,10 +4081,6 @@ findings:
   `model/Model/Laws.lean`,
   `model/README.md`,
   `model/lock.sha256`,
-  `scripts/render.py`,
-  `scripts/scaffold_book.py`,
-  `scripts/test_safe_push.py`,
-  `tests/certificate_expectations.json`,
   `tests/model/MODEL.md`,
   `tests/model/hyperbolic.py`,
   `tests/model/laws.toml`,
@@ -3609,16 +4094,85 @@ findings:
   `tests/model/results/search-seed2.txt`,
   `tests/model/results/search-seed3.txt`,
   `tests/model/results/structured.txt`,
-  `tests/model/results/summary.txt`,
-  `tests/model/search.py` and
-  `tests/test_check_style.py`.
-  Of these, `scripts/render.py`, `scripts/scaffold_book.py`, `scripts/test_safe_push.py`,
-  `tests/certificate_expectations.json` and `tests/test_check_style.py` are the check
-  train's, as at `9c83d79`, with the two entries of 20 October above ("The renderer's words
-  follow the content" and "III.1's porism has its whole axiom list pinned"), and so is
-  `Certificate/FIELDS.md`'s `axioms` row; its vocabulary count, 91 to 121, is this train's.
+  `tests/model/results/summary.txt` and
+  `tests/model/search.py`.
+  The check train's files, `review/SCHEMA.md`, `scripts/render.py`,
+  `scripts/scaffold_book.py`, `scripts/test_safe_push.py`,
+  `tests/certificate_expectations.json` and `tests/test_check_style.py`, with
+  `Certificate/FIELDS.md`'s `axioms` row, landed on main with the check train (#192) and
+  the two entries of 21 October above ("The renderer's words follow the content" and
+  "III.1's porism has its whole axiom list pinned"), and no longer differ from it;
+  `Certificate/FIELDS.md` differs only by its vocabulary count, 208 to 238, which is this
+  train's.
   `lakefile.toml` and `lean-toolchain` do not change. No statement, check or expected value
   changes in this entry.
+
+- **Train C6b reconciled after axiom wave one.** Train C6b carries III.1's construction
+  and porism and stage 4, merged with C6a after axiom wave one, at `4db10cf2`, and again
+  at `529c93f7`, which brings main's restricted rule of superposition (#191) and main at
+  `cba27afa`, and III.1's record and commentary saying the centre the statement takes
+  without the edition's history (`996b3f8f`). The 19 October stage 4 and III.25 entries'
+  88 axioms and vocabulary counts, and D1's 57 tacit rules for III.1, are their historical
+  pre-wave-one measurements; they stand as written. On the integrated tree the lock holds
+  train C6a's 80 axioms, of them 74 tacit rules, byte for byte, and 242 vocabulary words:
+  train C6a's 238 and this train's four, `Foot`, `Arc.Less`, `Arc.Semicircle` and
+  `Arc.Greater`. Of the 242, the axioms reach 153, the restricted rule's words among
+  them, and 89 are reached only by statements. The certificate has 56 tacit rules for III.1
+  and 51 for III.1 Por.; `Tacit.adjacent_eq_of_right`, which III.1 reaches, became a
+  theorem in wave one. These are the current measurements and supersede those earlier
+  entries only where they describe the integrated tree after C6b.
+
+  All four exact pins in `Audit/Overlaps.lean` were renewed from Lean's output:
+  `Audit.III_24_measure`, `Audit.III_26_any`, `Audit.III_27_any` and
+  `Audit.III_30_measure`. The protected file `tests/certificate_expectations.json` keeps
+  every assertion and pinned value. Its two III.1 reasons now say that excluding
+  `Tacit.centre_unique` from an axiom list cannot detect a call to that retired axiom,
+  now a theorem, and that the claim about the proof's route rests on proof review. No
+  declaration, dependency check or expected value changes in this reconciliation.
+
+  On the merge of `529c93f7`, `Certificate/axioms.lock` was written again by
+  `python3 scripts/check_fidelity.py --write-lock`, after `lake build` and
+  `Certificate/Facts.lean`, and not by hand: train C6a's lock with this train's four
+  words, every axiom byte-identical. Both [`model/lock.sha256`](../../model/lock.sha256)
+  and [`tests/model/lock.sha256`](../../tests/model/lock.sha256) keep every dated comment
+  of both trains, gain one for this merge, and hash the new lock,
+  `761e616d7bd1b535fa84085af023ae489a8f427986f06955cf2650034465198a`.
+  `model/Model/Laws.lean` was written again by `lake lean Check/Write.lean`, its line of
+  the hash alone changing; `model/Check/Laws.lean` and `model/Model/Assembly.lean` came out
+  byte-identical, and the model builds. [`tests/model/MODEL.md`](../../tests/model/MODEL.md)
+  and the model results were written again by `python3 tests/model/run.py --full --write`
+  (harness sha256 `9ec5d9c4a18dbbef546b8dd2bf2bea4d69a3f1326fb526a0001d62285ea487ac`,
+  train C6a's): 80 laws, 6,650,199 configurations in the plane with no counterexample,
+  all 15 mutations caught, and in the hyperbolic plane no counterexample to any axiom but
+  Postulate 5; only the provenance lines and the timings change. No pin was renewed:
+  `lake build Audit` compiles `Audit/Overlaps.lean`, `Audit/Crossing.lean` and main's
+  `Audit/Superposition.lean` afresh and passes with every pin as written.
+  The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`, `model/`, `scripts/`,
+  `.github/`, `review/SCHEMA.md`, `review/terms.toml`, `lakefile.toml` and
+  `lean-toolchain` that differ from train C6a at `529c93f7`, each named whole:
+  `Audit/Crossing.lean`,
+  `Audit/Overlaps.lean`,
+  `Certificate/FIELDS.md`,
+  `Certificate/axioms.lock`,
+  `model/Model/Laws.lean`,
+  `model/lock.sha256`,
+  `tests/certificate_expectations.json`,
+  `tests/model/MODEL.md`,
+  `tests/model/lock.sha256`,
+  `tests/model/results/angle_check.txt`,
+  `tests/model/results/exhaustive.txt`,
+  `tests/model/results/grid_check.txt`,
+  `tests/model/results/hyperbolic.txt`,
+  `tests/model/results/mutations.txt`,
+  `tests/model/results/search-seed1.txt`,
+  `tests/model/results/search-seed2.txt`,
+  `tests/model/results/search-seed3.txt`,
+  `tests/model/results/structured.txt` and
+  `tests/model/results/summary.txt`.
+  `Audit/Crossing.lean`, `Audit/Overlaps.lean` and `tests/certificate_expectations.json`
+  differ by this train's pins, counts and reasons, which the D1 entry and the paragraph
+  above give; `Certificate/FIELDS.md` differs only by its vocabulary count, 238 to 242.
+  The merge itself writes no statement, check or expected value: each is one train's.
 
 - **III.1's construction guard, brief 0008, step 4.** `Audit/Centre.lean`, imported
   from `Audit.lean`, fixes the frozen type of `Elements.BookIII.Prop1.construction`

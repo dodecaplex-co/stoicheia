@@ -52,12 +52,24 @@ Hypotheses come from the setting-out, conclusions from "I say that".
   multiplication.
 - **Right angles.** Definition 10 is a predicate, and Postulate 4 makes every right angle
   equal to `∟`, so that each use of Postulate 4 shows on the certificate.
-- **Superposition** is one rule, after LeanEuclid's form of System E's two, allowed in I.4
-  and I.8 alone. That limits where it is used, not what it can do: as a construction
-  principle it is stronger than System E's restricted inference rule
-  ([Superposition.lean](../../Elements/Foundations/Tacit/Superposition.lean)), and a
-  restricted rule is being prototyped
-  ([#75](https://github.com/jackChallis/stoicheia/issues/75)).
+- **Superposition** is a restricted inference in System E's style,
+  [`Tacit.superposition`](../../Elements/Foundations/Tacit/Superposition.lean), used
+  directly only in I.4 and I.8. A checked derivation over symbols may infer one equality
+  of lengths, angles or triangles about the given figure from its given facts, the guards
+  and a hypothetical placement. The guards require ABC to be a triangle, D and G to be
+  distinct points of L, and H to be off L. The placement puts A on D, B′ on the ray from D
+  through G and C′ on H's side of L, keeps the three sides and three angles, and keeps the
+  side AC as a straight line through D and C′. The placed corners and side have fresh
+  symbols that no exported formula can name; no derivation step constructs anything.
+  Besides its logical steps, the derivation may cite only a fixed list: Metric 3, 4 and 9;
+  that a length equal to one with distinct ends has distinct ends; one point at one
+  distance on a ray; one ray for one angle, in its incidence and direction; and I.7. Each
+  cited law is supplied with its proof. Our reading
+  admits I.7 inside I.8's placement because its statement asserts no existence, though its
+  earlier proof uses constructions. These are restrictions on represented derivations:
+  equivalence with System E's two printed rules is not claimed, nor is non-derivability
+  of placement from the whole foundation. I.22 and I.23 construct congruent figures by
+  Euclid's route.
 - **What the figure shows** is supplied by System E's tacit rules and the facts proved
   from them: an Intersection rule says when straight lines and circles must meet, and an
   Intersections rule lets a proof take a point where they do. Eight rules are now theorems
@@ -87,7 +99,9 @@ The rule of [FORMALIZATION.md](../FORMALIZATION.md), section 6, as Book I applie
   `Circles.lean`, `Parallels.lean`, `Parallelograms.lean`, `Areas.lean`
   (`area_lt_of_cut`, the strict area comparison in I.39 and I.40), `Sums.lean` (the sums
   of lists, and `InOrder.between_end`) and `Rectilineal.lean` (a fitted figure's triangles
-  lie apart, `Fitted.inside_pairwise`).
+  lie apart, `Fitted.inside_pairwise`). `Superposition.lean`, imported separately by I.4
+  and I.8, proves the geometric laws their hypothetical placements cite, without
+  construction rules.
 - **Shared steps that cite a proposition:** `Elements/BookI/Helpers.lean`, with
   `Prop5.base` (I.5's angles at the base, with the sides produced anywhere); and
   `Elements/BookI/HelpersParallels.lean`, for those that cite I.28, I.30 or I.31, with
@@ -151,14 +165,11 @@ supposition makes the constructed intersection differ from D; either order on th
 ray contradicts equal areas. I.40's general companion uses the same argument for equal
 bases anywhere on one straight line, including coincident vertices.
 
-For three propositions superposition supplies a step, as the
-[overlap catalogue](../reports/overlaps.md) records:
-
-| Proposition | Rule | What the proof does |
-|---|---|---|
-| I.2 | superposition | Euclid's construction, by I.1 and two circles; it never uses the rule |
-| I.3 | superposition | Euclid's construction, by I.2 and a circle; it never uses the rule |
-| I.23 | superposition | Euclid's construction, by I.22 and I.8; it rests on the rule through I.8, which with I.4 alone may call on it directly, and through I.20 |
+The [overlap catalogue](../reports/overlaps.md) records the retired shortcuts.
+The former construction overlaps for I.2, I.3 and I.23 used the existential
+superposition rule and are retired. I.2 and I.3 do not rest on superposition. I.23's points
+come from I.22 and its angle equality from I.8; its proof rests on the restricted rule
+through I.8 and I.20, which supplies the triangle inequalities.
 
 19 October 2026: I.7's former overlap with Circle 4 is retired. Circle 4 is now a
 corollary after I.7 in `Elements/BookI/Prop07.lean`, proved from I.7, Definition I.15

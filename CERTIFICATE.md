@@ -16,7 +16,7 @@ On each page, the notes under "How the Lean follows the text" open with a plain 
 
 ## Book I
 
-**All 48 propositions proved in Lean**: 47 as Euclid states them and 1 for a restricted statement ([I.45](book/I/45.md)). Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences. In [I.23](book/I/23.md) one of our tacit rules supplies a step of a proof of the proposition, and our proof rests on it. In [I.2](book/I/02.md) and [I.3](book/I/03.md) our tacit rules supply a step of a proof of each proposition, but our proofs never use those rules. [The overlap catalogue](docs/reports/overlaps.md) gives each.
+**All 48 propositions proved in Lean**: 47 as Euclid states them and 1 for a restricted statement ([I.45](book/I/45.md)). Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences.
 
 What the proofs show:
 
@@ -28,11 +28,11 @@ What the proofs show:
 | ✅ | [I.1](book/I/01.md) | whole | Euclid's |  |  | 1, 3 | Def. I.15 | 1, 5 | 15 | 10 | 5 |
 | ✅ | [I.2](book/I/02.md) | whole | Euclid's | I.1 | I.1 | 1, 3 | Def. I.15 | 1, 3, 5 | 21 | 12 | 4 |
 | ✅ | [I.3](book/I/03.md) | whole | Euclid's | I.2 | I.2 | 1, 3 | Def. I.15 | 1, 3, 5 | 24 | 5 | 6 |
-| ✅ | [I.4](book/I/04.md) | whole | Euclid's |  |  | 1 |  | 4, 5 | 22 | 5 | 15 |
+| ✅ | [I.4](book/I/04.md) | whole | Euclid's |  |  | 1 |  | 4, 5 | 22 | 2 | 18 |
 | ✅ | [I.5](book/I/05.md) | whole | Euclid's | I.3, I.4 | I.3, I.4 | 1, 3 | Def. I.15 | 1, 3, 4, 5 | 44 | 12 | 23 |
 | ✅ | [I.6](book/I/06.md) | whole | Euclid's |  | I.3, I.4 | 1, 3 | Def. I.15 | 1, 3, 4, 5 | 41 | 12 | 5 |
 | ✅ | [I.7](book/I/07.md) | whole | Euclid's | I.5 | I.5 | 1, 2, 3 | Def. I.15 | 1, 3, 4, 5 | 49 | 22 | 6 |
-| ✅ | [I.8](book/I/08.md) | whole | Euclid's | I.7 | I.7 | 1, 2, 3 | Def. I.15 | 1, 3, 4, 5 | 49 | 3 | 9 |
+| ✅ | [I.8](book/I/08.md) | whole | Euclid's | I.7 | I.7 | 1, 2, 3 | Def. I.15 | 1, 3, 4, 5 | 49 | 2 | 10 |
 | ✅ | [I.9](book/I/09.md) | whole | Euclid's | I.3, I.8 | I.1, I.3, I.5, I.7, I.8 | 1, 2, 3 | Def. I.15 | 1, 3, 4, 5 | 51 | 19 | 23 |
 | ✅ | [I.10](book/I/10.md) | whole | Euclid's | I.1, I.4, I.9 | I.1, I.4, I.9 | 1, 2, 3 | Def. I.15 | 1, 3, 4, 5 | 51 | 6 | 12 |
 | ✅ | [I.11](book/I/11.md) | whole | Euclid's | I.1, I.3, I.8 | I.1, I.3, I.8 | 1, 2, 3, 4 | Def. I.15 | 1, 3, 4, 5 | 49 | 11 | 16 |

@@ -17,6 +17,12 @@ these cases put it to small files of verdicts, each with the outcome it should g
   that --json did not write, cannot be compared, exit 2;
 * --json writes a verdict for every item of every proposition, book and the edition, with
   each failure's messages and why an item was not run;
+* the report, written by the generator in a small repository under several widths of
+  Git's short hashes, gives one revision, which the style check's S12 reads as a commit,
+  and no name for S12 to put to Lean; and the style check's findings on the report it
+  replaces are quoted in E5 whole, each as one code span, which shows each message as
+  the check printed it and in which neither S12 nor the report's other text rules find
+  anything again (issue #178);
 * CI copies the pull request's checks into main but keeps main's content pins, so an
   updated definition or expected count cannot hide a later E2 failure.
 
@@ -29,11 +35,14 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import os
+import re
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import check_acceptance as ca  # noqa: E402
@@ -222,6 +231,178 @@ class Verdicts(unittest.TestCase):
             out = io.StringIO()
             with contextlib.redirect_stdout(out):
                 self.assertEqual(ca.compare(path, path), 0, out.getvalue())
+
+
+class Report(unittest.TestCase):
+    """The report as the generator writes it, read by the style check's S12 and its other
+    rules for a report (issue #178)."""
+
+    def setUp(self):
+        ca.failures.clear()
+        ca.not_run.clear()
+
+    tearDown = setUp
+
+    @contextlib.contextmanager
+    def repository(self):
+        """A small repository, the generator's root while the context lasts, whose HEAD
+        begins with a letter, so that a short form of it reads as a name; yields HEAD and
+        a `git` that runs there."""
+        where = ca.REPORT.relative_to(ca.ROOT)
+        fixture = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+        who, when = ("Fixture", "fixture@example.invalid"), "2026-10-21T00:00:00Z"
+        fixture.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1",
+                       GIT_AUTHOR_NAME=who[0], GIT_AUTHOR_EMAIL=who[1], GIT_AUTHOR_DATE=when,
+                       GIT_COMMITTER_NAME=who[0], GIT_COMMITTER_EMAIL=who[1],
+                       GIT_COMMITTER_DATE=when)
+        with tempfile.TemporaryDirectory() as d, patch.dict(os.environ, fixture, clear=True):
+            root = Path(d).resolve()
+
+            def git(*args: str) -> str:
+                return subprocess.run(["git", *args], cwd=root, capture_output=True,
+                                      text=True, check=True).stdout.strip()
+
+            git("init", "-q")
+            git("commit", "-q", "--allow-empty", "-m", "A fixture")
+            for n in range(64):
+                if not git("rev-parse", "HEAD")[0].isdigit():
+                    break
+                git("commit", "-q", "--amend", "--allow-empty", "-m", f"A fixture, {n}")
+            head = git("rev-parse", "HEAD")
+            self.assertFalse(head[0].isdigit(), head)
+            with patch.object(ca, "ROOT", root), patch.object(ca, "REPORT", root / where):
+                yield head, git
+
+    @staticmethod
+    def s12_asks(text: str) -> list[str]:
+        """The names S12's plan puts to Lean in `text`, read as the report (call it
+        outside `repository`, where ca.REPORT is the report's own path)."""
+        import check_style as style
+        named = style.NamedText(ca.REPORT, text, style.every_book_opens())
+        _, asked, _, _ = style.s12_plan([named], True, (set(), set()))
+        return sorted(n for group in asked.values() for n in group)
+
+    @staticmethod
+    def text_rules_find(text: str) -> list[str]:
+        """What the style check's text rules for a report (S1, S7, S8 and S22) find in
+        `text`, read as the report, each finding as the check prints it after its "✗"
+        (call it outside `repository`)."""
+        import check_style as style
+        with patch.object(style, "failures", []):
+            style.check_text(ca.REPORT, text, {"report"}, new=True)
+            return [f"{rule} {path}{':' + str(line) if line else ''}: {msg}"
+                    for rule, path, line, msg in style.failures]
+
+    def regenerate(self, found: list[str]) -> str:
+        """The report the generator writes in a small repository when the style check's
+        findings are `found`, each as the check prints it after its "✗"."""
+        with self.repository():
+            style_check = subprocess.CompletedProcess(
+                [], 1, "".join(f"  ✗ {finding}\n" for finding in found), "")
+            with patch.object(ca, "run", return_value=style_check):
+                ca.check_style_rules()
+            return ca.report(ca.REPORT, {"lean_version": "4.35.0"}, quick=False)
+
+    def test_a_regenerated_report_passes_s12(self):
+        # Git's own width is seven digits in the small repository; under core.abbrev 4 it
+        # is four, which is not a commit to S12 (heath.COMMIT) but a name it puts to Lean.
+        # Whatever the width, the report gives one revision, in heath.COMMIT's form
+        # beside the word "Revision", and S12 asks Lean about nothing in it.
+        import check_style as style
+        self.assertTrue(style.is_report(ca.REPORT), ca.REPORT)
+        self.assertEqual(ca.REVISION_DIGITS, 12)
+        texts = {}
+        with self.repository() as (head, git):
+            for abbrev in ("4", "9", None):
+                if abbrev:
+                    git("config", "core.abbrev", abbrev)
+                else:
+                    git("config", "--unset", "core.abbrev")
+                texts[abbrev or "Git's own"] = ca.report(
+                    ca.REPORT, {"lean_version": "4.35.0"}, quick=False)
+        revisions = set()
+        for abbrev, text in texts.items():
+            with self.subTest(abbrev=abbrev):
+                line = re.search(r"(?m)^- \*\*Revision:\*\* `([^`\n]*)`\.$", text)
+                self.assertIsNotNone(line, text[:800])
+                revision = line.group(1)
+                revisions.add(revision)
+                self.assertEqual(self.s12_asks(text), [], "names S12 would put to Lean")
+                self.assertTrue(ca.heath.COMMIT.fullmatch(revision), revision)
+                self.assertTrue(head.startswith(revision), (revision, head))
+                self.assertEqual(revision, head[:ca.REVISION_DIGITS])
+        self.assertEqual(len(revisions), 1, revisions)
+
+    def test_a_finding_on_the_old_report_is_not_quoted_back_to_s12(self):
+        # The style check reads the report a run replaces, and E5 quotes its findings in
+        # the new one. Here S12 found names in the old report: its revision, of four
+        # digits as the old generator wrote it under core.abbrev 4, or of twelve as the
+        # generator writes it now, and a name Lean does not know, as B2 and E2 quote a
+        # catalogue's on purpose. Quoted as they were, away from the word "Revision", each
+        # is a name S12 puts to Lean in the new report, and every regeneration quotes the
+        # last one's finding back. E5 fails with each whole finding as one code span, and
+        # S12 asks Lean about nothing in the new report.
+        where = ca.REPORT.relative_to(ca.ROOT).as_posix()
+        with self.repository() as (head, _):
+            names = [head[:4], head[:ca.REVISION_DIGITS], "Elements.BookI.no_such_lemma"]
+            found = [f"S12 {where}:{line}: `{name}`: unknown identifier '{name}'"
+                     for line, name in zip((6, 6, 120), names)]
+            style_check = subprocess.CompletedProcess(
+                [], 1, "".join(f"  ✗ {finding}\n" for finding in found), "")
+            with patch.object(ca, "run", return_value=style_check):
+                ca.check_style_rules()
+            text = ca.report(ca.REPORT, {"lean_version": "4.35.0"}, quick=False)
+        self.assertEqual(self.s12_asks(text), [], "names S12 would put to Lean")
+        quoted = [f"`` {finding} ``" for finding in found]
+        self.assertEqual(ca.failures, {("edition", "E5"): quoted})
+        for message in quoted:
+            self.assertIn(f"\n  - {message}\n", text)
+
+    def test_quoted_code_is_shown_as_the_style_check_printed_it(self):
+        # The texts the style check reads hold code (the report on the figures against
+        # the scans gives `figures/<book>/NN.svg`), and a finding's excerpt quotes it.
+        # With its backticks gone, GitHub would take `<book>` for an HTML tag and set
+        # `2*a*b` in italic. Each finding is one code span, its fence one backtick longer
+        # than any run of backticks in it (three for the double backticks of the last),
+        # and reads, as CommonMark reads a span, exactly as the check printed it: in E5's
+        # list, and as I.1's one P9 message.
+        import check_style as style
+        found = ['S22 docs/reports/figures-against-scans.md:3: "AB": …each of Euclid\'s '
+                 'figures, `figures/<book>/NN.svg`, with its side `AB`…',
+                 'S12 review/I/01.toml:9: `h : 2*a*b = c`: write the hypothesis in words, '
+                 'not as a Lean binder (STYLE, section 1, "Hypotheses in words")',
+                 'S22 docs/reports/figures-against-scans.md:9: "ABC": …the triangle `ABC` '
+                 'of ``Elements.Book<book>.Prop<n>``…']
+        text = self.regenerate(found)
+        spans = [content for _, _, content in style.markdown_code_spans(text)]
+        for finding in found:
+            with self.subTest(finding=finding):
+                self.assertIn(finding, spans)
+        self.assertEqual(sorted(ca.failures), [("I.1", "P9"), ("edition", "E5")])
+        self.assertIn(f"\n  - ``` {found[2]} ```\n", text)
+
+    def test_a_finding_on_the_old_report_is_not_quoted_back_to_the_text_rules(self):
+        # S1, S7 and S8 read the report outside code. An old report with an em dash, a
+        # definition without its book and curly quotation marks fails each, and an S22
+        # finding elsewhere holds an em dash only in code. Quoted outside code, each
+        # would fail its rule again in the new report, and every regeneration would quote
+        # it back. E5 quotes each finding in the new report, and none of the style
+        # check's rules for a report finds anything there: S1, S7, S8 and S22 nothing,
+        # and S12's plan no name.
+        import check_style as style
+        old = ("# The old report\n\nA line \u2014 with Definition 15 and "
+               "\u201cquoted\u201d words.\n")
+        found = self.text_rules_find(old)
+        self.assertEqual(sorted({finding.split()[0] for finding in found}),
+                         ["S1", "S7", "S8"], found)
+        found.append('S22 docs/reports/figures-against-scans.md:5: "AB": …the side `AB` '
+                     'and the step `A\u2014B`…')
+        text = self.regenerate(found)
+        self.assertEqual(self.text_rules_find(text), [], "the text rules on the new report")
+        self.assertEqual(self.s12_asks(text), [], "names S12 would put to Lean")
+        spans = [content for _, _, content in style.markdown_code_spans(text)]
+        self.assertEqual([finding for finding in found if finding not in spans], [])
+        self.assertEqual(len(ca.failures[("edition", "E5")]), len(found))
 
 
 class BaselineCopy(unittest.TestCase):
