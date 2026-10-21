@@ -29,7 +29,7 @@ equal. Then III.22 leaves the angles at A and D as what remains of two right ang
 III.26's obtuse case, after Heath, who says his remarks there "apply here also" (vol. 2,
 p. 59). Where the angles are right, the centres lie on BC and EF, and each angle is an angle
 in a semicircle, and right; `Prop24.angle_type` reads that off the measure of the
-circumference, so this case still rests on the measure. Nothing here uses
+circumference, so in this case alone the angles are read off the measure. Nothing here uses
 `Circumference.standing`.
 
 Status: staged to replace the proof in Elements/BookIII/Prop27.lean when Book III's files

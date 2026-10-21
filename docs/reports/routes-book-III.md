@@ -6,9 +6,12 @@ This report answers issues #125, #126, #127, #129, #130 and #131. Five of them a
 Euclid's own argument where our proofs of Book III take another way, or for something his
 words say that our Lean does not yet say; the sixth asks which of our calls of III.1 do any
 work. The Lean is in seven files under `Staging/Routes/`, as delivered and checked at
-4504fa48 (the docstrings of `AngleOfContact.lean` were revised after 1265f23c, its Lean
-unchanged), and every declaration in them is in the namespace `Elements.BookIII.Routes`.
-None of it is in `Elements/` yet.
+4cd7c77d (after 1265f23c the docstrings of `AngleOfContact.lean` were revised; at 4cd7c77d
+`Prop27.lean` gained `import Elements.BookIII.Squares`, and comments changed in
+`Prop20.lean`, `Prop26.lean` and `Prop27.lean`; no other Lean has changed). Every
+declaration in them is in the namespace `Elements.BookIII.Routes`, which departs from
+FORMALIZATION's `Elements.Book<B>.Staging.PropN` for staged proofs; whether to rename it or
+record the exception is the coordinator's decision. None of it is in `Elements/` yet.
 
 Two things stand between these files and `Elements/`. The first is the move itself. The
 next move of Book III's files is under way, and nothing here touches those files; once it
@@ -16,10 +19,16 @@ has landed, each staged proof goes into its proposition's file, with its review 
 again, its passages rewritten where the route has changed, and its page made afresh. The
 second is the owner's approval of every new statement and definition: the reading of
 Definition III.3 at the point of contact (#126), the angle at the centre of any size and
-III.20 for it (#129), and the angle of contact after III.18 (#130). **No new statement or definition in these files is approved.** The
-proofs for III.8 and III.27 prove main's statements and stand on nothing new. Those for
-III.20 as main states it, III.21 and III.26 prove main's statements too, but rest on the
-draft angle at the centre, and so wait for its approval as well.
+III.20 for it (#129), and the angle of contact after III.18 (#130). **No new statement or
+definition in these files is approved.** The proofs for III.8 and III.27 prove main's
+statements and stand on nothing new. Those for III.20 as main states it, III.21 and III.26
+prove main's statements too, but rest on the draft angle at the centre, and so wait for its
+approval as well.
+
+WORKFLOW, section 2, admits these proofs in `Staging/` only as those of a prototype the
+coordinator has approved; recording `Staging/Routes/` so, as the 18 October entry records
+the mixed angles, is the coordinator's to confirm, and the files wait for it before they
+land.
 
 | Issue | File | What it holds | Statement |
 |---|---|---|---|
@@ -142,6 +151,11 @@ GB, so that it is on the circle, and "the less to the greater" is read from the 
 (`Circumference.centre`). The obtuse and right cases lie within Euclid's statement, so the
 route stays modified. Its note changes from the measure to III.22 for the obtuse case, and
 keeps the measure for the right case, which still rests on it through `Prop24.angle_type`.
+The measure still compares the circumferences in every case: `Prop27.sides` sorts the
+centres by it, calling `Prop24.angle_type` for where they lie, and the reductio reads "the
+less to the greater" from it, so `Circumference.eq` [III. 21] lies beneath the acute and
+obtuse cases too. What the note records is where the angles at A and D are read off the
+measure: now the right case alone.
 
 **What is left.** No approval is needed: nothing new is stated or defined, and the step
 that puts the centres alike is a helper of III.27, before it in its file. At the move the
@@ -544,12 +558,12 @@ nothing proposed here has been compiled.
 
 ## Checks
 
-Each of the seven files was built with `lake build`, at commit 4504fa48, and every theorem
+Each of the seven files was built with `lake build`, at commit 4cd7c77d, and every theorem
 the seven modules declare, other than the private steps the others use, was put to Lean's
 collectAxioms. The check looks for `sorryAx`, for an axiom declared outside
 `Elements/Foundations/` other than Lean's own three (`propext`, `Classical.choice`,
 `Quot.sound`), and for Circle 3, which Circle 2 now rests on, so that it finds both. It
-reported, as it had at 1265f23c:
+reported, as it had at 1265f23c and 4504fa48:
 
 ```text
 Build completed successfully (91 jobs).
@@ -567,4 +581,5 @@ Each file was also read against Heath's text by a reader who did not write it, a
 writer handed it back: the other six before 1265f23c, their readers' findings answered at
 that commit, and `AngleOfContact.lean` at its text of 1265f23c, its reader's five minor
 findings then answered in its docstrings alone. The whole branch was then reviewed at
-4504fa48.
+4504fa48, and the answers to that review at 4cd7c77d; the comments 4cd7c77d changed were
+not read again against Heath's text.
