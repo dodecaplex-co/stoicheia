@@ -1,5 +1,5 @@
-# commit: 3d1f11c2ac1387d868d987eaf5e0ff3b10b94f89 (harness files differ from this commit)
-# harness: 2a8771abcd95266d2253431e7b704cfff0bfffad4b9b567f5e9544586d9b7161
+# commit: 8e5adbdca305a3846930d5ef0f57b0eebbf49ae7 (harness files differ from this commit)
+# harness: 9ec5d9c4a18dbbef546b8dd2bf2bea4d69a3f1326fb526a0001d62285ea487ac
 # python: 3.14.2 (CPython, Darwin arm64)
 # date: 2026-10-21
 

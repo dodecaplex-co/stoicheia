@@ -47,9 +47,28 @@
 # retirements that day): their laws leave the generated translation;
 # the other 79 axioms and every word are unchanged, byte for byte.
 #
+# Renewed on 19 October 2026, when the restricted rule of superposition (brief 0009, #75)
+# replaced the existential one: the generated law, its hand translation and its proof in
+# the plane were brought to it (model/README.md), and the other 86 laws are unchanged.
+# Renewed on 20 October 2026 after the coincidence marker was integrated (brief 0009,
+# #75): the vocabulary grows from 206 to 208 words. Coincidence and its step join
+# the lock, and the three Derives congruence constructors take the marker. All 87
+# axiom statements are unchanged. The marker records a step without changing its
+# interpretation; the existing placement proofs and numerical law still apply.
+# Renewed on 20 October 2026, when the restricted rule was merged after the first
+# retirement wave: the generated translation has the 79 laws of wave one with the
+# restricted superposition law and its words, and the lock's vocabulary stays at 208 words.
+#
 # Renewed on 21 October 2026, when axiom wave one was merged into train C6a: the lock is
 # main's 79 rules and Tacit.exists_centre, 80 axioms, with 121 words of vocabulary. The
 # generator writes 80 laws, Model/Assembly.lean gathers all 80 with Euclidean.exists_centre
 # among them, and the eight retired rules keep their plane proofs and audits as derived
 # facts, with no field of Laws.
-46d2f009922f16cf4fe011630291b0ef99c4dd683adb19af5f1f69323207b9b1  Certificate/axioms.lock
+#
+# Renewed on 21 October 2026, when main's restricted rule of superposition (#191) was
+# merged into train C6a, through tooling/centre-given-meaning at 980569da: the lock is
+# main's 79 axioms, with Tacit.superposition restated as Superposition.Rule primitives, and
+# Tacit.exists_centre, 80 in all, with 238 words of vocabulary, main's 208 and this train's
+# 30. The generator writes 80 laws, the restricted superposition law and exists_centre's
+# among them, and Model/Assembly.lean gathers all 80.
+e3c5d7123a3b973dd79436c07409c30858acc2ac8c6507cb6805205fcb373296  Certificate/axioms.lock

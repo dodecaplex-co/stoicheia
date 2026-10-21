@@ -22,7 +22,5 @@ the mixed-angle prototype for III.16 and III.31 (brief 0011). The others:
   the meeting fact for an arc (`Prop25.meets`);
 * `Centre/`: brief 0008's restated propositions, using the rule now in the foundations
   that every circle has a centre, with III.1 kept as Euclid's construction and III.5 and
-  III.6 read with crossing and contact within;
-* `Superposition/`: the prototype of a restricted superposition rule (brief 0009), carried
-  as a hypothesis, with its proofs, which the coordinator approved on 18 October 2026.
+  III.6 read with crossing and contact within.
 -/

@@ -50,9 +50,32 @@
 # Tacit.triple_incidence3 and Tacit.inside_of_angle_add. Their laws leave laws.toml, search.py
 # and hyperbolic.py; the other 79 axioms and every word are unchanged, byte for byte.
 #
+# Renewed on 19 October 2026, when the restricted rule of superposition (brief 0009, #75)
+# replaced the existential one: the axiom Tacit.superposition is restated as
+# Superposition.Rule primitives, and the lock's vocabulary gains the calculus's words. The
+# harness's superposition law now checks the placement the rule reduces to
+# (Rule.of_placement) with its kept side, as MODEL.md says; the other 86 axioms are
+# unchanged, byte for byte.
+# Renewed on 20 October 2026 after the coincidence marker was integrated (brief 0009,
+# #75): the vocabulary grows from 206 to 208 words. Coincidence and its step join
+# the lock, and the three Derives congruence constructors take the marker. All 87
+# axiom statements are unchanged. The marker records a step without changing its
+# interpretation; the existing placement proofs and numerical law still apply.
+# Renewed on 20 October 2026, when the restricted rule was merged after the first
+# retirement wave: the 79 axioms of wave one with Tacit.superposition restated as
+# Superposition.Rule primitives, and the vocabulary at 208 words; the harness keeps wave
+# one's removals and the restricted law's placement check with its kept side.
+#
 # Renewed on 21 October 2026, when axiom wave one was merged into train C6a: the lock is
 # main's 79 axioms and Tacit.exists_centre, 80 in all, with 121 words of vocabulary. The
 # eight retired rules stay out of laws.toml, search.py and hyperbolic.py, exists_centre's law
 # stays in them, and MODEL.md's counts are written again by run.py --full --write in the
 # same change.
-46d2f009922f16cf4fe011630291b0ef99c4dd683adb19af5f1f69323207b9b1  Certificate/axioms.lock
+#
+# Renewed on 21 October 2026, when main's restricted rule of superposition (#191) was
+# merged into train C6a, through tooling/centre-given-meaning at 980569da: 80 axioms, main's
+# 79 with Tacit.superposition restated as Superposition.Rule primitives, and
+# Tacit.exists_centre, with 238 words of vocabulary, main's 208 and this train's 30. The
+# harness keeps the restricted law's placement check with its kept side and exists_centre's
+# law, and MODEL.md's counts are written again by run.py --full --write in the same change.
+e3c5d7123a3b973dd79436c07409c30858acc2ac8c6507cb6805205fcb373296  Certificate/axioms.lock

@@ -209,10 +209,11 @@ lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull requests".
   for the presence of a passing run only for the first three, while refusing any reported
   failure or pending check; aligning that local test needs a separate protected-check
   change.
-- **The statements' vocabulary** (settled 17 Oct). The lock holds every word that the
-  axioms' statements or the entries' statements reach: <!-- count:vocabulary -->121<!-- /count -->, the 37 of the axioms and 84
-  that only the statements use (`Touches`, `EqualCircles`, `circumference`, `rect`,
-  `Parallel` and others). A change to one is a decision, as a changed axiom is
+- **The statements' vocabulary** (settled 17 Oct; extended for restricted superposition).
+  The lock holds every word that the axioms' statements or the entries' statements
+  reach: <!-- count:vocabulary -->238<!-- /count -->, including the restricted calculus and its interpretation,
+  as well as `Touches`, `EqualCircles`, `circumference`, `rect`, `Parallel` and others.
+  A change to one is a decision, as a changed axiom is
   ([0002](briefs/0002-decisions.md), [FIELDS.md](../Certificate/FIELDS.md#the-vocabulary)).
   Each later book's definitions join the lock with its statements.
 
