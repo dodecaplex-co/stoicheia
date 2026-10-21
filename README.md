@@ -93,7 +93,7 @@ Each proposition's page shows, under Euclid's enunciation, what its Lean stateme
 
 ## Run it
 
-1. Install Lean: the easiest route is VS Code with the **Lean 4** extension, or `curl https://elan.lean-lang.org/elan-init.sh -sSf | sh`. The `lean-toolchain` file pins Lean 4.35.0. The checks below and the pages need Python 3.11 or later, and nothing else.
+1. Install Lean: the easiest route is VS Code with the **Lean 4** extension, or `curl https://elan.lean-lang.org/elan-init.sh -sSf | sh`. The `lean-toolchain` file pins Lean 4.35.0. The checks and pages need Python 3.11 or later, and nothing else.
 2. Check every proof:
    ```sh
    lake build
