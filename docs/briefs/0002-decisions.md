@@ -3032,3 +3032,37 @@ findings:
   hold. `git safe-push --label release` creates the `release` label, with its
   description, the first time it is given; the consolidation release (#38) lands through
   a pull request carrying it. Tags and releases stay manual, by the owner.
+
+## 21 October 2026
+
+- **The merge gate requires the ruleset's five checks (#142).** On 20 October the owner
+  made `formal-model` and `acceptance` required status checks in the ruleset on main,
+  beside `check`, `model` and `negative`, as the entry of that date on content kept fresh
+  records. Read on 21 October with `gh api repos/{owner}/{repo}/rulesets/25333614`, the
+  ruleset's required status checks rule is:
+  ```json
+  {"parameters":{"do_not_enforce_on_create":false,"required_status_checks":[{"context":"check"},{"context":"model"},{"context":"negative"},{"context":"formal-model","integration_id":15368},{"context":"acceptance","integration_id":15368}],"strict_required_status_checks_policy":true},"type":"required_status_checks"}
+  ```
+  The integration 15368 is GitHub Actions, and the strict policy asks that a pull
+  request's branch be up to date with main before it merges. `REQUIRED_CHECKS` in
+  `scripts/safe_push.py` now names the same five, in the ruleset's order, so
+  `git safe-push --merge`, and the pre-flight's CI watcher, which judges as it does, give
+  "missing" when a pull request has no passing run of `formal-model` or of `acceptance`,
+  and "failure" when one fails, as for the first three. A skipped run is not a pass. The
+  CI workflow runs on pushes as well as pull requests and skips `acceptance` in the push
+  event's run; `judge_checks` counts a pass from any run reported for the head, so the
+  pull request's own run, which includes both jobs, is the one that must pass it, and a
+  check whose every run was skipped is "missing". GitHub, which accepts a skipped
+  required job, makes no such distinction
+  ([WORKFLOW](../WORKFLOW.md#8-validation-on-the-integrated-revision), section 8). The
+  docstrings of the module and of `judge_checks` name the five checks. In
+  `scripts/test_safe_push.py`, `PASSING` holds the five, and `Units.test_judge_checks`
+  shows that a missing `formal-model` and a missing `acceptance` each give "missing",
+  that a failing one gives "failure", and that a skipped run gives "missing" alone and
+  "success" beside a passing one; with main's list of three, the two missing cases give
+  "success" and the test fails. Nothing is loosened: no other check, expected value or
+  gate changes. WORKFLOW, section 8, and PROGRAM, section 4, no longer describe the gap,
+  and PROGRAM's account of 18 October notes the two checks added since. The entries of
+  18, 19 and 20 October that call these checks not required, or say that safe_push tests
+  for three, are true of their dates. The protected files changed are
+  `scripts/safe_push.py` and `scripts/test_safe_push.py`.
