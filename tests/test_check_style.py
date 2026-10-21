@@ -22,6 +22,10 @@ it, put to the script's own patterns and functions:
   from plain words alike, save the letters of English (A's, e.g., the article "a") and
   what a reader does not see, in a comment or in code; the paragraph selection keeps
   its source offsets and indentation.
+* the wording cases: render.py names the rules of an overlap that a proof leaves unused
+  as "does not use" for one, "neither … nor" for two and "none of" for more, and words
+  III.24's application of one segment to another by `placement` only from what its
+  facts.json entry shows, read afresh for each root;
 * the clearance cases: S26 finds a stroke through a letter, or nearer it than 2 less half
   its width (given as an attribute or inherited), and not one clear of it;
   reads a stroke of none as no stroke and a dashed one whole; closes a path's stroke only
@@ -75,6 +79,7 @@ section 8, "A guard defect gets a regression"). Python 3.11 or later; standard l
 from __future__ import annotations
 
 import io
+import json
 import os
 import runpy
 import subprocess
@@ -2191,6 +2196,62 @@ class Modern(unittest.TestCase):
 
     test_modern_cases.__doc__ = (f"S24 and S25 read {len(MODERN_CASES)} figures of the "
                                  "modern way rightly")
+
+
+class Wording(unittest.TestCase):
+    """render.py's words that facts.json decides: which of an overlap's rules the proof
+    uses, and III.24's application of one segment to another by `placement`."""
+
+    def test_overlap_use_names_the_unused_rules_plainly(self):
+        four = {"rule": "Tacit.a", "also": ["Tacit.b", "Tacit.c", "Tacit.d"], "kind": "gives"}
+        rules = render.overlap_rules(four)
+        for used, want in [
+                (rules, "our proof rests on all these rules"),
+                ([], "our proof does not use any of these rules"),
+                (rules[:3], "of these rules, our proof rests on `a`, `b` and `c`, and does not "
+                            "use `d`"),
+                (rules[:2], "of these rules, our proof rests on `a` and `b`, and uses neither "
+                            "`c` nor `d`"),
+                (rules[:1], "of these rules, our proof rests on `a` and uses none of `b`, `c` "
+                            "and `d`")]:
+            with self.subTest(used=used):
+                self.assertEqual(render.overlap_use({"axioms": used}, four), want)
+        two = {"rule": "Tacit.a", "also": ["Tacit.b"], "kind": "gives"}
+        self.assertEqual(render.overlap_use({"axioms": ["Tacit.b"]}, two),
+                         "of these rules, our proof rests on `b` and does not use `a`")
+
+    @staticmethod
+    def facts(direct=(), brings=("I.4", "I.8"), step="BookIII.placement"):
+        """A facts.json in which III.24's proof has the shared step `step`, citing
+        `brings`, and calls on superposition itself where `direct` says so."""
+        sup = "Tacit.superposition"
+        return {"propositions": [
+            {"ref": "III.24", "axioms": [sup], "direct_axioms": list(direct),
+             "shared_steps": [{"name": step, "brings_in": list(brings)}]},
+            {"ref": "I.4", "axioms": [sup], "direct_axioms": [sup]},
+            {"ref": "I.8", "axioms": [sup], "direct_axioms": [sup]},
+            {"ref": "I.26", "axioms": [sup], "direct_axioms": []},
+            {"ref": "I.5", "axioms": [], "direct_axioms": []}]}
+
+    def test_placement_is_worded_from_facts(self):
+        """The line on III.24 names only what its facts.json entry shows, read afresh for
+        each root."""
+        head = (" Euclid's III.24 applies one segment to another, and so does our proof of "
+                "it, by `placement`")
+        through = ", which uses superposition only through the propositions it cites"
+        old = render.SUPERPOSITION_NOTE["III"]
+        for facts, want in [
+                (self.facts(), head + through + ", I.4 and I.8 among them."),
+                (self.facts(brings=("I.8", "I.26")), head + through + ", I.8 among them."),
+                (self.facts(brings=("I.26",)), head + through + "."),
+                (self.facts(brings=("I.5",)), head + "."),
+                (self.facts(direct=("Tacit.superposition",)), head + "."),
+                (self.facts(step="BookIII.other"), old)]:
+            with self.subTest(facts=facts), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp).resolve()
+                (root / "facts.json").write_text(json.dumps(facts))
+                with patch.object(render, "ROOT", root):
+                    self.assertEqual(render.content_wording().get(old, old), want)
 
 
 def svg_refusal(kind, attr=None, value=None):
