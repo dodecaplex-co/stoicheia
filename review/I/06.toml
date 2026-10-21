@@ -47,9 +47,9 @@ note = "Like Heath's, this figure draws Euclid's impossible supposition. DB is d
 
 [review]
 stage = "full"
-commit = "4a4bd6ec"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-run = "brief 0005 stage 6, workflow Q-read-jev, independent re-read at 4a4bd6ec"
+commit = "900984f6"
+reviewer = "Claude Opus 5.5, independent reader"
+run = "issue #32, the sweep's findings in Books I and II, ship TT"
 lean = "sha256:8c6d2e5ec99a02cf"
 
 [review.items]

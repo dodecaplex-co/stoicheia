@@ -76,10 +76,10 @@ case = "D between C and B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "f3b45b70"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "900984f6"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:d341a1520792f8c3"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "issue #32, the sweep's findings in Books I and II, ship TT"
 
 [review.items]
 statement = "pass"

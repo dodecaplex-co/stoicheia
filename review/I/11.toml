@@ -35,10 +35,10 @@ case = "C between A and B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "267d8d2f"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:6aad9ce1223a6e05"
-run = "ship Q orders, item (a): the Postulate 1 joins; stage full, independent re-read at 267d8d2f; workflow wf_012f714f-e1a (stoicheia-ship-q); reader run Q-read-p1b, Codex exec session 01a159b0-1bad-73b2-bdef-4d42ed062aad, which wrote only this record's [review] lines and ran review_stamp.py itself; ship Q's lead (Claude Opus 5.5) committed them unchanged; this run text later amended with that provenance, no restamp"
+commit = "900984f6"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:a1b5532a9baeffc0"
+run = "issue #32, the sweep's findings in Books I and II, ship TT"
 
 [review.items]
 statement = "pass"

@@ -61,10 +61,10 @@ note = "Euclid takes the gnomon STU and OH together as the whole square AEFD. `P
 
 [review]
 stage = "full"
-commit = "570e6fa"
-reviewer = "GPT-6 Astra (Codex), records re-read"
-lean = "sha256:d2669414e0cf5c4c"
-run = "brief 0005 stage 5, ship C5 re-read"
+commit = "900984f6"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:ce2b21d5eedee152"
+run = "issue #32, the sweep's findings in Books I and II, ship TT"
 
 [review.items]
 statement = "pass"

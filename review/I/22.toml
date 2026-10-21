@@ -39,10 +39,10 @@ unused = ["this"]
 
 [review]
 stage = "full"
-commit = "ce5a881"
-reviewer = "Claude Opus 5.5, records review"
+commit = "900984f6"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:7231552689f848f2"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "issue #32, the sweep's findings in Books I and II, ship TT"
 
 [review.items]
 statement = "pass"
