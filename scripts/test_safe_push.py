@@ -3,6 +3,7 @@
 
     python3 -m pip install -r scripts/requirements-test_safe_push.txt
     python3 scripts/test_safe_push.py        # no Lean, no network; timing in WORKFLOW section 8
+    python3 scripts/test_safe_push.py --shard 3/7   # one of CI's seven shards (#233)
     STOICHEIA_SLOW_TESTS=1 python3 scripts/test_safe_push.py FullChecks   # Lean, minutes
 
 The clone is made with `git clone --local --no-hardlinks` of this repository into a temporary
@@ -147,6 +148,11 @@ local origin, and with it calls only the gh stand-in. The checks the guards run
 themselves (check_fidelity.py and render.py on the commit as committed) still run. The
 opt-in FullChecks test runs step 4 for real, once, on a good commit, as a dry run of the
 pre-flight. Python 3.11 or later; PyYAML at the version pinned beside this file, and git.
+
+CI runs the suite as seven shards side by side, `--shard K/7` for each K (#233): the tests
+are listed by unittest's own loader and dealt out by the seconds each took on a GitHub
+runner, kept in test_safe_push_times.json beside this file, so that each test runs in
+exactly one shard. Without --shard the whole suite runs.
 """
 
 from __future__ import annotations
@@ -164,6 +170,7 @@ import re
 import shlex
 import shutil
 import signal
+import statistics
 import subprocess
 import sys
 import tempfile
@@ -6736,5 +6743,241 @@ class Units(unittest.TestCase):
         self.assertEqual(cut, ["structured stopped before its last line"])
 
 
+# The shards (#233). In one job the suite took 38 to 45 minutes on a GitHub runner, so CI
+# runs it as `--shard K/N` for each K from 1 to N, side by side, and the safe-push-tests
+# job passes only when every shard passed. Each test runs in exactly one shard: the tests
+# are listed by unittest's own loader, so a new one is never missed, and dealt out by the
+# seconds each took on a GitHub runner, kept beside this file.
+TIMES = HERE / "test_safe_push_times.json"
+PATHS_JOB, SHARD_JOB, GATHER_JOB = "safe-push-paths", "safe-push-shards", "safe-push-tests"
+
+
+@dataclass(frozen=True)
+class ShardPlan:
+    shard_of: dict[str, int]     # each test, as Class.test_name, and its shard, from 1
+    loads: tuple[float, ...]     # each shard's expected seconds, the module's setup included
+    unmeasured: tuple[str, ...]  # the tests the times do not name, which weigh the median
+    median: float
+
+
+def loaded_tests() -> list[unittest.TestCase]:
+    """This suite's tests, as unittest's own loader lists them, in the order it runs them."""
+    def flat(suite):
+        for test in suite:
+            yield from flat(test) if isinstance(test, unittest.TestSuite) else (test,)
+    return list(flat(unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__])))
+
+
+def time_key(test: unittest.TestCase) -> str:
+    """A test's name in the times file: Class.test_name."""
+    return ".".join(test.id().split(".")[-2:])
+
+
+def load_times(path: Path = TIMES) -> tuple[float, dict[str, float]]:
+    """The module's setup, which every shard pays once, and each test's seconds."""
+    data = json.loads(path.read_text())
+    return float(data["setUpModule"]), {str(k): float(v) for k, v in data["tests"].items()}
+
+
+def shard_plan(keys: list[str], count: int, times: dict[str, float], setup: float) -> ShardPlan:
+    """Deal the tests to `count` shards, longest first: each test, heaviest first and then
+    by name, goes to the shard with the least time so far, then the fewest tests, then the
+    lowest number. A test the times do not name weighs their median. Every test lands in
+    exactly one shard, and in the same one whatever order the keys and times come in."""
+    if len(set(keys)) != len(keys):
+        raise ValueError("two tests share a name")
+    median = statistics.median(times.values()) if times else 0.0
+    weight = {key: times.get(key, median) for key in keys}
+    loads, sizes, shard_of = [setup] * count, [0] * count, {}
+    for key in sorted(keys, key=lambda key: (-weight[key], key)):
+        index = min(range(count), key=lambda i: (loads[i], sizes[i], i))
+        shard_of[key] = index + 1
+        loads[index] += weight[key]
+        sizes[index] += 1
+    return ShardPlan(shard_of, tuple(loads), tuple(sorted(set(keys) - set(times))), median)
+
+
+def shard_report(plan: ShardPlan, shard: int) -> list[str]:
+    """What a shard says before it runs: the tests with no measured time, and its share."""
+    lines = [f"No measured time for {key} in scripts/{TIMES.name}: it weighs their median, "
+             f"{plan.median:g} s." for key in plan.unmeasured]
+    mine = sum(1 for index in plan.shard_of.values() if index == shard)
+    lines.append(f"Shard {shard} of {len(plan.loads)}: {mine} of {len(plan.shard_of)} tests, "
+                 f"about {plan.loads[shard - 1]:.0f} s by the times measured on a GitHub "
+                 f"runner, the module's setup included.")
+    return lines
+
+
+def shard_argument(argv: list[str]) -> tuple[int, int] | None:
+    """(K, N) for `--shard K/N`, which stands alone; None when there is no --shard."""
+    if not any(arg.startswith("--shard") for arg in argv):
+        return None
+    match = (re.fullmatch(r"([1-9][0-9]*)/([1-9][0-9]*)", argv[1])
+             if len(argv) == 2 and argv[0] == "--shard" else None)
+    if match is None or int(match[1]) > int(match[2]):
+        print("usage: test_safe_push.py --shard K/N, alone, with 1 <= K <= N", file=sys.stderr)
+        sys.exit(2)
+    return int(match[1]), int(match[2])
+
+
+def run_shard(shard: int, count: int) -> None:
+    """Run exactly the tests dealt to shard `shard` of `count`, in unittest's order."""
+    tests = loaded_tests()
+    setup, times = load_times()
+    plan = shard_plan([time_key(test) for test in tests], count, times, setup)
+    for line in shard_report(plan, shard):
+        print(line, file=sys.stderr)
+    names = [time_key(test) for test in tests if plan.shard_of[time_key(test)] == shard]
+    if not names:
+        sys.exit(f"Shard {shard} of {count} has no tests: {len(tests)} tests fill at most "
+                 f"{len(tests)} shards.")
+    unittest.main(argv=sys.argv[:1], defaultTest=names, verbosity=2)
+
+
+class Shards(unittest.TestCase):
+    """CI's shards of this suite and the job that gathers them (#233), without git: the
+    shards of CI's matrix hold every test once, and safe-push-tests passes only when every
+    shard passed, or when the pull request changes nothing the tests guard."""
+
+    def jobs(self) -> dict:
+        return yaml.safe_load((SOURCE / ".github/workflows/ci.yml").read_text())["jobs"]
+
+    def ci_shard_count(self) -> int:
+        """N, from the matrix of CI's shard job, whose one dimension holds 1 to N in turn,
+        each once: `strategy.job-total`, which each shard is given as N, is then N too."""
+        matrix = self.jobs()[SHARD_JOB]["strategy"]["matrix"]
+        self.assertEqual(list(matrix), ["shard"], "no other dimension, include or exclude")
+        self.assertEqual(matrix["shard"], list(range(1, len(matrix["shard"]) + 1)))
+        self.assertGreater(len(matrix["shard"]), 1)
+        return len(matrix["shard"])
+
+    def test_ci_shards_hold_every_test_once(self):
+        # What `--shard K/N` hands unittest.main, for each K of the N in CI's matrix: each
+        # test of the loader's list once, in the loader's order.
+        count = self.ci_shard_count()
+        keys = [time_key(test) for test in loaded_tests()]
+        self.assertIn("Shards.test_ci_shards_hold_every_test_once", keys)
+        dealt = []
+        for shard in range(1, count + 1):
+            with mock.patch.object(unittest, "main") as main, \
+                    contextlib.redirect_stderr(io.StringIO()):
+                run_shard(shard, count)
+            names = main.call_args.kwargs["defaultTest"]
+            self.assertTrue(names, f"shard {shard} runs no test")
+            self.assertEqual(names, [key for key in keys if key in set(names)])
+            dealt.append(names)
+        self.assertEqual(sorted(key for names in dealt for key in names), sorted(keys))
+        setup, times = load_times()
+        plan = shard_plan(keys, count, times, setup)
+        for shard, names in enumerate(dealt, 1):
+            self.assertAlmostEqual(plan.loads[shard - 1], setup + sum(
+                times.get(key, plan.median) for key in names))
+
+    def test_a_test_with_no_measured_time_is_still_dealt(self):
+        setup, times = load_times()
+        keys = [time_key(test) for test in loaded_tests()]
+        dropped = sorted(set(keys) & set(times))[0]
+        fewer = {key: value for key, value in times.items() if key != dropped}
+        plan = shard_plan(keys + ["Later.test_added"], 7, fewer, setup)
+        self.assertEqual(plan.unmeasured, tuple(sorted(
+            set(keys) - set(times) | {dropped, "Later.test_added"})))
+        self.assertEqual(plan.median, statistics.median(fewer.values()))
+        self.assertEqual(sorted(plan.shard_of), sorted(keys + ["Later.test_added"]))
+        for key in plan.unmeasured:
+            self.assertIn(plan.shard_of[key], range(1, 8))
+            for shard in range(1, 8):
+                self.assertIn(f"No measured time for {key} ", "\n".join(shard_report(plan, shard)))
+        self.assertEqual(shard_plan(["A.test_one"], 2, {}, 0.0).shard_of, {"A.test_one": 1})
+
+    def test_the_dealing_is_deterministic(self):
+        setup, times = load_times()
+        keys = [time_key(test) for test in loaded_tests()]
+        count = self.ci_shard_count()
+        plan = shard_plan(keys, count, times, setup)
+        self.assertEqual(shard_plan(list(reversed(keys)), count,
+                                    dict(reversed(list(times.items()))), setup), plan)
+        # Ties go by name, then to the shard with the least time, the fewest tests, and the
+        # lowest number: tests that weigh nothing are spread, not heaped on the first shard.
+        tied = shard_plan(["C.test", "A.test", "B.test", "D.test"], 2,
+                          {"A.test": 1.0, "B.test": 1.0, "C.test": 0.0, "D.test": 0.0}, 0.0)
+        self.assertEqual(tied.shard_of, {"A.test": 1, "B.test": 2, "C.test": 1, "D.test": 2})
+
+    def test_shard_argument(self):
+        self.assertIsNone(shard_argument([]))
+        self.assertIsNone(shard_argument(["Units"]))
+        self.assertEqual(shard_argument(["--shard", "3/7"]), (3, 7))
+        for argv in (["--shard"], ["--shard", "0/7"], ["--shard", "8/7"], ["--shard", "3"],
+                     ["--shard", "3/7", "Units"], ["Units", "--shard", "3/7"],
+                     ["--shard=3/7"], ["--shard", "-1/7"]):
+            with self.subTest(argv=argv):
+                with contextlib.redirect_stderr(io.StringIO()), \
+                        self.assertRaises(SystemExit) as stopped:
+                    shard_argument(argv)
+                self.assertEqual(stopped.exception.code, 2)
+
+    def test_every_shard_runs_its_part_of_the_suite(self):
+        jobs = self.jobs()
+        paths, job = jobs[PATHS_JOB], jobs[SHARD_JOB]
+        self.assertEqual(paths["if"], "github.event_name == 'pull_request'")
+        self.assertEqual(paths["outputs"], {"run": "${{ steps.paths.outputs.run }}"})
+        self.ci_shard_count()
+        self.assertEqual(job["needs"], PATHS_JOB)
+        self.assertEqual(job["if"], f"needs.{PATHS_JOB}.outputs.run == 'true'")
+        self.assertEqual(job["strategy"]["fail-fast"], False)
+        self.assertEqual(job["permissions"], {"contents": "read"})
+        self.assertNotIn("continue-on-error", job)
+        self.assertEqual([{key: value for key, value in step.items() if key != "name"}
+                          for step in job["steps"]], [
+            {"uses": "actions/checkout@v5",
+             "with": {"fetch-depth": 0, "persist-credentials": False}},
+            {"uses": "actions/setup-python@v5", "with": {"python-version": "3.12"}},
+            {"run": "python3 -m pip install -r scripts/requirements-test_safe_push.txt"},
+            {"run": "python3 scripts/test_safe_push.py "
+                    "--shard ${{ matrix.shard }}/${{ strategy.job-total }}"}])
+
+    def test_safe_push_tests_passes_only_when_every_shard_passed(self):
+        job = self.jobs()[GATHER_JOB]
+        self.assertNotIn("name", job, "the check is named by the job: safe-push-tests")
+        self.assertEqual(sorted(job["needs"]), sorted([PATHS_JOB, SHARD_JOB]))
+        self.assertEqual(job["if"], "always() && github.event_name == 'pull_request'")
+        self.assertEqual(job["permissions"], {"contents": "read"})
+        self.assertNotIn("continue-on-error", job)
+        [step] = job["steps"]
+        self.assertFalse({"if", "shell", "continue-on-error", "uses"} & set(step))
+        self.assertEqual(step["env"], {"PATHS": f"${{{{ needs.{PATHS_JOB}.result }}}}",
+                                       "RUN": f"${{{{ needs.{PATHS_JOB}.outputs.run }}}}",
+                                       "SHARDS": f"${{{{ needs.{SHARD_JOB}.result }}}}"})
+        self.assertNotIn("${{", step["run"])
+
+        def verdict(paths: str, run: str, shards: str) -> tuple[int, str]:
+            # As GitHub runs a step's script on Linux: bash, stopping at the first failure.
+            r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c",
+                                step["run"]], capture_output=True, text=True,
+                               env={"PATH": os.environ["PATH"], "PATHS": paths, "RUN": run,
+                                    "SHARDS": shards})
+            return r.returncode, r.stdout + r.stderr
+
+        status, out = verdict("success", "true", "success")
+        self.assertEqual(status, 0, out)
+        status, out = verdict("success", "false", "skipped")
+        self.assertEqual(status, 0, out)
+        self.assertIn("so scripts/test_safe_push.py does not run", out)
+        for shards in ("failure", "cancelled", "skipped", ""):
+            with self.subTest(shards=shards):
+                status, out = verdict("success", "true", shards)
+                self.assertNotEqual(status, 0, out)
+                self.assertIn(shards or "''", out)
+        for paths, run in (("failure", ""), ("cancelled", ""), ("skipped", ""),
+                           ("failure", "false"), ("failure", "true"), ("success", ""),
+                           ("success", "maybe")):
+            with self.subTest(paths=paths, run=run):
+                status, out = verdict(paths, run, "skipped")
+                self.assertNotEqual(status, 0, out)
+
+
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    shard = shard_argument(sys.argv[1:])
+    if shard is None:
+        unittest.main(verbosity=2)
+    else:
+        run_shard(*shard)

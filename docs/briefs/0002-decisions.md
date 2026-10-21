@@ -4097,3 +4097,49 @@ findings:
   caught. Neither file pinned the list of plants or its count.
   [FORMALIZATION](../FORMALIZATION.md), section 7, and the README's row for the negative
   tests now describe both plants. No check is weakened.
+
+- **The safe_push tests run as seven shards side by side
+  ([#233](https://github.com/jackChallis/stoicheia/issues/233), its first part).** CI's
+  `safe-push-tests` job ran the whole of `scripts/test_safe_push.py` in one job: 37.7
+  minutes on #239 and 45.4 on #232, on GitHub's runners, and on #240 it ran past its
+  60-minute limit and was cancelled, while every other job takes about 11. The 61 tests of
+  `Merge` alone take 20 minutes, so whole classes cannot balance, and the suite is dealt
+  out test by test. `python3 scripts/test_safe_push.py --shard K/N` lists the suite's
+  tests with unittest's own loader, so that a new test is never missed, and weighs each by
+  the seconds it took on a GitHub runner, kept in the new
+  `scripts/test_safe_push_times.json`: 288 tests, read from the timestamps of #239's run,
+  with an estimate of the module's setup, the clone of the repository that every shard
+  pays once. It deals them out longest first, each to the shard with the least time so
+  far, then the fewest tests, then the lowest number, ties between tests going by name, so
+  that every test lands in exactly one shard, the same one on every machine; shard K runs
+  exactly its own, in unittest's order. A test the file does not name weighs the median,
+  2.7 seconds, and every shard's log names it. Without `--shard` the whole suite runs, as
+  before, and WORKFLOW section 8's commands stay as they were, with a line added for one
+  shard. In `.github/workflows/ci.yml` the one job becomes three. `safe-push-paths`
+  decides, as the old step did, with the same paths, messages and failures, whether the
+  pull request changes safe_push's check inputs, `.github/` or `docs/WORKFLOW.md`.
+  `safe-push-shards`, a matrix of seven, runs only when it does, each shard with the whole
+  history, no token kept, Python 3.12, the pinned PyYAML and a 30-minute limit, none
+  stopping the others when it fails; each is given its N as `strategy.job-total`, so that
+  the matrix's list is the one place N is written. `safe-push-tests`, the check's name
+  unchanged, needs both, runs whatever happened before it (`always()`, on pull requests
+  only), and passes at once, with the old message, when nothing it guards changed, and
+  otherwise only when the shards' result is success: a shard that failed, was cancelled or
+  was skipped fails it, and its log says which, as it does when the paths job did not
+  succeed. Seven, because by the measured times each shard then holds about 329 seconds,
+  five and a half minutes with its setup, where six would hold 6.4; the time after comes
+  from this pull request's own CI run. Nothing is selected out: every test still runs on
+  every pull request that ran the job before. Running only the classes a change touches,
+  the issue's second part, is the owner's decision, and waits on it. A new class,
+  `Shards`, without git or network, checks that for the N of CI's matrix the names that
+  `--shard K/N` hands unittest, for each K, hold every test of the loader's list once, in
+  its order; that a test the file does not name is still dealt, and named; that the
+  dealing is the same whatever order its inputs come in; that `--shard` stands alone; that
+  each shard runs the checkout, Python, parser and command above; and that
+  `safe-push-tests` is named so, needs the matrix job, runs if `always()`, and refuses
+  every result but success when the paths job says the tests must run, by running its
+  step's script under bash for each result. Main's ruleset still does not require the
+  check; a failing shard, like any failing check, holds a merge through the merge gate.
+  [WORKFLOW](../WORKFLOW.md), sections 8 and 10, describes the shards and how to run one.
+  The protected files changed are `.github/workflows/ci.yml`, `scripts/test_safe_push.py`
+  and `scripts/test_safe_push_times.json`. No check is weakened.

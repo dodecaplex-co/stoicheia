@@ -315,7 +315,7 @@ Review the generated differences and commit them with their sources, so that reg
 leaves them unchanged and the `git status` line prints nothing. Five more jobs run on
 their own, each in isolation. The first three have direct local commands; the next two
 commands below run the acceptance job's tests and checklist without its CI comparison, and
-the last two run the `safe-push-tests` job's:
+the last three run the `safe-push-tests` check's, whole and then one shard as CI runs it:
 
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
@@ -328,7 +328,8 @@ python3 -I tests/test_check_acceptance.py   # CI's `acceptance` job: the compari
 # After lake build, lake build Audit and Facts.lean, the checklist run:
 python3 scripts/check_acceptance.py --output "${RUNNER_TEMP:-/tmp}/acceptance/report.md" --json "${RUNNER_TEMP:-/tmp}/acceptance/verdicts.json"
 python3 -m pip install -r scripts/requirements-test_safe_push.txt
-python3 scripts/test_safe_push.py      # CI's `safe-push-tests` job: no Lean
+python3 scripts/test_safe_push.py      # CI's `safe-push-tests` check, every test: no Lean
+python3 scripts/test_safe_push.py --shard 3/7   # its third shard of seven, as CI runs it
 ```
 
 `RUNNER_TEMP` supplies GitHub Actions' temporary directory; the fallback writes under
@@ -346,43 +347,58 @@ script, from the base commit, but GitHub takes the workflow file itself from the
 request, which could change it, so the job only shows the hold: the authority is the merge
 gate, which reads the issues again when the coordinator merges (section 10).
 
-The `safe-push-tests` job runs `python3 scripts/test_safe_push.py`, the tests of the gate
-every pull request lands through (section 10), on each pull request that changes
+The `safe-push-tests` check runs `python3 scripts/test_safe_push.py`, the tests of the
+gate every pull request lands through (section 10), on each pull request that changes
 `scripts/`, `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`,
 `.github/` (the pull request template among them) or this page: the check inputs
 safe_push guards (its `CHECK_INPUTS`), the workflows, and this page, whose first command
-block the tests compare with safe_push's `CHECKS` and the `check` job. It decides with
-`git diff --name-only` from the pull request's base to its head, with three dots, so that
-only the pull request's own changes count; an empty base or head, or a comparison that
-fails, fails the job. On any other pull request it passes at once and says why; on a
-push it is skipped. Those paths are not all the tests read: they also read content
-(`heath/I/01.md`, the decisions page, `docs/briefs/book-I.md`, `docs/program.toml`,
-`docs/reading.md` and `facts.json`) and run `check_fidelity.py` and `render.py` over the
-whole tree, so a pull request that changes only content can still break them, and the
-next run of the job shows it. The tests need Git with the whole history and the pinned
-PyYAML, but no Lean and no network. They take about seven minutes on a quiet machine and
-have taken 35 on a busy one; `FullChecks`, the one test that needs Lean, is skipped
-without `STOICHEIA_SLOW_TESTS=1`, there as anywhere.
-The job reads the repository with no other permission, and its checkout keeps no token.
+block the tests compare with safe_push's `CHECKS` and the `check` job. Its first job,
+`safe-push-paths`, decides with `git diff --name-only` from the pull request's base to
+its head, with three dots, so that only the pull request's own changes count; an empty
+base or head, or a comparison that fails, fails the check. On any other pull request the
+check passes at once and says why; on a push it is skipped. Those paths are not all the
+tests read: they also read content (`heath/I/01.md`, the decisions page,
+`docs/briefs/book-I.md`, `docs/program.toml`, `docs/reading.md` and `facts.json`) and run
+`check_fidelity.py` and `render.py` over the whole tree, so a pull request that changes
+only content can still break them, and the next run of the check shows it. The tests need
+Git with the whole history and the pinned PyYAML, but no Lean and no network. They take
+about seven minutes on a quiet machine and have taken 35 on a busy one; in a single job
+they took 37.7 and 45.4 minutes on GitHub's runners, and once ran past its 60-minute
+limit. So CI runs them as seven shards side by side
+([#233](https://github.com/jackChallis/stoicheia/issues/233)): the `safe-push-shards`
+job's matrix runs `python3 scripts/test_safe_push.py --shard K/7` for each K from 1 to 7,
+and the `safe-push-tests` job, which gives the check its name, passes only when every
+shard passed, failing when a shard failed, was cancelled or was skipped. Every test still
+runs on each such pull request, in exactly one shard: `--shard` lists the tests with
+unittest's own loader, so that a new test is never missed, and deals them out by the
+seconds each took on a GitHub runner, kept in `scripts/test_safe_push_times.json`, the
+heaviest first, each to the shard with the least time so far. By those times each shard
+takes about five and a half minutes. A test the file does not name weighs the median, and
+each shard's log names it; the times are refreshed from a CI run's logs when the shards
+drift apart. To run one shard as CI does, give its number and the count, as in
+`python3 scripts/test_safe_push.py --shard 3/7`; without `--shard` the whole suite runs.
+`FullChecks`, the one test that needs Lean, is skipped without `STOICHEIA_SLOW_TESTS=1`,
+there as anywhere. The three jobs read the repository with no other permission, and their
+checkouts keep no token.
 
 `scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on
 the head commit of every pull request (section 10), so a change to them is made there too,
 and in the CI workflow. It leaves the `formal-model` job to CI on purpose, since it
 fetches Mathlib's prebuilt files
 ([model/README.md](../model/README.md#the-ci-job)), the `acceptance` job, since it builds
-main beside the pull request, and the `safe-push-tests` job, whose full suite would hold
+main beside the pull request, and the `safe-push-tests` check, whose full suite would hold
 up every pre-flight. Its merge gate refuses when any reported check fails, is
 cancelled or is still running, apart from the `release-gate` job of the "Release gate"
 workflow on an ordinary pull request, even if a run remains from before its `release`
 label was removed. It requires a passing run of each of the five checks that main's
 ruleset requires, `check`, `model`, `negative`, `formal-model` and `acceptance`, the names
 in its `REQUIRED_CHECKS`: a required check that is missing, or whose every run was
-skipped, holds the merge. Main's ruleset does not require `safe-push-tests`, whose
-failing run holds a merge through the merge gate alone. GitHub uses the ruleset when
-merging, and there the two differ, for requiring `acceptance` does not by itself prove
-that the pull request's checklist ran: the workflow also runs on pushes, where that job
-is conditionally skipped, and GitHub accepts a skipped job even when it is required
-([GitHub documentation](https://docs.github.com/en/pull-requests/reference/status-checks)).
+skipped, holds the merge. Main's ruleset does not require `safe-push-tests` or its
+shards, whose failing runs hold a merge through the merge gate alone. GitHub uses the
+ruleset when merging, and there the two differ, for requiring `acceptance` does not by
+itself prove that the pull request's checklist ran: the workflow also runs on pushes,
+where that job is conditionally skipped, and GitHub accepts a skipped job even when it is
+required ([GitHub documentation](https://docs.github.com/en/pull-requests/reference/status-checks)).
 The merge gate does not count a skipped run as a pass, so it waits for the pull request's
 own run of `acceptance` to pass.
 The ruleset and the remaining merge requirements are in
@@ -1015,5 +1031,5 @@ cases include unfinished work left unwritten, closed or unlabelled issues, open 
 issues, the release held by an open blocker or an unreadable reply, and an ordinary pull
 request merging without reading the blockers;
 `STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and all. CI's
-`safe-push-tests` job runs the tests, without that run, on each pull request that changes
-one of the paths section 8 lists.
+`safe-push-tests` check runs the tests, in seven shards and without that run, on each pull
+request that changes one of the paths section 8 lists.

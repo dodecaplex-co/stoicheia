@@ -288,40 +288,38 @@ jobs:
           name: acceptance
           path: ${{ runner.temp }}/acceptance/
 
-  safe-push-tests:
-    # scripts/test_safe_push.py, the tests of the gate every pull request lands through
-    # (docs/WORKFLOW.md, sections 8 and 10), on each pull request that changes scripts/,
-    # tests/, Certificate/, review/SCHEMA.md, review/terms.toml, .github/ (the pull request
-    # template among them) or docs/WORKFLOW.md: the check inputs safe_push guards (its
-    # CHECK_INPUTS, the gate's code and the tests among them), the workflows, and the page
-    # whose section 8 the tests compare with safe_push's CHECKS and the `check` job. On
-    # any other pull request the job passes at once and says why; on a push it is skipped.
+  safe-push-paths:
+    # The `safe-push-tests` check, in three jobs (#233). scripts/test_safe_push.py, the
+    # tests of the gate every pull request lands through (docs/WORKFLOW.md, sections 8 and
+    # 10), runs on each pull request that changes scripts/, tests/, Certificate/,
+    # review/SCHEMA.md, review/terms.toml, .github/ (the pull request template among them)
+    # or docs/WORKFLOW.md: the check inputs safe_push guards (its CHECK_INPUTS, the gate's
+    # code and the tests among them), the workflows, and the page whose section 8 the tests
+    # compare with safe_push's CHECKS and the `check` job. This job decides whether it
+    # runs; safe-push-shards runs it, whole, in shards side by side; and safe-push-tests,
+    # the check's name, passes only when every shard passed, or at once, saying why, on any
+    # other pull request. On a push all three are skipped.
     # Those paths are not all the tests read: they also read content (heath/I/01.md, the
     # decisions page, docs/briefs/book-I.md, docs/program.toml, docs/reading.md and
     # facts.json) and run check_fidelity.py and render.py over the whole tree, so a pull
     # request that changes only content can still break them, and the next run shows it.
-    # The tests need Git with the whole history, but no Lean and no network: FullChecks,
-    # which needs Lean, is skipped without
-    # STOICHEIA_SLOW_TESTS=1, as it is anywhere. The pre-flight leaves this job to CI, and
-    # main's ruleset does not require it; a failing run still holds the merge, for the
-    # merge gate refuses while any check fails.
+    # The pre-flight leaves this check to CI, and main's ruleset does not require it; a
+    # failing run, of a shard or of safe-push-tests, still holds the merge, for the merge
+    # gate refuses while any check fails.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    # About seven minutes on a quiet machine, but 35 on a busy one: room to spare.
-    timeout-minutes: 60
+    timeout-minutes: 10
+    outputs:
+      run: ${{ steps.paths.outputs.run }}
     steps:
       - uses: actions/checkout@v5
         with:
-          # The tests clone this repository, and the next step needs the base commit.
+          # The next step needs the base commit.
           fetch-depth: 0
-          # No token stays in .git/config while the pull request's code runs.
+          # No token stays in .git/config.
           persist-credentials: false
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
 
       - name: Decide whether the pull request changes safe_push's check inputs, .github/ or docs/WORKFLOW.md
         id: paths
@@ -330,7 +328,7 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         # Three dots: what the pull request changes since it left main, as GitHub's list of
         # files changed shows it. An empty base or head, or a comparison that fails, fails
-        # the job; it never skips.
+        # the job, and so safe-push-tests; it never skips.
         run: |
           : "${BASE_SHA:?}" "${HEAD_SHA:?}"
           changed=$(git diff --name-only "$BASE_SHA...$HEAD_SHA" -- \
@@ -344,10 +342,81 @@ jobs:
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
+  safe-push-shards:
+    # The whole of scripts/test_safe_push.py, in seven shards side by side. In one job it
+    # took 37.7 and 45.4 minutes on GitHub's runners, and once ran past its 60-minute limit.
+    # `--shard K/N` lists the tests with unittest's own loader and deals them out by the
+    # seconds each took on a GitHub runner (scripts/test_safe_push_times.json), so that
+    # each test runs in exactly one shard: by those times each shard takes about five and a
+    # half minutes, its clone of the repository included. The tests need Git with the whole
+    # history and the pinned YAML parser, but no Lean and no network: FullChecks, which
+    # needs Lean, is skipped without STOICHEIA_SLOW_TESTS=1, as it is anywhere.
+    needs: safe-push-paths
+    if: needs.safe-push-paths.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # About six minutes by the times measured, more on a busy runner: room to spare.
+    timeout-minutes: 30
+    strategy:
+      # Every shard runs to its end, so that one failing hides none of the others'.
+      fail-fast: false
+      matrix:
+        # 1 to N, each once: strategy.job-total, which each shard is given as N, is N too.
+        shard: [1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # The tests clone this repository.
+          fetch-depth: 0
+          # No token stays in .git/config while the pull request's code runs.
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Install the pinned YAML parser the tests read the workflow with
-        if: steps.paths.outputs.run == 'true'
         run: python3 -m pip install -r scripts/requirements-test_safe_push.txt
 
-      - name: Check the gate every pull request lands through, guard by guard
-        if: steps.paths.outputs.run == 'true'
-        run: python3 scripts/test_safe_push.py
+      - name: Check the gate every pull request lands through, guard by guard, one shard of the tests
+        run: python3 scripts/test_safe_push.py --shard ${{ matrix.shard }}/${{ strategy.job-total }}
+
+  safe-push-tests:
+    # The check, by its old name: it passes at once when safe-push-paths finds nothing the
+    # tests guard changed, and otherwise only when the shards' result is success, so that a
+    # shard that failed, was cancelled or was skipped fails it. It runs whatever happened
+    # before it (always()), so that it never passes by being skipped.
+    needs: [safe-push-paths, safe-push-shards]
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 5
+    steps:
+      - name: Pass only when every shard passed, or when the pull request changes none of those paths
+        env:
+          PATHS: ${{ needs.safe-push-paths.result }}
+          RUN: ${{ needs.safe-push-paths.outputs.run }}
+          SHARDS: ${{ needs.safe-push-shards.result }}
+        run: |
+          if [ "$PATHS" != success ]; then
+            echo "safe-push-paths, which decides whether the tests run, ended '$PATHS', not success."
+            exit 1
+          fi
+          if [ "$RUN" = false ]; then
+            echo "The pull request changes nothing under scripts/, tests/, Certificate/ or .github/, nor review/SCHEMA.md, review/terms.toml or docs/WORKFLOW.md, so scripts/test_safe_push.py does not run."
+            echo "Its tests also read content elsewhere: if this pull request breaks them, the next run shows it."
+            exit 0
+          fi
+          if [ "$RUN" != true ]; then
+            echo "safe-push-paths gave no answer ('$RUN'), so whether the tests had to run is unknown."
+            exit 1
+          fi
+          case "$SHARDS" in
+            success) echo "Every shard of scripts/test_safe_push.py passed." ;;
+            failure) echo "The shards ended in failure: a shard failed, and its log names the test."; exit 1 ;;
+            cancelled) echo "The shards ended cancelled: a shard was cancelled, so not every test ran."; exit 1 ;;
+            skipped) echo "The shards were skipped, though the pull request changes what they test, so no test ran."; exit 1 ;;
+            *) echo "The shards ended '$SHARDS', which is not success."; exit 1 ;;
+          esac
