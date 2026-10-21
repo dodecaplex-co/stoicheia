@@ -3537,9 +3537,8 @@ train C6c, recording each protected path that the merge changes, as the integrat
 lists them.
 
 - **III.30's halves, approved, proved and registered (#67).** The owner approved
-  `Prop30.halves` on 20 October 2026, in the decisions of 06:30 that approved everything
-  then pending. Its statement, staged in [brief 0006](0006-statements.md) ("Addition, 19
-  October 2026"), is proved with its type unchanged, immediately after `Prop30` in
+  `Prop30.halves` on 20 October 2026. Its statement, staged in [brief 0006](0006-statements.md) ("Addition, 19
+  October 2026"), is proved with its type unchanged, after `Prop30` in
   [`Elements/BookIII/Prop30.lean`](../../Elements/BookIII/Prop30.lean), with three
   helpers of its own, `Prop30.on_chord`, `Prop30.not_within` and `Prop30.not_vertical`.
   It is registered in [`Elements/Companions.lean`](../../Elements/Companions.lean) as the
