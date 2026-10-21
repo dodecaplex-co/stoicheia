@@ -506,6 +506,9 @@ other forbidden commands on an allowed generator call's line or in its arguments
 options with no space before the guillemet, `#eval`, `#exit` and `#guard_panic` closed up
 to the word after them, and `#guard_msgs` with `drop`, with `substring`, and under a
 docstring that pins an error, each in each of its forms, in a scratch copy of I.1's file;
+forbidden commands and `axiom` closed up to decimal, hexadecimal, scientific and
+underscore-separated numbers, after both an ordinary projection and a declared notation
+ending in `.`, with controls that preserve ordinary projections;
 the same pin at a new file beside each file of its allow-list, at each file's name in the
 other's folder, in `Audit/` and in `Staging/`, and a pin whose `error:` ends its line;
 a proposition imported by Book Zero; a `sorry` in a
@@ -548,8 +551,12 @@ two exceptions: the generator `run_cmd` allowance in `model/Check.lean` and
 `MODEL_CHECK_RUN_CMD` names that allowance in the script; it exempts only `run_cmd`,
 so its arguments and any further command on the line are still scanned. Book Zero's
 import rule and the placement policy remain confined to `Elements/`. It reads
-comments and literals as Lean's tokenizer does, so a string cannot hide a command from it
-by opening a comment or ending an attribute's brackets. Beyond that it reads words, not
+comments, literals and number endings as Lean 4.35's tokenizer does, so a string cannot
+hide a command by opening a comment or ending an attribute's brackets, and a word closed
+up to a number remains visible. An adjacent numeric projection stays a projection; where
+a declared `.` notation makes a longer number the competing reading, the longer boundary
+stays visible too. Whitespace and comments end projection adjacency, as they do in Lean.
+Beyond that it reads words, not
 Lean's grammar nor the tokens a file declares, so it catches a slip but not a command
 disguised from it on purpose, nor an attribute it does not list: review still reads every
 staged file, audit lemma and model file. In `Elements/` the certificate reads the axioms

@@ -4001,15 +4001,22 @@ findings:
   is a field, and `0xA`, `1e5`, `1.5` or `1_0` before it, and `1axiom planted : False`
   declares an axiom. `read_lean` read `\d[\w.]*` as one number, and an identifier's `.`
   before a digit as part of it, so the scan's `\b` before `set_option` and `axiom` found
-  no boundary. A number now ends where Lean's `numberFnAux` ends it, a field after a
-  single `.` is its digits alone, and either, with a letter, a digit or `_` just after it,
-  is blanked, so every pattern of `FORBIDDEN` and `AXIOM` sees the word after it begin.
-  No tracked `.lean` file reads differently. One refusal goes, rightly: a raw string
-  closed up to a number, as in `infixl:65r#"{x"# => Nat.add`, which Lean builds, was read
-  as a plain string after the number `65r` and refused as one the scan could not read for
-  certain; it is now read as Lean reads it, a raw string, and passes. The set_option plant
-  gains five such spellings and, not to be refused, a name with a digit before
-  `set_option` and fields and numbers in plain use.
+  no boundary. A number now ends where Lean's `numberFnAux` ends it. After an adjacent
+  `.`, an ordinary projection field ends at its digits, preserving `p.1.succ`,
+  `(·.2.toList)` and projections after `⟩`; but a declared `.` notation can make a
+  scientific or underscore-separated number the longer reading, so that longer boundary
+  is kept. Whitespace and comments clear the projection state, since Lean requires a
+  projection to be adjacent on both sides. A number or field with a letter, a digit or
+  `_` just after it is blanked, so every pattern of `FORBIDDEN` and `AXIOM` sees the word
+  after it begin. No tracked `.lean` file reads differently. One refusal goes, rightly: a
+  raw string closed up to a number, as in `infixl:65r#"{x"# => Nat.add`, which Lean
+  builds, was read as a plain string after the number `65r` and refused as one the scan
+  could not read for certain; it is now read as Lean reads it, a raw string, and passes.
+  The set_option plant
+  covers numbers and fields of each form, dot notation beside whitespace or a block
+  comment, ambiguous adjacent dot notation, and the corresponding harmless numbers and
+  projections. It also keeps names with a digit before `set_option` and the unspaced plain
+  names `set_optiondebug.skipKernelTC` and `set_optiondoc.verso`.
 
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains five plants,
   which plant each closed-up spelling, each form of `drop`, the closed-up `#eval`,
@@ -4025,12 +4032,11 @@ findings:
   fails if check_fidelity's allow-list differs from the one it writes out. The
   forbidden-command plant's commands gain `#guard_panic`. Run with origin/main's check
   (`17369f92`, whose `check_fidelity.py` is that of `0a05f96f`), all five fail: that
-  scan misses the five closed-up spellings, all eleven forms of `drop`, all five
-  closed-up commands, all nine forms of `substring`, all seven pins and the pin at the
-  four new files (as first run; the set_option plant's two cases after an opener and its
-  three kept lines, and the pin plant's eighth pin and two further files, came after
-  review), and catches only the three spaced spellings. With this one, all five pass,
-  and a copy of the scan with any one of these rules undone fails its test.
+  scan misses the new closed-up spellings and commands, every planted form of `drop` and
+  `substring`, and the error pins outside the allow-list, while catching only the spaced
+  set_option spellings. Review then added the comment-opener, exact allow-list and
+  number/projection boundary cases described above. With this scan all five plants pass,
+  and undoing any one of their rules makes its plant fail.
 
   [FORMALIZATION](../FORMALIZATION.md), section 7, the list's one home, now names each of
   these. The protected files this changes are `scripts/check_fidelity.py` and

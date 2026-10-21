@@ -1103,11 +1103,13 @@ def lake_links() -> None:
 # `/-/-` or `/--/`; with them, a guillemet after a space, a tab (which Lean refuses on its
 # own) and a line break, which the scan caught before; and the command closed up to a
 # number or a field before it, decimal, hexadecimal, scientific or with `_`, which Lean ends
-# before the command, including numbers after notation ending in `.`. Each is planted as
-# (the spelling check_fidelity.py names, a line of Lean). SET_OPTION_KEPT holds what the rule
-# does not refuse: the command inside a nested comment, `set_optiondebug.skipKernelTC` and
+# before the command, including numbers after notation ending in `.` and with whitespace or
+# a block comment breaking projection adjacency. Each is planted as (the spelling
+# check_fidelity.py names, a line of Lean). SET_OPTION_KEPT holds what the rule does not
+# refuse: the command inside a nested comment, `set_optiondebug.skipKernelTC` and
 # `set_optiondoc.verso`, with neither a space nor a guillemet, which Lean reads as one name,
-# a name with a digit before `set_option`, and fields and numbers in plain use.
+# a name with a digit before `set_option`, and fields and numbers in plain use. The explicit
+# read_lean cases below preserve ordinary projections after an identifier, `·` and `⟩`.
 SET_OPTION_SPELLINGS = (
     ("set_option«debug».",
      "set_option«debug».skipKernelTC true in theorem planted_closed : True := trivial"),

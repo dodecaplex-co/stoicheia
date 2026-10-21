@@ -279,9 +279,13 @@ def check_fidelity() -> None:
 # a raw string with `r`, any `#`s and `"`, a character literal with `'`; a number with a
 # digit, so that the `'` after one begins a character literal. A string just after one of
 # INTERPOLATED is read with its `{…}` holes, as Lean reads it.
-# An identifier's parts are joined by a `.` before a word character other than a digit:
-# Lean reads `p.1` as `p` and the field `.1`, its digits alone, after a projection `.`
-# (FIELD).
+# An identifier's parts are joined by a `.` before a word character other than a digit.
+# After a term, an adjacent `.` can begin a projection field: Lean reads `p.1` as `p` and
+# the field `.1`, its digits alone (FIELD). It can also be a declared notation token. When
+# the number after it runs past FIELD through `_` or an exponent, keep NUMBER's longer
+# boundary, which is the reading Lean's longest parser can select for that notation; an
+# ordinary projection such as `p.1.succ` keeps FIELD. Whitespace or a comment ends the
+# adjacency on which a projection depends.
 # A number ends where Lean 4.35's tokenizer ends it (its `numberFnAux`): binary, octal,
 # hexadecimal or decimal digits, `_` between them, and a decimal's point and exponent,
 # never a `..` after it. Lean reads `1set_option` as `1` and `set_option`, and
