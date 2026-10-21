@@ -33,8 +33,9 @@
    is read like any other; Mathlib imports are allowed. Only in `model/Check.lean` and `model/Check/`, `run_cmd` may be the first
    word on its line followed by `Check.Generator.<ident>` or
    `(Check.Generator.<ident>`, since those files run the generator. Every other command
-   and attribute on the list is still refused there. The model's independent kernel
-   replay, the other half of #121, remains open.
+   and attribute on the list is still refused there. The other half of #121, the model's
+   compiled declarations replayed through Lean's kernel apart from the build, is
+   `check_model_kernel.py`'s, in CI's `formal-model` job.
 5. Placement, Euclid's application of one figure to another (brief 0006): outside its
    own files, `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`, no
    Lean under `Elements/` names `placement` or the `Placement` namespace but III.24's
