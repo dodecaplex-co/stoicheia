@@ -487,14 +487,19 @@ stand after a string, a raw string or a character literal holding `/-`, `-/`, `]
 and one in an interpolated string's hole, and a string whose braces Lean could read as
 code is planted too. The source scan names each finding's file and line, except for
 symbolic links to files or directories in the scanned trees and root files, which are
-refused by their paths and never followed, a link at `model/.lake` among them. A
-complete book's missing figure or mishnah has no planted break yet. The tests also check
+refused by their paths and never followed, a link at `model/.lake` among them. I.1's
+figure, idea figure and mishnah are each removed in turn, and the fidelity check names
+the one missing, since Book I is complete. Past the scan, a copy of I.1 outside the tree,
+with `set_option debug.skipKernelTC true` and a `run_cmd` that adds `True.intro` as a
+proof of `False`, is compiled over I.1's `.olean`, and leanchecker's replay (section 9)
+must refuse that declaration by name. The tests also check
 that generator calls first on their line are allowed in `model/Check.lean` and
 `model/Check/`, that an axiom in a `.lake` folder of `model/Model/` or `model/Check/` is
 caught while one in `model/.lake` is not read, that a link named `.lake`, to a
 directory, a file or nothing, is refused in `model/`, `model/Model/` and `model/Check/`,
 and that the unplanted tree passes. They plant source files in place, the `.lake` links
-in small trees of their own, and copy only `facts.json`, never `model/.lake`.
+in small trees of their own, and copy only `facts.json` and that one copy of I.1, never
+`model/.lake`.
 
 The first two policies hold in `Staging/` (section 6), `Audit/` and `model/` as well,
 with the model's Check allowance above. Nothing there reaches the certificate, so the
@@ -514,8 +519,22 @@ by opening a comment or ending an attribute's brackets. Beyond that it reads wor
 Lean's grammar nor the tokens a file declares, so it catches a slip but not a command
 disguised from it on purpose, nor an attribute it does not list: review still reads every
 staged file, audit lemma and model file. In `Elements/` the certificate reads the axioms
-from Lean itself as well. The model's independent kernel replay, the other half of #121,
-is still open.
+from Lean itself as well. In `model/`, the scan reads words and the replay reads proofs:
+after `lake build`, CI's `formal-model` job runs `scripts/check_model_kernel.py`, in which
+leanchecker replays every compiled declaration of the model's `Model` and `Check` libraries
+through Lean's kernel again, apart from the build (#121); a module compiled in the package
+outside those two libraries is an error, by name. That replay runs without `--fresh`, so
+what those modules import is loaded, not replayed; then leanchecker replays the whole
+environment of `Check`, which has no Mathlib, from nothing (`--fresh`). So Lean's own
+library is replayed here as far as `Check` loads it, `Std` and every `Lean` module among it
+(`Check/Generator.lean` has `import Lean`), and so are the library's declarations that
+`Check` imports, which, with `Init`, are `check_kernel.py`'s as well. What `Model` loads
+through Mathlib is loaded, not replayed: Mathlib's declarations, and five of `Lake`'s
+modules outside `Check`'s environment, are left to Mathlib's own checks, on Mathlib's
+toolchain. Its self-test plants a theorem of `False` added without the kernel's check,
+which `lake build` accepts and the check must reject by name, in the model's libraries and
+in a package that `Check` requires
+([model/README.md](../model/README.md#the-ci-job), "The CI job").
 The checks' own Lean, `Certificate/Facts.lean`, which writes `facts.json`, is not
 scanned: it is a protected path ([WORKFLOW.md](WORKFLOW.md), section 10), changed only
 with a decisions entry and a security review.
