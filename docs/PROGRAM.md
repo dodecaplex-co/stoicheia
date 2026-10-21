@@ -207,10 +207,11 @@ is at home in `Elements/BookIII/Prop01.lean`. How work lands is in
   for the presence of a passing run only for the first three, while refusing any reported
   failure or pending check; aligning that local test needs a separate protected-check
   change.
-- **The statements' vocabulary** (settled 17 Oct). The lock holds every word that the
-  axioms' statements or the entries' statements reach: <!-- count:vocabulary -->125<!-- /count -->, the 37 of the axioms and 88
-  that only the statements use (`Touches`, `EqualCircles`, `circumference`, `rect`,
-  `Parallel` and others). A change to one is a decision, as a changed axiom is
+- **The statements' vocabulary** (settled 17 Oct; extended for restricted superposition).
+  The lock holds every word that the axioms' statements or the entries' statements
+  reach: <!-- count:vocabulary -->242<!-- /count -->, including the restricted calculus and its interpretation,
+  as well as `Touches`, `EqualCircles`, `circumference`, `rect`, `Parallel` and others.
+  A change to one is a decision, as a changed axiom is
   ([0002](briefs/0002-decisions.md), [FIELDS.md](../Certificate/FIELDS.md#the-vocabulary)).
   Each later book's definitions join the lock with its statements.
 

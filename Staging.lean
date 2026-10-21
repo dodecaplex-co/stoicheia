@@ -15,7 +15,5 @@ the mixed-angle prototype for III.16 and III.31 (brief 0011). The others:
 
 * `Centre/`: brief 0008's restated propositions, using the rule now in the foundations
   that every circle has a centre, with III.1's construction now in `Elements/` and III.5
-  and III.6 read with crossing and contact within;
-* `Superposition/`: the prototype of a restricted superposition rule (brief 0009), carried
-  as a hypothesis, with its proofs, which the coordinator approved on 18 October 2026.
+  and III.6 read with crossing and contact within.
 -/

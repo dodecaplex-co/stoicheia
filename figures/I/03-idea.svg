@@ -9,7 +9,7 @@
   <line x1="244.0" y1="72.0" x2="318.0" y2="72.0" data-unlettered="the given straight line C, which Heath names by one letter, not by its ends" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
   <circle cx="114.0" cy="158.0" r="4.5" fill="#222222"/>
   <!-- Heath's letters -->
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="114" y="180.6">A</text><text x="197.2" y="176.7">E</text><text x="354" y="180.6">B</text><text x="55.3" y="96.1">D</text>
     <text x="69.5" y="240.7">F</text><text x="281" y="61.6">C</text>
   </g>

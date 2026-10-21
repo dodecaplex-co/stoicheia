@@ -9,12 +9,12 @@ kind = "euclid"
 
 [representation]
 tags = ["centre-given"]
-note = "The circle comes with some centre G, Euclid's supposed centre, and with the two points A, B of the straight line he draws through it at random. The porism, too, is stated of a circle with a centre."
+note = "The circle comes with some centre G, Euclid's supposed centre, a hypothesis every circle meets by `Tacit.exists_centre`, and with the two points A, B of the straight line he draws through it at random. The porism names its centre G."
 
 [overlap]
 rule = "Tacit.exists_centre"
 kind = "step"
-note = "Our foundations assume that every circle has a centre. In `Prop1.construction` the rule supplies a centre only for the proof that D is within the circle, by III.2's argument in `Prop1.within`; that witness supplies none of the constructed points. The bisections, perpendicular straight line and proof that F is the centre remain III.1's work. The statement still supplies the centre G for the reductio."
+note = "Our foundations assume that every circle has a centre. In `Prop1.construction` the rule supplies a centre only for the proof that D is within the circle, by III.2's argument in `Prop1.within`; that witness supplies none of the constructed points. The bisections, perpendicular straight line and proof that F is the centre remain III.1's work. The statement's hypothesis that the circle has some centre, which every circle meets by the rule, supplies the centre G for the reductio."
 
 [[passage]]
 at = "Let a straight line AB be drawn through it at random"
