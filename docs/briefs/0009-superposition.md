@@ -630,8 +630,8 @@ The marker change made I.4's and I.8's records stale; an independent reader read
 again and stamped them at `0085b443`. No attributable handback identifies the review
 stage and workflow for the claimed reading at `bd86a7b6`, so the required integration
 review remains unresolved and the records are not stamped at that revision. The pages
-were regenerated on the restricted-rule branch before the A1 merge. That earlier
-regeneration and those record readings do not validate the combined revision.
+show those attributable earlier review commits. Regenerating them from the records does
+not validate the combined revision.
 
 ## Evidence before landing
 
