@@ -3294,6 +3294,15 @@ findings:
   `radius_ne_zero`), and the fixture needs a locked rule that III.1 uses neither before nor
   after it. Every test case, exact replacement, count decrement and rejection expectation
   remains in place.
+- **The style check's scope test, made ready for the second axiom retirement.**
+  [`tests/test_check_style.py`](../../tests/test_check_style.py)'s case that a rule no
+  proposition page shows is outside the rendered-docstring scope used
+  `Tacit.exists_point_inside_circle`; after the second retirement I.1 and every entry
+  after it rest on that rule, so the page shows it and the case would fail. The case now
+  names Circle 3, `Tacit.outside_of_between`, which has a docstring and on which
+  `scripts/check_fidelity.py` forbids every entry to rest, so no page can show it before
+  the retirement or after. The case still asserts that a rule with a docstring is left out
+  of the scope when no page shows it; nothing else changes.
 - **Thirty-one more axioms retired, 79 to 48.** The owner
   decided on 19 October 2026: "Please do both. 79 is rather large with so many books in
   front of us." That is, the eight above, and then the largest further set of
@@ -3301,7 +3310,7 @@ findings:
   stay explicit assumptions even where they are derivable, and no certificate entry may
   rest on Circle 2 or Circle 3 (`Tacit.inside_of_between`, `Tacit.outside_of_between`).
   On 20 October the owner approved landing each retirement as three pull requests; this is
-  the second of the second, after the two preparations above. An exact search over every
+  the second of the second, after the three preparations above. An exact search over every
   checked derivation, the earlier search's and a second search's that avoids Circle 3, found a
   largest set of 31; it is a maximum over the derivations found, not a proof that no
   smaller foundation exists. Among the maximum sets, this one keeps the most of System E's
@@ -3403,12 +3412,6 @@ findings:
   [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) keeps
   all 29 of main's expectations, with the measured counts of III.1 and its porism now 38,
   and adds the four pins above, 33 in all.
-  [`tests/test_check_style.py`](../../tests/test_check_style.py) changes one case: its
-  rendered-docstring test took `Tacit.exists_point_inside_circle` as a locked rule that no
-  proposition page shows, and after the second wave I.1 and the propositions after it rest
-  on that rule through the proved `centre_inside`. The case now takes Circle 3,
-  `Tacit.outside_of_between`, which has a docstring and on which `check_fidelity.py` lets
-  no entry rest; it still checks a rule shown and a rule not shown.
   `model/Model/Laws.lean`, `model/Check/Laws.lean` and `model/Model/Assembly.lean` were
   written again by the generator: the 48 laws reach 152 words of the vocabulary, the 153
   of main less `LineMeetsCircle`. Both `lock.sha256` files keep main's comments and are
