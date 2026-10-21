@@ -997,6 +997,12 @@ are no longer staged. `centre-given` has left the Book III records; the proposed
 `Prop30.halves` remains staged separately, awaiting the owner's approval, with no proof
 or companion registration.
 
+**21 October 2026, a correction to the sentence above.** `Prop30.halves` is no longer
+staged. The owner approved it on 20 October 2026; it is proved in
+`Elements/BookIII/Prop30.lean` and registered as the companion "III.30 halves", and
+`Staging/Halves/Prop30.lean` is deleted. The note after its Addition, under stage 3, gives
+the route.
+
 ## Stage 3: arcs and segments
 
 ### The words
@@ -1551,6 +1557,41 @@ The two membership equivalences need a separate argument from plane separation a
 incidence, with III.2 providing the relevant chord facts. Pointwise division is the main
 unproved obligation. The staged `sorry` establishes only that the proposed type elaborates;
 it proves none of these claims. No proof or certificate is assigned before approval.
+
+**21 October 2026: approved, proved and registered.** The owner approved this statement on
+20 October 2026, in the decisions of that day at 06:30, which approved everything then
+pending. It is proved, with the type above unchanged, immediately after `Prop30` in
+`Elements/BookIII/Prop30.lean`, and registered in `Elements/Companions.lean` as the
+companion "III.30 halves", which the record `review/III/30.toml` lists.
+`Staging/Halves/Prop30.lean` and its import in `Staging.lean` are deleted. The route
+taken is the one proposed:
+
+- Q and R as above, by `exists_oppositeSidesOf` on `hDP.triangle.acb` and
+  `hDP.triangle.cba`; the two arcs are drawn, their ends being on the circle and Q, R off
+  AD, DB.
+- **The I.6 recovery.** `Circumference.standing` makes the two standing measures in
+  `hequal` twice the angles ABD and DAB, so those angles are equal
+  (`Magnitude.eq_of_add_self_eq`), and I.6 in the triangle DAB makes DA equal to DB. This
+  step is not in Euclid's route, and the record's route note discloses it.
+- I.17 makes the angles ABD, DAB together less than two right angles, so each arc is less
+  than a semicircle; with `Circumference.whole`, each is the less of the two that its
+  straight line cuts off, and III.28's `.2.2` congruence clause, in one circle
+  (`EqualCircles.refl`), makes them congruent.
+- The sum is `Circumference.add` with circle points A, D, B and side markers P, Q, R.
+- The pointwise statements are argued by plane separation and III.2, with three helpers
+  of the companion. `Prop30.on_chord`: a point of the circle on a straight line joining
+  two others is one of them (`Prop2.triangle`). `Prop30.not_within`: no point of the
+  circle lies within the triangle of three others (Triple incidence 1, then III.2 and
+  `Prop2.within`). `Prop30.not_vertical`: none lies in the angle vertical to the angle
+  of three others at one of them (Pasch 2 and 4, then III.2 and `Prop2.within`). A point
+  of the given circumference on neither half would lie within the triangle ADB; a point
+  of either half across AB from D would lie in the angle vertical to DAB or to DBA; and a
+  point of both halves other than D would be A or B, or lie in the angle vertical to ADB.
+  `Prop28.sides` decides on which side of each straight line a point falls.
+
+The proof cites `Prop2`, `Prop2.triangle` and `Prop2.within`, and neither Circle 2 nor
+Circle 3, `Triangle.of_onCircle`, `exists_onCircle_sameSideOf` nor
+`exists_onCircle_oppositeSidesOf`; `#print axioms` lists no `sorryAx`.
 
 ## Stage 4: III.14, III.15, III.25
 

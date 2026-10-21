@@ -1,5 +1,3 @@
-import Staging.Halves.Prop30
-
 /-!
 # Staging: statements on their way to `Elements/`
 
@@ -13,10 +11,9 @@ The folders follow the briefs' stages. The statements of brief 0006's stages 2, 
 all proved, have moved to their homes in `Elements/`, and their folders with them; so have
 stage 4b's statements of brief 0007, III.7, III.8 and III.17 with the point of contact, and
 the mixed-angle prototype for III.16 and III.31 (brief 0011). Brief 0008's centre
-restatements have also moved home. The remaining work:
+restatements have also moved home, and so has III.30's halves (brief 0006), proved on
+21 October 2026 as the companion "III.30 halves". The remaining work:
 
-* `Halves/`: III.30's proposed congruence, addition and pointwise division statement,
-  awaiting the owner's approval and not yet assigned for proof (brief 0006).
 * `Superposition/`: the prototype of a restricted superposition rule (brief 0009), carried
   as a hypothesis, with its proofs, which the coordinator approved on 18 October 2026.
 -/
