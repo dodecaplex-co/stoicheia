@@ -3500,17 +3500,21 @@ findings:
   default, switched on, so that a hypothesis `assumption`, `simp_all`, `omega` or `grind`
   uses without naming it counts as used. A file that sets one of the linter's options
   itself, as `set_option linter.unusedVariables false in` or its `.analyzeTactics`, in
-  any spelling, would silence it there, so the sweep refuses that file, exit 2, by its
-  name and line; it refuses a file that does not elaborate too, since Lean reports the
-  rest of such a file and drops the hits of what fails. The linter cannot see three
-  things: a name that begins with `_`, which it never checks; an anonymous `have`, whose
-  `this` it passes over; and the kept name of an `obtain` whose other parts are cleared
-  or unused, as `obtain ⟨KF, -, -⟩`, because the facts it clears mention KF in the tactic
-  states it reads. In the copy the first two are renamed, lines kept, so that Lean judges
-  them; a `_` name that the proof writes again keeps its name, so that the copy still
-  elaborates, and is listed as used by name. The third is found by a textual pass for
-  exactly that shape, which stands aside where automation that uses a hypothesis without
-  naming it follows in the declaration. A case split, as `rcases h with hp | hq`, is
+  any spelling, would silence it there, and so would a `#guard_msgs` around anything but
+  `#print`, which swallows the linter's report with `(drop warning)`, `(drop all)` or a
+  docstring that expects the warning, as a review found; so the sweep refuses that file,
+  exit 2, by its name and line. The `#guard_msgs` that Audit and Staging put around
+  `#print axioms`, to pin what a proof rests on, are not refused. The sweep refuses a file
+  that does not elaborate too, since Lean reports the rest of such a file and drops the
+  hits of what fails. The linter cannot see three things: a name that begins with `_`,
+  which it never checks; an anonymous `have`, whose `this` it passes over; and the kept
+  name of an `obtain` whose other parts are cleared or unused, as `obtain ⟨KF, -, -⟩`,
+  because the facts it clears mention KF in the tactic states it reads. In the copy the
+  first two are renamed, lines kept, so that Lean judges them; a `_` name that the proof
+  writes again keeps its name, so that the copy still elaborates, and is listed as used
+  by name. The third is found by a textual pass for exactly that shape, which stands
+  aside where automation that uses a hypothesis without naming it follows in the
+  declaration. A case split, as `rcases h with hp | hq`, is
   never a discarded result: only Lean's warnings on its names are hits. A statement's own
   unused hypotheses are not listed: they stay review prompts, tagged
   `redundant-hypothesis` where that is the truth. A statement ends at its `:=`, or at the
@@ -3523,13 +3527,15 @@ findings:
   structure, as a part of a conjunction or either way of an iff, and through a fact
   turned round (`.2`, `.mp`, `.symm`), to the helper, since Book I's figure helpers give
   several facts at once (`Prop7.figure` gives four); so a figure of the project's own is
-  named by the helper that gives it, never by its field. It is read on, too, from a step
-  bound to a helper's result, or a part of one taken apart, that a branch returns as it
-  is, as `have hw := pair h; exact hw.2` or `obtain ⟨-, hL⟩ := pair h; exact hL`, which a
-  review found passing; parts put together again by a constructor make a step of the
-  proof's own, and are not read on. A private helper counts, though Lean marks every
-  private name an internal detail. The foundations (axioms, Common Notions, proved rules)
-  are left to the overlap catalogue.
+  named by the helper that gives it, never by its field. A class's law, as
+  `Std.Commutative.comm`, is not read so: it would name the instance, such as Book Zero's
+  for the magnitudes, as the helper, as a review found. It is read on, too, from a step
+  bound to a helper's result, or a part of one taken apart (by a split of one term), that
+  a branch returns as it is, as `have hw := pair h; exact hw.2` or
+  `obtain ⟨-, hL⟩ := pair h; exact hL`, which a review found passing; parts put together
+  again by a constructor make a step of the proof's own, and are not read on. A private
+  helper counts, though Lean marks every private name an internal detail. The foundations
+  (axioms, Common Notions, proved rules) are left to the overlap catalogue.
 
   One rule declares a hit: its record has a passage whose `at` begins a sentence of the
   run of `--` lines over it, the runs read as `check_fidelity.py` reads them, and whose
@@ -3563,23 +3569,29 @@ findings:
   and FORMALIZATION, section 5, allows a checked intermediate fact tied to one.
   `--self-test` plants every kind of hit in Lean outside the tree, among them a `_` name
   written again, an `rcases … with` whose pattern, or whose `with`, is on the next line,
-  a case split, a `suffices`, a `have` in a proof by equations, and a helper behind a
-  whole proof: after a step that feeds it nothing, as a private theorem, in each branch
-  of a case split, through `.1`, `.2` (as Lean's primitive projection too), `.symm`,
-  `.mp` and `.mpr`, as a field of a figure, through a step bound to its result or a part
-  of it taken apart, and stated exactly. Its controls must pass, among them a binding
-  used later, one used by `assumption` or `simp_all`, a pattern's `_` part, a statement's
+  a case split, a `suffices`, a `have` in a proof by equations, one under
+  `warningAsError`, and a helper behind a whole proof: after a step that feeds it
+  nothing, as a private theorem, in each branch of a case split (of a hypothesis, or by
+  excluded middle), behind a reductio's opening, a cast, a `show` or metadata, through
+  `.1`, `.2` (as Lean's primitive projection too), `.symm`, `.mp` and `.mpr`, as a field
+  of a figure, through a step bound to its result, or a part of it or of one of its parts
+  taken apart, and stated exactly. Its controls must pass, among them a binding used
+  later, one used by `assumption` or `simp_all`, a pattern's `_` part, a statement's
   unused hypothesis, a helper fed by a step, a helper's parts put together again, an
   entry citing an entry, an iff applied to the proof's own step, a case split of that
-  step, and a field of a figure the statement gives; a declared join is reported as
-  declared. Its record is read as TOML, and in it a name in a note or a `#` comment, or
-  in the `unused` of a passage over another run, declares nothing, and
+  step, a field of a figure the statement gives, an `if` whose other branch is a rule of
+  the foundations, a proved rule of the foundations, and a class's law; a declared join
+  is reported as declared. Its record is read as TOML, and in it a name in a note or a
+  `#` comment, or in the `unused` of a passage over another run, declares nothing, and
   `check_fidelity.py` must report that last name as unbound; nor does one name declare a
   hit that keeps two, and no helper hit is declared. The sweep must refuse two files,
-  exit 2: one that sets the linter's options in four ways, naming each line, and one that
-  does not elaborate. The self-test needs the library built. CI's `negative` job runs it
-  after its build, then the sweep over `Elements/` as a report (139 files in 7 to 13
-  seconds on a 16-core laptop), and safe_push's `NEGATIVE` list runs the same two; the
+  exit 2: one that silences the linter in six ways, four settings of its options and two
+  `#guard_msgs`, naming each line, and one that does not elaborate; it must not refuse a
+  remark that quotes them, nor a `#guard_msgs` around `#print`; and a run of Lean that
+  fails with no error at a line must fail the sweep too. The self-test needs the library
+  built. CI's `negative` job runs it after its build, then the sweep over `Elements/` as
+  a report (139 files in 7 to 13 seconds on a 16-core laptop), and safe_push's
+  `NEGATIVE` list runs the same two; the
   release gate ([WORKFLOW](../WORKFLOW.md), section 10, step 10) runs it with
   `--fail-on-undeclared` on the release candidate. On main's Lean at `09bc89f3` it lists
   57 hits in Books I to III, none declared, as no record lists `unused` yet; the fixes
@@ -3591,10 +3603,12 @@ findings:
   follows in its declaration, where the textual pass stands aside; a name an `obtain` or
   `rcases` keeps that a later binding writes again, which the textual pass counts as
   naming it; a `_` name inside a pattern or after `intro`; a citation whose result feeds
-  only another idle step, listed by that step alone; and a helper fed by one trivial
-  step, unless its statement is the entry's own. Elements has no `clear`, no
-  `(fun _ => …)` applied and no `_` name in a pattern or after `intro` today, and the
-  sweep finds the same 57 hits there with the stand-aside off.
+  only another idle step, listed by that step alone; a helper fed by one trivial step,
+  unless its statement is the entry's own; and a part of a helper's result returned from
+  a `match` on two or more terms at once. Elements has no `clear`, no `(fun _ => …)`
+  applied and no `_` name in a pattern or after `intro` today; its two entries that split
+  several terms at once, `Prop45.sum` and `Prop14.sum`, split only what their statements
+  bind; and the sweep finds the same 57 hits there with the stand-aside off.
 
   Open: no negative test plants a stale `unused` in a real record yet, to reach
   `check_review`'s failure from end to end. It waits for the stamp-text branch (#77),

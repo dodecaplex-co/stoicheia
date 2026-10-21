@@ -34,7 +34,10 @@ How each is found:
    sets one of the linter's options itself, as
    `set_option linter.unusedVariables false in`, or its `.analyzeTactics`, `.funArgs`
    or `.patternVars`, in any spelling (`«linter».unusedVariables`), would silence it
-   there, so the sweep refuses that file, exit 2, naming it and each such line. The
+   there, and so would a `#guard_msgs` around anything but `#print` (Audit's and
+   Staging's pins of `#print axioms`), which swallows the linter's report with
+   `(drop warning)`, `(drop all)` or a docstring that expects the warning; so the sweep
+   refuses that file, exit 2, naming it and each such line. The
    linter reads a copy of the file, outside the tree, in which two things are renamed,
    lines kept: each anonymous `have` is named `this`, which Lean then checks (it passes
    over the name Lean gives an anonymous `have`), and each `have`, `let` or `obtain`
@@ -58,12 +61,13 @@ How each is found:
 3. **Lean's proof terms** for helpers: one run of Lean, with `import Lean` and `import
    Elements`, reads each entry's proof term past its intros, its `have`, `let` and
    `obtain` steps, its case splits, a reductio's opening, a cast and the parts of an
-   anonymous constructor; from a field of a structure (a part of a conjunction, `.1`,
-   `.2`, either way of an iff, `.mp`, `.mpr`, or a field of a figure, `(fig h).line`,
-   unless the proof's own step is what the field is applied to) or a fact turned round
-   (`.symm`) to the term it is read from, so that `exact (Prop7.figure h).2` is read as
-   `Prop7.figure h`; and from a step, or a part of a split, that a branch returns as it
-   is to the term the step is bound to or the term split, so that
+   anonymous constructor; from a field of a structure, not a class's law (a part of a
+   conjunction, `.1`, `.2`, either way of an iff, `.mp`, `.mpr`, or a field of a figure,
+   `(fig h).line`, unless the proof's own step is what the field is applied to) or a
+   fact turned round (`.symm`) to the term it is read from, so that
+   `exact (Prop7.figure h).2` is read as `Prop7.figure h`; and from a step, or a part of
+   a split of one term, that a branch returns as it is to the term the step is bound to
+   or the term split, so that
    `have hw := Prop7.figure h` then `exact hw.2`, or `obtain ⟨-, hL⟩ := Prop7.figure h`
    then `exact hL`, is read the same way. Parts put together again by a constructor are
    a step of the proof's own, and are not read on. A helper is a theorem or definition
@@ -80,9 +84,12 @@ textual pass stands aside, and a name an `obtain` or `rcases` keeps that a later
 writes again, which the textual pass counts as naming it; a `_` name inside a pattern
 (`obtain ⟨L, hK, _hF⟩`) or after `intro` is not listed; a citation whose result feeds
 only another idle step is listed by that step alone; and a helper fed by one trivial
-step passes, unless its statement is the entry's own. Elements has no `clear`, no
-`(fun _ => …)` applied and no `_` name in a pattern or after `intro` today, and the
-sweep finds the same hits there with the stand-aside off.
+step passes, unless its statement is the entry's own, and so does a part of a helper's
+result returned from a `match` on two or more terms at once. Elements has no `clear`, no
+`(fun _ => …)` applied and no `_` name in a pattern or after `intro` today; its two
+entries that split several terms at once, `Prop45.sum` and `Prop14.sum`, split only
+what their statements bind; and the sweep finds the same hits there with the
+stand-aside off.
 
 **Declared hits.** There is one rule. A hit is declared when the review record of its
 proposition, `review/<book>/NN.toml`, has a `[[passage]]` whose `at` begins a sentence
@@ -120,8 +127,8 @@ Each hit is printed as `file:line: kind: name: why`, a declared one followed by
 `(declared in review/…)`, then a summary for each book. Exits 0 after listing;
 `--fail-on-undeclared` exits 1 when any undeclared hit remains (the release gate,
 docs/WORKFLOW.md, section 10); 2 when the sweep cannot run (no Lean, an unbuilt library,
-a file that does not elaborate or that sets the linter's options itself, a facts.json
-that does not match Lean).
+a file that does not elaborate, that sets the linter's options itself or that captures
+its messages with `#guard_msgs`, a facts.json that does not match Lean).
 
     python3 scripts/sweep_citations.py                       Elements/
     python3 scripts/sweep_citations.py Elements Staging Audit  these trees (or files)
@@ -131,22 +138,28 @@ that does not match Lean).
 `--self-test` writes planted Lean outside the tree, each plant of which must be
 reported: each kind of hit; a `_` name the proof writes again, as used by name; an
 `rcases … with` whose pattern, or whose `with`, is on the next line; a case split's
-names, never `discarded`; a `suffices`; a `have` in a proof by equations; and a helper
-behind a whole proof: after a step that feeds it nothing, as a private theorem, in each
-branch of a case split, through `.1`, `.2` (as Lean's primitive projection too),
-`.symm`, `.mp` and `.mpr`, applied or not, as a field of a figure, through a step bound
-to its result or a part of it taken apart, and, cited by a reductio, stated exactly.
-Its controls must not be reported: a binding used later, one used by `assumption` or
-`simp_all`, a pattern's `_` part, an unused hypothesis of the statement, a helper that
-supplies one step, a helper's parts put together again, an entry that cites another, an
-iff applied to the proof's own step, a case split of that step, a field of a figure the
-statement gives, a match on two terms; and a declared join, reported as declared. Its
-record is read as TOML, and in it only a name in `unused` over its own run declares, and
-only with every name the hit keeps: one in a note or a `#` comment does not, nor one in
-`unused` over another run, which `check_fidelity.unbound_unused` must report; and no
-helper hit is declared. The sweep must refuse, exit 2, a file that sets the linter's
-options (four ways, each line named) and a file that does not elaborate. It exits 1
-naming any plant missed, control reported, binding misread or file not refused. Both it
+names, never `discarded`; a `suffices`; a `have` in a proof by equations; one under
+`warningAsError`, which Lean reports as an error; and a helper behind a whole proof:
+after a step that feeds it nothing, as a private theorem, in each branch of a case split
+(of a hypothesis, or by excluded middle), behind a reductio's opening, a cast (`rw`), a
+`show` or metadata, through `.1`, `.2` (as Lean's primitive projection too), `.symm`,
+`.mp` and `.mpr`, applied or not, as a field of a figure, through a step bound to its
+result, or a part of it or of one of its parts taken apart, and, cited by a reductio,
+stated exactly. Its controls must not be reported: a binding used later, one used by
+`assumption` or `simp_all`, a pattern's `_` part, an unused hypothesis of the statement,
+a helper that supplies one step, a helper's parts put together again, an entry that
+cites another, an iff applied to the proof's own step, a case split of that step, a
+field of a figure the statement gives, a match on two terms, an `if` whose other branch
+is a rule of the foundations, a proved rule of the foundations, a class's law; and a
+declared join, reported as declared. Its record is read as TOML, and in it only a name
+in `unused` over its own run declares, and only with every name the hit keeps: one in a
+note or a `#` comment does not, nor one in `unused` over another run, which
+`check_fidelity.unbound_unused` must report; and no helper hit is declared. The sweep
+must refuse, exit 2, a file that silences the linter (four settings of its options and
+two `#guard_msgs`, each line named), but not a remark that quotes them nor a
+`#guard_msgs` around `#print`; a file that does not elaborate; and a run of Lean that
+fails with no error at a line (a file that is not there). It exits 1 naming any plant
+missed, control reported, binding misread or file not refused. Both it
 and the sweep need the library built by `lake build`
 and the Lean tools on PATH (`export PATH=$HOME/.elan/bin:$PATH`); the sweep also reads
 facts.json (`lake env lean Certificate/Facts.lean`). Standard library only; Python 3.11
@@ -179,6 +192,10 @@ LINT = ["-Dlinter.unusedVariables=true", "-Dlinter.unusedVariables.analyzeTactic
 # `.funArgs`, `.patternVars` and `.analyzeTactics`), in any spelling, as
 # `«linter».unusedVariables`: it would silence what LINT switches on, so it is refused.
 SILENCING = re.compile(r"(?<![\w'.])set_option\s+«?linter»?\s*\.\s*«?unusedVariables")
+# A `#guard_msgs` around anything but `#print` (the axiom pins of Audit and Staging): with
+# `(drop warning)`, `(drop all)`, or a docstring that expects the warning, it swallows the
+# linter's report.
+GUARDED = re.compile(r"(?<![\w'.])#guard_msgs\b(?:\s*\([^)]*\))?\s+in\s+(?!#print\b)")
 TREES = ("Elements", "Staging", "Audit")
 
 # The kinds of hit, in the order the summary counts them.
@@ -414,15 +431,18 @@ def prepare(src: str, rel: str) -> Copy:
     so that the linter judges them; every line keeps its number. A `_` name that the
     proof writes again in its declaration, as `have _h := …` then `exact _h`, keeps its
     name, so the copy still elaborates: it is used, by name. A file that sets one of the
-    linter's options itself (SILENCING) is refused, by its name and lines."""
+    linter's options itself (SILENCING), or captures its messages with `#guard_msgs`
+    (GUARDED), is refused, by its name and lines."""
     code = code_of(src)
     starts = line_starts(code)
-    silencing = [line_at(starts, m.start()) for m in SILENCING.finditer(code)]
+    silencing = sorted(line_at(starts, m.start()) for p in (SILENCING, GUARDED)
+                       for m in p.finditer(code))
     if silencing:
         lines = src.split("\n")
         shown = "\n".join(f"{rel}:{n}: {lines[n - 1].strip()}" for n in silencing)
-        raise SweepError("a file sets an option of Lean's unused-variables linter, which would "
-                         f"silence the sweep there; remove it:\n{shown}")
+        raise SweepError("a file sets an option of Lean's unused-variables linter, or captures "
+                         "its messages with `#guard_msgs` around anything but `#print`, which "
+                         f"would silence the sweep there; remove it:\n{shown}")
     if RENAMED in src:
         raise SweepError(f"{rel}: the file already uses the name {RENAMED}, which the sweep "
                          "needs")
@@ -622,12 +642,12 @@ def obtained (steps : Array Expr) (e : Expr) : MetaM Bool := do
 /-- Each term that finishes a branch of the proof `e`, with the steps before it. The proof
 is followed past its intros, its `have`, `let` and `obtain` steps, its case splits, a
 reductio's opening, a cast and the parts of an anonymous constructor; from a field of a
-structure (`.1`, `.2`, `.mp`, `.mpr`, `(fig h).line`, unless a step of the proof is what
-the field is applied to) or a fact turned round (`.symm`) to the term it is read from;
-and from a step, or a part of a split, that a branch returns as it is, to the term the
-step is bound to or the term split, so that `have hw := pair h; exact hw.2` and
-`obtain ⟨-, hL⟩ := pair h; exact hL` are each read as `pair h`. `parts` holds each split
-around `e`: the names it binds, and the term split. -/
+structure, not a class's law (`.1`, `.2`, `.mp`, `.mpr`, `(fig h).line`, unless a step of
+the proof is what the field is applied to) or a fact turned round (`.symm`) to the term it
+is read from; and from a step, or a part of a split of one term, that a branch returns as
+it is, to the term the step is bound to or the term split, so that
+`have hw := pair h; exact hw.2` and `obtain ⟨-, hL⟩ := pair h; exact hL` are each read as
+`pair h`. `parts` holds each split around `e`: the names it binds, and the term split. -/
 partial def ends (steps : Array Expr) (parts : Array (Array Expr × Expr)) (e : Expr) :
     MetaM (Array (Array Expr × Expr)) := do
   let e := strip e
@@ -650,7 +670,7 @@ partial def ends (steps : Array Expr) (parts : Array (Array Expr × Expr)) (e : 
     if let .const c _ := e.getAppFn then
       if let some info ← getProjectionFnInfo? c then
         let args := e.getAppArgs
-        if args.size > info.numParams then
+        if !info.fromClass && args.size > info.numParams then
           if (args.extract (info.numParams + 1) args.size).any
               (fun a => steps.any (fun s => a.containsFVar s.fvarId!)) then
             return #[(steps, e)]
@@ -1006,6 +1026,20 @@ theorem plant_equations : ∀ m : Nat, m + 0 = m
     rfl
   | _ + 1 => rfl
 
+/- A remark that quotes Lean's hint, `set_option linter.unusedVariables false in`, or a
+`#guard_msgs (drop warning) in`, is not refused: only code is read. Nor is a `#guard_msgs`
+around `#print`, as Audit pins its axioms. -/
+/-- info: 'SweepSelfTest.plant_intro' does not depend on any axioms -/
+#guard_msgs in
+#print axioms plant_intro
+
+/- Under `warningAsError`, as Audit/Overlaps.lean sets it, the linter reports an error. -/
+set_option warningAsError true
+
+theorem plant_error (a : Nat) : a = a := by
+  have herror : a + 0 = a := rfl
+  rfl
+
 end SweepSelfTest
 """
 
@@ -1238,18 +1272,89 @@ theorem Prop28 {A B : Point} (h : A ≠ B) :
   obtain ⟨hne, hL⟩ := Prop9.figure h
   exact ⟨hL, hne⟩
 
+/-- A helper that does the whole reductio. -/
+theorem Prop29.contra {A B : Point} (h : A ≠ B) (hn : ¬∃ L : Line, OnLine A L ∧ OnLine B L) :
+    False :=
+  hn (Postulate1 A B h)
+
+/-- Plant: a reductio whose contradiction is all the helper's. -/
+theorem Prop29 {A B : Point} (h : A ≠ B) : ∃ L : Line, OnLine A L ∧ OnLine B L :=
+  Classical.byContradiction fun hn => Prop29.contra h hn
+
+/-- Plant: the goal rewritten, a cast, then the helper. -/
+theorem Prop30 {A B : Point} (h : A ≠ B) :
+    (fun X => ∃ L : Line, OnLine X L ∧ OnLine B L) A := by
+  rw [show ((fun X => ∃ L : Line, OnLine X L ∧ OnLine B L) A) =
+      (∃ L : Line, OnLine A L ∧ OnLine B L) from rfl]
+  exact Prop2.figure h
+
+/-- Plant: the goal shown in another form, then the helper. -/
+theorem Prop31 {A B : Point} (h : A ≠ B) :
+    (fun X => ∃ L : Line, OnLine X L ∧ OnLine B L) A := by
+  show ∃ L : Line, OnLine A L ∧ OnLine B L
+  exact Prop2.figure h
+
+/-- Control: an `if`, one branch the helper, the other a rule of the foundations. -/
+theorem Prop32 {A B : Point} (h : A ≠ B) (p : Prop) [Decidable p] :
+    ∃ L : Line, OnLine A L ∧ OnLine B L :=
+  if hp : p then Prop2.figure h else Postulate1 A B h
+
+/-- Control: the whole proof one proved rule of the foundations, Common Notion 1. -/
+theorem Prop33 {a b c : Nat} (h₁ : a = c) (h₂ : b = c) : a = b := CommonNotion1 h₁ h₂
+
+/-- A class of the self-test's own, and an instance of it. -/
+class Prop34.Turn (α : Type) : Prop where
+  turn : ∀ a b : α, a ≠ b → b ≠ a
+
+instance Prop34.inst : Prop34.Turn Point := ⟨fun _ _ h => h.symm⟩
+
+/-- Control: a class's law, which is no field of a figure: its instance is no helper. -/
+theorem Prop34 {A B : Point} (h : A ≠ B) : B ≠ A := Prop34.Turn.turn A B h
+
+/-- Plant: a case split by excluded middle, no step of the proof's, each branch the
+helper. -/
+theorem Prop35 {A B : Point} (h : A ≠ B) (p : Prop) : ∃ L : Line, OnLine A L ∧ OnLine B L :=
+  match Classical.em p with
+  | .inl _ => Prop2.figure h
+  | .inr _ => Prop2.figure h
+
+/-- A helper that gives three facts at once. -/
+theorem Prop36.figure {A B : Point} (h : A ≠ B) :
+    A ≠ B ∧ B ≠ A ∧ ∃ L : Line, OnLine A L ∧ OnLine B L :=
+  ⟨h, h.symm, Postulate1 A B h⟩
+
+/-- Plant: a part of a helper's result taken apart, and one part of that returned as it
+is. -/
+theorem Prop36 {A B : Point} (h : A ≠ B) : ∃ L : Line, OnLine A L ∧ OnLine B L := by
+  obtain ⟨-, hL⟩ := (Prop36.figure h).2
+  exact hL
+
+-- Plant: Prop2's proof with the helper's application wrapped in metadata, which a tactic
+-- may leave in a proof term. It has no place in this file, so its hit is reported at
+-- line 0.
+open Lean Meta in
+run_meta do
+  let ci ← getConstInfo ``Prop2
+  let v ← forallTelescope ci.type fun xs _ =>
+    mkLambdaFVars xs (.mdata {} (mkAppN (.const ``Prop2.figure []) xs))
+  addDecl (.thmDecl { name := `SweepSelfTest.Prop37, levelParams := [], type := ci.type,
+                      value := v })
+
 end SweepSelfTest
 """
 # The shape (SHAPES) each planted entry's helper must be reported with; the controls'
 # helpers must not be reported. Prop7's step, the helper's result returned whole, is read
-# as the helper itself.
+# as the helper itself. Read wrongly, Prop31 and Prop37 would still be reported, but as
+# `restates`, and Prop35 as `unfed`: their shapes are what is checked.
 HELPER_SHAPES = {"Prop2": "whole", "Prop5": "unfed", "Prop7": "whole", "Prop8": "whole",
                  "Prop9": "whole", "Prop10": "whole", "Prop11": "whole", "Prop13": "whole",
                  "Prop14": "whole", "Prop16": "whole", "Prop17": "whole", "Prop18": "whole",
                  "Prop19": "whole", "Prop20": "whole", "Prop21": "whole", "Prop22": "whole",
-                 "Prop23": "whole", "Prop25": "restates"}
+                 "Prop23": "whole", "Prop25": "restates", "Prop29": "whole",
+                 "Prop30": "whole", "Prop31": "whole", "Prop35": "whole", "Prop36": "whole",
+                 "Prop37": "whole"}
 HELPER_CONTROLS = ["Prop3", "Prop4", "Prop6", "Prop12", "Prop15", "Prop24", "Prop26",
-                   "Prop27", "Prop28"]
+                   "Prop27", "Prop28", "Prop32", "Prop33", "Prop34"]
 HELPER_ENTRIES = [f"SweepSelfTest.{e}" for e in
                   sorted([*HELPER_SHAPES, *HELPER_CONTROLS], key=lambda e: int(e[4:]))]
 
@@ -1273,7 +1378,10 @@ EXPECTED = [
     ("unused-binding", "hq2", False),
     ("unused-binding", "hsuf", False),  # `suffices` binds it
     ("unused-have", "heqn", False),   # in a proof by equations
-    ("helper", "SweepSelfTest.Prop2.figure", False),   # Prop2, 5, 7, 14 and 25
+    ("unused-have", "herror", False), # under `warningAsError`, reported as an error
+    ("helper", "SweepSelfTest.Prop2.figure", False),   # Prop2, 5, 7, 14, 25, 30, 31, 35, 37
+    ("helper", "SweepSelfTest.Prop29.contra", False),  # behind a reductio's opening
+    ("helper", "SweepSelfTest.Prop36.figure", False),  # a part of a part, taken apart
     ("helper", "SweepSelfTest.Prop8.hidden", False),   # private, named as written
     ("helper", "SweepSelfTest.Prop9.figure", False),   # `.2`, `.1`, a step's: 9, 13, 19, 21, 22
     ("helper", "SweepSelfTest.Prop10.ne", False),      # its `.symm`
@@ -1288,8 +1396,9 @@ CONTROLS = ["hused", "hline", "hauto", "hsimp", "hidle", "L", "hK", "h", "a", "b
             "hq", "L2"]
 
 # Files the sweep must refuse (SweepError, exit 2). One sets the linter's options itself,
-# in several spellings, on the lines SILENCED_AT names; it elaborates, so that only the
-# refusal stands between it and a quiet pass. The other does not elaborate, and Lean would
+# in several spellings, or captures its messages with `#guard_msgs`, on the lines
+# SILENCED_AT names; it elaborates, so that only the refusal stands between it and a quiet
+# pass. The other does not elaborate, and Lean would
 # drop the hits of what fails while it reports the rest, as hok.
 SILENCED_LEAN = """\
 set_option linter.unusedVariables false in
@@ -1307,10 +1416,27 @@ theorem inner (a : Nat) : a = a := by
   have hinner : a + 0 = a := rfl
   rfl
 
+#guard_msgs (drop warning) in
+theorem guarded (a : Nat) : a = a := by
+  have hguarded : a + 0 = a := rfl
+  rfl
+
+/-- warning: Variable name `hexpected` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly).
+Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _hexpected
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false` -/
+#guard_msgs in
+theorem expected (a : Nat) : a = a := by
+  have hexpected : a + 0 = a := rfl
+  rfl
+
 set_option
   linter.unusedVariables.funArgs false
 """
-SILENCED_AT = [1, 6, 12, 16]
+SILENCED_AT = [1, 6, 12, 16, 28, 33]
 UNELABORATED_LEAN = """\
 theorem elaborated (a : Nat) : a = a := by
   have hok : a + 0 = a := rfl
@@ -1343,9 +1469,16 @@ def self_test() -> int:
         prop = Proposition(1, record["passage"], "the self-test's record")
         hits = sweep([(plant, "SweepPlants.lean")],
                      lambda rel: prop if rel == "SweepPlants.lean" else None,
-                     HELPER_ENTRIES, ["Elements.Foundations.Postulates"], HELPER_PLANTS)
+                     HELPER_ENTRIES, ["Elements.Foundations.Postulates",
+                                      "Elements.Foundations.CommonNotions"], HELPER_PLANTS)
         silenced = refusal(SILENCED_LEAN, Path(tmp) / "SweepSilenced.lean")
         unelaborated = refusal(UNELABORATED_LEAN, Path(tmp) / "SweepUnelaborated.lean")
+        # Lean exits 1 with no error at a line of a file: only the exit code shows it.
+        try:
+            run_lean(Path(tmp) / "SweepMissing.lean", LINT, "a file that is not there")
+            missing = None
+        except SweepError as e:
+            missing = str(e)
     print_hits(hits)
     for kind, name, declared in EXPECTED:
         found = [h for h in hits if h.kind == kind and h.name == name]
@@ -1363,12 +1496,15 @@ def self_test() -> int:
     kf = next((h for h in hits if h.name == "KF"), None)
     if kf and declaring(kf._replace(kind="helper"), PLANTS_LEAN, prop) is not None:
         problems.append("a helper hit is declared by a name in `unused`")
-    if silenced is None or any(f"SweepSilenced.lean:{n}: set_option" not in silenced
+    if silenced is None or any(f"SweepSilenced.lean:{n}: " not in silenced
                                for n in SILENCED_AT):
-        problems.append(f"a file that sets the linter's options is not refused, naming each "
-                        f"of its lines {SILENCED_AT}: {silenced!r}")
+        problems.append(f"a file that sets the linter's options or captures its messages is "
+                        f"not refused, naming each of its lines {SILENCED_AT}: {silenced!r}")
     if unelaborated is None or "could not elaborate" not in unelaborated:
         problems.append(f"a file that does not elaborate is not refused: {unelaborated!r}")
+    if missing is None or "could not elaborate" not in missing:
+        problems.append(f"a run of Lean that fails with no error at a line is not refused: "
+                        f"{missing!r}")
     helpers = [h for h in hits if h.kind == "helper"]
     for entry, shape in HELPER_SHAPES.items():
         mine = [h for h in helpers if h.why.startswith(f"SweepSelfTest.{entry}:")]
@@ -1403,8 +1539,9 @@ def self_test() -> int:
         return 1
     print(f"\n✓ self-test: {len(EXPECTED)} plants reported (only those in `unused` over "
           f"their run as declared), {len(HELPER_SHAPES)} entries with their helper's shape, "
-          f"{len(CONTROLS) + len(HELPER_CONTROLS)} controls passed, a file that sets the "
-          f"linter's options and one that does not elaborate refused, and check_fidelity "
+          f"{len(CONTROLS) + len(HELPER_CONTROLS)} controls passed, a file that silences the "
+          f"linter ({len(SILENCED_AT)} ways), one that does not elaborate and a run of Lean "
+          f"that fails with no error at a line refused, and check_fidelity "
           f"reads {len(BOUND_CASES)} shapes of binding and the stale `unused` name")
     return 0
 
