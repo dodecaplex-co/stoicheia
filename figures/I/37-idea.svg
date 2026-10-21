@@ -15,7 +15,7 @@
     <line x1="45.0" y1="85.0" x2="355.0" y2="85.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
     <line x1="45.0" y1="215.0" x2="355.0" y2="215.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
   </g>
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="145" y="74.2">A</text>
     <text x="320" y="74.2">D</text>
     <text x="80" y="236.2">B</text>
