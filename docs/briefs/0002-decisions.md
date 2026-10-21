@@ -3820,12 +3820,19 @@ findings:
   beside an import of Book Zero, is not named at all.
   [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py), whose
   `CircleRuleTests` already test one of check_fidelity's rules, gains
-  `BookZeroImportTests`: seven tests on a small tree, without Lean, of every planted form;
+  `BookZeroImportTests`: ten tests on a small tree, without Lean, of every planted form;
   text that only holds an import; a comment or a string that hides none; `module`,
   `prelude` and Lean's own modules passing; names the scan cannot read; a proposition
   brought in through two files that import each other; and a file outside Book Zero, which
   rule 3 leaves alone. Against origin/main's check_fidelity (`001620f1`) each of the 19
   forms passes, the plain `import Elements.BookI.Prop01` alone being refused; now all 19
-  are refused. Nothing is loosened, and #197's forbidden-command scan is untouched. The
+  are refused. The shared reader correction also affects rules 2, 4 and 5: nested-comment
+  scanning begins after Lean's initially consumed third character, so overlapping comment
+  boundaries match Lean and doc-comment contents remain comments, while an unterminated
+  `/-` at the end of a file is bounded to the source. `check_rules` and `brought_in`
+  preserve original newlines instead of applying Python's universal-newline translation.
+  Thus #197's forbidden-command scan is changed too, and the newline correction overlaps
+  the lone-carriage-return case recorded in #207; this entry does not record #207 as
+  resolved. The
   protected files changed are `scripts/check_fidelity.py`, `scripts/negative_tests.py` and
   `tests/test_negative_tests.py`.

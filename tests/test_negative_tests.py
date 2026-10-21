@@ -627,6 +627,12 @@ class BookZeroImportTests(unittest.TestCase):
                 b"/- /- nested -/ outer -/ import Elements.BookI.Prop01\n"),
             [self.refused(1)])
 
+    def test_unterminated_comment_entry_at_eof_is_bounded(self):
+        for source, expected in (("/-", "  "),
+                                 ("def x := 1 /-", "def x := 1   ")):
+            with self.subTest(source=source):
+                self.assertEqual(negative.check_fidelity.read_lean(source), (expected, []))
+
     def test_plain_imports_and_lean_s_own_pass(self):
         text = ("module\n\nprelude\npublic import Elements.Figure.Lines\n"
                 "meta import  «Elements».«Foundations».Words\nimport all Init.Data.List.Basic\n")
