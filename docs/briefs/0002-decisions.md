@@ -4003,6 +4003,78 @@ findings:
   `scripts/test_safe_push.py`, `scripts/check_acceptance.py` and
   `tests/test_check_acceptance.py`.
 
+- **A carried passage's helper is named by its kind
+  ([#163](https://github.com/jackChallis/stoicheia/issues/163)).** The sentence on how to
+  read a page's listing said "where a porism is proved as a theorem of its own" for every
+  carried passage that names a `helper`. Once III.25's core moves into Elements, its
+  companion `Prop25.complete` is to carry the step Heath cites as III. 9, and the page would
+  call it a porism. The protected file [`scripts/render.py`](../../scripts/render.py) now
+  finds the entry of facts.json's `attached` that the helper names, written in one of three
+  ways (`Prop16.porism`, `BookIII.Prop16.porism` or `Elements.BookIII.Prop16.porism`), and
+  takes it apart with `heath.parse_ref` (`carried_ref`). The sentence names each such
+  theorem by its kind, "a porism" for a porism, "a companion" for a companion; several
+  read, for example, "a porism and two companions are proved as theorems of their own". It
+  counts theorems, not passages: `Prop25.complete` is to carry the same [III. 9] step in
+  each of III.25's three cases, from "Therefore the circle drawn with centre E", from "D
+  will be the centre of the completed circle" and from "and if we construct, on the
+  straight line BA", and is one companion, as one theorem named two ways is one. A carried
+  helper of any other kind stops the render, naming the proposition, the helper and the
+  three ways render.py reads such a name: a lemma or another proposition that does a step
+  makes a `helper` passage, "Done by" it, and is not a theorem attached to the
+  proposition, so a word for it here would put a passage of the wrong kind on the page.
+  The comment above `PASSAGE_WORD` says the same, and CERTIFICATE.md's key gives *Proved
+  separately* for the kinds the records carry, today "a porism". `use_self_check` gains
+  nine cases, `CARRIED_CASES`: a porism; a companion; a porism with two companions, in the
+  three ways of naming one; one companion named two ways; one porism carrying two
+  passages; that porism beside a companion; and a lemma, another proposition and another
+  proposition's companion, each refused. Against origin/main's render.py (`ac6e5389`)
+  seven of them fail, the companion's read as "a porism", and the two with a porism alone
+  pass. Against this change's first round (`4d261614`), which counted passages, the three
+  that repeat a theorem fail, reading "two companions", "two porisms" and "two porisms and
+  a companion". The protected file [`review/SCHEMA.md`](../../review/SCHEMA.md) allows a
+  companion beside the porism as a carried passage's `helper`, gives the three ways of
+  writing it, says how the page names each, counting theorems, and says that render.py
+  stops on any other. `heath.py` and `check_fidelity.py` check no carried helper's kind:
+  check_fidelity asks only that it is declared, and finds a declaration by more names than
+  these three (`Elements.Prop16.porism`, or a short name that ends exactly one declared
+  name), so nothing refused a companion, render.py's refusal names the three it reads, and
+  no other validation changes. Every generated file stays byte for byte as it was: the three
+  pages that print the clause, I.15, III.1 and III.16, each carry a porism. The fourth
+  item of #163, III.25's page naming `Prop25.complete` a companion, waits for the core's
+  move.
+
+- **The merge gate requires the ruleset's five checks (#142).** On 20 October the owner
+  made `formal-model` and `acceptance` required status checks in the ruleset on main,
+  beside `check`, `model` and `negative`, as the entry of that date on content kept fresh
+  records. Read on 21 October with `gh api repos/{owner}/{repo}/rulesets/25333614`, the
+  ruleset's required status checks rule is:
+  ```json
+  {"parameters":{"do_not_enforce_on_create":false,"required_status_checks":[{"context":"check"},{"context":"model"},{"context":"negative"},{"context":"formal-model","integration_id":15368},{"context":"acceptance","integration_id":15368}],"strict_required_status_checks_policy":true},"type":"required_status_checks"}
+  ```
+  The integration 15368 is GitHub Actions, and the strict policy asks that a pull
+  request's branch be up to date with main before it merges. `REQUIRED_CHECKS` in
+  `scripts/safe_push.py` now names the same five, in the ruleset's order, so
+  `git safe-push --merge`, and the pre-flight's CI watcher, which judges as it does, give
+  "missing" when a pull request has no passing run of `formal-model` or of `acceptance`,
+  and "failure" when one fails, as for the first three. A skipped run is not a pass. The
+  CI workflow runs on pushes as well as pull requests and skips `acceptance` in the push
+  event's run; `judge_checks` counts a pass from any run reported for the head, so the
+  pull request's own run, which includes both jobs, is the one that must pass it, and a
+  check whose every run was skipped is "missing". GitHub, which accepts a skipped
+  required job, makes no such distinction
+  ([WORKFLOW](../WORKFLOW.md#8-validation-on-the-integrated-revision), section 8). The
+  docstrings of the module and of `judge_checks` name the five checks. In
+  `scripts/test_safe_push.py`, `PASSING` holds the five, and `Units.test_judge_checks`
+  shows that a missing `formal-model` and a missing `acceptance` each give "missing",
+  that a failing one gives "failure", and that a skipped run gives "missing" alone and
+  "success" beside a passing one; with main's list of three, the two missing cases give
+  "success" and the test fails. Nothing is loosened: no other check, expected value or
+  gate changes. WORKFLOW, section 8, and PROGRAM, section 4, no longer describe the gap,
+  and PROGRAM's account of 18 October notes the two checks added since. The entries of
+  18, 19 and 20 October that call these checks not required, or say that safe_push tests
+  for three, are true of their dates. The protected files changed are
+  `scripts/safe_push.py` and `scripts/test_safe_push.py`.
+
 - **The centre-given tag says what the statement does, not why (#59).** The meaning of
   `centre-given` in the protected file [`review/terms.toml`](../../review/terms.toml)
   gave a reason: "a circle in Lean has a centre only when a hypothesis or Postulate 3
@@ -4031,7 +4103,9 @@ findings:
   `980569da`, after main had landed the restricted rule of superposition (#191), the check
   train (#192), train Tw2 (#193), Heath's letters upright (#194) and the twenty entries out
   of `REACH_PENDING` (#195); and again with that branch at `4aadad20`, after its review,
-  which brings main at `cba27afa` (#196, the switch for upright letters).
+  which brings main at `0a05f96f` (#196, the switch for upright letters, and #198, short
+  hashes read from Git); and last with main at `001620f1` (#199, the carried helper's
+  kind, and #201, the five required checks).
   The counts in this train's entries of 19 October above ("The mixed-angle move integrated
   with the Circle 2 proofs", "Every circle has a centre: the rule lands" and "III.5 and
   III.6: section 7 lands before step 6": 88 axioms and 82 tacit rules, "the other 87", a
@@ -4060,12 +4134,12 @@ findings:
   `III_11_today`, `III_13_today`, `cut_point`, `CirclesCut.of_meet` and `within_point`,
   were renewed from Lean's output, and change only by losing `Tacit.adjacent_eq_of_right`
   and `Tacit.centre_unique`, now theorems; every other name in each list is unchanged. On
-  the merges of `756bdbae` and `cba27afa` no pin was renewed: `lake build Audit` passes with every pin of
+  the merges of `756bdbae`, `0a05f96f` and `001620f1` no pin was renewed: `lake build Audit` passes with every pin of
   `Audit/Overlaps.lean`, `Audit/Crossing.lean` and main's `Audit/Superposition.lean` as
   written.
   The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`, `model/`, `scripts/`,
   `review/SCHEMA.md`, `lakefile.toml` and `lean-toolchain` that differ from main at
-  `cba27afa`, each named whole:
+  `001620f1`, each named whole:
   `Audit.lean`,
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
@@ -4110,8 +4184,9 @@ findings:
 - **Train C6b reconciled after axiom wave one.** Train C6b carries III.1's construction
   and porism and stage 4, merged with C6a after axiom wave one, at `4db10cf2`, and again
   at `529c93f7`, which brings main's restricted rule of superposition (#191) and main at
-  `cba27afa`, and III.1's record and commentary saying the centre the statement takes
-  without the edition's history (`996b3f8f`). The 19 October stage 4 and III.25 entries'
+  `0a05f96f`, and III.1's record and commentary saying the centre the statement takes
+  without the edition's history (`996b3f8f`); and last at `d58ac22d`, which brings main at
+  `001620f1` (#199 and #201) and changes neither the lock nor any pin. The 19 October stage 4 and III.25 entries'
   88 axioms and vocabulary counts, and D1's 57 tacit rules for III.1, are their historical
   pre-wave-one measurements; they stand as written. On the integrated tree the lock holds
   train C6a's 80 axioms, of them 74 tacit rules, byte for byte, and 242 vocabulary words:
@@ -4149,7 +4224,7 @@ findings:
   `Audit/Superposition.lean` afresh and passes with every pin as written.
   The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`, `model/`, `scripts/`,
   `.github/`, `review/SCHEMA.md`, `review/terms.toml`, `lakefile.toml` and
-  `lean-toolchain` that differ from train C6a at `529c93f7`, each named whole:
+  `lean-toolchain` that differ from train C6a at `d58ac22d`, each named whole:
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
   `Certificate/FIELDS.md`,
