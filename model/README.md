@@ -73,7 +73,7 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/Superposition.lean](Model/Euclidean/Superposition.lean) | superposition proved in the plane: an isometry, with a reflection when the side needs one | Mathlib |
 | [Model/Euclidean/TripleIncidence.lean](Model/Euclidean/TripleIncidence.lean) | Triple incidence 1 to 3 proved by signed determinants and affine sides | Mathlib |
 | [Model/Assembly.lean](Model/Assembly.lean) | **generated:** `euclidean_laws`, all 79 proofs gathered into `Laws`, and the unconditional `model_exists` | Mathlib |
-| [Model/Audit.lean](Model/Audit.lean) | checked at every build: the library is not imported, and what each proof in the plane, and the assembly, rests on | every module of `Model` |
+| [Model/Audit.lean](Model/Audit.lean) | checked at every build: the library's geometric vocabulary remains out of scope, and what each proof in the plane, and the assembly, rests on | every module of `Model` |
 | [Check/Angles.lean](Check/Angles.lean) | the hand-translated angle laws and their two words compared with the library and the generated laws | `Elements.Foundations`, `Elements.BookI.Prop13`, `Check.Hand`, the generator, `Model.Laws.angles` |
 | [Check/AreasP5.lean](Check/AreasP5.lean) | the hand-translated area laws and Postulate 5 compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.«areas-p5»` |
 | [Check/Circles.lean](Check/Circles.lean) | the hand-translated circle rules compared with the library and the generated laws | `Elements.Foundations`, `Elements.BookI.Prop07`, `Elements.Figure.Circles`, `Check.Hand`, the generator, `Model.Laws.circles` |
@@ -92,9 +92,10 @@ at the repository's root builds the library exactly as before.
 | [Check/Write.lean](Check/Write.lean) | run by hand, never built: writes the generated files | as `Check/Generated.lean` |
 | [lock.sha256](lock.sha256) | the hash of the lock the model was last checked against | |
 
-Nothing under `Model/` imports the library, and nothing under `Check/` imports Mathlib. The
-three generated files are committed, so that anyone can read them, and `lake build` fails
-while any of them differs from what the generator writes.
+`Model/` may import only the four audited pure superposition modules from the library; no
+geometric module is permitted. Nothing under `Check/` imports Mathlib. The three generated
+files are committed, so that anyone can read them, and `lake build` fails while any of them
+differs from what the generator writes.
 
 ## The signature
 

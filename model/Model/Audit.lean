@@ -49,8 +49,9 @@ public import Model.Euclidean.TripleIncidence
 A model is evidence only if its proofs do not use the laws they are meant to satisfy. This
 file imports every module of the `Model` library, and checks two things at every build.
 
-* **The library is not imported,** directly or through another file: its words are unknown
-  here, so none of its laws is in scope.
+* **The library's geometric vocabulary is not imported:** `Elements.Point` is unknown
+  here. The source and compiled-import checks permit only the four pure superposition
+  modules from the library, after auditing everything they reach.
 * **Each theorem that proves a law in the plane rests on Lean's own axioms alone,**
   `propext`, `Classical.choice` and `Quot.sound`, which Mathlib's real numbers use. No
   axiom of the library can appear, and neither can `sorryAx`, which an unfinished proof
@@ -66,7 +67,7 @@ The eight retired rules keep their individual audits as derived facts even thoug
 generated assembly no longer has assumption fields for them.
 -/
 
-/-! ## The library is not imported -/
+/-! ## The geometric vocabulary is not imported -/
 
 /-- error: Unknown identifier `Elements.Point` -/
 #guard_msgs in
