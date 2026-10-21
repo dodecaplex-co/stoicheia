@@ -41,9 +41,9 @@ note = "Heath draws AD level and AF sloping; our drawing puts AF level, as the p
 
 [review]
 stage = "full"
-commit = "adbf6993"
-reviewer = "GPT-6 Astra, independent reader"
-run = "ship R1 wave 2, independent re-read of the merged record at adbf6993"
+commit = "3ddb107d"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+run = "Q watch, independent re-read on train/Tw2 at 3ddb107d"
 lean = "sha256:42c6b5725278f449"
 
 [review.items]
