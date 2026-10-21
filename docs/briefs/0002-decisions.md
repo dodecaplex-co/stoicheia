@@ -3055,8 +3055,8 @@ findings:
   [`scripts/heath.py`](../../scripts/heath.py) knows the key and checks the examples'
   values; [`scripts/render.py`](../../scripts/render.py) counts such a record as not
   current, and writes nothing new; [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
-  asks of a record at P2 that it carry `text`, as [ACCEPTANCE](../ACCEPTANCE.md), P2, now
-  says, so no record is accepted whose own words no stamp ties to a reading;
+  is unchanged, and fails P2 on that finding of `check_fidelity.py`'s, as
+  [ACCEPTANCE](../ACCEPTANCE.md), P2, now says;
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants an edited note in
   I.1's record and expects it caught, and a comment and a moved stamp not;
   [`scripts/safe_push.py`](../../scripts/safe_push.py) counts a `text` line as a stamp.
@@ -3066,23 +3066,30 @@ findings:
   [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) tests both: no stamp key
   is taken away, and the record as TOML reads it, its stamps set aside, is unchanged, so
   that a line shaped as a stamp inside a multi-line string, which changes the record's
-  words, is judged. This is a check change on its own: it changes no record.
+  words, is judged. Its account of the records in a pull request's body is unchanged, so a
+  record that gains `text` alone, its commit kept, is listed as "touched, not re-stamped",
+  which is what the migration below does to it. This is a check change on its own: it
+  changes no record.
 - **The `text` stamps' migration, and what it does not do.** The existing records are not
   stamped as read. `review_stamp.py --migrate-text` writes `text` alone, and only where a record's
   text at its own stamp commit (`git show <commit>:review/<book>/NN.toml`, its `[review]`
   table and fingerprint aside) is its text now: the hash then records what its reviewer
   read, and no new reading. Every other record is listed as needing a reader, and is never
-  stamped by the migration. On main at `89c5da4` it would write 93 records; six were
-  edited after their stamp commit and need a reader: I.37, I.38, III.4, III.13, III.14 and
-  III.16 (quotation marks and wording in their notes, III.13's figure note, III.14's
-  `short`). The records crew taking Books I and II to `full` stamps with the current
-  scheme while this waits; the migration treats their stamps exactly as any other, since
-  it reads each record's own stamp commit, so it is run again on main at landing, after
-  their branches and the other branches that change records, in a records pull request of
-  its own. Failing on the records without `text` would stop main, so until every record
-  carries it, `check_fidelity.py` names each record without it in a note, and fails on a
-  `text` that no longer matches. The order of landing: this change; then the records'
-  `text` stamps, by `--migrate-text` at landing; then the remaining records read and
-  stamped by a reader; then, in a check change of its own, `text` required like the other
-  stamps. The branch carries the work of the lane of 18 October that first built it, with
-  thanks, brought up to main and to the required overlap kind.
+  stamped by the migration. On main at `2e8aecf8` it would write 92 records; seven were
+  edited after their stamp commit and need a reader: II.2, II.6, II.7, II.8 and II.10,
+  whose passages name Book I's helpers as `BookI.…` since the renaming of 19 October;
+  III.4, whose notes changed their quotation marks and a word; and III.13, whose
+  `[figure]` note was written after the commit its page names. The migration waits for
+  the branches in flight that re-stamp records: train Tw2 (Book I's Postulate 1 joins, and
+  the records read again), the Book III cascade's re-stamps (ship C7) and axiom wave two.
+  It reads each record's own stamp commit, so it treats their stamps as any other, and it
+  runs on main after them, in a records pull request of its own. Then a reader reads and
+  stamps the records it lists; then, in a check change of its own, `text` is required like
+  the other stamps: `check_fidelity.py` fails a record without it, and
+  `check_acceptance.py` asks it of a record at P2. Until then, failing on the records
+  without `text` would stop main, so `check_fidelity.py` names each record without it in
+  a note, and fails only on a `text` that no longer matches. P2's requirement waits too:
+  asked now, it would fail all 99 records, where main passes 62, and the 372 review items
+  of those 62 (P11 to P16) with them; and while every record failed it, the `acceptance`
+  job's ratchet could not catch a regression in those items as the branches above land.
+  The branch carries the work of the lane of 18 October that first built it, with thanks.

@@ -339,7 +339,7 @@ case = "the bases BC and CE meeting at C, as in Heath's figure"
 stage = "exceptions"
 commit = "d040117"
 lean = "sha256:5f353abf9022b4fd"
-text = "sha256:1cd54525e1a8a857"
+text = "sha256:39fcf9b00f4bf715"
 reviewer = "Claude Opus 5.5"
 ```
 

@@ -817,11 +817,6 @@ class Clone(unittest.TestCase):
                            cwd=ORIGIN, capture_output=True, text=True)
         return r.stdout.strip() or None
 
-    def short(self, sha: str) -> str:
-        """A commit's hash as the clone abbreviates it, as safe_push lists the commits: git
-        gives seven characters or more, as many as the repository's size asks for."""
-        return git(WORK, "log", "-1", "--format=%h", sha).strip()
-
     def guard(self, out: str, name: str) -> str | None:
         """The outcome a step's line reports: "ok", "FAIL", "note", or None if absent."""
         m = re.search(r"^\s+(ok|FAIL|note)\s+%s:" % re.escape(name), out, re.M)
@@ -905,7 +900,7 @@ class Accepts(Clone):
         self.assertIn(f"<!-- safe_push:preflight begin sha={sha} base={BASE} -->", body)
         self.assertIn("## Checklist", body)
         self.assertIn("- [ ] **Required:**", body)
-        self.assertIn(f"`{self.short(sha)}` A good commit", body)
+        self.assertIn(f"`{sha[:7]}` A good commit", body)
         self.assertIn("| 3. statements | ok |", body)
         self.assertNotIn("<!-- safe_push: commits -->", body)
         self.assertNotIn(str(Path.home()), body, "a private path in the public body")
@@ -1208,6 +1203,13 @@ class Hook(Clone):
 def hooks_dir() -> Path:
     out = git(WORK, "rev-parse", "--git-path", "hooks").strip()
     return Path(out) if os.path.isabs(out) else WORK / out
+
+
+def with_text(record: str, value: str) -> str:
+    """A review record with `text = "value"` as the first line of its [review] table, so
+    within [review] whether or not [review.items] follows it."""
+    assert record.count("[review]\n") == 1, "a record with one [review] table"
+    return record.replace("[review]\n", f'[review]\ntext = "{value}"\n', 1)
 
 
 class Edge(Clone):
@@ -1876,17 +1878,6 @@ class PullRequests(Edge):
     def test_update_refreshes_the_generated_parts(self):
         # The final review: every part safe_push wrote is written afresh on an update (the
         # commits, the statements changed, the records), and the coordinator's words stay.
-        # I.3's record as it stood before `text` stamps, if it carries one already.
-        texted = "review/I/03.toml"
-        untexted = re.sub(r'(?m)^text = "[^"]*"\n?', "", self.text(texted))
-        if untexted != self.text(texted):
-            self.new_base("I.3's record before its `text` stamp", {texted: untexted})
-        # And I.4's record with its `text` stamp, if it does not carry it already.
-        lost = "review/I/04.toml"
-        bare = re.sub(r'(?m)^text = "[^"]*"\n?', "", self.text(lost))
-        with_text = bare.rstrip("\n") + f'\ntext = "{safe_push.heath.text_hash(bare)}"\n'
-        if with_text != self.text(lost):
-            self.new_base("I.4's record with its `text` stamp", {lost: with_text})
         self.good_commit()
         self.assertEqual(self.safe_push().returncode, 0)
         words = "A change for the test, in the coordinator's words."
@@ -1905,13 +1896,7 @@ class PullRequests(Edge):
         stamped = re.sub(r'(?m)^lean = "[^"]*"',
                          f'lean = "{safe_push.heath._sha(new_lean.encode())}"', self.text(record))
         stamped = re.sub(r'(?m)^commit = "[^"]*"', 'commit = "abc1234"', stamped)
-        # And I.3's record gains its `text` stamp alone, its commit kept, as
-        # review_stamp.py --migrate-text writes it; I.4's loses its `text` stamp, its
-        # commit kept, which is no stamp written.
-        kept = re.search(r'(?m)^commit = "([^"]*)"', self.text(texted)).group(1)
-        changes = {lean: new_lean, record: stamped, texted: self.text(texted).rstrip("\n")
-                   + f'\ntext = "{safe_push.heath.text_hash(self.text(texted))}"\n',
-                   lost: bare}
+        changes = {lean: new_lean, record: stamped}
         changes.update(self.decision("I.1 names its side point Q."))
         second = self.regenerated_commit("I.1 names its side point Q", changes)
         r = self.safe_push()
@@ -1923,13 +1908,9 @@ class PullRequests(Edge):
         self.assertIn("I.1 (the Lean statement changed), named in the docs/briefs/ lines added",
                       statements)
         self.assertNotIn("None.", statements)
-        records = part(body, "Review records", "Protected paths")
-        self.assertIn("`review/I/01.toml`: re-stamped at `abc1234`", records)
-        self.assertIn(f"`review/I/03.toml`: its stamps written, its commit kept at `{kept[:12]}`",
-                      records)
-        self.assertIn("`review/I/04.toml`: a stamp taken away (`text`)", records)
-        self.assertNotIn("`review/I/04.toml`: its stamps written", records)
-        self.assertIn(f"`{self.short(second)}` I.1 names its side point Q", body)
+        self.assertIn("`review/I/01.toml`: re-stamped at `abc1234`",
+                      part(body, "Review records", "Protected paths"))
+        self.assertIn(f"`{second[:7]}` I.1 names its side point Q", body)
         for name in ("commits", "statements", "records", "protected", "generated", "preflight"):
             self.assertEqual(body.count(f"<!-- safe_push:{name} begin"), 1, name)
 
@@ -1957,7 +1938,7 @@ class PullRequests(Edge):
         for text in (words, approval):
             self.assertIn(text, body)
         self.assertEqual(re.findall(r"(?m)^## .*$", body), re.findall(r"(?m)^## .*$", before))
-        self.assertIn(f"`{self.short(second)}` A good commit", body)
+        self.assertIn(f"`{second[:7]}` A good commit", body)
         self.assertIn(f"sha={second}", body)
         for name in ("commits", "statements", "records", "protected", "generated", "preflight"):
             self.assertEqual(len(re.findall(rf"(?m)^<!-- safe_push:{name} begin", body)), 1,
@@ -3987,10 +3968,10 @@ class ProtectedPaths(Edge):
         # a Lean file, and README.md's hand-written part are.
         record = self.text("review/I/01.toml")
         stamped = re.sub(r'(?m)^commit = "[^"]*"', 'commit = "0123456"', record)
-        # A `text` stamp added, or rewritten, on a line of its own is a stamp too
-        # (review/SCHEMA.md).
-        texted = re.sub(r'(?m)^text = "[^"]*"\n?', "", self.text("review/I/03.toml")) \
-            .rstrip("\n") + '\ntext = "sha256:0123456789abcdef"\n'
+        # A `text` stamp added, or rewritten, on a line of its own in [review] is a stamp
+        # too (review/SCHEMA.md).
+        texted = with_text(re.sub(r'(?m)^text = "[^"]*"\n?', "", self.text("review/I/03.toml")),
+                           "sha256:0123456789abcdef")
         changes = {
             "Certificate/Facts.lean": self.text("Certificate/Facts.lean") + "\n-- for the test\n",
             "review/I/01.toml": stamped,
@@ -4028,7 +4009,7 @@ class ProtectedPaths(Edge):
         self.assertFalse(safe_push.stamp_only(WORK, first, inside, path))
         git(WORK, "checkout", "--quiet", "--force", "--detach", first)
         stamped = self.commit("A `text` stamp in [review]", {
-            path: noted.rstrip("\n") + f"\n{line}\n"})
+            path: with_text(noted, "sha256:0123456789abcdef")})
         self.assertTrue(safe_push.stamp_only(WORK, first, stamped, path))
 
     def test_a_stamp_taken_away_beside_a_stamp_shaped_line_is_judged(self):
@@ -4039,7 +4020,7 @@ class ProtectedPaths(Edge):
         self.assertEqual(record.count('scope = "full"\n'), 1)
         noted = record.replace('scope = "full"\n', 'scope = "full"\n'
                                f'note = """\nA note on two lines,\n{line}\n"""\n')
-        stamped = noted.rstrip("\n") + '\ntext = "sha256:3333333333333333"\n'
+        stamped = with_text(noted, "sha256:3333333333333333")
         first = self.commit("A stamp-shaped line in the note, and a `text` stamp",
                             {path: stamped})
         taken = self.commit("The `text` stamp taken away", {path: noted})

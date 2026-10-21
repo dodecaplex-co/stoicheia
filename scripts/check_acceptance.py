@@ -435,8 +435,7 @@ def load_records() -> dict:
 def record_problems(record: dict) -> list[str]:
     """Why a record is not a current record at the stage `full` (P2), beyond what
     check_fidelity says (the schema, the stamps, and a full record's reviewer and run):
-    its stage, its commit, its `text` stamp, which check_fidelity only names while some
-    records lack it, and its item keys."""
+    its stage, its commit and its item keys."""
     out = []
     rv = record["review"]
     if rv["stage"] != "full":
@@ -446,9 +445,6 @@ def record_problems(record: dict) -> list[str]:
         problem = commit_problem(rv["commit"])
         if problem:
             out.append(f"its commit {rv['commit']} {problem}")
-    if "text" not in rv:
-        out.append("it has no `text` stamp, so nothing ties its own words to a reading: "
-                   "scripts/review_stamp.py writes it (review/SCHEMA.md, \"Stamps\")")
     for key in sorted(set(rv["items"]) - set(REVIEW_ITEMS)):
         out.append(f"[review] items: `{key}` is not an item key of docs/ACCEPTANCE.md "
                    f"({', '.join(REVIEW_ITEMS)})")
@@ -676,8 +672,7 @@ def check_review_items(records: dict, facts: dict) -> None:
             why = "the record cannot be read (P2)"
         elif record["review"]["stage"] != "full":
             why = f"the record is at the stage `{record['review']['stage']}` (P2)"
-        elif (not render.record_current(ref, record, facts_by_ref)
-              or "text" not in record["review"]):
+        elif not render.record_current(ref, record, facts_by_ref):
             why = "the record's stamps are not current (P2)"
         elif "commit" in record["review"] and commit_problem(record["review"]["commit"]):
             commit = record["review"]["commit"]
