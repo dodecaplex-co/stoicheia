@@ -25,11 +25,11 @@ objects, into a private folder, checks that they hash as the files checked out d
 runs again from that copy, so that every module the run imports and every harness it runs
 is that commit's, whatever the checkout does meanwhile. It writes nothing unless the
 harness files are as committed when it begins, and the commit, their state and their hash
-are the same when it ends; stopped by SIGTERM or SIGHUP before it writes, it stops the run
-from the copy, removes the copy and writes nothing. Then it saves each harness's output in
-results/, under a header naming the commit, the harness's hash, the seeds and the Python;
-writes the axiom-by-axiom table to results/summary.txt; and brings the counts in MODEL.md
-up to date.
+are the same when it ends; stopped by SIGTERM or SIGHUP while it runs or publishes, it
+stops the run from the copy, rolls any publication back, removes the copy and writes
+nothing. Then it saves each harness's output in results/, under a header naming the commit,
+the harness's hash, the seeds and the Python; writes the axiom-by-axiom table to
+results/summary.txt; and brings the counts in MODEL.md up to date.
 results_check.py, beside this file but not one of HARNESS, holds what --write wrote to the
 harness as it hashes now, and to what `judge` accepts (docs/WORKFLOW.md, section 8).
 
@@ -552,19 +552,60 @@ def counts_block(runs, prov):
         derived_table(runs)])
 
 
-def save(path, text):
-    """write `path` whole, through a new file renamed over it, so that a symbolic link in its
-    place is replaced, not followed"""
-    new = os.path.join(os.path.dirname(path), f'.{os.path.basename(path)}.{os.getpid()}')
-    with open(new, 'x') as f:
-        f.write(text)
-    os.replace(new, path)
+def publish(outputs):
+    """Replace every `(path, text)` as one publication, restoring every prior directory entry
+    if publication is interrupted. Destination symbolic links are replaced, not followed."""
+    stages = []
+    journal = []
+    stops = {getattr(signal, name) for name in ('SIGTERM', 'SIGHUP') if hasattr(signal, name)}
+    previous_mask = (signal.pthread_sigmask(signal.SIG_BLOCK, stops)
+                     if stops and hasattr(signal, 'pthread_sigmask') else None)
+    try:
+        try:
+            for path, text in outputs:
+                new = os.path.join(os.path.dirname(path),
+                                   f'.{os.path.basename(path)}.{os.getpid()}.new')
+                stages.append((path, new))
+                with open(new, 'x') as f:
+                    f.write(text)
+            for path, new in stages:
+                if os.path.isdir(path) and not os.path.islink(path):
+                    raise IsADirectoryError(path)
+                backup = None
+                if os.path.lexists(path):
+                    backup = os.path.join(os.path.dirname(path),
+                                          f'.{os.path.basename(path)}.{os.getpid()}.old')
+                    if os.path.lexists(backup):
+                        raise FileExistsError(backup)
+                    os.replace(path, backup)
+                journal.append((path, backup))
+                os.replace(new, path)
+            if previous_mask is not None and signal.sigpending() & stops:
+                raise InterruptedError('publication interrupted')
+        except BaseException:
+            for path, backup in reversed(journal):
+                if os.path.lexists(path):
+                    os.unlink(path)
+                if backup is not None:
+                    os.replace(backup, path)
+            raise
+        else:
+            for _, backup in journal:
+                if backup is not None:
+                    os.unlink(backup)
+        finally:
+            for _, new in stages:
+                if os.path.lexists(new):
+                    os.unlink(new)
+    finally:
+        if previous_mask is not None:
+            signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
 
 
 def write(runs, prov, results=RESULTS, model_md=MODEL_MD):
-    os.makedirs(results, exist_ok=True)
+    outputs = []
     for r in runs:
-        save(os.path.join(results, result_file(r)), header(r, prov) + r.out)
+        outputs.append((os.path.join(results, result_file(r)), header(r, prov) + r.out))
     met, total = totals(runs)
     with io.StringIO() as f:
         f.write(''.join(f'# {k}: {v}\n' for k, v in prov.items()) + '\n')
@@ -579,13 +620,21 @@ def write(runs, prov, results=RESULTS, model_md=MODEL_MD):
             if v:
                 f.write(f'  {k}: {v:,}\n')
         f.write(derived_table(runs) + '\n')
-        save(os.path.join(results, SUMMARY), f.getvalue())
+        outputs.append((os.path.join(results, SUMMARY), f.getvalue()))
     with open(model_md) as f:
         md = f.read()
     new, n = COUNTS.subn(lambda m: m.group(1) + counts_block(runs, prov) + m.group(2), md)
     if n != 1:
         sys.exit('MODEL.md has no counts block to update')
-    save(model_md, new)
+    outputs.append((model_md, new))
+    made_results = not os.path.lexists(results)
+    try:
+        os.makedirs(results, exist_ok=True)
+        publish(outputs)
+    except BaseException:
+        if made_results and os.path.isdir(results) and not os.listdir(results):
+            os.rmdir(results)
+        raise
 
 
 # ---------------------------------------------------------------- main

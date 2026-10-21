@@ -30,7 +30,9 @@ first: it writes results as --write does, from made-up runs, into a temporary fo
 each fault the check exists to catch, and checks that each is caught and that the results
 unchanged pass. It drives --write's guards too, and runs `run.py --full --write` for real,
 in a git repository of its own, on a made-up harness that changes and restores the
-checkout's harness while the run goes on, and on one stopped by SIGTERM partway.
+checkout's harness while the run goes on, and on one stopped by SIGTERM partway. For each
+of SIGTERM and SIGHUP, it also stops publication after a replacement and checks that the
+whole previous output set remains.
 """
 import contextlib
 import hashlib
@@ -590,12 +592,86 @@ def snapshot_self_test():
              if os.name == 'posix' else ''))
 
 
+def publication_signal_self_test():
+    """Interrupt publication after MODEL.md is replaced and require its whole prior tree back."""
+    stops = [getattr(signal, name) for name in ('SIGTERM', 'SIGHUP') if hasattr(signal, name)]
+    if not stops:
+        return
+
+    def tree(root):
+        entries = {}
+        for parent, dirs, files in os.walk(root):
+            for name in sorted(dirs + files):
+                path = os.path.join(parent, name)
+                rel = os.path.relpath(path, root)
+                if os.path.islink(path):
+                    entries[rel] = ('link', os.readlink(path))
+                elif os.path.isdir(path):
+                    entries[rel] = ('directory',)
+                else:
+                    with open(path, 'rb') as f:
+                        entries[rel] = ('file', f.read())
+        return entries
+
+    for stop in stops:
+        with tempfile.TemporaryDirectory() as tmp:
+            results = os.path.join(tmp, 'results')
+            model_md = os.path.join(tmp, 'MODEL.md')
+            with open(model_md, 'w', encoding='utf-8') as f:
+                f.write(PAGE)
+            old = dict(commit='a' * 40 + f' ({COMMITTED})', harness='b' * 64,
+                       python=f'{platform.python_version()} (self-test)', date='2000-01-01')
+            old_runs = made_up_runs()
+            write(old_runs, old, results, model_md)
+            linked = os.path.join(results, result_file(old_runs[0]))
+            link_target = os.path.join(tmp, 'linked-result.txt')
+            os.replace(linked, link_target)
+            os.symlink(link_target, linked)
+            missing = os.path.join(results, result_file(old_runs[1]))
+            os.unlink(missing)
+            before = tree(tmp)
+            new = dict(old, commit='c' * 40 + f' ({COMMITTED})', date='2000-01-02')
+            real_replace = os.replace
+            sent = False
+
+            def interrupting_replace(source, destination):
+                nonlocal sent
+                real_replace(source, destination)
+                if destination == model_md and not sent:
+                    sent = True
+                    if not os.path.isfile(destination):
+                        raise AssertionError('publication signal preceded the replacement')
+                    os.kill(os.getpid(), stop)
+
+            previous = {sig: signal.getsignal(sig) for sig in stops}
+            runner.stop_as_exit()
+            stopped = None
+            try:
+                with mock.patch.object(runner.os, 'replace', side_effect=interrupting_replace):
+                    write(made_up_runs(), new, results, model_md)
+            except SystemExit as e:
+                stopped = e.code
+            finally:
+                for sig, handler in previous.items():
+                    signal.signal(sig, handler)
+            after = tree(tmp)
+            if not sent or stopped != 128 + stop or after != before:
+                raise AssertionError(f'model publication self-test: {signal.Signals(stop).name} '
+                                     'after a replacement did not restore the previous output set '
+                                     f'without temporary files: stopped {stopped}; '
+                                     f'added {sorted(after.keys() - before.keys())}; '
+                                     f'removed {sorted(before.keys() - after.keys())}')
+    print('model publication self-test: SIGTERM and SIGHUP after a replacement restore the '
+          'previous output set without temporary files')
+
+
 def self_test():
     """Write results as --write does, from made-up runs, into a temporary folder; plant each
     fault the check exists to catch in a fresh copy, and check that it is caught; and check
     that the results unchanged pass."""
     write_guard_self_test()
     snapshot_self_test()
+    publication_signal_self_test()
     runs = sorted(written() - {SUMMARY})
     if len(runs) < 4:
         raise AssertionError('results self-test: the full plan writes fewer than four runs')
