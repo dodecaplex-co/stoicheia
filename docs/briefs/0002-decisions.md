@@ -3919,14 +3919,17 @@ findings:
   markers stand, by name and in order, as origin/main's `scripts/generated_counts.py`
   reads them, the file stays a regular file of the same mode, and both sides read.
   `counts_moved`, which already read the markers of that Markdown, compares the page's
-  marker names alone, and `pinned` asks it for the page. A marker added, removed or
-  renamed, the file added or deleted, its mode changed, or a side that does not read, is
+  marker names alone, in order, and `pinned` asks it for the page. A marker added,
+  removed, renamed or reordered, the file added or deleted, its mode changed, or a side that does not read, is
   no pinned value, so `keep_apart` refuses it as a check change when origin/main's checks
-  fail, and its refusal says so: "it adds, removes or renames a count marker of
-  tests/model/MODEL.md". A renamed marker is the case that matters: the commit's own
+  fail, and its refusal says so: "it adds, removes, renames or reorders a count marker of
+  tests/model/MODEL.md". A renamed or reordered marker is the case that matters: the commit's own
   `check_fidelity.py` checks each value against the marker that holds it, so a count of
   the axioms renamed to a count of the tacit rules, its value moved to match, would pass
-  that check and leave the page miscounting the axioms. This is a tightening, not a
+  that check and leave the page miscounting the axioms. The guard holds the markers, not
+  the sentences around them: the page's prose still moves with its laws, so a sentence
+  reworded to put a standing count beside the wrong noun is a pinned value, as before,
+  for the security review to read. This is a tightening, not a
   weakening: it lets through nothing that was refused before, and refuses what was let
   through. The module docstring, the comments on the pinned values, the docstrings of
   `counts_moved`, `pinned` and `keep_apart`, and the refusal's list of pinned values say
@@ -3935,9 +3938,9 @@ findings:
   tests beside the count tests. In the first, an axiom added with its law moves MODEL.md's
   account and its counts of the axioms, with a sentence around a marker reworded as well;
   the page is a pinned value, and the change lands as content. In the second, the same
-  change with a marker added, removed, renamed or left unclosed, or the page deleted or
-  made executable, is no pinned value, and is kept apart with that refusal. Against
-  origin/main's `safe_push.py` (`e7ffaf68`) the first passes and each of the second's six
+  change with a marker added, removed, renamed, reordered or left unclosed, or the page
+  deleted or made executable, is no pinned value, and is kept apart with that refusal. Against
+  origin/main's `safe_push.py` (`e7ffaf68`) the first passes and each of the second's seven
   cases fails, the page counted as a pinned value; with this change both pass. No negative
   plant is added, as for #177: the harness's regressions are in its own suite. Nothing
   else states the rule. CI's `acceptance` job, [ACCEPTANCE](../ACCEPTANCE.md) and

@@ -103,7 +103,7 @@ one commit and runs safe_push.py against that origin:
   value; and the markers are read by origin/main's reader, never the commit's;
 - the model's page (#187): an axiom added with its law, tests/model/MODEL.md's account
   and its counts moved with it, lands as content, its prose free to move; while a count
-  marker of the page added, removed or renamed, or the page deleted, made executable or
+  marker of the page added, removed, renamed or reordered, or the page deleted, made executable or
   left unreadable, is a check change, kept apart;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
@@ -3917,10 +3917,14 @@ class ProtectedPaths(Edge):
                 "\nThe lock's words: <!-- count:vocabulary -->91<!-- /count -->.\n"),
             "a marker removed": lambda t: self.AXIOM_COUNT.sub(lambda m: m[2], t, count=1),
             "a marker renamed": renamed,
+            "the markers reordered": lambda t: t.replace(
+                "<!-- count:axioms -->", "<!-- count:SWAP -->", 1).replace(
+                "<!-- count:tacit-rules -->", "<!-- count:axioms -->", 1).replace(
+                "<!-- count:SWAP -->", "<!-- count:tacit-rules -->", 1),
             "a marker unclosed": lambda t: t.replace("<!-- /count -->", "", 1),
             "the file deleted": lambda t: None,
         }
-        marker = f"it adds, removes or renames a count marker of {self.PAGE}"
+        marker = f"it adds, removes, renames or reorders a count marker of {self.PAGE}"
         for name, change in weakened.items():
             with self.subTest(name):
                 sha = self.page_changed(moved, change)

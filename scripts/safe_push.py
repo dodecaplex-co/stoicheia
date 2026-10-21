@@ -2042,13 +2042,13 @@ def count_markers(repo, base):
 def counts_moved(repo, base, sha, path: str) -> bool:
     """Is the commit's change to `path`, Markdown of COUNTED_PROSE, confined to the values
     between its count markers, as origin/main's generated_counts reads them
-    (count_markers)? The file stays a regular file of the same mode, the same markers stand
-    by name and in order, every byte outside their values is as it was, and a value moves.
-    The model's page (MODEL_PAGE) is its account of the laws, pinned whole for its prose,
-    so there only the markers must stand (#187). A marker added, removed or renamed, any
-    other byte changed but in the model's page, a file added or deleted, or one either
-    side cannot read, is not. The commit's own check_fidelity.py holds each value to the
-    files it counts."""
+    (count_markers)? (For the model's page, do those markers stand?) The file stays a
+    regular file of the same mode, the same markers stand by name and in order, every byte
+    outside their values is as it was, and a value moves. The model's page (MODEL_PAGE) is
+    its account of the laws, pinned whole for its prose, so there only the markers must
+    stand (#187). A marker added, removed, renamed or reordered, any other byte changed but
+    in the model's page, a file added or deleted, or one either side cannot read, is not.
+    The commit's own check_fidelity.py holds each value to the files it counts."""
     if not (path.endswith(".md") and under(path, COUNTED_PROSE)):
         return False
     raw = git(repo, "diff", "--raw", "-z", "--no-renames", base, sha, "--", f":(literal){path}")
@@ -2105,10 +2105,10 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     content, in no other order, and the commit's own pass still needs them to agree. An
     expectation dropped or loosened is no pinned value: check_fidelity.py checks only
     what each expectation says, so the commit's own pass could never catch it. Nor is a
-    count marker added, removed or renamed, in that Markdown or in the model's page
-    (whose prose moves with its laws), or any other byte of that Markdown but the page's
-    prose changed: the commit's own pass checks the values alone, each against the marker
-    that holds it. Check code changed with judged content is kept apart, pinned values or
+    count marker added, removed, renamed or reordered, in that Markdown or in the model's
+    page, nor any other byte of that Markdown changed (the page's prose moves with its
+    laws): the commit's own pass checks the values alone, each against the marker that
+    holds it. Check code changed with judged content is kept apart, pinned values or
     not; and so is a law of the model changed while its axiom stands, for the commit's own
     pass could not catch that either. True when it refuses."""
     failed = [name for s in rep.steps
@@ -2144,9 +2144,9 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
                "name), which is a check change" if laws else "")
             + (f"; and it changes {', '.join(counted)} beyond the values between count "
                "markers, which is a check change" if counted else "")
-            + (f"; and it adds, removes or renames a count marker of {MODEL_PAGE} (or adds "
-               "or deletes the file, changes its mode, or leaves it unreadable), which is a "
-               "check change" if marked else "")
+            + (f"; and it adds, removes, renames or reorders a count marker of {MODEL_PAGE} "
+               "(or adds or deletes the file, changes its mode, or leaves it unreadable), "
+               "which is a check change" if marked else "")
             + ". Land the check change first, in a pull request of its own (the check code, "
             "the guides, the regenerated pages and the records' stamps), and the rest after "
             f"it; values pinned to the edition ({LOCK}, {MODEL_HASH}, the counts and values "

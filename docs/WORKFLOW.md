@@ -684,10 +684,10 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       are as they were). MODEL.md's prose moves with the laws, but its markers are held
       the same way: a change to it counts as a pinned value only while the same markers
       stand, by name and in order, the file's mode is as it was and both sides read; a
-      marker added, removed or renamed is a check change. When pinned values are the only
-      check inputs a pull request changes, origin/main's failure is noted, and its own
-      copies must pass. The expectations are
-      checked one way only, each for what it says, so they count as pinned values only
+      marker added, removed, renamed or reordered is a check change. When pinned values
+      are the only check inputs a pull request changes, origin/main's failure is noted,
+      and its own copies must pass. The expectations are checked one way only, each for
+      what it says, so they count as pinned values only
       while every one of origin/main's stays, by its `ref` and `field`, with its
       `includes` and `excludes` the same or grown and only the values of `count.is` and
       `equals` changed (new expectations are fine); an expectation dropped or loosened is
