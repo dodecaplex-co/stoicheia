@@ -1,11 +1,11 @@
 # angle_check: a second, independent angle and area check
 # command: python3 -I tests/model/angle_check.py
 # seeds: 1
-# commit: 9232c9f7364b1425f1817040f9bfb6f84cce24ce (harness files as committed)
-# harness sha256: 379f07c83071cf926b89a00ed692eeb9b25c7815dd2d1a5376e2c38ace38c082
+# commit: 716312130b507f655d45da5ec7b3c7292afc3fe7 (harness files as committed)
+# harness sha256: b33a92550e514b49568fc04abe5a7a07accd347beb8ba53eedf54fbd82bf5c82
 # python: 3.11.9 (CPython, Darwin arm64)
 # date: 2026-10-21
-# time: 3.5 s
+# time: 2.8 s
 
 triple incidence grid failures: 0 []
 float failures: {}
