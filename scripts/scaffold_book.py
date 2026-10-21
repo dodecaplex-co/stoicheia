@@ -1,7 +1,7 @@
 """Create the Lean file for each proposition of a book: the statement in Heath's
 letters, Heath's enunciation as its docstring, and every sentence of Euclid's
-proof as a `--` comment, ending in `sorry`. That is the "sketch"; proofs are then
-written between the comments.
+proof as a `--` comment, with approved porisms and companions after it. Each
+declaration ends in `sorry`; proofs are then written between the comments.
 
 Only creates files that don't exist yet, so it never overwrites a proof.
 
