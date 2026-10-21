@@ -97,7 +97,9 @@ def members_table(body: str) -> list[dict]:
     if len(cells) < 3 or tuple(_plain(c) for c in cells[0]) != HEADINGS \
             or not all(re.fullmatch(r":?-{3,}:?", c) for c in cells[1]):
         raise ValueError("Members: expected the header, separator and at least one member")
-    return [dict(zip(FIELDS, (_plain(c) for c in row))) for row in cells[2:]]
+    return [dict(zip(FIELDS, (cell.strip() if key in {"code_review", "security_review"}
+                              else _plain(cell)
+                              for key, cell in zip(FIELDS, row)))) for row in cells[2:]]
 
 
 def _new() -> dict:
@@ -449,18 +451,54 @@ def _without_link_targets(text: str) -> str:
 
 
 def _review_text(cell: str) -> str:
-    """A review cell's text as a reader sees it: without raw HTML comments and tags,
-    inline link destinations or reference labels, then with character references decoded
-    and NFKC applied to the visible text. The reviewed commit is read here, never in the
-    raw cell, so a commit no reader sees names none."""
-    text = _without_html(_without_link_targets(cell))
-    return unicodedata.normalize("NFKC", html.unescape(text))
+    """A review cell as read: literal matched code spans; elsewhere no hidden markup,
+    with character references decoded; and NFKC applied to all visible text."""
+    runs = []
+    at = 0
+    while at < len(cell):
+        if cell[at] != "`":
+            at += 1
+            continue
+        end = at + 1
+        while end < len(cell) and cell[end] == "`":
+            end += 1
+        runs.append((at, end, end - at))
+        at = end
+    next_run = {}
+    following = {}
+    for start, end, length in reversed(runs):
+        next_run[start] = following.get(length)
+        following[length] = (start, end)
+
+    protected = []
+    code_spans = []
+    outside = 0
+    at = 0
+    for start, end, _ in runs:
+        if start < at or not (close := next_run[start]):
+            continue
+        protected.append(cell[outside:start])
+        code = re.sub(r"\r\n|\r|\n", " ", cell[end:close[0]])
+        if len(code) >= 2 and code[0] == code[-1] == " " and code.strip(" "):
+            code = code[1:-1]
+        protected.append(f"\0{len(code_spans)}\0")
+        code_spans.append(code)
+        at = outside = close[1]
+    protected.append(cell[outside:])
+    text = html.unescape(_without_html(_without_link_targets("".join(protected))))
+    text = re.sub("\0([0-9]+)\0", lambda match: code_spans[int(match.group(1))], text)
+    return unicodedata.normalize("NFKC", text)
+
+
+INVISIBLE_LETTERS = frozenset("\u115f\u1160\u3164\uffa0")
 
 
 def _review_content(cell: str) -> bool:
     """Whether a review cell says something visible beyond commit names and markup, read
     in its text as a reader sees it (_review_text)."""
-    return any(character.isalpha() for character in COMMIT.sub("", _review_text(cell)))
+    return any(character.isalpha() and character not in INVISIBLE_LETTERS
+               and unicodedata.category(character) not in ("Cf", "Mn", "Me")
+               for character in COMMIT.sub("", _review_text(cell)))
 
 
 def _evidence(rows: list[dict]) -> list[str]:
@@ -486,7 +524,7 @@ def _evidence(rows: list[dict]) -> list[str]:
                     problems.append(f"Members: {branch}: {label} says {word!r}: a review "
                                     "cell may not say a review is pending, to come, TBD, "
                                     "not needed or N/A, even beside the member's commit")
-                not_required = key == "security_review" and NOT_REQUIRED.match(cell)
+                not_required = key == "security_review" and NOT_REQUIRED.match(_plain(cell))
                 if not COMMIT.search(_review_text(cell)) and not not_required:
                     problems.append(f"Members: {branch}: {label} names no reviewed commit "
                                     "(7 to 40 lower-case hex digits)")
@@ -704,7 +742,7 @@ def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
         for key, label in (("code_review", "/code-review"),
                            ("security_review", "/security-review")):
             if key == "security_review" and not protected \
-                    and NOT_REQUIRED.match(row[key]):
+                    and NOT_REQUIRED.match(_plain(row[key])):
                 continue
             if not named[key] & own:
                 problems.append(f"Members: {row['branch']}: {label} names no commit of the "

@@ -1283,6 +1283,8 @@ class TreeTests(unittest.TestCase):
                      "Prose that quotes the tag as &lt;h2&gt;, with <b>HTML</b> and a "
                      "[link](#x).",
                      "21 October 2026\n===\n\nNotes\n---",
+                     "### 20 October 2026\n---", "- 20 October 2026\n---",
+                     "> 20 October 2026\n---", "> - 20 October 2026\n---",
                      "Notes\n21. October 2026\n===", "## 21 October 2026 ##",
                      "# Notes #", "##"])
 
@@ -1317,15 +1319,15 @@ class TreeTests(unittest.TestCase):
             "## 20 \N{CYRILLIC CAPITAL LETTER O}ctober 2026",
             "## 20 October 2026 [a later note](#x)",
             "## 20 October 2026 &amp; 21", "## 20 October 2026 <b>and after</b>",
-            "## 20 October 2026#", "### 20 October 2026\n---", "20\tOctober 2026\n==="))
+            "## 20 October 2026#", "20\tOctober 2026\n==="))
 
     def test_containers_hide_no_heading(self):
         self.refused((added, self.REPEATED) for added in (
             "> ## 20 October 2026", ">## 20 October 2026", "- ## 20 October 2026",
             "+ ## 20 October 2026", "1. ## 20 October 2026", "1) ## 20 October 2026",
             "> - > ## 20 October 2026", "> - ## 20 October 2026", "* > 2. ## 20 October 2026",
-            "> 20 October 2026\n> ---", "- 20 October 2026\n---",
-            "- 20 October 2026\n  ---", "> - 20 October 2026\n---",
+            "> 20 October 2026\n> ---", "- 20 October 2026\n  ---",
+            "> - 20 October 2026\n>   ---",
             "1.  Item\n\n    ## 20 October 2026",
             # GFM's footnote definitions and task items hold blocks too (the fourth review).
             "[^n]: ## 20 October 2026", "[^n]:## 20 October 2026",
@@ -1351,18 +1353,18 @@ class TreeTests(unittest.TestCase):
             "- <div>\n## 20 October 2026", "20 October\n    2026\n===",
             "- Item\n\n  ```\n## 20 October 2026"))
 
-    def test_an_underline_reads_back_to_the_blank_line(self):
-        # A line of spaces and tabs is blank; a line of no-break spaces, or one holding
-        # only a list marker or a > (indented four columns or more, it is a paragraph's
-        # text), is not. A later underline's text holds an earlier one's.
-        self.refused((added, self.REPEATED) for added in (
+    def test_block_boundaries_end_a_setext_paragraph(self):
+        # Empty containers, an incompatible indent and an earlier setext heading close
+        # the paragraph whose text a later underline may promote.
+        self.refused((added, self.YEAR) for added in (
             "20 October\n*\n2026\n---", "20 October\n\N{NO-BREAK SPACE}\n2026\n===",
             "20 October\n1.\n2026\n---", "20 October\n    ===\n2026\n---",
-            "21 October 2026\n===\nNotes\n---", "20 October\n>\n2026\n===",
+            "20 October\n>\n2026\n==="))
+        self.passes((added for added in (
+            "21 October 2026\n===\nNotes\n---",
             "20 October 2026\n    >\n===", "20 October 2026\n\t>\n===",
             "- 20 October 2026\n      >\n  ===", "> 20 October 2026\n>     >\n> ===",
-            "21 October 2026\n===\n>\nNotes\n---"))
-        self.refused([("21 October 2026\n===\nNotes\n---", self.PLAIN)])
+            "21 October 2026\n===\n>\nNotes\n---")))
         self.passes(["21 October 2026\n===\n \t\nNotes\n---"])
         # The blank line ends the stretch: no date is read across it, though the heading
         # "2026" below it holds a year in no date.

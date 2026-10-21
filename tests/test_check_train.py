@@ -407,6 +407,8 @@ class TrainChecks(Repository):
 
     def test_review_cells_need_visible_content_beyond_the_commit(self):
         for cell in (self.member, f"`{self.member}`.", f"({self.member})!", f"{self.member} 123",
+                     f"{self.member} \N{HANGUL FILLER}", f"{self.member} \u1160",
+                     f"{self.member} &#12644;",
                      f"**[{self.member}]**", f"<span>{self.member}</span>",
                      f"[{self.member}](https://example.invalid/review)"):
             for key in ("code_review", "security_review"):
@@ -414,7 +416,8 @@ class TrainChecks(Repository):
                     row = dict(self.row, **{key: cell})
                     self.refused("gives no visible review verdict or findings beyond the "
                                  "reviewed commit", text=body([row]))
-        for cell in (f"{self.member}: pass", f"{self.member}: one finding"):
+        for cell in (f"{self.member}: pass", f"{self.member}: one finding",
+                     f"{self.member}: révisé", f"{self.member}: 审查完毕"):
             for key in ("code_review", "security_review"):
                 with self.subTest(cell=cell, key=key):
                     row = dict(self.row, **{key: cell})
@@ -456,6 +459,29 @@ class TrainChecks(Repository):
             with self.subTest(visible=cell):
                 self.assertEqual(self.problems(text=body(
                     [dict(self.row, code_review=cell)])), [])
+
+    def test_code_spans_preserve_literal_review_evidence(self):
+        visible = (
+            f"`[review](https://example.invalid/{self.member})` no findings",
+            f"`` `[review](https://example.invalid/{self.member})` `` no findings",
+            f"`<span title='{self.member}'>reviewed</span>` no findings",
+        )
+        hidden = (
+            f"`reviewed [x](https://example.invalid/{self.member})",
+            f"`reviewed` [x](https://example.invalid/{self.member})",
+            f"[review](https://example.invalid/`{self.member}`) no findings",
+            f"<span title='`{self.member}`'>reviewed</span>",
+        )
+        for key, label in (("code_review", "/code-review"),
+                           ("security_review", "/security-review")):
+            for cell in visible:
+                with self.subTest(key=key, visible=cell):
+                    self.assertEqual(self.problems(text=body(
+                        [dict(self.row, **{key: cell})])), [])
+            for cell in hidden:
+                with self.subTest(key=key, hidden=cell):
+                    self.refused(f"{label} names no reviewed commit",
+                                 text=body([dict(self.row, **{key: cell})]))
 
     def test_footnotes_and_images_supply_no_review_evidence(self):
         prefix = self.member[:12]
@@ -504,6 +530,7 @@ class TrainChecks(Repository):
         size = 200_000
         for cell in ("<!--" * (size // 4), "<a" * (size // 2), "](" * (size // 2),
                      "][" * (size // 2), '[Reviewed](x "' + ")" * size,
+                     "`" * size,
                      "n" + "/" * size, "to" + " " * size,
                      "not" + "-" * size + "x", ("n" + " " * 50) * (size // 51 + 1)):
             with self.subTest(cell=cell[:12]):
