@@ -737,12 +737,34 @@ class BookZeroImportTests(unittest.TestCase):
     def test_a_symlinked_module_directory_is_refused_without_reading_its_target(self):
         target = self.root / "Outside"
         target.mkdir()
-        (target / "Bridge.lean").write_text("import Elements.BookI.Prop01\n")
+        (target / "Bridge.lean").write_bytes(b"\xff")
         (self.root / "Elements/Alias").symlink_to(target, target_is_directory=True)
-        self.assertEqual(
-            self.findings("import Elements.Alias.Bridge\n"),
-            ["Elements/Alias: a symbolic link, which the source scan does not follow; "
-             "use a regular file or directory (docs/FORMALIZATION.md, section 7)"])
+        self.assertEqual(self.findings("import Elements.Alias.Bridge\n"), [
+            "Elements/Alias: a symbolic link, which the source scan does not follow; "
+            "use a regular file or directory (docs/FORMALIZATION.md, section 7)",
+            f"{self.refused(1)}, and `Elements.Alias.Bridge` reaches Elements/Alias, "
+            "a symbolic link which the import scan does not follow",
+        ])
+
+    def test_a_root_module_symlink_is_refused_without_reading_its_target(self):
+        target = self.root / "Outside.lean"
+        target.write_bytes(b"\xff")
+        (self.root / "Bridge.lean").symlink_to(target)
+        self.assertEqual(self.findings("import Bridge\n"), [
+            f"{self.refused(1)}, and `Bridge` reaches Bridge.lean, a symbolic link which "
+            "the import scan does not follow",
+        ])
+
+    def test_a_transitive_symlinked_directory_outside_source_trees_is_refused(self):
+        target = self.root / "Outside"
+        target.mkdir()
+        (target / "Hidden.lean").write_bytes(b"\xff")
+        (self.root / "Support").symlink_to(target, target_is_directory=True)
+        (self.root / "Bridge.lean").write_text("import Support.Hidden\n")
+        self.assertEqual(self.findings("import Bridge\n"), [
+            f"{self.refused(1)}, and `Bridge` reaches Support, a symbolic link which "
+            "the import scan does not follow",
+        ])
 
     def test_a_cycle_ends_and_files_outside_book_zero_may_import_propositions(self):
         (self.root / "Elements/Foundations/Words.lean").write_text(

@@ -441,32 +441,38 @@ def module_file(module: str) -> Path:
     return ROOT.joinpath(*folders, name + ".lean")
 
 
-def has_symlink(path: Path) -> bool:
-    """Whether a component of `path` beneath `ROOT` is a symbolic link."""
+def symlink_in(path: Path) -> Path | None:
+    """The first symbolic-link component of `path` beneath `ROOT`, if any."""
     part = ROOT
     for name in path.relative_to(ROOT).parts:
         part /= name
         if part.is_symlink():
-            return True
-    return False
+            return part
+    return None
 
 
-def brought_in(module: str, read: dict) -> tuple[str, str | None] | None:
+class FollowedImport(NamedTuple):
+    path: str
+    imported: str | None
+    symlink: bool = False
+
+
+def brought_in(module: str, read: dict) -> FollowedImport | None:
     """The first proposition that `module` imports through the edition's own Lean files,
-    read breadth first, as (the file that imports it, the proposition), or (that file, None)
-    for an import there that the scan cannot read for certain; None if neither. Lean's own
-    modules have no file here, and a symbolic link anywhere in a module's path is refused
-    by its own path. `read` keeps each file's imports, so that each file is read once."""
+    read breadth first, or the first symbolic link in a followed path. Lean's own modules
+    have no file here. `read` keeps each file's imports, so that each file is read once."""
     queue, seen = [module], {module}
     while queue:
         path = module_file(queue.pop(0))
-        if has_symlink(path) or not path.is_file():
+        if link := symlink_in(path):
+            return FollowedImport(link.relative_to(ROOT).as_posix(), None, True)
+        if not path.is_file():
             continue
         if path not in read:
             read[path] = imports(read_lean(path.read_text())[0])
         for _, imported in read[path]:
             if imported is None or proposition(imported):
-                return rel(path), imported
+                return FollowedImport(rel(path), imported)
             if imported not in seen:
                 seen.add(imported)
                 queue.append(imported)
@@ -486,9 +492,13 @@ def check_book_zero(file: str, code: str, read: dict) -> None:
         elif proposition(module):
             fail(where)
         elif found := brought_in(module, read):
-            importer, imported = found
-            fail(f"{where}, and `{module}` brings one in: {importer} imports "
-                 + (f"`{imported}`" if imported else "a module the scan cannot read for certain"))
+            if found.symlink:
+                fail(f"{where}, and `{module}` reaches {found.path}, a symbolic link which "
+                     "the import scan does not follow")
+            else:
+                fail(f"{where}, and `{module}` brings one in: {found.path} imports "
+                     + (f"`{found.imported}`" if found.imported else
+                        "a module the scan cannot read for certain"))
 
 
 def check_rules() -> None:
