@@ -760,8 +760,9 @@ passed it, with minor findings: a remark wanted under III.26's step in III.27, t
 hypothesis that the circles are two in the step from the straight line through the centres,
 and docstrings that named a centre the statement no longer has or told the history of the
 move; 86c5748d answers them. The port of `Prop20.lean`, `Prop21.lean` and `Prop26.lean`, at
-9f8c8adb, is being read by an independent reader as this report is written, and its findings
-are not in it. The changes at 86c5748d, and this report, have not been read by an
-independent reader; the branch's code review will review them. Before the port, each file
-was read against Heath's text by an independent reader, and the whole branch was reviewed at
-4504fa48, with the answers to that review at 4cd7c77d.
+9f8c8adb, the changes at 86c5748d and a7724676, and this report have not been read by an
+independent reader. The branch's code review read the work through a7724676 and required the
+explicit prototype authorization, the `Elements.BookIII.Staging.Prop20` name and the fresh
+validation recorded above. Before the port, each file was read against Heath's text by an
+independent reader, and the whole branch was reviewed at 4504fa48, with the answers to that
+review at 4cd7c77d.
