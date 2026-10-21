@@ -69,6 +69,96 @@ COUNTS_FROM = 'Counts from `run.py --full --write` at commit `'   # the counts' 
 HARNESS_LINE = 'harness sha256'   # a run's header names its harness so; the summary, `harness`
 COMMITTED = 'harness files as committed'   # a commit's state, when the run read its harness
 
+
+def arguments(argv):
+    args = set(argv)
+    if args != {'--ties'} and (not args or not args <= {'--fast', '--full', '--write'}
+                               or ('--fast' in args) == ('--full' in args)
+                               or ('--write' in args and '--full' not in args)):
+        sys.exit(__doc__)
+    return args
+
+
+def git(*args):
+    try:
+        p = subprocess.run(['git', *args], capture_output=True, text=True, cwd=ROOT)
+        return p.stdout.strip() if p.returncode == 0 else None
+    except OSError:
+        return None
+
+
+def harness_hash(here=HERE):
+    """the sha256 of the harness: each file of HARNESS, in order, by its name and its bytes.
+    The results name it (provenance), and results_check.py compares it with theirs."""
+    h = hashlib.sha256()
+    for f in HARNESS:
+        with open(os.path.join(here, f), 'rb') as fh:
+            h.update(f.encode() + b'\0' + fh.read())
+    return h.hexdigest()
+
+
+def provenance():
+    sha = git('rev-parse', 'HEAD') or 'unknown'
+    changed = git('status', '--porcelain', '--', *[f'tests/model/{f}' for f in HARNESS])
+    state = (COMMITTED if changed == '' else
+             'harness files differ from this commit' if changed else 'state unknown')
+    py = f'{platform.python_version()} ({platform.python_implementation()}, {platform.system()} {platform.machine()})'
+    return dict(commit=f'{sha} ({state})', harness=harness_hash(CHECKOUT), python=py,
+                date=datetime.date.today().isoformat())
+
+
+def provenance_signature(prov):
+    """the commit, harness state and harness hash that decide whether --write may write"""
+    match = re.fullmatch(r'([0-9a-f]{40}) \(([^()]*)\)', prov['commit'])
+    return (match.group(1), match.group(2), prov['harness']) if match else None
+
+
+def committed_file(commit, name):
+    """a file of HARNESS as `commit` has it, out of git's objects, or None"""
+    try:
+        p = subprocess.run(['git', 'cat-file', 'blob', f'{commit}:tests/model/{name}'],
+                           capture_output=True, cwd=ROOT)
+    except OSError:
+        return None
+    return p.stdout if p.returncode == 0 else None
+
+
+def run_from_snapshot(argv):
+    """--write: run this file again, with `argv`, from a copy of the harness as the commit
+    checked out has it, made in a private folder out of git's objects, once it hashes as the
+    harness checked out does; the run's exit status"""
+    prov = provenance()
+    signature = provenance_signature(prov)
+    if signature is None or signature[1] != COMMITTED:
+        sys.exit("the model harness is not a commit's committed files, so nothing is written")
+    commit = signature[0]
+    with tempfile.TemporaryDirectory(prefix='model-harness-') as snap:
+        for name in HARNESS:
+            data = committed_file(commit, name)
+            if data is None:
+                sys.exit(f'git has no tests/model/{name} at {commit[:12]}, so nothing is written')
+            with open(os.path.join(snap, name), 'xb') as f:
+                f.write(data)
+        if harness_hash(snap) != prov['harness']:
+            sys.exit(f'the harness as {commit[:12]} has it does not hash as the harness checked '
+                     'out does, so nothing is written')
+        print(f'running the harness as {commit[:12]} has it, from a copy out of git', flush=True)
+        env = dict(os.environ, **{SNAPSHOT: json.dumps({'root': ROOT, 'provenance': prov})})
+        return subprocess.run([sys.executable, '-I', os.path.join(snap, 'run.py'), *argv],
+                              env=env).returncode
+
+
+def bootstrap(argv):
+    args = arguments(argv)
+    return run_from_snapshot(argv) if '--write' in args and FROM_SNAPSHOT is None else None
+
+
+if __name__ == '__main__':
+    bootstrap_status = bootstrap(sys.argv[1:])
+    if bootstrap_status is not None:
+        sys.exit(bootstrap_status)
+
+
 sys.path.insert(0, HERE)
 _argv, sys.argv = sys.argv, sys.argv[:1]   # the harness modules read sys.argv when imported
 import search  # noqa: E402
@@ -347,74 +437,6 @@ def self_test():
 
 # ---------------------------------------------------------------- writing the results
 
-def git(*args):
-    try:
-        p = subprocess.run(['git', *args], capture_output=True, text=True, cwd=ROOT)
-        return p.stdout.strip() if p.returncode == 0 else None
-    except OSError:
-        return None
-
-
-def harness_hash(here=HERE):
-    """the sha256 of the harness: each file of HARNESS, in order, by its name and its bytes.
-    The results name it (provenance), and results_check.py compares it with theirs."""
-    h = hashlib.sha256()
-    for f in HARNESS:
-        with open(os.path.join(here, f), 'rb') as fh:
-            h.update(f.encode() + b'\0' + fh.read())
-    return h.hexdigest()
-
-
-def provenance():
-    sha = git('rev-parse', 'HEAD') or 'unknown'
-    changed = git('status', '--porcelain', '--', *[f'tests/model/{f}' for f in HARNESS])
-    state = (COMMITTED if changed == '' else
-             'harness files differ from this commit' if changed else 'state unknown')
-    py = f'{platform.python_version()} ({platform.python_implementation()}, {platform.system()} {platform.machine()})'
-    return dict(commit=f'{sha} ({state})', harness=harness_hash(CHECKOUT), python=py,
-                date=datetime.date.today().isoformat())
-
-
-def provenance_signature(prov):
-    """the commit, harness state and harness hash that decide whether --write may write"""
-    match = re.fullmatch(r'([0-9a-f]{40}) \(([^()]*)\)', prov['commit'])
-    return (match.group(1), match.group(2), prov['harness']) if match else None
-
-
-def committed_file(commit, name):
-    """a file of HARNESS as `commit` has it, out of git's objects, or None"""
-    try:
-        p = subprocess.run(['git', 'cat-file', 'blob', f'{commit}:tests/model/{name}'],
-                           capture_output=True, cwd=ROOT)
-    except OSError:
-        return None
-    return p.stdout if p.returncode == 0 else None
-
-
-def run_from_snapshot(argv):
-    """--write: run this file again, with `argv`, from a copy of the harness as the commit
-    checked out has it, made in a private folder out of git's objects, once it hashes as the
-    harness checked out does; the run's exit status"""
-    prov = provenance()
-    signature = provenance_signature(prov)
-    if signature is None or signature[1] != COMMITTED:
-        sys.exit("the model harness is not a commit's committed files, so nothing is written")
-    commit = signature[0]
-    with tempfile.TemporaryDirectory(prefix='model-harness-') as snap:
-        for name in HARNESS:
-            data = committed_file(commit, name)
-            if data is None:
-                sys.exit(f'git has no tests/model/{name} at {commit[:12]}, so nothing is written')
-            with open(os.path.join(snap, name), 'xb') as f:
-                f.write(data)
-        if harness_hash(snap) != prov['harness']:
-            sys.exit(f'the harness as {commit[:12]} has it does not hash as the harness checked '
-                     'out does, so nothing is written')
-        print(f'running the harness as {commit[:12]} has it, from a copy out of git', flush=True)
-        env = dict(os.environ, **{SNAPSHOT: json.dumps({'root': ROOT, 'provenance': prov})})
-        return subprocess.run([sys.executable, '-I', os.path.join(snap, 'run.py'), *argv],
-                              env=env).returncode
-
 
 def short_commit(commit):
     """the commit as MODEL.md's counts name it"""
@@ -550,14 +572,8 @@ def write(runs, prov, results=RESULTS, model_md=MODEL_MD):
 # ---------------------------------------------------------------- main
 
 def main():
-    args = set(sys.argv[1:])
-    if args != {'--ties'} and (not args or not args <= {'--fast', '--full', '--write'}
-                               or ('--fast' in args) == ('--full' in args)
-                               or ('--write' in args and '--full' not in args)):
-        sys.exit(__doc__)
+    args = arguments(sys.argv[1:])
     full = '--full' in args
-    if '--write' in args and FROM_SNAPSHOT is None:
-        sys.exit(run_from_snapshot(sys.argv[1:]))
     self_test()
     n, problems = check_names()
     print(f'names: laws.toml names {len(LAW_OF)} laws; facts.json declares {n} axioms'

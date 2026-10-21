@@ -39,8 +39,9 @@ functions to small inputs, each with the answer the screen should give.
   is refused; no record is written of such a run, through a symbolic link, or of inputs
   or a commit that moved while it ran; an ignored module that is an actual hashed input
   cannot receive committed provenance or make a matching record current, while ignored
-  files outside the inputs remain excluded; and the real inputs compute, which takes most
-  of the time.
+  files outside the inputs remain excluded; a symbolic-link input, a linked input directory
+  or a dangling input link is refused before a run, a record or a current verdict; and the
+  real inputs compute, which takes most of the time.
 * Before any Lean: --check-current takes no OUTDIR and no --write; a stale build, --write
   on inputs that are not a commit's, or a move to another commit or other inputs after the
   build checks as current, stops a run. Before a successful --write, an unchanged build is
@@ -403,6 +404,20 @@ class GitProvenance(unittest.TestCase):
         self.assertNotEqual(parts["screen"], clean["screen"])
         return parts
 
+    def commit_paths(self, *paths: str) -> None:
+        self.git("add", *paths)
+        self.git("-c", "user.name=Screen test", "-c", "user.email=screen@example.invalid",
+                 "commit", "-qm", "fixture update")
+        self.commit = self.git("rev-parse", "HEAD").stdout.strip()
+
+    def matching_record_is_refused(self, parts: dict[str, str]) -> None:
+        self.path.write_text(screen.record_text(parts, self.commit, screen.COMMITTED, 1),
+                             encoding="utf-8")
+        problems, _, changed = screen.check_current(self.root, self.path)
+        self.assertEqual(changed, [])
+        self.assertEqual(len(problems), 1)
+        self.assertIn("symbolic link", problems[0])
+
     def test_a_clean_committed_fixture_can_record_and_check(self):
         parts = screen.inputs(self.root, self.facts)
         at = screen.revision(self.root)
@@ -433,6 +448,61 @@ class GitProvenance(unittest.TestCase):
         self.assertEqual(changed, [])
         self.assertEqual(len(problems), 1)
         self.assertIn("inputs now are not a commit's", problems[0])
+
+    def test_a_committed_input_symlink_is_refused_before_write_and_recording(self):
+        self.write("docs/Words.lean", "def x := 1\n")
+        link = self.root / "Elements" / "Foundations" / "Words.lean"
+        link.unlink()
+        link.symlink_to("../../docs/Words.lean")
+        self.commit_paths("docs/Words.lean", "Elements/Foundations/Words.lean")
+        self.write("docs/Words.lean", "def x := 2\n")
+        parts = screen.inputs(self.root, self.facts)
+        at = screen.revision(self.root)
+        self.assertNotEqual(at[1], screen.COMMITTED)
+
+        real_run = subprocess.run
+        lake = []
+
+        def command(argv, **kwargs):
+            if argv[0] == "lake":
+                lake.append(argv)
+                return subprocess.CompletedProcess(argv, 0)
+            return real_run(argv, **kwargs)
+
+        with tempfile.TemporaryDirectory() as out, \
+                mock.patch.object(screen, "ROOT", self.root), \
+                mock.patch.object(screen, "RECORD", self.path), \
+                mock.patch.object(screen.subprocess, "run", side_effect=command), \
+                mock.patch.object(sys, "argv", ["screen.py", out, "--write"]), \
+                self.assertRaisesRegex(SystemExit, "symbolic link"):
+            screen.main()
+        self.assertEqual(lake, [])
+
+        self.path.write_text("existing record\n", encoding="utf-8")
+        before = self.path.read_text(encoding="utf-8")
+        with self.assertRaisesRegex(SystemExit, "symbolic link"):
+            screen.write_record(self.root, parts, 1, self.path, at=at)
+        self.assertEqual(self.path.read_text(encoding="utf-8"), before)
+        self.matching_record_is_refused(parts)
+
+    def test_a_symlinked_input_directory_is_refused(self):
+        self.write("outside/Hidden.lean", "def hidden := 1\n")
+        (self.root / "Elements" / "Linked").symlink_to("../outside", target_is_directory=True)
+        self.commit_paths("outside/Hidden.lean", "Elements/Linked")
+        self.write("outside/Hidden.lean", "def hidden := 2\n")
+        parts = screen.inputs(self.root, self.facts)
+        at = screen.revision(self.root)
+        self.assertNotEqual(at[1], screen.COMMITTED)
+        self.matching_record_is_refused(parts)
+
+    def test_a_dangling_input_symlink_is_refused(self):
+        path = self.root / "lakefile.lean"
+        path.symlink_to("missing-lakefile.lean")
+        self.commit_paths("lakefile.lean")
+        parts = screen.inputs(self.root, self.facts)
+        at = screen.revision(self.root)
+        self.assertNotEqual(at[1], screen.COMMITTED)
+        self.matching_record_is_refused(parts)
 
 
 class Record(unittest.TestCase):

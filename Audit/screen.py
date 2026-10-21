@@ -122,16 +122,17 @@ toolchain's files; and this file without this docstring, which records the run a
 written after it, with any other Python module under Audit/, which a run without -I could
 import in place of a standard one. An ignored module among those actual input files still
 counts, and cannot be called committed; ignored files outside the input paths and modules
-under __pycache__ do not count. --write records only a run on a commit's inputs as
-committed, and stops before the run otherwise. `--check-current` refuses a record that
-does not name a commit's 40 hex digits in that state, computes the parts again, without
-Lean, and exits 1 when the record is missing, the inputs differ, or matching inputs are not
-committed. It names each part that changed. The run needs Lean and takes the time above,
-so this is a release step (docs/WORKFLOW.md, section 10, step 10), not one of CI's checks.
-The record is written only by a run, never by hand. `--check-current` reads the record,
-not the run: a record written by hand, or by `write_record` with no run, passes it, and the
-record holds only hashes. The run's closing lines, quoted in the release's pull request,
-are its evidence.
+under __pycache__ do not count. No input file or its directory may be a symbolic link,
+since Git commits the link and the run would read its target. --write records only a run on
+a commit's inputs as committed, and stops before the run otherwise. `--check-current`
+refuses a record that does not name a commit's 40 hex digits in that state, computes the
+parts again, without Lean, and exits 1 when the record is missing, the inputs differ,
+matching inputs are not committed, or an input path is a symbolic link. It names each part
+that changed. The run needs Lean and takes the time above, so this is a release step
+(docs/WORKFLOW.md, section 10, step 10), not one of CI's checks. The record is written only
+by a run, never by hand. `--check-current` reads the record, not the run: a record written
+by hand, or by `write_record` with no run, passes it, and the record holds only hashes. The
+run's closing lines, quoted in the release's pull request, are its evidence.
 """
 
 import argparse
@@ -630,9 +631,41 @@ def input_paths(root: Path) -> list[str]:
     return ["facts.json", *library_files(root), *TOOLCHAIN, *screen_files(root)]
 
 
+def input_symlinks(root: Path) -> list[str]:
+    """Symbolic links among input files or their directory components."""
+    found = set()
+    for rel in ("facts.json", LIBRARY[0], LIBRARY[1], *TOOLCHAIN, "Audit", SCREEN):
+        path = root
+        for part in Path(rel).parts:
+            path /= part
+            if path.is_symlink():
+                found.add(path.relative_to(root).as_posix())
+                break
+    for rel, excluded, suffixes in ((LIBRARY[1], set(), {".lean"}),
+                                    ("Audit", {"__pycache__"}, set(MODULES))):
+        base = root / rel
+        if base.is_symlink() or not base.is_dir():
+            continue
+        for directory, dirs, files in os.walk(base, followlinks=False):
+            dirs[:] = [name for name in dirs if name not in excluded]
+            for name in list(dirs):
+                path = Path(directory) / name
+                if path.is_symlink():
+                    found.add(path.relative_to(root).as_posix())
+                    dirs.remove(name)
+            for name in files:
+                path = Path(directory) / name
+                if path.is_symlink() and (not path.exists() or path.suffix in suffixes):
+                    found.add(path.relative_to(root).as_posix())
+    return sorted(found)
+
+
 def revision(root: Path) -> tuple[str, str]:
     """The commit checked out, and whether the inputs are as it has them (COMMITTED)."""
     commit = git("rev-parse", "HEAD", root=root) or "unknown"
+    links = input_symlinks(root)
+    if links:
+        return commit, "input paths include symbolic links: " + ", ".join(links)
     status = git("status", "--porcelain", "--", *INPUTS, root=root)
     ignored = git("status", "--porcelain", "--ignored=matching", "--untracked-files=all",
                   "--", *input_paths(root), root=root)
@@ -664,6 +697,9 @@ def write_record(root: Path, read: dict[str, str], count: int, path: Path = RECO
     """Record what the run read, at the commit and state `revision` gave when it read them,
     unless its inputs or that commit changed while it ran, or they are not a commit's;
     through a new file renamed over the record, which is never a symbolic link."""
+    if links := input_symlinks(root):
+        sys.exit("screen: input paths include symbolic links, so nothing is recorded: "
+                 + ", ".join(links))
     facts = json.loads((root / "facts.json").read_text(encoding="utf-8"))
     moved = [k for k, v in inputs(root, facts).items() if read[k] != v]
     if moved:
@@ -708,6 +744,8 @@ def check_current(root: Path = ROOT, path: Path = RECORD) -> tuple[list[str], di
             or rec.get("state") != COMMITTED:
         return [f"{name} records a run on inputs other than a commit's: --write records only "
                 f'a commit\'s 40 hex digits, with the state "{COMMITTED}"'], rec, []
+    if links := input_symlinks(root):
+        return ["the inputs now include symbolic links: " + ", ".join(links)], rec, []
     try:
         facts = json.loads((root / "facts.json").read_text(encoding="utf-8"))
         now = inputs(root, facts)

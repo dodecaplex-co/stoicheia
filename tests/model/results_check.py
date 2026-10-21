@@ -307,8 +307,11 @@ def write_guard_self_test():
                 mock.patch.object(runner, 'write', writer), \
                 mock.patch('builtins.print'):
             try:
-                runner.main()
-                stopped = None
+                if start is None:
+                    stopped = runner.bootstrap(['--full', '--write'])
+                else:
+                    runner.main()
+                    stopped = None
             except SystemExit as e:
                 stopped = e.code
         return launched, writer, child, stopped
@@ -362,12 +365,17 @@ def write_guard_self_test():
 
 
 PLANT = 'MODEL_SELF_TEST_PLANT'   # the made-up harness's orders: 'aba', 'stay', or none
+CHECKOUT_IMPORT = 'MODEL_SELF_TEST_CHECKOUT'
 FAKE_EXHAUSTIVE = "Law 9 5 0\nderived.P 7 3 0\nexhaustive axioms run: 1\n"   # what it prints
+LIVE_IMPORT = f"""import os
+if os.path.dirname(os.path.abspath(__file__)) == os.environ.get({CHECKOUT_IMPORT!r}):
+    with open('checkout-imported', 'a') as marker:
+        marker.write(os.path.basename(__file__) + '\\n')
+"""
 FAKE = {   # the made-up harness: every file of HARNESS but run.py, which is the real one
-    'model.py': "def read_laws():\n    return {'Ax': 'Law'}, set()\n",
-    'derived.py': "PROPERTIES = ('derived.P',)\n",
-    'search.py': f"""import os
-import shutil
+    'model.py': LIVE_IMPORT + "def read_laws():\n    return {'Ax': 'Law'}, set()\n",
+    'derived.py': LIVE_IMPORT + "PROPERTIES = ('derived.P',)\n",
+    'search.py': LIVE_IMPORT + f"""import shutil
 import sys
 AXIOMS = [('Law', None, None)]
 if __name__ == '__main__':
@@ -397,7 +405,7 @@ print('structured total counterexamples: 0')
     'grid_check.py': "print('failures 0')\n",
     'angle_check.py': ("print('triple incidence grid failures: 0 []')\n"
                        "print('float failures: {}')\n"),
-    'hyperbolic.py': """AXIOMS = [('Law', None)]
+    'hyperbolic.py': LIVE_IMPORT + """AXIOMS = [('Law', None)]
 if __name__ == '__main__':
     print('Law 9 5 0')
     print('self-test: made up')
@@ -418,7 +426,7 @@ def snapshot_self_test():
     if set(FAKE) != set(HARNESS) - {'run.py'}:
         raise AssertionError('snapshot self-test: the made-up harness is not HARNESS')
     env = {k: v for k, v in os.environ.items()
-           if not k.startswith('GIT_') and k not in (runner.SNAPSHOT, PLANT)}
+           if not k.startswith('GIT_') and k not in (runner.SNAPSHOT, PLANT, CHECKOUT_IMPORT)}
     env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM='1')
 
     def put(path, text):
@@ -450,8 +458,13 @@ def snapshot_self_test():
                     f.write('# not committed\n')
             p = subprocess.run([sys.executable, '-I', os.path.join(model, 'run.py'), '--full',
                                 '--write'], cwd=root, capture_output=True, text=True,
-                               env=dict(env, **({PLANT: plant} if plant != 'dirty' else {})))
+                               env=dict(env, **{CHECKOUT_IMPORT: model},
+                                        **({PLANT: plant} if plant != 'dirty' else {})))
             results = os.path.join(model, 'results')
+            imported = os.path.join(root, 'checkout-imported')
+            if os.path.exists(imported):
+                raise AssertionError('snapshot self-test: the checkout harness was imported before '
+                                     f'snapshot dispatch: {read(imported)}')
             if plant == 'aba':
                 path = os.path.join(results, 'exhaustive.txt')
                 fields = header_of(path) if p.returncode == 0 and os.path.isfile(path) else {}
