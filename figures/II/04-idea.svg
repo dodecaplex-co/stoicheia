@@ -14,7 +14,7 @@
     <line x1="90.0" y1="53.5" x2="90.0" y2="128.5" stroke="#1f5aa6" stroke-width="7" stroke-linecap="butt"/>
     <line x1="90.0" y1="128.5" x2="90.0" y2="263.5" stroke="#d0312d" stroke-width="7" stroke-linecap="butt"/>
   </g>
-  <g font-style="italic" font-size="14" fill="#222222">
+  <g font-size="14" fill="#222222">
     <text x="103.5" y="30" text-anchor="middle">A</text>
     <text x="238.5" y="30" text-anchor="middle">C</text>
     <text x="313.5" y="30" text-anchor="middle">B</text>
