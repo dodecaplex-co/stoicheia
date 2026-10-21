@@ -458,7 +458,7 @@ The ruleset and the remaining merge requirements are in
   planted straight into the index. Neither needs Lean: both read Git's index, not the
   files, and they run first, before `lake build`, so a misnamed path stops the checks
   before anything is built. `negative_tests.py` plants eight of the faults in a copy of
-  the edition's index (its item 19), under `--counts-only` too.
+  the edition's index (its item 20), under `--counts-only` too.
 - **The style check's cases run before it.** `tests/test_check_style.py` puts the readings
   of `scripts/check_style.py` that [STYLE.md](STYLE.md), section 8, names to short texts
   and small figures, including S20's ink and S26's clearance and repeated letters, each
