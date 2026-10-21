@@ -6,7 +6,7 @@ import Elements.Figure.Sides
 A scratch proof of brief 0013, kept unbuilt (docs/WORKFLOW.md, section 2): the probe of
 19 October 2026 into I.45's and II.14's figures. From the root of a checkout that has built
 `Elements`, `lake env lean` on this file checks it. Its arguments were carried into
-`Staging/Figures/` (`ConvexFacts.lean`, `Closed.lean`, `ConvexAreaHelpers.lean`).
+the prototype proofs on the branch `lean/figures-staging`.
 -/
 
 namespace Elements.Probe
