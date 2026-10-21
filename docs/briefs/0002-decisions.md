@@ -3184,8 +3184,12 @@ findings:
   in #150.
 
   The six records the restricted rule changes, for I.2, I.3, I.4, I.8, I.23 and I.44, were
-  read in full at `bd86a7b6` by an independent Codex reader, who found every item true,
-  and were stamped there (run "brief 0009 stage full, ship S3 A1-integration re-read").
+  read in full at `bd86a7b6` by an independent Codex reader, who found every item to pass
+  or not to apply, and were stamped there (run "brief 0009 stage full, ship S3
+  A1-integration re-read"). After that reading, /no-mistakes removed from
+  `mishnah/I/08.md` its sentence on the former, existential rule; an independent review of
+  `84a306e0..3ad74e04` found that I.8's commentary item still holds, every remaining
+  sentence being as read.
 
   The protected paths this merge changes from both of its parents are these. Reconciled by
   hand: `Audit/Overlaps.lean`, `Audit/screen.py`, `tests/certificate_expectations.json` (29

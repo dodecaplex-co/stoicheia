@@ -78,10 +78,10 @@ depend on the corresponding declarations remaining in the axiom registry.
   hypotheses on purpose, where chance rarely meets them (three straight lines through one
   point, a right angle, two circles through a common point), over a large lattice and over
   fractions.
-- **[mutations.py](mutations.py)** makes fourteen mutation cases of the laws, and one of
-  the placement that supports superposition (M9), on purpose, each by changing a hypothesis
-  or a conclusion, and checks that each changed statement has a counterexample. So the
-  harness can see a false statement when there is one.
+- **[mutations.py](mutations.py)** weakens 15 statements on purpose, each by changing a
+  hypothesis or a conclusion: fourteen rules, assumed or now proved, and the placement that
+  supports superposition (M9). It checks that each weakened statement has a counterexample.
+  So the harness can see a false statement when there is one.
 - **[grid_check.py](grid_check.py)** and **[angle_check.py](angle_check.py)** are a second
   opinion, written separately: the incidence, order and circle rules exactly on a grid,
   and the angle, area, Postulate 4, Postulate 5 and superposition rules in floating point.
@@ -385,8 +385,8 @@ lines are different and the points are not `A`.
 Many rules, assumed or proved, carry a guard that looks fussy: a point must be different from another, two
 lines or circles must differ, a point must be strictly inside. The mutation test changes a
 hypothesis or conclusion in fifteen cases and finds a counterexample in each. Fourteen
-concern laws; M9 concerns the supporting placement construction for superposition. It tests
-why that construction requires a triangle, not whether the restricted derivation calculus
+concern rules, assumed or now proved; M9 concerns the supporting placement construction for
+superposition. It tests why that construction requires a triangle, not whether the restricted derivation calculus
 fails without that guard.
 
 | Mutation | What goes wrong without the guard |

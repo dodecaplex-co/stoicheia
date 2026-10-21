@@ -628,7 +628,7 @@ parallelogram. The six records for I.2, I.3, I.4, I.8, I.23 and I.44 were read a
 stamped independently before A1; all retain full coverage and Euclid's route.
 The marker change made I.4's and I.8's records stale; an independent reader read both
 again and stamped them at `0085b443`. An independent Codex reader then read all six in
-full at `bd86a7b6`, the integration merge, found every item true and stamped them there
+full at `bd86a7b6`, the integration merge, found every item to pass or not to apply, and stamped them there
 (run "brief 0009 stage full, ship S3 A1-integration re-read"); the pages show that commit.
 
 ## Evidence before landing
@@ -743,16 +743,15 @@ four pure module imports and the page claim; finishing the three answers is trac
 
 The owner's approval of 20 October 2026 authorises the replacement subject to the
 tooling pull requests landing first, /no-mistakes and an independent Codex read of the
-model lane. The tooling pull requests have landed; the remaining integration and
-landing work is:
+model lane. The tooling pull requests have landed and the combined sources are
+regenerated; the record of each condition is:
 
 - **The tooling pull requests landed first.** The check changes in `Certificate/Facts.lean`,
   `scripts/heath.py` and `review/SCHEMA.md` reached main in #180, and the model checks
   reached main in #182. This branch has merged main at `64206ed3`, which contains both.
-  WORKFLOW,
-  section 10, forbids changing a check in the same pull
-  request as that code. The certificate must recognise `Coincidence.step`
-  without requiring it to be present on main yet; the Heath self-test and the schema's
+  WORKFLOW, section 10, forbids changing a check in the same pull request as that code.
+  The certificate recognised `Coincidence.step` without requiring it to be present on main
+  before this rule landed; the Heath self-test and the schema's
   example keep their outcomes while naming I.13's overlap in I.47 (Metric 5 in
   `Prop47.within`), which survives this rule and the axiom retirements. The model check
   changes, including the older relative-path defect fixed on
