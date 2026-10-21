@@ -251,9 +251,9 @@ reviewer from the authors of the proof.
   commit is its text now: what was read is then what the record says, so it records no
   new reading. It reads the records' history, so it runs in a full clone. A record whose
   text it cannot confirm is listed as needing a reader, who reads it and stamps it as
-  above. A stamp commit absent from the clone, abbreviated ambiguously, or one a shallow
-  clone cannot place in the history of HEAD is a problem, and the command exits 1 without
-  listing that record for a reader. Fetch missing history and run it again; for an
+  above. A stamp commit absent from the clone or abbreviated ambiguously is a problem, and
+  so, for a record without `text`, is one a shallow clone cannot place in the history of
+  HEAD: the command exits 1 without listing that record for a reader. Fetch missing history and run it again; for an
   ambiguous id, a reader identifies the intended commit without guessing, reads the record
   and stamps it as above with enough of the id to name that commit alone; then run it
   again. The migration may be run again at any time, as at landing, after the branches

@@ -4935,6 +4935,21 @@ class Units(unittest.TestCase):
             self.assertIn("0 need(s) a reader; 1 problem(s)", out.getvalue())
             self.assertEqual((shallow / "review/I/01.toml").read_text(), before)
             self.assertNotIn('\ntext = "', before)
+            with mock.patch.object(review_stamp, "ROOT", shallow), \
+                    mock.patch.object(review_stamp.heath, "ROOT", shallow), \
+                    mock.patch.object(review_stamp.heath, "REVIEW", shallow / "review"), \
+                    mock.patch.object(review_stamp.heath, "review_fingerprint",
+                                      return_value="sha256:0123456789abcdef"):
+                with self.assertRaisesRegex(ValueError, "cannot be confirmed in the "
+                                            "incomplete history of this shallow clone"):
+                    review_stamp.stamp({}, "I", 1, read_commit, False)
+                self.assertEqual((shallow / "review/I/01.toml").read_text(), before)
+                # A record that already carries a current `text` has nothing to migrate,
+                # so the shallow boundary does not make it a problem.
+                own = review_stamp.heath.text_hash(before)
+                (shallow / "review/I/01.toml").write_text(
+                    before.replace("[review]\n", f'[review]\ntext = "{own}"\n', 1))
+                self.assertEqual(review_stamp.migrate_text("I", 1, True)[0], "current")
 
     def test_review_stamp_rejects_an_ambiguous_prefix_even_when_a_ref_shadows_it(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -31,9 +31,9 @@ section; nothing else in the file changes.
 writes `text` alone, and only for a record whose own stamp `commit` is in the history of
 HEAD and whose text at that commit is its text now: what the reviewer read is then what
 the record says, so the stamp records no new reading. A record whose text cannot be
-confirmed is listed as needing a reader. A stamp commit absent from this clone,
-abbreviating more than one commit, or not to be confirmed in the history of HEAD in a
-shallow clone is instead a problem: fetch the missing history; or, for an ambiguous id, a
+confirmed is listed as needing a reader. A stamp commit absent from this clone or
+abbreviating more than one commit is instead a problem, and so, for a record without
+`text`, is one not to be confirmed in the history of HEAD in a shallow clone: fetch the missing history; or, for an ambiguous id, a
 reader identifies the intended commit without guessing, reads the record and stamps it
 with --commit and enough of the id to name that commit alone; then run the migration
 again. It changes nothing it cannot confirm, and it can be run again at any time, as at
@@ -89,7 +89,7 @@ def set_stamp(text: str, section: str, key: str, value: str) -> str:
 
 NO_COMMIT = "is not a commit of this clone (a shallow clone, or a commit never fetched)"
 AMBIGUOUS_COMMIT = "abbreviates more than one commit of this clone"
-GIT = ("git", "--no-replace-objects")
+GIT = ("git", "--no-replace-objects", "-c", "advice.graftFileDeprecated=false")
 
 
 def git_env() -> dict[str, str]:
@@ -293,7 +293,8 @@ def migrate_text(book: str, n: int, dry_run: bool) -> tuple[str, str]:
     in the history of HEAD and its text at that commit is its text now. Returns (outcome,
     what was found): "written", "current", or "reader" for a record that needs a reader;
     raises ValueError when the record cannot be read, its commit is absent or ambiguous
-    in this clone (resolve), or shallow history prevents confirming its ancestry."""
+    in this clone (resolve), or, for a record without `text`, shallow history prevents
+    confirming its ancestry."""
     ref, path = f"{book}.{n}", heath.review_path(book, n)
     if not path.exists():
         raise ValueError(f"{ref}: there is no record {rel(path)}")
@@ -373,9 +374,9 @@ def main(argv=None) -> int:
     parser.add_argument("--migrate-text", action="store_true",
                         help="write `text` alone, for each record whose text at its stamp commit, "
                         "in the history of HEAD, is its text now; list each record it cannot "
-                        "confirm as needing a reader, and report a stamp commit that is absent, "
-                        "ambiguous, or not to be placed in HEAD's history in a shallow clone, as "
-                        "a problem")
+                        "confirm as needing a reader, and report a stamp commit that is absent "
+                        "or ambiguous, or, for a record without `text`, not to be placed in "
+                        "HEAD's history in a shallow clone, as a problem")
     args = parser.parse_args(argv)
     if args.commit and not heath.COMMIT.fullmatch(args.commit):
         parser.error("--commit is a git commit, 7 to 40 lower-case hex digits")
