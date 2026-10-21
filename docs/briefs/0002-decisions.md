@@ -3209,6 +3209,18 @@ findings:
   hold. `git safe-push --label release` creates the `release` label, with its
   description, the first time it is given; the consolidation release (#38) lands through
   a pull request carrying it. Tags and releases stay manual, by the owner.
+- **The joins by Postulate 1 stay wherever Euclid writes them (part of
+  [#32](https://github.com/jackChallis/stoicheia/issues/32)).** Train Tw2 first removed the
+  joins by Postulate 1 from I.5, I.11, I.16, I.20 and I.26, since the later steps of those
+  proofs do not use the segment the join names. The coordinator ruled that a join stays
+  wherever a sentence of Euclid's stands over it, and goes only where none does: he writes
+  "let ... be joined" over each of these steps (`heath/I/05.md`, line 16; `heath/I/11.md`,
+  line 16; `heath/I/16.md`, line 12; `heath/I/20.md`, line 18; `heath/I/26.md`, lines 12
+  and 54). So all five joins stay, the five Lean files are as they were, and the records of
+  I.5 and I.11 now declare their joins as passages carried from the text. This is not a
+  dummy citation in the sense of [FORMALIZATION](../FORMALIZATION.md), section 5: the step
+  is Euclid's own, written where he writes it. A later sweep for unused steps keeps a join
+  that a sentence of Euclid's stands over, on this ground.
 
 - **The checks read a tree without the files a commit adds to them (#178).** The
   pre-flight's pass with origin/main's checks (`scripts/safe_push.py`, steps 3 and 4)
