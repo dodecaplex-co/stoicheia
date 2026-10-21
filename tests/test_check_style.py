@@ -53,6 +53,9 @@ it, put to the script's own patterns and functions:
   are bounded; non-finite geometry and decoder failures report the figure and leave
   subsequent figures checked. Cubic subdivision includes its chord error, and malformed
   lists take linear time;
+* the upright cases: S15 and S20 fail an italic letter planted in a copy of Euclid's figure
+  and of the figure at a glance, one letter or every one, as the figures were drawn until
+  21 October, and D15 lists nothing;
 * the scope cases (#66): which texts of a review record the rules read, and on which
   lines; the docstring render.py shows, found again in its file; S12's reading of a
   `name : type`; S22's reading of letters in backticks, one code span at a time; and the
@@ -543,9 +546,9 @@ def figure_fixture(idea: bool):
         '<rect width="400" height="300" rx="10" fill="#fbf7ee"/>'
         f'<line x1="145" y1="150" x2="165" y2="150" stroke="{ink}" stroke-width="1.6"/>'
         f'<g fill="{ink}">'
-        + letter("A", x=132, y=172, size=size, anchor=anchor)
-        + letter("C", x=cx, y=cy, size=size, anchor=anchor)
-        + letter("E", x=ex, y=ey, size=size, anchor=anchor)
+        + letter("A", x=132, y=172, font_style="normal", size=size, anchor=anchor)
+        + letter("C", x=cx, y=cy, font_style="normal", size=size, anchor=anchor)
+        + letter("E", x=ex, y=ey, font_style="normal", size=size, anchor=anchor)
         + '</g></svg>')
 
 
@@ -3641,7 +3644,7 @@ class Clearance(unittest.TestCase):
                         curve.append(svg_element(markup))
                         e = next(el for el in root.iter()
                                  if style.tag(el) == "text" and style.text_of(el) == "E")
-                        e.attrib.update(x="268.13", y=("47.38" if idea else "48.93")
+                        e.attrib.update(x="268.13", y=("47.49" if idea else "49.12")
                                         if near else "47")
                         found = figure_findings(root, idea)
                         if shape.startswith("transformed") or shape == "relative path":
@@ -3836,6 +3839,44 @@ class Clearance(unittest.TestCase):
 
     test_twice_cases.__doc__ = (f"S26 reads {len(TWICE_CASES)} figures drawing a letter "
                                 "once or more rightly")
+
+
+class Upright(unittest.TestCase):
+    """The upright cases: an italic letter planted in a copy of each of I.1's figures."""
+
+    def test_italic_letter_fails(self):
+        """S15 and S20 fail an italic letter, one or every one, and D15 lists nothing."""
+        folder = style.ROOT / "figures" / "I"
+        euclid = (folder / "01.svg").read_text(encoding="utf-8")
+        idea = (folder / "01-idea.svg").read_text(encoding="utf-8")
+        plants = (   # (where font-style="italic" goes, the letters it sets italic)
+            ("<text ", "A"),                    # on the first letter alone
+            ("<svg ", "A, B, C, D, E"),         # on the root, so every letter inherits it
+        )
+        for name, rule in (("01.svg", "S15"), ("01-idea.svg", "S20")):
+            for at, letters in ((None, None),) + plants:
+                with self.subTest(figure=name, at=at), \
+                        tempfile.TemporaryDirectory() as tmp, ExitStack() as stack:
+                    root = Path(tmp)
+                    copies = root / "figures" / "I"
+                    copies.mkdir(parents=True)
+                    for copy, raw in (("01.svg", euclid), ("01-idea.svg", idea)):
+                        if copy == name and at is not None:
+                            raw = raw.replace(at, at + 'font-style="italic" ', 1)
+                        (copies / copy).write_text(raw, encoding="utf-8")
+                    stack.enter_context(patch.object(style, "ROOT", root))
+                    stack.enter_context(patch.object(style, "books_with_pages",
+                                                     return_value=["I"]))
+                    stack.enter_context(patch.object(style, "failures", []))
+                    reports = stack.enter_context(patch.object(style, "reports",
+                                                               defaultdict(list)))
+                    stack.enter_context(patch.object(style, "italic_figures",
+                                                     defaultdict(lambda: defaultdict(list))))
+                    style.check_figures(True)
+                    self.assertEqual(style.failures, [] if at is None else [
+                        (rule, f"figures/I/{name}", 0, f"letter(s) {letters} italic: Heath's "
+                         "letters are upright (STYLE, section 4)")])
+                    self.assertNotIn("D15", reports)
 
 
 class Scopes(unittest.TestCase):
