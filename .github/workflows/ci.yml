@@ -115,10 +115,10 @@ jobs:
         run: python3 -I tests/model/run.py --fast
 
       - name: The committed results and the counts in MODEL.md are the present harness's
-        # Reads only their headers, and runs no harness. So a pull request that changes the
+        # Reads what a run wrote, and runs no harness. So a pull request that changes the
         # harness runs `run.py --full --write` in the same pull request: generated facts are
         # refused when stale (docs/WORKFLOW.md, section 10, step 8, Tier 1).
-        run: python3 -I tests/model/run.py --check-results
+        run: python3 -I tests/model/results_check.py
 
   formal-model:
     # The formal model in model/ (model/README.md, "The CI job"): a Lake package of its

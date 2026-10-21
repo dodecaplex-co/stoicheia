@@ -1,9 +1,8 @@
 """Run the model evidence for the axioms and retained derived properties.
 
     python3 -I tests/model/run.py --fast           # CI: well under two minutes
-    python3 -I tests/model/run.py --full [--write] # about seven minutes
+    python3 -I tests/model/run.py --full [--write] # about eight minutes
     python3 -I tests/model/run.py --ties           # the ties to the Lean alone
-    python3 -I tests/model/run.py --check-results  # CI: results/ are the present harness's
 
 Two checks tie the model to the Lean before anything runs:
 * laws.toml names a law for each axiom: exactly the axioms of Certificate/axioms.lock
@@ -22,16 +21,10 @@ angle checks, and the hyperbolic model at 300 per axiom (seed 1).
 enumeration, the structured run at 100,000 per axiom (seed 11), the mutations, both
 independent checks, and the hyperbolic model at 20,000 per axiom (seed 1).  With --write
 it saves each harness's output in results/, under a header naming the commit, the
-seeds and the Python; writes the axiom-by-axiom table to results/summary.txt; and brings
-the counts in MODEL.md up to date.
-
---check-results runs no harness. It reads the headers --write wrote, and fails, naming
-each file, unless every file names the harness as it hashes now and all name one commit,
-the files in results/ are exactly those --write writes, and the counts in MODEL.md name
-that commit too. So a change to any file of HARNESS fails it until `--full --write` is
-run again (docs/WORKFLOW.md, section 8). Its self-test runs first: it plants each fault
-in a temporary copy of results/ and MODEL.md, and checks that the copy unchanged, and
-what --write writes, pass.
+harness's hash, the seeds and the Python; writes the axiom-by-axiom table to
+results/summary.txt; and brings the counts in MODEL.md up to date. results_check.py,
+beside this file but not one of HARNESS, holds what --write wrote to the harness as it
+hashes now (docs/WORKFLOW.md, section 8).
 
 The run passes when every harness runs to its last line, no harness finds a counterexample
 in the plane or reports a law or derived property twice, every mutation is caught,
@@ -43,6 +36,7 @@ its unchanged predicate also supplies evidence that the axiom's hypotheses were 
 """
 import datetime
 import hashlib
+import io
 import json
 import os
 import platform
@@ -64,6 +58,7 @@ SUMMARY = 'summary.txt'
 COUNTS = re.compile(r'(<!-- counts:begin -->\n).*?(\n<!-- counts:end -->)', re.S)   # in MODEL.md
 COUNTS_FROM = 'Counts from `run.py --full --write` at commit `'   # the counts' first words
 HARNESS_LINE = 'harness sha256'   # a run's header names its harness so; the summary, `harness`
+COMMITTED = 'harness files as committed'   # a commit's state, when the run read its harness
 
 sys.path.insert(0, HERE)
 _argv, sys.argv = sys.argv, sys.argv[:1]   # the harness modules read sys.argv when imported
@@ -353,7 +348,7 @@ def git(*args):
 
 def harness_hash(here=HERE):
     """the sha256 of the harness: each file of HARNESS, in order, by its name and its bytes.
-    The results name it (provenance), and --check-results compares it with theirs."""
+    The results name it (provenance), and results_check.py compares it with theirs."""
     h = hashlib.sha256()
     for f in HARNESS:
         with open(os.path.join(here, f), 'rb') as fh:
@@ -364,7 +359,7 @@ def harness_hash(here=HERE):
 def provenance():
     sha = git('rev-parse', 'HEAD') or 'unknown'
     changed = git('status', '--porcelain', '--', *[f'tests/model/{f}' for f in HARNESS])
-    state = ('harness files as committed' if changed == '' else
+    state = (COMMITTED if changed == '' else
              'harness files differ from this commit' if changed else 'state unknown')
     py = f'{platform.python_version()} ({platform.python_implementation()}, {platform.system()} {platform.machine()})'
     return dict(commit=f'{sha} ({state})', harness=harness_hash(), python=py,
@@ -466,13 +461,21 @@ def counts_block(runs, prov):
         derived_table(runs)])
 
 
+def save(path, text):
+    """write `path` whole, through a new file renamed over it, so that a symbolic link in its
+    place is replaced, not followed"""
+    new = os.path.join(os.path.dirname(path), f'.{os.path.basename(path)}.{os.getpid()}')
+    with open(new, 'x') as f:
+        f.write(text)
+    os.replace(new, path)
+
+
 def write(runs, prov, results=RESULTS, model_md=MODEL_MD):
     os.makedirs(results, exist_ok=True)
     for r in runs:
-        with open(os.path.join(results, result_file(r)), 'w') as f:
-            f.write(header(r, prov) + r.out)
+        save(os.path.join(results, result_file(r)), header(r, prov) + r.out)
     met, total = totals(runs)
-    with open(os.path.join(results, SUMMARY), 'w') as f:
+    with io.StringIO() as f:
         f.write(''.join(f'# {k}: {v}\n' for k, v in prov.items()) + '\n')
         f.write(f'configurations meeting an axiom\'s hypotheses in the plane: {total:,}\n')
         for k, v in met.items():
@@ -485,227 +488,19 @@ def write(runs, prov, results=RESULTS, model_md=MODEL_MD):
             if v:
                 f.write(f'  {k}: {v:,}\n')
         f.write(derived_table(runs) + '\n')
+        save(os.path.join(results, SUMMARY), f.getvalue())
     with open(model_md) as f:
         md = f.read()
     new, n = COUNTS.subn(lambda m: m.group(1) + counts_block(runs, prov) + m.group(2), md)
     if n != 1:
         sys.exit('MODEL.md has no counts block to update')
-    with open(model_md, 'w') as f:
-        f.write(new)
-
-
-# ---------------------------------------------------------------- checking the results
-
-def shown(path):
-    """a path as a message names it: from the repository's root when it is inside"""
-    rel = os.path.relpath(path, ROOT)
-    return path if rel.startswith('..') else rel
-
-
-def header_of(path):
-    """{key: [values]} from the `# key: value` lines that head a results file"""
-    fields = {}
-    with open(path, encoding='utf-8', errors='replace') as f:
-        for line in f:
-            if not line.startswith('# '):
-                break
-            key, sep, value = line[2:].rstrip('\n').partition(': ')
-            if sep:
-                fields.setdefault(key, []).append(value)
-    return fields
-
-
-def check_results(results=RESULTS, model_md=MODEL_MD, harness=None):
-    """(the problems, the commits the results name). A problem is a file in results/ that
-    names a harness other than `harness` (by default the harness now), or names no commit
-    or harness; files that name more than one commit or harness between them; a file --write
-    writes that is missing, or one it does not write; and counts in MODEL.md that name a
-    commit other than the results'. Runs no harness."""
-    harness = harness or harness_hash()
-    where = shown(results)
-    present = set(os.listdir(results)) if os.path.isdir(results) else set()
-    expected = written()
-    problems = [f'{where}/{n} is missing: --write writes it' for n in sorted(expected - present)]
-    problems += [f'{where}/{n} is not a file --write writes' for n in sorted(present - expected)]
-    commits, harnesses = {}, {}
-    for name in sorted(expected & present):
-        fields = header_of(os.path.join(results, name))
-        for key, label, form, named in (
-                ('commit', 'commit', r'[0-9a-f]{40}', commits),
-                ('harness' if name == SUMMARY else HARNESS_LINE, 'harness', r'[0-9a-f]{64}', harnesses)):
-            values = fields.get(key, [])
-            if len(values) > 1:
-                problems.append(f'{where}/{name} names its {label} {len(values)} times')
-                continue
-            value = (values[0].split() or [''])[0] if values else ''
-            if not re.fullmatch(form, value):
-                problems.append(f'{where}/{name} names no {label} in its header')
-                continue
-            named.setdefault(value, []).append(name)
-    for value, names in sorted(harnesses.items()):
-        if value != harness:
-            problems += [f'{where}/{n} names harness {value[:12]}..., not {harness[:12]}..., '
-                         'the harness as it hashes now' for n in names]
-    for label, named in (('commits', commits), ('harnesses', harnesses)):
-        if len(named) > 1:
-            problems.append(f'the results name {len(named)} {label}: ' + '; '.join(
-                f'{v[:12]} in {", ".join(ns)}' for v, ns in sorted(named.items())))
-    try:
-        with open(model_md, encoding='utf-8') as f:
-            blocks = [m.group(0) for m in COUNTS.finditer(f.read())]
-    except OSError:
-        blocks = []
-    page = shown(model_md)
-    if len(blocks) != 1:
-        problems.append(f'{page} has {len(blocks) or "no"} counts blocks, not one')
-    elif not (m := re.search(re.escape(COUNTS_FROM) + r'([^`]*)`', blocks[0])):
-        problems.append(f"{page}'s counts name no commit")
-    else:
-        for commit, names in sorted(commits.items()):
-            if short_commit(commit) != m.group(1):
-                problems.append(f"{page}'s counts name commit {m.group(1)}, not {commit[:12]}, "
-                                + ('the commit of the results' if len(commits) == 1
-                                   else f'the commit of {", ".join(names)}'))
-    return problems, sorted(commits)
-
-
-def results_self_test():
-    """Plant each fault --check-results exists to catch in a temporary copy of results/ and
-    MODEL.md, and check that it is caught; the copy unchanged, judged against the harness it
-    names, passes, as does what --write writes."""
-    import shutil
-    import tempfile
-    runs = sorted(written() - {SUMMARY})
-    if len(runs) < 4:
-        raise AssertionError('results self-test: the full plan writes fewer than four runs')
-    if not os.path.isdir(RESULTS) or not os.path.isfile(MODEL_MD):
-        raise AssertionError(f'results self-test: no {shown(RESULTS)}/ or MODEL.md to copy')
-    checked = 0
-    with tempfile.TemporaryDirectory() as tmp:
-        copies = iter(range(1, 100))
-
-        def fresh():
-            d = os.path.join(tmp, f'copy{next(copies)}')
-            shutil.copytree(RESULTS, os.path.join(d, 'results'))
-            shutil.copyfile(MODEL_MD, os.path.join(d, 'MODEL.md'))
-            return os.path.join(d, 'results'), os.path.join(d, 'MODEL.md')
-
-        def edit(path, pattern, new):
-            with open(path, encoding='utf-8') as f:
-                text = f.read()
-            text, n = re.subn(pattern, new, text, count=1, flags=re.M)
-            if n != 1:
-                raise AssertionError(f'results self-test: nothing to plant in {path}')
-            with open(path, 'w', encoding='utf-8') as f:
-                f.write(text)
-
-        def expect(label, results, md, harness, *found):
-            nonlocal checked
-            problems, _ = check_results(results, md, harness)
-            if not found and problems:
-                raise AssertionError(f'results self-test: {label} refused: {problems}')
-            for text in found:
-                if not any(text in p for p in problems):
-                    raise AssertionError(f'results self-test: {label} escaped: no problem says '
-                                         f'{text!r} in {problems}')
-            checked += 1
-
-        results, md = fresh()
-        named = header_of(os.path.join(results, SUMMARY)).get('harness', [''])[0]
-        expect('the copy unchanged', results, md, named)
-
-        # The harness changed: computed as provenance() computes it, over a copy of its files.
-        harness = os.path.join(tmp, 'harness')
-        os.makedirs(harness)
-        for f in HARNESS:
-            shutil.copyfile(os.path.join(HERE, f), os.path.join(harness, f))
-        if harness_hash(harness) != harness_hash():
-            raise AssertionError('results self-test: a copy of the harness hashes otherwise')
-        with open(os.path.join(harness, 'run.py'), 'a') as f:
-            f.write('\n')
-        changed = harness_hash(harness)
-        if changed == harness_hash():
-            raise AssertionError('results self-test: a changed harness file leaves its hash')
-        expect('a changed harness', results, md, changed,
-               *[f'{n} names harness {named[:12]}' for n in sorted(written())])
-
-        results, md = fresh()
-        edit(os.path.join(results, runs[0]), rf'^(# {HARNESS_LINE}: )\S+', r'\g<1>' + '0' * 64)
-        expect('a changed harness line', results, md, named,
-               f'{runs[0]} names harness 000000000000', 'the results name 2 harnesses')
-
-        results, md = fresh()
-        os.remove(os.path.join(results, runs[1]))
-        expect('a missing file', results, md, named, f'{runs[1]} is missing')
-
-        results, md = fresh()
-        with open(os.path.join(results, 'stray.txt'), 'w') as f:
-            f.write('# commit: none\n')
-        expect('an unexpected file', results, md, named, 'stray.txt is not a file --write writes')
-
-        results, md = fresh()
-        edit(os.path.join(results, runs[2]), r'\A(?:# .*\n)+', '')
-        expect('a file with no header', results, md, named,
-               f'{runs[2]} names no commit', f'{runs[2]} names no harness')
-
-        results, md = fresh()
-        edit(os.path.join(results, runs[3]), r'^(# commit: )[0-9a-f]+', r'\g<1>' + '1' * 40)
-        expect('a changed commit line', results, md, named, 'the results name 2 commits')
-
-        results, md = fresh()
-        edit(md, '^(' + re.escape(COUNTS_FROM) + ')[^`]*', r'\g<1>' + 'f' * 12)
-        expect("a mismatched commit in MODEL.md's counts", results, md, named,
-               "counts name commit ffffffffffff")
-
-        # What --write writes passes: its files and its header lines are the ones read here.
-        d = os.path.join(tmp, 'written')
-        os.makedirs(d)
-        shutil.copyfile(MODEL_MD, os.path.join(d, 'MODEL.md'))
-        made = plan(True)
-        for r in made:
-            r.out, r.seconds, r.laws, r.derived, r.command = '', 0.0, {}, {}, 'python3 -I'
-        prov = dict(commit='a' * 40 + ' (harness files as committed)', harness=harness_hash(),
-                    python='self-test', date='self-test')
-        write(made, prov, os.path.join(d, 'results'), os.path.join(d, 'MODEL.md'))
-        expect('what --write writes', os.path.join(d, 'results'), os.path.join(d, 'MODEL.md'),
-               prov['harness'])
-    print(f'results self-test: {checked - 2} planted faults caught; the copy unchanged and '
-          'what --write writes pass')
+    save(model_md, new)
 
 
 # ---------------------------------------------------------------- main
 
-def report_results():
-    """--check-results: exit 1, naming each problem, unless the committed results are the
-    present harness's"""
-    results_self_test()
-    now = harness_hash()
-    problems, commits = check_results(harness=now)
-    if not problems:
-        print(f'results: the {len(written())} files of tests/model/results/ name commit '
-              f'{commits[0][:12]} and the harness as it hashes now ({now[:12]}...), '
-              "and MODEL.md's counts name the same commit")
-        return
-    print('results: tests/model/results/ and the counts in MODEL.md are not the present '
-          "harness's:")
-    for p in problems:
-        print('  ' + p)
-    if len(commits) == 1:   # which files of the harness changed, when git has that commit
-        changed = git('diff', '--name-only', commits[0], '--',
-                      *[f'tests/model/{f}' for f in HARNESS])
-        if changed:
-            print(f'  harness files changed since {commits[0][:12]}: '
-                  + ', '.join(changed.split()))
-    print('Run `python3 -I tests/model/run.py --full --write` and commit what it writes with '
-          'the change (docs/WORKFLOW.md, section 8).')
-    sys.exit(1)
-
-
 def main():
     args = set(sys.argv[1:])
-    if args == {'--check-results'}:
-        report_results()
-        return
     if args != {'--ties'} and (not args or not args <= {'--fast', '--full', '--write'}
                                or ('--fast' in args) == ('--full' in args)
                                or ('--write' in args and '--full' not in args)):

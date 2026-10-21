@@ -211,7 +211,7 @@ CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "revie
 # Of those, the values pinned to the edition, not code. The lock and the model's hash of it
 # are compared exactly, both ways: check_fidelity.py the lock with facts.json, and the
 # model's run its hash with the lock. The model's page and results are its account of the
-# laws; `run.py --check-results` holds both to one commit, and the results to the present
+# laws; `results_check.py` holds both to one commit, and the results to the present
 # harness. The certificate's expectations are checked one way only, each
 # for what it says, so a change to them is a pinned value only while it keeps every
 # expectation origin/main has (kept_expectations). The model's law names are compared with

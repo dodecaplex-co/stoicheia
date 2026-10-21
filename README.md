@@ -114,6 +114,7 @@ Each proposition's page shows, under Euclid's enunciation, what its Lean stateme
    python3 scripts/check_links.py
    python3 scripts/negative_tests.py
    python3 -I tests/model/run.py --fast
+   python3 -I tests/model/results_check.py
    ```
 
 **Try breaking it.** In [`Prop01.lean`](Elements/BookI/Prop01.lean), change `Definition15 hA_BCD hC_BCD hB_BCD` to `Definition15 hB_ACE hC_ACE hA_ACE` and run `lake build`. Lean refuses: B is the centre of the other circle, so the radii it gives are the wrong ones.
