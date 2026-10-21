@@ -51,6 +51,6 @@ note = "G is drawn within the circle and H beyond G, on the circumference, as th
 
 [review]
 stage = "exceptions"
-commit = "e707d55"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:815ace823c8618d7"
+commit = "97f6403e"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:25b5c722a51cdf88"

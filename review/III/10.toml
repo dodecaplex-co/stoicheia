@@ -27,6 +27,6 @@ note = "Like Heath's, this figure draws the impossible supposition: DEF meeting 
 
 [review]
 stage = "exceptions"
-commit = "e707d55"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:ca985a775f3743d1"
+commit = "97f6403e"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:871967b5a1a19fd4"
