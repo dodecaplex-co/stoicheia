@@ -41,7 +41,7 @@ meaning = "An angle contained by a straight line and a circumference (Definition
 
 [tag.centre-given]
 kind = "representation"
-meaning = "The statement gives the circle its centre, named or as `∃ G, Centre G α`, as a hypothesis, where Euclid's setting-out takes the centre or a proof needs one. Brief 0008's centre rule, once it is in the axiom lock, gives every circle a centre, so the hypothesis then names a centre the circle already has and excludes no circle (briefs 0004 and 0008)."
+meaning = "The statement gives the circle its centre, named or as `∃ G, Centre G α`, as a hypothesis, where Euclid's setting-out takes the centre or a proof needs one. Brief 0008's centre rule, once it is in the axiom lock, gives every circle a centre, so the hypothesis then asks only for a centre the circle already has and excludes no circle (briefs 0004 and 0008)."
 
 [tag.touching-whole-circles]
 kind = "representation"

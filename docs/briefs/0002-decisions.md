@@ -3541,10 +3541,14 @@ findings:
   gives it one". Train C6a adds the owner's rule `Tacit.exists_centre`, which gives every
   circle a centre, and the reason then becomes false under every record that carries the
   tag, until step 6 of [brief 0008](0008-centre.md) retires their uses. The meaning now
-  says only what the tag records, which holds before and after the rule: the statement
+  says what the tag records, which holds before and after the rule: the statement
   gives the circle its centre as a hypothesis, where Euclid's setting-out takes the centre
   or a proof needs one. It also says what the rule makes true: once the rule is in the
-  lock, every circle has a centre, so the hypothesis names a centre the circle already has
-  and excludes no circle. The term's kind and name do not change, no record changes, and no
-  page changes. It is a check input, so it lands in a pull request of its own, before
-  train C6a. Protected file changed: `review/terms.toml`.
+  lock, every circle has a centre, so the hypothesis asks only for a centre the circle
+  already has and excludes no circle. This is not the new meaning that brief 0008 rejected
+  (section 4, and question 9 in section 8), which would have kept the tag on the twelve
+  records that name a centre: the tag still leaves all 31 records in step 6, and the term
+  leaves `review/terms.toml` in step 7; until then its meaning stays true. The term's kind and
+  name do not change, no record changes, and no page changes. It is a check input, so it
+  lands in a pull request of its own, before train C6a. Protected file changed:
+  `review/terms.toml`.
