@@ -7,7 +7,15 @@
 2. Every `axiom` lives in `Elements/Foundations/`: a first look in the source here,
    which reads `Staging/`, `Audit/` and `model/` too, and the real check from Lean's own
    environment in 6.
-3. Book Zero (`Elements/Figure/`) never imports a proposition.
+3. Book Zero (`Elements/Figure/`) never imports a proposition, directly or through
+   another of the edition's files. Every `import` in its Lean, read as 4 reads it
+   (`read_lean`), so that a comment never hides one and a string never makes one, is
+   read with the module it names, in each form of Lean 4.35's header (`public`, `meta`
+   and `all` among them), whatever whitespace or comments stand between the words. An
+   import is refused if its module, compared without regard to case, is under
+   `Elements.Book`, if the module brings one in through the edition's own files, or if
+   the scan cannot read it for certain, as when a part of the name in «…» is not a
+   plain name.
 4. None of the commands that `docs/FORMALIZATION.md`, section 7, forbids under
    `Elements/`, `Staging/`, `Audit/` or `model/` (LEAN_TREES), since they get round the kernel,
    bring in an axiom without the word, run a program when a file is built or imported,
@@ -83,6 +91,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 from pathlib import Path
 from typing import NamedTuple
 
@@ -180,6 +189,24 @@ PLACEMENT_ENTRIES = {"III.24"}
 # (`BookIII.placement`, `Placement.dist`), in the Lean as `read_lean` gives it, its
 # comments and literals taken out.
 PLACEMENT_NAME = re.compile(r"\b(placement|Placement)\b")
+# Book Zero's imports (3). Lean 4.35's header (Lean/Parser/Module/Syntax.lean) is an
+# optional `module`, an optional `prelude`, then any number of imports, each `[public]
+# [meta] import [all] M` naming one module, two of them on one line if need be. Whitespace
+# or comments, line, block or nested, may stand between the words, and nothing need stand
+# before a «…» part or a comment. So every `import` in the Lean as `read_lean` gives it,
+# outside a «…» name, is read with the name after it, each part plain or in «…»; one after
+# a command, an error in Lean, is read all the same. Lean joins the parts into a path, and
+# a disk that ignores case, as macOS's does, reads the Kelvin sign as `k` and the long s
+# as `s`: so a part that is not a plain name once its «…» are off (`«Elements/BookI»`), or
+# a name that does not end in whitespace, is refused as unread, and modules are compared
+# in NFKC, case-folded.
+IMPORT_WORD = re.compile(r"(?<![\w'!?.])import(?![\w'!?])")
+MODULE_PART = r"«[^»]*»|[^\W\d][\w'!?]*"
+IMPORTED = re.compile(rf"\s*(?:all(?![\w'!?.])\s*)?"
+                      rf"(?P<name>(?:{MODULE_PART})(?:\.(?:{MODULE_PART}))*)(?=\s|\Z)")
+PLAIN_PART = re.compile(r"[^\W\d][\w'!?]*")
+QUOTED_NAME = re.compile(r"«[^»]*»")
+PROPOSITIONS = "elements.book"
 
 errors: list[str] = []
 
@@ -386,7 +413,74 @@ def line_of(text: str, offset: int) -> int:
     return text[:offset].count("\n") + 1
 
 
+def imports(code: str) -> list[tuple[int, str | None]]:
+    """Each `import` in `code`, the Lean as `read_lean` gives it, outside a «…» name: its
+    offset, and the module it names, plain parts joined by dots, or None if the scan cannot
+    read the name for certain."""
+    words = QUOTED_NAME.sub(lambda m: re.sub(r"[^\n]", " ", m[0]), code)
+    found = []
+    for word in IMPORT_WORD.finditer(words):
+        m = IMPORTED.match(code, word.end())
+        parts = [p.removeprefix("«").removesuffix("»")
+                 for p in (re.findall(MODULE_PART, m["name"]) if m else ())]
+        plain = bool(parts) and all(PLAIN_PART.fullmatch(p) for p in parts)
+        found.append((word.start(), ".".join(parts) if plain else None))
+    return found
+
+
+def proposition(module: str) -> bool:
+    """Is `module` under `Elements.Book`, to a Lean whose disk may ignore case?"""
+    return unicodedata.normalize("NFKC", module).casefold().startswith(PROPOSITIONS)
+
+
+def module_file(module: str) -> Path:
+    """The edition's file for `module`, one folder for each part, as Lake finds it."""
+    *folders, name = module.split(".")
+    return ROOT.joinpath(*folders, name + ".lean")
+
+
+def brought_in(module: str, read: dict) -> tuple[str, str | None] | None:
+    """The first proposition that `module` imports through the edition's own Lean files,
+    read breadth first, as (the file that imports it, the proposition), or (that file, None)
+    for an import there that the scan cannot read for certain; None if neither. Lean's own
+    modules have no file here, and a symbolic link is refused by its own path. `read` keeps
+    each file's imports, so that each file is read once."""
+    queue, seen = [module], {module}
+    while queue:
+        path = module_file(queue.pop(0))
+        if path.is_symlink() or not path.is_file():
+            continue
+        if path not in read:
+            read[path] = imports(read_lean(path.read_text())[0])
+        for _, imported in read[path]:
+            if imported is None or proposition(imported):
+                return rel(path), imported
+            if imported not in seen:
+                seen.add(imported)
+                queue.append(imported)
+    return None
+
+
+def check_book_zero(file: str, code: str, read: dict) -> None:
+    """Rule 3: refuse each import in the Book Zero file `file`, its Lean `code`, that brings
+    in a proposition, directly or through the edition's own files, or that the scan cannot
+    read for certain."""
+    for offset, module in imports(code):
+        where = f"{file}:{line_of(code, offset)}: Book Zero must not import a proposition"
+        if module is None:
+            fail(f"{where}, and the scan cannot read this import for certain: each part of "
+                 "the module's name must be a plain name, in «…» or not, and whitespace "
+                 "must follow it")
+        elif proposition(module):
+            fail(where)
+        elif found := brought_in(module, read):
+            importer, imported = found
+            fail(f"{where}, and `{module}` brings one in: {importer} imports "
+                 + (f"`{imported}`" if imported else "a module the scan cannot read for certain"))
+
+
 def check_rules() -> None:
+    read: dict = {}           # each file's imports, for Book Zero's (check_book_zero)
     for path in lean_sources():
         rel = path.relative_to(ROOT).as_posix()
         if path.is_symlink():
@@ -418,8 +512,7 @@ def check_rules() -> None:
                  "since Lean could read its braces as holes of code (docs/FORMALIZATION.md, "
                  "section 7)")
         if rel.startswith("Elements/Figure/"):
-            for m in re.finditer(r"^import Elements\.Book", src, re.M):
-                fail(f"{rel}:{line_of(src, m.start())}: Book Zero must not import a proposition")
+            check_book_zero(rel, code, read)
         if (rel.startswith("Elements/") and not rel.startswith(PLACEMENT_HOME)
                 and rel not in PLACEMENT_CITERS):
             for m in PLACEMENT_NAME.finditer(code):

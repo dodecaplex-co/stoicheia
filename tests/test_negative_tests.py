@@ -534,5 +534,99 @@ class AbsentTrackedFileTests(unittest.TestCase):
         self.assertEqual(negative.failures, [])
 
 
+class BookZeroImportTests(unittest.TestCase):
+    """check_fidelity's rule 3 on a small tree, without Lean (#200): Book Zero's imports
+    read as Lean 4.35 reads them, through comments, strings and «…» names, and through
+    the edition's own files."""
+
+    rel = "Elements/Figure/Planted.lean"
+    tree = {"Elements/BookI/Prop01.lean": "theorem planted : True := trivial\n",
+            "Elements/Companions.lean": "import Elements.BookI.Prop01\n",
+            "Elements/Foundations/Words.lean": "import Init.Prelude\n",
+            "Elements/Figure/Lines.lean": "import Elements.Foundations.Words\n"}
+
+    def setUp(self):
+        self.root = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+        for rel, text in self.tree.items():
+            (self.root / rel).parent.mkdir(parents=True, exist_ok=True)
+            (self.root / rel).write_text(text)
+
+    def findings(self, text, rel=None):
+        (self.root / (rel or self.rel)).write_text(text, encoding="utf-8")
+        return [line for line in negative.rules_in(self.root).stdout.split("\n") if line]
+
+    def refused(self, line):
+        return f"{self.rel}:{line}: Book Zero must not import a proposition"
+
+    def test_each_spelling_of_the_negative_plants_is_refused_on_its_line(self):
+        for what, text, *extra in negative.BOOK_ZERO_SPELLINGS:
+            with self.subTest(what=what):
+                found = self.findings(text)
+                line = text.count("\n", 0, text.rindex("import")) + 1
+                self.assertEqual(len(found), 1, found)
+                self.assertTrue(found[0].startswith(self.refused(line)), found)
+                for words in extra:
+                    self.assertIn(words, found[0])
+
+    def test_text_that_only_holds_an_import_is_not_refused(self):
+        _, text = negative.BOOK_ZERO_TEXT
+        self.assertEqual(self.findings(text), [])
+        for text in ('def s := "\\" import Elements.BookI.Prop01"\n',
+                     "def s := r#\"import Elements.BookI.Prop01\"#\n",
+                     "def «import Elements.BookI.Prop01 » := 1\n",
+                     "-- import Elements.BookI.Prop01\nimport Elements.Figure.Lines\n",
+                     "/- /- -/ import Elements.BookI.Prop01 -/\n",
+                     "theorem planted_import_ok : True := trivial\n",
+                     "example := Lean.Parser.Module.import\n"):
+            with self.subTest(text=text):
+                self.assertEqual(self.findings(text), [])
+
+    def test_a_comment_or_string_hides_no_import(self):
+        for text, line in (("/- \" -/ import Elements.BookI.Prop01\n", 1),
+                           ('def s := "/-"\nimport Elements.BookI.Prop01\n', 2),
+                           ("-- a remark\n/-! A doc -/\nimport Elements.BookI.Prop01\n", 3),
+                           ("import Elements.Figure.Lines -- a remark\n"
+                            "import Elements.BookI.Prop01\n", 2)):
+            with self.subTest(text=text):
+                self.assertEqual(self.findings(text), [self.refused(line)])
+
+    def test_plain_imports_and_lean_s_own_pass(self):
+        text = ("module\n\nprelude\npublic import Elements.Figure.Lines\n"
+                "meta import  «Elements».«Foundations».Words\nimport all Init.Data.List.Basic\n")
+        self.assertEqual(self.findings(text), [])
+
+    def test_a_name_the_scan_cannot_read_is_refused(self):
+        for text in ("import «Elements».«Book I».Prop01\n", "import «Elements.BookI».Prop01\n",
+                     "import Elements.«».Prop01\n", "import Elements.Figure.Lines.\n",
+                     "import Elements.«Figure»import Elements.BookI.Prop01\n", "import\n"):
+            with self.subTest(text=text):
+                found = self.findings(text)
+                self.assertTrue(found and found[0].startswith(self.refused(1)), found)
+                self.assertIn("cannot read this import for certain", found[0])
+
+    def test_an_import_through_the_edition_s_files_is_refused(self):
+        # Cycle.lean and Planted.lean import each other; Planted.lean brings in the rest.
+        foundations = self.root / "Elements/Foundations"
+        (foundations / "Cycle.lean").write_text("import Elements.Foundations.Planted\n")
+        for planted, importer, brought in (
+                ("import Elements.Companions\n", "Elements/Companions.lean",
+                 "`Elements.BookI.Prop01`"),
+                ("import «Elements/BookI».Prop01\n", "Elements/Foundations/Planted.lean",
+                 "a module the scan cannot read for certain")):
+            with self.subTest(planted=planted):
+                (foundations / "Planted.lean").write_text(
+                    "import Elements.Foundations.Cycle\n" + planted)
+                self.assertEqual(self.findings("import Elements.Foundations.Cycle\n"),
+                                 [f"{self.refused(1)}, and `Elements.Foundations.Cycle` brings "
+                                  f"one in: {importer} imports {brought}"])
+
+    def test_a_cycle_ends_and_files_outside_book_zero_may_import_propositions(self):
+        (self.root / "Elements/Foundations/Words.lean").write_text(
+            "import Elements.Figure.Lines\n")
+        self.assertEqual(self.findings("import Elements.Figure.Lines\n"), [])
+        self.assertEqual(self.findings("import Elements.BookI.Prop01\n",
+                                       "Elements/BookI/Prop02.lean"), [])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -87,6 +87,17 @@ records current; CI runs it on every push.
 18. Counting congruence constructors instead of `Coincidence.step` in the certificate:
     `tests/test_certificate.py` fails on transformers with no step. The restored
     certificate must pass the same regression, including its real-step cases.
+19. Without a build, Book Zero's imports (#200): a new file of Book Zero imports a
+    proposition in each spelling Lean 4.35 accepts that the rule once passed: two
+    spaces, a line break, a remark, a line comment or a nested remark between the words,
+    nothing before «…» or a remark, `«Elements»`, `«BookI»`, a second import on one line,
+    and `public import`, `meta import`, `public meta import`, `import all` and `meta
+    import all` after `module`. Then the name with a part in «…» that holds a path, in another case and
+    with the Kelvin sign for its k, any of which Lean may read as the proposition's file;
+    and `Elements.Companions`, which imports propositions itself. Each is refused by
+    `check_fidelity.py`, naming its file and line, while a file holding the same import
+    only in a comment, a remark, a string and a «…» name, beside a Book Zero import of its
+    own, is not named at all. The files are read, not built, and removed after.
 
 The copies of items 16 and 17, and item 13's list of generated outputs, read Git's
 tracked files. One absent from the work tree is named on stdout and passed over: as a
@@ -870,6 +881,65 @@ def forbidden_commands() -> None:
                 path.unlink(missing_ok=True)
 
 
+# A proposition imported by Book Zero in each spelling Lean 4.35 accepts, and in forms
+# Lean may read as one (#200), each with what must be caught besides its file and line.
+BOOK_ZERO_SPELLINGS = (
+    ("two spaces", "import  Elements.BookI.Prop01\n"),
+    ("a line break", "import\n  Elements.BookI.Prop01\n"),
+    ("a remark between", "import /- a remark -/ Elements.BookI.Prop01\n"),
+    ("a line comment between", "import -- a remark\n  Elements.BookI.Prop01\n"),
+    ("a nested remark between", "import /- a /- nested -/ remark -/ Elements.BookI.Prop01\n"),
+    ("nothing before «…»", "import«Elements».BookI.Prop01\n"),
+    ("nothing around a remark", "import/- a remark -/Elements.BookI.Prop01\n"),
+    ("«Elements»", "import «Elements».BookI.Prop01\n"),
+    ("«BookI»", "import Elements.«BookI».Prop01\n"),
+    ("a second import on the line",
+     "import Elements.Figure.Lines import Elements.BookI.Prop01\n"),
+    ("public import", "module\npublic import Elements.BookI.Prop01\n"),
+    ("meta import", "module\nmeta import Elements.BookI.Prop01\n"),
+    ("public meta import", "module\npublic meta import Elements.BookI.Prop01\n"),
+    ("import all", "module\nimport all Elements.BookI.Prop01\n"),
+    ("meta import all", "module\nmeta import all Elements.BookI.Prop01\n"),
+    ("a path in «…»", "import «Elements/BookI».Prop01\n", "cannot read this import for certain"),
+    ("another case", "import elements.booki.Prop01\n"),
+    ("the Kelvin sign", "import Elements.BooKI.Prop01\n"),
+    ("through Elements.Companions", "import Elements.Companions\n",
+     "`Elements.Companions` brings one in: Elements/Companions.lean imports `Elements.Book"),
+)
+# A file of Book Zero with the same import only in text, beside a Book Zero import.
+BOOK_ZERO_TEXT = ("Elements/Figure/PlantedImportText.lean",
+                  "import Elements.Figure.Lines\n"
+                  "-- import Elements.BookI.Prop01\n"
+                  "/- import Elements.BookI.Prop01 -/\n"
+                  'def plantedImportText : String := "import Elements.BookI.Prop01"\n'
+                  "def «import Elements.BookI.Prop01» : Nat := 1\n")
+
+
+def book_zero_imports() -> None:
+    """A new Book Zero file for each of BOOK_ZERO_SPELLINGS, each refused on its file and
+    line, and BOOK_ZERO_TEXT's file not named; all removed after."""
+    header = "-- Planted by scripts/negative_tests.py: the import below must be caught.\n"
+    plants = [(f"Elements/Figure/PlantedImport{n:02}.lean", header + text, what, extra)
+              for n, (what, text, *extra) in enumerate(BOOK_ZERO_SPELLINGS, 1)]
+    text_rel, text = BOOK_ZERO_TEXT
+    planted: list[Path] = []
+    try:
+        for rel, source in [(text_rel, text)] + [(rel, source) for rel, source, _, _ in plants]:
+            path = ROOT / rel
+            assert not path.exists() and not path.is_symlink(), f"{rel} exists; update this test"
+            path.write_text(source, encoding="utf-8")
+            planted.append(path)
+        result = fidelity()
+        for rel, source, what, extra in plants:
+            line = source[:source.rindex("import")].count("\n") + 1
+            expect_failure(f"a proposition imported by Book Zero: {what}", result,
+                           f"{rel}:{line}: Book Zero must not import a proposition", *extra,
+                           unwanted=(f"{text_rel}:",))
+    finally:
+        for path in planted:
+            path.unlink(missing_ok=True)
+
+
 def symbolic_links() -> None:
     """Refuse a directory link and a file link by their own paths."""
     links = (("model/Model/PlantedLink", ROOT / "model/Check"),
@@ -1299,6 +1369,7 @@ def main(argv=()) -> int:
         remark_ends_run()
         native_decide()
         forbidden_commands()
+        book_zero_imports()
         symbolic_links()
         model_lake()
         lake_links()

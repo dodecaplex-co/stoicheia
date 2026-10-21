@@ -3698,3 +3698,53 @@ findings:
   18, 19 and 20 October that call these checks not required, or say that safe_push tests
   for three, are true of their dates. The protected files changed are
   `scripts/safe_push.py` and `scripts/test_safe_push.py`.
+
+- **Book Zero's imports are read as Lean reads them
+  ([#200](https://github.com/jackChallis/stoicheia/issues/200)).** Rule 3 of
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py), that Book Zero
+  (`Elements/Figure/`) never imports a proposition, matched `^import Elements\.Book` in the
+  raw source: `import`, one space and `Elements.Book` at the start of a line. An
+  independent reviewer on ship TT showed five other spellings of that import passing it in
+  a planted file, all of which Lean 4.35 accepts: two spaces, a line break between `import`
+  and the module, a remark between them, `«Elements»` and `«BookI»`. Tried on Lean 4.35
+  itself, more pass as well: nothing between `import` and a «…» part or a remark, a line
+  comment or a nested remark between the words, a second import on the same line, and,
+  after `module`, the five other forms of an import that the toolchain's header grammar
+  (`Lean/Parser/Module/Syntax.lean`) and its checks allow, `public import`, `meta import`,
+  `public meta import`, `import all` and `meta import all`. The rule now reads every
+  `import` in the Lean as rule 4 reads it, through `read_lean`, so that a comment never
+  hides one and a string, a raw string or a «…» name never makes one; it takes the module
+  named after it, past `all`, and refuses the import when that module, in NFKC and
+  case-folded, begins `Elements.Book`. Two more ways in came to light in the testing. Lean
+  joins a name's parts into a path: `import «Init/Data».List.Basic` loaded
+  `Init/Data/List/Basic`, so `«Elements/BookI».Prop01` could load a built proposition. And
+  on a disk that ignores case, as macOS's does, `import lean.data.json`, a Kelvin sign for
+  a `k` and a long s for an `s` each loaded the module they stand for. So a part that is
+  not a plain name once its «…» are off, or a name that whitespace does not follow, is
+  refused as unread, failing closed, and modules are compared case-folded. Last, an import
+  of one of the edition's own files that brings a proposition in, as `Elements.Companions`
+  does, is refused too: the rule follows the edition's files breadth first (`brought_in`)
+  and names the file that imports the proposition. Two forms pass the rule, and Lean
+  refuses each with an error, so that the build fails: a second module after one `import`
+  (the reviewer's I5, "unexpected identifier; expected command", which imports the first
+  module alone) and a name beginning `_root_.` ("unknown module prefix"). A tab, a no-break
+  space, a «…» part holding a dot and an import after a command, each an error in Lean
+  too, are refused by the rule as well. On main the rule reads the 42 imports of Book
+  Zero's 16 files, exactly their header lines, and refuses none.
+
+  A new item of [`scripts/negative_tests.py`](../../scripts/negative_tests.py), 19 for now
+  (its number may change as other branches add theirs), plants a new Book Zero file for
+  each of 19 forms, the reviewer's five and the fourteen above, and requires each refused
+  on its file and line, while a file holding the import only in a comment, a remark, a
+  string and a «…» name, beside an import of Book Zero, is not named at all.
+  [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py), whose
+  `CircleRuleTests` already test one of check_fidelity's rules, gains
+  `BookZeroImportTests`: seven tests on a small tree, without Lean, of every planted form;
+  text that only holds an import; a comment or a string that hides none; `module`,
+  `prelude` and Lean's own modules passing; names the scan cannot read; a proposition
+  brought in through two files that import each other; and a file outside Book Zero, which
+  rule 3 leaves alone. Against origin/main's check_fidelity (`001620f1`) each of the 19
+  forms passes, the plain `import Elements.BookI.Prop01` alone being refused; now all 19
+  are refused. Nothing is loosened, and #197's forbidden-command scan is untouched. The
+  protected files changed are `scripts/check_fidelity.py`, `scripts/negative_tests.py` and
+  `tests/test_negative_tests.py`.
