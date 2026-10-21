@@ -1,6 +1,6 @@
 # Read-through 02: Books I and II
 
-*21 October 2026. Read at main 2e8aecf8; the mends and their state as at b78e8ae5, the head of this read-through's branch. This first part covers Books I and II. A second part reads the findings on pages that were held while the readers read, with the changes that have since landed on main, and a later part reads Book III once its moves into the edition land (#34).*
+*21 October 2026. Read at main 2e8aecf8; the mends and their state as at b78e8ae5, the head of this read-through's branch, with the second code review's mends after it. This first part covers Books I and II. A second part reads the findings on pages that were held while the readers read, with the changes that have since landed on main, and a later part reads Book III once its moves into the edition land (#34).*
 
 ## Who read what
 
@@ -56,23 +56,23 @@ The readers made 191 findings: 172 from the six readers of ranges and pages, and
 
 Of the 27 material findings, 11 are fixed on this branch: I.7's attribution, I.18's "We prove both", I.21's condition, I.33's "in the same directions", the docstring of `Prop34.bisect`, I.43's modern figure, II.13's modern figure, I.18's reading line, the two findings on Postulate 5 in Book II, and II.14's figure note. 16 are left: 3 fixed for II.14 and left for I.45, and 13 open. "The material findings left", below, names each with its owner and next step. So #34 is not yet done: each blocking or material finding must name the commit on main that resolves it.
 
-The seven re-readers confirmed every mend, and 43 records now carry their stamps. They and the code review found no blocking point and no material one that the readers had not already found. Their editorial points, with what became of each, are under "Re-read and stamped" and "The code review": most are mended (c814e8fb, a1ddfcf7, 9b7dad70, b78e8ae5), and the rest are for the next part, for the coordinator or for Book III's read.
+The seven re-readers confirmed every mend, and 43 records now carry their stamps. They and the code review found no blocking point and no material one that the readers had not already found. Their editorial points, with what became of each, are under "Re-read and stamped" and "The code review": most are mended (c814e8fb, a1ddfcf7, 9b7dad70, b78e8ae5); one was declined and one not taken up; the rest wait for the next part, the coordinator, the owners of the gap catalogues and Book Zero, or Book III's read.
 
 ## The material findings left
 
 | Finding | What | Owner | Next step |
 |---|---|---|---|
 | I.1 to I.12, 1; I.13 to I.24, 2; across pages, 26 and 27 | The brief, README.md, FORMALIZATION, the overlap and gap catalogues and the rule's docstring would describe the old superposition rule once the replacement landed, and the overlap catalogue would keep rows for I.2, I.3 and I.23 that B2 refuses | Each file's owner; the coordinator for the foundations | The replacement has landed (17ae8e2a, #75). The next part reads these files as it left them, and sends any mend to the file's owner |
-| I.37 to I.48, 3 | I.44's commentary and record would give two reasons for one step | The next part (#34) | Read I.44 as the replacement left it; its commentary and record are now free |
-| I.37 to I.48, 4 | The Lean notes of `Prop44.place` and `Prop46.side_eq`, and the rule's docstring on every page, describe the form the replacement retires | The next part; the coordinator for the docstring | Prop44.lean and Prop46.lean are free; the docstring is in the foundations |
-| I.1 to I.12, 2 | I.4's figure note: Heath's figure also draws the bent base, and ours says nothing (#30) | The next part | review/I/04.toml is held by the per-law superposition change (#150); write the line the scans report proposes once that lands |
-| I.25 to I.36, 2 | I.27's figure note does not say the figure draws the impossible supposition (#30) | The next part | review/I/27.toml is held by the second axiom wave (#119); write the note and case the scans report proposes once that lands |
+| I.37 to I.48, 3 | I.44's commentary and record would give two reasons for one step | The coordinator, who orders the next part (#34) | Read I.44 as the replacement left it; its commentary and record are now free |
+| I.37 to I.48, 4 | The Lean notes of `Prop44.place` and `Prop46.side_eq`, and the rule's docstring on every page, describe the form the replacement retires | The coordinator, who orders the next part (#34) | Prop44.lean and Prop46.lean are free; the docstring is in the foundations |
+| I.1 to I.12, 2 | I.4's figure note: Heath's figure also draws the bent base, and ours says nothing (#30) | The coordinator, who orders the next part (#34) | review/I/04.toml is held by the per-law superposition change (#150) and the second axiom wave (#119); write the line the scans report proposes once those land |
+| I.25 to I.36, 2 | I.27's figure note does not say the figure draws the impossible supposition (#30) | The coordinator, who orders the next part (#34) | review/I/27.toml is held by the second axiom wave (#119); write the note and case the scans report proposes once that lands |
 | I.1 to I.12, 4; across pages, 33 | Book I's front page maps Definitions I.2 and I.3 to `Line`, and lists `quadArea` for Definition I.14 | The coordinator | A change to scripts/render.py, proposed (#34) |
-| I.37 to I.48, 1 | I.45's modern way needs A and C on opposite sides of DB | The next part (#34, #116) | mishnah/I/45.md is free; mend it with II.14's wording |
-| Across pages, 16 (in part); pilot, 3 (in part) | I.45's half: the main theorem said to "take the figure", and the issue link read as the citation for Hilbert's proof | The next part (#116) | Mend mishnah/I/45.md as II.14 now reads (c814e8fb, a1ddfcf7) |
-| Pilot, 4 (in part) | I.45's Statement and Extra hypotheses rows describe the companions in noun piles | The next part (#116) | review/I/45.toml is held by the citation sweep (#32); mend it in II.14's words once that lands |
-| Pilot, 1 | The notation train's I.45 record was cut from an older base, its stamp and Lean hash out of date | The next part | The notation train has landed (09bc89f3); read I.45's record as it stands, and stamp it again once the citation sweep (#32) releases it |
-| Pilot, 16 | III.24's caption claims more than its statement; two sentences will be false once it cites placement; its scope and route fail ACCEPTANCE P3 | Book III's read (#34) | Read with III.24's restatement |
+| I.37 to I.48, 1 | I.45's modern way needs A and C on opposite sides of DB | The coordinator, who orders the next part (#34) | mishnah/I/45.md is free; mend it with II.14's wording (#116) |
+| Across pages, 16 (in part); pilot, 3 (in part) | I.45's half: the main theorem said to "take the figure", and the issue link read as the citation for Hilbert's proof | The coordinator, who orders the next part (#34) | Mend mishnah/I/45.md as II.14 now reads (c814e8fb, a1ddfcf7), #116 |
+| Pilot, 4 (in part) | I.45's Statement and Extra hypotheses rows describe the companions in noun piles | The coordinator, who orders the next part (#34) | review/I/45.toml is held by the citation sweep (#32); mend it in II.14's words once that lands, #116 |
+| Pilot, 1 | The notation train's I.45 record was cut from an older base, its stamp and Lean hash out of date | The coordinator, who orders the next part (#34) | The notation train has landed (09bc89f3); read I.45's record as it stands, and stamp it again once the citation sweep (#32) releases it |
+| Pilot, 16 | III.24's caption claims more than its statement; two sentences will be false once it cites placement; its scope and route fail ACCEPTANCE P3 | The coordinator, for Book III's read (#34) | Read with III.24's restatement |
 
 ## The four answers
 
@@ -180,7 +180,7 @@ Each row gives a reader's finding:
 - **Severity**: by WORKFLOW section 9, the reader's own grade.
 - **Resolution.** "Next part" marks a finding on a page that a change in flight held while the readers read: the superposition replacement, for I.4, I.8, I.23, I.44 and Book I's introduction, or the notation train, for I.5, I.11, I.20, I.27, I.29, I.35, I.37, I.39, I.40, I.43, I.45 and I.48. Both have landed on main, and this branch has merged them. The next part of this read-through, a second train under #34, reads these findings on the pages as they landed, with the dated addendum #34 asks for (see "Still open"), and until then they stay open. Where a file is still held by a change in flight, the row names it: the per-law superposition change (#150), the citation sweep (#32) or the second axiom wave (#119).
 
-A finding several readers made has one row naming them all. The cross-page reader's fortieth item is not a finding: every relative link and anchor on the book pages resolves, Heath's "three sections" (vol. 1, p. 308) checks out, and every record declares Euclid's route.
+A finding several readers made has one row naming them all. The cross-page reader's fortieth item is not a finding: every relative link and anchor on the book pages resolves, the introduction's "Heath sees three sections in it" (vol. 1, p. 308) checks out against his "second section of the first Book", which "leads up to the third", and every record declares Euclid's route.
 
 ### Book I: introduction and front matter
 
@@ -200,7 +200,7 @@ A finding several readers made has one row naming them all. The cross-page reade
 | Finding | Where (file:line at 2e8aecf8) | Tier | Severity | What | Resolution |
 |---|---|---|---|---|---|
 | I.1 to I.12, 29 | reading/I/03.md:1, reading/I/05.md:2 | 2 | editorial | Kedlaya's line on I.3 and Wardhaugh's on I.5 would fit any page | Fixed in fe30d3f3: both dropped, and each work described in full at its first apt page, I.18 and I.40 |
-| I.1 to I.12, 2; across pages, section 5 | review/I/04.toml (no [figure]) (book/I/04.md:21) | 2 | material | Heath's figure also draws the base bent below EF, for the bracketed scholium; ours leaves it out and says nothing | Open: next part; the record is held by the per-law superposition change (#150), #30 |
+| I.1 to I.12, 2; across pages, section 5 | review/I/04.toml (no [figure]) (book/I/04.md:21) | 2 | material | Heath's figure also draws the base bent below EF, for the bracketed scholium; ours leaves it out and says nothing | Open: next part; the record is held by the per-law superposition change (#150) and the second axiom wave (#119), #30 |
 | I.1 to I.12, 5 | mishnah/I/04.md:3, :7 (in flight) | 2 | editorial | I.4's new paragraph in a logician's register, and without the answer to Peletier's danger | Open: next part, #75, #34 |
 | I.1 to I.12, 8 | review/I/04.toml:13, :19; review/I/08.toml:10, :17, :38 (in flight) | 2 | editorial | The new notes of I.4 and I.8 in the same register | Open: next part; both records are held by the per-law superposition change (#150), #34 |
 | I.1 to I.12, 21; across pages, 24 (I.4) | review/I/04.toml:36; Elements/BookI/Prop04.lean:55 | 2 | editorial | Heiberg and Savile first named by surname alone, in notes that stand before the commentary | Open: next part; both files are held by the per-law superposition change (#150), #34 |
@@ -467,7 +467,7 @@ Three exceptions named when the map was first made are settled: Maor's *Trigonom
 
 ## The habits removed
 
-For #46: the habits of machine-written prose that the language passes (pull requests #111, on I.1 to I.24, and #115, on I.25 to I.48 and Book II) and this read-through removed from Books I and II are now listed in STYLE section 4, "Tightening the language": thirteen habits, each with one example from the history of mishnah/, reading/, the records and the Lean notes (b9245195, with the I.41 example worded more exactly in 9b7dad70). The list there merges the twelve this report first proposed with the six examples the notation train had given that paragraph:
+For #46: the habits of machine-written prose that the language passes (pull requests #111, on I.1 to I.24, and #115, on I.25 to I.48 and Book II) and this read-through removed from Books I and II are now listed in STYLE section 4, "Tightening the language": thirteen habits, each with one example from the history of mishnah/, reading/, the records and the Lean notes (b9245195, with the I.41 example worded more exactly in 9b7dad70). The list there merges the twelve this report first proposed with the six habits, with eight examples, the notation train had given that paragraph:
 
 - Both gave I.41 for a recap in threes, and the two are one bullet.
 - For announcing sentences, the notation train's I.33 stands; this report's I.4 was dropped, since I.4's page was being changed by the superposition work and its wording might change.
@@ -475,6 +475,7 @@ For #46: the habits of machine-written prose that the language passes (pull requ
 - This report's change-log on a reader's page (I.13's docstring) and its dated "now proved" clause (II.3) are one bullet, with I.13's example.
 - This report's mould in the reading lines is folded into "One opening for every reading line" and "Inflated praise", and its Coxeter example is dropped, since its "after" still praises.
 - This report's aside written for a checker (I.47) is dropped: the mend there was chiefly a correction of fact, and section 1 already rules such asides out.
+- The notation train's second examples, I.27's "The proposition is old" and II.1's "does its multiplying", are dropped, to keep one example for each habit.
 - The notation train's two qualifications close the list: a list that supplies necessary cases stays, and so does a qualification that belongs to the claim.
 
 The last re-reader found every "before" in the history and every "after" in the files as they stand. It noted that "The proof is short", I.33's example, was written and cut within one pull request, so it never stood on main; the example is still true as history.
@@ -493,7 +494,7 @@ Every open item, with its issue.
    - **Findings on files still held** by a change in flight:
      - the per-law superposition change (#150), which holds Prop04.lean, Prop08.lean and the records of I.4 and I.8: I.4's figure note (material, #30), the notes of I.4 and I.8 and their stock tag, Heiberg's and Savile's first naming at I.4, and I.8's backticked letters;
      - the citation sweep (#32), which holds the records of I.5, I.6, I.10, I.11, I.12, I.16, I.20, I.21, I.22, I.26, I.33, I.34, I.35, I.39, I.40, I.45 and I.47 and of II.6, II.8, II.9 and II.10, with Book I's Prop10.lean, Prop11.lean and Prop45.lean and Book II's Prop06.lean and Prop08.lean: I.11's Lean note, I.20's case and stock tag, the notes of I.39 and I.40, I.45's record (the pilot editor's notes 1, 4, 5, 12 and 13), and "Proclus's" at I.35;
-     - the second axiom wave (#119), which holds Book I's introduction, the commentaries of I.5 and I.12, Prop05.lean, the records of I.2, I.5, I.11, I.12, I.22, I.27, I.31 and I.35, and those of II.10 and II.14: the introduction's new wording from the superposition replacement, its bare "(p. 316)", its "bracket", its two asides, the order of the page it gives and the sentence proposed to replace the gloss "a rule we assume"; I.27's figure note (material, #30) and stock tag; and, with the citation sweep, I.5's and I.11's joins and I.11's passage key.
+     - the second axiom wave (#119), which holds Book I's introduction, the commentaries of I.5 and I.12, Prop05.lean, the records of I.2, I.5, I.11, I.12, I.22, I.27, I.31 and I.35, and those of II.10 and II.14, and, having merged the per-law superposition change, that change's files too: the introduction's new wording from the superposition replacement, its bare "(p. 316)", its "bracket", its two asides, the order of the page it gives and the sentence proposed to replace the gloss "a rule we assume"; I.27's figure note (material, #30) and stock tag; and, with the citation sweep, I.5's and I.11's joins and I.11's passage key.
 2. **I.45 told as II.14 now is** (#34, #116).
    - These are the pilot editor's notes 3 to 7, 12 and 13, with note 1 on I.45's record; the reader of I.37 to I.48's findings 1, 18 and 19; and the cross-page reader's findings 16 and 17. Four of them are material, and note 1 is material too.
    - II.14's page and Book II's introduction now tell the restriction in one set of words: a figure given with a checked division into triangles; the main theorem taking its two triangles unchecked; and what is not yet proved, that every rectilineal figure, given only by its boundary, has such a division, and that another division gives the same area (a1ddfcf7).
@@ -519,21 +520,21 @@ Every open item, with its issue.
    - a record of which chapters were checked (across pages, 13);
    - "cut" for figures: Book II's introduction (:13, :15) and I.34's caption say a diameter "cuts" a figure, where II.14's page now says "divides". A sweep to "divide" waits for the vocabulary the pilot editor proposes for STYLE section 4 (note 6);
    - II.11's caption, "(Drawn 89 to 144: no whole numbers fit.)", which the last re-reader would end "fit exactly" and judged harmless as it stands;
-   - the lines the scans report proposes for I.4's and I.27's records (#30). They are material, and were not written in this part because both records were held; they still are, I.4's by the per-law superposition change (#150) and I.27's by the second axiom wave (#119), and the lines go with the next part (item 1).
-7. **The book acceptance records** (#156). On main at 001620f1, docs/reports/acceptance/ holds neither book-I.toml nor book-II.toml, so neither book can yet record a pass.
+   - the lines the scans report proposes for I.4's and I.27's records (#30). They are material, and were not written in this part because both records were held; they still are, I.4's by the per-law superposition change (#150) and the second axiom wave (#119), and I.27's by the second axiom wave, and the lines go with the next part (item 1).
+7. **The book acceptance records** (#156). On main at e7ffaf68, docs/reports/acceptance/ holds neither book-I.toml nor book-II.toml, so neither book can yet record a pass.
    - **B3 (read-through)** needs:
      - this report on main;
      - every blocking or material finding resolved by a commit on main: once this branch lands, 11 of the 27 material findings will be, and 16 will not ("The material findings left");
      - the dated addendum of item 1, reading each change under book/, mishnah/, Elements/ or figures/ after 2e8aecf8 other than this read-through's own fixes;
      - the [read-through] table of each record, citing this report as its evidence.
 
-     Main stands at 001620f1, twelve pull requests after 2e8aecf8. Of them, only #191, #193 and #194 change book/, mishnah/, Elements/ or figures/.
+     When this branch merged main, at 2853075b, main stood at e7ffaf68, fourteen pull requests after 2e8aecf8. Of them, only #191, #193 and #194 change book/, mishnah/, Elements/ or figures/.
    - **B4 (limitations)** needs I.45's limitation stated plainly where it occurs, as II.14's now is (the pilot editor's notes 3 and 4; item 2); a limitations review against docs/ACCEPTANCE.md, "The limitations allowed", for the record's evidence; and the limitation itself waits on #116.
    - Book III's record waits on Book III's read, and its B4 on #57 (III.16 and III.31) as well.
 
 ## Re-read and stamped
 
-Seven re-readers read the mends, each Claude Opus 5.5, and none of them wrote or prompted the mends. They read in three rounds, each at the commit that carried the mends it read, and each stamped the records it read whose files no other work held, with the reviewer "Claude Opus 5.5, independent reader".
+Seven re-readers read the mends, each Claude Opus 5.5, and none of them wrote or prompted the mends. They read in three rounds, each at the commit that carried the mends it read, and each stamped the records it read that it was given to stamp, with the reviewer "Claude Opus 5.5, independent reader".
 
 ### At 206e3080: four re-readers
 
@@ -552,7 +553,7 @@ Each read the changed page against Heath's text and the OCR, against the Lean an
 - the eight example titles in STYLE against the figures' own titles;
 - every dated note of the scans report against the records.
 
-**Every mend was confirmed.** They stamped the 42 records whose page changed and whose record no other work held, in 4a7bc952, with the run "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at 206e3080". The records stamped are those of:
+**Every mend was confirmed.** They stamped the 42 records whose page changed and which they were given to stamp, in 4a7bc952, with the run "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at 206e3080". The records stamped are those of:
 
 - I.6, I.7, I.9, I.10 and I.12 to I.19;
 - I.21, I.22, I.24 to I.26, I.28, I.30 to I.34 and I.36;
@@ -616,13 +617,15 @@ The last re-reader read the mends of b9245195, a1ddfcf7 and 9b7dad70 at 9b7dad70
 | Last re-reader, F1 | figures/II/11-idea.svg:3 | 2 | editorial | "(Drawn 89 to 144: no whole numbers fit.)" leaves out "exactly" | Not taken up: judged harmless, the caption being true to its drawing |
 | Last re-reader, F2 | review/I/43.toml:8; review/I/35.toml; review/I/48.toml | 2 | editorial | "Proclus's", where the pages write "Proclus'" | Open: next part, with the cross-page readers' finding above; I.35's record is held by the citation sweep (#32) and the second axiom wave (#119), #34 |
 | Last re-reader, F3 | docs/reports/figures-against-scans.md:74 | 3 | editorial | I.27's row says its note tells "only" Heath's bend, where it also says ours keeps the lines straight | Fixed in b78e8ae5 |
-| Last re-reader, F4 | docs/STYLE.md:313 | 3 | an observation | "The proof is short" was written and cut within one pull request, so it never stood on main | No change: the example is true as history |
+| Last re-reader, F4 | docs/STYLE.md:313 | 3 | editorial (an observation) | "The proof is short" was written and cut within one pull request, so it never stood on main | The example is true as history, and is kept; STYLE section 4 now says it was caught in the passes' own reviews |
 
 **In all, 43 records carry a stamp of this read-through:** 28 at 206e3080, 9 at c814e8fb and 6 at 9b7dad70. They are the 42 first stamped in 4a7bc952 and I.43, whose stamp at 9b7dad70 is its first from this read-through. Of the 42, thirteen were stamped again at c814e8fb and four of those again at 9b7dad70, with I.28 once more at 9b7dad70.
 
+Sixteen of these records are also changed by work in flight, and a read-only trial merge (`git merge-tree`) of 2853075b with each change conflicts in every one of them: I.6, I.10, I.12, I.16, I.21, I.22, I.26, I.33, I.34, I.47, II.6, II.8, II.9 and II.10 with the citation sweep (#32), and I.12, I.22, I.31, II.10 and II.14 with the second axiom wave (#119). Of this branch and each of those changes, whichever lands second has each record they share re-read and stamped again, in the order the coordinator sets.
+
 ## The code review
 
-An independent code reviewer, another Claude Opus 5.5 instance, which wrote nothing on this branch and was none of its readers, reviewed the branch at 926e67d2: against the repository's standards, and against #34, #30, #46, #144 and #145. It ran `lake build`, the certificate, check_fidelity, check_style and check_links, and all passed. It found every change to the Lean inside a comment or a docstring, no held file changed, the merge of main clean, and every stamp current. It checked each new or changed quotation against the OCR, rendered the 20 changed figures, and found the reading lines' years, editions and **Free** marks as docs/reading.md gives them. Its verdict on both counts was a pass with minor findings. It graded every point minor, which is editorial by WORKFLOW section 9:
+An independent code reviewer, another Claude Opus 5.5 instance, which wrote nothing on this branch and was none of its readers, reviewed the branch at 926e67d2: against the repository's standards, and against #34, #30, #46, #144 and #145. It ran `lake build`, the certificate, check_fidelity, check_style and check_links, and all passed. It found every change to the Lean inside a comment or a docstring, no held file changed (the list of held files it was given named none of the sixteen records above), the merge of main clean, and every stamp current. It checked each new or changed quotation against the OCR, rendered the 20 changed figures, and found the reading lines' years, editions and **Free** marks as docs/reading.md gives them. Its verdict on both counts was a pass with minor findings. It graded its own points minor, which is editorial by WORKFLOW section 9; its Spec 2 and Spec 8 restated as material the readers' material findings still open:
 
 | Point | Where (file:line at 926e67d2) | What | Resolution |
 |---|---|---|---|
@@ -642,3 +645,5 @@ An independent code reviewer, another Claude Opus 5.5 instance, which wrote noth
 | Spec 10 | the records; scripts/render.py:1434; mishnah/intro/I.md; Book Zero and the gap catalogues | "a rule we assume" in many records; the generated heading; "bracket"; "laws of magnitudes" | Open: the gloss is kept until the introduction's sentence replaces it (#119 holds the introduction), with "bracket", for the next part; the heading proposed to the coordinator; "laws of magnitudes" for the catalogues' and Book Zero's owners, #46 |
 
 Its Spec points 1 and 9 confirmed mends, and need nothing.
+
+A second code reviewer, another Claude Opus 5.5 instance that wrote nothing on this branch, read its later commits, 926e67d2 to 2853075b: the habits list, the last mends, the stamps at 9b7dad70, this report, and the merge of main at 2853075b, whose one conflict, in STYLE sections 7 and 8, it redid and found that neither side lost a word. It found one material point, the sixteen records shared with work in flight, which the paragraph above now names, with the order of landing left to the coordinator. Its minor points (the scans report's account of who holds I.4's and I.27's records, a quotation of Heath's that was the introduction's words, this report's owners and dates, and the I.33 example of the habits list) were mended in the commit after 2853075b.
