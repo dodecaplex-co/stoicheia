@@ -4479,4 +4479,8 @@ findings:
   `Audit/Crossing.lean`, `Audit/Overlaps.lean` and `tests/certificate_expectations.json`
   differ by this train's pins, counts and reasons, which the D1 entry and the paragraph
   above give; `Certificate/FIELDS.md` differs only by its vocabulary count, 238 to 242.
+  `scripts/render.py`, `scripts/heath.py`, `review/SCHEMA.md` and
+  `tests/test_check_style.py` differ by tooling/figure-every-case's check change, merged at
+  `0254f4cd`, which lands before this train with its own entry; this train uses it only in
+  III.25's record, whose figure draws every case.
   The merge itself writes no statement, check or expected value: each is one train's.
