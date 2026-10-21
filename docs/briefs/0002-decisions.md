@@ -1866,12 +1866,11 @@ findings:
   (the entry below) lists for each rule. A pin on the proved rules an entry uses would
   need a field of its own, which this change does not add.
 
-- **Restricted superposition prepared on 19 October, approved on 20 October, not landed.** On
+- **Restricted superposition prepared for the owner's final word, not landed.** On
   19 October 2026, [brief 0009, round 3](0009-superposition.md) records the replacement
   prepared on `lean/superposition-restricted`, at `aa96ab8`, from `origin/main` at
   `39ae65c`. The owner's decision of 18 October authorised the prototype and preparation;
-  the owner approved the finished replacement on 20 October, with the scope and landing
-  conditions recorded in the dated entry below. `Tacit.superposition` now has type
+  the finished branch awaits the owner's final word. `Tacit.superposition` now has type
   `Superposition.Rule primitives`: a represented derivation may export one equality of
   lengths, angles or triangles about the given figure, and may neither introduce objects
   inside the placement nor export its hypothetical corners or side. I.4 and I.8 alone use
@@ -1894,11 +1893,8 @@ findings:
 
   `Certificate/axioms.lock` restates one axiom, keeps all 87, and adds 115 vocabulary
   entries, from 91 to 206, with no former word removed or otherwise changed.
-  `Certificate/Facts.lean` initially counted the calculus's three congruence constructors
-  as C.N. 4; all 121 common-notion lists matched the baseline. This also counted any use
-  of `Derives.map`, which rebuilds every constructor. The 20 October entry records the
-  correction: each congruence step supplies `Coincidence.step`, and the certificate
-  counts that marker instead.
+  `Certificate/Facts.lean` recognises actual uses of the calculus's three congruence
+  constructors as C.N. 4; all 121 common-notion lists match the baseline.
   `tests/certificate_expectations.json` keeps its eleven existing expectations unchanged
   and adds thirteen for the restricted rule, its citations and C.N. 4.
   `Audit.lean` imports the new superposition audit.
@@ -1937,10 +1933,11 @@ findings:
   The I.4, I.8 and I.23 pages and the overlap catalogue now describe an inference in
   System E's style. An independent reader has read and stamped the six records for I.2,
   I.3, I.4, I.8, I.23 and I.44, retaining full coverage and Euclid's route. No equivalence
-  with System E's two rules or whole-theory non-derivability is claimed. On 20 October
-  the owner answered questions 2, 4 and 5 as prototyped: accept the five-part restriction,
-  permit I.7 inside the placement despite constructions in its proof, and retain the
-  laid-down side. After
+  with System E's two rules or whole-theory non-derivability is claimed. Questions 2, 4
+  and 5 of the brief remain the owner's: accept the five-part restriction or require
+  another formal statement; permit I.7 inside the placement despite constructions in its
+  proof or require construction-free cited proofs; retain the laid-down side or revise
+  the calculus and argument. The branch follows the first reading in each case. After
   `lean/retire-axioms-2`, the proofs of `triple_incidence2` from Postulate 2 and
   `eq_of_len_eq_zero` from Postulate 3 bring I.4's cited laws within question 4 too;
   `drawsNothing` and the audit pins must be reviewed again.
@@ -1949,9 +1946,8 @@ findings:
   must be split into a tooling pull request that lands first, as WORKFLOW, section 10,
   requires. The retirement branches must be reconciled, generated outputs regenerated,
   and the finished revision validated and independently reviewed, including the model
-  and the protected paths named above. The 20 October approval below supplies the
-  authority for the replacement and its landing conditions; no check, expectation, lock
-  or schema is loosened.
+  and the protected paths named above. This entry records preparation, not landing
+  approval; no check, expectation, lock or schema is loosened.
 
 ## 20 October 2026
 
@@ -2739,7 +2735,7 @@ findings:
   module to the production boundary, since the laws now reach the real calculus.
   Their success expectations and the production boundary itself are unchanged.
 
-- **The prototyped answers to brief 0009's questions 2, 4 and 5 are finished in
+- **Finishing the prototyped answers to brief 0009's questions 2, 4 and 5 is tracked in
   [#150](https://github.com/jackChallis/stoicheia/issues/150).** The owner approved those
   answers "as prototyped" (the entry above) and, as #150 records, said: "prototyped work
   needs to be finalized - that opens an issue". #150 carries the label `blocks-release`, so
@@ -2755,5 +2751,7 @@ findings:
   `Elements/Foundations/Superposition/Syntax.lean` and
   `Elements/Foundations/Superposition/Restriction.lean`, and the comment beside I.8's route
   note in `review/I/08.toml`, now say "as prototyped" and cite #150; these are comments
-  only, and change no statement, declaration, stamp or check. The 19 October entry stays as
-  written.
+  only, and change no statement, declaration, stamp or check. The 19 October superposition
+  entry is restored verbatim from `bccc3f52`, as #150 requires. The approval and the
+  correction to Common Notion 4 counting belong to the 20 October entry above; they do
+  not revise that earlier record of preparation.

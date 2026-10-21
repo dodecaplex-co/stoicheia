@@ -3,7 +3,7 @@
 
 What [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py) finds against [the acceptance checklist](../ACCEPTANCE.md), item by item: for each of the 99 propositions, for each book and for the edition as a whole. A [machine] item is checked by the script; a [review] item is read from the records, and passes only when a reviewer has recorded it. The checklist says what each item asks. ✓ passes; ✗ fails, and every failure is listed at the end.
 
-- **Revision:** `a87ff6bf`.
+- **Revision:** `39ae65c2`.
 - **Lean:** facts.json as Lean 4.35.0 wrote it.
 - **Run:** every item.
 
@@ -37,10 +37,10 @@ Failing propositions, item by item:
 | Item | | Kind | Result |
 |---|---|---|---|
 | E1 | kernel: every proof replayed by Lean's kernel and by nanoda | machine | ✓ |
-| E2 | certificate: the lock, the axioms, the entries and the pinned facts | machine | ✓ |
+| E2 | certificate: the lock, the axioms, the entries and the pinned facts | machine | ✗ |
 | E3 | contracts: the shared contracts (`heath.py`) | machine | ✓ |
 | E4 | model: the model tests | machine | ✓ |
-| E5 | edition: the edition's other pages, links and style | machine | ✗ |
+| E5 | edition: the edition's other pages, links and style | machine | ✓ |
 | E6 | staging: nothing else staged | machine | ✗ |
 
 ## Book I
@@ -182,7 +182,14 @@ Failing propositions, item by item:
 
 ### The whole edition
 
-- **E5 edition:** S12 docs/reports/acceptance-books-I-III.md:6: `a2e0f02a`: Unknown identifier `a2e0f02a`
+- **E2 certificate:**
+  - docs/reports/overlaps.md names `Audit.III_2_outside`, which Lean does not know, with Audit built: the catalogue has fallen behind the Lean
+  - docs/reports/overlaps.md names `Audit.III_30_measure`, which Lean does not know, with Audit built: the catalogue has fallen behind the Lean
+  - docs/reports/overlaps.md names `Audit.III_5_crossing`, which Lean does not know, with Audit built: the catalogue has fallen behind the Lean
+  - docs/reports/overlaps.md names Audit.I_2 (now retired), which Lean does not know, with Audit built: the catalogue has fallen behind the Lean
+  - docs/reports/overlaps.md names Audit.I_3 (now retired), which Lean does not know, with Audit built: the catalogue has fallen behind the Lean
+  - docs/reports/overlaps.md names `Audit.inside_of_between`, which Lean does not know, with Audit built: the catalogue has fallen behind the Lean
+  - docs/reports/overlaps.md names `Audit.outside_of_between`, which Lean does not know, with Audit built: the catalogue has fallen behind the Lean
 - **E6 staging:**
   - Staging/Stage3/Aligned.lean still stages 3 declaration(s), for no one proposition: move them to Elements/ or retire them
   - Staging/Stage3/Arcs.lean still stages 2 declaration(s), for no one proposition: move them to Elements/ or retire them
@@ -196,6 +203,12 @@ Failing propositions, item by item:
   - Staging/Stage3/Placement/Unique.lean still stages 2 declaration(s), for no one proposition: move them to Elements/ or retire them
   - Staging/Stage3/Placement.lean still stages 7 declaration(s), for no one proposition: move them to Elements/ or retire them
   - Staging/Stage4/Foot.lean still stages 3 declaration(s), for no one proposition: move them to Elements/ or retire them
+  - Staging/Superposition/Derivations.lean still stages 31 declaration(s), for no one proposition: move them to Elements/ or retire them
+  - Staging/Superposition/Formulas.lean still stages 20 declaration(s), for no one proposition: move them to Elements/ or retire them
+  - Staging/Superposition/Prop04.lean still stages 16 declaration(s), for no one proposition: move them to Elements/ or retire them
+  - Staging/Superposition/Prop08.lean still stages 13 declaration(s), for no one proposition: move them to Elements/ or retire them
+  - Staging/Superposition/Restriction.lean still stages 9 declaration(s), for no one proposition: move them to Elements/ or retire them
+  - Staging/Superposition/Rule.lean still stages 32 declaration(s), for no one proposition: move them to Elements/ or retire them
 
 ### Book I
 
