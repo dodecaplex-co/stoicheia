@@ -5,7 +5,7 @@
     python3 scripts/test_safe_push.py        # seven minutes or so; no Lean, no network
     STOICHEIA_SLOW_TESTS=1 python3 scripts/test_safe_push.py FullChecks   # Lean, minutes
 
-The clone is made with `git clone --local` of this repository into a temporary
+The clone is made with `git clone --local --no-hardlinks` of this repository into a temporary
 directory: a bare `origin.git` and a working clone of it. Origin's main is this
 checkout's HEAD with this checkout's copies of the harness (scripts/safe_push.py, its
 hook, its allow-list, its tests) and of the pull request template committed on top, so
@@ -27,6 +27,10 @@ one commit and runs safe_push.py against that origin:
   GitHub names for the head (issue #41); and believes gh's exit 0 only once GitHub says
   the pull request merged and origin/main holds the merge commit GitHub names, the merge
   state otherwise unknown, with no revert advised (issue #42);
+- unfinished work must be written as None or with issues open and labelled blocks-release;
+  closed or unlabelled issues and unreadable replies refuse the merge; a release pull
+  request waits for every open blocker, while an ordinary pull request never reads that
+  list; both None and an open labelled issue pass;
 - the pre-push hook refuses every push to main and scans a push to any other branch;
 - the review's findings: the harness and the check scripts are origin/main's, an
   allow-list entry the push adds does not count, the heath/ leaves are origin/main's, an
@@ -158,6 +162,7 @@ DECISIONS = "docs/briefs/0002-decisions.md"
 HARNESS_FILES = ("scripts/safe_push.py", "scripts/heath.py", "scripts/test_safe_push.py",
                  "scripts/hooks/pre-push", "scripts/hooks/safe-push", "scripts/install_hooks.sh",
                  "scripts/safe_push_allow.toml", ".github/pull_request_template.md",
+                 "scripts/check_release_gate.py", "tests/test_release_gate.py",
                  "tests/certificate_expectations.json", "tests/model/hyperbolic.py")
 
 
@@ -465,7 +470,11 @@ def fields(pr, wanted):
     full = dict(pr, headRefOid=head, labels=[{"name": n} for n in pr["labels"]],
                 isCrossRepository=fork,
                 headRepositoryOwner=pr.get("headRepositoryOwner", {"login": "test"}))
-    return {k: full.get(k) for k in wanted.split(",")}
+    if pr.get("omit_labels"):
+        del full["labels"]
+    elif "raw_labels" in pr:
+        full["labels"] = pr["raw_labels"]
+    return {k: full[k] for k in wanted.split(",") if k in full}
 
 
 def kill_on_watch():
@@ -495,6 +504,37 @@ def main(argv):
     cmd = args[:2]
     if cmd == ["auth", "status"]:
         return 0
+    if args[0] == "api":
+        path = args[-1]
+        if path == "repos/test/stoicheia":
+            print(s.get("repository_output", json.dumps({
+                "url": "https://api.github.com/repos/test/stoicheia"})))
+            return 1 if s.get("repository_read_fail") else 0
+        if s.get("issue_read_fail"):
+            # Even valid stdout on a failed read must not pass either gate.
+            print("[]")
+            return 1
+        if "issue_output" in s:
+            print(s["issue_output"])
+            return 0
+        issues = s.get("issues", [])
+        if path == "repos/test/stoicheia/issues?labels=blocks-release&state=open&per_page=100":
+            if "--paginate" not in args:
+                return 2
+            found = [i for i in issues if i["state"].lower() == "open" and
+                     "blocks-release" in [(v.get("name") if isinstance(v, dict) else v).lower()
+                                         for v in i["labels"]]]
+            # Two concatenated pages, as gh api --paginate prints them.
+            print(json.dumps(found[:1]))
+            print(json.dumps(found[1:]))
+            return 0
+        if path.startswith("repos/test/stoicheia/issues/"):
+            number = int(path.rsplit("/", 1)[1])
+            issue = next((i for i in issues if i["number"] == number), None)
+            if issue is not None:
+                print(json.dumps(issue))
+                return 0
+        return 1
     if cmd == ["label", "list"]:
         print(json.dumps([{"name": n} for n in s["labels"]]))
         return 0
@@ -536,6 +576,9 @@ def main(argv):
         print("fake gh: no such pull request: %s" % argv, file=sys.stderr)
         return 1
     if cmd == ["pr", "view"]:
+        if opt(args, "--json") == "labels" and s.get("label_read_fail"):
+            print(json.dumps({"labels": [{"name": "release"}]}))
+            return 1
         # "rename": {"views": n, "to": name}: after n views, the branch is renamed on
         # GitHub, its head kept, as a rename in GitHub's page would leave it.
         rename = s.get("rename")
@@ -548,6 +591,19 @@ def main(argv):
                 subprocess.run(["git", "update-ref", "-d", "refs/heads/" + pr["headRefName"]],
                                cwd=ORIGIN, check=True)
                 pr["headRefName"] = rename["to"]
+            save(s)
+        # "reread_body": the body GitHub gives the merge's own read of the body alone,
+        # as an edit made between the gates and that read would leave it.
+        if opt(args, "--json") == "body" and "reread_body" in s:
+            pr["body"] = s["reread_body"]
+            save(s)
+        if opt(args, "--json") == "body" and "after_body" in s:
+            s.update(s.pop("after_body"))
+            save(s)
+        # "relabel": the labels GitHub gives the merge's own read of the labels alone, as
+        # a label given between the gates and the merge would leave them.
+        if opt(args, "--json") == "labels" and "relabel" in s:
+            pr["labels"] = s["relabel"]
             save(s)
         print(json.dumps(fields(pr, opt(args, "--json"))))
         return 0
@@ -582,6 +638,13 @@ def main(argv):
                       file=sys.stderr)
                 return 1
         if "--watch" in args:
+            if "watch_labels" in s:
+                pr["labels"] = s["watch_labels"]
+            if "watch_raw_labels" in s:
+                pr["raw_labels"] = s["watch_raw_labels"]
+            if s.get("watch_omit_labels"):
+                pr["omit_labels"] = True
+            save(s)
             kill_on_watch()
             return 0 if all(c["bucket"] == "pass" for c in checks) else 1
         print(json.dumps(checks))
@@ -651,8 +714,8 @@ sys.exit(main(sys.argv[1:]))
 
 
 def reset_gh() -> None:
-    GH_STATE.write_text(json.dumps({"prs": [], "labels": [], "checks": {"*": PASSING},
-                                    "calls": []}))
+    GH_STATE.write_text(json.dumps({"prs": [], "labels": ["release", "blocks-release"],
+                                    "issues": [], "checks": {"*": PASSING}, "calls": []}))
 
 
 def setUpModule():
@@ -665,13 +728,17 @@ def setUpModule():
     reset_gh()
     common = git(SOURCE, "rev-parse", "--path-format=absolute", "--git-common-dir").strip()
     head = git(SOURCE, "rev-parse", "HEAD").strip()
-    git(TMP, "clone", "--quiet", "--bare", "--local", common, str(ORIGIN))
+    # Copy the objects: a sandbox may read the source repository but refuse hard links
+    # to its files. All commits and ref changes stay in the temporary clone.
+    git(TMP, "clone", "--quiet", "--bare", "--local", "--no-hardlinks", common, str(ORIGIN))
     git(ORIGIN, "update-ref", "refs/heads/main", head)
     git(ORIGIN, "symbolic-ref", "HEAD", "refs/heads/main")
     git(TMP, "clone", "--quiet", "--local", str(ORIGIN), str(WORK))
     git(WORK, "config", "user.name", "safe_push test")
     git(WORK, "config", "user.email", "safe-push-test@example.invalid")
     git(WORK, "config", "commit.gpgsign", "false")
+    # The body assertions use seven digits; Git's default grows with the object count.
+    git(WORK, "config", "core.abbrev", "7")
     git(WORK, "checkout", "--quiet", "--detach", head)
     for rel in HARNESS_FILES:
         if (SOURCE / rel).exists():
@@ -1423,7 +1490,7 @@ class GeneratedPages(Edge):
 # Runs safe_push in a subprocess with `guards`, `gates` or `watch_checks` wrapped, so that
 # something happens at a chosen moment: origin's main moves, or an interruption.
 DRIVER = r"""
-import json, os, subprocess, sys
+import json, os, re, subprocess, sys
 sys.path.insert(0, sys.argv[1])
 import safe_push
 action, origin, target = sys.argv[2], sys.argv[3], sys.argv[4]
@@ -1444,7 +1511,7 @@ class Clock:
 if os.environ.get("STOICHEIA_TEST_CLOCK"):
     safe_push.time = Clock({"still": 0.0, "leap": 3600.0}[os.environ["STOICHEIA_TEST_CLOCK"]])
 real_guards, real_watch = safe_push.guards, safe_push.watch_checks
-real_gates = safe_push.gates
+real_gates, real_refreshed = safe_push.gates, safe_push.refreshed
 def gates(ctx, number, rep, record=None):
     result = real_gates(ctx, number, rep, record)
     if action == "move-at-merge" and record is not None:
@@ -1463,6 +1530,21 @@ def watch_checks(*args, **kwargs):
     if action == "watch-fail":
         raise RuntimeError("gh went away")
     return real_watch(*args, **kwargs)
+def refreshed(body, parts):
+    result = real_refreshed(body, parts)
+    if action == "edit-after-unfinished-comparison":
+        path = os.environ["STOICHEIA_FAKE_GH_STATE"]
+        with open(path) as f:
+            state = json.load(f)
+        current = state["prs"][0]["body"]
+        state["prs"][0]["body"] = re.sub(
+            r"(## Unfinished work\n).*?(?=\n## )",
+            lambda m: m.group(1) + "\n- Prototype #38\n", current, count=1, flags=re.S)
+        with open(path, "w") as f:
+            json.dump(state, f, indent=1)
+        return result.replace("<!-- safe_push:commits end -->",
+                              "\n<!-- safe_push:commits end -->", 1)
+    return result
 real_gh_json, real_gh_run = safe_push.gh_json, safe_push.gh_run
 def gh_json(ctx, *args):
     # The look at GitHub after `gh pr merge`, interrupted or failing.
@@ -1484,6 +1566,7 @@ def gh_run(ctx, *args):
 safe_push.guards = guards
 safe_push.gates = gates
 safe_push.watch_checks = watch_checks
+safe_push.refreshed = refreshed
 safe_push.gh_json = gh_json
 safe_push.gh_run = gh_run
 sys.exit(safe_push.main(sys.argv[5:]))
@@ -1728,6 +1811,7 @@ def boxes_ticked(body: str) -> str:
 def ticked(body: str) -> str:
     """The body as the coordinator completes it: the sections written, the boxes ticked."""
     body = body.replace("## What and why\n", "## What and why\n\nA change for the test.\n", 1)
+    body = body.replace("## Unfinished work\n", "## Unfinished work\n\nNone\n", 1)
     for review in ("/code-review", "/security-review", "/no-mistakes"):
         body = body.replace(f"| {review} | | |", f"| {review} | abc1234 | None. |")
     body = body.replace("## Needs the owner's OK\n", "## Needs the owner's OK\n\nNothing.\n", 1)
@@ -2010,8 +2094,543 @@ class PullRequests(Edge):
         self.assertIn("failing: negative", out)
         self.assertEqual(self.origin_main(), BASE)
 
+    def stale_release_check(self, bucket):
+        sha = self.good_commit()
+        check = {"name": "release-gate", "workflow": "Release gate", "bucket": bucket,
+                 "state": "FAILURE" if bucket == "fail" else "IN_PROGRESS"}
+        self.set_gh(lambda s: s["checks"].update({sha: PASSING + [check]}))
+        return sha
+
+    def test_watcher_ignores_failed_stale_release_check(self):
+        self.stale_release_check("fail")
+        r = self.safe_push()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "CI"), "ok", r.stdout)
+
+    def test_watcher_ignores_pending_stale_release_check(self):
+        self.stale_release_check("pending")
+        r = self.safe_push()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "CI"), "ok", r.stdout)
+
+    def test_watcher_keeps_release_check_for_given_and_carried_labels(self):
+        self.stale_release_check("fail")
+        r = self.safe_push("--label", "release", "--label", "tooling")
+        self.assertEqual(r.returncode, 3, r.stdout + r.stderr)
+        self.assertIn("failing: release-gate", r.stdout)
+        self.set_gh(lambda s: s["prs"][0].update(labels=["tooling", "Release"]))
+        r = self.safe_push()
+        self.assertEqual(r.returncode, 3, r.stdout + r.stderr)
+        self.assertIn("failing: release-gate", r.stdout)
+
+    def test_watcher_keeps_release_check_when_label_is_added_during_watch(self):
+        self.stale_release_check("fail")
+        self.set_gh(lambda s: s.update(watch_labels=["docs", "release"]))
+        r = self.safe_push()
+        self.assertEqual(r.returncode, 3, r.stdout + r.stderr)
+        self.assertIn("failing: release-gate", r.stdout)
+
+    def test_watcher_ignores_release_check_when_label_is_removed_during_watch(self):
+        self.stale_release_check("fail")
+        self.set_gh(lambda s: s.update(watch_labels=["docs"]))
+        r = self.safe_push("--label", "docs", "--label", "release")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "CI"), "ok", r.stdout)
+
+    def test_watcher_refuses_unreadable_final_labels_without_exemption(self):
+        self.stale_release_check("fail")
+        self.set_gh(lambda s: s.update(watch_raw_labels=None))
+        r = self.safe_push()
+        self.assertEqual(r.returncode, 3, r.stdout + r.stderr)
+        self.assertIn("the pull request's labels are unreadable", r.stdout)
+        self.assertIn("failing: release-gate", r.stdout)
+
+    def test_watcher_refuses_failed_final_label_read_without_exemption(self):
+        self.stale_release_check("fail")
+        self.set_gh(lambda s: s.update(label_read_fail=True))
+        r = self.safe_push()
+        self.assertEqual(r.returncode, 3, r.stdout + r.stderr)
+        self.assertIn("the pull request's labels could not be read", r.stdout)
+        self.assertIn("failing: release-gate", r.stdout)
+
 
 class Merge(Edge):
+    def unfinished_body(self, text):
+        self.set_gh(lambda s: s["prs"][0].update(body=re.sub(
+            r"(## Unfinished work\n).*?(?=\n## )", lambda m: m.group(1) + "\n" + text + "\n",
+            ticked(s["prs"][0]["body"]), count=1, flags=re.S)))
+
+    def blocker(self, **changes):
+        issue = {"number": 38, "title": "Finish the prototype", "state": "open",
+                 "labels": [{"name": "blocks-release"}],
+                 "repository_url": "https://api.github.com/repos/test/stoicheia",
+                 "html_url": "https://github.invalid/test/stoicheia/issues/38"}
+        return dict(issue, **changes)
+
+    def test_unfinished_work_unwritten_refused(self):
+        self.opened()
+        self.unfinished_body("")
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
+        self.assertIn("Unfinished work must say None", out)
+        self.assertEqual(self.merges(), [])
+
+    def test_unfinished_work_closed_and_unlabelled_refused(self):
+        self.opened()
+        self.unfinished_body("- Prototype #38\n- Deferred page #39")
+        self.set_gh(lambda s: s.update(issues=[
+            self.blocker(state="closed"), self.blocker(number=39, labels=[])]))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
+        self.assertIn("#38 is closed", out)
+        self.assertIn("#39 lacks the label blocks-release", out)
+        self.assertEqual(self.merges(), [])
+
+    def test_release_label_given_after_the_gates_refused(self):
+        # An ordinary pull request passes the gates; "release" is then given before the
+        # merge, with a blocker open: the labels are read again, and nothing merges.
+        self.opened()
+        self.unfinished_body("None")
+        labels = self.gh_state()["prs"][0]["labels"]
+        self.set_gh(lambda s: s.update(issues=[self.blocker()],
+                                       relabel=list(labels) + ["release"]))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("labels changed after the gates read them", out)
+        self.assertEqual(self.merges(), [])
+
+    def test_final_gates_refuse_a_blocker_opened_after_body_refresh(self):
+        self.opened()
+        self.unfinished_body("None")
+        self.set_gh(lambda s: (s["prs"][0]["labels"].append("release"),
+                               s.update(after_body={"issues": [self.blocker()]})))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("FAIL  release:", out)
+        self.assertIn("#38: Finish the prototype", out)
+        self.assertEqual(self.merges(), [])
+
+    def test_final_gates_refuse_an_unreadable_blocker_reply(self):
+        self.opened()
+        self.unfinished_body("None")
+        self.set_gh(lambda s: (s["prs"][0]["labels"].append("release"),
+                               s.update(after_body={"issue_read_fail": True})))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("FAIL  release:", out)
+        self.assertIn("release issues unreadable", out)
+        self.assertEqual(self.merges(), [])
+
+    def test_final_gates_refuse_a_named_issue_changed_after_body_refresh(self):
+        self.opened()
+        self.unfinished_body("- Prototype #38")
+        self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+        for issue, reason in ((self.blocker(state="closed"), "#38 is closed"),
+                              (self.blocker(labels=[]), "lacks the label blocks-release")):
+            with self.subTest(reason=reason):
+                self.set_gh(lambda s: s.update(after_body={"issues": [issue]}))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertIn("FAIL  unfinished work:", out)
+                self.assertIn(reason, out)
+                self.assertEqual(self.merges(), [])
+                self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+
+    def test_final_gates_refuse_release_ci_changed_after_body_refresh(self):
+        sha = self.opened()
+        self.unfinished_body("None")
+        self.set_gh(lambda s: s["prs"][0]["labels"].append("release"))
+        for bucket, state in (("pending", "IN_PROGRESS"), ("fail", "FAILURE")):
+            with self.subTest(bucket=bucket):
+                check = {"name": "release-gate", "workflow": "Release gate",
+                         "bucket": bucket, "state": state}
+                self.set_gh(lambda s: s.update(after_body={
+                    "checks": {"*": PASSING, sha: PASSING + [check]}}))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertIn("FAIL  CI:", out)
+                self.assertIn("release-gate", out)
+                self.assertEqual(self.merges(), [])
+                self.set_gh(lambda s: s.update(checks={"*": PASSING, sha: PASSING}))
+
+    def test_unfinished_work_changed_after_the_gates_refused(self):
+        self.opened()
+        self.unfinished_body("None")
+        body = self.gh_state()["prs"][0]["body"]
+        self.set_gh(lambda s: s.update(reread_body=body.replace(
+            "\nNone\n", "\n- Deferred page to come\n", 1)))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("changed after the gates read it", out)
+        self.assertEqual(self.merges(), [])
+
+    def test_merge_never_overwrites_a_concurrent_unfinished_edit(self):
+        self.opened()
+        body = ticked(self.gh_state()["prs"][0]["body"])
+        concurrent = re.sub(
+            r"(## Unfinished work\n).*?(?=\n## )",
+            lambda m: m.group(1) + "\n- Prototype #38\n", body, count=1, flags=re.S)
+        self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+        before = len([c for c in self.gh_state()["calls"]
+                      if c[:2] == ["pr", "edit"] and "--body-file" in c])
+        r = self.driven_merge("edit-after-unfinished-comparison")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "body"), "FAIL", out)
+        self.assertIn("run `git safe-push --branch test-pr`", out)
+        self.assertEqual(self.gh_state()["prs"][0]["body"], concurrent)
+        after = len([c for c in self.gh_state()["calls"]
+                     if c[:2] == ["pr", "edit"] and "--body-file" in c])
+        self.assertEqual(after, before)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+
+    def test_refresh_that_would_change_unfinished_work_refused(self):
+        # The statements part's end marker moved past "## Review records": writing the
+        # parts afresh would swallow the section, so the gates, reading its heading as
+        # GitHub shows it without the parts safe_push writes, refuse it before any write.
+        self.opened()
+        self.unfinished_body("None")
+        def move(s):
+            body = s["prs"][0]["body"]
+            end = "<!-- safe_push:statements end -->\n"
+            body = body.replace(end, "", 1).replace("## Review records\n",
+                                                    "## Review records\n" + end, 1)
+            s["prs"][0]["body"] = body
+        self.set_gh(move)
+        def edits():
+            return [c for c in self.gh_state()["calls"] if c[:2] == ["pr", "edit"]
+                    and "--body-file" in c]
+        before = len(edits())
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
+        self.assertIn("must be one GitHub shows", out)
+        self.assertEqual(len(edits()), before)      # the body was not written
+        self.assertEqual(self.merges(), [])
+
+    def test_unfinished_work_open_labelled_issue_merges(self):
+        self.opened()
+        self.unfinished_body("- Prototype #38")
+        self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+        r = self.merge()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "unfinished work"), "ok", r.stdout)
+        self.assertEqual(len(self.merges()), 1)
+
+    def test_unfinished_work_read_failure_refused(self):
+        self.opened()
+        self.unfinished_body("- Prototype #38")
+        self.set_gh(lambda s: s.update(issue_read_fail=True))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("#38 unreadable", out)
+        self.assertEqual(self.merges(), [])
+
+    def test_wrapped_unfinished_item_merges(self):
+        self.opened()
+        self.unfinished_body("- Prototype awaiting a proof,\n  tracked by #38.")
+        self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+        r = self.merge()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "unfinished work"), "ok", r.stdout)
+        self.assertEqual(len(self.merges()), 1)
+
+    def test_unfinished_markup_and_fragments_refuse_the_merge(self):
+        self.opened()
+        self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+        cases = (
+            ("- Prototype [section](#38)", "bracket"),
+            ("- Prototype https://example.invalid/page?x=#38", "URL"),
+            ("- Prototype #38, see WWW.GITHUB.COM/example/edition/issues/39", "URL"),
+            ("- Prototype #38 example.org/ticket/39", "URL"),
+            ("- Prototype #38 fooGH-39", "write the issue as #N on its own"),
+            ("- _Prototype_ #38", "emphasis"),
+            ("- Prototype `code\n  #38`", "backtick"),
+            ("- ```\n  #38\n  ```", "backtick"),
+            ('- Prototype <span title="#38">later</span>', "HTML"),
+            ("[prototype]: https://github.com/test/stoicheia/issues/38", "bracket"),
+            ("> - Prototype #38\n> - Deferred page to come", "block quote"),
+            ("- Prototype #38\n  - Deferred page", "nested list"),
+            ("1. Prototype #38", "plain list"),
+            ("None\n<div><ul><li>Deferred page</li></ul></div>", "HTML"),
+            ("None\n```\n- Deferred page to come\n```", "backtick"),
+            ("None\n~~~\n- Deferred page to come\n~~~", "tilde"),
+            ("None\n<!-- safe_push:custom begin -->\n- Prototype with no issue\n"
+             "<!-- safe_push:custom end -->", "a comment other than the template's own"),
+            ("-     Prototype #38", "plain list"),
+            ("-\tPrototype #38", "tab"),
+        )
+        for text, reason in cases:
+            with self.subTest(text=text):
+                self.unfinished_body(text)
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
+                self.assertIn(reason, out)
+                self.assertEqual(self.merges(), [])
+                self.assertEqual(self.origin_main(), BASE)
+
+    def test_unfinished_ipv4_url_refuses_the_merge(self):
+        self.opened()
+        self.unfinished_body("- Prototype #38 192.0.2.1/ticket/39")
+        self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
+        self.assertIn("URL", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+
+    def test_unfinished_hostname_port_url_refuses_the_merge(self):
+        self.opened()
+        self.unfinished_body("- Prototype #38 localhost:8080/ticket/39")
+        self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
+        self.assertIn("URL", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+
+    def test_duplicate_unfinished_sections_refuse_the_merge(self):
+        self.opened()
+        self.unfinished_body("None\n\n## Unfinished work ##\n- Deferred page")
+        self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
+        self.assertIn("exactly one", out)
+        self.assertEqual(self.merges(), [])
+
+    def test_hidden_unfinished_heading_refuses_the_merge(self):
+        # The one raw heading, and the section after it saying None, where GitHub shows
+        # no heading: in a comment, code, an HTML block or a part safe_push writes.
+        self.opened()
+        body = ticked(self.gh_state()["prs"][0]["body"])
+        for before, after in (("<!--", "-->"), ("```", "```"), ("~~~", "~~~"),
+                              ("<div>", "</div>"),
+                              ("<!-- safe_push:custom begin -->",
+                               "<!-- safe_push:custom end -->")):
+            hidden = re.sub(r"## Unfinished work\n.*?(?=## Review records\n)",
+                            lambda m: f"{before}\n## Unfinished work\nNone\n"
+                                      f"## Review records\n{after}\n\n",
+                            body, count=1, flags=re.S)
+            with self.subTest(before=before):
+                self.set_gh(lambda s: s["prs"][0].update(body=hidden))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
+                self.assertIn("must be one GitHub shows", out)
+                self.assertEqual(self.merges(), [])
+                self.assertEqual(self.origin_main(), BASE)
+
+    def test_fence_opened_in_a_safe_push_part_refuses_the_merge(self):
+        # The section moved to the end, after a part safe_push writes that opens a fence:
+        # GitHub shows the part, so the fence hides the heading and the section after it,
+        # whether it runs to the end or a longer fence closes it after them.
+        self.opened()
+        body = re.sub(r"## Unfinished work\n.*?(?=## Review records\n)", "",
+                      ticked(self.gh_state()["prs"][0]["body"]), count=1, flags=re.S)
+        for closer in ("", "````\n"):
+            hidden = body.rstrip("\n") + "\n\n" + (
+                "<!-- safe_push:custom begin -->\n```\n<!-- safe_push:custom end -->\n"
+                "## Unfinished work\nNone\n## Review records\n" + closer)
+            with self.subTest(closer=closer):
+                self.set_gh(lambda s: s["prs"][0].update(body=hidden))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
+                self.assertIn("must be one GitHub shows", out)
+                self.assertEqual(self.merges(), [])
+                self.assertEqual(self.origin_main(), BASE)
+
+    def test_unfinished_heading_after_closed_comment_code_and_html_merges(self):
+        self.opened()
+        self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+        self.unfinished_body("- Prototype #38")
+        self.set_gh(lambda s: s["prs"][0].update(body=s["prs"][0]["body"].replace(
+            "## Unfinished work\n", "<!--\nA note.\n-->\n```\ncode\n```\n<div>\nA note.\n"
+            "</div>\n\n## Unfinished work\n", 1)))
+        r = self.merge()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "unfinished work"), "ok", r.stdout)
+        self.assertEqual(len(self.merges()), 1)
+
+    def test_unreadable_labels_refuse_release_without_stale_check_exemption(self):
+        sha = self.opened()
+        self.unfinished_body("None")
+        self.set_gh(lambda s: s["checks"].update({sha: PASSING + [
+            {"name": "release-gate", "workflow": "Release gate", "bucket": "fail"}]}))
+        for labels in ([{"name": "tooling"}, {}], None, "missing"):
+            with self.subTest(labels=labels):
+                def set_labels(s):
+                    pr = s["prs"][0]
+                    pr.pop("raw_labels", None)
+                    pr.pop("omit_labels", None)
+                    if labels == "missing":
+                        pr["omit_labels"] = True
+                    else:
+                        pr["raw_labels"] = labels
+                self.set_gh(set_labels)
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertIn("the pull request's labels are unreadable", out)
+                self.assertEqual(self.guard(out, "release"), "FAIL", out)
+                self.assertEqual(self.guard(out, "CI"), "FAIL", out)
+                self.assertEqual(self.merges(), [])
+
+    def test_transferred_or_unbound_unfinished_issue_refuses_the_merge(self):
+        self.opened()
+        self.unfinished_body("- Prototype #38")
+        missing = self.blocker()
+        del missing["repository_url"]
+        for issue, reason in (
+                (self.blocker(repository_url="https://api.github.com/repos/test/other"),
+                 "another repository"), (missing, "repository_url")):
+            with self.subTest(issue=issue):
+                self.set_gh(lambda s: s.update(issues=[issue]))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
+                self.assertIn(reason, out)
+                self.assertEqual(self.merges(), [])
+
+    def test_canonical_repository_read_failure_refuses_the_merge(self):
+        self.opened()
+        self.unfinished_body("- Prototype #38")
+        self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+        for reply in ({"repository_read_fail": True}, {"repository_output": "{}"},
+                      {"repository_output": "{"}):
+            with self.subTest(reply=reply):
+                self.set_gh(lambda s: (s.pop("repository_read_fail", None),
+                                       s.pop("repository_output", None), s.update(reply)))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertIn("repository unreadable", out)
+                self.assertEqual(self.merges(), [])
+
+    def test_release_label_case_holds_the_merge_for_blockers_and_bad_reads(self):
+        self.opened()
+        self.unfinished_body("None")
+        self.set_gh(lambda s: s["prs"][0]["labels"].append("Release"))
+        for reply, reason in (
+                ({"issues": [self.blocker(labels=[{"name": "BLOCKS-RELEASE"}])]},
+                 "#38: Finish the prototype"),
+                ({"issue_output": "{"}, "release issues unreadable")):
+            with self.subTest(reply=reply):
+                self.set_gh(lambda s: s.update(reply))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertEqual(self.guard(out, "release"), "FAIL", out)
+                self.assertIn(reason, out)
+                self.assertEqual(self.merges(), [])
+
+    def removed_release_label_merges(self, bucket):
+        sha = self.opened()
+        self.unfinished_body("None")
+        self.set_gh(lambda s: s["prs"][0]["labels"].append("release"))
+        check = {"name": "release-gate", "workflow": "Release gate", "bucket": bucket,
+                 "state": "FAILURE" if bucket == "fail" else "IN_PROGRESS"}
+        self.set_gh(lambda s: s["checks"].update({sha: PASSING + [check]}))
+        r = self.merge()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "CI"), "FAIL", r.stdout)
+        self.assertEqual(self.merges(), [])
+        self.set_gh(lambda s: s["prs"][0]["labels"].remove("release"))
+        r = self.merge()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "CI"), "ok", r.stdout)
+        self.assertEqual(len(self.merges()), 1)
+
+    def test_removed_release_label_with_failing_check_merges(self):
+        self.removed_release_label_merges("fail")
+
+    def test_removed_release_label_with_pending_check_merges(self):
+        self.removed_release_label_merges("pending")
+
+    def test_ordinary_pull_request_still_judges_every_other_check(self):
+        sha = self.opened()
+        self.unfinished_body("None")
+        for name, workflow in (("release-gate", "CI"), ("other", "Release gate")):
+            with self.subTest(name=name, workflow=workflow):
+                check = {"name": name, "workflow": workflow, "bucket": "fail", "state": "FAILURE"}
+                self.set_gh(lambda s: s["checks"].update({sha: PASSING + [check]}))
+                r = self.merge()
+                self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+                self.assertEqual(self.guard(r.stdout, "CI"), "FAIL", r.stdout)
+                self.assertEqual(self.merges(), [])
+
+    def test_release_waits_for_all_open_blockers_then_merges(self):
+        self.opened()
+        self.unfinished_body("None")
+        self.set_gh(lambda s: s["prs"][0]["labels"].append("release"))
+        self.set_gh(lambda s: s.update(issues=[
+            self.blocker(), self.blocker(number=39, title="Finish the page",
+                                        pull_request={})]))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "release"), "FAIL", out)
+        self.assertIn("#38: Finish the prototype", out)
+        self.assertIn("#39: Finish the page", out)
+        self.assertEqual(self.merges(), [])
+        self.set_gh(lambda s: s.update(issues=[]))
+        r = self.merge()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "release"), "ok", r.stdout)
+        self.assertEqual(len(self.merges()), 1)
+
+    def test_release_issue_read_failures_refused(self):
+        self.opened()
+        self.unfinished_body("None")
+        self.set_gh(lambda s: s["prs"][0]["labels"].append("release"))
+        for reply in ({"issue_read_fail": True}, {"issue_output": "[]\n{"},
+                      {"issue_output": '[{"number": 38}]'}):
+            with self.subTest(reply=reply):
+                self.set_gh(lambda s: (s.pop("issue_read_fail", None),
+                                       s.pop("issue_output", None), s.update(reply)))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertEqual(self.guard(out, "release"), "FAIL", out)
+                self.assertIn("release issues unreadable", out)
+                self.assertEqual(self.merges(), [])
+
+    def test_ordinary_pull_request_never_reads_open_blockers(self):
+        self.opened()
+        self.unfinished_body("None")
+        self.set_gh(lambda s: s.update(issues=[self.blocker()], issue_read_fail=True))
+        r = self.merge()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "unfinished work"), "ok", r.stdout)
+        self.assertEqual(self.step(r.stdout, "release"), "skip", r.stdout)
+        self.assertFalse([c for c in json.loads(GH_STATE.read_text())["calls"]
+                          if c[0] == "api"])
+        self.assertEqual(len(self.merges()), 1)
+
     def opened(self, *args, ready=True, **write) -> str:
         sha = self.good_commit() if not write else self.commit("A change", write)
         r = self.safe_push(*args, *(("--ready",) if ready else ()))
@@ -2112,16 +2731,23 @@ class Merge(Edge):
         self.assertIn("missing from the body: Required: Nothing public", out)
         self.assertEqual(self.origin_main(), BASE)
 
-    def test_new_head_gets_its_preflight_at_the_merge(self):
+    def test_new_head_needs_a_fresh_preflight_before_merge(self):
         self.opened()
         self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
-        # A commit pushed to the branch by hand: the pre-flight has not seen it.
         newer = self.good_commit("A line pushed by hand.")
         git(WORK, "push", "--quiet", "origin", f"{newer}:refs/heads/{BRANCH}")
         r = self.merge()
         out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(r.returncode, 1, out)
         self.assertIn(f"none of {newer[:12]}", out)
+        self.assertEqual(self.guard(out, "body"), "FAIL", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+        r = self.safe_push()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
         self.assertEqual(git(ORIGIN, "rev-parse", "refs/heads/main^2").strip(), newer)
         self.assertIn(f"sha={newer}", self.gh_state()["prs"][0]["body"])
 
@@ -2164,7 +2790,8 @@ class Merge(Edge):
         (LOG.parent / "preflight" / f"{record['sha']}-{BASE}.json").write_text(json.dumps(record))
         r = self.merge("--dry-run")
         self.assertIn("is not of the full checks by origin/main's harness", r.stdout)
-        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "body"), "FAIL", r.stdout)
 
     def test_bad_new_head_refused_at_the_merge(self):
         self.opened()
@@ -4252,6 +4879,10 @@ class Units(unittest.TestCase):
         template = (SOURCE / ".github" / "pull_request_template.md").read_text()
         self.assertEqual(len(safe_push.section_problems(template, template, False)), 4)
         self.assertEqual(len(safe_push.section_problems(template, template, True)), 5)
+        # Unfinished work is now judged separately, against the raw text.
+        text, problems = safe_push.unfinished_section(template)
+        self.assertEqual(problems, [])
+        self.assertTrue(safe_push.unfinished_refs(text)[1])
         self.assertEqual(safe_push.section_problems(ticked(template), template, True), [])
         # safe_push's own lines are not the coordinator's words.
         body = template.replace("<!-- safe_push: commits -->", "<!-- safe_push:commits begin "
@@ -4263,6 +4894,7 @@ class Units(unittest.TestCase):
         # A fenced block of filled-in headings at the end does not write the sections.
         fenced = template + "\n```\n" + ticked(template) + "\n```\n"
         self.assertEqual(len(safe_push.section_problems(fenced, template, False)), 4)
+        self.assertTrue(safe_push.unfinished_section(fenced)[1])
         # Backticked review names are read; a dash holds a place.
         rows = ticked(template).replace("| /code-review |", "| `/code-review` |")
         self.assertEqual(safe_push.section_problems(rows, template, False), [])
@@ -4381,7 +5013,7 @@ class Units(unittest.TestCase):
             with self.subTest(name):
                 self.assertEqual(both(body), ([], []))
         hidden = swap("## Checklist\n", "<!-- a note never closed\n\n## Checklist\n")
-        self.assertEqual(len(both(hidden)[0]), 9, both(hidden))
+        self.assertEqual(len(both(hidden)[0]), 10, both(hidden))
         commented = swap(cell, "| /no-mistakes | abc1234 | <!-- x --> |")
         self.assertEqual(both(commented), ([], ["not written: the review /no-mistakes, its "
                                                 "commit and its findings"]))
@@ -4397,7 +5029,7 @@ class Units(unittest.TestCase):
         template = (SOURCE / ".github" / "pull_request_template.md").read_text()
         head, _, checklist = ticked(template).partition("## Checklist\n")
         boxes = [line for line in checklist.splitlines() if line.startswith("- [x]")]
-        self.assertEqual(len(boxes), 9)
+        self.assertEqual(len(safe_push.boxes(ticked(template))), 10)
 
         def problems(lines, indent=""):
             body = head + "## Checklist\n\n" + lines + "\n".join(indent + b for b in boxes)
@@ -4411,7 +5043,7 @@ class Units(unittest.TestCase):
         }
         for name, (lines, indent) in hidden.items():
             with self.subTest(name):
-                self.assertEqual(len(problems(lines, indent)), 9)
+                self.assertEqual(len(problems(lines, indent)), 10)
         shown = {
             "three spaces under a paragraph's line": ("See below.\n", "   "),
             "nested by its item's content column": ("1. The boxes:\n\n", "   "),
