@@ -14,7 +14,7 @@ note = "Definition I.20 distinguishes isosceles from equilateral triangles. The 
 [[passage]]
 at = "and let the straight lines BD, CE be produced further"
 kind = "given"
-note = "D and E come with the statement, already produced, so the Lean draws only AB and AC here. The proof still rests on Postulate 2 through proved rules: the order rule `Tacit.between_of_between_right`, beneath `OnRay.between_of_len_lt`, and Metric 8, `Tacit.area_swap`. `Prop5.base` produces the sides for the propositions that cite only the angles at the base."
+note = "D and E come with the statement, already produced, so the Lean draws only AB and AC here. The proof's own Lean still rests on Postulate 2 through proved rules: the order rule `Tacit.between_of_between_right`, beneath `OnRay.between_of_len_lt`, and Metric 8, `Tacit.area_swap`; I.4, which it cites, rests on it too. `Prop5.base` produces the sides for the propositions that cite only the angles at the base."
 
 [[passage]]
 at = "Let a point F be taken at random on BD"
