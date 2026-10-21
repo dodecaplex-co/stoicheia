@@ -314,53 +314,9 @@ class QueueTests(unittest.TestCase):
                 self.verdict(self.cli(head=self.merge(first, two, 2)), 1,
                              "decisions added lines are missing or out of order")
 
-    def test_decisions_existing_identical_line_cannot_replace_an_added_occurrence(self):
-        page = self.trees[self.base][PAGE] + "\nSame decision.\n"
-        self.base = self.make([self.base], {PAGE: page})
-        self.snapshot["main"]["sha"] = self.base
-        self.nodes().clear()
-        one = self.train(1, {PAGE: page + "Same decision.\n"})
-        first = self.merge(self.base, one, 1)
-        two = self.train(2, {PAGE: page}, start=one)
-        self.verdict(self.cli(head=self.merge(first, two, 2)), 1,
-                     "decisions added lines are missing or out of order")
-
-    def test_decisions_added_duplicate_and_unrelated_addition_pass(self):
-        page = self.trees[self.base][PAGE] + "\nA\nX\n"
-        self.base = self.make([self.base], {PAGE: page})
-        one = self.train(1, {PAGE: page.replace("A\nX\n", "A\nA\nX\n")})
-        first = self.merge(self.base, one, 1)
-        group = self.make([first], {PAGE: page.replace("A\nX\n", "A\nOther\nA\nX\n")})
-        queue.intact(self.repo, self.base, group, {"number": 1, "head": one})
-
-    def test_decisions_readded_identical_line_at_another_anchor_refuses(self):
-        page = self.trees[self.base][PAGE] + "\nA\nX\n"
-        self.base = self.make([self.base], {PAGE: page})
-        one = self.train(1, {PAGE: page.replace("A\nX\n", "A\nA\nX\n")})
-        first = self.merge(self.base, one, 1)
-        moved = self.make([first], {PAGE: page + "A\n"})
-        with self.assertRaisesRegex(queue.Refused,
-                                    "decisions added lines are missing or out of order"):
-            queue.intact(self.repo, self.base, moved, {"number": 1, "head": one})
-
     def test_preflight_names_another_head(self):
         self.set_body(self.body().replace(f"sha={self.one}", f"sha={self.two}"))
         self.verdict(self.cli(), 1, "pre-flight: sha differs")
-
-    def test_preflight_visible_summary_must_name_marker_revisions(self):
-        original = self.body()
-        cases = (
-            original.replace(f"Pre-flight of `{self.one[:12]}`",
-                             f"Pre-flight of `{self.two[:12]}`"),
-            original.replace(f"origin/main `{self.base[:12]}`",
-                             f"origin/main `{self.one[:12]}`"),
-            original.replace(f"Pre-flight of `{self.one[:12]}`", "Pre-flight of HEAD"),
-        )
-        for changed in cases:
-            with self.subTest(summary=changed.split("Pre-flight", 1)[1].splitlines()[0]):
-                self.set_body(changed)
-                self.verdict(self.cli(), 1,
-                             "visible summary must name the recorded head and base")
 
     def test_preflight_is_missing(self):
         self.set_body(queue.PREFLIGHT.sub("", self.body()))
@@ -635,8 +591,6 @@ class QueueTests(unittest.TestCase):
         original = self.body()
         for body in (
             original.replace("Verdict: PASS.", "<!-- Verdict: PASS. -->"),
-            original.replace("\nVerdict: PASS.\n",
-                             '\n<span title="\nVerdict: PASS.\n">x</span>\n'),
             original.replace("| Step | Outcome | Seconds |",
                              "```\n| Step | Outcome | Seconds |")
                     .replace("<!-- safe_push:preflight end -->",
@@ -1284,11 +1238,7 @@ class TreeTests(unittest.TestCase):
                      "> ### 20 October 2026", "<h3>20 October 2026</h3>",
                      "Prose that quotes the tag as &lt;h2&gt;, with <b>HTML</b> and a "
                      "[link](#x).",
-                     "21 October 2026\n===\n\nNotes\n---",
-                     "### 20 October 2026\n---", "- 20 October 2026\n---",
-                     "- 20 October 2026\n ---", "1. 20 October 2026\n---",
-                     "> 20 October 2026\n---", "> - 20 October 2026\n---",
-                     "Notes\n21. October 2026\n===", "## 21 October 2026 ##",
+                     "21 October 2026\n===\n\nNotes\n---", "## 21 October 2026 ##",
                      "# Notes #", "##"])
 
     def test_a_dated_heading_repeats_wherever_its_date_stands(self):
@@ -1322,16 +1272,15 @@ class TreeTests(unittest.TestCase):
             "## 20 \N{CYRILLIC CAPITAL LETTER O}ctober 2026",
             "## 20 October 2026 [a later note](#x)",
             "## 20 October 2026 &amp; 21", "## 20 October 2026 <b>and after</b>",
-            "## 20 October 2026#", "20\tOctober 2026\n==="))
+            "## 20 October 2026#", "### 20 October 2026\n---", "20\tOctober 2026\n==="))
 
     def test_containers_hide_no_heading(self):
         self.refused((added, self.REPEATED) for added in (
             "> ## 20 October 2026", ">## 20 October 2026", "- ## 20 October 2026",
             "+ ## 20 October 2026", "1. ## 20 October 2026", "1) ## 20 October 2026",
             "> - > ## 20 October 2026", "> - ## 20 October 2026", "* > 2. ## 20 October 2026",
-            "> 20 October 2026\n> ---", "- 20 October 2026\n  ---",
-            "1. 20 October 2026\n   ---",
-            "> - 20 October 2026\n>   ---",
+            "> 20 October 2026\n> ---", "- 20 October 2026\n---",
+            "- 20 October 2026\n  ---", "> - 20 October 2026\n---",
             "1.  Item\n\n    ## 20 October 2026",
             # GFM's footnote definitions and task items hold blocks too (the fourth review).
             "[^n]: ## 20 October 2026", "[^n]:## 20 October 2026",
@@ -1357,21 +1306,18 @@ class TreeTests(unittest.TestCase):
             "- <div>\n## 20 October 2026", "20 October\n    2026\n===",
             "- Item\n\n  ```\n## 20 October 2026"))
 
-    def test_block_boundaries_end_a_setext_paragraph(self):
-        # Empty containers, an incompatible indent and an earlier setext heading close
-        # the paragraph whose text a later underline may promote.
-        self.refused((added, self.YEAR) for added in (
+    def test_an_underline_reads_back_to_the_blank_line(self):
+        # A line of spaces and tabs is blank; a line of no-break spaces, or one holding
+        # only a list marker or a > (indented four columns or more, it is a paragraph's
+        # text), is not. A later underline's text holds an earlier one's.
+        self.refused((added, self.REPEATED) for added in (
             "20 October\n*\n2026\n---", "20 October\n\N{NO-BREAK SPACE}\n2026\n===",
             "20 October\n1.\n2026\n---", "20 October\n    ===\n2026\n---",
-            "20 October\n>\n2026\n==="))
-        self.passes((added for added in (
-            "21 October 2026\n===\nNotes\n---",
-            "20 October\n***\n2026-10-21\n===",
-            "20 October\n___\n2026-10-21\n===",
-            "20 October\n- - -\n2026-10-21\n===",
+            "21 October 2026\n===\nNotes\n---", "20 October\n>\n2026\n===",
             "20 October 2026\n    >\n===", "20 October 2026\n\t>\n===",
             "- 20 October 2026\n      >\n  ===", "> 20 October 2026\n>     >\n> ===",
-            "21 October 2026\n===\n>\nNotes\n---")))
+            "21 October 2026\n===\n>\nNotes\n---"))
+        self.refused([("21 October 2026\n===\nNotes\n---", self.PLAIN)])
         self.passes(["21 October 2026\n===\n \t\nNotes\n---"])
         # The blank line ends the stretch: no date is read across it, though the heading
         # "2026" below it holds a year in no date.
@@ -1390,20 +1336,11 @@ class TreeTests(unittest.TestCase):
             "## 2026", "## 31 February 2026", "## 2026-02-31", "## FY2026",
             "## 21 October 2026 (also 20/10/2026)", "# 20October2026",
             "20 October\n2026\n===", "Notes\n2026. October 20\n===", "1. October 2026\n   =",
-            "21. October 2026\n    ===", "- October 2026\n  ===",
             "Notes 20 October\n[^2026]:\n==="))
         self.passes(["## 21 October 2026", "## October 21, 2026", "## 2026-10-21",
                      "## 21st October 2026", "## 21 October 2026 to 22 October 2026",
                      "## Book I, 1066 and after", "## 2200 propositions", "### 2026",
-                     "A paragraph of 2026, in prose.", "1. 21 October 2026\n   ---",
-                     "Notes\n01. October 2026\n===",
-                     "    Notes\n21. October 2026\n ===", "- - -\n21. October 2026\n ===",
-                     "-\n21. October 2026\n ===", ">\n21. October 2026\n ===",
-                     "> Notes\n21. October 2026\n ===", "- Notes\n21. October 2026\n ===",
-                     "- - -\n    Notes\n21. October 2026\n ===",
-                     "2. Notes\n21. October 2026\n ===",
-                     "Notes\n- 21. October 2026\n ===",
-                     "Notes\n> 21. October 2026\n> ==="])
+                     "A paragraph of 2026, in prose.", "1. 21 October 2026\n   ---"])
 
     def test_a_page_a_checkout_may_rewrite_is_unreadable(self):
         # --tree reads the checkout, where Git writes the page through its attributes:

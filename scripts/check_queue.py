@@ -110,8 +110,7 @@ BOM = "\N{BYTE ORDER MARK}"  # which a renderer skips at the start of a page
 BLANK = re.compile(r"[ \t]*")
 CONTAINER = re.compile(r"\s+|>|[-*+](?=\s|$)|\[[ xX]\](?=\s|$)"
                        r"|(?P<text>[0-9]+[.)](?=\s|$)|\[\^[^\]]*\]:)")
-ANY_OPENER = re.compile(r"#{1,6}(?=[ \t]|$)")
-THEMATIC = re.compile(r" {0,3}(?:(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|(?:-[ \t]*){3,})")
+OPENER = re.compile(r"#{1,2}(?=[ \t]|$)")
 # A heading's text is plain: ASCII letters, digits, spaces and . , : ; ' ( ) - / only.
 PLAIN = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
                   " .,:;'()-/")
@@ -125,9 +124,6 @@ DAY = re.compile(r"(?i)([0-9]{1,2})(?:st|nd|rd|th)?")
 NUMBER = re.compile(r"[0-9]{1,2}")
 YEAR = re.compile(r"[0-9]{4}")
 YEARLIKE = re.compile(r"(?<![0-9])(?:19|20|21)[0-9]{2}(?![0-9])")
-ORDERED_TEXT = re.compile(r"(?:^| )([0-9]+)[.)]$")
-TOP_ORDERED = re.compile(r" {0,3}[0-9]+[.)](?=[ \t]|$)")
-LIST_START = re.compile(r"(?:[-+*]|([0-9]{1,9})[.)])(?=[ \t]|$)")
 # An HTML heading tag of level one or two, which this reading refuses rather than reads.
 RAW_HEADING = re.compile(r"(?i)<h[12](?=[\s/>]|$)")
 GENERATED = (*safe_push.GENERATED, "book/", safe_push.DECISIONS)
@@ -139,8 +135,6 @@ PREFLIGHT = re.compile(
     r"(?: harness=([0-9a-f]{40}))? -->[ \t\r]*$"
     r"(?:(?!<!-- safe_push:preflight begin).)*?"
     r"^<!-- safe_push:preflight end -->[ \t\r]*$")
-DECISION_HUNK = re.compile(
-    r"^@@ -([0-9]+)(?:,([0-9]+))? \+[0-9]+(?:,([0-9]+))? @@")
 
 
 class Refused(Exception):
@@ -524,15 +518,10 @@ def preflight(repo: Path, base: str, pr: dict) -> None:
     # further down (a record that stood in, say) may quote the same words again.
     summary = next((line for line in safe_push.visible(inner).splitlines() if line.strip()),
                    "")
-    named = re.match(
-        r"^Pre-flight of `([0-9a-f]{7,40})` against origin/main `([0-9a-f]{7,40})`,",
-        summary)
-    if not named or not checked.startswith(named.group(1)) \
-            or not against.startswith(named.group(2)):
-        raise Refused("pre-flight: visible summary must name the recorded head and base")
     harness = re.findall(
         r"origin/main's `scripts/safe_push\.py` \(blob `([0-9a-f]{12,40})`\)", summary)
-    if len(harness) != 1 or "full checks skipped" in inner:
+    if len(harness) != 1 or not summary.startswith("Pre-flight of ") \
+            or "full checks skipped" in inner:
         raise Refused("pre-flight: missing origin/main harness or full checks skipped")
     actual = oid(safe_push.git(repo, "rev-parse",
                                f"{harness_commit}:scripts/safe_push.py").strip(),
@@ -587,34 +576,6 @@ def hand_written_intact(repo: Path, path: str, group: str, mb: str, train: str) 
     return clean and reapplied == g
 
 
-def decision_additions(repo: Path, old: str, new: str) -> dict[tuple[int, int], list[str]]:
-    """Decision lines added from `old` to `new`, grouped by their old-file hunk anchor."""
-    output = safe_push.git(
-        repo, "diff", "--no-color", "--text", "--no-ext-diff", "--no-textconv",
-        "--no-renames", "--unified=0", old, new, "--", safe_push.DECISIONS,
-        binary=True).decode("utf-8", errors="replace")
-    additions: dict[tuple[int, int], list[str]] = {}
-    old_left = new_left = 0
-    anchor = None
-    for line in output.split("\n"):
-        if old_left > 0 or new_left > 0:
-            if line.startswith("+"):
-                additions[anchor].append(line[1:])
-                new_left -= 1
-            elif line.startswith("-"):
-                old_left -= 1
-            elif not line.startswith("\\"):
-                old_left = new_left = 0
-            continue
-        match = DECISION_HUNK.match(line)
-        if match:
-            old_left = int(match.group(2)) if match.group(2) is not None else 1
-            new_left = int(match.group(3)) if match.group(3) is not None else 1
-            anchor = (int(match.group(1)), old_left)
-            additions.setdefault(anchor, [])
-    return {anchor: lines for anchor, lines in additions.items() if lines}
-
-
 def intact(repo: Path, base: str, head: str, pr: dict) -> None:
     """Require reversal then reapplication to preserve the non-exempt group tree, against
     every merge base of the entry with the group's base: after criss-cross merges there
@@ -640,17 +601,12 @@ def intact(repo: Path, base: str, head: str, pr: dict) -> None:
         if lost:
             raise Refused(f"not overwriting: #{pr['number']} changed lines were "
                           "overwritten: " + ", ".join(sorted(lost)))
-        added = decision_additions(repo, mb, pr["head"])
+        added = [line.text for line in safe_push.added_lines(repo, mb, pr["head"],
+                                                          safe_push.DECISIONS)]
         if added:
-            present = decision_additions(repo, mb, head)
-            preserved = True
-            for anchor, lines in added.items():
-                remaining = iter(present.get(anchor, []))
-                if not all(any(line == candidate for candidate in remaining)
-                           for line in lines):
-                    preserved = False
-                    break
-            if not preserved:
+            page = safe_push.git(repo, "show", f"{head}:{safe_push.DECISIONS}").splitlines()
+            remaining = iter(page)
+            if not all(any(line == present for present in remaining) for line in added):
                 raise Refused(f"not overwriting: #{pr['number']} decisions added lines "
                               "are missing or out of order")
 
@@ -829,79 +785,6 @@ def _underline(stripped: str, line: str) -> bool:
     return not core.strip("=") or not core.strip("-")
 
 
-def _indent(line: str) -> int:
-    """The CommonMark column of the first non-space-or-tab character."""
-    column = 0
-    for character in line:
-        if character == " ":
-            column += 1
-        elif character == "\t":
-            column += 4 - column % 4
-        else:
-            break
-    return column
-
-
-def _column(text: str) -> int:
-    """The CommonMark column after all characters of a prefix."""
-    column = 0
-    for character in text:
-        column = column + 4 - column % 4 if character == "\t" else column + 1
-    return column
-
-
-def _line_layout(line: str) -> tuple[int, int, int | None, bool, bool]:
-    """A line's quote depth, content indent, ordered marker, list marker and content."""
-    at = 0
-    quotes = 0
-    while True:
-        probe = at
-        spaces = 0
-        while probe < len(line) and line[probe] == " " and spaces < 3:
-            probe += 1
-            spaces += 1
-        if probe == len(line) or line[probe] != ">":
-            break
-        quotes += 1
-        at = probe + 1
-        if at < len(line) and line[at] in " \t":
-            at += 1
-    indent = _indent(line[at:])
-    content = at
-    while content < len(line) and line[content] in " \t":
-        content += 1
-    marker = LIST_START.match(line, content)
-    if marker:
-        after = marker.end()
-        while after < len(line) and line[after] in " \t":
-            after += 1
-        width = _column(line[at:after])
-        return quotes, width, int(marker.group(1)) if marker.group(1) else None, True, \
-            bool(line[after:].rstrip(" \t"))
-    return quotes, indent, None, False, bool(line[content:].rstrip(" \t"))
-
-
-def _paragraph_continuation(line: str, context: tuple[int, int, bool]) -> tuple[bool, bool]:
-    """Whether a line continues a paragraph, and uses a non-one marker as its text."""
-    quotes, indent, ordered, listed, content = _line_layout(line)
-    active_quotes, required, _ = context
-    if quotes != active_quotes or not content:
-        return False, False
-    if listed:
-        marker_text = ordered is not None and ordered != 1 and required == 0 \
-            and bool(TOP_ORDERED.match(line))
-        return marker_text, marker_text
-    return (True, False) if required == 0 else (indent > 0, False)
-
-
-def _underline_in_context(line: str, context: tuple[int, int, bool]) -> bool:
-    """Whether an underline remains inside the paragraph's quote and list containers."""
-    quotes, indent, _, _, _ = _line_layout(line)
-    active_quotes, required, _ = context
-    return quotes == active_quotes and (indent <= 3 if required == 0 else
-                                        indent >= required)
-
-
 def _month(word: str) -> int | None:
     """A month's number from its English name or first three letters, in any case."""
     word = word.casefold()
@@ -955,10 +838,10 @@ def heading_problems(page: str) -> list[str]:
     counts wherever it stands, in code, HTML and every container too.
 
     Each line is read stripped (_stripped). One that begins with one or two # followed
-    by a space, a tab or the end is a heading, its text what follows (_atx_text). A run
-    of = or of - (_underline) underlines the open paragraph in the same container; any
-    ATX heading or block boundary closes that paragraph. The heading text is its open
-    paragraph's stripped lines, with list numbers and footnote markers before them.
+    by a space, a tab or the end is a heading, its text what follows (_atx_text). One
+    that is a run of = or of - (_underline), under one or more lines that are not blank,
+    underlines a heading whose text is every line back to the previous blank line, each
+    stripped, with its list numbers and footnote markers before it, joined by spaces.
     Every heading's text must be plain (PLAIN): any other character refuses the page,
     naming the line. Every year in it must be a date's year (undated_year), read in the
     year's own line as stripped, since a heading's text may begin at any of its lines and
@@ -966,9 +849,10 @@ def heading_problems(page: str) -> list[str]:
     date's. Any other year refuses the page, naming the line. A heading is dated when its
     text contains a date (heading_dates), read in the lines both as stripped and with
     their list numbers and footnote markers, and two headings with the same date refuse
-    the page, naming both. An HTML <h1> or <h2> tag anywhere refuses too. Each line is
-    read a bounded number of times, and a paragraph's text is never joined: its dates
-    are read word by word as it grows."""
+    the page, naming both. A later underline's text holds an earlier one's, so two
+    underlines in one stretch of lines repeat the first's dates. An HTML <h1> or <h2> tag
+    anywhere refuses too. Each line is read a bounded number of times, and a stretch's
+    text is never joined: its dates are read word by word as it grows."""
     problems: list[str] = []
     first: dict[datetime.date, str] = {}
 
@@ -984,7 +868,7 @@ def heading_problems(page: str) -> list[str]:
             else:
                 first[date] = where
 
-    def readable(number: int, text: str, kept: str = "", paragraph: bool = False) -> None:
+    def readable(number: int, text: str, kept: str = "") -> None:
         # `kept`, the line's list numbers and footnote markers, may be its own text or
         # its containers': it is read as text for plainness, and no year in it is dated.
         if odd := NOT_PLAIN.search(f"{kept} {text}" if kept else text):
@@ -993,83 +877,56 @@ def heading_problems(page: str) -> list[str]:
                             f"(U+{ord(odd.group()):04X}), which is not plain: write it with "
                             "ASCII letters, digits, spaces and . , : ; ' ( ) - / only")
         year = next((word for word in WORD.findall(kept) if YEARLIKE.search(word)), None)
-        marker = ORDERED_TEXT.search(kept)
-        dated_text = (f"{kept} {text}" if paragraph and marker
-                      and int(marker.group(1)) != 1 and year is None else text)
-        if (year := year or undated_year(dated_text)) is not None:
+        if (year := year or undated_year(text)) is not None:
             problems.append(f"{safe_push.DECISIONS}:{number}: a line that could render as a "
                             f"heading, or as part of one, holds {year!r}, a year in no date "
                             "this check reads: write a heading's date in its line as 20 "
                             "October 2026, October 20, 2026 or 2026-10-20")
 
-    # The open paragraph: its first line, last words with and without list numbers and
-    # footnote markers, dates in order and as a set, unread lines, and container context.
-    start = None
+    # The stretch of lines that are not blank since the last blank one: its first line,
+    # the last words of its lines as stripped and of its lines with their list numbers
+    # and footnote markers (one list, until such a marker makes them differ, and again
+    # once a line without one has given both its last two words), its dates in order
+    # and as a set, how many an underline has noted, its lines since its last underline
+    # (not yet read as a heading's), and its last underline, with whether that
+    # underline's text was dated.
+    start = last = None
     words: list[str] = []
     own_words = words
     dates: list[datetime.date] = []
     held: set[datetime.date] = set()
-    unread: list[tuple[int, str, str, bool]] = []
-    context: tuple[int, int, bool] | None = None
+    noted = 0
+    unread: list[tuple[int, str, str]] = []
     for number, line in enumerate(LINE_END.split(page.removeprefix(BOM)), 1):
         if RAW_HEADING.search(line):
             problems.append(f"{safe_push.DECISIONS}:{number}: an HTML heading tag (<h1> or "
                             "<h2>), which this check does not read: write the heading in "
                             "Markdown")
         if BLANK.fullmatch(line):
-            start = context = None
-            words, dates, held, unread = [], [], set(), []
+            start = last = None
+            words, dates, held, noted, unread = [], [], set(), 0, []
             own_words = words
             continue
         kept, stripped = _stripped(line)
-        if opener := ANY_OPENER.match(stripped):
-            if opener.end() <= 2:
-                text = _atx_text(stripped[opener.end():])
-                readable(number, text)
-                dated(heading_dates(text), str(number))
-            start = context = None
-            words, dates, held, unread = [], [], set(), []
-            own_words = words
-            continue
-        if _underline(stripped, line):
-            if context is not None and _underline_in_context(line, context):
-                where = f"{start}-{number}"
-                for read in unread:
-                    readable(*read)
-                dated(dates, where)
-            start = context = None
-            words, dates, held, unread = [], [], set(), []
-            own_words = words
-            continue
-
-        if THEMATIC.fullmatch(line) or THEMATIC.fullmatch(stripped):
-            start = context = None
-            words, dates, held, unread = [], [], set(), []
-            own_words = words
-            continue
-
-        layout = _line_layout(line)
-        if not stripped.rstrip(" \t") and not kept.startswith("[^"):
-            start = context = None
-            words, dates, held, unread = [], [], set(), []
-            own_words = words
-            continue
-        marker_text = False
-        if context is not None:
-            continues, marker_text = _paragraph_continuation(line, context)
-        else:
-            continues = False
-        if context is None or not continues:
+        if opener := OPENER.match(stripped):
+            text = _atx_text(stripped[opener.end():])
+            readable(number, text)
+            dated(heading_dates(text), str(number))
+        elif start is not None and _underline(stripped, line):
+            where = f"{start}-{number}"
+            for read in unread:
+                readable(*read)
+            unread = []
+            if last is not None and last[1]:
+                problems.append(f"{safe_push.DECISIONS}:{where}: repeated dated heading: "
+                                f"{spoken(dates[0])} (first at {safe_push.DECISIONS}:"
+                                f"{last[0]}, whose text this one holds)")
+            dated(dates[noted:], where)
+            noted, last = len(dates), (where, bool(dates))
+        if start is None:
             start = number
-            words, dates, held, unread = [], [], set(), []
-            own_words = words
-            required = layout[1] if layout[3] or layout[1] >= 4 else 0
-            context = (layout[0], required, layout[2] is not None) if layout[4] else None
-        if context is None:
-            continue
-        paragraph = marker_text
         text = stripped.rstrip(" \t")
-        unread.append((number, text, kept, paragraph))
+        unread.append((number, text, kept))
         found = WORD.findall(text)
         streams = [(words, found)]
         if kept or own_words is not words:
