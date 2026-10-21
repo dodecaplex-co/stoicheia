@@ -372,6 +372,9 @@ def api(s, args):
             queue_merge(s, pr)
         save(s)
     view = fields(pr, "state,headRefOid,headRefName,baseRefName,mergeCommit,mergeQueueEntry")
+    # GitHub's GraphQL gives every field asked for, null when there is none.
+    view.setdefault("mergeCommit", None)
+    view.setdefault("mergeQueueEntry", None)
     view["id"] = "PR_1"
     print(json.dumps({"data": {"repository": {"pullRequest": view}}}))
     return 0
@@ -3377,7 +3380,7 @@ class Trains(Edge):
                 self.assertEqual(self.origin_main(), base)
                 self.assertEqual(self.merges(), [])
 
-    def test_renamed_bootstrap_train_merges_and_refreshes_its_notes_in_both_modes(self):
+    def test_renamed_bootstrap_train_merges_and_reports_its_note_in_both_modes(self):
         for queued in (False, True):
             with self.subTest(queued=queued):
                 self.setUp()
@@ -3401,8 +3404,9 @@ class Trains(Edge):
                 out = r.stdout + r.stderr
                 self.assertEqual(r.returncode, 0, out)
                 self.assertEqual(self.step(out, "train"), "ok", out)
+                # --merge never writes the body; the bootstrap note is in its report.
                 self.assertIn("bootstrap: the commit's own check_train.py, "
-                              "for the security review", self.gh_state()["prs"][0]["body"])
+                              "for the security review", out)
                 self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
 
     def test_origin_train_failure_refuses_even_if_candidate_passes(self):
@@ -3533,8 +3537,11 @@ class Queue(Edge):
                          [main, sha])
         self.assertNotEqual(git(ORIGIN, "rev-parse", "main^{tree}").strip(),
                             git(ORIGIN, "rev-parse", f"{sha}^{{tree}}").strip())
-        self.assertIn(f"sha={sha} base={BASE} harness={main} -->",
+        # --merge never writes the body: the pre-flight's block of this head and base stays,
+        # by a harness that was main, which the queue's judge accepts too.
+        self.assertIn(f"sha={sha} base={BASE} harness={BASE} -->",
                       self.gh_state()["prs"][0]["body"])
+        self.assertNotIn(main, self.gh_state()["prs"][0]["body"])
 
     def test_queue_reads_main_s_current_template(self):
         # In queue mode the head is judged against its merge base, but the template in
@@ -3567,9 +3574,12 @@ class Queue(Edge):
         self.assertEqual(record["harness_sha"], main)
         blob = git(WORK, "rev-parse", f"{main}:scripts/safe_push.py").strip()
         self.assertEqual(record["harness_blob"], blob)
+        # --merge never writes the body: the pre-flight's block, by the harness that was
+        # main then, stays; the queue's judge reads that harness's checks.
         body = self.gh_state()["prs"][0]["body"]
-        self.assertIn(f"sha={sha} base={BASE} harness={main} -->", body)
-        self.assertIn(f"origin/main's `scripts/safe_push.py` (blob `{blob[:12]}`)", body)
+        self.assertIn(f"sha={sha} base={BASE} harness={BASE} -->", body)
+        old_blob = git(WORK, "rev-parse", f"{BASE}:scripts/safe_push.py").strip()
+        self.assertIn(f"origin/main's `scripts/safe_push.py` (blob `{old_blob[:12]}`)", body)
         self.assertEqual(body.count("safe_push:preflight begin"), 1)
         self.assertEqual(git(ORIGIN, "rev-parse", "main^2").strip(), sha)
 
