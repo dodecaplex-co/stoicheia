@@ -3137,36 +3137,47 @@ findings:
   in memory beside good paths, Book IV's and Book X's among them; the test file plants
   faults straight into the indexes of throwaway repositories, where a case-insensitive
   disk could not hold a twin as two files; and `scripts/negative_tests.py`, item 19,
-  plants seven (a case twin, a space, an upper-case extension, a symbolic link, an
+  plants eight (a case twin of `README.md` and one of a protected file,
+  `Certificate/fields.md`, a space, an upper-case extension, a symbolic link, an
   executable bit, an svg under `book/` and a misnamed review record) in a copy of the
-  edition's index that passes unplanted, under `--counts-only` too, leaving the real
-  index and `git status` as they were. Every finding is one line of printable ASCII,
-  naming its rule and its path, with any name inside the reason escaped as Git quotes a
-  path. A module planted beside the script, such as `scripts/unicodedata.py`, is never
-  read in place of the standard library's: the script takes its own folder off
-  `sys.path` before any other import, and has no `from __future__` import, which would
-  read a planted one first; the test file loads the script from its file, and plants
-  such modules to show that they never run. An inherited `GIT_DIR` or `GIT_WORK_TREE` that names
-  another work tree is refused, the message saying how to run the check. The pre-flight's
-  step 3 begins with a paths guard, which refuses outright, whatever the decisions page
-  says, a commit whose tree, or the tree of any commit it brings since origin/main, holds
-  a path or folder that collides with another under case folding and NFC normalisation,
-  that is a protected path or a check input spelt otherwise (`LAKEFILE.lean`,
-  `Scripts/x.py`, whether or not the tree holds the real one), or that is not plain
-  printable ASCII, so that a twin of a protected path or a check input cannot change it
-  by the back door. It reads each tree once, names the commits that hold a finding, and
-  runs before the commit is checked out, so that a refusal comes before any worktree is
-  made; it runs again at `--merge`, and its cases include the plainest twin,
-  `Certificate/fields.md` beside `Certificate/FIELDS.md`. `scripts/safe_push.py`, once
-  it has found the repository, drops Git's location variables (`GIT_DIR`,
-  `GIT_WORK_TREE`, `GIT_INDEX_FILE` and the rest; a Git alias run from a linked worktree
-  sets `GIT_DIR`), so that every check in its fresh worktrees reads that worktree and
-  never the caller's index or HEAD; when they name another repository, it refuses. A failure of origin/main's path check, or of its cases, refuses a pull request
-  whatever else it changes, guides and protected paths alone included: every path is what
-  the check judges, so a looser `scripts/check_paths.py` cannot land in the same pull
-  request as the path it would let in. A new extension, top-level folder, executable or
-  named file is a change to the check, landing first, in a pull request of its own. The
-  protected files changed are:
+  edition's index that passes unplanted, under `--counts-only` too, leaving the real index
+  and `git status` as they were. Every finding is one line of printable ASCII, naming its
+  rule and its path, with any name inside the reason escaped as Git quotes a path. A
+  module planted beside the script, such as `scripts/unicodedata.py`, is never read in
+  place of the standard library's: the script takes its own folder off `sys.path` before
+  any other import, and has no `from __future__` import, which would read a planted one
+  first; the test file loads the script from its file, and plants such modules to show
+  that they never run. An inherited `GIT_DIR` or `GIT_WORK_TREE` that names another work
+  tree is refused, the message saying how to run the check. The pre-flight's step 3 begins
+  with two paths guards, which refuse outright, whatever the decisions page says, and run
+  before the commit is checked out, so that a refusal comes before any worktree is made.
+  The first refuses a commit whose tree, or the tree of any commit it brings since
+  origin/main, holds a path or folder that collides with another under case folding and
+  NFC normalisation, that is a protected path or a check input spelt otherwise
+  (`LAKEFILE.lean`, `Scripts/x.py`, whether or not the tree holds the real one), or that
+  is not plain printable ASCII, so that a twin of a protected path or a check input cannot
+  change it by the back door. The second applies origin/main's own standard to the same
+  trees: origin/main's `scripts/check_paths.py`, read from its blob and run by the harness
+  itself, judges every commit's tree before any of the commit's code has run, so that
+  nothing the commit runs (its `render.py`, say, taking a path out of the worktree's
+  index) can keep a path from it; when origin/main has none, as before the pull request
+  that brings it, a note says so. They read each tree once and name, for each tree that
+  holds a finding, the first commit with that tree, at most three and then "and N more";
+  both run again at `--merge`, and their cases include the plainest twin,
+  `Certificate/fields.md` beside `Certificate/FIELDS.md`, and a page in `.yaml` that only
+  origin/main's standard refuses. `scripts/safe_push.py`, once it has found the
+  repository, drops Git's location variables (`GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE`
+  and the rest; a Git alias run from a linked worktree sets `GIT_DIR`), so that every
+  check in its fresh worktrees reads that worktree and never the caller's index or HEAD;
+  when they name another repository, it refuses. In step 4, as a second line, a failure of
+  origin/main's path check, or of its cases, refuses a pull request whatever else it
+  changes, guides and protected paths alone included: every path is what the check judges,
+  so a looser `scripts/check_paths.py` cannot land in the same pull request as the path it
+  would let in. Each pass of the checks, in step 3 and in step 4, begins with the
+  worktree's HEAD and index at the commit, and is refused otherwise; origin/main's copies
+  are taken out again by a reset to the commit, never to HEAD. A new extension, top-level
+  folder, executable or named file is a change to the check, landing first, in a pull
+  request of its own. The protected files changed are:
   `.github/workflows/ci.yml`,
   `scripts/check_paths.py`,
   `scripts/negative_tests.py`,

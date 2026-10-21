@@ -88,7 +88,8 @@ records current; CI runs it on every push.
     `tests/test_certificate.py` fails on transformers with no step. The restored
     certificate must pass the same regression, including its real-step cases.
 19. Without a build, in a temporary copy of Git's index named by GIT_INDEX_FILE: a case
-    twin of README.md, a space in a page's name, an upper-case extension, a symbolic
+    twin of README.md, a case twin of a protected file (Certificate/fields.md, beside
+    Certificate/FIELDS.md), a space in a page's name, an upper-case extension, a symbolic
     link, an executable bit on a script outside the six, an svg under book/ and a
     misnamed review record each make `check_paths.py` fail, naming the path and its
     rule, on a copy that passes before it is planted. The real index and the work tree
@@ -1271,6 +1272,7 @@ def count_markers() -> None:
 # index: what it is, its mode and path, and the rule of check_paths.py that must name it.
 PATH_FAULTS = (
     ("a case twin of README.md", "100644", "readme.md", "P2"),
+    ("a case twin of a protected file", "100644", "Certificate/fields.md", "P2"),
     ("a space in a page's name", "100644", "book/I/Planted page.md", "P1"),
     ("an upper-case extension", "100644", "docs/planted.MD", "P3"),
     ("a symbolic link", "120000", "docs/planted-link.md", "P6"),

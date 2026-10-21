@@ -45,7 +45,23 @@ order, and the first that fails stops it with a message saying why:
    or identity cannot be allowed, and an entry added by the push itself does not count.
    An allowed finding is noted in the pull request by its place, its rule, its value's
    SHA-256 and the reason, never by its line.
-3. Invariant guards against origin/main, in a fresh temporary worktree of the commit:
+3. Invariant guards against origin/main. First, before the commit is checked out, the
+   paths guards. They read the tree of each commit the push brings (origin/main..the
+   commit), each tree once, and a finding names, for each tree that holds it, the first
+   commit with that tree, at most three and then "and N more":
+   - every path is plain printable ASCII, with no space; no two paths, nor two folders of
+     them, are one name once casefolded and NFC-normalised, as a case-insensitive disk
+     (macOS's default) compares them; and none is a protected path or a check input
+     spelt otherwise (LAKEFILE.lean, Scripts/x.py): such a twin, as certificate/FIELDS.md
+     beside Certificate/FIELDS.md, or Scripts/json.py beside scripts/, is checked out
+     over the file or into the folder the protected paths and the check inputs name,
+     unseen by both;
+   - every path keeps origin/main's own standard (docs/WORKFLOW.md, "File names"):
+     origin/main's scripts/check_paths.py, read from its blob and run in this process,
+     judges each tree, before any of the commit's code has run. When origin/main has no
+     check_paths.py, as before the pull request that brings it, a note says so.
+   They read the trees, which such a disk cannot hold, and when they refuse, no worktree
+   is made. Then, in a fresh temporary worktree of the commit:
    - every statement (facts.json's `statement`, and the Lean source of `theorem PropN`,
      its porism and its companions, up to its own `:=`, whitespace aside) is unchanged,
      unless the push adds a new line to `docs/briefs/` naming it;
@@ -59,17 +75,7 @@ order, and the first that fails stops it with a message saying why:
    - no review record is stale, and the generated pages are current (check_fidelity.py
      and render.py, on the commit as committed);
    - no whole directory under Elements/, heath/, review/, figures/ or mishnah/ is
-     deleted unless 0002-decisions.md gains a new line naming it;
-   - every path in the tree of each commit the push brings (origin/main..the commit, each
-     tree once, a finding naming its commits) is plain printable ASCII, with no space; no
-     two paths, nor two folders of them, are one name once casefolded and NFC-normalised,
-     as a case-insensitive disk (macOS's default) compares them; and none is a protected
-     path or a check input spelt otherwise (LAKEFILE.lean, Scripts/x.py): such a twin, as
-     certificate/FIELDS.md beside Certificate/FIELDS.md, or Scripts/json.py beside
-     scripts/, is checked out over the file or into the folder the protected paths and
-     the check inputs name, unseen by both. It reads the trees, which such a disk cannot
-     hold, and runs first, before the commit is checked out: when it refuses, no
-     worktree is made.
+     deleted unless 0002-decisions.md gains a new line naming it.
    A new line here is a mention the push adds: an old line that already named the
    thing, edited in place, does not count.
 4. The full check sequence of docs/WORKFLOW.md, section 8, in that worktree, and
@@ -79,10 +85,14 @@ order, and the first that fails stops it with a message saying why:
    copies, which must pass. A check that fails with origin/main's copies is noted for the
    security review, and refuses the commit when it also changes what the checks judge
    (keep_apart, below): a check change lands in a pull request of its own, before the
-   code it checks. A failure of origin/main's path check (check_paths.py and its cases)
-   refuses the commit whatever else it changes: every path is what it judges, so a looser
-   check cannot land with the path it would let in. Two kinds of failure are not a check's
-   verdict, and are noted only:
+   code it checks. Step 3 has already judged every commit's tree by origin/main's standard
+   for paths, before any of the commit's code ran; as a second line, a failure here of
+   origin/main's path check (check_paths.py and its cases) refuses the commit whatever
+   else it changes: every path is what it judges, so a looser check cannot land with the
+   path it would let in. Each pass begins with the worktree's HEAD and index at the
+   commit, and is refused otherwise, since the commit's own code may have run in an
+   earlier one; origin/main's copies are taken out again by a reset to the commit. Two
+   kinds of failure are not a check's verdict, and are noted only:
    pages gone stale under origin/main's render.py (or facts.json rewritten by its
    certificate), which the pages' diff shows in full; and a failure on a commit whose
    only check inputs changed are values pinned to the edition (PINNED, below; the
@@ -168,6 +178,7 @@ import contextlib
 import datetime
 import hashlib
 import html
+import importlib.util
 import json
 import math
 import os
@@ -1481,7 +1492,7 @@ def path_faults(paths: list[str]) -> list[str]:
         if odd:
             faults.append(f"{path_shown(p)}: not plain printable ASCII "
                           f"({', '.join(f'U+{ord(c):04X}' for c in odd)})")
-    # Security review 4: the protected-path rule and keep_apart compare spellings, so a
+    # #186: the protected-path rule and keep_apart compare spellings, so a
     # name they protect, spelt otherwise, is refused here, its twin in the tree or not.
     named = {path_fold(q.rstrip("/")): q for q in PROTECTED + CHECK_INPUTS}
     respelt: dict[str, tuple[str, list[str]]] = {}   # a spelling -> (the name, paths under it)
@@ -1524,41 +1535,91 @@ def path_faults(paths: list[str]) -> list[str]:
     return faults
 
 
+PATH_STANDARD = "scripts/check_paths.py"
+
+
+def base_standard(repo, base):
+    """origin/main's scripts/check_paths.py, loaded from its blob as a module, or None when
+    origin/main has none, as before the pull request that brings it. Nothing is written to
+    disk or put on sys.path, and it is loaded as a module, not run as a script, so its
+    trim of sys.path, which is a script's alone, leaves this process's as it was. Its
+    `findings` judges a tree's (mode, path) entries, as its --rev does."""
+    if not git_ok(repo, "cat-file", "-e", f"{base}:{PATH_STANDARD}"):
+        return None
+    source = git(repo, "cat-file", "blob", f"{base}:{PATH_STANDARD}", binary=True)
+    standard = importlib.util.module_from_spec(
+        importlib.util.spec_from_loader("origin_main_check_paths", loader=None))
+    # It reads __file__ only to find the repository it is run in, which is never asked here.
+    standard.__file__ = str(Path(repo) / PATH_STANDARD)
+    exec(compile(source, f"origin/main:{PATH_STANDARD}", "exec"), standard.__dict__)
+    return standard
+
+
 def guard_paths(repo, base, sha, rep: Report) -> bool:
     """Every path plain printable ASCII, no two of them, nor two folders of them, one name
     on a case-insensitive disk, and none a protected path or a check input spelt otherwise
     (#186): such a twin of a protected file or a check input is checked out over it, unseen
-    by the protected-path rule and keep_apart. It judges the tree of each commit the push
-    brings (base..sha), each tree once, since the merge puts them all in main's history;
-    a finding names the commits whose trees hold it. It reads the trees, not a worktree,
-    which such a disk cannot hold, and check_commit runs it before the commit is checked
-    out. Whether it passed."""
+    by the protected-path rule and keep_apart. And every path kept to origin/main's own
+    standard (base_standard), which judges the trees before any of the commit's code has
+    run, so none can keep a path from it. It judges the tree of each commit the push brings
+    (base..sha), each tree once, since the merge puts them all in main's history; a finding
+    names, for each tree that holds it, the first commit with that tree, at most three and
+    then "and N more". It reads the trees, not a worktree, which such a disk cannot hold,
+    and check_commit runs it before the commit is checked out. Whether both passed."""
+    standard = base_standard(repo, base)
     # "commit <sha>" and then its tree, for each commit, the oldest first and sha last.
     words = git(repo, "rev-list", "--reverse", "--format=%T", f"{base}..{sha}").split()
     commits = list(zip(words[1::3], words[2::3])) or [(sha, f"{sha}^{{tree}}")]
-    found: dict[str, list[str]] = {}     # a fault -> the commits whose trees hold it
+    found: dict[str, list[str]] = {}     # a fault -> the first commit of each tree holding it
+    theirs: dict[str, list[str]] = {}    # the same, for origin/main's standard's findings
     counted: dict[str, int] = {}         # a tree judged -> its paths
     for commit, tree in commits:
         if tree in counted:
             continue
-        out = git(repo, "ls-tree", "-r", "-z", "--full-tree", "--name-only", tree, binary=True)
-        paths = [p.decode("utf-8", "surrogateescape") for p in out.split(b"\0") if p]
+        out = git(repo, "ls-tree", "-r", "-z", "--full-tree", tree, binary=True)
+        # Each entry: its mode, type and object, a tab and its path, as --rev reads them.
+        entries = [(fields.split(b" ", 1)[0].decode("ascii", "replace"),
+                    path.decode("utf-8", "surrogateescape"))
+                   for fields, _, path in (e.partition(b"\t") for e in out.split(b"\0") if e)]
+        paths = [p for _, p in entries]
         counted[tree] = len(paths)
         for fault in path_faults(paths):
             found.setdefault(fault, []).append(commit)
-    if found:
+        if standard is not None:
+            try:
+                judged = standard.findings(entries)
+            except Exception as e:      # a crash of origin/main's check refuses, as a finding
+                judged = [f"origin/main's {PATH_STANDARD} fails on the tree: {e!r}"]
+            for finding in judged:
+                theirs.setdefault(finding, []).append(commit)
+
+    def listed(faults: dict[str, list[str]]) -> str:
         lines = []
-        for fault, held in found.items():
+        for fault, held in faults.items():
             more = f" and {len(held) - 3} more" if len(held) > 3 else ""
             lines.append(f"{fault} (in {'commit' if len(held) == 1 else 'commits'} "
                          f"{', '.join(c[:12] for c in held[:3])}{more})")
-        rep.add("3", "paths", "FAIL", "\n".join(lines))
-        return False
-    rep.add("3", "paths", "ok", f"{plural(counted[commits[-1][1]], 'path')} at {sha[:12]}, "
-            f"and the trees of {plural(len(commits), 'commit')}: each path plain printable "
-            "ASCII, none a protected path spelt otherwise, and no two of them, nor two "
-            "folders, equal once casefolded and NFC-normalised")
-    return True
+        return "\n".join(lines)
+
+    trees = f"the trees of {plural(len(commits), 'commit')}"
+    if found:
+        rep.add("3", "paths", "FAIL", listed(found))
+    else:
+        rep.add("3", "paths", "ok", f"{plural(counted[commits[-1][1]], 'path')} at {sha[:12]}, "
+                f"and {trees}: each path plain printable ASCII, none a protected path spelt "
+                "otherwise, and no two of them, nor two folders, equal once casefolded and "
+                "NFC-normalised")
+    name = "paths (origin/main's standard)"
+    if standard is None:
+        rep.add("3", name, "note", f"origin/main has no {PATH_STANDARD}, as before the pull "
+                "request that brings it: there is no standard of origin/main's to judge the "
+                "trees by")
+    elif theirs:
+        rep.add("3", name, "FAIL", listed(theirs))
+    else:
+        rep.add("3", name, "ok", f"origin/main's {PATH_STANDARD}, run before any of the "
+                f"commit's code, finds nothing in {trees} (docs/WORKFLOW.md, \"File names\")")
+    return not (found or theirs)
 
 
 def status_lines(wt: Path, excludes: list[str]) -> subprocess.CompletedProcess:
@@ -1621,10 +1682,11 @@ def slug_of(label: str) -> str:
 
 
 @contextlib.contextmanager
-def base_copies(repo, base, wt: Path, changes: list[tuple[str, str]]):
+def base_copies(repo, base, sha, wt: Path, changes: list[tuple[str, str]]):
     """origin/main's copies of the check inputs the commit changes, put in place in the
     worktree (and the files the commit adds to them taken out); the worktree is reset
-    to the commit afterwards. Yields the pathspecs that keep them out of `git status`."""
+    to the commit, `sha`, afterwards, never to HEAD, which the checks run could move.
+    Yields the pathspecs that keep them out of `git status`."""
     for status, path in changes:
         target = wt / path
         if target.is_symlink() or target.is_file():
@@ -1645,7 +1707,7 @@ def base_copies(repo, base, wt: Path, changes: list[tuple[str, str]]):
     try:
         yield [f":(exclude,literal){p}" for _, p in changes]
     finally:
-        run(["git", "reset", "-q", "--hard", "HEAD"], wt)
+        run(["git", "reset", "-q", "--hard", sha], wt)
         run(["git", "clean", "-fdq"], wt)
 
 
@@ -1657,17 +1719,30 @@ BASE_PASS = " (origin/main's checks)"
 FRESHNESS = ("generated pages", "git status --porcelain is empty")
 
 
-def passes(repo, base, wt: Path, changes: list[tuple[str, str]]):
+def at_commit(wt: Path, sha: str) -> None:
+    """Refused unless the worktree's HEAD is the commit and its index the commit's tree:
+    the commit's own code, run in an earlier pass (its render.py, say), could have moved
+    either, and origin/main's checks, which read the index, would judge another tree."""
+    head = run(["git", "rev-parse", "--verify", "--quiet", "HEAD"], wt).stdout.strip()
+    if head != sha or not git_ok(wt, "diff-index", "--cached", "--quiet", sha, "--"):
+        raise Refusal(f"before a pass of the checks, the worktree {wt} is no longer the "
+                      f"commit {sha[:12]} (its HEAD is {head[:12] or 'unreadable'}, or its "
+                      "index differs): something run in an earlier pass changed it")
+
+
+def passes(repo, base, sha, wt: Path, changes: list[tuple[str, str]]):
     """(label, the outcome of a failure, status excludes) for each pass of the checks:
     with origin/main's copies of the check inputs; and, when the commit changes any,
     with the commit's own, which must pass, while a failure with origin/main's is noted
     for the security review (and refuses the commit, if it changes what the checks
-    judge as well: keep_apart)."""
+    judge as well: keep_apart). Each begins at the commit, `sha` (at_commit)."""
+    at_commit(wt, sha)
     if not changes:
         yield "", "FAIL", []
         return
-    with base_copies(repo, base, wt, changes) as excludes:
+    with base_copies(repo, base, sha, wt, changes) as excludes:
         yield BASE_PASS, "note", excludes
+    at_commit(wt, sha)
     yield " (the commit's checks)", "FAIL", []
 
 
@@ -2143,8 +2218,9 @@ def pinned(repo, base, sha, path: str) -> bool:
 
 # origin/main's path check and its cases (CHECKS): every path of the tree is what they
 # judge, so a failure of either is a verdict whatever else the commit changes (keep_apart).
-PATH_CHECKS = ("python3 -I tests/test_check_paths.py",
-               "python3 scripts/check_paths.py --self-test")
+# Read from CHECKS, so that a command reworded there keeps the rule, and there must be two.
+PATH_CHECKS = tuple(name for name, _ in CHECKS if "check_paths" in name)
+assert len(PATH_CHECKS) == 2, PATH_CHECKS
 
 
 def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
@@ -2155,8 +2231,10 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     noted. A failure of origin/main's path check (PATH_CHECKS) refuses the commit
     whatever else it changes, even when that is only protected paths and guides, which
     are not judged: every path is what it judges, so a looser check_paths.py cannot land
-    with the path it would let in. Two failures are not a verdict, and do not count. Pages
-    gone stale under origin/main's copies (FRESHNESS): a renderer's change shows in the pages it
+    with the path it would let in. This is a second line: step 3 has already judged every
+    commit's tree by origin/main's standard (guard_paths), before any of the commit's code
+    ran. Two failures are not a verdict, and do not count. Pages gone stale under
+    origin/main's copies (FRESHNESS): a renderer's change shows in the pages it
     regenerates, and the commit's own pass still needs them current. And any failure on a
     commit whose only check inputs changed are pinned values (pinned): a re-proof that
     moves an expected count, or a new word in the lock, changes the value with the
@@ -2170,7 +2248,7 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
               if s.stage == stage and s.outcome == "note" and s.name.endswith(BASE_PASS)
               and (name := s.name.removesuffix(BASE_PASS)) not in FRESHNESS]
     paths = [name for name in failed if name in PATH_CHECKS]
-    if paths:       # security review 3: no judged file needed, no pinned value excuses it
+    if paths:       # #186, a looser path check: no judged file needed, no pinned value excuses it
         rep.add(stage, "check change kept apart", "FAIL",
                 f"origin/main's path check fails on the commit ({', '.join(paths)}): every "
                 "path is what it judges, so the commit is refused whatever else it changes. "
@@ -2228,7 +2306,7 @@ def guards(ctx, wt: Path, rep: Report, logs: Path) -> Guarded:
     guard_heath(repo, base, sha, wt, rep)
     guard_directories(repo, base, sha, rep)
     inputs = [(s, p) for s, p in changed_files(repo, base, sha) if under(p, CHECK_INPUTS)]
-    with contextlib.closing(passes(repo, base, wt, inputs)) as each:
+    with contextlib.closing(passes(repo, base, sha, wt, inputs)) as each:
         for label, fail, excludes in each:
             guard_fidelity(wt, rep, logs, label, fail)
             guard_generated(wt, rep, logs, label, fail, excludes)
@@ -2295,14 +2373,14 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path) ->
 
     # A refusal inside origin/main's pass leaves passes() at its yield: closing it puts
     # the worktree back before the worktree is removed.
-    with contextlib.closing(passes(ctx.repo, ctx.base, wt, inputs)) as each:
+    with contextlib.closing(passes(ctx.repo, ctx.base, ctx.sha, wt, inputs)) as each:
         for label, fail, excludes in each:
             for i, (name, cmd) in enumerate(CHECKS, 1):
                 run_step("4", name + label, cmd, wt, rep, logs, 10 + i, fail, excludes)
             kept_apart(label)
     with worktree(ctx.repo, ctx.sha, parent, "negative") as neg:
         copy_build(wt, neg)
-        with contextlib.closing(passes(ctx.repo, ctx.base, neg, inputs)) as each:
+        with contextlib.closing(passes(ctx.repo, ctx.base, ctx.sha, neg, inputs)) as each:
             for label, fail, excludes in each:
                 for i, (name, cmd) in enumerate(NEGATIVE, 1):
                     run_step("4", name + label, cmd, neg, rep, logs, 30 + i, fail, excludes)
@@ -2322,12 +2400,14 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool,
     run."""
     secret_scan(ctx.repo, ctx.base, ctx.sha, rep, allow_rev=ctx.base)
     rep.heading("3. Invariant guards against origin/main")
-    # Before the commit is checked out (security review 7): on a case-insensitive disk a
-    # twin is written over what it shadows, and a module in a twin folder (Scripts/json.py)
-    # would run in the checks; and checking out a hostile tree is where git's own flaws
-    # have been. So a refusal here comes before any worktree is made.
+    # Before the commit is checked out (#186): on a case-insensitive disk a twin is written
+    # over what it shadows, and a module in a twin folder (Scripts/json.py) would run in the
+    # checks; checking out a hostile tree is where git's own flaws have been; and no code of
+    # the commit has run yet to keep a path from origin/main's standard. So a refusal here
+    # comes before any worktree is made.
     if not guard_paths(ctx.repo, ctx.base, ctx.sha, rep):
-        raise Refusal("the invariant guards refused: paths")
+        failed = [s.name for s in rep.failed() if s.stage == "3"]
+        raise Refusal(f"the invariant guards refused: {', '.join(failed)}")
     with tempfile.TemporaryDirectory(prefix="stoicheia-push-") as tmp:
         parent = Path(tmp)
         with worktree(ctx.repo, ctx.sha, parent, "check") as wt:
@@ -4326,7 +4406,7 @@ def main(argv=None) -> int:
     repo = Path(r.stdout.strip())
     if args.scan_push:
         return scan_push_main(repo, *args.scan_push)
-    # Security review 1 and 2: a shell alias run from a linked worktree, as `git safe-push`
+    # #186, a linked worktree's GIT_DIR: a shell alias run from one, as `git safe-push`
     # is, sets GIT_DIR (and GIT_PREFIX). Left set, it would point every git command in the
     # fresh worktrees at the caller's index and HEAD, and check_paths.py would refuse to
     # run. Every git call here names its directory, so the variables go, once they have

@@ -98,9 +98,14 @@ one commit and runs safe_push.py against that origin:
   spellings of one name under NFC, and a path with a space are each refused by step 3's
   paths guard, at the pre-flight and at the merge, before any worktree is made, and in
   an earlier commit of the push too, each tree judged once, while an ordinary commit
-  passes it; a looser check_paths.py is refused with the path it lets in, wherever that
-  path stands (keep_apart); and `git safe-push`, run from a linked worktree as the lane
-  runs it, drops the GIT_DIR its alias is given before any check runs;
+  passes it; a path origin/main's own standard refuses (docs/x.yaml) is refused there too,
+  before any worktree, by origin/main's check_paths.py, read from its blob, and when
+  origin/main has none a note says so; a looser check_paths.py is refused with the path it
+  lets in, wherever that path stands, by origin/main's standard in step 3 and again by
+  keep_apart, a second line, even when the commit's render.py hides the path from the
+  worktree's index, since each pass of the checks begins at the commit, its HEAD and index
+  unmoved; and `git safe-push`, run from a linked worktree as the lane runs it, drops the
+  GIT_DIR its alias is given before any check runs;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -827,6 +832,17 @@ class Clone(unittest.TestCase):
         index.unlink(missing_ok=True)
         return git(WORK, "rev-parse", "HEAD").strip()
 
+    def checkout_marker(self) -> Path:
+        """A file that stays absent until a worktree is made: `git worktree add` runs the
+        post-checkout hook, which writes it. The hook goes when the test ends."""
+        marker = TMP / "checked-out"
+        marker.unlink(missing_ok=True)
+        hook = hooks_dir() / "post-checkout"
+        hook.write_text(f'#!/bin/sh\necho "$PWD" >> "{marker}"\n')
+        hook.chmod(0o755)
+        self.addCleanup(hook.unlink, missing_ok=True)
+        return marker
+
     def new_base(self, message: str, write: dict) -> str:
         """A commit on origin's main, as a merged pull request would leave it."""
         sha = self.commit(message, write)
@@ -1192,7 +1208,7 @@ class CaseTwins(Clone):
         self.assertIn(f"(in commit {bad[:12]})", detail)
 
     def test_protected_name_spelt_otherwise_refused(self):
-        # Security review 4: main has no lakefile.lean, so LAKEFILE.lean twins nothing; but
+        # #186: main has no lakefile.lean, so LAKEFILE.lean twins nothing; but
         # a case-insensitive disk opens it as lakefile.lean, which Lake reads and runs.
         self.plant("A protected name spelt otherwise", {"LAKEFILE.lean": "-- Run by Lake.\n"})
         out, detail = self.refused_by_paths(self.safe_push())
@@ -1200,17 +1216,12 @@ class CaseTwins(Clone):
         self.assertIsNone(self.step(out, "protected paths"), out)
 
     def test_refused_before_any_worktree(self):
-        # Security review 7: the paths guard reads the trees, and refuses before the commit
+        # #186: the paths guard reads the trees, and refuses before the commit
         # is checked out. `git worktree add` runs the post-checkout hook, so a hook that
         # leaves a marker shows whether a worktree was made.
-        marker = TMP / "checked-out"
-        marker.unlink(missing_ok=True)
         self.plant("A case twin of a protected file",
                    {"certificate/FIELDS.md": "Checked out over Certificate/FIELDS.md.\n"})
-        hook = hooks_dir() / "post-checkout"
-        hook.write_text(f'#!/bin/sh\necho "$PWD" >> "{marker}"\n')
-        hook.chmod(0o755)
-        self.addCleanup(hook.unlink, missing_ok=True)
+        marker = self.checkout_marker()
         out, _ = self.refused_by_paths(self.safe_push())
         self.assertFalse(marker.exists(), f"a worktree was made:\n{out}")
         self.assertIsNone(self.step(out, "statements"), out)
@@ -1221,9 +1232,9 @@ class CaseTwins(Clone):
         self.assertTrue(marker.exists(), "the post-checkout hook did not run")
 
     def test_twin_in_an_earlier_commit_refused(self):
-        # Security review 8: the merge puts every commit the push brings in main's history,
-        # so the tree of each is judged, not only the last one's, and a finding names the
-        # commits that hold it.
+        # #186: the merge puts every commit the push brings in main's history, so the tree
+        # of each is judged, not only the last one's, and a finding names, for each tree that
+        # holds it, the first commit with that tree.
         bad = self.plant("A case twin",
                          {"certificate/FIELDS.md": "Checked out over Certificate/FIELDS.md.\n"})
         head = self.plant("The twin taken out again", {}, remove=["certificate/FIELDS.md"])
@@ -1249,6 +1260,40 @@ class CaseTwins(Clone):
         self.assertIn(f": equal once casefolded and NFC-normalised, so a case-insensitive disk "
                       f"(macOS's default) checks them out as one, the one over the other (in "
                       f"commits {first[:12]}, {last[:12]})", step.detail)
+
+    def test_a_path_origin_mains_standard_refuses_is_refused_before_any_worktree(self):
+        # #186, origin/main's standard in step 3: docs/x.yaml is neither a twin nor a name
+        # spelt otherwise, so safe_push's own paths guard passes it; origin/main's
+        # check_paths.py, run on the trees before the commit is checked out, refuses it,
+        # though no check changed, and no worktree is made.
+        bad = self.commit("A page in yaml", {"docs/x.yaml": "a: 1\n"})
+        marker = self.checkout_marker()
+        out = self.assertRefused(self.safe_push(),
+                                 "the invariant guards refused: paths (origin/main's standard)")
+        self.assertEqual(self.guard(out, "paths"), "ok", out)
+        self.assertEqual(self.guard(out, "paths (origin/main's standard)"), "FAIL", out)
+        self.assertIn("P3 docs/x.yaml: ", out)
+        self.assertIn(f"(in commit {bad[:12]})", out)
+        self.assertFalse(marker.exists(), f"a worktree was made:\n{out}")
+        self.assertIsNone(self.step(out, "statements"), out)
+
+    def test_origin_main_without_the_standard_is_a_note(self):
+        # Before the pull request that brings scripts/check_paths.py, origin/main has none:
+        # the guard says so and goes on. With one, it is loaded from origin/main's blob as a
+        # module, and this process's sys.path and modules are left as they were.
+        bare = self.commit("No standard", remove=[safe_push.PATH_STANDARD])
+        sha = self.commit("A page in yaml", {"docs/x.yaml": "a: 1\n"})
+        rep, out, path = safe_push.Report(), io.StringIO(), list(sys.path)
+        with contextlib.redirect_stdout(out):
+            self.assertTrue(safe_push.guard_paths(WORK, bare, sha, rep), out.getvalue())
+            self.assertFalse(safe_push.guard_paths(WORK, BASE, sha, rep), out.getvalue())
+        standard = "paths (origin/main's standard)"
+        self.assertEqual([(s.name, s.outcome) for s in rep.steps],
+                         [("paths", "ok"), (standard, "note"), ("paths", "ok"), (standard, "FAIL")])
+        self.assertIn("origin/main has no scripts/check_paths.py", rep.steps[1].detail)
+        self.assertIn("P3 docs/x.yaml: ", rep.steps[3].detail)
+        self.assertEqual(sys.path, path)
+        self.assertNotIn("origin_main_check_paths", sys.modules)
 
     def test_ordinary_commit_passes(self):
         self.commit("A page of its own name", {"docs/style-notes.md": "Plain.\n"})
@@ -3424,6 +3469,9 @@ class ProtectedPaths(Edge):
     only with a decisions entry naming it, and the label."""
 
     def test_protected_change_without_a_decision_refused(self):
+        # origin/main's standard refuses three of these names in step 3, before the
+        # protected-path rule runs (#186); that rule, a second line, refuses each of them too.
+        by_name = (".gitattributes", "lakefile.lean", "model/lakefile.lean")
         for path in ("scripts/check_style.py", ".github/workflows/ci.yml",
                      "tests/model/MODEL.md", "review/terms.toml", ".gitattributes",
                      ".gitignore", "lakefile.lean", "Audit/Overlaps.lean", "Audit.lean",
@@ -3433,8 +3481,16 @@ class ProtectedPaths(Edge):
             with self.subTest(path=path):
                 git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
                 old = self.text(path) if (WORK / path).exists() else ""
-                self.commit(f"Touch {path}", {path: old + "\n# for the test\n"})
-                out = self.assertRefused(self.safe_push(), "protected paths", path)
+                sha = self.commit(f"Touch {path}", {path: old + "\n# for the test\n"})
+                out = self.assertRefused(self.safe_push(), path)
+                if path in by_name:
+                    self.assertEqual(self.guard(out, "paths (origin/main's standard)"), "FAIL",
+                                     out)
+                    rep, log = safe_push.Report(), io.StringIO()
+                    with contextlib.redirect_stdout(log):
+                        safe_push.guard_protected(WORK, BASE, sha, rep)
+                    out = log.getvalue()
+                self.assertIn("protected paths", out)
                 self.assertEqual(self.guard(out, "protected paths"), "FAIL", out)
 
     def test_decision_naming_another_file_does_not_count(self):
@@ -4125,16 +4181,16 @@ class ProtectedPaths(Edge):
                 self.assertIn("docs/reading.md", out)
 
     def test_a_looser_path_check_is_refused_with_the_path_it_lets_in(self):
-        # Security review 3: .yaml let in by check_paths.py, and a .yaml under a guides'
+        # #186: .yaml let in by check_paths.py, and a .yaml under a guides'
         # folder, which keep_apart counts as unjudged. origin/main's path check judges every
-        # path, so its failure refuses the commit, whatever else it changes.
+        # path, so its failure refuses the commit, whatever else it changes. This is the
+        # second line: end to end, step 3's paths guards refuse the commit first (below).
         path = "scripts/check_paths.py"
         changes = {path: self.replaced(path, '"yml", "sha256", "sh"',
                                        '"yml", "yaml", "sha256", "sh"'),
                    "docs/templates/x.yaml": "a: 1\n"}
         changes.update(self.decision(f"`{path}` takes .yaml, for the test."))
         sha = self.commit("Let .yaml in, and add one", changes)
-        self.assertLessEqual(set(safe_push.PATH_CHECKS), {n for n, _ in safe_push.CHECKS})
         self.assertEqual(safe_push.judged_files(WORK, BASE, sha), [])
         self.assertFalse(self.kept_apart(sha, "python3 scripts/check_links.py")[0])
         for check in safe_push.PATH_CHECKS:
@@ -4152,6 +4208,83 @@ class ProtectedPaths(Edge):
         self.assertIn("docs/templates/x.yaml", out)
         self.assertEqual(self.guard(out, "check change kept apart"), "FAIL", out)
         self.assertIsNone(self.step(out, name + " (the commit's checks)"), out)
+
+    # Run at the top of the commit's render.py: it takes the yaml file out of the
+    # worktree's index and commits there, so that origin/main's path check, run in that
+    # worktree in step 4, would not see it.
+    HIDE = '''
+import os as _os, subprocess as _sp
+if _sp.run(["git", "ls-files", "--error-unmatch", "docs/templates/x.yaml"],
+           capture_output=True).returncode == 0:
+    _sp.run(["git", "rm", "-q", "--cached", "docs/templates/x.yaml"], capture_output=True)
+    _os.remove("docs/templates/x.yaml")
+    _sp.run(["git", "commit", "-q", "-m", "Out of sight"], capture_output=True)
+'''
+
+    def test_a_render_that_hides_the_path_is_refused(self):
+        # #186, the commit's own code keeping a path from origin/main's path check: a
+        # looser check_paths.py, the yaml file it lets in, and a render.py that hides that
+        # file. origin/main's standard refuses it in step 3, before the commit is checked
+        # out, so the render.py never runs.
+        checks, render = "scripts/check_paths.py", "scripts/render.py"
+        loose = self.replaced(checks, '"yml", "sha256", "sh"', '"yml", "yaml", "sha256", "sh"')
+        loose = loose.replace('"docs": frozenset({"md", "toml",',
+                              '"docs": frozenset({"md", "yaml", "toml",', 1)
+        text = self.text(render)
+        end = text.index('"""', 3) + 3          # after the module's docstring
+        changes = {checks: loose, render: text[:end] + self.HIDE + text[end:],
+                   "docs/templates/x.yaml": "a: 1\n"}
+        changes.update(self.decision(f"`{checks}` and `{render}` take .yaml, for the test."))
+        sha = self.commit("Let .yaml in, add one, and hide it", changes)
+        marker = self.checkout_marker()
+        out = self.assertRefused(self.safe_push(), "P3 docs/templates/x.yaml: ")
+        self.assertEqual(self.guard(out, "paths (origin/main's standard)"), "FAIL", out)
+        self.assertFalse(marker.exists(), f"a worktree was made:\n{out}")
+        # The second line, as the exploit ran: past the paths guards, the commit's own pass
+        # in step 3 runs its render.py, which moves the worktree's HEAD and index; step 4's
+        # first pass then refuses the worktree before any check reads it.
+        rep, log = safe_push.Report(), io.StringIO()
+        ctx = safe_push.Context(WORK, sha, BASE, 1, str(ORIGIN), None, {})
+        refusal = None
+        paths_only = [(n, c) for n, c in safe_push.CHECKS if n in safe_push.PATH_CHECKS]
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                mock.patch.object(safe_push, "CHECKS", paths_only), \
+                mock.patch.object(safe_push, "NEGATIVE", []), contextlib.redirect_stdout(log):
+            parent = Path(tmp)
+            (parent / "logs").mkdir()
+            with safe_push.worktree(WORK, sha, parent, "check") as wt:
+                guarded = safe_push.guards(ctx, wt, rep, parent / "logs")
+                moved = git(wt, "rev-parse", "HEAD").strip()
+                try:
+                    safe_push.full_checks(ctx, wt, parent, guarded.check_inputs, rep,
+                                          parent / "logs")
+                except safe_push.Refusal as e:
+                    refusal = str(e)
+        self.assertNotEqual(moved, sha, f"the render.py did not move HEAD:\n{log.getvalue()}")
+        self.assertIn(f"is no longer the commit {sha[:12]}", refusal or "", log.getvalue())
+        self.assertEqual([s.name for s in rep.steps if s.stage == "4"], [], log.getvalue())
+
+    def test_each_pass_begins_at_the_commit(self):
+        # origin/main's copies are taken out by a reset to the commit, never to HEAD, so a
+        # HEAD moved in origin/main's pass is put back; and a pass begun with HEAD moved, or
+        # the index changed, is refused.
+        path = "scripts/check_links.py"
+        sha = self.commit("A check", {path: self.text(path) + "\n# for the test\n"})
+        changes = [("M", path)]
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, sha, Path(tmp), "check") as wt:
+            with contextlib.closing(safe_push.passes(WORK, BASE, sha, wt, changes)) as each:
+                self.assertEqual(next(each)[0], safe_push.BASE_PASS)
+                git(wt, "commit", "-q", "--allow-empty", "-m", "Moved in origin/main's pass")
+                self.assertEqual(next(each)[0], " (the commit's checks)")
+                self.assertEqual(git(wt, "rev-parse", "HEAD").strip(), sha)
+                git(wt, "commit", "-q", "--allow-empty", "-m", "Moved in the commit's pass")
+            with self.assertRaisesRegex(safe_push.Refusal, f"no longer the commit {sha[:12]}"):
+                next(safe_push.passes(WORK, BASE, sha, wt, changes))
+            git(wt, "reset", "-q", "--hard", sha)
+            git(wt, "rm", "-q", "--cached", "README.md")
+            with self.assertRaisesRegex(safe_push.Refusal, "or its index differs"):
+                next(safe_push.passes(WORK, BASE, sha, wt, []))
 
     def test_kept_apart_judges_the_edition_not_the_guides_or_stamps(self):
         # The stage 2 pattern: the certificate changes, the pages and a record's stamp
@@ -4462,7 +4595,7 @@ class HandOver(Edge):
 
 
 class LinkedWorktree(Edge):
-    """Security review 1 and 2: `git safe-push` is a shell alias, and git gives a shell
+    """#186: `git safe-push` is a shell alias, and git gives a shell
     alias run from a linked worktree, as the lane runs it, GIT_DIR (and GIT_PREFIX). Left
     set, GIT_DIR would point every git command in the fresh worktrees at the caller's index
     and HEAD, and check_paths.py would refuse to run at all; so safe_push drops the
@@ -4774,7 +4907,7 @@ class Units(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertEqual(faults([path]),
                                  [f"{ascii(path)}: not plain printable ASCII ({code})"])
-        # Security review 4: a protected path or a check input spelt otherwise, though the
+        # #186: a protected path or a check input spelt otherwise, though the
         # tree holds no twin of it, since such a disk opens it as the name the rules know.
         self.assertEqual(faults(["lakefile.lean", "model/lakefile.lean", ".gitattributes",
                                  "scripts/x.py", "review/SCHEMA.md"]), [])
@@ -4821,6 +4954,13 @@ class Units(unittest.TestCase):
         self.assertEqual(checks, ci_commands)
         certificate = checks.index("lake env lean Certificate/Facts.lean")
         self.assertEqual(checks[certificate + 1], "python3 -I tests/test_certificate.py")
+
+    def test_path_checks_are_read_from_checks(self):
+        # #186, a looser path check: keep_apart's rule names the two path commands as CHECKS
+        # names them, read from it, so that a command reworded there keeps the rule.
+        self.assertEqual(safe_push.PATH_CHECKS, ("python3 -I tests/test_check_paths.py",
+                                                 "python3 scripts/check_paths.py --self-test"))
+        self.assertLessEqual(set(safe_push.PATH_CHECKS), {n for n, _ in safe_push.CHECKS})
 
     def test_ci_check_job_rejects_skip_and_failure_suppression(self):
         source = (SOURCE / ".github/workflows/ci.yml").read_text()

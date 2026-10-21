@@ -449,7 +449,7 @@ The ruleset and the remaining merge requirements are in
   it must accept and refuse, and runs the script on throwaway repositories whose faults are
   planted straight into the index. Neither needs Lean: both read Git's index, not the
   files, and they run first, before `lake build`, so a misnamed path stops the checks
-  before anything is built. `negative_tests.py` plants seven of the faults in a copy of
+  before anything is built. `negative_tests.py` plants eight of the faults in a copy of
   the edition's index (its item 19), under `--counts-only` too.
 - **The style check's cases run before it.** `tests/test_check_style.py` puts the readings
   of `scripts/check_style.py` that [STYLE.md](STYLE.md), section 8, names to short texts
@@ -694,15 +694,21 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       the push itself does not count. An allowed finding is noted in the pull request by
       its place, its rule, its value's SHA-256 and the reason, never by its line.
    3. *Invariant guards,* against origin/main. First, before the commit is checked out,
-      the paths guard reads the tree of each commit the push brings (from origin/main to
-      the commit, each tree once, a finding naming its commits), and refuses outright: no
-      mention excuses it, and when it refuses no worktree is made. It refuses a path, or a
-      folder of one, that collides with another under case folding and NFC normalisation,
-      that is a protected path or a check input spelt otherwise (`LAKEFILE.lean`,
-      `Scripts/x.py`), or that is not plain printable ASCII (#186): a disk that ignores
-      case checks out `Scripts/safe_push.py` as `scripts/safe_push.py`, so such a twin
-      could otherwise change a protected path or a check input by the back door. Then, in
-      the temporary worktree:
+      two paths guards read the tree of each commit the push brings (from origin/main to
+      the commit, each tree once; a finding names, for each tree that holds it, the first
+      commit with that tree, at most three and then "and N more"), and refuse outright: no
+      mention excuses them, and when they refuse no worktree is made. The first refuses a
+      path, or a folder of one, that collides with another under case folding and NFC
+      normalisation, that is a protected path or a check input spelt otherwise
+      (`LAKEFILE.lean`, `Scripts/x.py`), or that is not plain printable ASCII (#186): a
+      disk that ignores case checks out `Scripts/safe_push.py` as `scripts/safe_push.py`,
+      so such a twin could otherwise change a protected path or a check input by the back
+      door. The second applies origin/main's own standard
+      ([section 4, "File names"](#file-names)): origin/main's `scripts/check_paths.py`,
+      read from its blob and run by the harness itself, judges each tree before any of the
+      commit's code has run, so nothing the commit runs can keep a path from it; when
+      origin/main has none, as before the pull request that brings it, a note says so.
+      Then, in the temporary worktree:
       - no statement changed (facts.json's `statement`, and the Lean source of the
         theorem, its porism and its companions, to its own `:=`, whitespace aside) unless
         the push adds a new line to `docs/briefs/`, a brief's revision or a decisions
@@ -731,18 +737,21 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       changes what the checks judge (anything but the guides and briefs, the generated
       pages, a review record's stamp, and the protected paths other than `Audit/`,
       `Audit.lean`, `model/Model/Audit.lean`, `model/Model.lean` and the model's build
-      files): the check change goes first, in a pull request of its own. A failure of
-      origin/main's path check (`python3 -I tests/test_check_paths.py` or
+      files): the check change goes first, in a pull request of its own. Step 3 has
+      already judged every commit's tree by origin/main's standard, before any of the
+      commit's code ran; as a second line, a failure here of origin/main's path check
+      (`python3 -I tests/test_check_paths.py` or
       `python3 scripts/check_paths.py --self-test`) refuses the pull request whatever else
       it changes, guides and protected paths alone included: every path is what it judges,
-      so a looser `scripts/check_paths.py` cannot land with the path it would let in.
-      Two kinds of failure are only noted. Pages gone stale under origin/main's
-      `render.py`, or
-      `facts.json` rewritten by origin/main's
-      certificate, show the generator's change in the pages' diff; a failure of
-      `render.py` itself, its check of `docs/program.toml` among them, is a verdict. And
-      the values pinned to the edition move with the content they pin (a re-proof that
-      changes an expected count, a new word in the lock, an axiom added):
+      so a looser `scripts/check_paths.py` cannot land with the path it would let in. Each
+      pass begins with the worktree's HEAD and index at the commit, and is refused
+      otherwise, since the commit's own code may have run in an earlier one; origin/main's
+      copies are taken out again by a reset to the commit. Two kinds of failure are only
+      noted. Pages gone stale under origin/main's `render.py`, or `facts.json` rewritten
+      by origin/main's certificate, show the generator's change in the pages' diff; a
+      failure of `render.py` itself, its check of `docs/program.toml` among them, is a
+      verdict. And the values pinned to the edition move with the content they pin (a
+      re-proof that changes an expected count, a new word in the lock, an axiom added):
       `tests/certificate_expectations.json`, `Certificate/axioms.lock`,
       `tests/model/lock.sha256`, the model's law names in `tests/model/laws.toml`, and its
       account of the laws, `tests/model/MODEL.md` and `tests/model/results/`, which no
