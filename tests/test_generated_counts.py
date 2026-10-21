@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """File-only count and marker regressions: python3 -I tests/test_generated_counts.py."""
 
+import io
 import os
 import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
@@ -409,6 +411,71 @@ def Elements.companions : List (Lean.Name × String) := [
         self.assertIn("unknown", bad.read_text())
 
 
+ABSENT_NOTE = ("note: tracked but absent from the work tree (under the check inputs, as a "
+               "file the commit adds is in the pre-flight's pass with origin/main's "
+               "checks): {}\n")
+ABSENT_FAULT = "tracked but absent from the work tree, outside the check inputs: {}"
+
+
+class AbsentTrackedMarkdownTests(unittest.TestCase):
+    """The pre-flight's pass with origin/main's checks (scripts/safe_push.py, step 4,
+    base_copies) takes the files a commit adds under the check inputs out of the work
+    tree, while Git's index still lists them. A tracked Markdown file absent there is
+    noted and passed over, and the rest is still checked; absent anywhere else, it is
+    refused. Git runs only in a temporary repository, without user config."""
+
+    files = {"Certificate/axioms.lock": '[axioms]\n[vocabulary]\nPoint = "word"\n',
+             "Certificate/NEW.md": "Notes on a field a commit adds.\n",
+             "docs/notes.md": "Words: <!-- count:vocabulary -->2<!-- /count -->.\n",
+             "tests/new_check.md": "Notes on a check a commit adds.\n",
+             "tests/folder/notes.md": "Notes in a folder.\n"}
+
+    def setUp(self):
+        self.root = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+        env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+        self.enterContext(patch.dict(os.environ, {**env, "GIT_CONFIG_GLOBAL": os.devnull,
+                                                  "GIT_CONFIG_NOSYSTEM": "1"}, clear=True))
+        for rel, text in self.files.items():
+            (self.root / rel).parent.mkdir(parents=True, exist_ok=True)
+            (self.root / rel).write_text(text)
+        for args in (("init", "-q"), ("add", "--", *self.files)):
+            subprocess.run(["git", *args], cwd=self.root, capture_output=True, check=True)
+        self.output = self.enterContext(redirect_stdout(io.StringIO()))
+
+    def test_absent_check_inputs_are_noted_and_the_rest_still_checked(self):
+        for rel in ("Certificate/NEW.md", "tests/new_check.md"):
+            (self.root / rel).unlink()
+        changes, errors = counts.updates(self.root, check=True)
+        self.assertEqual(errors, ["docs/notes.md:1: count 'vocabulary': stated '2', "
+                                  "computed '1'; run python3 scripts/render.py"])
+        self.assertEqual(set(changes), {self.root / "docs/notes.md"})
+        self.assertEqual(self.output.getvalue(), ABSENT_NOTE.format("Certificate/NEW.md")
+                         + ABSENT_NOTE.format("tests/new_check.md"))
+
+    def test_absent_markdown_outside_the_check_inputs_is_refused(self):
+        for rel in ("docs/notes.md", "tests/new_check.md"):
+            (self.root / rel).unlink()
+        for check in (True, False):
+            with self.subTest(check=check):
+                self.assertEqual(counts.updates(self.root, check=check),
+                                 ({}, [ABSENT_FAULT.format("docs/notes.md")]))
+        self.assertEqual(self.output.getvalue(), 2 * ABSENT_NOTE.format("tests/new_check.md"))
+
+    def test_symlinks_in_place_of_absent_check_inputs_are_still_refused(self):
+        (self.root / "tests/new_check.md").unlink()
+        (self.root / "tests/new_check.md").symlink_to(self.root / "missing.md")
+        (self.root / "tests/folder/notes.md").unlink()
+        (self.root / "tests/folder").rmdir()
+        (self.root / "tests/folder").symlink_to(self.root / "missing",
+                                                target_is_directory=True)
+        changes, errors = counts.updates(self.root, check=True)
+        self.assertEqual(errors, ["docs/notes.md:1: count 'vocabulary': stated '2', "
+                                  "computed '1'; run python3 scripts/render.py",
+                                  "tests/folder: symlink is forbidden",
+                                  "tests/new_check.md: symlink is forbidden"])
+        self.assertEqual(self.output.getvalue(), "")
+
+
 class GitCountTests(unittest.TestCase):
     """Exercise real read-only Git calls, including the source copy's index."""
 
@@ -570,6 +637,25 @@ class GitCountTests(unittest.TestCase):
                                 or "outside repository root" in message, message)
                 self.assertEqual({output: output.read_bytes() for output in outputs}, before)
                 self.assertEqual(target.read_bytes() if target.exists() else None, target_before)
+
+    def test_public_checks_pass_over_only_an_absent_check_input(self):
+        from negative_tests import count_source_copy
+
+        for rel, under_inputs in (("tests/model/MODEL.md", True),
+                                  ("docs/reports/crew/voice-01.md", False)):
+            with self.subTest(path=rel), count_source_copy() as (root, env):
+                (root / rel).unlink()       # as base_copies takes out a file the commit adds
+                for script in ("check_fidelity.py", "render.py"):
+                    result = subprocess.run([sys.executable, f"scripts/{script}"], cwd=root,
+                                            env=env, capture_output=True, text=True)
+                    message = result.stdout + result.stderr
+                    self.assertNotIn("Traceback", message)
+                    if under_inputs:
+                        self.assertEqual(result.returncode, 0, message)
+                        self.assertIn(ABSENT_NOTE.format(rel), result.stdout)
+                    else:
+                        self.assertNotEqual(result.returncode, 0, message)
+                        self.assertIn(ABSENT_FAULT.format(rel), message)
 
     def test_render_refuses_dangling_optional_inputs(self):
         from negative_tests import count_source_copy

@@ -5,7 +5,9 @@ spell a number in lower case or with its first letter capitalised. Only the valu
 belongs to the generator. Literal examples must escape '<', even in code spans.
 
 Git must resolve the supplied root as its work tree. Only tracked Markdown and
-review records are scanned. Symlinks and paths resolving outside the root are
+review records are scanned. A tracked Markdown file absent from the work tree is
+noted and passed over under the check inputs, and refused anywhere else
+(absent_tracked). Symlinks and paths resolving outside the root are
 refused. Whole renderer outputs are scanned but may not contain markers. The
 decisions log and reports are history, except the living gap and overlap catalogues;
 markers there are refused. Markers are also refused when they overlap README scope
@@ -68,6 +70,44 @@ def tracked_files(root, pattern):
     except (subprocess.CalledProcessError, OSError) as error:
         raise ValueError(f"{root}: cannot list tracked files with Git") from error
     return [Path(name.decode()) for name in result.stdout.split(b"\0") if name]
+
+
+def absent_tracked(root, paths):
+    """The tracked `paths` absent from the work tree, and a fault for each one outside
+    the check inputs.
+
+    The pre-flight's pass with origin/main's checks (scripts/safe_push.py, step 4) takes
+    the files a commit adds under the check inputs out of the work tree, while Git's index
+    still lists them: each of those is noted on stdout, for the caller to pass over. The
+    pre-flight takes nothing else out, so any other is a fault, for the caller to fail on.
+    A path that is or passes through a symlink is not absent: repository_path refuses it
+    when the caller reads it. Returns the absent paths, as given, and the faults.
+    """
+    absent = []
+    for rel in paths:
+        try:
+            path = repository_path(root, rel)
+        except ValueError:
+            continue
+        if not path.exists():
+            absent.append(rel)
+    if not absent:
+        return [], []
+    # The check inputs are listed once, in the harness. It is imported only when a tracked
+    # file is absent, so an ordinary run of a check never loads it.
+    from safe_push import CHECK_INPUTS, under
+
+    faults = []
+    for rel in absent:
+        name = Path(rel).as_posix()
+        if under(name, CHECK_INPUTS):
+            print("note: tracked but absent from the work tree (under the check inputs, as a "
+                  "file the commit adds is in the pre-flight's pass with origin/main's "
+                  f"checks): {name}")
+        else:
+            faults.append("tracked but absent from the work tree, outside the check "
+                          f"inputs: {name}")
+    return absent, faults
 
 
 def lock_table(root, table):
@@ -381,9 +421,13 @@ def updates(root, *, check=False):
     changes, errors, cache = {}, [], {}
     try:
         paths = tracked_markdown(root)
+        absent, faults = absent_tracked(root, paths)
     except (ValueError, OSError) as error:
         return {}, [str(error)]
+    errors += faults
     for path in paths:
+        if path in absent:
+            continue
         try:
             text = repository_path(root, path).read_text()
             token = START.search(text)

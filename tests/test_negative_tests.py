@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
-"""Restoration regressions for scripts/negative_tests.py, without Lean or Git.
+"""Restoration regressions for scripts/negative_tests.py, without Lean, and without Git
+outside temporary repositories.
 
     python3 -I tests/test_negative_tests.py
 
 The negative suite runs these first. Temporary files stand in for Lake outputs;
 simulated builds delete, replace and create them before failing or being interrupted.
+A temporary repository stands in for the pre-flight's pass with origin/main's checks,
+whose work tree lacks the files a commit adds under the check inputs while Git's index
+still lists them.
 """
 
 import io
 import json
+import os
 import re
 import subprocess
 import sys
@@ -426,6 +431,85 @@ class CircleRuleTests(unittest.TestCase):
                     self.assertEqual(self.lock.read_bytes(), saved)
                     self.assertEqual(self.errors, ["a previous finding"])
                     self.assertEqual(json.loads((self.root / "facts.json").read_text()), facts)
+
+
+class AbsentTrackedFileTests(unittest.TestCase):
+    """A commit adds a check and its test (and a note beside them), and the pre-flight's
+    pass with origin/main's checks (scripts/safe_push.py, step 4, base_copies) unlinks
+    each from the work tree while Git's index still lists it. Every listing of tracked
+    files names them and goes on with what is present; one absent outside the check
+    inputs is a failure. Git runs only in a temporary repository, without user config."""
+
+    present = {"scripts/check.py": "# the check\n", "tests/test_check.py": "# its test\n",
+               "docs/notes.md": "Words: <!-- count:vocabulary -->3<!-- /count -->.\n"}
+    added = ("scripts/new_check.py", "tests/test_new_check.py", "tests/new_check.md")
+
+    def setUp(self):
+        self.root = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+        env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+        self.enterContext(patch.dict(os.environ, {**env, "GIT_CONFIG_GLOBAL": os.devnull,
+                                                  "GIT_CONFIG_NOSYSTEM": "1"}, clear=True))
+        self.enterContext(patch.multiple(negative, ROOT=self.root, failures=[]))
+        self.output = self.enterContext(redirect_stdout(io.StringIO()))
+        files = {**self.present, **{rel: f"# added: {rel}\n" for rel in self.added}}
+        for rel, text in files.items():
+            (self.root / rel).parent.mkdir(parents=True, exist_ok=True)
+            (self.root / rel).write_text(text)
+        self.git("init", "-q")
+        self.git("add", "--", *files)
+        self.git("-c", "user.name=test", "-c", "user.email=test@example.invalid",
+                 "commit", "-q", "--no-verify", "-m", "add a check and its test")
+        for rel in self.added:
+            (self.root / rel).unlink()       # as base_copies takes out a file the commit adds
+        self.assertEqual(self.git("ls-files").split(), sorted(files))
+
+    def git(self, *args):
+        return subprocess.run(["git", *args], cwd=self.root, capture_output=True, text=True,
+                              check=True).stdout
+
+    def note(self, rel):
+        return ("note: tracked but absent from the work tree (under the check inputs, as a "
+                "file the commit adds is in the pre-flight's pass with origin/main's "
+                f"checks): {rel}\n")
+
+    def assert_named(self, failures=()):
+        for rel in self.added:
+            self.assertIn(self.note(rel), self.output.getvalue())
+        self.assertEqual(negative.failures, list(failures))
+
+    def test_count_copy_names_absent_files_and_copies_the_rest(self):
+        with negative.count_source_copy() as (copy, env):
+            copied = {p.relative_to(copy).as_posix() for p in copy.rglob("*") if p.is_file()}
+            self.assertEqual(copied, set(self.present))
+            for rel in self.present:
+                self.assertEqual((copy / rel).read_bytes(), (self.root / rel).read_bytes())
+            self.assertEqual((env["GIT_DIR"], env["GIT_WORK_TREE"]),
+                             (str(self.root / ".git"), str(copy)))
+        self.assert_named()
+
+    def test_marker_copy_names_absent_files(self):
+        listing = negative.run("git", "ls-files", "-z")
+        copy = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        negative.copy_marker_files(copy, listing.stdout.split("\0"))
+        copied = {p.relative_to(copy).as_posix() for p in copy.rglob("*") if p.is_file()}
+        self.assertEqual(copied, set(self.present))
+        self.assert_named()
+
+    def test_generated_outputs_pass_over_absent_markdown(self):
+        self.assertEqual(negative.generated_files(), {self.root / "docs/notes.md"})
+        self.assertIn(self.note("tests/new_check.md"), self.output.getvalue())
+        self.assertEqual(negative.failures, [])
+
+    def test_absent_file_outside_the_check_inputs_fails(self):
+        (self.root / "docs/notes.md").unlink()
+        message = "tracked but absent from the work tree, outside the check inputs: docs/notes.md"
+        with negative.count_source_copy() as (copy, _):
+            copied = {p.relative_to(copy).as_posix() for p in copy.rglob("*") if p.is_file()}
+            self.assertEqual(copied, {"scripts/check.py", "tests/test_check.py"})
+        negative.copy_marker_files(Path(self.enterContext(tempfile.TemporaryDirectory())),
+                                   negative.run("git", "ls-files", "-z").stdout.split("\0"))
+        self.assertEqual(self.output.getvalue().count(f"✗ {message}\n"), 2)
+        self.assert_named([message])
 
 
 if __name__ == "__main__":

@@ -2622,3 +2622,54 @@ findings:
   insert Python setup after checks begin, repeat either action, reverse the actions or
   omit setup; each is refused. Protected file changed in this round:
   `scripts/test_safe_push.py`. No check is weakened.
+
+- **The checks read a tree without the files a commit adds to them (#178).** The
+  pre-flight's pass with origin/main's checks (`scripts/safe_push.py`, step 4) takes the
+  files a commit adds under the check inputs out of the work tree, while Git's index still
+  lists them. `scripts/negative_tests.py` copied every tracked path for its count plants,
+  so on such a commit it stopped with `FileNotFoundError` in
+  `tests/test_generated_counts.py`, which uses the same copy, before any count plant ran;
+  the count plants, run alone, stopped the same way. A tracked Markdown file taken out
+  stopped the freshness plant's list of generated outputs too, and the merge-marker copy
+  passed such files over without a word. `check_fidelity.py` and `render.py` read every
+  tracked Markdown file for count markers (`generated_counts.updates`), so a Markdown
+  file the commit adds there, as `tests/notes.md`, failed both in that pass with `No such
+  file or directory`. A failure in that pass is only a note, but `keep_apart` counts it,
+  so a content pull request with a new test beside it was refused as a check changed
+  together with what it checks: the second item of #178.
+
+  One rule, `generated_counts.absent_tracked`, now holds wherever these checks list
+  tracked files: a tracked file absent from the work tree under the check inputs is named
+  on stdout as a note, and the check goes on with what is present; one absent anywhere
+  else, where the pre-flight takes nothing out, is a failure that names it. A path that
+  is or passes through a symlink is not absent, and is refused as before.
+  `generated_counts.updates`, which `check_fidelity.py` and `render.py` share, follows
+  it, and so do the negative suite's two copies and its list of generated outputs; no
+  plant is skipped. The check inputs stay listed once, as `scripts/safe_push.py`'s
+  `CHECK_INPUTS`, which `generated_counts.py` imports only when a tracked file is
+  absent, so an ordinary run of a check never loads the harness.
+
+  `tests/test_negative_tests.py` builds the case in a temporary repository: a commit
+  adding a check, its test and a Markdown note, each then unlinked as the pre-flight
+  unlinks it. It checks both copies, the list of generated outputs and a tracked file
+  absent outside the check inputs; against origin/main's `negative_tests.py`, three of its
+  four tests stop with that error and the fourth finds no file named.
+  `tests/test_generated_counts.py` does the same for the counts, in a temporary
+  repository: a Markdown file absent under the check inputs is noted while a stale count
+  beside it is still refused, one absent elsewhere is refused by name, and a symlink in
+  place of one is still refused as a symlink. In the negative suite's source copy,
+  `check_fidelity.py` and `render.py` pass with `tests/model/MODEL.md` taken out, noting
+  it, and fail naming a crew log taken out. Against origin/main's `generated_counts.py`
+  every one of these fails but the symlink case.
+
+  No other reader of Git's tracked files in that pass crashes or fails on such a file:
+  `check_style.py`'s S23 passes over a tracked path that is not a file, and its S12 reads
+  the names alone; `check_links.py` reads the Markdown files present; and
+  `generated_counts.review_stages` reads review records, which are never check inputs. A
+  link to a file the commit adds under the check inputs still fails `check_links.py` in
+  that pass, rightly: the content then depends on the check change, which lands first.
+  `scripts/safe_push.py` is unchanged: dropping the added files from the worktree's index
+  as well would change what every check in that pass reads, `check_style.py`'s list of
+  tracked files for S12 among them. This is a check change alone. Protected files
+  changed: `scripts/negative_tests.py`, `tests/test_negative_tests.py`,
+  `scripts/generated_counts.py` and `tests/test_generated_counts.py`.

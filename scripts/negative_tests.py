@@ -88,6 +88,13 @@ records current; CI runs it on every push.
     `tests/test_certificate.py` fails on transformers with no step. The restored
     certificate must pass the same regression, including its real-step cases.
 
+The copies of items 16 and 17, and item 13's list of generated outputs, read Git's
+tracked files. One absent from the work tree is named on stdout and passed over: as a
+note under the check inputs, since the pre-flight's pass with origin/main's checks takes
+out the files a commit adds there while Git's index still lists them (scripts/safe_push.py,
+step 4); as a failure anywhere else. The rule is generated_counts.absent_tracked's, which
+check_fidelity.py and render.py follow for the tracked Markdown they read.
+
 These faults exercise the style and link checks, page freshness, an audit pin and
 leanchecker's loading of compiled files as well as the earlier checks. They do not
 plant an invalid proof term for leanchecker's kernel replay. `check_kernel.py`'s own
@@ -231,8 +238,27 @@ def style_error() -> None:
         path.write_bytes(saved)
 
 
+def absent_tracked(rels: list) -> list:
+    """The tracked paths of `rels` absent from the work tree, each named on stdout.
+
+    The rule is generated_counts.absent_tracked's, which the count checks follow too: one
+    under the check inputs is noted, and the caller goes on with what is present, since the
+    pre-flight's pass with origin/main's checks (scripts/safe_push.py, step 4) takes out
+    the files a commit adds there while Git's index still lists them. One absent outside
+    the check inputs is a failure too, so none goes unseen.
+    """
+    missing, faults = generated_counts.absent_tracked(ROOT, rels)
+    for message in faults:
+        if message not in failures:
+            failures.append(message)
+        print(f"✗ {message}")
+    return missing
+
+
 def copy_marker_files(root: Path, names: list[str]) -> None:
-    """Copy the tracked files for item 16, skipping symlinks without reading targets."""
+    """Copy the tracked files for item 16, skipping symlinks without reading targets,
+    and naming those absent from the work tree (absent_tracked)."""
+    absent_tracked([name for name in names if name])
     for name in names:
         source = ROOT / name
         if name and not source.is_symlink() and source.is_file():
@@ -338,9 +364,12 @@ def generated_files() -> set[Path]:
             paths.update(p for p in path.rglob("*") if p.is_file())
         elif path.exists():
             paths.add(path)
-    for rel in generated_counts.tracked_markdown(ROOT):
+    tracked = generated_counts.tracked_markdown(ROOT)
+    missing = set(absent_tracked(tracked))
+    for rel in tracked:
         path = ROOT / rel
-        if (not generated_counts.whole_output(rel) and not generated_counts.historical(rel)
+        if (rel not in missing and not generated_counts.whole_output(rel)
+                and not generated_counts.historical(rel)
                 and generated_counts.START.search(path.read_text())):
             paths.add(path)
     return paths
@@ -1147,12 +1176,14 @@ def count_source_copy():
 
     Git reads the original index through GIT_DIR; GIT_WORK_TREE points only at the
     copy. No Git command writes. Include new Python sources before they are committed.
+    A tracked file absent from the work tree is named (absent_tracked), not copied.
     """
     tracked = run("git", "ls-files", "-z")
     tracked.check_returncode()
     git_dir = run("git", "rev-parse", "--absolute-git-dir")
     git_dir.check_returncode()
     paths = {Path(p) for p in tracked.stdout.split("\0") if p}
+    paths.difference_update(absent_tracked(sorted(paths)))
     paths.update(p.relative_to(ROOT) for p in (ROOT / "scripts").glob("*.py"))
     with tempfile.TemporaryDirectory(prefix="stoicheia-counts-", dir="/tmp") as tmp:
         copy = Path(tmp)
