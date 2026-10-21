@@ -16,7 +16,8 @@ under "The merge".
 ## What and why
 
 <!-- One coherent change, in your words, above the commits safe_push lists. Link the brief
-and the decision it carries out: a section of docs/briefs/, an entry of
+and the decision it carries out: a section of docs/briefs/, and its decision entry in
+docs/decisions/ (docs/WORKFLOW.md, "Decision entries"), or an earlier entry of
 docs/briefs/0002-decisions.md. A check is never changed in the same pull request as the
 code it checks. -->
 
