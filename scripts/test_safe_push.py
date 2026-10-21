@@ -4867,6 +4867,60 @@ class Units(unittest.TestCase):
                     self.assertIn("0 need(s) a reader; 1 problem(s)", out.getvalue())
                     self.assertEqual(record.read_text(), body)
 
+    def test_review_stamp_migration_rejects_a_shallow_ancestry_boundary(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo = root / "source"
+            shallow = root / "shallow"
+            git(root, "init", "-q", "-b", "main", str(repo))
+            git(repo, "config", "user.name", "review stamp test")
+            git(repo, "config", "user.email", "review-stamp-test@example.invalid")
+            git(repo, "config", "commit.gpgsign", "false")
+            for name, body in {"Elements/BookI/Prop01.lean": "theorem P : True := trivial\n",
+                               "heath/I/01.md": "A test enunciation.\n\nA test proof.\n"}.items():
+                (repo / name).parent.mkdir(parents=True, exist_ok=True)
+                (repo / name).write_text(body)
+            record = repo / "review/I/01.toml"
+            record.parent.mkdir(parents=True)
+            text = ('[statement]\nscope = "full"\n'
+                    'fingerprint = "sha256:0123456789abcdef"\n\n'
+                    '[route]\nkind = "euclid"\n\n[review]\nstage = "exceptions"\n'
+                    'reviewer = "Test reader"\nlean = "sha256:0123456789abcdef"\n')
+            record.write_text(text)
+            git(repo, "add", ".")
+            git(repo, "commit", "-q", "-m", "The base record")
+            git(repo, "checkout", "-q", "-b", "feature")
+            git(repo, "commit", "-q", "--allow-empty", "-m", "The files read")
+            read_full = git(repo, "rev-parse", "HEAD").strip()
+            read_commit = read_full[:12]
+            stamped = text.replace("[review]\n", f'[review]\ncommit = "{read_commit}"\n', 1)
+            record.write_text(stamped)
+            git(repo, "add", "review/I/01.toml")
+            git(repo, "commit", "-q", "-m", "Record the reading")
+            git(repo, "checkout", "-q", "main")
+            git(repo, "merge", "-q", "--no-ff", "feature", "-m", "Merge the record")
+            for n in range(3):
+                git(repo, "commit", "-q", "--allow-empty", "-m", f"Later change {n + 1}")
+            git(root, "clone", "-q", "--depth", "2", "--no-single-branch", "--branch", "main",
+                repo.as_uri(), str(shallow))
+            self.assertEqual(git(shallow, "cat-file", "-t", read_full).strip(), "commit")
+            self.assertEqual(git(shallow, "rev-parse", "--is-shallow-repository").strip(),
+                             "true")
+            before = (shallow / "review/I/01.toml").read_text()
+            out = io.StringIO()
+            with mock.patch.object(review_stamp, "ROOT", shallow), \
+                    mock.patch.object(review_stamp.heath, "ROOT", shallow), \
+                    mock.patch.object(review_stamp.heath, "REVIEW", shallow / "review"), \
+                    contextlib.redirect_stdout(out):
+                self.assertFalse(review_stamp.in_history(read_full))
+                code = review_stamp.migrate([("I", 1)], dry_run=False)
+            self.assertEqual(code, 1, out.getvalue())
+            self.assertIn("incomplete history of this shallow clone", out.getvalue())
+            self.assertNotIn("needs a reader, who reads", out.getvalue())
+            self.assertIn("0 need(s) a reader; 1 problem(s)", out.getvalue())
+            self.assertEqual((shallow / "review/I/01.toml").read_text(), before)
+            self.assertNotIn('\ntext = "', before)
+
     def test_review_stamp_rejects_an_ambiguous_prefix_even_when_a_ref_shadows_it(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)

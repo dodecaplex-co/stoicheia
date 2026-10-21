@@ -31,11 +31,12 @@ section; nothing else in the file changes.
 writes `text` alone, and only for a record whose own stamp `commit` is in the history of
 HEAD and whose text at that commit is its text now: what the reviewer read is then what
 the record says, so the stamp records no new reading. A record whose text cannot be
-confirmed is listed as needing a reader. A stamp commit absent from this clone or
-abbreviating more than one commit is instead a problem: fetch the missing history, or
-identify the intended commit without guessing and record enough of its id to distinguish
-it, then run the migration again. It changes nothing it cannot confirm, and it can be run
-again at any time, as at landing, after branches that change records.
+confirmed is listed as needing a reader. A stamp commit absent from this clone,
+abbreviating more than one commit, or separated from HEAD by a shallow-history boundary
+is instead a problem: fetch the missing history, or identify the intended commit without
+guessing and record enough of its id to distinguish it, then run the migration again. It
+changes nothing it cannot confirm, and it can be run again at any time, as at landing,
+after branches that change records.
 
 Run it after `lake env lean Certificate/Facts.lean`. Standard library only; reading
 the records needs Python 3.11 or later (tomllib).
@@ -124,6 +125,16 @@ def in_history(commit: str) -> bool:
                               cwd=ROOT, capture_output=True).returncode == 0
     except OSError:
         return False
+
+
+def is_shallow() -> bool:
+    """Does Git report that this repository has a shallow history?"""
+    try:
+        out = subprocess.run([*GIT, "rev-parse", "--is-shallow-repository"], cwd=ROOT,
+                             capture_output=True, text=True)
+    except OSError:
+        return False
+    return out.returncode == 0 and out.stdout.strip() == "true"
 
 
 def show_at(commit: str, path: Path) -> bytes | None:
@@ -267,8 +278,8 @@ def migrate_text(book: str, n: int, dry_run: bool) -> tuple[str, str]:
     """Write the `text` stamp of a record stamped before it, when its own stamp commit is
     in the history of HEAD and its text at that commit is its text now. Returns (outcome,
     what was found): "written", "current", or "reader" for a record that needs a reader;
-    raises ValueError when the record cannot be read, or its commit is absent or ambiguous
-    in this clone (resolve)."""
+    raises ValueError when the record cannot be read, its commit is absent or ambiguous
+    in this clone (resolve), or shallow history prevents confirming its ancestry."""
     ref, path = f"{book}.{n}", heath.review_path(book, n)
     if not path.exists():
         raise ValueError(f"{ref}: there is no record {rel(path)}")
@@ -294,6 +305,10 @@ def migrate_text(book: str, n: int, dry_run: bool) -> tuple[str, str]:
     if full is None:
         return "reader", f"{ref}: no stamp commit to compare it with"
     if not in_history(full):
+        if is_shallow():
+            raise ValueError(f"{ref}: its stamp commit {commit} cannot be confirmed in the "
+                             "incomplete history of this shallow clone: fetch complete "
+                             "history, then run this again")
         return "reader", f"{ref}: its stamp commit {commit} is not in the history of HEAD"
     then = text_at(full, path)
     if then is None:
@@ -343,7 +358,8 @@ def main(argv=None) -> int:
     parser.add_argument("--migrate-text", action="store_true",
                         help="write `text` alone, for each record whose text at its stamp commit, "
                         "in the history of HEAD, is its text now; list confirmed edits as needing "
-                        "a reader, and report absent or ambiguous stamp commits as problems")
+                        "a reader, and report absent, ambiguous or shallow-history stamp commits "
+                        "as problems")
     args = parser.parse_args(argv)
     if args.commit and not heath.COMMIT.fullmatch(args.commit):
         parser.error("--commit is a git commit, 7 to 40 lower-case hex digits")
