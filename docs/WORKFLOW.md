@@ -320,7 +320,9 @@ the last two run the `safe-push-tests` job's:
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
-                                       # CI's `formal-model` job: the formal model, with Mathlib
+python3 scripts/check_model_kernel.py --self-test && python3 scripts/check_model_kernel.py
+                                       # CI's `formal-model` job: the formal model, with Mathlib,
+                                       # then its compiled proofs replayed by Lean's kernel
 python3 -I tests/test_check_acceptance.py   # CI's `acceptance` job: the comparison tests
 # After lake build, lake build Audit and Facts.lean, the checklist run:
 python3 scripts/check_acceptance.py --output "${RUNNER_TEMP:-/tmp}/acceptance/report.md" --json "${RUNNER_TEMP:-/tmp}/acceptance/verdicts.json"
