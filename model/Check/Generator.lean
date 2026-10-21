@@ -1560,8 +1560,8 @@ def compareBack (p : Plan) (S : Expr) (what : String) (model lib : Expr) (carrie
 
 /-- A definition of the model over the signature, `fun S => …`, against the library's word or
 law: its value against the library's, and its type, after the signature, against the
-library's type. For a law, whose library counterpart is an axiom, `libValue` is the axiom's
-statement and the type is `Prop`. -/
+library's type. For a law, whose library counterpart is an axiom or a theorem, `libValue`
+is that declaration's statement and the type is `Prop`. -/
 def compareDefinition (p : Plan) (model : Name) (libValue libType : Expr) (carriers : Bool) :
     MetaM (Array String) := do
   let (value, type) ← definition model
@@ -1723,9 +1723,10 @@ def checkRoundTrip : CommandElabM Unit := do
     return errors
   unless errors.isEmpty do throwError "{"\n".intercalate errors.toList}"
 
-/-- Compare the definition `planted`, over the signature, with the library's axiom `lib`, as
-`checkRoundTrip` compares a generated law: for the tests that the check catches what it is
-meant to. -/
+/-- Compare the definition `planted`, over the signature, with the statement of the
+library's axiom or theorem `lib`, as `checkRoundTrip` compares a generated law.
+This checks the hand translations of retired rules and tests that the comparison catches
+the changes it is meant to. -/
 def comparePlanted (planted lib : Name) : CommandElabM Unit := do
   let env ← getEnv
   let p ← match plan env with

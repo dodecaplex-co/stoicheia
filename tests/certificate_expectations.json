@@ -4,15 +4,15 @@
     {
       "ref": "III.1 Por.",
       "field": "axioms",
-      "count": {"prefix": "Tacit.", "is": 57},
-      "why": "The review found the porism's assumptions missing from III.1's certificate. The porism's own entry must carry its full dependency count: 57 tacit rules, counted separately from III.1's construction."
+      "count": {"prefix": "Tacit.", "is": 55},
+      "why": "The review found the porism's assumptions missing from III.1's certificate. The porism's own entry must carry its full dependency count: 55 tacit rules, counted separately from III.1's construction."
     },
     {
       "ref": "III.1",
       "field": "axioms",
       "excludes": ["Tacit.centre_unique"],
-      "count": {"prefix": "Tacit.", "is": 56},
-      "why": "III.1's own certificate is its construction alone: 56 tacit rules, without the porism's centre_unique."
+      "count": {"prefix": "Tacit.", "is": 55},
+      "why": "III.1's own certificate is its construction alone: 55 tacit rules, counted separately from its porism. Since centre_unique is now a theorem, excluding its name from the axiom list no longer distinguishes the construction from the porism."
     },
     {
       "ref": "III.1 Por.",
@@ -30,13 +30,13 @@
       "ref": "III.2",
       "field": "own_axioms",
       "excludes": ["Tacit.inside_of_between"],
-      "why": "III.2's own Lean never calls Circle 2 (Argon's second review; #65): its own axioms are those its proof and its helpers name, not those of the propositions it cites."
+      "why": "III.2's own Lean does not call Circle 2 (Argon's second review; #65). Since Circle 2 is now a theorem, excluding its name from own_axioms no longer checks for such a call; the separate axioms pin excludes its underlying Circle 3."
     },
     {
       "ref": "III.2",
       "field": "inherited",
       "excludes": ["Tacit.inside_of_between"],
-      "why": "No lemma III.2 calls brings Circle 2 in (#65)."
+      "why": "No lemma that III.2 calls uses Circle 2 (#65). Since Circle 2 is now a theorem, excluding its name from inherited no longer checks for such a use; the separate axioms pin excludes its underlying Circle 3."
     },
     {
       "ref": "I.5",
@@ -54,19 +54,79 @@
       "ref": "III.2",
       "field": "axioms",
       "excludes": ["Tacit.inside_of_between", "Tacit.outside_of_between"],
-      "why": "III.2 rests on neither Circle 2 nor Circle 3: its own Lean calls neither, and III.1, which it cites, shows its middle point within the circle by III.2's own argument (#60)."
+      "why": "III.2 does not rest on Circle 3: its own Lean calls neither Circle 3 nor the theorem Circle 2, and III.1, which it cites, shows its middle point within the circle by III.2's own argument (#60). Circle 2's retired name is also kept out of the axiom list."
     },
     {
       "ref": "III.1",
       "field": "axioms",
       "excludes": ["Tacit.inside_of_between", "Tacit.outside_of_between"],
-      "why": "III.1 shows the middle point of its chord within the circle by I.5, I.16 and I.19, as III.2 does, and so rests on neither Circle 2 nor Circle 3 (#60)."
+      "why": "III.1 shows the middle point of its chord within the circle by I.5, I.16 and I.19, as III.2 does, and does not rest on Circle 3 (#60). Circle 2's retired name is also kept out of the axiom list."
     },
     {
       "ref": "II.14",
       "field": "axioms",
       "excludes": ["Tacit.inside_of_between", "Tacit.outside_of_between"],
-      "why": "II.14 puts E within the circle by Definition I.15 and the order of the points (InsideCircle.of_between_centre), and rests on neither Circle 2 nor Circle 3 (#60)."
+      "why": "II.14 puts E within the circle by Definition I.15 and the order of the points (InsideCircle.of_between_centre), and does not rest on Circle 3 (#60). Circle 2's retired name is also kept out of the axiom list."
+    },
+    {
+      "ref": "III.1",
+      "field": "axioms",
+      "excludes": [
+        "Tacit.adjacent_eq_of_right",
+        "Tacit.not_same_side_of_circles_meet",
+        "Tacit.centre_unique",
+        "Tacit.inside_of_between",
+        "Tacit.exists_point_outside_circle",
+        "Tacit.line_meets_circle_of_opposite_sides",
+        "Tacit.triple_incidence3",
+        "Tacit.inside_of_angle_add"
+      ],
+      "why": "None of the eight retired names may appear as an axiom in III.1's certificate. Each now names a theorem with the same type; a proof that uses it lists its underlying axioms instead."
+    },
+    {
+      "ref": "III.1 Por.",
+      "field": "axioms",
+      "excludes": [
+        "Tacit.adjacent_eq_of_right",
+        "Tacit.not_same_side_of_circles_meet",
+        "Tacit.centre_unique",
+        "Tacit.inside_of_between",
+        "Tacit.exists_point_outside_circle",
+        "Tacit.line_meets_circle_of_opposite_sides",
+        "Tacit.triple_incidence3",
+        "Tacit.inside_of_angle_add"
+      ],
+      "why": "None of the eight retired names may appear as an axiom in III.1 Por.'s certificate. Each now names a theorem with the same type; a proof that uses it lists its underlying axioms instead."
+    },
+    {
+      "ref": "III.2",
+      "field": "axioms",
+      "excludes": [
+        "Tacit.adjacent_eq_of_right",
+        "Tacit.not_same_side_of_circles_meet",
+        "Tacit.centre_unique",
+        "Tacit.inside_of_between",
+        "Tacit.exists_point_outside_circle",
+        "Tacit.line_meets_circle_of_opposite_sides",
+        "Tacit.triple_incidence3",
+        "Tacit.inside_of_angle_add"
+      ],
+      "why": "None of the eight retired names may appear as an axiom in III.2's certificate. Each now names a theorem with the same type; a proof that uses it lists its underlying axioms instead."
+    },
+    {
+      "ref": "II.14",
+      "field": "axioms",
+      "excludes": [
+        "Tacit.adjacent_eq_of_right",
+        "Tacit.not_same_side_of_circles_meet",
+        "Tacit.centre_unique",
+        "Tacit.inside_of_between",
+        "Tacit.exists_point_outside_circle",
+        "Tacit.line_meets_circle_of_opposite_sides",
+        "Tacit.triple_incidence3",
+        "Tacit.inside_of_angle_add"
+      ],
+      "why": "None of the eight retired names may appear as an axiom in II.14's certificate. Each now names a theorem with the same type; a proof that uses it lists its underlying axioms instead."
     }
   ]
 }
