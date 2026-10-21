@@ -3487,11 +3487,13 @@ findings:
     the previous main's `scripts/auto_revert.py`, trusted only when its own post-merge
     run passed, reverts the push's merges on a `revert/` branch and queues the revert,
     which the judge admits only as the exact revert of a failed push's merges, while an
-    open `main-red` issue names that run. Decision entries are history: the revert keeps
-    `docs/decisions/` as at the failed push's tip, and the judge, in
-    `scripts/check_queue.py`, accepts exactly that difference and no other. Each entry
-    is a page of its own, which nothing assembles into another page, so the decisions
-    page is reverted like any other file. The workflow that holds the key is read from
+    open `main-red` issue names that run. The decisions record is history, only ever
+    added to, so a revert never removes a decision's text: the revert keeps
+    `docs/decisions/` and this page as at the failed push's tip, as the advice for a
+    revert by hand on tooling/decision-entries restores both from origin/main, and the
+    judge, in `scripts/check_queue.py`, accepts exactly that difference and no other: a
+    revert that takes a train's lines off this page, or changes it otherwise, refuses.
+    The workflow that holds the key is read from
     main, so code that has landed there could take it; the App is bounded instead: no
     bypass, no permission to write contents at all (the job's own token pushes the
     revert branch), and the judge's refusal of any entry a bot wrote, queued or edited,
@@ -3499,10 +3501,12 @@ findings:
     judge may find that run still in progress: it reads the run again every 15 seconds,
     for up to 10 minutes, and judges it once completed. A run that concluded failure
     admits its revert and any other conclusion refuses it; a run not completed by then
-    refuses it too, and the revert leaves the queue.
+    refuses it too, and the revert leaves the queue. So the queue's status check
+    timeout must allow that wait, on top of the job's own work.
   - *The merge.* When main's rules require a merge queue, `git safe-push --merge` keeps
-    every gate, checks the head against its merge base with main, enqueues it with its
-    head pinned, and follows it to a verified merge or an ejection. In both modes it
+    every gate, checks the head against the newest commit of main's first-parent chain
+    that it contains, which its pre-flight recorded, enqueues it with its head pinned,
+    and follows it to a verified merge or an ejection. In both modes it
     refuses while main is red, save the fix: a pull request whose body has the line
     `Fixes main-red: #<n>`, where GitHub shows it, naming every open `main-red` issue
     and no other, and whose own CI passes. With the queue off only a merge moves main's
@@ -3528,15 +3532,18 @@ findings:
 
   Nothing is weakened: every existing refusal of `scripts/safe_push.py` stays, save
   three. In queue mode a head need not contain the latest main (the queue builds each
-  group on it), and is judged against its merge base with main. `--merge` takes the
+  group on it), and is judged against the newest commit of main's first-parent chain
+  that it contains, not its merge base with main, which lies off that chain when a
+  member was merged on its own before its train: so `--merge`'s own checks, its train
+  check and the judge compare against one base. `--merge` takes the
   body's pre-flight summary as current when it names this head, its base and harness
   held to the judge's own rule, read on current main, in both modes (the base the
   newest commit of main's first-parent chain that the head contains, the harness that
   base or a later commit of the chain; with the queue off, both main's tip), and for a
   train shows its train step passing, even when the full checks ran again at the merge,
   which leaves that summary true. So a summary the judge would refuse is never current,
-  and one it would accept is, even when the head's merge base with main lies off main's
-  chain (a member merged on its own before its train). And a body edited in GitHub's
+  and one it would accept is, its base the one the merge checks against. And a body
+  edited in GitHub's
   page, which keeps CRLF line ends, is up to date when it differs from the parts
   safe_push writes by line ends alone. With the queue off `--merge` merges as before,
   save the new pause while main is red and its one exit. The queue stays off until the

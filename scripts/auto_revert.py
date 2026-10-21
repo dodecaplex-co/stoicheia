@@ -8,10 +8,11 @@ configuration and inherited credentials disabled. The job's own GITHUB_TOKEN pus
 the revert branch and writes the issue and its labels; the App's token, which reads
 contents and writes none, opens, labels and enqueues the pull request.
 
-Only a first-parent chain of two-parent pull request merges can be reverted. Decision
-entries are history (docs/WORKFLOW.md, "Decision entries"), each a file of its own that
-nothing assembles into another page: the revert keeps docs/decisions/ as at the reverted
-push's tip; everything else, the decisions page included, is the exact revert.
+Only a first-parent chain of two-parent pull request merges can be reverted. The
+decisions record is history, only ever added to (docs/WORKFLOW.md, "Auto-revert"), so a
+revert never removes a decision's text: it keeps docs/decisions/ and the decisions page
+as at the reverted push's tip, as the advice for a revert by hand keeps them as
+origin/main has them; everything else is the exact revert.
 Unreadable history or metadata, missing credentials and conflicts leave an issue
 without a pull request. Exit 0 means enqueued (or cleared), 1 means issue only or
 an incomplete revert, and 2 means the issue itself could not be recorded.
@@ -56,8 +57,11 @@ LABELS = {
     "lean": ("ededed", "Proofs and statements"),
     "docs": ("ededed", "Guides, briefs and reports"),
 }
-# Decision entries (tooling/decision-entries), each a file of its own.
+# The decisions record: its entries (tooling/decision-entries), each a file of its own,
+# and its page, safe_push.DECISIONS. A revert keeps both.
 ENTRIES = "docs/decisions"
+DECISIONS = "docs/briefs/0002-decisions.md"
+KEPT = (ENTRIES, DECISIONS)
 SHA = re.compile(r"[0-9a-f]{40}")
 SLUG = re.compile(r"[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+")
 MERGE = re.compile(r"Merge pull request #([1-9][0-9]*) from \S+")
@@ -284,18 +288,20 @@ def push_branch(repo: Path, slug: str, branch: str, token: str) -> None:
 
 
 def keep_decisions(target: Path, after: str) -> None:
-    """Put docs/decisions/ back as it was at `after`, the reverted push's tip and the
-    revert's base, in a commit of its own; nothing when the reverts left it as it was, or
-    it exists at neither. The decisions page is reverted like any other file."""
-    kept = git(target, "ls-tree", after, "--", ENTRIES)
-    if git(target, "ls-tree", "HEAD", "--", ENTRIES) != kept:
-        git(target, "rm", "-r", "-q", "--ignore-unmatch", "--", ENTRIES)
-        if kept:
-            git(target, "checkout", after, "--", ENTRIES)
+    """Put docs/decisions/ and the decisions page back as they were at `after`, the
+    reverted push's tip and the revert's base, in a commit of its own; nothing when the
+    reverts left both as they were. A path absent at `after` is left absent."""
+    kept = {path: git(target, "ls-tree", after, "--", path) for path in KEPT}
+    if any(git(target, "ls-tree", "HEAD", "--", path) != kept[path] for path in KEPT):
+        for path in KEPT:
+            git(target, "rm", "-r", "-q", "--ignore-unmatch", "--", path)
+            if kept[path]:
+                git(target, "checkout", after, "--", path)
         git(target, "commit", "-q", "-m",
-            f"Keep {ENTRIES}/ as at {after[:12]}: decisions are history")
-    if git(target, "ls-tree", "HEAD", "--", ENTRIES) != kept:
-        raise Refusal(f"The revert could not keep {ENTRIES}/ as at the failed push.")
+            f"Keep {ENTRIES}/ and {DECISIONS} as at {after[:12]}: decisions are history")
+    for path in KEPT:
+        if git(target, "ls-tree", "HEAD", "--", path) != kept[path]:
+            raise Refusal(f"The revert could not keep {path} as at the failed push.")
 
 
 def make_revert(source: Path, target: Path, after: str,
@@ -374,7 +380,8 @@ def dry_run(args, repo: Path, env: dict) -> int:
     print(f"Would clone locally and create branch revert/{args.after[:12]} from {args.after}.")
     for train in entries:
         print(f"Would git revert --no-edit -m 1 {train.sha}.")
-    print(f"Would keep {ENTRIES}/ as at {args.after}: decision entries are history.")
+    print(f"Would keep {ENTRIES}/ and {DECISIONS} as at {args.after}: "
+          "the decisions record is history.")
     print("Would stop on any conflict, update the issue and open no pull request.")
     print("Would sign an RS256 JWT with openssl, find the installation and mint its scoped token.")
     print("Would ensure auto-revert, the trains' kind labels and security-review "

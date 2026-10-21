@@ -476,10 +476,11 @@ class QueueTests(unittest.TestCase):
 
     def test_safe_push_counts_current_exactly_the_blocks_the_judge_accepts(self):
         # The b7aac65f-like case, a head built on newer main than an old main commit,
-        # with a member merged on its own first, so that the head's merge base with main,
-        # which safe_push's queue mode compares against, lies off main's chain. For each
-        # block, safe_push's block_current and the judge's pre-flight agree, whatever base
-        # the merge compares against.
+        # with a member merged on its own first, so that the head's merge base with main
+        # lies off main's chain. safe_push's queue mode compares against the newest commit
+        # of main's chain that the head contains, not that merge base: the base of every
+        # block the judge accepts. For each block, safe_push's block_current and the
+        # judge's pre-flight agree, whatever base the merge compares against.
         old_base = self.base
         newer = self.make([old_base], {
             "scripts/safe_push.py": harness_source("A newer main harness.")})
@@ -488,8 +489,9 @@ class QueueTests(unittest.TestCase):
         head = self.merge(newer, self.make([member], {SECOND: "The train's own line.\n"}))
         ctx = queue.safe_push.Context(self.repo, head, main, 1, "", None, {},
                                       branch="docs/agreement", queue=True, harness_sha=main)
-        merge_base = queue.safe_push.queue_base(ctx, head)
-        self.assertEqual(merge_base, member)
+        self.assertEqual(self.git("merge-base", "--all", head, main).split(), [member])
+        compared_base = queue.safe_push.queue_base(ctx, head)
+        self.assertEqual(compared_base, newer)
         cases = {(newer, newer): True, (newer, main): True, (old_base, old_base): False,
                  (old_base, newer): False, (newer, old_base): False, (member, member): False,
                  (member, main): False, (main, main): False}
@@ -502,7 +504,9 @@ class QueueTests(unittest.TestCase):
             except queue.Refused:
                 judged = False
             self.assertEqual(judged, accepted, (base, harness))
-            for compared in (merge_base, base):
+            if accepted:
+                self.assertEqual(base, compared_base, (base, harness))
+            for compared in (compared_base, member, base):
                 with self.subTest(base=base, harness=harness, compared=compared):
                     current = queue.safe_push.block_current(
                         ctx._replace(base=compared), queue.safe_push.BLOCK.search(block),
@@ -1162,7 +1166,7 @@ class QueueTests(unittest.TestCase):
         """Main with decision entries, each a file of its own (and, if given, `page` as
         its decisions page); a train adding one, with a reviewed line; that train's merge
         pushed and failed; and the bot's revert of it, which restores the reviewed line
-        and keeps the folder, unless `revert` says otherwise."""
+        and keeps the folder and the page, unless `revert` says otherwise."""
         changes = {"docs/decisions/README.md": "One file a decision.\n"}
         if page is not None:
             changes[PAGE] = page
@@ -1181,10 +1185,22 @@ class QueueTests(unittest.TestCase):
         return self.merge(self.base, head, 3)
 
     def test_auto_revert_keeps_decision_entries(self):
-        # Entries are history: the revert keeps docs/decisions/ as at the failed push;
-        # the rest is reverted.
+        # The record is history: the revert keeps docs/decisions/ and the decisions page
+        # as at the failed push; the rest is reverted.
         head = self.entries_revert_group()
         self.verdict(self.cli(head=head), 0, "queue: PASS")
+
+    def test_auto_revert_keeps_an_edited_decision_entry(self):
+        # A train that edits an entry already on main: the revert keeps the edit, and the
+        # plain git revert, which undoes it, refuses.
+        edited = {"docs/decisions/README.md": "One file a decision, kept.\n"}
+        base, snapshot = self.base, copy.deepcopy(self.snapshot)
+        head = self.entries_revert_group(train=edited)
+        self.verdict(self.cli(head=head), 0, "queue: PASS")
+        self.base, self.snapshot = base, snapshot
+        head = self.entries_revert_group(
+            train=edited, revert={"docs/decisions/README.md": "One file a decision.\n"})
+        self.verdict(self.cli(head=head), 1, "not the exact revert tree (extra change)")
 
     def test_auto_revert_that_takes_a_decision_entry_away_refuses(self):
         # The plain git revert, which deletes the entry.
@@ -1204,31 +1220,54 @@ class QueueTests(unittest.TestCase):
 
     ADDED = "\nA page decision the train added.\n"
 
-    def test_auto_revert_reverts_the_decisions_page_like_any_file(self):
+    def test_auto_revert_keeps_the_decisions_page_with_the_entries(self):
+        # The page is the record too, only ever added to: the revert keeps both it and the
+        # train's entry as at the failed push.
+        original = self.trees[self.base][PAGE]
+        head = self.entries_revert_group(train={PAGE: original + self.ADDED})
+        self.assertEqual(self.trees[head][PAGE], original + self.ADDED)
+        self.verdict(self.cli(head=head), 0, "queue: PASS")
+
+    def test_auto_revert_that_reverts_the_page_s_added_lines_refuses(self):
+        # The plain git revert, which takes the train's lines off the page again.
         original = self.trees[self.base][PAGE]
         head = self.entries_revert_group(train={PAGE: original + self.ADDED},
                                          revert={PAGE: original})
-        self.verdict(self.cli(head=head), 0, "queue: PASS")
-
-    def test_auto_revert_that_keeps_a_change_to_the_decisions_page_refuses(self):
-        original = self.trees[self.base][PAGE]
-        head = self.entries_revert_group(train={PAGE: original + self.ADDED})
         self.verdict(self.cli(head=head), 1, "not the exact revert tree (extra change)")
 
-    def test_auto_revert_reads_no_region_of_the_decisions_page(self):
-        # Entries are never assembled into the page, so no part of it is kept: comments
-        # of the shape an earlier design gave a region, paired or not, change nothing.
+    def test_auto_revert_may_change_nothing_else_on_the_decisions_page(self):
+        original = self.trees[self.base][PAGE]
+        kept = original + self.ADDED
+        base, snapshot = self.base, copy.deepcopy(self.snapshot)
+        for page in (kept + "\nA line the revert added.\n",
+                     kept.replace("A previous decision.", "A previous decision, edited."),
+                     kept.replace("A previous decision.\n", ""),
+                     original + "\nA page decision the train added, edited.\n",
+                     None):
+            with self.subTest(page=page):
+                self.base, self.snapshot = base, copy.deepcopy(snapshot)
+                head = self.entries_revert_group(train={PAGE: kept}, revert={PAGE: page})
+                self.verdict(self.cli(head=head), 1,
+                             "not the exact revert tree (extra change)")
+
+    def test_auto_revert_keeps_the_whole_page_whatever_comments_it_holds(self):
+        # The whole page is kept, so comments of the shape an earlier design gave a region
+        # of it, paired or not, change nothing: the kept page passes, and a revert of the
+        # lines between them refuses.
         begin, end = "<!-- decisions:entries begin -->", "<!-- decisions:entries end -->"
         original = self.trees[self.base][PAGE]
         base, snapshot = self.base, copy.deepcopy(self.snapshot)
         for before, after in ((f"{begin}\n{end}\n", f"{begin}\n{self.ADDED}{end}\n"),
                               (f"{end}\n", f"{self.ADDED}{end}\n")):
-            with self.subTest(before=before):
-                self.base, self.snapshot = base, copy.deepcopy(snapshot)
-                head = self.entries_revert_group(page=original + before,
-                                                 train={PAGE: original + after},
-                                                 revert={PAGE: original + before})
-                self.verdict(self.cli(head=head), 0, "queue: PASS")
+            for revert, code, message in (
+                    ({}, 0, "queue: PASS"),
+                    ({PAGE: original + before}, 1, "not the exact revert tree")):
+                with self.subTest(before=before, code=code):
+                    self.base, self.snapshot = base, copy.deepcopy(snapshot)
+                    head = self.entries_revert_group(page=original + before,
+                                                     train={PAGE: original + after},
+                                                     revert=revert)
+                    self.verdict(self.cli(head=head), code, message)
 
     def test_auto_revert_without_decision_entries_adds_none(self):
         # Without the folder, nothing changes: a revert that adds one is an extra change.
@@ -1384,7 +1423,7 @@ class QueueTests(unittest.TestCase):
         install = [step for step in steps if step.get("name") ==
                    "Install the queue tests' pinned YAML parser"]
         offline = [step for step in steps if step.get("name") ==
-                   "Check the queue and train checks, case by case"]
+                   "Check the queue and train checks, and automatic reverts, case by case"]
         judge = [step for step in steps if step.get("name") ==
                  "Check the group with main's copy of check_queue.py"]
         self.assertEqual(len(install), 1)

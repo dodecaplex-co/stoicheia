@@ -137,7 +137,8 @@ unknown", with no revert advised. Afterwards that merge commit is checked to joi
 base and the head checked, with the head's tree.
 
 When main's rules require a merge queue, --merge keeps these gates, checks the head
-against its merge base with origin/main, and enqueues it with expectedHeadOid pinned.
+against the newest commit of origin/main's first-parent chain that it contains, as the
+queue's judge does, and enqueues it with expectedHeadOid pinned.
 It follows the queue to a verified merge or an ejection; an unreadable or timed out
 verdict is exit 3. In both modes, open main-red issues or a failed completed post-merge
 run at main's tip refuse every merge but the fix's: a pull request whose body has the
@@ -2467,8 +2468,9 @@ def train_input(ctx: Context, body: str | None) -> str | None:
 def train_check(ctx: Context, body: str, rep: Report) -> None:
     """Run origin/main's train checker on the commit and the body. While origin/main has
     none, every train is refused: no commit's own copy ever runs in its place. In queue
-    mode the base compared against is the head's merge base with main, older than main's
-    tip, whose checker (ctx.harness_sha's) is the one that runs."""
+    mode the base compared against is the newest commit of main's chain that the head
+    contains (queue_base), the judge's base too, perhaps older than main's tip, whose
+    checker (ctx.harness_sha's) is the one that runs."""
     rep.heading("3. train")
     started = time.time()
     try:
@@ -2502,12 +2504,12 @@ def block_current(ctx: Context, m, record: dict) -> bool:
     is the newest commit of main's first-parent chain that the head contains, which is
     what the pre-flight records (origin/main's tip, which the head held), and the
     harness that base or a later commit of the same chain. So a summary the judge would
-    refuse is never current here, and one it would accept is current, in queue mode
-    even when the head's merge base with main, which the merge checks against, lies off
-    main's chain (a member merged before its train): the summary names the pre-flight's
-    base, not the merge's. Without the queue the base and the harness are both main's
-    tip, as the head holds it. That the full checks ran again here, and passed, leaves a
-    summary of the same head and base true."""
+    refuse is never current here, and one it would accept is current; in queue mode its
+    base is the one this merge checks against (queue_base), even when the head's merge
+    base with main lies off main's chain (a member merged before its train). Without the
+    queue the base and the harness are both main's tip, as the head holds it. That the
+    full checks ran again here, and passed, leaves a summary of the same head and base
+    true."""
     if not m:
         return False
     sha, base, harness = m.group(1), m.group(2), m.group(3) or m.group(2)
@@ -3863,7 +3865,7 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
                 f"`gh pr view {number} --json headRepositoryOwner`")
     body = view.get("body") or ""
     # The template in force is current main's (the harness's), also in queue mode, where
-    # ctx.base is the head's older merge base: a box main added since binds this merge.
+    # ctx.base may be an older main (queue_base): a box main added since binds this merge.
     policy = ctx.harness_sha or ctx.base
     template = show(ctx.repo, policy, TEMPLATE) or show(ctx.repo, ctx.sha, TEMPLATE)
     problems = checklist_problems(body, template, bool(protected))
@@ -4228,11 +4230,18 @@ def red_or_fix(rep: Report, red: list[int], failed: str | None, detail: str,
 
 
 def queue_base(ctx: Context, head: str) -> str:
-    """A queued head is checked against its unique merge base with current main."""
-    bases = git(ctx.repo, "merge-base", "--all", head, ctx.base).split()
-    if len(bases) != 1 or not FULL_OID.fullmatch(bases[0]):
-        raise Refusal("the queued head has no unique merge base with origin/main")
-    return bases[0]
+    """A queued head is checked against the newest commit of current main's first-parent
+    chain that it contains: the base its pre-flight recorded, origin/main's tip then, and
+    the base the queue's judge holds that summary to and runs its train check against
+    (check_queue.preflight). So --merge's own checks, its train check and the judge
+    compare against one base, even when the head's merge base with main lies off the
+    chain (a member merged on its own before its train)."""
+    held = set(git(ctx.repo, "rev-list", head).split())
+    chain = git(ctx.repo, "rev-list", "--first-parent", ctx.base).split()
+    base = next((tip for tip in chain if tip in held), None)
+    if base is None or not FULL_OID.fullmatch(base):
+        raise Refusal("the queued head contains no commit of origin/main's first-parent chain")
+    return base
 
 
 QUEUE_POLL = 10

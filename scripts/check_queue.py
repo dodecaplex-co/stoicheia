@@ -42,10 +42,9 @@ also merges cleanly. Reapplying T must reproduce the group on every non-exempt
 path. Generated files are excluded; added decisions lines must remain a
 subsequence. An automatic revert instead requires an exact git revert tree,
 the failed post-merge run's push range and the configured STOICHEIA_REVERT_BOT. Its one
-allowed difference: decision entries, files of their own that nothing assembles into
-another page, are history, so docs/decisions/ stays as at the revert's base, the failed
-push's tip; the decisions page itself is reverted like any file
-(auto_revert.keep_decisions makes the same tree). A failed run that is still in
+allowed difference: the decisions record is history, only ever added to, so
+docs/decisions/ and the decisions page stay as at the revert's base, the failed push's
+tip (auto_revert.keep_decisions makes the same tree). A failed run that is still in
 progress, as it is while its own revert job ends, is read again every RUN_POLL seconds
 for up to RUN_WAIT seconds, and refuses if it has not completed by then.
 
@@ -135,9 +134,10 @@ ISO_DATE = re.compile(r"\W*(\d{4})\W+(\d{1,2})\W+(\d{1,2})\W*")
 DAY_FIRST = re.compile(rf"(?i)\W*(\d{{1,2}}){ORDINAL}\W+([^\W\d_]+)\W+(\d{{4}})\W*")
 MONTH_FIRST = re.compile(rf"(?i)\W*([^\W\d_]+)\W+(\d{{1,2}}){ORDINAL}\W+(\d{{4}})\W*")
 GENERATED = (*safe_push.GENERATED, "book/", safe_push.DECISIONS)
-# Decision entries (tooling/decision-entries), each a file of its own: an automatic revert
-# keeps them.
+# The decisions record: its entries (tooling/decision-entries), each a file of its own,
+# and its page. An automatic revert keeps both.
 ENTRIES = "docs/decisions"
+KEPT = (ENTRIES, safe_push.DECISIONS)
 # A failed run still in progress is read again this often, in seconds, for at most this
 # long: the revert job is one of that run's own jobs.
 RUN_POLL = 15
@@ -732,12 +732,15 @@ def red_issue_names(pages, run_id: int) -> None:
 
 
 def kept_decisions(git, start: str) -> None:
-    """In the temporary revert checkout, put docs/decisions/ back as it was at `start`, the
-    revert's base: decision entries are history. Nothing else may differ from the exact
-    revert, the decisions page included; without the folder, nothing changes."""
-    git("rm", "-r", "-q", "--ignore-unmatch", "--", ENTRIES)
-    if git("ls-tree", start, "--", ENTRIES):
-        git("checkout", start, "--", ENTRIES)
+    """In the temporary revert checkout, put docs/decisions/ and the decisions page back as
+    they were at `start`, the revert's base: the decisions record is history, only ever
+    added to. Nothing else may differ from the exact revert; a path absent at `start` is
+    left absent. The reverts leave their changes staged, which git rm refuses to remove
+    unless forced."""
+    for path in KEPT:
+        git("rm", "-r", "-q", "-f", "--ignore-unmatch", "--", path)
+        if git("ls-tree", start, "--", path):
+            git("checkout", start, "--", path)
 
 
 def exact_revert(repo: Path, pr: dict, api: GitHub) -> None:

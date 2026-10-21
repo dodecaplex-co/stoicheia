@@ -3930,6 +3930,31 @@ class Queue(Edge):
                       self.gh_state()["prs"][0]["body"])
         self.assertNotIn(main, self.gh_state()["prs"][0]["body"])
 
+    def test_queue_checks_against_main_s_chain_when_a_member_merged_first(self):
+        # A member of the head merged on its own before it, so the head's merge base with
+        # main is that member, off main's first-parent chain. The merge compares against
+        # the newest commit of the chain that the head contains, the pre-flight's base and
+        # the judge's, so the pre-flight's record of that base stands in.
+        member = self.commit("A member merged on its own", {
+            "docs/queue-member.md": "A member's change.\n"})
+        sha = self.opened()
+        tree = git(WORK, "merge-tree", "--write-tree", BASE, member).splitlines()[0]
+        main = git(WORK, "commit-tree", tree, "-p", BASE, "-p", member, "-m",
+                   "Merge pull request #5 from owner/member").strip()
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{main}:refs/heads/main")
+        git(WORK, "fetch", "--quiet", "origin")
+        self.assertEqual(git(WORK, "merge-base", "--all", sha, main).split(), [member])
+        r = self.run_entry()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertIn(f"2 commits onto origin/main {BASE[:12]}", out)
+        self.assertIn(f"{sha[:12]} checked against origin/main {BASE[:12]}", out)
+        self.assertIn("the full checks are not repeated", out)
+        self.assertEqual(git(ORIGIN, "rev-list", "--parents", "-n", "1", "main").split()[1:],
+                         [main, sha])
+        self.assertIn(f"sha={sha} base={BASE} harness={BASE} -->",
+                      self.gh_state()["prs"][0]["body"])
+
     def test_queue_reads_main_s_current_template(self):
         # In queue mode the head is judged against its merge base, but the template in
         # force is current main's: a required box main added since binds the merge.
@@ -6315,8 +6340,8 @@ class Units(unittest.TestCase):
             self.assertFalse(safe_push.block_current(ctx, block(older, at=older), record))
             self.assertFalse(safe_push.block_current(ctx._replace(base=older),
                                                      block(older, at=older), record))
-            # And the reverse: the block the judge accepts is current, though the head's
-            # merge base with main, which this run compares against, is off main's chain.
+            # And the reverse: the block the judge accepts is current, whatever base the
+            # context names (block_current reads main's chain itself), even one off it.
             self.assertTrue(safe_push.block_current(ctx._replace(base="9" * 40),
                                                     block(base), record))
             self.assertTrue(safe_push.block_current(ctx._replace(base="9" * 40),
@@ -6402,15 +6427,33 @@ class Units(unittest.TestCase):
                 with self.assertRaisesRegex(safe_push.Refusal, "unreadable queue group head"):
                     safe_push.queue_group({"headCommit": commit})
 
-    def test_queue_base_needs_one_merge_base(self):
-        ctx = safe_push.Context(Path("."), "a" * 40, "b" * 40, 1, "", None, {})
-        for bases in ("", "c" * 40 + "\n" + "d" * 40, "short"):
-            with self.subTest(bases=bases):
-                with mock.patch.object(safe_push, "git", return_value=bases), \
-                        self.assertRaisesRegex(safe_push.Refusal, "no unique merge base"):
-                    safe_push.queue_base(ctx, "a" * 40)
-        with mock.patch.object(safe_push, "git", return_value="c" * 40 + "\n"):
-            self.assertEqual(safe_push.queue_base(ctx, "a" * 40), "c" * 40)
+    def test_queue_base_is_the_newest_main_commit_the_head_contains(self):
+        # Main's first-parent chain, newest first, and what the head holds: the base is the
+        # newest commit of the chain held, the judge's base for the block, never the head's
+        # merge base with main when that lies off the chain (a member merged on its own,
+        # "9" * 40 here, which the head holds and main has as a second parent).
+        tip, older, oldest, member, head = "d" * 40, "c" * 40, "b" * 40, "9" * 40, "a" * 40
+        ctx = safe_push.Context(Path("."), head, tip, 1, "", None, {})
+
+        def history(chain, held):
+            def answer(repo, *args, **kwargs):
+                return "\n".join(chain if "--first-parent" in args else held) + "\n"
+            return answer
+
+        chain = (tip, older, oldest)
+        for held, base in (((head, member, older, oldest), older),
+                           ((head, tip, older, oldest), tip),
+                           ((head, member, oldest), oldest)):
+            with self.subTest(held=held):
+                with mock.patch.object(safe_push, "git", side_effect=history(chain, held)):
+                    self.assertEqual(safe_push.queue_base(ctx, head), base)
+        for chain, held in ((chain, (head, member)), ((), (head, older)),
+                            (("short",), ("short",))):
+            with self.subTest(chain=chain, held=held):
+                with mock.patch.object(safe_push, "git", side_effect=history(chain, held)), \
+                        self.assertRaisesRegex(safe_push.Refusal, "contains no commit of "
+                                               "origin/main's first-parent chain"):
+                    safe_push.queue_base(ctx, head)
 
     def test_queue_main_refuses_a_closed_request_and_reports_an_unknown_end(self):
         head = "a" * 40

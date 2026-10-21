@@ -334,44 +334,68 @@ class AutoRevert(unittest.TestCase):
         return command(self.remote, "git", *(("rev-parse", revision) if name
                                               else ("show", revision)))
 
-    def test_decision_entries_are_kept(self):
-        # Entries are history: the revert keeps the folder as at the failed push; all else,
-        # the decisions page included, is reverted.
+    def changed(self, start):
+        """The files the pushed revert changes against `start`."""
+        return command(self.remote, "git", "diff", "--no-renames", "--name-only", start,
+                       self.pushes[0]["head"]).splitlines()
+
+    KEEP = f"Keep docs/decisions/ and {PAGE} as at"
+
+    def test_decision_entries_and_the_page_are_kept(self):
+        # The record is history, only ever added to: the revert keeps the folder and the
+        # page as at the failed push; all else is reverted.
         self.entries_landed()
         entry = "- **A train's decision.** Kept as history.\n"
+        page = self.PAGE_TEXT + "- **A page line.**\n"
         merge = self.train_files(11, {"chapter.txt": "Changed chapter.\n", self.ENTRY: entry,
-                                      self.PAGE: self.PAGE_TEXT + "- **A page line.**\n"})
+                                      self.PAGE: page})
         status, output = self.run_revert()
         self.assertEqual(status, 0, output)
         self.assertEqual(self.pushed("chapter.txt"), "Original chapter.")
         self.assertEqual(self.pushed(self.ENTRY), entry.strip())
-        self.assertEqual(self.pushed(self.PAGE), self.PAGE_TEXT.strip())
-        self.assertEqual(self.pushed("docs/decisions", name=True),
-                         self.git("rev-parse", f"{merge}:docs/decisions"))
-        self.assertEqual(self.pushed(self.PAGE, name=True),
-                         self.git("rev-parse", f"{self.before}:{self.PAGE}"))
-        self.assertIn("Keep docs/decisions/ as at", self.pushes[0]["subjects"])
+        self.assertEqual(self.pushed(self.PAGE), page.strip())
+        for path in ("docs/decisions", self.PAGE):
+            self.assertEqual(self.pushed(path, name=True),
+                             self.git("rev-parse", f"{merge}:{path}"))
+        self.assertEqual(self.changed(merge), ["chapter.txt"])
+        self.assertIn(f"{self.KEEP} {merge[:12]}", self.pushes[0]["subjects"])
         self.assertIn("was enqueued", self.body())
 
-    def reverts_the_page_exactly(self, before, after):
-        """Entries are never assembled into the page, so no part of it is kept: comments of
-        the shape an earlier design gave such a region change nothing."""
-        self.entries_landed(self.PAGE_TEXT + before)
-        self.train_files(11, {"chapter.txt": "Changed chapter.\n",
-                              self.PAGE: self.PAGE_TEXT + after})
+    def test_without_entries_the_page_is_still_kept(self):
+        # No folder: the page alone is kept, and no folder is made.
+        page = "# Decisions\n\n- **An earlier decision.**\n"
+        self.write(self.PAGE, page)
+        self.commit("The decisions page")
+        self.before = self.rev()
+        merge = self.train_files(11, {"chapter.txt": "Changed chapter.\n",
+                                      self.PAGE: page + "- **A page line.**\n"})
         status, output = self.run_revert()
         self.assertEqual(status, 0, output)
-        self.assertEqual(self.pushes[0]["tree"], self.git("rev-parse", self.before + "^{tree}"))
-        self.assertNotIn("Keep docs/decisions/", self.pushes[0]["subjects"])
+        self.assertEqual(self.changed(merge), ["chapter.txt"])
+        self.assertEqual(self.changed(self.before), [self.PAGE])
+        self.assertIn(self.KEEP, self.pushes[0]["subjects"])
+
+    def keeps_the_page_whole(self, before, after):
+        """The whole page is kept: comments of the shape an earlier design gave a region of
+        it change nothing."""
+        self.entries_landed(self.PAGE_TEXT + before)
+        merge = self.train_files(11, {"chapter.txt": "Changed chapter.\n",
+                                      self.PAGE: self.PAGE_TEXT + after})
+        status, output = self.run_revert()
+        self.assertEqual(status, 0, output)
+        self.assertEqual(self.pushed(self.PAGE, name=True),
+                         self.git("rev-parse", f"{merge}:{self.PAGE}"))
+        self.assertEqual(self.changed(merge), ["chapter.txt"])
+        self.assertIn(self.KEEP, self.pushes[0]["subjects"])
 
     BEGIN, END = "<!-- decisions:entries begin -->", "<!-- decisions:entries end -->"
 
-    def test_paired_region_comments_in_the_page_are_reverted_like_the_rest(self):
-        self.reverts_the_page_exactly(f"{self.BEGIN}\n{self.END}\n",
-                                      f"{self.BEGIN}\n- **A train's line.**\n{self.END}\n")
+    def test_paired_region_comments_in_the_page_change_nothing(self):
+        self.keeps_the_page_whole(f"{self.BEGIN}\n{self.END}\n",
+                                  f"{self.BEGIN}\n- **A train's line.**\n{self.END}\n")
 
-    def test_a_lone_region_comment_in_the_page_is_reverted_like_the_rest(self):
-        self.reverts_the_page_exactly(f"{self.END}\n", f"- **A train's line.**\n{self.END}\n")
+    def test_a_lone_region_comment_in_the_page_changes_nothing(self):
+        self.keeps_the_page_whole(f"{self.END}\n", f"- **A train's line.**\n{self.END}\n")
 
     def test_a_push_that_leaves_the_entries_alone_reverts_exactly(self):
         self.entries_landed()
@@ -626,10 +650,12 @@ class AutoRevert(unittest.TestCase):
             if isinstance(node, ast.Assign):
                 for target in node.targets:
                     if isinstance(target, ast.Name) and target.id in {
-                            "PROTECTED", "PROTECTED_JUDGED", "KIND_LABELS"}:
+                            "PROTECTED", "PROTECTED_JUDGED", "KIND_LABELS", "DECISIONS"}:
                         values[target.id] = ast.literal_eval(node.value)
         self.assertEqual(ar.PROTECTED, values["PROTECTED"] + values["PROTECTED_JUDGED"])
         self.assertEqual(ar.KINDS, set(values["KIND_LABELS"]))
+        # So is the decisions page, which a revert keeps.
+        self.assertEqual(ar.DECISIONS, values["DECISIONS"])
         for prefix in values["PROTECTED"] + values["PROTECTED_JUDGED"]:
             self.assertTrue(ar.protected(prefix + "example.py" if prefix.endswith("/")
                                          else prefix))

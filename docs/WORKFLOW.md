@@ -844,12 +844,13 @@ App either. The pull request carries `auto-revert`, the reverted requests' kind 
 lets that pull request trigger CI; a pull request opened with `GITHUB_TOKEN` would
 not trigger it.
 
-Decision entries, the files in `docs/decisions/` that tooling/decision-entries brings,
-are history, only ever added to, so a revert never takes one away: after the reverts, in
-a commit of its own, the script puts `docs/decisions/` back as it was at the failed
-push's tip. Each entry is a page of its own, which nothing assembles into another page,
-so nothing else is kept: everything else, the decisions page included, is the exact
-revert. Without the folder, nothing changes.
+The decisions record, the decisions page with the entries in `docs/decisions/` that
+tooling/decision-entries brings, is history, only ever added to, so a revert never
+removes a decision's text: after the reverts, in a commit of its own, the script puts
+`docs/decisions/` and the decisions page back as they were at the failed push's tip, as
+the advice for a revert by hand that tooling/decision-entries brings restores both from
+origin/main. Everything else is the exact revert. A path the failed push's tip lacks
+stays absent, so without the folder only the page is kept.
 
 The workflow records an issue with `GITHUB_TOKEN`, labelled `blocks-release` and
 `main-red`, naming the trains, their merge commits, the failed jobs and the run. It
@@ -864,9 +865,10 @@ when its named run is a failed post-merge run of a push to main, its branch is
 `revert/` and that push's first 12 hexadecimal digits, an open issue labelled
 `main-red` names the run, the merges it names are exactly the merges of that push (its
 `before` and `after` read from GitHub's record of pushes to main), newest first, and
-its tree is exactly those merges reverted, save that `docs/decisions/` stays as at the
-revert's base, the failed push's tip, as above: nothing else may differ, the decisions
-page included. The job that clears `main-red` runs no repository code at all.
+its tree is exactly those merges reverted, save that `docs/decisions/` and the decisions
+page stay as at the revert's base, the failed push's tip, as above: nothing else may
+differ, so a revert that takes a train's lines off the page, or changes it in any other
+way, refuses. The job that clears `main-red` runs no repository code at all.
 
 The revert job is one of the named run's own jobs, so the revert's group can be judged
 while that run is still in progress. The judge then reads the run again every 15
@@ -915,7 +917,11 @@ and a failing one is a failed push like any other.
 owner has chosen the authenticated source for the pre-flight's evidence that rule (b)
 asks for. The coordinator holds these steps: add the merge queue rule for main, keep merge commits and enable
 "only merge non-failing pull requests"; require `check`, `model`, `negative`,
-`formal-model`, `acceptance`, `queue-integrity` and `queue-gaps`; install the revert App
+`formal-model`, `acceptance`, `queue-integrity` and `queue-gaps`; set the queue's status
+check timeout to allow each of them, `queue-integrity` with the judge's wait of up to 10
+minutes for a revert's run to complete before it judges the revert (above), on top of
+the job's own work, since a shorter timeout ejects every automatic revert whose run is
+still in progress; install the revert App
 for this repository with contents read, and pull requests and merge queues write (a
 train that changed `.github/workflows/` cannot be pushed by the job's token, and is
 reverted by hand); add the rulesets that keep branches other than `revert/**` and tags
@@ -1094,8 +1100,12 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    main's health (a red main admits only its fix: "Out of a red main", above) and runs
    the secret scan and guards on the pull request's head again, every time. With the
    queue off, the base is current origin/main, which the head must contain. With the
-   queue on, the base is the head's unique merge base with current
-   origin/main, so the head need not contain the intervening main changes. The
+   queue on, the base is the newest commit of current origin/main's first-parent chain
+   that the head contains, which is what its pre-flight recorded, so the head need not
+   contain the intervening main changes. It is not the head's merge base with main,
+   which lies off the chain when a member was merged on its own before its train: so
+   `--merge`'s own checks, its train check and the queue's judge (rule (b), above)
+   compare against one base. The
    pre-flight's record is a local file, which code the pre-flight ran (a commit's
    checks, Lean at elaboration) could have written, so it stands in only for the full
    checks, which CI runs as well, and only for this head and base with the running
@@ -1109,9 +1119,8 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    pre-flight records, and the harness that base or a later commit of the chain (with
    the queue off, both are main's tip); for a train, with its train step passing. So a
    summary the judge would refuse is never taken as current, and one it would accept
-   is, even in queue mode when the head's merge base with main lies off main's chain
-   (a member merged on its own before its train), though the merge then checks against
-   that merge base. Every other part safe_push wrote must be up to
+   is, its base the one the merge checks against, even when the head's merge base with
+   main lies off main's chain. Every other part safe_push wrote must be up to
    date; a body edited in GitHub's page, which keeps CRLF line ends, is up to date when
    it differs from those parts by line ends alone. `--merge` never writes the
    pull request body: when one of those parts is stale, it refuses before writing, and
