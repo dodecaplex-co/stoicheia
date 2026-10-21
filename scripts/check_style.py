@@ -212,15 +212,13 @@ REACH_PENDING: dict[str, tuple[str, str]] = {
     "Elements/BookII/Prop14.lean": ("S22", "the records of Books I and II (#29), with the record"),
     "Elements/BookIII/Prop10.lean": ("S22", "the next change to the file, with its record"),
     "Elements/BookIII/Prop19.lean": ("S22", "the next change to the file, with its record"),
-    # The foundations' notes (S22), and the rendered docstrings of Transfer.lean (S7): the
-    # coordinator's files.
+    # The foundations' notes (S22): the coordinator's files.
     "Elements/Foundations/Definitions.lean": ("S22", "the coordinator, who owns the foundations"),
     "Elements/Foundations/DefinitionsII.lean": ("S22", "the coordinator, who owns the foundations"),
     "Elements/Foundations/DefinitionsIII.lean": ("S22", "the coordinator, after the mixed angles (#57)"),
     "Elements/Foundations/Magnitudes.lean": ("S22", "the coordinator, who owns the foundations"),
     "Elements/Foundations/Phrases.lean": ("S22", "the coordinator, who owns the foundations"),
     "Elements/Foundations/Postulates.lean": ("S22", "the coordinator, who owns the foundations"),
-    "Elements/Foundations/Tacit/Transfer.lean": ("S7", "the coordinator, who owns the foundations"),
     "Elements/Foundations/Words.lean": ("S22", "the coordinator, who owns the foundations"),
 }
 

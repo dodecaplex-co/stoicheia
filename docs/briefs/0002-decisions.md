@@ -3945,8 +3945,13 @@ findings:
   hyperbolic.py), so its test that each entry is needed passes again; nothing is widened.
   [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py)'s example decorator `gs_ti()`
   becomes `gs_convex('in')`, an entry that stays.
-  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) updates the measured counts for
-  III.1, its porism and III.2; its axiom examples use retained assumptions or identify the
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) updates III.2's measured count of
+  its own axioms, 17 to 11 (III.1's and its porism's counts left the row when main pinned
+  them in the expectations); its axiom examples use retained assumptions or identify the
   retired rules as theorems. [`review/SCHEMA.md`](../../review/SCHEMA.md) marks the overlap
   examples that treated Generalities 3 as an axiom as historical; its fields, requirements
   and worked TOML examples stay unchanged.
+  [`scripts/check_style.py`](../../scripts/check_style.py) takes
+  `Elements/Foundations/Tacit/Transfer.lean` out of `REACH_PENDING`: after the retirement
+  the check reports no finding of S7 left there, with Lean and without, so the entry is
+  done and its rule now applies in full; only stricter.
