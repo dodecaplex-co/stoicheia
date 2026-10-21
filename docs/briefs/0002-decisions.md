@@ -3921,9 +3921,10 @@ findings:
   `module`", checked with Lean 4.35 against the built I.1), since the edition's files are
   not modules, so none can import a proposition today; the rule refuses them all the same,
   and their plants keep it ready for when the files are modules. The rule now reads every
-  `import` in the Lean as rule 4 reads it, through `read_lean`, so that a comment never
-  hides one and a string, a raw string or a «…» name never makes one, save a string whose
-  braces `read_lean` keeps as code. It takes the module named after each import, past
+  `import` through the unchanged shared `read_lean` reader, as rule 4 does. A comment that
+  reader removes cannot hide one, and a string, a raw string or a «…» name never makes
+  one, save a string whose braces `read_lean` keeps as code. It takes the module named
+  after each import, past
   `all`, and refuses the import when that module, in NFKC and case-folded, begins
   `Elements.Book`. The exception fails closed: rule 4 keeps a string's braces as code when
   its two readings, plain and with holes, end in one place, so an `import` inside them is
@@ -3963,6 +3964,9 @@ findings:
   the edition's files, `brought_in` refuses a module whose path beneath the repository
   passes through a symbolic link, without reading its target, as the scan refuses a linked
   file; the symbolic-link test fails against the rule as it stood before that change and
-  passes now. Nothing is loosened, and #197's forbidden-command scan is untouched. The
-  protected files changed are `scripts/check_fidelity.py`, `scripts/negative_tests.py` and
-  `tests/test_negative_tests.py`.
+  passes now. This change leaves the shared reader and file-newline handling unchanged.
+  The reader's overlapping-comment boundary and Python's universal-newline translation
+  can still hide direct or transitive imports; an overlapping-comment import that the
+  former raw-line guard refused is one such case. Fixes to those shared limits remain
+  deferred to #197 and #207. The protected files changed are
+  `scripts/check_fidelity.py`, `scripts/negative_tests.py` and `tests/test_negative_tests.py`.
