@@ -393,7 +393,7 @@ FOLDED_HOME = "-" + "Users" + "-someone"
 SCRATCHPAD = "/private" + "/tmp/" + "claude" + "-501/" + FOLDED_HOME + "/0123/scratchpad/x.txt"
 
 PASSING = [{"name": n, "bucket": "pass", "state": "SUCCESS", "workflow": "CI"}
-           for n in ("check", "model", "negative")]
+           for n in ("check", "model", "negative", "formal-model", "acceptance")]
 
 # Judges the runs of a passing --fast run made by hand, then the same with the structured
 # run's last line dropped; prints the two lists of failures.
@@ -5026,6 +5026,24 @@ class Units(unittest.TestCase):
         self.assertEqual(judge(PASSING[:2])[0], "missing")
         self.assertEqual(judge(PASSING + [{"name": "check", "bucket": "fail"}])[0], "failure")
         self.assertEqual(judge(PASSING + [{"name": "other", "bucket": "pending"}])[0], "pending")
+        # The two checks the ruleset gained on 20 October (#142) hold a merge as the first
+        # three do. `acceptance` is skipped in the push event's run, so a skipped run beside
+        # the pull request's passing one is a pass, and a skipped run alone is not.
+        for name in ("formal-model", "acceptance"):
+            with self.subTest(name=name):
+                own = next(c for c in PASSING if c["name"] == name)
+                others = [c for c in PASSING if c is not own]
+                failed = dict(own, bucket="fail", state="FAILURE")
+                skipped = dict(own, bucket="skipping", state="SKIPPED")
+                verdict, detail = judge(others)
+                self.assertEqual(verdict, "missing")
+                self.assertIn(f"no passing run of {name} ", detail)
+                verdict, detail = judge(others + [failed])
+                self.assertEqual(verdict, "failure")
+                self.assertIn(f"failing: {name} ", detail)
+                self.assertEqual(judge(PASSING + [failed])[0], "failure")
+                self.assertEqual(judge(others + [skipped])[0], "missing")
+                self.assertEqual(judge(PASSING + [skipped])[0], "success")
 
     @staticmethod
     def law(body: str, path: str = "tests/model/hyperbolic.py",
