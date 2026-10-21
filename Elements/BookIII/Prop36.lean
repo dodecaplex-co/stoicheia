@@ -1,4 +1,5 @@
 import Elements.Figure.Basics
+import Elements.Figure.Circles
 import Elements.BookIII.Squares
 import Elements.BookIII.Circumferences
 import Elements.BookI.Prop12

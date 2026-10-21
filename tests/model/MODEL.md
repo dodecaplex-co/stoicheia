@@ -1,6 +1,6 @@
 # The model behind the axioms
 
-Stoicheia's proofs rest on 87 axioms: Postulates 1 to 5, Definition 15, and 81 tacit
+Stoicheia's proofs rest on 79 axioms: Postulates 1 to 5, Definition 15, and 73 tacit
 rules, most of them the rules of System E (Jeremy Avigad, Edward Dean and John Mumma, ["A
 formal system for Euclid's *Elements*"](https://doi.org/10.1017/S1755020309990098), 2009).
 Lean checks that
@@ -9,18 +9,18 @@ at once. If they could not, every certificate would be worthless, because anythi
 from a contradiction.
 
 This page gives the reasons for thinking they can. It reads the words in the ordinary
-plane, goes through the 87 axioms one at a time, says why each one holds there, and shows
+plane, goes through the 79 axioms one at a time, says why each one holds there, and shows
 the numbers from the programs in this folder that test each one against the plane. It
 does the same in the hyperbolic plane, where Postulate 5 fails and every other axiom
 passes the tests. It ends with [the formal model](#the-formal-model), in which Lean checks
-that the ordinary plane satisfies every one of the 87, and with [what the evidence shows,
+that the ordinary plane satisfies every one of the 79, and with [what the evidence shows,
 and what it does not](#what-this-shows-and-what-it-does-not).
 
 ## The plane
 
 The words Euclid leaves undefined are `opaque` in Lean
 ([Words.lean](../../Elements/Foundations/Words.lean)): Lean knows nothing of them but what
-the axioms say. So any reading of the words that makes all 87 axioms true is a model.
+the axioms say. So any reading of the words that makes all 79 axioms true is a model.
 Here is ours.
 
 | Word | In the plane |
@@ -78,9 +78,9 @@ depend on the corresponding declarations remaining in the axiom registry.
   hypotheses on purpose, where chance rarely meets them (three straight lines through one
   point, a right angle, two circles through a common point), over a large lattice and over
   fractions.
-- **[mutations.py](mutations.py)** weakens 15 axioms on purpose, by dropping or loosening
-  one guard, and checks that each weakened axiom has a counterexample. So the harness can
-  see a false axiom when there is one.
+- **[mutations.py](mutations.py)** weakens 15 rules on purpose, by dropping or loosening
+  one guard, and checks that each weakened rule has a counterexample. So the harness can
+  see a false rule when there is one.
 - **[grid_check.py](grid_check.py)** and **[angle_check.py](angle_check.py)** are a second
   opinion, written separately: the incidence, order and circle rules exactly on a grid,
   and the angle, area, Postulate 4, Postulate 5 and superposition rules in floating point.
@@ -105,9 +105,9 @@ run.py and hyperbolic.py are new.
 ## What the numbers say
 
 <!-- counts:begin -->
-Counts from `run.py --full --write` at commit `9dbe96182b9a`, 2026-10-17, Python 3.11.9. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
+Counts from `run.py --full --write` at commit `8fe005701f4c`, 2026-10-19, Python 3.11.9. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
 
-In the plane: **13,454,289** configurations met an axiom's hypotheses (1,558,659 in the search, 10,321,534 exhaustive, 1,574,096 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 729,838 configurations met an axiom's hypotheses; Postulate 5 failed 1,189 times and every other axiom held.
+In the plane: **6,590,542** configurations met an axiom's hypotheses (1,477,887 in the search, 3,688,278 exhaustive, 1,424,377 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 679,398 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
 
 | Axiom | Search, seeds 1-3 | Exhaustive | Structured | Hyperbolic |
 |---|--:|--:|--:|--:|
@@ -133,71 +133,76 @@ In the plane: **13,454,289** configurations met an axiom's hypotheses (1,558,659
 | `Tacit.exists_point_opposite_side` | 988 | · | 89,623 | 7,992 |
 | `Tacit.exists_point_on_circle` | 60,000 | · | · | 20,000 |
 | `Tacit.exists_point_inside_circle` | 60,000 | · | · | 20,000 |
-| `Tacit.exists_point_outside_circle` | 60,000 | · | · | 20,000 |
-| `Tacit.line_circle_between` | 2,784 | 44,088 | 44,974 | 3,842 |
-| `Tacit.line_circle_beyond` | 7,225 | 80,320 | 57,135 | 9,609 |
-| `Tacit.circles_meet_same_side` | 364 | 216,488 | 40,033 | 8,980 |
-| `Tacit.circles_meet_opposite_side` | 397 | 216,488 | 40,177 | 8,852 |
-| `Tacit.line_unique` | 17,498 | 600 | · | 1,892 |
-| `Tacit.centre_unique` | 18,477 | 72 | · | 2,173 |
-| `Tacit.centre_inside` | 28,513 | 72 | · | 4,022 |
-| `Tacit.inside_not_on` | 33,143 | 1,260 | · | 9,421 |
-| `Tacit.between_symm` | 4,752 | 304 | · | 11,348 |
-| `Tacit.ne_of_between` | 4,828 | 304 | · | 11,438 |
-| `Tacit.ne_of_between_ends` | 4,733 | 304 | · | 11,382 |
-| `Tacit.not_between_of_between` | 4,789 | 304 | · | 11,334 |
-| `Tacit.on_line_of_between` | 5,525 | 304 | 7,215 | 394 |
-| `Tacit.on_line_of_between_ends` | 5,491 | 304 | 7,275 | 397 |
-| `Tacit.between_of_between_left` | 633 | 128 | 36,856 | 4,803 |
-| `Tacit.between_of_between_right` | 610 | 128 | 43,514 | 4,037 |
-| `Tacit.between_cases` | 16,489 | 912 | · | 2,191 |
-| `Tacit.not_between_of_between_between` | 1,771 | 560 | 48,699 | 5,022 |
-| `Tacit.same_side_refl` | 941 | 3,160 | · | 8,005 |
-| `Tacit.same_side_symm` | 369 | 45,192 | · | 4,381 |
-| `Tacit.not_on_line_of_same_side` | 332 | 45,192 | · | 4,333 |
-| `Tacit.same_side_trans` | 240 | 724,792 | 33,327 | 5,189 |
-| `Tacit.same_side_or` | 7 | 595,104 | 14,059 | 1,868 |
-| `Tacit.pasch1` | 1 | 17,160 | 28,583 | 3,370 |
-| `Tacit.pasch2` | 307 | 3,872 | 8,435 | 1,412 |
-| `Tacit.pasch3` | 5,775 | 3,856 | 15,576 | 1,630 |
-| `Tacit.pasch4` | 241 | 3,552 | 20,921 | 2,217 |
-| `Tacit.triple_incidence1` | 0 | 77,960 | 7,925 | 1,159 |
-| `Tacit.triple_incidence2` | 1 | 77,960 | 8,043 | 1,071 |
-| `Tacit.triple_incidence3` | 0 | 315,152 | 1,246 | 615 |
-| `Tacit.between_of_inside_chord` | 243 | 3,228 | 37,732 | 8,095 |
-| `Tacit.inside_of_between` | 1,663 | 76,104 | 39,272 | 6,718 |
-| `Tacit.outside_of_between` | 442 | 281,664 | 47,802 | 2,044 |
-| `Tacit.not_same_side_of_circles_meet` | 0 | 1,704 | 939 | 4,080 |
-| `Tacit.lines_meet_of_opposite_sides` | 21 | 26,248 | 39,362 | 4,461 |
-| `Tacit.line_meets_circle_of_opposite_sides` | 1,115 | 6,161,192 | 58,077 | 7,031 |
-| `Tacit.line_meets_circle_of_inside` | 27,936 | 30,204 | · | 5,018 |
-| `Tacit.circles_meet_of_on_inside_outside` | 782 | 49,616 | 358 | 995 |
-| `Tacit.circles_meet` | 1,341 | 10,668 | 1,587 | 2,585 |
-| `Tacit.eq_of_len_eq_zero` | 41,904 | 25 | · | 11,587 |
+| `Tacit.line_circle_between` | 2,821 | 44,088 | 44,974 | 3,820 |
+| `Tacit.line_circle_beyond` | 7,222 | 80,320 | 57,135 | 9,637 |
+| `Tacit.circles_meet_same_side` | 347 | 216,488 | 40,033 | 9,003 |
+| `Tacit.circles_meet_opposite_side` | 408 | 216,488 | 40,177 | 8,804 |
+| `Tacit.line_unique` | 17,379 | 600 | · | 1,919 |
+| `Tacit.centre_inside` | 28,539 | 72 | · | 4,161 |
+| `Tacit.inside_not_on` | 33,376 | 1,260 | · | 9,305 |
+| `Tacit.between_symm` | 4,840 | 304 | · | 11,454 |
+| `Tacit.ne_of_between` | 4,781 | 304 | · | 11,364 |
+| `Tacit.ne_of_between_ends` | 4,808 | 304 | · | 11,350 |
+| `Tacit.not_between_of_between` | 4,768 | 304 | · | 11,411 |
+| `Tacit.on_line_of_between` | 5,399 | 304 | 7,215 | 372 |
+| `Tacit.on_line_of_between_ends` | 5,534 | 304 | 7,275 | 390 |
+| `Tacit.between_of_between_left` | 727 | 128 | 36,856 | 4,689 |
+| `Tacit.between_of_between_right` | 701 | 128 | 43,514 | 4,076 |
+| `Tacit.between_cases` | 16,428 | 912 | · | 2,169 |
+| `Tacit.not_between_of_between_between` | 1,777 | 560 | 48,699 | 5,135 |
+| `Tacit.same_side_refl` | 921 | 3,160 | · | 7,939 |
+| `Tacit.same_side_symm` | 308 | 45,192 | · | 4,397 |
+| `Tacit.not_on_line_of_same_side` | 341 | 45,192 | · | 4,444 |
+| `Tacit.same_side_trans` | 221 | 724,792 | 33,327 | 5,204 |
+| `Tacit.same_side_or` | 12 | 595,104 | 14,059 | 1,826 |
+| `Tacit.pasch1` | 6 | 17,160 | 28,583 | 3,421 |
+| `Tacit.pasch2` | 305 | 3,872 | 8,435 | 1,389 |
+| `Tacit.pasch3` | 5,767 | 3,856 | 15,576 | 1,657 |
+| `Tacit.pasch4` | 216 | 3,552 | 20,921 | 2,240 |
+| `Tacit.triple_incidence1` | 0 | 77,960 | 7,925 | 1,086 |
+| `Tacit.triple_incidence2` | 0 | 77,960 | 8,043 | 1,148 |
+| `Tacit.between_of_inside_chord` | 264 | 3,228 | 37,732 | 8,008 |
+| `Tacit.outside_of_between` | 481 | 281,664 | 47,802 | 2,055 |
+| `Tacit.lines_meet_of_opposite_sides` | 14 | 26,248 | 39,362 | 4,407 |
+| `Tacit.line_meets_circle_of_inside` | 28,128 | 30,204 | · | 4,950 |
+| `Tacit.circles_meet_of_on_inside_outside` | 751 | 49,616 | 358 | 991 |
+| `Tacit.circles_meet` | 1,407 | 10,668 | 1,587 | 2,588 |
+| `Tacit.eq_of_len_eq_zero` | 41,971 | 25 | · | 11,658 |
 | `Tacit.len_self` | 60,000 | 25 | · | 20,000 |
 | `Tacit.len_symm` | 60,000 | 625 | · | 20,000 |
-| `Tacit.angle_symm` | 15,446 | 14,400 | · | 7,018 |
+| `Tacit.angle_symm` | 15,598 | 14,400 | · | 7,048 |
 | `Tacit.angle_le_two_right` | 60,000 | 15,625 | · | 20,000 |
 | `Tacit.area_degenerate` | 60,000 | 625 | · | 20,000 |
 | `Tacit.area_rotate` | 60,000 | 15,625 | · | 20,000 |
 | `Tacit.area_swap` | 60,000 | 15,625 | · | 20,000 |
-| `Tacit.area_congruent` | 54,662 | 375,479 | 94,050 | 10,818 |
-| `Tacit.len_add_of_between` | 4,811 | 304 | · | 9,962 |
-| `Tacit.circle_eq` | 853 | 2,448 | 27,089 | 4,259 |
-| `Tacit.on_circle_of_len_eq` | 2,536 | 2,448 | 27,123 | 6,738 |
-| `Tacit.inside_of_len_lt` | 3,035 | 5,776 | 19,704 | 3,534 |
-| `Tacit.len_lt_of_inside` | 2,992 | 5,776 | 19,736 | 3,500 |
-| `Tacit.angle_eq_zero_of_same_ray` | 15,171 | 1,208 | · | 2,580 |
-| `Tacit.same_ray_of_angle_eq_zero` | 15,154 | 1,208 | · | 2,674 |
-| `Tacit.angle_add_of_inside` | 5 | 77,960 | 24,987 | 3,747 |
-| `Tacit.inside_of_angle_add` | 8 | 77,960 | 25,019 | 3,845 |
-| `Tacit.adjacent_eq_of_right` | 1 | 1,072 | 25,166 | 6,043 |
-| `Tacit.angle_eq_of_same_rays` | 7,021 | 60,032 | 8,676 | 4,152 |
-| `Tacit.area_eq_zero_of_on_line` | 24,674 | 2,112 | · | 4,793 |
-| `Tacit.on_line_of_area_eq_zero` | 24,785 | 2,112 | · | 4,645 |
-| `Tacit.area_add_of_between` | 19 | 6,176 | 55,499 | 8,550 |
-| `Tacit.between_of_area_add` | 21 | 6,176 | 56,023 | 8,422 |
-| `Tacit.superposition` | 111 | 363,888 | 71,970 | 8,605 |
+| `Tacit.area_congruent` | 54,653 | 375,479 | 94,050 | 10,893 |
+| `Tacit.len_add_of_between` | 4,753 | 304 | · | 9,877 |
+| `Tacit.circle_eq` | 761 | 2,448 | 27,089 | 4,304 |
+| `Tacit.on_circle_of_len_eq` | 2,488 | 2,448 | 27,123 | 6,649 |
+| `Tacit.inside_of_len_lt` | 3,138 | 5,776 | 19,704 | 3,515 |
+| `Tacit.len_lt_of_inside` | 3,001 | 5,776 | 19,736 | 3,563 |
+| `Tacit.angle_eq_zero_of_same_ray` | 15,154 | 1,208 | · | 2,684 |
+| `Tacit.same_ray_of_angle_eq_zero` | 15,254 | 1,208 | · | 2,693 |
+| `Tacit.angle_add_of_inside` | 4 | 77,960 | 24,987 | 3,807 |
+| `Tacit.angle_eq_of_same_rays` | 6,771 | 60,032 | 8,676 | 4,120 |
+| `Tacit.area_eq_zero_of_on_line` | 24,853 | 2,112 | · | 4,735 |
+| `Tacit.on_line_of_area_eq_zero` | 24,672 | 2,112 | · | 4,613 |
+| `Tacit.area_add_of_between` | 22 | 6,176 | 55,499 | 8,416 |
+| `Tacit.between_of_area_add` | 19 | 6,176 | 56,023 | 8,472 |
+| `Tacit.superposition` | 107 | 363,888 | 71,970 | 8,590 |
+
+Separately, **6,887,189** configurations met a retained derived property's hypotheses, with no counterexample. These do not count toward the axiom totals.
+
+| Derived property | Exhaustive | Structured |
+|---|--:|--:|
+| `derived.adjacent_eq_of_right` | 1,072 | 25,166 |
+| `derived.not_same_side_of_circles_meet` | 1,704 | 939 |
+| `derived.centre_unique` | 72 | 4,142 |
+| `derived.inside_of_between` | 76,104 | 39,272 |
+| `derived.exists_point_outside_circle` | 72 | 100,000 |
+| `derived.line_meets_circle_of_opposite_sides` | 6,161,192 | 58,077 |
+| `derived.triple_incidence3` | 315,152 | 1,246 |
+| `derived.inside_of_angle_add` | 77,960 | 25,019 |
 <!-- counts:end -->
 
 The full output of each program, headed with the commit, the seeds and the Python that
@@ -223,6 +228,12 @@ carries the weight:
 Every other axiom's hypotheses are met, exactly, thousands of times or more.
 
 Names are those in `Elements.Tacit` unless they are postulates or Definition 15.
+
+Eight former axioms are now theorems with the same names and types:
+`adjacent_eq_of_right`, `not_same_side_of_circles_meet`, `centre_unique`,
+`inside_of_between`, `exists_point_outside_circle`, `line_meets_circle_of_opposite_sides`,
+`triple_incidence3` and `inside_of_angle_add`. Their numerical configurations remain in
+[derived.py](derived.py), reported separately from the locked axioms.
 
 ### The postulates and Definition 15
 
@@ -258,7 +269,6 @@ Each kind of magnitude is the real numbers of at least 0, with their own `0`, `+
 | `exists_point_opposite_side` | a point on the other side of `L` | `B`'s mirror image in `L`, and infinitely many more, lie in the other open half-plane. |
 | `exists_point_on_circle` | a point on `α` | A circle of positive radius has infinitely many points. |
 | `exists_point_inside_circle` | a point inside `α` | The open disc is infinite. |
-| `exists_point_outside_circle` | a point outside `α` | Any point farther from the centre than the radius. |
 | `line_circle_between` | a line from a point `B` inside to a point `C` outside crosses the circle between them | Along the segment the distance from the centre is continuous, less than the radius at `B` and more at `C`, so it equals the radius somewhere strictly between. |
 | `line_circle_beyond` | a line through `B` inside, produced beyond `B` away from `C`, crosses the circle there | Going from `B` away from `C`, the distance from the centre grows without bound, so it passes the radius at a point `A` with `B` between `A` and `C`. |
 | `circles_meet_same_side`, `circles_meet_opposite_side` | two circles that cut, with centres on `L`, cut on each side of `L` | If the circles differ, their centres differ (concentric circles that differ share no point), `L` is the line of centres, and the two common points are mirror images in it, off it, one on each side. If the circles are the same, `L` is any line through the centre, and the circle reaches both sides. |
@@ -268,7 +278,6 @@ Each kind of magnitude is the real numbers of at least 0, with their own `0`, `+
 | Axiom | Why it holds |
 |---|---|
 | `line_unique` | Two different points lie on only one line. |
-| `centre_unique` | A circle has one centre. |
 | `centre_inside` | The centre is at distance 0, less than the positive radius. |
 | `inside_not_on` | Nearer than the radius is not at the radius. |
 
@@ -317,23 +326,19 @@ lines are different and the points are not `A`.
 |---|---|
 | `triple_incidence1` | `C` is on `D`'s side of `L` and on `B`'s side of `N`: that is the open angle `BAD`, which is less than two right angles because `L ≠ N`. The ray from `A` through `C` lies inside it and splits it, so the line `AC` has `B` and `D` on opposite sides. |
 | `triple_incidence2` | `B` and `D` are on opposite sides of `M`, so the segment `BD` crosses `M` at a point `X`. `X` is not `A` (else `D` would be on `L`), so by Pasch `X` is on `D`'s side of `L`, which is `C`'s: `X` is on the ray from `A` through `C`. By Pasch again `X` is on `B`'s side of `N`, and so is `C`, on the same ray. |
-| `triple_incidence3` | `C` lies inside the angle `BAD`, so the angle `CAD` lies inside it too, and `E`, inside `CAD`, is on `D`'s side of `L`, which is `C`'s. |
 
 ### Circles
 
 | Axiom | Why it holds |
 |---|---|
 | `between_of_inside_chord` | A line meets a circle at most twice, so `B` and `C` are those two points. The points of the line inside the circle are exactly the open chord between them, and `A` is one. |
-| `inside_of_between` | The disc is strictly convex: a point strictly between two points of the closed disc is strictly inside. |
-| `outside_of_between` | If `B` were inside or on the circle, `C`, strictly between `A` and `B`, would be inside by the last rule. |
-| `not_same_side_of_circles_meet` | Two different circles with two common points have different centres, and the common points are mirror images in the line of centres, off it. The guard `α ≠ β` matters: two points of one circle can lie on one side. |
+| `outside_of_between` | If `B` were inside or on the circle, `C`, strictly between `A` and `B`, would be inside by strict convexity of the disc. |
 
 ### Intersections
 
 | Axiom | Why it holds |
 |---|---|
 | `lines_meet_of_opposite_sides` | `f` changes sign along the segment `AB`, so it is 0 somewhere on it: `M` (through `A` and `B`) meets `L`, and differs from it because `A` is off `L`. |
-| `line_meets_circle_of_opposite_sides` | The segment `AB` crosses `L` at a point strictly between `A` and `B`, which is strictly inside the circle by convexity; a line through a point inside cuts the circle twice. |
 | `line_meets_circle_of_inside` | The distance from the centre to the line is at most that to `A`, which is less than the radius, so the line cuts the circle twice. |
 | `circles_meet_of_on_inside_outside` | The circumference of `α` has a point inside `β` (namely `A`). It also has a point outside `β`: otherwise all of `α`'s closed disc, the convex hull of its circumference, would lie in `β`'s closed disc, and `B` could not be outside `β`. A circle with points inside and outside another circle crosses it on both arcs between them, so twice. This is the corrected form of System E's Intersection 4 that we owe to [LeanEuclid](https://github.com/loganrjmurphy/LeanEuclid) (Logan Murphy, Kaiyu Yang, Jialiang Sun, Zhaoyu Li, Anima Anandkumar and Xujie Si, 2024), with our thanks; as printed, with `A` "on or inside" `α`, it fails for a small circle inside a large one. |
 | `circles_meet` | With `d` the distance between the centres and `r`, `s` the radii: `A` on `α` and inside `β` gives `|r − d| < s`, and `B` on `β` and inside `α` gives `|s − d| < r`. Together, `|r − s| < d < r + s`, which is exactly when two circles cut in two points (and rules out `d = 0`). |
@@ -362,8 +367,6 @@ lines are different and the points are not `A`.
 | `angle_eq_zero_of_same_ray` | `B` and `C` are on `L`, different from `A`, and `A` is not between them, so they are on one ray from `A`, and the angle is 0. |
 | `same_ray_of_angle_eq_zero` | An angle of 0 between rays from `A` makes them one ray, so `C` is on `L` and `A` is not between `B` and `C`. |
 | `angle_add_of_inside` | `L ≠ M`, so the angle `BAC` is less than two right angles, and `D`, on `B`'s side of `M` and `C`'s side of `L`, is inside it. A ray inside an angle splits it into two that add up. |
-| `inside_of_angle_add` | Angles between rays from `A` obey the triangle inequality on the circle of directions, with equality only when `D`'s direction lies on the shorter arc from `B`'s to `C`'s. `D` is off both lines, so it is strictly inside the angle, which is the two side conditions. The guard `L ≠ M` matters: with `B` and `C` on one ray, a `D` anywhere off the line would do. |
-| `adjacent_eq_of_right` | `C` is between `A` and `B`, so `∠ A C D + ∠ D C B = π`, and one of them is π/2. |
 | `angle_eq_of_same_rays` | `B'` is on the ray from `A` through `B`, and `C'` on the ray through `C`, so the rays, and the angle, are the same. |
 | `area_eq_zero_of_on_line` | Corners on one line make no area. |
 | `on_line_of_area_eq_zero` | With `A ≠ B`, no area means `C` is on the line `AB`. |
@@ -378,10 +381,10 @@ lines are different and the points are not `A`.
 
 ## The guards and the mutations
 
-Many axioms carry a guard that looks fussy: a point must be different from another, two
-lines or circles must differ, a point must be strictly inside. The mutation test drops or
-loosens 15 of them and finds a counterexample to each weakened rule. So each guard is
-doing work, and the harness can see a false rule.
+Many rules, assumed or proved, carry a guard that looks fussy: a point must be different
+from another, two lines or circles must differ, a point must be strictly inside. The
+mutation test drops or loosens 15 of them and finds a counterexample to each weakened
+rule. So each guard is doing work, and the harness can see a false rule.
 
 | Mutation | What goes wrong without the guard |
 |---|---|
@@ -404,7 +407,7 @@ doing work, and the harness can see a false rule.
 ## The hyperbolic plane
 
 The book's certificates say which proofs use Postulate 5. They do not say, by themselves,
-that the other 86 axioms could not do its work in disguise: a proof avoiding the named
+that the other 78 axioms could not do its work in disguise: a proof avoiding the named
 Postulate 5 might still lean on some other rule just as strong. Astra's review asked for
 the way to settle that, a model of the other axioms in which Postulate 5 fails, and
 [hyperbolic.py](hyperbolic.py) tests such a model numerically, which supports the answer
@@ -445,7 +448,7 @@ along any ray, on either side, so superposition holds. Marvin Jay Greenberg's
 [*Euclidean and Non-Euclidean Geometries*](../../docs/reading.md#greenberg2008euclidean)
 tells this story in full, models and all.
 
-**What it shows.** It supports, numerically, that none of the other 86 axioms carries the
+**What it shows.** It supports, numerically, that none of the other 78 axioms carries the
 parallel postulate in disguise. If every one of them does hold in the hyperbolic plane,
 as the hand arguments say, then whatever follows from them without Postulate 5 is true
 there, and a statement that fails there, such as I.32's "the three interior angles of the
@@ -475,7 +478,7 @@ as Astra advised, with our thanks. The model has four parts.
    states the same words as the fields of a Lean structure, `Signature`, the carriers of
    the magnitudes with their zero, addition and order among them, and the laws as a
    proposition about any such structure, `Laws`, with Postulate 5 apart from the other
-   86. A Lean program generates the laws from the elaborated declarations themselves, not
+   78. A Lean program generates the laws from the elaborated declarations themselves, not
    from their printed text, and every build checks the translation: taken back to the
    library's words, each law is compared with the library's declaration, by the kernel
    and expression by expression, and no word of the project is left untranslated.
@@ -485,11 +488,11 @@ as Astra advised, with our thanks. The model has four parts.
    distance, the area by a determinant, and `∟` as π/2. One care: Mathlib's unoriented
    angle is π/2 when a point is repeated, and our reading needs 0 there, so the plane's
    angle is Mathlib's only when both arms are nonzero.
-3. **Every law of the lock proved in the plane**, degenerate cases included: all 87, each
+3. **Every law of the lock proved in the plane**, degenerate cases included: all 79, each
    a theorem of its own. The hardest were taken first, since they might have reshaped the
    representation: where circles meet, and on which side; angle addition, both ways; the
    side on which Postulate 5's lines meet; superposition, reflections included; the area
-   rules; and the finite `avoid` lists. The generator gathers the 87 into
+   rules; and the finite `avoid` lists. The generator gathers the 79 into
    `euclidean_laws`, which says that the plane satisfies `Laws`, with no hypothesis left,
    and `model_exists : ∃ S : Signature, Laws S` follows. Every build checks that nothing
    in the model imports the library, and that beneath each of these proofs lie only
@@ -518,7 +521,7 @@ package is built, and how each check works, is in its [README](../../model/READM
   ([#73](https://github.com/jackChallis/stoicheia/issues/73)). So the axioms cannot
   contradict one another unless those foundations do.
 - **The interpretation** is the reading of the words above, with a short argument for
-  each of the 87 axioms and many configurations tested against each, exactly wherever
+  each of the 79 axioms and many configurations tested against each, exactly wherever
   the coordinates allow. The formal model makes the same reading in Lean and proves each
   law there, so that the axioms can all be true together no longer rests on these
   arguments and tests alone.
@@ -526,7 +529,7 @@ package is built, and how each check works, is in its [README](../../model/READM
   checks, and on the axioms being the ones this page and the formal model were checked
   against, which [lock.sha256](lock.sha256) and
   [model/lock.sha256](../../model/lock.sha256) pin.
-- **Non-derivability is not proved.** That the other 86 axioms cannot give Postulate 5,
+- **Non-derivability is not proved.** That the other 78 axioms cannot give Postulate 5,
   and that a statement failing in the hyperbolic plane cannot be proved without it, rest
   on the numerical hyperbolic check [above](#the-hyperbolic-plane) until a hyperbolic
   model is built in Lean. A test can find a counterexample but cannot show that there is

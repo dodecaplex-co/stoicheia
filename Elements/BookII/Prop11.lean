@@ -2,6 +2,7 @@ import Elements.Figure.Basics
 import Elements.BookII.Rectangles
 import Elements.BookI.Prop04
 import Elements.BookI.Prop10
+import Elements.BookI.Prop13
 import Elements.BookI.Prop17
 import Elements.BookI.Prop19
 import Elements.BookI.Prop20

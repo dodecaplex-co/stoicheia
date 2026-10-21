@@ -8,11 +8,16 @@ public import Model.Hand
 **Hand-translated.** Each statement here is the library's law, word for word, with
 `S.Point` for `Elements.Point`, `S.OnCircle` for `Elements.OnCircle`, and so on, as in
 `Model/Hand.lean`. The printed original is quoted above each law, from
-`Certificate/axioms.lock`. `Check/Circles.lean` puts the library's own words in for `S` and
-asks the kernel whether each result is the original declaration; the build fails if it is
-not. The generator described in the [README](../../README.md) writes the laws from the
-elaborated declarations, and `Check/Circles.lean` also compares each translation here with
-its generated field. Overlapping translations keep their statements under distinct names.
+the lock or, for a retired rule, its unchanged theorem type. `Check/Circles.lean` puts the
+library's own words in for `S` and asks the kernel whether each result is the original
+declaration; the build fails if it is not. The generator described in the
+[README](../../README.md) writes the laws from the elaborated declarations, and
+`Check/Circles.lean` also compares each locked law's translation here with
+its generated field. The retired rules `centre_unique`, `inside_of_between`,
+`not_same_side_of_circles_meet` and `exists_point_outside_circle` are compared directly
+with their library declarations, including binder kinds. Their concrete plane proofs
+remain as derived facts, with no generated assumption fields. Overlapping translations
+keep their statements under distinct names.
 
 The laws here are those about a single circle, or about where a circle and its points lie:
 
@@ -59,7 +64,8 @@ def Definition15 : Prop :=
 
 /-! ## A centre, and the inside of a circle -/
 
-/-- `Elements.Tacit.centre_unique` (Generalities 2), hand-translated. The lock prints it as
+/-- `Elements.Tacit.centre_unique` (Generalities 2), hand-translated.
+The theorem's unchanged type is
 `∀ {A B : Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.Centre B α →
 Eq A B`. -/
 def centre_unique_circles : Prop :=
@@ -117,7 +123,8 @@ def between_of_inside_chord : Prop :=
     S.OnLine C L → S.InsideCircle A α → S.OnCircle B α → S.OnCircle C α → B ≠ C →
     S.Between B A C
 
-/-- `Elements.Tacit.inside_of_between` (Circle 2), hand-translated. The lock prints it as
+/-- `Elements.Tacit.inside_of_between` (Circle 2), hand-translated.
+The theorem's unchanged type is
 `∀ {A B C : Elements.Point} {α : Elements.Circle}, Or (Elements.InsideCircle A α)
 (Elements.OnCircle A α) → Or (Elements.InsideCircle B α) (Elements.OnCircle B α) →
 Elements.Between A C B → Elements.InsideCircle C α`. -/
@@ -133,8 +140,9 @@ def outside_of_between : Prop :=
   ∀ {A B C : S.Point} {α : S.Circle}, S.InsideCircle A α ∨ S.OnCircle A α →
     ¬S.InsideCircle C α → S.Between A C B → S.OutsideCircle B α
 
-/-- `Elements.Tacit.not_same_side_of_circles_meet` (Circle 4), hand-translated. The lock
-prints it as `∀ {A B C D : Elements.Point} {L : Elements.Line} {α β : Elements.Circle}, Ne α
+/-- `Elements.Tacit.not_same_side_of_circles_meet` (Circle 4), hand-translated.
+The theorem's unchanged type is
+`∀ {A B C D : Elements.Point} {L : Elements.Line} {α β : Elements.Circle}, Ne α
 β → Elements.OnCircle C α → Elements.OnCircle C β → Elements.OnCircle D α → Elements.OnCircle
 D β → Ne C D → Elements.Centre A α → Elements.Centre B β → Elements.OnLine A L →
 Elements.OnLine B L → Not (Elements.SameSide C D L)`. -/
@@ -172,7 +180,8 @@ And (Elements.InsideCircle A α) (Not (Membership.mem avoid A))`. -/
 def exists_point_inside_circle : Prop :=
   ∀ (α : S.Circle) (avoid : List S.Point), ∃ A : S.Point, S.InsideCircle A α ∧ ¬A ∈ avoid
 
-/-- `Elements.Tacit.exists_point_outside_circle`, hand-translated. The lock prints it as
+/-- `Elements.Tacit.exists_point_outside_circle`, hand-translated.
+The theorem's unchanged type is
 `∀ (α : Elements.Circle) (avoid : List Elements.Point), Exists fun (A : Elements.Point) =>
 And (Elements.OutsideCircle A α) (Not (Membership.mem avoid A))`. -/
 def exists_point_outside_circle : Prop :=
