@@ -3346,6 +3346,12 @@ def unfinished_refs(text: str, comment: str | None = None) -> tuple[list[int], l
                 local.append(int(match[1]))
             elif "#" in token or re.search(r"gh-[0-9]", token, re.I):
                 problems.append(f"write the issue as #N on its own: {token}")
+            elif re.search(r"github\.com|/issues/|/pull/", token, re.I):
+                problems.append(f"Unfinished work names issues as #N, never by an address: "
+                                f"{token}")
+            elif "*" in token:
+                problems.append(f"Unfinished work must be plain text, with no emphasis: "
+                                f"{token}")
         refs.update(local)
         if not local:
             problems.append(f"list item names no local issue: {item}")
@@ -3991,6 +3997,17 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
                         "its pre-flight summary and the parts safe_push wrote, of this head")
         if rep.failed():
             raise Refusal("the pull request's body could not be brought up to date")
+        # The labels decide the release gate and which checks count: read them once more
+        # after the body's refresh, so that a label given meanwhile (release, say) is never
+        # merged past unjudged.
+        try:
+            current = read_pr_labels(ctx, number)
+        except ValueError as e:
+            raise Refusal(f"#{number}: {e}") from None
+        if current != labels:
+            raise Refusal(f"#{number}'s labels changed after the gates read them "
+                          f"({', '.join(sorted(labels)) or 'none'} to "
+                          f"{', '.join(sorted(current)) or 'none'}): run --merge again")
         rep.heading("4. Merge")
         if dry_run:
             rep.add("4", "gh pr merge", "skip", f"dry run: would merge #{number} "

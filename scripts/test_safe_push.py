@@ -397,6 +397,11 @@ def main(argv):
         if opt(args, "--json") == "body" and "reread_body" in s:
             pr["body"] = s["reread_body"]
             save(s)
+        # "relabel": the labels GitHub gives the merge's own read of the labels alone, as
+        # a label given between the gates and the merge would leave them.
+        if opt(args, "--json") == "labels" and "relabel" in s:
+            pr["labels"] = s["relabel"]
+            save(s)
         print(json.dumps(fields(pr, opt(args, "--json"))))
         return 0
     if cmd == ["pr", "edit"]:
@@ -1964,6 +1969,20 @@ class Merge(Edge):
         self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
         self.assertIn("#38 is closed", out)
         self.assertIn("#39 lacks the label blocks-release", out)
+        self.assertEqual(self.merges(), [])
+
+    def test_release_label_given_after_the_gates_refused(self):
+        # An ordinary pull request passes the gates; "release" is then given before the
+        # merge, with a blocker open: the labels are read again, and nothing merges.
+        self.opened()
+        self.unfinished_body("None")
+        labels = self.gh_state()["prs"][0]["labels"]
+        self.set_gh(lambda s: s.update(issues=[self.blocker()],
+                                       relabel=list(labels) + ["release"]))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("labels changed after the gates read them", out)
         self.assertEqual(self.merges(), [])
 
     def test_unfinished_work_changed_after_the_gates_refused(self):

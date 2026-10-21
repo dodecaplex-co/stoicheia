@@ -228,6 +228,16 @@ class UnfinishedWork(unittest.TestCase):
         refs, problems = self.refs("- Prototype #38\n- III.18\u2013III.22 awaiting, #39")
         self.assertIn("U+2013 on line 2", "\n".join(problems))
 
+    def test_addresses_and_emphasis_are_refused(self):
+        for text in ("- Prototype #38; see github.com/example/edition/issues/39",
+                     "- Prototype #38, example/edition/issues/39",
+                     "- Prototype #38, example/edition/pull/40",
+                     "- **Prototype** #38", "- Prototype *later* #38"):
+            with self.subTest(text=text):
+                self.assertTrue(self.refs(text)[1])
+        # The list marker "* " stays allowed.
+        self.assertEqual(self.refs("* Prototype #38"), ([38], []))
+
     def test_a_stale_template_comment_is_named_as_such(self):
         refs, problems = self.refs("<!-- An older wording. -->\nNone")
         self.assertIn("comment other than the template's own", "\n".join(problems))
