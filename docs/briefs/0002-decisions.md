@@ -3516,11 +3516,12 @@ findings:
   finds the entry of facts.json's `attached` that the helper names, written in one of three
   ways (`Prop16.porism`, `BookIII.Prop16.porism` or `Elements.BookIII.Prop16.porism`), and
   takes it apart with `heath.parse_ref` (`carried_ref`). The sentence names each such
-  theorem by its kind, "a porism" for a porism, "a companion" for a companion, and for
-  several, as "a porism and two companions are proved as theorems of their own". It counts
-  theorems, not passages: `Prop25.complete` is to carry two of III.25's passages, from
-  "Therefore the circle drawn with centre E" and from "D will be the centre of the
-  completed circle", and is one companion, as one theorem named two ways is one. A carried
+  theorem by its kind, "a porism" for a porism, "a companion" for a companion; several
+  read, for example, "a porism and two companions are proved as theorems of their own". It
+  counts theorems, not passages: `Prop25.complete` is to carry the same [III. 9] step in
+  each of III.25's three cases, from "Therefore the circle drawn with centre E", from "D
+  will be the centre of the completed circle" and from "and if we construct, on the
+  straight line BA", and is one companion, as one theorem named two ways is one. A carried
   helper of any other kind stops the render, naming the proposition, the helper and the
   three ways render.py reads such a name: a lemma or another proposition that does a step
   makes a `helper` passage, "Done by" it, and is not a theorem attached to the
