@@ -3046,51 +3046,73 @@ findings:
   the decisions record: one each in `book/III/06.md`, `docs/FORMALIZATION.md` and
   `scripts/audit/jev.py`.
 
-  So each decision is now a file of its own, `docs/decisions/<YYYY-MM-DD>-<slug>.md`: a
-  valid date, then a short name of lower-case letters and digits joined by hyphens. An
-  entry is read where it is, as a page of its own, its relative links resolving from
-  `docs/decisions/`; nothing assembles the entries into this page or any other, since any
-  file that every entry's pull request had to update would collide just as this page does.
-  GitHub lists the folder in name order, which is date order, as its README,
-  [`docs/decisions/README.md`](../decisions/README.md), says; the README stays the same
-  from one entry to the next. `scripts/render.py` checks the folder before it writes
-  anything, and CI and the pre-flight run it on every pull request: the folder, which may
-  be absent, lies under no link and is spelled `docs/decisions` on disk, with no other
-  spelling beside it; it holds regular files alone, the README and entries; every file
-  there is UTF-8 and holds no count marker, so that `render.py` never writes into it; and
-  an entry holds text, and no control character but a tab and a line feed, no format
-  character (Unicode's Cf), no line or paragraph separator and no other default-ignorable
-  character. An entry needs no date heading, and may hold headings, as any page may.
-  `tests/test_decision_entries.py` tests these refusals, and `scripts/negative_tests.py`
-  runs it after the count regressions, so that CI's `negative` job and the pre-flight run
-  it too.
+  So each decision written after this entry is a file of its own,
+  `docs/decisions/<YYYY-MM-DD>-<slug>.md`: a valid date, then a short name of lower-case
+  letters and digits joined by hyphens. An entry is read where it is, as a page of its
+  own, its relative links resolving from `docs/decisions/`; nothing assembles the entries
+  into this page or any other, since any file that every entry's pull request had to
+  update would collide just as this page does. GitHub lists the folder in name order,
+  which is date order, as its README, [`docs/decisions/README.md`](../decisions/README.md),
+  says; the README stays the same from one entry to the next. `scripts/render.py` checks
+  the folder before it writes anything, and CI and the pre-flight run it on every pull
+  request: the folder, which may be absent, lies under no link and is spelled
+  `docs/decisions` on disk, with no other spelling beside it; it holds regular files
+  alone, the README and entries; every file there is UTF-8 and holds no count marker, so
+  that `render.py` never writes into it; and an entry holds text, and no control
+  character but a tab and a line feed, no format character (Unicode's Cf), no line or
+  paragraph separator and no other default-ignorable character. An entry needs no date
+  heading, and may hold headings, as any page may. `tests/test_decision_entries.py` tests
+  these refusals, and `scripts/negative_tests.py` runs it after the count regressions, so
+  that CI's `negative` job and the pre-flight run it too.
 
   Every guard that asks for a new line in this page (the axiom lock, a protected path, a
   deleted directory) or in `docs/briefs/` (a statement changed) accepts a new line in a
   dated entry the push adds, a relative link there resolved from `docs/decisions/`. Such a
   line counts only when it holds a word; when no line of this page or of any file under
-  `docs/decisions/` at origin/main matches it, each read in Unicode's NFKC form with its
-  whitespace collapsed; and when none of its words lies in a run of 12 or more consecutive
-  words, read across lines in that form, that this page or one file there at origin/main
-  holds too: so a copy of an older entry kept beside its original, re-wrapped or not,
-  renews nothing. Each run of consecutive lines that count is read on its own, so no
-  mention is made by joining words across a blank line or a line that does not count.
+  `docs/decisions/` at origin/main matches it, each read as a skeleton: in Unicode's NFKC
+  form, casefolded, each Cyrillic or Greek letter that looks like a Latin one read as that
+  letter, and every space separator, the Braille pattern blank and the Hangul fillers
+  read as spaces, the whitespace collapsed; and when none of its words lies in a run of
+  12 or more consecutive words, so read across lines, that this page or one file there at
+  origin/main holds too. So a copy of an older entry, re-wrapped, re-spaced, in capitals
+  or in those look-alike letters, renews nothing, kept beside its original or not. The
+  comparison catches no more than that: a copy with a word put in after every eleventh,
+  one reworded throughout, or one in look-alike letters of another script reads as an
+  entry in words of its own, and only the reviews can tell it from one. Each run of
+  consecutive lines that count is read on its own, so no mention is made by joining words
+  across a blank line or a line that does not count; and a guard that refuses names each
+  line of an entry that did not count, and why, so that a list of files repeated from
+  this page or from an older entry is seen for what it is. An entry names each file,
+  statement and lock in a sentence of its own. The comparison is for entries alone: a
+  line added to this page counts as any new line always has, so the page's own route is
+  as it was.
+
   Entries are history, only ever added: a new guard of the pre-flight's step 3, "decision
-  entries", refuses a push that modifies, deletes, renames or copies an entry origin/main
-  holds (a copy as Git's rename and copy detection finds one, or an added entry with no
-  line that counts); any other file, or a link, in the folder; a path spelled otherwise
-  than `docs/decisions/`; and an entry whose date or characters `render.py` would refuse.
-  While it refuses, entries supply no new line to the four guards. The README may be
-  edited, and approves nothing. A correction is a new entry, in words of its own. The
-  revert that `scripts/safe_push.py` advises after a merge now restores `docs/decisions/`
-  and this page from origin/main after `git revert --no-commit -m 1`, and adds an entry
-  recording the revert. WORKFLOW, FORMALIZATION, the diagnostics of
+  entries", refuses a push that modifies, deletes or renames an entry origin/main holds (a
+  move as Git's rename detection finds one); any other file, or a link, in the folder; a
+  path spelled otherwise than `docs/decisions/`; and an entry whose date or characters
+  `render.py` would refuse. It refuses no entry for copying another, in part or whole:
+  the lines the comparison finds copied count for nothing, and a routine entry that
+  shares a line with an older one, which Git's copy detection would call a copy, is still
+  an entry. While the guard refuses, entries supply no new line to the four guards, and
+  their refusals say so. The README may be edited, and approves nothing. A correction is
+  a new entry, in words of its own. The revert that `scripts/safe_push.py` advises after
+  a merge now restores `docs/decisions/` and this page from origin/main after
+  `git revert --no-commit -m 1`, and adds an entry recording the revert, naming each
+  protected file, statement and lock in a sentence of its own.
+
+  WORKFLOW, FORMALIZATION, `docs/templates/orders.md`, the pull request template, the
+  model's account of a change to the axioms in `tests/model/MODEL.md`, the diagnostics of
   `scripts/check_fidelity.py` and the account `scripts/safe_push.py` gives of its guards
-  now send a new decision to an entry, and the page stays valid history; the lock's own
-  header, which `--write-lock` writes, is left as it is. The protected files changed:
+  now send a new decision to an entry, and the page stays valid history. So does the
+  header that `--write-lock` writes; the lock itself keeps its header until the next
+  decision that changes it, for its sha256 is pinned by `tests/model/lock.sha256`,
+  `model/lock.sha256` and the generated `model/Model/Laws.lean`, which that decision
+  renews in any case. The protected files changed: `.github/pull_request_template.md`,
   `scripts/render.py`, `scripts/safe_push.py`, `scripts/test_safe_push.py`,
-  `scripts/negative_tests.py`, `scripts/check_fidelity.py` and
+  `scripts/negative_tests.py`, `scripts/check_fidelity.py`, `tests/model/MODEL.md` and
   `tests/test_decision_entries.py`, which is new.
 
-  This is the last entry on this page: from now on each decision is a file of its own in
-  [`docs/decisions/`](../decisions/README.md).
+  From this entry on, each new decision is a file of its own in
+  [`docs/decisions/`](../decisions/README.md); pull requests opened before it landed may
+  still add theirs to this page.

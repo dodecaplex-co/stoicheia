@@ -203,10 +203,13 @@ class DecisionEntries(unittest.TestCase):
             render.decision_entries()
 
     def test_ordinary_text_is_kept(self):
+        # Spaces of other widths and the Braille pattern blank are kept: safe_push.py reads
+        # each as a space when it compares an entry with the record (safe_push.skeleton).
         self.entry("2026-10-20-test.md",
                    "- **Στοιχεῖα, naïve and café.**\tA tab, a no-break\u00a0space, an "
-                   "em space\u2003and ✓ marks are text.\n")
+                   "em space\u2003, a Braille blank\u2800and ✓ marks are text.\n")
         self.assertEqual(render.decision_entries(), ["2026-10-20-test.md"])
+        self.assertEqual(safe_push.record_line("a\u00a0b\u2003c\u2800d"), "a b c d")
 
     def test_render_and_safe_push_refuse_the_same_characters(self):
         differ = [hex(n) for n in range(0x110000)

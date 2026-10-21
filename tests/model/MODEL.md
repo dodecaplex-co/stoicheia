@@ -542,9 +542,10 @@ package is built, and how each check works, is in its [README](../../model/READM
 
 ## Changing the axioms
 
-Adding, removing or restating an axiom is the owner's decision, recorded on the
-[decisions page](../../docs/briefs/0002-decisions.md). Once it is made, the model follows
-the axiom in the same pull request as the Lean:
+Adding, removing or restating an axiom is the owner's decision, recorded in a decision
+entry of its own in [`docs/decisions/`](../../docs/decisions/README.md), as the earlier
+ones are on the [decisions page](../../docs/briefs/0002-decisions.md). Once it is made,
+the model follows the axiom in the same pull request as the Lean:
 
 1. **The lock.** `python3 scripts/check_fidelity.py --write-lock` writes
    `Certificate/axioms.lock` from the new `facts.json`, and

@@ -462,7 +462,8 @@ LOCK_HEADER = """\
 #
 # scripts/check_fidelity.py compares this file with facts.json in both directions, and
 # takes the number of Euclid's assumptions from it. Change it only with a decision,
-# recorded in docs/briefs/0002-decisions.md, and then only by running
+# recorded in a decision entry of its own, docs/decisions/<YYYY-MM-DD>-<slug>.md
+# (docs/WORKFLOW.md, section 10, "Decision entries"), and then only by running
 #
 #     python3 scripts/check_fidelity.py --write-lock
 """

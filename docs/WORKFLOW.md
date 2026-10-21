@@ -17,7 +17,7 @@ contributor may hold several roles, save one: nobody reviews a claim they wrote.
 | Role | Responsible for |
 |---|---|
 | Owner | The repository's owner. Every public action but landing a checked pull request (tags, releases and their notes, the GitHub description, anything sent outside the repository), and the foundation decisions, made with the coordinator. |
-| Coordinator | The plan, the baseline, and the decisions delegated to the role: approving statements and brief corrections, the files of the foundations, `Certificate/axioms.lock`, the decisions record (the dated entries of `docs/decisions/`, and [0002-decisions.md](briefs/0002-decisions.md) before them), PROGRAM.md, CI, and opening and merging pull requests, through `scripts/safe_push.py` alone (section 10, "Landing work: pull requests"). |
+| Coordinator | The plan, the baseline, and the decisions delegated to the role: approving statements and brief corrections, the files of the foundations, `Certificate/axioms.lock`, the decisions record ([0002-decisions.md](briefs/0002-decisions.md), the decisions page, and the dated entries of `docs/decisions/`), PROGRAM.md, CI, and opening and merging pull requests, through `scripts/safe_push.py` alone (section 10, "Landing work: pull requests"). |
 | Statement and representation owner | A book's brief and each proposition's statement: vocabulary, hypotheses, conclusions, cases, and the exceptions allowed. |
 | Proof contributor | The assigned declarations with their helpers, porisms and companions, and how the Lean corresponds to the text. |
 | Edition contributor | Commentary, figures, source notes and further reading, written against the brief and reconciled with the finished proof. |
@@ -159,9 +159,9 @@ files working in parallel, the renderers, and an integrator followed by blind re
   of its owner through the handback, never edited in passing.
 - **Standing owners.** The coordinator owns `Elements/Foundations/` (every `Definitions*`
   file included), `Certificate/axioms.lock`, the toolchain and its dependencies
-  (`lean-toolchain`, `lakefile.toml`, `lake-manifest.json`), the decisions record (the
-  entries of `docs/decisions/`, and the decisions page before them), PROGRAM.md with
-  `docs/program.toml`, and the CI workflow, and may hand the lock, the decisions record,
+  (`lean-toolchain`, `lakefile.toml`, `lake-manifest.json`), the decisions page and
+  `docs/decisions/`, the folder of decision entries, PROGRAM.md with `docs/program.toml`,
+  and the CI workflow, and may hand the lock, the decisions page and `docs/decisions/`,
   PROGRAM.md and the CI workflow to a wave's integrator. The integrator
   owns the generated edition: `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`,
   README.md's rows between the `<!-- scope:… -->` markers, PROGRAM.md's status table
@@ -572,16 +572,21 @@ train (the owner, 18 October 2026). A train is a branch `train/<area>-<n>` that 
 several branches, each already one coherent change with its own reviews and
 `/no-mistakes` run, as merge commits of their own, so history keeps each change whole.
 Each branch brings its decision entries as files of its own ("Decision entries", below),
-so they merge side by side, untouched, and the decisions page is not edited; the
-coordinator regenerates the pages once;
+so they merge side by side, untouched; the coordinator resolves the decisions page only
+for a branch opened before entry files that added its entry there, and regenerates the
+pages once;
 the train passes the pre-flight and CI once and merges as one pull request, whose body
 lists each branch with its reviews and the issue it closes. A train never carries a check
 change together with content that check judges: trains of checks and trains of content are
 separate, and a branch that fails the train's pre-flight leaves the train.
 
-**Decision entries.** Since 20 October 2026 each decision is a file of its own in
-`docs/decisions/`, so that pull requests queued together do not collide at the end of
-[the decisions page](briefs/0002-decisions.md), whose entries up to that day stay where
+**Decision entries.** A new decision is a file of its own in `docs/decisions/`, so that
+pull requests queued together do not collide at the end of
+[the decisions page](briefs/0002-decisions.md), as they did while each added its entry
+there. The page's entry of 20 October 2026, "Decision entries, one file each", brought
+the rule: a decision written after that entry landed goes in an entry file. A pull
+request opened before it landed may keep the entry it added to the page, whose new lines
+count as any new line of the page does (step 3, below). The page's entries stay where
 they are. An entry is read where it is, as a page of its own: nothing assembles it into
 another page, and GitHub lists the folder in name order, which is date order
 ([the folder's README](decisions/README.md)). To write one, the coordinator:
@@ -590,9 +595,12 @@ another page, and GitHub lists the folder in name order, which is date order
    date, then a short name of lower-case letters and digits joined by hyphens, as
    `docs/decisions/2026-10-21-entry-files.md`;
 2. writes the entry as the page's entries are written (`- **A title (area).** The
-   decision, and why.`), with no date heading, since the name carries the date; it may
-   hold headings, as any page may, and its relative links resolve from
-   `docs/decisions/`, as `../WORKFLOW.md` or `../../scripts/render.py`;
+   decision, and why.`), with no date heading, since the name carries the date, and
+   names each file, statement and lock it approves in a sentence of its own, never on a
+   line or in a list repeated from an older entry or the page, for such a line counts
+   for nothing (step 3, below); it may hold headings, as any page may, and its relative
+   links resolve from `docs/decisions/`, as `../WORKFLOW.md` or
+   `../../scripts/render.py`;
 3. keeps out of it a count marker, and any character that could hide a copy of an older
    entry: a control character but a tab and a line feed (a carriage return among them,
    so lines end in a line feed alone), a format character (Unicode's Cf, as a zero-width
@@ -607,15 +615,17 @@ another page, and GitHub lists the folder in name order, which is date order
    change it records.
 
 An entry is dated history, never edited: the pre-flight refuses a push that modifies,
-deletes, renames or copies an entry origin/main holds (step 3, below), and a correction
-is a new entry, in words of its own, naming the entry it corrects. A revert keeps the
-record too: after `git revert --no-commit -m 1 <merge>`, the coordinator restores
-`docs/decisions/` and the decisions page as origin/main has them
+deletes or renames an entry origin/main holds (step 3, below), and a correction is a new
+entry, in words of its own, naming the entry it corrects. An entry that copies another,
+or the page, in part or whole, is not refused for it, but the lines that step 3's
+comparison finds copied approve nothing. A revert keeps the record too: after
+`git revert --no-commit -m 1 <merge>`, the coordinator restores `docs/decisions/` and
+the decisions page as origin/main has them
 (`git restore --source=origin/main --staged --worktree --` with those two paths), then
 adds an entry recording the revert and why, naming each protected file, statement and
-lock the revert changes, as any entry must, and commits; the advice `--merge` prints
-when main is not what was checked gives these commands. The folder's README is no entry:
-it may be edited, and approves nothing.
+lock the revert changes in a sentence of its own, as any entry must, and commits; the
+advice `--merge` prints when main is not what was checked gives these commands. The
+folder's README is no entry: it may be edited, and approves nothing.
 
 ```sh
 sh scripts/install_hooks.sh                        # from a checkout of origin/main: once per
@@ -695,25 +705,36 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       - `docs/decisions/` holding regular files alone, its README and dated entries, each
         entry named and written as "Decision entries", above, says (a valid date, and
         UTF-8 text holding none of the characters kept out there), every path there
-        spelled `docs/decisions/`, and no entry origin/main holds modified, deleted,
-        renamed or copied: Git's rename and copy detection (`-C -C`, every file there a
-        source, with no limit) finds a move or a copy with edits. The README may be
-        edited or deleted, and approves nothing.
+        spelled `docs/decisions/`, and no entry origin/main holds modified, deleted or
+        renamed: Git's rename detection (every file there a source, with no limit) finds
+        a move with edits. An entry that copies another is not refused for it, though
+        Git's copy detection would call it a copy; the lines the comparison below finds
+        copied count for nothing. The README may be edited or deleted, and approves
+        nothing.
 
       For each of these, the push must add a mention: an old line that already named the
-      thing, edited in place, does not count. A line of a dated entry counts only in an
-      entry the push adds, and only when it holds a word; when no line of the decisions
-      page or of any file under `docs/decisions/` at origin/main matches it, each read in
-      Unicode's NFKC form with its whitespace collapsed, inside the line and at its ends;
-      and when none of its words lies in a run of 12 or more consecutive words, read
-      across lines in that form, that the page or one file under `docs/decisions/` at
-      origin/main holds too. So a copy of an older entry kept beside its original,
-      re-wrapped or not, renews nothing. Each run of consecutive lines that count is read
-      on its own: words are never joined across a blank line or a line that does not
-      count, though a name wrapped from one line that counts to the next still counts, as
-      on the page. An entry the push adds that holds no line that counts is a copy, and
-      refused; and while a push refuses anything under `docs/decisions/`, entries supply
-      no new line at all, so a rename, a copy or a deletion and re-addition of an entry
+      thing, edited in place, does not count. A line added to the decisions page counts
+      as any new line does: that is the page's rule, and entry files leave it as it was. A
+      line of a dated entry counts only in an entry the push adds, and only when it holds
+      a word; when no line of the decisions page or of any file under `docs/decisions/`
+      at origin/main matches it, each read as a skeleton (in Unicode's NFKC form,
+      casefolded, each Cyrillic or Greek letter that looks like a Latin one read as that
+      letter, and every space separator, the Braille pattern blank and the Hangul fillers
+      read as spaces, the whitespace collapsed inside the line and at its ends); and when
+      none of its words lies in a run of 12 or more consecutive words, so read across
+      lines, that the page or one file under `docs/decisions/` at origin/main holds too.
+      So a copy of an older entry, re-wrapped, re-spaced, in capitals or in those
+      look-alike letters, renews nothing, kept beside its original or not. That is all the
+      comparison catches: a copy with a word put in after every eleventh, one reworded
+      throughout, or one in look-alike letters of another script reads as an entry in
+      words of its own, and only the reviews can tell it from one. Each run of
+      consecutive lines that count is read on its own: words are never joined across a
+      blank line or a line that does not count, though a name wrapped from one line that
+      counts to the next still counts, as on the page. A guard that refuses names each
+      line of an entry the push adds that did not count, and why: a line the record holds
+      already, or one in a run of 12 or more words the record holds too. While a push
+      refuses anything under `docs/decisions/`, entries supply no new line at all, and
+      the guards' refusals say so; so a rename, or a deletion and re-addition of an entry,
       renews no approval.
    4. *The full checks* of section 8 in that worktree, and `negative_tests.py` in a
       second, each step timed. The check scripts and what they expect (`scripts/`,
