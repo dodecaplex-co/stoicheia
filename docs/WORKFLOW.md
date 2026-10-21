@@ -362,11 +362,13 @@ The ruleset and the remaining merge requirements are in
 On pull requests and pushes, `queue-integrity` runs the offline cases in
 `tests/test_check_queue.py` and `tests/test_check_train.py`, each with `python3 -I`.
 Its other step is the merge queue's judge: it takes `scripts/` from a group's base and
-runs that `check_queue.py`, running no code of the group. It has no event to run on
-yet, since this workflow does not run on `merge_group` until the queue lands
-(section 10). The `check` job's `check_queue.py --tree .` step, which the pre-flight
-runs too, checks that no dated decisions heading repeats, reading each heading as it
-renders; conflict markers in tracked text are S23's, in `scripts/check_style.py`. The
+runs that `check_queue.py`, running none of the group's scripts, though GitHub runs the
+group's own copy of this workflow file (section 10 says what must hold it). It has no
+event to run on yet, since this workflow does not run on `merge_group` until the queue
+lands (section 10). The `check` job's `check_queue.py --tree .` step, which the
+pre-flight runs too, checks that no dated decisions heading repeats, reading each
+heading as section 10's rule (d) describes; conflict markers in tracked text are S23's,
+in `scripts/check_style.py`. The
 train and queue checks need Git 2.42 or later (`merge-tree --write-tree` came in 2.38,
 its `--merge-base` in 2.40 and `--attr-source` in 2.42); with an older Git they refuse
 every train and group as unreadable.
@@ -591,13 +593,21 @@ pull request sections and two more, `Members` and `What is new`. `Members` is a 
 with the columns `Branch`, `Head`, `/code-review`, `/security-review` and `/no-mistakes`,
 one row per member. `Head` is 12 to 40 lower-case hexadecimal digits naming the member
 head merged. Each `/code-review` and `/security-review` cell names the commit its review
-read, by 7 to 40 lower-case hexadecimal digits, with the findings. A cell that is only a
-placeholder or a review still to come ("pending", "not run", "awaiting review", "N/A"
-and their like) refuses; a finding that merely begins with such words ("To do so, ...",
-"Later commits ...") does not. `/security-review` may instead say "Not required", and
-only if no protected path changed, read against every merge base of the member with
-origin/main. `/no-mistakes` says `passed at <head>` for that same member head, or
-`not run: <reason>`, with at least five words giving the reason.
+read, by 7 to 40 lower-case hexadecimal digits, with the findings, and that commit must
+be one of the member's own: the member's head, or an ancestor of it not on origin/main,
+named unambiguously by digits that begin its name (as `git rev-parse --verify
+<digits>^{commit}` resolves them; a ref whose name is hex digits does not count). Other
+digits in the cell, a coordinator's commit or a run's, may stand beside it. A cell that
+is only a placeholder or a review still to come ("pending", "not run", "awaiting
+review", "N/A" and their like) refuses; a finding that merely begins with such words
+("To do so, ...", "Later commits ...") does not. `/security-review` may instead say
+"Not required", and only if no protected path changed, read against every merge base of
+the member with origin/main; a member that changes a protected path must name its
+commit there, and its cell may not say "Not required" anywhere, in any case or
+spelling. Beyond that, the cells are the coordinator's words: the check reads that a
+review of the member is named, not what it found. `/no-mistakes` says
+`passed at <head>` for that same member head, or `not run: <reason>`, with at least
+five words giving the reason.
 
 `What is new` says `None.` or gives bullet lines of these forms:
 
@@ -626,9 +636,10 @@ merge, to which each of the train's merges is compared, reads merge attributes f
 origin/main, never from the checkout or a member's `.gitattributes`: a member's
 `merge=union` cannot make a resolution by hand count as automatic. A member's own
 history, a merge of main into it with its resolution included, is the member's, judged
-by its reviews. Decisions here are the page and, once tooling/decision-entries has
-landed (before this check), the Markdown decision entry files directly under
-`docs/decisions/`. A merge of main needs no member row, but its tree is checked too.
+by its reviews. Decisions here are the page and, when origin/main's tree has a
+`docs/decisions/` directory (tooling/decision-entries brings it), the Markdown decision
+entry files directly under it; while origin/main has none, an entry file is refused like
+any other path. A merge of main needs no member row, but its tree is checked too.
 While origin/main has no `scripts/check_train.py`, every train is refused, one that
 adds the checker too: no commit's own copy ever judges it, so the checker lands first,
 as an ordinary pull request. An unreadable checker or a refused train stops the
@@ -642,10 +653,19 @@ differs from the text checked.
 member. Merge each member once, at its final head, after its reviews and `/no-mistakes`
 have run on that head; if a member moves, build the train again from origin/main rather
 than merging the member a second time. A merge of origin/main into the train is
-allowed, and its tree is checked like the members' merges. Anything the train needs
-beyond the generated pages and the decisions page, a conflict resolved in a reviewed
-file or a review record's stamp, say, goes into a member of its own: a branch from
-origin/main with its own reviews and its own `Members` row, merged like the others.
+allowed, and its tree is checked like the members' merges. The train itself resolves
+and adds nothing beyond the generated pages and the decisions page. A conflict between
+members, or between a member and origin/main, and a review record's stamp of a member's
+change, are made in a branch that contains the sides it resolves or stamps: merge
+origin/main, or the other member, into the member, resolve or stamp there, and review
+that head, with its own `/no-mistakes`; the train then merges it, with one row (a
+member it contains may still be merged before it, with its own row). A branch from
+origin/main cannot hold them: a resolution made there conflicts again when
+the train merges it beside the members, and `scripts/review_stamp.py` stamps a record
+with the hashes of the files in the checkout it runs in, refusing a `--commit` whose Lean
+file differs. A stamp or an edit that stands alone, touching no file a member changes,
+may come from origin/main: a branch of its own, with its own reviews and its own
+`Members` row, merged like the others.
 Then regenerate and commit the generated pages, and write the body: `Members`, one row
 for each member merge, with the head merged; and `What is new`, covering at least what
 `derive_new` in `scripts/check_train.py` gives for origin/main to the train's head,
@@ -673,12 +693,19 @@ Once the queue is on, GitHub makes a group for each queued train: main plus the 
 ahead of it, then that train, in queue order. Several passing entries can be batched
 into a push to main. CI runs the integration checks on each group and the
 `queue-integrity` job runs `scripts/check_queue.py`, taken with the scripts beside it
-from the group's base, main, never from the group, in a job that runs no code of the
-group (it builds and renders nothing): a train's scripts cannot change the checker that
-judges it, and the job fails while main has none. It refuses an unreadable input,
-record or GitHub answer. GitHub reads the workflow file itself from the group, so a
-change to `.github/` is held by the pre-flight, which origin/main's harness runs, and by
-the security review, not by this job. Its four rules are:
+from the group's base, main, never from the group, in a job that runs none of the
+group's scripts (it builds and renders nothing): a train's scripts cannot change the
+checker that judges it, and the job fails while main has none. It refuses an unreadable
+input, record or GitHub answer. But GitHub runs the group's own copy of the workflow
+file, so the judge's verdict, and any check of the pre-flight's evidence added to it,
+counts only while the group's `.github/workflows/ci.yml` still calls it: a group that
+changed the job's step would pass unjudged. So the protection of `.github/`, `scripts/`
+and `tests/`, and the authenticity of the pre-flight's evidence, must be held by
+something a group cannot change: a ruleset requiring code-owner review, with a
+`CODEOWNERS` file naming the owner for those paths; a required workflow pinned to main,
+if the account offers one; or a status posted by an App that runs main's code. The
+queue must not be turned on until one exists; the owner chooses which. Its four rules
+are:
 
 - **(a) No change overwritten.** Each train's change is reverted from the group tree and
   applied again, by three-way merges, and the result must be the group's tree on every
@@ -692,19 +719,20 @@ the security review, not by this job. Its four rules are:
   its head, the base it was compared against and the harness: the main commit whose
   `scripts/safe_push.py` ran it (today's pre-flight names its base as its harness; the
   judge also accepts a later main commit, which the queue mode to come may record). The
-  base must have been main itself, on the first-parent chain of the group's base, and an
-  ancestor of the head; the harness commit must be that base or a later commit of the
-  same chain, never an older one. The block must name the harness commit's blob, give a
-  passing verdict, and show every full check that harness runs, by its own `CHECKS` and
-  `NEGATIVE` lists, with no failure; a block written before the `Verdict` line existed
-  does not pass, so its pull request needs a fresh pre-flight. The block is a
-  declaration: anyone who can edit the pull request's body can type one, and the judge
-  checks it for consistency with the repository, not as proof that a pre-flight ran.
-  Before the queue is turned on, the pre-flight's evidence needs an authenticated
-  source, which the owner chooses. A `train/` entry's Members table is matched again to
-  its actual member merges with `check_train.py`, against the pull request's current
-  body. The queue does not repeat member review. An automatic revert has the narrowly
-  checked exception below.
+  base must be the newest commit of the group base's first-parent chain that the head
+  contains, which is what safe_push records (origin/main's tip when the pre-flight
+  ran), so an old base cannot be named for a head built on a newer main; the harness
+  commit must be that base or a later commit of the same chain, never an older one. The
+  block must name the harness commit's blob, give a passing verdict, and show every full
+  check that harness runs, by its own `CHECKS` and `NEGATIVE` lists, with no failure; a
+  block written before the `Verdict` line existed does not pass, so its pull request
+  needs a fresh pre-flight. The block is a declaration: anyone who can edit the pull
+  request's body can type one, and the judge checks it for consistency with the
+  repository, not as proof that a pre-flight ran. Its authenticity must be held by
+  something a group cannot change, as above, before the queue is turned on. A `train/`
+  entry's Members table is matched again to its actual member merges with
+  `check_train.py`, against the pull request's current body. The queue does not repeat
+  member review. An automatic revert has the narrowly checked exception below.
 - **(c) Batching in order.** From the group's base to its head, the first-parent chain
   consists of two-parent merges whose trees are exactly their automatic merges.
   An already merged prefix must be held by main; the rest must be the queue's entries
@@ -714,11 +742,17 @@ the security review, not by this job. Its four rules are:
   fallback is not allowed for the already merged prefix.
 - **(d) A clean tree.** The decisions page has no repeated dated heading, read as it
   renders: a level-one or level-two heading, indented by three spaces at most or
-  underlined, after NFKC and without format characters or emphasis, its month in any
-  case or abbreviated, in any of the three common orders; a heading in the form of a
-  date whose month has letters outside ASCII refuses. That rendering the group changes
-  no generated file is the `check` job's, on the same group, and conflict markers are
-  S23's of `scripts/check_style.py`, in the same job.
+  underlined, also inside a block quote, and an ATX heading inside a list item; its text
+  read with character references (`&nbsp;`, `&#98;`) decoded, without HTML comments and
+  tags or a link's destination, after NFKC and without format characters or emphasis,
+  its month in any case or abbreviated, in any of the three common orders. A heading in
+  the form of a date whose month has letters outside ASCII refuses, and so does an HTML
+  `<h1>` or `<h2>` tag anywhere in the page, code included, which the check refuses
+  rather than reads: headings there are written in Markdown, and the page quotes such a
+  tag only as character references (`&lt;h2&gt;`). Each line is read in time linear in
+  its length. That rendering the group changes no generated file is the `check` job's,
+  on the same group, and conflict markers are S23's of `scripts/check_style.py`, in the
+  same job.
 
 Every merge the judge computes reads merge attributes from the group's base, main,
 never from the group's checkout, so an entry's `.gitattributes` cannot change a verdict.

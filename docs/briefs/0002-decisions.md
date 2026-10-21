@@ -3059,34 +3059,51 @@ findings:
     pre-flight runs origin/main's `scripts/check_train.py` before the full checks, with
     six rules: each member is merged exactly once and has exactly one row; each of the
     train's merges has two parents and adds or resolves nothing outside the generated
-    files (README.md and PROGRAM.md only between their markers) and the decisions page,
-    Git's automatic merge reading merge attributes from origin/main, never from the
-    checkout or a member's `.gitattributes`; the train's own commits change only those;
-    each `/code-review` and `/security-review` cell names the commit its review read, by
-    7 or more hexadecimal digits, and is not only a placeholder, `/no-mistakes` says
+    files (README.md and PROGRAM.md only between their markers) and the decisions page
+    (with its entry files under `docs/decisions/` only once origin/main has that
+    directory), Git's automatic merge reading merge attributes from origin/main, never
+    from the checkout or a member's `.gitattributes`; the train's own commits change only
+    those; each `/code-review` and `/security-review` cell names, by 7 or more
+    hexadecimal digits, a commit of the member's own history (its head, or an ancestor
+    of it not on origin/main) and is not only a placeholder, `/no-mistakes` says
     `passed at` the member's own head or `not run: <reason>` with five words or more,
     and `/security-review` says "Not required" only where no protected path changed,
-    against any of the member's merge bases with main; checks and the content they
-    judge travel apart, even when origin/main's checks pass; and `What is new` covers
-    the diff. While origin/main has no train check, every train is refused, one adding
-    the check too: no commit's own copy ever judges it. `--merge` checks the train's
-    current body again, and refuses if any later read of the body before the merge
-    differs. A branch not named `train/*` meets none of these rules.
+    against any of the member's merge bases with main, a member with a protected path
+    naming its commit there and saying "Not required" nowhere in the cell; checks and the
+    content they judge travel apart, even when origin/main's checks pass; and
+    `What is new` covers the diff. Beyond the commit, the review cells are the
+    coordinator's words, read for their form. While origin/main has no train check,
+    every train is refused, one adding the check too: no commit's own copy ever judges
+    it. `--merge` checks the train's current body again, and refuses if any later read
+    of the body before the merge differs. A branch not named `train/*` meets none of
+    these rules, though every branch's `--body-file` is now read once, as UTF-8, before
+    the checks, and refused if it cannot be read.
   - *The judge.* `scripts/check_queue.py`, which the new `queue-integrity` job takes
-    from a group's base and runs without running any code of the group, checks (a) that
-    no train's change is overwritten, by reverting and reapplying it against every merge
-    base it has with the group's base (generated files by regeneration, and every
+    from a group's base and runs without running any of the group's scripts, checks (a)
+    that no train's change is overwritten, by reverting and reapplying it against every
+    merge base it has with the group's base (generated files by regeneration, and every
     decisions line a train adds kept in order); (b) that each entry's pre-flight block
-    names its head, a base on main's first-parent chain and a harness that is that base
-    or a later main commit, with a passing verdict and every check that harness runs
-    passing, and that each train's `Members` are still its actual merges; (c) that the
-    group is main and the queued entries ahead, in order, as plain merge commits; and
-    (d) that no dated decisions heading repeats, read as it renders (the pages'
-    freshness and conflict markers are the `check` job's). Every merge it computes reads
-    merge attributes from the group's base. The pre-flight block is a declaration that
-    anyone who can edit the pull request's body can type: the judge checks it for
-    consistency, not as proof that a pre-flight ran, and before the queue is turned on
-    the owner chooses an authenticated source for that evidence. No entry may come from
+    names its head, as its base the newest commit of main's first-parent chain that the
+    head contains, and a harness that is that base or a later main commit, with a
+    passing verdict and every check that harness runs passing, and that each train's
+    `Members` are still its actual merges; (c) that the group is main and the queued
+    entries ahead, in order, as plain merge commits; and (d) that no dated decisions
+    heading repeats, read as it renders, in block quotes and list items too and through
+    character references, inline HTML and link syntax, with HTML heading tags of levels
+    one and two refused, wherever they stand on the page, which therefore quotes them
+    only as character references (the pages' freshness and conflict markers are the
+    `check` job's). Every
+    merge it computes reads merge attributes from the group's base. The pre-flight block
+    is a declaration that anyone who can edit the pull request's body can type: the
+    judge checks it for consistency, not as proof that a pre-flight ran. And GitHub runs
+    the group's own copy of the workflow file, so the judge's verdict, and any check of
+    that evidence added to it, counts only while the group's `ci.yml` still calls it.
+    The protection of `.github/`, `scripts/` and `tests/`, and the authenticity of the
+    pre-flight's evidence, must be held by something a group cannot change: a ruleset
+    requiring code-owner review, with a `CODEOWNERS` file naming the owner for those
+    paths; a required workflow pinned to main, if the account offers one; or a status
+    posted by an App that runs main's code. The owner chooses which, and the queue must
+    not be turned on until one exists. No entry may come from
     another repository, or be written by a bot, put in the queue by one or last edited
     by one, save one exception: an automatic revert from the configured App bot
     (`STOICHEIA_REVERT_BOT`), on a `revert/` branch with the `auto-revert` label, whose

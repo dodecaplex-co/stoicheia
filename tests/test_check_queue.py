@@ -19,6 +19,7 @@ import subprocess
 import sys
 import tempfile
 import textwrap
+import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -452,6 +453,23 @@ class QueueTests(unittest.TestCase):
         self.verdict(self.cli(head=self.merge(self.base, one, 1)), 1,
                      "harness commit is older than the recorded base")
 
+    def test_preflight_base_older_than_the_head_s_newest_main_refuses(self):
+        # The block names an old main commit as both base and harness (as b7aac65f of
+        # 17 October, whose harness lacks later checks), for a head built on a newer
+        # main: safe_push records origin/main's tip, the newest main the head contains.
+        old_base = self.base
+        self.base = self.make([old_base], {
+            "scripts/safe_push.py": harness_source("A newer main harness.")})
+        self.snapshot["main"]["sha"] = self.base
+        self.nodes().clear()
+        one = self.train(1, {TEXT: "A train pre-flighted on the newer main.\n"})
+        group = self.merge(self.base, one, 1)
+        self.verdict(self.cli(head=group), 0, "queue: PASS")
+        self.set_body(queue.PREFLIGHT.sub(self.block(one, base=old_base,
+                                                     harness_commit=old_base), self.body()))
+        self.verdict(self.cli(head=group), 1, "recorded base is not the newest commit of "
+                     "main's first-parent chain that the head contains")
+
     def test_preflight_base_must_have_been_main(self):
         # The block's base is an ancestor of the group's base, but by a merge's second
         # parent: it was never main's tip.
@@ -555,6 +573,10 @@ class QueueTests(unittest.TestCase):
             (original.replace(review, "TODO"), "not written"),
             (original.replace(review, "Independent reader: pass, no findings."),
              "names no reviewed commit"),
+            (original.replace(review, f"{REVIEW} {self.base[:12]}: pass, no findings."),
+             "names no commit of the member's own history"),
+            (original.replace(review, "Not needed (1234567)"),
+             "names no commit of the member's own history"),
             (original.replace("## What is new", "## Omitted"), "What is new"),
         ):
             with self.subTest(message=message):
@@ -693,6 +715,63 @@ class QueueTests(unittest.TestCase):
                 page.write_text(original + "\n" + added + "\n", encoding="utf-8")
                 self.verdict(self.cli(tree=True, prepare=False), 0, "queue: PASS")
         page.write_text(original, encoding="utf-8")
+
+    def test_tree_reads_headings_through_html_links_and_containers(self):
+        # Character references, inline HTML, link syntax, block quotes and list items
+        # are read through; an HTML heading tag is refused rather than read.
+        self.checkout(self.head)
+        page = self.repo / PAGE
+        original = page.read_text(encoding="utf-8")
+        for added, message in (
+                ("## 20&nbsp;October 2026", "repeated dated heading"),
+                ("## 20 Octo&#98;er 2026", "repeated dated heading"),
+                ("## 20 October&#x20;2026", "repeated dated heading"),
+                ("## [20 October 2026](#x)", "repeated dated heading"),
+                ("## [20 October 2026][x]", "repeated dated heading"),
+                ("## [20](#a) [October](#b) [2026](#c)", "repeated dated heading"),
+                ("## 20 Octo<!-- -->ber 2026", "repeated dated heading"),
+                ("## 20 October 2026<span></span>", "repeated dated heading"),
+                ("## <em>20 October</em> 2026", "repeated dated heading"),
+                ("## 20 October 2026 ##", "repeated dated heading"),
+                ("## 20 October 2026 ####   ", "repeated dated heading"),
+                ("> ## 20 October 2026", "repeated dated heading"),
+                (">## 20 October 2026", "repeated dated heading"),
+                ("- ## 20 October 2026", "repeated dated heading"),
+                ("1. ## 20 October 2026", "repeated dated heading"),
+                ("> - > ## 20 October 2026", "repeated dated heading"),
+                ("> 20 October 2026\n> ---", "repeated dated heading"),
+                ("<h2>20 October 2026</h2>", "an HTML heading tag"),
+                ("<H1 class=\"date\">Any heading</H1>", "an HTML heading tag"),
+                ("Some text <h2\nid=x>A heading</h2>", "an HTML heading tag")):
+            with self.subTest(added=added):
+                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
+                self.verdict(self.cli(tree=True, prepare=False), 1, PAGE, message)
+        for added in ("## 20 October 2026 [a later note](#x)", "## 20 October 2026 &amp; 21",
+                      "> ### 20 October 2026", "<h3>20 October 2026</h3>",
+                      "## 20 October 2026 <b>and after</b>", "- 20 October 2026"):
+            with self.subTest(added=added):
+                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
+                self.verdict(self.cli(tree=True, prepare=False), 0, "queue: PASS")
+        page.write_text(original, encoding="utf-8")
+
+    def test_long_heading_lines_are_read_in_linear_time(self):
+        # A 200,000-character line, in the shapes that once backtracked ("## a", spaces
+        # and a last word: about 0.45 s at 8,000 characters, and hours at 200,000) and in
+        # those the reading of HTML, links and containers could, is read in under a second.
+        size = 200_000
+        for line in ("## a" + " " * size + "b", "## a" + " " * size,
+                     "## " + "#" * size + " x", "## " + "<" * size,
+                     "## " + "<!--" * (size // 4), "## " + "<a" * (size // 2),
+                     "## " + "](" * (size // 2), "## " + "][" * (size // 2),
+                     "## " + "&#" * (size // 2), "> " * (size // 2) + "## 20 October 2026",
+                     "- " * (size // 2), "## 1 " + "a " * (size // 2),
+                     "## 20 October 2026" + " " * size + "#"):
+            with self.subTest(line=line[:12]):
+                self.assertGreaterEqual(len(line), size)
+                started = time.perf_counter()
+                for _, heading in queue.headings("Paragraph.\n\n" + line + "\n=\n"):
+                    queue.heading_date(heading)
+                self.assertLess(time.perf_counter() - started, 1.0)
 
     def test_repeated_dated_heading_refuses(self):
         page = self.trees[self.base][PAGE] + "\n## 20 October 2026\n\nRepeated date.\n"

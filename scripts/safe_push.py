@@ -21,17 +21,14 @@ to end, reading nothing from the working tree, and only then pushes it to
 refs/heads/<name> and opens the pull request, or updates the open one. The steps run in
 order, and the first that fails stops it with a message saying why:
 
-Branches named train/* require --body-file. Step "3. train" runs origin/main's
-check_train.py before the full checks; while origin/main has none, every train is
-refused, and no commit's own copy runs in its place.
-
 1. Preconditions. The commit exists; `git fetch origin`; origin/main is an ancestor of
    the commit, so that the merge commit will hold exactly the tree checked; the branch,
    if origin has it, is an ancestor too, for nothing is ever forced; the branch is not
    main; the branch name and the title hold nothing the scan refuses. The harness is
-   origin/main's: when this copy of safe_push.py or heath.py differs from origin/main's,
-   origin/main's replaces this process (os.execve), so that a branch cannot weaken the
-   guards that judge it, and an interruption reaches the copy that pushed.
+   origin/main's: when this copy of safe_push.py or heath.py, or the check_train.py
+   beside it, differs from origin/main's, origin/main's replaces this process
+   (os.execve), so that a branch cannot weaken the guards that judge it, and an
+   interruption reaches the copy that pushed.
 2. A secret scan of every line the push adds, of every file it adds or changes, of its
    commit messages, and of each commit's author and committer, and then of each commit's
    own change, since the push publishes the history: a secret added and taken out again,
@@ -65,7 +62,10 @@ refused, and no commit's own copy runs in its place.
    - no whole directory under Elements/, heath/, review/, figures/ or mishnah/ is
      deleted unless 0002-decisions.md gains a new line naming it.
    A new line here is a mention the push adds: an old line that already named the
-   thing, edited in place, does not count.
+   thing, edited in place, does not count. A branch named train/* requires --body-file,
+   and step "3. train" then runs origin/main's check_train.py on the commit and that
+   body, before the full checks; while origin/main has none, every train is refused,
+   and no commit's own copy runs in its place.
 4. The full check sequence of docs/WORKFLOW.md, section 8, in that worktree, and
    `negative_tests.py` in a second one, each step timed. The checks run with
    origin/main's copies of the check scripts and their expected values (CHECK_INPUTS,
