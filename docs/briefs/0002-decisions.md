@@ -2087,7 +2087,6 @@ findings:
   is written by `tests/model/run.py --full --write`: its dated numerical results and
   axiom-by-axiom table stay untouched. README's scope rows and PROGRAM's status table
   stay untouched too.
-  The markers are inert on this branch. Once `tooling/generated-counts` lands,
-  `scripts/render.py` fills them and `scripts/check_fidelity.py` checks them against
-  the lock. The protected files changed here are `Certificate/FIELDS.md` and
+  The tooling that reads the markers landed first, in #166: `scripts/render.py` fills
+  them, and `scripts/check_fidelity.py` checks them against the lock. The protected files changed here are `Certificate/FIELDS.md` and
   `tests/model/MODEL.md`; no check, declaration, lock or review record changes.
