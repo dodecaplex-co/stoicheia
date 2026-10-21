@@ -3098,3 +3098,24 @@ findings:
   tracked files for S12 among them. This is a check change alone. Protected files
   changed: `scripts/negative_tests.py`, `tests/test_negative_tests.py`,
   `scripts/generated_counts.py` and `tests/test_generated_counts.py`.
+
+## 21 October 2026
+
+- **Heath's letters upright in both figures (#159).** The owner decided on 18 October
+  that Heath's letters take one style, upright, in the text and in both figures (the
+  voice rules' check change, above). The figures are now set upright. Every
+  `figures/<book>/NN.svg` and `NN-idea.svg` of Books I to III, 198 in all, drew the letters
+  italic: 83 of Euclid's figures set `font-style="italic"` on the root `<svg>`, and the
+  other 16, with all 99 figures at a glance, on the `<g>` that holds the letters. That one
+  attribute is removed from each, so the letters take SVG's default, upright. Nothing else
+  in a figure changes, and no letter moves. Every text the attribute set italic was one of
+  Heath's letters, so nothing italic on purpose is lost. S26 now measures each letter by
+  the hull of the upright capital, and every letter still stands 2 clear of every stroke
+  and dot: the closest is III.33's F, at 2.05. `scripts/check_style.py` reports no D15.
+  The modern figures (`NN-modern.svg`) do not change: their capitals were upright already,
+  and the paragraph's own names stay italic, as S25 requires. The switch follows in a
+  change of its own to the check
+  ([#159](https://github.com/jackChallis/stoicheia/issues/159)):
+  `UPRIGHT_LETTERS_REQUIRED` set to `True`, a test that plants an italic letter, and
+  STYLE's wording for the switch. Until then S15 and S20 still accept a figure whose
+  letters are all italic. No protected file changes.
