@@ -348,7 +348,7 @@ class PinTests(unittest.TestCase):
                 self.assertIn("`Derives.sound` has no statement pin", out)
                 self.assertIn(f"Audit.lean:6 is under `#guard_msgs {options} in`", out)
                 self.assertIn("only a bare `#guard_msgs in` pins a statement", out)
-                self.assert_refused(out, numbered(audit, guard))
+                self.assert_refused(out, [(3, "/--"), *numbered(audit, guard)])
 
     def test_a_weak_pin_is_refused_even_beside_a_bare_one(self):
         bare = PIN.format(name="Derives.sound")
@@ -359,7 +359,8 @@ class PinTests(unittest.TestCase):
         code, out = self.run_check(self.brief("`Derives.sound` holds."), audit)
         self.assertEqual(code, 1, out)
         self.assertNotIn("has no statement pin", out)
-        self.assert_refused(out, [(4, "#guard_msgs (substring := true) in"),
+        self.assert_refused(out, [(1, "/--"),
+                                  (4, "#guard_msgs (substring := true) in"),
                                   (5, f"#check @{SOUND}")])
 
     def test_options_that_shorten_what_lean_prints_are_refused(self):
@@ -372,6 +373,7 @@ class PinTests(unittest.TestCase):
         back = "\nset_option pp.deepTerms true\n"
         oneline, steps = "set_option pp.oneline true\n\n", "set_option pp.maxSteps 1\n\n"
         one_pin = f"#guard_msgs in\nset_option pp.maxSteps 1 in\n#check @{RESTRICT}\n"
+        doc = audit[start:audit.index("-/\n", start) + len("-/\n")]
         # (the copy, the snippets planted in it, whether the reader alone counts the pin,
         # and the pins refused besides); the reader refuses the cut-down docstring itself.
         cut = audit[:start] + deep + shortened + back + audit[end:]
@@ -391,8 +393,10 @@ class PinTests(unittest.TestCase):
                 code, out = self.run_check((REPO / pins.BRIEF).read_text(), planted,
                                            printed=False)
                 self.assertEqual(code, 1, out)
-                self.assert_refused(out, [line for snippet in snippets
-                                          for line in numbered(planted, snippet)], others)
+                refused = [line for snippet in snippets for line in numbered(planted, snippet)]
+                if label == "an option for one pin":
+                    refused.insert(0, numbered(planted, doc)[0])
+                self.assert_refused(out, refused, others)
 
     def test_a_namespace_whose_theorem_takes_a_pinned_name_is_refused(self):
         audit, start, end = self.real_pin()
@@ -713,6 +717,21 @@ class PinTests(unittest.TestCase):
                 self.assertNotIn("has no statement pin", out)
                 self.assert_refused(out, [(7, command)])
 
+    def test_unattached_docstrings_are_refused(self):
+        brief = (REPO / pins.BRIEF).read_text()
+        audit = (REPO / pins.AUDIT).read_text()
+        cases = {
+            "trailing": "/-- extra -/\n",
+            "consecutive trailing": "/-- first -/\n/-- second -/\n",
+        }
+        for label, extra in cases.items():
+            with self.subTest(label):
+                planted = audit + extra
+                code, out = self.run_check(brief, planted, printed=False)
+                self.assertEqual(code, 1, out)
+                self.assertNotIn("has no statement pin", out)
+                self.assert_refused(out, numbered(planted, extra))
+
     def test_imports_lead_the_file_one_module_each(self):
         pin = PIN.format(name="Derives.sound")
         brief = self.brief("`Derives.sound` holds.")
@@ -728,7 +747,8 @@ class PinTests(unittest.TestCase):
         audit = pin.replace("#guard_msgs in", "import Elements.BookI.Prop04\n#guard_msgs in")
         code, out = self.run_check(brief, audit)
         self.assertEqual(code, 1, out)
-        self.assert_refused(out, [(4, "import Elements.BookI.Prop04"), (5, "#guard_msgs in"),
+        self.assert_refused(out, [(1, "/--"), (4, "import Elements.BookI.Prop04"),
+                                  (5, "#guard_msgs in"),
                                   (6, f"#check @{SOUND}")])
 
     def test_a_pin_with_no_docstring_is_refused(self):
@@ -780,7 +800,9 @@ class PinTests(unittest.TestCase):
                 self.assertIn("`Derives.sound` has no statement pin", out)
                 command = next((number, line.strip()) for number, line in
                                enumerate(audit.splitlines(), 1) if f"#check @{SOUND}" in line)
-                self.assert_refused(out, [], ((
+                refused = [(1, "/--")] if label == (
+                    "an active docstring with line-commented commands") else []
+                self.assert_refused(out, refused, ((
                     *command, "is a pin inside a comment; commented pins do not "
                     "run and are refused"),))
 

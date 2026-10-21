@@ -471,12 +471,17 @@ def imports(text: str) -> list[str]:
 
 def strays(text: str) -> list[tuple[int, str]]:
     """Each line of the audit file that holds anything but its leading imports, comments,
-    docstrings and pins, each pin directly after its docstring, with the line's text. The
-    file is read to its end, so a `#exit` is one of them."""
+    and pins, each pin directly after its docstring, with the line's text. The file is read
+    to its end, so a `#exit` is one of them."""
     lines = text.split("\n")
     pieces = lex(text)
     found: set[int] = set()
     for index, (kind, offset, code) in enumerate(pieces):
+        if kind == "doc":
+            after = pieces[index + 1] if index + 1 < len(pieces) else None
+            if after is None or after[0] != "code" or PIN.match(after[2]) is None:
+                found.add(text.count("\n", 0, offset) + 1)
+            continue
         if kind != "code":
             continue
         end = leading_imports(code)[1] if index == 0 else 0
