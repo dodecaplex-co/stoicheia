@@ -443,7 +443,8 @@ class AbsentTrackedFileTests(unittest.TestCase):
 
     present = {"scripts/check.py": "# the check\n", "tests/test_check.py": "# its test\n",
                "docs/notes.md": "Words: <!-- count:vocabulary -->3<!-- /count -->.\n"}
-    added = ("scripts/new_check.py", "tests/test_new_check.py", "tests/new_check.md")
+    added = ("scripts/new_check.py", "tests/test_new_check.py", "tests/new_check.md",
+             "tests/a\x1b[2K\rforged\nline.py")
 
     def setUp(self):
         self.root = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
@@ -462,11 +463,16 @@ class AbsentTrackedFileTests(unittest.TestCase):
                  "commit", "-q", "--no-verify", "-m", "add a check and its test")
         for rel in self.added:
             (self.root / rel).unlink()       # as base_copies takes out a file the commit adds
-        self.assertEqual(self.git("ls-files").split(), sorted(files))
+        self.assertEqual(self.git_names(), sorted(files))
 
     def git(self, *args):
         return subprocess.run(["git", *args], cwd=self.root, capture_output=True, text=True,
                               check=True).stdout
+
+    def git_names(self):
+        result = subprocess.run(["git", "ls-files", "-z"], cwd=self.root,
+                                capture_output=True, check=True)
+        return [name.decode() for name in result.stdout.split(b"\0") if name]
 
     def note(self, rel):
         return ("note: tracked but absent from the work tree (under the check inputs, as a "
@@ -489,9 +495,9 @@ class AbsentTrackedFileTests(unittest.TestCase):
         self.assert_named()
 
     def test_marker_copy_names_absent_files(self):
-        listing = negative.run("git", "ls-files", "-z")
+        _, listing = negative.tracked_names()
         copy = Path(self.enterContext(tempfile.TemporaryDirectory()))
-        negative.copy_marker_files(copy, listing.stdout.split("\0"))
+        negative.copy_marker_files(copy, listing)
         copied = {p.relative_to(copy).as_posix() for p in copy.rglob("*") if p.is_file()}
         self.assertEqual(copied, set(self.present))
         self.assert_named()
@@ -508,8 +514,9 @@ class AbsentTrackedFileTests(unittest.TestCase):
         with negative.count_source_copy() as (copy, _):
             copied = {p.relative_to(copy).as_posix() for p in copy.rglob("*") if p.is_file()}
             self.assertEqual(copied, {"scripts/check.py", "tests/test_check.py"})
+        _, listing = negative.tracked_names()
         negative.copy_marker_files(Path(self.enterContext(tempfile.TemporaryDirectory())),
-                                   negative.run("git", "ls-files", "-z").stdout.split("\0"))
+                                   listing)
         self.assertEqual(self.output.getvalue().count(f"✗ {message}\n"), 2)
         self.assert_named([message])
 
@@ -517,7 +524,7 @@ class AbsentTrackedFileTests(unittest.TestCase):
         docs = self.root / "docs"
         docs.chmod(0)
         self.addCleanup(docs.chmod, 0o755)
-        listing = negative.run("git", "ls-files", "-z").stdout.split("\0")
+        _, listing = negative.tracked_names()
         with self.assertRaises(PermissionError), negative.count_source_copy():
             pass
         with self.assertRaises(PermissionError):

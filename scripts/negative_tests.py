@@ -143,6 +143,13 @@ def run(*cmd: str) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
 
 
+def tracked_names() -> tuple[subprocess.CompletedProcess, list[str]]:
+    """List tracked names without text mode changing control characters in them."""
+    result = subprocess.run(("git", "ls-files", "-z"), cwd=ROOT, capture_output=True)
+    names = [name.decode() for name in result.stdout.split(b"\0") if name]
+    return result, names
+
+
 def fidelity(*args: str) -> subprocess.CompletedProcess:
     return run(sys.executable, "scripts/check_fidelity.py", *args)
 
@@ -273,12 +280,16 @@ def merge_conflict_markers() -> None:
     by the check. Compare the harmless heading with the baseline, so an existing
     marker elsewhere cannot masquerade as a refusal of the planted heading.
     """
-    listing = run("git", "ls-files", "-z")
-    if not expect_success("tracked files for marker plants", listing):
+    listing, names = tracked_names()
+    if listing.returncode != 0:
+        decoded = subprocess.CompletedProcess(
+            listing.args, listing.returncode,
+            listing.stdout.decode(errors="replace"), listing.stderr.decode(errors="replace"))
+        expect_success("tracked files for marker plants", decoded)
         return
     with tempfile.TemporaryDirectory(prefix="stoicheia-markers-") as tmp:
         root = Path(tmp)
-        copy_marker_files(root, listing.stdout.split("\0"))
+        copy_marker_files(root, names)
 
         def check() -> subprocess.CompletedProcess:
             return subprocess.run([sys.executable, "scripts/check_style.py", "--no-lean"],
@@ -1179,11 +1190,11 @@ def count_source_copy():
     copy. No Git command writes. Include new Python sources before they are committed.
     A tracked file absent from the work tree is named (absent_tracked), not copied.
     """
-    tracked = run("git", "ls-files", "-z")
+    tracked, names = tracked_names()
     tracked.check_returncode()
     git_dir = run("git", "rev-parse", "--absolute-git-dir")
     git_dir.check_returncode()
-    paths = {Path(p) for p in tracked.stdout.split("\0") if p}
+    paths = {Path(p) for p in names}
     paths.difference_update(absent_tracked(sorted(paths)))
     paths.update(p.relative_to(ROOT) for p in (ROOT / "scripts").glob("*.py"))
     with tempfile.TemporaryDirectory(prefix="stoicheia-counts-", dir="/tmp") as tmp:
