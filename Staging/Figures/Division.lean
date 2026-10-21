@@ -3,6 +3,7 @@ import Staging.Figures.Content
 import Staging.Figures.ConvexCover
 import Staging.Figures.Arrangement
 import Staging.Figures.DivisionFacts
+import Staging.Figures.Extract
 import Elements.Figure.Rectilineal
 
 /-!
@@ -48,6 +49,11 @@ theorem convex_fan {cs : List Point} (h : ConvexOutline cs) :
 /-- Every figure previously supplied as an Apart has an outline with exactly
 the same region, including holes, separate pieces and contacts at corners. -/
 theorem apart_has_outline (R : Apart) : ∃ F : Outline, Divides F.region R := by
-  sorry
+  /- Cut the sides at the corners; the elementary lines along one triangle only, grouped by
+  linked triangles, are even in number at every corner of each group, so they are the sides of
+  simple contours (`Extract.cycles`). A contour lies wholly inside or outside another, off it,
+  since it has one status on linked closed triangles (`Extract.linked_status`), so contours are
+  compatible; off the sides, crossing parity counts the triangles (`Extract.parity_at`). -/
+  exact Extract.apart_outline R
 
 end Elements.Figures
