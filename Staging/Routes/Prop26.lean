@@ -5,6 +5,7 @@ import Elements.BookI.Prop04
 import Elements.BookIII.Prop02
 import Elements.BookIII.Prop22
 import Elements.BookIII.Prop24
+import Elements.BookIII.Prop26
 import Staging.Routes.Prop20
 
 /-!
@@ -192,5 +193,8 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
     rw [angleAtCentre.within hG hB hC hGK, angleAtCentre.within hH hE hF hHL, h]
   exact euclid hGH (Magnitude.eq_of_add_self_eq (h₁.symm.trans (hGH.trans h₂)))
   -- Q. E. D.
+
+/-- The check: `Routes.Prop26` proves the statement of III.26 in `Elements/` (checked by Lean). -/
+example : type_of% @Elements.BookIII.Routes.Prop26 = type_of% @Elements.BookIII.Prop26 := rfl
 
 end Elements.BookIII.Routes

@@ -91,9 +91,10 @@ def CirclesTouchAt (α β : Circle) (C : Point) : Prop :=
 
 /-! ## Small facts the agreement needs
 
-Four others are in `Elements`, and are cited from there: `exists_circle_about` and
-`onLine_of_collinear`, in `Elements/Figure/Regions.lean`, and `foot_nearest` and
-`len_lt_of_add_lt`, in `Elements/BookIII/MixedAngles.lean`. -/
+Five others are in `Elements`, and are cited from there: `exists_circle_about` and
+`onLine_of_collinear`, in `Elements/Figure/Regions.lean`, and `foot_nearest`,
+`len_lt_of_add_lt` and `surrounds_sameSideOf`, in `Elements/BookIII/MixedAngles.lean`;
+`onLine_of_collinear` and `foot_nearest` through `surrounds_sameSideOf`, which cites them. -/
 
 /-- A point outside a circle is farther from the centre than the circumference: were it
 nearer, it would be within; at the same distance, on it (System E, Diagram-segment 3
@@ -106,27 +107,20 @@ theorem Touching.len_lt_of_outside {F C P : Point} {α : Circle} (hF : Centre F 
   · exact h
 
 /-- **Near a point off a straight line, every point is on its side.** If C is off the
-straight line GF, take N, the foot of the perpendicular from C to GF [I. 12]: every point
-nearer C than N is on C's side of GF. On GF, it would be a point of GF nearer C than N;
-across GF, the straight line joining it to C would cross GF nearer still (System E,
-Intersection 1). Both are against `foot_nearest`. -/
+straight line GF, there is a point N other than C such that every point nearer C than N is
+on C's side of GF. This is `surrounds_sameSideOf` (`Elements/BookIII/MixedAngles.lean`),
+said with a distance in place of a circle, and it is cited from there: C is on its own side
+of GF (System E, Same side 1), so every point within the circle about C through the foot of
+the perpendicular from C to GF is on that side; N is a point of that circle (System E,
+Points 7), and a point nearer C than N is within it (System E, Diagram-segment 4). -/
 theorem Touching.sameSide_of_near {C F G : Point} (hGFC : Triangle G F C) :
     ∃ N : Point, N ≠ C ∧ ∀ X : Point, ‖C X‖ < ‖C N‖ → SameSideOf X C G F := by
-  have hGF : G ≠ F := hGFC.ne₁₂
-  obtain ⟨N, hN, hright⟩ := BookI.Prop12 hGF hGFC
-  have hnear := foot_nearest hGF hGFC hN hright
-  obtain ⟨L, hG_L, hF_L⟩ := Postulate1 G F hGF
-  have hC_L : ¬ OnLine C L := hGFC.off_line hG_L hF_L
-  have hN_L : OnLine N L := onLine_of_collinear hGF hN hG_L hF_L
-  refine ⟨N, fun e => hC_L (e ▸ hN_L), fun X hX => ?_⟩
-  have hnot : ∀ Y : Point, OnLine Y L → ‖C Y‖ < ‖C N‖ → False := fun Y hY hlt => by
-    rcases hnear Y ⟨L, hG_L, hF_L, hY⟩ with e | h'
-    · rw [e] at hlt; exact lt_irrefl _ hlt
-    · exact lt_irrefl _ (lt_trans hlt h')
-  have hX_L : ¬ OnLine X L := fun hXL => hnot X hXL hX
-  refine SameSideOf.of_line hGF hG_L hF_L (Classical.byContradiction fun hs => ?_)
-  obtain ⟨Y, hY_L, hXYC⟩ := OppositeSides.exists_between ⟨hX_L, hC_L, hs⟩
-  exact hnot Y hY_L (lt_trans (len_lt_of_between (between_symm hXYC)) hX)
+  have hCC : SameSideOf C C G F := by
+    obtain ⟨L, hG_L, hF_L⟩ := Postulate1 G F hGFC.ne₁₂
+    exact SameSideOf.of_line hGFC.ne₁₂ hG_L hF_L (same_side_refl (hGFC.off_line hG_L hF_L))
+  obtain ⟨δ, hδ, hall⟩ := surrounds_sameSideOf hCC
+  obtain ⟨N, hN, -⟩ := exists_point_on_circle δ []
+  exact ⟨N, ne_of_centre_of_on hδ hN, fun X hX => hall X (inside_of_len_lt hδ hN hX)⟩
 
 /-- **A small circle about the point of contact.** Within any circle `γ` about a point C of
 the circle `β`, with G its centre, which every circle has (`Tacit.exists_centre`), a circle

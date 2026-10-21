@@ -7,28 +7,29 @@ import Elements.BookIII.Prop20
 import Elements.BookIII.Prop22
 import Elements.BookIII.Prop24
 import Elements.BookIII.Prop26
+import Elements.BookIII.Prop27
 
 /-!
 # Book III, Proposition 27, by Euclid's reductio and halving
 
-This file answers issue #127. It stages a proof of III.27, with main's statement, that
-reaches the angles at A and D by Euclid's own step, "the angle at A is half of the angle
-BGC" [III. 20], where they are acute. Where they are obtuse, it takes the same step on the
-circumferences that remain, and III.22 passes back to A and D. Where they are right, there
-is no angle at the centre to halve, and both angles are right.
+This file answers issue #127. It stages a proof of III.27, with the statement in
+`Elements/`, that reaches the angles at A and D by Euclid's own step, "the angle at A is
+half of the angle BGC" [III. 20], where they are acute. Where they are obtuse, it takes the
+same step on the circumferences that remain, and III.22 passes back to A and D. Where they
+are right, there is no angle at the centre to halve, and both angles are right.
 
-Main's proof keeps Euclid's reductio at the centres, and his halving where the angles at A
-and D are acute; where they are right or obtuse it halves the measure of the circumference
-instead (`Circumference.standing`), a shortcut through the definition of the measure. Here
-Euclid's argument, his reductio and his halving together, is written once, for any points
-of the circles on the centres' sides. Where the angles at A and D are acute, it runs at A
-and D, as in his figure. Where they are obtuse, we pass to the circumferences that remain,
-as III.26 passes to "the circumference BKC which remains". The angles standing on them at
-points of the circles on the centres' sides are acute, and Euclid's argument makes those
-equal. Then III.22 leaves the angles at A and D as what remains of two right angles, as in
-III.26's obtuse case, after Heath, who says his remarks there "apply here also" (vol. 2,
-p. 59). Where the angles are right, the centres lie on BC and EF, and each angle is an angle
-in a semicircle, and right; `Prop24.angle_type` reads that off the measure of the
+The proof in `Elements/` keeps Euclid's reductio at the centres, and his halving where the
+angles at A and D are acute; where they are right or obtuse it halves the measure of the
+circumference instead (`Circumference.standing`), a shortcut through the definition of the
+measure. Here Euclid's argument, his reductio and his halving together, is written once, for
+any points of the circles on the centres' sides. Where the angles at A and D are acute, it
+runs at A and D, as in his figure. Where they are obtuse, we pass to the circumferences that
+remain, as III.26 passes to "the circumference BKC which remains". The angles standing on
+them at points of the circles on the centres' sides are acute, and Euclid's argument makes
+those equal. Then III.22 leaves the angles at A and D as what remains of two right angles,
+as in III.26's obtuse case, after Heath, who says his remarks there "apply here also"
+(vol. 2, p. 59). Where the angles are right, the centres lie on BC and EF, and each angle is
+an angle in a semicircle, and right; `Prop24.angle_type` reads that off the measure of the
 circumference, so in this case alone the angles are read off the measure. Nothing here uses
 `Circumference.standing`.
 
@@ -175,12 +176,11 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
     have h20D := Prop20 hH hD hE hF hHD
     -- therefore the angle at A is also equal to the angle at D.
     exact ⟨centres, Magnitude.eq_of_add_self_eq (h20A.symm.trans (centres.trans h20D))⟩
-  /- Euclid's halving holds where the angles at A and D are acute. Under III.26 Heath writes
-     that "we must deal separately with the cases where the angle at the circumference is
-     equal to or greater than a right angle" (vol. 2, p. 57), and under III.27 that "the
-     remarks about the method of treating the different cases apply here also" (vol. 2,
-     p. 59). Equal circumferences put the centres alike (`Prop27.sides`), and we take the
-     three cases in turn, as III.26 does. -/
+  /- Euclid's halving holds where the angles at A and D are acute. The right and obtuse
+     cases are taken separately, as Heath notes on III.26, and under III.27 he writes that
+     "the remarks about the method of treating the different cases apply here also"
+     (vol. 2, p. 59). Equal circumferences put the centres alike (`Prop27.sides`), and we
+     take the three cases in turn, as III.26 does. -/
   have hAD : ∠ B A C = ∠ E D F := by
     rcases Prop27.sides hG hH hA hB hC hD hE hF hBAC.acb hEDF.acb heq with
       ⟨hGA, hHD⟩ | ⟨hBGC, hEHF⟩ | ⟨hGA, hHD⟩
@@ -244,5 +244,8 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   -- Therefore etc.
   exact ⟨hAD, fun hGA hHD => (euclid hA hD hGA hHD heq).1⟩
   -- Q. E. D.
+
+/-- The check: `Routes.Prop27` proves the statement of III.27 in `Elements/` (checked by Lean). -/
+example : type_of% @Elements.BookIII.Routes.Prop27 = type_of% @Elements.BookIII.Prop27 := rfl
 
 end Elements.BookIII.Routes

@@ -5,6 +5,7 @@ import Elements.BookI.Prop05
 import Elements.BookI.Prop13
 import Elements.BookI.Prop32
 import Elements.BookIII.Prop02
+import Elements.BookIII.Prop20
 
 /-!
 # Book III, Proposition 20, for every angle at the centre
@@ -550,5 +551,10 @@ theorem Prop20.circumference (hB : OnCircle B α) (hC : OnCircle C α)
       x = ∠ B A C + ∠ B A C) ⟨_, A₀, hA₀, hA₀K, rfl⟩
   unfold Elements.circumference
   rw [hx, Prop20 hA hB hC hAK]
+
+/-- The check: `Staging.Prop20.special` proves the statement of III.20 in `Elements/`
+(checked by Lean). -/
+example :
+    type_of% @Elements.BookIII.Staging.Prop20.special = type_of% @Elements.BookIII.Prop20 := rfl
 
 end Elements.BookIII.Staging

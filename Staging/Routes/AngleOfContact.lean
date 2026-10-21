@@ -33,7 +33,7 @@ statements:
   angle of the semicircle does not depend on it: on any side of the diameter its comparison
   follows from III.16, with the perpendicular to AB at A drawn on that side by I.11.
 
-Main has none of these. The mixed angles of `Elements` (issue #57), whose words and
+`Elements` has none of these. The mixed angles of `Elements` (issue #57), whose words and
 facts this file uses, prove III.16's comparisons in III.16's figure, where AE is drawn at right
 angles to the diameter, and do not prove the angle of contact's comparisons for a touching
 straight line in general. The route is Euclid's order: III.18 makes the touching straight

@@ -1,5 +1,6 @@
 import Elements.Figure.Basics
 import Elements.BookIII.Squares
+import Elements.BookIII.Prop21
 import Staging.Routes.Prop20
 
 /-!
@@ -64,5 +65,8 @@ theorem Prop21 {A B D E : Point} {ABCD : Circle}
   exact Magnitude.eq_of_add_self_eq (h₁.symm.trans h₂)
   -- Therefore etc.
   -- Q. E. D.
+
+/-- The check: `Routes.Prop21` proves the statement of III.21 in `Elements/` (checked by Lean). -/
+example : type_of% @Elements.BookIII.Routes.Prop21 = type_of% @Elements.BookIII.Prop21 := rfl
 
 end Elements.BookIII.Routes

@@ -12,21 +12,21 @@ import Elements.BookIII.Prop08
 /-!
 # Book III, Proposition 8, with Euclid's own last step
 
-This file answers issue #125. It stages `Routes.Prop8`, main's statement of III.8 word for
-word, with main's proof except for the last step, that no third straight line from D is
-equal to DK. Main's proof takes that step by I.24 at the centre M for every point of the
-circle. Here it is Euclid's: when N is off DA, DN and the straight line it is compared
-with, DB or DK, are on one side of DA (on DA, N is A or G, and DA is the greatest and DG
-the least), and if both fall on the convex circumference, the nearer to DG is the less by
-the order proved earlier in the proof, so they cannot be equal, "which was proved
-impossible". Two points of the concave circumference are compared by that circumference's
-order in the same way, a case Euclid's figure leaves aside. I.24 at M stays for the cases
-neither order reaches: the two points on different circumferences, or one of them a point
-where a straight line from D touches the circle, which is on neither.
+This file answers issue #125. It stages `Routes.Prop8`, the statement of III.8 in
+`Elements/` word for word, with the proof in `Elements/` except for the last step, that no
+third straight line from D is equal to DK. The proof in `Elements/` takes that step by I.24
+at the centre M for every point of the circle. Here it is Euclid's: when N is off DA, DN and
+the straight line it is compared with, DB or DK, are on one side of DA (on DA, N is A or G,
+and DA is the greatest and DG the least), and if both fall on the convex circumference, the
+nearer to DG is the less by the order proved earlier in the proof, so they cannot be equal,
+"which was proved impossible". Two points of the concave circumference are compared by that
+circumference's order in the same way, a case Euclid's figure leaves aside. I.24 at M stays
+for the cases neither order reaches: the two points on different circumferences, or one of
+them a point where a straight line from D touches the circle, which is on neither.
 
-Main's helpers `Prop8.outside`, `Prop8.within` and `Prop8.on_diameter` are cited from
-main's file. Status: staged to replace the proof in Elements/BookIII/Prop08.lean when Book
-III's files are next moved.
+The helpers `Prop8.outside`, `Prop8.within` and `Prop8.on_diameter` are cited from the file
+in `Elements/`. Status: staged to replace the proof in Elements/BookIII/Prop08.lean when
+Book III's files are next moved.
 -/
 
 namespace Elements.BookIII.Routes
@@ -303,7 +303,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle}
   exact ⟨greatest, concave, least, convex, two_equal⟩
   -- Q. E. D.
 
-/-- The check: `Routes.Prop8` proves main's statement of III.8 (checked by Lean). -/
+/-- The check: `Routes.Prop8` proves the statement of III.8 in `Elements/` (checked by Lean). -/
 example : type_of% @Elements.BookIII.Routes.Prop8 = type_of% @Elements.BookIII.Prop8 := rfl
 
 end Elements.BookIII.Routes
