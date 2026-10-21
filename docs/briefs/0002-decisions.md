@@ -3054,8 +3054,13 @@ findings:
   the files it counts. A marker added, removed or renamed, any other byte changed, or the
   file added, deleted or given another mode, is still a check change, and the refusal now
   names such a file. Check code is never pinned by this rule: nothing under `scripts/`,
-  and no code under `tests/`. `tests/model/MODEL.md` was already pinned whole. No check
-  is loosened beyond count values that the commit's own pass checks. The docstrings, the
+  and no code under `tests/`. `tests/model/MODEL.md` was already pinned whole. This is
+  not a weakening: every check still runs, origin/main's failure is still noted for the
+  security review, and the commit's own `check_fidelity.py` must still pass, holding
+  each moved value exactly to the files it counts; the rule lets through only a value
+  that check already pins, and a change it could not judge (a marker added, removed or
+  renamed, any other byte, the file's mode, anything under `scripts/`) is still kept
+  apart. The docstrings, the
   comment on the pinned values, the module docstring and the refusal's list of pinned
   values say so. `scripts/test_safe_push.py` gains three tests beside the expectations'
   own: a new word in the lock, with FIELDS.md's count moved, lands as content, with
@@ -3066,6 +3071,7 @@ findings:
   `scripts/`, in code under `tests/` or elsewhere in `review/`, read by origin/main's
   reader and never the commit's. No negative plant is added: [WORKFLOW](../WORKFLOW.md),
   section 8, asks for a focused regression for a guard defect, and the harness's own are
-  in its suite. WORKFLOW, section 10, step 4, which lists the pinned values, is not
-  changed here. The protected files changed are `scripts/safe_push.py` and
-  `scripts/test_safe_push.py`.
+  in its suite. WORKFLOW, section 10, step 4, which lists the pinned values, gains a
+  sentence saying a count between count markers in such Markdown is one, on the same
+  terms. The protected files changed are `scripts/safe_push.py` and
+  `scripts/test_safe_push.py`; `docs/WORKFLOW.md` and this page are not protected.
