@@ -232,7 +232,9 @@ class UnfinishedWork(unittest.TestCase):
         for text in ("- Prototype #38; see github.com/example/edition/issues/39",
                      "- Prototype #38, example/edition/issues/39",
                      "- Prototype #38, example/edition/pull/40",
-                     "- **Prototype** #38", "- Prototype *later* #38"):
+                     "- Prototype #38 example.org/ticket/39",
+                     "- **Prototype** #38", "- Prototype *later* #38",
+                     "- _Prototype_ #38"):
             with self.subTest(text=text):
                 self.assertTrue(self.refs(text)[1])
         # The list marker "* " stays allowed.

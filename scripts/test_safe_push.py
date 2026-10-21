@@ -397,6 +397,9 @@ def main(argv):
         if opt(args, "--json") == "body" and "reread_body" in s:
             pr["body"] = s["reread_body"]
             save(s)
+        if opt(args, "--json") == "body" and "after_body" in s:
+            s.update(s.pop("after_body"))
+            save(s)
         # "relabel": the labels GitHub gives the merge's own read of the labels alone, as
         # a label given between the gates and the merge would leave them.
         if opt(args, "--json") == "labels" and "relabel" in s:
@@ -1985,6 +1988,64 @@ class Merge(Edge):
         self.assertIn("labels changed after the gates read them", out)
         self.assertEqual(self.merges(), [])
 
+    def test_final_gates_refuse_a_blocker_opened_after_body_refresh(self):
+        self.opened()
+        self.unfinished_body("None")
+        self.set_gh(lambda s: (s["prs"][0]["labels"].append("release"),
+                               s.update(after_body={"issues": [self.blocker()]})))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("FAIL  release:", out)
+        self.assertIn("#38: Finish the prototype", out)
+        self.assertEqual(self.merges(), [])
+
+    def test_final_gates_refuse_an_unreadable_blocker_reply(self):
+        self.opened()
+        self.unfinished_body("None")
+        self.set_gh(lambda s: (s["prs"][0]["labels"].append("release"),
+                               s.update(after_body={"issue_read_fail": True})))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("FAIL  release:", out)
+        self.assertIn("release issues unreadable", out)
+        self.assertEqual(self.merges(), [])
+
+    def test_final_gates_refuse_a_named_issue_changed_after_body_refresh(self):
+        self.opened()
+        self.unfinished_body("- Prototype #38")
+        self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+        for issue, reason in ((self.blocker(state="closed"), "#38 is closed"),
+                              (self.blocker(labels=[]), "lacks the label blocks-release")):
+            with self.subTest(reason=reason):
+                self.set_gh(lambda s: s.update(after_body={"issues": [issue]}))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertIn("FAIL  unfinished work:", out)
+                self.assertIn(reason, out)
+                self.assertEqual(self.merges(), [])
+                self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+
+    def test_final_gates_refuse_release_ci_changed_after_body_refresh(self):
+        sha = self.opened()
+        self.unfinished_body("None")
+        self.set_gh(lambda s: s["prs"][0]["labels"].append("release"))
+        for bucket, state in (("pending", "IN_PROGRESS"), ("fail", "FAILURE")):
+            with self.subTest(bucket=bucket):
+                check = {"name": "release-gate", "workflow": "Release gate",
+                         "bucket": bucket, "state": state}
+                self.set_gh(lambda s: s.update(after_body={
+                    "checks": {"*": PASSING, sha: PASSING + [check]}}))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertIn("FAIL  CI:", out)
+                self.assertIn("release-gate", out)
+                self.assertEqual(self.merges(), [])
+                self.set_gh(lambda s: s.update(checks={"*": PASSING, sha: PASSING}))
+
     def test_unfinished_work_changed_after_the_gates_refused(self):
         self.opened()
         self.unfinished_body("None")
@@ -2057,7 +2118,9 @@ class Merge(Edge):
             ("- Prototype [section](#38)", "bracket"),
             ("- Prototype https://example.invalid/page?x=#38", "URL"),
             ("- Prototype #38, see WWW.GITHUB.COM/example/edition/issues/39", "URL"),
+            ("- Prototype #38 example.org/ticket/39", "URL"),
             ("- Prototype #38 fooGH-39", "write the issue as #N on its own"),
+            ("- _Prototype_ #38", "emphasis"),
             ("- Prototype `code\n  #38`", "backtick"),
             ("- ```\n  #38\n  ```", "backtick"),
             ('- Prototype <span title="#38">later</span>', "HTML"),

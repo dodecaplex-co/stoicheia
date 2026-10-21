@@ -3221,8 +3221,12 @@ ISSUE_TOKEN = re.compile(r"\(?#([1-9][0-9]*)[).,;:]*")
 UNFINISHED_FORBIDDEN = (("`", "a backtick (code)"), ("<", "HTML or a comment"),
                         (">", "HTML or a block quote"), ("[", "a bracket (link)"),
                         ("]", "a bracket (link)"), ("~", "a tilde"), ("|", "a pipe"),
-                        ("\\", "a backslash escape"), ("://", "a URL"),
+                        ("_", "an underscore (emphasis)"), ("\\", "a backslash escape"),
+                        ("://", "a URL"),
                         ("www.", "a URL"), ("&", "an entity"))
+SCHEMELESS_URL = re.compile(
+    r"(?i)(?<![A-Za-z0-9_.-])(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,62}[A-Za-z0-9])?\.)+"
+    r"[A-Za-z]{2,63}(?::[0-9]{1,5})?(?:/\S*)?")
 
 
 def raw_lines(text: str) -> list[str]:
@@ -3313,6 +3317,8 @@ def unfinished_refs(text: str, comment: str | None = None) -> tuple[list[int], l
     for token, reason in UNFINISHED_FORBIDDEN:
         if token.lower() in text.lower():
             return [], [f"Unfinished work must be a plain list: {reason} is forbidden"]
+    if SCHEMELESS_URL.search(text):
+        return [], ["Unfinished work must be a plain list: a URL is forbidden"]
     if re.fullmatch(r"None\.?", text.strip(), re.I):
         return [], []
     refs, problems, items = set(), [], []
@@ -3967,7 +3973,6 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         save_record(record)
         view = gates(ctx, number, rep, record)
         labels = pr_labels(view.get("labels"))
-        kind = next((k for k in KIND_LABELS if k in labels), None)
         # The body's summary is written afresh when the full checks ran again or when it
         # is not of this head and origin/main; the parts safe_push wrote, whenever they
         # are out of date.
@@ -3997,17 +4002,23 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
                         "its pre-flight summary and the parts safe_push wrote, of this head")
         if rep.failed():
             raise Refusal("the pull request's body could not be brought up to date")
-        # The labels decide the release gate and which checks count: read them once more
-        # after the body's refresh, so that a label given meanwhile (release, say) is never
-        # merged past unjudged.
         try:
-            current = read_pr_labels(ctx, number)
+            refreshed_labels = read_pr_labels(ctx, number)
         except ValueError as e:
             raise Refusal(f"#{number}: {e}") from None
-        if current != labels:
+        if refreshed_labels != labels:
             raise Refusal(f"#{number}'s labels changed after the gates read them "
                           f"({', '.join(sorted(labels)) or 'none'} to "
-                          f"{', '.join(sorted(current)) or 'none'}): run --merge again")
+                          f"{', '.join(sorted(refreshed_labels)) or 'none'}): run --merge again")
+        current_view = gates(ctx, number, rep, record)
+        current_labels = pr_labels(current_view.get("labels"))
+        if current_labels != labels:
+            raise Refusal(f"#{number}'s labels changed after the gates read them "
+                          f"({', '.join(sorted(labels)) or 'none'} to "
+                          f"{', '.join(sorted(current_labels)) or 'none'}): run --merge again")
+        view = current_view
+        labels = current_labels
+        kind = next((k for k in KIND_LABELS if k in labels), None)
         rep.heading("4. Merge")
         if dry_run:
             rep.add("4", "gh pr merge", "skip", f"dry run: would merge #{number} "
