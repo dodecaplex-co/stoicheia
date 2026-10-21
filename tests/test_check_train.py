@@ -278,6 +278,14 @@ class TrainChecks(Repository):
         head = self.commit([bad], {LEAN: self.trees[self.head][LEAN]})
         self.refused("coordinator commit", head=head)
 
+    def test_member_descent_cannot_hide_a_first_parent_coordinator_commit(self):
+        coordinator = self.commit([self.base], {LEAN: "-- unchecked coordinator source\n"})
+        member = self.commit([coordinator], {"mishnah/I/01.md": "Reviewed commentary.\n"})
+        head = self.merge(coordinator, member)
+        problems = self.problems(head=head, text=body([member_row(member)]))
+        self.assertIn(f"coordinator commit {coordinator[:12]} changes forbidden path: "
+                      f"{LEAN}", problems)
+
     def test_generated_and_decision_changes_are_allowed(self):
         for path in ("facts.json", "book/I/1.html", train.DECISIONS, ENTRY):
             with self.subTest(path=path):

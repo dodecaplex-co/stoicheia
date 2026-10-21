@@ -93,9 +93,25 @@ MONTHS = ("January", "February", "March", "April", "May", "June", "July",
 # backtracks over a line: the closing # sequence is taken off with str.rstrip (atx).
 ATX = re.compile(r" {0,3}#{1,2}[ \t]+(.*)")
 SETEXT = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
+FENCE = re.compile(r" {0,3}(`{3,}|~{3,})(.*)")
 # A block quote's marker, and a list item's (bullet or ordered), before a heading.
 QUOTE = re.compile(r" {0,3}>[ \t]?")
 CONTAINER = re.compile(r" {0,3}(?:>[ \t]?|(?:[-+*]|[0-9]{1,9}[.)])[ \t]+)")
+# CommonMark's type-six HTML block names. Types six and seven end at a blank line;
+# the other five forms have explicit terminators.
+HTML_BLOCK_TAGS = (
+    "address", "article", "aside", "base", "basefont", "blockquote", "body", "caption",
+    "center", "col", "colgroup", "dd", "details", "dialog", "dir", "div", "dl", "dt",
+    "fieldset", "figcaption", "figure", "footer", "form", "frame", "frameset", "h1",
+    "h2", "h3", "h4", "h5", "h6", "head", "header", "hr", "html", "iframe",
+    "legend", "li", "link", "main", "menu", "menuitem", "nav", "noframes", "ol",
+    "optgroup", "option", "p", "param", "search", "section", "summary", "table",
+    "tbody", "td", "tfoot", "th", "thead", "title", "tr", "track", "ul",
+)
+HTML_BLOCK_TAG = re.compile(
+    rf"(?i) {{0,3}}</?(?:{'|'.join(HTML_BLOCK_TAGS)})(?=[ \t\n/>]|$)")
+HTML_COMPLETE_TAG = re.compile(
+    r"(?i) {0,3}</?[A-Za-z][A-Za-z0-9-]*(?:[ \t]+[^<>]*)?/?>[ \t]*")
 # An HTML heading tag of level one or two, which this reading refuses rather than reads.
 RAW_HEADING = re.compile(r"(?i)<h[12](?=[\s/>]|$)")
 # A link's destination or reference after its text: [text](destination), [text][label].
@@ -752,27 +768,124 @@ def _unwrap(line: str, markers: re.Pattern = CONTAINER) -> str:
     return line[position:]
 
 
+def _quoted(line: str) -> tuple[int, str]:
+    """A line without its block quote markers, and the number removed."""
+    position = depth = 0
+    while (match := QUOTE.match(line, position)) and match.end() > position:
+        position = match.end()
+        depth += 1
+    return depth, line[position:]
+
+
+def _fence_close(line: str, marker: str, size: int) -> bool:
+    """Whether line closes the active fenced code block."""
+    stripped = line.lstrip(" ")
+    if len(line) - len(stripped) > 3 or not stripped.startswith(marker):
+        return False
+    run = len(stripped) - len(stripped.lstrip(marker))
+    return run >= size and not stripped[run:].strip(" \t")
+
+
+def _html_block(line: str) -> tuple[re.Pattern | None, bool] | None:
+    """An HTML block's explicit terminator, or its blank-line termination."""
+    stripped = line.lstrip(" ")
+    if len(line) - len(stripped) > 3:
+        return None
+    lower = stripped.casefold()
+    for tag in ("script", "pre", "style", "textarea"):
+        if re.match(rf"<{tag}(?=[ \t\n/>]|$)", lower):
+            return re.compile(rf"(?i)</{tag}[ \t]*>"), False
+    if stripped.startswith("<!--"):
+        return re.compile(r"-->"), False
+    if stripped.startswith("<?"):
+        return re.compile(r"\?>"), False
+    if re.match(r"<![A-Z]", stripped):
+        return re.compile(r">"), False
+    if stripped.startswith("<![CDATA["):
+        return re.compile(r"\]\]>"), False
+    if HTML_BLOCK_TAG.match(line) or HTML_COMPLETE_TAG.fullmatch(line):
+        return None, True
+    return None
+
+
 def headings(text: str) -> list[tuple[int, str]]:
     """The page's level-one and level-two headings, with their line numbers, as they
     render: an ATX heading indented by three spaces at most, and a setext heading, a
     paragraph underlined with = or -, each also inside block quotes, and an ATX heading
-    inside list items. Headings in code are read too, and a setext underline after a
-    block quote, which can only refuse more. HTML heading tags are refused instead
-    (tree_problems). Each line is read a bounded number of times."""
-    lines = text.splitlines()
-    quoted = [_unwrap(line, QUOTE) for line in lines]
-    titles = [atx(_unwrap(line)) for line in lines]
-    found = []
-    for index, line in enumerate(quoted):
-        if titles[index] is not None:
-            found.append((index + 1, titles[index]))
-        elif SETEXT.fullmatch(line):
-            start = index
-            while start and quoted[start - 1].strip() and titles[start - 1] is None \
-                    and not SETEXT.fullmatch(quoted[start - 1]):
-                start -= 1
-            if start < index:
-                found.append((start + 1, " ".join(quoted[start:index])))
+    inside list items. Fenced and indented code and HTML blocks supply no headings.
+    HTML heading tags are refused independently (tree_problems). Each line is read a
+    bounded number of times."""
+    found, paragraph = [], []
+    paragraph_start = paragraph_quote = None
+    fence = None
+    fence_quote = 0
+    html_end = None
+    html_blank = False
+    html_quote = 0
+
+    def clear_paragraph():
+        nonlocal paragraph, paragraph_start, paragraph_quote
+        paragraph, paragraph_start, paragraph_quote = [], None, None
+
+    for number, raw in enumerate(text.splitlines(), 1):
+        quote_depth, quoted = _quoted(raw)
+        line = _unwrap(raw)
+
+        if fence is not None:
+            if quote_depth < fence_quote and raw.strip():
+                fence = None
+            else:
+                if _fence_close(line, *fence):
+                    fence = None
+                clear_paragraph()
+                continue
+        if html_end is not None or html_blank:
+            if quote_depth < html_quote and raw.strip():
+                html_end, html_blank = None, False
+            elif html_blank and not line.strip():
+                html_blank = False
+                clear_paragraph()
+                continue
+            else:
+                if html_end is not None and html_end.search(line):
+                    html_end = None
+                clear_paragraph()
+                continue
+
+        if match := FENCE.fullmatch(line):
+            marker, info = match.groups()
+            if marker[0] != "`" or "`" not in info:
+                fence = marker[0], len(marker)
+                fence_quote = quote_depth
+                clear_paragraph()
+                continue
+        if block := _html_block(line):
+            html_end, html_blank = block
+            html_quote = quote_depth
+            if html_end is not None and html_end.search(line):
+                html_end = None
+            clear_paragraph()
+            continue
+        if quoted.startswith(("    ", "\t")):
+            clear_paragraph()
+            continue
+
+        title = atx(line)
+        if title is not None:
+            clear_paragraph()
+            found.append((number, title))
+        elif SETEXT.fullmatch(quoted):
+            if paragraph and paragraph_quote == quote_depth:
+                found.append((paragraph_start, " ".join(paragraph)))
+            clear_paragraph()
+        elif not quoted.strip():
+            clear_paragraph()
+        else:
+            if paragraph_quote != quote_depth:
+                clear_paragraph()
+            if not paragraph:
+                paragraph_start, paragraph_quote = number, quote_depth
+            paragraph.append(line)
     return found
 
 

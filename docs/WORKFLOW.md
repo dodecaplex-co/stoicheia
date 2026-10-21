@@ -361,6 +361,8 @@ The ruleset and the remaining merge requirements are in
 
 On pull requests and pushes, `queue-integrity` runs the offline cases in
 `tests/test_check_queue.py` and `tests/test_check_train.py`, each with `python3 -I`.
+Locally, install their pinned YAML parser first with
+`python3 -m pip install -r scripts/requirements-test_safe_push.txt`.
 Its other step is the merge queue's judge: it takes `scripts/` from a group's base and
 runs that `check_queue.py`, running none of the group's scripts, though GitHub runs the
 group's own copy of this workflow file (section 10 says what must hold it). It has no
