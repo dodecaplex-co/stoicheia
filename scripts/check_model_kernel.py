@@ -86,7 +86,10 @@ file, comes after a copy of `Check`, compiled without it, is put in the build fo
 a required package, earlier on the search path: both replays would replay the copy and pass
 it, so the check must fail before them, naming `Check` and both folders. A source the build
 never compiled, and a compiled module whose source is gone, must each fail too, naming the
-module. Exits 1 on any failure. Standard library only.
+module. A current compiled module that its library root does not import must pass, while an
+edit to its source without another build must fail, naming it. The self-test also interrupts
+an untimed command and times out another after each has started a descendant, and requires
+both descendants to stop. Exits 1 on any failure. Standard library only.
 
 The first replay runs its modules in parallel, and each loads its imports' environment
 afresh, Mathlib's for each module that imports it: on a machine with sixteen threads one run
@@ -108,6 +111,8 @@ import signal
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -175,13 +180,11 @@ def tail(text: str, size: int = 4000) -> str:
 
 def run(cmd: list[str], cwd: Path, timeout: float | None = None,
         **kw) -> subprocess.CompletedProcess:
-    """Run a command, capturing its output. Given a timeout, the command runs in a process
-    group of its own, stopped whole if it outlives the timeout (which raises
-    subprocess.TimeoutExpired) or the script is interrupted or terminated: `lake env` runs
-    its command as a child, which stopping `lake` alone would leave running."""
+    """Run a command in its own process group, capturing its output. Stop the whole group
+    if it outlives a timeout (which raises subprocess.TimeoutExpired), or if the script is
+    interrupted or terminated: `lake env` runs its command as a child, which stopping
+    `lake` alone would leave running."""
     try:
-        if timeout is None:
-            return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, **kw)
         child = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE, text=True, process_group=0, **kw)
     except OSError as e:
@@ -274,11 +277,6 @@ def to_replay(package: Path, modules: dict[tuple[str, ...], Path]) -> list[tuple
         if parts not in modules:
             raise Rejected(f"NOT_COMPILED excuses {shown(parts)}, which has no source here: "
                            "remove it from the list")
-    out = run(["lake", "build", "--no-build"], package)
-    if out.returncode != 0:
-        raise Rejected(f"the build in {rel(package)} is not up to date with its sources, "
-                       f"so its compiled files are not theirs: run `lake build` there "
-                       f"first\n{tail(out.stdout + out.stderr)}")
     listed = []
     for parts, source in sorted(modules.items()):
         if compiled_file(package, parts).is_file():
@@ -287,6 +285,12 @@ def to_replay(package: Path, modules: dict[tuple[str, ...], Path]) -> list[tuple
             raise Rejected(f"{shown(parts)} has a source, {rel(source)}, but no compiled "
                            f"file, so nothing of it could be replayed: is it imported by "
                            f"its library's root, {parts[0]}.lean?")
+    targets = [parts[0] if len(parts) == 1 else "+" + shown(parts) for parts in listed]
+    out = run(["lake", "build", "--no-build", *targets], package)
+    if out.returncode != 0:
+        raise Rejected(f"the build in {rel(package)} is not up to date with its sources, "
+                       f"so its compiled files are not theirs: run `lake build` there "
+                       f"first\n{tail(out.stdout + out.stderr)}")
     for parts in compiled(package):
         if parts[0] not in LIBRARIES:
             raise Rejected(f"{shown(parts)} is compiled in this package but is in "
@@ -467,34 +471,35 @@ REQUIRED_PACKAGE = {
     "required/lakefile.toml": 'name = "required"\n\n[[lean_lib]]\nname = "Required"\n',
 }
 
-# (name, files over the control's, extra build targets, sources removed after the build,
-#  a shadow or None, words the rejection must name, with {package} for the case's folder,
-#  or None for the control, which must pass). A shadow is a library whose compiled files
-#  are copied, after the build, into the build folder of the package in `required/`, and
-#  files then written over the package's own, which is built again.
+# (name, files over the control's, extra build targets, files changed after the build,
+#  sources removed after the build, a shadow or None, words the rejection must name, with
+#  {package} for the case's folder, or None for a control, which must pass). A shadow is a
+#  library whose compiled files are copied, after the build, into the build folder of the
+#  package in `required/`, and files then written over the package's own, which is built
+#  again.
 CASES = [
     ("the control, with a true theorem added without the kernel's check",
-     {}, [], [], None, None),
+     {}, [], {}, [], None, None),
     ("a theorem of False added without the kernel's check, in a Check file",
      {"Check.lean": "import Check.Sound\nimport Check.Planted\n",
       "Check/Planted.lean": unchecked("Planted.checkFalse", "False", "True.intro",
                                       module=False)},
-     [], [], None, ["Check.Planted", "Planted.checkFalse"]),
+     [], {}, [], None, ["Check.Planted", "Planted.checkFalse"]),
     ("a theorem of False added without the kernel's check, in a Model module",
      {"Model.lean": CONTROL["Model.lean"] + "public import Model.Planted\n",
       "Model/Planted.lean": unchecked("Planted.modelFalse", "False", "True.intro",
                                       module=True)},
-     [], [], None, ["Model.Planted", "Planted.modelFalse"]),
+     [], {}, [], None, ["Model.Planted", "Planted.modelFalse"]),
     ("a theorem of False added without the kernel's check, in a second root of Model",
      {"lakefile.toml": SECOND_ROOT,
       "Helper.lean": unchecked("Planted.helperFalse", "False", "True.intro",
                                module=False)},
-     [], [], None, ["Helper", "neither Model nor Check"]),
+     [], {}, [], None, ["Helper", "neither Model nor Check"]),
     ("a theorem of False added without the kernel's check, in a third library",
      {"lakefile.toml": THIRD_LIBRARY,
       "Check.lean": "import Check.Sound\nimport Extra\n",
       "Extra.lean": unchecked("Planted.extraFalse", "False", "True.intro", module=False)},
-     [], [], None, ["Extra", "neither Model nor Check"]),
+     [], {}, [], None, ["Extra", "neither Model nor Check"]),
     ("a theorem of False added without the kernel's check, in a package that Check "
      "requires and imports",
      {"lakefile.toml": REQUIRED,
@@ -502,7 +507,7 @@ CASES = [
       **REQUIRED_PACKAGE,
       "required/Required.lean": unchecked("Planted.requiredFalse", "False", "True.intro",
                                           module=False)},
-     [], [], None, ["Planted.requiredFalse", "from nothing"]),
+     [], {}, [], None, ["Planted.requiredFalse", "from nothing"]),
     ("a theorem of False added without the kernel's check, in a Check file, with a copy "
      "of Check compiled without it in the build folder of a package that Check requires",
      {"lakefile.toml": REQUIRED,
@@ -510,17 +515,28 @@ CASES = [
       **REQUIRED_PACKAGE,
       "required/Required.lean": "theorem Required.holds : True := trivial\n",
       "Check/Planted.lean": "theorem Planted.shadowHolds : True := trivial\n"},
-     [], [],
+     [], {}, [],
      ("Check", {"Check/Planted.lean": unchecked("Planted.shadowFalse", "False",
                                                 "True.intro", module=False)}),
      ["Check is compiled in {package}/required/.lake/build/lib/lean",
       "and in {package}/.lake/build/lib/lean"]),
     ("a source the build never compiled",
      {"Model/Unbuilt.lean": "module\n\npublic theorem Unbuilt.holds : True := trivial\n"},
-     [], [], None, ["Model.Unbuilt", "no compiled file"]),
+     [], {}, [], None, ["Model.Unbuilt", "no compiled file"]),
     ("a compiled module whose source is gone",
      {"Model/Gone.lean": "module\n\npublic theorem Gone.holds : True := trivial\n"},
-     ["Model.Gone"], ["Model/Gone.lean"], None, ["Model.Gone", "no source"]),
+     ["Model.Gone"], {}, ["Model/Gone.lean"], None, ["Model.Gone", "no source"]),
+    ("a current compiled module that its library root does not import",
+     {"Model/Unimported.lean":
+      "module\n\npublic theorem Unimported.holds : True := trivial\n"},
+     ["Model.Unimported"], {}, [], None, None),
+    ("a stale compiled module that its library root does not import",
+     {"Model/Unimported.lean":
+      "module\n\npublic theorem Unimported.holds : True := trivial\n"},
+     ["Model.Unimported"],
+     {"Model/Unimported.lean":
+      "module\n\npublic theorem Unimported.changed : True := trivial\n"},
+     [], None, ["Model.Unimported", "not up to date"]),
 ]
 
 
@@ -557,7 +573,7 @@ def self_test(bin_: Path) -> None:
             fail(f"the temporary directory {tmp} is inside the repository; set TMPDIR "
                  "elsewhere")
         for number, case in enumerate(CASES, 1):
-            name, files, targets, removed, shadow, expected = case
+            name, files, targets, after, removed, shadow, expected = case
             package = Path(tmp).resolve() / f"case{number}"
             write(package, {**CONTROL, "lakefile.toml": LAKEFILE,
                             "lean-toolchain": toolchain, **files})
@@ -567,6 +583,7 @@ def self_test(bin_: Path) -> None:
                 copy_compiled(package, library, build_folder(package / "required"))
                 write(package, then)
                 build(package, name, [])
+            write(package, after)
             for path in removed:
                 (package / path).unlink()
             try:
@@ -588,27 +605,119 @@ def self_test(bin_: Path) -> None:
                 print(f"  self-test, {name}: lake build accepts it and the check passes")
 
 
+DESCENDANT = """import os
+import sys
+import time
+
+fd = os.open(sys.argv[1], os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+while True:
+    os.write(fd, b"x")
+    time.sleep(0.01)
+"""
+
+PARENT = """import subprocess
+import sys
+import time
+
+subprocess.Popen([sys.executable, "-c", sys.argv[2], sys.argv[1]])
+time.sleep(60)
+"""
+
+
+def wait_for_heartbeat(path: Path) -> None:
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        if path.is_file() and path.stat().st_size:
+            return
+        time.sleep(0.01)
+    fail("process-cleanup self-test: the descendant never started")
+
+
+def require_stopped(path: Path, case: str) -> None:
+    wait_for_heartbeat(path)
+    first = path.stat().st_size
+    time.sleep(0.2)
+    second = path.stat().st_size
+    time.sleep(0.2)
+    if first != second or second != path.stat().st_size:
+        fail(f"process-cleanup self-test: {case} left its descendant running")
+
+
+def process_cleanup_self_test() -> None:
+    with tempfile.TemporaryDirectory(prefix="check-model-kernel-processes-") as tmp:
+        folder = Path(tmp)
+        timed = folder / "timed"
+        try:
+            run([sys.executable, "-c", PARENT, str(timed), DESCENDANT], ROOT, timeout=0.5)
+        except subprocess.TimeoutExpired:
+            pass
+        else:
+            fail("process-cleanup self-test: the timed command did not time out")
+        require_stopped(timed, "a timeout")
+
+        untimed = folder / "untimed"
+        previous = signal.getsignal(signal.SIGTERM)
+
+        def cancel(_number, _frame) -> None:
+            sys.exit(128 + signal.SIGTERM)
+
+        def interrupt() -> None:
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline:
+                if untimed.is_file() and untimed.stat().st_size:
+                    break
+                time.sleep(0.01)
+            os.kill(os.getpid(), signal.SIGTERM)
+
+        signal.signal(signal.SIGTERM, cancel)
+        thread = threading.Thread(target=interrupt)
+        thread.start()
+        try:
+            try:
+                run([sys.executable, "-c", PARENT, str(untimed), DESCENDANT], ROOT)
+            except SystemExit as e:
+                if e.code != 128 + signal.SIGTERM:
+                    raise
+            else:
+                fail("process-cleanup self-test: the untimed command was not interrupted")
+        finally:
+            thread.join()
+            signal.signal(signal.SIGTERM, previous)
+        require_stopped(untimed, "an interruption of an untimed command")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--self-test", action="store_true",
                         help="plant faults in small packages of the model's shape, which "
                              "need no Mathlib, and expect the check to catch each")
+    parser.add_argument("--self-test-process-cleanup", action="store_true",
+                        help="interrupt and time out commands with descendants, and expect "
+                             "the whole process group to stop")
     args = parser.parse_args()
 
-    # A terminated or hung-up script exits through SystemExit, so run() stops a timed
-    # command's process group and the temporary folder is removed, as on an interrupt.
+    # A terminated or hung-up script exits through SystemExit, so run() stops the command's
+    # process group and the temporary folder is removed, as on an interrupt.
     for number in (signal.SIGTERM, signal.SIGHUP):
         signal.signal(number, lambda n, frame: sys.exit(128 + n))
+    if args.self_test_process_cleanup:
+        process_cleanup_self_test()
+        print("✓ model kernel process-cleanup self-test: an interruption of an untimed "
+              "command and a timeout stop their descendants")
+        return
     bin_ = toolchain_bin()
     if args.self_test:
         self_test(bin_)
+        process_cleanup_self_test()
         print(f"✓ model kernel self-test: lake build accepts each theorem of False added "
               f"without the kernel's check, and the check rejects each, naming it: the "
               f"replay in Model and in Check, the build folder's walk in a second root and "
               f"in a third library, the replay from nothing in a package that Check "
               f"requires, and the search path's check where a copy of Check compiled "
               f"without the plant lies earlier on it, naming both folders; the control "
-              f"passes, and a module without a compiled file or a source fails")
+              f"and a current unimported module pass; a module without a compiled file "
+              f"or a source and a stale unimported module fail; interrupted and timed-out "
+              f"commands stop their descendants")
         return
 
     try:
