@@ -18,6 +18,9 @@ at = "Similarly we can prove that the angles BAC, ACB"
 kind = "grouped"
 note = "Euclid leaves the argument for the other two pairs to the reader. The Lean proves his argument once over any letters, with BC produced in ABC, and applies it again to the triangles BAC and CAB, producing AC and AB respectively."
 
+[figure]
+case = "the angles ABC, BCA, with BC produced to D, as in Heath's figure"
+
 [review]
 stage = "full"
 commit = "570e6fa"

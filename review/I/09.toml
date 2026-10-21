@@ -29,7 +29,7 @@ note = "Euclid reads off his figure that AF falls within the angle; the Lean ans
 at = "Therefore the given rectilineal angle BAC has been bisected"
 kind = "helper"
 helper = "Tacit.angle_add_of_inside"
-note = "Euclid takes for granted that DAF and EAF are BAF and FAC, since D lies on AB and E on AC, and that BAF and FAC together make up BAC. The Lean identifies the angles by `angle_onRay_left` and, using the sides established above, adds them by `Tacit.angle_add_of_inside`, a rule we assume (System E, Diagram-angle 2), not a proved lemma."
+note = "Euclid takes for granted that DAF and EAF are BAF and FAC, since D lies on AB and E on AC, and that BAF and FAC together make up BAC. The Lean identifies the angles by `angle_onRay_left` and, using the sides established above, adds them by `Tacit.angle_add_of_inside`, a rule we assume (System E, Diagram-angle 2)."
 
 [review]
 stage = "full"

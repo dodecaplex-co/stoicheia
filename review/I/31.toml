@@ -13,7 +13,7 @@ kind = "euclid"
 at = "Let a point D be taken at random on BC"
 kind = "helper"
 helper = "Tacit.exists_point_between"
-note = "Euclid takes D on BC; the Lean chooses it between B and C, as in his figure. `Tacit.exists_point_between` supplies this point by System E, Points 3, a rule we assume, not a proof."
+note = "Euclid takes D on BC; the Lean chooses it between B and C, as in his figure. `Tacit.exists_point_between` supplies this point by System E, Points 3, a rule we assume."
 
 [[passage]]
 at = "Then, since the straight line AD falling on the two straight lines BC, EF"

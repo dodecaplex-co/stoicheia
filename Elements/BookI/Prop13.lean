@@ -114,7 +114,7 @@ theorem Prop13 {A B C D : Point} (hCBD : Between C B D) (hA : ¬ Collinear C D A
   -- Now, if the angle CBA is equal to the angle ABD,
   by_cases heq : ∠ C B A = ∠ A B D
   -- they are two right angles. [Def. 10]
-  /- Definition 10 says each is right, for they are adjacent angles (A is off the
+  /- Definition I.10 says each is right, for they are adjacent angles (A is off the
      straight line CD); each is then `∟` (Post. 4, as in I.11). -/
   · have hCBA : ∠ C B A = ∟ :=
       Postulate4 ⟨D, hCBD, Triangle.of_line hC_CD hB_CD hCB hA_CD, heq⟩
@@ -183,9 +183,8 @@ theorem Prop13 {A B C D : Point} (hCBD : Between C B D) (hA : ¬ Collinear C D A
   -- Q. E. D.
 
 /-- A right angle is equal to the angle adjacent to it (System E, Diagram-angle 3).
-This was an assumption until 19 October 2026 and is now proved from I.13 and Common
-Notion 3: the two adjacent angles together equal two right angles, and taking the
-given right angle away leaves one right angle. -/
+We prove it from I.13 and Common Notion 3: the two adjacent angles together equal two
+right angles, and taking the given right angle away leaves one right angle. -/
 theorem _root_.Elements.Tacit.adjacent_eq_of_right
     {A B C D : Point} {L : Line}
     (hA : OnLine A L) (hB : OnLine B L) (h : Between A C B)
@@ -239,11 +238,11 @@ private theorem triangle_angle_lt_two_right {A B C : Point} (h : Triangle B A C)
   exact hlt
 
 /-- If the angle BAC is made up of BAD and DAC, then D lies within it (System E,
-Diagram-angle 2, converse). This was an assumption until 19 October 2026 and is now
-proved from I.13, angle addition and positivity, and the side rules. If just one side
-condition fails, one angle would be less than itself. If both fail, producing DA
-through A gives two decompositions whose sum forces BAC to equal two right angles,
-contrary to I.13 and the positive adjacent angle. -/
+Diagram-angle 2, converse). We prove it from I.13, the adding of angles, the fact
+that an angle of a triangle is greater than nothing, and the rules for the sides of a
+straight line. If just one side condition fails, one angle would be less than itself.
+If both fail, producing DA through A gives two decompositions whose sum forces BAC
+to equal two right angles, contrary to I.13 and the positive adjacent angle. -/
 theorem _root_.Elements.Tacit.inside_of_angle_add {A B C D : Point} {L M : Line}
     (hAL : OnLine A L) (hAM : OnLine A M) (hB : OnLine B L)
     (hC : OnLine C M) (hAB : A ≠ B) (hAC : A ≠ C) (hDL : ¬ OnLine D L) (hDM : ¬ OnLine D M)

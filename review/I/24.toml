@@ -16,7 +16,7 @@ note = "Euclid places G on the new arm with DG equal to DF; the Lean sets this l
 at = "the angle DGF is also equal to the angle DFG"
 kind = "case"
 helper = "Prop24.cases"
-note = "Euclid draws F beyond EG and leaves the rest to the reader. The Lean takes Proclus's other two cases (Heath, vol. 1, p. 297): F on EG, where EF is a part of EG, and F within the triangle DEG, by I.21."
+note = "Euclid draws F beyond EG and leaves the rest to the reader. The Lean takes Proclus' other two cases (Heath, vol. 1, p. 297): F on EG, where EF is a part of EG, and F within the triangle DEG, by I.21."
 
 [[passage]]
 at = "therefore the angle DFG is greater than the angle EGF"

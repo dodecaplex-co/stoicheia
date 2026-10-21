@@ -10,7 +10,7 @@ kind = "euclid"
 at = "For, if AB is unequal to AC"
 kind = "helper"
 helper = "Tacit.lt_trichotomy"
-note = "Euclid takes for granted that one of two unequal lengths is greater; the Lean uses `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E §3.5), not a proved lemma."
+note = "Euclid takes for granted that one of two unequal lengths is greater; the Lean uses `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E §3.5)."
 
 [[passage]]
 at = "Let AB be greater"
@@ -41,8 +41,8 @@ helper = "Prop6.less"
 note = "Euclid takes for granted that DBC is less than ACB; the Lean proves it with areas, the whole triangle being greater than its part."
 
 [figure]
-case = "AB supposed greater than AC, with DB cut off from AB equal to AC, as in Heath's figure"
-note = "Like Heath's, this figure draws Euclid's impossible supposition. DB is drawn shorter than AC, although it is cut off equal to AC."
+case = "DB cut off from AB, for the supposition that AB is greater than AC, as in Heath's figure"
+note = "Like Heath's, this figure is drawn for Euclid's impossible supposition, but keeps the angles at B and C equal, so AB and AC are drawn equal: D stands on AB, and DB, supposed equal to AC, is drawn shorter."
 
 [review]
 stage = "full"

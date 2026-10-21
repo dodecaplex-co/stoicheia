@@ -30,7 +30,7 @@ note = "Euclid concludes that CB and BD form one straight line; `OnRay.between` 
 
 [figure]
 case = "BE within the angle ABD, as in Heath's figure"
-note = "Like Heath's, this figure draws the impossible supposition: BE in a straight line with CB while BD is not. BE is drawn rising away from the straight line CBD, so the drawn C, B and E are not in a straight line."
+note = "Like Heath's, this figure is drawn for the impossible supposition that BE, not BD, is in a straight line with CB: it draws CBD straight, and BE rising from it, standing for CB produced."
 
 [review]
 stage = "full"
