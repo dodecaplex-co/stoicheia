@@ -9,6 +9,6 @@ note = "In each case the proof takes the centre from the rule where Euclid takes
 
 [review]
 stage = "exceptions"
-commit = "17987153"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:c7b29f4f6f758223"
+commit = "b9f6a766"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:032a5eeb545ce97c"
