@@ -390,6 +390,21 @@ class TrainChecks(Repository):
                 self.refused(f"{label} names no reviewed commit",
                              text=body([dict(self.row, **{key: cell})]))
 
+    def test_review_cells_need_visible_content_beyond_the_commit(self):
+        for cell in (self.member, f"`{self.member}`.", f"({self.member})!", f"{self.member} 123",
+                     f"**[{self.member}]**", f"<span>{self.member}</span>",
+                     f"[{self.member}](https://example.invalid/review)"):
+            for key in ("code_review", "security_review"):
+                with self.subTest(cell=cell, key=key):
+                    row = dict(self.row, **{key: cell})
+                    self.refused("gives no visible review verdict or findings beyond the "
+                                 "reviewed commit", text=body([row]))
+        for cell in (f"{self.member}: pass", f"{self.member}: one finding"):
+            for key in ("code_review", "security_review"):
+                with self.subTest(cell=cell, key=key):
+                    row = dict(self.row, **{key: cell})
+                    self.assertEqual(self.problems(text=body([row])), [])
+
     def test_findings_that_begin_like_a_placeholder_pass(self):
         for cell in (f"To do so, the reader re-ran the checks at {self.member[:7]}: no "
                      "findings.",

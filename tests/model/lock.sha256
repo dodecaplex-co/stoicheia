@@ -23,4 +23,20 @@
 # Tacit.exists_point_outside_circle, Tacit.line_meets_circle_of_opposite_sides,
 # Tacit.triple_incidence3 and Tacit.inside_of_angle_add. Their laws leave laws.toml, search.py
 # and hyperbolic.py; the other 79 axioms and every word are unchanged, byte for byte.
-da52a4969bf323512b82545ca01023038782d1c17a57e56da3273efdc93a1402  Certificate/axioms.lock
+#
+# Renewed on 19 October 2026, when the restricted rule of superposition (brief 0009, #75)
+# replaced the existential one: the axiom Tacit.superposition is restated as
+# Superposition.Rule primitives, and the lock's vocabulary gains the calculus's words. The
+# harness's superposition law now checks the placement the rule reduces to
+# (Rule.of_placement) with its kept side, as MODEL.md says; the other 86 axioms are
+# unchanged, byte for byte.
+# Renewed on 20 October 2026 after the coincidence marker was integrated (brief 0009,
+# #75): the vocabulary grows from 206 to 208 words. Coincidence and its step join
+# the lock, and the three Derives congruence constructors take the marker. All 87
+# axiom statements are unchanged. The marker records a step without changing its
+# interpretation; the existing placement proofs and numerical law still apply.
+# Renewed on 20 October 2026, when the restricted rule was merged after the first
+# retirement wave: the 79 axioms of wave one with Tacit.superposition restated as
+# Superposition.Rule primitives, and the vocabulary at 208 words; the harness keeps wave
+# one's removals and the restricted law's placement check with its kept side.
+7214fce515f3ffa876bba7e362535f719c6b370ebf5b1ba744b6f3d27ab60bef  Certificate/axioms.lock

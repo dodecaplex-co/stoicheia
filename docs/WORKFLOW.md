@@ -313,6 +313,7 @@ python3 scripts/heath.py
 python3 scripts/check_fidelity.py
 python3 -I tests/test_check_style.py
 python3 -I tests/test_release_gate.py
+python3 -I tests/test_jev_models.py
 python3 scripts/check_style.py
 python3 scripts/render.py
 git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md   # prints nothing
@@ -434,6 +435,10 @@ in 2.42); with an older Git they refuse every train and group as unreadable.
   checks the unfinished work section, the issues' state and labels, pagination and
   unreadable replies, and that an ordinary pull request skips the release hold; fixtures
   and stand-ins supply every reply.
+- **The Jev client's model check needs no key and no network.**
+  `python3 -I tests/test_jev_models.py`, immediately after the release gate's cases, checks
+  that `scripts/audit/jev.py` refuses an answer without its model's identifier when it
+  runs, scores and resumes, with in-process replies standing in for the service.
 - **Counts in prose.** A count a script knows exactly goes between count markers and is
   rendered; the surrounding prose stays human ([STYLE](STYLE.md), section 4).
   `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`
@@ -451,8 +456,8 @@ in 2.42); with an older Git they refuse every train and group as unreadable.
 
 ## 9. Release criteria and severity
 
-Until the acceptance checklist of brief 0005's stage 6 (`docs/ACCEPTANCE.md`) replaces it,
-a proposition meets the standard when:
+The acceptance checklist ([ACCEPTANCE.md](ACCEPTANCE.md#where-the-older-criteria-went))
+incorporates the criteria below. A proposition meets these criteria when:
 
 1. its reviewed brief and its final formal statements agree;
 2. every substantive clause, and its porism, is proved or exactly qualified;
@@ -626,7 +631,9 @@ review", "N/A" and their like) refuses; a finding that merely begins with such w
 the member with origin/main; a member that changes a protected path must name its
 commit there, and its cell may not say "Not required" anywhere, in any case or
 spelling. Beyond that, the cells are the coordinator's words: the check reads that a
-review of the member is named, not what it found. `/no-mistakes` says
+review of the member is named and that some visible verdict or findings stand beyond the
+commit name and its punctuation or markup. It imposes no verdict vocabulary or prose
+length. `/no-mistakes` says
 `passed at <head>` for that same member head, or `not run: <reason>`, with at least
 five words giving the reason.
 
@@ -1023,7 +1030,15 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       `tests/certificate_expectations.json`, `Certificate/axioms.lock`,
       `tests/model/lock.sha256`, the model's law names in `tests/model/laws.toml`, and its
       account of the laws, `tests/model/MODEL.md` and `tests/model/results/`, which no
-      check reads. When they are the only check inputs a pull request changes,
+      check reads but for MODEL.md's count markers. A count between count markers
+      ([STYLE](STYLE.md), section 4) in the Markdown of a check input under
+      `Certificate/` or `tests/`, or in `review/SCHEMA.md`, such as
+      `Certificate/FIELDS.md`'s count of the lock's words, is such a value too:
+      `render.py` generates its value and `check_fidelity.py` refuses a stale one, so a
+      change to that Markdown counts as a pinned value while nothing else in it changes
+      (the same markers stand, by name and in order, as origin/main's
+      `scripts/generated_counts.py` reads them, and every other byte and the file's mode
+      are as they were). When they are the only check inputs a pull request changes,
       origin/main's failure is noted, and its own copies must pass. The expectations are
       checked one way only, each for what it says, so they count as pinned values only
       while every one of origin/main's stays, by its `ref` and `field`, with its
