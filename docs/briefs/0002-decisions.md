@@ -4299,7 +4299,9 @@ findings:
   value changes in this merge.
 
 - **III.30's halves, approved, proved and registered (#67).** The owner approved
-  `Prop30.halves` on 20 October 2026. Its statement, staged in [brief 0006](0006-statements.md) ("Addition, 19
+  `Prop30.halves` on 20 October 2026: asked "Also approve the smaller items?
+  Prop30.halves (#67); III.36's corollary layout; ...", the owner answered "Approve all".
+  Its statement, staged in [brief 0006](0006-statements.md) ("Addition, 19
   October 2026"), is proved with its type unchanged, after `Prop30` in
   [`Elements/BookIII/Prop30.lean`](../../Elements/BookIII/Prop30.lean), with three
   helpers of its own, `Prop30.on_chord`, `Prop30.not_within` and `Prop30.not_vertical`.
