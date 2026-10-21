@@ -13,6 +13,6 @@ note = "The centre E is given, as Euclid's setting-out takes it, and his straigh
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "2c3686e"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:dbe127860e3c138b"
+lean = "sha256:7bbd030974eadcab"

@@ -4,6 +4,7 @@ import Elements.BookI.Prop02
 import Elements.BookI.Prop03
 import Elements.BookI.Prop04
 import Elements.BookI.Prop11
+import Elements.BookI.Prop13
 import Elements.BookI.Prop29
 import Elements.BookI.Prop30
 import Elements.BookI.Prop31

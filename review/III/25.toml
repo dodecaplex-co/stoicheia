@@ -37,6 +37,6 @@ note = "The Lean carries the construction, and the statement says that the centr
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
+commit = "2c3686e"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:a647496de419c36d"
+lean = "sha256:fbc6c624a0c71cb9"
