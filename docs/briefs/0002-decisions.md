@@ -1597,10 +1597,9 @@ findings:
   III.11, III.12 and III.13 keep their `[representation]` with this tag, and III.6 takes it
   too. It lands here, in a pull request of its own, before any record uses it, as
   [FORMALIZATION](../FORMALIZATION.md), section 3, asks and as step 1 of the brief's
-  section 6 orders; no record carries it yet, so no page changes. The definition of
-  contact within now changes with section 7, before step 6, under the correction below; the tag's meaning is to gain that the inner circle has passed
-  within the outer (question 16). Protected file changed: `review/terms.toml`.
-
+  section 6 orders; no record carries it yet, so no page changes. When the definition of
+  contact within changes, in the brief's step 6, the meaning gains that the inner circle has
+  passed within the outer (question 16). Protected file changed: `review/terms.toml`.
 - **An overlap always names its kind.** The last part of
   [#93](https://github.com/jackChallis/stoicheia/issues/93), as its comments list it. The
   decision of 18 October, "An overlap is worded by its kind, as the catalogue gives it",
@@ -4020,7 +4019,7 @@ findings:
   retirements of axiom wave one (87 to 79), and then with the check train at `9c83d79`,
   with main again at `8e9a187`, `68b365c` and `f9017e1`, and with
   tooling/centre-given-meaning, whose `review/terms.toml` lands before this train with its
-  own entry above. Last, it was merged with main at `756bdbae`, through that branch's head
+  own entry above. Then it was merged with main at `756bdbae`, through that branch's head
   `980569da`, after main had landed the restricted rule of superposition (#191), the check
   train (#192), train Tw2 (#193), Heath's letters upright (#194) and the twenty entries out
   of `REACH_PENDING` (#195); and again with that branch at `4aadad20`, after its review,
@@ -4056,9 +4055,9 @@ findings:
   `III_11_today`, `III_13_today`, `cut_point`, `CirclesCut.of_meet` and `within_point`,
   were renewed from Lean's output, and change only by losing `Tacit.adjacent_eq_of_right`
   and `Tacit.centre_unique`, now theorems; every other name in each list is unchanged. On
-  the merges of `756bdbae`, `0a05f96f`, `001620f1` and `e7ffaf68` no pin was renewed: `lake build Audit` passes with every pin of
-  `Audit/Overlaps.lean`, `Audit/Crossing.lean` and main's `Audit/Superposition.lean` as
-  written.
+  the merges of `756bdbae`, `0a05f96f`, `001620f1`, `e7ffaf68` and `6e0cdd27` no pin was
+  renewed: `lake build Audit` passes with every pin of `Audit/Overlaps.lean`,
+  `Audit/Crossing.lean` and main's `Audit/Superposition.lean` as written.
   The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`, `model/`, `scripts/`,
   `review/SCHEMA.md`, `lakefile.toml` and `lean-toolchain` that differ from main at
   `e7ffaf68`, each named whole:
@@ -4102,4 +4101,3 @@ findings:
   train's.
   `lakefile.toml` and `lean-toolchain` do not change. No statement, check or expected value
   changes in this entry.
-
