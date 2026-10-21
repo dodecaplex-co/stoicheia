@@ -3910,7 +3910,7 @@ findings:
   fixed "Drawn for one case:". That is false of a figure that draws every case its theorem
   covers: III.25's, `figures/III/25.svg`, draws Euclid's three cases side by side, as
   Heath's three figures do ([the figures against the scans](../reports/figures-against-scans.md)),
-  and III.35's, on main, draws two. A record's `[figure]` may now give
+  and III.35's, on main, draws Euclid's two. A record's `[figure]` may now give
   `every_case = true`, and the caption under the figure, and its alternative text, then
   read "Drawn for every case: …" in place of "Drawn for one case: …", with the `case`
   naming the cases drawn. [`scripts/heath.py`](../../scripts/heath.py) reads the key as a
@@ -3930,8 +3930,10 @@ findings:
   `every_case`, a record read with it, and the record refused. No record uses the key yet,
   so no page changes. This check change lands on its own, before train C6b
   ([WORKFLOW](../WORKFLOW.md), section 10: a check lands first), which gives III.25 its
-  three companions and sets `every_case` in its record; III.35 can take it in a later
-  change to its content. The protected files changed are
+  three companions and sets `every_case` in its record. Whether III.35 may take it is for
+  its own review, since its theorem also covers Simson's cases, which its figure does not
+  draw: the key means every case the theorem covers, as review/SCHEMA.md says. The
+  protected files changed are
   `scripts/render.py`,
   `scripts/heath.py`,
   `review/SCHEMA.md`,
