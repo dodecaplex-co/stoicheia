@@ -373,6 +373,14 @@ def git(cwd, *args, env=None, check=True) -> str:
     return r.stdout
 
 
+def short_sha(sha: str) -> str:
+    """A commit's short form as Git gives it in the clone under test (WORK), which is how
+    safe_push writes it (`git log --format=%h`). Git sets the width, seven digits or more
+    as the object count grows, or as core.abbrev says, so a test reads it here and never
+    assumes it (issue #178)."""
+    return git(WORK, "log", "-1", "--format=%h", sha).strip()
+
+
 def clean_env() -> dict:
     env = dict(os.environ, STOICHEIA_PUSH_LOG=str(LOG), STOICHEIA_TEST_GH=str(GH),
                STOICHEIA_FAKE_GH_STATE=str(GH_STATE), STOICHEIA_FAKE_GH_ORIGIN=str(ORIGIN),
@@ -396,7 +404,7 @@ FOLDED_HOME = "-" + "Users" + "-someone"
 SCRATCHPAD = "/private" + "/tmp/" + "claude" + "-501/" + FOLDED_HOME + "/0123/scratchpad/x.txt"
 
 PASSING = [{"name": n, "bucket": "pass", "state": "SUCCESS", "workflow": "CI"}
-           for n in ("check", "model", "negative")]
+           for n in ("check", "model", "negative", "formal-model", "acceptance")]
 
 # Judges the runs of a passing --fast run made by hand, then the same with the structured
 # run's last line dropped; prints the two lists of failures.
@@ -741,8 +749,6 @@ def setUpModule():
     git(WORK, "config", "user.name", "safe_push test")
     git(WORK, "config", "user.email", "safe-push-test@example.invalid")
     git(WORK, "config", "commit.gpgsign", "false")
-    # The body assertions use seven digits; Git's default grows with the object count.
-    git(WORK, "config", "core.abbrev", "7")
     git(WORK, "checkout", "--quiet", "--detach", head)
     for rel in HARNESS_FILES:
         if (SOURCE / rel).exists():
@@ -911,7 +917,7 @@ class Accepts(Clone):
         self.assertIn(f"<!-- safe_push:preflight begin sha={sha} base={BASE} -->", body)
         self.assertIn("## Checklist", body)
         self.assertIn("- [ ] **Required:**", body)
-        self.assertIn(f"`{sha[:7]}` A good commit", body)
+        self.assertIn(f"`{short_sha(sha)}` A good commit", body)
         self.assertIn("| 3. statements | ok |", body)
         self.assertNotIn("<!-- safe_push: commits -->", body)
         self.assertNotIn(str(Path.home()), body, "a private path in the public body")
@@ -1921,7 +1927,7 @@ class PullRequests(Edge):
         self.assertNotIn("None.", statements)
         self.assertIn("`review/I/01.toml`: re-stamped at `abc1234`",
                       part(body, "Review records", "Protected paths"))
-        self.assertIn(f"`{second[:7]}` I.1 names its side point Q", body)
+        self.assertIn(f"`{short_sha(second)}` I.1 names its side point Q", body)
         for name in ("commits", "statements", "records", "protected", "generated", "preflight"):
             self.assertEqual(body.count(f"<!-- safe_push:{name} begin"), 1, name)
 
@@ -1949,7 +1955,7 @@ class PullRequests(Edge):
         for text in (words, approval):
             self.assertIn(text, body)
         self.assertEqual(re.findall(r"(?m)^## .*$", body), re.findall(r"(?m)^## .*$", before))
-        self.assertIn(f"`{second[:7]}` A good commit", body)
+        self.assertIn(f"`{short_sha(second)}` A good commit", body)
         self.assertIn(f"sha={second}", body)
         for name in ("commits", "statements", "records", "protected", "generated", "preflight"):
             self.assertEqual(len(re.findall(rf"(?m)^<!-- safe_push:{name} begin", body)), 1,
@@ -5597,6 +5603,24 @@ class Units(unittest.TestCase):
         self.assertEqual(judge(PASSING[:2])[0], "missing")
         self.assertEqual(judge(PASSING + [{"name": "check", "bucket": "fail"}])[0], "failure")
         self.assertEqual(judge(PASSING + [{"name": "other", "bucket": "pending"}])[0], "pending")
+        # The two checks the ruleset gained on 20 October (#142) hold a merge as the first
+        # three do. `acceptance` is skipped in the push event's run, so a skipped run beside
+        # the pull request's passing one is a pass, and a skipped run alone is not.
+        for name in ("formal-model", "acceptance"):
+            with self.subTest(name=name):
+                own = next(c for c in PASSING if c["name"] == name)
+                others = [c for c in PASSING if c is not own]
+                failed = dict(own, bucket="fail", state="FAILURE")
+                skipped = dict(own, bucket="skipping", state="SKIPPED")
+                verdict, detail = judge(others)
+                self.assertEqual(verdict, "missing")
+                self.assertIn(f"no passing run of {name} ", detail)
+                verdict, detail = judge(others + [failed])
+                self.assertEqual(verdict, "failure")
+                self.assertIn(f"failing: {name} ", detail)
+                self.assertEqual(judge(PASSING + [failed])[0], "failure")
+                self.assertEqual(judge(others + [skipped])[0], "missing")
+                self.assertEqual(judge(PASSING + [skipped])[0], "success")
 
     @staticmethod
     def law(body: str, path: str = "tests/model/hyperbolic.py",

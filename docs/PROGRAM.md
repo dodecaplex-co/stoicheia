@@ -108,9 +108,9 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 
 Stages 1 and 1b are done, and the book-III release is made; the owner's decision that the
 figures at a glance carry Heath's letters came after them. On main, a GitHub ruleset
-requires a pull request and the checks `check`, `model` and `negative`, allows merge
-commits only, and blocks force pushes and deletion; secret scanning with push protection
-is on. On 18 October the items then open landed on main, each as a pull request of its
+requires a pull request and the checks `check`, `model` and `negative` (and, since 20
+October, `formal-model` and `acceptance`), allows merge commits only, and blocks force
+pushes and deletion; secret scanning with push protection is on. On 18 October the items then open landed on main, each as a pull request of its
 own, the figure letters as three:
 
 - **The pull-request harness, [#1]:** `scripts/safe_push.py` as the pre-flight and the
@@ -203,10 +203,9 @@ either side of each base, followed in [#134]. How work lands is in
   captures what Euclid meant. The independence of Postulate 5 still rests on the
   numerical hyperbolic check in [tests/model](../tests/model/), until a hyperbolic model
   is built. GitHub now requires all five checks: `check`, `model`, `negative`,
-  `formal-model` and `acceptance`. The merge gate in `scripts/safe_push.py` still tests
-  for the presence of a passing run only for the first three, while refusing any reported
-  failure or pending check; aligning that local test needs a separate protected-check
-  change.
+  `formal-model` and `acceptance`. The merge gate in `scripts/safe_push.py` requires a
+  passing run of the same five, and refuses any reported failure or pending check
+  ([WORKFLOW](WORKFLOW.md#8-validation-on-the-integrated-revision), section 8).
 - **The statements' vocabulary** (settled 17 Oct; extended for restricted superposition).
   The lock holds every word that the axioms' statements or the entries' statements
   reach: <!-- count:vocabulary -->208<!-- /count -->, including the restricted calculus and its interpretation,
