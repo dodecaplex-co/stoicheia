@@ -3115,7 +3115,16 @@ findings:
   two libraries (from a new root or a new library in `model/lakefile.toml`), a build not
   up to date with its sources (`lake build --no-build`) and a compiled module whose source
   is gone each fail it, and a rejection names the module and the declaration leanchecker
-  names. `Check/Write.lean` alone is not replayed, by name: it writes the generated files
+  names. And what is replayed is the package's own compiled files, not a copy of them:
+  each module root lies in one folder of Lean's search path, since Lean loads a module
+  from the first folder that holds its root. So before either replay the script reads the
+  search path that leanchecker gets through `lake env`, and a root (a folder, or an
+  `.olean` file, at the top of one of its folders) found in two folders, its name compared
+  without case as macOS's file system compares it, fails the check, naming both: a copy of
+  `Check` in the build folder of a package that the model requires, earlier on the path
+  (the repository root's `.lake/build/lib/lean`, which Git ignores), would otherwise be
+  replayed in place of the package's own.
+  `Check/Write.lean` alone is not replayed, by name: it writes the generated files
   whenever Lean elaborates it, so `lake build` never compiles it, and the check fails if
   that file goes. It runs first as `scripts/check_kernel.py` runs leanchecker for
   `Elements`, but without `--fresh`, so each module's imports are loaded from their
@@ -3143,30 +3152,35 @@ findings:
   the same kernel as `lake build`, so the replay catches a declaration that reached a
   compiled file without the kernel's check, not a fault in the kernel, and it replays any
   axiom it meets: which axioms the model's proofs rest on stays `model/Model/Audit.lean`'s
-  check. The planted fault: its
-  `--self-test`, which runs first in the job and needs no Mathlib, builds with `lake
-  build`, in a temporary directory outside the repository, small packages of the model's
-  shape that import only Lean, and adds a theorem of `False`, proved by `True.intro`, from
-  a `run_cmd` with the kernel's check switched off (`debug.skipKernelTC`, under which
-  `addDecl` calls `addDeclWithoutChecking`), once in a `Check` file and once in a `Model`
-  module. `lake build` accepts both; the check must fail on each, naming the module and
-  the declaration, and must pass the control, which adds a true theorem the same way. Two
-  more theorems of `False` are planted outside the libraries' names, where leanchecker,
-  given the two roots, would never look: in a second root of `Model`
-  (`roots = ["Model", "Helper"]`) and in a third library that `Check` imports. The check
-  must fail on each at its walk of the build folder, naming the module; without the walk,
-  both passed. A last theorem of `False` is planted in a package of its own that `Check`
-  requires and imports, as the model's `Check` requires the edition: the walk and the
-  first replay pass it, and the replay from nothing must fail on it, naming the
-  declaration; without that replay, the check passed it. A source never compiled and a
-  compiled module without its source are planted too.
+  check. The planted fault: its `--self-test`, which runs first in the job and needs no
+  Mathlib, builds with `lake build`, in a temporary directory outside the repository,
+  small packages of the model's shape that import only Lean, and adds a theorem of
+  `False`, proved by `True.intro`, from a `run_cmd` with the kernel's check switched off
+  (`debug.skipKernelTC`, under which `addDecl` calls `addDeclWithoutChecking`), once in a
+  `Check` file and once in a `Model` module. `lake build` accepts both; the check must
+  fail on each, naming the module and the declaration, and must pass the control, which
+  adds a true theorem the same way. Two more theorems of `False` are planted outside the
+  libraries' names, where leanchecker, given the two roots, would never look: in a second
+  root of `Model` (`roots = ["Model", "Helper"]`) and in a third library that `Check`
+  imports. The check must fail on each at its walk of the build folder, naming the module;
+  without the walk, both passed. Another theorem of `False` is planted in a package of its
+  own that `Check` requires and imports, as the model's `Check` requires the edition: the
+  walk and the first replay pass it, and the replay from nothing must fail on it, naming
+  the declaration; without that replay, the check passed it. A last theorem of `False` is
+  planted in a `Check` file after a copy of `Check`, compiled without it, is put in the
+  build folder of such a required package, earlier on the search path: both replays replay
+  the copy and pass it, and the check must fail before them, naming `Check` and both
+  folders; without the search path's check, the check passed it. A source never compiled
+  and a compiled module without its source are planted too.
   leanchecker runs on two threads, since each module it replays loads its imports'
   environment afresh, Mathlib's for each module that imports it: unthrottled on sixteen
   threads one run reached a 49 GB footprint, and on two it peaked near 2.6 GB and took
   about a minute. The replay from nothing is one task, which more threads do not speed:
   it took 95 seconds on two threads and 112 on four, with a resident peak of 1.5 GB, on a
   machine busy with other builds; with it the whole script took 205 seconds and the
-  self-test 162, in a job that stops at 30 minutes.
+  self-test 162, in a job that stops at 30 minutes. The script stops the replay from
+  nothing after 15 minutes and fails, asking whether `Check` now imports Mathlib, so that
+  the job ends with a named cause rather than at its limit.
   Kim Morrison and Sebastian Ullrich wrote leanchecker, which began as Kim Morrison's
   [lean4checker](https://github.com/leanprover/lean4checker) and now ships with Lean; we
   are warmly grateful to them both. `safe_push` still leaves the `formal-model` job to CI

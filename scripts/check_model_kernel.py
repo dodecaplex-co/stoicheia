@@ -13,7 +13,15 @@ link, or a build not up to date with the sources, is an error, not a silent skip
 leanchecker is given the two roots, and replays every compiled module whose name begins
 with one; it is asked which modules it replayed, and the check fails unless they are
 exactly the modules listed, so a compiled module whose source is gone fails it too. A
-rejection names the module and the declaration that leanchecker names.
+rejection names the module and the declaration that leanchecker names. And what is replayed
+is the package's own compiled files, not a copy of them: each module root lies in one folder
+of Lean's search path, since Lean loads a module from the first folder that holds its root.
+Before either replay, the search path that leanchecker gets through `lake env` is read, and
+a root (a folder, or an `.olean` file, at the top of one of its folders) found in two
+folders is an error naming both, the names compared without case, which macOS's file system
+ignores by default: a copy of `Check` in the build folder of a package that the model
+requires, which comes earlier on the path, would otherwise be replayed in place of the
+package's own.
 
 leanchecker runs first as `check_kernel.py` runs it for `Elements`, but without `--fresh`:
 each module's own declarations are replayed into the environment of its imports, and that
@@ -70,12 +78,15 @@ compiled file comes in three parts. `lake build` accepts both, and the check mus
 each, naming its module and its declaration. Two more plants lie outside the libraries'
 names, where leanchecker, given the two roots, would never look: one in a second root of
 `Model` (`roots = ["Model", "Helper"]`), one in a third library that `Check` imports. On
-each, the check must fail at its walk of the build folder, naming the module. A last plant
+each, the check must fail at its walk of the build folder, naming the module. Another plant
 lies in a package of its own that `Check` requires and imports, as the model's `Check`
 requires the edition: the walk and the first replay never look there, and pass it, and the
-replay from nothing must fail on it, naming the declaration. A source the build never
-compiled, and a compiled module whose source is gone, must each fail too, naming the module.
-Exits 1 on any failure. Standard library only.
+replay from nothing must fail on it, naming the declaration. A last plant, in a `Check`
+file, comes after a copy of `Check`, compiled without it, is put in the build folder of such
+a required package, earlier on the search path: both replays would replay the copy and pass
+it, so the check must fail before them, naming `Check` and both folders. A source the build
+never compiled, and a compiled module whose source is gone, must each fail too, naming the
+module. Exits 1 on any failure. Standard library only.
 
 The first replay runs its modules in parallel, and each loads its imports' environment
 afresh, Mathlib's for each module that imports it: on a machine with sixteen threads one run
@@ -83,7 +94,8 @@ reached a 49 GB footprint. So it runs on two threads (LEAN_NUM_THREADS, unless t
 already), which peaked near 2.6 GB and took about a minute for the whole model. The replay
 from nothing is one task, which more threads do not speed: on two threads and on four it
 took 95 and 112 seconds, with a resident peak of 1.5 GB, on a machine busy with other
-builds.
+builds. Past fifteen minutes the replay from nothing is stopped, and the check fails:
+`Check` would then be loading far more than it does, Mathlib's environment perhaps.
 """
 
 from __future__ import annotations
@@ -91,6 +103,8 @@ from __future__ import annotations
 import argparse
 import os
 import re
+import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -102,6 +116,9 @@ LIBRARIES = ("Model", "Check")
 # The library whose whole environment is replayed from nothing as well: it never imports
 # Mathlib, so that environment is Lean's own library and the edition's, not Mathlib's.
 FRESH = "Check"
+# Seconds after which the replay from nothing is stopped: it takes about two minutes for
+# `Check`, and one that loaded Mathlib's environment would run far longer.
+FRESH_TIMEOUT = 900
 # Sources that `lake build` never compiles, by design, each with the reason.
 NOT_COMPILED = {
     ("Check", "Write"): "it writes the generated files whenever Lean elaborates it, so "
@@ -156,12 +173,30 @@ def tail(text: str, size: int = 4000) -> str:
     return text if len(text) <= size else "…" + text[-size:]
 
 
-def run(cmd: list[str], cwd: Path, **kw) -> subprocess.CompletedProcess:
+def run(cmd: list[str], cwd: Path, timeout: float | None = None,
+        **kw) -> subprocess.CompletedProcess:
+    """Run a command, capturing its output. Given a timeout, the command runs in a process
+    group of its own, stopped whole if it outlives the timeout (which raises
+    subprocess.TimeoutExpired) or the script is interrupted: `lake env` runs its command
+    as a child, which stopping `lake` alone would leave running."""
     try:
-        return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, **kw)
+        if timeout is None:
+            return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, **kw)
+        child = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE, text=True, process_group=0, **kw)
     except OSError as e:
         fail(f"cannot run {cmd[0]} ({e}); is elan's bin folder (`~/.elan/bin`) on "
              "the PATH?")
+    try:
+        out, err = child.communicate(timeout=timeout)
+    except BaseException:
+        try:
+            os.killpg(child.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        child.communicate()
+        raise
+    return subprocess.CompletedProcess(cmd, child.returncode, out, err)
 
 
 def toolchain_bin() -> Path:
@@ -260,10 +295,66 @@ def to_replay(package: Path, modules: dict[tuple[str, ...], Path]) -> list[tuple
     return listed
 
 
-def leanchecker(package: Path, bin_: Path, *args: str) -> subprocess.CompletedProcess:
+def lake_env(package: Path, *cmd: str,
+             timeout: float | None = None) -> subprocess.CompletedProcess:
+    """Run a command through `lake env` in the package, as leanchecker is run, so that it
+    gets the environment Lake gives leanchecker there, Lean's search path among it."""
     env = dict(os.environ)
     env.setdefault("LEAN_NUM_THREADS", THREADS)
-    return run(["lake", "env", str(bin_ / "leanchecker"), "-v", *args], package, env=env)
+    return run(["lake", "env", *cmd], package, timeout=timeout, env=env)
+
+
+def leanchecker(package: Path, bin_: Path, *args: str,
+                timeout: float | None = None) -> subprocess.CompletedProcess:
+    return lake_env(package, str(bin_ / "leanchecker"), "-v", *args, timeout=timeout)
+
+
+def search_path(package: Path) -> list[Path]:
+    """The folders in which leanchecker, run through `lake env` in the package, looks for
+    compiled modules, in Lean's order (`initSearchPath`): those of LEAN_PATH, then the
+    library of the toolchain at LEAN_SYSROOT."""
+    said = []
+    for name in ("LEAN_PATH", "LEAN_SYSROOT"):
+        done = lake_env(package, "printenv", name)
+        if done.returncode != 0:
+            raise Rejected(f"cannot ask Lake for {name} in {rel(package)}, so the search "
+                           f"path that leanchecker gets is unknown:\n"
+                           f"{tail(done.stdout + done.stderr)}")
+        said.append(done.stdout.rstrip("\n"))
+    lean_path, sysroot = said
+    return ([package / p for p in lean_path.split(os.pathsep) if p]
+            + [package / sysroot / "lib" / "lean"])
+
+
+def one_folder_each(package: Path) -> None:
+    """Refuse a module root (a folder, or an `.olean` file, at the top of a folder of the
+    search path) found in more than one folder of it: Lean loads a module from the first
+    folder that holds its root, so leanchecker would replay a copy earlier on the path in
+    place of the package's own. Roots are compared without case, since a file system that
+    ignores it, as macOS's does by default, finds `check/` where Lean asks for `Check/`."""
+    folders: list[Path] = []
+    for folder in search_path(package):
+        if folder.is_dir() and folder.resolve() not in folders:
+            folders.append(folder.resolve())
+    own = build_folder(package).resolve()
+    if own not in folders:
+        raise Rejected(f"{rel(own)}, the package's own build folder, is not on the search "
+                       "path that leanchecker gets, so it would not replay what is there")
+    seen: dict[str, Path] = {}
+    for folder in folders:
+        for entry in sorted(folder.iterdir()):
+            if entry.is_dir():
+                root = entry.name
+            elif entry.name.lower().endswith(".olean"):
+                root = entry.name[:-len(".olean")]
+            else:
+                continue
+            first = seen.setdefault(root.casefold(), folder)
+            if first != folder:
+                raise Rejected(f"{root} is compiled in {rel(first)} and in {rel(folder)}: "
+                               "Lean loads a module from the first folder of its search "
+                               "path that holds its root, so leanchecker would replay that "
+                               "copy in place of the other")
 
 
 def replay(package: Path, bin_: Path, modules: list[tuple[str, ...]]) -> None:
@@ -302,7 +393,12 @@ def replay(package: Path, bin_: Path, modules: list[tuple[str, ...]]) -> None:
 def replay_fresh(package: Path, bin_: Path) -> None:
     """Have leanchecker replay every declaration of FRESH's whole environment, Lean's own
     library among it, from nothing, into an empty environment."""
-    done = leanchecker(package, bin_, "--fresh", FRESH)
+    try:
+        done = leanchecker(package, bin_, "--fresh", FRESH, timeout=FRESH_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        raise Rejected(f"the replay from nothing of {FRESH}'s environment ran past "
+                       f"{FRESH_TIMEOUT // 60} minutes: does {FRESH} now import Mathlib? "
+                       "model/lakefile.toml says it never does") from None
     said = done.stdout + done.stderr
     whole = f"the whole environment of {FRESH} from nothing"
     if done.returncode != 0:
@@ -318,6 +414,7 @@ def replay_fresh(package: Path, bin_: Path) -> None:
 
 def check(package: Path, bin_: Path) -> list[tuple[str, ...]]:
     modules = to_replay(package, sources(package))
+    one_folder_each(package)
     replay(package, bin_, modules)
     replay_fresh(package, bin_)
     return modules
@@ -366,46 +463,91 @@ CONTROL = {
     "Check/Write.lean": "-- Never compiled, as the model's Check/Write.lean is not.\n",
 }
 
+REQUIRED_PACKAGE = {
+    "required/lakefile.toml": 'name = "required"\n\n[[lean_lib]]\nname = "Required"\n',
+}
+
 # (name, files over the control's, extra build targets, sources removed after the build,
-#  words the rejection must name, or None for the control, which must pass)
+#  a shadow or None, words the rejection must name, with {package} for the case's folder,
+#  or None for the control, which must pass). A shadow is a library whose compiled files
+#  are copied, after the build, into the build folder of the package in `required/`, and
+#  files then written over the package's own, which is built again.
 CASES = [
     ("the control, with a true theorem added without the kernel's check",
-     {}, [], [], None),
+     {}, [], [], None, None),
     ("a theorem of False added without the kernel's check, in a Check file",
      {"Check.lean": "import Check.Sound\nimport Check.Planted\n",
       "Check/Planted.lean": unchecked("Planted.checkFalse", "False", "True.intro",
                                       module=False)},
-     [], [], ["Check.Planted", "Planted.checkFalse"]),
+     [], [], None, ["Check.Planted", "Planted.checkFalse"]),
     ("a theorem of False added without the kernel's check, in a Model module",
      {"Model.lean": CONTROL["Model.lean"] + "public import Model.Planted\n",
       "Model/Planted.lean": unchecked("Planted.modelFalse", "False", "True.intro",
                                       module=True)},
-     [], [], ["Model.Planted", "Planted.modelFalse"]),
+     [], [], None, ["Model.Planted", "Planted.modelFalse"]),
     ("a theorem of False added without the kernel's check, in a second root of Model",
      {"lakefile.toml": SECOND_ROOT,
       "Helper.lean": unchecked("Planted.helperFalse", "False", "True.intro",
                                module=False)},
-     [], [], ["Helper", "neither Model nor Check"]),
+     [], [], None, ["Helper", "neither Model nor Check"]),
     ("a theorem of False added without the kernel's check, in a third library",
      {"lakefile.toml": THIRD_LIBRARY,
       "Check.lean": "import Check.Sound\nimport Extra\n",
       "Extra.lean": unchecked("Planted.extraFalse", "False", "True.intro", module=False)},
-     [], [], ["Extra", "neither Model nor Check"]),
+     [], [], None, ["Extra", "neither Model nor Check"]),
     ("a theorem of False added without the kernel's check, in a package that Check "
      "requires and imports",
      {"lakefile.toml": REQUIRED,
       "Check.lean": "import Check.Sound\nimport Required\n",
-      "required/lakefile.toml": 'name = "required"\n\n[[lean_lib]]\nname = "Required"\n',
+      **REQUIRED_PACKAGE,
       "required/Required.lean": unchecked("Planted.requiredFalse", "False", "True.intro",
                                           module=False)},
-     [], [], ["Planted.requiredFalse", "from nothing"]),
+     [], [], None, ["Planted.requiredFalse", "from nothing"]),
+    ("a theorem of False added without the kernel's check, in a Check file, with a copy "
+     "of Check compiled without it in the build folder of a package that Check requires",
+     {"lakefile.toml": REQUIRED,
+      "Check.lean": "import Check.Sound\nimport Check.Planted\nimport Required\n",
+      **REQUIRED_PACKAGE,
+      "required/Required.lean": "theorem Required.holds : True := trivial\n",
+      "Check/Planted.lean": "theorem Planted.shadowHolds : True := trivial\n"},
+     [], [],
+     ("Check", {"Check/Planted.lean": unchecked("Planted.shadowFalse", "False",
+                                                "True.intro", module=False)}),
+     ["Check is compiled in {package}/required/.lake/build/lib/lean",
+      "and in {package}/.lake/build/lib/lean"]),
     ("a source the build never compiled",
      {"Model/Unbuilt.lean": "module\n\npublic theorem Unbuilt.holds : True := trivial\n"},
-     [], [], ["Model.Unbuilt", "no compiled file"]),
+     [], [], None, ["Model.Unbuilt", "no compiled file"]),
     ("a compiled module whose source is gone",
      {"Model/Gone.lean": "module\n\npublic theorem Gone.holds : True := trivial\n"},
-     ["Model.Gone"], ["Model/Gone.lean"], ["Model.Gone", "no source"]),
+     ["Model.Gone"], ["Model/Gone.lean"], None, ["Model.Gone", "no source"]),
 ]
+
+
+def write(package: Path, files: dict[str, str]) -> None:
+    for path, text in files.items():
+        (package / path).parent.mkdir(parents=True, exist_ok=True)
+        (package / path).write_text(text, encoding="utf-8")
+
+
+def build(package: Path, name: str, targets: list[str]) -> None:
+    for target in [[], *([t] for t in targets)]:
+        built = run(["lake", "build", *target], package)
+        if built.returncode != 0:
+            fail(f"self-test, {name}: lake build refused the package, so the case shows "
+                 f"nothing:\n{tail(built.stdout + built.stderr)}")
+
+
+def copy_compiled(package: Path, library: str, into: Path) -> None:
+    """Copy the library's compiled files at the top of the package's build folder, its
+    folder and its root's files, into another folder."""
+    into.mkdir(parents=True, exist_ok=True)
+    for entry in build_folder(package).iterdir():
+        if entry.name == library or entry.name.startswith(library + "."):
+            if entry.is_dir():
+                shutil.copytree(entry, into / entry.name)
+            else:
+                shutil.copy2(entry, into / entry.name)
 
 
 def self_test(bin_: Path) -> None:
@@ -414,17 +556,17 @@ def self_test(bin_: Path) -> None:
         if ROOT == Path(tmp).resolve() or ROOT in Path(tmp).resolve().parents:
             fail(f"the temporary directory {tmp} is inside the repository; set TMPDIR "
                  "elsewhere")
-        for number, (name, files, targets, removed, expected) in enumerate(CASES, 1):
-            package = Path(tmp) / f"case{number}"
-            for path, text in {**CONTROL, "lakefile.toml": LAKEFILE,
-                               "lean-toolchain": toolchain, **files}.items():
-                (package / path).parent.mkdir(parents=True, exist_ok=True)
-                (package / path).write_text(text, encoding="utf-8")
-            for target in [[], *([t] for t in targets)]:
-                built = run(["lake", "build", *target], package)
-                if built.returncode != 0:
-                    fail(f"self-test, {name}: lake build refused the package, so the "
-                         f"case shows nothing:\n{tail(built.stdout + built.stderr)}")
+        for number, case in enumerate(CASES, 1):
+            name, files, targets, removed, shadow, expected = case
+            package = Path(tmp).resolve() / f"case{number}"
+            write(package, {**CONTROL, "lakefile.toml": LAKEFILE,
+                            "lean-toolchain": toolchain, **files})
+            build(package, name, targets)
+            if shadow:
+                library, then = shadow
+                copy_compiled(package, library, build_folder(package / "required"))
+                write(package, then)
+                build(package, name, [])
             for path in removed:
                 (package / path).unlink()
             try:
@@ -432,7 +574,9 @@ def self_test(bin_: Path) -> None:
             except Rejected as e:
                 if expected is None:
                     fail(f"self-test, {name}: the check rejected the control: {e}")
-                unnamed = [word for word in expected if word not in str(e)]
+                unnamed = [word for word in
+                           (w.replace("{package}", str(package)) for w in expected)
+                           if word not in str(e)]
                 if unnamed:
                     fail(f"self-test, {name}: the check failed, but without naming "
                          f"{', '.join(unnamed)}: {e}")
@@ -458,8 +602,9 @@ def main() -> None:
               f"without the kernel's check, and the check rejects each, naming it: the "
               f"replay in Model and in Check, the build folder's walk in a second root and "
               f"in a third library, the replay from nothing in a package that Check "
-              f"requires; the control passes, and a module without a compiled file or a "
-              f"source fails")
+              f"requires, and the search path's check where a copy of Check compiled "
+              f"without the plant lies earlier on it, naming both folders; the control "
+              f"passes, and a module without a compiled file or a source fails")
         return
 
     try:
