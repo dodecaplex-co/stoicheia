@@ -322,10 +322,11 @@ Its commits are "<B>.N restated: proof, in Staging" and the integrator's "<B>.N 
 in place of PropN"; its record entries are the `scope`, the `[route]` and the
 `[[passage]]` entries, with no `companions` entry.
 The pre-flight's statement guard passes a changed `theorem PropN` only if the push adds a
-new line to `docs/briefs/` naming <B>.N; an old line, or one edited in place, does not
-count (WORKFLOW, section 10, "Landing work: pull requests"). So the restatement's pull
-request adds that line, which is the coordinator's: a revision of the brief, or an entry
-in the decisions page.
+new line naming <B>.N to `docs/briefs/`, or to a decision entry it adds in
+`docs/decisions/`; an old line, or one edited in place, does not count (WORKFLOW,
+section 10, "Landing work: pull requests"). So the restatement's pull request adds that
+line, which is the coordinator's: a revision of the brief, or a new decision entry
+(WORKFLOW, section 10, "Decision entries").
 
 **The record.** Its owner reads `review/<B>/NN.toml` again against the moved file and the
 attached statement: `companions = ["<B>.N <word>"]`, the `scope`, `note` and `short` the
