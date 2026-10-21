@@ -3802,10 +3802,11 @@ findings:
   ([#32](https://github.com/jackChallis/stoicheia/issues/32)), committed there at
   `720569db` and completed at `f745017b`, and made here too, at `fd1db6c6`, its one line
   alone: every comment's body begins at its fourth character, as Lean reads it, nesting
-  kept, so a `/-/-` opener, which the scan had read as opening a nested comment, whose `-/`
-  then closed only the inner one, hides nothing either. Test 20 plants `set_option«debug».skipKernelTC` after
-  `/-/- -/` and after `/--/ x -/`, each to be refused on its line, and the same command
-  inside a nested comment, `/- /- -/ … -/`, not to be.
+  kept, so a `/-/-` opener, which the scan had read as opening a nested comment, whose
+  `-/` then closed only the inner one, hides nothing either. The set_option plant puts
+  `set_option«debug».skipKernelTC` after `/-/- -/` and after `/--/ x -/`, each to be
+  refused on its line, and the same command inside a nested comment, `/- /- -/ … -/`,
+  not to be.
 
   Third, `#guard_msgs (drop all) in` over a theorem that Lean refuses: the error leaves the
   build, `lake env lean` exits 0 on the file, and the theorem rests on `sorryAx`, which the
@@ -3859,25 +3860,26 @@ findings:
   and the only messages it skips are silent ones, which Lean's own code makes only for
   information.
 
-  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains tests 20 to 24 (main's highest was 19 when this was posted),
-  which plant each closed-up spelling, each form of `drop`, the closed-up `#eval`, `#exit`
-  and `#guard_panic` (with `#guard_panic` after a remark or a line break), each form of
-  `substring` and each form of a pinned error in a scratch copy of I.1's file, in a tree
-  of their own, and require each to be refused on its line,
-  by name. A `#guard_msgs` that checks its messages or passes them on, one under a
-  docstring that pins an info message, `error:` in a theorem's own docstring, a comment or
-  a module docstring before a `#guard_msgs`, and the words of each command in a comment
-  or a string, must not be. Test 24 then puts the pin alone at each file of the allow-list,
-  where it must pass, and at a new file beside each, at each file's name in the other's
-  folder, in `Audit/` and in `Staging/`, where it must be refused; it also fails if
-  check_fidelity's allow-list differs from the one it writes out. Test 8's commands gain `#guard_panic`. Run with origin/main's check
-  (`17369f92`, whose `check_fidelity.py` is that of `0a05f96f`), all five fail: that scan
-  misses the five closed-up spellings, all eleven forms of `drop`, all five commands of
-  test 22, all nine forms of `substring`, all seven pins and the pin at the four new
-  files (as first run; test 20's two plants after an opener and its three kept lines, and
-  test 24's eighth pin and two further files, came after review), and catches only the
-  three spaced spellings. With this one, all five pass, and a
-  copy of the scan with any one of these rules undone fails its test.
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains five plants,
+  which plant each closed-up spelling, each form of `drop`, the closed-up `#eval`,
+  `#exit` and `#guard_panic` (with `#guard_panic` after a remark or a line break), each
+  form of `substring` and each form of a pinned error in a scratch copy of I.1's file,
+  in a tree of their own, and require each to be refused on its line, by name. A
+  `#guard_msgs` that checks its messages or passes them on, one under a docstring that
+  pins an info message, `error:` in a theorem's own docstring, a comment or a module
+  docstring before a `#guard_msgs`, and the words of each command in a comment or a
+  string, must not be. The pin plant then puts the pin alone at each file of the
+  allow-list, where it must pass, and at a new file beside each, at each file's name in
+  the other's folder, in `Audit/` and in `Staging/`, where it must be refused; it also
+  fails if check_fidelity's allow-list differs from the one it writes out. The
+  forbidden-command plant's commands gain `#guard_panic`. Run with origin/main's check
+  (`17369f92`, whose `check_fidelity.py` is that of `0a05f96f`), all five fail: that
+  scan misses the five closed-up spellings, all eleven forms of `drop`, all five
+  closed-up commands, all nine forms of `substring`, all seven pins and the pin at the
+  four new files (as first run; the set_option plant's two cases after an opener and its
+  three kept lines, and the pin plant's eighth pin and two further files, came after
+  review), and catches only the three spaced spellings. With this one, all five pass,
+  and a copy of the scan with any one of these rules undone fails its test.
 
   [FORMALIZATION](../FORMALIZATION.md), section 7, the list's one home, now names each of
   these. The protected files this changes are `scripts/check_fidelity.py` and
