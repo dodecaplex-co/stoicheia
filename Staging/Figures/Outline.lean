@@ -1,6 +1,8 @@
 import Staging.Figures.Loops
 import Staging.Figures.LoopFacts
 import Staging.Figures.Parity
+import Staging.Figures.OutlineFacts
+import Staging.Figures.OutlineBound
 import Elements.Figure.Sides
 import Elements.Figure.Angles
 
@@ -196,26 +198,87 @@ theorem convex_supporting_side {cs : List Point} (h : ConvexOutline cs)
 theorem outline_bounded (F : Outline) :
     ∃ A B C : Point, Triangle A B C ∧
       ∀ X : Point, F.region X → InsideTriangle X A B C := by
-  sorry
+  /- The corners lie on one side of a straight line, so within an angle at a point beyond it,
+  and so within a triangle cut off from that angle, by Postulate 5, with an angle copied by
+  I.23 (`OutlineFacts.enclosing_triangle`). A triangle holding every corner holds the
+  whole region (`OutlineFacts.bounded_of_enclosure`). -/
+  obtain ⟨A, B, C, h, hin⟩ := OutlineFacts.enclosing_triangle F.loops.flatten
+  exact ⟨A, B, C, h, OutlineFacts.bounded_of_enclosure F fun ps hps V hV =>
+    hin V (List.mem_flatten.mpr ⟨ps, hps, hV⟩)⟩
 
 /-- The stated contours are exactly the boundary of the independently defined region. -/
 theorem outline_boundary (F : Outline) (X : Point) :
     F.boundary X ↔ RegionBoundary F.region X := by
-  sorry
+  /- On a contour, the point is in the region, and across a side of its contour, away from
+  every corner, the depth changes parity: no other contour passes there. Off the contours, a
+  small triangle about the point misses every side, and no contour's inside changes in it. -/
+  constructor
+  · exact OutlineFacts.boundary_regionBoundary F
+  · intro hR
+    exact Classical.byContradiction fun hX => OutlineFacts.not_regionBoundary F hX hR
 
 /-- The same boundary describes the same region, regardless of its listing,
 orientations, starting vertices or decomposition into simple contours. -/
 theorem same_boundary_region (F G : Outline)
     (h : ∀ X : Point, F.boundary X ↔ G.boundary X) :
     ∀ X : Point, F.region X ↔ G.region X := by
-  sorry
+  /- Off the boundary, the depth has the parity of the crossings of one good ray, through no
+  corner of either description. Each crossing is a point of the boundary, read as a point set,
+  strictly within exactly one side of one contour, however the sides are subdivided; so both
+  descriptions count the same points. -/
+  intro X
+  by_cases hX : F.boundary X
+  · exact ⟨fun _ => Or.inl ((h X).mp hX), fun _ => Or.inl hX⟩
+  · have hXG : ¬ G.boundary X := fun hg => hX ((h X).mpr hg)
+    rw [OutlineFacts.region_off hX, OutlineFacts.region_off hXG,
+      OutlineFacts.depth_parity_eq F G h hX]
 
 /-- Every outline has a reduced description with the same boundary.
 Contacts against the middle of a side remain allowed. -/
 theorem outline_normalise (F : Outline) :
     ∃ G : Outline, (∀ ps ∈ G.loops, ReducedLoop ps) ∧
       ∀ X : Point, G.boundary X ↔ F.boundary X := by
-  sorry
+  /- Normalise each contour (`loop_normalise`), keeping its boundary and region, so its
+  inside. The reduced family is still compatible: a contact strictly within a side of each
+  reduced contour would be, for the original contours, either an overlap of two sides on one
+  straight line, with infinitely many contacts, or a crossing, near which insides are neither
+  disjoint nor nested (`OutlineFacts.contact_vertex`). So a redundant corner of one contour
+  that lies on another is a true corner of that other, and contacts survive. -/
+  classical
+  have hn : ∀ ps ∈ F.loops, ∃ qs : List Point, SimpleLoop qs ∧ ReducedLoop qs ∧
+      (∀ X : Point, loopBoundary qs X ↔ loopBoundary ps X) ∧
+      (∀ X : Point, loopRegion qs X ↔ loopRegion ps X) :=
+    fun ps hps => loop_normalise (F.simple ps hps)
+  let f : List Point → List Point := fun ps =>
+    if h : ps ∈ F.loops then Classical.choose (hn ps h) else ps
+  have hf : ∀ ps ∈ F.loops, SimpleLoop (f ps) ∧ ReducedLoop (f ps) ∧
+      (∀ X : Point, loopBoundary (f ps) X ↔ loopBoundary ps X) ∧
+      (∀ X : Point, loopRegion (f ps) X ↔ loopRegion ps X) := by
+    intro ps hps
+    have e : f ps = Classical.choose (hn ps hps) := by simp only [f, hps, ↓reduceDIte]
+    rw [e]
+    exact Classical.choose_spec (hn ps hps)
+  refine ⟨⟨F.loops.map f, ?_, ?_, ?_⟩, ?_, ?_⟩
+  · intro e
+    exact F.ne (List.map_eq_nil_iff.mp e)
+  · intro qs hqs
+    obtain ⟨ps, hps, rfl⟩ := List.mem_map.mp hqs
+    exact (hf ps hps).1
+  · rw [List.pairwise_map]
+    refine F.compatible.imp_of_mem fun {a b} ha hb hab => ?_
+    obtain ⟨ha₁, -, ha₃, ha₄⟩ := hf a ha
+    obtain ⟨hb₁, -, hb₃, hb₄⟩ := hf b hb
+    exact OutlineFacts.compatible_transfer ha₁ hb₁ ha₃ ha₄ hb₃ hb₄ hab
+  · intro qs hqs
+    obtain ⟨ps, hps, rfl⟩ := List.mem_map.mp hqs
+    exact (hf ps hps).2.1
+  · intro X
+    constructor
+    · rintro ⟨qs, hqs, hX⟩
+      obtain ⟨ps, hps, rfl⟩ := List.mem_map.mp hqs
+      exact ⟨ps, hps, ((hf ps hps).2.2.1 X).mp hX⟩
+    · rintro ⟨ps, hps, hX⟩
+      exact ⟨f ps, List.mem_map_of_mem hps, ((hf ps hps).2.2.1 X).mpr hX⟩
 
 /-- One outer contour with unnested holes means its closed region with the
 strict interiors of the holes removed. All hole boundaries remain.
@@ -228,6 +291,10 @@ theorem region_with_holes (F : Outline) (outer : List Point)
     (X : Point) :
     F.region X ↔ loopRegion outer X ∧
       ∀ ps ∈ holes, ¬ loopInside ps X := by
-  sorry
+  /- Off the boundary, the depth counts the outer contour and at most one hole, which lies
+  in it. On the boundary, no hole holds the point inside: near a point of any contour are
+  points inside that contour and outside the outer region, while near a point inside a hole
+  every point is inside it. -/
+  exact OutlineFacts.region_holes F outer holes hl hin hapart X
 
 end Elements.Figures
