@@ -37,9 +37,9 @@ note = "Like Heath's, this figure draws Euclid's impossible supposition. CA and 
 
 [review]
 stage = "full"
-commit = "7285f05"
-reviewer = "Claude Opus 5.5, records review"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+commit = "d0de0df0"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+run = "ship J3, independent re-read of the merged record at d0de0df0"
 lean = "sha256:b1e72bc213d450aa"
 
 [review.items]
