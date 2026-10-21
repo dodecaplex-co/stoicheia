@@ -362,12 +362,12 @@ def git(cwd, *args, env=None, check=True) -> str:
     return r.stdout
 
 
-def short_sha(sha: str, repo=None) -> str:
-    """A commit's short form as Git gives it in the clone under test (WORK, or `repo`),
-    which is how safe_push writes it (`git log --format=%h`). Git sets the width, seven
-    digits or more as the object count grows, or as core.abbrev says, so a test reads it
-    here and never assumes it (issue #178)."""
-    return git(repo or WORK, "log", "-1", "--format=%h", sha).strip()
+def short_sha(sha: str) -> str:
+    """A commit's short form as Git gives it in the clone under test (WORK), which is how
+    safe_push writes it (`git log --format=%h`). Git sets the width, seven digits or more
+    as the object count grows, or as core.abbrev says, so a test reads it here and never
+    assumes it (issue #178)."""
+    return git(WORK, "log", "-1", "--format=%h", sha).strip()
 
 
 def clean_env() -> dict:

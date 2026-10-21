@@ -351,7 +351,8 @@ def check_certificate(facts: dict) -> None:
 
 def check_style_rules() -> None:
     """check_style.py as CI runs it, each failure sorted by the file it names: a
-    proposition's review record to P9, whatever its rule."""
+    proposition's review record to P9, whatever its rule. Each message is quoted whole,
+    without its backticks."""
     done = run([PY, "scripts/check_style.py", "--quiet"])
     found = 0
     for line in done.stdout.splitlines():
@@ -360,6 +361,12 @@ def check_style_rules() -> None:
             continue
         found += 1
         rule, path, number, msg = m.groups()
+        # The style check reads the report this run replaces. A name it backticks there (a
+        # revision, or a name B2 or E2 quotes because Lean does not know it), quoted back
+        # with its backticks, is a name S12 puts to Lean in the new report, away from the
+        # word "Revision", and each regeneration would quote the last finding again. So
+        # the backticks go, as verdicts() writes the revision (issue #178).
+        msg = msg.replace("`", "")
         text = f"{rule} {path}{':' + number if number else ''}: {msg}"
         who = owner(path)
         if who is None:
@@ -881,8 +888,8 @@ def check_book_record(book: str) -> None:
 
 # The digits of the report's revision: heath.COMMIT's form (7 to 40), which the style
 # check's S12 reads as a commit beside the word "Revision" (STYLE, section 8). Git's own
-# short form varies with the clone and with core.abbrev, and under 7 digits it is a name
-# that S12 puts to Lean (issue #178).
+# short form varies with the clone and with core.abbrev, and a short form under 7 digits
+# that begins with a letter is a name S12 puts to Lean (issue #178).
 REVISION_DIGITS = 12
 
 
