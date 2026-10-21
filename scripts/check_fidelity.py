@@ -949,6 +949,8 @@ BINDS = re.compile(r"(?<![\w'.])(?P<kw>have|haveI|let|letI|set|obtain|rcases|int
 SEVERAL = ("intro", "intros", "rintro", "fun", "λ")
 WITH = re.compile(r"(?<![\w'.])with(?![\w'!?])")
 PATTERN_LEAF = re.compile(r"-|[^\W\d][\w'!?₀-₉]*")
+ALTERNATIVE = re.compile(r"[ \t]*\|(?![|>])\s*")    # the `|` before an alternative
+INDENT = re.compile(r"\n([ \t]*)(?=\S)")
 
 
 class Leaf(NamedTuple):
@@ -991,36 +993,61 @@ def read_pattern(code: str, i: int) -> tuple[list, int]:
     return leaves, j
 
 
+def read_alternatives(code: str, i: int) -> tuple[list, int]:
+    """The leaves of the rcases pattern at `i` and of each alternative after a `|`, as
+    `hp | hq` or `⟨x, hx⟩ | h`, and where the last alternative ends."""
+    leaves, i = read_pattern(code, i)
+    while leaves:
+        bar = ALTERNATIVE.match(code, i)
+        if not bar:
+            break
+        more, j = read_pattern(code, bar.end())
+        if not more:
+            break
+        leaves, i = leaves + more, j
+    return leaves, i
+
+
+def rcases_pattern(code: str, i: int) -> int | None:
+    """Where the pattern of the `rcases` whose keyword ends at `i` begins, or None when the
+    tactic has no `with`: past its `with`, which may stand on a later line of the tactic
+    (each indented further than the keyword), and past a line break after the `with`."""
+    column = i - len("rcases") - (code.rfind("\n", 0, i) + 1)
+    end = next((m.start() for m in INDENT.finditer(code, i) if len(m[1]) <= column),
+               len(code))
+    w = WITH.search(code, i, end)
+    if not w:
+        return None
+    return re.compile(r"\s*").match(code, w.end()).end()
+
+
 def bound_names(code: str) -> set:
     """The names the code text `code` (`read_lean`) binds, read plainly, without Lean: the
     name or pattern after `have`, `let`, `set`, `obtain`, `by_cases` or `by_contra`, or
-    after `rcases … with` on one line, with each alternative after a `|`; each name or
-    pattern after `intro`, `intros`, `rintro`, `fun` or `λ`; and `this`, for a `have` that
-    gives no name. Every name in a pattern counts, but `-`, `_` and `rfl`. A binding of
-    another shape is not found, so a passage cannot name it in `unused`."""
+    after `rcases … with` (`rcases_pattern`, over line breaks), with each alternative after
+    a `|`; each name or pattern after `intro`, `intros`, `rintro`, `fun` or `λ`; and
+    `this`, for a `have` that gives no name. Every name in a pattern counts, but `-`, `_`
+    and `rfl`. A binding of another shape is not found, so a passage cannot name it in
+    `unused`."""
     names = set()
     for m in BINDS.finditer(code):
         kw, i = m["kw"], m.end()
         if kw == "rcases":
-            eol = code.find("\n", i)
-            w = WITH.search(code, i, len(code) if eol < 0 else eol)
-            if not w:
+            i = rcases_pattern(code, i)
+            if i is None:
                 continue
-            i = w.end()
         if kw in ("have", "haveI") and re.compile(r"[ \t]*:").match(code, i):
             names.add("this")
             continue
-        while True:
-            leaves, i = read_pattern(code, i)
+        if kw in SEVERAL:
+            while True:
+                leaves, i = read_pattern(code, i)
+                if not leaves:
+                    break
+                names.update(leaf.name for leaf in leaves if leaf.name not in ("-", "_", "rfl"))
+        else:
+            leaves, i = read_alternatives(code, i)
             names.update(leaf.name for leaf in leaves if leaf.name not in ("-", "_", "rfl"))
-            if not leaves:
-                break
-            if kw in SEVERAL:
-                continue
-            bar = re.compile(r"[ \t]*\|(?!\|)").match(code, i)
-            if not bar:
-                break
-            i = bar.end()
     return names
 
 

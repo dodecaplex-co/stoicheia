@@ -3105,64 +3105,97 @@ findings:
   `scripts/sweep_citations.py`, standard library only, lists the candidates that brief
   0005's stage 5 names and [FORMALIZATION](../FORMALIZATION.md), section 5, forbids: the
   bindings of a proof (`have`, `let`, `obtain`, `rcases`, `intro`) that nothing uses, an
-  `obtain` whose whole result is discarded, every `_`-named binding, and helpers that may
-  conceal a whole conclusion. Unused names are Lean's own judgement: each file is
-  elaborated, in parallel and from a copy outside the tree, with the unused-variables
-  linter (Sebastian Ullrich's and Mario Carneiro's, in Lean itself, with our thanks) and
-  `linter.unusedVariables.analyzeTactics`, off by default, switched on, so that a
-  hypothesis `assumption`, `simp_all`, `omega` or `grind` uses without naming it counts as
-  used. The linter cannot see three things: a name that begins with `_`, which it never
-  checks; an anonymous `have`, whose `this` it passes over; and the kept name of an
-  `obtain` whose other parts are cleared or unused, as `obtain ⟨KF, -, -⟩`, because the
-  facts it clears mention KF in the tactic states it reads. In the copy the first two are
-  renamed, lines kept, so that Lean judges them; the third is found by a textual pass for
+  `obtain` whose whole result is discarded, every `have`, `let` or `obtain` whose name
+  begins with `_`, and helpers that may conceal a whole conclusion. Unused names are
+  Lean's own judgement: each file is elaborated, in parallel and from a copy outside the
+  tree, with the unused-variables linter (Sebastian Ullrich's and Mario Carneiro's, in
+  Lean itself, with our thanks) and `linter.unusedVariables.analyzeTactics`, off by
+  default, switched on, so that a hypothesis `assumption`, `simp_all`, `omega` or `grind`
+  uses without naming it counts as used. The linter cannot see three things: a name that
+  begins with `_`, which it never checks; an anonymous `have`, whose `this` it passes
+  over; and the kept name of an `obtain` whose other parts are cleared or unused, as
+  `obtain ⟨KF, -, -⟩`, because the facts it clears mention KF in the tactic states it
+  reads. In the copy the first two are renamed, lines kept, so that Lean judges them; a
+  `_` name that the proof writes again keeps its name, so that the copy still
+  elaborates, and is listed as used by name. The third is found by a textual pass for
   exactly that shape, which stands aside where automation that uses a hypothesis without
-  naming it follows in the declaration. A statement's own unused hypotheses are not
-  listed: they stay review prompts, tagged `redundant-hypothesis` where that is the truth.
-  The helpers are read from Lean's proof terms, in one run with `import Lean`: an entry of
-  facts.json is listed when its proof, past its intros, steps and case splits, comes down
-  in every branch to one helper that none of its own steps feeds, or when it cites a
-  helper stating exactly what it states; the foundations (axioms, Common Notions, proved
-  rules) are left to the overlap catalogue. One rule declares a hit: its record has a
-  passage whose `at` begins a sentence of the run of `--` lines over it, the runs read as
-  `check_fidelity.py` reads them, and whose `unused`, a key the record's schema gains for
-  the purpose, lists the binding by the name the proof gives it (`FC`, `hCHG_EHC`, or
-  `this` for an anonymous `have`). A first version took any `carried` passage over the
-  run as declaring a hypothesis; on Book I it declared I.45's two unused facts through a
-  passage about where H falls, so it was dropped. A second let a note name a point or
-  straight line, and a `#` comment of the passage's table name any binding; it was
-  dropped on review, since TOML does not read a comment, so the records' `text` stamp
-  ([#77](https://github.com/jackChallis/stoicheia/issues/77)), which hashes a record as
-  TOML reads it, could not see a declaration there change. The note went with the comment: a note is prose for readers, which says a
-  hypothesis in words ([STYLE](../STYLE.md), section 1), a word in it that matched a
-  name would declare by accident, and one place to look serves the sweep, the reviewer
-  and the check alike. So train Tw2's notes for the joins of I.5 and I.11 declare
-  nothing; the content train after it adds `unused = ["FC", "GB"]` to I.5's passage and
-  `unused = ["FC"]` to I.11's, with the other declarations. `unused` is checked twice:
-  `heath.py` checks that it lists distinct names, each one Lean identifier or `this`;
-  `check_fidelity.py` reads the Lean beneath the passage's run as plain text
-  (`bound_names`, its patterns read by the reader the sweep now shares) and fails a name
-  that is not bound there, so a declaration cannot outlive its binding. A plain read was
-  chosen over the sweep's, which needs Lean and the build; it finds the binding of every
-  hit that stands under a run, 55 of the 57. render.py reads a passage's `at`, `kind`,
-  `helper` and `note` alone, so no page shows `unused`. A helper hit is never declared,
-  but fixed: FORMALIZATION, section 5, has a helper supply one step, never a whole
-  conclusion.
-  The joins ruling decides what is declared rather than deleted: a step stays where a
-  sentence of Euclid's stands over it, and FORMALIZATION, section 5, allows a checked
-  intermediate fact tied to one. `--self-test` plants every kind of hit, and controls
-  (a binding used later, one used by `assumption` or `simp_all`, a statement's unused
-  hypothesis, a declared join, a helper fed by a step, an entry citing an entry), in Lean
-  outside the tree, with a record read as TOML in which a name in a note or a `#`
-  comment, or in the `unused` of a passage over another run, declares nothing, and
-  `check_fidelity.py` must report that last name as unbound; it needs the library built.
-  CI's `negative` job runs it after its build, then the sweep over `Elements/` as a
-  report (134 files in 7 to 13 seconds on a 16-core laptop), and safe_push's `NEGATIVE`
-  list runs the same two; the release gate ([WORKFLOW](../WORKFLOW.md), section 10, step
-  10) runs it with `--fail-on-undeclared` on the release candidate. On the Lean of
-  `2e8aecf8` it lists 57 hits in Books I to III, none declared, as no record lists
-  `unused` yet; the fixes and declarations belong to a content train. The protected files
-  changed are:
+  naming it follows in the declaration. A case split, as `rcases h with hp | hq`, is
+  never a discarded result: only Lean's warnings on its names are hits. A statement's own
+  unused hypotheses are not listed: they stay review prompts, tagged
+  `redundant-hypothesis` where that is the truth. A statement ends at its `:=`, or at the
+  first `|` of a proof by equations.
+
+  The helpers are read from Lean's proof terms, in one run with `import Lean`: an entry
+  of facts.json is listed when its proof, past its intros, steps and case splits, comes
+  down in every branch to one helper that none of its own steps feeds, or when it cites a
+  helper stating exactly what it states. The proof is read on through a part of a
+  conjunction, either way of an iff and a fact turned round (`.2`, `.mp`, `.symm`) to the
+  helper, since Book I's figure helpers give several facts at once (`Prop7.figure`
+  gives four); and a private helper counts, though Lean marks every private name an
+  internal detail. The foundations (axioms, Common Notions, proved rules) are left to the
+  overlap catalogue.
+
+  One rule declares a hit: its record has a passage whose `at` begins a sentence of the
+  run of `--` lines over it, the runs read as `check_fidelity.py` reads them, and whose
+  `unused`, a key the record's schema gains for the purpose, lists the binding by the
+  name the proof gives it (`FC`, `hCHG_EHC`, or `this` for an anonymous `have`). A first
+  version took any `carried` passage over the run as declaring a hypothesis; on Book I
+  it declared I.45's two unused facts through a passage about where H falls, so it was
+  dropped. A second let a note name a point or straight line, and a `#` comment of the
+  passage's table name any binding; it was dropped on review, since TOML does not read a
+  comment: `unused` is a key, which the records' `text` stamp will cover once
+  [#77](https://github.com/jackChallis/stoicheia/issues/77) lands, while a comment that
+  stamp would never see change. The note went with the comment: a note is prose for
+  readers, which says a hypothesis in words ([STYLE](../STYLE.md), section 1), a word in
+  it that matched a name would declare by accident, and one place to look serves the
+  sweep, the reviewer and the check alike. So train Tw2's notes for the joins of I.5 and
+  I.11 declare nothing; the content train after it adds `unused = ["FC", "GB"]` to I.5's
+  passage and `unused = ["FC"]` to I.11's, with the other declarations. `unused` is
+  checked twice: `heath.py` checks that it lists distinct names, each one Lean identifier
+  or `this`; `check_fidelity.py` reads the Lean beneath the passage's run as plain text
+  (`bound_names`, whose patterns, with their alternatives and an `rcases … with` over
+  line breaks, are read by the reader the sweep now shares) and fails a name that is not
+  bound there, so a declaration cannot outlive its binding. A plain read was chosen over
+  the sweep's, which needs Lean and the build; it finds the binding of every hit that
+  stands under a run, 55 of the 57. render.py reads a passage's `at`, `kind`, `helper`
+  and `note` alone, so no page shows `unused`, though a passage added only to hold it is
+  listed on the page as every passage is. A helper hit is never declared, but fixed:
+  FORMALIZATION, section 5, has a helper supply one step, never a whole conclusion.
+
+  The coordinator's ruling on the joins (#32), recorded by train Tw2, decides what is
+  declared rather than deleted: a step stays where a sentence of Euclid's stands over it,
+  and FORMALIZATION, section 5, allows a checked intermediate fact tied to one.
+  `--self-test` plants every kind of hit in Lean outside the tree, among them a `_` name
+  written again, an `rcases … with` whose pattern is on the next line, a case split, a
+  `have` in a proof by equations, and a helper behind a whole proof: after a step that
+  feeds it nothing, as a private theorem, through `.2` (as Lean's primitive projection
+  too), `.symm` and `.mp`, and stated exactly by a step. Its controls must pass: a
+  binding used later, one used by `assumption` or `simp_all`, a statement's unused
+  hypothesis, a declared join, a helper fed by a step, an entry citing an entry, an iff
+  applied to the proof's own step. Its record is read as TOML, and in it a name in a note
+  or a `#` comment, or in the `unused` of a passage over another run, declares nothing,
+  and `check_fidelity.py` must report that last name as unbound; it needs the library
+  built. CI's `negative` job runs it after its build, then the sweep over `Elements/` as
+  a report (134 files in 7 to 13 seconds on a 16-core laptop), and safe_push's
+  `NEGATIVE` list runs the same two; the release gate ([WORKFLOW](../WORKFLOW.md),
+  section 10, step 10) runs it with `--fail-on-undeclared` on the release candidate. On
+  main's Lean at `8e9a1879` it lists 57 hits in Books I to III, none declared, as no
+  record lists `unused` yet; the fixes and declarations belong to a content train.
+
+  Some shapes pass it, and [README's table of checks](../../README.md) names them: a
+  binding cleared with `clear h`, or handed to a function that ignores it,
+  `(fun _ => …) h`; a kept name that automation such as `contradiction` or `simpa`
+  follows in its declaration, where the textual pass stands aside; a name bound twice,
+  whose second binding counts as naming the first; a `_` name inside a pattern or after
+  `intro`; a citation whose result feeds only another idle step, listed by that step
+  alone; and a helper fed by one trivial step, unless its statement is the entry's own.
+  Elements has no `clear`, no `(fun _ => …)` applied and no `_` name in a pattern or
+  after `intro` today, and the sweep finds the same 57 hits there with the stand-aside
+  off.
+
+  Open: no negative test plants a stale `unused` in a real record yet, to reach
+  `check_review`'s failure from end to end. It waits for the stamp-text branch (#77),
+  which is editing `scripts/negative_tests.py`. The protected files changed are:
   `.github/workflows/ci.yml`,
   `scripts/safe_push.py`,
   `scripts/sweep_citations.py`,

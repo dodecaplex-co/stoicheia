@@ -168,10 +168,14 @@ word for its kind: "Done by `Prop6.less`", "Carried together", "A further case",
 nothing uses ([FORMALIZATION](../docs/FORMALIZATION.md), section 5). Where a sentence of
 Euclid's stands over one, as over I.5's joins, the passage whose `at` begins a sentence
 of that run of `--` lines declares it by name, and nothing else does: not a note, nor a
-`#` comment, which TOML does not read, so that the record's `text` stamp
-([#77](https://github.com/jackChallis/stoicheia/issues/77)) could not see it change. `heath.load_review` checks that `unused` lists distinct names, each one
-Lean identifier; `scripts/check_fidelity.py`, that the Lean beneath the run binds each,
-so a declaration cannot outlive its binding.
+`#` comment. `unused` is a key, which the records' `text` stamp will cover once
+[#77](https://github.com/jackChallis/stoicheia/issues/77) lands; TOML does not read a
+comment, so that stamp would never see one change. `heath.load_review` checks that
+`unused` lists distinct names, each one Lean identifier; `scripts/check_fidelity.py`,
+that the Lean beneath the run binds each, so a declaration cannot outlive its binding.
+The page does not show the key, but it does show the passage: one added only to hold
+`unused` is listed under "How the Lean follows the text", led by "Carried", as every
+passage is.
 
 ```toml
 [[passage]]

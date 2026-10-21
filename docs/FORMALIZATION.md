@@ -292,8 +292,9 @@ construction, its premises, and the diagram fact or lemma it needed.
 - **The sweep lists the candidates.** `python3 scripts/sweep_citations.py` lists every
   binding in a proof that Lean's unused-variables linter, its tactic analysis on, finds
   unused; every `obtain` whose whole result goes unused, as
-  `obtain ⟨KF, -, -⟩ := Postulate1 …`, which the linter cannot see; every `_`-named
-  binding (`have _ := h…`); and every helper that is a proof's whole conclusion (below).
+  `obtain ⟨KF, -, -⟩ := Postulate1 …`, which the linter cannot see; every `have`, `let`
+  or `obtain` whose name begins with `_` (`have _ := h…`); and every helper that is a
+  proof's whole conclusion (below).
   Each hit is fixed, or, where a sentence of Euclid's stands over the step, declared in
   the record: the passage whose `at` begins a sentence of that run of `--` lines lists
   the binding, by the name the proof gives it, in its `unused`, as `unused = ["FC", "GB"]`

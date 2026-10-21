@@ -319,8 +319,9 @@ their own, each in isolation. The first three have direct local commands; the la
 commands below run the acceptance job's tests and checklist without its CI comparison:
 
 ```sh
-python3 scripts/sweep_citations.py --self-test   # CI's `negative` job runs these two first:
-python3 scripts/sweep_citations.py     # the sweep's plants, then the sweep, which only lists
+python3 scripts/sweep_citations.py --self-test   # the sweep's plants, and below, the sweep,
+python3 scripts/sweep_citations.py     # which only lists: CI's `negative` job runs the two
+                                       # after lake build and Facts.lean, before the next line
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
@@ -378,10 +379,12 @@ The ruleset and the remaining merge requirements are in
 - **The citation sweep reads the build.** `python3 scripts/sweep_citations.py` elaborates
   a copy of each file of `Elements/` with Lean's unused-variables linter and its tactic
   analysis on, and reads every entry's proof term, so it needs `lake build` and
-  facts.json; `Staging` and `Audit` it reads when named, after their builds. Its
-  `--self-test` plants each kind of hit, and controls that must pass, in Lean outside the
-  tree. CI's `negative` job runs both after its build; the sweep there only lists, and
-  the release gate (section 10, step 10) runs it with `--fail-on-undeclared`.
+  facts.json; `Staging` and `Audit` it reads when named, after their builds, though the
+  linter passes over any declaration with a `sorry` in it, so a staged statement gives no
+  hit until its proof arrives. Its `--self-test` plants each kind of hit, and controls
+  that must pass, in Lean outside the tree. CI's `negative` job runs both after its
+  build; the sweep there only lists, and the release gate (section 10, step 10) runs it
+  with `--fail-on-undeclared`.
 - **Staging builds; it is not proved.** `lake build Staging` checks that the statements
   staged before their proofs (section 2), each with `sorry` where its proof is due, still
   build against the library they import. It builds every file under `Staging/`, whether or
@@ -526,8 +529,7 @@ looked into.
     (unfinished work, a prototype or a provisional answer may be on main only as such an
     issue, and holds every release until it closes); the citation sweep, `python3
     scripts/sweep_citations.py --fail-on-undeclared`, passing on the release candidate,
-    with every remaining hit fixed or declared in its record (section 6); and the wiki
-    refreshed, so that it is
+    with each hit fixed or declared in its record; and the wiki refreshed, so that it is
     reasonably correct as of its date, as its pages say, and is not expected to be more
     current than that. The hold is checked by `python3 scripts/check_release_gate.py`, by
     the `release-gate` job on the release's pull request, and by `git safe-push --merge`,
