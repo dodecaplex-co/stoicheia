@@ -4057,21 +4057,22 @@ findings:
   origin/main's path check, or of its cases, refuses a pull request whatever else it
   changes, guides and protected paths alone included: every path is what the check judges,
   so a looser `scripts/check_paths.py` cannot land in the same pull request as the path it
-  would let in. Each pass of the checks, in step 3 and in step 4, begins with the
-  worktree at the commit, and is refused otherwise: its HEAD the commit, its index the
-  commit's tree, no file flagged skip-worktree or assume-unchanged, and
-  `git status --porcelain --untracked-files=all` empty, each asked of Git with its stat
-  settings at their defaults, no fsmonitor, untracked cache or hook, and, as the worktrees
-  are made, file modes compared and no line-ending conversion or global attributes file,
-  whatever the shared `.git/config` says, and refused while the shared
-  `.git/info/attributes` exists; then every ignored file is removed but the build's
-  caches, `.lake/` and `model/.lake/`, a channel the commit's own build already has
-  ([#197](https://github.com/jackChallis/stoicheia/issues/197)). This asks Git and is no
-  byte comparison of the disk with the commit, so routes past it remain (a hand-edited
-  index, a process left running, a `.git` below the root among them;
-  [#218](https://github.com/jackChallis/stoicheia/issues/218)), each needing the commit's
-  own code to have run first, through a change to a protected script or its Lean at
-  elaboration ([#197](https://github.com/jackChallis/stoicheia/issues/197)). origin/main's
+  would let in. Each pass of the checks, in steps 3 and 4, begins with the worktree at the
+  commit, or is refused: its HEAD the commit, its index the commit's tree, no file flagged
+  skip-worktree or assume-unchanged, and `git status --porcelain --untracked-files=all`
+  empty, each asked of Git with stat settings at their defaults, no fsmonitor, untracked
+  cache or hook, and, as the worktrees are made, file modes compared and no conversion or
+  attributes but the system's (`attr.tree` the empty tree), whatever the shared
+  `.git/config` says, and refused while the shared `.git/info/attributes` exists; then
+  every ignored file is removed but the build's caches, `.lake/` and `model/.lake/`, a
+  channel the commit's build already has
+  ([#197](https://github.com/jackChallis/stoicheia/issues/197)). This asks Git and
+  compares no bytes, so routes past it remain (a hand-edited index, a process left
+  running, a `.git` below the root among them;
+  [#218](https://github.com/jackChallis/stoicheia/issues/218)), each needing code of this
+  commit or one checked before to have run first, through a change to a protected script
+  or its Lean at elaboration
+  ([#197](https://github.com/jackChallis/stoicheia/issues/197)). origin/main's
   copies are taken out again by a reset to the commit, never to HEAD. A new
   extension, top-level folder, executable or named file is a change to the check, landing
   first, in a pull request of its own; and since step 3 judges every commit a pull request

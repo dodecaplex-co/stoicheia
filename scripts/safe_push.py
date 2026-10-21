@@ -90,21 +90,21 @@ order, and the first that fails stops it with a message saying why:
    for paths, before any of the commit's code ran; as a second line, a failure here of
    origin/main's path check (check_paths.py and its cases) refuses the commit whatever
    else it changes: every path is what it judges, so a looser check cannot land with the
-   path it would let in. Each pass begins with the worktree at the commit, and is refused
-   otherwise, since the commit's own code may have run in an earlier one: its HEAD the
-   commit, its index the commit's tree, no file flagged skip-worktree or assume-unchanged
-   (either keeps git from looking at the file on disk), and `git status --porcelain
-   --untracked-files=all` empty, each asked of git with its stat settings at their
-   defaults, no fsmonitor, untracked cache or hook, and, as the worktrees are made, file
-   modes compared and no line-ending conversion or global attributes file, whatever the
-   shared .git/config says, and refused while the shared .git/info/attributes exists;
-   then every ignored file is removed but the build's caches, .lake/ and model/.lake/, a
-   channel the commit's own build already has (#197). This asks git and is no byte
-   comparison of the disk with the commit, so routes past it remain (a hand-edited index,
-   a process left running, a .git below the root among them; #218), each needing the
-   commit's own code to have run first, through a change to a protected script or its
-   Lean at elaboration (#197). origin/main's copies are taken out again by a reset to the
-   commit. Two kinds of failure are not a check's verdict, and are noted only:
+   path it would let in. Each pass begins with the worktree at the commit, or is refused,
+   since the commit's code may have run in an earlier one: its HEAD the commit, its index
+   the commit's tree, no file flagged skip-worktree or assume-unchanged (either keeps git
+   from looking at the file on disk), and `git status --porcelain --untracked-files=all`
+   empty, each asked of git with stat settings at their defaults, no fsmonitor, untracked
+   cache or hook, and, as the worktrees are made, file modes compared and no conversion or
+   attributes but the system's (attr.tree the empty tree), whatever the shared .git/config
+   says, and refused while the shared .git/info/attributes exists; then every ignored file
+   is removed but the build's caches, .lake/ and model/.lake/, a channel the commit's
+   build already has (#197). This asks git and compares no bytes, so routes past it remain
+   (a hand-edited index, a process left running, a .git below the root among them; #218),
+   each needing code of this commit or one checked before to have run first, through a
+   change to a protected script or its Lean at elaboration (#197). origin/main's copies
+   are taken out again by a reset to the commit. Two kinds of failure are not a check's
+   verdict, and are noted only:
    pages gone stale under origin/main's render.py (or facts.json rewritten by its
    certificate), which the pages' diff shows in full; and a failure on a commit whose
    only check inputs changed are values pinned to the edition (PINNED, below; the
@@ -1808,17 +1808,25 @@ BASE_PASS = " (origin/main's checks)"
 FRESHNESS = ("generated pages", "git status --porcelain is empty")
 
 
-# No conversion between the commit and the disk, for `git worktree add` and with
-# DISK_AS_IS: the commit's own code can write the shared .git/config, where
-# core.fileMode=false lets git status pass a changed executable bit, and
-# core.autocrlf=true, or attributes (working-tree-encoding, eol) in the global attributes
-# file, core.attributesFile (by default ~/.config/git/attributes), make git's own
-# checkout write bytes the commit does not hold, which git status then compares through.
-# The shared .git/info/attributes, which no setting turns off, at_commit refuses.
+# For `git worktree add`, and with DISK_AS_IS: files written and compared as the commit
+# holds them, whatever the shared .git/config says. Code of this commit or one checked
+# before can write that config, where core.fileMode=false lets git status pass a changed
+# executable bit, and core.autocrlf=true, or attributes in the global attributes file
+# (core.attributesFile, by default ~/.config/git/attributes) or in a tree attr.tree
+# names, make git's own checkout write bytes the commit does not hold (eol,
+# working-tree-encoding, a smudge filter), which git status then compares through, or
+# git status pass a changed file (a clean filter). attr.tree is pinned to the empty
+# tree, which git then reads in place of every .gitattributes, an ignored one on disk
+# among them, so that none applies. The id is SHA-1's empty tree, as this repository and
+# every clone of it are SHA-1, and git knows it without the object; a value git cannot
+# resolve it ignores, reading .gitattributes again. The shared .git/info/attributes,
+# which no setting turns off, at_commit refuses; the system attributes file, outside the
+# clone, is not pinned.
 AS_COMMITTED = ("-c", "core.fileMode=true", "-c", "core.autocrlf=false",
-                "-c", "core.attributesFile=/dev/null")
-# Git's stat settings at their defaults, no fsmonitor, untracked cache or hook, and no
-# conversion (AS_COMMITTED), for at_commit's commands and base_copies' reset and clean:
+                "-c", "core.attributesFile=/dev/null",
+                "-c", "attr.tree=4b825dc642cb6eb9a060e54bf8d69288fbee4904")
+# Git's stat settings at their defaults, no fsmonitor, untracked cache or hook, and
+# AS_COMMITTED's pins, for at_commit's commands and base_copies' reset and clean:
 # in the shared .git/config, core.checkStat=minimal or core.trustctime=false lets git
 # status pass a change of the same size with its time put back; the untracked cache or
 # an fsmonitor hook can answer in git's place; and a hook in the shared .git/hooks
@@ -1836,19 +1844,19 @@ def at_commit(wt: Path, sha: str) -> None:
     commit's tree, no entry of the index flagged skip-worktree or assume-unchanged (which
     keep git from looking at the file on disk), and `git status --porcelain
     --untracked-files=all` empty, so that no file on disk differs from the index and none
-    stands untracked beside them. Each is asked of git with its stat settings at their
-    defaults, no fsmonitor, untracked cache or hook, and, as the worktrees are made, file
-    modes compared and no line-ending conversion or global attributes file (DISK_AS_IS),
-    whatever the shared .git/config says, and refused while the shared
+    stands untracked beside them. Each is asked of git with stat settings at their
+    defaults, no fsmonitor, untracked cache or hook, and, as worktrees are made, file
+    modes compared and no conversion or attributes but the system's (DISK_AS_IS, attr.tree
+    the empty tree), whatever the shared .git/config says, and refused while the shared
     .git/info/attributes exists; then every ignored file but the build's caches, .lake/
-    and model/.lake/ (CACHES, a channel the commit's own build already has, #197), is
-    removed, so that the next pass reads no scripts/json.pyc the commit left. The commit's
-    own code, run in an earlier pass (its render.py, say), could have changed any of
-    these, and origin/main's checks, which read the index and the files, would judge
-    another tree. This asks git and is no byte comparison of the disk with the commit, so
-    routes past it remain (a hand-edited index, a process left running, a .git below the
-    root among them; #218), each needing the commit's own code to have run first, through
-    a change to a protected script or its Lean at elaboration (#197)."""
+    and model/.lake/ (CACHES, a channel the commit's build already has, #197), is removed,
+    so the next pass reads no scripts/json.pyc left behind. The commit's own code, run in
+    an earlier pass (its render.py, say), could have changed any of these, and
+    origin/main's checks, which read the index and the files, would judge another tree.
+    This asks git and compares no bytes, so routes past it remain (a hand-edited index, a
+    process left running, a .git below the root among them; #218), each needing code of
+    this commit or one checked before to have run first, through a change to a protected
+    script or its Lean at elaboration (#197)."""
     head = run(["git", *DISK_AS_IS, "rev-parse", "--verify", "--quiet", "HEAD"],
                wt).stdout.strip()
     indexed = git_ok(wt, *DISK_AS_IS, "diff-index", "--cached", "--quiet", sha, "--")

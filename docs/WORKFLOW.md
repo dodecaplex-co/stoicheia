@@ -804,21 +804,21 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       `python3 scripts/check_paths.py --self-test`) refuses the pull request whatever else
       it changes, guides and protected paths alone included: every path is what it judges,
       so a looser `scripts/check_paths.py` cannot land with the path it would let in. Each
-      pass begins with the worktree at the commit, and is refused otherwise, since the
-      commit's own code may have run in an earlier one: its HEAD the commit, its index the
-      commit's tree, no file flagged skip-worktree or assume-unchanged (either keeps Git
-      from reading the file on disk), and `git status --porcelain --untracked-files=all`
-      empty, each asked of Git with its stat settings at their defaults, no fsmonitor,
-      untracked cache or hook, and, as the worktrees are made, file modes compared and no
-      line-ending conversion or global attributes file, whatever the shared `.git/config`
+      pass begins with the worktree at the commit, or is refused, since the commit's code
+      may have run in an earlier one: its HEAD the commit, its index the commit's tree, no
+      file flagged skip-worktree or assume-unchanged (either keeps Git from reading the
+      file on disk), and `git status --porcelain --untracked-files=all` empty, each asked
+      of Git with stat settings at their defaults, no fsmonitor, untracked cache or hook,
+      and, as the worktrees are made, file modes compared and no conversion or attributes
+      but the system's (`attr.tree` the empty tree), whatever the shared `.git/config`
       says, and refused while the shared `.git/info/attributes` exists; then every ignored
       file is removed but the build's caches, `.lake/` and `model/.lake/`, a channel the
-      commit's own build already has (#197). This asks Git and is no byte comparison of
-      the disk with the commit, so routes past it remain (a hand-edited index, a process
-      left running, a `.git` below the root among them; #218), each needing the commit's
-      own code to have run first, through a change to a protected script or its Lean at
-      elaboration (#197). origin/main's copies are taken out again by a reset to the
-      commit. Two kinds of failure are only noted. Pages gone stale under
+      commit's build already has (#197). This asks Git and compares no bytes, so routes
+      past it remain (a hand-edited index, a process left running, a `.git` below the root
+      among them; #218), each needing code of this commit or one checked before to have
+      run first, through a change to a protected script or its Lean at elaboration (#197).
+      origin/main's copies are taken out again by a reset to the commit. Two kinds of
+      failure are only noted. Pages gone stale under
       origin/main's `render.py`, or `facts.json` rewritten by origin/main's certificate,
       show the generator's change in the pages' diff; a
       failure of `render.py` itself, its check of `docs/program.toml` among them, is a

@@ -108,9 +108,11 @@ one commit and runs safe_push.py against that origin:
   even when the commit's render.py hides the path from the worktree's index, since each
   pass of the checks begins at the commit, its HEAD, index and files on disk unmoved as
   git sees them (a file flagged skip-worktree is refused, and so is a change hidden by
-  stat settings or core.fileMode=false written into the shared config, or by the shared
-  info/attributes, while a hook planted there never runs, and core.autocrlf=true changes
-  no worktree made), with every ignored file but the build's caches removed (a planted
+  stat settings, core.fileMode=false or a clean filter through attr.tree, written into
+  the shared config, or by the shared info/attributes or an ignored .gitattributes on
+  disk; a hook planted in the shared hooks folder runs under plain git but never in
+  at_commit; and neither core.autocrlf=true nor eol=crlf through attr.tree changes a
+  worktree made), with every ignored file but the build's caches removed (a planted
   scripts/json.pyc); and `git safe-push`, run from a linked worktree as the lane runs it,
   drops the GIT_DIR its alias is given before any check runs;
 - the count markers of T1 (#177): a new word in the lock, with Certificate/FIELDS.md's
@@ -4630,12 +4632,15 @@ if _sp.run(["git", "ls-files", "--error-unmatch", "docs/templates/x.yaml"],
                     next(safe_push.passes(WORK, BASE, BASE, wt, []))
 
     def test_the_shared_git_folder_cannot_hide_a_change(self):
-        # The commit's own code can write the clone's shared .git, which every worktree
-        # reads: under core.fileMode=false git status passes a changed executable bit; a
-        # hook git status runs can write a file once git has looked; and info/attributes,
-        # or core.autocrlf=true set before a worktree is made, makes git's own checkout
-        # write bytes the commit does not hold. Each is planted in the test clone, never
-        # this repository, and taken out again, on a failure too and when the test ends.
+        # Code of this commit or one checked before can write the clone's shared .git,
+        # which every worktree reads: under core.fileMode=false git status passes a
+        # changed executable bit; a hook git status runs can write a file once git has
+        # looked; info/attributes, or core.autocrlf=true or attr.tree set before a
+        # worktree is made, makes git's own checkout write bytes the commit does not hold;
+        # and a clean filter, named through attr.tree or by a .gitattributes an ignore
+        # file hides, has git status pass a change of the same size. Each is planted in
+        # the test clone, never this repository, and taken out again, on a failure too and
+        # when the test ends.
         common = Path(git(WORK, "rev-parse", "--path-format=absolute",
                           "--git-common-dir").strip()).resolve()
         self.assertEqual(common, (WORK / ".git").resolve())
@@ -4711,6 +4716,62 @@ if _sp.run(["git", "ls-files", "--error-unmatch", "docs/templates/x.yaml"],
                 safe_push.worktree(WORK, BASE, Path(tmp), "crlf") as wt:
             self.assertEqual((wt / "README.md").read_bytes(), held)
             safe_push.at_commit(wt, BASE)
+        # attr.tree names a tree whose .gitattributes git reads in place of every other:
+        # eol=crlf there would check README.md out as CRLF, and a clean filter there has
+        # git status pass a change of the same size. AS_COMMITTED pins it to the empty
+        # tree, git's own for the clone's object format. Each tree is written into the
+        # test clone's objects only.
+        with self.subTest(pin="attr.tree"):
+            self.assertIn(f"attr.tree={safe_push.empty_tree(WORK)}", safe_push.AS_COMMITTED)
+
+        def attributes(text: str) -> str:
+            def put(*args: str, data: str) -> str:
+                return subprocess.run(["git", *args], cwd=WORK, input=data, text=True,
+                                      capture_output=True, check=True).stdout.strip()
+            blob = put("hash-object", "-w", "--stdin", data=text)
+            return put("mktree", data=f"100644 blob {blob}\t.gitattributes\n")
+
+        with self.subTest(setting="attr.tree naming eol=crlf"), \
+                setting("attr.tree", attributes("*.md text eol=crlf\n")), \
+                tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "attr-tree") as wt:
+            self.assertIn("eol: crlf", git(WORK, "check-attr", "eol", "--", "README.md"))
+            self.assertEqual((wt / "README.md").read_bytes(), held)
+            safe_push.at_commit(wt, BASE)
+        # The filter swaps the case of letters back. It is named for README.md alone: any
+        # other file git reads again, as it can one written in the second its index was,
+        # would be compared through it too.
+        swapped = held.swapcase()
+        self.assertNotEqual(swapped, held)
+        with self.subTest(setting="attr.tree naming a clean filter"), \
+                setting("attr.tree", attributes("/README.md filter=swapcase\n")), \
+                setting("filter.swapcase.clean", "LC_ALL=C tr a-zA-Z A-Za-z"), \
+                tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "filter") as wt:
+            (wt / "README.md").write_bytes(swapped)
+            # Plain git passes the change; --no-optional-locks keeps it from writing the
+            # index, which would take the file's new times and hide it from any status.
+            self.assertEqual(git(wt, "--no-optional-locks", "status", "--porcelain"), "")
+            with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status lists  M "
+                                        "README.md"):
+                safe_push.at_commit(wt, BASE)
+        # A .gitattributes on disk, hidden from git status by an ignore file the config
+        # names, would name the filter too: the empty tree is read in its place, where an
+        # attr.tree git cannot resolve (an empty value, say) would leave it read.
+        with self.subTest(attributes="an ignored .gitattributes"), \
+                tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "ignored") as wt:
+            ignore = Path(tmp) / "ignore"
+            ignore.write_text("/.gitattributes\n")
+            with setting("core.excludesFile", str(ignore)), \
+                    setting("filter.swapcase.clean", "LC_ALL=C tr a-zA-Z A-Za-z"):
+                (wt / ".gitattributes").write_text("/README.md filter=swapcase\n")
+                (wt / "README.md").write_bytes(swapped)
+                self.assertEqual(git(wt, "--no-optional-locks", "status", "--porcelain"),
+                                 "")
+                with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status "
+                                            "lists  M README.md"):
+                    safe_push.at_commit(wt, BASE)
 
     def test_an_ignored_file_left_between_passes_is_removed(self):
         # git status leaves ignored files out, and origin/main's checks would import a
