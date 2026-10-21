@@ -86,7 +86,7 @@ Heath and the Lean, before reading anyone's account of how they agree. The quest
   cases matter, not a generic list of degeneracies.
 - **Objects and operations.** What equality, order, area and the rest mean for the
   representation used (section 3).
-- **Outputs.** A construction's result is easy to recognize. Where the theorem returns a
+- **Outputs.** A construction's result is easy to recognise. Where the theorem returns a
   side that determines a square, the page points to what constructs the square.
 
 What these questions catch, from our own history: "any number of segments" stated for
