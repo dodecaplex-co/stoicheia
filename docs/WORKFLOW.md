@@ -609,16 +609,25 @@ another page, and GitHub lists the folder in name order, which is date order
 3. keeps out of it a count marker, and any character that could hide a copy of an older
    entry: a control character but a tab and a line feed (a carriage return among them,
    so lines end in a line feed alone), a format character (Unicode's Cf, as a zero-width
-   space, a soft hyphen or a byte-order mark), a line or paragraph separator, and
-   Unicode's other default-ignorable characters (as a variation selector or a Hangul
-   filler); and saves it as UTF-8;
+   space, a soft hyphen or a byte-order mark), a line or paragraph separator, Unicode's
+   other default-ignorable characters (as a variation selector or a Hangul filler), a
+   character that renders blank though Unicode counts it neither white space nor
+   default-ignorable (a fixed list, since Unicode has no property for a blank glyph: the
+   Braille pattern blank, U+2800, the musical symbol null notehead, U+1D159, and the
+   Khitan small script filler, U+16FE4), and a code point Unicode keeps for private use
+   or leaves unassigned (its Co and Cn); and saves it as UTF-8;
 4. runs `python3 scripts/render.py`, which checks the folder before it writes anything,
-   refusing, with the file's name, a link, a folder or any file but the README and
-   entries, a folder spelled otherwise on disk (as `docs/Decisions/`, which a Mac finds
-   and Git does not), an entry that breaks the rules above, and an empty one; it passes
-   over a file Git ignores, as Finder's `.DS_Store`, which Git never commits, and stops
-   if Git cannot say which files those are; it writes nothing into the folder, so the
-   pull request carries the entry alone, beside the change it records.
+   refusing, with the file's name, its unprintable characters written as escapes, a
+   link, a folder or any file but the README and entries, a folder spelled otherwise on
+   disk (as `docs/Decisions/`, or `docs/deciſions/` with a long s, which a Mac finds and
+   Git does not), an entry whose name or characters break steps 1 and 3, a count marker
+   in any file there, a README holding a character step 3 keeps out, and an empty entry;
+   it passes over a file Git ignores by a rule of the root's `.gitignore`, of
+   `.git/info/exclude` or of the user's own excludes file, as Finder's `.DS_Store`,
+   which Git never commits, but never one that a nested `.gitignore`, which a commit
+   could add, ignores; it stops if Git cannot say which files those are; and it writes
+   nothing into the folder, so the pull request carries the entry alone, beside the
+   change it records.
 
 An entry is dated history, never edited: the pre-flight refuses a push that modifies,
 deletes or renames an entry origin/main holds (step 3, below), and a correction is a new
@@ -632,7 +641,9 @@ adds an entry recording the revert and why, naming each protected file, statemen
 lock the revert changes in a sentence of its own, as any entry must, and commits; the
 advice `--merge` prints when main is not what was checked gives these commands. The
 folder's README is no entry: it may be edited, and approves nothing; once added, it is
-never deleted, so that origin/main always holds the folder.
+never deleted, so that origin/main always holds the folder; and it is UTF-8 text holding
+none of the characters step 3 keeps out of an entry, which `render.py` and the
+pre-flight both check.
 
 ```sh
 sh scripts/install_hooks.sh                        # from a checkout of origin/main: once per
@@ -708,42 +719,57 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       - the generated pages current (`render.py`, on the commit as committed, changes
         nothing, and refuses no decision entry);
       - no whole directory of `Elements/`, `heath/`, `review/`, `figures/` or `mishnah/`
-        deleted unless the decisions page or a dated entry gains a new line naming it;
+        deleted unless the decisions page or a dated entry gains a new line naming it, as
+        a protected file is named (below), with a full stop after it only when its
+        mention holds a slash, so that "the figures." names nothing, though `figures/.`
+        does;
       - `docs/decisions/` holding regular files alone, its README and dated entries, each
         entry named and written as "Decision entries", above, says (a valid date, from
-        20 October 2026 to the day after the commit's committer date, a day's grace for
-        time zones, and UTF-8 text holding none of the characters kept out there), every
-        path there spelled `docs/decisions/`, and no entry origin/main holds modified,
-        deleted or renamed: Git's rename detection (every file there a source, with no
-        limit) finds a move with edits. An entry that copies another is not refused for
-        it, though Git's copy detection would call it a copy; the lines the comparison
-        below finds copied count for nothing. The README may be edited, never deleted
-        once added, and approves nothing.
+        20 October 2026 to the day after the earlier of the commit's committer date,
+        which the pusher sets, and the runner's own date, a day's grace for time zones,
+        and UTF-8 text holding none of the characters kept out there), and the README,
+        when the push adds or changes it, UTF-8 text holding none of them either; no path
+        the push changes spelled otherwise than `docs/decisions/` where a Mac's file
+        system reads it as that folder (its first two names in Unicode's NFD form,
+        casefolded, as `docs/Decisions/`, or `docs/deciſions/` with a long s, which Git's
+        own case-blind matching misses); and no entry origin/main holds modified, deleted
+        or renamed: Git's rename detection (every file there a source, with no limit)
+        finds a move with edits. Each path a refusal names is printed with its
+        unprintable characters written as escapes. An entry that copies another is not
+        refused for it, though Git's copy detection would call it a copy; the lines the
+        comparison below finds copied count for nothing. The README may be edited, never
+        deleted once added, and approves nothing.
 
       For each of these, the push must add a mention: an old line that already named the
-      thing, edited in place, does not count. A line added to the decisions page counts
-      as any new line does: that is the page's rule, and entry files leave it as it was. A
-      line of a dated entry counts only in an entry the push adds, and only when it holds
-      a word; when no line of the decisions page or of any file under `docs/decisions/`
-      at origin/main matches it, each read as a skeleton (in Unicode's NFKC form,
-      casefolded, each Cyrillic or Greek letter that looks like a Latin one read as that
-      letter, and every space separator, the Braille pattern blank and the Hangul fillers
-      read as spaces, the whitespace collapsed inside the line and at its ends); and when
-      none of its words lies in a run of 12 or more consecutive words, so read across
-      lines, that the page or one file under `docs/decisions/` at origin/main holds too.
-      So a copy of an older entry, re-wrapped, re-spaced, in capitals or in those
-      look-alike letters, renews nothing, kept beside its original or not. That is all the
-      comparison catches: a copy with a word put in after every eleventh, one reworded
-      throughout, or one in look-alike letters of another script reads as an entry in
-      words of its own, and only the reviews can tell it from one. Each run of
-      consecutive lines that count is read on its own: words are never joined across a
-      blank line or a line that does not count, though a name wrapped from one line that
-      counts to the next still counts, as on the page. A guard that refuses names each
-      line of an entry the push adds that did not count, and why: a line the record holds
-      already, or one in a run of 12 or more words the record holds too. While a push
-      refuses anything under `docs/decisions/`, entries supply no new line at all, and
-      the guards' refusals say so; so a rename, or a deletion and re-addition of an entry,
-      renews no approval.
+      thing, edited in place, does not count. A line added to the decisions page is
+      compared with nothing, and any new line there counts, as it did before the entries
+      began; its mentions, though, are read by the same rules as an entry's, which are new
+      for the page too: where a mention may start (as "Protected paths", below, says), a
+      directory named by a link or the root's anchor, as a file is, and a directory's full
+      stop. A line of a dated entry counts only in an entry the push adds, and only when
+      it holds a word; when no line of the decisions page or of any file under
+      `docs/decisions/` at origin/main matches it, each read as a skeleton (in Unicode's
+      NFKC form, casefolded, each Cyrillic or Greek letter that looks like a Latin one
+      read as that letter, and every space separator, and each of the characters that
+      render blank, the Braille pattern blank, the null notehead, the Khitan filler and
+      the Hangul fillers, read as a space, the whitespace collapsed inside the line and at
+      its ends: the page may hold those, though no entry may); and when none of its words
+      lies in a run of 12 or more consecutive words, so read across lines, that the page
+      or one file under `docs/decisions/` at origin/main holds too. So a copy of an older
+      entry, re-wrapped, re-spaced, in capitals or in those look-alike letters, renews
+      nothing, kept beside its original or not. That is all the comparison catches: a copy
+      with a word put in after every eleventh, one reworded throughout, or one in
+      look-alike letters of another script reads as an entry in words of its own, and only
+      the reviews can tell it from one. Each run of consecutive lines that count is read
+      on its own: words are never joined across a blank line or a line that does not
+      count, though a name wrapped from one line that counts to the next still counts, as
+      on the page. A guard that refuses names each line of an entry the push adds that did
+      not count and in which its own reading finds a mention of something it found no new
+      line naming, and why: a line the record holds already, or one in a run of 12 or more
+      words the record holds too; so it never names a code fence, or another line that
+      names nothing it asks for. While a push refuses anything under `docs/decisions/`,
+      entries supply no new line at all, and the guards' refusals say so; so a rename, or
+      a deletion and re-addition of an entry, renews no approval.
    4. *The full checks* of section 8 in that worktree, and `negative_tests.py` in a
       second, each step timed. The check scripts and what they expect (`scripts/`,
       `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) are origin/main's

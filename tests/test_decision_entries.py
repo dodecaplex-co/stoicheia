@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """The checks render.py makes of docs/decisions/, the dated decision entries, each a page
-of its own, before it writes anything, passing over the files Git ignores; and that
-render.py, run whole on a copy of the sources, assembles no entry into another page and
-leaves the decisions record as it was.
+of its own, before it writes anything, passing over the files Git ignores by a rule of the
+root's .gitignore, .git/info/exclude or the user's excludes file, never a nested
+.gitignore's; and that render.py, run whole on a copy of the sources, assembles no entry
+into another page and leaves the decisions record as it was.
 
     python3 -I tests/test_decision_entries.py
 
@@ -137,6 +138,49 @@ class DecisionEntries(unittest.TestCase):
         with self.refused("^docs/decisions/.DS_Store: expected README.md or an entry"):
             render.decision_entries()
 
+    def test_only_the_root_ignore_rules_and_the_users_pass_a_file_over(self):
+        # A rule of a nested .gitignore, which a commit may add beside the folder or in it,
+        # passes nothing over (the security re-review's case); nor does a negated rule. A
+        # rule of the root's .gitignore, of .git/info/exclude, of core.excludesFile or of
+        # Git's default excludes file does.
+        self.entry("2026-10-20-test.md", "- A decision.\n")
+        self.entry("notes.md", "- Notes.\n")
+        nested = self.root / "docs" / ".gitignore"
+        for rules in ("decisions/notes.md\n", "*.md\n"):
+            with self.subTest(rules=rules):
+                nested.write_text(rules)
+                with self.refused("^docs/decisions/notes.md: expected README.md or an entry"):
+                    render.decision_entries()
+        nested.unlink()
+        inside = self.entry(".gitignore", "*\n")
+        with self.refused("^docs/decisions/.gitignore: expected README.md or an entry"):
+            render.decision_entries()
+        inside.unlink()
+        (self.root / ".gitignore").write_text("notes.md\n")
+        nested.write_text("!decisions/notes.md\n")
+        with self.refused("^docs/decisions/notes.md: expected README.md or an entry"):
+            render.decision_entries()
+        nested.unlink()
+        self.assertEqual(render.decision_entries(), ["2026-10-20-test.md"])
+        (self.root / ".gitignore").unlink()
+        home = Path(os.environ["HOME"])
+        exclude = self.root / ".git" / "info" / "exclude"
+        configured = home / "excludes"
+        default = home / ".config" / "git" / "ignore"
+        default.parent.mkdir(parents=True)
+        for path, setting in ((exclude, None), (configured, str(configured)),
+                              (home / "tilde", "~/tilde"), (default, None)):
+            with self.subTest(path=path.name):
+                path.write_text("notes.md\n")
+                if setting:
+                    self.git("config", "core.excludesFile", setting)
+                self.assertEqual(render.decision_entries(), ["2026-10-20-test.md"])
+                path.unlink()
+                if setting:
+                    self.git("config", "--unset", "core.excludesFile")
+                with self.refused("^docs/decisions/notes.md: expected README.md or an entry"):
+                    render.decision_entries()
+
     def test_git_must_say_what_it_ignores(self):
         # Where Git cannot be run, finds no repository, finds one whose work tree is not
         # the root, or cannot read its index, nothing is passed over: render.py stops.
@@ -159,18 +203,25 @@ class DecisionEntries(unittest.TestCase):
             render.decision_entries()
 
     def test_git_naming_a_file_it_was_not_asked_about_stops_render(self):
+        # Or answering otherwise than in fours: a rule's source, its line, its pattern and
+        # the file.
         self.entry("2026-10-20-test.md", "- A decision.\n")
         run = subprocess.run
+        for out, why in ((b".gitignore\x001\x00other\x00docs/decisions/other\x00",
+                          "named a file it was not asked about"),
+                         (b"docs/decisions/2026-10-20-test.md\x00",
+                          "answered in a form it was not asked for"),
+                         (b".gitignore\x001\x00x\x00docs/decisions/2026-10-20-test.md",
+                          "answered in a form it was not asked for")):
+            def answer(command, **kwargs):
+                if "check-ignore" in command:
+                    return subprocess.CompletedProcess(command, 0, out, b"")
+                return run(command, **kwargs)
 
-        def answer(command, **kwargs):
-            if "check-ignore" in command:
-                return subprocess.CompletedProcess(command, 0, b"docs/decisions/other\0", b"")
-            return run(command, **kwargs)
-
-        with mock.patch.object(render.subprocess, "run", side_effect=answer):
-            with self.refused("^docs/decisions: git check-ignore named a file it was not "
-                              "asked about$"):
-                render.decision_entries()
+            with self.subTest(out=out):
+                with mock.patch.object(render.subprocess, "run", side_effect=answer):
+                    with self.refused(f"^docs/decisions: git check-ignore {why}$"):
+                        render.decision_entries()
 
     def test_only_regular_files_the_readme_included(self):
         target = self.root / "elsewhere.md"
@@ -216,6 +267,13 @@ class DecisionEntries(unittest.TestCase):
         (other / "2026-10-21-case.md").write_text("- A decision.\n")
         with self.refused("spelled on disk as docs/Decisions;"):
             render.decision_entries()
+        # A long s (U+017F) casefolds to an s, so a Mac's file system finds docs/deciſions/
+        # there too.
+        long_s = self.root / "docs" / "deciſions"
+        other.rename(long_s)
+        with self.refused("spelled on disk as docs/deciſions;"):
+            render.decision_entries()
+        long_s.rename(other)
         # Where case counts, a second spelling beside the folder is refused too.
         try:
             self.folder.mkdir()
@@ -280,7 +338,11 @@ class DecisionEntries(unittest.TestCase):
                            ("\u2060", "WORD JOINER"), ("\u202e", "RIGHT-TO-LEFT OVERRIDE"),
                            ("\u034f", "COMBINING GRAPHEME JOINER"), ("\u3164", "HANGUL FILLER"),
                            ("\ufe0f", "VARIATION SELECTOR-16"),
-                           ("\U000e0041", "TAG LATIN CAPITAL LETTER A")):
+                           ("\U000e0041", "TAG LATIN CAPITAL LETTER A"),
+                           ("\u2800", "BRAILLE PATTERN BLANK"),
+                           ("\U0001d159", "MUSICAL SYMBOL NULL NOTEHEAD"),
+                           ("\U00016fe4", "KHITAN SMALL SCRIPT FILLER"),
+                           ("\ue000", "U\\+E000"), ("\u0378", "U\\+0378")):
             for text in (char + line, line.replace(" ", char + " ", 1),
                          line + line.replace("\n", char + "\n")):
                 with self.subTest(char=hex(ord(char)), text=text):
@@ -293,19 +355,51 @@ class DecisionEntries(unittest.TestCase):
         with self.refused("2026-10-20-test.md:1: U\\+000D: an entry holds no control"):
             render.decision_entries()
 
+    def test_readme_holds_no_hidden_character(self):
+        # The README is held to an entry's characters, though it may be empty and is no
+        # entry, as the pre-flight holds it (safe_push.entry_changes).
+        for char, name in (("\u200b", "ZERO WIDTH SPACE"),
+                           ("\U0001d159", "MUSICAL SYMBOL NULL NOTEHEAD"), ("\r", "U\\+000D")):
+            with self.subTest(char=hex(ord(char))):
+                self.entry("README.md", f"# Decision entries\n\nEach{char} decision.\n")
+                with self.refused(f"^docs/decisions/README.md:3: .*{name}.*: the README holds "
+                                  "no control character"):
+                    render.decision_entries()
+        self.entry("README.md", "")
+        self.assertEqual(render.decision_entries(), [])
+
     def test_ordinary_text_is_kept(self):
-        # Spaces of other widths and the Braille pattern blank are kept: safe_push.py reads
-        # each as a space when it compares an entry with the record (safe_push.skeleton).
+        # Spaces of other widths are kept: safe_push.py reads each as a space when it
+        # compares an entry with the record (safe_push.skeleton). The Braille pattern blank,
+        # which it reads so too, renders blank and is no white space, so an entry may not
+        # hold it (test_invisible_characters_refused); the decisions page may.
         self.entry("2026-10-20-test.md",
                    "- **Στοιχεῖα, naïve and café.**\tA tab, a no-break\u00a0space, an "
-                   "em space\u2003, a Braille blank\u2800and ✓ marks are text.\n")
+                   "em space\u2003, and ✓ marks are text.\n")
         self.assertEqual(render.decision_entries(), ["2026-10-20-test.md"])
         self.assertEqual(safe_push.record_line("a\u00a0b\u2003c\u2800d"), "a b c d")
+
+    def test_refusals_print_names_with_escapes(self):
+        # A name holding an escape sequence, a bell or a bidirectional mark is printed with
+        # each written as an escape, so that a refusal gives a terminal nothing to act on.
+        for name, shown in (("notes\x1b[31m.md", "notes\\\\x1b\\[31m\\.md"),
+                            ("2026-10-20-\u202etest.md", "2026-10-20-\\\\u202etest\\.md"),
+                            ("\x07bell.md", "\\\\x07bell\\.md")):
+            with self.subTest(name=ascii(name)):
+                path = self.entry(name, "- A decision.\n")
+                with self.assertRaises(SystemExit) as caught:
+                    render.decision_entries()
+                message = str(caught.exception)
+                self.assertRegex(message, f"^docs/decisions/{shown}: expected README.md or an "
+                                          "entry")
+                self.assertEqual([c for c in message if not c.isprintable()], [])
+                path.unlink()
 
     def test_render_and_safe_push_refuse_the_same_characters(self):
         differ = [hex(n) for n in range(0x110000)
                   if render.invisible(chr(n)) != safe_push.invisible(chr(n))]
         self.assertEqual(differ, [])
+        self.assertEqual(render.BLANK_GLYPHS, safe_push.BLANK_GLYPHS)
 
 
 class RenderLeavesTheRecord(unittest.TestCase):

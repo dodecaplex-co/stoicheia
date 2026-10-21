@@ -70,15 +70,19 @@ order, and the first that fails stops it with a message saying why:
      deleted unless the decisions record gains a new line naming it, as a protected path
      is named;
    - docs/decisions/ holds regular files alone, its README.md, which once added stays,
-     and dated entries, each dated from FIRST_ENTRY to the day after the commit's
-     committer date, and an entry is only added: none there at origin/main is changed,
-     deleted or renamed (entry_changes).
+     and dated entries, each dated from FIRST_ENTRY to the day after the earlier of the
+     commit's committer date and the runner's own date; an entry is only added: none
+     there at origin/main is changed, deleted or renamed; and no path the commit changes
+     is spelled otherwise than docs/decisions/ where a Mac's file system reads it as that
+     folder (entry_changes).
    A new line here is a mention the push adds: an old line that already named the
    thing, edited in place, does not count. A line of a dated entry the push adds counts
    only when the decisions record held none like it, nor a run of SHARED_RUN of its
    words, each read as `skeleton` reads it (entry_lines); a guard that refuses names
-   each line of an entry that did not count, and why (uncounted). That comparison is
-   for entries alone: a line added to the page counts as any new line does.
+   each line of an entry that did not count and in which its own reading finds a mention
+   of what it asks for, and why (uncounted). That comparison is for entries alone: a
+   line added to the page is compared with nothing, and any new line there counts, but
+   its mentions are read by the same rules as an entry's (mention, names_path).
 4. The full check sequence of docs/WORKFLOW.md, section 8, in that worktree, and
    `negative_tests.py` in a second one, each step timed. The checks run with
    origin/main's copies of the check scripts and their expected values (CHECK_INPUTS,
@@ -207,7 +211,7 @@ DECISION_ENTRY = re.compile(r"docs/decisions/([0-9]{4}-[0-9]{2}-[0-9]{2})-[a-z0-
                             r"(?:-[a-z0-9]+)*\.md")
 # The first day an entry may bear: the day of the decisions page's entry "Decision entries,
 # one file each", which began them (render.py's FIRST_ENTRY). The last is the day after the
-# pushed commit's committer date (entry_changes).
+# earlier of the pushed commit's committer date and the runner's own date (entry_changes).
 FIRST_ENTRY = datetime.date(2026, 10, 20)
 # A run of this many consecutive words that an entry shares with the decisions record is
 # copied from it, however the lines are wrapped.
@@ -269,10 +273,16 @@ LOOK_ALIKES = str.maketrans({unicodedata.lookup(name): latin for latin, names in
     ("\N{LATIN SMALL LETTER E WITH DIAERESIS}", "CYRILLIC SMALL LETTER IO"),
     ("\N{LATIN SMALL LETTER I WITH DIAERESIS}", "CYRILLIC SMALL LETTER YI"),
 ) for name in names.split(", ")})
-# Characters that look blank and that str.split does not take for white space: the Braille
-# pattern blank and the Hangul fillers, which an entry may not hold anyway (IGNORABLE).
-# skeleton reads them, and every space separator (Unicode's Zs), as a space.
-BLANKS = frozenset("\u2800\u115f\u1160\u3164\uffa0")
+# Characters that render blank though Unicode counts them neither white space nor
+# default-ignorable, as render.py's BLANK_GLYPHS: a fixed list, since Unicode has no
+# property for a blank glyph. The Braille pattern blank, the musical symbol null notehead
+# and the Khitan small script filler; an entry may not hold one (invisible).
+BLANK_GLYPHS = frozenset("\u2800\U0001d159\U00016fe4")
+# Characters that look blank and that str.split does not take for white space: those of
+# BLANK_GLYPHS and the Hangul fillers (IGNORABLE), none of which an entry may hold, though
+# the decisions page may. skeleton reads them, and every space separator (Unicode's Zs),
+# as a space.
+BLANKS = BLANK_GLYPHS | frozenset("\u115f\u1160\u3164\uffa0")
 BRIEFS = "docs/briefs/"
 LOCK = "Certificate/axioms.lock"
 ALLOWLIST = "scripts/safe_push_allow.toml"
@@ -1329,14 +1339,17 @@ def names_ref(text: str, ref: str) -> bool:
 
 
 def invisible(char: str) -> bool:
-    """Is `char` one that an entry may not hold? A control character but a tab and a
-    line feed (a carriage return among them), a format character (Unicode's Cf, as a
-    zero-width space or a byte-order mark), a line or paragraph separator, or another
-    default-ignorable character (IGNORABLE): each could hide a copy of an older entry
-    from the comparison, or make Git and a reader see different lines. render.py refuses
-    the same characters."""
+    """Is `char` one that an entry, or the folder's README, may not hold? A control
+    character but a tab and a line feed (a carriage return among them), a format character
+    (Unicode's Cf, as a zero-width space or a byte-order mark), a line or paragraph
+    separator, another default-ignorable character (IGNORABLE), a character of the fixed
+    list BLANK_GLYPHS, which render blank, or a code point Unicode keeps for private use or
+    leaves unassigned (its Co and Cn, as this Python's Unicode data has them), which no
+    font is bound to draw: each could hide a copy of an older entry from the comparison,
+    or make Git and a reader see different lines. render.py refuses the same characters."""
     category = unicodedata.category(char)
-    return ((category == "Cc" and char not in "\t\n") or category in ("Cf", "Zl", "Zp")
+    return ((category == "Cc" and char not in "\t\n")
+            or category in ("Cf", "Zl", "Zp", "Co", "Cn") or char in BLANK_GLYPHS
             or any(a <= ord(char) <= b for a, b in IGNORABLE))
 
 
@@ -1405,9 +1418,21 @@ IN_RECORD = "a line the decisions record holds already"
 IN_RUN = f"in a run of {SHARED_RUN} or more words the decisions record holds too"
 
 
+class Uncounted(NamedTuple):
+    """A line of an entry that holds a word and does not count, and why: shown as a
+    refusal names it, by its place and why, never by its text."""
+    path: str
+    number: int     # its line number in the entry
+    text: str
+    why: str        # IN_RECORD or IN_RUN
+
+    def __str__(self) -> str:
+        return f"{printable_text(self.path)}:{self.number}: {self.why}"
+
+
 class EntryLines(NamedTuple):
-    runs: list[Hunk]        # its runs of consecutive lines that count, each a hunk for gains()
-    uncounted: list[str]    # each line that holds a word and does not count, and why
+    runs: list[Hunk]            # its runs of consecutive lines that count, each for gains()
+    uncounted: list[Uncounted]  # each line that holds a word and does not count
 
 
 def entry_lines(path: str, text: str, record: Record) -> EntryLines:
@@ -1421,7 +1446,8 @@ def entry_lines(path: str, text: str, record: Record) -> EntryLines:
     throughout, and this comparison cannot tell either from an entry of its own words.
     The runs of consecutive lines that count are hunks of their own, so that no words are
     joined across a line that does not count, or a blank line; each line that holds a
-    word and does not count is named with why, for a guard's refusal."""
+    word and does not count is kept with why, for a guard's refusal, which names those of
+    them in which it finds a mention of what it asks for (uncounted)."""
     lines = text.split("\n")
     words = [(n, word) for n, line in enumerate(lines) for word in record_words(line)]
     copied = set()
@@ -1437,7 +1463,7 @@ def entry_lines(path: str, text: str, record: Record) -> EntryLines:
             run.append(Added(path, n + 1, line))
             continue
         if read:
-            uncounted.append(f"{path}:{n + 1}: {why}")
+            uncounted.append(Uncounted(path, n + 1, line, why))
         if run:
             hunks.append(Hunk(path, [], run))
         run = []
@@ -1456,6 +1482,49 @@ def committed_on(repo, sha) -> datetime.date:
         raise Refusal(f"could not read the committer date of {sha}") from None
 
 
+def today() -> datetime.date:
+    """The runner's own date, on its own calendar, which bounds an entry's date with its
+    commit's (entry_changes): the pusher sets the committer date, not this clock. A test
+    puts a clock of its own in its place."""
+    return datetime.date.today()
+
+
+def spelled_otherwise(path: str) -> bool:
+    """Is `path` one that a Mac's file system finds under docs/decisions/, though Git and
+    GitHub do not? Its first two components, each in Unicode's NFD form and casefolded,
+    as such a file system compares names, read as docs and decisions, but are spelled
+    otherwise: docs/Decisions/, or docs/deciſions/ with a long s (U+017F), which
+    casefolds to an s, as Git's own case-blind matching (:(icase)) does not see."""
+    parts = path.split("/")[:2]
+    read = [unicodedata.normalize("NFD", unicodedata.normalize("NFD", part).casefold())
+            for part in parts]
+    return read == ENTRIES.split("/")[:2] and parts != ENTRIES.split("/")[:2]
+
+
+# A character that `invisible` refuses, as a refusal names it.
+HIDDEN = ("a character an entry or the README may not hold (a control character but a tab "
+          "and a line feed, a format character, a line or paragraph separator, another "
+          "default-ignorable one, one that renders blank, or a private-use or unassigned "
+          "code point)")
+
+
+def folder_text(repo, sha, path: str, refused: list[str]) -> str | None:
+    """The text of `path`, a regular file of docs/decisions/ that the commit `sha` adds or
+    changes; or None, with the refusal added to `refused`, when it is no UTF-8 text, or
+    holds a character that `invisible` refuses, named by its line."""
+    try:
+        text = git(repo, "cat-file", "blob", f"{sha}:{path}", binary=True).decode("utf-8")
+    except UnicodeError:
+        refused.append(f"{printable_text(path)}: not UTF-8 text")
+        return None
+    hidden = next(((n, c) for n, line in enumerate(text.split("\n"), 1) for c in line
+                   if invisible(c)), None)
+    if hidden:
+        refused.append(f"{printable_text(path)}:{hidden[0]}: U+{ord(hidden[1]):04X}, {HIDDEN}")
+        return None
+    return text
+
+
 def entry_changes(repo, base, sha) -> tuple[list[str], dict[str, EntryLines]]:
     """What the commit does under docs/decisions/: the changes refused, and the entries it
     adds, each read against the record (entry_lines). An entry is dated history, added
@@ -1466,50 +1535,65 @@ def entry_changes(repo, base, sha) -> tuple[list[str], dict[str, EntryLines]]:
     short entry that shares a line with an older one is still an entry. The README is no
     entry: it may be edited, and supplies no approval, but once added it stays, a regular
     file, never a link, so that the folder origin/main holds is never taken away (the
-    revert that revert_advice gives restores it). A file added there is a regular file:
-    the README, or an entry named <YYYY-MM-DD>-<slug>.md with a valid date, from
-    FIRST_ENTRY to the day after the committer date of `sha` (a day's grace for the
-    time zones between the entry's writer and the committer), and UTF-8 text holding no
-    character that `invisible` refuses. Paths are read whatever their case, and one
-    spelled otherwise than docs/decisions/ is refused: a Mac's file system finds it there,
-    and Git does not."""
+    revert that revert_advice gives restores it); added or changed, it is UTF-8 text
+    holding no character that `invisible` refuses, so that a later push can read the
+    record. A file added there is a regular file: the README, or an entry named
+    <YYYY-MM-DD>-<slug>.md with a valid date, from FIRST_ENTRY to the day after the
+    earlier of the committer date of `sha`, which the pusher sets, and the runner's own
+    date (today), a day's grace for the time zones between the entry's writer and the
+    runner; and UTF-8 text holding no character that `invisible` refuses. Every path the
+    commit changes, in or out of the folder, is read as a Mac's file system reads it, and
+    one spelled otherwise than docs/decisions/ is refused (spelled_otherwise): such a
+    file system finds it there, and Git does not. Each path a refusal names is printed
+    with its control and format characters, and any other a terminal could act on,
+    written as escapes (printable_text)."""
+    names = git(repo, "diff", "--name-only", "-z", "--no-renames", base, sha)
+    refused = [f"{printable_text(path)}: spelled otherwise than {ENTRIES}, which Git and "
+               "GitHub tell apart by case" for path in names.split("\0")
+               if path and spelled_otherwise(path)]
     out = git(repo, "diff", "--raw", "-z", "--no-abbrev", "-M", "-l0", base, sha,
-              "--", f":(icase){ENTRIES}")
+              "--", ENTRIES)
     parts = out.split("\0")
-    refused, added, i = [], [], 0
+    added, i = [], 0
     while i < len(parts) - 1:
         fields = parts[i].lstrip(":").split()
         if len(fields) != 5 or not fields[4]:
             raise Refusal(f"could not read the changes to {ENTRIES} from {base} to {sha}")
         status, mode = fields[4][0], fields[1]
         path = parts[i + 2] if status in "RC" else parts[i + 1]
+        shown = printable_text(path)
         if not path.startswith(ENTRIES):
-            refused.append(f"{path}: spelled otherwise than {ENTRIES}, which Git and GitHub "
+            refused.append(f"{shown}: spelled otherwise than {ENTRIES}, which Git and GitHub "
                            "tell apart by case")
         if status in "RC":
-            refused.append(f"{path}: {'renamed' if status == 'R' else 'copied'} "
-                           f"from {parts[i + 1]}")
+            refused.append(f"{shown}: {'renamed' if status == 'R' else 'copied'} "
+                           f"from {printable_text(parts[i + 1])}")
             i += 3
             continue
         i += 2
-        if path == ENTRIES_README and status in "MTD":
+        if path == ENTRIES_README:
             if status == "D":
-                refused.append(f"{path}: deleted (the README, once added, stays)")
+                refused.append(f"{shown}: deleted (the README, once added, stays)")
+            elif status not in "AMT":
+                refused.append(f"{shown}: changed ({status})")
             elif mode not in ("100644", "100755"):
-                refused.append(f"{path}: not a regular file (mode {mode})")
+                refused.append(f"{shown}: not a regular file (mode {mode})")
+            else:
+                folder_text(repo, sha, path, refused)
             continue
         if status in "MT":
-            refused.append(f"{path}: changed")
+            refused.append(f"{shown}: changed")
         elif status == "D":
-            refused.append(f"{path}: deleted")
+            refused.append(f"{shown}: deleted")
         elif status != "A":
-            refused.append(f"{path}: changed ({status})")
+            refused.append(f"{shown}: changed ({status})")
         elif mode not in ("100644", "100755"):
-            refused.append(f"{path}: not a regular file (mode {mode})")
-        elif path.startswith(ENTRIES) and path != ENTRIES_README:
+            refused.append(f"{shown}: not a regular file (mode {mode})")
+        elif path.startswith(ENTRIES):
             added.append(path)
     entries, record, last = {}, None, None
     for path in added:
+        shown = printable_text(path)
         match = DECISION_ENTRY.fullmatch(path)
         if match:
             try:
@@ -1517,38 +1601,28 @@ def entry_changes(repo, base, sha) -> tuple[list[str], dict[str, EntryLines]]:
             except ValueError:
                 match = None
         if not match:
-            refused.append(f"{path}: neither the README nor an entry named "
+            refused.append(f"{shown}: neither the README nor an entry named "
                            "<YYYY-MM-DD>-<slug>.md with a valid date")
             continue
         if day < FIRST_ENTRY:
-            refused.append(f"{path}: dated before {FIRST_ENTRY}, the day the entries began")
+            refused.append(f"{shown}: dated before {FIRST_ENTRY}, the day the entries began")
             continue
         if last is None:
-            last = committed_on(repo, sha) + datetime.timedelta(days=1)
+            last = min(committed_on(repo, sha), today()) + datetime.timedelta(days=1)
         if day > last:
-            refused.append(f"{path}: dated after {last}, the day after {sha[:12]}'s "
-                           "committer date")
+            refused.append(f"{shown}: dated after {last}, the day after the earlier of "
+                           f"{sha[:12]}'s committer date and this machine's date")
             continue
-        try:
-            text = git(repo, "cat-file", "blob", f"{sha}:{path}", binary=True).decode("utf-8")
-        except UnicodeError:
-            refused.append(f"{path}: not UTF-8 text")
-            continue
-        hidden = next(((n, c) for n, line in enumerate(text.split("\n"), 1) for c in line
-                       if invisible(c)), None)
-        if hidden:
-            refused.append(f"{path}:{hidden[0]}: U+{ord(hidden[1]):04X}, a character an "
-                           "entry may not hold (a control character but a tab and a line "
-                           "feed, a format character, a line or paragraph separator, or "
-                           "another default-ignorable one)")
+        text = folder_text(repo, sha, path, refused)
+        if text is None:
             continue
         if not text.strip():
-            refused.append(f"{path}: holds no text")
+            refused.append(f"{shown}: holds no text")
             continue
         if record is None:
             record = record_at(repo, base)
         entries[path] = entry_lines(path, text, record)
-    return refused, entries
+    return list(dict.fromkeys(refused)), entries
 
 
 def entry_hunks(repo, base, sha) -> list[Hunk]:
@@ -1559,23 +1633,28 @@ def entry_hunks(repo, base, sha) -> list[Hunk]:
     return [] if refused else [h for e in entries.values() for h in e.runs]
 
 
-def uncounted(repo, base, sha) -> str:
+def uncounted(repo, base, sha, finds) -> str:
     """For the refusal of a guard that asks for a new line: the lines of the entries the
-    commit adds that hold a word and did not count, each with why (entry_lines), and how
-    an entry names a thing so that it counts; or, while guard_entries refuses a change
+    commit adds that hold a word and did not count (entry_lines), each with why, those
+    alone in which `finds`, the guard's own reading of a line given its text and its
+    entry's path, finds a mention of something the guard found no new line naming, so
+    that a code fence, or a line that names nothing it asks for, is never named; and how
+    an entry names a thing so that it counts. Or, while guard_entries refuses a change
     under docs/decisions/, that no line of an entry counted. Empty when there is neither.
-    A line added to the decisions page is read as any new line is, and is never named
+    A line added to the decisions page is compared with nothing, and is never named
     here."""
     refused, entries = entry_changes(repo, base, sha)
     if refused:
         return (f"\nno line of an entry counts while the guard of the decision entries "
                 f"refuses a change under {ENTRIES}")
-    lines = [line for e in entries.values() for line in e.uncounted]
+    lines = [line for e in entries.values() for line in e.uncounted
+             if finds(line.text, line.path)]
     if not lines:
         return ""
-    return ("\nlines of the entries added that did not count (an entry names each file, "
-            "statement and lock in a sentence of its own, never on a line or in a list "
-            "repeated from an older entry):\n" + "\n".join(f"  {line}" for line in lines))
+    return ("\nlines of the entries added that did not count, each naming what is missing "
+            "here (an entry names each file, statement and lock in a sentence of its own, "
+            "never on a line or in a list repeated from an older entry):\n"
+            + "\n".join(f"  {line}" for line in lines))
 
 
 def decision_hunks(repo, base, sha) -> list[Hunk]:
@@ -1603,7 +1682,7 @@ def guard_statements(repo, base, sha, wt: Path, rep: Report) -> list[str]:
                 refs.add(f"{book}.{n} Por.")
     briefs = diff_hunks(repo, base, sha, BRIEFS)
     entries = entry_hunks(repo, base, sha)
-    changed, approved, new = [], [], []
+    changed, approved, new, unnamed = [], [], [], []
     for ref in sorted(refs, key=lambda r: (heath.prop_key(r), r)):
         r = heath.parse_ref(ref)
         path = f"Elements/Book{r.book}/Prop{r.n:02d}.lean"
@@ -1630,6 +1709,7 @@ def guard_statements(repo, base, sha, wt: Path, rep: Report) -> list[str]:
             source = BRIEFS if brief_named else "docs/decisions/"
             approved.append(f"{ref} ({'; '.join(why)}), named in the {source} lines added")
         else:
+            unnamed.append(ref)
             changed.append(f"{ref}: {'; '.join(why)}, and no new line in docs/briefs/ "
                            "or docs/decisions/ "
                            f"(a brief's revision or a decisions entry) names {r.parent}; "
@@ -1643,8 +1723,11 @@ def guard_statements(repo, base, sha, wt: Path, rep: Report) -> list[str]:
     if new:
         notes.append(f"new statements (not changes): {', '.join(new)}")
     if changed:
+        def finds(text, source):
+            return any(ref_count(text, ref) for ref in unnamed)
+
         rep.add("3", "statements", "FAIL",
-                "\n".join(changed + notes) + uncounted(repo, base, sha), seconds)
+                "\n".join(changed + notes) + uncounted(repo, base, sha, finds), seconds)
     else:
         rep.add("3", "statements", "ok",
                 "\n".join([f"{count} statements compared in facts.json and the Lean"] + notes),
@@ -1667,7 +1750,8 @@ def guard_lock(repo, base, sha, rep: Report) -> None:
                 "or an entry in docs/decisions/ mentions the lock (\"axioms.lock\" or "
                 "\"axiom lock\"; the push must add a "
                 "mention: an old line that already mentioned it, edited in place, does not "
-                "count)" + uncounted(repo, base, sha))
+                "count)" + uncounted(repo, base, sha,
+                                     lambda text, source: bool(LOCK_MENTION.search(text))))
 
 
 # Where a mention of a path may start (mention): at the start of the text, or after
@@ -1681,35 +1765,47 @@ MENTION_START = r"(?<![^\s(<\[`\"'*])"
 
 
 def mention(path: str, directory: bool = False) -> re.Pattern:
-    """A mention of `path`, for names_path: whole, starting where MENTION_START allows,
+    """A mention of `path`, for path_mentions: whole, starting where MENTION_START allows,
     its group `prefix` a / that anchors it at the root or the ./ and ../ steps of a
-    relative link, and never the head of a longer path. A file may be followed by a full
-    stop that ends a sentence, or by 's, but by no word character, / or -, after a full
-    stop or not, so that Audit.lean.orig names no Audit.lean. A directory may close with
-    its slash or not, and be followed by a full stop that ends a sentence, but by no word
-    character, / or -, nor by a full stop with one of those or another full stop after
-    it, so that mishnah/test/note.md, mishnah/tests/, mishnah/test-old/, mishnah/test.md
-    or mishnah/test.. names no mishnah/test/."""
-    end = r"/?(?![\w/-]|\.[\w./-])" if directory else r"(?!\.?[\w/-])"
-    return re.compile(r"%s(?P<prefix>/|(?:\.\.?/)*)%s%s"
+    relative link (its group `anchor` when there is either), and never the head of a
+    longer path. A file may be followed by a full stop that ends a sentence, or by 's, but
+    by no word character, / or -, after a full stop or not, so that Audit.lean.orig names
+    no Audit.lean. A directory may close with its slash or not, and be followed by no word
+    character, / or -; and by a full stop that ends a sentence only when its mention holds
+    a slash (mishnah/test., figures/. or /figures.), never with one of those or another
+    full stop after it, so that mishnah/test/note.md, mishnah/tests/, mishnah/test-old/,
+    mishnah/test.md or mishnah/test.. names no mishnah/test/. A directory at the root
+    named bare, as figures, is a word of prose too, and may be followed by no full stop,
+    as origin/main's guards read it: "the figures." names no figures/."""
+    after = r"(?![\w/-]|\.[\w./-])"
+    if not directory:
+        end = r"(?!\.?[\w/-])"
+    elif "/" in path:
+        end = r"/?" + after
+    else:
+        end = r"(?(anchor)/?%s|(?:/%s|(?![\w./-])))" % (after, after)
+    return re.compile(r"%s(?P<prefix>(?P<anchor>/|(?:\.\.?/)+)?)%s%s"
                       % (MENTION_START, re.escape(path), end))
 
 
-def names_path(hunks: list[Hunk], path: str, pattern: re.Pattern) -> bool:
-    """Does a hunk of the decisions record gain a mention of `path`, as `pattern` finds
-    one (mention), its group `prefix` what stands before the path? The path counts whole,
-    from the repository's root or anchored there (/model/lock.sha256), or by a relative
-    link that resolves from the folder of the hunk's file, docs/briefs/ for the page and
-    docs/decisions/ for an entry, to exactly `path`, as check_links.py reads one. Each
-    hunk, and so each run of an entry's lines that count, is read on its own."""
-    def count(text, source):
-        return sum(
-            not m.group("prefix").startswith(".")
-            or posixpath.normpath(posixpath.join(posixpath.dirname(source), m.group()))
-            == path
-            for m in pattern.finditer(text))
+def path_mentions(text: str, source: str, path: str, pattern: re.Pattern) -> int:
+    """How many mentions of `path` `text`, a line or lines of `source`, a file of the
+    decisions record, holds, as `pattern` finds them (mention), its group `prefix` what
+    stands before the path. The path counts whole, from the repository's root or anchored
+    there (/model/lock.sha256), or by a relative link that resolves from the folder of
+    `source`, docs/briefs/ for the page and docs/decisions/ for an entry, to exactly
+    `path`, as check_links.py reads one."""
+    return sum(not m.group("prefix").startswith(".")
+               or posixpath.normpath(posixpath.join(posixpath.dirname(source), m.group()))
+               == path
+               for m in pattern.finditer(text))
 
-    return any(gains([h], lambda text: count(text, h.path or DECISIONS)) for h in hunks)
+
+def names_path(hunks: list[Hunk], path: str, pattern: re.Pattern) -> bool:
+    """Does a hunk of the decisions record gain a mention of `path` (path_mentions)? Each
+    hunk, and so each run of an entry's lines that count, is read on its own."""
+    return any(gains([h], lambda text: path_mentions(text, h.path or DECISIONS, path, pattern))
+               for h in hunks)
 
 
 def guard_protected(repo, base, sha, rep: Report) -> list[str]:
@@ -1734,12 +1830,15 @@ def guard_protected(repo, base, sha, rep: Report) -> list[str]:
 
     unnamed = [p for p in files if not named(p)]
     if unnamed:
+        def finds(text, source):
+            return any(path_mentions(text, source, p, mention(p)) for p in unnamed)
+
         rep.add("3", "protected paths", "FAIL",
                 f"changed with no new line in {DECISIONS} or an entry in docs/decisions/ "
                 f"naming them: {', '.join(unnamed)} "
                 f"(a protected change is named file by file in a decisions entry, and its "
                 f"pull request carries the label {SECURITY_LABEL})"
-                + uncounted(repo, base, sha))
+                + uncounted(repo, base, sha, finds))
     else:
         source = (f"{DECISIONS} or {ENTRIES}" if any(under(h.path or "", (ENTRIES,))
                                                      for h in decisions) else DECISIONS)
@@ -1832,16 +1931,21 @@ def guard_directories(repo, base, sha, rep: Report) -> None:
     # The directory whole, with its closing slash or without, read as guard_protected reads
     # a path (names_path, mention): never the tail of a longer path, nor its head, so that a
     # line naming tests/mishnah/test/, ~/mishnah/test/, mishnah/test/note.md or
-    # mishnah/tests/ names no mishnah/test/, though mishnah/test. ending a sentence does.
+    # mishnah/tests/ names no mishnah/test/, though mishnah/test. ending a sentence does;
+    # and "the figures." names no figures/, though figures/. does.
     def named(d):
         return names_path(decisions, d, mention(d, directory=True))
 
     unnamed = [d for d in top if not named(d)]
     if unnamed:
+        def finds(text, source):
+            return any(path_mentions(text, source, d, mention(d, directory=True))
+                       for d in unnamed)
+
         rep.add("3", "directories", "FAIL", f"deleted with no new line in {DECISIONS} "
                 "or an entry in docs/decisions/ "
                 f"naming them: {', '.join(d + '/' for d in unnamed)}"
-                + uncounted(repo, base, sha))
+                + uncounted(repo, base, sha, finds))
     else:
         rep.add("3", "directories", "ok", f"deleted, each named in {DECISIONS} or "
                 "docs/decisions/: "
@@ -3931,8 +4035,10 @@ def issue_pages(text: str) -> list[dict]:
 
 
 def printable_text(text: str) -> str:
-    """An issue's title, which its author may edit, with every character a terminal could
-    take for a command (controls, bidirectional marks) written as an escape."""
+    """Text another may write, as an issue's title or a path a commit names, with every
+    character a terminal could take for a command (controls, format characters as the
+    bidirectional marks), and every other that Python counts unprintable, written as an
+    escape."""
     return "".join(c if c.isprintable() else c.encode("unicode_escape").decode("ascii")
                    for c in text)
 
@@ -4180,7 +4286,7 @@ def revert_advice(ctx: Context, kind: str | None = None) -> str:
     any change's entry must: in sentences of its own, since a line or a list repeated
     from the merge's entry counts for nothing (entry_lines)."""
     branch = f"revert-{ctx.sha[:12]}"
-    entry = f"{ENTRIES}{datetime.date.today().isoformat()}-revert-{ctx.sha[:12]}.md"
+    entry = f"{ENTRIES}{today().isoformat()}-revert-{ctx.sha[:12]}.md"
     held = [p for p in (ENTRIES, DECISIONS)
             if git_ok(ctx.repo, "cat-file", "-e", f"origin/main:{p.rstrip('/')}")]
     restore = ([f"    git restore --source=origin/main --staged --worktree -- {' '.join(held)}"]

@@ -96,23 +96,28 @@ one commit and runs safe_push.py against that origin:
   docs/decisions/ for a protected path and a deleted directory alike, its words never
   joined across a blank line or a line that does not count; an entry is only added, so
   a rename or a deletion and re-addition, with edits or without, renews no approval, and
-  is refused, as is a copy with carriage returns or zero-width spaces in it; a copy
-  (re-wrapped, re-spaced, reworded in a word, in capitals, or with Cyrillic letters or
-  Braille blanks for Latin ones and spaces) renews no approval, though it is not refused
+  is refused, as is a copy with carriage returns, zero-width spaces, Braille blanks or
+  null noteheads in it; a copy (re-wrapped, re-spaced, reworded in a word, in capitals,
+  or with Cyrillic letters for Latin ones) renews no approval, though it is not refused
   for being one, and an entry with a Greek word in it approves as any does; a guard that
-  refuses names each line of an entry that did not count, and why, a list of files
-  repeated from the page or from an older entry among them; a short entry sharing a line
-  with an older one is an entry, though Git calls it a copy; the folder's README may be
-  edited, never deleted, and approves nothing; a link, a name spelled otherwise or a file
-  of any other name is refused, and so is an entry dated before 20 October 2026 or after
-  the day after its commit's committer date; in an entry and on the page, a mention of a
-  file or a directory starts the text or follows whitespace or an opening mark, so that
-  a longer path, a home folder's, a drive's or a URL's, names nothing, and every form
-  the guards counted before that starts so still counts; a directory may end a sentence;
-  the page, deleted, refuses a protected change rather than crashing; the revert that
-  safe_push advises keeps the record and passes the guards, its entry naming each file
-  in a sentence of its own, and restores only what origin/main holds; an abbreviated
-  commit name is as wide as Git makes it here;
+  refuses names each line of an entry that did not count and names what it asks for,
+  and why, a list of files repeated from the page or from an older entry among them, and
+  never a code fence or another line that names nothing it asks for; a short entry
+  sharing a line with an older one is an entry, though Git calls it a copy; the folder's
+  README may be edited, never deleted, and approves nothing, and is refused, added or
+  changed, when it is no UTF-8 text or holds a character an entry may not; a link, a
+  name spelled otherwise (a long s among the spellings, wherever it lies) or a file of
+  any other name is refused, its path printed with escapes, and so is an entry dated
+  before 20 October 2026 or after the day after the earlier of its commit's committer
+  date and the machine's own; in an entry and on the page, a mention of a file or a
+  directory starts the text or follows whitespace or an opening mark, so that a longer
+  path, a home folder's, a drive's or a URL's, names nothing, and every form the guards
+  counted before that starts so still counts; a directory whose mention holds a slash
+  may end a sentence, but "the figures." names no figures/; the page, deleted, refuses a
+  protected change rather than crashing; the revert that safe_push advises keeps the
+  record and passes the guards, its entry naming each file in a sentence of its own, and
+  restores only what origin/main holds; an abbreviated commit name is as wide as Git
+  makes it here;
 - the count markers of T1 (#177): a new word in the lock, with Certificate/FIELDS.md's
   count of the words moved with it, lands as content, origin/main's failure noted and the
   commit's own pass holding the count to the lock; while that page changed beyond the
@@ -3306,7 +3311,7 @@ class DecisionEntries(Clone):
     are only ever added, beside the folder's README, which approves nothing; a line counts
     only when the record holds nothing like it, read as safe_push.skeleton reads it, its
     words never joined across a line that does not count; and a guard that refuses names
-    each line of an entry that did not count, and why."""
+    each line of an entry that did not count and names what it asks for, and why."""
 
     ENTRY = "docs/decisions/2026-10-20-test.md"
     MOVED = "docs/decisions/2026-10-21-moved.md"
@@ -3334,11 +3339,14 @@ class DecisionEntries(Clone):
     ZERO_WIDTH = "".join(line[:2] + "\u200b" + line[2:] + "\n" for line in OLD.splitlines())
     # The prose of the earlier entry, its code spans as they were, so that each still names
     # what the earlier entry names: in capitals; with the Cyrillic letters U+0430, U+0435
-    # and U+043E for the Latin a, e and o, which look the same; and with the Braille pattern
-    # blank (U+2800), which looks like a space and is none to str.split, for its spaces.
+    # and U+043E for the Latin a, e and o, which look the same; with the Braille pattern
+    # blank (U+2800), which looks like a space and is none to str.split, for its spaces;
+    # and with the musical symbol null notehead (U+1D159), which renders blank, put in after
+    # each word's first letter, as the security re-review wrote it.
     CAPITALS = in_prose(OLD, str.upper)
     CYRILLIC = in_prose(OLD, lambda s: s.translate(str.maketrans("aeo", "\u0430\u0435\u043e")))
     BRAILLE = in_prose(OLD, lambda s: s.replace(" ", "\u2800"))
+    NOTEHEADS = in_prose(OLD, lambda s: re.sub(r"\b(\w)", "\\1\U0001d159", s))
     # An entry of its own words, with a Greek word in it.
     GREEK = ("- **\u03a3\u03c4\u03bf\u03b9\u03c7\u03b5\u1fd6\u03b1, a new decision for the "
              f"test.** It names `{PATH}`, "
@@ -3354,8 +3362,14 @@ class DecisionEntries(Clone):
              "copy with zero-width spaces": (ZERO_WIDTH, False),
              "copy in capitals": (CAPITALS, False), "copy in Cyrillic": (CYRILLIC, False),
              "copy with Braille blanks": (BRAILLE, False),
+             "copy with null noteheads": (NOTEHEADS, False),
              "page copy": (OLD, False), "readme copy": (OLD, False),
              "undated copy": (OLD, False), "new": (NEW, False), "new in Greek": (GREEK, False)}
+    # What each of the four guards asks for, as a line of OLD, and of each copy of it, names
+    # it (the lock is a protected file too): a refusal names a line that did not count only
+    # when it names one of those.
+    ASKS = {"guard_protected": (PATH, "Certificate/axioms.lock"), "guard_lock": ("axioms.lock",),
+            "guard_statements": ("I.1",), "guard_directories": ("mishnah/test/",)}
 
     def four_guards(self):
         """The guards that ask for a new line in the decisions record, with their
@@ -3409,19 +3423,31 @@ class DecisionEntries(Clone):
             guard(WORK, base, sha, *args, rep)
         return rep
 
-    def check_decision_change(self, kind, outcome, entries="ok", why=None, uncounted=()):
-        """The four guards' outcome, with each line of an entry that a refusal names as not
-        counting, and the outcome of the guard of the entries, with what it says when it
-        refuses."""
+    def check_decision_change(self, kind, outcome, entries="ok", why=None, uncounted=None):
+        """The four guards' outcome, and the outcome of the guard of the entries, with what
+        it says when it refuses. `uncounted`, when given, maps each line of the entry `kind`
+        writes at MOVED that did not count to why: a guard's refusal names each of those
+        lines that names what the guard asks for (ASKS), with why, and no other line of the
+        entry, so never a line that names nothing it asks for."""
         base, sha = self.decision_change(kind)
+        lines = self.MOVES[kind][0].splitlines() if uncounted else []
         for guard, args in self.four_guards():
             with self.subTest(guard=guard.__name__):
                 rep = self.check_guard(guard, base, sha, *args)
                 self.assertEqual(rep.steps[-1].outcome, outcome, rep.steps)
                 if outcome == "FAIL":
-                    self.assertIn("no new line", rep.failed()[0].detail)
-                    for line in uncounted:
-                        self.assertIn(f"\n  {line}", rep.failed()[0].detail)
+                    detail = rep.failed()[0].detail
+                    self.assertIn("no new line", detail)
+                    if uncounted:
+                        asks = self.ASKS[guard.__name__]
+                        named = [n for n in uncounted
+                                 if any(ask in lines[n - 1] for ask in asks)]
+                        self.assertTrue(named and len(named) < len(lines), (asks, lines))
+                        for n, reason in uncounted.items():
+                            if n in named:
+                                self.assertIn(f"\n  {self.MOVED}:{n}: {reason}", detail)
+                            else:
+                                self.assertNotIn(f"{self.MOVED}:{n}:", detail)
                     if entries == "FAIL":
                         self.assertIn("no line of an entry counts while the guard of the "
                                       "decision entries refuses", rep.failed()[0].detail)
@@ -3451,20 +3477,20 @@ class DecisionEntries(Clone):
                                    f"{self.MOVED}: renamed from {self.ENTRY}")
 
     def every_line(self, why, text=OLD):
-        """Each line of `text`, written at MOVED, as a refusal names it, with `why`."""
-        return [f"{self.MOVED}:{n}: {why}" for n in range(1, len(text.splitlines()) + 1)]
+        """Each line of `text`, written at MOVED, by its number, with `why`."""
+        return {n: why for n in range(1, len(text.splitlines()) + 1)}
 
     # A copy is not refused for being one (an entry may share words with an older one),
-    # but its copied lines count for nothing, and a refusal names each of them.
+    # but its copied lines count for nothing, and a refusal names each of them that names
+    # what the guard asks for: OLD's first line, never its four lines of reasons.
 
     def test_copy_renews_no_approval(self):
         self.check_decision_change("copy", "FAIL",
                                    uncounted=self.every_line(safe_push.IN_RECORD))
 
     def test_copy_with_a_word_changed_renews_no_approval(self):
-        self.check_decision_change("copy reworded", "FAIL", uncounted=[
-            f"{self.MOVED}:1: {safe_push.IN_RUN}",
-            *self.every_line(safe_push.IN_RECORD)[1:]])
+        self.check_decision_change("copy reworded", "FAIL", uncounted={
+            **self.every_line(safe_push.IN_RECORD), 1: safe_push.IN_RUN})
 
     def test_copy_with_its_whitespace_changed_renews_no_approval(self):
         # Every line differs; but every line, its whitespace collapsed, is an old one.
@@ -3478,13 +3504,11 @@ class DecisionEntries(Clone):
             safe_push.IN_RUN, self.REWRAPPED))
 
     def test_look_alike_copies_renew_no_approval(self):
-        # The copy in capitals, or with Cyrillic letters or Braille blanks in its prose,
-        # each still naming every thing the earlier entry names, reads as the earlier
-        # entry: NFKC, the look-alike letters read as Latin ones, casefolded, and the blank
-        # read as a space.
+        # The copy in capitals, or with Cyrillic letters in its prose, each still naming
+        # every thing the earlier entry names, reads as the earlier entry: NFKC, the
+        # look-alike letters read as Latin ones, and casefolded.
         for kind, text in (("copy in capitals", self.CAPITALS),
-                           ("copy in Cyrillic", self.CYRILLIC),
-                           ("copy with Braille blanks", self.BRAILLE)):
+                           ("copy in Cyrillic", self.CYRILLIC)):
             with self.subTest(kind=kind):
                 self.restart()
                 self.assertNotEqual(text, self.OLD)
@@ -3492,6 +3516,18 @@ class DecisionEntries(Clone):
                 self.assertIn(f"`{self.PATH}`", text)
                 self.check_decision_change(kind, "FAIL",
                                            uncounted=self.every_line(safe_push.IN_RECORD))
+
+    def test_copies_with_characters_that_render_blank_are_refused(self):
+        # The copy with Braille blanks for its spaces, or with null noteheads in its words,
+        # renders as the earlier entry does; Unicode counts neither character white space
+        # nor default-ignorable, so each is refused by name, as a zero-width space is.
+        for kind, char in (("copy with Braille blanks", "U+2800"),
+                           ("copy with null noteheads", "U+1D159")):
+            with self.subTest(kind=kind):
+                self.restart()
+                self.assertIn(f"`{self.PATH}`", self.MOVES[kind][0])
+                self.check_decision_change(kind, "FAIL", "FAIL",
+                                           f"{self.MOVED}:1: {char}, {safe_push.HIDDEN}")
 
     def test_entry_with_a_greek_word_passes(self):
         self.check_decision_change("new in Greek", "ok")
@@ -3508,11 +3544,13 @@ class DecisionEntries(Clone):
     def test_copy_with_carriage_returns_is_refused(self):
         # Git reads the copy as one new line; render.py would read the old entry's lines.
         self.check_decision_change("copy with carriage returns", "FAIL", "FAIL",
-                                   f"{self.MOVED}:1: U+000D, a character an entry may not hold")
+                                   f"{self.MOVED}:1: U+000D, a character an entry or the "
+                                   "README may not hold")
 
     def test_copy_with_zero_width_spaces_is_refused(self):
         self.check_decision_change("copy with zero-width spaces", "FAIL", "FAIL",
-                                   f"{self.MOVED}:1: U+200B, a character an entry may not hold")
+                                   f"{self.MOVED}:1: U+200B, a character an entry or the "
+                                   "README may not hold")
 
     def test_copy_from_the_page_renews_no_approval(self):
         self.check_decision_change("page copy", "FAIL",
@@ -3588,16 +3626,23 @@ class DecisionEntries(Clone):
                          [[(1, "new one"), (2, "new two")], [(5, "new three")],
                           [(7, "new four")]])
         self.assertTrue(all(h.path == self.ENTRY and h.removed == [] for h in lines.runs))
-        self.assertEqual(lines.uncounted, [f"{self.ENTRY}:4: {safe_push.IN_RECORD}",
-                                           f"{self.ENTRY}:6: {safe_push.IN_RUN}"])
+        self.assertEqual([str(u) for u in lines.uncounted],
+                         [f"{self.ENTRY}:4: {safe_push.IN_RECORD}",
+                          f"{self.ENTRY}:6: {safe_push.IN_RUN}"])
+        self.assertEqual([u.text for u in lines.uncounted],
+                         ["  An  OLD line ", f"half {quoted} and more"])
 
     def test_skeleton(self):
         # NFKC, the Cyrillic and Greek look-alikes read as Latin letters (capital Eta as H,
         # small eta as n; the lunate sigmas, which NFKC makes sigmas, as C and c), casefolded,
-        # and every space separator, the Braille blank and the Hangul fillers read as spaces.
+        # and every space separator, the Braille blank, the null notehead, the Khitan filler
+        # and the Hangul fillers read as spaces: an entry may hold none of those five, but
+        # the decisions page may.
         line = safe_push.record_line
         self.assertEqual(line("\ufb01ve\u00a0\u3000 words\t"), "five words")
         self.assertEqual(line("A\u2800B\u1680C\u2003D\u3164E\u202fF"), "a b c d e f")
+        self.assertEqual(line("A\U0001d159B\U00016fe4C"), "a b c")
+        self.assertTrue(all(safe_push.invisible(c) for c in safe_push.BLANKS))
         self.assertEqual(line("\u0397\u0435ll\u043e \u03b7\u03bft \u03f9\u03f2 \U0001d6c2"),
                          "hello not cc a")
         self.assertEqual(line("IT NAMES `Scripts/X.py`"), line("it names `scripts/x.py`"))
@@ -3662,9 +3707,10 @@ class DecisionEntries(Clone):
             "<YYYY-MM-DD>-<slug>.md with a valid date",
             "docs/decisions/2026-10-19-mode.md: changed",
             "docs/decisions/2026-10-22-empty.md: holds no text",
-            "docs/decisions/2026-10-22-hidden.md:1: U+2060, a character an entry may not "
-            "hold (a control character but a tab and a line feed, a format character, a "
-            "line or paragraph separator, or another default-ignorable one)",
+            "docs/decisions/2026-10-22-hidden.md:1: U+2060, a character an entry or the "
+            "README may not hold (a control character but a tab and a line feed, a format "
+            "character, a line or paragraph separator, another default-ignorable one, one "
+            "that renders blank, or a private-use or unassigned code point)",
             "docs/decisions/2026-10-22-latin.md: not UTF-8 text",
             "docs/decisions/notes.md: neither the README nor an entry named "
             "<YYYY-MM-DD>-<slug>.md with a valid date",
@@ -3672,6 +3718,62 @@ class DecisionEntries(Clone):
             "<YYYY-MM-DD>-<slug>.md with a valid date",
             f"{self.ENTRY}: deleted"]))
         self.assertEqual(list(added), ["docs/decisions/2026-10-22-fresh.md"])
+
+    def test_paths_a_mac_reads_as_the_folder_are_refused(self):
+        # A Mac's file system compares names in NFD form, casefolded, and finds each of
+        # these under docs/decisions/; Git and GitHub do not. A long s (U+017F) casefolds to
+        # an s, which Git's :(icase) does not see, so a .gitignore planted there could hide
+        # an entry from render.py on a Mac, as the security re-review found. Each is
+        # refused, wherever in the path the respelling lies; a folder of another name is not.
+        misspelled = ("docs/deciſions/2026-10-22-long-s.md",
+                      "docs/deciſions/.gitignore", "docſ/decisions/2026-10-22-docs.md",
+                      "docs/decisionſ/2026-10-22-last.md",
+                      "DOCS/DECISIONS/2026-10-22-capitals.md")
+        apart = ("docs/decisions-old/2026-10-22-apart.md", "docs/decision/2026-10-22-apart.md",
+                 "docs/deciſions-old/2026-10-22-apart.md")
+        sha = self.planted({**{path: "- A decision for the test.\n" for path in misspelled},
+                            **{path: "- A note for the test.\n" for path in apart}})
+        refused, added = safe_push.entry_changes(WORK, BASE, sha)
+        self.assertEqual(sorted(refused), sorted(
+            f"{path}: spelled otherwise than docs/decisions/, which Git and GitHub tell apart "
+            "by case" for path in misspelled))
+        self.assertEqual(added, {})
+        rep = self.check_guard(safe_push.guard_entries, BASE, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+
+    def test_refused_paths_are_printed_with_escapes(self):
+        # A path holding an escape sequence, a bell or a bidirectional mark is named with
+        # each written as an escape, so that a refusal gives a terminal nothing to act on.
+        sha = self.planted({"docs/decisions/2026-10-22-\x1b[31mred.md": "- A decision.\n",
+                            "docs/decisions/notes\u202e.md": "- Notes.\n",
+                            "docs/Decisions/\x07bell.md": "- A decision, recased.\n"})
+        rep = self.check_guard(safe_push.guard_entries, BASE, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+        detail = rep.steps[-1].detail
+        for shown in ("docs/decisions/2026-10-22-\\x1b[31mred.md: neither the README",
+                      "docs/decisions/notes\\u202e.md: neither the README",
+                      "docs/Decisions/\\x07bell.md: spelled otherwise"):
+            self.assertIn(shown, detail)
+        self.assertEqual([c for c in detail if not c.isprintable() and c != "\n"], [])
+
+    def test_readme_is_utf8_text_with_no_hidden_character(self):
+        # Added or changed, the README is read as an entry is read: one that is no UTF-8
+        # text would stop every later push that reads the record (the security
+        # re-review's case), and one holding a character an entry may not hold could hide
+        # what it says. Each is refused, by its line.
+        bare, held = self.readme_bases()
+        for start, text, why in (
+                (bare, b"# Decision entries \xff\n", f"{self.README}: not UTF-8 text"),
+                (held, "# Decision entries\n\nEach\u200b decision.\n".encode(),
+                 f"{self.README}:3: U+200B, {safe_push.HIDDEN}"),
+                (held, "# Decision\U0001d159 entries\n".encode(),
+                 f"{self.README}:1: U+1D159, {safe_push.HIDDEN}")):
+            with self.subTest(why=why):
+                self.restart(start)
+                sha = self.commit("The README for the test", {self.README: text})
+                rep = self.check_guard(safe_push.guard_entries, start, sha)
+                self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+                self.assertIn(why, rep.steps[-1].detail)
 
     def readme_bases(self) -> tuple[str, str]:
         """A commit with no README in the folder, and one with a README, as a regular file:
@@ -3795,37 +3897,60 @@ class DecisionEntries(Clone):
                 self.assertEqual(rep.steps[-1].outcome, "FAIL")
                 self.assertIn(f"naming them: {self.PATH}", rep.failed()[0].detail)
 
+    LATE = ("dated after {}, the day after the earlier of {}'s committer date and this "
+            "machine's date")
+
+    def check_entry_dates(self, committed, machine, cases):
+        """Each of `cases`, an entry's name and why it is refused (None when it is not),
+        committed with the committer date `committed`, on a machine whose date is
+        `machine`: the guard of the entries, and the protected-paths guard the entry
+        names a file for."""
+        env = dict(os.environ, GIT_COMMITTER_DATE=committed)
+        with mock.patch.object(safe_push, "today", lambda: machine):
+            for name, why in cases:
+                with self.subTest(name=name):
+                    self.restart()
+                    entry = f"docs/decisions/{name}"
+                    sha = self.commit("Name a protected change in a dated entry", {
+                        self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+                        entry: f"`{self.PATH}` changes.\n",
+                    }, env=env)
+                    self.assertEqual(safe_push.committed_on(WORK, sha),
+                                     datetime.date.fromisoformat(committed[:10]))
+                    entries = self.check_guard(safe_push.guard_entries, BASE, sha)
+                    protected = self.check_guard(safe_push.guard_protected, BASE, sha)
+                    if why is None:
+                        self.assertEqual([(s.outcome, s.detail) for s in entries.steps],
+                                         [("ok", f"added: {entry}")])
+                        self.assertFalse(protected.failed(), protected.steps)
+                    else:
+                        self.assertEqual(entries.steps[-1].outcome, "FAIL", entries.steps)
+                        self.assertIn(f"{entry}: {why.format(sha[:12])}",
+                                      entries.steps[-1].detail)
+                        self.assertEqual(protected.steps[-1].outcome, "FAIL", protected.steps)
+                        self.assertIn("no line of an entry counts while the guard of the "
+                                      "decision entries refuses", protected.failed()[0].detail)
+
     def test_entry_dates_run_from_the_first_entry_to_the_day_after_the_commit(self):
         # An entry is dated from 20 October 2026, the day the entries began, to the day after
-        # its commit's committer date, read on the committer's own calendar: committed at
-        # 23:30 on 25 October at UTC-11, which is 26 October at UTC, an entry may be dated
-        # 26 October, and no later.
-        env = dict(os.environ, GIT_COMMITTER_DATE="2026-10-25T23:30:00-11:00")
+        # its commit's committer date, read on the committer's own calendar, when this
+        # machine's date is later: committed at 23:30 on 25 October at UTC-11, which is
+        # 26 October at UTC, an entry may be dated 26 October, and no later.
         early = "dated before 2026-10-20, the day the entries began"
-        late = "dated after 2026-10-26, the day after {}'s committer date"
-        for name, why in (("2026-10-20-first.md", None), ("2026-10-26-next-day.md", None),
-                          ("2026-10-19-early.md", early), ("1900-01-01-old.md", early),
-                          ("2026-10-27-later.md", late), ("9999-12-31-last-word.md", late)):
-            with self.subTest(name=name):
-                self.restart()
-                entry = f"docs/decisions/{name}"
-                sha = self.commit("Name a protected change in a dated entry", {
-                    self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
-                    entry: f"`{self.PATH}` changes.\n",
-                }, env=env)
-                self.assertEqual(safe_push.committed_on(WORK, sha), datetime.date(2026, 10, 25))
-                entries = self.check_guard(safe_push.guard_entries, BASE, sha)
-                protected = self.check_guard(safe_push.guard_protected, BASE, sha)
-                if why is None:
-                    self.assertEqual([(s.outcome, s.detail) for s in entries.steps],
-                                     [("ok", f"added: {entry}")])
-                    self.assertFalse(protected.failed(), protected.steps)
-                else:
-                    self.assertEqual(entries.steps[-1].outcome, "FAIL", entries.steps)
-                    self.assertIn(f"{entry}: {why.format(sha[:12])}", entries.steps[-1].detail)
-                    self.assertEqual(protected.steps[-1].outcome, "FAIL", protected.steps)
-                    self.assertIn("no line of an entry counts while the guard of the decision "
-                                  "entries refuses", protected.failed()[0].detail)
+        late = self.LATE.format("2026-10-26", "{}")
+        self.check_entry_dates("2026-10-25T23:30:00-11:00", datetime.date(2026, 10, 30), (
+            ("2026-10-20-first.md", None), ("2026-10-26-next-day.md", None),
+            ("2026-10-19-early.md", early), ("1900-01-01-old.md", early),
+            ("2026-10-27-later.md", late), ("9999-12-31-last-word.md", late)))
+
+    def test_entry_dates_run_to_the_day_after_this_machines_date_too(self):
+        # The pusher sets the committer date. Committed as of 1 January 2099, as in the
+        # security re-review's case, an entry is still dated no later than the day after
+        # this machine's date, 25 October 2026 here: 26 October, and no later.
+        late = self.LATE.format("2026-10-26", "{}")
+        self.check_entry_dates("2099-01-01T12:00:00+00:00", datetime.date(2026, 10, 25), (
+            ("2026-10-26-next-day.md", None), ("2026-10-27-later.md", late),
+            ("2099-01-01-future.md", late)))
 
     def test_symlink_entry_supplies_no_approval(self):
         path = WORK / self.ENTRY
@@ -3965,8 +4090,9 @@ class DecisionEntries(Clone):
                         self.assertEqual(self.mention_outcome(kind, line, source), outcome)
 
     def test_a_directory_may_end_a_sentence(self):
-        # As a file may: its full stop after it, with its closing slash or without; but not
-        # a full stop with another, or with a slash, after it.
+        # As a file may, when its mention holds a slash: its full stop after it, with its
+        # closing slash or without; but not a full stop with another, or with a slash, after
+        # it.
         for line, outcome in (("The folder removed is mishnah/test.", "ok"),
                               ("The folder removed is mishnah/test/.", "ok"),
                               ("The folder removed is mishnah/test..", "FAIL"),
@@ -3976,6 +4102,29 @@ class DecisionEntries(Clone):
                 with self.subTest(line=line, source=source):
                     self.assertEqual(self.mention_outcome("directory", "- " + line, source),
                                      outcome)
+
+    def test_a_bare_top_level_directory_ends_no_sentence(self):
+        # A directory at the root named bare is a word of prose too: "the figures." names
+        # no figures/, as origin/main's guards read it (the security re-review's case); its
+        # closing slash, the root's anchor or a link before the full stop names it, and so
+        # does the bare name with no full stop after it.
+        for line, outcome in (("Nothing changes in the figures.", "FAIL"),
+                              ("Nothing changes in figures.", "FAIL"),
+                              ("The folder removed is figures/.", "ok"),
+                              ("The folder removed is /figures.", "ok"),
+                              ("The folder removed is [it](../../figures).", "ok"),
+                              ("The folder removed is figures, all of it.", "ok")):
+            for source in (self.ENTRY, DECISIONS):
+                with self.subTest(line=line, source=source):
+                    self.restart()
+                    text = "- " + line + "\n"
+                    if source == DECISIONS:
+                        text = self.text(DECISIONS) + "\n" + text
+                    sha = self.commit("Delete the figures", {source: text}, remove=["figures"])
+                    rep = self.check_guard(safe_push.guard_directories, BASE, sha)
+                    self.assertEqual(rep.steps[-1].outcome, outcome, rep.steps)
+                    if outcome == "FAIL":
+                        self.assertIn("naming them: figures/", rep.failed()[0].detail)
 
     def test_deleted_directory_needs_a_new_line_of_an_added_entry(self):
         # The earlier entry names the directory by a link that resolves; a copy of its
@@ -4070,12 +4219,51 @@ class DecisionEntries(Clone):
             "protected files changed are: " + ", ".join(f"`{path}`" for path in listed) + ".",
             72, subsequent_indent="  ", break_long_words=False) + "\n"
         self.assertFalse(set(text.splitlines()) & set(self.text(DECISIONS).splitlines()))
-        detail = self.protected_refusal(("scripts/check_release_gate.py",
-                                         "tests/test_release_gate.py"), text)
-        holding = [n for n, line in enumerate(text.splitlines(), 1) if "`" in line]
-        self.assertGreater(len(holding), 1)
+        changed = ("scripts/check_release_gate.py", "tests/test_release_gate.py")
+        detail = self.protected_refusal(changed, text)
+        # Named: each line that did not count and names a file changed. Not named: the
+        # lines that did not count and name only files the push leaves alone.
+        lines = text.splitlines()
+        holding = [n for n, line in enumerate(lines, 1)
+                   if any(f"`{path}`" in line for path in changed)]
+        others = [n for n, line in enumerate(lines, 1) if "`" in line and n not in holding]
+        self.assertTrue(holding and others, lines)
         for n in holding:
             self.assertIn(f"\n  {self.ENTRY}:{n}: {safe_push.IN_RUN}", detail)
+        for n in others:
+            self.assertNotIn(f"{self.ENTRY}:{n}:", detail)
+
+    def test_refusal_names_no_line_that_names_nothing_asked_for(self):
+        # The re-review's case: an entry whose code fences, and a line of output between
+        # them, are lines the record holds already. They did not count, but name nothing a
+        # guard asks for, so no refusal names them; the line copied from the earlier
+        # entry that names the file changed is named. The lock changed too, which no line
+        # names: its refusal names no line of the entry at all.
+        base = self.commit("An earlier decision with a fence", {
+            self.ENTRY: "- **An earlier decision for the test.** It names one file:\n"
+                        f"  `{self.PATH}`, which gains a comment.\n"
+                        "  ```text\n  a line of output for the test\n  ```\n"})
+        sha = self.commit("A protected change with a fence", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+            safe_push.LOCK: self.text(safe_push.LOCK) + "\n# A comment for the test.\n",
+            self.MOVED: "- **A new decision for the test, in words of its own.** It changes "
+                        "this one:\n"
+                        f"  `{self.PATH}`, which gains a comment.\n"
+                        "```text\na line of output for the test\n```\n"})
+        refused, entries = safe_push.entry_changes(WORK, base, sha)
+        self.assertEqual(refused, [])
+        self.assertEqual([str(u) for u in entries[self.MOVED].uncounted],
+                         [f"{self.MOVED}:{n}: {safe_push.IN_RECORD}" for n in (2, 3, 4, 5)])
+        rep = self.check_guard(safe_push.guard_protected, base, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+        detail = rep.failed()[0].detail
+        self.assertIn(f"\n  {self.MOVED}:2: {safe_push.IN_RECORD}", detail)
+        for n in (1, 3, 4, 5):
+            self.assertNotIn(f"{self.MOVED}:{n}:", detail)
+        rep = self.check_guard(safe_push.guard_lock, base, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+        self.assertNotIn(self.MOVED, rep.failed()[0].detail)
+        self.assertNotIn("lines of the entries added", rep.failed()[0].detail)
 
     def test_short_entry_sharing_a_line_with_an_older_one_is_an_entry(self):
         # Two routine entries, alike but for the proposition and sharing a line: Git's copy
@@ -4093,8 +4281,8 @@ class DecisionEntries(Clone):
                          [("ok", f"added: {newer}")])
         refused, entries = safe_push.entry_changes(WORK, base, sha)
         self.assertEqual((refused, list(entries)), ([], [newer]))
-        self.assertEqual(entries[newer].uncounted, [f"{newer}:1: {safe_push.IN_RUN}",
-                                                    f"{newer}:2: {safe_push.IN_RECORD}"])
+        self.assertEqual([str(u) for u in entries[newer].uncounted],
+                         [f"{newer}:1: {safe_push.IN_RUN}", f"{newer}:2: {safe_push.IN_RECORD}"])
 
     def test_advised_revert_keeps_the_record_and_passes_the_guards(self):
         # A merged pull request that adds an entry listing its protected files a line each,
@@ -6158,10 +6346,13 @@ class Units(unittest.TestCase):
         # guard's, which took no prefix. Over every form below, the rule now counts none of
         # the forms those refused, but a directory's own additions, each starting where a
         # mention may: anchored at the root, by a relative link that resolves, or ending a
-        # sentence. It counts every form those counted that starts so, and none other.
+        # sentence when the mention holds a slash, so that a directory at the root named
+        # bare, as "the figures.", names nothing. It counts every form those counted that
+        # starts so, and none other.
         before = {"file": r"(?<![\w/.-])(?P<prefix>/|(?:\.\.?/)*)%s(?!\.?[\w/-])",
                   "directory": r"(?<![\w/.-])(?P<prefix>)%s/?(?![\w./-])"}
-        paths = {"file": "scripts/check_style.py", "directory": "mishnah/test"}
+        paths = (("file", "scripts/check_style.py"), ("directory", "mishnah/test"),
+                 ("directory", "figures"))
         # What stands before the path: a head, then a prefix. No head ends in / or ., so
         # that the prefix, read whole, is the one given.
         leads = ["", *"!#$%&()*+,-:;<=>?@[\\]^_`{|}~\"'aZ0 \t\u00a0\u201c\u2018\u00ab\u00e9"]
@@ -6177,7 +6368,7 @@ class Units(unittest.TestCase):
             return safe_push.names_path([hunk], path, pattern)
 
         newly, lost, elsewhere = [], [], []
-        for kind, path in paths.items():
+        for kind, path in paths:
             now = safe_push.mention(path, kind == "directory")
             then = re.compile(before[kind] % re.escape(path))
             for source, head, prefix, tail in itertools.product(sources, heads, prefixes, tails):
@@ -6188,7 +6379,8 @@ class Units(unittest.TestCase):
                 starts = prefix in ("", "/", "../../", "./../../", "../") and (
                     not head or head[-1].isspace() or head[-1] in "(<[`\"'*")
                 added = kind == "directory" and starts and (
-                    prefix in ("/", "../../", "./../../") or tail in (".", "/."))
+                    prefix in ("/", "../../", "./../../") or tail == "/."
+                    or (tail == "." and "/" in prefix + path))
                 if counted and not was and not added:
                     newly.append((kind, source, text))
                 if was and starts and not counted:
@@ -6200,16 +6392,19 @@ class Units(unittest.TestCase):
         self.assertEqual(elsewhere, [])
         # The forms the security re-review found, refused now, and a few the guards counted
         # before that start otherwise, refused too.
-        for kind, text in (("directory", "~/mishnah/test/"), ("directory", "C:/mishnah/test/"),
-                           ("directory", "@/mishnah/test/"),
-                           ("directory", "https://example.com/~/mishnah/test/"),
-                           ("directory", "x+mishnah/test/"),
-                           ("file", "x+scripts/check_style.py"),
-                           ("file", "~/scripts/check_style.py"),
-                           ("file", "x:scripts/check_style.py")):
+        for kind, path, text in (
+                ("directory", "mishnah/test", "~/mishnah/test/"),
+                ("directory", "mishnah/test", "C:/mishnah/test/"),
+                ("directory", "mishnah/test", "@/mishnah/test/"),
+                ("directory", "mishnah/test", "https://example.com/~/mishnah/test/"),
+                ("directory", "mishnah/test", "x+mishnah/test/"),
+                ("file", "scripts/check_style.py", "x+scripts/check_style.py"),
+                ("file", "scripts/check_style.py", "~/scripts/check_style.py"),
+                ("file", "scripts/check_style.py", "x:scripts/check_style.py"),
+                ("directory", "figures", "Nothing changes in the figures.")):
             with self.subTest(text=text):
-                pattern = safe_push.mention(paths[kind], kind == "directory")
-                self.assertFalse(counts(pattern, paths[kind], text, sources[1]))
+                pattern = safe_push.mention(path, kind == "directory")
+                self.assertFalse(counts(pattern, path, text, sources[1]))
 
     def test_revert_advice_and_slug(self):
         ctx = safe_push.Context(Path("."), "a" * 40, "b" * 40, 3, "", None, {})

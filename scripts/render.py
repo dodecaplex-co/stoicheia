@@ -2521,43 +2521,100 @@ FIRST_ENTRY = date(2026, 10, 20)
 IGNORABLE = ((0x034F, 0x034F), (0x115F, 0x1160), (0x17B4, 0x17B5), (0x180B, 0x180F),
              (0x2065, 0x2065), (0x3164, 0x3164), (0xFE00, 0xFE0F), (0xFFA0, 0xFFA0),
              (0xFFF0, 0xFFF8), (0xE0000, 0xE0FFF))
+# Characters that render blank though Unicode counts them neither white space nor
+# default-ignorable: a fixed list, since Unicode has no property for a blank glyph. The
+# Braille pattern blank, the musical symbol null notehead and the Khitan small script
+# filler (scripts/safe_push.py's BLANK_GLYPHS).
+BLANK_GLYPHS = frozenset("\u2800\U0001d159\U00016fe4")
 
 
 def invisible(char):
-    """Is `char` one that an entry may not hold? A control character but a tab and a
-    line feed (a carriage return among them), a format character (Unicode's Cf, as a
-    zero-width space or a byte-order mark), a line or paragraph separator, or another
-    default-ignorable character (IGNORABLE). Each could hide a copy of an older entry from
+    """Is `char` one that an entry, or the folder's README, may not hold? A control
+    character but a tab and a line feed (a carriage return among them), a format character
+    (Unicode's Cf, as a zero-width space or a byte-order mark), a line or paragraph
+    separator, another default-ignorable character (IGNORABLE), a character of the fixed
+    list BLANK_GLYPHS, which render blank, or a code point Unicode keeps for private use or
+    leaves unassigned (its Co and Cn, as this Python's Unicode data has them), which no
+    font is bound to draw. Each could hide a copy of an older entry from
     scripts/safe_push.py's comparison, or make Git and a reader see different lines;
     safe_push.py refuses the same characters."""
     category = unicodedata.category(char)
-    return ((category == "Cc" and char not in "\t\n") or category in ("Cf", "Zl", "Zp")
+    return ((category == "Cc" and char not in "\t\n")
+            or category in ("Cf", "Zl", "Zp", "Co", "Cn") or char in BLANK_GLYPHS
             or any(a <= ord(char) <= b for a, b in IGNORABLE))
+
+
+def printable_text(text):
+    """A name read from the disk, with every character that Python counts unprintable,
+    control and format characters among them, written as an escape, so that a refusal
+    that prints it gives a terminal nothing to act on (scripts/safe_push.py's
+    printable_text)."""
+    return "".join(c if c.isprintable() else c.encode("unicode_escape").decode("ascii")
+                   for c in text)
+
+
+def folded(name):
+    """`name` as a Mac's file system compares names: in Unicode's NFD form, casefolded
+    (scripts/safe_push.py's spelled_otherwise reads names so)."""
+    return unicodedata.normalize("NFD", unicodedata.normalize("NFD", name).casefold())
 
 
 def spelled_otherwise(path):
     """The names on disk of the first part of `path`, below ROOT, that the disk spells
-    otherwise, or beside which it holds a name differing only in case; None when there is
-    none. A file system that ignores case, as a Mac's does, finds docs/Decisions/ as
-    docs/decisions/; Git and GitHub do not."""
+    otherwise, or beside which it holds a name that differs from it only as `folded`
+    reads names; None when there is none. A file system that ignores case, as a Mac's
+    does, finds docs/Decisions/, or docs/deciſions/ with a long s, as docs/decisions/; Git
+    and GitHub do not."""
     here = ROOT
     for part in path.relative_to(ROOT).parts:
         if not here.is_dir():
             return None
-        names = sorted(name for name in os.listdir(here) if name.casefold() == part.casefold())
+        names = sorted(name for name in os.listdir(here) if folded(name) == folded(part))
         if names and names != [part]:
-            return [(here / name).relative_to(ROOT).as_posix() for name in names]
+            return [printable_text((here / name).relative_to(ROOT).as_posix())
+                    for name in names]
         here = here / part
     return None
 
 
+def ignore_sources(cannot):
+    """The real paths of the files, beside the root's .gitignore, whose rules may pass a
+    file of docs/decisions/ over (git_ignored): this repository's .git/info/exclude, where
+    `git rev-parse --git-path` finds it, and the user's excludes file, core.excludesFile
+    or, where that is unset, Git's own default, $XDG_CONFIG_HOME/git/ignore or
+    ~/.config/git/ignore. A path Git gives relative is read from ROOT, as Git reads it
+    here. If Git cannot say, render.py stops."""
+    def ask(*args):
+        try:
+            return subprocess.run(["git", *args], cwd=ROOT, capture_output=True)
+        except OSError as error:
+            raise SystemExit(cannot.format(error)) from None
+
+    exclude = ask("rev-parse", "--git-path", "info/exclude")
+    configured = ask("config", "--path", "--get", "core.excludesFile")
+    if exclude.returncode != 0 or configured.returncode not in (0, 1):
+        raise SystemExit(cannot.format("git could not name info/exclude or "
+                                       "core.excludesFile"))
+    paths = [os.fsdecode(exclude.stdout).removesuffix("\n")]
+    if configured.returncode == 0:
+        paths.append(os.fsdecode(configured.stdout).removesuffix("\n"))
+    elif os.environ.get("XDG_CONFIG_HOME"):
+        paths.append(os.path.join(os.environ["XDG_CONFIG_HOME"], "git", "ignore"))
+    elif "HOME" in os.environ:
+        paths.append(os.path.join(os.environ["HOME"], ".config", "git", "ignore"))
+    return {os.path.realpath(os.path.join(ROOT, path)) for path in paths}
+
+
 def git_ignored(names):
     """Those of `names`, the files of docs/decisions/, that Git ignores (`git
-    check-ignore`): untracked, and matched by a rule of .gitignore, .git/info/exclude or
-    the user's own excludes file, as Finder's .DS_Store is. Git never commits them, so
-    they are no part of the decisions record; a tracked file is never ignored. Git's work
-    tree must be ROOT. If Git cannot be run, cannot answer, or names a file it was not
-    asked about, render.py stops, so that no file is passed over on a guess."""
+    check-ignore -v`) by a rule of the root's .gitignore, of .git/info/exclude or of the
+    user's own excludes file (ignore_sources), as Finder's .DS_Store is: untracked, and
+    never committed, so no part of the decisions record; a tracked file is never ignored.
+    A file ignored by a rule of a nested .gitignore, which a commit may add beside the
+    folder or in it, or whose last matching rule is a negated one (!), is not passed over.
+    Git's work tree must be ROOT. If Git cannot be run, cannot answer, answers in a form
+    it was not asked for, or names a file it was not asked about, render.py stops, so
+    that no file is passed over on a guess."""
     if not names:
         return set()
     asked = {f"docs/decisions/{name}": name for name in names}
@@ -2573,7 +2630,7 @@ def git_ignored(names):
         raise SystemExit(f"docs/decisions: Git's work tree {work_tree} is not the "
                          f"repository root {ROOT}, so Git cannot say which files it ignores")
     try:
-        result = subprocess.run(["git", "check-ignore", "-z", "--stdin"], cwd=ROOT,
+        result = subprocess.run(["git", "check-ignore", "-v", "-z", "--stdin"], cwd=ROOT,
                                 input=b"".join(os.fsencode(path) + b"\0" for path in asked),
                                 capture_output=True)
     except OSError as error:
@@ -2581,10 +2638,24 @@ def git_ignored(names):
     if result.returncode not in (0, 1):
         raise SystemExit("docs/decisions: git check-ignore failed: "
                          + os.fsdecode(result.stderr).strip())
-    named = [os.fsdecode(path) for path in result.stdout.split(b"\0") if path]
-    if any(path not in asked for path in named):
-        raise SystemExit("docs/decisions: git check-ignore named a file it was not asked about")
-    return {asked[path] for path in named}
+    # Each file Git finds a rule for: the rule's source, its line, its pattern, the file.
+    fields = [os.fsdecode(field) for field in result.stdout.split(b"\0")]
+    if fields[-1] or (len(fields) - 1) % 4:
+        raise SystemExit("docs/decisions: git check-ignore answered in a form it was not "
+                         "asked for")
+    ignored, sources = set(), None
+    for i in range(0, len(fields) - 1, 4):
+        source, _, pattern, path = fields[i:i + 4]
+        if path not in asked:
+            raise SystemExit("docs/decisions: git check-ignore named a file it was not "
+                             "asked about")
+        if pattern.startswith("!"):
+            continue
+        if sources is None:
+            sources = ignore_sources(cannot)
+        if source == ".gitignore" or os.path.realpath(os.path.join(ROOT, source)) in sources:
+            ignored.add(asked[path])
+    return ignored
 
 
 def decision_entries():
@@ -2595,12 +2666,15 @@ def decision_entries():
     Where it is not, it is a folder under no link, spelled so on disk with nothing beside
     it spelled otherwise, and holds regular files alone: its README.md, which is no entry,
     and entries named `<YYYY-MM-DD>-<slug>.md`, a valid date no earlier than FIRST_ENTRY
-    and then lower-case letters and digits joined by hyphens. A file Git ignores, as
-    Finder's .DS_Store, is passed over (git_ignored). Every file there is UTF-8 and holds
-    no count marker, so that render.py writes nothing into the folder; and every entry
-    holds text, and no character that `invisible` refuses. The working tree has no commit
-    date, so no date is too late here: the pre-flight's guard of the entries refuses one
-    later than the day after its commit's (scripts/safe_push.py, entry_changes)."""
+    and then lower-case letters and digits joined by hyphens. A file Git ignores by a rule
+    of the root's .gitignore, .git/info/exclude or the user's excludes file, as Finder's
+    .DS_Store, is passed over (git_ignored). Every file there is UTF-8, holds no count
+    marker, so that render.py writes nothing into the folder, and holds no character that
+    `invisible` refuses; and every entry holds text. A refusal prints a name with its
+    unprintable characters written as escapes (printable_text). The working tree has no
+    commit date, so no date is too late here: the pre-flight's guard of the entries
+    refuses one later than the day after the earlier of its commit's and the runner's
+    (scripts/safe_push.py, entry_changes)."""
     try:
         folder = generated_counts.repository_path(ROOT, ROOT / "docs" / "decisions")
     except ValueError as error:
@@ -2619,7 +2693,7 @@ def decision_entries():
     for name in names:
         if name in ignored:
             continue
-        where, path = f"docs/decisions/{name}", folder / name
+        where, path = f"docs/decisions/{printable_text(name)}", folder / name
         if path.is_symlink() or not path.is_file():
             raise SystemExit(f"{where}: expected a regular file, the README.md or an entry")
         match = DECISION_FILE.fullmatch(name)
@@ -2649,21 +2723,22 @@ def decision_entries():
             number = text.count("\n", 0, counts[0].start) + 1
             raise SystemExit(f"{where}:{number}: count markers are forbidden in dated "
                              "history, which render.py never writes")
-        if not match:
-            continue
-        if not text.strip():
+        if match and not text.strip():
             raise SystemExit(f"{where}: expected the entry's text")
         for number, line in enumerate(text.split("\n"), 1):
             hidden = next((char for char in line if invisible(char)), None)
             if hidden is not None:
                 named = unicodedata.name(hidden, "")
                 raise SystemExit(f"{where}:{number}: U+{ord(hidden):04X}"
-                                 f"{f' ({named})' if named else ''}: an entry holds no "
+                                 f"{f' ({named})' if named else ''}: "
+                                 f"{'an entry' if match else 'the README'} holds no "
                                  "control character but a tab and a line feed, no format "
-                                 "character, no line or paragraph separator and no other "
-                                 "default-ignorable character, any of which could hide a "
-                                 "copy of an older entry")
-        entries.append(name)
+                                 "character, no line or paragraph separator, no other "
+                                 "default-ignorable character, no character that renders "
+                                 "blank and no private-use or unassigned code point, any of "
+                                 "which could hide a copy of an older entry")
+        if match:
+            entries.append(name)
     return entries
 
 

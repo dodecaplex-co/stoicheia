@@ -24,10 +24,11 @@ Greek letters that look like Latin ones read as those, and blanks as spaces. So 
 an older entry, re-wrapped, recased or written in those look-alike letters, approves
 nothing, though it is not refused for being one; a copy reworded, or with words put in,
 is beyond that comparison, and is for the reviews to find. A refusal names each line that
-did not count, and why. Lines added to the decisions page are not compared so: they count
-as any new line does, as they always have.
+did not count and mentions what the refusal asks for, and why. Lines added to the
+decisions page are compared with nothing: any new line there counts, as it always has,
+though its mentions are read by the same rules as an entry's.
 
-This README is no entry, and stays the same from one entry to the next. How to write an
-entry, and what one may not hold, is in
-[WORKFLOW, "Landing work: pull requests"](../WORKFLOW.md#landing-work-pull-requests), under
-"Decision entries".
+This README is no entry, and stays the same from one entry to the next; it holds none of
+the characters an entry may not hold. How to write an entry, and what one may not hold, is
+in [WORKFLOW, "Landing work: pull requests"](../WORKFLOW.md#landing-work-pull-requests),
+under "Decision entries".
