@@ -87,6 +87,12 @@ one commit and runs safe_push.py against that origin:
   entry naming them, a protected path is named only whole (a line naming
   tests/model/lock.sha256 names no model/lock.sha256), and those
   paths stay what the checks judge, so a check change is still kept apart from them;
+- the decision entries of docs/decisions/: a new line in an entry the push adds approves
+  as one on the page does; an entry is only added, so a rename, a copy or a deletion and
+  re-addition, with edits or without, renews no approval, and is refused; the region
+  render.py assembles on the page counts for nothing, and text after its end marker is
+  the page's own; a test's page entry goes above the markers, and an abbreviated commit
+  name is as wide as Git makes it here;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -147,6 +153,8 @@ GH_STATE: Path
 UNDER_TEST: Path      # the harness committed at BASE, which DRIVER runs (setUpModule)
 BRANCH = "test-pr"
 DECISIONS = "docs/briefs/0002-decisions.md"
+DECISION_BEGIN = "<!-- decisions:entries begin -->"
+DECISION_END = "<!-- decisions:entries end -->"
 # The files of the harness under test, committed on top of HEAD as origin's main.
 HARNESS_FILES = ("scripts/safe_push.py", "scripts/heath.py", "scripts/test_safe_push.py",
                  "scripts/hooks/pre-push", "scripts/hooks/safe-push", "scripts/install_hooks.sh",
@@ -269,7 +277,7 @@ def normalized_check_job(source: str) -> WorkflowCheckJob:
 
 
 FRESHNESS_COMMAND = ("git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md "
-                     "README.md docs/PROGRAM.md")
+                     "README.md docs/PROGRAM.md docs/briefs/0002-decisions.md")
 RENDER_COMMAND = "python3 scripts/render.py"
 FRESHNESS_ASSERTION = f'test -z "$({FRESHNESS_COMMAND})"'
 SETUP_ACTIONS = {"actions/checkout@v5": frozenset(),
@@ -350,11 +358,25 @@ def with_branch(args) -> tuple:
     return ("--branch", BRANCH, *args) + (() if "--label" in args else ("--label", "docs"))
 
 
+def above_markers(page: str, text: str) -> str:
+    """The decisions page with `text` as a page entry where the page keeps its own text:
+    above the markers between which render.py assembles the dated entries, or at the end
+    of a page without them."""
+    place = page.find(DECISION_BEGIN)
+    return page + "\n" + text if place < 0 else page[:place] + text + "\n" + page[place:]
+
+
 def git(cwd, *args, env=None, check=True) -> str:
     r = subprocess.run(["git", *args], cwd=cwd, env=env, capture_output=True, text=True)
     if check and r.returncode != 0:
         raise AssertionError(f"git {' '.join(args)} failed in {cwd}:\n{r.stdout}{r.stderr}")
     return r.stdout
+
+
+def short(sha: str) -> str:
+    """A commit's name as Git abbreviates it in the test clone, `%h`: Git chooses the width
+    from the number of objects, or core.abbrev, so no width is assumed."""
+    return git(WORK, "rev-parse", "--short", sha).strip()
 
 
 def clean_env() -> dict:
@@ -775,7 +797,8 @@ class Clone(unittest.TestCase):
         return out
 
     def decision(self, line: str) -> dict:
-        return {DECISIONS: self.text(DECISIONS) + f"\n- **A decision for the test.** {line}\n"}
+        return {DECISIONS: above_markers(self.text(DECISIONS),
+                                         f"- **A decision for the test.** {line}\n")}
 
     def gh_state(self) -> dict:
         return json.loads(GH_STATE.read_text())
@@ -833,7 +856,7 @@ class Accepts(Clone):
         self.assertIn(f"<!-- safe_push:preflight begin sha={sha} base={BASE} -->", body)
         self.assertIn("## Checklist", body)
         self.assertIn("- [ ] **Required:**", body)
-        self.assertIn(f"`{sha[:7]}` A good commit", body)
+        self.assertIn(f"`{short(sha)}` A good commit", body)
         self.assertIn("| 3. statements | ok |", body)
         self.assertNotIn("<!-- safe_push: commits -->", body)
         self.assertNotIn(str(Path.home()), body, "a private path in the public body")
@@ -1819,7 +1842,7 @@ class PullRequests(Edge):
         self.assertNotIn("None.", statements)
         self.assertIn("`review/I/01.toml`: re-stamped at `abc1234`",
                       part(body, "Review records", "Protected paths"))
-        self.assertIn(f"`{second[:7]}` I.1 names its side point Q", body)
+        self.assertIn(f"`{short(second)}` I.1 names its side point Q", body)
         for name in ("commits", "statements", "records", "protected", "generated", "preflight"):
             self.assertEqual(body.count(f"<!-- safe_push:{name} begin"), 1, name)
 
@@ -1847,7 +1870,7 @@ class PullRequests(Edge):
         for text in (words, approval):
             self.assertIn(text, body)
         self.assertEqual(re.findall(r"(?m)^## .*$", body), re.findall(r"(?m)^## .*$", before))
-        self.assertIn(f"`{second[:7]}` A good commit", body)
+        self.assertIn(f"`{short(second)}` A good commit", body)
         self.assertIn(f"sha={second}", body)
         for name in ("commits", "statements", "records", "protected", "generated", "preflight"):
             self.assertEqual(len(re.findall(rf"(?m)^<!-- safe_push:{name} begin", body)), 1,
@@ -2624,22 +2647,54 @@ class Merge(Edge):
 
 
 class DecisionEntries(Clone):
-    """Dated entry files supply new mentions to every decision guard."""
+    """Dated entry files supply new mentions to every decision guard; being history, they
+    are only ever added, and a line counts only when the record held none like it."""
 
     ENTRY = "docs/decisions/2026-10-20-test.md"
+    MOVED = "docs/decisions/2026-10-21-moved.md"
     PATH = "scripts/check_style.py"
+    # Its first line names all four things the guards protect; the rest is long enough
+    # that a copy with a word of that line changed is still most of the file, as Git's
+    # copy detection measures it.
+    OLD = (f"- **An earlier decision for the test.** It names `{PATH}`, "
+           "`Certificate/axioms.lock`, I.1 and `mishnah/test/`.\n"
+           "  It gives its reasons at some length, so that a copy of it with one word\n"
+           "  changed is still most of the file, as Git's copy detection measures one,\n"
+           "  and is found as a copy: an entry is history, added once and never moved,\n"
+           "  copied or changed, and a correction is a new entry in words of its own.\n")
+    NEW = (f"- **A new decision for the test.** It names `{PATH}`, "
+           "`Certificate/axioms.lock`, I.1 and `mishnah/test/` afresh.\n")
+    RESPACED = OLD.replace(" It names ", " It  names\t").replace(".\n", ". \n")
+    SPACED_THROUGH = "".join("\t" + "  ".join(line.split()) + " \n"
+                             for line in OLD.splitlines())
+    REWORDED = OLD.replace("earlier", "revised")
+    # What each kind writes at MOVED, and whether it removes the earlier entry.
+    MOVES = {"rename": (OLD, True), "rename re-spaced": (RESPACED, True),
+             "rename reworded": (REWORDED, True), "rename and add": (OLD + NEW, True),
+             "copy": (OLD, False), "copy re-spaced": (SPACED_THROUGH, False),
+             "copy reworded": (REWORDED, False), "page copy": (OLD, False),
+             "readme copy": (OLD, False), "undated copy": (OLD, False),
+             "rendered copy": (OLD, False), "new": (NEW, False), "rendered new": (NEW, False)}
+
+    def above_markers(self, text):
+        return above_markers(self.text(DECISIONS), text)
+
+    def rendered(self, entry):
+        """The page with `entry` assembled between its markers, as render.py would."""
+        page = self.text(DECISIONS)
+        self.assertEqual(page.count(DECISION_BEGIN), 1)
+        return page.replace(DECISION_BEGIN, DECISION_BEGIN + "\n## 21 October 2026\n\n"
+                            + entry.strip("\n") + "\n", 1)
 
     def decision_change(self, kind):
-        """Plant old mentions, then change each thing the four guards protect."""
-        old = (f"The earlier entry names `{self.PATH}`, `Certificate/axioms.lock`, "
-               "I.1 and `mishnah/test/`.\n")
+        """Plant an earlier decision, then change each thing the four guards protect, with
+        the decisions record changed as `kind` says."""
         source = {"page copy": DECISIONS, "readme copy": "docs/decisions/README.md",
                   "undated copy": "docs/decisions/notes.md"}.get(kind, self.ENTRY)
         base = self.commit("Record an earlier decision", {
-            source: self.text(DECISIONS) + "\n" + old if source == DECISIONS else old,
+            source: self.above_markers(self.OLD) if source == DECISIONS else self.OLD,
             "mishnah/test/note.md": "A note.\n",
         })
-        moved = "docs/decisions/2026-10-20-moved.md"
         writes = {
             self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
             safe_push.LOCK: self.text(safe_push.LOCK) + "\n# A comment for the test.\n",
@@ -2647,25 +2702,31 @@ class DecisionEntries(Clone):
                 "Elements/BookI/Prop01.lean", SIGNATURE_OLD, SIGNATURE_NEW),
         }
         remove = ["mishnah/test"]
-        if kind == "delete and re-add":
+        if kind.startswith("delete and re-add"):
             self.commit("Remove the earlier entry", remove=[self.ENTRY])
-            writes[self.ENTRY] = old
+            writes[self.ENTRY] = self.RESPACED if kind.endswith("re-spaced") else self.OLD
         elif kind == "edit":
-            writes[self.ENTRY] = old.replace("earlier", "revised")
+            writes[self.ENTRY] = self.REWORDED
         elif kind == "edit and add":
-            writes[self.ENTRY] = old + old.replace("earlier", "new")
+            writes[self.ENTRY] = self.OLD + self.NEW
         else:
-            writes[moved] = old
-            if kind in ("rename", "rename and add"):
+            writes[self.MOVED], gone = self.MOVES[kind]
+            if gone:
                 remove.append(self.ENTRY)
-            if kind == "rename and add":
-                writes[moved] += old.replace("earlier", "new")
-            if kind == "whitespace copy":
-                writes[moved] = " \t" + old.rstrip() + "\t \n"
+            if kind.startswith("rendered"):
+                writes[DECISIONS] = self.rendered(writes[self.MOVED])
         sha = self.commit("Change the guarded files", writes, remove=remove)
         return base, sha
 
-    def check_decision_change(self, kind, outcome):
+    def check_guard(self, guard, base, sha, *args):
+        rep = safe_push.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            guard(WORK, base, sha, *args, rep)
+        return rep
+
+    def check_decision_change(self, kind, outcome, entries="ok", why=None):
+        """The four guards' outcome, and that of the guard of the entries, with what it
+        says when it refuses."""
         base, sha = self.decision_change(kind)
         for guard, args in ((safe_push.guard_protected, ()), (safe_push.guard_lock, ()),
                             (safe_push.guard_statements, (WORK,)),
@@ -2677,43 +2738,134 @@ class DecisionEntries(Clone):
                     self.assertIn("no new line", rep.failed()[0].detail)
                 else:
                     self.assertFalse(rep.failed(), rep.steps)
+        rep = self.check_guard(safe_push.guard_entries, base, sha)
+        self.assertEqual([(s.name, s.outcome) for s in rep.steps],
+                         [("decision entries", entries)], rep.steps)
+        if why:
+            self.assertIn(why, rep.steps[-1].detail)
+            self.assertIn("a correction is a new entry", rep.steps[-1].detail)
 
     def test_rename_renews_no_approval(self):
-        self.check_decision_change("rename", "FAIL")
+        self.check_decision_change("rename", "FAIL", "FAIL",
+                                   f"{self.MOVED}: renamed from {self.ENTRY}")
 
-    def test_rename_with_a_new_naming_line_passes(self):
-        self.check_decision_change("rename and add", "ok")
+    def test_rename_with_interior_whitespace_renews_no_approval(self):
+        self.check_decision_change("rename re-spaced", "FAIL", "FAIL",
+                                   f"{self.MOVED}: renamed from {self.ENTRY}")
+
+    def test_rename_with_a_word_changed_renews_no_approval(self):
+        self.check_decision_change("rename reworded", "FAIL", "FAIL",
+                                   f"{self.MOVED}: renamed from {self.ENTRY}")
+
+    def test_rename_with_a_new_naming_line_is_refused(self):
+        self.check_decision_change("rename and add", "FAIL", "FAIL",
+                                   f"{self.MOVED}: renamed from {self.ENTRY}")
 
     def test_copy_renews_no_approval(self):
-        self.check_decision_change("copy", "FAIL")
+        self.check_decision_change("copy", "FAIL", "FAIL",
+                                   f"{self.MOVED}: copied from {self.ENTRY}")
 
-    def test_copy_with_surrounding_whitespace_renews_no_approval(self):
-        self.check_decision_change("whitespace copy", "FAIL")
+    def test_copy_with_a_word_changed_renews_no_approval(self):
+        self.check_decision_change("copy reworded", "FAIL", "FAIL",
+                                   f"{self.MOVED}: copied from {self.ENTRY}")
+
+    def test_copy_with_its_whitespace_changed_renews_no_approval(self):
+        # Every line differs, so Git finds no copy; but every line, its whitespace
+        # collapsed, is an old one.
+        self.check_decision_change("copy re-spaced", "FAIL", "FAIL",
+                                   f"{self.MOVED}: holds no line new to the decisions record")
 
     def test_copy_from_the_page_renews_no_approval(self):
-        self.check_decision_change("page copy", "FAIL")
+        self.check_decision_change("page copy", "FAIL", "FAIL",
+                                   f"{self.MOVED}: holds no line new to the decisions record")
 
     def test_copy_from_the_folder_readme_renews_no_approval(self):
-        self.check_decision_change("readme copy", "FAIL")
+        self.check_decision_change("readme copy", "FAIL", "FAIL",
+                                   f"{self.MOVED}: copied from docs/decisions/README.md")
 
     def test_copy_from_an_undated_file_renews_no_approval(self):
-        self.check_decision_change("undated copy", "FAIL")
+        self.check_decision_change("undated copy", "FAIL", "FAIL",
+                                   f"{self.MOVED}: copied from docs/decisions/notes.md")
 
     def test_delete_and_re_add_renews_no_approval(self):
         self.check_decision_change("delete and re-add", "FAIL")
 
-    def test_old_entry_edited_in_place_renews_no_approval(self):
-        self.check_decision_change("edit", "FAIL")
+    def test_delete_and_re_add_with_interior_whitespace_renews_no_approval(self):
+        self.check_decision_change("delete and re-add re-spaced", "FAIL", "FAIL",
+                                   f"{self.ENTRY}: changed")
 
-    def test_old_entry_with_a_new_naming_line_passes(self):
-        self.check_decision_change("edit and add", "ok")
+    def test_old_entry_edited_in_place_renews_no_approval(self):
+        self.check_decision_change("edit", "FAIL", "FAIL", f"{self.ENTRY}: changed")
+
+    def test_old_entry_with_a_new_naming_line_is_refused(self):
+        self.check_decision_change("edit and add", "FAIL", "FAIL", f"{self.ENTRY}: changed")
+
+    def test_new_entry_beside_an_old_one_passes(self):
+        self.check_decision_change("new", "ok")
+
+    def test_rendered_copy_renews_no_approval(self):
+        # The page's region, which render.py fills from the entries, is no page text: the
+        # copy assembled there names everything again, and counts for nothing.
+        self.check_decision_change("rendered copy", "FAIL", "FAIL",
+                                   f"{self.MOVED}: copied from {self.ENTRY}")
+
+    def test_rendered_new_entry_passes(self):
+        self.check_decision_change("rendered new", "ok")
+
+    def test_lines_written_into_the_region_by_hand_add_no_mention(self):
+        page = self.text(DECISIONS).replace(
+            DECISION_BEGIN, DECISION_BEGIN + f"\n- `{self.PATH}` changes.\n", 1)
+        sha = self.commit("Name a protected change inside the generated region", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+            DECISIONS: page,
+        })
+        rep = self.check_guard(safe_push.guard_protected, BASE, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+        self.assertIn(f"naming them: {self.PATH}", rep.failed()[0].detail)
+
+    def test_page_text_after_the_end_marker_is_page_text(self):
+        # A coordinator who appends to the page's end, after the markers, still writes a
+        # page entry: render.py keeps it there, and the guards read it.
+        sha = self.commit("Name a protected change after the markers", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+            DECISIONS: self.text(DECISIONS) + f"\n- `{self.PATH}` changes.\n",
+        })
+        rep = self.check_guard(safe_push.guard_protected, BASE, sha)
+        self.assertFalse(rep.failed(), rep.steps)
+        self.assertIn(f"each named in {DECISIONS}: {self.PATH};", rep.steps[-1].detail)
+
+    def test_entries_guard_runs_in_the_pre_flight(self):
+        self.new_base("An earlier decision", {self.ENTRY: self.OLD})
+        self.commit("Move the earlier decision", {self.MOVED: self.OLD}, remove=[self.ENTRY])
+        r = self.safe_push("--dry-run")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("REFUSED", out)
+        self.assertEqual(self.guard(out, "decision entries"), "FAIL", out)
+        self.assertIn(f"{self.MOVED}: renamed from {self.ENTRY}", out)
+
+    def test_entry_changes_reads_every_kind_of_change(self):
+        base = self.commit("Earlier entries", {
+            self.ENTRY: self.OLD, "docs/decisions/2026-10-19-kept.md": self.NEW,
+            "docs/decisions/2026-10-19-mode.md": "- A decision whose mode changes.\n",
+        })
+        (WORK / "docs/decisions/2026-10-19-mode.md").chmod(0o755)
+        sha = self.commit("Change them", {
+            "docs/decisions/2026-10-22-fresh.md": "- A fresh decision for the test.\n",
+            "docs/decisions/2026-02-30-bad-date.md": "- A decision with a bad date.\n",
+            "docs/decisions/2026-10-19-mode.md": "- A decision whose mode changes.\n",
+        }, remove=[self.ENTRY])
+        refused, added = safe_push.entry_changes(WORK, base, sha)
+        self.assertEqual(sorted(refused), ["docs/decisions/2026-10-19-mode.md: changed",
+                                           f"{self.ENTRY}: deleted"])
+        self.assertEqual(added, ["docs/decisions/2026-10-22-fresh.md"])
 
     def test_unreadable_base_record_refuses(self):
-        base, sha = self.decision_change("rename and add")
+        base, sha = self.decision_change("new")
         original_git = safe_push.git
 
         def unreadable(repo, *args, **kwargs):
-            if args[:2] == ("cat-file", "blob"):
+            if args[:2] == ("cat-file", "blob") and not args[2].startswith(sha):
                 raise safe_push.Refusal("cannot read the base decision blob")
             return original_git(repo, *args, **kwargs)
 
@@ -2727,12 +2879,6 @@ class DecisionEntries(Clone):
                                     "docs/decisions/2026-10-20-new.md")
         with self.assertRaisesRegex(safe_push.Refusal, "could not decode the decisions record"):
             safe_push.decision_hunks(WORK, base, sha)
-
-    def check_guard(self, guard, base, sha, *args):
-        rep = safe_push.Report()
-        with contextlib.redirect_stdout(io.StringIO()):
-            guard(WORK, base, sha, *args, rep)
-        return rep
 
     def protected_change(self, mention, entry=ENTRY):
         return self.commit("Name a protected change in an entry", {
@@ -2833,17 +2979,14 @@ class DecisionEntries(Clone):
         self.assertIn("mishnah/test/", rep.steps[-1].detail)
 
     def test_decisions_page_has_a_generated_region(self):
-        begin = "<!-- decisions:entries begin -->\n"
-        end = "<!-- decisions:entries end -->\n"
-        base = self.commit("Mark the decisions page", {
-            DECISIONS: self.text(DECISIONS) + "\n" + begin + end,
-        })
+        page = self.text(DECISIONS)
+        self.assertEqual((page.count(DECISION_BEGIN), page.count(DECISION_END)), (1, 1))
         sha = self.commit("Assemble an entry", {
-            DECISIONS: self.text(DECISIONS).replace(begin, begin + "\nAn entry.\n\n"),
+            DECISIONS: page.replace(DECISION_BEGIN, DECISION_BEGIN + "\n\nAn entry.\n", 1),
         })
-        self.assertEqual(safe_push.generated_parts(WORK, base, sha, DECISIONS), (True, False))
-        newer = self.commit("Change the historical text", {
-            DECISIONS: "# Historical text changed.\n" + self.text(DECISIONS),
+        self.assertEqual(safe_push.generated_parts(WORK, BASE, sha, DECISIONS), (True, False))
+        newer = self.commit("Change the page's own text, before the markers and after them", {
+            DECISIONS: "# Historical text changed.\n" + self.text(DECISIONS) + "\nLater.\n",
         })
         self.assertEqual(safe_push.generated_parts(WORK, sha, newer, DECISIONS), (False, True))
 
@@ -3108,7 +3251,8 @@ class ProtectedPaths(Edge):
         path = "scripts/check_fidelity.py"
         changes = self.reproof()
         changes[path] = self.text(path) + "\n# A comment for the test.\n"
-        changes[DECISIONS] += f"\n- **Another decision for the test.** `{path}` gains a line.\n"
+        changes[DECISIONS] = above_markers(
+            changes[DECISIONS], f"- **Another decision for the test.** `{path}` gains a line.\n")
         self.regenerated_commit("Re-prove III.1, and change check_fidelity.py", changes)
         out = self.assertRefused(self.safe_push("--dry-run"), "check change kept apart",
                                  "Elements/BookIII/Prop01.lean")

@@ -540,6 +540,41 @@ lists each branch with its reviews and the issue it closes. A train never carrie
 change together with content that check judges: trains of checks and trains of content are
 separate, and a branch that fails the train's pre-flight leaves the train.
 
+**Decision entries.** So that branches queued together do not collide at the decisions
+page's end, a decisions entry may be a file of its own (20 October 2026). To write one,
+the coordinator:
+
+1. names it `docs/decisions/<YYYY-MM-DD>-<slug>.md`: the day of the decision, a valid
+   date, then a short name of lower-case letters and digits joined by hyphens, as
+   `docs/decisions/2026-10-21-entry-files.md`; the entries of one day are assembled in
+   the order of their names;
+2. writes the entry's text alone, starting at the margin, as the page's entries do
+   (`- **A title.** The decision, and why.`), with no date heading: `render.py` puts
+   `## <D Month YYYY>` above it, from the file's name, and leaves that heading out only
+   when the last heading before it on the page, of any kind, is that same date's;
+3. keeps out of it what would change the page around it: a date heading, a
+   `decisions:entries` marker or a count marker; a reference or footnote definition
+   (`[label]: …`, `[^1]: …`), or a bracketed label the page's own text defines, so links
+   are written inline; a relative link, Markdown or HTML (an `href`, `src` or other URL
+   attribute, quoted or bare, read in code too), that does not start with `../`, which
+   resolves alike from `docs/decisions/` and `docs/briefs/` (as `../WORKFLOW.md`,
+   `../../scripts/render.py` or `../decisions/<another entry>.md`); and anything left
+   open at its end: every HTML comment closes, a code fence of backticks or tildes opens and
+   closes at the margin, outside a comment and any run of lines from one that starts
+   with `<`, and there is no `<script>`, `<pre>`, `<style>`, `<textarea>`, `<?`, `<!X`
+   or CDATA block at all;
+4. runs `python3 scripts/render.py`, which checks every entry before it writes anything,
+   refusing one that breaks the rules above, any other file in the folder but a README,
+   an entry that is a link, and a folder that is a link or lies under one; then commits
+   the entry with the page as rendered.
+
+An entry on main is history: the pre-flight refuses a change that modifies, deletes,
+renames or copies one, and a correction is a new entry, in words of its own. The entries
+between the markers are generated output, the integrator's (section 4). A page entry may
+still be written on the page, above the markers; text after the end marker is the page's
+own too, and `render.py` keeps it there, after the assembled entries, so one appended at
+the page's very end breaks nothing, though the page then reads out of date order.
+
 ```sh
 sh scripts/install_hooks.sh                        # from a checkout of origin/main: once per
                                                    # clone, and after the hook or launcher changes
@@ -614,18 +649,24 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
         nothing);
       - no whole directory of `Elements/`, `heath/`, `review/`, `figures/` or `mishnah/`
         deleted unless the decisions page or a dated entry in docs/decisions/ gains a
-        new line naming it.
+        new line naming it;
+      - no file under `docs/decisions/` that origin/main holds modified, deleted, renamed
+        or copied: entries are only added ("Decision entries", above). Git's rename and
+        copy detection (`-C -C`, every file there a source, with no limit) finds a move
+        or a copy with edits, and an added file holding no line new to the record is a
+        copy too.
 
       For each of these, the push must add a mention: an old line that already named the
-      thing, edited in place, does not count. An added line in a dated entry counts only
-      when neither the decisions page nor any file under `docs/decisions/` held that line
-      at origin/main, compared line by line with surrounding whitespace stripped. A
-      rename, copy, or deletion and re-addition of old text renews no approval; a new
-      naming line does. Entry files contain no date heading or count marker, since they
-      are dated history. Their relative links, inline or by reference, must start with
-      `../`, which resolves alike from `docs/decisions/` and `docs/briefs/`; same-folder
-      links and bare anchors are refused. The entries folder and its ancestors may not
-      be links. The renderer validates entries before writing any output.
+      thing, edited in place, does not count. On the decisions page only its own text
+      counts, above the `decisions:entries` markers or after them, not the lines
+      `render.py` assembles between them. A line of a dated entry counts only in an entry
+      the push adds (a regular file with an entry's name and a valid date; the README and
+      other names count for nothing), and only when no line of the page or of any file
+      under `docs/decisions/` at origin/main matches it with its whitespace collapsed,
+      inside the line and at its ends. While a push modifies, deletes, renames or copies
+      an entry origin/main holds, entries supply no new line at all, so a rename, a copy
+      or a deletion and re-addition, with edits or without, renews no approval; a new
+      naming line in a new entry does.
    4. *The full checks* of section 8 in that worktree, and `negative_tests.py` in a
       second, each step timed. The check scripts and what they expect (`scripts/`,
       `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) are origin/main's

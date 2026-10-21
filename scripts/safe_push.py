@@ -59,9 +59,13 @@ order, and the first that fails stops it with a message saying why:
    - no review record is stale, and the generated pages are current (check_fidelity.py
      and render.py, on the commit as committed);
    - no whole directory under Elements/, heath/, review/, figures/ or mishnah/ is
-     deleted unless 0002-decisions.md gains a new line naming it.
+     deleted unless 0002-decisions.md gains a new line naming it;
+   - the dated decision entries under docs/decisions/ are only added: none there at
+     origin/main is changed, deleted, renamed or copied.
    A new line here is a mention the push adds: an old line that already named the
-   thing, edited in place, does not count.
+   thing, edited in place, does not count. A new line in a dated entry the push adds
+   counts as one in 0002-decisions.md, unless the record held it already, its whitespace
+   collapsed; the lines render.py assembles between the page's markers do not count.
 4. The full check sequence of docs/WORKFLOW.md, section 8, in that worktree, and
    `negative_tests.py` in a second one, each step timed. The checks run with
    origin/main's copies of the check scripts and their expected values (CHECK_INPUTS,
@@ -170,6 +174,12 @@ HARNESS_PROTOCOL = 2
 
 PY = sys.executable
 DECISIONS = "docs/briefs/0002-decisions.md"
+# Dated decision entries, which render.py assembles into the page between its markers.
+ENTRIES = "docs/decisions/"
+DECISION_ENTRY = re.compile(r"docs/decisions/([0-9]{4}-[0-9]{2}-[0-9]{2})-[a-z0-9]+"
+                            r"(?:-[a-z0-9]+)*\.md")
+DECISION_BEGIN = "<!-- decisions:entries begin -->"
+DECISION_END = "<!-- decisions:entries end -->"
 BRIEFS = "docs/briefs/"
 LOCK = "Certificate/axioms.lock"
 ALLOWLIST = "scripts/safe_push_allow.toml"
@@ -237,7 +247,8 @@ assert set(KIND_LABELS) <= set(LABELS)
 REQUIRED_CHECKS = ("check", "model", "negative")
 GENERATED = ("facts.json", "book/", "CERTIFICATE.md", "GRAPH.md", "README.md", "docs/PROGRAM.md")
 # Of these, two are generated only between their markers (render.py's SCOPE_MARKERS and
-# STATUS_MARKERS); the rest of each is written by hand.
+# STATUS_MARKERS); and so is the decisions page, a guide, between its decisions:entries
+# markers. The rest of each is written by hand.
 GENERATED_REGIONS = {
     "README.md": re.compile(r"<!-- scope:([IVX]+) -->.*?<!-- /scope:\1 -->", re.S),
     "docs/PROGRAM.md": re.compile(r"<!-- status -->\n.*?<!-- /status -->", re.S),
@@ -1208,59 +1219,112 @@ def names_ref(text: str, ref: str) -> bool:
     return ref_count(text, ref) > 0
 
 
-def decision_hunks(repo, base, sha) -> list[Hunk]:
-    """The decisions page's changes and those of dated entry files. The folder's
-    README, invalid dates and files outside the entry filename form supply no
-    approval. An entry must be a regular file at the revision being checked. Its
-    added lines count only if no file of the decisions record held them at the
-    base, with surrounding whitespace stripped; moving old text adds no approval.
-    Removed lines stay in each hunk, so editing an old mention adds none either."""
-    entries = {}
-    old_lines = None
-    found = []
-    for h in diff_hunks(repo, base, sha, DECISIONS, "docs/decisions/"):
-        if h.path == DECISIONS:
-            found.append(h)
+def record_line(text: str) -> str:
+    """A line of the decisions record as the guards compare it: its whitespace collapsed,
+    inside the line and at its ends."""
+    return " ".join(text.split())
+
+
+def record_lines(repo, base) -> set[str]:
+    """Every line of the decisions record at the base, the page's and every file's under
+    docs/decisions/, as record_line gives it."""
+    lines = set()
+    tree = git(repo, "ls-tree", "-r", "-z", base, "--", DECISIONS, ENTRIES, binary=True)
+    for item in tree.split(b"\0"):
+        if not item:
             continue
-        match = re.fullmatch(
-            r"docs/decisions/([0-9]{4}-[0-9]{2}-[0-9]{2})-[a-z0-9]+(?:-[a-z0-9]+)*\.md",
-            h.path or "")
-        if not match:
-            continue
+        metadata, separator, path = item.partition(b"\t")
+        fields = metadata.split()
+        if (not separator or len(fields) != 3
+                or fields[0] not in (b"100644", b"100755")
+                or fields[1] != b"blob"
+                or not (path == DECISIONS.encode() or path.startswith(ENTRIES.encode()))):
+            raise Refusal(f"could not read the decisions record at {base}")
         try:
-            datetime.date.fromisoformat(match.group(1))
-        except ValueError:
+            text = git(repo, "cat-file", "blob", fields[2].decode("ascii"),
+                       binary=True).decode("utf-8")
+        except UnicodeError:
+            raise Refusal(f"could not decode the decisions record at {base}") from None
+        lines.update(record_line(line) for line in text.split("\n"))
+    return lines
+
+
+def entry_changes(repo, base, sha) -> tuple[list[str], list[str]]:
+    """What the commit does under docs/decisions/: the changes refused, and the regular
+    files it adds there with a dated entry's name. Entries are dated history, added and
+    never changed: a file there at the base may not be modified, deleted, renamed or
+    copied. Git's rename and copy detection (-C -C, every file there at the base a
+    source, with no limit) finds a move or a copy with edits; a file added holding no
+    line new to the record is a copy too, found or not."""
+    out = git(repo, "diff", "--raw", "-z", "--no-abbrev", "-C", "-C", "-l0", base, sha,
+              "--", ENTRIES)
+    parts = out.split("\0")
+    refused, added, i = [], [], 0
+    while i < len(parts) - 1:
+        fields = parts[i].lstrip(":").split()
+        if len(fields) != 5 or not fields[4]:
+            raise Refusal(f"could not read the changes to {ENTRIES} from {base} to {sha}")
+        status, mode = fields[4][0], fields[1]
+        if status in "RC":
+            source, path = parts[i + 1], parts[i + 2]
+            i += 3
+            refused.append(f"{path}: {'renamed' if status == 'R' else 'copied'} "
+                           f"from {source}")
             continue
-        if h.path not in entries:
-            fields = git(repo, "ls-tree", sha, "--", h.path).split()
-            if len(fields) != 4 or fields[3] != h.path:
-                raise Refusal(f"could not read the decision entry {h.path} at {sha}")
-            entries[h.path] = fields[0] in ("100644", "100755") and fields[1] == "blob"
-        if entries[h.path]:
-            if old_lines is None:
-                old_lines = set()
-                tree = git(repo, "ls-tree", "-r", "-z", base, "--", DECISIONS,
-                           "docs/decisions", binary=True)
-                for item in tree.split(b"\0"):
-                    if not item:
-                        continue
-                    metadata, separator, path = item.partition(b"\t")
-                    fields = metadata.split()
-                    if (not separator or len(fields) != 3
-                            or fields[0] not in (b"100644", b"100755")
-                            or fields[1] != b"blob"
-                            or not (path == DECISIONS.encode()
-                                    or path.startswith(b"docs/decisions/"))):
-                        raise Refusal(f"could not read the decisions record at {base}")
-                    try:
-                        text = git(repo, "cat-file", "blob", fields[2].decode("ascii"),
-                                   binary=True).decode("utf-8")
-                    except UnicodeError:
-                        raise Refusal(f"could not decode the decisions record at {base}") \
-                            from None
-                    old_lines.update(line.strip() for line in text.split("\n"))
-            found.append(h._replace(added=[a for a in h.added
-                                          if a.text.strip() not in old_lines]))
+        path = parts[i + 1]
+        i += 2
+        if status in "MT":
+            refused.append(f"{path}: changed")
+        elif status == "D":
+            refused.append(f"{path}: deleted")
+        elif status != "A":
+            refused.append(f"{path}: changed ({status})")
+        elif mode in ("100644", "100755"):
+            added.append(path)
+    old = None
+    for path in added:
+        if old is None:
+            old = record_lines(repo, base)
+        try:
+            text = git(repo, "cat-file", "blob", f"{sha}:{path}", binary=True).decode("utf-8")
+        except UnicodeError:
+            refused.append(f"{path}: not UTF-8 text")
+            continue
+        if not {record_line(line) for line in text.split("\n")} - old - {""}:
+            refused.append(f"{path}: holds no line new to the decisions record, a copy")
+    good = [p for p in added if DECISION_ENTRY.fullmatch(p)]
+    for path in list(good):
+        try:
+            datetime.date.fromisoformat(DECISION_ENTRY.fullmatch(path).group(1))
+        except ValueError:
+            good.remove(path)
+    return refused, good
+
+
+def decision_hunks(repo, base, sha) -> list[Hunk]:
+    """The decisions record's changes, as gains() reads them. The page's own, without the
+    lines of its generated region, which render.py assembles from the entries. And the
+    lines of each dated entry the commit adds (a regular file; the README, other names
+    and invalid dates supply no approval), each only when no line of the record held it
+    at the base, its whitespace collapsed. When the commit changes, moves or copies an
+    entry that was there at the base (guard_entries refuses it), entries supply nothing.
+    Removed lines stay in the page's hunks, so editing an old mention adds none."""
+    found = []
+    text = show(repo, sha, DECISIONS)
+    lines = text.split("\n") if text is not None else []
+    begin = next((n for n, line in enumerate(lines, 1) if DECISION_BEGIN in line), None)
+    end = max((n for n, line in enumerate(lines, 1)
+               if DECISION_END in line and begin is not None and n >= begin),
+              default=len(lines))
+    for h in diff_hunks(repo, base, sha, DECISIONS):
+        found.append(h._replace(added=[a for a in h.added
+                                       if begin is None or not begin <= a.line <= end]))
+    refused, added = entry_changes(repo, base, sha)
+    if refused or not added:
+        return found
+    old = record_lines(repo, base)
+    for h in diff_hunks(repo, base, sha, *added):
+        found.append(h._replace(added=[a for a in h.added if record_line(a.text) not in old]))
     return found
 
 
@@ -1280,8 +1344,10 @@ def guard_statements(repo, base, sha, wt: Path, rep: Report) -> list[str]:
             refs.add(f"{book}.{n}")
             if re.search(r"(?m)^theorem Prop%d\.porism\s" % n, src):
                 refs.add(f"{book}.{n} Por.")
-    briefs = diff_hunks(repo, base, sha, BRIEFS)
-    entries = [h for h in decision_hunks(repo, base, sha) if h.path != DECISIONS]
+    decisions = decision_hunks(repo, base, sha)
+    briefs = ([h for h in diff_hunks(repo, base, sha, BRIEFS) if h.path != DECISIONS]
+              + [h for h in decisions if h.path == DECISIONS])
+    entries = [h for h in decisions if h.path != DECISIONS]
     changed, approved, new = [], [], []
     for ref in sorted(refs, key=lambda r: (heath.prop_key(r), r)):
         r = heath.parse_ref(ref)
@@ -1487,6 +1553,19 @@ def guard_directories(repo, base, sha, rep: Report) -> None:
         rep.add("3", "directories", "ok", f"deleted, each named in {DECISIONS} or "
                 "docs/decisions/: "
                 f"{', '.join(d + '/' for d in top)}")
+
+
+def guard_entries(repo, base, sha, rep: Report) -> None:
+    """Decision entries are dated history: a commit only adds them."""
+    refused, added = entry_changes(repo, base, sha)
+    if refused:
+        rep.add("3", "decision entries", "FAIL",
+                f"an entry in {ENTRIES} is history, added once and never changed, moved or "
+                "copied; a correction is a new entry, in words of its own:\n"
+                + "\n".join(refused))
+    else:
+        rep.add("3", "decision entries", "ok",
+                f"added: {', '.join(added)}" if added else f"none added under {ENTRIES}")
 
 
 def status_lines(wt: Path, excludes: list[str]) -> subprocess.CompletedProcess:
@@ -2138,6 +2217,7 @@ def guards(ctx, wt: Path, rep: Report, logs: Path) -> Guarded:
     protected = guard_protected(repo, base, sha, rep)
     guard_heath(repo, base, sha, wt, rep)
     guard_directories(repo, base, sha, rep)
+    guard_entries(repo, base, sha, rep)
     inputs = [(s, p) for s, p in changed_files(repo, base, sha) if under(p, CHECK_INPUTS)]
     with contextlib.closing(passes(repo, base, wt, inputs)) as each:
         for label, fail, excludes in each:
@@ -2622,8 +2702,9 @@ def put_block(body: str, block: str) -> str:
 
 def generated_parts(repo, base, sha, path: str) -> tuple[bool, bool]:
     """Does the change touch what render.py writes in `path`, and does it touch the rest,
-    written by hand? Only README.md and PROGRAM.md have a rest: render.py writes them only
-    between their markers, and every other generated file whole."""
+    written by hand? Only README.md, PROGRAM.md and the decisions page have a rest:
+    render.py writes them only between their markers, and every other generated file
+    whole."""
     pattern = GENERATED_REGIONS.get(path)
     if pattern is None:
         return True, False

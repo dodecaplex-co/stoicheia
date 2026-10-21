@@ -2626,27 +2626,48 @@ findings:
 - **Decision entries, one file each (tooling).** Nearly every pull request appends to this
   page, so any two queued together collide at its end: of the last 30 merged pull requests
   (#98 to #148), 24 changed it, and of 29 consecutive pairs, 16 would have conflicted had
-  they been queued together, 13 of them on this page alone. So a decisions entry may now be a
-  file of its own, `docs/decisions/<YYYY-MM-DD>-<slug>.md` (a valid date, then a short name
-  of lower-case letters and digits joined by hyphens; the entry's text, with no date heading
-  or count marker, since entries are dated history). Relative links, inline or by reference,
-  must start with `../` so they resolve alike from the sibling folders `docs/decisions/`
-  and `docs/briefs/`; same-folder links and bare anchors are refused. The folder and its
-  ancestors may not be links. `scripts/render.py` validates the entries before writing,
-  and assembles them, in file-name order, between the
-  `decisions:entries` markers at the end of this page, under their date headings, leaving out
-  a heading that would repeat the one before it. Readers see the same page; the entries
-  between the markers are generated output, the integrator's (WORKFLOW, section 4), and CI's
-  freshness check now reads this page as well. With no entry files the page is unchanged.
+  they been queued together, 13 of them on this page alone. So a decisions entry may now be
+  a file of its own, `docs/decisions/<YYYY-MM-DD>-<slug>.md`: a valid date, then a short
+  name of lower-case letters and digits joined by hyphens, holding the entry's text alone,
+  starting at the margin. `scripts/render.py` checks every entry before it writes anything,
+  and assembles them, in file-name order, between the `decisions:entries` markers below
+  this entry, each under the heading `## <D Month YYYY>` its file's name gives, left out
+  only when the last heading before it, of any kind, is that date's. Readers see the same
+  page; the entries between the markers are generated output, the integrator's (WORKFLOW,
+  section 4), and CI's freshness check now reads this page as well. With no entry files the
+  page is unchanged. Text after the end marker is this page's own: `render.py` keeps it
+  there, after the entries, so a page entry appended at the page's very end breaks nothing,
+  though a page entry belongs above the markers, where the page keeps its date order.
+
+  An entry may hold no date heading, page marker or count marker, since entries are dated
+  history; no reference or footnote definition, which would bind its label across the whole
+  page, nor a bracketed label this page's own text defines, so its links are inline; no
+  relative link, Markdown or HTML (any URL attribute, quoted or bare, read in code too),
+  that does not start with `../`, which resolves alike from the sibling folders
+  `docs/decisions/` and `docs/briefs/`; and nothing left open at its end that would hide
+  what follows it: an HTML comment, a code fence of backticks or tildes (opened and closed
+  at the margin, outside HTML), or an HTML block that runs on to its closing text
+  (`<script>`, `<pre>`, `<style>`, `<textarea>`, `<?`, `<!X` or CDATA), which an entry may
+  not hold at all. The folder, the folders above it and its entries may not be links.
+
   Every guard that asks for a new line in this page (a statement changed, the axiom lock, a
-  protected path, a deleted directory) also accepts a new line in a dated entry file, a
-  relative link in an entry resolving from `docs/decisions/`. An added entry line counts
-  only when neither this page nor any file under `docs/decisions/` held it at origin/main,
-  compared line by line with surrounding whitespace stripped. Renaming, copying, or deleting
-  and re-adding old text renews no approval; an old mention edited in place still does not
-  count. A new naming line does. The entries already on this page stay where they are. The protected
-  files changed: `scripts/render.py`, `scripts/safe_push.py`, `scripts/test_safe_push.py`,
-  `tests/test_render_decisions.py` and `.github/workflows/ci.yml`.
+  protected path, a deleted directory) also accepts a new line in a dated entry the push
+  adds, a relative link there resolving from `docs/decisions/`. On this page only its own
+  text counts, not the lines assembled between the markers; an entry's line counts only
+  when no line of this page or of any file under `docs/decisions/` at origin/main matches
+  it with its whitespace collapsed, inside the line and at its ends. Entries are history,
+  only ever added: a new guard of step 3, "decision entries", refuses a push that
+  modifies, deletes, renames or copies a file there that origin/main holds (a copy as
+  Git's rename and copy detection finds one, or a file holding no line new to the record),
+  and while a push does, entries supply no new line to the four guards. So a rename, a
+  copy, or a deletion and re-addition, with edits or without, renews no approval; a
+  correction is a new entry, in words of its own. The entries already on this page stay
+  where they are. `scripts/test_safe_push.py` now writes a test's page entry above the
+  markers, reads the width of an abbreviated commit name from Git rather than assuming
+  seven characters, and its CI freshness command names this page, as CI's does. The
+  protected files changed: `scripts/render.py`, `scripts/safe_push.py`,
+  `scripts/test_safe_push.py`, `tests/test_render_decisions.py` and
+  `.github/workflows/ci.yml`.
 
 <!-- decisions:entries begin -->
 <!-- decisions:entries end -->
