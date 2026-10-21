@@ -1,6 +1,7 @@
 import Elements.Figure.Basics
 import Elements.BookII.Rectangles
 import Elements.BookI.HelpersParallels
+import Elements.BookI.Prop13
 import Elements.BookI.Prop31
 import Elements.BookI.Prop34
 import Elements.BookI.Prop36

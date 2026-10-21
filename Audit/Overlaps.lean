@@ -1,4 +1,7 @@
 import Elements
+import Elements.Figure.Circles
+import Elements.BookI.Prop07
+import Elements.BookI.Prop13
 
 /-!
 # Overlaps: propositions a rule already contains
@@ -8,16 +11,20 @@ or give it in a few lines. Astra found the clearest case, III.2, in the outside 
 (`docs/reports/outside-review-01.md`), and compiled its one-line proof; we are grateful.
 The catalogue in `docs/reports/overlaps.md` lists every case we found, and this file
 proves each "states it" or "gives it at once" row again, from the rules alone, and I.2,
-I.3, I.7 and I.23, whose rules supply their step in a longer proof. After III.6,
+I.3 and I.23, whose rules supply their step in a longer proof. The former I.7 audit is
+kept as a circular derivation through Circle 4, now a corollary of I.7. After III.6,
 `III_5_crossing` shows that III.5 needs neither of its rules when "cut" is read as
 crossing. A second section proves III.24, III.26 and III.27 without the hypotheses our
 measure of circumferences leaves idle, the catalogue's near misses of representation.
 
+A third section proves III.30 by the same measure, without III.28 (`III_30_measure`),
+another near miss of representation.
+
 Each theorem's type is the proposition's own (`type_of% @Elements.BookIII.Prop2`), so a
 change to a statement shows up here too. At the end, `#guard_msgs` pins the axioms Lean
-reports for each theorem: the rules named in the catalogue, and nothing else. The last
-theorems run the other way: one proves a rule from a proposition, and two prove Circle 2
-and Circle 3, each from the other.
+reports for each theorem. The last theorems repeat the derivations of Diagram-angle 3
+from I.13 and Circle 2 from Circle 3. The reverse derivation of Circle 3 through the
+derived Circle 2 is circular and retains Circle 3 in its axiom closure.
 
 Nothing imports this file, and it is not part of the default build. `lake build Audit`
 checks it. If a statement or a rule changes so that one of these proofs fails, that is
@@ -98,13 +105,13 @@ theorem I_3 : type_of% @Elements.BookI.Prop3 := by
   · exact absurd h' hEAB
   · exact absurd (lt_trans (hAE ▸ len_lt_of_between h') h) (lt_irrefl _)
 
-/-- **I.7 from Circle 4.** Two circles that cut one another do so on opposite sides of
-the straight line through their centres (`not_same_side_of_circles_meet`, Circle 4).
-I.7 is that rule with its circles left undrawn. Draw the circle about A through C and
-the circle about B through C (Postulate 3); D is on both, being as far from each centre
-as C is (Diagram-segment 3); they are two circles, having two centres (Generalities 2);
-so C and D cannot be two points on one side of AB. No proof in Stoicheia uses Circle 4:
-our I.7 follows Euclid, by I.5. -/
+/-- **I.7 through its own corollary.** Until 19 October 2026 this was an overlap proof
+from Circle 4, `not_same_side_of_circles_meet`, taken as an assumption. Circle 4 is now
+proved from I.7, so this derivation uses I.7 and establishes no independent overlap.
+Draw the circles about A and B through C (Postulate 3); D is on both by their equal
+radii (Diagram-segment 3), and the circles differ by the proved `centre_unique`.
+Circle 4 excludes C and D on the same side. The published I.7 follows Euclid through
+I.5 and does not use this corollary. -/
 theorem I_7 : type_of% @Elements.BookI.Prop7 := by
   intro A B C D hside hCA hCB
   refine Classical.byContradiction fun hCD => ?_
@@ -158,10 +165,11 @@ theorem I_23 : type_of% @Elements.BookI.Prop23 := by
   · rw [angle_symm hFA hGA]
     exact hGAF
 
-/-- **III.2 from Circle 2.** Between two points on or within a circle, every point is
+/-- **III.2 through Circle 2, from Circle 3.** Between two points on or within a circle, every point is
 within it (`inside_of_between`, Circle 2). With both points on the circle, that is III.2.
-This is Astra's proof, from the outside review. Our III.2 follows Euclid, by I.5, I.16
-and I.19, and rests on neither this rule nor Circle 3: III.1, which finds its centre, puts
+This is Astra's proof from the outside review, now using Circle 2 as a theorem of
+Circle 3. The overlap with Circle 3 remains. Our III.2 follows Euclid, by I.5, I.16
+and I.19, and rests on neither Circle 2 nor Circle 3: III.1, which finds its centre, puts
 the middle point of a straight line in the circle within it by III.2's own argument
 (`Prop1.within`). -/
 theorem III_2 : type_of% @Elements.BookIII.Prop2 :=
@@ -202,8 +210,9 @@ two circles have a point C in common, they have no common centre: P is nearer th
 than C is (`len_lt_of_inside`, Diagram-segment 4), and yet, both being on the one circle,
 as far from it (Definition I.15). A circle and its copy, drawn twice over, do not cross
 so, for neither has a point within the other. Our III.5 reads "cut" as meeting at two
-points (`CirclesMeet`), which a circle and its copy do, and there Diagram-segment 2 or
-Circle 4 is needed (the catalogue, under III.5). The same proof gives III.6 for circles
+points (`CirclesMeet`), which a circle and its copy do, and there the published proof
+uses Diagram-segment 2 (the catalogue, under III.5). Circle 4 is now proved using
+Diagram-segment 2 as well. The same proof gives III.6 for circles
 touching within, read with a point of the inner circle within the outer. -/
 theorem III_5_crossing {C P E : Point} {ABC CDG : Circle} (hC₁ : OnCircle C ABC)
     (hC₂ : OnCircle C CDG) (hP₂ : OnCircle P CDG) (hP₁ : InsideCircle P ABC) :
@@ -288,14 +297,80 @@ example : type_of% @Elements.BookIII.Prop24 :=
     ⟨(BookIII.Prop24 hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hAB hsim).1,
      III_24_measure hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hsim⟩
 
+/-! ## III.30 by the measure
+
+The same measure saves III.30 a step. Its two halves are measured by the angles that stand
+on them, each taken twice (`Circumference.standing`, by III.21), so they are equal once
+those angles are, which I.4 gives. Euclid goes instead from the equal straight lines AD and
+DB, by III.28, with his step that each half is less than a semicircle; his own III.26
+would take him from the equal angles to equal halves without either. What the measure
+saves is III.26's step at the circumference, which it reduces to its definition and
+III.21. `III_30_measure` has III.30's own statement, which keeps the measure when arcs get
+a meaning of their own (brief 0006, stage 3), so it stays. Our III.30 follows Euclid, by
+III.28. -/
+
+/-- **III.30 without III.28.** The halves AD and DB are measured by the angles ABD and DAB
+that stand on them, each taken twice, so they are equal once those angles are. The
+construction is Euclid's: AB is bisected at C (I.10), CD drawn at right angles to it (I.11)
+meets the given circumference at D, C being within the circle (III.2), and I.4 makes the
+angles at A and B equal. -/
+theorem III_30_measure : type_of% @Elements.BookIII.Prop30 := by
+  intro A B ADB hADB hA hB P hP
+  have hABP : Triangle A B P := hP
+  have hAB : A ≠ B := hABP.ne₁₂
+  /- C bisects AB; CX is at right angles to it, on P's side. -/
+  obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hAB
+  obtain ⟨C, hACB, hAC⟩ := BookI.Prop10 hAB
+  have hC_L : OnLine C L := on_line_of_between_ends hACB hA_L hB_L
+  obtain ⟨X, hXP, hX⟩ := BookI.Prop11 hAB ⟨L, hA_L, hB_L, hC_L⟩ hP
+  /- C is within the circle (III.2), so XC produced beyond C to Y meets the circle at D,
+     beyond C from Y, on X's side of AB. -/
+  have hC_in : InsideCircle C ADB := BookIII.Prop2 hADB hA hB C hACB
+  have hX_L : ¬ OnLine X L := hXP.triangle.off_line hA_L hB_L
+  have hCX : C ≠ X := fun e => hX_L (e ▸ hC_L)
+  obtain ⟨N, hC_N, hX_N⟩ := Postulate1 C X hCX
+  obtain ⟨Y, hY_N, hXCY, -⟩ := Postulate2 hX_N hC_N hCX.symm []
+  obtain ⟨D, hD, hD_N, hDCY⟩ :=
+    line_circle_beyond hC_in hC_N hY_N (ne_of_between (between_symm hXCY))
+  have hDC : D ≠ C := fun e => inside_not_on hC_in (e ▸ hD)
+  have hD_L : ¬ OnLine D L := fun hD_L =>
+    hX_L ((line_unique hDC hD_N hC_N hD_L hC_L) ▸ hX_N)
+  have hY_L : ¬ OnLine Y L := fun hY_L =>
+    hX_L ((line_unique (ne_of_between (between_symm hXCY)) hY_N hC_N hY_L hC_L) ▸ hX_N)
+  have hDX : SameSide D X L := same_side_of_opposite_sides
+    ⟨hY_L, hD_L, fun h => pasch3 hDCY hC_L (same_side_symm h)⟩
+    ⟨hY_L, hX_L, fun h => pasch3 hXCY hC_L (same_side_symm h)⟩
+  refine ⟨D, hD, (SameSideOf.of_line hAB hA_L hB_L hDX).trans hXP, ?_⟩
+  have hABD : Triangle A B D := Triangle.of_line hA_L hB_L hAB hD_L
+  /- The triangles CAD, CBD have their sides about the right angles at C equal, so the
+     angles at A and B are equal (I.4). -/
+  have hCA : ‖C A‖ = ‖C B‖ := by rw [len_symm C A, hAC]
+  have hDray : OnRay D C X := OnRay.of_between_between (between_symm hXCY) (between_symm hDCY)
+  have hACD : ∠ A C D = ∟ := by
+    rw [angle_onRay_right hDray (ne_of_between hACB)]
+    exact hX A ⟨L, hA_L, hB_L, hA_L⟩ (ne_of_between hACB)
+  have hBCD : ∠ B C D = ∟ := by
+    rw [angle_onRay_right hDray (ne_of_between (between_symm hACB))]
+    exact hX B ⟨L, hA_L, hB_L, hB_L⟩ (ne_of_between (between_symm hACB))
+  have hCAD : Triangle C A D := Triangle.of_line hC_L hA_L (ne_of_between hACB).symm hD_L
+  have hCBD : Triangle C B D :=
+    Triangle.of_line hC_L hB_L (ne_of_between (between_symm hACB)).symm hD_L
+  obtain ⟨-, -, hA₁, -⟩ := BookI.Prop4 hCAD hCBD hCA rfl (hACD.trans hBCD.symm)
+  have hbase : ∠ D A B = ∠ A B D := by
+    rw [angle_symm hABD.ne₁₃.symm hAB.symm,
+      ← angle_onRay_left (OnRay.of_between hACB) hABD.ne₁₃.symm, hA₁,
+      angle_onRay_left (OnRay.of_between (between_symm hACB)) hABD.ne₂₃.symm]
+  /- Each half is twice the angle standing on it, and the angles are equal. -/
+  rw [BookIII.Circumference.standing hADB hB hA hD hABD.acb,
+    BookIII.Circumference.standing hADB hA hD hB hABD.cba, hbase]
+
 /-! ## A rule that a proposition gives back -/
 
 /-- **Diagram-angle 3 from I.13.** The angle beside a right angle is right
 (`adjacent_eq_of_right`, Diagram-angle 3). I.13 makes the two angles together two right
 angles, and Common Notion 3 takes the one right angle away. I.13 does not rest on the
-rule, so the rule is a theorem of the others. Seventeen proofs from II.1 on, III.1's
-porism among them, use it where I.13 would serve: sixteen call it themselves, and III.19
-reaches it only through III.1's helper `Prop1.perpendicular`. -/
+rule. Since 19 October 2026 the library proves it after I.13 under the same name;
+this audit repeats the derivation, and its guard pins the underlying assumptions. -/
 theorem adjacent_eq_of_right : type_of% @Elements.Tacit.adjacent_eq_of_right := by
   intro A B C D L hA hB hACB hD hright
   have hAB : A ≠ B := ne_of_between_ends hACB
@@ -315,8 +390,10 @@ theorem inside_of_between : type_of% @Elements.Tacit.inside_of_between :=
   fun hA hB h => Classical.byContradiction fun hC =>
     hB.elim (outside_of_between hA hC h).1 (outside_of_between hA hC h).2
 
-/-- **Circle 3 from Circle 2.** Were the point beyond within the circle or on it, the point
-between would be within the circle (`inside_of_between`, Circle 2), which it is not. -/
+/-- **Circle 3 through its own consequence.** Were the point beyond within the circle or
+on it, the point between would be within the circle (`inside_of_between`, Circle 2),
+which it is not. Circle 2 is now proved from Circle 3, so this reverse derivation is
+circular evidence and does not remove Circle 3 from the assumptions. -/
 theorem outside_of_between : type_of% @Elements.Tacit.outside_of_between :=
   fun hA hC h => ⟨fun hB => hC (Elements.Tacit.inside_of_between hA (Or.inl hB) h),
     fun hB => hC (Elements.Tacit.inside_of_between hA (Or.inr hB) h)⟩
@@ -379,14 +456,63 @@ info: 'Audit.I_3' depends on axioms: [propext,
 /--
 info: 'Audit.I_7' depends on axioms: [propext,
  Classical.choice,
+ Elements.Definition15,
  Elements.Postulate1,
+ Elements.Postulate2,
  Elements.Postulate3,
  Quot.sound,
- Elements.Tacit.centre_unique,
+ Elements.Tacit.add_comm,
+ Elements.Tacit.add_lt_add_right,
+ Elements.Tacit.add_zero,
+ Elements.Tacit.angle_add_of_inside,
+ Elements.Tacit.angle_eq_of_same_rays,
+ Elements.Tacit.angle_symm,
+ Elements.Tacit.area_congruent,
+ Elements.Tacit.area_rotate,
+ Elements.Tacit.area_swap,
+ Elements.Tacit.between_cases,
+ Elements.Tacit.between_of_between_left,
+ Elements.Tacit.between_of_between_right,
+ Elements.Tacit.between_of_inside_chord,
+ Elements.Tacit.between_symm,
+ Elements.Tacit.centre_inside,
+ Elements.Tacit.circle_eq,
+ Elements.Tacit.circles_meet,
+ Elements.Tacit.circles_meet_same_side,
+ Elements.Tacit.eq_of_len_eq_zero,
+ Elements.Tacit.exists_point,
+ Elements.Tacit.exists_point_between,
+ Elements.Tacit.inside_of_len_lt,
+ Elements.Tacit.len_add_of_between,
+ Elements.Tacit.len_lt_of_inside,
+ Elements.Tacit.len_self,
  Elements.Tacit.len_symm,
+ Elements.Tacit.line_circle_between,
+ Elements.Tacit.line_circle_beyond,
+ Elements.Tacit.line_unique,
+ Elements.Tacit.lines_meet_of_opposite_sides,
+ Elements.Tacit.lt_irrefl,
+ Elements.Tacit.lt_trans,
+ Elements.Tacit.lt_trichotomy,
+ Elements.Tacit.ne_of_between,
+ Elements.Tacit.ne_of_between_ends,
+ Elements.Tacit.not_between_of_between,
+ Elements.Tacit.not_between_of_between_between,
+ Elements.Tacit.not_lt_zero,
  Elements.Tacit.not_on_line_of_same_side,
- Elements.Tacit.not_same_side_of_circles_meet,
- Elements.Tacit.on_circle_of_len_eq]
+ Elements.Tacit.on_circle_of_len_eq,
+ Elements.Tacit.on_line_of_between,
+ Elements.Tacit.on_line_of_between_ends,
+ Elements.Tacit.pasch2,
+ Elements.Tacit.pasch3,
+ Elements.Tacit.pasch4,
+ Elements.Tacit.same_ray_of_angle_eq_zero,
+ Elements.Tacit.same_side_or,
+ Elements.Tacit.same_side_symm,
+ Elements.Tacit.same_side_trans,
+ Elements.Tacit.superposition,
+ Elements.Tacit.triple_incidence1,
+ Elements.Tacit.triple_incidence2]
 -/
 #guard_msgs in
 #print axioms Audit.I_7
@@ -407,7 +533,9 @@ info: 'Audit.I_23' depends on axioms: [propext,
 #guard_msgs in
 #print axioms Audit.I_23
 
-/-- info: 'Audit.III_2' depends on axioms: [Elements.Tacit.inside_of_between] -/
+/--
+info: 'Audit.III_2' depends on axioms: [propext, Classical.choice, Quot.sound, Elements.Tacit.outside_of_between]
+-/
 #guard_msgs in
 #print axioms Audit.III_2
 
@@ -417,7 +545,9 @@ info: 'Audit.III_2_outside' depends on axioms: [propext, Classical.choice, Quot.
 #guard_msgs in
 #print axioms Audit.III_2_outside
 
-/-- info: 'Audit.III_5' depends on axioms: [Classical.choice, Elements.Tacit.circle_eq] -/
+/--
+info: 'Audit.III_5' depends on axioms: [Classical.choice, Elements.Tacit.circle_eq]
+-/
 #guard_msgs in
 #print axioms Audit.III_5
 
@@ -450,7 +580,6 @@ info: 'Audit.III_26_any' depends on axioms: [propext,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
- Elements.Tacit.adjacent_eq_of_right,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
@@ -521,7 +650,6 @@ info: 'Audit.III_27_any' depends on axioms: [propext,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
- Elements.Tacit.adjacent_eq_of_right,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
@@ -592,7 +720,6 @@ info: 'Audit.III_24_measure' depends on axioms: [propext,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
- Elements.Tacit.adjacent_eq_of_right,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
@@ -648,6 +775,76 @@ info: 'Audit.III_24_measure' depends on axioms: [propext,
 -/
 #guard_msgs in
 #print axioms Audit.III_24_measure
+
+/--
+info: 'Audit.III_30_measure' depends on axioms: [propext,
+ Classical.choice,
+ Elements.Definition15,
+ Elements.Postulate1,
+ Elements.Postulate2,
+ Elements.Postulate3,
+ Elements.Postulate4,
+ Elements.Postulate5,
+ Quot.sound,
+ Elements.Tacit.add_assoc,
+ Elements.Tacit.add_comm,
+ Elements.Tacit.add_lt_add_right,
+ Elements.Tacit.add_zero,
+ Elements.Tacit.angle_add_of_inside,
+ Elements.Tacit.angle_eq_of_same_rays,
+ Elements.Tacit.angle_symm,
+ Elements.Tacit.area_congruent,
+ Elements.Tacit.area_rotate,
+ Elements.Tacit.area_swap,
+ Elements.Tacit.between_cases,
+ Elements.Tacit.between_of_between_left,
+ Elements.Tacit.between_of_between_right,
+ Elements.Tacit.between_of_inside_chord,
+ Elements.Tacit.between_symm,
+ Elements.Tacit.centre_inside,
+ Elements.Tacit.circles_meet,
+ Elements.Tacit.circles_meet_of_on_inside_outside,
+ Elements.Tacit.circles_meet_same_side,
+ Elements.Tacit.eq_of_len_eq_zero,
+ Elements.Tacit.exists_point,
+ Elements.Tacit.exists_point_between,
+ Elements.Tacit.exists_point_opposite_side,
+ Elements.Tacit.exists_point_same_side,
+ Elements.Tacit.inside_not_on,
+ Elements.Tacit.inside_of_len_lt,
+ Elements.Tacit.len_add_of_between,
+ Elements.Tacit.len_lt_of_inside,
+ Elements.Tacit.len_self,
+ Elements.Tacit.len_symm,
+ Elements.Tacit.line_circle_between,
+ Elements.Tacit.line_circle_beyond,
+ Elements.Tacit.line_unique,
+ Elements.Tacit.lines_meet_of_opposite_sides,
+ Elements.Tacit.lt_irrefl,
+ Elements.Tacit.lt_trans,
+ Elements.Tacit.lt_trichotomy,
+ Elements.Tacit.ne_of_between,
+ Elements.Tacit.ne_of_between_ends,
+ Elements.Tacit.not_between_of_between,
+ Elements.Tacit.not_between_of_between_between,
+ Elements.Tacit.not_lt_zero,
+ Elements.Tacit.not_on_line_of_same_side,
+ Elements.Tacit.on_line_of_between,
+ Elements.Tacit.on_line_of_between_ends,
+ Elements.Tacit.pasch2,
+ Elements.Tacit.pasch3,
+ Elements.Tacit.pasch4,
+ Elements.Tacit.same_ray_of_angle_eq_zero,
+ Elements.Tacit.same_side_or,
+ Elements.Tacit.same_side_refl,
+ Elements.Tacit.same_side_symm,
+ Elements.Tacit.same_side_trans,
+ Elements.Tacit.superposition,
+ Elements.Tacit.triple_incidence1,
+ Elements.Tacit.triple_incidence2]
+-/
+#guard_msgs in
+#print axioms Audit.III_30_measure
 
 /--
 info: 'Audit.adjacent_eq_of_right' depends on axioms: [propext,
@@ -718,6 +915,8 @@ info: 'Audit.inside_of_between' depends on axioms: [propext, Classical.choice, Q
 #guard_msgs in
 #print axioms Audit.inside_of_between
 
-/-- info: 'Audit.outside_of_between' depends on axioms: [Elements.Tacit.inside_of_between] -/
+/--
+info: 'Audit.outside_of_between' depends on axioms: [propext, Classical.choice, Quot.sound, Elements.Tacit.outside_of_between]
+-/
 #guard_msgs in
 #print axioms Audit.outside_of_between

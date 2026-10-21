@@ -38,10 +38,14 @@ note = "The reductio shows that the supposed centre G lies on CE, and the Lean b
 at = "PORISM. From this it is manifest"
 kind = "carried"
 helper = "Prop1.porism"
-note = "Proved as its own theorem, III.1 Por., from this construction. It uses that a circle has one centre (`centre_unique`), which III.1 itself does not."
+note = "Proved as its own theorem, III.1 Por., from this construction. It uses `Tacit.centre_unique`, now proved from the foundations in `Elements/Figure/Circles.lean` using circle intersections, equal radii (Definition I.15) and the order of lengths; III.1 itself does not use this theorem."
+
+[figure]
+case = "the supposed centre G off AB and off CE, as in Heath's figure"
+note = "Like Heath's, this figure draws the impossible supposition: G, off CE, as a centre of the circle ABC."
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:49fd7a425f9aeb86"
+commit = "6fbd90c0"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:fd968c0c90a4b364"

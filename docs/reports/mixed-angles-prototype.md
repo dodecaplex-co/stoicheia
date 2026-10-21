@@ -88,7 +88,16 @@ slit would count as an excess. A straight line holds no circle, so neither can h
 
 ## 2. What is proved
 
-**The census.** The namespace `Elements.MixedAngles` holds 117 theorems: the 109 written in
+19 October 2026: the census was measured again at `1e713bb`, after all eight
+retirements, using `Lean.collectAxioms` on every theorem in `Elements.MixedAngles`.
+There are still 117 theorems: 13 use no axiom, 5 use only Lean's logical axioms, and
+99 use foundation axioms. The union is now **68 foundation axioms**, each in the
+79-axiom lock, with no `sorryAx` and none of the eight retired names. Only
+`Prop31.any_greater_gt_right` and `Prop31.any_less_lt_right` use Postulate 5.
+This is a fresh census of the proof terms, not a subtraction from the earlier total.
+The table below preserves the earlier measurement of 71.
+
+**The census before retirement.** The namespace `Elements.MixedAngles` holds 117 theorems: the 109 written in
 the file, and 8 that Lean generates for the type and the two `@[simp]` lemmas
 (`MixedAngle.ofSegment.inj`, `.injEq` and `.sizeOf_spec`, the same three for `ofContact`,
 and the `_simp_1` forms of `MixedAngle.region_ofSegment` and `region_ofContact`). It also
@@ -317,6 +326,13 @@ nothing enters a proposition's namespace before #57 is decided. On adoption the 
 go into `Elements.BookIII`, and the rest where condition 3 says.
 
 ## 4. Is an axiom needed?
+
+19 October 2026: the answer remains no. The earlier account below names rules that
+are now theorems: Circle 2 follows Circle 3 in `Elements/Figure/Circles.lean`;
+Triple incidence 3 is proved there from angle addition, positivity and the crossing
+and side rules; Diagram-angle 3 follows I.13 in `Elements/BookI/Prop13.lean`.
+The fresh census in section 2 gives 68 foundation axioms. The earlier count of 71
+and the record of the prototype's reviews below remain historical measurements.
 
 No. Every fact used is already in the foundations or proved from them: the postulates,
 Definition I.15, System E's rules for sides, betweenness, circles, lengths and angles

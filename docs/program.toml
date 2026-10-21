@@ -9,22 +9,26 @@
 #   stage    where the book stands, one of brief, statements, proofs, voice, records,
 #            acceptance or released, with a few words in brackets where they help:
 #            "records (exceptions)".
-#   outside  the latest cold outside reading: its score, who read, and the commit read.
+#   outside  Astra's cold outside reading of 17 October 2026 at 676244a:
+#            its score, who read, and the commit read.
 #   tag      the release tag, once there is one; or else
 #   release  a few words on the release still to come.
 # A book with no table here and nothing in facts.json is shown as not begun.
 
 [I]
-stage = "released (next: I.40 and I.45 in full generality)"
+stage = "released (next: I.45 outline coverage and independence of division, #116)"
 outside = { score = 90, by = "Astra", commit = "676244a" }
 tag = "book-I"
 
 [II]
-stage = "released (next: II.1 and II.14 in full generality)"
+stage = "released (next: II.14 outline coverage and independence of division, #116)"
 outside = { score = 85, by = "Astra", commit = "676244a" }
 tag = "book-II"
 
 [III]
-stage = "released (next: arcs and segments)"
+stage = "released (next: stage 3/4 migrations; mixed angles; centre rule; full records)"
 outside = { score = 80, by = "Astra", commit = "676244a" }
 tag = "book-III"
+
+[IV]
+stage = "brief (draft, awaiting approval)"
