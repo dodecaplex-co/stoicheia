@@ -17,8 +17,10 @@ non-derivability claim.
 Each of these theorems is pinned twice: its statement, by `#check`, so that a weaker
 statement under the same name fails the build, and then its axioms. The two
 definitions part 4 rests on, `Rule.Figure` and `Interpretation.Embedding`, are pinned
-whole by `#print`. Every theorem that brief 0009's restriction section names has
-its statement pinned here. `Cited.holds_all`, which gives every cited law in one
+whole by `#print`, and so are three that pinned statements read: `Placed`, in
+`Rule.of_placement`; `Val.place`, in `Metric.holds_place`; and `Metric.names`, in
+`exportable_iff` and the two `not_exportable` theorems. Every theorem that brief 0009's
+restriction section names has its statement pinned here. `Cited.holds_all`, which gives every cited law in one
 statement, is pinned the same way, by its statement and then its axioms, at the end of
 the file; through I.7 it rests on `Tacit.superposition` itself.
 
@@ -354,6 +356,54 @@ constructor:
 -/
 #guard_msgs in
 #print Elements.Superposition.Interpretation.Embedding
+
+/--
+info: def Elements.Superposition.Placed : (I : Elements.Superposition.Interpretation) →
+  I.Point → I.Point → I.Point → I.Point → I.Point → I.Point → I.Line → I.Point → I.Point → Prop :=
+fun I A B C D G H L B' C' =>
+  I.OnLine B' L ∧
+    ¬I.Between B' D G ∧
+      I.SameSide C' H L ∧
+        I.len D B' = I.len A B ∧
+          I.len B' C' = I.len B C ∧
+            I.len C' D = I.len C A ∧
+              I.ang B' D C' = I.ang B A C ∧ I.ang D C' B' = I.ang A C B ∧ I.ang C' B' D = I.ang C B A
+-/
+#guard_msgs in
+#print Elements.Superposition.Placed
+
+/--
+info: def Elements.Superposition.Val.place : {I : Elements.Superposition.Interpretation} →
+  {P L : Type} →
+    Elements.Superposition.Val I P L →
+      I.Point →
+        I.Point →
+          I.Line → Elements.Superposition.Val I (Elements.Superposition.Name P) (Elements.Superposition.LineName L) :=
+fun {I} {P L} v B' C' N =>
+  {
+    pt := fun x =>
+      match x with
+      | Elements.Superposition.Name.given p => v.pt p
+      | Elements.Superposition.Name.second => B'
+      | Elements.Superposition.Name.third => C',
+    line := fun x =>
+      match x with
+      | Elements.Superposition.LineName.given l => v.line l
+      | Elements.Superposition.LineName.side => N }
+-/
+#guard_msgs in
+#print Elements.Superposition.Val.place
+
+/--
+info: def Elements.Superposition.Metric.names : {P : Type} → Elements.Superposition.Metric P → List P :=
+fun {P} x =>
+  match x with
+  | Elements.Superposition.Metric.len p q r s => [p, q, r, s]
+  | Elements.Superposition.Metric.angle p q r s t u => [p, q, r, s, t, u]
+  | Elements.Superposition.Metric.area p q r s t u => [p, q, r, s, t, u]
+-/
+#guard_msgs in
+#print Elements.Superposition.Metric.names
 
 /--
 info: @Elements.Superposition.Rule.Figure.restrict : ∀ {I J : Elements.Superposition.Interpretation} (e : J.Embedding I)

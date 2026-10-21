@@ -86,7 +86,7 @@ Heath and the Lean, before reading anyone's account of how they agree. The quest
   cases matter, not a generic list of degeneracies.
 - **Objects and operations.** What equality, order, area and the rest mean for the
   representation used (section 3).
-- **Outputs.** A construction's result is easy to recognize. Where the theorem returns a
+- **Outputs.** A construction's result is easy to recognise. Where the theorem returns a
   side that determines a square, the page points to what constructs the square.
 
 What these questions catch, from our own history: "any number of segments" stated for
@@ -593,7 +593,9 @@ this project's definitions in what remains: `CirclesMeet`, `LineMeetsCircle`, `L
 `Collinear`, and an instance that gives an order its meaning. The axiom is a construction
 rule when an `∃` then stands in positive position. `And` and `Or` keep a position's sign;
 `Not` and the left of an implication reverse it; either side of an `Iff` counts at both.
-Any other structure or inductive type is read as a word and never unfolded: what its
+Only an `∃` written out, or one those definitions give, is counted: an existence stated
+another way, as `¬ ∀ x, ¬ P x` or by an axiom that is not a proposition, would not be, and
+no axiom in the lock states one so. Any other structure or inductive type is read as a word and never unfolded: what its
 fields or constructors say is not read. So Postulates 1, 2, 3 and 5, the rules that give a
 point (`exists_point` and its kin) and the rules that conclude that two circles, a straight
 line and a circle, or two straight lines meet are construction rules. A rule that concludes

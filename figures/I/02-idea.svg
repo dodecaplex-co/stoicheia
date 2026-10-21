@@ -16,7 +16,7 @@
   <circle cx="169.0" cy="199.7" r="4.5" fill="#222222"/>
   <circle cx="231.0" cy="199.7" r="4.5" fill="#222222"/>
   <!-- Heath's letters -->
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="200" y="134.6">D</text><text x="155.1" y="197.3">A</text><text x="237.5" y="183.5">B</text><text x="289.1" y="179.5">C</text>
     <text x="271" y="252.7">G</text><text x="275.1" y="267.7">F</text><text x="129.3" y="250.2">L</text><text x="124.9" y="267.7">E</text>
     <text x="252.2" y="147">H</text><text x="324" y="151.6">K</text>

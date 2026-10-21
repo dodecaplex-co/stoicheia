@@ -9,11 +9,11 @@ would use. `Cited.holds_all` gives every cited law in one statement. The restric
 theorems are pinned by their statements as well as their axioms, in
 [`Audit/Superposition.lean`](../../Audit/Superposition.lean). `Rule`, the lock and every
 statement are unchanged, and non-derivability stays unclaimed. Where round 4 below calls
-part 4 an inspection of
-`Rule.infer`, this note supersedes it; the lines that said so in the present tense are
-corrected in place.*
+part 4 an inspection of `Rule.infer`, this note supersedes it; the lines that said so in
+the present tense are corrected in place.*
 
-*21 October 2026: question 4 of #150 takes route (b).* The hand-set flag
+*21 October 2026: for question 4 of #150, the coordinator takes route (b)
+([decisions](0002-decisions.md#21-october-2026), 21 October 2026).* The hand-set flag
 `Cited.drawsNothing`, the theorem `Cited.holds_of_drawsNothing` that proved the laws it
 marked, and I.4's check of it, `Prop4.cites_drawNothing`, are retired. Under the permissive
 reading the owner approved, `Rule` asks only that each cited law hold, so the flag carried
@@ -22,7 +22,8 @@ closures, which no check confirmed. I.4 now proves its laws one by one, as I.8 d
 the certificate computes, for I.4 and I.8, the construction rules beneath each cited law's
 proof (`cited_laws` in `facts.json`), with "construction rule" defined in
 [FORMALIZATION.md](../FORMALIZATION.md#construction-rules), section 9. The lines below that
-spoke of the flag as present now say so; what they record of earlier revisions stands.
+spoke of the flag as present now record its retirement; what they record of earlier
+revisions stands.
 
 *20 October 2026, round 4: the replacement lands on the answers to questions 2, 4 and 5
 that the owner approved "as prototyped", and their finishing is tracked in #150, which

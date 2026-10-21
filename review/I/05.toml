@@ -23,6 +23,11 @@ helper = "exists_between_nearer"
 note = "Euclid assumes he can find F on BD near enough to B that AF remains less than AE. The Lean applies `exists_between_nearer` to AB = AC < AE, using `len_lt_of_between` for C between A and E, and obtains F between B and D with AF < AE; it then derives the order A, B, F by `between_cut` and puts F on AB by `Tacit.on_line_of_between`, a rule we assume (System E, Between 2)."
 
 [[passage]]
+at = "and let the straight lines FC, GB be joined"
+kind = "carried"
+note = "The Lean joins FC and GB by Postulate 1, as Euclid asks. The later steps use lengths, angles, triangles and areas named by their points and do not use either joined line; the lines are named here only to carry out this sentence."
+
+[[passage]]
 at = "and they contain a common angle"
 kind = "helper"
 helper = "OnRay.between_of_len_lt"
@@ -53,10 +58,10 @@ note = "Euclid identifies FBC and GCB with the angles under the base. The Lean u
 
 [review]
 stage = "full"
-commit = "8bdf0ef"
-reviewer = "Claude Opus 5.5, records review"
+commit = "07bdc4df"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:434da0bb3337847c"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "ship Q orders, item (a): the Postulate 1 joins; stage full, independent re-read at 07bdc4df; workflow wf_012f714f-e1a (stoicheia-ship-q); reader run Q-read-p1c, Codex exec session 01a159fa-c971-7500-92b3-91e0f702bc1e, which wrote only this record's [review] lines and ran review_stamp.py itself; ship Q's lead (Claude Opus 5.5) committed them unchanged; this run text later amended with that provenance, no restamp"
 
 [review.items]
 statement = "pass"
