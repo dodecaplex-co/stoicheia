@@ -548,7 +548,7 @@ def self_test() -> list[str]:
     return problems
 
 
-def repository() -> Path:
+def repository() -> tuple[Path, dict[str, str]]:
     """The repository the script stands in, as Git names its work tree and Git directory.
     An inherited GIT_DIR or GIT_WORK_TREE that names another is refused, saying what to do:
     a Git alias run from a linked worktree sets GIT_DIR, and the check would judge the wrong
@@ -561,6 +561,12 @@ def repository() -> Path:
     discovery_env = os.environ.copy()
     discovery_env.pop("GIT_DIR", None)
     discovery_env.pop("GIT_WORK_TREE", None)
+    active_env = os.environ.copy()
+    caller = Path.cwd()
+    for name in ("GIT_DIR", "GIT_WORK_TREE"):
+        value = active_env.get(name)
+        if value and not Path(value).is_absolute():
+            active_env[name] = str((caller / value).resolve())
 
     def location(env: dict[str, str] | None) -> tuple[Path, Path]:
         try:
@@ -582,7 +588,7 @@ def repository() -> Path:
     if expected_top != script_root:
         fail(f"Git's work tree is {expected_top}, not the script's repository {script_root}; "
              "run the check from the repository's own work tree")
-    top, git_dir = location(None)
+    top, git_dir = location(active_env)
     if top != script_root:
         fail(f"Git's work tree is {top}, not the script's repository {script_root}"
              + (remedy or "; run the check from the repository's own work tree"))
@@ -590,12 +596,12 @@ def repository() -> Path:
         fail(f"Git's directory is {git_dir}, not the script's repository Git directory "
              f"{expected_git_dir}" + (remedy or "; run the check from the repository's "
                                          "own work tree"))
-    return top
+    return top, active_env
 
 
-def git(root: Path, *args: str) -> bytes:
+def git(root: Path, *args: str, env: dict[str, str] | None = None) -> bytes:
     try:
-        done = subprocess.run(["git", *args], cwd=root, capture_output=True)
+        done = subprocess.run(["git", *args], cwd=root, env=env, capture_output=True)
     except OSError as e:
         fail(f"cannot run Git ({e})")
     if done.returncode != 0:
@@ -656,19 +662,21 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  self-test: {len(PLANTED)} planted faults, each caught by its rule; "
               f"{len(GOOD)} good paths, Book IV's and Book X's among them, pass")
 
-    root = repository()
+    root, repository_env = repository()
     if args.rev is None:
         # The index lists a path once, save once at each stage of a merge left unresolved,
         # so an entry repeated there is taken once; a tree's entries are all kept, and a
         # path listed twice among them is P2's.
-        entries = sorted(set(entries_of(git(root, "ls-files", "-s", "-z"))))
+        entries = sorted(set(entries_of(
+            git(root, "ls-files", "-s", "-z", env=repository_env))))
         directories = []
         judged = "tracked paths of the index"
     else:
         commit = git(root, "rev-parse", "--verify", "--quiet", "--end-of-options",
-                     f"{args.rev}^{{commit}}").decode().strip()
+                     f"{args.rev}^{{commit}}", env=repository_env).decode().strip()
         entries, directories = tree_entries_of(
-            git(root, "ls-tree", "-r", "-t", "-z", "--full-tree", commit))
+            git(root, "ls-tree", "-r", "-t", "-z", "--full-tree", commit,
+                env=repository_env))
         judged = f"paths of {args.rev} ({commit[:12]})"
     count = len({path for _, path in entries})
     found = findings(entries, directories)

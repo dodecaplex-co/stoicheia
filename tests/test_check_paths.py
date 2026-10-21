@@ -346,10 +346,10 @@ class Index(unittest.TestCase):
         return done
 
     def check(self, *args: str, env: dict[str, str] | None = None,
-              isolated: bool = True) -> subprocess.CompletedProcess:
+              isolated: bool = True, cwd: Path | None = None) -> subprocess.CompletedProcess:
         return subprocess.run([sys.executable, *(["-I"] if isolated else []),
                                str(self.root / "scripts/check_paths.py"), *args],
-                              cwd=self.root, env=git_env() if env is None else env,
+                              cwd=cwd or self.root, env=git_env() if env is None else env,
                               capture_output=True, text=True)
 
     def caught(self, rule: int, names: str | tuple[str, ...], *args: str) -> None:
@@ -568,6 +568,31 @@ class Index(unittest.TestCase):
                                         GIT_WORK_TREE=str(self.root)))
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("not the script's repository Git directory", result.stderr)
+        self.assertNotIn("✓", result.stdout)
+
+    def test_matching_relative_git_locations_from_root_and_a_subdirectory(self):
+        callers = (self.root, self.root / "caller" / "deep")
+        callers[1].mkdir(parents=True)
+        for caller in callers:
+            relative = git_env(
+                GIT_DIR=os.path.relpath(self.root / ".git", caller),
+                GIT_WORK_TREE=os.path.relpath(self.root, caller))
+            for args in ((), ("--rev", "HEAD")):
+                with self.subTest(caller=caller.relative_to(self.root), args=args):
+                    result = self.check(*args, cwd=caller, env=relative)
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertIn("✓ paths:", result.stdout)
+
+    def test_a_foreign_relative_git_pair_is_refused(self):
+        foreign = self.root / "foreign"
+        foreign.mkdir()
+        self.git("-C", str(foreign), "init", "-q", "-b", "main", ".")
+        self.git("-C", str(foreign), "commit", "-q", "--allow-empty", "-m", "Foreign")
+        result = self.check(env=git_env(
+            GIT_DIR=os.path.relpath(foreign / ".git", self.root),
+            GIT_WORK_TREE=os.path.relpath(foreign, self.root)))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("not the script's repository", result.stderr)
         self.assertNotIn("✓", result.stdout)
 
     def test_self_test_runs_before_the_index(self):
