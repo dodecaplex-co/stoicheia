@@ -3535,7 +3535,7 @@ findings:
   dash or a curly quotation mark in a quoted excerpt's code would come out of code,
   where S1 or S8 finds it in the next report, and every regeneration quotes it back. The
   code span closes as well an older loop of the same kind, which main's generator has:
-  an S1 or S8 finding on the report itself. B2's and E2's own messages are unchanged. A
+  an S1, S8 or S22 finding on the report itself. B2's and E2's own messages are unchanged. A
   second test, `Report.test_a_finding_on_the_old_report_is_not_quoted_back_to_s12`,
   gives the generator three such findings through a stand-in for the style check (the
   old report's four-digit revision, the twelve-digit one and an unknown name) and puts
