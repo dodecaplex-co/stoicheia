@@ -4783,7 +4783,7 @@ findings:
   review fixes (III.1's figure note from main, the current overlap row of III.1's centre
   rule, and the historical row of III.1's corollary as it stood), train C6a at `ba839370`
   and main at `e7ffaf68` (#199, #201, #202 and #204), and changes neither the lock nor any
-  pin; and last with the guard at `82a2894c`, which brings the guard's review fixes, train
+  pin; then with the guard at `82a2894c`, which brings the guard's review fixes, train
   C6b at `4adcfd95` (its second review's fixes: III.1's page, and a dated update under
   III.1's corollary), train C6a at `05e27335` (III.10's record read afresh, with Heath's
   statement under III.5 said truly) and main at `73b97ab1` (#208 and #219), and changes
@@ -4792,8 +4792,9 @@ findings:
   tooling/figure-every-case (`752a84fb`, landing before train C6b with its own entry) and
   III.25's figure of every case, and changes neither the lock nor any pin; and last with
   main at `554dfb0f` (#232, the unrun tests in CI, and #239, decision entries one file
-  each), which changes neither the lock nor any pin. The restated Book III of this train is kept whole; III.1's record
-  and commentary are this train's, since its statement no longer takes a centre.
+  each), which changes neither the lock nor any pin. The restated Book III of this train
+  is kept whole; III.1's record and commentary are this train's, since its statement no
+  longer takes a centre.
   `Certificate/axioms.lock`, written again by `python3 scripts/check_fidelity.py
   --write-lock` after `lake build` and `Certificate/Facts.lean`, holds the guard side's 80
   axioms, of them 74 tacit rules, each byte for byte, and its 242 words, with this train's
