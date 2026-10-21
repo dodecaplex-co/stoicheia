@@ -41,7 +41,7 @@ note = "Euclid applies I.47 to the square on DC without describing it. The Lean 
 at = "therefore the square on DC is equal to the square on BC"
 kind = "helper"
 helper = "Prop46.side_eq"
-note = "Euclid assumes the converse too, that equal squares stand on equal straight lines; Heath reports Proclus's proof, while the Lean's `Prop46.side_eq` takes another road, the square on the less being the less. Before applying that lemma in I.48, the Lean uses `Prop28.square` (I.28) to make both squares parallelograms and `Parallelogram.quadArea_rotate` to read their unchanged areas from C, as squares on CD and CB."
+note = "Euclid assumes the converse too, that equal squares stand on equal straight lines; Heath reports Proclus' proof, while the Lean's `Prop46.side_eq` takes another road, the square on the less being the less. Before applying that lemma in I.48, the Lean uses `Prop28.square` (I.28) to make both squares parallelograms and `Parallelogram.quadArea_rotate` to read their unchanged areas from C, as squares on CD and CB."
 
 [review]
 stage = "full"
