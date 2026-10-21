@@ -16,7 +16,8 @@ conditional on /no-mistakes and an independent Codex read of the model lane. The
 states what we formalised; the brief, the review records and the pages must agree with it
 ([FORMALIZATION.md](../FORMALIZATION.md), section 1).*
 
-*21 October 2026: question 4 of #150 takes route (b).* The hand-set flag
+*21 October 2026: for question 4 of #150, the coordinator takes route (b)
+([decisions](0002-decisions.md#21-october-2026), 21 October 2026).* The hand-set flag
 `Cited.drawsNothing`, the theorem `Cited.holds_of_drawsNothing` that proved the laws it
 marked, and I.4's check of it, `Prop4.cites_drawNothing`, are retired. Under the permissive
 reading the owner approved, `Rule` asks only that each cited law hold, so the flag carried
@@ -25,7 +26,8 @@ closures, which no check confirmed. I.4 now proves its laws one by one, as I.8 d
 the certificate computes, for I.4 and I.8, the construction rules beneath each cited law's
 proof (`cited_laws` in `facts.json`), with "construction rule" defined in
 [FORMALIZATION.md](../FORMALIZATION.md#construction-rules), section 9. The lines below that
-spoke of the flag as present now say so; what they record of earlier revisions stands.
+spoke of the flag as present now record its retirement; what they record of earlier
+revisions stands.
 
 **Baseline update, 20 October 2026: A1 has landed.** The integration merge at
 `bd86a7b6` has the restricted-rule revision `9fc4bdc9` as one parent and
