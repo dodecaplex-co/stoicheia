@@ -31,8 +31,8 @@ functions to small inputs, each with the answer the screen should give.
 * The lists: the definitions unfolded, chosen and left as they are do not overlap; every
   file of tries proves the controls, and unfolds every definition listed.
 
-Nothing runs these in CI yet: whoever changes the screen runs this file. Python 3.11 or
-later; standard library.
+CI's `check` job and safe_push's check sequence run this file (docs/WORKFLOW.md, section 8);
+neither runs the screen itself, which needs Lean. Python 3.11 or later; standard library.
 """
 
 from __future__ import annotations
