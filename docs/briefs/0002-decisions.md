@@ -3506,3 +3506,31 @@ findings:
   `UPRIGHT_LETTERS_REQUIRED` set to `True`, a test that plants an italic letter, and
   STYLE's wording for the switch. Until then S15 and S20 still accept a figure whose
   letters are all italic. No protected file changes.
+
+- **Twenty entries come out of `REACH_PENDING`
+  ([#159](https://github.com/jackChallis/stoicheia/issues/159)).** Run on `8e9a1879` with
+  Lean, after `lake build` and `lake build Audit`, `scripts/check_style.py` reported 19 of
+  the list's 38 entries done, with no finding of any of their rules left, and this change
+  takes exactly those out: the fourteen notes of Book Zero, `Elements/Figure/*.lean`
+  (S22); `docs/reports/gaps-book-I.md` (S7); `docs/reports/gaps-book-II.md` and
+  `docs/reports/read-through-01.md` (S7 and S12); `review/I/09.toml` (S7); and
+  `review/II/14.toml` (S12), the two that the progress check of 20 October on #159 named.
+  Under `--no-lean` the same check reported 18 of them, the two "S7 S12" entries for S7
+  alone and `review/II/14.toml` not at all, since S12 alone asks Lean; with Lean their S12
+  is done too, so each of the 19 comes out whole and no entry is left with a rule fewer.
+  No rule of the 19 entries that remain was reported done, and none of them changes. D16
+  goes from 364 lines to 345 with Lean, and from 202 to 184 under `--no-lean`: the 19 and
+  18 done lines go, the findings are line for line the same, and both runs pass with no
+  "done" line. The comment over the reports' entries gave the S12 inventory of two of them
+  on `bd3b72a`, 147 and 2; it now gives the one left,
+  `docs/reports/mixed-angles-prototype.md`. The paragraphs on the list, in the script's
+  docstring and in [STYLE](../STYLE.md), section 8, now say that a file with findings on
+  19 October "was" listed, since a mended file no longer is; neither holds a count, and no
+  count marker counts the list. Of the 19 entries that remain, one names the closed #66
+  as its mender and nine name no issue. The protected file changed is
+  `scripts/check_style.py`; `tests/test_check_style.py` is unchanged, since
+  `test_done_cases` and `test_done_without_lean` already test the done report.
+  After origin/main was merged at `17ae8e2a`, where the restricted rule of superposition
+  rewrote I.8's Lean, the check reported one entry more done, `Elements/BookI/Prop08.lean`
+  (S22, which named #29), both with Lean and without; it comes out too, so 20 entries
+  come out and 18 remain, and both runs again pass with no "done" line.

@@ -739,7 +739,7 @@ empty. The switch is never turned back to quiet a figure: the figure is set upri
 ([#66](https://github.com/jackChallis/stoicheia/issues/66)): the Review notes, the overlap
 catalogue, the Other reports, the Rendered docstrings, the front pages and the table of
 names, with S7 in the gap catalogues and the Generated files, S12 beyond the mishnah (and
-the name of a `name : type`), and S22. A file that had findings of that reach on the day is
+the name of a `name : type`), and S22. A file that had findings of that reach on the day was
 listed in `REACH_PENDING` in `scripts/check_style.py`, with the rules it had findings of
 and whoever mends them; while it is listed, its findings of those rules are reported (D16)
 and fail nothing. Every other finding of the reach fails at once, in a listed file as in
