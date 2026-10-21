@@ -74,7 +74,7 @@ jobs:
 
       - name: Check the overlap screen's tries and its reading of Lean's logs, case by case
         # tests/test_screen.py needs no Lean: it puts Audit/screen.py's own functions to small
-        # inputs. The screen itself, which needs Lean for hours, is not run here.
+        # inputs. The screen itself needs Lean, takes minutes, and is not run here.
         run: python3 -I tests/test_screen.py
 
       - name: Check the limitations acceptance item P3 allows, case by case
@@ -289,8 +289,8 @@ jobs:
     # decisions page, docs/briefs/book-I.md, docs/program.toml, docs/reading.md and
     # facts.json) and run check_fidelity.py and render.py over the whole tree, so a pull
     # request that changes only content can still break them, and the next run shows it.
-    # The tests take about seven minutes and need Git with the whole history, but no Lean
-    # and no network: FullChecks, which needs Lean, is skipped without
+    # The tests need Git with the whole history, but no Lean and no network: FullChecks,
+    # which needs Lean, is skipped without
     # STOICHEIA_SLOW_TESTS=1, as it is anywhere. The pre-flight leaves this job to CI, and
     # main's ruleset does not require it; a failing run still holds the merge, for the
     # merge gate refuses while any check fails.

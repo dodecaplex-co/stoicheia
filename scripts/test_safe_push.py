@@ -2,7 +2,7 @@
 """Tests for scripts/safe_push.py, on a throwaway clone with a bare origin.
 
     python3 -m pip install -r scripts/requirements-test_safe_push.txt
-    python3 scripts/test_safe_push.py        # seven minutes or so; no Lean, no network
+    python3 scripts/test_safe_push.py        # no Lean, no network; timing in WORKFLOW section 8
     STOICHEIA_SLOW_TESTS=1 python3 scripts/test_safe_push.py FullChecks   # Lean, minutes
 
 The clone is made with `git clone --local --no-hardlinks` of this repository into a temporary

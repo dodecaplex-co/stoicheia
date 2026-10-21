@@ -325,7 +325,7 @@ python3 -I tests/test_check_acceptance.py   # CI's `acceptance` job: the compari
 # After lake build, lake build Audit and Facts.lean, the checklist run:
 python3 scripts/check_acceptance.py --output "${RUNNER_TEMP:-/tmp}/acceptance/report.md" --json "${RUNNER_TEMP:-/tmp}/acceptance/verdicts.json"
 python3 -m pip install -r scripts/requirements-test_safe_push.txt
-python3 scripts/test_safe_push.py      # CI's `safe-push-tests` job: seven minutes, no Lean
+python3 scripts/test_safe_push.py      # CI's `safe-push-tests` job: no Lean
 ```
 
 `RUNNER_TEMP` supplies GitHub Actions' temporary directory; the fallback writes under
@@ -357,8 +357,9 @@ push it is skipped. Those paths are not all the tests read: they also read conte
 `docs/reading.md` and `facts.json`) and run `check_fidelity.py` and `render.py` over the
 whole tree, so a pull request that changes only content can still break them, and the
 next run of the job shows it. The tests need Git with the whole history and the pinned
-PyYAML, but no Lean and no network, and take about seven minutes; `FullChecks`, the one
-test that needs Lean, is skipped without `STOICHEIA_SLOW_TESTS=1`, there as anywhere.
+PyYAML, but no Lean and no network. They take about seven minutes on a quiet machine and
+have taken 35 on a busy one; `FullChecks`, the one test that needs Lean, is skipped
+without `STOICHEIA_SLOW_TESTS=1`, there as anywhere.
 The job reads the repository with no other permission, and its checkout keeps no token.
 
 `scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on
@@ -366,8 +367,8 @@ the head commit of every pull request (section 10), so a change to them is made 
 and in the CI workflow. It leaves the `formal-model` job to CI on purpose, since it
 fetches Mathlib's prebuilt files
 ([model/README.md](../model/README.md#the-ci-job)), the `acceptance` job, since it builds
-main beside the pull request, and the `safe-push-tests` job, whose seven minutes would
-hold up every pre-flight. Its merge gate refuses when any reported check fails, is
+main beside the pull request, and the `safe-push-tests` job, whose full suite would hold
+up every pre-flight. Its merge gate refuses when any reported check fails, is
 cancelled or is still running, apart from the `release-gate` job of the "Release gate"
 workflow on an ordinary pull request, even if a run remains from before its `release`
 label was removed. It requires a passing run of each of the five checks that main's
@@ -438,7 +439,7 @@ The ruleset and the remaining merge requirements are in
   and no key; it checks, among other things, that the key appears in no output.
   `python3 -I tests/test_screen.py` puts the overlap screen's own functions
   (`Audit/screen.py`) to small inputs: the tries it makes and its reading of Lean's logs.
-  The screen itself needs Lean for hours and is not run by CI.
+  The screen itself needs Lean, takes minutes, and is not run by CI.
   `python3 -I tests/test_acceptance_limits.py` checks the limitations that acceptance item
   P3 allows against [ACCEPTANCE's table](ACCEPTANCE.md#the-limitations-allowed), and P3
   itself on review records varied in memory. The Jev question generator's tests,
