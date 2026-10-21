@@ -280,7 +280,8 @@ def check_fidelity() -> None:
 # digit, so that the `'` after one begins a character literal. A string just after one of
 # INTERPOLATED is read with its `{…}` holes, as Lean reads it.
 # An identifier's parts are joined by a `.` before a word character other than a digit:
-# Lean reads `p.1` as `p` and the field `.1`, its digits alone, after a single `.` (FIELD).
+# Lean reads `p.1` as `p` and the field `.1`, its digits alone, after a projection `.`
+# (FIELD).
 # A number ends where Lean 4.35's tokenizer ends it (its `numberFnAux`): binary, octal,
 # hexadecimal or decimal digits, `_` between them, and a decimal's point and exponent,
 # never a `..` after it. Lean reads `1set_option` as `1` and `set_option`, and
@@ -291,7 +292,7 @@ IDENT = re.compile(r"[^\W\d][\w'!?]*(?:\.[^\W\d][\w'!?]*)*")
 NUMBER = re.compile(r"0[bB](?:_*[01])+|0[oO](?:_*[0-7])+|0[xX](?:_*[0-9a-fA-F])+|"
                     r"[0-9](?:_*[0-9])*(?:(?!\.\.)\.(?:[0-9](?:_*[0-9])*)?)?"
                     r"(?:[eE][+-]?[0-9](?:_*[0-9])*)?")
-FIELD = re.compile(r"[0-9]+")
+FIELD = re.compile(r"[1-9][0-9]*")
 WORD = re.compile(r"\w")
 RAW = re.compile(r'r(#*)"')
 CHAR = re.compile(r"'(?:\\(?:x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|.)|[^\\\n'])'")
@@ -336,7 +337,7 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
     """Read Lean from `i` to the end or, in a hole, to the `}` that closes it, and return
     that offset. `marks` gains the text of each comment and literal ("text"), each «…»
     name ("name") and each string the scan cannot read for certain ("unsure")."""
-    depth, previous = 0, ""
+    depth, previous, can_project, field_dot = 0, "", False, False
     while i < len(src):
         c, j = src[i], i + 1
         if src.startswith("--", i):
@@ -351,30 +352,39 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
             marks.append(("text", i, j))
         elif c == '"':
             j, previous = _read_string(src, i, marks, previous in INTERPOLATED), c
+            can_project, field_dot = True, False
         elif m := RAW.match(src, i):
             close = '"' + m[1]
             k = _find(src, close, m.end())
             marks.append(("text", m.end(), k))
             j, previous = min(k + len(close), len(src)), c
+            can_project, field_dot = True, False
         elif c == "«":
             j = min(_find(src, "»", i) + 1, len(src))
             marks.append(("name", i, j))
             previous = src[i:j]
+            can_project, field_dot = True, False
         elif m := IDENT.match(src, i):
             j, previous = m.end(), m[0]
-        elif m := (FIELD if src[i - 1:i] == "." != src[max(i - 2, 0):i - 1]
-                   else NUMBER).match(src, i):
+            can_project, field_dot = True, False
+        elif m := ((FIELD.match(src, i) if field_dot else None) or NUMBER.match(src, i)):
             j, previous = m.end(), m[0]
             if WORD.match(src, j):
                 marks.append(("text", i, j))
+            can_project, field_dot = True, False
         elif c == "'" and src[j:j + 1] != "'" and (m := CHAR.match(src, i)):
             marks.append(("text", i + 1, m.end() - 1))
             j, previous = m.end(), c
+            can_project, field_dot = True, False
         elif c == "}" and hole and not depth:
             return i
         elif not c.isspace():
             depth += (c == "{") - (c == "}")
             previous = c
+            if c == ".":
+                field_dot, can_project = can_project, False
+            else:
+                can_project, field_dot = c in ")]}", False
         i = j
     return len(src)
 
