@@ -175,4 +175,18 @@ theorem Prop8 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D E
   -- If therefore etc.
   -- Q. E. D.
 
+/-- **Every law a derivation may cite holds**, each from its own proof: the seven of Book Zero
+(`Elements/Figure/Superposition.lean`) and I.7, by `Prop8.holds_prop7`. Through I.7 it rests
+on `Tacit.superposition`, the restricted rule itself, since I.7 cites I.5, which rests on I.4.
+I.8's proof does not use it: it proves the four laws it cites, case by case. -/
+theorem _root_.Elements.Superposition.Cited.holds_all : ∀ c : Cited, c.Holds primitives
+  | .lenSymm => Cited.holds_lenSymm
+  | .angleSymm => Cited.holds_angleSymm
+  | .areaCongruent => Cited.holds_areaCongruent
+  | .neOfLen => Cited.holds_neOfLen
+  | .rayUnique => Cited.holds_rayUnique
+  | .rayOfAngle => Cited.holds_rayOfAngle
+  | .rayOfAngleSide => Cited.holds_rayOfAngleSide
+  | .prop7 => Prop8.holds_prop7
+
 end Elements.BookI

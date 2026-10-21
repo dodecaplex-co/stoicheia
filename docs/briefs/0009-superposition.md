@@ -1,5 +1,18 @@
 # Brief 0009: a restricted rule of superposition
 
+*21 October 2026, #150, question 2: part 4 of the restriction is now a theorem.
+`Rule.Figure` is the statement of `Rule.infer` without its cited-law hypothesis, tied to the
+locked rule by `Rule.iff_figure`, and `Rule.Figure.restrict` proves that it passes to any part
+of an interpretation that keeps the primitive relations and the straight line through any two
+of its points (`Interpretation.Embedding`), a part that may lack every point the placement
+would use. `Cited.holds_all` gives every cited law in one statement. The restriction's
+theorems are pinned by their statements as well as their axioms, in
+[`Audit/Superposition.lean`](../../Audit/Superposition.lean). `Rule`, the lock and every
+statement are unchanged, and non-derivability stays unclaimed. Where round 4 below calls
+part 4 an inspection of
+`Rule.infer`, this note supersedes it; the lines that said so in the present tense are
+corrected in place.*
+
 *20 October 2026, round 4: the replacement lands on the answers to questions 2, 4 and 5
 that the owner approved "as prototyped", and their finishing is tracked in #150, which
 holds every release until it closes. This revision of brief 0009 follows
@@ -485,11 +498,12 @@ of retired axiom names, making 29 in all. The III.1 and III.1 Por. tacit counts 
 [`Restriction.lean`](../../Elements/Foundations/Superposition/Restriction.lean), with the
 syntax-only exportability results in
 [`Syntax.lean`](../../Elements/Foundations/Superposition/Syntax.lean) and `Rule.of_placement`
-in [`Soundness.lean`](../../Elements/Foundations/Superposition/Soundness.lean). The restriction, in five parts: parts 1, 2, 3 and 5
-are theorems; part 4 is read off the statement of `Rule.infer` as locked in
-`Certificate/axioms.lock`, and its one theorem is `Metric.holds_const`. The owner approved
-this statement, as prototyped, under question 2 on 20 October 2026; #150 tracks part 4 as
-a theorem.
+in [`Soundness.lean`](../../Elements/Foundations/Superposition/Soundness.lean). The restriction is in five parts, each a
+theorem. The owner approved this statement, as prototyped, under question 2 on 20 October
+2026, when part 4 was read off the statement of `Rule.infer` as locked in
+`Certificate/axioms.lock`; on 21 October 2026 part 4 became the theorem below (#150). Every
+theorem this section names is pinned by its statement in
+[`Audit/Superposition.lean`](../../Audit/Superposition.lean).
 
 1. **No symbol of the placement is exported.** `exportable_iff`: a formula of the placement
    is the image of an exportable conclusion exactly when every symbol in it is the figure's.
@@ -508,18 +522,35 @@ a theorem.
    `Cited.holds_iff`: every law asserts no existence. The separate claim about what a cited
    law's proof constructs is tied to the revision above; the owner accepted that reading,
    as prototyped, under question 4 on 20 October 2026, and #150 tracks its check.
-4. **No hypothesis assigns objects to the placement's fresh symbols.** The rule's hypotheses are the
-   cited laws (a fixed list, each a universal statement over its letters), the given facts
-   and the conclusion (data over the figure's numbered symbols, holding no point, no straight
-   line and no proposition), a derivation (over symbols, and before any valuation), and a
-   valuation of the figure's symbols that satisfies the guards and the given facts. B′, C′
-   and the side occur only as symbols inside the derivation; no hypothesis assigns those
-   fresh symbols a point or a straight line. The cited-law hypothesis ranges over all
-   points and straight lines, and the triangle guard quantifies over straight lines;
-   neither is restricted to the given figure's objects. This inspection does not prove
-   the preservation property requested in #150. `Metric.holds_const` proves that every metric formula holds when all its
-   point symbols denote one supplied point, given a line valuation. That valuation need
-   not satisfy the guards; this is no general theorem against classical witness recovery.
+4. **The rule's part about the figure asserts no placed point.** The rule's hypotheses are
+   the cited laws (a fixed list, each a universal statement over its letters), the given
+   facts and the conclusion (data over the figure's numbered symbols, holding no point, no
+   straight line and no proposition), a derivation (over symbols, and before any valuation),
+   and a valuation of the figure's symbols that satisfies the guards and the given facts.
+   B′, C′ and the side occur only as symbols inside the derivation; no hypothesis assigns
+   those fresh symbols a point or a straight line. Two hypotheses range over every point or
+   straight line of the interpretation, not only the given figure's, and so over wherever
+   B′ and C′ might be: the cited-law hypothesis, `∀ c ∈ cites, c.Holds I`, and the triangle
+   guard, that no straight line passes through the three corners. `Rule.Figure` is the
+   statement of `Rule.infer` without the cited-law hypothesis: the rule's part about the
+   figure. `Rule.iff_figure`: the rule holds in an interpretation exactly when its part
+   about the figure holds there for every list of laws that hold there, by the definitions
+   alone. `Rule.Figure.restrict`: if the part about the figure holds in an interpretation I,
+   it holds in every interpretation J embedded in I (`Interpretation.Embedding`), keeping
+   incidence, betweenness, sides and the equalities of lengths, angles and areas both ways,
+   distinct points distinct, and the straight line through any two of its points (a
+   straight line of I through two distinct points of J is one of J's, and a point of J on a
+   straight line of I is on one of J's). The guards and the given facts pass from J to I,
+   the triangle guard by the kept straight lines, and the conclusion comes back. Nothing
+   asks that J have the points B′ and C′ would go to, so the part about the figure asserts
+   no placed point. The cited-law hypothesis is what the theorem leaves out. It contributes
+   the laws, assumed of every point and straight line of I, and it is the one hypothesis
+   that does not pass from J to I, since a law true of every point of J need not be true
+   of every point of I. So the rule in I gives the part about the figure in J only for laws
+   that hold in I. `Metric.holds_const` remains a warning: every metric formula holds when
+   all its point symbols denote one supplied point, given a line valuation, but that
+   valuation never meets the guards, since it puts D and G at one point, and it is no
+   theorem against classical witness recovery.
 5. **No stronger than laying a triangle down.** `Rule.of_placement`: if every triangle can be
    laid down with the former rule's properties and a straight line through D and C′ for
    its side AC, then `Rule I` holds. Its proof uses `propext` and `Quot.sound` alone.
@@ -642,31 +673,39 @@ Astra names three kinds. Their state on the delivered branch:
    as witnesses, nor take construction steps in the placement. *Done in the five parts
    above*, for the symbolic calculus. The owner accepted this statement of the restriction,
    as prototyped, under question 2 on 20 October 2026, with part 4's limits retained;
-   #150 tracks part 4 as a theorem.
+   part 4 has been a theorem since 21 October 2026 (#150).
 3. **A carefully scoped non-derivability result, if claimed.** *Not claimed.* A route, for
    whoever takes it up. Besides its hypotheses about the figure, an instance of `Rule`
    assumes that each cited law holds, `∀ c ∈ cites, c.Holds I`; that hypothesis quantifies
    over every point and straight line, not only the figure's, and in hypothesis position it
    is not a statement about the figure alone. But every law in `Cited` is true in the plane
    outright, I.7's included, so in the plane each instance of `Rule` reduces to its part
-   about the figure. That part speaks only of the figure's points and straight lines, and
-   its only existential, "some straight line passes through A, B and C", stands negated, in
-   the hypothesis that ABC is a triangle. So that part, true in the plane, stays true in any
-   part of the plane that keeps the straight line through any two of its points and the same
-   lengths, angles and areas. Take the points with rational coordinates, the straight
-   lines through two of them, and real magnitudes: the laws that do not mention circles
-   appear to hold there, and so does every instance of `Rule`; but the triangle with corners
-   (0, 0), (1, 0), (0, 1) cannot be laid along the ray from (0, 0) through (1, 1), for B′
-   would be (1/√2, 1/√2). Checked law by law and proved in `model/`, that would show the
-   restricted rule does not give the placement from the laws that do not mention circles.
-   Until then, nothing is claimed.
+   about the figure (`Rule.iff_figure`). In the edition, `Cited.holds_all` proves every law
+   in one statement, though through I.7 it rests on `Tacit.superposition` itself. That part
+   speaks of the figure's points and straight lines, save that its only existential, "some
+   straight line passes through A, B and C", stands negated, in the hypothesis that ABC is a
+   triangle, which ranges over every straight line. So that part, true in the plane, stays
+   true in any part of the plane that keeps the straight line through any two of its points
+   and the same lengths, angles and areas: this half of the route is now a theorem,
+   `Rule.Figure.restrict`, for any interpretation and any part of it in the sense of
+   `Interpretation.Embedding`, which keeps incidence, betweenness and sides as well, and
+   distinct points distinct. Take the points with
+   rational coordinates, the straight lines through two of them, and real magnitudes: the
+   laws that do not mention circles appear to hold there, and so does every instance of
+   `Rule`; but the triangle with corners (0, 0), (1, 0), (0, 1) cannot be laid along the ray
+   from (0, 0) through (1, 1), for B′ would be (1/√2, 1/√2). The other half remains: the
+   laws that do not mention circles, checked law by law in that part, and the whole proved
+   in `model/`. That would show the restricted rule does not give the placement from those
+   laws. Until then, nothing is claimed.
 
 A failed compilation of `Audit.I_23` against the new rule is a useful regression signal,
 and establishes none of the third kind by itself (Astra).
 
-The production evidence is pinned by 27 dependency checks in
+The production evidence is pinned by 30 dependency checks in
 [`Audit/Superposition.lean`](../../Audit/Superposition.lean), covering I.4 and I.8,
-soundness, the placement reduction, restriction results, cited-law proofs and I.7's adapter.
+soundness, the placement reduction, restriction results, cited-law proofs, I.7's adapter
+and every cited law in one statement. The restriction's theorems and warnings and
+`Cited.holds_all` are pinned by their statements too, and part 4's two definitions whole.
 The 13 surviving overlap proofs are retained with A1's revised axiom pins. The exact validation evidence
 and remaining landing work are recorded below.
 
@@ -733,8 +772,9 @@ vocabulary entries and 29 certificate expectations. The older measurements above
 validate that result.
 
 It does not prove equivalence with System E's two-rule presentation, or non-derivability of
-placement in the whole theory. Part 4 of the restriction remains chiefly an inspection of
-the rule's hypotheses; `Metric.holds_const` does not settle classical recovery of witnesses.
+placement in the whole theory. Part 4 of the restriction is a theorem about the rule
+without its cited-law hypothesis; neither it nor `Metric.holds_const` settles classical
+recovery of witnesses.
 The owner approved questions 2, 4 and 5 as prototyped on 20 October 2026, together with the
 four pure module imports and the page claim; finishing the three answers is tracked in
 #150. Landing has the conditions below.
@@ -880,8 +920,8 @@ from round 2. The other items record the delivered design or the continuing proc
    statement as prototyped: parts 1, 2, 3 and 5 are theorems; part 4 is a reading of
    `Rule.infer`, with `Metric.holds_const` its limited satisfiability theorem.
    No further formal statement or separating model is a condition of this approval;
-   whole-theory non-derivability is not claimed. Until #150 proves part 4, it stays an
-   inspection of `Rule.infer` as locked.
+   whole-theory non-derivability is not claimed. Part 4 has been a theorem since
+   21 October 2026 (`Rule.Figure.restrict`, #150).
 3. **The symbols' front end.** The delivered rule uses `Fin n` and `Fin m`; `Symbols` and
    `Rule.apply` let proofs name their letters. The alternative would quantify over any
    vocabulary with `Symbols` in the axiom itself. No such change is proposed here.
