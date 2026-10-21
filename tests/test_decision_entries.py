@@ -413,6 +413,9 @@ class RenderLeavesTheRecord(unittest.TestCase):
         words = [f"entry-{uuid.uuid4().hex}" for _ in range(2)]
         with count_source_copy() as (root, env):
             folder = root / "docs" / "decisions"
+            baseline = {path: path.read_bytes() for path in folder.iterdir()
+                        if path.is_file()}
+            baseline_entries = [path for path in baseline if path.name != "README.md"]
             entries = {
                 folder / "2026-10-22-render-first.md":
                     f"- **A first decision for the test ({words[0]}).** It links "
@@ -432,9 +435,10 @@ class RenderLeavesTheRecord(unittest.TestCase):
             result = subprocess.run([sys.executable, "scripts/render.py"], cwd=root, env=env,
                                     capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn(f"decision entries: {len(entries)} checked in docs/decisions/",
-                          result.stdout)
+            self.assertIn(f"decision entries: {len(baseline_entries) + len(entries)} checked "
+                          "in docs/decisions/", result.stdout)
             self.assertIn("rendered book pages", result.stdout)
+            self.assertEqual({path: path.read_bytes() for path in baseline}, baseline)
             self.assertEqual({path: path.read_bytes() for path in record}, before)
             self.assertEqual(sorted(os.listdir(folder)), names)
             holding = sorted(path.relative_to(root).as_posix() for path in root.rglob("*")
