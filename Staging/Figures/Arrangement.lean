@@ -4,19 +4,21 @@ import Staging.Figures.ConvexArea
 import Staging.Figures.ArrangementFacts
 import Staging.Figures.CoverFacts
 import Staging.Figures.Diagonal
+import Staging.Figures.DivisionFacts
 
 /-!
 # Staging: from side lines to a division of an outline
 
-Internal statements for brief 0013, all awaiting their own proofs. The convex
-precursors make the proposed dependency order explicit. Regular rays and their parity are `good_ray_exists` and
-`crossing_parity_independent` in `Outline.lean`.
+Internal statements for brief 0013, with their proofs. The convex precursors make the
+proposed dependency order explicit. Regular rays and their parity are `good_ray_exists` and
+`crossing_parity_independent` in `Outline.lean`. No proposition of the Elements is cited;
+through `Outline.lean` this file imports I.23, which only `outline_bounded` uses.
 
 The recommended division route selects cells of a finite arrangement. The first two
 diagonal statements below describe splits joining original corners.
 `simple_triangulation` asserts division existence without restricting the triangle
-vertices; the arrangement route can also supply that conclusion. A proof that cites Book I must move to a shared Book I module after its
-latest cited proposition, as brief 0013 requires.
+vertices, and the arrangement route proves it. A proof that cites Book I must move to a
+shared Book I module after its latest cited proposition, as brief 0013 requires.
 -/
 
 namespace Elements.Figures
@@ -121,22 +123,10 @@ theorem convex_enclosure (ps : List Point)
     (h : ∃ A ∈ ps, ∃ B ∈ ps, ∃ C ∈ ps, Triangle A B C) :
     ∃ P : ConvexCell, ∀ V ∈ ps, P.region V := by
   /- Begin with the triangle, a convex outline, and add the points one after another
-  (`Arr.insert_point`): each time, a convex outline holding the region before and the new
-  point. Its corners need not be among the points. -/
+  (`Arr.enclose_list`, by `Arr.insert_point`): each time, a convex outline holding the region
+  before and the new point. Its corners need not be among the points. -/
   obtain ⟨A, -, B, -, C, -, hABC⟩ := h
-  have grow : ∀ qs : List Point, ∃ ds : List Point, ConvexOutline ds ∧
-      ∀ V ∈ qs, ConvexRegion ds V := by
-    intro qs
-    induction qs with
-    | nil => exact ⟨[A, B, C], Ext.triangle_outline hABC, fun V hV => absurd hV List.not_mem_nil⟩
-    | cons V qs ih =>
-      obtain ⟨cs, hcs, hqs⟩ := ih
-      obtain ⟨ds, hds, hin, hV⟩ := Arr.insert_point hcs V
-      refine ⟨ds, hds, fun U hU => ?_⟩
-      rcases List.mem_cons.mp hU with rfl | hU
-      · exact hV
-      · exact hin U (hqs U hU)
-  obtain ⟨ds, hds, hps⟩ := grow ps
+  obtain ⟨ds, hds, -, hps⟩ := Arr.enclose_list ps (Ext.triangle_outline hABC)
   exact ⟨⟨ds, hds⟩, hps⟩
 
 /-- An outline's whole region lies strictly inside an enclosing cell. -/
@@ -155,7 +145,7 @@ theorem outline_enclosure (F : Outline) :
   point inside is inside some contour; were it outside the cell's region, a good ray from it
   would cross no side of that contour (`Arr.outside_ray`), an even count, while being inside
   gives a good ray with an odd count: two good rays from one point have one parity
-  (`crossing_parity_independent`, a staged statement whose proof is due). -/
+  (`crossing_parity_independent`). -/
   have hin : ∀ X : Point, F.region X → P₀.region X := by
     rintro X (⟨ps, hps, s, hs, hX⟩ | ⟨-, hd⟩)
     · have h₁ := hP₀ _ (hm hps (LoopFacts.side_mem hs).1)
@@ -301,8 +291,8 @@ theorem outline_cells_cover (F : Outline) (P : ConvexCell)
       obtain ⟨W, hW, hWY⟩ := CoverFacts.cell_point F hs (hl Q hQ) hY.1 hQY
       exact ⟨Q, (hmem Q).mpr ⟨hQ, W, hW, hWY.mpr hY⟩, hp2 Y hYp Q hQ hQY⟩
     · /- A kept cell's inside is inside the figure throughout (`outline_cell_constant`). A
-      point of its closed region off the boundary has a point of its inside within the same
-      contours (`cell_point`), so it is inside the figure too. -/
+      point of its closed region off the boundary has a point of its inside that is inside the
+      figure exactly when it is (`cell_point`), so it is inside the figure too. -/
       rintro ⟨Q, hQ, hQX⟩
       obtain ⟨hQ, Z, hZ, hZi⟩ := (hmem Q).mp hQ
       by_cases hb : F.boundary X
@@ -328,9 +318,11 @@ theorem simple_diagonal {ps : List Point} (h : SimpleLoop ps) (hn : 4 ≤ ps.len
       ps.rotateLeft n = A :: (us ++ B :: vs) ∧ us ≠ [] ∧ vs ≠ [] ∧
         ∀ X : Point, Between A X B → loopInside ps X := by
   /- An extreme corner V, with every other corner strictly across a straight line through it,
-  has neighbours U and W. Either UW is an interior diagonal (an ear), or a corner nearest V
-  within the triangle VUW is joined to V by one (`Diag.diagonal_exists`). Two corners that
-  are not neighbours split the loop read from one of them (`Diag.diagonal_rotate`). -/
+  has neighbours U and W. Either UW is an interior diagonal (an ear), or a corner in the
+  triangle VUW (inside it, or strictly between U and W), on a straight line across V that cuts
+  off a triangle with no corner inside it, is joined to V by one (`Diag.diagonal_exists`). Two
+  corners that are not neighbours split the loop read from one of them
+  (`Diag.diagonal_rotate`). -/
   obtain ⟨A, hA, B, hB, hAB, h₁, h₂, hd⟩ := Diag.diagonal_exists h hn
   obtain ⟨n, us, vs, he, hu, hv⟩ := Diag.diagonal_rotate h.2.1 hA hB hAB h₁ h₂
   exact ⟨n, A, B, us, vs, he, hu, hv, hd⟩
@@ -439,8 +431,8 @@ theorem simple_diagonal_partition {A B : Point} {us vs : List Point}
     exact ⟨Or.inl ((hbP X).mpr (Or.inr hX)),
       Or.inl ((hbQ X).mpr (Or.inr (LoopFacts.onFiniteLine_comm.mp hX)))⟩
 
-/-- A simple outline admits a division. The arrangement route also supplies
-this conclusion; the optional diagonal route proves it by splitting the outline. -/
+/-- A simple outline admits a division. The arrangement route proves it; the optional
+diagonal route, splitting the outline along interior diagonals, could prove it too. -/
 theorem simple_triangulation {ps : List Point} (h : SimpleLoop ps) :
     ∃ R : Apart, Divides (loopRegion ps) R := by
   /- The arrangement route (ledger D9), not the diagonal route: the one-contour outline of

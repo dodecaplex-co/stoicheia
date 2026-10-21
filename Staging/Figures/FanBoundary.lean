@@ -4,9 +4,10 @@ import Staging.Figures.CoverFacts
 # Staging: the outline of the checked fan of I.45
 
 Helper lemmas for `Prop45.fan_boundary` in `BookI.lean` (brief 0013, section 8, the
-"E2 bridge" of the lemma ledger). No proposition of the Elements is cited here, and no
-statement still awaiting its proof; `Fitted.fan`, which cites I.13, is applied only in
-`BookI.lean`, and these lemmas take what it proves as a hypothesis.
+"E2 bridge" of the lemma ledger). No proposition of the Elements is cited here; through
+`Outline.lean` this file imports I.23, which only `outline_bounded` uses. `Fitted.fan`, which
+cites I.13, is applied only in `BookI.lean`, and these lemmas take what it proves as a
+hypothesis.
 
 The fan's triangles O A₁ A₂, O A₂ A₃, …, O Aₙ₋₁ Aₙ are laid round O one at a time.
 
@@ -16,9 +17,9 @@ The fan's triangles O A₁ A₂, O A₂ A₃, …, O Aₙ₋₁ Aₙ are laid ro
 * **Gluing a triangle onto an outline** (`glue`). Let the outline run from O round to Z and
   close along ZO, and let the triangle O Z W meet its region only on the finite straight line
   OZ. Replacing the side ZO by ZW and WO keeps the outline simple, and its region gains the
-  closed triangle and nothing else. A good ray crosses the new outline and the triangle
-  together as often as the old outline, up to the side ZO counted twice; a point of the
-  region and of the triangle at once would be on OZ. A point strictly within OZ is joined,
+  closed triangle and nothing else. A good ray crosses the old outline and the triangle
+  together as often as the new outline, with ZO counted twice more; a point of the region and
+  of the triangle at once would be on OZ. A point strictly within OZ is joined,
   along a finite straight line through no corner, to a point inside the triangle
   (`CoverFacts.inside_of_segment`).
 * **The whole fan** (`fan_chain`, `fan_loop`). From the triangle O A₁ A₂ (`triangle_region`),

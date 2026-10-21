@@ -107,7 +107,8 @@ theorem triangle_outline {A B C : Point} (h : Triangle A B C) :
   · intro s hs P hP Q hQ hP₁ hP₂ hQ₁ hQ₂
     have self {D E F : Point} (ht : Triangle D E F) : SameSideOf F F D E := by
       exact ⟨ht.ne₁₂, fun L hD hE => same_side_refl (ht.off_line hD hE)⟩
-    simp only [sides, List.cons_append, List.nil_append, segments, List.mem_cons, List.not_mem_nil] at hs
+    simp only [sides, List.cons_append, List.nil_append, segments, List.mem_cons,
+      List.not_mem_nil] at hs
     rcases hs with hs | hs | hs | hs <;> try contradiction
     all_goals subst s
     · have hp : P = C := by simpa [hP₁, hP₂] using hP

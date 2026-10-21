@@ -5,9 +5,9 @@ import Staging.Figures.Parity
 
 Helper lemmas for `region_with_holes`, `outline_boundary`, `same_boundary_region`,
 `outline_normalise` and `outline_bounded` in `Outline.lean` (brief 0013, section 8, "Ray parity
-and the region"). No proposition of the Elements is cited, no statement still awaiting its
-proof, and neither Postulate 5 nor superposition. What `outline_bounded` needs beyond this file,
-a triangle holding every corner, needs Postulate 5 and I.23, and is in `OutlineBound.lean`.
+and the region"). No proposition of the Elements is cited, and neither Postulate 5 nor
+superposition is used. What `outline_bounded` uses beyond this file, a triangle holding every
+corner, is found with Postulate 5 and I.23 in `OutlineBound.lean`.
 
 * **Sides of finitely many straight lines.** A point off a finite straight line has a straight
   line between them (`sep_segment`); so a point off every side of a loop has finitely many

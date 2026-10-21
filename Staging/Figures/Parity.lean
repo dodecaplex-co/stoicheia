@@ -4,8 +4,7 @@ import Staging.Figures.LoopFacts
 # Staging: two good rays give one parity
 
 Helper lemmas for `crossing_parity_independent` (brief 0013, D3) and `loop_normalise` (D4)
-in `Outline.lean`. No proposition of the Elements is cited, and no statement still awaiting
-its proof.
+in `Outline.lean`. No proposition of the Elements is cited.
 
 The route compares the two rays through the angle between them, rather than through a fan.
 Let the rays from X run through Q and through R, not on one straight line, and call a point

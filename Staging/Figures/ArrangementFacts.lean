@@ -6,8 +6,8 @@ import Staging.Figures.ConvexArea
 # Staging: helpers for the diagonals, the enclosure and the arrangement
 
 Helper lemmas for `Arrangement.lean` (brief 0013, section 8, "The arrangement and general
-division"; D2, D8 and the enclosure of D9). No proposition of the Elements is cited,
-and no statement still awaiting its proof; neither Postulate 5 nor superposition is used.
+division"; D2, D8 and the enclosure of D9). No proposition of the Elements is cited, and
+neither Postulate 5 nor superposition is used.
 
 * **A point added to a convex outline.** A point outside a convex outline, and off every
   side's straight line, is strictly beyond some sides and strictly within others: were it
@@ -20,7 +20,7 @@ and no statement still awaiting its proof; neither Postulate 5 nor superposition
 * **A ray that crosses nothing.** From a point outside a convex region holding every corner
   of a loop, a ray leaving the region's side line behind crosses no side of the loop
   (`outside_ray`).
-* **Cells cut by a straight line**, keeping both pieces (`cut_all`).
+* **Cells cut by a straight line**, keeping both pieces (`cut_cells`).
 
 With thanks to David Hilbert, whose theory of content guides this route.
 -/

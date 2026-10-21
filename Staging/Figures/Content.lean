@@ -4,9 +4,9 @@ import Staging.Figures.ContentFacts
 /-!
 # Staging: the content of a figure does not depend on its division
 
-The central statement of brief 0013 (a draft for the owner's approval), with `sorry` where
-its proof is due: two divisions of a figure into triangles that lie apart, whose triangles
-cover the same points, have the same sum. The figure may have holes, touch itself at a
+The central statement of brief 0013 (a draft for the owner's approval), with its proof: two
+divisions of a figure into triangles that lie apart, whose triangles cover the same points,
+have the same sum. The figure may have holes, touch itself at a
 corner, or be in pieces; the triangles may meet a side of another at a corner of their own.
 Euclid takes it for granted under I.45; David Hilbert proved it, for the measure of area he
 builds from his axioms (*The Foundations of Geometry*, chapter IV, section 20).

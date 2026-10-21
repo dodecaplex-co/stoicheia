@@ -7,9 +7,9 @@ import Elements.BookI.Prop23
 Helper lemmas for `outline_bounded` in `Outline.lean` (brief 0013, section 8): finitely many
 points lie within some triangle. `bounded_of_enclosure`, in `OutlineFacts.lean`, does the rest.
 The statement can fail without Postulate 5, which enters here, and an angle is copied by I.23,
-the one proposition of the Elements these helpers cite (by the coordinator's leave). I.23
-reaches superposition only through I.4 and I.8, the two places FORMALIZATION (section 7) allows
-it; nothing here names superposition. No statement still awaiting its proof is cited.
+the one proposition of the Elements these helpers cite. I.23 reaches superposition only
+through I.4 and I.8, the two places FORMALIZATION (section 7) allows it; nothing here names
+superposition.
 
 * **Finitely many points in one angle.** Finitely many points lie on one side of a straight
   line (`line_one_side`), so within an angle at a point beyond it (`cone_of_line`); these need
@@ -41,9 +41,8 @@ theorem mag_lt_of_lt_of_le {k : Kind} {a b c : Magnitude k} (h₁ : a < b) (h₂
   · exact absurd h₁ h₂
   · exact absurd (Tacit.lt_trans h h₁) h₂
 
-/-- **An angle of a triangle is less than two right angles**: produced beyond `C`, the
-straight line `AC` makes with `BA` a greater angle at `B`, and no angle exceeds two right
-angles. -/
+/-- **An angle of a triangle is less than two right angles.** Produce AC beyond C to E: the
+angle ABE is greater than the angle ABC, and no angle exceeds two right angles. -/
 theorem angle_lt_two_right {A B C : Point} (h : Triangle A B C) : ∠ A B C < ∟ + ∟ := by
   obtain ⟨E, hACE⟩ := produce h.ne₁₃
   obtain ⟨L, hA, hC⟩ := Postulate1 A C h.ne₁₃
@@ -188,7 +187,8 @@ theorem cone_side {O B C B'' C'' : Point} (hOBC : Triangle O B C) (hB : Between 
   obtain ⟨Y, hYm, hYC, hYB⟩ : ∃ Y, OnLine Y m ∧ SameSide Y C LB ∧ SameSide Y B LC := by
     by_cases hX : OnLine X m
     · exact ⟨X, hX, hXC', hXB'⟩
-    · obtain ⟨Y, hY, hOYX⟩ := OppositeSides.exists_between ⟨hOm, hX, fun hs => hn (same_side_symm hs)⟩
+    · obtain ⟨Y, hY, hOYX⟩ :=
+        OppositeSides.exists_between ⟨hOm, hX, fun hs => hn (same_side_symm hs)⟩
       have hray : OnRay Y O X := OnRay.of_between hOYX
       exact ⟨Y, hY, (SameSideOf.of_onRay hray hXC).sameSide hO_B hB_B,
         (SameSideOf.of_onRay hray hXB).sameSide hO_C hC_C⟩

@@ -7,8 +7,11 @@ import Elements.Figure.Sides
 import Elements.Figure.Angles
 
 /-!
-The boundary bridges proposed by brief 0013. Their own proofs await approval.
-No proposition of the Elements is imported.
+The boundary bridges proposed by brief 0013, with their proofs.
+Only `outline_bounded` cites a proposition of the Elements: its enclosing triangle
+(`OutlineBound.lean`) copies an angle by I.23 and uses Postulate 5, so this file imports I.23
+and the propositions it rests on. The other statements cite no proposition and rest on
+neither Postulate 5 nor superposition.
 -/
 
 namespace Elements.Figures

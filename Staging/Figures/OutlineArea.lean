@@ -4,19 +4,20 @@ import Elements.Figure.Sums
 
 /-!
 The area of an outline proposed by brief 0013, using the content theorem.
-The interface derivations below remain conditional on the stubs.
-No proposition of the Elements is imported.
+No proposition of the Elements is cited; through `Outline.lean` this file imports I.23, which only
+`outline_bounded` uses.
 -/
 
 namespace Elements.Figures
 
-/-- An area selected from divisions of the outline. Existence and uniqueness
-must be proved before this is used as the area of a figure. -/
+/-- An area selected from divisions of the outline. A division exists (`division_exists`)
+and any two have the same sum (`divisions_equal`), so every division gives this area
+(`area_eq`). -/
 noncomputable def Outline.area (F : Outline) : Area :=
   Classical.epsilon fun a : Area => ∃ R : Apart, Divides F.region R ∧ R.area = a
 
 /-- Two divisions of an outline have the same sum.
-This is an interface derivation from the unproved content theorem. -/
+This follows from the content theorem (`Apart.area_eq_of_same_region`). -/
 theorem divisions_equal (F : Outline) (R S : Apart)
     (hR : Divides F.region R) (hS : Divides F.region S) : R.area = S.area := by
   exact Apart.area_eq_of_same_region R S (fun X => (hR X).trans (hS X).symm)
@@ -30,21 +31,23 @@ theorem area_eq (F : Outline) (R : Apart) (hR : Divides F.region R) :
   obtain ⟨T, hT, ht⟩ := Classical.epsilon_spec hex
   exact ht.symm.trans (divisions_equal F T R hT hR)
 
-/-- The area depends only on the region. This derivation still rests on stubs. -/
+/-- The area depends only on the region: a division of one region divides the other
+(`division_exists`, `area_eq`). -/
 theorem area_congr (F G : Outline)
     (h : ∀ X : Point, F.region X ↔ G.region X) : F.area = G.area := by
   obtain ⟨R, hR⟩ := division_exists F
   have hG : Divides G.region R := fun X => (hR X).trans (h X)
   exact (area_eq F R hR).trans (area_eq G R hG).symm
 
-/-- Reading the same boundary another way leaves its area unchanged.
-This derivation still rests on the boundary and content stubs. -/
+/-- Reading the same boundary another way leaves its area unchanged: the same boundary has
+the same region (`same_boundary_region`), and so the same area (`area_congr`). -/
 theorem area_of_same_boundary (F G : Outline)
     (h : ∀ X : Point, F.boundary X ↔ G.boundary X) : F.area = G.area :=
   area_congr F G (same_boundary_region F G h)
 
-/-- A strictly convex outline has its explicit fan sum for area. This derivation
-still depends on the staged boundary, coverage and content theorems. -/
+/-- A strictly convex outline has its explicit fan sum for area: the fan divides its region
+(`convex_fan`), which is the outline's region (`convex_loop_region`), so the fan's sum is the
+area (`area_eq`). -/
 theorem convex_fan_area {cs : List Point} (h : ConvexOutline cs) :
     (singleOutline cs (convex_loop_region h).1).area = fanSum cs := by
   obtain ⟨R, hp, hd⟩ := convex_fan h

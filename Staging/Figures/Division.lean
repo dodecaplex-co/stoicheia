@@ -7,8 +7,10 @@ import Staging.Figures.Extract
 import Elements.Figure.Rectilineal
 
 /-!
-Division statements proposed by brief 0013. Their own proofs await approval.
+Division statements proposed by brief 0013, with their proofs.
 The supplied Outline never contains a division witness.
+No proposition of the Elements is cited; through `Outline.lean` this file imports I.23,
+which only `outline_bounded` uses.
 -/
 
 namespace Elements.Figures
@@ -31,8 +33,8 @@ theorem division_exists (F : Outline) : ∃ R : Apart, Divides F.region R := by
   obtain ⟨R, -, hR⟩ := DivisionFacts.cells_division rs hne (List.Pairwise.sublist hsub ha)
   exact ⟨R, fun X => (hR X).trans (hcov X).symm⟩
 
-/-- The explicit fan divides a strictly convex outline. This interface derivation
-uses the staged triangle, separation and coverage theorems. -/
+/-- The explicit fan divides a strictly convex outline: its pieces are triangles
+(`fan_triangle`), they lie apart (`fan_apart`), and they cover the region (`fan_covers`). -/
 theorem convex_fan {cs : List Point} (h : ConvexOutline cs) :
     ∃ R : Apart, R.pieces = fan cs ∧ Divides (ConvexRegion cs) R := by
   have hne : fan cs ≠ [] := by
@@ -52,8 +54,10 @@ theorem apart_has_outline (R : Apart) : ∃ F : Outline, Divides F.region R := b
   /- Cut the sides at the corners; the elementary lines along one triangle only, grouped by
   linked triangles, are even in number at every corner of each group, so they are the sides of
   simple contours (`Extract.cycles`). A contour lies wholly inside or outside another, off it,
-  since it has one status on linked closed triangles (`Extract.linked_status`), so contours are
-  compatible; off the sides, crossing parity counts the triangles (`Extract.parity_at`). -/
+  since the other contour has one inside-status on all the closed triangles of a class
+  (`Extract.linked_status`), and the first lies on closed triangles of its own class; so
+  contours are compatible. Off the sides, crossing parity counts the triangles
+  (`Extract.parity_at`). -/
   exact Extract.apart_outline R
 
 end Elements.Figures

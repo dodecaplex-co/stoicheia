@@ -8,7 +8,8 @@ preserves the sum. Successive changes compare fans based at consecutive corners.
 David Hilbert's theory of content provides the classical route, which we
 gratefully acknowledge, together with the contributions of Gérard, F. Schur and
 O. Stolz recorded in brief 0006. Here the comparison is between vertex fans;
-independence from arbitrary divisions into triangles remains a further step.
+independence from arbitrary divisions into triangles is the content theorem's further step
+(`Apart.area_eq_of_same_region`, in `Content.lean`).
 -/
 
 namespace Elements.Figures
