@@ -30,17 +30,19 @@ section; nothing else in the file changes.
 `--migrate-text` is for the records stamped before `text` was introduced. It
 writes `text` alone, and only for a record whose own stamp `commit` is in the history of
 HEAD and whose text at that commit is its text now: what the reviewer read is then what
-the record says, so the stamp records no new reading. Every other record is listed as
-needing a reader, who reads it and stamps it with `--commit` (docs/WORKFLOW.md, section
-6). It reads the records' history with git, so it needs a clone with that history; it
-changes nothing it cannot confirm, and it can be run again at any time, as at landing,
-after branches that change records.
+the record says, so the stamp records no new reading. A record whose text cannot be
+confirmed is listed as needing a reader. A stamp commit absent from this clone or
+abbreviating more than one commit is instead a problem: fetch the missing history, or
+identify the intended commit without guessing and record enough of its id to distinguish
+it, then run the migration again. It changes nothing it cannot confirm, and it can be run
+again at any time, as at landing, after branches that change records.
 
 Run it after `lake env lean Certificate/Facts.lean`. Standard library only; reading
 the records needs Python 3.11 or later (tomllib).
 """
 
 import argparse
+import functools
 import json
 import re
 import subprocess
@@ -82,21 +84,36 @@ def set_stamp(text: str, section: str, key: str, value: str) -> str:
     return "\n".join(lines)
 
 
-NOT_ONE = ("is not one commit of this clone (a shallow clone, or a commit never fetched; or "
-           "an abbreviation of more than one, or a branch or tag of that name)")
+NO_COMMIT = "is not a commit of this clone (a shallow clone, or a commit never fetched)"
+AMBIGUOUS_COMMIT = "abbreviates more than one commit of this clone"
 
 
-def resolve(commit: str) -> str | None:
-    """The full id of the commit that `commit` names, or None when it names no commit of
-    this clone (a shallow clone, or a commit never fetched), or more than one, or when git
-    reads it first as a branch or tag of that name: the full id must start with it."""
+@functools.lru_cache
+def commit_objects(root: Path) -> tuple[str, ...]:
+    """The full ids of all commit objects in the object store at `root`."""
     try:
-        out = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"{commit}^{{commit}}"],
-                             cwd=ROOT, capture_output=True, text=True, check=True)
+        out = subprocess.run(
+            ["git", "cat-file", "--batch-all-objects",
+             "--batch-check=%(objectname) %(objecttype)", "--unordered"],
+            cwd=root, capture_output=True, text=True, check=True)
     except (OSError, subprocess.CalledProcessError):
-        return None
-    full = out.stdout.strip()
-    return full if full.startswith(commit) else None
+        return ()
+    return tuple(line.split()[0] for line in out.stdout.splitlines()
+                 if line.endswith(" commit") and len(line.split()) == 2)
+
+
+def resolve(commit: str) -> tuple[str | None, str | None]:
+    """Resolve a hexadecimal commit prefix independently of refs.
+
+    Returns its one matching full commit id and no problem, or no id and a diagnostic
+    when this clone has no matching commit object or has more than one.
+    """
+    matches = [full for full in commit_objects(ROOT) if full.startswith(commit)]
+    if not matches:
+        return None, NO_COMMIT
+    if len(matches) != 1:
+        return None, AMBIGUOUS_COMMIT
+    return matches[0], None
 
 
 def in_history(commit: str) -> bool:
@@ -111,7 +128,7 @@ def in_history(commit: str) -> bool:
 def show_at(commit: str, path: Path) -> bytes | None:
     """The file at `path` as it stands in `commit`, read by the commit's full id (resolve),
     or None when the commit or the file is not to be found there."""
-    full = resolve(commit)
+    full, _ = resolve(commit)
     if full is None:
         return None
     try:
@@ -183,8 +200,9 @@ def stamp(facts: dict, book: str, n: int, commit: str | None, dry_run: bool) -> 
     if (changes or "commit" not in rv) and commit is None:
         why = f"{ref}: its stamps change ({'; '.join(changes) or 'no commit yet'}): "
         ask = "name the commit whose files you read with --commit"
-        full = resolve(rv["commit"]) \
-            if "text" not in rv and "commit" in rv and len(changes) == 1 else None
+        full = None
+        if "text" not in rv and "commit" in rv and len(changes) == 1:
+            full, _ = resolve(rv["commit"])
         then = text_at(full, path) if full is not None and in_history(full) else None
         if then == own:
             raise ValueError(why + ask + "; or, as it was stamped before `text` was, write "
@@ -195,11 +213,16 @@ def stamp(facts: dict, book: str, n: int, commit: str | None, dry_run: bool) -> 
                              "it with --commit (docs/WORKFLOW.md, section 6)")
         raise ValueError(why + ask)
     if commit is not None:
-        full = resolve(commit)
-        if full is None or not in_history(full):
-            raise ValueError(f"{ref}: {commit} "
-                             + (NOT_ONE if full is None else "is not in the history of HEAD")
-                             + ": stamp with the commit whose files you read, on this branch")
+        full, problem = resolve(commit)
+        if full is None:
+            recovery = ("fetch the missing history" if problem == NO_COMMIT else
+                        "identify the intended commit without guessing and use enough of its "
+                        "id to distinguish it")
+            raise ValueError(f"{ref}: {commit} {problem}: {recovery}, then stamp with the "
+                             "commit whose files you read, on this branch")
+        if not in_history(full):
+            raise ValueError(f"{ref}: {commit} is not in the history of HEAD: stamp with the "
+                             "commit whose files you read, on this branch")
         at = hash_at(full, heath.lean_path(book, n))
         if at != lean:
             raise ValueError(f"{ref}: {rel(heath.lean_path(book, n))} at {commit} "
@@ -243,8 +266,8 @@ def migrate_text(book: str, n: int, dry_run: bool) -> tuple[str, str]:
     """Write the `text` stamp of a record stamped before it, when its own stamp commit is
     in the history of HEAD and its text at that commit is its text now. Returns (outcome,
     what was found): "written", "current", or "reader" for a record that needs a reader;
-    raises ValueError when the record cannot be read, or its commit is not one commit of
-    this clone (resolve)."""
+    raises ValueError when the record cannot be read, or its commit is absent or ambiguous
+    in this clone (resolve)."""
     ref, path = f"{book}.{n}", heath.review_path(book, n)
     if not path.exists():
         raise ValueError(f"{ref}: there is no record {rel(path)}")
@@ -261,10 +284,12 @@ def migrate_text(book: str, n: int, dry_run: bool) -> tuple[str, str]:
     if "commit" not in rv:
         return "reader", f"{ref}: no stamp commit to compare it with"
     commit = rv["commit"]
-    full = resolve(commit)
+    full, problem = resolve(commit)
     if full is None:
-        raise ValueError(f"{ref}: its stamp commit {commit} {NOT_ONE}: fetch the history, or "
-                         "rename the branch or tag of that name, then run this again")
+        recovery = ("fetch the missing history, then run this again" if problem == NO_COMMIT
+                    else "identify the intended commit without guessing, record enough of "
+                         "its id to distinguish it, then run this again")
+        raise ValueError(f"{ref}: its stamp commit {commit} {problem}: {recovery}")
     if not in_history(full):
         return "reader", f"{ref}: its stamp commit {commit} is not in the history of HEAD"
     then = text_at(full, path)
@@ -314,8 +339,8 @@ def main(argv=None) -> int:
     parser.add_argument("--dry-run", action="store_true", help="say what would change; write nothing")
     parser.add_argument("--migrate-text", action="store_true",
                         help="write `text` alone, for each record whose text at its stamp commit, "
-                        "in the history of HEAD, is its text now, and list the rest as needing "
-                        "a reader")
+                        "in the history of HEAD, is its text now; list confirmed edits as needing "
+                        "a reader, and report absent or ambiguous stamp commits as problems")
     args = parser.parse_args(argv)
     if args.commit and not heath.COMMIT.fullmatch(args.commit):
         parser.error("--commit is a git commit, 7 to 40 lower-case hex digits")

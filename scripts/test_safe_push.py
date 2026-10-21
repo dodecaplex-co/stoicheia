@@ -4800,8 +4800,66 @@ class Units(unittest.TestCase):
                     contextlib.redirect_stdout(out):
                 code = review_stamp.migrate([("I", 1)], dry_run=True)
             self.assertEqual(code, 1, out.getvalue())
-            self.assertIn(f"✗ I.1: its stamp commit abcdef1 {review_stamp.NOT_ONE}",
+            self.assertIn(f"✗ I.1: its stamp commit abcdef1 {review_stamp.NO_COMMIT}",
                           out.getvalue())
+            self.assertIn("0 need(s) a reader; 1 problem(s)", out.getvalue())
+            self.assertEqual(record.read_text(), text)
+
+    def test_review_stamp_rejects_an_ambiguous_prefix_even_when_a_ref_shadows_it(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            git(repo, "init", "-q", "--object-format=sha1")
+            tree = git(repo, "write-tree").strip()
+            seen = {}
+            collision = None
+            for nonce in range(100_000):
+                stamp = nonce + 1
+                body = (f"tree {tree}\nauthor Test <test@example.invalid> {stamp} +0000\n"
+                        f"committer Test <test@example.invalid> {stamp} +0000\n\n"
+                        f"Commit {nonce}\n").encode()
+                oid = hashlib.sha1(b"commit " + str(len(body)).encode() + b"\0" + body).hexdigest()
+                prefix = oid[:7]
+                if prefix in seen:
+                    collision = (prefix, seen[prefix], (oid, body))
+                    break
+                seen[prefix] = (oid, body)
+            self.assertIsNotNone(collision, "no seven-digit collision in 100,000 commits")
+            prefix, first, second = collision
+            for expected, body in (first, second):
+                written = subprocess.run(
+                    ["git", "hash-object", "-t", "commit", "-w", "--stdin"], cwd=repo,
+                    input=body, capture_output=True, check=True).stdout.decode().strip()
+                self.assertEqual(written, expected)
+            with mock.patch.object(review_stamp, "ROOT", repo):
+                self.assertEqual(review_stamp.resolve(prefix),
+                                 (None, review_stamp.AMBIGUOUS_COMMIT))
+            git(repo, "update-ref", "refs/heads/main", second[0])
+            git(repo, "symbolic-ref", "HEAD", "refs/heads/main")
+            git(repo, "update-ref", f"refs/heads/{prefix}", second[0])
+            for name, body in {"Elements/BookI/Prop01.lean": "theorem P : True := trivial\n",
+                               "heath/I/01.md": "A test enunciation.\n\nA test proof.\n"}.items():
+                (repo / name).parent.mkdir(parents=True, exist_ok=True)
+                (repo / name).write_text(body)
+            record = repo / "review/I/01.toml"
+            record.parent.mkdir(parents=True)
+            text = ('[statement]\nscope = "full"\n'
+                    'fingerprint = "sha256:0123456789abcdef"\n\n'
+                    '[route]\nkind = "euclid"\n\n[review]\nstage = "exceptions"\n'
+                    f'reviewer = "Test reader"\ncommit = "{prefix}"\n'
+                    'lean = "sha256:0123456789abcdef"\n')
+            record.write_text(text)
+            out = io.StringIO()
+            with mock.patch.object(review_stamp, "ROOT", repo), \
+                    mock.patch.object(review_stamp.heath, "ROOT", repo), \
+                    mock.patch.object(review_stamp.heath, "REVIEW", repo / "review"), \
+                    contextlib.redirect_stdout(out):
+                self.assertEqual(review_stamp.resolve(prefix),
+                                 (None, review_stamp.AMBIGUOUS_COMMIT))
+                code = review_stamp.migrate([("I", 1)], dry_run=True)
+            self.assertEqual(code, 1, out.getvalue())
+            self.assertIn(f"its stamp commit {prefix} {review_stamp.AMBIGUOUS_COMMIT}",
+                          out.getvalue())
+            self.assertIn("identify the intended commit without guessing", out.getvalue())
             self.assertIn("0 need(s) a reader; 1 problem(s)", out.getvalue())
             self.assertEqual(record.read_text(), text)
 
