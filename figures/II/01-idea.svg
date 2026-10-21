@@ -11,7 +11,7 @@
   <line x1="153.5" y1="75.0" x2="268.5" y2="75.0" stroke="#f2b705" stroke-width="7" stroke-linecap="butt"/>
   <line x1="268.5" y1="75.0" x2="348.5" y2="75.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="butt"/>
   <line data-unlettered="the straight line A, which Heath names by one letter, not by its ends" x1="55.0" y1="88.5" x2="55.0" y2="228.5" stroke="#222222" stroke-width="7" stroke-linecap="butt"/>
-  <g font-style="italic" font-size="14" fill="#222222">
+  <g font-size="14" fill="#222222">
     <text x="46" y="163" text-anchor="end">A</text>
     <text x="68.5" y="65" text-anchor="middle">B</text>
     <text x="153.5" y="65" text-anchor="middle">D</text>

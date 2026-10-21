@@ -17,7 +17,7 @@
   <line x1="188.0" y1="175.0" x2="212.0" y2="175.0" stroke="#222222" stroke-width="4" stroke-linecap="butt"/>
   <line x1="188.0" y1="186.0" x2="212.0" y2="186.0" stroke="#222222" stroke-width="4" stroke-linecap="butt"/>
   <!-- Heath's letters -->
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="100" y="227.6">B</text><text x="34" y="227.6">C</text><text x="166" y="227.6">D</text><text x="28.5" y="102.5">A</text>
   </g>
 </svg>
