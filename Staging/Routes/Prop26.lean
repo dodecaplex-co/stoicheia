@@ -2,6 +2,7 @@ import Elements.Figure.Basics
 import Elements.BookIII.Squares
 import Elements.BookIII.Circumferences
 import Elements.BookI.Prop04
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop22
 import Elements.BookIII.Prop24
 import Staging.Routes.Prop20
@@ -30,8 +31,9 @@ there are no triangles for I.4; where they are greater, I.4 applies to the angle
 that remain of four right angles. The whole circle is four right angles
 (`Circumference.whole`), as before. Each clause also concludes that the circumferences
 BKC, ELF are congruent (`Arc.Congruent`); as in `Elements/BookIII/Prop26.lean`, that
-cannot come by subtraction, and comes from III.24 applied to the remaining segments, whose
-angles make two right angles with the equal angles at A and D [III. 22], and so are equal.
+cannot come by subtraction, and comes from III.24 applied to the remaining segments, which
+are similar: their angles make two right angles with the equal angles at A and D
+[III. 22], and so are equal.
 The statement is that of `Elements.BookIII.Prop26`, exactly.
 
 Status: staged to replace the proof in `Elements/BookIII/Prop26.lean` when Book III's
