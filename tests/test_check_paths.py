@@ -15,26 +15,39 @@ and one missing from the six, an svg under book/, a misnamed review record, Prop
 a law of the model named in capitals, lakefile.lean at the root and in model/, a
 .gitattributes, a ".." segment (which Git refuses itself), and a file renamed with
 `git mv` to a bad name; an untracked file is not judged, `--rev` judges a commit's tree
-and not the index, and the repository passes.
+and not the index, a tree made with `git mktree` that lists one path twice is refused, a
+module planted beside the script (scripts/unicodedata.py and others) never stands in for
+the standard library's, an inherited GIT_DIR or GIT_WORK_TREE naming another work tree is
+refused with what to do, and the repository passes.
 CI runs this file first, before the script's own `--self-test`.
 """
 
-from __future__ import annotations
-
 import os
-import shutil
-import subprocess
 import sys
-import tempfile
-import unittest
-from pathlib import Path
-from unittest.mock import patch
+
+# As in scripts/check_paths.py: a module planted beside this file must not stand in for the
+# standard library's, so its folder is taken off sys.path (where -I has not kept it off)
+# before any other import, and there is no `from __future__` import, which would read one
+# first. The script is loaded from its file, never by putting scripts/ on sys.path, so a
+# planted scripts/unicodedata.py cannot stand in either.
+sys.path[:] = [p for p in sys.path if os.path.realpath(p or os.curdir)
+               != os.path.dirname(os.path.realpath(__file__))]
+
+import importlib.util  # noqa: E402
+import shutil  # noqa: E402
+import subprocess  # noqa: E402
+import tempfile  # noqa: E402
+import unittest  # noqa: E402
+from pathlib import Path  # noqa: E402
+from unittest.mock import patch  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO / "scripts"))
-import check_paths as paths  # noqa: E402
-
 SCRIPT = REPO / "scripts" / "check_paths.py"
+SPEC = importlib.util.spec_from_file_location("check_paths", SCRIPT)
+paths = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = paths
+SPEC.loader.exec_module(paths)
+
 PLAIN, EXECUTABLE = paths.PLAIN, paths.EXECUTABLE
 
 
@@ -85,11 +98,14 @@ class Rules(unittest.TestCase):
 
     def test_p1_windows_devices(self):
         for name in ("docs/CON.md", "docs/con.md", "docs/Aux.tar.md", "docs/nul/a.md",
-                     "docs/COM1.md", "docs/lpt9.md", "docs/PRN.md"):
+                     "docs/COM1.md", "docs/lpt9.md", "docs/PRN.md", "docs/COM0.md",
+                     "docs/lpt0.md", "docs/Com0.tar.md", "docs/LPT0/a.md"):
             with self.subTest(name=name):
                 self.refused(1, entries(name), name)
+        self.assertEqual(len(paths.DEVICES), 24)    # CON, PRN, AUX, NUL; COM0-9; LPT0-9
         self.accepted((PLAIN, "docs/console.md"), (PLAIN, "docs/COM10.md"),
-                      (PLAIN, "docs/auxiliary.md"), (PLAIN, "docs/com.md"))
+                      (PLAIN, "docs/LPT10.md"), (PLAIN, "docs/auxiliary.md"),
+                      (PLAIN, "docs/com.md"))
 
     def test_p2_twins(self):
         found = self.refused(2, entries("README.md", "readme.md"), "readme.md")
@@ -97,12 +113,23 @@ class Rules(unittest.TestCase):
         found = self.refused(2, entries("scripts/a.py", "Scripts/json.py"), "Scripts/")
         self.assertIn("(the folder of Scripts/json.py)", "\n".join(found))
         self.refused(2, entries("scripts/a.py", "Scripts/json.py"), "scripts/")
-        self.refused(2, entries("docs/café.md", "docs/café.md"), "docs/café.md")
+        # An accented e, composed (NFC) and decomposed (NFD): escapes, so no editor merges them.
+        self.refused(2, entries("docs/caf\u00e9.md", "docs/cafe\u0301.md"), "docs/cafe\u0301.md")
         self.refused(2, entries("docs/Notes", "docs/notes/a.md"), "docs/notes/")
         self.refused(2, entries("docs/STRASSE.md", "docs/straße.md"), "docs/STRASSE.md")
         self.refused(2, entries("Elements/BookI/Prop01.lean", "Elements/booki/Prop02.lean"),
                      "Elements/booki/")
         self.accepted((PLAIN, "docs/a.md"), (PLAIN, "docs/b.md"), (PLAIN, "docs/a/b.md"))
+
+    def test_p2_a_path_listed_twice(self):
+        # A tree made by hand can list one name twice (Git's fsck: duplicateEntries); the
+        # entries are judged as listed, so the repeat is seen, whatever the modes.
+        found = self.refused(2, entries("README.md", "README.md"), "README.md")
+        self.assertIn("P2 README.md: listed 2 times; a tree names a path once", "\n".join(found))
+        found = self.refused(2, [(PLAIN, "docs/a.md"), (EXECUTABLE, "docs/a.md"),
+                                 (PLAIN, "docs/a.md")], "docs/a.md")
+        self.assertIn("P2 docs/a.md: listed 3 times", "\n".join(found))
+        self.assertTrue([f for f in found if f.startswith("P6 docs/a.md: ")], found)
 
     def test_p3_extensions(self):
         for name in ("docs/notes.MD", "docs/notes.Md", "docs/notes.markdown",
@@ -127,11 +154,13 @@ class Rules(unittest.TestCase):
                      ".gitattributes", ".gitmodules", "docs/.gitignore", "Staging/Sub/.gitkeep",
                      ".gitkeep", "figures/I/01.png", "lakefile.lean", "Elements/a.py",
                      "review/I/01.md", "scripts/notes.md", "Audit/other.py",
-                     "Certificate/other.lock", "docs/run.sh"):
+                     "Certificate/other.lock", "docs/run.sh", "TRAILING-.md",
+                     "DOUBLE--HYPHEN.md", "LOWER-case.md", "A-.md", "README_2.md"):
             with self.subTest(name=name):
                 self.refused(4, entries(name), name)
         self.accepted(*entries("README.md", "SECURITY.md", "LICENSE-PROSE.md", "CITATION.cff",
-                               "Audit/screen.py", "Certificate/axioms.lock", "review/SCHEMA.md"),
+                               "CODE-OF-CONDUCT.md", "A1-B2.md", "Audit/screen.py",
+                               "Certificate/axioms.lock", "review/SCHEMA.md"),
                       (EXECUTABLE, "scripts/hooks/pre-push"))
 
     def test_p5_book_names(self):
@@ -301,10 +330,12 @@ class Index(unittest.TestCase):
             self.fail(f"planting {name!r}: {done.stderr.decode(errors='replace')}")
         return done
 
-    def check(self, *args: str) -> subprocess.CompletedProcess:
-        return subprocess.run([sys.executable, "-I", str(self.root / "scripts/check_paths.py"),
-                               *args], cwd=self.root, env=git_env(), capture_output=True,
-                              text=True)
+    def check(self, *args: str, env: dict[str, str] | None = None,
+              isolated: bool = True) -> subprocess.CompletedProcess:
+        return subprocess.run([sys.executable, *(["-I"] if isolated else []),
+                               str(self.root / "scripts/check_paths.py"), *args],
+                              cwd=self.root, env=git_env() if env is None else env,
+                              capture_output=True, text=True)
 
     def caught(self, rule: int, names: str | tuple[str, ...], *args: str) -> None:
         result = self.check(*args)
@@ -321,8 +352,8 @@ class Index(unittest.TestCase):
         cases = (
             ("a case twin of a file", [(PLAIN, "readme.md")], 2, ("README.md", "readme.md")),
             ("a twin of a folder", [(PLAIN, "Scripts/json.py")], 2, ("Scripts/", "scripts/")),
-            ("an NFC/NFD twin", [(PLAIN, "docs/café.md"), (PLAIN, "docs/café.md")],
-             2, ("docs/café.md", "docs/café.md")),
+            ("an NFC/NFD twin", [(PLAIN, "docs/caf\u00e9.md"), (PLAIN, "docs/cafe\u0301.md")],
+             2, ("docs/caf\u00e9.md", "docs/cafe\u0301.md")),
             ("a space", [(PLAIN, "docs/two words.md")], 1, "docs/two words.md"),
             ("an upper-case extension", [(PLAIN, "docs/notes.MD")], 3, "docs/notes.MD"),
             ("a symbolic link", [("120000", "docs/link.md")], 6, "docs/link.md"),
@@ -399,6 +430,73 @@ class Index(unittest.TestCase):
         result = self.check("--rev=--not-a-commit")
         self.assertEqual(result.returncode, 1)
         self.assertIn("✗ paths: git rev-parse", result.stderr)
+
+    def test_rev_refuses_a_tree_listing_a_path_twice(self):
+        # No index holds one path twice, but `git mktree` writes a tree that names README.md
+        # twice (Git's fsck: duplicateEntries); --rev reads the tree as listed.
+        listing = self.git("ls-tree", "HEAD")
+        readme = next(line for line in listing.splitlines() if line.endswith("\tREADME.md"))
+        made = subprocess.run(["git", "mktree"], cwd=self.root, env=git_env(),
+                              input=f"{listing}{readme}\n".encode(), capture_output=True)
+        if made.returncode != 0:
+            self.skipTest("git mktree refuses a tree that names one path twice: "
+                          + made.stderr.decode(errors="replace").strip())
+        commit = self.git("commit-tree", made.stdout.decode().strip(), "-p", "HEAD",
+                          "-m", "README.md twice").strip()
+        self.caught(2, "README.md", "--rev", commit)
+        self.assertIn("✗ P2 README.md: listed 2 times", self.check("--rev", commit).stdout)
+
+    def test_a_module_planted_beside_the_script_never_stands_in(self):
+        # A module planted in scripts/ that would pass any tree: run as CI runs it, without
+        # -I, the script still refuses a bad path, and the plant never runs. A probe in the
+        # same folder that imports the module shows the plant is live for a script that
+        # keeps its folder on sys.path; a module this Python loads before any script runs
+        # cannot be planted, and its case is skipped.
+        self.plant(PLAIN, "docs/two words.md")
+        env = {k: v for k, v in git_env().items() if not k.startswith("PYTHON")}
+        for name in ("unicodedata", "argparse", "subprocess", "pathlib", "__future__"):
+            with self.subTest(name):
+                marker = self.root / f"{name}.ran"
+                plant = self.root / "scripts" / f"{name}.py"
+                probe = self.root / "scripts" / "probe.py"
+                plant.write_text(f"open({str(marker)!r}, 'w').close()\n"
+                                 "print('paths: all tracked paths of the index pass')\n"
+                                 "raise SystemExit(0)\n")
+                probe.write_text("from __future__ import annotations\n" if name == "__future__"
+                                 else f"import {name}\n")
+                try:
+                    subprocess.run([sys.executable, str(probe)], cwd=self.root, env=env,
+                                   capture_output=True)
+                    if not marker.exists():
+                        self.skipTest(f"this Python loads {name} before a script runs")
+                    marker.unlink()
+                    for args in ((), ("--self-test",)):
+                        result = self.check(*args, env=env, isolated=False)
+                        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                        self.assertIn('✗ P1 "docs/two words.md": ', result.stdout)
+                        self.assertFalse(marker.exists(), f"the planted {name}.py ran")
+                finally:
+                    plant.unlink()
+                    probe.unlink()
+
+    def test_an_inherited_git_dir_is_refused_saying_what_to_do(self):
+        # A Git alias run from a linked worktree sets GIT_DIR, and Git then takes the folder
+        # it runs in for the work tree; a GIT_WORK_TREE may name another. Either is refused.
+        elsewhere = str(Path(self.enterContext(tempfile.TemporaryDirectory())).resolve())
+        gitdir = str(self.root / ".git")
+        for extra in ({"GIT_DIR": gitdir}, {"GIT_WORK_TREE": elsewhere},
+                      {"GIT_DIR": gitdir, "GIT_WORK_TREE": elsewhere}):
+            with self.subTest(**extra):
+                result = self.check(env=git_env(**extra))
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertIn(f"{' and '.join(extra)} {'is' if len(extra) == 1 else 'are'} set",
+                              result.stderr)
+                self.assertIn("run the check with neither (env -u GIT_DIR -u GIT_WORK_TREE "
+                              "python3 scripts/check_paths.py)", result.stderr)
+                self.assertNotIn("✓", result.stdout)
+        # Both naming this repository, as negative_tests.py's copies name theirs, judge it.
+        result = self.check(env=git_env(GIT_DIR=gitdir, GIT_WORK_TREE=str(self.root)))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_self_test_runs_before_the_index(self):
         self.plant(PLAIN, "readme.md")

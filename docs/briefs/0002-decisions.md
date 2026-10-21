@@ -3043,10 +3043,13 @@ findings:
   [`scripts/check_paths.py`](../../scripts/check_paths.py), each a named constant. A path
   is ASCII letters, digits, `.`, `_`, `-` and `/`, with no empty, `.` or `..` segment, no
   segment beginning or ending with `.` or `-` save `.github`, `.gitignore` and `.gitkeep`,
-  no Windows device name, and at most 160 characters, 100 in a segment. No two paths, and
-  no two of their folders, differ only in case or Unicode form. Extensions are in lower
-  case, from the fifteen the tree uses, and six named files have none. Each top-level
-  folder, and the root, holds only its listed types and files. A book's pages, Heath's
+  no Windows device name (`CON`, `PRN`, `AUX`, `NUL`, `COM0` to `COM9`, `LPT0` to `LPT9`,
+  in any case), and at most 160 characters, 100 in a segment. No two paths, and no two of
+  their folders, differ only in case or Unicode form, and no tree lists a path twice.
+  Extensions are in lower case, from the fifteen the tree uses, and six named files have
+  none. Each top-level folder, and the root, holds only its listed types and files, with
+  further Markdown at the root named in capitals and digits, words joined by single
+  hyphens (`LICENSE-PROSE.md`, never `NOTES-.md` or `A--B.md`). A book's pages, Heath's
   text, the mishnah, the reading lines, the review records, the figures and the briefs
   have mechanical names; a Lean file of the edition's libraries has Lean module names,
   with `BookR` and `PropNN` under `Elements/` and no `lakefile.lean`; a Python file's name
@@ -3057,10 +3060,13 @@ findings:
   `Model.Laws.«areas-p5»`) keep their lower-case names, the model's own convention, and
   the rule codifies it: a file directly in that folder is named in lower-case words
   joined by hyphens, every other Lean file keeps the module-name rule, and nothing was
-  renamed. Every one of main's 1,137 paths passes. The check reads Git's index, so it
-  judges exactly what is committed and never the working tree, and it runs first, before
-  `lake build`, in CI's `check` job, in `scripts/safe_push.py`'s checks and in WORKFLOW,
-  section 8: `python3 -I tests/test_check_paths.py`, then
+  renamed. Every one of main's 1,137 paths passes. The check reads Git's index, which is
+  what is staged for the next commit: in CI and in the pre-flight's fresh worktree, the
+  commit itself, and on a contributor's machine, what they have staged; never the working
+  tree. `--rev` reads a commit's tree instead, entry by entry, so that a tree made by hand
+  that lists a path twice is refused. The check runs first, before `lake build`, in CI's
+  `check` job, in `scripts/safe_push.py`'s checks and in WORKFLOW, section 8:
+  `python3 -I tests/test_check_paths.py`, then
   `python3 scripts/check_paths.py --self-test`. The self-test plants a fault of each rule
   in memory beside good paths, Book IV's and Book X's among them; the test file plants
   faults straight into the indexes of throwaway repositories, where a case-insensitive
@@ -3070,12 +3076,31 @@ findings:
   edition's index that passes unplanted, under `--counts-only` too, leaving the real
   index and `git status` as they were. Every finding is one line of printable ASCII,
   naming its rule and its path, with any name inside the reason escaped as Git quotes a
-  path. The pre-flight's step 3 also refuses a commit any of whose paths, or
-  folders, collides with another under case folding and NFC normalisation, or is not
-  plain printable ASCII, so that a twin of a protected path or a check input cannot
-  change it by the back door. A new extension, top-level folder, executable or named file
-  is a change to the check, landing first, in a pull request of its own. The protected
-  files changed are:
+  path. A module planted beside the script, such as `scripts/unicodedata.py`, is never
+  read in place of the standard library's: the script takes its own folder off
+  `sys.path` before any other import, and has no `from __future__` import, which would
+  read a planted one first; the test file loads the script from its file, and plants
+  such modules to show that they never run. An inherited `GIT_DIR` or `GIT_WORK_TREE` that names
+  another work tree is refused, the message saying how to run the check. The pre-flight's
+  step 3 begins with a paths guard, which refuses outright, whatever the decisions page
+  says, a commit whose tree, or the tree of any commit it brings since origin/main, holds
+  a path or folder that collides with another under case folding and NFC normalisation,
+  that is a protected path or a check input spelt otherwise (`LAKEFILE.lean`,
+  `Scripts/x.py`, whether or not the tree holds the real one), or that is not plain
+  printable ASCII, so that a twin of a protected path or a check input cannot change it
+  by the back door. It reads each tree once, names the commits that hold a finding, and
+  runs before the commit is checked out, so that a refusal comes before any worktree is
+  made; it runs again at `--merge`, and its cases include the plainest twin,
+  `Certificate/fields.md` beside `Certificate/FIELDS.md`. `scripts/safe_push.py`, once
+  it has found the repository, drops Git's location variables (`GIT_DIR`,
+  `GIT_WORK_TREE`, `GIT_INDEX_FILE` and the rest; a Git alias run from a linked worktree
+  sets `GIT_DIR`), so that every check in its fresh worktrees reads that worktree and
+  never the caller's index or HEAD; when they name another repository, it refuses. A failure of origin/main's path check, or of its cases, refuses a pull request
+  whatever else it changes, guides and protected paths alone included: every path is what
+  the check judges, so a looser `scripts/check_paths.py` cannot land in the same pull
+  request as the path it would let in. A new extension, top-level folder, executable or
+  named file is a change to the check, landing first, in a pull request of its own. The
+  protected files changed are:
   `.github/workflows/ci.yml`,
   `scripts/check_paths.py`,
   `scripts/negative_tests.py`,

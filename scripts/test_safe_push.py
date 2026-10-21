@@ -92,10 +92,15 @@ one commit and runs safe_push.py against that origin:
   tests/model/lock.sha256 names no model/lock.sha256), and those
   paths stay what the checks judge, so a check change is still kept apart from them;
 - the case twins of issue #186, planted straight into an index, since this disk cannot
-  hold them: a twin of a protected file (certificate/FIELDS.md), a check input in a twin
-  folder (Scripts/json.py, which then runs in no check), two spellings of one name under
-  NFC, and a path with a space are each refused by step 3's paths guard, at the
-  pre-flight and at the merge, while an ordinary commit passes it;
+  hold them: a twin of a protected file (certificate/FIELDS.md, and Certificate/fields.md
+  beside it), a check input in a twin folder (Scripts/json.py, which then runs in no
+  check), a protected name spelt otherwise with no twin in the tree (LAKEFILE.lean), two
+  spellings of one name under NFC, and a path with a space are each refused by step 3's
+  paths guard, at the pre-flight and at the merge, before any worktree is made, and in
+  an earlier commit of the push too, each tree judged once, while an ordinary commit
+  passes it; a looser check_paths.py is refused with the path it lets in, wherever that
+  path stands (keep_apart); and `git safe-push`, run from a linked worktree as the lane
+  runs it, drops the GIT_DIR its alias is given before any check runs;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -801,10 +806,11 @@ class Clone(unittest.TestCase):
         git(WORK, "commit", "-q", "-m", message, env=env)
         return git(WORK, "rev-parse", "HEAD").strip()
 
-    def plant(self, message: str, files: dict) -> str:
+    def plant(self, message: str, files: dict, remove=()) -> str:
         """A commit of HEAD's tree with `files` added straight into an index of its own,
-        since a case-insensitive disk cannot hold a case twin, nor two spellings of one
-        name. HEAD moves to it; the working tree and its index are left as they were."""
+        and the paths `remove` taken out of it, since a case-insensitive disk cannot hold
+        a case twin, nor two spellings of one name (with neither, HEAD's tree again). HEAD
+        moves to it; the working tree and its index are left as they were."""
         index = TMP / "planted.index"
         env = dict(os.environ, GIT_INDEX_FILE=str(index))
         git(WORK, "read-tree", "HEAD", env=env)
@@ -814,7 +820,10 @@ class Clone(unittest.TestCase):
             # git on macOS writes an NFD path as NFC unless told not to.
             git(WORK, "-c", "core.precomposeUnicode=false", "update-index", "--add",
                 "--cacheinfo", f"100644,{blob.stdout.strip()},{path}", env=env)
-        git(WORK, "commit", "-q", "-m", message, env=env)
+        for path in remove:
+            git(WORK, "-c", "core.precomposeUnicode=false", "update-index", "--force-remove",
+                "--", path, env=env)
+        git(WORK, "commit", "-q", "--allow-empty", "-m", message, env=env)
         index.unlink(missing_ok=True)
         return git(WORK, "rev-parse", "HEAD").strip()
 
@@ -1172,6 +1181,74 @@ class CaseTwins(Clone):
         for path in (nfc, nfd, space):
             self.assertIn(f"{ascii(path)}: not plain printable ASCII", detail)
         self.assertIn(f"{ascii(nfd)} and {ascii(nfc)}: equal once casefolded", detail)
+
+    def test_case_twin_in_one_folder_refused(self):
+        # #186's plainest case: two files of one folder, differing only in case.
+        bad = self.plant("A case twin beside a protected file",
+                         {"Certificate/fields.md": "Checked out over Certificate/FIELDS.md.\n"})
+        _, detail = self.refused_by_paths(self.safe_push())
+        self.assertIn("Certificate/FIELDS.md and Certificate/fields.md: equal once casefolded",
+                      detail)
+        self.assertIn(f"(in commit {bad[:12]})", detail)
+
+    def test_protected_name_spelt_otherwise_refused(self):
+        # Security review 4: main has no lakefile.lean, so LAKEFILE.lean twins nothing; but
+        # a case-insensitive disk opens it as lakefile.lean, which Lake reads and runs.
+        self.plant("A protected name spelt otherwise", {"LAKEFILE.lean": "-- Run by Lake.\n"})
+        out, detail = self.refused_by_paths(self.safe_push())
+        self.assertIn("LAKEFILE.lean: the protected path lakefile.lean, spelt otherwise", detail)
+        self.assertIsNone(self.step(out, "protected paths"), out)
+
+    def test_refused_before_any_worktree(self):
+        # Security review 7: the paths guard reads the trees, and refuses before the commit
+        # is checked out. `git worktree add` runs the post-checkout hook, so a hook that
+        # leaves a marker shows whether a worktree was made.
+        marker = TMP / "checked-out"
+        marker.unlink(missing_ok=True)
+        self.plant("A case twin of a protected file",
+                   {"certificate/FIELDS.md": "Checked out over Certificate/FIELDS.md.\n"})
+        hook = hooks_dir() / "post-checkout"
+        hook.write_text(f'#!/bin/sh\necho "$PWD" >> "{marker}"\n')
+        hook.chmod(0o755)
+        self.addCleanup(hook.unlink, missing_ok=True)
+        out, _ = self.refused_by_paths(self.safe_push())
+        self.assertFalse(marker.exists(), f"a worktree was made:\n{out}")
+        self.assertIsNone(self.step(out, "statements"), out)
+        # The hook does mark a worktree made, as safe_push makes one.
+        probe = TMP / "probe-worktree"
+        git(WORK, "worktree", "add", "--detach", "--quiet", str(probe), BASE)
+        git(WORK, "worktree", "remove", "--force", str(probe))
+        self.assertTrue(marker.exists(), "the post-checkout hook did not run")
+
+    def test_twin_in_an_earlier_commit_refused(self):
+        # Security review 8: the merge puts every commit the push brings in main's history,
+        # so the tree of each is judged, not only the last one's, and a finding names the
+        # commits that hold it.
+        bad = self.plant("A case twin",
+                         {"certificate/FIELDS.md": "Checked out over Certificate/FIELDS.md.\n"})
+        head = self.plant("The twin taken out again", {}, remove=["certificate/FIELDS.md"])
+        self.assertNotIn("certificate/", git(WORK, "ls-tree", "--name-only", head))
+        _, detail = self.refused_by_paths(self.safe_push())
+        self.assertIn("certificate/ (certificate/FIELDS.md)", detail)
+        self.assertIn(f"the one over the other (in commit {bad[:12]})", detail)
+        self.assertNotIn(head[:12], detail)
+
+    def test_each_tree_judged_once(self):
+        # A tree two commits share is read once, and the finding names each commit whose
+        # tree holds it, the first of each tree.
+        first = self.plant("A case twin", {"Certificate/fields.md": "A twin.\n"})
+        self.plant("The same tree", {})
+        last = self.plant("And a page", {"docs/style-notes.md": "Plain.\n"})
+        rep, out = safe_push.Report(), io.StringIO()
+        with mock.patch.object(safe_push, "path_faults", wraps=safe_push.path_faults) as judged, \
+                contextlib.redirect_stdout(out):
+            self.assertFalse(safe_push.guard_paths(WORK, BASE, last, rep))
+        self.assertEqual(judged.call_count, 2, out.getvalue())
+        (step,) = [s for s in rep.steps if s.name == "paths"]
+        self.assertEqual(step.outcome, "FAIL")
+        self.assertIn(f": equal once casefolded and NFC-normalised, so a case-insensitive disk "
+                      f"(macOS's default) checks them out as one, the one over the other (in "
+                      f"commits {first[:12]}, {last[:12]})", step.detail)
 
     def test_ordinary_commit_passes(self):
         self.commit("A page of its own name", {"docs/style-notes.md": "Plain.\n"})
@@ -4047,6 +4124,35 @@ class ProtectedPaths(Edge):
                 self.assertTrue(refused, out)
                 self.assertIn("docs/reading.md", out)
 
+    def test_a_looser_path_check_is_refused_with_the_path_it_lets_in(self):
+        # Security review 3: .yaml let in by check_paths.py, and a .yaml under a guides'
+        # folder, which keep_apart counts as unjudged. origin/main's path check judges every
+        # path, so its failure refuses the commit, whatever else it changes.
+        path = "scripts/check_paths.py"
+        changes = {path: self.replaced(path, '"yml", "sha256", "sh"',
+                                       '"yml", "yaml", "sha256", "sh"'),
+                   "docs/templates/x.yaml": "a: 1\n"}
+        changes.update(self.decision(f"`{path}` takes .yaml, for the test."))
+        sha = self.commit("Let .yaml in, and add one", changes)
+        self.assertLessEqual(set(safe_push.PATH_CHECKS), {n for n, _ in safe_push.CHECKS})
+        self.assertEqual(safe_push.judged_files(WORK, BASE, sha), [])
+        self.assertFalse(self.kept_apart(sha, "python3 scripts/check_links.py")[0])
+        for check in safe_push.PATH_CHECKS:
+            with self.subTest(check=check):
+                refused, out = self.kept_apart(sha, check)
+                self.assertTrue(refused, out)
+                self.assertIn(f"origin/main's path check fails on the commit ({check})", out)
+        # Step 4's own wiring, which the internal flag skips: origin/main's check_paths.py
+        # refuses x.yaml, and the commit is refused before its own copy runs.
+        name = "python3 scripts/check_paths.py --self-test"
+        check = (name, [sys.executable, "scripts/check_paths.py", "--self-test"])
+        refusal, out = self.full_checks(sha, [check], [])
+        self.assertEqual(refusal, "a check changed together with what it checks", out)
+        self.assertEqual(self.guard(out, name + safe_push.BASE_PASS), "note", out)
+        self.assertIn("docs/templates/x.yaml", out)
+        self.assertEqual(self.guard(out, "check change kept apart"), "FAIL", out)
+        self.assertIsNone(self.step(out, name + " (the commit's checks)"), out)
+
     def test_kept_apart_judges_the_edition_not_the_guides_or_stamps(self):
         # The stage 2 pattern: the certificate changes, the pages and a record's stamp
         # follow, and the guides say why; none of that is judged. A record's other lines,
@@ -4355,6 +4461,94 @@ class HandOver(Edge):
         self.assertIn("differs from origin/main's scripts/hooks/pre-push", out)
 
 
+class LinkedWorktree(Edge):
+    """Security review 1 and 2: `git safe-push` is a shell alias, and git gives a shell
+    alias run from a linked worktree, as the lane runs it, GIT_DIR (and GIT_PREFIX). Left
+    set, GIT_DIR would point every git command in the fresh worktrees at the caller's index
+    and HEAD, and check_paths.py would refuse to run at all; so safe_push drops the
+    variables that place a repository once they have found it."""
+
+    def linked(self) -> Path:
+        """A linked worktree of the clone at BASE, with work of the caller's staged in it,
+        removed when the test ends."""
+        path = TMP / "linked"
+        git(WORK, "worktree", "add", "--quiet", "--detach", str(path), BASE)
+        self.addCleanup(git, WORK, "worktree", "remove", "--force", str(path), check=False)
+        (path / "README.md").write_text((path / "README.md").read_text() + "\nStaged.\n")
+        git(path, "add", "README.md")
+        return path
+
+    def test_git_safe_push_from_a_linked_worktree(self):
+        # The commit checked is not the caller's HEAD, and the caller has work staged: with
+        # GIT_DIR left set, `git status` in the fresh worktree would read the caller's
+        # index, and the generated pages would look stale.
+        sha = self.good_commit()
+        linked = self.linked()
+        r = subprocess.run(["git", "safe-push", "--_test-skip-checks", "--dry-run",
+                            "--commit", sha], cwd=linked, env=clean_env(),
+                           capture_output=True, text=True)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        for name in ("paths", "statements", "review records", "generated pages"):
+            self.assertEqual(self.guard(out, name), "ok", f"{name}:\n{out}")
+        self.assertIn("4. The full local checks", out)
+        self.assertEqual(git(linked, "rev-parse", "HEAD").strip(), BASE)
+        self.assertEqual(git(linked, "diff", "--cached", "--name-only").split(), ["README.md"])
+        self.assertEqual(len(git(WORK, "worktree", "list").splitlines()), 2, out)
+
+    def test_location_variables_gone_before_the_checks(self):
+        # As the alias sets them, and more: none is left when the pre-flight or the merge
+        # begins, and the repository is the linked worktree.
+        linked = self.linked()
+        gitdir = git(linked, "rev-parse", "--absolute-git-dir").strip()
+        common = git(linked, "rev-parse", "--path-format=absolute", "--git-common-dir").strip()
+        planted = {"GIT_DIR": gitdir, "GIT_PREFIX": "", "GIT_COMMON_DIR": common,
+                   "GIT_OBJECT_DIRECTORY": str(Path(common) / "objects"),
+                   "GIT_INDEX_FILE": str(Path(gitdir) / "index"), "GIT_NAMESPACE": "caller",
+                   "GIT_CEILING_DIRECTORIES": str(TMP)}
+        seen = []
+
+        def record(repo, *args):
+            seen.append((Path(repo).resolve(),
+                         sorted(name for name in safe_push.GIT_LOCATION if name in os.environ)))
+            return 0
+
+        for argv in (["--dry-run"], ["--merge", "1", "--dry-run"]):
+            with self.subTest(argv=argv), mock.patch.dict(os.environ, planted), \
+                    mock.patch.object(safe_push, "preflight_main", record), \
+                    mock.patch.object(safe_push, "merge_main", record), \
+                    mock.patch.object(safe_push.signal, "signal"), contextlib.chdir(linked):
+                self.assertEqual(safe_push.main(argv), 0)
+        self.assertEqual(seen, [(linked.resolve(), [])] * 2)
+
+    def test_a_variable_naming_another_repository_refused(self):
+        # Dropped, GIT_DIR must leave the repository git finds as it was: here it names
+        # another, so the run stops rather than judge a different one.
+        other = TMP / "another-repository"
+        git(TMP, "init", "--quiet", str(other))
+        self.addCleanup(shutil.rmtree, other, ignore_errors=True)
+        err = io.StringIO()
+        with mock.patch.dict(os.environ, {"GIT_DIR": str(other / ".git")}), \
+                mock.patch.object(safe_push, "preflight_main",
+                                  side_effect=AssertionError("the pre-flight ran")), \
+                mock.patch.object(safe_push.signal, "signal"), contextlib.chdir(WORK), \
+                contextlib.redirect_stderr(err):
+            self.assertEqual(safe_push.main(["--dry-run"]), 2)
+        self.assertIn("names a repository other than the one git finds", err.getvalue())
+
+    def test_git_location_holds_gits_own_list(self):
+        # git's own list of the variables that tie a command to one repository, less the
+        # `-c` settings, which git passes on to a submodule too, and the two that choose
+        # whether replacement refs apply.
+        kept = {"GIT_CONFIG_PARAMETERS", "GIT_CONFIG_COUNT", "GIT_NO_REPLACE_OBJECTS",
+                "GIT_REPLACE_REF_BASE"}
+        theirs = set(git(WORK, "rev-parse", "--local-env-vars").split())
+        self.assertIn("GIT_DIR", theirs)
+        self.assertLessEqual(theirs - kept, set(safe_push.GIT_LOCATION))
+        self.assertLessEqual({"GIT_NAMESPACE", "GIT_CEILING_DIRECTORIES"},
+                             set(safe_push.GIT_LOCATION))
+
+
 class PrivatePaths(Edge):
     """(5) Scratchpad paths, in a file or a message; private paths and machine-made
     identities in a commit's author or committer."""
@@ -4558,6 +4752,8 @@ class Units(unittest.TestCase):
         nfc, sharp = "docs/café.md", "docs/straße.md"
         nfd = unicodedata.normalize("NFD", nfc)
         cases = (
+            (["Certificate/FIELDS.md", "Certificate/fields.md"],
+             "Certificate/FIELDS.md and Certificate/fields.md"),
             (["Certificate/FIELDS.md", "certificate/FIELDS.md"],
              "Certificate/ (Certificate/FIELDS.md) and certificate/ (certificate/FIELDS.md)"),
             (["scripts/heath.py", "Scripts/json.py"],
@@ -4578,6 +4774,25 @@ class Units(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertEqual(faults([path]),
                                  [f"{ascii(path)}: not plain printable ASCII ({code})"])
+        # Security review 4: a protected path or a check input spelt otherwise, though the
+        # tree holds no twin of it, since such a disk opens it as the name the rules know.
+        self.assertEqual(faults(["lakefile.lean", "model/lakefile.lean", ".gitattributes",
+                                 "scripts/x.py", "review/SCHEMA.md"]), [])
+        for path, own, shown in (
+                ("LAKEFILE.lean", "lakefile.lean", "LAKEFILE.lean"),
+                ("model/Lakefile.lean", "model/lakefile.lean", "model/Lakefile.lean"),
+                (".GITATTRIBUTES", ".gitattributes", ".GITATTRIBUTES"),
+                ("Scripts/x.py", "scripts/", "Scripts/ (Scripts/x.py)"),
+                ("Review/SCHEMA.md", "review/SCHEMA.md", "Review/SCHEMA.md"),
+                ("TESTS/model/run.py", "tests/", "TESTS/ (TESTS/model/run.py)")):
+            with self.subTest(path=path):
+                self.assertEqual(faults([path, "docs/STYLE.md"]),
+                                 [f"{shown}: the protected path {own}, spelt otherwise, which a "
+                                  f"case-insensitive disk (macOS's default) opens as {own}, "
+                                  "unseen by the protected-path rule and keep_apart"])
+        # A folder spelt otherwise is named once, with the paths under it.
+        (fault,) = faults(["Scripts/a.py", "Scripts/b.py"])
+        self.assertTrue(fault.startswith("Scripts/ (Scripts/a.py, Scripts/b.py): "), fault)
 
     def configured_check_commands(self):
         checks = []

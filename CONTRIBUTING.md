@@ -63,12 +63,18 @@ CI runs the commands listed in [WORKFLOW.md](docs/WORKFLOW.md), section 8. Befor
 request, run at least these:
 
 ```sh
+python3 scripts/check_paths.py
 lake build
 lake env lean Certificate/Facts.lean
 python3 scripts/check_fidelity.py
 python3 scripts/check_style.py
 python3 scripts/render.py
 ```
+
+The first needs no Lean and runs in under a second. It holds the name, type and mode of
+every file Git tracks to the standard in [WORKFLOW.md](docs/WORKFLOW.md#file-names),
+section 4, "File names"; it reads what you have staged, so `git add` a new file before
+you run it.
 
 If you change a Lean file, its review record goes stale, even for a comment: say so in the
 pull request, and leave the stamp to a reviewer (WORKFLOW.md, section 6).

@@ -4,24 +4,27 @@ The owner asked, on 21 October 2026, "Can we standardize the file names and type
 don't have silliness with messy paths?" WORKFLOW.md, section 4, "File names", states the
 standard in words; its lists live here, each a named constant, so that a change to the
 standard is a visible change of one line. The script reads Git's index
-(`git ls-files -s -z`, which honours GIT_INDEX_FILE), so it judges exactly what is
-committed next and never the working tree; it never opens or follows a file. Each finding
-names the path, the rule and the reason.
+(`git ls-files -s -z`, which honours GIT_INDEX_FILE): what is staged for the next commit,
+which in CI and in safe_push's fresh worktree is the commit itself, and never the working
+tree; it never opens or follows a file. Each finding names the path, the rule and the
+reason.
 
 P1. Characters. ASCII letters, digits, ".", "_", "-" and "/" only; no empty segment, no
     "." or ".." segment, and no segment that begins or ends with "." or "-", save
     `.github` as the first segment and `.gitignore` and `.gitkeep` as a file's name. At
     most 160 characters in all and 100 in a segment. No segment whose stem, in any case,
-    is a Windows device name (CON, PRN, AUX, NUL, COM1 to COM9, LPT1 to LPT9).
+    is a Windows device name (CON, PRN, AUX, NUL, COM0 to COM9, LPT0 to LPT9).
 P2. No case twins. No two paths, and no two of their folders, alike once Unicode NFC
     normalisation and case folding are applied: a disk that ignores case, as macOS's does
     by default, checks the two out as one, so `Scripts/json.py` beside `scripts/heath.py`
-    is a twin of the folder `scripts`.
+    is a twin of the folder `scripts`. Nor one path listed twice, as a tree made by hand
+    (`git mktree`) can list it, and `--rev` reads it.
 P3. Extensions. In lower case, from EXTENSIONS; a file without one only at a path of
     EXTENSIONLESS.
 P4. Types by folder. The top-level folders of TOP_FOLDERS; at the root, the files of
-    ROOT_FILES and Markdown named in capitals; in each folder the types of FOLDER_TYPES,
-    and the files of FOLDER_FILES and DOT_FILES at their own paths.
+    ROOT_FILES and Markdown named in capitals, words joined by single hyphens; in each
+    folder the types of FOLDER_TYPES, and the files of FOLDER_FILES and DOT_FILES at their
+    own paths.
 P5. Names where they are mechanical. A book's pages, texts, mishnah, reading lines, review
     records and figures are named by its Roman numeral and the proposition's number
     (NAMES); a brief by four digits and a slug, or as a book's brief; a Lean file of the
@@ -42,18 +45,30 @@ protected path, and lands first, in a pull request of its own.
 
 The self-test plants a fault of each rule in memory, beside good paths (Book IV's and
 Book X's among them), and fails if a fault passes or a good path is refused. Exits 1 on
-any finding. Standard library only; Python 3.11 or later.
+any finding. Standard library only; Python 3.11 or later. A module planted beside the
+script (scripts/unicodedata.py, say) is never read in its place.
 """
 
-from __future__ import annotations
-
-import argparse
-import re
-import subprocess
+import os
 import sys
-import unicodedata
-from collections import defaultdict
-from pathlib import Path
+
+# Run as `python3 scripts/check_paths.py`, Python puts the script's own folder first on
+# sys.path, so a module planted there would stand in for the standard library's and could
+# pass any tree. sys is built in, and site has loaded os before any script runs, so
+# neither is read from the folder; it is taken off before any other import. For the same
+# reason there is no `from __future__` import: it is an import like any other, and would
+# read a planted scripts/__future__.py first. A script that imports this one keeps its own
+# sys.path.
+if __name__ == "__main__":
+    sys.path[:] = [p for p in sys.path if os.path.realpath(p or os.curdir)
+                   != os.path.dirname(os.path.realpath(__file__))]
+
+import argparse  # noqa: E402
+import re  # noqa: E402
+import subprocess  # noqa: E402
+import unicodedata  # noqa: E402
+from collections import Counter, defaultdict  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 SCRIPT = Path(__file__).resolve()
 
@@ -67,8 +82,8 @@ DOT_FOLDERS = frozenset({".github"})
 # P1: the file names that may begin with a dot (where they stand is P4's, DOT_FILES).
 DOT_NAMES = frozenset({".gitignore", ".gitkeep"})
 # P1: Windows's device names, refused as a segment's stem in any case.
-DEVICES = frozenset({"CON", "PRN", "AUX", "NUL", *(f"COM{n}" for n in range(1, 10)),
-                     *(f"LPT{n}" for n in range(1, 10))})
+DEVICES = frozenset({"CON", "PRN", "AUX", "NUL", *(f"COM{n}" for n in range(10)),
+                     *(f"LPT{n}" for n in range(10))})
 # P3: the extensions the tree uses, in lower case.
 EXTENSIONS = frozenset({"md", "svg", "lean", "toml", "py", "txt", "json", "png", "jsonl",
                         "yml", "sha256", "sh", "lock", "cff", "bib"})
@@ -85,8 +100,9 @@ ROOT_FILES = frozenset({".gitignore", "AGENTS.md", "Audit.lean", "CERTIFICATE.md
                         "GRAPH.md", "LICENSE", "LICENSE-PROSE.md", "NOTICE", "README.md",
                         "Staging.lean", "facts.json", "lake-manifest.json", "lakefile.toml",
                         "lean-toolchain"})
-# P4: further Markdown at the root, named in capitals as README.md is.
-ROOT_MARKDOWN = re.compile(r"[A-Z][A-Z0-9-]*\.md")
+# P4: further Markdown at the root, named in capitals as README.md is: words of capitals
+# and digits joined by single hyphens, as LICENSE-PROSE.md is.
+ROOT_MARKDOWN = re.compile(r"[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*\.md")
 # P4: the types each top-level folder holds, by extension.
 FOLDER_TYPES = {
     ".github": frozenset({"md", "yml"}),
@@ -286,7 +302,7 @@ def placement(path: str) -> list[str]:
         if path in ROOT_FILES or ROOT_MARKDOWN.fullmatch(path):
             return []
         return ["not a file of the root, which holds ROOT_FILES and Markdown named in "
-                "capitals, as README.md"]
+                "capitals, words joined by single hyphens, as README.md and LICENSE-PROSE.md"]
     top = parts[0]
     if top not in TOP_FOLDERS:
         return [f"'{shown(top)}/' is not a top-level folder (TOP_FOLDERS)"]
@@ -371,10 +387,15 @@ def mode(mode_: str, path: str) -> list[str]:
 
 def findings(entries: list[tuple[str, str]]) -> list[str]:
     """Every finding for the (mode, path) entries, one line each, by rule and then path:
-    "P<rule> <path>: <reason>". P4 judges only what P3 passes, and P5 what both pass, so
-    that one fault is not reported three times over."""
+    "P<rule> <path>: <reason>". A path among the entries more than once is P2's: a tree
+    names a path once, and a disk holds one of them. P4 judges only what P3 passes, and P5
+    what both pass, so that one fault is not reported three times over."""
     found: set[tuple[int, str, str]] = set()
     paths = sorted({path for _, path in entries})
+    for path, n in Counter(path for _, path in entries).items():
+        if n > 1:
+            found.add((2, path, f"listed {n} times; a tree names a path once, and a disk "
+                                "holds one of them"))
     for mode_, path in set(entries):
         found.update((6, path, r) for r in mode(mode_, path))
     for path in paths:
@@ -409,10 +430,14 @@ PLANTED: tuple[tuple[int, tuple[tuple[str, str], ...], str], ...] = (
     (1, ((PLAIN, "docs/con.md"),), "docs/con.md"),
     (1, ((PLAIN, "docs/Lpt9/a.md"),), "docs/Lpt9/a.md"),
     (1, ((PLAIN, "docs/aux.tar.md"),), "docs/aux.tar.md"),
+    (1, ((PLAIN, "docs/com0.md"),), "docs/com0.md"),
+    (1, ((PLAIN, "docs/LPT0/a.md"),), "docs/LPT0/a.md"),
     (2, ((PLAIN, "README.md"), (PLAIN, "readme.md")), "readme.md"),
     (2, ((PLAIN, "scripts/a.py"), (PLAIN, "Scripts/json.py")), "Scripts/"),
-    (2, ((PLAIN, "docs/café.md"), (PLAIN, "docs/café.md")), "docs/café.md"),
+    # An accented e, composed (NFC) and decomposed (NFD): escapes, so no editor merges them.
+    (2, ((PLAIN, "docs/caf\u00e9.md"), (PLAIN, "docs/cafe\u0301.md")), "docs/cafe\u0301.md"),
     (2, ((PLAIN, "docs/Notes"), (PLAIN, "docs/notes/a.md")), "docs/notes/"),
+    (2, ((PLAIN, "README.md"), (PLAIN, "README.md")), "README.md"),
     (3, ((PLAIN, "docs/notes.MD"),), "docs/notes.MD"),
     (3, ((PLAIN, "docs/notes.markdown"),), "docs/notes.markdown"),
     (3, ((PLAIN, ".github/workflows/ci.yaml"),), ".github/workflows/ci.yaml"),
@@ -422,6 +447,8 @@ PLANTED: tuple[tuple[int, tuple[tuple[str, str], ...], str], ...] = (
     (4, ((PLAIN, "notes/a.md"),), "notes/a.md"),
     (4, ((PLAIN, "notes.txt"),), "notes.txt"),
     (4, ((PLAIN, "Readme.md"),), "Readme.md"),
+    (4, ((PLAIN, "TRAILING-.md"),), "TRAILING-.md"),
+    (4, ((PLAIN, "DOUBLE--HYPHEN.md"),), "DOUBLE--HYPHEN.md"),
     (4, ((PLAIN, ".gitattributes"),), ".gitattributes"),
     (4, ((PLAIN, ".gitmodules"),), ".gitmodules"),
     (4, ((PLAIN, "docs/.gitignore"),), "docs/.gitignore"),
@@ -457,7 +484,8 @@ PLANTED: tuple[tuple[int, tuple[tuple[str, str], ...], str], ...] = (
 # The self-test's good paths, which must pass together: today's kinds, and a new book's.
 GOOD: tuple[tuple[str, str], ...] = (
     (PLAIN, ".github/workflows/ci.yml"), (PLAIN, ".gitignore"), (PLAIN, "README.md"),
-    (PLAIN, "SECURITY.md"), (PLAIN, "LICENSE"), (PLAIN, "lean-toolchain"),
+    (PLAIN, "SECURITY.md"), (PLAIN, "CODE-OF-CONDUCT.md"), (PLAIN, "LICENSE"),
+    (PLAIN, "lean-toolchain"),
     (PLAIN, "Elements.lean"), (PLAIN, "Elements/BookI/Prop01.lean"),
     (PLAIN, "Elements/BookIV/Prop16.lean"), (PLAIN, "Elements/BookX/Prop115.lean"),
     (PLAIN, "Elements/Foundations/Tacit/Metric.lean"), (PLAIN, "Staging/.gitkeep"),
@@ -490,18 +518,26 @@ def self_test() -> list[str]:
 
 
 def repository() -> Path:
-    """The repository the script stands in, as Git names its work tree."""
+    """The repository the script stands in, as Git names its work tree. An inherited
+    GIT_DIR or GIT_WORK_TREE that names another is refused, saying what to do: a Git alias
+    run from a linked worktree sets GIT_DIR, and the check would judge the wrong index."""
+    inherited = [name for name in ("GIT_DIR", "GIT_WORK_TREE") if name in os.environ]
+    remedy = ((f"; {' and '.join(inherited)} {'is' if len(inherited) == 1 else 'are'} set "
+               "(a Git alias run from a linked worktree sets GIT_DIR): run the check with "
+               "neither (env -u GIT_DIR -u GIT_WORK_TREE python3 scripts/check_paths.py)")
+              if inherited else "")
     try:
         done = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=SCRIPT.parent,
                               capture_output=True, text=True)
     except OSError as e:
         fail(f"cannot run Git ({e})")
     if done.returncode != 0:
-        fail(f"cannot find the repository from {SCRIPT.parent}: {done.stderr.strip()}")
+        fail(f"cannot find the repository from {SCRIPT.parent}: {done.stderr.strip()}"
+             + remedy)
     top = Path(done.stdout.strip()).resolve()
     if top != SCRIPT.parent.parent:
-        fail(f"Git's work tree is {top}, not the script's repository {SCRIPT.parent.parent}; "
-             "is GIT_DIR or GIT_WORK_TREE set?")
+        fail(f"Git's work tree is {top}, not the script's repository {SCRIPT.parent.parent}"
+             + (remedy or "; run the check from the repository's own work tree"))
     return top
 
 
@@ -516,18 +552,19 @@ def git(root: Path, *args: str) -> bytes:
 
 
 def entries_of(listing: bytes) -> list[tuple[str, str]]:
-    """The (mode, path) entries of `git ls-files -s -z` or `git ls-tree -r -z`: each record
-    is the mode and other fields, a tab, and the path, as bytes. A path that is not UTF-8
-    keeps its bytes as surrogates, which P1 refuses."""
-    entries = set()
+    """The (mode, path) entries of `git ls-files -s -z` or `git ls-tree -r -z`, every one,
+    so that a path listed twice is seen: each record is the mode and other fields, a tab,
+    and the path, as bytes. A path that is not UTF-8 keeps its bytes as surrogates, which
+    P1 refuses."""
+    entries = []
     for record in listing.split(b"\0"):
         if not record:
             continue
         fields, tab, path = record.partition(b"\t")
         if not tab or not fields:
             fail(f"cannot read Git's entry {record!r}")
-        entries.add((fields.split(b" ", 1)[0].decode("ascii", "replace"),
-                     path.decode("utf-8", "surrogateescape")))
+        entries.append((fields.split(b" ", 1)[0].decode("ascii", "replace"),
+                        path.decode("utf-8", "surrogateescape")))
     return sorted(entries)
 
 
@@ -550,7 +587,10 @@ def main(argv: list[str] | None = None) -> int:
 
     root = repository()
     if args.rev is None:
-        entries = entries_of(git(root, "ls-files", "-s", "-z"))
+        # The index lists a path once, save once at each stage of a merge left unresolved,
+        # so an entry repeated there is taken once; a tree's entries are all kept, and a
+        # path listed twice among them is P2's.
+        entries = sorted(set(entries_of(git(root, "ls-files", "-s", "-z"))))
         judged = "tracked paths of the index"
     else:
         commit = git(root, "rev-parse", "--verify", "--quiet", "--end-of-options",
