@@ -14,7 +14,8 @@ the few proofs this library may hold, are in `docs/WORKFLOW.md`, section 2. Brie
 the home and owner of each statement of brief 0005's stages; a later brief names those of
 its own.
 
-The folders follow the briefs' stages. The statements of brief 0006's stages 2, 3 and 4,
+The folders followed the briefs' stages; the one left, `Routes/`, follows issues instead
+(#125, #126, #127, #129 and #130). The statements of brief 0006's stages 2, 3 and 4,
 all proved, have moved to their homes in `Elements/`, and their folders with them; so have
 stage 4b's statements of brief 0007, III.7, III.8 and III.17 with the point of contact, and
 the mixed-angle prototype for III.16 and III.31 (brief 0011). Brief 0008's centre

@@ -1,5 +1,4 @@
 import Elements.Figure.Basics
-import Elements.BookI.Prop12
 import Elements.BookI.Prop20
 import Elements.BookI.Prop24
 import Elements.BookIII.Prop02
@@ -43,9 +42,9 @@ straight line on the wrong side, I.20, or a point of a radius near C, would do t
 So C lies on the straight line through the centres, beyond the inner centre within
 (`TouchesInternallyAt.between`) and between the centres without
 (`TouchesExternallyAt.between`); and from there I.20 and Definition I.15 give the whole
-circles. The proofs use Book I, III.2 and System E's diagram rules, Intersections 8 and 9
-among them, with the rule that every circle has a centre, and nothing that rests on Circle 2
-or Circle 3.
+circles. The proofs use Book I, III.2 and System E's diagram and construction rules,
+Intersections 8 and 9 among the latter, with the rule that every circle has a centre, and
+nothing that rests on Circle 2 or Circle 3.
 
 These two lemmas reach the conclusions of III.11 and III.12 by a route that is not
 Euclid's. They are not meant to replace his proofs: the agreement belongs beside

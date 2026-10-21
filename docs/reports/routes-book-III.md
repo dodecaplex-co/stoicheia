@@ -24,8 +24,14 @@ new drafts. No rule names a namespace for them, and the coordinator may rename t
 **The statements the files stand on.** [Brief 0008](../briefs/0008-centre.md) restates
 Book III so that every circle has a centre (`Tacit.exists_centre`). The trains C6a, C6b and
 C6c carry the next move of Book III's files into `Elements/`, those restatements among it,
-with main as at 2e8aecf. This branch merged their head, train C6c as at 80292b0a (the merge
-is 9679f978), and its `Elements/` has not changed since. As their head, train C6c carries
+with main as at 2e8aecf. This branch merged their head, train C6c, twice: as at 80292b0a
+(the merge is 9679f978), and as at e8a375b7, which carries main as at 0a05f96f (the merge
+is 60dc26e0). The second merge brings to `Elements/` main's change between 2e8aecf and
+0a05f96f, and nothing else: the foundations' rule of superposition restated as a restricted
+rule, with its home in `Elements/Foundations/Superposition/` and the laws its derivations
+cite proved in `Elements/Figure/Superposition.lean`; I.4 and I.8 proved by it; and words in
+the files of I.11 and I.44. It changes no file of `Elements/BookIII/`. Then 9a0f8ba1 merged
+main as at e7ffaf68, and changed no file of `Elements/`. As their head, train C6c carries
 the other two, and in this report it stands for all three. Main did not have the
 restatements when this report was written, and these files land after train C6c. In this
 report, **the statement in `Elements/`** or **the proof in `Elements/`** of a proposition is
@@ -600,19 +606,28 @@ short. Their home in `Elements/` is part of their approval.
 
 *This section is analysis only.* It changes no file of Book III, and nothing of the Lean it
 proposes has been compiled. Its facts were read from this branch at 9f8c8adb, whose
-`Elements/` is train C6c's as at 80292b0a, the `Elements/` these files land on; no later
-commit on this branch changes `Elements/` or `facts.json`. That tree holds main as at
-2e8aecf, with main's retirements
-of axioms, so `centre_unique` and `adjacent_eq_of_right` are theorems there. For this report
-its certificate was built afresh (`lake build`, then `lake env lean
-Certificate/Facts.lean`), and the `facts.json` it wrote is, byte for byte, the one committed
-at 9f8c8adb. In the figures below the first number of each pair is measured, read from that
-`facts.json`. The second is computed: a Lean walk of the dependencies, as Lean's
+`Elements/` is train C6c's as at 80292b0a. That tree holds main as at 2e8aecf, with main's
+retirements of axioms, so `centre_unique` and `adjacent_eq_of_right` are theorems there, as
+they still are. For this report its certificate was built afresh (`lake build`, then `lake
+env lean Certificate/Facts.lean`), and the `facts.json` it wrote is, byte for byte, the one
+committed at 9f8c8adb. In the figures below the first number of each pair is measured, read
+from that `facts.json`. The second is computed: a Lean walk of the dependencies, as Lean's
 collectAxioms walks them, which takes the dropped call out of the proof that makes it and
 puts the rule in its place. Run with nothing dropped, the walk gives each of the 137 entries
 exactly its `axioms` in `facts.json`. An earlier version of this section measured main at
 2e8aecf and an earlier C6c (d3e9a8c), and estimated the tree that merges them; this tree is
 that merge, and its measurements replace the estimate.
+
+**At 9a0f8ba1, the `Elements/` these files land on.** Of the later commits on this branch,
+only the merge 60dc26e0 changes `Elements/` or `facts.json` (see the opening of this
+report). It changes no file of `Elements/BookIII/`, and every one of the 137 entries of
+`facts.json` keeps exactly the `axioms` it had at 9f8c8adb. What changes in `facts.json` is
+the vocabulary (125 words, now 242), the type of the rule of superposition, and, for I.4
+and I.8 alone, the record of which rules each proof calls itself and through which steps it
+reaches the others. The certificate built afresh at 9a0f8ba1 is, byte for byte, the
+`facts.json` committed there, and every figure below was found again on it: the measured
+numbers read from it, the computed ones by the walk run again, and the count of Heath's
+references by the page generator's functions ("Checks", at the end).
 
 **The finding.** On main as at 2e8aecf, III.1 is called nine times in eight proofs: III.2,
 III.4, III.8, III.14, III.17, III.35, III.36 (twice) and III.37. Train C6c removes four of
@@ -746,14 +761,48 @@ not built from changed Lean. How far the audit pins shrink is inferred, for they
 
 ## Checks
 
-Each check below names the revision it ran on. No file under `Staging/Routes/` has changed
-since 80e85ec6: the revision that carries this text changes only this report, the
-decisions entry, and the paragraph on `Routes/` in the docstring of `Staging.lean`.
+Each check below names the revision it ran on. No file under `Staging/Routes/` changed from
+80e85ec6 to 9a0f8ba1. The commit that carries this text changes one of them,
+`Touching.lean`, in an import and its docstring, and no declaration. The first paragraph
+below is for the revision delivered; the others are its history.
 
-**At 80e85ec6, the Lean as delivered.** The seven modules were built, and a scratch module
-outside the repository put every theorem they declare, other than the private steps the
-others use, to Lean's collectAxioms. It looks for `sorryAx`; for an axiom declared outside
-`Elements/Foundations/` other than Lean's own three (`propext`, `Classical.choice`,
+**At 9a0f8ba1, with the edits of the commit that carries this text.** That is this
+paragraph's revision. The edits change no declaration: they delete from `Touching.lean` its
+import of I.12, which nothing in the file used; correct a sentence of its docstring and one
+of the doc comment of `Staging.lean`; and change this report. On that tree the seven modules
+were built, and the scratch module described at 80e85ec6, below, put the 38 theorems to
+Lean's collectAxioms. It reported:
+
+```text
+Build completed successfully (107 jobs).
+routes_check: 38 theorems, 0 findings
+```
+
+`lake build Staging` completed (109 jobs) with no warning from `Staging/Routes/`; its only
+warnings are the two unused variables at lines 165 and 166 of
+`Elements/Figure/Circles.lean`. Each of the seven files, elaborated alone with `lake env
+lean`, gave no message at all, so the five type equalities they end with hold. The scratch
+walk beneath the seven theorems for the angle of contact found no proposition of Book III
+later than III.18, and reached the modules of Book III it reached at 80e85ec6:
+
+```text
+cutoff_check: 7 roots, 1462 constants walked, 0 findings
+```
+
+It walked 520 at 80e85ec6, and gives 520 again when run there. The difference is the merge
+60dc26e0: I.4 and I.8, beneath the angle of contact, are now proved by the restricted rule
+of superposition, and 289 of the 1462 constants are in its modules, while 776 are Lean's
+own, where 193 were. Then `scripts/check_style.py` and `scripts/check_links.py` passed:
+
+```text
+✓ style: the hard rules hold (S1–S26)
+✓ links: all 14061 relative links and anchors in 484 Markdown files resolve
+```
+
+**At 80e85ec6, the Lean as delivered then.** The seven modules were built, and a scratch
+module outside the repository put every theorem they declare, other than the private steps
+the others use, to Lean's collectAxioms. It looks for `sorryAx`; for an axiom declared
+outside `Elements/Foundations/` other than Lean's own three (`propext`, `Classical.choice`,
 `Quot.sound`); and for Circle 3, which Circle 2 now rests on, so that it finds both. It
 reported:
 
@@ -818,8 +867,26 @@ for the angle of contact. c868a9fc changed `Prop20.lean` and `Prop26.lean` after
 **The certificate for #131, at 9f8c8adb.** `lake build` and `lake env lean
 Certificate/Facts.lean` wrote a `facts.json` identical to the one committed, which the
 figures of #131 read; the walk behind the computed figures agrees with it on all 137
-entries. No later commit on this branch changes `Elements/` or `facts.json`, so the
-measurement stands for 80e85ec6; it was not run again.
+entries.
+
+**The certificate for #131, at 9a0f8ba1.** The merge 60dc26e0 changes `Elements/` and
+`facts.json`, so the measurement was made again. `lake build` completed (153 jobs), and
+`lake env lean Certificate/Facts.lean` reported:
+
+```text
+certificate: 99 propositions, 3 porisms and 35 companions written to facts.json, with 80 axioms and 242 words of the vocabulary they and the entries are stated in
+```
+
+The `facts.json` it wrote is, byte for byte, the one committed at 9a0f8ba1; the files the
+run writes were then restored, and none was left changed. Compared with the one at
+9f8c8adb, each of the 137 entries has the same `axioms`. A scratch walk outside the
+repository gives, with nothing dropped, each entry exactly its `axioms` there, and with the
+five calls dropped every computed figure of #131: each pair of the table, the rules that
+leave, III.8's call alone changing nothing, the 45 entries on the rule and 43 after, the 38
+that change and the 31 of them that lose only `exists_point_same_side`, and the 42 entries
+beneath III.1 and none after. The page generator's own functions, run on that `facts.json`,
+give two of Heath's 86 references in Book III uncited, III.5 in III.10 and III.10 in III.24,
+and seven with III.1 taken from the citations of the five proofs.
 
 **Who read what.**
 
@@ -830,11 +897,12 @@ measurement stands for 80e85ec6; it was not run again.
   text where a file has his sentences and against train C6c's tree: one `Prop08.lean` and
   `Prop27.lean`, and another `Touching.lean` and `AngleOfContact.lean`, at 4a6d9a49; the
   third `Prop20.lean`, `Prop21.lean` and `Prop26.lean`, at 9f8c8adb. Each passed it with
-  minor findings. 86c5748d answers the first two: a remark wanted under III.26's step in
-  III.27, the unused hypothesis that the circles are two in the step from the straight line
-  through the centres, and docstrings that named a centre the statement no longer has or
-  told the history of the move. c868a9fc answers the third: III.20 and III.26 import what
-  they cite, and III.26's docstring says that the segments are similar.
+  minor findings. 86c5748d answers the first two, and the third's request for a remark on F
+  in III.21: a remark wanted under III.26's step in III.27, the unused hypothesis that the
+  circles are two in the step from the straight line through the centres, docstrings that
+  named a centre the statement no longer has or told the history of the move, and the
+  remark on F. c868a9fc answers the third's other two: III.20 and III.26 import what they
+  cite, and III.26's docstring says that the segments are similar.
 - **The code review.** After this report was rewritten (78b3d913, bd9c4b76), an
   independent code review read the whole branch at bd9c4b76, against the repository's
   standards and the six issues. It found the five staged proofs of statements in
@@ -843,14 +911,27 @@ measurement stands for 80e85ec6; it was not run again.
   `Touching.lean`, checks and readings in this report not tied to the revision delivered,
   and a miscount of the coordinator's questions in the decisions entry. 80e85ec6 answers
   four of its findings on the Lean (that fact, now cited from `Elements/`; "main's" in the
-  Lean; Heath's note on III.26 quoted on III.27's page; and the type checks), and this
-  text those on the report and the decisions entry. Two minor findings are still open, both
-  in the Lean: the staged III.21 takes the centre F under Euclid's sentence and uses it
-  nowhere below, and the header of `Touching.lean` calls Intersections 8 and 9, which are
-  construction rules, diagram rules.
-- **Not yet read independently.** The pre-merge validation passed at e225a060, after
-  commits of its own: a7724676, which put III.20 in general and the three theorems named
-  after it in the namespace of a changed main theorem, with the files that cite them, and
-  wrote the sentence on the prototype that this text replaces; and 09a88a7b and e225a060,
-  its records of checks in this report. Those three commits, 80e85ec6 and this text have
-  not yet been read by an independent reader.
+  Lean; Heath's note on III.26 quoted on III.27's page; and the type checks), and 7d9ffaed
+  those on the report and the decisions entry. Two of its minor findings, both in the
+  Lean, were left open then. The commit that carries this text answers one: the header of
+  `Touching.lean` called Intersections 8 and 9, which are construction rules, diagram
+  rules, and now names both kinds. The other is kept by choice: the staged III.21 takes the
+  centre F under Euclid's sentence, as III.21 in `Elements/` does, and uses it nowhere
+  below, and a remark in the file says why; the second code review found the remark true.
+- **The pre-merge validation** (WORKFLOW, section 10). It completed at e225a060; its Lean
+  checks are those above at a7724676, and its lint did not catch the six names that
+  `scripts/check_style.py` rejects (above, at 80e85ec6). Its commits: a7724676, which put
+  III.20 in general and the three theorems named after it in the namespace of a changed
+  main theorem, with the files that cite them, and wrote the sentence on the prototype that
+  7d9ffaed replaced; 09a88a7b, its record of those checks; and e225a060, a sentence on
+  review status, which 7d9ffaed replaced.
+- **The second code review.** An independent code review read the delta from bd9c4b76 to
+  7d9ffaed, which holds the three commits of the pre-merge validation, 80e85ec6 and
+  7d9ffaed, and the merge 60dc26e0. It found the earlier findings answered, but for the two
+  minor ones above, and the renaming of III.20 in general and its three theorems
+  consistent, with no type changed. Its own findings, one material and four minor, are
+  answered by the commit that carries this text: three sentences of this report that the
+  merge had made false, with checks that all predated the merge (the opening, #131 and
+  "Checks"); the import of I.12 in `Touching.lean`, which nothing used; two sentences of
+  this list; and a sentence of `Staging.lean` on its folders.
+- **Not yet read independently.** The commit that carries this text.
