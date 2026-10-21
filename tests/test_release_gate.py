@@ -133,6 +133,35 @@ class UnfinishedWork(unittest.TestCase):
                     self.assertEqual(verdict, "FAIL")
                     self.assertIn("exactly one ## Unfinished work heading", detail)
 
+    def test_a_heading_github_does_not_show_is_refused(self):
+        for before, after in (("<!--", "-->"), ("```", "```"), ("~~~", "~~~"),
+                              ("<div>", "</div>"), ("<details>", "</details>"),
+                              ("<!-- safe_push:custom begin -->",
+                               "<!-- safe_push:custom end -->")):
+            with self.subTest(before=before):
+                body = self.section("None").replace(
+                    "## Unfinished work\n", f"{before}\n## Unfinished work\nNone\n"
+                    f"## Review records\n{after}\n\n", 1)
+                verdict, detail = self.gate(body)
+                self.assertEqual(verdict, "FAIL")
+                self.assertIn("must be one GitHub shows", detail)
+        # A part safe_push writes is read in place, as GitHub shows it: a fence opened in
+        # it hides the heading after it, run to the end or closed by a longer fence.
+        for closer in ("", "````\n"):
+            with self.subTest(closer=closer):
+                body = self.TEMPLATE.replace(
+                    "## Unfinished work\n\n<!-- Name each piece. -->\n\n", "") + (
+                    "<!-- safe_push:custom begin -->\n```\n<!-- safe_push:custom end -->\n"
+                    "## Unfinished work\nNone\n## Review records\n" + closer)
+                verdict, detail = self.gate(body)
+                self.assertEqual(verdict, "FAIL")
+                self.assertIn("must be one GitHub shows", detail)
+        # Each closed before the heading, it is shown, and the section is read.
+        shown_body = self.section("None", before="<!--\nA note.\n-->\n```\ncode\n```\n"
+                                  "<div>\nA note.\n</div>\n\n<!-- safe_push:custom begin -->\n"
+                                  "- A commit\n<!-- safe_push:custom end -->\n\n")
+        self.assertEqual(self.gate(shown_body), ("ok", "None"))
+
     def test_section_ends_only_at_the_templates_next_heading(self):
         for line in ("##", "## #", "# Next", "## Next", "### Next", "---", "===",
                      "## &nbsp;", "  ## Next"):
@@ -198,6 +227,20 @@ class UnfinishedWork(unittest.TestCase):
     def test_the_ascii_refusal_names_the_character_and_its_line(self):
         refs, problems = self.refs("- Prototype #38\n- III.18\u2013III.22 awaiting, #39")
         self.assertIn("U+2013 on line 2", "\n".join(problems))
+
+    def test_addresses_and_emphasis_are_refused(self):
+        for text in ("- Prototype #38; see github.com/example/edition/issues/39",
+                     "- Prototype #38, example/edition/issues/39",
+                     "- Prototype #38, example/edition/pull/40",
+                     "- Prototype #38 example.org/ticket/39",
+                     "- Prototype #38 192.0.2.1/ticket/39",
+                     "- Prototype #38 localhost:8080/ticket/39",
+                     "- **Prototype** #38", "- Prototype *later* #38",
+                     "- _Prototype_ #38"):
+            with self.subTest(text=text):
+                self.assertTrue(self.refs(text)[1])
+        # The list marker "* " stays allowed.
+        self.assertEqual(self.refs("* Prototype #38"), ([38], []))
 
     def test_a_stale_template_comment_is_named_as_such(self):
         refs, problems = self.refs("<!-- An older wording. -->\nNone")
@@ -300,11 +343,14 @@ class UnfinishedWork(unittest.TestCase):
 
     def test_foreign_references_refused_even_beside_local(self):
         for text in ("other/repo#38", "x=#38", "page#38", "(#38)extra", "#0", "#038",
-                     "#38,#39"):
+                     "#38,#39", "fooGH-39"):
             with self.subTest(text=text):
                 refs, problems = self.refs("- Prototype " + text + " and #40")
                 self.assertEqual(refs, [40])
                 self.assertIn("write the issue as #N on its own", "\n".join(problems))
+        refs, problems = self.refs("- Prototype #38 fooGH-39")
+        self.assertEqual(refs, [38])
+        self.assertIn("write the issue as #N on its own", "\n".join(problems))
 
     def test_urls_and_forbidden_characters_are_refused(self):
         for text, reason in (
@@ -313,12 +359,18 @@ class UnfinishedWork(unittest.TestCase):
                 ("https://elsewhere.invalid/#https://github.com/example/edition/issues/38", "URL"),
                 ("https://github.com/example/edition/issues/38/garbage", "URL"),
                 ("https://github.com/other/repo/issues/38", "URL"),
-                ("www.example.invalid", "URL"), ("~", "tilde"), ("|", "pipe"),
+                ("www.example.invalid", "URL"),
+                ("WWW.GITHUB.COM/example/edition/issues/39", "URL"),
+                ("~", "tilde"), ("|", "pipe"),
                 ("\\", "backslash"), ("\t", "tab"), ("<!-- unclosed", "comment")):
             with self.subTest(text=text):
                 refs, problems = self.refs("- Prototype " + text + " #38")
                 self.assertEqual(refs, [])
                 self.assertIn(reason, "\n".join(problems))
+        refs, problems = self.refs(
+            "- Prototype #38, see WWW.GITHUB.COM/example/edition/issues/39")
+        self.assertEqual(refs, [])
+        self.assertIn("URL", "\n".join(problems))
 
     def test_each_list_item_needs_its_issue(self):
         refs, problems = self.refs("- Prototype #38\n- Page to come\n* Test to come")
@@ -573,12 +625,13 @@ class ReleaseReads(unittest.TestCase):
 
 class MergeChecks(unittest.TestCase):
     def test_valid_and_missing_labels(self):
-        for labels in (None, []):
-            self.assertEqual(safe_push.pr_labels(labels), set())
+        self.assertEqual(safe_push.pr_labels([]), set())
+        with self.assertRaisesRegex(ValueError, "labels are unreadable"):
+            safe_push.pr_labels(None)
         self.assertEqual(safe_push.pr_labels([{"name": "tooling"}, {"name": "Release"}]),
                          {"tooling", "release"})
 
-    def judge(self, label, extra, **changes):
+    def judge(self, label, extra, omit_labels=False, **changes):
         ctx = safe_push.Context(ROOT, "head", "", 0, "", "example/edition", {},
                                 branch="test-gates")
         template = "## Unfinished work\n\n## Checklist\n- [ ] **Required:** Reviewed."
@@ -587,6 +640,8 @@ class MergeChecks(unittest.TestCase):
                 "body": template.replace("\n\n", "\nNone\n").replace("[ ]", "[x]"),
                 "labels": [{"name": name} for name in ["tooling", *([label] if label else [])]]}
         view.update(changes)
+        if omit_labels:
+            del view["labels"]
         checks = [{"name": name, "bucket": "pass"} for name in safe_push.REQUIRED_CHECKS]
         report = safe_push.Report()
         with mock.patch.object(safe_push, "gh_json", return_value=view), \
@@ -625,7 +680,7 @@ class MergeChecks(unittest.TestCase):
     def test_malformed_labels_refuse_release_and_keep_stale_check(self):
         for labels in ([{"name": "tooling"}, {}], {}, "release", ["tooling"],
                        [{"name": ""}], [{"name": None}], [{"name": 2}], [None],
-                       [{"name": "   "}], False):
+                       [{"name": "   "}], False, None):
             for bucket in ("fail", "pending"):
                 with self.subTest(labels=labels, bucket=bucket):
                     report = self.judge(None, {"name": "release-gate", "workflow": "Release gate",
@@ -633,6 +688,13 @@ class MergeChecks(unittest.TestCase):
                     failed = {step.name: step.detail for step in report.failed()}
                     self.assertIn("the pull request's labels are unreadable", failed["release"])
                     self.assertIn("CI", failed)
+        for bucket in ("fail", "pending"):
+            with self.subTest(labels="missing", bucket=bucket):
+                report = self.judge(None, {"name": "release-gate", "workflow": "Release gate",
+                                           "bucket": bucket}, omit_labels=True)
+                failed = {step.name: step.detail for step in report.failed()}
+                self.assertIn("the pull request's labels are unreadable", failed["release"])
+                self.assertIn("CI", failed)
 
 
 class WatchChecks(unittest.TestCase):
@@ -650,12 +712,29 @@ class WatchChecks(unittest.TestCase):
                 with self.subTest(bucket=bucket, labels=labels), \
                         mock.patch.object(safe_push, "pr_checks",
                                           return_value=passing + [stale]), \
+                        mock.patch.object(safe_push, "read_pr_labels",
+                                          return_value=labels) as read_labels, \
                         mock.patch.object(safe_push.subprocess, "run") as run, \
                         redirect_stdout(io.StringIO()):
-                    self.assertEqual(safe_push.watch_checks(ctx, pr, safe_push.Report(),
-                                                            labels), verdict)
+                    self.assertEqual(safe_push.watch_checks(ctx, pr, safe_push.Report()), verdict)
                     self.assertEqual(run.call_count, 1)
                     self.assertNotIn("timeout", run.call_args.kwargs)
+                    read_labels.assert_called_once_with(ctx, pr.number)
+
+    def test_unreadable_final_labels_retain_every_check_and_refuse(self):
+        ctx = safe_push.Context(ROOT, "head", "", 0, "", "example/edition", {},
+                                gh=("stand-in",))
+        pr = safe_push.PR(1, "https://example.invalid/pull/1", False)
+        passing = [{"name": name, "bucket": "pass"} for name in safe_push.REQUIRED_CHECKS]
+        stale = {"name": "release-gate", "workflow": "Release gate", "bucket": "fail"}
+        report = safe_push.Report()
+        with mock.patch.object(safe_push, "pr_checks", return_value=passing + [stale]), \
+                mock.patch.object(safe_push, "read_pr_labels",
+                                  side_effect=ValueError("labels unreadable")), \
+                mock.patch.object(safe_push.subprocess, "run"), \
+                redirect_stdout(io.StringIO()):
+            self.assertEqual(safe_push.watch_checks(ctx, pr, report), "unknown")
+        self.assertIn("failing: release-gate", report.failed()[0].detail)
 
 
 if __name__ == "__main__":

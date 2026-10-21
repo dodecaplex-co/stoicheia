@@ -517,8 +517,8 @@ done; `--merge` refuses a draft.
 provisional answer, a restricted or partial scope awaiting a proof, a deferred page, a
 test not yet in CI, anything a disclosure calls "to come", has an open issue labelled
 `blocks-release`, named as `#N` in the pull request's "Unfinished work" section; when
-there is none, the section says "None". Each list item names its issue. These issues
-hold the release until they are closed, as the owner's rule of
+there is none, the section says "None". Each list item names at least one issue. These
+issues hold the release until they are closed, as the owner's rule of
 [20 October 2026](briefs/0002-decisions.md#20-october-2026) says. The release lands
 through a pull request labelled `release`; `git safe-push --label release` creates that
 label, with its description, the first time it is given, as it does the others.
@@ -869,11 +869,13 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    origin/main harness's blob, and never for a head that changes the checks (`scripts/`,
    `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) or any protected
    path, since CI runs a head's own copies and its own workflow, and only the pre-flight
-   runs origin/main's on it; otherwise they run again too. The body's summary is
-   written afresh when the full checks ran again or when it is not of this head and
-   base, and the other parts safe_push wrote whenever they are out of date. It merges
-   only when those pass; CI on that head
-   is green (`check`, `model` and `negative` pass, and nothing fails or is still
+   runs origin/main's on it; otherwise they run again too. The body must already carry
+   the summary of this head and its base (in queue mode, by a harness that was main),
+   and every other part safe_push wrote must be up to date. `--merge` never writes the
+   pull request body: when one of those parts is stale, it refuses before writing, and
+   the coordinator runs the pre-flight to refresh the body before starting a fresh merge
+   attempt. It merges only when those pass; CI on that head is green
+   (`check`, `model` and `negative` pass, and nothing fails or is still
    running, apart from the `release-gate` job of the "Release gate" workflow on an
    ordinary pull request, even if a run remains from before its `release` label was
    removed, in the pre-flight watcher too); no box marked **Required** is unticked, nor
@@ -887,17 +889,18 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    protected path changes) and "Needs the owner's OK". Boxes and other sections count
    where GitHub shows them, by CommonMark's rules; "Unfinished work" is read as raw text,
    so that nothing GitHub hides or shows differently can stand in for it. The body holds
-   the line `## Unfinished work` once, at the left edge, and no other line whose
-   letters, with tags and entities taken out, begin "unfinished work" or are just
-   "unfinished" (in a comment or code too, so not even a sentence may start with those
-   words); a heading disguised on purpose, in another alphabet or in crafted markup, is
-   for the reviews to find, as a false "None" is. The section runs to the template's
-   next heading. Taking out the template's own comment for it, where it stands on lines
-   of its own, it is plain ASCII with no markup (no links, code, HTML, other comments,
-   headings or entities): "None", with an optional full stop, or a list, each item `- `
-   or `* ` at the left
-   edge, wrapped with two to five spaces, naming its issue as a token `#N` (perhaps in
-   parentheses, or before punctuation); any other `#`, or `GH-N`, is refused. Each
+   the line `## Unfinished work` once, at the left edge, where GitHub shows it as a
+   heading (not in a comment, an HTML block, code or a part safe_push writes), and no
+   other line whose letters, with tags and entities taken out, begin "unfinished work"
+   or are just "unfinished" (in a comment or code too, so not even a sentence may start
+   with those words); a heading disguised on purpose, in another alphabet or in crafted
+   markup, is for the reviews to find, as a false "None" is. The section runs to the
+   template's next heading. Taking out the template's own comment for it, where it
+   stands on lines of its own, it is plain ASCII with no markup (no links, code, HTML,
+   other comments, headings or entities): "None", with an optional full stop, or a list,
+   each item `- ` or `* ` at the left edge, wrapped with two to five spaces, naming one
+   or more issues as tokens `#N` (perhaps in parentheses, or before punctuation); any
+   other `#`, or `GH-N`, is refused. Each
    issue is open with `blocks-release`, not a pull request, and of this repository by
    GitHub's canonical address for it, so a rename is allowed and a transfer is not;
    the section is read again before the merge, and refused if it changed meanwhile.
