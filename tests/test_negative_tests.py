@@ -599,6 +599,30 @@ class RestorationTests(unittest.TestCase):
         self.assertTrue(any("also refused outside" in f and "Elements/Figure/Superposition.lean"
                             in f for f in negative.failures), negative.failures)
 
+    def test_figure_guard_runs_differ_in_the_guard_alone(self):
+        original = (REPO / negative.RESTRICTION).read_text()
+        control = negative.plant_figure_guard(original, negative.OVER_THE_FIGURE)
+        plant = negative.plant_figure_guard(original, negative.OVER_ALL_POINTS)
+        self.assertEqual(control.replace(negative.OVER_THE_FIGURE, "GUARD"),
+                         plant.replace(negative.OVER_ALL_POINTS, "GUARD"))
+        for text in (control, plant):
+            proof = text[text.index(negative.RESTRICT):]
+            self.assertIn("hh hX hΓ", proof)
+            self.assertIn(negative.THROUGH_THE_EMBEDDING, proof)
+            self.assertTrue(text.endswith(f"#print axioms {negative.RESTRICT_NAME}\n"))
+            # Rule.iff_figure and its docstring are left out, and nothing else.
+            self.assertNotIn(negative.IFF_FIGURE, text)
+            self.assertNotIn("for laws that hold.**", text)
+            self.assertNotIn("\n\n\n", text)
+            self.assertIn("def Rule.Figure", text)
+            self.assertIn("structure Interpretation.Embedding", text)
+        start = original.index("/-- **The rule is its part about the figure")
+        iff = original[start:original.index("\n\n", original.index(negative.IFF_FIGURE))]
+        edited = ["      ¬ I.OnLine (v.pt h) (v.line l) → (∀ ℓ ∈ Γ, ℓ.Holds v) → φ.Holds v",
+                  "  intro n m Γ a b c d g h l φ dφ v hT hd hg hdg hh hΓ"]
+        removed = [line for line in original.splitlines() if line not in plant.splitlines()]
+        self.assertEqual(sorted(removed), sorted(iff.splitlines() + edited))
+
     def test_figure_guard_needs_the_control_to_compile_and_the_plant_to_fail(self):
         source = self.root / negative.RESTRICTION
         original = (REPO / negative.RESTRICTION).read_bytes()
