@@ -1866,6 +1866,89 @@ findings:
   (the entry below) lists for each rule. A pin on the proved rules an entry uses would
   need a field of its own, which this change does not add.
 
+- **Restricted superposition prepared for the owner's final word, not landed.** On
+  19 October 2026, [brief 0009, round 3](0009-superposition.md) records the replacement
+  prepared on `lean/superposition-restricted`, at `aa96ab8`, from `origin/main` at
+  `39ae65c`. The owner's decision of 18 October authorised the prototype and preparation;
+  the finished branch awaits the owner's final word. `Tacit.superposition` now has type
+  `Superposition.Rule primitives`: a represented derivation may export one equality of
+  lengths, angles or triangles about the given figure, and may neither introduce objects
+  inside the placement nor export its hypothetical corners or side. I.4 and I.8 alone use
+  it directly. Their statements and Heath lines are unchanged, their coincidence
+  arguments are retained, and every dependent proof has rebuilt. The same 115 of 121
+  certificate entries rest on the rule. I.23 keeps its construction through I.22 and
+  inherits the rule through I.8 and I.20.
+
+  The four new pure modules under `Elements/Foundations/Superposition/` are `Syntax.lean`,
+  `Semantics.lean`, `Soundness.lean` and `Restriction.lean`. They use Lean's `module` format
+  with public imports and sections so that the model's modules can import them. Their
+  words include `Atom`, `Lit`, `Metric`, `Letter`, `LineLetter`, `Law`, `Cited`, `Derives`,
+  `Name`, `LineName`, `Interpretation`, `Val`, `Collinear`, `Triangle`, `Rule`, `guards`,
+  `kept`, `branch` and `rayOfAnglePremises`, with the reached constructors, fields,
+  recursors, matchers, renamings, law data and interpretations. The library's `primitives`
+  reads them in its own geometric words. `Elements/Figure/Superposition.lean` proves the
+  geometric cited laws; I.8 supplies I.7's adapter. The deleted directory
+  `Staging/Superposition/` held the six prototype files; its proofs and restriction evidence
+  now have these production homes. The old-axiom compatibility example is removed.
+
+  `Certificate/axioms.lock` restates one axiom, keeps all 87, and adds 115 vocabulary
+  entries, from 91 to 206, with no former word removed or otherwise changed.
+  `Certificate/Facts.lean` recognises actual uses of the calculus's three congruence
+  constructors as C.N. 4; all 121 common-notion lists match the baseline.
+  `tests/certificate_expectations.json` keeps its eleven existing expectations unchanged
+  and adds thirteen for the restricted rule, its citations and C.N. 4.
+  `Audit.lean` imports the new superposition audit.
+  `Audit/Superposition.lean` pins 27 dependency closures, including both propositions,
+  soundness, restriction evidence and the cited-law proofs.
+  `Audit/Overlaps.lean` retires `I_2`, `I_3` and `I_23`, preserving the thirteen surviving
+  overlap proofs and their pins.
+  `Audit/screen.py` describes those construction shortcuts as retired.
+  `review/SCHEMA.md` replaces the obsolete overlap example with I.7, without changing a
+  field or validation rule.
+  `scripts/heath.py` uses I.7's surviving overlap in two self-test cases, preserving their
+  accepted and rejected outcomes.
+
+  The model generator gives declarations from the four pure modules a checked identity
+  translation, retaining universe arguments, lock coverage, syntactic correspondence and
+  all previous rejection tests. It translates `primitives` over the model signature. The
+  plane's proved isometry and reflection supply placement, its proved Postulate 1 supplies
+  the kept side, and `Rule.of_placement` proves the restricted law. `model_exists` remains
+  unconditional, resting only on `propext`, `Classical.choice` and `Quot.sound`.
+  `model/Model/Audit.lean` retains the existing closure pins and the unknown-`Elements.Point`
+  sentinel, and checks that Model may import from Elements exactly these four modules:
+  `Elements.Foundations.Superposition.Syntax`, `Elements.Foundations.Superposition.Semantics`,
+  `Elements.Foundations.Superposition.Soundness` and
+  `Elements.Foundations.Superposition.Restriction`, including transitive imports. Their
+  declarations are checked to use only the pure modules and `Init`, with no geometric
+  words, project axioms or `sorryAx`.
+  `model/lakefile.toml` documents that precise import boundary; Mathlib stays in `model/`.
+  `model/lock.sha256` is renewed against the regenerated lock.
+  `tests/model/lock.sha256` is renewed against the same lock.
+  `tests/model/laws.toml` describes placement with its kept side as the sampled sufficient
+  condition for the restricted law.
+  `tests/model/MODEL.md` explains the reduction, the proved model and the import boundary.
+  `tests/model/search.py` retains its placement checks and checks the kept side too.
+  `tests/model/hyperbolic.py` retains its placement checks and checks the kept side too.
+
+  The I.4, I.8 and I.23 pages and the overlap catalogue now describe an inference in
+  System E's style. An independent reader has read and stamped the six records for I.2,
+  I.3, I.4, I.8, I.23 and I.44, retaining full coverage and Euclid's route. No equivalence
+  with System E's two rules or whole-theory non-derivability is claimed. Questions 2, 4
+  and 5 of the brief remain the owner's: accept the five-part restriction or require
+  another formal statement; permit I.7 inside the placement despite constructions in its
+  proof or require construction-free cited proofs; retain the laid-down side or revise
+  the calculus and argument. The branch follows the first reading in each case. After
+  `lean/retire-axioms-2`, the proofs of `triple_incidence2` from Postulate 2 and
+  `eq_of_len_eq_zero` from Postulate 3 bring I.4's cited laws within question 4 too;
+  `drawsNothing` and the audit pins must be reviewed again.
+
+  Before landing, the check changes in `Certificate/Facts.lean` and `scripts/heath.py`
+  must be split into a tooling pull request that lands first, as WORKFLOW, section 10,
+  requires. The retirement branches must be reconciled, generated outputs regenerated,
+  and the finished revision validated and independently reviewed, including the model
+  and the protected paths named above. This entry records preparation, not landing
+  approval; no check, expectation, lock or schema is loosened.
+
 ## 20 October 2026
 
 - **The Jev scorer checks confidence in both askings
@@ -2963,6 +3046,100 @@ findings:
   independent kernel replay and independent security review were not run in this round;
   security review before landing remains open.
 
+- **The owner approves the restricted superposition replacement.** The owner's exact
+  approval is: "replace the superposition rule as ship S built it, with brief 0009 questions 2, 4 and 5 as prototyped, the model's import of the four pure modules, the page claim 'a restricted inference in System E's style', tooling PR first. Lands after /no-mistakes and an independent Codex read of the model lane."
+
+  [Brief 0009](0009-superposition.md) and the code agree on those answers. Question 2
+  accepts the five-part restriction: parts 1, 2, 3 and 5 are theorems; part 4 is a reading
+  of `Rule.infer`, with the limited theorem `Metric.holds_const`. Question 4 permits a
+  proved law whose statement asserts no existence inside the placement, even when its
+  proof uses constructions; I.8 therefore cites I.7 on its hypothetical corner.
+  Question 5 keeps the side AC as a straight line through D and C′. The approved model
+  imports are exactly the four pure modules `Elements.Foundations.Superposition.Syntax`,
+  `Elements.Foundations.Superposition.Semantics`, `Elements.Foundations.Superposition.Soundness`
+  and `Elements.Foundations.Superposition.Restriction`; the approved page claim is
+  "a restricted inference in System E's style". Neither equivalence with System E's
+  two printed rules nor whole-theory non-derivability is claimed.
+
+  The approval covers restating `Tacit.superposition`, the pure calculus and its use in
+  I.4 and I.8, the corresponding update of `Certificate/axioms.lock`, and the model's
+  translation and proof. The tooling pull requests must land first. Landing the
+  replacement also requires /no-mistakes and an independent Codex read of the model lane.
+  The read at `cdcf3b9e`
+  found no weakening and one older relative-path defect in `model/Check/Generator.lean`;
+  the read at `0085b443` found that an escaped module name passed the Model import audit.
+  Both are fixed on `tooling/superposition-model-check`. That evidence is tied to the
+  revisions read; the revision that lands still needs its own read and validation.
+
+  Common Notion 4 is marked at its actual steps by the pure proposition
+  `Elements.Superposition.Coincidence`, with its sole constructor
+  `Elements.Superposition.Coincidence.step`. The three congruence constructors of
+  `Derives` take the marker as their first explicit argument. Renaming passes the
+  received marker along and soundness binds it; neither creates one. I.4 and I.8 supply
+  it at their congruence steps. The tooling certificate counts this constructor instead
+  of the congruence constructors, so merely reaching `Derives.map` no longer reports
+  C.N. 4. This adds no axiom and changes no derivable conclusion, proposition statement,
+  Heath line or route. Integration with `tooling/superposition-certificate` regenerates
+  `Certificate/axioms.lock`, both model hashes, the model outputs, certificate and pages.
+  The 87 axiom statements stay unchanged; the vocabulary grows from 206 to 208, adding
+  `Superposition.Coincidence` and `Superposition.Coincidence.step` and changing only
+  `Superposition.Derives.len_congr`, `Superposition.Derives.angle_congr` and
+  `Superposition.Derives.area_congr` to take the marker. `Derives` still has seventeen
+  constructors. The certificate has 122 entries: 99 propositions, 3 porisms and 20
+  companions. Of these, 116 reach the calculus and its marker; none reaches the calculus
+  without taking or inheriting a congruence step, so all Common Notion lists stay
+  unchanged. I.4 has C.N. 4 and C.N. 5; I.8 has C.N. 1, C.N. 3, C.N. 4 and C.N. 5.
+  `tests/certificate_expectations.json` keeps all 24 existing expectations and adds
+  I.8's inclusion of C.N. 4 beside I.4's existing expectation. The fixture tests cover
+  derivations that reach transformers without a step. I.4's and I.8's review records
+  were read again by an independent reader after the marker change and stamped at
+  `0085b443`.
+
+  Once the two tooling branches have landed, the protected files this branch changes are
+  `Audit.lean`, `Audit/Overlaps.lean`, `Audit/Superposition.lean`, `Audit/screen.py`,
+  `Certificate/axioms.lock`, `model/Model/Audit.lean`, `model/lakefile.toml`,
+  `model/lock.sha256`, `tests/certificate_expectations.json`, `tests/model/MODEL.md`,
+  `tests/model/hyperbolic.py`, `tests/model/laws.toml`, `tests/model/lock.sha256` and
+  `tests/model/search.py`. `Certificate/Facts.lean`, `scripts/heath.py` and the example in
+  `review/SCHEMA.md` now arrive with `tooling/superposition-certificate`, which lands
+  first, so this branch changes no check input other than values pinned to it and the
+  superposition law's code in the two numerical harnesses. The content change in `Audit/screen.py` unfolds
+  `primitives`, the edition's interpretation of the restricted calculus, without
+  changing its coverage check or returning placement witnesses. No check, expected
+  value, lock or schema is weakened; the check changes land in tooling first.
+
+  Integration with the model tooling moves the import-boundary check out of
+  `model/Model/Audit.lean`: `Check.Generator.checkModelImports`, called from
+  `model/Check/RoundTrip.lean`, checks every Model source and the four pure modules on
+  each build. The unknown-`Elements.Point` sentinel and every axiom pin remain in
+  `model/Model/Audit.lean`. The real-calculus regressions use the tooling's generator
+  helpers, retaining every case and expected rejection; `model/lakefile.toml` keeps
+  all tooling inputs and `needs` unchanged and describes the boundary now in use.
+  The two identity fixtures for `List.filterMap` and `Model.Kind.rec` add their stand-in
+  module to the production boundary, since the laws now reach the real calculus.
+  Their success expectations and the production boundary itself are unchanged.
+
+- **Finishing the prototyped answers to brief 0009's questions 2, 4 and 5 is tracked in
+  [#150](https://github.com/jackChallis/stoicheia/issues/150).** The owner approved those
+  answers "as prototyped" (the entry above) and, as #150 records, said: "prototyped work
+  needs to be finalized - that opens an issue". #150 carries the label `blocks-release`, so
+  no release is made until it closes. The replacement lands on the prototyped answers. Until
+  #150 finishes them, part 4 of the restriction is an inspection of `Rule.infer` as locked
+  in `Certificate/axioms.lock`, not a theorem; `Cited.drawsNothing` is a classification set
+  by hand, whose meaning is judged by eye from the audit's pinned axiom closures; and the cost of the kept side is
+  checked by reading the model's proof. Non-derivability stays unclaimed. The landing order
+  with the retirement waves (#119) is the first wave, `lean/retire-axioms`, then the
+  replacement, then the second wave, `lean/retire-axioms-2`, whose landing carries the
+  review of `drawsNothing` and of the audit pins. [Brief 0009](0009-superposition.md)
+  records this in its round 4. The docstrings that cite question 4 in
+  `Elements/Foundations/Superposition/Syntax.lean` and
+  `Elements/Foundations/Superposition/Restriction.lean`, and the comment beside I.8's route
+  note in `review/I/08.toml`, now say "as prototyped" and cite #150; these are comments
+  only, and change no statement, declaration, stamp or check. The 19 October superposition
+  entry is restored verbatim from `bccc3f52`, as #150 requires. The approval and the
+  correction to Common Notion 4 counting belong to the 20 October entry above; they do
+  not revise that earlier record of preparation.
+
 - **The model-check branch's reviews closed, and Model/Audit.lean's heading corrected.**
   Six independent Codex code and security reviews of `tooling/superposition-model-check`
   ended with both verdicts passing at `bc4e6574`; the round entries above that say a
@@ -3032,6 +3209,18 @@ findings:
   hold. `git safe-push --label release` creates the `release` label, with its
   description, the first time it is given; the consolidation release (#38) lands through
   a pull request carrying it. Tags and releases stay manual, by the owner.
+- **The joins by Postulate 1 stay wherever Euclid writes them (part of
+  [#32](https://github.com/jackChallis/stoicheia/issues/32)).** Train Tw2 first removed the
+  joins by Postulate 1 from I.5, I.11, I.16, I.20 and I.26, since the later steps of those
+  proofs do not use the segment the join names. The coordinator ruled that a join stays
+  wherever a sentence of Euclid's stands over it, and goes only where none does: he writes
+  "let ... be joined" over each of these steps (`heath/I/05.md`, line 16; `heath/I/11.md`,
+  line 16; `heath/I/16.md`, line 12; `heath/I/20.md`, line 18; `heath/I/26.md`, lines 12
+  and 54). So all five joins stay, the five Lean files are as they were, and the records of
+  I.5 and I.11 now declare their joins as passages carried from the text. This is not a
+  dummy citation in the sense of [FORMALIZATION](../FORMALIZATION.md), section 5: the step
+  is Euclid's own, written where he writes it. A later sweep for unused steps keeps a join
+  that a sentence of Euclid's stands over, on this ground.
 
 - **The checks read a tree without the files a commit adds to them (#178).** The
   pre-flight's pass with origin/main's checks (`scripts/safe_push.py`, steps 3 and 4)
@@ -3171,6 +3360,180 @@ findings:
   adjudication. The protected files this changes are
   `.github/workflows/ci.yml`, `scripts/audit/jev.py`, `scripts/safe_push.py` and
   `tests/test_jev_models.py`; [WORKFLOW](../WORKFLOW.md), section 8, lists the command.
+
+- **The restricted rule is integrated after axiom wave one (A1).** On 20 October 2026,
+  the integration merge at `bd86a7b6` has the restricted-rule revision `9fc4bdc9` as one
+  parent and `tooling/superposition-model-check` at `5a848389` as the other. The tooling
+  parent already contains main at `7834e3a7`, A1 and both superposition tooling branches.
+  This brings the eight proved rules into the restricted-rule branch without restoring
+  any retired axiom. A1 has landed; the landing order is A1, then this restricted-rule
+  replacement, then wave two (A2, `lean/retire-axioms-2`). A2's landing carries the review
+  of `drawsNothing`, its
+  supporting prose and the audit pins when cited-law proofs gain construction
+  dependencies, as #119 and #150 require. A1 alone does not make that change: I.4's
+  cited laws still use the retained `triple_incidence2`, `eq_of_len_eq_zero` and
+  `angle_add_of_inside`, not the retired `triple_incidence3` or `inside_of_angle_add`.
+
+  The fuller A2 account, checked against its source at `d2c45450`, includes
+  `same_side_symm` and `pasch3` as well as `triple_incidence2` and `eq_of_len_eq_zero`.
+  Their proofs use circle intersections and Postulate 3, Postulate 1, Postulate 2 and
+  Postulate 3 respectively, with points on straight lines where needed. The laws affected
+  in I.4 are `neOfLen`, `rayUnique`, `rayOfAngle` and `rayOfAngleSide`; I.8 also cites
+  the first two. This expands the earlier warning in a new entry, leaving the 19 October
+  entry as written. Brief 0009 also makes part 4's inspection precise: the fresh symbols
+  receive no objects in a hypothesis, but the cited laws quantify over all points and
+  straight lines, and the triangle guard over straight lines. No new restriction theorem
+  or completion of #150 is claimed here.
+
+  Regenerated on the merge, the lock has 79 axioms (five postulates, Definition I.15 and
+  73 tacit rules), with `"Tacit.superposition" = "Elements.Superposition.Rule Elements.primitives"`
+  restated, and 208 words of vocabulary: `check_fidelity.py --write-lock` wrote the lock
+  exactly as Git had merged it. The earlier 87-axiom and 206/208-word reports above remain
+  evidence for their dated revisions; the 19 October preparation entry is unchanged. The
+  20 October approval "as prototyped" and round 4 remain in force, with finishing tracked
+  in #150.
+
+  The six records the restricted rule changes, for I.2, I.3, I.4, I.8, I.23 and I.44, were
+  read in full at `bd86a7b6` by an independent Codex reader, who found every item to pass
+  or not to apply, and were stamped there (run "brief 0009 stage full, ship S3
+  A1-integration re-read"). After that reading, /no-mistakes removed from
+  `mishnah/I/08.md` its sentence on the former, existential rule; an independent review of
+  `84a306e0..3ad74e04` found that I.8's commentary item still holds, every remaining
+  sentence being as read.
+
+  The protected paths this merge changes from both of its parents are these. Reconciled by
+  hand: `Audit/Overlaps.lean`, `Audit/screen.py`, `tests/certificate_expectations.json` (29
+  expectations, every one of both sides) and `model/Model/Audit.lean`; merged without
+  conflict and kept from both sides: `tests/model/laws.toml`, `tests/model/search.py` and
+  `tests/model/hyperbolic.py`. Regenerated: `Certificate/axioms.lock`, the count in
+  `Certificate/FIELDS.md` and the model's results, `tests/model/results/angle_check.txt`,
+  `tests/model/results/exhaustive.txt`, `tests/model/results/grid_check.txt`,
+  `tests/model/results/hyperbolic.txt`, `tests/model/results/mutations.txt`,
+  `tests/model/results/search-seed1.txt`, `tests/model/results/search-seed2.txt`,
+  `tests/model/results/search-seed3.txt`, `tests/model/results/structured.txt` and
+  `tests/model/results/summary.txt`; reconciled by hand with its counts regenerated:
+  `tests/model/MODEL.md`; renewed from the lock: `model/lock.sha256` and
+  `tests/model/lock.sha256`. Every check and pin of both sides stays.
+
+- **The renderer's words follow the content.** The protected file
+  [`scripts/render.py`](../../scripts/render.py) selects its Book III wording from
+  `facts.json`, read once for each root through the renderer's guarded paths, as its
+  other inputs are: `MixedAngle.ofSegment`, with a companion of III.16 and one of III.31,
+  enables the mixed-angle row; `Arc`, `InSegment`, `OnArc` and `Arc.Congruent`, with
+  III.24, III.26 and III.28, enable the segment row; `Arc` with `Arc.measure` enables the
+  circumference row; `CirclesCut` enables Definition III.3's row, on cutting and
+  touching, and the line on that definition on the pages where Heath's brackets cite it;
+  `Foot` enables the account of perpendicular feet in Definitions III.4 and III.5,
+  including a diameter at no distance from the centre, each row with the companion it
+  names, III.14 general or III.15 nearer; and III.24's shared step `BookIII.placement`
+  enables the account of its application of one segment to another. That account is
+  built from III.24's entry, so that it is true by construction: only when III.24's
+  `direct_axioms` leave superposition out, and a proposition `placement` cites rests on
+  it, does it say that `placement` uses superposition only through the propositions it
+  cites, and it names those of them that call on superposition themselves; otherwise it
+  says only that the proof applies the segment by `placement`. Each keeps the present
+  wording until its named content, and every proposition and companion it names, is
+  there. Comments about III.2's unused overlapping rule are corrected, and the
+  clause-map docstring no longer names particular propositions. The renderer
+  distinguishes all, some and none of a record's overlapping rules, using `facts.json`'s
+  `axioms` for the proof's full dependencies. When the proof uses all or none, the
+  status line and Overlap row keep their exact wording, with no added sentence repeating
+  the record's note. Only partial use adds a clause naming both the rules used and those
+  unused in the status line, the Overlap row and the book summaries. One rule unused
+  reads "does not use `b`", two "uses neither `b` nor `c`", and three or more "uses none
+  of `b`, `c` and `d`". This applies to every record, including both kinds that contain
+  the proposition and rules that supply a step. On main's present content, every
+  generated page stays byte for byte unchanged. The protected file
+  [`review/SCHEMA.md`](../../review/SCHEMA.md) now states that the line under the
+  enunciation and the book's summary say whether the proof rests on all, some or none of
+  the named rules, naming each rule used and unused for partial use, and that the
+  Overlap row gives the record's note word for word and adds that account only for
+  partial use. The protected test file
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains two wording cases
+  beside its cases of the page: the clause for rules left unused, and the account of
+  `placement` from `facts.json`, read afresh for each root. Each fails on the renderer
+  before this change.
+  The protected file [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes
+  brief 0008, section 7's approved III.5 signature (`CirclesCut`, without the separate
+  inequality of circles) and its comment on cutting and contact within and without,
+  exactly as the supplied scaffold patch specifies. A search of `scripts/` and `tests/`
+  found no check that reads the scaffold's Book III strings. The scaffold records the
+  approved statements; it was not run to rewrite any Lean file.
+  This tooling change lands before the content it describes, so that the content's
+  pull request changes no check input beyond the values pinned to that content:
+  the content's new lock makes main's checks fail, and `scripts/safe_push.py` keeps such
+  content apart from an accompanying change to `scripts/render.py`. No check, statement,
+  lock or review record changes here, apart from the approved signature in the scaffold
+  and the two cases the style test gains.
+- **III.1's porism has its whole axiom list pinned.** The first expectation in
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json), a
+  protected file, gains `equals` holding the porism's full list regenerated from main at
+  `2e8aecf` (21 October 2026, after axiom wave one), in `facts.json`'s order. The porism's
+  own entry carries every assumption its proof uses: Definition I.15, Postulates 1 to 4
+  and the reviewed 55 tacit rules. `Tacit.centre_unique` is a theorem since wave one, so
+  the list holds the axioms beneath it. The `ref`, `field` and count of 55 tacit rules
+  stay as they are; no other expectation changes. This makes the check stricter on its
+  own, before the content it describes: an existing `equals` value and `count.is` may
+  move with that content, as pinned values. Train C6b can then reprove the porism by
+  Euclid's reductio and move the pinned list and count to that proof's assumptions in
+  its content pull request.
+  The `axioms` row of [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md), a protected
+  file, gave III.1's and its porism's counts as fixed; it now says that the list follows
+  each proof's dependencies and that the expectations pin what those two must hold, which
+  stays true when a re-proof moves the pinned values. The protected regression test
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) keeps its checks of
+  growing and emptying an `includes` list by exercising the still-list-shaped I.5
+  expectation, and its simulated future re-proof moves the porism's exact list together
+  with the counts. It reads III.1's tacit count from
+  `tests/certificate_expectations.json`, so it holds before and after the content it
+  describes. No guard is weakened.
+
+- **Heath's letters upright in both figures (#159).** The owner decided on 18 October
+  that Heath's letters take one style in the text and in both figures, which the voice
+  rules' check change, above, reads as upright. The figures are now set upright. Every
+  `figures/<book>/NN.svg` and `NN-idea.svg` of Books I to III, 198 in all, drew the letters
+  italic: 83 of Euclid's figures set `font-style="italic"` on the root `<svg>`, and the
+  other 16, with all 99 figures at a glance, on the `<g>` that holds the letters. That one
+  attribute is removed from each, so the letters take SVG's default, upright. Nothing else
+  in a figure changes, and no letter moves. Every text the attribute set italic was one of
+  Heath's letters, so nothing italic on purpose is lost. S26 now measures each letter by
+  the hull of the upright capital, and every letter still stands 2 clear of every stroke
+  and dot: the closest is III.33's F, at 2.05. `scripts/check_style.py` reports no D15.
+  The modern figures (`NN-modern.svg`) do not change: their capitals were upright already,
+  and the paragraph's own names stay italic, as S25 requires. The switch follows in a
+  change of its own to the check
+  ([#159](https://github.com/jackChallis/stoicheia/issues/159)):
+  `UPRIGHT_LETTERS_REQUIRED` set to `True`, a test that plants an italic letter, and
+  STYLE's wording for the switch. Until then S15 and S20 still accept a figure whose
+  letters are all italic. No protected file changes.
+
+- **Twenty entries come out of `REACH_PENDING`
+  ([#159](https://github.com/jackChallis/stoicheia/issues/159)).** Run on `8e9a1879` with
+  Lean, after `lake build` and `lake build Audit`, `scripts/check_style.py` reported 19 of
+  the list's 38 entries done, with no finding of any of their rules left, and this change
+  takes exactly those out: the fourteen notes of Book Zero, `Elements/Figure/*.lean`
+  (S22); `docs/reports/gaps-book-I.md` (S7); `docs/reports/gaps-book-II.md` and
+  `docs/reports/read-through-01.md` (S7 and S12); `review/I/09.toml` (S7); and
+  `review/II/14.toml` (S12), the two that the progress check of 20 October on #159 named.
+  Under `--no-lean` the same check reported 18 of them, the two "S7 S12" entries for S7
+  alone and `review/II/14.toml` not at all, since S12 alone asks Lean; with Lean their S12
+  is done too, so each of the 19 comes out whole and no entry is left with a rule fewer.
+  No rule of the 19 entries that remain was reported done, and none of them changes. D16
+  goes from 364 lines to 345 with Lean, and from 202 to 184 under `--no-lean`: the 19 and
+  18 done lines go, the findings are line for line the same, and both runs pass with no
+  "done" line. The comment over the reports' entries gave the S12 inventory of two of them
+  on `bd3b72a`, 147 and 2; it now gives the one left,
+  `docs/reports/mixed-angles-prototype.md`. The paragraphs on the list, in the script's
+  docstring and in [STYLE](../STYLE.md), section 8, now say that a file with findings on
+  19 October "was" listed, since a mended file no longer is; neither holds a count, and no
+  count marker counts the list. Of the 19 entries that remain, one names the closed #66
+  as its mender and nine name no issue. The protected file changed is
+  `scripts/check_style.py`; `tests/test_check_style.py` is unchanged, since
+  `test_done_cases` and `test_done_without_lean` already test the done report.
+  After origin/main was merged at `17ae8e2a`, where the restricted rule of superposition
+  rewrote I.8's Lean, the check reported one entry more done, `Elements/BookI/Prop08.lean`
+  (S22, which named #29), both with Lean and without; it comes out too, so 20 entries
+  come out and 18 remain, and both runs again pass with no "done" line.
 
 - **The centre-given tag says what the statement does, not why (#59).** The meaning of
   `centre-given` in the protected file [`review/terms.toml`](../../review/terms.toml)

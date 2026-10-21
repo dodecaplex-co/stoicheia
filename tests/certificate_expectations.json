@@ -4,8 +4,70 @@
     {
       "ref": "III.1 Por.",
       "field": "axioms",
+      "equals": [
+        "Definition15",
+        "Postulate1",
+        "Postulate2",
+        "Postulate3",
+        "Postulate4",
+        "Tacit.add_assoc",
+        "Tacit.add_comm",
+        "Tacit.add_lt_add_right",
+        "Tacit.add_zero",
+        "Tacit.angle_add_of_inside",
+        "Tacit.angle_eq_of_same_rays",
+        "Tacit.angle_symm",
+        "Tacit.area_congruent",
+        "Tacit.area_rotate",
+        "Tacit.area_swap",
+        "Tacit.between_cases",
+        "Tacit.between_of_between_left",
+        "Tacit.between_of_between_right",
+        "Tacit.between_of_inside_chord",
+        "Tacit.between_symm",
+        "Tacit.centre_inside",
+        "Tacit.circles_meet",
+        "Tacit.circles_meet_same_side",
+        "Tacit.eq_of_len_eq_zero",
+        "Tacit.exists_point",
+        "Tacit.exists_point_between",
+        "Tacit.exists_point_opposite_side",
+        "Tacit.exists_point_same_side",
+        "Tacit.inside_not_on",
+        "Tacit.inside_of_len_lt",
+        "Tacit.len_add_of_between",
+        "Tacit.len_lt_of_inside",
+        "Tacit.len_self",
+        "Tacit.len_symm",
+        "Tacit.line_circle_between",
+        "Tacit.line_circle_beyond",
+        "Tacit.line_unique",
+        "Tacit.lines_meet_of_opposite_sides",
+        "Tacit.lt_irrefl",
+        "Tacit.lt_trans",
+        "Tacit.lt_trichotomy",
+        "Tacit.ne_of_between",
+        "Tacit.ne_of_between_ends",
+        "Tacit.not_between_of_between",
+        "Tacit.not_between_of_between_between",
+        "Tacit.not_lt_zero",
+        "Tacit.not_on_line_of_same_side",
+        "Tacit.on_line_of_between",
+        "Tacit.on_line_of_between_ends",
+        "Tacit.pasch2",
+        "Tacit.pasch3",
+        "Tacit.pasch4",
+        "Tacit.same_ray_of_angle_eq_zero",
+        "Tacit.same_side_or",
+        "Tacit.same_side_refl",
+        "Tacit.same_side_symm",
+        "Tacit.same_side_trans",
+        "Tacit.superposition",
+        "Tacit.triple_incidence1",
+        "Tacit.triple_incidence2"
+      ],
       "count": {"prefix": "Tacit.", "is": 55},
-      "why": "The review found the porism's assumptions missing from III.1's certificate. The porism's own entry must carry its full dependency count: 55 tacit rules, counted separately from III.1's construction."
+      "why": "The porism's own entry carries every assumption its proof uses, pinned in full: the reviewed list includes 55 tacit rules, counted separately from III.1's construction."
     },
     {
       "ref": "III.1",
@@ -67,6 +129,90 @@
       "field": "axioms",
       "excludes": ["Tacit.inside_of_between", "Tacit.outside_of_between"],
       "why": "II.14 puts E within the circle by Definition I.15 and the order of the points (InsideCircle.of_between_centre), and does not rest on Circle 3 (#60). Circle 2's retired name is also kept out of the axiom list."
+    },
+    {
+      "ref": "I.4",
+      "field": "direct_axioms",
+      "includes": ["Tacit.superposition"],
+      "why": "I.4 uses the restricted rule directly for its hypothetical placement (#75); the certificate policy forbids direct use outside I.4 and I.8."
+    },
+    {
+      "ref": "I.8",
+      "field": "direct_axioms",
+      "includes": ["Tacit.superposition"],
+      "why": "I.8 uses the restricted rule directly for its hypothetical placement (#75); the certificate policy forbids direct use outside I.4 and I.8."
+    },
+    {
+      "ref": "I.8",
+      "field": "cites",
+      "includes": ["I.7"],
+      "why": "I.8 cites I.7 inside the hypothetical placement to identify the laid-down corner with D (#75)."
+    },
+    {
+      "ref": "I.23",
+      "field": "cites",
+      "includes": ["I.20", "I.22", "I.8"],
+      "why": "I.23 keeps Euclid's construction: I.20 supplies the triangle inequalities, I.22 constructs the triangle and I.8 proves the angle equality (#75)."
+    },
+    {
+      "ref": "I.23",
+      "field": "axioms",
+      "includes": ["Tacit.superposition"],
+      "why": "I.23 still rests on the restricted rule through the earlier propositions it cites (#75)."
+    },
+    {
+      "ref": "I.23",
+      "field": "direct_axioms",
+      "excludes": ["Tacit.superposition"],
+      "why": "I.23 constructs by I.22 and uses superposition only through cited propositions; the restricted rule returns no placement witnesses (#75)."
+    },
+    {
+      "ref": "I.1",
+      "field": "axioms",
+      "excludes": ["Tacit.superposition"],
+      "why": "I.1's construction does not rest on superposition (#75)."
+    },
+    {
+      "ref": "I.2",
+      "field": "axioms",
+      "excludes": ["Tacit.superposition"],
+      "why": "I.2's construction does not rest on superposition; its former audit shortcut is retired (#75)."
+    },
+    {
+      "ref": "I.3",
+      "field": "axioms",
+      "excludes": ["Tacit.superposition"],
+      "why": "I.3's construction does not rest on superposition; its former audit shortcut is retired (#75)."
+    },
+    {
+      "ref": "I.22",
+      "field": "axioms",
+      "excludes": ["Tacit.superposition"],
+      "why": "I.22 constructs a triangle from its sides without resting on superposition (#75)."
+    },
+    {
+      "ref": "III.5",
+      "field": "axioms",
+      "excludes": ["Tacit.superposition"],
+      "why": "III.5 does not rest on superposition (#75)."
+    },
+    {
+      "ref": "III.6",
+      "field": "axioms",
+      "excludes": ["Tacit.superposition"],
+      "why": "III.6 does not rest on superposition (#75)."
+    },
+    {
+      "ref": "I.4",
+      "field": "common_notions",
+      "includes": ["C.N. 4"],
+      "why": "I.4's len_congr, angle_congr and area_congr derivation steps express Common Notion 4, including the base equality under Heath's reference (#75)."
+    },
+    {
+      "ref": "I.8",
+      "field": "common_notions",
+      "includes": ["C.N. 4"],
+      "why": "I.8 supplies Coincidence.step at its length and angle congruence steps; its certificate must retain Common Notion 4 under the restricted rule (#75)."
     },
     {
       "ref": "III.1",
