@@ -387,7 +387,8 @@ dependencies.
   line followed by `Check.Generator.<ident>` or `(Check.Generator.<ident>`, since those
   files run the generator. Every other forbidden command or attribute is still refused
   there, and an `axiom` is refused everywhere under `model/`. `check_fidelity.py` matches
-  each as a whole word, in
+  each as a whole word, and `#eval`, `#exit` and `#guard_panic` also closed up to the word
+  after them, since Lean reads the longest command it knows (`#evalx` is `#eval x`), in
   the Lean with its comments and the text of its string and character literals taken
   out, read as Lean reads them, raw strings and escapes among them (`native_decide` even
   in a comment or a string). The code in an interpolated string's `{…}` holes is read
@@ -445,13 +446,26 @@ dependencies.
     refused in every file the scan reads, the audit lemmas and the model among them, with
     no exception, since no file needs it
     ([decisions, 21 October 2026](briefs/0002-decisions.md#21-october-2026)); a need for
-    one is asked for in a change of its own. A `#guard_msgs` that checks its messages, as
-    the audit pins do, is not refused. A `#guard_msgs` can still hide an error without
-    `drop`: when its docstring pins that error, as `model/Check/RoundTrip.lean` pins the
-    generator's refusals on purpose, or with `substring := true`, which lets an empty
-    docstring, or none, match an error. The scan does not refuse these yet; review reads
-    them, and the certificate's axiom check finds the `sorryAx` beneath any certificate
-    entry that rests on such a theorem;
+    one is asked for in a change of its own;
+  - `#guard_msgs` with `substring`, in any setting (`(substring := true)`, or `false`),
+    with or without spaces, beside any filter or option: with `substring := true` the
+    docstring need only appear somewhere in the messages, so a docstring that is only
+    part of the messages (`error`), an empty one, or none, matches an error and takes it
+    out of the build. It is refused in every file the scan reads, with no exception,
+    since no file uses it;
+  - `#guard_msgs` under a docstring that pins an error, one that holds `error:`, the
+    word Lean writes before each error it checks: the docstring matches
+    the error, and the error leaves the build as with `drop`. It is refused in every
+    file the scan reads but two, which pin errors on purpose:
+    `model/Check/RoundTrip.lean` pins the generator's refusals, each over a `run_cmd`,
+    and `model/Model/Audit.lean` pins one refusal of `#check`. Neither wraps a
+    declaration, and review reads any new pin there. The scan reads both files, so the
+    allow-list names what it would otherwise refuse
+    ([decisions, 21 October 2026](briefs/0002-decisions.md#21-october-2026)). A
+    `#guard_msgs` whose docstring pins only info messages or warnings, as the audit
+    lemmas' pins do, or that has none, is not refused;
+  - `#guard_panic`, which takes every message of the command it wraps out of the build
+    once any one holds the word `PANIC`, an error among them;
   - `#exit` stops Lean reading the file, though a reader and the checks here read on.
 - **Superposition** only in I.4 and I.8.
 - **Placement,** Euclid's application of one figure to another, only in III.24 and the
@@ -489,8 +503,11 @@ of each root; generator `run_cmd` calls, plain and parenthesised, outside the mo
 Check files, and calls there to another namespace or after another command on the line;
 other forbidden commands on an allowed generator call's line or in its arguments;
 `set_option«debug».skipKernelTC` and the other spellings of the `debug.` and `doc.`
-options with no space before the guillemet, and `#guard_msgs` with `drop` in each of its
-forms, in a scratch copy of I.1's file;
+options with no space before the guillemet, `#eval`, `#exit` and `#guard_panic` closed up
+to the word after them, and `#guard_msgs` with `drop`, with `substring`, and under a
+docstring that pins an error, each in each of its forms, in a scratch copy of I.1's file;
+the same pin at a new file beside each file of its allow-list, in `Audit/` and in
+`Staging/`;
 a proposition imported by Book Zero; a `sorry` in a
 complete book; and a primitive word no longer opaque. Some of the forbidden commands
 stand after a string, a raw string or a character literal holding `/-`, `-/`, `]` or `"`,
@@ -503,8 +520,11 @@ that generator calls first on their line are allowed in `model/Check.lean` and
 `model/Check/`, that an axiom in a `.lake` folder of `model/Model/` or `model/Check/` is
 caught while one in `model/.lake` is not read, that a link named `.lake`, to a
 directory, a file or nothing, is refused in `model/`, `model/Model/` and `model/Check/`,
-that a `#guard_msgs` that checks its messages or passes them on, and the words of a
-`drop` in a comment or a string, are not refused, and that the unplanted tree passes.
+that a `#guard_msgs` that checks its messages or passes them on, one under a docstring
+that pins an info message, `error:` in a theorem's own docstring, a comment or a module
+docstring before a `#guard_msgs`, and the words of each of these commands in a comment
+or a string, are not refused, that the pin passes at each file of its allow-list, and
+that the unplanted tree passes.
 They plant source files in place, the `.lake` links and the scratch copy of I.1's file
 in small trees of their own, and copy only `facts.json`, never `model/.lake`.
 
@@ -517,7 +537,9 @@ without entering the directory `model/.lake`, whose contents go unscanned; a lin
 `model/.lake` is refused like any other link, and a `.lake` folder deeper in the model is
 read like any other. It refuses an `axiom` anywhere outside
 `Elements/Foundations/` and every command and attribute the list above names, with only
-the generator `run_cmd` allowance in `model/Check.lean` and `model/Check/`.
+two exceptions: the generator `run_cmd` allowance in `model/Check.lean` and
+`model/Check/`, and the error pins of `model/Check/RoundTrip.lean` and
+`model/Model/Audit.lean`.
 `MODEL_CHECK_RUN_CMD` names that allowance in the script; it exempts only `run_cmd`,
 so its arguments and any further command on the line are still scanned. Book Zero's
 import rule and the placement policy remain confined to `Elements/`. It reads

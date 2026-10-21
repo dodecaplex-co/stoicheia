@@ -3627,7 +3627,7 @@ findings:
   `scripts/test_safe_push.py`, `scripts/check_acceptance.py` and
   `tests/test_check_acceptance.py`.
 
-- **Three ways past the forbidden-command scan
+- **Ways past the forbidden-command scan
   ([#197](https://github.com/jackChallis/stoicheia/issues/197)).** An independent reviewer
   found three files that `lake build` accepts and the source scan of
   [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) let through, and we thank
@@ -3640,16 +3640,20 @@ findings:
   `0 = 1` builds, resting on `sorryAx`. The pattern now takes `\s*`, so the scan refuses
   `set_option«debug».…` and `set_option«doc».…`, with guillemets around one part or each,
   in a command or a tactic block, as it refused the spaced spellings; it still refuses
-  those after a space, a tab or a line break. No other pattern of `FORBIDDEN` asks for a
-  space where Lean needs none: their only whitespace is `\s*`, and the scan's one
-  `[ \t]+`, in `MODEL_CHECK_RUN_CMD`, bounds the generator's allowance, so a missing space
-  there means a refusal.
+  those after a space, a tab or a line break. Two more patterns of `FORBIDDEN`, found in
+  this change's second round, asked for a break where Lean needs none: `#eval\b` and
+  `#exit\b`. Lean reads the longest command it knows, so plain `lean` runs `#evalx` as
+  `#eval x` and stops reading at `#exitx`, exiting 0 on both, and the scan passed both.
+  They now end with no `\b`, as `#guard_panic` does (below). The other patterns'
+  only whitespace is `\s*`, and the `[ \t]+` of `MODEL_CHECK_RUN_CMD` bounds the
+  generator's allowance, so a missing space there means a refusal. Outside FORBIDDEN, the
+  Book Zero rule asks for one space, a gap of the same kind, left to its own issue.
 
   Second, a command after a `/--/` doc-comment opener, where `read_lean` began the
   comment's body one character before Lean does. No code changes here for it: it closes
   with the correction of `read_lean` on `tooling/citation-sweep`
-  ([#32](https://github.com/jackChallis/stoicheia/issues/32)), when that tooling train
-  lands.
+  ([#32](https://github.com/jackChallis/stoicheia/issues/32)), committed there at
+  `720569db`, when that tooling train lands.
 
   Third, `#guard_msgs (drop all) in` over a theorem that Lean refuses: the error leaves the
   build, `lake env lean` exits 0 on the file, and the theorem rests on `sorryAx`, which the
@@ -3667,20 +3671,61 @@ findings:
   `model/Model/Audit.lean`. None is refused. Lean reads `drop` only as the plain word,
   never as `«drop»`.
 
-  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains tests 19 and 20,
-  which plant each closed-up spelling and each form of `drop` in a scratch copy of I.1's
-  file, in a tree of their own, and require each to be refused on its line, by name; a
-  `#guard_msgs` that checks its messages or passes them on, and the words in a comment or
-  a string, must not be. Run with origin/main's check at `0a05f96f`, both fail: that scan
-  misses the five closed-up spellings and all eleven forms of `drop`, and catches only the
-  three spaced spellings. With this one, both pass.
+  Two more ways for `#guard_msgs` to hide an error were found while testing the third, and
+  the coordinator ruled on both on 21 October: each adds a refusal and loosens nothing.
+  `#guard_msgs` with `substring` is refused in any setting (`(substring := true)`, or
+  `false`), with or without spaces, beside any filter or option, in every file the scan
+  reads, with no allow-list (`GUARD_SUBSTRING`). With `substring := true` the docstring
+  need only appear somewhere in the messages, so one that is only part of the error
+  (`error`), an empty one, or none, matches it: plain `lake env lean` exits 0 on each, the
+  theorem resting on `sorryAx`. No file uses it. A `#guard_msgs` under a docstring that
+  pins an error is refused in every file the scan reads but an allow-list of two,
+  `model/Check/RoundTrip.lean` and `model/Model/Audit.lean` (`GUARD_ERROR_PINS`). Lean
+  writes each error it checks as `error:` and its text, so with `drop` and `substring`
+  refused, a docstring pins an error only if it holds `error:`. The docstring is the
+  `/--` comment among the comments and whitespace just before the `#guard_msgs`, read as
+  `read_lean` reads them: a remark between the two hides nothing, and `error:` in a
+  theorem's own docstring, a comment or a module docstring is not refused. Lean accepts
+  the pin plain, closed up, with a remark or a comment between, under a filter, with lax
+  whitespace or positions, over two errors and with `#guard_msgsin` closed up, exiting 0
+  with the theorem on `sorryAx`. The two files pin errors on purpose: the round trip pins
+  60 of the generator's refusals, each over a `run_cmd`, and the audit pins one refusal
+  of `#check`; neither wraps a declaration. The scan reads `model/`, both files among it,
+  so without the list it would refuse those 61 pins: the list names exactly what the
+  rule would otherwise refuse. Within the two files a new pin, over a declaration or not,
+  passes the scan, and review reads it.
 
-  Two more ways for `#guard_msgs` to hide an error, found while testing this, remain open,
-  and this entry decides nothing about them: a docstring that pins the error, as
-  `model/Check/RoundTrip.lean` pins the generator's refusals on purpose, and
-  `substring := true`, which lets an empty docstring, or none, match an error. The scan
-  does not refuse them yet. [FORMALIZATION](../FORMALIZATION.md), section 7, the list's
-  one home, now names the closed-up spellings and `drop`, with the two open ways. The
-  protected files this changes are `scripts/check_fidelity.py` and
-  `scripts/negative_tests.py`. Nothing is loosened: the scan refuses all it refused
-  before, and no file of the edition changes.
+  Last, `#guard_panic`, which the independent review of this change found, and we thank
+  the reviewer warmly. Lean's `elabGuardPanic` empties the whole message log of the
+  command it wraps once any message holds the text `PANIC`, so
+  `#guard_panic in theorem bad : (0 : Nat) = 1 := by fail "PANIC"` exits 0, the theorem
+  resting on `sorryAx`; so does a `trace "PANIC"` before a failing tactic. It joins
+  `FORBIDDEN`, matched with no `\b` after it, since Lean reads `#guard_panicin` as
+  `#guard_panic in`. No tracked file uses it. A reading of Lean 4.35's
+  `Lean/Elab/GuardMsgs.lean` finds no other way for `#guard_msgs` to take an error out of
+  the build: a message it neither checks nor drops is passed on and stays in the build,
+  and the only messages it skips are silent ones, which Lean's own code makes only for
+  information.
+
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains tests 19 to 23,
+  which plant each closed-up spelling, each form of `drop`, the closed-up `#eval`, `#exit`
+  and `#guard_panic` (with `#guard_panic` after a remark or a line break), each form of
+  `substring` and each form of a pinned error in a scratch copy of I.1's file, in a tree
+  of their own, and require each to be refused on its line,
+  by name. A `#guard_msgs` that checks its messages or passes them on, one under a
+  docstring that pins an info message, `error:` in a theorem's own docstring, a comment or
+  a module docstring before a `#guard_msgs`, and the words of each command in a comment
+  or a string, must not be. Test 23 then puts the pin alone at each file of the allow-list,
+  where it must pass, and at a new file beside each, in `Audit/` and in `Staging/`, where
+  it must be refused. Test 8's commands gain `#guard_panic`. Run with origin/main's check
+  (`17369f92`, whose `check_fidelity.py` is that of `0a05f96f`), all five fail: that scan
+  misses the five closed-up spellings, all eleven forms of `drop`, all five commands of
+  test 21, all nine forms of `substring`, all seven pins and the pin at the four new
+  files, and catches only the three spaced spellings. With this one, all five pass, and a
+  copy of the scan with any one of these rules undone fails its test.
+
+  [FORMALIZATION](../FORMALIZATION.md), section 7, the list's one home, now names each of
+  these. The protected files this changes are `scripts/check_fidelity.py` and
+  `scripts/negative_tests.py`. Nothing is loosened: on 238 plants and probes, in each of
+  the five folders the scan reads, the scan makes every finding origin/main's makes, and
+  no file of the edition changes.
