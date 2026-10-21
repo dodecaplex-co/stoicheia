@@ -728,6 +728,9 @@ def answered_lines(path: Path, made: dict[str, Any]) -> list[str]:
             raise Failure(f"{path.name} was made {'with' if made['order_check'] else 'without'} "
                           "--no-order-check; resume it as it was made, start afresh with "
                           "--overwrite, or write to another file")
+        if "error" not in line and not _model_id(line.get("model")):
+            say(f"{path.name}:{n}: its answering model is not a nonempty string; resume "
+                "will send this row again")
         if ("error" not in line and _model_id(line.get("model"))
                 and isinstance(line.get("id"), str)):
             kept.append(text)

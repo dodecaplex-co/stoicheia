@@ -1,10 +1,12 @@
 """Model provenance regressions, using in-process replies and no service."""
 
 import contextlib
+import hashlib
 import io
 import json
 from pathlib import Path
 import sys
+import tempfile
 import types
 import unittest
 from unittest.mock import patch
@@ -24,9 +26,10 @@ MADE = {"input_sha256": "0" * 64, "input_rows": 1,
         "model_requested": "jev-1.13.0", "order_check": False}
 
 
-def stored(model):
-    row = {"id": "model", **ANSWER, **MADE, "expected": "a", "agrees": True,
-           "model": model}
+def stored(model, made=MADE):
+    row = {"id": "model", **ANSWER, **made, "expected": "a", "agrees": True}
+    if model is not None:
+        row["model"] = model
     if model != MADE["model_requested"]:
         row["model_differs"] = True
     return json.dumps(row) + "\n"
@@ -69,10 +72,32 @@ class ModelIdentity(unittest.TestCase):
 
     def test_resume(self):
         for model in MODELS:
-            with self.subTest(model=model), \
-                    patch.object(Path, "read_text", return_value=stored(model)):
-                kept = jev.answered_lines(Path("answers.jsonl"), MADE)
-                self.assertEqual(len(kept), int(model in ("jev-1.13.0", "jev-1.14.0")))
+            with self.subTest(model=model), tempfile.TemporaryDirectory() as directory:
+                folder = Path(directory)
+                input_file = folder / "input.jsonl"
+                output_file = folder / "answers.jsonl"
+                input_file.write_text(json.dumps(INPUT) + "\n")
+                made = {**MADE, "input_sha256": hashlib.sha256(
+                    input_file.read_bytes()).hexdigest()}
+                output_file.write_text(stored(model, made))
+                reply = {"model": MADE["model_requested"], "answers": {"q": ANSWER}}
+                errors = io.StringIO()
+                with patch.object(jev, "read_key", return_value="offline"), \
+                        patch.object(jev, "preflight", return_value=[]), \
+                        patch.object(jev, "request", return_value=jev.Reply(
+                            200, json.dumps(reply).encode(), 0)) as request, \
+                        contextlib.redirect_stdout(io.StringIO()), \
+                        contextlib.redirect_stderr(errors):
+                    code = jev.main(["run", str(input_file), "--out", str(output_file),
+                                     "--resume", "--no-order-check"])
+                valid = model in ("jev-1.13.0", "jev-1.14.0")
+                self.assertEqual(code, 0)
+                self.assertEqual(request.call_count, int(not valid))
+                self.assertEqual(json.loads(output_file.read_text())["model"],
+                                 model if valid else MADE["model_requested"])
+                diagnostic = (f"{output_file.name}:1: its answering model is not a "
+                              "nonempty string; resume will send this row again\n")
+                self.assertEqual(diagnostic in errors.getvalue(), not valid)
 
 
 if __name__ == "__main__":
