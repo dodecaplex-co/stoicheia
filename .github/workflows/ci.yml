@@ -91,9 +91,8 @@ jobs:
         # lake build Audit checks that each pin is what Lean prints; this checks that the
         # pins exist, each under a bare #guard_msgs and its full name in
         # Elements.Superposition, in a file of only imports, comments and pins that
-        # Audit.lean imports; that the five definitions it names are pinned by #print, the
-        # two the section names opening their prints as Lean's do today; and that none is
-        # cut short.
+        # Audit.lean imports; that five definitions are pinned by #print, the two the
+        # section names opening their prints as Lean's do today; and that none is cut short.
         run: python3 -I scripts/check_superposition_pins.py
 
       - name: Check the house style's hard rules
