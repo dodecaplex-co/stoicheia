@@ -38,7 +38,7 @@ The statement is that of `Elements.BookIII.Prop26`, exactly.
 
 Status: staged to replace the proof in `Elements/BookIII/Prop26.lean` when Book III's
 files are next moved, once the draft it stands on, `angleAtCentre` and the general
-statement of `Routes.Prop20`, has the owner's approval; that draft is not approved.
+statement of `Staging.Prop20`, has the owner's approval; that draft is not approved.
 -/
 
 namespace Elements.BookIII.Routes
@@ -183,8 +183,10 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
      the angles BGC, EHF themselves (`angleAtCentre.within`); the angles at A and D are
      their halves, and so equal. Given at the circumferences, the angles at the centres
      are their doubles, and so equal. -/
-  have h₁ : angleAtCentre ABC B K C = ∠ B A C + ∠ B A C := Prop20 hA hB hC hAK
-  have h₂ : angleAtCentre DEF E L F = ∠ E D F + ∠ E D F := Prop20 hD hE hF hDL
+  have h₁ : angleAtCentre ABC B K C = ∠ B A C + ∠ B A C :=
+    Elements.BookIII.Staging.Prop20 hA hB hC hAK
+  have h₂ : angleAtCentre DEF E L F = ∠ E D F + ∠ E D F :=
+    Elements.BookIII.Staging.Prop20 hD hE hF hDL
   refine ⟨fun hGK hHL h => ?_, fun h => euclid (by rw [h₁, h₂, h]) h⟩
   have hGH : angleAtCentre ABC B K C = angleAtCentre DEF E L F := by
     rw [angleAtCentre.within hG hB hC hGK, angleAtCentre.within hH hE hF hHL, h]

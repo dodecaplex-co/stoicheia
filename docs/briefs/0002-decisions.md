@@ -3780,11 +3780,14 @@ lists them.
   the whole-circle reading (`Staging/Routes/Touching.lean`), the angle at the centre of any
   size with III.20 in general (`Staging/Routes/Prop20.lean`), and the angle of contact after
   III.18 (`Staging/Routes/AngleOfContact.lean`). None of them is approved, and no file of
-  `Elements/` changes. #131 is an analysis, re-checked on C6c's Lean: the trains remove four
+  `Elements/` changes. The explicit authorization for this staging task permits the proved
+  drafts to remain under `Staging/Routes/` as prototypes for later owner approval under
+  [WORKFLOW](../WORKFLOW.md), section 2. It does not approve a mathematical statement or
+  definition, or its promotion into `Elements/`; those approvals remain pending. The
+  changed main theorem is staged as `Elements.BookIII.Staging.Prop20`, as FORMALIZATION,
+  section 6 requires. #131 is an analysis, re-checked on C6c's Lean: the trains remove four
   of the nine calls of III.1 that main had at 2e8aecf (III.35, III.36 twice, III.37), and
   the five under Heath's "[III. 1]" (III.2, III.4, III.8, III.14, III.17) remain and do no
-  work. Two questions are the coordinator's: whether to record `Staging/Routes/` as a
-  prototype under [WORKFLOW](../WORKFLOW.md), section 2, "What proofs `Staging/` may hold",
-  as the mixed angles were; and whether the five bracketed calls stay under brief 0008's
-  rule or go as dummy citations. The report, which owns the detail, is
+  work. Whether the five bracketed calls stay under brief 0008's rule or go as dummy
+  citations remains the coordinator's question. The report, which owns the detail, is
   [docs/reports/routes-book-III.md](../reports/routes-book-III.md).

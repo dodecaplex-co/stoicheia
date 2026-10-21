@@ -34,11 +34,11 @@ It stages three things.
   two right angles (`angleAtCentre.reflex_gt`), so the angle at the centre is less than
   two right angles, two right angles, or greater, as the centre lies
   (`angleAtCentre.size`).
-* **III.20 for every angle at the centre**, `Routes.Prop20`, by Euclid's own proof: the
+* **III.20 for every angle at the centre**, `Staging.Prop20`, by Euclid's own proof: the
   diameter AEF, the isosceles triangles and I.32, then the sum of BEF and FEC (his first
   figure, which now covers the centre within the angle BAC, on BC, or beyond it) or
-  their difference (his second figure). With it, `Routes.Prop20.special` has the
-  statement of `Elements.BookIII.Prop20` exactly, and `Routes.Prop20.circumference`
+  their difference (his second figure). With it, `Staging.Prop20.special` has the
+  statement of `Elements.BookIII.Prop20` exactly, and `Staging.Prop20.circumference`
   shows that our measure of the circumference BKC is, in every case, the angle at the
   centre standing on it.
 
@@ -53,8 +53,8 @@ AF with BC is within the circle, so that F lies across BC from A.
 
 Status: staged to replace the proof in `Elements/BookIII/Prop20.lean` when Book III's
 files are next moved. The definition `angleAtCentre` and the theorems about it, and the
-statements of `Routes.Prop20` and `Routes.Prop20.circumference`, are a draft for the
-owner's approval; not approved. `Routes.Prop20.special` keeps the present statement of
+statements of `Staging.Prop20` and `Staging.Prop20.circumference`, are a draft for the
+owner's approval; not approved. `Staging.Prop20.special` keeps the present statement of
 III.20 exactly, for its citers, should the general statement replace it.
 -/
 
@@ -324,6 +324,14 @@ theorem angleAtCentre.size (hE : Centre E α) (hB : OnCircle B α) (hC : OnCircl
     rw [angleAtCentre.within hE hB hC hEK]
     exact angle_lt_two_right hEK.triangle.acb
 
+end Elements.BookIII.Routes
+
+namespace Elements.BookIII.Staging
+
+open Tacit Routes
+
+variable {A B C E F K : Point} {α : Circle}
+
 /-- **The centre in Euclid's second figure.** When the centre E and the point C lie on
 opposite sides of DB, E lies on D's side of BC, so that the angle at the centre is the
 angle BEC (`angleAtCentre.within`). EC crosses DB at a point within the circle, between
@@ -543,4 +551,4 @@ theorem Prop20.circumference (hB : OnCircle B α) (hC : OnCircle C α)
   unfold Elements.circumference
   rw [hx, Prop20 hA hB hC hAK]
 
-end Elements.BookIII.Routes
+end Elements.BookIII.Staging

@@ -28,6 +28,6 @@ restatements have also moved home, and so has III.30's halves (brief 0006), prov
   to replace the proofs there (those of III.20's special case, III.21 and III.26 rest on
   the draft angle at the centre, and wait for its approval), and drafts for the owner's
   approval of Definition III.3 read at the point, the angle at the centre of any size with
-  III.20 in general, and the angle of contact after III.18
-  (`docs/reports/routes-book-III.md`).
+  III.20 in general (`Elements.BookIII.Staging.Prop20`), and the angle of contact after
+  III.18 (`docs/reports/routes-book-III.md`).
 -/

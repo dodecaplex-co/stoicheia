@@ -15,12 +15,12 @@ case twice.
 Here the angle at the centre may be two right angles or more (`angleAtCentre`, staged
 with III.20 in `Staging/Routes/Prop20.lean`), so Euclid's own two steps cover every
 segment: the angles BAD and BED are each half of the one angle at the centre standing on
-the circumference BCD (`Routes.Prop20`), and halves of one angle are equal. The statement
+the circumference BCD (`Staging.Prop20`), and halves of one angle are equal. The statement
 is that of `Elements.BookIII.Prop21`, exactly.
 
 Status: staged to replace the proof in `Elements/BookIII/Prop21.lean` when Book III's
 files are next moved, once the draft it stands on, `angleAtCentre` and the general
-statement of `Routes.Prop20`, has the owner's approval; that draft is not approved.
+statement of `Staging.Prop20`, has the owner's approval; that draft is not approved.
 -/
 
 namespace Elements.BookIII.Routes
@@ -40,7 +40,7 @@ theorem Prop21 {A B D E : Point} {ABCD : Circle}
   obtain ⟨C, hCA, -⟩ := exists_oppositeSidesOf hAE.triangle []
   -- For let the centre of the circle ABCD be taken, and let it be F; let BF, FD be joined.
   obtain ⟨F, hF⟩ := exists_centre ABCD
-  /- The general III.20 takes the centre itself (`Routes.Prop20`), and the angle at the
+  /- The general III.20 takes the centre itself (`Staging.Prop20`), and the angle at the
      centre is made up of angles there (`angleAtCentre.diameter`). F is that centre, for a
      circle has one centre (`centre_unique`), and nothing below needs it named. -/
   -- Now, since the angle BFD is at the centre,
@@ -54,11 +54,12 @@ theorem Prop21 {A B D E : Point} {ABCD : Circle}
      than two right angles, covers only the greater segment (vol. 2, p. 49). With the
      angle at the centre of any size, the general III.20 carries his two steps to the
      semicircle and the less segment too, the cases his figure leaves aside. -/
-  have h₁ : angleAtCentre ABCD B C D = ∠ B A D + ∠ B A D := Prop20 hA hB hD hCA.symm
+  have h₁ : angleAtCentre ABCD B C D = ∠ B A D + ∠ B A D :=
+    Elements.BookIII.Staging.Prop20 hA hB hD hCA.symm
   -- For the same reason
   -- the angle BFD is also double of the angle BED;
   have h₂ : angleAtCentre ABCD B C D = ∠ B E D + ∠ B E D :=
-    Prop20 hE hB hD (hAE.symm.trans_opposite hCA.symm)
+    Elements.BookIII.Staging.Prop20 hE hB hD (hAE.symm.trans_opposite hCA.symm)
   -- therefore the angle BAD is equal to the angle BED.
   exact Magnitude.eq_of_add_self_eq (h₁.symm.trans h₂)
   -- Therefore etc.

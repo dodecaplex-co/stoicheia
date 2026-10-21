@@ -5,10 +5,11 @@
 This report answers issues #125, #126, #127, #129, #130 and #131. Five of them ask for
 Euclid's own argument where our proofs of Book III take another way, or for something his
 words say that our Lean does not yet say; the sixth asks which of our calls of III.1 do any
-work. The Lean is in seven files under `Staging/Routes/`. Every declaration is in the
-namespace `Elements.BookIII.Routes`, which departs from `Elements.Book<B>.Staging.PropN`,
-the name FORMALIZATION, section 6, gives staged proofs; whether to rename it or record the
-exception is the coordinator's decision. None of it is in `Elements/` yet.
+work. The Lean is in seven files under `Staging/Routes/`. The route declarations are in
+the namespace `Elements.BookIII.Routes`; the changed main theorem III.20, its helper,
+special case and circumference corollary are under `Elements.BookIII.Staging.Prop20`, the
+name FORMALIZATION, section 6, gives a changed main theorem. None of it is in `Elements/`
+yet.
 
 **The statements the files stand on.** [Brief 0008](../briefs/0008-centre.md) restates
 Book III so that every circle has a centre (`Tacit.exists_centre`). The trains C6a, C6b and
@@ -46,10 +47,10 @@ states it (III.20's special case, below), III.21 and III.26 prove the statements
 `Elements/` too, but rest on the draft angle at the centre, and so wait for its approval as
 well.
 
-WORKFLOW, section 2, admits these proofs in `Staging/` only as those of a prototype the
-coordinator has approved; recording `Staging/Routes/` so, as the 18 October entry records
-the mixed angles, is the coordinator's to confirm, and the files wait for it before they
-land.
+The explicit authorization for this staging task permits these proved drafts to remain
+under `Staging/Routes/` as prototypes for later owner approval, under WORKFLOW, section 2.
+That permission is not approval of any mathematical statement or definition, nor approval
+to promote one into `Elements/`; those approvals remain pending as described above.
 
 | Issue | File | What it holds | Statement |
 |---|---|---|---|
@@ -67,12 +68,13 @@ of the theorem in `Elements/`, which Lean checks (see "Checks", at the end).
 
 The drafts await approval in the text they have now. Moving them onto the statements in
 `Elements/` changed no definition, and eleven theorems, each only by dropping hypotheses.
-The first column names the theorem in the namespace `Elements.BookIII.Routes`, the second
+The first column names a theorem relative to `Elements.BookIII`; the two under `Staging`
+belong to the changed III.20, and the others are under `Routes`. The second column says
 what it lost:
 
 ```text
-Prop20                          {E} (hE : Centre E ABC)
-Prop20.circumference            (hE : Centre E α)
+Staging.Prop20                  {E} (hE : Centre E ABC)
+Staging.Prop20.circumference    (hE : Centre E α)
 Touching.small                  {G} (hG : Centre G β)
 TouchesInternallyAt.whole       {F G} (hF : Centre F α) (hG : Centre G β)
 TouchesExternallyAt.whole       {F G} (hF : Centre F α) (hG : Centre G β)
@@ -406,7 +408,9 @@ second). Its statement names no centre, for the angle at the centre is the circl
 proof takes the centre E by the rule, under Euclid's setting-out. From it the file derives
 III.20 exactly as `Elements/` states it (its special case, which keeps the E its conclusion
 uses), and shows that our measure of the circumference BKC is, in every case, the angle at
-the centre standing on it.
+the centre standing on it. The declarations below are `Elements.BookIII.Staging.Prop20`,
+`Elements.BookIII.Staging.Prop20.special` and
+`Elements.BookIII.Staging.Prop20.circumference`.
 
 ```lean
 theorem Prop20 {A B C K : Point} {ABC : Circle} (hA : OnCircle A ABC)
