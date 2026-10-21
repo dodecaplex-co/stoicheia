@@ -4075,6 +4075,59 @@ findings:
   for three, are true of their dates. The protected files changed are
   `scripts/safe_push.py` and `scripts/test_safe_push.py`.
 
+- **S24 to S26 grant a name only to a letter that is one, and refuse an arc that SVG does
+  not draw as an arc ([#172](https://github.com/jackChallis/stoicheia/issues/172)).** The
+  two gaps that the reviews of S24 to S26 left open at train H10 are closed in the
+  protected file [`scripts/check_style.py`](../../scripts/check_style.py). The names:
+  emphasis through a full stop or an apostrophe was refused only with a bare letter on its
+  other side, so `*e*.*g*.` was neither refused nor read as e.g., and granted e and g.
+  `modern_markup_findings` now refuses emphasis on either side of the stop or on both, the
+  stop escaped or not, and refused markup supplies no names. The same reading found three
+  more letters that are no names: `e\.g\.` granted e and g, an invisible format character
+  (a zero-width space, a soft hyphen) let a letter of one visible word stand alone, and the
+  p of Heath's page, "(vol. 1, p. 389)", was granted on five pages of main, II.6, II.7,
+  II.8, II.14 and III.8. The independent review of this change found six more of the same
+  kind, none on main's pages: a combining accent (e and U+0301, éxponent), a Cyrillic
+  letter (eхponent), an accented word (déjà), a Hangul filler, which Unicode counts as a
+  letter and which shows nothing (e and U+3164 before .g.), two spaces in `e.  g.`, and a
+  Roman page number (p. ix). `ABBREVIATION` now reads an escaped stop, spaces inside e.g.
+  and i.e., and the p of a page before its number, taking a Roman number's letters with
+  it (p. ix, pp. v–vii). `modern_names` keeps a letter in its word when a letter of any
+  script, Greek too, a mark or a format character stands beside it (the new
+  `joins_word`), so that the r of 2πr is a name only in TeX. The markup check refuses a
+  format character and the rest of Unicode's default-ignorable characters (the new
+  `INVISIBLE`: the Hangul fillers, the variation selectors, the combining grapheme joiner).
+  On main the names change only by those five p's, which no modern figure draws, and no
+  paragraph is refused. The arcs: by SVG's implementation notes for arcs, every choice of the large-arc
+  and sweep flags draws something once radii too short to reach the ends are enlarged
+  (F.6.6), for two distinct ends then lie on two ellipses of those radii, or on one when
+  the radii only just reach, and the flags take one arc of them from end to end (F.6.5); on
+  one ellipse both arcs are halves and the large-arc flag changes nothing. So no flag
+  choice is refused. What does not draw as an arc is an arc whose ends are one point,
+  which SVG omits, and one with a radius of 0, which it draws as a straight line (F.6.2).
+  The new `arc_fault` finds either, wherever the path stands when the arc begins, testing
+  the ends first, as F.6.2 does, so that an arc with both is named as drawing nothing; S26's
+  `supported_svg` refuses the path, naming what SVG draws; S24's `modern_path` refuses the
+  same arcs in the modern figures. None of main's 317 arcs is either, and every figure and
+  page on main passes. The protected file
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains the cases, 95
+  subtests that fail on the check before this change and pass after it (two of them the
+  clearance case below), and
+  `test_arc_flags_always_draw`, which passes before and after: the four flag choices, with
+  radii enlarged, just reaching and ample, each draw on the side of the chord the sweep
+  flag gives, and the large-arc flag changes the arc only when the radii are ample. One
+  clearance case moves: the path whose omitted arc showed that such an arc does not break
+  a join is now refused at the figure entry points, so its join claim is held on the
+  strokes S26 measures, read directly with the default join, miter and round, as main
+  measured it, which equal those of the same path without the arc, itself a case at the
+  entry points; the refusal is asserted at both entry points. The
+  protected file [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains item
+  19, three plants in real files restored after: `*e*.*g*.` in II.7's modern way with an
+  italic e in its figure, an italic p in that figure beside Heath's "p. 389", and the two
+  arcs in I.1's figure. Each is caught by this check, and main's check passes each planted
+  tree. [STYLE](../STYLE.md), section 8, says each change in the rows of S24, S25 and S26.
+  No check, test or expected value is weakened.
+
 - **The centre-given tag says what the statement does, not why (#59).** The meaning of
   `centre-given` in the protected file [`review/terms.toml`](../../review/terms.toml)
   gave a reason: "a circle in Lean has a centre only when a hypothesis or Postulate 3
@@ -4092,7 +4145,6 @@ findings:
   name do not change, no record changes, and no page changes. It is a check input, so it
   lands in a pull request of its own, before train C6a. Protected file changed:
   `review/terms.toml`.
-
 - **Train C6a meets axiom wave one: the lock is main's 79 axioms and the centre rule.**
   Train C6a, which carries stage 3, the mixed angles, the rule that every circle has a
   centre and brief 0008's section 7, was merged with main at `2e8aecf`, after the eight
@@ -4104,8 +4156,9 @@ findings:
   train (#192), train Tw2 (#193), Heath's letters upright (#194) and the twenty entries out
   of `REACH_PENDING` (#195); and again with that branch at `4aadad20`, after its review,
   which brings main at `0a05f96f` (#196, the switch for upright letters, and #198, short
-  hashes read from Git); and last with main at `001620f1` (#199, the carried helper's
-  kind, and #201, the five required checks).
+  hashes read from Git); with main at `001620f1` (#199, the carried helper's kind, and
+  #201, the five required checks); and last with main at `e7ffaf68` (#202, the gaps of S24
+  to S26, and #204, tooling/centre-given-meaning itself).
   The counts in this train's entries of 19 October above ("The mixed-angle move integrated
   with the Circle 2 proofs", "Every circle has a centre: the rule lands" and "III.5 and
   III.6: section 7 lands before step 6": 88 axioms and 82 tacit rules, "the other 87", a
@@ -4134,12 +4187,12 @@ findings:
   `III_11_today`, `III_13_today`, `cut_point`, `CirclesCut.of_meet` and `within_point`,
   were renewed from Lean's output, and change only by losing `Tacit.adjacent_eq_of_right`
   and `Tacit.centre_unique`, now theorems; every other name in each list is unchanged. On
-  the merges of `756bdbae`, `0a05f96f` and `001620f1` no pin was renewed: `lake build Audit` passes with every pin of
+  the merges of `756bdbae`, `0a05f96f`, `001620f1` and `e7ffaf68` no pin was renewed: `lake build Audit` passes with every pin of
   `Audit/Overlaps.lean`, `Audit/Crossing.lean` and main's `Audit/Superposition.lean` as
   written.
   The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`, `model/`, `scripts/`,
   `review/SCHEMA.md`, `lakefile.toml` and `lean-toolchain` that differ from main at
-  `001620f1`, each named whole:
+  `e7ffaf68`, each named whole:
   `Audit.lean`,
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
@@ -4185,8 +4238,9 @@ findings:
   and porism and stage 4, merged with C6a after axiom wave one, at `4db10cf2`, and again
   at `529c93f7`, which brings main's restricted rule of superposition (#191) and main at
   `0a05f96f`, and III.1's record and commentary saying the centre the statement takes
-  without the edition's history (`996b3f8f`); and last at `d58ac22d`, which brings main at
-  `001620f1` (#199 and #201) and changes neither the lock nor any pin. The 19 October stage 4 and III.25 entries'
+  without the edition's history (`996b3f8f`); at `d58ac22d`, which brings main at
+  `001620f1` (#199 and #201); and last at `ba839370`, which brings main at `e7ffaf68`
+  (#202 and #204); neither of the last two changes the lock or any pin. The 19 October stage 4 and III.25 entries'
   88 axioms and vocabulary counts, and D1's 57 tacit rules for III.1, are their historical
   pre-wave-one measurements; they stand as written. On the integrated tree the lock holds
   train C6a's 80 axioms, of them 74 tacit rules, byte for byte, and 242 vocabulary words:
@@ -4224,7 +4278,7 @@ findings:
   `Audit/Superposition.lean` afresh and passes with every pin as written.
   The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`, `model/`, `scripts/`,
   `.github/`, `review/SCHEMA.md`, `review/terms.toml`, `lakefile.toml` and
-  `lean-toolchain` that differ from train C6a at `d58ac22d`, each named whole:
+  `lean-toolchain` that differ from train C6a at `ba839370`, each named whole:
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
   `Certificate/FIELDS.md`,
