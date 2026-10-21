@@ -32,7 +32,7 @@ note = "Euclid takes AG as a parallelogram when he applies I.34 to identify HG w
 [[passage]]
 at = "Now, since AG is equal to GE"
 kind = "helper"
-helper = "Prop43"
+helper = "BookI.Prop43"
 note = "Euclid takes the complements AG and GE to be equal. The Lean applies I.43, for which Heath gives no reference here."
 
 [[passage]]
