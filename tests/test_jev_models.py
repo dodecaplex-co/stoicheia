@@ -1,4 +1,7 @@
-"""Model provenance regressions, using in-process replies and no service."""
+"""Model provenance regressions, using in-process replies and no service.
+
+Run with python3 -I tests/test_jev_models.py. To show the cases failing without the fix,
+name another copy of the client: python3 -I tests/test_jev_models.py --client=PATH."""
 
 import contextlib
 import hashlib
@@ -11,8 +14,13 @@ import types
 import unittest
 from unittest.mock import patch
 
-source = (Path(sys.argv.pop(1)) if len(sys.argv) > 1 else
-          Path(__file__).resolve().parents[1] / "scripts/audit/jev.py")
+source = Path(__file__).resolve().parents[1] / "scripts/audit/jev.py"
+for argument in sys.argv[1:]:
+    if argument.startswith("--client="):
+        source = Path(argument.split("=", 1)[1])
+        sys.argv.remove(argument)
+        break
+REASON = "model is not a nonempty string"
 jev = types.ModuleType("jev_under_test")
 jev.__file__ = str(source.resolve())
 exec(compile(source.read_text(), str(source), "exec"), jev.__dict__)
@@ -53,19 +61,23 @@ class ModelIdentity(unittest.TestCase):
                 code = jev.main(["run", "input.jsonl", "--no-order-check"])
                 invalid = model not in ("jev-1.13.0", "jev-1.14.0")
                 self.assertEqual(code, int(invalid))
-                self.assertEqual("error" in json.loads(out.getvalue()), invalid)
+                line = json.loads(out.getvalue())
+                self.assertEqual("error" in line, invalid)
+                if invalid:
+                    self.assertIn(REASON, line["error"])
 
     def test_score(self):
         for model in MODELS:
             with self.subTest(model=model), \
                     patch.object(Path, "read_text", return_value=stored(model)), \
                     contextlib.redirect_stdout(io.StringIO()) as out, \
-                    contextlib.redirect_stderr(io.StringIO()):
+                    contextlib.redirect_stderr(io.StringIO()) as errors:
                 code = jev.main(["score", "answers.jsonl", "--bar", "1"])
                 invalid = model not in ("jev-1.13.0", "jev-1.14.0")
                 self.assertEqual(code, int(invalid))
                 if invalid:
                     self.assertEqual(out.getvalue(), "")
+                    self.assertIn(REASON, errors.getvalue())
                 else:
                     count = int(model != MADE["model_requested"])
                     self.assertIn(f"for adjudication: {count}\n", out.getvalue())

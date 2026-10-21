@@ -55,10 +55,12 @@ confidence (or the noul); the latency in seconds; the tokens used; the SHA-256 o
 body sent, so an answer can be tied to its request; the SHA-256 of the input and its number
 of rows, and whether the order check was on; whether it agrees with `expected`; and the
 reversed asking. A failed request is written as its status and its redacted error, and so
-is an answer that is not the shape TypeSafe documents. Retries are off: a refused key, a
+is an answer that is not the shape TypeSafe documents, a reply that names no answering
+model among them. Retries are off: a refused key, a
 rate limit or an overload stops the run, and any other failure is recorded and the run goes
 on. `--resume` sends again, by hand, only the rows that an earlier output of the same input,
-model and order check has no answer for, and `--pause` waits between requests.
+model and order check has no answer for (a line naming no answering model is not an
+answer, and is sent again), and `--pause` waits between requests.
 
 **The model is pinned.** Each run names a versioned model id (`jev-1.13.0` by default, which
 `jev-latest` points to on 18 October 2026), and records it with every answer, so that a
@@ -79,7 +81,7 @@ a confidence under `--low` (0.5 by default, the threshold under which the exampl
 TypeSafe's Confidence page sends an answer to a person; a noul's confidence is |2p - 1|,
 as that page gives it) or none, changes when its options are reversed, or comes from
 another model than the one pinned: these go to the adjudicator. A line whose reversed asking
-is not an answer is refused. It also counts
+is not an answer, or that names no answering model, is refused. It also counts
 how many of the input's rows are answered. With `--bar`, it exits 1 when agreement falls
 under the bar, when any request failed, or when any row of the input has no answer: a bar
 is met only when every row of the input is answered.
@@ -709,7 +711,7 @@ def cmd_run(args) -> int:
 
 def answered_lines(path: Path, made: dict[str, Any]) -> list[str]:
     """The lines of an earlier output that hold an answer, for --resume; a failed request's
-    line is dropped, so that its row is sent again. Refuses an output made from another
+    line, or one naming no answering model, is dropped, so that its row is sent again. Refuses an output made from another
     input, with another model or with another order check."""
     kept = []
     for n, text in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
