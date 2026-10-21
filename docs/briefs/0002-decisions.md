@@ -3273,10 +3273,11 @@ findings:
   owner approved on 20 October ("as prototyped"), carries no logical weight, and a check of
   it would only confirm a classification nothing depends on; the computed record serves both
   the reader and the second retirement wave, after which four of I.4's seven laws are proved
-  with construction rules. "Construction rule" is now defined once, in
+  with construction rules. "Construction rule" is now defined in
   [FORMALIZATION](../FORMALIZATION.md#construction-rules), section 9: an axiom whose
   conclusion asserts existence once the project's definitions are unfolded, a structure or
-  inductive type read as a word. This check change lands first, under WORKFLOW, section 10.
+  inductive type read as a word, and only an `∃` written out or given by a definition
+  counted. This check change lands first, under WORKFLOW, section 10.
   Protected files changed:
   [`Certificate/Facts.lean`](../../Certificate/Facts.lean) computes the top-level
   `construction_rules` (20 of the 79 axioms at this revision) and, for I.4 and I.8, a
@@ -3302,7 +3303,10 @@ findings:
   list, which the build refuses. [`tests/test_certificate.py`](../../tests/test_certificate.py),
   with its fixture [`tests/fixtures/CertificateCited.lean`](../../tests/fixtures/CertificateCited.lean),
   and [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) test the walk,
-  the expectations' new forms and the plants' restoration. The lock is unchanged.
+  the expectations' new forms and the plants' restoration. The fixture declares fourteen
+  stand-in axioms, one for each case of the definition; they are compiled only into the
+  test's temporary package, which no library of the edition builds, and the lock is
+  unchanged.
 
 - **The flag `Cited.drawsNothing` retired; I.4 proves its laws one by one (#150, question 4,
   route (b)).** The content change that follows the check above. #150, the owner's issue
