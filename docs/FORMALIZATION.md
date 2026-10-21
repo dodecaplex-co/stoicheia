@@ -506,8 +506,8 @@ other forbidden commands on an allowed generator call's line or in its arguments
 options with no space before the guillemet, `#eval`, `#exit` and `#guard_panic` closed up
 to the word after them, and `#guard_msgs` with `drop`, with `substring`, and under a
 docstring that pins an error, each in each of its forms, in a scratch copy of I.1's file;
-the same pin at a new file beside each file of its allow-list, in `Audit/` and in
-`Staging/`;
+the same pin at a new file beside each file of its allow-list, at each file's name in the
+other's folder, in `Audit/` and in `Staging/`, and a pin whose `error:` ends its line;
 a proposition imported by Book Zero; a `sorry` in a
 complete book; and a primitive word no longer opaque. Some of the forbidden commands
 stand after a string, a raw string or a character literal holding `/-`, `-/`, `]` or `"`,

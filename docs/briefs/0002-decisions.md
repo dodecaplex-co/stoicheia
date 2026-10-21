@@ -3725,7 +3725,9 @@ findings:
   comment's body one character before Lean does. No code changes here for it: it closes
   with the correction of `read_lean` on `tooling/citation-sweep`
   ([#32](https://github.com/jackChallis/stoicheia/issues/32)), committed there at
-  `720569db`, when that tooling train lands.
+  `720569db` and completed at `f745017b`, where every comment's body begins at its fourth
+  character, as Lean reads it, so a `/-/-` opener hides nothing either, when that tooling
+  train lands.
 
   Third, `#guard_msgs (drop all) in` over a theorem that Lean refuses: the error leaves the
   build, `lake env lean` exits 0 on the file, and the theorem rests on `sorryAx`, which the

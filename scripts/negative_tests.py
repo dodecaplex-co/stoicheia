@@ -108,15 +108,16 @@ records current; CI runs it on every push.
     docstring that is only part of the error, and `(substring := false)`: each refused by
     its file and line, while a `#guard_msgs` with other options, and the words in a
     comment or a string, are not (#197).
-23. Likewise, `#guard_msgs` under a docstring that pins an error: closed up, with a
-    remark or a comment between the two, under a filter or an option, with positions, and
-    two errors at once: each refused by its file and line. Not refused: a docstring that
-    pins only an info message or a warning, a theorem's own docstring holding `error:`,
-    `error:` in a comment or a module docstring before a `#guard_msgs`, and the words in
-    a comment or a string. Then the same pin alone in a small tree of its own, at each
-    path of the allow-list, `model/Check/RoundTrip.lean` and `model/Model/Audit.lean`,
-    must pass, and at a new file beside each of them, in `Audit/` and in `Staging/`, is
-    refused (#197).
+23. Likewise, `#guard_msgs` under a docstring that pins an error: closed up, with a remark
+    or a comment between the two, under a filter or an option, with positions, two errors
+    at once, and `error:` alone on its line: each refused by its file and line. Not
+    refused: a docstring that pins only an info message or a warning, a theorem's own
+    docstring holding `error:`, `error:` in a comment or a module docstring before a
+    `#guard_msgs`, and the words in a comment or a string. Then the same pin alone in a
+    small tree of its own, at each path of the allow-list, `model/Check/RoundTrip.lean`
+    and `model/Model/Audit.lean`, must pass, and at a new file beside each of them, at
+    each one's name in the other's folder, in `Audit/` and in `Staging/`, is refused
+    (#197).
 
 The copies of items 16 and 17, and item 13's list of generated outputs, read Git's
 tracked files. One absent from the work tree is named on stdout and passed over: as a
@@ -1131,6 +1132,8 @@ GUARD_PINS = (
      '(0 : Nat) = 1 ∧ (1 : Nat) = 2 := ⟨by fail "one", by fail "two"⟩'),
     ("#guard_msgs", "/-- error: boom\n⊢ 0 = 1 -/\n#guard_msgsin\n"
      'theorem planted_pin_keyword : (0 : Nat) = 1 := by fail "boom"'),
+    ("#guard_msgs", "/--\nerror:\nboom\n⊢ 0 = 1\n-/\n#guard_msgs in\n"
+     'theorem planted_pin_break : (0 : Nat) = 1 := by fail "boom"'),
 )
 GUARD_PIN_KEPT = (
     "/-- info: planted_pin : 0 = 1 -/\n#guard_msgs in #check planted_pin",
@@ -1144,9 +1147,11 @@ GUARD_PIN_KEPT = (
     'def plantedKeptPin := "/-- error: boom -/ #guard_msgs in"',
 )
 # The allow-list of check_fidelity.py's GUARD_ERROR_PINS, written out here so that a change
-# to it fails this test, and a new file beside each of its files, in Audit/ and in Staging/.
+# to it fails this test; a new file beside each of its files, each of its file names in the
+# other's folder, and a new file in Audit/ and in Staging/.
 GUARD_PIN_ALLOWED = ("model/Check/RoundTrip.lean", "model/Model/Audit.lean")
 GUARD_PIN_REFUSED = ("model/Check/Planted.lean", "model/Model/Planted.lean",
+                     "model/Check/Audit.lean", "model/Model/RoundTrip.lean",
                      "Audit/Planted.lean", "Staging/Planted.lean")
 
 
@@ -1218,6 +1223,9 @@ def guard_error_pins() -> None:
     I.1's file: each refused by its file and line; nothing of GUARD_PIN_KEPT is. Then the
     first pin alone, in a small tree of its own: not refused at each path of
     GUARD_PIN_ALLOWED, refused at each of GUARD_PIN_REFUSED."""
+    if check_fidelity.GUARD_ERROR_PINS != set(GUARD_PIN_ALLOWED):
+        failures.append("GUARD_ERROR_PINS differs from GUARD_PIN_ALLOWED: a change to the "
+                        "allow-list is made in both, with its decision")
     scratch_plants("#guard_msgs under a docstring that pins an error, in each of its forms",
                    GUARD_PINS, GUARD_PIN_KEPT)
     pin = GUARD_PINS[0][1] + "\n"
