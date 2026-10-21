@@ -291,7 +291,8 @@ jobs:
     # fails.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # About seven minutes on a quiet machine, but 35 on a busy one: room to spare.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
         with:
