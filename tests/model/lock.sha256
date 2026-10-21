@@ -17,15 +17,32 @@
 # and every word already locked are unchanged, byte for byte, so MODEL.md's account stands
 # as it was.
 #
-# Renewed on 19 October 2026, when eight axioms became theorems (the owner approved retirement
-# in principle that day, pending the evidence): Tacit.adjacent_eq_of_right,
+# Renewed on 19 October 2026, when eight axioms became theorems (the owner approved both
+# retirements that day): Tacit.adjacent_eq_of_right,
 # Tacit.not_same_side_of_circles_meet, Tacit.centre_unique, Tacit.inside_of_between,
 # Tacit.exists_point_outside_circle, Tacit.line_meets_circle_of_opposite_sides,
 # Tacit.triple_incidence3 and Tacit.inside_of_angle_add. Their laws leave laws.toml, search.py
 # and hyperbolic.py; the other 79 axioms and every word are unchanged, byte for byte.
 #
-# Renewed on 19 October 2026, when 31 more axioms became theorems (the owner's decision that
-# day: "Please do both. 79 is rather large with so many books in front of us"):
+# Renewed on 19 October 2026, when the restricted rule of superposition (brief 0009, #75)
+# replaced the existential one: the axiom Tacit.superposition is restated as
+# Superposition.Rule primitives, and the lock's vocabulary gains the calculus's words. The
+# harness's superposition law now checks the placement the rule reduces to
+# (Rule.of_placement) with its kept side, as MODEL.md says; the other 86 axioms are
+# unchanged, byte for byte.
+# Renewed on 20 October 2026 after the coincidence marker was integrated (brief 0009,
+# #75): the vocabulary grows from 206 to 208 words. Coincidence and its step join
+# the lock, and the three Derives congruence constructors take the marker. All 87
+# axiom statements are unchanged. The marker records a step without changing its
+# interpretation; the existing placement proofs and numerical law still apply.
+# Renewed on 20 October 2026, when the restricted rule was merged after the first
+# retirement wave: the 79 axioms of wave one with Tacit.superposition restated as
+# Superposition.Rule primitives, and the vocabulary at 208 words; the harness keeps wave
+# one's removals and the restricted law's placement check with its kept side.
+#
+# Renewed on 21 October 2026, when 31 more axioms became theorems, merged after the restricted
+# rule (the owner's decision of 19 October 2026: "Please do both. 79 is rather large with so
+# many books in front of us"):
 # Tacit.area_swap, Tacit.between_of_area_add, Tacit.between_of_between_left,
 # Tacit.between_of_between_right, Tacit.centre_inside, Tacit.circles_meet_of_on_inside_outside,
 # Tacit.circles_meet_opposite_side, Tacit.eq_of_len_eq_zero, Tacit.exists_point_between,
@@ -38,4 +55,4 @@
 # Tacit.same_side_symm, Tacit.triple_incidence1 and Tacit.triple_incidence2. Their laws
 # leave laws.toml, search.py and hyperbolic.py, and derived.py keeps checking each; the other
 # 48 axioms and every word are unchanged, byte for byte.
-aaba04e9a811778508d047c348856225583ce35f90df3f098bf7fe4d15252f6b  Certificate/axioms.lock
+7fe6e851b6b154b614ab229e71ef8e0fdcbf395d2f4d4d6d45961421965dff34  Certificate/axioms.lock

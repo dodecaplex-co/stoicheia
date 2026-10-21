@@ -12,6 +12,6 @@ note = "The circle comes with a centre (`∃ F, Centre F ABC`), and the proof fi
 
 [review]
 stage = "exceptions"
-commit = "2c3686e"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:eb1fa7419f134b37"
+commit = "6fbd90c0"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:23f23abce84167cb"

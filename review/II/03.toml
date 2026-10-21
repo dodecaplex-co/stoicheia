@@ -8,8 +8,8 @@ kind = "euclid"
 [[passage]]
 at = "and through A let AF be drawn parallel"
 kind = "helper"
-helper = "Prop31.parallelogram"
-note = "Euclid draws AF parallel to CD and takes its meeting with DE at F from the figure. `Prop31.parallelogram` draws the parallel by I.31, finds F by `Prop30.meet` and proves DCAF a parallelogram; `Prop30.parallel` (I.30, which Heath does not cite here) makes AF parallel to BE as well."
+helper = "BookI.Prop31.parallelogram"
+note = "Euclid draws AF parallel to CD and takes its meeting with DE at F from the figure. `BookI.Prop31.parallelogram` draws the parallel by I.31, finds F by `BookI.Prop30.meet` and proves DCAF a parallelogram; `BookI.Prop30.parallel` (I.30, which Heath does not cite here) makes AF parallel to BE as well."
 
 [[passage]]
 at = "Then AE is equal to AD, CE"
@@ -31,8 +31,8 @@ note = "Euclid treats AD as a rectangle, with DC equal to CB. The Lean gets the 
 
 [review]
 stage = "full"
-commit = "7285f05"
-reviewer = "Claude Opus 5.5, records review"
+commit = "f3b45b70"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:ff9c599209c8485f"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 

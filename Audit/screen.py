@@ -1,27 +1,105 @@
 """A mechanical screen for docs/reports/overlaps.md.
 
 For every statement in facts.json, Lean's `grind` tries a proof from
+  - no rule at all (the bare try),
   - each axiom alone,
   - each family of axioms together (the module that declares them),
   - each pair of the rules about circles, and
   - each pair of families,
-with the phrase definitions (SameSideOf, CirclesMeet, ...) unfolded. A failed attempt
-falls back to `sorry`, and only the attempts that close without it are reported.
+with every definition unfolded that a statement or a rule reaches. Each attempt with rules
+is two tries, each a theorem with a budget of its own (BEATS): `grind` with the rules as it
+chooses to use them, and `grind` forward from their hypotheses. A failed try falls back to
+`sorry`, and only the tries that close without it are reported. A try that runs out of
+time is tried again with RETRY times the budget, and one that runs out again is listed as
+not searched to the end. A try that stops on any other error is listed so at once. A
+statement that the bare try closes holds by its definitions and logic alone, so its other
+tries say nothing of a rule: the screen lists it apart from the statements a rule closes.
+
+The rules `grind` refuses. Given a rule in which it finds nothing to match, `grind`
+refuses the whole list, and the try fails with no search at all. So a pass before the
+attempts gives `grind` each rule alone, in each of the two ways, and each try leaves out
+the rules refused in its way; a try left with none is not made. Refused both ways are the
+eleven rules that only say that a point, a straight line or a circle exists (Postulates 1
+to 3 and the eight `exists_point` rules); refused forward as well are fourteen with no
+hypothesis `grind` can start from (`len_symm`, `add_comm` and the like), plus the restricted
+superposition rule, whose conclusion is the structure `Superposition.Rule`. Such a rule gives
+`grind` nothing to work with in any case (see below); but while it stayed in, as in the
+families Postulates and Constructions and every pair with either, the try searched with
+none of its other rules.
+
+What is unfolded. Before the attempts, a pass over facts.json's statements and its axioms
+lists every definition of the edition that their types reach, through the bodies of other
+definitions (Triangle reaches Collinear; Rectangle reaches Parallelogram, AreParallel and
+Parallel; Apart.area reaches Magnitude.sum), and the screen stops if one is in none of the
+lists below. The definitions Lean makes for itself, to compile a definition by cases or by
+recursion (`InOrder.match_1`, `segments._f`), and the fields of a structure
+(`Apart.pieces`), are followed but not listed: the first are unfolded with the definition
+they serve, and `grind` reads a field as it is. Each listed definition is given to `grind`
+in one of three ways.
+  - DEFS, the phrases (SameSideOf, Triangle, Collinear, Parallelogram, ...) and the words
+    that say "any number" (the points in order of II.1, `InOrder`, with its `segments` and
+    `endOf`; I.45's `triples`; the sum of a list, `Magnitude.sum`, and the areas of a figure
+    given with its triangles, `Rectilineal.area` and `Apart.area`): unfolded to their
+    bodies, those defined by cases or by recursion one case at a time, by the equations
+    Lean proves for them. The restricted rule's `primitives` interpretation is unfolded
+    here too: it assigns the edition's words to the pure calculus's fields.
+  - CHOSEN, the magnitudes Lean chooses (`circumference`, `standing`, `rect`) and the
+    order "not greater": by what the definition says of them and nothing more, as a lemma
+    proved from Lean's choice alone (`Classical.epsilon_spec`), in the preamble of every
+    file. Unfolded to `Classical.epsilon` alone, a chosen magnitude gives `grind` nothing to
+    reason with. What the lemma leaves out stays unsearched: that two descriptions choose
+    the same magnitude when they hold of the same things, and, for `circumference` and
+    `standing`, that every point of the circle gives the same angle, which is III.21 (so a
+    statement whose proof needs it, as the catalogue's near misses of the measure do, is
+    not found here, and is not a rule's overlap).
+  - CARRIERS, the kinds of magnitude and their sum, order and zero: the words the axioms
+    are stated in, left as they are.
+A word that names a new kind of thing, with rules of formation of its own, is not an
+abbreviation to unfold, and the pass does not list it: the figure of triangles fitted
+together (`Fitted`, defined by induction), and the figures given with their triangles
+(`Rectilineal`, `Apart`, structures). `grind` takes them as they are: it does not reason by
+induction on `Fitted`, and draws on a figure's fields only where a rule or the goal names
+them. So a companion of I.45 or II.14 whose proof needs that is not found here.
+The restricted superposition rule is also a structure, `Superposition.Rule`. Its field
+requires a represented derivation; `grind` does not build that derivation or open the
+field of itself. Unfolding `primitives` supplies its interpretation, not placement
+witnesses or an existential substitute for the rule.
+Every file of tries begins by proving a few goals that `grind` closes only so (CONTROLS),
+so a screen that has stopped unfolding stops, and ends with a line that Lean prints (END),
+so a Lean process that stopped early is not read as tries that closed.
 
 It is a screen, not a proof search. `grind` instantiates rules among the terms already in
-a goal; it does not draw a new circle or lay down a triangle, so a proposition that needs
-one (I.23 from superposition) is found by reading, not here. The former I.7 overlap
-used Circle 4, now a corollary of I.7 and no longer an axiom in this screen.
+a goal; it does not draw a new circle or lay down a triangle. The former superposition
+shortcuts for I.2, I.3 and I.23 are retired: the restricted rule returns no placement
+witnesses. The former I.7 overlap used Circle 4, now a corollary of I.7 and no longer an
+axiom in this screen; deriving I.7 through it is circular.
 
-The statements are facts.json's entries. At commit d040117 that is the 99 propositions,
-399 attempts each, 39,501 in all; with the three porisms as well, 40,698. Either way the
-screen closes III.2, III.5 and III.6, and nothing else.
+The statements are facts.json's entries: the propositions, the porisms and the companions.
+At commit d040117, with only the phrases SameSideOf to LinesMeet unfolded, both tries in
+one budget and no rule left out, 40,698 attempts over the 99 propositions and the three
+porisms closed III.2, III.5 and III.6, and nothing else. Run again on the statements of
+1caff82, with every definition unfolded, each try in its own budget and the refused rules
+left out, they closed the same three. Run on the statements of 89c5da4, the 99
+propositions, the three porisms and the 19 companions, with a bare try for each, the
+48,400 attempts made 90,629 tries (6,050 were left with no rule) and closed the same
+three, each by a rule; no statement closed bare. 175 tries ran out of time and were tried
+again; 7 ran out again, all of them III.34 from Postulate 4, alone or with Postulate 5 and
+at most one more family, as on 1caff82. III.34 asks for three points on its circle, and
+the rules among those that put a point on a circle that has none need a straight line,
+which III.34 does not give and none of those rules draws. III.2 closes by Circle 2 with
+Generalities 4 (`inside_not_on`), and by the diagram rules together, but not by Circle 2
+alone: `grind` tries Circle 2 only on points of which the goal asks whether they are
+within the circle, and III.2 asks that only of E, until Generalities 4 brings in A and B.
+The screen checks that III.2, III.5 and III.6 still close by a rule (KNOWN, below), and
+says so when one does not.
 
 usage (from the repository root, after `lake build`):
     python3 Audit/screen.py OUTDIR [--jobs N]
 
-It writes its Lean files and logs to OUTDIR, which must be outside the repository, and
-takes about ten minutes with twelve jobs. Standard library only.
+It writes its Lean files and logs to OUTDIR, which must be outside the repository. Each
+job is one Lean process on one thread, so N jobs keep N cores busy. It takes about an hour
+and a half of processor time: some eight minutes with twelve jobs on an idle machine.
+Standard library only. Its cases, which need no Lean, are in tests/test_screen.py.
 """
 
 import argparse
@@ -43,30 +121,146 @@ Tacit.circles_meet_opposite_side Tacit.exists_point_on_circle Tacit.exists_point
 Tacit.circle_eq Tacit.on_circle_of_len_eq
 Tacit.inside_of_len_lt Tacit.len_lt_of_inside""".split()
 
-# Phrases unfolded in every attempt.
-DEFS = ", ".join("""SameSideOf OppositeSidesOf OppositeSides OutsideCircle CirclesMeet
-LineMeetsCircle CirclesTouch TouchesInternally TouchesExternally Touches LinesMeet""".split())
+# The phrases, and the words for "any number", unfolded in every attempt.
+DEFS = """SameSideOf OppositeSidesOf OppositeSides OutsideCircle CirclesMeet LineMeetsCircle
+CirclesTouch TouchesInternally TouchesExternally Touches LinesMeet Collinear Triangle OnRay
+InsideTriangle Equilateral IsRightAngle IsObtuse IsAcute Square Parallel AreParallel
+Parallelogram Rectangle EqualCircles Contain quadArea sq InOrder segments endOf triples
+Magnitude.sum Rectilineal.area Apart.area primitives""".split()
 
-HEAD = "import Elements\nopen Elements Elements.Tacit\nset_option maxErrors 1000000\n\n"
+# The chosen magnitudes, and the order "not greater", each given by its lemma in SPECS.
+CHOSEN = {"circumference": "Screen.circumference_spec", "standing": "Screen.standing_spec",
+          "rect": "Screen.rect_spec", "instLEMagnitude": "Screen.le_iff"}
+
+# The words the axioms are stated in, left as they are.
+CARRIERS = """Magnitude Length Angle Area instAddMagnitude instLTMagnitude
+instOfNatMagnitudeOfNatNat""".split()
+
+# The rows of the catalogue the screen has always found, each by a rule: a screen that
+# misses one is broken.
+KNOWN = ["BookIII.Prop2", "BookIII.Prop5", "BookIII.Prop6"]
+
+# What each chosen definition says, proved from Lean's choice alone; nothing else.
+SPECS = """namespace Screen
+open Elements
+
+/-- `circumference`: given a point of the circle on the other side of BC from K, the
+measure is twice the angle BXC at some such point X. -/
+theorem circumference_spec {α : Circle} {A B K C : Point} (hA : OnCircle A α)
+    (h : OppositeSidesOf A K B C) :
+    ∃ X, OnCircle X α ∧ OppositeSidesOf X K B C ∧ circumference α B K C = ∠ B X C + ∠ B X C :=
+  Classical.epsilon_spec
+    (p := fun x => ∃ X, OnCircle X α ∧ OppositeSidesOf X K B C ∧ x = ∠ B X C + ∠ B X C)
+    ⟨_, A, hA, h, rfl⟩
+
+/-- `standing`: given a point of the circle on A's side of BC, the measure is twice the
+angle BYC at some such point Y. -/
+theorem standing_spec {α : Circle} {X B A C : Point} (hX : OnCircle X α)
+    (h : SameSideOf X A B C) :
+    ∃ Y, OnCircle Y α ∧ SameSideOf Y A B C ∧ standing α B A C = ∠ B Y C + ∠ B Y C :=
+  Classical.epsilon_spec
+    (p := fun x => ∃ Y, OnCircle Y α ∧ SameSideOf Y A B C ∧ x = ∠ B Y C + ∠ B Y C)
+    ⟨_, X, hX, h, rfl⟩
+
+/-- `rect`: if AB and CD contain some area, the rectangle contained by them is one. -/
+theorem rect_spec {A B C D : Point} {x : Area} (h : Contain ‖A B‖ ‖C D‖ x) :
+    Contain ‖A B‖ ‖C D‖ (rect A B C D) :=
+  Classical.epsilon_spec ⟨x, h⟩
+
+/-- `≤`: "not greater". -/
+theorem le_iff {k : Kind} {a b : Magnitude k} : a ≤ b ↔ ¬ b < a := Iff.rfl
+
+end Screen
+
+"""
+
+# Each try's budget, in thousands of heartbeats; a try that runs out has RETRY times as much.
+BEATS = 30000
+RETRY = 4
+
+# The two ways a try gives `grind` its rules: the end of the try's name, and the mark
+# before each rule.
+MODES = {"": "", "__forward": "→ "}
+
+# The last line of every file the screen writes: Lean prints it only if it got that far.
+END = "screen: end of file"
+
+UNFOLD = ", ".join([f"Elements.{d}" for d in DEFS] + list(CHOSEN.values()))
+
+# Goals that `grind` closes only with the definitions unfolded and the lemmas given: the
+# preamble of every file proves them, so a screen that unfolds nothing stops.
+CONTROLS = [
+    "∀ {A B C : Point} {L : Line}, Triangle A B C → OnLine A L → OnLine B L → ¬ OnLine C L",
+    "∀ {A B C : Point} {L : Line}, OnLine A L → OnLine B L → OnLine C L → Collinear A B C",
+    "∀ {α : Circle} {A B K C E F G : Point}, OnCircle A α → OppositeSidesOf A K B C → "
+    "(∀ X, OnCircle X α → OppositeSidesOf X K B C → ∠ B X C = ∠ E F G) → "
+    "circumference α B K C = ∠ E F G + ∠ E F G",
+    "∀ {α : Circle} {A B X C E F G : Point}, OnCircle X α → SameSideOf X A B C → "
+    "(∀ Y, OnCircle Y α → SameSideOf Y A B C → ∠ B Y C = ∠ E F G) → "
+    "standing α B A C = ∠ E F G + ∠ E F G",
+    "∀ {A B : Point} {x : Area}, Contain ‖A B‖ ‖A B‖ x → Contain ‖A B‖ ‖A B‖ (sq A B)",
+    "∀ {a b : Angle}, a < b → ¬ b ≤ a",
+    "∀ {A B C : Point}, InOrder [A, B, C] → Between A B C",
+    "∀ {A B C : Point}, segments [A, B, C] = [(A, B), (B, C)]",
+    "∀ {A B C : Point}, endOf A [B, C] = C",
+    "∀ {A B C : Point}, triples [A, B, C] = [(A, B, C)]",
+    "∀ {a b : Length}, Magnitude.sum [a, b] = a + (b + 0)",
+    "∀ {R : Rectilineal}, R.area = Magnitude.sum (R.pieces.map fun t => △ t.1 t.2.1 t.2.2)",
+    "∀ {R : Apart}, R.area = Magnitude.sum (R.pieces.map fun t => △ t.1 t.2.1 t.2.2)",
+]
+
+HEAD = ("import Elements\nopen Elements Elements.Tacit\nset_option maxErrors 1000000\n\n"
+        + SPECS
+        + "".join(f"example : {g} := by\n  intros\n  grind [{UNFOLD}]\n\n" for g in CONTROLS))
+
+# The pass before the attempts: every definition of the edition that the roots' types
+# reach, through the bodies of definitions; and every listed name the edition lacks. The
+# definitions Lean makes for itself (a name with a part that begins `_`, as `segments._f`;
+# the matchers, as `InOrder.match_1`) and the fields of structures are followed, not listed.
+REACH = """import Lean
+import Elements
+open Lean
+
+run_cmd do
+  let env ← getEnv
+  let roots : Array Name := #[ROOTS]
+  let listed : Array Name := #[LISTED]
+  for n in roots ++ listed do
+    if (env.find? n).isNone then Lean.logInfo m!"screen-unknown {n}"
+  let mut todo : Array Name := #[]
+  for n in roots do
+    if let some ci := env.find? n then todo := todo ++ ci.type.getUsedConstants
+  let mut seen : NameSet := {}
+  while h : todo.size > 0 do
+    let n := todo.back
+    todo := todo.pop
+    if seen.contains n then continue
+    seen := seen.insert n
+    if let some (ConstantInfo.defnInfo d) := env.find? n then
+      if (`Elements).isPrefixOf n then
+        unless n.isInternal || Meta.isMatcherCore env n || env.isProjectionFn n do
+          Lean.logInfo m!"screen-def {n}"
+        todo := todo ++ d.value.getUsedConstants ++ d.type.getUsedConstants
+
+""" + f'#print "{END}"\n'
+
+
+# The kinds of attempt, each the start of a try's name; the bare try has no rules.
+KINDS = ("bare", "single", "family", "pair", "fampair")
+
+# An error in Lean's log, after the file, line and column: Lean may name the kind of error
+# after the word (`error(lean.unknownIdentifier): ...`), or not (`error: ...`). The message
+# is the group.
+ERROR = r"error(?:\([^)\s]*\))?: (.*)"
 
 
 def ident(s: str) -> str:
     return re.sub(r"\W", "_", s)
 
 
-def attempt(name: str, decl: str, rules: list[str]) -> str:
-    plain = ", ".join("Elements." + r for r in rules)
-    forward = ", ".join("→ Elements." + r for r in rules)
-    return (f"set_option maxHeartbeats 30000 in\n"
-            f"theorem {name} : type_of% @Elements.{decl} := by\n"
-            f"  intros\n"
-            f"  first\n"
-            f"  | grind [{plain}, {DEFS}]\n"
-            f"  | grind [{forward}, {DEFS}]\n"
-            f"  | sorry\n\n")
-
-
-def attempts(facts: dict) -> list[str]:
+def attempts(facts: dict) -> list[tuple[str, str, list[str]]]:
+    """Each attempt: its name, the statement, and the rules. The bare attempt, with no rules,
+    comes first for each statement."""
     decls = [e["name"] for e in facts["propositions"]]
     axioms = sorted(facts["axiom_modules"])
     missing = [c for c in CIRCLE if c not in facts["axiom_modules"]]
@@ -77,30 +271,223 @@ def attempts(facts: dict) -> list[str]:
         families.setdefault(module.split(".")[-1], []).append(ax)
     jobs = []
     for d in decls:
+        jobs.append((f"bare__{ident(d)}", d, []))
         for ax in axioms:
-            jobs.append(attempt(f"single__{ident(d)}__{ident(ax)}", d, [ax]))
+            jobs.append((f"single__{ident(d)}__{ident(ax)}", d, [ax]))
         for fam in sorted(families):
-            jobs.append(attempt(f"family__{ident(d)}__{fam}", d, sorted(families[fam])))
+            jobs.append((f"family__{ident(d)}__{fam}", d, sorted(families[fam])))
         for a, b in itertools.combinations(CIRCLE, 2):
-            jobs.append(attempt(f"pair__{ident(d)}__{ident(a)}__{ident(b)}", d, [a, b]))
+            jobs.append((f"pair__{ident(d)}__{ident(a)}__{ident(b)}", d, [a, b]))
         for f, g in itertools.combinations(sorted(families), 2):
-            jobs.append(attempt(f"fampair__{ident(d)}__{f}__{g}", d,
-                                sorted(families[f] + families[g])))
+            jobs.append((f"fampair__{ident(d)}__{f}__{g}", d,
+                         sorted(families[f] + families[g])))
     return jobs
 
 
-def successes(lean: Path, log: str) -> tuple[int, list[str]]:
-    lines = lean.read_text().splitlines()
+def refusal_cases(axioms: list[str]) -> tuple[list[tuple[str, str]], str]:
+    """The pass over the rules: each rule alone, in each way (MODES), for a goal `grind`
+    closes at once, so that an error is a refusal; and the Lean file that tries them. Two
+    lines of header, then three lines a case: the case k starts on line 3 + 3k."""
+    cases = [(mode, ax) for ax in sorted(axioms) for mode in MODES]
+    text = ("import Elements\n\n"
+            + "".join(f"example (h : False) : False := by\n"
+                      f"  grind [{MODES[mode]}Elements.{ax}]\n\n" for mode, ax in cases)
+            + f'#print "{END}"\n')
+    return cases, text
+
+
+def refusals(cases: list[tuple[str, str]], name: str, log: str) -> dict[str, set[str]]:
+    """Read the pass over the rules: for each way, the rules `grind` refused. Stop if Lean
+    did not reach the end of the file, or if any error is not a refusal of the rule."""
+    if END not in log:
+        sys.exit("screen: the pass over the rules stopped early (see Refused.log)")
+    found: dict[str, set[str]] = {mode: set() for mode in MODES}
+    for m in re.finditer(rf"{re.escape(name)}:(\d+):\d+: {ERROR}", log):
+        k = (int(m.group(1)) - 3) // 3
+        if not 0 <= k < len(cases) or not re.search(
+                r"invalid `grind`|failed to find patterns", m.group(2)):
+            sys.exit(f"screen: the pass over the rules failed at line {m.group(1)}: "
+                     f"{m.group(2)} (see Refused.log)")
+        found[cases[k][0]].add(cases[k][1])
+    return found
+
+
+def refused(facts: dict, out: Path) -> dict[str, set[str]]:
+    """The rules `grind` refuses, for each way of giving them (MODES)."""
+    cases, text = refusal_cases(list(facts["axiom_modules"]))
+    path = out / "Refused.lean"
+    path.write_text(text)
+    run = subprocess.run(["lake", "env", "lean", str(path)], cwd=ROOT, capture_output=True,
+                         text=True)
+    log = run.stdout + run.stderr
+    (out / "Refused.log").write_text(log)
+    found = refusals(cases, path.name, log)
+    for mode, way in (("", "as it chooses"), ("__forward", "forward")):
+        print(f"grind refuses {len(found[mode])} rules given {way}, left out of those "
+              f"tries: {', '.join(sorted(found[mode]))}")
+    return found
+
+
+def tries(jobs: list[tuple[str, str, list[str]]],
+          refuse: dict[str, set[str]]) -> dict[str, tuple[str, str]]:
+    """Each attempt with rules is two tries, each a theorem with a budget of its own:
+    `grind` with the rules as it chooses to use them, and `grind` forward from their
+    hypotheses, each without the rules `grind` refuses in its way; a try left with no rule
+    is not made. The bare attempt is one try, with no rule. A try maps to its statement and
+    what `grind` is given."""
+    out = {}
+    for name, decl, rules in jobs:
+        if not rules:
+            out[name] = (decl, "")
+            continue
+        for mode, mark in MODES.items():
+            given = [r for r in rules if r not in refuse[mode]]
+            if given:
+                out[name + mode] = (decl, ", ".join(f"{mark}Elements.{r}" for r in given))
+    return out
+
+
+def theorem(name: str, decl: str, given: str, beats: int) -> str:
+    rules = f"{given}, " if given else ""
+    return (f"set_option maxHeartbeats {beats} in\n"
+            f"theorem {name} : type_of% @Elements.{decl} := by\n"
+            f"  intros\n"
+            f"  first\n"
+            f"  | grind [{rules}{UNFOLD}]\n"
+            f"  | sorry\n\n")
+
+
+def reach_file(facts: dict) -> str:
+    """The pass over the definitions, for the statements and the rules."""
+    roots = [e["name"] for e in facts["propositions"]] + sorted(facts["axiom_modules"])
+    listed = DEFS + list(CHOSEN) + CARRIERS
+    return (REACH.replace("ROOTS", ", ".join(f"`Elements.{n}" for n in roots))
+                 .replace("LISTED", ", ".join(f"`Elements.{n}" for n in listed)))
+
+
+def definitions(log: str, ok: bool) -> set[str]:
+    """Read the pass over the definitions: the definitions reached. Stop if Lean did not
+    reach the end of the file or failed, if a listed name or a root is not the edition's,
+    if nothing was reached, or if a definition reached is in none of the lists."""
+    if END not in log:
+        sys.exit("screen: the pass over the definitions stopped early (see Reach.log)")
+    unknown = re.findall(r"screen-unknown Elements\.(\S+)", log)
+    found = set(re.findall(r"screen-def Elements\.(\S+)", log))
+    if not ok or unknown or not found:
+        sys.exit("screen: the pass over the definitions failed (see Reach.log)"
+                 + (f"; not in the edition: {unknown}" if unknown else ""))
+    unlisted = sorted(found - set(DEFS + list(CHOSEN) + CARRIERS))
+    if unlisted:
+        sys.exit(f"screen: a statement or a rule reaches {unlisted}, which the screen does "
+                 "not unfold: add each to DEFS, or to CHOSEN with its lemma in SPECS")
+    return found
+
+
+def reached(facts: dict, out: Path) -> None:
+    """Stop unless every definition the statements and the rules reach is in DEFS, CHOSEN
+    or CARRIERS, and every name listed there is the edition's."""
+    path = out / "Reach.lean"
+    path.write_text(reach_file(facts))
+    run = subprocess.run(["lake", "env", "lean", str(path)], cwd=ROOT, capture_output=True,
+                         text=True)
+    log = run.stdout + run.stderr
+    (out / "Reach.log").write_text(log)
+    found = definitions(log, run.returncode == 0)
+    print(f"{len(found)} definitions reached: {len(found & set(DEFS))} unfolded, "
+          f"{len(found & set(CHOSEN))} given by their lemmas, "
+          f"{len(found & set(CARRIERS))} left as they are")
+
+
+def outcomes(name: str, text: str, log: str) -> tuple[int, list[str], list[str], list[str]]:
+    """The tries in a file of tries (its name and text, and Lean's log of it): how many,
+    those that closed, those that ran out of time, and those that stopped on any other
+    error (the limit of recursion, the kernel refusing a proof). A try runs from its
+    `set_option` line to the next try's; Lean reports its errors, and its `sorry`, at its
+    `theorem` line or below."""
+    lines = text.splitlines()
     starts = [(i + 1, m.group(1)) for i, line in enumerate(lines)
-              if (m := re.match(r"theorem (\S+) :", line))]
+              if (m := re.match(rf"theorem ((?:{'|'.join(KINDS)})__\S+) :", line))]
+    if END not in log:
+        sys.exit(f"screen: Lean stopped before the end of {name} (see the log)")
     bad = {int(m.group(1)) for m in re.finditer(
-        rf"{re.escape(lean.name)}:(\d+):\d+: (error|warning: declaration uses)", log)}
-    found = []
-    for k, (start, name) in enumerate(starts):
-        end = starts[k + 1][0] if k + 1 < len(starts) else len(lines) + 1
-        if not any(start <= b < end for b in bad):
-            found.append(name)
-    return len(starts), found
+        rf"{re.escape(name)}:(\d+):\d+: (error|warning: declaration uses)", log)}
+    slow, stop = set(), set()
+    for m in re.finditer(rf"{re.escape(name)}:(\d+):\d+: {ERROR}", log):
+        timeout = re.match(r"\(deterministic\) timeout|\(kernel\) deterministic timeout",
+                           m.group(2))
+        (slow if timeout else stop).add(int(m.group(1)))
+    first = starts[0][0] - 1 if starts else len(lines) + 1
+    if any(b < first for b in bad):
+        sys.exit(f"screen: the preamble of {name} does not compile: a lemma of SPECS, or a "
+                 "goal of CONTROLS that the definitions unfolded should close (see the log)")
+    closed, timed_out, stopped = [], [], []
+    for k, (start, try_name) in enumerate(starts):
+        begin = start - 1
+        end = starts[k + 1][0] - 1 if k + 1 < len(starts) else len(lines) + 1
+        if any(begin <= b < end for b in slow):
+            timed_out.append(try_name)
+        elif any(begin <= b < end for b in stop):
+            stopped.append(try_name)
+        elif not any(begin <= b < end for b in bad):
+            closed.append(try_name)
+    return len(starts), closed, timed_out, stopped
+
+
+def run(todo: dict[str, tuple[str, str]], beats: int, out: Path, stem: str,
+        jobs: int) -> tuple[int, list[str], list[str], list[str]]:
+    """Run the tries `todo` with the budget `beats`, in `jobs` Lean processes of one thread
+    each: how many were read back, and those that closed, ran out of time, or stopped on
+    another error."""
+    names = list(todo)
+    files = []
+    for k in range(min(jobs, len(names))):
+        path = out / f"{stem}{k}.lean"
+        path.write_text(HEAD + "".join(theorem(n, *todo[n], beats) for n in names[k::jobs])
+                        + f'#print "{END}"\n')
+        files.append(path)
+    procs = [(f, subprocess.Popen(["lake", "env", "lean", "--threads=1", str(f)], cwd=ROOT,
+                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True))
+             for f in files]
+    total, closed, timed_out, stopped = 0, [], [], []
+    for f, p in procs:
+        log, _ = p.communicate()
+        (out / f"{f.stem}.log").write_text(log)
+        n, ok, slow, stop = outcomes(f.name, f.read_text(), log)
+        total += n
+        closed += ok
+        timed_out += slow
+        stopped += stop
+    return total, closed, timed_out, stopped
+
+
+def statement_of(try_name: str) -> str:
+    """The statement a try is about, as `ident` writes it: the part of its name after the
+    kind."""
+    return try_name.split("__")[1]
+
+
+def refs(facts: dict, hit: set[str]) -> list[str]:
+    """The references of the statements `hit`, as `ident` writes them, in facts.json's
+    order."""
+    return [e["ref"] for e in facts["propositions"] if ident(e["name"]) in hit]
+
+
+def statements(facts: dict, names: list[str]) -> list[str]:
+    """The references of the statements that the tries `names` are about."""
+    return refs(facts, {statement_of(n) for n in names})
+
+
+def by_rule(closed: list[str]) -> tuple[set[str], set[str]]:
+    """The statements the bare try closes, and those that only a try with rules closes."""
+    bare = {statement_of(n) for n in closed if n.startswith("bare__")}
+    ruled = {statement_of(n) for n in closed if not n.startswith("bare__")} - bare
+    return bare, ruled
+
+
+def lost(closed: list[str]) -> list[str]:
+    """The rows of KNOWN that no try with rules closed, or that the bare try closed."""
+    _, ruled = by_rule(closed)
+    return [d for d in KNOWN if ident(d) not in ruled]
 
 
 def main() -> int:
@@ -113,25 +500,50 @@ def main() -> int:
         sys.exit("screen: OUTDIR must be outside the repository")
     out.mkdir(parents=True, exist_ok=True)
     facts = json.loads((ROOT / "facts.json").read_text())
+    kinds: dict[str, int] = {}
+    for e in facts["propositions"]:
+        kinds[e["kind"]] = kinds.get(e["kind"], 0) + 1
+    print(f"{len(facts['propositions'])} statements: "
+          + ", ".join(f"{n} {k}" for k, n in sorted(kinds.items())))
+    reached(facts, out)
     jobs = attempts(facts)
-    files = []
-    for k in range(args.jobs):
-        path = out / f"Screen{k}.lean"
-        path.write_text(HEAD + "".join(jobs[k::args.jobs]))
-        files.append(path)
-    procs = [(f, subprocess.Popen(["lake", "env", "lean", str(f)], cwd=ROOT,
-                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True))
-             for f in files]
-    total, found = 0, []
-    for f, p in procs:
-        log, _ = p.communicate()
-        (out / f"{f.stem}.log").write_text(log)
-        n, ok = successes(f, log)
-        total += n
-        found += ok
-    print(f"{total} attempts, {len(found)} closed:")
-    for name in sorted(found):
+    todo = tries(jobs, refused(facts, out))
+    total, closed, slow, stopped = run(todo, BEATS, out, "Screen", args.jobs)
+    if total != len(todo):
+        sys.exit(f"screen: {total} of {len(todo)} tries were read back from the logs")
+    ruled_jobs = [j for j in jobs if j[2]]
+    print(f"{len(jobs)} attempts, {len(jobs) - len(ruled_jobs)} of them bare; {total} tries "
+          f"({2 * len(ruled_jobs) - (total - (len(jobs) - len(ruled_jobs)))} left with no "
+          f"rule grind takes); {len(slow)} ran out of time at {BEATS} and were tried again "
+          f"at {BEATS * RETRY}")
+    if slow:
+        _, more, slow, also = run({n: todo[n] for n in slow}, BEATS * RETRY, out, "Again",
+                                  args.jobs)
+        closed += more
+        stopped += also
+    print(f"{len(closed)} tries closed:")
+    for name in sorted(closed):
         print("  " + name)
+    bare, ruled = by_rule(closed)
+    print(f"{len(bare)} statements closed with no rule, by their definitions and logic "
+          f"alone: {', '.join(refs(facts, bare)) or 'none'}")
+    print(f"{len(ruled)} statements closed by a rule: "
+          f"{', '.join(refs(facts, ruled)) or 'none'}")
+    if slow:
+        print(f"{len(slow)} tries ran out of time again, not searched to the end, on "
+              f"{', '.join(statements(facts, slow))}:")
+        for name in sorted(slow):
+            print("  " + name)
+    if stopped:
+        print(f"{len(stopped)} tries stopped on another error, not searched to the end, on "
+              f"{', '.join(statements(facts, stopped))}:")
+        for name in sorted(stopped):
+            print("  " + name)
+    missing = lost(closed)
+    if missing:
+        print(f"screen: the known rows {missing} did not close by a rule; the screen may be "
+              "broken")
+        return 1
     return 0
 
 

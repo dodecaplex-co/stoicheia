@@ -22,7 +22,7 @@ Book I's words are the foundations every later book uses, in `Elements/Foundatio
 | `Phrases.lean` | Phrases Euclid never defines, as abbreviations: `SameSideOf`, `OppositeSidesOf`, `OnRay`, `InsideTriangle`, `AreParallel`, `Parallelogram` and its area `quadArea`; points in order on a straight line, `InOrder`, with `segments` and `endOf` (II.1); and a rectilineal figure given with its triangles (Definitions I.14 and I.19), as triangles that lie apart, `Apart`, or fitted together, `Fitted` and `Rectilineal`, each with its area as given, with `OnFiniteLine`, `OnOrInsideTriangle`, `Corners` and `triples`. |
 | `Postulates.lean` | The five postulates, each an `axiom`. |
 | `CommonNotions.lean` | The five Common Notions, each a theorem; Common Notions 3 and 5 rest on tacit laws of magnitudes. |
-| `Tacit/` | 42 tacit rules taken as axioms, from System E: `Diagram.lean`, `Transfer.lean`, `Constructions.lean`, `Metric.lean`, `Magnitudes.lean` and `Superposition.lean`. |
+| `Tacit/` | <!-- count:tacit-rules -->42<!-- /count --> tacit rules taken as axioms, from System E: `Diagram.lean`, `Transfer.lean`, `Constructions.lean`, `Metric.lean`, `Magnitudes.lean` and `Superposition.lean`. |
 
 ## How the statements say Euclid's phrases
 
@@ -54,25 +54,39 @@ Hypotheses come from the setting-out, conclusions from "I say that".
   multiplication.
 - **Right angles.** Definition 10 is a predicate, and Postulate 4 makes every right angle
   equal to `∟`, so that each use of Postulate 4 shows on the certificate.
-- **Superposition** is one rule, after LeanEuclid's form of System E's two, allowed in I.4
-  and I.8 alone. That limits where it is used, not what it can do: as a construction
-  principle it is stronger than System E's restricted inference rule
-  ([Superposition.lean](../../Elements/Foundations/Tacit/Superposition.lean)), and a
-  restricted rule is being prototyped
-  ([#75](https://github.com/jackChallis/stoicheia/issues/75)).
+- **Superposition** is a restricted inference in System E's style,
+  [`Tacit.superposition`](../../Elements/Foundations/Tacit/Superposition.lean), used
+  directly only in I.4 and I.8. A checked derivation over symbols may infer one equality
+  of lengths, angles or triangles about the given figure from its given facts, the guards
+  and a hypothetical placement. The guards require ABC to be a triangle, D and G to be
+  distinct points of L, and H to be off L. The placement puts A on D, B′ on the ray from D
+  through G and C′ on H's side of L, keeps the three sides and three angles, and keeps the
+  side AC as a straight line through D and C′. The placed corners and side have fresh
+  symbols that no exported formula can name; no derivation step constructs anything.
+  Besides its logical steps, the derivation may cite only a fixed list: Metric 3, 4 and 9;
+  that a length equal to one with distinct ends has distinct ends; one point at one
+  distance on a ray; one ray for one angle, in its incidence and direction; and I.7. Each
+  cited law is supplied with its proof. Our reading
+  admits I.7 inside I.8's placement because its statement asserts no existence, though its
+  earlier proof uses constructions. These are restrictions on represented derivations:
+  equivalence with System E's two printed rules is not claimed, nor is non-derivability
+  of placement from the whole foundation. I.22 and I.23 construct congruent figures by
+  Euclid's route.
 - **What the figure shows** is supplied by System E's tacit rules and the facts proved
   from them: an Intersection rule says when straight lines and circles must meet, and an
   Intersections rule lets a proof take a point where they do. Thirty-nine rules are now theorems
   with their existing names and types; [FORMALIZATION](../FORMALIZATION.md#rules-now-proved)
   gives their derivations and homes.
 - **A rectilineal figure** (I.45) is given with its division into triangles, and the division
-  is checked: triangles that lie apart (`Apart`), for any figure, a figure with a hole among
-  them; triangles fitted together in a suitable order (`Fitted`, `Rectilineal`), for a figure
+  is checked: triangles that lie apart (`Apart`), allowing a figure with a hole;
+  triangles fitted together in a suitable order (`Fitted`, `Rectilineal`), for a figure
   with one boundary; or Euclid's and Oliver Byrne's triangles from one corner, under two
   conditions that `Fitted.fan` shows make them fit together. Equal to the figure means equal
-  to those triangles together. That every figure can be so divided, and that another division
-  gives the same sum, are not proved: the second is the step Euclid takes for granted, which
-  David Hilbert proved, for his measure of area ([the gap catalogue](../reports/gaps-book-I.md#i45)).
+  to those triangles together. The scope is `restricted`: existence of a division from the
+  figure's outline, coverage of its region, and independence of the sum from the division
+  chosen remain unproved ([#116](https://github.com/jackChallis/stoicheia/issues/116)).
+  The last is the step Euclid takes for granted, which David Hilbert proved, for his
+  measure of area ([the gap catalogue](../reports/gaps-book-I.md#i45)).
   The tag is `figure-with-dissection`. The main theorem keeps Euclid's two triangles ABD and
   DBC, unchecked: an area-sum theorem, whose checked case is `Prop45.fan` for the corners D,
   A, B, C.
@@ -85,9 +99,11 @@ The rule of [FORMALIZATION.md](../FORMALIZATION.md), section 6, as Book I applie
   (imports the rest), `Lines.lean` (order on a straight line; `produce_longer`),
   `Sides.lean`, `Rays.lean`, `Angles.lean`, `Lengths.lean`, `Triangles.lean`,
   `Circles.lean`, `Parallels.lean`, `Parallelograms.lean`, `Areas.lean`
-  (`OnRay.eq_of_area_eq`, the "greater to the less" of I.39 and I.40), `Sums.lean` (the sums
+  (`area_lt_of_cut`, the strict area comparison in I.39 and I.40), `Sums.lean` (the sums
   of lists, and `InOrder.between_end`) and `Rectilineal.lean` (a fitted figure's triangles
-  lie apart, `Fitted.inside_pairwise`).
+  lie apart, `Fitted.inside_pairwise`). `Superposition.lean`, imported separately by I.4
+  and I.8, proves the geometric laws their hypothetical placements cite, without
+  construction rules.
 - **Shared steps that cite a proposition:** `Elements/BookI/Helpers.lean`, with
   `Prop5.base` (I.5's angles at the base, with the sides produced anywhere); and
   `Elements/BookI/HelpersParallels.lean`, for those that cite I.28, I.30 or I.31, with
@@ -98,8 +114,12 @@ The rule of [FORMALIZATION.md](../FORMALIZATION.md), section 6, as Book I applie
   `Prop29.interior`, `Prop29.exterior`, `Prop31.line`, `Prop34.bisect`, and
   `Prop46.square_eq` with `Prop46.side_eq` (squares on equal straight lines are equal, and
   conversely, as Heath reports Proclus proving under I.46).
-- **Companions after their propositions** (the exceptions, below): I.40's and I.45's; and,
-  in `Prop45.lean` before `Prop45.fan`, the bridge `Fitted.fan`, which cites I.13.
+- **Companions after their propositions** (the exceptions, below): I.40's, I.45's and
+  I.47's; and, in `Prop45.lean` before `Prop45.fan`, the bridge `Fitted.fan`, which cites
+  I.13.
+
+19 October 2026: the statement of `Prop47.general` was challenged by an independent reader
+who wrote none of it, and approved as written by the coordinator.
 
 ## The statements' choices
 
@@ -127,38 +147,40 @@ Each was approved before its voyage, and the reasons are in the first mates' rep
 
 ## Exceptions
 
-The review records in `review/I/` are the authority, proposition by proposition. These are
-the exceptions the outside review named, and stage 2 of
-[brief 0006](0006-statements.md) answers both with companions, so that each record's scope
-is `full`:
+The review records in `review/I/` are the authority, proposition by proposition. Stage 2 of
+[brief 0006](0006-statements.md) answered I.40 and I.45 with companions. `Prop47.general`
+makes the transfer from outward squares to squares on either side explicit. I.40 and I.47
+have scope `full`; I.45 is `restricted` to a supplied checked division, with outline
+coverage and independence of division still unproved (#116):
 
-| Proposition | Main theorem | Companions | Tag |
-|---|---|---|---|
-| I.40 | the equal bases meet end to end, as BC and CE | `Prop40.general`, for equal bases anywhere on one straight line; `Prop40.join` and `Prop40.special` | |
-| I.45 | the figure is two triangles, unchecked | `Prop45.apart`, for any figure given with triangles that lie apart; `Prop45.figure` and `Prop45.fan`, the main companion, beside it; `Prop45.append` and `Prop45.sum`, the construction | `figure-with-dissection` |
+| Proposition | Scope | Main theorem | Companions | Tag |
+|---|---|---|---|---|
+| I.40 | full | the equal bases meet end to end, as BC and CE | `Prop40.general`, for equal bases anywhere on one straight line; `Prop40.join` and `Prop40.special` | |
+| I.45 | restricted | the figure is two triangles, unchecked | `Prop45.apart`, for a supplied checked division into triangles that lie apart; `Prop45.figure` and `Prop45.fan`, the main companion, beside it; `Prop45.append` and `Prop45.sum`, the construction | `figure-with-dissection` |
+| I.47 | full | the three squares stand outward from the triangle | `Prop47.general`, for squares independently on either side of each base | |
 
-Both main theorems stay as Euclid's worked configuration, with the general theorems beside
-them as companions ([FORMALIZATION.md](../FORMALIZATION.md), section 2).
+These main theorems stay as Euclid's worked configuration, with companions extending them
+under the hypotheses and limits above ([FORMALIZATION.md](../FORMALIZATION.md), section 2).
 
-Two proofs follow Euclid with one step changed: I.39, and I.40 after it, make the end of
-his reductio direct, the parallel through A being shown to pass through D
-(`OnRay.eq_of_area_eq`). Superposition supplies a step of alternative proofs of three
-propositions, as the [overlap catalogue](../reports/overlaps.md) records:
+Reconciled 19 October 2026: I.39 and I.40 follow Euclid's closing reductio. The contrary
+supposition makes the constructed intersection differ from D; either order on the same
+ray contradicts equal areas. I.40's general companion uses the same argument for equal
+bases anywhere on one straight line, including coincident vertices.
 
-| Proposition | Rule | What the proof does |
-|---|---|---|
-| I.2 | superposition | Euclid's construction, by I.1 and two circles; it never uses the rule |
-| I.3 | superposition | Euclid's construction, by I.2 and a circle; it never uses the rule |
-| I.23 | superposition | Euclid's construction, by I.22 and I.8; it rests on the rule through I.8, which with I.4 alone may call on it directly, and through I.20 |
+The [overlap catalogue](../reports/overlaps.md) records the retired shortcuts.
+The former construction overlaps for I.2, I.3 and I.23 used the existential
+superposition rule and are retired. I.2 and I.3 do not rest on superposition. I.23's points
+come from I.22 and its angle equality from I.8; its proof rests on the restricted rule
+through I.8 and I.20, which supplies the triangle inequalities.
 
 19 October 2026: I.7's former overlap with Circle 4 is retired. Circle 4 is now a
 corollary after I.7 in `Elements/BookI/Prop07.lean`, proved from I.7, Definition I.15
 and `circle_eq`; using it to prove I.7 would be circular. The right-angle rule
 `adjacent_eq_of_right` and the converse angle-addition rule `inside_of_angle_add` are
 corollaries after I.13. The other five retired rules are proved in Book Zero's
-`Circles.lean`. Thirty-one more rules became theorems the same day, in Book Zero's
-`RuleBase.lean`, `Incidence.lean`, `AreaRules.lean` and `CirclePoints.lean`, and the lock
-now holds 48 axioms, including 42 tacit rules.
+`Circles.lean`. By the owner's decision of 19 October 2026, 31 more rules became
+theorems in Book Zero's `RuleBase.lean`, `Incidence.lean`, `AreaRules.lean` and
+`CirclePoints.lean`, proved that day and landed on 21 October. The lock now holds <!-- count:axioms -->48<!-- /count --> axioms, including <!-- count:tacit-rules -->42<!-- /count --> tacit rules.
 
 The stage-5 review will give the hardest formal blocks (I.7, I.35, I.47) a paragraph of
 their own in the mishnah.

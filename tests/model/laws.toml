@@ -59,6 +59,7 @@
 "Tacit.pasch2" = "pasch2"
 "Tacit.same_ray_of_angle_eq_zero" = "same_ray_of_angle_eq_zero"
 "Tacit.same_side_trans" = "same_side_trans"
+# The restricted rule follows from the tested placement with its kept side.
 "Tacit.superposition" = "superposition"
 
 [hyperbolic]
