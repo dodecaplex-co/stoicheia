@@ -556,9 +556,9 @@ hide a command by opening a comment or ending an attribute's brackets, and a wor
 up to a number remains visible. An adjacent numeric projection stays a projection; where
 a declared `.` notation makes a longer number the competing reading, the longer boundary
 stays visible too. Whitespace and comments end projection adjacency, as they do in Lean.
-Beyond that it reads words, not
-Lean's grammar nor the tokens a file declares, so it catches a slip but not a command
-disguised from it on purpose, nor an attribute it does not list: review still reads every
+Beyond that it reads words, not Lean's grammar nor the tokens a file declares, so it
+catches a slip but not a command disguised from it on purpose, nor an attribute it does
+not list: review still reads every
 staged file, audit lemma and model file. In `Elements/` the certificate reads the axioms
 from Lean itself as well. In `model/`, the scan reads words and the replay reads proofs:
 after `lake build`, CI's `formal-model` job runs `scripts/check_model_kernel.py`, in which

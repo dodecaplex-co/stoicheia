@@ -3995,24 +3995,23 @@ findings:
   information.
 
   And a number closed up to a command, which the /no-mistakes review of this change found,
-  with our thanks. Lean 4.35 ends a number where its digits end, so it reads
-  `def x : Nat := 1set_option«debug».byAsSorry true in` as `1` and the command, and a
-  theorem stating `0 = 1` after it builds on `sorryAx`; so do `p.1set_option…`, where `.1`
-  is a field, and `0xA`, `1e5`, `1.5` or `1_0` before it, and `1axiom planted : False`
-  declares an axiom. `read_lean` read `\d[\w.]*` as one number, and an identifier's `.`
-  before a digit as part of it, so the scan's `\b` before `set_option` and `axiom` found
-  no boundary. A number now ends where Lean's `numberFnAux` ends it. After an adjacent
-  `.`, an ordinary projection field ends at its digits, preserving `p.1.succ`,
-  `(·.2.toList)` and projections after `⟩`; but a declared `.` notation can make a
-  scientific or underscore-separated number the longer reading, so that longer boundary
-  is kept. Whitespace and comments clear the projection state, since Lean requires a
-  projection to be adjacent on both sides. A number or field with a letter, a digit or
-  `_` just after it is blanked, so every pattern of `FORBIDDEN` and `AXIOM` sees the word
-  after it begin. No tracked `.lean` file reads differently. One refusal goes, rightly: a
-  raw string closed up to a number, as in `infixl:65r#"{x"# => Nat.add`, which Lean
-  builds, was read as a plain string after the number `65r` and refused as one the scan
-  could not read for certain; it is now read as Lean reads it, a raw string, and passes.
-  The set_option plant
+  with our thanks. Lean 4.35 ends a number where its digits end, so it reads `def x : Nat
+  := 1set_option«debug».byAsSorry true in` as `1` and the command, and a theorem stating
+  `0 = 1` after it builds on `sorryAx`; so do `p.1set_option…`, where `.1` is a field, and
+  `0xA`, `1e5`, `1.5` or `1_0` before it, and `1axiom planted : False` declares an axiom.
+  `read_lean` read `\d[\w.]*` as one number, and an identifier's `.` before a digit as
+  part of it, so the scan's `\b` before `set_option` and `axiom` found no boundary. A
+  number now ends where Lean's `numberFnAux` ends it. After an adjacent `.`, an ordinary
+  projection field ends at its digits, preserving `p.1.succ`, `(·.2.toList)` and
+  projections after `⟩`; but a declared `.` notation can make a scientific or
+  underscore-separated number the longer reading, so that longer boundary is kept.
+  Whitespace and comments clear the projection state, since Lean requires a projection to
+  be adjacent on both sides. A number or field with a letter, a digit or `_` just after it
+  is blanked, so every pattern of `FORBIDDEN` and `AXIOM` sees the word after it begin. No
+  tracked `.lean` file reads differently. One refusal goes, rightly: a raw string closed
+  up to a number, as in `infixl:65r#"{x"# => Nat.add`, which Lean builds, was read as a
+  plain string after the number `65r` and refused as one the scan could not read for
+  certain; it is now read as Lean reads it, a raw string, and passes. The set_option plant
   covers numbers and fields of each form, dot notation beside whitespace or a block
   comment, ambiguous adjacent dot notation, and the corresponding harmless numbers and
   projections. It also keeps names with a digit before `set_option` and the unspaced plain
