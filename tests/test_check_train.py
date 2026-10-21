@@ -457,6 +457,46 @@ class TrainChecks(Repository):
                 self.assertEqual(self.problems(text=body(
                     [dict(self.row, code_review=cell)])), [])
 
+    def test_footnotes_and_images_supply_no_review_evidence(self):
+        prefix = self.member[:12]
+        hidden = (
+            (f"[^{prefix}-reviewed]", f"[^{prefix}-reviewed]: a note"),
+            (f"![{prefix} reviewed](proof.png)", ""),
+            (f"![{prefix} reviewed][proof]", "[proof]: proof.png"),
+            (f"![{prefix} reviewed][]", f"[{prefix} reviewed]: proof.png"),
+            (f"![{prefix} reviewed]", f"[{prefix} reviewed]: proof.png"),
+        )
+        hidden_verdicts = (
+            (f"{prefix} [^reviewed]", "[^reviewed]: a note"),
+            (f"{prefix} ![reviewed](proof.png)", ""),
+            (f"{prefix} ![reviewed][proof]", "[proof]: proof.png"),
+            (f"{prefix} ![reviewed][]", "[reviewed]: proof.png"),
+            (f"{prefix} ![reviewed]", "[reviewed]: proof.png"),
+        )
+        for key, label in (("code_review", "/code-review"),
+                           ("security_review", "/security-review")):
+            for cell, definition in hidden:
+                with self.subTest(key=key, hidden=cell):
+                    text = body([dict(self.row, **{key: cell})])
+                    text += f"\n## References\n\n{definition}\n"
+                    self.refused(f"{label} names no reviewed commit", text=text)
+            for cell, definition in hidden_verdicts:
+                with self.subTest(key=key, hidden_verdict=cell):
+                    text = body([dict(self.row, **{key: cell})])
+                    text += f"\n## References\n\n{definition}\n"
+                    self.refused("gives no visible review verdict or findings beyond the "
+                                 "reviewed commit", text=text)
+
+        for cell, definition in (
+                (f"[Reviewed {prefix}: no findings][review]",
+                 "[review]: https://example.invalid/review"),
+                (f"[Reviewed {prefix}: no findings]",
+                 f"[Reviewed {prefix}: no findings]: https://example.invalid/review")):
+            with self.subTest(visible=cell):
+                text = body([dict(self.row, code_review=cell)])
+                text += f"\n## References\n\n{definition}\n"
+                self.assertEqual(self.problems(text=text), [])
+
     def test_long_review_cells_are_read_in_linear_time(self):
         # 200,000 characters of openings that never close, which a regular expression
         # rescanning to the end from each would read in quadratic time (3.4 s at 65,536

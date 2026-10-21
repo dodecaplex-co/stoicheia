@@ -377,7 +377,7 @@ def _inline_link_end(text: str, start: int) -> int | None:
 
 
 def _without_link_targets(text: str) -> str:
-    """Remove inline destinations, titles, reference labels and image descriptions."""
+    """Remove link targets, footnote labels and every form of image description."""
     visible = []
     labels: list[tuple[int, bool]] = []
     at = 0
@@ -388,14 +388,21 @@ def _without_link_targets(text: str) -> str:
             continue
         if text[at] == "[":
             image = at > 0 and text[at - 1] == "!" and visible and visible[-1] == "!"
-            labels.append((len(visible) - 1 if image else len(visible), image))
+            hidden = image or text.startswith("[^", at)
+            labels.append((len(visible) - 1 if image else len(visible), hidden))
             visible.append("[")
+            at += 1
+            continue
+        if text[at] == "]" and not text.startswith(("](", "]["), at):
+            label = labels.pop() if labels else None
+            if label and label[1]:
+                del visible[label[0]:]
+            else:
+                visible.append("]")
             at += 1
             continue
         if not text.startswith(("](", "]["), at):
             visible.append(text[at])
-            if text[at] == "]" and labels:
-                labels.pop()
             at += 1
             continue
         label = labels.pop() if labels else None
@@ -413,14 +420,19 @@ def _without_link_targets(text: str) -> str:
                     break
                 end += 1
             if not valid:
-                visible.append("]")
+                if label and label[1]:
+                    del visible[label[0]:]
+                    break
+                else:
+                    visible.append("]")
                 at += 1
                 continue
             if label and label[1]:
                 del visible[label[0]:]
+                at = end + 1
             else:
                 visible.append("]")
-            at = end
+                at = end
             continue
         end = _inline_link_end(text, at)
         if label and label[1]:
@@ -430,6 +442,9 @@ def _without_link_targets(text: str) -> str:
         if end is None:
             break
         at = end
+    hidden = [position for position, remove in labels if remove]
+    if hidden:
+        del visible[min(hidden):]
     return "".join(visible)
 
 
