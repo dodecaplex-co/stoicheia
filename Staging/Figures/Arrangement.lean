@@ -3,6 +3,7 @@ import Staging.Figures.Content
 import Staging.Figures.ConvexArea
 import Staging.Figures.ArrangementFacts
 import Staging.Figures.CoverFacts
+import Staging.Figures.Diagonal
 
 /-!
 # Staging: from side lines to a division of an outline
@@ -326,7 +327,13 @@ theorem simple_diagonal {ps : List Point} (h : SimpleLoop ps) (hn : 4 ≤ ps.len
     ∃ (n : Nat) (A B : Point) (us vs : List Point),
       ps.rotateLeft n = A :: (us ++ B :: vs) ∧ us ≠ [] ∧ vs ≠ [] ∧
         ∀ X : Point, Between A X B → loopInside ps X := by
-  sorry
+  /- An extreme corner V, with every other corner strictly across a straight line through it,
+  has neighbours U and W. Either UW is an interior diagonal (an ear), or a corner nearest V
+  within the triangle VUW is joined to V by one (`Diag.diagonal_exists`). Two corners that
+  are not neighbours split the loop read from one of them (`Diag.diagonal_rotate`). -/
+  obtain ⟨A, hA, B, hB, hAB, h₁, h₂, hd⟩ := Diag.diagonal_exists h hn
+  obtain ⟨n, us, vs, he, hu, hv⟩ := Diag.diagonal_rotate h.2.1 hA hB hAB h₁ h₂
+  exact ⟨n, A, B, us, vs, he, hu, hv, hd⟩
 
 /-- An interior diagonal splits a simple region into two simple regions with
 exactly that diagonal in common. Disjoint interiors need their own argument. -/
@@ -339,12 +346,119 @@ theorem simple_diagonal_partition {A B : Point} {us vs : List Point}
       (∀ X : Point,
         (loopRegion (A :: (us ++ [B])) X ∧ loopRegion (B :: (vs ++ [A])) X) ↔
           OnFiniteLine X A B) := by
-  sorry
+  /- Read the loop as two chains, A through `us` to B and B through `vs` to A; each piece is a
+  chain closed by the diagonal. The pieces are simple: the diagonal meets a side only at A or B,
+  its other points being inside (`Diag.piece_simple`). Off the sides and the diagonal, a good
+  ray crosses the loop as often as both pieces together, less the diagonal twice, so the loop's
+  inside is the points inside exactly one piece (`Diag.inside_xor`). That parity cancellation
+  does not keep the pieces apart; a separate argument does: along each chain the other piece's
+  inside is constant, and rays from either side of the diagonal show it is outside
+  (`Diag.chains_outside`); so no point is inside both pieces (`Diag.pieces_apart`). -/
+  have hP := Diag.piece_simple h hu hd
+  have hQ := Diag.piece_simple₂ h hv hd
+  obtain ⟨ho₁, ho₂⟩ := Diag.chains_outside h hu hv hd
+  have hb := Diag.boundary_split (A := A) (B := B) (us := us) (vs := vs)
+  have hbP := Diag.boundary_piece A B us
+  have hbQ := Diag.boundary_piece B A vs
+  have hA : A ∈ A :: (us ++ B :: vs) := List.mem_cons_self
+  have hB : B ∈ A :: (us ++ B :: vs) := by simp
+  /- A point of the diagonal is in the loop's region: A and B on its boundary, the rest inside. -/
+  have diag {X : Point} (hX : OnFiniteLine X A B) : loopRegion (A :: (us ++ B :: vs)) X := by
+    rcases hX with rfl | rfl | hX
+    · exact Or.inl (Diag.corner_boundary hA)
+    · exact Or.inl (Diag.corner_boundary hB)
+    · exact Or.inr (hd X hX)
+  /- A point inside one piece and off the loop's boundary is inside the loop: off the diagonal,
+  and not inside the other piece. -/
+  have one {X : Point} (h₁ : loopInside (A :: (us ++ [B])) X ∨ loopInside (B :: (vs ++ [A])) X)
+      (hXb : ¬ loopBoundary (A :: (us ++ B :: vs)) X) (hXd : ¬ OnFiniteLine X A B) :
+      loopInside (A :: (us ++ B :: vs)) X := by
+    refine (Diag.inside_xor h hu hv hd hXb hXd).mpr ⟨fun hi hi' => ?_, fun hn => ?_⟩
+    · exact Diag.pieces_apart h hu hv hd hi hi'
+    · exact h₁.resolve_right hn
+  refine ⟨hP, hQ, fun X => ⟨?_, ?_⟩, fun X => ⟨?_, ?_⟩⟩
+  · /- The loop's region is in the pieces': its boundary is the two chains, and inside it, off
+    the diagonal, a point is inside one piece. -/
+    rintro (hX | hX)
+    · rcases (hb X).mp hX with hc | hc
+      · exact Or.inl (Or.inl ((hbP X).mpr (Or.inl hc)))
+      · exact Or.inr (Or.inl ((hbQ X).mpr (Or.inl hc)))
+    · by_cases hXd : OnFiniteLine X A B
+      · exact Or.inl (Or.inl ((hbP X).mpr (Or.inr hXd)))
+      · have e := (Diag.inside_xor h hu hv hd hX.1 hXd).mp hX
+        by_cases h₁ : loopInside (A :: (us ++ [B])) X
+        · exact Or.inl (Or.inr h₁)
+        · exact Or.inr (Or.inr (Classical.byContradiction fun h₂ => h₁ (e.mpr h₂)))
+  · /- The pieces' regions are in the loop's: a chain is on its boundary, the diagonal in its
+    region, and a point inside a piece is on its boundary or inside it. -/
+    have inside {X : Point} (hi : loopInside (A :: (us ++ [B])) X ∨
+        loopInside (B :: (vs ++ [A])) X) (hXd : ¬ OnFiniteLine X A B) :
+        loopRegion (A :: (us ++ B :: vs)) X := by
+      by_cases hXb : loopBoundary (A :: (us ++ B :: vs)) X
+      · exact Or.inl hXb
+      · exact Or.inr (one hi hXb hXd)
+    rintro ((hX | hX) | (hX | hX))
+    · rcases (hbP X).mp hX with hc | hc
+      · exact Or.inl ((hb X).mpr (Or.inl hc))
+      · exact diag hc
+    · exact inside (Or.inl hX) fun hc => hX.1 ((hbP X).mpr (Or.inr hc))
+    · rcases (hbQ X).mp hX with hc | hc
+      · exact Or.inl ((hb X).mpr (Or.inr hc))
+      · exact diag (LoopFacts.onFiniteLine_comm.mp hc)
+    · exact inside (Or.inr hX) fun hc =>
+        hX.1 ((hbQ X).mpr (Or.inr (LoopFacts.onFiniteLine_comm.mp hc)))
+  · /- In both regions means on the diagonal: two chains meet only at A and B (`chains_meet`),
+    each chain but A and B is outside the other piece, and no point is inside both. -/
+    have on_ends {Y : Point} (e : Y = A ∨ Y = B) : OnFiniteLine Y A B := by
+      rcases e with e | e
+      · exact Or.inl e
+      · exact Or.inr (Or.inl e)
+    rintro ⟨hX₁ | hX₁, hX₂ | hX₂⟩
+    · rcases (hbP X).mp hX₁ with ⟨s, hs, hXs⟩ | hc
+      · rcases (hbQ X).mp hX₂ with ⟨t, ht, hXt⟩ | hc
+        · exact on_ends (Diag.chains_meet h hs ht hXs hXt)
+        · exact LoopFacts.onFiniteLine_comm.mp hc
+      · exact hc
+    · rcases (hbP X).mp hX₁ with hc | hc
+      · by_cases hXA : X = A
+        · exact Or.inl hXA
+        by_cases hXB : X = B
+        · exact Or.inr (Or.inl hXB)
+        exact absurd hX₂ (ho₁ X hc hXA hXB)
+      · exact hc
+    · rcases (hbQ X).mp hX₂ with hc | hc
+      · by_cases hXA : X = A
+        · exact Or.inl hXA
+        by_cases hXB : X = B
+        · exact Or.inr (Or.inl hXB)
+        exact absurd hX₁ (ho₂ X hc hXA hXB)
+      · exact LoopFacts.onFiniteLine_comm.mp hc
+    · exact (Diag.pieces_apart h hu hv hd hX₁ hX₂).elim
+  · /- The diagonal is a side of each piece. -/
+    intro hX
+    exact ⟨Or.inl ((hbP X).mpr (Or.inr hX)),
+      Or.inl ((hbQ X).mpr (Or.inr (LoopFacts.onFiniteLine_comm.mp hX)))⟩
 
 /-- A simple outline admits a division. The arrangement route also supplies
 this conclusion; the optional diagonal route proves it by splitting the outline. -/
 theorem simple_triangulation {ps : List Point} (h : SimpleLoop ps) :
     ∃ R : Apart, Divides (loopRegion ps) R := by
-  sorry
+  /- The arrangement route (ledger D9), not the diagonal route: the one-contour outline of
+  `ps` (`singleOutline`, whose compatibility is vacuous) has the loop's region
+  (`single_region`). A convex cell holds it strictly inside (`outline_enclosure`); the side
+  lines (`outline_side_lines`) cut the cell into cells with disjoint insides
+  (`convex_arrangement`); those with a point inside the outline make up its region exactly
+  (`outline_cells_cover`), and their fans divide it (`DivisionFacts.cells_division`). -/
+  let F := singleOutline ps h
+  obtain ⟨P, hP⟩ := outline_enclosure F
+  obtain ⟨ls, hls⟩ := outline_side_lines F
+  have hs : ∀ qs ∈ F.loops, ∀ s ∈ sides qs, ∃ L ∈ ls, OnLine s.1 L ∧ OnLine s.2 L := by
+    intro qs hqs s hs
+    obtain ⟨L, h₁, h₂⟩ := collinear_of_two s.1 s.2
+    exact ⟨L, (hls L).mpr ⟨qs, hqs, s, hs, h₁, h₂⟩, h₁, h₂⟩
+  obtain ⟨qs, -, ha, hc, hl⟩ := convex_arrangement P ls
+  obtain ⟨rs, hne, hsub, -, hcov⟩ := outline_cells_cover F P hP ls hs qs ha hc hl
+  obtain ⟨R, -, hR⟩ := DivisionFacts.cells_division rs hne (List.Pairwise.sublist hsub ha)
+  exact ⟨R, fun X => (hR X).trans ((hcov X).symm.trans (single_region ps h X))⟩
 
 end Elements.Figures
