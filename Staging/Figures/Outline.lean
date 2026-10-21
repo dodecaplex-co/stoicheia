@@ -2,6 +2,7 @@ import Staging.Figures.Loops
 import Staging.Figures.LoopFacts
 import Staging.Figures.Parity
 import Staging.Figures.OutlineFacts
+import Staging.Figures.OutlineBound
 import Elements.Figure.Sides
 import Elements.Figure.Angles
 
@@ -199,7 +200,7 @@ theorem outline_bounded (F : Outline) :
       ∀ X : Point, F.region X → InsideTriangle X A B C := by
   /- The corners lie on one side of a straight line, so within an angle at a point beyond it,
   and so within a triangle cut off from that angle, by Postulate 5, with an angle copied by
-  superposition (`OutlineFacts.enclosing_triangle`). A triangle holding every corner holds the
+  I.23 (`OutlineFacts.enclosing_triangle`). A triangle holding every corner holds the
   whole region (`OutlineFacts.bounded_of_enclosure`). -/
   obtain ⟨A, B, C, h, hin⟩ := OutlineFacts.enclosing_triangle F.loops.flatten
   exact ⟨A, B, C, h, OutlineFacts.bounded_of_enclosure F fun ps hps V hV =>
