@@ -477,14 +477,19 @@ stand after a string, a raw string or a character literal holding `/-`, `-/`, `]
 and one in an interpolated string's hole, and a string whose braces Lean could read as
 code is planted too. The source scan names each finding's file and line, except for
 symbolic links to files or directories in the scanned trees and root files, which are
-refused by their paths and never followed, a link at `model/.lake` among them. A
-complete book's missing figure or mishnah has no planted break yet. The tests also check
+refused by their paths and never followed, a link at `model/.lake` among them. I.1's
+figure, idea figure and mishnah are each removed in turn, and the fidelity check names
+the one missing, since Book I is complete. Past the scan, a copy of I.1 outside the tree,
+with `set_option debug.skipKernelTC true` and a `run_cmd` that adds `True.intro` as a
+proof of `False`, is compiled over I.1's `.olean`, and leanchecker's replay (section 9)
+must refuse that declaration by name. The tests also check
 that generator calls first on their line are allowed in `model/Check.lean` and
 `model/Check/`, that an axiom in a `.lake` folder of `model/Model/` or `model/Check/` is
 caught while one in `model/.lake` is not read, that a link named `.lake`, to a
 directory, a file or nothing, is refused in `model/`, `model/Model/` and `model/Check/`,
 and that the unplanted tree passes. They plant source files in place, the `.lake` links
-in small trees of their own, and copy only `facts.json`, never `model/.lake`.
+in small trees of their own, and copy only `facts.json` and that one copy of I.1, never
+`model/.lake`.
 
 The first two policies hold in `Staging/` (section 6), `Audit/` and `model/` as well,
 with the model's Check allowance above. Nothing there reaches the certificate, so the
