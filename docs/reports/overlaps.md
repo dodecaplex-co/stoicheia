@@ -37,7 +37,7 @@ proof uses.
 | Former overlap | Why it is retired |
 |---|---|
 | I.7 and Circle 4 (`not_same_side_of_circles_meet`) | I.7, Definition I.15 and `circle_eq`, after I.7 in `Elements/BookI/Prop07.lean`. `Audit.I_7` now reaches I.7 through its own corollary, so it is circular as an independent proof of I.7. |
-| I.13's right-angle case and Diagram-angle 3 (`adjacent_eq_of_right`) | I.13 and Common Notion 3, after I.13 in `Elements/BookI/Prop13.lean`. The later proofs now use that theorem: [17 proofs, 16 calling it themselves](#i13s-rule-in-later-proofs). |
+| I.13's right-angle case and Diagram-angle 3 (`adjacent_eq_of_right`) | I.13 and Common Notion 3, after I.13 in `Elements/BookI/Prop13.lean`. The later proofs now use that theorem: [16 proofs, 15 calling it themselves](#i13s-rule-in-later-proofs). |
 | III.1's centre uniqueness and Generalities 2 (`centre_unique`) | The foundations, in `Elements/Figure/Circles.lean`: two supposed centres bisect the same straight line through the circle, and equal doubles have equal halves. III.1 Por. still calls the theorem, but its axiom closure is now the same as III.1's. |
 | III.2 and Circle 2 (`inside_of_between`) | Circle 3, in `Elements/Figure/Circles.lean`. The remaining axiom overlap is the Circle 3 row above. |
 | I.2, I.3 and I.23 and existential superposition | The restricted rule exports only an equality about the given figure. The three former audit lemmas returned placed corners, which no exported formula can name, and have been removed. |
@@ -56,34 +56,35 @@ inequalities; this inherited dependency does not restore the construction shortc
 
 ### I.13's rule in later proofs
 
-Recounted on 21 October 2026, after II.14 came to prove its right angle in place,
-across all 122 certificate entries: the theorem occurs in 17 proofs without passing
-through another certified entry. Of these, 16 call it in their own declarations or
-their proposition's helpers.
+Recounted on 21 October 2026, after II.5 and II.14 came to prove their right angles in
+place, across all 122 certificate entries: the theorem occurs in 16 proofs without
+passing through another certified entry. Of these, 15 call it in their own declarations
+or their proposition's helpers.
 
-Sixteen of the 17 proofs call Diagram-angle 3 (`adjacent_eq_of_right`) themselves:
-II.1 and its companion `BookII.Prop1.two`, II.3, II.4, II.5, II.9, II.11, III.3, III.10,
+Fifteen of the 16 proofs call Diagram-angle 3 (`adjacent_eq_of_right`) themselves:
+II.1 and its companion `BookII.Prop1.two`, II.3, II.4, II.9, II.11, III.3, III.10,
 III.15, III.16, III.17 and III.25 in their own Lean; III.9 in its helper
 `BookIII.Prop9.apart`; and III.1 and its porism in III.1's helper
 `BookIII.Prop1.perpendicular`, which shows that at a point of a straight line only one
 straight line is at right angles to it. III.19 reaches the rule only through
-`BookIII.Prop1.perpendicular`, which III.16 uses as well as calling the rule itself. II.14
-and its companion `BookII.Prop14.rectangle` no longer call it: they prove the right angle
-HEG by I.13 and Common Notion 3 in their own Lean, and reach the rule only through II.5,
-which they cite. Thirty-six more entries (25 propositions, III.16's porism and ten
-companions) rest on it through these 17. I.13 does not rest on it. The rule gives the
-right angles Euclid reads off his figure, as for the rectangles of II.1, where his text
-says nothing of them.
+`BookIII.Prop1.perpendicular`, which III.16 uses as well as calling the rule itself. II.5
+no longer calls it: it proves the right angle HDA by I.13 and Common Notion 3 in its own
+Lean. Nor do II.14 and its companion `BookII.Prop14.rectangle`, which prove the right
+angle HEG in the same way and cite II.5; so neither they nor II.14's other five
+companions rest on the rule at all. Twenty-nine more entries (24 propositions, III.16's
+porism and four companions) rest on it through these 16. I.13 does not rest on it. The
+rule gives the right angles Euclid reads off his figure, as for the rectangles of II.1,
+where his text says nothing of them.
 
-The full dependency closure contains the theorem in 53 entries: 40 propositions,
-two porisms and eleven companions. The 36 additional entries above reach it only
+The full dependency closure contains the theorem in 45 entries: 38 propositions,
+two porisms and five companions. The 29 additional entries above reach it only
 through entries they cite. These are uses of a proved rule, not axiom overlaps.
 
 The recount walks Lean's elaborated declarations using the same type, value and
-constructor references as `Certificate/Facts.lean`. For the 17, it stops at another
-certificate entry or a Common Notion; for the 16, it also stops at a shared lemma
+constructor references as `Certificate/Facts.lean`. For the 16, it stops at another
+certificate entry or a Common Notion; for the 15, it also stops at a shared lemma
 outside the proposition's namespace, while following Lean's auxiliary declarations.
-For the 53, it follows every project declaration. Each walk counts an entry once
+For the 45, it follows every project declaration. Each walk counts an entry once
 when it reaches `Tacit.adjacent_eq_of_right`, before following that theorem's proof.
 Searching the merged Lean sources for the rule's name confirms the calls listed
 above. The retired name is absent from every axiom list; those lists alone cannot

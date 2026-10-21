@@ -12536,11 +12536,7 @@
     {"name": "Square.eq_sq",
      "line": 142,
      "file": "Elements/BookII/Rectangles.lean",
-     "brings_in": ["I.4", "I.34"]},
-    {"name": "Tacit.adjacent_eq_of_right",
-     "line": 189,
-     "file": "Elements/BookI/Prop13.lean",
-     "brings_in": ["I.13"]}],
+     "brings_in": ["I.4", "I.34"]}],
    "ref": "II.5",
    "own_axioms":
    ["Postulate1",

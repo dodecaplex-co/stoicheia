@@ -3870,7 +3870,7 @@ findings:
   `scripts/check_fidelity.py`,
   `scripts/check_model_kernel.py`.
 
-- **II.14 proves its right angle in place
+- **II.14 and II.5 prove their right angles in place
   ([#168](https://github.com/jackChallis/stoicheia/issues/168)).** The owner ruled on #168
   on 21 October 2026: "**remove the uses first.** III.1, III.2, II.14 and III.1 Por. are
   to be proved without the eight retired rules (today III.1, III.2 and II.14 use
@@ -3885,12 +3885,20 @@ findings:
   unchanged. The record's passage at "But the squares on HE, EG are equal to the square
   on GH" now names `BookI.Prop13` and says what the Lean does; the interim restricted
   disclosure (#116) is unchanged, and the record waits for a reader's stamp. A walk of
-  every constant beneath II.14 and its six companions, before and after, finds that II.14's
-  own file no longer names any of the eight, and that one remains beneath it:
+  every constant beneath II.14 and its six companions then found that II.14's own file no
+  longer named any of the eight, and that one remained beneath it:
   `Tacit.adjacent_eq_of_right`, through II.5 (`BookII.Prop5`), which II.14 cites and which
-  takes its right angle HDA from the rule. A pin on II.14's whole closure therefore needs
-  II.5's step proved in place as well. The census in the
-  [overlap catalogue](../reports/overlaps.md#i13s-rule-in-later-proofs) is recounted: 17
-  proofs reach the rule without passing through another entry, 16 of them calling it
-  themselves, and the full closure is still 53 entries. The pins on #168 come later, once
-  III.1, III.2 and III.1 Por. are proved without the eight too.
+  took its right angle HDA, beside the square's right angle BDH, from the rule. II.5 now
+  proves it in place in [`Elements/BookII/Prop05.lean`](../../Elements/BookII/Prop05.lean)
+  in the same way: DH stands on the straight line AB, so the angles BDH, HDA together make
+  two right angles by I.13 (`BookI.Prop13`), and taking the square's right angle BDH from
+  each leaves HDA right by Common Notion 3. Again no helper is added, and II.5's statement,
+  its `--` lines and every other step are unchanged; the record's passage at "But AH is
+  the rectangle AD, DB" says what the Lean now does, and waits for a reader's stamp. The
+  walk, run again beneath II.14, its six companions and II.5, now finds none of the eight;
+  run as a control beneath II.4 and III.1, it still finds the rule there. The census in the
+  [overlap catalogue](../reports/overlaps.md#i13s-rule-in-later-proofs) is recounted: 16
+  proofs reach the rule without passing through another entry, 15 of them calling it
+  themselves, and the full closure is 45 entries (it was 53: II.5, II.14 and II.14's six
+  companions have left it). The pins on #168 come later, once III.1, III.2 and III.1 Por.
+  are proved without the eight too.
