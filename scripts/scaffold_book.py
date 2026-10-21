@@ -186,11 +186,11 @@ BOOK_II = {
 
 
 # The statements of Book III. A circle takes Heath's letters (`ABC` for the circle ABC).
-# `Tacit.exists_centre` supplies a centre for every circle. The current III.1 statement
-# still takes `∃ G, Centre G ABC` explicitly and proves that its constructed point is the
-# centre. Elsewhere, where the setting-out names a centre or speaks of a straight line
-# through it, the centre is a hypothesis in Heath's letter. "Equal circles" is
-# `EqualCircles`; a straight line touching a circle is `Touches`; circles
+# Our circles carry a centre only when a hypothesis gives one: where the setting-out
+# names the centre, or speaks of a straight line through it, the centre is a hypothesis
+# in Heath's letter; otherwise the circle comes with `∃ O, Centre O α` (in Heath's letter
+# for the centre where he has one), and the proof takes the centre by III.1. "Equal
+# circles" is `EqualCircles`; a straight line touching a circle is `Touches`; circles
 # touching one another are `TouchesInternally`, `TouchesExternally` or `CirclesTouch`.
 # Contact within includes a point of the inner circle within the outer and none outside;
 # contact without has no point within both. `CirclesCut` means meeting at two points with

@@ -41,7 +41,7 @@ meaning = "An angle contained by a straight line and a circumference (Definition
 
 [tag.centre-given]
 kind = "representation"
-meaning = "The statement explicitly supplies the circle's centre, named or as `∃ G, Centre G α`, although `Tacit.exists_centre` now gives every circle a centre (brief 0008)."
+meaning = "The circle comes with a centre, named or as `∃ G, Centre G α`, because a circle in Lean has a centre only when a hypothesis or Postulate 3 gives it one (brief 0004)."
 
 [tag.touching-whole-circles]
 kind = "representation"
