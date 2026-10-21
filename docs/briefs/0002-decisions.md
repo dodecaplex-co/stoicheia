@@ -3344,6 +3344,78 @@ findings:
   independent review judged that it is not a weakening of keep_apart.
 
 ## 21 October 2026
+
+- **The tests nothing ran now run in CI (#157).** Four tests on main guarded real
+  behaviour and passed, but neither CI nor safe_push's check sequence ran them. Three of
+  them need no Lean, and become steps of CI's `check` job, entries in safe_push's
+  `CHECKS` and lines of WORKFLOW section 8's command block, in the same order, after
+  `tests/test_release_gate.py` and the Jev client's model check (`tests/test_jev_models.py`,
+  the entry below): `python3 scripts/audit/jev.py self-test`, then
+  `python3 -I tests/test_screen.py`, then `python3 -I tests/test_acceptance_limits.py`.
+  `Units.test_check_sequence_matches_workflow_and_ci`, in `scripts/test_safe_push.py`,
+  still compares the three lists exactly. The limitations' cases could have joined their
+  sibling, `tests/test_check_acceptance.py`, in the `acceptance` job; they go in the
+  `check` job instead, so that they run on every push as well as on every pull request,
+  and in each pre-flight, for about three seconds. `tests/test_screen.py` no longer says
+  that nothing runs it. The entries above that say CI does not run these tests yet (of
+  19 October, on the screen's cases, and of 20 October, on the Jev client's self-test and
+  on the limitations) stay as the records of their day.
+  `scripts/test_safe_push.py`, the tests of the gate every pull request lands through,
+  runs in a new CI job, `safe-push-tests`, on each pull request that changes `scripts/`,
+  `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`, `.github/` (the pull
+  request template among them) or `docs/WORKFLOW.md`. The issue named `scripts/`,
+  `.github/` and the template; `tests/` and `docs/WORKFLOW.md` join them because the tests
+  copy files of `tests/` into the harness under test, plant changes in the model's
+  harnesses, and compare WORKFLOW's section 8 with `CHECKS` and the `check` job, so a
+  change to either can fail them. `Certificate/`, `review/SCHEMA.md` and
+  `review/terms.toml` join them since the second review, as the rest of safe_push's
+  `CHECK_INPUTS`, which the tests guard; `Certificate/axioms.lock` and
+  `Certificate/FIELDS.md` are among what they read. Those paths are still not all the
+  tests read, and the job's comment, its path step's name and WORKFLOW section 8 had said
+  they were. The tests also read content (`heath/I/01.md`, this page,
+  `docs/briefs/book-I.md`, `docs/program.toml`, `docs/reading.md` and `facts.json`) and
+  run the commit's own `check_fidelity.py` and `render.py` over the whole tree, so a pull
+  request that changes only content can still break them while the job passes at once on
+  it, and the next run of the job shows it; the three now say so. The job checks out the
+  whole history and decides with `git diff --name-only` from the pull request's base to
+  its head, with three dots, so that only the pull request's own changes count; a
+  comparison that fails fails the job, and so, since the second review, does an empty
+  base or head, which the step's first line refuses:
+  `: "${BASE_SHA:?}" "${HEAD_SHA:?}"`. The job's `if`, on the `pull_request` event, already
+  kept both from being empty. The job asks for `contents: read` and no other permission,
+  and its checkout sets `persist-credentials: false`, so that no token sits in
+  `.git/config` while the pull request's code and a package from PyPI run. The model of
+  the workflow in `scripts/test_safe_push.py` reads the `check` job alone, and `Units`
+  passes with both keys. On any other pull request the job passes at once and says why,
+  and on a push it is skipped, as the `acceptance` job is. The tests need no Lean and no
+  network: `FullChecks`, which needs Lean, is skipped without `STOICHEIA_SLOW_TESTS=1`, as
+  the file has always skipped it. The job is not in `CHECKS`, every entry of which runs in
+  each pre-flight, nor among the checks main's ruleset requires, which are the owner's to
+  set; the merge gate refuses while it fails, as for any failing check, and a skipped run
+  holds nothing back. Two new cases of `Units.test_judge_checks` pin both: beside the five
+  required checks passing, a failing run of `safe-push-tests` gives "failure", and a
+  skipped one "success".
+  `tests/test_jev_questions.py`, the Jev question generator's tests (#185 notes that they
+  wait on #157), stays out. One of its cases checks out `39ae65c2`, a commit of
+  19 October, which the `check` job's checkout, one commit deep, does not hold; and that
+  job's setup, which `scripts/test_safe_push.py` holds to the checkout, Python's version
+  and the elan install, cannot ask for more history without a change to that model, a
+  change of its own. That is why the file stays out. The first round said that the rest of
+  the file passed in a clone one commit deep. That was true at `87b27ac3`, where all 36
+  tests passed in a full clone, and stopped being true when this branch merged main at
+  `dd908004`: since main's superposition rule landed (#191), two more cases fail at any
+  depth, on main itself, the HEAD subtest of
+  `test_commentary_controls_at_evidence_commit_and_head` and
+  `test_full_generation_has_ten_controls_and_exact_commentary_changes`, each with
+  "Elements.Superposition.Lit is not imported". #185's branch,
+  `tooling/jev-questions-paths`, fixes the generator. So two cases fail in a full clone,
+  and a third, at `39ae65c2`, in a clone one commit deep. The file can join once #185
+  lands and a job with the whole history runs it. The issue's last item, a green run in
+  CI on main for each of the four, linked from the issue, waits for the landing.
+  The protected files changed are `.github/workflows/ci.yml`, `scripts/safe_push.py`,
+  `scripts/test_safe_push.py` and `tests/test_screen.py`; [WORKFLOW](../WORKFLOW.md),
+  sections 8 and 10, records the steps and the job. No check is weakened.
+
 - **The Jev client keeps no answer without its model's identifier
   ([#181](https://github.com/jackChallis/stoicheia/issues/181)).** `run` in
   [`scripts/audit/jev.py`](../../scripts/audit/jev.py) wrote a reply with no `model` as a
@@ -3666,7 +3738,6 @@ findings:
   pages that print the clause, I.15, III.1 and III.16, each carry a porism. The fourth
   item of #163, III.25's page naming `Prop25.complete` a companion, waits for the core's
   move.
-
 - **The merge gate requires the ruleset's five checks (#142).** On 20 October the owner
   made `formal-model` and `acceptance` required status checks in the ruleset on main,
   beside `check`, `model` and `negative`, as the entry of that date on content kept fresh
@@ -3769,6 +3840,140 @@ findings:
   name do not change, no record changes, and no page changes. It is a check input, so it
   lands in a pull request of its own, before train C6a. Protected file changed:
   `review/terms.toml`.
+
+- **The formal model's compiled proofs replayed by Lean's kernel, apart from the build
+  ([#121](https://github.com/jackChallis/stoicheia/issues/121)).** The other half of
+  #121, which the source scan's entry of 19 October left open: after `lake build`, CI's
+  `formal-model` job runs [`scripts/check_model_kernel.py`](../../scripts/check_model_kernel.py)
+  (new), in which leanchecker, from the pinned toolchain, replays through Lean's kernel
+  every declaration of every compiled module of the model's own two libraries, `Model`
+  and `Check`, private declarations included. The script lists the modules from the
+  files, the two roots and every `.lean` file under `model/Model/` and `model/Check/`,
+  walks the package's build folder (`model/.lake/build/lib/lean`) for every compiled
+  module, and fails unless leanchecker reports replaying exactly those listed, so a new
+  module is never missed; a source with no compiled file, a module compiled outside the
+  two libraries (from a new root or a new library in `model/lakefile.toml`), a build not
+  up to date with its sources and a compiled module whose source is gone each fail it, and
+  a rejection names the module and the declaration leanchecker names. The freshness check
+  gives `lake build --no-build` every compiled source as an explicit target, including a
+  module its library root does not import, so an old compiled file cannot hide a later edit
+  to that source. And what is replayed is the package's own compiled files, not a copy of
+  them: each module root lies in one folder of Lean's search path, since Lean loads a
+  module from the first folder that holds its root. So before either replay the script
+  reads the search path that leanchecker gets through `lake env`, and a root (a folder, or
+  an `.olean` file, at the top of one of its folders) found in two folders, its name
+  compared without case as macOS's file system compares it, fails the check, naming both: a
+  copy of `Check` in the build folder of a package that the model requires, earlier on the
+  path (the repository root's `.lake/build/lib/lean`, which Git ignores), would otherwise
+  be replayed in place of the package's own.
+  `Check/Write.lean` alone is not replayed, by name: it writes the generated files
+  whenever Lean elaborates it, so `lake build` never compiles it, and the check fails if
+  that file goes. It runs first as `scripts/check_kernel.py` runs leanchecker for
+  `Elements`, but without `--fresh`, so each module's imports are loaded from their
+  compiled files, not replayed. Then it runs with `--fresh` on `Check`, which never
+  imports Mathlib (`model/lakefile.toml`), and replays `Check`'s whole environment from
+  nothing: Lean's own library as `Check` loads it (`Init`, `Std` and `Lean`, through
+  `Check/Generator.lean`'s `import Lean`), the library's modules that `Check` imports, the
+  plain-Lean part of `Model`, and `Check`. The first replay is kept for `Check` as well,
+  rather than replaced: it accounts for every compiled module by name, and a module
+  compiled but not imported by `Check.lean` is one that `--fresh Check` would never load;
+  for `Check` it costs about half a minute. What that leaves: the declarations of Mathlib
+  and of the packages it requires are left to Mathlib's own checks, a daily job
+  (`.github/workflows/daily.yml` in Mathlib) that replays Mathlib and Batteries from
+  nothing with leanchecker and checks Mathlib with nanoda, on Mathlib's master branch
+  rather than the release pinned here. Of Lean's own library, everything that `Check`
+  loads is replayed here from nothing, on the pinned toolchain, all 1,227 of its `Lean`
+  modules among it: so the 435 of them that lie outside Mathlib's environment, which
+  Mathlib's daily job does not reach, are no longer a gap. All that `Model` loads lies
+  within it but five of `Lake`'s modules, which `Model` loads through Mathlib
+  (`Lake.Build.Trace`, `Lake.Config.Glob`, `Lake.Util.Date`, `Lake.Util.String`,
+  `Lake.Util.Version`); those lie within Mathlib's environment, which Mathlib's daily job
+  replays, on Mathlib's toolchain rather than the one pinned here. `Init`, and the
+  library's declarations that `Check` imports, are replayed from nothing by
+  `check_kernel.py` as well, in the `check` job, from that job's own build. leanchecker runs
+  the same kernel as `lake build`, so the replay catches a declaration that reached a
+  compiled file without the kernel's check, not a fault in the kernel, and it replays any
+  axiom it meets: which axioms the model's proofs rest on stays `model/Model/Audit.lean`'s
+  check. The planted fault: its `--self-test`, which runs first in the job and needs no
+  Mathlib, builds with `lake build`, in a temporary directory outside the repository,
+  small packages of the model's shape that import only Lean, and adds a theorem of
+  `False`, proved by `True.intro`, from a `run_cmd` with the kernel's check switched off
+  (`debug.skipKernelTC`, under which `addDecl` calls `addDeclWithoutChecking`), once in a
+  `Check` file and once in a `Model` module. `lake build` accepts both; the check must
+  fail on each, naming the module and the declaration, and must pass the control, which
+  adds a true theorem the same way. Two more theorems of `False` are planted outside the
+  libraries' names, where leanchecker, given the two roots, would never look: in a second
+  root of `Model` (`roots = ["Model", "Helper"]`) and in a third library that `Check`
+  imports. The check must fail on each at its walk of the build folder, naming the module;
+  without the walk, both passed. Another theorem of `False` is planted in a package of its
+  own that `Check` requires and imports, as the model's `Check` requires the edition: the
+  walk and the first replay pass it, and the replay from nothing must fail on it, naming
+  the declaration; without that replay, the check passed it. A last theorem of `False` is
+  planted in a `Check` file after a copy of `Check`, compiled without it, is put in the
+  build folder of such a required package, earlier on the search path: both replays replay
+  the copy and pass it, and the check must fail before them, naming `Check` and both
+  folders; without the search path's check, the check passed it. A source never compiled
+  and a compiled module without its source are planted too. The control also compiles a
+  module that its library root does not import; after that source is edited without another
+  build, the check must reject it by name.
+  leanchecker runs on two threads, since each module it replays loads its imports'
+  environment afresh, Mathlib's for each module that imports it: unthrottled on sixteen
+  threads one run reached a 49 GB footprint, and on two it peaked near 2.6 GB and took
+  about a minute. The replay from nothing is one task, which more threads do not speed:
+  it took 95 seconds on two threads and 112 on four, with a resident peak of 1.5 GB, on a
+  machine busy with other builds; with it the whole script took 205 seconds and the
+  self-test 162, in a job that stops at 30 minutes. The script stops the replay from
+  nothing after 15 minutes and fails, asking whether `Check` now imports Mathlib, so that
+  the job ends with a named cause rather than at its limit. Every command runs in a process
+  group of its own; on interruption or termination the script stops that whole group and
+  waits for its command before temporary-directory cleanup, as it does on the replay's
+  timeout. The self-test times out a command, interrupts an untimed one and terminates
+  another, after each starts a descendant, and requires each descendant to stop.
+  Kim Morrison and Sebastian Ullrich wrote leanchecker, which began as Kim Morrison's
+  [lean4checker](https://github.com/leanprover/lean4checker) and now ships with Lean; we
+  are warmly grateful to them both. `safe_push` still leaves the `formal-model` job to CI
+  ([WORKFLOW](../WORKFLOW.md), section 8). The sentences that called the replay open, in
+  `scripts/check_fidelity.py`'s docstring and [FORMALIZATION](../FORMALIZATION.md),
+  section 7, now say what is true;
+  [model/README.md](../../model/README.md#the-ci-job), "The CI job", lists the step. The
+  protected files changed are:
+  `.github/workflows/ci.yml`,
+  `scripts/check_fidelity.py`,
+  `scripts/check_model_kernel.py`.
+
+- **Two guards gain their planted faults
+  ([#158](https://github.com/jackChallis/stoicheia/issues/158)).** The check that a
+  complete book has every figure and mishnah, and leanchecker's kernel replay, each said it
+  had no planted fault to show that it works. Each now has one, in the protected file
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py), as new items 19 and 20,
+  each a function of its own with one call. Item 19 removes I.1's `figures/I/01.svg`, then
+  `figures/I/01-idea.svg`, then `mishnah/I/01.md`, one at a time. Book I is complete, so
+  `check_fidelity.py` must fail each time with "I.1: … is missing", naming that file and
+  not the other two; each file is put back byte for byte in `finally`. Item 20 plants
+  `True.intro` as a proof of `False` in I.1's compiled module, the way the first
+  read-through named ([read-through 01](../reports/read-through-01.md)):
+  `set_option debug.skipKernelTC true` and a `run_cmd` that calls `addDecl`. The source
+  scan refuses both, so I.1 is compiled with them by `lake env lean -o`, over its own
+  `.olean`, from a copy in a temporary folder outside the tree, importing
+  `Lean.Elab.Command`, which defines the monad `run_cmd` runs in and brings `addDecl`
+  with it. Then
+  `leanchecker --fresh Elements`, the command `scripts/check_kernel.py` runs, must fail
+  with "while replaying declaration 'Elements.BookI.planted_ill_typed'" and the kernel's
+  type mismatch, and not with a file it cannot read or an invalid header. The build is
+  restored as item 15 restores it: the original bytes, a forced rebuild, and on success
+  the whole environment replayed; no file is left in the tree. Tried by hand first with
+  Lean 4.35: without the option, the kernel refuses the same plant when I.1 compiles, so
+  the proof is ill-typed and the option is what lets it past. With the missing-file check
+  commented out in a scratch copy of `check_fidelity.py`, item 19 reports each of the three
+  files not caught; with a leanchecker that checks nothing, item 20 reports the proof not
+  caught. Item 20 takes about a minute, restoration included. The protected regression
+  test [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) gains three
+  tests, without Lean: the three files return byte for byte whether the check names them,
+  misses them or is interrupted; the build returns when the restoration build fails or is
+  interrupted; and a replay that fails on a header, not on the proof, is not counted as
+  caught. Neither file pinned the list of plants or its count.
+  [FORMALIZATION](../FORMALIZATION.md), section 7, and the README's row for the negative
+  tests now describe both plants. No check is weakened.
 
 - **Which laws' proofs draw: computed, not set by hand (#150, question 4).** Of the two
   routes #150 offers, the coordinator takes route (b): the hand-set flag `Cited.drawsNothing` is retired,
