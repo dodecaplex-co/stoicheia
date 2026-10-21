@@ -17,6 +17,25 @@ at = "let EF be made equal to BE"
 kind = "helper"
 helper = "between_cut"
 note = "Euclid cuts off EF equal to BE and joins FC, then produces AC to G. After I.3 chooses F, `between_cut` proves that E lies between B and F; Postulates 1 and 2 make the join and the production."
+unused = ["FC"]
+
+[[passage]]
+at = "Therefore the base AB is equal to the base FC"
+kind = "carried"
+note = "The Lean proves that the base AB equals FC here, as Euclid states it; the argument goes on by the angles, and does not use it again."
+unused = ["hAB_FC"]
+
+[[passage]]
+at = "and the triangle ABE is equal to the triangle CFE"
+kind = "carried"
+note = "The Lean proves that the triangle ABE equals CFE here, as Euclid states it; the argument goes on by the angles, and does not use it again."
+unused = ["this"]
+
+[[passage]]
+at = "and the remaining angles are equal to the remaining angles respectively"
+kind = "carried"
+note = "The Lean states one pair here, the angles EBA and EFC; the next step takes the other pair, BAE and ECF, from I.4 directly, and EBA and EFC are not used again."
+unused = ["this"]
 
 [[passage]]
 at = "But the angle ECD is greater than the angle ECF"

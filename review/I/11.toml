@@ -22,6 +22,7 @@ note = "Euclid cuts off CE equal to CD, taking for granted a straight line beyon
 at = "and let FC be joined;"
 kind = "carried"
 note = "The Lean joins FC by Postulate 1, as Euclid asks. The later proof compares lengths and angles named by the points, without using the joined line; FC is named here only to carry out this sentence."
+unused = ["FC"]
 
 [[passage]]
 at = "Therefore the straight line CF has been drawn at right angles"

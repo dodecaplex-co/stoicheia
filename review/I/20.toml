@@ -17,6 +17,7 @@ at = "let DA be made equal to CA, and let DC be joined"
 kind = "helper"
 helper = "between_cut"
 note = "Euclid makes DA equal to CA and takes for granted that D lies on BA produced beyond A. Heath gives no reference for the cut; the Lean uses I.3 (`Prop3`) to cut AD from AX, `between_cut` to place A between B and D, and Postulate 1 to join DC."
+unused = ["DC"]
 
 [[passage]]
 at = "therefore the angle BCD is greater than the angle ADC"

@@ -26,12 +26,19 @@ note = "Euclid assumes he can find F on BD near enough to B that AF remains less
 at = "and let the straight lines FC, GB be joined"
 kind = "carried"
 note = "The Lean joins FC and GB by Postulate 1, as Euclid asks. The later steps use lengths, angles, triangles and areas named by their points and do not use either joined line; the lines are named here only to carry out this sentence."
+unused = ["FC", "GB"]
 
 [[passage]]
 at = "and they contain a common angle"
 kind = "helper"
 helper = "OnRay.between_of_len_lt"
 note = "Euclid reads B between A and F and C between A and G from the figure, giving the triangles the same angle at A. The Lean uses `Tacit.ne_of_between` (System E, Between 1) and `Tacit.len_add_of_between` (System E, Diagram-segment 1), rules we assume, with `len_pos` and `CommonNotion5` to show AB is less than AF; after substituting AC for AB and AG for AF, `OnRay.of_between` and `OnRay.between_of_len_lt` put C between A and G, and `OnRay.of_beyond` with `angle_onRay_left` identifies the angles."
+
+[[passage]]
+at = "and the triangle AFC is equal to the triangle AGB"
+kind = "carried"
+note = "The Lean proves that the triangle AFC equals the triangle AGB here, as Euclid states it; the later steps use the base FC and the angles that I.4 gives, and do not use it again."
+unused = ["this"]
 
 [[passage]]
 at = "And, since the whole AF is equal to the whole AG"
@@ -43,6 +50,12 @@ note = "Euclid subtracts equal AB and AC from equal AF and AG. `Tacit.len_add_of
 at = "while the base BC is common to them"
 kind = "given"
 note = "BC is one straight line, the base of both triangles, so nothing is proved here; I.4, applied next, takes only the two sides and the angle between them."
+
+[[passage]]
+at = "therefore the triangle BFC is also equal to the triangle CGB"
+kind = "carried"
+note = "The Lean proves that the triangle BFC equals the triangle CGB here, as Euclid states it; the later steps use only the angles that I.4 gives, and do not use it again."
+unused = ["this"]
 
 [[passage]]
 at = "Accordingly, since the whole angle ABG was proved equal to the angle ACF"

@@ -19,6 +19,7 @@ at = "For, if not, let AF be drawn through A parallel to BE"
 kind = "helper"
 helper = "Prop30.meet"
 note = "Euclid draws AF parallel to BE and takes its meeting with CD at F from the figure. The Lean draws the parallel by I.31 (`Prop31.line`), proves the meeting by I.30 (`Prop30.meet`), and joins FE by Postulate 1."
+unused = ["FE"]
 
 [[passage]]
 at = "But the triangle ABC is equal to the triangle DCE"

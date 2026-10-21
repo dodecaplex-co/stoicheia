@@ -19,6 +19,24 @@ kind = "helper"
 helper = "Parallelogram.sameSideOf"
 note = "Euclid takes BC to run within the angles ABD and ACD. `Parallelogram.sameSideOf`, with the corners named in turn, locates C and B within those angles, and `angle_add_of_within` gives their parts before Common Notion 2 adds the equal angles."
 
+[[passage]]
+at = "the two sides AB, BC are equal to the two sides DC, CB respectively"
+kind = "carried"
+note = "The Lean states the two pairs of equal sides here, as Euclid does; I.4 is then given BA equal to CD and BC equal to CB directly, and the pair is not used again."
+unused = ["this"]
+
+[[passage]]
+at = "and the angle ABC is equal to the angle BCD"
+kind = "carried"
+note = "The Lean restates that the angle ABC equals BCD, as the first part proved it; I.4 cites the equality where it was first proved, and does not use the restatement."
+unused = ["this"]
+
+[[passage]]
+at = "therefore the base AC is also equal to DB"
+kind = "carried"
+note = "The Lean proves that the base AC equals DB here, as Euclid states it; this part of the proof is about the areas, and the equality is not used again."
+unused = ["hAC_DB'"]
+
 [review]
 stage = "full"
 commit = "e8b6113"

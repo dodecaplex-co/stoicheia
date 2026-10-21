@@ -42,6 +42,12 @@ kind = "helper"
 helper = "Tacit.len_add_of_between"
 note = "Euclid reads ED and DB together as EB because D lies between E and B. The Lean makes this replacement with `Tacit.len_add_of_between`, a rule we assume, not a proof (System E, Diagram-segment 1)."
 
+[[passage]]
+at = "But BA, AC were proved greater than BE, EC"
+kind = "carried"
+note = "The Lean restates here that BA, AC are greater than BE, EC, as Euclid recalls it; the next step cites the inequality where it was first proved, and does not use the restatement."
+unused = ["this"]
+
 [review]
 stage = "full"
 commit = "570e6fa"

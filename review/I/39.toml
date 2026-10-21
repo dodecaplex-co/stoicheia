@@ -21,6 +21,7 @@ at = "and let EC be joined"
 kind = "helper"
 helper = "Prop30.meet"
 note = "Euclid takes E where the parallel through A meets BD. The Lean proves that this meeting exists by I.30 (`Prop30.meet`), then joins EC by Postulate 1."
+unused = ["EC"]
 
 [[passage]]
 at = "But ABC is equal to DBC"

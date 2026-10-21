@@ -34,6 +34,12 @@ helper = "Prop47.within"
 note = "Euclid reads off his figure that C lies within the angle DBA and A within FBC; the Lean finds the reason in I.17 and I.13, with the squares standing outward."
 
 [[passage]]
+at = "therefore the base AD is equal to the base FC"
+kind = "carried"
+note = "The Lean proves that the base AD equals FC here, as Euclid states it; the argument goes on by the triangles ABD and FBC, and does not use it again."
+unused = ["hAD_FC"]
+
+[[passage]]
 at = "Similarly, if AE, BK be joined"
 kind = "grouped"
 note = "Euclid invokes the same argument for CL and the square HC. The Lean proves the half once over any letters and applies it at B and again at C."
