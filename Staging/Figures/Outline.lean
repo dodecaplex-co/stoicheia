@@ -1,5 +1,6 @@
 import Staging.Figures.Loops
 import Staging.Figures.LoopFacts
+import Staging.Figures.Parity
 import Elements.Figure.Sides
 import Elements.Figure.Angles
 
@@ -36,7 +37,10 @@ theorem crossing_parity_independent {ps : List Point} (h : SimpleLoop ps)
     {X Q R : Point} (hX : ¬ loopBoundary ps X)
     (hQ : GoodRay ps X Q) (hR : GoodRay ps X R) :
     crossingCount ps X Q % 2 = crossingCount ps X R % 2 := by
-  sorry
+  /- Each side crosses two rays not on one straight line together oddly exactly when its
+  ends disagree about the angle between them, and round the outline those ends pair off.
+  Rays on one straight line each compare with a third good ray off it. -/
+  exact Parity.parity_independent h hX hQ hR
 
 /-- Any good ray decides interior membership, once the point is off the boundary. -/
 theorem loop_inside_iff {ps : List Point} (h : SimpleLoop ps)
@@ -83,7 +87,26 @@ theorem loop_normalise {ps : List Point} (h : SimpleLoop ps) :
     ∃ qs : List Point, SimpleLoop qs ∧ ReducedLoop qs ∧
       (∀ X : Point, loopBoundary qs X ↔ loopBoundary ps X) ∧
       (∀ X : Point, loopRegion qs X ↔ loopRegion ps X) := by
-  sorry
+  /- By induction on the number of corners. A loop that is not reduced has a corner between
+  its neighbours (`Parity.straight_corner`); read from the corner before it, the loop loses
+  that corner and keeps its boundary and region (`Parity.remove_corner`). A corner that
+  turns back is never removed: simplicity puts the middle corner between the others. -/
+  obtain ⟨n, hn⟩ : ∃ n, ps.length = n := ⟨_, rfl⟩
+  induction n using Nat.strongRecOn generalizing ps with
+  | ind n ih =>
+    by_cases hr : ReducedLoop ps
+    · exact ⟨ps, h, hr, fun _ => Iff.rfl, fun _ => Iff.rfl⟩
+    obtain ⟨us, vs, a, b, c, rest, rfl, hrot, hrest, habc⟩ := Parity.straight_corner h hr
+    obtain ⟨hs₁, hb₁, hg₁⟩ := loop_rotate us vs h
+    rw [hrot] at hs₁ hb₁ hg₁
+    obtain ⟨hs₂, hb₂, hg₂⟩ := Parity.remove_corner hs₁ hrest habc
+    have hlen : (a :: c :: rest).length < n := by
+      have e := congrArg List.length hrot
+      simp only [List.length_append, List.length_cons] at e hn ⊢
+      omega
+    obtain ⟨qs, hq, hqr, hqb, hqg⟩ := ih _ hlen hs₂ rfl
+    exact ⟨qs, hq, hqr, fun X => (hqb X).trans ((hb₂ X).trans (hb₁ X)),
+      fun X => (hqg X).trans ((hg₂ X).trans (hg₁ X))⟩
 
 /-- A triangle's outline encloses exactly its existing closed triangle. -/
 theorem triangle_region {A B C : Point} (h : Triangle A B C) :
