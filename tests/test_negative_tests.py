@@ -663,6 +663,16 @@ class BookZeroImportTests(unittest.TestCase):
                                  [f"{self.refused(1)}, and `Elements.Foundations.Cycle` brings "
                                   f"one in: {importer} imports {brought}"])
 
+    def test_a_symlinked_module_directory_is_refused_without_reading_its_target(self):
+        target = self.root / "Outside"
+        target.mkdir()
+        (target / "Bridge.lean").write_text("import Elements.BookI.Prop01\n")
+        (self.root / "Elements/Alias").symlink_to(target, target_is_directory=True)
+        self.assertEqual(
+            self.findings("import Elements.Alias.Bridge\n"),
+            ["Elements/Alias: a symbolic link, which the source scan does not follow; "
+             "use a regular file or directory (docs/FORMALIZATION.md, section 7)"])
+
     def test_a_cycle_ends_and_files_outside_book_zero_may_import_propositions(self):
         (self.root / "Elements/Foundations/Words.lean").write_text(
             "import Elements.Figure.Lines\n")

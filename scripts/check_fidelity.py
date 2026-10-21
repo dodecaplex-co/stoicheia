@@ -440,16 +440,26 @@ def module_file(module: str) -> Path:
     return ROOT.joinpath(*folders, name + ".lean")
 
 
+def has_symlink(path: Path) -> bool:
+    """Whether a component of `path` beneath `ROOT` is a symbolic link."""
+    part = ROOT
+    for name in path.relative_to(ROOT).parts:
+        part /= name
+        if part.is_symlink():
+            return True
+    return False
+
+
 def brought_in(module: str, read: dict) -> tuple[str, str | None] | None:
     """The first proposition that `module` imports through the edition's own Lean files,
     read breadth first, as (the file that imports it, the proposition), or (that file, None)
     for an import there that the scan cannot read for certain; None if neither. Lean's own
-    modules have no file here, and a symbolic link is refused by its own path. `read` keeps
-    each file's imports, so that each file is read once."""
+    modules have no file here, and a symbolic link anywhere in a module's path is refused
+    by its own path. `read` keeps each file's imports, so that each file is read once."""
     queue, seen = [module], {module}
     while queue:
         path = module_file(queue.pop(0))
-        if path.is_symlink() or not path.is_file():
+        if has_symlink(path) or not path.is_file():
             continue
         if path not in read:
             with path.open(encoding="utf-8", newline="") as source:
