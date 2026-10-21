@@ -201,7 +201,16 @@ class Evidence:
 
 # A small source lexer, not a Lean elaborator. Masking preserves offsets and line breaks.
 # Strings, nested comments and balanced binders cannot terminate a signature.
-IDENT = r"[^\W\d][\w'₀-₉]*"
+# Lean 4.35's name characters (Init/Meta/Defs.lean, isIdFirst and isIdRest): a name begins
+# with an ASCII letter, `_` or a letter-like character, and goes on with these, ASCII digits,
+# `'`, `!`, `?` and subscripts. The ranges are written as `re` escapes, in Lean's hex values.
+LETTER_LIKE = ('\\u03b1-\\u03ba\\u03bc-\\u03c9\\u0391-\\u039f\\u03a1\\u03a2\\u03a4-\\u03a9'
+               '\\u03ca-\\u03fb\\u1f00-\\u1ffe\\u2100-\\u214f\\U0001d49c-\\U0001d59f'
+               '\\u00c0-\\u00d6\\u00d8-\\u00f6\\u00f8-\\u00ff\\u0100-\\u017f')
+SUBSCRIPTS = '\\u2080-\\u2089\\u2090-\\u209c\\u1d62-\\u1d6a\\u2c7c'
+NAME_REST = 'A-Za-z_' + LETTER_LIKE + "0-9'!?" + SUBSCRIPTS
+IDENT = '[A-Za-z_' + LETTER_LIKE + '][' + NAME_REST + ']*'
+LEAN_NAME = re.compile(IDENT)
 NAME = IDENT + r'(?:\.' + IDENT + r')*'
 TOKEN = re.compile(NAME)
 MODULE_COMPONENT = r'(?:' + IDENT + r'|«[^»\n]+»)'
@@ -224,15 +233,6 @@ QUOTED_NAME = re.compile(r'«[^»\n]*»')
 # predicate can give any syntax a meaning.
 SYNTAX_WORD = re.compile(r"(?<![\w'.«])(?:notation|infixl|infixr|infix|prefix|postfix"
                          r"|(macro_rules|macro|elab_rules|elab|binder_predicate))(?![\w'»])")
-# Lean 4.35's name characters (Init/Meta/Defs.lean, isIdFirst and isIdRest): a name begins
-# with an ASCII letter, `_` or a letter-like character, and goes on with these, ASCII digits,
-# `'`, `!`, `?` and subscripts. The ranges are written as `re` escapes, in Lean's hex values.
-LETTER_LIKE = ('\\u03b1-\\u03ba\\u03bc-\\u03c9\\u0391-\\u039f\\u03a1\\u03a2\\u03a4-\\u03a9'
-               '\\u03ca-\\u03fb\\u1f00-\\u1ffe\\u2100-\\u214f\\U0001d49c-\\U0001d59f'
-               '\\u00c0-\\u00d6\\u00d8-\\u00f6\\u00f8-\\u00ff\\u0100-\\u017f')
-SUBSCRIPTS = '\\u2080-\\u2089\\u2090-\\u209c\\u1d62-\\u1d6a\\u2c7c'
-NAME_REST = 'A-Za-z_' + LETTER_LIKE + "0-9'!?" + SUBSCRIPTS
-LEAN_NAME = re.compile('[A-Za-z_' + LETTER_LIKE + '][' + NAME_REST + ']*')
 # A character of a name, to Lean or to the patterns' \w.
 NAME_CHARACTER = re.compile(r'[\w' + NAME_REST + ']')
 # The whitespace Lean reads between tokens (Lean/Parser/Basic.lean, `whitespace`, which refuses
@@ -826,7 +826,8 @@ class Calls:
             if d.kind == 'inductive':
                 found = [m.group(1) for m in self.constructors(index.clean[d.path], d)]
             elif d.kind == 'structure':
-                found = re.findall(r'^  (' + IDENT + r')\b', index.clean[d.path][d.name_end:d.end], re.M)
+                found = re.findall(r'^  (' + IDENT + r')(?![' + NAME_REST + '])',
+                                   index.clean[d.path][d.name_end:d.end], re.M)
             else:
                 continue
             for member in found:
@@ -905,6 +906,8 @@ class Calls:
         found, stack, line_end, word, stop = [], [], -1, None, d.end
         for i in range(d.name_end, d.end):
             if not stack and clean[i - 1] == '\n' and self.CONSTRUCTORS_END.match(clean, i):
+                require(not re.match(r' *\|', clean[i:]),
+                        f'{d.path}: unsupported bar in an inductive, {d.name}')
                 stop = i
                 break
             line_end = lines.get(i, line_end)

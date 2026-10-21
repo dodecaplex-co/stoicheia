@@ -44,7 +44,7 @@ COMMENTARY_CHANGES = {
 }
 BASE = 'namespace Elements\n\ntheorem base : True := trivial\n\nend Elements\n'
 BODY = '\nnamespace Elements\n\nend Elements\n'
-IMPORTED = ('Base.lean', 'areas-p5.lean', 'areas.p5.lean', 'a"b.lean')
+IMPORTED = ('Base.lean', 'areas-p5.lean', 'areas.p5.lean', 'a"b.lean', 'Tools!.lean')
 # Each Lean file, with the imports read from it as (imported file, the import's words to the
 # end of its line), or None where it is refused as an unsupported import. Lean 4.35 accepts
 # each file read, and refuses each file refused but those with `import all`, `prelude`, two
@@ -66,6 +66,8 @@ HEADERS = (
      [('areas.p5', 'public import Elements.«areas.p5»\n')]),
     ('module public import Elements.Base\n' + BODY, [('Base', 'public import Elements.Base\n')]),
     ('module\n\npublic import Elements.«a"b»\n' + BODY, [('a"b', 'public import Elements.«a"b»\n')]),
+    ('module\n\npublic import Elements.Tools!\n' + BODY,
+     [('Tools!', 'public import Elements.Tools!\n')]),
     ('module\n\npublic import Elements.Base', [('Base', 'public import Elements.Base')]),
     ('module\n\npublic import Elements.Base -- the end',
      [('Base', 'public import Elements.Base -- the end')]),
@@ -638,6 +640,17 @@ class Imports(LeanFiles):
                 for target, _, _ in spans:
                     self.assertIn(target, index.visible('Elements/Header.lean'))
 
+    def test_suffixed_module_and_declaration_names_are_visible(self):
+        tools = 'namespace Elements\n\ntheorem helper? : True := trivial\n\nend Elements\n'
+        header = ('public import Elements.Tools!\n\nnamespace Elements\n\n'
+                  'theorem uses : True := helper?\n\nend Elements\n')
+        index = self.index({'Tools!.lean': tools, 'Header.lean': header})
+        self.assertIn('Elements/Tools!.lean', index.visible('Elements/Header.lean'))
+        start = header.index('helper?')
+        self.assertEqual([(call['name'], call['token'], call['start'], call['end'])
+                          for call in questions.Calls(index, {}).direct('Elements.uses')],
+                         [('Elements.helper?', 'helper?', start, start + len('helper?'))])
+
 
 class CallReconciler(LeanFiles):
     """The forms of I.4's and I.8's proofs on the superposition branch, the plain forms an
@@ -651,6 +664,20 @@ class CallReconciler(LeanFiles):
         self.assertEqual(calls.unresolved['Elements.uses'], set())
         self.assertIn(('c', 'Elements.Pt', 'field candidates via signature closure'),
                       [(c['token'], c['name'], c['resolution']) for c in found])
+
+    def test_suffixed_constructor_names_and_calls_remain_distinct(self):
+        text = ('namespace Elements\n\ninductive Pt where\n  | mk\n  | mk!\n\n'
+                'theorem uses : Pt × Pt := (.mk, .mk!)\n\nend Elements\n')
+        calls = self.calls(text)
+        self.assertEqual({member for member, owners in calls.members.items()
+                          if 'Elements.Pt' in owners}, {'mk', 'mk!'})
+        start_mk = text.index('.mk,') + 1
+        start_mk_bang = text.index('.mk!') + 1
+        self.assertEqual([(call['token'], call['start'], call['end']) for call in
+                          calls.direct('Elements.uses') if call['name'] == 'Elements.Pt'
+                          and call['resolution'] == 'field candidates via signature closure'],
+                         [('mk', start_mk, start_mk + 2),
+                          ('mk!', start_mk_bang, start_mk_bang + 3)])
 
     def test_open_in_names_a_namespace_within_the_current_one(self):
         calls = self.calls('namespace Elements.BookI\n\nnamespace Prop4\n\n'
@@ -841,6 +868,8 @@ class CallReconciler(LeanFiles):
         # reconciler does not read. A command opening a line within an open bracket, here
         # `open ... in`, ends the inductive for the index, so its bracket stays open.
         for inductive, refused in (('\n    | a\n    | b', 'unsupported bar in an inductive, '),
+                                   ('\n| a\n| b', 'unsupported bar in an inductive, '),
+                                   ('\n | a\n | b', 'unsupported bar in an inductive, '),
                                    (' | a | b', 'unsupported bar in an inductive, '),
                                    ('\n  | mk ⦃h :\nopen Nat in succ 0 = 1⦄ : Pt',
                                     'unbalanced brackets in ')):
