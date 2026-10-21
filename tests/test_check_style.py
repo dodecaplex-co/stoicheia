@@ -20,10 +20,11 @@ it, put to the script's own patterns and functions:
 * the modern cases: S24 and S25 read a figure of the modern way against its Euclid's
   figure's letters and its paragraph's names, which `modern_names` takes from TeX and
   from plain words alike, save the letters of English (A's, e.g. however its full stops
-  are spelled, the p of Heath's page, the article "a") and what a reader does not see,
-  in a comment or in code; emphasis or an invisible character that would let a letter
-  of one word stand alone is refused; the paragraph selection keeps its source offsets
-  and indentation.
+  are spelled and spaced, the p of Heath's page and the letters of a Roman page number,
+  the article "a") and what a reader does not see, in a comment or in code; a letter
+  beside a letter of any script or a mark is in its word; emphasis or an invisible
+  character that would let a letter of one word stand alone is refused; the paragraph
+  selection keeps its source offsets and indentation.
 * the wording cases: render.py names the rules of an overlap that a proof leaves unused
   as "does not use" for one, "neither … nor" for two and "none of" for more, and words
   III.24's application of one segment to another by `placement` only from what its
@@ -282,6 +283,13 @@ NAMES_CASES = [   # (a paragraph, names it must give, names it must not)
      "\np.\n385.", set(), {"p"}),
     (style.MODERN_WAY + " Its side is p. Then (vol. 1, p. 383) it is twice q.",
      {"p", "q"}, set()),
+    # A letter beside a letter of any script or a mark is in its word, whatever the reader
+    # takes it for; spaces after a stop are one space to the reader; and a Roman page
+    # number's letters are no names, nor its p (#172).
+    (style.MODERN_WAY + " The éxponent, the eхponent with a Cyrillic х, déjà vu, "
+     "2πr and aⁿ.", {"π"}, {"e", "d", "j", "r", "a"}),
+    (style.MODERN_WAY + " One, e.  g. two, i.\n  e. three; Heath's preface (vol. 1, p. ix; "
+     "pp. v–vii, p\\. x) and p. ivy.", {"p"}, {"e", "g", "i", "v", "x"}),
 ]
 LEAN_NAME = "`Elements.BookI.prop05_converse`"
 COMMENT_PARAGRAPH = (style.MODERN_WAY + " Put $b$ here <!--\nnotes x and y\n--> "
@@ -1387,8 +1395,11 @@ class Modern(unittest.TestCase):
 
     def test_modern_invisible_characters_are_refused(self):
         # A format character (Unicode's Cf) shows nothing, so the reader sees one word,
-        # e.g. or exponent, where the names would find a letter standing alone (#172).
-        for invisible in ("​", "‍", "­", "⁠", "﻿"):
+        # e.g. or exponent, where the names would find a letter standing alone (#172);
+        # nor do the rest of Unicode's default-ignorable characters, a Hangul filler (a
+        # letter to Unicode), a variation selector or the grapheme joiner (marks to it).
+        for invisible in ("​", "‍", "­", "⁠", "﻿", "ᅟ", "ㅤ", "ﾠ",
+                          "️", "\U000e0100", "͏", "᠋"):
             for word, name in ((f"e{invisible}.g.", "g"), (f"e{invisible}xponent", "e")):
                 with self.subTest(invisible=repr(invisible), word=word):
                     findings = self.check_refused_modern(
@@ -3029,6 +3040,7 @@ sys.exit(not result.wasSuccessful())
                     ("M90 90 100 100 A10 10 0 0 1 100 100", "draws nothing"),
                     ("M100 100 C110 90 120 90 130 100 A10 10 0 0 1 130 100", "draws nothing"),
                     ("M100 100 A10 10 0 0 1 120 100 10 10 0 0 1 120 100", "draws nothing"),
+                    ("M100 100 A0 10 0 0 1 100 100", "draws nothing"),
                     ("M100 100 A0 10 0 0 1 120 100", "straight line"),
                     ("M100 100 A10 0 0 1 1 120 100", "straight line"),
                     ("M100 100 A-0 10 0 0 1 120 100", "straight line"),
@@ -3327,12 +3339,13 @@ class Clearance(unittest.TestCase):
         # draws nothing for it (#172).
         omitted = ("M150 90 C150 95 149.9999 100 150 100 L150 100 "
                    "C150 100 150 100 150 100 A10 10 0 0 0 150 100 L141.339746 105")
-        for join in ("miter", "round"):
+        for join in (None, "miter", "round"):
             with self.subTest(d=omitted, join=join):
+                linejoin = "" if join is None else f' stroke-linejoin="{join}"'
                 measured = [
                     list(style.strokes(style.ROOT / "figures" / "case.svg", ET.fromstring(
-                        f'<svg stroke="#3b2f2f" stroke-width="1.6" fill="none" '
-                        f'stroke-linejoin="{join}"><path d="{d}"/></svg>')))
+                        f'<svg stroke="#3b2f2f" stroke-width="1.6" fill="none"{linejoin}>'
+                        f'<path d="{d}"/></svg>')))
                     for d in (omitted, paths[-1])]
                 self.assertTrue(measured[0])
                 self.assertEqual(measured[0], measured[1])

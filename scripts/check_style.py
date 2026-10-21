@@ -3543,8 +3543,8 @@ def supported_path(value: str) -> bool:
 def arc_fault(value: str) -> str | None:
     """What SVG draws, in place of an arc, for the first arc of a supported path that it
     does not draw as one; or None. SVG's implementation notes for arcs (F.6.2) omit an arc
-    whose ends are one point, and draw one with a radius of 0 as a straight line. Any
-    other arc draws, whatever its large-arc and sweep flags: radii too short to reach its
+    whose ends are one point, and then draw one with a radius of 0 as a straight line, so
+    that an arc with both draws nothing. Any other arc draws, whatever its large-arc and sweep flags: radii too short to reach its
     ends are enlarged until they reach (F.6.6), and two distinct ends then lie on two
     ellipses of those radii, or on one when the radii only just reach; the flags take one
     arc of them from the one end to the other (F.6.5), and on one ellipse both arcs are
@@ -3559,10 +3559,10 @@ def arc_fault(value: str) -> str | None:
         arity = PATH_ARITY[cmd.lower()]
         for i in range(0, len(v), arity):
             group = v[i:i + arity]
-            if cmd == "A" and (group[0] == 0 or group[1] == 0):
-                return f"a straight line for an arc with a radius of 0, from ({x:g}, {y:g})"
             if cmd == "A" and (group[5], group[6]) == (x, y):
                 return f"nothing for an arc whose ends are one point, ({x:g}, {y:g})"
+            if cmd == "A" and (group[0] == 0 or group[1] == 0):
+                return f"a straight line for an arc with a radius of 0, from ({x:g}, {y:g})"
             if cmd == "H":
                 x = group[0]
             elif cmd == "V":
@@ -4059,14 +4059,26 @@ TEX_SPAN = re.compile(r"\$([^$\n]+)\$")
 TEX_UPRIGHT = re.compile(r"\\(?:mathrm|text|textrm|textup|operatorname)\s*\{")
 TEX_COMMAND = re.compile(r"\\([A-Za-z]+)")
 # A lower-case letter standing alone in the paragraph's words, not the s of "A's" or
-# "Euclid’s" after an apostrophe.
+# "Euclid’s" after an apostrophe. Python's patterns name no class of Unicode's, so a
+# letter of another script, a mark or a format character beside it is found by
+# joins_word, and keeps it in its word too (éxponent spelled with a combining accent,
+# eхponent with a Cyrillic х).
 LONE_LOWER = re.compile(r"(?<![A-Za-z'’])[a-z](?![A-Za-z])")
 # The abbreviations whose letters are no names: e.g. and i.e., each full stop escaped or
-# not (e\.g\., which Markdown shows as e.g.) and a space after the first or not (e. g.);
-# and the p of Heath's page before its number, as STYLE, section 5, cites it (vol. 1,
-# p. 383).
-ABBREVIATION = re.compile(r"(?<![A-Za-z])(?:(?:[eE]\\?\.\s?g|[iI]\\?\.\s?e)\\?\."
-                          r"|p\\?\.(?=\s*\d))")
+# not (e\.g\., which Markdown shows as e.g.) and spaces after the first or not (e. g.,
+# e.  g., which a reader sees as e. g.); and the p of Heath's page before its number, as
+# STYLE, section 5, cites it (vol. 1, p. 383), with the number when it is a Roman one,
+# whose letters are no names either (p. ix, pp. v–vii).
+ABBREVIATION = re.compile(r"(?<![A-Za-z])(?:(?:[eE]\\?\.\s*g|[iI]\\?\.\s*e)\\?\."
+                          r"|pp?\\?\.(?:(?=\s*\d)|\s*[ivxlcdm]+(?:[–-][ivxlcdm]+)?"
+                          r"(?![A-Za-z])))")
+# The characters that show nothing and are not format characters (Unicode's Cf, which
+# their category finds): the rest of Unicode's Default_Ignorable_Code_Point, the Hangul
+# fillers, which it counts as letters, the combining grapheme joiner and the variation
+# selectors, which it counts as marks, and the code points it leaves unassigned among
+# them.
+INVISIBLE = re.compile(r"[͏ᅟᅠ឴឵᠋-᠏⁥ㅤ"
+                       r"︀-️ﾠ￰-￸\U000e0000-\U000e0fff]")
 # What stands beside the article "a", spaces between, when it is a name, as in "AC = a"
 # or "(a + b)²": a sign of an expression, a digit, raised or lowered, or a bracket.
 BESIDE_A_NAME = set("=+-−×·/<>≤≥()[]0123456789⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉")
@@ -4186,8 +4198,10 @@ def modern_markup_findings(text: str) -> list[str]:
     if re.search(r"&(?:#[xX][0-9a-fA-F]+|#[0-9]+|[A-Za-z][A-Za-z0-9]*);", visible):
         found.append("unsupported character reference in the modern paragraph")
     # A format character (Unicode's Cf: a zero-width space, a soft hyphen, a joiner) shows
-    # nothing, so a letter beside it would stand alone in a word the reader sees whole.
-    invisible = sorted({c for c in visible if unicodedata.category(c) == "Cf"})
+    # nothing, nor does a Hangul filler or a variation selector (INVISIBLE), so a letter
+    # beside one would stand alone in a word the reader sees whole: e.g. or exponent.
+    invisible = sorted({c for c in visible
+                        if unicodedata.category(c) == "Cf" or INVISIBLE.match(c)})
     if invisible:
         found.append("unsupported invisible character "
                      + ", ".join(f"U+{ord(c):04X}" for c in invisible)
@@ -4208,14 +4222,22 @@ def modern_markup_findings(text: str) -> list[str]:
     return found
 
 
+def joins_word(c: str) -> bool:
+    """Whether a character beside a letter keeps it in one word: a letter of any script,
+    Greek too (the r of 2πr is a name in TeX, $2\\pi r$), a mark, which sits on the letter
+    before it, or a format character."""
+    return bool(c) and (c.isalpha() or unicodedata.category(c) in {"Mn", "Mc", "Me", "Cf"})
+
+
 def modern_names(paragraph: str) -> set[str]:
     """The names a modern-way paragraph uses: each lower-case Latin or Greek letter of a
     $…$ span, its commands taken out (\\vec, \\frac, \\sin) and its Greek ones read as
     their letters (\\theta, θ), what \\mathrm{…} sets upright left aside (Heath's points);
     and, outside the spans, each Greek letter, and each lower-case letter that stands
-    alone, save the letters of English: one after an apostrophe (A's), those of e.g. and
-    i.e. and the p of Heath's page (ABBREVIATION), and the article "a" when no sign of an
-    expression, digit or bracket stands beside it (BESIDE_A_NAME)."""
+    alone, with no letter of any script, mark or format character beside it (joins_word),
+    save the letters of English: one after an apostrophe (A's), those of e.g. and i.e.
+    and of Heath's page (ABBREVIATION), and the article "a" when no sign of an expression,
+    digit or bracket stands beside it (BESIDE_A_NAME)."""
     names: set[str] = set()
 
     def span(m: re.Match) -> str:
@@ -4227,6 +4249,8 @@ def modern_names(paragraph: str) -> set[str]:
     rest = TEX_SPAN.sub(span, paragraph).translate(GREEK_VARIANTS)
     rest = ABBREVIATION.sub(_blank, rest)
     for m in LONE_LOWER.finditer(rest):
+        if joins_word(rest[m.start() - 1:m.start()]) or joins_word(rest[m.end():m.end() + 1]):
+            continue
         before, after = rest[:m.start()].rstrip()[-1:], rest[m.end():].lstrip()[:1]
         if m.group(0) != "a" or {before, after} & BESIDE_A_NAME:
             names.add(m.group(0))

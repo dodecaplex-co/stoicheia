@@ -3518,21 +3518,31 @@ findings:
   more letters that are no names: `e\.g\.` granted e and g, an invisible format character
   (a zero-width space, a soft hyphen) let a letter of one visible word stand alone, and the
   p of Heath's page, "(vol. 1, p. 389)", was granted on five pages of main, II.6, II.7,
-  II.8, II.14 and III.8. `ABBREVIATION` now reads an escaped stop, a space inside e.g. and
-  i.e., and the p of a page before its number, and the markup check refuses a format
-  character. On main the names change only by those five p's, which no modern figure
-  draws. The arcs: by SVG's implementation notes for arcs, every choice of the large-arc
+  II.8, II.14 and III.8. The independent review of this change found six more of the same
+  kind, none on main's pages: a combining accent (e and U+0301, éxponent), a Cyrillic
+  letter (eхponent), an accented word (déjà), a Hangul filler, which Unicode counts as a
+  letter and which shows nothing (e and U+3164 before .g.), two spaces in `e.  g.`, and a
+  Roman page number (p. ix). `ABBREVIATION` now reads an escaped stop, spaces inside e.g.
+  and i.e., and the p of a page before its number, taking a Roman number's letters with
+  it (p. ix, pp. v–vii). `modern_names` keeps a letter in its word when a letter of any
+  script, Greek too, a mark or a format character stands beside it (the new
+  `joins_word`), so that the r of 2πr is a name only in TeX. The markup check refuses a
+  format character and the rest of Unicode's default-ignorable characters (the new
+  `INVISIBLE`: the Hangul fillers, the variation selectors, the combining grapheme joiner).
+  On main the names change only by those five p's, which no modern figure draws, and no
+  paragraph is refused. The arcs: by SVG's implementation notes for arcs, every choice of the large-arc
   and sweep flags draws something once radii too short to reach the ends are enlarged
   (F.6.6), for two distinct ends then lie on two ellipses of those radii, or on one when
   the radii only just reach, and the flags take one arc of them from end to end (F.6.5); on
   one ellipse both arcs are halves and the large-arc flag changes nothing. So no flag
   choice is refused. What does not draw as an arc is an arc whose ends are one point,
   which SVG omits, and one with a radius of 0, which it draws as a straight line (F.6.2).
-  The new `arc_fault` finds either, wherever the path stands when the arc begins, and S26's
+  The new `arc_fault` finds either, wherever the path stands when the arc begins, testing
+  the ends first, as F.6.2 does, so that an arc with both is named as drawing nothing; S26's
   `supported_svg` refuses the path, naming what SVG draws; S24's `modern_path` refuses the
   same arcs in the modern figures. None of main's 317 arcs is either, and every figure and
   page on main passes. The protected file
-  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains the cases, 77
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains the cases, 95
   subtests that fail on the check before this change and pass after it (two of them the
   clearance case below), and
   `test_arc_flags_always_draw`, which passes before and after: the four flag choices, with
@@ -3540,8 +3550,9 @@ findings:
   flag gives, and the large-arc flag changes the arc only when the radii are ample. One
   clearance case moves: the path whose omitted arc showed that such an arc does not break
   a join is now refused at the figure entry points, so its join claim is held on the
-  strokes S26 measures, read directly, which equal those of the same path without the arc,
-  itself a case at the entry points; the refusal is asserted at both entry points. The
+  strokes S26 measures, read directly with the default join, miter and round, as main
+  measured it, which equal those of the same path without the arc, itself a case at the
+  entry points; the refusal is asserted at both entry points. The
   protected file [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains item
   19, three plants in real files restored after: `*e*.*g*.` in II.7's modern way with an
   italic e in its figure, an italic p in that figure beside Heath's "p. 389", and the two
