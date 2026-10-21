@@ -2,6 +2,7 @@ import Staging.Figures.Convex
 import Staging.Figures.Avoid
 import Staging.Figures.ExtHelpers
 import Staging.Figures.CutHelpers
+import Staging.Figures.CutPieces
 
 /-!
 # Staging: convex cells, and cutting them
@@ -212,6 +213,47 @@ def CutPieces (P : ConvexCell) (L : Line) (A B : Point) (U V : ConvexCell) : Pro
     (Clips P L A (some V) ∧ Clips P L B (some U) ∧
       ∀ X : Point, P.region X ↔ cellRegion (some V) X ∨ cellRegion (some U) X)
 
+/-! ### The pieces of a genuine cut, as cells
+
+Helpers for `convex_cut_pieces`: the geometry is in `CutPieces.lean`, on outlines; here its
+pieces become cells. -/
+
+/-- A piece of a cell's outline on `R`'s side of a straight line is what the line leaves of
+the cell there. -/
+theorem clips_of_piece {P Q : ConvexCell} {L : Line} {R : Point}
+    (h : Pieces.IsPiece P.corners L R Q.corners) : Clips P L R (some Q) :=
+  ⟨fun X => h.2.2 X, ⟨[], fun X _ => h.2.1 X⟩⟩
+
+/-- Two pieces of a cell's outline, one on each side of a straight line, are the cells of
+the cut, and together they make up the cell exactly. -/
+theorem cut_pieces_of_lists (P : ConvexCell) {L : Line} {A B : Point}
+    (hAB : OppositeSides A B L) {qs rs : List Point}
+    (h : (Pieces.IsPiece P.corners L A qs ∧ Pieces.IsPiece P.corners L B rs) ∨
+      (Pieces.IsPiece P.corners L B qs ∧ Pieces.IsPiece P.corners L A rs)) :
+    ∃ U V : ConvexCell, U.corners = qs ∧ V.corners = rs ∧ CutPieces P L A B U V := by
+  have cover {S T : ConvexCell} (hS : Pieces.IsPiece P.corners L A S.corners)
+      (hT : Pieces.IsPiece P.corners L B T.corners) (X : Point) :
+      P.region X ↔ cellRegion (some S) X ∨ cellRegion (some T) X := by
+    change ConvexRegion P.corners X ↔ ConvexRegion S.corners X ∨ ConvexRegion T.corners X
+    rw [hS.2.1 X, hT.2.1 X]
+    constructor
+    · intro hX
+      by_cases hon : OnLine X L
+      · exact Or.inl ⟨hX, Or.inl hon⟩
+      rcases Pieces.side_cases hAB hon with hs | hs
+      · exact Or.inl ⟨hX, Or.inr hs⟩
+      · exact Or.inr ⟨hX, Or.inr hs⟩
+    · rintro (hX | hX) <;> exact hX.1
+  rcases h with ⟨hq, hr⟩ | ⟨hq, hr⟩
+  · let U : ConvexCell := ⟨qs, hq.1⟩
+    let V : ConvexCell := ⟨rs, hr.1⟩
+    exact ⟨U, V, rfl, rfl, Or.inl ⟨clips_of_piece (Q := U) hq, clips_of_piece (Q := V) hr,
+      cover (S := U) (T := V) hq hr⟩⟩
+  · let U : ConvexCell := ⟨qs, hq.1⟩
+    let V : ConvexCell := ⟨rs, hr.1⟩
+    exact ⟨U, V, rfl, rfl, Or.inr ⟨clips_of_piece (Q := V) hr, clips_of_piece (Q := U) hq,
+      cover (S := V) (T := U) hr hq⟩⟩
+
 /-- **The pieces of a genuine cut**: a straight line with corners of the cell strictly on
 both sides of it cuts the cell corner to corner, corner to side, or side to side; read from
 the first crossing, the outline splits into two chains, and each, closed by the cut, is the
@@ -231,7 +273,17 @@ theorem convex_cut_pieces (P : ConvexCell) {L : Line} {A B : Point}
       F :: ps = us ++ C :: D :: vs ∧ Between E X F ∧ Between C Y D ∧
       U.corners = X :: (us ++ [C, Y]) ∧
       V.corners = X :: Y :: (D :: vs ++ [E]) ∧ CutPieces P L A B U V) := by
-  sorry
+  rcases Pieces.cut_lists P.convex hAB hA hB with
+    ⟨pre, post, us, vs, X, Y, hp, hr, hs⟩ |
+    ⟨pre, post, us, vs, X, C, D, Y, hp, hr, hy, hs⟩ |
+    ⟨pre, post, ps, us, vs, E, F, C, D, X, Y, hp, hr, hc, hx, hy, hs⟩
+  · obtain ⟨U, V, hU, hV, hcut⟩ := cut_pieces_of_lists P hAB hs
+    exact Or.inl ⟨pre, post, us, vs, X, Y, U, V, hp, hr, hU, hV, hcut⟩
+  · obtain ⟨U, V, hU, hV, hcut⟩ := cut_pieces_of_lists P hAB hs
+    exact Or.inr (Or.inl ⟨pre, post, us, vs, X, C, D, Y, U, V, hp, hr, hy, hU, hV, hcut⟩)
+  · obtain ⟨U, V, hU, hV, hcut⟩ := cut_pieces_of_lists P hAB hs
+    exact Or.inr (Or.inr ⟨pre, post, ps, us, vs, E, F, C, D, X, Y, U, V, hp, hr, hc, hx, hy,
+      hU, hV, hcut⟩)
 
 /-- **A straight cut**: a straight line cuts a cell into what is left on each side of it,
 which together make up the cell exactly, and whose areas make up its area. -/
