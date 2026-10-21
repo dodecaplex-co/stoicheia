@@ -812,8 +812,8 @@ Every merge the judge computes reads merge attributes from the group's base, mai
 never from the group's checkout. And judging a group, it reads every file from Git's
 objects, the decisions page among them (its blob, a regular file), never from the
 checkout, which the group's own attributes shape (`working-tree-encoding` or a
-`filter`, say). So an entry's `.gitattributes` cannot change what is judged; it can at
-most make the checkout differ from the group's head, which refuses. `--tree` reads the
+`filter`, say). So an entry's `.gitattributes` cannot change what is judged: it can
+shape only the checkout, and no verdict reads the checkout. `--tree` reads the
 page in the checkout it is given, so it refuses as unreadable (exit 2) a page to which
 Git gives an attribute that can change how a checkout writes it: `working-tree-encoding`,
 `filter`, `ident`, `text`, `eol` or `crlf`, set, unset or with a value.

@@ -3379,8 +3379,8 @@ findings:
     of it not on origin/main), gives some visible verdict or findings beyond that name,
     is not only a placeholder and holds nowhere, in any case, "pending", "TBD", "to
     come", "not needed" or "N/A", `/no-mistakes` says `passed at` the member's own head
-    or `not run: <reason>` with five words or more, and `/security-review` says "Not required" only where no protected path changed,
-    against any of the member's merge bases with main, a member with a protected path
+    or `not run: <reason>` with five words or more, and `/security-review` says "Not
+    required" only where no protected path changed, against any of the member's merge bases with main, a member with a protected path
     naming its commit there and saying "Not required" nowhere in the cell; checks and the
     content they judge travel apart, even when origin/main's checks pass; and
     `What is new` covers the diff. Beyond the commit, the review cells are the
@@ -3409,9 +3409,9 @@ findings:
     naming the line; an underline's text is every line back to the previous blank one,
     each with its list numbers and footnote markers, which may be a paragraph's own text;
     a heading is dated when its text contains a date, and two with the same date are
-    refused, naming both; every year in a heading must be the year of a date the check
-    reads, in its own line, so that a date written another way (`20/10/2026`) is refused,
-    never passed; and an HTML heading tag of level one or two anywhere on the page is
+    refused, naming both; every year from 1900 to 2199 in a heading must be the year of a
+    date the check reads, in its own line, so that a date written another way
+    (`20/10/2026`) is refused, never passed; and an HTML heading tag of level one or two anywhere on the page is
     refused, so the page quotes one only in prose, as character references (the pages'
     freshness and conflict markers are the `check` job's). Every merge it computes reads
     merge attributes from the group's base, and judging a group it reads the decisions

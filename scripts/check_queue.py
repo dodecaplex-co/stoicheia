@@ -16,8 +16,8 @@ Every merge-tree reads merge attributes from the group's base, main, never from 
 group's checkout (git --attr-source). Judging a group, every file read comes from Git's
 objects, the decisions page among them (page_blob), never from the checkout, which the
 group's attributes shape (working-tree-encoding or a filter, say): an entry's
-.gitattributes cannot change what is judged, and can at most make the checkout differ
-from the group's head, which refuses. --tree reads the page in the checkout it is given,
+.gitattributes cannot change what is judged; it can shape only the checkout, and no
+verdict reads the checkout. --tree reads the page in the checkout it is given,
 so it exits 2 when Git gives the page an attribute that can change how a checkout writes
 it (CHECKOUT_ATTRIBUTES). --gaps runs the group's own tests, in its checkout. Git 2.42 or
 later: merge-tree --write-tree came in 2.38, its --merge-base in 2.40 and --attr-source

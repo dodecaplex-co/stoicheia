@@ -280,9 +280,9 @@ jobs:
     # group's base (main) and runs that check_queue.py, which reads what it judges from
     # Git's objects and GitHub only, never from the checkout, which it only compares with
     # the group's head; it builds nothing and renders nothing (the check job renders the
-    # same group). But
-    # GitHub runs the group's own copy of this file, so the judge's verdict, and any
-    # evidence check added later, count only while the group's ci.yml still calls them.
+    # same group). But GitHub runs the group's own copy of this file, so the judge's
+    # verdict, and any evidence check added later, count only while the group's ci.yml
+    # still calls them.
     # The protection of .github/, scripts/ and tests/, and the authenticity of the
     # pre-flight's evidence, must be held by something a group cannot change: a ruleset
     # requiring code-owner review, with a CODEOWNERS file naming the owner for those
