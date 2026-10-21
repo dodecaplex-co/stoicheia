@@ -1685,7 +1685,8 @@ class Clock:
     # pre-flight's record, stays).
     # It never reads the wall clock and never waits. "still": time stands, but for the
     # sleeps; "leap": each reading is an hour after the last, past every deadline safe_push
-    # keeps, as on a machine so loaded that each step takes an hour.
+    # keeps within a few readings (the queue's, of five hours, within five), as on a
+    # machine so loaded that each step takes an hour.
     def __init__(self, leap):
         self.now, self.leap = 1e9, leap
     def time(self):
@@ -2847,11 +2848,16 @@ class Merge(Edge):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertEqual(self.guard(r.stdout, "unfinished work"), "ok", r.stdout)
         self.assertEqual(self.step(r.stdout, "release"), "skip", r.stdout)
-        # The merge's other reads (main's rules, and whether main is red) are not reads
-        # of the release's blockers.
-        self.assertFalse([c for c in json.loads(GH_STATE.read_text())["calls"]
-                          if c[0] == "api" and ("blocks-release" in c[-1]
-                                                or "/issues/" in c[-1])])
+        # The merge's only reads of the API are main's rules, whether main is red (its
+        # open main-red issues and the post-merge runs at its tip): none of them is a
+        # read of the release's blockers.
+        allowed = ("repos/test/stoicheia/rules/branches/main",
+                   "repos/test/stoicheia/issues?state=open&labels=main-red&per_page=100",
+                   "repos/test/stoicheia/actions/workflows/post-merge.yml/runs?branch=main"
+                   "&head_sha=")
+        reads = [c for c in json.loads(GH_STATE.read_text())["calls"] if c[0] == "api"]
+        self.assertTrue(reads)
+        self.assertEqual([c for c in reads if not c[1].startswith(allowed)], [])
         self.assertEqual(len(self.merges()), 1)
 
     def opened(self, *args, ready=True, **write) -> str:
@@ -3954,6 +3960,19 @@ class Queue(Edge):
                          [main, sha])
         self.assertIn(f"sha={sha} base={BASE} harness={BASE} -->",
                       self.gh_state()["prs"][0]["body"])
+
+    def test_queue_compares_the_installed_hook_with_current_main(self):
+        # A queued head is checked against an older main, but the installed hook and
+        # launcher are compared with current main's copies.
+        self.opened()
+        git(WORK, "checkout", "--quiet", "--detach", BASE)
+        hook = "scripts/hooks/pre-push"
+        self.new_base("Main's hook gains a line", {
+            hook: self.text(hook) + "\n# A later hook revision for the test.\n"})
+        r = self.safe_push("--merge", "1", "--dry-run")
+        out = r.stdout + r.stderr
+        self.assertEqual(self.guard(out, "pre-push hook"), "note", out)
+        self.assertIn("differs from origin/main's scripts/hooks/pre-push", out)
 
     def test_queue_reads_main_s_current_template(self):
         # In queue mode the head is judged against its merge base, but the template in

@@ -231,7 +231,16 @@ jobs:
           # No repository code runs here, not even the previous main's: a fix that lands
           # after a failed push must not run the failed push's script with issues: write.
           tip=$(gh api "repos/$REPOSITORY/git/ref/heads/main" --jq '.object.sha')
-          test "$tip" = "$AFTER"
+          if ! [[ "$tip" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Main's tip could not be read."
+            exit 1
+          fi
+          # A success of a main that is no longer the tip clears nothing: a later push's
+          # run decides, and its own clear or revert follows. This run still passed.
+          if [[ "$tip" != "$AFTER" ]]; then
+            echo "Main has moved on from ${AFTER:0:12} to ${tip:0:12}: a later push's run decides, and no label was changed."
+            exit 0
+          fi
           issues=$(mktemp "$RUNNER_TEMP/main-red-issues.XXXXXX")
           gh api --paginate --slurp "repos/$REPOSITORY/issues?state=open&labels=main-red&per_page=100" \
             | jq -r '

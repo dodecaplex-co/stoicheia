@@ -3479,10 +3479,18 @@ findings:
     so main's `check_queue.py --gaps --plan` now chooses them in the step that holds
     the token, running none, and the job's last step, which holds none (nor does any
     step after the choosing), runs them with `--run-plan`, which refuses to run a test
-    while any variable named with `TOKEN` is set. Before that step the job installs
-    main's pinned YAML parser, which the queue's tests import. With "only merge
-    non-failing pull requests", a train merges only when its own group passed; GitHub
-    removes a failing group's last train and rebuilds the groups after it.
+    while any variable named with `TOKEN` is set. That keeps the token out of the
+    tests' environment, files, caches and artifacts, but not out of the job: the runner
+    process holds it until the job ends, beneath every step, so the token is read-only
+    by design (contents, pull requests, actions and issues, each read only). Before
+    that step the job installs main's pinned YAML parser, which the queue's tests
+    import, with `python3 -I -m pip` run from the runner's temporary directory, so that
+    nothing in the group's checkout runs in pip's place. `queue-gaps` may take 75
+    minutes and `queue-integrity` 20, and the queue's status check timeout is to be 150
+    (`acceptance`'s 60, then `queue-gaps`' 75, and 15 for runners), all to be measured
+    again on the queue's trial. With "only merge non-failing pull requests", a train
+    merges only when its own group passed; GitHub removes a failing group's last train
+    and rebuilds the groups after it.
   - *The CI model.* `scripts/test_safe_push.py` holds CI's `check` job, safe_push's
     `CHECKS` and WORKFLOW's section 8 to one list, and allowed no input on the check
     job's checkout. It now allows exactly one, `persist-credentials: false`, the boolean
@@ -3494,24 +3502,35 @@ findings:
     each push to main. If they fail, it opens an issue labelled `blocks-release` and
     `main-red`; with the revert App's key (in the `auto-revert` environment, main only),
     the previous main's `scripts/auto_revert.py`, trusted only when its own post-merge
-    run passed, reverts the push's merges on a `revert/` branch and queues the revert,
-    which the judge admits only as the exact revert of a failed push's merges, while an
-    open `main-red` issue names that run. The decisions record is history, only ever
-    added to, so a revert never removes a decision's text: the revert keeps
-    `docs/decisions/` and this page as at the failed push's tip, as the advice for a
-    revert by hand on tooling/decision-entries restores both from origin/main, and the
-    judge, in `scripts/check_queue.py`, accepts exactly that difference and no other: a
-    revert that takes a train's lines off this page, or changes it otherwise, refuses.
-    The workflow that holds the key is read from
-    main, so code that has landed there could take it; the App is bounded instead: no
-    bypass, no permission to write contents at all (the job's own token pushes the
-    revert branch), and the judge's refusal of any entry a bot wrote, queued or edited,
-    save that revert. Since the revert job is one of the failed run's own jobs, the
-    judge may find that run still in progress: it reads the run again every 15 seconds,
-    for up to 10 minutes, and judges it once completed. A run that concluded failure
+    run passed, reverts the push's merges on a `revert/` branch, reading merge
+    attributes from the previous main (Git 2.42 or later), and queues the revert. The
+    judge admits it only as the exact revert of a failed push of two-parent merges, and
+    only while an open `main-red` issue names that run on its own `Run:` line, by this
+    repository's address: its one merge base with main must be the push's tip, and the
+    commits from that tip to its head exactly the reverts, one for each merge, newest
+    first, and at most one commit that keeps the decisions record, with no merge. The
+    decisions record is history, only ever added to, so a revert never removes a
+    decision's text: the revert keeps `docs/decisions/` and this page as at the failed
+    push's tip, as the advice for a revert by hand on tooling/decision-entries restores
+    both from origin/main, and the judge, in `scripts/check_queue.py`, accepts exactly
+    that difference and no other: a revert that takes a train's lines off this page, or
+    changes it otherwise, refuses. A revert that would break a relative link of the kept
+    record, one that resolves at the failed push's tip, would fail its own link check:
+    the script pushes none, and its issue names the links and says to revert by hand.
+    While an open `main-red` issue exists, the judge also refuses every queued entry
+    but that revert and a declared fix (below), so trains queued before main went red
+    leave the queue. When main has moved on during a post-merge run whose integration
+    passed, its clear job changes no label and passes: a later push's run decides. The
+    workflow that holds the key is read from main, so code that has landed there could
+    take it; the App is bounded instead: no bypass, no permission to write contents at
+    all (the job's own token pushes the revert branch), and the judge's refusal of any
+    entry a bot wrote, queued, edited or renamed, save that revert. Since the revert
+    job is one of the failed run's own jobs, the judge may find that run still in
+    progress: it reads the run again every 15 seconds, for up to 10 minutes, and
+    judges it once completed. A run that concluded failure
     admits its revert and any other conclusion refuses it; a run not completed by then
     refuses it too, and the revert leaves the queue. So the queue's status check
-    timeout must allow that wait, on top of the job's own work.
+    timeout must allow that wait, on top of the jobs' own work.
   - *The merge.* When main's rules require a merge queue, `git safe-push --merge` keeps
     every gate, checks the head against the newest commit of main's first-parent chain
     that it contains, which its pre-flight recorded, enqueues it with its head pinned,

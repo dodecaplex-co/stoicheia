@@ -820,9 +820,13 @@ Every merge the judge computes reads merge attributes from the group's base, mai
 never from the group's checkout, so an entry's `.gitattributes` cannot change a verdict.
 
 Every entry other than an automatic revert must have its head in this repository, and no
-bot, the revert App's above all, may have written it, put it in the queue or last edited
-its body: trains are written and queued by people. GraphQL names a bot by a login
-without the "[bot]" that REST adds, so the actor's type is read, not its login.
+bot, the revert App's above all, may have written it, put it in the queue, last edited
+its body or last renamed it (the last rename is read from its timeline; the title goes
+into main's merge commit): trains are written, named and queued by people. GraphQL names
+a bot by a login without the "[bot]" that REST adds, so the actor's type is read, not
+its login. And while an issue labelled `main-red` is open, an entry in the queue lands
+only as main's fix: its body must declare, as `--merge` reads it, every open `main-red`
+issue and no other ("Out of a red main", below), or the judge refuses it.
 
 **The gaps of what is new.** In the `queue-gaps` job, `check_queue.py --gaps` takes the
 union of the entries' derived changes and their declarations. A changed
@@ -838,19 +842,28 @@ verdict already judged there. Declared rules are printed for the reader. Foundat
 need no extra run here, since `model` and `formal-model` run on every group.
 
 The tests are the group's own code, and on Linux a process can read its parent's
-environment (`/proc/<ppid>/environ`), so no test runs beneath a process that holds a
-token. The step that holds the job's token, to read GitHub, runs main's
+environment (`/proc/<ppid>/environ`), so no test runs in a step that holds the token.
+The step that holds the job's token, to read GitHub, runs main's
 `check_queue.py --gaps --plan <file>`, which chooses the tests, prints the reports above
 and writes the chosen commands to a new file, running none of them. The next step
 installs main's pinned YAML parser, which the queue's tests import, from
-`scripts/requirements-test_safe_push.txt` at the group's base; it comes after the
-token's last step, since what pip installs could run in any later Python. The last
-step declares no token, and neither does any step after the choosing: it runs main's
+`scripts/requirements-test_safe_push.txt` at the group's base, with
+`python3 -I -m pip` run from the runner's temporary directory, so that nothing in the
+group's checkout can run in pip's place; it comes after the token's last step, since
+what pip installs could run in any later Python. The last step declares no token, and
+neither does any step after the choosing: it runs main's
 `check_queue.py --run-plan <file> --head <sha>`, which reads no GitHub, checks that the
 plan is for that head and that the checkout is that head, unchanged, runs only
 commands of the forms above, for files of that checkout, and refuses to run any test
 while a variable whose name holds `TOKEN` is in its environment. `--gaps` without
 `--plan`, run by hand, refuses the same way.
+
+This split keeps the token out of the tests' environment, files, caches and artifacts.
+It does not keep it out of the job: the runner process holds the job's token until the
+job ends, and every step runs beneath it, so a test that can read the runner's memory (a
+hosted runner gives its steps `sudo`) could read the token there. So `queue-gaps`' token
+is read-only by design: its permissions are contents, pull requests, actions and issues,
+each read only, and the token ends with the job.
 
 **Auto-eject.** With GitHub's "only merge non-failing pull requests" setting, a train
 merges only when its own group passed. If a group fails, GitHub removes its last
@@ -865,13 +878,19 @@ otherwise it opens the issue alone and says why. It runs the script in Python's
 isolated mode, importing no code from the failed checkout. The `auto-revert`
 environment must allow main alone and hold `STOICHEIA_REVERT_APP_ID` and
 `STOICHEIA_REVERT_APP_KEY`. The script reverts each merge in the push's first-parent
-chain, newest first, pushes `revert/<after12>` with the job's own token, and opens and
-enqueues one pull request, its head pinned, with that App's installation token. A revert
-that changes `.github/workflows/` cannot be pushed with the job's token, so it is left
-to the coordinator, and the issue says so. If main has moved on since the failed push, it reverts nothing and leaves the
-issue, since a later push's own run then decides. A push that GitHub records as a
-plain pull request merge, rather than a push or a queue merge, is not reverted by the
-App either. The pull request carries `auto-revert`, the reverted requests' kind labels,
+chain, newest first, reading merge attributes from `before`, never from the tree it
+reverts (`git --attr-source`, which needs Git 2.42 or later), pushes `revert/<after12>`
+with the job's own token, and opens and enqueues one pull request, its head pinned, with
+that App's installation token. A push that holds a commit other than a two-parent merge
+is not reverted: the issue says so. A revert that changes `.github/workflows/` cannot be
+pushed with the job's token, so it is left to the coordinator, and the issue says so.
+If main has moved on since the failed push, it reverts nothing and leaves the issue,
+since a later push's own run then decides. A push that GitHub records as a plain pull
+request merge, rather than a push or a queue merge, is reverted and enqueued by the App
+like any other; but the judge finds the failed push only among the pushes and queue
+merges GitHub records for main, so it refuses that revert, which leaves the queue, and
+the issue stays open for the coordinator, who lands the revert by hand as a red main's
+fix (below). The pull request carries `auto-revert`, the reverted requests' kind labels,
 `security-review` when a protected path changes, a `Failed run: <id>` line and
 `Reverts: <sha>` lines; the script pushes to no branch but `revert/<12 hex>`. The App
 lets that pull request trigger CI; a pull request opened with `GITHUB_TOKEN` would
@@ -885,6 +904,19 @@ the advice for a revert by hand that tooling/decision-entries brings restores bo
 origin/main. Everything else is the exact revert. A path the failed push's tip lacks
 stays absent, so without the folder only the page is kept.
 
+A link on the kept record can outlive what it names: the page links to a file the
+reverted push added, say, or to a heading of a page it changed, and the revert takes
+that away. The revert's own `check_links.py` step would then fail, and the queue eject
+it. So before it pushes, the script reads every relative link of the kept page and of
+the kept Markdown files under `docs/decisions/`, as `scripts/check_links.py` reads and
+resolves them (its reading copied, since the script imports no repository code), and if
+one that resolves at the failed push's tip would not resolve in the revert, it pushes
+nothing: it records the issue only, names the links and says to revert by hand. A
+revert made by hand meets the same links. `python3 scripts/check_links.py`, which the
+pre-flight runs, names them, and each is mended in the revert's own pull request,
+keeping the decision's words (a link to the file as it stood at the failed push's tip,
+say), before it lands.
+
 The workflow records an issue with `GITHUB_TOKEN`, labelled `blocks-release` and
 `main-red`, naming the trains, their merge commits, the failed jobs and the run. It
 does this before attempting the revert. Without the App credentials, it records the
@@ -895,13 +927,21 @@ be read, the workflow's own fallback opens the issue without running repository 
 The queue accepts a revert without an ordinary pre-flight only from the configured
 App bot (`STOICHEIA_REVERT_BOT`), on a `revert/` branch with the `auto-revert` label,
 when its named run is a failed post-merge run of a push to main, its branch is
-`revert/` and that push's first 12 hexadecimal digits, an open issue labelled
-`main-red` names the run, the merges it names are exactly the merges of that push (its
-`before` and `after` read from GitHub's record of pushes to main), newest first, and
-its tree is exactly those merges reverted, save that `docs/decisions/` and the decisions
-page stay as at the revert's base, the failed push's tip, as above: nothing else may
+`revert/` and that push's first 12 hexadecimal digits, and an open issue labelled
+`main-red` names the run on its own `Run:` line, by this repository's address for the
+run (a run of another repository, or an address elsewhere in the issue, names nothing).
+The push, its `before` and `after` read from GitHub's record of pushes to main, must be
+two-parent merges only, and the merges the revert names must be exactly those, newest
+first. The revert's one merge base with main must be the push's tip, `after`, and
+`after..head` exactly the reverts and at most one keep commit, with no merge: one
+commit for each named merge, in that order, whose tree is that merge reverted onto the
+last (merge attributes read from `before`, as the script reads them), then, only where
+the reverts changed the decisions record, one commit whose tree keeps
+`docs/decisions/` and the decisions page as at `after`, as above. Nothing else may
 differ, so a revert that takes a train's lines off the page, or changes it in any other
-way, refuses. The job that clears `main-red` runs no repository code at all.
+way, refuses, and so does one built on a later main, or through any other commit. The
+commits' messages are not read. The job that clears `main-red` runs no repository code
+at all.
 
 The revert job is one of the named run's own jobs, so the revert's group can be judged
 while that run is still in progress. The judge then reads the run again every 15
@@ -916,9 +956,11 @@ from main, so code that has landed there could take the key. A key taken that wa
 writes nothing to the repository's contents (the App only reads them; the revert job's
 own token, which lasts as long as the job, pushes the revert branch), so it makes no
 branch, tag or release; it is no ruleset's bypass actor; and it lands nothing but the
-revert above, since the queue refuses any other entry a bot wrote, queued or last
-edited. It can still open, label and edit pull requests, and take entries out of the
-queue. Reverting such a change does
+revert above, since the queue refuses any other entry a bot wrote, queued, last edited
+or last renamed. The revert's own title and body are the App's words, which a taken key
+could choose; the judge reads the body's `Reverts:` and `Failed run:` lines and the
+tree, not the rest. It can still open, label and edit pull requests, and take entries
+out of the queue. Reverting such a change does
 not take the key back: the owner makes a new key. And the pre-flight block
 in a pull request body is evidence the coordinator's harness wrote, which anyone who can
 edit the body could imitate; the queue checks it for the head and the harness, and
@@ -927,9 +969,14 @@ edit the body could imitate; the queue checks it for the head and the harness, a
 Landing through `--merge` pauses while an open `main-red` issue exists or the latest
 completed post-merge run at main's tip concluded anything other than success, neutral
 or skipped. A tip with no completed run is not itself marked red; unreadable health
-answers refuse. This gate does not remove trains already queued. Successful integration clears
-`main-red` only after confirming that the successful commit is still main's tip;
-the issue stays open with `blocks-release` for the coordinator.
+answers refuse. The queue's judge holds the same pause for trains already queued, or
+queued without `--merge`: while an issue labelled `main-red` is open, it refuses every
+entry in the queue but the automatic revert and a declared fix (below), so the rest
+leave the queue. It reads the open issues only, not the post-merge runs. Successful
+integration clears `main-red` only after confirming that the successful commit is still
+main's tip; the issue stays open with `blocks-release` for the coordinator. When main
+has moved on, the clear job says that a later push's run decides, changes no label and
+passes, so a run whose integration passed is never marked failed for main's moving.
 
 **Out of a red main.** While main is red, `--merge` lands only its fix. With the queue
 off, or without the revert App, only a merge moves main's tip, so the fix comes through
@@ -942,28 +989,35 @@ main's health is shown as a note, not as ok, in the summary. A declaration that 
 too few issues or too many, names one twice, or is not in that form, refuses, and so
 does more than one such line. A failed run with no open `main-red` issue leaves nothing
 to declare: the coordinator labels its issue `main-red` again first. The fix may be a
-revert made by hand, as for a train that changed `.github/workflows/`. Once it is on
+revert made by hand, as for a train that changed `.github/workflows/`; it keeps the
+decisions record, and mends each link on it that the revert would break, as
+`check_links.py` names them ("Auto-revert", above). Once it is on
 main, its own post-merge run decides: a passing run at the new tip clears `main-red`,
 and a failing one is a failed push like any other.
 
 **Turning it on.** The queue remains off until the owner enables it, and not before the
 owner has chosen the authenticated source for the pre-flight's evidence that rule (b)
-asks for. The coordinator holds these steps: add the merge queue rule for main, keep merge commits and enable
-"only merge non-failing pull requests"; require `check`, `model`, `negative`,
-`formal-model`, `acceptance`, `queue-integrity` and `queue-gaps`; set the queue's status
-check timeout to allow each of them, `queue-integrity` with the judge's wait of up to 10
-minutes for a revert's run to complete before it judges the revert (above), on top of
-the job's own work, since a shorter timeout ejects every automatic revert whose run is
-still in progress; install the revert App
-for this repository with contents read, and pull requests and merge queues write (a
-train that changed `.github/workflows/` cannot be pushed by the job's token, and is
-reverted by hand); add the rulesets that keep branches other than `revert/**` and tags
-to the owner; restrict the
-`auto-revert` environment to main and put the App credentials there, not in repository
-secrets; set the repository variable `STOICHEIA_REVERT_BOT` to its bot login as REST
-spells it, `<the App's slug>[bot]`. With the
-queue off, `--merge` follows the direct merge path below. The issue and the pause still
-apply if the App has not been set up.
+asks for. The coordinator holds these steps: add the merge queue rule for main, keep
+merge commits and enable "only merge non-failing pull requests"; require `check`,
+`model`, `negative`, `formal-model`, `acceptance`, `queue-integrity` and `queue-gaps`;
+set the queue's status check timeout to 150 minutes: `acceptance`'s limit of 60 minutes,
+then `queue-gaps`' of 75, which starts only once `acceptance` ends, and 15 for waiting
+on runners. `queue-gaps` may run the tests of `safe_push.py`, `check_queue.py` and
+`check_train.py` in one group, near 40 minutes as measured off GitHub, and its choosing
+step, like `queue-integrity` (limit 20 minutes), may wait up to 10 minutes for a
+revert's run to complete before it judges the revert (above): a shorter timeout ejects
+sound slow groups, and every automatic revert whose run is still in progress. These
+numbers are measured again on the queue's trial, and `QUEUE_TIMEOUT` in `safe_push.py`,
+how long `--merge` follows an entry, is twice the status check timeout, for one rebuild
+behind a group that fails. Then install the revert App for this repository with contents
+read, and pull requests and merge queues write (a train that changed
+`.github/workflows/` cannot be pushed by the job's token, and is reverted by hand); add
+the rulesets that keep branches other than `revert/**` and tags to the owner; restrict
+the `auto-revert` environment to main and put the App credentials there, not in
+repository secrets; set the repository variable `STOICHEIA_REVERT_BOT` to its bot login
+as REST spells it, `<the App's slug>[bot]`. With the queue off, `--merge` follows the
+direct merge path below. The issue and the pause still apply if the App has not been set
+up.
 
 ```sh
 sh scripts/install_hooks.sh                        # from a checkout of origin/main: once per

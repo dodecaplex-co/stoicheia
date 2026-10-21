@@ -466,7 +466,7 @@ class AutoRevert(unittest.TestCase):
 
         def conflicting(repo, *args, **kwargs):
             nonlocal injected
-            if args[0] == "revert" and not injected:
+            if "revert" in args and not injected:
                 injected = True
                 (repo / "chapter.txt").write_text("A conflicting local revision.\n",
                                                   encoding="utf-8")
@@ -503,6 +503,112 @@ class AutoRevert(unittest.TestCase):
         self.assertEqual(self.pushes, [])
         self.assertIsNone(self.api.issued_permissions)
         self.assertIn("revert it by hand", self.body())
+
+    LINKED = "scripts/audit/tool.py"
+
+    def test_a_revert_that_would_break_a_kept_link_is_left_to_the_coordinator(self):
+        # The kept page links to a file the train added, which the revert deletes: the
+        # revert's own check_links.py step would fail, so nothing is pushed.
+        self.entries_landed()
+        page = self.PAGE_TEXT + f"- **A tool.** See [the tool](../../{self.LINKED}).\n"
+        entry = f"- **An entry.** [The tool](../../{self.LINKED}#L1).\n"
+        self.train_files(11, {self.LINKED: "print('tool')\n", self.PAGE: page,
+                              self.ENTRY: entry}, labels=("tooling",))
+        status, output = self.run_revert()
+        self.assert_issue_only(status)
+        self.assertIsNone(self.api.issued_permissions)
+        body = self.body()
+        self.assertIn(f"- {self.PAGE}:6: ../../{self.LINKED}\n", body)
+        self.assertIn(f"- {self.ENTRY}:1: ../../{self.LINKED}#L1\n", body)
+        self.assertIn("Revert it by hand, mending each link", body)
+        self.assertIn("No branch pushed and no pull request opened.", body)
+
+    def test_a_kept_link_to_a_heading_or_lines_the_revert_takes_away_is_named(self):
+        self.write("docs/guide.md", "# Guide\n\nThe guide.\n")
+        self.write("notes.txt", "One.\n")
+        self.entries_landed()
+        page = (self.PAGE_TEXT + "- [A part](../guide.md#a-new-part).\n"
+                "- [Line three](../../notes.txt#L3).\n")
+        self.train_files(11, {"docs/guide.md": "# Guide\n\nThe guide.\n\n## A new part\n",
+                              "notes.txt": "One.\nTwo.\nThree.\n", self.PAGE: page})
+        status, _ = self.run_revert()
+        self.assert_issue_only(status)
+        self.assertIn(f"- {self.PAGE}:6: ../guide.md#a-new-part\n", self.body())
+        self.assertIn(f"- {self.PAGE}:7: ../../notes.txt#L3\n", self.body())
+
+    def test_kept_links_that_still_resolve_or_were_already_broken_are_pushed(self):
+        # A link the revert leaves resolving, one broken before it, a web address, and a
+        # link in code (which check_links.py does not read) stop nothing.
+        self.write("docs/guide.md", "# Guide\n\n## A part\n")
+        self.entries_landed()
+        page = (self.PAGE_TEXT + "- [Chapter](../../chapter.txt), [part](../guide.md#a-part),"
+                " [folder](../decisions/), [root](/), [gone](../../never-there.md),"
+                " [web](https://example.invalid/x).\n"
+                f"- `[code](../../{self.LINKED})`\n\n```\n[fenced](../../{self.LINKED})\n```\n")
+        self.train_files(11, {"chapter.txt": "Changed chapter.\n", self.LINKED: "print(1)\n",
+                              "docs/guide.md": "# Guide\n\n## A part\n\nMore.\n",
+                              self.PAGE: page}, labels=("tooling",))
+        status, output = self.run_revert()
+        self.assertEqual(status, 0, output)
+        self.assertEqual(self.pushed(self.PAGE), page.strip())
+        self.assertIn("was enqueued", self.body())
+
+    def test_the_link_reading_is_check_links_own(self):
+        # The trusted script imports no repository code, so it holds a copy of
+        # check_links.py's reading: the two must read every link and anchor alike.
+        import check_links
+        for name in ("SCHEME", "LINE_ANCHOR", "FENCE", "ATX", "SETEXT", "COMMENT",
+                     "LINK_TEXT", "REF_DEF", "HTML_URL", "HTML_ANCHOR"):
+            with self.subTest(pattern=name):
+                self.assertEqual(getattr(ar, name).pattern, getattr(check_links, name).pattern)
+                self.assertEqual(getattr(ar, name).flags, getattr(check_links, name).flags)
+        for path in ("docs/briefs/0002-decisions.md", "docs/WORKFLOW.md", "README.md",
+                     "docs/STYLE.md", "CONTRIBUTING.md"):
+            with self.subTest(path=path):
+                text = ar.markdown((ROOT / path).read_bytes())
+                self.assertEqual(list(ar.links(text)), list(check_links.links(ROOT / path)))
+                self.assertEqual(ar.anchors(text), check_links.anchors(ROOT / path))
+        for target in ("../x.md", "https://example.invalid", "//host/x", "mailto:a", "",
+                       " #top", "C:/x"):
+            self.assertEqual(ar.relative(target), check_links.relative(target), target)
+
+    def test_reverts_read_merge_attributes_from_before(self):
+        # Never from the tree being reverted, which the failed push wrote.
+        self.train()
+        self.train(12, text="Second chapter revision.\n")
+        calls, original = [], ar.git
+
+        def recording(repo, *args, **kwargs):
+            calls.append(args)
+            return original(repo, *args, **kwargs)
+
+        with mock.patch.object(ar, "git", side_effect=recording):
+            status, output = self.run_revert()
+        self.assertEqual(status, 0, output)
+        reverts = [args for args in calls if "revert" in args]
+        self.assertEqual(len(reverts), 2)
+        for args in reverts:
+            self.assertEqual(args[:2], (f"--attr-source={self.before}", "revert"))
+
+    def test_an_enqueued_revert_whose_issue_is_not_updated_says_both(self):
+        self.train()
+        self.api.broken = lambda method, path, token, data: method == "PATCH"
+        status, output = self.run_revert()
+        self.assertEqual(status, 3, output)
+        self.assertIsNotNone(self.api.queue)
+        self.assertIn("Revert pull request #2000 was enqueued", output)
+        self.assertIn("Issue #1000 was not updated with this outcome", output)
+        for secret in (WORKFLOW_TOKEN, APP_TOKEN):
+            self.assertNotIn(secret, output)
+
+    def test_an_unrecorded_outcome_without_an_enqueue_is_exit_2(self):
+        self.train()
+        self.api.broken = lambda method, path, token, data: method == "PATCH" or (
+            path == "/graphql")
+        status, output = self.run_revert()
+        self.assertEqual(status, 2, output)
+        self.assertIn("enqueueing is not confirmed", output)
+        self.assertIn("Issue #1000 was not updated with this outcome", output)
 
     def test_tokens_and_private_key_are_never_printed(self):
         self.train()
@@ -706,11 +812,86 @@ class AutoRevert(unittest.TestCase):
         self.assertEqual(self.api.deleted, [])
 
     def test_clear_old_success_does_not_clear_new_main(self):
+        # Main has moved on: a later push's run decides, so the run that passed is not
+        # failed, and no label changes.
         self.api.after = "b" * 40
         self.api.open_issues = [self.open_issue(4)]
         status, output = self.run_clear("--after", "a" * 40)
-        self.assertEqual(status, 2, output)
+        self.assertEqual(status, 0, output)
         self.assertEqual(self.api.deleted, [])
+        self.assertIn("a later push's run decides, and no label was changed", output)
+
+    def test_clear_with_main_s_tip_unreadable_removes_nothing(self):
+        self.api.open_issues = [self.open_issue(4)]
+        for tip in ("", "b" * 39, None):
+            with self.subTest(tip=tip):
+                self.api.after = tip
+                status, output = self.run_clear("--after", "a" * 40)
+                self.assertEqual(status, 2, output)
+                self.assertIn("Main's tip could not be read", output)
+                self.assertEqual(self.api.deleted, [])
+
+    def run_clear_step(self, tip, *, issues=None):
+        """The clear job's step, run as the workflow runs it, with a stand-in for gh: the
+        step's output, its exit and the labels it removed."""
+        script = workflow_step("post-merge.yml",
+                               "Clear main-red after successful integration of the current main")
+        directory = self.directory / "clear-bin"
+        directory.mkdir(exist_ok=True)
+        state = self.directory / "clear-state.json"
+        state.write_text(json.dumps({"tip": tip, "issues": issues or [[]], "deleted": []}),
+                         encoding="utf-8")
+        gh = directory / "gh"
+        gh.write_text(f"#!{sys.executable}\n" + textwrap.dedent('''\
+            import json
+            import os
+            import sys
+            from pathlib import Path
+
+            args = sys.argv[1:]
+            root = "repos/" + os.environ["REPOSITORY"]
+            path = Path(os.environ["CLEAR_STATE"])
+            state = json.loads(path.read_text())
+            if args == ["api", root + "/git/ref/heads/main", "--jq", ".object.sha"]:
+                if state["tip"] is None:
+                    sys.exit(1)
+                print(state["tip"])
+            elif args == ["api", "--paginate", "--slurp",
+                          root + "/issues?state=open&labels=main-red&per_page=100"]:
+                print(json.dumps(state["issues"]))
+            elif args[:3] == ["api", "--method", "DELETE"]:
+                state["deleted"].append(args[3])
+                path.write_text(json.dumps(state))
+                print(json.dumps([{"name": "blocks-release"}]))
+            else:
+                raise AssertionError("Unexpected gh operation: " + repr(args))
+            '''), encoding="utf-8")
+        gh.chmod(0o755)
+        env = ar.git_env()
+        env.update(PATH=str(directory) + ":" + env["PATH"], REPOSITORY=SLUG, AFTER="a" * 40,
+                   RUNNER_TEMP=str(self.directory), CLEAR_STATE=str(state))
+        result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script],
+                                cwd=self.repo, env=env, text=True, capture_output=True,
+                                check=False)
+        deleted = json.loads(state.read_text(encoding="utf-8"))["deleted"]
+        return result.stdout + result.stderr, result.returncode, deleted
+
+    def test_workflow_clear_changes_nothing_and_passes_when_main_has_moved(self):
+        issues = [[self.open_issue(4)]]
+        output, code, deleted = self.run_clear_step("b" * 40, issues=issues)
+        self.assertEqual(code, 0, output)
+        self.assertEqual(deleted, [])
+        self.assertIn("a later push's run decides, and no label was changed", output)
+        output, code, deleted = self.run_clear_step("a" * 40, issues=issues)
+        self.assertEqual(code, 0, output)
+        self.assertEqual(deleted, [f"repos/{SLUG}/issues/4/labels/main-red"])
+
+    def test_workflow_clear_fails_when_main_s_tip_is_unreadable(self):
+        for tip in (None, "", "not a commit"):
+            with self.subTest(tip=tip):
+                output, code, deleted = self.run_clear_step(tip, issues=[[self.open_issue(4)]])
+                self.assertNotEqual(code, 0, output)
+                self.assertEqual(deleted, [])
 
     def test_clear_dry_run_never_contacts_github(self):
         status, output = self.run_clear("--dry-run")

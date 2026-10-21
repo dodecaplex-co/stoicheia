@@ -12,28 +12,43 @@ Only a first-parent chain of two-parent pull request merges can be reverted. The
 decisions record is history, only ever added to (docs/WORKFLOW.md, "Auto-revert"), so a
 revert never removes a decision's text: it keeps docs/decisions/ and the decisions page
 as at the reverted push's tip, as the advice for a revert by hand keeps them as
-origin/main has them; everything else is the exact revert.
+origin/main has them; everything else is the exact revert. Each revert reads merge
+attributes from the push's before, the main whose own run passed, never from the
+reverted tree (git --attr-source, Git 2.42 or later), as the queue's judge does. A
+relative link of the kept record that resolves at the reverted push's tip but would not
+in the revert (broken_links) would fail the revert's own link check, so such a revert
+is not pushed: the issue names the links and says to revert by hand.
 Unreadable history or metadata, missing credentials and conflicts leave an issue
-without a pull request. Exit 0 means enqueued (or cleared), 1 means issue only or
-an incomplete revert, and 2 means the issue itself could not be recorded.
+without a pull request. Exit 0 means enqueued (or cleared, or nothing to clear because
+main has moved on), 1 means issue only or an incomplete revert, 2 means the issue
+itself could not be recorded or updated, and 3 means the revert was enqueued but the
+issue could not be updated with that outcome.
 --dry-run describes the actions without network access or changing the repository.
+--clear is the coordinator's, run by hand from a checkout of main: it removes main-red
+from every open issue, as the post-merge workflow's clear job does with the runner's
+tools alone, since that job runs no repository code; it stays for a clear by hand that
+must read every page, confirm each removal and change nothing once main has moved on.
 """
 
 from __future__ import annotations
 
 import argparse
 import base64
+import html
 import json
 import os
+import posixpath
 import re
 import subprocess
 import sys
 import tempfile
 import time
+import unicodedata
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import unquote
 
 
 # These are safe_push.py's protected paths. This copy keeps the trusted script
@@ -166,8 +181,20 @@ def git(repo: Path, *args: str, env=None) -> str:
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False, timeout=120)
     if result.returncode:
         # A subprocess error can contain credentials or untrusted repository text.
-        raise Refusal(f"git {args[0]} failed.")
+        command = next((arg for arg in args if not arg.startswith("-")), args[0])
+        raise Refusal(f"git {command} failed.")
     return result.stdout.rstrip("\n")
+
+
+def blob(repo: Path, sha: str) -> bytes:
+    """A blob's bytes as they are, for the link check."""
+    result = subprocess.run(
+        ["git", "-c", "core.hooksPath=/dev/null", "cat-file", "blob", sha], cwd=repo,
+        env=git_env(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+        timeout=120)
+    if result.returncode:
+        raise Refusal("git cat-file failed.")
+    return result.stdout
 
 
 @dataclass
@@ -304,13 +331,240 @@ def keep_decisions(target: Path, after: str) -> None:
             raise Refusal(f"The revert could not keep {path} as at the failed push.")
 
 
-def make_revert(source: Path, target: Path, after: str,
+# The links of the kept record, read and resolved as scripts/check_links.py reads and
+# resolves them: its patterns and functions, copied, since this script imports no
+# repository code. The tests hold the two together.
+SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+LINE_ANCHOR = re.compile(r"L(\d+)(?:C\d+)?(?:-L(\d+)(?:C\d+)?)?")
+FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
+ATX = re.compile(r"^ {0,3}(#{1,6})(?:[ \t]+(.*?))?(?:[ \t]+#+)?[ \t]*$")
+SETEXT = re.compile(r"^ {0,3}(=+|-+)[ \t]*$")
+COMMENT = re.compile(r"<!--.*?-->", re.S)
+LINK_TEXT = re.compile(r"(?<!\\)\[(?:[^\[\]\\]|\\.|\[(?:[^\[\]\\]|\\.)*\])*\]\(")
+REF_DEF = re.compile(r"^ {0,3}\[((?:[^\[\]\\]|\\.)+)\]:[ \t]*(<[^>]*>|\S+)")
+HTML_URL = re.compile(r"<[A-Za-z][^>]*?\b(?:href|src)\s*=\s*(\"[^\"]*\"|'[^']*')", re.S)
+HTML_ANCHOR = re.compile(r"<[A-Za-z][^>]*?\b(?:name|id)\s*=\s*(\"[^\"]*\"|'[^']*')", re.S)
+# So many links are named in the issue at most, which GitHub limits in length.
+SHOWN_LINKS = 20
+
+
+def blank_code(text: str) -> list[str]:
+    """The text's lines with fenced code blocks and HTML comments blanked, as
+    check_links.blank_code does."""
+    text = COMMENT.sub(lambda m: re.sub(r"[^\n]", " ", m.group(0)), text)
+    lines = text.split("\n")
+    fence = None
+    for i, line in enumerate(lines):
+        m = FENCE.match(line)
+        if fence:
+            if m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence) \
+                    and not line.strip()[len(m.group(1)):].strip():
+                fence = None
+            lines[i] = ""
+        elif m:
+            fence = m.group(1)
+            lines[i] = ""
+    return lines
+
+
+def blank_spans(line: str) -> str:
+    """A line with its inline code spans blanked, as check_links.blank_spans does."""
+    out, i = [], 0
+    while i < len(line):
+        if line[i] == "`":
+            run = len(line[i:]) - len(line[i:].lstrip("`"))
+            close = line.find("`" * run, i + run)
+            while close >= 0 and line[close + run:close + run + 1] == "`":
+                close = line.find("`" * run, close + run + 1)
+            if close >= 0:
+                out.append(" " * (close + run - i))
+                i = close + run
+                continue
+            out.append(line[i:i + run])
+            i += run
+            continue
+        out.append(line[i])
+        i += 1
+    return "".join(out)
+
+
+def destination(line: str, start: int) -> str | None:
+    """An inline link's target, as check_links.destination reads it."""
+    rest = line[start:].lstrip()
+    if rest.startswith("<"):
+        end = rest.find(">")
+        return rest[1:end] if end > 0 else None
+    depth, out = 0, []
+    for ch in rest:
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            if depth == 0:
+                break
+            depth -= 1
+        elif ch.isspace():
+            break
+        out.append(ch)
+    return "".join(out)
+
+
+def links(text: str):
+    """(line number, target) for every link in Markdown text, as check_links.links reads
+    a file."""
+    for number, line in enumerate(blank_code(text), 1):
+        m = REF_DEF.match(line)
+        if m:
+            yield number, m.group(2).strip("<>")
+            continue
+        spans = blank_spans(line)
+        for m in LINK_TEXT.finditer(spans):
+            target = destination(line, m.end())
+            if target is not None:
+                yield number, target
+        for m in HTML_URL.finditer(spans):
+            yield number, html.unescape(m.group(1)[1:-1])
+
+
+def heading_text(raw: str) -> str:
+    """A heading's text as GitHub renders it, as check_links.heading_text reads it."""
+    s = re.sub(r"!?\[((?:[^\[\]]|\[[^\[\]]*\])*)\]\([^)]*\)", r"\1", raw)
+    s = re.sub(r"!?\[((?:[^\[\]]|\[[^\[\]]*\])*)\]\[[^\]]*\]", r"\1", s)
+    s = re.sub(r"(`+)(.*?)\1", r"\2", s)
+    s = re.sub(r"<[^>]+>", "", s)
+    s = re.sub(r"\\([!-/:-@\[-`{-~])", r"\1", s)
+    s = s.replace("*", "")
+    s = re.sub(r"(?<!\w)_+|_+(?!\w)", "", s)
+    return html.unescape(s).strip()
+
+
+def slug(text: str) -> str:
+    """GitHub's slug of a heading's text, as check_links.slug gives it."""
+    kept = [ch for ch in text.lower() if ch in " -" or unicodedata.category(ch)[0] in "LM"
+            or unicodedata.category(ch) in ("Nd", "Pc")]
+    return "".join(kept).replace(" ", "-")
+
+
+def anchors(text: str) -> frozenset:
+    """Every #anchor of Markdown text, as check_links.anchors finds a file's."""
+    lines = blank_code(text)
+    found, seen = set(), {}
+
+    def add(raw):
+        base = slug(heading_text(raw))
+        count = seen.get(base, 0)
+        found.add(base if count == 0 else f"{base}-{count}")
+        seen[base] = count + 1
+
+    previous = ""
+    for line in lines:
+        m = ATX.match(line)
+        if m:
+            add(m.group(2) or "")
+        elif SETEXT.match(line) and previous.strip() and not re.match(
+                r"^ {0,3}([#|>*+-]|\d+[.)]|<)", previous) and not SETEXT.match(previous):
+            add(previous.strip())
+        for m in HTML_ANCHOR.finditer(blank_spans(line)):
+            found.add(html.unescape(m.group(1)[1:-1]))
+        previous = line
+    return frozenset(found)
+
+
+def relative(target: str) -> bool:
+    """A link check_links.py checks: not a web address, mail or other scheme, and not
+    empty."""
+    target = target.strip()
+    return bool(target) and not SCHEME.match(target) and not target.startswith("//")
+
+
+def markdown(data: bytes) -> str:
+    """A Markdown file's text as check_links.py reads it: UTF-8, line ends made line
+    feeds."""
+    return data.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+
+
+def tree_entries(repo: Path, rev: str) -> dict[str, tuple[str, str]]:
+    """Every path of `rev`'s tree, folders included, with its object's type and name."""
+    result = {}
+    for row in git(repo, "ls-tree", "-r", "-t", "-z", rev).split("\0"):
+        if row:
+            meta, _, path = row.partition("\t")
+            result[path] = tuple(meta.split()[1:3])
+    return result
+
+
+def resolves(repo: Path, tree: dict, path: str, anchor: str, cache: dict) -> bool:
+    """Whether a link to `path`, from the root ("" is the root itself), with `anchor`,
+    resolves in `tree`, as check_links.check_link resolves it: to a file or a folder;
+    an anchor to a heading or an HTML name or id of a Markdown file (a folder's
+    README.md), or to lines of any other file."""
+    entry = ("tree", "") if not path else tree.get(path)
+    if entry is None:
+        return False
+    if not anchor:
+        return True
+    if entry[0] == "tree":
+        path = f"{path}/README.md" if path else "README.md"
+        entry = tree.get(path)
+        if entry is None or entry[0] != "blob":
+            return False
+    if entry[1] not in cache:
+        cache[entry[1]] = blob(repo, entry[1])
+    data = cache[entry[1]]
+    if path.endswith(".md"):
+        if ("#", entry[1]) not in cache:
+            cache["#", entry[1]] = anchors(markdown(data))
+        return anchor in cache["#", entry[1]]
+    lines = LINE_ANCHOR.fullmatch(anchor)
+    if not lines:
+        return False
+    first, last = int(lines.group(1)), int(lines.group(2) or lines.group(1))
+    count = data.count(b"\n") + (0 if data.endswith(b"\n") or not data else 1)
+    return 1 <= first <= last <= count
+
+
+def broken_links(repo: Path, after: str, head: str) -> list[str]:
+    """The relative links of the kept record, the decisions page and the Markdown files
+    under docs/decisions/ as at `after`, that resolve at `after` but would not at
+    `head`, the revert: a file or folder it takes away, or a heading or lines a linked
+    file loses. Each is named as file:line: target. A link already broken at `after` is
+    not the revert's doing, and is left to the link check."""
+    kept_tree, revert_tree = tree_entries(repo, after), tree_entries(repo, head)
+    files = sorted(path for path, (kind, _) in kept_tree.items()
+                   if kind == "blob" and path.endswith(".md")
+                   and (path == DECISIONS or path.startswith(ENTRIES + "/")))
+    cache: dict = {}
+    broken = []
+    for name in files:
+        for number, target in links(markdown(blob(repo, kept_tree[name][1]))):
+            if not relative(target):
+                continue
+            path, _, anchor = target.strip().partition("#")
+            path, anchor = unquote(path.split("?", 1)[0]), unquote(anchor)
+            if not path:
+                where = name
+            elif path.startswith("/"):
+                where = posixpath.normpath(path.lstrip("/") or ".")
+            else:
+                where = posixpath.normpath(posixpath.join(posixpath.dirname(name), path))
+            if where == ".." or where.startswith("../"):
+                continue
+            where = "" if where == "." else where
+            if resolves(repo, kept_tree, where, anchor, cache) \
+                    and not resolves(repo, revert_tree, where, anchor, cache):
+                broken.append(f"{name}:{number}: {target}")
+    return broken
+
+
+def make_revert(source: Path, target: Path, before: str, after: str,
                 entries: list[Train]) -> tuple[str, list[str]]:
     git(source, "clone", "--local", "--no-hardlinks", "--no-checkout", str(source), str(target))
     git(target, "switch", "--create", f"revert/{after[:12]}", after)
     for train in entries:
         try:
-            git(target, "revert", "--no-edit", "-m", "1", train.sha)
+            # Merge attributes come from before, the main whose own run passed, never
+            # from the tree being reverted.
+            git(target, f"--attr-source={before}", "revert", "--no-edit", "-m", "1",
+                train.sha)
         except Refusal:
             raise Refusal(f"Revert of {train.sha} did not apply cleanly; "
                           "no pull request opened.") from None
@@ -330,15 +584,25 @@ def issue_body(args, entries: list[Train], outcome: str) -> str:
             f"Run: {args.run_url}\n\n{outcome}\n")
 
 
-def main_tip(api: GitHub, after: str) -> None:
+def main_tip(api: GitHub) -> str:
+    """Main's tip as GitHub names it now; an unreadable answer refuses."""
     data = api.call("GET", api.root + "/git/ref/heads/main")
-    if not isinstance(data, dict) or data.get("object", {}).get("sha") != after:
-        raise Refusal("Main has moved or its tip could not be read.")
+    named = data.get("object") if isinstance(data, dict) else None
+    sha = named.get("sha") if isinstance(named, dict) else None
+    if not isinstance(sha, str) or not SHA.fullmatch(sha):
+        raise Refusal("Main's tip could not be read.")
+    return sha
 
 
 def clear(api: GitHub, after: str | None) -> int:
     if after:
-        main_tip(api, after)
+        tip = main_tip(api)
+        if tip != after:
+            # The success is of a main that is no longer the tip: a later push's run
+            # decides, and its own clear or revert follows.
+            print(f"Main has moved on from {after[:12]} to {tip[:12]}: a later push's run "
+                  "decides, and no label was changed.")
+            return 0
     rows = api.pages(api.root + "/issues?state=open&labels=main-red")
     numbers = []
     for row in rows:
@@ -363,7 +627,8 @@ def dry_run(args, repo: Path, env: dict) -> int:
     root = f"/repos/{args.repo}"
     if args.clear:
         if args.after:
-            print(f"Would check main still names {args.after}.")
+            print(f"Would check main still names {args.after}, and change no label if "
+                  "it has moved on.")
         print(f"Would GET every page of {root}/issues?state=open&labels=main-red.")
         print("Would DELETE main-red from each open issue, keeping blocks-release and the issue.")
         return 0
@@ -379,10 +644,13 @@ def dry_run(args, repo: Path, env: dict) -> int:
         return 1
     print(f"Would clone locally and create branch revert/{args.after[:12]} from {args.after}.")
     for train in entries:
-        print(f"Would git revert --no-edit -m 1 {train.sha}.")
+        print(f"Would git revert --no-edit -m 1 {train.sha}, with merge attributes from "
+              f"{args.before} (git --attr-source).")
     print(f"Would keep {ENTRIES}/ and {DECISIONS} as at {args.after}: "
           "the decisions record is history.")
     print("Would stop on any conflict, update the issue and open no pull request.")
+    print("Would push nothing, and say to revert by hand, if a relative link of the kept "
+          "record that resolves at after would not resolve in the revert.")
     print("Would sign an RS256 JWT with openssl, find the installation and mint its scoped token.")
     print("Would ensure auto-revert, the trains' kind labels and security-review "
           "for protected paths.")
@@ -422,12 +690,23 @@ def revert(args, source: Path, api: GitHub, env: dict, push) -> int:
     try:
         with tempfile.TemporaryDirectory(prefix="stoicheia-revert-") as directory:
             target = Path(directory) / "tree"
-            head, paths = make_revert(source, target, args.after, entries)
+            head, paths = make_revert(source, target, args.before, args.after, entries)
             if any(path.startswith(".github/workflows/") for path in paths):
                 # The job's token cannot push a change to a workflow, and the App writes
                 # no contents: such a revert is the coordinator's, by hand.
                 raise Refusal("The revert changes .github/workflows/, which the job's token "
                               "cannot push: revert it by hand.")
+            broken = broken_links(target, args.after, head)
+            if broken:
+                # Its own check_links.py step would fail, and the queue eject it.
+                more = len(broken) - SHOWN_LINKS
+                raise Refusal(
+                    "The revert would break these relative links of the kept decisions "
+                    "record, which resolve at the failed push:\n"
+                    + "\n".join(f"- {link}" for link in broken[:SHOWN_LINKS])
+                    + (f"\n- and {more} more" if more > 0 else "")
+                    + "\nRevert it by hand, mending each link (docs/WORKFLOW.md, "
+                    "\"Auto-revert\").")
             labels = {"auto-revert"} | {label for t in entries for label in t.labels
                                         if label in KINDS}
             if any(protected(path) for path in paths):
@@ -436,7 +715,9 @@ def revert(args, source: Path, api: GitHub, env: dict, push) -> int:
             token = installation_token(api, env["STOICHEIA_REVERT_APP_ID"],
                                        env["STOICHEIA_REVERT_APP_KEY"], args.repo)
             app = GitHub(args.repo, token, api.http)
-            main_tip(api, args.after)
+            if main_tip(api) != args.after:
+                raise Refusal("Main has moved on from the failed push: a later push's own "
+                              "run decides.")
             branch = f"revert/{args.after[:12]}"
             stage = f"Push of {branch} was attempted; its remote state may need inspection."
             # The job's own token pushes; a GITHUB_TOKEN cannot push a change to
@@ -477,11 +758,18 @@ def revert(args, source: Path, api: GitHub, env: dict, push) -> int:
         reason = (str(exc) if isinstance(exc, Refusal)
                   else "The automatic revert could not be completed.")
         outcome = f"{reason}\n{stage}"
-    updated = api.call("PATCH", f"{api.root}/issues/{issue['number']}",
-                       {"body": issue_body(args, entries, outcome)})
-    if not isinstance(updated, dict) or updated.get("number") != issue["number"]:
-        raise Refusal("GitHub did not confirm the issue's outcome.")
     print(outcome)
+    try:
+        updated = api.call("PATCH", f"{api.root}/issues/{issue['number']}",
+                           {"body": issue_body(args, entries, outcome)})
+        if not isinstance(updated, dict) or updated.get("number") != issue["number"]:
+            raise Refusal("GitHub did not confirm the issue's outcome.")
+    except Exception as exc:
+        reason = str(exc) if isinstance(exc, Refusal) else "The issue could not be updated."
+        # An enqueued revert stays enqueued: only the issue's account of it is missing.
+        print(f"Issue #{issue['number']} was not updated with this outcome: {reason}",
+              file=sys.stderr)
+        return 3 if result == 0 else 2
     return result
 
 

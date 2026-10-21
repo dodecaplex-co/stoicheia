@@ -338,10 +338,14 @@ jobs:
     # posted by an App running main's code. The queue must not be turned on until one
     # exists.
     runs-on: ubuntu-latest
+    # The judge's own reading, and its wait of up to 10 minutes for a revert's run to
+    # complete (WORKFLOW, section 10): to be measured again on the queue's trial.
+    timeout-minutes: 20
     permissions:
       contents: read
       pull-requests: read
-      # An automatic revert's failed run and the open main-red issue that names it.
+      # An automatic revert's failed run and the open main-red issues, which a revert
+      # must name and an ordinary entry must declare it fixes.
       actions: read
       issues: read
     steps:
@@ -355,8 +359,11 @@ jobs:
           python-version: "3.12"
 
       - name: Install the queue tests' pinned YAML parser
+        # Isolated, from the runner's temporary directory: nothing in the checkout (a
+        # pip/ folder, say) can run in pip's place.
         if: github.event_name != 'merge_group'
-        run: python3 -m pip install -r scripts/requirements-test_safe_push.txt
+        working-directory: ${{ runner.temp }}
+        run: python3 -I -m pip install -r "$GITHUB_WORKSPACE/scripts/requirements-test_safe_push.txt"
 
       - name: Check the queue and train checks, and automatic reverts, case by case
         # On a pull request and on main: the offline cases, which need no network.
@@ -398,10 +405,17 @@ jobs:
     # process can read its parent's environment (/proc/<ppid>/environ), so the step that
     # holds the token, to read GitHub, chooses them and runs none; the last step, which
     # holds no token, nor does any step after the choosing, runs them, and refuses to if
-    # a variable named with TOKEN is in its environment.
+    # a variable named with TOKEN is in its environment. That keeps the token out of the
+    # tests' environment, files, caches and artifacts, but the runner process holds it
+    # for the whole job, beneath every step: so it is read-only by design, the four
+    # permissions below, all read.
     needs: acceptance
     if: always()
     runs-on: ubuntu-latest
+    # The changed checks' tests, the slowest group (safe_push's, check_queue's and
+    # check_train's at once) near 40 minutes here, and the judge's wait of up to 10
+    # minutes for a revert's run: to be measured again on the queue's trial.
+    timeout-minutes: 75
     permissions:
       contents: read
       pull-requests: read
@@ -455,8 +469,11 @@ jobs:
 
       - name: Install the tests' pinned YAML parser, main's pin
         # After the token's last step: what pip installs could run in any later Python.
+        # Isolated, from the runner's temporary directory: nothing in the group's
+        # checkout (a pip/ folder, say) can run in pip's place.
         if: github.event_name == 'merge_group'
-        run: python3 -m pip install -r "$RUNNER_TEMP/judge/requirements-test_safe_push.txt"
+        working-directory: ${{ runner.temp }}
+        run: python3 -I -m pip install -r "$RUNNER_TEMP/judge/requirements-test_safe_push.txt"
 
       - name: Run the tests of what is new
         # No token here: the tests are the group's own code. Main's check_queue.py runs

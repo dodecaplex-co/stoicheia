@@ -107,6 +107,8 @@ class QueueTests(unittest.TestCase):
             "queue": {"data": {"repository": {"mergeQueue": {"entries": {
                 "nodes": [], "pageInfo": {"hasNextPage": False},
             }}}}},
+            # No open main-red issue: main is green.
+            "main_red": [[]],
         }
         self.one = self.train(1, {TEXT: "The first train's reviewed line.\n"})
         self.two = self.train(2, {SECOND: "The second train's reviewed line.\n"})
@@ -218,7 +220,8 @@ class QueueTests(unittest.TestCase):
             nodes.append({"position": len(nodes) + 1,
                           "enqueuer": {"__typename": "User", "login": "fixture"},
                           "pullRequest": {"number": number, "headRefOid": head,
-                                          "editor": None}})
+                                          "editor": None,
+                                          "timelineItems": {"nodes": []}}})
 
     def nodes(self):
         return self.snapshot["queue"]["data"]["repository"]["mergeQueue"]["entries"]["nodes"]
@@ -700,6 +703,77 @@ class QueueTests(unittest.TestCase):
         self.nodes()[0]["pullRequest"]["editor"] = {"__typename": "User", "login": "someone"}
         self.verdict(self.cli(), 0, "queue: PASS")
 
+    def rename(self, typename):
+        """The entry's last title rename, by an actor of this type, as its timeline gives
+        it."""
+        self.nodes()[0]["pullRequest"]["timelineItems"]["nodes"] = [
+            {"actor": {"__typename": typename, "login": "renamer"}}]
+
+    def test_no_bot_may_rename_an_ordinary_entry(self):
+        # The title goes into main's merge commit, so a bot's rename is the bot's words.
+        self.rename("Bot")
+        self.verdict(self.cli(), 1, "#1: a bot last renamed a pull request")
+        self.rename("User")
+        self.verdict(self.cli(), 0, "queue: PASS")
+
+    def test_unreadable_rename_refuses(self):
+        timeline = self.nodes()[0]["pullRequest"]["timelineItems"]
+        for nodes in (None, [{"actor": None}], [{}], [{"actor": {"login": "renamer"}}],
+                      [{"actor": {"__typename": "User", "login": "a"}}] * 2):
+            with self.subTest(nodes=nodes):
+                timeline["nodes"] = nodes
+                self.verdict(self.cli(), 2, "who queued, edited and renamed each entry")
+        del self.nodes()[0]["pullRequest"]["timelineItems"]
+        self.verdict(self.cli(), 2, "who queued, edited and renamed each entry")
+
+    def test_the_queue_read_asks_for_each_entry_s_last_rename(self):
+        with patch.dict(os.environ, {"GH_TOKEN": "fixture-token"}), \
+                patch.object(queue.subprocess, "run", return_value=subprocess.CompletedProcess(
+                    [], 0, "{}", "")) as call:
+            queue.GitHub("owner/repository", None).read("queue")
+        query = next(arg for arg in call.call_args.args[0] if arg.startswith("query="))
+        self.assertIn("timelineItems(itemTypes:[RENAMED_TITLE_EVENT],last:1)", query)
+        self.assertIn("...on RenamedTitleEvent{actor{__typename login}}", query)
+
+    RED = [[{"number": 9, "state": "open", "labels": [{"name": "main-red"}],
+             "body": "Main's integration checks failed.\n"}]]
+
+    def test_red_main_holds_every_entry_but_its_declared_fix(self):
+        # A train queued before main went red, or queued without --merge, waits as --merge
+        # does: only a pull request that declares it fixes every open main-red issue lands.
+        self.snapshot["main_red"] = self.RED
+        self.verdict(self.cli(), 1, "#1: main is red (open main-red issues #9)")
+        for number in (1, 2):
+            self.set_body("Fixes main-red: #9\n\n" + self.body(number), number)
+        self.verdict(self.cli(), 0, "queue: PASS")
+        for line, message in (("Fixes main-red: #9, #10", "naming every open main-red issue"),
+                              ("Fixes main-red: 9", "unreadable main-red fix")):
+            with self.subTest(line=line):
+                self.set_body(self.body().replace("Fixes main-red: #9", line))
+                self.verdict(self.cli(), 1, "#1: ", message)
+                self.set_body(self.body().replace(line, "Fixes main-red: #9"))
+
+    def test_red_main_judges_no_merged_entry(self):
+        # An entry already merged is on main; the pause is for those still queued.
+        pr = self.snapshot["pull_requests"]["1"]
+        pr.update(state="closed", merged=True, merge_commit_sha=self.first)
+        self.snapshot["main"]["sha"] = self.first
+        self.nodes().pop(0)
+        self.nodes()[0]["position"] = 1
+        self.snapshot["main_red"] = self.RED
+        self.verdict(self.cli(), 1, "#2: main is red")
+        self.set_body("Fixes main-red: #9\n\n" + self.body(2), 2)
+        self.verdict(self.cli(), 0, "queue: PASS")
+
+    def test_unreadable_main_red_issues_refuse_an_ordinary_entry(self):
+        for pages in ([[{"state": "open", "labels": [{"name": "main-red"}], "body": ""}]],
+                      [{}], None):
+            with self.subTest(pages=pages):
+                self.snapshot["main_red"] = pages
+                self.verdict(self.cli(), 2, "could not read the open main-red issues")
+        del self.snapshot["main_red"]
+        self.verdict(self.cli(), 2, "fixture lacks main_red")
+
     def test_unreadable_enqueuer_refuses(self):
         self.nodes()[0]["enqueuer"] = None
         self.verdict(self.cli(), 2)
@@ -796,12 +870,14 @@ class QueueTests(unittest.TestCase):
         self.base = self.first if merges == 1 else self.head
         self.snapshot["main"]["sha"] = self.base
         reverted = [self.first] if merges == 1 else [self.head, self.first]
-        changes = {TEXT: original[TEXT]}
+        # One commit for each merge, its revert, newest first, as auto_revert makes them.
+        head = self.base
         if merges == 2:
-            changes[SECOND] = original[SECOND]
+            head = self.make([head], {SECOND: original[SECOND]})
+        changes = {TEXT: original[TEXT]}
         if extra:
             changes["notes/unrelated.txt"] = "An extra change.\n"
-        head = self.make([self.base], changes)
+        head = self.make([head], changes)
         self.nodes().clear()
         self.pr(3, head, f"revert/{self.base[:12]}",
                 "Failed run: 71\n" + "\n".join(f"Reverts: {sha}" for sha in reverted) + "\n",
@@ -830,11 +906,26 @@ class QueueTests(unittest.TestCase):
 
     def test_auto_revert_needs_an_open_main_red_issue_naming_its_run(self):
         head, _ = self.revert_group()
-        for issues in ([[]], [[{"number": 9, "state": "open", "labels": [{"name": "main-red"}],
-                                 "body": "Run: https://github.com/o/r/actions/runs/710\n"}]]):
-            with self.subTest(issues=issues):
-                self.snapshot["main_red"] = issues
+        run = "https://github.com/owner/repository/actions/runs/71"
+        for body in ("Run: https://github.com/o/r/actions/runs/710\n",
+                     # Another repository's run of the same number names nothing.
+                     "Run: https://github.com/other/repository/actions/runs/71\n",
+                     # Nor does this repository's address off the issue's own Run: line.
+                     f"Failed jobs:\n{run}\n", f"Runs: {run}\n", f"Run: {run}0\n",
+                     f"Run: {run}\nRun: {run}\n", f"> Run: {run}\n"):
+            with self.subTest(body=body):
+                self.snapshot["main_red"] = [[{"number": 9, "state": "open",
+                                               "labels": [{"name": "main-red"}],
+                                               "body": body}]]
                 self.verdict(self.cli(head=head), 1, "no open main-red issue names")
+        self.snapshot["main_red"] = [[]]
+        self.verdict(self.cli(head=head), 1, "no open main-red issue names")
+        for body in (f"Run: {run}/attempts/2\n", f"Before: x\nRun: {run}\r\n\nOutcome.\n"):
+            with self.subTest(body=body):
+                self.snapshot["main_red"] = [[{"number": 9, "state": "open",
+                                               "labels": [{"name": "main-red"}],
+                                               "body": body}]]
+                self.verdict(self.cli(head=head), 0, "queue: PASS")
 
     def test_auto_revert_branch_must_name_the_failed_push(self):
         head, _ = self.revert_group()
@@ -958,6 +1049,90 @@ class QueueTests(unittest.TestCase):
         self.failed_run(self.base, self.two)
         self.verdict(self.cli(head=head), 1, "range is not on main's first-parent chain")
 
+    def queued_revert(self, after, before, head, reverts):
+        """Queue `head` as the bot's revert of the merges `reverts`, of the failed push
+        before..after, alone; the group on main's tip."""
+        self.nodes().clear()
+        self.pr(3, head, f"revert/{after[:12]}",
+                "Failed run: 71\n" + "".join(f"Reverts: {sha}\n" for sha in reverts),
+                ["auto-revert"], {"login": BOT, "type": "Bot"})
+        self.failed_run(before, after)
+        return self.merge(self.base, head, 3)
+
+    def test_auto_revert_built_on_a_later_main_refuses(self):
+        # The failed push is the first train's merge; main has moved on to the second's.
+        # A revert of the first built there would keep the decisions record as at that
+        # later main, not as at the failed push.
+        old_base, original = self.base, self.trees[self.base]
+        self.base = self.head
+        self.snapshot["main"]["sha"] = self.head
+        head = self.make([self.head], {TEXT: original[TEXT]})
+        group = self.queued_revert(self.first, old_base, head, [self.first])
+        self.verdict(self.cli(head=group), 1,
+                     "the revert's base must be the failed push's tip")
+
+    def test_auto_revert_holds_only_its_reverts_and_one_keep_commit(self):
+        # The exact tree is not enough: the branch's commits are the reverts, one for each
+        # merge, then at most the one commit that keeps the decisions record.
+        _, old_base = self.revert_group(merges=2)
+        original = self.trees[old_base]
+        base, snapshot = self.base, copy.deepcopy(self.snapshot)
+        exact = self.snapshot["pull_requests"]["3"]["head"]["sha"]
+        injected = "notes/injected.txt"
+        through = self.make([self.make([self.head], {SECOND: original[SECOND],
+                                                     injected: "Injected.\n"})],
+                            {injected: None})
+        side = self.make([self.head], {})
+        cases = {
+            "an injected file, taken out again": self.make([through], {TEXT: original[TEXT]}),
+            "both reverts in one commit": self.make([self.head], {
+                TEXT: original[TEXT], SECOND: original[SECOND]}),
+            "a commit of no change after them": self.make([exact], {}),
+            "a merge on the branch": self.make([exact, side],
+                                               tree=self.git("rev-parse",
+                                                             f"{exact}^{{tree}}").strip()),
+            "the reverts in the other order": self.make([self.make([self.head], {
+                TEXT: original[TEXT]})], {SECOND: original[SECOND]}),
+        }
+        for case, head in cases.items():
+            with self.subTest(case=case):
+                self.base, self.snapshot = base, copy.deepcopy(snapshot)
+                group = self.queued_revert(self.head, old_base, head, [self.head, self.first])
+                self.verdict(self.cli(head=group), 1, "auto-revert: the branch must hold")
+
+    def test_auto_revert_of_a_push_holding_a_one_parent_commit_refuses(self):
+        # auto_revert reverts none of such a push; nor does the queue admit a revert of
+        # its merges alone.
+        old_base, original = self.base, self.trees[self.base]
+        direct = self.make([self.base], {SECOND: "A direct commit to main.\n"})
+        one = self.train(1, {TEXT: "The first train's reviewed line.\n"}, start=direct)
+        self.base = self.merge(direct, one, 1)
+        self.snapshot["main"]["sha"] = self.base
+        head = self.make([self.base], {TEXT: original[TEXT]})
+        group = self.queued_revert(self.base, old_base, head, [self.base])
+        self.verdict(self.cli(head=group), 1,
+                     "the failed push holds a commit that is not a two-parent merge")
+
+    def test_auto_revert_reads_merge_attributes_from_before(self):
+        # As the revert job reads them: from the main whose own run passed, never from the
+        # tree being reverted.
+        _, old_base = self.revert_group(merges=2)
+        self.fixture.write_text(json.dumps(self.snapshot), encoding="utf-8")
+        pr = dict(queue.pull_request(self.snapshot["pull_requests"]["3"], 3), main=self.base)
+        api = queue.GitHub("owner/repository", self.fixture)
+        calls, run = [], queue.safe_push.run
+
+        def recording(args, *rest, **kwargs):
+            calls.append(list(args))
+            return run(args, *rest, **kwargs)
+
+        with patch.object(queue.safe_push, "run", side_effect=recording):
+            queue.exact_revert(self.repo, pr, api)
+        reverts = [call for call in calls if "revert" in call]
+        self.assertEqual(len(reverts), 2, calls)
+        for call in reverts:
+            self.assertEqual(call[call.index("revert") - 1], f"--attr-source={old_base}")
+
     def waited_push(self, *states):
         """failed_push on run 71 as GitHub reports it at each read in turn, the last state
         repeating, with a clock that only sleeping moves on: the push it finds, how many
@@ -1033,11 +1208,17 @@ class QueueTests(unittest.TestCase):
             changes[PAGE] = page
         self.base = self.make([self.base], changes)
         original = self.trees[self.base]
-        one = self.train(1, {TEXT: "The first train's reviewed line.\n",
-                             self.ENTRY: self.DECISION, **(train or {})})
+        trained = {TEXT: "The first train's reviewed line.\n", self.ENTRY: self.DECISION,
+                   **(train or {})}
+        one = self.train(1, trained)
         old_base, self.base = self.base, self.merge(self.base, one, 1)
         self.snapshot["main"]["sha"] = self.base
-        head = self.make([self.base], {TEXT: original[TEXT], **(revert or {})})
+        # The revert, as git makes it, then the commit that keeps the record as at the
+        # failed push (with any change `revert` asks for).
+        reverted = self.make([self.base], {path: original.get(path) for path in trained})
+        kept = {path: text for path, text in self.trees[self.base].items()
+                if path == PAGE or path.startswith(queue.ENTRIES + "/")}
+        head = self.make([reverted], {**kept, **(revert or {})})
         self.nodes().clear()
         self.pr(3, head, f"revert/{self.base[:12]}",
                 f"Failed run: 71\nReverts: {self.base}\n", ["auto-revert"],
@@ -1495,6 +1676,45 @@ class QueueTests(unittest.TestCase):
             [["--gaps", "--head", head, "--base", base, "--repo", "owner/repository",
               "--plan", plan], ["GH_TOKEN"]],
             [["--run-plan", plan, "--head", head], []]])
+
+    @staticmethod
+    def workflow(name):
+        with (SCRIPTS.parent / ".github/workflows" / name).open(encoding="utf-8") as source:
+            return yaml.safe_load(source)
+
+    def test_python_modules_run_isolated_outside_the_checkout(self):
+        # python3 -m puts the working directory first on the import path, so a pip/ folder
+        # in a group's checkout would run in pip's place.
+        modules = []
+        for name in ("ci.yml", "post-merge.yml"):
+            for job, value in self.workflow(name)["jobs"].items():
+                for step in value.get("steps", []):
+                    for line in str(step.get("run", "")).splitlines():
+                        if re.search(r"\bpython3?(?:\s+-\S+)*\s+-m\b", line):
+                            modules.append((name, job, step.get("working-directory"), line))
+        self.assertEqual(sorted(job for _, job, _, _ in modules),
+                         ["queue-gaps", "queue-integrity"])
+        for name, job, directory, line in modules:
+            with self.subTest(job=job):
+                self.assertEqual(directory, "${{ runner.temp }}")
+                self.assertRegex(line, r"^python3 -I -m pip install -r \"\$[A-Z_]+/\S+\.txt\"$")
+
+    def test_queue_timeouts_are_pinned(self):
+        # To be measured again on the queue's trial (WORKFLOW, "Turning it on").
+        jobs = self.workflow("ci.yml")["jobs"]
+        self.assertEqual(jobs["acceptance"]["timeout-minutes"], 60)
+        self.assertEqual(jobs["queue-gaps"]["timeout-minutes"], 75)
+        self.assertEqual(jobs["queue-integrity"]["timeout-minutes"], 20)
+        # The status check timeout: acceptance, then queue-gaps, which waits for it, and
+        # 15 minutes for runners.
+        self.assertEqual(jobs["queue-gaps"]["needs"], "acceptance")
+        status = jobs["acceptance"]["timeout-minutes"] + jobs["queue-gaps"]["timeout-minutes"]
+        self.assertEqual(status + 15, 150)
+        guide = " ".join((SCRIPTS.parent / "docs/WORKFLOW.md").read_text(
+            encoding="utf-8").split())
+        self.assertIn("set the queue's status check timeout to 150 minutes", guide)
+        # --merge follows an entry through one rebuild behind a group that fails.
+        self.assertEqual(queue.safe_push.QUEUE_TIMEOUT, 2 * 150 * 60)
 
     def test_checkout_must_be_the_group_head(self):
         self.checkout(self.base)

@@ -3813,7 +3813,9 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report):
     commits = int(git(repo, "rev-list", "--count", f"{base}..{head}").strip())
     rep.add("1", "pull request", "ok", f"#{number} \"{view.get('title')}\": {branch} at "
             f"{head[:12]}, {plural(commits, 'commit')} onto origin/main {base[:12]}")
-    check_installed(repo, base, rep)
+    # The installed copies are compared with current main's, not with the older base a
+    # queued head is checked against.
+    check_installed(repo, ctx.harness_sha, rep)
     return ctx._replace(sha=head, commits=commits, branch=branch), view
 
 
@@ -4245,9 +4247,10 @@ def queue_base(ctx: Context, head: str) -> str:
 
 
 QUEUE_POLL = 10
-# A group's CI can take as long as the queue's status check timeout (60 minutes, the
-# acceptance job's own limit), and a train may wait behind the groups ahead of it.
-QUEUE_TIMEOUT = 5400
+# A group's CI can take as long as the queue's status check timeout, 150 minutes
+# (WORKFLOW, section 10, "Turning it on"), and a train behind a group that fails waits
+# for its own group to be built and run again: twice that, in seconds.
+QUEUE_TIMEOUT = 18000
 
 
 def queue_view(ctx: Context, number: int) -> dict:
