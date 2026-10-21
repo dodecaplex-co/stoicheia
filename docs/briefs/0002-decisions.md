@@ -3780,10 +3780,14 @@ findings:
   `set_option` and a guillemet, and the scan's pattern,
   `\bset_option\s+«?(?:debug|doc)»?\.`, asked for one. Plain `lean` accepts the closed-up
   spelling and acts on it: under `set_option«debug».byAsSorry true in`, a theorem stating
-  `0 = 1` builds, resting on `sorryAx`. The pattern now takes `\s*`, so the scan refuses
-  `set_option«debug».…` and `set_option«doc».…`, with guillemets around one part or each,
-  in a command or a tactic block, as it refused the spaced spellings; it still refuses
-  those after a space, a tab or a line break. Two more patterns of `FORBIDDEN`, found in
+  `0 = 1` builds, resting on `sorryAx`. The pattern is now
+  `\bset_option(?:\s+«?|\s*«)(?:debug|doc)»?\.`, which lets a guillemet follow
+  `set_option` with no space, so the scan refuses `set_option«debug».…` and
+  `set_option«doc».…`, with guillemets around one part or each, in a command or a tactic
+  block, as it refused the spaced spellings; it still refuses those after a space, a tab or
+  a line break. A plain `debug` or `doc` still needs the space: Lean reads
+  `set_optiondebug.skipKernelTC` as one name, not the command, and the scan does not refuse
+  it or `set_optiondoc.verso`. Two more patterns of `FORBIDDEN`, found in
   this change's second round, asked for a break where Lean needs none: `#eval\b` and
   `#exit\b`. Lean reads the longest command it knows, so plain `lean` runs `#evalx` as
   `#eval x` and stops reading at `#exitx`, exiting 0 on both, and the scan passed both.
@@ -3793,12 +3797,15 @@ findings:
   Book Zero rule asks for one space, a gap of the same kind, left to its own issue.
 
   Second, a command after a `/--/` doc-comment opener, where `read_lean` began the
-  comment's body one character before Lean does. No code changes here for it: it closes
-  with the correction of `read_lean` on `tooling/citation-sweep`
+  comment's body one character before Lean does. It closes with the correction of
+  `read_lean` made on `tooling/citation-sweep`
   ([#32](https://github.com/jackChallis/stoicheia/issues/32)), committed there at
-  `720569db` and completed at `f745017b`, where every comment's body begins at its fourth
-  character, as Lean reads it, so a `/-/-` opener hides nothing either, when that tooling
-  train lands.
+  `720569db` and completed at `f745017b`, and made here too, at `fd1db6c6`, its one line
+  alone: every comment's body begins at its fourth character, as Lean reads it, nesting
+  kept, so a `/-/-` opener, which the scan had read as opening a nested comment, whose `-/`
+  then closed only the inner one, hides nothing either. Test 20 plants `set_option«debug».skipKernelTC` after
+  `/-/- -/` and after `/--/ x -/`, each to be refused on its line, and the same command
+  inside a nested comment, `/- /- -/ … -/`, not to be.
 
   Third, `#guard_msgs (drop all) in` over a theorem that Lean refuses: the error leaves the
   build, `lake env lean` exits 0 on the file, and the theorem rests on `sorryAx`, which the
@@ -3867,7 +3874,9 @@ findings:
   (`17369f92`, whose `check_fidelity.py` is that of `0a05f96f`), all five fail: that scan
   misses the five closed-up spellings, all eleven forms of `drop`, all five commands of
   test 22, all nine forms of `substring`, all seven pins and the pin at the four new
-  files (as first run; test 24's eighth pin and two further files came after review), and catches only the three spaced spellings. With this one, all five pass, and a
+  files (as first run; test 20's two plants after an opener and its three kept lines, and
+  test 24's eighth pin and two further files, came after review), and catches only the
+  three spaced spellings. With this one, all five pass, and a
   copy of the scan with any one of these rules undone fails its test.
 
   [FORMALIZATION](../FORMALIZATION.md), section 7, the list's one home, now names each of

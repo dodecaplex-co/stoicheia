@@ -138,7 +138,8 @@ MODEL_CHECK_RUN_CMD = re.compile(
     r"[^\W\d][\w'!?]*(?=[ \t\r\n()]|$)", re.M)
 # Commands that could get round the kernel (`native_decide` and the `debug.` options, among
 # them `debug.skipKernelTC`, spelled `debug.` or `«debug».`, and with no space after
-# `set_option` before a guillemet, as Lean reads `set_option«debug».skipKernelTC`), bring
+# `set_option` before a guillemet, as Lean reads `set_option«debug».skipKernelTC`, though
+# not before a plain `debug`, since `set_optiondebug.skipKernelTC` is one name), bring
 # in an axiom without the keyword, run a program when the file is built or imported
 # (`#eval`, `run_cmd` and their kin, `initialize`, the simproc commands and
 # `set_library_suggestions`, whose code `simp` and the suggestion tactics run, and the
@@ -165,7 +166,7 @@ MODEL_CHECK_RUN_CMD = re.compile(
 FORBIDDEN = re.compile(
     r"\bnative_decide\b|\bdecide\s*\+\s*native\b|\bnative\s*:=\s*true\b|\bnative\b|"
     r"\(\s*«?config»?\s*:=|"
-    r"\bset_option\s*«?(?:debug|doc)»?\.|#eval|#exit|#guard_panic|"
+    r"\bset_option(?:\s+«?|\s*«)(?:debug|doc)»?\.|#eval|#exit|#guard_panic|"
     r"\b(bv_decide|bv_check|run_cmd|run_elab|run_meta|run_tac|by_elab|elab|elab_rules|"
     r"macro|macro_rules|command_elab|term_elab|initialize|builtin_initialize|"
     r"(?:builtin_)?(?:sym_|cbv_)?d?simproc(?:_decl|_pattern)?|set_library_suggestions|"

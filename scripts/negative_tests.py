@@ -1045,9 +1045,12 @@ def lake_links() -> None:
 
 # The spellings of `set_option debug.…` and `doc.…` with no space before the option, which
 # Lean 4.35 reads as the option itself (#197): a guillemet closed up to the command, around
-# one part or each, in a command and in a tactic block; with them, a guillemet after a
-# space, a tab (which Lean refuses on its own) and a line break, which the scan caught
-# before. Each is planted as (the spelling check_fidelity.py names, a line of Lean).
+# one part or each, in a command and in a tactic block, and after a comment opened
+# `/-/-` or `/--/`; with them, a guillemet after a space, a tab (which Lean refuses on its
+# own) and a line break, which the scan caught before. Each is planted as (the spelling
+# check_fidelity.py names, a line of Lean). SET_OPTION_KEPT holds what the rule does not
+# refuse: the command inside a nested comment, and `set_optiondebug.skipKernelTC` and
+# `set_optiondoc.verso`, with neither a space nor a guillemet, which Lean reads as one name.
 SET_OPTION_SPELLINGS = (
     ("set_option«debug».",
      "set_option«debug».skipKernelTC true in theorem planted_closed : True := trivial"),
@@ -1072,6 +1075,8 @@ SET_OPTION_SPELLINGS = (
 SET_OPTION_KEPT = (
     "/- /- -/ set_option«debug».skipKernelTC true in "
     "theorem planted_nested : True := trivial -/",
+    "theorem set_optiondebug.skipKernelTC : True := trivial",
+    "def set_optiondoc.verso : Bool := true",
 )
 # `#guard_msgs` with `drop`, in Lean 4.35's forms (#197): each kind of message and `all`,
 # the brackets closed up or spaced, `drop` after another filter or an option, twice, and a
@@ -1239,7 +1244,8 @@ def scratch_plants(name: str, plants: tuple, kept: tuple = ()) -> None:
 
 def set_option_spellings() -> None:
     """`set_option«debug».skipKernelTC true in`, and the other SET_OPTION_SPELLINGS, in a
-    scratch copy of I.1's file: each refused by its file, line and spelling."""
+    scratch copy of I.1's file: each refused by its file, line and spelling; nothing of
+    SET_OPTION_KEPT is."""
     scratch_plants("set_option«debug».… and its kin, with no space before the option",
                    SET_OPTION_SPELLINGS, SET_OPTION_KEPT)
 
