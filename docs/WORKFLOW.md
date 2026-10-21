@@ -206,7 +206,7 @@ staged. It never reads the working tree or opens a file, and
 2. **No case twins.** No two paths, and no two of their folders, are alike once case and
    Unicode's normal forms are set aside: a disk that ignores case, as macOS's does by
    default, checks the two out as one, so `Scripts/json.py` beside `scripts/heath.py` is
-   refused. Nor is a path listed twice, as a tree made by hand can list it.
+   refused. Nor is a path or a folder listed twice, as a tree made by hand can list it.
 3. **Extensions** are in lower case, from the fifteen the tree uses (`.md`, `.lean`,
    `.toml`, `.py`, `.svg` and the rest; never `.MD`, `.markdown` or `.yaml`). A file without
    one stands only at its own path: `LICENSE`, `NOTICE`, the two `lean-toolchain` files and

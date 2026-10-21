@@ -17,8 +17,8 @@ P1. Characters. ASCII letters, digits, ".", "_", "-" and "/" only; no empty segm
 P2. No case twins. No two paths, and no two of their folders, alike once Unicode NFC
     normalisation and case folding are applied: a disk that ignores case, as macOS's does
     by default, checks the two out as one, so `Scripts/json.py` beside `scripts/heath.py`
-    is a twin of the folder `scripts`. Nor one path listed twice, as a tree made by hand
-    (`git mktree`) can list it, and `--rev` reads it.
+    is a twin of the folder `scripts`. Nor one path or folder listed twice, as a tree made
+    by hand (`git mktree`) can list it, and `--rev` reads it.
 P3. Extensions. In lower case, from EXTENSIONS; a file without one only at a path of
     EXTENSIONLESS.
 P4. Types by folder. The top-level folders of TOP_FOLDERS; at the root, the files of
@@ -549,10 +549,14 @@ def self_test() -> list[str]:
 
 
 def repository() -> tuple[Path, dict[str, str]]:
-    """The repository the script stands in, as Git names its work tree and Git directory.
-    An inherited GIT_DIR or GIT_WORK_TREE that names another is refused, saying what to do:
-    a Git alias run from a linked worktree sets GIT_DIR, and the check would judge the wrong
-    index."""
+    """The repository the script stands in, as Git names its work tree, and the environment
+    its Git reads run in. An inherited GIT_DIR or GIT_WORK_TREE that names another is
+    refused, saying what to do: a Git alias run from a linked worktree sets GIT_DIR, and the
+    check would judge the wrong index. Those reads run from the work tree's root, so each
+    relative variable keeps the meaning Git gives it from the caller's directory: GIT_DIR
+    and GIT_WORK_TREE are taken from there, and GIT_INDEX_FILE from the root, where Git
+    reads it once it has entered the work tree, save that a caller outside the work tree
+    with an explicit pair, which Git does not enter, has it taken from its own directory."""
     inherited = [name for name in ("GIT_DIR", "GIT_WORK_TREE") if name in os.environ]
     remedy = ((f"; {' and '.join(inherited)} {'is' if len(inherited) == 1 else 'are'} set "
                "(a Git alias run from a linked worktree sets GIT_DIR): run the check with "
@@ -615,10 +619,9 @@ def git(root: Path, *args: str, env: dict[str, str] | None = None) -> bytes:
 
 
 def entries_of(listing: bytes) -> list[tuple[str, str]]:
-    """The (mode, path) entries of `git ls-files -s -z` or `git ls-tree -r -z`, every one,
-    so that a path listed twice is seen: each record is the mode and other fields, a tab,
-    and the path, as bytes. A path that is not UTF-8 keeps its bytes as surrogates, which
-    P1 refuses."""
+    """The (mode, path) entries of `git ls-files -s -z`, every one: each record is the mode
+    and other fields, a tab, and the path, as bytes. A path that is not UTF-8 keeps its
+    bytes as surrogates, which P1 refuses."""
     entries = []
     for record in listing.split(b"\0"):
         if not record:
@@ -632,7 +635,8 @@ def entries_of(listing: bytes) -> list[tuple[str, str]]:
 
 
 def tree_entries_of(listing: bytes) -> tuple[list[tuple[str, str]], list[str]]:
-    """The leaves and explicit directories of `git ls-tree -r -t -z`, kept separately."""
+    """The leaves and explicit directories of `git ls-tree -r -t -z`, kept separately and
+    every one, so that a path or folder listed twice is seen, and an empty folder too."""
     entries, directories = [], []
     for record in listing.split(b"\0"):
         if not record:

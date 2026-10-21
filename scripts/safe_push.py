@@ -2016,9 +2016,10 @@ def path_faults(paths: list[str], directories: list[str] | tuple[str, ...] = ())
     printable ASCII, since HFS+ and APFS ignore or fold some code points that casefolding
     and NFC keep; a protected path or a check input spelt otherwise (LAKEFILE.lean,
     Scripts/x.py), which such a disk opens as the one the rules name, whether or not the
-    tree holds that one; and paths, or folders of them, equal under path_fold (a file
-    listed twice, or a file and a folder of one name, among them), named where they first
-    meet, with their twins."""
+    tree holds that one; and paths, or folders of them, equal under path_fold (a file or a
+    folder listed twice, or a file and a folder of one name, among them), named where they
+    first meet, with their twins. The directories are the tree's own folder entries, an
+    empty one among them, judged as its paths are."""
     def listing(under: list[str]) -> str:
         more = f" and {len(under) - 3} more" if len(under) > 3 else ""
         return ", ".join(path_shown(f) for f in under[:3]) + more
@@ -2199,6 +2200,7 @@ def guard_paths(repo, base, sha, rep: Report) -> bool:
             found.setdefault(fault, []).append(commit)
         if standard is not None:
             with off_path(repo):        # its imports in findings, too, read nothing planted
+                # A copy from before its findings took the tree's folders judges the leaves.
                 accepts_directories = len(inspect.signature(
                     standard.findings).parameters) >= 2
                 judged, crash = judge(lambda: [str(f) for f in standard.findings(
