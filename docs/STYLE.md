@@ -310,7 +310,8 @@ section 1 sets the voice and the rule for vague hedges.
 
 - Labels for leads: I.21's lead "Three facts in one word." goes, and the paragraph opens on
   its claim, "Our statement reads 'within the triangle' as three facts".
-- Announcing sentences: "The proof is short" gives way to "Euclid joins BC" (I.33).
+- Announcing sentences, caught in the passes' own reviews: "The proof is short" gave way
+  to "Euclid joins BC" (I.33).
 - One opening for every reading line: each opened "For …", and II.1's "For algebra drawn
   as rectangles" gives way to what Nelsen's book shows. Section 6 gives the reading lines
   their shape.
