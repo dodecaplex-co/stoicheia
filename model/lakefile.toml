@@ -9,15 +9,17 @@ name = "mathlib"
 scope = "leanprover-community"
 rev = "v4.35.0"
 
-# The edition itself, read only by the Check library to compare translations with the
-# original declarations. Model may import only its four audited pure superposition
-# modules when they arrive; the main package depends on nothing here.
+# Check reads the edition to compare translations with the original declarations.
+# Model shares only Elements.Foundations.Superposition.{Syntax,Semantics,Soundness,Restriction},
+# whose transitive declarations are checked to use no geometric words or project axioms.
+# The main package depends on nothing here.
 [[require]]
 name = "stoicheia"
 path = ".."
 
-# The signature, the translated laws and the Euclidean interpretation. Imports Mathlib;
-# Check.Generator audits the boundary with the edition.
+# The signature, the translated laws and the Euclidean interpretation. Imports Mathlib
+# and exactly the four pure Elements modules named above. Check.Generator audits that
+# import boundary and the shared declarations' purity.
 [[lean_lib]]
 name = "Model"
 
@@ -84,9 +86,8 @@ path = "Model"
 text = true
 filter = { extension = ["lean", "leaN", "leAn", "leAN", "lEan", "lEaN", "lEAn", "lEAN", "Lean", "LeaN", "LeAn", "LeAN", "LEan", "LEaN", "LEAn", "LEAN"] }
 
-# Superposition does not exist on main yet. Lake rejects a missing input directory, so
-# track Lean files under its existing parent, a superset of the four pure sources.
-# The extension filter also catches the first source arriving by a .txt to .lean rename.
+# Track Lean files under the foundations parent, a superset of the four pure sources. The
+# extension filter also catches a source arriving by a .txt to .lean rename.
 [[input_dir]]
 name = "pureSources"
 path = "../Elements/Foundations"
