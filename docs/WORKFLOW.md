@@ -506,7 +506,8 @@ looked into.
      that later work overtakes gains a dated status note, never a quiet rewrite, and the
      issues and the tracker are kept current.
 9. **Acceptance:** from brief 0005's stage 6, the checklist passes in CI with no failures,
-   the independent audit agrees, and a cold outside reading scores the book. The switch
+   the independent audit agrees, and a cold outside reading scores the book by the
+   [review rubric](RUBRIC.md). The switch
    from the ratchet to the full gate is described in
    [ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci).
 10. **Release.** A release waits for its gate: both the page read-through and the
