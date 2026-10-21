@@ -424,11 +424,6 @@ def _(c):
     return all(inside(w, al) for w in ws) or all(inside((al[0] + Fr(t, 10**6), al[1]), al) for t in (1, 2, 3))
 
 
-@axiom('exists_point_outside_circle', dict(al=C_))
-def _(c):
-    al = c['al']
-    ws = [(al[0] + al[2] + k, al[1]) for k in (1, 2, 3)]
-    return all(outside(w, al) for w in ws)
 
 
 @axiom('line_circle_between', dict(B=P, C=P, L=L_, al=C_))
@@ -487,11 +482,6 @@ def _(c):
     return L == M
 
 
-@axiom('centre_unique', dict(A=P, B=P, al=C_))
-def _(c):
-    if not (is_centre(c['A'], c['al']) and is_centre(c['B'], c['al'])):
-        return None
-    return c['A'] == c['B']
 
 
 @axiom('centre_inside', dict(A=P, al=C_))
@@ -681,12 +671,6 @@ def _(c):
     return same_side(c['B'], c['C'], c['N'])
 
 
-@axiom('triple_incidence3', dict(A=P, B=P, C=P, D=P, E=P, L=L_, M=L_, N=L_))
-def _(c):
-    if not (_ti_hyp(c) and same_side(c['C'], c['D'], c['L']) and same_side(c['B'], c['C'], c['N'])
-            and same_side(c['D'], c['E'], c['M']) and same_side(c['C'], c['E'], c['N'])):
-        return None
-    return same_side(c['C'], c['E'], c['L'])
 
 
 # ---- Circles
@@ -703,12 +687,6 @@ def in_or_on(P_, al):
     return inside(P_, al) or on_circle(P_, al)
 
 
-@axiom('inside_of_between', dict(A=P, B=P, C=P, al=C_))
-def _(c):
-    A, B, Cc, al = c['A'], c['B'], c['C'], c['al']
-    if not (in_or_on(A, al) and in_or_on(B, al) and between(A, Cc, B)):
-        return None
-    return inside(Cc, al)
 
 
 @axiom('outside_of_between', dict(A=P, B=P, C=P, al=C_))
@@ -719,13 +697,6 @@ def _(c):
     return (not inside(B, al)) and (not on_circle(B, al))
 
 
-@axiom('not_same_side_of_circles_meet', dict(A=P, B=P, C=P, D=P, L=L_, al=C_, be=C_))
-def _(c):
-    A, B, Cc, D, L, al, be = (c[k] for k in ('A', 'B', 'C', 'D', 'L', 'al', 'be'))
-    if not (al != be and on_circle(Cc, al) and on_circle(Cc, be) and on_circle(D, al) and on_circle(D, be)
-            and Cc != D and is_centre(A, al) and is_centre(B, be) and on_line(A, L) and on_line(B, L)):
-        return None
-    return not same_side(Cc, D, L)
 
 
 # ---- Intersection (diagrammatic)
@@ -737,12 +708,6 @@ def _(c):
     return lines_meet(L, M)
 
 
-@axiom('line_meets_circle_of_opposite_sides', dict(A=P, B=P, L=L_, al=C_))
-def _(c):
-    A, B, L, al = c['A'], c['B'], c['L'], c['al']
-    if not (in_or_on(A, al) and in_or_on(B, al) and opposite(A, B, L)):
-        return None
-    return line_meets_circle(L, al)
 
 
 @axiom('line_meets_circle_of_inside', dict(A=P, L=L_, al=C_))
@@ -922,26 +887,8 @@ def _(c):
     return feq(ang(B, A, Cc), ang(B, A, D) + ang(D, A, Cc))
 
 
-@axiom('inside_of_angle_add', dict(A=P, B=P, C=P, D=P, L=L_, M=L_))
-def _(c):
-    if not _angle_inside_hyp(c):
-        return None
-    A, B, Cc, D = c['A'], c['B'], c['C'], c['D']
-    gap = ang(B, A, D) + ang(D, A, Cc) - ang(B, A, Cc)
-    if abs(gap) > 1e-9:
-        return None
-    return same_side(B, D, c['M']) and same_side(Cc, D, c['L'])
 
 
-@axiom('adjacent_eq_of_right', dict(A=P, B=P, C=P, D=P, L=L_))
-def _(c):
-    A, B, Cc, D, L = (c[k] for k in 'ABCDL')
-    if not (on_line(A, L) and on_line(B, L) and between(A, Cc, B) and not on_line(D, L)):
-        return None
-    # exact right-angle test
-    if dot(sub(A, Cc), sub(D, Cc)) != 0:
-        return None
-    return feq(ang(A, Cc, D), ang(D, Cc, B))
 
 
 @axiom('angle_eq_of_same_rays', dict(A=P, B=P, B2=P, C=P, C2=P, L=L_, M=L_))

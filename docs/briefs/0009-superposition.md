@@ -16,6 +16,19 @@ at `aa96ab8`, from `origin/main` at `39ae65c`, and the approval after main was m
 formalised; the brief, the review records and the pages must agree with it
 ([FORMALIZATION.md](../FORMALIZATION.md), section 1).*
 
+**Baseline update, 20 October 2026: A1 has landed.** This merge brings main at
+`7834e3a7` and both tooling branches through `tooling/superposition-model-check` at
+`5a848389` into the restricted-rule branch at `9fc4bdc9`. A1's eight retired axioms
+remain theorems: the foundation has 79 axioms, including 73 tacit rules, with
+`Tacit.superposition` restated as `Elements.Superposition.Rule Elements.primitives`.
+The combined vocabulary is expected to be 208 and the certificate has 29 expectations;
+the coordinator must confirm the counts after regeneration. Earlier 87-axiom and
+206/208-word measurements below describe their named revisions before this A1 integration.
+The landed retirements also change the overlap catalogue: Circle 4 is a corollary of
+I.7, Diagram-angle 3 follows I.13, and Generalities 2 is proved in Book Zero. Circle 2
+is proved from Circle 3, which remains III.2's axiom overlap. The restricted rule
+separately retires the construction shortcuts for I.2, I.3 and I.23. A2 has not landed.
+
 **Round 4's correction.** The owner approved questions 2, 4 and 5 "as prototyped", and
 asked that the prototyped work be finished in an issue of its own, #150. There each answer
 that is still a reading, a flag set by hand or an unchecked sentence becomes a theorem, a
@@ -65,7 +78,8 @@ justification; land it only when complete; and meanwhile disclose that our rule 
 stronger, as a construction principle, than System E's. The same day the owner decided
 that every circle has a centre (#59) and that the formal model starts now in `model/` (#73).
 The prerequisite #40, the model's law names as a pinned data file, is now met by
-`tests/model/laws.toml`. One axiom is restated, with the total kept at 87.
+`tests/model/laws.toml`. Before A1, the replacement restated one axiom and kept the
+total at 87; on the landed A1 baseline it restates that axiom and keeps the total at 79.
 
 On 20 October 2026 the owner approved the completed replacement with questions 2, 4
 and 5 answered as prototyped, the model's import of the four pure modules and the page
@@ -351,10 +365,23 @@ approved this permissive reading, as prototyped, under question 4 on 20 October 
 `Cited.drawsNothing` is set by hand; #150 tracks checking it against the laws' proofs, or
 retiring it.
 
-**After the retirement branches merge.** The claim about the laws' proofs above is tied to
-`aa96ab8`, before `lean/retire-axioms-2`. That branch proves `triple_incidence2` using
-Postulate 2 and `eq_of_len_eq_zero` using Postulate 3. The cited-law proofs which reach those
-results will then use construction rules too. `Cited.drawsNothing` is a classification,
+**A1 leaves these cited-law dependencies unchanged.** I.4's named-line ray proof uses
+the retained `triple_incidence2` and `angle_add_of_inside`, not the retired
+`triple_incidence3` and `inside_of_angle_add`; `eq_of_len_eq_zero`, `len_symm`,
+`angle_symm` and `area_congruent` also remain axioms. I.8's adapter still cites I.7;
+A1 proves Circle 4 after I.7, without using it to establish I.7. The existing pins are
+therefore expected to remain unchanged, subject to the combined Audit build.
+
+**When wave two lands.** The measured claim about the laws' proofs above is tied to
+`aa96ab8`, before `lean/retire-axioms-2`. At `d2c45450`, that second wave proves four
+axioms used by the cited laws with construction rules: `same_side_symm` uses
+`exists_point_on_line`, Postulate 3 and circle intersections; `pasch3` uses
+`exists_point_on_line` and Postulate 1; `eq_of_len_eq_zero` uses Postulate 3; and
+`triple_incidence2` uses Postulate 2. The affected laws are `neOfLen`, `rayUnique`,
+`rayOfAngle` and `rayOfAngleSide` in I.4; I.8 also cites the first two. Of I.4's
+seven laws, only `lenSymm`, `angleSymm` and `areaCongruent` then have proofs without
+construction rules. This describes that A2 revision, not this A1 merge, and its
+dependencies must be checked again at A2's landing. `Cited.drawsNothing` is a classification,
 not a proof-term inspection; it and its supporting prose and audit pins must be reviewed
 again. Under the stricter reading of question 4, this would affect I.4 as well as I.8.
 Retired axioms must not be restored to preserve the earlier classification. That review
@@ -446,9 +473,11 @@ The regenerated lists for I.4, I.8, I.23 and the six entries not resting on the 
 | III.5 | C.N. 5 |
 | III.6 | C.N. 5 |
 
-Fourteen new expectations pin direct use, I.7 in I.8, I.23's construction and inherited
-dependency, the six unaffected entries and C.N. 4 in both I.4 and I.8. All eleven
-expectations from before the replacement are retained unchanged, making 25 in all.
+Fourteen replacement expectations pin direct use, I.7 in I.8, I.23's construction and
+inherited dependency, the six unaffected entries and C.N. 4 in both I.4 and I.8. The
+eleven shared expectations retain A1's approved pin changes, and A1 adds four exclusions
+of retired axiom names, making 29 in all. The III.1 and III.1 Por. tacit counts are both
+55 on A1's baseline; the combined facts must confirm them without loosening the pins.
 
 ## The restriction theorem
 
@@ -478,15 +507,16 @@ a theorem.
    `Cited.holds_iff`: every law asserts no existence. The separate claim about what a cited
    law's proof constructs is tied to the revision above; the owner accepted that reading,
    as prototyped, under question 4 on 20 October 2026, and #150 tracks its check.
-4. **No hypothesis of the rule speaks of the placement.** The rule's hypotheses are the
+4. **No hypothesis assigns objects to the placement's fresh symbols.** The rule's hypotheses are the
    cited laws (a fixed list, each a universal statement over its letters), the given facts
    and the conclusion (data over the figure's numbered symbols, holding no point, no straight
    line and no proposition), a derivation (over symbols, and before any valuation), and a
    valuation of the figure's symbols that satisfies the guards and the given facts. B′, C′
-   and the side occur only as symbols inside the derivation; no hypothesis gives them a point
-   or a straight line, or quantifies over them. Astra's second observation needs a premise
-   that quantifies over the placed points, so the rule's own hypotheses cannot instantiate
-   it directly. `Metric.holds_const` proves that every metric formula holds when all its
+   and the side occur only as symbols inside the derivation; no hypothesis assigns those
+   fresh symbols a point or a straight line. The cited-law hypothesis ranges over all
+   points and straight lines, and the triangle guard quantifies over straight lines;
+   neither is restricted to the given figure's objects. This inspection does not prove
+   the preservation property requested in #150. `Metric.holds_const` proves that every metric formula holds when all its
    point symbols denote one supplied point, given a line valuation. That valuation need
    not satisfy the guards; this is no general theorem against classical witness recovery.
 5. **No stronger than laying a triangle down.** `Rule.of_placement`: if every triangle can be
@@ -536,7 +566,8 @@ lengths and all three angles. Since C′ is off L and D is on it, they are disti
 The model's proved Postulate 1 supplies their straight line. The theorem `superposition`
 then applies `Rule.of_placement` to that placement with its side. It uses no project axiom.
 The assembled `model_exists : ∃ S : Signature, Laws S` remains unconditional, with all
-87 laws proved; its audited closure is `propext`, `Classical.choice` and `Quot.sound`.
+79 locked laws proved; its pinned closure is `propext`, `Classical.choice` and
+`Quot.sound`. Regeneration and the model build must confirm the assembly on this merge.
 
 **Import boundary and regressions.** `Model` may import from `Elements` exactly the four
 pure calculus modules named above, including transitive imports.
@@ -563,7 +594,7 @@ whole-theory non-derivability of an existential placement.
 
 **It clears the direct construction shortcut.** No conclusion of the restricted rule names a
 symbol of the placement, so the temporary placement points can no longer be returned as the
-answer to I.2, I.3 or I.23. `Audit.I_2`, `Audit.I_3` and `Audit.I_23` each take a point the
+answer to I.2, I.3 or I.23. The former Audit.I_2, Audit.I_3 and Audit.I_23 each took a point the
 former rule returned. Those three audit lemmas and the three corresponding overlap rows
 are retired; their history remains in the catalogue. I.2 and I.3 rest on no superposition.
 I.23 still constructs through I.22 and rests on the restricted rule through I.8 and I.20.
@@ -572,9 +603,10 @@ I.23 still constructs through I.22 and rests on the restricted rule through I.8 
 
 - make I.23, I.2 or I.3 unprovable, nor should it: I.2 and I.3 already rest on no
   superposition, and I.23 must stay provable through I.22 and I.8;
-- touch the other overlap rows: Circle 2 and III.2, Diagram-segment 2 and III.5 and III.6,
-  Generalities 3 and III.6, Generalities 2 and III.1's porism, Diagram-angle 3 and I.13,
-  Metric 5 and I.47, Circle 4 and I.7;
+- remove the remaining axiom overlaps: Circle 3 and III.2, Diagram-segment 2 and III.5
+  and III.6, Generalities 3 and III.6, and Metric 5's consequence of I.13 in I.47.
+  A1 has already retired the former overlaps with Circle 4, Diagram-angle 3,
+  Generalities 2 and Circle 2, as the catalogue's retirement table records;
 - shrink the certificate: 116 of the 122 entries in `facts.json` after the main merge
   rest on the restricted rule, as they did on its predecessor. The six exceptions remain I.1, I.2, I.3, I.22,
   III.5 and III.6. The affected entries are 93 main propositions and 23 attached entries.
@@ -595,7 +627,8 @@ parallelogram. The six records for I.2, I.3, I.4, I.8, I.23 and I.44 have been r
 stamped independently; all retain full coverage and Euclid's route. The marker change
 made I.4's and I.8's records stale; an independent reader read both again and stamped
 them at `0085b443`.
-The pages were regenerated from the integrated sources on 20 October.
+The pages were regenerated on the restricted-rule branch before this A1 merge. That
+earlier regeneration and those record readings do not validate the combined revision.
 
 ## Evidence before landing
 
@@ -633,7 +666,7 @@ and establishes none of the third kind by itself (Astra).
 The production evidence is pinned by 27 dependency checks in
 [`Audit/Superposition.lean`](../../Audit/Superposition.lean), covering I.4 and I.8,
 soundness, the placement reduction, restriction results, cited-law proofs and I.7's adapter.
-The 13 surviving overlap proofs and their pins are preserved. The exact validation evidence
+The 13 surviving overlap proofs are retained with A1's revised axiom pins. The exact validation evidence
 and remaining landing work are recorded below.
 
 ## The guards
@@ -684,14 +717,18 @@ construction shortcuts, and proves the restated law in the formal model. At `aa9
 the regenerated lock kept 87 axioms and grew its vocabulary from 91 to 206, adding
 115 words and removing none. The certificate, model laws and both lock hashes were
 regenerated at that revision.
-At the integration on 20 October, the lock still holds all 87 axiom statements unchanged
-and its vocabulary grows from 206 to 208. The added words are
+At the certificate-tooling integration on 20 October, before A1 was brought into this
+branch, the lock kept all 87 axiom statements unchanged and its vocabulary grew from
+206 to 208. The added words were
 `Superposition.Coincidence` and `Superposition.Coincidence.step`; the changed words are
 `Superposition.Derives.len_congr`, `Superposition.Derives.angle_congr` and
 `Superposition.Derives.area_congr`, each gaining the explicit marker argument. No word
-is removed, and no other locked word changes. The lock, both hashes, the model's three
-generated files and the edition were regenerated from these integrated sources.
+was removed, and no other locked word changed in that integration. The lock, both hashes,
+the model's three generated files and the edition were regenerated from those sources.
 The certificate has 99 propositions, 3 porisms and 20 companions, 122 entries in all.
+This A1 integration retains the restricted rule and the marker, removes the eight retired
+axioms, and expects 79 axioms and vocabulary 208 after fresh regeneration. The older
+measurements above do not validate that result.
 
 It does not prove equivalence with System E's two-rule presentation, or non-derivability of
 placement in the whole theory. Part 4 of the restriction remains chiefly an inspection of
@@ -706,9 +743,10 @@ The owner's approval of 20 October 2026 authorises the replacement subject to th
 tooling pull requests landing first, /no-mistakes and an independent Codex read of the
 model lane. The remaining integration and validation work is:
 
-- **The tooling pull requests first.** Split the check changes in `Certificate/Facts.lean`,
-  `scripts/heath.py` and `review/SCHEMA.md` into tooling pull requests, reviewed and landed
-  before the code they check. WORKFLOW, section 10, forbids changing a check in the same pull
+- **The tooling pull requests first.** The check changes in `Certificate/Facts.lean`,
+  `scripts/heath.py` and `review/SCHEMA.md` are on the tooling branches included in this
+  merge; they must be reviewed and landed before the code they check. WORKFLOW,
+  section 10, forbids changing a check in the same pull
   request as that code. The certificate must recognise `Coincidence.step`
   without requiring it to be present on main yet; the Heath self-test and the schema's
   example keep their outcomes while naming I.13's overlap in I.47 (Metric 5 in
@@ -716,13 +754,16 @@ model lane. The remaining integration and validation work is:
   older relative-path defect fixed on `tooling/superposition-model-check`, land first
   too. No check may be loosened.
 - **The landing order with the retirement waves (#119).** The first wave,
-  `lean/retire-axioms`, which reduces 87 axioms to 79, lands before the replacement; it
-  reached main on 20 October 2026. The replacement merges main, reconciling that wave's
-  edits to the lock, model, numerical laws, audit and overlap catalogue, and then lands.
+  `lean/retire-axioms` (A1), reduced 87 axioms to 79 and reached main on 20 October 2026.
+  This merge reconciles that landed baseline's edits to the lock, model, numerical laws,
+  audit and overlap catalogue. The replacement lands next.
   The second wave, `lean/retire-axioms-2`, which reduces 79 to 48, lands after the
   replacement. Its landing carries the review of `drawsNothing` and of the audit pins once
-  the construction dependencies change (#150); question 4 now permits cited laws whose
-  proofs use constructions. Resolve its modify/delete conflict in
+  `same_side_symm`, `pasch3`, `eq_of_len_eq_zero` and `triple_incidence2` acquire the
+  construction dependencies described above (#150). Review `neOfLen`, `rayUnique`,
+  `rayOfAngle` and `rayOfAngleSide` in I.4 and the first two in I.8, with fresh per-law
+  dependency evidence; question 4 permits cited laws whose proofs use constructions.
+  Resolve its modify/delete conflict in
   `Staging/Superposition/Derivations.lean` by carrying needed geometric support into
   `Elements/Figure/Superposition.lean`, not by restoring the prototype. Preserve both
   waves' root imports, and restore no retired axiom.
@@ -849,8 +890,9 @@ from round 2. The other items record the delivered design or the continuing proc
    suggested test, `∀ c ∈ cites, c.drawsNothing = true`, expresses that only while the
    classification agrees with the actual proofs. It would reject this I.8 route, requiring
    another argument labelled as such. At `aa96ab8` I.4's cited laws pass that classification;
-   after `lean/retire-axioms-2`, their use of `triple_incidence2` through Postulate 2 and
-   `eq_of_len_eq_zero` through Postulate 3 brings I.4 within this decision too. The
+   after `lean/retire-axioms-2`, the construction dependencies of `same_side_symm`,
+   `pasch3`, `triple_incidence2` and `eq_of_len_eq_zero` bring I.4 within this decision
+   too, in the four laws named under "What the laws' proofs draw". The
    classification is set by hand; #150 tracks checking it against the proofs, or retiring
    it, and the review at the second wave's landing.
 5. **The side laid down, approved 20 October 2026.** The owner accepted the prototype's
@@ -862,8 +904,8 @@ from round 2. The other items record the delivered design or the continuing proc
    theorem rather than by reading the model's proof.
 6. **More citable propositions.** `Cited` holds I.7 alone among the propositions. Another
    joins only by a revision of this brief, with its reason.
-7. **Timing.** The replacement is approved and unlanded. The tooling pull requests land
-   first, and the first retirement wave lands before it, the second after it. Landing the
+7. **Timing.** The replacement is approved and unlanded. A1 has landed. The tooling pull
+   requests must land before the replacement, and A2 lands after it. Landing the
    replacement also requires /no-mistakes and the independent Codex read of the model
    lane, with evidence tied to the revision delivered as described under "Landing". #150
    stays open after the landing and holds every release until it closes.

@@ -13,8 +13,8 @@ differs from what the generator writes. To write it again, run `lake lean Check/
 `model/`. The [README](../README.md) says how the laws are translated and checked.
 
 It was written from the lock, `Certificate/axioms.lock`, whose sha256 is
-`4b384982036b5f0e4348a3537b65b4a0c52a36afbdeb13000eed7ac5f4e996fb`,
-the hash that `model/lock.sha256` holds. The lock has 87 laws, and they reach 153 words of its
+`7214fce515f3ffa876bba7e362535f719c6b370ebf5b1ba744b6f3d27ab60bef`,
+the hash that `model/lock.sha256` holds. The lock has 79 laws, and they reach 153 words of its
 vocabulary. Each law here is the library's axiom with the words of a signature `S` put for the
 library's words:
 
@@ -283,11 +283,6 @@ def add_lt_add_right : Prop :=
 def add_zero : Prop :=
   ∀ {k : Kind} (a : S.Magnitude k), a + 0 = a
 
-/-- `Elements.Tacit.adjacent_eq_of_right`, translated. -/
-def adjacent_eq_of_right : Prop :=
-  ∀ {A B C D : S.Point} {L : S.Line}, S.OnLine A L → S.OnLine B L → S.Between A C B →
-    ¬S.OnLine D L → S.ang A C D = S.rightAngle → S.ang A C D = S.ang D C B
-
 /-- `Elements.Tacit.angle_add_of_inside`, translated. -/
 def angle_add_of_inside : Prop :=
   ∀ {A B C D : S.Point} {L M : S.Line}, S.OnLine A L → S.OnLine A M → S.OnLine B L → S.OnLine C M →
@@ -372,10 +367,6 @@ def between_symm : Prop :=
 def centre_inside : Prop :=
   ∀ {A : S.Point} {α : S.Circle}, S.Centre A α → S.InsideCircle A α
 
-/-- `Elements.Tacit.centre_unique`, translated. -/
-def centre_unique : Prop :=
-  ∀ {A B : S.Point} {α : S.Circle}, S.Centre A α → S.Centre B α → A = B
-
 /-- `Elements.Tacit.circle_eq`, translated. -/
 def circle_eq : Prop :=
   ∀ {A B C : S.Point} {α β : S.Circle}, S.Centre A α → S.Centre A β → S.OnCircle B α →
@@ -438,10 +429,6 @@ def exists_point_opposite_side : Prop :=
   ∀ {B : S.Point} {L : S.Line}, ¬S.OnLine B L → ∀ (avoid : List S.Point), ∃ A : S.Point,
     S.OppositeSides A B L ∧ ¬A ∈ avoid
 
-/-- `Elements.Tacit.exists_point_outside_circle`, translated. -/
-def exists_point_outside_circle : Prop :=
-  ∀ (α : S.Circle) (avoid : List S.Point), ∃ A : S.Point, S.OutsideCircle A α ∧ ¬A ∈ avoid
-
 /-- `Elements.Tacit.exists_point_same_side`, translated. -/
 def exists_point_same_side : Prop :=
   ∀ {B : S.Point} {L : S.Line}, ¬S.OnLine B L → ∀ (avoid : List S.Point), ∃ A : S.Point,
@@ -450,17 +437,6 @@ def exists_point_same_side : Prop :=
 /-- `Elements.Tacit.inside_not_on`, translated. -/
 def inside_not_on : Prop :=
   ∀ {A : S.Point} {α : S.Circle}, S.InsideCircle A α → ¬S.OnCircle A α
-
-/-- `Elements.Tacit.inside_of_angle_add`, translated. -/
-def inside_of_angle_add : Prop :=
-  ∀ {A B C D : S.Point} {L M : S.Line}, S.OnLine A L → S.OnLine A M → S.OnLine B L → S.OnLine C M →
-    A ≠ B → A ≠ C → ¬S.OnLine D L → ¬S.OnLine D M → L ≠ M →
-    S.ang B A C = S.ang B A D + S.ang D A C → S.SameSide B D M ∧ S.SameSide C D L
-
-/-- `Elements.Tacit.inside_of_between`, translated. -/
-def inside_of_between : Prop :=
-  ∀ {A B C : S.Point} {α : S.Circle}, S.InsideCircle A α ∨ S.OnCircle A α →
-    S.InsideCircle B α ∨ S.OnCircle B α → S.Between A C B → S.InsideCircle C α
 
 /-- `Elements.Tacit.inside_of_len_lt`, translated. -/
 def inside_of_len_lt : Prop :=
@@ -499,11 +475,6 @@ def line_circle_beyond : Prop :=
 def line_meets_circle_of_inside : Prop :=
   ∀ {A : S.Point} {L : S.Line} {α : S.Circle}, S.InsideCircle A α → S.OnLine A L →
     S.LineMeetsCircle L α
-
-/-- `Elements.Tacit.line_meets_circle_of_opposite_sides`, translated. -/
-def line_meets_circle_of_opposite_sides : Prop :=
-  ∀ {A B : S.Point} {L : S.Line} {α : S.Circle}, S.InsideCircle A α ∨ S.OnCircle A α →
-    S.InsideCircle B α ∨ S.OnCircle B α → S.OppositeSides A B L → S.LineMeetsCircle L α
 
 /-- `Elements.Tacit.line_unique`, translated. -/
 def line_unique : Prop :=
@@ -550,12 +521,6 @@ def not_lt_zero : Prop :=
 /-- `Elements.Tacit.not_on_line_of_same_side`, translated. -/
 def not_on_line_of_same_side : Prop :=
   ∀ {A B : S.Point} {L : S.Line}, S.SameSide A B L → ¬S.OnLine A L
-
-/-- `Elements.Tacit.not_same_side_of_circles_meet`, translated. -/
-def not_same_side_of_circles_meet : Prop :=
-  ∀ {A B C D : S.Point} {L : S.Line} {α β : S.Circle}, α ≠ β → S.OnCircle C α → S.OnCircle C β →
-    S.OnCircle D α → S.OnCircle D β → C ≠ D → S.Centre A α → S.Centre B β → S.OnLine A L →
-    S.OnLine B L → ¬S.SameSide C D L
 
 /-- `Elements.Tacit.on_circle_of_len_eq`, translated. -/
 def on_circle_of_len_eq : Prop :=
@@ -636,12 +601,6 @@ def triple_incidence2 : Prop :=
     S.OnLine B L → S.OnLine C M → S.OnLine D N → S.SameSide C D L → ¬S.SameSide B D M →
     ¬S.OnLine D M → B ≠ A → S.SameSide B C N
 
-/-- `Elements.Tacit.triple_incidence3`, translated. -/
-def triple_incidence3 : Prop :=
-  ∀ {A B C D E : S.Point} {L M N : S.Line}, S.OnLine A L → S.OnLine A M → S.OnLine A N →
-    S.OnLine B L → S.OnLine C M → S.OnLine D N → S.SameSide C D L → S.SameSide B C N →
-    S.SameSide D E M → S.SameSide C E N → S.SameSide C E L
-
 end Law.Tacit
 
 /-! ## The laws as one structure -/
@@ -659,7 +618,6 @@ structure Neutral (S : Signature) : Prop where
   add_comm : Law.Tacit.add_comm S
   add_lt_add_right : Law.Tacit.add_lt_add_right S
   add_zero : Law.Tacit.add_zero S
-  adjacent_eq_of_right : Law.Tacit.adjacent_eq_of_right S
   angle_add_of_inside : Law.Tacit.angle_add_of_inside S
   angle_eq_of_same_rays : Law.Tacit.angle_eq_of_same_rays S
   angle_eq_zero_of_same_ray : Law.Tacit.angle_eq_zero_of_same_ray S
@@ -678,7 +636,6 @@ structure Neutral (S : Signature) : Prop where
   between_of_inside_chord : Law.Tacit.between_of_inside_chord S
   between_symm : Law.Tacit.between_symm S
   centre_inside : Law.Tacit.centre_inside S
-  centre_unique : Law.Tacit.centre_unique S
   circle_eq : Law.Tacit.circle_eq S
   circles_meet : Law.Tacit.circles_meet S
   circles_meet_of_on_inside_outside : Law.Tacit.circles_meet_of_on_inside_outside S
@@ -692,11 +649,8 @@ structure Neutral (S : Signature) : Prop where
   exists_point_on_line : Law.Tacit.exists_point_on_line S
   exists_point_on_line_off_line : Law.Tacit.exists_point_on_line_off_line S
   exists_point_opposite_side : Law.Tacit.exists_point_opposite_side S
-  exists_point_outside_circle : Law.Tacit.exists_point_outside_circle S
   exists_point_same_side : Law.Tacit.exists_point_same_side S
   inside_not_on : Law.Tacit.inside_not_on S
-  inside_of_angle_add : Law.Tacit.inside_of_angle_add S
-  inside_of_between : Law.Tacit.inside_of_between S
   inside_of_len_lt : Law.Tacit.inside_of_len_lt S
   len_add_of_between : Law.Tacit.len_add_of_between S
   len_lt_of_inside : Law.Tacit.len_lt_of_inside S
@@ -705,7 +659,6 @@ structure Neutral (S : Signature) : Prop where
   line_circle_between : Law.Tacit.line_circle_between S
   line_circle_beyond : Law.Tacit.line_circle_beyond S
   line_meets_circle_of_inside : Law.Tacit.line_meets_circle_of_inside S
-  line_meets_circle_of_opposite_sides : Law.Tacit.line_meets_circle_of_opposite_sides S
   line_unique : Law.Tacit.line_unique S
   lines_meet_of_opposite_sides : Law.Tacit.lines_meet_of_opposite_sides S
   lt_irrefl : Law.Tacit.lt_irrefl S
@@ -717,7 +670,6 @@ structure Neutral (S : Signature) : Prop where
   not_between_of_between_between : Law.Tacit.not_between_of_between_between S
   not_lt_zero : Law.Tacit.not_lt_zero S
   not_on_line_of_same_side : Law.Tacit.not_on_line_of_same_side S
-  not_same_side_of_circles_meet : Law.Tacit.not_same_side_of_circles_meet S
   on_circle_of_len_eq : Law.Tacit.on_circle_of_len_eq S
   on_line_of_area_eq_zero : Law.Tacit.on_line_of_area_eq_zero S
   on_line_of_between : Law.Tacit.on_line_of_between S
@@ -735,7 +687,6 @@ structure Neutral (S : Signature) : Prop where
   superposition : Law.Tacit.superposition S
   triple_incidence1 : Law.Tacit.triple_incidence1 S
   triple_incidence2 : Law.Tacit.triple_incidence2 S
-  triple_incidence3 : Law.Tacit.triple_incidence3 S
 
 /-- Every law of the lock, a field for each: those of `Neutral`, and Postulate 5. A model of
 the laws is a signature `S` with `Laws S`. -/

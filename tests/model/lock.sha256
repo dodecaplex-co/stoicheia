@@ -17,6 +17,13 @@
 # and every word already locked are unchanged, byte for byte, so MODEL.md's account stands
 # as it was.
 #
+# Renewed on 19 October 2026, when eight axioms became theorems (the owner approved both
+# retirements that day): Tacit.adjacent_eq_of_right,
+# Tacit.not_same_side_of_circles_meet, Tacit.centre_unique, Tacit.inside_of_between,
+# Tacit.exists_point_outside_circle, Tacit.line_meets_circle_of_opposite_sides,
+# Tacit.triple_incidence3 and Tacit.inside_of_angle_add. Their laws leave laws.toml, search.py
+# and hyperbolic.py; the other 79 axioms and every word are unchanged, byte for byte.
+#
 # Renewed on 19 October 2026, when the restricted rule of superposition (brief 0009, #75)
 # replaced the existential one: the axiom Tacit.superposition is restated as
 # Superposition.Rule primitives, and the lock's vocabulary gains the calculus's words. The
@@ -28,4 +35,8 @@
 # the lock, and the three Derives congruence constructors take the marker. All 87
 # axiom statements are unchanged. The marker records a step without changing its
 # interpretation; the existing placement proofs and numerical law still apply.
-4b384982036b5f0e4348a3537b65b4a0c52a36afbdeb13000eed7ac5f4e996fb  Certificate/axioms.lock
+# Renewed on 20 October 2026, when the restricted rule was merged after the first
+# retirement wave: the 79 axioms of wave one with Tacit.superposition restated as
+# Superposition.Rule primitives, and the vocabulary at 208 words; the harness keeps wave
+# one's removals and the restricted law's placement check with its kept side.
+7214fce515f3ffa876bba7e362535f719c6b370ebf5b1ba744b6f3d27ab60bef  Certificate/axioms.lock

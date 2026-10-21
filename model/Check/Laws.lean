@@ -99,9 +99,6 @@ example : Law.Tacit.add_zero original ↔ type_of% @Elements.Tacit.add_zero :=
     | area => exact @h .area,
     fun h => h⟩
 
-example : Law.Tacit.adjacent_eq_of_right original =
-    type_of% @Elements.Tacit.adjacent_eq_of_right := rfl
-
 example : Law.Tacit.angle_add_of_inside original =
     type_of% @Elements.Tacit.angle_add_of_inside := rfl
 
@@ -147,8 +144,6 @@ example : Law.Tacit.between_symm original = type_of% @Elements.Tacit.between_sym
 
 example : Law.Tacit.centre_inside original = type_of% @Elements.Tacit.centre_inside := rfl
 
-example : Law.Tacit.centre_unique original = type_of% @Elements.Tacit.centre_unique := rfl
-
 example : Law.Tacit.circle_eq original = type_of% @Elements.Tacit.circle_eq := rfl
 
 example : Law.Tacit.circles_meet original = type_of% @Elements.Tacit.circles_meet := rfl
@@ -184,18 +179,10 @@ example : Law.Tacit.exists_point_on_line_off_line original =
 example : Law.Tacit.exists_point_opposite_side original =
     type_of% @Elements.Tacit.exists_point_opposite_side := rfl
 
-example : Law.Tacit.exists_point_outside_circle original =
-    type_of% @Elements.Tacit.exists_point_outside_circle := rfl
-
 example : Law.Tacit.exists_point_same_side original =
     type_of% @Elements.Tacit.exists_point_same_side := rfl
 
 example : Law.Tacit.inside_not_on original = type_of% @Elements.Tacit.inside_not_on := rfl
-
-example : Law.Tacit.inside_of_angle_add original =
-    type_of% @Elements.Tacit.inside_of_angle_add := rfl
-
-example : Law.Tacit.inside_of_between original = type_of% @Elements.Tacit.inside_of_between := rfl
 
 example : Law.Tacit.inside_of_len_lt original = type_of% @Elements.Tacit.inside_of_len_lt := rfl
 
@@ -214,9 +201,6 @@ example : Law.Tacit.line_circle_beyond original = type_of% @Elements.Tacit.line_
 
 example : Law.Tacit.line_meets_circle_of_inside original =
     type_of% @Elements.Tacit.line_meets_circle_of_inside := rfl
-
-example : Law.Tacit.line_meets_circle_of_opposite_sides original =
-    type_of% @Elements.Tacit.line_meets_circle_of_opposite_sides := rfl
 
 example : Law.Tacit.line_unique original = type_of% @Elements.Tacit.line_unique := rfl
 
@@ -268,9 +252,6 @@ example : Law.Tacit.not_lt_zero original ↔ type_of% @Elements.Tacit.not_lt_zer
 example : Law.Tacit.not_on_line_of_same_side original =
     type_of% @Elements.Tacit.not_on_line_of_same_side := rfl
 
-example : Law.Tacit.not_same_side_of_circles_meet original =
-    type_of% @Elements.Tacit.not_same_side_of_circles_meet := rfl
-
 example : Law.Tacit.on_circle_of_len_eq original =
     type_of% @Elements.Tacit.on_circle_of_len_eq := rfl
 
@@ -308,7 +289,5 @@ example : Law.Tacit.superposition original = type_of% @Elements.Tacit.superposit
 example : Law.Tacit.triple_incidence1 original = type_of% @Elements.Tacit.triple_incidence1 := rfl
 
 example : Law.Tacit.triple_incidence2 original = type_of% @Elements.Tacit.triple_incidence2 := rfl
-
-example : Law.Tacit.triple_incidence3 original = type_of% @Elements.Tacit.triple_incidence3 := rfl
 
 end Check

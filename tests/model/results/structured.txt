@@ -1,18 +1,18 @@
-# structured: structured search, 100,000 samples per axiom
+# structured: structured search, 100,000 samples per axiom or derived property
 # command: python3 -I tests/model/structured.py 100000 11
 # seeds: 11
-# commit: 9dbe96182b9a6d2080f23d3ead93e4c35f9ce624 (harness files as committed)
-# harness sha256: a156322ad06909ccfbc90d48426ac7bc3457d5625dd1072b2a4e98d5602a456a
+# commit: 9fc4bdc900ea1caa7bee692f846eb67747b3d157 (harness files differ from this commit)
+# harness sha256: 0759482897d704d7ea2c4af38ec942f43f8a7da3eada7555612073880239ccf6
 # python: 3.11.9 (CPython, Darwin arm64)
-# date: 2026-10-17
-# time: 85.8 s
+# date: 2026-10-20
+# time: 88.9 s
 
-axiom                                     samples      hyp   cex
+axiom / derived property                  samples      hyp   cex
 Postulate4                                 100000    14711     0
 Postulate5                                 100000    46580     0
 triple_incidence1                          100000     7925     0
 triple_incidence2                          100000     8043     0
-triple_incidence3                          100000     1246     0
+derived.triple_incidence3                  100000     1246     0
 pasch1                                     100000    28583     0
 pasch2                                     100000     8435     0
 pasch3                                     100000    15576     0
@@ -22,23 +22,23 @@ on_line_of_between                         100000     7215     0
 on_line_of_between_ends                    100000     7275     0
 pasch4                                     100000    20921     0
 angle_add_of_inside                        100000    24987     0
-inside_of_angle_add                        100000    25019     0
-adjacent_eq_of_right                       100000    25166     0
+derived.inside_of_angle_add                100000    25019     0
+derived.adjacent_eq_of_right               100000    25166     0
 angle_eq_of_same_rays                      100000     8676     0
 area_add_of_between                        100000    55499     0
 between_of_area_add                        100000    56023     0
 area_congruent                             100000    94050     0
 between_of_inside_chord                    100000    37732     0
-inside_of_between                          100000    39272     0
+derived.inside_of_between                  100000    39272     0
 outside_of_between                         100000    47802     0
 circles_meet_same_side                     100000    40033     0
 circles_meet_opposite_side                 100000    40177     0
-not_same_side_of_circles_meet              100000      939     0
+derived.not_same_side_of_circles_meet      100000      939     0
 circles_meet_of_on_inside_outside          100000      358     0
 circles_meet                               100000     1587     0
 line_circle_between                        100000    44974     0
 line_circle_beyond                         100000    57135     0
-line_meets_circle_of_opposite_sides        100000    58077     0
+derived.line_meets_circle_of_opposite_sides   100000    58077     0
 superposition                              100000    71970     0
 exists_point_on_line_off_line              100000    89876     0
 exists_point_between                       100000    72507     0
@@ -53,5 +53,7 @@ circle_eq                                  100000    27089     0
 on_circle_of_len_eq                        100000    27123     0
 inside_of_len_lt                           100000    19704     0
 len_lt_of_inside                           100000    19736     0
+derived.centre_unique                      100000     4142     0
+derived.exists_point_outside_circle        100000   100000     0
 structured total counterexamples: 0
 never met: []

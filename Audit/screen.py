@@ -19,8 +19,8 @@ The rules `grind` refuses. Given a rule in which it finds nothing to match, `gri
 refuses the whole list, and the try fails with no search at all. So a pass before the
 attempts gives `grind` each rule alone, in each of the two ways, and each try leaves out
 the rules refused in its way; a try left with none is not made. Refused both ways are the
-twelve rules that only say that a point, a straight line or a circle exists (Postulates 1
-to 3 and the nine `exists_point` rules); refused forward as well are fourteen with no
+eleven rules that only say that a point, a straight line or a circle exists (Postulates 1
+to 3 and the eight `exists_point` rules); refused forward as well are fourteen with no
 hypothesis `grind` can start from (`len_symm`, `add_comm` and the like), plus the restricted
 superposition rule, whose conclusion is the structure `Superposition.Rule`. Such a rule gives
 `grind` nothing to work with in any case (see below); but while it stayed in, as in the
@@ -69,9 +69,10 @@ so a screen that has stopped unfolding stops, and ends with a line that Lean pri
 so a Lean process that stopped early is not read as tries that closed.
 
 It is a screen, not a proof search. `grind` instantiates rules among the terms already in
-a goal; it does not draw a new circle, so an overlap that needs one (I.7 from Circle 4)
-is found by reading, not here. The former superposition shortcuts for I.2, I.3 and I.23
-are retired: the restricted rule returns no placement witnesses.
+a goal; it does not draw a new circle or lay down a triangle. The former superposition
+shortcuts for I.2, I.3 and I.23 are retired: the restricted rule returns no placement
+witnesses. The former I.7 overlap used Circle 4, now a corollary of I.7 and no longer an
+axiom in this screen; deriving I.7 through it is circular.
 
 The statements are facts.json's entries: the propositions, the porisms and the companions.
 At commit d040117, with only the phrases SameSideOf to LinesMeet unfolded, both tries in
@@ -112,13 +113,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 # Rules that speak of circles: the pairs among these are screened against every statement.
-CIRCLE = """Definition15 Postulate3 Tacit.centre_unique Tacit.centre_inside Tacit.inside_not_on
-Tacit.between_of_inside_chord Tacit.inside_of_between Tacit.outside_of_between
-Tacit.not_same_side_of_circles_meet Tacit.line_meets_circle_of_opposite_sides
+CIRCLE = """Definition15 Postulate3 Tacit.centre_inside Tacit.inside_not_on
+Tacit.between_of_inside_chord Tacit.outside_of_between
 Tacit.line_meets_circle_of_inside Tacit.circles_meet_of_on_inside_outside Tacit.circles_meet
 Tacit.line_circle_between Tacit.line_circle_beyond Tacit.circles_meet_same_side
 Tacit.circles_meet_opposite_side Tacit.exists_point_on_circle Tacit.exists_point_inside_circle
-Tacit.exists_point_outside_circle Tacit.circle_eq Tacit.on_circle_of_len_eq
+Tacit.circle_eq Tacit.on_circle_of_len_eq
 Tacit.inside_of_len_lt Tacit.len_lt_of_inside""".split()
 
 # The phrases, and the words for "any number", unfolded in every attempt.
