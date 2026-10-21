@@ -10,7 +10,8 @@ history.
 shortcuts for I.2, I.3 and I.23. The current table reflects both changes.
 
 21 October 2026: 31 more axioms, proved on 19 October by the owner's decision of that
-day, have become theorems, again with their names and exact types unchanged, among them
+day ("Please do both. 79 is rather large with so many books in front of us."), have become
+theorems, again with their names and exact types unchanged, among them
 Generalities 3 (`centre_inside`). The lock now holds <!-- count:axioms -->48<!-- /count --> axioms,
 including <!-- count:tacit-rules -->42<!-- /count --> tacit rules. The current table
 reflects this change too.

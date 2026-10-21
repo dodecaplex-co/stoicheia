@@ -24,7 +24,7 @@ note = "Euclid treats EAD and ADC as alternate; `SameSideOf.trans_opposite` puts
 [review]
 stage = "full"
 commit = "251129b"
-reviewer = "GPT-6 (Codex), independent reader Aw2-reader-f"
+reviewer = "GPT-6 Astra (Codex), independent reader Aw2-reader-f"
 lean = "sha256:664aca971683e75b"
 run = "brief 0005 stage 5, ship A wave-two records re-read, Aw2-reader-f"
 
