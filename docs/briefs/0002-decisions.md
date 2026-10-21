@@ -3032,3 +3032,53 @@ findings:
   hold. `git safe-push --label release` creates the `release` label, with its
   description, the first time it is given; the consolidation release (#38) lands through
   a pull request carrying it. Tags and releases stay manual, by the owner.
+
+## 21 October 2026
+
+- **The citation sweep ([#32](https://github.com/jackChallis/stoicheia/issues/32)).**
+  `scripts/sweep_citations.py`, standard library only, lists the candidates that brief
+  0005's stage 5 names and [FORMALIZATION](../FORMALIZATION.md), section 5, forbids: the
+  bindings of a proof (`have`, `let`, `obtain`, `rcases`, `intro`) that nothing uses, an
+  `obtain` whose whole result is discarded, every `_`-named binding, and helpers that may
+  conceal a whole conclusion. Unused names are Lean's own judgement: each file is
+  elaborated, in parallel and from a copy outside the tree, with the unused-variables
+  linter (Sebastian Ullrich's and Mario Carneiro's, in Lean itself, with our thanks) and
+  `linter.unusedVariables.analyzeTactics`, off by default, switched on, so that a
+  hypothesis `assumption`, `simp_all`, `omega` or `grind` uses without naming it counts as
+  used. The linter cannot see three things: a name that begins with `_`, which it never
+  checks; an anonymous `have`, whose `this` it passes over; and the kept name of an
+  `obtain` whose other parts are cleared or unused, as `obtain ⟨KF, -, -⟩`, because the
+  facts it clears mention KF in the tactic states it reads. In the copy the first two are
+  renamed, lines kept, so that Lean judges them; the third is found by a textual pass for
+  exactly that shape, which stands aside where automation that uses a hypothesis without
+  naming it follows in the declaration. A statement's own unused hypotheses are not
+  listed: they stay review prompts, tagged `redundant-hypothesis` where that is the truth.
+  The helpers are read from Lean's proof terms, in one run with `import Lean`: an entry of
+  facts.json is listed when its proof, past its intros, steps and case splits, comes down
+  in every branch to one helper that none of its own steps feeds, or when it cites a
+  helper stating exactly what it states; the foundations (axioms, Common Notions, proved
+  rules) are left to the overlap catalogue. A hit is declared when its record has a
+  passage whose `at` begins a sentence of the run of `--` lines over it, the runs read as
+  `check_fidelity.py` reads them, and which names the binding: a point or straight line
+  in its note (as train Tw2's notes for the joins of I.5 and I.11 name FC and GB) or in a
+  `#` comment of its table; a hypothesis, or `this` for an anonymous `have`, in such a
+  comment alone, since [STYLE](../STYLE.md), section 1, says a hypothesis in words in a
+  note, never by its local name, and lets a record's `#` comments, which no page shows,
+  name it as the Lean does; a helper as the passage's `helper`. A first version took any
+  `carried` passage over the run as declaring a hypothesis; on Book I it declared I.45's
+  two unused facts through a passage about where H falls, so it was dropped.
+  The joins ruling decides what is declared rather than deleted: a step stays where a
+  sentence of Euclid's stands over it, and FORMALIZATION, section 5, allows a checked
+  intermediate fact tied to one. `--self-test` plants every kind of hit, and controls
+  (a binding used later, one used by `assumption` or `simp_all`, a statement's unused
+  hypothesis, a declared join, a helper fed by a step, an entry citing an entry), in Lean
+  outside the tree, and needs the library built. CI's `negative` job runs it after its
+  build, then the sweep over `Elements/` as a report (134 files in 7 to 12 seconds on a
+  16-core laptop), and safe_push's `NEGATIVE` list runs the same two; the release gate
+  ([WORKFLOW](../WORKFLOW.md), section 10, step 10) runs it with `--fail-on-undeclared`
+  on the release candidate. At `2e8aecf8` it lists 57 hits in Books I to III, 6 of them
+  declared; the fixes and declarations belong to a content train. The protected files
+  changed are:
+  `.github/workflows/ci.yml`,
+  `scripts/safe_push.py`,
+  `scripts/sweep_citations.py`.
