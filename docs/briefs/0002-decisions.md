@@ -3626,3 +3626,50 @@ findings:
   nineteen times over, and pass now. The protected files changed are
   `scripts/test_safe_push.py`, `scripts/check_acceptance.py` and
   `tests/test_check_acceptance.py`.
+
+- **Brief 0013's staged statements are proved in `Staging/` (#116).** On 20 October 2026,
+  after the owner approved decisions 1 to 5 of [brief 0013](0013-figures.md) (the entry
+  of [20 October](#20-october-2026) above records the approval and quotes decision 5), the
+  coordinator assigned the proofs of the statements staged with that brief, in place in
+  `Staging/Figures/`, as a prototype the coordinator approved (the brief's decision 6;
+  [WORKFLOW](../WORKFLOW.md), section 2). By 21 October every one was proved, the optional
+  diagonal route and the bridge `Prop45.fan_boundary` among them, with no new axiom, no
+  statement or definition changed and `Certificate/axioms.lock` unchanged. Each proof of
+  21 October was written by one writer and read in full by an independent reader who wrote
+  none of it. The prototype proofs of 19 October were read in full at `b2c0580a` by a
+  reader who wrote none of them, who approved them with minor findings, one of which
+  corrected the order of two rows of the brief's ledger (B0 and B3). The readings of the
+  bound, the fan's bridge, the diagonal route and the extraction are named in merge commits
+  of `lean/figures-staging`; the others, the reading of the prototype among them, are
+  recorded with the work, outside the repository. The reading of the bound asked for
+  changes: two module notes were false, and have since been corrected, and the import of
+  I.23 bears on the homes, which the brief's section 7 records; the other readings approved
+  with minor findings. At
+  `b2c0580a`, the final Lean of these proofs, `#print axioms` reports `sorryAx` for no
+  staged theorem, and Postulate 5 and superposition only in `outline_bounded`, whose
+  enclosing triangle uses Postulate 5 and copies an angle by I.23, its one citation of the
+  *Elements*, which reaches superposition through I.4 and I.8; in `Prop45.fan_boundary`,
+  superposition alone, through `Fitted.fan`, which rests on I.13; and in the three
+  companions, through Euclid's I.45 and II.14 constructions. Every other staged theorem,
+  `division_exists`, `area_eq` and `apart_has_outline` among them, shows neither and cites
+  no proposition. The checks of [WORKFLOW](../WORKFLOW.md), section 8, are run on that
+  revision before the work lands. Where a proof departs from the brief's route, the brief
+  records it (section 8, "The routes taken"), and the Lean says how the proof goes. Nothing
+  moves into `Elements/`, and I.45 and II.14 stay restricted (`figure-with-dissection`),
+  until the owner approves promotion. The approvals asked for are listed together in the
+  brief's section 10, "Progress, 21 October 2026": moving the statements and proofs into
+  `Elements/`, to the homes of the brief's section 7; `outline_bounded`, with its citation
+  of I.23 and its use of Postulate 5, moved unchanged out of `Outline.lean` to a Book I
+  module of its own after I.29, so that `Outline.lean` and the files that import it, the
+  companions aside, import no proposition and can go to Book Zero; the outline companions
+  as the edition's general claim for I.45 and II.14; the two records' return from
+  restricted to full, once reviewed; the removal of the two `ALLOWED_LIMITS` entries in
+  `scripts/check_acceptance.py`, with the two rows of
+  [ACCEPTANCE's table](../ACCEPTANCE.md#the-limitations-allowed); and, for the natural-number
+  counts of the brief's decision 3, the amendment of the sentence of
+  [FORMALIZATION](../FORMALIZATION.md), section 2, "No numbers, coordinates or real numbers
+  appear in a statement or a proof.", or the exception recorded. The points for the change
+  that promotes the work, the code review of the whole of `Staging/Figures/` at `b2c0580a`
+  among their sources, are in the brief's section 7, "Before promotion". Until promotion
+  the staged copies hold P10 for I.45 and II.14, so the release gate holds, as #116
+  intends.
