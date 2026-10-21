@@ -46,10 +46,18 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 5. **Records.** A review record for every proposition, keyed to the commit it read; the
    gap and overlap catalogues; the book's introduction; further reading from the verified
    list only.
-6. **Acceptance.** The checklist passes in CI, the independent audit agrees, a reader goes
-   through the book start to finish.
-7. **Release.** Release notes drafted from the generated summaries, approved by the
-   owner, then the tag.
+6. **Acceptance.** The five required checks (`check`, `model`, `negative`, `formal-model`
+   and `acceptance`) pass in CI, the independent audit agrees, and a reader goes through
+   the book start to finish.
+7. **Release.** An independent reviewer reads the candidate for stale content and assigns
+   every finding to one of four tiers: **Tier 0, defects,** never on main; **Tier 1,
+   generated facts,** regenerated rather than written by hand; **Tier 2, reader prose,**
+   true at release; and **Tier 3, working records,** dated rather than quietly rewritten.
+   The release waits until every Tier 0 to 2 finding is fixed in the release change, every
+   Tier 3 finding has a dated status note, no open issue is labelled `blocks-release`, and
+   the wiki is refreshed and reasonably correct as of its stated date. Release notes are
+   drafted from the generated summaries and approved by the owner before the tag
+   ([WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10, steps 8 and 10).
 
 ## 3. Status
 
@@ -188,14 +196,18 @@ either side of each base, followed in [#134]. How work lands is in
 - **Solids** (Books XI–XIII): planes as primitives; one statement prototyped first.
 - **A formal model** of the axioms in Lean with Mathlib: done. Begun on 18 October 2026 in
   a package of its own, [`model/`](../model/README.md), with CI's `formal-model` job (#73,
-  a gate for the consolidation release), it proves all 79 locked laws in the ordinary
+  a gate for the consolidation release), it proves all <!-- count:axioms -->79<!-- /count --> locked laws in the ordinary
   plane, and `model_exists` has no hypothesis left: a model relative to Lean's logic and
   Mathlib's construction of the real numbers. It does not show that a formal statement
   captures what Euclid meant. The independence of Postulate 5 still rests on the
   numerical hyperbolic check in [tests/model](../tests/model/), until a hyperbolic model
-  is built. Making `formal-model` a required check of the ruleset is the owner's call.
+  is built. GitHub now requires all five checks: `check`, `model`, `negative`,
+  `formal-model` and `acceptance`. The merge gate in `scripts/safe_push.py` still tests
+  for the presence of a passing run only for the first three, while refusing any reported
+  failure or pending check; aligning that local test needs a separate protected-check
+  change.
 - **The statements' vocabulary** (settled 17 Oct). The lock holds every word that the
-  axioms' statements or the entries' statements reach: 61, the 37 of the axioms and 24
+  axioms' statements or the entries' statements reach: <!-- count:vocabulary -->91<!-- /count -->, the 37 of the axioms and 54
   that only the statements use (`Touches`, `EqualCircles`, `circumference`, `rect`,
   `Parallel` and others). A change to one is a decision, as a changed axiom is
   ([0002](briefs/0002-decisions.md), [FIELDS.md](../Certificate/FIELDS.md#the-vocabulary)).
@@ -269,6 +281,11 @@ either side of each base, followed in [#134]. How work lands is in
 - **18 Oct. A stricter rule that today's content fails lands with a switch.** The figure
   letters came as three pull requests: the rule with its switch off, the letters, then the
   switch on, so that no check travelled with what it judges ([#8], [#9], [#10]).
+- **20 Oct. What a check cannot judge needs a standing read.** The first read for stale
+  content (A0) found claims false on main and others that queued work would make false;
+  the merge-conflict marker and the stale counts among them prompted checks of their own.
+  The read now comes before every release and at the end of each programme stage
+  ([WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10, step 8).
 
 ## 6. Cost and time
 
