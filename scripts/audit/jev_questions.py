@@ -235,6 +235,59 @@ NAME_REST = 'A-Za-z_' + LETTER_LIKE + "0-9'!?" + SUBSCRIPTS
 LEAN_NAME = re.compile('[A-Za-z_' + LETTER_LIKE + '][' + NAME_REST + ']*')
 # A character of a name, to Lean or to the patterns' \w.
 NAME_CHARACTER = re.compile(r'[\w' + NAME_REST + ']')
+# The whitespace Lean reads between tokens (Lean/Parser/Basic.lean, `whitespace`, which refuses
+# a tab and a carriage return), narrower than Python's: a no-break space may stand in a token.
+WHITESPACE = ' \n'
+# The tokens of Lean 4.35's token table (Lean.Parser.getTokenTable; toolchain 4.35.0, commit
+# eb6cafb7) that begin with a letter or `_`: 282 of the 507 that the toolchain's `lean` lists
+# on a scratch file importing Lean, Std and Lake (Lake.DSL adds none). Lean reads one as a
+# keyword where it begins a name and is at least as long as the name, as `trace[` is.
+KEYWORD_TOKENS = frozenset('''
+    EStack⟨ Macro.trace[ Prop Sort StateRefT Type _ abbrev add_decl_doc assert!
+    assert_not_exists assert_not_imported at attribute aux_def axiom bif
+    binder_predicate binop% binop_lazy% binrel% binrel_no_prop% break
+    builtin_cbv_simproc builtin_cbv_simproc_decl builtin_cbv_simproc_pattern%
+    builtin_dsimproc builtin_dsimproc_decl builtin_grind_propagator builtin_initialize
+    builtin_simproc builtin_simproc_decl builtin_simproc_pattern% by by? by_elab calc
+    catch cbv_eval cbv_simproc cbv_simproc_decl cbv_simproc_pattern% class clear%
+    coinductive coinductive_fixpoint continue date( datespec( datetime( dbg_trace
+    debug_assert! decl_name% declare_bitwise_int_theorems declare_bitwise_uint_theorems
+    declare_command_config_elab declare_command_config_elab_legacy declare_config_elab
+    declare_config_elab_legacy declare_core_config_elab declare_eval_bin
+    declare_eval_bin_bitwise declare_eval_bin_bool_pred declare_int_theorems
+    declare_simp_like_tactic declare_sint_simprocs declare_syntax_cat
+    declare_term_config_elab declare_uint_simprocs declare_uint_theorems decreasing_by
+    def def_eval_config_item default_or_ofNonempty% deprecated_module deprecated_syntax
+    deriving do docs_to_verso dsimproc dsimproc_decl elab elabToSyntax% elab_rules
+    elab_stx_quot else end ensure_expected_type% ensure_type_of% estack⟨ eval_prec
+    eval_prio exact?% example exists export extends f! finally for for_in% for_in'%
+    forall from fun gen_injective_theorems% generalizing grind_annotated grind_pattern
+    grind_propagator have haveI hiding hydrate_opaque_type idbg if import in include
+    include_str inductive inductive_fixpoint inferInstanceAs infix infixl infixr
+    init_grind_norm init_quot initialize instance json% leading_parser leftact% let letI
+    let_delayed let_expr let_fun let_mvar% let_tmp let_λ local logNamedError
+    logNamedErrorAt logNamedWarning logNamedWarningAt m! macro macro_rules match
+    match_expr matches max_prec meta mod_cast monotonicity_by mut mutual namespace
+    nat_lit no_error_if_unused% no_implicit_lambda% no_index nofun nomatch noncomputable
+    nonempty_type nonrec norm_cast_add_elim notation offset( omit opaque open panic!
+    partial partial_fixpoint postfix prefix println! private private_decl% protected
+    public recall recall? recommended_spelling register_builtin_option
+    register_error_explanation register_grind_attr register_label_attr
+    register_linter_set register_option register_parser_alias register_simp_attr
+    register_sym_dsimp register_sym_simp register_sym_simp_attr register_tactic_tag
+    register_try?_tactic renaming repeat reportDbgIssue! reportEMatchIssue! reportIssue!
+    reprove reset_grind_attrs% return rightact% run_cmd run_elab run_meta s!
+    satisfies_binder_pred% scoped seal section sepBy( sepBy1( set_library_suggestions
+    set_option show show_panel_widgets show_term show_term_elab simproc simproc_decl
+    simproc_pattern% sorry struct_inst_default% structure suffices syntax tactic_alt
+    tactic_extension tactic_name tactic_tag termination_by termination_by? test_extern
+    then theorem throwError throwErrorAt throwNamedError throwNamedErrorAt time(
+    timezone( trace[ trace_goal[ trailing_parser try type_of% unicode( unif_hint
+    universe unless unlock_limits unop% unreachable! unsafe unseal until using using!
+    value_of% variable wait_for_expected_type% wait_if_contains_mvar%
+    wait_if_type_contains_mvar% wait_if_type_mvar% where while with with_annotate_term
+    with_decl_name% with_weak_namespace without_expected_type zoned( Σ Σ' λ
+'''.split())
 
 
 def comment_end(src: str, i: int) -> int:
@@ -680,9 +733,10 @@ class Calls:
     and named structure projections are quoted through their enclosing declaration, which
     contains their exact signatures and docstrings. An inductive's constructors are each
     named after a `|` outside every bracket in the declaration, on a line that opens `  |`,
-    several to a line as `| a | b | c`; there they are declared, not called. The glossary's
-    supplied definitions also expose their underlying types, including AreParallel within
-    Parallelogram.
+    several to a line as `| a | b | c`; there they are declared, not called. An inductive
+    is read only in the plain forms `constructors` names, and refused otherwise. The
+    glossary's supplied definitions also expose their underlying types, including
+    AreParallel within Parallelogram.
 
     The fixed core/projection allowlist is: 1, 2, symm, trans, refl, mp, mpr, elim, left, right,
     ne, imp, inl, inr, resolve_left, resolve_right, map, Pairwise, mem_append, mem_cons,
@@ -706,29 +760,51 @@ class Calls:
     CONSTRUCTOR_LINE = re.compile(r'^  \|[^\n]*', re.M)
     CONSTRUCTOR = re.compile(r'\|\s*(' + IDENT + ')')
     CLOSERS = {')': '(', ']': '[', '}': '{', '⟩': '⟨', '⦄': '⦃', '⟧': '⟦', '›': '‹'}
-    # The words of Lean 4.35's term syntax after which a `|` may begin an alternative or a
-    # pattern: of `fun`, `match` or `match_expr`, of a `let`, `have`, `haveI`, `letI`,
-    # `let_fun`, `let_delayed` or `let_tmp` by equations or of `let_expr`, of `matches`, of a
-    # tactic, of `do`, or of a computed field after `with`.
+    # The plain forms, the only ones `constructors` reads from an inductive's name to the end
+    # of its constructors: whitespace and name characters; a dot after a name character, a
+    # bracket or a space, and before a name character; the brackets ( ) [ ] { } ⦃ ⦄ ⟨ ⟩; the
+    # symbols : , → ∀ ∈ × + |; and no keyword but those of PLAIN_WORDS. A match is a word, to
+    # be read against KEYWORD_TOKENS, or a dot or a character outside the plain forms.
+    PLAIN_WORDS = frozenset({'Type', 'Prop', 'Sort', 'where', '_'})
+    UNPLAIN = re.compile('(?P<word>' + LEAN_NAME.pattern + ')'
+                         '|(?P<after>(?<![' + WHITESPACE + NAME_REST
+                         + '()\\[\\]{}⦃⦄⟨⟩])\\.)|(?P<before>\\.(?![' + NAME_REST + ']))'
+                         '|[^' + WHITESPACE + NAME_REST + '.()\\[\\]{}⦃⦄⟨⟩:,→∀∈×+|]')
+    # The longest keyword token at a place, as Lean's token table reads it.
+    KEYWORD = re.compile('|'.join(re.escape(token) for token in
+                                  sorted(KEYWORD_TOKENS, key=lambda token: (-len(token), token))))
+    # Words after which a `|` may begin an alternative or a pattern, as in
+    # `| mk : Q <| match 0 with | Known.bar n => n | _ => 0`: of `fun`, `match` or
+    # `match_expr`, of a `let`, `have`, `haveI`, `letI`, `let_fun`, `let_delayed` or `let_tmp`
+    # by equations or of `let_expr`, of `matches`, of a tactic, of `do`, or of a computed field
+    # after `with`. The plain forms hold none of them; a bar after one is refused first, with
+    # that reason.
     ALTERNATIVES = re.compile(r"(?<![\w'.])(?:fun|match|match_expr|matches|let|let_expr|have|by"
                               r"|do|with|haveI|letI|let_fun|let_delayed|let_tmp)(?![\w'])|λ")
     # A line that is blank, opens `  |` or opens with three spaces continues the constructors.
     CONSTRUCTORS_END = re.compile(r'(?! *$|  \||   )', re.M)
-    # A declaration's keyword begins a command wherever it stands on its line.
+    # A declaration's keyword, or `recall`, begins a command wherever it stands on its line,
+    # and ends the constructors.
     COMMAND_WORD = re.compile(r"(?<![\w'.«])(?:def|theorem|abbrev|instance|example|opaque|axiom"
-                              r"|structure|class|inductive|deriving|mutual)(?![\w'»])")
+                              r"|structure|class|inductive|deriving|mutual|recall)(?![\w'»])")
+    # Three forms would make the masked text, or the words in it, other than Lean reads them.
     # A string, a char literal or a «...» name, whose brackets and bars the masking may misread.
     LITERAL = re.compile(r"[\"«]|(?<![\w'₀-₉!?])'")
-    # Where Lean ends a token within what these patterns read as one word, a keyword after it
-    # goes unseen and a quote may open a literal: after a number glued to a word or a quote,
-    # as in `5matches`, `0x5def`, `p.1def` or `0'a'`, and at a quote after a bare `!` or `?`,
-    # as in `!'a'matches`.
+    # A number glued to a word or a quote, as in `0x5matches` or `0'a'`, where Lean ends the
+    # number, so that a keyword after it would go unseen and a quote would open a char literal;
+    # and a quote after a bare `!` or `?`, which opens one, as in `!'a'matches`.
     GLUED = re.compile(r"(?<![\w'₀-₉!?])(?:[0-9]+(?:[^\W\d]|['!?])|[!?]+')")
-    # So too after a word character Lean reads in no name, such as `²` or `ж` (but `λ`, which
-    # ALTERNATIVES reads), and after a token ending in a subscript, such as `→ₑ`, where a
-    # subscript begins a word; and after `#`, which begins Lean's commands, each read whole,
-    # as `#where` is in `#wheredef`.
+    # A dash or a slash after which the masking opens a comment, after anything but whitespace
+    # or a name character: Lean may read it within a token, as in `\/-`, `//-` or a notation's
+    # `+--`, and open no comment there.
+    OPENER = re.compile('--|/-')
+    # Two forms the plain forms leave out are refused first, with a reason of their own: a
+    # word character Lean reads in no name, such as `²` or `ж` (but `λ`, which ALTERNATIVES
+    # reads), a subscript that begins a word, as after `→ₑ`, and `#`, which begins Lean's
+    # commands, each read whole, as `#where` is in `#wheredef`; and a dot glued to a symbol
+    # before a word, as in `..matches` or `⊗.matches`, which the patterns take for a field.
     FOREIGN = re.compile('[^\\W' + NAME_REST + 'λ]|(?<![\\w\'!?])[' + SUBSCRIPTS + ']|#')
+    DOT = re.compile('(?<=[^\\s\\w' + NAME_REST + '()\\[\\]{}⟨⟩⦃⦄⟦⟧‹›])\\.(?=\\w)')
 
     def __init__(self, index: Index, facts: dict):
         self.index = index
@@ -753,30 +829,34 @@ class Calls:
         """Return each constructor name of inductive d: the name after a `|` outside every
         bracket in the declaration, on a line that opens `  |`.
 
-        The reading is lexical: patterns over the masked text find the words, brackets and
-        bars, and Lean's parser is not run. Where the patterns could read the text otherwise
-        than Lean does, the inductive is refused. Its raw text may hold no string and no
-        «...» name, whose brackets and bars the masking may misread, and no quote but one
-        after a word character, `'`, `!` or `?`, which may continue a name; its masked text
-        may hold none of the forms GLUED and FOREIGN name, where Lean ends a token within what
-        the patterns read as one word, so that a keyword after it would go unseen and a quote
-        after it would open a char literal. The index refuses a notation whose words before
-        `=>` hold a bar, or whose token joins a name character to another, and every macro,
-        elaborator and binder-predicate command; `scripts/check_fidelity.py`, not this
-        generator, refuses in `Elements/` the attributes that make a declaration an
-        elaborator or a parser, such as `@[term_elab k]`. Brackets
-        are counted from the declaration's name across lines to the end of its constructors,
-        and an unbalanced one is refused. The constructors end before the first line outside
-        every bracket that is not blank and opens neither `  |` nor three spaces, where a
-        deriving clause or a command begins, and before a declaration's keyword outside every
-        bracket, as in `| mk def f`, wherever it stands on its line, when the keyword begins a
-        word to the patterns; what follows is read for uses. A bar within brackets, or of
-        `||`, `<|` or `|>`, separates no constructors, so a name after it stays a use: in a
-        family `Q : Nat → Type`, Lean accepts `| mk : Q <| Known.bar 0`. Every other bar must
-        separate constructors, standing on a line that opens `  |` before a name, and is
-        refused otherwise. It is refused too after one of the words ALTERNATIVES names, such
-        as `match`, where it may begin an alternative, as in
-        `| mk : Q <| match 0 with | Known.bar n => n | _ => 0`, which Lean also accepts."""
+        The reader accepts only the plain forms main's inductives are written in, and refuses
+        everything else. From the inductive's name to the end of its constructors, the masked
+        text may hold only whitespace and name characters; a dot after a name character, a
+        bracket or a space, and before a name character; the brackets ( ) [ ] { } ⦃ ⦄ ⟨ ⟩;
+        the symbols : , → ∀ ∈ × + |; and no keyword Lean 4.35 reads (KEYWORD_TOKENS) but
+        `Type`, `Prop`, `Sort`, `where` and `_`. An alternative or a pattern after a bar needs
+        `=>` or a keyword, so in these forms each bar outside every bracket separates
+        constructors or stands beside another, as in `||`, which separates none; any other
+        bar is refused, as are constructors at four spaces or on the inductive's own line.
+
+        So that the masked text, and the words in it, are those Lean reads, the declaration's
+        raw text may hold no string, char literal or «...» name (LITERAL), no number glued to
+        a word or a quote (GLUED), and no comment opening after anything but whitespace or a
+        name character, where Lean may read the dash or slash within a token (OPENER). Some
+        forms outside the plain forms are refused first, with a reason of their own: those
+        FOREIGN and DOT name, anywhere in the declaration, and a bar after a word
+        ALTERNATIVES names.
+
+        The constructors end before the first line outside every bracket that is not blank
+        and opens neither `  |` nor three spaces, where a deriving clause or a command
+        begins, and before a declaration's keyword or `recall` outside every bracket,
+        wherever it stands on its line, as in `| mk def f`; what follows is read for uses.
+        Brackets are counted from the name across lines, and an unbalanced one is refused.
+        The index refuses a notation whose words before `=>` hold a bar, or whose token joins
+        a name character to another, and every macro, elaborator and binder-predicate
+        command; `scripts/check_fidelity.py`, not this generator, refuses in `Elements/` the
+        attributes that make a declaration an elaborator or a parser, such as
+        `@[term_elab k]`."""
         require(not self.LITERAL.search(self.index.raw[d.path], d.name_end, d.end),
                 f'{d.path}: unsupported string, char literal or quoted name in {d.name}')
         require(not self.GLUED.search(clean, d.name_end, d.end),
@@ -784,14 +864,23 @@ class Calls:
         foreign = self.FOREIGN.search(clean, d.name_end, d.end)
         if foreign:
             raise Refusal(f'{d.path}: unsupported character {foreign.group()!r} in {d.name}')
+        raw = self.index.raw[d.path]
+        for found in self.OPENER.finditer(raw, d.name_end, d.end):
+            before = raw[found.start() - 1]
+            require(clean[found.start() - 1] != before or before in WHITESPACE
+                    or NAME_CHARACTER.match(before),
+                    f'{d.path}: unsupported comment glued to {before!r} in {d.name}')
+        require(not self.DOT.search(clean, d.name_end, d.end),
+                f'{d.path}: unsupported dot glued to a symbol in {d.name}')
         lines = {line.start(): line.end()
                  for line in self.CONSTRUCTOR_LINE.finditer(clean, d.name_end, d.end)}
         words = {found.start(): found.group()
                  for found in self.ALTERNATIVES.finditer(clean, d.name_end, d.end)}
         commands = {found.start() for found in self.COMMAND_WORD.finditer(clean, d.name_end, d.end)}
-        found, stack, line_end, word = [], [], -1, None
+        found, stack, line_end, word, stop = [], [], -1, None, d.end
         for i in range(d.name_end, d.end):
             if not stack and clean[i - 1] == '\n' and self.CONSTRUCTORS_END.match(clean, i):
+                stop = i
                 break
             line_end = lines.get(i, line_end)
             c = clean[i]
@@ -803,6 +892,7 @@ class Calls:
             elif stack:
                 continue
             elif i in commands:
+                stop = i
                 break
             elif i in words:
                 word = word or words[i]
@@ -813,6 +903,21 @@ class Calls:
                 require(match, f'{d.path}: unsupported bar in an inductive, {d.name}')
                 found.append(match)
         require(not stack, f'{d.path}: unbalanced brackets in {d.name}')
+        for unplain in self.UNPLAIN.finditer(clean, d.name_end, stop):
+            if unplain.lastgroup == 'word':
+                keyword = self.KEYWORD.match(clean, unplain.start(), stop)
+                if (not keyword or keyword.end() < unplain.end()
+                        or keyword.group() in self.PLAIN_WORDS):
+                    continue
+                what = f'the keyword {keyword.group()!r}'
+            elif unplain.lastgroup == 'after':
+                what = f'a dot after {clean[unplain.start() - 1]!r}'
+            elif unplain.lastgroup == 'before':
+                what = f'a dot before {clean[unplain.end():unplain.end() + 1]!r}'
+            else:
+                what = f'the character {unplain.group()!r}'
+            raise Refusal(f'{d.path}: {d.name} holds {what}, outside the plain forms an '
+                          'inductive may hold')
         return found
 
     def type_names(self, text: str, consumer: Declaration) -> set[str]:

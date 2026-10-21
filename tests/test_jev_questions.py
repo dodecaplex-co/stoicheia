@@ -640,8 +640,8 @@ class Imports(LeanFiles):
 
 
 class CallReconciler(LeanFiles):
-    """The forms of I.4's and I.8's proofs on the superposition branch, bars within a
-    constructor, and forms that could hide a use, each in a file Lean 4.35 accepts."""
+    """The forms of I.4's and I.8's proofs on the superposition branch, the plain forms an
+    inductive may hold, and forms that could hide a use, each in a file Lean 4.35 accepts."""
 
     def test_every_constructor_on_a_line_is_a_member(self):
         calls = self.calls('namespace Elements\n\ninductive Pt where\n  | a | b | c\n\n'
@@ -661,7 +661,8 @@ class CallReconciler(LeanFiles):
 
     def test_lean_core_list_lemmas_are_not_missing_names(self):
         calls = self.calls('namespace Elements\n\ntheorem lists : True := by\n'
-                           '  have h := @List.mem_nil_iff\n  have k := @List.forall_mem_cons\n'
+                           '  have h := @List.mem_nil_iff Nat\n'
+                           '  have k := @List.forall_mem_cons Nat\n'
                            '  trivial\n\nend Elements\n')
         self.assertEqual(calls.direct('Elements.lists'), [])
         self.assertEqual(calls.unresolved['Elements.lists'], set())
@@ -672,14 +673,14 @@ class CallReconciler(LeanFiles):
                            'abbrev a : Pt := .a\nabbrev b : Pt := .b\n\nend Elements\n')
         self.assertEqual(calls.direct('Elements.Pt'), [])
 
-    def test_a_bar_within_a_constructor_begins_no_constructor(self):
-        # Only a `|` outside every bracket in the declaration, and not of `||`, begins a
-        # constructor; each Known.bar after another bar is a use.
-        text = ('namespace Elements\n\ndef Known.bar (n : Nat) : Bool := n == 1\n\n'
-                'inductive Pt where\n  | a | b | c\n'
-                '  | mk (n : Nat) (h : (n == 0 || Known.bar n) = true)\n'
-                '  | odd (n : Nat) (h : match n with | 0 => True | k => Known.bar k = true)\n'
-                '  | even : (n : Nat) → n == 0 || Known.bar n → Pt\n\nend Elements\n')
+    def test_a_bar_of_or_begins_no_constructor(self):
+        # Of the bars the plain forms hold, only one beside another, as in `||`, stands within a
+        # constructor, outside every bracket or within one opened on an earlier line; it
+        # begins no constructor, so each Known.bar after one is a use.
+        text = self.known_bool('inductive Pt where\n  | a | b | c\n'
+                               '  | mk (n : Nat) (h : Nat.beq n 0 || Known.bar n)\n'
+                               '  | odd (n : Nat) (h : Nat.beq n 0\n  || Known.bar n)\n'
+                               '  | even : (n : Nat) → Nat.beq n 0 || Known.bar n → Pt')
         calls = self.calls(text)
         self.assertEqual({member for member, owners in calls.members.items()
                           if 'Elements.Pt' in owners}, {'a', 'b', 'c', 'mk', 'odd', 'even'})
@@ -693,6 +694,10 @@ class CallReconciler(LeanFiles):
         return ('namespace Elements\n\n@[match_pattern] def Known.bar (n : Nat) : Nat := n + 1\n\n'
                 f'{inductive}\n\nend Elements\n')
 
+    def known_bool(self, inductive):
+        return ('namespace Elements\n\ndef Known.bar (n : Nat) : Bool := n == 1\n\n'
+                f'{inductive}\n\nend Elements\n')
+
     def assert_uses(self, text, name, members):
         calls = self.calls(text)
         self.assertEqual({member for member, owners in calls.members.items()
@@ -702,26 +707,50 @@ class CallReconciler(LeanFiles):
         self.assertEqual([c['start'] for c in calls.direct(name)
                           if c['name'] == 'Elements.Known.bar'], uses)
 
-    def test_a_bar_within_a_bracket_opened_on_an_earlier_line_begins_no_constructor(self):
-        # Brackets are counted across lines, ⦃ ⦄ among them: each bar here is within one, the
-        # last before a pipe, so each Known.bar is a use.
-        for inductive in ('  | mk (f : Nat → Nat := fun\n  | Known.bar n => n\n  | _ => 0)',
-                          '  | mk (n : Nat) (h : (match n with\n  | Known.bar k => k\n'
-                          '  | _ => 0) = 0)',
-                          '  | mk ⦃h : id = fun | Known.bar n => n | _ => 0⦄ : Pt',
-                          '  | mk (f : Nat → Nat := fun\n  | k => id <| Known.bar k)'):
-            with self.subTest(inductive=inductive):
-                self.assert_uses(self.known('inductive Pt where\n' + inductive), 'Elements.Pt',
-                                 {'mk'})
+    def test_every_form_outside_the_plain_forms_is_refused(self):
+        # The first reviews' probes, which this branch once read and kept the use of: `||`
+        # beside `==` or `=`; a bar within a bracket opened on an earlier line, or within ⦃ ⦄,
+        # after `fun` or `match`; and, in a family, a pipe, `<|` or `|>`, outside every
+        # bracket. Main's inductives use none of these forms, and each is refused, naming the
+        # first character or keyword outside the plain forms; so are a modifier before a
+        # `def` at four spaces, which Lean reads as a command, and a dot before a brace.
+        for text, name, refused in (
+                (self.known_bool('inductive Pt where\n'
+                                 '  | mk (n : Nat) (h : (n == 0 || Known.bar n) = true)'),
+                 'Pt', "the character '='"),
+                (self.known_bool('inductive Pt where\n  | odd (n : Nat) '
+                                 '(h : match n with | 0 => True | k => Known.bar k = true)'),
+                 'Pt', "the keyword 'match'"),
+                (self.known_bool('inductive Pt where\n'
+                                 '  | even : (n : Nat) → n == 0 || Known.bar n → Pt'),
+                 'Pt', "the character '='"),
+                (self.known('inductive Pt where\n'
+                            '  | mk (f : Nat → Nat := fun\n  | Known.bar n => n\n  | _ => 0)'),
+                 'Pt', "the character '='"),
+                (self.known('inductive Pt where\n  | mk (n : Nat) (h : (match n with\n'
+                            '  | Known.bar k => k\n  | _ => 0) = 0)'), 'Pt', "the keyword 'match'"),
+                (self.known('inductive Pt where\n'
+                            '  | mk ⦃h : id = fun | Known.bar n => n | _ => 0⦄ : Pt'),
+                 'Pt', "the character '='"),
+                (self.known('inductive Pt where\n'
+                            '  | mk (f : Nat → Nat := fun\n  | k => id <| Known.bar k)'),
+                 'Pt', "the character '='"),
+                (self.known('inductive Q : Nat → Type where\n  | mk : Q <| Known.bar 0'),
+                 'Q', "the character '<'"),
+                (self.known('inductive Q : Nat → Type where\n'
+                            '  | a : Q 0 | b : Known.bar 1 |> Q'), 'Q', "the character '>'"),
+                (self.known('inductive Pt where\n  | mk\n    partial def f : Nat → Nat'
+                            + self.EQUATIONS), 'Pt', "the keyword 'partial'"),
+                (self.known('inductive Pt where\n  | mk (n : Nat) (h : n ∈ List.cons.{0} n [])'),
+                 'Pt', "a dot before '{'")):
+            with self.subTest(text=text):
+                self.assert_refused(text, f'Elements/Proof.lean: Elements.{name} holds {refused}, '
+                                    'outside the plain forms an inductive may hold')
 
     def test_a_bar_outside_every_bracket_begins_a_constructor_only_where_one_can(self):
-        # In a family Lean accepts a pipe outside every bracket, so a name after `<|` is a use.
         # A command the index reads with the inductive, such as `partial def`, ends its
         # constructors. After each word ALTERNATIVES names, one row each, a bar outside every
-        # bracket may begin an alternative or a pattern, and is refused.
-        self.assert_uses(self.known('inductive Q : Nat → Type where\n  | mk : Q <| Known.bar 0\n'
-                                    '  | a : Q 0 | b : Known.bar 1 |> Q'),
-                         'Elements.Q', {'mk', 'a', 'b'})
+        # bracket may begin an alternative or a pattern, and is refused with that reason.
         self.assert_uses(self.known('inductive Pt where\n  | mk\n\npartial def f : Nat → Nat\n'
                                     '  | Known.bar n => f n\n  | _ => 0'), 'Elements.Pt', {'mk'})
         family = 'inductive Q : Nat → Type where\n  | mk : Q <| '
@@ -750,10 +779,16 @@ class CallReconciler(LeanFiles):
                     self.calls(header + self.known(inductive))
 
     def test_a_declaration_keyword_ends_the_constructors_wherever_it_stands(self):
-        # Lean reads `def` as a command on a constructor's own line, and at three spaces: each
-        # equation after it is the def's, so its Known.bar is a use.
+        # Lean reads `def` as a command on a constructor's own line, and at three spaces, and
+        # so `example`, `instance` and `theorem`: each equation after one is the command's, so
+        # its Known.bar is a use.
         for inductive in ('  | mk def f : Nat → Nat\n  | Known.bar n => n\n  | _ => 0',
-                          '  | mk\n   def f : Nat → Nat\n  | Known.bar n => n\n  | _ => 0'):
+                          '  | mk\n   def f : Nat → Nat\n  | Known.bar n => n\n  | _ => 0',
+                          '  | mk example : Nat → Nat\n  | Known.bar n => n\n  | _ => 0',
+                          '  | mk instance : Inhabited (Nat → Nat) where default\n'
+                          '  | Known.bar n => n\n  | _ => 0',
+                          '  | mk theorem t : ∀ n : Nat, n = n\n  | Known.bar n => rfl\n'
+                          '  | _ => rfl'):
             with self.subTest(inductive=inductive):
                 self.assert_uses(self.known('inductive Pt where\n' + inductive), 'Elements.Pt',
                                  {'mk'})
@@ -891,6 +926,62 @@ class CallReconciler(LeanFiles):
         self.assert_uses(self.known('notation "nine" => (9 : Nat)\n\n'
                                     'inductive Q : Nat → Type where\n  | mk : Q nine\n'
                                     '  | b : Q (Known.bar 0)'), 'Elements.Q', {'mk', 'b'})
+
+    def test_a_recall_ends_the_constructors(self):
+        # Lean reads `recall` as a command wherever it stands, as it does `def`: the equations
+        # after it are the recall's, so each Known.bar in them is a use.
+        f = 'def f : Nat → Nat' + self.EQUATIONS + '\n\n'
+        s = ('structure S where\n  g : Nat → Nat\n\n'
+             'def s : S where\n  g | Known.bar n => n | _ => 0\n\n')
+        for inductive in (f + 'inductive Pt where\n  | mk recall f : Nat → Nat' + self.EQUATIONS,
+                          f + 'inductive Pt where\n  | mk\n   recall f : Nat → Nat'
+                          + self.EQUATIONS,
+                          f + 'inductive Pt where\n'
+                          '  | mk recall f : Nat → Nat | Known.bar n => n | _ => 0',
+                          s + 'inductive Pt where\n'
+                          '  | mk recall s : S where\n  g | Known.bar n => n | _ => 0'):
+            with self.subTest(inductive=inductive):
+                self.assert_uses(self.known(inductive), 'Elements.Pt', {'mk'})
+
+    def test_a_comment_opener_or_dot_glued_to_a_symbol_is_refused(self):
+        # Lean reads `\/`, `//`, `..` and a notation's `+-`, `⊗.` or no-break space and dash
+        # whole, so the dash or the dot after each opens no comment and begins no field: the
+        # masking would hide `match` or `matches`, and the patterns would take `..matches` or
+        # `..def` for a field. The masked text of the row with `∀` is in the plain forms,
+        # which would keep it.
+        prop = 'inductive Q : Prop → Type where\n  | mk : Q <| False \\/-(1 : Int) = 0 ∨ '
+        nat = 'inductive Q : Nat → Type where\n  | mk : Q <| '
+        alternatives = 'match 0 with -- -/\n  | Known.bar n => True\n  | _ => True'
+        for text, refused in (
+                (prop + 'match 0 with /- -/ -- -/\n  | Known.bar n => True\n  | _ => True',
+                 "comment glued to '\\\\'"),
+                (prop + '5 matches 0 -- -/\n  | Known.bar 0', "comment glued to '\\\\'"),
+                (prop + 'match 0 with | Known.bar n => True | _ => True -- -/',
+                 "comment glued to '\\\\'"),
+                ('inductive Q : Type → Type where\n'
+                 '  | mk : Q {x : Int //-x = 0 ∨ ' + alternatives + '}', "comment glued to '/'"),
+                ('infixl:65 " +- " => Int.sub\n\n' + self.BOOL
+                 + '(1 : Int) +--1 == 0 && 5 matches 0\n  | Known.bar 0', "comment glued to '+'"),
+                ('infixl:65 " +- " => Int.sub\n\ninductive Q : Type where\n'
+                 '  | mk : ∀ _ : (1 : Int) +--1 == 0 && 5 matches 0\n  | Known.bar 0, Q',
+                 "comment glued to '+'"),
+                ('infixl:65 "  - " => Int.sub\n\ninductive Q : Type where\n'
+                 '  | mk : ∀ _ : (1 : Int) --1 == 0 && 5 matches 0\n  | Known.bar 0, Q',
+                 "comment glued to '\\xa0'"),
+                (self.BOOL + 'Nat.succ ..matches 0 | Known.bar 0', 'dot glued to a symbol'),
+                (nat + 'Nat.succ ..def f : Nat → Nat' + self.EQUATIONS, 'dot glued to a symbol'),
+                ('notation "⊗." => (5 : Nat)\n\n' + self.BOOL + '⊗.matches 0 | Known.bar 0',
+                 'dot glued to a symbol')):
+            with self.subTest(text=text):
+                self.assert_refused(self.known(text), f'unsupported {refused} in Elements.Q')
+        # A dot after a bracket or a name, and a comment after a name or a space, keep their uses.
+        self.assert_uses(self.known("def p : Nat × Nat := (5, 6)\n\ndef h' : Nat := 2\n\n"
+                                    'inductive L where\n  | eq (n : Nat)\n\n'
+                                    'inductive Q : L → Nat → Type where\n'
+                                    "  | mk : Q (.eq p.1) (p).2 -- a comment\n"
+                                    "  | a : Q (.eq h') h'-- another\n  /-- A doc. -/\n"
+                                    '  | b : Q (.eq 0) (Known.bar 0) /- a block -/'),
+                         'Elements.Q', {'mk', 'a', 'b'})
 
 
 class HelperModules(unittest.TestCase):
