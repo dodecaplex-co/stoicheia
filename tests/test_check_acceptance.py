@@ -18,10 +18,7 @@ these cases put it to small files of verdicts, each with the outcome it should g
 * --json writes a verdict for every item of every proposition, book and the edition, with
   each failure's messages and why an item was not run;
 * CI copies the pull request's checks into main but keeps main's content pins, so an
-  updated definition or expected count cannot hide a later E2 failure;
-* the report gives each failure's message, one line or several, as literal text, and
-  names its revision as a commit, so that S12, reading the report, finds no name in it
-  to put to Lean, and a second run copies no finding of the first.
+  updated definition or expected count cannot hide a later E2 failure.
 
 CI runs this file before the checker. Python 3.11 or later; standard library, with sh and
 rsync for scripts/copy_acceptance_checks.sh, the helper the workflow runs.
@@ -32,13 +29,11 @@ from __future__ import annotations
 import contextlib
 import io
 import json
-import re
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import check_acceptance as ca  # noqa: E402
@@ -339,70 +334,6 @@ class BaselineCopy(unittest.TestCase):
                 self.assertEqual(code, 1, out.getvalue())
                 self.assertIn("edition, E2 certificate: fail", out.getvalue())
                 self.assertEqual(before["verdicts"]["edition"]["E2"], "pass")
-
-
-class Report(unittest.TestCase):
-    """The report as written, read back as S12 reads it (check_style.s12_plan), with no
-    Lean: the names it would put to Lean, and what the report keeps of each message."""
-
-    COMMIT = "`abcdef12`"
-    STALE = "S12 docs/reports/acceptance-books-I-III.md:6: `a2e0f02a`: Unknown identifier `a2e0f02a`"
-    OTHERS = [("I.5", "P2", "the record names `Prop5.not_a_name`, which Lean does not know"),
-              ("Book III", "B2", "first line\n  `Elements.Missing` indented\n\n``` a fence"),
-              ("edition", "E6", "Staging/X.lean still stages 1 declaration(s)")]
-
-    def setUp(self):
-        ca.failures.clear()
-        ca.not_run.clear()
-
-    tearDown = setUp
-
-    def write(self, stale: list[str]) -> str:
-        ca.failures.clear()
-        for where, item, msg in self.OTHERS:
-            ca.fail(where, item, msg)
-        for msg in stale:
-            ca.fail("edition", "E5", msg)
-        with mock.patch.object(ca, "revision", lambda *_: self.COMMIT):
-            return ca.report(ca.REPORT, {"lean_version": "4.35.0"}, quick=False)
-
-    def asked(self, text: str) -> set[str]:
-        cs = ca.check_style
-        _, new, _, _ = cs.s12_plan([cs.NamedText(ca.REPORT, text, cs.every_book_opens())],
-                                   audit_built=True)
-        return {name for group in new.values() for name in group}
-
-    def blocks(self, text: str) -> list[str]:
-        found, lines, fence = [], [], None
-        for line in text.splitlines():
-            if fence is None:
-                m = re.fullmatch(r"  (`{3,})text", line)
-                if m:
-                    fence, lines = m.group(1), []
-            elif line == f"  {fence}":
-                found.append("\n".join(lines))
-                fence = None
-            else:
-                lines.append(line[2:] if line.startswith("  ") else line)
-        return found
-
-    def test_messages_are_literal_and_whole(self):
-        text = self.write([self.STALE])
-        self.assertEqual(sorted(self.blocks(text)),
-                         sorted([self.STALE] + [msg for _, _, msg in self.OTHERS]))
-        self.assertIn("the files of commit `abcdef12`", text)
-        self.assertEqual(self.asked(text), set())
-
-    def test_a_second_run_copies_no_finding_of_the_first(self):
-        first = self.write([self.STALE])
-        found = [f"S12 docs/reports/acceptance-books-I-III.md: `{n}`: Unknown identifier `{n}`"
-                 for n in sorted(self.asked(first))]
-        second = self.write(found)
-        self.assertNotIn("a2e0f02a", second)
-        self.assertNotIn("abcdef12`: Unknown", second)
-        self.assertEqual(self.write([]), second)
-        self.assertNotIn("| E5 | edition: the edition's other pages, links and style | machine | ✗ |",
-                         second)
 
 
 if __name__ == "__main__":

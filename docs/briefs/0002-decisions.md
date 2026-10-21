@@ -2757,17 +2757,3 @@ findings:
   note in `review/I/08.toml`, now say "as prototyped" and cite #150; these are comments
   only, and change no statement, declaration, stamp or check. The 19 October entry stays as
   written.
-
-- **The acceptance report gives each failure's message as literal text.** S12 reads
-  `docs/reports/acceptance-books-I-III.md` as a report, and the report copied each message
-  as Markdown, so a backticked word a check quoted, such as the commit of the report's own
-  revision line, became a name S12 put to Lean; S12's finding about it was then copied into
-  the next report, and no regeneration settled. `scripts/check_acceptance.py` now writes
-  every failure's message, one line or several, in a fenced block, whole and with a fence
-  longer than any run of backticks in it, and names the revision as "the files of commit"
-  it read, which S12 already reads as a commit identifier. No check, rule, exemption or
-  expected value changes, and every failure is still listed. `tests/test_check_acceptance.py`
-  reads a written report back through `check_style.s12_plan`: no message puts a name to
-  Lean, and a second run copies no finding of the first. The protected files this changes
-  are `scripts/check_acceptance.py` and `tests/test_check_acceptance.py`; as a check change,
-  it lands in a tooling pull request before the content it judges.
