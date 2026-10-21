@@ -31,9 +31,11 @@ each fault the check exists to catch, and checks that each is caught and that th
 unchanged pass. It drives --write's guards too, and runs `run.py --full --write` for real,
 in a git repository of its own, on a made-up harness that changes and restores the
 checkout's harness while the run goes on, and on one stopped by SIGTERM partway. For each
-of SIGTERM and SIGHUP, it also stops publication at each part of its commit boundary and
-checks that the whole previous output set remains; and changes a harness file during
-publication to check that the prior outputs return.
+of SIGTERM, SIGHUP and SIGINT, it also stops publication after a file is moved to its
+backup, after a replacement, after the check for a pending signal, after the signals are
+blocked again and while the old files are removed, and checks each time that every earlier
+file returns; and it changes a harness file during publication and checks that the earlier
+files return.
 """
 import contextlib
 import hashlib
@@ -613,13 +615,14 @@ def output_tree(root):
 
 def publication_signal_self_test():
     """Interrupt each publication boundary and require its whole prior tree back."""
-    stops = [getattr(signal, name) for name in ('SIGTERM', 'SIGHUP') if hasattr(signal, name)]
-    if not stops:
+    stops = [getattr(signal, name) for name in ('SIGTERM', 'SIGHUP', 'SIGINT')
+             if hasattr(signal, name)]
+    if os.name != 'posix' or not hasattr(signal, 'pthread_sigmask') or not stops:
         return
 
     for stop in stops:
-        for timing in ('after replacement', 'after pending check', 'after second block',
-                       'during backup cleanup'):
+        for timing in ('after backup rename', 'after replacement', 'after pending check',
+                       'after second block', 'during backup cleanup'):
             with tempfile.TemporaryDirectory() as tmp:
                 results = os.path.join(tmp, 'results')
                 model_md = os.path.join(tmp, 'MODEL.md')
@@ -647,6 +650,10 @@ def publication_signal_self_test():
                 def interrupting_replace(source, destination):
                     nonlocal sent
                     real_replace(source, destination)
+                    if timing == 'after backup rename' and destination.endswith('.old') \
+                            and not sent:
+                        sent = True
+                        os.kill(os.getpid(), stop)
                     if timing == 'after replacement' and destination == model_md and not sent:
                         sent = True
                         if not os.path.isfile(destination):
@@ -664,7 +671,7 @@ def publication_signal_self_test():
                 def interrupting_mask(how, mask):
                     nonlocal blocks, sent
                     previous_mask = real_mask(how, mask)
-                    if how == signal.SIG_BLOCK and set(mask) == set(stops):
+                    if how == signal.SIG_BLOCK and stop in set(mask):
                         blocks += 1
                         if timing == 'after second block' and blocks == 2 and not sent:
                             sent = True
@@ -694,6 +701,8 @@ def publication_signal_self_test():
                         write(made_up_runs(), new, results, model_md)
                 except SystemExit as e:
                     stopped = e.code
+                except KeyboardInterrupt:
+                    stopped = 128 + signal.SIGINT
                 finally:
                     for sig, handler in previous.items():
                         signal.signal(sig, handler)
@@ -705,8 +714,8 @@ def publication_signal_self_test():
                                          f'stopped {stopped}; '
                                          f'added {sorted(after.keys() - before.keys())}; '
                                          f'removed {sorted(before.keys() - after.keys())}')
-    print('model publication self-test: SIGTERM and SIGHUP across replacement, signal checks '
-          'and backup cleanup restore the previous output set without temporary files')
+    print('model publication self-test: SIGTERM, SIGHUP and SIGINT, sent at five points of '
+          'publication, put every earlier file back and leave no temporary file')
 
 
 def publication_provenance_self_test():

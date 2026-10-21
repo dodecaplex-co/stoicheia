@@ -3743,8 +3743,8 @@ findings:
   lock against someone who sets it on purpose: pointed at another checkout's root, it
   lets a run that is not from a copy write that checkout's results, as a header written
   by hand could, and the security review, which reads the results' diff, is the guard
-  there. SIGTERM or SIGHUP stops the run from the copy and the harness it is running,
-  and removes the copy. The run from the copy replaces its files as one publication and
+  there. SIGTERM, SIGHUP or SIGINT stops the run from the copy and the harness it is
+  running, and removes the copy. The run from the copy replaces its files as one publication and
   checks the harness's provenance again once they are replaced; a signal, or a harness
   found changed, puts every file back as it was, a link as a link and a file that was
   not there removed, so a `--write` stopped while it runs or publishes writes nothing.
@@ -3755,7 +3755,8 @@ findings:
   the commit's output; changed and left, or changed from the start, which writes
   nothing; and, where there are POSIX signals, sent SIGTERM partway, which writes
   nothing and leaves no copy and no harness running. It stops publication too, with
-  SIGTERM and with SIGHUP, after a replacement, after the check for a pending signal,
+  SIGTERM, with SIGHUP and with SIGINT, after a file is moved to its backup, after a
+  replacement, after the check for a pending signal,
   after the signals are blocked again and while the old files are removed, and changes a
   harness file and leaves it changed during publication; each time the earlier files
   must all return, with no temporary file left.

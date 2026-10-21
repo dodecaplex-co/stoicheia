@@ -25,9 +25,9 @@ objects, into a private folder, checks that they hash as the files checked out d
 runs again from that copy, so that every module the run imports and every harness it runs
 is that commit's, whatever the checkout does meanwhile. It writes nothing unless the
 harness files are as committed when it begins, and the commit, their state and their hash
-are the same when it ends; stopped by SIGTERM or SIGHUP while it runs or publishes, it
-stops the run from the copy, rolls any publication back, removes the copy and writes
-nothing. Then it saves each harness's output in results/, under a header naming the commit,
+are the same when it ends; stopped by SIGTERM, SIGHUP or SIGINT while it runs or
+publishes, it stops the run from the copy, rolls any publication back, removes the copy and
+writes nothing. Then it saves each harness's output in results/, under a header naming the commit,
 the harness's hash, the seeds and the Python; writes the axiom-by-axiom table to
 results/summary.txt; and brings the counts in MODEL.md up to date.
 results_check.py, beside this file but not one of HARNESS, holds what --write wrote to the
@@ -557,7 +557,8 @@ def publish(outputs, expected_signature=None):
     if publication is interrupted. Destination symbolic links are replaced, not followed."""
     stages = []
     journal = []
-    stops = {getattr(signal, name) for name in ('SIGTERM', 'SIGHUP') if hasattr(signal, name)}
+    stops = {getattr(signal, name) for name in ('SIGTERM', 'SIGHUP', 'SIGINT')
+             if hasattr(signal, name)}
     caller_mask = (signal.pthread_sigmask(signal.SIG_BLOCK, stops)
                    if stops and hasattr(signal, 'pthread_sigmask') else None)
     mask_restored = False
@@ -604,8 +605,8 @@ def publish(outputs, expected_signature=None):
             for path, text in outputs:
                 new = os.path.join(os.path.dirname(path),
                                    f'.{os.path.basename(path)}.{os.getpid()}.new')
-                stages.append((path, new))
                 with open(new, 'x') as f:
+                    stages.append((path, new))
                     f.write(text)
             for path, new in stages:
                 if os.path.isdir(path) and not os.path.islink(path):
