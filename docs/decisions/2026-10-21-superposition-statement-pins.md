@@ -4,9 +4,10 @@
   checks that every theorem and definition named in backticks in brief 0009's section "The
   restriction theorem" has a statement pin in `Audit/Superposition.lean`, a bare
   `#guard_msgs in` over `#check @` for a theorem or `#print` for a definition, under its
-  full name in `Elements.Superposition`, its one namespace; a pin in a comment does not
-  count, and a section that names nothing fails. The audit file may hold nothing but its
-  leading imports, comments and pins, each a docstring, a bare `#guard_msgs in`, then
+  full name in `Elements.Superposition`, its one namespace; a pin in a line, block, nested
+  or module comment is refused with its line and does not count, while ordinary comments
+  remain allowed, and a section that names nothing fails. The audit file may hold nothing
+  but its leading imports, comments and pins, each a docstring, a bare `#guard_msgs in`, then
   `#check @`, `#print` or `#print axioms`. Anything else is refused with its line. An
   independent review showed why: `set_option pp.deepTerms false` with a threshold of 0
   shortens what Lean prints, so that a docstring cut down to match passes `lake build Audit`

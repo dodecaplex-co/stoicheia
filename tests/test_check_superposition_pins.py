@@ -6,8 +6,9 @@
 The real brief, audit file and Audit.lean must pass. In copies, an invented theorem name in
 the restriction section must fail with its line and name, and so must a name pinned only by
 its axioms, by a `#check` with no `#guard_msgs`, by a `#guard_msgs` with any option
-(`substring := true` among them), or by a pin in a comment. A name is pinned only under its
-full name, so a pin of `Rule.Figure.restrict` does not pin a bare `restrict`, and only in
+(`substring := true` among them), or by a pin in a comment, which is also refused with its
+line even beside an active duplicate. A name is pinned only under its full name, so a pin
+of `Rule.Figure.restrict` does not pin a bare `restrict`, and only in
 `Elements.Superposition`: in copies of the real file, a decoy theorem `: True` of the same
 name in `Elements.BookI`, pinned by `#check` in place of `Interpretation.Embedding`'s
 `#print` or of `Rule.Figure.restrict`'s `#check`, fails with the brief's line. The
@@ -45,7 +46,9 @@ short, is refused with no option in the file, as if set outside it, and so is a 
 printed as `⋯`. What shows a definition in Lean's print of a type is tested on the five
 definitions' prints, on propositions that only look like definitions' types, and on types
 that show neither sign, definitions' among them; every `#check` pin in the real file shows
-nothing. Every docstring below said to be what Lean prints was printed by Lean 4.35.
+nothing. A `#print` whose docstring opens with `theorem`, including after declaration
+modifiers, is refused and excluded from the valid pins even beside a valid `#check`. Every
+docstring below said to be what Lean prints was printed by Lean 4.35.
 """
 
 import io
@@ -227,6 +230,36 @@ class PinTests(unittest.TestCase):
         code, out = self.run_check(self.brief("`Rule.Figure` is a definition."),
                                    audit + others, printed=False)
         self.assertEqual(code, 0, out)
+
+    def test_a_print_pin_of_a_theorem_is_refused(self):
+        brief = self.brief("`Derives.sound` holds.")
+        for keyword in ("theorem", "private theorem", "protected theorem",
+                        "noncomputable theorem", "unsafe theorem", "partial theorem",
+                        "private noncomputable theorem"):
+            with self.subTest(keyword):
+                pin = (f"/--\ninfo: {keyword} {SOUND} : True := by\n  trivial\n-/\n"
+                       f"#guard_msgs in\n#print {SOUND}\n")
+                line = numbered(pin, f"#print {SOUND}\n")[0][0]
+                self.assertNotIn(SOUND, pins.statement_pins(pin)[0])
+                code, out = self.run_check(brief, pin)
+                self.assertEqual(code, 1, out)
+                self.assertIn("`Derives.sound` has no statement pin", out)
+                self.assert_refused(out, [], ((
+                    line, f"#print {SOUND}",
+                    f"is a `#print` of theorem `{SOUND}`; a theorem's statement pin must "
+                    "use `#check @`"),))
+
+    def test_a_theorem_print_is_refused_beside_a_valid_check(self):
+        active = PIN.format(name="Derives.sound")
+        printed = (f"/--\ninfo: theorem {SOUND} : True := by\n  trivial\n-/\n"
+                   f"#guard_msgs in\n#print {SOUND}\n")
+        audit = active + "\n" + printed
+        line = numbered(audit, f"#print {SOUND}\n")[0][0]
+        code, out = self.run_check(self.brief("`Derives.sound` holds."), audit)
+        self.assertEqual(code, 1, out)
+        self.assertNotIn("has no statement pin", out)
+        self.assert_refused(out, [], ((
+            line, f"#print {SOUND}", f"is a `#print` of theorem `{SOUND}`"),))
 
     def test_an_axiom_pin_is_not_a_statement_pin(self):
         code, out = self.run_check(self.brief("`Derives.sound` holds."),
@@ -715,13 +748,39 @@ class PinTests(unittest.TestCase):
             "a nested block comment": f"/- outer /- inner -/\n{pin}-/\n",
             "a module doc": f"/-!\n{pin}-/\n",
             "line comments": "".join(f"-- {line}\n" for line in pin.splitlines()),
+            "an active docstring with line-commented commands": pin.replace(
+                "#guard_msgs in\n#check", "-- #guard_msgs in\n-- #check"),
         }
         for label, audit in cases.items():
             with self.subTest(label):
                 code, out = self.run_check(self.brief("`Derives.sound` holds."), audit)
                 self.assertEqual(code, 1, out)
                 self.assertIn("`Derives.sound` has no statement pin", out)
-                self.assertNotIn("refused", out)
+                command = next((number, line.strip()) for number, line in
+                               enumerate(audit.splitlines(), 1) if f"#check @{SOUND}" in line)
+                self.assert_refused(out, [], ((
+                    *command, "is a statement pin inside a comment; commented pins do not "
+                    "run and are refused"),))
+
+    def test_a_pin_in_a_comment_is_refused_beside_an_active_duplicate(self):
+        pin = PIN.format(name="Derives.sound")
+        commented = f"/-\n{pin}-/\n"
+        audit = commented + pin
+        command = next((number, line.strip()) for number, line in
+                       enumerate(commented.splitlines(), 1) if f"#check @{SOUND}" in line)
+        code, out = self.run_check(self.brief("`Derives.sound` holds."), audit)
+        self.assertEqual(code, 1, out)
+        self.assertNotIn("has no statement pin", out)
+        self.assert_refused(out, [], ((
+            *command, "is a statement pin inside a comment; commented pins do not run and "
+            "are refused"),))
+
+    def test_ordinary_comments_and_active_pin_docstrings_are_allowed(self):
+        pin = PIN.format(name="Derives.sound")
+        audit = ("-- An ordinary comment mentions #check without a guard.\n"
+                 "/- Another mentions #guard_msgs without a command. -/\n" + pin)
+        code, out = self.run_check(self.brief("`Derives.sound` holds."), audit)
+        self.assertEqual(code, 0, out)
 
     def test_the_reader_skips_a_pin_lean_never_runs(self):
         pin = PIN.format(name="Derives.sound")

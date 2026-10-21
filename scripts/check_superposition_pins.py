@@ -66,10 +66,11 @@ and `end` (in a namespace, a new declaration can take a pinned name); any declar
 `#eval`; `#exit`; and a `#guard_msgs` with options, such as `(substring := true)`,
 `(drop info)` or `(whitespace := lax)`, which let a message pass that is not the
 docstring. A name pinned only under such options is also reported with that pin's line.
-The file is read as Lean reads it: a pin inside a comment, nested as Lean nests them, is
-not run, and is not counted. And Audit.lean, the root that `lake build Audit` builds,
-must import `Audit.Superposition` among its leading imports: without it, that build does
-not run the pins at all.
+The file is read as Lean reads it: a pin inside a line, block, nested or module comment,
+nested as Lean nests them, is not run, is refused with its command's line and is not
+counted. Ordinary comments remain allowed. And Audit.lean, the root that `lake build
+Audit` builds, must import `Audit.Superposition` among its leading imports: without it,
+that build does not run the pins at all.
 
 Not checked:
 
@@ -89,7 +90,8 @@ among them when it has no `#print` pin that counts), `AUDIT: `name`, read by …
 `#print` pin` for each of the three not printed, `AUDIT: `name`, held to `#print` by name
 …, has no `#print` pin` for each of the two the section no longer names and that is not
 printed, `AUDIT:LINE: `…` is not a leading import, a comment or a pin` for each line
-refused, `AUDIT:LINE: `…` pins a definition by `#check`` for a `#check` of a definition,
+refused, `AUDIT:LINE: `…` is a statement pin inside a comment` for a commented pin,
+`AUDIT:LINE: `…` pins a definition by `#check`` for a `#check` of a definition,
 `AUDIT:LINE: `…` prints `def …`, where Lean prints `structure …` today` (or the like) for
 a `#print` of one of the two held by name that does not open as Lean's does today,
 `AUDIT:LINE: `…` holds `⋯`` for a shortened print, and a line naming Audit.lean if it
@@ -221,6 +223,11 @@ class Pin(NamedTuple):
                 f"{self.name}` today, as a definition held by name must, since a `#print` "
                 "shows one level and does not pin the definitions its body or fields name")
 
+    def prints_theorem(self) -> bool:
+        """Whether this is a `#print` whose print opens as a theorem."""
+        return (self.command == "print" and self.keyword is not None
+                and self.keyword.split()[-1] == "theorem")
+
     def fault(self) -> tuple[int, str] | None:
         """Why the pin does not pin its statement, with the line to point to, said after
         "its pin at FILE:LINE"; None when it does."""
@@ -237,6 +244,9 @@ class Pin(NamedTuple):
             return self.line, ("is a `#check` of a definition held to `#print` by name, "
                                "whatever its print shows, since `#check` shows only a "
                                "definition's type; only `#print` pins a definition")
+        if self.prints_theorem():
+            return self.line, ("is a `#print` of a theorem, but a theorem's statement pin "
+                               "must use `#check @`; `#print` is reserved for definitions")
         if why := self.opening():
             return self.line, why
         if self.sign:
@@ -354,6 +364,65 @@ def lex(text: str) -> list[tuple[str, int, str]]:
             i += 1
     flush()
     return pieces
+
+
+def comment_bodies(text: str) -> list[tuple[int, str]]:
+    """Non-doc comments as their starting line and body, with consecutive line comments
+    joined after their `--` prefixes are removed. Strings and character literals are
+    skipped, and a block comment includes its nested comments."""
+    found: list[tuple[int, str]] = []
+    i, n = 0, len(text)
+    while i < n:
+        in_name = i > 0 and NAME_CHAR.match(text[i - 1]) is not None
+        if text.startswith("--", i):
+            start = i + 2
+            bodies = []
+            while True:
+                end = text.find("\n", i)
+                if end < 0:
+                    bodies.append(text[i + 2:])
+                    i = n
+                    break
+                bodies.append(text[i + 2:end])
+                following = end + 1
+                while following < n and text[following] in " \t":
+                    following += 1
+                if not text.startswith("--", following):
+                    i = end
+                    break
+                i = following
+            found.append((text.count("\n", 0, start) + 1, "\n".join(bodies)))
+        elif text.startswith("/-", i):
+            doc = text.startswith("/--", i)
+            depth, j = 1, i + (3 if doc else 2)
+            while j < n and depth:
+                if text.startswith("/-", j):
+                    depth, j = depth + 1, j + 2
+                elif text.startswith("-/", j):
+                    depth, j = depth - 1, j + 2
+                else:
+                    j += 1
+            if depth:
+                raise Unreadable(f"a comment opened at line {text.count(chr(10), 0, i) + 1} "
+                                 "is never closed")
+            if not doc:
+                start = i + 2
+                found.append((text.count("\n", 0, start) + 1, text[start:j - 2]))
+            i = j
+        elif text[i] == '"':
+            j = i + 1
+            while j < n and text[j] != '"':
+                j += 2 if text[j] == "\\" else 1
+            i = j + 1
+        elif not in_name and (raw := RAW_STRING.match(text, i)):
+            close = '"' + raw.group(1)
+            end = text.find(close, raw.end())
+            i = n if end < 0 else end + len(close)
+        elif not in_name and (char := CHAR_LITERAL.match(text, i)):
+            i = char.end()
+        else:
+            i += 1
+    return found
 
 
 def lean_pieces(text: str) -> list[tuple[str, int, str]]:
@@ -492,6 +561,14 @@ def read_pins(text: str) -> list[Pin]:
     return found
 
 
+def commented_pins(text: str) -> list[tuple[int, str]]:
+    """Guarded statement commands inside comments, with their line in the whole file."""
+    return [
+        (start + body.count("\n", 0, guarded.start("command")), guarded.group("command"))
+        for start, body in comment_bodies(text) for guarded in GUARDED.finditer(body)
+    ]
+
+
 def statement_pins(text: str) -> tuple[set[str], dict[str, tuple[int, str]]]:
     """The full names the audit file pins by their statements: under a bare `#guard_msgs
     in`, with a docstring Lean did not cut short, and by `#print` if a definition. And
@@ -530,7 +607,11 @@ def refused_pins(text: str) -> list[tuple[int, str]]:
             line, mark = pin.shortened
             found.append((line, f"holds `{mark}`, where Lean cut its print short, so the pin "
                                 f"of `{pin.name}` matches only part of the statement"))
-        if why := pin.opening():
+        if pin.prints_theorem():
+            found.append((pin.line, f"is a `#print` of theorem `{pin.name}`; a theorem's "
+                                    "statement pin must use `#check @`, while `#print` is "
+                                    "reserved for definitions"))
+        elif why := pin.opening():
             found.append((pin.line, why))
         if pin.by_name():
             found.append((pin.line, f"pins a definition by `#check`, which shows only its "
@@ -587,6 +668,11 @@ def check(brief: Path, audit: Path, library: Path = ROOT / LIBRARY) \
                 for number, line in strays(text)]
     refusals += [(number, f"`{shorten(lines[number - 1].strip())}` {why}")
                  for number, why in refused_pins(text)]
+    refusals += [
+        (number, f"`{shorten(lines[number - 1].strip())}` is a statement pin inside a "
+                 "comment; commented pins do not run and are refused")
+        for number, _ in commented_pins(text)
+    ]
     refused = [f"{shown_audit}:{number}: {message}" for number, message in sorted(refusals)]
     if MODULE not in imports(read(library)):
         refused.append(f"{display(library)}: does not import {MODULE} among its leading "
@@ -654,11 +740,12 @@ def main(argv=None) -> int:
         print(message)
     if refused:
         print(f"✗ {len(refused)} refused: {display(args.audit)} may hold only its leading "
-              "imports, comments and pins (a docstring, a bare `#guard_msgs in`, then "
+              "imports, ordinary comments and pins (a docstring, a bare `#guard_msgs in`, then "
               "`#check @name`, `#print name` or `#print axioms name`), so that nothing in it "
               "changes what a pin prints or which declaration it names; a definition is "
-              "pinned by `#print`, never `#check`, and the two held by name open their prints "
-              "as Lean's do today; no statement pin may be cut short (`⋯`, "
+              "pinned by `#print`, never `#check`, a theorem is pinned by `#check @`, never "
+              "`#print`, and the two definitions held by name open their prints as Lean's do "
+              "today; no statement pin may be commented out or cut short (`⋯`, "
               f"`[...]`); and {display(args.library)} must import {MODULE}")
     if missing:
         print(f"✗ {len(missing)} of {count} names in {HEADING!r} have no statement pin")
