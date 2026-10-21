@@ -470,11 +470,11 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
     hypotheses, omitted and companions, [coverage]'s three lists, `passage` and
     [review] items, each empty when not given. Raises ReviewError naming every fault.
 
-    With require_stamp=False the stamp keys (fingerprint, commit, lean) may be absent,
-    for scripts/review_stamp.py to write; `text` may be absent either way, for now (see
-    FIELDS). Whether the stamps are current (the fingerprint against facts.json, `lean`
-    against the file, `text` against the record) is check_fidelity's business, not this
-    function's."""
+    With require_stamp=False `fingerprint`, `commit` and `lean` may be absent, for
+    scripts/review_stamp.py to write. `text`, also a stamp, may be absent either way, for
+    now (see FIELDS). Whether the stamps are current (the fingerprint against facts.json,
+    `lean` against the file, `text` against the record) is check_fidelity's business, not
+    this function's."""
     where = where or _rel(review_path(book, n))
     problems = _shape(record, require_stamp)
     if problems:
