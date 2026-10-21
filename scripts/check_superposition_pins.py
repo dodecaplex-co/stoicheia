@@ -304,24 +304,31 @@ def names(lines: list[tuple[int, str]]) -> list[tuple[int, str]]:
 
 
 def block_comment(text: str, start: int) \
-        -> tuple[int, int, str, list[tuple[int, str]]]:
-    """A block comment's end, body offset, body with nested comments blanked, and nested
-    bodies, each with its line. Blanking preserves line breaks and follows Lean's nesting."""
+        -> tuple[int, int, str, str, list[tuple[int, str]]]:
+    """A block comment's end, body offset, body with nested comments blanked, body with
+    nested levels flattened, and nested bodies, each with its line. Both forms preserve
+    source positions and follow Lean's nesting."""
     body_start = start + (3 if text.startswith(("/--", "/-!"), start) else 2)
     chunks: list[str] = []
+    flattened: list[str] = []
     nested: list[tuple[int, str]] = []
     cursor = i = body_start
     while i < len(text):
         if text.startswith("/-", i):
             chunks.append(text[cursor:i])
-            end, child_start, child, descendants = block_comment(text, i)
+            flattened.append(text[cursor:i])
+            end, child_start, child, child_flattened, descendants = block_comment(text, i)
             chunks.append("".join("\n" if c == "\n" else " " for c in text[i:end]))
+            flattened.append(" " * (child_start - i))
+            flattened.append(child_flattened)
+            flattened.append("  ")
             nested.append((text.count("\n", 0, child_start) + 1, child))
             nested.extend(descendants)
             cursor = i = end
         elif text.startswith("-/", i):
             chunks.append(text[cursor:i])
-            return i + 2, body_start, "".join(chunks), nested
+            flattened.append(text[cursor:i])
+            return i + 2, body_start, "".join(chunks), "".join(flattened), nested
         else:
             i += 1
     raise Unreadable(f"a comment opened at line {text.count(chr(10), 0, start) + 1} "
@@ -355,7 +362,7 @@ def lex(text: str) -> list[tuple[str, int, str]]:
             code.append(" ")
         elif text.startswith("/-", i):
             doc = text.startswith("/--", i)
-            j, _, _, _ = block_comment(text, i)
+            j, _, _, _, _ = block_comment(text, i)
             if doc:
                 flush()
                 pieces.append(("doc", i, text[i + 3:j - 2]))
@@ -392,6 +399,7 @@ def comment_bodies(text: str) -> list[tuple[int, str]]:
     Comment delimiters are blanked, active code separates regions, strings and character
     literals are skipped, and nested block-comment bodies are also returned separately."""
     projected = [c if c.isspace() else "\0" for c in text]
+    flattened = projected.copy()
     all_nested: list[tuple[int, str]] = []
     i, n = 0, len(text)
     while i < n:
@@ -401,13 +409,17 @@ def comment_bodies(text: str) -> list[tuple[int, str]]:
             end = n if end < 0 else end
             projected[i:i + 2] = "  "
             projected[i + 2:end] = text[i + 2:end]
+            flattened[i:i + 2] = "  "
+            flattened[i + 2:end] = text[i + 2:end]
             i = end
         elif text.startswith("/-", i):
             doc = text.startswith("/--", i)
-            j, start, body, children = block_comment(text, i)
+            j, start, body, flat_body, children = block_comment(text, i)
             if not doc:
                 projected[i:j] = ["\n" if c == "\n" else " " for c in text[i:j]]
                 projected[start:start + len(body)] = body
+                flattened[i:j] = ["\n" if c == "\n" else " " for c in text[i:j]]
+                flattened[start:start + len(flat_body)] = flat_body
                 all_nested.extend(children)
             i = j
         elif text[i] == '"':
@@ -424,7 +436,8 @@ def comment_bodies(text: str) -> list[tuple[int, str]]:
         else:
             i += 1
     found = [(text.count("\n", 0, match.start()) + 1, match.group())
-             for match in re.finditer(r"[^\0]+", "".join(projected))]
+             for view in (projected, flattened)
+             for match in re.finditer(r"[^\0]+", "".join(view))]
     found.extend(all_nested)
     return found
 
@@ -578,10 +591,14 @@ def read_pins(text: str) -> list[Pin]:
 
 def commented_pins(text: str) -> list[tuple[int, str]]:
     """Guarded pin commands inside comments, with their line in the whole file."""
-    return [
-        (start + body.count("\n", 0, guarded.start("command")), guarded.group("command"))
-        for start, body in comment_bodies(text) for guarded in COMMENTED_GUARDED.finditer(body)
-    ]
+    found = []
+    for start, body in comment_bodies(text):
+        for guarded in COMMENTED_GUARDED.finditer(body):
+            pin = (start + body.count("\n", 0, guarded.start("command")),
+                   guarded.group("command"))
+            if pin not in found:
+                found.append(pin)
+    return found
 
 
 def statement_pins(text: str) -> tuple[set[str], dict[str, tuple[int, str]]]:

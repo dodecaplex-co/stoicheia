@@ -810,6 +810,17 @@ class PinTests(unittest.TestCase):
             "is a pin inside a comment; commented pins do not run and are "
             "refused"),))
 
+    def test_pin_split_across_nested_comment_levels_is_refused(self):
+        active = PIN.format(name="Derives.sound")
+        commented = f"/- #guard_msgs /- in -/ #check @{SOUND} -/\n"
+        audit = commented + active
+        code, out = self.run_check(self.brief("`Derives.sound` holds."), audit)
+        self.assertEqual(code, 1, out)
+        self.assertNotIn("has no statement pin", out)
+        self.assert_refused(out, [], ((
+            1, commented.strip(),
+            "is a pin inside a comment; commented pins do not run and are refused"),))
+
     def test_line_comment_pin_across_blank_lines_is_refused_beside_an_active_duplicate(self):
         active = PIN.format(name="Derives.sound")
         for separator in ("\n", " \t\n"):
