@@ -3874,15 +3874,16 @@ findings:
   ([#207](https://github.com/jackChallis/stoicheia/issues/207)).** `check_rules` in
   [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) read each `.lean` file
   with `Path.read_text()`, whose universal newlines turn a lone carriage return into a
-  line feed. Lean does not: it normalises `\r\n` to `\n` and then refuses a lone `\r`, and
-  a `--` comment ends only at a line feed. So in `-- a remark\r"` Lean sees one comment,
-  the quote among it, while the scan saw the comment end at the carriage return and a
-  string open on the next line, which swallowed the code after it up to a `"` in a later
-  comment. Every forbidden command behind such a comment was hidden from the scan that
-  guards the axioms, `axiom` included: an independent reviewer on ship TT (#197's final
-  review) planted six behind one, `#guard_msgs (drop all)`, `set_option debug.byAsSorry`,
-  a pinned error, `#guard_panic`, `set_option debug.skipKernelTC` and an `axiom`, and Lean
-  accepted each while the scan passed all six. The scan now reads each Lean source with
+  line feed. Lean does not: it reads `\r\n` as `\n`, refuses a lone `\r` between tokens but
+  accepts one inside a comment or a literal, and ends a `--` comment only at a line feed.
+  So in `-- a remark\r"` Lean sees one comment, the quote among it, while the scan saw the
+  comment end at the carriage return and a string open on the next line, which swallowed
+  the code after it up to a `"` in a later comment. Every forbidden command behind such a
+  comment was hidden from the scan that guards the axioms, `axiom` included: an
+  independent reviewer on ship TT (#197's final review) planted six behind one,
+  `#guard_msgs (drop all)`, `set_option debug.byAsSorry`, a pinned error, `#guard_panic`,
+  `set_option debug.skipKernelTC` and an `axiom`, and Lean accepted each while the scan
+  passed all six. The scan now reads each Lean source with
   `path.read_bytes().decode("utf-8")` (`lean_text`), with no newline translation, so its
   view of comments, strings and lines is Lean's; and it refuses a lone carriage return (a
   `\r` not followed by `\n`) in any scanned `.lean` file, naming its file and line, since
@@ -3900,7 +3901,7 @@ findings:
   check, test, expected value, lock or schema is weakened:
   `scripts/negative_tests.py` gains one plant that hides the six probes behind a
   carriage-return comment in a scratch copy of I.1's file and shows each refused, where
-  origin/main's check misses all six. Protected files changed:
+  the check before #207 missed all six. Protected files changed:
   [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py),
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py),
   [`docs/FORMALIZATION.md`](../FORMALIZATION.md) and this page.

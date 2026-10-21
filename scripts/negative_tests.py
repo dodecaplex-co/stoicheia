@@ -92,18 +92,18 @@ records current; CI runs it on every push.
     no name of the modern way; an italic p planted there fails S25 too, though Heath's
     "p. 389" stands in the paragraph; and an arc whose ends are one point and one with a
     radius of 0, planted in I.1's figure, fail S26 with what SVG draws for each.
-20. Without a build, the six probes an independent reviewer on ship TT planted for #207,
-    each a forbidden command or an axiom hidden behind a carriage-return comment
-    (`-- a remark\r"`), in one scratch copy of I.1's file in a temporary tree, read by the
+20. Without a build, the six probes an independent reviewer planted for #207, each a
+    forbidden command or an axiom hidden behind a carriage-return comment
+    (`-- a remark\\r"`), in one scratch copy of I.1's file in a temporary tree, read by the
     source scan alone (`rules_in`): Lean ends a `--` comment only at a line feed, so a
     scan that read the file with Python's universal newlines would end the comment at the
-    `\r` and let a string open behind it that hides the command up to a later `"`. Read as
-    Lean reads the bytes, the lone `\r` of each is refused by its file and line, and the
+    `\\r` and let a string open behind it that hides the command up to a later `"`. Read as
+    Lean reads the bytes, the lone `\\r` of each is refused by its file and line, and the
     `set_option debug.…` pair and the `axiom`, no longer hidden, are named too; the other
-    three (`#guard_msgs (drop all)`, a pinned error and `#guard_panic`) the shared reader
-    of #206 names by command, after #197, and here the lone `\r` refuses all six. The
-    unplanted copy passes, and origin/main's check, reading with universal newlines, misses
-    all six (#207).
+    three (`#guard_msgs (drop all)`, a pinned error and `#guard_panic`) are named by
+    command once #197's rules land, and here the lone `\\r` refuses all six. The unplanted
+    copy passes, and so does a copy of it with CRLF line endings, which Lean allows; the
+    check before #207, reading with universal newlines, missed all six.
 
 The copies of items 16 and 17, and item 13's list of generated outputs, read Git's
 tracked files. One absent from the work tree is named on stdout and passed over: as a
@@ -1022,15 +1022,15 @@ def lake_links() -> None:
             print("✓ a real model/.lake holding an axiom and a link: not read")
 
 
-# The six probes an independent reviewer on ship TT planted for #207 (its issue lists
-# them), each a forbidden command or an axiom hidden behind a carriage-return comment:
-# Lean ends a `--` comment only at a line feed, so `-- a remark\r"` is one comment to Lean,
-# the quote among it, while a scan that reads the file with Python's universal newlines
-# sees the comment end at the `\r` and a string open on the next line, which swallows the
-# command up to the `"` of the closing `-- "`. Each is (a short name, the probe's exact
-# bytes). Read as Lean reads the bytes (`check_fidelity.lean_text`), the comment hides
-# nothing: the lone `\r` of each is refused, and this branch names the command of three of
-# them (the `set_option debug.…` pair and the `axiom`) once the comment no longer hides it.
+# The six probes an independent reviewer planted for #207 (its issue lists them), each a
+# forbidden command or an axiom hidden behind a carriage-return comment: Lean ends a `--`
+# comment only at a line feed, so `-- a remark\r"` is one comment to Lean, the quote among
+# it, while a scan that reads the file with Python's universal newlines sees the comment
+# end at the `\r` and a string open on the next line, which swallows the command up to the
+# `"` of the closing `-- "`. Each is (a short name, the probe's exact bytes). Read as Lean
+# reads the bytes (`check_fidelity.lean_text`), the comment hides nothing: the lone `\r`
+# of each is refused, and the scan names the command of three of them (the
+# `set_option debug.…` pair and the `axiom`) once the comment no longer hides it.
 CARRIAGE_RETURN_PROBES = (
     ("#guard_msgs (drop all)", '-- a remark\r"\n#guard_msgs (drop all) in\n'
      'theorem bad : (0 : Nat) = 1 := rfl\n-- "\n#print axioms bad\n'),
@@ -1044,10 +1044,10 @@ CARRIAGE_RETURN_PROBES = (
      'theorem ok : True := trivial\n-- "\n'),
     ("axiom", '-- a remark\r"\naxiom planted : (0 : Nat) = 1\n-- "\n#print axioms planted\n'),
 )
-# The three probes whose command check_fidelity.py already names on this branch once the
-# carriage-return comment no longer hides it: {probe index: (the words it names, the token
-# that begins them in the probe)}. The FORBIDDEN regex matches `set_option debug.` up to
-# its dot; the axiom has its own message. The other three the lone `\r` alone refuses here.
+# The three probes whose command check_fidelity.py already names once the carriage-return
+# comment no longer hides it: {probe index: (the words it names, the token that begins
+# them in the probe)}. The FORBIDDEN regex matches `set_option debug.` up to its dot; the
+# axiom has its own message. The other three the lone `\r` alone refuses here.
 CR_COMMANDS = {
     1: ("uses `set_option debug.`", "set_option"),
     4: ("uses `set_option debug.`", "set_option"),
@@ -1059,7 +1059,8 @@ def carriage_return_comment() -> None:
     """The six CARRIAGE_RETURN_PROBES of #207, in one scratch copy of I.1's file in a
     temporary tree, run through the source scan (`rules_in`): read as Lean reads the bytes,
     the lone `\\r` of each is refused by its file and line, and the `set_option debug.…`
-    pair and the `axiom`, no longer hidden, are named too. The unplanted copy passes."""
+    pair and the `axiom`, no longer hidden, are named too. The unplanted copy passes, and
+    so does a copy of it with CRLF line endings, which Lean allows."""
     rel = "Elements/BookI/Prop01.lean"
     marker = "\nend Elements.BookI\n"
     source = (ROOT / rel).read_text()
@@ -1068,7 +1069,8 @@ def carriage_return_comment() -> None:
     block = header + "".join(body for _, body in CARRIAGE_RETURN_PROBES)
     planted = source.replace(marker, block + marker)
     cr_message = ("an isolated carriage return (a `\\r` not followed by `\\n`), which Lean "
-                  "refuses and a `--` comment does not end at")
+                  "accepts inside a comment or a literal and a `--` comment does not "
+                  "end at")
 
     def line(offset: int) -> int:
         return planted[:offset].count("\n") + 1
@@ -1088,6 +1090,9 @@ def carriage_return_comment() -> None:
         if not expect_success("the unplanted scratch copy of I.1 for #207's probes",
                               rules_in(root)):
             return
+        path.write_bytes(source.replace("\n", "\r\n").encode("utf-8"))
+        expect_success("the unplanted scratch copy of I.1 for #207's probes, with CRLF "
+                       "line endings", rules_in(root))
         path.write_bytes(planted.encode("utf-8"))
         expect_failure("the six #207 probes behind a carriage-return comment",
                        rules_in(root), *wanted)

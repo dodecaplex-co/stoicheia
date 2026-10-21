@@ -21,13 +21,14 @@
    literal's text never opens a comment or ends an attribute's brackets, and is not read
    as code, while the code in an interpolated string's `{…}` holes is; a string whose
    braces Lean could read either way is refused. The scan reads each file's bytes decoded
-   as UTF-8, with no newline translation (`lean_text`), as Lean reads them, so a `--`
-   comment ends only at a line feed as it does for Lean, not at a lone carriage return
-   that Python's universal newlines would make one; such a lone carriage return (a `\r`
-   not followed by `\n`), which Lean itself refuses and a `--` comment does not end at, is
-   refused in any scanned file, since it could otherwise hide the code after it. Each
-   finding of 2, 3 and 4, and of a lone carriage return, names its file and line; symbolic
-   links are refused by their paths and never followed.
+   as UTF-8, with no newline translation (`lean_text`), so a `--` comment ends only at a
+   line feed, as it does for Lean, not at a lone carriage return that Python's universal
+   newlines would make one. Such a lone carriage return (a `\\r` not followed by `\\n`),
+   which Lean refuses between tokens but accepts inside a comment or a literal, is refused
+   in any scanned file, since a reader with universal newlines would end a comment at it
+   and could miss the code after it. Each finding of 2, 3 and 4, and of a lone carriage
+   return, names its file and line; symbolic links are refused by their paths and never
+   followed.
    Under `model/`, the package's own `model/.lake` directory is never entered or read
    (a link there is refused like any other), while a `.lake` folder deeper in the model
    is read like any other; Mathlib imports are allowed. Only in `model/Check.lean` and `model/Check/`, `run_cmd` may be the first
@@ -173,11 +174,12 @@ FORBIDDEN = re.compile(
 # An axiom, declared anywhere in a line: Lean reads `example : True := trivial axiom
 # planted : False` as two commands, the second an axiom.
 AXIOM = re.compile(r"\baxiom\b")
-# A lone carriage return: a `\r` not followed by `\n` (#207). Lean normalises `\r\n` to
-# `\n` and then refuses a lone `\r`, so CRLF files are allowed (no tracked .lean file has
-# a `\r` today) but a lone one is not. A `--` comment does not end at it, so, read as
-# Lean reads the bytes, it can sit between a comment's words and a quote and hide the code
-# after that quote; check_rules refuses it in every scanned file.
+# A lone carriage return: a `\r` not followed by `\n` (#207). Lean reads `\r\n` as `\n`,
+# refuses a lone `\r` between tokens but accepts one inside a comment or a literal, so
+# CRLF files are allowed (no tracked .lean file has a `\r` today) but a lone one is not.
+# A `--` comment does not end at it, so, read as Lean reads the bytes, it can sit between
+# a comment's words and a quote and hide the code after that quote; check_rules refuses it
+# in every scanned file.
 LONE_CR = re.compile(r"\r(?!\n)")
 # Placement (brief 0006, "Placement", the policy). `placement` carries the points on one
 # side of a straight line, and the line, onto those on one side of an equal straight line,
@@ -211,12 +213,13 @@ def rel(path: Path) -> str:
 def lean_text(path: Path) -> str:
     """A Lean source file's bytes, decoded as UTF-8, with no newline translation, as Lean
     reads them (#207). `Path.read_text()` uses Python's universal newlines, which turn a
-    lone carriage return into a line feed; Lean does not. Lean normalises `\\r\\n` to `\\n`
-    and then refuses a lone `\\r`, but a `--` comment ends only at a `\\r`-free line feed, so
-    a scan that let `read_text()` shorten `-- a remark\\r"` to a comment ending at the `\\r`
-    would see a string open on the next line and swallow the code after it, hiding a
-    forbidden command, an `axiom` included. Reading the bytes keeps the scan's view of
-    comments, strings and lines exactly Lean's; check_rules then refuses any lone `\\r`."""
+    lone carriage return into a line feed; Lean does not. Lean reads `\\r\\n` as `\\n`,
+    refuses a lone `\\r` between tokens but accepts one inside a comment or a literal, and
+    a `--` comment ends only at a line feed, so a scan that let `read_text()` shorten
+    `-- a remark\\r"` to a comment ending at the `\\r` would see a string open on the next
+    line and swallow the code after it, hiding a forbidden command, an `axiom` included.
+    Reading the bytes keeps the scan's view of comments, strings and lines exactly Lean's;
+    check_rules then refuses any lone `\\r`."""
     return path.read_bytes().decode("utf-8")
 
 
@@ -422,9 +425,9 @@ def check_rules() -> None:
         code, unsure = read_lean(src)
         for m in LONE_CR.finditer(src):
             fail(f"{rel}:{line_of(src, m.start())}: an isolated carriage return (a `\\r` not "
-                 "followed by `\\n`), which Lean refuses and a `--` comment does not end at, "
-                 "so it could hide the code after it from the scan "
-                 "(docs/FORMALIZATION.md, section 7)")
+                 "followed by `\\n`), which Lean accepts inside a comment or a literal "
+                 "and a `--` comment does not end at, so a reader with universal newlines "
+                 "could miss the code after it (docs/FORMALIZATION.md, section 7)")
         generator_calls = ({m.start("command") for m in MODEL_CHECK_RUN_CMD.finditer(src)}
                            if rel == "model/Check.lean" or rel.startswith("model/Check/")
                            else set())
