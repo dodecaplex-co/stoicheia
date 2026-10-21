@@ -853,7 +853,10 @@ def overlap_rests(p, overlap):
 
 
 def overlap_use(p, overlap):
-    """A clause saying whether the proof uses all, some or none of the named rules."""
+    """A clause saying whether the proof uses all, some or none of the named rules. Of
+    those it does not use, one is "does not use `b`", two "uses neither `b` nor `c`", and
+    three or more "uses none of `b`, `c` and `d`", never "does not use `b` and `c`", which
+    could be read as "not both"."""
     rules = overlap_rules(overlap)
     used = overlap_rests(p, overlap)
     if used == rules:
@@ -862,9 +865,15 @@ def overlap_use(p, overlap):
         return "our proof does not use " + ("the rule" if len(rules) == 1 else "any of these rules")
     unused = [r for r in rules if r not in used]
     def names(rs):
-        return and_list(f"`{r.removeprefix('Tacit.')}`" for r in rs)
-    return (f"of these rules, our proof rests on {names(used)} and does not use "
-            f"{names(unused)}")
+        return [f"`{r.removeprefix('Tacit.')}`" for r in rs]
+    if len(unused) == 1:
+        rest = f"does not use {names(unused)[0]}"
+    elif len(unused) == 2:
+        rest = "uses neither {} nor {}".format(*names(unused))
+    else:
+        rest = f"uses none of {and_list(names(unused))}"
+    comma = "," if len(used) > 1 else ""
+    return f"of these rules, our proof rests on {and_list(names(used))}{comma} and {rest}"
 
 
 def overlap_steps(overlap):
@@ -1635,8 +1644,8 @@ def overlap_sentences(overlap, facts, records, links, up):
     supplies a step of a proof of, told apart by the record's [overlap] `kind` and by
     whether the proof rests on all, some or none of those axioms (facts.json's `axioms`):
     "In I.23 one of our tacit rules supplies a step of a proof of the proposition, and our
-    proof rests on it"; "In I.7 one of our tacit rules supplies a step of a proof of the
-    proposition, but our proof never uses that rule." Only a rule that states the
+    proof rests on it"; "In I.2 and I.3 our tacit rules supply a step of a proof of each
+    proposition, but our proofs never use those rules." Only a rule that states the
     proposition or gives it at once is said to contain it, as in the overlap catalogue.
     Where an overlap names several rules together, it says so, but not of rules that
     contain the proposition and go unused; partial use names the rules used and unused
@@ -1871,7 +1880,8 @@ FRONT_LEAN_III = {
 FRONT_LEAN = {"I": FRONT_LEAN_I, "II": FRONT_LEAN_II, "III": FRONT_LEAN_III}
 # Euclid's definitions include words with no Lean partner, such as Definition III.10's
 # sector, so every front page says only that the Lean proofs never use those words.
-# Helpers such as `Prop1.figure` are named for the diagram, not for Definition I.14.
+# Helpers such as `Prop1.figure` are named for the diagram: Definition I.14's figure has
+# no Lean partner either.
 FRONT_UNUSED = "Words with no Lean partner are never used in a Lean proof."
 
 
@@ -2096,25 +2106,70 @@ SUPERPOSITION_NOTE = {"III": " Euclid's III.24 applies one segment to another, a
                              "of it compares the radii instead."}
 
 
-@functools.cache
 def content_wording():
-    """Text pairs selected by the vocabulary and proof dependencies in facts.json.
-    Read once per render; without the named content, keep the existing wording."""
-    path = ROOT / "facts.json"
-    data = json.loads(path.read_text()) if path.exists() else {}
+    """Text pairs selected by the vocabulary and proof dependencies in facts.json: each
+    old wording, and the new one that replaces it once the content it names is there.
+    Read once per render of a root; without the named content, keep the existing
+    wording."""
+    return content_wording_at(ROOT)
+
+
+def placement_note(props):
+    """The superposition line's words on III.24 when its proof applies one segment to
+    another by the shared step `BookIII.placement`, built from III.24's facts.json entry
+    so that they are true by construction. A proof reaches superposition only by its own
+    Lean, which III.24's `direct_axioms` record with its helpers and shared steps, or
+    through the entries it cites, since no Common Notion uses it. So where
+    `direct_axioms` leave it out and a proposition `placement` cites (`brings_in`) rests
+    on it, the line says that `placement` uses it only through the propositions it
+    cites, and names those among them that call on it themselves (check_fidelity.py keeps
+    them to I.4 and I.8). Otherwise it says only that the proof applies the segment by
+    `placement`. None when `placement` is not one of III.24's shared steps."""
+    sup = "Tacit.superposition"
+    p = props.get("III.24", {})
+    step = next((s for s in p.get("shared_steps", []) if s["name"] == "BookIII.placement"),
+                None)
+    if step is None:
+        return None
+    note = (" Euclid's III.24 applies one segment to another, and so does our proof of it, "
+            "by `placement`")
+    cited = [props.get(r, {}) for r in step.get("brings_in", [])]
+    if sup not in p.get("direct_axioms", []) and any(sup in c.get("axioms", []) for c in cited):
+        callers = [c["ref"] for c in cited if sup in c.get("direct_axioms", [])]
+        note += ", which uses superposition only through the propositions it cites"
+        if callers:
+            note += f", {and_list(callers)} among them"
+    return note + "."
+
+
+@functools.cache
+def content_wording_at(root):
+    """content_wording for one ROOT, read through the renderer's guarded paths."""
+    path = optional_path(root / "facts.json")
+    data = json.loads(read_text(path)) if path is not None else {}
     words = data.get("vocabulary", {})
     props = {p["ref"]: p for p in data.get("propositions", [])}
-    placement = any(s["name"] == "BookIII.placement"
-                    for s in props.get("III.24", {}).get("shared_steps", []))
+
+    def stated(*refs):
+        """Is each proposition, porism or companion a passage names in facts.json?"""
+        return all(r in props for r in refs)
+
+    def companion_of(*refs):
+        """Does each of these propositions have a companion in facts.json?"""
+        return all(any(e.get("kind") == "companion" and e.get("of") == r
+                       for e in props.values()) for r in refs)
+
+    placement = placement_note(props)
     definitions = FRONT_LEAN_III["Definitions"]
     choices = (
-        ("MixedAngle.ofSegment" in words, (
+        ("MixedAngle.ofSegment" in words and companion_of("III.16", "III.31"), (
             (definitions[7],
              "`MixedAngle.ofSegment A B α S`: the angle of the segment on S's side of AB, "
              "read as the region it opens near A; the companions of III.16 and III.31 "
              "compare it there with rectilineal angles placed along AB on that side"),
         )),
-        ({"Arc", "InSegment", "OnArc", "Arc.Congruent"} <= words.keys(), (
+        ({"Arc", "InSegment", "OnArc", "Arc.Congruent"} <= words.keys()
+         and stated("III.24", "III.26", "III.28"), (
             (definitions[6],
              "`Arc`: a circle, the ends A, B of a straight line in it, and a point E naming "
              "its side, the segment AEB; its points, `InSegment`, and its circumference's, "
@@ -2136,20 +2191,19 @@ def content_wording():
              "and no point is within both; `CirclesTouch α β C`: either touches the other "
              "within, or they touch without. Touching is read of the whole circles"),
         )),
-        ("Foot" in words, (
+        ("Foot" in words and stated("III.14", "III.14 general"), (
             (definitions[4],
              "`‖E F‖ = ‖E G‖`, for the perpendiculars EF, EG from the centre E (III.14); "
              "`Foot E A B F`: F is the foot of the perpendicular from E to AB, or E itself "
              "when AB passes through E, so that a diameter is at no distance (III.14 general)"),
+        )),
+        ("Foot" in words and stated("III.15", "III.15 nearer"), (
             (definitions[5],
              "`‖E H‖ < ‖E K‖`, for the perpendiculars EH, EK from the centre E (III.15), "
              "or for the feet H, K, `Foot` (III.15 nearer)"),
         )),
-        (placement, (
-            (SUPERPOSITION_NOTE["III"],
-             " Euclid's III.24 applies one segment to another, and so does our proof of it, "
-             "by `placement`, which uses superposition only through the propositions it "
-             "cites, I.4 and I.8 among them."),
+        (placement is not None, (
+            (SUPERPOSITION_NOTE["III"], placement),
         )),
     )
     return {old: new for present, pairs in choices if present for old, new in pairs}

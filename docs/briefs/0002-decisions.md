@@ -3035,24 +3035,42 @@ findings:
 
 - **The renderer's words follow the content.** The protected file
   [`scripts/render.py`](../../scripts/render.py) selects its Book III wording from
-  `facts.json`: `MixedAngle.ofSegment` enables the mixed-angle row; `Arc`, `InSegment`,
-  `OnArc` and `Arc.Congruent` enable the segment row; `Arc` with `Arc.measure` enables the
-  circumference row; `CirclesCut` enables the cutting and touching rows; `Foot` enables
-  the account of perpendicular feet in Definitions III.4 and III.5, including a diameter
-  at no distance from the centre; and III.24's
-  shared step `BookIII.placement` enables the account of its application of one segment
-  to another. Each keeps the present wording until its named content is there. Comments
-  about III.2's unused overlapping rule are corrected, and the clause-map docstring no
-  longer names particular propositions. The renderer distinguishes all, some and none of
-  a record's overlapping rules, using `facts.json`'s `axioms` for the proof's full
-  dependencies. When the proof uses all or none, the status line and Overlap row keep
-  their exact wording, with no added sentence repeating the record's note. Only partial
-  use adds a clause naming both the rules used and those unused in the status line, the
-  Overlap row and the book summaries. This applies to every record, including both kinds
-  that contain the proposition and rules that supply a step. On main's present content,
-  every generated page stays byte for byte unchanged. The protected file
-  [`review/SCHEMA.md`](../../review/SCHEMA.md) now states that the page's Overlap row also
-  carries this account and that partial use names each rule used and unused.
+  `facts.json`, read once for each root through the renderer's guarded paths, as its
+  other inputs are: `MixedAngle.ofSegment`, with a companion of III.16 and one of III.31,
+  enables the mixed-angle row; `Arc`, `InSegment`, `OnArc` and `Arc.Congruent`, with
+  III.24, III.26 and III.28, enable the segment row; `Arc` with `Arc.measure` enables the
+  circumference row; `CirclesCut` enables Definition III.3's row, on cutting and
+  touching, and the line on that definition on the pages where Heath's brackets cite it;
+  `Foot` enables the account of perpendicular feet in Definitions III.4 and III.5,
+  including a diameter at no distance from the centre, each row with the companion it
+  names, III.14 general or III.15 nearer; and III.24's shared step `BookIII.placement`
+  enables the account of its application of one segment to another. That account is
+  built from III.24's entry, so that it is true by construction: only when III.24's
+  `direct_axioms` leave superposition out, and a proposition `placement` cites rests on
+  it, does it say that `placement` uses superposition only through the propositions it
+  cites, and it names those of them that call on superposition themselves; otherwise it
+  says only that the proof applies the segment by `placement`. Each keeps the present
+  wording until its named content, and every proposition and companion it names, is
+  there. Comments about III.2's unused overlapping rule are corrected, and the
+  clause-map docstring no longer names particular propositions. The renderer
+  distinguishes all, some and none of a record's overlapping rules, using `facts.json`'s
+  `axioms` for the proof's full dependencies. When the proof uses all or none, the
+  status line and Overlap row keep their exact wording, with no added sentence repeating
+  the record's note. Only partial use adds a clause naming both the rules used and those
+  unused in the status line, the Overlap row and the book summaries. One rule unused
+  reads "does not use `b`", two "uses neither `b` nor `c`", and three or more "uses none
+  of `b`, `c` and `d`". This applies to every record, including both kinds that contain
+  the proposition and rules that supply a step. On main's present content, every
+  generated page stays byte for byte unchanged. The protected file
+  [`review/SCHEMA.md`](../../review/SCHEMA.md) now states that the line under the
+  enunciation and the book's summary say whether the proof rests on all, some or none of
+  the named rules, naming each rule used and unused for partial use, and that the
+  Overlap row gives the record's note word for word and adds that account only for
+  partial use. The protected test file
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains two wording cases
+  beside its cases of the page: the clause for rules left unused, and the account of
+  `placement` from `facts.json`, read afresh for each root. Each fails on the renderer
+  before this change.
   The protected file [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes
   brief 0008, section 7's approved III.5 signature (`CirclesCut`, without the separate
   inequality of circles) and its comment on cutting and contact within and without,
@@ -3061,9 +3079,33 @@ findings:
   approved statements; it was not run to rewrite any Lean file.
   This tooling change lands before the content it describes, so that the content's
   pull request changes no check input beyond the values pinned to that content:
-  the new lock makes main's checks fail, and `scripts/safe_push.py` keeps such content
-  apart from an accompanying change to `scripts/render.py`. No check, statement, lock
-  or review record changes here, apart from the approved signature in the scaffold.
+  the content's new lock makes main's checks fail, and `scripts/safe_push.py` keeps such
+  content apart from an accompanying change to `scripts/render.py`. No check, statement,
+  lock or review record changes here, apart from the approved signature in the scaffold
+  and the two cases the style test gains.
+
+- **III.1's porism has its whole axiom list pinned.** The first expectation in
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json), a
+  protected file, gains `equals` holding the porism's full list regenerated from main at
+  `2e8aecf` (21 October 2026, after axiom wave one), in `facts.json`'s order. The porism's
+  own entry carries every assumption its proof uses: Definition I.15, Postulates 1 to 4
+  and the reviewed 55 tacit rules. `Tacit.centre_unique` is a theorem since wave one, so
+  the list holds the axioms beneath it. The `ref`, `field` and count of 55 tacit rules
+  stay as they are; no other expectation changes. This makes the check stricter on its
+  own, before the content it describes: an existing `equals` value and `count.is` may
+  move with that content, as pinned values. Train C6b can then reprove the porism by
+  Euclid's reductio and move the pinned list and count to that proof's assumptions in
+  its content pull request.
+  The `axioms` row of [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md), a protected
+  file, gave III.1's and its porism's counts as fixed; it now says that the list follows
+  each proof's dependencies and that the expectations pin what those two must hold, which
+  stays true when a re-proof moves the pinned values. The protected regression test
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) keeps its checks of
+  growing and emptying an `includes` list by exercising the still-list-shaped I.5
+  expectation, and its simulated future re-proof moves the porism's exact list together
+  with the counts. It reads III.1's tacit count from
+  `tests/certificate_expectations.json`, so it holds before and after the content it
+  describes. No guard is weakened.
 
 - **The scaffold follows the restated Book III statements.** The protected file
   [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes
