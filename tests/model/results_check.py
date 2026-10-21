@@ -4,7 +4,8 @@
 
 `run.py --full --write` heads each file it writes in results/ with the commit it ran at and
 the sha256 of the harness (HARNESS in run.py), and names the same commit in the counts of
-MODEL.md. This check runs no harness. It fails, naming each file, unless
+MODEL.md. Apart from its self-test, which runs run.py on a made-up harness of its own, this
+check runs no harness. It fails, naming each file, unless
 * the files in results/ are exactly those --write writes, each a regular file that reads;
 * each names, once, a commit whose harness files its run read as committed, and the harness
   as it hashes now, and all name the same commit; summary.txt names, once, the Python and
@@ -29,18 +30,22 @@ first: it writes results as --write does, from made-up runs, into a temporary fo
 each fault the check exists to catch, and checks that each is caught and that the results
 unchanged pass. It drives --write's guards too, and runs `run.py --full --write` for real,
 in a git repository of its own, on a made-up harness that changes and restores the
-checkout's harness while the run goes on.
+checkout's harness while the run goes on, and on one stopped by SIGTERM partway.
 """
+import contextlib
 import hashlib
+import importlib.util
 import itertools
 import json
 import os
 import platform
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 from unittest import mock
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -155,8 +160,8 @@ def check_results(results=RESULTS, model_md=MODEL_MD, harness=None):
     summary.txt that names no Python or date, or one twice; files that name more than one
     commit or harness between them; a MODEL.md that is not a regular file or does not read,
     or whose counts are not one block naming the results' commit; and, when there is no other,
-    summary.txt or MODEL.md's counts not what --write makes of the runs' output. Runs no
-    harness."""
+    runs' output that run.py's `judge` refuses, or summary.txt or MODEL.md's counts not what
+    --write makes of it. Runs no harness."""
     harness = harness or harness_hash()
     where = shown(results)
     if os.path.islink(results) or not os.path.isdir(results):
@@ -272,9 +277,10 @@ def write_guard_self_test():
         return dict(commit=f'{sha} ({state})', harness=digest,
                     python=f'{platform.python_version()} (self-test)', date=date)
 
-    def exercise(provenances, start=None, copy=harness):
+    def exercise(provenances, start=None, copy=harness, in_place=False):
         """--full --write: in the checkout when `start` is None, else in a run from a copy of
-        the harness, handed the provenance `start`; the copy hashes as `copy`"""
+        the harness, handed the provenance `start`; the copy hashes as `copy`. A run handed
+        `start` runs from a copy elsewhere than the checkout, unless `in_place`."""
         launched = []
 
         class GuardRun:
@@ -288,24 +294,34 @@ def write_guard_self_test():
 
         run = GuardRun()
         writer = mock.Mock()
-        child = mock.Mock(return_value=subprocess.CompletedProcess([], 0))
+        child = mock.MagicMock()   # subprocess.Popen, for the run from a copy
+        child.return_value.__enter__.return_value.wait.return_value = 0
         snapshot = None if start is None else {'root': ROOT, 'provenance': start}
-        with mock.patch.object(runner.sys, 'argv', ['run.py', '--full', '--write']), \
-                mock.patch.object(runner, 'FROM_SNAPSHOT', snapshot), \
-                mock.patch.object(runner, 'harness_hash', return_value=copy), \
-                mock.patch.object(runner, 'committed_file', return_value=b''), \
-                mock.patch.object(runner.subprocess, 'run', child), \
-                mock.patch.object(runner, 'self_test'), \
-                mock.patch.object(runner, 'check_names', return_value=(0, [])), \
-                mock.patch.object(runner, 'check_lock', return_value=(True, 'self-test')), \
-                mock.patch.object(runner, 'plan', return_value=[run]), \
-                mock.patch.object(runner, 'judge', return_value=[]), \
-                mock.patch.object(runner, 'totals', return_value=({}, 0)), \
-                mock.patch.object(runner, 'derived_table', return_value=''), \
-                mock.patch.object(runner, 'EXPECTED_TO_FAIL', set()), \
-                mock.patch.object(runner, 'provenance', side_effect=provenances), \
-                mock.patch.object(runner, 'write', writer), \
-                mock.patch('builtins.print'):
+        checkout = (runner.CHECKOUT if start is None or in_place
+                    else os.path.join(os.path.dirname(HERE), 'checkout'))
+        patches = (mock.patch.object(runner.sys, 'argv', ['run.py', '--full', '--write']),
+                   mock.patch.object(runner, 'FROM_SNAPSHOT', snapshot),
+                   mock.patch.object(runner, 'CHECKOUT', checkout),
+                   mock.patch.object(runner, 'harness_hash', return_value=copy),
+                   mock.patch.object(runner, 'committed_file', return_value=b''),
+                   mock.patch.object(runner, 'stop_as_exit'),
+                   mock.patch.object(runner.subprocess, 'Popen', child),
+                   mock.patch.object(runner.subprocess, 'run', side_effect=AssertionError(
+                       'the guard self-test ran a process')),
+                   mock.patch.object(runner, 'self_test'),
+                   mock.patch.object(runner, 'check_names', return_value=(0, [])),
+                   mock.patch.object(runner, 'check_lock', return_value=(True, 'self-test')),
+                   mock.patch.object(runner, 'plan', return_value=[run]),
+                   mock.patch.object(runner, 'judge', return_value=[]),
+                   mock.patch.object(runner, 'totals', return_value=({}, 0)),
+                   mock.patch.object(runner, 'derived_table', return_value=''),
+                   mock.patch.object(runner, 'EXPECTED_TO_FAIL', set()),
+                   mock.patch.object(runner, 'provenance', side_effect=provenances),
+                   mock.patch.object(runner, 'write', writer),
+                   mock.patch('builtins.print'))
+        with contextlib.ExitStack() as stack:   # one `with` of them all is too deep for 3.11
+            for patch in patches:
+                stack.enter_context(patch)
             try:
                 if start is None:
                     stopped = runner.bootstrap(['--full', '--write'])
@@ -336,7 +352,7 @@ def write_guard_self_test():
     for initial in (prov(state='harness files differ from this commit'),
                     prov(sha='unknown', state='state unknown')):
         for given in ({}, {'start': initial}):
-            launched, writer, child, stopped = exercise([initial] if not given else [], **given)
+            launched, writer, child, stopped = exercise([initial], **given)
             if launched or writer.called or child.called or "not a commit's" not in str(stopped):
                 raise AssertionError('--write did not refuse invalid initial provenance before '
                                      'running')
@@ -344,12 +360,28 @@ def write_guard_self_test():
 
     for given, says in (({}, 'does not hash as the harness checked out does'),
                         ({'start': before}, 'does not hash as its provenance says')):
-        launched, writer, child, stopped = exercise([before] if not given else [],
-                                                    copy='e' * 64, **given)
+        launched, writer, child, stopped = exercise([before], copy='e' * 64, **given)
         if launched or writer.called or child.called or says not in str(stopped):
             raise AssertionError('--write did not refuse a copy of the harness that hashes '
                                  'otherwise before running')
         refused += 1
+
+    launched, writer, child, stopped = exercise([before], start=before, in_place=True)
+    if launched or writer.called or child.called \
+            or 'this run is not from a copy of the harness' not in str(stopped):
+        raise AssertionError(f'--write ran in place, not from a copy, when {runner.SNAPSHOT} '
+                             'was set')
+    refused += 1
+
+    # Imported, as this check imports it, run.py takes no root or provenance from SNAPSHOT.
+    spec = importlib.util.spec_from_file_location('run_imported', os.path.join(HERE, 'run.py'))
+    imported = importlib.util.module_from_spec(spec)
+    planted = json.dumps({'root': os.path.join(ROOT, 'elsewhere'), 'provenance': before})
+    with mock.patch.dict(os.environ, {runner.SNAPSHOT: planted}):
+        spec.loader.exec_module(imported)
+        kept = os.environ.get(runner.SNAPSHOT) == planted
+    if imported.FROM_SNAPSHOT is not None or imported.ROOT != ROOT or not kept:
+        raise AssertionError(f'run.py, imported, read {runner.SNAPSHOT}')
 
     changed = [prov(sha='c' * 40),
                prov(state='harness files differ from this commit'),
@@ -361,10 +393,11 @@ def write_guard_self_test():
             raise AssertionError('--write did not refuse changed provenance before writing')
         refused += 1
     print(f'model write guard self-test: stable provenance handed on and passed; {refused} '
-          'invalid starts, copies and changes refused')
+          'invalid starts, copies, runs in place and changes refused; imported, run.py reads '
+          f'no {runner.SNAPSHOT}')
 
 
-PLANT = 'MODEL_SELF_TEST_PLANT'   # the made-up harness's orders: 'aba', 'stay', or none
+PLANT = 'MODEL_SELF_TEST_PLANT'   # the made-up harness's orders: 'aba', 'stay', 'term' or none
 CHECKOUT_IMPORT = 'MODEL_SELF_TEST_CHECKOUT'
 FAKE_EXHAUSTIVE = "Law 9 5 0\nderived.P 7 3 0\nexhaustive axioms run: 1\n"   # what it prints
 LIVE_IMPORT = f"""import os
@@ -380,7 +413,7 @@ import sys
 AXIOMS = [('Law', None, None)]
 if __name__ == '__main__':
     live = os.path.join('tests', 'model', 'exhaustive.py')
-    if os.environ.get({PLANT!r}) and sys.argv[2] == '3':
+    if os.environ.get({PLANT!r}) in ('aba', 'stay') and sys.argv[2] == '3':
         shutil.copyfile(live, 'exhaustive.kept')
         with open(live) as f:
             text = f.read()
@@ -401,7 +434,15 @@ print('Law 9 5 0')
 print('derived.P 7 3 0')
 print('structured total counterexamples: 0')
 """,
-    'mutations.py': "print('15/15 mutations caught')\n",
+    'mutations.py': f"""import os
+import time
+if os.environ.get({PLANT!r}) == 'term':   # its pid, to see that the SIGTERM stopped it
+    with open('mutations.new', 'w') as f:
+        f.write(str(os.getpid()))
+    os.replace('mutations.new', 'mutations.pid')
+    time.sleep(30)
+print('15/15 mutations caught')
+""",
     'grid_check.py': "print('failures 0')\n",
     'angle_check.py': ("print('triple incidence grid failures: 0 []')\n"
                        "print('float failures: {}')\n"),
@@ -415,6 +456,38 @@ if __name__ == '__main__':
 }
 
 
+def running(pid):
+    """whether there is still a process `pid`"""
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:   # there, but another user's
+        return True
+    return True
+
+
+def stopped_by_sigterm(command, root, env):
+    """Run `command` in `root` until the made-up mutations.py has started, then send it
+    SIGTERM; the finished process, and the pid mutations.py ran as, or None"""
+    pid = os.path.join(root, 'mutations.pid')
+    with subprocess.Popen(command, cwd=root, env=env, stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE, text=True) as p:
+        deadline = time.monotonic() + 60
+        while not os.path.exists(pid) and p.poll() is None and time.monotonic() < deadline:
+            time.sleep(0.01)
+        if p.poll() is None:
+            p.send_signal(signal.SIGTERM)
+        try:
+            out, err = p.communicate(timeout=60)
+        except subprocess.TimeoutExpired:
+            p.kill()
+            out, err = p.communicate()
+            err += '\n(it was still running a minute after SIGTERM, and was killed)'
+    started = int(read(pid)) if os.path.exists(pid) else None
+    return subprocess.CompletedProcess(command, p.returncode, out, err), started
+
+
 def snapshot_self_test():
     """Run `run.py --full --write` for real, on a made-up harness that runs in moments, in a
     git repository of its own. The harness's last search writes another exhaustive.py into
@@ -422,7 +495,10 @@ def snapshot_self_test():
     is as committed when the run begins and when it ends, but not while exhaustive.py runs.
     What is written must be the committed exhaustive.py's output, under the commit and its
     harness's hash. Left in place, the other file must stop the run with nothing written;
-    there from the start, it must stop the run before anything runs."""
+    there from the start, it must stop the run before anything runs. Where there are POSIX
+    signals, a run sent SIGTERM while its mutations.py runs must exit as sys.exit does, with
+    no results/, MODEL.md unchanged, no model-harness-* folder left in the temporary folder
+    it was given, and mutations.py no longer running."""
     if set(FAKE) != set(HARNESS) - {'run.py'}:
         raise AssertionError('snapshot self-test: the made-up harness is not HARNESS')
     env = {k: v for k, v in os.environ.items()
@@ -434,7 +510,7 @@ def snapshot_self_test():
         with open(path, 'w', encoding='utf-8') as f:
             f.write(text)
 
-    for plant in ('aba', 'stay', 'dirty'):
+    for plant in ('aba', 'stay', 'dirty') + (('term',) if os.name == 'posix' else ()):
         with tempfile.TemporaryDirectory() as root:
             model = os.path.join(root, 'tests', 'model')
             for name, text in FAKE.items():
@@ -456,15 +532,37 @@ def snapshot_self_test():
             if plant == 'dirty':
                 with open(os.path.join(model, 'exhaustive.py'), 'a') as f:
                     f.write('# not committed\n')
-            p = subprocess.run([sys.executable, '-I', os.path.join(model, 'run.py'), '--full',
-                                '--write'], cwd=root, capture_output=True, text=True,
-                               env=dict(env, **{CHECKOUT_IMPORT: model},
-                                        **({PLANT: plant} if plant != 'dirty' else {})))
+            command = [sys.executable, '-I', os.path.join(model, 'run.py'), '--full', '--write']
+            run_env = dict(env, **{CHECKOUT_IMPORT: model},
+                           **({PLANT: plant} if plant != 'dirty' else {}))
+            if plant == 'term':
+                tmp = os.path.join(root, 'tmp')   # its own, so a copy left there is this run's
+                os.mkdir(tmp)
+                p, pid = stopped_by_sigterm(command, root, dict(run_env, TMPDIR=tmp))
+            else:
+                p = subprocess.run(command, cwd=root, capture_output=True, text=True,
+                                   env=run_env)
             results = os.path.join(model, 'results')
             imported = os.path.join(root, 'checkout-imported')
             if os.path.exists(imported):
                 raise AssertionError('snapshot self-test: the checkout harness was imported before '
                                      f'snapshot dispatch: {read(imported)}')
+            if plant == 'term':
+                copies = sorted(n for n in os.listdir(tmp) if n.startswith('model-harness-'))
+                wrong = [what for what, there in (
+                    ('mutations.py never started', pid is None),
+                    (f'it exited {p.returncode}, not {128 + signal.SIGTERM}',
+                     p.returncode != 128 + signal.SIGTERM),
+                    ('it wrote results/', os.path.exists(results)),
+                    ('it changed MODEL.md', read(os.path.join(model, 'MODEL.md')) != PAGE),
+                    ('it left its copy, ' + ', '.join(copies), copies),
+                    ('its mutations.py is still running', pid is not None and running(pid)),
+                ) if there]
+                if wrong:
+                    raise AssertionError('snapshot self-test: a run stopped by SIGTERM was not '
+                                         f'stopped as it should be: {"; ".join(wrong)}: '
+                                         f'{p.stdout}{p.stderr}')
+                continue
             if plant == 'aba':
                 path = os.path.join(results, 'exhaustive.txt')
                 fields = header_of(path) if p.returncode == 0 and os.path.isfile(path) else {}
@@ -487,7 +585,9 @@ def snapshot_self_test():
                 raise AssertionError(f'snapshot self-test: a harness {plant} was not refused as '
                                      f'it should be: {p.stdout}{p.stderr}')
     print('model write snapshot self-test: a harness changed and restored while it ran wrote '
-          "the commit's output; changed and left, or changed from the start, nothing")
+          "the commit's output; changed and left, or changed from the start, nothing"
+          + ('; stopped by SIGTERM, nothing, with its copy removed and its harness stopped'
+             if os.name == 'posix' else ''))
 
 
 def self_test():

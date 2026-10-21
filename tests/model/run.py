@@ -25,9 +25,11 @@ objects, into a private folder, checks that they hash as the files checked out d
 runs again from that copy, so that every module the run imports and every harness it runs
 is that commit's, whatever the checkout does meanwhile. It writes nothing unless the
 harness files are as committed when it begins, and the commit, their state and their hash
-are the same when it ends. Then it saves each harness's output in results/, under a header
-naming the commit, the harness's hash, the seeds and the Python; writes the axiom-by-axiom
-table to results/summary.txt; and brings the counts in MODEL.md up to date.
+are the same when it ends; stopped by SIGTERM or SIGHUP before it writes, it stops the run
+from the copy, removes the copy and writes nothing. Then it saves each harness's output in
+results/, under a header naming the commit, the harness's hash, the seeds and the Python;
+writes the axiom-by-axiom table to results/summary.txt; and brings the counts in MODEL.md
+up to date.
 results_check.py, beside this file but not one of HARNESS, holds what --write wrote to the
 harness as it hashes now, and to what `judge` accepts (docs/WORKFLOW.md, section 8).
 
@@ -46,6 +48,7 @@ import json
 import os
 import platform
 import re
+import signal
 import subprocess
 import sys
 import tempfile
@@ -53,7 +56,8 @@ import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SNAPSHOT = 'MODEL_HARNESS_SNAPSHOT'   # set for a run from a copy: the checkout, the provenance
-FROM_SNAPSHOT = json.loads(os.environ.pop(SNAPSHOT)) if SNAPSHOT in os.environ else None
+FROM_SNAPSHOT = (json.loads(os.environ.pop(SNAPSHOT))
+                 if __name__ == '__main__' and SNAPSHOT in os.environ else None)
 ROOT = FROM_SNAPSHOT['root'] if FROM_SNAPSHOT else os.path.dirname(os.path.dirname(HERE))
 CHECKOUT = os.path.join(ROOT, 'tests', 'model')   # HERE, unless this run is from a copy
 RESULTS = os.path.join(CHECKOUT, 'results')
@@ -123,10 +127,19 @@ def committed_file(commit, name):
     return p.stdout if p.returncode == 0 else None
 
 
+def stop_as_exit():
+    """SIGTERM and SIGHUP end this process as sys.exit does, so that its temporary folder
+    is removed and the run it waits on is stopped"""
+    for name in ('SIGTERM', 'SIGHUP'):
+        if hasattr(signal, name):
+            signal.signal(getattr(signal, name), lambda n, _: sys.exit(128 + n))
+
+
 def run_from_snapshot(argv):
     """--write: run this file again, with `argv`, from a copy of the harness as the commit
     checked out has it, made in a private folder out of git's objects, once it hashes as the
     harness checked out does; the run's exit status"""
+    stop_as_exit()
     prov = provenance()
     signature = provenance_signature(prov)
     if signature is None or signature[1] != COMMITTED:
@@ -144,8 +157,14 @@ def run_from_snapshot(argv):
                      'out does, so nothing is written')
         print(f'running the harness as {commit[:12]} has it, from a copy out of git', flush=True)
         env = dict(os.environ, **{SNAPSHOT: json.dumps({'root': ROOT, 'provenance': prov})})
-        return subprocess.run([sys.executable, '-I', os.path.join(snap, 'run.py'), *argv],
-                              env=env).returncode
+        with subprocess.Popen([sys.executable, '-I', os.path.join(snap, 'run.py'), *argv],
+                              env=env) as child:
+            try:
+                return child.wait()
+            except BaseException:
+                child.terminate()
+                child.wait()
+                raise
 
 
 def bootstrap(argv):
@@ -590,6 +609,10 @@ def main():
     write_prov = None
     write_signature = None
     if '--write' in args:
+        if os.path.realpath(HERE) == os.path.realpath(CHECKOUT):
+            sys.exit(f'{SNAPSHOT} is set, but this run is not from a copy of the harness, so '
+                     'nothing is written')
+        stop_as_exit()
         write_prov = FROM_SNAPSHOT['provenance']
         write_signature = provenance_signature(write_prov)
         if write_signature is None or write_signature[1] != COMMITTED:

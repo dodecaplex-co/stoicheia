@@ -381,8 +381,9 @@ The ruleset and the remaining merge requirements are in
   `python3 -I tests/model/run.py --full --write` on it (about eight minutes) and commits
   what it writes, in the same pull request; its decisions entry names each file the run
   changes. `--write` runs from a copy of the harness taken out of git at the commit, so
-  what it writes is that commit's harness's. The check runs no harness, so it cannot tell
-  a header written by hand from a run's, and the output records no exit status, which only
+  what it writes is that commit's harness's. Apart from its self-test, which runs `run.py`
+  on a made-up harness of its own, the check runs no harness, so it cannot tell a header
+  written by hand from a run's, and the output records no exit status, which only
   `--write` sees; the security review, which every change under `tests/` gets, reads the
   results' diff.
 - **Staging builds; it is not proved.** `lake build Staging` checks that the statements

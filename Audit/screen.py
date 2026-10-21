@@ -707,8 +707,9 @@ def write_record(root: Path, read: dict[str, str], count: int, path: Path = RECO
                  + "; ".join(PARTS[k] for k in moved))
     commit, state = at
     if revision(root) != at:
-        sys.exit(f"screen: the commit checked out changed while it ran, from {commit[:12]} "
-                 "as it read its inputs, so nothing is recorded")
+        sys.exit(f"screen: the commit checked out, or the state of its inputs, changed while "
+                 f"it ran (it was {commit[:12]}, {state}, as it read them), so nothing is "
+                 "recorded")
     if state != COMMITTED or not re.fullmatch(r"[0-9a-f]{40}", commit):
         sys.exit(f"screen: the inputs are not a commit's ({state}), so nothing is recorded")
     if path.is_symlink():
