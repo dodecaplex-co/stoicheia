@@ -3700,7 +3700,9 @@ findings:
   itself needs no such split. Independent record review, the separate construction
   guard and regeneration of the edition remain with their assigned owners.
 
-- **III.25's segment kinds (19 October 2026), approved by the owner.**
+- **III.25's segment kinds (19 October 2026), approved by the owner.** On 19 October 2026
+  the coordinator asked the owner to approve new statements, among them `Prop25.kind`
+  (III.25's three kinds of segment), and the owner answered "Approve all."
   The addition in [brief 0006](0006-statements.md#addition-19-october-2026-iii25s-segment-kinds)
   records the exact statement of `Elements.BookIII.Prop25.kind`, reviewed unchanged by
   both first mates. It is proved after `Prop25.complete` and registered as the companion
