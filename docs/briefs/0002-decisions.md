@@ -3476,7 +3476,8 @@ findings:
 - **Train C6a meets axiom wave one: the lock is main's 79 axioms and the centre rule.**
   Train C6a, which carries stage 3, the mixed angles, the rule that every circle has a
   centre and brief 0008's section 7, was merged with main at `2e8aecf`, after the eight
-  retirements of axiom wave one (87 to 79), and then with the check train at `9c83d79`.
+  retirements of axiom wave one (87 to 79), and then with the check train at `9c83d79`
+  and with main again at `8e9a187` and `68b365c`, which leave the list below as it was.
   The counts in this train's entries of 19 October above ("The mixed-angle move integrated
   with the Circle 2 proofs", "Every circle has a centre: the rule lands" and "III.5 and
   III.6: section 7 lands before step 6": 88 axioms and 82 tacit rules, "the other 87", a
@@ -3500,7 +3501,8 @@ findings:
   were renewed from Lean's output, and change only by losing `Tacit.adjacent_eq_of_right`
   and `Tacit.centre_unique`, now theorems; every other name in each list is unchanged.
   The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`, `model/`, `scripts/`,
-  `lakefile.toml` and `lean-toolchain` that differ from main at `2e8aecf`, each named whole:
+  `review/SCHEMA.md`, `lakefile.toml` and `lean-toolchain` that differ from main at
+  `2e8aecf`, each named whole:
   `Audit.lean`,
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
@@ -3516,6 +3518,7 @@ findings:
   `model/Model/Laws.lean`,
   `model/README.md`,
   `model/lock.sha256`,
+  `review/SCHEMA.md`,
   `scripts/render.py`,
   `scripts/scaffold_book.py`,
   `scripts/test_safe_push.py`,
@@ -3536,8 +3539,9 @@ findings:
   `tests/model/results/summary.txt`,
   `tests/model/search.py` and
   `tests/test_check_style.py`.
-  Of these, `scripts/render.py`, `scripts/scaffold_book.py`, `scripts/test_safe_push.py`,
-  `tests/certificate_expectations.json` and `tests/test_check_style.py` are the check
+  Of these, `review/SCHEMA.md`, `scripts/render.py`, `scripts/scaffold_book.py`,
+  `scripts/test_safe_push.py`, `tests/certificate_expectations.json` and
+  `tests/test_check_style.py` are the check
   train's, as at `9c83d79`, with the two entries of 20 October above ("The renderer's words
   follow the content" and "III.1's porism has its whole axiom list pinned"), and so is
   `Certificate/FIELDS.md`'s `axioms` row; its vocabulary count, 91 to 121, is this train's.
