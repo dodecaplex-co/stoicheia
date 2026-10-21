@@ -3948,8 +3948,8 @@ findings:
   Book Zero's 16 files, exactly their header lines, and refuses none.
 
   A new item of [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants a
-  new Book Zero file for each of 19 forms, the reviewer's five and the fourteen above, and requires each refused on its file and line,
-  while a file holding the import only in a comment, a remark, a string and a «…» name,
+  new Book Zero file for each of 19 forms, the reviewer's five and the fourteen above,
+  and requires each refused on its file and line, while a file holding the import only in a comment, a remark, a string and a «…» name,
   beside an import of Book Zero, is not named at all.
   [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py), whose
   `CircleRuleTests` already test one of check_fidelity's rules, gains
