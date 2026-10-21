@@ -586,7 +586,11 @@ class BookZeroImportTests(unittest.TestCase):
                            ('def s := "/-"\nimport Elements.BookI.Prop01\n', 2),
                            ("-- a remark\n/-! A doc -/\nimport Elements.BookI.Prop01\n", 3),
                            ("import Elements.Figure.Lines -- a remark\n"
-                            "import Elements.BookI.Prop01\n", 2)):
+                            "import Elements.BookI.Prop01\n", 2),
+                           # Lean reads these braces as text, but both readings end
+                           # in one place, so read_lean keeps them as code (rule 4),
+                           # failing closed.
+                           ('def s := "{ import Elements.BookI.Prop01 }"\n', 1)):
             with self.subTest(text=text):
                 self.assertEqual(self.findings(text), [self.refused(line)])
 

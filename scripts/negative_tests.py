@@ -95,14 +95,17 @@ records current; CI runs it on every push.
 20. Without a build, Book Zero's imports (#200): a new file of Book Zero imports a
     proposition in each spelling Lean 4.35 accepts that the rule once passed: two
     spaces, a line break, a remark, a line comment or a nested remark between the words,
-    nothing before «…» or a remark, `«Elements»`, `«BookI»`, a second import on one line,
-    and `public import`, `meta import`, `public meta import`, `import all` and `meta
-    import all` after `module`. Then the name with a part in «…» that holds a path, in another case and
-    with the Kelvin sign for its k, any of which Lean may read as the proposition's file;
-    and `Elements.Companions`, which imports propositions itself. Each is refused by
-    `check_fidelity.py`, naming its file and line, while a file holding the same import
-    only in a comment, a remark, a string and a «…» name, beside a Book Zero import of its
-    own, is not named at all. The files are read, not built, and removed after.
+    nothing before «…» or a remark, `«Elements»`, `«BookI»` and a second import on one
+    line. Then, after `module`, the five forms that Lean's grammar accepts too:
+    `public import`, `meta import`, `public meta import`, `import all` and
+    `meta import all`. Lean refuses them while the edition's files are not modules, and
+    these plants keep the rule ready for when they are. Then the name with a part in «…»
+    that holds a path, in another case and with the Kelvin sign for its k, any of which
+    Lean may read as the proposition's file; and `Elements.Companions`, which imports
+    propositions itself. Each is refused by `check_fidelity.py`, naming its file and
+    line, while a file holding the same import only in a comment, a remark, a string and
+    a «…» name, beside a Book Zero import of its own, is not named at all. The files are
+    read, not built, and removed after.
 
 The copies of items 16 and 17, and item 13's list of generated outputs, read Git's
 tracked files. One absent from the work tree is named on stdout and passed over: as a
@@ -921,8 +924,10 @@ def forbidden_commands() -> None:
                 path.unlink(missing_ok=True)
 
 
-# A proposition imported by Book Zero in each spelling Lean 4.35 accepts, and in forms
-# Lean may read as one (#200), each with what must be caught besides its file and line.
+# A proposition imported by Book Zero in each spelling Lean 4.35 accepts; in the five
+# forms after `module` that its grammar accepts, which Lean refuses while the edition's
+# files are not modules, so that the rule is ready for when they are; and in forms Lean
+# may read as one (#200). Each comes with what must be caught besides its file and line.
 BOOK_ZERO_SPELLINGS = (
     ("two spaces", "import  Elements.BookI.Prop01\n"),
     ("a line break", "import\n  Elements.BookI.Prop01\n"),

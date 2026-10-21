@@ -9,13 +9,14 @@
    environment in 6.
 3. Book Zero (`Elements/Figure/`) never imports a proposition, directly or through
    another of the edition's files. Every `import` in its Lean, read as 4 reads it
-   (`read_lean`), so that a comment never hides one and a string never makes one, is
-   read with the module it names, in each form of Lean 4.35's header (`public`, `meta`
-   and `all` among them), whatever whitespace or comments stand between the words. An
-   import is refused if its module, compared without regard to case, is under
-   `Elements.Book`, if the module brings one in through the edition's own files, or if
-   the scan cannot read it for certain, as when a part of the name in «…» is not a
-   plain name.
+   (`read_lean`), so that a comment never hides one and a string never makes one (save
+   a string whose braces `read_lean` keeps as code, as 4 says, where an `import` is read
+   too, failing closed), is read with the module it names, in each form of Lean 4.35's
+   header (`public`, `meta` and `all` among them), whatever whitespace or comments stand
+   between the words. An import is refused if its module, compared without regard to
+   case, is under `Elements.Book`, if the module brings one in through the edition's own
+   files, or if the scan cannot read it for certain, as when a part of the name in «…»
+   is not a plain name.
 4. None of the commands that `docs/FORMALIZATION.md`, section 7, forbids under
    `Elements/`, `Staging/`, `Audit/` or `model/` (LEAN_TREES), since they get round the kernel,
    bring in an axiom without the word, run a program when a file is built or imported,
