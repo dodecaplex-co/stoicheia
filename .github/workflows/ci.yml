@@ -61,6 +61,11 @@ jobs:
         # These cases need no Lean and no network; unreadable issues must hold a release.
         run: python3 -I tests/test_release_gate.py
 
+      - name: Check the Jev client keeps no answer without its model's identifier
+        # These cases need no key and no network: run, score and a resumed run each refuse
+        # an answer whose model is missing, empty or not a string.
+        run: python3 -I tests/test_jev_models.py
+
       - name: Check Jev's client against a stand-in for the service, with a key it makes up
         # The self-test needs no network and no key: among other things, it checks that the
         # key appears in no output, that a dry run sends nothing, and that a row's expected

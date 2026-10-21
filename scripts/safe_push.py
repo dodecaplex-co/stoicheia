@@ -274,6 +274,7 @@ CHECKS = [
     ("python3 scripts/check_fidelity.py", [PY, "scripts/check_fidelity.py"]),
     ("python3 -I tests/test_check_style.py", [PY, "-I", "tests/test_check_style.py"]),
     ("python3 -I tests/test_release_gate.py", [PY, "-I", "tests/test_release_gate.py"]),
+    ("python3 -I tests/test_jev_models.py", [PY, "-I", "tests/test_jev_models.py"]),
     ("python3 scripts/audit/jev.py self-test", [PY, "scripts/audit/jev.py", "self-test"]),
     ("python3 -I tests/test_screen.py", [PY, "-I", "tests/test_screen.py"]),
     ("python3 -I tests/test_acceptance_limits.py",

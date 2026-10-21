@@ -300,6 +300,7 @@ python3 scripts/heath.py
 python3 scripts/check_fidelity.py
 python3 -I tests/test_check_style.py
 python3 -I tests/test_release_gate.py
+python3 -I tests/test_jev_models.py
 python3 scripts/audit/jev.py self-test
 python3 -I tests/test_screen.py
 python3 -I tests/test_acceptance_limits.py
@@ -422,6 +423,10 @@ The ruleset and the remaining merge requirements are in
   checks the unfinished work section, the issues' state and labels, pagination and
   unreadable replies, and that an ordinary pull request skips the release hold; fixtures
   and stand-ins supply every reply.
+- **The Jev client's model check needs no key and no network.**
+  `python3 -I tests/test_jev_models.py`, immediately after the release gate's cases, checks
+  that `scripts/audit/jev.py` refuses an answer without its model's identifier when it
+  runs, scores and resumes, with in-process replies standing in for the service.
 - **Three more sets of cases follow, each with no Lean.**
   `python3 scripts/audit/jev.py self-test` runs every command of the Jev client against a
   stand-in for the service on this machine, with a key it makes up, and needs no network
