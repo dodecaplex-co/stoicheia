@@ -123,40 +123,51 @@ independence theorem.
 
 ### I.13's rule in 20 proofs
 
-Recounted on 21 October 2026, after the retirement, on the revision that holds all 130
-certificate entries: the theorem occurs in 20 proofs without passing through another
-certified entry. Of these, 19 call it in their own declarations or their proposition's
-helpers. The count of 20 October, across the 122 entries there were then, found 19 and 18.
-Of the eight companions that have joined the certificate since (III.16's three, III.23's,
-III.24's two and III.31's two), one adds to each count: `BookIII.Prop31.less`, which
-reaches the theorem through its own step `BookIII.Prop31.less_lt_right`. The other seven
-reach it only through entries they cite.
+Recounted on 21 October 2026, after the retirement, on the revision that holds all 136
+certificate entries (99 propositions, three porisms and 34 companions): the theorem occurs
+in 20 proofs without passing through another certified entry. Of these, 19 call it in their
+own declarations or their proposition's helpers. An earlier count the same day, across 130
+entries, found the same 20 and 19; the count of 20 October, across the 122 entries there
+were then, found 19 and 18. Of the eight companions that joined between those two counts
+(III.16's three, III.23's, III.24's two and III.31's two), one added to each count:
+`BookIII.Prop31.less`, which reaches the theorem through its own step
+`BookIII.Prop31.less_lt_right`. The other seven reach it only through entries they cite.
+No entry has left since the 130, and none of the six companions that have joined adds to
+either count. Five reach the theorem only through entries they cite:
+`BookIII.Prop14.general` through III.14, `BookIII.Prop15.nearer` through III.15,
+`BookIII.Prop25.complete` through III.9, `BookIII.Prop25.kind` through III.2, III.21 and
+III.22, and `BookIII.Prop25.of_circle` through III.2, III.25 and `BookIII.Prop25.complete`.
+The sixth, `BookIII.Prop15.le_diameter`, cites only I.20 and does not reach it.
 
 Nineteen of the 20 proofs call Diagram-angle 3 (`adjacent_eq_of_right`) themselves:
 II.1 and its companion `BookII.Prop1.two`, II.3, II.4, II.5, II.9, II.11,
 II.14 and its companion `BookII.Prop14.rectangle`, III.3, III.10, III.15, III.16, III.17
-and III.25 in their own Lean; III.9 in its helper `BookIII.Prop9.apart`; III.1 and its porism
-in III.1's helper `BookIII.Prop1.perpendicular`, which shows that at a point of a straight line
-only one straight line is at right angles to it; and III.31's companion `BookIII.Prop31.less`
-in its helper `BookIII.Prop31.less_lt_right`. III.19 reaches the rule only through
-`BookIII.Prop1.perpendicular`, which III.16 uses as well as calling the rule itself. Forty-one
-more entries (24 propositions, III.16's porism and 16 companions) rest on it through
-these 20. I.13 does not rest on it. The rule gives the right angles Euclid reads off his
-figure, as for the rectangles of II.1, where his text says nothing of them.
+and III.25 in their own Lean, III.10 also in its helper `BookIII.Prop10.right_on_line` and
+III.15 in its helper `BookIII.Prop15.perp`; III.9 in its helper `BookIII.Prop9.apart`; III.1
+and its porism in III.1's helper `BookIII.Prop1.perpendicular`, which shows that at a point
+of a straight line only one straight line is at right angles to it; and III.31's companion
+`BookIII.Prop31.less` in its helper `BookIII.Prop31.less_lt_right`. III.19 reaches the rule
+only through `BookIII.Prop1.perpendicular`, which III.16 uses as well as calling the rule
+itself. Forty-six more entries (24 propositions, III.16's porism and 21 companions) rest on
+it through these 20. I.13 does not rest on it. The rule gives the right angles Euclid reads
+off his figure, as for the rectangles of II.1, where his text says nothing of them.
 
-The full dependency closure contains the theorem in 61 entries: 40 propositions,
-two porisms and 19 companions. The 41 additional entries above reach it only
+The full dependency closure contains the theorem in 66 entries: 40 propositions,
+two porisms and 24 companions. The 46 additional entries above reach it only
 through entries they cite. These are uses of a proved rule, not axiom overlaps.
 
 The recount walks Lean's elaborated declarations using the same type, value and
 constructor references as `Certificate/Facts.lean`. For the 20, it stops at another
 certificate entry or a Common Notion; for the 19, it also stops at a shared lemma
 outside the proposition's namespace, while following Lean's auxiliary declarations.
-For the 61, it follows every project declaration. Each walk counts an entry once
+For the 66, it follows every project declaration. Each walk counts an entry once
 when it reaches `Tacit.adjacent_eq_of_right`, before following that theorem's proof.
 Since the theorem's proof cites I.13, `facts.json` records I.13 among the citations of each
 of the 20; the first walk, stopping at the theorem, finds every entry's citations as
-`facts.json` gives them, save I.13 for exactly these 20. Searching the Lean sources for the rule's name confirms the calls
+`facts.json` gives them, save I.13 for exactly these 20. Run without that stop, as
+`Certificate/Facts.lean` runs it, it finds the citations of all 136 entries exactly as
+`facts.json` gives them; and the 66 are exactly the 20 with every entry whose citations in
+`facts.json` lead to one of them. Searching the Lean sources for the rule's name confirms the calls
 listed above; in `Elements/BookIII/Prop16.lean` two shared lemmas call it too,
 `Segment.exists_tangent` and `Segment.angle_tangent_of_oppositeSidesOf`, which serve only
 `Segment.compare_alike`, a lemma no certificate entry uses. The retired name is absent
