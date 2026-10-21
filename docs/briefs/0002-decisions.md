@@ -3041,12 +3041,13 @@ findings:
   successful answer, `score` counted it towards `--bar`, and a resumed run kept it. Each of
   the three now asks for the answering model's identifier, a nonempty string: `run` writes
   such a reply as an error line with the reason, `score` stops with a failure naming the
-  line, and a resumed run asks the question again. The self-test's two noul cases gain the
-  model they lacked. The new `tests/test_jev_models.py` (three tests, fifteen cases) uses
-  in-process replies and no key or network; it fails on the client before this change and
-  passes after it, and it runs in CI's `check` job and safe_push's check sequence,
-  immediately after `tests/test_release_gate.py`. The audit of Books I and II scores as
-  committed: `score` on its answers gives the same output, line for line, before and after,
-  with 95 rows for adjudication. The protected files this changes are
+  answer's id and the reason, and a resumed run reports the output file, line and reason
+  before asking the question again. The self-test's two noul cases gain the model they
+  lacked. The new `tests/test_jev_models.py` (three tests, twenty-one cases) uses in-process
+  replies and no key or network; it fails on the client before this change and passes after
+  it, and it runs in CI's `check` job and safe_push's check sequence, immediately after
+  `tests/test_release_gate.py`. The audit of Books I and II scores as committed: `score` on
+  its answers gives the same output, line for line, before and after, with 95 rows for
+  adjudication. The protected files this changes are
   `.github/workflows/ci.yml`, `scripts/audit/jev.py`, `scripts/safe_push.py` and
   `tests/test_jev_models.py`; [WORKFLOW](../WORKFLOW.md), section 8, lists the command.
