@@ -3102,15 +3102,13 @@ findings:
 ## 21 October 2026
 
 - **Euclid's routes in Book III staged; their statements await approval (#125, #126, #127,
-  #129, #130, #131).** Seven Lean files under `Staging/Routes/`, as delivered and checked
-  at 4cd7c77d (after 1265f23c the docstrings of `AngleOfContact.lean` were revised; at
-  4cd7c77d `Prop27.lean` gained `import Elements.BookIII.Squares`, and comments changed in
-  `Prop20.lean`, `Prop26.lean` and `Prop27.lean`; no other Lean has changed), give Euclid's own arguments where main's proofs of Book III take
-  another way, and drafts where his words, or Heath's reading of them, ask for more than
-  our Lean says. The proofs of main's statements (III.8, III.21, III.26, III.27 and
-  III.20's special case) are staged to replace main's proofs at the next move of Book
-  III's files; those of III.20's special case, III.21 and III.26 rest on the draft angle at
-  the centre, and wait for its approval too. The proofs in these files are held in
+  #129, #130, #131).** Seven Lean files under `Staging/Routes/` give Euclid's own arguments
+  where main's proofs of Book III take another way, and drafts where his words, or Heath's
+  reading of them, ask for more than our Lean says. The linked report owns the detailed
+  revision and check evidence. The proofs of main's statements (III.8, III.21, III.26,
+  III.27 and III.20's special case) are staged to replace main's proofs at the next move of
+  Book III's files; those of III.20's special case, III.21 and III.26 rest on the draft
+  angle at the centre, and wait for its approval too. The proofs in these files are held in
   `Staging/` under the coordinator's orders for this work; recording `Staging/Routes/` as a
   prototype under [WORKFLOW](../WORKFLOW.md), section 2, "What proofs `Staging/` may
   hold", as the prototype of mixed angles was, is the coordinator's to confirm. The new

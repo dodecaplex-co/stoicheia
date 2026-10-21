@@ -5,11 +5,13 @@
 This report answers issues #125, #126, #127, #129, #130 and #131. Five of them ask for
 Euclid's own argument where our proofs of Book III take another way, or for something his
 words say that our Lean does not yet say; the sixth asks which of our calls of III.1 do any
-work. The Lean is in seven files under `Staging/Routes/`, as delivered and checked at
-4cd7c77d (after 1265f23c the docstrings of `AngleOfContact.lean` were revised; at 4cd7c77d
-`Prop27.lean` gained `import Elements.BookIII.Squares`, and comments changed in
-`Prop20.lean`, `Prop26.lean` and `Prop27.lean`; no other Lean has changed). Every
-declaration in them is in the namespace `Elements.BookIII.Routes`, which departs from
+work. The Lean is in seven files under `Staging/Routes/`. Its declarations and proof
+bodies were delivered and checked at 4cd7c77d (after 1265f23c the docstrings of
+`AngleOfContact.lean` were revised; at 4cd7c77d `Prop27.lean` gained
+`import Elements.BookIII.Squares`, and comments changed in `Prop20.lean`, `Prop26.lean`
+and `Prop27.lean`). At 72e33a46 one more comment in `Prop27.lean` was clarified; no
+declaration or proof body changed. Every declaration is in the namespace
+`Elements.BookIII.Routes`, which departs from
 FORMALIZATION's `Elements.Book<B>.Staging.PropN` for staged proofs; whether to rename it or
 record the exception is the coordinator's decision. None of it is in `Elements/` yet.
 
@@ -153,9 +155,9 @@ route stays modified. Its note changes from the measure to III.22 for the obtuse
 keeps the measure for the right case, which still rests on it through `Prop24.angle_type`.
 The measure still compares the circumferences in every case: the staged file's first
 theorem sorts the centres by it, calling `Prop24.angle_type` for where they lie, and the
-reductio reads "the less to the greater" from it, so `Circumference.eq` [III. 21] lies beneath the acute and
-obtuse cases too. What the note records is where the angles at A and D are read off the
-measure: now the right case alone.
+reductio reads "the less to the greater" from it, so `Circumference.eq` [III. 21] lies
+beneath the acute and obtuse cases too. What the note records is where the angles at A and D
+are read off the measure: now the right case alone.
 
 **What is left.** No approval is needed: nothing new is stated or defined, and the step
 that puts the centres alike is a helper of III.27, before it in its file. At the move the
@@ -581,5 +583,5 @@ Each file was also read against Heath's text by a reader who did not write it, a
 writer handed it back: the other six before 1265f23c, their readers' findings answered at
 that commit, and `AngleOfContact.lean` at its text of 1265f23c, its reader's five minor
 findings then answered in its docstrings alone. The whole branch was then reviewed at
-4504fa48, and the answers to that review at 4cd7c77d; the comments 4cd7c77d changed were
-not read again against Heath's text.
+4504fa48, and the answers to that review at 4cd7c77d; the comments changed at 4cd7c77d and
+72e33a46 were not read again against Heath's text.
