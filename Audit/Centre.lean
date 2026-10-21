@@ -15,8 +15,9 @@ are theorems since axiom wave one: Circle 2 is proved from Circle 3, so the abse
 Circle 3 excludes it too, but no axiom list shows a call to `centre_unique`.
 `Tacit.exists_centre` is admitted, as the owner decided. The pin cannot show that its
 centre is used only inside the proof that D is within the circle, nor that
-`centre_unique` is not called. A reader checks both in `Prop1.construction`, as well as
-how the construction follows Euclid.
+`centre_unique` is not called. A reader checks both in `Prop1.construction` and the
+lemmas it calls, as well as how the construction follows Euclid; a pin on the proved rules
+each entry uses is #168's.
 -/
 
 set_option warningAsError true
