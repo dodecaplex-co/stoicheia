@@ -172,6 +172,17 @@ jobs:
         working-directory: model
         run: lake build
 
+      - name: Check the model's compiled proofs again, by Lean's kernel, apart from the build
+        # leanchecker replays every declaration of every compiled module of Model and Check
+        # into the environment of the module's imports, which it loads, Mathlib's among them,
+        # without replaying; then it replays Check's whole environment, which has no Mathlib,
+        # from nothing (model/README.md, "The CI job"). --self-test runs first and needs
+        # no Mathlib: lake build must accept a theorem of False added without the kernel's
+        # check, and the replay must reject it, naming it.
+        run: |
+          python3 scripts/check_model_kernel.py --self-test
+          python3 scripts/check_model_kernel.py
+
   acceptance:
     # The acceptance checklist, docs/ACCEPTANCE.md, on every pull request, as this
     # `acceptance` job and docs/briefs/0002-decisions.md describe:
