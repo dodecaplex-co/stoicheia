@@ -1,22 +1,27 @@
 import Elements.Figure.Basics
-import Elements.BookIII.Prop29
 import Elements.BookIII.Circumferences
-import Staging.Stage3.Chord
-import Staging.Stage3.Definitions
-import Staging.Stage3.Placement
-import Staging.Stage3.Prop24
-import Staging.Stage3.Prop28
+import Elements.BookIII.Prop02
+import Elements.BookIII.Prop24
+import Elements.BookIII.Prop28
+import Elements.BookIII.Prop29
 
 /-!
-# Stage 3, staged: what equal measures mean
+# Book III: what equal circumferences and equal segments come to
 
-Statements frozen before their proofs (brief 0006, stage 3), and proved here. Destined for
-`Elements/BookIII/Arcs.lean`, placed after III.29 so that the argument cannot go round in a
-circle: these bridge theorems justify the measure of a circumference (`circumference`, an
-angle carrying no radius) and the congruence of segments, and III.26–III.29 must not rest on
-them. Outside the placement files,
-this file and III.24 are the only places that may cite `placement` or any lemma of the
-`Placement` namespace.
+A circumference is measured by twice the angle that stands on it (`circumference`), a
+measure that carries no radius, and two segments are equal when they coincide
+(`Arc.Congruent`). These bridge theorems say what each comes to for drawn segments
+(`Arc.Drawn`: the circle has a centre, the ends of the base are on it, and the point naming
+the side is off the base). In equal circles, the circumferences of two drawn segments are
+equal in measure exactly when the straight lines that cut them off are equal and they are
+of one kind, both less than semicircles, both semicircles, or both greater
+(`Arc.measure_eq_iff`). And two drawn segments are congruent exactly when their circles are
+equal and their circumferences equal in measure (`Arc.congruent_iff`).
+
+They stand after III.29 so that the argument cannot go round in a circle: they rest on
+III.24, III.28 and III.29, and III.26–III.29 must not rest on them. With III.24, this file
+is one of the two places outside placement's own files that may cite `placement` or a lemma
+of the `Placement` namespace; its theorems reach placement only through III.24.
 -/
 
 namespace Elements.BookIII
@@ -82,7 +87,7 @@ theorem Arc.measure_eq_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
       have hle₂ : circumference b.circle b.B b.K b.C ≤ circumference b.circle b.B Y b.C :=
         fun hlt => lt_irrefl _ (lt_trans hlt (lt_trans (Circumference.lt_semicircle hH hD hE hHL)
           (Circumference.gt_semicircle hH hD hE hHY)))
-      exact (Staging.Prop28 hcircles hB hC hD hE hXK hYL hBC hle₁ hle₂).2.1
+      exact (Prop28 hcircles hB hC hD hE hXK hYL hBC hle₁ hle₂).2.1
     · /- Both arcs are semicircles: a centre on the base lies between its ends, within the
          circle, and each measure is two right angles (`Circumference.semicircle`). -/
       have hBGC := between_of_inside_chord hG_N hB_N hC_N (centre_inside hG) hB hC hBCK.ne₁₂
@@ -100,7 +105,7 @@ theorem Arc.measure_eq_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
       have hle₂ : circumference b.circle b.B Y b.C ≤ circumference b.circle b.B b.K b.C :=
         fun hlt => lt_irrefl _ (lt_trans hlt (lt_trans (Circumference.lt_semicircle hH hD hE hHY)
           (Circumference.gt_semicircle hH hD hE hHL)))
-      exact (Staging.Prop28 hcircles hB hC hD hE hXK.symm hYL.symm hBC hle₁ hle₂).1.1
+      exact (Prop28 hcircles hB hC hD hE hXK.symm hYL.symm hBC hle₁ hle₂).1.1
 
 /-- **Congruent is equal circles and equal measure.** Two drawn arcs are congruent exactly when
 their circles are equal and their measures are equal.
@@ -123,10 +128,10 @@ theorem Arc.congruent_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) :
     /- A point P of the first arc off its base, and its image Q, show the segments similar
        on equal bases (`Prop24.image`, by I.8): so the circles are equal, by III.24's
        companion `Prop24.equalCircles`, and the measures, by `Prop24.equalMeasure`. -/
-    obtain ⟨P, hP, hPK⟩ := exists_onCircle_sameSideOf hB hC hK
-    obtain ⟨hBC, Q, hQ, hQL, hPQ⟩ := Staging.Prop24.image ha hb h hP hPK
-    exact ⟨(Staging.Prop24.equalCircles hα hβ hB hC hP hD hE hQ hPK.triangle hQL.triangle
-      hBC hPQ).1, Staging.Prop24.equalMeasure ha hb h⟩
+    obtain ⟨P, hP, hPK⟩ := Prop2.sameSide hα hB hC hK
+    obtain ⟨hBC, Q, hQ, hQL, hPQ⟩ := Prop24.image ha hb h hP hPK
+    exact ⟨(Prop24.equalCircles hα hβ hB hC hP hD hE hQ hPK.triangle hQL.triangle
+      hBC hPQ).1, Prop24.equalMeasure ha hb h⟩
   · rintro ⟨hcircles, hm⟩
     /- The chords are equal (`Arc.measure_eq_iff`). -/
     have hBC : ‖a.B a.C‖ = ‖b.B b.C‖ := ((Arc.measure_eq_iff ha hb hcircles).mp hm).1
@@ -135,8 +140,8 @@ theorem Arc.congruent_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) :
        the remainders of the whole circles when the equal arcs are taken away
        (`Circumference.whole`), so they are equal [C.N. 3]; and each is twice the angle at P
        or Q (`Circumference.eq`). -/
-    obtain ⟨P, hP, hPK⟩ := exists_onCircle_sameSideOf hB hC hK
-    obtain ⟨Q, hQ, hQL⟩ := exists_onCircle_sameSideOf hD hE hL
+    obtain ⟨P, hP, hPK⟩ := Prop2.sameSide hα hB hC hK
+    obtain ⟨Q, hQ, hQL⟩ := Prop2.sameSide hβ hD hE hL
     obtain ⟨X, hXK, -⟩ := exists_oppositeSidesOf (show Triangle a.B a.C a.K from hK) []
     obtain ⟨Y, hYL, -⟩ := exists_oppositeSidesOf (show Triangle b.B b.C b.K from hL) []
     have hXY : circumference a.circle a.B X a.C = circumference b.circle b.B Y b.C :=
@@ -147,7 +152,7 @@ theorem Arc.congruent_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) :
     have hPQ : ∠ a.B P a.C = ∠ b.B Q b.C := Magnitude.eq_of_add_self_eq hXY
     /- So the segments named by P and Q are similar, and on equal bases they are congruent
        [III. 24]; only the side names a segment (`Arc.Congruent.congr_side`). -/
-    exact (Staging.Prop24 hα hβ hB hC hP hD hE hQ hPK.triangle hQL.triangle hBC
+    exact (Prop24 hα hβ hB hC hP hD hE hQ hPK.triangle hQL.triangle hBC
       hPQ).congr_side hPK hQL
 
 end Elements.BookIII
