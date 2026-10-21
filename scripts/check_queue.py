@@ -124,6 +124,7 @@ DAY = re.compile(r"(?i)([0-9]{1,2})(?:st|nd|rd|th)?")
 NUMBER = re.compile(r"[0-9]{1,2}")
 YEAR = re.compile(r"[0-9]{4}")
 YEARLIKE = re.compile(r"(?<![0-9])(?:19|20|21)[0-9]{2}(?![0-9])")
+ORDERED_TEXT = re.compile(r"(?:^| )([0-9]+)[.)]$")
 # An HTML heading tag of level one or two, which this reading refuses rather than reads.
 RAW_HEADING = re.compile(r"(?i)<h[12](?=[\s/>]|$)")
 GENERATED = (*safe_push.GENERATED, "book/", safe_push.DECISIONS)
@@ -518,10 +519,15 @@ def preflight(repo: Path, base: str, pr: dict) -> None:
     # further down (a record that stood in, say) may quote the same words again.
     summary = next((line for line in safe_push.visible(inner).splitlines() if line.strip()),
                    "")
+    named = re.match(
+        r"^Pre-flight of `([0-9a-f]{7,40})` against origin/main `([0-9a-f]{7,40})`,",
+        summary)
+    if not named or not checked.startswith(named.group(1)) \
+            or not against.startswith(named.group(2)):
+        raise Refused("pre-flight: visible summary must name the recorded head and base")
     harness = re.findall(
         r"origin/main's `scripts/safe_push\.py` \(blob `([0-9a-f]{12,40})`\)", summary)
-    if len(harness) != 1 or not summary.startswith("Pre-flight of ") \
-            or "full checks skipped" in inner:
+    if len(harness) != 1 or "full checks skipped" in inner:
         raise Refused("pre-flight: missing origin/main harness or full checks skipped")
     actual = oid(safe_push.git(repo, "rev-parse",
                                f"{harness_commit}:scripts/safe_push.py").strip(),
@@ -602,10 +608,11 @@ def intact(repo: Path, base: str, head: str, pr: dict) -> None:
             raise Refused(f"not overwriting: #{pr['number']} changed lines were "
                           "overwritten: " + ", ".join(sorted(lost)))
         added = [line.text for line in safe_push.added_lines(repo, mb, pr["head"],
-                                                          safe_push.DECISIONS)]
+                                                              safe_push.DECISIONS)]
         if added:
-            page = safe_push.git(repo, "show", f"{head}:{safe_push.DECISIONS}").splitlines()
-            remaining = iter(page)
+            present = [line.text for line in safe_push.added_lines(repo, mb, head,
+                                                                   safe_push.DECISIONS)]
+            remaining = iter(present)
             if not all(any(line == present for present in remaining) for line in added):
                 raise Refused(f"not overwriting: #{pr['number']} decisions added lines "
                               "are missing or out of order")
@@ -868,7 +875,7 @@ def heading_problems(page: str) -> list[str]:
             else:
                 first[date] = where
 
-    def readable(number: int, text: str, kept: str = "") -> None:
+    def readable(number: int, text: str, kept: str = "", paragraph: bool = False) -> None:
         # `kept`, the line's list numbers and footnote markers, may be its own text or
         # its containers': it is read as text for plainness, and no year in it is dated.
         if odd := NOT_PLAIN.search(f"{kept} {text}" if kept else text):
@@ -877,7 +884,10 @@ def heading_problems(page: str) -> list[str]:
                             f"(U+{ord(odd.group()):04X}), which is not plain: write it with "
                             "ASCII letters, digits, spaces and . , : ; ' ( ) - / only")
         year = next((word for word in WORD.findall(kept) if YEARLIKE.search(word)), None)
-        if (year := year or undated_year(text)) is not None:
+        marker = ORDERED_TEXT.search(kept)
+        dated_text = (f"{kept} {text}" if paragraph and marker
+                      and int(marker.group(1)) != 1 and year is None else text)
+        if (year := year or undated_year(dated_text)) is not None:
             problems.append(f"{safe_push.DECISIONS}:{number}: a line that could render as a "
                             f"heading, or as part of one, holds {year!r}, a year in no date "
                             "this check reads: write a heading's date in its line as 20 "
@@ -896,7 +906,7 @@ def heading_problems(page: str) -> list[str]:
     dates: list[datetime.date] = []
     held: set[datetime.date] = set()
     noted = 0
-    unread: list[tuple[int, str, str]] = []
+    unread: list[tuple[int, str, str, bool]] = []
     for number, line in enumerate(LINE_END.split(page.removeprefix(BOM)), 1):
         if RAW_HEADING.search(line):
             problems.append(f"{safe_push.DECISIONS}:{number}: an HTML heading tag (<h1> or "
@@ -908,6 +918,7 @@ def heading_problems(page: str) -> list[str]:
             own_words = words
             continue
         kept, stripped = _stripped(line)
+        paragraph = start is not None
         if opener := OPENER.match(stripped):
             text = _atx_text(stripped[opener.end():])
             readable(number, text)
@@ -926,7 +937,7 @@ def heading_problems(page: str) -> list[str]:
         if start is None:
             start = number
         text = stripped.rstrip(" \t")
-        unread.append((number, text, kept))
+        unread.append((number, text, kept, paragraph))
         found = WORD.findall(text)
         streams = [(words, found)]
         if kept or own_words is not words:

@@ -391,7 +391,13 @@ class TrainChecks(Repository):
                           ("security_review",
                            f"<a href='#{self.member[:12]}'>Pass</a>: no findings."),
                           ("code_review",
-                           f"[Pass, no findings](https://example.invalid/{self.member})")):
+                           f"[Pass, no findings](https://example.invalid/{self.member})"),
+                          ("code_review",
+                           f"[Reviewed](https://example.invalid/(note)/{self.member})"),
+                          ("security_review",
+                           f"[Reviewed](https://example.invalid/a\\(b\\)/{self.member})"),
+                          ("code_review",
+                           f'<span title="> {self.member}">Reviewed</span>')):
             with self.subTest(key=key, cell=cell):
                 label = "/code-review" if key == "code_review" else "/security-review"
                 self.refused(f"{label} names no reviewed commit",
@@ -411,6 +417,11 @@ class TrainChecks(Repository):
                 with self.subTest(cell=cell, key=key):
                     row = dict(self.row, **{key: cell})
                     self.assertEqual(self.problems(text=body([row])), [])
+        for cell in (f"[Reviewed {self.member}: no findings](https://example.invalid/(note))",
+                     f'<span title="> note">Reviewed {self.member}: no findings</span>'):
+            with self.subTest(cell=cell):
+                row = dict(self.row, code_review=cell)
+                self.assertEqual(self.problems(text=body([row])), [])
 
     def test_long_review_cells_are_read_in_linear_time(self):
         # 200,000 characters of openings that never close, which a regular expression

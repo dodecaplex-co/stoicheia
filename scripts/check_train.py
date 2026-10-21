@@ -210,39 +210,82 @@ def _placeholder_word(cell: str) -> str | None:
     return match.group() if match else None
 
 
-def _cut(text: str, opener: str, spans: tuple[tuple[str, str], ...], keep: int) -> str:
-    """The text with spans cut out, as re.sub reads alternatives left to right: at each
-    `opener`, the first span whose opening stands there and whose closing follows it is
-    cut through that closing's nearest place, keeping the opening's first `keep`
-    characters. A closing is searched for again only once passed, so the text is read
-    in linear time, however many openings it holds."""
-    parts, position, nearest = [], 0, {}
-    while (start := text.find(opener, position)) >= 0:
-        for opening, closing in spans:
-            if not text.startswith(opening, start):
-                continue
-            found = nearest.get(closing, -2)
-            if found != -1 and found < start + len(opening):
-                found = nearest[closing] = text.find(closing, start + len(opening))
-            if found >= 0:
-                parts.append(text[position:start + keep])
-                position = found + len(closing)
+def _without_html(text: str) -> str:
+    """Remove complete HTML comments and tags, respecting quoted attribute values."""
+    visible = []
+    at = 0
+    while at < len(text):
+        if text[at] != "<":
+            visible.append(text[at])
+            at += 1
+            continue
+        if text.startswith("<!--", at):
+            end = text.find("-->", at + 4)
+            if end < 0:
+                visible.append(text[at:])
                 break
-        else:
-            parts.append(text[position:start + 1])
-            position = start + 1
-    parts.append(text[position:])
-    return "".join(parts)
+            at = end + 3
+            continue
+        end, quote = at + 1, None
+        while end < len(text):
+            character = text[end]
+            if quote is not None:
+                if character == quote:
+                    quote = None
+            elif character in "\"'":
+                quote = character
+            elif character == ">":
+                break
+            end += 1
+        if end == len(text):
+            visible.append(text[at:])
+            break
+        at = end + 1
+    return "".join(visible)
+
+
+def _without_link_targets(text: str) -> str:
+    """Remove inline link destinations and reference labels with escaped delimiters."""
+    visible = []
+    at = 0
+    while at < len(text):
+        if text[at] == "\\" and at + 1 < len(text):
+            visible.append(text[at:at + 2])
+            at += 2
+            continue
+        if not text.startswith(("](", "]["), at):
+            visible.append(text[at])
+            at += 1
+            continue
+        opening = text[at + 1]
+        end = at + 2
+        depth = 1
+        while end < len(text):
+            if text[end] == "\\" and end + 1 < len(text):
+                end += 2
+                continue
+            if opening == "(" and text[end] == "(":
+                depth += 1
+            elif text[end] == (")" if opening == "(" else "]"):
+                depth -= 1
+                if depth == 0:
+                    break
+            end += 1
+        visible.append("]")
+        if end == len(text):
+            visible.append(text[at + 1:])
+            break
+        at = end + 1
+    return "".join(visible)
 
 
 def _review_text(cell: str) -> str:
     """A review cell's text as a reader sees it: character references decoded, after
-    NFKC, without HTML comments and tags (<!-- to -->, < to >) and a link's destination
-    or label (]( to ), ][ to ]), each to its nearest closing. The reviewed commit is
-    read here, never in the raw cell, so a commit no reader sees names none."""
+    NFKC, without complete HTML comments and tags, inline link destinations or reference
+    labels. The reviewed commit is read here, never in the raw cell, so a commit no reader
+    sees names none."""
     text = unicodedata.normalize("NFKC", html.unescape(cell))
-    text = _cut(text, "<", (("<!--", "-->"), ("<", ">")), keep=0)
-    return _cut(text, "]", (("](", ")"), ("][", "]")), keep=1)
+    return _without_link_targets(_without_html(text))
 
 
 def _review_content(cell: str) -> bool:
