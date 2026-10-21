@@ -36,7 +36,7 @@ have something to say. Unknown sections and keys are faults, so a misspelling is
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `scope` | `"full"`, `"restricted"` or `"partial"` | yes | How much of the enunciation the theorem proves, with the companions listed below. |
-| `hypotheses` | list of strings | when restricted | Each extra hypothesis that excludes a case Euclid's words admit, in plain words with the Lean hypothesis after it. |
+| `hypotheses` | list of strings | when restricted | Each extra hypothesis that excludes a case Euclid's words admit, in words, as [STYLE](../docs/STYLE.md), section 1, "Hypotheses in words", says. |
 | `omitted` | list of strings | when partial | Each clause with no formal conclusion, quoted exactly from Heath's enunciation or porism. |
 | `note` | string, one line, at most 160 characters | unless full | What the theorem proves, in plain words, shown in the page's field table. |
 | `short` | string, one line, at most 70 characters, no full stop | unless full | The same in a few words, shown beside the badge: "bases that meet end to end". It follows a colon or a bracket, so it begins with a small letter. |
@@ -79,7 +79,7 @@ If it no longer matches, a statement changed after the review.
   declared as a passage (`case`, `helper` or `given`).
 - **modified**: Euclid's argument, with a step done materially differently: another
   construction, or one of his steps, or a real case within his statement, argued another
-  way (I.39 and I.40, whose Lean makes the end of his reductio direct).
+  way (III.8, whose last step compares the angles at the centre by I.24).
 - **alternative**: a different proof altogether, labelled as one on the page (III.24's
   proof by the radii, once stage 3 gives Euclid's own).
 
@@ -112,8 +112,8 @@ kinds, and `kind` names the row's kind in the catalogue's words:
   (III.2 from Circle 3; III.5, and III.6 for contact within, from Diagram-segment 2;
   contact without is settled by Generalities 3, now a theorem).
 - **step**: inside some proof, the rule carries a step that is the proposition's content,
-  or a case of it, and does not give the proposition at once (I.2, I.3 and I.23,
-  where the proof is the audit lemma, which takes eight axioms or more).
+  or a case of it, and does not give the proposition at once (as for I.13, a consequence of
+  which, Metric 5, carries a step of I.47's proof).
 
 The page words its overlap by the kind, in the line under the enunciation and in the
 book's summary, which also heads the book's index, its section of CERTIFICATE.md and its
@@ -184,8 +184,13 @@ The section needs at least one of the two, and is left out when it has neither.
 | `run` | string | from stage `full` | The run the review was made in: the brief and stage, and the workflow, as `"brief 0005 stage 5, workflow wf_…"`. |
 | `items` | table | no | Acceptance items, each `"pass"`, `"fail"` or `"n/a"`. |
 
-The acceptance checklist, [docs/ACCEPTANCE.md](../docs/ACCEPTANCE.md), fixes the item keys
-and when an item counts, in "Recording a review item".
+`items` may be omitted or empty at either stage. `heath.load_review` checks each key's
+syntax and the three verdict values, but neither requires items nor limits keys to the
+acceptance checklist; `scripts/check_fidelity.py` adds no such requirement.
+`scripts/check_acceptance.py` rejects other keys (P2) and fails missing verdicts (P11 to
+P16). The keys and conditions for a verdict to count are in
+[docs/ACCEPTANCE.md](../docs/ACCEPTANCE.md#recording-a-review-item), "Recording a review
+item".
 
 ## Stamps
 
@@ -219,6 +224,14 @@ require_stamp=False)` reads a record without them.
 `scripts/check_fidelity.py` adds what needs facts.json and the Lean files: that every
 proposition has a record, that the stamps are current (if not, "statement changed since
 reviewed"), and that every run of `--` lines with no Lean beneath it is declared.
+
+`scripts/check_style.py` reads as "Review notes" the statement's `note`, `short` and
+`hypotheses`, the route, representation, overlap and passage notes, the figure's `case`
+and `note`, and the clause map's `checked` and `explains`. It also reads each tag's
+`meaning` and `badge` in `review/terms.toml`. S1 to S9 and S22 check their prose; S12 asks Lean
+about names in backticks, except the non-declarations listed in `NOT_DECLARED`.
+[STYLE](../docs/STYLE.md#8-checks), section 8, gives the rules and explains which findings
+`REACH_PENDING` reports without failing.
 
 ## Worked examples
 
@@ -286,13 +299,13 @@ lean = "sha256:061379c1f0411141"
 reviewer = "Claude Opus 5.5"
 ```
 
-I.40 is restricted: the theorem takes the two bases end to end.
+At d040117, I.40 was restricted: the theorem took the two bases end to end.
 
 ```toml
 # review/I/40.toml
 [statement]
 scope = "restricted"
-hypotheses = ["the bases BC and CE meet at C (`hBCE : Between B C E`)"]
+hypotheses = ["the bases BC and CE meet at C (`Between B C E`)"]
 note = "Proved for equal bases that meet end to end, as BC and CE; Euclid's bases may lie anywhere on one straight line."
 short = "bases that meet end to end"
 fingerprint = "sha256:5ea666d96871b7f8"
@@ -313,6 +326,6 @@ lean = "sha256:5f353abf9022b4fd"
 reviewer = "Claude Opus 5.5"
 ```
 
-Once stage 2 adds `Prop40.general`, I.40's record would list `companions =
-["I.40 general"]`, its scope would become full, and its fingerprint would change with the
-new attached statement, so the record would be read again.
+Stage 2 has added `Prop40.general`; [I.40's current record](I/40.toml) has full scope and
+lists `"I.40 general"`, `"I.40 join"` and `"I.40 special"` as companions. The example above
+remains the fixture from commit d040117.

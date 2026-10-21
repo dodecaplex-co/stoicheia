@@ -9,28 +9,36 @@ name = "mathlib"
 scope = "leanprover-community"
 rev = "v4.35.0"
 
-# The edition itself, read only by the Check library to compare translations with the
-# original declarations. The Model library never imports it, and the main package
-# depends on nothing here.
+# Check reads the edition to compare translations with the original declarations.
+# Model shares only Elements.Foundations.Superposition.{Syntax,Semantics,Soundness,Restriction},
+# whose transitive declarations are checked to use no geometric words or project axioms.
+# The main package depends on nothing here.
 [[require]]
 name = "stoicheia"
 path = ".."
 
-# The signature, the translated laws and the Euclidean interpretation. Imports Mathlib,
-# never Elements.
+# The signature, the translated laws and the Euclidean interpretation. Imports Mathlib
+# and exactly the four pure Elements modules named above. Check.Generator audits that
+# import boundary and the shared declarations' purity.
 [[lean_lib]]
 name = "Model"
 
 # Translation checks and the generator: imports Elements.Foundations and the plain-Lean part
 # of Model (Model.Signature, Model.Laws, Model.Hand), never Mathlib. Its modules read files
 # that are not Lean imports: the lock and its hash, the files the generator writes, and the
-# proofs in the plane, whose theorems the assembly gathers. Lake reruns a module only when
-# its inputs change, so the library `needs` each of those files, and any change to one of
-# them reruns the checks, as a fresh build in CI does.
+# proofs in the plane, whose theorems the assembly gathers, and the import audit's sources.
+# The library `needs` these inputs. Lake hashes text with line endings normalised;
+# content changes or a file entering or leaving a filtered directory input rerun the
+# checks. Timestamps and filenames alone are not hashed. CI's fresh build runs every
+# check regardless of these local cache traces.
+# The compiled-import audit reads Model's artefacts without importing Mathlib into Check.
+# Build the whole Model library first, including when building a Check module directly.
+# This is a build prerequisite, not a Lean import. Model has no Check imports, so the
+# normal build is acyclic; a Model import of Check makes Lake refuse a build cycle.
 [[lean_lib]]
 name = "Check"
-needs = ["axiomsLock", "lockHash", "generatedLaws", "generatedChecks", "generatedAssembly",
-  "planeProofs"]
+needs = ["Model:leanArts", "axiomsLock", "lockHash", "generatedLaws", "generatedChecks", "generatedAssembly",
+  "planeProofs", "modelRoot", "modelSources", "pureSources"]
 
 [[input_file]]
 name = "axiomsLock"
@@ -61,3 +69,27 @@ text = true
 name = "planeProofs"
 path = "Model/Euclidean"
 text = true
+filter = { extension = ["lean"] }
+
+# The import audit reads the library root as well as every Model source, including files
+# not imported by the root. Filter before hashing: a same-content .txt to .lean rename
+# must add a hashed input, since it adds a source to the audit.
+# Include all sixteen ASCII case variants so non-canonical extensions rerun the check.
+[[input_file]]
+name = "modelRoot"
+path = "Model.lean"
+text = true
+
+[[input_dir]]
+name = "modelSources"
+path = "Model"
+text = true
+filter = { extension = ["lean", "leaN", "leAn", "leAN", "lEan", "lEaN", "lEAn", "lEAN", "Lean", "LeaN", "LeAn", "LeAN", "LEan", "LEaN", "LEAn", "LEAN"] }
+
+# Track Lean files under the foundations parent, a superset of the four pure sources. The
+# extension filter also catches a source arriving by a .txt to .lean rename.
+[[input_dir]]
+name = "pureSources"
+path = "../Elements/Foundations"
+text = true
+filter = { extension = ["lean", "leaN", "leAn", "leAN", "lEan", "lEaN", "lEAn", "lEAN", "Lean", "LeaN", "LeAn", "LeAN", "LEan", "LEaN", "LEAn", "LEAN"] }

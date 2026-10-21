@@ -1,11 +1,11 @@
 # search-seed2: random search, 20,000 samples per axiom
 # command: python3 -I tests/model/search.py 20000 2
 # seeds: 2
-# commit: 37bcd05a7db2787db9d2543e268c3300c2de9f30 (harness files as committed)
-# harness sha256: 327ea3cc5944688cff19c0e04e2829e766cfb03447a2a93ab83f9045955cae27
-# python: 3.11.9 (CPython, Darwin arm64)
-# date: 2026-10-19
-# time: 8.0 s
+# commit: d2c454507f0523f2358dbac383751bb475ecfd36 (harness files differ from this commit)
+# harness sha256: 4fdcd9508ac705c018c191dd82831f7ed2c3aaf9183f6be433b54d134f6599b0
+# python: 3.14.2 (CPython, Darwin arm64)
+# date: 2026-10-21
+# time: 8.7 s
 
 axiom                                       tried  hyp held counterex
 Postulate1                                  20000      6158         0

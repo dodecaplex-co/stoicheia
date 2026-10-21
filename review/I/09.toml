@@ -1,7 +1,7 @@
 # review/I/09.toml
 [statement]
 scope = "full"
-note = "The angle is given as the triangle BAC, its arms not in one straight line, as Definition 8 asks; the bisector AF is proved to fall within it."
+note = "The angle is given as the triangle BAC, its arms not in one straight line, as Definition I.8 asks; the bisector AF is proved to fall within it."
 fingerprint = "sha256:615a25d41eb9d01a"
 
 [route]
@@ -33,9 +33,9 @@ note = "Euclid takes for granted that DAF and EAF are BAF and FAC, since D lies 
 
 [review]
 stage = "full"
-commit = "2ac1625"
-reviewer = "Claude Opus 5.5, records review"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+commit = "8b8162f7"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+run = "brief 0005 stage 5, R2, independent re-read at 8b8162f7"
 lean = "sha256:d385f2716fd5a8ad"
 
 [review.items]

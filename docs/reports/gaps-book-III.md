@@ -16,8 +16,11 @@ here is meant to be new.
 Each entry names the Lean lemma or tacit rule that fills the gap. A few of System E's
 rules for circles do most of the work, and we name them once here. A circle's centre is
 within it (`centre_inside`, Generalities 3), now proved in Book Zero's `RuleBase.lean`
-from Circle 1, Definition I.15, circle crossings and length addition: a centre outside
-would have unequal radii. That it has only one centre
+from Circle 1, Definition I.15, Postulates 1 and 3, circle crossings, length addition and
+the rule that one centre and one radius make one circle (`circle_eq`, Diagram-segment 2):
+a centre outside would have unequal radii, which needs every radius to be something, and
+Postulate 3 and Diagram-segment 2 show that it is (`RuleProofs.Circle.radius_ne_zero` and
+`RuleProofs.Circle.length_pos`). That it has only one centre
 (`centre_unique`, Generalities 2) is now proved in Book Zero's `Circles.lean`:
 two supposed centres bisect the same straight line through the circle by Definition I.15,
 and equal doubles have equal halves. A point within a circle, on a straight line that
@@ -278,7 +281,8 @@ Heath's brackets give in most of the propositions of Book III.
 - "Therefore DE is equal to DB": equal squares are on equal straight lines (`BookI.Prop46.sq`), as in III.14.
 - I.8 needs DBF to be a triangle, which Euclid reads off his figure. Were B on DF, either D would be within the circle, or two sides of the triangle DEF would together equal the third, against I.20 (`Prop37.triangle`).
 - De Morgan finds here "the same defect as in I. 48, i.e. an apparent avoidance of indirect demonstration by drawing the tangent DE on the opposite side of DF from DB" (Heath, vol. 2, pp. 76–77). III.17 does not say which straight line it draws. Our proof holds for either, even with E at B, for our I.8 does not ask on which side of DF the triangles lie.
-- "And FB produced is a diameter": our porism to III.16 is said at the end of a radius, so FB need not be produced. "Similarly this can be proved to be the case even if the centre be on AC" is no case for our proof, for III.36 is cited by its statement, which holds wherever the centre lies.
+- "And FB produced is a diameter": our porism to III.16 is said at the end of a radius, so FB need not be produced.
+- "Similarly this can be proved to be the case even if the centre be on AC": Euclid leaves this case to the reader. `Prop37.centre_on_secant` proves it from `Prop36.through_centre`, III.36's diameter case, and the given equality, then by Euclid's comparison of two triangles through I.8.
 
 ## The postulates: what the Lean uses and what Heath's brackets give
 

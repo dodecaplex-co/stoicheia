@@ -16,7 +16,7 @@ On each page, the notes under "How the Lean follows the text" open with a plain 
 
 ## Book I
 
-**All 48 propositions proved in Lean**, every one as Euclid states it. 46 proofs follow Euclid's argument and 2 follow it with one step changed ([I.39](book/I/39.md), [I.40](book/I/40.md)); each page says how. In [I.23](book/I/23.md) one of our tacit rules supplies a step of a proof of the proposition, and our proof rests on it. In [I.2](book/I/02.md) and [I.3](book/I/03.md) our tacit rules supply a step of a proof of each proposition, but our proofs never use those rules. [The overlap catalogue](docs/reports/overlaps.md) gives each.
+**All 48 propositions proved in Lean**: 47 as Euclid states them and 1 for a restricted statement ([I.45](book/I/45.md)). Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences.
 
 What the proofs show:
 
@@ -28,11 +28,11 @@ What the proofs show:
 | ✅ | [I.1](book/I/01.md) | whole | Euclid's |  |  | 1, 3 | Def. I.15 | 1, 5 | 21 | 9 | 13 |
 | ✅ | [I.2](book/I/02.md) | whole | Euclid's | I.1 | I.1 | 1, 3 | Def. I.15 | 1, 3, 5 | 22 | 8 | 11 |
 | ✅ | [I.3](book/I/03.md) | whole | Euclid's | I.2 | I.2 | 1, 3 | Def. I.15 | 1, 3, 5 | 22 | 4 | 15 |
-| ✅ | [I.4](book/I/04.md) | whole | Euclid's |  |  | 1, 2, 3 | Def. I.15 | 4, 5 | 32 | 5 | 30 |
+| ✅ | [I.4](book/I/04.md) | whole | Euclid's |  |  | 1, 2, 3 | Def. I.15 | 4, 5 | 32 | 2 | 33 |
 | ✅ | [I.5](book/I/05.md) | whole | Euclid's | I.3, I.4 | I.3, I.4 | 1, 2, 3 | Def. I.15 | 1, 3, 4, 5 | 38 | 7 | 30 |
 | ✅ | [I.6](book/I/06.md) | whole | Euclid's |  | I.3, I.4 | 1, 2, 3 | Def. I.15 | 1, 3, 4, 5 | 39 | 8 | 28 |
 | ✅ | [I.7](book/I/07.md) | whole | Euclid's | I.5 | I.5 | 1, 2, 3 | Def. I.15 | 1, 3, 4, 5 | 38 | 16 | 17 |
-| ✅ | [I.8](book/I/08.md) | whole | Euclid's | I.7 | I.7 | 1, 2, 3 | Def. I.15 | 1, 3, 4, 5 | 38 | 3 | 18 |
+| ✅ | [I.8](book/I/08.md) | whole | Euclid's | I.7 | I.7 | 1, 2, 3 | Def. I.15 | 1, 3, 4, 5 | 38 | 2 | 19 |
 | ✅ | [I.9](book/I/09.md) | whole | Euclid's | I.3, I.8 | I.1, I.3, I.5, I.7, I.8 | 1, 2, 3 | Def. I.15 | 1, 3, 4, 5 | 38 | 11 | 24 |
 | ✅ | [I.10](book/I/10.md) | whole | Euclid's | I.1, I.4, I.9 | I.1, I.4, I.9 | 1, 2, 3 | Def. I.15 | 1, 3, 4, 5 | 38 | 4 | 28 |
 | ✅ | [I.11](book/I/11.md) | whole | Euclid's | I.1, I.3, I.8 | I.1, I.3, I.8 | 1, 2, 3, 4 | Def. I.15 | 1, 3, 4, 5 | 38 | 7 | 26 |
@@ -64,16 +64,16 @@ What the proofs show:
 | ✅ | [I.36](book/I/36.md) | whole | Euclid's | I.33, I.34, I.35 | I.33, I.34, I.35 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 1 | 37 |
 | ✅ | [I.37](book/I/37.md) | whole | Euclid's | I.31, I.34, I.35 | I.30, I.31, I.34, I.35 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 0 | 38 |
 | ✅ | [I.38](book/I/38.md) | whole | Euclid's | I.31, I.34, I.36 | I.30, I.31, I.34, I.36 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 0 | 38 |
-| ✅ | [I.39](book/I/39.md) | whole | Euclid's, one step changed | I.31, I.37 | I.30, I.31, I.37 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 1 | 38 |
-| ✅ | [I.40](book/I/40.md) | whole | the text's, one step changed | I.31, I.38 | I.30, I.31, I.38 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 1 | 38 |
-| ✅ | &emsp;[I.40 general](book/I/40.md#general) |  |  |  | I.30, I.31, I.38 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 2 | 37 |
+| ✅ | [I.39](book/I/39.md) | whole | Euclid's | I.31, I.37 | I.30, I.31, I.37 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 2 | 37 |
+| ✅ | [I.40](book/I/40.md) | whole | the text's | I.31, I.38 | I.30, I.31, I.38 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 2 | 37 |
+| ✅ | &emsp;[I.40 general](book/I/40.md#general) |  |  |  | I.30, I.31, I.38 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 3 | 36 |
 | ✅ | &emsp;[I.40 join](book/I/40.md#join) |  |  |  | I.40 general | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 0 | 3 |
 | ✅ | &emsp;[I.40 special](book/I/40.md#special) |  |  |  | I.40 general | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 1 | 33 |
 | ✅ | [I.41](book/I/41.md) | whole | Euclid's | I.34, I.37 | I.34, I.37 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 1 | 33 |
 | ✅ | [I.42](book/I/42.md) | whole | Euclid's | I.23, I.31, I.38, I.41 | I.10, I.23, I.30, I.31, I.38, I.41 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 3 | 37 |
 | ✅ | [I.43](book/I/43.md) | whole | Euclid's | I.34 | I.34 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 5 | 33 |
 | ✅ | [I.44](book/I/44.md) | whole | Euclid's | I.15, I.29, I.31, I.42, I.43 | I.2, I.4, I.15, I.23, I.29, I.30, I.31, I.34, I.42, I.43 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 8 | 33 |
-| ✅ | [I.45](book/I/45.md) | whole | Euclid's | I.14, I.29, I.30, I.33, I.34, I.42, I.44 | I.14, I.29, I.30, I.33, I.34, I.42, I.44 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 7 | 33 |
+| ✅ | [I.45](book/I/45.md) | restricted | Euclid's | I.14, I.29, I.30, I.33, I.34, I.42, I.44 | I.14, I.29, I.30, I.33, I.34, I.42, I.44 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 7 | 33 |
 | ✅ | &emsp;[I.45 apart](book/I/45.md#apart) |  |  |  | I.45 sum | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 0 | 0 |
 | ✅ | &emsp;[I.45 append](book/I/45.md#append) |  |  |  | I.14, I.29, I.30, I.33, I.34, I.44 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 7 | 33 |
 | ✅ | &emsp;[I.45 fan](book/I/45.md#fan) |  |  |  | I.13, I.45 figure | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 0 | 35 |
@@ -81,11 +81,12 @@ What the proofs show:
 | ✅ | &emsp;[I.45 sum](book/I/45.md#sum) |  |  |  | I.42, I.45 append | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 3 | 36 |
 | ✅ | [I.46](book/I/46.md) | whole | Euclid's | I.11, I.29, I.31, I.34 | I.11, I.29, I.30, I.31, I.34 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 38 | 4 | 29 |
 | ✅ | [I.47](book/I/47.md) | whole | Euclid's | I.4, I.14, I.41, I.46 | I.4, I.13, I.14, I.17, I.28, I.30, I.31, I.41 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 12 | 28 |
+| ✅ | &emsp;[I.47 general](book/I/47.md#general) |  |  |  | I.4, I.28, I.46, I.47 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 39 | 0 | 38 |
 | ✅ | [I.48](book/I/48.md) | whole | Euclid's | I.8, I.47 | I.3, I.4, I.8, I.11, I.28, I.34, I.46, I.47 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 3 | 38 |
 
 ## Book II
 
-**All 14 propositions proved in Lean**, every one as Euclid states it. Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences.
+**All 14 propositions proved in Lean**: 13 as Euclid states them and 1 for a restricted statement ([II.14](book/II/14.md)). Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences.
 
 What the proofs show:
 
@@ -109,7 +110,7 @@ What the proofs show:
 | ✅ | [II.11](book/II/11.md) | whole | Euclid's | I.46, I.47, II.6 | I.4, I.10, I.13, I.17, I.19, I.20, I.28, I.29, I.30, I.34, I.46, I.47, II.6 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 7 | 33 |
 | ✅ | [II.12](book/II/12.md) | whole | Euclid's | I.47, II.4 | I.4, I.17, I.28, I.34, I.46, I.47, II.4 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 8 | 32 |
 | ✅ | [II.13](book/II/13.md) | whole | Euclid's | I.47, II.7 | I.4, I.13, I.17, I.28, I.34, I.46, I.47, II.7 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 10 | 29 |
-| ✅ | [II.14](book/II/14.md) | whole | Euclid's | I.45, I.47, II.5 | I.4, I.10, I.11, I.13, I.28, I.29, I.34, I.45, I.46, I.47, II.5 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 13 | 27 |
+| ✅ | [II.14](book/II/14.md) | restricted | Euclid's | I.45, I.47, II.5 | I.4, I.10, I.11, I.13, I.28, I.29, I.34, I.45, I.46, I.47, II.5 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 13 | 27 |
 | ✅ | &emsp;[II.14 apart](book/II/14.md#apart) |  |  |  | II.14 sum | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 0 | 0 |
 | ✅ | &emsp;[II.14 fan](book/II/14.md#fan) |  |  |  | I.13, II.14 figure | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 0 | 35 |
 | ✅ | &emsp;[II.14 figure](book/II/14.md#figure) |  |  |  | II.14 apart | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 40 | 0 | 23 |

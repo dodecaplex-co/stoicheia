@@ -14,12 +14,13 @@ now proved from I.7 using `circle_eq` (19 October 2026). Definition III.3 sets c
 against touching: "Circles are said to touch one another which, meeting one another, do not cut one
 another." Read so, circles that cut one another cross, each passing within the other, and
 circles touching within have the inner circle passing within the outer, as Heath says the
-definition must imply. Then III.5 and III.6 follow by Euclid's own argument, with neither
-rule. In the intended plane the old and the new hypotheses agree; the circle drawn twice
-over shows that they differ in an interpretation without `circle_eq` and its consequence
-Circle 4, not every way in which they could. The rules still give the restated statements
+definition must imply. Then III.5 and III.6 follow by Euclid's own argument, citing neither
+rule, though the proved rules it uses now rest on `circle_eq` (see the end). In the
+intended plane the old and the new hypotheses agree; the circle drawn twice over shows
+that they differ in an interpretation without `circle_eq` and its consequence Circle 4,
+not every way in which they could. The rules still give the restated statements
 in a line or two, so the
-overlap catalogue keeps its rows: the proofs avoid the rules, which still contain the
+overlap catalogue keeps its rows: the proofs do not cite the rules, which still contain the
 propositions (brief 0008, section 7, after Astra's challenge).
 
 Here, with proofs, which the freeze approved as staged facts resting on no stub (brief
@@ -39,9 +40,10 @@ Here, with proofs, which the freeze approved as staged facts resting on no stub 
   the only lines of III.11 and III.13 that read the definition of contact within go through
   as they are written today;
 * at the end, the axioms Lean reports for the restated III.5 and III.6, pinned with
-  `#guard_msgs` as `Audit/Overlaps.lean` pins its lemmas: neither `circle_eq` nor an
-  admitted proof is among them, and the build fails if one enters. Circle 4 is now a
-  theorem whose proof uses `circle_eq`, so the guards also exclude that route.
+  `#guard_msgs` as `Audit/Overlaps.lean` pins its lemmas: the pins check the names of
+  those axioms, and the build fails if an admitted proof (`sorry`) enters. Since
+  19 October 2026 `Elements.Tacit.circle_eq` and Postulate 3 are among them, through
+  proved rules such as `centre_inside`.
 
 When the restatements land (step 6), the definitions go to
 `Elements/Foundations/DefinitionsIII.lean`, the proofs to `Elements/BookIII/Prop05.lean` and
@@ -278,11 +280,13 @@ end Elements.BookIII.Staging.Centre
 
 /-! ## What the restated III.5 and III.6 rest on
 
-Neither Diagram-segment 2 (`circle_eq`) nor an admitted proof: Definition I.15, Postulate 1 and
-thirteen tacit rules, the same for each (checked by Lean, as `lake build Staging` builds
-the file; the default `lake build` does not). The pins check the names of these two
-declarations' axioms. They also exclude the route through Circle 4, now proved using
-`circle_eq`. They do not check the reading of the statements, nor the
+Definition I.15, Postulates 1 and 3 and 18 tacit rules, the same for each (checked by Lean,
+as `lake build Staging` builds the file; the default `lake build` does not). Diagram-segment
+2 (`Elements.Tacit.circle_eq`) is among them: the proofs do not cite it, but since 19 October
+2026 the proved rules they use, such as `centre_inside`, rest on it and on Postulate 3, to
+show that a radius is never nothing (`RuleProofs.Circle.radius_ne_zero`). The pins check the
+names of these two declarations' axioms, and the build fails if an admitted proof (`sorry`)
+enters. They do not check the reading of the statements, nor the
 statements of the axioms, nor the other declarations here, nor whether a shorter proof
 from other rules exists. Shorter proofs do exist, from Diagram-segment 2 among others, as
 the overlap catalogue will record (brief 0008, section 7). -/

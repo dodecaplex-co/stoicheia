@@ -1,36 +1,50 @@
 import Elements.Foundations.Tacit.Transfer
+import Elements.Foundations.Superposition.Semantics
 
 /-!
 # Superposition
 
-> "For, if the triangle ABC be applied to the triangle DEF, and if the point A
-> be placed on the point D and the straight line AB on DE, then the point B will
-> also coincide with E …" (I.4)
+Twice in Book I, in I.4 and I.8, Euclid lays one triangle on another and reasons from
+the coincidence of their parts. System E (§3.7) treats superposition as a restricted
+inference: the hypothetical placement proves facts about the figure already given.
 
-Twice in Book I (I.4 and I.8) Euclid picks a triangle up and lays it down on
-another. Commentators from Proclus onward have worried about this, since moving
-figures appears in none of the postulates. Hilbert simply made side–angle–side
-an axiom. System E (§3.7) treats superposition as a rule that may be used only
-to prove facts about the figure already drawn, never to build anything new.
+Our rule follows this style. A represented derivation may use the sides and angles
+of the triangle laid down, together with its side AC, but introduces no further
+objects. Its conclusion is an equality of lengths, angles or areas over the given
+figure's symbols. The hypothetical corners cannot be returned as constructed points
+by this rule. This restriction concerns represented derivations; it does not claim
+that the full theory cannot prove a placement by later construction propositions.
 
-Our superposition axiom asserts that a congruent triangle can be placed on a
-given ray and side: A on D, AB along the ray from D toward G, C on H's side. We
-take its form, one rule for System E's two, from LeanEuclid, by Logan Murphy,
-Kaiyu Yang, Jialiang Sun, Zhaoyu Li, Anima Anandkumar and Xujie Si, with warm
-thanks. The edition permits its direct use only in I.4 and I.8, where the
-checks hold it. This axiom is stronger as a construction principle than System
-E's restricted inference rule: a proof may build on the corners it places.
+The combined placement, keeping all three sides and all three angles, follows
+LeanEuclid, by Logan Murphy, Kaiyu Yang, Jialiang Sun, Zhaoyu Li, Anima Anandkumar
+and Xujie Si, with warm thanks. Equivalence with System E's two-rule presentation is
+not claimed. The edition permits direct use of this rule only in I.4 and I.8.
 -/
+
+namespace Elements
+
+/-- The library's primitive words, read by the restricted calculus. -/
+noncomputable def primitives : Superposition.Interpretation where
+  Point := Point
+  Line := Line
+  OnLine := OnLine
+  Between := Between
+  SameSide := SameSide
+  Length := Length
+  Angle := Angle
+  Area := Area
+  len := len
+  ang := ang
+  area := area
+
+end Elements
 
 namespace Elements.Tacit
 
-/-- **Superposition.** The triangle ABC can be applied to the straight line L
-with A on D, B on the ray from D through G, and C on the side of L
-where H is, without changing any side or angle. -/
-axiom superposition {A B C D G H : Point} {L : Line} (hABC : Triangle A B C)
-    (hD : OnLine D L) (hG : OnLine G L) (hDG : D ≠ G) (hH : ¬ OnLine H L) :
-    ∃ B' C' : Point, OnLine B' L ∧ ¬ Between B' D G ∧ SameSide C' H L ∧
-      ‖D B'‖ = ‖A B‖ ∧ ‖B' C'‖ = ‖B C‖ ∧ ‖C' D‖ = ‖C A‖ ∧
-      ∠ B' D C' = ∠ B A C ∧ ∠ D C' B' = ∠ A C B ∧ ∠ C' B' D = ∠ C B A
+/-- **Superposition.** A hypothetical placement of a triangle on a given ray and
+side permits a restricted derivation of metric equalities about the figure already
+given. The derivation introduces no further objects, cites each geometric law it
+uses, and exports no symbol of the placement. -/
+axiom superposition : Superposition.Rule primitives
 
 end Elements.Tacit

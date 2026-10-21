@@ -5,6 +5,10 @@ import Elements.Foundations.DefinitionsIII
 import Elements.Foundations.Magnitudes
 import Elements.Foundations.Phrases
 import Elements.Foundations.Postulates
+import Elements.Foundations.Superposition.Restriction
+import Elements.Foundations.Superposition.Semantics
+import Elements.Foundations.Superposition.Soundness
+import Elements.Foundations.Superposition.Syntax
 import Elements.Foundations.Tacit.Constructions
 import Elements.Foundations.Tacit.Diagram
 import Elements.Foundations.Tacit.Magnitudes
@@ -46,7 +50,7 @@ example : original.IsRightAngle = Elements.IsRightAngle := rfl
 example : original.LinesMeet = Elements.LinesMeet := rfl
 example : original.OppositeSides = Elements.OppositeSides := rfl
 example : original.OutsideCircle = Elements.OutsideCircle := rfl
-example : original.Triangle = Elements.Triangle := rfl
+example : original.primitives = Elements.primitives := rfl
 
 /-! ## The laws -/
 
