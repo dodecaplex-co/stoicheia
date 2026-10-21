@@ -17,11 +17,12 @@ every book in `heath.BOOKS`:
     docs/PROGRAM.md    only the status table between `<!-- status -->` and
                        `<!-- /status -->`, with the stage, the outside score and the
                        release read from `docs/program.toml`
-    docs/briefs/0002-decisions.md
-                       only the `decisions:entries` region, assembled from the dated
-                       files in `docs/decisions/`; text after it stays as it is
     tracked Markdown   inline count values; generated_counts.py defines the markers
                        and where they are refused
+
+Before it writes anything, the script checks the dated decision entries of
+`docs/decisions/` (`decision_entries`): each is a page of its own, read where it is, and
+nothing is assembled from them.
 
 A page of a later book links each proposition it cites from an earlier one, as
 [I.47](../I/47.md) on a page of Book II, and a porism to its anchor, as
@@ -46,13 +47,13 @@ later for the review records (tomllib).
 """
 
 import functools
-import html
 import json
+import os
 import re
+import unicodedata
 from datetime import date
 
 import check_fidelity
-import check_links
 import check_style
 import generated_counts
 from generated_counts import axiom_groups
@@ -2286,272 +2287,112 @@ def program_page(text, facts, records, program):
                               count=1)
 
 
-DECISIONS = ROOT / "docs" / "briefs" / "0002-decisions.md"
-DECISION_ENTRIES = ROOT / "docs" / "decisions"
-DECISION_BEGIN = "<!-- decisions:entries begin -->"
-DECISION_END = "<!-- decisions:entries end -->"
 DECISION_FILE = re.compile(r"([0-9]{4}-[0-9]{2}-[0-9]{2})-[a-z0-9]+(?:-[a-z0-9]+)*\.md")
-DECISION_DATE = re.compile(r"(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})")
-MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August",
-          "September", "October", "November", "December")
-# A line's indentation and the blockquote and list markers before its text.
-CONTAINERS = re.compile(r"(?:[ \t]*(?:>|(?:[-+*]|\d{1,9}[.)])(?=[ \t]|$)))*[ \t]*")
-# The markers alone, before a heading in a blockquote or a list item.
-MARKS = re.compile(r"(?:[ \t]{0,3}(?:>|(?:[-+*]|\d{1,9}[.)])(?=[ \t]))[ \t]?)*")
-FENCE_LINE = re.compile(r"(`{3,}|~{3,})(.*)")
-# CommonMark's HTML blocks that run on past a blank line until their closing text: kind 1
-# (<script>, <pre>, <style>, <textarea>), kind 3 (<?), kind 4 (<!X) and kind 5 (CDATA).
-# Kind 2, a comment, must close; kinds 6 and 7 end at a blank line.
-RUNNING_HTML = re.compile(r"(?i)<(?:script|pre|style|textarea)\b|<\?|<![A-Za-z]|<!\[CDATA\[")
-# An HTML start or end tag. An element left open (a <details>, a <div>, a <b>) holds or
-# restyles everything after it on the rendered page, so an entry's must close.
-TAG = re.compile(r"<(/?)([A-Za-z][A-Za-z0-9-]*)(?:\s[^<>]*)?/?>")
-VOID = frozenset({"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta",
-                  "param", "source", "track", "wbr"})
-# A link reference or footnote definition, in a blockquote or a list item too, its label
-# over several lines too.
-DEFINITION = re.compile(r"(?m)^(?:[ \t]*(?:>|(?:[-+*]|\d{1,9}[.)])(?=[ \t])))*[ \t]*"
-                        r"\[((?:[^\[\]\\]|\\.)+)\]:")
-LABEL = re.compile(r"\[((?:[^\[\]\\]|\\.)+)\]")
-# Attributes whose value is a URL, or a list of them (srcset, ping, archive).
-URL_ATTRIBUTES = frozenset({"action", "archive", "background", "cite", "classid", "codebase",
-                            "data", "dynsrc", "formaction", "href", "icon", "itemid",
-                            "itemtype", "longdesc", "lowsrc", "manifest", "ping", "poster",
-                            "profile", "src", "srcset", "usemap"})
-# An attribute and its value, double-quoted, single-quoted or bare, as CommonMark reads one.
-ATTRIBUTE = re.compile(r"(?<![\w.:-])([A-Za-z_:][\w.:-]*)\s*=\s*"
-                       r"(\"[^\"]*\"|'[^']*'|[^\s\"'=<>`]*)")
+# Unicode's default-ignorable characters that are no format characters (Cf): the
+# combining grapheme joiner, the Hangul fillers, two Khmer vowels, the Mongolian and
+# other variation selectors, and the code points Unicode keeps for more of them.
+IGNORABLE = ((0x034F, 0x034F), (0x115F, 0x1160), (0x17B4, 0x17B5), (0x180B, 0x180F),
+             (0x2065, 0x2065), (0x3164, 0x3164), (0xFE00, 0xFE0F), (0xFFA0, 0xFFA0),
+             (0xFFF0, 0xFFF8), (0xE0000, 0xE0FFF))
 
 
-def label(text):
-    """A link label as CommonMark matches one: case-folded, its whitespace collapsed."""
-    return " ".join(text.split()).casefold()
+def invisible(char):
+    """Is `char` one that an entry may not hold? A control character but a tab and a
+    line feed (a carriage return among them), a format character (Unicode's Cf, as a
+    zero-width space or a byte-order mark), a line or paragraph separator, or another
+    default-ignorable character (IGNORABLE). Each could hide a copy of an older entry from
+    scripts/safe_push.py's comparison, or make Git and a reader see different lines;
+    safe_push.py refuses the same characters."""
+    category = unicodedata.category(char)
+    return ((category == "Cc" and char not in "\t\n") or category in ("Cf", "Zl", "Zp")
+            or any(a <= ord(char) <= b for a, b in IGNORABLE))
 
 
-def comment_spans(text):
-    """Where `text`'s HTML comments run, each `<!--` to the next `-->`, as check_links.py
-    blanks them; None when a `<!--` has no `-->` after it."""
-    spans, start = [], text.find("<!--")
-    while start >= 0:
-        end = text.find("-->", start + 4)
-        if end < 0:
+def spelled_otherwise(path):
+    """The names on disk of the first part of `path`, below ROOT, that the disk spells
+    otherwise, or beside which it holds a name differing only in case; None when there is
+    none. A file system that ignores case, as a Mac's does, finds docs/Decisions/ as
+    docs/decisions/; Git and GitHub do not."""
+    here = ROOT
+    for part in path.relative_to(ROOT).parts:
+        if not here.is_dir():
             return None
-        spans.append((start, end + 3))
-        start = text.find("<!--", end + 3)
-    return spans
-
-
-def left_open(text):
-    """What `text` leaves open at its end as check_links.py reads it, or None."""
-    if comment_spans(text) is None:
-        return "an HTML comment open (<!-- with no --> after it)"
-    if check_links.blank_code(text + "\n\nx")[-1] != "x":
-        return "a code fence open"
+        names = sorted(name for name in os.listdir(here) if name.casefold() == part.casefold())
+        if names and names != [part]:
+            return [(here / name).relative_to(ROOT).as_posix() for name in names]
+        here = here / part
     return None
 
 
-def open_block(text):
-    """What an entry leaves open at its end that would run on into what follows it, or
-    None. Every `<!--` closes with a `-->`. No HTML block opens that runs on past a blank
-    line (RUNNING_HTML). Every HTML element but a void one closes, in order, its tags
-    read in the whole text, code and comments too. A fenced code block (three or more
-    backticks or tildes) opens and closes at the margin, outside any comment and any run
-    of lines from one that starts with `<`, and no backtick follows the backticks that
-    open it: so CommonMark and check_links.py pair its fences alike, and a fence left
-    open is found. CommonMark's other blocks close at the blank line the page puts after
-    every entry."""
-    comments = comment_spans(text)
-    if comments is None:
-        return left_open(text)
-    running = RUNNING_HTML.search(text)
-    if running:
-        return f"an HTML block that would run on to its closing text ({running.group(0)})"
-    elements = []
-    for tag in TAG.finditer(text):
-        # A `/>` closes no element in HTML but a void one, which needs no end tag.
-        end, name = tag.group(1), tag.group(2).lower()
-        if name in VOID:
-            continue
-        if not end:
-            elements.append(name)
-        elif elements and elements[-1] == name:
-            elements.pop()
-        else:
-            return f"an HTML end tag (</{name}>) closing no element it opened"
-    if elements:
-        return f"an HTML element open (<{elements[-1]}>)"
-    fence, markup, offset = None, False, 0
-    for line in text.split("\n"):
-        here, offset = offset, offset + len(line) + 1
-        prefix = CONTAINERS.match(line).end()
-        found = FENCE_LINE.match(line[prefix:])
-        if not line.strip():
-            markup = False
-        elif fence is None and line[prefix:].startswith("<"):
-            markup = True
-        if not found:
-            continue
-        if prefix or markup or any(a <= here < b for a, b in comments):
-            return ("a code fence away from the margin, or in HTML, where CommonMark and "
-                    "check_links.py may pair it differently")
-        run, info = found.groups()
-        if fence is None:
-            if run[0] == "`" and "`" in info:
-                return "a line of backticks with a backtick after them, a fence or not"
-            fence = run
-        elif run[0] == fence[0] and len(run) >= len(fence) and not info.strip():
-            fence = None
-    if fence:
-        return f"a code fence open ({fence})"
-    return left_open(text)
-
-
-def headings(text):
-    """(level, text) of each heading, in a blockquote or a list item too, as
-    check_links.py reads them: fenced code and comments hold none."""
-    found, previous = [], ""
-    for line in check_links.blank_code(text):
-        atx = check_links.ATX.match(line[MARKS.match(line).end():])
-        if atx:
-            found.append((len(atx.group(1)), atx.group(2) or ""))
-        elif check_links.SETEXT.match(line) and previous.strip() and not re.match(
-                r"^ {0,3}([#|>*+-]|\d+[.)]|<)", previous) \
-                and not check_links.SETEXT.match(previous):
-            found.append((1 if line.strip()[0] == "=" else 2, previous.strip()))
-        previous = line
-    return found
-
-
-def heading_date(heading):
-    """The date a heading of level 2 gives, as `D Month YYYY`, or None."""
-    level, text = heading
-    match = DECISION_DATE.fullmatch(check_links.heading_text(text))
-    if level != 2 or not match:
-        return None
-    return f"{int(match.group(1))} {match.group(2)} {int(match.group(3)):04d}"
-
-
-def decision_links(entry):
-    """(line, target) for each link of an entry: inline links and images, read with
-    check_links.py's readers, wrapped destinations too; and every URL an HTML attribute
-    gives, its value quoted or bare, read in the whole text, code and comments too."""
-    lines = check_links.blank_code(entry)
-    text = "\n".join(lines)
-    spans = check_links.blank_spans(text)
-    for match in check_links.LINK_TEXT.finditer(spans):
-        target = check_links.destination(text, match.end())
-        if target is None:
-            raise SystemExit("docs/decisions: cannot read an inline link destination")
-        yield text.count("\n", 0, match.start()) + 1, target
-    for match in ATTRIBUTE.finditer(entry):
-        name = match.group(1).lower().replace(":", "-").rsplit("-", 1)[-1]
-        if name not in URL_ATTRIBUTES:
-            continue
-        value = match.group(2)
-        value = html.unescape(value[1:-1] if value[:1] in ("\"", "'") else value)
-        if name == "srcset":
-            urls = [(candidate.split() or [""])[0] for candidate in value.split(",")]
-        elif name in ("ping", "archive"):
-            urls = value.split() or [""]
-        else:
-            urls = [value]
-        for url in urls:
-            yield entry.count("\n", 0, match.start()) + 1, url
-
-
-def decisions_page(text, folder):
-    """Fill the page's marked region with decision entries in file-name order. The file
-    name supplies the date; entries supply the text without a date heading. A date
-    heading is left out when the last heading before it, of any kind, is that date's.
-    Text after the end marker is the page's own and stays after the entries as it is.
-    Invalid inputs stop the render; the page's own text and the markers stay as they
-    are."""
-    pattern = re.compile(r"(?m)^(" + re.escape(DECISION_BEGIN) + r"\n).*?^("
-                         + re.escape(DECISION_END) + r")$", re.S)
-    markers = pattern.search(text)
-    if text.count(DECISION_BEGIN) != 1 or text.count(DECISION_END) != 1 or not markers:
-        raise SystemExit("docs/briefs/0002-decisions.md needs one pair of decisions:entries "
-                         "markers, each on a line of its own, the begin marker first")
-    before, after = text[:markers.start()], text[markers.end(2):]
-    problem = left_open(before)
-    if problem:
-        raise SystemExit(f"docs/briefs/0002-decisions.md: the text before the "
-                         f"decisions:entries markers leaves {problem}, which would hide the "
-                         "entries")
-    # Labels the page's own text defines: an entry's brackets would bind to them.
-    defined = {label(m.group(1)) for m in DEFINITION.finditer(before + after)}
-    found = headings(before)
-    previous = heading_date(found[-1]) if found else None
-    parts = []
+def decision_entries():
+    """Check docs/decisions/, the folder of dated decision entries, and return the
+    entries' names. Each entry is a page of its own, read where it is, and nothing is
+    assembled from them: so an entry may hold whatever a page may, headings included, and
+    needs no date heading, since its name carries its date. The folder may be absent.
+    Where it is not, it is a folder under no link, spelled so on disk with nothing beside
+    it spelled otherwise, and holds regular files alone: its README.md, which is no entry,
+    and entries named `<YYYY-MM-DD>-<slug>.md`, a valid date and then lower-case letters
+    and digits joined by hyphens. Every file there is UTF-8 and holds no count marker, so
+    that render.py writes nothing into the folder; and every entry holds text, and no
+    character that `invisible` refuses."""
     try:
-        folder = generated_counts.repository_path(ROOT, folder)
+        folder = generated_counts.repository_path(ROOT, ROOT / "docs" / "decisions")
     except ValueError as error:
         raise SystemExit(f"docs/decisions: expected a folder of entry files: {error}") from None
-    # Git keeps no empty folder: with no entry yet there is no folder, and no entry.
-    # Anything else in its place (a file, a link) is refused.
-    if not folder.exists() and not folder.is_symlink():
-        paths = []
-    elif folder.is_symlink() or not folder.is_dir():
+    spellings = spelled_otherwise(folder)
+    if spellings:
+        raise SystemExit(f"docs/decisions: spelled on disk as {', '.join(spellings)}; "
+                         "Git and GitHub tell names apart by case, so it must be "
+                         "docs/decisions alone")
+    if not folder.exists():
+        return []
+    if not folder.is_dir():
         raise SystemExit("docs/decisions: expected a folder of entry files")
-    else:
-        paths = sorted(folder.iterdir())
-    for path in paths:
-        if path.name == "README.md":
-            continue
-        match = DECISION_FILE.fullmatch(path.name)
-        if not match or path.is_symlink() or not path.is_file():
-            raise SystemExit(f"docs/decisions/{path.name}: expected YYYY-MM-DD-slug.md, "
-                             "a regular file")
+    entries = []
+    for name in sorted(os.listdir(folder)):
+        where, path = f"docs/decisions/{name}", folder / name
+        if path.is_symlink() or not path.is_file():
+            raise SystemExit(f"{where}: expected a regular file, the README.md or an entry")
+        match = DECISION_FILE.fullmatch(name)
+        if name != "README.md" and not match:
+            raise SystemExit(f"{where}: expected README.md or an entry named "
+                             "<YYYY-MM-DD>-<slug>.md, a date and then lower-case letters "
+                             "and digits joined by hyphens")
+        if match:
+            try:
+                date.fromisoformat(match.group(1))
+            except ValueError:
+                raise SystemExit(f"{where}: invalid date") from None
         try:
-            day = date.fromisoformat(match.group(1))
-        except ValueError:
-            raise SystemExit(f"docs/decisions/{path.name}: invalid date") from None
-        where = f"docs/decisions/{path.name}"
-        entry = path.read_text(encoding="utf-8").strip("\n")
-        own = headings(entry)
-        if not entry.strip() or any(DECISION_DATE.fullmatch(check_links.heading_text(t))
-                                    for _, t in own):
-            raise SystemExit(f"{where}: expected entry text without a date heading")
-        if DECISION_BEGIN in entry or DECISION_END in entry:
-            raise SystemExit(f"{where}: entry text contains page markers")
-        if entry[0] in " \t":
-            raise SystemExit(f"{where}: an entry starts at the margin, so that it cannot run "
-                             "on from the entry before it")
-        problem = open_block(entry)
-        if problem:
-            raise SystemExit(f"{where}: the entry leaves {problem}, which would hide what "
-                             "follows it on the decisions page")
+            text = path.read_bytes().decode("utf-8")
+        except UnicodeDecodeError as error:
+            raise SystemExit(f"{where}: not UTF-8 text (byte {error.start}: "
+                             f"{error.reason})") from None
         try:
-            counts = generated_counts.markers(entry, where)
+            counts = generated_counts.markers(text, where)
         except ValueError as error:
-            raise SystemExit(str(error)) from None
+            raise SystemExit(f"{error}; count markers are forbidden in dated history, "
+                             "which render.py never writes") from None
         if counts:
-            raise SystemExit(f"{where}: count markers are forbidden in dated history")
-        definition = DEFINITION.search(entry)
-        if definition:
-            number = entry.count("\n", 0, definition.start()) + 1
-            raise SystemExit(f"{where}:{number}: a reference or footnote definition "
-                             f"([{definition.group(1)}]:) "
-                             "binds its label across the whole decisions page; write the "
-                             "link inline")
-        shared = sorted(defined & {label(m.group(1)) for m in LABEL.finditer(entry)})
-        if shared:
-            raise SystemExit(f"{where}: [{shared[0]}] is a label the decisions page's own "
-                             "text defines, so on the page it would link there")
-        for number, target in decision_links(entry):
-            target = target.strip()
-            if not target or (check_links.relative(target) and not target.startswith("../")):
-                raise SystemExit(f"{where}:{number}: relative links must start with ../ so "
-                                 "they resolve alike on the decisions page")
-        heading = f"{day.day} {MONTHS[day.month - 1]} {day.year:04d}"
-        if heading != previous:
-            parts.append(f"## {heading}")
-            previous = heading
-        parts.append(entry)
-        if own:
-            previous = None     # the entry's own heading now stands last, and is no date
-    body = "\n" + "\n\n".join(parts) + "\n\n" if parts else ""
-    return before + markers.group(1) + body + text[markers.start(2):]
+            number = text.count("\n", 0, counts[0].start) + 1
+            raise SystemExit(f"{where}:{number}: count markers are forbidden in dated "
+                             "history, which render.py never writes")
+        if not match:
+            continue
+        if not text.strip():
+            raise SystemExit(f"{where}: expected the entry's text")
+        for number, line in enumerate(text.split("\n"), 1):
+            hidden = next((char for char in line if invisible(char)), None)
+            if hidden is not None:
+                named = unicodedata.name(hidden, "")
+                raise SystemExit(f"{where}:{number}: U+{ord(hidden):04X}"
+                                 f"{f' ({named})' if named else ''}: an entry holds no "
+                                 "control character but a tab and a line feed, no format "
+                                 "character, no line or paragraph separator and no other "
+                                 "default-ignorable character, any of which could hide a "
+                                 "copy of an older entry")
+        entries.append(name)
+    return entries
 
 
 def heath_edges(book, count):
@@ -2812,16 +2653,11 @@ def main() -> None:
         raise SystemExit(f"{len(faults)} fault(s) in the modern figure's placement; "
                          "nothing was rendered:\n" + "\n".join("  ✗ " + f for f in faults))
     print(f"self-check: the modern figure is placed or refused rightly in {count} cases")
+    entries = decision_entries()
+    print(f"decision entries: {len(entries)} checked in docs/decisions/")
     changes, errors = generated_counts.updates(ROOT)
     if errors:
         raise SystemExit("count markers: nothing was rendered:\n" + "\n".join(errors))
-    # The entries are assembled into the page as the count markers leave it, before
-    # anything is written, so that a bad entry stops the render with nothing changed.
-    decisions = read_text(DECISIONS)
-    counted = next((text for path, text in changes.items()
-                    if generated_counts.repository_path(ROOT, path)
-                    == generated_counts.repository_path(ROOT, DECISIONS)), decisions)
-    filled_decisions = decisions_page(counted, DECISION_ENTRIES)
     facts = load_facts()
     docs = load_axiom_docs()
     records = load_records()
@@ -2847,10 +2683,8 @@ def main() -> None:
     filled = program_page(text, facts, records, load_program())
     if filled != text:
         write_text(PROGRAM, filled)
-    if filled_decisions != read_text(DECISIONS):
-        write_text(DECISIONS, filled_decisions)
     print("rendered book pages, the table of names, CERTIFICATE.md, GRAPH.md, README.md's "
-          "scope summaries, PROGRAM.md's status table and the decision entries")
+          "scope summaries and PROGRAM.md's status table")
 
 
 if __name__ == "__main__":

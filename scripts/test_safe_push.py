@@ -87,12 +87,15 @@ one commit and runs safe_push.py against that origin:
   entry naming them, a protected path is named only whole (a line naming
   tests/model/lock.sha256 names no model/lock.sha256), and those
   paths stay what the checks judge, so a check change is still kept apart from them;
-- the decision entries of docs/decisions/: a new line in an entry the push adds approves
-  as one on the page does; an entry is only added, so a rename, a copy or a deletion and
-  re-addition, with edits or without, renews no approval, and is refused; the region
-  render.py assembles on the page counts for nothing, and text after its end marker is
-  the page's own; a test's page entry goes above the markers, and an abbreviated commit
-  name is as wide as Git makes it here;
+- the decision entries of docs/decisions/, each a page of its own: a new line in an
+  entry the push adds approves as one on the page does, its words never joined across a
+  blank line or a line that does not count; an entry is only added, so a rename, a copy
+  (re-wrapped, or with carriage returns or zero-width spaces in it too) or a deletion and
+  re-addition, with edits or without, renews no approval, and is refused; the folder's
+  README may change and approves nothing; a link, a name spelled otherwise or a file of
+  any other name is refused; the page, deleted, refuses a protected change rather than
+  crashing; the revert that safe_push advises keeps the record and passes the guards;
+  and an abbreviated commit name is as wide as Git makes it here;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -119,16 +122,19 @@ from __future__ import annotations
 import ast
 import base64
 import contextlib
+import datetime
 import hashlib
 import io
 import json
 import os
 import re
+import shlex
 import shutil
 import signal
 import subprocess
 import sys
 import tempfile
+import textwrap
 import unittest
 from dataclasses import dataclass
 from pathlib import Path
@@ -153,8 +159,6 @@ GH_STATE: Path
 UNDER_TEST: Path      # the harness committed at BASE, which DRIVER runs (setUpModule)
 BRANCH = "test-pr"
 DECISIONS = "docs/briefs/0002-decisions.md"
-DECISION_BEGIN = "<!-- decisions:entries begin -->"
-DECISION_END = "<!-- decisions:entries end -->"
 # The files of the harness under test, committed on top of HEAD as origin's main.
 HARNESS_FILES = ("scripts/safe_push.py", "scripts/heath.py", "scripts/test_safe_push.py",
                  "scripts/hooks/pre-push", "scripts/hooks/safe-push", "scripts/install_hooks.sh",
@@ -277,7 +281,7 @@ def normalized_check_job(source: str) -> WorkflowCheckJob:
 
 
 FRESHNESS_COMMAND = ("git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md "
-                     "README.md docs/PROGRAM.md docs/briefs/0002-decisions.md")
+                     "README.md docs/PROGRAM.md")
 RENDER_COMMAND = "python3 scripts/render.py"
 FRESHNESS_ASSERTION = f'test -z "$({FRESHNESS_COMMAND})"'
 SETUP_ACTIONS = {"actions/checkout@v5": frozenset(),
@@ -356,14 +360,6 @@ def with_branch(args) -> tuple:
     if {"--branch", "--merge", "--scan-push"} & set(args):
         return tuple(args)
     return ("--branch", BRANCH, *args) + (() if "--label" in args else ("--label", "docs"))
-
-
-def above_markers(page: str, text: str) -> str:
-    """The decisions page with `text` as a page entry where the page keeps its own text:
-    above the markers between which render.py assembles the dated entries, or at the end
-    of a page without them."""
-    place = page.find(DECISION_BEGIN)
-    return page + "\n" + text if place < 0 else page[:place] + text + "\n" + page[place:]
 
 
 def git(cwd, *args, env=None, check=True) -> str:
@@ -797,8 +793,7 @@ class Clone(unittest.TestCase):
         return out
 
     def decision(self, line: str) -> dict:
-        return {DECISIONS: above_markers(self.text(DECISIONS),
-                                         f"- **A decision for the test.** {line}\n")}
+        return {DECISIONS: self.text(DECISIONS) + f"\n- **A decision for the test.** {line}\n"}
 
     def gh_state(self) -> dict:
         return json.loads(GH_STATE.read_text())
@@ -2580,7 +2575,9 @@ class Merge(Edge):
         merge = self.origin_main()
         self.assertEqual(git(ORIGIN, "rev-list", "--parents", "-n", "1", merge).split()[1:],
                          [side, sha])
-        self.assertIn(f"git revert --no-edit -m 1 {merge}", out)
+        self.assertIn(f"git revert --no-commit -m 1 {merge}", out)
+        self.assertIn("git restore --source=origin/main --staged --worktree -- docs/decisions/ "
+                      f"{DECISIONS}", out)
         self.assertIn(f"git safe-push --branch revert-{merge[:12]} --label docs", out)
 
     def test_merge_refuses_a_pull_request_it_may_not_merge(self):
@@ -2648,10 +2645,13 @@ class Merge(Edge):
 
 class DecisionEntries(Clone):
     """Dated entry files supply new mentions to every decision guard; being history, they
-    are only ever added, and a line counts only when the record held none like it."""
+    are only ever added, beside the folder's README, which approves nothing; and a line
+    counts only when the record holds nothing like it, its words never joined across a
+    line that does not count."""
 
     ENTRY = "docs/decisions/2026-10-20-test.md"
     MOVED = "docs/decisions/2026-10-21-moved.md"
+    README = "docs/decisions/README.md"
     PATH = "scripts/check_style.py"
     # Its first line names all four things the guards protect; the rest is long enough
     # that a copy with a word of that line changed is still most of the file, as Git's
@@ -2668,39 +2668,52 @@ class DecisionEntries(Clone):
     SPACED_THROUGH = "".join("\t" + "  ".join(line.split()) + " \n"
                              for line in OLD.splitlines())
     REWORDED = OLD.replace("earlier", "revised")
+    # The same words wrapped at another width, so that no line is one of the original's.
+    REWRAPPED = textwrap.fill(" ".join(OLD.split()), 41) + "\n"
+    CARRIAGE = OLD.replace("\n", "\r")
+    ZERO_WIDTH = "".join(line[:2] + "\u200b" + line[2:] + "\n" for line in OLD.splitlines())
+    LOCK_LINE = "- **A new line for the test.** The axiom lock gains a comment.\n"
     # What each kind writes at MOVED, and whether it removes the earlier entry.
     MOVES = {"rename": (OLD, True), "rename re-spaced": (RESPACED, True),
              "rename reworded": (REWORDED, True), "rename and add": (OLD + NEW, True),
              "copy": (OLD, False), "copy re-spaced": (SPACED_THROUGH, False),
-             "copy reworded": (REWORDED, False), "page copy": (OLD, False),
-             "readme copy": (OLD, False), "undated copy": (OLD, False),
-             "rendered copy": (OLD, False), "new": (NEW, False), "rendered new": (NEW, False)}
+             "copy reworded": (REWORDED, False), "copy re-wrapped": (REWRAPPED, False),
+             "copy re-wrapped and add": (REWRAPPED + "\n" + LOCK_LINE, False),
+             "copy with carriage returns": (CARRIAGE, False),
+             "copy with zero-width spaces": (ZERO_WIDTH, False),
+             "page copy": (OLD, False), "readme copy": (OLD, False),
+             "undated copy": (OLD, False), "new": (NEW, False)}
 
-    def above_markers(self, text):
-        return above_markers(self.text(DECISIONS), text)
+    def four_guards(self):
+        """The guards that ask for a new line in the decisions record, with their
+        arguments."""
+        return ((safe_push.guard_protected, ()), (safe_push.guard_lock, ()),
+                (safe_push.guard_statements, (WORK,)), (safe_push.guard_directories, ()))
 
-    def rendered(self, entry):
-        """The page with `entry` assembled between its markers, as render.py would."""
-        page = self.text(DECISIONS)
-        self.assertEqual(page.count(DECISION_BEGIN), 1)
-        return page.replace(DECISION_BEGIN, DECISION_BEGIN + "\n## 21 October 2026\n\n"
-                            + entry.strip("\n") + "\n", 1)
-
-    def decision_change(self, kind):
-        """Plant an earlier decision, then change each thing the four guards protect, with
-        the decisions record changed as `kind` says."""
-        source = {"page copy": DECISIONS, "readme copy": "docs/decisions/README.md",
-                  "undated copy": "docs/decisions/notes.md"}.get(kind, self.ENTRY)
-        base = self.commit("Record an earlier decision", {
-            source: self.above_markers(self.OLD) if source == DECISIONS else self.OLD,
-            "mishnah/test/note.md": "A note.\n",
-        })
-        writes = {
+    def protected_writes(self):
+        """A change to each thing the four guards protect, but a directory."""
+        return {
             self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
             safe_push.LOCK: self.text(safe_push.LOCK) + "\n# A comment for the test.\n",
             "Elements/BookI/Prop01.lean": self.replaced(
                 "Elements/BookI/Prop01.lean", SIGNATURE_OLD, SIGNATURE_NEW),
         }
+
+    def restart(self, rev=None):
+        """Back to `rev` (BASE by default), as a test starts."""
+        git(WORK, "checkout", "--quiet", "--force", "--detach", rev or BASE)
+        git(WORK, "clean", "-fdq")
+
+    def decision_change(self, kind):
+        """Plant an earlier decision, then change each thing the four guards protect, with
+        the decisions record changed as `kind` says."""
+        source = {"page copy": DECISIONS, "readme copy": self.README,
+                  "undated copy": "docs/decisions/notes.md"}.get(kind, self.ENTRY)
+        base = self.commit("Record an earlier decision", {
+            source: self.text(DECISIONS) + "\n" + self.OLD if source == DECISIONS else self.OLD,
+            "mishnah/test/note.md": "A note.\n",
+        })
+        writes = self.protected_writes()
         remove = ["mishnah/test"]
         if kind.startswith("delete and re-add"):
             self.commit("Remove the earlier entry", remove=[self.ENTRY])
@@ -2710,11 +2723,10 @@ class DecisionEntries(Clone):
         elif kind == "edit and add":
             writes[self.ENTRY] = self.OLD + self.NEW
         else:
-            writes[self.MOVED], gone = self.MOVES[kind]
+            text, gone = self.MOVES[kind]
+            writes[self.MOVED] = text.encode()
             if gone:
                 remove.append(self.ENTRY)
-            if kind.startswith("rendered"):
-                writes[DECISIONS] = self.rendered(writes[self.MOVED])
         sha = self.commit("Change the guarded files", writes, remove=remove)
         return base, sha
 
@@ -2728,9 +2740,7 @@ class DecisionEntries(Clone):
         """The four guards' outcome, and that of the guard of the entries, with what it
         says when it refuses."""
         base, sha = self.decision_change(kind)
-        for guard, args in ((safe_push.guard_protected, ()), (safe_push.guard_lock, ()),
-                            (safe_push.guard_statements, (WORK,)),
-                            (safe_push.guard_directories, ())):
+        for guard, args in self.four_guards():
             with self.subTest(guard=guard.__name__):
                 rep = self.check_guard(guard, base, sha, *args)
                 self.assertEqual(rep.steps[-1].outcome, outcome, rep.steps)
@@ -2775,13 +2785,37 @@ class DecisionEntries(Clone):
         self.check_decision_change("copy re-spaced", "FAIL", "FAIL",
                                    f"{self.MOVED}: holds no line new to the decisions record")
 
+    def test_re_wrapped_copy_renews_no_approval(self):
+        # No line is an old one; but every word lies in a run of twelve the old entry holds.
+        self.assertFalse(set(self.REWRAPPED.splitlines()) & set(self.OLD.splitlines()))
+        self.check_decision_change("copy re-wrapped", "FAIL", "FAIL",
+                                   f"{self.MOVED}: holds no line new to the decisions record")
+
+    def test_re_wrapped_copy_beside_a_new_line_renews_only_that_line(self):
+        base, sha = self.decision_change("copy re-wrapped and add")
+        outcomes = {guard.__name__: self.check_guard(guard, base, sha, *args).steps[-1].outcome
+                    for guard, args in self.four_guards()}
+        self.assertEqual(outcomes, {"guard_protected": "FAIL", "guard_lock": "ok",
+                                    "guard_statements": "FAIL", "guard_directories": "FAIL"})
+        rep = self.check_guard(safe_push.guard_entries, base, sha)
+        self.assertEqual(rep.steps[-1].outcome, "ok", rep.steps)
+
+    def test_copy_with_carriage_returns_is_refused(self):
+        # Git reads the copy as one new line; render.py would read the old entry's lines.
+        self.check_decision_change("copy with carriage returns", "FAIL", "FAIL",
+                                   f"{self.MOVED}:1: U+000D, a character an entry may not hold")
+
+    def test_copy_with_zero_width_spaces_is_refused(self):
+        self.check_decision_change("copy with zero-width spaces", "FAIL", "FAIL",
+                                   f"{self.MOVED}:1: U+200B, a character an entry may not hold")
+
     def test_copy_from_the_page_renews_no_approval(self):
         self.check_decision_change("page copy", "FAIL", "FAIL",
                                    f"{self.MOVED}: holds no line new to the decisions record")
 
     def test_copy_from_the_folder_readme_renews_no_approval(self):
         self.check_decision_change("readme copy", "FAIL", "FAIL",
-                                   f"{self.MOVED}: copied from docs/decisions/README.md")
+                                   f"{self.MOVED}: copied from {self.README}")
 
     def test_copy_from_an_undated_file_renews_no_approval(self):
         self.check_decision_change("undated copy", "FAIL", "FAIL",
@@ -2803,36 +2837,53 @@ class DecisionEntries(Clone):
     def test_new_entry_beside_an_old_one_passes(self):
         self.check_decision_change("new", "ok")
 
-    def test_rendered_copy_renews_no_approval(self):
-        # The page's region, which render.py fills from the entries, is no page text: the
-        # copy assembled there names everything again, and counts for nothing.
-        self.check_decision_change("rendered copy", "FAIL", "FAIL",
-                                   f"{self.MOVED}: copied from {self.ENTRY}")
+    # Words that name a proposition and mention the axiom lock only when joined across a
+    # line: "III." and "16", as the security review found them, and "I." and "1".
+    SPLIT = ("- **Timing (tooling).** The queue now waits for Book {1}.\n{0}"
+             "{2} checks run in the second pass. Nothing in it touches an axiom\n{0}"
+             "lock or key; those stay as they were.\n")
+    STATEMENTS = {"III.16": ("Elements/BookIII/Prop16.lean", "theorem Prop16 {A B D E : Point}",
+                             "theorem Prop16 {A B D E X : Point}"),
+                  "I.1": ("Elements/BookI/Prop01.lean", SIGNATURE_OLD, SIGNATURE_NEW)}
 
-    def test_rendered_new_entry_passes(self):
-        self.check_decision_change("rendered new", "ok")
+    def test_words_are_never_joined_across_a_blank_or_an_old_line(self):
+        # The book and the number, "axiom" and "lock", in lines kept apart by a blank line,
+        # or by a line the record holds, are in hunks of their own; in consecutive lines
+        # they are one mention, as a name wrapped on the page is.
+        old = "## 15 October 2026\n"
+        self.assertIn("\n" + old, self.text(DECISIONS))
+        for ref, (path, before, after) in self.STATEMENTS.items():
+            book, number = ref.split(".")
+            for between, outcome in (("", "ok"), ("\n", "FAIL"), (old, "FAIL"),
+                                     ("\n" + old + "\n", "FAIL")):
+                with self.subTest(ref=ref, between=between):
+                    self.restart()
+                    lock = self.text(safe_push.LOCK) + "\n# A comment for the test.\n"
+                    sha = self.commit("Name a statement and the lock across lines", {
+                        path: self.replaced(path, before, after), safe_push.LOCK: lock,
+                        self.ENTRY: self.SPLIT.format(between, book, number),
+                    })
+                    rep = self.check_guard(safe_push.guard_statements, BASE, sha, WORK)
+                    self.assertEqual(rep.steps[-1].outcome, outcome, rep.steps)
+                    self.assertRegex(rep.steps[-1].detail,
+                                     rf"{re.escape(ref)}(: | \()the Lean statement changed")
+                    rep = self.check_guard(safe_push.guard_lock, BASE, sha)
+                    self.assertEqual(rep.steps[-1].outcome, outcome, rep.steps)
+                    self.assertFalse(self.check_guard(safe_push.guard_entries, BASE, sha).failed())
 
-    def test_lines_written_into_the_region_by_hand_add_no_mention(self):
-        page = self.text(DECISIONS).replace(
-            DECISION_BEGIN, DECISION_BEGIN + f"\n- `{self.PATH}` changes.\n", 1)
-        sha = self.commit("Name a protected change inside the generated region", {
-            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
-            DECISIONS: page,
-        })
-        rep = self.check_guard(safe_push.guard_protected, BASE, sha)
-        self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
-        self.assertIn(f"naming them: {self.PATH}", rep.failed()[0].detail)
-
-    def test_page_text_after_the_end_marker_is_page_text(self):
-        # A coordinator who appends to the page's end, after the markers, still writes a
-        # page entry: render.py keeps it there, and the guards read it.
-        sha = self.commit("Name a protected change after the markers", {
-            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
-            DECISIONS: self.text(DECISIONS) + f"\n- `{self.PATH}` changes.\n",
-        })
-        rep = self.check_guard(safe_push.guard_protected, BASE, sha)
-        self.assertFalse(rep.failed(), rep.steps)
-        self.assertIn(f"each named in {DECISIONS}: {self.PATH};", rep.steps[-1].detail)
+    def test_entry_runs_split_at_every_line_that_does_not_count(self):
+        record = safe_push.Record({"an old line"},
+                                  {" ".join(f"w{n}" for n in range(i, i + 12))
+                                   for i in range(20)})
+        quoted = " ".join(f"w{n}" for n in range(3, 15))
+        text = (f"new one\nnew two\n\n  an  old line \nnew three\nhalf {quoted} and more\n"
+                "new four\n")
+        runs = safe_push.entry_runs(self.ENTRY, text, record)
+        self.assertEqual([[(a.line, a.text) for a in h.added] for h in runs],
+                         [[(1, "new one"), (2, "new two")], [(5, "new three")],
+                          [(7, "new four")]])
+        self.assertTrue(all(h.path == self.ENTRY and h.removed == [] for h in runs))
+        self.assertEqual(safe_push.record_line("\ufb01ve\u00a0\u3000 words\t"), "five words")
 
     def test_entries_guard_runs_in_the_pre_flight(self):
         self.new_base("An earlier decision", {self.ENTRY: self.OLD})
@@ -2844,21 +2895,107 @@ class DecisionEntries(Clone):
         self.assertEqual(self.guard(out, "decision entries"), "FAIL", out)
         self.assertIn(f"{self.MOVED}: renamed from {self.ENTRY}", out)
 
+    def planted(self, files: dict, mode="100644") -> str:
+        """A commit on HEAD holding `files` at exactly the paths given, made without the
+        working tree, so that no file system that ignores case can respell them."""
+        env = dict(os.environ, GIT_INDEX_FILE=str(TMP / "planted-index"))
+        head = git(WORK, "rev-parse", "HEAD").strip()
+        git(WORK, "read-tree", head, env=env)
+        for path, text in files.items():
+            blob = subprocess.run(["git", "hash-object", "-w", "--stdin"], cwd=WORK,
+                                  input=text, capture_output=True, text=True,
+                                  check=True).stdout.strip()
+            git(WORK, "update-index", "--add", "--cacheinfo", f"{mode},{blob},{path}", env=env)
+        tree = git(WORK, "write-tree", env=env).strip()
+        return git(WORK, "commit-tree", tree, "-p", head, "-m", "Planted", env=env).strip()
+
     def test_entry_changes_reads_every_kind_of_change(self):
         base = self.commit("Earlier entries", {
             self.ENTRY: self.OLD, "docs/decisions/2026-10-19-kept.md": self.NEW,
             "docs/decisions/2026-10-19-mode.md": "- A decision whose mode changes.\n",
+            self.README: "# Decision entries\n",
         })
         (WORK / "docs/decisions/2026-10-19-mode.md").chmod(0o755)
-        sha = self.commit("Change them", {
+        self.commit("Change them", {
             "docs/decisions/2026-10-22-fresh.md": "- A fresh decision for the test.\n",
             "docs/decisions/2026-02-30-bad-date.md": "- A decision with a bad date.\n",
+            "docs/decisions/notes.md": "- Notes for the test.\n",
+            "docs/decisions/sub/2026-10-22-deeper.md": "- A decision in a folder.\n",
+            "docs/decisions/2026-10-22-empty.md": " \n",
+            "docs/decisions/2026-10-22-latin.md": b"- A decision \xff.\n",
+            "docs/decisions/2026-10-22-hidden.md": "- A fresh\u2060 decision.\n",
             "docs/decisions/2026-10-19-mode.md": "- A decision whose mode changes.\n",
+            self.README: "# Decision entries\n\nEach decision is a file.\n",
         }, remove=[self.ENTRY])
+        sha = self.planted({"docs/Decisions/2026-10-22-case.md": "- A decision, recased.\n"})
         refused, added = safe_push.entry_changes(WORK, base, sha)
-        self.assertEqual(sorted(refused), ["docs/decisions/2026-10-19-mode.md: changed",
-                                           f"{self.ENTRY}: deleted"])
-        self.assertEqual(added, ["docs/decisions/2026-10-22-fresh.md"])
+        self.assertEqual(sorted(refused), sorted([
+            "docs/Decisions/2026-10-22-case.md: spelled otherwise than docs/decisions/, "
+            "which Git and GitHub tell apart by case",
+            "docs/decisions/2026-02-30-bad-date.md: neither the README nor an entry named "
+            "<YYYY-MM-DD>-<slug>.md with a valid date",
+            "docs/decisions/2026-10-19-mode.md: changed",
+            "docs/decisions/2026-10-22-empty.md: holds no text",
+            "docs/decisions/2026-10-22-hidden.md:1: U+2060, a character an entry may not "
+            "hold (a control character but a tab and a line feed, a format character, a "
+            "line or paragraph separator, or another default-ignorable one)",
+            "docs/decisions/2026-10-22-latin.md: not UTF-8 text",
+            "docs/decisions/notes.md: neither the README nor an entry named "
+            "<YYYY-MM-DD>-<slug>.md with a valid date",
+            "docs/decisions/sub/2026-10-22-deeper.md: neither the README nor an entry named "
+            "<YYYY-MM-DD>-<slug>.md with a valid date",
+            f"{self.ENTRY}: deleted"]))
+        self.assertEqual(list(added), ["docs/decisions/2026-10-22-fresh.md"])
+
+    def readme_bases(self) -> tuple[str, str]:
+        """A commit with no README in the folder, and one with a README, as a regular file:
+        BASE is one of them, as it holds a README or not."""
+        if (WORK / self.README).is_file():
+            return self.commit("No README for the entries", remove=[self.README]), BASE
+        return BASE, self.commit("A README for the entries",
+                                 {self.README: "# Decision entries\n"})
+
+    def readme_status(self, start: str, sha: str) -> str:
+        """How Git reads the README's change from `start` to `sha`: A, M, T or D."""
+        return git(WORK, "diff", "--name-status", "--no-renames", start, sha, "--",
+                   self.README).split()[0]
+
+    def test_readme_may_change_and_approves_nothing(self):
+        bare, held = self.readme_bases()
+        for change, status in (("added", "A"), ("edited", "M"), ("deleted", "D")):
+            with self.subTest(change=change):
+                start = bare if change == "added" else held
+                self.restart(start)
+                writes = {self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n"}
+                remove = [self.README] if change == "deleted" else []
+                if change != "deleted":
+                    writes[self.README] = f"# Decision entries\n\n`{self.PATH}` changes.\n"
+                sha = self.commit(f"The README {change}", writes, remove=remove)
+                self.assertEqual(self.readme_status(start, sha), status)
+                rep = self.check_guard(safe_push.guard_entries, start, sha)
+                self.assertEqual(rep.steps[-1].outcome, "ok", rep.steps)
+                rep = self.check_guard(safe_push.guard_protected, start, sha)
+                self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+                self.assertIn(f"naming them: {self.PATH}", rep.failed()[0].detail)
+
+    def test_readme_link_refused(self):
+        # A link added where there was no README, or put in the README's place, is refused
+        # as a link, though the README may change.
+        bare, held = self.readme_bases()
+        for start, status in ((bare, "A"), (held, "T")):
+            with self.subTest(status=status):
+                self.restart(start)
+                path = WORK / self.README
+                path.unlink(missing_ok=True)
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.symlink_to("../../" + self.PATH)
+                git(WORK, "add", "--", self.README)
+                sha = self.commit("A link for the README")
+                self.assertEqual(self.readme_status(start, sha), status)
+                rep = self.check_guard(safe_push.guard_entries, start, sha)
+                self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+                self.assertIn(f"{self.README}: not a regular file (mode 120000)",
+                              rep.steps[-1].detail)
 
     def test_unreadable_base_record_refuses(self):
         base, sha = self.decision_change("new")
@@ -2891,7 +3028,8 @@ class DecisionEntries(Clone):
         rep = self.check_guard(safe_push.guard_protected, BASE, sha)
         self.assertFalse(rep.failed(), rep.steps)
         self.assertEqual(rep.steps[-1].outcome, "ok")
-        self.assertIn(self.PATH, rep.steps[-1].detail)
+        self.assertIn(f"each named in {DECISIONS} or docs/decisions/: {self.PATH};",
+                      rep.steps[-1].detail)
         self.assertEqual(self.text(DECISIONS), safe_push.show(WORK, BASE, DECISIONS))
         self.assertEqual(safe_push.judged_files(WORK, BASE, sha), [])
 
@@ -2934,6 +3072,8 @@ class DecisionEntries(Clone):
         rep = self.check_guard(safe_push.guard_protected, BASE, sha)
         self.assertEqual(rep.steps[-1].outcome, "FAIL")
         self.assertIn(f"naming them: {self.PATH}", rep.failed()[0].detail)
+        rep = self.check_guard(safe_push.guard_entries, BASE, sha)
+        self.assertIn(f"{self.ENTRY}: not a regular file (mode 120000)", rep.steps[-1].detail)
 
     def test_lock_named_in_an_entry_passes(self):
         sha = self.commit("Name the lock in an entry", {
@@ -2978,17 +3118,81 @@ class DecisionEntries(Clone):
         self.assertFalse(rep.failed(), rep.steps)
         self.assertIn("mishnah/test/", rep.steps[-1].detail)
 
-    def test_decisions_page_has_a_generated_region(self):
-        page = self.text(DECISIONS)
-        self.assertEqual((page.count(DECISION_BEGIN), page.count(DECISION_END)), (1, 1))
-        sha = self.commit("Assemble an entry", {
-            DECISIONS: page.replace(DECISION_BEGIN, DECISION_BEGIN + "\n\nAn entry.\n", 1),
+    def test_page_text_counts_wherever_it_stands(self):
+        # No part of the page is generated: a line appended at its end names the file.
+        sha = self.commit("Name a protected change on the page", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+            DECISIONS: self.text(DECISIONS) + f"\n- `{self.PATH}` changes.\n",
         })
-        self.assertEqual(safe_push.generated_parts(WORK, BASE, sha, DECISIONS), (True, False))
-        newer = self.commit("Change the page's own text, before the markers and after them", {
-            DECISIONS: "# Historical text changed.\n" + self.text(DECISIONS) + "\nLater.\n",
+        rep = self.check_guard(safe_push.guard_protected, BASE, sha)
+        self.assertFalse(rep.failed(), rep.steps)
+        self.assertIn(f"each named in {DECISIONS}: {self.PATH};", rep.steps[-1].detail)
+        self.assertNotIn(DECISIONS, safe_push.GENERATED_REGIONS)
+
+    def test_page_deleted_with_a_protected_change_is_refused(self):
+        # The page's removed lines name the file by a link resolved from the page's folder,
+        # though the deleted page's hunks have no path.
+        base = self.commit("A page line naming the file by a link", {
+            DECISIONS: self.text(DECISIONS) + f"\n- [The file](../../{self.PATH}) changes.\n",
         })
-        self.assertEqual(safe_push.generated_parts(WORK, sha, newer, DECISIONS), (False, True))
+        sha = self.commit("Delete the page", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+        }, remove=[DECISIONS])
+        rep = self.check_guard(safe_push.guard_protected, base, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+        self.assertIn(f"naming them: {self.PATH}", rep.failed()[0].detail)
+
+    def test_advised_revert_keeps_the_record_and_passes_the_guards(self):
+        # A merged pull request that adds an entry, appends to the page and changes a
+        # protected file, reverted as revert_advice says.
+        feature = self.commit("A change with its entry", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+            self.ENTRY: f"- **A change for the test.** `{self.PATH}` gains a comment.\n",
+            DECISIONS: self.text(DECISIONS) + "\n- **A page line for the test.** It stays.\n",
+        })
+        self.restart()
+        git(WORK, "merge", "--quiet", "--no-ff", "--no-edit", feature)
+        merge = git(WORK, "rev-parse", "HEAD").strip()
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{merge}:refs/heads/main")
+        git(WORK, "fetch", "--quiet", "origin")
+        branch = f"revert-{merge[:12]}"
+        self.addCleanup(lambda: git(WORK, "branch", "-D", branch, check=False))
+        self.addCleanup(self.restart)
+        ctx = safe_push.Context(WORK, merge, BASE, 1, "", None, {})
+        advice = safe_push.revert_advice(ctx, "tooling")
+        entry = f"docs/decisions/{datetime.date.today().isoformat()}-revert-{merge[:12]}.md"
+        lines = [line.strip() for line in advice.splitlines()[1:]]
+        self.assertEqual(lines, [
+            f"git switch -c {branch} origin/main",
+            f"git revert --no-commit -m 1 {merge}",
+            f"git restore --source=origin/main --staged --worktree -- docs/decisions/ "
+            f"{DECISIONS}",
+            f"# write {entry}: the revert and why, naming each protected file, statement",
+            "# and lock that it changes, as an entry of any change must",
+            f"git add -- {entry}",
+            "git commit --no-edit",
+            f"git safe-push --branch {branch} --label tooling"])
+        for line in lines[:-1]:
+            if line.startswith("# write "):
+                (WORK / entry).write_text(f"- **The merge reverted, for the test.** "
+                                          f"`{self.PATH}` loses its comment again.\n")
+            elif not line.startswith("#"):
+                git(WORK, *shlex.split(line)[1:])
+        self.assertEqual(self.text(self.PATH), safe_push.show(WORK, BASE, self.PATH))
+        for path in (DECISIONS, self.ENTRY):
+            self.assertEqual(self.text(path), safe_push.show(WORK, merge, path))
+        self.assertIn("Revert", git(WORK, "log", "-1", "--format=%s"))
+        head = git(WORK, "rev-parse", "HEAD").strip()
+        for guard, args in self.four_guards() + ((safe_push.guard_entries, ()),):
+            with self.subTest(guard=guard.__name__):
+                rep = self.check_guard(guard, merge, head, *args)
+                self.assertFalse(rep.failed(), rep.steps)
+        # Without restoring the record, the revert deletes the merge's entry: refused.
+        self.restart(merge)
+        git(WORK, "revert", "--no-edit", "-m", "1", merge)
+        bare = git(WORK, "rev-parse", "HEAD").strip()
+        rep = self.check_guard(safe_push.guard_entries, merge, bare)
+        self.assertIn(f"{self.ENTRY}: deleted", rep.failed()[0].detail)
 
 
 class ProtectedPaths(Edge):
@@ -3251,8 +3455,7 @@ class ProtectedPaths(Edge):
         path = "scripts/check_fidelity.py"
         changes = self.reproof()
         changes[path] = self.text(path) + "\n# A comment for the test.\n"
-        changes[DECISIONS] = above_markers(
-            changes[DECISIONS], f"- **Another decision for the test.** `{path}` gains a line.\n")
+        changes[DECISIONS] += f"\n- **Another decision for the test.** `{path}` gains a line.\n"
         self.regenerated_commit("Re-prove III.1, and change check_fidelity.py", changes)
         out = self.assertRefused(self.safe_push("--dry-run"), "check change kept apart",
                                  "Elements/BookIII/Prop01.lean")
@@ -4722,7 +4925,11 @@ class Units(unittest.TestCase):
     def test_revert_advice_and_slug(self):
         ctx = safe_push.Context(Path("."), "a" * 40, "b" * 40, 3, "", None, {})
         advice = safe_push.revert_advice(ctx)
-        self.assertIn(f"git revert --no-edit -m 1 {'a' * 40}", advice)
+        self.assertIn(f"git revert --no-commit -m 1 {'a' * 40}", advice)
+        self.assertIn("git restore --source=origin/main --staged --worktree -- docs/decisions/ "
+                      f"{DECISIONS}", advice)
+        self.assertIn(f"docs/decisions/{datetime.date.today().isoformat()}-revert-{'a' * 12}.md",
+                      advice)
         self.assertIn(f"git safe-push --branch revert-{'a' * 12} --label <kind>", advice)
         self.assertIn("--label tooling", safe_push.revert_advice(ctx, "tooling"))
         self.assertEqual(safe_push.github_slug("https://github.com/jackChallis/stoicheia.git"),

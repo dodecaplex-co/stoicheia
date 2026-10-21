@@ -63,9 +63,8 @@ People start at [CONTRIBUTING.md](CONTRIBUTING.md); the state of the work is in
 ## Scope and ownership
 
 - Work only in the files your task names: one writer per file. The integrator owns the
-  generated output (`facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`, the entries
-  assembled in `docs/briefs/0002-decisions.md`, README.md's rows between the
-  `<!-- scope:… -->` markers and PROGRAM.md's status table between the
+  generated output (`facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`, README.md's rows
+  between the `<!-- scope:… -->` markers and PROGRAM.md's status table between the
   `<!-- status -->` markers, and inline `count:` values) and the companions list
   (`Elements/Companions.lean`); the
   coordinator owns the foundations

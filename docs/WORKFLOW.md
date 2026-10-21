@@ -163,8 +163,6 @@ files working in parallel, the renderers, and an integrator followed by blind re
   with `docs/program.toml`, and the CI workflow, and may hand the lock, the decisions page,
   PROGRAM.md and the CI workflow to a wave's integrator. The integrator
   owns the generated edition: `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`,
-  the entries in `docs/briefs/0002-decisions.md` between the
-  `<!-- decisions:entries begin -->` and `<!-- decisions:entries end -->` markers,
   README.md's rows between the `<!-- scope:… -->` markers, PROGRAM.md's status table
   between the `<!-- status -->` markers and inline `count:` values in tracked Markdown,
   which `render.py` fills; the rest of README.md has an owner of its own, named in the
@@ -303,7 +301,7 @@ python3 scripts/check_fidelity.py
 python3 -I tests/test_check_style.py
 python3 scripts/check_style.py
 python3 scripts/render.py
-git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md docs/briefs/0002-decisions.md   # prints nothing
+git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md   # prints nothing
 python3 scripts/check_links.py
 ```
 
@@ -396,6 +394,11 @@ The ruleset and the remaining merge requirements are in
   generated scope regions or PROGRAM.md's generated status region. `negative_tests.py` runs
   the tests before planting; its `--counts-only` option runs these plants and the file-only
   regressions without a build.
+- **Decision entries are checked before anything is written.** `render.py` refuses a bad
+  file in `docs/decisions/` (section 10, "Decision entries") before it writes, so CI's
+  `check` job and the pre-flight refuse it. `tests/test_decision_entries.py` tests those
+  refusals without Lean, and `negative_tests.py` runs it after the count regressions,
+  before planting, with `--counts-only` too.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that
   branch; if integration changes the mathematics, the dependencies or a public description,
@@ -540,40 +543,43 @@ lists each branch with its reviews and the issue it closes. A train never carrie
 change together with content that check judges: trains of checks and trains of content are
 separate, and a branch that fails the train's pre-flight leaves the train.
 
-**Decision entries.** So that branches queued together do not collide at the decisions
-page's end, a decisions entry may be a file of its own (20 October 2026). To write one,
-the coordinator:
+**Decision entries.** Since 20 October 2026 each decision is a file of its own in
+`docs/decisions/`, so that pull requests queued together do not collide at the end of
+[the decisions page](briefs/0002-decisions.md), whose entries up to that day stay where
+they are. An entry is read where it is, as a page of its own: nothing assembles it into
+another page, and GitHub lists the folder in name order, which is date order
+([the folder's README](decisions/README.md)). To write one, the coordinator:
 
 1. names it `docs/decisions/<YYYY-MM-DD>-<slug>.md`: the day of the decision, a valid
    date, then a short name of lower-case letters and digits joined by hyphens, as
-   `docs/decisions/2026-10-21-entry-files.md`; the entries of one day are assembled in
-   the order of their names;
-2. writes the entry's text alone, starting at the margin, as the page's entries do
-   (`- **A title.** The decision, and why.`), with no date heading: `render.py` puts
-   `## <D Month YYYY>` above it, from the file's name, and leaves that heading out only
-   when the last heading before it on the page, of any kind, is that same date's;
-3. keeps out of it what would change the page around it: a date heading, a
-   `decisions:entries` marker or a count marker; a reference or footnote definition
-   (`[label]: …`, `[^1]: …`), or a bracketed label the page's own text defines, so links
-   are written inline; a relative link, Markdown or HTML (an `href`, `src` or other URL
-   attribute, quoted or bare, read in code too), that does not start with `../`, which
-   resolves alike from `docs/decisions/` and `docs/briefs/` (as `../WORKFLOW.md`,
-   `../../scripts/render.py` or `../decisions/<another entry>.md`); and anything left
-   open at its end: every HTML comment closes, a code fence of backticks or tildes opens and
-   closes at the margin, outside a comment and any run of lines from one that starts
-   with `<`, and there is no `<script>`, `<pre>`, `<style>`, `<textarea>`, `<?`, `<!X`
-   or CDATA block at all;
-4. runs `python3 scripts/render.py`, which checks every entry before it writes anything,
-   refusing one that breaks the rules above, any other file in the folder but a README,
-   an entry that is a link, and a folder that is a link or lies under one; then commits
-   the entry with the page as rendered.
+   `docs/decisions/2026-10-21-entry-files.md`;
+2. writes the entry as the page's entries are written (`- **A title (area).** The
+   decision, and why.`), with no date heading, since the name carries the date; it may
+   hold headings, as any page may, and its relative links resolve from
+   `docs/decisions/`, as `../WORKFLOW.md` or `../../scripts/render.py`;
+3. keeps out of it a count marker, and any character that could hide a copy of an older
+   entry: a control character but a tab and a line feed (a carriage return among them,
+   so lines end in a line feed alone), a format character (Unicode's Cf, as a zero-width
+   space, a soft hyphen or a byte-order mark), a line or paragraph separator, and
+   Unicode's other default-ignorable characters (as a variation selector or a Hangul
+   filler); and saves it as UTF-8;
+4. runs `python3 scripts/render.py`, which checks the folder before it writes anything,
+   refusing, with the file's name, a link, a folder or any file but the README and
+   entries, a folder spelled otherwise on disk (as `docs/Decisions/`, which a Mac finds
+   and Git does not), an entry that breaks the rules above, and an empty one; it writes
+   nothing into the folder, so the pull request carries the entry alone, beside the
+   change it records.
 
-An entry on main is history: the pre-flight refuses a change that modifies, deletes,
-renames or copies one, and a correction is a new entry, in words of its own. The entries
-between the markers are generated output, the integrator's (section 4). A page entry may
-still be written on the page, above the markers; text after the end marker is the page's
-own too, and `render.py` keeps it there, after the assembled entries, so one appended at
-the page's very end breaks nothing, though the page then reads out of date order.
+An entry is dated history, never edited: the pre-flight refuses a push that modifies,
+deletes, renames or copies an entry origin/main holds (step 3, below), and a correction
+is a new entry, in words of its own, naming the entry it corrects. A revert keeps the
+record too: after `git revert --no-commit -m 1 <merge>`, the coordinator restores
+`docs/decisions/` and the decisions page as origin/main has them
+(`git restore --source=origin/main --staged --worktree --` with those two paths), then
+adds an entry recording the revert and why, naming each protected file, statement and
+lock the revert changes, as any entry must, and commits; the advice `--merge` prints
+when main is not what was checked gives these commands. The folder's README is no entry:
+it may be edited, and approves nothing.
 
 ```sh
 sh scripts/install_hooks.sh                        # from a checkout of origin/main: once per
@@ -635,38 +641,44 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    3. *Invariant guards,* against origin/main, in the temporary worktree:
       - no statement changed (facts.json's `statement`, and the Lean source of the
         theorem, its porism and its companions, to its own `:=`, whitespace aside) unless
-        the push adds a new line to `docs/briefs/` or a dated entry in `docs/decisions/`,
-        a brief's revision or a decisions entry, that names the proposition (section 2);
+        the push adds a new line to `docs/briefs/`, a brief's revision or a decisions
+        entry, or to a dated entry in `docs/decisions/`, that names the proposition
+        (section 2);
       - `Certificate/axioms.lock` unchanged unless
-        [0002-decisions.md](briefs/0002-decisions.md) or a dated entry in
-        `docs/decisions/` gains a new line mentioning the lock;
-      - no protected path changed unless 0002-decisions.md or a dated entry in
-        docs/decisions/ gains a new line naming each file changed (below);
+        [0002-decisions.md](briefs/0002-decisions.md) or a dated entry gains a new line
+        mentioning the lock;
+      - no protected path changed unless 0002-decisions.md or a dated entry gains a new
+        line naming each file changed (below);
       - every change to `heath/` carries a comment naming a scan leaf of its own pages, as
         origin/main's copy of the file lists them ([STYLE.md](STYLE.md), section 5);
       - no review record stale (`check_fidelity.py`, on the commit as committed);
       - the generated pages current (`render.py`, on the commit as committed, changes
-        nothing);
+        nothing, and refuses no decision entry);
       - no whole directory of `Elements/`, `heath/`, `review/`, `figures/` or `mishnah/`
-        deleted unless the decisions page or a dated entry in docs/decisions/ gains a
-        new line naming it;
-      - no file under `docs/decisions/` that origin/main holds modified, deleted, renamed
-        or copied: entries are only added ("Decision entries", above). Git's rename and
-        copy detection (`-C -C`, every file there a source, with no limit) finds a move
-        or a copy with edits, and an added file holding no line new to the record is a
-        copy too.
+        deleted unless the decisions page or a dated entry gains a new line naming it;
+      - `docs/decisions/` holding regular files alone, its README and dated entries, each
+        entry named and written as "Decision entries", above, says (a valid date, and
+        UTF-8 text holding none of the characters kept out there), every path there
+        spelled `docs/decisions/`, and no entry origin/main holds modified, deleted,
+        renamed or copied: Git's rename and copy detection (`-C -C`, every file there a
+        source, with no limit) finds a move or a copy with edits. The README may be
+        edited or deleted, and approves nothing.
 
       For each of these, the push must add a mention: an old line that already named the
-      thing, edited in place, does not count. On the decisions page only its own text
-      counts, above the `decisions:entries` markers or after them, not the lines
-      `render.py` assembles between them. A line of a dated entry counts only in an entry
-      the push adds (a regular file with an entry's name and a valid date; the README and
-      other names count for nothing), and only when no line of the page or of any file
-      under `docs/decisions/` at origin/main matches it with its whitespace collapsed,
-      inside the line and at its ends. While a push modifies, deletes, renames or copies
-      an entry origin/main holds, entries supply no new line at all, so a rename, a copy
-      or a deletion and re-addition, with edits or without, renews no approval; a new
-      naming line in a new entry does.
+      thing, edited in place, does not count. A line of a dated entry counts only in an
+      entry the push adds, and only when it holds a word; when no line of the decisions
+      page or of any file under `docs/decisions/` at origin/main matches it, each read in
+      Unicode's NFKC form with its whitespace collapsed, inside the line and at its ends;
+      and when none of its words lies in a run of 12 or more consecutive words, read
+      across lines in that form, that the page or one file under `docs/decisions/` at
+      origin/main holds too. So a copy of an older entry kept beside its original,
+      re-wrapped or not, renews nothing. Each run of consecutive lines that count is read
+      on its own: words are never joined across a blank line or a line that does not
+      count, though a name wrapped from one line that counts to the next still counts, as
+      on the page. An entry the push adds that holds no line that counts is a copy, and
+      refused; and while a push refuses anything under `docs/decisions/`, entries supply
+      no new line at all, so a rename, a copy or a deletion and re-addition of an entry
+      renews no approval.
    4. *The full checks* of section 8 in that worktree, and `negative_tests.py` in a
       second, each step timed. The check scripts and what they expect (`scripts/`,
       `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) are origin/main's
@@ -777,7 +789,8 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    main is known to be the merge. Afterwards the merge commit is checked to join the base
    and the head checked, with the head's tree; if it does not, the script prints how to
    revert it in a pull request of its own, with the merged pull request's label for its
-   kind, and reverts nothing itself.
+   kind, keeping the decisions record ("Decision entries", above), and reverts nothing
+   itself.
 5. **Generated files** are regenerated from the integrated sources and committed by the
    integrator (section 4), so the pull request that changes their sources carries them.
 
@@ -796,8 +809,8 @@ and `model/Model.lean` join them, because they pin the model's proofs to `propex
 `Classical.choice` and `Quot.sound` with `Elements` absent, and include that audit in the
 build. A change to any of them needs a new line in the decisions page or a dated entry
 in `docs/decisions/` naming each file changed, by its whole path (from the root, or by a
-relative link that resolves from the file's folder, `docs/briefs/` for the page or
-`docs/decisions/` for an entry, to exactly that path: for
+relative link that resolves from the folder of the file that names it, `docs/briefs/`
+for the page and `docs/decisions/` for an entry, to exactly that path: for
 `model/Model/Audit.lean`, `../../model/Model/Audit.lean` counts, but
 `../model/Model/Audit.lean`, `../../../model/Model/Audit.lean` and
 `./model/Model/Audit.lean` do not; a line naming `tests/model/lock.sha256` does not name
