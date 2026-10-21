@@ -3806,10 +3806,11 @@ findings:
   commit by its full id, so a branch or tag named as the commit is never read in its
   place. A record whose text it cannot confirm is listed as needing a reader, and is never
   stamped by the migration. A stamp commit that is absent or ambiguous is instead a
-  problem, and so, for a record without `text`, is one that a shallow clone cannot place in
-  the history of HEAD: the command exits 1 without listing that record for a reader. Missing history is fetched, or, for an
-  ambiguous id, a reader identifies the intended commit without guessing, reads the record
-  and stamps it with enough of the id to name that commit alone, before running it again.
+  problem, and so, for a record without `text`, is one that a shallow clone cannot place
+  in the history of HEAD: the command exits 1 without listing that record for a reader.
+  Missing history is fetched, or, for an ambiguous id, a reader identifies the intended
+  commit without guessing, reads the record and stamps it with enough of the id to name
+  that commit alone, before running it again.
   On main at `756bdbae` it would write 92 records; seven were edited after their stamp
   commit and need a reader: II.2, II.6, II.7, II.8 and II.10, whose passages name Book I's
   helpers as `BookI.…` since the renaming of 19 October; III.4, whose notes changed their

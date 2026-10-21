@@ -33,11 +33,11 @@ HEAD and whose text at that commit is its text now: what the reviewer read is th
 the record says, so the stamp records no new reading. A record whose text cannot be
 confirmed is listed as needing a reader. A stamp commit absent from this clone or
 abbreviating more than one commit is instead a problem, and so, for a record without
-`text`, is one not to be confirmed in the history of HEAD in a shallow clone: fetch the missing history; or, for an ambiguous id, a
-reader identifies the intended commit without guessing, reads the record and stamps it
-with --commit and enough of the id to name that commit alone; then run the migration
-again. It changes nothing it cannot confirm, and it can be run again at any time, as at
-landing, after branches that change records.
+`text`, is one not to be confirmed in the history of HEAD in a shallow clone: fetch the
+missing history; or, for an ambiguous id, a reader identifies the intended commit without
+guessing, reads the record and stamps it with --commit and enough of the id to name that
+commit alone; then run the migration again. It changes nothing it cannot confirm, and it
+can be run again at any time, as at landing, after branches that change records.
 
 Run it after `lake env lean Certificate/Facts.lean`. Standard library only; reading
 the records needs Python 3.11 or later (tomllib).
