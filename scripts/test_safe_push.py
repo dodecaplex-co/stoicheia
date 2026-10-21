@@ -1290,7 +1290,7 @@ class GeneratedPages(Edge):
 # Runs safe_push in a subprocess with `guards`, `gates` or `watch_checks` wrapped, so that
 # something happens at a chosen moment: origin's main moves, or an interruption.
 DRIVER = r"""
-import json, os, subprocess, sys
+import json, os, re, subprocess, sys
 sys.path.insert(0, sys.argv[1])
 import safe_push
 action, origin, target = sys.argv[2], sys.argv[3], sys.argv[4]
@@ -1311,7 +1311,7 @@ class Clock:
 if os.environ.get("STOICHEIA_TEST_CLOCK"):
     safe_push.time = Clock({"still": 0.0, "leap": 3600.0}[os.environ["STOICHEIA_TEST_CLOCK"]])
 real_guards, real_watch = safe_push.guards, safe_push.watch_checks
-real_gates = safe_push.gates
+real_gates, real_refreshed = safe_push.gates, safe_push.refreshed
 def gates(ctx, number, rep, record=None):
     result = real_gates(ctx, number, rep, record)
     if action == "move-at-merge" and record is not None:
@@ -1330,6 +1330,21 @@ def watch_checks(*args, **kwargs):
     if action == "watch-fail":
         raise RuntimeError("gh went away")
     return real_watch(*args, **kwargs)
+def refreshed(body, parts):
+    result = real_refreshed(body, parts)
+    if action == "edit-after-unfinished-comparison":
+        path = os.environ["STOICHEIA_FAKE_GH_STATE"]
+        with open(path) as f:
+            state = json.load(f)
+        current = state["prs"][0]["body"]
+        state["prs"][0]["body"] = re.sub(
+            r"(## Unfinished work\n).*?(?=\n## )",
+            lambda m: m.group(1) + "\n- Prototype #38\n", current, count=1, flags=re.S)
+        with open(path, "w") as f:
+            json.dump(state, f, indent=1)
+        return result.replace("<!-- safe_push:commits end -->",
+                              "\n<!-- safe_push:commits end -->", 1)
+    return result
 real_gh_json, real_gh_run = safe_push.gh_json, safe_push.gh_run
 def gh_json(ctx, *args):
     # The look at GitHub after `gh pr merge`, interrupted or failing.
@@ -1351,6 +1366,7 @@ def gh_run(ctx, *args):
 safe_push.guards = guards
 safe_push.gates = gates
 safe_push.watch_checks = watch_checks
+safe_push.refreshed = refreshed
 safe_push.gh_json = gh_json
 safe_push.gh_run = gh_run
 sys.exit(safe_push.main(sys.argv[5:]))
@@ -2058,6 +2074,27 @@ class Merge(Edge):
         self.assertIn("changed after the gates read it", out)
         self.assertEqual(self.merges(), [])
 
+    def test_merge_never_overwrites_a_concurrent_unfinished_edit(self):
+        self.opened()
+        body = ticked(self.gh_state()["prs"][0]["body"])
+        concurrent = re.sub(
+            r"(## Unfinished work\n).*?(?=\n## )",
+            lambda m: m.group(1) + "\n- Prototype #38\n", body, count=1, flags=re.S)
+        self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+        before = len([c for c in self.gh_state()["calls"]
+                      if c[:2] == ["pr", "edit"] and "--body-file" in c])
+        r = self.driven_merge("edit-after-unfinished-comparison")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "body"), "FAIL", out)
+        self.assertIn("run `git safe-push --branch test-pr`", out)
+        self.assertEqual(self.gh_state()["prs"][0]["body"], concurrent)
+        after = len([c for c in self.gh_state()["calls"]
+                     if c[:2] == ["pr", "edit"] and "--body-file" in c])
+        self.assertEqual(after, before)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+
     def test_refresh_that_would_change_unfinished_work_refused(self):
         # The statements part's end marker moved past "## Review records": writing the
         # parts afresh would swallow the section, so the gates, reading its heading as
@@ -2150,6 +2187,18 @@ class Merge(Edge):
     def test_unfinished_ipv4_url_refuses_the_merge(self):
         self.opened()
         self.unfinished_body("- Prototype #38 192.0.2.1/ticket/39")
+        self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
+        self.assertIn("URL", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+
+    def test_unfinished_hostname_port_url_refuses_the_merge(self):
+        self.opened()
+        self.unfinished_body("- Prototype #38 localhost:8080/ticket/39")
         self.set_gh(lambda s: s.update(issues=[self.blocker()]))
         r = self.merge()
         out = r.stdout + r.stderr
@@ -2482,16 +2531,23 @@ class Merge(Edge):
         self.assertIn("missing from the body: Required: Nothing public", out)
         self.assertEqual(self.origin_main(), BASE)
 
-    def test_new_head_gets_its_preflight_at_the_merge(self):
+    def test_new_head_needs_a_fresh_preflight_before_merge(self):
         self.opened()
         self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
-        # A commit pushed to the branch by hand: the pre-flight has not seen it.
         newer = self.good_commit("A line pushed by hand.")
         git(WORK, "push", "--quiet", "origin", f"{newer}:refs/heads/{BRANCH}")
         r = self.merge()
         out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(r.returncode, 1, out)
         self.assertIn(f"none of {newer[:12]}", out)
+        self.assertEqual(self.guard(out, "body"), "FAIL", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+        r = self.safe_push()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
         self.assertEqual(git(ORIGIN, "rev-parse", "refs/heads/main^2").strip(), newer)
         self.assertIn(f"sha={newer}", self.gh_state()["prs"][0]["body"])
 
@@ -2534,7 +2590,8 @@ class Merge(Edge):
         (LOG.parent / "preflight" / f"{record['sha']}-{BASE}.json").write_text(json.dumps(record))
         r = self.merge("--dry-run")
         self.assertIn("is not of the full checks by origin/main's harness", r.stdout)
-        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "body"), "FAIL", r.stdout)
 
     def test_bad_new_head_refused_at_the_merge(self):
         self.opened()

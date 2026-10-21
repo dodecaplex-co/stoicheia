@@ -3225,9 +3225,10 @@ UNFINISHED_FORBIDDEN = (("`", "a backtick (code)"), ("<", "HTML or a comment"),
                         ("://", "a URL"),
                         ("www.", "a URL"), ("&", "an entity"))
 SCHEMELESS_URL = re.compile(
-    r"(?i)(?<![A-Za-z0-9_.-])(?:(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,62}"
+    r"(?i)(?<![A-Za-z0-9_.-])(?:(?:(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,62}"
     r"[A-Za-z0-9])?\.)+[A-Za-z]{2,63}|(?:[0-9]{1,3}\.){3}[0-9]{1,3})"
-    r"(?::[0-9]{1,5})?(?:/\S*)?")
+    r"(?::[0-9]{1,5})?(?:/\S*)?|[A-Za-z](?:[A-Za-z0-9-]{0,62}[A-Za-z0-9])?"
+    r":[0-9]{1,5}(?:/\S*)?)")
 
 
 def raw_lines(text: str) -> list[str]:
@@ -3974,9 +3975,6 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         save_record(record)
         view = gates(ctx, number, rep, record)
         labels = pr_labels(view.get("labels"))
-        # The body's summary is written afresh when the full checks ran again or when it
-        # is not of this head and origin/main; the parts safe_push wrote, whenever they
-        # are out of date.
         body = gh_json(ctx, "pr", "view", str(number), "--json", "body").get("body") or ""
         template = show(ctx.repo, ctx.base, TEMPLATE) or show(ctx.repo, ctx.sha, TEMPLATE)
         if unfinished_section(body, template) != unfinished_section(view.get("body") or "",
@@ -3991,16 +3989,9 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
             raise Refusal(f"refreshing #{number}'s parts would change its Unfinished work: "
                           "put safe_push's markers back where the template has them")
         if new != body:
-            if dry_run:
-                rep.add("3", "body", "note", "its pre-flight summary or the parts safe_push "
-                        "wrote are not of this head: --merge would write them afresh")
-            else:
-                check_body(new)
-                path = logs_dir(ctx.sha) / "pr-body.md"
-                path.write_text(new)
-                r = gh_run(ctx, "pr", "edit", str(number), "--body-file", str(path))
-                rep.add("3", "body", "ok" if r.returncode == 0 else "FAIL",
-                        "its pre-flight summary and the parts safe_push wrote, of this head")
+            rep.add("3", "body", "FAIL", "its pre-flight summary or the parts safe_push "
+                    f"wrote are out of date: run `git safe-push --branch {ctx.branch}` to "
+                    "refresh them, then run --merge again")
         if rep.failed():
             raise Refusal("the pull request's body could not be brought up to date")
         try:

@@ -647,10 +647,12 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    pre-flight's record is a local file, which code the pre-flight ran (a commit's
    checks, Lean at elaboration) could have written, so it stands in only for the full
    checks, which CI runs as well, and only when origin/main's harness made it; otherwise
-   they run again too. The body's summary is written afresh when the full checks ran
-   again or when it is not of this head and origin/main, and the other parts safe_push
-   wrote whenever they are out of date. It merges only when those pass; CI on that head
-   is green (`check`, `model` and `negative` pass, and nothing fails or is still
+   they run again too. The body must already carry the summary of this head and
+   origin/main, and every other part safe_push wrote must be up to date. `--merge` never
+   writes the pull request body: when one of those parts is stale, it refuses before
+   writing, and the coordinator runs the pre-flight to refresh the body before starting
+   a fresh merge attempt. It merges only when those pass; CI on that head is green
+   (`check`, `model` and `negative` pass, and nothing fails or is still
    running, apart from the `release-gate` job of the "Release gate" workflow on an
    ordinary pull request, even if a run remains from before its `release` label was
    removed, in the pre-flight watcher too); no box marked **Required** is unticked, nor

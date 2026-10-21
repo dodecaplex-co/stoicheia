@@ -2219,6 +2219,11 @@ findings:
   `release` label on an ordinary pull request. The gate checks what the section says;
   it cannot know what was left out of it, so a "None" that should have named an issue
   remains for the reviews to find.
+  The merge command never writes the pull request body. If the pre-flight summary or
+  another part safe_push owns is stale, it refuses before writing; the coordinator runs
+  the pre-flight to refresh those parts, then starts a fresh merge attempt. Thus a
+  concurrent edit to "Unfinished work" cannot be overwritten by the merge that checked
+  the earlier text.
   `scripts/check_release_gate.py` makes the same release check, with an offline JSON
   mode for its tests, and the separate `release-gate` CI job shows the hold on a release
   pull request. That job is skipped on ordinary pull requests and runs main's copy of
