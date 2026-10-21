@@ -3948,29 +3948,30 @@ findings:
   Book Zero's 16 files, exactly their header lines, and refuses none.
 
   A new item of [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants a
-  new Book Zero file for each of 19 forms, the reviewer's five and the fourteen above,
-  and requires each refused on its file and line, while a file holding the import only in a comment, a remark, a string and a «…» name,
-  beside an import of Book Zero, is not named at all.
-  [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py), whose
+  new Book Zero file for each of 19 forms, the reviewer's five and the fourteen above, and
+  requires each refused on its file and line, while a file holding the import only in a
+  comment, a remark, a string and a «…» name, beside an import of Book Zero, is not named
+  at all. [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py), whose
   `CircleRuleTests` already test one of check_fidelity's rules, gains
-  `BookZeroImportTests`: eight tests on a small tree, without Lean, of every planted form;
+  `BookZeroImportTests`: ten tests on a small tree, without Lean, of every planted form;
   text that only holds an import; a comment or a string that hides none; `module`,
   `prelude` and Lean's own modules passing; names the scan cannot read; a proposition
-  brought in through two files that import each other; a module reached through a
-  symbolic link; and a file outside Book Zero, which rule 3 leaves alone. Against
-  origin/main's check_fidelity (`001620f1`) each of the 19 forms passes, the plain
-  `import Elements.BookI.Prop01` alone being refused; now all 19 are refused. In following
-  the edition's files, `brought_in` refuses a module whose path beneath the repository
-  passes through a symbolic link, without reading its target, as the scan refuses a linked
-  file; the symbolic-link test fails against the rule as it stood before that change and
-  passes now. Since rule 3 now reads through the reader rule 4 uses, it lands after #197
-  and #207, which correct that reader: #197 for a comment opened as `/-/`, which Lean
-  closes at the next `-/`, and #207 for a lone carriage return, at which Python's
-  universal newlines end a `--` comment that Lean does not. Before them, `/-/- -/` on one
-  line and an import on the next, and `-- remark`, a lone carriage return and a quote
-  before an import, would each hide from the reader an import that the old rule, matching
-  raw lines, refused. With the three branches merged, each is refused, directly and
-  through the edition's files, so nothing is loosened. This change leaves the shared
-  reader and how files are read to those two issues. The protected files changed are
-  `scripts/check_fidelity.py`, `scripts/negative_tests.py` and
+  brought in through two files that import each other; a module reached through a symbolic
+  link, in the source trees, at the root, or through a file outside them; and a file
+  outside Book Zero, which rule 3 leaves alone. Against origin/main's check_fidelity
+  (`001620f1`) each of the 19 forms passes, the plain `import Elements.BookI.Prop01` alone
+  being refused; now all 19 are refused. In following the edition's files, `brought_in`
+  refuses a module whose path beneath the repository passes through a symbolic link,
+  inside the scanned trees or not, without reading its target, and names the link; the
+  three symbolic-link tests fail against the rule as it stood at the first review
+  (`a3f1f33f`) and pass now. Since rule 3 now reads through the reader rule 4 uses, it
+  lands after #197 and #207, which correct that reader: #197 for a comment opened as
+  `/-/`, which Lean closes at the next `-/`, and #207 for a lone carriage return, at which
+  Python's universal newlines end a `--` comment that Lean does not. Before them,
+  `/-/- -/` on one line and an import on the next, and `-- remark`, a lone carriage return
+  and a quote before an import, would each hide from the reader an import that the old
+  rule, matching raw lines, refused. With the three branches merged, each is refused,
+  directly and through the edition's files, so nothing is loosened. This change leaves the
+  shared reader and how files are read to those two issues. The protected files changed
+  are `scripts/check_fidelity.py`, `scripts/negative_tests.py` and
   `tests/test_negative_tests.py`.
