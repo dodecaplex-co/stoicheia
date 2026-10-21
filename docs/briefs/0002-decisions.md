@@ -2194,6 +2194,12 @@ findings:
   theorems, while the existing Circle 3 exclusions still constrain dependencies.
   Every expectation value stays unchanged. No check, field or requirement changes.
 
+- **Review schema wording.** [review/SCHEMA.md](../../review/SCHEMA.md) now describes the
+  style check's reading of review notes, distinguishes items the schema permits from
+  verdicts that count for acceptance, and records I.40's completed stage-2 change, to match
+  the checks and records on main. The TOML fixtures read by `scripts/heath.py` and the
+  checks' requirements are unchanged.
+
 - **The stage test reads the program's words.**
   `test_renderer_validation_loosened_with_content_is_kept_apart` in
   [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py), a protected file,
