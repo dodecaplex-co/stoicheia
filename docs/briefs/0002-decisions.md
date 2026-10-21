@@ -3035,22 +3035,38 @@ findings:
 
 ## 21 October 2026
 
-- **The Jev question generator reads Lean's `public import`, and checks its helpers' paths
-  before running them (#185).** Two defects in `scripts/audit/jev_questions.py` (#179)
-  were found while merging the superposition replacement. First, the generator read an
-  import only from a line beginning `import`. The superposition branch's
-  `Elements/Foundations/Superposition/` files open with `module` and import with
-  `public import`, so their imports were never read, and on that branch
-  `tests/test_jev_questions.py` refused I.4: "Elements.Superposition.Lit is not
-  imported". The generator now reads the four forms that Lean 4.35's header allows
-  without `all` (`Lean/Parser/Module/Syntax.lean` in the toolchain's source, confirmed
-  by running `lean` on sample headers): `import`, `public import`, `meta import` and
-  `public meta import`, with comments and line breaks allowed between the words. Every
-  other form is refused: another prefix before `import` (`meta public`, `private`, an
-  attribute, a repeated `public`); `import all`, which Lean accepts but the generator
-  does not read; and an import naming anything but one module before the end of its
-  line. Before, `private import` and an import after an attribute were read as imports,
-  and `import all M` as a module named "all M".
+- **The Jev question generator reads Lean's module header with a parser, checks its helpers'
+  paths before running them, and passes its test on the superposition branch (#185).** Two
+  defects in `scripts/audit/jev_questions.py` (#179) were found while merging the
+  superposition replacement. First, the generator read an import only from a line beginning
+  `import`. The superposition branch's `Elements/Foundations/Superposition/` files open with
+  `module` and import with `public import`, so their imports were never read, and on that
+  branch `tests/test_jev_questions.py` refused I.4: "Elements.Superposition.Lit is not
+  imported".
+
+  A first fix read the new forms with line patterns, and three rounds of review each found
+  another header they misread: an attribute over several lines, a `partial` or `nonrec`
+  prefix, a quoted module name, and then five more. `module public import M` on one line read
+  no import; `all` on the line before `import M`, and a doc comment between `public` and
+  `import`, were read as plain imports; a `"` inside a quoted component, as in `«a"b»`, was
+  taken for an unterminated string; and an import ending the file without a newline was
+  given a span one character past the end, which the excerpt check refused. So the patterns
+  are gone. The header is read by one small parser over a stream of tokens, following Lean
+  4.35's own grammar (`Lean/Parser/Module/Syntax.lean` in the toolchain's source): an
+  optional `module`, then any number of `[public] [meta] import M`, where M is
+  dot-separated components, each a plain identifier or a whole `«...»` component. Tokens
+  are read before any masking, so nothing inside `«...»` is read as syntax, and a component
+  keeps its dots: `Elements.«areas.p5»` is the file `Elements/areas.p5.lean`. Ordinary
+  comments, nested or not, may come between the words. Each import ends its line, and its
+  span runs to the end of that line, or of the file. As in Lean, an import is read only
+  whole, so `public section` after the imports ends the header. Refused as an unsupported
+  import: a doc comment or any other word before an import (`all`, `private`, `partial`,
+  `nonrec`, an attribute, a second name), `prelude`, `import all`, two imports on one line,
+  a component holding `/`, and any `import` after the header has ended. Running the
+  toolchain's `lean` on sample headers confirmed that Lean reads the imports of each header
+  the generator reads; of those refused, Lean accepts only the ones with `prelude`,
+  `import all`, two imports on one line or a `/` in a name, which the generator does not
+  read.
 
   Second, the generator ran `scripts/heath.py` and `scripts/audit/jev.py` as it loaded
   them, before any check of their paths, so a check that should refuse first came
@@ -3061,26 +3077,50 @@ findings:
   refused helper path prints `refused:` and exits with status 1, like the generator's
   other refusals.
 
-  `tests/test_jev_questions.py` adds four cases, each failing on the old generator. The
-  four import forms and quoted module identifiers are read, with their exact spans, and
-  make the imported file visible; eleven other headers are refused. While the second
-  helper's path is a
-  symlink, behind a symlinked folder, absolute, traversing, missing or a folder, neither
-  planted helper runs, the first included; both run once both paths pass. A copy of the
-  generator beside a symlinked `jev.py` refuses, and neither planted helper runs. On
-  main (`2e8aecf8`) all 40 cases pass, and the generated questions and manifest are
-  byte for byte those of the old generator. The protected files changed are
-  `scripts/audit/jev_questions.py` and `tests/test_jev_questions.py`. No check is
-  weakened, and no expected value, allowlist, schema or review record changes. CI does
-  not run the test yet (#157).
+  Third, on `lean/superposition-restricted` the test then refused I.4 and I.8, whose new
+  proofs the call reconciler could not yet read, for four reasons, each now fixed. It took
+  only the first of several constructors on one line (`| a | b | c`). It resolved
+  `open Prop4 in` from the root and from `Elements.`, never from the current namespace;
+  each namespace enclosing the declaration now counts too. It read an inductive's own
+  constructor names as uses, so I.4's constructor `a` was taken for the abbreviation `a`
+  declared after it. And `List.mem_nil_iff` and `List.forall_mem_cons` were not on its core
+  allowlist. **The core allowlist gains these two names, `mem_nil_iff` and
+  `forall_mem_cons`.** The list names lemmas of Lean core so that a call to one is not taken
+  for a missing project name; the coordinator ruled that adding a name which really is a
+  Lean core lemma is upkeep of the list, not a widening of its exemption, provided each is
+  shown to be core. Both are: the toolchain's `lean` (4.35.0, commit `eb6cafb7`), with no
+  Mathlib and no project import, run on a scratch file outside the repository holding
+  `#check @List.mem_nil_iff` and `#check @List.forall_mem_cons`, prints
 
-  On `lean/superposition-restricted` (`99ba29d5`) the test no longer stops at the
-  imports, but still refuses I.4 and I.8, whose new proofs the call reconciler cannot
-  yet read. It takes only the first of several constructors on one line
-  (`| a | b | c`); it resolves `open Prop4 in` from the root and from `Elements.`, not
-  from the current namespace; it reads an inductive's own constructor names as uses;
-  and `List.mem_nil_iff` and `List.forall_mem_cons`, both Lean core lemmas, are not on
-  its core allowlist. A prototype of all four changes, made outside the repository,
-  passes all 40 cases there and leaves main's questions unchanged. Its allowlist
-  addition widens an exemption, so it waits for approval, and the issue's third
-  condition, the test passing on that branch, remains open.
+  ```
+  @List.mem_nil_iff : ∀ {α : Type u_1} (a : α), a ∈ [] ↔ False
+  @List.forall_mem_cons : ∀ {α : Type u_1} {p : α → Prop} {a : α} {l : List α},
+    (∀ (x : α), x ∈ a :: l → p x) ↔ p a ∧ ∀ (x : α), x ∈ l → p x
+  ```
+
+  Only these two are added, the names the superposition branch needs, and the manifest's
+  `core_projection_allowlist` lists them.
+
+  `tests/test_jev_questions.py` now has 43 cases. One table-driven case reads 11 headers,
+  each with its imports' exact spans, an `import_text` excerpt the excerpt check accepts
+  (an import ending the file without a newline among them) and every imported file
+  visible, and refuses 18 others as unsupported imports; ten of its rows fail on the
+  generator before the parser: the five forms above, an indented import, a module doc
+  comment before an import, `prelude`, `«a/b»` and an import after a declaration. Four
+  cases test the reconciler on small files in the shape of I.4's proof, and each fails with
+  its own fix removed. While the second helper's path is a symlink, behind a symlinked
+  folder, absolute, traversing, missing or a folder, neither planted helper runs, the
+  first included; both run once both paths pass. A copy of the generator beside a
+  symlinked `jev.py` refuses, and neither planted helper runs.
+
+  Every Lean file on main (134 files, 735 imports) and on the superposition branch (139
+  files, 745 imports) reads the same imports with the same spans, comments and
+  declarations as before. On main (`2e8aecf8`) the parser alone generates questions and a
+  manifest byte for byte those of the old generator; with the reconciler's changes the
+  questions are still byte for byte the same, and the manifest differs only by the two
+  names in `core_projection_allowlist`. All 43 cases pass on main with this change, and on
+  `lean/superposition-restricted` at `99ba29d5`, a fresh clone with the two changed files
+  copied in, so the issue's third condition is met. The protected files changed are
+  `scripts/audit/jev_questions.py` and `tests/test_jev_questions.py`. No check is
+  weakened, and no expected value, schema or review record changes; the one allowlist
+  change is the two Lean core names above. CI does not run the test yet (#157).

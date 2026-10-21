@@ -23,9 +23,12 @@ Generation reads no credentials and sends nothing. Every evidence file is compar
 the committed evidence, missing evidence, ambiguous names and differences from the revision
 are errors. Evidence paths must be relative, without parent traversal or symlinks, and
 resolve inside the repository. Both helpers' paths pass those checks, and must name regular
-files, before either helper runs. Lean imports are read in the four forms Lean 4.35 allows
-without `all`: `import`, `public import`, `meta import` and `public meta import`, each
-naming one module; any other import is refused. Both output paths reject symlinks,
+files, before either helper runs. Each Lean file's header is read by a small parser following
+Lean 4.35's grammar, before any masking: an optional `module`, then imports in the four forms
+`import`, `public import`, `meta import` and `public meta import`, each naming one module of
+plain or «...» components and ending its line, with ordinary comments between the words. A
+doc comment or any other word before an import, `prelude`, `import all`, and any `import`
+after the header are refused. Both output paths reject symlinks,
 evidence files, tracked files other than the two default outputs, Git metadata, protected
 paths independently of the index, and collisions with each other; an output may be
 outside the repository.
@@ -200,23 +203,39 @@ class Evidence:
 IDENT = r"[^\W\d][\w'₀-₉]*"
 NAME = IDENT + r'(?:\.' + IDENT + r')*'
 TOKEN = re.compile(NAME)
-MODULE_COMPONENT = r'(?:' + IDENT + r'|«[^»\n]*»)'
-MODULE_NAME = MODULE_COMPONENT + r'(?:\.' + MODULE_COMPONENT + r')*'
+MODULE_COMPONENT = r'(?:' + IDENT + r'|«[^»\n]+»)'
+MODULE_NAME = re.compile(MODULE_COMPONENT + r'(?:\.' + MODULE_COMPONENT + r')*')
 MODULE_PART = re.compile(MODULE_COMPONENT)
 COMMAND = re.compile(
     r'^(?:@\[[^\n]*?\]\s*)?(?:(?:private|protected|noncomputable|unsafe)\s+)*'
     r'(theorem|lemma|def|abbrev|axiom|opaque|structure|inductive|instance|example|'
     r'namespace|section|end|open|variable|notation\S*|infix\S*|prefix\S*|'
     r'postfix\S*|attribute|set_option)\b', re.M)
-# Lean 4.35's header (Lean/Parser/Module/Syntax.lean) allows `public`, then `meta`, each
-# optional, before `import`. Any other prefix is refused, as is an import that does not name
-# exactly one module before the end of its line: `import all` is not read.
-IMPORT = re.compile(r'^(?:public\s+)?(?:meta\s+)?(import)\b', re.M)
-PREFIXED_IMPORT = re.compile(
-    r'^(?:@\[[\s\S]*?\]\s*|'
-    r'(?:public|meta|private|protected|noncomputable|unsafe|partial|nonrec)\s+)+import\b', re.M)
-IMPORT_NAME = re.compile(r'\s+(' + MODULE_NAME + r')[^\S\n]*(?:\n|\Z)')
+# Lean 4.35's module header (Lean/Parser/Module/Syntax.lean) is an optional `module`, an
+# optional `prelude`, then any number of imports, each `[public] [meta] import [all] M`. The
+# generator reads the subset without `prelude` and `all`, each import ending its line.
 HEADER_WORDS = frozenset({'module', 'prelude', 'public', 'meta', 'all', 'import'})
+IMPORT_WORD = re.compile(r"(?<![\w'.«])import(?![\w'»])")
+
+
+def comment_end(src: str, i: int) -> int:
+    """Return the end of the line comment or nested block comment that starts at i."""
+    if src.startswith('--', i):
+        end = src.find('\n', i)
+        return len(src) if end < 0 else end
+    depth = 1
+    i += 2
+    while i < len(src) and depth:
+        if src.startswith('/-', i):
+            depth += 1
+            i += 2
+        elif src.startswith('-/', i):
+            depth -= 1
+            i += 2
+        else:
+            i += 1
+    require(depth == 0, 'unterminated Lean comment')
+    return i
 
 
 def mask(src: str) -> tuple[str, list[tuple[int, int]]]:
@@ -225,23 +244,8 @@ def mask(src: str) -> tuple[str, list[tuple[int, int]]]:
     i = 0
     while i < len(src):
         start = i
-        if src.startswith('--', i):
-            end = src.find('\n', i)
-            i = len(src) if end < 0 else end
-            comments.append((start, i))
-        elif src.startswith('/-', i):
-            depth = 1
-            i += 2
-            while i < len(src) and depth:
-                if src.startswith('/-', i):
-                    depth += 1
-                    i += 2
-                elif src.startswith('-/', i):
-                    depth -= 1
-                    i += 2
-                else:
-                    i += 1
-            require(depth == 0, 'unterminated Lean comment')
+        if src.startswith(('--', '/-'), i):
+            i = comment_end(src, i)
             comments.append((start, i))
         elif src[i] == '"':
             i += 1
@@ -281,19 +285,90 @@ def assignment(clean: str, start: int, end: int) -> int | None:
     return None
 
 
-def module_path(name: str) -> str:
-    parts = []
-    position = 0
-    while position < len(name):
-        found = MODULE_PART.match(name, position)
-        require(found is not None, f'invalid module name {name!r}')
-        part = found.group()
-        parts.append(part[1:-1] if part.startswith('«') else part)
-        position = found.end()
-        if position < len(name):
-            require(name[position] == '.', f'invalid module name {name!r}')
-            position += 1
+def header_tokens(src: str, comments: list[tuple[int, int]]):
+    """Yield the tokens of a Lean header as (text, start, end), before any masking.
+
+    Whitespace and ordinary comments separate tokens; each comment is added to comments. A
+    doc comment is one token, and so is a module name, read whole with its «...» components,
+    so that nothing inside them is read as syntax. Any other character is a token by itself.
+    At the end of the text the stream yields ('', len(src), len(src)) for ever.
+    """
+    i = 0
+    while True:
+        while i < len(src) and src[i] in ' \t\r\n':
+            i += 1
+        if i == len(src):
+            yield '', i, i
+            continue
+        if src.startswith(('--', '/-'), i) and not src.startswith(('/--', '/-!'), i):
+            end = comment_end(src, i)
+            comments.append((i, end))
+        elif src.startswith('/-', i):
+            end = comment_end(src, i)
+            yield src[i:end], i, end
+        else:
+            found = MODULE_NAME.match(src, i)
+            end = found.end() if found else i + 1
+            yield src[i:end], i, end
+        i = end
+
+
+def module_path(name: str) -> str | None:
+    """Return the file a module name names, one folder per component, or None if a component
+    could leave its folder."""
+    parts = [part[1:-1] if part.startswith('«') else part for part in MODULE_PART.findall(name)]
+    if any(part in ('.', '..') or '/' in part for part in parts):
+        return None
     return '/'.join(parts) + '.lean'
+
+
+def lean_source(path: str, raw: str) -> tuple[str, list[tuple[int, int]], list[tuple[str, int, int]]]:
+    """Read a Lean file's header, then mask the file; return the masked text, its comments and
+    its imports, each with its module's file and the span of its words to the end of its line.
+
+    The header is an optional `module`, then any number of `[public] [meta] import M`, each
+    ending its line, with ordinary comments between the words. As in Lean, an import is read
+    only whole, so `public section` after the header ends it. An import naming anything but one
+    module, and an `import` anywhere after the header, are refused: so is any other word before
+    an import, `prelude`, `import all` or a doc comment among the imports. The header is blank
+    in the masked text.
+    """
+    comments: list[tuple[int, int]] = []
+    stream = header_tokens(raw, comments)
+    tokens: list[tuple[str, int, int]] = []
+
+    def token(k: int) -> tuple[str, int, int]:
+        while len(tokens) <= k:
+            tokens.append(next(stream))
+        return tokens[k]
+
+    k = 1 if token(0)[0] == 'module' else 0
+    end = token(0)[2] if k else 0
+    imports = []
+    while True:
+        j = k + (token(k)[0] == 'public')
+        j += token(j)[0] == 'meta'
+        if token(j)[0] != 'import':
+            break
+        name, _, end = token(j + 1)
+        following = token(j + 2)
+        line_end = raw.find('\n', end)
+        line_end = len(raw) if line_end < 0 else line_end + 1
+        file = module_path(name) if MODULE_NAME.fullmatch(name) else None
+        require(file and name not in HEADER_WORDS
+                and (not following[0] or '\n' in raw[end:following[1]]),
+                f'{path}: unsupported import {raw[token(k)[1]:line_end].rstrip()!r}')
+        imports.append((file, token(k)[1], line_end))
+        k = j + 2
+    rest, rest_comments = mask(raw[end:])
+    clean = re.sub(r'[^\n]', ' ', raw[:end]) + rest
+    later = IMPORT_WORD.search(clean, end)
+    if later:
+        line_end = raw.find('\n', later.start())
+        line = raw[raw.rfind('\n', 0, later.start()) + 1:len(raw) if line_end < 0 else line_end]
+        raise Refusal(f'{path}: unsupported import {line!r}')
+    comments = [c for c in comments if c[0] < end] + [(a + end, b + end) for a, b in rest_comments]
+    return clean, comments, imports
 
 
 @dataclass(frozen=True)
@@ -328,17 +403,9 @@ class Index:
 
     def add(self, path: str) -> None:
         raw = self.evidence.read(path)
-        clean, comments = mask(raw)
+        clean, comments, self.imports[path] = lean_source(path, raw)
         self.clean[path] = clean
-        commands = sorted([*COMMAND.finditer(clean), *IMPORT.finditer(clean)], key=lambda m: m.start())
-        imports = {match.start() for match in commands if match.re is IMPORT}
-        for found in PREFIXED_IMPORT.finditer(clean):
-            require(found.start() in imports, f'{path}: unsupported import {found.group()!r}')
-        for a, b in comments:
-            following = re.match(r'\s*', clean[b:])
-            if raw[a:a + 3] == '/--' and b + following.end() in imports:
-                raise Refusal(f'{path}: unsupported import {raw[a:b + following.end()]!r}')
-        self.imports[path] = []
+        commands = list(COMMAND.finditer(clean))
         namespace = ''
         frames: list[tuple[str, int, int]] = []
         contexts: list[tuple[int, int]] = []
@@ -356,16 +423,6 @@ class Index:
             end = len(raw[:stop].rstrip())
             line_end = raw.find('\n', start)
             line_end = len(raw) if line_end < 0 else line_end
-            if kind == 'import':
-                found = IMPORT_NAME.match(clean, match.end())
-                require(found and found.group(1) not in HEADER_WORDS,
-                        f'{path}: unsupported import {raw[start:line_end]!r}')
-                # The import runs to the end of the line naming its module.
-                line_end = raw.find('\n', found.end(1))
-                line_end = len(raw) if line_end < 0 else line_end
-                self.imports[path].append(
-                    (module_path(found.group(1)), start, line_end + 1))
-                continue
             if kind in ('namespace', 'section'):
                 frames.append((namespace, len(contexts), len(opens)))
                 if kind == 'namespace':
@@ -435,8 +492,13 @@ class Index:
             if candidate in self.decls:
                 return candidate
         candidates = set()
+        # An opened namespace is named from the root, from Elements, or from the consumer's
+        # namespace or any enclosing it: `open Prop4 in` within Elements.BookI opens
+        # Elements.BookI.Prop4.
+        parts = consumer.namespace.split('.') if consumer.namespace else []
+        scopes = {'', 'Elements.'} | {'.'.join(parts[:n]) + '.' for n in range(1, len(parts) + 1)}
         for opened in (*consumer.opens, *(['Elements', 'Elements.Tacit'] if commentary else [])):
-            for prefix in ('', 'Elements.'):
+            for prefix in sorted(scopes):
                 candidate = prefix + opened + '.' + token
                 if candidate in self.decls:
                     candidates.add(candidate)
@@ -556,27 +618,32 @@ class Calls:
     unit or in a collected signature, repeating to closure. Namespace prefixes do not
     restrict these conservative candidates, and no receiver type is guessed. Constructors
     and named structure projections are quoted through their enclosing declaration, which
-    contains their exact signatures and docstrings. The glossary's supplied definitions
-    also expose their underlying types, including AreParallel within Parallelogram.
+    contains their exact signatures and docstrings. An inductive's constructors are each
+    named after a `|` on a line that opens `  |`, several to a line as `| a | b | c`; there
+    they are declared, not called. The glossary's supplied definitions also expose their
+    underlying types, including AreParallel within Parallelogram.
 
     The fixed core/projection allowlist is: 1, 2, symm, trans, refl, mp, mpr, elim, left, right,
     ne, imp, inl, inr, resolve_left, resolve_right, map, Pairwise, mem_append, mem_cons,
     mem_cons_of_mem, mem_cons_self, mem_singleton, mem_singleton_self, not_mem_nil,
-    cons_ne_nil, append_ne_nil_of_right_ne_nil, append_assoc, append_nil, nil_append,
-    cons_append, pairwise_append, pairwise_singleton, byContradiction, epsilon_spec.
-    These names exempt only fields with no project candidate; symm, for example, still
-    collects every eligible geometric signature. Any remaining field is unresolved.
+    mem_nil_iff, forall_mem_cons, cons_ne_nil, append_ne_nil_of_right_ne_nil, append_assoc,
+    append_nil, nil_append, cons_append, pairwise_append, pairwise_singleton,
+    byContradiction, epsilon_spec. These names exempt only fields with no project candidate;
+    symm, for example, still collects every eligible geometric signature. Any remaining field
+    is unresolved.
     """
 
     CORE_FIELDS = frozenset({
         '1', '2', 'symm', 'trans', 'refl', 'mp', 'mpr', 'elim', 'left', 'right', 'ne', 'imp',
         'inl', 'inr', 'resolve_left', 'resolve_right', 'map', 'Pairwise', 'mem_append',
         'mem_cons', 'mem_cons_of_mem', 'mem_cons_self', 'mem_singleton', 'mem_singleton_self',
-        'not_mem_nil', 'cons_ne_nil', 'append_ne_nil_of_right_ne_nil', 'append_assoc',
-        'append_nil', 'nil_append', 'cons_append', 'pairwise_append', 'pairwise_singleton',
-        'byContradiction', 'epsilon_spec',
+        'not_mem_nil', 'mem_nil_iff', 'forall_mem_cons', 'cons_ne_nil',
+        'append_ne_nil_of_right_ne_nil', 'append_assoc', 'append_nil', 'nil_append',
+        'cons_append', 'pairwise_append', 'pairwise_singleton', 'byContradiction', 'epsilon_spec',
     })
     REFERENCE = re.compile(r'(?:' + IDENT + r'|(?<=\.)[0-9]+)(?:\.(?:' + IDENT + r'|[0-9]+))*')
+    CONSTRUCTOR_LINE = re.compile(r'^  \|[^\n]*', re.M)
+    CONSTRUCTOR = re.compile(r'\|\s*(' + IDENT + ')')
 
     def __init__(self, index: Index, facts: dict):
         self.index = index
@@ -588,10 +655,18 @@ class Calls:
                       if d.kind in ('def', 'abbrev', 'opaque', 'axiom', 'structure', 'inductive')}
         self.members: dict[str, set[str]] = {}
         for name, d in index.decls.items():
-            if d.kind in ('structure', 'inductive'):
-                pattern = r'^  ' + (r'\| ' if d.kind == 'inductive' else '') + '(' + IDENT + r')\b'
-                for member in re.findall(pattern, index.clean[d.path][d.name_end:d.end], re.M):
-                    self.members.setdefault(member, set()).add(name)
+            if d.kind == 'inductive':
+                found = [m.group(1) for m in self.constructors(index.clean[d.path], d)]
+            elif d.kind == 'structure':
+                found = re.findall(r'^  (' + IDENT + r')\b', index.clean[d.path][d.name_end:d.end], re.M)
+            else:
+                continue
+            for member in found:
+                self.members.setdefault(member, set()).add(name)
+
+    def constructors(self, clean: str, d: Declaration) -> list[re.Match]:
+        return [found for line in self.CONSTRUCTOR_LINE.finditer(clean, d.name_end, d.end)
+                for found in self.CONSTRUCTOR.finditer(clean, line.start(), line.end())]
 
     def type_names(self, text: str, consumer: Declaration) -> set[str]:
         found = set()
@@ -622,7 +697,11 @@ class Calls:
                           'position': 'proof' if match.start() >= d.body else 'type',
                           'resolution': resolution})
 
+        declared = ({found.start(1) for found in self.constructors(clean, d)}
+                    if d.kind == 'inductive' else set())
         for match in self.REFERENCE.finditer(clean, d.name_end, d.end):
+            if match.start() in declared:
+                continue
             token = match.group()
             parts = token.split('.')
             after_expression = clean[match.start() - 1:match.start()] == '.'

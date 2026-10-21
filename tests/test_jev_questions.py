@@ -26,7 +26,6 @@ import time
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import patch
 
 sys.dont_write_bytecode = True
@@ -45,30 +44,42 @@ COMMENTARY_CHANGES = {
 }
 BASE = 'namespace Elements\n\ntheorem base : True := trivial\n\nend Elements\n'
 BODY = '\nnamespace Elements\n\nend Elements\n'
-# Lean 4.35 accepts each header: `public`, then `meta`, each optional, before `import`,
-# with comments and line breaks allowed between the words.
-LEAN_IMPORTS = {
-    'Plain.lean': ('', 'import Elements.Base\n'),
-    'Public.lean': ('module\n\n', 'public import Elements.Base\n'),
-    'Meta.lean': ('module\n\n', 'meta import Elements.Base\n'),
-    'PublicMeta.lean': ('module\n\n', 'public meta import Elements.Base\n'),
-    'Spaced.lean': ('module\n\n',
-                    'public /- between words -/ meta\n  import\n    Elements.Base -- the module\n'),
-}
-RAW_IMPORTS = {
-    'QuotedDash.lean': ('areas-p5.lean', 'public import Elements.«areas-p5»\n'),
-    'QuotedDot.lean': ('areas.p5.lean', 'public import Elements.«areas.p5»\n'),
-}
-# Lean 4.35 refuses each header but the two with `import all`, which the generator does
-# not read. None of them may be read as an import.
-REFUSED_IMPORTS = (
-    'meta public import Elements.Base', 'public public import Elements.Base',
-    'private import Elements.Base', '@[expose] import Elements.Base',
-    '@[\nexpose\n]\nimport Elements.Base',
-    'partial\nimport Elements.Base', 'nonrec\nimport Elements.Base',
-    '/-- declaration documentation -/\nimport Elements.Base',
-    'import Elements.Base Elements.Base', 'import all Elements.Base',
-    'import all\n  Elements.Base',
+IMPORTED = ('Base.lean', 'areas-p5.lean', 'areas.p5.lean', 'a"b.lean')
+# Each Lean file, with the imports read from it as (imported file, the import's words to the
+# end of its line), or None where it is refused as an unsupported import. Lean 4.35 accepts
+# each file read, and refuses each file refused but those with `import all`, `prelude`, two
+# imports on one line or a `/` in a module name, which the generator does not read.
+HEADERS = (
+    ('import Elements.Base\n' + BODY, [('Base', 'import Elements.Base\n')]),
+    ('module\n\npublic import Elements.Base\n' + BODY,
+     [('Base', 'public import Elements.Base\n')]),
+    ('module\n\nmeta import Elements.Base\n' + BODY, [('Base', 'meta import Elements.Base\n')]),
+    ('module\n\npublic meta import Elements.Base\n' + BODY,
+     [('Base', 'public meta import Elements.Base\n')]),
+    ('module\n\npublic /- between words -/ meta\n  import\n    Elements.Base -- the module\n'
+     + BODY,
+     [('Base', 'public /- between words -/ meta\n  import\n    Elements.Base -- the module\n')]),
+    ('module\n\npublic import Elements.«areas-p5»\n' + BODY,
+     [('areas-p5', 'public import Elements.«areas-p5»\n')]),
+    ('module\n\npublic import Elements.«areas.p5»\n' + BODY,
+     [('areas.p5', 'public import Elements.«areas.p5»\n')]),
+    ('module public import Elements.Base\n' + BODY, [('Base', 'public import Elements.Base\n')]),
+    ('module\n\npublic import Elements.«a"b»\n' + BODY, [('a"b', 'public import Elements.«a"b»\n')]),
+    ('module\n\npublic import Elements.Base', [('Base', 'public import Elements.Base')]),
+    ('module\n\n/- a /- nested -/ comment -/\n  public import Elements.Base\n'
+     'import Elements.«areas-p5» -- the figure\n\n/-! The file. -/\n\npublic section\n' + BODY,
+     [('Base', 'public import Elements.Base\n'),
+      ('areas-p5', 'import Elements.«areas-p5» -- the figure\n')]),
+    *((f'module\n\n{header}\n' + BODY, None) for header in (
+        'meta public import Elements.Base', 'public public import Elements.Base',
+        'private import Elements.Base', '@[expose] import Elements.Base',
+        '@[\nexpose\n]\nimport Elements.Base', 'partial\nimport Elements.Base',
+        'nonrec\nimport Elements.Base', '/-- declaration documentation -/\nimport Elements.Base',
+        'import Elements.Base Elements.Base', 'import all Elements.Base',
+        'import all\n  Elements.Base', 'all\nimport Elements.Base',
+        'public /-- doc -/ import Elements.Base', '/-! The file. -/\nimport Elements.Base',
+        'prelude\nimport Elements.Base', 'import Elements.Base import Elements.«areas-p5»',
+        'public import Elements.«a/b»', 'theorem t : True := trivial\nimport Elements.Base')),
 )
 HELPER_NAMES = ('jev_questions_test_first', 'jev_questions_test_second')
 
@@ -572,7 +583,18 @@ class FileContainment(unittest.TestCase):
                 del self.metadata['evidence_files'][path.name]
 
 
-class Imports(unittest.TestCase):
+class Files(questions.Evidence):
+    """Evidence read from a temporary folder, with no Git."""
+
+    def __init__(self, root):
+        super().__init__('0' * 40)
+        self.root = root
+
+    def read(self, path):
+        return (self.root / path).read_text()
+
+
+class LeanFiles(unittest.TestCase):
     def index(self, files):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -580,38 +602,65 @@ class Imports(unittest.TestCase):
         (root / 'Elements').mkdir()
         for name, text in files.items():
             (root / 'Elements' / name).write_text(text)
-        evidence = SimpleNamespace(read=lambda path: (root / path).read_text())
         with patch.object(questions, 'ROOT', root):
-            return questions.Index(evidence)
+            return questions.Index(Files(root))
 
-    def test_public_and_meta_imports_are_imports(self):
-        sources = {name: prefix + text + BODY for name, (prefix, text) in LEAN_IMPORTS.items()}
-        raw_sources = {name: 'module\n\n' + text + BODY
-                       for name, (_, text) in RAW_IMPORTS.items()}
-        raw_targets = {target: 'namespace Elements\n\nend Elements\n'
-                       for target, _ in RAW_IMPORTS.values()}
-        index = self.index({'Base.lean': BASE, **raw_targets, **sources, **raw_sources})
-        for name, (_, text) in LEAN_IMPORTS.items():
-            path = 'Elements/' + name
-            with self.subTest(name=name):
-                [(target, start, end)] = index.imports[path]
-                self.assertEqual(target, 'Elements/Base.lean')
-                self.assertEqual(sources[name][start:end], text)
-                self.assertIn('Elements/Base.lean', index.visible(path))
-        for name, (target, text) in RAW_IMPORTS.items():
-            path = 'Elements/' + name
-            imported = 'Elements/' + target
-            with self.subTest(name=name):
-                [(actual, start, end)] = index.imports[path]
-                self.assertEqual(actual, imported)
-                self.assertEqual(raw_sources[name][start:end], text)
-                self.assertIn(imported, index.visible(path))
+    def calls(self, text):
+        return questions.Calls(self.index({'Proof.lean': text}), {})
 
-    def test_other_import_forms_are_refused(self):
-        for header in REFUSED_IMPORTS:
-            with self.subTest(header=header):
-                with self.assertRaisesRegex(questions.Refusal, 'unsupported import'):
-                    self.index({'Base.lean': BASE, 'Bad.lean': 'module\n\n' + header + '\n' + BODY})
+
+class Imports(LeanFiles):
+    def test_headers_are_read_with_exact_spans_or_refused(self):
+        targets = {name: BASE if name == 'Base.lean' else BODY for name in IMPORTED}
+        for text, expected in HEADERS:
+            with self.subTest(text=text):
+                if expected is None:
+                    with self.assertRaisesRegex(questions.Refusal, 'unsupported import'):
+                        self.index({**targets, 'Header.lean': text})
+                    continue
+                index = self.index({**targets, 'Header.lean': text})
+                spans = index.imports['Elements/Header.lean']
+                self.assertEqual([(target, text[start:end]) for target, start, end in spans],
+                                 [(f'Elements/{name}.lean', words) for name, words in expected])
+                source = {'excerpts': []}
+                self.assertEqual(index.import_text(source, 'imports', 'Elements/Header.lean'),
+                                 text[spans[0][1]:spans[-1][2]])
+                self.assertEqual(source['excerpts'][0]['end'], spans[-1][2])
+                for target, _, _ in spans:
+                    self.assertIn(target, index.visible('Elements/Header.lean'))
+
+
+class CallReconciler(LeanFiles):
+    """The forms of I.4's and I.8's proofs on the superposition branch."""
+
+    def test_every_constructor_on_a_line_is_a_member(self):
+        calls = self.calls('namespace Elements\n\ninductive Pt where\n  | a | b | c\n\n'
+                           'theorem uses (p : Pt) : p = .c ∨ True := Or.inr trivial\n\n'
+                           'end Elements\n')
+        found = calls.direct('Elements.uses')
+        self.assertEqual(calls.unresolved['Elements.uses'], set())
+        self.assertIn(('c', 'Elements.Pt', 'field candidates via signature closure'),
+                      [(c['token'], c['name'], c['resolution']) for c in found])
+
+    def test_open_in_names_a_namespace_within_the_current_one(self):
+        calls = self.calls('namespace Elements.BookI\n\nnamespace Prop4\n\n'
+                           'theorem helper : True := trivial\n\nend Prop4\n\n'
+                           'open Prop4 in\ntheorem Prop4 : True := helper\n\nend Elements.BookI\n')
+        self.assertEqual([c['name'] for c in calls.direct('Elements.BookI.Prop4')],
+                         ['Elements.BookI.Prop4.helper'])
+
+    def test_lean_core_list_lemmas_are_not_missing_names(self):
+        calls = self.calls('namespace Elements\n\ntheorem lists : True := by\n'
+                           '  have h := @List.mem_nil_iff\n  have k := @List.forall_mem_cons\n'
+                           '  trivial\n\nend Elements\n')
+        self.assertEqual(calls.direct('Elements.lists'), [])
+        self.assertEqual(calls.unresolved['Elements.lists'], set())
+
+    def test_an_inductive_does_not_call_its_own_constructors(self):
+        # Each constructor shares its name with an abbreviation declared after it.
+        calls = self.calls('namespace Elements\n\ninductive Pt where\n  | a | b\n\n'
+                           'abbrev a : Pt := .a\nabbrev b : Pt := .b\n\nend Elements\n')
+        self.assertEqual(calls.direct('Elements.Pt'), [])
 
 
 class HelperModules(unittest.TestCase):
