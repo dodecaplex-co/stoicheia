@@ -224,7 +224,9 @@ staged. It never reads the working tree or opens a file, and
    module names, with `BookR` and `PropNN` under `Elements/` (`Prop01.lean`, never
    `Prop1.lean`), save that the model's laws, directly in `model/Model/Laws/`, keep the
    model's lower-case names (`areas-p5.lean`); `lakefile.lean` is refused anywhere. A
-   Python file's name can be imported.
+   Python file's name is a lower-case importable identifier: it begins with a letter,
+   continues with lower-case letters, digits or underscores, and is not a Python keyword;
+   soft keywords are allowed.
 6. **Modes.** No symbolic links and no submodules. Six scripts are executable, and they
    alone: the two hooks, `safe_push.py`, `check_release_gate.py`, `install_hooks.sh` and
    `copy_acceptance_checks.sh`.
@@ -236,10 +238,12 @@ pre-flight ([section 10, "Landing work"](#landing-work-pull-requests)) judges ev
 a pull request brings by origin/main's standard, so an entry is taken out of a list (an
 executable, an extension, a named file) only when no open branch's history still holds a
 path it allows; otherwise that branch is first rebuilt without the path. The script
-judges only its own repository: when `GIT_DIR` or `GIT_WORK_TREE` names another work tree,
-as `GIT_DIR` does in a Git alias run from a linked worktree, it refuses and says how to
-run it. A module planted beside it, such as `scripts/unicodedata.py`, is never read in
-place of the standard library's.
+judges only its own repository: it independently discovers both the script's worktree and
+that worktree's Git directory, including a linked worktree's own directory. An explicit
+`GIT_DIR` and `GIT_WORK_TREE` pair for that worktree is accepted; a foreign Git directory
+or worktree is refused, with instructions for running the check without the override. A
+module planted beside it, such as `scripts/unicodedata.py`, is never read in place of the
+standard library's.
 
 ## 5. Proving in parallel: a voyage
 

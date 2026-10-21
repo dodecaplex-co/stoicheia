@@ -13,12 +13,12 @@ files of one name: a case twin of a file and of a folder, an NFC/NFD twin, a spa
 upper-case extension, a symbolic link, a submodule, an executable bit on a seventh file
 and one missing from the six, an svg under book/, a misnamed review record, Prop1.lean,
 a law of the model named in capitals, lakefile.lean at the root and in model/, a
-.gitattributes, a ".." segment (which Git refuses itself), and a file renamed with
-`git mv` to a bad name; an untracked file is not judged, `--rev` judges a commit's tree
-and not the index, a tree made with `git mktree` that lists one path twice is refused, a
-module planted beside the script (scripts/unicodedata.py and others) never stands in for
-the standard library's, an inherited GIT_DIR or GIT_WORK_TREE naming another work tree is
-refused with what to do, and the repository passes.
+.gitattributes, a Python keyword, a ".." segment (which Git refuses itself), and a file
+renamed with `git mv` to a bad name; an untracked file is not judged, `--rev` judges a
+commit's tree and not the index, a tree made with `git mktree` that lists one path twice
+is refused, a module planted beside the script (scripts/unicodedata.py and others) never
+stands in for the standard library's, explicit Git locations must identify both the
+script's worktree and its worktree-specific Git directory, and the repository passes.
 CI runs this file first, before the script's own `--self-test`.
 """
 

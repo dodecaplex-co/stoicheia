@@ -3746,8 +3746,10 @@ findings:
   place of the standard library's: the script takes its own folder off `sys.path` before
   any other import, and has no `from __future__` import, which would read a planted one
   first; the test file loads the script from its file, and plants such modules to show
-  that they never run. An inherited `GIT_DIR` or `GIT_WORK_TREE` that names another work
-  tree is refused, the message saying how to run the check. The pre-flight's step 3 begins
+  that they never run. The check independently discovers the script's worktree and its
+  worktree-specific Git directory. It accepts an explicit `GIT_DIR` and `GIT_WORK_TREE`
+  pair that identifies both, and refuses a foreign worktree or Git directory with a
+  message saying how to run the check. The pre-flight's step 3 begins
   with two paths guards, which refuse outright, whatever the decisions page says, and run
   before the commit is checked out, so that a refusal comes before any worktree is made.
   The first refuses a commit whose tree, or the tree of any commit it brings since
