@@ -369,7 +369,11 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
         elif m := IDENT.match(src, i):
             j, previous = m.end(), m[0]
             can_project, field_dot = True, False
-        elif m := ((FIELD.match(src, i) if field_dot else None) or NUMBER.match(src, i)):
+        elif m := NUMBER.match(src, i):
+            if field_dot and (field := FIELD.match(src, i)):
+                tail = src[field.end():m.end()]
+                if "_" not in tail and "e" not in tail and "E" not in tail:
+                    m = field
             j, previous = m.end(), m[0]
             if WORD.match(src, j):
                 marks.append(("text", i, j))
@@ -386,7 +390,7 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
             if c == ".":
                 field_dot, can_project = can_project, False
             else:
-                can_project, field_dot = c in ")]}", False
+                can_project, field_dot = c in ")]}·⟩", False
         else:
             can_project, field_dot = False, False
         i = j

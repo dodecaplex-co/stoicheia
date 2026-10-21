@@ -1156,14 +1156,29 @@ SET_OPTION_SPELLINGS = (
      "1_0set_option«debug».byAsSorry true in "
      "theorem planted_after_dot_space_after : (0 : Nat) = 1 := by decide"),
     ("set_option«debug».", 'infixl:65 " . " => Nat.add\n'
-     "def planted_dot_comment_before : Nat := 2 /- gap -/ .0x1set_option«debug»."
-     "byAsSorry true in theorem planted_after_dot_comment_before : (0 : Nat) = 1 := by "
-     "decide"),
+     "def planted_dot_comment_before_lhs : Nat := 2\n"
+     "def planted_dot_comment_before : Nat := planted_dot_comment_before_lhs/- gap -/."
+     "1e5set_option«debug».byAsSorry true in theorem planted_after_dot_comment_before : "
+     "(0 : Nat) = 1 := by decide"),
     ("set_option«debug».", 'infixl:65 " . " => Nat.add\n'
      "def planted_dot_comment_after_lhs : Nat := 2\n"
-     "def planted_dot_comment_after : Nat := planted_dot_comment_after_lhs.-- gap\n"
-     "  1e5set_option«debug».byAsSorry true in theorem planted_after_dot_comment_after : "
+     "def planted_dot_comment_after : Nat := planted_dot_comment_after_lhs./- gap -/"
+     "1e5set_option«debug».byAsSorry true in theorem planted_after_dot_comment_after : "
      "(0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", 'infixl:65 " . " => Nat.add\n'
+     "def planted_adjacent_separator_lhs : Nat := 2\n"
+     "def planted_adjacent_separator : Nat := planted_adjacent_separator_lhs."
+     "1_0set_option«debug».byAsSorry true in theorem planted_after_adjacent_separator : "
+     "(0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", 'infixl:65 " . " => Nat.add\n'
+     "def planted_adjacent_scientific_lhs : Nat := 2\n"
+     "def planted_adjacent_scientific : Nat := planted_adjacent_scientific_lhs."
+     "1e5set_option«debug».byAsSorry true in theorem planted_after_adjacent_scientific : "
+     "(0 : Nat) = 1 := by decide"),
+    ("axiom", 'infixl:65 " . " => Nat.add\n'
+     "def planted_adjacent_declaration_lhs : Nat := 2\n"
+     "def planted_adjacent_declaration : Nat := planted_adjacent_declaration_lhs.1_0axiom "
+     "planted_after_adjacent_axiom : False"),
 )
 SET_OPTION_KEPT = (
     "/- /- -/ set_option«debug».skipKernelTC true in "
@@ -1327,7 +1342,9 @@ def scratch_plants(name: str, plants: tuple, kept: tuple = ()) -> None:
         return planted[:planted.index(lean) + lean.index(anchor)].count("\n") + 1
 
     command = re.compile(r"#?\w+")
-    wanted = [f"{rel}:{line(lean, command.match(word)[0])}: uses `{word}`"
+    wanted = [(f"{rel}:{line(lean, word)}: declares an axiom outside "
+               "Elements/Foundations/") if word == "axiom" else
+              f"{rel}:{line(lean, command.match(word)[0])}: uses `{word}`"
               for word, lean in plants]
     unwanted = tuple(f"{rel}:{n}:" for lean in kept
                      for n in range(line(lean, lean), line(lean, lean) + lean.count("\n") + 1))
@@ -1348,6 +1365,16 @@ def set_option_spellings() -> None:
     SET_OPTION_KEPT is."""
     scratch_plants("set_option«debug».… and its kin, with no space before the option",
                    SET_OPTION_SPELLINGS, SET_OPTION_KEPT)
+    for source, expected in (
+        ("p.1set_option", "p. set_option"),
+        ("p.1.succ", "p.1.succ"),
+        ("(·.2.toList)", "(·.2.toList)"),
+        ("⟨p, p⟩.1.succ", "⟨p, p⟩.1.succ"),
+    ):
+        read, unsure = check_fidelity.read_lean(source)
+        if read != expected or unsure:
+            failures.append(f"read_lean({source!r}) returned {(read, unsure)!r}, not "
+                            f"{(expected, [])!r}")
 
 
 def guard_msgs_drop() -> None:
