@@ -3267,7 +3267,7 @@ findings:
 ## 21 October 2026
 
 - **Which laws' proofs draw: computed, not set by hand (#150, question 4).** Of the two
-  routes #150 offers, route (b) is taken: the hand-set flag `Cited.drawsNothing` is retired,
+  routes #150 offers, the coordinator takes route (b): the hand-set flag `Cited.drawsNothing` is retired,
   in the content change that follows this one, and the certificate records what each cited
   law's proof uses. Route (a) would have kept a flag that, under the permissive reading the
   owner approved on 20 October ("as prototyped"), carries no logical weight, and a check of
