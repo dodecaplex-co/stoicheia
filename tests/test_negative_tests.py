@@ -8,24 +8,40 @@ The negative suite runs these first. Temporary files stand in for Lake outputs;
 simulated builds delete, replace and create them before failing or being interrupted.
 A temporary repository stands in for the pre-flight's pass with origin/main's checks,
 whose work tree lacks the files a commit adds under the check inputs while Git's index
-still lists them.
+still lists them. The plants are reached as the suite reaches them, through its loader
+of scripts/negative/, and the loader is tested on temporary folders of small plants.
 """
 
 import io
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
 import negative_tests as negative  # noqa: E402
+
+
+def plant(name):
+    """The plant() of scripts/negative/<name>.py, as the loader gives it."""
+    plants, faults = negative.load_plants(REPO / "scripts" / "negative")
+    assert not faults, faults
+    return next(p for p in plants if p.name == name).plant
+
+
+def stand_in(root, **kwargs):
+    """One stand-in plant, its function a Mock given `kwargs`, as load_plants returns it."""
+    function = Mock(**kwargs)
+    return ([negative.Plant("heath_word", root / "scripts/negative/heath_word.py",
+                            "A stand-in.", False, function)], []), function
 
 
 class RestorationTests(unittest.TestCase):
@@ -109,7 +125,7 @@ class RestorationTests(unittest.TestCase):
         with patch.object(negative, "run", side_effect=run), \
                 patch.object(negative.check_kernel, "toolchain_bin",
                              return_value=Path("toolchain")):
-            negative.corrupt_olean()
+            plant("corrupt_olean")()
         self.assertEqual(len(calls), 3)
         self.assertEqual(path.read_bytes(), b"olean rebuilt")
         self.assertEqual(negative.failures, [])
@@ -130,9 +146,9 @@ class RestorationTests(unittest.TestCase):
                                      return_value=Path("toolchain")):
                     if interrupt:
                         with self.assertRaises(KeyboardInterrupt):
-                            negative.corrupt_olean()
+                            plant("corrupt_olean")()
                     else:
-                        negative.corrupt_olean()
+                        plant("corrupt_olean")()
                         self.assertIn("the restored Elements build: exit 1", negative.failures)
                 self.assertEqual(commands.call_count, 2)
                 self.assertEqual(self.files(), saved)
@@ -162,9 +178,9 @@ class RestorationTests(unittest.TestCase):
                 with patch.object(negative, "run", side_effect=run) as commands:
                     if interrupt:
                         with self.assertRaises(KeyboardInterrupt):
-                            negative.changed_audit_pin()
+                            plant("changed_audit_pin")()
                     else:
-                        negative.changed_audit_pin()
+                        plant("changed_audit_pin")()
                         self.assertIn("the restored audit build: exit 1", negative.failures)
                 self.assertEqual(commands.call_count, 2)
                 self.assertEqual(source.read_bytes(), original)
@@ -204,7 +220,7 @@ class RestorationTests(unittest.TestCase):
                         "Docstring on `#guard_msgs` does not match generated message "
                         f"Audit.III_2 {dropped}")
                 with patch.object(negative, "run", side_effect=run):
-                    negative.changed_audit_pin()
+                    plant("changed_audit_pin")()
                 self.assertEqual(len(calls), 2)
                 self.assertEqual(source.read_bytes(), original)
                 self.assertEqual(negative.failures, [])
@@ -237,9 +253,9 @@ class RestorationTests(unittest.TestCase):
                 with patch.object(negative, "run", side_effect=run) as commands:
                     if outcome == "interrupted":
                         with self.assertRaises(KeyboardInterrupt):
-                            negative.planted_assumptions()
+                            plant("planted_assumptions")()
                     else:
-                        negative.planted_assumptions()
+                        plant("planted_assumptions")()
                 self.assertEqual(commands.call_count, 2)
                 self.assertFalse(self.planted.exists())
                 for rel, data in originals.items():
@@ -257,7 +273,7 @@ class RestorationTests(unittest.TestCase):
             raise KeyboardInterrupt("certificate test interrupted")
         with patch.object(negative, "run", side_effect=interrupted):
             with self.assertRaises(KeyboardInterrupt):
-                negative.certificate_constructor_counting()
+                plant("certificate_constructor_counting")()
         self.assertEqual(source.read_bytes(), original)
 
     def test_certificate_plant_restores_source_when_mutation_fails(self):
@@ -274,19 +290,21 @@ class RestorationTests(unittest.TestCase):
                 with patch.object(Path, "write_text", damaged_write), \
                         patch.object(negative, "run") as commands:
                     with self.assertRaises(type(error)) as raised:
-                        negative.certificate_constructor_counting()
+                        plant("certificate_constructor_counting")()
                 self.assertIs(raised.exception, error)
                 commands.assert_not_called()
                 self.assertEqual(source.read_bytes(), original)
 
     def test_failed_regressions_stop_before_any_plant(self):
+        loaded, first = stand_in(self.root)
         with patch.object(negative, "run", return_value=subprocess.CompletedProcess(
                 [], 1, "", "regression failed")) as commands, \
-                patch.object(negative, "heath_word") as plant:
+                patch.object(negative, "load_plants", return_value=loaded) as load:
             self.assertEqual(negative.main(), 1)
         self.assertEqual(commands.call_args.args,
                          (sys.executable, "-I", "tests/test_negative_tests.py"))
-        plant.assert_not_called()
+        first.assert_not_called()
+        load.assert_not_called()
 
     def test_final_status_checked_without_replacing_original_exception(self):
         for final in ("unchanged", "changed", "failed", "raised"):
@@ -307,9 +325,10 @@ class RestorationTests(unittest.TestCase):
                         if final == "changed":
                             return subprocess.CompletedProcess(cmd, 0, " M unexpected\n", "")
                     return subprocess.CompletedProcess(cmd, 0, " M entry\n", "")
+                loaded, _ = stand_in(self.root, side_effect=original)
                 with redirect_stdout(output), \
                         patch.object(negative, "run", side_effect=run), \
-                        patch.object(negative, "heath_word", side_effect=original):
+                        patch.object(negative, "load_plants", return_value=loaded):
                     with self.assertRaises(KeyboardInterrupt) as raised:
                         negative.main()
                 self.assertIs(raised.exception, original)
@@ -405,7 +424,7 @@ class CircleRuleTests(unittest.TestCase):
                 self.errors[:] = ["a previous finding"]
                 with patch.object(negative.check_fidelity, "check_lock",
                                   wraps=negative.check_fidelity.check_lock) as check:
-                    negative.circle_proved()
+                    plant("circle_proved")()
                 self.assertEqual(check.call_count, 2)
                 calls = [call.args[0] for call in check.call_args_list]
                 self.assertEqual(calls[0]["proved_rules"][self.inside], [])
@@ -427,7 +446,7 @@ class CircleRuleTests(unittest.TestCase):
                     with patch.object(negative.check_fidelity, "check_lock",
                                       side_effect=exception("interrupted")):
                         with self.assertRaises(exception):
-                            negative.circle_proved()
+                            plant("circle_proved")()
                     self.assertEqual(self.lock.read_bytes(), saved)
                     self.assertEqual(self.errors, ["a previous finding"])
                     self.assertEqual(json.loads((self.root / "facts.json").read_text()), facts)
@@ -532,6 +551,292 @@ class AbsentTrackedFileTests(unittest.TestCase):
                                        listing)
         self.assertEqual(self.output.getvalue(), "")
         self.assertEqual(negative.failures, [])
+
+
+PLANT = '''{doc}
+import subprocess
+
+import negative_tests as nt
+
+{builds}
+
+
+{plant}
+'''
+DOC = '"""A plant the loader\'s tests write."""'
+
+
+def plant_source(name, *, doc=DOC, builds="BUILDS = False", body='nt.refused("{name}: caught")',
+                 function=None):
+    """A plant's file: it leaves planted-<name> in ROOT, so a test sees that it ran, and then
+    does `body`."""
+    if function is None:
+        function = ("def plant() -> None:\n"
+                    f'    (nt.ROOT / "planted-{name}").touch()\n'
+                    f"    {body.format(name=name)}")
+    return PLANT.format(doc=doc, builds=builds, plant=function)
+
+
+class LoaderTests(unittest.TestCase):
+    """The loader of scripts/negative/, and main() around it, on temporary folders of small
+    plants, without Lean or Git: `run` is a stand-in that passes, so the regressions, the
+    Git bracket and the final check are calls it records."""
+
+    def setUp(self):
+        self.root = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+        self.folder = self.root / "scripts/negative"
+        self.folder.mkdir(parents=True)
+        self.enterContext(patch.multiple(negative, ROOT=self.root, failures=[]))
+        self.calls = []
+        self.fidelity = 0
+
+        def run(*cmd):
+            self.calls.append(cmd)
+            code = self.fidelity if cmd[1:] == ("scripts/check_fidelity.py",) else 0
+            return subprocess.CompletedProcess(cmd, code, "", "")
+        self.enterContext(patch.object(negative, "run", side_effect=run))
+        self.output = self.enterContext(redirect_stdout(io.StringIO()))
+
+    def write(self, name, text):
+        (self.folder / name).write_text(text)
+
+    def reset(self):
+        if self.folder.is_dir():
+            shutil.rmtree(self.folder)
+        else:
+            self.folder.unlink(missing_ok=True)
+        self.folder.mkdir()
+        for path in self.root.glob("planted-*"):
+            path.unlink()
+        negative.failures.clear()
+        self.calls.clear()
+        self.output.truncate(0)
+        self.output.seek(0)
+
+    def planted(self):
+        return sorted(p.name.removeprefix("planted-") for p in self.root.glob("planted-*"))
+
+    def git_status(self):
+        return [cmd for cmd in self.calls if cmd[:2] == ("git", "status")]
+
+    def assert_refused_before_planting(self, *faults):
+        self.assertEqual(negative.main(), 1)
+        self.assertEqual(len(negative.failures), len(faults), negative.failures)
+        for fault, failure in zip(faults, negative.failures):
+            self.assertTrue(failure.startswith(fault), f"{failure!r} for {fault!r}")
+            self.assertIn(f"✗ {failure}\n", self.output.getvalue())
+        self.assertIn("loading the plants (scripts/negative/):\n  ✗ " + negative.failures[0],
+                      self.output.getvalue())
+        self.assertEqual(self.planted(), [])
+        self.assertEqual(self.git_status(), [])
+
+    def test_the_stable_order(self):
+        for name, builds in (("zeta", False), ("alpha", True), ("beta", False),
+                             ("gamma", True), ("a1_b", False)):
+            self.write(f"{name}.py", plant_source(name, builds=f"BUILDS = {builds}"))
+        plants, faults = negative.load_plants()
+        self.assertEqual(faults, [])
+        order = [("a1_b", False), ("beta", False), ("zeta", False), ("alpha", True),
+                 ("gamma", True)]
+        self.assertEqual([(p.name, p.builds) for p in plants], order)
+        self.assertEqual(plants[0].path, self.folder / "a1_b.py")
+        self.assertEqual(plants[0].description, "A plant the loader's tests write.")
+        again, faults = negative.load_plants(self.folder)
+        self.assertEqual([p[:4] for p in again], [p[:4] for p in plants])
+        self.assertEqual(faults, [])
+        self.assertEqual(negative.main(), 0)
+        output = self.output.getvalue()
+        headings = [output.index(f"\n{name} (scripts/negative/{name}.py)\n") for name, _ in order]
+        self.assertEqual(headings, sorted(headings))
+        for name, _ in order:
+            self.assertRegex(output, rf"\n  {name}: \d+\.\d\ds \(including restoration\)\n")
+        self.assertEqual(self.planted(), sorted(name for name, _ in order))
+        self.assertEqual(len(self.git_status()), 2)
+
+    def test_each_fault_fails_main_with_nothing_planted(self):
+        def file(text=""):
+            return lambda path: path.write_text(text)
+
+        def link(target):
+            return lambda path: path.symlink_to(target)
+
+        def directory(path):
+            path.mkdir()
+
+        name = "not a plant's file name, which is [a-z][a-z0-9_]*.py"
+        unloaded = "does not load: "
+        cases = [
+            ("Capital.py", file(plant_source("Capital")), name),
+            ("1st.py", file(plant_source("1st")), name),
+            ("with-dash.py", file(plant_source("dash")), name),
+            ("_private.py", file(plant_source("private")), name),
+            ("notes.txt", file("notes"), name),
+            ("good.py.orig", file(plant_source("orig")), name),
+            ("README", file("A folder of plants."), name),
+            ("__pycache__", file(), name),
+            ("linked.py", link(self.folder / "good.py"), "a symbolic link, which is not read"),
+            ("dangling.py", link(self.root / "missing.py"), "a symbolic link, which is not read"),
+            ("cached", link(self.root), "a symbolic link, which is not read"),
+            ("nested", directory, "a directory, not a plant's file"),
+            ("nested.py", directory, "a directory, not a plant's file"),
+            ("broken.py", file(plant_source("broken", function="def plant(:\n    pass")),
+             unloaded + "SyntaxError: "),
+            ("raises.py", file(DOC + '\nraise RuntimeError("raised on import")\n'),
+             unloaded + "RuntimeError: raised on import"),
+            ("exits.py", file(DOC + "\nimport sys\nsys.exit(3)\n"), unloaded + "SystemExit: 3"),
+            ("imports.py", file(DOC + "\nimport no_such_module_for_a_plant\n"),
+             unloaded + "ModuleNotFoundError: "),
+            ("undescribed.py", file(plant_source("undescribed", doc="")), "no description"),
+            ("blank.py", file(plant_source("blank", doc='"""  \n  """')), "no description"),
+            ("unbuilt.py", file(plant_source("unbuilt", builds="")), "no BUILDS"),
+            ("one.py", file(plant_source("one", builds="BUILDS = 1")),
+             "BUILDS is 1, not True or False"),
+            ("words.py", file(plant_source("words", builds='BUILDS = "False"')),
+             "BUILDS is 'False', not True or False"),
+            ("nothing.py", file(plant_source("nothing", builds="BUILDS = None")),
+             "BUILDS is None, not True or False"),
+            ("plantless.py", file(plant_source("plantless", function="")), "no plant()"),
+            ("uncallable.py", file(plant_source("uncallable", function='plant = "plant"')),
+             "plant is str, not a function"),
+            ("argued.py", file(plant_source("argued", function="def plant(where):\n    pass")),
+             "plant() must take no arguments"),
+            ("keyword.py",
+             file(plant_source("keyword", function="def plant(*, where):\n    pass")),
+             "plant() must take no arguments"),
+        ]
+        for entry, make, reason in cases:
+            with self.subTest(entry=entry):
+                self.reset()
+                self.write("good.py", plant_source("good"))
+                make(self.folder / entry)
+                self.assert_refused_before_planting(f"scripts/negative/{entry}: {reason}")
+        with self.subTest(entry="several faults in one file"):
+            self.reset()
+            self.write("bare.py", plant_source("bare", doc="", builds="", function=""))
+            self.assert_refused_before_planting(
+                "scripts/negative/bare.py: no description", "scripts/negative/bare.py: no BUILDS",
+                "scripts/negative/bare.py: no plant()")
+
+    def test_a_missing_or_empty_folder_fails_main(self):
+        cases = [("missing", lambda: self.folder.rmdir(),
+                  "scripts/negative: the plants' folder cannot be listed (FileNotFoundError"),
+                 ("a file", lambda: (self.folder.rmdir(), self.folder.write_text("")),
+                  "scripts/negative: the plants' folder cannot be listed (NotADirectoryError"),
+                 ("empty", lambda: None, "scripts/negative: no plants"),
+                 ("only __pycache__", lambda: (self.folder / "__pycache__").mkdir(),
+                  "scripts/negative: no plants")]
+        for what, make, fault in cases:
+            with self.subTest(folder=what):
+                self.reset()
+                make()
+                self.assert_refused_before_planting(fault)
+
+    def test_pycache_is_passed_over(self):
+        self.write("good.py", plant_source("good"))
+        (self.folder / "__pycache__").mkdir()
+        (self.folder / "__pycache__/stale.cpython-312.pyc").write_bytes(b"not a plant")
+        plants, faults = negative.load_plants()
+        self.assertEqual(([p.name for p in plants], faults), (["good"], []))
+
+    def test_a_plant_that_refuses_nothing_fails_by_name(self):
+        self.write("quiet.py", plant_source("quiet", body='print("✓ a control, not a refusal")'))
+        self.write("loud.py", plant_source("loud"))
+        self.assertEqual(negative.main(), 1)
+        message = "quiet: nothing refused what scripts/negative/quiet.py planted"
+        self.assertEqual(negative.failures, [message])
+        self.assertIn(f"✗ {message}\n", self.output.getvalue())
+        self.assertIn(f"quiet (scripts/negative/quiet.py):\n  ✗ {message}\n",
+                      self.output.getvalue())
+        self.assertEqual(self.planted(), ["loud", "quiet"])
+        self.assertEqual(len(self.git_status()), 2)
+
+    def test_a_plant_whose_check_passes_fails(self):
+        self.write("passes.py", plant_source("passes", body=(
+            'nt.expect_failure("a check that passes", subprocess.CompletedProcess('
+            '[], 0, "", ""), "refused")')))
+        self.assertEqual(negative.main(), 1)
+        message = "a check that passes: not caught (missing 'refused')"
+        self.assertEqual(negative.failures, [message])
+        self.assertIn(f"passes (scripts/negative/passes.py):\n  ✗ {message}\n",
+                      self.output.getvalue())
+
+    def test_a_plant_that_records_a_refusal_passes(self):
+        self.write("caught.py", plant_source("caught", body=(
+            'nt.expect_failure("a check that fails", subprocess.CompletedProcess('
+            '[], 1, "refused here", ""), "refused")')))
+        self.write("judged.py", plant_source("judged", body='nt.refused("judged by hand")'))
+        refusals = len(negative.refusals)
+        self.assertEqual(negative.main(), 0)
+        self.assertEqual(negative.failures, [])
+        self.assertEqual(negative.refusals[refusals:], ["a check that fails: caught",
+                                                        "judged by hand"])
+        for line in ("✓ a check that fails: caught\n", "✓ judged by hand\n",
+                     "✓ the unplanted tree passes check_fidelity.py\n",
+                     "✓ every planted change was caught\n"):
+            self.assertIn(line, self.output.getvalue())
+
+    def test_failures_outside_a_plant_have_a_heading_of_their_own(self):
+        self.write("passes.py", plant_source("passes", body=(
+            'nt.expect_failure("a check that passes", subprocess.CompletedProcess('
+            '[], 0, "", ""))')))
+        self.fidelity = 1
+        self.assertEqual(negative.main(), 1)
+        self.assertEqual(negative.failures, ["a check that passes: not caught",
+                                             "the unplanted tree failed check_fidelity.py"])
+        self.assertTrue(self.output.getvalue().endswith(
+            "2 negative-test failure(s):\n"
+            "passes (scripts/negative/passes.py):\n  ✗ a check that passes: not caught\n"
+            "outside any plant:\n  ✗ the unplanted tree failed check_fidelity.py\n"))
+
+    def test_plant_option(self):
+        for name in ("one", "two", "three"):
+            self.write(f"{name}.py", plant_source(name))
+        self.assertEqual(negative.main(["--plant", "two", "--plant", "one"]), 0)
+        self.assertEqual(self.planted(), ["one", "two"])
+        self.assertEqual(len(self.git_status()), 2)
+        self.assertEqual(self.calls[-2], (sys.executable, "scripts/check_fidelity.py"))
+        output = self.output.getvalue()
+        self.assertLess(output.index("\none (scripts/negative/one.py)\n"),
+                        output.index("\ntwo (scripts/negative/two.py)\n"))
+        for known, unknown in ((["one", "nine"], "'nine'"), (["ten", "nine"], "'ten', 'nine'")):
+            with self.subTest(names=known):
+                for path in self.root.glob("planted-*"):
+                    path.unlink()
+                self.calls.clear()
+                errors = io.StringIO()
+                with redirect_stderr(errors), self.assertRaises(SystemExit) as raised:
+                    negative.main([arg for name in known for arg in ("--plant", name)])
+                self.assertEqual(raised.exception.code, 2)
+                self.assertIn(f"no plant {unknown} in scripts/negative/; the plants are one, "
+                              "three, two", errors.getvalue())
+                self.assertEqual(self.planted(), [])
+                self.assertEqual(self.git_status(), [])
+        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as raised:
+            negative.main(["--plant", "one", "--counts-only"])
+        self.assertEqual(raised.exception.code, 2)
+        self.assertEqual(self.planted(), [])
+
+    def test_counts_only_runs_count_markers_alone_without_git(self):
+        self.write("count_markers.py", plant_source("count_markers"))
+        self.write("other.py", plant_source("other"))
+        self.assertEqual(negative.main(["--counts-only"]), 0)
+        self.assertEqual(self.planted(), ["count_markers"])
+        self.assertEqual(self.git_status(), [])
+        self.assertTrue(self.output.getvalue().endswith(
+            "✓ count plants passed; other plants were not run (--counts-only)\n"))
+
+    def test_the_real_plants_load(self):
+        folder = REPO / "scripts" / "negative"
+        plants, faults = negative.load_plants(folder)
+        self.assertEqual(faults, [])
+        names = [p.name for p in plants]
+        self.assertEqual(len(names), len(set(names)))
+        self.assertEqual(sorted(names), sorted(path.stem for path in folder.iterdir()
+                                               if path.name != "__pycache__"))
+        self.assertEqual(plants, sorted(plants, key=lambda p: (p.builds, p.name)))
+        for p in plants:
+            self.assertEqual(p.path, folder / f"{p.name}.py")
+            self.assertTrue(p.description)
 
 
 if __name__ == "__main__":

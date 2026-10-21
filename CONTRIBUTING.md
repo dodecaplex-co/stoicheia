@@ -73,6 +73,12 @@ python3 scripts/render.py
 If you change a Lean file, its review record goes stale, even for a comment: say so in the
 pull request, and leave the stamp to a reviewer (WORKFLOW.md, section 6).
 
+If you fix a check, add a test that shows the fault would now be caught. A negative test,
+which plants the fault in the real files and requires the check to refuse it, is one new
+file in `scripts/negative/`, with nothing else to edit;
+[WORKFLOW.md, section 8](docs/WORKFLOW.md#8-validation-on-the-integrated-revision), says
+what the file holds, how to run it alone, and what its pull request carries.
+
 Working alone on a pull request, you are its integrator: commit the regenerated `book/`,
 `CERTIFICATE.md`, `GRAPH.md`, `facts.json`, README.md's rows between the
 `<!-- scope:… -->` markers and PROGRAM.md's status table with your change, and CI checks

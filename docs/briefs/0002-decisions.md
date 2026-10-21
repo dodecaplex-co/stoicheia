@@ -3751,3 +3751,67 @@ findings:
   arcs in I.1's figure. Each is caught by this check, and main's check passes each planted
   tree. [STYLE](../STYLE.md), section 8, says each change in the rows of S24, S25 and S26.
   No check, test or expected value is weakened.
+
+- **Each negative test's plant is a file of its own
+  ([#205](https://github.com/jackChallis/stoicheia/issues/205)).** The protected file
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) numbered its plants in one
+  docstring and called each from one list in `main()`, so two branches that each added a
+  plant took the same next number and edited the same list. On 21 October that happened
+  three times (#172 against #158 against #168, and F2's #150 chain against #172), each
+  resolved by hand. The issue quotes the owner's words of that day: "I'd like to prevent
+  the problems we KNOW we have." Each plant is now a file in `scripts/negative/`, named for
+  it, holding its description as the module docstring (what it plants, which check must
+  refuse it and what that check must say), `BUILDS`, True for the three that run
+  `lake build`, and `plant()`, which reaches the shared helpers as `nt.<name>`. The suite
+  lists that folder, never Git's index, so the pre-flight's pass with origin/main's checks,
+  which takes out the files a commit adds, runs main's plants. It runs every plant that
+  needs no build, by name, then every one that builds, by name, naming each with its file
+  before it and timing each after it, restoration included; the closing list gives each
+  failure, in its old words, under the plant that added it. Adding a plant is adding one
+  file, with no number to choose and no list to edit. `--plant NAME` runs the plants named,
+  inside the same Git bracket and with the same closing check of the unplanted tree, and
+  exits 2 on a name it does not know; `--counts-only` keeps its meaning. The loader is
+  checked too: a missing or empty folder, an entry other than `__pycache__` that is not a
+  regular file with a plant's name (a symbolic link or a directory among them), a file
+  that does not import, and one with no description, no `BUILDS` of True or False, or no
+  `plant()` callable with no arguments, each fails the run, named, before anything is
+  planted; and a plant that records no refusal and adds no failure fails the run by its
+  name. To count refusals, `expect_failure` records one where it printed "caught", through
+  a new `refused` that prints the same line, and stale_page, the one plant that judges its
+  refusal by hand, calls `refused` with the words it printed.
+
+  Every one of main's 29 plants is carried over unchanged in behaviour: the same changes
+  planted and the same refusals expected. Each `plant()` is its old function's body,
+  character for character, but that each module-level name of `negative_tests.py` it uses
+  is written `nt.<name>`, and stale_page's printed refusal goes through `refused`. The
+  constants and helpers that one plant alone used move into its file with their comments:
+  `PLANTED_COMMANDS`, `PLANTED_FILES` and `BOOK_ZERO` into forbidden_commands, `toml_blocks`
+  into undeclared_run and `rules_in` into lake_links. The order of the run changes to the
+  one above, which keeps merge_conflict_markers before the plants that build, as its
+  description asks. The captain adds the evidence of equivalence, plant by plant, to this
+  entry. The protected test file
+  [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) keeps every test and
+  assertion, reaching the plants through the loader, and gains `LoaderTests`, eleven tests
+  on temporary folders without Lean or Git: the order; each kind of fault, each failing
+  the run with nothing planted; a plant that refuses nothing, one whose check passes and
+  one that records a refusal; `--plant` and `--counts-only`; and the real folder loading
+  with no fault. [WORKFLOW](../WORKFLOW.md), section 8, and CONTRIBUTING say how to add a
+  plant, and that its file, being under `scripts/`, is named in a decisions entry and
+  carries `security-review`. CI's `negative` job and `scripts/safe_push.py` are unchanged.
+  No check, plant or expected value is weakened. The protected files this changes are
+  `scripts/negative_tests.py` and `tests/test_negative_tests.py`, and the 29 plants, each
+  new: `scripts/negative/broken_link.py`, `scripts/negative/certificate_constructor_counting.py`,
+  `scripts/negative/changed_audit_pin.py`, `scripts/negative/changed_word.py`,
+  `scripts/negative/circle_dependencies.py`, `scripts/negative/circle_proved.py`,
+  `scripts/negative/circle_renamed.py`, `scripts/negative/corrupt_olean.py`,
+  `scripts/negative/count_markers.py`, `scripts/negative/figure_names_and_arcs.py`,
+  `scripts/negative/forbidden_commands.py`, `scripts/negative/heath_word.py`,
+  `scripts/negative/lake_links.py`, `scripts/negative/merge_conflict_markers.py`,
+  `scripts/negative/model_lake.py`, `scripts/negative/native_decide.py`,
+  `scripts/negative/placement_called.py`, `scripts/negative/placement_named.py`,
+  `scripts/negative/planted_assumptions.py`, `scripts/negative/primitive_not_opaque.py`,
+  `scripts/negative/remark_ends_run.py`, `scripts/negative/stale_lean.py`,
+  `scripts/negative/stale_page.py`, `scripts/negative/stale_statement.py`,
+  `scripts/negative/style_error.py`, `scripts/negative/symbolic_links.py`,
+  `scripts/negative/undeclared_run.py`, `scripts/negative/weakened_postulate.py` and
+  `scripts/negative/wrong_radii.py`.
