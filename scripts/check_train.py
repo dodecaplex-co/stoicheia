@@ -436,9 +436,8 @@ def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
             problems.append(f"member {head[:12]} has no Members row")
         elif matched[head] != 1:
             problems.append(f"member {head[:12]} has more than one Members row")
-    covered = _commits(repo, *members, "--not", base) if members else set()
     for commit, parents in graph:
-        if len(parents) < 2 and commit not in covered:
+        if len(parents) < 2:
             if len(parents) != 1:
                 raise ValueError(f"could not read a parent for coordinator commit {commit}")
             for _, path in changed_files(repo, parents[0], commit):

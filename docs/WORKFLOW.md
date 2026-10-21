@@ -372,18 +372,20 @@ The ruleset and the remaining merge requirements are in
 
 On pull requests and post-merge main runs, `queue-integrity` runs the offline cases in
 `tests/test_check_queue.py`, `tests/test_check_train.py` and `tests/test_auto_revert.py`,
-each with `python3 -I`. On a merge group it is the queue's judge: it takes `scripts/`
-from the group's base and runs that `check_queue.py` with the event's head, base and
-repository, running none of the group's scripts and building and rendering nothing,
-though GitHub runs the group's own copy of this workflow file (section 10 says what
-must hold it). `queue-gaps` waits for
-acceptance and, on a merge group, runs the tests of what the group changes (`--gaps`),
-with no token in their environment. Section 10 gives the rules. The `check` job renders
-the same group and checks the pages are current, and its `check_queue.py --tree .` step,
-which the pre-flight runs too, checks that no dated decisions heading repeats, reading
-each heading as section 10's rule (d) describes; conflict markers in tracked text are S23's, in
-`scripts/check_style.py`. The train and queue checks need Git 2.42 or later
-(`merge-tree --write-tree` came in 2.38, its `--merge-base` in 2.40 and `--attr-source`
+each with `python3 -I`; locally, install their pinned YAML parser first with
+`python3 -m pip install -r scripts/requirements-test_safe_push.txt`. On a merge group
+`queue-integrity` is the queue's judge: it takes `scripts/` from the group's base and
+runs that `check_queue.py` with the event's head, base and repository, running none of
+the group's scripts and building and rendering nothing, though GitHub runs the group's
+own copy of this workflow file (section 10 says what must hold it). `queue-gaps` waits
+for acceptance and, on a merge group, runs the tests of what the group changes
+(`--gaps`), with no token in their environment. Section 10 gives the rules. The `check`
+job renders the same group and checks the pages are current, and its
+`check_queue.py --tree .` step, which the pre-flight runs too, checks that no dated
+decisions heading repeats, reading each heading as section 10's rule (d) describes;
+conflict markers in tracked text are S23's, in `scripts/check_style.py`. The train and
+queue checks need Git 2.42 or later (`merge-tree --write-tree` came in 2.38, its
+`--merge-base` in 2.40 and `--attr-source`
 in 2.42); with an older Git they refuse every train and group as unreadable.
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in

@@ -24,6 +24,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import yaml
+
 sys.dont_write_bytecode = True
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
@@ -524,15 +526,15 @@ class QueueTests(unittest.TestCase):
         self.snapshot["main"]["sha"] = self.base
         self.nodes().clear()
         one = self.train(1, {"README.md": readme.replace("Prose by hand.", "Prose, reviewed.")})
-        member = self.git("rev-parse", f"{one}^2").strip()
-        two = self.train(2, {"README.md": readme.replace("Prose by hand.", "Prose, reviewed.")
-                             .replace("Row.", "Row, regenerated.")}, start=member)
+        two = self.train(2, {"README.md": readme.replace("Row.", "Row, regenerated.")})
         first = self.merge(self.base, one, 1)
         group = self.merge(first, two, 2)
         self.verdict(self.cli(head=group), 0, "queue: PASS")
-        three = self.train(2, {"README.md": readme.replace("Row.", "Row, regenerated.")},
-                           start=member)
-        self.verdict(self.cli(head=self.merge(first, three, 2)), 1, "README.md")
+        rewritten = readme.replace("Prose by hand.", "Prose, rewritten.")
+        three = self.train(2, {"README.md": rewritten})
+        self.verdict(self.cli(head=self.merge(first, three, 2,
+                                              changes={"README.md": rewritten})),
+                     1, "batching", "conflicts or extra content")
 
     def test_preflight_reads_the_current_writer_with_a_newer_harness(self):
         old_base = self.base
@@ -753,6 +755,66 @@ class QueueTests(unittest.TestCase):
                 page.write_text(original + "\n" + added + "\n", encoding="utf-8")
                 self.verdict(self.cli(tree=True, prepare=False), 0, "queue: PASS")
         page.write_text(original, encoding="utf-8")
+
+    def test_tree_ignores_headings_in_code_and_html_blocks(self):
+        self.checkout(self.head)
+        page = self.repo / PAGE
+        original = page.read_text(encoding="utf-8")
+        for hidden in (
+                "```markdown\n## 20 October 2026\n```",
+                "~~~\n20 October 2026\n---\n~~~",
+                "    ## 20 October 2026\n\n    20 October 2026\n    ---",
+                "<!--\n## 20 October 2026\n-->",
+                "<div>\n## 20 October 2026\n</div>\n",
+                "<pre>\n## 20 October 2026\n</pre>"):
+            with self.subTest(hidden=hidden.splitlines()[0]):
+                page.write_text(original + "\n" + hidden + "\n", encoding="utf-8")
+                self.verdict(self.cli(tree=True, prepare=False), 0, "queue: PASS")
+
+    def test_tree_resumes_headings_after_rendered_blocks(self):
+        self.checkout(self.head)
+        page = self.repo / PAGE
+        original = page.read_text(encoding="utf-8")
+        for added in (
+                "```\n## hidden\n```\n## 20 October 2026",
+                "<div>\n## hidden\n</div>\n\n## 20 October 2026",
+                "<pre>\n## hidden\n</pre>\n## 20 October 2026",
+                "> ```\n> ## hidden\n## 20 October 2026"):
+            with self.subTest(added=added.splitlines()[0]):
+                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
+                self.verdict(self.cli(tree=True, prepare=False), 1,
+                             "repeated dated heading")
+
+    def test_tree_reads_only_rendered_container_headings(self):
+        self.checkout(self.head)
+        page = self.repo / PAGE
+        original = page.read_text(encoding="utf-8")
+        for added in (
+                "> 20 October 2026",
+                "> quoted prose\n> 20 October 2026",
+                "- 20 October 2026"):
+            with self.subTest(added=added):
+                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
+                self.verdict(self.cli(tree=True, prepare=False), 0, "queue: PASS")
+        for added in (
+                "> ## 20 October 2026",
+                "> 20 October 2026\n> ---",
+                "- ## 20 October 2026"):
+            with self.subTest(added=added):
+                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
+                self.verdict(self.cli(tree=True, prepare=False), 1,
+                             "repeated dated heading")
+
+    def test_tree_refuses_raw_html_headings_even_in_hidden_blocks(self):
+        self.checkout(self.head)
+        page = self.repo / PAGE
+        original = page.read_text(encoding="utf-8")
+        for added in ("```html\n<h2>20 October 2026</h2>\n```",
+                      "<!-- <h1>hidden heading</h1> -->"):
+            with self.subTest(added=added.splitlines()[0]):
+                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
+                self.verdict(self.cli(tree=True, prepare=False), 1,
+                             "an HTML heading tag")
 
     def test_long_heading_lines_are_read_in_linear_time(self):
         # A 200,000-character line, in the shapes that once backtracked ("## a", spaces
@@ -1170,10 +1232,14 @@ class QueueTests(unittest.TestCase):
 
     def queue_job(self, head, base):
         """Execute the workflow's extraction and invocation with local fixture objects."""
-        workflow = (SCRIPTS.parent / ".github/workflows/ci.yml").read_text(encoding="utf-8")
-        step = workflow.split(
-            "      - name: Check the group with main's copy of check_queue.py\n", 1)[1]
-        script = textwrap.dedent(step.split("        run: |\n", 1)[1].split("\n\n", 1)[0])
+        with (SCRIPTS.parent / ".github/workflows/ci.yml").open(encoding="utf-8") as source:
+            workflow = yaml.safe_load(source)
+        job = workflow["jobs"]["queue-integrity"]
+        steps = [step for step in job["steps"] if step.get("name") ==
+                 "Check the group with main's copy of check_queue.py"]
+        self.assertEqual(len(steps), 1)
+        script = steps[0].get("run")
+        self.assertIsInstance(script, str)
         self.checkout(head)
         runner = self.root / "runner"
         runner.mkdir()

@@ -349,6 +349,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install the queue tests' pinned YAML parser
+        run: python3 -m pip install -r scripts/requirements-test_safe_push.txt
+
       - name: Check the queue and train checks, and automatic reverts, case by case
         # On a pull request and on main: the offline cases, which need no network.
         if: github.event_name != 'merge_group'
