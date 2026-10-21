@@ -372,6 +372,14 @@ def git(cwd, *args, env=None, check=True) -> str:
     return r.stdout
 
 
+def short_sha(sha: str) -> str:
+    """A commit's short form as Git gives it in the clone under test (WORK), which is how
+    safe_push writes it (`git log --format=%h`). Git sets the width, seven digits or more
+    as the object count grows, or as core.abbrev says, so a test reads it here and never
+    assumes it (issue #178)."""
+    return git(WORK, "log", "-1", "--format=%h", sha).strip()
+
+
 def clean_env() -> dict:
     env = dict(os.environ, STOICHEIA_PUSH_LOG=str(LOG), STOICHEIA_TEST_GH=str(GH),
                STOICHEIA_FAKE_GH_STATE=str(GH_STATE), STOICHEIA_FAKE_GH_ORIGIN=str(ORIGIN),
@@ -740,8 +748,6 @@ def setUpModule():
     git(WORK, "config", "user.name", "safe_push test")
     git(WORK, "config", "user.email", "safe-push-test@example.invalid")
     git(WORK, "config", "commit.gpgsign", "false")
-    # The body assertions use seven digits; Git's default grows with the object count.
-    git(WORK, "config", "core.abbrev", "7")
     git(WORK, "checkout", "--quiet", "--detach", head)
     for rel in HARNESS_FILES:
         if (SOURCE / rel).exists():
@@ -910,7 +916,7 @@ class Accepts(Clone):
         self.assertIn(f"<!-- safe_push:preflight begin sha={sha} base={BASE} -->", body)
         self.assertIn("## Checklist", body)
         self.assertIn("- [ ] **Required:**", body)
-        self.assertIn(f"`{sha[:7]}` A good commit", body)
+        self.assertIn(f"`{short_sha(sha)}` A good commit", body)
         self.assertIn("| 3. statements | ok |", body)
         self.assertNotIn("<!-- safe_push: commits -->", body)
         self.assertNotIn(str(Path.home()), body, "a private path in the public body")
@@ -1913,7 +1919,7 @@ class PullRequests(Edge):
         self.assertNotIn("None.", statements)
         self.assertIn("`review/I/01.toml`: re-stamped at `abc1234`",
                       part(body, "Review records", "Protected paths"))
-        self.assertIn(f"`{second[:7]}` I.1 names its side point Q", body)
+        self.assertIn(f"`{short_sha(second)}` I.1 names its side point Q", body)
         for name in ("commits", "statements", "records", "protected", "generated", "preflight"):
             self.assertEqual(body.count(f"<!-- safe_push:{name} begin"), 1, name)
 
@@ -1941,7 +1947,7 @@ class PullRequests(Edge):
         for text in (words, approval):
             self.assertIn(text, body)
         self.assertEqual(re.findall(r"(?m)^## .*$", body), re.findall(r"(?m)^## .*$", before))
-        self.assertIn(f"`{second[:7]}` A good commit", body)
+        self.assertIn(f"`{short_sha(second)}` A good commit", body)
         self.assertIn(f"sha={second}", body)
         for name in ("commits", "statements", "records", "protected", "generated", "preflight"):
             self.assertEqual(len(re.findall(rf"(?m)^<!-- safe_push:{name} begin", body)), 1,
@@ -3499,7 +3505,7 @@ class ProtectedPaths(Edge):
             self.assertEqual(pin["count"]["prefix"], "Tacit.")
             pin["count"]["is"] -= 1
             if "equals" in pin:
-                pin["equals"].remove("Tacit.area_swap")
+                pin["equals"].remove(self.RETAINED_AXIOM)
         changes = {lean: new_lean, record: stamped,
                    "facts.json": json.dumps(facts, indent=2, ensure_ascii=False) + "\n",
                    expect: json.dumps(expectations, indent=2, ensure_ascii=False) + "\n"}
