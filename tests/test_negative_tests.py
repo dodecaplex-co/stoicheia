@@ -396,9 +396,23 @@ class RestorationTests(unittest.TestCase):
         self.assertEqual(negative.failures, [
             f"printing the pins of {rel}: 2 `#print axioms` commands, but 1 pins read; "
             "update this test"])
-        text = (REPO / "Audit/Superposition.lean").read_text()
-        self.assertEqual(len(list(negative.AUDIT_PIN.finditer(text))),
-                         len(re.findall(r"^#print axioms ", text, re.M)))
+        negative.failures.clear()
+        text = ("import Elements\n\n" + self.axiom_pin("Elements.a")
+                + "\n" + self.axiom_pin("Elements.b"))
+        self.write(self.root / rel, text.encode())
+
+        def run(*cmd):
+            self.assertEqual(cmd[:3], ("lake", "env", "lean"))
+            self.assertEqual(Path(cmd[3]).read_text().splitlines(), [
+                "import Elements", "#print axioms Elements.a", "#print axioms Elements.b"])
+            return subprocess.CompletedProcess(cmd, 0, "".join(
+                f"{cmd[3]}:{i}:0: info: '{name}' depends on axioms: [propext, Elements.P]\n"
+                for i, name in enumerate(("Elements.a", "Elements.b"), 2)), "")
+
+        with patch.object(negative, "run", side_effect=run):
+            changed = negative.rewritten_pins(rel)
+        self.assertEqual(negative.failures, [])
+        self.assertEqual(changed, text.replace("[propext]", "[propext, Elements.P]"))
 
     def test_certificate_plant_restores_source_on_interruption(self):
         source = self.root / "Certificate/Facts.lean"

@@ -465,7 +465,10 @@ class ExpectationTests(unittest.TestCase):
              "count": {"prefix": "", "is": 2}},
             {"ref": "I.4", "field": "cited_laws", "excludes": ["prop7"]},
             {"ref": "I.8", "field": "cited_laws", "law": "prop7", "includes": ["Postulate1"]},
-            {"ref": "I.4", "field": "cited_laws", "law": "lenSymm", "equals": []},
+            {"ref": "I.4", "field": "cited_laws", "law": "lenSymm", "excludes": [],
+             "equals": []},
+            {"ref": "I.4", "field": "cited_laws", "law": "lenSymm", "includes": [],
+             "count": {"prefix": "", "is": 0}},
             {"field": "construction_rules", "includes": ["Postulate1"],
              "excludes": ["Postulate4"]},
         ), [])
@@ -524,11 +527,16 @@ class ExpectationTests(unittest.TestCase):
         # Before #150's review this passed: an expectation with none of the four asked
         # nothing, and so could never fail.
         for expectation in ({"ref": "I.4", "field": "axioms"},
+                            {"ref": "I.4", "field": "axioms", "includes": []},
+                            {"ref": "I.4", "field": "axioms", "excludes": []},
+                            {"ref": "I.4", "field": "axioms", "includes": [],
+                             "excludes": []},
                             {"ref": "I.4", "field": "cited_laws", "law": "lenSymm"},
                             {"field": "construction_rules"}):
             with self.subTest(expectation=expectation):
-                self.assertFailsOnce(expectation, "and one or more of `includes`, "
-                                                  "`excludes`, `equals`, `count`")
+                self.assertFailsOnce(expectation, "and an effective predicate: nonempty "
+                                                  "`includes` or `excludes`, or present "
+                                                  "`equals` or `count`")
 
     def test_a_malformed_expectation_fails(self):
         for expectation in ({"ref": "I.4", "field": "axioms", "includes": [], "why": None,

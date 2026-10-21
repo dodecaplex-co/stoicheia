@@ -740,7 +740,8 @@ def check_expectations(by_ref, path: Path = EXPECTATIONS, facts: dict | None = N
     expectation that also names a `law` reads that law's `construction_rules` instead,
     and fails when the entry cites no such law. An expectation with no `ref` reads a field
     of facts.json's top level, as `construction_rules` is, from `facts`. An expectation
-    that asks nothing, with none of `includes`, `excludes`, `equals` and `count`, fails."""
+    that asks nothing fails: `includes` and `excludes` are effective only when nonempty,
+    while `equals` and `count` are effective whenever present."""
     if not path.exists():
         fail(f"{rel(path)} is missing")
         return
@@ -751,14 +752,16 @@ def check_expectations(by_ref, path: Path = EXPECTATIONS, facts: dict | None = N
         fail(f"{rel(path)}: expected a JSON object with a list `expectations` ({e})")
         return
     known = {"ref", "field", "law", "includes", "excludes", "equals", "count", "why"}
-    asks = {"includes", "excludes", "equals", "count"}
     for i, x in enumerate(expectations, 1):
         label = f"{rel(path)}, expectation {i}"
+        effective = isinstance(x, dict) and (
+            bool(x.get("includes")) or bool(x.get("excludes"))
+            or "equals" in x or "count" in x)
         if (not isinstance(x, dict) or not {"field", "why"} <= set(x) or set(x) - known
-                or not asks & set(x) or ("law" in x and "ref" not in x)):
+                or not effective or ("law" in x and "ref" not in x)):
             fail(f"{label}: needs `field` and `why`, a `ref` unless it reads the top level "
-                 "of facts.json (and always with a `law`), and one or more of `includes`, "
-                 "`excludes`, `equals`, `count`")
+                 "of facts.json (and always with a `law`), and an effective predicate: "
+                 "nonempty `includes` or `excludes`, or present `equals` or `count`")
             continue
         field, why = x["field"], x["why"]
         if "ref" in x:
