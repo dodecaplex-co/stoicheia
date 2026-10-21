@@ -96,7 +96,7 @@ records current; CI runs it on every push.
     proposition in each spelling Lean 4.35 accepts that the rule once passed: two
     spaces, a line break, a remark, a line comment or a nested remark between the words,
     nothing before «…» or a remark, `«Elements»`, `«BookI»` and a second import on one
-    line. Then, after `module`, the five forms that Lean's grammar accepts too:
+    line. Then the five forms that Lean's header allows after `module`:
     `public import`, `meta import`, `public meta import`, `import all` and
     `meta import all`. Lean refuses them while the edition's files are not modules, and
     these plants keep the rule ready for when they are. Then the name with a part in «…»
@@ -925,7 +925,7 @@ def forbidden_commands() -> None:
 
 
 # A proposition imported by Book Zero in each spelling Lean 4.35 accepts; in the five
-# forms after `module` that its grammar accepts, which Lean refuses while the edition's
+# forms that Lean's header allows after `module`, which Lean refuses while the edition's
 # files are not modules, so that the rule is ready for when they are; and in forms Lean
 # may read as one (#200). Each comes with what must be caught besides its file and line.
 BOOK_ZERO_SPELLINGS = (

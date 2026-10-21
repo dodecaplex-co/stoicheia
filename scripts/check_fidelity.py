@@ -10,13 +10,13 @@
 3. Book Zero (`Elements/Figure/`) never imports a proposition, directly or through
    another of the edition's files. Every `import` in its Lean, read as 4 reads it
    (`read_lean`), so that a comment never hides one and a string never makes one (save
-   a string whose braces `read_lean` keeps as code, as 4 says, where an `import` is read
-   too, failing closed), is read with the module it names, in each form of Lean 4.35's
-   header (`public`, `meta` and `all` among them), whatever whitespace or comments stand
-   between the words. An import is refused if its module, compared without regard to
-   case, is under `Elements.Book`, if the module brings one in through the edition's own
-   files, or if the scan cannot read it for certain, as when a part of the name in «…»
-   is not a plain name.
+   a string whose braces are kept as code, as `read_lean` reads them for 4, where an
+   `import` is read too, failing closed), is read with the module it names, in each form
+   of Lean 4.35's header (`public`, `meta` and `all` among them), whatever whitespace or
+   comments stand between the words. An import is refused if its module, compared
+   without regard to case, is under `Elements.Book`, if the module brings one in through
+   the edition's own files, or if the scan cannot read it for certain, as when a part of
+   the name in «…» is not a plain name.
 4. None of the commands that `docs/FORMALIZATION.md`, section 7, forbids under
    `Elements/`, `Staging/`, `Audit/` or `model/` (LEAN_TREES), since they get round the kernel,
    bring in an axiom without the word, run a program when a file is built or imported,
@@ -316,7 +316,7 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
             j = _find(src, "\n", i)
             marks.append(("text", i, j))
         elif src.startswith("/-", i):
-            j, nested = min(i + 3, len(src)), 1
+            j, nested = i + 2, 1
             while j < len(src) and nested:
                 pair = src[j:j + 2]
                 nested += (pair == "/-") - (pair == "-/")
@@ -462,8 +462,7 @@ def brought_in(module: str, read: dict) -> tuple[str, str | None] | None:
         if has_symlink(path) or not path.is_file():
             continue
         if path not in read:
-            with path.open(encoding="utf-8", newline="") as source:
-                read[path] = imports(read_lean(source.read())[0])
+            read[path] = imports(read_lean(path.read_text())[0])
         for _, imported in read[path]:
             if imported is None or proposition(imported):
                 return rel(path), imported
@@ -499,8 +498,7 @@ def check_rules() -> None:
             fail(f"{rel}: a symbolic link, which the source scan does not follow; "
                  "use a regular file or directory (docs/FORMALIZATION.md, section 7)")
             continue
-        with path.open(encoding="utf-8", newline="") as source:
-            src = source.read()
+        src = path.read_text()
         code, unsure = read_lean(src)
         generator_calls = ({m.start("command") for m in MODEL_CHECK_RUN_CMD.finditer(src)}
                            if rel == "model/Check.lean" or rel.startswith("model/Check/")

@@ -3780,8 +3780,8 @@ findings:
   and the module, a remark between them, `«Elements»` and `«BookI»`. Tried on Lean 4.35
   itself, more pass as well: nothing between `import` and a «…» part or a remark, a line
   comment or a nested remark between the words, and a second import on the same line. The
-  rule also passed the five other forms of an import that the toolchain's header grammar
-  (`Lean/Parser/Module/Syntax.lean`) accepts after `module`: `public import`,
+  rule also passed the five other forms of an import that Lean's header allows after
+  `module` (the toolchain's `Lean/Parser/Module/Syntax.lean`): `public import`,
   `meta import`, `public meta import`, `import all` and `meta import all`. Lean refuses
   each of them on this edition ("cannot import non-`module` Elements.BookI.Prop01 from
   `module`", checked with Lean 4.35 against the built I.1), since the edition's files are
@@ -3806,7 +3806,7 @@ findings:
   edition's own files that brings a proposition in, as `Elements.Companions` does, is
   refused too: the rule follows the edition's files breadth first (`brought_in`) and
   names the file that imports the proposition. Two forms pass the rule, and Lean refuses
-  each with an error, so that the build fails: a second module after one `import` (the
+  each with an error and imports no proposition: a second module after one `import` (the
   reviewer's I5, "unexpected identifier; expected command", which imports the first
   module alone) and a name beginning `_root_.` ("unknown module prefix"). A tab, a
   no-break space, a «…» part holding a dot and an import after a command, each an error
@@ -3820,19 +3820,16 @@ findings:
   beside an import of Book Zero, is not named at all.
   [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py), whose
   `CircleRuleTests` already test one of check_fidelity's rules, gains
-  `BookZeroImportTests`: ten tests on a small tree, without Lean, of every planted form;
+  `BookZeroImportTests`: eight tests on a small tree, without Lean, of every planted form;
   text that only holds an import; a comment or a string that hides none; `module`,
   `prelude` and Lean's own modules passing; names the scan cannot read; a proposition
-  brought in through two files that import each other; and a file outside Book Zero, which
-  rule 3 leaves alone. Against origin/main's check_fidelity (`001620f1`) each of the 19
-  forms passes, the plain `import Elements.BookI.Prop01` alone being refused; now all 19
-  are refused. The shared reader correction also affects rules 2, 4 and 5: nested-comment
-  scanning begins after Lean's initially consumed third character, so overlapping comment
-  boundaries match Lean and doc-comment contents remain comments, while an unterminated
-  `/-` at the end of a file is bounded to the source. `check_rules` and `brought_in`
-  preserve original newlines instead of applying Python's universal-newline translation.
-  Thus #197's forbidden-command scan is changed too, and the newline correction overlaps
-  the lone-carriage-return case recorded in #207; this entry does not record #207 as
-  resolved. The
+  brought in through two files that import each other; a module reached through a
+  symbolic link; and a file outside Book Zero, which rule 3 leaves alone. Against
+  origin/main's check_fidelity (`001620f1`) each of the 19 forms passes, the plain
+  `import Elements.BookI.Prop01` alone being refused; now all 19 are refused. In following
+  the edition's files, `brought_in` refuses a module whose path beneath the repository
+  passes through a symbolic link, without reading its target, as the scan refuses a linked
+  file; the symbolic-link test fails against the rule as it stood before that change and
+  passes now. Nothing is loosened, and #197's forbidden-command scan is untouched. The
   protected files changed are `scripts/check_fidelity.py`, `scripts/negative_tests.py` and
   `tests/test_negative_tests.py`.
