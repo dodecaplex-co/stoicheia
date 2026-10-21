@@ -120,16 +120,18 @@ parts are facts.json's statements (name, reference, kind and statement), its rul
 (modules and statements) and its words (`vocabulary`); every Lean file of the library; the
 toolchain's files; and this file without this docstring, which records the run and so is
 written after it, with any other Python module under Audit/, which a run without -I could
-import in place of a standard one. --write records only a run on a commit's inputs as
+import in place of a standard one. An ignored module among those actual input files still
+counts, and cannot be called committed; ignored files outside the input paths and modules
+under __pycache__ do not count. --write records only a run on a commit's inputs as
 committed, and stops before the run otherwise. `--check-current` refuses a record that
 does not name a commit's 40 hex digits in that state, computes the parts again, without
-Lean, and exits 1, naming each part that changed, when
-the record is missing or the inputs differ. The run needs Lean and takes the time above,
-so this is a release step (docs/WORKFLOW.md, section 10, step 10), not one of CI's
-checks. The record is written only by a run, never by hand. `--check-current` reads the
-record, not the run: a record written by hand, or by `write_record` with no run, passes it,
-and the record holds only hashes. The run's closing lines, quoted in the release's pull
-request, are its evidence.
+Lean, and exits 1 when the record is missing, the inputs differ, or matching inputs are not
+committed. It names each part that changed. The run needs Lean and takes the time above,
+so this is a release step (docs/WORKFLOW.md, section 10, step 10), not one of CI's checks.
+The record is written only by a run, never by hand. `--check-current` reads the record,
+not the run: a record written by hand, or by `write_record` with no run, passes it, and the
+record holds only hashes. The run's closing lines, quoted in the release's pull request,
+are its evidence.
 """
 
 import argparse
@@ -623,12 +625,20 @@ def git(*args: str, root: Path = ROOT) -> str | None:
     return p.stdout.strip() if p.returncode == 0 else None
 
 
+def input_paths(root: Path) -> list[str]:
+    """The file paths whose contents `inputs` reads when they exist."""
+    return ["facts.json", *library_files(root), *TOOLCHAIN, *screen_files(root)]
+
+
 def revision(root: Path) -> tuple[str, str]:
     """The commit checked out, and whether the inputs are as it has them (COMMITTED)."""
     commit = git("rev-parse", "HEAD", root=root) or "unknown"
     status = git("status", "--porcelain", "--", *INPUTS, root=root)
-    return commit, (COMMITTED if status == "" else
-                    "inputs differ from this commit" if status else "unknown")
+    ignored = git("status", "--porcelain", "--ignored=matching", "--untracked-files=all",
+                  "--", *input_paths(root), root=root)
+    state = ("unknown" if status is None or ignored is None else
+             "inputs differ from this commit" if status or ignored else COMMITTED)
+    return commit, state
 
 
 def record_text(parts: dict[str, str], commit: str, state: str, count: int) -> str:
@@ -701,6 +711,7 @@ def check_current(root: Path = ROOT, path: Path = RECORD) -> tuple[list[str], di
     try:
         facts = json.loads((root / "facts.json").read_text(encoding="utf-8"))
         now = inputs(root, facts)
+        current_commit, current_state = revision(root)
     except (OSError, ValueError, KeyError, TypeError, SyntaxError) as e:
         return [f"the inputs do not read now: {e!r}"], rec, []
     if parts["statements"] == now["statements"] \
@@ -708,6 +719,9 @@ def check_current(root: Path = ROOT, path: Path = RECORD) -> tuple[list[str], di
         return [f"{name} is not as a run writes it: it counts {rec['statements']} statements, "
                 f"but the statements it pins are {len(facts['propositions'])}"], rec, []
     if total(now) == rec["inputs"]:
+        if current_state != COMMITTED or not re.fullmatch(r"[0-9a-f]{40}", current_commit):
+            return [f"the inputs now are not a commit's ({current_state}): matching hashes "
+                    "are current only for committed inputs"], rec, []
         return [], rec, []
     changed = [k for k in PARTS if parts[k] != now[k]]
     problems = []

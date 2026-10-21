@@ -37,8 +37,10 @@ functions to small inputs, each with the answer the screen should give.
   docstring, what the screen does not read); a record that is missing, does not read, is
   a symbolic link, disagrees with itself, or is of a run on inputs other than a commit's
   is refused; no record is written of such a run, through a symbolic link, or of inputs
-  or a commit that moved while it ran; and the real inputs compute, which takes most of
-  the time.
+  or a commit that moved while it ran; an ignored module that is an actual hashed input
+  cannot receive committed provenance or make a matching record current, while ignored
+  files outside the inputs remain excluded; and the real inputs compute, which takes most
+  of the time.
 * Before any Lean: --check-current takes no OUTDIR and no --write; a stale build, --write
   on inputs that are not a commit's, or a move to another commit or other inputs after the
   build checks as current, stops a run. Before a successful --write, an unchanged build is
@@ -354,6 +356,83 @@ def git_at(commit: str | None = COMMIT, status: str | None = ""):
     def git(*args: str, root: Path = REPO) -> str | None:
         return {"rev-parse": commit, "status": status}.get(args[0])
     return mock.patch.object(screen, "git", git)
+
+
+class GitProvenance(unittest.TestCase):
+    def setUp(self):
+        self.tmp = self.enterContext(tempfile.TemporaryDirectory())
+        self.root = Path(self.tmp)
+        self.facts = {"propositions": [
+            {"name": "BookI.Prop1", "ref": "I.1", "kind": "proposition", "statement": "P1"}],
+            "axiom_modules": {"Postulate1": "Elements.Foundations.Postulates"},
+            "axiom_types": {"Postulate1": "T1"},
+            "vocabulary": {"Triangle": "def : X := Y"}}
+        self.write(".gitignore", "*.pyc\n*.tmp\n")
+        self.write("facts.json", json.dumps(self.facts))
+        self.write("Elements.lean", "import Elements.Foundations.Words\n")
+        self.write("Elements/Foundations/Words.lean", "def x := 1\n")
+        self.write("lean-toolchain", "leanprover/lean4:v4.35.0\n")
+        self.write("lakefile.toml", 'name = "stoicheia"\n')
+        self.write("lake-manifest.json", "{}\n")
+        (self.root / "Audit").mkdir()
+        shutil.copyfile(REPO / screen.SCREEN, self.root / screen.SCREEN)
+        self.git("init", "-q")
+        self.git("add", ".")
+        self.git("-c", "user.name=Screen test", "-c", "user.email=screen@example.invalid",
+                 "commit", "-qm", "fixture")
+        self.commit = self.git("rev-parse", "HEAD").stdout.strip()
+        self.path = self.root / "Audit" / "screen-run.toml"
+
+    def write(self, rel: str, text: str) -> None:
+        path = self.root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def git(self, *args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(["git", *args], cwd=self.root, capture_output=True, text=True,
+                              check=True)
+
+    def add_ignored_module(self) -> dict[str, str]:
+        clean = screen.inputs(self.root, self.facts)
+        module = self.root / "Audit" / "datetime.pyc"
+        module.write_bytes(b"ignored bytecode")
+        self.assertEqual(self.git("check-ignore", "Audit/datetime.pyc").stdout.strip(),
+                         "Audit/datetime.pyc")
+        self.assertIn("Audit/datetime.pyc", screen.screen_files(self.root))
+        parts = screen.inputs(self.root, self.facts)
+        self.assertNotEqual(parts["screen"], clean["screen"])
+        return parts
+
+    def test_a_clean_committed_fixture_can_record_and_check(self):
+        parts = screen.inputs(self.root, self.facts)
+        at = screen.revision(self.root)
+        self.assertEqual(at, (self.commit, screen.COMMITTED))
+        screen.write_record(self.root, parts, 1, self.path, at=at)
+        self.assertEqual(screen.check_current(self.root, self.path)[0], [])
+        (self.root / "Audit" / "__pycache__").mkdir()
+        (self.root / "Audit" / "__pycache__" / "datetime.pyc").write_bytes(b"cache")
+        self.write("Audit/unrelated.tmp", "ignored\n")
+        self.assertEqual(screen.revision(self.root), at)
+        self.assertEqual(screen.check_current(self.root, self.path)[0], [])
+
+    def test_an_ignored_hashed_module_has_no_committed_provenance_or_record(self):
+        parts = self.add_ignored_module()
+        at = screen.revision(self.root)
+        self.assertNotEqual(at[1], screen.COMMITTED)
+        self.path.write_text("existing record\n", encoding="utf-8")
+        before = self.path.read_text(encoding="utf-8")
+        with self.assertRaisesRegex(SystemExit, "not a commit's"):
+            screen.write_record(self.root, parts, 1, self.path, at=at)
+        self.assertEqual(self.path.read_text(encoding="utf-8"), before)
+
+    def test_a_matching_record_with_an_ignored_hashed_module_is_not_current(self):
+        parts = self.add_ignored_module()
+        self.path.write_text(screen.record_text(parts, self.commit, screen.COMMITTED, 1),
+                             encoding="utf-8")
+        problems, _, changed = screen.check_current(self.root, self.path)
+        self.assertEqual(changed, [])
+        self.assertEqual(len(problems), 1)
+        self.assertIn("inputs now are not a commit's", problems[0])
 
 
 class Record(unittest.TestCase):
