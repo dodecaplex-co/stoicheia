@@ -189,7 +189,8 @@ I.7 shortcut and the 17-proof right-angle census describe the earlier foundation
 the notes on III.5 and III.6 describe those propositions as they were stated before brief
 0008 restated them ([III.5](#iii5) and [III.6](#iii6) above give them as they are now).
 The later notes under I.2/I.3 and I.23 are dated updates about the retired construction
-shortcuts; their old rows remain here as history.
+shortcuts, and the second paragraph under III.1's corollary is a dated update about the
+rule's first user; their old rows remain here as history.
 
 Stoicheia takes the rules of System E (Jeremy Avigad, Edward Dean and John Mumma, 2009) as
 its axioms, and a few of them already say what Euclid later proves, or give it in a few
@@ -340,19 +341,25 @@ existence; the construction and the proof that F is the centre are III.1's work.
 ##### III.1's corollary
 
 Heath calls uniqueness "a proposition which, if thought necessary, may be added to
-III. 1 as a corollary" (vol. 2, p. 8). The rule first enters at III.14, not at III.1's
-porism. Since 19 October 2026 our porism proves that the given centre lies on the cutting
-straight line by the argument of Euclid's reductio: on AB it is D; off AB, the equal
-adjacent angles put it on DC. It neither calls III.1 nor uses `centre_unique` or
-`exists_centre`, and rests on 51 tacit rules to III.1's 56. III.14, III.17 and III.36 call
-`centre_unique` themselves, making the centre III.1 finds the centre their statements
-speak of. III.26 reaches it only through Book Zero's `EqualCircles.radii`, that equal
-circles have equal radii: a circle has only one centre, so the centres the definition of
-equal circles names are the given ones. III.28 and III.29 call that lemma too, and rest on
-the rule through III.26 and III.27 as well, which they cite. These are the six proofs of
-the row. Seven more entries rest on the rule only through entries they cite: III.15,
-III.27, III.30 and III.37, III.15's companion `Prop15.nearer`, and the companions
-`Prop14.general` and `Prop17.general`.
+III. 1 as a corollary" (vol. 2, p. 8). III.1's porism calls the rule itself: it makes the
+centre III.1 finds the given centre, so that it lies on the cutting straight line. III.14,
+III.17 and III.36 call it themselves for the same step, making the centre III.1 finds the
+centre their statements speak of. III.26 reaches it only through Book Zero's
+`EqualCircles.radii`, that equal circles have equal radii: a circle has only one centre,
+so the centres the definition of equal circles names are the given ones. III.28 and III.29
+call that lemma too, and rest on the rule through III.26 and III.27 as well, which they
+cite.
+
+21 October 2026 update: the porism no longer calls the rule, which now first enters at
+III.14. Our porism proves that the given centre lies on the cutting straight line by the
+argument of Euclid's reductio: on AB it is D; off AB, the equal adjacent angles put it on
+DC. It neither calls III.1 nor uses `centre_unique` or `exists_centre`, and rests on 51
+tacit rules to III.1's 56. Six proofs now use the rule: III.14, III.17 and III.36 call
+`centre_unique` themselves, and III.26, III.28 and III.29 call `EqualCircles.radii`. Seven
+more entries rest on the rule only through entries they cite: III.15, III.27, III.30 and
+III.37, III.15's companion `Prop15.nearer`, and the companions `Prop14.general` and
+`Prop17.general`. [Former axiom overlaps](#former-axiom-overlaps) gives the rule as it is
+now.
 
 ##### III.2
 
