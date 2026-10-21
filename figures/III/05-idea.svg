@@ -9,7 +9,7 @@
   <circle cx="250.0" cy="150.0" r="4.5" fill="#222222"/>
   <circle cx="182.7" cy="224.0" r="4.5" fill="#222222"/>
   <circle cx="182.7" cy="76.0" r="4.5" fill="#222222"/>
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="67.9" y="142.2">A</text>
     <text x="179.6" y="243.6">B</text>
     <text x="179.6" y="66.2">C</text>

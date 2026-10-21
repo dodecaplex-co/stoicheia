@@ -40,10 +40,10 @@ case = "BA and AC together greater than BC, with D on BA produced beyond A in Eu
 
 [review]
 stage = "full"
-commit = "64ccb2bb"
-reviewer = "Claude Opus 5.5, records review"
+commit = "07bdc4df"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:143bf867e071afbd"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "ship Q orders, item (a): the Postulate 1 joins; stage full, independent re-read at 07bdc4df; workflow wf_012f714f-e1a (stoicheia-ship-q); reader run Q-read-p1c, Codex exec session 01a159fa-c971-7500-92b3-91e0f702bc1e, which wrote only this record's [review] lines and ran review_stamp.py itself; ship Q's lead (Claude Opus 5.5) committed them unchanged; this run text later amended with that provenance, no restamp"
 
 [review.items]
 statement = "pass"
