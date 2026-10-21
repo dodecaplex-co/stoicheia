@@ -2678,3 +2678,14 @@ findings:
   The changes remain uncommitted. No push or GitHub action was taken. Full repository CI,
   independent kernel replay and independent security review were not run in this round;
   security review before landing remains open.
+
+- **The model-check branch's reviews closed, and Model/Audit.lean's heading corrected.**
+  Six independent Codex code and security reviews of `tooling/superposition-model-check`
+  ended with both verdicts passing at `bc4e6574`; the round entries above that say a
+  security review is still open record their own rounds, and this entry closes them. A
+  /no-mistakes round then corrected the wording of the protected `model/Model/Audit.lean`,
+  a comment and a heading only: the library's geometric vocabulary is not imported, and
+  the import checks permit only the four pure superposition modules. No guard, pin or
+  declaration of that file changes. The other files the branch changes on its own are
+  `model/Check/Generator.lean`, `model/Check/RoundTrip.lean`, `model/README.md` and the
+  protected `model/lakefile.toml`, named above.
