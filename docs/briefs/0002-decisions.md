@@ -3171,3 +3171,15 @@ findings:
   adjudication. The protected files this changes are
   `.github/workflows/ci.yml`, `scripts/audit/jev.py`, `scripts/safe_push.py` and
   `tests/test_jev_models.py`; [WORKFLOW](../WORKFLOW.md), section 8, lists the command.
+
+- **The centre-given tag says what the statement does, not why (#59).** The meaning of
+  `centre-given` in the protected file [`review/terms.toml`](../../review/terms.toml)
+  gave a reason: "a circle in Lean has a centre only when a hypothesis or Postulate 3
+  gives it one". Train C6a adds the owner's rule `Tacit.exists_centre`, which gives every
+  circle a centre, and the reason then becomes false under every record that carries the
+  tag, until step 6 of [brief 0008](0008-centre.md) retires their uses. The meaning now
+  says only what the tag records, which holds before and after the rule: the statement
+  gives the circle its centre as a hypothesis, where Euclid's setting-out takes the centre
+  or a proof needs one. The term's kind and name do not change, no record changes, and no
+  page changes. It is a check input, so it lands in a pull request of its own, before
+  train C6a. Protected file changed: `review/terms.toml`.
