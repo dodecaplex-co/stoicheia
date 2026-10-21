@@ -1,4 +1,5 @@
 import Elements.Figure.Basics
+import Elements.Figure.Circles
 import Elements.BookI.Prop07
 import Staging.Stage3.Definitions
 

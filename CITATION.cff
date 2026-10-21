@@ -2,8 +2,7 @@ cff-version: 1.2.0
 message: "If you use Stoicheia, we'd be glad if you cited it like this."
 title: "Stoicheia: Euclid's Elements in Lean, sentence by sentence"
 authors:
-  - family-names: Challis
-    given-names: Jack
+  - name: "Stoicheia Team"
 repository-code: "https://github.com/jackChallis/stoicheia"
 license: [Apache-2.0, CC-BY-4.0]
 version: book-III

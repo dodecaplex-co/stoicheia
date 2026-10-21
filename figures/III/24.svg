@@ -13,8 +13,8 @@
     <circle cx="230" cy="160" r="2.6"/>
     <circle cx="370" cy="160" r="2.6"/>
     <circle cx="110" cy="125" r="2.6"/>
-    <circle cx="282" cy="126.871" r="2.6"/>
-    <circle cx="325" cy="116" r="2.6"/>
+    <circle cx="255" cy="137.458" r="2.6"/>
+    <circle cx="294.017" cy="125.191" r="2.6"/>
   </g>
   <g fill="#3b2f2f" font-family="Georgia, serif" font-size="17" font-style="italic" text-anchor="middle">
     <text x="36" y="184">A</text>
@@ -22,7 +22,7 @@
     <text x="226" y="184">C</text>
     <text x="374" y="184">D</text>
     <text x="110" y="111">E</text>
-    <text x="277" y="113">F</text>
-    <text x="325" y="102">G</text>
+    <text x="246" y="128">F</text>
+    <text x="293" y="110">G</text>
   </g>
 </svg>

@@ -59,12 +59,12 @@ run_cmd Check.Generator.checkRoundTrip
 
 /-! ## The check refuses what it is meant to refuse
 
-Each definition here is a law of `Model/Laws.lean` with one fault planted in it, and
-`comparePlanted` runs on it the comparison that `checkRoundTrip` makes of every generated law;
-`#guard_msgs` fails the build unless the comparison refuses it with exactly the message above.
-The first and the fourth pass the kernel's `rfl`, which is why the comparison by syntax is
-needed. The last two are statements in the library's words, and the translation must refuse a
-constant it has no translation for. -/
+The law fixtures copy `Model/Laws.lean` with one fault planted in each; `comparePlanted`
+applies the comparison that `checkRoundTrip` makes of every generated law. `#guard_msgs`
+pins each exact refusal. The first and fourth pass the kernel's `rfl`, which is why the
+comparison by syntax is needed. Two statements in the library's words test that translation
+refuses constants it has no translation for. Two copies of collinearity exercise
+`comparePlantedWord`: the matching copy passes, and the corrupted copy pins its refusal. -/
 
 namespace Check.Planted
 
@@ -101,7 +101,23 @@ def parallels : Prop := ∀ L M : Elements.Line, Elements.Parallel L M → L ≠
 /-- A statement using the check's own copy of the kinds, neither the library's nor Lean's. -/
 def foreign : Prop := ∀ k : Model.Kind, kind k = kind k
 
+/-- A copy of the translated definition of collinearity, with no fault planted. -/
+def collinear (S : Signature) (A B C : S.Point) : Prop :=
+  ∃ L : S.Line, S.OnLine A L ∧ S.OnLine B L ∧ S.OnLine C L
+
+/-- The same definition with the last two points exchanged in its value. -/
+def collinearExchanged (S : Signature) (A B C : S.Point) : Prop :=
+  ∃ L : S.Line, S.OnLine A L ∧ S.OnLine C L ∧ S.OnLine B L
+
 end Check.Planted
+
+#guard_msgs in
+run_cmd Check.Generator.comparePlantedWord ``Check.Planted.collinear ``Elements.Collinear
+
+/-- error: `Check.Planted.collinearExchanged`: `C` where the library has `B` -/
+#guard_msgs in
+run_cmd (Check.Generator.comparePlantedWord ``Check.Planted.collinearExchanged
+  ``Elements.Collinear)
 
 /-- error: `Check.Planted.explicit`: the binder `A` is explicit where the library's `A` is implicit -/
 #guard_msgs in
@@ -131,3 +147,388 @@ error: `Check.Planted.foreign`: `Model.Kind` is neither Lean's own (from `Init`)
 -/
 #guard_msgs in
 run_cmd Check.Generator.translatePlanted ``Check.Planted.foreign
+
+/-! ## Purity before the shared modules arrive
+
+These cases use Init declarations, so they run before the restricted calculus exists.
+The planted declarations are copies passed to a lookup, never installed in Lean's
+environment. Some fixtures make the root reach a second definition, so the faults test
+both direct and transitive dependencies through types and values. -/
+
+/- Init definitions, inductives, recursors and all three permitted axioms pass unchanged. -/
+#guard_msgs in
+run_cmd (Check.Generator.checkPureFixture
+  #[``id, ``List, ``Nat.rec, ``propext, ``Classical.choice, ``Quot.sound])
+
+/- Planted declaring-module lookups exercise the core and sharing decisions without
+installing a module or constructing an environment. -/
+#guard_msgs in
+run_cmd Check.Generator.checkModuleTrustFixture `Init.«/tmp/Elements/Foundations/Words»
+
+#guard_msgs in
+run_cmd Check.Generator.checkModuleTrustFixture `Model.«..».Check.Original
+
+#guard_msgs in
+run_cmd Check.Generator.checkModuleTrustFixture `Elements.«..».Check.Original
+
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Generator.pureDependency ``Elements.Point
+
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Generator.pureDependency ``Elements.Point true
+
+/-- error: shared calculus reaches `sorryAx` -/
+#guard_msgs in
+run_cmd Check.Generator.pureDependency ``sorryAx
+
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Generator.plantPureDependency ``id ``Elements.Point
+
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Generator.plantPureDependency ``Not ``Elements.Point true
+
+#guard_msgs in
+run_cmd Check.Generator.plantPureDependency ``id ``Not
+
+/-- error: shared calculus reaches unapproved axiom `Not` -/
+#guard_msgs in
+run_cmd Check.Generator.pureAxiom
+
+/-- error: `Nat.rec` is not shared -/
+#guard_msgs in
+run_cmd Check.Generator.checkSharedIdentity ``Nat.rec
+
+/- Stand-in modules extend the production boundary, so these fixtures also work after
+the calculus arrives. They exercise successful identities before the calculus exists.
+List.filterMap has two universe arguments; Model.Kind.rec also checks that a shared name
+in the Model namespace survives the residual-name check in reverse translation. -/
+#guard_msgs in
+run_cmd (Check.Generator.checkSharedIdentityWith
+  (Check.Generator.pureModules ++ #[`Init.Data.List.Basic]) ``List.filterMap)
+
+#guard_msgs in
+run_cmd (Check.Generator.checkSharedIdentityWith
+  (Check.Generator.pureModules ++ #[`Model.Signature]) ``Model.Kind.rec)
+
+#guard_msgs in
+run_cmd (Check.Generator.checkPureModuleFixture
+  (Check.Generator.pureModules ++ #[`Init.Data.List.Basic]) ``List.filterMap)
+
+/- No explicit declaration root is supplied to the audit: module data must find this
+word even though the library's laws do not use it. -/
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd (Check.Generator.checkPureModuleFixture
+  (Check.Generator.pureModules ++ #[`Init.Data.List.Basic])
+  ``List.filterMap (some ``Elements.Point))
+
+#guard_msgs in
+run_cmd Check.Generator.checkSharedImportHeader
+
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Generator.pureOpaqueDependency
+
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Generator.pureRecursorDependency
+
+#guard_msgs in
+run_cmd Check.Generator.checkModelDirPaths
+
+/-! ## The imports respect the shared boundary
+
+The real tree and planted headers use the same parser and decision. The permitted headers
+exercise comments, blank lines, import modifiers and escaped identifiers. Text after the
+first body command is not part of the header. -/
+
+#guard_msgs in
+run_cmd Check.Generator.checkModelImports
+
+/-- error: model/Model/Uppercase.LEAN: non-canonical source extension (expected `.lean`) -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "model/Model.lean", "model/Model/Uppercase.LEAN"])
+
+/-- error: source paths differ only in case: `model/Model/A.lean` and `model/Model/a.lean` -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "model/Model/A.lean", "model/Model/a.lean"])
+
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "model/Model.lean", "model/Model/Laws/areas-p5.lean", "model/Model/notes.txt",
+  "Elements/Foundations/Superposition/Syntax.lean"])
+
+/-- error: model/Model/Mixed.LeAn: non-canonical source extension (expected `.lean`) -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture ["model/Model/Mixed.LeAn"])
+
+/--
+error: Elements/Foundations/Superposition/Syntax.lEaN: non-canonical source extension (expected `.lean`)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "Elements/Foundations/Superposition/Syntax.lEaN"])
+
+/-- error: model/Model.LEAN: non-canonical source extension (expected `.lean`) -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture ["model/Model.LEAN"])
+
+/--
+error: source paths differ only in case: `model/Model/A.lean` and `model/Model/A.LEAN`
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "model/Model/A.lean", "model/Model/A.LEAN"])
+
+/--
+error: source paths differ only in case: `model/Model/Sub/A.lean` and `model/Model/sub/A.lean`
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "model/Model/Sub/A.lean", "model/Model/sub/A.lean"])
+
+/--
+error: source paths differ only in case: `Elements/Foundations/Superposition/Syntax.lean` and `Elements/Foundations/Superposition/syntax.lean`
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "Elements/Foundations/Superposition/Syntax.lean",
+  "Elements/Foundations/Superposition/syntax.lean"])
+
+/--
+error: Elements/Foundations/Superposition/syntax.lean: non-canonical pure source path (expected `Elements/Foundations/Superposition/Syntax.lean`)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "Elements/Foundations/Superposition/syntax.lean"])
+
+/- Unicode filenames are refused before ASCII case comparison or source selection.
+These listings and headers are data, so the cases need neither a folding filesystem
+nor the four pure modules. The long s can alias S, and the Kelvin sign can alias K. -/
+/--
+error: Elements/Foundations/Superposition/ſyntax.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "Elements/Foundations/Superposition/ſyntax.lean"])
+
+/--
+error: model/Model/ſignature.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture ["model/Model/ſignature.lean"])
+
+/--
+error: model/Model/Kind.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "model/Model/Kind.lean", "model/Model/Kind.lean"])
+
+/--
+error: Elements/Foundations/α.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture ["Elements/Foundations/α.lean"])
+
+/--
+error: Elements/Foundations/ſuperposition/Syntax.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "Elements/Foundations/ſuperposition/Syntax.lean"])
+
+/--
+error: model/Model/notes-é.txt: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture ["model/Model/notes-é.txt"])
+
+/--
+error: Elements/Foundations/Superposition/ſyntax.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("Elements/Foundations/Superposition/ſyntax.lean", "import Lake.Util.Version\n")])
+
+/--
+error: model/Model/ſignature.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/ſignature.lean", "import Lake.Util.Version\n")])
+
+/--
+error: model/Model/Kind.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/Kind.lean", "import Init\n")])
+
+/--
+error: Elements/Foundations/α.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("Elements/Foundations/α.lean", "import Init\n")])
+
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "model/Model.lean", "model/Model/Signature.lean", "model/Model/Kind.lean",
+  "model/Model/Sub_2/areas-p5.lean", "Elements/Foundations/Superposition/Syntax.lean",
+  "Elements/Foundations/Superposition/Semantics.lean",
+  "Elements/Foundations/Superposition/Soundness.lean",
+  "Elements/Foundations/Superposition/Restriction.lean"])
+
+/-! The compiled graph is checked separately from source headers. The real closure is
+required to pass; planted closures need no compiled fixture files. -/
+
+#guard_msgs in
+run_cmd Check.Generator.checkModelImportClosure
+
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportClosureFixture
+  #[`Model, `Model.Signature, `Elements.Foundations.Superposition.Syntax,
+    `Init, `Std, `Lean, `Lake.Util.Version, `Mathlib, `Batteries, `Aesop, `Qq, `Plausible,
+    `LeanSearchClient, `ImportGraph, `ProofWidgets, `Cli]
+  #[`Model, `Model.Signature])
+
+/-- error: Model compiled import closure reaches `Check.Original`, outside the approved import roots -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportClosureFixture #[`Model, `Check.Original])
+
+/--
+error: Model compiled import closure reaches `Elements.Foundations.Words`, outside the approved import roots
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportClosureFixture #[`Model, `Elements.Foundations.Words])
+
+/-- error: Model compiled import closure: non-canonical module name `Model.«..».Check.Original` -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportClosureFixture #[`Model, `Model.«..».Check.Original])
+
+/-- error: Model source `Model.Unused` is not in the compiled import closure of `Model` -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportClosureFixture #[`Model, `Init] #[`Model, `Model.Unused])
+
+#guard_msgs in
+run_cmd Check.Generator.checkCanonicalModuleNames
+
+/-- error: model/Model.lean: import `Model.«..».Check.Original` has a non-canonical module name -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model.lean", "import Model.«..».Check.Original\n")])
+
+/--
+error: Elements/Foundations/Superposition/Syntax.lean: import `Init.«/tmp/Elements/Foundations/Words»` has a non-canonical module name
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("Elements/Foundations/Superposition/Syntax.lean",
+    "import Init.«/tmp/Elements/Foundations/Words»\n")])
+
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model.lean",
+    "import Model.Signature\nimport Mathlib\nimport Init\nimport Std\nimport Lean\n\
+    import Lake.Util.Version\n\
+    import Plausible\nimport LeanSearchClient\nimport ImportGraph\nimport ProofWidgets\n\
+    import Aesop\nimport Qq\nimport Batteries\nimport Cli\n"),
+  ("model/Model/Planted.lean",
+    "/- import Elements.Point /- nested -/ -/\nmodule\n\n\
+    public /- between tokens -/ import Elements.Foundations.Superposition.Syntax\n\
+    -- import Elements.Point\n\
+    public meta import Elements.Foundations.Superposition.Semantics\n\
+    import all Elements.Foundations.Superposition.Soundness\n\
+    public import Elements.Foundations.Superposition.Restriction\n\
+    public import Model.Laws.«areas-p5»\n\
+    def body := \"import Elements.Point\"\nimport Elements.Point"),
+  ("Elements/Foundations/Superposition/Syntax.lean",
+    "module\nprelude\npublic import Init\nimport Init.Data.List.Basic\n\
+    public import Elements.Foundations.Superposition.Semantics\n"),
+  ("Elements/Foundations/Superposition/Semantics.lean",
+    "import Elements.Foundations.Superposition.Syntax\n"),
+  ("Elements/Foundations/Superposition/Soundness.lean",
+    "import Elements.Foundations.Superposition.Semantics\n"),
+  ("Elements/Foundations/Superposition/Restriction.lean",
+    "import Elements.Foundations.Superposition.Soundness\n")])
+
+/-- error: model/Model/Planted.lean: Model imports `Elements.Point`, outside the four pure modules -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/Planted.lean", "import Elements.Point\n")])
+
+/--
+error: model/Model/Planted.lean: Model imports `Elements.Foundations.Words`, outside the four pure modules
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/Planted.lean",
+    "module\n\n/- header /- nested -/ comment -/\n\
+    public /- comment -/ import\n  Elements.Foundations.Words\n")])
+
+/-- error: model/Model.lean: Model imports `Elements`, outside the four pure modules -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model.lean", "module\npublic import Elements\n")])
+
+/--
+error: model/Model/Planted.lean: Model imports `Elements.Foundations.Superposition.Syntax.Extra`, outside the four pure modules
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/Planted.lean",
+    "import Elements.Foundations.Superposition.Syntax.Extra\n")])
+
+/--
+error: Elements/Foundations/Superposition/Syntax.lean: pure module imports `Elements.Foundations.Words`, outside the four pure modules and `Init`
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("Elements/Foundations/Superposition/Syntax.lean",
+    "module\npublic import Elements.Foundations.Words\n")])
+
+/--
+error: Elements/Foundations/Superposition/Restriction.lean: pure module imports `Mathlib`, outside the four pure modules and `Init`
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("Elements/Foundations/Superposition/Restriction.lean", "import Mathlib\n")])
+
+/--
+error: Elements/Foundations/Superposition/Restriction.lean: pure module imports `Lake.Util.Version`, outside the four pure modules and `Init`
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("Elements/Foundations/Superposition/Restriction.lean", "import Lake.Util.Version\n")])
+
+/-- error: model/Model.lean: Model imports `Check.Original`, outside the approved import roots -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model.lean", "import Check.Original\n")])
+
+/-- error: model/Model/Planted.lean: Model imports `Staging.X`, outside the approved import roots -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/Planted.lean", "module\npublic import Staging.X\n")])
+
+/-- error: model/Model/Planted.lean: Model imports `Unknown.X`, outside the approved import roots -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/Planted.lean", "module\nimport Unknown.X\n")])
+
+/-- error: model/Model/Planted.lean: Model imports `Audit.X`, outside the approved import roots -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/Planted.lean", "import Audit.X\n")])
+
+/-- error: model/Model.lean: Model imports `Certificate.Facts`, outside the approved import roots -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model.lean", "module\npublic import Certificate.Facts\n")])

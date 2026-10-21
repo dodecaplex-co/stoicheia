@@ -21,6 +21,6 @@ note = "Like Heath's, this figure draws the impossible supposition: DEF meeting 
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
+commit = "2c3686e"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:5427e28b878c322d"
+lean = "sha256:bfd30bc6abf3e690"

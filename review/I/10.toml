@@ -6,8 +6,23 @@ fingerprint = "sha256:5873b0c44ac25f36"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "and let the angle ACB be bisected by the straight line CD"
+kind = "helper"
+helper = "crossbar"
+note = "Euclid takes D to lie on AB between A and B. After I.9 gives a bisector within the angle ACB, `crossbar` finds its meeting D with AB on the ray from C through I.9's point F; the Lean then uses `angle_onRay_right` and `angle_onRay_left`, with angle symmetry, to identify ACD and BCD with the angles ACF and FCB that I.9 made equal."
+
 [review]
-stage = "exceptions"
-commit = "2a34715"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "a9bca05"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:724cea2aa4407afd"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
