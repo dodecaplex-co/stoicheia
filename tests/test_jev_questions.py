@@ -4,6 +4,8 @@
     python3 -I tests/test_jev_questions.py
 
 File access cases use temporary directories and stubs of Git's file and directory queries.
+Import cases index Lean headers written to a temporary directory. Helper cases plant modules
+there that leave a marker if they ever run, and run a copy of the generator beside them.
 The control case generates all rows in memory against the real HEAD and reports its
 duration. No case writes to the repository or its Git metadata.
 """
@@ -24,6 +26,7 @@ import time
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 sys.dont_write_bytecode = True
@@ -40,6 +43,27 @@ COMMENTARY_CHANGES = {
     '12-I.40-commentary': ('our I.38 makes ABC equal to FCE',
                           'our I.38 makes ABC greater than FCE'),
 }
+BASE = 'namespace Elements\n\ntheorem base : True := trivial\n\nend Elements\n'
+BODY = '\nnamespace Elements\n\nend Elements\n'
+# Lean 4.35 accepts each header: `public`, then `meta`, each optional, before `import`,
+# with comments and line breaks allowed between the words.
+LEAN_IMPORTS = {
+    'Plain.lean': ('', 'import Elements.Base\n'),
+    'Public.lean': ('module\n\n', 'public import Elements.Base\n'),
+    'Meta.lean': ('module\n\n', 'meta import Elements.Base\n'),
+    'PublicMeta.lean': ('module\n\n', 'public meta import Elements.Base\n'),
+    'Spaced.lean': ('module\n\n',
+                    'public /- between words -/ meta\n  import\n    Elements.Base -- the module\n'),
+}
+# Lean 4.35 refuses each header but the two with `import all`, which the generator does
+# not read. None of them may be read as an import.
+REFUSED_IMPORTS = (
+    'meta public import Elements.Base', 'public public import Elements.Base',
+    'private import Elements.Base', '@[expose] import Elements.Base',
+    'import Elements.Base Elements.Base', 'import all Elements.Base',
+    'import all\n  Elements.Base',
+)
+HELPER_NAMES = ('jev_questions_test_first', 'jev_questions_test_second')
 
 
 class FileContainment(unittest.TestCase):
@@ -539,6 +563,100 @@ class FileContainment(unittest.TestCase):
                 self.assertEqual(status, 1, error)
                 self.assertIn('evidence', error)
                 del self.metadata['evidence_files'][path.name]
+
+
+class Imports(unittest.TestCase):
+    def index(self, files):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        root = Path(temporary.name).resolve()
+        (root / 'Elements').mkdir()
+        for name, text in files.items():
+            (root / 'Elements' / name).write_text(text)
+        evidence = SimpleNamespace(read=lambda path: (root / path).read_text())
+        with patch.object(questions, 'ROOT', root):
+            return questions.Index(evidence)
+
+    def test_public_and_meta_imports_are_imports(self):
+        sources = {name: prefix + text + BODY for name, (prefix, text) in LEAN_IMPORTS.items()}
+        index = self.index({'Base.lean': BASE, **sources})
+        for name, (_, text) in LEAN_IMPORTS.items():
+            path = 'Elements/' + name
+            with self.subTest(name=name):
+                [(target, start, end)] = index.imports[path]
+                self.assertEqual(target, 'Elements/Base.lean')
+                self.assertEqual(sources[name][start:end], text)
+                self.assertIn('Elements/Base.lean', index.visible(path))
+
+    def test_other_import_forms_are_refused(self):
+        for header in REFUSED_IMPORTS:
+            with self.subTest(header=header):
+                with self.assertRaisesRegex(questions.Refusal, 'unsupported import'):
+                    self.index({'Base.lean': BASE, 'Bad.lean': 'module\n\n' + header + '\n' + BODY})
+
+
+class HelperModules(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.directory = Path(temporary.name).resolve()
+        self.root = self.directory / 'repository'
+        (self.root / 'scripts/audit').mkdir(parents=True)
+        self.markers = self.directory / 'markers'
+        self.markers.mkdir()
+        for name in HELPER_NAMES:
+            self.addCleanup(sys.modules.pop, name, None)
+
+    def helper(self, path, marker):
+        """Write a module that leaves a marker file if it ever runs."""
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f'from pathlib import Path\nPath({str(self.markers / marker)!r}).touch()\n')
+
+    def ran(self):
+        return sorted(path.name for path in self.markers.iterdir())
+
+    def load(self, second):
+        with patch.object(questions, 'ROOT', self.root):
+            return questions.helper_modules(tuple(zip(HELPER_NAMES, ('scripts/heath.py', second))))
+
+    def test_no_helper_runs_until_every_helper_path_passes(self):
+        self.helper(self.root / 'scripts/heath.py', 'first')
+        outside = self.directory / 'outside.py'
+        self.helper(outside, 'outside')
+        self.helper(self.directory / 'elsewhere/jev.py', 'elsewhere')
+        (self.root / 'scripts/audit/link.py').symlink_to(outside)
+        (self.root / 'scripts/linked').symlink_to(self.directory / 'elsewhere',
+                                                  target_is_directory=True)
+        refused = (('scripts/audit/link.py', 'symlink'), ('scripts/linked/jev.py', 'symlink'),
+                   (str(outside), 'relative'), ('../outside.py', 'relative'),
+                   ('scripts/audit/missing.py', 'not a regular file'),
+                   ('scripts/audit', 'not a regular file'))
+        for path, message in refused:
+            with self.subTest(path=path):
+                with self.assertRaisesRegex(questions.Refusal, message):
+                    self.load(path)
+                self.assertEqual(self.ran(), [])
+                self.assertFalse(set(HELPER_NAMES) & sys.modules.keys())
+        # With the second path accepted, both helpers run, each from its checked path.
+        self.helper(self.root / 'scripts/audit/jev.py', 'second')
+        first, second = self.load('scripts/audit/jev.py')
+        self.assertEqual(self.ran(), ['first', 'second'])
+        self.assertEqual(Path(first.__file__), self.root / 'scripts/heath.py')
+        self.assertEqual(Path(second.__file__), self.root / 'scripts/audit/jev.py')
+        self.assertIs(sys.modules[HELPER_NAMES[1]], second)
+
+    def test_generator_runs_no_helper_when_a_helper_path_is_refused(self):
+        generator = self.root / 'scripts/audit/jev_questions.py'
+        shutil.copyfile(REPOSITORY / 'scripts/audit/jev_questions.py', generator)
+        self.helper(self.root / 'scripts/heath.py', 'heath')
+        outside = self.directory / 'outside.py'
+        self.helper(outside, 'jev')
+        (self.root / 'scripts/audit/jev.py').symlink_to(outside)
+        result = subprocess.run([sys.executable, '-I', str(generator), '--commit', '0' * 40],
+                                cwd=self.directory, capture_output=True, text=True, timeout=120)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertRegex(result.stderr, r'^refused: .*scripts/audit/jev\.py: symlink component')
+        self.assertEqual(self.ran(), [])
 
 
 class Controls(unittest.TestCase):

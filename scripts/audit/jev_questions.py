@@ -22,9 +22,13 @@ Generation reads no credentials and sends nothing. Every evidence file is compar
 `git show REV:path`; every excerpt records its exact source slice and hash. Failure to read
 the committed evidence, missing evidence, ambiguous names and differences from the revision
 are errors. Evidence paths must be relative, without parent traversal or symlinks, and
-resolve inside the repository. Both output paths reject symlinks, evidence files, tracked
-files other than the two default outputs, Git metadata, protected paths independently
-of the index, and collisions with each other; an output may be outside the repository.
+resolve inside the repository. Both helpers' paths pass those checks, and must name regular
+files, before either helper runs. Lean imports are read in the four forms Lean 4.35 allows
+without `all`: `import`, `public import`, `meta import` and `public meta import`, each
+naming one module; any other import is refused. Both output paths reject symlinks,
+evidence files, tracked files other than the two default outputs, Git metadata, protected
+paths independently of the index, and collisions with each other; an output may be
+outside the repository.
 Both outputs are assembled and validated before either is written, using temporary
 files and replacement without following a final symlink.
 The checks cover links and aliases present when it runs, not a concurrent writer racing
@@ -74,19 +78,6 @@ def require(condition: Any, message: str) -> None:
         raise Refusal(message)
 
 
-def module(name: str, path: str):
-    spec = importlib.util.spec_from_file_location(name, ROOT / path)
-    require(spec and spec.loader, f'cannot import {path}')
-    result = importlib.util.module_from_spec(spec)
-    sys.modules[name] = result
-    spec.loader.exec_module(result)
-    return result
-
-
-heath = module('jev_questions_heath', 'scripts/heath.py')
-jev = module('jev_questions_client', 'scripts/audit/jev.py')
-
-
 def dumps(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, allow_nan=False)
 
@@ -126,6 +117,40 @@ def read_no_follow(path: Path) -> bytes:
     """Refuse a final symlink even if it appeared after the component checks."""
     with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW), 'rb') as stream:
         return stream.read()
+
+
+HELPERS = (('jev_questions_heath', 'scripts/heath.py'),
+           ('jev_questions_client', 'scripts/audit/jev.py'))
+
+
+def helper_modules(helpers: tuple[tuple[str, str], ...]) -> list:
+    """Check every helper's path, then read and compile each, before any helper runs."""
+    checked = []
+    for name, path in helpers:
+        resolved = evidence_path(path)
+        require(resolved.is_file(), f'{path}: helper module is missing or not a regular file')
+        checked.append((name, path, resolved))
+    # Each helper runs from the bytes read here, never through a final symlink.
+    code = [(name, path, resolved, compile(read_no_follow(resolved), str(resolved), 'exec',
+                                           dont_inherit=True))
+            for name, path, resolved in checked]
+    result = []
+    for name, path, resolved, compiled in code:
+        spec = importlib.util.spec_from_file_location(name, resolved)
+        require(spec is not None, f'cannot import {path}')
+        loaded = importlib.util.module_from_spec(spec)
+        sys.modules[name] = loaded
+        exec(compiled, loaded.__dict__)
+        result.append(loaded)
+    return result
+
+
+try:
+    heath, jev = helper_modules(HELPERS)
+except (Refusal, OSError) as error:
+    if __name__ != '__main__':
+        raise
+    raise SystemExit(f'refused: {error}') from None
 
 
 class Evidence:
@@ -178,8 +203,16 @@ TOKEN = re.compile(NAME)
 COMMAND = re.compile(
     r'^(?:@\[[^\n]*?\]\s*)?(?:(?:private|protected|noncomputable|unsafe)\s+)*'
     r'(theorem|lemma|def|abbrev|axiom|opaque|structure|inductive|instance|example|'
-    r'namespace|section|end|open|variable|import|notation\S*|infix\S*|prefix\S*|'
+    r'namespace|section|end|open|variable|notation\S*|infix\S*|prefix\S*|'
     r'postfix\S*|attribute|set_option)\b', re.M)
+# Lean 4.35's header (Lean/Parser/Module/Syntax.lean) allows `public`, then `meta`, each
+# optional, before `import`. Any other prefix is refused, as is an import that does not name
+# exactly one module before the end of its line: `import all` is not read.
+IMPORT = re.compile(r'^(?:public\s+)?(?:meta\s+)?(import)\b', re.M)
+PREFIXED_IMPORT = re.compile(
+    r'^(?:@\[[^\n]*?\]\s*|(?:public|meta|private|protected|noncomputable|unsafe)\s+)+import\b', re.M)
+IMPORT_NAME = re.compile(r'\s+(' + NAME + r')[^\S\n]*(?:\n|\Z)')
+HEADER_WORDS = frozenset({'module', 'prelude', 'public', 'meta', 'all', 'import'})
 
 
 def mask(src: str) -> tuple[str, list[tuple[int, int]]]:
@@ -278,7 +311,10 @@ class Index:
         raw = self.evidence.read(path)
         clean, comments = mask(raw)
         self.clean[path] = clean
-        commands = list(COMMAND.finditer(clean))
+        commands = sorted([*COMMAND.finditer(clean), *IMPORT.finditer(clean)], key=lambda m: m.start())
+        imports = {match.start() for match in commands if match.re is IMPORT}
+        for found in PREFIXED_IMPORT.finditer(clean):
+            require(found.start() in imports, f'{path}: unsupported import {found.group()!r}')
         self.imports[path] = []
         namespace = ''
         frames: list[tuple[str, int, int]] = []
@@ -298,8 +334,13 @@ class Index:
             line_end = raw.find('\n', start)
             line_end = len(raw) if line_end < 0 else line_end
             if kind == 'import':
-                imported = clean[match.end():line_end].strip()
-                self.imports[path].append((imported.replace('.', '/') + '.lean', start, line_end + 1))
+                found = IMPORT_NAME.match(clean, match.end())
+                require(found and found.group(1) not in HEADER_WORDS,
+                        f'{path}: unsupported import {raw[start:line_end]!r}')
+                # The import runs to the end of the line naming its module.
+                line_end = raw.find('\n', found.end(1))
+                line_end = len(raw) if line_end < 0 else line_end
+                self.imports[path].append((found.group(1).replace('.', '/') + '.lean', start, line_end + 1))
                 continue
             if kind in ('namespace', 'section'):
                 frames.append((namespace, len(contexts), len(opens)))
