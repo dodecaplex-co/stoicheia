@@ -897,9 +897,9 @@ def _paragraph_continuation(line: str, context: tuple[int, int, bool]) -> tuple[
 def _underline_in_context(line: str, context: tuple[int, int, bool]) -> bool:
     """Whether an underline remains inside the paragraph's quote and list containers."""
     quotes, indent, _, _, _ = _line_layout(line)
-    active_quotes, required, ordered = context
+    active_quotes, required, _ = context
     return quotes == active_quotes and (indent <= 3 if required == 0 else
-                                        indent > 0 or ordered)
+                                        indent >= required)
 
 
 def _month(word: str) -> int | None:
@@ -1037,6 +1037,12 @@ def heading_problems(page: str) -> list[str]:
                 for read in unread:
                     readable(*read)
                 dated(dates, where)
+            start = context = None
+            words, dates, held, unread = [], [], set(), []
+            own_words = words
+            continue
+
+        if THEMATIC.fullmatch(line) or THEMATIC.fullmatch(stripped):
             start = context = None
             words, dates, held, unread = [], [], set(), []
             own_words = words

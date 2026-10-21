@@ -430,6 +430,35 @@ class TrainChecks(Repository):
                 row = dict(self.row, code_review=cell)
                 self.assertEqual(self.problems(text=body([row])), [])
 
+    def test_review_commit_must_use_visible_ascii_hex(self):
+        token = self.member[:12]
+        fullwidth = "".join(chr(ord(character) + 0xFEE0) for character in token)
+        hidden = (
+            f"\\`[reviewed](https://example.invalid/{token})\\`",
+            f"[reviewed](https://example.invalid/{token})",
+            f"Reviewed {fullwidth}: no findings",
+        )
+        visible = (
+            f"`reviewed {token}: no findings\\`",
+            f"\\\\`reviewed {token}: no findings`",
+            f"<https://example.invalid/{token}>: pass",
+            f"\\[review](https://example.invalid/{token}) pass",
+        )
+        for key, label in (("code_review", "/code-review"),
+                           ("security_review", "/security-review")):
+            for cell in hidden:
+                with self.subTest(key=key, hidden=cell):
+                    self.refused(f"{label} names no reviewed commit",
+                                 text=body([dict(self.row, **{key: cell})]))
+            for cell in visible:
+                with self.subTest(key=key, visible=cell):
+                    self.assertEqual(self.problems(text=body(
+                        [dict(self.row, **{key: cell})])), [])
+
+    def test_multiline_html_does_not_hide_block_sections(self):
+        wrapped = '<span title="\n' + body([self.row]) + '\n">x</span>'
+        self.assertEqual(train.members_table(wrapped), [self.row])
+
     def test_malformed_markup_and_link_titles_hide_no_review_commit(self):
         cells = (
             f'<" <span title="{self.member}">Reviewed</span>',
@@ -570,6 +599,14 @@ class TrainChecks(Repository):
                     self.refused(f"{label} says", text=body([dict(self.row, **{key: cell})]))
                     self.assertIn("a review cell may not say", "\n".join(
                         train.body_problems(body([dict(self.row, **{key: cell})]))))
+        for filler in train.INVISIBLE_LETTERS:
+            for suffix in (filler, f"&#{ord(filler)};"):
+                cell = f"{own}: pending{suffix}"
+                for key, label in (("code_review", "/code-review"),
+                                   ("security_review", "/security-review")):
+                    with self.subTest(key=key, filler=ord(filler), entity="&" in suffix):
+                        self.refused(f"{label} says", text=body(
+                            [dict(self.row, **{key: cell})]))
         member = self.commit([self.base], {CHECK: "print('reviewed check')\n"})
         head = self.merge(self.base, member)
         for cell in (f"Security reader at {member}: PASS; a second pass is pending.",

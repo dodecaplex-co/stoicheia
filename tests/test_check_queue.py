@@ -635,6 +635,8 @@ class QueueTests(unittest.TestCase):
         original = self.body()
         for body in (
             original.replace("Verdict: PASS.", "<!-- Verdict: PASS. -->"),
+            original.replace("\nVerdict: PASS.\n",
+                             '\n<span title="\nVerdict: PASS.\n">x</span>\n'),
             original.replace("| Step | Outcome | Seconds |",
                              "```\n| Step | Outcome | Seconds |")
                     .replace("<!-- safe_push:preflight end -->",
@@ -1284,6 +1286,7 @@ class TreeTests(unittest.TestCase):
                      "[link](#x).",
                      "21 October 2026\n===\n\nNotes\n---",
                      "### 20 October 2026\n---", "- 20 October 2026\n---",
+                     "- 20 October 2026\n ---", "1. 20 October 2026\n---",
                      "> 20 October 2026\n---", "> - 20 October 2026\n---",
                      "Notes\n21. October 2026\n===", "## 21 October 2026 ##",
                      "# Notes #", "##"])
@@ -1327,6 +1330,7 @@ class TreeTests(unittest.TestCase):
             "+ ## 20 October 2026", "1. ## 20 October 2026", "1) ## 20 October 2026",
             "> - > ## 20 October 2026", "> - ## 20 October 2026", "* > 2. ## 20 October 2026",
             "> 20 October 2026\n> ---", "- 20 October 2026\n  ---",
+            "1. 20 October 2026\n   ---",
             "> - 20 October 2026\n>   ---",
             "1.  Item\n\n    ## 20 October 2026",
             # GFM's footnote definitions and task items hold blocks too (the fourth review).
@@ -1362,6 +1366,9 @@ class TreeTests(unittest.TestCase):
             "20 October\n>\n2026\n==="))
         self.passes((added for added in (
             "21 October 2026\n===\nNotes\n---",
+            "20 October\n***\n2026-10-21\n===",
+            "20 October\n___\n2026-10-21\n===",
+            "20 October\n- - -\n2026-10-21\n===",
             "20 October 2026\n    >\n===", "20 October 2026\n\t>\n===",
             "- 20 October 2026\n      >\n  ===", "> 20 October 2026\n>     >\n> ===",
             "21 October 2026\n===\n>\nNotes\n---")))
@@ -1383,19 +1390,20 @@ class TreeTests(unittest.TestCase):
             "## 2026", "## 31 February 2026", "## 2026-02-31", "## FY2026",
             "## 21 October 2026 (also 20/10/2026)", "# 20October2026",
             "20 October\n2026\n===", "Notes\n2026. October 20\n===", "1. October 2026\n   =",
-            "Notes\n01. October 2026\n===",
-            "    Notes\n21. October 2026\n ===", "- - -\n21. October 2026\n ===",
-            "-\n21. October 2026\n ===", ">\n21. October 2026\n ===",
-            "> Notes\n21. October 2026\n ===", "- Notes\n21. October 2026\n ===",
-            "- - -\n    Notes\n21. October 2026\n ===",
-            "2. Notes\n21. October 2026\n ===",
-            "Notes\n- 21. October 2026\n ===",
-            "Notes\n> 21. October 2026\n> ===",
+            "21. October 2026\n    ===", "- October 2026\n  ===",
             "Notes 20 October\n[^2026]:\n==="))
         self.passes(["## 21 October 2026", "## October 21, 2026", "## 2026-10-21",
                      "## 21st October 2026", "## 21 October 2026 to 22 October 2026",
                      "## Book I, 1066 and after", "## 2200 propositions", "### 2026",
-                     "A paragraph of 2026, in prose.", "1. 21 October 2026\n   ---"])
+                     "A paragraph of 2026, in prose.", "1. 21 October 2026\n   ---",
+                     "Notes\n01. October 2026\n===",
+                     "    Notes\n21. October 2026\n ===", "- - -\n21. October 2026\n ===",
+                     "-\n21. October 2026\n ===", ">\n21. October 2026\n ===",
+                     "> Notes\n21. October 2026\n ===", "- Notes\n21. October 2026\n ===",
+                     "- - -\n    Notes\n21. October 2026\n ===",
+                     "2. Notes\n21. October 2026\n ===",
+                     "Notes\n- 21. October 2026\n ===",
+                     "Notes\n> 21. October 2026\n> ==="])
 
     def test_a_page_a_checkout_may_rewrite_is_unreadable(self):
         # --tree reads the checkout, where Git writes the page through its attributes:

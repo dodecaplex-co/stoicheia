@@ -24,7 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from safe_push import (
     CHECK_INPUTS, DECISIONS, GENERATED, GENERATED_REGIONS, SECTION, Refusal, changed_files,
-    generated_parts, git,
+    generated_parts, git, html_tag_end,
     is_protected, judged_files, pinned, run, sections, shown, under, visible, written,
 )
 
@@ -195,6 +195,9 @@ def _placeholder(cell: str) -> bool:
                                       .rstrip(".!;:, ").casefold()))
 
 
+INVISIBLE_LETTERS = frozenset("\u115f\u1160\u3164\uffa0")
+
+
 def _normal(cell: str) -> str:
     """A cell's text as it reads: character references decoded, then NFKC, casefolding
     and NFKC again, then without format characters and combining marks. NFKC comes
@@ -203,69 +206,14 @@ def _normal(cell: str) -> str:
     casefolding the dotted capital I adds one."""
     text = unicodedata.normalize("NFKC", html.unescape(cell))
     text = unicodedata.normalize("NFKC", text.casefold())
-    return "".join(c for c in text if unicodedata.category(c) not in ("Cf", "Mn", "Me"))
+    return "".join(c for c in text if c not in INVISIBLE_LETTERS
+                   and unicodedata.category(c) not in ("Cf", "Mn", "Me"))
 
 
 def _placeholder_word(cell: str) -> str | None:
     """The first word anywhere in the cell that says the review is absent or to come."""
     match = PLACEHOLDER_WORD.search(_normal(cell))
     return match.group() if match else None
-
-
-def _html_tag_end(text: str, start: int) -> tuple[bool, int | None]:
-    """Whether `start` opens an HTML tag, and its end when the tag is complete."""
-    at = start + 1
-    closing = at < len(text) and text[at] == "/"
-    if closing:
-        at += 1
-    if at == len(text) or not text[at].isascii() or not text[at].isalpha():
-        return False, None
-    at += 1
-    while at < len(text) and text[at].isascii() \
-            and (text[at].isalnum() or text[at] == "-"):
-        at += 1
-    if closing:
-        while at < len(text) and text[at] in " \t\r\n":
-            at += 1
-        if at < len(text) and text[at] == ">":
-            return True, at + 1
-        return (True, None) if at == len(text) else (False, None)
-    while at < len(text):
-        while at < len(text) and text[at] in " \t\r\n":
-            at += 1
-        if at == len(text):
-            return True, None
-        if text.startswith("/>", at):
-            return True, at + 2
-        if text[at] == ">":
-            return True, at + 1
-        name = at
-        while at < len(text) and text[at] not in " \t\r\n\"'=<>`":
-            at += 1
-        if at == name:
-            return False, None
-        while at < len(text) and text[at] in " \t\r\n":
-            at += 1
-        if at < len(text) and text[at] == "=":
-            at += 1
-            while at < len(text) and text[at] in " \t\r\n":
-                at += 1
-            if at == len(text):
-                return True, None
-            if text[at] in "\"'":
-                quote = text[at]
-                at += 1
-                end = text.find(quote, at)
-                if end < 0:
-                    return True, None
-                at = end + 1
-            else:
-                value = at
-                while at < len(text) and text[at] not in " \t\r\n\"'=<>`":
-                    at += 1
-                if at == value:
-                    return False, None
-    return True, None
 
 
 def _without_html(text: str) -> str:
@@ -302,7 +250,7 @@ def _without_html(text: str) -> str:
                 break
             at = end + 1
             continue
-        recognized, end = _html_tag_end(text, at)
+        recognized, end = html_tag_end(text, at)
         if not recognized:
             visible.append("<")
             at += 1
@@ -408,6 +356,10 @@ def _without_link_targets(text: str) -> str:
             at += 1
             continue
         label = labels.pop() if labels else None
+        if label is None:
+            visible.append("]")
+            at += 1
+            continue
         if text[at + 1] == "[":
             end = at + 2
             valid = False
@@ -434,7 +386,7 @@ def _without_link_targets(text: str) -> str:
                 at = end + 1
             else:
                 visible.append("]")
-                at = end
+                at = at + 1 if end + 1 < len(text) and text[end + 1] == "(" else end
             continue
         end = _inline_link_end(text, at)
         if label and label[1]:
@@ -450,9 +402,9 @@ def _without_link_targets(text: str) -> str:
     return "".join(visible)
 
 
-def _review_text(cell: str) -> str:
+def _review_text(cell: str, normalize: bool = False) -> str:
     """A review cell as read: literal matched code spans; elsewhere no hidden markup,
-    with character references decoded; and NFKC applied to all visible text."""
+    with character references decoded; compatibility normalization only when requested."""
     runs = []
     at = 0
     while at < len(cell):
@@ -462,11 +414,16 @@ def _review_text(cell: str) -> str:
         end = at + 1
         while end < len(cell) and cell[end] == "`":
             end += 1
-        runs.append((at, end, end - at))
+        escapes = 0
+        before = at
+        while before and cell[before - 1] == "\\":
+            escapes += 1
+            before -= 1
+        runs.append((at, end, end - at, escapes % 2 == 1))
         at = end
     next_run = {}
     following = {}
-    for start, end, length in reversed(runs):
+    for start, end, length, _ in reversed(runs):
         next_run[start] = following.get(length)
         following[length] = (start, end)
 
@@ -474,8 +431,8 @@ def _review_text(cell: str) -> str:
     code_spans = []
     outside = 0
     at = 0
-    for start, end, _ in runs:
-        if start < at or not (close := next_run[start]):
+    for start, end, _, escaped in runs:
+        if start < at or escaped or not (close := next_run[start]):
             continue
         protected.append(cell[outside:start])
         code = re.sub(r"\r\n|\r|\n", " ", cell[end:close[0]])
@@ -487,10 +444,7 @@ def _review_text(cell: str) -> str:
     protected.append(cell[outside:])
     text = html.unescape(_without_html(_without_link_targets("".join(protected))))
     text = re.sub("\0([0-9]+)\0", lambda match: code_spans[int(match.group(1))], text)
-    return unicodedata.normalize("NFKC", text)
-
-
-INVISIBLE_LETTERS = frozenset("\u115f\u1160\u3164\uffa0")
+    return unicodedata.normalize("NFKC", text) if normalize else text
 
 
 def _review_content(cell: str) -> bool:
@@ -498,7 +452,7 @@ def _review_content(cell: str) -> bool:
     in its text as a reader sees it (_review_text)."""
     return any(character.isalpha() and character not in INVISIBLE_LETTERS
                and unicodedata.category(character) not in ("Cf", "Mn", "Me")
-               for character in COMMIT.sub("", _review_text(cell)))
+               for character in COMMIT.sub("", _review_text(cell, normalize=True)))
 
 
 def _evidence(rows: list[dict]) -> list[str]:
