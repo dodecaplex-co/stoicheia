@@ -21,7 +21,8 @@ attempts gives `grind` each rule alone, in each of the two ways, and each try le
 the rules refused in its way; a try left with none is not made. Refused both ways are the
 eleven rules that only say that a point, a straight line or a circle exists (Postulates 1
 to 3 and the eight `exists_point` rules); refused forward as well are fourteen with no
-hypothesis `grind` can start from (`len_symm`, `add_comm` and the like). Such a rule gives
+hypothesis `grind` can start from (`len_symm`, `add_comm` and the like), plus the restricted
+superposition rule, whose conclusion is the structure `Superposition.Rule`. Such a rule gives
 `grind` nothing to work with in any case (see below); but while it stayed in, as in the
 families Postulates and Constructions and every pair with either, the try searched with
 none of its other rules.
@@ -40,7 +41,8 @@ in one of three ways.
     `endOf`; I.45's `triples`; the sum of a list, `Magnitude.sum`, and the areas of a figure
     given with its triangles, `Rectilineal.area` and `Apart.area`): unfolded to their
     bodies, those defined by cases or by recursion one case at a time, by the equations
-    Lean proves for them.
+    Lean proves for them. The restricted rule's `primitives` interpretation is unfolded
+    here too: it assigns the edition's words to the pure calculus's fields.
   - CHOSEN, the magnitudes Lean chooses (`circumference`, `standing`, `rect`) and the
     order "not greater": by what the definition says of them and nothing more, as a lemma
     proved from Lean's choice alone (`Classical.epsilon_spec`), in the preamble of every
@@ -58,14 +60,19 @@ together (`Fitted`, defined by induction), and the figures given with their tria
 (`Rectilineal`, `Apart`, structures). `grind` takes them as they are: it does not reason by
 induction on `Fitted`, and draws on a figure's fields only where a rule or the goal names
 them. So a companion of I.45 or II.14 whose proof needs that is not found here.
+The restricted superposition rule is also a structure, `Superposition.Rule`. Its field
+requires a represented derivation; `grind` does not build that derivation or open the
+field of itself. Unfolding `primitives` supplies its interpretation, not placement
+witnesses or an existential substitute for the rule.
 Every file of tries begins by proving a few goals that `grind` closes only so (CONTROLS),
 so a screen that has stopped unfolding stops, and ends with a line that Lean prints (END),
 so a Lean process that stopped early is not read as tries that closed.
 
 It is a screen, not a proof search. `grind` instantiates rules among the terms already in
-a goal; it does not draw a new circle or lay down a triangle, so a proposition that needs
-one (I.23 from superposition) is found by reading, not here. The former I.7 overlap
-used Circle 4, now a corollary of I.7 and no longer an axiom in this screen.
+a goal; it does not draw a new circle or lay down a triangle. The former superposition
+shortcuts for I.2, I.3 and I.23 are retired: the restricted rule returns no placement
+witnesses. The former I.7 overlap used Circle 4, now a corollary of I.7 and no longer an
+axiom in this screen; deriving I.7 through it is circular.
 
 The statements are facts.json's entries: the propositions, the porisms and the companions.
 At commit d040117, with only the phrases SameSideOf to LinesMeet unfolded, both tries in
@@ -119,7 +126,7 @@ DEFS = """SameSideOf OppositeSidesOf OppositeSides OutsideCircle CirclesMeet Lin
 CirclesTouch TouchesInternally TouchesExternally Touches LinesMeet Collinear Triangle OnRay
 InsideTriangle Equilateral IsRightAngle IsObtuse IsAcute Square Parallel AreParallel
 Parallelogram Rectangle EqualCircles Contain quadArea sq InOrder segments endOf triples
-Magnitude.sum Rectilineal.area Apart.area""".split()
+Magnitude.sum Rectilineal.area Apart.area primitives""".split()
 
 # The chosen magnitudes, and the order "not greater", each given by its lemma in SPECS.
 CHOSEN = {"circumference": "Screen.circumference_spec", "standing": "Screen.standing_spec",
