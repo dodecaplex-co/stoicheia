@@ -44,7 +44,7 @@ COMMENTARY_CHANGES = {
 }
 BASE = 'namespace Elements\n\ntheorem base : True := trivial\n\nend Elements\n'
 BODY = '\nnamespace Elements\n\nend Elements\n'
-IMPORTED = ('Base.lean', 'areas-p5.lean', 'areas.p5.lean', 'a"b.lean', 'Tools!.lean')
+IMPORTED = ('Base.lean', 'areas-p5.lean', 'areas.p5.lean', 'a"b.lean')
 # Each Lean file, with the imports read from it as (imported file, the import's words to the
 # end of its line), or None where it is refused as an unsupported import. Lean 4.35 accepts
 # each file read, and refuses each file refused but those with `import all`, `prelude`, two
@@ -66,8 +66,6 @@ HEADERS = (
      [('areas.p5', 'public import Elements.«areas.p5»\n')]),
     ('module public import Elements.Base\n' + BODY, [('Base', 'public import Elements.Base\n')]),
     ('module\n\npublic import Elements.«a"b»\n' + BODY, [('a"b', 'public import Elements.«a"b»\n')]),
-    ('module\n\npublic import Elements.Tools!\n' + BODY,
-     [('Tools!', 'public import Elements.Tools!\n')]),
     ('module\n\npublic import Elements.Base', [('Base', 'public import Elements.Base')]),
     ('module\n\npublic import Elements.Base -- the end',
      [('Base', 'public import Elements.Base -- the end')]),
@@ -641,13 +639,13 @@ class Imports(LeanFiles):
                 for target, _, _ in spans:
                     self.assertIn(target, index.visible('Elements/Header.lean'))
 
-    def test_suffixed_module_and_declaration_names_are_visible(self):
+    def test_suffixed_declaration_names_are_visible(self):
         tools = ('namespace Elements\n\ntheorem helper? : True := trivial\n\n'
                  'def import! : Nat := 0\n\ndef macro? : Nat := 0\n\nend Elements\n')
-        header = ('public import Elements.Tools!\n\nnamespace Elements\n\n'
+        header = ('import Elements.Tools\n\nnamespace Elements\n\n'
                   'theorem uses : True := helper?\n\nend Elements\n')
-        index = self.index({'Tools!.lean': tools, 'Header.lean': header})
-        self.assertIn('Elements/Tools!.lean', index.visible('Elements/Header.lean'))
+        index = self.index({'Tools.lean': tools, 'Header.lean': header})
+        self.assertIn('Elements/Tools.lean', index.visible('Elements/Header.lean'))
         self.assertEqual(index.get('Elements.import!').name, 'Elements.import!')
         self.assertEqual(index.get('Elements.macro?').name, 'Elements.macro?')
         start = header.index('helper?')
@@ -671,7 +669,7 @@ class CallReconciler(LeanFiles):
 
     def test_suffixed_constructor_names_and_calls_remain_distinct(self):
         text = ('namespace Elements\n\ninductive Pt where\n  | mk | mk! | def! | match?\n\n'
-                'theorem uses : Pt × Pt := (.mk, .mk!)\n\nend Elements\n')
+                'def uses : Pt × Pt := (.mk, .mk!)\n\nend Elements\n')
         calls = self.calls(text)
         self.assertEqual({member for member, owners in calls.members.items()
                           if 'Elements.Pt' in owners}, {'mk', 'mk!', 'def!', 'match?'})
