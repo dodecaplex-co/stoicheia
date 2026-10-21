@@ -101,6 +101,10 @@ one commit and runs safe_push.py against that origin:
   moved to a value the lock does not give is refused by the commit's own
   check_fidelity.py; a count moved in scripts/, or in code under tests/, is never a pinned
   value; and the markers are read by origin/main's reader, never the commit's;
+- the model's page (#187): an axiom added with its law, tests/model/MODEL.md's account
+  and its counts moved with it, lands as content, its prose free to move; while a count
+  marker of the page added, removed or renamed, or the page deleted, made executable or
+  left unreadable, is a check change, kept apart;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -3850,6 +3854,89 @@ class ProtectedPaths(Edge):
             git(WORK, "add", "--", "Certificate/linked.md")
             second = self.commit("Its count moved")
             self.assertFalse(safe_push.pinned(WORK, first, second, "Certificate/linked.md"))
+
+    # The model's page (#187): pinned whole for its prose, the model's account of its laws,
+    # while its count markers stand, as the other check inputs' do.
+    AXIOM_COUNT = re.compile(r"(<!-- count:axioms -->)([0-9]+)(<!-- /count -->)")
+
+    def model_moved(self) -> str:
+        """A commit from origin/main of an axiom added with its law (planted_axiom), with
+        the pages render.py regenerates from it: MODEL.md gains a line of its account, and
+        each of its counts of the axioms moves."""
+        git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+        sha = self.regenerated_commit("Add an axiom, with its law", self.planted_axiom())
+        old, new = (git(WORK, "show", f"{rev}:{self.PAGE}") for rev in (BASE, sha))
+        self.assertIn("The planted law:", new)
+        self.assertEqual([int(m[2]) for m in self.AXIOM_COUNT.finditer(new)],
+                         [int(m[2]) + 1 for m in self.AXIOM_COUNT.finditer(old)])
+        return sha
+
+    def page_changed(self, moved: str, change, mode: int | None = None) -> str:
+        """A commit on `moved` of MODEL.md changed by `change`, given its text (None deletes
+        the file); `mode`, if given, is the file's new mode."""
+        git(WORK, "checkout", "--quiet", "--force", "--detach", moved)
+        result = change(self.text(self.PAGE))
+        if mode is not None:
+            (WORK / self.PAGE).write_text(result)
+            os.chmod(WORK / self.PAGE, mode)
+        return self.commit("MODEL.md changed, for the test",
+                           {} if result is None else {self.PAGE: result},
+                           remove=[self.PAGE] if result is None else ())
+
+    def test_model_page_moves_with_its_markers_standing(self):
+        # An axiom added with its law moves the model's account, a line of MODEL.md, and
+        # its counts of the axioms; its prose may move further. The same markers stand, by
+        # name and in order, so the page is a pinned value and lands with its content.
+        moved = self.model_moved()
+        reworded = self.page_changed(moved, lambda t: t.replace(
+            "Stoicheia's proofs rest on <!-- count:axioms -->",
+            "Stoicheia's proofs now rest on <!-- count:axioms -->", 1))
+        for name, sha in (("the account and its counts moved", moved),
+                          ("a sentence around a marker reworded", reworded)):
+            with self.subTest(name):
+                self.assertTrue(safe_push.pinned(WORK, BASE, sha, self.PAGE))
+                refused, out = self.kept_apart(sha, "python3 scripts/check_fidelity.py")
+                self.assertFalse(refused, out)
+                self.assertIn("pinned values", out)
+                self.assertIn(self.PAGE, out[out.index("pinned values"):])
+
+    def test_model_page_markers_added_removed_or_renamed_kept_apart(self):
+        # The same change, with a count marker of MODEL.md added, removed or renamed, is
+        # no pinned value, and keep_apart refuses it when origin/main's checks fail: the
+        # commit's own pass checks each value against the marker that holds it. The first
+        # count of the axioms renamed to tacit-rules, its value moved to match, would have
+        # the page say that the proofs rest on as many axioms as there are tacit rules, and
+        # pass that check. Nor is the page deleted, made executable or left unreadable.
+        def renamed(text):
+            (tacit,) = re.findall(r"<!-- count:tacit-rules -->([0-9]+)<!-- /count -->", text)
+            return self.AXIOM_COUNT.sub(
+                lambda m: f"<!-- count:tacit-rules -->{tacit}{m[3]}", text, count=1)
+        moved = self.model_moved()
+        weakened = {
+            "a marker added": lambda t: t + (
+                "\nThe lock's words: <!-- count:vocabulary -->91<!-- /count -->.\n"),
+            "a marker removed": lambda t: self.AXIOM_COUNT.sub(lambda m: m[2], t, count=1),
+            "a marker renamed": renamed,
+            "a marker unclosed": lambda t: t.replace("<!-- /count -->", "", 1),
+            "the file deleted": lambda t: None,
+        }
+        marker = f"it adds, removes or renames a count marker of {self.PAGE}"
+        for name, change in weakened.items():
+            with self.subTest(name):
+                sha = self.page_changed(moved, change)
+                self.assertFalse(safe_push.pinned(WORK, BASE, sha, self.PAGE))
+                refused, out = self.kept_apart(sha, "python3 scripts/check_fidelity.py")
+                self.assertTrue(refused, out)
+                self.assertIn(marker, out)
+                self.assertNotIn("beyond", out)
+                self.assertNotIn("pinned values", out)
+        with self.subTest("the file made executable"):
+            sha = self.page_changed(moved, lambda t: t, mode=0o755)
+            self.assertFalse(safe_push.pinned(WORK, BASE, sha, self.PAGE))
+            refused, out = self.kept_apart(sha, "python3 scripts/check_fidelity.py")
+            self.assertTrue(refused, out)
+            self.assertIn(marker, out)
+            self.assertNotIn("pinned values", out)
 
     # The model's laws (issue #40): an axiom moves with its law, in one pull request.
     LOCK, HASH = "Certificate/axioms.lock", "tests/model/lock.sha256"
