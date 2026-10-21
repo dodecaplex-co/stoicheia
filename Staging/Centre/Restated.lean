@@ -1,3 +1,4 @@
+import Elements.Figure.Circles
 import Elements
 
 /-!
@@ -392,7 +393,7 @@ example : type_of% @Elements.EqualCircles.refl := fun _ _ => Centre.EqualCircles
 /-! ## Book Zero: what holds of one centre holds of every centre -/
 
 /-- What is true of one centre of a circle is true of every centre, since a circle has only
-one (`centre_unique`, Generalities 2). For a condition said of every centre, as III.4's
+one (`centre_unique`, proved in `Elements.Figure.Circles`). For a condition said of every centre, as III.4's
 "not through the centre" and III.8's "through the centre" are: a citer who has named the
 centre O passes `hO.every h`, with `h` the condition at O. -/
 theorem _root_.Elements.Centre.every {O : Point} {α : Circle} {p : Point → Prop}

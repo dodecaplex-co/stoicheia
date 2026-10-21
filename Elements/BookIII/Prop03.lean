@@ -2,6 +2,7 @@ import Elements.Figure.Basics
 import Elements.BookIII.Squares
 import Elements.BookI.Prop05
 import Elements.BookI.Prop08
+import Elements.BookI.Prop13
 import Elements.BookI.Prop26
 import Elements.BookI.Helpers
 

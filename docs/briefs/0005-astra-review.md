@@ -1,5 +1,15 @@
 # Brief 0005: answering Astra's review
 
+19 October 2026: this brief keeps its earlier measurements and instructions as history.
+[Eight rules are now theorems](../FORMALIZATION.md#rules-now-proved), with their names
+and types unchanged; the baseline is 79 axioms, including 73 tacit rules. Fresh
+certificate output at `1e713bb` gives III.1 and its porism the same 60 axioms, including
+55 tacit rules. `centre_unique` is proved in Book Zero, so the old 56/57 counts and
+required axiom membership no longer describe their dependencies. Any change to those
+checks needs its own approval and separate preparation under WORKFLOW, section 10.
+Circle 2 is proved from Circle 3; III.2's remaining overlap is with Circle 3, and its
+published proof uses neither the Circle 2 theorem nor the Circle 3 axiom.
+
 *Written and committed on 17 October 2026 (d040117), and revised on 18 October 2026 to the owner's decisions taken after it. The first text stands in the history, and each revised passage says so where it stands. What changed, and why:*
 
 - **Placement has no time limit and no fallback.** The owner decided on 17 October that III.24 waits for a proved placement lemma, and that a fact the axioms lack is a decision for the owner, never a quiet new axiom. "Timeboxed", the fallback congruence and "if the fallback was used" are removed; the verification line for placement, which could never pass, is restated; the corrections to the design and the order of work, spike first, are added under stage 3.
@@ -232,7 +242,12 @@ Expected result: III.1 shows 56 tacit rules and III.1 Por. 57, including `centre
 **k. Additions that close every remaining review point.**
 
 *Certificate regressions* (the review asked for them by name):
-- `tests/certificate_expectations.json` pins facts the CI must keep: `III.1 Por.` includes `Tacit.centre_unique` and `III.1` does not. A negative test plants a dependency that occurs **only in a declaration's type** and checks the unified walk finds it.
+- `tests/certificate_expectations.json` originally pinned that `III.1 Por.` includes
+  `Tacit.centre_unique` and `III.1` does not. The membership pin was later dropped, with
+  the owner's approval, ahead of retiring that axiom; the
+  [decision record](0002-decisions.md#19-october-2026) owns that change. A negative test
+  plants a dependency that occurs **only in a declaration's type** and checks the unified
+  walk finds it.
 
 *Overlap catalogue columns*: proposition, rule, **where the rule first enters the development** (its first user), which dependencies bring it in, what the Lean proof does, and the audit lemma. Deriving these propositions from weaker assumptions is recorded as an optional, separate, dependency-audited workstream, not this plan.
 

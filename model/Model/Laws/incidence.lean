@@ -7,12 +7,15 @@ public import Model.Hand
 # The incidence and line laws, translated by hand
 
 **Hand-translated: this file is written by hand,** like `Model/Hand.lean`, alongside the
-generated laws described in the [README](../../README.md). Each law here is the library's, word for word, with `S.Point` for
-`Elements.Point`, `S.OnLine` for `Elements.OnLine`, and so on, and the lock's printed
-statement is quoted above it, from `Certificate/axioms.lock`. Each binder is implicit or
-explicit as the lock prints it. `Check/Incidence.lean` puts the library's own words in for
-`S` and asks the kernel whether each result is the original declaration; the build fails if
-it is not. The same check file compares each translation with its generated law.
+generated laws described in the [README](../../README.md). Each law here is the library's,
+word for word, with `S.Point` for `Elements.Point`, `S.OnLine` for `Elements.OnLine`, and
+so on. Its printed statement is quoted above it, from the lock or, for the retired
+`centre_unique`, its unchanged theorem type. Each binder keeps its original kind.
+`Check/Incidence.lean` puts the library's own words in for `S` and asks the kernel whether
+each result is the original declaration; the build fails if it is not. The same check
+file compares each locked law's translation with its generated
+law, and `centre_unique` directly with the library declaration, including binder kinds.
+Its concrete plane proof remains as a derived fact, with no generated assumption field.
 
 The laws are those of a straight line and the points on it:
 
@@ -65,7 +68,9 @@ def line_unique : Prop :=
   ∀ {A B : S.Point} {L M : S.Line}, A ≠ B → S.OnLine A L → S.OnLine B L → S.OnLine A M →
     S.OnLine B M → L = M
 
-/-- `Elements.Tacit.centre_unique`, hand-translated. The lock prints it as `∀ {A B :
+/-- `Elements.Tacit.centre_unique`, hand-translated.
+The theorem's unchanged type is
+`∀ {A B :
 Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.Centre B α → Eq A B`. -/
 def centre_unique : Prop :=
   ∀ {A B : S.Point} {α : S.Circle}, S.Centre A α → S.Centre B α → A = B

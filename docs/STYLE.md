@@ -155,7 +155,8 @@ where to look:
    theorem, its porism, its companions), with Heath's references beside the Lean's
    citations, the postulates, definitions taken as axioms, Common Notions and tacit
    rules, and the generated line naming the shared steps that bring in propositions.
-8. **The mishnah,** our commentary (section 3).
+8. **The mishnah,** our commentary (section 3). The page sets any modern figure under
+   its paragraph "The modern way" (section 7); S24 checks that the source has the paragraph.
 9. **Further reading,** when something apt exists (section 6).
 10. **The foot of the page:** links to the scan leaves of Heath's text and figure, the
     thanks to the authors of System E and LeanEuclid, and the navigation again.
@@ -167,6 +168,9 @@ sentence. Each does what the other cannot, and neither is decoration. Both carry
 letters, the names the text and the Lean use, so a reader passes from the colours to the
 proof by the same A and B (section 7). Colour may carry an equality, but never alone: the
 caption names the colours, so that a reader who cannot tell them apart still has the point.
+Where the modern way is easier to follow with a picture, it has a third, its own figure,
+drawn as Euclid's is and with his letters, so that a reader moves between the coordinates
+and the proof by the same names (section 7).
 
 **Each thing in one place.** Scope and exceptions go at the top, in the status line and
 the table. Citations, postulates and rules go in the certificate and the line under it.
@@ -384,8 +388,9 @@ strikethrough (write a space or `\sim`), and no backtick, which opens code; and 
 stands straight after a letter or a digit: `x_{1}^{2}`, not `x^{2}_{1}`, and
 `\mathrm{A_1}`, not `\mathrm{A}_1`. A shape not yet found may still break, so the reviewer
 sees each span rendered on GitHub (section 8, the reviewer's checklist, item 5).
-`scripts/render.py` copies the mishnah onto its page unchanged but for its count comments,
-so the page shows the same mathematics.
+`scripts/render.py` copies the mishnah onto its page unchanged but for its count comments
+and the insertion of its modern figure beneath "The modern way", so the page shows the
+same mathematics.
 
 **System E and LeanEuclid** are thanked by name in every page's footer, so the mishnah
 does not thank them again; a particular debt is still said where it falls (Intersection 4
@@ -471,8 +476,10 @@ would fit any page of the book is left out.
 
 ## 7. Figures
 
-Two per proposition, on the parchment card (`#fbf7ee`, a rect with `rx="10"` over the
-whole canvas), in Georgia. Section 2 says why there are two.
+Each proposition has two required figures, `NN-idea.svg` and `NN.svg`, on the parchment
+card (`#fbf7ee`, a rect with `rx="10"` over the whole canvas), in Georgia. It may also
+have `NN-modern.svg` beneath its paragraph **The modern way.** Section 2 says why the
+first two are required.
 
 **`NN-idea.svg`, the figure at a glance.** A canvas of 400 × 300 **[checked]**. Byrne's red
 `#d0312d`, yellow `#f2b705`, blue `#1f5aa6` and black `#222222`, and white only for grid
@@ -493,11 +500,20 @@ figures stand side by side (III.25, III.33, III.35, III.36) **[checked]**. Uprig
 is "Euclid I.N: …", with no caption **[checked]**.
 
 **Heath's letters, all and only [checked].** Each point stands where the proof puts it
-(I.6: D on AB), each letter clear of every stroke, nothing touching the frame. The Lean
-uses the same letters, save in a helper written once over any letters (`Prop44.place`). A
-point Heath leaves without a letter gets a name in the Lean and none in the figure; a
-letter Heath gives a point the Lean does not need (III.3's C and D) is still drawn; the
-letters inside shared steps do not count; and "PORISM" is not a letter.
+(I.6: D on AB). The Lean uses the same letters, save in a helper written once over any
+letters (`Prop44.place`). A point Heath leaves without a letter gets a name in the Lean
+and none in the figure; a letter Heath gives a point the Lean does not need (III.3's C and
+D) is still drawn; the letters inside shared steps do not count; and "PORISM" is not a
+letter.
+
+**One letter, one point [checked].** A letter names one thing, a point unless Heath gives
+it to a straight line or a figure (below), and the figure leaves no doubt which. It draws
+each letter once, or once in each of Heath's figures where two or three stand side by
+side; and each letter stands 2 clear of every stroke and every dot, and of the canvas's
+edge, so that no straight line or circle runs through it and nothing touches the frame.
+The same holds at a glance (S26, section 8). In the Lean, a letter that names one of
+Heath's points names no straight line or circle, which a reviewer checks (section 8, the
+reviewer's checklist, item 16).
 
 **The same letters at a glance [checked].** Byrne's book uses coloured diagrams and
 symbols "instead of letters for the greater ease of learners", as its title says, and its
@@ -507,7 +523,8 @@ text, so that the yellow angle at B is the angle ABC of I.5's proof. The figure 
 glance carries Heath's letters, the same names as Euclid's figure and the Lean, at every
 point it shows, so that a reader can follow it however it turns or reflects Euclid's
 figure. Each letter is one that `NN.svg` draws, upright, at 14, small and beside its point,
-in the figure's black `#222222`, and clear of every colour and stroke where there is room.
+in the figure's black `#222222`, clear of every colour where there is room, and 2 clear
+of every stroke and dot (above).
 A point inside a coloured piece, with no parchment near it, takes its letter on the fill
 (I.43's K, II.4's G): in black on yellow, and in the parchment's `#fbf7ee` on red, blue or
 black (II.12's D), where black would hardly show. A point is shown when it is drawn as a
@@ -534,6 +551,27 @@ validate a figure. Before a changed figure is signed off, render it
 - the scope: the figure does not show more than the theorem proves;
 - legibility at the size the page shows it: nothing clipped, letters clear.
 
+**`NN-modern.svg`, the figure of the modern way.** Where the paragraph that opens **The
+modern way.** is easier to follow with a picture (its coordinates, its vectors, Book II's
+lengths a and b), it has a figure of its own. The page sets the figure under that paragraph;
+S24 checks that the source has the paragraph.
+It is drawn as Euclid's figure is: the same canvas, palette and strokes **[checked]**, and
+Euclid's figure's letters, upright at 17 **[checked]**, at the points his figure gives
+them, placed on the axes or in the plane as the paragraph places them. What the
+paragraph measures takes the paragraph's own names (a, b, θ, u), italic at 17, and the
+figure uses no name the paragraph does not **[checked]**. A name is a lower-case letter
+of the paragraph's `$…$`, or one standing alone in its words, as in Book II's "AC = a",
+that a reader sees (not in a comment, code, an HTML tag or a link's target or reference
+identifier) and that English does not use as a
+word: not the s of "A's", nor the letters of e.g. and i.e., nor the article "a" unless a
+sign of an expression, a digit or a bracket stands beside it. A capital stands alone, as
+one of Heath's letters: a length or a vector is named by its lower-case letter. The title is
+"I.N: the modern way", with no caption, for its paragraph serves as one **[checked]**. A
+page with no modern way has no such figure **[checked]**, and a modern way that would only
+restate the proposition in symbols needs none. The figure shows what the paragraph says
+and no more, with the paragraph's conditions (A = (0, 0), b > 0), and is checked as
+geometry, as Euclid's is.
+
 **Departures go in the figure note.** Where our drawing places a point otherwise than
 Heath's figure, because the Lean does, draw the proof and say so in one line under the
 figure (I.39, I.40, III.16); not in the mishnah. The line is the review record's
@@ -556,9 +594,10 @@ comment leader (`--`, or a quotation's `>`). A blank line ends such a phrase, sa
 white space. A word that a rule seeks elsewhere in the clause or the sentence (what
 follows S5's "never need", S11's "Proclus", D9's "need") is found as its row says. The
 patterns are tested on such phrases, case by case, with S20's reading of a letter on an
-angle's wedge, and the scopes' reading of a review record, a rendered docstring, a
-`name : type` and letters in backticks, in `tests/test_check_style.py`, which CI runs
-just before the script ([WORKFLOW](WORKFLOW.md), section 8).
+angle's wedge and S26's measure of a letter beside a stroke, and the scopes' reading of a
+review record, a rendered docstring, a `name : type` and letters in backticks, in
+`tests/test_check_style.py`, which CI runs just before the script
+([WORKFLOW](WORKFLOW.md), section 8).
 
 - **Prose:** `mishnah/<book>/NN.md`, `mishnah/intro/<book>.md`, `reading/<book>/NN.md`.
 - **Mishnah:** `mishnah/<book>/NN.md` alone.
@@ -595,9 +634,9 @@ just before the script ([WORKFLOW](WORKFLOW.md), section 8).
   `book/<book>/front.md` and `book/names.md`. A failure here is mended in
   `scripts/render.py` or in the source it reads.
 - **Idea figures:** `figures/<book>/NN-idea.svg`. **Euclid's figures:**
-  `figures/<book>/NN.svg`.
+  `figures/<book>/NN.svg`. **Modern figures:** `figures/<book>/NN-modern.svg`.
 
-**Failures.** Each fails the script, naming the file, the line and the rule.
+**Failures.** S1 to S26 fail the script, naming the file, the line and the rule.
 
 S23 reads every tracked text file's raw contents, including comments and fenced code
 blocks in Markdown; text means bytes with no NUL that decode as UTF-8. It uses
@@ -633,6 +672,9 @@ serves S23 alone; S12 still requires Git's tracked-file index.
 | S21 | A point the figure shows with no letter within 30 of it: a dot (a filled `<circle>` of radius 6 at most), an end of a `<line>` 25 long or more in a Byrne colour or black, or a corner of a `<polygon>` filled or stroked in one. Transforms are applied; a letter stands at its glyph's middle, reckoned from its x, y, anchor and size; points within 8 of one another are one point. A point drawn by an element marked `data-unlettered`, or inside a `<g>` so marked, is excused, and each mark is printed on every run; a mark whose reason is under two words, or that excuses no point, fails. With the switch on (below), S21 holds every figure | Idea figures |
 | S22 | Letters in backticks: a code span that holds only letters, a capital or a run of capitals (each with its prime or subscript) or several such runs apart by commas or spaces, as `P`, `PQ`, `ABCD` or `AB, CD` (section 1, "Lean notes") | Prose, Review notes, Catalogues, Other reports, Lean notes, Generated |
 | S23 | A merge-conflict marker, with its kind: a line beginning with exactly seven `<`, `\|` or `>` followed by a space or the line's end; or exactly seven `=` with optional trailing spaces or tabs. A trailing CR is allowed. A middle is refused between opening and closing markers, outside `.md` files, or unless every line of the preceding block is ordinary paragraph text. Blank lines, markers, ATX or completed setext headings, thematic breaks, fences, HTML blocks and GFM tables bound or disqualify the block; indented code cannot start a paragraph, but indented continuations are allowed. Any possible reference definition prefix (up to three spaces, a bracketed label allowing escaped brackets, then a colon), block quote or list item disqualifies the whole block; within a paragraph, a list item counts only where it can interrupt one, as a bullet or an ordered item numbered 1, with some text, so `2. item` or a bare `*` goes on with the paragraph. S23 errs toward refusal: other lengths of equals are never examined as middles, so a refused heading can use eight. Fences inside comments or HTML blocks open no block | Every tracked text file except symlinks, or the files of the walk described above |
+| S24 | A viewBox width outside 400–440 or non-positive height; a colour other than Euclid's figure's five, or a shape or a `<text>` with no fill, which SVG paints black; a stroke-width under 1.2 or over 3.2; a `<desc>`; anything but exactly one `<title>` directly under the root, with the text "I.N: the modern way"; no `NN.svg` beside it, or no paragraph opening `**The modern way.**` in `mishnah/<book>/NN.md` for it to stand under, read as Markdown reads it (not in a comment or a code block). The modern figure is UTF-8 with no NUL, DTD, entity declaration, stylesheet processing instruction or `@import`, and may use only the elements, attributes and spellings that the modern figures on main use; a character reference in a serialised attribute is refused before XML can normalise it. | Modern figures |
+| S25 | A `<text>` not at font-size 17, or a `<tspan>`; an explicit `font-style` other than `italic` (an upright letter omits it); a capital letter (with a prime or a subscript) that `NN.svg` does not draw, or not upright; a capital in a longer text; any other text holding a character besides lower-case Latin and Greek letters, digits and the signs of an expression, or with letters not italic, or with a letter that is not a name of the page's modern way: in its `$…$` spans, each lower-case letter once the commands are taken out (`\vec`, `\frac`, `\mathrm{…}` and what it sets) and the Greek ones read as their letters (`\theta` as θ, and a variant such as ϑ as the letter it is a form of); outside them, each Greek letter, and each lower-case letter standing alone, save one straight after an apostrophe (`'` or `’`, the s of "A's"), the letters of e.g. and i.e., and the article a with no sign of an expression (=, +, -, −, ×, ·, /, <, >, ≤, ≥), digit (raised or lowered, as ²) or bracket beside it, spaces between; and none of it from an HTML tag or comment, a code span or a link's target or resolved reference identifier, which a reader does not see, the paragraph being read as Markdown reads it, so that a line holding only a code span goes on with it. A character reference, emphasis inside a word, inline HTML, a reference-style link, a reference definition in the selected block or one used by a link in the paragraph is refused; an unrelated definition elsewhere is not. | Modern figures |
+| S26 | One letter, one point: a letter drawn twice in a figure, or twice in one of Heath's figures where two or three stand side by side (III.25, III.33, III.35, III.36, each split at the x of the straight cuts the script gives, a letter belonging to the figure its middle stands in), or across such a cut; or a letter that a stroke, a dot or the canvas's edge comes within 2 of. S26 reads only the elements, attributes and spellings that the figures on main use, and refuses any other. Every element is in the SVG namespace; only the root `<svg>` and a `<g>` may contain elements, so titles and descriptions are text-only and drawn elements are leaves. A text payload is one Heath letter or an ASCII integer annotation; text children, an invisible point label with fill none, zero fill or stroke opacity, processing instructions (an `<?xml-stylesheet?>` among them) and every other payload fail. Before parsing, every figure reader refuses `<!DOCTYPE` or `<!ENTITY` anywhere in the bytes, including UTF-16 and UTF-32 spellings and such text inside comments. The refusal is independent of ElementTree's C accelerator; the doctype callback remains a second guard. A letter is measured as Georgia draws its capital, upright or italic as the figure sets it, by the convex hull of the points of its outline, at its x, y and size, anchored by the whole label's advance (a prime or a subscript after it included, though not itself measured), transforms applied; a stroke (a `<line>`, `<polyline>`, `<polygon>`, `<rect>` with its corners rounded as rx and ry round them, `<circle>`, `<ellipse>`, or each subpath of a `<path>`, closed only where a Z closes it, a dashed one read whole, a single-point subpath closed by Z retained for round caps, a shape that SVG does not draw left out) less half its width and that subpath's conservative chord allowance. Literal `stroke-dasharray="none"` is solid; a numeric dash array must contain a positive component, so an all-zero array is refused rather than named as dashed. Mitre joins include their filled corners, transformed after applying the inherited stroke-linejoin (by default miter, with a mitre limit of 4), with round joins and mitres over the limit covered by the existing half-width measure; a dot (a filled `<circle>` of radius 6 at most) less its radius; a width and a radius each taken at the most its transform stretches it. The hull holds the ink and spans its hollows, so a stroke that ends in an L's corner or a K's notch is found while the ink is clear: move the letter | Idea figures, Euclid's figures |
 
 **Reports.** Each is listed, with its count, and fails nothing.
 
@@ -741,11 +783,16 @@ proposition, and a later book's numeral replaces `I` in the paths.
 15. The figure is checked as geometry (section 7), rendered and looked at.
 16. The Lean uses the figure's letters: S16 checks the figure against Heath, and
     `grep -oE '\{[^}]*: Point\}|obtain ⟨[^⟩]*⟩' Elements/BookI/PropNN.lean` shows the
-    Lean's own.
+    Lean's own. One letter, one point: a letter that names one of Heath's points names no
+    straight line or circle in the Lean (`{L : Line}`, or `obtain ⟨L, …⟩ := Postulate1 …`,
+    beside Heath's point L);
+    `grep -nE '[{(]([A-Z] )*[A-Z] : (Line|Circle)\b|⟨[A-Z],' Elements/BookI/PropNN.lean`
+    shows the candidates, a binder of several names (`{L M : Line}`) and a line taken
+    from inside another fact (`obtain ⟨-, -, ⟨L, …⟩, -⟩`) among them.
 17. On the figure at a glance, rendered beside Euclid's, each letter is the one Euclid's
-    figure gives that point, beside it and clear of every colour and stroke, or on the fill
-    as section 7 says; S21 sees only that a letter is near. Each `data-unlettered` reason
-    is true of Heath's figure.
+    figure gives that point, beside it and clear of every colour, or on the fill as section
+    7 says; S21 sees only that a letter is near, and S26 that it is clear of the strokes.
+    Each `data-unlettered` reason is true of Heath's figure.
 18. A departure from Heath's figure has its line in the figure note, and a figure of one
     case among several names it.
 

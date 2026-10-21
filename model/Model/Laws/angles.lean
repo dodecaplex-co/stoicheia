@@ -7,14 +7,17 @@ public import Model.Signature
 
 **This file is hand-translated.** It holds the ten laws about angles that the model proves
 in the plane. The generator described in the [README](../../README.md) writes every
-law from the library's elaborated declarations, and `Check/Angles.lean` compares every
-translation here with its generated field, including the two hand-translated words.
+locked law from the library's elaborated declarations. `Check/Angles.lean` compares the
+locked laws and the two hand-translated words with their generated counterparts.
+`inside_of_angle_add` and `adjacent_eq_of_right` are now theorems in the library, so their
+translations are compared directly with those declarations, including binder kinds.
+Their concrete plane proofs remain as derived facts, with no generated assumption field.
 
 The ten are the angle rules of the library:
 
 * the two metric laws about angles, `angle_symm` and `angle_le_two_right`
   (`Elements/Foundations/Tacit/Metric.lean`);
-* the diagram-angle transfer rules 1 to 4 of System E (`Tacit/Transfer.lean`): an angle
+* the diagram-angle transfer rules 1 to 4 of System E: an angle
   is nothing exactly when its arms lie on one ray (`angle_eq_zero_of_same_ray`,
   `same_ray_of_angle_eq_zero`); angle addition, in both directions (`angle_add_of_inside`,
   `inside_of_angle_add`); a right angle equals its neighbour (`adjacent_eq_of_right`); and
@@ -24,7 +27,7 @@ The ten are the angle rules of the library:
   Definition 15.
 
 Each declaration is the library's, word for word, with `S.Point` for `Elements.Point`,
-`S.ang` for `Elements.ang`, and so on; the lock's printed statement is quoted above each.
+`S.ang` for `Elements.ang`, and so on; its printed statement is quoted above each.
 Two words the laws reach, `Collinear` and `IsRightAngle`, are translated here too, in the
 namespace `Model.Hand`, so that they do not meet the generated `Signature.Collinear` and
 `Signature.IsRightAngle` when both are imported. Where angles are added or compared, the
@@ -113,7 +116,8 @@ def angle_add_of_inside : Prop :=
     S.SameSide B D M → S.SameSide C D L →
     S.ang B A C = HAdd.hAdd (α := S.Angle) (β := S.Angle) (S.ang B A D) (S.ang D A C)
 
-/-- `Elements.Tacit.inside_of_angle_add` (Diagram-angle 2), by hand. The lock prints it as
+/-- `Elements.Tacit.inside_of_angle_add` (Diagram-angle 2), by hand.
+The theorem's unchanged type is
 `∀ {A B C D : Elements.Point} {L M : Elements.Line}, Elements.OnLine A L → Elements.OnLine A M →
 Elements.OnLine B L → Elements.OnLine C M → Ne A B → Ne A C → Not (Elements.OnLine D L) →
 Not (Elements.OnLine D M) → Ne L M → Eq (Elements.ang B A C) (HAdd.hAdd (Elements.ang B A D)
@@ -124,7 +128,8 @@ def inside_of_angle_add : Prop :=
     S.ang B A C = HAdd.hAdd (α := S.Angle) (β := S.Angle) (S.ang B A D) (S.ang D A C) →
     S.SameSide B D M ∧ S.SameSide C D L
 
-/-- `Elements.Tacit.adjacent_eq_of_right` (Diagram-angle 3), by hand. The lock prints it as
+/-- `Elements.Tacit.adjacent_eq_of_right` (Diagram-angle 3), by hand.
+The theorem's unchanged type is
 `∀ {A B C D : Elements.Point} {L : Elements.Line}, Elements.OnLine A L → Elements.OnLine B L →
 Elements.Between A C B → Not (Elements.OnLine D L) → Eq (Elements.ang A C D)
 Elements.rightAngle → Eq (Elements.ang A C D) (Elements.ang D C B)`. -/
