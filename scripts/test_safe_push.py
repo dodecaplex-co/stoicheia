@@ -2,7 +2,7 @@
 """Tests for scripts/safe_push.py, on a throwaway clone with a bare origin.
 
     python3 -m pip install -r scripts/requirements-test_safe_push.txt
-    python3 scripts/test_safe_push.py        # seven minutes or so; no Lean, no network
+    python3 scripts/test_safe_push.py        # no Lean, no network; timing in WORKFLOW section 8
     STOICHEIA_SLOW_TESTS=1 python3 scripts/test_safe_push.py FullChecks   # Lean, minutes
 
 The clone is made with `git clone --local --no-hardlinks` of this repository into a temporary
@@ -6458,6 +6458,13 @@ class Units(unittest.TestCase):
         self.assertEqual(judge(PASSING[:2])[0], "missing")
         self.assertEqual(judge(PASSING + [{"name": "check", "bucket": "fail"}])[0], "failure")
         self.assertEqual(judge(PASSING + [{"name": "other", "bucket": "pending"}])[0], "pending")
+        # A check outside REQUIRED_CHECKS, as safe-push-tests is, holds a merge while it
+        # fails, and a skipped run of it holds nothing back (#157).
+        unrequired = {"name": "safe-push-tests", "workflow": "CI"}
+        self.assertEqual(judge(PASSING + [dict(unrequired, bucket="fail", state="FAILURE")])[0],
+                         "failure")
+        self.assertEqual(judge(PASSING + [dict(unrequired, bucket="skipping",
+                                               state="SKIPPED")])[0], "success")
         # The two checks the ruleset gained on 20 October (#142) hold a merge as the first
         # three do. `acceptance` is skipped in the push event's run, so a skipped run beside
         # the pull request's passing one is a pass, and a skipped run alone is not.
