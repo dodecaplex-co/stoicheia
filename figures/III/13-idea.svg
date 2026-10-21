@@ -13,7 +13,7 @@
   <circle cx="307.51" cy="85.82" r="4.5" data-unlettered="the yellow circle's centre, which Heath's proof does not take" fill="#222222"/>
   <circle cx="68.03" cy="131.33" r="4.5" fill="#222222"/>
   <circle cx="259.83" cy="111.17" r="4.5" fill="#222222"/>
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="244.5" y="111.4">A</text>
     <text x="53.6" y="132.1">D</text>
     <text x="99.3" y="208.7">E</text>
