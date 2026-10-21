@@ -22,8 +22,8 @@ refs/heads/<name> and opens the pull request, or updates the open one. The steps
 order, and the first that fails stops it with a message saying why:
 
 Branches named train/* require --body-file. Step "3. train" runs origin/main's
-check_train.py before the full checks. While main has no such module, only a commit
-adding it may use its own copy, with a bootstrap note for the security review.
+check_train.py before the full checks; while origin/main has none, every train is
+refused, and no commit's own copy runs in its place.
 
 1. Preconditions. The commit exists; `git fetch origin`; origin/main is an ancestor of
    the commit, so that the merge commit will hold exactly the tree checked; the branch,
@@ -2270,23 +2270,26 @@ def check_installed(repo, base: str, rep: Report) -> None:
                     "(sh scripts/install_hooks.sh --force)")
 
 
-def harness_train(repo: Path, base: str, owner: str = "origin/main") -> bytes | None:
-    """Read the train module at a commit, distinguishing absent from unreadable."""
+def harness_train(repo: Path, base: str) -> bytes | None:
+    """origin/main's train module, distinguishing absent from unreadable."""
     entry = git(repo, "ls-tree", base, "--", "scripts/check_train.py").strip()
     if not entry:
         return None
-    if not re.fullmatch(r"100(?:644|755) blob [0-9a-f]{40,64}\tscripts/check_train\.py", entry):
-        raise Refusal(f"{owner}'s scripts/check_train.py is not a regular file")
+    if not re.fullmatch(r"100(?:644|755) blob [0-9a-f]{40,64}\tscripts/check_train\.py",
+                        entry):
+        raise Refusal("origin/main's scripts/check_train.py is not a regular file")
     return git(repo, "cat-file", "blob", f"{base}:scripts/check_train.py", binary=True)
 
 
-def harness_copy(theirs: bytes, theirs_heath: bytes, theirs_train: bytes | None = None) -> Path:
+def harness_copy(theirs: bytes, theirs_heath: bytes,
+                 theirs_train: bytes | None = None) -> Path:
     """origin/main's harness modules, written to a directory named by their
     blobs, beside the log (~/.cache/stoicheia/harness/): it needs no
     cleaning up, since the same harness always lands in the same place, and each file is
     written afresh, through a rename, so that nothing left there earlier is run."""
     train_id = blob_id(theirs_train) if theirs_train is not None else "no-train"
-    path = log_path().parent / "harness" / f"{blob_id(theirs)}-{blob_id(theirs_heath)}-{train_id}"
+    path = log_path().parent / "harness" / \
+        f"{blob_id(theirs)}-{blob_id(theirs_heath)}-{train_id}"
     path.mkdir(parents=True, exist_ok=True)
     for name, data in (("safe_push.py", theirs), ("heath.py", theirs_heath),
                        ("check_train.py", theirs_train)):
@@ -2324,10 +2327,10 @@ def harness(repo, base: str, rep: Report) -> None:
     if os.environ.get("STOICHEIA_HARNESS"):
         if not same:
             raise Refusal("STOICHEIA_HARNESS says this is origin/main's harness, but this "
-                          "copy of safe_push.py, heath.py or check_train.py is not origin/main's "
-                          f"(blob {blob_id(own)[:12]}): origin/main moved since the hand-over, "
-                          "or the variable was set by hand. Run safe_push again, with the "
-                          "variable unset.")
+                          "copy of safe_push.py, heath.py or check_train.py is not "
+                          f"origin/main's (blob {blob_id(own)[:12]}): origin/main moved "
+                          "since the hand-over, or the variable was set by hand. Run "
+                          "safe_push again, with the variable unset.")
         HARNESS = f"origin/main's `scripts/safe_push.py` (blob `{blob_id(own)[:12]}`)"
         HARNESS_BLOB = blob_id(own)
         rep.add("1", "harness", "ok", f"origin/main's scripts/safe_push.py (blob "
@@ -2345,8 +2348,8 @@ def harness(repo, base: str, rep: Report) -> None:
         rep.add("1", "harness", "ok", f"origin/main's scripts/safe_push.py "
                 f"(blob {blob_id(own)[:12]})")
         return
-    print("  this copy of safe_push.py, heath.py or check_train.py differs from origin/main's: running "
-          "origin/main's in its place", flush=True)
+    print("  this copy of safe_push.py, heath.py or check_train.py differs from "
+          "origin/main's: running origin/main's in its place", flush=True)
     path = harness_copy(theirs, theirs_heath, theirs_train) / "safe_push.py"
     env = dict(os.environ, STOICHEIA_HARNESS="origin/main")
     sys.stdout.flush()
@@ -2354,37 +2357,36 @@ def harness(repo, base: str, rep: Report) -> None:
     os.execve(PY, [PY, str(path), *ARGV], env)
 
 
-def train_input(ctx: Context, args) -> str | None:
-    """A train needs an explicit body, including on a dry run or an update."""
-    if not (ctx.branch or "").startswith("train/"):
-        return None
+def body_input(args) -> str | None:
+    """--body-file's text, read once, as UTF-8, before the checks: the train check, the
+    dry run's body and the pull request's body are all that same text."""
     if not args.body_file:
-        raise Refusal("a train/* branch requires --body-file")
+        return None
     try:
         return Path(args.body_file).read_text(encoding="utf-8")
     except (OSError, UnicodeError) as e:
-        raise Refusal(f"could not read the train's --body-file: {e}") from e
+        raise Refusal(f"could not read --body-file: {e}") from e
+
+
+def train_input(ctx: Context, body: str | None) -> str | None:
+    """A train needs an explicit body, including on a dry run or an update."""
+    if not (ctx.branch or "").startswith("train/"):
+        return None
+    if body is None:
+        raise Refusal("a train/* branch requires --body-file")
+    return body
 
 
 def train_check(ctx: Context, body: str, rep: Report) -> None:
-    """Run main's train checker, or the commit's newly added checker with a bootstrap note."""
+    """Run origin/main's train checker on the commit and the body. While origin/main has
+    none, every train is refused: no commit's own copy ever runs in its place."""
     rep.heading("3. train")
     started = time.time()
     try:
         source = harness_train(ctx.repo, ctx.base)
-        origin = "origin/main's check_train"
         if source is None:
-            added = any(c.status == "A" and c.path == "scripts/check_train.py"
-                        for c in raw_changes(ctx.repo, ctx.base, ctx.sha))
-            if not added:
-                raise Refusal("origin/main has no scripts/check_train.py and the commit "
-                              "does not add it")
-            source = harness_train(ctx.repo, ctx.sha, "the commit")
-            if source is None:
-                raise Refusal("could not read the commit's added scripts/check_train.py")
-            rep.add("3", "train bootstrap", "note", "bootstrap: the commit's own check_train.py, "
-                    "for the security review")
-            origin = "the commit's check_train"
+            raise Refusal("origin/main has no scripts/check_train.py, so no train can be "
+                          "checked: land the train checker first, then the train")
         here = Path(__file__).resolve().parent
         path = harness_copy((here / "safe_push.py").read_bytes(),
                             (here / "heath.py").read_bytes(), source)
@@ -2401,7 +2403,7 @@ def train_check(ctx: Context, body: str, rep: Report) -> None:
     except (Exception, SystemExit) as e:
         rep.add("3", "train", "FAIL", str(e), time.time() - started)
         raise Refusal(f"the train check refused: {e}") from e
-    rep.add("3", "train", "ok", f"{origin} passed", time.time() - started)
+    rep.add("3", "train", "ok", "origin/main's check_train passed", time.time() - started)
 
 
 def merge_train_input(ctx: Context, view: dict) -> str | None:
@@ -2834,18 +2836,20 @@ def check_kind_label(ctx: Context, args, rep: Report) -> None:
     rep.add("1", "kind label", "ok", f"on #{existing['number']}")
 
 
-def plan_pr(ctx: Context, pre: Preflight, record: dict, args) -> PRPlan:
+def plan_pr(ctx: Context, pre: Preflight, record: dict, args,
+            body_text: str | None) -> PRPlan:
     """Everything the pull request will carry, settled before the push: our open pull
     request for the branch (never a fork's of the same name), and the body, scanned. A
-    new pull request's body, or --body-file, is known in full; an open one's is fetched."""
+    new pull request's body, or --body-file's text (body_input, read once before the
+    checks), is known in full; an open one's is fetched."""
     labels = set(args.label) | ({SECURITY_LABEL} if pre.protected else set())
     existing = find_own_pr(ctx)
     try:
         pr_labels([] if existing is None else existing.get("labels"))
     except ValueError as e:
         raise Refusal(str(e)) from None
-    if args.body_file:
-        body = fill_body(ctx, pre, record, Path(args.body_file).read_text())
+    if body_text is not None:
+        body = fill_body(ctx, pre, record, body_text)
     elif existing:
         view = gh_json(ctx, "pr", "view", str(existing["number"]), "--json", "body")
         body = put_block(refreshed(view.get("body") or "", describe(ctx, pre)),
@@ -3964,7 +3968,9 @@ def preflight_main(repo: Path, args) -> int:
         if ctx.branch:
             check_kind_label(ctx, args, rep)
         logs = logs_dir(sha)
-        pre = check_commit(ctx, rep, logs, args.test_mode, train_body=train_input(ctx, args))
+        body_text = body_input(args)
+        pre = check_commit(ctx, rep, logs, args.test_mode,
+                           train_body=train_input(ctx, body_text))
         record = make_record(ctx, pre, rep, full=not args.test_mode)
         save_record(record)
         if args.dry_run:
@@ -3972,8 +3978,8 @@ def preflight_main(repo: Path, args) -> int:
             where = f"refs/heads/{ctx.branch}, and open or update its pull request" \
                 if ctx.branch else "nowhere: no --branch given"
             if ctx.branch:
-                body = fill_body(ctx, pre, record, Path(args.body_file).read_text()) \
-                    if args.body_file else generated_body(ctx, pre, record)
+                body = fill_body(ctx, pre, record, body_text) \
+                    if body_text is not None else generated_body(ctx, pre, record)
                 check_body(body)
                 (logs / "pr-body.md").write_text(body)
                 print(f"  the body it would post: {logs / 'pr-body.md'}")
@@ -3981,7 +3987,7 @@ def preflight_main(repo: Path, args) -> int:
             result, code = "passed every check (dry run, not pushed)", 0
         else:
             # The pull request is settled, its body scanned, before anything is public.
-            plan = plan_pr(ctx, pre, record, args)
+            plan = plan_pr(ctx, pre, record, args, body_text)
             fresh = push_branch(ctx, rep)
             pushed = True       # from here on, a refusal or an interruption is exit 3
             result = f"pushed to {ctx.branch}"
@@ -4103,6 +4109,8 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
                           f"({', '.join(sorted(labels)) or 'none'} to "
                           f"{', '.join(sorted(refreshed_labels)) or 'none'}): run --merge again")
         current_view = gates(ctx, number, rep, record)
+        if merge_train_input(ctx, current_view) != train_body:
+            raise Refusal("the train's body changed during the checks: run --merge again")
         current_labels = pr_labels(current_view.get("labels"))
         if current_labels != labels:
             raise Refusal(f"#{number}'s labels changed after the gates read them "

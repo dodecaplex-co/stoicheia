@@ -318,12 +318,57 @@ class TrainChecks(Repository):
         self.refused("reason needs at least five words", text=body([row]))
 
     def test_review_cells_that_say_the_review_is_to_come_refuse(self):
-        for cell in ("pending", "Not run yet.", "In progress: a reader is on it.", "TBD"):
+        for cell in ("pending", "Not run yet.", "TBD", "awaiting review", "WIP", "N/A",
+                     "none", "?", "queued", "skipped", "Will run after merge."):
             for key in ("code_review", "security_review"):
                 with self.subTest(cell=cell, key=key):
                     row = dict(self.row, **{key: cell})
                     self.refused("is not written, or says the review is not done",
                                  text=body([row]))
+
+    def test_review_cells_must_name_the_reviewed_commit(self):
+        for key, cell in (("code_review", "In progress: a reader is on it."),
+                          ("security_review", "In progress: a reader is on it."),
+                          ("code_review", "Independent reader: PASS, no findings."),
+                          ("code_review", "Not required: a documentation change."),
+                          ("code_review", f"Reviewed at {self.member[:6]}: no findings."),
+                          ("code_review", "Reviewed at ABCDEF1: no findings."),
+                          ("security_review", "Reviewed by hand: no findings.")):
+            with self.subTest(key=key, cell=cell):
+                label = "/code-review" if key == "code_review" else "/security-review"
+                self.refused(f"{label} names no reviewed commit",
+                             text=body([dict(self.row, **{key: cell})]))
+
+    def test_findings_that_begin_like_a_placeholder_pass(self):
+        for cell in (f"To do so, the reader re-ran the checks at {self.member[:7]}: no "
+                     "findings.",
+                     f"Later commits after {self.member[:8]} change only the record's "
+                     "stamp: no findings.",
+                     f"Pending items: none; reviewed at `{self.member[:10]}`."):
+            for key in ("code_review", "security_review"):
+                with self.subTest(cell=cell, key=key):
+                    row = dict(self.row, **{key: cell})
+                    self.assertEqual(self.problems(text=body([row])), [])
+
+    def test_the_coordinator_s_written_rows_pass(self):
+        # Rows as the coordinator's body writer gives them: one line each, "|" written
+        # "/", the commit named by seven or eight digits somewhere in the finding.
+        rows = (
+            ("Ship H's bosun passed it at d6243923; its one editorial suggestion (qualify "
+             "the helper fields) adopted in 005281b7; the captain re-ran fidelity.",
+             "Not required: no protected path."),
+            ("Stand-in outside review (Codex, read-only) of d532116: 1 error and 2 "
+             "should-fix items, all fixed in 7916e6d; a second pass found nothing.",
+             "/security-review at 99b0ef4: not required. No protected path changed."),
+            ("Records review by an independent reviewer, stamped at 2ac1625. One findings "
+             "round; all items pass.",
+             "Not required. review/I/02..05.toml only; no protected path."),
+        )
+        for code, security in rows:
+            with self.subTest(code=code):
+                row = dict(self.row, code_review=code, security_review=security)
+                self.assertEqual(train.body_problems(body([row])), [])
+                self.assertEqual(self.problems(text=body([row])), [])
 
     def test_recorded_reason(self):
         row = {**self.row, "no_mistakes": "not run: the required runner was unavailable"}
@@ -339,14 +384,56 @@ class TrainChecks(Repository):
         head = self.merge(self.base, member)
         self.refused("/security-review says Not required for protected paths",
                      head=head, text=body([member_row(member)], f"- check: {CHECK}"))
-        row = member_row(member, security_review="Independent security reader: PASS.")
+        row = member_row(member, security_review=f"Security reader at {member}: PASS.")
         self.assertEqual(self.problems(head=head, text=body([row], f"- check: {CHECK}")), [])
+
+    def test_criss_cross_member_reads_protected_paths_against_every_merge_base(self):
+        # Main merged the member's first commit while the member merged main's: the two
+        # have two merge bases. The protected change shows against one base only, and
+        # counts.
+        ahead = self.commit([self.base], {"docs/STYLE.md": "Main's guide.\n"})
+        first = self.commit([self.base], {CHECK: "print('reviewed check')\n"})
+        main = self.merge(ahead, first)
+        member = self.commit([self.merge(first, ahead)], {LEAN: "-- reviewed source\n"})
+        self.assertEqual(len(self.git("merge-base", "--all", main, member).split()), 2)
+        head = self.merge(main, member)
+        self.refused("/security-review says Not required for protected paths: "
+                     f"{CHECK}", base=main, head=head, text=body([member_row(member)]))
+        row = member_row(member, security_review=f"Security reader at {member}: PASS.")
+        self.assertEqual(self.problems(base=main, head=head, text=body([row])), [])
+
+    def test_unreadable_member_merge_base_names_the_member(self):
+        with patch.object(train, "_merge_bases",
+                          side_effect=ValueError("could not read a merge base")):
+            with self.assertRaisesRegex(ValueError, f"Members: content/one "
+                                        rf"\({self.member[:12]}\): could not read"):
+                self.problems()
+
+    def test_member_attributes_cannot_make_a_resolution_automatic(self):
+        # A member's .gitattributes says merge=union. In a checkout of the train, git's
+        # own merge reads it and takes the coordinator's union as automatic; the check
+        # reads attributes from the base, so the resolution is still refused.
+        other = self.commit([self.base], {LEAN: "-- another reviewed source\n",
+                                          ".gitattributes": f"{LEAN} merge=union\n"})
+        checkout = self.root / "checkout"
+        self.git("worktree", "add", "--quiet", "--detach", str(checkout), other)
+        union = subprocess.run(["git", "merge-tree", "--write-tree", self.head, other],
+                               cwd=checkout, capture_output=True, text=True)
+        self.assertEqual(union.returncode, 0, union.stdout + union.stderr)
+        head = self.commit([self.head, other], tree=union.stdout.strip())
+        self.assertIn("-- reviewed source\n", self.trees[head][LEAN])
+        self.assertIn("-- another reviewed source\n", self.trees[head][LEAN])
+        rows = [self.row, member_row(other, "content/two",
+                                     security_review=f"Security reader at {other}: PASS.")]
+        problems = train.check_train(checkout, self.base, head, body(rows))
+        self.assertIn(f"merge {head[:12]}: resolution or added content outside generated "
+                      f"files and decisions: {LEAN}", problems)
 
     def test_check_change_with_judged_content_across_members(self):
         member = self.commit([self.base], {CHECK: "print('reviewed check')\n"})
         head = self.merge(self.head, member)
         row = member_row(member, "tooling/check",
-                         security_review="Independent security reader: PASS.")
+                         security_review=f"Security reader at {member}: PASS.")
         self.refused("check changes must be kept apart from judged content", head=head,
                      text=body([self.row, row], f"- check: {CHECK}\n- propositions: I.1"))
 
@@ -354,21 +441,21 @@ class TrainChecks(Repository):
         member = self.commit([self.base], {CHECK: "print('reviewed check')\n"})
         merged = self.merge(self.base, member)
         head = self.commit([merged], {ENTRY: "The reason for the check change.\n"})
-        row = member_row(member, security_review="Independent security reader: PASS.")
+        row = member_row(member, security_review=f"Security reader at {member}: PASS.")
         self.assertEqual(self.problems(head=head, text=body([row], f"- check: {CHECK}")), [])
 
     def test_pinned_values_can_move_with_content(self):
         path = "tests/model/MODEL.md"
         member = self.commit([self.member], {path: "A revised account.\n"})
         head = self.merge(self.base, member)
-        row = member_row(member, security_review="Independent security reader: PASS.")
+        row = member_row(member, security_review=f"Security reader at {member}: PASS.")
         self.assertEqual(self.problems(head=head,
                          text=body([row], f"- check: {path}\n- propositions: I.1")), [])
 
     def test_undeclared_changed_check(self):
         member = self.commit([self.base], {CHECK: "print('reviewed check')\n"})
         head = self.merge(self.base, member)
-        row = member_row(member, security_review="Independent security reader: PASS.")
+        row = member_row(member, security_review=f"Security reader at {member}: PASS.")
         self.refused(f"undeclared check: {CHECK}", head=head, text=body([row], "None."))
 
     def test_undeclared_changed_proposition(self):
@@ -548,7 +635,7 @@ class CoverageAndCLI(Repository):
         original = train.run
 
         def fail(args, cwd, **kwargs):
-            if args[:2] == ["git", "merge-tree"]:
+            if args[0] == "git" and "merge-tree" in args:
                 return subprocess.CompletedProcess(args, 128, "", "cannot read tree")
             return original(args, cwd, **kwargs)
 

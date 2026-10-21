@@ -5,10 +5,15 @@
     python3 scripts/check_queue.py --gaps --head <sha> --base <sha> --repo <owner/name>
     python3 scripts/check_queue.py --tree <dir> [--render]
 
-Group commands require a checkout of the supplied head. CI builds its certificate
-before this check runs render.py. --tree checks for repeated dated decisions
-headings, adding freshness with --render. Conflict markers are checked by S23 in
-check_style.py, in the check job on the same merge group.
+Group commands require a checkout of the supplied head. --tree checks for repeated
+dated decisions headings, read as they render (heading_date), adding freshness with
+--render. Conflict markers are checked by S23 in check_style.py, in the check job on
+the same merge group.
+
+Every merge-tree reads merge attributes from the group's base, main, never from the
+group's checkout (git --attr-source), so an entry's .gitattributes cannot change a
+verdict. Git 2.42 or later: merge-tree --write-tree came in 2.38, its --merge-base in
+2.40 and --attr-source in 2.42; an older Git makes every group unreadable.
 
 GitHub reads use gh api and gh api graphql, with GH_TOKEN inherited and never
 printed. --github-json replaces that boundary completely: an object with
@@ -20,18 +25,22 @@ headRefOid must agree. A different queue merge subject is accepted only when its
 second parent uniquely identifies a queue entry; no subject fallback is allowed
 for the already merged prefix.
 
-Reversing T with merge-base T.head merges the group with T's original base.
+Reversing T with merge-base T.head merges the group with T's original base, once for
+each of T's merge bases with the group's base (more than one after criss-cross merges).
 A clean reverse merge alone does not prove preservation: a complete cancellation
 also merges cleanly. Reapplying T must reproduce the group on every non-exempt
 path. Generated files are excluded; added decisions lines must remain a
 subsequence. An automatic revert instead requires an exact git revert tree,
 the failed post-merge run's push range and the configured STOICHEIA_REVERT_BOT.
 
-safe_push records abbreviated harness blobs. They must resolve unambiguously to
-the full blob at the pre-flight's harness commit, on the group base's first-parent chain.
-Older blocks without a harness field use their recorded base as that commit.
-The summary and steps must report a passing verdict and every full check its harness runs.
-These body fields are declarations, not authenticated attestations.
+safe_push records abbreviated harness blobs. They must resolve unambiguously to the
+full blob at the pre-flight's harness commit. The block's base must be on the group
+base's first-parent chain, and its harness that base or a later commit of the same
+chain. Older blocks without a harness field use their recorded base as that commit. The
+summary and steps must report a passing verdict and every full check its harness runs.
+The block is a declaration that anyone who can edit the pull request body can type: the
+judge checks it for consistency, not as proof that a pre-flight ran. Before the queue
+is turned on, the pre-flight's evidence needs an authenticated source.
 ACCEPTANCE_VERDICTS names the acceptance job's JSON for proposition gap reports.
 Exit 0 means pass, 1 refused, and 2 unreadable. Standard library, Python 3.11+, git.
 """
@@ -49,6 +58,7 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import unicodedata
 from pathlib import Path
 
 sys.dont_write_bytecode = True
@@ -67,6 +77,17 @@ SLUG = re.compile(r"[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+")
 SUBJECT = re.compile(r"Merge pull request #([1-9][0-9]*) from \S+")
 MONTHS = ("January", "February", "March", "April", "May", "June", "July",
           "August", "September", "October", "November", "December")
+# Level-one and level-two headings, as CommonMark reads them (headings), and the three
+# orders a date is written in (heading_date); \W between the parts takes punctuation and
+# separators that are not format characters, such as a no-break space.
+ATX = re.compile(r" {0,3}#{1,2}[ \t]+(.+?)(?:[ \t]+#+)?[ \t]*")
+SETEXT = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
+# The Hangul fillers render as nothing, though Unicode counts them as letters.
+INVISIBLE = {"\u115f", "\u1160", "\u3164", "\uffa0"}
+ORDINAL = r"(?:st|nd|rd|th)?"
+ISO_DATE = re.compile(r"\W*(\d{4})\W+(\d{1,2})\W+(\d{1,2})\W*")
+DAY_FIRST = re.compile(rf"(?i)\W*(\d{{1,2}}){ORDINAL}\W+([^\W\d_]+)\W+(\d{{4}})\W*")
+MONTH_FIRST = re.compile(rf"(?i)\W*([^\W\d_]+)\W+(\d{{1,2}}){ORDINAL}\W+(\d{{4}})\W*")
 GENERATED = (*safe_push.GENERATED, "book/", safe_push.DECISIONS)
 PREFLIGHT = re.compile(
     r"(?ms)^<!-- safe_push:preflight begin sha=([0-9a-f]{40}) base=([0-9a-f]{40})"
@@ -151,11 +172,14 @@ def parents(repo: Path, sha: str) -> list[str]:
     return [oid(value, "parent") for value in values]
 
 
-def merge_base(repo: Path, left: str, right: str) -> str:
-    values = safe_push.git(repo, "merge-base", "--all", left, right).split()
-    if len(values) != 1:
-        raise ValueError("could not read a unique merge base")
-    return oid(values[0], "merge base")
+def merge_bases(repo: Path, left: str, right: str, entry: int) -> list[str]:
+    """Every merge base of an entry's commit with another, more than one after
+    criss-cross merges; none, or an unreadable answer, is unreadable, naming the entry."""
+    result = safe_push.run(["git", "merge-base", "--all", left, right], repo)
+    values = result.stdout.split() if result.returncode == 0 else []
+    if result.returncode not in (0, 1) or not values:
+        raise ValueError(f"#{entry}: could not read a merge base")
+    return [oid(value, f"#{entry}'s merge base") for value in values]
 
 
 def ancestor(repo: Path, older: str, newer: str) -> bool:
@@ -165,14 +189,17 @@ def ancestor(repo: Path, older: str, newer: str) -> bool:
     return result.returncode == 0
 
 
-def automatic(repo: Path, left: str, right: str, base: str | None = None) -> tuple:
-    """Read the automatic tree and every conflicted path, including binary files."""
-    args = ["git", "merge-tree", "--write-tree", "--name-only", "-z", "--no-messages"]
+def automatic(repo: Path, left: str, right: str, attrs: str,
+              base: str | None = None) -> tuple:
+    """Read the automatic tree and every conflicted path, including binary files. Merge
+    attributes are read from `attrs`, main's commit, never from the checkout."""
+    args = ["git", f"--attr-source={attrs}", "merge-tree", "--write-tree", "--name-only",
+            "-z", "--no-messages"]
     if base:
         args.append(f"--merge-base={base}")
     result = safe_push.run([*args, left, right], repo)
     if result.returncode not in (0, 1):
-        raise ValueError("could not read an automatic merge")
+        raise ValueError("could not read an automatic merge (Git 2.42 or later is needed)")
     fields = result.stdout.split("\0")
     if not fields or fields[-1] != "":
         raise ValueError("could not read automatic merge paths")
@@ -248,7 +275,7 @@ def ordinary_entry(pr: dict, actors: dict, repo_slug: str) -> None:
     if pr["number"] not in actors:
         raise ValueError(f"GitHub: #{pr['number']} is open but not in the queue read")
     queued_by_bot, edited_by_bot = actors[pr["number"]]
-    if pr["author"]["type"] == "Bot" or queued_by_bot or edited_by_bot:
+    if queued_by_bot or edited_by_bot:
         raise Refused(f"#{pr['number']}: a bot wrote, queued or edited a pull request that "
                       "is not an automatic revert")
 
@@ -314,8 +341,9 @@ def chain(repo: Path, base: str, head: str, api: GitHub, queue_answer=None) -> l
         pr = pull_request(api.read("pull_requests", number), number)
         if pr["head"] != pp[1]:
             raise Refused(f"batching: #{number} head differs from the second parent")
-        tree, conflicts = automatic(repo, *pp)
-        if conflicts or tree != safe_push.git(repo, "rev-parse", f"{current}^{{tree}}").strip():
+        tree, conflicts = automatic(repo, *pp, attrs=base)
+        if conflicts or tree != safe_push.git(repo, "rev-parse",
+                                              f"{current}^{{tree}}").strip():
             raise Refused(f"batching: merge {current[:12]} has conflicts or extra content")
         backwards.append(dict(pr, merge=current, main=main))
         current = pp[0]
@@ -371,8 +399,9 @@ def harness_check_names(repo: Path, harness_commit: str) -> set[str]:
 
 def preflight_steps(inner: str, head: str, base: str,
                     expected: set[str] | None = None) -> None:
-    """Read a passing verdict and complete full-check rows, or their named record. The
-    full checks expected are those of the harness that ran the pre-flight."""
+    """Read one passing verdict and a steps table whose passing rows include every full
+    check expected, with no failing row: a record standing in for them does not count.
+    The full checks expected are those of the harness that ran the pre-flight."""
     visible = safe_push.visible(inner)
     verdicts = [line.strip().strip("*") for line in visible.splitlines()
                 if re.match(r"(?:\*\*)?(?:Pre-flight )?Verdict:", line.strip(), re.I)]
@@ -423,13 +452,20 @@ def preflight(repo: Path, base: str, pr: dict) -> None:
     if visible.splitlines().count(sentinel) != 1:
         raise Refused("pre-flight: block is hidden by code or HTML")
     commit(repo, against)
-    if not ancestor(repo, against, base) or not ancestor(repo, against, checked):
-        raise Refused("pre-flight: recorded base is not an ancestor of the head and group base")
     commit(repo, harness_commit)
-    if harness_commit not in safe_push.git(repo, "rev-list", "--first-parent",
-                                           base).split():
+    # Main's tips, newest first: the base compared against was one of them, and the
+    # harness that ran is that base or a later tip, never an older one.
+    main_chain = safe_push.git(repo, "rev-list", "--first-parent", base).split()
+    if against not in main_chain:
+        raise Refused("pre-flight: recorded base was never main (not on the first-parent "
+                      "chain of the group base)")
+    if not ancestor(repo, against, checked):
+        raise Refused("pre-flight: recorded base is not an ancestor of the head")
+    if harness_commit not in main_chain:
         raise Refused("pre-flight: harness commit was never main (not on the first-parent "
                       "chain of the group base)")
+    if main_chain.index(harness_commit) > main_chain.index(against):
+        raise Refused("pre-flight: harness commit is older than the recorded base")
     inner = "\n".join(block.group().splitlines()[1:-1])
     # The harness is named by the summary's first line, which safe_push writes; a note
     # further down (a record that stood in, say) may quote the same words again.
@@ -441,12 +477,14 @@ def preflight(repo: Path, base: str, pr: dict) -> None:
             or "full checks skipped" in inner:
         raise Refused("pre-flight: missing origin/main harness or full checks skipped")
     actual = oid(safe_push.git(repo, "rev-parse",
-                              f"{harness_commit}:scripts/safe_push.py").strip(), "harness blob")
+                               f"{harness_commit}:scripts/safe_push.py").strip(),
+                 "harness blob")
     if safe_push.git(repo, "cat-file", "-t", actual).strip() != "blob":
         raise Refused("pre-flight: the recorded harness is not a blob")
     candidates = safe_push.git(repo, "rev-parse", f"--disambiguate={harness[0]}").split()
     if candidates != [actual]:
-        raise Refused("pre-flight: harness blob is not the recorded harness commit's safe_push.py")
+        raise Refused("pre-flight: harness blob is not the recorded harness commit's "
+                      "safe_push.py")
     preflight_steps(inner, checked, against, harness_check_names(repo, harness_commit))
     if pr["ref"].startswith("train/"):
         try:
@@ -492,34 +530,38 @@ def hand_written_intact(repo: Path, path: str, group: str, mb: str, train: str) 
 
 
 def intact(repo: Path, base: str, head: str, pr: dict) -> None:
-    """Require reversal then reapplication to preserve the non-exempt group tree."""
-    mb = merge_base(repo, pr["head"], base)
-    reversed_tree, conflicts = automatic(repo, head, mb, pr["head"])
-    # merge-tree takes commits for its sides. This object has no ref or checkout.
-    reversed_commit = oid(safe_push.git(
-        repo, "-c", "user.name=Queue integrity", "-c", "user.email=queue@example.invalid",
-        "commit-tree", reversed_tree, "-m", "Queue reverse application").strip(),
-        "reverse application commit")
-    reapplied, forward_conflicts = automatic(repo, reversed_commit, pr["head"], mb)
-    changed = {path for _, path in safe_push.changed_files(repo, head, reapplied)}
-    lost = [path for path in set(conflicts) | set(forward_conflicts) | changed
-            if not safe_push.under(path, GENERATED)]
-    # README.md and docs/PROGRAM.md are generated only between their markers: the rest,
-    # written by hand, is held to the same revert and reapply, read with the markers'
-    # regions taken out.
-    lost += [path for path in safe_push.GENERATED_REGIONS
-             if not hand_written_intact(repo, path, head, mb, pr["head"])]
-    if lost:
-        raise Refused(f"not overwriting: #{pr['number']} changed lines were overwritten: "
-                      + ", ".join(sorted(lost)))
-    added = [line.text for line in safe_push.added_lines(repo, mb, pr["head"],
-                                                      safe_push.DECISIONS)]
-    if added:
-        page = safe_push.git(repo, "show", f"{head}:{safe_push.DECISIONS}").splitlines()
-        remaining = iter(page)
-        if not all(any(line == present for present in remaining) for line in added):
-            raise Refused(f"not overwriting: #{pr['number']} decisions added lines "
-                          "are missing or out of order")
+    """Require reversal then reapplication to preserve the non-exempt group tree, against
+    every merge base of the entry with the group's base: after criss-cross merges there
+    is more than one, and each must preserve it, so more bases never mean less checked.
+    Merge attributes are read from the group's base."""
+    for mb in merge_bases(repo, pr["head"], base, pr["number"]):
+        reversed_tree, conflicts = automatic(repo, head, mb, attrs=base, base=pr["head"])
+        # merge-tree takes commits for its sides. This object has no ref or checkout.
+        reversed_commit = oid(safe_push.git(
+            repo, "-c", "user.name=Queue integrity", "-c", "user.email=queue@example.invalid",
+            "commit-tree", reversed_tree, "-m", "Queue reverse application").strip(),
+            "reverse application commit")
+        reapplied, forward_conflicts = automatic(repo, reversed_commit, pr["head"],
+                                                 attrs=base, base=mb)
+        changed = {path for _, path in safe_push.changed_files(repo, head, reapplied)}
+        lost = [path for path in set(conflicts) | set(forward_conflicts) | changed
+                if not safe_push.under(path, GENERATED)]
+        # README.md and docs/PROGRAM.md are generated only between their markers: the
+        # rest, written by hand, is held to the same revert and reapply, read with the
+        # markers' regions taken out.
+        lost += [path for path in safe_push.GENERATED_REGIONS
+                 if not hand_written_intact(repo, path, head, mb, pr["head"])]
+        if lost:
+            raise Refused(f"not overwriting: #{pr['number']} changed lines were "
+                          "overwritten: " + ", ".join(sorted(lost)))
+        added = [line.text for line in safe_push.added_lines(repo, mb, pr["head"],
+                                                          safe_push.DECISIONS)]
+        if added:
+            page = safe_push.git(repo, "show", f"{head}:{safe_push.DECISIONS}").splitlines()
+            remaining = iter(page)
+            if not all(any(line == present for present in remaining) for line in added):
+                raise Refused(f"not overwriting: #{pr['number']} decisions added lines "
+                              "are missing or out of order")
 
 
 @contextlib.contextmanager
@@ -624,7 +666,10 @@ def exact_revert(repo: Path, pr: dict, api: GitHub) -> None:
     run_id = int(runs[0].split()[2])
     before, after = failed_push(api, run_id)
     main = safe_push.git(repo, "rev-list", "--first-parent", pr["main"]).splitlines()
-    start = merge_base(repo, pr["head"], pr["main"])
+    starts = merge_bases(repo, pr["head"], pr["main"], pr["number"])
+    if len(starts) != 1:
+        raise Refused(f"auto-revert: #{pr['number']} has more than one merge base with main")
+    start = starts[0]
     if len(set(named)) != len(named) or any(sha not in main for sha in named):
         raise Refused("auto-revert: every named commit must be a distinct merge on main")
     if named != sorted(named, key=main.index):
@@ -660,22 +705,61 @@ def exact_revert(repo: Path, pr: dict, api: GitHub) -> None:
         raise Refused("auto-revert: head is not the exact revert tree (extra change)")
 
 
-def dated_heading(line: str):
-    """Recognise the decisions page's dated level-two headings."""
-    match = re.fullmatch(r"##[ \t]+(.+?)[ \t]*(?:[ \t]+#+[ \t]*)?", line)
-    if not match:
+def headings(text: str) -> list[tuple[int, str]]:
+    """The page's level-one and level-two headings, with their line numbers, as they
+    render: an ATX heading indented by three spaces at most, and a setext heading, a
+    paragraph underlined with = or -. Headings in code are read too, which can only
+    refuse more."""
+    lines, found = text.splitlines(), []
+    for number, line in enumerate(lines, 1):
+        if match := ATX.fullmatch(line):
+            found.append((number, match.group(1)))
+        elif SETEXT.fullmatch(line):
+            above = []
+            for previous in reversed(lines[:number - 1]):
+                if not previous.strip() or ATX.fullmatch(previous) \
+                        or SETEXT.fullmatch(previous):
+                    break
+                above.insert(0, previous)
+            if above:
+                found.append((number - len(above), " ".join(above)))
+    return found
+
+
+def _month(word: str) -> int | None:
+    """A month's number from its English name or first three letters, in any case."""
+    if not word.isascii():
+        raise Refused(f"a heading in the form of a date names its month with letters "
+                      f"outside ASCII, which may be a lookalike: {word}")
+    word = word.casefold()
+    for number, name in enumerate(MONTHS, 1):
+        if word in (name.casefold(), name[:3].casefold()) or (number, word) == (9, "sept"):
+            return number
+    return None
+
+
+def heading_date(text: str) -> datetime.date | None:
+    """The date a heading's text names, read as it renders: after NFKC, without format
+    characters (a zero-width space, say), other invisible marks or emphasis and code
+    marks, with the month in any case or abbreviated, day first, month first or in ISO
+    order, and punctuation or other separators between the parts. A month spelt with
+    letters outside ASCII is refused, since it may be a lookalike of another."""
+    text = unicodedata.normalize("NFKC", text)
+    text = "".join(c for c in text if c not in INVISIBLE
+                   and unicodedata.category(c) not in ("Cf", "Mn", "Me"))
+    text = re.sub(r"[*_`~]+", "", text)
+    if match := ISO_DATE.fullmatch(text):
+        year, month, day = (int(value) for value in match.groups())
+    elif match := DAY_FIRST.fullmatch(text):
+        day, month, year = int(match.group(1)), _month(match.group(2)), int(match.group(3))
+    elif match := MONTH_FIRST.fullmatch(text):
+        month, day, year = _month(match.group(1)), int(match.group(2)), int(match.group(3))
+    else:
         return None
-    value = match.group(1)
     try:
-        return datetime.date.fromisoformat(value)
+        return datetime.date(year, month, day) if month else None
     except ValueError:
-        parts = value.split()
-        if len(parts) != 3 or parts[1] not in MONTHS:
-            return None
-        try:
-            return datetime.date(int(parts[2]), MONTHS.index(parts[1]) + 1, int(parts[0]))
-        except ValueError:
-            return None
+        return None
 
 
 def tree_problems(repo: Path, render: bool = False) -> list[str]:
@@ -693,12 +777,16 @@ def tree_problems(repo: Path, render: bool = False) -> list[str]:
     if b"\0" in data:
         raise ValueError("the decisions page is not text")
     problems, dates = [], set()
-    for number, line in enumerate(data.decode("utf-8").splitlines(), 1):
-        date = dated_heading(line)
+    for number, heading in headings(data.decode("utf-8")):
+        try:
+            date = heading_date(heading)
+        except Refused as error:
+            problems.append(f"{safe_push.DECISIONS}:{number}: {error}")
+            continue
         if date is not None:
             if date in dates:
                 problems.append(f"{safe_push.DECISIONS}:{number}: repeated dated heading: "
-                                f"{line}")
+                                f"{heading}")
             dates.add(date)
     if render:
         result = safe_push.run(["python3", "scripts/render.py"], repo)
@@ -754,10 +842,14 @@ def gaps(repo: Path, base: str, entries: list[dict]) -> list[str]:
     checks, propositions, foundations = set(), set(), set()
     deleted = set()
     for pr in entries:
-        mb = merge_base(repo, base, pr["head"])
-        changes = [derive_new(repo, mb, pr["head"])]
-        deleted.update(path for status, path in safe_push.changed_files(repo, mb, pr["head"])
-                       if status == "D")
+        # After criss-cross merges an entry has several merge bases: it asks for the
+        # tests of what it changes against any of them, and is excused a test only for
+        # a file it deletes against all of them.
+        bases = merge_bases(repo, base, pr["head"], pr["number"])
+        changes = [derive_new(repo, mb, pr["head"]) for mb in bases]
+        deleted.update(set.intersection(*(
+            {path for status, path in safe_push.changed_files(repo, mb, pr["head"])
+             if status == "D"} for mb in bases)))
         if pr["ref"].startswith("train/"):
             changes.append(declared_new(pr["body"]))
         for change in changes:
