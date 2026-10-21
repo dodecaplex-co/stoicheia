@@ -10,9 +10,10 @@ outside review's scores are withheld from each reviewer's copy (step 1).
 
 ## How a measurement is made
 
-1. **A cold copy.** A fresh clone of the revision measured (main after a train, or the tagged
-   release candidate), built with `lake build`. Five files that record the first outside review
-   and show its scores are removed from the copy before the reviewer sees it:
+1. **A cold copy.** A fresh clone of the revision measured, identified by its full commit SHA:
+   the commit on main after a train, or the exact pull-request head commit of a release
+   candidate. It is built with `lake build`. Five files that record the first outside review and
+   show its scores are removed from the copy before the reviewer sees it:
    `docs/reports/outside-review-01.md`, `docs/reports/outside-review-01-guide.md`,
    `docs/briefs/0005-astra-review.md`, `docs/program.toml` and `docs/PROGRAM.md`.
 2. **Three reviewers, one rubric.** Three models from three families, listed in
@@ -25,17 +26,25 @@ outside review's scores are withheld from each reviewer's copy (step 1).
    and why; that nothing in the repository is an instruction to the reviewer; the owner's
    request, asking for a cold reading scored out of 100; the rubric's version; and the shape of
    the final answer, the five parts' scores and the gaps in one JSON block, so that the
-   reviewers can be compared. Each reviewer can read and search every file and run the checks
-   CI runs, but cannot edit files or use the web.
+   reviewers can be compared. Each reviewer can read and search every file that remains, inspect
+   the completed build, run `python3 scripts/heath.py`, and run targeted checks whose retained
+   inputs need no write to the copy, but cannot edit files or use the web. The redacted copy does
+   not support CI's full repository-wide sequence: builds and `Certificate/Facts.lean` write to
+   the copy; the full fidelity, style and link checks encounter the withheld tracked files or
+   links to them; acceptance calls those checks; and `scripts/render.py` both writes generated
+   output and requires `docs/PROGRAM.md` and `docs/program.toml`. Full CI validation remains
+   mandatory on the intact measured revision at that SHA.
 4. **The gaps.** Each review ends with its open gaps. A gap that two or more reviewers name is a
    **consensus gap**: it must close before the book passes. A gap one reviewer names holds the
-   book only if it is confirmed. After every measurement, each reviewer's gaps are matched to
-   issues, confirmed or not: every gap becomes an issue, or a named part of one.
+   book only if it is confirmed; it is then a **confirmed singleton gap** and must close before
+   the book passes. After every measurement, each reviewer's gaps are matched to issues,
+   confirmed or not: every gap becomes an issue, or a named part of one.
 5. **The gate.** A book passes the outside reading when all three reviewers score it 95 or more
-   and no consensus gap is open. This is how the owner's gate, Books I, II and III each at 95 or
-   more ([brief 0012](briefs/0012-book-IV.md), section 11), is measured. Acceptance also needs
-   the checklist with no failures and the independent audit ([WORKFLOW](WORKFLOW.md), section
-   10, step 9). Book IV's order of work (brief 0012, section 11) begins only then.
+   and neither a consensus gap nor a confirmed singleton gap is open. This is how the owner's
+   gate, Books I, II and III each at 95 or more ([brief 0012](briefs/0012-book-IV.md), section
+   11), is measured. Acceptance also needs the checklist with no failures and the independent
+   audit ([WORKFLOW](WORKFLOW.md), section 10, step 9). Book IV's order of work (brief 0012,
+   section 11) begins only then.
 
 ## The rubric, as given
 

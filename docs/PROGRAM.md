@@ -9,9 +9,10 @@ and why they are what they are.
 ## 1. The standard
 
 We aim at 95/100 or more for every book, as three cold outside reviewers score it by the
-[review rubric](RUBRIC.md); the first such reading was [Astra's outside
-review](reports/outside-review-01.md). A reader of any page should be able to answer four
-questions at once:
+[review rubric](RUBRIC.md). [Astra's 17 October outside
+review](reports/outside-review-01.md), scored against the README, was the predecessor that
+prompted the rubric; the three-reviewer version-1 measurements began on 19 October. A reader of
+any page should be able to answer four questions at once:
 
 1. What does Euclid claim?
 2. What does the formal theorem prove?
