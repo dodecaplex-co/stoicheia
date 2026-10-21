@@ -1,14 +1,16 @@
 module
 
 public import Model.Euclidean.CircleSides
+public import Model.Euclidean.Incidence
 public import Model.Laws.superposition
+public import Elements.Foundations.Superposition.Soundness
 public import Mathlib.Geometry.Euclidean.Projection
 
 /-!
 # Superposition, in the plane
 
-The rule of superposition, as the lock states it, holds in the plane: a triangle ABC can be
-laid down with A on the point D of a line L, B on the ray from D through G, and C on the
+The restricted rule of superposition holds in the plane. Its supporting construction
+lays a triangle ABC down with A on the point D of a line L, B on the ray from D through G, and C on the
 side of L where H is, with its three sides and three angles kept. In the plane this is a
 motion, and the proof builds one, from Mathlib alone, with a reflection when the side needs
 one.
@@ -24,10 +26,10 @@ orthogonal projection onto L. Distances and all three angles survive both isomet
 The angle helper also covers repeated points, whose angle is zero in this reading, since
 an isometry repeats a point exactly when its image is repeated.
 
-This proves the rule as it is locked. System E allows superposition only to prove facts
-about a figure already drawn, and the certificate's checks let only I.4 and I.8 cite it.
-That restriction governs the library's proofs; the model needs only the locked rule to be
-true here. A restricted rule, if one is adopted in its place, will need its own proof.
+The retained placement theorem supplies the triangle. Its third corner C' is off L,
+whereas D is on L, so Postulate 1 supplies the side through D and C'. The generic
+`Rule.of_placement` then proves the restricted law. The library may use that law directly
+only in I.4 and I.8; it exports metric equalities about the given figure.
 
 We thank Zhouhang Zhou, Frédéric Dupuis and Heather Macbeth for Mathlib's linear
 reflection lemmas, Heather Macbeth for its affine isometries, Joseph Myers and Manuel
@@ -122,8 +124,8 @@ theorem exists_isometry_sameSide (f : Plane ≃ᵃⁱ[ℝ] Plane) {A B C H : Pla
     · change L.1.SSameSide (EuclideanGeometry.reflection L.1 (f C)) H
       exact (sOppSide_reflection hC).symm.trans hside
 
-/-- **Superposition holds in the plane.** -/
-theorem superposition : Hand.Superposition.superposition plane := by
+/-- The supporting placement exists in the plane, by isometry and reflection. -/
+theorem superposition_placement : Hand.Superposition.placement plane := by
   intro A B C D G H L hABC hD hG hDG hH
   let t := dist A B / dist D G
   have ht : 0 ≤ t := div_nonneg dist_nonneg dist_nonneg
@@ -151,5 +153,17 @@ theorem superposition : Hand.Superposition.superposition plane := by
   · simpa only [hgD, hgB'] using angle_map_isometry g B A C
   · simpa only [hgD, hgB'] using angle_map_isometry g A C B
   · simpa only [hgD, hgB'] using angle_map_isometry g C B A
+
+/-- **Restricted superposition holds in the plane**, including the side laid down. -/
+theorem superposition : Hand.Superposition.superposition plane := by
+  apply Elements.Superposition.Rule.of_placement
+  intro A B C D G H L hABC hD hG hDG hH
+  obtain ⟨B', C', hp⟩ := superposition_placement hABC hD hG hDG hH
+  have hDC' : D ≠ C' := by
+    intro heq
+    have hs : L.1.SSameSide C' H := hp.2.2.1
+    exact hs.left_notMem (heq ▸ hD)
+  obtain ⟨N, hDN, hC'N⟩ := Postulate1 D C' hDC'
+  exact ⟨B', C', N, hp, hDN, hC'N⟩
 
 end Model.Euclidean

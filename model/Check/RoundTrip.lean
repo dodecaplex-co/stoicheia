@@ -12,6 +12,7 @@ import Elements.Foundations.Tacit.Metric
 import Elements.Foundations.Tacit.Superposition
 import Elements.Foundations.Tacit.Transfer
 import Elements.Foundations.Words
+import Elements.Foundations.Superposition.Restriction
 import Model.Laws
 import Model.Hand
 import Model.Laws.«areas-p5»
@@ -148,6 +149,62 @@ error: `Check.Planted.foreign`: `Model.Kind` is neither Lean's own (from `Init`)
 #guard_msgs in
 run_cmd Check.Generator.translatePlanted ``Check.Planted.foreign
 
+/-! ## The shared restricted calculus
+
+A changed guard and swapped interpretation fields must fail the same expression comparison
+used for translated words. Shared definitions also remain in the vocabulary lock. Purity
+faults below alter only an in-memory copy inspected by the checker, never the environment
+in which Lean checks proofs. -/
+
+namespace Check.Planted
+
+open Model Elements.Superposition
+
+/-- The fourth placement guard is wrongly positive. -/
+def changedGuard (_S : Signature) {P L : Type} (d g h : P) (l : L) : List (Lit P L) :=
+  [.pos (.onLine d l), .pos (.onLine g l), .neg (.eq d g), .pos (.onLine h l)]
+
+/-- Exchange angle and area, including their carriers, in the interpretation. -/
+def swappedPrimitives (S : Signature) : Interpretation :=
+  ⟨S.Point, S.Line, S.OnLine, S.Between, S.SameSide, S.Length, S.Area, S.Angle,
+    S.len, S.area, S.ang⟩
+
+end Check.Planted
+
+/-- error: `Check.Planted.changedGuard`: `Elements.Superposition.Lit.pos` where the library has `Elements.Superposition.Lit.neg` -/
+#guard_msgs in
+run_cmd (Check.Generator.comparePlantedWord ``Check.Planted.changedGuard
+  ``Elements.Superposition.guards)
+
+/-- error: `Check.Planted.swappedPrimitives`: `Elements.Kind.area` where the library has `Elements.Kind.angle` -/
+#guard_msgs in
+run_cmd Check.Generator.comparePlantedWord ``Check.Planted.swappedPrimitives ``Elements.primitives
+
+/-- A familiar namespace gives no permission to share a declaration from another module. -/
+def Elements.Superposition.unapprovedShared : Prop := True
+
+def Check.Planted.unapproved : Prop := Elements.Superposition.unapprovedShared
+
+/-- error: `Check.Planted.unapproved`: `Elements.Superposition.unapprovedShared` is neither Lean's own (from `Init`) nor a word of the project -/
+#guard_msgs in
+run_cmd Check.Generator.translatePlanted ``Check.Planted.unapproved
+
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Generator.plantPureDependency ``Elements.Superposition.guards ``Elements.Point
+
+/-- error: shared calculus reaches `Elements.Tacit.superposition`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Generator.plantPureDependency ``Elements.Superposition.guards ``Elements.Tacit.superposition
+
+/-- error: shared calculus reaches `sorryAx` -/
+#guard_msgs in
+run_cmd Check.Generator.plantPureDependency ``Elements.Superposition.guards ``sorryAx
+
+/- Shared recursors retain zero, symbolic and compound universe arguments in both directions. -/
+#guard_msgs in
+run_cmd Check.Generator.checkSharedIdentity ``Elements.Superposition.Atom.rec
+
 /-! ## Purity before the shared modules arrive
 
 These cases use Init declarations, so they run before the restricted calculus exists.
@@ -205,7 +262,8 @@ run_cmd Check.Generator.checkSharedIdentity ``Nat.rec
 /- Stand-in modules extend the production boundary, so these fixtures also work after
 the calculus arrives. They exercise successful identities before the calculus exists.
 List.filterMap has two universe arguments; Model.Kind.rec also checks that a shared name
-in the Model namespace survives the residual-name check in reverse translation. -/
+in the Model namespace survives the residual-name check in reverse translation. Include
+the production boundary too, since the library's laws now reach the real calculus. -/
 #guard_msgs in
 run_cmd (Check.Generator.checkSharedIdentityWith
   (Check.Generator.pureModules ++ #[`Init.Data.List.Basic]) ``List.filterMap)
