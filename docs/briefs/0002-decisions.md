@@ -3349,3 +3349,76 @@ findings:
   with the counts. It reads III.1's tacit count from
   `tests/certificate_expectations.json`, so it holds before and after the content it
   describes. No guard is weakened.
+
+## 21 October 2026
+
+- **Train C6a meets axiom wave one: the lock is main's 79 axioms and the centre rule.**
+  Train C6a, which carries stage 3, the mixed angles, the rule that every circle has a
+  centre and brief 0008's section 7, was merged with main at `2e8aecf`, after the eight
+  retirements of axiom wave one (87 to 79), and then with the check train at `9c83d79`.
+  The counts in this train's entries of 19 October above ("The mixed-angle move integrated
+  with the Circle 2 proofs", "Every circle has a centre: the rule lands" and "III.5 and
+  III.6: section 7 lands before step 6": 88 axioms and 82 tacit rules, "the other 87", a
+  model over 88 laws, "still 87 axioms") predate wave one; they stand as written, and this
+  entry gives the counts after the merge. The lock, written by
+  `python3 scripts/check_fidelity.py --write-lock`, holds main's 79 axioms, each unchanged,
+  and `Tacit.exists_centre`: 80 axioms, of them 74 tacit rules, main's 73 and the rule, as
+  `facts.json` and the count markers say. Its vocabulary holds 121 words: main's 91 and this
+  train's 30 (the arcs and segments of stage 3, the mixed angles, and `CirclesCut`), with
+  `TouchesInternally` redefined as brief 0008, section 7, approved, asking for a point of
+  the inner circle within the outer; no other word of main's changes. Both
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) and
+  [`model/lock.sha256`](../../model/lock.sha256) were renewed on 21 October 2026 to hash
+  the regenerated lock, `46d2f009922f16cf4fe011630291b0ef99c4dd683adb19af5f1f69323207b9b1`.
+  [`tests/model/MODEL.md`](../../tests/model/MODEL.md) and the model results were written
+  again by `python3 tests/model/run.py --full --write`, on the merged tree (harness
+  sha256 `2a8771abcd95266d2253431e7b704cfff0bfffad4b9b567f5e9544586d9b7161`): 80 laws, no
+  counterexample in the plane, and all 15 mutations caught. The seven exact pins of
+  [`Audit/Crossing.lean`](../../Audit/Crossing.lean), for `III_5_today`, `III_6_today`,
+  `III_11_today`, `III_13_today`, `cut_point`, `CirclesCut.of_meet` and `within_point`,
+  were renewed from Lean's output, and change only by losing `Tacit.adjacent_eq_of_right`
+  and `Tacit.centre_unique`, now theorems; every other name in each list is unchanged.
+  The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`, `model/`, `scripts/`,
+  `lakefile.toml` and `lean-toolchain` that differ from main at `2e8aecf`, each named whole:
+  `Audit.lean`,
+  `Audit/Crossing.lean`,
+  `Audit/Overlaps.lean`,
+  `Audit/screen.py`,
+  `Certificate/FIELDS.md`,
+  `Certificate/axioms.lock`,
+  `model/Check/Hand.lean`,
+  `model/Check/Laws.lean`,
+  `model/Model/Assembly.lean`,
+  `model/Model/Audit.lean`,
+  `model/Model/Euclidean/Centre.lean`,
+  `model/Model/Hand.lean`,
+  `model/Model/Laws.lean`,
+  `model/README.md`,
+  `model/lock.sha256`,
+  `scripts/render.py`,
+  `scripts/scaffold_book.py`,
+  `scripts/test_safe_push.py`,
+  `tests/certificate_expectations.json`,
+  `tests/model/MODEL.md`,
+  `tests/model/hyperbolic.py`,
+  `tests/model/laws.toml`,
+  `tests/model/lock.sha256`,
+  `tests/model/results/angle_check.txt`,
+  `tests/model/results/exhaustive.txt`,
+  `tests/model/results/grid_check.txt`,
+  `tests/model/results/hyperbolic.txt`,
+  `tests/model/results/mutations.txt`,
+  `tests/model/results/search-seed1.txt`,
+  `tests/model/results/search-seed2.txt`,
+  `tests/model/results/search-seed3.txt`,
+  `tests/model/results/structured.txt`,
+  `tests/model/results/summary.txt`,
+  `tests/model/search.py` and
+  `tests/test_check_style.py`.
+  Of these, `scripts/render.py`, `scripts/scaffold_book.py`, `scripts/test_safe_push.py`,
+  `tests/certificate_expectations.json` and `tests/test_check_style.py` are the check
+  train's, as at `9c83d79`, with the two entries of 20 October above ("The renderer's words
+  follow the content" and "III.1's porism has its whole axiom list pinned"), and so is
+  `Certificate/FIELDS.md`'s `axioms` row; its vocabulary count, 91 to 121, is this train's.
+  `lakefile.toml` and `lean-toolchain` do not change. No statement, check or expected value
+  changes in this entry.

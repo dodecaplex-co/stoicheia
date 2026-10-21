@@ -28,6 +28,17 @@ Stage 4b's III.8 and III.17 companions are in [`Elements/BookIII/Prop08.lean`](.
 Still to do under #59: the prototype rename, centre rule, construction guard, restatements, tag revision and record migration.
 The frozen text below is kept as history.
 
+*Status, 21 October 2026, after train C6a, merged with axiom wave one:*
+
+The rule is in the foundations: `Tacit.exists_centre`, in [`Constructions.lean`](../../Elements/Foundations/Tacit/Constructions.lean), and with it the lock holds 80 axioms and 74 tacit rules, main's 79 and 73 and the rule (step 5).
+Section 7 is in the edition: III.5 and III.6 read "cut" as crossing (`CirclesCut`), and contact within asks for a point of the inner circle within the outer; [`Audit/Crossing.lean`](../../Audit/Crossing.lean) recovers the earlier statements of III.5, III.6, III.11 and III.13.
+The prototype's rename landed with the mixed angles of III.16 and III.31: the theorem is `exists_circle_about`, in [`Elements/Figure/Regions.lean`](../../Elements/Figure/Regions.lean).
+The [formal model](../../model/Model/Assembly.lean) proves all 80 locked laws.
+Stage 3 is in `Elements/`, save its meeting fact for an arc, which waits beside III.25 in `Staging/Stage4/`; stage 4 remains there, for train C6b.
+Staged III.1 still calls Circle 2, as the note of 20 October says.
+Still to do under #59: III.1's construction and its guard (steps 3 and 4), the restatements and the record migration (step 6, train C6c), and the tag revision (step 7).
+This note changes no declaration of the brief, and the frozen text below is kept as history.
+
 *The brief settles, before any proof work and as [WORKFLOW.md](../WORKFLOW.md), section 2,
 requires, the rule the owner approved, that every circle has a centre, and every statement
 the rule changes. Each new statement is written with `sorry` in the `Staging` library, in
