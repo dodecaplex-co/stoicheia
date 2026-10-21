@@ -21,7 +21,7 @@ note = "Our triangles ABE and AEC are named by their corners, so no straight lin
 at = "through A let AG be drawn parallel to EC"
 kind = "helper"
 helper = "Prop30.meet"
-note = "Euclid draws the parallel through A and takes F where it meets the arm of the angle at E. The Lean draws the parallel by I.31 and finds F with `Prop30.meet`, using I.30, which Heath does not cite here."
+note = "Euclid draws the parallel through A and takes F where it meets the arm of the angle at E. The Lean draws the parallel by I.31 and finds F with `Prop30.meet`, using I.30, for which Heath gives no reference here."
 
 [[passage]]
 at = "through C let CG be drawn parallel to EF"

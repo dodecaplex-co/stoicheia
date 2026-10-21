@@ -29,7 +29,7 @@ note = "Euclid reads the angles AGK and GKD as alternate. `SameSideOf.trans_oppo
 at = "Therefore AB is parallel to CD"
 kind = "helper"
 helper = "Prop27"
-note = "Euclid concludes parallelism from the equal alternate angles; the Lean applies I.27 (`Prop27`), for which Heath prints no reference here."
+note = "Euclid concludes parallelism from the equal alternate angles; the Lean applies I.27 (`Prop27`), for which Heath gives no reference here."
 
 [figure]
 case = "EF between AB and CD, so that GK crosses it, as in Heath's figure"

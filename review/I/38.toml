@@ -16,7 +16,7 @@ note = "Euclid produces AD in both directions. The statement already gives the w
 at = "through B let BG be drawn parallel to CA"
 kind = "helper"
 helper = "Prop31.parallelogram"
-note = "Euclid draws BG and FH and takes their meetings with AD at G and H from the figure, then calls GBCA and DEFH parallelograms without giving a reason. The Lean uses `Prop31.parallelogram` to draw the parallels by I.31, prove their meetings by I.30, which Heath does not cite here, and establish both parallelograms for the next sentence."
+note = "Euclid draws BG and FH and takes their meetings with AD at G and H from the figure, then calls GBCA and DEFH parallelograms without giving a reason. The Lean uses `Prop31.parallelogram` to draw the parallels by I.31, prove their meetings by I.30, for which Heath gives no reference here, and establish both parallelograms for the next sentence."
 
 [[passage]]
 at = "But the halves of equal things are equal to one another"

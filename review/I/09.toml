@@ -17,7 +17,7 @@ note = "Euclid takes D anywhere on AB and takes for granted that AC is long enou
 at = "let DE be joined, and on DE let the equilateral triangle DEF be constructed"
 kind = "helper"
 helper = "Prop1"
-note = "Euclid constructs the equilateral triangle DEF but leaves its side of DE to his figure. The Lean takes a point beyond DE from A by `exists_oppositeSidesOf` (System E, Points 6) and builds DEF on that point's side by I.1 (`Prop1`), for which Heath prints no reference here."
+note = "Euclid constructs the equilateral triangle DEF but leaves its side of DE to his figure. The Lean takes a point beyond DE from A by `exists_oppositeSidesOf` (System E, Points 6) and builds DEF on that point's side by I.1 (`Prop1`), for which Heath gives no reference here."
 
 [[passage]]
 at = "let AF be joined"

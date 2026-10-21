@@ -4,12 +4,12 @@
 [statement]
 scope = "full"
 companions = ["I.47 general"]
-note = "Prop47 keeps Euclid's outward squares; Prop47.general proves the same area identity for squares on either side of each base."
+note = "`Prop47` keeps Euclid's outward squares; `Prop47.general` proves the same area identity for squares on either side of each base."
 fingerprint = "sha256:0443415760ef83f5"
 
 [route]
 kind = "euclid"
-note = "The main theorem follows Euclid's outward-square argument; Prop47.general transfers its result using equal squares on the same base."
+note = "The main theorem follows Euclid's outward-square argument; `Prop47.general` transfers its result using equal squares on the same base."
 
 [[passage]]
 at = "For let there be described on BC the square BDEC"
@@ -50,7 +50,7 @@ kind = "given"
 note = "The main theorem takes BDEC, GB and HC as the squares on BC, BA and AC; `Prop47.general` transfers the outward result to squares on either side of each base by `Prop46.square_eq`. Book II separately restates I.47 using its areas of squares on straight lines for later citations."
 
 [figure]
-case = "the three squares standing outward from the right-angled triangle, as in the main theorem; Prop47.general also covers squares on either side of each base"
+case = "the three squares standing outward from the right-angled triangle, as in the main theorem; its companion also covers squares on either side of each base"
 
 [review]
 stage = "full"

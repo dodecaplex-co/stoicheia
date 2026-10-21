@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.45 at a glance</title>
-  <desc>The straight-sided figure ABCD can be remade as a parallelogram KFLM in a chosen angle (red): cut it into triangles by DB, and turn each one into a slice of equal area (yellow, blue).</desc>
+  <desc>The straight-sided figure ABCD can be remade as a parallelogram KFLM, drawn apart as Heath draws it, in a chosen angle (red): cut ABCD into triangles by DB, and turn each one into a slice of equal area (yellow, blue).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="31.8,127.2 109.2,75.6 67.5,224.4" fill="#f2b705" fill-opacity="0.95"/>
   <polygon points="109.2,75.6 168.7,166.9 67.5,224.4" fill="#1f5aa6" fill-opacity="0.9"/>

@@ -16,7 +16,7 @@ note = "Euclid reads off the crossing lines that A is off CD and D is off AB. Be
 at = "PORISM. From this it is manifest"
 kind = "carried"
 helper = "Prop15.porism"
-note = "Heath brackets the Porism, after Heiberg. It is proved as its own theorem, with its own certificate entry, I.15 Por."
+note = "Heath brackets the Porism, after J. L. Heiberg. It is proved as its own theorem, with its own certificate entry, I.15 Por."
 
 [review]
 stage = "full"

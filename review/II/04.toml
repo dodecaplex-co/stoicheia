@@ -32,14 +32,14 @@ note = "Euclid takes AG as a parallelogram when he applies I.34 to identify HG w
 [[passage]]
 at = "Now, since AG is equal to GE"
 kind = "helper"
-helper = "Prop43"
+helper = "BookI.Prop43"
 note = "Euclid takes the complements AG and GE to be equal. The Lean applies I.43, for which Heath gives no reference here."
 
 [[passage]]
 at = "and AG is the rectangle AC, CB"
 kind = "helper"
 helper = "Rectangle.of_right"
-note = "Euclid treats AG as a rectangle, with GC equal to CB. The Lean gets the adjacent right angle at C from `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, then uses `Rectangle.of_right` (I.29) and `Rectangle.eq_rect` to identify AG."
+note = "Euclid treats AG as a rectangle, with GC equal to CB. The Lean gets the adjacent right angle at C from `Tacit.adjacent_eq_of_right` (I.13), then uses `Rectangle.of_right` (I.29) and `Rectangle.eq_rect` to identify AG."
 
 [[passage]]
 at = "But HF, CK, AG, GE are the whole ADEB"

@@ -56,14 +56,14 @@ note = "Euclid takes the angles FBD and DFB to be equal because each is half a r
 [[passage]]
 at = "But the square on EF is equal to the squares on EG, GF"
 kind = "helper"
-helper = "Prop47.sq"
+helper = "BookI.Prop47.sq"
 note = "Euclid gives the square on EF as the squares on EG and GF together, without a reference here. The Lean applies I.47 to the triangle EGF, whose angle at G has been proved right."
 
 [[passage]]
 at = "But the squares on AD, DF are equal to the square on AF"
 kind = "helper"
 helper = "Tacit.adjacent_eq_of_right"
-note = "Euclid uses the right angle ADF, while the earlier parallel argument made FDB right. The Lean obtains ADF from `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, and then applies I.47."
+note = "Euclid uses the right angle ADF, while the earlier parallel argument made FDB right. The Lean obtains ADF from `Tacit.adjacent_eq_of_right` (I.13) and then applies I.47."
 
 [figure]
 case = "D between C and B, as in Heath's figure"
