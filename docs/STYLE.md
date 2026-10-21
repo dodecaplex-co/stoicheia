@@ -301,23 +301,41 @@ first use in each book (in Book III it is the circle's). Gloss "applied" (I.44) 
 "gnomon" (II.5). Modern words stay in the modern way, and a Lean word gets a plain gloss
 the first time it appears.
 
-**Tightening the language.** Section 1 sets the voice and the rule for vague hedges.
-These examples show what the language passes cut or replaced:
+**Tightening the language.** These are the habits that the language passes
+([#111](https://github.com/jackChallis/stoicheia/pull/111) and
+[#115](https://github.com/jackChallis/stoicheia/pull/115)) and read-through 02 removed from
+the commentary, the reading lines, the records and the Lean notes, each with one example;
+section 1 sets the voice and the rule for vague hedges.
 
-- Repeated openings: the reading lines' "For algebra drawn as rectangles" gives way to
-  what Nelsen's book shows (II.1). Section 6 gives the reading lines their shape.
-- Announcing sentences: "The proof is short" gives way to "Euclid joins BC" (I.33);
-  "The proposition is old" goes, leaving Heath's evidence from Aristotle (I.27).
-- Sweeping closings: "Book II leans on it again and again" becomes "II.2 to II.8, II.11
-  and II.14 use it again", with a link to the introduction (II.1).
-- Recaps in threes: I.41 drops the closing "greater than, equal to or less than" summary
-  and keeps Proclus' construction. A list that supplies necessary cases stays.
-- Padded phrases: "does its multiplying" becomes "multiplies" (II.1); "has a name for
-  this cut" becomes "names the cut" (II.11).
-- Unsupported certainty: "Heron, whose proof for circles touching without became III.12"
-  gives way to "Heath thinks a later editor made III.12 out of Heron's proof for circles
-  touching without" (III.12's reading). This qualification belongs to the claim, as
-  section 1 requires.
+- Labels for leads: I.21's lead "Three facts in one word." goes, and the paragraph opens on
+  its claim, "Our statement reads 'within the triangle' as three facts".
+- Announcing sentences: "The proof is short" gives way to "Euclid joins BC" (I.33).
+- One opening for every reading line: each opened "For …", and II.1's "For algebra drawn
+  as rectangles" gives way to what Nelsen's book shows. Section 6 gives the reading lines
+  their shape.
+- Inflated praise: Fowler's chapter on II.10 loses its "beautifully argued".
+- Padded phrases: "Book VI has a name for this cut" becomes "Book VI names the cut" (II.11).
+- Recaps in threes: I.41 drops Heath's summary of Proclus' three results, "greater than,
+  equal to or less than double the triangle", and keeps Proclus' construction.
+- Sweeping closings: "Book II leans on it again and again" becomes "II.2 to II.8, II.11 and
+  II.14 use it again" (II.1).
+- Stock closings: II.2 ended on a modern way that only restated it, "the whole times each
+  part, added together, is the whole times itself"; it now ends on Heath's count of the
+  words in Euclid's proof.
+- Retelling the Lean notes: I.17's commentary drops "we prove his case for any triangle and
+  call on it three times", which its Lean note tells.
+- Refrains: I.21's record said "a rule we assume, not a proof" at four steps; now each of
+  its two rules is "a rule we assume" once, and pointed back to after.
+- Change-logs on the page: a docstring on I.13's page, "This was an assumption until 19
+  October 2026 and is now proved from I.13 and Common Notion 3", now says "We prove it from
+  I.13 and Common Notion 3".
+- Blaming Lean for our choices: I.7's "Lean has no reader to leave cases to" becomes "A
+  proof that leaves no case to its reader must find D in four places".
+- Certainty beyond the evidence: I.18's "We prove both", of two steps, one of them a rule
+  we assume, now says "we prove it" of the first and "which we assume" of the rule.
+
+Two things stay: a list that supplies necessary cases, and a qualification that belongs to
+the claim, which section 1 requires.
 
 **Tacit rules,** never "tacit assumptions" or "tacit laws", outside Heath's words
 **[checked]**.
