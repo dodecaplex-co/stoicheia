@@ -295,8 +295,9 @@ not named **[checked]**; what the list says besides is judged by a reader:
 **Euclid's words for Euclid's things:** straight line, produced, joined, greater and less,
 the angle ABC, the square on AB, the rectangle contained by AB, BC, circumference (an arc),
 touches (a tangent), segment, the angle in the segment, the angle at the centre. Never
-"chord" or "segment" for a straight line, "arc" outside the modern way, or "the tangent"
-where Heath does not write it. "Diameter" is Euclid's word for a diagonal: gloss it at its
+"chord" or "segment" for a straight line (save Heath's segments of a straight line cut at
+a point, in Book II and III.35), "arc" outside the modern way, or "the tangent" where
+Heath does not write it. "Diameter" is Euclid's word for a diagonal: gloss it at its
 first use in each book (in Book III it is the circle's). Gloss "applied" (I.44) and
 "gnomon" (II.5). Modern words stay in the modern way, and a Lean word gets a plain gloss
 the first time it appears.
@@ -315,8 +316,9 @@ section 1 sets the voice and the rule for vague hedges.
   their shape.
 - Inflated praise: Fowler's chapter on II.10 loses its "beautifully argued".
 - Padded phrases: "Book VI has a name for this cut" becomes "Book VI names the cut" (II.11).
-- Recaps in threes: I.41 drops Heath's summary of Proclus' three results, "greater than,
-  equal to or less than double the triangle", and keeps Proclus' construction.
+- Recaps in threes: I.41's commentary drops its retelling of Heath's summary of Proclus'
+  three results, "greater than, equal to or less than double the triangle", and keeps
+  Proclus' construction.
 - Sweeping closings: "Book II leans on it again and again" becomes "II.2 to II.8, II.11 and
   II.14 use it again" (II.1).
 - Stock closings: II.2 ended on a modern way that only restated it, "the whole times each
@@ -625,8 +627,8 @@ one of Heath's letters: a length or a vector is named by its lower-case letter. 
 caption, for its paragraph serves as one **[checked]**. A
 page with no modern way has no such figure **[checked]**, and a modern way that would only
 restate the proposition in symbols needs none. The figure shows what the paragraph says
-and no more, with the paragraph's conditions (A = (0, 0), b > 0), and is checked as
-geometry, as Euclid's is.
+and no more, drawn under the conditions the paragraph states (A = (0, 0), b > 0), and is
+checked as geometry, as Euclid's is.
 
 **Departures go in the figure note.** Where our drawing places a point otherwise than
 Heath's figure, because the Lean does, draw the proof and say so in one line under the
