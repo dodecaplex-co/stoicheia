@@ -488,8 +488,9 @@ The ruleset and the remaining merge requirements are in
   an option that hides part of a print with no mark, such as `pp.piBinderTypes false`,
   could be set only outside the file, in the lakefile, a protected file, so that protection
   holds it off, not this check. A pin inside a line, block, nested or module comment, which
-  Lean never runs, is refused with its line and does not count; ordinary comments remain
-  allowed. The file may hold nothing but its leading imports, ordinary comments and pins
+  Lean never runs, never counts, and is refused with its line wherever the script reads it
+  as a pin (one with an inner comment between quotation marks can escape the refusal, and
+  still counts for nothing); ordinary comments remain allowed. The file may hold nothing but its leading imports, ordinary comments and pins
   (a docstring, a bare `#guard_msgs in`, then `#check @`, `#print` or `#print axioms`);
   anything else is
   refused with its line, such as a `set_option` of any kind (some shorten what Lean

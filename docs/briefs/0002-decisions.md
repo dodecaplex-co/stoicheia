@@ -4201,7 +4201,9 @@ findings:
   restriction theorem" has a statement pin in `Audit/Superposition.lean`, a bare
   `#guard_msgs in` over `#check @` for a theorem or `#print` for a definition, under its
   full name in `Elements.Superposition`, its one namespace; a pin in a line, block, nested
-  or module comment is refused with its line and does not count, while ordinary comments
+  or module comment never counts, and is refused with its line wherever the script reads it
+  as a pin (an independent review found that one with an inner comment between quotation
+  marks escapes the refusal, though it still counts for nothing), while ordinary comments
   remain allowed, and a section that names nothing fails. The audit file may hold nothing
   but its leading imports, comments and pins, each a docstring, a bare `#guard_msgs in`, then
   `#check @`, `#print` or `#print axioms`. Anything else is refused with its line. An

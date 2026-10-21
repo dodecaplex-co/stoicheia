@@ -67,8 +67,10 @@ and `end` (in a namespace, a new declaration can take a pinned name); any declar
 `(drop info)` or `(whitespace := lax)`, which let a message pass that is not the
 docstring. A name pinned only under such options is also reported with that pin's line.
 The file is read as Lean reads it: a pin inside a line, block, nested or module comment,
-nested as Lean nests them, is not run, is refused with its command's line and is not
-counted. Ordinary comments remain allowed. And Audit.lean, the root that `lake build
+nested as Lean nests them, is not run and is never counted. The script also refuses, with
+its command's line, each commented pin it reads as one; a pin whose comment holds an inner
+comment between quotation marks can escape that refusal, and then simply counts for
+nothing. Ordinary comments remain allowed. And Audit.lean, the root that `lake build
 Audit` builds, must import `Audit.Superposition` among its leading imports: without it,
 that build does not run the pins at all.
 
