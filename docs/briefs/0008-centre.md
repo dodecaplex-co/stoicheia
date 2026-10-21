@@ -24,7 +24,7 @@ The [forbidden-command scan](../../scripts/check_fidelity.py) covers `Staging/` 
 The [formal model](../../model/Model/Assembly.lean) proves all 79 locked laws, with [generated laws](../../model/Model/Laws.lean) (#109).
 Stage 2's proofs are in [`Elements/`](../../Elements/) (#102).
 Stage 4b's III.8 and III.17 companions are in [`Elements/BookIII/Prop08.lean`](../../Elements/BookIII/Prop08.lean) and [`Prop17.lean`](../../Elements/BookIII/Prop17.lean) (#111); stages 3 and 4 remain in `Staging/`.
-[Staged III.1](../../Staging/Centre/Prop01.lean) still calls Circle 2, now a theorem resting on Circle 3; its construction must be reconciled with [main's III.1](../../Elements/BookIII/Prop01.lean) before migration.
+[Staged III.1](https://github.com/jackChallis/stoicheia/blob/01ecbaa2/Staging/Centre/Prop01.lean) still calls Circle 2, now a theorem resting on Circle 3; its construction must be reconciled with [main's III.1](../../Elements/BookIII/Prop01.lean) before migration.
 Still to do under #59: the prototype rename, centre rule, construction guard, restatements, tag revision and record migration.
 The frozen text below is kept as history.
 
@@ -33,10 +33,37 @@ lock, by the owner's decision of 18 October (80 axioms, 74 tacit rules after wav
 Stages 3 and 4 and the mixed angles are in `Elements/`, and their staged copies are
 deleted. III.1's construction is at home in `Elements/BookIII/Prop01.lean` and takes a
 centre from the rule only inside the proof that D is within, as the dated correction in
-section 3 records; [staged III.1](../../Staging/Centre/Prop01.lean) now checks the
+section 3 records; [staged III.1](https://github.com/jackChallis/stoicheia/blob/1cc743ec/Staging/Centre/Prop01.lean) now checks the
 restated III.1 against it and calls neither Circle 2 nor Circle 3. Still to do under #59:
 the construction guard, in a pull request of its own, then step 6's restatements, the tag
 revision and the record migration.
+
+*Correction, 21 October 2026, train C6c (C6a, C6b and step 6), for issue #152:* the two
+statuses above are kept as written, and this note corrects what step 6 has made false in
+them. No statement, declaration, record or lock changes, so no consumer is affected.
+
+- **Discrepancy.** Step 6 retired `Staging/Centre/` (the [dated completion in section
+  3](#completion-step6-19-october-2026)), so neither staged III.1 the statuses describe
+  exists on this train. Their links now name the file at the revision each status was
+  written: 01ecbaa2, where the staged construction called Circle 2, and 1cc743ec, where it
+  called neither Circle 2 nor Circle 3. The construction guard and step 6's restatements,
+  listed above as still to do, are done on this train: the guard is `Audit/Centre.lean`,
+  renewed after axiom wave one, and the completion note says what work remains.
+- **III.1 and its pin.** `Prop1.construction` agrees with the pin by the route decision D1
+  recorded in the [section 3 correction](#correction-iii1-19-october-2026): it takes a
+  centre from `exists_centre` only inside the proof that D is within. Lean's axioms for
+  `Elements.BookIII.Prop1.construction` are 64 names, 56 of them tacit rules, with
+  `Tacit.exists_centre` among them and neither Circle 3 (`Tacit.outside_of_between`) nor
+  `sorryAx`: the list `Audit/Centre.lean` pins, and the count the correction gives at
+  `b117d01`. Since wave one, Circle 2 and `centre_unique` are theorems, so no axiom list
+  shows either. Circle 2 is proved from Circle 3, and the absence of Circle 3 excludes it.
+  A call to `centre_unique` is left to the reader, as the guard's opening note says, so the
+  renewal read that the section 3 correction and the note before question 7 ask for can
+  find only Circle 3 and `sorryAx`. A walk of the construction's proof terms on 21 October
+  reaches neither Circle 2 nor `centre_unique`.
+- **Staged work.** No file under `Staging/` calls Circle 2 or Circle 3, or any of Book
+  Zero's three lemmas that rest on Circle 2, and no declaration of the Staging library
+  rests on Circle 3, by Lean's axiom lists on 21 October.
 
 *19 October 2026: the [dated correction in section 3](#correction-iii1-19-october-2026)
 replaces the frozen construction, guard, porism, overlap and order claims it names below,

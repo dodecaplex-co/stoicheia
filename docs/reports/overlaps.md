@@ -112,7 +112,7 @@ agreement with Heath's preferred local reading at the contact.
 |---|---|
 | I.7 and Circle 4 (`not_same_side_of_circles_meet`) | I.7, Definition I.15 and `circle_eq`, after I.7 in `Elements/BookI/Prop07.lean`. `Audit.I_7` now reaches I.7 through its own corollary, so it is circular as an independent proof of I.7. |
 | I.13's right-angle case and Diagram-angle 3 (`adjacent_eq_of_right`) | I.13 and Common Notion 3, after I.13 in `Elements/BookI/Prop13.lean`. The later proofs now use that theorem: [19 proofs, 18 calling it themselves](#i13s-rule-in-19-proofs), by the count of 20 October 2026. |
-| III.1's centre uniqueness and Generalities 2 (`centre_unique`) | The foundations, in `Elements/Figure/Circles.lean`: two supposed centres bisect the same straight line through the circle, and equal doubles have equal halves. III.1 Por. still calls the theorem, but its axiom closure is now the same as III.1's. |
+| III.1's centre uniqueness and Generalities 2 (`centre_unique`) | The foundations, in `Elements/Figure/Circles.lean`: two supposed centres bisect the same straight line through the circle, and equal doubles have equal halves. III.1 Por. does not use the theorem: it takes the argument of Euclid's reductio from its given centre, reaches neither III.1 nor the theorem, and rests on 51 tacit rules to III.1's 56 ([facts.json](../../facts.json)). III.14 is the first proposition whose own Lean calls it. |
 | III.2 and Circle 2 (`inside_of_between`) | Circle 3, in `Elements/Figure/Circles.lean`. The remaining axiom overlap is the Circle 3 row above. |
 
 `Audit.outside_of_between`, which derives Circle 3 through Circle 2, now reaches the
@@ -237,7 +237,7 @@ rule's Lean name finds the same calls.
 | I.13, a case of it, in 17 proofs from II.1 on ([details](#i13-in-17-proofs)) | Diagram-angle 3 (`adjacent_eq_of_right`): the angle beside a right angle is right | Supplies a step: I.13 makes the two angles two right angles, so the second is right | II.1 | `Audit.adjacent_eq_of_right` runs the other way: the rule, proved from I.13 |
 | I.13, a consequence of it, in I.47 ([details](#i13-in-i47)) | Metric 5 (`angle_le_two_right`): no angle exceeds two right angles | Supplies a step: for an angle between two straight lines, I.13 gives it | I.47, its only user | None |
 | I.23 ([details](#i23)) | Superposition (`superposition`): a triangle can be laid down on a given ray, on a given side, keeping its sides and angles | Supplies a step, in `Audit.I_23`: laid down at A along AB, the triangle DCE carries its angle at C to A, and naming the ray and the side takes seven axioms more | I.4 | `Audit.I_23` |
-| III.1's corollary, in III.1 Por. ([details](#iii1-por)) | Generalities 2 (`centre_unique`): a circle has only one centre | Supplies a step: "a proposition which, if thought necessary, may be added to III. 1 as a corollary" (Heath, vol. 2, p. 8) | III.1's porism; of the propositions themselves, III.14 | None |
+| III.1's corollary, in five proofs from III.14 on ([details](#iii1-por)) | Generalities 2 (`centre_unique`): a circle has only one centre | Supplies a step: "a proposition which, if thought necessary, may be added to III. 1 as a corollary" (Heath, vol. 2, p. 8) | III.14 | None |
 | III.2 ([details](#iii2)) | Circle 2 (`inside_of_between`): between two points on or within a circle, every point is within it | States it, and more: the ends may be within the circle as well as on it | Nowhere: no proposition rests on it | `Audit.III_2`, Astra's proof: Circle 2 alone |
 | III.2 ([details](#iii2)) | Circle 3 (`outside_of_between`): a straight line that has left a circle does not come back; Circle 2 turned round | Gives it at once: were a point between two points of the circle not within it, the second point would be outside the circle, not on it | Nowhere: no proposition rests on it | `Audit.III_2_outside`: Circle 3 alone |
 | III.5 ([details](#iii5-1)) | Diagram-segment 2 (`circle_eq`): a circle is fixed by its centre and radius | Gives it at once: two circles about one centre through one point are one circle | III.5 | `Audit.III_5`: Diagram-segment 2 alone |
@@ -321,7 +321,10 @@ case. III.17 now obtains its centre by `Prop1.of_circle` and has no such identif
 step. III.26 reaches it only through Book Zero's `EqualCircles.radii`, that equal
 circles have equal radii: a circle has only one centre, so the centres the definition of
 equal circles names are the given ones. III.28 and III.29 call that lemma too, and rest on
-the rule through III.26 and III.27 as well, which they cite.
+the rule through III.26 and III.27 as well, which they cite. These five, III.14, III.26,
+III.28, III.29 and III.36, are the row's proofs: walking Lean's proof terms on 21 October
+2026, as for I.13's rule above, every other certificate entry that reaches the theorem
+reaches it through one of them, and no entry before III.14 reaches it.
 
 ##### III.2
 
@@ -427,12 +430,13 @@ both circles, and circles that touch without have none.
 
 **19 October 2026, screen rerun after step 6.** With `Tacit.exists_centre` added to the
 rules about circles that `Audit/screen.py` tries in pairs, the screen ran against fresh
-certificates at `b260c826`: 57,240 attempts over 135 statements, eleven closings, all on
+certificates at b260c826: 57,240 attempts over 135 statements, eleven closings, all on
 III.2, III.5 and III.6. No pair containing `Tacit.exists_centre` closed; but `grind`
 refuses that rule, so every attempt that included it searched with none of its rules, and
 the run says nothing of the rule. The full result and its comparison with the earlier
-runs follow below. `Prop30.halves` is staged for the owner's approval, with no proof or
-certificate entry, and supplies no overlap evidence.
+runs follow below. The proposed statement of III.30's congruent halves, staged in
+[Staging/Halves/Prop30.lean](../../Staging/Halves/Prop30.lean) for the owner's approval,
+has no proof or certificate entry, and supplies no overlap evidence.
 
 **What the project already says.** The [gap catalogue for Book III](gaps-book-III.md) said
 that Circle 2 "already contains III.2", in its introduction and under III.1, where it also
@@ -459,7 +463,7 @@ of III.7, III.8 and III.17), and found no more. Then a mechanical screen,
 [Audit/screen.py](../../Audit/screen.py), had Lean's `grind` try every statement against
 every axiom alone, every family of axioms (the file that declares them) together, every
 pair of the 24 rules about circles, and every pair of families. Its first run, at
-`d040117`, made 399 attempts per statement, 40,698 over the 99 propositions and the
+d040117, made 399 attempts per statement, 40,698 over the 99 propositions and the
 three porisms (39,501 over the propositions alone), and closed III.2, III.5 and III.6,
 and nothing else. But it left defined words folded, `Triangle`, `Collinear`, `circumference`
 and `standing` among them, so that a statement written with them was searched only in part,
@@ -505,7 +509,7 @@ came from reading. I.2 and I.3 need a triangle drawn and then laid down. The cat
 listed them as near misses, since neither statement gives a triangle to move; but the same
 holds of I.7's circles, and they are rows now, with `Audit.I_2` and `Audit.I_3`.
 
-After step 6, on 19 October, a run against fresh certificates at `b260c826`, on the
+After step 6, on 19 October, a run against fresh certificates at b260c826, on the
 restated statements, added `Tacit.exists_centre` to the rules about circles. It used the
 screen as it then stood on that branch, before the revision above reached it: only the
 phrase definitions, `CirclesCut` among them, were unfolded, no statement was tried with
@@ -514,24 +518,25 @@ porisms and 33 companions, and tried each statement against each of the 88 axiom
 each of eight families (the module that declares them), each pair of the 25 circle
 rules, and each pair of families. That is 88 + 8 + 300 + 28 = 424 attempts per
 statement, 57,240 in all. Its eleven closings are below. Family names are the final
-components of their module names; the rule column omits the prefix `Tacit.`. Each
+components of their module names; the rule column omits the namespace, writing
+`inside_not_on` for `Tacit.inside_not_on`. Each
 successful attempt was also recompiled with warnings treated as errors and its axioms
 printed: the listed rules, plus Lean's `propext`, `Classical.choice` and `Quot.sound`,
 with no `sorryAx`.
 
 | Statement | Attempt: family, family pair or rule pair | Rules used |
 |---|---|---|
-| III.2 | `Diagram` | `inside_not_on`, `inside_of_between` |
-| III.2 | `Definitions` + `Diagram` | `inside_not_on`, `inside_of_between` |
-| III.2 | `Diagram` + `Magnitudes` | `inside_not_on`, `inside_of_between` |
-| III.2 | `Diagram` + `Metric` | `inside_not_on`, `inside_of_between` |
-| III.2 | `Diagram` + `Superposition` | `inside_not_on`, `inside_of_between` |
-| III.2 | `Diagram` + `Transfer` | `inside_not_on`, `inside_of_between` |
+| III.2 | Diagram | `inside_not_on`, `inside_of_between` |
+| III.2 | Definitions + Diagram | `inside_not_on`, `inside_of_between` |
+| III.2 | Diagram + Magnitudes | `inside_not_on`, `inside_of_between` |
+| III.2 | Diagram + Metric | `inside_not_on`, `inside_of_between` |
+| III.2 | Diagram + Superposition | `inside_not_on`, `inside_of_between` |
+| III.2 | Diagram + Transfer | `inside_not_on`, `inside_of_between` |
 | III.2 | `inside_not_on` + `inside_of_between` | `inside_not_on`, `inside_of_between` |
-| III.5 | `Diagram` + `Transfer` | `circle_eq`, `inside_not_on` |
-| III.5 | `Magnitudes` + `Transfer` | `len_lt_of_inside`, `lt_irrefl`, `lt_trans` |
+| III.5 | Diagram + Transfer | `circle_eq`, `inside_not_on` |
+| III.5 | Magnitudes + Transfer | `len_lt_of_inside`, `lt_irrefl`, `lt_trans` |
 | III.5 | `inside_not_on` + `circle_eq` | `circle_eq`, `inside_not_on` |
-| III.6 | `Diagram` + `Transfer` | `centre_inside`, `circle_eq`, `inside_not_on` |
+| III.6 | Diagram + Transfer | `centre_inside`, `circle_eq`, `inside_not_on` |
 
 No single axiom, porism, companion or other proposition closed. Of the remaining
 attempts, 57,196 fell back to `sorry` and 33 timed out at the unchanged limit of 30,000
@@ -625,7 +630,7 @@ For each row we looked for a proof of the proposition's statement from at most t
   for any two circles, and its audit example has given way to a note saying so. III.1
   takes background centres internally while retaining its construction;
   III.25 keeps the construction separate from correctness and the three classifications
-  and measure comparisons, without supplied centres in `complete` or `of_circle`. These belong to
+  and measure comparisons, without supplied centres in `Prop25.complete` or `Prop25.of_circle`. These belong to
   the review records, under `[representation]` and `[statement]`.
 
 - **III.30, by the same measure.** I.4 makes the angles DAB and ABD equal, and they stand
