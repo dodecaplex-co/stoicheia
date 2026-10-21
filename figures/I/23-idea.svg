@@ -15,7 +15,7 @@
   <line x1="196.0" y1="228.0" x2="260.3" y2="151.4" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
   <circle cx="196.0" cy="228.0" r="4.5" fill="#222222"/>
   <!-- Heath's letters -->
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="29" y="106.6">C</text><text x="141" y="68.6">D</text><text x="136" y="202.6">E</text><text x="194" y="251.6">A</text><text x="326" y="251.6">G</text><text x="366" y="251.6">B</text><text x="247" y="143.6">F</text>
   </g>
 </svg>
