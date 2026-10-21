@@ -11,9 +11,9 @@ restricted rule delivered on `lean/superposition-restricted`, with questions 2, 
 answered as prototyped, the model's import of the four pure modules and the page claim
 "a restricted inference in System E's style". It records the replacement first delivered
 at `aa96ab8`, from `origin/main` at `39ae65c`, and the approval after main was merged at
-`bccc3f52`. Landing remains conditional on the tooling pull requests landing first,
-/no-mistakes and an independent Codex read of the model lane. The code states what we
-formalised; the brief, the review records and the pages must agree with it
+`bccc3f52`. The tooling pull requests have landed as #180 and #182. Landing remains
+conditional on /no-mistakes and an independent Codex read of the model lane. The code
+states what we formalised; the brief, the review records and the pages must agree with it
 ([FORMALIZATION.md](../FORMALIZATION.md), section 1).*
 
 **Baseline update, 20 October 2026: A1 has landed.** The integration merge at
@@ -743,18 +743,20 @@ four pure module imports and the page claim; finishing the three answers is trac
 
 The owner's approval of 20 October 2026 authorises the replacement subject to the
 tooling pull requests landing first, /no-mistakes and an independent Codex read of the
-model lane. The remaining integration and validation work is:
+model lane. The tooling pull requests have landed; the remaining integration and
+landing work is:
 
-- **The tooling pull requests first.** The check changes in `Certificate/Facts.lean`,
-  `scripts/heath.py` and `review/SCHEMA.md` are on the tooling branches included in this
-  merge; they must be reviewed and landed before the code they check. WORKFLOW,
+- **The tooling pull requests landed first.** The check changes in `Certificate/Facts.lean`,
+  `scripts/heath.py` and `review/SCHEMA.md` reached main in #180, and the model checks
+  reached main in #182. This branch has merged main at `64206ed3`, which contains both.
+  WORKFLOW,
   section 10, forbids changing a check in the same pull
   request as that code. The certificate must recognise `Coincidence.step`
   without requiring it to be present on main yet; the Heath self-test and the schema's
   example keep their outcomes while naming I.13's overlap in I.47 (Metric 5 in
-  `Prop47.within`), which survives this rule and the axiom retirements. The model check changes, including the
-  older relative-path defect fixed on `tooling/superposition-model-check`, land first
-  too. No check may be loosened.
+  `Prop47.within`), which survives this rule and the axiom retirements. The model check
+  changes, including the older relative-path defect fixed on
+  `tooling/superposition-model-check`, landed in #182. No check may be loosened.
 - **The landing order with the retirement waves (#119).** The first wave,
   `lean/retire-axioms` (A1), reduced 87 axioms to 79 and reached main on 20 October 2026.
   This merge reconciles that landed baseline's edits to the lock, model, numerical laws,
@@ -769,10 +771,10 @@ model lane. The remaining integration and validation work is:
   `Staging/Superposition/Derivations.lean` by carrying needed geometric support into
   `Elements/Figure/Superposition.lean`, not by restoring the prototype. Preserve both
   waves' root imports, and restore no retired axiom.
-- **Regenerate from the combined sources.** The integrator regenerates the lock, both model
-  hashes, model laws and assembly, `facts.json`, certificate, graph and pages, and reconciles
-  pinned counts without dropping or loosening expectations. Recheck affected records and
-  every audit pin against that revision.
+- **The combined sources are regenerated.** The exact outputs and the six records read
+  again at `bd86a7b6` are recorded in the
+  [decisions entry](0002-decisions.md#20-october-2026). Regenerate and recheck them again
+  if validation changes a source.
 - **Finish validation and review on that revision.** Complete WORKFLOW, section 8, including
   the kernel replay, style tests, clean regeneration, negative suite, numerical model and
   formal-model build, and run /no-mistakes. The independent Codex reads of the model lane
