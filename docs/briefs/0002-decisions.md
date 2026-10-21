@@ -3209,6 +3209,18 @@ findings:
   hold. `git safe-push --label release` creates the `release` label, with its
   description, the first time it is given; the consolidation release (#38) lands through
   a pull request carrying it. Tags and releases stay manual, by the owner.
+- **The joins by Postulate 1 stay wherever Euclid writes them (part of
+  [#32](https://github.com/jackChallis/stoicheia/issues/32)).** Train Tw2 first removed the
+  joins by Postulate 1 from I.5, I.11, I.16, I.20 and I.26, since the later steps of those
+  proofs do not use the segment the join names. The coordinator ruled that a join stays
+  wherever a sentence of Euclid's stands over it, and goes only where none does: he writes
+  "let ... be joined" over each of these steps (`heath/I/05.md`, line 16; `heath/I/11.md`,
+  line 16; `heath/I/16.md`, line 12; `heath/I/20.md`, line 18; `heath/I/26.md`, lines 12
+  and 54). So all five joins stay, the five Lean files are as they were, and the records of
+  I.5 and I.11 now declare their joins as passages carried from the text. This is not a
+  dummy citation in the sense of [FORMALIZATION](../FORMALIZATION.md), section 5: the step
+  is Euclid's own, written where he writes it. A later sweep for unused steps keeps a join
+  that a sentence of Euclid's stands over, on this ground.
 
 - **The checks read a tree without the files a commit adds to them (#178).** The
   pre-flight's pass with origin/main's checks (`scripts/safe_push.py`, steps 3 and 4)
@@ -3475,6 +3487,25 @@ findings:
   with the counts. It reads III.1's tacit count from
   `tests/certificate_expectations.json`, so it holds before and after the content it
   describes. No guard is weakened.
+
+- **Heath's letters upright in both figures (#159).** The owner decided on 18 October
+  that Heath's letters take one style in the text and in both figures, which the voice
+  rules' check change, above, reads as upright. The figures are now set upright. Every
+  `figures/<book>/NN.svg` and `NN-idea.svg` of Books I to III, 198 in all, drew the letters
+  italic: 83 of Euclid's figures set `font-style="italic"` on the root `<svg>`, and the
+  other 16, with all 99 figures at a glance, on the `<g>` that holds the letters. That one
+  attribute is removed from each, so the letters take SVG's default, upright. Nothing else
+  in a figure changes, and no letter moves. Every text the attribute set italic was one of
+  Heath's letters, so nothing italic on purpose is lost. S26 now measures each letter by
+  the hull of the upright capital, and every letter still stands 2 clear of every stroke
+  and dot: the closest is III.33's F, at 2.05. `scripts/check_style.py` reports no D15.
+  The modern figures (`NN-modern.svg`) do not change: their capitals were upright already,
+  and the paragraph's own names stay italic, as S25 requires. The switch follows in a
+  change of its own to the check
+  ([#159](https://github.com/jackChallis/stoicheia/issues/159)):
+  `UPRIGHT_LETTERS_REQUIRED` set to `True`, a test that plants an italic letter, and
+  STYLE's wording for the switch. Until then S15 and S20 still accept a figure whose
+  letters are all italic. No protected file changes.
 
 - **A carried passage's helper is named by its kind
   ([#163](https://github.com/jackChallis/stoicheia/issues/163)).** The sentence on how to
