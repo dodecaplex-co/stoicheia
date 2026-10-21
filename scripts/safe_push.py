@@ -94,7 +94,13 @@ order, and the first that fails stops it with a message saying why:
    otherwise, since the commit's own code may have run in an earlier one: its HEAD the
    commit, its index the commit's tree, no file flagged skip-worktree or assume-unchanged
    (either keeps git from looking at the file on disk), and `git status --porcelain
-   --untracked-files=all` empty, ignored files aside. origin/main's copies are taken out
+   --untracked-files=all` empty, each asked of git with its stat settings at their
+   defaults and no fsmonitor or untracked cache, whatever the shared .git/config says;
+   then every ignored file is removed but the build's caches, .lake/ and model/.lake/, a
+   channel the commit's own build already has (#197). This asks git, and is no byte
+   comparison of the disk with the commit: a hand-edited index, or a clean filter in the
+   shared .git, could still hide a change, though either needs the commit's own code to
+   have run first, a change to a protected script. origin/main's copies are taken out
    again by a reset to the commit. Two kinds of failure are not a check's verdict, and
    are noted only:
    pages gone stale under origin/main's render.py (or facts.json rewritten by its
@@ -1560,35 +1566,60 @@ def path_faults(paths: list[str]) -> list[str]:
 PATH_STANDARD = "scripts/check_paths.py"
 
 
+@contextlib.contextmanager
+def off_path(repo):
+    """sys.path without '', any entry that is not a string, and any entry inside the
+    repository judged or this file's folder, so that origin/main's code run within imports
+    no module planted there. An entry is inside when it, or a folder above it, is one of
+    the two by file identity (os.path.samestat), followed as written and as resolved: a
+    case variant on a case-insensitive disk, or a link into the repository, is caught. The
+    same list, with its contents, is put back afterwards, whatever the code did to it."""
+    roots = []
+    for root in (repo, os.path.dirname(os.path.realpath(__file__))):
+        with contextlib.suppress(OSError):
+            roots.append(os.stat(root))
+
+    def inside(entry) -> bool:
+        if not isinstance(entry, str) or not entry:
+            return True
+        for start in (os.path.abspath(entry), os.path.realpath(entry)):
+            here = start
+            while True:
+                with contextlib.suppress(OSError):      # a missing path is skipped
+                    if any(os.path.samestat(os.stat(here), r) for r in roots):
+                        return True
+                if os.path.dirname(here) == here:
+                    break
+                here = os.path.dirname(here)
+        return False
+
+    kept, saved = sys.path, list(sys.path)
+    try:
+        sys.path = [p for p in saved if not inside(p)]
+        yield
+    finally:
+        kept[:] = saved
+        sys.path = kept
+
+
 def base_standard(repo, base):
     """origin/main's scripts/check_paths.py, loaded from its blob as a module, or None when
     origin/main has none, as before the pull request that brings it. Nothing is written to
     disk; it is compiled as an import compiles it, without this file's __future__ import,
     and loaded as a module, not run as a script, so its trim of sys.path, which is a
-    script's alone, never runs. Its `findings` judges a tree's (mode, path) entries, as
-    its --rev does. A copy that cannot be read or loaded raises (SystemExit too), and
-    guard_paths refuses on it."""
+    script's alone, never runs. It is loaded, and guard_paths calls its `findings`, under
+    off_path, so that its imports find no module planted in the repository. `findings`
+    judges a tree's (mode, path) entries, as its --rev does. A copy that cannot be read or
+    loaded raises (SystemExit too), and guard_paths refuses on it."""
     if not git_ok(repo, "cat-file", "-e", f"{base}:{PATH_STANDARD}"):
         return None
     source = git(repo, "cat-file", "blob", f"{base}:{PATH_STANDARD}", binary=True)
     standard = types.ModuleType("origin_main_check_paths")
     # It reads __file__ only to find the repository it is run in, which is never asked here.
     standard.__file__ = str(Path(repo) / PATH_STANDARD)
-    roots = (os.path.realpath(repo), os.path.dirname(os.path.realpath(__file__)))
-
-    def planted(entry) -> bool:
-        where = os.path.realpath(entry) if isinstance(entry, str) and entry else ""
-        return not where or any(where == r or where.startswith(r + os.sep) for r in roots)
-
-    # Its imports must not load a module planted in the repository judged or beside this file.
-    kept, saved = sys.path, list(sys.path)
-    sys.path = [p for p in saved if not planted(p)]
-    try:
+    with off_path(repo):
         exec(compile(source, f"origin/main:{PATH_STANDARD}", "exec", dont_inherit=True),
              vars(standard))
-    finally:
-        kept[:] = saved
-        sys.path = kept
     return standard
 
 
@@ -1636,7 +1667,8 @@ def guard_paths(repo, base, sha, rep: Report) -> bool:
         for fault in path_faults(paths):
             found.setdefault(fault, []).append(commit)
         if standard is not None:
-            judged, crash = judge(lambda: [str(f) for f in standard.findings(entries)])
+            with off_path(repo):        # its imports in findings, too, read nothing planted
+                judged, crash = judge(lambda: [str(f) for f in standard.findings(entries)])
             if crash is not None:       # a crash of origin/main's check refuses, as a finding
                 judged = [f"origin/main's {PATH_STANDARD} fails on the tree: {crash}"]
             for finding in judged:
@@ -1770,25 +1802,46 @@ BASE_PASS = " (origin/main's checks)"
 FRESHNESS = ("generated pages", "git status --porcelain is empty")
 
 
+# Git's stat settings at their defaults, and no fsmonitor or untracked cache, for
+# at_commit's commands: the commit's own code can write the shared .git/config, where
+# core.checkStat=minimal or core.trustctime=false lets git status pass a change of the
+# same size with its time put back, and the untracked cache or an fsmonitor hook can
+# answer in git's place.
+DISK_AS_IS = ("-c", "core.checkStat=default", "-c", "core.trustctime=true",
+              "-c", "core.fsmonitor=false", "-c", "core.untrackedCache=false")
+# The build's caches, which a pass keeps; at_commit removes every other ignored file.
+CACHES = ("/.lake", "/model/.lake")
+
+
 def at_commit(wt: Path, sha: str) -> None:
     """Refused unless the worktree is the commit: its HEAD the commit, its index the
     commit's tree, no entry of the index flagged skip-worktree or assume-unchanged (which
     keep git from looking at the file on disk), and `git status --porcelain
-    --untracked-files=all` empty, ignored files aside, so that no file on disk differs from
-    the index and none stands untracked beside them. The commit's own code, run in an
-    earlier pass (its render.py, say), could have changed any of these, and origin/main's
-    checks, which read the index and the files, would judge another tree."""
-    head = run(["git", "rev-parse", "--verify", "--quiet", "HEAD"], wt).stdout.strip()
-    if head != sha or not git_ok(wt, "diff-index", "--cached", "--quiet", sha, "--"):
+    --untracked-files=all` empty, so that no file on disk differs from the index and none
+    stands untracked beside them. Each is asked of git with its stat settings at their
+    defaults and no fsmonitor or untracked cache (DISK_AS_IS), whatever the shared
+    .git/config says; then every ignored file but the build's caches, .lake/ and
+    model/.lake/ (CACHES, a channel the commit's own build already has, #197), is removed,
+    so that the next pass reads no scripts/json.pyc the commit left. The commit's own
+    code, run in an earlier pass (its render.py, say), could have changed any of these,
+    and origin/main's checks, which read the index and the files, would judge another
+    tree. This asks git, and is no byte comparison of the disk with the commit: a
+    hand-edited index, or a clean filter in the shared .git, could still hide a change,
+    though either needs the commit's own code to have run first, which is a change to a
+    protected script."""
+    head = run(["git", *DISK_AS_IS, "rev-parse", "--verify", "--quiet", "HEAD"],
+               wt).stdout.strip()
+    indexed = git_ok(wt, *DISK_AS_IS, "diff-index", "--cached", "--quiet", sha, "--")
+    if head != sha or not indexed:
         raise Refusal(f"before a pass of the checks, the worktree {wt} is no longer the "
                       f"commit {sha[:12]} (its HEAD is {head[:12] or 'unreadable'}, or its "
                       "index differs): something run in an earlier pass changed it")
     # ls-files -v tags an entry H, S when skip-worktree, M when unmerged, and in lower case
     # when assume-unchanged: any tag but H is refused. A fresh worktree's entries are all H.
-    tags = run(["git", "ls-files", "-v", "-z"], wt, binary=True)
+    tags = run(["git", *DISK_AS_IS, "ls-files", "-v", "-z"], wt, binary=True)
     flagged = [e[2:].decode(errors="replace") for e in tags.stdout.split(b"\0")
                if e and not e.startswith(b"H ")]
-    status = run(["git", "status", "--porcelain", "--untracked-files=all"], wt)
+    status = run(["git", *DISK_AS_IS, "status", "--porcelain", "--untracked-files=all"], wt)
     listed = status.stdout.splitlines()
 
     def some(items: list[str]) -> str:
@@ -1801,7 +1854,12 @@ def at_commit(wt: Path, sha: str) -> None:
     elif listed:
         why = f"git status lists {some(listed)}"
     else:
-        return
+        # Only now, with nothing untracked but what is ignored: -x reads no ignore file,
+        # so each ignored file goes, and only the -e patterns, the caches, are kept.
+        keep = [arg for cache in CACHES for arg in ("-e", cache)]
+        if run(["git", *DISK_AS_IS, "clean", "-ffdxq", *keep], wt).returncode == 0:
+            return
+        why = "git clean of its ignored files fails in it"
     raise Refusal(f"before a pass of the checks, the files on disk in the worktree {wt} may "
                   f"no longer be the commit {sha[:12]} ({why}): something run in an earlier "
                   "pass changed them")

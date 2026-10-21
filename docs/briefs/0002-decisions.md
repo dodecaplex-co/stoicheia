@@ -3770,8 +3770,11 @@ findings:
   text, the mishnah, the reading lines, the review records, the figures and the briefs
   have mechanical names; a Lean file of the edition's libraries has Lean module names,
   with `BookR` and `PropNN` under `Elements/` and no `lakefile.lean`; a Python file's name
-  can be imported. A file is 100644, or 100755 for exactly six scripts, and there is no
-  symbolic link and no submodule. A new book's paths already fit, Book X's 115
+  can be imported, and its stem is not a Python keyword (soft keywords are allowed): a
+  rule that, like `COM0`, `LPT0` and the single hyphens of the root's Markdown, refuses
+  more than the standard as proposed wrote, and nothing in today's tree. A file is 100644,
+  or 100755 for exactly six scripts, and there is no symbolic link and no submodule. A
+  new book's paths already fit, Book X's 115
   propositions among them. The nine hand translations of the model's laws in
   `model/Model/Laws/` (`angles.lean`, `areas-p5.lean` and seven more, imported as
   `Model.Laws.«areas-p5»`) keep their lower-case names, the model's own convention, and
@@ -3831,8 +3834,15 @@ findings:
   would let in. Each pass of the checks, in step 3 and in step 4, begins with the
   worktree at the commit, and is refused otherwise: its HEAD the commit, its index the
   commit's tree, no file flagged skip-worktree or assume-unchanged, and
-  `git status --porcelain --untracked-files=all` empty, ignored files aside;
-  origin/main's copies are taken out again by a reset to the commit, never to HEAD. A new
+  `git status --porcelain --untracked-files=all` empty, each asked of Git with its stat
+  settings at their defaults and no fsmonitor or untracked cache, whatever the shared
+  `.git/config` says; then every ignored file is removed but the build's caches, `.lake/`
+  and `model/.lake/`, a channel the commit's own build already has
+  ([#197](https://github.com/jackChallis/stoicheia/issues/197)). This asks Git, and is no
+  byte comparison of the disk with the commit: a hand-edited index, or a clean filter in
+  the shared `.git`, could still hide a change, though either needs the commit's own code
+  to have run first, a change to a protected script. origin/main's copies are taken out
+  again by a reset to the commit, never to HEAD. A new
   extension, top-level folder, executable or named file is a change to the check, landing
   first, in a pull request of its own; and since step 3 judges every commit a pull request
   brings by origin/main's standard, an entry is taken out of a list only when no open

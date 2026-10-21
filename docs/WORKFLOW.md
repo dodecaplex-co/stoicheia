@@ -761,8 +761,14 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       commit's own code may have run in an earlier one: its HEAD the commit, its index the
       commit's tree, no file flagged skip-worktree or assume-unchanged (either keeps Git
       from reading the file on disk), and `git status --porcelain --untracked-files=all`
-      empty, ignored files aside. origin/main's copies are taken out again by a reset to
-      the commit. Two kinds of failure are only noted. Pages gone stale under
+      empty, each asked of Git with its stat settings at their defaults and no fsmonitor
+      or untracked cache, whatever the shared `.git/config` says; then every ignored file
+      is removed but the build's caches, `.lake/` and `model/.lake/`, a channel the
+      commit's own build already has (#197). This asks Git, and is no byte comparison of
+      the disk with the commit: a hand-edited index, or a clean filter in the shared
+      `.git`, could still hide a change, though either needs the commit's own code to have
+      run first, a change to a protected script. origin/main's copies are taken out again
+      by a reset to the commit. Two kinds of failure are only noted. Pages gone stale under
       origin/main's `render.py`, or `facts.json` rewritten by origin/main's certificate,
       show the generator's change in the pages' diff; a
       failure of `render.py` itself, its check of `docs/program.toml` among them, is a

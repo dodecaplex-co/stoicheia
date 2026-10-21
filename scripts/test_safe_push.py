@@ -101,13 +101,17 @@ one commit and runs safe_push.py against that origin:
   passes it; a path origin/main's own standard refuses (docs/x.yaml) is refused there too,
   before any worktree, by origin/main's check_paths.py, read from its blob, and when
   origin/main has none a note says so, while one that does not load, or exits, refuses,
-  and its imports never read a module planted in the repository; a looser check_paths.py
-  is refused with the path it lets in, wherever that path stands, by origin/main's
-  standard in step 3 and again by keep_apart, a second line, even when the commit's
-  render.py hides the path from the worktree's index, since each pass of the checks
-  begins at the commit, its HEAD, index and files on disk unmoved (a file flagged
-  skip-worktree is refused); and `git safe-push`, run from a linked worktree as the lane
-  runs it, drops the GIT_DIR its alias is given before any check runs;
+  and its imports, at its load and in its findings, find no module planted in the
+  repository through a sys.path entry inside it, however spelt (a case variant among
+  them); a looser check_paths.py is refused with the path it lets in, wherever that path
+  stands, by origin/main's standard in step 3 and again by keep_apart, a second line,
+  even when the commit's render.py hides the path from the worktree's index, since each
+  pass of the checks begins at the commit, its HEAD, index and files on disk unmoved as
+  git sees them (a file flagged skip-worktree is refused, and so is a change hidden by
+  stat settings written into the shared config), with every ignored file but the build's
+  caches removed (a planted scripts/json.pyc); and `git safe-push`, run from a linked
+  worktree as the lane runs it, drops the GIT_DIR its alias is given before any check
+  runs;
 - the count markers of T1 (#177): a new word in the lock, with Certificate/FIELDS.md's
   count of the words moved with it, lands as content, origin/main's failure noted and the
   commit's own pass holding the count to the lock; while that page changed beyond the
@@ -154,6 +158,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import time
 import unicodedata
 import unittest
 from dataclasses import dataclass
@@ -1315,10 +1320,12 @@ class CaseTwins(Clone):
 
     def test_a_standard_that_does_not_load_or_exits_refuses(self):
         # origin/main's check_paths.py is compiled as an import compiles it, without
-        # safe_push's __future__ import, and its imports never read a module planted in the
-        # repository judged, here on sys.path as when safe_push is run from its scripts/;
-        # a copy that does not load, or whose findings exits (its fail()), refuses as a
-        # FAIL, naming the error, never a traceback or a pass.
+        # safe_push's __future__ import, and its imports, at its load and in its findings,
+        # never read a module planted in the repository judged, here on sys.path as when
+        # safe_push is run from its scripts/, and again by a case variant of the clone's
+        # folder (that folder on a case-insensitive disk, no folder elsewhere); a copy that
+        # does not load, or whose findings exits (its fail()), refuses as a FAIL, naming the
+        # error, never a traceback or a pass.
         text = self.text(safe_push.PATH_STANDARD)
         standard = safe_push.base_standard(WORK, BASE)
         self.assertNotIsInstance(standard.findings.__annotations__["entries"], str)
@@ -1326,14 +1333,24 @@ class CaseTwins(Clone):
         planted = WORK / "scripts" / "stoicheia_planted.py"
         planted.write_text(f"open({str(ran)!r}, 'w').close()\n")
         self.addCleanup(planted.unlink)
+
+        def findings_that(body: str) -> str:
+            return text.replace("def findings(entries", "def findings(entries, *_):\n"
+                                f"    {body}\n\n\ndef unused(entries", 1)
+
         broken = {
             "ModuleNotFoundError": "import stoicheia_planted\n" + text,
             "SyntaxError": text + "\ndef (\n",
-            "SystemExit(1): ✗ paths: a fault of the check": text.replace(
-                "def findings(entries", "def findings(entries, *_):\n"
-                "    fail('a fault of the check')\n\n\ndef unused(entries", 1)}
+            "SystemExit(1): ✗ paths: a fault of the check": findings_that(
+                "fail('a fault of the check')"),
+            "fails on the tree: ModuleNotFoundError": findings_that(
+                "import stoicheia_planted")}
+        variant = str(TMP.parent / TMP.name.upper() / "work" / "scripts")
+        with mock.patch.object(sys, "path", [variant]), safe_push.off_path(WORK):
+            # Matched by the folder's identity, not by its spelling.
+            self.assertEqual(sys.path, [] if os.path.isdir(variant) else [variant])
         rep, out, path = safe_push.Report(), io.StringIO(), list(sys.path)
-        run_from_scripts = [str(WORK / "scripts"), *path]
+        run_from_scripts = [variant, str(WORK / "scripts"), *path]
         with mock.patch.object(sys, "path", list(run_from_scripts)), \
                 contextlib.redirect_stdout(out):
             for source in broken.values():
@@ -1342,7 +1359,7 @@ class CaseTwins(Clone):
                 self.assertEqual(sys.path, run_from_scripts)
         self.assertEqual(sys.path, path)
         judged = [s for s in rep.steps if s.name == "paths (origin/main's standard)"]
-        self.assertEqual([s.outcome for s in judged], ["FAIL"] * 3, out.getvalue())
+        self.assertEqual([s.outcome for s in judged], ["FAIL"] * len(broken), out.getvalue())
         for step, error in zip(judged, broken):
             self.assertIn(error, step.detail)
         self.assertIn("does not load: ModuleNotFoundError", judged[0].detail)
@@ -4581,6 +4598,69 @@ if _sp.run(["git", "ls-files", "--error-unmatch", "docs/templates/x.yaml"],
             with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status lists \\?\\? "
                                         "docs/left-behind.md"):
                 next(safe_push.passes(WORK, BASE, BASE, wt, []))
+            (wt / "docs" / "left-behind.md").unlink()
+            # Stat settings the commit's code could write into the shared .git/config, under
+            # which git status passes a change of the same size with its time put back, are
+            # overridden. That config is the test clone's, never this repository's.
+            common = Path(git(wt, "rev-parse", "--path-format=absolute",
+                              "--git-common-dir").strip()).resolve()
+            self.assertEqual(common, (WORK / ".git").resolve())
+            self.assertTrue(common.is_relative_to(TMP.resolve()), common)
+            with self.subTest(settings="core.checkStat=minimal, core.trustctime=false"):
+                readme, then = wt / "README.md", 1_600_000_000_000_000_000
+                os.utime(readme, ns=(then, then))
+                git(wt, "update-index", "--refresh")    # an old time, so not racily clean
+                for key, value in (("core.checkStat", "minimal"), ("core.trustctime", "false")):
+                    git(wt, "config", key, value)
+                    self.addCleanup(git, WORK, "config", "--unset", key)
+                    self.assertEqual(git(WORK, "config", "--get", key).strip(), value)
+                # git reads a file's times to the second, so the change comes in a later
+                # second than the ctime the index holds, as a later pass's would.
+                held = int(os.stat(readme).st_ctime)
+                while int(time.time()) <= held:
+                    time.sleep(0.05)
+                data = readme.read_bytes()
+                readme.write_bytes(data.swapcase())
+                os.utime(readme, ns=(then, then))
+                self.assertEqual(len(readme.read_bytes()), len(data))
+                self.assertEqual(git(wt, "status", "--porcelain", "--untracked-files=all"), "")
+                with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status lists  M "
+                                            "README.md"):
+                    next(safe_push.passes(WORK, BASE, BASE, wt, []))
+
+    def test_an_ignored_file_left_between_passes_is_removed(self):
+        # git status leaves ignored files out, and origin/main's checks would import a
+        # scripts/json.pyc the commit's code left, or a stale pyc of heath: each pass
+        # begins with every ignored file removed but the build's caches, which are kept,
+        # from origin/main's pass to the commit's, and from step 3's to step 4's.
+        path = "scripts/check_links.py"
+        sha = self.commit("A check", {path: self.text(path) + "\n# for the test\n"})
+        changes = [("M", path)]
+        planted = ("scripts/json.pyc", "scripts/__pycache__/heath.cpython-312.pyc")
+        caches = (".lake/build/kept", "model/.lake/kept")
+
+        def plant() -> None:
+            for rel in planted + caches:
+                (wt / rel).parent.mkdir(parents=True, exist_ok=True)
+                (wt / rel).write_text("Left by the commit's code.\n")
+            self.assertEqual(git(wt, "status", "--porcelain", "--untracked-files=all", "--",
+                                 *planted, *caches), "")       # ignored: git status is silent
+
+        def removed() -> None:
+            self.assertEqual([rel for rel in planted if (wt / rel).exists()], [])
+            self.assertEqual([rel for rel in caches if not (wt / rel).exists()], [])
+
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, sha, Path(tmp), "check") as wt:
+            with contextlib.closing(safe_push.passes(WORK, BASE, sha, wt, changes)) as each:
+                self.assertEqual(next(each)[0], safe_push.BASE_PASS)
+                plant()
+                self.assertEqual(next(each)[0], " (the commit's checks)")
+                removed()
+                plant()
+            with contextlib.closing(safe_push.passes(WORK, BASE, sha, wt, changes)) as each:
+                self.assertEqual(next(each)[0], safe_push.BASE_PASS)     # step 4's first
+                removed()
 
     def test_kept_apart_judges_the_edition_not_the_guides_or_stamps(self):
         # The stage 2 pattern: the certificate changes, the pages and a record's stamp
