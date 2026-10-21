@@ -106,8 +106,9 @@ The rule of [FORMALIZATION.md](../FORMALIZATION.md), section 6, as Book I applie
   (`area_lt_of_cut`, the strict area comparison in I.39 and I.40), `Sums.lean` (the sums
   of lists, and `InOrder.between_end`) and `Rectilineal.lean` (a fitted figure's triangles
   lie apart, `Fitted.inside_pairwise`). `Superposition.lean`, imported separately by I.4
-  and I.8, proves the laws their placements cite, one theorem each; the certificate lists the
-  construction rules beneath each (`cited_laws`).
+  and I.8, proves the seven geometric laws their placements cite, one theorem each (I.8
+  also cites I.7's, proved in its own file); the certificate lists the construction rules
+  beneath each (`cited_laws`).
 - **Shared steps that cite a proposition:** `Elements/BookI/Helpers.lean`, with
   `Prop5.base` (I.5's angles at the base, with the sides produced anywhere); and
   `Elements/BookI/HelpersParallels.lean`, for those that cite I.28, I.30 or I.31, with
@@ -182,7 +183,8 @@ corollary after I.7 in `Elements/BookI/Prop07.lean`, proved from I.7, Definition
 and `circle_eq`; using it to prove I.7 would be circular. The right-angle rule
 `adjacent_eq_of_right` and the converse angle-addition rule `inside_of_angle_add` are
 corollaries after I.13. The other five retired rules are proved in Book Zero's
-`Circles.lean`. By the owner's decision of 19 October 2026, 31 more rules became
+`Circles.lean`. By the owner's decision of 19 October 2026 ("Please do both. 79 is rather large with so
+many books in front of us."), 31 more rules became
 theorems in Book Zero's `RuleBase.lean`, `Incidence.lean`, `AreaRules.lean` and
 `CirclePoints.lean`, proved that day and landed on 21 October. The lock now holds <!-- count:axioms -->48<!-- /count --> axioms, including <!-- count:tacit-rules -->42<!-- /count --> tacit rules.
 
