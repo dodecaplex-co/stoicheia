@@ -2,7 +2,7 @@
 scope = "full"
 note = "`Prop30` finds D, bisecting the given circumference in measure; `Prop30.halves` shows the halves congruent, adding to it, covering it and meeting only at D."
 companions = ["III.30 halves"]
-fingerprint = "sha256:c9d25335828c0ef3"
+fingerprint = "sha256:d3f25afc0f876290"
 
 [route]
 kind = "euclid"
@@ -17,6 +17,6 @@ case = "the given circumference ADB less than a semicircle"
 
 [review]
 stage = "exceptions"
-commit = "17987153"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:7490e3622b6ee0f0"
+commit = "05b34dc0"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:284aea10fd6a6062"
