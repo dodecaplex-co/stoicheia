@@ -46,9 +46,10 @@ short, is refused with no option in the file, as if set outside it, and so is a 
 printed as `⋯`. What shows a definition in Lean's print of a type is tested on the five
 definitions' prints, on propositions that only look like definitions' types, and on types
 that show neither sign, definitions' among them; every `#check` pin in the real file shows
-nothing. A `#print` whose docstring opens with `theorem`, including after declaration
-modifiers, is refused and excluded from the valid pins even beside a valid `#check`. Every
-docstring below said to be what Lean prints was printed by Lean 4.35.
+nothing. A `#print` whose docstring opens with `theorem`, including after attributes or
+declaration modifiers, is refused and excluded from the valid pins even beside a valid
+`#check`; an unrecognized printer header is refused too. Every docstring below said to be
+what Lean prints was printed by Lean 4.35.
 """
 
 import io
@@ -233,7 +234,8 @@ class PinTests(unittest.TestCase):
 
     def test_a_print_pin_of_a_theorem_is_refused(self):
         brief = self.brief("`Derives.sound` holds.")
-        for keyword in ("theorem", "private theorem", "protected theorem",
+        for keyword in ("theorem", "@[defeq] theorem", "@[defeq] private theorem",
+                        "private theorem", "protected theorem",
                         "noncomputable theorem", "unsafe theorem", "partial theorem",
                         "private noncomputable theorem"):
             with self.subTest(keyword):
@@ -251,7 +253,7 @@ class PinTests(unittest.TestCase):
 
     def test_a_theorem_print_is_refused_beside_a_valid_check(self):
         active = PIN.format(name="Derives.sound")
-        printed = (f"/--\ninfo: theorem {SOUND} : True := by\n  trivial\n-/\n"
+        printed = (f"/--\ninfo: @[defeq] theorem {SOUND} : True := by\n  trivial\n-/\n"
                    f"#guard_msgs in\n#print {SOUND}\n")
         audit = active + "\n" + printed
         line = numbered(audit, f"#print {SOUND}\n")[0][0]
@@ -260,6 +262,26 @@ class PinTests(unittest.TestCase):
         self.assertNotIn("has no statement pin", out)
         self.assert_refused(out, [], ((
             line, f"#print {SOUND}", f"is a `#print` of theorem `{SOUND}`"),))
+
+    def test_an_attribute_prefixed_definition_print_is_recognized(self):
+        name = f"{S}.Later.kind"
+        pin = (f"/--\ninfo: @[reducible] def {name} : Nat := 1\n-/\n"
+               f"#guard_msgs in\n#print {name}\n")
+        code, out = self.run_check(self.brief("`Later.kind` is a definition."), pin)
+        self.assertEqual(code, 0, out)
+
+    def test_an_unrecognized_print_header_is_refused_beside_a_valid_check(self):
+        active = PIN.format(name="Derives.sound")
+        malformed = (f"/--\ninfo: mysterious theorem {SOUND} : True := by\n  trivial\n-/\n"
+                     f"#guard_msgs in\n#print {SOUND}\n")
+        audit = active + "\n" + malformed
+        line = numbered(audit, f"#print {SOUND}\n")[0][0]
+        code, out = self.run_check(self.brief("`Derives.sound` holds."), audit)
+        self.assertEqual(code, 1, out)
+        self.assertNotIn("has no statement pin", out)
+        self.assert_refused(out, [], ((
+            line, f"#print {SOUND}",
+            f"does not have a recognized printer header for `{SOUND}`"),))
 
     def test_an_axiom_pin_is_not_a_statement_pin(self):
         code, out = self.run_check(self.brief("`Derives.sound` holds."),
@@ -774,6 +796,19 @@ class PinTests(unittest.TestCase):
         self.assert_refused(out, [], ((
             *command, "is a statement pin inside a comment; commented pins do not run and "
             "are refused"),))
+
+    def test_nested_comment_between_pin_tokens_is_refused_at_the_command(self):
+        active = PIN.format(name="Derives.sound")
+        commented = f"/- #guard_msgs /- nested -/ in\n#check @{SOUND} -/\n"
+        audit = commented + active
+        line = numbered(audit, f"#check @{SOUND} -/\n")[0][0]
+        code, out = self.run_check(self.brief("`Derives.sound` holds."), audit)
+        self.assertEqual(code, 1, out)
+        self.assertNotIn("has no statement pin", out)
+        self.assert_refused(out, [], ((
+            line, f"#check @{SOUND} -/",
+            "is a statement pin inside a comment; commented pins do not run and are "
+            "refused"),))
 
     def test_ordinary_comments_and_active_pin_docstrings_are_allowed(self):
         pin = PIN.format(name="Derives.sound")

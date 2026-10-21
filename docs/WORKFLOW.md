@@ -479,14 +479,19 @@ The ruleset and the remaining merge requirements are in
   binder with an arrow, as in `{P : Type} →`, where a proposition has `∀`: either shows a
   definition. These signs are only a backstop for a definition the section names later,
   since a sort spelt through a name, as in `id Type`, prints as written and shows neither.
-  `Placed`, `Val.place` and `Metric.names`, which theorems the section names read, must
-  have `#print` pins too. A statement pin whose docstring holds `⋯` or `[...]`, where Lean
+  A theorem's pin must use `#check @`: a `#print` whose Lean header says `theorem`,
+  including after attributes or declaration modifiers, is refused with its line, as is an
+  unrecognized printer header. `Placed`, `Val.place` and `Metric.names`, which theorems the
+  section names read, must have `#print` pins too. A statement pin whose docstring holds
+  `⋯` or `[...]`, where Lean
   cut its print short, is refused with its line, wherever the option that cut it was set;
   an option that hides part of a print with no mark, such as `pp.piBinderTypes false`,
   could be set only outside the file, in the lakefile, a protected file, so that protection
-  holds it off, not this check. A pin in a comment, which Lean never runs, does not count.
-  The file may hold nothing but its leading imports, comments and pins (a docstring, a
-  bare `#guard_msgs in`, then `#check @`, `#print` or `#print axioms`); anything else is
+  holds it off, not this check. A pin inside a line, block, nested or module comment, which
+  Lean never runs, is refused with its line and does not count; ordinary comments remain
+  allowed. The file may hold nothing but its leading imports, ordinary comments and pins
+  (a docstring, a bare `#guard_msgs in`, then `#check @`, `#print` or `#print axioms`);
+  anything else is
   refused with its line, such as a `set_option` of any kind (some shorten what Lean
   prints), a namespace (a theorem in it can take a pinned name), any declaration, `#eval`,
   `#exit` or a `#guard_msgs` with options. `Audit.lean` must import the file, or

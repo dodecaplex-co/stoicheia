@@ -162,7 +162,7 @@ GUARDED = re.compile(
     r"(?P<command>#check\s+@(?P<check>\S+)|#print\s+(?!axioms\b)(?P<print>\S+))")
 # The first line of the docstring, which must name the declaration: `@name :` or `name :`
 # for `#check`, `def name`, `structure name` and the like for `#print`.
-KEYWORD = r"(?P<keyword>(?:(?:private|protected|noncomputable|unsafe|partial)\s+)*" \
+KEYWORD = r"(?P<keyword>(?:(?:@\[[^\]\n]*\]|private|protected|noncomputable|unsafe|partial)\s+)*" \
           r"(?:def|theorem|structure|class|inductive|abbrev|opaque|instance))\s+"
 # What tells, in Lean's print of a type, that the type is not a proposition. A sort, as
 # Lean prints one: `Prop`, `Type`, `Sort u`, `Type (max u v)` and the like; a type that
@@ -208,6 +208,7 @@ class Pin(NamedTuple):
     shortened: tuple[int, str] | None   # the line and mark of a shortened print
     sign: str | None        # for `#check`, what in its type shows a definition
     keyword: str | None     # for `#print`, the word its print opens with, such as `def`
+    format_fault: str | None  # why the docstring does not identify the guarded declaration
 
     def by_name(self) -> bool:
         """Whether the pin is a `#check` of a definition held to `#print` by name."""
@@ -240,6 +241,8 @@ class Pin(NamedTuple):
             return line, (f"holds `{mark}`, where Lean cut its print short, so the docstring "
                           "matches only part of the statement; no statement pin may be "
                           "shortened")
+        if self.format_fault:
+            return self.line, self.format_fault
         if self.by_name():
             return self.line, ("is a `#check` of a definition held to `#print` by name, "
                                "whatever its print shows, since `#check` shows only a "
@@ -297,6 +300,31 @@ def names(lines: list[tuple[int, str]]) -> list[tuple[int, str]]:
             for span in CODE_SPAN.findall(line) if is_name(span.strip())]
 
 
+def block_comment(text: str, start: int) \
+        -> tuple[int, int, str, list[tuple[int, str]]]:
+    """A block comment's end, body offset, body with nested comments blanked, and nested
+    bodies, each with its line. Blanking preserves line breaks and follows Lean's nesting."""
+    body_start = start + (3 if text.startswith("/--", start) else 2)
+    chunks: list[str] = []
+    nested: list[tuple[int, str]] = []
+    cursor = i = body_start
+    while i < len(text):
+        if text.startswith("/-", i):
+            chunks.append(text[cursor:i])
+            end, child_start, child, descendants = block_comment(text, i)
+            chunks.append("".join("\n" if c == "\n" else " " for c in text[i:end]))
+            nested.append((text.count("\n", 0, child_start) + 1, child))
+            nested.extend(descendants)
+            cursor = i = end
+        elif text.startswith("-/", i):
+            chunks.append(text[cursor:i])
+            return i + 2, body_start, "".join(chunks), nested
+        else:
+            i += 1
+    raise Unreadable(f"a comment opened at line {text.count(chr(10), 0, start) + 1} "
+                     "is never closed")
+
+
 def lex(text: str) -> list[tuple[str, int, str]]:
     """A Lean file as Lean reads it, to its end: its doc comments `/-- … -/`, as ("doc",
     offset, body), and the code between them, as ("code", offset, code), each offset where
@@ -324,17 +352,7 @@ def lex(text: str) -> list[tuple[str, int, str]]:
             code.append(" ")
         elif text.startswith("/-", i):
             doc = text.startswith("/--", i)
-            depth, j = 1, i + (3 if doc else 2)
-            while j < n and depth:
-                if text.startswith("/-", j):
-                    depth, j = depth + 1, j + 2
-                elif text.startswith("-/", j):
-                    depth, j = depth - 1, j + 2
-                else:
-                    j += 1
-            if depth:
-                raise Unreadable(f"a comment opened at line {text.count(chr(10), 0, i) + 1} "
-                                 "is never closed")
+            j, _, _, _ = block_comment(text, i)
             if doc:
                 flush()
                 pieces.append(("doc", i, text[i + 3:j - 2]))
@@ -369,7 +387,8 @@ def lex(text: str) -> list[tuple[str, int, str]]:
 def comment_bodies(text: str) -> list[tuple[int, str]]:
     """Non-doc comments as their starting line and body, with consecutive line comments
     joined after their `--` prefixes are removed. Strings and character literals are
-    skipped, and a block comment includes its nested comments."""
+    skipped. Block comments are normalized with the same nesting scanner as `lex`, and
+    nested bodies are returned separately."""
     found: list[tuple[int, str]] = []
     i, n = 0, len(text)
     while i < n:
@@ -394,20 +413,10 @@ def comment_bodies(text: str) -> list[tuple[int, str]]:
             found.append((text.count("\n", 0, start) + 1, "\n".join(bodies)))
         elif text.startswith("/-", i):
             doc = text.startswith("/--", i)
-            depth, j = 1, i + (3 if doc else 2)
-            while j < n and depth:
-                if text.startswith("/-", j):
-                    depth, j = depth + 1, j + 2
-                elif text.startswith("-/", j):
-                    depth, j = depth - 1, j + 2
-                else:
-                    j += 1
-            if depth:
-                raise Unreadable(f"a comment opened at line {text.count(chr(10), 0, i) + 1} "
-                                 "is never closed")
+            j, start, body, nested = block_comment(text, i)
             if not doc:
-                start = i + 2
-                found.append((text.count("\n", 0, start) + 1, text[start:j - 2]))
+                found.append((text.count("\n", 0, start) + 1, body))
+                found.extend(nested)
             i = j
         elif text[i] == '"':
             j = i + 1
@@ -527,19 +536,27 @@ def read_pins(text: str) -> list[Pin]:
     found: list[Pin] = []
     pieces = lean_pieces(text)
     for (kind, offset, body), after in zip(pieces, pieces[1:] + [("code", len(text), "")]):
-        info = body.lstrip()
-        if kind != "doc" or not info.startswith("info:") or after[0] != "code":
+        if kind != "doc" or after[0] != "code":
             continue
-        printed = info[len("info:"):].lstrip(" \t")
         guarded = GUARDED.match(after[2])
         if not guarded:
             continue
         name = guarded.group("check") or guarded.group("print")
-        shape = rf"@?{re.escape(name)}\s*:" if guarded.group("check") \
-            else rf"{KEYWORD}{re.escape(name)}{NAME_END}"
-        named = re.match(shape, printed.split("\n", 1)[0])
-        if not named:
-            continue
+        info = body.lstrip()
+        printed = info[len("info:"):].lstrip(" \t") if info.startswith("info:") else ""
+        shape = (rf"@?{re.escape(name)}\s*:" if guarded.group("check")
+                 else rf"{KEYWORD}{re.escape(name)}{NAME_END}")
+        named = re.match(shape, printed.split("\n", 1)[0]) if printed else None
+        format_fault = None
+        if not info.startswith("info:"):
+            format_fault = ("does not have an `info:` docstring identifying the guarded "
+                            f"declaration `{name}`")
+        elif not named and guarded.group("check"):
+            format_fault = (f"does not have `@{name} :` on its docstring's first line, as "
+                            "Lean prints the checked declaration")
+        elif not named:
+            format_fault = (f"does not have a recognized printer header for `{name}` on its "
+                            "docstring's first line")
 
         def line(position: int) -> int:
             return text.count("\n", 0, position) + 1
@@ -556,8 +573,11 @@ def read_pins(text: str) -> list[Pin]:
             options=guarded.group("options").strip(),
             options_line=line(after[1] + guarded.start("options")),
             shortened=shortened,
-            sign=definition_sign(printed[named.end():]) if guarded.group("check") else None,
-            keyword=None if guarded.group("check") else " ".join(named["keyword"].split())))
+            sign=(definition_sign(printed[named.end():])
+                  if guarded.group("check") and named else None),
+            keyword=(None if guarded.group("check") or not named
+                     else " ".join(named["keyword"].split())),
+            format_fault=format_fault))
     return found
 
 
@@ -607,7 +627,9 @@ def refused_pins(text: str) -> list[tuple[int, str]]:
             line, mark = pin.shortened
             found.append((line, f"holds `{mark}`, where Lean cut its print short, so the pin "
                                 f"of `{pin.name}` matches only part of the statement"))
-        if pin.prints_theorem():
+        if pin.format_fault:
+            found.append((pin.line, pin.format_fault))
+        elif pin.prints_theorem():
             found.append((pin.line, f"is a `#print` of theorem `{pin.name}`; a theorem's "
                                     "statement pin must use `#check @`, while `#print` is "
                                     "reserved for definitions"))
