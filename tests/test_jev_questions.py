@@ -88,6 +88,7 @@ HEADERS = (
         'import Elements.Base Elements.Base', 'import all Elements.Base',
         'import all\n  Elements.Base', 'all\nimport Elements.Base',
         'public /-- doc -/ import Elements.Base', '/-! The file. -/\nimport Elements.Base',
+        'public /- opened\nclosed -/ import Elements.Base',
         'prelude\nimport Elements.Base', 'import Elements.Base import Elements.«areas-p5»',
         'public import Elements.«a/b»', 'theorem t : True := trivial\nimport Elements.Base',
         'import Elements.Base /- opened here\n  closed on a later line -/')),
@@ -641,11 +642,14 @@ class Imports(LeanFiles):
                     self.assertIn(target, index.visible('Elements/Header.lean'))
 
     def test_suffixed_module_and_declaration_names_are_visible(self):
-        tools = 'namespace Elements\n\ntheorem helper? : True := trivial\n\nend Elements\n'
+        tools = ('namespace Elements\n\ntheorem helper? : True := trivial\n\n'
+                 'def import! : Nat := 0\n\ndef macro? : Nat := 0\n\nend Elements\n')
         header = ('public import Elements.Tools!\n\nnamespace Elements\n\n'
                   'theorem uses : True := helper?\n\nend Elements\n')
         index = self.index({'Tools!.lean': tools, 'Header.lean': header})
         self.assertIn('Elements/Tools!.lean', index.visible('Elements/Header.lean'))
+        self.assertEqual(index.get('Elements.import!').name, 'Elements.import!')
+        self.assertEqual(index.get('Elements.macro?').name, 'Elements.macro?')
         start = header.index('helper?')
         self.assertEqual([(call['name'], call['token'], call['start'], call['end'])
                           for call in questions.Calls(index, {}).direct('Elements.uses')],
@@ -666,11 +670,11 @@ class CallReconciler(LeanFiles):
                       [(c['token'], c['name'], c['resolution']) for c in found])
 
     def test_suffixed_constructor_names_and_calls_remain_distinct(self):
-        text = ('namespace Elements\n\ninductive Pt where\n  | mk\n  | mk!\n\n'
+        text = ('namespace Elements\n\ninductive Pt where\n  | mk | mk! | def! | match?\n\n'
                 'theorem uses : Pt × Pt := (.mk, .mk!)\n\nend Elements\n')
         calls = self.calls(text)
         self.assertEqual({member for member, owners in calls.members.items()
-                          if 'Elements.Pt' in owners}, {'mk', 'mk!'})
+                          if 'Elements.Pt' in owners}, {'mk', 'mk!', 'def!', 'match?'})
         start_mk = text.index('.mk,') + 1
         start_mk_bang = text.index('.mk!') + 1
         self.assertEqual([(call['token'], call['start'], call['end']) for call in

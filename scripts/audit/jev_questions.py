@@ -216,6 +216,8 @@ TOKEN = re.compile(NAME)
 MODULE_COMPONENT = r'(?:' + IDENT + r'|«[^»\n]+»)'
 MODULE_NAME = re.compile(MODULE_COMPONENT + r'(?:\.' + MODULE_COMPONENT + r')*')
 MODULE_PART = re.compile(MODULE_COMPONENT)
+KEYWORD_LEFT = r'(?<![' + NAME_REST + r'.«])'
+KEYWORD_RIGHT = r'(?![' + NAME_REST + r'»])'
 COMMAND = re.compile(
     r'^(?:@\[[^\n]*?\]\s*)?(?:(?:private|protected|noncomputable|unsafe)\s+)*'
     r'(theorem|lemma|def|abbrev|axiom|opaque|structure|inductive|instance|example|'
@@ -225,14 +227,16 @@ COMMAND = re.compile(
 # optional `prelude`, then any number of imports, each `[public] [meta] import [all] M`. The
 # generator reads the subset without `prelude` and `all`, each import ending its line.
 HEADER_WORDS = frozenset({'module', 'prelude', 'public', 'meta', 'all', 'import'})
-IMPORT_WORD = re.compile(r"(?<![\w'.«])import(?![\w'»])")
+IMPORT_WORD = re.compile(KEYWORD_LEFT + 'import' + KEYWORD_RIGHT)
 QUOTED_NAME = re.compile(r'«[^»\n]*»')
 # A command that can declare a token: a notation whose words before `=>` hold a bar could make
 # a bar an operator, and one whose token joins a name character to another, as `-x` does,
 # could end a word where the patterns below see none; a macro, an elaborator or a binder
 # predicate can give any syntax a meaning.
-SYNTAX_WORD = re.compile(r"(?<![\w'.«])(?:notation|infixl|infixr|infix|prefix|postfix"
-                         r"|(macro_rules|macro|elab_rules|elab|binder_predicate))(?![\w'»])")
+SYNTAX_WORD = re.compile(KEYWORD_LEFT
+                         + r'(?:notation|infixl|infixr|infix|prefix|postfix'
+                         + r'|(macro_rules|macro|elab_rules|elab|binder_predicate))'
+                         + KEYWORD_RIGHT)
 # A character of a name, to Lean or to the patterns' \w.
 NAME_CHARACTER = re.compile(r'[\w' + NAME_REST + ']')
 # The whitespace Lean reads between tokens (Lean/Parser/Basic.lean, `whitespace`, which refuses
@@ -451,7 +455,8 @@ def lean_source(path: str, raw: str) -> tuple[str, list[tuple[int, int]], list[t
         # import's span ends outside it.
         require(file and name not in HEADER_WORDS
                 and (not following[0] or '\n' in raw[end:following[1]])
-                and not any(a < newline < b for a, b in comments),
+                and not any(token(k)[1] <= a < line_end and raw.startswith('/-', a)
+                            and '\n' in raw[a:b] for a, b in comments),
                 f'{path}: unsupported import {raw[token(k)[1]:line_end].rstrip()!r}')
         imports.append((file, token(k)[1], line_end))
         k = j + 2
@@ -784,14 +789,18 @@ class Calls:
     # by equations or of `let_expr`, of `matches`, of a tactic, of `do`, or of a computed field
     # after `with`. The plain forms hold none of them; a bar after one is refused first, with
     # that reason.
-    ALTERNATIVES = re.compile(r"(?<![\w'.])(?:fun|match|match_expr|matches|let|let_expr|have|by"
-                              r"|do|with|haveI|letI|let_fun|let_delayed|let_tmp)(?![\w'])|λ")
+    ALTERNATIVES = re.compile(KEYWORD_LEFT
+                              + r'(?:fun|match|match_expr|matches|let|let_expr|have|by'
+                              + r'|do|with|haveI|letI|let_fun|let_delayed|let_tmp)'
+                              + KEYWORD_RIGHT + '|λ')
     # A line that is blank, opens `  |` or opens with three spaces continues the constructors.
     CONSTRUCTORS_END = re.compile(r'(?! *$|  \||   )', re.M)
     # A declaration's keyword, or `recall`, begins a command wherever it stands on its line,
     # and ends the constructors.
-    COMMAND_WORD = re.compile(r"(?<![\w'.«])(?:def|theorem|abbrev|instance|example|opaque|axiom"
-                              r"|structure|class|inductive|deriving|mutual|recall)(?![\w'»])")
+    COMMAND_WORD = re.compile(KEYWORD_LEFT
+                              + r'(?:def|theorem|abbrev|instance|example|opaque|axiom'
+                              + r'|structure|class|inductive|deriving|mutual|recall)'
+                              + KEYWORD_RIGHT)
     # Three forms would make the masked text, or the words in it, other than Lean reads them.
     # A string, a char literal or a «...» name, whose brackets and bars the masking may misread,
     # and a `»`, which may end a «...» name Lean opened before the inductive.

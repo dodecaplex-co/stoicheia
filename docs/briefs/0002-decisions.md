@@ -4056,12 +4056,16 @@ findings:
     (∀ (x : α), x ∈ a :: l → p x) ↔ p a ∧ ∀ (x : α), x ∈ l → p x
   ```
 
-  `tests/test_jev_questions.py` now has 58 cases, and Lean compiles all 95 texts its
-  reconciler cases build. On fresh clones of main (`73b97ab1`) and of the superposition
-  branch (`4c579527`), the generator gives 338 rows with no unresolved name, byte for byte
-  those of the generator before the `/--/` and notation-token rules, and all 58 cases pass
+  At the revisions tested then, `tests/test_jev_questions.py` had 58 cases, and Lean
+  compiled all 95 texts its reconciler cases built. On fresh clones of main (`73b97ab1`) and
+  of the superposition branch (`4c579527`), the generator gives 338 rows with no unresolved
+  name, byte for byte those of the generator before the `/--/` and notation-token rules, and
+  all 58 cases pass
   with the two changed files copied in, so the issue's third condition is met. Before the
   superposition code (`8e9a1879`), the questions are byte for byte those of main's own
-  generator, and the manifest differs only by the two allowlist names. Protected files
-  changed: `scripts/audit/jev_questions.py` and `tests/test_jev_questions.py`. No expected
-  value, schema or review record changes; CI does not run the test yet (#157).
+  generator, and the manifest differs only by the two allowlist names. The delivered
+  revision adds behavioral regressions for suffixed Lean identifiers, dedented constructors
+  and multiline comments within import headers; the focused module has 60 test methods, and
+  all 60 pass. Protected files changed: `scripts/audit/jev_questions.py`,
+  `tests/test_jev_questions.py` and this decision entry. No expected value, schema or review
+  record changes; CI does not run the test yet (#157).
