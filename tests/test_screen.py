@@ -41,7 +41,9 @@ functions to small inputs, each with the answer the screen should give.
   the time.
 * Before any Lean: --check-current takes no OUTDIR and no --write; a stale build, --write
   on inputs that are not a commit's, or a move to another commit or other inputs after the
-  build checks as current, stops a run.
+  build checks as current, stops a run. Before a successful --write, an unchanged build is
+  checked again; a build left stale during the main or retry pass stops the run and leaves
+  the existing record in place.
 
 Nothing runs these in CI yet: whoever changes the screen runs this file. Python 3.11 or
 later; standard library.
@@ -605,6 +607,77 @@ class Record(unittest.TestCase):
                 self.assertEqual(launched, [["lake", "build", "--no-build", "Elements"]])
                 lean.assert_not_called()
                 self.assertEqual(self.path.read_text(encoding="utf-8"), before)
+
+    def run_with_build_change(self, during_retry: bool) -> tuple[list[list[str]], str]:
+        self.path.write_text("existing record\n", encoding="utf-8")
+        before = self.path.read_text(encoding="utf-8")
+        stale = {"build": False}
+        launched = []
+
+        def lake(argv, **kw):
+            launched.append(argv)
+            return subprocess.CompletedProcess(argv, 3 if stale["build"] else 0)
+
+        def lean(todo, beats, out, prefix, jobs):
+            if during_retry and prefix == "Screen":
+                return 1, [], list(todo), []
+            stale["build"] = True
+            return len(todo), list(todo), [], []
+
+        jobs = [("bare__BookI_Prop1", "BookI.Prop1", [])]
+        with tempfile.TemporaryDirectory() as out, \
+                mock.patch.object(screen, "ROOT", self.root), \
+                mock.patch.object(screen, "RECORD", self.path), \
+                mock.patch.object(screen, "reached"), \
+                mock.patch.object(screen, "attempts", return_value=jobs), \
+                mock.patch.object(screen, "refused", return_value={}), \
+                mock.patch.object(screen, "tries", return_value={
+                    "bare__BookI_Prop1": ("BookI.Prop1", "")}), \
+                mock.patch.object(screen, "run", side_effect=lean), \
+                mock.patch.object(screen, "lost", return_value=[]), \
+                mock.patch.object(screen.subprocess, "run", side_effect=lake), \
+                mock.patch.object(sys, "argv", ["screen.py", out, "--write"]), \
+                contextlib.redirect_stdout(io.StringIO()), \
+                self.assertRaises(SystemExit) as stop:
+            screen.main()
+        self.assertEqual(self.path.read_text(encoding="utf-8"), before)
+        return launched, str(stop.exception.code)
+
+    def test_a_build_left_stale_during_the_main_pass_is_not_recorded(self):
+        launched, stopped = self.run_with_build_change(False)
+        self.assertEqual(launched, 2 * [["lake", "build", "--no-build", "Elements"]])
+        self.assertIn("build of Elements changed while the screen ran", stopped)
+
+    def test_a_build_left_stale_during_the_retry_pass_is_not_recorded(self):
+        launched, stopped = self.run_with_build_change(True)
+        self.assertEqual(launched, 2 * [["lake", "build", "--no-build", "Elements"]])
+        self.assertIn("build of Elements changed while the screen ran", stopped)
+
+    def test_an_unchanged_build_is_checked_again_and_recorded(self):
+        self.path.write_text("existing record\n", encoding="utf-8")
+        launched = []
+
+        def lake(argv, **kw):
+            launched.append(argv)
+            return subprocess.CompletedProcess(argv, 0)
+
+        jobs = [("bare__BookI_Prop1", "BookI.Prop1", [])]
+        with tempfile.TemporaryDirectory() as out, \
+                mock.patch.object(screen, "ROOT", self.root), \
+                mock.patch.object(screen, "RECORD", self.path), \
+                mock.patch.object(screen, "reached"), \
+                mock.patch.object(screen, "attempts", return_value=jobs), \
+                mock.patch.object(screen, "refused", return_value={}), \
+                mock.patch.object(screen, "tries", return_value={
+                    "bare__BookI_Prop1": ("BookI.Prop1", "")}), \
+                mock.patch.object(screen, "run", return_value=(1, [jobs[0][0]], [], [])), \
+                mock.patch.object(screen, "lost", return_value=[]), \
+                mock.patch.object(screen.subprocess, "run", side_effect=lake), \
+                mock.patch.object(sys, "argv", ["screen.py", out, "--write"]), \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(screen.main(), 0)
+        self.assertEqual(launched, 2 * [["lake", "build", "--no-build", "Elements"]])
+        self.assertEqual(screen.check_current(self.root, self.path)[0], [])
 
     def test_the_repository_inputs_read(self):
         """The real inputs compute, and every part is present."""

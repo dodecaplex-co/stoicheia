@@ -102,8 +102,11 @@ job is one Lean process on one thread, so N jobs keep N cores busy. It takes abo
 and a half of processor time: some eight minutes with twelve jobs on an idle machine.
 Every try imports what `lake build` built, not the sources. So a run reads the commit and
 its inputs, checks with `lake build --no-build Elements` that the build is current, and
-reads them again before any Lean runs: it stops if the build is not current, or if the
-commit or the inputs changed meanwhile, and a record names what it read first.
+reads them again before any Lean runs. Before --write records a completed run, it checks
+the build again after all tries and retries, then reads the original commit and inputs
+again. It stops if either build check fails, or if the commit or the inputs changed around
+one of those checks, and a record names what it read first. These boundary checks do not
+show that no transient concurrent modification occurred.
 Standard library only. Its cases, which need no Lean, are in tests/test_screen.py.
 
 What a run read. With --write, a run that ends with every known row closed by a rule
@@ -845,6 +848,15 @@ def main() -> int:
               "broken")
         return 1
     if args.write:
+        try:
+            built = subprocess.run(["lake", "build", "--no-build", "Elements"], cwd=ROOT,
+                                   capture_output=True, text=True).returncode == 0
+        except OSError:
+            sys.exit("screen: there is no `lake` to run (export PATH=$HOME/.elan/bin:$PATH)")
+        if not built:
+            sys.exit("screen: the build of Elements changed while the screen ran and is not "
+                     "current with its sources, so nothing is recorded: run `lake build` "
+                     "and the screen again")
         write_record(ROOT, read, len(facts["propositions"]), RECORD, at=at)
     return 0
 
