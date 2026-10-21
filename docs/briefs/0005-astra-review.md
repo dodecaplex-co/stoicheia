@@ -1,5 +1,15 @@
 # Brief 0005: answering Astra's review
 
+19 October 2026: this brief keeps its earlier measurements and instructions as history.
+[Eight rules are now theorems](../FORMALIZATION.md#rules-now-proved), with their names
+and types unchanged; the baseline is 79 axioms, including 73 tacit rules. Fresh
+certificate output at `1e713bb` gives III.1 and its porism the same 60 axioms, including
+55 tacit rules. `centre_unique` is proved in Book Zero, so the old 56/57 counts and
+required axiom membership no longer describe their dependencies. Any change to those
+checks needs its own approval and separate preparation under WORKFLOW, section 10.
+Circle 2 is proved from Circle 3; III.2's remaining overlap is with Circle 3, and its
+published proof uses neither the Circle 2 theorem nor the Circle 3 axiom.
+
 *Written and committed on 17 October 2026 (d040117), and revised on 18 October 2026 to the owner's decisions taken after it. The first text stands in the history, and each revised passage says so where it stands. What changed, and why:*
 
 - **Placement has no time limit and no fallback.** The owner decided on 17 October that III.24 waits for a proved placement lemma, and that a fact the axioms lack is a decision for the owner, never a quiet new axiom. "Timeboxed", the fallback congruence and "if the fallback was used" are removed; the verification line for placement, which could never pass, is restated; the corrections to the design and the order of work, spike first, are added under stage 3.
@@ -55,11 +65,11 @@ We verified every claim against the code with three read-only explorers. All hol
 
 **Layout.** Lean listings have a median of 94 lines and run up to 309 (II.8) before the commentary. Navigation is at the top only, and the scan references are plain text.
 
-**Decisions by Jack Challis, 17 October 2026**
+**The owner's decisions, 17 October 2026**
 - An honest book-III release now, then a ~95 consolidation release of Books I–III.
 - Publish Astra's review in the repository with a point-by-point response and warm thanks.
 - Fold the helper lemmas and keep the main proof visible.
-- He has already approved the book-III notes. They must be re-approved, because they now overclaim.
+- The owner has already approved the book-III notes. They must be re-approved, because they now overclaim.
 
 - Adopt Astra's layered contributor guide.
 - Voice rules become defaults, not quotas.
@@ -75,19 +85,19 @@ We verified every claim against the code with three read-only explorers. All hol
 | Stage | What | Ends with |
 |---|---|---|
 | 0 | Anchor: this plan as `docs/briefs/0005-astra-review.md`; the review (both parts plus the guide) with our point-by-point response in `docs/reports/outside-review-01.md`; references research files put in place | commit |
-| 1 | Precision pass: certificate, review records (exceptions), wording, layout, evidence, overlaps, Book III references | **book-III release** (notes re-approved by Jack) |
+| 1 | Precision pass: certificate, review records (exceptions), wording, layout, evidence, overlaps, Book III references | **book-III release** (notes re-approved by the owner) |
 | 1b | Standards: Astra's layered guide, adapted | in the same release |
 | 2 | Books I–II generality (pilot of the guide: briefs before proofs) | — |
 | 3 | Book III arcs and segments; III.24 | — |
 | 4 | III.14/15 boundaries; III.25 construction core | — |
 | 5 | Consolidation review of all 99 (full semantic records, figures against the scans, read-through) | — |
-| 6 | **Acceptance**: `docs/ACCEPTANCE.md` checklist, `check_acceptance.py` with zero failures, an independent Jev audit (a fresh client), and a cold re-score by Astra | **consolidation release of Books I–III** (notes approved by Jack) |
+| 6 | **Acceptance**: `docs/ACCEPTANCE.md` checklist, `check_acceptance.py` with zero failures, an independent Jev audit (a fresh client), and a cold re-score by Astra | **consolidation release of Books I–III** (notes approved by the owner) |
 
-Each stage runs as a workflow (ultracode): crews in git worktrees, adversarial verifiers, an integrator, and the coordinator landing each piece as a reviewed pull request (revised 18 October; the first text had the captain merging and pushing after full CI, and [Landing work: pull requests](#landing-work-pull-requests) points to the rules now). Nothing public (tags, releases, release notes, the GitHub description) happens without Jack's OK.
+Each stage runs as a workflow (ultracode): crews in git worktrees, adversarial verifiers, an integrator, and the coordinator landing each piece as a reviewed pull request (revised 18 October; the first text had the captain merging and pushing after full CI, and [Landing work: pull requests](#landing-work-pull-requests) points to the rules now). Nothing public (tags, releases, release notes, the GitHub description) happens without the owner's OK.
 
 ## The standing document: `docs/PROGRAM.md`
 
-This is Jack's request. One living page tracks the programme across this work and **every later book**: how we run in parallel and keep to the 95/100 bar. It is created in stage 0 and updated at the end of every stage and every book. WORKFLOW.md holds the rules; PROGRAM.md holds the state and the lessons.
+This is the owner's request. One living page tracks the programme across this work and **every later book**: how we run in parallel and keep to the 95/100 bar. It is created in stage 0 and updated at the end of every stage and every book. WORKFLOW.md holds the rules; PROGRAM.md holds the state and the lessons.
 
 1. **The standard.** What 95/100 means for a book: Astra's four reader questions, the acceptance checklist (link to ACCEPTANCE.md), the allowed deliberate limitations, and how the score is measured (check_acceptance, Jev audit, cold re-score).
 2. **How a book is run in parallel.** A one-page summary of WORKFLOW.md:
@@ -202,7 +212,7 @@ Expected result: III.1 shows 56 tacit rules and III.1 Por. 57, including `centre
 - A lint over README, CERTIFICATE and the index pages rejects "never need", "Euclid cites" and "Euclid's own bracketed".
 - A blind reader checks the tone.
 
-**f. Layout** (Jack: fold helpers, keep the main proof).
+**f. Layout** (the owner's decision: fold helpers, keep the main proof).
 - Jump links under the title, and prev/next repeated at the bottom.
 - `lean_parts()` shows the main theorem open, the helpers before it in one `<details>` (with names and a line count), and the corollaries and porism proofs after it in another.
 - `scan_url()` is factored out of `heath_figure_note`, and footers link "scan leaves nA–nB", "scan leaf nX" and "figure on nX".
@@ -232,7 +242,12 @@ Expected result: III.1 shows 56 tacit rules and III.1 Por. 57, including `centre
 **k. Additions that close every remaining review point.**
 
 *Certificate regressions* (the review asked for them by name):
-- `tests/certificate_expectations.json` pins facts the CI must keep: `III.1 Por.` includes `Tacit.centre_unique` and `III.1` does not. A negative test plants a dependency that occurs **only in a declaration's type** and checks the unified walk finds it.
+- `tests/certificate_expectations.json` originally pinned that `III.1 Por.` includes
+  `Tacit.centre_unique` and `III.1` does not. The membership pin was later dropped, with
+  the owner's approval, ahead of retiring that axiom; the
+  [decision record](0002-decisions.md#19-october-2026) owns that change. A negative test
+  plants a dependency that occurs **only in a declaration's type** and checks the unified
+  walk finds it.
 
 *Overlap catalogue columns*: proposition, rule, **where the rule first enters the development** (its first user), which dependencies bring it in, what the Lean proof does, and the audit lemma. Deriving these propositions from weaker assumptions is recorded as an optional, separate, dependency-audited workstream, not this plan.
 
@@ -261,7 +276,7 @@ Also: "an absent bracket does not mean Euclid gave no reason, and a bracket is H
 4. A bosun merges, regenerates and runs the full CI, followed by two blind page readers.
 
 Then:
-- **Release.** Draft the book-III notes in the new precise terms, plus corrections to the book-I and book-II notes ("each one following Euclid's own proof" becomes scoped). **Jack approves.** Then tag and publish.
+- **Release.** Draft the book-III notes in the new precise terms, plus corrections to the book-I and book-II notes ("each one following Euclid's own proof" becomes scoped). **The owner approves.** Then tag and publish.
 
 ## Stage 1b: the standards (Astra's layered guide, adapted)
 - `AGENTS.md`: Astra's §14 entry brief, adapted. Codex reads it.
@@ -309,10 +324,10 @@ Then:
   The Book III crew orders said "every hypothesis should be used" and asked bosuns to check that Euclid's brackets all appear among the citations. That rule is replaced in the order templates and in the fleet script.
 - **STYLE.md** also carries:
   - "Euclid" for the historical argument, "Heath" for the translation, "Lean" for the checker; production details stay out of the public mathematics;
-  - nothing competitive: no unsupported claims of novelty or superiority, and related work cited accurately and warmly (this keeps Jack's rule);
+  - nothing competitive: no unsupported claims of novelty or superiority, and related work cited accurately and warmly (this keeps the owner's rule);
   - further reading only where apt, verified, never to fill a slot;
   - figures: departures from Heath's figure in the page's figure note, a one-case figure never implying the other cases, a reductio's impossible figure explained.
-- **The colour figures are to carry Heath's letters** (revised 18 October). The owner decided on 17 October, after stage 1b was done, that the figures at a glance, in Byrne's colours, are to carry Heath's letters at every point they show, each one that Euclid's figure draws, with the same names as Euclid's figure, the text and the Lean. In his words that day: "Proof without words is one thing - proof without Point labeling is quite another!" Byrne's diagrams use colours in place of letters, as his title says, and are a delight without them; the letters are wanted because a proof is read by its points, so that a reader passes from the colours to the proof by the same A and B. This replaces "no letters in idea figures" in the first text. The rule is to go into STYLE.md, section 7, its one home, in place of its "no letters", and `check_style.py`'s S14 is to change with it, as the figures are lettered.
+- **The colour figures are to carry Heath's letters** (revised 18 October). The owner decided on 17 October, after stage 1b was done, that the figures at a glance, in Byrne's colours, are to carry Heath's letters at every point they show, each one that Euclid's figure draws, with the same names as Euclid's figure, the text and the Lean. In the owner's words that day: "Proof without words is one thing - proof without Point labeling is quite another!" Byrne's diagrams use colours in place of letters, as his title says, and are a delight without them; the letters are wanted because a proof is read by its points, so that a reader passes from the colours to the proof by the same A and B. This replaces "no letters in idea figures" in the first text. The rule is to go into STYLE.md, section 7, its one home, in place of its "no letters", and `check_style.py`'s S14 is to change with it, as the figures are lettered.
 - **Book briefs, one home per book's decisions.** Refresh 0004 (Book III) with the arc and segment representation, construction inputs and exceptions. Gather Books I and II's vocabulary, representations, shared lemmas and exceptions (now scattered over 0001–0003) into short book briefs. Each book's introduction links its brief.
 - **Reviewed examples** (docs/examples.md), each tied to a commit and a reason:
   - a short construction (I.1);
@@ -352,6 +367,13 @@ What remains of stages 1 and 1b is kept in [docs/PROGRAM.md](../PROGRAM.md), sec
 *I.40 general*
 - `Prop40.general`: four base ends on one line L, equal bases, equal areas, same side ⇒ ∃ M parallel to L through A and D. Plus `Prop40.join` (A ≠ D ⇒ AD ∥ BC) and `Prop40.special` (the current statement as a corollary).
 - Proof: Euclid's own argument (`Prop31.line`, `Prop30.meet`, I.38 already general, `OnRay.eq_of_area_eq`). It covers separated, touching, overlapping and oppositely named bases.
+
+Reconciled 19 October 2026: `Prop40` and `Prop40.general` now retain Euclid's closing
+reductio. The contrary supposition makes the constructed intersection differ from D.
+I.38 and Common Notion 1 give equal areas; `between_cases` and `area_lt_of_cut`
+contradict them in either order on the ray. Neither proof calls `OnRay.eq_of_area_eq`.
+The route is `euclid`; the statements, admitted configurations and companion registration
+are unchanged, including the general companion's coverage of coincident vertices.
 
 *I.45 for a figure given by its corners* (revised 18 October, to the owner's decision later on 17 October)
 
@@ -476,7 +498,7 @@ The order of work, de-risking first:
 
   Each hit is fixed or declared in its record. A script lists the candidates (unused `have` bindings, `_`-named citations).
 - **Book II's area correspondence** (which expression is which drawn piece, why the pieces subdivide) gets one compact explanation in Book II's introduction, linked at its important uses, not longer commentary on every page.
-- **Consolidation release** of Books I–III. The notes are drafted from the generated scope summaries, and **Jack approves** before the tag.
+- **Consolidation release** of Books I–III. The notes are drafted from the generated scope summaries, and **the owner approves** before the tag.
 - **After this:** Book IV starts with briefs approved before proofs. Each new foundation gets a one-statement prototype before any fleet: V (V.18's fourth proportional), VII (VII.16 without `Nat.mul_comm`), X (X.1), XI–XIII. The Mathlib formal model is its own milestone.
 
 ## Stage 6: acceptance, the checklist that says Books I–III meet the standard
@@ -551,14 +573,14 @@ Jev must meet a stated accuracy bar on it. Below the bar, Jev's answers become a
 
 *Prior art.* The owner recalls a GitHub project that does this kind of "everything checks out" checklist. Before building, look for it (Massot's leanblueprint `checkdecls`, which checks that every declaration a blueprint names exists, is the obvious relative). Adopt or credit whatever fits.
 
-**Cold re-score.** Finally Astra re-reviews the tagged candidate cold, with the same question as before: how well do Books I–III meet the README's goal, 0–100. Jack runs this in ChatGPT. The target is about 95 for each book, and any defect named goes back through the loop.
+**Cold re-score.** Finally Astra re-reviews the tagged candidate cold, with the same question as before: how well do Books I–III meet the README's goal, 0–100. The owner runs this in ChatGPT. The target is about 95 for each book, and any defect named goes back through the loop.
 
 ## Crew, tools and safety
 - **Lean proofs:** Codex sailors, best of two, with Claude bosuns and reviewers, as on the Book III voyages. Placement goes to the strongest prover and to Codex in the order under stage 3, with no time limit (revised 18 October). The sailors read AGENTS.md automatically.
 - **Prose, records, review and design:** Claude agents.
 - **Ownership:** the captain owns Foundations/Definitions*, the lock, decisions and merges; one writer per file; the integrator owns the generated output. Negative and mutation tests run in isolated worktrees.
 - **Rough scale:** stage 1 is about 22 agent slots, stages 2–4 about 13 tasks in 3 voyages, and stage 5 about 20 agents.
-- **Public actions need Jack's OK:** the release notes for book-III, the book-I/II note corrections, the consolidation release, and any GitHub description change.
+- **Public actions need the owner's OK:** the release notes for book-III, the book-I/II note corrections, the consolidation release, and any GitHub description change.
 
 ## Landing work: pull requests
 

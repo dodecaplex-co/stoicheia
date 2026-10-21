@@ -5,12 +5,19 @@ machine or a reviewer answers it. This script answers the machine's items for ev
 proposition of Books I-III, for each book and for the edition as a whole, and reads the
 reviewer's items from the review records (`review/<book>/NN.toml`, `[review] items`) and
 from each book's acceptance record (`docs/reports/acceptance/book-<book>.toml`). It
-writes every failure to docs/reports/acceptance-books-I-III.md, and changes nothing else.
+writes every failure to docs/reports/acceptance-books-I-III.md and, with --json, writes
+the verdicts beside it; it changes nothing else.
 
     python3 scripts/check_acceptance.py            every item
     python3 scripts/check_acceptance.py --quick    the kernel replay and the model tests
                                                    not run (each reported as not run)
     python3 scripts/check_acceptance.py --output PATH   the report written to PATH
+    python3 scripts/check_acceptance.py --json PATH     every item's verdict written to
+                                                        PATH as well, for --compare
+    python3 scripts/check_acceptance.py --compare MAIN PR
+                                                   no check run: whether every item that
+                                                   passes in MAIN passes in PR, two files
+                                                   that --json wrote (P10 and E6 aside)
 
 Run it on a built tree, as CI's `check` job leaves one: after `lake build`, `lake build
 Audit` and `lake env lean Certificate/Facts.lean`, with `lake` on the PATH, Python 3.11 or
@@ -25,13 +32,24 @@ The check that every Lean name a catalogue gives is declared, by asking Lean its
 follows Patrick Massot's `leanblueprint checkdecls`, which checks that every declaration a
 blueprint names exists in the project; we are grateful for the idea.
 
-Exits 0 only when every item passes and every check ran; 1 otherwise, the report written
-either way; 2 when it cannot begin (no facts.json, say). Standard library only.
+In checking mode it exits 0 only when every item passes and every check ran; 1 otherwise,
+the report written either way; 2 when it cannot begin (no facts.json, say). Standard
+library only.
+
+With --compare it runs no check, and reads two files of verdicts that one copy of this
+script wrote with --json: main's, then the pull request's. It exits 0 when every item that
+passes in the first passes in the second, so that a pass may not turn into a fail; 1 when
+one does not, each such item listed with why; and 2 when either file is not this script's
+verdicts, or the two were written by different copies of it, which would not judge alike.
+P10 and E6 turning into a fail are listed and not held (STAGING_ITEMS): they read Staging/
+alone, and staging a statement before its proof is the workflow's own way in. CI's
+`acceptance` job in `.github/workflows/ci.yml` runs it on every pull request.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import subprocess
@@ -92,6 +110,9 @@ BOOK_REVIEW_ITEMS = {key: item for item, key, kind, _ in BOOK_ITEMS if kind == "
 # allowed"): each proposition, the scope it may keep and the tag that must say why. Every
 # other statement is full (stage 4b's goal, brief 0007), and no route is "alternative".
 ALLOWED_LIMITS = {
+    # #116: the owner's interim disclosure decision of 20 October 2026.
+    "I.45": ("restricted", "figure-with-dissection"),
+    "II.14": ("restricted", "figure-with-dissection"),
     "III.16": ("partial", "mixed-angles-omitted"),
     "III.31": ("partial", "mixed-angles-omitted"),
 }
@@ -116,7 +137,7 @@ PLACEMENT_HOMES = ("Elements/BookIII/Placement.lean", "Elements/BookIII/Placemen
 
 # The check_style rules each item reads; the rest belong to P9 (or B1, B2 and E5).
 TEXT_RULES = {"S8", "S9", "S17"}
-FIGURE_RULES = {"S13", "S14", "S15", "S16", "S20", "S21"}
+FIGURE_RULES = {"S13", "S14", "S15", "S16", "S20", "S21", "S24", "S25", "S26"}
 
 # B2. Backticked words of a catalogue that are not Lean declarations, and need none: the
 # placeholder of a pattern, a field of facts.json, a tactic.
@@ -151,7 +172,7 @@ def owner(path: str) -> str | None:
     for the edition's."""
     path = path.strip().lstrip("./")
     m = (re.fullmatch(r"(?:mishnah|reading|heath|review|book)/([IVX]+)/(\d\d)\.(?:md|toml)", path)
-         or re.fullmatch(r"figures/([IVX]+)/(\d\d)(?:-idea)?\.svg", path)
+         or re.fullmatch(r"figures/([IVX]+)/(\d\d)(?:-idea|-modern)?\.svg", path)
          or re.fullmatch(r"Elements/Book([IVX]+)/Prop(\d\d)\.lean", path))
     if m and m.group(1) in heath.BOOKS and 1 <= int(m.group(2)) <= heath.BOOKS[m.group(1)]:
         return f"{m.group(1)}.{int(m.group(2))}"
@@ -329,7 +350,8 @@ def check_certificate(facts: dict) -> None:
 
 
 def check_style_rules() -> None:
-    """check_style.py as CI runs it, each failure sorted by the file it names."""
+    """check_style.py as CI runs it, each failure sorted by the file it names: a
+    proposition's review record to P9, whatever its rule."""
     done = run([PY, "scripts/check_style.py", "--quiet"])
     found = 0
     for line in done.stdout.splitlines():
@@ -344,6 +366,8 @@ def check_style_rules() -> None:
             fail("edition", "E5", text)
         elif who.startswith("Book"):
             fail(who, "B2" if "gaps-book" in path else "B1", text)
+        elif path.lstrip("./").startswith("review/"):
+            fail(who, "P9", text)
         elif rule in TEXT_RULES:
             fail(who, "P7", text)
         elif rule in FIGURE_RULES:
@@ -860,19 +884,21 @@ def check_book_record(book: str) -> None:
 # ---------------------------------------------------------------------------------------
 # The report.
 
-def revision(output: Path) -> str:
+def revision(output: Path, *more: Path) -> str:
     """The commit whose files were read: HEAD, or, while HEAD's commits change nothing
     but the report, the commit before them, so that regenerating the report on the same
     files writes the same report. Any other change, staged, unstaged or untracked (a new
-    book record, say), is noted as not yet committed."""
+    book record, say), is noted as not yet committed; the files this run writes (`output`
+    and `more`, the verdicts of --json) are not."""
     head = run(["git", "rev-parse", "--short", "HEAD"])
     if head.returncode != 0:
         return "not a git checkout"
     reports = {REPORT.relative_to(ROOT).as_posix()}
-    try:
-        reports.add(output.resolve().relative_to(ROOT).as_posix())
-    except ValueError:
-        pass
+    for path in (output, *more):
+        try:
+            reports.add(path.resolve().relative_to(ROOT).as_posix())
+        except ValueError:
+            pass
     commit = head.stdout.strip()
     while True:
         changed = run(["git", "diff", "--name-only", f"{commit}^", commit])
@@ -897,7 +923,7 @@ def page_link(ref: str, up: str = "../../") -> str:
     return f"[{ref}]({up}book/{b}/{int(n):02d}.md)"
 
 
-def report(output: Path, facts: dict, quick: bool) -> str:
+def report(output: Path, facts: dict, quick: bool, more: tuple = ()) -> str:
     items = {i: (k, kind, label) for i, k, kind, label in PROP_ITEMS + BOOK_ITEMS + EDITION_ITEMS}
     total = len(failures)
     props = [ref for _, _, ref in refs()]
@@ -910,7 +936,7 @@ def report(output: Path, facts: dict, quick: bool) -> str:
            "item is checked by the script; a [review] item is read from the records, and "
            "passes only when a reviewer has recorded it. The checklist says what each item "
            "asks. ✓ passes; ✗ fails, and every failure is listed at the end.", "",
-           f"- **Revision:** {revision(output)}.",
+           f"- **Revision:** {revision(output, *more)}.",
            f"- **Lean:** facts.json as Lean {facts.get('lean_version', '?')} wrote it.",
            "- **Run:** " + ("`--quick`: the kernel replay (E1) and the model tests (E4) were "
                             "not run, and a check not run is not a pass."
@@ -989,6 +1015,160 @@ def report(output: Path, facts: dict, quick: bool) -> str:
 
 
 # ---------------------------------------------------------------------------------------
+# The verdicts as JSON (--json), and the comparison of two runs (--compare), which CI's
+# `acceptance` job in .github/workflows/ci.yml makes between main and a pull request.
+
+VERDICTS_FORMAT = 1
+VERDICT_WORDS = ("pass", "fail", "not run")
+
+# The items --compare lists but does not hold when they turn from a pass into a fail. P10
+# and E6 read Staging/ alone, and a statement that a stage adds or changes is staged before
+# its proof (docs/WORKFLOW.md, section 2), so they turn into a fail exactly when a pull
+# request stages something, as the workflow has it do. Only the full gate holds them. A
+# pass of theirs that turns into "not run", or goes missing, is held like any other.
+STAGING_ITEMS = ("P10", "E6")
+
+
+def checker_id() -> str:
+    """This copy of the script, by its bytes. --compare compares only verdicts that one
+    copy wrote, so that main and the pull request are judged alike."""
+    return "sha256:" + hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+
+
+def cells() -> list[tuple[str, str]]:
+    """Every item of every proposition, book and the edition, in the report's order, and
+    any other a failure names."""
+    out = [("edition", i) for i, *_ in EDITION_ITEMS]
+    out += [(f"Book {b}", i) for b in heath.BOOKS for i, *_ in BOOK_ITEMS]
+    out += [(ref, i) for _, _, ref in refs() for i, *_ in PROP_ITEMS]
+    known = set(out)
+    out += sorted((set(failures) | set(not_run)) - known)
+    return out
+
+
+def verdicts(output: Path, quick: bool, more: tuple = ()) -> dict:
+    """Every item's verdict, "pass", "fail" or "not run", with the failure's messages or
+    the reason it was not run."""
+    result: dict = {"format": VERDICTS_FORMAT, "checker": checker_id(),
+                    "revision": revision(output, *more).replace("`", ""),
+                    "run": "--quick" if quick else "every item", "verdicts": {}, "notes": {}}
+    for where, item in cells():
+        verdict = cell(where, item)
+        word = {"✓": "pass", "✗": "fail"}.get(verdict, verdict)
+        result["verdicts"].setdefault(where, {})[item] = word
+        if (where, item) in not_run:
+            result["notes"].setdefault(where, {})[item] = [f"not run ({not_run[(where, item)]})"]
+        elif (where, item) in failures:
+            result["notes"].setdefault(where, {})[item] = list(failures[(where, item)])
+    return result
+
+
+def read_verdicts(path: Path) -> dict:
+    """A file that --json wrote; ValueError, saying why, for anything else."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as e:
+        raise ValueError(f"{path} cannot be read as JSON ({e})")
+    table = data.get("verdicts") if isinstance(data, dict) else None
+    if not isinstance(data, dict) or data.get("format") != VERDICTS_FORMAT \
+            or not isinstance(data.get("checker"), str) or not isinstance(table, dict) \
+            or not all(isinstance(items, dict) and all(v in VERDICT_WORDS for v in items.values())
+                       for items in table.values()):
+        raise ValueError(f"{path} is not a file of verdicts that check_acceptance.py --json "
+                         f"writes (format {VERDICTS_FORMAT})")
+    if not isinstance(data.get("notes"), dict):
+        data["notes"] = {}
+    return data
+
+
+def place(where: str, item: str) -> tuple:
+    """The report's order: the edition, the books, then the propositions; items in their
+    lists' order."""
+    ids = [i for i, *_ in EDITION_ITEMS + BOOK_ITEMS + PROP_ITEMS]
+    rank = ids.index(item) if item in ids else len(ids)
+    if where == "edition":
+        return (0, (), rank, item)
+    if where.startswith("Book "):
+        return (1, (where,), rank, item)
+    try:
+        key = tuple(heath.prop_key(where))
+    except (ValueError, KeyError, IndexError, TypeError):
+        key = (where,)
+    return (2, key, rank, item)
+
+
+def regressions(before: dict, after: dict) -> list[tuple[str, str, str]]:
+    """Each item that passes in `before` and does not in `after`: (where, item, its
+    verdict in `after`, or "missing" when `after` has none). A check not run is not a
+    pass, so a pass that turns into "not run" is one."""
+    lost = []
+    for where, items in before["verdicts"].items():
+        for item, verdict in items.items():
+            now = after["verdicts"].get(where, {}).get(item, "missing")
+            if verdict == "pass" and now != "pass":
+                lost.append((where, item, now))
+    return sorted(lost, key=lambda x: place(x[0], x[1]))
+
+
+def compare(before_path: Path, after_path: Path) -> int:
+    """--compare: 0 when every item that passes in the first file passes in the second,
+    save the staging items' fails (STAGING_ITEMS), which are listed; 1 when one does not,
+    each listed with why; 2 when either is not a file of verdicts, or the two came from
+    different copies of this script."""
+    try:
+        before, after = read_verdicts(before_path), read_verdicts(after_path)
+    except ValueError as e:
+        print(f"✗ acceptance: {e}")
+        return 2
+    if before["checker"] != after["checker"]:
+        print("✗ acceptance: the two files of verdicts were written by different copies of "
+              "check_acceptance.py, which need not judge alike: run one copy on both trees")
+        return 2
+    labels = {i: key for i, key, *_ in PROP_ITEMS + BOOK_ITEMS + EDITION_ITEMS}
+
+    def show(cells) -> None:
+        for where, item, now in cells:
+            notes = after["notes"].get(where, {}).get(item) if isinstance(
+                after["notes"].get(where), dict) else None
+            why = str(notes[0]).splitlines()[0] if isinstance(notes, list) and notes else ""
+            label = f" {labels[item]}" if item in labels else ""
+            print(f"  {where}, {item}{label}: {now}" + (f": {why}" if why else ""))
+
+    lost = regressions(before, after)
+    staged = [x for x in lost if x[1] in STAGING_ITEMS and x[2] == "fail"]
+    lost = [x for x in lost if x not in staged]
+    passing = sum(v == "pass" for items in before["verdicts"].values() for v in items.values())
+    gained = sum(v == "pass" and before["verdicts"].get(w, {}).get(i) != "pass"
+                 for w, items in after["verdicts"].items() for i, v in items.items())
+    rest = sum(v != "pass" for items in after["verdicts"].values() for v in items.values())
+    first = f"main ({before.get('revision', '?')})"
+    second = f"the pull request ({after.get('revision', '?')})"
+    if lost:
+        one = len(lost) == 1
+        print(f"✗ acceptance: {len(lost)} item{'' if one else 's'} that pass{'es' if one else ''} "
+              f"on {first} {'does' if one else 'do'} not pass on {second}; a pass may not "
+              "turn into a fail:")
+        show(lost)
+    if staged:
+        one = len(staged) == 1
+        print(f"{'Besides, n' if lost else 'N'}ot held: {len(staged)} staging "
+              f"item{'' if one else 's'} that pass{'es' if one else ''} on {first} and "
+              f"fail{'s' if one else ''} on {second}, for what it stages, as a statement is "
+              "staged before its proof (docs/WORKFLOW.md, section 2); only the full gate "
+              f"holds {'it' if one else 'them'}:")
+        show(staged)
+    if lost:
+        print("Every failure, with what to do about it, is in the pull request's report.")
+        return 1
+    print(f"✓ acceptance: no item that passes on {first} fails on {second}"
+          + ((", save the staging item above" if len(staged) == 1 else
+              ", save the staging items above") if staged else "")
+          + f": {passing - len(staged)} pass on both, {gained} more pass on the pull request, "
+          f"and {rest} still fail or were not run there")
+    return 0
+
+
+# ---------------------------------------------------------------------------------------
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
@@ -997,7 +1177,18 @@ def main(argv=None) -> int:
                              "reporting each as not run")
     parser.add_argument("--output", type=Path, default=REPORT,
                         help="where to write the report (default: %(default)s)")
+    parser.add_argument("--json", type=Path, metavar="PATH",
+                        help="write every item's verdict to PATH as well, as JSON, for "
+                             "--compare")
+    parser.add_argument("--compare", type=Path, nargs=2, metavar=("MAIN", "PR"),
+                        help="run no check: exit 1 when an item that passes in MAIN does "
+                             "not pass in PR, save a staging item's fail (P10, E6), two "
+                             "files that --json wrote")
     args = parser.parse_args(argv)
+    if args.compare:
+        if args.quick or args.json or args.output != REPORT:
+            parser.error("--compare runs no check, and takes no other option")
+        return compare(*args.compare)
 
     facts_path = ROOT / "facts.json"
     if not facts_path.exists():
@@ -1020,9 +1211,14 @@ def main(argv=None) -> int:
     check_links()
     check_runs(args.quick)
 
-    text = report(args.output, facts, args.quick)
+    more = (args.json,) if args.json else ()
+    text = report(args.output, facts, args.quick, more)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(text, encoding="utf-8")
+    if args.json:
+        args.json.parent.mkdir(parents=True, exist_ok=True)
+        args.json.write_text(json.dumps(verdicts(args.output, args.quick, more), indent=1,
+                                        ensure_ascii=False) + "\n", encoding="utf-8")
     try:
         shown = args.output.resolve().relative_to(ROOT).as_posix()
     except ValueError:

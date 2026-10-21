@@ -10,6 +10,6 @@
   <g fill="#3b2f2f">
     <circle cx="150" cy="150" r="2.6"/><circle cx="250" cy="150" r="2.6"/><circle cx="200" cy="63.4" r="2.6"/>
     <text x="132" y="172">A</text><text x="256" y="172">B</text><text x="194" y="54">C</text>
-    <text x="36" y="156">D</text><text x="353" y="156">E</text>
+    <text x="33" y="156">D</text><text x="353" y="156">E</text>
   </g>
 </svg>

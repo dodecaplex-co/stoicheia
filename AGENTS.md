@@ -2,9 +2,9 @@
 
 Stoicheia is a reader's edition of Euclid's *Elements*: Heath's text, synthetic proofs in
 plain Lean 4.35 (no Mathlib), two figures, a certificate of what each proof rests on, and
-commentary, for Books I–III so far. It is Jack Challis's friendly, public, personal
-project. Read this file on every task. It is short on purpose: each rule lives in one
-place, and this file links to it.
+commentary, for Books I–III so far. It is a friendly, public project. Read this file on
+every task. It is short on purpose: each rule lives in one place, and this file links
+to it.
 
 ## Priorities
 
@@ -65,7 +65,8 @@ People start at [CONTRIBUTING.md](CONTRIBUTING.md); the state of the work is in
 - Work only in the files your task names: one writer per file. The integrator owns the
   generated output (`facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`, README.md's rows
   between the `<!-- scope:… -->` markers and PROGRAM.md's status table between the
-  `<!-- status -->` markers) and the companions list (`Elements/Companions.lean`); the
+  `<!-- status -->` markers, and inline `count:` values) and the companions list
+  (`Elements/Companions.lean`); the
   coordinator owns the foundations
   (`Elements/Foundations/`), `Certificate/axioms.lock`, the toolchain (`lean-toolchain`,
   `lakefile.toml`, `lake-manifest.json`), the decisions page, PROGRAM.md and CI; your
@@ -95,7 +96,8 @@ Each rule has one home, linked; this list only points to it.
   work on main only as a pull request, through `scripts/safe_push.py` (WORKFLOW, section
   10, "Landing work: pull requests").
 - Publish: tag, release, write release notes, change the GitHub description, or send
-  anything outside the repository. Each needs Jack Challis's OK (WORKFLOW, section 1).
+  anything outside the repository. Each needs the repository owner's OK (WORKFLOW,
+  section 1).
 - Invent a quotation, a page or a reference; put crew talk where readers look; write
   anything competitive (STYLE, sections 1 and 5).
 

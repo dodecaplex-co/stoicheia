@@ -1,5 +1,11 @@
 # Brief 0006: the statements of stages 2–4
 
+19 October 2026: the frozen instructions below use the former baseline of 87 axioms.
+[Eight rules are now theorems](../FORMALIZATION.md#rules-now-proved), keeping their
+names and exact types, so the baseline for the instruction to add no axioms is now
+79, including 73 tacit rules. Circle 2 in the proposed `Arc.meets` route is a theorem
+of Circle 3 in `Elements/Figure/Circles.lean`. No frozen statement changes here.
+
 *17 October 2026. This brief settles every new or changed statement of
 [brief 0005](0005-astra-review.md)'s stages 2–4 before any proof work, as
 [WORKFLOW.md](../WORKFLOW.md), section 2, requires. Each statement below was written with
@@ -111,6 +117,16 @@ companions in one step. No statement's hypotheses or conclusions changed.*
 to a changed lock now have one home, tests/model/MODEL.md, "Changing the axioms", and "No
 new axioms" below points to it in place of the steps it gave. No statement changes.*
 
+*Overtaken in part 20 October 2026
+([issue #116](https://github.com/jackChallis/stoicheia/issues/116)): the records of I.45 and
+II.14 now claim the scope `restricted`, with the limitation `figure-with-dissection`, in
+place of decision 1's `full`. On that day the owner approved the interim disclosure among
+the decisions for #116: the figure is given with its checked division into triangles, and
+its area is relative to that division, until the proofs that build a division from the
+figure's outline, and show that the area does not depend on the division chosen, are proved
+and reviewed. No statement or companion here changes; only the scope the two records claim
+does (the entry of 20 October 2026 in [the decisions page](0002-decisions.md)).*
+
 Base: the branch was written on main at `1e5b99a`, and has main merged in; the revision of
 18 October was written on main at `f17b427`, and the corrections after Astra's second answer
 on `b48640c`. The statements are in `Staging/`, as committed with this brief.
@@ -120,7 +136,7 @@ CI are untouched.
 
 ## The owner's decisions
 
-Jack Challis decided three things on 17 October 2026, revised the first on 18 October, and
+The owner decided three things on 17 October 2026, revised the first on 18 October, and
 decided a fourth on 18 October; this brief is written to them:
 
 1. **I.45 and II.14 are stated as Euclid and Byrne state them.** The figure is given by
@@ -156,13 +172,17 @@ decided a fourth on 18 October; this brief is written to them:
    Astra's second answer (18 October) accepts `full` for these statements as they stood at
    `b48640c`, before the fan companions gained the conclusion that the fan fits (the note
    at the head of this brief).
+
+   **Overtaken in part 20 October 2026:** the scope is `restricted` for now, with the
+   limitation `figure-with-dissection`, until #116's outline proofs are proved and reviewed
+   (the note at the head of this brief).
 2. **III.24 is restated** to conclude that the segments are congruent, by Euclid's route:
    one segment is applied to the other. Today's proof by the radii is kept, as the
    labelled alternative proof, `Prop24.equalCircles`.
 3. **Placement has no fallback and no time limit, and no new axiom may be added.** III.24
    waits for a proved `placement`; the other work goes on in parallel. If a case of
    placement turns out to need a fact the 87 axioms lack, work on it stops and the case is
-   reported to Jack. Brief 0005's "timeboxed", its fallback congruence and "if the
+   reported to the owner. Brief 0005's "timeboxed", its fallback congruence and "if the
    fallback was used" are withdrawn.
 4. **The definitions that frozen briefs name are approved for the foundations as a
    class** (18 October 2026). The tracking issue,
@@ -591,8 +611,8 @@ theorem Fitted.fan {A₀ A₁ A₂ : Point} {ps : List Point}
   straight line and the sector is a half-plane bounded by it; and more than two, where the
   sector is that half-plane together with the angle between A₁A₀ produced through A₀ and
   A₀Aᵢ (I.13). No new axiom is expected (Astra saw no need of one); if a step needs a
-  fact the 87 axioms lack, work on it stops and the case is reported to Jack, as decision 3
-  has it for placement.
+  fact the 87 axioms lack, work on it stops and the case is reported to the owner, as
+  decision 3 has it for placement.
 - **Euclid's figure.** `Fitted.two` of 17 October, Euclid's ABCD as the list ABD, DBC, is not
   restored: `Fitted.fan` for the corners D, A, B, C says it, with the triangle ABD named
   DAB from D.
@@ -652,6 +672,13 @@ theorem Prop40.special {A B C D E : Point} (hABC : Triangle A B C) (hCDE : Trian
   I.40's record says now).
 - **Dependencies.** I.31, I.38, `Prop30.meet` (HelpersParallels), `Prop31.line`,
   `OnRay.eq_of_area_eq`; `AreParallel.of_parallel` for `special`.
+
+Reconciled 19 October 2026: `Prop40` and `Prop40.general` now retain Euclid's closing
+reductio. The contrary supposition makes the constructed intersection differ from D.
+I.38 and Common Notion 1 give equal areas; `between_cases` and `area_lt_of_cut`
+contradict them in either order on the ray. Neither proof calls `OnRay.eq_of_area_eq`.
+The route is `euclid`; the statements, admitted configurations and companion registration
+are unchanged, including the general companion's coverage of coincident vertices.
 
 ### I.45, for any rectilineal figure
 
@@ -1623,8 +1650,8 @@ leaves `lake build`, `lake build Audit` and `lake build Staging` green.
    then `Arcs.lean`.
 
 Alongside, the stage 3 ground task: `Elements/Figure/Chords.lean` and
-`Circumference.add`. If any case needs a fact the axioms lack, work on it stops and Jack
-decides (decision 3).
+`Circumference.add`. If any case needs a fact the axioms lack, work on it stops and the
+owner decides (decision 3).
 
 **Stage 3: the migration into `Elements/`,** each step green:
 1. the arc words into `DefinitionsIII.lean`, with the lock and a decisions entry;
@@ -1905,6 +1932,12 @@ into `Elements/`, each read again then, as "Records made stale" says:
 - I.40 (`review/I/40.toml`): nothing departs. The route stays `modified`, the end of the
   reductio direct; "I.40 general" is Euclid's argument for bases anywhere on L, his F being
   the meeting point G, and "I.40 join" follows from it.
+
+  Reconciled 19 October 2026: the route instruction above is superseded by the
+  [I.40 reconciliation](#i40-for-bases-anywhere-on-one-straight-line). `Prop40` and
+  `Prop40.general` retain the closing reductio, so the route is `euclid`. Statements
+  and companion registration are unchanged.
+
 - I.45 (`review/I/45.toml`): "I.45 append" cites I.30 with Euclid; "I.45 fan" rests on I.13
   through `Fitted.fan`, which moves into `Prop45.lean`.
 - II.1 (`review/II/01.toml`): "II.1 two" cites I.2 and I.30, as today's II.1 does; "II.1

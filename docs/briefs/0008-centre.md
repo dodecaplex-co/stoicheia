@@ -1,7 +1,32 @@
 # Brief 0008: every circle has a centre
 
+19 October 2026: the frozen plan below uses the former baseline of 87 axioms.
+[Eight rules are now theorems](../FORMALIZATION.md#rules-now-proved), keeping their
+names and exact types, so the baseline is 79, including 73 tacit rules. Adding the
+proposed centre-existence axiom would now take 79 to 80, and 73 tacit rules to 74.
+This note adds no axiom and grants no approval to add one.
+
+`centre_unique` is now proved in `Elements/Figure/Circles.lean`; Circle 4 is proved
+after I.7 from I.7, Definition I.15 and `circle_eq`; Circle 2 is proved from Circle 3,
+which stays an axiom. The old dependency counts must be measured again. A pin excluding
+a retired name from an axiom list no longer detects calls to that theorem; any intended
+restriction on its use needs a separate check proposal. The historical readings and
+frozen statements below are preserved.
+
 *Frozen 18 October 2026 by the coordinator, after Astra's challenges of `afe0ee9` and
 `3f00ebf` and the Claude challenger's; decisions Q1 to Q16 as recorded in section 8.*
+
+*Status, 20 October 2026, after the eight axiom retirements:*
+
+No certified proof uses Circle 2 or rests on Circle 3. The [guard](../../scripts/check_fidelity.py) now forbids the proved Circle 2 through its dependence on the retained Circle 3 axiom.
+The [overlap kind](../../review/SCHEMA.md) is required (#93); the [negative test](../../scripts/negative_tests.py) reads the lock and [`touching-whole-circles`](../../review/terms.toml) exists (#113).
+The [forbidden-command scan](../../scripts/check_fidelity.py) covers `Staging/` and `Audit/` (#39).
+The [formal model](../../model/Model/Assembly.lean) proves all 79 locked laws, with [generated laws](../../model/Model/Laws.lean) (#109).
+Stage 2's proofs are in [`Elements/`](../../Elements/) (#102).
+Stage 4b's III.8 and III.17 companions are in [`Elements/BookIII/Prop08.lean`](../../Elements/BookIII/Prop08.lean) and [`Prop17.lean`](../../Elements/BookIII/Prop17.lean) (#111); stages 3 and 4 remain in `Staging/`.
+[Staged III.1](../../Staging/Centre/Prop01.lean) still calls Circle 2, now a theorem resting on Circle 3; its construction must be reconciled with [main's III.1](../../Elements/BookIII/Prop01.lean) before migration.
+Still to do under #59: the prototype rename, centre rule, construction guard, restatements, tag revision and record migration.
+The frozen text below is kept as history.
 
 *The brief settles, before any proof work and as [WORKFLOW.md](../WORKFLOW.md), section 2,
 requires, the rule the owner approved, that every circle has a centre, and every statement
@@ -49,8 +74,8 @@ the fresh outside review (#47), which found the `centre-given` hypothesis across
 
 ## 1. The decision
 
-Jack Challis decided on 18 October 2026, on issue #59 (the words below checked against his
-comment there, on 18 October):
+The owner decided on 18 October 2026, on issue #59 (the words below checked against the
+owner's comment there, on 18 October):
 
 > **The owner's decision (18 October): approved, as Astra recommends.** `axiom exists_centre
 > (α : Circle) : ∃ O, Centre O α`; III.1 keeps its construction-rich conclusion and drops the
@@ -62,11 +87,11 @@ comment there, on 18 October):
 > changed, challenged and frozen, then the axiom with its lock entry, model law and decisions
 > entry, then the restatements and their records.
 
-On the same day he decided to start the formal model now (#73): in `model/`, a Lake package
-of its own in this repository with a pinned Mathlib and its own CI job, the main library
-staying plain Lean, its laws generated from the elaborated declarations with translation
-checks, the hardest first. The package landed on main in #98; issue #73 stays open for the
-work to come. Section 2 says what that means for this rule.
+On the same day the owner decided to start the formal model now (#73): in `model/`, a Lake
+package of its own in this repository with a pinned Mathlib and its own CI job, the main
+library staying plain Lean, its laws generated from the elaborated declarations with
+translation checks, the hardest first. The package landed on main in #98; issue #73 stays
+open for the work to come. Section 2 says what that means for this rule.
 
 Astra's words that the decision rests on:
 
@@ -674,8 +699,8 @@ a train with content its check judges, and the order holds between trains. The o
    own, since that file is protected.
 
 Steps 3 and 4 may come before or after step 5; steps 1, 3, 4 and 5 all come before step 6.
-If a step needs a fact the axioms lack, work on it stops and the case goes to Jack, as for
-every stage.
+If a step needs a fact the axioms lack, work on it stops and the case goes to the owner, as
+for every stage.
 
 **Other branches.** `lean/iii5-iii6-ending` and `lean/iii5-iii6-euclid` landed together in
 #87, which rewrote `Audit/Overlaps.lean`, `docs/reports/overlaps.md` and the records of
@@ -1508,7 +1533,7 @@ before it was applied.
 | The `Arc.Drawn` users; III.10's passage note | Claude challenger (editorial) | Both in section 4 |
 | Conditions said of every centre burden a citer who holds a named centre | Claude challenger (editorial) | `Centre.every`, staged, proved and checked against III.4, proposed for approval, and approved at the freeze; a docstring cannot carry the idiom, since a proposition's docstring is Heath's enunciation |
 | The brief is long for "a short brief" | Claude challenger (editorial) | The decisions entry's draft and the model's detail are cut; what the challenge added stays |
-| Astra could not fetch issue #59 | Astra (answer 6), triage | The owner's words were checked against his comment on issue #59 on 18 October (section 1) |
+| Astra could not fetch issue #59 | Astra (answer 6), triage | The owner's words were checked against the owner's comment on issue #59 on 18 October (section 1) |
 | The answer's links point to private paths | Triage | This brief cites repository paths only |
 | Brief 0006's conversions show interfaces, not proofs; `of_circle`'s closure is provisional | Astra (answer 1) | Said in Appendix A and section 3 |
 | `Audit/` lacks the protected-path treatment of `scripts/` and `tests/` | Astra (answer 5) | The guard is described as a regression check, and lands on its own; whether `Audit/` becomes protected is a policy question for the coordinator, outside this brief |

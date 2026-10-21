@@ -53,7 +53,7 @@ Book III's hand-written parts (captions, titles, `DefinitionsIII.lean`) match th
 **Mostly, yes.** It is one project with about two dozen seams, and none of them breaks a proof. The seams cluster where Book I meets Books II and III, and where the generated pages meet the hand-written docs. These are the ones readers will notice first:
 - Book III has no lettered figures, though the README promises two figures for every proposition.
 - Book III is "Stated" in the README and "Sketched" on its pages.
-- Book I's Definition 15 is written "I.15" in Book II's tables, right beside Proposition I.15.
+- Definition I.15 is written "I.15" in Book II's tables, right beside Proposition I.15.
 - One table counts postulates through the cited propositions but Common Notions only where named.
 - Book I's titles say "line" and "wider" where everything else says "straight line" and "greater".
 - Full names at first mention appear on some pages and not others.
@@ -93,7 +93,7 @@ CI's guard against stray axioms is a regular expression with a hole. Nothing get
 
 ### 4. Are the axioms sound?
 
-**Yes.** The 87 axioms are 5 postulates, Definition 15 and 81 tacit rules. All of them are true together in the ordinary plane, including every degenerate case. In that model:
+**Yes.** The 87 axioms are 5 postulates, Definition I.15 and 81 tacit rules. All of them are true together in the ordinary plane, including every degenerate case. In that model:
 - points are points of the plane, lines are whole lines, and circles have positive radius;
 - betweenness is strict, and sides are open half-planes;
 - magnitudes are reals of at least 0, and length is distance;
@@ -105,13 +105,13 @@ So the axioms are consistent relative to Lean's logic and the reals, and no fals
 How we know:
 - Two verifiers searched independently, and about 8 million configurations met an axiom's hypotheses with no counterexample.
 - A mutation test caught all 15 deliberately weakened axioms, so the search can find a false rule when one exists.
-- For this report we also read Postulates 1 to 5, Definitions 10 and 15, superposition, the magnitude laws and the angle and area transfer rules against the model, and each holds.
+- For this report we also read Postulates 1 to 5, Definitions I.10 and I.15, superposition, the magnitude laws and the angle and area transfer rules against the model, and each holds.
 
 *Correction, 17 October 2026:* that search met about 11.8 million configurations, not 8 million; rerun with more seeds and committed in [tests/model](../../tests/model/MODEL.md), it meets 13,454,289, with no counterexample.
 
 Four things are worth writing down:
 1. Soundness depends on the 17 primitive words and magnitudes staying `opaque`.
-2. Definition 10's `¬ Collinear A B C` clause is what keeps Postulate 4 true, and its docstring does not say so.
+2. Definition I.10's `¬ Collinear A B C` clause is what keeps Postulate 4 true, and its docstring does not say so.
 3. The model is written down nowhere in the repository.
 4. Six Book III circumference lemmas rest on the still-unproved statements of III.20 to III.22.
 
@@ -146,7 +146,7 @@ Four things are worth writing down:
 
 The README promises two figures, a certificate and a mishnah for every proposition, and says every page reads "Euclid's statement, his figure, his proof…". Book III has none of the lettered figures. Proofs that run on Heath's letters (III.8, III.10, and III.33's "as in the first figure") cannot be followed, and nothing on the page says the figure is missing.
 
-The page also tells the reader that "the lines under each one are the Lean that carries it out" above a bare `sorry`, which is never explained. The status reads "Sketched" where the README says "Stated". The front page says words with no Lean partner are "never used in a proof", yet III.16 and III.31 argue with Def. 7.
+The page also tells the reader that "the lines under each one are the Lean that carries it out" above a bare `sorry`, which is never explained. The status reads "Sketched" where the README says "Stated". The front page says words with no Lean partner are "never used in a proof", yet III.16 and III.31 argue with Def. III.7.
 
 **Fix now:** these are render.py changes that touch only Book III pages, plus README scope lines. **Later:** draw the 37 figures.
 
@@ -167,7 +167,7 @@ Postulates, definitions and tacit rules include everything the cited proposition
 - superposition appears on every page after I.8;
 - I.29 shows 51 rules where its own steps use 16.
 
-CERTIFICATE.md explains the Common Notions; no proposition page does. **Fix:** clearer labels and a key under each table. Splitting the tacit list is for Jack.
+CERTIFICATE.md explains the Common Notions; no proposition page does. **Fix:** clearer labels and a key under each table. Splitting the tacit list is for the owner.
 
 ### 4. Credits and provenance
 
@@ -196,7 +196,7 @@ A later check found a third, the same kind of slip. Eight Book II mishnahs say t
 - "any straight-sided figure" for II.14, which is proved for two triangles;
 - "every proposition stated as Euclid states it", though II.1 is stated for two points of section.
 
-**book-I's** "Twenty-nine" reads like an off-by-one error until the reader is told the 29th is I.31. Drafts are in the discussion list, for Jack's OK.
+**book-I's** "Twenty-nine" reads like an off-by-one error until the reader is told the 29th is I.31. Drafts are in the discussion list, for the owner's OK.
 
 ### 7. The README claims a little more than is true
 
@@ -213,9 +213,9 @@ A later check found a third, the same kind of slip. Eight Book II mishnahs say t
 
 ### 8. The axiom guard in CI is a regex
 
-An axiom written after a same-line docstring in a proposition file passes `check_fidelity`. `render.py` would then leave it off every page. Nothing like this exists today. **Fix now:** check from the Lean environment instead, and show any unrecognised axiom under "Other".
+An axiom written after a same-line docstring in a proposition file passes `check_fidelity.py`. `render.py` would then leave it off every page. Nothing like this exists today. **Fix now:** check from the Lean environment instead, and show any unrecognised axiom under "Other".
 
-Two more ways round CI's house rules, found by a later check, are not in the repository either: Lean 4.35's `decide +native` does what `native_decide` does without that word, and adds an axiom without the keyword; and `set_option debug.skipKernelTC true` with a `run_cmd` that calls `addDecl` lets an ill-typed proof in with no axiom at all. CI's page check also used `git diff`, which does not see a page that was never committed.
+Two more ways round CI's house rules, found by a later check, are not in the repository either: Lean 4.35's `decide +native` does what `native_decide` does without that word, and adds an axiom without the keyword; and `set_option debug.skipKernelTC true` with a `run_cmd` that adds a declaration lets an ill-typed proof in with no axiom at all. CI's page check also used `git diff`, which does not see a page that was never committed.
 
 ### 9. Heath's italics dropped
 
@@ -233,7 +233,7 @@ About 18 quotations drop Heath's italics, confirmed on the page images, includin
 
 ### 11. Naming seams across books
 
-- Definition 15 is "Def. I.15", "I.15" or "Definition I.15" depending on the page.
+- Definition I.15 is "Def. I.15", "I.15" or "Definition I.15" depending on the page.
 - Book III is "stated" in one place and "sketched" in another.
 - Book I's titles use modern words.
 - Full names at first mention are uneven.
@@ -257,7 +257,7 @@ Books I and II "render byte for byte as tagged" (0002, 0004), and the book-II re
 - the glosses;
 - the table labels.
 
-We suggest one deliberate reader's-edition pass on main, recorded in 0002, with optional tags `book-I.1` and `book-II.1`. The original tags would keep the text as released. Until Jack decides, the fixes marked "after decision 1" wait.
+We suggest one deliberate reader's-edition pass on main, recorded in 0002, with optional tags `book-I.1` and `book-II.1`. The original tags would keep the text as released. Until the owner decides, the fixes marked "after decision 1" wait.
 
 ## Fixes a bosun can make now
 
@@ -269,7 +269,7 @@ None of these touches a released page, a statement or an axiom.
    - On stated pages, say the Lean is still to be written and explain `sorry`.
    - Use "stated" in the index legend and GRAPH.md.
    - Show the bracket note for III.12.
-   - Front page: "never used in a Lean proof"; give reasons for the empty Def. 7 and Def. 10 cells; gloss the touching words; say Def. 9 is measured twice.
+   - Front page: "never used in a Lean proof"; give reasons for the empty Def. III.7 and Def. III.10 cells; gloss the touching words; say Def. III.9 is measured twice.
 2. **`render.py`:** print "none", not "none yet", for a finished book.
 3. **README.**
    - Scope Book III's lines, explain I.31 in the "29", and note II.1 and II.14.
@@ -288,7 +288,7 @@ None of these touches a released page, a statement or an axiom.
 6. **Retire scratch-II** as voyage 4 did. Remove it at HEAD, point its links at `19279eb`, and add a 0002 bullet.
 7. **0002:** "Lean cites". Record that the Book II gap catalogue follows the book.
 8. **0003 and 0004.**
-   - The `sq_pos` note; split the `lt_semicircle` row.
+   - The `sq_pos` note; split the `BookIII.Circumference.lt_semicircle` row.
    - Reword the III.24 sentence.
    - "`rect` chooses one area".
    - Turn the captain asides into design statements.
@@ -298,11 +298,11 @@ None of these touches a released page, a statement or an axiom.
     - Check axiom modules from the environment; check that the primitives stay opaque and that the axiom count is 87.
     - In `render.py`, show unrecognised axioms under "Other".
 12. **Logs:** record the negative tests, or make them a CI job. Add "No axiom added; gaps: …" to voyages 3 to 5.
-13. **Write down the model** in a `Words.lean` docstring or in CERTIFICATE.md's source. Add the sentence on why Definition 10 needs `¬ Collinear A B C`.
+13. **Write down the model** in a `Words.lean` docstring or in CERTIFICATE.md's source. Add the sentence on why Definition I.10 needs `¬ Collinear A B C`.
 14. **`gaps-book-I.md`.**
     - Add the page and the italic to the circles quotation.
     - Give full names at first mention.
-    - Fill the seven entries that name nothing, and replace `PropN.something`.
+    - Fill the seven entries that name nothing, and replace the placeholder with the helper's name.
     - Restore Heath's italics.
 15. **STYLE.**
     - Keep Heath's italics, and add check 12b.
@@ -336,7 +336,7 @@ None of these touches a released page, a statement or an axiom.
    - "Def. I.15".
 6. **Glosses:** what each page holds, on the Book I index; System E in I.1; "diameter"; plain words for "associative" and "transitive"; "straight line" in the tacit docstrings.
 
-## For Jack to decide
+## For the owner to decide
 
 1. Decision 1, above.
 2. **The release notes:** approve the drafted book-II "How it was made" and thanks, the II.14 and II.1 scope, and book-I's "twenty-nine" and "used directly".
@@ -354,10 +354,10 @@ None of these touches a released page, a statement or an axiom.
    Should each page show a short "How Lean says it" note before its mishnah lands? Should Book III gain the rule that a circle has a centre?
 8. **III.20 to III.22** carry six circumference lemmas: prove them first, or review their statements first.
 9. **Stated pages** print Euclid's proof twice: fold the comment lines until the proof lands?
-10. **Book I** titles in Euclid's words, and the front page's Defs. 17 and 18.
+10. **Book I** titles in Euclid's words, and the front page's Defs. I.17 and I.18.
 11. **Ground files:** one naming and namespace scheme.
 12. **When to draw Book III's lettered figures**, and when to write `gaps-book-II.md`.
-13. **Only Jack can confirm** the ChatGPT sentence, and whether LeanEuclid's area rules were adapted, which NOTICE would then name.
+13. **Only the owner can confirm** the ChatGPT sentence, and whether LeanEuclid's area rules were adapted, which NOTICE would then name.
 
 ## What holds
 
@@ -365,7 +365,7 @@ These claims were all verified:
 - All 62 proofs build. They quote Heath exactly, and CI keeps the certificate fresh.
 - No axiom is hidden.
 - The Common Notions are theorems.
-- Definition 15 is the only definition that is an axiom.
+- Definition I.15 is the only definition that is an axiom.
 - Book II's and Book III's words are defined, not assumed.
 - Superposition is used directly only in I.4 and I.8.
 - Book Zero cites no proposition.
@@ -393,9 +393,9 @@ The care is visible on every page. What remains is mostly a matter of saying thi
 - **7.** `gaps-book-II.md` has since been written, so 0002 records that Book II's catalogue followed its book, and 0003's "Later" item says it now exists.
 - **10.** III.10's caption now ends "cross only at the centre". III.17's calls its translucent arc "the outer circle" and uses Euclid's word "perpendicular" to come in at about 45 words.
 - **11.** `Certificate/Facts.lean` writes `axiom_modules` (every axiom the project declares, and every axiom a proposition rests on, with its module) and `opaque` to `facts.json`. `check_fidelity.py` fails if any proposition rests on an axiom outside `Elements/Foundations/` (Lean's `propext`, `Classical.choice` and `Quot.sound` aside), if any axiom is declared elsewhere in `Elements`, if the count is not 87, or if any of the 17 primitives stops being `opaque`. With the later check above, it also refuses `decide +native`, `set_option debug.…`, `run_cmd`, `run_elab`, `elab`, `macro`, `implemented_by`, `extern` and `unsafe` in the Lean with its comments taken out, and the source check for `axiom` now reads past a docstring on the same line. CI's page check is `git status --porcelain`, which sees new and deleted pages. Replaying the build with lean4checker, a further guard the later check suggested, is not done.
-- **12.** The negative tests are a CI job, `scripts/negative_tests.py`: an edited Heath word, the README's wrong radii in I.1, and, in I.16, Postulate 5, a planted `Tacit.Euclidean` rule and an axiom after a same-line docstring. All were caught when it was first run. Voyage 5's line points at `gaps-book-II.md`, which now exists.
+- **12.** The negative tests are a CI job, `scripts/negative_tests.py`: an edited Heath word, the README's wrong radii in I.1, and, in I.16, Postulate 5, a planted rule in the namespace reserved for Euclidean-only rules and an axiom after a same-line docstring. All were caught when it was first run. Postulate 5 and rules in that namespace are forbidden before I.29, which is why planting them in I.16 makes the check fail. Voyage 5's line points at `gaps-book-II.md`, which now exists.
 - **13.** The model is a section of `Words.lean`'s module docstring, "The plane they describe".
-- **14.** The seven entries now name `CommonNotion4` (I.4), `between_cut` (I.11), `Prop13.cases` (I.13), `Triangle.bac` and `Triangle.cab` (I.17), `Prop3` (I.26), I.31's hypothesis `¬ Collinear B C A`, and `line_unique`, `Parallel.not_onLine` and `same_side_trans` (I.45). Full names at first mention also reach J. L. Heiberg, Bernhard Riemann, Augustus De Morgan and Paul Tannery, and Sir Thomas L. Heath.
+- **14.** The seven entries now name `CommonNotion4` (I.4), `between_cut` (I.11), `Prop13.cases` (I.13), `Triangle.bac` and `Triangle.cab` (I.17), `BookI.Prop3` (I.26), I.31's hypothesis `¬ Collinear B C A`, and `line_unique`, `Parallel.not_onLine` and `same_side_trans` (I.45). Full names at first mention also reach J. L. Heiberg, Bernhard Riemann, Augustus De Morgan and Paul Tannery, and Sir Thomas L. Heath.
 - **15.** Check 12b reads the italic flags in the scan's ABBYY file. Subject strokes are 2.4 to 2.6, as the figures of I.30 to II.14 draw them.
 
 **The fixes that wait on Decision 1 were made once it was taken** (0002, "Books I and II in one voice"): most in the pass that put Books I and II in one voice, the rest in "The held reader's-edition fixes, in the common voice". Where one was carried out differently from the list above, this is how:

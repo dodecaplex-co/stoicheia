@@ -22,8 +22,8 @@ code.
 
 **No guide grants authority.** This page, STYLE, WORKFLOW and every other guide describe
 the standard. None of them grants authority to change the foundations, weaken a check or
-publish. Those decisions belong to the project's owner, Jack Challis, working with the
-coordinator of the work ([WORKFLOW.md](WORKFLOW.md)), and each is recorded in
+publish. Those decisions belong to the repository's owner, working with the coordinator
+of the work ([WORKFLOW.md](WORKFLOW.md)), and each is recorded in
 [0002-decisions.md](briefs/0002-decisions.md):
 
 - **The foundations:** everything in `Elements/Foundations/` (the postulates, Definition
@@ -222,7 +222,7 @@ The representations Books I–III rest on:
 | lengths, angles, areas | `Magnitude` of one kind each, added and compared only | Common Notions proved as theorems | |
 | a right angle | Definition I.10 as a predicate, and Postulate 4 making every right angle `∟` | | |
 | superposition | one rule, `Tacit.superposition`, allowed in I.4 and I.8 alone | stronger as a construction principle than System E's restricted inference rule, as [its file](../Elements/Foundations/Tacit/Superposition.lean) says; a restricted rule is being prototyped ([#75](https://github.com/jackChallis/stoicheia/issues/75)) | |
-| the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
+| the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `exists_rect`, `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
 | a rectilineal figure | given with its division into triangles, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | that every figure can be so divided, and that another division gives the same sum, are not proved; Hilbert proved the second, for his measure of area | `figure-with-dissection` |
 | a circle's centre | a hypothesis, `∃ O, Centre O α`, or Postulate 3's | III.1 finds it | `centre-given` |
 | a circumference | twice the angle standing on it, `circumference`, `standing`; no radius | proved facts in `Circumferences.lean`; arcs with membership are stage 3's work | `angle-measure`, `redundant-hypothesis` |
@@ -366,7 +366,7 @@ dependencies.
 ## 7. The foundations, and the policies the checks enforce
 
 - **Every assumption is an `axiom` in `Elements/Foundations/`:** the five postulates,
-  Definition I.15 and 81 tacit rules, 87 in all, each tacit rule from System E (or
+  Definition I.15 and <!-- count:tacit-rules -->73<!-- /count --> tacit rules, <!-- count:axioms -->79<!-- /count --> in all, each tacit rule from System E (or
   LeanEuclid's corrections of it) with its citation. A new rule, or a change to one, is a
   foundation decision (section 1); `Certificate/axioms.lock` holds every axiom's exact
   statement, with every definition that the axioms' statements or the propositions',
@@ -381,7 +381,13 @@ dependencies.
 - **Nothing gets round the kernel:** no `native_decide`, `decide +native`,
   or any other command of the kinds below, in any Lean file the edition builds: under
   `Elements/`, `Staging/` and `Audit/`, and in their roots, `Elements.lean`,
-  `Staging.lean` and `Audit.lean`. `check_fidelity.py` matches each as a whole word, in
+  `Staging.lean` and `Audit.lean`, and under `model/`, except the package's own
+  `model/.lake`, which the scan never enters. Mathlib imports are allowed in the model.
+  Only in `model/Check.lean` and `model/Check/`, `run_cmd` may be the first word on its
+  line followed by `Check.Generator.<ident>` or `(Check.Generator.<ident>`, since those
+  files run the generator. Every other forbidden command or attribute is still refused
+  there, and an `axiom` is refused everywhere under `model/`. `check_fidelity.py` matches
+  each as a whole word, in
   the Lean with its comments and the text of its string and character literals taken
   out, read as Lean reads them, raw strings and escapes among them (`native_decide` even
   in a comment or a string). The code in an interpolated string's `{…}` holes is read
@@ -431,8 +437,19 @@ dependencies.
   - `implemented_by`, `extern` and `unsafe` put code in place of a definition;
   - `#exit` stops Lean reading the file, though a reader and the checks here read on.
 - **Superposition** only in I.4 and I.8.
+- **Placement,** Euclid's application of one figure to another, only in III.24 and the
+  bridge theorems of `Elements/BookIII/Arcs.lean` (brief 0006): outside its own files,
+  `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`, no other Lean under
+  `Elements/` names `placement` or a lemma of the `Placement` namespace, and no entry but
+  III.24 calls on one.
 - **Postulate 5.** No proof before I.29 uses Postulate 5 or a rule declared in
   `Elements.Tacit.Euclidean`; Books II and III come after Book I and may use it throughout.
+- **Circle 2 and Circle 3.** No certificate entry rests on `Tacit.inside_of_between` or
+  `Tacit.outside_of_between`, whether through its own proof or through a lemma it uses;
+  each name must stay in the axiom lock, or name a theorem whose `proved_rules` entry
+  in `facts.json` includes another forbidden circle rule still in the lock as an axiom.
+  Thus a proved rule remains forbidden through the axiom beneath it; a missing name,
+  or a proof without such an axiom, fails the check.
 - **No later citations:** no proof cites a proposition that does not come before it.
 - **Complete books stay complete:** every proposition of a complete book is proved, with
   both figures and a mishnah, and so is every porism and companion attached to it.
@@ -440,33 +457,92 @@ dependencies.
 
 `check_fidelity.py` enforces these for every certificate entry, porisms and companions
 included. `negative_tests.py` plants a break of these kinds to show each is caught: an
-axiom declared outside the foundations, in each of `Elements/`, `Staging/` and `Audit/`,
+axiom declared outside the foundations, in each of `Elements/`, `Staging/`, `Audit/`,
+`model/Model/` and `model/Check/`,
 one of them after another command on its line; an axiom missing from the lock, and one
 weakened; Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4
-and I.8; a later citation, one of them named only in a helper's statement; every
-forbidden command, and an attribute for each ending and prefix the scan knows, in each of
-`Elements/`, `Staging/` and `Audit/`, and `#exit` at the end of each root; a proposition
-imported by Book Zero; a `sorry` in a complete book; and a primitive word no longer
-opaque. Some of the forbidden commands stand after a string, a raw string or a character
-literal holding `/-`, `-/`, `]` or `"`, and one in an interpolated string's hole, and a
-string whose braces Lean could read as code is planted too. Each finding of the source
-scan names its file and line. A complete book's missing figure or mishnah has no planted
-break yet.
+and I.8; Circle 2 or Circle 3 in a proposition's, porism's or companion's axioms,
+Circle 3 renamed in the lock; and Circle 2 proved without Circle 3 beneath it, with a
+matching case that still rests on locked Circle 3 and must pass;
+placement among the shared steps of an entry other than III.24, and a lemma of
+its namespace named in another file under `Elements/`; a later citation, one of them
+named only in a helper's statement; every forbidden command, and an attribute for each
+ending and prefix the scan knows, in each of those five folders, and `#exit` at the end
+of each root; generator `run_cmd` calls, plain and parenthesised, outside the model's
+Check files, and calls there to another namespace or after another command on the line;
+other forbidden commands on an allowed generator call's line or in its arguments;
+a proposition imported by Book Zero; a `sorry` in a
+complete book; and a primitive word no longer opaque. Some of the forbidden commands
+stand after a string, a raw string or a character literal holding `/-`, `-/`, `]` or `"`,
+and one in an interpolated string's hole, and a string whose braces Lean could read as
+code is planted too. The source scan names each finding's file and line, except for
+symbolic links to files or directories in the scanned trees and root files, which are
+refused by their paths and never followed, a link at `model/.lake` among them. A
+complete book's missing figure or mishnah has no planted break yet. The tests also check
+that generator calls first on their line are allowed in `model/Check.lean` and
+`model/Check/`, that an axiom in a `.lake` folder of `model/Model/` or `model/Check/` is
+caught while one in `model/.lake` is not read, that a link named `.lake`, to a
+directory, a file or nothing, is refused in `model/`, `model/Model/` and `model/Check/`,
+and that the unplanted tree passes. They plant source files in place, the `.lake` links
+in small trees of their own, and copy only `facts.json`, never `model/.lake`.
 
-The first two policies hold in `Staging/` (section 6) and in `Audit/` as well: a staged
-file or an audit lemma declares no axiom and uses none of the forbidden commands. Nothing
-there reaches the certificate, so the source scan is what enforces them:
+The first two policies hold in `Staging/` (section 6), `Audit/` and `model/` as well,
+with the model's Check allowance above. Nothing there reaches the certificate, so the
+source scan is what enforces them:
 `check_fidelity.py`'s `check_rules` reads every `.lean` file under `Elements/`,
-`Staging/` and `Audit/`, and the three roots, and refuses an `axiom` anywhere outside
-`Elements/Foundations/` and every command and attribute the list above names. It reads
+`Staging/` and `Audit/`, and the three roots, and every `.lean` file under `model/`,
+without entering the directory `model/.lake`, whose contents go unscanned; a link at
+`model/.lake` is refused like any other link, and a `.lake` folder deeper in the model is
+read like any other. It refuses an `axiom` anywhere outside
+`Elements/Foundations/` and every command and attribute the list above names, with only
+the generator `run_cmd` allowance in `model/Check.lean` and `model/Check/`.
+`MODEL_CHECK_RUN_CMD` names that allowance in the script; it exempts only `run_cmd`,
+so its arguments and any further command on the line are still scanned. Book Zero's
+import rule and the placement policy remain confined to `Elements/`. It reads
 comments and literals as Lean's tokenizer does, so a string cannot hide a command from it
 by opening a comment or ending an attribute's brackets. Beyond that it reads words, not
 Lean's grammar nor the tokens a file declares, so it catches a slip but not a command
 disguised from it on purpose, nor an attribute it does not list: review still reads every
-staged file and audit lemma. In `Elements/` the certificate reads the axioms from Lean itself as well.
+staged file, audit lemma and model file. In `Elements/` the certificate reads the axioms
+from Lean itself as well. The model's independent kernel replay, the other half of #121,
+is still open.
 The checks' own Lean, `Certificate/Facts.lean`, which writes `facts.json`, is not
 scanned: it is a protected path ([WORKFLOW.md](WORKFLOW.md), section 10), changed only
 with a decisions entry and a security review.
+
+### Rules now proved
+
+19 October 2026: eight rules became theorems, taking the lock from 87 axioms to 79.
+Each keeps its `Elements.Tacit` name and exact type. The namespace preserves the
+interface; it does not make a declaration an assumption. The certificate follows each
+proof to the assumptions it uses.
+
+| Theorem under `Elements.Tacit` | System E label | Derivation and home |
+|---|---|---|
+| `adjacent_eq_of_right` | Diagram-angle 3 | I.13 makes adjacent angles two right angles; Common Notion 3 removes the given right angle. Proved after I.13 in [`Prop13.lean`](../Elements/BookI/Prop13.lean). |
+| `not_same_side_of_circles_meet` | Circle 4 | Definition I.15 gives equal distances from each centre, `circle_eq` tells the centres apart, and I.7 excludes two common points on the same side. Proved after I.7 in [`Prop07.lean`](../Elements/BookI/Prop07.lean). |
+| `centre_unique` | Generalities 2 | Two supposed centres bisect the same straight line through the circle by Definition I.15. Equal doubles have equal halves, and the strict order of lengths forces the centres to coincide. Proved from the foundations in [`Circles.lean`](../Elements/Figure/Circles.lean). |
+| `inside_of_between` | Circle 2 | Circle 3, `outside_of_between`, would put the second endpoint outside if the middle point were not inside. Proved in `Circles.lean`. Circle 3 stays an axiom. |
+| `exists_point_outside_circle` | Points 9 | Points on the circle enclose an interior point; Postulate 2 produces the line beyond the circumference, avoiding the given finite list, and Circle 3 puts the new point outside. Proved in `Circles.lean`. |
+| `line_meets_circle_of_opposite_sides` | Intersection 2 | Intersection 1, betweenness and Pasch 2 locate a crossing between the given points; Circle 3 puts it inside, and Intersections 5 gives two distinct points of the circle on the line. Proved in `Circles.lean`. |
+| `triple_incidence3` | Triple incidence 3 | Angle addition and positivity, Intersection 1, and the order and side rules locate a crossing and carry its side relation to the given point. Proved in `Circles.lean`. |
+| `inside_of_angle_add` | Diagram-angle 2, converse | I.13, angle addition, positivity and the side rules exclude each way the point could lie outside the angle. Proved after I.13 in `Prop13.lean`; the forward rule, `angle_add_of_inside`, stays an axiom. |
+
+The current proofs of Points 9 (`exists_point_outside_circle`) and Intersection 2
+(`line_meets_circle_of_opposite_sides`) both depend on Circle 3. The certificate applies
+the Circle 2 and Circle 3 ban transitively, so no proposition, porism or companion may
+depend on either proved rule.
+
+A client that previously imported only the foundations must now import the theorem's
+home. Book Zero still imports no proposition. I.7 cannot be established independently
+through Circle 4, since that theorem now uses I.7. III.2 still has an overlap with the
+retained Circle 3 axiom, as the [catalogue](reports/overlaps.md) explains.
+
+No certificate entry currently rests on Circle 3. I.12 finds the crossing X of
+CD with AB between the centre C and the point D on the circle, proves X inside
+by `InsideCircle.of_between_centre`, and uses the assumed Intersection 3
+(`line_meets_circle_of_inside`) to find two points of the circle on AB. The proved
+Intersection 2 has no user in the published proofs.
 
 ## 8. Completion claims
 
@@ -497,7 +573,7 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | The numerical model tests (`tests/model/`) | The locked axioms held in the configurations sampled from a standard model of the plane, exactly where coordinates allow, and planted mutations of them were caught. | A proof of consistency: a test can find a counterexample but cannot show there is none, and laws no harness reaches rest on a hand argument. |
 | The hyperbolic check (`tests/model/hyperbolic.py`) | Every axiom but Postulate 5 held in the configurations sampled from the hyperbolic plane, and Postulate 5 failed there. | Non-derivability: numerical tests do not establish that a statement failing there cannot be proved without Postulate 5. |
 | The informal model argument | A reasoned interpretation of each law in the standard plane. | A machine-checked proof. |
-| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all 87 laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
+| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->79<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
 
 The certificate describes proof-term dependencies, and nothing more. "This proof uses
 Postulate 5" is a fact about our proof. By itself it establishes neither the consistency of

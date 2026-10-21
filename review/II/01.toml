@@ -12,11 +12,62 @@ note = "Euclid draws every parallel in one figure. The companions draw one at a 
 tags = ["hypothesis-dropped"]
 note = "The straight line A is named by its two ends, A₁ and A₂, and the main theorem asks them to differ. The companions do not: A₁A₂ may be nothing, and then every rectangle is nothing, so they claim a little more than Euclid's two straight lines. `Prop1.general` takes the straight line from B cut at points given in order along it (`InOrder`), and adds the rectangles on its segments as a sum over the list; with no point of section the one segment is the whole, and with no point at all the straight line and each rectangle are nothing."
 
+[[passage]]
+at = "let BG be made equal to A"
+kind = "helper"
+helper = "produce_longer"
+note = "Euclid cuts off BG equal to A by I.3, taking enough room on BF for granted. The Lean first places A at B by I.2, then `produce_longer` extends the perpendicular far enough for I.3 to cut off BG."
+
+[[passage]]
+at = "and through D, E, C let DK, EL, CH be drawn parallel to BG"
+kind = "helper"
+helper = "BookI.Prop31.parallelogram"
+note = "Euclid draws DK, EL and CH and reads their meetings with GH from the figure. `BookI.Prop31.parallelogram` draws each parallel by I.31 and finds K, L and H by `BookI.Prop30.meet`, using I.30."
+
+[[passage]]
+at = "Then BH is equal to BK, DL, EH"
+kind = "helper"
+helper = "quadArea_add_of_parallelograms"
+note = "Euclid reads BH as BK, DL and EH together. The Lean proves the uprights parallel by `BookI.Prop30.parallel` (I.30), orders G, K, L and H by `Parallel.between`, and uses `quadArea_add_of_parallelograms` twice to join the three pieces."
+
+[[passage]]
+at = "Now BH is the rectangle A, BC"
+kind = "helper"
+helper = "Rectangle.of_right"
+note = "Euclid treats BH as a rectangle once its angle at B is right. `Rectangle.of_right` proves the other angles right by I.29, and `Rectangle.eq_rect` identifies its area from BG equal to A."
+
+[[passage]]
+at = "BK is the rectangle A, BD"
+kind = "helper"
+helper = "Rectangle.of_right"
+note = "Euclid likewise treats BK as a rectangle. The Lean transfers the right angle at B along BC to BD, uses `Rectangle.of_right` for the other angles, and identifies BK by `Rectangle.eq_rect`."
+
+[[passage]]
+at = "and DL is the rectangle A, DE"
+kind = "helper"
+helper = "Rectangle.of_right"
+note = "Euclid takes DL to be right-angled, with DK equal to A by I.34. The Lean gets its angle at D from the adjacent right angle of BK by `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, then uses `Rectangle.of_right` and `Rectangle.eq_rect` to identify DL."
+
+[[passage]]
+at = "Similarly also EH is the rectangle A, EC"
+kind = "helper"
+helper = "Rectangle.of_right"
+note = "Euclid gives EH the same justification as DL. The Lean repeats I.34 for EL equal to A, makes BL a rectangle by `Rectangle.of_right`, and uses `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, for the angle at E before `Rectangle.of_right` and `Rectangle.eq_rect` identify EH."
+
 [figure]
 case = "BC cut at two points, D and E, as in Heath's figure"
 
 [review]
-stage = "exceptions"
-commit = "5d6b1f6"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:2642bf8e58a5ea62"
+stage = "full"
+commit = "f3b45b70"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:dca5badf15c0dfbd"
+run = "brief 0005 stage 5, ship C5 re-read"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

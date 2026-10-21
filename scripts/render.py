@@ -17,6 +17,8 @@ every book in `heath.BOOKS`:
     docs/PROGRAM.md    only the status table between `<!-- status -->` and
                        `<!-- /status -->`, with the stage, the outside score and the
                        release read from `docs/program.toml`
+    tracked Markdown   inline count values; generated_counts.py defines the markers
+                       and where they are refused
 
 A page of a later book links each proposition it cites from an earlier one, as
 [I.47](../I/47.md) on a page of Book II, and a porism to its anchor, as
@@ -32,7 +34,9 @@ comments aside: one of the theorems later propositions use, a lemma for the prop
 own proofs, or a lemma beside the proposition; and the Proof row names the companions in
 the order the review record lists them. On every run, before anything else, the script
 checks both against the cases of USE_CASES and ORDER_CASES (`use_self_check`), and stops
-if one is read wrongly.
+if one is read wrongly; MODERN_FIGURE_CASES (`modern_figure_self_check`) checks that a
+modern figure follows its whole paragraph, or is refused if that paragraph is missing,
+before any page is written.
 
 Run after `lake env lean Certificate/Facts.lean`. Standard library, and Python 3.11 or
 later for the review records (tomllib).
@@ -43,6 +47,9 @@ import json
 import re
 
 import check_fidelity
+import check_style
+import generated_counts
+from generated_counts import axiom_groups
 import heath
 
 ROOT = heath.ROOT
@@ -197,11 +204,45 @@ def whose(book, n):
     return "the argument Heath prints" if heath.bracketed(book, n) else "Euclid's argument"
 
 
+def read_text(path):
+    """Read a repository file only after checking its destination."""
+    return generated_counts.repository_path(ROOT, path).read_text()
+
+
+def write_text(path, text):
+    """Write a repository file only after checking its destination."""
+    generated_counts.repository_path(ROOT, path).write_text(text)
+
+
+def optional_path(path):
+    path = generated_counts.repository_path(ROOT, path)
+    return path if path.exists() else None
+
+
+def guarded_review_path(book, n):
+    return generated_counts.repository_path(ROOT, heath.review_path(book, n))
+
+
+def guarded_terms_path():
+    return generated_counts.repository_path(ROOT, heath.REVIEW / "terms.toml")
+
+
+def load_terms():
+    guarded_terms_path()
+    return heath.load_terms()
+
+
+def load_review(book, n, *, require_stamp=True):
+    guarded_review_path(book, n)
+    guarded_terms_path()
+    return heath.load_review(book, n, require_stamp=require_stamp)
+
+
 def load_facts():
-    path = ROOT / "facts.json"
-    if not path.exists():
+    path = optional_path(ROOT / "facts.json")
+    if path is None:
         return {}
-    return {p["ref"]: p for p in json.loads(path.read_text())["propositions"]}
+    return {p["ref"]: p for p in json.loads(read_text(path))["propositions"]}
 
 
 def load_records():
@@ -212,8 +253,8 @@ def load_records():
     records = {}
     for book, count in heath.BOOKS.items():
         for n in range(1, count + 1):
-            exists = heath.review_path(book, n).exists()
-            records[f"{book}.{n}"] = (heath.load_review(book, n, require_stamp=False)
+            exists = optional_path(heath.review_path(book, n)) is not None
+            records[f"{book}.{n}"] = (load_review(book, n, require_stamp=False)
                                       if exists else None)
     return records
 
@@ -242,7 +283,7 @@ def load_axiom_docs():
     docs = {}
     pattern = re.compile(r"/--((?:(?!-/).)*?)-/\s*axiom\s+([^\s({]+)", re.S)
     for path in sorted((ROOT / "Elements" / "Foundations").rglob("*.lean")):
-        src = path.read_text()
+        src = read_text(path)
         # facts.json names an axiom by its namespace below `Elements`, e.g.
         # `Tacit.circles_meet` or, for a Euclidean-only rule, `Tacit.Euclidean.…`.
         ns = re.search(r"^namespace Elements\.(\S+)", src, re.M)
@@ -256,7 +297,7 @@ def load_axiom_docs():
 
 def svg_desc(path):
     """The one-line caption kept in an SVG's <desc> element."""
-    m = re.search(r"<desc>(.*?)</desc>", path.read_text(), re.S)
+    m = re.search(r"<desc>(.*?)</desc>", read_text(path), re.S)
     return " ".join(m.group(1).split()) if m else ""
 
 
@@ -284,7 +325,7 @@ def lean_parts(book, n):
     Text before the first helper that declares nothing (a section heading alone) goes
     with the main theorem, as does everything when the file has no documented main
     theorem."""
-    src = heath.lean_path(book, n).read_text()
+    src = read_text(heath.lean_path(book, n))
     start = src.find("open Tacit")
     start = start + len("open Tacit") if start >= 0 else 0
     end = src.rfind(f"end Elements.Book{book}")
@@ -652,18 +693,6 @@ def rules_summary(names, book):
     return "; ".join(parts) if parts else "none"
 
 
-def axiom_groups(entry):
-    """An entry's axioms by kind: postulates, definitions, tacit rules, and any other
-    axiom, which is shown under "Other", never dropped (check_fidelity.py fails on any
-    axiom declared outside Elements/Foundations/)."""
-    axioms = entry["axioms"]
-    posts = [a for a in axioms if a.startswith("Postulate")]
-    defs = [a for a in axioms if a.startswith("Definition")]
-    tacit = [a for a in axioms if a.startswith("Tacit.")]
-    other = [a for a in axioms if a not in posts + defs + tacit]
-    return posts, defs, tacit, other
-
-
 def rests_on(p, docs, depth, book, refs, attached=()):
     """Markdown for the 'What it rests on' section. `refs` is Heath's references (see
     heath_refs); they come from the text, so they are shown before the Lean is done.
@@ -843,7 +872,7 @@ def overlap_word(overlap):
 def representation_badge(record):
     """A few words beside the badge for a representation that changes how the whole
     statement is read (review/terms.toml `badge`): "in our measure of circumferences"."""
-    terms = heath.load_terms()
+    terms = load_terms()
     tags = (record.get("representation") or {}).get("tags", [])
     badges = [terms[t]["badge"] for t in tags if "badge" in terms.get(t, {})]
     return and_list(badges) if badges else ""
@@ -952,7 +981,7 @@ def field_table(book, n, p, record, attached, docs):
                      + (f" {route['note']}" if route.get("note") else "")))
         rep = record.get("representation")
         if rep:
-            terms = heath.load_terms()
+            terms = load_terms()
             meanings = [terms[t]["meaning"] for t in rep["tags"]
                         if terms.get(t, {}).get("kind") == "representation"]
             text = rep.get("note") or " ".join(meanings)
@@ -975,7 +1004,7 @@ def field_table(book, n, p, record, attached, docs):
                         "proposition.")
             else:
                 text = f"{name} already {'contains' if one else 'contain'} this proposition."
-            if (ROOT / "docs" / "reports" / "overlaps.md").exists():
+            if optional_path(ROOT / "docs" / "reports" / "overlaps.md") is not None:
                 text += " See [the overlap catalogue](../../docs/reports/overlaps.md)."
             rows.append(("Overlap", text))
         rv = record["review"]
@@ -1103,7 +1132,7 @@ def how_to_read(p, record, proof_text=""):
 def lean_code():
     """Every Lean file of the edition, by path, with its comments taken out
     (`check_fidelity.without_comments`): read once, for `use_kind`."""
-    return {path: check_fidelity.without_comments(path.read_text())
+    return {path: check_fidelity.without_comments(read_text(path))
             for path in sorted((ROOT / "Elements").rglob("*.lean"))}
 
 
@@ -1373,6 +1402,71 @@ JUMP_LINKS = ("[Euclid's proof](#euclids-proof) · [In Lean](#in-lean) · "
               "[What it rests on](#what-it-rests-on) · [Mishnah](#mishnah)")
 
 
+def with_modern_figure(text, book, n):
+    """The mishnah, with the figure of the modern way, `figures/<book>/NN-modern.svg`,
+    where there is one, set under the paragraph that opens "**The modern way.**", at the
+    end of that paragraph as check_style.py reads it (`modern_span`), with a blank line on
+    each side (docs/STYLE.md, section 7). A missing paragraph stops the render with a
+    diagnostic naming the proposition and figure, as S24 also requires the paragraph."""
+    figure = optional_path(ROOT / "figures" / book / f"{n:02d}-modern.svg")
+    if figure is None:
+        return text
+    img = (f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}-modern.svg\" "
+           f"alt=\"The modern way for Proposition {book}.{n}, with Heath's letters\" "
+           f"width=\"360\"></p>")
+    return insert_modern_figure(text, img, book, n)
+
+
+def insert_modern_figure(text, img, book, n):
+    """Insert the figure after the source paragraph selected by the figure rules."""
+    span = check_style.modern_span(text)
+    if span is None:
+        raise SystemExit(f"{book}.{n}: figures/{book}/{n:02d}-modern.svg exists but the "
+                         "mishnah has no paragraph 'The modern way'")
+    _, end = span
+    rest = text[end:].lstrip("\n")
+    return text[:end] + "\n\n" + img + ("\n\n" + rest if rest else "")
+
+
+MODERN_FIGURE_CASES = [   # (text before, the paragraph or None, text after)
+    ("", None, ""),
+    ("", None, "Ordinary commentary."),
+    ("", None, "    **The modern way.** Put $b$ here."),
+    ("Before.\n\n", None, "    **The modern way.** Put $b$ here."),
+    ("", None, "\t**The modern way.** Put $b$ here."),
+    ("Before.\n\n   ", "**The modern way.** Put $b$ here <!--\nnotes\n--> and $c$ there.",
+     "\n\nAfter."),
+    ("", "**The modern way.** Put $b$ here <!--\nnotes\n--> and $c$ there.", "\n# Next"),
+    ("Before.\n\n", "**The modern way.** Put $b$ here `k\nx` and $c$ there.", "\n\nAfter."),
+    ("", "**The modern way.** Put $b$ here ``k\nx`` and $c$ there.", "\n- Next"),
+    ("", "**The modern way.** Put $b$ here.", ""),
+]
+
+
+def modern_figure_self_check():
+    """Check placement and refusal against source text, comments and code included."""
+    faults = []
+    img = '<p align="center"><img src="modern.svg"></p>'
+    for before, paragraph, after in MODERN_FIGURE_CASES:
+        text = before + (paragraph or "") + after
+        want = (before + paragraph + "\n\n" + img
+                + ("\n\n" + after.lstrip("\n") if after else "")) if paragraph else None
+        try:
+            got = insert_modern_figure(text, img, "I", 1)
+        except SystemExit as error:
+            if paragraph is not None or str(error) != (
+                    "I.1: figures/I/01-modern.svg exists but the mishnah has no paragraph "
+                    "'The modern way'"):
+                faults.append(f"modern figure in {text!r}: unexpected refusal: {error}")
+            continue
+        if paragraph is None:
+            faults.append(f"modern figure in {text!r}: missing paragraph was not refused")
+            continue
+        if got != want:
+            faults.append(f"modern figure in {text!r}: got {got!r}, not {want!r}")
+    return len(MODERN_FIGURE_CASES), faults
+
+
 def page(book, n, count, titles, facts, docs, records):
     source, enunciation, proof = heath.read(book, n)
     # The enunciation counts too: I.22's [I. 20] is there. The porism's references go
@@ -1386,9 +1480,9 @@ def page(book, n, count, titles, facts, docs, records):
     attached_refs = [(a, heath_refs(porism_text, book) if a.get("kind") == "porism"
                       else heath_refs([], book)) for a in attached]
     nav = page_nav(book, n, count)
-    figure = ROOT / "figures" / book / f"{n:02d}.svg"
-    mishnah = ROOT / "mishnah" / book / f"{n:02d}.md"
-    idea = ROOT / "figures" / book / f"{n:02d}-idea.svg"
+    figure = optional_path(ROOT / "figures" / book / f"{n:02d}.svg")
+    mishnah = optional_path(ROOT / "mishnah" / book / f"{n:02d}.md")
+    idea = optional_path(ROOT / "figures" / book / f"{n:02d}-idea.svg")
     # A proposition Heath prints in square brackets (III.12) opens its bracket before
     # the enunciation, to close after "Q. E. D." at the end of the proof.
     opening = "[" if heath.bracketed(book, n) else ""
@@ -1397,14 +1491,14 @@ def page(book, n, count, titles, facts, docs, records):
     if opening:
         out += [BRACKET_NOTES.get((book, n), BRACKET_DEFAULT), ""]
     out += [in_lean_line(p, record, book, n), ""]
-    if idea.exists():
+    if idea is not None:
         caption = svg_desc(idea)
         alt = caption.replace('"', "&quot;")
         out += [f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}-idea.svg\" "
                 f"alt=\"{alt}\" width=\"420\"></p>", "",
                 f"<p align=\"center\"><em>{caption}</em></p>", ""]
     out += ["## Euclid's proof", ""]
-    if figure.exists():
+    if figure is not None:
         note = figure_note(record)
         alt = (f"Euclid's figure for Proposition {ref}, with Heath's letters" + (
             f". {note}" if note else "")).replace('"', "&quot;")
@@ -1429,13 +1523,16 @@ def page(book, n, count, titles, facts, docs, records):
     out += [lean_listing(book, n, facts), "",
             "## What it rests on", "", rests_on(p, docs, 2, book, refs, attached_refs)]
     out += ["## Mishnah", ""]
-    if mishnah.exists():
-        out += [MISHNAH_LEAD, "", mishnah.read_text().strip(), ""]
+    commentary = with_modern_figure(read_text(mishnah).strip("\r\n")
+                                    if mishnah is not None else "", book, n)
+    if mishnah is not None:
+        out += [MISHNAH_LEAD, "", generated_counts.without_markers(commentary.strip()), ""]
     else:
         out += ["_Commentary to come._", ""]
     # A line or three from docs/reading.md, chosen for this proposition; no file, no section.
-    reading = ROOT / "reading" / book / f"{n:02d}.md"
-    further = reading.read_text().strip() if reading.exists() else ""
+    reading = optional_path(ROOT / "reading" / book / f"{n:02d}.md")
+    further = (generated_counts.without_markers(read_text(reading).strip())
+               if reading is not None else "")
     if further:
         out += ["## Further reading", "", further, ""]
     out += [nav, ""]
@@ -1446,7 +1543,7 @@ def page(book, n, count, titles, facts, docs, records):
 def front_sections(book):
     """The headings of a book's front matter, in order: Book I has Definitions,
     Postulates and Common Notions; Book II has Definitions alone."""
-    text = heath.HTML_COMMENT.sub("", (ROOT / "heath" / book / "front.md").read_text())
+    text = heath.HTML_COMMENT.sub("", read_text(ROOT / "heath" / book / "front.md"))
     return [line[3:].strip() for line in text.splitlines() if line.startswith("## ")]
 
 
@@ -1462,8 +1559,9 @@ def book_intro(book):
     the book is about, and, once, what its pages share (the house words, the shared steps
     and where Postulate 5 comes in), so that no page has to say it again. Empty if the
     book has none yet."""
-    path = ROOT / "mishnah" / "intro" / f"{book}.md"
-    return path.read_text().strip() if path.exists() else ""
+    path = optional_path(ROOT / "mishnah" / "intro" / f"{book}.md")
+    return (generated_counts.without_markers(read_text(path).strip())
+            if path is not None else "")
 
 
 def ref_ranges(refs):
@@ -1641,7 +1739,7 @@ def book_summary(book, facts, records, href, postulate5=True, up=""):
 
 def index(book, count, titles, facts, records):
     start = f"Start with the [{in_words(front_sections(book))}](front.md)."
-    if (ROOT / "docs" / "reports" / f"gaps-book-{book}.md").exists():
+    if optional_path(ROOT / "docs" / "reports" / f"gaps-book-{book}.md") is not None:
         start += (" What Euclid takes for granted along the way is gathered in "
                   f"[a catalogue](../../docs/reports/gaps-book-{book}.md).")
     # The key names only the marks the table uses: a finished book shows ✅ alone.
@@ -1743,7 +1841,7 @@ FRONT_UNUSED = "Words with no Lean partner are never used in a Lean proof."
 
 
 def front(book):
-    raw = (ROOT / "heath" / book / "front.md").read_text()
+    raw = read_text(ROOT / "heath" / book / "front.md")
     source = heath.HTML_COMMENT.match(raw.strip()).group(0)[4:-3].strip()
     text = heath.HTML_COMMENT.sub("", raw)
     out = [GENERATED, f"[Book {book}](index.md)", "",
@@ -1829,7 +1927,7 @@ def certificate_intro(facts, records):
     else:
         shared += "."
     gaps = [f"[Book {b}](docs/reports/gaps-book-{b}.md)" for b in BOOKS
-            if (ROOT / "docs" / "reports" / f"gaps-book-{b}.md").exists()]
+            if optional_path(ROOT / "docs" / "reports" / f"gaps-book-{b}.md") is not None]
     catalogues = (f", and the steps Euclid takes without a word are gathered, proposition "
                   f"by proposition, in the catalogues for {and_list(gaps)}" if gaps else "")
     assumed = and_list(assumed_definitions(facts)) or "none"
@@ -1837,7 +1935,7 @@ def certificate_intro(facts, records):
     reached = ("which every record has reached" if stages == {"exceptions"} else
                "which every record has passed" if stages == {"full"} else
                "which every record has reached at least")
-    badges = sorted({t["badge"] for t in heath.load_terms().values() if "badge" in t})
+    badges = sorted({t["badge"] for t in load_terms().values() if "badge" in t})
     dagger = (f" A † marks a statement read {and_list(badges)}, which has no radius in it; "
               "the page's Representation row says what follows." if badges else "")
     bracketed = [f"{b}.{n}" for b, (count, _) in BOOKS.items() for n in range(1, count + 1)
@@ -2019,7 +2117,7 @@ def certificate(facts, docs, records):
 
 # README.md is generated in part: each book's completion summary stands between
 # `<!-- scope:I -->` and `<!-- /scope:I -->`, in its row of "Where things stand".
-SCOPE_MARKERS = re.compile(r"(<!-- scope:([IVX]+) -->)(.*?)(<!-- /scope:\2 -->)", re.S)
+SCOPE_MARKERS = generated_counts.README_SCOPE_MARKERS
 
 
 def readme(text, facts, records):
@@ -2041,7 +2139,7 @@ def readme(text, facts, records):
 # file of the edition holds, from docs/program.toml, kept by hand.
 PROGRAM = ROOT / "docs" / "PROGRAM.md"
 PROGRAM_TOML = ROOT / "docs" / "program.toml"
-STATUS_MARKERS = re.compile(r"(<!-- status -->\n)(.*?)(<!-- /status -->)", re.S)
+STATUS_MARKERS = generated_counts.PROGRAM_STATUS_MARKERS
 PROGRAM_STAGES = ("brief", "statements", "proofs", "voice", "records", "acceptance",
                   "released")
 PROGRAM_KEYS = {"stage", "outside", "tag", "release"}
@@ -2054,7 +2152,7 @@ def load_program():
     where = PROGRAM_TOML.relative_to(ROOT).as_posix()
     tomllib = heath._toml()
     try:
-        data = tomllib.loads(PROGRAM_TOML.read_text())
+        data = tomllib.loads(read_text(PROGRAM_TOML))
     except (OSError, tomllib.TOMLDecodeError) as e:
         raise SystemExit(f"{where}: {e}")
     faults = []
@@ -2387,10 +2485,11 @@ def names_page(facts, records):
             p = facts.get(ref)
             record = records.get(ref)
             page = f"{book}/{n:02d}.md"
-            path = heath.lean_path(book, n)
-            here = set(DECLARATION.findall(path.read_text())) if path.exists() else set()
+            path = optional_path(heath.lean_path(book, n))
+            here = set(DECLARATION.findall(read_text(path))) if path is not None else set()
+            module_path = path or heath.lean_path(book, n)
             module = (f"[`Elements.Book{book}.Prop{n:02d}`]"
-                      f"(../{path.relative_to(ROOT).as_posix()})")
+                      f"(../{module_path.relative_to(ROOT).as_posix()})")
             rests = f"[what it rests on]({page}#what-it-rests-on)"
             scope = SCOPE_WORD[record["statement"]["scope"]] if record else ""
             entries = [(p or {"name": f"Book{book}.Prop{n}", "status": "sketched"},
@@ -2438,29 +2537,39 @@ def main() -> None:
                          "is used, or of a record's order of companions; nothing was "
                          "rendered:\n" + "\n".join("  ✗ " + f for f in faults))
     print(f"self-check: the listing and the Proof row read {count} cases rightly")
+    count, faults = modern_figure_self_check()
+    if faults:
+        raise SystemExit(f"{len(faults)} fault(s) in the modern figure's placement; "
+                         "nothing was rendered:\n" + "\n".join("  ✗ " + f for f in faults))
+    print(f"self-check: the modern figure is placed or refused rightly in {count} cases")
+    changes, errors = generated_counts.updates(ROOT)
+    if errors:
+        raise SystemExit("count markers: nothing was rendered:\n" + "\n".join(errors))
     facts = load_facts()
     docs = load_axiom_docs()
     records = load_records()
+    for path, text in changes.items():
+        write_text(path, text)
     for book, (count, titles) in BOOKS.items():
-        out_dir = ROOT / "book" / book
+        out_dir = generated_counts.repository_path(ROOT, ROOT / "book" / book)
         out_dir.mkdir(parents=True, exist_ok=True)
         for n in range(1, count + 1):
-            (out_dir / f"{n:02d}.md").write_text(page(book, n, count, titles, facts, docs,
-                                                      records))
-        (out_dir / "index.md").write_text(index(book, count, titles, facts, records))
-        (out_dir / "front.md").write_text(front(book))
-    (ROOT / "book" / "names.md").write_text(names_page(facts, records))
-    (ROOT / "CERTIFICATE.md").write_text(certificate(facts, docs, records))
-    (ROOT / "GRAPH.md").write_text(graph(facts))
+            write_text(out_dir / f"{n:02d}.md", page(book, n, count, titles, facts, docs,
+                                                  records))
+        write_text(out_dir / "index.md", index(book, count, titles, facts, records))
+        write_text(out_dir / "front.md", front(book))
+    write_text(ROOT / "book" / "names.md", names_page(facts, records))
+    write_text(ROOT / "CERTIFICATE.md", certificate(facts, docs, records))
+    write_text(ROOT / "GRAPH.md", graph(facts))
     path = ROOT / "README.md"
-    text = path.read_text()
+    text = read_text(path)
     filled = readme(text, facts, records)
     if filled != text:
-        path.write_text(filled)
-    text = PROGRAM.read_text()
+        write_text(path, filled)
+    text = read_text(PROGRAM)
     filled = program_page(text, facts, records, load_program())
     if filled != text:
-        PROGRAM.write_text(filled)
+        write_text(PROGRAM, filled)
     print("rendered book pages, the table of names, CERTIFICATE.md, GRAPH.md, README.md's "
           "scope summaries and PROGRAM.md's status table")
 
