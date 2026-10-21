@@ -687,6 +687,10 @@ def publication_signal_self_test():
 
                 previous = {sig: signal.getsignal(sig) for sig in stops}
                 runner.stop_as_exit()
+                if hasattr(signal, 'SIGINT'):
+                    # A shell's background job starts with SIGINT ignored: give it Python's
+                    # own handler, so that the interruption the test sends is one.
+                    signal.signal(signal.SIGINT, signal.default_int_handler)
                 stopped = None
                 try:
                     with contextlib.ExitStack() as stack:
