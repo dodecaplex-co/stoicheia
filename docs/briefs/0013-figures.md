@@ -332,7 +332,12 @@ revision. None is a defect of a statement:
   `Avoid.inside_of_between` shares its short name with `Tacit.inside_of_between`, the
   Circle 2 rule that FORMALIZATION, section 7, bars from every certificate entry: it is a
   proved lemma of its own and harmless in the build, but wants a name no reader can take
-  for the barred rule.
+  for the barred rule. Promotion renames it `inside_triangle_of_between`, with its users at
+  `Diagonal.lean`, lines 599 and 1147, and `ExtractEdges.lean`, line 240, and takes the
+  general triangle facts beside it (`Avoid.lean`, lines 25 to 128 and 158 to 215) out of
+  the `Avoid` namespace, since they are not about the predicate `Avoid`. `inside_between`
+  (`ConvexFacts.lean`) and `OutlineFacts.inside_between` share a name and state different
+  things.
 - Twelve pairs of declarations have identical statements, their types equal in Lean;
   promotion keeps one of each, and cites it (FORMALIZATION, section 6). Four are aliases,
   the first of each pair proved by citing the second: `cut_convex_rotate_append` and
@@ -346,6 +351,24 @@ revision. None is a defect of a statement:
   `OutlineFacts.good_of_line` and `CoverFacts.goodRay_of_line`, `LoopFacts.convex_side_ne`
   and `Pieces.side_ne`, `OutlineFacts.vertex_boundary` and `Diag.corner_boundary`, and
   `Diag.sides_snd_inj` and `Extract.sides_snd_inj`.
+- More restate, or nearly restate, a fact proved elsewhere, and promotion keeps one name for
+  each. `CutHelpers.lean` restates eleven facts under the names the cut's proof uses, each
+  proved by citing the fact, as its module note says: four are aliases above, two are
+  unused helpers below, and the other five are `cut_half_between` (`half_between`),
+  `cut_segment_mem` (`segment_corners`), `cut_ear_separates` (`ear_opposite`),
+  `cut_between_side` (`Avoid.same_side_between_on`) and `cut_closed_half`
+  (`closed_in_half`). Seven more nearly restate another fact: `cut_quad_flip` and
+  `cut_vertex_flip` (`area_diagonal_change`), `cut_fan_close` (`fanArea_append`),
+  `cut_strict_between` (`Ext.between_half_open`), `Avoid.same_side_between`
+  (`half_between`), `Avoid.closed_same_side` (`closed_in_half`) and `Ext.split_last`
+  (Lean's `List.eq_nil_or_concat`, which proves it).
+- Three docstrings do not quite say what their lemma says, and are to read: for
+  `cut_vertex_flip` (`CutHelpers.lean`, lines 161 to 162), "The first four corners have one
+  sum whichever diagonal divides them: ABC with ACD, or BCD with ABD."; for
+  `Ext.closing_segment` (`ExtHelpers.lean`, line 18), "A chain that ends with V and then A
+  has VA among its segments: for an outline A, B, …, V it is the closing side."; and for
+  `Ext.corner_not_between` (`ExtHelpers.lean`, line 163), "No corner lies strictly between
+  two points of the region."
 - Six helpers are used by nothing, and promotion drops them: `Extract.rot_corner` and
   `Extract.vert_not_inside` (`ExtractEdges.lean`), `Extract.same_swap_left` and
   `Extract.same_pair` (`ExtractLists.lean`), and `cut_side_at` and `cut_corner_not_closed`
@@ -367,9 +390,15 @@ revision. None is a defect of a statement:
   the notes of `Elements/` and not those of `Staging/`; promoted unchanged, they would fail
   it. By S22's own reading they hold 317 code spans of letters alone, such as AB or B₂ in
   backticks (STYLE, section 1, "Lean notes"), most of them in `OutlineBound.lean`,
-  `ArrangementFacts.lean`, `CutPieces.lean` and `Cells.lean`; and a note of
-  `ExtractLists.lean` (line 421) names a hypothesis by its local name in backticks, `hgrow`,
-  where STYLE, section 1, "Hypotheses in words", asks for words.
+  `ArrangementFacts.lean`, `CutPieces.lean` and `Cells.lean`, and among them the five of
+  `ConvexFacts.lean`, line 231, which is to read "from B through D, it meets AC between A
+  and C"; and a note of `ExtractLists.lean` (line 421) names a hypothesis by its local name
+  in backticks, `hgrow`, where STYLE, section 1, "Hypotheses in words", asks for words.
+- Smaller points of form. Eight module notes open with no heading, where the others open
+  with one: those of `ExtHelpers.lean`, `CutHelpers.lean`, `Loops.lean`, `Outline.lean`,
+  `Division.lean`, `OutlineArea.lean`, `BookI.lean` and `BookII.lean`. `ExtHelpers.lean`
+  has doubled blank lines, at lines 16 to 17, 82 to 83 and 206 to 207. In `convex_cut`
+  (`Cells.lean`), line 304 reuses the local name `hc` of line 298, shadowing it.
 - `Diagonal.lean`, of 2,225 lines, proves the optional D5 and D6, and nothing outside it
   rests on them: `division_exists` takes the arrangement route, and D7 is proved by D9.
   Whether to keep it, in the Book Zero home of the table above, or to retire it with the
@@ -482,9 +511,10 @@ the genuine cut, tiling, content, ray parity, exact cell selection and extractio
 outlines.
 
 Those were proved on 21 October, with every other staged statement, `convex_cut_pieces`
-among them, on the same branch (section 10, "Progress, 21 October 2026"). The routes they
-took are below, under "The routes taken"; where a route departs from this section's, the
-Lean file describes it where it happens.
+among them, on the same branch (section 10, "Progress, 21 October 2026"), where the reading
+of the prototype's own proofs is recorded too. The routes they took are below, under "The
+routes taken"; where a route departs from this section's, the Lean file describes it where
+it happens.
 
 ### Content: compare the three routes
 
@@ -715,7 +745,8 @@ explicit contract was staged with this brief, with `sorry` where its own proof w
 "Derivation" means a checked interface derivation from other staged statements.
 A1 to A4, B0 to B6 and C1 to C4 are staged in the files named below. Every row is now
 proved on `lean/figures-staging`, under the coordinator's assignment of 20 October, and no
-`sorry` is left in `Staging/Figures/`. The Dependencies column gives the route proposed;
+`sorry` is left in `Staging/Figures/`. The Dependencies column gives the route proposed,
+save in rows B0 and B3, corrected to the order their proofs take;
 where the proof took another, the row says so, and "The routes taken" above gives the
 departure and its reason. A proof rests on a row when it uses the row's statement or the
 lemma that proves it: `crossing_parity_independent` (D3) applies `Parity.parity_independent`
@@ -738,10 +769,10 @@ the intermediate obligations the route described in prose.
 | A2 | `closed_triangle_sides` | incidence, order, sides, Pasch | `Closed.lean`, staged; proved, from the probe |
 | A3 | `triangle_point_avoiding`, `small_triangle` | finite choice, incidence and order; `exists_off_line` for the frame | `Avoid.lean`, staged; proved |
 | A4 | `area_cut_closed`, `triangle_cut_cover` | existing area cut, zero area, Pasch | `Closed.lean`, staged; proved |
-| B0 | `triangle_cell` | A2, singleton sum | `Cells.lean`, staged; proved |
+| B0 | `triangle_cell` | A2 (through B3's `fan_covers` on three corners), singleton sum | `Cells.lean`, staged; proved from `Ext.triangle_outline` and `fan_covers`, which does not use `triangle_cell`, so the order has no cycle; the ledger of 19 October had B3 resting on B0, and the proof runs the other way |
 | B1 | `convex_diagonal_separates` | supporting sides and incidence | `Arrangement.lean`, staged; proved from the prototype's ears (`Pieces.convex_sublist`, `ear_opposite`) |
 | B2 | `convex_diagonal_split` | A2, B1 | `Arrangement.lean`, staged; proved from B1 and C1's corner-to-corner pieces (`Pieces.form_corner_corner`), not a fan induction of its own |
-| B3 | `ConvexOutline.rotate`, `ConvexOutline.reverse`, `convexRegion_rotate`, `fan_triangle`, `fan_apart`, `fan_covers`; `convex_fan` | B0, B2 | `ConvexCover.lean`, staged; proved; `Division.lean`, derivation, resting on no stub |
+| B3 | `ConvexOutline.rotate`, `ConvexOutline.reverse`, `convexRegion_rotate`, `fan_triangle`, `fan_apart`, `fan_covers`; `convex_fan` | A2; B1 and B2 substance (`ear_opposite`, `cut_convex`) | `ConvexCover.lean`, staged; proved without B0, resting on A2 through `triangle_halfplanes`, the lemma that proves it; `Division.lean`, derivation, resting on no stub |
 | B4 | `fanSum_rotate`, `fanSum_reverse`, `fanSum_rotateLeft` | B1, probe flips and sums | `ConvexArea.lean`, staged; proved; `fanSum_rotateLeft` in `Arrangement.lean`, proved from `fanSum_rotate`, one corner at a time |
 | B5 | `fan_insert_between`, `boundary_fan_sum` | A4, B1, B4 | `Cells.lean`, staged; proved |
 | B6 | `convex_extreme_iff`, `convex_area_ext` | A2, A3, B2 to B4 | `Cells.lean`, staged; proved, citing no content |
@@ -876,14 +907,14 @@ and decisions 7 and 8 are open; the status of each follows it.
    `figure-with-dissection` until all bridges are proved and reviewed. Recommended:
    the present constructions remain useful without a claim that an outline or a
    choice-independent area has already been formalised.
-6. **Prototype approval.** The coordinator approves, or not, the prototype proofs of
-   section 8 at the revision named in section 10, with their dependency checks, so
-   that they may stay in `Staging/` (WORKFLOW, section 2). Recommended: they are the
-   route's first wave, every one free of new axioms and all but `convex_cut` free of
-   `sorry`; `convex_cut` rests on one lemma, `convex_cut_pieces`, with `sorry`, which exists
-   only on that branch and is not among the statements staged with this brief, so its
-   statement is approved, or not, with the prototype. Until then they stay on their branch,
-   and the brief with its statements lands without them. Then
+6. **Prototype approval.** As asked on 19 October: the coordinator approves, or not, the
+   prototype proofs of section 8 at the revision named in section 10, with their
+   dependency checks, so that they may stay in `Staging/` (WORKFLOW, section 2).
+   Recommended: they are the route's first wave, every one free of new axioms and all but
+   `convex_cut` free of `sorry`; `convex_cut` rests on one lemma, `convex_cut_pieces`, with
+   `sorry`, which exists only on that branch and is not among the statements staged with
+   this brief, so its statement is approved, or not, with the prototype. Until then they
+   stay on their branch, and the brief with its statements lands without them. Then
    authorise the next prototypes: the genuine cut, ray parity, and exact coverage for a
    concave figure and a figure with a hole. Approving this plan alone is not evidence
    that those proofs exist.
@@ -891,7 +922,9 @@ and decisions 7 and 8 are open; the status of each follows it.
    proofs of every staged statement, in place in `Staging/Figures/`, as a prototype the
    coordinator approved (WORKFLOW, section 2), and on 21 October all were proved, the
    genuine cut's `convex_cut_pieces` among them (section 10, "Progress, 21 October
-   2026"). They stay in `Staging/` until the owner approves their promotion.
+   2026"), and no `sorry` is left. The prototype proofs of 19 October were read in full at
+   `b2c0580a` by a reader who wrote none of them, who approved them with minor findings
+   (section 10). They stay in `Staging/` until the owner approves their promotion.
 7. **Ownership.** Approve the homes in section 7, name one writer per file and split
    outline and arrangement dependencies before proofs begin. Recommended. Reconcile
    any shared vocabulary with brief 0012 without silently replacing its `Polygon`.
@@ -947,8 +980,9 @@ carried this text. The table is the record of that revision; what has changed si
 
 Every lake or Lean command followed `export PATH=$HOME/.elan/bin:$PATH`. The seven quoted
 definitions match `heath/I/front.md`. Elaboration with staged `sorry` is interface
-evidence, not geometric completion; no independent semantic approval of the prototype
-proofs, scan comparison or kernel replay is claimed.
+evidence, not geometric completion. That revision claimed no independent reading of the
+prototype proofs, scan comparison or kernel replay; the prototype proofs have since been
+read in full, and approved with minor findings ("Progress, 21 October 2026", below).
 
 After approval and proof, acceptance requires:
 
@@ -994,24 +1028,26 @@ taken". Their helper lemmas are in files new on 21 October, `CutPieces.lean`,
 section 7 gives each a home.
 
 **How the evidence was gathered.** Each proof of 21 October was written by one writer and
-read in full by an independent reader who wrote none of it. Nine readings covered the
-proofs: the genuine cut's pieces (C1); the intersection, tiling and content (C2 to C4); the
+read in full by an independent reader who wrote none of it, and the prototype proofs of 19
+October were read in full at `b2c0580a` by a reader who wrote none of them. Ten readings
+covered the proofs: the prototype of 19 October (A1 to A4, B0, B3 to B6 and `convex_cut`);
+the genuine cut's pieces (C1); the intersection, tiling and content (C2 to C4); the
 loops and their parity (D1, D3, the D4 lemmas, `convex_loop_region` and
 `convex_supporting_side`); the convex precursors and the arrangement (B1, B2, D2, D8); the
 cell cover and division (D9); the diagonal route (D5 to D7); the extraction (D10); the
 fan's bridge; and the bound, `outline_bounded`, with the four D4 bridges proved beside it
 (`outline_boundary`, `same_boundary_region`, `outline_normalise`, `region_with_holes`).
-Eight of them approved the proofs with minor findings. The reading of the bound found the
-proofs correct and the statements untouched, and asked for changes: two module notes were
-false, and have since been corrected, and the import of I.23 bears on the homes, which
-section 7 records for the owner. A tenth reading, of the change that brought the Lean notes
-up to date with the proofs, approved it with minor findings, which were applied. The
-readings of the bound,
+Nine of them approved the proofs with minor findings. The reading of the prototype found
+nothing unsound and no statement changed, and one of its findings corrected the order of
+rows B0 and B3 in section 8's ledger. The reading of the bound found the proofs correct and
+the statements untouched, and asked for changes: two module notes were false, and have
+since been corrected, and the import of I.23 bears on the homes, which section 7 records
+for the owner. One more reading, of the change that brought the Lean notes up to date with
+the proofs, approved it with minor findings, which were applied. The readings of the bound,
 the fan's bridge, the diagonal route and the extraction are named in merge commits of
-`lean/figures-staging` (`5a27ae5c`, `5fcddcd5`, `0d665982`, `0637a668`); the others are
-recorded with the work, outside the repository. The readers' points that bear on promotion
-are listed in section 7, "Before promotion". The prototype's proofs of 19 October have the
-evidence that section 8 and this section's table of 19 October record for them.
+`lean/figures-staging` (`5a27ae5c`, `5fcddcd5`, `0d665982`, `0637a668`); the others, the
+reading of the prototype among them, are recorded with the work, outside the repository.
+The readers' points that bear on promotion are listed in section 7, "Before promotion".
 
 At `b2c0580a`, the final Lean of these proofs, `lake build Staging` passes, with three
 warnings, the unused binders of section 7; `#print axioms` reports `sorryAx` for none of

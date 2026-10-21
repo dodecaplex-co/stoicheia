@@ -3544,12 +3544,15 @@ findings:
   diagonal route and the bridge `Prop45.fan_boundary` among them, with no new axiom, no
   statement or definition changed and `Certificate/axioms.lock` unchanged. Each proof of
   21 October was written by one writer and read in full by an independent reader who wrote
-  none of it. The readings of the bound, the fan's bridge, the diagonal route and the
-  extraction are named in merge commits of `lean/figures-staging`; the others are recorded
-  with the work, outside the repository. The reading of the bound asked for changes: two
-  module notes were false, and have since been corrected, and the import of I.23 bears on
-  the homes, which the brief's section 7 records; the other readings approved with minor
-  findings. At
+  none of it. The prototype proofs of 19 October were read in full at `b2c0580a` by a
+  reader who wrote none of them, who approved them with minor findings, one of which
+  corrected the order of two rows of the brief's ledger (B0 and B3). The readings of the
+  bound, the fan's bridge, the diagonal route and the extraction are named in merge commits
+  of `lean/figures-staging`; the others, the reading of the prototype among them, are
+  recorded with the work, outside the repository. The reading of the bound asked for
+  changes: two module notes were false, and have since been corrected, and the import of
+  I.23 bears on the homes, which the brief's section 7 records; the other readings approved
+  with minor findings. At
   `b2c0580a`, the final Lean of these proofs, `#print axioms` reports `sorryAx` for no
   staged theorem, and Postulate 5 and superposition only in `outline_bounded`, whose
   enclosing triangle uses Postulate 5 and copies an angle by I.23, its one citation of the
