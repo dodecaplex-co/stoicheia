@@ -607,7 +607,9 @@ review", "N/A" and their like) refuses; a finding that merely begins with such w
 the member with origin/main; a member that changes a protected path must name its
 commit there, and its cell may not say "Not required" anywhere, in any case or
 spelling. Beyond that, the cells are the coordinator's words: the check reads that a
-review of the member is named, not what it found. `/no-mistakes` says
+review of the member is named and that some visible verdict or findings stand beyond the
+commit name and its punctuation or markup. It imposes no verdict vocabulary or prose
+length. `/no-mistakes` says
 `passed at <head>` for that same member head, or `not run: <reason>`, with at least
 five words giving the reason.
 

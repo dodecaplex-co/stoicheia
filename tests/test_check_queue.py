@@ -729,6 +729,10 @@ class QueueTests(unittest.TestCase):
                 ("## 20 Octo&#98;er 2026", "repeated dated heading"),
                 ("## 20 October&#x20;2026", "repeated dated heading"),
                 ("## [20 October 2026](#x)", "repeated dated heading"),
+                ("## [20 October 2026](https://example.test/a(b))",
+                 "repeated dated heading"),
+                (r"## [20 October 2026](https://example.test/a\(b\))",
+                 "repeated dated heading"),
                 ("## [20 October 2026][x]", "repeated dated heading"),
                 ("## [20](#a) [October](#b) [2026](#c)", "repeated dated heading"),
                 ("## 20 Octo<!-- -->ber 2026", "repeated dated heading"),
@@ -766,6 +770,8 @@ class QueueTests(unittest.TestCase):
                 "    ## 20 October 2026\n\n    20 October 2026\n    ---",
                 "<!--\n## 20 October 2026\n-->",
                 "<div>\n## 20 October 2026\n</div>\n",
+                "<x title=\">\">\n## 20 October 2026\n\n",
+                "<x title='<'>\n## 20 October 2026\n\n",
                 "<pre>\n## 20 October 2026\n</pre>"):
             with self.subTest(hidden=hidden.splitlines()[0]):
                 page.write_text(original + "\n" + hidden + "\n", encoding="utf-8")
@@ -805,6 +811,26 @@ class QueueTests(unittest.TestCase):
                 self.verdict(self.cli(tree=True, prepare=False), 1,
                              "repeated dated heading")
 
+    def test_tree_tracks_container_and_heading_block_boundaries(self):
+        self.checkout(self.head)
+        page = self.repo / PAGE
+        original = page.read_text(encoding="utf-8")
+        for added in (
+                "- 20 October 2026\n---",
+                "### 20 October 2026\n---",
+                "> - 20 October 2026\n---"):
+            with self.subTest(added=added):
+                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
+                self.verdict(self.cli(tree=True, prepare=False), 0, "queue: PASS")
+        for added in (
+                "- 20 October 2026\n  ---",
+                "- ```\n  ## hidden\n## 20 October 2026",
+                "> - ## 20 October 2026"):
+            with self.subTest(added=added):
+                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
+                self.verdict(self.cli(tree=True, prepare=False), 1,
+                             "repeated dated heading")
+
     def test_tree_refuses_raw_html_headings_even_in_hidden_blocks(self):
         self.checkout(self.head)
         page = self.repo / PAGE
@@ -827,6 +853,8 @@ class QueueTests(unittest.TestCase):
                      "## " + "](" * (size // 2), "## " + "][" * (size // 2),
                      "## " + "&#" * (size // 2), "> " * (size // 2) + "## 20 October 2026",
                      "- " * (size // 2), "## 1 " + "a " * (size // 2),
+                     "## [20 October 2026](a" + "(" * size,
+                     "<x title=\"" + ">" * size + "\">",
                      "## 20 October 2026" + " " * size + "#"):
             with self.subTest(line=line[:12]):
                 self.assertGreaterEqual(len(line), size)
@@ -1162,6 +1190,23 @@ class QueueTests(unittest.TestCase):
                    REPOSITORY="owner/repository")
         return subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script], cwd=self.repo,
                               env=env, capture_output=True, text=True)
+
+    def test_queue_job_installs_test_dependency_only_for_offline_tests(self):
+        with (SCRIPTS.parent / ".github/workflows/ci.yml").open(encoding="utf-8") as source:
+            workflow = yaml.safe_load(source)
+        steps = workflow["jobs"]["queue-integrity"]["steps"]
+        install = [step for step in steps if step.get("name") ==
+                   "Install the queue tests' pinned YAML parser"]
+        offline = [step for step in steps if step.get("name") ==
+                   "Check the queue and train checks, case by case"]
+        judge = [step for step in steps if step.get("name") ==
+                 "Check the group with main's copy of check_queue.py"]
+        self.assertEqual(len(install), 1)
+        self.assertEqual(len(offline), 1)
+        self.assertEqual(len(judge), 1)
+        self.assertEqual(install[0].get("if"), "github.event_name != 'merge_group'")
+        self.assertEqual(offline[0].get("if"), "github.event_name != 'merge_group'")
+        self.assertEqual(judge[0].get("if"), "github.event_name == 'merge_group'")
 
     def test_queue_job_executes_the_base_judge_with_all_its_scripts(self):
         script = (

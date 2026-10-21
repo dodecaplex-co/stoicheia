@@ -185,6 +185,15 @@ def _placeholder(cell: str) -> bool:
                                       .rstrip(".!;:, ").casefold()))
 
 
+def _review_content(cell: str) -> bool:
+    """Whether a review cell says something visible beyond commit names and markup."""
+    text = unicodedata.normalize("NFKC", html.unescape(cell))
+    text = re.sub(r"<!--.*?-->|<[^>]*>", "", text, flags=re.S)
+    text = re.sub(r"\]\([^)]*\)|\]\[[^]]*\]", "]", text)
+    text = COMMIT.sub("", text)
+    return any(character.isalpha() for character in text)
+
+
 def _evidence(rows: list[dict]) -> list[str]:
     """Check the evidence that can be read without a repository."""
     problems = []
@@ -203,10 +212,14 @@ def _evidence(rows: list[dict]) -> list[str]:
             if not written(cell) or (key != "no_mistakes" and _placeholder(cell)):
                 problems.append(f"Members: {branch}: {label} is not written, or says the "
                                 "review is not done")
-            elif key != "no_mistakes" and not COMMIT.search(cell) and not (
-                    key == "security_review" and NOT_REQUIRED.match(cell)):
-                problems.append(f"Members: {branch}: {label} names no reviewed commit "
-                                "(7 to 40 lower-case hex digits)")
+            elif key != "no_mistakes":
+                not_required = key == "security_review" and NOT_REQUIRED.match(cell)
+                if not COMMIT.search(cell) and not not_required:
+                    problems.append(f"Members: {branch}: {label} names no reviewed commit "
+                                    "(7 to 40 lower-case hex digits)")
+                elif not not_required and not _review_content(cell):
+                    problems.append(f"Members: {branch}: {label} gives no visible review "
+                                    "verdict or findings beyond the reviewed commit")
         evidence = row["no_mistakes"]
         if match := PASSED.fullmatch(evidence):
             checked = match.group(1)

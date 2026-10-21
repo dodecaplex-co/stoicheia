@@ -94,9 +94,8 @@ MONTHS = ("January", "February", "March", "April", "May", "June", "July",
 ATX = re.compile(r" {0,3}#{1,2}[ \t]+(.*)")
 SETEXT = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
 FENCE = re.compile(r" {0,3}(`{3,}|~{3,})(.*)")
-# A block quote's marker, and a list item's (bullet or ordered), before a heading.
+# A block quote's marker before a heading or another container.
 QUOTE = re.compile(r" {0,3}>[ \t]?")
-CONTAINER = re.compile(r" {0,3}(?:>[ \t]?|(?:[-+*]|[0-9]{1,9}[.)])[ \t]+)")
 # CommonMark's type-six HTML block names. Types six and seven end at a blank line;
 # the other five forms have explicit terminators.
 HTML_BLOCK_TAGS = (
@@ -110,12 +109,8 @@ HTML_BLOCK_TAGS = (
 )
 HTML_BLOCK_TAG = re.compile(
     rf"(?i) {{0,3}}</?(?:{'|'.join(HTML_BLOCK_TAGS)})(?=[ \t\n/>]|$)")
-HTML_COMPLETE_TAG = re.compile(
-    r"(?i) {0,3}</?[A-Za-z][A-Za-z0-9-]*(?:[ \t]+[^<>]*)?/?>[ \t]*")
 # An HTML heading tag of level one or two, which this reading refuses rather than reads.
 RAW_HEADING = re.compile(r"(?i)<h[12](?=[\s/>]|$)")
-# A link's destination or reference after its text: [text](destination), [text][label].
-LINK_TAIL = re.compile(r"\]\([^()]*\)|\]\[[^\[\]]*\]")
 # The Hangul fillers render as nothing, though Unicode counts them as letters.
 INVISIBLE = {"\u115f", "\u1160", "\u3164", "\uffa0"}
 ORDINAL = r"(?:st|nd|rd|th)?"
@@ -759,15 +754,6 @@ def atx(line: str) -> str | None:
     return bare.rstrip(" \t") if bare != text and bare[-1] in " \t" else text
 
 
-def _unwrap(line: str, markers: re.Pattern = CONTAINER) -> str:
-    """The line inside its block quote markers and, by default, its list item markers too,
-    read by position, so a line of many markers is read once."""
-    position = 0
-    while (match := markers.match(line, position)) and match.end() > position:
-        position = match.end()
-    return line[position:]
-
-
 def _quoted(line: str) -> tuple[int, str]:
     """A line without its block quote markers, and the number removed."""
     position = depth = 0
@@ -786,7 +772,64 @@ def _fence_close(line: str, marker: str, size: int) -> bool:
     return run >= size and not stripped[run:].strip(" \t")
 
 
-def _html_block(line: str) -> tuple[re.Pattern | None, bool] | None:
+def _complete_html_tag(line: str) -> bool:
+    """Whether a line consists of one CommonMark open or closing tag."""
+    at = len(line) - len(line.lstrip(" "))
+    if at > 3 or at >= len(line) or line[at] != "<":
+        return False
+    at += 1
+    closing = at < len(line) and line[at] == "/"
+    at += closing
+    if at >= len(line) or not line[at].isascii() or not line[at].isalpha():
+        return False
+    at += 1
+    while at < len(line) and line[at].isascii() and (line[at].isalnum()
+                                                      or line[at] == "-"):
+        at += 1
+    if closing:
+        while at < len(line) and line[at] in " \t":
+            at += 1
+        return at < len(line) and line[at] == ">" and not line[at + 1:].strip(" \t")
+    while at < len(line):
+        while at < len(line) and line[at] in " \t":
+            at += 1
+        if line.startswith("/>", at):
+            return not line[at + 2:].strip(" \t")
+        if at < len(line) and line[at] == ">":
+            return not line[at + 1:].strip(" \t")
+        if at >= len(line) or not (line[at].isascii() and
+                                   (line[at].isalpha() or line[at] in "_:")):
+            return False
+        at += 1
+        while at < len(line) and line[at].isascii() and (
+                line[at].isalnum() or line[at] in "_.:-"):
+            at += 1
+        while at < len(line) and line[at] in " \t":
+            at += 1
+        if at >= len(line) or line[at] != "=":
+            continue
+        at += 1
+        while at < len(line) and line[at] in " \t":
+            at += 1
+        if at >= len(line):
+            return False
+        if line[at] in "\"'":
+            quote = line[at]
+            at += 1
+            close = line.find(quote, at)
+            if close < 0:
+                return False
+            at = close + 1
+        else:
+            start = at
+            while at < len(line) and line[at] not in " \t\"'=<>`":
+                at += 1
+            if at == start:
+                return False
+    return False
+
+
+def _html_block(line: str, paragraph: bool) -> tuple[re.Pattern | None, bool] | None:
     """An HTML block's explicit terminator, or its blank-line termination."""
     stripped = line.lstrip(" ")
     if len(line) - len(stripped) > 3:
@@ -803,7 +846,7 @@ def _html_block(line: str) -> tuple[re.Pattern | None, bool] | None:
         return re.compile(r">"), False
     if stripped.startswith("<![CDATA["):
         return re.compile(r"\]\]>"), False
-    if HTML_BLOCK_TAG.match(line) or HTML_COMPLETE_TAG.fullmatch(line):
+    if HTML_BLOCK_TAG.match(line) or not paragraph and _complete_html_tag(line):
         return None, True
     return None
 
@@ -816,76 +859,121 @@ def headings(text: str) -> list[tuple[int, str]]:
     HTML heading tags are refused independently (tree_problems). Each line is read a
     bounded number of times."""
     found, paragraph = [], []
-    paragraph_start = paragraph_quote = None
+    paragraph_start = paragraph_container = None
+    items: list[int] = []
+    item_quotes: list[int] = []
     fence = None
-    fence_quote = 0
+    fence_container = None
     html_end = None
     html_blank = False
-    html_quote = 0
+    html_container = None
 
     def clear_paragraph():
-        nonlocal paragraph, paragraph_start, paragraph_quote
-        paragraph, paragraph_start, paragraph_quote = [], None, None
+        nonlocal paragraph, paragraph_start, paragraph_container
+        paragraph, paragraph_start, paragraph_container = [], None, None
 
     for number, raw in enumerate(text.splitlines(), 1):
         quote_depth, quoted = _quoted(raw)
-        line = _unwrap(raw)
+        line = quoted.expandtabs(4)
+        spaces = len(line) - len(line.lstrip(" "))
+        blank = not line.strip()
+        depth = 0
+        while depth < len(items) and quote_depth >= item_quotes[depth] \
+                and spaces >= items[depth]:
+            depth += 1
+        col = items[depth - 1] if depth else 0
+        content = line[spaces:]
+        container = (quote_depth, tuple(items[:depth]))
 
         if fence is not None:
-            if quote_depth < fence_quote and raw.strip():
+            if not blank and container != fence_container:
                 fence = None
             else:
-                if _fence_close(line, *fence):
+                if _fence_close(content, *fence):
                     fence = None
                 clear_paragraph()
                 continue
         if html_end is not None or html_blank:
-            if quote_depth < html_quote and raw.strip():
+            if not blank and container != html_container:
                 html_end, html_blank = None, False
-            elif html_blank and not line.strip():
+            elif html_blank and blank:
                 html_blank = False
                 clear_paragraph()
                 continue
             else:
-                if html_end is not None and html_end.search(line):
+                if html_end is not None and html_end.search(content):
                     html_end = None
                 clear_paragraph()
                 continue
 
-        if match := FENCE.fullmatch(line):
+        if depth < len(items):
+            del items[depth:]
+            del item_quotes[depth:]
+            clear_paragraph()
+            col = items[-1] if items else 0
+            container = (quote_depth, tuple(items))
+        if spaces - col >= 4:
+            if paragraph and paragraph_container == container:
+                paragraph.append(line[col:])
+            else:
+                clear_paragraph()
+            continue
+
+        container_text = content
+        position = 0
+        column = spaces
+        while match := safe_push.LIST_ITEM.match(container_text, position):
+            clear_paragraph()
+            gap_end = match.end()
+            while gap_end < len(container_text) and container_text[gap_end] == " ":
+                gap_end += 1
+            gap = gap_end - match.end()
+            item_col = column + match.end() - position + (gap if 1 <= gap <= 4 else 1)
+            items.append(item_col)
+            item_quotes.append(quote_depth)
+            col = item_col
+            column = item_col
+            position = gap_end
+            while quote := QUOTE.match(container_text, position):
+                quote_depth += 1
+                position = quote.end()
+        content = container_text[position:]
+        spaces = col
+        container = (quote_depth, tuple(items))
+        if paragraph and paragraph_container != container:
+            clear_paragraph()
+
+        if match := FENCE.fullmatch(content):
             marker, info = match.groups()
             if marker[0] != "`" or "`" not in info:
                 fence = marker[0], len(marker)
-                fence_quote = quote_depth
+                fence_container = container
                 clear_paragraph()
                 continue
-        if block := _html_block(line):
+        if block := _html_block(content, bool(paragraph)):
             html_end, html_blank = block
-            html_quote = quote_depth
-            if html_end is not None and html_end.search(line):
+            html_container = container
+            if html_end is not None and html_end.search(content):
                 html_end = None
             clear_paragraph()
             continue
-        if quoted.startswith(("    ", "\t")):
-            clear_paragraph()
-            continue
 
-        title = atx(line)
-        if title is not None:
+        if safe_push.HEADING.match(content):
             clear_paragraph()
-            found.append((number, title))
-        elif SETEXT.fullmatch(quoted):
-            if paragraph and paragraph_quote == quote_depth:
+            if (title := atx(content)) is not None:
+                found.append((number, title))
+        elif SETEXT.fullmatch(content):
+            if paragraph and paragraph_container == container:
                 found.append((paragraph_start, " ".join(paragraph)))
             clear_paragraph()
-        elif not quoted.strip():
+        elif blank or not content.strip():
             clear_paragraph()
         else:
-            if paragraph_quote != quote_depth:
+            if paragraph_container != container:
                 clear_paragraph()
             if not paragraph:
-                paragraph_start, paragraph_quote = number, quote_depth
-            paragraph.append(line)
+                paragraph_start, paragraph_container = number, container
+            paragraph.append(content)
     return found
 
 
@@ -920,6 +1008,51 @@ def _without_html(text: str) -> str:
     return "".join(parts)
 
 
+def _without_link_tails(text: str) -> str:
+    """Remove inline destinations and reference labels while keeping link text."""
+    parts = []
+    at = 0
+    while at < len(text):
+        close = text.find("]", at)
+        if close < 0:
+            parts.append(text[at:])
+            break
+        if close + 1 >= len(text) or text[close + 1] not in "([":
+            parts.append(text[at:close + 1])
+            at = close + 1
+            continue
+        opener = text[close + 1]
+        closer = ")" if opener == "(" else "]"
+        depth = 1
+        quote = None
+        end = close + 2
+        while end < len(text):
+            char = text[end]
+            if char == "\\" and end + 1 < len(text):
+                end += 2
+                continue
+            if quote is not None:
+                if char == quote:
+                    quote = None
+            elif opener == "(" and char in "\"'" and text[end - 1].isspace():
+                quote = char
+            elif char == opener:
+                depth += 1
+            elif char == closer:
+                depth -= 1
+                if not depth:
+                    break
+            elif opener == "[" and char == "[":
+                break
+            end += 1
+        if depth:
+            parts.append(text[at:])
+            break
+        parts.append(text[at:close + 1])
+        at = end + 1
+    return "".join(parts)
+
+
 def _month(word: str) -> int | None:
     """A month's number from its English name or first three letters, in any case."""
     if not word.isascii():
@@ -940,7 +1073,7 @@ def heading_date(text: str) -> datetime.date | None:
     or abbreviated, day first, month first or in ISO order, and punctuation or other
     separators between the parts. A month spelt with letters outside ASCII is refused,
     since it may be a lookalike of another. Each step is linear in the text."""
-    text = LINK_TAIL.sub("]", _without_html(html.unescape(text)))
+    text = _without_link_tails(_without_html(html.unescape(text)))
     text = unicodedata.normalize("NFKC", text)
     text = "".join(c for c in text if c not in INVISIBLE
                    and unicodedata.category(c) not in ("Cf", "Mn", "Me"))
