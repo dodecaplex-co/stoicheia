@@ -506,9 +506,10 @@ other forbidden commands on an allowed generator call's line or in its arguments
 options with no space before the guillemet, `#eval`, `#exit` and `#guard_panic` closed up
 to the word after them, and `#guard_msgs` with `drop`, with `substring`, and under a
 docstring that pins an error, each in each of its forms, in a scratch copy of I.1's file;
-forbidden commands and `axiom` closed up to decimal, hexadecimal, scientific and
-underscore-separated numbers, after both an ordinary projection and a declared notation
-ending in `.`, with controls that preserve ordinary projections;
+`set_option` closed up to decimal, hexadecimal, scientific and underscore-separated
+numbers, after a projection and after a declared notation ending in `.`, with whitespace
+or a comment beside it, and `axiom` closed up to such a number, with controls that
+preserve ordinary projections;
 the same pin at a new file beside each file of its allow-list, at each file's name in the
 other's folder, in `Audit/` and in `Staging/`, and a pin whose `error:` ends its line;
 a proposition imported by Book Zero; a `sorry` in a

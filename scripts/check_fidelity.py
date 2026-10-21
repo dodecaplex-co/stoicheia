@@ -284,8 +284,9 @@ def check_fidelity() -> None:
 # the field `.1`, its digits alone (FIELD). It can also be a declared notation token. When
 # the number after it runs past FIELD through `_` or an exponent, keep NUMBER's longer
 # boundary, which is the reading Lean's longest parser can select for that notation; an
-# ordinary projection such as `p.1.succ` keeps FIELD. Whitespace or a comment ends the
-# adjacency on which a projection depends.
+# ordinary projection such as `p.1.succ` keeps FIELD. Lean's field index never begins with
+# 0, so `.0x1`, `.0b1` or `.01` after a `.` is always a number. Whitespace or a comment
+# ends the adjacency on which a projection depends.
 # A number ends where Lean 4.35's tokenizer ends it (its `numberFnAux`): binary, octal,
 # hexadecimal or decimal digits, `_` between them, and a decimal's point and exponent,
 # never a `..` after it. Lean reads `1set_option` as `1` and `set_option`, and
@@ -394,7 +395,7 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
             if c == ".":
                 field_dot, can_project = can_project, False
             else:
-                can_project, field_dot = c in ")]}·⟩", False
+                can_project, field_dot = c in ")]}·⟩›", False
         else:
             can_project, field_dot = False, False
         i = j

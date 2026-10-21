@@ -1109,7 +1109,9 @@ def lake_links() -> None:
 # refuse: the command inside a nested comment, `set_optiondebug.skipKernelTC` and
 # `set_optiondoc.verso`, with neither a space nor a guillemet, which Lean reads as one name,
 # a name with a digit before `set_option`, and fields and numbers in plain use. The explicit
-# read_lean cases below preserve ordinary projections after an identifier, `·` and `⟩`.
+# read_lean cases below preserve ordinary projections after an identifier, `)`, `·`, `⟩`
+# and `›`, numbers after a declared notation, and a projection broken by a space or a
+# comment, whose digits are then a number.
 SET_OPTION_SPELLINGS = (
     ("set_option«debug».",
      "set_option«debug».skipKernelTC true in theorem planted_closed : True := trivial"),
@@ -1181,6 +1183,10 @@ SET_OPTION_SPELLINGS = (
      "def planted_adjacent_declaration_lhs : Nat := 2\n"
      "def planted_adjacent_declaration : Nat := planted_adjacent_declaration_lhs.1_0axiom "
      "planted_after_adjacent_axiom : False"),
+    ("set_option«debug».", 'infixl:65 " . " => Nat.add\n'
+     "def planted_adjacent_hex_lhs : Nat := 2\n"
+     "def planted_adjacent_hex : Nat := planted_adjacent_hex_lhs.0x1set_option«debug».byAsSorry "
+     "true in theorem planted_after_adjacent_hex : (0 : Nat) = 1 := by decide"),
 )
 SET_OPTION_KEPT = (
     "/- /- -/ set_option«debug».skipKernelTC true in "
@@ -1189,11 +1195,6 @@ SET_OPTION_KEPT = (
     "def set_optiondoc.verso : Bool := true",
     "def planted2set_option : Nat := 2",
     "def planted_kept_field : Nat := (1, 2).1.succ + 0x1F + 1_000",
-    'infixl:65 " +. " => Nat.add\n'
-    "def planted_kept_notation_numbers : Nat := 2 +.0x1 + 2 +.1e5 + 2 +.1_0",
-    'infixl:65 " . " => Nat.add\n'
-    "def planted_kept_spaced_dot_numbers : Nat := 2 . 0x1 + 2 . 1e5 + 2 . 1_0",
-    "def planted_kept_adjacent_projection : Nat := (1, 2).1",
 )
 # `#guard_msgs` with `drop`, in Lean 4.35's forms (#197): each kind of message and `all`,
 # the brackets closed up or spaced, `drop` after another filter or an option, twice, and a
@@ -1372,6 +1373,14 @@ def set_option_spellings() -> None:
         ("p.1.succ", "p.1.succ"),
         ("(·.2.toList)", "(·.2.toList)"),
         ("⟨p, p⟩.1.succ", "⟨p, p⟩.1.succ"),
+        ("‹h›.1.succ", "‹h›.1.succ"),
+        ("(p).1.succ", "(p).1.succ"),
+        ("p .1.succ", "p .  succ"),
+        ("p/- c -/.1.succ", "p       .  succ"),
+        ("p./- c -/1.succ", "p.         succ"),
+        ("2 +.0x1 + 2 +.1e5 + 2 +.1_0", "2 +.0x1 + 2 +.1e5 + 2 +.1_0"),
+        ("2 . 0x1 + 2 . 1e5 + 2 . 1_0", "2 . 0x1 + 2 . 1e5 + 2 . 1_0"),
+        ("(1, 2).1", "(1, 2).1"),
     ):
         read, unsure = check_fidelity.read_lean(source)
         if read != expected or unsure:

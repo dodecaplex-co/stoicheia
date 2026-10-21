@@ -4012,9 +4012,10 @@ findings:
   up to a number, as in `infixl:65r#"{x"# => Nat.add`, which Lean builds, was read as a
   plain string after the number `65r` and refused as one the scan could not read for
   certain; it is now read as Lean reads it, a raw string, and passes. The set_option plant
-  covers numbers and fields of each form, dot notation beside whitespace or a block
-  comment, ambiguous adjacent dot notation, and the corresponding harmless numbers and
-  projections. It also keeps names with a digit before `set_option` and the unspaced plain
+  covers numbers of each form and fields, dot notation beside whitespace or a block
+  comment, and ambiguous adjacent dot notation, a hexadecimal number after an adjacent
+  `.` among them, and requires the reader to leave numbers after a declared notation and
+  ordinary projections as they are. It also keeps names with a digit before `set_option` and the unspaced plain
   names `set_optiondebug.skipKernelTC` and `set_optiondoc.verso`.
 
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains five plants,
