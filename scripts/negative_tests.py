@@ -92,6 +92,18 @@ records current; CI runs it on every push.
     no name of the modern way; an italic p planted there fails S25 too, though Heath's
     "p. 389" stands in the paragraph; and an arc whose ends are one point and one with a
     radius of 0, planted in I.1's figure, fail S26 with what SVG draws for each.
+20. Without a build, the six probes an independent reviewer on ship TT planted for #207,
+    each a forbidden command or an axiom hidden behind a carriage-return comment
+    (`-- a remark\r"`), in one scratch copy of I.1's file in a temporary tree, read by the
+    source scan alone (`rules_in`): Lean ends a `--` comment only at a line feed, so a
+    scan that read the file with Python's universal newlines would end the comment at the
+    `\r` and let a string open behind it that hides the command up to a later `"`. Read as
+    Lean reads the bytes, the lone `\r` of each is refused by its file and line, and the
+    `set_option debug.…` pair and the `axiom`, no longer hidden, are named too; the other
+    three (`#guard_msgs (drop all)`, a pinned error and `#guard_panic`) the shared reader
+    of #206 names by command, after #197, and here the lone `\r` refuses all six. The
+    unplanted copy passes, and origin/main's check, reading with universal newlines, misses
+    all six (#207).
 
 The copies of items 16 and 17, and item 13's list of generated outputs, read Git's
 tracked files. One absent from the work tree is named on stdout and passed over: as a
@@ -1010,6 +1022,77 @@ def lake_links() -> None:
             print("✓ a real model/.lake holding an axiom and a link: not read")
 
 
+# The six probes an independent reviewer on ship TT planted for #207 (its issue lists
+# them), each a forbidden command or an axiom hidden behind a carriage-return comment:
+# Lean ends a `--` comment only at a line feed, so `-- a remark\r"` is one comment to Lean,
+# the quote among it, while a scan that reads the file with Python's universal newlines
+# sees the comment end at the `\r` and a string open on the next line, which swallows the
+# command up to the `"` of the closing `-- "`. Each is (a short name, the probe's exact
+# bytes). Read as Lean reads the bytes (`check_fidelity.lean_text`), the comment hides
+# nothing: the lone `\r` of each is refused, and this branch names the command of three of
+# them (the `set_option debug.…` pair and the `axiom`) once the comment no longer hides it.
+CARRIAGE_RETURN_PROBES = (
+    ("#guard_msgs (drop all)", '-- a remark\r"\n#guard_msgs (drop all) in\n'
+     'theorem bad : (0 : Nat) = 1 := rfl\n-- "\n#print axioms bad\n'),
+    ("set_option debug.byAsSorry", '-- a remark\r"\nset_option debug.byAsSorry true in\n'
+     'theorem bad : (0 : Nat) = 1 := by decide\n-- "\n#print axioms bad\n'),
+    ("a pinned error", '-- a remark\r"\n/-- error: boom\n⊢ 0 = 1 -/\n#guard_msgs in\n'
+     'theorem bad : (0 : Nat) = 1 := by fail "boom"\n-- "\n#print axioms bad\n'),
+    ("#guard_panic", '-- a remark\r"\n#guard_panic in\n'
+     'theorem bad : (0 : Nat) = 1 := by fail "PANIC"\n-- "\n#print axioms bad\n'),
+    ("set_option debug.skipKernelTC", '-- a remark\r"\nset_option debug.skipKernelTC true in\n'
+     'theorem ok : True := trivial\n-- "\n'),
+    ("axiom", '-- a remark\r"\naxiom planted : (0 : Nat) = 1\n-- "\n#print axioms planted\n'),
+)
+# The three probes whose command check_fidelity.py already names on this branch once the
+# carriage-return comment no longer hides it: {probe index: (the words it names, the token
+# that begins them in the probe)}. The FORBIDDEN regex matches `set_option debug.` up to
+# its dot; the axiom has its own message. The other three the lone `\r` alone refuses here.
+CR_COMMANDS = {
+    1: ("uses `set_option debug.`", "set_option"),
+    4: ("uses `set_option debug.`", "set_option"),
+    5: ("declares an axiom outside Elements/Foundations/", "axiom"),
+}
+
+
+def carriage_return_comment() -> None:
+    """The six CARRIAGE_RETURN_PROBES of #207, in one scratch copy of I.1's file in a
+    temporary tree, run through the source scan (`rules_in`): read as Lean reads the bytes,
+    the lone `\\r` of each is refused by its file and line, and the `set_option debug.…`
+    pair and the `axiom`, no longer hidden, are named too. The unplanted copy passes."""
+    rel = "Elements/BookI/Prop01.lean"
+    marker = "\nend Elements.BookI\n"
+    source = (ROOT / rel).read_text()
+    assert source.count(marker) == 1, f"{rel}: expected one {marker!r}; update this test"
+    header = "\n/-! Planted by scripts/negative_tests.py (#207). -/\n"
+    block = header + "".join(body for _, body in CARRIAGE_RETURN_PROBES)
+    planted = source.replace(marker, block + marker)
+    cr_message = ("an isolated carriage return (a `\\r` not followed by `\\n`), which Lean "
+                  "refuses and a `--` comment does not end at")
+
+    def line(offset: int) -> int:
+        return planted[:offset].count("\n") + 1
+
+    wanted, at = [], planted.index(block) + len(header)
+    for i, (_, body) in enumerate(CARRIAGE_RETURN_PROBES):
+        wanted.append(f"{rel}:{line(at + body.index(chr(13)))}: {cr_message}")
+        if i in CR_COMMANDS:
+            msg, token = CR_COMMANDS[i]
+            wanted.append(f"{rel}:{line(at + body.index(token))}: {msg}")
+        at += len(body)
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp).resolve()
+        path = root / rel
+        path.parent.mkdir(parents=True)
+        path.write_text(source)
+        if not expect_success("the unplanted scratch copy of I.1 for #207's probes",
+                              rules_in(root)):
+            return
+        path.write_bytes(planted.encode("utf-8"))
+        expect_failure("the six #207 probes behind a carriage-return comment",
+                       rules_in(root), *wanted)
+
+
 def placement_named() -> None:
     """A lemma of the `Placement` namespace named in Squares.lean, Book III's shared steps,
     read from the source: caught on its line. The word in a comment on the line before
@@ -1342,6 +1425,7 @@ def main(argv=()) -> int:
         symbolic_links()
         model_lake()
         lake_links()
+        carriage_return_comment()
         placement_named()
         figure_names_and_arcs()
         planted_assumptions()

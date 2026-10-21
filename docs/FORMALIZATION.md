@@ -498,9 +498,16 @@ read like any other. It refuses an `axiom` anywhere outside
 the generator `run_cmd` allowance in `model/Check.lean` and `model/Check/`.
 `MODEL_CHECK_RUN_CMD` names that allowance in the script; it exempts only `run_cmd`,
 so its arguments and any further command on the line are still scanned. Book Zero's
-import rule and the placement policy remain confined to `Elements/`. It reads
-comments and literals as Lean's tokenizer does, so a string cannot hide a command from it
-by opening a comment or ending an attribute's brackets. Beyond that it reads words, not
+import rule and the placement policy remain confined to `Elements/`. It reads each
+file's bytes decoded as UTF-8, with no newline translation, as Lean reads them, so a
+`--` comment ends only at a line feed as it does for Lean, and reads comments and
+literals as Lean's tokenizer does, so a string cannot hide a command from it by opening a
+comment or ending an attribute's brackets. A lone carriage return (a `\r` not followed by
+`\n`), which Lean itself refuses and a `--` comment does not end at, is refused in any
+scanned file, since a universal-newline read would end the comment at it and let a string
+open behind it that swallows the code, a forbidden command among it; CRLF files are
+allowed, as Lean allows them, and no tracked `.lean` file has a carriage return today.
+Beyond that it reads words, not
 Lean's grammar nor the tokens a file declares, so it catches a slip but not a command
 disguised from it on purpose, nor an attribute it does not list: review still reads every
 staged file, audit lemma and model file. In `Elements/` the certificate reads the axioms
