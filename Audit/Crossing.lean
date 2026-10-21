@@ -169,12 +169,12 @@ end Audit
 
 These lists include Diagram-segment 2. They check the bridges' dependencies, separately
 from the lists for III.5 and III.6 below, whose proofs use neither Diagram-segment 2 nor
-Circle 4. The bridge through III.7 and III.8 uses III.2 (`Prop2.within`), with the given
-centre, to order the points on the straight line through the centres. None of these lists
-includes Circle 2 or Circle 3. All seven bridge lists include `exists_centre` through
-III.1's construction. The four through `within_point` no longer include `centre_unique`,
-since III.1's porism uses its given centre directly. Nothing in this file enters the
-certificate.
+Circle 4, which is now a theorem proved from I.7 using Diagram-segment 2 (19 October 2026).
+The bridge through III.7 and III.8 uses III.2 (`Prop2.within`), with the given centre, to
+order the points on the straight line through the centres. None of these lists includes
+Circle 3, so no bridge uses Circle 2 either, which is now proved from Circle 3. All seven
+bridge lists include `exists_centre` through III.1's construction. Nothing in this file
+enters the certificate.
 -/
 
 /--
@@ -190,7 +190,6 @@ info: 'Audit.III_5_today' depends on axioms: [propext,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
- Elements.Tacit.adjacent_eq_of_right,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
@@ -203,7 +202,6 @@ info: 'Audit.III_5_today' depends on axioms: [propext,
  Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
  Elements.Tacit.centre_inside,
- Elements.Tacit.centre_unique,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
  Elements.Tacit.circles_meet_of_on_inside_outside,
@@ -264,7 +262,6 @@ info: 'Audit.III_6_today' depends on axioms: [propext,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
- Elements.Tacit.adjacent_eq_of_right,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
@@ -336,7 +333,6 @@ info: 'Audit.III_11_today' depends on axioms: [propext,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
- Elements.Tacit.adjacent_eq_of_right,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
@@ -408,7 +404,6 @@ info: 'Audit.III_13_today' depends on axioms: [propext,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
- Elements.Tacit.adjacent_eq_of_right,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
@@ -480,7 +475,6 @@ info: 'Audit.cut_point' depends on axioms: [propext,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
- Elements.Tacit.adjacent_eq_of_right,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
@@ -493,7 +487,6 @@ info: 'Audit.cut_point' depends on axioms: [propext,
  Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
  Elements.Tacit.centre_inside,
- Elements.Tacit.centre_unique,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
  Elements.Tacit.circles_meet_of_on_inside_outside,
@@ -554,7 +547,6 @@ info: 'Audit.CirclesCut.of_meet' depends on axioms: [propext,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
- Elements.Tacit.adjacent_eq_of_right,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
@@ -567,7 +559,6 @@ info: 'Audit.CirclesCut.of_meet' depends on axioms: [propext,
  Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
  Elements.Tacit.centre_inside,
- Elements.Tacit.centre_unique,
  Elements.Tacit.circle_eq,
  Elements.Tacit.circles_meet,
  Elements.Tacit.circles_meet_of_on_inside_outside,
@@ -628,7 +619,6 @@ info: 'Audit.within_point' depends on axioms: [propext,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
- Elements.Tacit.adjacent_eq_of_right,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
@@ -690,7 +680,10 @@ info: 'Audit.within_point' depends on axioms: [propext,
 /-! ## What III.5 and III.6 rest on
 
 The pins from the staged proofs follow them home: Definition I.15, Postulate 1 and
-thirteen tacit rules, with Lean's choice. Neither Circle 2 nor Circle 3 appears.
+thirteen tacit rules, with Lean's choice. Neither Diagram-segment 2 (`circle_eq`) nor an
+admitted proof is among them, and the build fails if one enters. Circle 4 is now a theorem
+whose proof uses `circle_eq`, so the pins also exclude that route. Circle 3 does not
+appear, so neither does Circle 2, now proved from it.
 -/
 
 /--

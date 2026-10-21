@@ -1,5 +1,6 @@
 import Elements.BookI.Prop40
 import Elements.BookI.Prop45
+import Elements.BookI.Prop47
 import Elements.BookII.Prop01
 import Elements.BookII.Prop14
 import Elements.BookIII.Prop07
@@ -36,6 +37,7 @@ def Elements.companions : List (Lean.Name × String) := [
   (``Elements.BookI.Prop45.apart, "I.45 apart"),
   (``Elements.BookI.Prop45.figure, "I.45 figure"),
   (``Elements.BookI.Prop45.fan, "I.45 fan"),
+  (``Elements.BookI.Prop47.general, "I.47 general"),
   (``Elements.BookII.Prop1.two, "II.1 two"),
   (``Elements.BookII.Prop1.general, "II.1 general"),
   (``Elements.BookII.Prop14.rectangle, "II.14 rectangle"),

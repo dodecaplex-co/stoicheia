@@ -17,6 +17,7 @@ kind = "case"
 note = "C and D may be one point, as Heath allows (vol. 2, p. 28), so the Lean proves only that FA, AG together are not greater than FG; I.20's \"less\" still gives the contradiction."
 
 [figure]
+case = "C and D apart on FG, as in Heath's figure"
 note = "Like Heath's, this figure draws the impossible supposition: FG passing as FCDG, away from A, so the F and G drawn are not the centres of ABC and ADE."
 
 [review]

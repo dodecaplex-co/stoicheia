@@ -23,15 +23,15 @@
 # angles (brief 0011) joined the vocabulary: words only the companions of III.16 and III.31
 # use, and no law of the model changes.
 #
+# Renewed on 18 October 2026, when the words of stage 3's statements (brief 0006) joined
+# the vocabulary: words only the propositions and their companions reach, so none of
+# the model's laws changes.
+#
 # Renewed on 19 October 2026, when the rule that every circle has a centre,
 # Tacit.exists_centre, joined the axioms (brief 0008, section 2): the generator writes its
 # law, Model/Assembly.lean gathers Euclidean.exists_centre, which proved it in the plane
 # before it landed, and Check/Hand.lean compares the hand translation with the library's
 # declaration. The other 87 laws and the 37 words they reach are unchanged.
-#
-# Renewed on 18 October 2026, when the words of stage 3's statements (brief 0006) joined
-# the vocabulary: words only the propositions and their companions reach, so none of
-# the model's laws changes.
 #
 # Renewed on 19 October 2026 for the combined vocabulary of stages 3 and mixed angles:
 # 88 axioms, byte-identical to the centre-rule revision, and 120 words of vocabulary.
@@ -50,4 +50,18 @@
 # Renewed on 19 October 2026 for III.25's kind companion (brief 0006): Arc.Less,
 # Arc.Semicircle and Arc.Greater join the vocabulary, 125 words in all. The 88 axioms
 # and every previously locked word are byte-identical; no model law changes.
-4d9993cc4a91f2251a38eeb4cfea86db688d75585f7d635fc0fd22abd365e849  Certificate/axioms.lock
+#
+# Renewed on 19 October 2026, when eight axioms became theorems (the owner approved both
+# retirements that day): their laws leave the generated translation;
+# the other 79 axioms and every word are unchanged, byte for byte.
+#
+# Renewed on 21 October 2026, when axiom wave one was merged into train C6a: the lock is
+# main's 79 rules and Tacit.exists_centre, 80 axioms, with 121 words of vocabulary. The
+# generator writes 80 laws, Model/Assembly.lean gathers all 80 with Euclidean.exists_centre
+# among them, and the eight retired rules keep their plane proofs and audits as derived
+# facts, with no field of Laws.
+#
+# Renewed on 21 October 2026, when train C6b was merged with train C6a after axiom wave
+# one: Foot, Arc.Less, Arc.Semicircle and Arc.Greater join the vocabulary, 125 words in
+# all. The 80 axioms are byte-identical to train C6a's; no model law changes.
+cc810b56bb730b231d1b0682e2f210c92bc088640ad386ca25e6656a490e4497  Certificate/axioms.lock

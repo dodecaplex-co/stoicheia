@@ -1,0 +1,27 @@
+<svg width="400" height="260" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" font-family="Georgia, 'Times New Roman', serif" font-size="17">
+  <title>I.2: the modern way</title>
+  <rect x="0" y="0" width="400" height="260" rx="10" fill="#fbf7ee"/>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#a0522d"/></marker>
+  </defs>
+  <line x1="195" y1="41.076951546" x2="135" y2="145" stroke="#3b2f2f" stroke-width="1.6"/>
+  <line x1="195" y1="41.076951546" x2="255" y2="145" stroke="#3b2f2f" stroke-width="1.6"/>
+  <line x1="135" y1="145" x2="255" y2="145" stroke="#3b2f2f" stroke-width="1.6"/>
+  <line x1="135" y1="145" x2="93" y2="217.746133918" stroke="#a0522d" stroke-width="2.4"/>
+  <line x1="255" y1="145" x2="333.934180146" y2="173.729692039" stroke="#a0522d" stroke-width="2.4" marker-end="url(#head)"/>
+  <line x1="135" y1="145" x2="213.934180146" y2="173.729692039" stroke="#a0522d" stroke-width="2.4" marker-end="url(#head)" stroke-dasharray="5 4"/>
+  <line x1="135" y1="145" x2="115" y2="179.641016151" stroke="#a0522d" stroke-width="2.4" marker-end="url(#head)"/>
+  <circle cx="135" cy="145" r="2.6" fill="#3b2f2f"/>
+  <circle cx="255" cy="145" r="2.6" fill="#3b2f2f"/>
+  <circle cx="333.934180146" cy="173.729692039" r="2.6" fill="#3b2f2f"/>
+  <circle cx="195" cy="41.076951546" r="2.6" fill="#3b2f2f"/>
+  <circle cx="93" cy="217.746133918" r="2.6" fill="#3b2f2f"/>
+  <g fill="#3b2f2f">
+    <text font-size="17" x="118" y="138" text-anchor="middle">A</text>
+    <text font-size="17" x="269" y="135" text-anchor="middle">B</text>
+    <text font-size="17" x="351.934180146" y="192.729692039" text-anchor="middle">C</text>
+    <text font-size="17" x="195" y="29.076951546" text-anchor="middle">D</text>
+    <text font-size="17" x="77" y="233.746133918" text-anchor="middle">L</text>
+    <text font-size="17" x="101" y="172.320508076" text-anchor="middle" font-style="italic">u</text>
+  </g>
+</svg>

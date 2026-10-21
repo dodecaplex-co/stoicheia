@@ -9,8 +9,29 @@ fingerprint = "sha256:07d1a4437d0abafd"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "Let a point D be taken at random on BC"
+kind = "helper"
+helper = "Tacit.exists_point_between"
+note = "Euclid takes D on BC; the Lean chooses it between B and C, as in his figure. `Tacit.exists_point_between` supplies this point by System E, Points 3, a rule we assume, not a proof."
+
+[[passage]]
+at = "Then, since the straight line AD falling on the two straight lines BC, EF"
+kind = "helper"
+helper = "SameSideOf.trans_opposite"
+note = "Euclid treats EAD and ADC as alternate; `SameSideOf.trans_opposite` puts E and C on opposite sides of AD. I.23 put E on B's side, and `OppositeSidesOf.of_between`, used beneath the joining of AD, put B and C on opposite sides because D is between them."
+
 [review]
-stage = "exceptions"
-commit = "2a34715"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "915600b"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:664aca971683e75b"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

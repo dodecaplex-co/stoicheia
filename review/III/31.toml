@@ -26,7 +26,7 @@ note = "What Euclid calls manifest, that near A the right angle BAC lies within 
 at = "Again, since the angle contained by the straight lines AC, AF is right"
 kind = "helper"
 helper = "Prop31.less"
-note = "Likewise, that the less segment lies wholly within the right angle CAF is proved after the theorem, by the companion. The `exact` beneath these sentences returns only the claims of the statement."
+note = "Likewise, that the less segment lies wholly within the right angle CAF is proved after the theorem, by the companion. The closing step beneath these sentences returns only the claims of the statement."
 
 [review]
 stage = "exceptions"

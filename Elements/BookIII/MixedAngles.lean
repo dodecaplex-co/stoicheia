@@ -224,8 +224,8 @@ theorem surrounds_outside {O : Point} (hO : Centre O α) (hP : OutsideCircle P �
     exact lt_irrefl _ (len_lt_of_add_lt hlt)
 
 /-- **Only the neighbourhood of A counts.** If, within some circle `γ₀` about A, the points
-of `T` are points of `U`, then whole circles of `T` as near A as we please give whole circles
-of `U`: each is shrunk to lie within `γ₀`. [I. 20] -/
+of T are points of U, then whole circles of T as near A as we please give whole circles
+of U: each is shrunk to lie within `γ₀`. [I. 20] -/
 theorem NearVertexOpen.mono_near {T U : Point → Prop} {γ₀ : Circle} (h : NearVertexOpen A T)
     (hγ₀ : Centre A γ₀) (hTU : ∀ Q, InsideCircle Q γ₀ → T Q → U Q) : NearVertexOpen A U := by
   intro γ hγ
@@ -292,8 +292,8 @@ theorem WithinAngle.locallyEqual_iff (hDC : SameSideOf D C A B) :
     exact ⟨⟨γ, hγ, fun P _ hP => (WithinAngle.eq_of_angle_eq (P := P) hDC h).1 hP⟩,
       ⟨γ, hγ, fun P _ hP => (WithinAngle.eq_of_angle_eq (P := P) hDC h).2 hP⟩⟩
 
-/-- **Less than a less is less.** Near A, `R` lies within `S` and `S` within `T`; the whole
-circles of `T` outside `S`, shrunk to the circle where `R` lies within `S`, are outside `R`.
+/-- **Less than a less is less.** Near A, R lies within S and S within T; the whole
+circles of T outside S, shrunk to the circle where R lies within S, are outside R.
 [I. 20] -/
 theorem LocallyLess.trans {R S T : Point → Prop} (h₁ : LocallyLess A R S)
     (h₂ : LocallyLess A S T) : LocallyLess A R T := by
@@ -301,16 +301,16 @@ theorem LocallyLess.trans {R S T : Point → Prop} (h₁ : LocallyLess A R S)
   obtain ⟨γ₁, hγ₁, f₁⟩ := h₁.1
   exact h₂.2.mono_near hγ₁ fun Q hQ hT => ⟨hT.1, fun hR => hT.2 (f₁ Q hQ hR)⟩
 
-/-- **Equal angles compare alike, on the left.** If `R` and `R'` are locally equal, and `R` is
-locally less than `S`, so is `R'`. [I. 20] -/
+/-- **Equal angles compare alike, on the left.** If R and R' are locally equal, and R is
+locally less than S, so is R'. [I. 20] -/
 theorem LocallyLess.congr_left {R R' S : Point → Prop} (hE : LocallyEqual A R R')
     (h : LocallyLess A R S) : LocallyLess A R' S := by
   refine ⟨hE.2.trans h.1, ?_⟩
   obtain ⟨γ₁, hγ₁, f₁⟩ := hE.2
   exact h.2.mono_near hγ₁ fun Q hQ hT => ⟨hT.1, fun hR' => hT.2 (f₁ Q hQ hR')⟩
 
-/-- **Equal angles compare alike, on the right.** If `S` and `S'` are locally equal, and `R` is
-locally less than `S`, it is locally less than `S'`. [I. 20] -/
+/-- **Equal angles compare alike, on the right.** If S and S' are locally equal, and R is
+locally less than S, it is locally less than S'. [I. 20] -/
 theorem LocallyLess.congr_right {R S S' : Point → Prop} (hE : LocallyEqual A S S')
     (h : LocallyLess A R S) : LocallyLess A R S' := by
   refine ⟨h.1.trans hE.1, ?_⟩
