@@ -1688,10 +1688,12 @@ def protected_paths() -> set[Path]:
             values['PROTECTED'] += values[node.value.id]
     require(names <= values.keys() and set(values['PROTECTED_JUDGED']) <= set(values['PROTECTED']),
             f'{policy}: missing protected path lists or extension')
-    # Standing ownership and source restrictions in AGENTS.md, beyond the push policy.
+    # Standing ownership and source restrictions in AGENTS.md and docs/WORKFLOW.md,
+    # section 4, beyond the push policy.
     declared = ('AGENTS.md', 'Elements/Foundations/', 'Elements/Companions.lean',
-                'docs/briefs/0002-decisions.md', 'docs/PROGRAM.md', 'docs/program.toml',
-                'facts.json', 'book/', 'CERTIFICATE.md', 'GRAPH.md', 'README.md', 'heath/')
+                'docs/briefs/0002-decisions.md', 'docs/decisions/', 'docs/PROGRAM.md',
+                'docs/program.toml', 'facts.json', 'book/', 'CERTIFICATE.md', 'GRAPH.md',
+                'README.md', 'heath/')
     roots = {ROOT / '.git'}
     for name in (*values['PROTECTED'], *declared,
                  'scripts/audit/jev_questions.py', 'scripts/heath.py', 'scripts/audit/jev.py'):
