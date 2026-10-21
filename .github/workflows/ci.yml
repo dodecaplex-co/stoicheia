@@ -71,10 +71,10 @@ jobs:
         # reading found wrong stops the job before the check's verdict.
         run: python3 -I tests/test_check_superposition_pins.py
 
-      - name: Check every theorem brief 0009's restriction section names has a statement pin in Audit/Superposition.lean
+      - name: Check every theorem and definition brief 0009's restriction section names is pinned in Audit/Superposition.lean
         # lake build Audit checks that each pin is what Lean prints; this checks that the
         # pins exist, under a bare #guard_msgs, in a file of only imports, comments and pins
-        # that Audit.lean imports.
+        # that Audit.lean imports, a definition by #print, and none cut short.
         run: python3 -I scripts/check_superposition_pins.py
 
       - name: Check the house style's hard rules

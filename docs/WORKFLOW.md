@@ -417,10 +417,17 @@ The ruleset and the remaining merge requirements are in
   that `scripts/audit/jev.py` refuses an answer without its model's identifier when it
   runs, scores and resumes, with in-process replies standing in for the service.
 - **The restriction's theorems are pinned by their statements.**
-  `python3 -I scripts/check_superposition_pins.py` checks that every theorem brief 0009's
-  section "The restriction theorem" names has a statement pin in
-  `Audit/Superposition.lean`: an `info:` docstring, a bare `#guard_msgs in`, then `#check`,
-  or `#print` for a definition. A pin in a comment, which Lean never runs, does not count.
+  `python3 -I scripts/check_superposition_pins.py` checks that every theorem and definition
+  brief 0009's section "The restriction theorem" names has a statement pin in
+  `Audit/Superposition.lean`: an `info:` docstring, a bare `#guard_msgs in`, then `#check`
+  for a theorem, or `#print` for a definition, since `#check` shows only a definition's
+  type. A `#check` pin is refused with its line when Lean's print of its type, in the
+  docstring, ends in a sort or opens a binder with an arrow, as in `{P : Type} →`, where a
+  proposition has `∀`: either shows a definition. `Placed`, `Val.place` and
+  `Metric.names`, which theorems the section names read, must have `#print` pins too. A
+  statement pin whose docstring holds `⋯` or `[...]`, where Lean cut its print short, is
+  refused with its line, wherever the option that cut it was set. A pin in a comment, which
+  Lean never runs, does not count.
   The file may hold nothing but its leading imports, comments and pins (a docstring, a
   bare `#guard_msgs in`, then `#check @`, `#print` or `#print axioms`); anything else is
   refused with its line, such as a `set_option` of any kind (some shorten what Lean
@@ -429,8 +436,9 @@ The ruleset and the remaining merge requirements are in
   `lake build Audit` does not run its pins. That build checks that each pin is what Lean
   prints; the script checks that the pins exist and that nothing in the file changes what
   they print or name, so that a theorem the brief names cannot be weakened under the same
-  name with only its axioms pinned. Its cases,
-  `python3 -I tests/test_check_superposition_pins.py`, need no Lean and run first.
+  name with only its axioms pinned, nor a definition changed under a pin of its type
+  alone. Its cases, `python3 -I tests/test_check_superposition_pins.py`, need no Lean and
+  run first.
 - **Counts in prose.** A count a script knows exactly goes between count markers and is
   rendered; the surrounding prose stays human ([STYLE](STYLE.md), section 4).
   `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`
