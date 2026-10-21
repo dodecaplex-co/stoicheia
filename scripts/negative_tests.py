@@ -87,6 +87,11 @@ records current; CI runs it on every push.
 18. Counting congruence constructors instead of `Coincidence.step` in the certificate:
     `tests/test_certificate.py` fails on transformers with no step. The restored
     certificate must pass the same regression, including its real-step cases.
+19. Without a build, names and arcs in real figures (#172): `*e*.*g*.` in II.7's modern
+    way, with an italic e planted in its figure, fails S25 for the emphasis and for e,
+    no name of the modern way; an italic p planted there fails S25 too, though Heath's
+    "p. 389" stands in the paragraph; and an arc whose ends are one point and one with a
+    radius of 0, planted in I.1's figure, fail S26 with what SVG draws for each.
 
 The copies of items 16 and 17, and item 13's list of generated outputs, read Git's
 tracked files. One absent from the work tree is named on stdout and passed over: as a
@@ -243,6 +248,41 @@ def style_error() -> None:
                        f"S1 {rel}:", "S1 an em dash")
     finally:
         path.write_bytes(saved)
+
+
+def figure_names_and_arcs() -> None:
+    label = ('<text font-family="Georgia, serif" font-size="17" x="30" y="30" '
+             'font-style="italic" fill="#3b2f2f">{}</text></svg>')
+    modern = "figures/II/07-modern.svg"
+    arcs = ('<path d="M 20 20 A 5 5 0 0 1 20 20" fill="none" stroke="#3b2f2f" '
+            'stroke-width="1.6"/><path d="M 30 20 A 0 5 0 0 1 40 20" fill="none" '
+            'stroke="#3b2f2f" stroke-width="1.6"/></svg>')
+    plants = (
+        ("*e*.*g*. in II.7's modern way, and e in its figure",
+         (("mishnah/II/07.md", "beside II.4's square on a sum.",
+           "beside II.4's square on a sum, *e*.*g*. a planted one."),
+          (modern, "</svg>", label.format("e"))),
+         (f"S25 {modern}: mishnah/II/07.md: unsupported intraword emphasis",
+          f"S25 {modern}: <text>e</text>: e is no name of the page's modern way")),
+        ("p in II.7's modern figure, beside Heath's page, p. 389",
+         ((modern, "</svg>", label.format("p")),),
+         (f"S25 {modern}: <text>p</text>: p is no name of the page's modern way",)),
+        ("an arc whose ends are one point, and one of radius 0, in I.1's figure",
+         (("figures/I/01.svg", "</svg>", arcs),),
+         ("S26 figures/I/01.svg: <path> d 'M 20 20 A 5 5 0 0 1 20 20': SVG draws nothing",
+          "S26 figures/I/01.svg: <path> d 'M 30 20 A 0 5 0 0 1 40 20': SVG draws a "
+          "straight line")),
+    )
+    for name, changes, wanted in plants:
+        saved = {}
+        try:
+            for rel, old, new in changes:
+                saved[rel] = replace_once(rel, old, new)
+            expect_failure(name, run(sys.executable, "scripts/check_style.py", "--no-lean"),
+                           *wanted)
+        finally:
+            for rel, text in saved.items():
+                (ROOT / rel).write_text(text)
 
 
 def absent_tracked(rels: list[str | Path]) -> list[str | Path]:
@@ -1307,6 +1347,7 @@ def main(argv=()) -> int:
         model_lake()
         lake_links()
         placement_named()
+        figure_names_and_arcs()
         planted_assumptions()
         for test in (circle_proved, style_error, broken_link, stale_page,
                      changed_audit_pin, corrupt_olean, certificate_constructor_counting):
