@@ -971,10 +971,13 @@ def _(c):
         nx, ny = -nx, -ny
     C2 = (Df[0] + x * ux + y * nx, Df[1] + x * uy + y * ny)
     Af, Bf, Cf = fl(A), fl(B), fl(Cc)
+    # The kept side through D and C', required by Rule.of_placement.
+    N = (Df[1] - C2[1], C2[0] - Df[0], Df[0] * C2[1] - C2[0] * Df[1])
     return (f_on_line(B2, L) and not f_between(B2, Df, Gf) and f_same_side(C2, fl(H), L)
             and feq(math.dist(Df, B2), ab, 1e-7) and feq(math.dist(B2, C2), bc, 1e-7) and feq(math.dist(C2, Df), ca, 1e-7)
             and feq(f_ang(B2, Df, C2), f_ang(Bf, Af, Cf), 1e-7) and feq(f_ang(Df, C2, B2), f_ang(Af, Cf, Bf), 1e-7)
-            and feq(f_ang(C2, B2, Df), f_ang(Cf, Bf, Af), 1e-7))
+            and feq(f_ang(C2, B2, Df), f_ang(Cf, Bf, Af), 1e-7)
+            and Df != C2 and f_on_line(Df, N) and f_on_line(C2, N))
 
 
 # ======================= run =======================

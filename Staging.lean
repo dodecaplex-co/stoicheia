@@ -19,17 +19,16 @@ all proved, have moved to their homes in `Elements/`, and their folders with the
 stage 4b's statements of brief 0007, III.7, III.8 and III.17 with the point of contact, and
 the mixed-angle prototype for III.16 and III.31 (brief 0011). Brief 0008's centre
 restatements have also moved home, and so has III.30's halves (brief 0006), proved on
-21 October 2026 as the companion "III.30 halves". The remaining work:
-
-* `Superposition/`: the prototype of a restricted superposition rule (brief 0009), carried
-  as a hypothesis, with its proofs, which the coordinator approved on 18 October 2026;
-* `Routes/`: Euclid's own routes in Book III, proved on the statements now in
-  `Elements/`: III.8, III.20's special case, III.21, III.26 and III.27 by his arguments,
-  to replace the proofs there (those of III.20's special case, III.21 and III.26 rest on
-  the draft angle at the centre, and wait for its approval), and drafts for the owner's
-  approval of Definition III.3 read at the point, the angle at the centre of any size with
-  III.20 in general (`Elements.BookIII.Staging.Prop20`), and the angle of contact after
-  III.18. The coordinator's orders of 21 October 2026 directed these proofs here; whether
-  they are recorded as the approval of a prototype is the coordinator's to confirm. The
-  report is `docs/reports/routes-book-III.md`.
+21 October 2026 as the companion "III.30 halves". The prototype of a restricted
+superposition rule (brief 0009) has its production home in
+`Elements/Foundations/Superposition/`, where the rule now in the foundations is stated.
+The remaining work is in `Routes/`: Euclid's own routes in Book III, proved on the
+statements now in `Elements/`: III.8, III.20's special case, III.21, III.26 and III.27 by
+his arguments, to replace the proofs there (those of III.20's special case, III.21 and
+III.26 rest on the draft angle at the centre, and wait for its approval), and drafts for
+the owner's approval of Definition III.3 read at the point, the angle at the centre of any
+size with III.20 in general (`Elements.BookIII.Staging.Prop20`), and the angle of contact
+after III.18. The coordinator's orders of 21 October 2026 directed these proofs here;
+whether they are recorded as the approval of a prototype is the coordinator's to confirm.
+The report is `docs/reports/routes-book-III.md`.
 -/
