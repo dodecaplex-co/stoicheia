@@ -90,7 +90,7 @@ among them when it has no `#print` pin that counts), `AUDIT: `name`, read by …
 `#print` pin` for each of the three not printed, `AUDIT: `name`, held to `#print` by name
 …, has no `#print` pin` for each of the two the section no longer names and that is not
 printed, `AUDIT:LINE: `…` is not a leading import, a comment or a pin` for each line
-refused, `AUDIT:LINE: `…` is a statement pin inside a comment` for a commented pin,
+refused, `AUDIT:LINE: `…` is a pin inside a comment` for a commented pin,
 `AUDIT:LINE: `…` pins a definition by `#check`` for a `#check` of a definition,
 `AUDIT:LINE: `…` prints `def …`, where Lean prints `structure …` today` (or the like) for
 a `#print` of one of the two held by name that does not open as Lean's does today,
@@ -160,6 +160,9 @@ HEADING_LINE = re.compile(r"^ {0,3}(#{1,6})[ \t]")
 GUARDED = re.compile(
     r"\s*#guard_msgs(?P<options>(?:\s*\([^)]*\))*)\s+in\s+"
     r"(?P<command>#check\s+@(?P<check>\S+)|#print\s+(?!axioms\b)(?P<print>\S+))")
+COMMENTED_GUARDED = re.compile(
+    r"\s*#guard_msgs(?:\s*\([^)]*\))*\s+in\s+"
+    r"(?P<command>#check\s+@\S+|#print\s+axioms\s+\S+|#print\s+(?!axioms\b)\S+)")
 # The first line of the docstring, which must name the declaration: `@name :` or `name :`
 # for `#check`, `def name`, `structure name` and the like for `#print`.
 KEYWORD = r"(?P<keyword>(?:(?:@\[[^\]\n]*\]|private|protected|noncomputable|unsafe|partial)\s+)*" \
@@ -304,7 +307,7 @@ def block_comment(text: str, start: int) \
         -> tuple[int, int, str, list[tuple[int, str]]]:
     """A block comment's end, body offset, body with nested comments blanked, and nested
     bodies, each with its line. Blanking preserves line breaks and follows Lean's nesting."""
-    body_start = start + (3 if text.startswith("/--", start) else 2)
+    body_start = start + (3 if text.startswith(("/--", "/-!"), start) else 2)
     chunks: list[str] = []
     nested: list[tuple[int, str]] = []
     cursor = i = body_start
@@ -385,56 +388,27 @@ def lex(text: str) -> list[tuple[str, int, str]]:
 
 
 def comment_bodies(text: str) -> list[tuple[int, str]]:
-    """Non-doc comments as their starting line and body, with consecutive line comments
-    joined across whitespace-only lines after their `--` prefixes are removed. Strings and
-    character literals are skipped. Block comments are normalized with the same nesting
-    scanner as `lex`, and nested bodies are returned separately."""
-    found: list[tuple[int, str]] = []
+    """Maximal regions of non-doc comments and whitespace as their starting line and body.
+    Comment delimiters are blanked, active code separates regions, strings and character
+    literals are skipped, and nested block-comment bodies are also returned separately."""
+    projected = [c if c.isspace() else "\0" for c in text]
+    all_nested: list[tuple[int, str]] = []
     i, n = 0, len(text)
     while i < n:
         in_name = i > 0 and NAME_CHAR.match(text[i - 1]) is not None
         if text.startswith("--", i):
-            start = i + 2
-            bodies = []
-            while True:
-                end = text.find("\n", i)
-                if end < 0:
-                    bodies.append(text[i + 2:])
-                    i = n
-                    break
-                bodies.append(text[i + 2:end])
-                following = end + 1
-                blanks = []
-                while following < n:
-                    next_end = text.find("\n", following)
-                    next_end = n if next_end < 0 else next_end
-                    line = text[following:next_end]
-                    comment = following
-                    while comment < next_end and text[comment] in " \t":
-                        comment += 1
-                    if text.startswith("--", comment):
-                        bodies.extend(blanks)
-                        i = comment
-                        break
-                    if line.strip(" \t\r"):
-                        i = following
-                        break
-                    blanks.append(line)
-                    if next_end == n:
-                        i = n
-                        break
-                    following = next_end + 1
-                else:
-                    i = n
-                if i >= n or not text.startswith("--", i):
-                    break
-            found.append((text.count("\n", 0, start) + 1, "\n".join(bodies)))
+            end = text.find("\n", i)
+            end = n if end < 0 else end
+            projected[i:i + 2] = "  "
+            projected[i + 2:end] = text[i + 2:end]
+            i = end
         elif text.startswith("/-", i):
             doc = text.startswith("/--", i)
-            j, start, body, nested = block_comment(text, i)
+            j, start, body, children = block_comment(text, i)
             if not doc:
-                found.append((text.count("\n", 0, start) + 1, body))
-                found.extend(nested)
+                projected[i:j] = ["\n" if c == "\n" else " " for c in text[i:j]]
+                projected[start:start + len(body)] = body
+                all_nested.extend(children)
             i = j
         elif text[i] == '"':
             j = i + 1
@@ -449,6 +423,9 @@ def comment_bodies(text: str) -> list[tuple[int, str]]:
             i = char.end()
         else:
             i += 1
+    found = [(text.count("\n", 0, match.start()) + 1, match.group())
+             for match in re.finditer(r"[^\0]+", "".join(projected))]
+    found.extend(all_nested)
     return found
 
 
@@ -600,10 +577,10 @@ def read_pins(text: str) -> list[Pin]:
 
 
 def commented_pins(text: str) -> list[tuple[int, str]]:
-    """Guarded statement commands inside comments, with their line in the whole file."""
+    """Guarded pin commands inside comments, with their line in the whole file."""
     return [
         (start + body.count("\n", 0, guarded.start("command")), guarded.group("command"))
-        for start, body in comment_bodies(text) for guarded in GUARDED.finditer(body)
+        for start, body in comment_bodies(text) for guarded in COMMENTED_GUARDED.finditer(body)
     ]
 
 
@@ -709,7 +686,7 @@ def check(brief: Path, audit: Path, library: Path = ROOT / LIBRARY) \
     refusals += [(number, f"`{shorten(lines[number - 1].strip())}` {why}")
                  for number, why in refused_pins(text)]
     refusals += [
-        (number, f"`{shorten(lines[number - 1].strip())}` is a statement pin inside a "
+        (number, f"`{shorten(lines[number - 1].strip())}` is a pin inside a "
                  "comment; commented pins do not run and are refused")
         for number, _ in commented_pins(text)
     ]

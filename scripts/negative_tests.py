@@ -1700,7 +1700,8 @@ def main(argv=()) -> int:
                         help="only the count plants and file-only regressions; no build needed")
     args = parser.parse_args(argv)
     if not expect_success("restoration regressions",
-                          run(sys.executable, "-I", "tests/test_negative_tests.py")):
+                          run(sys.executable, "-I", "tests/test_negative_tests.py",
+                              "RestorationTests")):
         return 1
     print("✓ restoration regressions passed (without Lean)")
     if not expect_success("count regressions",

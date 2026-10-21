@@ -781,7 +781,7 @@ class PinTests(unittest.TestCase):
                 command = next((number, line.strip()) for number, line in
                                enumerate(audit.splitlines(), 1) if f"#check @{SOUND}" in line)
                 self.assert_refused(out, [], ((
-                    *command, "is a statement pin inside a comment; commented pins do not "
+                    *command, "is a pin inside a comment; commented pins do not "
                     "run and are refused"),))
 
     def test_a_pin_in_a_comment_is_refused_beside_an_active_duplicate(self):
@@ -794,7 +794,7 @@ class PinTests(unittest.TestCase):
         self.assertEqual(code, 1, out)
         self.assertNotIn("has no statement pin", out)
         self.assert_refused(out, [], ((
-            *command, "is a statement pin inside a comment; commented pins do not run and "
+            *command, "is a pin inside a comment; commented pins do not run and "
             "are refused"),))
 
     def test_nested_comment_between_pin_tokens_is_refused_at_the_command(self):
@@ -807,7 +807,7 @@ class PinTests(unittest.TestCase):
         self.assertNotIn("has no statement pin", out)
         self.assert_refused(out, [], ((
             line, f"#check @{SOUND} -/",
-            "is a statement pin inside a comment; commented pins do not run and are "
+            "is a pin inside a comment; commented pins do not run and are "
             "refused"),))
 
     def test_line_comment_pin_across_blank_lines_is_refused_beside_an_active_duplicate(self):
@@ -825,16 +825,80 @@ class PinTests(unittest.TestCase):
                 self.assertEqual(code, 1, out)
                 self.assertNotIn("has no statement pin", out)
                 self.assert_refused(out, [], ((
-                    *command, "is a statement pin inside a comment; commented pins do not "
+                    *command, "is a pin inside a comment; commented pins do not "
                     "run and are refused"),))
+
+    def test_pin_split_across_comment_kinds_is_refused_beside_an_active_duplicate(self):
+        active = PIN.format(name="Derives.sound")
+        cases = {
+            "line, empty block, line":
+                f"-- #guard_msgs in\n/- -/\n-- #check @{SOUND}\n",
+            "block then line":
+                f"/- #guard_msgs in -/\n-- #check @{SOUND}\n",
+            "line then block":
+                f"-- #guard_msgs in\n/- #check @{SOUND} -/\n",
+            "two blocks on one line":
+                f"/- #guard_msgs in -/ /- #check @{SOUND} -/\n",
+            "two module comments":
+                f"/-! #guard_msgs in -/\n/-! #check @{SOUND} -/\n",
+        }
+        for label, commented in cases.items():
+            with self.subTest(label):
+                audit = commented + active
+                command = next((number, line.strip()) for number, line in
+                               enumerate(commented.splitlines(), 1)
+                               if f"#check @{SOUND}" in line)
+                code, out = self.run_check(self.brief("`Derives.sound` holds."), audit)
+                self.assertEqual(code, 1, out)
+                self.assertNotIn("has no statement pin", out)
+                self.assert_refused(out, [], ((
+                    *command, "is a pin inside a comment; commented pins do not "
+                    "run and are refused"),))
+
+    def test_commented_axiom_pins_are_refused_without_statement_coverage(self):
+        cases = {
+            "line comments":
+                f"-- #guard_msgs in\n-- #print axioms {SOUND}\n",
+            "block comment":
+                f"/- #guard_msgs in\n#print axioms {SOUND} -/\n",
+            "nested block comment":
+                f"/- #guard_msgs /- nested -/ in\n#print axioms {SOUND} -/\n",
+            "module comment":
+                f"/-! #guard_msgs in\n#print axioms {SOUND} -/\n",
+        }
+        active = PIN.format(name="Derives.sound")
+        for label, commented in cases.items():
+            with self.subTest(label):
+                command = next((number, line.strip()) for number, line in
+                               enumerate(commented.splitlines(), 1)
+                               if f"#print axioms {SOUND}" in line)
+                code, out = self.run_check(
+                    self.brief("`Derives.sound` holds."), commented + active)
+                self.assertEqual(code, 1, out)
+                self.assertNotIn("has no statement pin", out)
+                self.assert_refused(out, [], ((
+                    *command, "is a pin inside a comment; commented pins do not "
+                    "run and are refused"),))
+
+                code, out = self.run_check(self.brief("`Derives.sound` holds."), commented)
+                self.assertEqual(code, 1, out)
+                self.assertIn("`Derives.sound` has no statement pin", out)
 
     def test_line_comment_pin_does_not_cross_active_code(self):
         active = PIN.format(name="Derives.sound")
-        audit = ("-- #guard_msgs in\n"
-                 "import Elements.BookI.Prop04\n"
-                 f"-- #check @{SOUND}\n" + active)
-        code, out = self.run_check(self.brief("`Derives.sound` holds."), audit)
-        self.assertEqual(code, 0, out)
+        cases = {
+            "line comments": ("-- #guard_msgs in\n"
+                              "import Elements.BookI.Prop04\n"
+                              f"-- #check @{SOUND}\n"),
+            "mixed comments": ("/- #guard_msgs in -/\n"
+                               "import Elements.BookI.Prop04\n"
+                               f"-- #check @{SOUND}\n"),
+        }
+        for label, commented in cases.items():
+            with self.subTest(label):
+                code, out = self.run_check(
+                    self.brief("`Derives.sound` holds."), commented + active)
+                self.assertEqual(code, 0, out)
 
     def test_ordinary_comments_and_active_pin_docstrings_are_allowed(self):
         pin = PIN.format(name="Derives.sound")

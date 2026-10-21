@@ -4,12 +4,11 @@ temporary repositories.
 
     python3 -I tests/test_negative_tests.py
 
-The negative suite runs these first. The figure-guard regression compiles its control and
-plant with Lean. In the restoration cases, temporary files stand in for Lake outputs;
-simulated builds delete, replace and create them before failing or being interrupted. A
-temporary repository stands in for the pre-flight's pass with origin/main's checks, whose
-work tree lacks the files a commit adds under the check inputs while Git's index still lists
-them.
+The negative suite runs these first without Lean. Temporary files stand in for Lake
+outputs; simulated builds delete, replace and create them before failing or being
+interrupted. A temporary repository stands in for the pre-flight's pass with origin/main's
+checks, whose work tree lacks the files a commit adds under the check inputs while Git's
+index still lists them.
 """
 
 import io
@@ -600,21 +599,6 @@ class RestorationTests(unittest.TestCase):
         self.assertTrue(any("also refused outside" in f and "Elements/Figure/Superposition.lean"
                             in f for f in negative.failures), negative.failures)
 
-    def test_figure_guard_compiles_control_and_refuses_plant(self):
-        source = REPO / negative.RESTRICTION
-        original = source.read_bytes()
-        built = subprocess.run(
-            ("lake", "build", "Elements.Foundations.Superposition.Soundness"),
-            cwd=REPO, capture_output=True, text=True)
-        self.assertEqual(built.returncode, 0, built.stdout + built.stderr)
-        failures = []
-        with patch.multiple(negative, ROOT=REPO, failures=failures):
-            negative.figure_guard_over_all_points()
-        self.assertEqual(failures, [])
-        self.assertIn("caught by Rule.Figure.restrict", self.output.getvalue())
-        self.assertIn("guard over the figure alone compiles", self.output.getvalue())
-        self.assertEqual(source.read_bytes(), original)
-
     def test_figure_guard_needs_the_control_to_compile_and_the_plant_to_fail(self):
         source = self.root / negative.RESTRICTION
         original = (REPO / negative.RESTRICTION).read_bytes()
@@ -691,8 +675,28 @@ class RestorationTests(unittest.TestCase):
                 patch.object(negative, "heath_word") as plant:
             self.assertEqual(negative.main(), 1)
         self.assertEqual(commands.call_args.args,
-                         (sys.executable, "-I", "tests/test_negative_tests.py"))
+                         (sys.executable, "-I", "tests/test_negative_tests.py",
+                          "RestorationTests"))
         plant.assert_not_called()
+
+    def test_counts_only_invokes_no_lake_or_lean_build(self):
+        commands = []
+
+        def run(*cmd):
+            commands.append(cmd)
+            return subprocess.CompletedProcess(cmd, 0, "", "")
+
+        with patch.object(negative, "run", side_effect=run), \
+                patch.object(negative, "count_markers") as counts:
+            self.assertEqual(negative.main(("--counts-only",)), 0)
+        self.assertEqual(commands, [
+            (sys.executable, "-I", "tests/test_negative_tests.py", "RestorationTests"),
+            (sys.executable, "-I", "tests/test_generated_counts.py"),
+            (sys.executable, "-I", "tests/test_decision_entries.py"),
+        ])
+        self.assertFalse(any(part in {"lake", "lean"}
+                             for command in commands for part in command))
+        counts.assert_called_once_with()
 
     def test_final_status_checked_without_replacing_original_exception(self):
         for final in ("unchanged", "changed", "failed", "raised"):
