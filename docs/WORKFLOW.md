@@ -375,13 +375,16 @@ The ruleset and the remaining merge requirements are in
   harness that wrote it (`HARNESS` in `tests/model/run.py`), and MODEL.md's counts name
   the same commit. `tests/model/results_check.py`, which is not a file of the harness,
   fails when the harness now hashes otherwise, when a run read harness files other than
-  its commit's, or when `summary.txt` and the counts are not what `--write` makes of the
-  runs' output. So a pull request that changes a harness file commits the change, runs
+  its commit's, when the runs' output is what `run.py` refuses to write, or when
+  `summary.txt` and the counts are not what `--write` makes of the runs' output. So a pull
+  request that changes a harness file commits the change, runs
   `python3 -I tests/model/run.py --full --write` on it (about eight minutes) and commits
   what it writes, in the same pull request; its decisions entry names each file the run
-  changes. The check runs no harness, so it cannot tell a header written by hand from a
-  run's; the security review, which every change under `tests/` gets, reads the results'
-  diff.
+  changes. `--write` runs from a copy of the harness taken out of git at the commit, so
+  what it writes is that commit's harness's. The check runs no harness, so it cannot tell
+  a header written by hand from a run's, and the output records no exit status, which only
+  `--write` sees; the security review, which every change under `tests/` gets, reads the
+  results' diff.
 - **Staging builds; it is not proved.** `lake build Staging` checks that the statements
   staged before their proofs (section 2), each with `sorry` where its proof is due, still
   build against the library they import. It builds every file under `Staging/`, whether or

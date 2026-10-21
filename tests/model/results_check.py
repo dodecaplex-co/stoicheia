@@ -9,24 +9,36 @@ MODEL.md. This check runs no harness. It fails, naming each file, unless
 * each names, once, a commit whose harness files its run read as committed, and the harness
   as it hashes now, and all name the same commit; summary.txt names, once, the Python and
   the date its counts were written with;
-* MODEL.md has one block of counts, and it names that commit; and
+* MODEL.md has one block of counts, and it names that commit;
+* the runs' output in results/ is what run.py's `judge` accepts, as --write requires: each
+  run reached its last line and reported each law and derived property once, none found a
+  counterexample in the plane, every mutation was caught, the grid and angle checks found
+  no failure, and the hyperbolic plane failed the laws that must fail there and no other;
+  and
 * summary.txt and the counts in MODEL.md are what --write makes of the runs' output in
   results/.
 So a change to any file of HARNESS fails it until `run.py --full --write` is run on the
 change, committed, and what it writes is committed too (docs/WORKFLOW.md, section 8). It
 reads what a run wrote, and cannot tell a header written by hand from a run's: the security
-review, which every change under tests/ gets, reads the results' diff.
+review, which every change under tests/ gets, reads the results' diff. A results file holds
+what its run printed, not how its process exited or what it wrote to stderr, so `judge`
+here takes each run to have exited 0; that it did is --write's to check, not this one's.
 
 It is not a file of HARNESS, so a change to it alone needs no new run. Its self-test runs
 first: it writes results as --write does, from made-up runs, into a temporary folder, plants
 each fault the check exists to catch, and checks that each is caught and that the results
-unchanged pass.
+unchanged pass. It drives --write's guards too, and runs `run.py --full --write` for real,
+in a git repository of its own, on a made-up harness that changes and restores the
+checkout's harness while the run goes on.
 """
+import hashlib
 import itertools
+import json
 import os
 import platform
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 from unittest import mock
@@ -34,9 +46,10 @@ from unittest import mock
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import run as runner  # noqa: E402
-from run import (COMMITTED, COUNTS, COUNTS_FROM, EUCLIDEAN, HARNESS, HARNESS_LINE,  # noqa: E402
-                 LAWS, MODEL_MD, RESULTS, ROOT, SUMMARY, git, harness_hash, parse_results,
-                 plan, result_file, search_names, short_commit, write, written)
+from run import (COMMITTED, COUNTS, COUNTS_FROM, EUCLIDEAN, EXPECTED_TO_FAIL,  # noqa: E402
+                 HARNESS, HARNESS_LINE, LAST_LINE, LAWS, MODEL_MD, RESULTS, ROOT, SUMMARY, git,
+                 harness_hash, judge, parse_results, plan, result_file, search_names,
+                 short_commit, write, written)
 from derived import PROPERTIES  # noqa: E402
 
 PAGE = 'A page.\n\n<!-- counts:begin -->\nx\n<!-- counts:end -->\n'   # a MODEL.md to write into
@@ -96,16 +109,22 @@ def first_difference(have, want):
 
 
 def made_again(results, model_md):
-    """The problems with summary.txt and MODEL.md's counts, against what --write makes of the
-    runs' output in results/, with the provenance summary.txt names. Their first line names
-    the Python that wrote them, which here is summary.txt's."""
+    """The problems with the runs' output in results/, as run.py's `judge` finds them, which
+    stop --write from writing; and, when it finds none, with summary.txt and MODEL.md's
+    counts, against what --write makes of that output, with the provenance summary.txt
+    names. Their first line names the Python that wrote them, which here is summary.txt's.
+    The output records no exit status or stderr, so each run is taken to have exited 0."""
     runs = plan(True)
     for r in runs:
         r.out = body_of(read(os.path.join(results, result_file(r))))
         if r.out is None:
             return [f'{shown(results)}/{result_file(r)} has no blank line after its header']
-        r.seconds, r.command = 0.0, ''
+        r.seconds, r.command, r.code, r.err = 0.0, '', 0, ''
         r.laws, r.derived, r.twice = parse_results(r.out, search_names)
+    refused = judge(runs)
+    if refused:
+        return [f"the runs' output in {shown(results)}/ is what run.py refuses to write: {b}"
+                for b in refused]
     prov = {k: v[0] for k, v in header_of(os.path.join(results, SUMMARY)).items()}
     with tempfile.TemporaryDirectory() as tmp:
         page = os.path.join(tmp, 'MODEL.md')
@@ -216,24 +235,36 @@ def check_results(results=RESULTS, model_md=MODEL_MD, harness=None):
     return problems, sorted(commits)
 
 
+ENDS = {'mutations': ['15/15 mutations caught'], 'grid_check': ['failures 0 Counter()'],
+        'angle_check': ['triple incidence grid failures: 0 []', 'float failures: {}'],
+        'hyperbolic': ['self-test: made up']}   # what each passing run reports, as judge reads it
+
+
 def made_up_runs():
-    """The runs of the full plan, each with a little made-up output: in the plane and the
-    hyperbolic plane a row for each law, and in the exhaustive and structured runs one for
-    each derived property too."""
+    """The runs of the full plan, each with a little made-up output that run.py accepts: in
+    the plane and the hyperbolic plane a row for each law, with a counterexample only to
+    the laws that must fail in the hyperbolic plane, there; in the exhaustive and structured
+    runs one for each derived property too; and each run's verdicts and last line."""
     runs = plan(True)
     for i, r in enumerate(runs):
-        rows = ([f'{law} {i + 9} {i + 5} 0' for law in LAWS]
+        rows = ([f'{law} {i + 9} {i + 5} '
+                 f'{int(r.key == "hyperbolic" and law in EXPECTED_TO_FAIL) * (i + 1)}'
+                 for law in LAWS]
                 if r.key.startswith(EUCLIDEAN + ('hyperbolic',)) else [])
         if r.key in ('exhaustive', 'structured'):
             rows += [f'{p} {i + 7} {i + 3} 0' for p in PROPERTIES]
-        r.out = '\n'.join(rows + [f'{r.key}: made up by the self-test']) + '\n'
+        last = next((v for k, v in LAST_LINE.items() if r.key.startswith(k)), r.key + ':')
+        rows += ENDS.get(r.key, []) + [f'{last} made up by the self-test']
+        r.out = '\n'.join(rows) + '\n'
         r.seconds, r.command = 1.0, 'python3 -I'
         r.laws, r.derived, r.twice = parse_results(r.out, search_names)
     return runs
 
 
 def write_guard_self_test():
-    """Drive --write with stable, invalid and changing provenance without running a harness."""
+    """Drive --write's guards with stable, invalid and changing provenance, without running a
+    harness: in the checkout, which hands its provenance to a run from a copy of the harness,
+    and in that run, which writes."""
     commit = 'a' * 40
     harness = 'b' * 64
 
@@ -241,7 +272,9 @@ def write_guard_self_test():
         return dict(commit=f'{sha} ({state})', harness=digest,
                     python=f'{platform.python_version()} (self-test)', date=date)
 
-    def exercise(provenances):
+    def exercise(provenances, start=None, copy=harness):
+        """--full --write: in the checkout when `start` is None, else in a run from a copy of
+        the harness, handed the provenance `start`; the copy hashes as `copy`"""
         launched = []
 
         class GuardRun:
@@ -255,7 +288,13 @@ def write_guard_self_test():
 
         run = GuardRun()
         writer = mock.Mock()
+        child = mock.Mock(return_value=subprocess.CompletedProcess([], 0))
+        snapshot = None if start is None else {'root': ROOT, 'provenance': start}
         with mock.patch.object(runner.sys, 'argv', ['run.py', '--full', '--write']), \
+                mock.patch.object(runner, 'FROM_SNAPSHOT', snapshot), \
+                mock.patch.object(runner, 'harness_hash', return_value=copy), \
+                mock.patch.object(runner, 'committed_file', return_value=b''), \
+                mock.patch.object(runner.subprocess, 'run', child), \
                 mock.patch.object(runner, 'self_test'), \
                 mock.patch.object(runner, 'check_names', return_value=(0, [])), \
                 mock.patch.object(runner, 'check_lock', return_value=(True, 'self-test')), \
@@ -272,29 +311,170 @@ def write_guard_self_test():
                 stopped = None
             except SystemExit as e:
                 stopped = e.code
-        return launched, writer, stopped
+        return launched, writer, child, stopped
 
     before = prov()
-    launched, writer, stopped = exercise([before, prov(date='2000-01-02')])
+    launched, writer, child, stopped = exercise([before])
+    handed = child.call_args
+    if stopped != 0 or launched or writer.called or child.call_count != 1 \
+            or handed.args[0][1:2] + handed.args[0][3:] != ['-I', '--full', '--write'] \
+            or os.path.dirname(handed.args[0][2]) == HERE \
+            or json.loads(handed.kwargs['env'][runner.SNAPSHOT]) != {'root': ROOT,
+                                                                     'provenance': before}:
+        raise AssertionError('--write in the checkout did not hand its provenance to a run '
+                             'from a copy of the harness')
+
+    launched, writer, child, stopped = exercise([prov(date='2000-01-02')], start=before)
     if stopped is not None or launched != ['hyperbolic'] or writer.call_count != 1 \
-            or writer.call_args.args[1] is not before:
+            or writer.call_args.args[1] is not before or child.called:
         raise AssertionError('--write refused stable provenance or did not use its initial record')
 
+    refused = 0
     for initial in (prov(state='harness files differ from this commit'),
                     prov(sha='unknown', state='state unknown')):
-        launched, writer, stopped = exercise([initial])
-        if launched or writer.called or "not a commit's" not in str(stopped):
-            raise AssertionError('--write did not refuse invalid initial provenance before running')
+        for given in ({}, {'start': initial}):
+            launched, writer, child, stopped = exercise([initial] if not given else [], **given)
+            if launched or writer.called or child.called or "not a commit's" not in str(stopped):
+                raise AssertionError('--write did not refuse invalid initial provenance before '
+                                     'running')
+            refused += 1
+
+    for given, says in (({}, 'does not hash as the harness checked out does'),
+                        ({'start': before}, 'does not hash as its provenance says')):
+        launched, writer, child, stopped = exercise([before] if not given else [],
+                                                    copy='e' * 64, **given)
+        if launched or writer.called or child.called or says not in str(stopped):
+            raise AssertionError('--write did not refuse a copy of the harness that hashes '
+                                 'otherwise before running')
+        refused += 1
 
     changed = [prov(sha='c' * 40),
                prov(state='harness files differ from this commit'),
                prov(digest='d' * 64)]
     for after in changed:
-        launched, writer, stopped = exercise([before, after])
+        launched, writer, child, stopped = exercise([after], start=before)
         if launched != ['hyperbolic'] or writer.called \
                 or 'provenance changed while it ran' not in str(stopped):
             raise AssertionError('--write did not refuse changed provenance before writing')
-    print('model write guard self-test: stable provenance passed; 5 invalid changes refused')
+        refused += 1
+    print(f'model write guard self-test: stable provenance handed on and passed; {refused} '
+          'invalid starts, copies and changes refused')
+
+
+PLANT = 'MODEL_SELF_TEST_PLANT'   # the made-up harness's orders: 'aba', 'stay', or none
+FAKE_EXHAUSTIVE = "Law 9 5 0\nderived.P 7 3 0\nexhaustive axioms run: 1\n"   # what it prints
+FAKE = {   # the made-up harness: every file of HARNESS but run.py, which is the real one
+    'model.py': "def read_laws():\n    return {'Ax': 'Law'}, set()\n",
+    'derived.py': "PROPERTIES = ('derived.P',)\n",
+    'search.py': f"""import os
+import shutil
+import sys
+AXIOMS = [('Law', None, None)]
+if __name__ == '__main__':
+    live = os.path.join('tests', 'model', 'exhaustive.py')
+    if os.environ.get({PLANT!r}) and sys.argv[2] == '3':
+        shutil.copyfile(live, 'exhaustive.kept')
+        with open(live) as f:
+            text = f.read()
+        with open(live, 'w') as f:
+            f.write(text.replace('Law 9 5 0', 'Law 9 6 0'))
+    print('Law 9 5 0')
+    print('axioms checked: 1')
+""",
+    'exhaustive.py': f"""import os
+with open(os.path.join('tests', 'model', 'exhaustive.py')) as f, open('seen', 'w') as g:
+    g.write(f.read())
+print({FAKE_EXHAUSTIVE!r}, end='')
+""",
+    'structured.py': f"""import os
+if os.environ.get({PLANT!r}) == 'aba':
+    os.replace('exhaustive.kept', os.path.join('tests', 'model', 'exhaustive.py'))
+print('Law 9 5 0')
+print('derived.P 7 3 0')
+print('structured total counterexamples: 0')
+""",
+    'mutations.py': "print('15/15 mutations caught')\n",
+    'grid_check.py': "print('failures 0')\n",
+    'angle_check.py': ("print('triple incidence grid failures: 0 []')\n"
+                       "print('float failures: {}')\n"),
+    'hyperbolic.py': """AXIOMS = [('Law', None)]
+if __name__ == '__main__':
+    print('Law 9 5 0')
+    print('self-test: made up')
+    print('axioms checked: 1')
+""",
+    'laws.toml': '# made up for the self-test\n',
+}
+
+
+def snapshot_self_test():
+    """Run `run.py --full --write` for real, on a made-up harness that runs in moments, in a
+    git repository of its own. The harness's last search writes another exhaustive.py into
+    the checkout, and its structured run puts the committed one back, so that the checkout
+    is as committed when the run begins and when it ends, but not while exhaustive.py runs.
+    What is written must be the committed exhaustive.py's output, under the commit and its
+    harness's hash. Left in place, the other file must stop the run with nothing written;
+    there from the start, it must stop the run before anything runs."""
+    if set(FAKE) != set(HARNESS) - {'run.py'}:
+        raise AssertionError('snapshot self-test: the made-up harness is not HARNESS')
+    env = {k: v for k, v in os.environ.items()
+           if not k.startswith('GIT_') and k not in (runner.SNAPSHOT, PLANT)}
+    env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM='1')
+
+    def put(path, text):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(text)
+
+    for plant in ('aba', 'stay', 'dirty'):
+        with tempfile.TemporaryDirectory() as root:
+            model = os.path.join(root, 'tests', 'model')
+            for name, text in FAKE.items():
+                put(os.path.join(model, name), text)
+            shutil.copyfile(os.path.join(HERE, 'run.py'), os.path.join(model, 'run.py'))
+            lock = '[axioms]\nAx = "made up"\n'
+            put(os.path.join(root, 'Certificate', 'axioms.lock'), lock)
+            put(os.path.join(model, 'lock.sha256'),
+                hashlib.sha256(lock.encode()).hexdigest() + '  Certificate/axioms.lock\n')
+            put(os.path.join(root, 'facts.json'), json.dumps({'axiom_modules': {'Ax': 'M'}}))
+            put(os.path.join(model, 'MODEL.md'), PAGE)
+            for args in (['init', '-q'], ['add', '.'], ['commit', '-q', '-m', 'A']):
+                subprocess.run(['git', '-c', 'user.name=self-test',
+                                '-c', 'user.email=self-test@example.invalid', *args],
+                               cwd=root, env=env, check=True, capture_output=True)
+            commit = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=root, env=env, check=True,
+                                    capture_output=True, text=True).stdout.strip()
+            committed = harness_hash(model)
+            if plant == 'dirty':
+                with open(os.path.join(model, 'exhaustive.py'), 'a') as f:
+                    f.write('# not committed\n')
+            p = subprocess.run([sys.executable, '-I', os.path.join(model, 'run.py'), '--full',
+                                '--write'], cwd=root, capture_output=True, text=True,
+                               env=dict(env, **({PLANT: plant} if plant != 'dirty' else {})))
+            results = os.path.join(model, 'results')
+            if plant == 'aba':
+                path = os.path.join(results, 'exhaustive.txt')
+                fields = header_of(path) if p.returncode == 0 and os.path.isfile(path) else {}
+                if fields.get('commit') != [f'{commit} ({COMMITTED})'] \
+                        or fields.get(HARNESS_LINE) != [committed] \
+                        or body_of(read(path)) != FAKE_EXHAUSTIVE:
+                    raise AssertionError('snapshot self-test: a harness changed and restored '
+                                         'while it ran was written as the commit\'s: '
+                                         f'{p.stdout}{p.stderr}')
+                if 'Law 9 6 0' not in read(os.path.join(root, 'seen')) \
+                        or harness_hash(model) != committed:
+                    raise AssertionError('snapshot self-test: the checkout was not changed and '
+                                         'restored while exhaustive.py ran')
+                continue
+            says = ('provenance changed while it ran' if plant == 'stay'
+                    else "not a commit's committed files")
+            if p.returncode == 0 or says not in p.stderr or os.path.exists(results) \
+                    or read(os.path.join(model, 'MODEL.md')) != PAGE \
+                    or (plant == 'dirty') == os.path.exists(os.path.join(root, 'seen')):
+                raise AssertionError(f'snapshot self-test: a harness {plant} was not refused as '
+                                     f'it should be: {p.stdout}{p.stderr}')
+    print('model write snapshot self-test: a harness changed and restored while it ran wrote '
+          "the commit's output; changed and left, or changed from the start, nothing")
 
 
 def self_test():
@@ -302,6 +482,7 @@ def self_test():
     fault the check exists to catch in a fresh copy, and check that it is caught; and check
     that the results unchanged pass."""
     write_guard_self_test()
+    snapshot_self_test()
     runs = sorted(written() - {SUMMARY})
     if len(runs) < 4:
         raise AssertionError('results self-test: the full plan writes fewer than four runs')
@@ -466,6 +647,42 @@ def self_test():
         edit(os.path.join(results, 'search-seed1.txt'), rf'^({LAWS[0]} \d+ )\d+', r'\g<1>1')
         expect("a run's output edited, its summary not", results, md,
                f"{SUMMARY} is not what --write makes", "MODEL.md's counts are not what")
+
+        # Output run.py refuses to write, whether or not its summary and counts change.
+        law, prop = re.escape(LAWS[0]), next(iter(PROPERTIES))
+        holds = next(n for n in LAWS if n not in EXPECTED_TO_FAIL)
+        refused = "is what run.py refuses to write: "
+        plants = [
+            ('a counterexample in the plane, its hits unchanged', 'search-seed1.txt',
+             rf'^({law} \d+ \d+) 0$', r'\1 1', f'search-seed1: a counterexample to {LAWS[0]} '),
+            ('a row twice, its hits unchanged', 'search-seed2.txt', rf'^({law} .*\n)', r'\1\1',
+             f'search-seed2 reported {LAWS[0]} twice'),
+            ('a row missing', 'search-seed3.txt', rf'^{law} .*\n', '',
+             f'search-seed3 reported {len(LAWS) - 1} laws, not {len(LAWS)}'),
+            ('a derived property missing', 'exhaustive.txt', rf'^{re.escape(prop)} .*\n', '',
+             f'exhaustive did not report derived property {prop}'),
+            ('output that stops short', 'structured.txt',
+             rf'^{re.escape(LAST_LINE["structured"])}.*\n', '',
+             'structured stopped before its last line'),
+            ('a mutation not caught', 'mutations.txt', r'^15/15', '14/15',
+             'not every mutation was caught'),
+            ('a grid failure', 'grid_check.txt', r'^failures 0', 'failures 1',
+             'grid_check found a failure'),
+            ('an angle failure', 'angle_check.txt', r'grid failures: 0 ', 'grid failures: 1 ',
+             'angle_check found a failure'),
+            ('a counterexample in the hyperbolic plane', 'hyperbolic.txt',
+             rf'^({re.escape(holds)} \d+ \d+) 0$', r'\1 1',
+             f'hyperbolic: a counterexample to {holds}'),
+            ('no hyperbolic self-test', 'hyperbolic.txt', r'^self-test:.*\n', '',
+             "the hyperbolic model's self-test did not pass"),
+        ] + [(f'{n} holding in the hyperbolic plane', 'hyperbolic.txt',
+              rf'^({re.escape(n)} \d+ \d+) \d+$', r'\1 0',
+              f'the hyperbolic run found no counterexample to {n}')
+             for n in sorted(EXPECTED_TO_FAIL)]
+        for label, name, pattern, new, says in plants:
+            results, md = fresh()
+            edit(os.path.join(results, name), pattern, new)
+            expect(label, results, md, refused + says)
     print(f'results self-test: {caught} planted faults caught; results as --write writes them '
           'pass')
 

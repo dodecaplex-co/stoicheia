@@ -37,9 +37,11 @@ functions to small inputs, each with the answer the screen should give.
   docstring, what the screen does not read); a record that is missing, does not read, is
   a symbolic link, disagrees with itself, or is of a run on inputs other than a commit's
   is refused; no record is written of such a run, through a symbolic link, or of inputs
-  that moved while it ran; and the real inputs compute, which takes most of the time.
-* Before any Lean: --check-current takes no OUTDIR and no --write; a stale build, or
-  --write on inputs that are not a commit's, stops a run.
+  or a commit that moved while it ran; and the real inputs compute, which takes most of
+  the time.
+* Before any Lean: --check-current takes no OUTDIR and no --write; a stale build, --write
+  on inputs that are not a commit's, or a move to another commit or other inputs after the
+  build checks as current, stops a run.
 
 Nothing runs these in CI yet: whoever changes the screen runs this file. Python 3.11 or
 later; standard library.
@@ -392,7 +394,8 @@ class Record(unittest.TestCase):
         facts = json.loads((self.root / "facts.json").read_text(encoding="utf-8"))
         read = screen.inputs(self.root, facts)
         with contextlib.redirect_stdout(io.StringIO()) as out:
-            screen.write_record(self.root, read, len(facts["propositions"]), self.path)
+            screen.write_record(self.root, read, len(facts["propositions"]), self.path,
+                                at=screen.revision(self.root))
         return out.getvalue()
 
     def check(self) -> tuple[list[str], list[str]]:
@@ -558,7 +561,50 @@ class Record(unittest.TestCase):
         read = screen.inputs(self.root, self.facts)
         self.write("Elements/Foundations/Words.lean", "def x := 2\n")
         with self.assertRaisesRegex(SystemExit, "changed while it ran"):
-            screen.write_record(self.root, read, 2, self.path)
+            screen.write_record(self.root, read, 2, self.path, at=screen.revision(self.root))
+
+    def test_a_commit_moved_during_a_run_is_not_recorded(self):
+        """The inputs as they were, but another commit checked out: the record names the
+        commit the run read its inputs at, or nothing."""
+        before = self.path.read_text(encoding="utf-8")
+        read = screen.inputs(self.root, self.facts)
+        with git_at("b" * 40), self.assertRaisesRegex(SystemExit, "changed while it ran"):
+            screen.write_record(self.root, read, 2, self.path, at=(COMMIT, screen.COMMITTED))
+        self.assertEqual(self.path.read_text(encoding="utf-8"), before)
+
+    def test_a_move_to_clean_b_after_as_build_checks_stops_the_run(self):
+        """A's build checks as current, and then the checkout moves, clean, to commit B,
+        with another library file or none: no Lean runs, and B is not recorded against A's
+        build."""
+        before = self.path.read_text(encoding="utf-8")
+        for library in ("def x := 2\n", None):
+            with self.subTest(library=library):
+                head = {"commit": COMMIT}
+                launched = []
+
+                def git(*args: str, root: Path = REPO) -> str | None:
+                    return {"rev-parse": head["commit"], "status": ""}.get(args[0])
+
+                def lake(argv, **kw):
+                    launched.append(argv)
+                    if library:
+                        self.write("Elements/Foundations/Words.lean", library)
+                    head["commit"] = "b" * 40
+                    return subprocess.CompletedProcess(argv, 0)
+                with tempfile.TemporaryDirectory() as out, \
+                        mock.patch.object(screen, "git", git), \
+                        mock.patch.object(screen, "ROOT", self.root), \
+                        mock.patch.object(screen, "RECORD", self.path), \
+                        mock.patch.object(screen.subprocess, "run", lake), \
+                        mock.patch.object(screen.subprocess, "Popen") as lean, \
+                        mock.patch.object(sys, "argv", ["screen.py", out, "--write"]), \
+                        contextlib.redirect_stdout(io.StringIO()), \
+                        self.assertRaises(SystemExit) as stop:
+                    screen.main()
+                self.assertIn("changed while the build was checked", str(stop.exception.code))
+                self.assertEqual(launched, [["lake", "build", "--no-build", "Elements"]])
+                lean.assert_not_called()
+                self.assertEqual(self.path.read_text(encoding="utf-8"), before)
 
     def test_the_repository_inputs_read(self):
         """The real inputs compute, and every part is present."""
@@ -594,7 +640,7 @@ class Main(unittest.TestCase):
         def lake(argv, **kw):
             built.append(argv)
             return subprocess.CompletedProcess(argv, 3)
-        with tempfile.TemporaryDirectory() as out, \
+        with tempfile.TemporaryDirectory() as out, git_at(), \
                 mock.patch.object(screen.subprocess, "run", lake):
             code, _ = self.main(out)
         self.assertEqual(built, [["lake", "build", "--no-build", "Elements"]])

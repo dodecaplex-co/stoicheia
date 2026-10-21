@@ -100,8 +100,10 @@ usage (from the repository root, after `lake build`):
 It writes its Lean files and logs to OUTDIR, which must be outside the repository. Each
 job is one Lean process on one thread, so N jobs keep N cores busy. It takes about an hour
 and a half of processor time: some eight minutes with twelve jobs on an idle machine.
-Every try imports what `lake build` built, not the sources, so a run first checks with
-`lake build --no-build Elements` that the build is current, and stops if it is not.
+Every try imports what `lake build` built, not the sources. So a run reads the commit and
+its inputs, checks with `lake build --no-build Elements` that the build is current, and
+reads them again before any Lean runs: it stops if the build is not current, or if the
+commit or the inputs changed meanwhile, and a record names what it read first.
 Standard library only. Its cases, which need no Lean, are in tests/test_screen.py.
 
 What a run read. With --write, a run that ends with every known row closed by a rule
@@ -644,15 +646,20 @@ def record_text(parts: dict[str, str], commit: str, state: str, count: int) -> s
     ]) + "\n"
 
 
-def write_record(root: Path, read: dict[str, str], count: int, path: Path = RECORD) -> None:
-    """Record what the run read, unless its inputs changed while it ran or are not a
-    commit's; through a new file renamed over the record, which is never a symbolic link."""
+def write_record(root: Path, read: dict[str, str], count: int, path: Path = RECORD, *,
+                 at: tuple[str, str]) -> None:
+    """Record what the run read, at the commit and state `revision` gave when it read them,
+    unless its inputs or that commit changed while it ran, or they are not a commit's;
+    through a new file renamed over the record, which is never a symbolic link."""
     facts = json.loads((root / "facts.json").read_text(encoding="utf-8"))
     moved = [k for k, v in inputs(root, facts).items() if read[k] != v]
     if moved:
         sys.exit("screen: its inputs changed while it ran, so nothing is recorded: "
                  + "; ".join(PARTS[k] for k in moved))
-    commit, state = revision(root)
+    commit, state = at
+    if revision(root) != at:
+        sys.exit(f"screen: the commit checked out changed while it ran, from {commit[:12]} "
+                 "as it read its inputs, so nothing is recorded")
     if state != COMMITTED or not re.fullmatch(r"[0-9a-f]{40}", commit):
         sys.exit(f"screen: the inputs are not a commit's ({state}), so nothing is recorded")
     if path.is_symlink():
@@ -774,9 +781,12 @@ def main() -> int:
     out = args.outdir.resolve()
     if out == ROOT or ROOT in out.parents:
         sys.exit("screen: OUTDIR must be outside the repository")
-    if args.write and (state := revision(ROOT)[1]) != COMMITTED:
+    at = revision(ROOT)
+    if args.write and at[1] != COMMITTED:
         sys.exit(f"screen: --write records only a run on a commit's inputs as committed, and "
-                 f"these are not ({state}): commit them, or run without --write")
+                 f"these are not ({at[1]}): commit them, or run without --write")
+    facts = json.loads((ROOT / "facts.json").read_text(encoding="utf-8"))
+    read = inputs(ROOT, facts)
     try:
         built = subprocess.run(["lake", "build", "--no-build", "Elements"], cwd=ROOT,
                                capture_output=True, text=True).returncode == 0
@@ -785,9 +795,11 @@ def main() -> int:
     if not built:
         sys.exit("screen: the build of Elements is not current with its sources, and every try "
                  "imports the build: run `lake build` first")
+    if revision(ROOT) != at or inputs(
+            ROOT, json.loads((ROOT / "facts.json").read_text(encoding="utf-8"))) != read:
+        sys.exit("screen: the commit or the inputs changed while the build was checked, so "
+                 "the build checked may not be theirs: nothing is run")
     out.mkdir(parents=True, exist_ok=True)
-    facts = json.loads((ROOT / "facts.json").read_text(encoding="utf-8"))
-    read = inputs(ROOT, facts)
     kinds: dict[str, int] = {}
     for e in facts["propositions"]:
         kinds[e["kind"]] = kinds.get(e["kind"], 0) + 1
@@ -833,7 +845,7 @@ def main() -> int:
               "broken")
         return 1
     if args.write:
-        write_record(ROOT, read, len(facts["propositions"]))
+        write_record(ROOT, read, len(facts["propositions"]), RECORD, at=at)
     return 0
 
 
