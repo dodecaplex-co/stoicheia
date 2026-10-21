@@ -387,7 +387,7 @@ findings:
   and at "exceptions", from `review/`; and the stage, the outside score and the release
   from [program.toml](../program.toml), which the coordinator keeps by hand. CI's check of
   the generated pages covers it, and the integrator commits it with the other generated
-  files. Acceptance shows a dash until the acceptance report of brief 0005's stage 6.
+  files. Acceptance reads "—" until the acceptance report of brief 0005's stage 6.
 - **Pushing to main, safely and without asking.** The owner, on 17 October: "you definitely
   don't need my push for every one; build a harness that makes pushes safe." The coordinator
   pushes to main without asking, and only through [`scripts/safe_push.py`](../../scripts/safe_push.py),
