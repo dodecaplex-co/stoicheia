@@ -3866,7 +3866,10 @@ findings:
   (one behind a `/--/` and one behind a `/-/-`), three `#guard_msgs` and a `sorry` that
   never runs, naming each line, and one that does not elaborate; it must not refuse a
   remark that quotes them, nor a `#guard_msgs` around `#print`; and a run of Lean that
-  fails with no error at a line must fail the sweep too. Read without Lean, `admit` must
+  fails with no error at a line must fail the sweep too, as must one that ends in a
+  signal or an exit but 0 or 1, or exits 1 with anything but the linter's reports, one of
+  them promoted to an error by `warningAsError` (a fault the /no-mistakes review found,
+  with our thanks). Read without Lean, `admit` must
   be refused as `sorry` is, but not in Staging, and the shared reader must begin every
   comment's body at its fourth character, as Lean does. The self-test needs the library
   built. CI's `negative` job runs it after its build, then the sweep over `Elements/` as

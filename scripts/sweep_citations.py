@@ -148,14 +148,15 @@ facts.json that does not match Lean).
 `--self-test` writes planted Lean outside the tree, each plant of which must be
 reported: each kind of hit; a `_` name the proof writes again, as used by name; an
 `rcases … with` whose pattern, or whose `with`, is on the next line; a case split's
-names, never `discarded`; a `suffices`; a `have` in a proof by equations; one under
-`warningAsError`, which Lean reports as an error; and a helper behind a whole proof:
-after a step that feeds it nothing, as a private theorem, in each branch of a case split
-(of a hypothesis, or by excluded middle), behind a reductio's opening, a cast (`rw`), a
-`show` or metadata, through `.1`, `.2` (as Lean's primitive projection too), `.symm`,
-`.mp` and `.mpr`, applied or not, as a field of a figure, through a step bound to its
-result, or a part of it or of one of its parts taken apart, or of it through `id`, fed
-only by a part of a hypothesis taken apart, and, cited by a reductio, stated exactly.
+names, never `discarded`; a `suffices`; a `have` in a proof by equations; one named
+`killed`; one under `warningAsError`, which Lean reports as an error; and a helper
+behind a whole proof: after a step that feeds it nothing, as a private theorem, in each
+branch of a case split (of a hypothesis, or by excluded middle), behind a reductio's
+opening, a cast (`rw`), a `show` or metadata, through `.1`, `.2` (as Lean's primitive
+projection too), `.symm`, `.mp` and `.mpr`, applied or not, as a field of a figure,
+through a step bound to its result, or a part of it or of one of its parts taken apart,
+or of it through `id`, fed only by a part of a hypothesis taken apart, and, cited by a
+reductio, stated exactly.
 Its controls must not be reported: a binding used later, one used by
 `assumption` or `simp_all`, a pattern's `_` part, an unused hypothesis of the statement,
 a helper that supplies one step, a helper's parts put together again, a part of a
@@ -170,8 +171,10 @@ note or a `#` comment does not, nor one in `unused` over another run, which
 must refuse, exit 2, a file that silences the linter (eleven lines: seven settings of
 its options, one behind a `/--/` and one behind a `/-/-`, three `#guard_msgs` and a
 `sorry` that never runs, each line named), but not a remark that quotes them nor a
-`#guard_msgs` around `#print`; a file that does not elaborate; and a run of Lean that
-fails with no error at a line (a file that is not there). Read without Lean, a file with
+`#guard_msgs` around `#print`; a file that does not elaborate; a run of Lean that fails
+with no error at a line (a file that is not there); and a run that ends in a signal or an
+exit but 0 or 1, or exits 1 with anything but the linter's reports, one promoted to an
+error, even a panic after them. Read without Lean, a file with
 an `admit` must be refused, naming its line, but not in `Staging/`; and the reader must
 begin every comment's body at its fourth character, as Lean does. It exits 1
 naming any plant missed, control reported, binding misread or file not refused. Both it
@@ -194,6 +197,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import unittest.mock
 from pathlib import Path
 from typing import Callable, NamedTuple
 
@@ -232,8 +236,17 @@ AUTOMATION = re.compile(
 IDENT = re.compile(r"[^\W\d][\w'!?₀-₉]*(?:\.[^\W\d][\w'!?₀-₉]*)*")
 # The linter's report, a warning, or an error where a file sets `warningAsError` (as
 # Audit/Overlaps.lean does).
-WARNING = re.compile(r"^(?P<file>.+?):(?P<line>\d+):(?P<col>\d+): (?:warning|error): "
+WARNING = re.compile(r"^(?P<file>.+?):(?P<line>\d+):(?P<col>\d+): "
+                     r"(?P<severity>warning|error): "
                      r"(?:Variable name|unused variable) `(?P<name>[^`]+)`", re.M)
+# The lines that follow the first of each of the linter's reports: its hint, the name it
+# suggests, and its note.
+LINT_TAIL = re.compile(
+    r"|Hint: The binding can be removed \(if unused\) or named `_` \(if used implicitly\)\."
+    r"(?: Alternatively, prefix the name with `_` to silence this warning:)?"
+    r"|Alternatively, prefix the name with `_` to silence this warning:"
+    r"|  \[apply\] _\S.*"
+    r"|[Nn]ote: [Tt]his linter can be disabled with `set_option linter\.unusedVariables false`")
 ERROR = re.compile(r"^.+?:\d+:\d+: error\b(?!: (?:Variable name|unused variable) `).*$", re.M)
 # An anonymous `have`, which Lean names `this` without checking it.
 ANONYMOUS = re.compile(r"(?<![\w'.])have(?![\w'!?])(?=[ \t]*:)")
@@ -430,11 +443,27 @@ def run_lean(path: Path, options: list[str], what: str) -> str:
                        capture_output=True, text=True)
     out = r.stdout + r.stderr
     errors = ERROR.findall(out)
-    if errors or (r.returncode != 0 and not WARNING.search(out)):
-        shown = "\n".join(errors[:5]) or out.strip()[-2000:]
-        raise SweepError(f"Lean could not elaborate {what} (exit {r.returncode}); is the "
-                         f"library built (`lake build`)?\n{shown}")
-    return out
+    if (r.returncode == 0 and not errors
+            or r.returncode == 1 and not r.stderr.strip() and only_lint(r.stdout)):
+        return out
+    shown = "\n".join(errors[:5]) or out.strip()[-2000:]
+    raise SweepError(f"Lean could not elaborate {what} (exit {r.returncode}); is the "
+                     f"library built (`lake build`)?\n{shown}")
+
+
+def only_lint(out: str) -> bool:
+    """Whether `out` is the linter's reports and nothing else, one of them an error, as
+    `warningAsError` makes it: the one failure that leaves the linter's reading whole."""
+    promoted = False
+    reading = False
+    for line in out.splitlines():
+        m = WARNING.match(line)
+        if m:
+            promoted = promoted or m["severity"] == "error"
+            reading = True
+        elif not (reading and LINT_TAIL.fullmatch(line)):
+            return False
+    return promoted
 
 
 class Copy(NamedTuple):
@@ -1055,6 +1084,10 @@ theorem plant_equations : ∀ m : Nat, m + 0 = m
     rfl
   | _ + 1 => rfl
 
+theorem plant_killed (a : Nat) : a = a := by
+  have killed : a + 0 = a := rfl
+  rfl
+
 /- A remark that quotes Lean's hint, `set_option linter.unusedVariables false in`, or a
 `#guard_msgs (drop warning) in`, is not refused: only code is read. Nor is a `#guard_msgs`
 around `#print`, as Audit pins its axioms. -/
@@ -1425,6 +1458,7 @@ EXPECTED = [
     ("unused-binding", "hq2", False),
     ("unused-binding", "hsuf", False),  # `suffices` binds it
     ("unused-have", "heqn", False),   # in a proof by equations
+    ("unused-have", "killed", False), # a name a crash of Lean's might print
     ("unused-have", "herror", False), # under `warningAsError`, reported as an error
     ("helper", "SweepSelfTest.Prop2.figure", False),   # Prop2, 5, 7, 14, 25, 30, 31, 35, 37
     ("helper", "SweepSelfTest.Prop29.contra", False),  # behind a reductio's opening
@@ -1569,6 +1603,45 @@ def self_test() -> int:
             missing = None
         except SweepError as e:
             missing = str(e)
+        warning = (f"{plant}:1:1: warning: Variable name `hwarning` is not explicitly "
+                   "referenced.\n")
+        promoted = warning.replace("warning:", "error:")
+        killed = (f"{plant}:2:7: warning: Variable name `killed` is not explicitly "
+                  "referenced.\n\nHint: The binding can be removed (if unused) or named `_` "
+                  "(if used implicitly). Alternatively, prefix the name with `_` to silence "
+                  "this warning:\n  [apply] _killed\n\nNote: This linter can be disabled "
+                  "with `set_option linter.unusedVariables false`\n")
+        # (what Lean did, its exit, its output, its standard error, whether it is read)
+        runs = [
+            ("a warning, then a signal", -9, warning, "", False),
+            ("a warning, then an abort", 134, warning, "", False),
+            ("a warning, then exit 1", 1, warning, "", False),
+            ("a promoted warning, then a signal", -6, promoted, "", False),
+            ("a promoted warning, then an abort", 134, promoted, "", False),
+            ("a promoted warning, then exit 2", 2, promoted, "", False),
+            ("a promoted warning, then a panic", 1,
+             promoted + "PANIC at Lean.Elab.Command\n", "", False),
+            ("a promoted warning, then a failed process", 1,
+             promoted + "process exited with code 134\n", "", False),
+            ("a failed process, then a promoted warning", 1,
+             "process exited with code 134\n" + promoted, "", False),
+            ("a promoted warning, and a stack overflow", 1, promoted,
+             "Stack overflow detected. Aborting.\n", False),
+            ("a promoted warning", 1, promoted, "", True),
+            ("a promoted warning, in full", 1,
+             killed.replace("warning:", "error:", 1), "", True),
+            ("an unused binding named killed", 0, killed, "", True),
+        ]
+        outcomes = {}
+        for what, returncode, output, stderr, _ in runs:
+            with unittest.mock.patch.object(
+                    subprocess, "run",
+                    return_value=subprocess.CompletedProcess([], returncode, output, stderr)):
+                try:
+                    run_lean(plant, LINT, f"the self-test's run of {what}")
+                    outcomes[what] = None
+                except SweepError as e:
+                    outcomes[what] = str(e)
     print_hits(hits)
     for kind, name, declared in EXPECTED:
         found = [h for h in hits if h.kind == kind and h.name == name]
@@ -1595,6 +1668,11 @@ def self_test() -> int:
     if missing is None or "could not elaborate" not in missing:
         problems.append(f"a run of Lean that fails with no error at a line is not refused: "
                         f"{missing!r}")
+    for what, _, _, _, read in runs:
+        if read and outcomes[what] is not None:
+            problems.append(f"a Lean run of {what} is refused: {outcomes[what]!r}")
+        elif not read and outcomes[what] is None:
+            problems.append(f"a Lean run of {what} is accepted")
     helpers = [h for h in hits if h.kind == "helper"]
     for entry, shape in HELPER_SHAPES.items():
         mine = [h for h in helpers if h.why.startswith(f"SweepSelfTest.{entry}:")]
