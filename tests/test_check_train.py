@@ -648,6 +648,16 @@ class TrainChecks(Repository):
         self.refused("check changes must be kept apart from judged content", head=head,
                      text=body([self.row, row], f"- check: {CHECK}\n- propositions: I.1"))
 
+    def test_workflow_change_with_judged_content_across_members(self):
+        workflow = ".github/workflows/ci.yml"
+        member = self.commit([self.base], {workflow: "name: reviewed workflow\n"})
+        head = self.merge(self.head, member)
+        row = member_row(member, "tooling/workflow",
+                         security_review=f"Security reader at {member}: PASS.")
+        self.refused("check changes must be kept apart from judged content", head=head,
+                     text=body([self.row, row],
+                               f"- check: {workflow}\n- propositions: I.1"))
+
     def test_check_change_with_decision_entry(self):
         member = self.commit([self.base], {CHECK: "print('reviewed check')\n"})
         merged = self.merge(self.base, member)

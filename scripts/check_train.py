@@ -517,7 +517,8 @@ def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
                     problems.append(f"coordinator commit {commit[:12]} changes forbidden "
                                     f"path: {path}")
     inputs = sorted(p for _, p in changed_files(repo, base, sha)
-                    if under(p, CHECK_INPUTS) and not pinned(repo, base, sha, p))
+                    if under(p, CHECK_INPUTS + (".github/",))
+                    and not pinned(repo, base, sha, p))
     # Decision entry files (tooling/decision-entries) have the same allowance as the
     # decisions page once origin/main has their directory, including when safe_push's
     # guides do not yet include it.
