@@ -367,11 +367,12 @@ The ruleset and the remaining merge requirements are in
 - **A guard defect gets a regression.** When a certificate or check defect is fixed, add a
   focused test that shows the defect would now be caught (a negative test, an entry in
   `tests/certificate_expectations.json`, or, for the style check's reading of a phrase or
-  of a letter's ink, a case in `tests/test_check_style.py`). Tests that only repeat a
-  trivial prose change are not added.
-- **The style check's cases run before it.** `tests/test_check_style.py` puts the
-  wording rules of `scripts/check_style.py`, and S20's reading of a letter's ink, to short
-  texts and small figures, each with the finding the rule should make, and needs no Lean.
+  of a figure, a case in `tests/test_check_style.py`). Tests that only repeat a trivial
+  prose change are not added.
+- **The style check's cases run before it.** `tests/test_check_style.py` puts the readings
+  of `scripts/check_style.py` that [STYLE.md](STYLE.md), section 8, names to short texts
+  and small figures, including S20's ink and S26's clearance and repeated letters, each
+  with the finding the rule should make, and needs no Lean.
   It runs just before the script, so a rule that reads a case wrongly stops the checks
   before the script's findings are read. The script does not run them itself: whoever
   changes it runs the file too.
@@ -442,7 +443,9 @@ looked into.
 6. **One voice** (section 7).
 7. **Review records** completed: each record written in step 3 is read again against its
    finished proof (section 6), and every one reaches the stage `full` before acceptance.
-   Books I–III, whose records came after their proofs, reach it in brief 0005's stage 5.
+   Books I and II have reached `full` in all their records; Book III's remain at
+   `exceptions` and reach `full` in brief 0005's stage 5, after the moves from Staging
+   into Elements in stages 3 and 4 (#25, #28; the records are #29).
 8. **The page read-through and the stale-content audit.** Before every release or
    consolidation, readers go through the rendered pages as visitors, as section 7 requires.
    Separately, before every release and at the end of each programme stage, the coordinator
