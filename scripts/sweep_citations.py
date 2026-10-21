@@ -42,8 +42,8 @@ How each is found:
    `first | rfl | sorry`, since the linter passes over the whole declaration that holds
    one (it reads the syntax, not the proof). So the sweep refuses that file, exit 2,
    naming it and each such line. It reads the code as `check_fidelity.py` reads it,
-   beginning a doc comment's body after `/--` or `/-!`, as Lean does, so that a `/--/`
-   hides no line from it. The
+   beginning every comment's body at its fourth character, as Lean does, so that neither a
+   `/--/` nor a `/-/-` hides a line from it. The
    linter reads a copy of the file, outside the tree, in which two things are renamed,
    lines kept: each anonymous `have` is named `this`, which Lean then checks (it passes
    over the name Lean gives an anonymous `have`), and each `have`, `let` or `obtain`
@@ -167,13 +167,13 @@ declared join, reported as declared. Its record is read as TOML, and in it only 
 in `unused` over its own run declares, and only with every name the hit keeps: one in a
 note or a `#` comment does not, nor one in `unused` over another run, which
 `check_fidelity.unbound_unused` must report; and no helper hit is declared. The sweep
-must refuse, exit 2, a file that silences the linter (ten lines: six settings of its
-options, one of them behind a `/--/`, three `#guard_msgs` and a `sorry` that never runs,
-each line named), but not a remark that quotes them nor a
+must refuse, exit 2, a file that silences the linter (eleven lines: seven settings of
+its options, one behind a `/--/` and one behind a `/-/-`, three `#guard_msgs` and a
+`sorry` that never runs, each line named), but not a remark that quotes them nor a
 `#guard_msgs` around `#print`; a file that does not elaborate; and a run of Lean that
 fails with no error at a line (a file that is not there). Read without Lean, a file with
 an `admit` must be refused, naming its line, but not in `Staging/`; and the reader must
-take `/--/ x -/` and `/-/- -/ x -/` each for one comment, as Lean does. It exits 1
+begin every comment's body at its fourth character, as Lean does. It exits 1
 naming any plant missed, control reported, binding misread or file not refused. Both it
 and the sweep need the library built by `lake build`
 and the Lean tools on PATH (`export PATH=$HOME/.elan/bin:$PATH`); the sweep also reads
@@ -1444,8 +1444,8 @@ CONTROLS = ["hused", "hline", "hauto", "hsimp", "hidle", "L", "hK", "h", "a", "b
             "hq", "L2"]
 
 # Files the sweep must refuse (SweepError, exit 2). One sets the linter's options itself,
-# in several spellings and spacings, one of them behind a `/--/` (a doc comment whose body
-# begins at its fourth character, as Lean reads it), captures its messages with
+# in several spellings and spacings, one behind a `/--/` and one behind a `/-/-` (every
+# comment's body begins at its fourth character, as Lean reads it), captures its messages with
 # `#guard_msgs`, or has a `sorry` that never runs, on the lines SILENCED_AT names; it
 # elaborates, so that only the refusal stands between it and a quiet pass. The other does
 # not elaborate, and Lean would drop the hits of what fails while it reports the rest, as
@@ -1506,10 +1506,17 @@ theorem deadsorry (a : Nat) : a = a := by
   have hdead : a + 0 = a := rfl
   first | rfl | sorry
 
+/-/- -/
+set_option linter.unusedVariables false in
+theorem plainhidden (a : Nat) : a = a := by
+  have hplainhidden : a + 0 = a := rfl
+  rfl
+-- -/
+
 set_option
   linter.unusedVariables.funArgs false
 """
-SILENCED_AT = [1, 6, 12, 16, 28, 33, 38, 46, 54, 56]
+SILENCED_AT = [1, 6, 12, 16, 28, 33, 38, 46, 54, 57, 63]
 UNELABORATED_LEAN = """\
 theorem elaborated (a : Nat) : a = a := by
   have hok : a + 0 = a := rfl
@@ -1616,9 +1623,9 @@ def self_test() -> int:
             problems.append(f"check_fidelity.bound_names({code!r}) is {sorted(got)}, "
                             f"not {sorted(want)}")
     # Read without Lean: `admit` is refused as `sorry` is, but not in Staging, whose
-    # statements await their proofs; and the reader shared with check_fidelity begins a
-    # doc comment's body after `/--` and a comment's after `/-`, as Lean does, so that
-    # `/--/ x -/` and `/-/- -/ x -/` are each one comment.
+    # statements await their proofs; and the reader shared with check_fidelity begins
+    # every comment's body at its fourth character, as Lean does, so that `/--/ x -/` and
+    # `/- /- -/ x -/` are each one comment, and `/-/- -/` is one too.
     for rel, refused in (("SweepAdmit.lean", True), ("Staging/SweepAdmit.lean", False)):
         try:
             prepare(ADMITTED_LEAN, rel)
@@ -1629,10 +1636,9 @@ def self_test() -> int:
             problems.append(f"a file with `admit` is not refused, naming its line 5: {said!r}")
         if not refused and said is not None:
             problems.append(f"a staged file with `sorry` and `admit` is refused: {said!r}")
-    for text in ("/--/ x -/ y", "/-/- -/ x -/ y"):
-        code = code_of(text)
-        if "x" in code or "y" not in code:
-            problems.append(f"the reader does not take {text!r} for one comment, then `y`")
+    for text, seen in (("/--/ x -/ y", "y"), ("/-/- -/ x", "x"), ("/- /- -/ x -/ y", "y")):
+        if code_of(text).split() != [seen]:
+            problems.append(f"the reader does not read {text!r} as Lean does, leaving {seen!r}")
     if problems:
         print(f"\nself-test: {len(problems)} problem(s):")
         for p in problems:
@@ -1643,7 +1649,7 @@ def self_test() -> int:
           f"{len(CONTROLS) + len(HELPER_CONTROLS)} controls passed, a file that silences the "
           f"linter ({len(SILENCED_AT)} ways), one that does not elaborate and a run of Lean "
           f"that fails with no error at a line refused, `admit` refused outside Staging, "
-          f"and check_fidelity reads two comments as Lean does, {len(BOUND_CASES)} shapes "
+          f"and check_fidelity reads three comments as Lean does, {len(BOUND_CASES)} shapes "
           f"of binding and the stale `unused` name")
     return 0
 

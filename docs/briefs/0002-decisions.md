@@ -3689,10 +3689,10 @@ findings:
   only outside Staging, whose statements await their proofs. The `#guard_msgs` that
   Audit and Staging put around `#print axioms`, to pin what a proof rests on, are not
   refused. The sweep reads the code through `check_fidelity.py`'s reader, which now
-  begins a doc comment's body after `/--` or `/-!`, as Lean does: it began a character
-  early, so that in `/--/ " -/` it closed the comment at `/--/` and opened a string at
-  the `"`, which hid the lines after it from the sweep and from check_fidelity's own
-  scan for forbidden commands. Its reading of every Lean file in the repository is
+  begins every comment's body at its fourth character, as Lean does: it began a
+  character early, so that in `/--/ " -/` it closed the comment at `/--/` and opened a
+  string at the `"`, and in `/-/- -/` it counted a second opener, which hid the lines
+  after them from the sweep and from check_fidelity's own scan for forbidden commands. Its reading of every Lean file in the repository is
   unchanged by the fix. The sweep refuses a file
   that does not elaborate too, since Lean reports the rest of such a file and drops the
   hits of what fails. The linter cannot see three things: a name that begins with `_`,
@@ -3777,13 +3777,14 @@ findings:
   `#` comment, or in the `unused` of a passage over another run, declares nothing, and
   `check_fidelity.py` must report that last name as unbound; nor does one name declare a
   hit that keeps two, and no helper hit is declared. The sweep must refuse two files,
-  exit 2: one that silences the linter in ten ways, six settings of its options (one of
-  them behind a `/--/`), three `#guard_msgs` and a `sorry` that never runs, naming each
+  exit 2: one that silences the linter in eleven ways, seven settings of its options (one
+  behind a `/--/` and one behind a `/-/-`), three `#guard_msgs` and a `sorry` that never
+  runs, naming each
   line, and one that does not elaborate; it must not refuse a remark that quotes them,
   nor a `#guard_msgs` around `#print`; and a run of Lean that fails with no error at a
   line must fail the sweep too. Read without Lean, `admit` must be refused as `sorry` is,
-  but not in Staging, and the shared reader must take `/--/ x -/` and `/-/- -/ x -/` each
-  for one comment. The self-test needs the library
+  but not in Staging, and the shared reader must begin every comment's body at its fourth
+  character, as Lean does. The self-test needs the library
   built. CI's `negative` job runs it after its build, then the sweep over `Elements/` as
   a report (139 files in 6 to 13 seconds on a 16-core laptop), and safe_push's
   `NEGATIVE` list runs the same two; the
