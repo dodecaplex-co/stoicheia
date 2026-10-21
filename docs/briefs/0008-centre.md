@@ -24,9 +24,55 @@ The [forbidden-command scan](../../scripts/check_fidelity.py) covers `Staging/` 
 The [formal model](../../model/Model/Assembly.lean) proves all 79 locked laws, with [generated laws](../../model/Model/Laws.lean) (#109).
 Stage 2's proofs are in [`Elements/`](../../Elements/) (#102).
 Stage 4b's III.8 and III.17 companions are in [`Elements/BookIII/Prop08.lean`](../../Elements/BookIII/Prop08.lean) and [`Prop17.lean`](../../Elements/BookIII/Prop17.lean) (#111); stages 3 and 4 remain in `Staging/`.
-[Staged III.1](../../Staging/Centre/Prop01.lean) still calls Circle 2, now a theorem resting on Circle 3; its construction must be reconciled with [main's III.1](../../Elements/BookIII/Prop01.lean) before migration.
+[Staged III.1](https://github.com/jackChallis/stoicheia/blob/01ecbaa2/Staging/Centre/Prop01.lean) still calls Circle 2, now a theorem resting on Circle 3; its construction must be reconciled with [main's III.1](../../Elements/BookIII/Prop01.lean) before migration.
 Still to do under #59: the prototype rename, centre rule, construction guard, restatements, tag revision and record migration.
 The frozen text below is kept as history.
+
+*Status, 21 October 2026, after trains C6a and C6b, merged with axiom wave one:*
+
+The rule is in the foundations: `Tacit.exists_centre`, in [`Constructions.lean`](../../Elements/Foundations/Tacit/Constructions.lean), by the owner's decision of 18 October, and with it the lock holds 80 axioms and 74 tacit rules, main's 79 and 73 and the rule (step 5).
+Section 7 is in the edition: III.5 and III.6 read "cut" as crossing (`CirclesCut`), and contact within asks for a point of the inner circle within the outer; [`Audit/Crossing.lean`](../../Audit/Crossing.lean) recovers the earlier statements of III.5, III.6, III.11 and III.13.
+The prototype's rename landed with the mixed angles of III.16 and III.31: the theorem is `exists_circle_about`, in [`Elements/Figure/Regions.lean`](../../Elements/Figure/Regions.lean).
+The [formal model](../../model/Model/Assembly.lean) proves all 80 locked laws.
+Stages 3 and 4 and the mixed angles are in `Elements/`, and their staged copies are deleted.
+III.1's construction is at home in [`Elements/BookIII/Prop01.lean`](../../Elements/BookIII/Prop01.lean) and takes a centre from the rule only inside the proof that D is within, as the dated correction in section 3 records; [staged III.1](https://github.com/jackChallis/stoicheia/blob/1cc743ec/Staging/Centre/Prop01.lean) now checks the restated III.1 against it and calls neither Circle 2 nor Circle 3.
+Still to do under #59: the construction guard (step 4), in a pull request of its own, then the restatements and the record migration (step 6, train C6c), and the tag revision (step 7).
+This note changes no declaration of the brief, and the frozen text below is kept as history.
+
+*Correction, 21 October 2026, train C6c (C6a, C6b and step 6), for issue #152:* the two
+statuses above are kept as written, and this note corrects what step 6 has made false in
+them. No statement, declaration, record or lock changes, so no consumer is affected.
+
+- **Discrepancy.** Step 6 retired `Staging/Centre/` (the [dated completion in section
+  3](#completion-step6-19-october-2026)), so neither staged III.1 the statuses describe
+  exists on this train. Their links now name the file at the revision each status was
+  written: 01ecbaa2, where the staged construction called Circle 2, and 1cc743ec, where it
+  called neither Circle 2 nor Circle 3. The construction guard and step 6's restatements,
+  listed above as still to do, are done on this train: the guard is `Audit/Centre.lean`,
+  renewed after axiom wave one, and the completion note says what work remains.
+- **III.1 and its pin.** `Prop1.construction` agrees with the pin by the route decision D1
+  recorded in the [section 3 correction](#correction-iii1-19-october-2026): it takes a
+  centre from `exists_centre` only inside the proof that D is within. Lean's axioms for
+  `Elements.BookIII.Prop1.construction` are 64 names, 56 of them tacit rules, with
+  `Tacit.exists_centre` among them and neither Circle 3 (`Tacit.outside_of_between`) nor
+  `sorryAx`: the list `Audit/Centre.lean` pins, and the count the correction gives at
+  `b117d01`. Since wave one, Circle 2 and `centre_unique` are theorems, so no axiom list
+  shows either. Circle 2 is proved from Circle 3, and the absence of Circle 3 excludes it.
+  A call to `centre_unique` is left to the reader, as the guard's opening note says, so the
+  renewal read that the section 3 correction and the note before question 7 ask for can
+  find only Circle 3 and `sorryAx`. A walk of the construction's proof terms on 21 October
+  reaches neither Circle 2 nor `centre_unique`.
+- **Staged work.** No file under `Staging/` calls Circle 2 or Circle 3, or any of Book
+  Zero's three lemmas that rest on Circle 2, and no declaration of the Staging library
+  rests on Circle 3, by Lean's axiom lists on 21 October.
+
+*19 October 2026: the [dated correction in section 3](#correction-iii1-19-october-2026)
+replaces the frozen construction, guard, porism, overlap and order claims it names below,
+by the owner's decision D1. The frozen text is retained as history.*
+
+*19 October 2026: [step 6 is implemented](#completion-step6-19-october-2026) at
+`17987153`. The completion note records the current declarations and certificate counts;
+the earlier plans and reviews below remain dated records.*
 
 *The brief settles, before any proof work and as [WORKFLOW.md](../WORKFLOW.md), section 2,
 requires, the rule the owner approved, that every circle has a centre, and every statement
@@ -186,6 +232,169 @@ axiom exists_centre (α : Circle) : ∃ O : Point, Centre O α
 
 ## 3. III.1
 
+<a id="correction-iii1-19-october-2026"></a>
+
+### Dated correction, 19 October 2026: III.1's construction and porism
+
+The coordinator records the owner's decision D1 of 19 October under
+[WORKFLOW.md](../WORKFLOW.md), section 2, "Correcting a frozen brief". This note replaces
+the claims named below, including their summaries in sections 4, 6 and 8 and Appendix B;
+the frozen text that follows is kept, not silently rewritten.
+
+- **Discrepancy.** The frozen construction promises no use of a rule supplying a centre,
+  but its staged proof used Circle 2 for D within. That would reintroduce the rule that
+  contains III.2 into III.1 and its consumers. The frozen porism also describes a call to
+  III.1 and `centre_unique`; the delivered proof instead uses its given centre directly.
+- **Current declarations.** Section 3's code block fixes `Prop1.construction`, with the
+  circle and two distinct points on it as input and the bisections and perpendicular
+  straight line as output. Today's `Elements.BookIII.Prop1` still takes
+  `hABC : ∃ G : Point, Centre G ABC`; `Elements.BookIII.Prop1.porism` takes
+  `hG : Centre G ABC` and concludes `Collinear D C G`. Their types do not change in
+  corrected step 3. The restated `Prop1` and `Prop1.of_circle` remain staged for step 6.
+- **Corrected construction and reason, replacing "The construction, apart" and the
+  closure claims in "The correctness, with the rule".** D1 keeps the construction's
+  frozen type and moves it home before `Prop1`. It receives no centre. It uses
+  `exists_centre` only inside the proof that D is within the circle, through
+  `Prop1.within`, by III.2's argument using I.5, I.16 and I.19:
+
+  ```lean
+  have hD_in : InsideCircle D ABC :=
+    (exists_centre ABC).elim fun G hG => Prop1.within hG hA hB hADB hAD
+  ```
+
+  No centre witness reaches its output. The bisections and perpendicular construction
+  stay as before, and today's `Prop1` calls `Prop1.construction` under Euclid's three
+  construction sentences. The proof that F is the centre stays in `Prop1`.
+  `Prop1.within` keeps its given-centre interface for this confined use; changing that
+  helper is not part of step 3.
+- **Corrected guard, replacing "The guard Astra asks for", its sample comment and
+  counts, and both versions of question 7.** `Audit/Centre.lean` fixes the same
+  construction type and pins its complete axiom list afresh from Lean's actual output
+  for the home declaration. `Tacit.exists_centre` is admitted. Every renewal is read
+  for `Tacit.inside_of_between`, `Tacit.outside_of_between`, `Tacit.centre_unique` and
+  `sorryAx`, all of which must be absent. At `b117d01`, `#print axioms` reports 64 names:
+  Lean's three foundations, Definition I.15, Postulates 1 to 4 and 56 tacit rules, with
+  `Tacit.exists_centre` included and those four names absent. This delivered output
+  replaces the frozen prediction of 62 names and 54 tacit rules. The guard uses Lean's
+  complete printing, not a list inferred from the count. A pin does not show where the
+  witness was used; the reader checks that confinement in the proof.
+- **Corrected porism, replacing "The porism" and its record and certificate promises.**
+  The statement still names its centre G. Its proof takes the argument of Euclid's
+  reductio directly from that centre: on AB it is D by `Prop1.middle`; off AB, the shared
+  I.8 step `Prop1.equal_adjacent` makes the adjacent angles equal, Definition I.10 makes
+  them right, Postulate 4 identifies their measure with `∟`, and `Prop1.perpendicular`
+  puts G on DC. It neither calls III.1 nor uses `centre_unique` or `exists_centre`. The
+  fresh certificate has 51 tacit rules, replacing the frozen prediction of 58. III.1 has
+  57, including the rule through its construction, and still excludes `centre_unique`.
+- **Corrected overlap, replacing "The overlap note" and "The catalogue".** In the
+  final restated III.1, the rule supplies two steps: D within by III.2's argument, and
+  "let G be the centre". The bisections, perpendicular straight line and correctness
+  argument remain III.1's work. The record keeps `kind = "step"`; bare existence is
+  supplied by the rule, while `Prop1.of_circle` will give Euclid's construction and its
+  correctness from a circle alone. At corrected step 3, only D within uses the rule:
+  today's `hABC` still supplies G for the reductio. The current record must say this,
+  keep scope `full` and `centre-given`, and not claim the final restatement has landed.
+- **Corrected record and page text, replacing the affected instructions in "The
+  record" and section 4's prose list.** The grouped passage names `Prop1.construction`;
+  the `Prop1.within` passage names the rule as the source of its centre; the porism
+  passage names the shared comparison and its direct route. The commentary and overlap
+  catalogue say the same. The certificate field guide's old 56/57 counts are no longer
+  current. In `tests/certificate_expectations.json`, the porism's existing `equals`
+  moves to the full fresh list, its count to 51, and it gains an exclusion of
+  `Tacit.centre_unique`; III.1's count moves to 57 and its exclusion stays. Only those
+  two expectations change, with their reasons; no field is dropped. These are values
+  pinned to the content, after the earlier separate change that pinned the old porism's
+  full list. Review stamps wait for an independent reader.
+- **Corrected order, replacing section 6's order and its sentence allowing steps 3 and
+  4 before step 5, section 8's order of landing and its summary, and their repeated
+  guard instructions.** Step 5, the rule, precedes corrected step 3. Step 4 follows
+  step 3 and precedes step 6, in a pull request of its own, never in a train with the
+  content it judges. Section 7 landed earlier, as its separate dated correction says;
+  it does not wait for step 6. The construction and porism content comes first, the
+  guard next in a separate landing, then the centre restatements.
+- **Consumers affected.** III.1's callers, the porism's callers, its review record and
+  page, Book III's introduction (`mishnah/intro/III.md`) where it discusses centres,
+  `docs/briefs/0004-book-III.md` where it discusses centres and porisms, III.2's
+  commentary, `docs/reports/gaps-book-III.md`, the overlap catalogue,
+  `Certificate/FIELDS.md`, `tests/certificate_expectations.json`, the future
+  `Audit/Centre.lean`, and the dependency pins in `Audit/Overlaps.lean` and
+  `Audit/Crossing.lean`. The integrator regenerates the pages. No proposition or porism
+  statement, Heath sentence, foundation or lock changes under this correction.
+- **Work that can go on meanwhile.** The remaining content proceeds under its approved
+  interfaces. The construction guard waits for its separate landing; the restated
+  III.1 and its circle-only entry point wait for step 6.
+
+<a id="completion-step6-19-october-2026"></a>
+
+### Dated completion, 19 October 2026: step 6
+
+Step 6's centre restatements are done in both halves at `17987153`, under the approval
+of 18 October and the correction of 19 October above. This is completion of the source
+changes, not a claim that the outstanding reviews, tooling and generated edition have
+been completed. The earlier plans in sections 4 and 6 and Appendix A remain historical.
+
+- **Main statements.** `Prop1`, `Prop2`, `Prop4`, `Prop8`, `Prop9`, `Prop10`, `Prop13`,
+  `Prop17`, `Prop21`, `Prop22`, `Prop23`, `Prop24`, `Prop30`, `Prop32`, `Prop34`, `Prop35`,
+  `Prop36` and `Prop37` have no centre-existence inputs. `Prop34` takes its circle
+  explicitly. `Prop33` no longer returns a centre-existence clause. III.25 was already
+  restated as a construction from the segment's points; its core still constructs a
+  circle with centre E, and the changes here are to its companions. Named centres stay
+  wherever another hypothesis or conclusion uses them geometrically. `Prop1.within`
+  retains its approved given-centre interface for the confined construction step.
+- **Shared declarations and companions.** `Prop1.of_circle` now applies the restated
+  III.1 to two points chosen on the given circle. `Prop2.within`, `Prop2.triangle`,
+  `Prop2.oppositeSide`, `Prop2.sameSide`, `Prop8.partner`, `Prop8.general`,
+  `Prop17.general`, `Prop23.point`, `Prop24.chord_cases`, `Prop24.equalCircles`,
+  `Prop25.complete`, `Prop25.of_circle`, `Prop32.sameSide`, `Circumference.eq`,
+  `Circumference.standing`, `Circumference.whole` and `Circumference.add` take no
+  centre-existence input. `Prop25.complete` also drops its unused point parameter E
+  and the hypothesis that E is the constructed circle's centre, obtaining a centre
+  internally instead. `EqualCircles.refl` takes just its circle. The two projections
+  `Prop13.internally` and `Prop13.externally` and Book Zero's `Centre.every` are in
+  their homes. The dated notes in briefs [0006](0006-statements.md) and
+  [0007](0007-stage-4b.md) describe their current interfaces after the frozen blocks.
+- **Arcs.** `Arc.Drawn` now consists of endpoint incidence and non-collinearity of
+  the side marker with the base, without a centre clause. Its consumers use that
+  meaning, including `Arc.eq_of_aligned`, `Prop25.meets` (the planned `Arc.meets`),
+  `Prop24.image`, `Prop24.equalMeasure`, `Arc.measure_eq_iff` and `Arc.congruent_iff`.
+  Centres with geometric roles in `EqualCircles` and the three arc kinds remain.
+- **Routes and coverage.** III.24 still proves congruence; its alternative companion
+  `Prop24.equalCircles` takes two centres from the rule. III.25 has full coverage in
+  its record with the proved, registered companions `complete`, `kind` and `of_circle`;
+  the construction and `kind` keep E. III.30 takes no local centre witness:
+  `EqualCircles.refl` uses the rule internally. III.35–III.37 use `exists_centre` at
+  their unbracketed centre-taking steps, and their direct citations of III.1 are gone.
+  III.28 and III.29 continue to take their centres from their equal-circle data.
+- **Audit bridges.** `cut_point`, `CirclesCut.of_meet`, `within_point`, `III_13_today`
+  and `Audit.III_24_measure` take no supplied centres. The crossing bridge still uses
+  III.7 and III.8; the contact bridge still uses III.10. These comparisons with the
+  earlier readings do not enter III.5's or III.6's proofs. `lake build Audit` passes at
+  this revision, including all 26 axiom pins.
+- **Certificate and guard.** After `lake build` and
+  `lake env lean Certificate/Facts.lean` at `17987153`, fresh `facts.json` has
+  **44 entries** whose full axiom lists contain `Tacit.exists_centre`: **28
+  propositions and 16 companions, no porisms**, among 99 propositions, 3 porisms and
+  33 companions. These are dependency counts, not counts of restated statements.
+  III.1 Por. neither cites III.1 nor uses `exists_centre` or `centre_unique`.
+  `Audit/Centre.lean` is unchanged by step 6: its construction type and complete axiom
+  pin still pass. The guard does not replace the semantic review of how the witness
+  is confined in `Prop1.construction`.
+- **Staging and the separate proposal.** All files under `Staging/Centre/` have been
+  retired, with no live import of that directory. `Prop30.halves` is a separate
+  proposal staged with `sorry` in `Staging/Halves/Prop30.lean`, awaiting the owner's
+  approval. It is unproved, unregistered and absent from the certificate; its proof
+  is not assigned.
+  *21 October 2026:* the owner approved it on 20 October 2026; it is proved in
+  `Elements/BookIII/Prop30.lean`, registered as the companion "III.30 halves", and its
+  staging file is deleted (brief 0006, the note after its Addition).
+- **Remaining work.** The source and statement stamps still need independent review
+  at the revision to be delivered. The scaffold's Book III types and the screen's
+  circle-rule set need a separate tooling pull request, followed by a fresh screen.
+  The integrator regenerates the edition after review. Step 7 still removes the
+  unused `centre-given` definition from `review/terms.toml`.
+
+### The text frozen on 18 October
+
 `Staging/Centre/Prop01.lean`.
 
 ```lean
@@ -206,6 +415,12 @@ theorem Prop1.of_circle (ABC : Circle) :
       Between A D B ∧ ‖A D‖ = ‖D B‖ ∧ OnCircle C ABC ∧ OnCircle E ABC ∧ Between C D E ∧
       ∠ A D C = ∟ ∧ Between C F E ∧ ‖C F‖ = ‖F E‖
 ```
+
+**19 October 2026, step 6.** `Prop1`, `Prop1.construction` and `Prop1.of_circle`
+now have the declarations above in `Elements/BookIII/Prop01.lean`. The construction
+was already home under the earlier correction; the two entry points now use the
+restated interfaces. The correction above, not the frozen claim below, describes
+the confined use of `exists_centre` in the construction.
 
 - **The statement** is Astra's signature: today's, with `hABC : ∃ G, Centre G ABC` dropped
   and nothing else changed. A citer that passed `hABC` passes nothing.
@@ -441,6 +656,11 @@ theorem Centre.every {O : Point} {α : Circle} {p : Point → Prop}
     (hO : Centre O α) (h : p O) : ∀ F : Point, Centre F α → p F
 ```
 
+**19 October 2026, step 6.** `Prop13.internally` and `Prop13.externally` are now
+proved in `Elements/BookIII/Prop13.lean` with the declarations above. `Centre.every`
+is proved in `Elements/Figure/OnCircles.lean` with its written type unchanged. Their
+centre staging files are retired.
+
 The first two are III.13's clauses, each with only the two circles it speaks of, lemmas
 after III.13 with no certificate entry, resting on what III.13 rests on; a check shows that
 together they give III.13 back, which keeps its paired statement as Astra recommends. Making
@@ -499,7 +719,24 @@ III.15 through III.14; III.26 and III.27 through `Circumference.eq`, `.standing`
 porism through III.1. III.3, III.7, III.11, III.12, III.16, III.18 and III.20 do not reach
 the rule, nor do III.5, III.6 and III.19.
 
+**19 October 2026, measured dependencies after step 6.** The forecast above is superseded
+by the certificate at `17987153`: seven of the twelve named-centre propositions rest on
+`exists_centre`, III.7, III.11, III.14, III.15, III.26, III.27 and III.31. III.7 and
+III.11 reach it through `Prop2.within` and III.2; III.1's porism does not rest on it.
+The 28 main Book III propositions that rest on it are III.1, 2, 4, 7–11, 13–15, 17,
+21–24 and 26–37. This also replaces the certificate forecast under "Records, Lean files
+and pages" below; the earlier forecasts remain as history.
+
 ### Records, Lean files and pages
+
+**19 October 2026, inventory after step 6.** The counts and predictions below belong
+to the frozen plan. At `17987153`, `check_fidelity.py` reports 50 stale-stamp findings:
+30 Lean-file stamps and 20 statement stamps, including every record from III.23 to
+III.37. They await a reader; this documentation change stamps none. `centre-given`
+is absent from the Book III records but remains defined in `review/terms.toml` until
+step 7. The [completion note](#completion-step6-19-october-2026) gives the measured
+certificate counts and current routes, including III.1 Por.'s independence from the
+rule and III.25's full coverage with its three companions.
 
 - **The tag.** `centre-given` says that "a circle in Lean has a centre only when a
   hypothesis or Postulate 3 gives it one", which the rule makes false, so it leaves all 31
@@ -614,7 +851,34 @@ the rule, nor do III.5, III.6 and III.19.
 - **III.9's and III.10's `hypothesis-dropped`, III.24's and III.30's other tags,** and every
   restriction other than the centre.
 
+### Dated correction, 19 October 2026: section 7 before step 6
+
+The coordinator corrects the order frozen on 18 October, under WORKFLOW section 2.
+
+- **Discrepancy:** section 7 waits for step 6 only to avoid reading III.10, III.11 and
+  III.13 twice, although its restatement needs neither the centre rule nor the other
+  restatements.
+- **Current declaration:** section 6, step 6, and section 7, "Order", put section 7 in
+  the same pull request as the centre restatements.
+- **Corrected declaration:** section 7 lands now, before step 6, by the coordinator's
+  order of 19 October. Step 6 reads III.10, III.11 and III.13 again when its own changes
+  reach them.
+- **Reason:** III.5 and III.6 need not wait for step 6; the cost is the second reading of
+  those three records.
+- **Consumers affected:** III.5 and III.6, the definitions of cutting and contact within,
+  III.10's final step, III.11–III.13's semantic reviews, the overlap audit and catalogue,
+  their review records and page prose, the lock and its two hashes, and the generated
+  edition. The figures stay as drawn. The [decisions entry](0002-decisions.md#19-october-2026)
+  records the work that accompanies this landing.
+- **Work that can go on meanwhile:** the remaining steps of section 6 continue under their
+  existing dependencies. This correction changes only section 7's place in the order;
+  the frozen text below is retained.
+
 ## 6. The order of work
+
+*19 October correction: the [section 3 correction](#correction-iii1-19-october-2026)
+supersedes the frozen order below: step 5, corrected step 3, step 4 on its own, then
+step 6. Section 7 landed earlier; step 4 never shares a train with content it judges.*
 
 A check never lands in the pull request whose code it checks
 ([WORKFLOW.md](../WORKFLOW.md), section 10), so the guard of section 3 needs a pull request
@@ -1202,6 +1466,10 @@ changed two of question 15's three recommendations before the freeze (Appendix B
 
 ### Each decision
 
+*19 October correction: question 7 below is retained as frozen. The
+[section 3 correction](#correction-iii1-19-october-2026) admits `Tacit.exists_centre`
+and requires Circle 2, Circle 3, `centre_unique` and `sorryAx` to be absent at each renewal.*
+
 1. **Decided:** the rule is `Tacit.exists_centre`, in `Tacit/Constructions.lean`, a tacit
    rule of our own, with a pointer to it in the opening note of `Definitions.lean`.
 2. **Decided, as a standing rule for this brief and later ones:** a named centre that
@@ -1241,6 +1509,11 @@ changed two of question 15's three recommendations before the freeze (Appendix B
     form for III.6 alone stays only as a staged check.
 
 ### The order of landing
+
+*19 October correction: the [section 3 correction](#correction-iii1-19-october-2026)
+replaces this order and its closing summary. Step 5 precedes corrected step 3; step 4
+lands separately between step 3 and step 6, never in their content train. Section 7 has
+already landed.*
 
 1. **#40,** the model's law names as data: landed, in train H2 (#103).
 2. **The `[overlap]` kind,** one tooling pull request with issue #93 (question 3).
@@ -1462,6 +1735,15 @@ marked with its decision.
     the staged file, and goes with it.
 
 ## Appendix A: what is staged, and why
+
+**19 October 2026, after step 6.** This appendix records the former staging layout.
+All centre restatements now live in `Elements/` or `Audit/`; the last two files,
+`Staging/Centre/Restated.lean` and `Staging/Centre/Brief0006.lean`, are deleted, and
+there is no live import of that directory. `Staging/Halves/Prop30.lean` is a separate
+proposal awaiting the owner's approval, with `sorry` and no companion registration.
+**21 October 2026.** `Prop30.halves` is no longer staged: the owner approved it on 20
+October 2026, and it is proved in `Elements/BookIII/Prop30.lean` as the companion "III.30
+halves".
 
 The rule cannot be added before its pull request, so no staged statement can be proved from
 it. Each new statement is staged with `sorry`, and the rule's content enters only as a

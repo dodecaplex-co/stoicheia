@@ -68,12 +68,12 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
       /- For III.26 we name the circumference BK by a point P beyond it, and take a point of
          each circle on the centre's side. -/
       obtain ⟨P, hPG, -⟩ := exists_oppositeSidesOf hGBK.bca []
-      obtain ⟨X, hX, hXG⟩ := Prop2.sameSide ⟨G, hG⟩ hB hK hGBK.bca
-      obtain ⟨Y, hY, hYH⟩ := Prop2.sameSide ⟨H, hH⟩ hE hF hHR.triangle
+      obtain ⟨X, hX, hXG⟩ := Prop2.sameSide hB hK hGBK.bca
+      obtain ⟨Y, hY, hYH⟩ := Prop2.sameSide hE hF hHR.triangle
       -- therefore the circumference BK is equal to the circumference EF.
       have hBK : circumference ABC B P K = circumference DEF E R F :=
-        (Prop26 hcircles hG hH hX hB hK hY hE hF (hXG.trans_opposite hPG.symm)
-          (hYH.trans_opposite hHR)).1 hPG.symm hHR hBGK
+        ((Prop26 hcircles hG hH hX hB hK hY hE hF (hXG.trans_opposite hPG.symm)
+          (hYH.trans_opposite hHR)).1 hPG.symm hHR hBGK).1
       -- But EF is equal to BC;
       have hEF_BC := hBC.symm
       -- therefore BK is also equal to BC, the less to the greater: which is impossible.
@@ -95,8 +95,8 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
          where no angle at the centre in Euclid's sense stands on the same
          circumference. There the circumference is twice the angle standing on it
          (`Circumference.standing`), and halves of equal things are equal. -/
-      rw [Circumference.standing ⟨G, hG⟩ hA hB hC hBAC.acb,
-        Circumference.standing ⟨H, hH⟩ hD hE hF hEDF.acb] at heq
+      rw [Circumference.standing hA hB hC hBAC.acb,
+        Circumference.standing hD hE hF hEDF.acb] at heq
       exact Magnitude.eq_of_add_self_eq heq
     -- And the angle at A is half of the angle BGC,
     have h20A := Prop20 hG hA hB hC hGH.1

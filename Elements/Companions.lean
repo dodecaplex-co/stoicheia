@@ -5,7 +5,15 @@ import Elements.BookII.Prop01
 import Elements.BookII.Prop14
 import Elements.BookIII.Prop07
 import Elements.BookIII.Prop08
+import Elements.BookIII.Prop14
+import Elements.BookIII.Prop15
+import Elements.BookIII.Prop16
 import Elements.BookIII.Prop17
+import Elements.BookIII.Prop23
+import Elements.BookIII.Prop24
+import Elements.BookIII.Prop25
+import Elements.BookIII.Prop30
+import Elements.BookIII.Prop31
 
 /-!
 # The companions
@@ -41,4 +49,19 @@ def Elements.companions : List (Lean.Name × String) := [
   (``Elements.BookII.Prop14.fan, "II.14 fan"),
   (``Elements.BookIII.Prop7.general, "III.7 general"),
   (``Elements.BookIII.Prop8.general, "III.8 general"),
-  (``Elements.BookIII.Prop17.general, "III.17 general")]
+  (``Elements.BookIII.Prop14.general, "III.14 general"),
+  (``Elements.BookIII.Prop15.le_diameter, "III.15 le_diameter"),
+  (``Elements.BookIII.Prop15.nearer, "III.15 nearer"),
+  (``Elements.BookIII.Prop16.semicircle, "III.16 semicircle"),
+  (``Elements.BookIII.Prop16.remaining, "III.16 remaining"),
+  (``Elements.BookIII.Prop16.acute, "III.16 acute"),
+  (``Elements.BookIII.Prop17.general, "III.17 general"),
+  (``Elements.BookIII.Prop23.point, "III.23 point"),
+  (``Elements.BookIII.Prop24.equalCircles, "III.24 equalCircles"),
+  (``Elements.BookIII.Prop24.equalMeasure, "III.24 equalMeasure"),
+  (``Elements.BookIII.Prop25.complete, "III.25 complete"),
+  (``Elements.BookIII.Prop25.kind, "III.25 kind"),
+  (``Elements.BookIII.Prop25.of_circle, "III.25 of_circle"),
+  (``Elements.BookIII.Prop30.halves, "III.30 halves"),
+  (``Elements.BookIII.Prop31.greater, "III.31 greater"),
+  (``Elements.BookIII.Prop31.less, "III.31 less")]

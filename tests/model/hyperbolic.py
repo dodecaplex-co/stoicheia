@@ -1016,6 +1016,12 @@ def _(c):
 
 
 
+@axiom('exists_centre', dict(al=C_))
+def _(c):
+    al = c['al']
+    return is_centre(centre(al), al) and in_disc(centre(al))
+
+
 @axiom('line_circle_between', dict(B=P, C=P, L=L_, al=C_), gs_lc)
 def _(c):
     B, C, L, al = c['B'], c['C'], c['L'], c['al']

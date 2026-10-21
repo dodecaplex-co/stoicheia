@@ -1,14 +1,16 @@
 [statement]
 scope = "full"
-note = "Stated as an equality: two circles through A and B with similar segments on one side of AB are one circle."
-fingerprint = "sha256:3f7601e5fce9aeab"
+note = "Stated as an equality: two circles through A and B with similar segments on one side of AB are one circle; `Prop23.point` says it point by point."
+companions = ["III.23 point"]
+fingerprint = "sha256:48c3c7a485375f21"
 
 [route]
 kind = "euclid"
+note = "The companion `Prop23.point` goes through a point M between A and B, within the circle [III. 2]: a point on the circle subtends the angle in the segment [III. 21]; one outside it, or within it, subtends a less, or a greater, angle, through a point Q where MP meets the circle [I. 21, III. 21], with `Prop23.insideTriangle_of_between` for the step read off the figure."
 
 [representation]
-tags = ["segment-with-circle", "centre-given"]
-note = "Each segment is given as its circle, the straight line AB and a point C or D on one side, and each circle comes with a centre, which III.10 and III.21 need."
+tags = ["segment-with-circle"]
+note = "Each segment is given as its circle, the straight line AB and a point C or D on one side. III.10 and III.21 obtain their centres internally."
 
 [[passage]]
 at = "let ACD be drawn through, and let CB, DB be joined"
@@ -16,8 +18,12 @@ kind = "helper"
 helper = "Prop10"
 note = "Simson's preliminary (Heath, vol. 2, p. 53): by III.10 the circles meet only at A and B, so one segment falls within the other; III.21 carries the angle to where AC drawn through meets the other circle."
 
+[figure]
+case = "the segment ACB within ADB, as in Heath's figure"
+note = "Like Heath's, this figure draws the impossible supposition: two similar and unequal segments, ACB and ADB, on the same side of AB."
+
 [review]
 stage = "exceptions"
-commit = "66e9871"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:314961b131104353"
+commit = "17987153"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:284fa78fec44b776"

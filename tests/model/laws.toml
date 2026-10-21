@@ -46,6 +46,7 @@
 "Tacit.circles_meet_opposite_side" = "circles_meet_opposite_side"
 "Tacit.circles_meet_same_side" = "circles_meet_same_side"
 "Tacit.eq_of_len_eq_zero" = "eq_of_len_eq_zero"
+"Tacit.exists_centre" = "exists_centre"
 "Tacit.exists_point" = "exists_point"
 "Tacit.exists_point_between" = "exists_point_between"
 "Tacit.exists_point_inside_circle" = "exists_point_inside_circle"

@@ -610,7 +610,7 @@ findings:
   ([the approval on issue #51](https://github.com/jackChallis/stoicheia/issues/51#issuecomment-6252155076)),
   with a prototype of mixed angles first for III.16 and III.31: if it holds, they go full,
   and if not, they stay partial with Astra's wording. The prototype is
-  [`Staging/Stage4b/MixedAngles.lean`](../../Staging/Stage4b/MixedAngles.lean), with its
+  `Staging/Stage4b/MixedAngles.lean`, with its
   account in [the report](../reports/mixed-angles-prototype.md)
   ([issue #56](https://github.com/jackChallis/stoicheia/issues/56)): Astra's representation
   from issue #51, a mixed angle as a geometric object, compared with a rectilineal angle by
@@ -1267,6 +1267,40 @@ findings:
   as proved. It follows the client in a separate change (keep_apart). The examples in
   `scripts/audit/jev.py` now name the calibration file; only that documentation changes,
   with every check preserved. No request has been sent.
+- **Mixed angles in the edition: III.16 and III.31 full, by companions; the axiom lock's
+  vocabulary grown.** [Issue #57](https://github.com/jackChallis/stoicheia/issues/57)
+  decides the move of the approved prototype into `Elements/`, on the owner's decision on
+  [#51](https://github.com/jackChallis/stoicheia/issues/51) that III.16 and III.31 go full if
+  it holds. The coordinator's approval of [brief 0011](0011-mixed-angles.md), given in this
+  pull request, approves its five companions and the words they are stated in. The
+  statements of III.16 and III.31 do not change: their last clauses are companions, "III.16
+  semicircle", "III.16 remaining" and "III.16 acute", "III.31 greater" and "III.31 less",
+  which join `Elements/Companions.lean`. The words move, unchanged in meaning, into
+  `Elements/Foundations/DefinitionsIII.lean`: `WithinAngle`, `MixedAngle` with its two kinds,
+  `MixedAngle.vertex`, `.region`, `.WellFormed`, `.Exceeds` and `.FallsShort`,
+  `LocallyWithin`, `NearVertex`, `Surrounds`, `NearVertexOpen`, `LocallyLess` and
+  `LocallyEqual`. None is an assumption. Their facts go to Book Zero, in a new file that
+  `Basics.lean` gathers, `Elements/Figure/Regions.lean`, and the steps that cite a
+  proposition to a new shared module, `Elements/BookIII/MixedAngles.lean`, after III.2 and
+  before III.16, as the brief provides; those steps take "within the circle" from III.2,
+  not from System E's Circle 2 or Circle 3. `Staging/Stage4b/MixedAngles.lean` is gone, and
+  `Staging.lean` says so; the entry "Mixed angles: the prototype approved" above linked it,
+  and names it now without the link. That entry took the comparisons at another vertex as
+  the check of congruent placement; they are invariances of the comparisons with
+  rectilineal angles, moving no mixed angle, and are renamed `Segment.compare_alike`,
+  `Prop16.semicircle_compare_alike` and `Prop16.horn_compare_alike` (Astra's challenge, in
+  the brief); III.16 and III.31 compare at one vertex and need no more. No axiom is added.
+  The protected files this changes are two.
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock) is rewritten by `python3
+  scripts/check_fidelity.py --write-lock`: its `[axioms]` table is the same 87, byte for
+  byte, and its `[vocabulary]` grows from 91 words to 107, by the thirteen words above that
+  the companions' statements reach and three that Lean declares for them
+  (`MixedAngle.rec`, `MixedAngle.casesOn`, `MixedAngle.vertex.match_1`).
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) is renewed, and
+  [MODEL.md](../../tests/model/MODEL.md) read again: no axiom, and no word an axiom reaches,
+  has changed, so its account stands, and `tests/model/run.py --fast` passes.
+  `model/lock.sha256` is renewed with it, as its own comment says; no law of the model
+  changes.
 - **One certificate pin dropped, for one merge, on the owner's word.** Taking Circle 2 out of
   every proof (#60) makes the pin "III.2 rests on Circle 2, through III.1" false, and the
   harness does not let a pin flip in the same pull request as the content that flips it.
@@ -1419,6 +1453,56 @@ findings:
   and a total that is the clock's. `scripts/safe_push.py` is unchanged, and no test is
   loosened.
 
+- **Stage 4 in the edition: `Foot` in the foundations, III.14's and III.15's companions, III.25
+  restated.** Every statement of stage 4 of [brief 0006](0006-statements.md) is proved
+  (#90, with the routes its section "Routes as proved" records, #91), and moves from
+  `Staging/Stage4/` to its home in that brief's table, in the stage's migration
+  ([#28](https://github.com/jackChallis/stoicheia/issues/28)), a move the coordinator
+  delegated to the stage's integrator. The one definition it uses is approved for the
+  foundations with the class of brief 0006's definitions (decision 4 of brief 0006, as the
+  tracking issue, [#50](https://github.com/jackChallis/stoicheia/issues/50), records it), and
+  this entry records it: `Foot`, the foot of the perpendicular (Definitions III.4 and III.5,
+  extended to a straight line through the point, whose foot is the point itself), goes into
+  `Elements/Foundations/DefinitionsIII.lean` as frozen, after `Arc.Congruent`, so that no
+  definition before it moves. It is not an assumption. `Foot.exists` [I. 12] and
+  `Foot.unique` [I. 17] go to `Elements/BookIII/Squares.lean`, the home the brief names. The
+  statements of III.14, III.15 and III.25 change, each as brief 0006 froze it, and no `--`
+  line changes: III.14 keeps its statement and gains the companion "III.14 general", with
+  its helper `Prop14.diameter_sum`; III.15 keeps its statement and gains "III.15
+  le_diameter" and "III.15 nearer"; and III.25 is restated, `Prop25` now the construction
+  core, which is given the segment's points as a predicate and never sees a circle or a
+  centre, with the companions "III.25 complete", which carries "of which it is a segment"
+  by III.9, and "III.25 of_circle", which keeps III.25's statement before, proved from the
+  core, `Prop25.meets` and `Prop25.complete`. The meeting fact for an arc, `Prop25.meets`,
+  proved by III.2, moves with III.25 into `Elements/BookIII/Prop25.lean`, as the entry on
+  stage 3's ground off Circle 2 planned. The five companions join `Elements/Companions.lean`.
+  The staged copies are deleted, and `Staging/Stage4/` with them; brief 0008's staged checks
+  in `Staging/Centre/` follow the move, naming `Prop25.of_circle` in `Elements/`, and no
+  staged statement changes. The records of III.14, III.15 and III.25 are rewritten for their
+  reviewer and left unstamped: III.14's and III.15's scopes are full with their companions,
+  the `diameters-excluded` tag going, and III.25's is full for the pair, the core with
+  `Prop25.complete`. On 19 October 2026, the route of "III.15 nearer" is accepted, as its
+  record describes:
+  for two straight lines not through the centre it constructs the missing diameter and
+  calls the already proved III.15; for a nearer diameter it uses `Prop15.le_diameter`.
+  The later example deriving the old statement from the companions checks their interface;
+  it is not a proof on which either companion depends ("Routes as proved", under III.15
+  nearer). The protected files this changes are three.
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock) is rewritten by
+  `python3 scripts/check_fidelity.py --write-lock`: its `[axioms]` table is the same 87, byte
+  for byte, and its `[vocabulary]` grows from 104 words to 105, by `Foot`, which the
+  statements of "III.14 general" and "III.15 nearer" use.
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) is renewed, with a line in its
+  comment saying why, and [MODEL.md](../../tests/model/MODEL.md) read again: no axiom, and no
+  word an axiom reaches, has changed, so its account stands, and `tests/model/run.py --fast`
+  and `--ties` pass. The formal model's copy of the hash, `model/lock.sha256`, is renewed
+  with it, and `model/Model/Laws.lean` is written again by `lake lean Check/Write.lean` in
+  `model/`, the line of the hash alone changing; no law of the model changes, and the model
+  builds. [`scripts/render.py`](../../scripts/render.py) changes what it writes and nothing it
+  accepts or checks: `FRONT_LEAN_III` gives Definitions III.4 and III.5 `Foot` beside the
+  perpendiculars, as the stage 3 entry above planned. It is not a check change (WORKFLOW,
+  section 10); the regenerated pages show it.
+
 ## 19 October 2026
 
 - **The edition does not name its owner.** The owner asked that Stoicheia not be presented
@@ -1563,9 +1647,10 @@ findings:
   III.11, III.12 and III.13 keep their `[representation]` with this tag, and III.6 takes it
   too. It lands here, in a pull request of its own, before any record uses it, as
   [FORMALIZATION](../FORMALIZATION.md), section 3, asks and as step 1 of the brief's
-  section 6 orders; no record carries it yet, so no page changes. When the definition of
-  contact within changes, in the brief's step 6, the meaning gains that the inner circle has
-  passed within the outer (question 16). Protected file changed: `review/terms.toml`.
+  section 6 orders; no record carries it yet, so no page changes. The definition of
+  contact within now changes with section 7, before step 6, under the correction below; the tag's meaning is to gain that the inner circle has passed
+  within the outer (question 16). Protected file changed: `review/terms.toml`.
+
 - **An overlap always names its kind.** The last part of
   [#93](https://github.com/jackChallis/stoicheia/issues/93), as its comments list it. The
   decision of 18 October, "An overlap is worded by its kind, as the catalogue gives it",
@@ -1594,6 +1679,215 @@ findings:
   the lock holds 87, so the test expects what it expected before; nothing else in the
   script, and no check, changes. The one protected file it changes is
   `scripts/negative_tests.py`.
+- **The mixed-angle move integrated with the Circle 2 proofs.** The vocabulary of
+  `Certificate/axioms.lock` is regenerated by `python3 scripts/check_fidelity.py
+  --write-lock`: main's 87 axioms and 91 words are unchanged. With the 16 mixed-angle
+  words and `Tacit.exists_centre` from brief 0008, step 5, the integrated lock holds
+  88 axioms and 107 words. Both model hash files keep that lock's hash, and
+  `model/Model/Laws.lean` is regenerated to record it; no other law changes. The
+  renderer's row for Definition III.7, by `MixedAngle.ofSegment` and the companions'
+  comparisons near the vertex, comes ahead of the move in a tooling change of its own
+  (the entry "The renderer's words follow the content", below), so that this move
+  changes no check input but the values pinned to it.
+
+- **Every circle has a centre: the rule lands (brief 0008, step 5).** The owner approved it
+  on 18 October, on issue #59: "approved, as Astra recommends.
+  `axiom exists_centre (α : Circle) : ∃ O, Centre O α`", and set the order this follows,
+  "then the axiom with its lock entry, model law and decisions entry, then the restatements
+  and their records" (the entry of 18 October, above, gives the whole decision).
+  [`Elements/Foundations/Tacit/Constructions.lean`](../../Elements/Foundations/Tacit/Constructions.lean)
+  now declares `Elements.Tacit.exists_centre (α : Circle) : ∃ O : Point, Centre O α`, after
+  System E's Points rules, under a heading of its own, "The centre of a circle (ours)". The
+  rule is ours, not System E's: its content is Euclid's Definitions I.15 and I.16, which
+  give every circle a centre, while System E lets a circle be given without one and reads
+  III.1 as finding it (§4.2). It says that a centre exists, and no more: that there is only
+  one is Generalities 2 (`centre_unique`), and III.1 finds it by Euclid's construction. The
+  file's opening note says that one rule in it is ours, and the opening note of
+  `Elements/Foundations/Definitions.lean` points to the rule from Definition 15. The counts:
+  88 axioms, the five postulates, Definition I.15 and 82 tacit rules; the vocabulary is
+  107 words after the mixed-angle move, unchanged by this rule, since `Circle`, `Point`
+  and `Centre` were there already. Nothing
+  cites the rule yet, so no certificate changes but the list of axioms; the statements that
+  only assume a centre drop that hypothesis in step 6. The protected files this changes,
+  each named: `Certificate/axioms.lock`, whose one new line `check_fidelity.py --write-lock`
+  wrote; `tests/model/lock.sha256`, renewed with a comment saying why;
+  `tests/model/laws.toml`, which gains `"Tacit.exists_centre" = "exists_centre"`;
+  `tests/model/search.py` and `tests/model/hyperbolic.py`, each with the law's code and
+  nothing else changed, a function `_` under `@axiom('exists_centre', dict(al=C_))` that
+  uses only helpers its harness's allow-list names (in the plane
+  `is_centre((al[0], al[1]), al)`, in the hyperbolic plane
+  `is_centre(centre(al), al) and in_disc(centre(al))`); `tests/model/MODEL.md`, with the
+  rule's row, its counts of the axioms made 88 (and "the other 86" 87), Astra's argument
+  that the rule does not follow from the other 87, as an informal countermodel argument,
+  with our thanks, and the counts of `run.py --full --write` at `faeb7f7`; and the results
+  that run wrote, `tests/model/results/angle_check.txt`,
+  `tests/model/results/exhaustive.txt`, `tests/model/results/grid_check.txt`,
+  `tests/model/results/hyperbolic.txt`, `tests/model/results/mutations.txt`,
+  `tests/model/results/search-seed1.txt`, `tests/model/results/search-seed2.txt`,
+  `tests/model/results/search-seed3.txt`, `tests/model/results/structured.txt` and
+  `tests/model/results/summary.txt`. The rule has no guard, so no mutation goes with it. In
+  the formal model, `model/lock.sha256` is renewed; the generator writes the law into
+  `model/Model/Laws.lean` and `model/Check/Laws.lean`, and `model/Model/Assembly.lean`
+  gathers `Euclidean.exists_centre`, which proved the law in the plane before it landed, so
+  `model_exists` stays unconditional, now over 88 laws; `model/Check/Hand.lean` gains the
+  kernel's round trip of the hand translation, against the library's declaration and against
+  the generated law; `model/Model/Hand.lean`'s note that the law is not yet in the library
+  goes; and `model/Model/Audit.lean`, `model/Model/Euclidean/Centre.lean` and
+  `model/README.md` say so. The prose that called every tacit rule System E's now says that
+  one is ours: [FORMALIZATION](../FORMALIZATION.md), section 7, with section 9's count of
+  the formal model's laws; [Book I's brief](book-I.md); `CONTRIBUTING.md`; `README.md`, its
+  tacit rules, its table of checks and its thanks; and `NOTICE`. The pull request carries
+  the labels `lean` and `security-review`, and needs a `/security-review`. Warm thanks to
+  Astra, whose reading of the rule this follows throughout.
+- **Stage 3 in the edition: brief 0006's arc words in the foundations, III.24 restated,
+  III.26 and III.28 upgraded.** Every statement of stage 3 of
+  [brief 0006](0006-statements.md) is proved, and moves from `Staging/` to its home in that
+  brief's table, in the seven steps of its migration, a move the coordinator delegated to
+  the stage's integrator. The definitions they use are approved for the
+  foundations as a class (decision 4 of brief 0006: "the definitions the frozen briefs
+  name are approved for the foundations, each recorded in its pull request", as the
+  tracking issue, [#50](https://github.com/jackChallis/stoicheia/issues/50), records it).
+  This entry records the ones this pull request moves, each as the brief froze it, into
+  `Elements/Foundations/DefinitionsIII.lean`, after `standing`: `Arc`, with its constructor
+  and its four fields, `Arc.Drawn`, `OnSideOrLine`, `OnArc`, `InSegment`, `Arc.Less`,
+  `Arc.Semicircle`, `Arc.Greater`, `Arc.SameKind`, `Arc.measure`, `Places` and
+  `Arc.Congruent` (Definitions III.6 and III.9, and Common Notion 4 for congruence). None
+  is an assumption. The module's account gains a paragraph on segments and arcs. The words
+  join the lock with the first statements that use them, the companion
+  "III.24 equalMeasure", then III.24, III.26 and III.28 as restated. The ground goes to the
+  homes the brief names, save two facts that rest on III.2 (the next entry):
+  `Elements/Figure/Chords.lean` (new, Book Zero), I.20's degenerate
+  case in `Elements/BookI/HelpersTriangles.lean` (new, after I.20), placement in
+  `Elements/BookIII/Placement.lean` and its cases in `Elements/BookIII/Placement/` (new),
+  `Arc.eq_of_aligned` in `Elements/BookIII/Squares.lean` and `Circumference.add` in
+  `Elements/BookIII/Circumferences.lean`; and three companions join
+  `Elements/Companions.lean`: "III.23 point", "III.24 equalCircles" and "III.24
+  equalMeasure". The protected files this changes are three.
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock) is rewritten by
+  `python3 scripts/check_fidelity.py --write-lock`: its `[axioms]` table is the same 87, byte
+  for byte, and its `[vocabulary]` grows from 91 words to 104, by `Arc` with its constructor
+  `Arc.mk` and its fields `Arc.circle`, `Arc.B`, `Arc.C`, `Arc.K`, and by `Arc.Drawn`,
+  `OnSideOrLine`, `OnArc`, `InSegment`, `Arc.measure`, `Places` and `Arc.Congruent`. The
+  kinds, `Arc.Less`, `Arc.Semicircle`, `Arc.Greater` and `Arc.SameKind`, are in the
+  foundations but not in the lock, which holds the words that the axioms' and the entries'
+  statements reach: only `Arc.eq_of_aligned` and the bridge theorems of
+  `Elements/BookIII/Arcs.lean` use them, and those are not entries of the certificate.
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) is renewed, and
+  [MODEL.md](../../tests/model/MODEL.md) read again: no axiom, and no word an axiom reaches,
+  has changed, so its account stands, and `tests/model/run.py --fast` passes. The formal
+  model's copy of the hash, `model/lock.sha256`, is renewed with it, as its own comment
+  says, and the model's generated laws, `model/Model/Laws.lean`, which record that hash,
+  are written again by `lake lean Check/Write.lean` in `model/`, the line of the hash alone
+  changing; no law of the model changes, and the model builds.
+  III.24 is restated as the brief froze it, to conclude that the segments are congruent
+  (the owner's decision 2 in that brief): `placement` applies the one to the other, and
+  III.23's companion settles every point. Its statement before, the circles equal and the
+  measures equal, is its companion `Prop24.equalCircles`, with the proof by the radii, shown
+  as the alternative; III.26 takes the equal measures from III.24 by `Prop24.equalMeasure`,
+  and `Audit/Overlaps.lean`'s example of III.24 is pointed at `Prop24.equalCircles`, whose
+  measure clause still follows from the equal angles alone. III.26 and III.28 are upgraded
+  as the brief froze them, each clause concluding that the circumferences are equal in
+  measure and congruent; III.27, III.28 and III.30 take the first conjunct where they cite
+  them, and `Audit/Overlaps.lean`'s example of III.26 gives way to a note that III.26 no
+  longer holds for any two circles. The records of III.23, III.24, III.26 and III.28 are
+  rewritten for their reviewer, who read them in full with those of III.27 and III.30 and
+  stamped all six at 8f37887. III.24's record carries `segment-with-circle`, `centre-given`
+  and `redundant-hypothesis`, but not `angle-measure`, which the brief plans for its
+  companions: that tag's badge would put "in our measure of circumferences" beside the main
+  theorem, which says nothing of a measure, and the record's note says how the companions
+  measure. The reviewer may restore it, if the badge is first kept to statements that use
+  the measure.
+  [`scripts/render.py`](../../scripts/render.py) changes what it writes and nothing it
+  accepts or checks, as the brief's list of consumers asks: `SUPERPOSITION_NOTE` no longer
+  says that our proof of III.24 compares the radii, but that it applies one segment to
+  another by `placement`, which uses superposition only through the propositions it cites;
+  and `FRONT_LEAN_III` gives Definition III.6 its words, `Arc`, `InSegment`, `OnArc` and
+  `Arc.Congruent`, and Definition III.9 `Arc.measure`. Definitions III.4 and III.5 keep their
+  lines until `Foot` joins the foundations with stage 4. It is not a check change (WORKFLOW,
+  section 10); the regenerated pages show it.
+
+- **Stage 3's ground off Circle 2.** With `lean/circle2-out`
+  ([#60](https://github.com/jackChallis/stoicheia/issues/60)) merged into the stage 3 move,
+  no entry of the certificate rests on System E's Circle 2 (`Tacit.inside_of_between`) or
+  Circle 3, as facts.json shows. The calls of the rule that stage 3 brought in, and of Book
+  Zero's lemmas that call it, take the step as #60's do: III.23's companion `Prop23.point`
+  puts its point M within the circle by III.2; III.24's companions, III.26, III.28,
+  `Circumference.add` and the bridge theorems of `Elements/BookIII/Arcs.lean` take points of
+  a circle on either side of a straight line from III.2's corollaries `Prop2.sameSide` and
+  `Prop2.oppositeSide`. Two of the facts that [brief 0006](0006-statements.md) ("Book Zero
+  for arcs") puts in Book Zero rest on III.2, and Book Zero cites no proposition, so they
+  move after it, to the first proposition that uses each (FORMALIZATION, section 6). The
+  points of the straight line through two points of a circle, `chord_cases`, go before
+  III.24 as `Prop24.chord_cases`, proved by III.2, `Prop2.triangle` and Circle 1, with one
+  hypothesis more, the circle's centre (`∃ O : Point, Centre O α`), which III.2 needs and
+  which III.24, `Prop24.image` and `Prop24.equalMeasure` have. The meeting fact for an arc,
+  `Arc.meets`, which no proposition of the edition uses yet, waits, its statement unchanged
+  and proved by III.2, in `Staging/Stage4/Prop25.lean` as `Prop25.meets`, beside the staged
+  III.25 whose companion "III.25 of_circle" uses it, and moves with stage 4
+  ([#28](https://github.com/jackChallis/stoicheia/issues/28)), as WORKFLOW, section 2,
+  allows a proved staged fact that rests on no stub. `Elements/Figure/Chords.lean` keeps
+  `Arc.congr_side` and `Arc.Congruent.congr_side`. This corrects brief 0006's table of
+  homes and its "Book Zero for arcs" for those two facts (WORKFLOW, section 2, "Correcting a
+  frozen brief"): what fails is Book Zero's rule against citing a proposition, once no proof
+  may rest on Circle 2; the consumers are III.24, its companions and the staged III.25. So
+  III.24 now cites III.2, through its helper, and its record gains a passage for it; and the
+  shared steps of `Elements/BookIII/Circumferences.lean` that take points from III.2's
+  corollaries name III.2 among the propositions they cite. No statement of a proposition or a
+  companion changes, and no protected file. On 19 October 2026, the approved rule
+  `Tacit.exists_centre` removes that extra centre hypothesis from `Prop24.chord_cases`,
+  restoring brief 0006's frozen type exactly; its home before III.24, after III.2, is kept
+  and disclosed here.
+
+- **III.5 and III.6: section 7 lands before step 6.** By the coordinator's order of
+  19 October, [brief 0008](0008-centre.md), section 7, lands now, as lane 2 of the Book III
+  plan. Its frozen order bundled it with step 6 only so that III.10, III.11 and III.13
+  would be read once. The correction lets III.5 and III.6 proceed independently of the
+  centre rule and accepts reading those three records again in step 6.
+
+  `Elements.BookIII.Prop5` now takes `CirclesCut ABC CDG`, replacing `ABC ≠ CDG` and
+  `CirclesMeet ABC CDG`. The new definition says that the circles meet at two points and
+  each passes within the other; either point within implies that they are different.
+  In `TouchesInternally`, a point of the inner circle within the outer replaces the
+  inequality of the circles. This changes the meaning of `Elements.BookIII.Prop6`,
+  `Elements.BookIII.Prop11` and `Elements.BookIII.Prop13`, whose declaration text stays
+  the same. Contact without stays the same. Both definitions are approved by the frozen
+  brief; no axiom is added.
+
+  The staged proofs of III.5 and III.6 move home unchanged, with Euclid's route, and
+  `Staging/Centre/Crossing.lean` is deleted. `CirclesCut.symm` goes to Book Zero, and
+  `CirclesMeet`'s docstring now describes meeting at two points. III.10's statement stays;
+  its final step calls `circle_eq` directly, its import of III.5 goes, and its route is
+  `modified`. Its statement covers circles that only meet as well as circles that cross.
+
+  `Audit/Overlaps.lean` is retyped and gains `Audit.III_5_radius`, the third short route
+  for III.5, by Definition I.15, Diagram-segment 3's second half and Generalities 4. The
+  probe's bridge belongs in `Audit/`: `CirclesCut.of_meet`, `within_point`, and the earlier
+  readings of III.5, III.6, III.11 and III.13 derived from the restated ones. The bridge
+  takes centres from the given hypotheses or the supposed common centre and uses the
+  existing axioms, with III.7, III.8 and III.10; it adds no hypothesis to those earlier
+  statements. A copy of `CirclesCut.of_meet` in `Elements/` after III.8 is not approved
+  by this order and waits for the coordinator.
+
+  The catalogue keeps the overlaps, adds III.5's third row, and moves Diagram-segment 2's
+  first entry to III.10. It discloses that Generalities 3 ends III.6's contact without:
+  this is Definition I.15's clause putting the centre within the figure. The other
+  short routes are not the proofs used by III.5 and III.6. The mishnah, introduction,
+  gaps report, FORMALIZATION section 3 and brief 0004's dated notes follow the new
+  readings, and `Audit/screen.py` unfolds `CirclesCut`. The renderer's and the scaffold's
+  words for this content come in a separate tooling change that lands first, in
+  `scripts/render.py` and `scripts/scaffold_book.py`. The meaning of
+  `touching-whole-circles` in `review/terms.toml` is brought up to date by a later tooling
+  change: the inner circle has a point within the outer, and no point outside it.
+
+  III.5, III.6 and III.10 require fresh review stamps by an independent reader; III.11,
+  III.12 and III.13 require deliberate semantic re-reading, even where their hashes
+  do not change. III.6 takes `touching-whole-circles`. The lock change is vocabulary
+  only, still 87 axioms, with both lock hashes renewed and no model law changed.
+  Protected files carried with this change: `Certificate/axioms.lock`,
+  `tests/model/lock.sha256`, `model/lock.sha256`, `Audit.lean`, `Audit/Crossing.lean`,
+  `Audit/Overlaps.lean` and `Audit/screen.py`. The labels and
+  security review required by WORKFLOW remain part of integration.
+
 - **The model's audit and its root are protected too (#96).** `model/Model/Audit.lean`
   pins the model's proofs to `propext`, `Classical.choice` and `Quot.sound` alone and
   checks that `Elements` is absent; `model/Model.lean` imports that audit, so the build
@@ -3033,6 +3327,160 @@ findings:
   description, the first time it is given; the consolidation release (#38) lands through
   a pull request carrying it. Tags and releases stay manual, by the owner.
 
+- **Stage 4 integrated with the centre and mixed-angle work (19 October 2026).** The stage 4
+  entry above records its migration from stage 3 alone. In this combined revision,
+  `Certificate/axioms.lock` is regenerated by `python3 scripts/check_fidelity.py --write-lock`:
+  the 88 axioms are byte-identical to the preceding integration, and the vocabulary is its
+  121 words plus `Foot`, 122 in all. Both `model/lock.sha256` and
+  `tests/model/lock.sha256` keep the dated notes from both branches and pin the new hash;
+  `model/Model/Laws.lean` is regenerated offline from the same laws. The companions list
+  keeps both sets in book order. `scripts/render.py` stays exactly as in the preceding
+  integration; stage 4's renderer wording is assigned to the tooling change that precedes
+  this content. `Audit/Overlaps.lean` renews the dependency pins of `Audit.III_24_measure`,
+  `Audit.III_26_any` and `Audit.III_27_any` from Lean's output: III.1's construction now
+  brings `Tacit.exists_centre` into each. No proof, statement or check is weakened.
+- **III.1's construction home and its porism, 19 October 2026 (D1).** By the owner's
+  decision D1 of 19 October, `Elements.BookIII.Prop1.construction` moves home before
+  `Prop1`, with its frozen type: a circle and two points of it, no centre supplied,
+  returning Euclid's bisections and perpendicular straight line. The rule
+  `Tacit.exists_centre` supplies a centre only inside the proof that D is within the
+  circle, through `Prop1.within` and III.2's argument. No centre witness reaches the
+  construction's output. Today's `Prop1` calls it and keeps its existing hypothesis
+  `hABC` for G in the reductio. Its statement and every Heath sentence stay unchanged.
+
+  Lane 3's porism keeps its statement and uses the argument of Euclid's reductio from
+  its given centre G. On AB, G is D by `Prop1.middle`; off AB, the shared I.8 step
+  `Prop1.equal_adjacent` makes the adjacent angles equal, Definition I.10 makes them
+  right, Postulate 4 identifies their measure with `∟`, and `Prop1.perpendicular` puts G
+  on DC. It neither calls III.1 nor uses `centre_unique` or `exists_centre`.
+
+  [Brief 0008's dated correction](0008-centre.md#correction-iii1-19-october-2026)
+  records the discrepancy, the unchanged declarations, the corrected proof, guard,
+  overlap, porism, consumers and order under WORKFLOW section 2. The rule is step 5,
+  followed by corrected step 3, then step 4's guard in a pull request of its own before
+  step 6, never in a train with the content it judges. Section 7 landed earlier. The
+  final restated III.1 will take both D within and "let G be the centre" from the rule;
+  the current record says D within only, retaining scope `full` and `centre-given`.
+  Its grouped construction passage and porism passage are renewed without stamping.
+
+  Fresh Lean output at `b117d01` gives the construction 64 axioms, including 56 tacit
+  rules and `Tacit.exists_centre`, with none of `Tacit.inside_of_between`,
+  `Tacit.outside_of_between`, `Tacit.centre_unique` or `sorryAx`. The future guard pins
+  that complete output afresh and reads each renewal for those four excluded names.
+  The certificate has 57 tacit rules for III.1 and 51 for III.1 Por. In the protected
+  file `tests/certificate_expectations.json`, the porism's existing `equals` moves to
+  its complete fresh list, `count.is` moves to 51, and `excludes` gains
+  `Tacit.centre_unique`; III.1's `count.is` moves to 57 and its exclusion stays. Both
+  reasons follow the proofs. No other expectation or field changes. These are values
+  pinned to the content; `kept_expectations` accepts the transition.
+
+  `Audit/Overlaps.lean`'s three pins, renewed in the preceding stage 4 integration,
+  carry `Tacit.exists_centre` through III.1's construction. `Audit/Crossing.lean`'s
+  seven pins are renewed from Lean's actual printing: `Audit.III_5_today`,
+  `Audit.cut_point` and `Audit.CirclesCut.of_meet` gain `Tacit.exists_centre`;
+  `Audit.III_6_today`, `Audit.III_11_today`, `Audit.III_13_today` and
+  `Audit.within_point` gain it and lose `Tacit.centre_unique`. No statement or proof in
+  either audit file changes. All axiom lists remain pinned.
+
+  The protected `Certificate/FIELDS.md` corrects its now-false counts and account of
+  the porism's dependencies. It changes no field contract. The coordinator must keep
+  this documentation correction apart from the content landing if the base checks
+  fail: safe_push classifies this file as a check input, not as a pinned value, so
+  including it would defeat the pinned-values exception. The expectation update
+  itself needs no such split. Independent record review, the separate construction
+  guard and regeneration of the edition remain with their assigned owners.
+
+- **III.25's segment kinds (19 October 2026), approved by the owner.**
+  The addition in [brief 0006](0006-statements.md#addition-19-october-2026-iii25s-segment-kinds)
+  records the exact statement of `Elements.BookIII.Prop25.kind`, reviewed unchanged by
+  both first mates. It is proved after `Prop25.complete` and registered as the companion
+  "III.25 kind" in `Elements/Companions.lean`. It supplies the three segment kinds and
+  their circumference measures relative to two right angles, from the construction's
+  centre-position conclusions and the three semicircle lemmas. `Prop25.complete`
+  transports the result to the given arc; the construction and correctness companions
+  retain their separate certificate entries. The three passages in `review/III/25.toml`
+  are helpers naming `Prop25.kind`; the record was stamped after independent review at `58612ec`.
+
+  `Certificate/axioms.lock` is rewritten by `python3 scripts/check_fidelity.py --write-lock`.
+  It adds only `Arc.Less`, `Arc.Semicircle` and `Arc.Greater`, bringing its vocabulary
+  from 122 to 125 words. All 88 axioms and every previously locked word are byte-identical
+  to the preceding integration. `tests/model/lock.sha256` and `model/lock.sha256` receive
+  dated notes and the new hash; `model/Model/Laws.lean` is regenerated offline. No axiom
+  or model law changes. The statement approval does not replace the independent review or
+  the protected-path security review, which remain part of integration.
+- **The renderer's words follow the content.** The protected file
+  [`scripts/render.py`](../../scripts/render.py) selects its Book III wording from
+  `facts.json`, read once for each root through the renderer's guarded paths, as its
+  other inputs are: `MixedAngle.ofSegment`, with a companion of III.16 and one of III.31,
+  enables the mixed-angle row; `Arc`, `InSegment`, `OnArc` and `Arc.Congruent`, with
+  III.24, III.26 and III.28, enable the segment row; `Arc` with `Arc.measure` enables the
+  circumference row; `CirclesCut` enables Definition III.3's row, on cutting and
+  touching, and the line on that definition on the pages where Heath's brackets cite it;
+  `Foot` enables the account of perpendicular feet in Definitions III.4 and III.5,
+  including a diameter at no distance from the centre, each row with the companion it
+  names, III.14 general or III.15 nearer; and III.24's shared step `BookIII.placement`
+  enables the account of its application of one segment to another. That account is
+  built from III.24's entry, so that it is true by construction: only when III.24's
+  `direct_axioms` leave superposition out, and a proposition `placement` cites rests on
+  it, does it say that `placement` uses superposition only through the propositions it
+  cites, and it names those of them that call on superposition themselves; otherwise it
+  says only that the proof applies the segment by `placement`. Each keeps the present
+  wording until its named content, and every proposition and companion it names, is
+  there. Comments about III.2's unused overlapping rule are corrected, and the
+  clause-map docstring no longer names particular propositions. The renderer
+  distinguishes all, some and none of a record's overlapping rules, using `facts.json`'s
+  `axioms` for the proof's full dependencies. When the proof uses all or none, the
+  status line and Overlap row keep their exact wording, with no added sentence repeating
+  the record's note. Only partial use adds a clause naming both the rules used and those
+  unused in the status line, the Overlap row and the book summaries. One rule unused
+  reads "does not use `b`", two "uses neither `b` nor `c`", and three or more "uses none
+  of `b`, `c` and `d`". This applies to every record, including both kinds that contain
+  the proposition and rules that supply a step. On main's present content, every
+  generated page stays byte for byte unchanged. The protected file
+  [`review/SCHEMA.md`](../../review/SCHEMA.md) now states that the line under the
+  enunciation and the book's summary say whether the proof rests on all, some or none of
+  the named rules, naming each rule used and unused for partial use, and that the
+  Overlap row gives the record's note word for word and adds that account only for
+  partial use. The protected test file
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains two wording cases
+  beside its cases of the page: the clause for rules left unused, and the account of
+  `placement` from `facts.json`, read afresh for each root. Each fails on the renderer
+  before this change.
+  The protected file [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes
+  brief 0008, section 7's approved III.5 signature (`CirclesCut`, without the separate
+  inequality of circles) and its comment on cutting and contact within and without,
+  exactly as the supplied scaffold patch specifies. A search of `scripts/` and `tests/`
+  found no check that reads the scaffold's Book III strings. The scaffold records the
+  approved statements; it was not run to rewrite any Lean file.
+  This tooling change lands before the content it describes, so that the content's
+  pull request changes no check input beyond the values pinned to that content:
+  the content's new lock makes main's checks fail, and `scripts/safe_push.py` keeps such
+  content apart from an accompanying change to `scripts/render.py`. No check, statement,
+  lock or review record changes here, apart from the approved signature in the scaffold
+  and the two cases the style test gains.
+- **III.1's porism has its whole axiom list pinned.** The first expectation in
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json), a
+  protected file, gains `equals` holding the porism's full list regenerated from main at
+  `2e8aecf` (21 October 2026, after axiom wave one), in `facts.json`'s order. The porism's
+  own entry carries every assumption its proof uses: Definition I.15, Postulates 1 to 4
+  and the reviewed 55 tacit rules. `Tacit.centre_unique` is a theorem since wave one, so
+  the list holds the axioms beneath it. The `ref`, `field` and count of 55 tacit rules
+  stay as they are; no other expectation changes. This makes the check stricter on its
+  own, before the content it describes: an existing `equals` value and `count.is` may
+  move with that content, as pinned values. Train C6b can then reprove the porism by
+  Euclid's reductio and move the pinned list and count to that proof's assumptions in
+  its content pull request.
+  The `axioms` row of [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md), a protected
+  file, gave III.1's and its porism's counts as fixed; it now says that the list follows
+  each proof's dependencies and that the expectations pin what those two must hold, which
+  stays true when a re-proof moves the pinned values. The protected regression test
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) keeps its checks of
+  growing and emptying an `includes` list by exercising the still-list-shaped I.5
+  expectation, and its simulated future re-proof moves the porism's exact list together
+  with the counts. It reads III.1's tacit count from
+  `tests/certificate_expectations.json`, so it holds before and after the content it
+  describes. No guard is weakened.
+
 - **The checks read a tree without the files a commit adds to them (#178).** The
   pre-flight's pass with origin/main's checks (`scripts/safe_push.py`, steps 3 and 4)
   takes the files a commit adds under the check inputs out of the work tree, while Git's
@@ -3155,6 +3603,168 @@ findings:
   independent review judged that it is not a weakening of keep_apart.
 
 ## 21 October 2026
+
+- **Train C6a meets axiom wave one: the lock is main's 79 axioms and the centre rule.**
+  Train C6a, which carries stage 3, the mixed angles, the rule that every circle has a
+  centre and brief 0008's section 7, was merged with main at `2e8aecf`, after the eight
+  retirements of axiom wave one (87 to 79), and then with the check train at `9c83d79`.
+  The counts in this train's entries of 19 October above ("The mixed-angle move integrated
+  with the Circle 2 proofs", "Every circle has a centre: the rule lands" and "III.5 and
+  III.6: section 7 lands before step 6": 88 axioms and 82 tacit rules, "the other 87", a
+  model over 88 laws, "still 87 axioms") predate wave one; they stand as written, and this
+  entry gives the counts after the merge. The lock, written by
+  `python3 scripts/check_fidelity.py --write-lock`, holds main's 79 axioms, each unchanged,
+  and `Tacit.exists_centre`: 80 axioms, of them 74 tacit rules, main's 73 and the rule, as
+  `facts.json` and the count markers say. Its vocabulary holds 121 words: main's 91 and this
+  train's 30 (the arcs and segments of stage 3, the mixed angles, and `CirclesCut`), with
+  `TouchesInternally` redefined as brief 0008, section 7, approved, asking for a point of
+  the inner circle within the outer; no other word of main's changes. Both
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) and
+  [`model/lock.sha256`](../../model/lock.sha256) were renewed on 21 October 2026 to hash
+  the regenerated lock, `46d2f009922f16cf4fe011630291b0ef99c4dd683adb19af5f1f69323207b9b1`.
+  [`tests/model/MODEL.md`](../../tests/model/MODEL.md) and the model results were written
+  again by `python3 tests/model/run.py --full --write`, on the merged tree (harness
+  sha256 `2a8771abcd95266d2253431e7b704cfff0bfffad4b9b567f5e9544586d9b7161`): 80 laws, no
+  counterexample in the plane, and all 15 mutations caught. The seven exact pins of
+  [`Audit/Crossing.lean`](../../Audit/Crossing.lean), for `III_5_today`, `III_6_today`,
+  `III_11_today`, `III_13_today`, `cut_point`, `CirclesCut.of_meet` and `within_point`,
+  were renewed from Lean's output, and change only by losing `Tacit.adjacent_eq_of_right`
+  and `Tacit.centre_unique`, now theorems; every other name in each list is unchanged.
+  The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`, `model/`, `scripts/`,
+  `lakefile.toml` and `lean-toolchain` that differ from main at `2e8aecf`, each named whole:
+  `Audit.lean`,
+  `Audit/Crossing.lean`,
+  `Audit/Overlaps.lean`,
+  `Audit/screen.py`,
+  `Certificate/FIELDS.md`,
+  `Certificate/axioms.lock`,
+  `model/Check/Hand.lean`,
+  `model/Check/Laws.lean`,
+  `model/Model/Assembly.lean`,
+  `model/Model/Audit.lean`,
+  `model/Model/Euclidean/Centre.lean`,
+  `model/Model/Hand.lean`,
+  `model/Model/Laws.lean`,
+  `model/README.md`,
+  `model/lock.sha256`,
+  `scripts/render.py`,
+  `scripts/scaffold_book.py`,
+  `scripts/test_safe_push.py`,
+  `tests/certificate_expectations.json`,
+  `tests/model/MODEL.md`,
+  `tests/model/hyperbolic.py`,
+  `tests/model/laws.toml`,
+  `tests/model/lock.sha256`,
+  `tests/model/results/angle_check.txt`,
+  `tests/model/results/exhaustive.txt`,
+  `tests/model/results/grid_check.txt`,
+  `tests/model/results/hyperbolic.txt`,
+  `tests/model/results/mutations.txt`,
+  `tests/model/results/search-seed1.txt`,
+  `tests/model/results/search-seed2.txt`,
+  `tests/model/results/search-seed3.txt`,
+  `tests/model/results/structured.txt`,
+  `tests/model/results/summary.txt`,
+  `tests/model/search.py` and
+  `tests/test_check_style.py`.
+  Of these, `scripts/render.py`, `scripts/scaffold_book.py`, `scripts/test_safe_push.py`,
+  `tests/certificate_expectations.json` and `tests/test_check_style.py` are the check
+  train's, as at `9c83d79`, with the two entries of 20 October above ("The renderer's words
+  follow the content" and "III.1's porism has its whole axiom list pinned"), and so is
+  `Certificate/FIELDS.md`'s `axioms` row; its vocabulary count, 91 to 121, is this train's.
+  `lakefile.toml` and `lean-toolchain` do not change. No statement, check or expected value
+  changes in this entry.
+
+- **III.1's construction guard, brief 0008, step 4.** `Audit/Centre.lean`, imported
+  from `Audit.lean`, fixes the frozen type of `Elements.BookIII.Prop1.construction`
+  and pins its full axiom list with `#guard_msgs`, read afresh from Lean at `34f2db57`.
+  The list has 64 names, including `Tacit.exists_centre`, admitted by the owner's
+  decision. Every renewal is read for `Tacit.inside_of_between`,
+  `Tacit.outside_of_between`, `Tacit.centre_unique` and `sorryAx`, all of which must
+  remain absent. The pin cannot establish that the centre is used only inside the
+  proof that D is within the circle; a reader checks that confinement in the proof.
+  Under [brief 0008's dated correction](0008-centre.md#correction-iii1-19-october-2026),
+  this guard lands in a pull request of its own after step 3's construction and before
+  step 6's restatements, never in a train with the content it checks.
+  After axiom wave one (merged 21 October 2026), Circle 2 and `Tacit.centre_unique` are
+  theorems, so their names can no longer appear in the pinned list. The pin still
+  excludes Circle 2 through Circle 3, on which its proof rests; a call to
+  `centre_unique` is left to the reader, as `Audit/Centre.lean` now says. The pinned
+  list itself is unchanged by the merge.
+
+- **Brief 0008, step 6: a drawn arc needs no centre (19 October 2026).** As
+  [brief 0008](0008-centre.md), section 4, approved, `Arc.Drawn` in the foundations file
+  [`Elements/Foundations/DefinitionsIII.lean`](../../Elements/Foundations/DefinitionsIII.lean)
+  loses its existential centre clause: a drawn arc has its two ends on its circle and its
+  side point off their straight line, and a proof that needs the circle's centre takes it
+  from `Tacit.exists_centre`. [`Certificate/axioms.lock`](../../Certificate/axioms.lock)
+  is rewritten by `python3 scripts/check_fidelity.py --write-lock`; only the word
+  `Arc.Drawn` changes, and the 88 axioms and the other 124 words are byte for byte as
+  before. [`tests/model/lock.sha256`](../../tests/model/lock.sha256) and
+  [`model/lock.sha256`](../../model/lock.sha256) take the new hash with a dated note, and
+  [`model/Model/Laws.lean`](../../model/Model/Laws.lean) is regenerated, changing only
+  in the hash it records; no law changes. In
+  [`Audit/Crossing.lean`](../../Audit/Crossing.lean) and
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) the calls follow the restated
+  propositions; an argument no proof now uses keeps its type under a name beginning with
+  `_`, and every axiom pin stays as Lean prints it.
+
+- **Brief 0008, step 6, done (19 October 2026).** Every Book III statement, companion
+  and helper that took a circle's centre only to have one now takes it inside its proof:
+  from III.1 where Heath
+  cites it, from `Prop1.of_circle` in III.17, and from `Tacit.exists_centre` at an
+  unbracketed step; the twelve propositions whose statements use their named centre, and
+  the helpers [brief 0008](0008-centre.md), section 4, lists, keep it, as does
+  `Prop1.within`. III.33 returns no centre and III.34 takes its circle. The
+  construction's guard, `Audit/Centre.lean`, is unchanged and passes. `Staging/Centre/` is
+  retired. In [`Audit/Crossing.lean`](../../Audit/Crossing.lean) and
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean), `Audit.III_24_measure` and the
+  crossing bridge's `cut_point`, `CirclesCut.of_meet`, `within_point` and `III_13_today`
+  lose their centre inputs, `III_2` and `III_2_outside` follow III.2's type and keep their
+  own proofs, and every axiom pin is as Lean prints it. The records lose `centre-given`;
+  every Book III record whose text or Lean changed was read in full and stamped by a reader
+  who wrote none of it. No further foundation or lock change is made, and the tag
+  `centre-given` itself leaves `review/terms.toml` in step 7. `Prop30.halves` (#67) is
+  staged in `Staging/Halves/Prop30.lean` with `sorry`, proposed for the owner's approval in
+  [brief 0006](0006-statements.md); its proof is not assigned.
+
+- **Circle-rule screen after step 6, 19 October 2026.** In the protected file
+  [`Audit/screen.py`](../../Audit/screen.py), which is judged content, the approved rule
+  `Tacit.exists_centre` joins the screened circle rules. Against fresh certificates at
+  `b260c826`, with this addition, the screen ran 57,240 attempts over 135 statements
+  (99 propositions, three porisms and 33 companions). Eleven attempts closed: seven
+  for III.2, three for III.5 and one for III.6. No pair containing `exists_centre`
+  closed, and no closing uses it. This matches the earlier 51,600-attempt run; its
+  uncatalogued candidate route for III.5, from `Tacit.len_lt_of_inside`,
+  `Tacit.lt_trans` and `Tacit.lt_irrefl`, remains for the coordinator to decide.
+  No catalogue row is added. The module's last-run account and the
+  [overlap report](../reports/overlaps.md#how-the-rows-were-found) record the result.
+  Nothing is loosened: the screen's logic, unfolded definitions, heartbeat limit and
+  treatment of unsuccessful attempts are unchanged. The generated certificate is
+  restored after the run.
+
+## 21 October 2026
+
+PLACEHOLDER, for the integrator to replace with this day's entry: the merge of
+`lean/centre-guard` (axiom wave one, main at `2e8aecf`, and trains C6a and C6b) into
+train C6c, recording each protected path that the merge changes, as the integrator
+lists them.
+
+- **III.30's halves, approved, proved and registered (#67).** The owner approved
+  `Prop30.halves` on 20 October 2026. Its statement, staged in [brief 0006](0006-statements.md) ("Addition, 19
+  October 2026"), is proved with its type unchanged, after `Prop30` in
+  [`Elements/BookIII/Prop30.lean`](../../Elements/BookIII/Prop30.lean), with three
+  helpers of its own, `Prop30.on_chord`, `Prop30.not_within` and `Prop30.not_vertical`.
+  It is registered in [`Elements/Companions.lean`](../../Elements/Companions.lean) as the
+  companion "III.30 halves", which [`review/III/30.toml`](../../review/III/30.toml)
+  lists. The route is the brief's. The equal straight lines AD, DB, which III.30's
+  statement does not give, are recovered from the equal measures by I.6, a step the
+  record's route note discloses. Then come I.17, III.28's congruence clause and
+  `Circumference.add`, and the division point by point by plane separation and III.2.
+  The proof rests on neither Circle 2 nor Circle 3, through any lemma (#152), and adds no
+  axiom.
+  `Staging/Halves/Prop30.lean` and its import in `Staging.lean` are deleted. The record's
+  stamps are left for an independent reader.
 
 - **Euclid's routes in Book III staged; their statements await approval (#125, #126, #127,
   #129, #130, #131).** Seven Lean files under `Staging/Routes/` give Euclid's own arguments

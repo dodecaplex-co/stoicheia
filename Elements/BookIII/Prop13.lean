@@ -17,21 +17,19 @@ open Tacit
 
 /-- A circle does not touch a circle at more points than one, whether it touch it internally or
 externally. -/
-theorem Prop13 {A B C D : Point} {ABDC EBFD ACK : Circle} (hABDC : ∃ G : Point, Centre G ABDC)
-    (hEBFD : ∃ H : Point, Centre H EBFD) (hACK : ∃ O : Point, Centre O ACK) :
+theorem Prop13 {A B C D : Point} {ABDC EBFD ACK : Circle} :
     ((TouchesInternally ABDC EBFD D ∨ TouchesInternally EBFD ABDC D) →
       OnCircle B ABDC → OnCircle B EBFD → B = D) ∧
     (TouchesExternally ACK ABDC A → OnCircle C ACK → OnCircle C ABDC → C = A) := by
-  have within : ∀ {α β : Circle}, (∃ G, Centre G α) → (∃ H, Centre H β) →
-      TouchesInternally α β D → OnCircle B α → OnCircle B β → B = D := by
-    intro α β hα hβ ht hBα hBβ
+  have within : ∀ {α β : Circle}, TouchesInternally α β D → OnCircle B α → OnCircle B β → B = D := by
+    intro α β ht hBα hBβ
     -- For, if possible, let the circle ABDC touch the circle EBFD, first internally, at more
     -- points than one, namely D, B.
     refine Classical.byContradiction fun hBD => ?_
     have htB : TouchesInternally α β B := ⟨hBα, hBβ, ht.2.2.1, ht.2.2.2⟩
     -- Let the centre G of the circle ABDC, and the centre H of EBFD, be taken.
-    obtain ⟨G, hG⟩ := hα
-    obtain ⟨H, hH⟩ := hβ
+    obtain ⟨G, hG⟩ := exists_centre α
+    obtain ⟨H, hH⟩ := exists_centre β
     -- Therefore the straight line joined from G to H will fall on B, D. [III. 11]
     have hGHD : Between G H D := Prop11 hG hH ht
     have hGHB : Between G H B := Prop11 hG hH htB
@@ -63,8 +61,8 @@ theorem Prop13 {A B C D : Point} {ABDC EBFD ACK : Circle} (hABDC : ∃ G : Point
     intro h hB₁ hB₂
     /- The same argument serves with the circles' names exchanged. -/
     rcases h with h | h
-    · exact within hABDC hEBFD h hB₁ hB₂
-    · exact within hEBFD hABDC h hB₂ hB₁
+    · exact within h hB₁ hB₂
+    · exact within h hB₂ hB₁
   -- I say further that neither does it so touch it externally.
   have hexternal : TouchesExternally ACK ABDC A → OnCircle C ACK → OnCircle C ABDC →
       C = A := by
@@ -79,8 +77,8 @@ theorem Prop13 {A B C D : Point} {ABDC EBFD ACK : Circle} (hABDC : ∃ G : Point
     -- Then, since on the circumference of each of the circles ABDC, ACK two points A, C have
     -- been taken at random, the straight line joining the points will fall within each
     -- circle; [III. 2]
-    have hP₂ : InsideCircle P ABDC := Prop2 hABDC hA₂ hC₂ P hAPC
-    have hP₁ : InsideCircle P ACK := Prop2 hACK hA₁ hC₁ P hAPC
+    have hP₂ : InsideCircle P ABDC := Prop2 hA₂ hC₂ P hAPC
+    have hP₁ : InsideCircle P ACK := Prop2 hA₁ hC₁ P hAPC
     -- but it fell within the circle ABCD and outside ACK [III. Def. 3]: which is absurd.
     exact hout P hP₁ hP₂
   -- Therefore a circle does not touch a circle externally at more points than one.
@@ -88,5 +86,21 @@ theorem Prop13 {A B C D : Point} {ABDC EBFD ACK : Circle} (hABDC : ∃ G : Point
   -- Therefore etc.
   -- Q. E. D.
   exact ⟨hinternal, hexternal⟩
+
+/-- **III.13 for circles touching within**, with only the two circles it speaks of: circles
+touching within, either inside the other, have no common point but the point of contact. A
+lemma beside III.13, its first clause alone; it rests on whatever III.13 rests on. Without
+it, a citer of that clause names III.13's third circle, which the clause never mentions. -/
+theorem Prop13.internally {B D : Point} {α β : Circle}
+    (h : TouchesInternally α β D ∨ TouchesInternally β α D) (hBα : OnCircle B α)
+    (hBβ : OnCircle B β) : B = D :=
+  (Prop13 (A := D) (C := D) (ACK := α)).1 h hBα hBβ
+
+/-- **III.13 for circles touching without**, with only the two circles it speaks of: they
+have no common point but the point of contact. A lemma beside III.13, its second clause
+alone; it rests on whatever III.13 rests on. -/
+theorem Prop13.externally {A C : Point} {α β : Circle} (h : TouchesExternally α β A)
+    (hCα : OnCircle C α) (hCβ : OnCircle C β) : C = A :=
+  (Prop13 (B := A) (D := A) (EBFD := β)).2 h hCα hCβ
 
 end Elements.BookIII

@@ -1,13 +1,15 @@
 import Elements.Figure.Basics
 import Elements.BookI.Prop04
 import Elements.BookI.Prop08
-import Staging.Stage3.Degenerate
+import Elements.BookI.HelpersTriangles
 
 /-!
-# Stage 3, staged: placement, a point of the base and a point off it
+# Placement: a point of the base and a point off it
 
-Statements frozen before their proofs (brief 0006, stage 3), and proved here. One file of
-`Elements/BookIII/Placement/`.
+One of the five files of placement's cases (`Elements/BookIII/Placement.lean` gathers them).
+A point of the straight line AB and a point off it keep their distance when they are sent
+to CD: measured from the end of the base whose ray holds the point of the base, I.8 gives
+the angle there and I.4 the distance.
 -/
 
 namespace Elements.BookIII
@@ -59,7 +61,7 @@ matter.)
 Proved with the base point chosen so that P lies on the ray from it through the other
 end: from A when P is on the ray AB, from B when A lies between P and B. Say from A: the
 triangles ABQ, CDQ' have their sides equal, so the angles BAQ, DCQ' are equal [I. 8]; P' is
-on the ray CD as P is on the ray AB (`Prop20.between_congr`); so the angles PAQ, P'CQ' are
+on the ray CD as P is on the ray AB (`BookI.Prop20.between_congr`); so the angles PAQ, P'CQ' are
 those same angles, and the triangles APQ, CP'Q' give PQ equal to P'Q' [I. 4]. P at A or B is
 immediate. No supplementary angles arise. -/
 theorem Placement.dist_on_off {A B C D P Q P' Q' : Point} (hlen : ‖A B‖ = ‖C D‖)

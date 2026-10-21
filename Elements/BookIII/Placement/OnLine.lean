@@ -1,11 +1,14 @@
 import Elements.Figure.Basics
-import Staging.Stage3.Degenerate
+import Elements.BookI.HelpersTriangles
 
 /-!
-# Stage 3, staged: placement, two points of the base
+# Placement: two points of the base
 
-Statements frozen before their proofs (brief 0006, stage 3), and proved here. One file of
-`Elements/BookIII/Placement/`.
+One of the five files of placement's cases (`Elements/BookIII/Placement.lean` gathers them).
+Two points of the straight line AB keep their distance when they are sent to CD: their
+order about A, decided by their distances from A and B (`BookI.Prop20.between_congr`), is their
+images' order about C, and the distance between them is the sum or the difference of their
+distances from A.
 -/
 
 namespace Elements.BookIII
@@ -43,7 +46,7 @@ from C as its fellow is from A, and from D as its fellow is from B. Then P'Q' is
 
 Proved from the order of points on a straight line: P and Q are on one ray from A or
 on opposite rays, and P', Q' alike (their distances from B and D decide it, by
-`Prop20.between_congr`); then PQ is the difference or the sum of AP and AQ
+`BookI.Prop20.between_congr`); then PQ is the difference or the sum of AP and AQ
 (`len_add_of_between`), and P'Q' the same of CP' and CQ'. -/
 theorem Placement.dist_on_on {A B C D P Q P' Q' : Point} (hlen : ‖A B‖ = ‖C D‖)
     (hAB : A ≠ B) (hP : Collinear A B P) (hQ : Collinear A B Q) (hP' : Collinear C D P')

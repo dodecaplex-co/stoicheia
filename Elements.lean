@@ -26,6 +26,8 @@ import Elements.Figure.Rectangles
 import Elements.Figure.OnCircles
 import Elements.Figure.Sums
 import Elements.Figure.Rectilineal
+import Elements.Figure.Regions
+import Elements.Figure.Chords
 import Elements.Figure.Basics
 import Elements.BookI.Prop01
 import Elements.BookI.Prop02
@@ -48,6 +50,7 @@ import Elements.BookI.Prop17
 import Elements.BookI.Prop18
 import Elements.BookI.Prop19
 import Elements.BookI.Prop20
+import Elements.BookI.HelpersTriangles
 import Elements.BookI.Prop21
 import Elements.BookI.Prop22
 import Elements.BookI.Prop23
@@ -108,6 +111,7 @@ import Elements.BookIII.Prop12
 import Elements.BookIII.Prop13
 import Elements.BookIII.Prop14
 import Elements.BookIII.Prop15
+import Elements.BookIII.MixedAngles
 import Elements.BookIII.Prop16
 import Elements.BookIII.Prop17
 import Elements.BookIII.Prop18
@@ -117,12 +121,19 @@ import Elements.BookIII.Prop21
 import Elements.BookIII.Prop22
 import Elements.BookIII.Circumferences
 import Elements.BookIII.Prop23
+import Elements.BookIII.Placement.Exists
+import Elements.BookIII.Placement.Strict
+import Elements.BookIII.Placement.Unique
+import Elements.BookIII.Placement.OnLine
+import Elements.BookIII.Placement.Mixed
+import Elements.BookIII.Placement
 import Elements.BookIII.Prop24
 import Elements.BookIII.Prop25
 import Elements.BookIII.Prop26
 import Elements.BookIII.Prop27
 import Elements.BookIII.Prop28
 import Elements.BookIII.Prop29
+import Elements.BookIII.Arcs
 import Elements.BookIII.Prop30
 import Elements.BookIII.Prop31
 import Elements.BookIII.Prop32

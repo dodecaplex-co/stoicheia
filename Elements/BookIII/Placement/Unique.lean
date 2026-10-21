@@ -2,15 +2,14 @@ import Elements.Figure.Basics
 import Elements.BookI.Prop07
 
 /-!
-# Stage 3, staged: placement, only one place
+# Placement: only one place
 
-Statements frozen before their proofs (brief 0006, stage 3), and proved here. One file of
-`Elements/BookIII/Placement/`.
+One of the five files of placement's cases (`Elements/BookIII/Placement.lean` gathers them).
 
 A point is fixed by its distances from C and D together with whether it is on F's side of
 CD or on CD: on one side, by I.7; on the straight line, by the order of points on it. (A
 point on the side and a point on the line cannot share both distances: that is
-`Prop20.collinear_congr`, used in the assembly.)
+`BookI.Prop20.collinear_congr`, used in the assembly.)
 -/
 
 namespace Elements.BookIII

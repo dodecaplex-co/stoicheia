@@ -250,9 +250,11 @@ I.31's, and `Prop30.meet`, credited to Proclus (Heath, vol. 1, pp. 207 and 316).
 tells the steps of `Elements/BookII/Rectangles.lean`, with `Parallel.between`,
 `quadArea_add_of_parallelograms` and the unlettered point of `exists_off_line`, and how
 Book II's areas correspond to the pieces drawn: which expression is which piece, and why
-the pieces make up the whole. Book III's tells a circle's centre by hypothesis and III.1,
-the constructions the text makes with no reference (III.1, I.10, I.11, I.12, I.23), its
-definitions and the circumference measured by twice its angle, the steps of `Squares.lean`
+the pieces make up the whole. Book III's tells how proofs take a circle's centre: by
+III.1 where Heath cites it, by `exists_centre` where none is supplied, or from geometric
+data such as equal circles. It tells the constructions whose references the text leaves
+unstated (I.10, I.11, I.12, I.23), its definitions and the circumference measured by
+twice its angle, the steps of `Squares.lean`
 and `Circumferences.lean`, the porisms of III.1 and III.16, and where its statements part
 from Euclid's. A shared step may be told on its home page (II.1's rectangle contained,
 II.4's "For the same reason"); elsewhere it gets a clause at most ("as in II.4"). A

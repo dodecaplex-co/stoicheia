@@ -17,10 +17,63 @@
 # and every word already locked are unchanged, byte for byte, so MODEL.md's account stands
 # as it was.
 #
+# Renewed on 18 October 2026, when the words of the mixed angles (brief 0011), which only the
+# statements of the companions of III.16 and III.31 reach, joined the vocabulary: 16 new
+# words, the definitions and what Lean declares for them; the 87 axioms and every word
+# already locked are unchanged, byte for byte, so MODEL.md's account stands as it was.
+#
+# Renewed on 18 October 2026, when the words of stage 3's statements (brief 0006) joined the
+# vocabulary: 13 new words, the arcs and segments with the structure's constructor and fields;
+# the 87 axioms and every word already locked are unchanged, byte for byte, so MODEL.md's
+# account stands as it was.
+#
+# Renewed on 19 October 2026, when the rule that every circle has a centre,
+# Tacit.exists_centre, joined the axioms by the owner's decision (brief 0008, section 2):
+# 88 axioms, the other 87 and every word of the vocabulary unchanged, byte for byte. Its
+# law joins laws.toml, search.py and hyperbolic.py, and MODEL.md gains its row and new
+# counts, in the same change.
+#
+# Renewed on 19 October 2026 for the combined vocabulary of stages 3 and mixed angles:
+# 88 axioms, byte-identical to the centre-rule revision, and 120 words of vocabulary.
+#
+# Renewed on 19 October 2026 for brief 0008, section 7: CirclesCut joins the vocabulary,
+# and TouchesInternally asks for a point within instead of distinct circles. The 87 axioms
+# and all 37 words they reach are unchanged; no model law changes.
+#
+# Renewed on 19 October 2026 for the merged vocabulary of stage 3, mixed angles and
+# brief 0008, section 7: 88 axioms, unchanged, and 121 words of vocabulary.
+#
+# Renewed on 18 October 2026, when the word of stage 4's statements (brief 0006) joined the
+# vocabulary: `Foot`, the foot of the perpendicular, which only the companions of III.14 and
+# III.15 reach; the 87 axioms and every word already locked are unchanged, byte for byte, so
+# MODEL.md's account stands as it was.
+#
+# Renewed on 19 October 2026 for stage 4 with stage 3, mixed angles and brief 0008,
+# section 7: 88 axioms, byte-identical to the preceding integration, and its 121 words
+# plus Foot, 122 words of vocabulary. No model law changes.
+#
+# Renewed on 19 October 2026 for III.25's kind companion (brief 0006): Arc.Less,
+# Arc.Semicircle and Arc.Greater join the vocabulary, 125 words in all. The 88 axioms
+# and every previously locked word are byte-identical; no model law changes.
+#
 # Renewed on 19 October 2026, when eight axioms became theorems (the owner approved both
 # retirements that day): Tacit.adjacent_eq_of_right,
 # Tacit.not_same_side_of_circles_meet, Tacit.centre_unique, Tacit.inside_of_between,
 # Tacit.exists_point_outside_circle, Tacit.line_meets_circle_of_opposite_sides,
 # Tacit.triple_incidence3 and Tacit.inside_of_angle_add. Their laws leave laws.toml, search.py
 # and hyperbolic.py; the other 79 axioms and every word are unchanged, byte for byte.
-da52a4969bf323512b82545ca01023038782d1c17a57e56da3273efdc93a1402  Certificate/axioms.lock
+#
+# Renewed on 21 October 2026, when axiom wave one was merged into train C6a: the lock is
+# main's 79 axioms and Tacit.exists_centre, 80 in all, with 121 words of vocabulary. The
+# eight retired rules stay out of laws.toml, search.py and hyperbolic.py, exists_centre's law
+# stays in them, and MODEL.md's counts are written again by run.py --full --write in the
+# same change.
+#
+# Renewed on 21 October 2026, when train C6b was merged with train C6a after axiom wave
+# one: Foot, Arc.Less, Arc.Semicircle and Arc.Greater join the vocabulary, 125 words in
+# all. The 80 axioms are byte-identical to train C6a's; no model law changes.
+#
+# Renewed on 21 October 2026, when train C6c (brief 0008, step 6) was merged with the
+# guard after axiom wave one: Arc.Drawn no longer asks for a centre witness. The 80
+# axioms and the other 124 words are byte-identical; no model law changes.
+52d7991679c721c33576d4c0958d92f4a4f9a016fa98caa7d19368e9e2a3ef48  Certificate/axioms.lock

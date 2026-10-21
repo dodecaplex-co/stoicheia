@@ -1,36 +1,34 @@
 import Elements.Figure.Basics
-import Staging.Stage3.Definitions
-import Staging.Stage3.Degenerate
-import Staging.Stage3.Placement.Exists
-import Staging.Stage3.Placement.Unique
-import Staging.Stage3.Placement.OnLine
-import Staging.Stage3.Placement.Mixed
-import Staging.Stage3.Placement.Strict
+import Elements.BookI.HelpersTriangles
+import Elements.BookIII.Placement.Exists
+import Elements.BookIII.Placement.Unique
+import Elements.BookIII.Placement.OnLine
+import Elements.BookIII.Placement.Mixed
+import Elements.BookIII.Placement.Strict
 
 /-!
-# Stage 3, staged: placement
+# Placement: one segment applied to another
 
-Statements frozen before their proofs (brief 0006, stage 3), and the spike's assembly:
-`placement` is proved here from the cases proved in `Staging/Stage3/Placement/`. Destined for
-`Elements/BookIII/Placement.lean`, with the cases in `Elements/BookIII/Placement/`. Outside
-those files, only III.24 and `Arcs.lean` may cite `placement` or any lemma of the
-`Placement` namespace: the sub-lemmas carry the same distance-keeping content, and the
-policy check covers them all (brief 0006).
+Euclid applies one figure to another: "let the point A be placed on C and the straight line
+AB on CD" (III.24). On equal straight lines AB, CD, `placement` carries the closed
+half-plane on E's side of AB (the side with the straight line itself) onto the closed
+half-plane on F's side of CD, A on C and B on D, keeping every distance between its points;
+each point goes to the point as far from C as it was from A, and as far from D as it was
+from B; and a point stays off the base, or between its ends, exactly when its image does.
 
-**What it says.** Euclid applies one figure to another: "let the point A be placed on C and
-the straight line AB on CD" (III.24). On equal straight lines AB, CD, the closed half-plane
-on E's side of AB (the side with the straight line itself) is carried onto the closed
-half-plane on F's side of CD, A on C and B on D, keeping every distance between them; each
-point goes to the point as far from C as it was from A, and as far from D as it was from B;
-and a point stays off the base, or between its ends, exactly when its image does.
+**How.** No motion is assumed beyond I.4 and I.8, the two propositions that use
+superposition. The place of each point is chosen (`Classical.epsilon`): it exists (I.22, or
+I.3 and producing on the base) and is the only one (I.7 off the base, the order of points
+on it, and I.20's degenerate case between them). That every distance is kept is the long
+part, split by where the two points lie: both on the base, one on it, or both off it, where
+whichever end of the base gives unequal angles is used (I.8, `BookI.Prop24.within`, C.N. 3,
+I.4). The map is onto because the same construction runs back from CD to AB. The cases are
+in `Elements/BookIII/Placement/`, a file each.
 
-**How.** No motion is assumed beyond I.4 and I.8 (superposition, used by those two alone).
-The place of each point is chosen (`Classical.epsilon`): it exists (I.22, or I.3 and
-producing on the base) and is the only one (I.7 off the base, the order of points on it,
-and I.20's degenerate case between them). That every distance is kept is the long part,
-split by where the two points lie: both on the base, one on it, or both off it, where
-whichever end of the base gives unequal angles is used (I.8, `Prop24.within`, C.N. 3, I.4).
-The map is onto because the same construction runs back from CD to AB.
+**Who may cite it.** III.24, where Euclid applies one segment to the other, and the bridge
+theorems of `Elements/BookIII/Arcs.lean`, and no other proof. The lemmas of the `Placement`
+namespace carry the same distance-keeping content, so `scripts/check_fidelity.py` holds them
+all to the same rule.
 -/
 
 namespace Elements.BookIII
@@ -99,7 +97,7 @@ theorem Placement.dist_off_off {A B C D P Q P' Q' : Point} (hlen : ‖A B‖ = �
 
 /-- **Any two points of the half-plane keep their distance**, by where they lie: both on the
 base, one on it, or both off it. Whether a place is on the base is decided by the distances
-(`Prop20.collinear_congr`). -/
+(`BookI.Prop20.collinear_congr`). -/
 theorem Placement.dist {A B C D E F P Q P' Q' : Point} (hE : ¬ Collinear A B E)
     (hlen : ‖A B‖ = ‖C D‖) (hP : OnSideOrLine P E A B) (hQ : OnSideOrLine Q E A B)
     (hP' : OnSideOrLine P' F C D) (hQ' : OnSideOrLine Q' F C D)
