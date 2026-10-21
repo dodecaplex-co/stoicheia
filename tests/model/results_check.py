@@ -31,8 +31,9 @@ each fault the check exists to catch, and checks that each is caught and that th
 unchanged pass. It drives --write's guards too, and runs `run.py --full --write` for real,
 in a git repository of its own, on a made-up harness that changes and restores the
 checkout's harness while the run goes on, and on one stopped by SIGTERM partway. For each
-of SIGTERM and SIGHUP, it also stops publication after a replacement and immediately after
-its pending-signal check, and checks that the whole previous output set remains.
+of SIGTERM and SIGHUP, it also stops publication at each part of its commit boundary and
+checks that the whole previous output set remains; and changes a harness file during
+publication to check that the prior outputs return.
 """
 import contextlib
 import hashlib
@@ -347,7 +348,9 @@ def write_guard_self_test():
 
     launched, writer, child, stopped = exercise([prov(date='2000-01-02')], start=before)
     if stopped is not None or launched != ['hyperbolic'] or writer.call_count != 1 \
-            or writer.call_args.args[1] is not before or child.called:
+            or writer.call_args.args[1] is not before \
+            or writer.call_args.kwargs.get('expected_signature') \
+            != runner.provenance_signature(before) or child.called:
         raise AssertionError('--write refused stable provenance or did not use its initial record')
 
     refused = 0
@@ -592,29 +595,31 @@ def snapshot_self_test():
              if os.name == 'posix' else ''))
 
 
+def output_tree(root):
+    entries = {}
+    for parent, dirs, files in os.walk(root):
+        for name in sorted(dirs + files):
+            path = os.path.join(parent, name)
+            rel = os.path.relpath(path, root)
+            if os.path.islink(path):
+                entries[rel] = ('link', os.readlink(path))
+            elif os.path.isdir(path):
+                entries[rel] = ('directory',)
+            else:
+                with open(path, 'rb') as f:
+                    entries[rel] = ('file', f.read())
+    return entries
+
+
 def publication_signal_self_test():
-    """Interrupt after MODEL.md is replaced or signals are sampled; require the prior tree."""
+    """Interrupt each publication boundary and require its whole prior tree back."""
     stops = [getattr(signal, name) for name in ('SIGTERM', 'SIGHUP') if hasattr(signal, name)]
     if not stops:
         return
 
-    def tree(root):
-        entries = {}
-        for parent, dirs, files in os.walk(root):
-            for name in sorted(dirs + files):
-                path = os.path.join(parent, name)
-                rel = os.path.relpath(path, root)
-                if os.path.islink(path):
-                    entries[rel] = ('link', os.readlink(path))
-                elif os.path.isdir(path):
-                    entries[rel] = ('directory',)
-                else:
-                    with open(path, 'rb') as f:
-                        entries[rel] = ('file', f.read())
-        return entries
-
     for stop in stops:
-        for timing in ('after replacement', 'after pending check'):
+        for timing in ('after replacement', 'after pending check', 'after second block',
+                       'during backup cleanup'):
             with tempfile.TemporaryDirectory() as tmp:
                 results = os.path.join(tmp, 'results')
                 model_md = os.path.join(tmp, 'MODEL.md')
@@ -630,11 +635,14 @@ def publication_signal_self_test():
                 os.symlink(link_target, linked)
                 missing = os.path.join(results, result_file(old_runs[1]))
                 os.unlink(missing)
-                before = tree(tmp)
+                before = output_tree(tmp)
                 new = dict(old, commit='c' * 40 + f' ({COMMITTED})', date='2000-01-02')
                 real_replace = os.replace
                 real_pending = signal.sigpending
+                real_mask = signal.pthread_sigmask
+                real_unlink = os.unlink
                 sent = False
+                blocks = 0
 
                 def interrupting_replace(source, destination):
                     nonlocal sent
@@ -653,6 +661,23 @@ def publication_signal_self_test():
                         os.kill(os.getpid(), stop)
                     return pending
 
+                def interrupting_mask(how, mask):
+                    nonlocal blocks, sent
+                    previous_mask = real_mask(how, mask)
+                    if how == signal.SIG_BLOCK and set(mask) == set(stops):
+                        blocks += 1
+                        if timing == 'after second block' and blocks == 2 and not sent:
+                            sent = True
+                            os.kill(os.getpid(), stop)
+                    return previous_mask
+
+                def interrupting_unlink(path, *args, **kwargs):
+                    nonlocal sent
+                    real_unlink(path, *args, **kwargs)
+                    if timing == 'during backup cleanup' and path.endswith('.old') and not sent:
+                        sent = True
+                        os.kill(os.getpid(), stop)
+
                 previous = {sig: signal.getsignal(sig) for sig in stops}
                 runner.stop_as_exit()
                 stopped = None
@@ -662,13 +687,17 @@ def publication_signal_self_test():
                             runner.os, 'replace', side_effect=interrupting_replace))
                         stack.enter_context(mock.patch.object(
                             runner.signal, 'sigpending', side_effect=interrupting_pending))
+                        stack.enter_context(mock.patch.object(
+                            runner.signal, 'pthread_sigmask', side_effect=interrupting_mask))
+                        stack.enter_context(mock.patch.object(
+                            runner.os, 'unlink', side_effect=interrupting_unlink))
                         write(made_up_runs(), new, results, model_md)
                 except SystemExit as e:
                     stopped = e.code
                 finally:
                     for sig, handler in previous.items():
                         signal.signal(sig, handler)
-                after = tree(tmp)
+                after = output_tree(tmp)
                 if not sent or stopped != 128 + stop or after != before:
                     raise AssertionError(f'model publication self-test: '
                                          f'{signal.Signals(stop).name} {timing} did not restore '
@@ -676,8 +705,60 @@ def publication_signal_self_test():
                                          f'stopped {stopped}; '
                                          f'added {sorted(after.keys() - before.keys())}; '
                                          f'removed {sorted(before.keys() - after.keys())}')
-    print('model publication self-test: SIGTERM and SIGHUP after a replacement or the pending '
-          'check restore the previous output set without temporary files')
+    print('model publication self-test: SIGTERM and SIGHUP across replacement, signal checks '
+          'and backup cleanup restore the previous output set without temporary files')
+
+
+def publication_provenance_self_test():
+    """Change and leave a harness file during publication; require the prior outputs back."""
+    with tempfile.TemporaryDirectory() as tmp:
+        model = os.path.join(tmp, 'tests', 'model')
+        os.makedirs(model)
+        for name in HARNESS:
+            shutil.copyfile(os.path.join(HERE, name), os.path.join(model, name))
+        env = {k: v for k, v in os.environ.items() if not k.startswith('GIT_')}
+        env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM='1')
+        for args in (['init', '-q'], ['add', '.'], ['commit', '-q', '-m', 'A']):
+            subprocess.run(['git', '-c', 'user.name=self-test',
+                            '-c', 'user.email=self-test@example.invalid', *args],
+                           cwd=tmp, env=env, check=True, capture_output=True)
+        published = os.path.join(tmp, 'published')
+        os.makedirs(published)
+        results = os.path.join(published, 'results')
+        model_md = os.path.join(published, 'MODEL.md')
+        with open(model_md, 'w', encoding='utf-8') as f:
+            f.write(PAGE)
+        with mock.patch.object(runner, 'ROOT', tmp), mock.patch.object(runner, 'CHECKOUT', model):
+            prov = runner.provenance()
+            signature = runner.provenance_signature(prov)
+            write(made_up_runs(), prov, results, model_md)
+            before = output_tree(published)
+            harness_file = os.path.join(model, 'search.py')
+            real_replace = os.replace
+            changed = False
+
+            def changing_replace(source, destination):
+                nonlocal changed
+                real_replace(source, destination)
+                if destination == model_md and not changed:
+                    changed = True
+                    with open(harness_file, 'a', encoding='utf-8') as f:
+                        f.write('\n# changed during publication\n')
+
+            stopped = None
+            try:
+                with mock.patch.object(runner.os, 'replace', side_effect=changing_replace):
+                    write(made_up_runs(), prov, results, model_md,
+                          expected_signature=signature)
+            except SystemExit as e:
+                stopped = e.code
+        if not changed or 'provenance changed while it ran' not in str(stopped) \
+                or output_tree(published) != before \
+                or '# changed during publication' not in read(harness_file):
+            raise AssertionError('model publication self-test: a harness changed and left during '
+                                 'publication did not restore the previous output set and fail')
+    print('model publication self-test: a harness changed and left during publication restores '
+          'the previous output set and fails')
 
 
 def self_test():
@@ -687,6 +768,7 @@ def self_test():
     write_guard_self_test()
     snapshot_self_test()
     publication_signal_self_test()
+    publication_provenance_self_test()
     runs = sorted(written() - {SUMMARY})
     if len(runs) < 4:
         raise AssertionError('results self-test: the full plan writes fewer than four runs')

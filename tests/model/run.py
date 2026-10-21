@@ -552,21 +552,52 @@ def counts_block(runs, prov):
         derived_table(runs)])
 
 
-def publish(outputs):
+def publish(outputs, expected_signature=None):
     """Replace every `(path, text)` as one publication, restoring every prior directory entry
     if publication is interrupted. Destination symbolic links are replaced, not followed."""
     stages = []
     journal = []
     stops = {getattr(signal, name) for name in ('SIGTERM', 'SIGHUP') if hasattr(signal, name)}
-    previous_mask = (signal.pthread_sigmask(signal.SIG_BLOCK, stops)
-                     if stops and hasattr(signal, 'pthread_sigmask') else None)
+    caller_mask = (signal.pthread_sigmask(signal.SIG_BLOCK, stops)
+                   if stops and hasattr(signal, 'pthread_sigmask') else None)
+    mask_restored = False
+
+    def remember(path):
+        if not os.path.lexists(path):
+            return None
+        if os.path.islink(path):
+            return ('link', os.readlink(path))
+        if not os.path.isfile(path):
+            raise OSError(f'{path} is not a regular file or symbolic link')
+        details = os.stat(path, follow_symlinks=False)
+        with open(path, 'rb') as f:
+            return ('file', f.read(), details.st_mode & 0o7777,
+                    details.st_atime_ns, details.st_mtime_ns)
+
+    def remake(path, prior):
+        if prior is None:
+            return
+        if prior[0] == 'link':
+            os.symlink(prior[1], path)
+            return
+        with open(path, 'xb') as f:
+            f.write(prior[1])
+        os.chmod(path, prior[2])
+        os.utime(path, ns=(prior[3], prior[4]))
 
     def restore():
-        for path, backup in reversed(journal):
+        for path, backup, prior in reversed(journal):
             if os.path.lexists(path):
                 os.unlink(path)
-            if backup is not None:
+            if backup is not None and os.path.lexists(backup):
                 os.replace(backup, path)
+            else:
+                remake(path, prior)
+
+    def clean_stages():
+        for _, new in stages:
+            if os.path.lexists(new):
+                os.unlink(new)
 
     try:
         try:
@@ -579,6 +610,7 @@ def publish(outputs):
             for path, new in stages:
                 if os.path.isdir(path) and not os.path.islink(path):
                     raise IsADirectoryError(path)
+                prior = remember(path)
                 backup = None
                 if os.path.lexists(path):
                     backup = os.path.join(os.path.dirname(path),
@@ -586,33 +618,38 @@ def publish(outputs):
                     if os.path.lexists(backup):
                         raise FileExistsError(backup)
                     os.replace(path, backup)
-                journal.append((path, backup))
+                journal.append((path, backup, prior))
                 os.replace(new, path)
-            if previous_mask is not None:
-                deliverable = stops - set(previous_mask)
+            if expected_signature is not None \
+                    and provenance_signature(provenance()) != expected_signature:
+                sys.exit('the model harness provenance changed while it ran, so nothing is '
+                         'written')
+            if caller_mask is not None:
+                deliverable = stops - set(caller_mask)
                 pending = signal.sigpending() & deliverable
-                signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
+                signal.pthread_sigmask(signal.SIG_SETMASK, caller_mask)
                 if pending:
                     raise InterruptedError('publication interrupted')
-                previous_mask = None
-                previous_mask = signal.pthread_sigmask(signal.SIG_BLOCK, stops)
-        except BaseException:
-            restore()
-            raise
-        else:
-            for _, backup in journal:
+                signal.pthread_sigmask(signal.SIG_BLOCK, stops)
+            for _, backup, _ in journal:
                 if backup is not None:
                     os.unlink(backup)
-        finally:
-            for _, new in stages:
-                if os.path.lexists(new):
-                    os.unlink(new)
+            clean_stages()
+            if caller_mask is not None:
+                signal.pthread_sigmask(signal.SIG_SETMASK, caller_mask)
+                mask_restored = True
+        except BaseException:
+            if caller_mask is not None:
+                signal.pthread_sigmask(signal.SIG_BLOCK, stops)
+            restore()
+            clean_stages()
+            raise
     finally:
-        if previous_mask is not None:
-            signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
+        if caller_mask is not None and not mask_restored:
+            signal.pthread_sigmask(signal.SIG_SETMASK, caller_mask)
 
 
-def write(runs, prov, results=RESULTS, model_md=MODEL_MD):
+def write(runs, prov, results=RESULTS, model_md=MODEL_MD, expected_signature=None):
     outputs = []
     for r in runs:
         outputs.append((os.path.join(results, result_file(r)), header(r, prov) + r.out))
@@ -640,7 +677,7 @@ def write(runs, prov, results=RESULTS, model_md=MODEL_MD):
     made_results = not os.path.lexists(results)
     try:
         os.makedirs(results, exist_ok=True)
-        publish(outputs)
+        publish(outputs, expected_signature)
     except BaseException:
         if made_results and os.path.isdir(results) and not os.listdir(results):
             os.rmdir(results)
@@ -710,7 +747,7 @@ def main():
     if '--write' in args:
         if provenance_signature(provenance()) != write_signature:
             sys.exit('the model harness provenance changed while it ran, so nothing is written')
-        write(runs, write_prov)
+        write(runs, write_prov, expected_signature=write_signature)
         print('wrote tests/model/results/ and the counts in MODEL.md')
     print('model evidence: all checks pass')
 
