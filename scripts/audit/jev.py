@@ -711,8 +711,9 @@ def cmd_run(args) -> int:
 
 def answered_lines(path: Path, made: dict[str, Any]) -> list[str]:
     """The lines of an earlier output that hold an answer, for --resume; a failed request's
-    line, or one naming no answering model, is dropped, so that its row is sent again. Refuses an output made from another
-    input, with another model or with another order check."""
+    line, or one naming no answering model, is dropped, so that its row is sent again.
+    Refuses an output made from another input, with another model or with another order
+    check."""
     kept = []
     for n, text in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         if not text.strip():
