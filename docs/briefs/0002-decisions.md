@@ -4016,6 +4016,7 @@ findings:
   stand-in axioms, one for each case of the definition; they are compiled only into the
   test's temporary package, which no library of the edition builds, and the lock is
   unchanged.
+
 - **The flag `Cited.drawsNothing` retired; I.4 proves its laws one by one (#150, question 4,
   route (b)).** The content change that follows the check above. #150, the owner's issue
   for finishing the answers approved "as prototyped" on 20 October, offers this route by
@@ -4039,6 +4040,7 @@ findings:
   every law I.4 cites is proved with no construction rule, as `cited_laws` shows; the
   second retirement wave changes that for four of them, and its landing records it.
   I.4's and I.8's records were read again in full and stamped by an independent reader.
+
 - **The restriction's part 4 as a theorem, and every cited law in one statement (#150,
   question 2).** Part 4 of the restriction, that no hypothesis of the rule speaks of the
   placement, was read off the statement of `Rule.infer`; it is now restated as a theorem,
