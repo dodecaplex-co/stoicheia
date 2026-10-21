@@ -3619,3 +3619,21 @@ findings:
   `Certificate/FIELDS.md`'s `axioms` row; its vocabulary count, 91 to 121, is this train's.
   `lakefile.toml` and `lean-toolchain` do not change. No statement, check or expected value
   changes in this entry.
+
+- **Train C6b reconciled after axiom wave one.** Train C6b carries III.1's construction
+  and porism and stage 4, merged with C6a after axiom wave one. The 19 October stage 4
+  and III.25 entries' 88 axioms, and D1's 57 tacit rules for III.1, are their historical
+  pre-wave-one measurements; they stand as written. On the integrated tree the lock holds
+  80 axioms, of them 74 tacit rules, and 125 vocabulary words, the 37 reached by the
+  axioms and 88 reached only by statements. The certificate has 56 tacit rules for III.1
+  and 51 for III.1 Por.; `Tacit.adjacent_eq_of_right`, which III.1 reaches, became a
+  theorem in wave one. These are the current measurements and supersede those earlier
+  entries only where they describe the integrated tree after C6b.
+
+  All four exact pins in `Audit/Overlaps.lean` were renewed from Lean's output:
+  `Audit.III_24_measure`, `Audit.III_26_any`, `Audit.III_27_any` and
+  `Audit.III_30_measure`. The protected file `tests/certificate_expectations.json` keeps
+  every assertion and pinned value. Its two III.1 reasons now say that excluding
+  `Tacit.centre_unique` from an axiom list cannot detect a call to that retired axiom,
+  now a theorem, and that the claim about the proof's route rests on proof review. No
+  declaration, dependency check or expected value changes in this reconciliation.

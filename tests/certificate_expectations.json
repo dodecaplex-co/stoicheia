@@ -64,14 +64,14 @@
       ],
       "excludes": ["Tacit.centre_unique"],
       "count": {"prefix": "Tacit.", "is": 51},
-      "why": "The porism's own entry pins every assumption of its proof by the argument of Euclid's reductio from the given centre: 51 tacit rules, with centre_unique excluded. It neither calls III.1 nor uses exists_centre."
+      "why": "The porism's own entry pins every assumption of its proof by the argument of Euclid's reductio from the given centre: 51 tacit rules. Since centre_unique is now a theorem, excluding its name from axioms cannot detect a call to it; the claim that this proof avoids it rests on proof review. The proof neither calls III.1 nor uses exists_centre."
     },
     {
       "ref": "III.1",
       "field": "axioms",
       "excludes": ["Tacit.centre_unique"],
       "count": {"prefix": "Tacit.", "is": 56},
-      "why": "III.1's certificate now also carries exists_centre through its construction, for D within by III.2's argument: 56 tacit rules, still without centre_unique."
+      "why": "III.1's certificate now also carries exists_centre through its construction, for D within by III.2's argument: 56 tacit rules. Since centre_unique is now a theorem, excluding its name from axioms cannot detect a call to it; the claim that this proof avoids it rests on proof review."
     },
     {
       "ref": "III.1 Por.",

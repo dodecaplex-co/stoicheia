@@ -390,11 +390,13 @@ What is not proved is named in section 3, and neither proposition needs it. The 
    cites Book I goes into the foundations.
    - `len_lt_of_add_lt` (I.20) goes beside `Prop20.collinear_iff` in
      `Elements/BookI/HelpersTriangles.lean`, where brief 0006's stage 3 put it.
-   - What rests on I.12, I.17, I.19 or I.20 goes to `Elements/BookIII/Squares.lean`, with
-     Book III's other steps that cite Book I: `foot_nearest` (beside `Foot.exists` and
-     `Foot.unique`, and adapted on the move to take `Foot`, which stage 4 adopted, as its
-     hypothesis),
-     `near_inside_of_angle`, `near_across`, the `surrounds_` facts, `WithinAngle.surrounds`
+   - The original plan put what rests on I.12, I.17, I.19 or I.20 in
+     `Elements/BookIII/Squares.lean`, with Book III's other steps that cite Book I. It put
+     `foot_nearest` beside `Foot.exists` and `Foot.unique`, adapted to take `Foot` as its
+     hypothesis. The landed theorem remains in `Elements/BookIII/MixedAngles.lean` with
+     its point-and-right-angle interface; moving it beside `Foot` and adapting it are
+     still pending. The plan put `near_inside_of_angle`, `near_across`, the `surrounds_`
+     facts, `WithinAngle.surrounds`
      and `WithinAngle.nearVertexOpen`, `NearVertexOpen.mono_near`, and the checks and order
      laws that use them: `WithinAngle.locallyLess_of_lt`, `.locallyLess_iff`,
      `.locallyEqual_iff`, `LocallyLess.trans`, `.congr_left` and `.congr_right`.
