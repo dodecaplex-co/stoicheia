@@ -239,14 +239,14 @@ IDENT = re.compile(r"[^\W\d][\w'!?₀-₉]*(?:\.[^\W\d][\w'!?₀-₉]*)*")
 WARNING = re.compile(r"^(?P<file>.+?):(?P<line>\d+):(?P<col>\d+): "
                      r"(?P<severity>warning|error): "
                      r"(?:Variable name|unused variable) `(?P<name>[^`]+)`", re.M)
-# The lines that follow the first of each of the linter's reports: its hint, the name it
+# The lines that follow the first line of each of the linter's reports, as Lean 4.35
+# prints them (Lean/Linter/UnusedVariables.lean): blank lines, its hint, the name it
 # suggests, and its note.
 LINT_TAIL = re.compile(
-    r"|Hint: The binding can be removed \(if unused\) or named `_` \(if used implicitly\)\."
-    r"(?: Alternatively, prefix the name with `_` to silence this warning:)?"
-    r"|Alternatively, prefix the name with `_` to silence this warning:"
+    r"|Hint: The binding can be removed \(if unused\) or named `_` \(if used implicitly\)\. "
+    r"Alternatively, prefix the name with `_` to silence this warning:"
     r"|  \[apply\] _\S.*"
-    r"|[Nn]ote: [Tt]his linter can be disabled with `set_option linter\.unusedVariables false`")
+    r"|Note: This linter can be disabled with `set_option linter\.unusedVariables false`")
 ERROR = re.compile(r"^.+?:\d+:\d+: error\b(?!: (?:Variable name|unused variable) `).*$", re.M)
 # An anonymous `have`, which Lean names `this` without checking it.
 ANONYMOUS = re.compile(r"(?<![\w'.])have(?![\w'!?])(?=[ \t]*:)")
@@ -453,7 +453,8 @@ def run_lean(path: Path, options: list[str], what: str) -> str:
 
 def only_lint(out: str) -> bool:
     """Whether `out` is the linter's reports and nothing else, one of them an error, as
-    `warningAsError` makes it: the one failure that leaves the linter's reading whole."""
+    `warningAsError` makes it: the one failure the sweep reads, since the linter's reading
+    is then whole."""
     promoted = False
     reading = False
     for line in out.splitlines():
@@ -1458,7 +1459,7 @@ EXPECTED = [
     ("unused-binding", "hq2", False),
     ("unused-binding", "hsuf", False),  # `suffices` binds it
     ("unused-have", "heqn", False),   # in a proof by equations
-    ("unused-have", "killed", False), # a name a crash of Lean's might print
+    ("unused-have", "killed", False), # a crash's word as a name: never a refusal
     ("unused-have", "herror", False), # under `warningAsError`, reported as an error
     ("helper", "SweepSelfTest.Prop2.figure", False),   # Prop2, 5, 7, 14, 25, 30, 31, 35, 37
     ("helper", "SweepSelfTest.Prop29.contra", False),  # behind a reductio's opening
@@ -1726,7 +1727,9 @@ def self_test() -> int:
           f"their run as declared), {len(HELPER_SHAPES)} entries with their helper's shape, "
           f"{len(CONTROLS) + len(HELPER_CONTROLS)} controls passed, a file that silences the "
           f"linter ({len(SILENCED_AT)} ways), one that does not elaborate and a run of Lean "
-          f"that fails with no error at a line refused, `admit` refused outside Staging, "
+          f"that fails with no error at a line refused, "
+          f"{sum(not r[4] for r in runs)} failed runs of Lean refused and "
+          f"{sum(r[4] for r in runs)} read, `admit` refused outside Staging, "
           f"and check_fidelity reads three comments as Lean does, {len(BOUND_CASES)} shapes "
           f"of binding and the stale `unused` name")
     return 0
