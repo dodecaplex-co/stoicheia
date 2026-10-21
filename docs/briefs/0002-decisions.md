@@ -3053,14 +3053,30 @@ findings:
   `heath.COMMIT` allows, and when it begins with a letter S12 puts it to Lean as a name;
   and its width differs from one clone to another, so the same files gave different
   reports. The generator now writes twelve digits (`REVISION_DIGITS`, with
-  `git rev-parse --short=12`), the width `safe_push.py` gives commits, in the form S12
-  already reads. S12, its exemptions and `REACH_PENDING` are unchanged. A new test in
+  `git rev-parse --short=12`), the width `safe_push.py`'s pre-flight summary gives
+  commits, in the form S12 already reads. S12, its exemptions and `REACH_PENDING` are
+  unchanged. A new test in
   `tests/test_check_acceptance.py`, `Report.test_a_regenerated_report_passes_s12`, writes
   the report through the generator in a small repository under `core.abbrev` 4, 9 and
   Git's own width, and puts each report to S12's plan: on the old generator, S12 would
   put the four-digit revision to Lean, and the three revisions differ; now each is the
   same twelve digits, and S12 asks Lean about nothing. The committed report's revision,
   `33602846`, is all digits, which S12 does not read as a name, so it passes as it
-  stands; its next regeneration writes twelve digits. The protected files changed are
+  stands; its next regeneration writes twelve digits.
+  A review of that change found a second way for the report to fail S12, one that no
+  regeneration cleared. The style check reads the report a run replaces, and E5 quoted
+  each of its findings in the new report with the message's backticks. So a finding on
+  the old report, on a revision S12 put to Lean or on a name Lean does not know (B2 and
+  E2 quote such names on purpose), came back in the new report away from the word
+  "Revision"; S12 put it to Lean again, and each regeneration quoted the last finding
+  back. `check_style_rules` now quotes the style check's messages without their
+  backticks, as `verdicts()` already writes the revision: E5 still fails, once, with the
+  whole message, S12 finds no name in it, and the report after it passes. B2's and E2's
+  own messages are unchanged. A second test,
+  `Report.test_a_finding_on_the_old_report_is_not_quoted_back_to_s12`, gives the
+  generator three such findings through a stand-in for the style check (the old
+  report's four-digit revision, the twelve-digit one and an unknown name) and puts the
+  regenerated report to S12's plan: on the previous generator S12 would put all three
+  to Lean; now it asks about none. The protected files changed are
   `scripts/test_safe_push.py`, `scripts/check_acceptance.py` and
   `tests/test_check_acceptance.py`.

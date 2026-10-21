@@ -19,7 +19,9 @@ these cases put it to small files of verdicts, each with the outcome it should g
   each failure's messages and why an item was not run;
 * the report, written by the generator in a small repository under several widths of
   Git's short hashes, gives one revision, which the style check's S12 reads as a commit,
-  and no name for S12 to put to Lean (issue #178);
+  and no name for S12 to put to Lean; and the style check's findings on the report it
+  replaces are quoted in E5 without their backticks, so S12 does not read them again
+  (issue #178);
 * CI copies the pull request's checks into main but keeps main's content pins, so an
   updated definition or expected count cannot hide a later E2 failure.
 
@@ -239,14 +241,11 @@ class Report(unittest.TestCase):
 
     tearDown = setUp
 
-    def test_a_regenerated_report_passes_s12(self):
-        # A small repository whose HEAD begins with a letter, so that a short form of it
-        # reads as a name. Git's own width is seven digits there; under core.abbrev 4 it
-        # is four, which is not a commit to S12 (heath.COMMIT) but a name it puts to Lean.
-        # Whatever the width, the report gives one revision, in heath.COMMIT's form
-        # beside the word "Revision", and S12 asks Lean about nothing in it.
-        import check_style as style
-        self.assertTrue(style.is_report(ca.REPORT), ca.REPORT)
+    @contextlib.contextmanager
+    def repository(self):
+        """A small repository, the generator's root while the context lasts, whose HEAD
+        begins with a letter, so that a short form of it reads as a name; yields HEAD and
+        a `git` that runs there."""
         where = ca.REPORT.relative_to(ca.ROOT)
         fixture = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
         who, when = ("Fixture", "fixture@example.invalid"), "2026-10-21T00:00:00Z"
@@ -254,7 +253,6 @@ class Report(unittest.TestCase):
                        GIT_AUTHOR_NAME=who[0], GIT_AUTHOR_EMAIL=who[1], GIT_AUTHOR_DATE=when,
                        GIT_COMMITTER_NAME=who[0], GIT_COMMITTER_EMAIL=who[1],
                        GIT_COMMITTER_DATE=when)
-        texts = {}
         with tempfile.TemporaryDirectory() as d, patch.dict(os.environ, fixture, clear=True):
             root = Path(d).resolve()
 
@@ -270,14 +268,34 @@ class Report(unittest.TestCase):
                 git("commit", "-q", "--amend", "--allow-empty", "-m", f"A fixture, {n}")
             head = git("rev-parse", "HEAD")
             self.assertFalse(head[0].isdigit(), head)
+            with patch.object(ca, "ROOT", root), patch.object(ca, "REPORT", root / where):
+                yield head, git
+
+    @staticmethod
+    def s12_asks(text: str) -> list[str]:
+        """The names S12's plan puts to Lean in `text`, read as the report (call it
+        outside `repository`, where ca.REPORT is the report's own path)."""
+        import check_style as style
+        named = style.NamedText(ca.REPORT, text, style.every_book_opens())
+        _, asked, _, _ = style.s12_plan([named], True, (set(), set()))
+        return sorted(n for group in asked.values() for n in group)
+
+    def test_a_regenerated_report_passes_s12(self):
+        # Git's own width is seven digits in the small repository; under core.abbrev 4 it
+        # is four, which is not a commit to S12 (heath.COMMIT) but a name it puts to Lean.
+        # Whatever the width, the report gives one revision, in heath.COMMIT's form
+        # beside the word "Revision", and S12 asks Lean about nothing in it.
+        import check_style as style
+        self.assertTrue(style.is_report(ca.REPORT), ca.REPORT)
+        texts = {}
+        with self.repository() as (head, git):
             for abbrev in ("4", "9", None):
                 if abbrev:
                     git("config", "core.abbrev", abbrev)
                 else:
                     git("config", "--unset", "core.abbrev")
-                with patch.object(ca, "ROOT", root), patch.object(ca, "REPORT", root / where):
-                    texts[abbrev or "Git's own"] = ca.report(
-                        ca.REPORT, {"lean_version": "4.35.0"}, quick=False)
+                texts[abbrev or "Git's own"] = ca.report(
+                    ca.REPORT, {"lean_version": "4.35.0"}, quick=False)
         revisions = set()
         for abbrev, text in texts.items():
             with self.subTest(abbrev=abbrev):
@@ -285,13 +303,35 @@ class Report(unittest.TestCase):
                 self.assertIsNotNone(line, text[:800])
                 revision = line.group(1)
                 revisions.add(revision)
-                named = style.NamedText(ca.REPORT, text, style.every_book_opens())
-                _, asked, _, _ = style.s12_plan([named], True, (set(), set()))
-                self.assertEqual(sorted(n for group in asked.values() for n in group), [],
-                                 "names S12 would put to Lean")
+                self.assertEqual(self.s12_asks(text), [], "names S12 would put to Lean")
                 self.assertTrue(ca.heath.COMMIT.fullmatch(revision), revision)
                 self.assertTrue(head.startswith(revision), (revision, head))
         self.assertEqual(len(revisions), 1, revisions)
+
+    def test_a_finding_on_the_old_report_is_not_quoted_back_to_s12(self):
+        # The style check reads the report a run replaces, and E5 quotes its findings in
+        # the new one. Here S12 found names in the old report: its revision, of four
+        # digits as the old generator wrote it under core.abbrev 4, or of twelve as the
+        # generator writes it now, and a name Lean does not know, as B2 and E2 quote a
+        # catalogue's on purpose. Quoted with their backticks, away from the word
+        # "Revision", each is a name S12 puts to Lean in the new report, and every
+        # regeneration quotes the last one's finding back. E5 fails with each whole
+        # message, and S12 asks Lean about nothing in the new report.
+        where = ca.REPORT.relative_to(ca.ROOT).as_posix()
+        with self.repository() as (head, _):
+            names = [head[:4], head[:ca.REVISION_DIGITS], "Elements.BookI.no_such_lemma"]
+            found = [f"S12 {where}:{line}: `{name}`: unknown identifier '{name}'"
+                     for line, name in zip((6, 6, 120), names)]
+            style_check = subprocess.CompletedProcess(
+                [], 1, "".join(f"  ✗ {finding}\n" for finding in found), "")
+            with patch.object(ca, "run", return_value=style_check):
+                ca.check_style_rules()
+            text = ca.report(ca.REPORT, {"lean_version": "4.35.0"}, quick=False)
+        self.assertEqual(self.s12_asks(text), [], "names S12 would put to Lean")
+        quoted = [finding.replace("`", "") for finding in found]
+        self.assertEqual(ca.failures, {("edition", "E5"): quoted})
+        for message in quoted:
+            self.assertIn(f"\n  - {message}\n", text)
 
 
 class BaselineCopy(unittest.TestCase):
