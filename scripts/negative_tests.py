@@ -1756,6 +1756,10 @@ def main(argv=()) -> int:
                           run(sys.executable, "-I", "tests/test_generated_counts.py")):
         return 1
     print("✓ count regressions passed (without Lean)")
+    if not expect_success("decision entry regressions",
+                          run(sys.executable, "-I", "tests/test_decision_entries.py")):
+        return 1
+    print("✓ decision entry regressions passed (without Lean)")
     if args.counts_only:
         count_markers()
         if failures:
