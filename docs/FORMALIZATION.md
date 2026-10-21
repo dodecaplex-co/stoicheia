@@ -507,11 +507,16 @@ staged file, audit lemma and model file. In `Elements/` the certificate reads th
 from Lean itself as well. In `model/`, the scan reads words and the replay reads proofs:
 after `lake build`, CI's `formal-model` job runs `scripts/check_model_kernel.py`, in which
 leanchecker replays every compiled declaration of the model's `Model` and `Check` libraries
-through Lean's kernel again, apart from the build (#121). It runs without `--fresh`, so
-what those modules import is loaded, not replayed: Mathlib's declarations are left to
-Mathlib's own checks, and the library's and Lean's own are `check_kernel.py`'s. Its
-self-test plants a theorem of `False` added without the kernel's check, which `lake build`
-accepts and the replay must reject by name
+through Lean's kernel again, apart from the build (#121); a module compiled in the package
+outside those two libraries is an error, by name. It runs without `--fresh`, so what those
+modules import is loaded, not replayed: Mathlib's declarations are left to Mathlib's own
+checks, and the library's, with Lean's core library beneath them (`Init`), are
+`check_kernel.py`'s. The rest of Lean's own library that the model loads, `Std` and `Lean`
+among it (`Check/Generator.lean` has `import Lean`), is replayed by no check here: Mathlib's
+daily job replays the part of it that Mathlib imports, on Mathlib's toolchain, and about a
+third of the `Lean` modules that `Check` loads lie outside that part. Its self-test plants a
+theorem of `False` added without the kernel's check, which `lake build` accepts and the
+check must reject by name
 ([model/README.md](../model/README.md#the-ci-job), "The CI job").
 The checks' own Lean, `Certificate/Facts.lean`, which writes `facts.json`, is not
 scanned: it is a protected path ([WORKFLOW.md](WORKFLOW.md), section 10), changed only

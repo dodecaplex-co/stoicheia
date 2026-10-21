@@ -701,23 +701,38 @@ imports. It runs as [scripts/check_kernel.py](../scripts/check_kernel.py) runs i
 not replayed: the declarations of Mathlib, and of the packages it requires, are left to
 Mathlib's own checks, a daily job that replays Mathlib and Batteries from nothing with
 leanchecker and checks Mathlib with nanoda, on Mathlib's master branch rather than the
-release pinned here; the library's declarations that `Check` imports, and Lean's own, are
-replayed from nothing by `check_kernel.py`, in the `check` job. The script lists the modules
-from the files, the two roots and every module under `Model/` and `Check/`, so a new module
-is never missed, and compares the list with the modules leanchecker reports replaying: a
-source with no compiled file, a build not up to date with its sources, and a compiled module
-whose source is gone each fail it. Only `Check/Write.lean` is not replayed, by name, since
-`lake build` never compiles it. leanchecker runs the same kernel as `lake build`, so the
-replay catches a declaration that reached a compiled file without the kernel's check, not a
-fault in the kernel; and it replays any axiom it meets, so which axioms the proofs rest on
-stays the audit's check ([above](#what-the-proofs-rest-on)). Its self-test, which runs
-first, needs no Mathlib: in a temporary directory outside the repository it builds small
-packages of the model's shape that import only Lean, adds a theorem of `False`, proved by
-`True.intro`, from a `run_cmd` with the kernel's check switched off (`debug.skipKernelTC`),
-once in a `Check` file and once in a `Model` module, and requires that `lake build` accept
-each and that the check fail, naming the module and the declaration. A control, a source
-never compiled and a compiled module without its source are tested the same way. We thank
-Kim Morrison and Sebastian Ullrich warmly for leanchecker, which began as Kim Morrison's
+release pinned here. The library's declarations that `Check` imports, and Lean's core
+library beneath them (`Init`), are replayed from nothing by `check_kernel.py`, in the
+`check` job, from that job's own build of the same sources. The rest of Lean's own library
+that the model loads (`Std`, `Lean` and a few of `Lake`'s modules, through Mathlib and
+through `Check/Generator.lean`'s `import Lean`) is loaded here, not replayed. Mathlib's
+daily job replays the part of it that Mathlib imports, within Mathlib's environment and on
+Mathlib's toolchain rather than the one pinned here. At the pinned release that part holds
+all that `Model` loads, and all of `Std`, but only 792 of the 1,227 `Lean` modules that
+`Check` loads: the other 435 lie outside Mathlib's environment, and no check here replays
+them.
+
+The script lists the modules from the files, the two roots and every module under `Model/`
+and `Check/`, and walks the package's build folder (`.lake/build/lib/lean`) for every
+compiled module, so a new module is never missed. It compares the list with the modules
+leanchecker reports replaying: a source with no compiled file, a module compiled outside the
+two libraries (from a new root or a new library in `lakefile.toml`), a build not up to date
+with its sources, and a compiled module whose source is gone each fail it. Only
+`Check/Write.lean` is not replayed, by name, since `lake build` never compiles it.
+leanchecker runs the same kernel as `lake build`, so the replay catches a declaration that
+reached a compiled file without the kernel's check, not a fault in the kernel; and it
+replays any axiom it meets, so which axioms the proofs rest on stays the audit's check
+([above](#what-the-proofs-rest-on)). Its self-test, which runs first, needs no Mathlib: in a
+temporary directory outside the repository it builds small packages of the model's shape
+that import only Lean, adds a theorem of `False`, proved by `True.intro`, from a `run_cmd`
+with the kernel's check switched off (`debug.skipKernelTC`), once in a `Check` file and once
+in a `Model` module, and requires that `lake build` accept each and that the check fail,
+naming the module and the declaration. Two more plants lie outside the libraries' names,
+where leanchecker, given the two roots, would never look: in a second root of `Model` and in
+a third library that `Check` imports. The check must fail on each at its walk of the build
+folder, naming the module. A control, a source never compiled and a compiled module without
+its source are tested the same way. We thank Kim Morrison and Sebastian Ullrich warmly for
+leanchecker, which began as Kim Morrison's
 [lean4checker](https://github.com/leanprover/lean4checker) and now ships with Lean.
 
 On the machine that built this package, from a fresh clone, `lake exe cache get` took about
@@ -729,11 +744,12 @@ the generator added, `Check/Generator.lean` took about 2 seconds to compile,
 `Check/RoundTrip.lean` about 1, `Check/Laws.lean` under half a second and
 `Model/Assembly.lean` 1 to 2, much of it alongside the proofs in the plane; a build with
 nothing changed took a second or so. The replay of every compiled module took about a
-minute (53 seconds for leanchecker alone, and 62 and 65 for the whole script on a machine
-busy with other builds), and its self-test about 30 seconds. leanchecker replays modules in parallel, each loading its imports' environment
-afresh, Mathlib's for each module that imports it: on sixteen threads one run reached a
-49 GB footprint, so the script runs it on two, where it peaked near 2.6 GB. A runner should expect
-a few minutes in all.
+minute (45 and 53 seconds for leanchecker alone, and 58 to 77 for the whole script in four
+runs, on a machine busy with other builds), and its self-test 30 to 40 seconds. leanchecker
+replays modules in parallel, each loading its imports' environment afresh, Mathlib's for
+each module that imports it: on sixteen threads one run reached a 49 GB footprint, so the
+script runs it on two, where it peaked near 2.6 GB. A runner should expect a few minutes in
+all.
 
 Between runs the job caches two directories, keyed on `model/lake-manifest.json`:
 `model/.lake/packages`, which holds the pinned clones and the unpacked build, and

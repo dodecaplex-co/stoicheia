@@ -3043,31 +3043,47 @@ findings:
   every declaration of every compiled module of the model's own two libraries, `Model`
   and `Check`, private declarations included. The script lists the modules from the
   files, the two roots and every `.lean` file under `model/Model/` and `model/Check/`,
-  and fails unless leanchecker reports replaying exactly those, so a new module is never
-  missed; a source with no compiled file, a build not up to date with its sources (`lake
-  build --no-build`) and a compiled module whose source is gone each fail it, and a
-  rejection names the module and the declaration leanchecker names. `Check/Write.lean`
-  alone is not replayed, by name: it writes the generated files whenever Lean elaborates
-  it, so `lake build` never compiles it, and the check fails if that file goes. It runs
-  as `scripts/check_kernel.py` runs leanchecker for `Elements`, but without `--fresh`, so
-  each module's imports are loaded from their compiled files, not replayed. What that
+  walks the package's build folder (`model/.lake/build/lib/lean`) for every compiled
+  module, and fails unless leanchecker reports replaying exactly those listed, so a new
+  module is never missed; a source with no compiled file, a module compiled outside the
+  two libraries (from a new root or a new library in `model/lakefile.toml`), a build not
+  up to date with its sources (`lake build --no-build`) and a compiled module whose source
+  is gone each fail it, and a rejection names the module and the declaration leanchecker
+  names. `Check/Write.lean` alone is not replayed, by name: it writes the generated files
+  whenever Lean elaborates it, so `lake build` never compiles it, and the check fails if
+  that file goes. It runs as `scripts/check_kernel.py` runs leanchecker for `Elements`,
+  but without `--fresh`, so each module's imports are loaded from their compiled files,
+  not replayed. What that
   leaves: the declarations of Mathlib and of the packages it requires are left to
   Mathlib's own checks, a daily job (`.github/workflows/daily.yml` in Mathlib) that
   replays Mathlib and Batteries from nothing with leanchecker and checks Mathlib with
-  nanoda, on Mathlib's master branch rather than the release pinned here; the library's
-  declarations that `Check` imports, and Lean's own, are replayed from nothing by
-  `check_kernel.py` in the `check` job. leanchecker runs the same kernel as `lake build`,
-  so the replay catches a declaration that reached a compiled file without the kernel's
-  check, not a fault in the kernel, and it replays any axiom it meets: which axioms the
-  model's proofs rest on stays `model/Model/Audit.lean`'s check. The planted fault: its
+  nanoda, on Mathlib's master branch rather than the release pinned here. The library's
+  declarations that `Check` imports, and Lean's core library beneath them (`Init`), are
+  replayed from nothing by `check_kernel.py` in the `check` job, from that job's own build
+  of the same sources. The rest of Lean's own library that the model loads (`Std`, `Lean`
+  and a few of `Lake`'s modules, through Mathlib and through `Check/Generator.lean`'s
+  `import Lean`) is loaded here, not replayed. Mathlib's daily job replays the part of it
+  that Mathlib imports, within Mathlib's environment and on Mathlib's toolchain rather
+  than the one pinned here. At the pinned release that part holds all that `Model` loads,
+  and all of `Std`, but only 792 of the 1,227 `Lean` modules that `Check` loads: the other
+  435 lie outside Mathlib's environment, and no check here replays them. leanchecker runs
+  the same kernel as `lake build`, so the replay catches a declaration that reached a
+  compiled file without the kernel's check, not a fault in the kernel, and it replays any
+  axiom it meets: which axioms the model's proofs rest on stays `model/Model/Audit.lean`'s
+  check. The planted fault: its
   `--self-test`, which runs first in the job and needs no Mathlib, builds with `lake
   build`, in a temporary directory outside the repository, small packages of the model's
   shape that import only Lean, and adds a theorem of `False`, proved by `True.intro`, from
   a `run_cmd` with the kernel's check switched off (`debug.skipKernelTC`, under which
   `addDecl` calls `addDeclWithoutChecking`), once in a `Check` file and once in a `Model`
   module. `lake build` accepts both; the check must fail on each, naming the module and
-  the declaration, and must pass the control, which adds a true theorem the same way. A
-  source never compiled and a compiled module without its source are planted too.
+  the declaration, and must pass the control, which adds a true theorem the same way. Two
+  more theorems of `False` are planted outside the libraries' names, where leanchecker,
+  given the two roots, would never look: in a second root of `Model`
+  (`roots = ["Model", "Helper"]`) and in a third library that `Check` imports. The check
+  must fail on each at its walk of the build folder, naming the module; without the walk,
+  both passed. A source never compiled and a compiled module without its source are
+  planted too.
   leanchecker runs on two threads, since each module it replays loads its imports'
   environment afresh, Mathlib's for each module that imports it: unthrottled on sixteen
   threads one run reached a 49 GB footprint, and on two it peaked near 2.6 GB and took

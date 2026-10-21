@@ -5,13 +5,15 @@ is elaborated. This script checks every one of them a second time, from the `.ol
 the build wrote. Lean's leanchecker replays through Lean's kernel each declaration of each
 compiled module of the model's own two libraries, `Model` and `Check`: the two roots,
 `model/Model.lean` and `model/Check.lean`, and every module under `model/Model/` and
-`model/Check/`, private declarations included. The modules are listed from those files, so
-a new module is never missed: a source with no compiled file, or a build not up to date
-with the sources, is an error, not a silent skip. leanchecker is given the two roots, and
-replays every compiled module whose name begins with one; it is asked which modules it
-replayed, and the check fails unless they are exactly the modules listed, so a compiled
-module whose source is gone fails it too. A rejection names the module and the declaration
-that leanchecker names.
+`model/Check/`, private declarations included. The modules are listed from those files, and
+the package's own build folder (`model/.lake/build/lib/lean`) is walked for every compiled
+module, so a new module is never missed: a source with no compiled file, a module compiled
+outside the two libraries (from a new root or a new library in `model/lakefile.toml`), a
+link, or a build not up to date with the sources, is an error, not a silent skip.
+leanchecker is given the two roots, and replays every compiled module whose name begins
+with one; it is asked which modules it replayed, and the check fails unless they are
+exactly the modules listed, so a compiled module whose source is gone fails it too. A
+rejection names the module and the declaration that leanchecker names.
 
 leanchecker runs as `check_kernel.py` runs it for `Elements`, but without `--fresh`: each
 module's own declarations are replayed into the environment of its imports, and that
@@ -20,11 +22,19 @@ and of the packages it requires are not checked here again. That is left to Math
 checks: a daily job (`.github/workflows/daily.yml` in Mathlib) replays Mathlib and
 Batteries from nothing with leanchecker, and checks Mathlib with nanoda, on Mathlib's master
 branch as it stands each day, not on the release this package pins. The library's
-declarations that `Check` imports, and Lean's own, are replayed from nothing by
-`check_kernel.py`, in CI's `check` job. As there, it is the same kernel that
-`lake build` runs, so this catches a declaration that reached a compiled file without the
-kernel's check, not a fault in the kernel; and it replays any axiom it meets, so which
-axioms the proofs rest on is `model/Model/Audit.lean`'s check, not this one's.
+declarations that `Check` imports, and Lean's core library beneath them (`Init`), are
+replayed from nothing by `check_kernel.py`, in CI's `check` job, from that job's own build
+of the same sources. The rest of Lean's own library that the model loads (`Std`, `Lean` and
+a few of `Lake`'s modules, through Mathlib and through `Check/Generator.lean`'s
+`import Lean`) is loaded here, not replayed. Mathlib's daily job replays the part of it
+that Mathlib imports, within Mathlib's environment and on Mathlib's toolchain rather than
+the one pinned here. At the pinned release that part holds all that `Model` loads, and all
+of `Std`, but only 792 of the 1,227 `Lean` modules that `Check` loads: the other 435 lie
+outside Mathlib's environment, and no check here replays them. As in `check_kernel.py`, it
+is the same kernel that `lake build` runs, so this catches a declaration that reached a
+compiled file without the kernel's check, not a fault in the kernel; and it replays any
+axiom it meets, so which axioms the proofs rest on is `model/Model/Audit.lean`'s check, not
+this one's.
 
 One source is not replayed, by name (NOT_COMPILED): `model/Check/Write.lean` writes the
 generated files whenever Lean elaborates it, so `lake build` never compiles it, and it
@@ -47,9 +57,12 @@ switched off (`debug.skipKernelTC`, under which `addDecl` calls Lean's
 `addDeclWithoutChecking`), and must pass. Each plant adds a theorem of `False`, proved by
 `True.intro`, the same way: once in a `Check` file and once in a `Model` module, whose
 compiled file comes in three parts. `lake build` accepts both, and the check must fail on
-each, naming its module and its declaration. A source the build never compiled, and a
-compiled module whose source is gone, must each fail too, naming the module. Exits 1 on any
-failure. Standard library only.
+each, naming its module and its declaration. Two more plants lie outside the libraries'
+names, where leanchecker, given the two roots, would never look: one in a second root of
+`Model` (`roots = ["Model", "Helper"]`), one in a third library that `Check` imports. On
+each, the check must fail at its walk of the build folder, naming the module. A source the
+build never compiled, and a compiled module whose source is gone, must each fail too,
+naming the module. Exits 1 on any failure. Standard library only.
 
 leanchecker replays its modules in parallel, and each loads its imports' environment afresh,
 Mathlib's for each module that imports it: on a machine with sixteen threads one run reached
@@ -128,7 +141,8 @@ def run(cmd: list[str], cwd: Path, **kw) -> subprocess.CompletedProcess:
     try:
         return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, **kw)
     except OSError as e:
-        fail(f"cannot run {cmd[0]} ({e}); is elan's `lake` on the PATH?")
+        fail(f"cannot run {cmd[0]} ({e}); is elan's bin folder (`~/.elan/bin`) on "
+             "the PATH?")
 
 
 def toolchain_bin() -> Path:
@@ -171,13 +185,37 @@ def sources(package: Path) -> dict[tuple[str, ...], Path]:
     return found
 
 
+def build_folder(package: Path) -> Path:
+    """Where Lake writes the package's own compiled modules."""
+    return package / ".lake" / "build" / "lib" / "lean"
+
+
 def compiled_file(package: Path, parts: tuple[str, ...]) -> Path:
-    return package.joinpath(".lake", "build", "lib", "lean", *parts[:-1], parts[-1] + ".olean")
+    return build_folder(package).joinpath(*parts[:-1], parts[-1] + ".olean")
+
+
+def compiled(package: Path) -> list[tuple[str, ...]]:
+    """Every module compiled into the package's own build folder, by the parts of its
+    name: one for each `.olean` file beneath it, in any case of the extension."""
+    lib = build_folder(package)
+    found = []
+    for folder, subfolders, files in os.walk(lib):
+        here = Path(folder)
+        for name in sorted(subfolders + files):
+            path = here / name
+            if path.is_symlink():
+                raise Rejected(f"{rel(path)} is a link in the build folder, which no "
+                               "check follows")
+            if path.is_file() and name.lower().endswith(".olean"):
+                found.append((*path.relative_to(lib).parts[:-1], name[:-len(".olean")]))
+    return found
 
 
 def to_replay(package: Path, modules: dict[tuple[str, ...], Path]) -> list[tuple[str, ...]]:
     """The modules whose compiled files leanchecker must replay: all of them, but a source
-    named in NOT_COMPILED that has none. Any other source without one is an error."""
+    named in NOT_COMPILED that has none. Any other source without one is an error, and so
+    is a module compiled into the package's build folder outside the two libraries, which
+    leanchecker, given only their names, would never replay."""
     for parts in NOT_COMPILED:
         if parts not in modules:
             raise Rejected(f"NOT_COMPILED excuses {shown(parts)}, which has no source here: "
@@ -195,6 +233,11 @@ def to_replay(package: Path, modules: dict[tuple[str, ...], Path]) -> list[tuple
             raise Rejected(f"{shown(parts)} has a source, {rel(source)}, but no compiled "
                            f"file, so nothing of it could be replayed: is it imported by "
                            f"its library's root, {parts[0]}.lean?")
+    for parts in compiled(package):
+        if parts[0] not in LIBRARIES:
+            raise Rejected(f"{shown(parts)} is compiled in this package but is in "
+                           f"neither {' nor '.join(LIBRARIES)}, so leanchecker would not "
+                           "replay it: a new root or library must be added to this check")
     return listed
 
 
@@ -251,6 +294,11 @@ name = "Model"
 [[lean_lib]]
 name = "Check"
 """
+# The same, but with a module outside the two libraries' names: in a second root of
+# `Model`, and in a third library that `Check` imports.
+SECOND_ROOT = LAKEFILE.replace('name = "Model"\n',
+                               'name = "Model"\nroots = ["Model", "Helper"]\n')
+THIRD_LIBRARY = LAKEFILE + '\n[[lean_lib]]\nname = "Extra"\n'
 
 
 def unchecked(name: str, statement: str, proof: str, module: bool) -> str:
@@ -290,6 +338,16 @@ CASES = [
       "Model/Planted.lean": unchecked("Planted.modelFalse", "False", "True.intro",
                                       module=True)},
      [], [], ["Model.Planted", "Planted.modelFalse"]),
+    ("a theorem of False added without the kernel's check, in a second root of Model",
+     {"lakefile.toml": SECOND_ROOT,
+      "Helper.lean": unchecked("Planted.helperFalse", "False", "True.intro",
+                               module=False)},
+     [], [], ["Helper", "neither Model nor Check"]),
+    ("a theorem of False added without the kernel's check, in a third library",
+     {"lakefile.toml": THIRD_LIBRARY,
+      "Check.lean": "import Check.Sound\nimport Extra\n",
+      "Extra.lean": unchecked("Planted.extraFalse", "False", "True.intro", module=False)},
+     [], [], ["Extra", "neither Model nor Check"]),
     ("a source the build never compiled",
      {"Model/Unbuilt.lean": "module\n\npublic theorem Unbuilt.holds : True := trivial\n"},
      [], [], ["Model.Unbuilt", "no compiled file"]),
@@ -307,8 +365,8 @@ def self_test(bin_: Path) -> None:
                  "elsewhere")
         for number, (name, files, targets, removed, expected) in enumerate(CASES, 1):
             package = Path(tmp) / f"case{number}"
-            for path, text in {**CONTROL, **files, "lakefile.toml": LAKEFILE,
-                               "lean-toolchain": toolchain}.items():
+            for path, text in {**CONTROL, "lakefile.toml": LAKEFILE,
+                               "lean-toolchain": toolchain, **files}.items():
                 (package / path).parent.mkdir(parents=True, exist_ok=True)
                 (package / path).write_text(text, encoding="utf-8")
             for target in [[], *([t] for t in targets)]:
@@ -345,9 +403,11 @@ def main() -> None:
     bin_ = toolchain_bin()
     if args.self_test:
         self_test(bin_)
-        print(f"✓ model kernel self-test: lake build accepts both theorems of False added "
-              f"without the kernel's check, and the replay rejects each, naming it; the "
-              f"control passes, and a module without a compiled file or a source fails")
+        print(f"✓ model kernel self-test: lake build accepts each theorem of False added "
+              f"without the kernel's check, and the check rejects each, naming it: the "
+              f"replay in Model and in Check, the build folder's walk in a second root and "
+              f"in a third library; the control passes, and a module without a compiled "
+              f"file or a source fails")
         return
 
     try:
