@@ -3869,3 +3869,28 @@ findings:
   `.github/workflows/ci.yml`,
   `scripts/check_fidelity.py`,
   `scripts/check_model_kernel.py`.
+
+- **II.14 proves its right angle in place
+  ([#168](https://github.com/jackChallis/stoicheia/issues/168)).** The owner ruled on #168
+  on 21 October 2026: "**remove the uses first.** III.1, III.2, II.14 and III.1 Por. are
+  to be proved without the eight retired rules (today III.1, III.2 and II.14 use
+  `adjacent_eq_of_right`, and III.1 Por. also uses `centre_unique`), and then the pins say
+  what was approved on 19 October: none of the eight. ... II.14 with ship F2." II.14 and
+  its companion `Prop14.rectangle` took the right angle BEH, beside the rectangle's right
+  angle DEB with DE produced to H, from `Tacit.adjacent_eq_of_right`. Each now proves it
+  in place in [`Elements/BookII/Prop14.lean`](../../Elements/BookII/Prop14.lean): the
+  angles DEB, BEH together make two right angles by I.13 (`BookI.Prop13`), and taking the
+  right angle DEB from each leaves BEH right by Common Notion 3. No helper is added, and
+  II.14's statement, its companions' statements, its `--` lines and every other step are
+  unchanged. The record's passage at "But the squares on HE, EG are equal to the square
+  on GH" now names `BookI.Prop13` and says what the Lean does; the interim restricted
+  disclosure (#116) is unchanged, and the record waits for a reader's stamp. A walk of
+  every constant beneath II.14 and its six companions, before and after, finds that II.14's
+  own file no longer names any of the eight, and that one remains beneath it:
+  `Tacit.adjacent_eq_of_right`, through II.5 (`BookII.Prop5`), which II.14 cites and which
+  takes its right angle HDA from the rule. A pin on II.14's whole closure therefore needs
+  II.5's step proved in place as well. The census in the
+  [overlap catalogue](../reports/overlaps.md#i13s-rule-in-later-proofs) is recounted: 17
+  proofs reach the rule without passing through another entry, 16 of them calling it
+  themselves, and the full closure is still 53 entries. The pins on #168 come later, once
+  III.1, III.2 and III.1 Por. are proved without the eight too.

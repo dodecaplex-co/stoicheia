@@ -56,8 +56,8 @@ note = "Euclid uses the equality of the radii GF and GH without giving a reason.
 [[passage]]
 at = "But the squares on HE, EG are equal to the square on GH"
 kind = "helper"
-helper = "Tacit.adjacent_eq_of_right"
-note = "Euclid takes the right angle HEG for granted when he applies I.47. The Lean gets the adjacent right angle BEH from the rectangle's right angle DEB by `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, identifies it with HEG because the proved order B, G, E puts G on the ray EB, and applies `BookI.Prop47.sq`."
+helper = "BookI.Prop13"
+note = "Euclid takes the right angle HEG for granted when he applies I.47. The Lean proves it in place: the angles DEB, BEH on the straight line DH make two right angles by I.13, taking away the rectangle's right angle DEB leaves BEH right by Common Notion 3, and the proved order B, G, E puts G on the ray EB, so that HEG is the angle HEB; then `BookI.Prop47.sq` applies I.47."
 
 [representation]
 tags = ["figure-with-dissection", "side-not-square"]
