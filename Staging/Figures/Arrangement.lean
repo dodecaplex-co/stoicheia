@@ -2,6 +2,7 @@ import Staging.Figures.Outline
 import Staging.Figures.Content
 import Staging.Figures.ConvexArea
 import Staging.Figures.ArrangementFacts
+import Staging.Figures.CoverFacts
 
 /-!
 # Staging: from side lines to a division of an outline
@@ -255,7 +256,11 @@ theorem outline_cell_constant (F : Outline) (Q : ConvexCell) (ls : List Line)
       Q.core X → Q.core Y → SameSide X Y L)
     {X Y : Point} (hX : Q.core X) (hY : Q.core Y) :
     F.inside X ↔ F.inside Y := by
-  sorry
+  /- A point of the cell's inside is off every side line, so off the boundary. Join X and Y
+  to a third point Z of the inside, off the straight lines from X and from Y to the corners:
+  neither finite straight line meets a side line, and good rays along them cross the same
+  sides, so no contour's inside changes from X to Z or from Z to Y. -/
+  exact CoverFacts.cell_constant F hs hQ hX hY
 
 /-- Selecting the cells with an interior point in the figure gives its exact
 closed region, including hole boundaries, auxiliary cuts and corner contacts. -/
@@ -272,7 +277,48 @@ theorem outline_cells_cover (F : Outline) (P : ConvexCell)
       (∀ Q : ConvexCell, Q ∈ rs ↔
         Q ∈ qs ∧ ∃ X : Point, Q.core X ∧ F.inside X) ∧
       (∀ X : Point, F.region X ↔ ∃ Q ∈ rs, Q.region X) := by
-  sorry
+  classical
+  /- Keep the cells with a point of their inside inside the figure. -/
+  obtain ⟨rs, hrs⟩ : ∃ rs : List ConvexCell,
+      rs = qs.filter fun Q => decide (∃ X : Point, Q.core X ∧ F.inside X) := ⟨_, rfl⟩
+  have hmem : ∀ Q : ConvexCell, Q ∈ rs ↔ Q ∈ qs ∧ ∃ X : Point, Q.core X ∧ F.inside X := by
+    intro Q
+    rw [hrs, List.mem_filter, decide_eq_true_eq]
+  have hreg : ∀ X : Point, F.region X ↔ ∃ Q ∈ rs, Q.region X := by
+    intro X
+    constructor
+    · /- Near X lie only the cells whose closed regions hold X (`cells_apart`). Near X there
+      is a point Y inside the figure: X itself, or, on the boundary, an end of a short finite
+      straight line across a side, near a point of that side at no corner, where exactly one
+      contour's inside changes (`region_filled`). Y lies in some cell, which therefore holds
+      X; and from Y a point of that cell's inside is inside the figure as Y is
+      (`cell_point`). -/
+      intro hX
+      obtain ⟨hp, hp1, hp2⟩ := CoverFacts.cells_apart X qs
+      obtain ⟨Y, hY, hYp⟩ := CoverFacts.region_filled F hX hp hp1
+      obtain ⟨Q, hQ, hQY⟩ := (hc Y).mp (CoverFacts.core_region (hP Y (Or.inr hY)))
+      obtain ⟨W, hW, hWY⟩ := CoverFacts.cell_point F hs (hl Q hQ) hY.1 hQY
+      exact ⟨Q, (hmem Q).mpr ⟨hQ, W, hW, hWY.mpr hY⟩, hp2 Y hYp Q hQ hQY⟩
+    · /- A kept cell's inside is inside the figure throughout (`outline_cell_constant`). A
+      point of its closed region off the boundary has a point of its inside within the same
+      contours (`cell_point`), so it is inside the figure too. -/
+      rintro ⟨Q, hQ, hQX⟩
+      obtain ⟨hQ, Z, hZ, hZi⟩ := (hmem Q).mp hQ
+      by_cases hb : F.boundary X
+      · exact Or.inl hb
+      · obtain ⟨W, hW, hWX⟩ := CoverFacts.cell_point F hs (hl Q hQ) hb hQX
+        exact Or.inr (hWX.mp ((outline_cell_constant F Q ls hs (hl Q hQ) hZ hW).mp hZi))
+  refine ⟨rs, ?_, hrs ▸ List.filter_sublist, hmem, hreg⟩
+  /- A corner of a contour is in the figure, so in a kept cell. -/
+  obtain ⟨ps, hps⟩ := List.exists_mem_of_ne_nil F.loops F.ne
+  obtain ⟨V, hV⟩ : ∃ V : Point, V ∈ ps := by
+    have hlen := (F.simple ps hps).1
+    cases ps with
+    | nil => simp at hlen
+    | cons V _ => exact ⟨V, List.mem_cons_self⟩
+  obtain ⟨E, hE⟩ := outgoing_side hV
+  obtain ⟨Q, hQ, -⟩ := (hreg V).mp (Or.inl ⟨ps, hps, (V, E), hE, Or.inl rfl⟩)
+  exact List.ne_nil_of_mem hQ
 
 /-- A simple outline with at least four corners has an interior diagonal
 joining two of its original, nonadjacent corners. -/
