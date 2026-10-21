@@ -1737,8 +1737,9 @@ findings:
   and `Audit/Overlaps.lean`'s example of III.24 is pointed at `Prop24.equalCircles`, whose
   measure clause still follows from the equal angles alone. III.26 and III.28 are upgraded
   as the brief froze them, each clause concluding that the circumferences are equal in
-  measure and congruent; III.27, III.28 and III.30 take the first conjunct where they cite
-  them, and `Audit/Overlaps.lean`'s example of III.26 gives way to a note that III.26 no
+  measure and congruent; III.27 and III.30 take the first conjunct, the measure, where they
+  cite them, while III.28 keeps both conjuncts of III.26's clause, measure and congruence,
+  and `Audit/Overlaps.lean`'s example of III.26 gives way to a note that III.26 no
   longer holds for any two circles. The records of III.23, III.24, III.26 and III.28 are
   rewritten for their reviewer, who read them in full with those of III.27 and III.30 and
   stamped all six at 8f37887. III.24's record carries `segment-with-circle`, `centre-given`

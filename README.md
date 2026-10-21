@@ -18,7 +18,7 @@ For every proposition of Books I to III you get:
 
 - **Euclid's words**, in Sir Thomas Heath's 1908 translation (public domain).
 - **Two figures**: one "at a glance", in the bold red, yellow and blue of Oliver Byrne's 1847 Euclid, to show the idea before you read a word; and Heath's figure, redrawn, to follow the proof by. Both carry Heath's letters, the names the Lean uses too, so you can pass from one to the other.
-- **The proof in Lean**, written to follow Euclid sentence by sentence. Each of his sentences is a comment, and the Lean beneath carries it out, sometimes several sentences together. Where the Lean takes another step, or leaves a passage in Euclid's words with no Lean beneath it (as in I.4, III.16 and III.25), the page says so beside the listing; and III.24 follows a different argument altogether.
+- **The proof in Lean**, written to follow Euclid sentence by sentence. Each of his sentences is a comment, and the Lean beneath carries it out, sometimes several sentences together. Where the Lean takes another step, or leaves a passage in Euclid's words with no Lean beneath it (as in I.4, III.16 and III.25), the page says so beside the listing.
 - **A certificate**, computed by Lean itself, of exactly what the proof rests on: which postulates, which common notions, and which of the many things Euclid takes for granted without saying so.
 - **A mishnah**: commentary on what Euclid assumed, what Lean made us say out loud, and how the same result looks with modern tools.
 

@@ -232,9 +232,10 @@ stage 3, for III.24: `placement`, Euclid's application of one segment to another
 I.3, I.4, I.7, I.8, I.20, I.22 and I.24's step, with the lemmas of the `Placement`
 namespace, and I.20's degenerate case in `Elements/BookI/HelpersTriangles.lean`. Only
 III.24 and `Elements/BookIII/Arcs.lean`, after III.29, may cite them. `Arcs.lean` holds the
-bridge theorems: in equal circles, circumferences equal in measure are those on equal
-straight lines and of one kind (`Arc.measure_eq_iff`), and segments are congruent exactly
-when their circles are equal and their measures equal (`Arc.congruent_iff`).
+bridge theorems, for drawn segments (`Arc.Drawn`): in equal circles, circumferences equal
+in measure are those on equal straight lines and of one kind (`Arc.measure_eq_iff`), and
+segments are congruent exactly when their circles are equal and their measures equal
+(`Arc.congruent_iff`).
 
 **Book III's ground, after III.22, `Elements/BookIII/Circumferences.lean`**, imported by
 III.23–III.37:
@@ -353,8 +354,8 @@ worth naming. The first mate's report has a note on every statement.
   segments that coincide (`Arc.Congruent`). Euclid proves it by applying one segment to
   the other, and our Lean allows superposition only in I.4 and I.8, so the application is
   a theorem, `placement` (`Elements/BookIII/Placement.lean`), proved from I.2, I.3, I.4,
-  I.7, I.8, I.20 and I.22; III.23's companion then settles every point by the angles, in place of
-  Euclid's reductio, and III.10 is not needed. Until stage 3 of
+  I.7, I.8, I.20, I.22 and I.24's step; III.23's companion then settles every point by the
+  angles, in place of Euclid's reductio, and III.10 is not needed. Until stage 3 of
   [brief 0006](0006-statements.md), III.24 concluded only that the circles are equal and
   the circumferences equal in measure, proved by the angles at the centres (III.20,
   III.22) and the isosceles triangles on the equal bases (I.5, I.26, I.32), as in
@@ -481,8 +482,11 @@ Generalities 4 for III.5, with Generalities 3 as well for III.6. Two further row
 III.5 by Definition I.15 with Diagram-segment 4 and a magnitude law, or Diagram-segment 3's
 second half and Generalities 4. III.6 takes `touching-whole-circles`. III.10 keeps its whole
 statement, with `hypothesis-dropped`, but its route becomes `modified`: its last step uses
-`circle_eq`, since its circles may merely meet. The three records need new stamps from a
-reader; III.11–III.13 are also read again for the changed meaning and dependencies.
+`circle_eq`, since its circles may merely meet. The records of III.5 and III.6 carry stamps
+at e707d55 from GPT-6 Astra (Codex), and III.10's a stamp at 97f6403e from Claude Opus
+5.5, each an independent reader. III.11–III.13, read again for the changed meaning and
+dependencies, carry stamps too: III.13's at e707d55 from GPT-6 Astra (Codex), and III.11's
+and III.12's at 0130b26c from Claude Opus 5.5.
 
 **19 October 2026, III.16 and III.31.** Their rows in the dated table are also superseded:
 with their mixed-angle companions both now cover the whole enunciation, and carry
