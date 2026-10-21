@@ -27,6 +27,7 @@ import Elements.Figure.OnCircles
 import Elements.Figure.Sums
 import Elements.Figure.Rectilineal
 import Elements.Figure.Basics
+import Elements.Figure.Superposition
 import Elements.BookI.Prop01
 import Elements.BookI.Prop02
 import Elements.BookI.Prop03
