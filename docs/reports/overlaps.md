@@ -434,9 +434,10 @@ certificates at b260c826: 57,240 attempts over 135 statements, eleven closings, 
 III.2, III.5 and III.6. No pair containing `Tacit.exists_centre` closed; but `grind`
 refuses that rule, so every attempt that included it searched with none of its rules, and
 the run says nothing of the rule. The full result and its comparison with the earlier
-runs follow below. The proposed statement of III.30's congruent halves, staged in
-[Staging/Halves/Prop30.lean](../../Staging/Halves/Prop30.lean) for the owner's approval,
-has no proof or certificate entry, and supplies no overlap evidence.
+runs follow below. The proposed statement of III.30's congruent halves, then staged for the
+owner's approval, had no proof or certificate entry, and supplied no overlap evidence. The
+owner approved it on 20 October 2026; it is now proved as the companion "III.30 halves",
+and no run of the screen yet includes it.
 
 **What the project already says.** The [gap catalogue for Book III](gaps-book-III.md) said
 that Circle 2 "already contains III.2", in its introduction and under III.1, where it also
