@@ -31,10 +31,10 @@ note = "Euclid treats CE as a rectangle with BE equal to AB. The Lean reads CE f
 
 [review]
 stage = "full"
-commit = "570e6fa"
-reviewer = "GPT-6 Astra (Codex), records re-read"
+commit = "99359055"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:7b299b042dbabba1"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "brief 0005 stage 5, read-through 02 (#34), part 2: the changes landed since 2e8aecf8 and the held findings' mends, read at 99359055"
 
 [review.items]
 statement = "pass"
