@@ -44,7 +44,8 @@
      `Certificate/axioms.lock` has it, in both directions. The number of Euclid's
      assumptions is the lock's, and the 17 primitive words of `Words.lean` and
      `Magnitudes.lean` are still `opaque`. Changing any of these is a decision,
-     recorded in `docs/briefs/0002-decisions.md`; then
+     recorded in a decision entry of its own,
+     `docs/decisions/<YYYY-MM-DD>-<slug>.md`; then
      `python3 scripts/check_fidelity.py --write-lock` writes the new lock;
    - the entries are the propositions of `heath.BOOKS`, a porism entry for each of
      Heath's porisms (`heath.heath_porisms`) and nothing else, and companions of
@@ -93,6 +94,10 @@ ROOT = heath.ROOT
 BOOKS = heath.BOOKS
 FACTS = ROOT / "facts.json"
 LOCK = ROOT / "Certificate" / "axioms.lock"
+# Where a new decision is recorded: a decision entry of its own (docs/WORKFLOW.md,
+# section 10, "Decision entries"); docs/briefs/0002-decisions.md keeps the earlier ones
+# as history.
+DECISION_ENTRY = "a new decision entry, docs/decisions/<YYYY-MM-DD>-<slug>.md"
 EXPECTATIONS = ROOT / "tests" / "certificate_expectations.json"
 # Books whose every proposition is proved: they must stay that way.
 COMPLETE = {"I", "II", "III"}
@@ -507,7 +512,7 @@ def check_lock(facts, path: Path = LOCK):
         fail(str(e))
         return None
     if lock is None:
-        fail(f"{rel(path)} is missing: with a decisions entry, write it with "
+        fail(f"{rel(path)} is missing: with {DECISION_ENTRY}, write it with "
              "`python3 scripts/check_fidelity.py --write-lock`")
         return None
     proved = facts.get("proved_rules", {})
@@ -530,10 +535,10 @@ def check_lock(facts, path: Path = LOCK):
     where = rel(path)
     for name in sorted(set(types) - set(locked_axioms)):
         fail(f"{name}: an assumption not in {where} (a new axiom is a decision: record it in "
-             "docs/briefs/0002-decisions.md, then run `python3 scripts/check_fidelity.py --write-lock`)")
+             f"{DECISION_ENTRY}, then run `python3 scripts/check_fidelity.py --write-lock`)")
     for name in sorted(set(locked_axioms) - set(types)):
         fail(f"{name}: in the lock but no longer an axiom ({where}; removing one is a decision "
-             "for docs/briefs/0002-decisions.md)")
+             f"for {DECISION_ENTRY})")
     for name in sorted(set(types) & set(locked_axioms)):
         if types[name] != locked_axioms[name]:
             fail(f"{name}: its statement is not the one in {where}:\n      "
@@ -541,15 +546,15 @@ def check_lock(facts, path: Path = LOCK):
     # The vocabulary: the words of the axioms' statements and of the entries'.
     for name in sorted(set(vocabulary) - set(locked_vocabulary)):
         fail(f"{name}: a word of the statements, the axioms' or the entries', not in "
-             f"{where} (a new word is a decision: record it in docs/briefs/0002-decisions.md, "
+             f"{where} (a new word is a decision: record it in {DECISION_ENTRY}, "
              "then run `python3 scripts/check_fidelity.py --write-lock`)")
     for name in sorted(set(locked_vocabulary) - set(vocabulary)):
         fail(f"{name}: in the lock but no longer a word of any statement ({where})")
     for name in sorted(set(vocabulary) & set(locked_vocabulary)):
         if vocabulary[name] != locked_vocabulary[name]:
             fail(f"{name}: its definition is not the one in {where} (a changed word changes "
-                 "what every statement using it says: a decision for "
-                 "docs/briefs/0002-decisions.md):\n      "
+                 f"what every statement using it says: a decision for {DECISION_ENTRY}):"
+                 "\n      "
                  + first_difference(vocabulary[name], locked_vocabulary[name]))
     return len(locked_axioms)
 
@@ -579,7 +584,7 @@ def write_lock(facts, path: Path = LOCK) -> int:
     print(f"wrote {rel(path)}: {len(axioms)} axioms, {len(vocabulary)} words of vocabulary")
     if old is None:
         print("  (a new lock)")
-        print("Record it in docs/briefs/0002-decisions.md.")
+        print(f"Record it in {DECISION_ENTRY}.")
         return 0
     changes = []
     for new, before, label in ((axioms, old[0], "axiom"), (vocabulary, old[1], "vocabulary")):
@@ -588,7 +593,7 @@ def write_lock(facts, path: Path = LOCK) -> int:
         changes += [f"  ~ {label} {k}" for k in sorted(set(new) & set(before)) if new[k] != before[k]]
     print("\n".join(changes) if changes else "  (no change)")
     if changes:
-        print("Record the decision in docs/briefs/0002-decisions.md, with the reason.")
+        print(f"Record the decision in {DECISION_ENTRY}, with the reason.")
     return 0
 
 
@@ -612,7 +617,7 @@ def check_axioms(facts, count) -> None:
     declared = sum(1 for m in modules.values() if foundations(m))
     if count is not None and declared != count:
         fail(f"Elements/Foundations/ declares {declared} axioms, not {count}: a new or "
-             "removed assumption is a decision for docs/briefs/0002-decisions.md, and then "
+             f"removed assumption is a decision for {DECISION_ENTRY}, and then "
              "a new Certificate/axioms.lock (`--write-lock`)")
     for name in sorted(PRIMITIVES - set(facts["opaque"])):
         fail(f"{name}: no longer an opaque primitive; Lean must know only what the axioms say of it")

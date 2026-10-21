@@ -17,7 +17,7 @@ contributor may hold several roles, save one: nobody reviews a claim they wrote.
 | Role | Responsible for |
 |---|---|
 | Owner | The repository's owner. Every public action but landing a checked pull request (tags, releases and their notes, the GitHub description, anything sent outside the repository), and the foundation decisions, made with the coordinator. |
-| Coordinator | The plan, the baseline, and the decisions delegated to the role: approving statements and brief corrections, the files of the foundations, `Certificate/axioms.lock`, [0002-decisions.md](briefs/0002-decisions.md), PROGRAM.md, CI, and opening and merging pull requests, through `scripts/safe_push.py` alone (section 10, "Landing work: pull requests"). |
+| Coordinator | The plan, the baseline, and the decisions delegated to the role: approving statements and brief corrections, the files of the foundations, `Certificate/axioms.lock`, the decisions record (the dated entries of `docs/decisions/`, and [0002-decisions.md](briefs/0002-decisions.md) before them), PROGRAM.md, CI, and opening and merging pull requests, through `scripts/safe_push.py` alone (section 10, "Landing work: pull requests"). |
 | Statement and representation owner | A book's brief and each proposition's statement: vocabulary, hypotheses, conclusions, cases, and the exceptions allowed. |
 | Proof contributor | The assigned declarations with their helpers, porisms and companions, and how the Lean corresponds to the text. |
 | Edition contributor | Commentary, figures, source notes and further reading, written against the brief and reconciled with the finished proof. |
@@ -119,10 +119,10 @@ survive. A proposed correction carries:
 - the consumers it affects.
 
 The coordinator decides within the authority delegated to the role, records the
-correction in a new revision of the brief or an entry in
-[0002-decisions.md](briefs/0002-decisions.md), naming each statement it changes (the
-pre-flight looks for that new line: section 10, "Landing work: pull requests"), and tells
-the contributors affected. Useful independent work goes on
+correction in a new revision of the brief or a new decision entry,
+`docs/decisions/<YYYY-MM-DD>-<slug>.md` (section 10, "Decision entries"), naming each
+statement it changes (the pre-flight looks for that new line: section 10, "Landing work:
+pull requests"), and tells the contributors affected. Useful independent work goes on
 meanwhile.
 
 A changed statement or representation makes stale every proof, commentary, figure and
@@ -159,8 +159,9 @@ files working in parallel, the renderers, and an integrator followed by blind re
   of its owner through the handback, never edited in passing.
 - **Standing owners.** The coordinator owns `Elements/Foundations/` (every `Definitions*`
   file included), `Certificate/axioms.lock`, the toolchain and its dependencies
-  (`lean-toolchain`, `lakefile.toml`, `lake-manifest.json`), the decisions page, PROGRAM.md
-  with `docs/program.toml`, and the CI workflow, and may hand the lock, the decisions page,
+  (`lean-toolchain`, `lakefile.toml`, `lake-manifest.json`), the decisions record (the
+  entries of `docs/decisions/`, and the decisions page before them), PROGRAM.md with
+  `docs/program.toml`, and the CI workflow, and may hand the lock, the decisions record,
   PROGRAM.md and the CI workflow to a wave's integrator. The integrator
   owns the generated edition: `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`,
   README.md's rows between the `<!-- scope:… -->` markers, PROGRAM.md's status table
@@ -566,11 +567,13 @@ through a pull request labelled `release`; `git safe-push --label release` creat
 label, with its description, the first time it is given, as it does the others.
 
 **Trains.** Since every pull request must be up to date with main before it merges, and
-nearly every one touches the decisions page and the generated pages, reviewed branches can
-land together, as a train (the owner, 18 October 2026). A train is a branch
-`train/<area>-<n>` that merges several branches, each already one coherent change with its
-own reviews and `/no-mistakes` run, as merge commits of their own, so history keeps each
-change whole. The coordinator resolves the decisions page and regenerates the pages once;
+nearly every one touches the generated pages, reviewed branches can land together, as a
+train (the owner, 18 October 2026). A train is a branch `train/<area>-<n>` that merges
+several branches, each already one coherent change with its own reviews and
+`/no-mistakes` run, as merge commits of their own, so history keeps each change whole.
+Each branch brings its decision entries as files of its own ("Decision entries", below),
+so they merge side by side, untouched, and the decisions page is not edited; the
+coordinator regenerates the pages once;
 the train passes the pre-flight and CI once and merges as one pull request, whose body
 lists each branch with its reviews and the issue it closes. A train never carries a check
 change together with content that check judges: trains of checks and trains of content are

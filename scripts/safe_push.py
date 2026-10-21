@@ -45,28 +45,34 @@ order, and the first that fails stops it with a message saying why:
    or identity cannot be allowed, and an entry added by the push itself does not count.
    An allowed finding is noted in the pull request by its place, its rule, its value's
    SHA-256 and the reason, never by its line.
-3. Invariant guards against origin/main, in a fresh temporary worktree of the commit:
+3. Invariant guards against origin/main, in a fresh temporary worktree of the commit. A
+   new decision is a dated entry of its own, docs/decisions/<YYYY-MM-DD>-<slug>.md, which
+   the push adds (docs/WORKFLOW.md, section 10, "Decision entries"); 0002-decisions.md,
+   the decisions page, keeps the entries up to 20 October 2026 as history, and a new line
+   there still counts. The page and the entries are the decisions record:
    - every statement (facts.json's `statement`, and the Lean source of `theorem PropN`,
      its porism and its companions, up to its own `:=`, whitespace aside) is unchanged,
-     unless the push adds a new line to `docs/briefs/` naming it;
-   - `Certificate/axioms.lock` is unchanged, unless 0002-decisions.md gains a new line
+     unless the push adds a new line to `docs/briefs/`, or to an entry, naming it;
+   - `Certificate/axioms.lock` is unchanged, unless the decisions record gains a new line
      mentioning the lock;
    - a protected path (PROTECTED, below, as docs/WORKFLOW.md lists them) changes only
-     with a new line in 0002-decisions.md naming each file changed by its whole path, at
-     either end, and the pull request then carries the label `security-review`;
+     with a new line in the decisions record naming each file changed by its whole path,
+     at either end, a relative link resolving from the folder of the file that holds it
+     (names_path), and the pull request then carries the label `security-review`;
    - every changed file under `heath/` carries, in the change, a comment naming a scan
      leaf of its own pages, as origin/main's copy of the file lists them;
    - no review record is stale, and the generated pages are current (check_fidelity.py
      and render.py, on the commit as committed);
    - no whole directory under Elements/, heath/, review/, figures/ or mishnah/ is
-     deleted unless 0002-decisions.md gains a new line naming it;
+     deleted unless the decisions record gains a new line naming it, as a protected path
+     is named;
    - docs/decisions/ holds regular files alone, its README.md and dated entries, and an
      entry is only added: none there at origin/main is changed, deleted, renamed or
      copied (entry_changes).
    A new line here is a mention the push adds: an old line that already named the
    thing, edited in place, does not count. A line of a dated entry the push adds counts
-   as one in 0002-decisions.md, and for a statement as one in docs/briefs/, unless the
-   decisions record held it already, or a run of SHARED_RUN of its words (entry_hunks).
+   only when the decisions record held none like it, nor a run of SHARED_RUN of its
+   words (entry_hunks).
 4. The full check sequence of docs/WORKFLOW.md, section 8, in that worktree, and
    `negative_tests.py` in a second one, each step timed. The checks run with
    origin/main's copies of the check scripts and their expected values (CHECK_INPUTS,
@@ -1506,6 +1512,23 @@ def guard_lock(repo, base, sha, rep: Report) -> None:
                 "count)")
 
 
+def names_path(hunks: list[Hunk], path: str, pattern: re.Pattern) -> bool:
+    """Does a hunk of the decisions record gain a mention of `path`, as `pattern` finds
+    one, its group `prefix` what stands before the path? The path counts whole, from the
+    repository's root or anchored there (/model/lock.sha256), or by a relative link that
+    resolves from the folder of the hunk's file, docs/briefs/ for the page and
+    docs/decisions/ for an entry, to exactly `path`, as check_links.py reads one. Each
+    hunk, and so each run of an entry's lines that count, is read on its own."""
+    def count(text, source):
+        return sum(
+            not m.group("prefix").startswith(".")
+            or posixpath.normpath(posixpath.join(posixpath.dirname(source), m.group()))
+            == path
+            for m in pattern.finditer(text))
+
+    return any(gains([h], lambda text: count(text, h.path or DECISIONS)) for h in hunks)
+
+
 def guard_protected(repo, base, sha, rep: Report) -> list[str]:
     """A protected path changes only with a new line in the decisions page or an entry
     naming the file; the pull request then carries the label security-review.
@@ -1518,24 +1541,14 @@ def guard_protected(repo, base, sha, rep: Report) -> list[str]:
 
     # The path whole, from the repository's root, or from the decision's file by a relative
     # link resolved from its folder (../../), or anchored at the root (/model/lock.sha256), as
-    # check_links.py reads one; never the tail of a longer path, so that a line naming
-    # tests/model/lock.sha256 names no model/lock.sha256, nor one naming
+    # check_links.py reads one (names_path); never the tail of a longer path, so that a line
+    # naming tests/model/lock.sha256 names no model/lock.sha256, nor one naming
     # model/lakefile.toml the root's lakefile.toml; nor its head, so that a line naming
     # Audit.lean.orig names no Audit.lean, though Audit.lean. ending a sentence, or
     # Audit.lean's, does.
     def named(path):
-        pattern = re.compile(r"(?<![\w/.-])(?P<prefix>/|(?:\.\.?/)*)%s(?!\.?[\w/-])"
-                             % re.escape(path))
-
-        def count(text, source):
-            return sum(
-                not m.group("prefix").startswith(".")
-                or posixpath.normpath(posixpath.join(posixpath.dirname(source), m.group()))
-                == path
-                for m in pattern.finditer(text))
-
-        return any(gains([h], lambda text: count(text, h.path or DECISIONS))
-                   for h in decisions)
+        return names_path(decisions, path, re.compile(
+            r"(?<![\w/.-])(?P<prefix>/|(?:\.\.?/)*)%s(?!\.?[\w/-])" % re.escape(path)))
 
     unnamed = [p for p in files if not named(p)]
     if unnamed:
@@ -1633,9 +1646,13 @@ def guard_directories(repo, base, sha, rep: Report) -> None:
         return
     decisions = decision_hunks(repo, base, sha)
 
+    # The directory whole, with its closing slash or without, read as guard_protected reads
+    # a path (names_path): never the tail of a longer path, nor its head, so that a line
+    # naming tests/mishnah/test/, mishnah/test/note.md or mishnah/tests/ names no
+    # mishnah/test/.
     def named(d):
-        pattern = re.compile(r"(?<![\w/.-])%s/?(?![\w./-])" % re.escape(d))
-        return gains(decisions, lambda text: len(pattern.findall(text)))
+        return names_path(decisions, d, re.compile(
+            r"(?<![\w/.-])(?P<prefix>/|(?:\.\.?/)*)%s/?(?![\w./-])" % re.escape(d)))
 
     unnamed = [d for d in top if not named(d)]
     if unnamed:

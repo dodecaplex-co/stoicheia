@@ -3084,8 +3084,12 @@ findings:
   edited, and approves nothing. A correction is a new entry, in words of its own. The
   revert that `scripts/safe_push.py` advises after a merge now restores `docs/decisions/`
   and this page from origin/main after `git revert --no-commit -m 1`, and adds an entry
-  recording the revert. The protected files changed: `scripts/render.py`,
-  `scripts/safe_push.py`, `scripts/test_safe_push.py`, `scripts/negative_tests.py` and
+  recording the revert. WORKFLOW, FORMALIZATION, the diagnostics of
+  `scripts/check_fidelity.py` and the account `scripts/safe_push.py` gives of its guards
+  now send a new decision to an entry, and the page stays valid history; the lock's own
+  header, which `--write-lock` writes, is left as it is. The protected files changed:
+  `scripts/render.py`, `scripts/safe_push.py`, `scripts/test_safe_push.py`,
+  `scripts/negative_tests.py`, `scripts/check_fidelity.py` and
   `tests/test_decision_entries.py`, which is new.
 
   This is the last entry on this page: from now on each decision is a file of its own in

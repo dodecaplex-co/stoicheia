@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """The checks render.py makes of docs/decisions/, the dated decision entries, each a page
-of its own, before it writes anything.
+of its own, before it writes anything; and that render.py, run whole on a copy of the
+sources, assembles no entry into another page and leaves the decisions record as it was.
 
     python3 -I tests/test_decision_entries.py
 
@@ -10,9 +11,12 @@ count regressions, so CI's `negative` job and the pre-flight run it on every pul
 
 import contextlib
 import io
+import os
+import subprocess
 import sys
 import tempfile
 import unittest
+import uuid
 from pathlib import Path
 from unittest import mock
 
@@ -55,7 +59,6 @@ class DecisionEntries(unittest.TestCase):
                                                      "2026-10-20-b-second.md",
                                                      "2026-11-01-later.md"])
         self.assertEqual({path: path.read_bytes() for path in self.folder.iterdir()}, before)
-        self.assertFalse(hasattr(render, "decisions_page"))
 
     def test_missing_or_empty_folder_is_no_entries(self):
         self.assertEqual(render.decision_entries(), [])
@@ -209,6 +212,47 @@ class DecisionEntries(unittest.TestCase):
         differ = [hex(n) for n in range(0x110000)
                   if render.invisible(chr(n)) != safe_push.invisible(chr(n))]
         self.assertEqual(differ, [])
+
+
+class RenderLeavesTheRecord(unittest.TestCase):
+    """render.py, run whole on a copy of the sources, reads the entries where they are:
+    it assembles them into no page, and writes nothing into the decisions record."""
+
+    def test_render_assembles_no_entry_and_leaves_the_record_as_it_was(self):
+        from negative_tests import count_source_copy
+
+        # Words found in no file of the sources, this one included, until they are planted.
+        words = [f"entry-{uuid.uuid4().hex}" for _ in range(2)]
+        with count_source_copy() as (root, env):
+            folder = root / "docs" / "decisions"
+            entries = {
+                folder / "2026-10-22-render-first.md":
+                    f"- **A first decision for the test ({words[0]}).** It links "
+                    "[the renderer](../../scripts/render.py) and [the page]"
+                    "(../briefs/0002-decisions.md).\n",
+                folder / "2026-10-23-render-second.md":
+                    "- **A second decision for the test.** It holds a heading.\n\n"
+                    f"## {words[1]}\n\nAnd more words under it.\n",
+            }
+            for path, text in entries.items():
+                path.write_text(text, encoding="utf-8")
+            record = [root / "docs" / "briefs" / "0002-decisions.md", folder / "README.md",
+                      *entries]
+            self.assertTrue(all(path.is_file() for path in record))
+            before = {path: path.read_bytes() for path in record}
+            names = sorted(os.listdir(folder))
+            result = subprocess.run([sys.executable, "scripts/render.py"], cwd=root, env=env,
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn(f"decision entries: {len(entries)} checked in docs/decisions/",
+                          result.stdout)
+            self.assertIn("rendered book pages", result.stdout)
+            self.assertEqual({path: path.read_bytes() for path in record}, before)
+            self.assertEqual(sorted(os.listdir(folder)), names)
+            holding = sorted(path.relative_to(root).as_posix() for path in root.rglob("*")
+                             if path.is_file() and path not in entries
+                             and any(word.encode() in path.read_bytes() for word in words))
+            self.assertEqual(holding, [])
 
 
 if __name__ == "__main__":

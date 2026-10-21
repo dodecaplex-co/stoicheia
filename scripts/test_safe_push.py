@@ -92,13 +92,15 @@ one commit and runs safe_push.py against that origin:
   tests/model/lock.sha256 names no model/lock.sha256), and those
   paths stay what the checks judge, so a check change is still kept apart from them;
 - the decision entries of docs/decisions/, each a page of its own: a new line in an
-  entry the push adds approves as one on the page does, its words never joined across a
-  blank line or a line that does not count; an entry is only added, so a rename, a copy
-  (re-wrapped, or with carriage returns or zero-width spaces in it too) or a deletion and
-  re-addition, with edits or without, renews no approval, and is refused; the folder's
-  README may change and approves nothing; a link, a name spelled otherwise or a file of
-  any other name is refused; the page, deleted, refuses a protected change rather than
-  crashing; the revert that safe_push advises keeps the record and passes the guards;
+  entry the push adds approves as one on the page does, a link there resolving from
+  docs/decisions/ for a protected path and a deleted directory alike, its words never
+  joined across a blank line or a line that does not count; an entry is only added, so
+  a rename, a copy (re-wrapped, or with carriage returns or zero-width spaces in it too)
+  or a deletion and re-addition, with edits or without, renews no approval, and is
+  refused; the folder's README may change and approves nothing; a link, a name spelled
+  otherwise or a file of any other name is refused; the page, deleted, refuses a
+  protected change rather than crashing; the revert that safe_push advises keeps the
+  record and passes the guards;
   and an abbreviated commit name is as wide as Git makes it here;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
@@ -3745,6 +3747,67 @@ class DecisionEntries(Clone):
         self.assertFalse(rep.failed(), rep.steps)
         self.assertIn("mishnah/test/", rep.steps[-1].detail)
 
+    def deleted_directory(self, text, source=ENTRY, earlier=None):
+        """The directories guard on the deletion of mishnah/test/, with `text` added to
+        `source`, an entry or the page, from a base holding the directory and, when given,
+        `earlier` as an entry at ENTRY."""
+        self.restart()
+        write = {"mishnah/test/note.md": "A note.\n"}
+        if earlier is not None:
+            write[self.ENTRY] = earlier
+        base = self.commit("A directory for the test", write)
+        if source == DECISIONS:
+            text = self.text(DECISIONS) + "\n" + text
+        sha = self.commit("Delete the directory", {source: text}, remove=["mishnah/test"])
+        return self.check_guard(safe_push.guard_directories, base, sha)
+
+    def test_deleted_directory_linked_from_an_entry_resolves_from_its_folder(self):
+        # A link resolves from the folder of the file that holds it, as for a protected
+        # path; the directory counts only whole, never a longer path's tail or head.
+        for mention, outcome in (("[removed](../../mishnah/test/)", "ok"),
+                                 ("[removed](../../mishnah/test)", "ok"),
+                                 ("[removed](./../../mishnah/test/)", "ok"),
+                                 ("[removed](/mishnah/test/)", "ok"),
+                                 ("`mishnah/test/`", "ok"),
+                                 ("[removed](../mishnah/test/)", "FAIL"),
+                                 ("[removed](../../../mishnah/test/)", "FAIL"),
+                                 ("[removed](./mishnah/test/)", "FAIL"),
+                                 ("[removed](../../tests/mishnah/test/)", "FAIL"),
+                                 ("[removed](../../mishnah/test/note.md)", "FAIL"),
+                                 ("`tests/mishnah/test/`", "FAIL"),
+                                 ("`mishnah/test/note.md`", "FAIL"),
+                                 ("`mishnah/tests/`", "FAIL"),
+                                 ("`mishnah/test-old/`", "FAIL")):
+            with self.subTest(mention=mention):
+                rep = self.deleted_directory(f"- **A deletion for the test.** {mention}.\n")
+                self.assertEqual(rep.steps[-1].outcome, outcome, rep.steps)
+                if outcome == "FAIL":
+                    self.assertIn("no new line", rep.failed()[0].detail)
+                    self.assertIn("mishnah/test/", rep.failed()[0].detail)
+        rep = self.deleted_directory("- **A deletion for the test.** "
+                                     "[removed](../../mishnah/test/).\n", DECISIONS)
+        self.assertFalse(rep.failed(), rep.steps)
+
+    def test_deleted_directory_needs_a_new_line_of_an_added_entry(self):
+        # The earlier entry names the directory by a link that resolves; a copy of its
+        # line, re-spaced or not, the entry edited in place, or the line left as it was,
+        # renews nothing.
+        earlier = "- **An earlier deletion for the test.** [removed](../../mishnah/test/).\n"
+        for case, source, text in (
+                ("copied", self.MOVED, earlier),
+                ("copied and re-spaced", self.MOVED, earlier.replace(" [", " \t [")),
+                ("edited in place", self.ENTRY, earlier.replace("earlier", "revised")),
+                ("unchanged", self.MOVED, "- **A new decision for the test.** It names "
+                                          "nothing.\n")):
+            with self.subTest(case=case):
+                rep = self.deleted_directory(text, source, earlier)
+                self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+                self.assertIn("no new line", rep.failed()[0].detail)
+        rep = self.deleted_directory("- **A later deletion for the test.** In words of its "
+                                     "own, [the folder](../../mishnah/test/) goes.\n",
+                                     self.MOVED, earlier)
+        self.assertFalse(rep.failed(), rep.steps)
+
     def test_page_text_counts_wherever_it_stands(self):
         # No part of the page is generated: a line appended at its end names the file.
         sha = self.commit("Name a protected change on the page", {
@@ -3754,7 +3817,6 @@ class DecisionEntries(Clone):
         rep = self.check_guard(safe_push.guard_protected, BASE, sha)
         self.assertFalse(rep.failed(), rep.steps)
         self.assertIn(f"each named in {DECISIONS}: {self.PATH};", rep.steps[-1].detail)
-        self.assertNotIn(DECISIONS, safe_push.GENERATED_REGIONS)
 
     def test_page_deleted_with_a_protected_change_is_refused(self):
         # The page's removed lines name the file by a link resolved from the page's folder,
