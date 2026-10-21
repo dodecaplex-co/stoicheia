@@ -574,7 +574,9 @@ validate a figure. Before a changed figure is signed off, render it
   it, and each crossing is where it should be;
 - the cases: a figure drawn for one case says so, in the caption or the figure note, and
   does not suggest that the other cases were proved by the drawing; where a theorem covers
-  several cases, the review record's `[figure]` names the one shown;
+  several cases, the review record's `[figure]` names the one shown; a figure that draws
+  every case, side by side or on one figure, says so too, with `every_case` in the
+  record's `[figure]` and its `case` naming the cases drawn;
 - a reductio: a figure that draws the impossible supposition is said to be one;
 - the scope: the figure does not show more than the theorem proves;
 - legibility at the size the page shows it: nothing clipped, letters clear.
