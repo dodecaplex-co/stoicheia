@@ -231,7 +231,11 @@ staged. It never reads the working tree or opens a file, and
 
 A new book's paths already fit: Book IV's, and Book X's 115 propositions. A new extension,
 top-level folder, executable or named file is a change to the check, a protected path, and
-lands first, in a pull request of its own, before the file that needs it. The script
+lands first, in a pull request of its own, before the file that needs it. Step 3 of the
+pre-flight ([section 10, "Landing work"](#landing-work-pull-requests)) judges every commit
+a pull request brings by origin/main's standard, so an entry is taken out of a list (an
+executable, an extension, a named file) only when no open branch's history still holds a
+path it allows; otherwise that branch is first rebuilt without the path. The script
 judges only its own repository: when `GIT_DIR` or `GIT_WORK_TREE` names another work tree,
 as `GIT_DIR` does in a Git alias run from a linked worktree, it refuses and says how to
 run it. A module planted beside it, such as `scripts/unicodedata.py`, is never read in
@@ -711,8 +715,9 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       door. The second applies origin/main's own standard
       ([section 4, "File names"](#file-names)): origin/main's `scripts/check_paths.py`,
       read from its blob and run by the harness itself, judges each tree before any of the
-      commit's code has run, so nothing the commit runs can keep a path from it; when
-      origin/main has none, as before the pull request that brings it, a note says so.
+      commit's code has run, so nothing the commit runs can keep a path from it; a copy
+      that does not load, or fails on a tree, refuses, and when origin/main has none, as
+      before the pull request that brings it, a note says so.
       Then, in the temporary worktree:
       - no statement changed (facts.json's `statement`, and the Lean source of the
         theorem, its porism and its companions, to its own `:=`, whitespace aside) unless
@@ -749,11 +754,14 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       `python3 scripts/check_paths.py --self-test`) refuses the pull request whatever else
       it changes, guides and protected paths alone included: every path is what it judges,
       so a looser `scripts/check_paths.py` cannot land with the path it would let in. Each
-      pass begins with the worktree's HEAD and index at the commit, and is refused
-      otherwise, since the commit's own code may have run in an earlier one; origin/main's
-      copies are taken out again by a reset to the commit. Two kinds of failure are only
-      noted. Pages gone stale under origin/main's `render.py`, or `facts.json` rewritten
-      by origin/main's certificate, show the generator's change in the pages' diff; a
+      pass begins with the worktree at the commit, and is refused otherwise, since the
+      commit's own code may have run in an earlier one: its HEAD the commit, its index the
+      commit's tree, no file flagged skip-worktree or assume-unchanged (either keeps Git
+      from reading the file on disk), and `git status --porcelain --untracked-files=all`
+      empty, ignored files aside. origin/main's copies are taken out again by a reset to
+      the commit. Two kinds of failure are only noted. Pages gone stale under
+      origin/main's `render.py`, or `facts.json` rewritten by origin/main's certificate,
+      show the generator's change in the pages' diff; a
       failure of `render.py` itself, its check of `docs/program.toml` among them, is a
       verdict. And the values pinned to the edition move with the content they pin (a
       re-proof that changes an expected count, a new word in the lock, an axiom added):

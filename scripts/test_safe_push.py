@@ -100,12 +100,14 @@ one commit and runs safe_push.py against that origin:
   an earlier commit of the push too, each tree judged once, while an ordinary commit
   passes it; a path origin/main's own standard refuses (docs/x.yaml) is refused there too,
   before any worktree, by origin/main's check_paths.py, read from its blob, and when
-  origin/main has none a note says so; a looser check_paths.py is refused with the path it
-  lets in, wherever that path stands, by origin/main's standard in step 3 and again by
-  keep_apart, a second line, even when the commit's render.py hides the path from the
-  worktree's index, since each pass of the checks begins at the commit, its HEAD and index
-  unmoved; and `git safe-push`, run from a linked worktree as the lane runs it, drops the
-  GIT_DIR its alias is given before any check runs;
+  origin/main has none a note says so, while one that does not load, or exits, refuses,
+  and its imports never read a module planted in the repository; a looser check_paths.py
+  is refused with the path it lets in, wherever that path stands, by origin/main's
+  standard in step 3 and again by keep_apart, a second line, even when the commit's
+  render.py hides the path from the worktree's index, since each pass of the checks
+  begins at the commit, its HEAD, index and files on disk unmoved (a file flagged
+  skip-worktree is refused); and `git safe-push`, run from a linked worktree as the lane
+  runs it, drops the GIT_DIR its alias is given before any check runs;
 - the count markers of T1 (#177): a new word in the lock, with Certificate/FIELDS.md's
   count of the words moved with it, lands as content, origin/main's failure noted and the
   commit's own pass holding the count to the lock; while that page changed beyond the
@@ -1310,6 +1312,42 @@ class CaseTwins(Clone):
         self.assertIn("P3 docs/x.yaml: ", rep.steps[3].detail)
         self.assertEqual(sys.path, path)
         self.assertNotIn("origin_main_check_paths", sys.modules)
+
+    def test_a_standard_that_does_not_load_or_exits_refuses(self):
+        # origin/main's check_paths.py is compiled as an import compiles it, without
+        # safe_push's __future__ import, and its imports never read a module planted in the
+        # repository judged, here on sys.path as when safe_push is run from its scripts/;
+        # a copy that does not load, or whose findings exits (its fail()), refuses as a
+        # FAIL, naming the error, never a traceback or a pass.
+        text = self.text(safe_push.PATH_STANDARD)
+        standard = safe_push.base_standard(WORK, BASE)
+        self.assertNotIsInstance(standard.findings.__annotations__["entries"], str)
+        ran = TMP / "planted-module-ran"
+        planted = WORK / "scripts" / "stoicheia_planted.py"
+        planted.write_text(f"open({str(ran)!r}, 'w').close()\n")
+        self.addCleanup(planted.unlink)
+        broken = {
+            "ModuleNotFoundError": "import stoicheia_planted\n" + text,
+            "SyntaxError": text + "\ndef (\n",
+            "SystemExit(1): ✗ paths: a fault of the check": text.replace(
+                "def findings(entries", "def findings(entries, *_):\n"
+                "    fail('a fault of the check')\n\n\ndef unused(entries", 1)}
+        rep, out, path = safe_push.Report(), io.StringIO(), list(sys.path)
+        run_from_scripts = [str(WORK / "scripts"), *path]
+        with mock.patch.object(sys, "path", list(run_from_scripts)), \
+                contextlib.redirect_stdout(out):
+            for source in broken.values():
+                base = self.commit("A broken standard", {safe_push.PATH_STANDARD: source})
+                self.assertFalse(safe_push.guard_paths(WORK, base, base, rep), out.getvalue())
+                self.assertEqual(sys.path, run_from_scripts)
+        self.assertEqual(sys.path, path)
+        judged = [s for s in rep.steps if s.name == "paths (origin/main's standard)"]
+        self.assertEqual([s.outcome for s in judged], ["FAIL"] * 3, out.getvalue())
+        for step, error in zip(judged, broken):
+            self.assertIn(error, step.detail)
+        self.assertIn("does not load: ModuleNotFoundError", judged[0].detail)
+        self.assertIn("fails on the tree: SystemExit(1)", judged[2].detail)
+        self.assertFalse(ran.exists(), "a module planted in the repository ran")
 
     def test_ordinary_commit_passes(self):
         self.commit("A page of its own name", {"docs/style-notes.md": "Plain.\n"})
@@ -4513,6 +4551,36 @@ if _sp.run(["git", "ls-files", "--error-unmatch", "docs/templates/x.yaml"],
             git(wt, "rm", "-q", "--cached", "README.md")
             with self.assertRaisesRegex(safe_push.Refusal, "or its index differs"):
                 next(safe_push.passes(WORK, BASE, sha, wt, []))
+
+    def test_a_pass_begun_with_a_file_hidden_on_disk_is_refused(self):
+        # HEAD and the index at the commit do not show the files on disk: a file changed
+        # there and flagged skip-worktree, or assume-unchanged, is hidden from git status,
+        # so the flag is refused; and so is a change git status shows, or an untracked file.
+        disk = "the files on disk in the worktree"
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "check") as wt:
+            self.assertEqual(next(safe_push.passes(WORK, BASE, BASE, wt, []))[0], "")
+            (wt / "README.md").write_text("Changed on disk.\n")
+            for flag in ("--skip-worktree", "--assume-unchanged"):
+                with self.subTest(flag=flag):
+                    git(wt, "update-index", flag, "README.md")
+                    self.assertEqual(git(wt, "status", "--porcelain", "--untracked-files=all"),
+                                     "")
+                    self.assertEqual(git(wt, "rev-parse", "HEAD").strip(), BASE)
+                    self.assertTrue(safe_push.git_ok(wt, "diff-index", "--cached", "--quiet",
+                                                     BASE, "--"))
+                    with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*flagged "
+                                                "skip-worktree or assume-unchanged: README.md"):
+                        next(safe_push.passes(WORK, BASE, BASE, wt, []))
+                    git(wt, "update-index", flag.replace("--", "--no-", 1), "README.md")
+            with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status lists  M "
+                                        "README.md"):
+                next(safe_push.passes(WORK, BASE, BASE, wt, []))
+            git(wt, "reset", "-q", "--hard", BASE)
+            (wt / "docs" / "left-behind.md").write_text("Untracked.\n")
+            with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status lists \\?\\? "
+                                        "docs/left-behind.md"):
+                next(safe_push.passes(WORK, BASE, BASE, wt, []))
 
     def test_kept_apart_judges_the_edition_not_the_guides_or_stamps(self):
         # The stage 2 pattern: the certificate changes, the pages and a record's stamp

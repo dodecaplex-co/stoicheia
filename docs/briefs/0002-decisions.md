@@ -3692,9 +3692,10 @@ findings:
   `Model.Laws.«areas-p5»`) keep their lower-case names, the model's own convention, and
   the rule codifies it: a file directly in that folder is named in lower-case words
   joined by hyphens, every other Lean file keeps the module-name rule, and nothing was
-  renamed. Every one of main's 1,137 paths passes. The check reads Git's index, which is
-  what is staged for the next commit: in CI and in the pre-flight's fresh worktree, the
-  commit itself, and on a contributor's machine, what they have staged; never the working
+  renamed. Every one of the 1,138 paths at origin/main `17369f92` passes; there were 1,137
+  when the standard was written. The check reads Git's index, which is what is staged for
+  the next commit: in CI and in the pre-flight's fresh worktree, the commit itself, and on
+  a contributor's machine, what they have staged; never the working
   tree. `--rev` reads a commit's tree instead, entry by entry, so that a tree made by hand
   that lists a path twice is refused. The check runs first, before `lake build`, in CI's
   `check` job, in `scripts/safe_push.py`'s checks and in WORKFLOW, section 8:
@@ -3726,8 +3727,9 @@ findings:
   trees: origin/main's `scripts/check_paths.py`, read from its blob and run by the harness
   itself, judges every commit's tree before any of the commit's code has run, so that
   nothing the commit runs (its `render.py`, say, taking a path out of the worktree's
-  index) can keep a path from it; when origin/main has none, as before the pull request
-  that brings it, a note says so. They read each tree once and name, for each tree that
+  index) can keep a path from it; a copy that does not load, or fails on a tree, refuses,
+  and when origin/main has none, as before the pull request that brings it, a note says
+  so. They read each tree once and name, for each tree that
   holds a finding, the first commit with that tree, at most three and then "and N more";
   both run again at `--merge`, and their cases include the plainest twin,
   `Certificate/fields.md` beside `Certificate/FIELDS.md`, and a page in `.yaml` that only
@@ -3740,10 +3742,15 @@ findings:
   changes, guides and protected paths alone included: every path is what the check judges,
   so a looser `scripts/check_paths.py` cannot land in the same pull request as the path it
   would let in. Each pass of the checks, in step 3 and in step 4, begins with the
-  worktree's HEAD and index at the commit, and is refused otherwise; origin/main's copies
-  are taken out again by a reset to the commit, never to HEAD. A new extension, top-level
-  folder, executable or named file is a change to the check, landing first, in a pull
-  request of its own. The protected files changed are:
+  worktree at the commit, and is refused otherwise: its HEAD the commit, its index the
+  commit's tree, no file flagged skip-worktree or assume-unchanged, and
+  `git status --porcelain --untracked-files=all` empty, ignored files aside;
+  origin/main's copies are taken out again by a reset to the commit, never to HEAD. A new
+  extension, top-level folder, executable or named file is a change to the check, landing
+  first, in a pull request of its own; and since step 3 judges every commit a pull request
+  brings by origin/main's standard, an entry is taken out of a list only when no open
+  branch's history still holds a path it allows, or once that branch is rebuilt without
+  it. The protected files changed are:
   `.github/workflows/ci.yml`,
   `scripts/check_paths.py`,
   `scripts/negative_tests.py`,

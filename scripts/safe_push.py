@@ -58,8 +58,9 @@ order, and the first that fails stops it with a message saying why:
      unseen by both;
    - every path keeps origin/main's own standard (docs/WORKFLOW.md, "File names"):
      origin/main's scripts/check_paths.py, read from its blob and run in this process,
-     judges each tree, before any of the commit's code has run. When origin/main has no
-     check_paths.py, as before the pull request that brings it, a note says so.
+     judges each tree, before any of the commit's code has run, and refuses when it does
+     not load or fails on a tree. When origin/main has no check_paths.py, as before the
+     pull request that brings it, a note says so.
    They read the trees, which such a disk cannot hold, and when they refuse, no worktree
    is made. Then, in a fresh temporary worktree of the commit:
    - every statement (facts.json's `statement`, and the Lean source of `theorem PropN`,
@@ -89,10 +90,13 @@ order, and the first that fails stops it with a message saying why:
    for paths, before any of the commit's code ran; as a second line, a failure here of
    origin/main's path check (check_paths.py and its cases) refuses the commit whatever
    else it changes: every path is what it judges, so a looser check cannot land with the
-   path it would let in. Each pass begins with the worktree's HEAD and index at the
-   commit, and is refused otherwise, since the commit's own code may have run in an
-   earlier one; origin/main's copies are taken out again by a reset to the commit. Two
-   kinds of failure are not a check's verdict, and are noted only:
+   path it would let in. Each pass begins with the worktree at the commit, and is refused
+   otherwise, since the commit's own code may have run in an earlier one: its HEAD the
+   commit, its index the commit's tree, no file flagged skip-worktree or assume-unchanged
+   (either keeps git from looking at the file on disk), and `git status --porcelain
+   --untracked-files=all` empty, ignored files aside. origin/main's copies are taken out
+   again by a reset to the commit. Two kinds of failure are not a check's verdict, and
+   are noted only:
    pages gone stale under origin/main's render.py (or facts.json rewritten by its
    certificate), which the pages' diff shows in full; and a failure on a commit whose
    only check inputs changed are values pinned to the edition (PINNED, below; the
@@ -180,7 +184,7 @@ import contextlib
 import datetime
 import hashlib
 import html
-import importlib.util
+import io
 import json
 import math
 import os
@@ -1557,17 +1561,32 @@ PATH_STANDARD = "scripts/check_paths.py"
 def base_standard(repo, base):
     """origin/main's scripts/check_paths.py, loaded from its blob as a module, or None when
     origin/main has none, as before the pull request that brings it. Nothing is written to
-    disk or put on sys.path, and it is loaded as a module, not run as a script, so its
-    trim of sys.path, which is a script's alone, leaves this process's as it was. Its
-    `findings` judges a tree's (mode, path) entries, as its --rev does."""
+    disk; it is compiled as an import compiles it, without this file's __future__ import,
+    and loaded as a module, not run as a script, so its trim of sys.path, which is a
+    script's alone, never runs. Its `findings` judges a tree's (mode, path) entries, as
+    its --rev does. A copy that cannot be read or loaded raises (SystemExit too), and
+    guard_paths refuses on it."""
     if not git_ok(repo, "cat-file", "-e", f"{base}:{PATH_STANDARD}"):
         return None
     source = git(repo, "cat-file", "blob", f"{base}:{PATH_STANDARD}", binary=True)
-    standard = importlib.util.module_from_spec(
-        importlib.util.spec_from_loader("origin_main_check_paths", loader=None))
+    standard = types.ModuleType("origin_main_check_paths")
     # It reads __file__ only to find the repository it is run in, which is never asked here.
     standard.__file__ = str(Path(repo) / PATH_STANDARD)
-    exec(compile(source, f"origin/main:{PATH_STANDARD}", "exec"), standard.__dict__)
+    roots = (os.path.realpath(repo), os.path.dirname(os.path.realpath(__file__)))
+
+    def planted(entry) -> bool:
+        where = os.path.realpath(entry) if isinstance(entry, str) and entry else ""
+        return not where or any(where == r or where.startswith(r + os.sep) for r in roots)
+
+    # Its imports must not load a module planted in the repository judged or beside this file.
+    kept, saved = sys.path, list(sys.path)
+    sys.path = [p for p in saved if not planted(p)]
+    try:
+        exec(compile(source, f"origin/main:{PATH_STANDARD}", "exec", dont_inherit=True),
+             vars(standard))
+    finally:
+        kept[:] = saved
+        sys.path = kept
     return standard
 
 
@@ -1581,8 +1600,21 @@ def guard_paths(repo, base, sha, rep: Report) -> bool:
     (base..sha), each tree once, since the merge puts them all in main's history; a finding
     names, for each tree that holds it, the first commit with that tree, at most three and
     then "and N more". It reads the trees, not a worktree, which such a disk cannot hold,
-    and check_commit runs it before the commit is checked out. Whether both passed."""
-    standard = base_standard(repo, base)
+    and check_commit runs it before the commit is checked out. A standard that does not
+    load, or that fails on a tree (its fail() exits), refuses, naming the error. Whether
+    both passed."""
+    def judge(call):
+        """call(), or None and the error it ends in, SystemExit too (check_paths' fail()),
+        with what it printed: a crash refuses, and is never a traceback or a pass."""
+        err = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(err):
+                return call(), None
+        except (Exception, SystemExit) as e:
+            said = err.getvalue().strip()
+            return None, f"{e!r}" + (f": {said}" if said else "")
+
+    standard, unloaded = judge(lambda: base_standard(repo, base))
     # "commit <sha>" and then its tree, for each commit, the oldest first and sha last.
     words = git(repo, "rev-list", "--reverse", "--format=%T", f"{base}..{sha}").split()
     commits = list(zip(words[1::3], words[2::3])) or [(sha, f"{sha}^{{tree}}")]
@@ -1602,10 +1634,9 @@ def guard_paths(repo, base, sha, rep: Report) -> bool:
         for fault in path_faults(paths):
             found.setdefault(fault, []).append(commit)
         if standard is not None:
-            try:
-                judged = standard.findings(entries)
-            except Exception as e:      # a crash of origin/main's check refuses, as a finding
-                judged = [f"origin/main's {PATH_STANDARD} fails on the tree: {e!r}"]
+            judged, crash = judge(lambda: [str(f) for f in standard.findings(entries)])
+            if crash is not None:       # a crash of origin/main's check refuses, as a finding
+                judged = [f"origin/main's {PATH_STANDARD} fails on the tree: {crash}"]
             for finding in judged:
                 theirs.setdefault(finding, []).append(commit)
 
@@ -1626,7 +1657,9 @@ def guard_paths(repo, base, sha, rep: Report) -> bool:
                 "otherwise, and no two of them, nor two folders, equal once casefolded and "
                 "NFC-normalised")
     name = "paths (origin/main's standard)"
-    if standard is None:
+    if unloaded is not None:
+        rep.add("3", name, "FAIL", f"origin/main's {PATH_STANDARD} does not load: {unloaded}")
+    elif standard is None:
         rep.add("3", name, "note", f"origin/main has no {PATH_STANDARD}, as before the pull "
                 "request that brings it: there is no standard of origin/main's to judge the "
                 "trees by")
@@ -1635,7 +1668,7 @@ def guard_paths(repo, base, sha, rep: Report) -> bool:
     else:
         rep.add("3", name, "ok", f"origin/main's {PATH_STANDARD}, run before any of the "
                 f"commit's code, finds nothing in {trees} (docs/WORKFLOW.md, \"File names\")")
-    return not (found or theirs)
+    return not (found or theirs or unloaded)
 
 
 def status_lines(wt: Path, excludes: list[str]) -> subprocess.CompletedProcess:
@@ -1736,14 +1769,40 @@ FRESHNESS = ("generated pages", "git status --porcelain is empty")
 
 
 def at_commit(wt: Path, sha: str) -> None:
-    """Refused unless the worktree's HEAD is the commit and its index the commit's tree:
-    the commit's own code, run in an earlier pass (its render.py, say), could have moved
-    either, and origin/main's checks, which read the index, would judge another tree."""
+    """Refused unless the worktree is the commit: its HEAD the commit, its index the
+    commit's tree, no entry of the index flagged skip-worktree or assume-unchanged (which
+    keep git from looking at the file on disk), and `git status --porcelain
+    --untracked-files=all` empty, ignored files aside, so that no file on disk differs from
+    the index and none stands untracked beside them. The commit's own code, run in an
+    earlier pass (its render.py, say), could have changed any of these, and origin/main's
+    checks, which read the index and the files, would judge another tree."""
     head = run(["git", "rev-parse", "--verify", "--quiet", "HEAD"], wt).stdout.strip()
     if head != sha or not git_ok(wt, "diff-index", "--cached", "--quiet", sha, "--"):
         raise Refusal(f"before a pass of the checks, the worktree {wt} is no longer the "
                       f"commit {sha[:12]} (its HEAD is {head[:12] or 'unreadable'}, or its "
                       "index differs): something run in an earlier pass changed it")
+    # ls-files -v tags an entry H, S when skip-worktree, M when unmerged, and in lower case
+    # when assume-unchanged: any tag but H is refused. A fresh worktree's entries are all H.
+    tags = run(["git", "ls-files", "-v", "-z"], wt, binary=True)
+    flagged = [e[2:].decode(errors="replace") for e in tags.stdout.split(b"\0")
+               if e and not e.startswith(b"H ")]
+    status = run(["git", "status", "--porcelain", "--untracked-files=all"], wt)
+    listed = status.stdout.splitlines()
+
+    def some(items: list[str]) -> str:
+        return ", ".join(items[:3]) + (f" and {len(items) - 3} more" if len(items) > 3 else "")
+
+    if tags.returncode != 0 or status.returncode != 0:
+        why = "git ls-files -v or git status fails in it"
+    elif flagged:
+        why = f"flagged skip-worktree or assume-unchanged: {some(flagged)}"
+    elif listed:
+        why = f"git status lists {some(listed)}"
+    else:
+        return
+    raise Refusal(f"before a pass of the checks, the files on disk in the worktree {wt} may "
+                  f"no longer be the commit {sha[:12]} ({why}): something run in an earlier "
+                  "pass changed them")
 
 
 def passes(repo, base, sha, wt: Path, changes: list[tuple[str, str]]):
