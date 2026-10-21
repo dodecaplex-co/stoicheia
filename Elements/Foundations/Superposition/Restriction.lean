@@ -43,10 +43,10 @@ below, and part 5 is in `Soundness.lean`. All five parts are theorems.
    holds exactly when it holds for every list of laws that hold in I (`Rule.iff_figure`).
    The theorem is that the part about the figure, if it holds in I, holds in every J
    that sits in I (`Interpretation.Embedding`), keeping incidence, betweenness, sides, the
-   equalities of lengths, angles and areas, and the straight line through any two of its
-   points (a straight line of I through two distinct points of J is one of J's, and a point
-   of J on a straight line of I is on one of J's). The guards and the given facts pass from
-   J to I, the `Triangle` guard by the kept straight line, and the conclusion comes back.
+   equalities of lengths, angles and areas, every straight line of I through two distinct
+   points of J, and, when a point of J lies on a straight line of I, some straight line of J
+   through that point. The guards and the given facts pass from J to I, the `Triangle` guard
+   by the kept straight line, and the conclusion comes back.
    Nothing asks that J have the points B′ and C′ would go to: the part about the figure
    asserts no placed point. The cited-law hypothesis contributes the laws, assumed of every
    point and straight line of I. It is the one hypothesis that does not pass from J to I,
@@ -109,9 +109,10 @@ theorem Derives.no_construction {cites : List Cited} (hcites : ∀ c ∈ cites, 
 
 `Rule.Figure I cites` is the statement of `Rule.infer` for the cited laws `cites`, without the
 hypothesis that they hold (`Rule.iff_figure`). It passes from I to any part of I that
-keeps the primitive relations and the straight line through any two of its points
-(`Rule.Figure.restrict`), and such a part may lack every point a placement would use. The
-section ends with two warnings, `Metric.holds_const` and `valuation_encodes`. -/
+keeps the primitive relations and every straight line through two distinct points, and,
+when one of its points lies on an ambient straight line, supplies some straight line through
+that point (`Rule.Figure.restrict`). Such a part may lack every point a placement would use.
+The section ends with two warnings, `Metric.holds_const` and `valuation_encodes`. -/
 
 /-- **The rule's part about the figure.** The statement of `Rule.infer` for the cited laws
 `cites`, without its hypothesis that they hold: a derivation of an equality over the figure's
@@ -135,11 +136,11 @@ theorem Rule.iff_figure :
 /-- **A part of an interpretation.** `J.Embedding I` puts each point and each straight line of
 J at one of I, distinct points at distinct points. Incidence, betweenness, sides and the
 equalities of lengths, angles and areas hold in J exactly when they hold of the images in I.
-And J keeps the straight line through any two of its points: a straight line of I through
-two distinct points of J is the image of one of J, and a point of J on a straight line of
-I is on a straight line of J. Nothing asks that J have any further point. The points of
-the plane with rational coordinates, with the straight lines through two of them, are such a
-part of the plane (brief 0009, "Evidence before landing"). -/
+And J keeps every straight line through two distinct points: a straight line of I through
+two distinct points of J is the image of one of J. When a point of J lies on a straight line
+of I, some straight line of J passes through that point. Nothing asks that J have any further
+point. The points of the plane with rational coordinates, with the straight lines through
+two of them, are such a part of the plane (brief 0009, "Evidence before landing"). -/
 structure Interpretation.Embedding (J I : Interpretation) where
   /-- The point of I that each point of J is. -/
   pt : J.Point → I.Point

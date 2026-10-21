@@ -87,19 +87,24 @@ records current; CI runs it on every push.
 18. Counting congruence constructors instead of `Coincidence.step` in the certificate:
     `tests/test_certificate.py` fails on transformers with no step. The restored
     certificate must pass the same regression, including its real-step cases.
-19. One build with a construction rule planted in two clean laws' proofs: Postulate 1 in
+19. Without a build, names and arcs in real figures (#172): `*e*.*g*.` in II.7's modern
+    way, with an italic e planted in its figure, fails S25 for the emphasis and for e,
+    no name of the modern way; an italic p planted there fails S25 too, though Heath's
+    "p. 389" stands in the paragraph; and an arc whose ends are one point and one with a
+    radius of 0, planted in I.1's figure, fail S26 with what SVG draws for each.
+20. One build with a construction rule planted in two clean laws' proofs: Postulate 1 in
     Metric 3's (`Cited.holds_lenSymm`), `Tacit.circles_meet` in Metric 4's
     (`Cited.holds_angleSymm`). Every pin of `Audit/Superposition.lean` is rewritten to
     what Lean then prints, and `lake build Audit` must pass, so the pins cannot see the
     plants. The certificate recomputed, `check_fidelity.py` fails on the expectations on
     `cited_laws`, Metric 3's law in I.4 and in I.8 and Metric 4's in I.4, each with its
     construction rule, and on nothing the unplanted tree did not already show.
-20. I.7's law, `.prop7`, removed from `Prop8.cites`, with the arm of I.8's case split that
+21. I.7's law, `.prop7`, removed from `Prop8.cites`, with the arm of I.8's case split that
     proves it: Lean refuses I.8's file, as `lake build` would, at the derivation's citation
     of the law (`Derives.prop7`), whose `by decide` finds `Cited.prop7 ∈ cites` false. The
     build catches it, before the certificate runs; the expectation on I.8's `cited_laws`
     is not reached.
-21. A guard added to `Rule.Figure` in the restriction, in two runs that differ in the
+22. A guard added to `Rule.Figure` in the restriction, in two runs that differ in the
     guard alone. In both, the proof of `Rule.Figure.restrict` (the rule's part about the
     figure passes to a part of an interpretation) takes the new guard and passes it
     from the part to the whole through the embedding, and `Rule.iff_figure`, which any
@@ -107,7 +112,7 @@ records current; CI runs it on every push.
     points and straight line, compiles, and the theorem rests on no `sorryAx`. The
     plant, a guard over every point (the straight line through D and G holds no other
     point), fails inside the theorem's proof and nowhere else. Read, not built.
-22. A new law in `Cited` with no proof: the build of I.8 fails at `Cited.holds_all`,
+23. A new law in `Cited` with no proof: the build of I.8 fails at `Cited.holds_all`,
     naming the missing case, and nowhere else.
 
 The copies of items 16 and 17, and item 13's list of generated outputs, read Git's
@@ -125,11 +130,11 @@ for leanchecker's kernel replay. `check_kernel.py`'s own
 
 Every new plant restores its inputs in `finally`; the freshness plant also restores
 all renderer outputs.
-Tests 10, 14, 15, 19 and 22 attempt a restoration build; if it fails or is interrupted,
+Tests 10, 14, 15, 20 and 23 attempt a restoration build; if it fails or is interrupted,
 every file in `.lake/build` returns to its saved contents and presence or absence before
 the plant, including dependent modules, hashes and traces. Test 10 always restores or
 removes `Planted.*` outputs in a nested `finally`. Tests 11 to 15, the proved Circle 2
-plant and tests 18, 19 and 22 report elapsed time, restoration included. An outer `finally`
+plant and tests 18, 20 and 23 report elapsed time, restoration included. An outer `finally`
 compares Git status with the entry status, including on interruption, without replacing
 an exception already in flight.
 Temporary-directory regressions run first, without Lean. Exits non-zero if a fault
@@ -266,6 +271,41 @@ def style_error() -> None:
                        f"S1 {rel}:", "S1 an em dash")
     finally:
         path.write_bytes(saved)
+
+
+def figure_names_and_arcs() -> None:
+    label = ('<text font-family="Georgia, serif" font-size="17" x="30" y="30" '
+             'font-style="italic" fill="#3b2f2f">{}</text></svg>')
+    modern = "figures/II/07-modern.svg"
+    arcs = ('<path d="M 20 20 A 5 5 0 0 1 20 20" fill="none" stroke="#3b2f2f" '
+            'stroke-width="1.6"/><path d="M 30 20 A 0 5 0 0 1 40 20" fill="none" '
+            'stroke="#3b2f2f" stroke-width="1.6"/></svg>')
+    plants = (
+        ("*e*.*g*. in II.7's modern way, and e in its figure",
+         (("mishnah/II/07.md", "beside II.4's square on a sum.",
+           "beside II.4's square on a sum, *e*.*g*. a planted one."),
+          (modern, "</svg>", label.format("e"))),
+         (f"S25 {modern}: mishnah/II/07.md: unsupported intraword emphasis",
+          f"S25 {modern}: <text>e</text>: e is no name of the page's modern way")),
+        ("p in II.7's modern figure, beside Heath's page, p. 389",
+         ((modern, "</svg>", label.format("p")),),
+         (f"S25 {modern}: <text>p</text>: p is no name of the page's modern way",)),
+        ("an arc whose ends are one point, and one of radius 0, in I.1's figure",
+         (("figures/I/01.svg", "</svg>", arcs),),
+         ("S26 figures/I/01.svg: <path> d 'M 20 20 A 5 5 0 0 1 20 20': SVG draws nothing",
+          "S26 figures/I/01.svg: <path> d 'M 30 20 A 0 5 0 0 1 40 20': SVG draws a "
+          "straight line")),
+    )
+    for name, changes, wanted in plants:
+        saved = {}
+        try:
+            for rel, old, new in changes:
+                saved[rel] = replace_once(rel, old, new)
+            expect_failure(name, run(sys.executable, "scripts/check_style.py", "--no-lean"),
+                           *wanted)
+        finally:
+            for rel, text in saved.items():
+                (ROOT / rel).write_text(text)
 
 
 def absent_tracked(rels: list[str | Path]) -> list[str | Path]:
@@ -1629,6 +1669,7 @@ def main(argv=()) -> int:
         model_lake()
         lake_links()
         placement_named()
+        figure_names_and_arcs()
         planted_assumptions()
         for test in (circle_proved, style_error, broken_link, stale_page,
                      changed_audit_pin, cited_law_unproved, corrupt_olean,

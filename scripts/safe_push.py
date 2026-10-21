@@ -100,7 +100,8 @@ order, and the first that fails stops it with a message saying why:
 guards against the current origin/main, run again then (a record of the pre-flight is a
 local file, so it stands in for the full checks alone, and only when origin/main's
 harness made it; else they run again too), CI on that head is green (`gh pr checks`:
-check, model and negative pass, nothing fails or waits), no required box of its
+check, model, negative, formal-model and acceptance, the ruleset's required checks, each
+pass, a skipped run not counting, and nothing fails or waits), no required box of its
 checklist is unticked (the template's own required boxes included, so deleting one does
 not help; origin/main's template, or the head's while origin/main has none), the
 coordinator has written its "What and why", its reviews (each with its commit and its
@@ -261,7 +262,8 @@ LABELS = {
 }
 KIND_LABELS = ("tooling", "text", "lean", "docs")      # every pull request carries one
 assert set(KIND_LABELS) <= set(LABELS)
-REQUIRED_CHECKS = ("check", "model", "negative")
+# The required status checks of the ruleset on main, in its order (judge_checks).
+REQUIRED_CHECKS = ("check", "model", "negative", "formal-model", "acceptance")
 GENERATED = ("facts.json", "book/", "CERTIFICATE.md", "GRAPH.md", "README.md", "docs/PROGRAM.md")
 # Of these, two are generated only between their markers (render.py's SCOPE_MARKERS and
 # STATUS_MARKERS); the rest of each is written by hand.
@@ -2907,7 +2909,10 @@ def open_pr(ctx: Context, plan: PRPlan, args, rep: Report, logs: Path) -> PR:
 
 
 def judge_checks(checks: list[dict]) -> tuple[str, str]:
-    """("success", …) when check, model and negative pass and nothing fails or waits."""
+    """("success", …) when check, model, negative, formal-model and acceptance each have
+    a passing run and nothing fails or waits. A skipped run is not a pass: `acceptance`
+    is skipped in the push event's run, so it is the pull request's own run that passes
+    it, and a required check whose every run was skipped is "missing"."""
     buckets: dict[str, list[str]] = {}
     for c in checks:
         buckets.setdefault(str(c.get("name")), []).append(str(c.get("bucket")))
