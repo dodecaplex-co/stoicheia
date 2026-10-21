@@ -3627,6 +3627,149 @@ findings:
   `scripts/test_safe_push.py`, `scripts/check_acceptance.py` and
   `tests/test_check_acceptance.py`.
 
+- **A carried passage's helper is named by its kind
+  ([#163](https://github.com/jackChallis/stoicheia/issues/163)).** The sentence on how to
+  read a page's listing said "where a porism is proved as a theorem of its own" for every
+  carried passage that names a `helper`. Once III.25's core moves into Elements, its
+  companion `Prop25.complete` is to carry the step Heath cites as III. 9, and the page would
+  call it a porism. The protected file [`scripts/render.py`](../../scripts/render.py) now
+  finds the entry of facts.json's `attached` that the helper names, written in one of three
+  ways (`Prop16.porism`, `BookIII.Prop16.porism` or `Elements.BookIII.Prop16.porism`), and
+  takes it apart with `heath.parse_ref` (`carried_ref`). The sentence names each such
+  theorem by its kind, "a porism" for a porism, "a companion" for a companion; several
+  read, for example, "a porism and two companions are proved as theorems of their own". It
+  counts theorems, not passages: `Prop25.complete` is to carry the same [III. 9] step in
+  each of III.25's three cases, from "Therefore the circle drawn with centre E", from "D
+  will be the centre of the completed circle" and from "and if we construct, on the
+  straight line BA", and is one companion, as one theorem named two ways is one. A carried
+  helper of any other kind stops the render, naming the proposition, the helper and the
+  three ways render.py reads such a name: a lemma or another proposition that does a step
+  makes a `helper` passage, "Done by" it, and is not a theorem attached to the
+  proposition, so a word for it here would put a passage of the wrong kind on the page.
+  The comment above `PASSAGE_WORD` says the same, and CERTIFICATE.md's key gives *Proved
+  separately* for the kinds the records carry, today "a porism". `use_self_check` gains
+  nine cases, `CARRIED_CASES`: a porism; a companion; a porism with two companions, in the
+  three ways of naming one; one companion named two ways; one porism carrying two
+  passages; that porism beside a companion; and a lemma, another proposition and another
+  proposition's companion, each refused. Against origin/main's render.py (`ac6e5389`)
+  seven of them fail, the companion's read as "a porism", and the two with a porism alone
+  pass. Against this change's first round (`4d261614`), which counted passages, the three
+  that repeat a theorem fail, reading "two companions", "two porisms" and "two porisms and
+  a companion". The protected file [`review/SCHEMA.md`](../../review/SCHEMA.md) allows a
+  companion beside the porism as a carried passage's `helper`, gives the three ways of
+  writing it, says how the page names each, counting theorems, and says that render.py
+  stops on any other. `heath.py` and `check_fidelity.py` check no carried helper's kind:
+  check_fidelity asks only that it is declared, and finds a declaration by more names than
+  these three (`Elements.Prop16.porism`, or a short name that ends exactly one declared
+  name), so nothing refused a companion, render.py's refusal names the three it reads, and
+  no other validation changes. Every generated file stays byte for byte as it was: the three
+  pages that print the clause, I.15, III.1 and III.16, each carry a porism. The fourth
+  item of #163, III.25's page naming `Prop25.complete` a companion, waits for the core's
+  move.
+
+- **The merge gate requires the ruleset's five checks (#142).** On 20 October the owner
+  made `formal-model` and `acceptance` required status checks in the ruleset on main,
+  beside `check`, `model` and `negative`, as the entry of that date on content kept fresh
+  records. Read on 21 October with `gh api repos/{owner}/{repo}/rulesets/25333614`, the
+  ruleset's required status checks rule is:
+  ```json
+  {"parameters":{"do_not_enforce_on_create":false,"required_status_checks":[{"context":"check"},{"context":"model"},{"context":"negative"},{"context":"formal-model","integration_id":15368},{"context":"acceptance","integration_id":15368}],"strict_required_status_checks_policy":true},"type":"required_status_checks"}
+  ```
+  The integration 15368 is GitHub Actions, and the strict policy asks that a pull
+  request's branch be up to date with main before it merges. `REQUIRED_CHECKS` in
+  `scripts/safe_push.py` now names the same five, in the ruleset's order, so
+  `git safe-push --merge`, and the pre-flight's CI watcher, which judges as it does, give
+  "missing" when a pull request has no passing run of `formal-model` or of `acceptance`,
+  and "failure" when one fails, as for the first three. A skipped run is not a pass. The
+  CI workflow runs on pushes as well as pull requests and skips `acceptance` in the push
+  event's run; `judge_checks` counts a pass from any run reported for the head, so the
+  pull request's own run, which includes both jobs, is the one that must pass it, and a
+  check whose every run was skipped is "missing". GitHub, which accepts a skipped
+  required job, makes no such distinction
+  ([WORKFLOW](../WORKFLOW.md#8-validation-on-the-integrated-revision), section 8). The
+  docstrings of the module and of `judge_checks` name the five checks. In
+  `scripts/test_safe_push.py`, `PASSING` holds the five, and `Units.test_judge_checks`
+  shows that a missing `formal-model` and a missing `acceptance` each give "missing",
+  that a failing one gives "failure", and that a skipped run gives "missing" alone and
+  "success" beside a passing one; with main's list of three, the two missing cases give
+  "success" and the test fails. Nothing is loosened: no other check, expected value or
+  gate changes. WORKFLOW, section 8, and PROGRAM, section 4, no longer describe the gap,
+  and PROGRAM's account of 18 October notes the two checks added since. The entries of
+  18, 19 and 20 October that call these checks not required, or say that safe_push tests
+  for three, are true of their dates. The protected files changed are
+  `scripts/safe_push.py` and `scripts/test_safe_push.py`.
+
+- **S24 to S26 grant a name only to a letter that is one, and refuse an arc that SVG does
+  not draw as an arc ([#172](https://github.com/jackChallis/stoicheia/issues/172)).** The
+  two gaps that the reviews of S24 to S26 left open at train H10 are closed in the
+  protected file [`scripts/check_style.py`](../../scripts/check_style.py). The names:
+  emphasis through a full stop or an apostrophe was refused only with a bare letter on its
+  other side, so `*e*.*g*.` was neither refused nor read as e.g., and granted e and g.
+  `modern_markup_findings` now refuses emphasis on either side of the stop or on both, the
+  stop escaped or not, and refused markup supplies no names. The same reading found three
+  more letters that are no names: `e\.g\.` granted e and g, an invisible format character
+  (a zero-width space, a soft hyphen) let a letter of one visible word stand alone, and the
+  p of Heath's page, "(vol. 1, p. 389)", was granted on five pages of main, II.6, II.7,
+  II.8, II.14 and III.8. The independent review of this change found six more of the same
+  kind, none on main's pages: a combining accent (e and U+0301, éxponent), a Cyrillic
+  letter (eхponent), an accented word (déjà), a Hangul filler, which Unicode counts as a
+  letter and which shows nothing (e and U+3164 before .g.), two spaces in `e.  g.`, and a
+  Roman page number (p. ix). `ABBREVIATION` now reads an escaped stop, spaces inside e.g.
+  and i.e., and the p of a page before its number, taking a Roman number's letters with
+  it (p. ix, pp. v–vii). `modern_names` keeps a letter in its word when a letter of any
+  script, Greek too, a mark or a format character stands beside it (the new
+  `joins_word`), so that the r of 2πr is a name only in TeX. The markup check refuses a
+  format character and the rest of Unicode's default-ignorable characters (the new
+  `INVISIBLE`: the Hangul fillers, the variation selectors, the combining grapheme joiner).
+  On main the names change only by those five p's, which no modern figure draws, and no
+  paragraph is refused. The arcs: by SVG's implementation notes for arcs, every choice of the large-arc
+  and sweep flags draws something once radii too short to reach the ends are enlarged
+  (F.6.6), for two distinct ends then lie on two ellipses of those radii, or on one when
+  the radii only just reach, and the flags take one arc of them from end to end (F.6.5); on
+  one ellipse both arcs are halves and the large-arc flag changes nothing. So no flag
+  choice is refused. What does not draw as an arc is an arc whose ends are one point,
+  which SVG omits, and one with a radius of 0, which it draws as a straight line (F.6.2).
+  The new `arc_fault` finds either, wherever the path stands when the arc begins, testing
+  the ends first, as F.6.2 does, so that an arc with both is named as drawing nothing; S26's
+  `supported_svg` refuses the path, naming what SVG draws; S24's `modern_path` refuses the
+  same arcs in the modern figures. None of main's 317 arcs is either, and every figure and
+  page on main passes. The protected file
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains the cases, 95
+  subtests that fail on the check before this change and pass after it (two of them the
+  clearance case below), and
+  `test_arc_flags_always_draw`, which passes before and after: the four flag choices, with
+  radii enlarged, just reaching and ample, each draw on the side of the chord the sweep
+  flag gives, and the large-arc flag changes the arc only when the radii are ample. One
+  clearance case moves: the path whose omitted arc showed that such an arc does not break
+  a join is now refused at the figure entry points, so its join claim is held on the
+  strokes S26 measures, read directly with the default join, miter and round, as main
+  measured it, which equal those of the same path without the arc, itself a case at the
+  entry points; the refusal is asserted at both entry points. The
+  protected file [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains item
+  19, three plants in real files restored after: `*e*.*g*.` in II.7's modern way with an
+  italic e in its figure, an italic p in that figure beside Heath's "p. 389", and the two
+  arcs in I.1's figure. Each is caught by this check, and main's check passes each planted
+  tree. [STYLE](../STYLE.md), section 8, says each change in the rows of S24, S25 and S26.
+  No check, test or expected value is weakened.
+
+- **The centre-given tag says what the statement does, not why (#59).** The meaning of
+  `centre-given` in the protected file [`review/terms.toml`](../../review/terms.toml)
+  gave a reason: "a circle in Lean has a centre only when a hypothesis or Postulate 3
+  gives it one". Train C6a adds the owner's rule `Tacit.exists_centre`, which gives every
+  circle a centre, and the reason then becomes false under every record that carries the
+  tag, until step 6 of [brief 0008](0008-centre.md) retires their uses. The meaning now
+  says what the tag records, which holds before and after the rule: the statement
+  gives the circle its centre as a hypothesis, where Euclid's setting-out takes the centre
+  or a proof needs one. It also says what the rule makes true: once the rule is in the
+  lock, every circle has a centre, so the hypothesis asks only for a centre the circle
+  already has and excludes no circle. This is not the new meaning that brief 0008 rejected
+  (section 4, and question 9 in section 8), which would have kept the tag on the twelve
+  records that name a centre: the tag still leaves all 31 records in step 6, and the term
+  leaves `review/terms.toml` in step 7; until then its meaning stays true. The term's kind and
+  name do not change, no record changes, and no page changes. It is a check input, so it
+  lands in a pull request of its own, before train C6a. Protected file changed:
+  `review/terms.toml`.
+
 - **The Jev question generator reads Lean's module header with a parser, checks its helpers'
   paths before running them, reads an inductive only in the plain forms main writes, and
   passes its test on the superposition branch (#185).** Two defects in
