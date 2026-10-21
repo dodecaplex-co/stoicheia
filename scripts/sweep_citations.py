@@ -52,27 +52,36 @@ How each is found:
    declaration Lean made for another. Staging and Audit hold no entries, so this part
    reads only `Elements/`.
 
-**Declared hits.** A hit is declared when the review record of its proposition,
-`review/<book>/NN.toml`, has a `[[passage]]` whose `at` begins a sentence of the run of
-`--` lines (Euclid's words) under which the hit's line stands, and which names the
-binding, as a whole word:
+**Declared hits.** There is one rule. A hit is declared when the review record of its
+proposition, `review/<book>/NN.toml`, has a `[[passage]]` whose `at` begins a sentence
+of the run of `--` lines (Euclid's words) over the hit's line, and whose `unused` lists
+the binding by the name the proof gives it (`FC`, `hCHG_EHC`, or `this` for an
+anonymous `have`; every name, where the hit keeps several):
 
-* a point or a straight line, in Euclid's letters (FC, KF, N), in the passage's `note`,
-  as train Tw2 declares the Postulate 1 joins of I.5 and I.11: "The Lean joins FC and GB
-  by Postulate 1, as Euclid asks"; or in a `#` comment of the passage's table;
-* a hypothesis, or `this` for an anonymous `have`, in a `#` comment of the passage's
-  table alone, between its `[[passage]]` line and the next table: a note says a
-  hypothesis in words, never by its local name, and a record's `#` comments, which no
-  page shows, may name it as the Lean does (STYLE, section 1, "Hypotheses in words");
-* a helper, as the passage's `helper`, or in its note or a comment.
+    [[passage]]
+    at = "and let the straight lines FC, GB be joined"
+    kind = "carried"
+    unused = ["FC", "GB"]
 
-The runs and sentences are read as `check_fidelity.py` reads them (`proof_lines`,
-`sentence_starts`), so a passage that declares a run there declares the hits beneath it
-here. Only a hit inside `theorem PropN` can be declared: no `--` line stands over a
-helper's or a companion's proof. The decisions page's ruling of 20 October 2026 is why a
-join stays: it stays wherever a sentence of Euclid's stands over it, and is then
-declared, not deleted; and FORMALIZATION, section 5, allows a checked intermediate fact
-tied to a real sentence of Euclid's, which is declared in the same way.
+Nothing else declares a hit: not a passage's note, whose words a reader meets and which
+says a hypothesis in words (STYLE, section 1, "Hypotheses in words"), nor a `#` comment
+of the record. TOML does not read a comment, so neither does the records' `text` stamp
+(#77), which hashes a record as TOML reads it: a declaration there could change with no
+reader's knowledge. `unused` is a key of the record like any other, which the stamp
+covers and review/SCHEMA.md defines, and `check_fidelity.py` fails a name in it that the
+Lean beneath the passage's run does not bind (`unbound_unused`), so a declaration cannot
+outlive its binding. A helper hit is never declared: FORMALIZATION, section 5, has a
+helper supply one step, never a whole conclusion, so one is fixed. Nor is a binding with
+no name of its own, `obtain -` or `have _`.
+
+The runs and sentences are read as `check_fidelity.py` reads them (`runs_beneath`,
+`sentence_starts`), so the passage that `check_fidelity.py` places over a run declares
+the hits beneath it here. Only a hit inside `theorem PropN` can be declared: no `--`
+line stands over a helper's or a companion's proof. The decisions page's ruling of 20
+October 2026 is why a join stays: it stays wherever a sentence of Euclid's stands over
+it, and is then declared, not deleted; and FORMALIZATION, section 5, allows a checked
+intermediate fact tied to a real sentence of Euclid's, which is declared in the same
+way.
 
 Each hit is printed as `file:line: kind: name: why`, a declared one followed by
 `(declared in review/…)`, then a summary for each book. Exits 0 after listing;
@@ -88,8 +97,11 @@ a file that does not elaborate, a facts.json that does not match Lean).
 `--self-test` writes planted Lean outside the tree (each kind of hit, each of which must
 be reported, and controls that must not be: a binding used later, one used by
 `assumption` or `simp_all`, an unused hypothesis of the statement, a declared join, a
-helper that supplies one step, an entry that cites another) and exits 1 naming any plant
-missed or control reported. Both it and the sweep need the library built by `lake build`
+helper that supplies one step, an entry that cites another) with a record for it, read
+as TOML, in which only a name in `unused` over its own run declares: one in a note or a
+`#` comment does not, nor one in `unused` over another run, which
+`check_fidelity.unbound_unused` must report. It exits 1 naming any plant missed, control
+reported or binding misread. Both it and the sweep need the library built by `lake build`
 and the Lean tools on PATH (`export PATH=$HOME/.elan/bin:$PATH`); the sweep also reads
 facts.json (`lake env lean Certificate/Facts.lean`). Standard library only; Python 3.11
 or later, for the review records.
@@ -270,50 +282,17 @@ def binder_keyword(code: str, start: int, offset: int) -> str | None:
     return found
 
 
-class Leaf(NamedTuple):
-    name: str          # a name, `-` or `_` (or `rfl`)
-    offset: int
-
-
 class Pattern(NamedTuple):
     keyword: str       # obtain or rcases
     offset: int        # the keyword's
-    leaves: list
+    leaves: list       # check_fidelity.Leaf: a name, `-` or `_` (or `rfl`), and its offset
     end: int           # the end of the pattern
     value: str         # what the pattern takes apart, described
 
 
-def read_pattern(code: str, i: int) -> tuple[list, int]:
-    """The leaves of the rcases pattern at `i`, and where it ends. A type ascription in
-    brackets, `(h : T)`, gives its name only."""
-    while i < len(code) and code[i] in " \t":
-        i += 1
-    if i >= len(code):
-        return [], i
-    if code[i] != "⟨":
-        m = re.compile(r"-|[^\W\d][\w'!?₀-₉]*").match(code, i)
-        return ([Leaf(m.group(0), i)], m.end()) if m else ([], i)
-    leaves, depth, j, skip = [], 0, i, None
-    while j < len(code):
-        c = code[j]
-        if c in "⟨(":
-            depth += 1
-        elif c in "⟩)":
-            if skip is not None and depth == skip:
-                skip = None
-            depth -= 1
-            if depth == 0:
-                return leaves, j + 1
-        elif skip is None and c == ":" and code[j - 1] != ":" and not code.startswith(":=", j):
-            skip = depth                     # a type ascription: skip to its bracket's end
-        elif skip is None:
-            m = re.compile(r"-|[^\W\d][\w'!?₀-₉]*").match(code, j)
-            if m and (j == 0 or not (code[j - 1].isalnum() or code[j - 1] in "_'")):
-                leaves.append(Leaf(m.group(0), j))
-                j = m.end()
-                continue
-        j += 1
-    return leaves, j
+# The leaves of an rcases pattern, read as check_fidelity.py reads them for a passage's
+# `unused`, so the two agree on what a pattern binds.
+read_pattern = check_fidelity.read_pattern
 
 
 def patterns(code: str) -> list[Pattern]:
@@ -675,74 +654,27 @@ def application_line(code: str, a: int, b: int, helper: str) -> int | None:
 # ---------------------------------------------------------------------------------------
 # Declared hits.
 
-def runs(src: str, n: int) -> list[list[int]]:
-    """The runs of `--` lines in theorem PropN, as check_fidelity reads them: a run is
-    ended by a line of Lean or a `/- … -/` remark, not by a blank line."""
-    out, current = [], None
-    for ln, kind, _ in check_fidelity.proof_lines(src, n):
-        if kind == "words":
-            if current is None:
-                current = []
-                out.append(current)
-            current.append(ln)
-        elif kind in ("lean", "remark"):
-            current = None
-    return out
-
-
-def names_in(text: str, name: str) -> bool:
-    return re.search(r"(?<![\w'.])" + re.escape(name) + r"(?![\w'!?])", text) is not None
-
-
-# A name in Euclid's letters: a point or a straight line, as FC, KF or N.
-LETTERS = re.compile(r"[A-Z][A-Z'′₀-₉]*")
-
-
 def declaring(hit: Hit, src: str, prop: Proposition) -> str | None:
-    """The record that declares `hit`, or None: a passage that begins a sentence of the
-    run of `--` lines above the hit, and names the binding: a point or straight line in
-    its note or in a `#` comment of its table; a hypothesis, or `this`, in a comment only,
-    since a note says a hypothesis in words (STYLE, section 1, "Hypotheses in words");
-    and a helper as its `helper`, or in its note or a comment."""
+    """The record that declares `hit`, or None: one with a passage whose `at` begins a
+    sentence of the run of `--` lines over the hit's line (the run the line stands
+    beneath, `check_fidelity.runs_beneath`), and whose `unused` lists every name the hit
+    keeps. The one rule: neither a note nor a `#` comment declares anything, and a helper
+    hit is never declared."""
+    if hit.kind == "helper":
+        return None
     rows = check_fidelity.proof_lines(src, prop.n)
-    if not rows or not rows[0][0] <= hit.line <= rows[-1][0]:
+    over = [run for run in check_fidelity.runs_beneath(rows) if hit.line in run.lean]
+    if not over:
         return None
-    above = [run for run in runs(src, prop.n) if run[-1] < hit.line]
-    if not above:
-        return None
-    run = set(above[-1])
+    run = set(over[0].words)
     starts = check_fidelity.sentence_starts(rows)
     names = [name.strip() for name in hit.name.split(",")]
     for p in prop.passages:
         at = check_fidelity._plain(p["at"])
-        if not any(ln in run and words.startswith(at) for ln, words in starts):
-            continue
-        note, comments = p.get("note", ""), "\n".join(p.get("comments", []))
-        if hit.kind == "helper":
-            parts = hit.name.split(".")
-            tails = [".".join(parts[i:]) for i in range(len(parts) - 1)] or [hit.name]
-            if p.get("helper") in tails or any(names_in(note + "\n" + comments, t)
-                                               for t in tails):
-                return prop.record
-        elif all(names_in(comments, name)
-                 or (LETTERS.fullmatch(name) and names_in(note, name)) for name in names):
+        if (any(ln in run and words.startswith(at) for ln, words in starts)
+                and all(name in p.get("unused", []) for name in names)):
             return prop.record
     return None
-
-
-def passage_comments(text: str) -> list[list[str]]:
-    """The full-line `#` comments of each `[[passage]]` table of a record's text, in
-    order: those between its header and the next table's."""
-    out, current = [], None
-    for line in text.splitlines():
-        s = line.strip()
-        if s.startswith("["):
-            current = [] if s == "[[passage]]" else None
-            if current is not None:
-                out.append(current)
-        elif current is not None and s.startswith("#"):
-            current.append(s)
-    return out
 
 
 @functools.lru_cache(maxsize=None)
@@ -758,13 +690,7 @@ def record_for(rel: str) -> Proposition | None:
         print(f"note: {rel}: its record could not be read, so nothing in it is declared: {e}")
         return None
     path = heath.review_path(book, n)
-    passages = record.get("passage", [])
-    comments = passage_comments(path.read_text())
-    if len(comments) != len(passages):
-        raise SweepError(f"{path.relative_to(ROOT)}: {len(passages)} passages, but "
-                         f"{len(comments)} `[[passage]]` lines")
-    return Proposition(n, [dict(p, comments=c) for p, c in zip(passages, comments)],
-                       path.relative_to(ROOT).as_posix())
+    return Proposition(n, record.get("passage", []), path.relative_to(ROOT).as_posix())
 
 
 # ---------------------------------------------------------------------------------------
@@ -927,42 +853,63 @@ theorem control_automation {K F : Point} (h : K ≠ F) : ∃ L : Line, OnLine K 
 end SweepSelfTest
 """
 
-# The declared join: a passage over KF's run that names KF, as Tw2's records do (and KG,
-# which stands under another run, and so is not declared by it); one over KG's that does
-# not name it, and so declares nothing; a stated fact whose passage names its hypothesis
-# in a `#` comment; and a passage over the plants' run whose note says "n" and "this" in
-# prose, which declares neither.
-PLANT_PASSAGES = [
-    {"at": "Let KF be joined;", "kind": "carried",
-     "note": "The Lean joins KF by Postulate 1, as Euclid asks; KG follows.",
-     "comments": []},
-    {"at": "and let KG be joined.", "kind": "carried",
-     "note": "The Lean joins the second straight line by Postulate 1.", "comments": []},
-    {"at": "Therefore K is not F.", "kind": "carried",
-     "note": "The Lean states that K is not F, as Euclid does; nothing after uses it.",
-     "comments": ["# hstated: stated as Euclid states it, and not used again"]},
-    {"at": "Then the rest follows.", "kind": "carried",
-     "note": "The Lean carries this sentence; n is only a number.",
-     "comments": ["# nothing here is declared"]},
-]
-SAMPLE_RECORD = """[statement]
+# The self-test's record of Prop1, read by tomllib as heath.load_review reads a record,
+# so its `#` comments are lost as a real record's are. KF is declared by the `unused` of
+# the passage over its run. KG is named in its passage's note and `#` comments, never in
+# `unused`, and so is not. hstated is declared; hjoin, listed with it, stands under
+# another run, and so is not, and check_fidelity.unbound_unused reports it. `this` is
+# named in a comment only, and n in a note only.
+PLANT_RECORD = """\
+[statement]
 scope = "full"
+
+[route]
+kind = "euclid"
 
 [[passage]]
 at = "Let KF be joined;"
 kind = "carried"
-note = "The Lean joins KF by Postulate 1."
-# KF: joined as Euclid asks
+note = "The Lean joins KF by Postulate 1, as Euclid asks."
+unused = ["KF"]
 
 [[passage]]
 at = "and let KG be joined."
-kind = "given"
-note = "Given."
+kind = "carried"
+note = "The Lean joins KG by Postulate 1, and does not use KG again."
+# unused = ["KG"]
+# KG: joined as Euclid asks, and not used again
+
+[[passage]]
+at = "Therefore K is not F."
+kind = "carried"
+note = "The Lean states that K is not F, as Euclid does; nothing after uses it."
+unused = ["hstated", "hjoin"]
+
+[[passage]]
+at = "Then the rest follows."
+kind = "carried"
+note = "The Lean carries this sentence; n is only a number."
+# this: stated as Euclid states it, and not used again
 
 [review]
-# not a passage's
-stage = "full"
+stage = "exceptions"
+reviewer = "the sweep's self-test"
 """
+# What check_fidelity.unbound_unused must report of it: hjoin, under the wrong run.
+PLANT_UNBOUND = [(3, "Therefore K is not F.", ["hjoin"])]
+# Shapes of binding that check_fidelity.bound_names must read, and the names each binds.
+BOUND_CASES = [
+    ("obtain ⟨KF, -, -⟩ := Postulate1 K F hKF", {"KF"}),
+    ("obtain ⟨L, (hK : OnLine K L), _⟩ := x", {"L", "hK"}),
+    ("have hstated : K ≠ F := hKF", {"hstated"}),
+    ("have : OnLine K L := hK", {"this"}),
+    ("have := Postulate1 K G hKG", {"this"}),
+    ("let n := (2 : Nat)", {"n"}),
+    ("rcases h with ⟨x, rfl⟩ | hy", {"x", "hy"}),
+    ("intro a ⟨b, -⟩ c", {"a", "b", "c"}),
+    ("exact (fun (h : K ≠ F) => hused) hline", {"h"}),
+    ("exact hstated.symm", set()),
+]
 
 HELPER_PLANTS = """namespace SweepSelfTest
 
@@ -1005,14 +952,14 @@ HELPER_ENTRIES = [f"SweepSelfTest.Prop{n}" for n in (2, 3, 4, 5, 6)]
 
 # (kind, name, declared?) that must be reported; names that must not be, as any hit.
 EXPECTED = [
-    ("discarded", "KF", True),        # the declared join: reported, as declared
-    ("discarded", "KG", False),       # obtain ⟨KG, -, -⟩, KG never named again
-    ("unused-have", "hstated", True), # a stated fact under its own carried passage
-    ("unused-have", "hjoin", False),  # a citation bound and never used
+    ("discarded", "KF", True),        # the declared join: in `unused` over its run
+    ("discarded", "KG", False),       # named in its passage's note and `#` comments only
+    ("unused-have", "hstated", True), # a stated fact, in `unused` over its run
+    ("unused-have", "hjoin", False),  # a citation never used, in `unused` over another run
     ("discarded", "(cleared)", False),  # obtain - := …, every part cleared
     ("underscore", "_", False),       # have _ := hKG
-    ("unused-have", "this", False),   # an anonymous have, never used
-    ("unused-let", "n", False),
+    ("unused-have", "this", False),   # an anonymous have, named in a `#` comment only
+    ("unused-let", "n", False),       # named in a note only
     ("unused-obtain", "hF", False),   # one part of a result whose other parts are used
     ("unused-intro", "m", False),
     ("helper", "SweepSelfTest.Prop2.figure", False),   # Prop2, and Prop5 after a step
@@ -1022,15 +969,18 @@ CONTROLS = ["hused", "hline", "hauto", "hsimp", "hidle", "L", "hK", "h", "a", "b
 
 def self_test() -> int:
     """Plant each kind of hit, and the controls, outside the tree; 1 on any miss."""
+    problems = []
+    record = heath._toml().loads(PLANT_RECORD)
+    problems += [f"the self-test's record breaks review/SCHEMA.md: {p}"
+                 for p in heath._shape(record, require_stamp=False)]
     with tempfile.TemporaryDirectory(prefix="sweep-citations-self-test-") as tmp:
         plant = Path(tmp) / "SweepPlants.lean"
         plant.write_text(PLANTS_LEAN)
-        prop = Proposition(1, PLANT_PASSAGES, "the self-test's record")
+        prop = Proposition(1, record["passage"], "the self-test's record")
         hits = sweep([(plant, "SweepPlants.lean")],
                      lambda rel: prop if rel == "SweepPlants.lean" else None,
                      HELPER_ENTRIES, ["Elements.Foundations.Postulates"], HELPER_PLANTS)
     print_hits(hits)
-    problems = []
     for kind, name, declared in EXPECTED:
         found = [h for h in hits if h.kind == kind and h.name == name]
         if not found:
@@ -1054,16 +1004,24 @@ def self_test() -> int:
             problems.append(f"unexpected hit: {h.path}:{h.line}: {h.kind}: {h.name}")
     if exit_code(hits, True) != 1 or exit_code([h for h in hits if h.declared], True) != 0:
         problems.append("--fail-on-undeclared does not exit 1 on undeclared hits alone")
-    if passage_comments(SAMPLE_RECORD) != [["# KF: joined as Euclid asks"], []]:
-        problems.append("a passage's `#` comments are misread: "
-                        f"{passage_comments(SAMPLE_RECORD)}")
+    # check_fidelity's half: a name in `unused` that the Lean beneath does not bind.
+    unbound = check_fidelity.unbound_unused(PLANTS_LEAN, 1, record["passage"])
+    if unbound != PLANT_UNBOUND:
+        problems.append(f"check_fidelity.unbound_unused reports {unbound}, not {PLANT_UNBOUND}")
+    for code, want in BOUND_CASES:
+        got = check_fidelity.bound_names(code)
+        if got != want:
+            problems.append(f"check_fidelity.bound_names({code!r}) is {sorted(got)}, "
+                            f"not {sorted(want)}")
     if problems:
         print(f"\nself-test: {len(problems)} problem(s):")
         for p in problems:
             print(f"  ✗ {p}")
         return 1
-    print(f"\n✓ self-test: {len(EXPECTED)} planted kinds reported (the declared ones as "
-          f"declared), and {len(CONTROLS) + 3} controls passed")
+    print(f"\n✓ self-test: {len(EXPECTED)} planted kinds reported (only those in `unused` "
+          f"over their run as declared), {len(CONTROLS) + 3} controls passed, and "
+          f"check_fidelity reads {len(BOUND_CASES)} shapes of binding and the stale "
+          "`unused` name")
     return 0
 
 

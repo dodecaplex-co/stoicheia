@@ -294,12 +294,15 @@ construction, its premises, and the diagram fact or lemma it needed.
   unused; every `obtain` whose whole result goes unused, as
   `obtain ⟨KF, -, -⟩ := Postulate1 …`, which the linter cannot see; every `_`-named
   binding (`have _ := h…`); and every helper that is a proof's whole conclusion (below).
-  Each hit is fixed, or declared as a passage of the record where a sentence of Euclid's
-  stands over the step, as the joins by Postulate 1 are: a point or straight line is
-  named in the passage's note, and a hypothesis, which the note says in words, is named
-  in a `#` comment of the passage's table
-  ([decisions, 21 October 2026](briefs/0002-decisions.md#21-october-2026)). The release
-  waits until each hit is fixed or declared ([WORKFLOW](WORKFLOW.md), section 10).
+  Each hit is fixed, or, where a sentence of Euclid's stands over the step, declared in
+  the record: the passage whose `at` begins a sentence of that run of `--` lines lists
+  the binding, by the name the proof gives it, in its `unused`, as `unused = ["FC", "GB"]`
+  for the joins by Postulate 1 in I.5, or `this` for an anonymous `have`; and
+  `check_fidelity.py` fails a name there that the Lean beneath does not bind
+  ([review/SCHEMA.md](../review/SCHEMA.md);
+  [decisions, 21 October 2026](briefs/0002-decisions.md#21-october-2026)). Nothing else
+  declares a hit, and a helper hit is fixed, never declared. The release waits until each
+  hit is fixed or declared ([WORKFLOW](WORKFLOW.md), section 10).
 - Cite further earlier results when the argument needs them, and say what each does.
 - Prefer local proofs whose facts and cases follow the argument. Automation (`ac_rfl` to
   close a sum of magnitudes, and the like) is fine for a local step it checks.

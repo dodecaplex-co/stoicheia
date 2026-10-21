@@ -3057,28 +3057,49 @@ findings:
   facts.json is listed when its proof, past its intros, steps and case splits, comes down
   in every branch to one helper that none of its own steps feeds, or when it cites a
   helper stating exactly what it states; the foundations (axioms, Common Notions, proved
-  rules) are left to the overlap catalogue. A hit is declared when its record has a
+  rules) are left to the overlap catalogue. One rule declares a hit: its record has a
   passage whose `at` begins a sentence of the run of `--` lines over it, the runs read as
-  `check_fidelity.py` reads them, and which names the binding: a point or straight line
-  in its note (as train Tw2's notes for the joins of I.5 and I.11 name FC and GB) or in a
-  `#` comment of its table; a hypothesis, or `this` for an anonymous `have`, in such a
-  comment alone, since [STYLE](../STYLE.md), section 1, says a hypothesis in words in a
-  note, never by its local name, and lets a record's `#` comments, which no page shows,
-  name it as the Lean does; a helper as the passage's `helper`. A first version took any
-  `carried` passage over the run as declaring a hypothesis; on Book I it declared I.45's
-  two unused facts through a passage about where H falls, so it was dropped.
+  `check_fidelity.py` reads them, and whose `unused`, a key the record's schema gains for
+  the purpose, lists the binding by the name the proof gives it (`FC`, `hCHG_EHC`, or
+  `this` for an anonymous `have`). A first version took any `carried` passage over the
+  run as declaring a hypothesis; on Book I it declared I.45's two unused facts through a
+  passage about where H falls, so it was dropped. A second let a note name a point or
+  straight line, and a `#` comment of the passage's table name any binding; it was
+  dropped on review, since TOML does not read a comment, so the records' `text` stamp
+  ([#77](https://github.com/jackChallis/stoicheia/issues/77)), which hashes a record as
+  TOML reads it, could not see a declaration there change. The note went with the comment: a note is prose for readers, which says a
+  hypothesis in words ([STYLE](../STYLE.md), section 1), a word in it that matched a
+  name would declare by accident, and one place to look serves the sweep, the reviewer
+  and the check alike. So train Tw2's notes for the joins of I.5 and I.11 declare
+  nothing; the content train after it adds `unused = ["FC", "GB"]` to I.5's passage and
+  `unused = ["FC"]` to I.11's, with the other declarations. `unused` is checked twice:
+  `heath.py` checks that it lists distinct names, each one Lean identifier or `this`;
+  `check_fidelity.py` reads the Lean beneath the passage's run as plain text
+  (`bound_names`, its patterns read by the reader the sweep now shares) and fails a name
+  that is not bound there, so a declaration cannot outlive its binding. A plain read was
+  chosen over the sweep's, which needs Lean and the build; it finds the binding of every
+  hit that stands under a run, 55 of the 57. render.py reads a passage's `at`, `kind`,
+  `helper` and `note` alone, so no page shows `unused`. A helper hit is never declared,
+  but fixed: FORMALIZATION, section 5, has a helper supply one step, never a whole
+  conclusion.
   The joins ruling decides what is declared rather than deleted: a step stays where a
   sentence of Euclid's stands over it, and FORMALIZATION, section 5, allows a checked
   intermediate fact tied to one. `--self-test` plants every kind of hit, and controls
   (a binding used later, one used by `assumption` or `simp_all`, a statement's unused
   hypothesis, a declared join, a helper fed by a step, an entry citing an entry), in Lean
-  outside the tree, and needs the library built. CI's `negative` job runs it after its
-  build, then the sweep over `Elements/` as a report (134 files in 7 to 12 seconds on a
-  16-core laptop), and safe_push's `NEGATIVE` list runs the same two; the release gate
-  ([WORKFLOW](../WORKFLOW.md), section 10, step 10) runs it with `--fail-on-undeclared`
-  on the release candidate. At `2e8aecf8` it lists 57 hits in Books I to III, 6 of them
-  declared; the fixes and declarations belong to a content train. The protected files
+  outside the tree, with a record read as TOML in which a name in a note or a `#`
+  comment, or in the `unused` of a passage over another run, declares nothing, and
+  `check_fidelity.py` must report that last name as unbound; it needs the library built.
+  CI's `negative` job runs it after its build, then the sweep over `Elements/` as a
+  report (134 files in 7 to 13 seconds on a 16-core laptop), and safe_push's `NEGATIVE`
+  list runs the same two; the release gate ([WORKFLOW](../WORKFLOW.md), section 10, step
+  10) runs it with `--fail-on-undeclared` on the release candidate. On the Lean of
+  `2e8aecf8` it lists 57 hits in Books I to III, none declared, as no record lists
+  `unused` yet; the fixes and declarations belong to a content train. The protected files
   changed are:
   `.github/workflows/ci.yml`,
   `scripts/safe_push.py`,
-  `scripts/sweep_citations.py`.
+  `scripts/sweep_citations.py`,
+  `scripts/heath.py`,
+  `scripts/check_fidelity.py`,
+  `review/SCHEMA.md`.

@@ -59,6 +59,9 @@
    - every proposition of a completed book is proved, and so is everything attached
      to it, with both figures and a mishnah;
    - the facts pinned in `tests/certificate_expectations.json` still hold;
+   - each name a review record's passage lists as `unused` is bound by the Lean beneath
+     the run of `--` lines its `at` begins in (`unbound_unused`, read from the text by
+     `bound_names`), so a declaration for the citation sweep cannot outlive its binding;
    - the review records (`review/SCHEMA.md`): every proposition has one, valid; its
      stamps match the statements in facts.json and its Lean file, so a record goes
      stale when either changes; its passages begin at Euclid's sentences and name
@@ -890,23 +893,15 @@ def uncarried_runs(src: str, n: int) -> list:
     III.14), a setting-out or an "I say that" that the statement gives (I.13, I.21,
     I.23), a join that needs no object of its own (I.6), and III.16's last part: its
     conclusion, then the angle of the semicircle and the horn-like angle."""
-    runs, current = [], None
-    for ln, kind, text in proof_lines(src, n):
-        if kind == "words":
-            if current is None:
-                current = {"lines": [], "carried": False}
-                runs.append(current)
-            current["lines"].append((ln, text))
-        elif kind == "lean":
-            if runs:
-                runs[-1]["carried"] = True
-            current = None
-        elif kind == "remark":
-            current = None
+    rows = proof_lines(src, n)
+    text_of = {ln: text for ln, kind, text in rows if kind == "words"}
     found = []
-    for run in (r["lines"] for r in runs if not r["carried"]):
+    for run in runs_beneath(rows):
+        if run.lean:
+            continue
         words, porism = [], False
-        for ln, text in run:
+        for ln in run.words:
+            text = text_of[ln]
             porism = porism or bool(PORISM_LINE.match(text))
             if porism or FORMULA.fullmatch(_plain(text)):
                 continue
@@ -914,6 +909,143 @@ def uncarried_runs(src: str, n: int) -> list:
         if words:
             found.append(Run(words[0][0], _plain(" ".join(t for _, t in words)),
                              frozenset(ln for ln, _ in words)))
+    return found
+
+
+class Beneath(NamedTuple):
+    """A run of `--` lines and the Lean beneath it: `words`, the run's line numbers;
+    `lean`, those of the lines of Lean after it and before the next run, or the theorem's
+    end. A run is a stretch of `--` lines that no line of Lean and no `/- … -/` remark
+    interrupts; Lean after a remark still stands beneath the run before the remark."""
+    words: tuple
+    lean: tuple
+
+
+def runs_beneath(rows) -> list:
+    """Every run of `--` lines in `rows` (`proof_lines`), with the Lean beneath it: how
+    `uncarried_runs` reads the runs, and how a passage's `unused` and the citation sweep
+    (scripts/sweep_citations.py) find the Lean under a sentence."""
+    runs, current = [], None
+    for ln, kind, _ in rows:
+        if kind == "words":
+            if current is None:
+                current = ([], [])
+                runs.append(current)
+            current[0].append(ln)
+        elif kind == "lean":
+            if runs:
+                runs[-1][1].append(ln)
+            current = None
+        elif kind == "remark":
+            current = None
+    return [Beneath(tuple(words), tuple(lean)) for words, lean in runs]
+
+
+# The bindings a proof makes, read from its code text plainly, without Lean: what a
+# passage's `unused` may name (review/SCHEMA.md). The keywords that bind, and of those,
+# the ones that bind several names in a row.
+BINDS = re.compile(r"(?<![\w'.])(?P<kw>have|haveI|let|letI|set|obtain|rcases|intro|intros|"
+                   r"rintro|fun|λ|by_cases|by_contra)(?![\w'!?])")
+SEVERAL = ("intro", "intros", "rintro", "fun", "λ")
+WITH = re.compile(r"(?<![\w'.])with(?![\w'!?])")
+PATTERN_LEAF = re.compile(r"-|[^\W\d][\w'!?₀-₉]*")
+
+
+class Leaf(NamedTuple):
+    """A part of an rcases pattern: a name, `-` or `_` (or `rfl`), and where it stands."""
+    name: str
+    offset: int
+
+
+def read_pattern(code: str, i: int) -> tuple[list, int]:
+    """The leaves of the rcases pattern at `i` in the code text `code` (`read_lean`), and
+    where the pattern ends: one name, or every name in a pattern of ⟨…⟩ or (…), at any
+    depth. A type ascription, `(h : T)`, gives its name only."""
+    while i < len(code) and code[i] in " \t":
+        i += 1
+    if i >= len(code):
+        return [], i
+    if code[i] not in "⟨(":
+        m = PATTERN_LEAF.match(code, i)
+        return ([Leaf(m.group(0), i)], m.end()) if m else ([], i)
+    leaves, depth, j, skip = [], 0, i, None
+    while j < len(code):
+        c = code[j]
+        if c in "⟨(":
+            depth += 1
+        elif c in "⟩)":
+            if skip is not None and depth == skip:
+                skip = None
+            depth -= 1
+            if depth == 0:
+                return leaves, j + 1
+        elif skip is None and c == ":" and code[j - 1] != ":" and not code.startswith(":=", j):
+            skip = depth                     # a type ascription: skip to its bracket's end
+        elif skip is None:
+            m = PATTERN_LEAF.match(code, j)
+            if m and (j == 0 or not (code[j - 1].isalnum() or code[j - 1] in "_'")):
+                leaves.append(Leaf(m.group(0), j))
+                j = m.end()
+                continue
+        j += 1
+    return leaves, j
+
+
+def bound_names(code: str) -> set:
+    """The names the code text `code` (`read_lean`) binds, read plainly, without Lean: the
+    name or pattern after `have`, `let`, `set`, `obtain`, `by_cases` or `by_contra`, or
+    after `rcases … with` on one line, with each alternative after a `|`; each name or
+    pattern after `intro`, `intros`, `rintro`, `fun` or `λ`; and `this`, for a `have` that
+    gives no name. Every name in a pattern counts, but `-`, `_` and `rfl`. A binding of
+    another shape is not found, so a passage cannot name it in `unused`."""
+    names = set()
+    for m in BINDS.finditer(code):
+        kw, i = m["kw"], m.end()
+        if kw == "rcases":
+            eol = code.find("\n", i)
+            w = WITH.search(code, i, len(code) if eol < 0 else eol)
+            if not w:
+                continue
+            i = w.end()
+        if kw in ("have", "haveI") and re.compile(r"[ \t]*:").match(code, i):
+            names.add("this")
+            continue
+        while True:
+            leaves, i = read_pattern(code, i)
+            names.update(leaf.name for leaf in leaves if leaf.name not in ("-", "_", "rfl"))
+            if not leaves:
+                break
+            if kw in SEVERAL:
+                continue
+            bar = re.compile(r"[ \t]*\|(?!\|)").match(code, i)
+            if not bar:
+                break
+            i = bar.end()
+    return names
+
+
+def unbound_unused(src: str, n: int, passages: list) -> list:
+    """The names that passages of a record of PropN list as `unused` and the Lean beneath
+    their run does not bind (`bound_names`), as (passage number, its `at`, the names): a
+    declaration that has outlived its binding, or stands under the wrong sentence. A
+    passage whose `at` begins no sentence is left to the check of `at`."""
+    rows = proof_lines(src, n)
+    starts = sentence_starts(rows)
+    runs = runs_beneath(rows)
+    code = read_lean(src)[0].split("\n")
+    found = []
+    for i, p in enumerate(passages, 1):
+        if not p.get("unused"):
+            continue
+        at = _plain(p["at"])
+        lines = {ln for ln, words in starts if words.startswith(at)}
+        if not lines:
+            continue
+        lean = [ln for run in runs if lines & set(run.words) for ln in run.lean]
+        bound = bound_names("\n".join(code[ln - 1] for ln in lean))
+        missing = [x for x in p["unused"] if x not in bound]
+        if missing:
+            found.append((i, p["at"], missing))
     return found
 
 
@@ -1030,6 +1162,14 @@ def check_review(facts, by_ref, book: str, n: int) -> None:
         if "helper" in p and not helper_exists(book, p["helper"]):
             fail(f"{where}: [[passage]] {i}: `helper` {p['helper']} is not declared under "
                  "Elements/")
+
+    # What a passage lists as `unused` is bound by the Lean beneath its run, so that a
+    # declaration cannot outlive its binding (review/SCHEMA.md).
+    for i, at, missing in unbound_unused(src, n, record["passage"]):
+        fail(f"{where}: [[passage]] {i}: `unused` names {', '.join(missing)}, which the "
+             f"Lean beneath the `--` lines from {at!r} ({rel(lean)}) does not bind: name a "
+             "binding that stands there, as the proof writes it, or `this` for a `have` "
+             "that gives no name; or take the name out")
 
     # Every run of `--` lines with no Lean beneath it before the next run is declared: a
     # passage begins on one of its lines.

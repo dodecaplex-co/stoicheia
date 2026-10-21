@@ -142,6 +142,7 @@ One table for each passage declared, in the order of the proof.
 | `kind` | see below | yes | How the Lean carries the passage. |
 | `helper` | a Lean name | for `helper` | The declaration that does the work: `"Prop1.middle"`, or `"Prop16.porism"` for a porism proved on its own. |
 | `note` | string | unless carried | One or two plain sentences, shown on the page under "How the Lean follows the text". |
+| `unused` | list of names | no | The bindings this passage declares as standing for Euclid's words and not used again, each as the proof writes it: `"FC"`, `"hCHG_EHC"`, or `"this"` for a `have` that gives no name. For the citation sweep and reviewers; the page does not show it. |
 
 - **carried**: the Lean beneath carries out the inference or construction. Declared only
   where that needs saying, as for a porism proved as its own theorem.
@@ -162,6 +163,23 @@ The page lists the passages under "How the Lean follows the text", each led by a
 word for its kind: "Done by `Prop6.less`", "Carried together", "A further case",
 "Already given", "Argued another way", "Left in Euclid's words", or, for a porism,
 "Proved separately, as `Prop16.porism`".
+
+`unused` is for `scripts/sweep_citations.py`, which lists every binding of a proof that
+nothing uses ([FORMALIZATION](../docs/FORMALIZATION.md), section 5). Where a sentence of
+Euclid's stands over one, as over I.5's joins, the passage whose `at` begins a sentence
+of that run of `--` lines declares it by name, and nothing else does: not a note, nor a
+`#` comment, which TOML does not read, so that the record's `text` stamp
+([#77](https://github.com/jackChallis/stoicheia/issues/77)) could not see it change. `heath.load_review` checks that `unused` lists distinct names, each one
+Lean identifier; `scripts/check_fidelity.py`, that the Lean beneath the run binds each,
+so a declaration cannot outlive its binding.
+
+```toml
+[[passage]]
+at = "and let the straight lines FC, GB be joined"
+kind = "carried"
+note = "The Lean joins FC and GB by Postulate 1, as Euclid asks; no later step uses them."
+unused = ["FC", "GB"]
+```
 
 ### `[figure]`
 
@@ -215,6 +233,7 @@ require_stamp=False)` reads a record without them.
 - a modified or alternative route has a `note`, as does every passage not carried; a
   helper passage names its `helper`; a passage argued another way (`different`) is not
   under a route of `euclid`;
+- a passage's `unused` lists distinct names, each one Lean identifier, or `this`;
 - a restricted or partial statement has a `short`;
 - a record at stage `full` names its `run`, and its `reviewer` names a role;
 - stamps have their form.
