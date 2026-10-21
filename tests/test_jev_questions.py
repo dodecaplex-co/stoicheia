@@ -60,6 +60,7 @@ LEAN_IMPORTS = {
 REFUSED_IMPORTS = (
     'meta public import Elements.Base', 'public public import Elements.Base',
     'private import Elements.Base', '@[expose] import Elements.Base',
+    '@[\nexpose\n]\nimport Elements.Base',
     'import Elements.Base Elements.Base', 'import all Elements.Base',
     'import all\n  Elements.Base',
 )

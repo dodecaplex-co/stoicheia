@@ -210,7 +210,7 @@ COMMAND = re.compile(
 # exactly one module before the end of its line: `import all` is not read.
 IMPORT = re.compile(r'^(?:public\s+)?(?:meta\s+)?(import)\b', re.M)
 PREFIXED_IMPORT = re.compile(
-    r'^(?:@\[[^\n]*?\]\s*|(?:public|meta|private|protected|noncomputable|unsafe)\s+)+import\b', re.M)
+    r'^(?:@\[[\s\S]*?\]\s*|(?:public|meta|private|protected|noncomputable|unsafe)\s+)+import\b', re.M)
 IMPORT_NAME = re.compile(r'\s+(' + NAME + r')[^\S\n]*(?:\n|\Z)')
 HEADER_WORDS = frozenset({'module', 'prelude', 'public', 'meta', 'all', 'import'})
 
