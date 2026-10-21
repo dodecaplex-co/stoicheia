@@ -210,8 +210,64 @@ def _placeholder_word(cell: str) -> str | None:
     return match.group() if match else None
 
 
+def _html_tag_end(text: str, start: int) -> tuple[bool, int | None]:
+    """Whether `start` opens an HTML tag, and its end when the tag is complete."""
+    at = start + 1
+    closing = at < len(text) and text[at] == "/"
+    if closing:
+        at += 1
+    if at == len(text) or not text[at].isascii() or not text[at].isalpha():
+        return False, None
+    at += 1
+    while at < len(text) and text[at].isascii() \
+            and (text[at].isalnum() or text[at] == "-"):
+        at += 1
+    if closing:
+        while at < len(text) and text[at] in " \t\r\n":
+            at += 1
+        if at < len(text) and text[at] == ">":
+            return True, at + 1
+        return (True, None) if at == len(text) else (False, None)
+    while at < len(text):
+        while at < len(text) and text[at] in " \t\r\n":
+            at += 1
+        if at == len(text):
+            return True, None
+        if text.startswith("/>", at):
+            return True, at + 2
+        if text[at] == ">":
+            return True, at + 1
+        name = at
+        while at < len(text) and text[at] not in " \t\r\n\"'=<>`":
+            at += 1
+        if at == name:
+            return False, None
+        while at < len(text) and text[at] in " \t\r\n":
+            at += 1
+        if at < len(text) and text[at] == "=":
+            at += 1
+            while at < len(text) and text[at] in " \t\r\n":
+                at += 1
+            if at == len(text):
+                return True, None
+            if text[at] in "\"'":
+                quote = text[at]
+                at += 1
+                end = text.find(quote, at)
+                if end < 0:
+                    return True, None
+                at = end + 1
+            else:
+                value = at
+                while at < len(text) and text[at] not in " \t\r\n\"'=<>`":
+                    at += 1
+                if at == value:
+                    return False, None
+    return True, None
+
+
 def _without_html(text: str) -> str:
-    """Remove complete HTML comments and tags, respecting quoted attribute values."""
+    """Remove HTML comments and syntactically recognizable tags."""
     visible = []
     at = 0
     while at < len(text):
@@ -222,30 +278,22 @@ def _without_html(text: str) -> str:
         if text.startswith("<!--", at):
             end = text.find("-->", at + 4)
             if end < 0:
-                visible.append(text[at:])
                 break
             at = end + 3
             continue
-        end, quote = at + 1, None
-        while end < len(text):
-            character = text[end]
-            if quote is not None:
-                if character == quote:
-                    quote = None
-            elif character in "\"'":
-                quote = character
-            elif character == ">":
-                break
-            end += 1
-        if end == len(text):
-            visible.append(text[at:])
+        recognized, end = _html_tag_end(text, at)
+        if not recognized:
+            visible.append("<")
+            at += 1
+            continue
+        if end is None:
             break
-        at = end + 1
+        at = end
     return "".join(visible)
 
 
 def _without_link_targets(text: str) -> str:
-    """Remove inline link destinations and reference labels with escaped delimiters."""
+    """Remove inline link destinations, their titles, and valid reference labels."""
     visible = []
     at = 0
     while at < len(text):
@@ -257,23 +305,47 @@ def _without_link_targets(text: str) -> str:
             visible.append(text[at])
             at += 1
             continue
-        opening = text[at + 1]
+        if text[at + 1] == "[":
+            end = at + 2
+            valid = False
+            while end < len(text):
+                if text[end] == "\\" and end + 1 < len(text):
+                    end += 2
+                    continue
+                if text[end] == "[":
+                    break
+                if text[end] == "]":
+                    valid = True
+                    break
+                end += 1
+            if not valid:
+                visible.append("]")
+                at += 1
+                continue
+            visible.append("]")
+            at = end + 1
+            continue
         end = at + 2
         depth = 1
+        quote = None
         while end < len(text):
             if text[end] == "\\" and end + 1 < len(text):
                 end += 2
                 continue
-            if opening == "(" and text[end] == "(":
+            if quote is not None:
+                if text[end] == quote:
+                    quote = None
+            elif text[end] in "\"'":
+                quote = text[end]
+            elif text[end] == "(":
                 depth += 1
-            elif text[end] == (")" if opening == "(" else "]"):
+            elif text[end] == ")":
                 depth -= 1
                 if depth == 0:
                     break
             end += 1
         visible.append("]")
         if end == len(text):
-            visible.append(text[at + 1:])
             break
         at = end + 1
     return "".join(visible)

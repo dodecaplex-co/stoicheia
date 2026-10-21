@@ -111,6 +111,8 @@ BLANK = re.compile(r"[ \t]*")
 CONTAINER = re.compile(r"\s+|>|[-*+](?=\s|$)|\[[ xX]\](?=\s|$)"
                        r"|(?P<text>[0-9]+[.)](?=\s|$)|\[\^[^\]]*\]:)")
 OPENER = re.compile(r"#{1,2}(?=[ \t]|$)")
+ANY_OPENER = re.compile(r"#{1,6}(?=[ \t]|$)")
+THEMATIC = re.compile(r" {0,3}(?:(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|(?:-[ \t]*){3,})")
 # A heading's text is plain: ASCII letters, digits, spaces and . , : ; ' ( ) - / only.
 PLAIN = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
                   " .,:;'()-/")
@@ -826,6 +828,26 @@ def _underline(stripped: str, line: str) -> bool:
     return not core.strip("=") or not core.strip("-")
 
 
+def _indent(line: str) -> int:
+    """The CommonMark column of the first non-space-or-tab character."""
+    column = 0
+    for character in line:
+        if character == " ":
+            column += 1
+        elif character == "\t":
+            column += 4 - column % 4
+        else:
+            break
+    return column
+
+
+def _continues_paragraph(line: str, stripped: str, opening: bool) -> bool:
+    """Whether the line can leave a paragraph open for the following source line."""
+    return bool(stripped.rstrip(" \t")) and not ANY_OPENER.match(stripped) \
+        and not _underline(stripped, line) and not THEMATIC.fullmatch(line) \
+        and not (opening and _indent(line) >= 4)
+
+
 def _month(word: str) -> int | None:
     """A month's number from its English name or first three letters, in any case."""
     word = word.casefold()
@@ -941,6 +963,7 @@ def heading_problems(page: str) -> list[str]:
     held: set[datetime.date] = set()
     noted = 0
     unread: list[tuple[int, str, str, bool]] = []
+    continues = False
     for number, line in enumerate(LINE_END.split(page.removeprefix(BOM)), 1):
         if RAW_HEADING.search(line):
             problems.append(f"{safe_push.DECISIONS}:{number}: an HTML heading tag (<h1> or "
@@ -950,9 +973,11 @@ def heading_problems(page: str) -> list[str]:
             start = last = None
             words, dates, held, noted, unread = [], [], set(), 0, []
             own_words = words
+            continues = False
             continue
         kept, stripped = _stripped(line)
-        paragraph = start is not None
+        opening = start is None
+        paragraph = continues
         if opener := OPENER.match(stripped):
             text = _atx_text(stripped[opener.end():])
             readable(number, text)
@@ -988,6 +1013,7 @@ def heading_problems(page: str) -> list[str]:
                     dates.append(date)
         if not kept and len(found) >= 2:
             own_words = words
+        continues = _continues_paragraph(line, stripped, opening)
     return problems
 
 

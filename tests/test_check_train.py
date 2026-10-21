@@ -427,13 +427,34 @@ class TrainChecks(Repository):
                 row = dict(self.row, code_review=cell)
                 self.assertEqual(self.problems(text=body([row])), [])
 
+    def test_malformed_markup_and_link_titles_hide_no_review_commit(self):
+        cells = (
+            f'<" <span title="{self.member}">Reviewed</span>',
+            f"[x]( [Reviewed](https://example.invalid/{self.member})",
+            f'[Reviewed](https://example.invalid "note ) {self.member}")',
+            f"x][[Reviewed](https://example.invalid/{self.member})",
+        )
+        for cell in cells:
+            for key, label in (("code_review", "/code-review"),
+                               ("security_review", "/security-review")):
+                with self.subTest(cell=cell, key=key):
+                    self.refused(f"{label} names no reviewed commit",
+                                 text=body([dict(self.row, **{key: cell})]))
+        for cell in (
+                f'<" <span title="note">Reviewed {self.member}: no findings</span>',
+                f"x][[Reviewed {self.member}: no findings](https://example.invalid/review)"):
+            with self.subTest(visible=cell):
+                self.assertEqual(self.problems(text=body(
+                    [dict(self.row, code_review=cell)])), [])
+
     def test_long_review_cells_are_read_in_linear_time(self):
         # 200,000 characters of openings that never close, which a regular expression
         # rescanning to the end from each would read in quadratic time (3.4 s at 65,536
         # characters of "<!--"), and of separators after a placeholder word's start.
         size = 200_000
         for cell in ("<!--" * (size // 4), "<a" * (size // 2), "](" * (size // 2),
-                     "][" * (size // 2), "n" + "/" * size, "to" + " " * size,
+                     "][" * (size // 2), '[Reviewed](x "' + ")" * size,
+                     "n" + "/" * size, "to" + " " * size,
                      "not" + "-" * size + "x", ("n" + " " * 50) * (size // 51 + 1)):
             with self.subTest(cell=cell[:12]):
                 self.assertGreaterEqual(len(cell), size)

@@ -1382,6 +1382,8 @@ class TreeTests(unittest.TestCase):
             "## 21 October 2026 (also 20/10/2026)", "# 20October2026",
             "20 October\n2026\n===", "Notes\n2026. October 20\n===", "1. October 2026\n   =",
             "Notes\n01. October 2026\n===",
+            "    Notes\n21. October 2026\n ===", "- - -\n21. October 2026\n ===",
+            "-\n21. October 2026\n ===", ">\n21. October 2026\n ===",
             "Notes 20 October\n[^2026]:\n==="))
         self.passes(["## 21 October 2026", "## October 21, 2026", "## 2026-10-21",
                      "## 21st October 2026", "## 21 October 2026 to 22 October 2026",
