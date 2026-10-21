@@ -501,6 +501,9 @@ class Index:
 
     def add(self, path: str) -> None:
         raw = self.evidence.read(path)
+        # Lean's doc comment opens with all of `/--`, the masking's comment with `/-`, so in
+        # `/--/` the masking's ends at once and Lean's runs on to a later `-/`.
+        require('/--/' not in raw, f'{path}: unsupported doc comment opening /--/')
         clean, comments, self.imports[path] = lean_source(path, raw)
         self.clean[path] = clean
         self.raw[path] = raw
@@ -516,7 +519,9 @@ class Index:
                     f'{path}: unsupported {found.group()} with a bar')
             for atom in string_literals(raw, found.start(), stop):
                 atom = atom.strip()
-                require(LEAN_NAME.fullmatch(atom) or not NAME_CHARACTER.search(atom),
+                # Lean reads a token whole, `/--+` too, where the masking opens a comment.
+                require((LEAN_NAME.fullmatch(atom) or not NAME_CHARACTER.search(atom))
+                        and '--' not in atom and '/-' not in atom,
                         f'{path}: unsupported {found.group()} token {atom!r}')
         commands = list(COMMAND.finditer(clean))
         namespace = ''
@@ -796,7 +801,8 @@ class Calls:
     GLUED = re.compile(r"(?<![\w'₀-₉!?])(?:[0-9]+(?:[^\W\d]|['!?])|[!?]+')")
     # A dash or a slash after which the masking opens a comment, after anything but whitespace
     # or a name character: Lean may read it within a token, as in `\/-`, `//-` or a notation's
-    # `+--`, and open no comment there.
+    # `+--`, and open no comment there. After whitespace too Lean reads a notation's `/--+`
+    # whole; the index refuses every notation token holding `--` or `/-`.
     OPENER = re.compile('--|/-')
     # Two forms the plain forms leave out are refused first, with a reason of their own: a
     # word character Lean reads in no name, such as `²` or `ж` (but `λ`, which ALTERNATIVES
@@ -842,8 +848,11 @@ class Calls:
         So that the masked text, and the words in it, are those Lean reads, the declaration's
         raw text may hold no string, char literal or «...» name (LITERAL), no number glued to
         a word or a quote (GLUED), and no comment opening after anything but whitespace or a
-        name character, where Lean may read the dash or slash within a token (OPENER). Some
-        forms outside the plain forms are refused first, with a reason of their own: those
+        name character, where Lean may read the dash or slash within a token (OPENER); and
+        the index refuses, in any file it reads, `/--/`, after which Lean's doc comment runs
+        on to a later `-/` where the masking's ends at once, and a notation token holding
+        `--` or `/-`, which Lean reads whole where the masking opens a comment. Some forms
+        outside the plain forms are refused first, with a reason of their own: those
         FOREIGN and DOT name, anywhere in the declaration, and a bar after a word
         ALTERNATIVES names.
 

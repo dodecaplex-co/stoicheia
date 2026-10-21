@@ -3774,158 +3774,70 @@ findings:
   paths before running them, reads an inductive only in the plain forms main writes, and
   passes its test on the superposition branch (#185).** Two defects in
   `scripts/audit/jev_questions.py` (#179) were found while merging the superposition
-  replacement. First, the generator read an import only from a line beginning
-  `import`. The superposition branch's `Elements/Foundations/Superposition/` files open with
-  `module` and import with `public import`, so their imports were never read, and on that
+  replacement. First, the generator read an import only from a line beginning `import`, so
+  the `public import` of `Elements/Foundations/Superposition/` went unread, and on that
   branch `tests/test_jev_questions.py` refused I.4: "Elements.Superposition.Lit is not
-  imported".
-
-  A first fix read the new forms with line patterns, and three rounds of review each found
-  another header they misread: an attribute over several lines, a `partial` or `nonrec`
-  prefix, a quoted module name, and then five more. `module public import M` on one line read
-  no import; `all` on the line before `import M`, and a doc comment between `public` and
-  `import`, were read as plain imports; a `"` inside a quoted component, as in `«a"b»`, was
-  taken for an unterminated string; and an import ending the file without a newline was
-  given a span one character past the end, which the excerpt check refused. So the patterns
-  are gone. The header is read by one small parser over a stream of tokens, following Lean
-  4.35's own grammar (`Lean/Parser/Module/Syntax.lean` in the toolchain's source): an
-  optional `module`, then any number of `[public] [meta] import M`, where M is
-  dot-separated components, each a plain identifier or a whole `«...»` component. Tokens
-  are read before any masking, so nothing inside `«...»` is read as syntax, and a component
-  keeps its dots: `Elements.«areas.p5»` is the file `Elements/areas.p5.lean`. Ordinary
-  comments, nested or not, may come between the words. Each import ends its line, and its
-  span runs to the end of that line, or of the file. As in Lean, an import is read only
-  whole, so `public section` after the imports ends the header. Refused as an unsupported
-  import: a doc comment or any other word before an import (`all`, `private`, `partial`,
-  `nonrec`, an attribute, a second name), `prelude`, `import all`, two imports on one line,
-  a component holding `/`, a block comment that opens on an import's line and closes on a
-  later one, and any `import` after the header has ended, outside a whole `«...»` name.
-  Running the toolchain's `lean` on sample headers confirmed that Lean reads the imports of
-  each header the generator reads; of those refused, Lean accepts only the ones with
-  `prelude`, `import all`, two imports on one line, a `/` in a name or a block comment
-  running on from an import's line, which the generator does not read.
+  imported". Line patterns misread header after header in review, so a small parser now
+  reads the header by Lean 4.35's grammar (`Lean/Parser/Module/Syntax.lean`): an optional
+  `module`, then any number of `[public] [meta] import M`, each component of M a plain
+  identifier or a whole `«...»` one, with comments between the words. Each import ends its
+  line, and `public section` ends the header. Refused: a doc comment or any other word
+  before an import, `prelude`, `import all`, two imports on a line, a `/` in a component, a
+  block comment running on from an import's line, and an `import` after the header.
 
   Second, the generator ran `scripts/heath.py` and `scripts/audit/jev.py` as it loaded
-  them, before any check of their paths, so a check that should refuse first came
-  second (found by an independent security review). Both paths now pass the evidence
-  path checks (relative, with no `..` and no symlink component, inside the repository),
-  and must name regular files, before either helper runs. Each then runs from the bytes
-  read through its checked path, never through a final symlink. Run as a script, a
-  refused helper path prints `refused:` and exits with status 1, like the generator's
-  other refusals.
+  them, before checking their paths (found by an independent security review). Both paths
+  now pass the evidence path checks and must name regular files before either helper runs,
+  and each runs from the bytes read through its checked path, never through a final
+  symlink.
 
-  Third, on `lean/superposition-restricted` the test then refused I.4 and I.8, whose new
-  proofs the call reconciler could not yet read, for four reasons, each now fixed. It took
-  only the first of several constructors on one line (`| a | b | c`). It resolved
-  `open Prop4 in` from the root and from `Elements.`, never from the current namespace; each
-  namespace enclosing the declaration now counts too. It read an inductive's own constructor
-  names as uses, so I.4's constructor `a` was taken for the abbreviation `a` declared after
-  it. A name is now taken for a constructor only after a `|` outside every bracket in the
-  declaration, on a line that opens `  |`, and never after a bar that stands beside
-  another, as in `||`.
+  Third, the call reconciler could not read the superposition branch's proofs of I.4 and
+  I.8: it took only the first of several constructors on a line, resolved `open Prop4 in`
+  without the enclosing namespaces, and read an inductive's constructor names as uses.
+  Review after review found another form Lean accepts in which the reader took a use for a
+  constructor, so **the reader of constructors accepts only the plain forms main's
+  inductives are written in, and refuses everything else.** From an inductive's name to
+  the end of its constructors, the masked text may hold only spaces, line breaks and name
+  characters; a dot after a name character, a bracket or a space, and before a name
+  character; the brackets `( ) [ ] { } ⦃ ⦄ ⟨ ⟩` and the symbols `: , → ∀ ∈ × + |`; and,
+  of the 282 tokens beginning with a letter or `_` in Lean 4.35's token table
+  (`KEYWORD_TOKENS`, from `Lean.Parser.getTokenTable` at commit `eb6cafb7`), only `Type`,
+  `Prop`, `Sort`, `where` and `_`. Each bar outside every bracket must then separate
+  constructors or stand beside another, as in `||`, and constructors at four spaces or on
+  the inductive's own line are refused. The constructors end at the first line outside
+  every bracket that is not blank and opens neither `  |` nor three spaces, and at a
+  declaration's keyword or `recall` outside every bracket, wherever it stands. A refusal
+  names the first form outside the plain forms, and some, such as a bar after `fun` or
+  `match`, are refused first with a reason of their own.
 
-  That third fix has taken six rounds. Review after review found another form, accepted by
-  Lean, in which this branch read a constructor where Lean reads a use, and so dropped a use
-  that main's generator records: a bar within a bracket, or after `match`; a command on a
-  constructor's line; brackets within quotes; a notation with a bar; a keyword glued to a
-  number or to a token of Lean's own, as in `5matches` and `#wheredef`; `recall`; and a
-  comment that the masking opened within a token, as in `\/-`. Closing them one at a time
-  did not converge, so the reader no longer tries to follow each form Lean accepts. **The
-  reader of constructors accepts only the plain forms main's inductives are written in,
-  and refuses everything else.** From an inductive's name to the end of its constructors,
-  the masked text may hold only:
+  Five rules keep the masked text, and its words, those Lean reads, since the plain forms
+  cannot refuse what the masking hides. An inductive may hold no string, char literal or
+  `«...»` name, whose quoted brackets the masking could pair; no number glued to a word or
+  a quote, as in `0x5matches`, where Lean reads `matches`, nor a quote after a bare `!` or
+  `?`; and no comment opening after anything but a name character or Lean's whitespace (a
+  space or a line break), as in `False \/-(1 : Int)`, where Lean reads `\/` whole. The
+  index refuses, in any file it reads, `/--/`, after which Lean's doc comment, opening with
+  all of `/--`, runs on to a later `-/` where the masking's ends at once; and a notation
+  token holding `--` or `/-`, such as `/--+`, which Lean reads whole. It also refuses a
+  notation with a bar before `=>`, or whose token holds a name character and is no name,
+  and every macro, elaborator and binder-predicate command; `scripts/check_fidelity.py`
+  refuses the elaborator and parser attributes in `Elements/`.
 
-  - a space, a line break (the whitespace Lean reads between tokens) and the characters of
-    a name;
-  - a dot after a name character, a bracket or a space, and before a name character, as in
-    `s.2.1`, `(p).2` and `(.eq p q)`;
-  - the brackets `( ) [ ] { } ⦃ ⦄ ⟨ ⟩` and the symbols `: , → ∀ ∈ × + |`;
-  - no keyword but `Type`, `Prop`, `Sort`, `where` and `_`.
+  Four forms hide a use from main's generator too, a limit shared with main and outside
+  #185, left for a follow-up issue: `open Nat in` at column 0 within a constructor; a `'"'`
+  beside a use, which the masking reads as a string; an anonymous `instance … where` with
+  equations, which the index does not record; and, in any declaration but an inductive, a
+  comment the masking opens within a token, as in `\/-`. Nor does the index check a
+  `syntax` command's tokens; with every macro and elaborator refused, none is known to
+  take a meaning in `Elements/`, but that is untested.
 
-  The keywords are the 282 tokens of Lean 4.35's token table that begin with a letter or
-  `_`, embedded in the generator as `KEYWORD_TOKENS`: the toolchain's `lean` (4.35.0,
-  commit `eb6cafb7`) lists 507 tokens through `Lean.Parser.getTokenTable` on a scratch file
-  outside the repository that imports Lean, Std and Lake, and importing `Lake.DSL` adds
-  none. A word is refused where Lean reads one of them, as it reads `trace[` in `trace[x]`.
-  An alternative or a pattern after a bar needs `=>` or a keyword, so in these forms each
-  bar outside every bracket separates constructors or stands beside another, as in `||`,
-  which separates none. Any other bar is refused, and so are constructors at four spaces or
-  on the inductive's own line, which Lean accepts and the reader does not read. A refusal
-  names the inductive and the first character, dot or keyword outside the plain forms. The
-  constructors end at the first line outside every bracket that is not blank and opens
-  neither `  |` nor three spaces, where a deriving clause begins, or a command the index
-  reads with the inductive, such as `partial def`. They end too at a declaration's keyword
-  outside every bracket (`def`, `theorem`, `abbrev`, `instance`, `example`, `opaque`,
-  `axiom`, `structure`, `class`, `inductive`, `deriving` or `mutual`), or at `recall`,
-  which takes equations as `def` does, wherever it stands on its line: Lean reads
-  `| mk def f : Nat → Nat` as a constructor and then a command, and so with `def f` at
-  three spaces. What follows is read for uses. Brackets, `⦃ ⦄` among them, are counted
-  across lines, and an unbalanced one is refused.
-
-  Three rules keep the masked text, and the words in it, those Lean reads, since the plain
-  forms cannot refuse what the masking hides. The masking can misread the brackets and bars
-  within a string, a char literal or a `«...»` name: in
-  `| mk (f : Nat → Nat := fun | 0 => g ')' 0 | Known.bar n => g '(' n) : Pt`, the quoted
-  brackets would pair, and leave the second bar outside every bracket. So an inductive
-  whose raw text holds a string or a `«...»` name is refused, and so is one holding a quote
-  that follows no word character, `'`, `!` or `?`, after which the quote may continue a
-  name, as in `h'`. Lean ends a number before a letter or a quote: in `0x5matches` it reads
-  `matches`, which the patterns take for the end of a word, and in `0'a'` a char literal.
-  So a number glued to a word or a quote is refused, and so is a quote after a bare `!` or
-  `?`, which opens a char literal, as in `!'a'matches`. And Lean reads a token whole, and
-  looks for a comment only between tokens: in `False \/-(1 : Int) = 0`, the dash after `\/`
-  begins `-(1 : Int)`, where the masking would open a comment and hide what follows. So a
-  comment opening after anything but whitespace or a name character is refused, the sixth
-  review's fix, taken here with its rule for `recall`. This round's probes found the rule
-  needed beside the plain forms. After `infixl:65 " +- " => Int.sub`, a constructor
-  `| mk : ∀ _ : (1 : Int) +--1 == 0 && 5 matches 0` with `| Known.bar 0, Q` on the next
-  line hides its use, though its masked text is plain. And Python's whitespace is wider
-  than Lean's: a notation's token may begin with a no-break space, which Python's
-  `isspace` takes for a space, so the comment rule and the plain forms both take Lean's
-  whitespace alone, a space or a line break.
-
-  Some forms outside the plain forms are refused first, each with a reason of its own: a bar
-  after a word that opens alternatives or patterns (`fun`, `λ`, `match`, `matches`, `let`,
-  `have`, `by`, `do`, `with`, `match_expr`, `let_expr`, `haveI`, `letI`, `let_fun`,
-  `let_delayed` or `let_tmp`), as in `| mk : Q <| match 0 with | Known.bar n => n | _ => 0`;
-  a word character that Lean 4.35 reads in no name (`Init/Meta/Defs.lean`, `isIdFirst` and
-  `isIdRest`), such as `¹`, `²` or `ж`, a subscript that begins a word, as after `∧ₑ`, and
-  `#`, which begins Lean's commands, as in `#wheredef`; and, the sixth review's, a dot glued
-  to a symbol before a word, as in `..matches` or a notation's `⊗.matches`, which the
-  patterns would take for a field. The index refuses, in any file it reads, a `notation`,
-  `infix`, `infixl`, `infixr`, `prefix` or `postfix` command, local or not, whose words
-  before `=>` hold a bar: after `infixl:65 " | " => Nat.add`, the constructor
-  `| mk : Q <| 0 | Known.bar 0` has the type `Q (Nat.add 0 (Known.bar 0))`. It refuses too
-  such a command whose token, read without its spaces, holds a character of a name and is
-  not itself a name: `-x`, `²` and `→ₑ` are refused, and `nine`, `‖` and `∠` are not. And
-  it refuses every `macro`, `macro_rules`, `elab`, `elab_rules` and `binder_predicate`,
-  which can give any syntax a meaning. `scripts/check_fidelity.py` already refuses the
-  first four in `Elements/`, and, there too, the attributes that make a declaration an
-  elaborator or a parser, such as `@[term_elab k]`, which the generator does not refuse
-  itself.
-
-  Main's inductives are written in the plain forms, and no rule here refuses anything on
-  main or on the superposition branch. Forms main never writes, whose uses earlier rounds
-  kept, are refused now: `||` beside `==` or `=`; a bar within a bracket opened on an
-  earlier line, or within `⦃ ⦄`, after `fun` or `match`; and, in a family, a pipe, `<|` or
-  `|>`, outside every bracket. Four forms hide a use from main's generator too, a known
-  limit shared with main and outside #185, left for a follow-up issue: `open Nat in` at
-  column 0 within a constructor, which ends the inductive for the index; a `'"'` beside a
-  use in any declaration, as in `g '"' (Known.bar 0) '"'`, which the masking reads as a
-  string; an anonymous `instance … where` with equations, which the index does not record;
-  and, in any declaration but an inductive, a comment that the masking opens within a
-  token, as in `False \/-(1 : Int) = 0 ∨ match 0 with | Known.bar n => True | _ => True`
-  followed by `-- -/` on the same line.
-
-  The fourth reason: `List.mem_nil_iff` and
-  `List.forall_mem_cons` were not on its core allowlist. **The core allowlist gains these
-  two names, `mem_nil_iff` and `forall_mem_cons`.** The list names lemmas of Lean core so
-  that a call to one is not taken for a missing project name; the coordinator ruled that
-  adding a name which really is a Lean core lemma is upkeep of the list, not a widening of
-  its exemption, provided each is shown to be core. Both are: the toolchain's `lean`
-  (4.35.0, commit `eb6cafb7`), with no Mathlib and no project import, run on a scratch file
-  outside the repository holding `#check @List.mem_nil_iff` and
-  `#check @List.forall_mem_cons`, prints
+  Fourth, those proofs call `List.mem_nil_iff` and `List.forall_mem_cons`, so **the core
+  allowlist gains these two names, `mem_nil_iff` and `forall_mem_cons`,** which the
+  manifest's `core_projection_allowlist` lists. The coordinator ruled that adding a name
+  which really is a Lean core lemma is upkeep of the list, not a widening of its
+  exemption, provided each is shown to be core. Both are: the toolchain's `lean` (4.35.0,
+  commit `eb6cafb7`), with no Mathlib and no project import, on a scratch file outside the
+  repository holding `#check @List.mem_nil_iff` and `#check @List.forall_mem_cons`, prints
 
   ```
   @List.mem_nil_iff : ∀ {α : Type u_1} (a : α), a ∈ [] ↔ False
@@ -3933,73 +3845,12 @@ findings:
     (∀ (x : α), x ∈ a :: l → p x) ↔ p a ∧ ∀ (x : α), x ∈ l → p x
   ```
 
-  Only these two are added, the names the superposition branch needs, and the manifest's
-  `core_projection_allowlist` lists them.
-
-  `tests/test_jev_questions.py` now has 56 cases. One table-driven case reads 14 headers,
-  each with its imports' exact spans, an `import_text` excerpt the excerpt check accepts (an
-  import ending the file without a newline among them) and every imported file visible, and
-  refuses 19 others as unsupported imports; twelve of its rows fail on the generator before
-  the parser: the five forms above (the last twice, with and without a comment after the
-  import), an indented import, a module doc comment before an import, `prelude`, `«a/b»`, an
-  import after a declaration, and a block comment running on from an import's line.
-  Seventeen cases test the reconciler on small files, each a file Lean 4.35 accepts: the
-  toolchain's `lean` compiles all 88 texts they build. Four are in the shape of I.4's proof,
-  one of them with `@List.mem_nil_iff Nat` and `@List.forall_mem_cons Nat`, given the type
-  each needs to compile. Thirteen hold the forms above. One keeps each use after `||`,
-  outside every bracket and within one opened on an earlier line. One refuses eleven forms
-  outside the plain forms, the first reviews' probes among them, naming the first
-  character, dot or keyword of each: `=` in five, `match` in two, `<`, `>`, `partial` before
-  a `def` at four spaces, and a dot before the brace of `List.cons.{0}`. Others keep each
-  use after `def` on a constructor's line and at three spaces, and after `example`,
-  `instance` and `theorem` on one; after `recall` in four forms; in a name holding a digit,
-  a prime, a subscript and `é`; and beside a dot after a bracket or a name, and a comment
-  after a name or a space. The rest refuse a bar after each of the sixteen words; five pairs
-  of quoted brackets, in char literals, `«...»` names, raw strings, `'"'` beside strings and
-  interpolated strings; the two notations with a bar and a command for each of the four
-  macro and elaborator words; the two bars the reconciler does not read, and a `⦃` left
-  open where `open ... in` begins a line within it; the eight glued forms (`5matches`,
-  `0x5matches`, `p.1matches`, `5def` with its equations on the lines after it and on the
-  same line, `p.1def`, `5instance` and `!'a'matches`); `x⁻¹matches`, `#wheredef`,
-  `#versiondef` and a constructor using `∧ₑ`, from `Std.Do`; the six notation tokens above
-  and the `binder_predicate`, with `nine` as a token kept; and seven comments the masking
-  would open within a token, with three dots glued to a symbol. Every probe of the
-  reviews' blocking findings, with the variants each names, is one of these rows, refused
-  or kept with its use. Taking out any one rule fails its own rows: the plain forms fail
-  eleven, and their characters alone seven, their dots one and their keywords three; the
-  comment rule fails seven, and its reading of whitespace alone one; the dot rule three;
-  `recall` four; and each earlier rule, and each of the exceptions for `||` and for `<|` and
-  `|>`, fails rows of its own. On the generator at `7bc340d7`, 24 rows fail: the eleven, the
-  ten of comments and dots, and three of the four with `recall`, whose fourth, with its
-  `where` field on the next line, ends the constructors at that line there too. While the
-  second helper's path is a symlink, behind a symlinked folder, absolute, traversing,
-  missing or a folder, neither planted helper runs, the first included; both run once both
-  paths pass. A copy of the generator beside a symlinked
-  `jev.py` refuses, and neither planted helper runs.
-
-  Main now carries the superposition code (`17ae8e2a`). There, in all 139 Lean files, the
-  generator reads the same comments and declarations as the old one, and the same imports
-  with the same spans, 745 in all, but for the four the old one missed: the `public import`
-  of each of four files in `Elements/Foundations/Superposition/`. On the main before it
-  (`8e9a1879`: 134 files, 735 imports) every file reads the same imports, spans, comments
-  and declarations as with the old generator. There the parser alone generates questions and
-  a manifest byte for byte those of the old generator; with the reconciler's changes the
-  questions are still byte for byte the same, and the manifest differs only by the two names
-  in `core_projection_allowlist`. At `17ae8e2a` the old generator, and main's own copy of
-  the test, refuse I.4: "Elements.Superposition.Lit is not imported". With this change the
-  generator gives all 338 rows there with no unresolved name. The rules for literals,
-  notations, keywords and other bars refuse nothing at `8e9a1879`, at `17ae8e2a`, on main
-  (`ac6e5389`) or on the superposition branch (`4c579527`): at each, the questions and the
-  manifest are byte for byte those of the generator before them (`520bc68e`). Nor do the
-  rules for lexical reading: on fresh clones of `8e9a1879`, `17ae8e2a`, `756bdbae`, main at
-  `cba27afa` and the superposition branch at `4c579527`, the questions and the manifest are
-  byte for byte those of the generator at `69f44687`. Nor do the plain forms: on fresh
-  clones of main at `e604deb0`, fetched from GitHub, of the superposition branch at
-  `4c579527`, and of `8e9a1879`, `17ae8e2a` and `756bdbae`, the questions and the manifest
-  are byte for byte those of the generator at `7bc340d7`, with 338 rows at each and no
-  unresolved name. All 56 cases pass on fresh clones of main (`e604deb0`) and of the
-  superposition branch with the two changed files copied in, so the issue's third
-  condition is met. The protected files changed are `scripts/audit/jev_questions.py` and
-  `tests/test_jev_questions.py`. No expected value, schema or review record changes; the
-  one allowlist change is the two Lean core names above. CI does not run the test yet
-  (#157).
+  `tests/test_jev_questions.py` now has 57 cases, and Lean compiles all 91 texts its
+  reconciler cases build. On fresh clones of main (`e7ffaf68`) and of the superposition
+  branch (`4c579527`), the generator gives 338 rows with no unresolved name, byte for byte
+  those of the generator before the last two rules, and all 57 cases pass with the two
+  changed files copied in, so the issue's third condition is met. Before the superposition
+  code (`8e9a1879`), the questions are byte for byte those of main's own generator, and the
+  manifest differs only by the two allowlist names. Protected files changed:
+  `scripts/audit/jev_questions.py` and `tests/test_jev_questions.py`. No expected value,
+  schema or review record changes; CI does not run the test yet (#157).

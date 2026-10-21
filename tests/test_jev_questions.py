@@ -983,6 +983,22 @@ class CallReconciler(LeanFiles):
                                     '  | b : Q (.eq 0) (Known.bar 0) /- a block -/'),
                          'Elements.Q', {'mk', 'a', 'b'})
 
+    def test_a_doc_comment_or_token_the_masking_reads_otherwise_is_refused(self):
+        # Lean's doc comment opens with all of `/--`, so in `/--/ -- -/` it ends at the `-/`,
+        # where the masking's ends at `/--/` and a line comment opens; and Lean reads a
+        # notation's `/--+` whole, where the masking opens a comment. Each would hide
+        # `matches`, and the masked text after it is in the plain forms.
+        for text, refused in (
+                ('inductive Q : Bool → Type where\n  /--/ -- -/ | mk : Q <| 5 matches 0\n'
+                 '  | Known.bar 0', 'doc comment opening /--/'),
+                ('/--/\ninductive P : Type where -- -/ def g : Bool := 5 matches 0\n'
+                 '  | Known.bar 0', 'doc comment opening /--/'),
+                ('prefix:max "/--+" => id\n\ninductive Q : Type where\n'
+                 '  | mk : ∀ _ : /--+ 5 matches 0 -- -/\n  | Known.bar 0, Q',
+                 "prefix token '/--+'")):
+            with self.subTest(text=text):
+                self.assert_refused(self.known(text), 'Elements/Proof.lean: unsupported ' + refused)
+
 
 class HelperModules(unittest.TestCase):
     def setUp(self):
