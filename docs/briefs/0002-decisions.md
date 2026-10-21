@@ -3489,8 +3489,9 @@ findings:
   comments and layout aside ([`review/SCHEMA.md`](../../review/SCHEMA.md#stamps), "Stamps",
   whose two worked examples now carry it as test values).
   [`scripts/review_stamp.py`](../../scripts/review_stamp.py) writes it with the other
-  stamps, and, whenever a stamp changes, checks both the Lean file and the record at the
-  commit named (before, it checked the Lean file only, and only when the commit changed).
+  stamps, and, whenever a stamp changes, checks that the commit named is in the history of
+  HEAD, and both the Lean file and the record at that commit (before, it checked the Lean
+  file only, and only when the commit changed).
   [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) fails on a record whose
   text no longer matches its stamp: "its record has changed since it was reviewed".
   [`scripts/heath.py`](../../scripts/heath.py) knows the key and checks the examples'
@@ -3513,8 +3514,10 @@ findings:
   in [`.github/pull_request_template.md`](../../.github/pull_request_template.md), and its
   comment under "Review records", therefore now admit a record that "gained only its
   `text` stamp from `scripts/review_stamp.py --migrate-text`", so that the migration's
-  pull request can tick that box truly. This is a check change on its own: it changes no
-  record.
+  pull request can tick that box truly. Once this lands, any pull request open with the
+  box's old words must have that box rewritten in its body before `--merge`, which
+  otherwise refuses it as missing the box's new words. This is a check change on its own:
+  it changes no record.
 - **The `text` stamps' migration, and what it does not do.** The existing records are not
   stamped as read. `review_stamp.py --migrate-text` writes `text` alone, and only where a
   record's stamp commit is in the history of HEAD and its text at that commit (`git show
@@ -3539,10 +3542,11 @@ findings:
   record at P2. That change also takes out every place that lets a record go without
   `text`, or says "for now": `render.record_current`'s clause counting a record with no
   `text` as current; `text` in `heath.FIELDS`, which becomes a stamp, with the comment
-  above FIELDS and `validate_review`'s "for now"; SCHEMA's "for now" in the `text` row,
-  and its paragraph on the records stamped before `text`; [WORKFLOW](../WORKFLOW.md),
-  section 6's "Until every record carries `text`"; ACCEPTANCE P2's "once it
-  carries one"; [CONTRIBUTING](../../CONTRIBUTING.md)'s "once it carries its `text` stamp";
+  above FIELDS and `validate_review`'s "for now"; `check_fidelity.py`'s docstring, which
+  says a record with no `text` stamp yet is named in a note; SCHEMA's "for now" in the
+  `text` row, and its paragraph on the records stamped before `text`;
+  [WORKFLOW](../WORKFLOW.md), section 6's "Until every record carries `text`"; ACCEPTANCE
+  P2's "once it carries one"; [CONTRIBUTING](../../CONTRIBUTING.md)'s "once it carries its `text` stamp";
   [PROGRAM](../PROGRAM.md)'s "where a record carries a `text` stamp"; and the template's
   words for the migration. It also considers covering `[review]`'s `stage` and `items` by
   `text`: a page words its "Reviewed" row from `stage`, and P11 to P16 count `items`, yet

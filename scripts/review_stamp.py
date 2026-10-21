@@ -19,8 +19,9 @@ a review, never just to quiet the check.
 
 `commit` changes only when `--commit` names one: the commit whose files the reviewer
 read. Commit the change first, then stamp with that commit. The script checks that the
-record's Lean file and the record itself, its [review] table and fingerprint aside, are
-at that commit as they are now, so a record never names a commit it was not read at.
+commit is in the history of HEAD, and that the record's Lean file and the record itself,
+its [review] table and fingerprint aside, are at that commit as they are now, so a record
+never names a commit it was not read at.
 When a record's fingerprint, `lean` or `text` would change, or it has no commit yet,
 `--commit` is required; otherwise an existing commit is kept. Each stamp stays on a line
 of its own, `key = "value"`, and is rewritten in place or added at the end of its
@@ -79,6 +80,10 @@ def set_stamp(text: str, section: str, key: str, value: str) -> str:
             last = i
     lines.insert(last + 1, new)
     return "\n".join(lines)
+
+
+NOT_ONE = ("is not one commit of this clone (a shallow clone, or a commit never fetched; or "
+           "an abbreviation of more than one, or a branch or tag of that name)")
 
 
 def resolve(commit: str) -> str | None:
@@ -178,8 +183,9 @@ def stamp(facts: dict, book: str, n: int, commit: str | None, dry_run: bool) -> 
     if (changes or "commit" not in rv) and commit is None:
         why = f"{ref}: its stamps change ({'; '.join(changes) or 'no commit yet'}): "
         ask = "name the commit whose files you read with --commit"
-        then = text_at(rv["commit"], path) \
+        full = resolve(rv["commit"]) \
             if "text" not in rv and "commit" in rv and len(changes) == 1 else None
+        then = text_at(full, path) if full is not None and in_history(full) else None
         if then == own:
             raise ValueError(why + ask + "; or, as it was stamped before `text` was, write "
                              "`text` with --migrate-text")
@@ -189,13 +195,19 @@ def stamp(facts: dict, book: str, n: int, commit: str | None, dry_run: bool) -> 
                              "it with --commit (docs/WORKFLOW.md, section 6)")
         raise ValueError(why + ask)
     if commit is not None and (changes or commit != rv.get("commit")):
-        # Whatever the stamps record, the files at the commit named are the files now.
-        at = hash_at(commit, heath.lean_path(book, n))
+        # Whatever the stamps record, the commit named is in the history of HEAD, and the
+        # files at it are the files now.
+        full = resolve(commit)
+        if full is None or not in_history(full):
+            raise ValueError(f"{ref}: {commit} "
+                             + (NOT_ONE if full is None else "is not in the history of HEAD")
+                             + ": stamp with the commit whose files you read, on this branch")
+        at = hash_at(full, heath.lean_path(book, n))
         if at != lean:
             raise ValueError(f"{ref}: {rel(heath.lean_path(book, n))} at {commit} "
                              + ("is not to be found" if at is None else f"is {at}, not {lean}")
                              + ": commit the change first, then stamp with that commit")
-        then = text_at(commit, path)
+        then = text_at(full, path)
         if then != own:
             raise ValueError(f"{ref}: {rel(path)} at {commit} "
                              + ("is not to be found, or does not read" if then is None
@@ -253,10 +265,8 @@ def migrate_text(book: str, n: int, dry_run: bool) -> tuple[str, str]:
     commit = rv["commit"]
     full = resolve(commit)
     if full is None:
-        raise ValueError(f"{ref}: its stamp commit {commit} is not one commit of this clone (a "
-                         "shallow clone, or a commit never fetched; or an abbreviation of more "
-                         "than one, or a branch or tag of that name): fetch the history, then "
-                         "run this again")
+        raise ValueError(f"{ref}: its stamp commit {commit} {NOT_ONE}: fetch the history, or "
+                         "rename the branch or tag of that name, then run this again")
     if not in_history(full):
         return "reader", f"{ref}: its stamp commit {commit} is not in the history of HEAD"
     then = text_at(full, path)
@@ -300,8 +310,9 @@ def main(argv=None) -> int:
     parser.add_argument("refs", nargs="*", help="the propositions to stamp, as III.16 (default: every record)")
     parser.add_argument("--facts", type=Path, default=ROOT / "facts.json",
                         help="the facts.json to read the statements from")
-    parser.add_argument("--commit", help="the commit whose files the reviewer read; required "
-                        "when a stamp changes, and an existing commit is kept without it")
+    parser.add_argument("--commit", help="the commit whose files the reviewer read, in the "
+                        "history of HEAD; required when a stamp changes, and an existing commit "
+                        "is kept without it")
     parser.add_argument("--dry-run", action="store_true", help="say what would change; write nothing")
     parser.add_argument("--migrate-text", action="store_true",
                         help="write `text` alone, for each record whose text at its stamp commit, "

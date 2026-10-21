@@ -235,8 +235,9 @@ reviewer from the authors of the proof.
 
 - The reviewer stamps, after reading, with the commit whose files were read:
   `python3 scripts/review_stamp.py --commit <commit> III.16`. Commit the change first,
-  then stamp; the script checks that the Lean file and the record at that commit are as
-  they are now, the record's `[review]` table and fingerprint aside.
+  then stamp; the script checks that the commit is in the history of HEAD, and that the
+  Lean file and the record at that commit are as they are now, the record's `[review]`
+  table and fingerprint aside.
 - The integrator re-stamps only after reading each changed file against its record, and
   then stamps with the commit read. A record the integrator cannot confirm goes back to the
   records' owner.
@@ -246,8 +247,9 @@ reviewer from the authors of the proof.
   made stale"), and never runs `review_stamp.py` on a record they did not review.
 - The records stamped before the `text` stamp was introduced gain it by
   `python3 scripts/review_stamp.py --migrate-text`, which writes `text` alone, and only
-  for a record whose text at its own stamp commit is its text now: what was read is then
-  what the record says, so it records no new reading. It lists every other record as
+  for a record whose own stamp commit is in the history of HEAD and whose text at that
+  commit is its text now: what was read is then what the record says, so it records no
+  new reading. It lists every other record as
   needing a reader, who reads it and stamps it as above. It reads the records' history,
   so it runs in a full clone, and it may be run again at any time, as at landing, after
   the branches that change records. Until every record carries `text`, `check_fidelity.py`

@@ -988,8 +988,9 @@ def untexted_note() -> str | None:
         ", ".join(untexted[:10]) + f" and {len(untexted) - 10} more"
     return (f"note: {len(untexted)} review record(s) have no `text` stamp yet, so an edit to "
             f"their text is not yet caught: {shown}. `scripts/review_stamp.py "
-            "--migrate-text` writes it where a record is unchanged since its stamp commit, "
-            "and a reader stamps the rest (WORKFLOW.md, section 6)")
+            "--migrate-text` writes it only where a record is unchanged since its stamp "
+            "commit, a commit in the history of HEAD, and a reader stamps the rest "
+            "(WORKFLOW.md, section 6)")
 
 
 def check_review(facts, by_ref, book: str, n: int) -> None:
