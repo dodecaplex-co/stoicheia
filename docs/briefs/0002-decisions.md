@@ -3535,6 +3535,98 @@ findings:
   (S22, which named #29), both with Lean and without; it comes out too, so 20 entries
   come out and 18 remain, and both runs again pass with no "done" line.
 
+- **Heath's letters upright: required, the switch on
+  ([#159](https://github.com/jackChallis/stoicheia/issues/159)).** Every one of the 198
+  figures now sets Heath's letters upright (above), so the switch `UPRIGHT_LETTERS_REQUIRED`
+  in [`scripts/check_style.py`](../../scripts/check_style.py) is `True`: S15 fails an
+  italic letter in Euclid's figure, and S20 one in a figure at a glance, whether one letter
+  is italic or every one, and D15 is empty. D15 stays, empty, as D14 did when
+  `IDEA_LETTERS_REQUIRED` went `True`: the switch keeps its off position, and D15 is what
+  that position reports, so its description and STYLE's row say "while the switch for
+  upright letters is off". `GLYPHS_ITALIC` stays too: S26 still measures an italic letter
+  as Georgia draws it, and measuring it upright would change two of S26's clearance cases.
+  A new case in [`tests/test_check_style.py`](../../tests/test_check_style.py), `Upright`,
+  sets `font-style="italic"` in temporary copies of I.1's two figures, on one letter and on
+  the root, and requires S15's or S20's finding and no D15; on origin/main's check, where
+  the switch is `False`, its four planted cases fail. The figure fixture that the S26 and
+  SVG input cases share drew its letters italic, and now draws them upright; the sagitta
+  cases placed their near E by its italic hull, and now place the upright E at the same
+  clearance (1.975 and 1.981, against 1.979), still nearer 2 than a three-degree chord's
+  sagitta. No case is removed or loosened. [STYLE](../STYLE.md), sections 7 and 8,
+  describes the finished state: the switch clauses of S15 and S20, the D15 row and the
+  switch paragraph; its **[checked]** for upright letters, in Euclid's figure and at a
+  glance, now holds whole. The switch is never turned back to quiet a figure: the figure is
+  set upright. #159's items on `REACH_PENDING` are untouched. The protected files this
+  changes are `scripts/check_style.py` and `tests/test_check_style.py`.
+
+- **Short hashes are read from Git, and the acceptance report's revision has twelve
+  digits (#178, items one and three).** `scripts/test_safe_push.py` looked for the commits
+  a pull request's body lists by the first seven digits of each hash, and its clone
+  pinned `core.abbrev` to 7 to make that so. Git reads `core.abbrev` as a minimum width,
+  and its own width grows with the object count: eight digits on a clone of main today.
+  The pin is gone. A new helper, `short_sha`, asks the clone under test for a commit's
+  short form with `git log -1 --format=%h`, as `scripts/safe_push.py` writes the body,
+  and the three tests that sliced seven digits use it; any later test that needs a short
+  hash can too. Nothing they check is loosened. The other half of item one was already
+  done: the stage test reads the first stage line from `docs/program.toml` (the entry of
+  20 October above).
+  `scripts/check_acceptance.py` wrote the report's revision with `git rev-parse --short`.
+  Since the entry of 20 October on S12 and the word "Revision", S12 takes a hash of 7 to
+  40 digits beside "Revision" as a commit, so a regenerated report passed at Git's
+  usual widths. Under a `core.abbrev` of 4 to 6, though, the revision is shorter than
+  `heath.COMMIT` allows, and when it begins with a letter S12 puts it to Lean as a name;
+  and its width differs from one clone to another, so the same files gave different
+  reports. The generator now writes twelve digits (`REVISION_DIGITS`, with
+  `git rev-parse --short=12`), the width `safe_push.py`'s pre-flight summary gives
+  commits, in the form S12 already reads. S12, its exemptions and `REACH_PENDING` are
+  unchanged. A new test in
+  `tests/test_check_acceptance.py`, `Report.test_a_regenerated_report_passes_s12`, writes
+  the report through the generator in a small repository under `core.abbrev` 4, 9 and
+  Git's own width, and puts each report to S12's plan: on the old generator, S12 would
+  put the four-digit revision to Lean, and the three revisions differ; now each is the
+  same twelve digits, and S12 asks Lean about nothing. The committed report's revision,
+  `33602846`, is all digits, which S12 does not read as a name, so it passes as it
+  stands; its next regeneration writes twelve digits.
+  A review of that change found a second way for the report to fail S12, one that no
+  regeneration cleared. The style check reads the report a run replaces, and E5 quoted
+  each of its findings in the new report with the message's backticks. So a finding on
+  the old report, on a revision S12 put to Lean or on a name Lean does not know (B2 and
+  E2 quote such names on purpose), came back in the new report away from the word
+  "Revision"; S12 put it to Lean again, and each regeneration quoted the last finding
+  back. `check_style_rules` now quotes each of the style check's findings whole, as one
+  code span whose fence is one backtick longer than the longest run of backticks in it,
+  with a space inside each end. E5 still fails, once, with the whole finding, and a
+  reader sees it exactly as the check printed it. S12 reads a span as a name only when
+  the span is one name or opens with `name :`, and a quoted finding opens with its rule
+  and file, so S12 finds no name in it; S1, S7, S8 and S22, the style check's other
+  rules for a report, read it outside code and find nothing in it either. So the report
+  after a fixed finding passes every rule, not S12 alone. Taking the backticks away, as
+  a first version of this change did, closed S12's loop alone: GitHub would read a quoted
+  excerpt's `<book>` as an HTML tag and drop it, and set `2*a*b` in italic, and an em
+  dash or a curly quotation mark in a quoted excerpt's code would come out of code,
+  where S1 or S8 finds it in the next report, and every regeneration quotes it back. The
+  code span closes as well an older loop of the same kind, which main's generator has:
+  an S1, S8 or S22 finding on the report itself. B2's and E2's own messages are unchanged. A
+  second test, `Report.test_a_finding_on_the_old_report_is_not_quoted_back_to_s12`,
+  gives the generator three such findings through a stand-in for the style check (the
+  old report's four-digit revision, the twelve-digit one and an unknown name) and puts
+  the regenerated report to S12's plan: on the previous generator S12 would put all
+  three to Lean; now it asks about none, and E5 gives each finding as one code span. Two
+  more tests hold the rest. The first,
+  `Report.test_quoted_code_is_shown_as_the_style_check_printed_it`, quotes findings
+  whose excerpts hold `figures/<book>/NN.svg`, `h : 2*a*b = c` and a name in double
+  backticks, and reads each back, as CommonMark reads a code span, exactly as printed.
+  The second,
+  `Report.test_a_finding_on_the_old_report_is_not_quoted_back_to_the_text_rules`, puts
+  an old report with an em dash, a definition without its book and curly quotation
+  marks to the style check's rules for a report, quotes their findings through the
+  generator with one whose excerpt holds an em dash only in code, and finds that those
+  rules and S12's plan find nothing in the regenerated report. Both fail on the
+  generator that took the backticks away, whose regenerated report fails S1, S7 and S8
+  nineteen times over, and pass now. The protected files changed are
+  `scripts/test_safe_push.py`, `scripts/check_acceptance.py` and
+  `tests/test_check_acceptance.py`.
+
 - **The scaffold follows the restated Book III statements.** The protected file
   [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes [brief
   0008](0008-centre.md), step 6's restated signatures from `b260c826` for III.1, III.2,
