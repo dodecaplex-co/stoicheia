@@ -303,8 +303,8 @@ over a postulate, the reason is one of these.
   through the inside of a circle meets it (System E, Intersections 5) does the
   producing, so that proof uses no Postulate 2, though Heath's bracket gives it.
   In I.5 the statement hands us the produced sides, but Postulate 2 still underlies
-  proved rules, including `OnRay.between_of_len_lt` through `between_of_between_right`
-  and `area_swap`. I.4 reaches it through the proof of a law its derivation cites,
+  proved rules: in its own Lean the order rule `between_of_between_right`, beneath
+  `OnRay.between_of_len_lt`, and Metric 8, `area_swap`. I.4 reaches it through the proof of a law its derivation cites,
   one ray for one angle (`Superposition.Cited.holds_rayOfAngle`), by way of the proved
   Triple incidence 2, and I.6 through `area_swap` as well as I.4.
 - **Postulate 3 and Definition I.15**: circles Euclid does not draw, which keep a

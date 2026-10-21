@@ -24,10 +24,11 @@ stands.
 *21 October 2026, #150, question 2: part 4 of the restriction is now a theorem.
 `Rule.Figure` is the statement of `Rule.infer` without its cited-law hypothesis, tied to the
 locked rule by `Rule.iff_figure`, and `Rule.Figure.restrict` proves that it passes to any part
-of an interpretation that keeps the primitive relations and the straight line through any two
-of its points (`Interpretation.Embedding`), a part that may lack every point the placement
-would use. `Cited.holds_all` gives every cited law in one statement. The restriction's
-theorems are pinned by their statements as well as their axioms, in
+of an interpretation that keeps the primitive relations, every straight line through two
+distinct points, and, when one of its points lies on an ambient straight line, some straight
+line through that point (`Interpretation.Embedding`), a part that may lack every point the
+placement would use. `Cited.holds_all` gives every cited law in one statement. The
+restriction's theorems are pinned by their statements as well as their axioms, in
 [`Audit/Superposition.lean`](../../Audit/Superposition.lean). `Rule`, the lock and every
 statement are unchanged, and non-derivability stays unclaimed. Where round 4 below calls
 part 4 an inspection of `Rule.infer`, this note supersedes it; the lines that said so in
@@ -608,10 +609,10 @@ theorem this section names is pinned by its statement in
    alone. `Rule.Figure.restrict`: if the part about the figure holds in an interpretation I,
    it holds in every interpretation J embedded in I (`Interpretation.Embedding`), keeping
    incidence, betweenness, sides and the equalities of lengths, angles and areas both ways,
-   distinct points distinct, and the straight line through any two of its points (a
-   straight line of I through two distinct points of J is one of J's, and a point of J on a
-   straight line of I is on one of J's). The guards and the given facts pass from J to I,
-   the triangle guard by the kept straight lines, and the conclusion comes back. Nothing
+   distinct points distinct, every straight line of I through two distinct points of J, and,
+   when a point of J lies on a straight line of I, some straight line of J through that
+   point. The guards and the given facts pass from J to I, the triangle guard by the kept
+   straight lines, and the conclusion comes back. Nothing
    asks that J have the points B′ and C′ would go to, so the part about the figure asserts
    no placed point. The cited-law hypothesis is what the theorem leaves out. It contributes
    the laws, assumed of every point and straight line of I, and it is the one hypothesis
@@ -755,8 +756,9 @@ Astra names three kinds. Their state on the delivered branch:
    speaks of the figure's points and straight lines, save that its only existential, "some
    straight line passes through A, B and C", stands negated, in the hypothesis that ABC is a
    triangle, which ranges over every straight line. So that part, true in the plane, stays
-   true in any part of the plane that keeps the straight line through any two of its points
-   and the same lengths, angles and areas: this half of the route is now a theorem,
+   true in any part of the plane that keeps every straight line through two distinct points,
+   supplies some straight line through a point that lies on an ambient straight line, and
+   keeps the same lengths, angles and areas: this half of the route is now a theorem,
    `Rule.Figure.restrict`, for any interpretation and any part of it in the sense of
    `Interpretation.Embedding`, which keeps incidence, betweenness and sides as well, and
    distinct points distinct. Take the points with

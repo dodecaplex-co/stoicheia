@@ -316,7 +316,9 @@ commands below run the acceptance job's tests and checklist without its CI compa
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
-                                       # CI's `formal-model` job: the formal model, with Mathlib
+python3 scripts/check_model_kernel.py --self-test && python3 scripts/check_model_kernel.py
+                                       # CI's `formal-model` job: the formal model, with Mathlib,
+                                       # then its compiled proofs replayed by Lean's kernel
 python3 -I tests/test_check_acceptance.py   # CI's `acceptance` job: the comparison tests
 # After lake build, lake build Audit and Facts.lean, the checklist run:
 python3 scripts/check_acceptance.py --output "${RUNNER_TEMP:-/tmp}/acceptance/report.md" --json "${RUNNER_TEMP:-/tmp}/acceptance/verdicts.json"
@@ -345,17 +347,16 @@ fetches Mathlib's prebuilt files
 main beside the pull request. Its merge gate refuses when any reported check fails, is
 cancelled or is still running, apart from the `release-gate` job of the "Release gate"
 workflow on an ordinary pull request, even if a run remains from before its `release`
-label was removed. It requires a passing
-run of `check`, `model` and `negative`, the three names still in its `REQUIRED_CHECKS`;
-its local check judgement does not reject a skipped or missing `formal-model` or
-`acceptance` when those three pass and no other check fails, is cancelled or is still
-running. Main's ruleset requires all five checks; aligning the local presence test with it
-needs a separate protected-check change, tracked by #142. GitHub uses the ruleset when
-merging, but requiring
-`acceptance` does not by itself prove that the pull request's checklist ran: the workflow
-also runs on pushes, where that job is conditionally skipped, and GitHub accepts a skipped
-job even when it is required
+label was removed. It requires a passing run of each of the five checks that main's
+ruleset requires, `check`, `model`, `negative`, `formal-model` and `acceptance`, the names
+in its `REQUIRED_CHECKS`: a required check that is missing, or whose every run was
+skipped, holds the merge. GitHub uses the ruleset when merging, and there the two differ,
+for requiring `acceptance` does not by itself prove that the pull request's checklist
+ran: the workflow also runs on pushes, where that job is conditionally skipped, and
+GitHub accepts a skipped job even when it is required
 ([GitHub documentation](https://docs.github.com/en/pull-requests/reference/status-checks)).
+The merge gate does not count a skipped run as a pass, so it waits for the pull request's
+own run of `acceptance` to pass.
 The ruleset and the remaining merge requirements are in
 [section 10, "Landing work: pull requests"](#landing-work-pull-requests).
 

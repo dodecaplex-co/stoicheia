@@ -28,9 +28,9 @@ note = "Euclid takes K where the circles meet without proving they meet; `Prop22
 [review]
 stage = "full"
 commit = "251129b"
-reviewer = "Claude Opus 5.5, records review"
+reviewer = "GPT-6 (Codex), independent reader Aw2-reader-e"
 lean = "sha256:7231552689f848f2"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "brief 0005 stage 5, ship A wave-two records re-read, Aw2-reader-e"
 
 [review.items]
 statement = "pass"
