@@ -432,8 +432,8 @@ class ExpectationTests(unittest.TestCase):
         return {
             "construction_rules": ["Postulate1", "Tacit.circles_meet"],
             "propositions": [
-                {"ref": "I.4", "axioms": ["Tacit.len_symm"], "cited_laws": i4.get(
-                    "cited_laws", [{"law": "lenSymm", "proofs": [], "construction_rules": []}])},
+                dict({"ref": "I.4", "axioms": ["Tacit.len_symm"], "cited_laws": [
+                    {"law": "lenSymm", "proofs": [], "construction_rules": []}]}, **i4),
                 {"ref": "I.8", "axioms": ["Postulate1"], "cited_laws": [
                     {"law": "lenSymm", "proofs": [], "construction_rules": []},
                     {"law": "prop7", "proofs": [], "construction_rules": ["Postulate1"]}]},
@@ -544,6 +544,74 @@ class ExpectationTests(unittest.TestCase):
                             {"ref": "I.4", "includes": ["Tacit.len_symm"]}):
             with self.subTest(expectation=expectation):
                 self.assertFailsOnce(expectation, "needs `field` and `why`")
+
+    def test_a_malformed_predicate_fails(self):
+        # A string `excludes` was read letter by letter, and so could never fail.
+        for expectation in ({"ref": "I.4", "field": "axioms", "excludes": "Tacit.len_symm"},
+                            {"ref": "I.4", "field": "axioms", "includes": [1]},
+                            {"ref": "I.4", "field": "axioms", "count": 1},
+                            {"ref": "I.4", "field": "axioms", "count": {"is": "1"}},
+                            {"ref": "I.4", "field": "axioms",
+                             "count": {"pefix": "Tacit.", "is": 1}},
+                            {"ref": "I.4", "field": "axioms",
+                             "count": {"prefix": 1, "is": 1}}):
+            with self.subTest(expectation=expectation):
+                self.assertFailsOnce(expectation, "`includes` and `excludes` must be lists of "
+                                                  "names, and `count` an object with an "
+                                                  "integer `is`")
+
+    def test_a_field_with_no_names_cannot_be_read_by_name(self):
+        # Before #150's review these passed: `shared_steps` was read as its objects' missing
+        # `law`s, and a scalar as no names, so an `excludes` on either could never fail.
+        steps = [{"name": "Prop1.perpendicular", "brings_in": ["I.1"], "file": "f", "line": 1}]
+        facts = self.facts(shared_steps=steps, statement="If two triangles …",
+                           mixed=["Tacit.len_symm", {"law": "lenSymm"}])
+        for expectation in ({"ref": "I.4", "field": "shared_steps",
+                             "excludes": ["Prop1.perpendicular"]},
+                            {"ref": "I.4", "field": "shared_steps",
+                             "includes": ["Prop1.perpendicular"]},
+                            {"ref": "I.4", "field": "statement", "excludes": ["If"]},
+                            {"ref": "I.4", "field": "statement",
+                             "count": {"prefix": "", "is": 0}},
+                            {"ref": "I.4", "field": "mixed", "excludes": ["Tacit.len_symm"]}):
+            with self.subTest(expectation=expectation):
+                self.assertFailsOnce(expectation, "is not a list of names, an object or "
+                                                  "cited_laws, so `includes`, `excludes` and "
+                                                  "`count` cannot read it", facts=facts)
+        self.assertFailsOnce({"ref": "I.4", "field": "statement", "excludes": [],
+                              "equals": "If two triangles"},
+                             "I.4: its statement is 'If two triangles …', not 'If two "
+                             "triangles'", facts=facts)
+        self.assertEqual(self.problems(
+            {"ref": "I.4", "field": "shared_steps", "equals": steps},
+            {"ref": "I.4", "field": "statement", "excludes": [],
+             "equals": "If two triangles …"},
+            {"ref": "I.4", "field": "inherited", "includes": ["Postulate3"],
+             "excludes": ["Postulate1"], "count": {"prefix": "Post", "is": 1}},
+            facts=self.facts(shared_steps=steps, statement="If two triangles …",
+                             inherited={"Postulate3": steps})), [])
+
+    def test_a_malformed_cited_law_fails(self):
+        for cited in ([{"name": "lenSymm", "proofs": [], "construction_rules": []}],
+                      [{"law": None, "proofs": [], "construction_rules": []}],
+                      [{"law": "", "proofs": [], "construction_rules": []}],
+                      ["lenSymm"],
+                      {"lenSymm": []}):
+            facts = self.facts(cited_laws=cited)
+            for expectation in ({"ref": "I.4", "field": "cited_laws", "excludes": ["prop7"]},
+                                {"ref": "I.4", "field": "cited_laws",
+                                 "count": {"prefix": "", "is": 1}}):
+                with self.subTest(cited=cited, expectation=expectation):
+                    self.assertFailsOnce(expectation, "I.4: pinned by", facts=facts)
+                    self.assertFailsOnce(expectation, "but its cited_laws is not a list of "
+                                                      "objects each with a `law` name",
+                                         facts=facts)
+        beside = [{"law": "lenSymm", "proofs": [], "construction_rules": []},
+                  {"proofs": [], "construction_rules": ["Postulate1"]}]
+        self.assertFailsOnce({"ref": "I.4", "field": "cited_laws", "law": "lenSymm",
+                              "equals": []},
+                             "but its cited_laws is not a list of objects each with a `law` "
+                             "name", facts=self.facts(cited_laws=beside))
 
 
 if __name__ == "__main__":
