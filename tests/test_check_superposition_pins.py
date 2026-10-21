@@ -843,6 +843,34 @@ class PinTests(unittest.TestCase):
             1, commented.strip(),
             "is a pin inside a comment; commented pins do not run and are refused"),))
 
+    def test_commented_pin_with_inner_comments_is_refused(self):
+        active = PIN.format(name="Rule.Figure.restrict")
+        cases = {
+            "block with inner line comment":
+                f"/- #guard_msgs in -- note\n#check @{RESTRICT} -/\n",
+            "line comments with inner line comment":
+                f"-- #guard_msgs in -- note\n-- #check @{RESTRICT}\n",
+            "line comments with inner block comment":
+                f"-- #guard_msgs in /- note -/\n-- #check @{RESTRICT}\n",
+            "unbalanced block marker in prose":
+                f"-- ordinary prose /-\n-- #guard_msgs in\n-- #check @{RESTRICT}\n",
+            "unbalanced quote in prose":
+                f"-- ordinary prose \"\n-- #guard_msgs in\n-- #check @{RESTRICT}\n",
+        }
+        for label, commented in cases.items():
+            with self.subTest(label):
+                audit = commented + active
+                command = next((number, line.strip()) for number, line in
+                               enumerate(commented.splitlines(), 1)
+                               if f"#check @{RESTRICT}" in line)
+                code, out = self.run_check(
+                    self.brief("`Rule.Figure.restrict` holds."), audit)
+                self.assertEqual(code, 1, out)
+                self.assertNotIn("has no statement pin", out)
+                self.assert_refused(out, [], ((
+                    *command, "is a pin inside a comment; commented pins do not run and "
+                    "are refused"),))
+
     def test_line_comment_pin_across_blank_lines_is_refused_beside_an_active_duplicate(self):
         active = PIN.format(name="Derives.sound")
         for separator in ("\n", " \t\n"):

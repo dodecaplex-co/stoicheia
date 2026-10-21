@@ -442,6 +442,52 @@ def comment_bodies(text: str) -> list[tuple[int, str]]:
     return found
 
 
+def uncommented(text: str) -> str:
+    """A position-preserving view of code after comments and literals are removed."""
+    out = list(text)
+    i, n = 0, len(text)
+    while i < n:
+        in_name = i > 0 and NAME_CHAR.match(text[i - 1]) is not None
+        if text.startswith("--", i):
+            end = text.find("\n", i)
+            end = n if end < 0 else end
+            out[i:end] = " " * (end - i)
+            i = end
+        elif text.startswith("/-", i):
+            try:
+                end, _, _, _, _ = block_comment(text, i)
+            except Unreadable:
+                i += 2
+                continue
+            out[i:end] = ["\n" if c == "\n" else " " for c in text[i:end]]
+            i = end
+        elif text[i] == '"':
+            end = i + 1
+            while end < n and text[end] != '"':
+                end += 2 if text[end] == "\\" else 1
+            if end == n:
+                i += 1
+                continue
+            end += 1
+            out[i:end] = ["\n" if c == "\n" else "\0" for c in text[i:end]]
+            i = end
+        elif not in_name and (raw := RAW_STRING.match(text, i)):
+            close = '"' + raw.group(1)
+            found = text.find(close, raw.end())
+            if found < 0:
+                i = raw.end()
+                continue
+            end = found + len(close)
+            out[i:end] = ["\n" if c == "\n" else "\0" for c in text[i:end]]
+            i = end
+        elif not in_name and (char := CHAR_LITERAL.match(text, i)):
+            out[i:char.end()] = "\0" * (char.end() - i)
+            i = char.end()
+        else:
+            i += 1
+    return "".join(out)
+
+
 def lean_pieces(text: str) -> list[tuple[str, int, str]]:
     """The pieces of `lex` that Lean runs: nothing after a `#exit` is read."""
     out = []
@@ -598,8 +644,9 @@ def commented_pins(text: str) -> list[tuple[int, str]]:
     """Guarded pin commands inside comments, with their line in the whole file."""
     found = []
     for start, body in comment_bodies(text):
-        for guarded in COMMENTED_GUARDED.finditer(body):
-            pin = (start + body.count("\n", 0, guarded.start("command")),
+        code = uncommented(body)
+        for guarded in COMMENTED_GUARDED.finditer(code):
+            pin = (start + code.count("\n", 0, guarded.start("command")),
                    guarded.group("command"))
             if pin not in found:
                 found.append(pin)

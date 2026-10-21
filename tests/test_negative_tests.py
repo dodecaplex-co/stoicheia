@@ -675,8 +675,7 @@ class RestorationTests(unittest.TestCase):
                 patch.object(negative, "heath_word") as plant:
             self.assertEqual(negative.main(), 1)
         self.assertEqual(commands.call_args.args,
-                         (sys.executable, "-I", "tests/test_negative_tests.py",
-                          "RestorationTests"))
+                         (sys.executable, "-I", "tests/test_negative_tests.py"))
         plant.assert_not_called()
 
     def test_counts_only_invokes_no_lake_or_lean_build(self):
@@ -690,7 +689,7 @@ class RestorationTests(unittest.TestCase):
                 patch.object(negative, "count_markers") as counts:
             self.assertEqual(negative.main(("--counts-only",)), 0)
         self.assertEqual(commands, [
-            (sys.executable, "-I", "tests/test_negative_tests.py", "RestorationTests"),
+            (sys.executable, "-I", "tests/test_negative_tests.py"),
             (sys.executable, "-I", "tests/test_generated_counts.py"),
             (sys.executable, "-I", "tests/test_decision_entries.py"),
         ])
