@@ -72,16 +72,16 @@ theorem Prop20.collinear_iff {A B P : Point} :
     · /- BA and AP are greater than BP. -/
       exact Magnitude.ne_of_lt hBP hsum
 
-/-- **Collinearity carried across.** If `AB`, `AP`, `BP` are equal to `CD`, `CQ`, `DQ`, then
-`P` is on the straight line `AB` exactly when `Q` is on the straight line `CD`. Proved from
+/-- **Collinearity carried across.** If AB, AP, BP are equal to CD, CQ, DQ, then
+P is on the straight line AB exactly when Q is on the straight line CD. Proved from
 `Prop20.collinear_iff`. -/
 theorem Prop20.collinear_congr {A B P C D Q : Point} (hAB : ‖A B‖ = ‖C D‖)
     (hAP : ‖A P‖ = ‖C Q‖) (hBP : ‖B P‖ = ‖D Q‖) : Collinear A B P ↔ Collinear C D Q := by
   rw [Prop20.collinear_iff, Prop20.collinear_iff, hAB, hAP, len_symm P B, hBP, len_symm B A,
     hAB, len_symm Q D, len_symm D C]
 
-/-- **Between, by distances.** `P` lies between `A` and `B` exactly when it is neither end
-and `AP`, `PB` together make `AB`. Proved from `len_add_of_between` one way, and the other
+/-- **Between, by distances.** P lies between A and B exactly when it is neither end
+and AP, PB together make AB. Proved from `len_add_of_between` one way, and the other
 way from `Prop20.collinear_iff` and `between_cases`, the other two orders making something
 nothing. -/
 theorem Prop20.between_iff {A B P : Point} :
@@ -144,8 +144,8 @@ theorem Prop20.between_iff {A B P : Point} :
       rw [hzero] at hBP_lt
       exact False.elim (not_lt_zero _ hBP_lt)
 
-/-- **Between carried across.** If `AB`, `AP`, `BP` are equal to `CD`, `CQ`, `DQ`, then `P`
-is between `A` and `B` exactly when `Q` is between `C` and `D`. Proved from
+/-- **Between carried across.** If AB, AP, BP are equal to CD, CQ, DQ, then P
+is between A and B exactly when Q is between C and D. Proved from
 `Prop20.between_iff`. -/
 theorem Prop20.between_congr {A B P C D Q : Point} (hAB : ‖A B‖ = ‖C D‖)
     (hAP : ‖A P‖ = ‖C Q‖) (hBP : ‖B P‖ = ‖D Q‖) : Between A P B ↔ Between C Q D := by

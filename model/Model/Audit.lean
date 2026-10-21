@@ -49,8 +49,9 @@ public import Model.Euclidean.TripleIncidence
 A model is evidence only if its proofs do not use the laws they are meant to satisfy. This
 file imports every module of the `Model` library, and checks two things at every build.
 
-* **The library is not imported,** directly or through another file: its words are unknown
-  here, so none of its laws is in scope.
+* **The library's geometric vocabulary is not imported:** `Elements.Point` is unknown
+  here. The source and compiled-import checks permit only the four pure superposition
+  modules from the library, after auditing everything they reach.
 * **Each theorem that proves a law in the plane rests on Lean's own axioms alone,**
   `propext`, `Classical.choice` and `Quot.sound`, which Mathlib's real numbers use. No
   axiom of the library can appear, and neither can `sorryAx`, which an unfinished proof
@@ -62,9 +63,11 @@ generates from every theorem that proves a law in the plane, is audited after th
 `Model.model_exists` last, so a law's theorem is audited through it as soon as the generator
 gathers it; the theorems listed one by one before it are every law's, `exists_centre`
 among them, the copies kept under suffixed names, and `circlesMeet_self`.
+The eight retired rules keep their individual audits as derived facts even though the
+generated assembly no longer has assumption fields for them.
 -/
 
-/-! ## The library is not imported -/
+/-! ## The geometric vocabulary is not imported -/
 
 /-- error: Unknown identifier `Elements.Point` -/
 #guard_msgs in
@@ -692,7 +695,7 @@ info: 'Model.Euclidean.triple_incidence3' depends on axioms: [propext, Classical
 
 /-! ## What the assembled model rests on
 
-`euclidean_laws` gathers proofs of all 88 locked laws, with no remaining hypothesis.
+`euclidean_laws` gathers proofs of all 80 locked laws, with no remaining hypothesis.
 It and `model_exists` rest on what those proofs rest on. -/
 
 /--

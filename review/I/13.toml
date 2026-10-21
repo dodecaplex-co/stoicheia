@@ -6,6 +6,7 @@ fingerprint = "sha256:75b80d518e57f424"
 
 [route]
 kind = "euclid"
+note = "After I.13, `Elements/BookI/Prop13.lean` proves `Tacit.adjacent_eq_of_right` from I.13 and Common Notion 3, and `Tacit.inside_of_angle_add` from I.13, angle addition, positivity and the side rules. These corollaries retain the former rules' names and types; I.13's statement and argument are unchanged."
 
 [[passage]]
 at = "I say that the angles CBA, ABD are either two right angles"
@@ -14,11 +15,35 @@ note = "The statement gives the goal, in Euclid's second form, as the table abov
 
 [[passage]]
 at = "Then, since the angle CBE is equal to the two angles CBA, ABE"
+kind = "helper"
+helper = "angle_add_of_within"
+note = "Euclid reads off his figure that BA falls within the right angle CBE. In the Lean, A lies on E's side of BC because I.11 puts E on A's side of CD, of which BC is a part. `Prop13.cases` proves that A lies on C's side of BE in the case Euclid draws; with both facts, `angle_add_of_within` gives the sum."
+
+[[passage]]
+at = "Again, since the angle DBA is equal to the two angles DBE, EBA"
+kind = "helper"
+helper = "Prop13.within"
+note = "Euclid reads off his figure that BE falls within the angle DBA. `Prop13.within` proves this from BA's place within CBE, and `angle_add_of_within` gives the sum."
+
+[[passage]]
+at = "Therefore etc."
 kind = "case"
-note = "Euclid's figure has AB leaning towards C; leaning towards D is his figure with C and D exchanged (`Prop13.cases`), so one argument serves for both."
+note = "Euclid's figure has AB leaning towards C; leaning towards D is his figure with C and D exchanged (`Prop13.cases`), so one argument serves for both. The Lean also proves in `Prop13.cases` that A cannot lie on BE itself: since A and E lie on the same side of CD, A would lie on the ray from B through E and make CBA and ABD the equal right angles CBE and EBD, contrary to the unequal case, so AB leans towards C or towards D."
+
+[figure]
+case = "AB leaning towards C, as in Heath's figure"
 
 [review]
-stage = "exceptions"
-commit = "a7b8d90"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:aa3108c6a122b530"
+stage = "full"
+commit = "7285f05"
+reviewer = "Claude Opus 5.5, records review"
+lean = "sha256:2c2481ea33a0fd8d"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

@@ -3,6 +3,7 @@ import Elements.BookIII.Squares
 import Elements.BookIII.Prop01
 import Elements.BookI.Prop05
 import Elements.BookI.Prop12
+import Elements.BookI.Prop13
 import Elements.BookI.Prop17
 import Elements.BookI.Prop19
 import Elements.BookI.Helpers
@@ -53,7 +54,7 @@ theorem Prop16 {A B D E : Point} {ABC : Circle} (hD : Centre D ABC) (hA : OnCirc
   obtain ⟨L, hA_L, hE_L⟩ := Postulate1 A E hDAE'.ne₂₃
   have hD_L : ¬ OnLine D L := hDAE'.bca.off_line hA_L hE_L
   /- Every point of AE but A makes a right angle with AD: on E's ray the angle
-     is unchanged; beyond A its adjacent angle is right (System E, Diagram-angle 3). -/
+     is unchanged; beyond A its adjacent angle is right (I.13, `adjacent_eq_of_right`). -/
   have hright : ∀ {P : Point}, OnLine P L → P ≠ A → ∠ D A P = ∟ := by
     intro P hP_L hPA
     by_cases hb : Between P A E
@@ -724,7 +725,7 @@ theorem Segment.tangent_parts {A O T : Point} {α : Circle} (hO : Centre O α)
 /-- **The straight line at right angles to the radius, on the segment's side.** Let AC be a
 straight line in a circle about O, not through the centre, and S a point off AC. A straight
 line AT can be drawn at right angles to OA, with T on S's side of AC: the perpendicular at A
-[I. 11], produced beyond A if it falls on the other side (System E, Diagram-angle 3). It is
+[I. 11], produced beyond A if it falls on the other side (I.13, `adjacent_eq_of_right`). It is
 not AC itself, for every point of it but A is without the circle, and C is on it. -/
 theorem Segment.exists_tangent {A C O S : Point} {α : Circle} (hO : Centre O α)
     (hA : OnCircle A α) (hC : OnCircle C α) (hACO : ¬ Collinear A C O)

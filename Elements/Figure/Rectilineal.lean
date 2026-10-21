@@ -74,7 +74,7 @@ theorem Fitted.inside_pairwise {ps : List (Point × Point × Point)} (h : Fitted
 
 /-- **A figure glued together, taken with triangles that lie apart**: the same triangles,
 which lie apart by `Fitted.inside_pairwise`. A companion that takes `Apart` takes a glued
-figure `R` as `R.toApart`: `Prop45.figure` and `Prop14.figure` are `Prop45.apart` and
+figure R as `R.toApart`: `Prop45.figure` and `Prop14.figure` are `Prop45.apart` and
 `Prop14.apart` for it, and `Prop14.square R.toApart` draws its square. -/
 def Rectilineal.toApart (R : Rectilineal) : Apart :=
   ⟨R.pieces, R.fitted.ne_nil, R.fitted.triangle, R.fitted.inside_pairwise⟩

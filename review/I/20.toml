@@ -6,8 +6,49 @@ fingerprint = "sha256:b05b756871654980"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "For let BA be drawn through to the point D"
+kind = "helper"
+helper = "produce_longer"
+note = "Euclid draws BA through far enough to make DA equal to CA. The Lean first uses `produce_longer` to reach a point X beyond A with AX greater than AC, leaving room for I.3 to cut off AD."
+
+[[passage]]
+at = "let DA be made equal to CA, and let DC be joined"
+kind = "helper"
+helper = "between_cut"
+note = "Euclid makes DA equal to CA and takes for granted that D lies on BA produced beyond A. Heath gives no reference for the cut; the Lean uses I.3 (`Prop3`) to cut AD from AX, `between_cut` to place A between B and D, and Postulate 1 to join DC."
+
+[[passage]]
+at = "therefore the angle BCD is greater than the angle ADC"
+kind = "helper"
+helper = "angle_add_of_between"
+note = "Euclid reads off his figure that the angle ACD is part of BCD; the Lean finds the reason in A lying between B and D, so CA falls within BCD and `angle_add_of_between` splits it into BCA and ACD. The Lean uses `Triangle.angle_pos` and Common Notion 5 to make BCD greater than ACD, which equals ADC."
+
+[[passage]]
+at = "But DA is equal to AC"
+kind = "helper"
+helper = "Tacit.len_add_of_between"
+note = "Euclid replaces DA by AC in the whole DB, which consists of BA and AD. The Lean writes this sum using `Tacit.len_add_of_between`, a rule we assume, not a proof (System E, Diagram-segment 1), then substitutes the equal length AC."
+
+[[passage]]
+at = "Similarly we can prove that AB, BC are also greater than CA"
+kind = "grouped"
+note = "Euclid leaves the other two pairs to the same argument. The Lean proves once, for any triangle ABC, that BA and AC together are greater than BC, then applies this step to BAC and CBA as well."
+
+[figure]
+case = "BA and AC together greater than BC, with D on BA produced beyond A in Euclid's figure"
+
 [review]
-stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "64ccb2bb"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:143bf867e071afbd"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

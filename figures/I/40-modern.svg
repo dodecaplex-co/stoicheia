@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 290" font-family="Georgia, 'Times New Roman', serif" font-size="17" width="400" height="290">
+  <title>I.40: the modern way</title>
+  <rect x="0" y="0" width="400" height="290" rx="10" fill="#fbf7ee" />
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#a0522d" /></marker>
+  </defs>
+  <polygon points="80,80 40,240 200,240" fill="#e9dcc0" fill-opacity="0.55" />
+  <polygon points="320,80 200,240 360,240" fill="#e9dcc0" fill-opacity="0.55" />
+  <line x1="40" y1="240" x2="80" y2="80" stroke="#3b2f2f" stroke-width="1.6" />
+  <line x1="80" y1="80" x2="200" y2="240" stroke="#3b2f2f" stroke-width="1.6" />
+  <line x1="200" y1="240" x2="320" y2="80" stroke="#3b2f2f" stroke-width="1.6" />
+  <line x1="320" y1="80" x2="360" y2="240" stroke="#3b2f2f" stroke-width="1.6" />
+  <line x1="40" y1="240" x2="200" y2="240" stroke="#a0522d" stroke-width="2.4" marker-end="url(#head)" />
+  <line x1="200" y1="240" x2="360" y2="240" stroke="#a0522d" stroke-width="2.4" marker-end="url(#head)" />
+  <line x1="80" y1="80" x2="320" y2="80" stroke="#a0522d" stroke-width="2.4" marker-end="url(#head)" />
+  <circle cx="80" cy="80" r="2.6" fill="#3b2f2f" />
+  <circle cx="320" cy="80" r="2.6" fill="#3b2f2f" />
+  <circle cx="40" cy="240" r="2.6" fill="#3b2f2f" />
+  <circle cx="200" cy="240" r="2.6" fill="#3b2f2f" />
+  <circle cx="360" cy="240" r="2.6" fill="#3b2f2f" />
+  <g fill="#3b2f2f">
+    <text x="80" y="62" text-anchor="middle" font-size="17">A</text>
+    <text x="320" y="62" text-anchor="middle" font-size="17">D</text>
+    <text x="40" y="268" text-anchor="middle" font-size="17">B</text>
+    <text x="200" y="268" text-anchor="middle" font-size="17">C</text>
+    <text x="360" y="268" text-anchor="middle" font-size="17">E</text>
+    <text x="120" y="264" text-anchor="middle" font-style="italic" font-size="17">u</text>
+    <text x="280" y="264" text-anchor="middle" font-style="italic" font-size="17">u</text>
+  </g>
+</svg>

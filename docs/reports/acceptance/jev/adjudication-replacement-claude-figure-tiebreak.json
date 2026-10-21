@@ -1,0 +1,54 @@
+{
+  "reviewer": "Claude replacement figure tie-break",
+  "model": "claude-opus-5-5 (Opus 5.5)",
+  "source_revision": "39ae65c21c6b8188c0fa53bf91b6fde3ce3b11a3",
+  "replacement_reason": "fresh tie-break for conflicting replacement adjudications",
+  "independence": "Files not opened: audit-books-I-II.md, the Jev answer JSONL, the manifest, every adjudication-replacement file, any earlier adjudication output and current report verdicts. From audit-books-I-II.jsonl I read only id, state and question for the three rows, using a read-only Python command; I never printed or inspected 'expected'. That JSONL is not in the pinned commit, so it was read from the working tree. Its captions and Lean statements match the pinned book/I/NN.md and Elements/BookI/PropNN.lean. Everything else was read with git show at 39ae65c2: figures/I/{06,14,26}.svg (coordinates checked for collinearity, betweenness and lengths), heath/I/{06,14,26}.md, Elements/BookI/Prop{06,14,26}.lean, book/I/{06,14,26}.md captions, and review/I/{06,14,26}.toml [figure] and [review] entries.",
+  "rows": [
+    {
+      "id": "13-I.6-figure",
+      "record_claim": "agrees",
+      "verdict": "disagrees",
+      "checked_sources": [
+        "figures/I/06.svg@39ae65c2",
+        "heath/I/06.md@39ae65c2",
+        "Elements/BookI/Prop06.lean@39ae65c2",
+        "book/I/06.md@39ae65c2 (caption)",
+        "review/I/06.toml@39ae65c2 ([figure] case; figures = pass)"
+      ],
+      "supporting_evidence": "The SVG draws A(200,36), B(90,220), C(310,220), so AB = AC exactly, with equal angle marks at B and C. D(167,91.2) lies on BA at 0.7 of the way from B to A, so DB is about 0.7 AC and plainly not equal to AC. The figure therefore realizes neither 'AB greater than AC' nor 'DB equal to AC'. The caption only restates the supposition ('AB supposed greater than AC, with DB cut off from AB equal to AC'). It does not say which relationships the drawing cannot realize (drawn AB = AC; drawn DB shorter than AC). It also asserts DB equal to AC, which the image contradicts. The review record's [figure] entry has no note identifying the incompatibility. Under the row's rule, the unequal DB is therefore an unexcepted defect, and the caption does not match the image.",
+      "consequence": "record defect",
+      "confidence": "medium"
+    },
+    {
+      "id": "13-I.14-figure",
+      "record_claim": "agrees",
+      "verdict": "agrees",
+      "checked_sources": [
+        "figures/I/14.svg@39ae65c2",
+        "heath/I/14.md@39ae65c2",
+        "Elements/BookI/Prop14.lean@39ae65c2",
+        "book/I/14.md@39ae65c2 (caption)",
+        "review/I/14.toml@39ae65c2 ([figure] case and note; figures = pass)"
+      ],
+      "supporting_evidence": "C(55,185), B(205,185) and D(345,185) are collinear with B between C and D, matching the Lean conclusion Between C B D. C and D lie on opposite sides of AB, matching OppositeSidesOf C D A B. Measured from BD, the angles are about ABC 66° and ABD 114°, which sum to two right angles. BE (about 44° above BD) lies inside angle ABD, so ABE is less than ABD, matching 'the less to the greater' and the caption's 'BE within the angle ABD'. The only relationships the drawing cannot realize belong to the impossible supposition. The caption names both: it calls CBD 'the straight line CBD' although the supposition says BD is not in line with CB, and it states that the drawn C, B and E are not in a straight line. ABC + ABE not equalling two right angles follows directly from the named C, B, E incompatibility. Letters, incidence and sides otherwise agree.",
+      "consequence": "record confirmed",
+      "confidence": "high"
+    },
+    {
+      "id": "13-I.26-figure",
+      "record_claim": "agrees",
+      "verdict": "disagrees",
+      "checked_sources": [
+        "figures/I/26.svg@39ae65c2",
+        "heath/I/26.md@39ae65c2",
+        "Elements/BookI/Prop26.lean@39ae65c2",
+        "book/I/26.md@39ae65c2 (caption)",
+        "review/I/26.toml@39ae65c2 ([figure] case; figures = pass)"
+      ],
+      "supporting_evidence": "Triangle DEF is an exact translate of ABC: A(60,45), B(30,215), C(180,215) and D(250,45), E(220,215), F(370,215). So AB = DE and BC = EF in the drawing. G(51,96) lies on BA at 0.7 of BA, so BG is about 0.7 DE, not equal to DE. H(138,215) is between B and C with BH = 108 against EF = 150, so BH is not equal to EF. The drawing therefore realizes neither 'BG made equal to DE' nor 'BH made equal to EF', nor the suppositions AB > DE and BC > EF. The caption correctly places G between B and A and H between B and C, and it discloses that both suppositions share one triangle. But it identifies no incompatible relationship. It never says that the triangles are drawn congruent or that BG and BH are drawn unequal to DE and EF. A caption that names the supposition without identifying the incompatibility does not earn the reductio exception, so these unequal constructed segments remain defects.",
+      "consequence": "record defect",
+      "confidence": "medium"
+    }
+  ]
+}
