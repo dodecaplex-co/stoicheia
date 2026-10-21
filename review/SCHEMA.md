@@ -118,9 +118,13 @@ The page words its overlap by the kind, in the line under the enunciation and in
 book's summary, which also heads the book's index, its section of CERTIFICATE.md and its
 row of README.md. A rule that states the proposition or gives it at once "contains" it;
 a rule that supplies a step "supplies a step of a proof of it", and is never said to
-contain it. Each says too whether our proof rests on the rule, from facts.json's
-`axioms`. Every `[overlap]` names its kind, and one that does not is a fault, so no
-page words an overlap by a guess.
+contain it. Each says too whether our proof rests on all, some or none of the named
+rules, from facts.json's `axioms`; when it uses some but not all, each rule used and
+each unused is named. The table's Overlap row names the rules and gives the record's
+`note` word for word (with no note, it says by the kind that the rules contain the
+proposition, or supply a step of a proof of it); it adds the account of which rules our
+proof rests on only when the proof uses some but not all. Every `[overlap]` names its
+kind, and one that does not is a fault, so no page words an overlap by a guess.
 
 ### `[coverage]`: the clause map
 
@@ -168,10 +172,14 @@ word for its kind: "Done by `Prop6.less`", "Carried together", "A further case",
 nothing uses ([FORMALIZATION](../docs/FORMALIZATION.md), section 5). Where a sentence of
 Euclid's stands over one, as over I.5's joins, the passage whose `at` begins a sentence
 of that run of `--` lines declares it by name, and nothing else does: not a note, nor a
-`#` comment, which TOML does not read, so that the record's `text` stamp
-([#77](https://github.com/jackChallis/stoicheia/issues/77)) could not see it change. `heath.load_review` checks that `unused` lists distinct names, each one
-Lean identifier; `scripts/check_fidelity.py`, that the Lean beneath the run binds each,
-so a declaration cannot outlive its binding.
+`#` comment. `unused` is a key, which the records' `text` stamp will cover once
+[#77](https://github.com/jackChallis/stoicheia/issues/77) lands; TOML does not read a
+comment, so that stamp would never see one change. `heath.load_review` checks that
+`unused` lists distinct names, each one Lean identifier; `scripts/check_fidelity.py`,
+that the Lean beneath the run binds each, so a declaration cannot outlive its binding.
+The page does not show the key, but it does show the passage: one added only to hold
+`unused` is listed under "How the Lean follows the text", led by "Carried", as every
+passage is.
 
 ```toml
 [[passage]]

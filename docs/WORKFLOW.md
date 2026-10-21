@@ -307,6 +307,7 @@ python3 scripts/heath.py
 python3 scripts/check_fidelity.py
 python3 -I tests/test_check_style.py
 python3 -I tests/test_release_gate.py
+python3 -I tests/test_jev_models.py
 python3 scripts/check_style.py
 python3 scripts/render.py
 git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md   # prints nothing
@@ -319,8 +320,9 @@ their own, each in isolation. The first three have direct local commands; the la
 commands below run the acceptance job's tests and checklist without its CI comparison:
 
 ```sh
-python3 scripts/sweep_citations.py --self-test   # CI's `negative` job runs these two first:
-python3 scripts/sweep_citations.py     # the sweep's plants, then the sweep, which only lists
+python3 scripts/sweep_citations.py --self-test   # the sweep's plants, and below, the sweep,
+python3 scripts/sweep_citations.py     # which only lists: CI's `negative` job runs the two
+                                       # after lake build and Facts.lean, before the next line
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
@@ -378,10 +380,12 @@ The ruleset and the remaining merge requirements are in
 - **The citation sweep reads the build.** `python3 scripts/sweep_citations.py` elaborates
   a copy of each file of `Elements/` with Lean's unused-variables linter and its tactic
   analysis on, and reads every entry's proof term, so it needs `lake build` and
-  facts.json; `Staging` and `Audit` it reads when named, after their builds. Its
-  `--self-test` plants each kind of hit, and controls that must pass, in Lean outside the
-  tree. CI's `negative` job runs both after its build; the sweep there only lists, and
-  the release gate (section 10, step 10) runs it with `--fail-on-undeclared`.
+  facts.json; `Staging` and `Audit` it reads when named, after their builds, though the
+  linter passes over any declaration with a `sorry` in it, so a staged statement gives no
+  hit until its proof arrives. Its `--self-test` plants each kind of hit, and controls
+  that must pass, in Lean outside the tree. CI's `negative` job runs both after its
+  build; the sweep there only lists, and the release gate (section 10, step 10) runs it
+  with `--fail-on-undeclared`.
 - **Staging builds; it is not proved.** `lake build Staging` checks that the statements
   staged before their proofs (section 2), each with `sorry` where its proof is due, still
   build against the library they import. It builds every file under `Staging/`, whether or
@@ -418,6 +422,10 @@ The ruleset and the remaining merge requirements are in
   checks the unfinished work section, the issues' state and labels, pagination and
   unreadable replies, and that an ordinary pull request skips the release hold; fixtures
   and stand-ins supply every reply.
+- **The Jev client's model check needs no key and no network.**
+  `python3 -I tests/test_jev_models.py`, immediately after the release gate's cases, checks
+  that `scripts/audit/jev.py` refuses an answer without its model's identifier when it
+  runs, scores and resumes, with in-process replies standing in for the service.
 - **Counts in prose.** A count a script knows exactly goes between count markers and is
   rendered; the surrounding prose stays human ([STYLE](STYLE.md), section 4).
   `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`
@@ -526,8 +534,7 @@ looked into.
     (unfinished work, a prototype or a provisional answer may be on main only as such an
     issue, and holds every release until it closes); the citation sweep, `python3
     scripts/sweep_citations.py --fail-on-undeclared`, passing on the release candidate,
-    with every remaining hit fixed or declared in its record (section 6); and the wiki
-    refreshed, so that it is
+    with each hit fixed or declared in its record; and the wiki refreshed, so that it is
     reasonably correct as of its date, as its pages say, and is not expected to be more
     current than that. The hold is checked by `python3 scripts/check_release_gate.py`, by
     the `release-gate` job on the release's pull request, and by `git safe-push --merge`,
@@ -686,7 +693,15 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       `tests/certificate_expectations.json`, `Certificate/axioms.lock`,
       `tests/model/lock.sha256`, the model's law names in `tests/model/laws.toml`, and its
       account of the laws, `tests/model/MODEL.md` and `tests/model/results/`, which no
-      check reads. When they are the only check inputs a pull request changes,
+      check reads but for MODEL.md's count markers. A count between count markers
+      ([STYLE](STYLE.md), section 4) in the Markdown of a check input under
+      `Certificate/` or `tests/`, or in `review/SCHEMA.md`, such as
+      `Certificate/FIELDS.md`'s count of the lock's words, is such a value too:
+      `render.py` generates its value and `check_fidelity.py` refuses a stale one, so a
+      change to that Markdown counts as a pinned value while nothing else in it changes
+      (the same markers stand, by name and in order, as origin/main's
+      `scripts/generated_counts.py` reads them, and every other byte and the file's mode
+      are as they were). When they are the only check inputs a pull request changes,
       origin/main's failure is noted, and its own copies must pass. The expectations are
       checked one way only, each for what it says, so they count as pinned values only
       while every one of origin/main's stays, by its `ref` and `field`, with its

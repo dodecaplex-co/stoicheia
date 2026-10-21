@@ -221,7 +221,7 @@ The representations Books I–III rest on:
 | a straight line | a whole straight line, `Line`, named by any two points (Postulate 1) | producing it costs nothing | |
 | lengths, angles, areas | `Magnitude` of one kind each, added and compared only | Common Notions proved as theorems | |
 | a right angle | Definition I.10 as a predicate, and Postulate 4 making every right angle `∟` | | |
-| superposition | one rule, `Tacit.superposition`, allowed in I.4 and I.8 alone | stronger as a construction principle than System E's restricted inference rule, as [its file](../Elements/Foundations/Tacit/Superposition.lean) says; a restricted rule is being prototyped ([#75](https://github.com/jackChallis/stoicheia/issues/75)) | |
+| superposition | `Tacit.superposition`, a restricted inference in System E's style, used directly only in I.4 and I.8 | a checked derivation over symbols exports one equality of lengths, angles or triangles about the given figure; it constructs nothing inside the placement and no exported formula names the placed corners or side ([the rule](../Elements/Foundations/Tacit/Superposition.lean), [Book I's reading](briefs/book-I.md#representations)) | |
 | the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `exists_rect`, `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
 | a rectilineal figure | given with its division into triangles, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | that every figure can be so divided, and that another division gives the same sum, are not proved; Hilbert proved the second, for his measure of area | `figure-with-dissection` |
 | a circle's centre | a hypothesis, `∃ O, Centre O α`, or Postulate 3's | III.1 finds it | `centre-given` |
@@ -292,8 +292,9 @@ construction, its premises, and the diagram fact or lemma it needed.
 - **The sweep lists the candidates.** `python3 scripts/sweep_citations.py` lists every
   binding in a proof that Lean's unused-variables linter, its tactic analysis on, finds
   unused; every `obtain` whose whole result goes unused, as
-  `obtain ⟨KF, -, -⟩ := Postulate1 …`, which the linter cannot see; every `_`-named
-  binding (`have _ := h…`); and every helper that is a proof's whole conclusion (below).
+  `obtain ⟨KF, -, -⟩ := Postulate1 …`, which the linter cannot see; every `have`, `let`
+  or `obtain` whose name begins with `_` (`have _ := h…`); and every helper that is a
+  proof's whole conclusion (below).
   Each hit is fixed, or, where a sentence of Euclid's stands over the step, declared in
   the record: the passage whose `at` begins a sentence of that run of `--` lines lists
   the binding, by the name the proof gives it, in its `unused`, as `unused = ["FC", "GB"]`
