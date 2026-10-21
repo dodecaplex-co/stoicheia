@@ -46,6 +46,6 @@ note = "Like Heath's, this figure draws the impossible supposition: G, off CE, a
 
 [review]
 stage = "exceptions"
-commit = "6fbd90c0"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "529c93f7"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:fd968c0c90a4b364"
