@@ -80,6 +80,9 @@ class Repository(unittest.TestCase):
             LEAN: "-- source at the base\n",
             CHECK: "print('base')\n",
             train.DECISIONS: "## 20 October 2026\n\nA previous decision.\n",
+            # Main has the decision entries' directory, as once tooling/decision-entries
+            # lands; test_decision_entries_need_their_directory_on_main removes it.
+            "docs/decisions/README.md": "Decision entries, one to a file.\n",
             "docs/STYLE.md": "The guide at the base.\n",
             "facts.json": "{}\n",
             "tests/model/MODEL.md": "The account at the base.\n",
@@ -237,6 +240,20 @@ class TrainChecks(Repository):
         self.assertEqual(self.problems(head=head, base=main,
                                        text=body([member_row(resolved)])), [])
 
+    def test_a_conflict_is_resolved_in_a_member_that_holds_both_sides(self):
+        # WORKFLOW, "Building a train that passes": two members change the same line. The
+        # resolution is made in a branch that merges one into the other and is reviewed
+        # at that head; the train merges it with one row, the member it holds merged
+        # before it with its own row or not at all.
+        other = self.commit([self.base], {LEAN: "-- the other member's source\n"})
+        both = self.commit([self.member, other], {LEAN: "-- both members, resolved\n"})
+        alone = self.merge(self.base, both)
+        self.assertEqual(self.problems(head=alone, text=body([member_row(both)])), [])
+        first = self.merge(self.base, other)
+        after = self.merge(first, both)
+        rows = [member_row(other, "content/two"), member_row(both, "content/both")]
+        self.assertEqual(self.problems(head=after, text=body(rows)), [])
+
     def test_readme_prose_is_not_the_coordinator_s(self):
         readme = ("Prose by hand.\n<!-- scope:I -->\nGenerated row.\n<!-- /scope:I -->\n")
         base = self.commit([self.base], {"README.md": readme})
@@ -274,6 +291,32 @@ class TrainChecks(Repository):
     def test_non_markdown_decision_file_is_not_exempt(self):
         head = self.commit([self.head], {"docs/decisions/run.py": "print('unchecked')\n"})
         self.refused("changes forbidden path: docs/decisions/run.py", head=head)
+
+    def test_decision_entries_need_their_directory_on_main(self):
+        # While origin/main has no docs/decisions/ directory (absent, or a file of that
+        # name), an entry file has no allowance: in a merge or in the train's own commits.
+        for name, change in (("absent", None), ("a file", "Not a directory.\n")):
+            with self.subTest(main=name):
+                base = self.commit([self.base], {"docs/decisions/README.md": None})
+                # The entry needs a directory in the train, so the file of that name goes.
+                gone = {}
+                if change is not None:
+                    base = self.commit([base], {"docs/decisions": change})
+                    gone = {"docs/decisions": None}
+                member = self.commit([base], {LEAN: "-- reviewed source\n"})
+                merged = self.merge(base, member)
+                text = body([member_row(member)])
+                self.assertEqual(self.problems(base=base, head=merged, text=text), [])
+                own = self.commit([merged], {**gone, ENTRY: "An entry written in the train.\n"})
+                self.assertIn(f"coordinator commit {own[:12]} changes forbidden path: "
+                              f"{ENTRY}", self.problems(base=base, head=own, text=text))
+                resolved = self.commit([base, member], {
+                    **self.trees[member], **gone, ENTRY: "An entry added in the merge.\n"})
+                self.assertIn(f"merge {resolved[:12]}: resolution or added content outside "
+                              f"generated files and decisions: {ENTRY}",
+                              self.problems(base=base, head=resolved, text=text))
+                self.assertEqual(self.problems(base=base, head=self.commit(
+                    [merged], {train.DECISIONS: "The page itself.\n"}), text=text), [])
 
     def test_conflicted_generated_and_decision_files_are_allowed(self):
         for path in ("facts.json", train.DECISIONS, ENTRY):
@@ -350,9 +393,15 @@ class TrainChecks(Repository):
                     row = dict(self.row, **{key: cell})
                     self.assertEqual(self.problems(text=body([row])), [])
 
+    def own(self, cell: str, commit: str) -> str:
+        """The cell as written, its first commit name standing for `commit`, by as many
+        digits: the other names, the coordinator's or other members', stay as written."""
+        return train.COMMIT.sub(lambda match: commit[:len(match.group())], cell, count=1)
+
     def test_the_coordinator_s_written_rows_pass(self):
         # Rows as the coordinator's body writer gives them: one line each, "|" written
-        # "/", the commit named by seven or eight digits somewhere in the finding.
+        # "/", the commit named by seven or eight digits somewhere in the finding. The
+        # commit each names first is the member's, here this fixture's member.
         rows = (
             ("Ship H's bosun passed it at d6243923; its one editorial suggestion (qualify "
              "the helper fields) adopted in 005281b7; the captain re-ran fidelity.",
@@ -363,12 +412,98 @@ class TrainChecks(Repository):
             ("Records review by an independent reviewer, stamped at 2ac1625. One findings "
              "round; all items pass.",
              "Not required. review/I/02..05.toml only; no protected path."),
+            ("Independent Codex review (Standards and Spec) of d5c4f98f: no blocking or "
+             "material defect; its one editorial finding (a decisions sentence saying "
+             "negative_tests was unchanged) fixed in 0806e32c. Independent re-review of "
+             "d5c4f98f..601e13f3: nothing; main's judged_files is empty and all 15 "
+             "protected files are named. The coordinator's commit 0e205986 changes the "
+             "decisions entry's approval wording only (the owner's words of 19 and 20 "
+             "October, and #168).",
+             "Independent Codex security review of d5c4f98f: nothing blocking, material or "
+             "minor; it noted one authorised weakening, 5d200cf's pin drop, which the owner "
+             "approved on 19 October and the decisions page records. Re-review at "
+             "601e13f3: nothing. Needs the label security-review."),
+            ("Eight rounds through R3-rr8-letter (ab8e2e93); R4-rr2-letterdtd passed "
+             "(a062cbeb); its /no-mistakes commits 072d3609, 383c6c8e, 7f1f4003, 640efbb7 "
+             "passed review (R4-rr5-H10).",
+             "c32002b1 and f6e2b382 found the <use> and square-cap gaps, fixed; R4-rr3-H10 "
+             "found DTD and entity expansion (23bc3b2a), R4-rr-letterdtd the pure-Python "
+             "parser gap (a062cbeb); R4-rr2-letterdtd and R4-rr5-H10 pass."),
         )
         for code, security in rows:
             with self.subTest(code=code):
                 row = dict(self.row, code_review=code, security_review=security)
                 self.assertEqual(train.body_problems(body([row])), [])
+                row = dict(row, code_review=self.own(code, self.member),
+                           security_review=self.own(security, self.member))
                 self.assertEqual(self.problems(text=body([row])), [])
+
+    def test_the_coordinator_s_protected_row_passes(self):
+        # A member that changes protected paths, with the coordinator's written security
+        # cell, its commit the member's head.
+        member = self.commit([self.base], {CHECK: "print('reviewed check')\n"})
+        head = self.merge(self.base, member)
+        security = self.own(
+            "Protected paths .github/workflows/ci.yml, scripts/check_acceptance.py, "
+            "scripts/copy_acceptance_checks.sh and tests/test_check_acceptance.py, each "
+            "named in the decisions entry. Ship Q's independent Codex reader: PASS at "
+            "e0ca0c80; nothing loosened, no required check or pre-flight check changed, the "
+            "job reads only the repository. The PR needs the label security-review.", member)
+        code = self.own(
+            "Independent reviews through the lane (the ratchet's staged-statement case and a "
+            "misspelt gate found and fixed at 109a29f8, 6dbdd3c9); ship Q's Codex reviewer "
+            "passed the fixture fix at ba0a803f and the merged head e0ca0c80, Standards "
+            "PASS, Spec PASS.", member)
+        row = member_row(member, code_review=code, security_review=security)
+        self.assertEqual(self.problems(head=head, text=body([row], f"- check: {CHECK}")), [])
+
+    def test_review_cells_must_name_a_commit_of_the_member_s_own_history(self):
+        later = self.commit([self.member], {LEAN: "-- a later, unreviewed change\n"})
+        other = self.commit([self.base], {"docs/STYLE.md": "Another branch's guide.\n"})
+        blob = self.git("rev-parse", f"{self.member}:{LEAN}").strip()
+        tree = self.git("rev-parse", f"{self.member}^{{tree}}").strip()
+        # A ref whose name is hex digits resolves by name to a commit they do not begin.
+        name = "abcdef1" if not self.base.startswith("abcdef1") else "abcdef2"
+        self.git("update-ref", f"refs/tags/{name}", self.member)
+        for cell in (
+                "Not needed (1234567)", "skipped at 1234567", "0000000", "pending 1234567",
+                f"Reviewed the file's blob {blob[:10]}: no findings.",
+                f"Reviewed the tree {tree[:10]}: no findings.",
+                f"Reviewed main's {self.base[:10]}: no findings.",
+                f"Reviewed {other[:10]}, another branch: no findings.",
+                f"Reviewed {later[:10]}, a later commit than the member's head.",
+                f"Reviewed {self.head[:10]}, the train: no findings.",
+                f"Reviewed {name}: no findings."):
+            for key, label in (("code_review", "/code-review"),
+                               ("security_review", "/security-review")):
+                with self.subTest(cell=cell, key=key):
+                    self.refused(f"{label} names no commit of the member's own history",
+                                 text=body([dict(self.row, **{key: cell})]))
+        earlier = self.commit([self.base], {LEAN: "-- the version first reviewed\n"})
+        member = self.commit([earlier], {LEAN: "-- reviewed source\n"})
+        head = self.merge(self.base, member)
+        for commit in (member, earlier):
+            with self.subTest(commit=commit):
+                cell = f"Reviewed {commit[:7]}: no findings; 0000000 is no commit."
+                self.assertEqual(self.problems(head=head, text=body([member_row(
+                    member, code_review=cell, security_review=cell)])), [])
+
+    def test_protected_member_may_not_say_not_required_anywhere(self):
+        member = self.commit([self.base], {CHECK: "print('reviewed check')\n"})
+        head = self.merge(self.base, member)
+        text = f"- check: {CHECK}"
+        for said in ("Not required", "not required", "NOT REQUIRED", "not  required",
+                     "not-required", "not_required", "Notrequired", "not required",
+                     "Not&nbsp;required", "Not&#32;required", "not​required",
+                     "**Not** required", "Ｎot required"):
+            with self.subTest(said=said):
+                cell = f"Security reader at {member}: PASS; a second pass is {said}."
+                self.refused("/security-review says Not required for protected paths",
+                             head=head, text=body([member_row(member, security_review=cell)],
+                                                  text))
+        cell = f"Security reader at {member}: PASS; nothing is required of the next pass."
+        self.assertEqual(self.problems(head=head, text=body(
+            [member_row(member, security_review=cell)], text)), [])
 
     def test_recorded_reason(self):
         row = {**self.row, "no_mistakes": "not run: the required runner was unavailable"}

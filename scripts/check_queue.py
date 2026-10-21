@@ -6,9 +6,9 @@
     python3 scripts/check_queue.py --tree <dir> [--render]
 
 Group commands require a checkout of the supplied head. --tree checks for repeated
-dated decisions headings, read as they render (heading_date), adding freshness with
---render. Conflict markers are checked by S23 in check_style.py, in the check job on
-the same merge group.
+dated decisions headings, read as they render as far as headings and heading_date say,
+and refuses HTML <h1> and <h2> tags, adding freshness with --render. Conflict markers
+are checked by S23 in check_style.py, in the check job on the same merge group.
 
 Every merge-tree reads merge attributes from the group's base, main, never from the
 group's checkout (git --attr-source), so an entry's .gitattributes cannot change a
@@ -38,13 +38,22 @@ its decisions:entries markers, which render.py assembles from that folder
 (auto_revert.keep_decisions makes the same tree).
 
 safe_push records abbreviated harness blobs. They must resolve unambiguously to the
-full blob at the pre-flight's harness commit. The block's base must be on the group
-base's first-parent chain, and its harness that base or a later commit of the same
-chain. Older blocks without a harness field use their recorded base as that commit. The
-summary and steps must report a passing verdict and every full check its harness runs.
-The block is a declaration that anyone who can edit the pull request body can type: the
-judge checks it for consistency, not as proof that a pre-flight ran. Before the queue
-is turned on, the pre-flight's evidence needs an authenticated source.
+full blob at the pre-flight's harness commit. The block's base must be the newest
+commit of the group base's first-parent chain that the head contains, which is what
+safe_push records, and its harness that base or a later commit of the same chain. Older
+blocks without a harness field use their recorded base as that commit. The summary and
+steps must report a passing verdict and every full check its harness runs. The block
+is a declaration that anyone who can edit the pull request body can type: the judge
+checks it for consistency, not as proof that a pre-flight ran.
+
+GitHub runs the group's own copy of the workflow file, so this judge's verdict, and any
+evidence check added to it, counts only while the group's .github/workflows/ci.yml still
+calls it. The protection of .github/, scripts/ and tests/, and the authenticity of the
+pre-flight's evidence, must be held by something a group cannot change: a ruleset
+requiring code-owner review, with a CODEOWNERS file naming the owner for those paths; a
+required workflow pinned to main, if the account offers one; or a status posted by an
+App running main's code. The queue must not be turned on until one exists.
+
 ACCEPTANCE_VERDICTS names the acceptance job's JSON for proposition gap reports.
 Exit 0 means pass, 1 refused, and 2 unreadable. Standard library, Python 3.11+, git.
 """
@@ -55,6 +64,7 @@ import argparse
 import ast
 import contextlib
 import datetime
+import html
 import json
 import os
 import re
@@ -83,9 +93,17 @@ MONTHS = ("January", "February", "March", "April", "May", "June", "July",
           "August", "September", "October", "November", "December")
 # Level-one and level-two headings, as CommonMark reads them (headings), and the three
 # orders a date is written in (heading_date); \W between the parts takes punctuation and
-# separators that are not format characters, such as a no-break space.
-ATX = re.compile(r" {0,3}#{1,2}[ \t]+(.+?)(?:[ \t]+#+)?[ \t]*")
+# separators that are not format characters, such as a no-break space. No pattern here
+# backtracks over a line: the closing # sequence is taken off with str.rstrip (atx).
+ATX = re.compile(r" {0,3}#{1,2}[ \t]+(.*)")
 SETEXT = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
+# A block quote's marker, and a list item's (bullet or ordered), before a heading.
+QUOTE = re.compile(r" {0,3}>[ \t]?")
+CONTAINER = re.compile(r" {0,3}(?:>[ \t]?|(?:[-+*]|[0-9]{1,9}[.)])[ \t]+)")
+# An HTML heading tag of level one or two, which this reading refuses rather than reads.
+RAW_HEADING = re.compile(r"(?i)<h[12](?=[\s/>]|$)")
+# A link's destination or reference after its text: [text](destination), [text][label].
+LINK_TAIL = re.compile(r"\]\([^()]*\)|\]\[[^\[\]]*\]")
 # The Hangul fillers render as nothing, though Unicode counts them as letters.
 INVISIBLE = {"\u115f", "\u1160", "\u3164", "\uffa0"}
 ORDINAL = r"(?:st|nd|rd|th)?"
@@ -472,6 +490,12 @@ def preflight(repo: Path, base: str, pr: dict) -> None:
                       "chain of the group base)")
     if not ancestor(repo, against, checked):
         raise Refused("pre-flight: recorded base is not an ancestor of the head")
+    # safe_push records origin/main's tip, which the head contains: the newest commit of
+    # main's chain that the head holds. An older one is a pre-flight of another head.
+    held = set(safe_push.git(repo, "rev-list", checked).split())
+    if next((tip for tip in main_chain if tip in held), None) != against:
+        raise Refused("pre-flight: recorded base is not the newest commit of main's "
+                      "first-parent chain that the head contains")
     if harness_commit not in main_chain:
         raise Refused("pre-flight: harness commit was never main (not on the first-parent "
                       "chain of the group base)")
@@ -752,25 +776,82 @@ def exact_revert(repo: Path, pr: dict, api: GitHub) -> None:
         raise Refused("auto-revert: head is not the exact revert tree (extra change)")
 
 
+def atx(line: str) -> str | None:
+    """A level-one or level-two ATX heading's text, or None. The closing sequence, a run
+    of # after a space or tab, or the whole text, is taken off by str.rstrip, so no
+    pattern backtracks over the line."""
+    match = ATX.fullmatch(line)
+    if not match:
+        return None
+    text = match.group(1).rstrip(" \t")
+    bare = text.rstrip("#")
+    if not bare:
+        return ""
+    return bare.rstrip(" \t") if bare != text and bare[-1] in " \t" else text
+
+
+def _unwrap(line: str, markers: re.Pattern = CONTAINER) -> str:
+    """The line inside its block quote markers and, by default, its list item markers too,
+    read by position, so a line of many markers is read once."""
+    position = 0
+    while (match := markers.match(line, position)) and match.end() > position:
+        position = match.end()
+    return line[position:]
+
+
 def headings(text: str) -> list[tuple[int, str]]:
     """The page's level-one and level-two headings, with their line numbers, as they
     render: an ATX heading indented by three spaces at most, and a setext heading, a
-    paragraph underlined with = or -. Headings in code are read too, which can only
-    refuse more."""
-    lines, found = text.splitlines(), []
-    for number, line in enumerate(lines, 1):
-        if match := ATX.fullmatch(line):
-            found.append((number, match.group(1)))
+    paragraph underlined with = or -, each also inside block quotes, and an ATX heading
+    inside list items. Headings in code are read too, and a setext underline after a
+    block quote, which can only refuse more. HTML heading tags are refused instead
+    (tree_problems). Each line is read a bounded number of times."""
+    lines = text.splitlines()
+    quoted = [_unwrap(line, QUOTE) for line in lines]
+    titles = [atx(_unwrap(line)) for line in lines]
+    found = []
+    for index, line in enumerate(quoted):
+        if titles[index] is not None:
+            found.append((index + 1, titles[index]))
         elif SETEXT.fullmatch(line):
-            above = []
-            for previous in reversed(lines[:number - 1]):
-                if not previous.strip() or ATX.fullmatch(previous) \
-                        or SETEXT.fullmatch(previous):
-                    break
-                above.insert(0, previous)
-            if above:
-                found.append((number - len(above), " ".join(above)))
+            start = index
+            while start and quoted[start - 1].strip() and titles[start - 1] is None \
+                    and not SETEXT.fullmatch(quoted[start - 1]):
+                start -= 1
+            if start < index:
+                found.append((start + 1, " ".join(quoted[start:index])))
     return found
+
+
+def _without_html(text: str) -> str:
+    """The text without HTML comments and tags: a comment from <!-- to the next -->, and a
+    tag from < followed by a letter, /, ! or ? to the next >, with no < between; any other
+    < is text, as it renders. Each search resumes past the last, so a line is read in
+    linear time, however many < it holds."""
+    parts, position, nearest = [], 0, {}
+
+    def after(needle: str, start: int) -> int:
+        found = nearest.get(needle)
+        if found is None or 0 <= found < start:
+            found = nearest[needle] = text.find(needle, start)
+        return found
+
+    while (start := text.find("<", position)) >= 0:
+        parts.append(text[position:start])
+        position = start + 1
+        if text.startswith("<!--", start) and (end := after("-->", start + 2)) >= 0:
+            position = end + 3
+            continue
+        follower = text[start + 1:start + 3]
+        if follower[:1] in ("!", "?") or follower[:1].isascii() and follower[:1].isalpha() \
+                or follower[:1] == "/" and follower[1:].isascii() and follower[1:].isalpha():
+            close, reopen = after(">", start + 1), after("<", start + 1)
+            if close >= 0 and (reopen < 0 or close < reopen):
+                position = close + 1
+                continue
+        parts.append("<")
+    parts.append(text[position:])
+    return "".join(parts)
 
 
 def _month(word: str) -> int | None:
@@ -786,11 +867,14 @@ def _month(word: str) -> int | None:
 
 
 def heading_date(text: str) -> datetime.date | None:
-    """The date a heading's text names, read as it renders: after NFKC, without format
-    characters (a zero-width space, say), other invisible marks or emphasis and code
-    marks, with the month in any case or abbreviated, day first, month first or in ISO
-    order, and punctuation or other separators between the parts. A month spelt with
-    letters outside ASCII is refused, since it may be a lookalike of another."""
+    """The date a heading's text names, read as it renders: with character references
+    (&nbsp;, &#98;) read by html.unescape, without HTML comments and tags or a link's
+    destination or label, after NFKC, without format characters (a zero-width space,
+    say), other invisible marks or emphasis and code marks, with the month in any case
+    or abbreviated, day first, month first or in ISO order, and punctuation or other
+    separators between the parts. A month spelt with letters outside ASCII is refused,
+    since it may be a lookalike of another. Each step is linear in the text."""
+    text = LINK_TAIL.sub("]", _without_html(html.unescape(text)))
     text = unicodedata.normalize("NFKC", text)
     text = "".join(c for c in text if c not in INVISIBLE
                    and unicodedata.category(c) not in ("Cf", "Mn", "Me"))
@@ -823,8 +907,13 @@ def tree_problems(repo: Path, render: bool = False) -> list[str]:
     data = path.read_bytes()
     if b"\0" in data:
         raise ValueError("the decisions page is not text")
-    problems, dates = [], set()
-    for number, heading in headings(data.decode("utf-8")):
+    problems, dates, page = [], set(), data.decode("utf-8")
+    for number, line in enumerate(page.splitlines(), 1):
+        if RAW_HEADING.search(line):
+            problems.append(f"{safe_push.DECISIONS}:{number}: an HTML heading tag (<h1> or "
+                            "<h2>), which this check does not read: write the heading in "
+                            "Markdown")
+    for number, heading in headings(page):
         try:
             date = heading_date(heading)
         except Refused as error:
@@ -975,9 +1064,9 @@ def main(argv=None) -> int:
                     ordinary_entry(pr, actors, args.repo)
                     preflight(repo, base, pr)
                     intact(repo, base, head, pr)
-            # The judge runs no code of the group: the generated pages' freshness is the
-            # check job's (render.py and git status, on the same group), so rule (d) here
-            # reads files only.
+            # The judge runs none of the group's scripts: the generated pages' freshness
+            # is the check job's (render.py and git status, on the same group), so rule
+            # (d) here reads files only.
             problems = gaps(repo, base, entries) if args.gaps else tree_problems(repo, False)
     except Refused as error:
         problems = [str(error)]

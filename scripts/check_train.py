@@ -14,8 +14,10 @@ later, the standard library and Git 2.42 or later (merge-tree --write-tree came 
 from __future__ import annotations
 
 import argparse
+import html
 import re
 import sys
+import unicodedata
 from collections import Counter
 from pathlib import Path
 
@@ -37,10 +39,14 @@ PLACEHOLDER = re.compile(
     r"(?:pending|waiting|awaiting(?: (?:review|the review))?|(?:still )?to come|to ?do|"
     r"tbd|tbc|wip|queued|skipped|later|soon|in progress|n/?a|none|nothing|-+|\?+|"
     r"not (?:yet )?(?:run|done|started|reviewed)(?: yet)?|will run after (?:the )?merge)")
-# A review cell names the commit it reviewed, by 7 to 40 lower-case hex digits; on
+# A review cell names the commit it reviewed, by 7 to 40 lower-case hex digits, and with
+# a repository that commit must be one of the member's own (check_train); on
 # /security-review, "Not required" stands instead, where no protected path changed.
 COMMIT = re.compile(r"(?<![0-9A-Za-z])[0-9a-f]{7,40}(?![0-9A-Za-z])")
 NOT_REQUIRED = re.compile(r"(?i)not required\b")
+# "Not required" anywhere in the cell, however spelt: in any case, with any separators or
+# none, and through character references, compatibility forms and invisible marks.
+SAYS_NOT_REQUIRED = re.compile(r"not[\W_]*required")
 HEADINGS = ("Branch", "Head", "/code-review", "/security-review", "/no-mistakes")
 CHECK_PATHS = ("scripts/", "tests/", ".github/")
 FOUNDATION_PATHS = ("Elements/Foundations/", "Certificate/axioms.lock", "model/")
@@ -239,29 +245,38 @@ def body_problems(body: str) -> list[str]:
     return problems
 
 
-def _decision_path(path: str) -> bool:
-    """The decisions page or one of its Markdown entry files. The entry files, one per
-    decision directly under docs/decisions/, come with tooling/decision-entries, which
-    lands before this check; until then main has none, and the allowance covers only
-    such an entry."""
-    return path == DECISIONS or bool(
+def _entries_on_main(repo: Path, base: str) -> bool:
+    """Whether origin/main's tree has docs/decisions/ as a directory, where the decision
+    entry files of tooling/decision-entries live. Absent, or anything but a directory,
+    is false, and then no entry file has the decisions page's allowance."""
+    entry = git(repo, "ls-tree", base, "--", "docs/decisions").strip()
+    return bool(re.fullmatch(r"040000 tree [0-9a-f]{40,64}\tdocs/decisions", entry))
+
+
+def _decision_path(path: str, entries: bool = False) -> bool:
+    """The decisions page or, when origin/main has docs/decisions/ (entries), one of the
+    Markdown entry files directly under it."""
+    return path == DECISIONS or entries and bool(
         re.fullmatch(r"docs/decisions/[^/]+\.md", path))
 
 
 def _coordinator_path(path: str, repo: Path | None = None, old: str | None = None,
-                      new: str | None = None) -> bool:
-    """Generated files and the decisions page or a Markdown decision entry. README.md and
-    docs/PROGRAM.md are generated only between their markers: given the two revisions,
-    a change to them counts only when it leaves the rest, written by hand, as it was."""
+                      new: str | None = None, entries: bool = False) -> bool:
+    """Generated files and the decisions page, or a Markdown decision entry when origin/main
+    has docs/decisions/. README.md and docs/PROGRAM.md are generated only between their
+    markers: given the two revisions, a change to them counts only when it leaves the rest,
+    written by hand, as it was."""
     if path in GENERATED_REGIONS:
         return repo is not None and not generated_parts(repo, old, new, path)[1]
-    return under(path, (*GENERATED, "book/")) or _decision_path(path)
+    return under(path, (*GENERATED, "book/")) or _decision_path(path, entries)
 
 
-def _merge_problems(repo: Path, merge: str, parents: list[str], attrs: str) -> list[str]:
+def _merge_problems(repo: Path, merge: str, parents: list[str], attrs: str,
+                    entries: bool = False) -> list[str]:
     """Compare a merge with git's automatic tree, including every conflicted path. Merge
     attributes (merge=union, say) are read from `attrs`, origin/main's commit, never from
-    the checkout or the merged sides."""
+    the checkout or the merged sides; `entries` says whether origin/main has
+    docs/decisions/."""
     result = run(["git", f"--attr-source={attrs}", "merge-tree", "--write-tree",
                   "--name-only", "-z", "--no-messages", *parents], repo)
     if result.returncode not in (0, 1):
@@ -279,7 +294,7 @@ def _merge_problems(repo: Path, merge: str, parents: list[str], attrs: str) -> l
     paths = set(conflicts) | {p for _, p in changed_files(repo, tree, merge)}
     return [f"merge {merge[:12]}: resolution or added content outside generated files "
             f"and decisions: {path}" for path in sorted(paths)
-            if not _coordinator_path(path, repo, tree, merge)]
+            if not _coordinator_path(path, repo, tree, merge, entries)]
 
 
 def _merge_bases(repo: Path, left: str, right: str) -> list[str]:
@@ -306,13 +321,48 @@ def _commits(repo: Path, *args: str) -> set[str]:
     return set(commits)
 
 
+def _named_commits(repo: Path, cells: list[str]) -> set[str]:
+    """The commits the cells' tokens name, each token resolved as `git rev-parse --verify
+    <token>^{commit}` resolves it, all in one cat-file call. A token that is no commit, is
+    ambiguous, or resolves (as a ref name, say) to a commit whose name does not begin
+    with it, names none."""
+    tokens = list(dict.fromkeys(t for cell in cells for t in COMMIT.findall(cell)))
+    if not tokens:
+        return set()
+    result = run(["git", "cat-file", "--batch-check=%(objectname) %(objecttype)"], repo,
+                 input="".join(f"{token}^{{commit}}\n" for token in tokens))
+    lines = result.stdout.splitlines()
+    if result.returncode != 0 or len(lines) != len(tokens):
+        raise ValueError("could not resolve the commits the review cells name")
+    named = set()
+    for token, line in zip(tokens, lines):
+        if line == f"{token}^{{commit}} missing":
+            continue
+        value, _, kind = line.partition(" ")
+        if kind != "commit" or not OID.fullmatch(value):
+            raise ValueError("could not resolve the commits the review cells name")
+        if value.startswith(token):
+            named.add(value)
+    return named
+
+
+def _says_not_required(cell: str) -> bool:
+    """Whether the cell says "Not required" anywhere, however spelt."""
+    text = unicodedata.normalize("NFKC", html.unescape(cell))
+    text = "".join(c for c in text if unicodedata.category(c) not in ("Cf", "Mn", "Me"))
+    return bool(SAYS_NOT_REQUIRED.search(text.casefold()))
+
+
 def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
     """Check rules 1 to 6, returning refusals; unreadable inputs raise ValueError or Refusal.
 
     The base is origin/main's supplied tip. The train's own first-parent chain is read:
-    its merges and its own commits; a member's history is the member's. Keep-apart is
-    stricter than safe_push.keep_apart: check changes with judged content refuse even
-    when origin/main's checks pass.
+    its merges and its own commits; a member's history is the member's. Each
+    /code-review and /security-review cell must name a commit of the member's own
+    history, its head or an ancestor of it not on origin/main, and a member that changes
+    a protected path may not say "Not required" anywhere in its /security-review cell.
+    Keep-apart is stricter than safe_push.keep_apart: check changes with judged content
+    refuse even when origin/main's checks pass.
     """
     rows, declared = members_table(body), declared_new(body)
     base, sha = _commit(repo, base), _commit(repo, sha)
@@ -322,6 +372,7 @@ def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
         return ["train head does not contain the supplied base"]
     problems = _evidence(rows)
     history = _commits(repo, base)
+    entries = _entries_on_main(repo, base)
     # Rules 1 to 3 read the train's own first-parent chain: its merges of members and of
     # main, and its own commits. A member's history inside it, merges of main with their
     # resolutions included, is the member's, judged by the member's own reviews.
@@ -339,7 +390,7 @@ def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
         elif len(parents) == 2:
             if parents[1] not in history:
                 members[parents[1]] += 1
-            problems.extend(_merge_problems(repo, commit, parents, base))
+            problems.extend(_merge_problems(repo, commit, parents, base, entries))
     matched = Counter()
     for row in rows:
         heads = [head for head in members if HEAD.fullmatch(row["head"])
@@ -360,9 +411,22 @@ def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
         try:
             protected = {p for member_base in _merge_bases(repo, base, head)
                          for _, p in changed_files(repo, member_base, head) if is_protected(p)}
+            # The member's own history: its head and every ancestor not on origin/main.
+            own = _commits(repo, head, "--not", base)
+            named = {key: _named_commits(repo, [row[key]])
+                     for key in ("code_review", "security_review")}
         except (ValueError, Refusal) as error:
             raise ValueError(f"Members: {row['branch']} ({head[:12]}): {error}") from None
-        if protected and NOT_REQUIRED.match(row["security_review"]):
+        for key, label in (("code_review", "/code-review"),
+                           ("security_review", "/security-review")):
+            if key == "security_review" and not protected \
+                    and NOT_REQUIRED.match(row[key]):
+                continue
+            if not named[key] & own:
+                problems.append(f"Members: {row['branch']}: {label} names no commit of the "
+                                "member's own history (its head, or an ancestor of it not "
+                                "on origin/main)")
+        if protected and _says_not_required(row["security_review"]):
             problems.append(f"Members: {row['branch']}: /security-review says Not required "
                             f"for protected paths: {', '.join(sorted(protected))}")
     for head, count in sorted(members.items()):
@@ -378,15 +442,16 @@ def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
             if len(parents) != 1:
                 raise ValueError(f"could not read a parent for coordinator commit {commit}")
             for _, path in changed_files(repo, parents[0], commit):
-                if not _coordinator_path(path, repo, parents[0], commit):
+                if not _coordinator_path(path, repo, parents[0], commit, entries):
                     problems.append(f"coordinator commit {commit[:12]} changes forbidden "
                                     f"path: {path}")
     inputs = sorted(p for _, p in changed_files(repo, base, sha)
                     if under(p, CHECK_INPUTS) and not pinned(repo, base, sha, p))
     # Decision entry files (tooling/decision-entries) have the same allowance as the
-    # decisions page, including when safe_push's guides do not yet include their directory.
+    # decisions page once origin/main has their directory, including when safe_push's
+    # guides do not yet include it.
     judged = [p for p in judged_files(repo, base, sha)
-              if not _decision_path(p)] if inputs else []
+              if not _decision_path(p, entries)] if inputs else []
     if inputs and judged:
         problems.append(f"check changes must be kept apart from judged content: "
                         f"{', '.join(inputs)}; judged: {', '.join(judged)}")

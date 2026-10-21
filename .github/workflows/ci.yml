@@ -321,12 +321,17 @@ jobs:
           path: ${{ runner.temp }}/acceptance/
 
   queue-integrity:
-    # The judge of each merge group. It runs no code of the group: it checks out the
-    # group, takes scripts/ from the group's base (main) and runs that check_queue.py,
-    # which reads git and GitHub only; it builds nothing and renders nothing (the check
-    # job renders the same group). GitHub reads this workflow file itself from the
-    # group, so a change to .github/ is held by the pre-flight, which origin/main's
-    # harness runs, and by the security review, not by this job.
+    # The judge of each merge group. It checks out the group, takes scripts/ from the
+    # group's base (main) and runs that check_queue.py, which reads git and GitHub only;
+    # it builds nothing and renders nothing (the check job renders the same group). But
+    # GitHub runs the group's own copy of this file, so the judge's verdict, and any
+    # evidence check added later, count only while the group's ci.yml still calls them.
+    # The protection of .github/, scripts/ and tests/, and the authenticity of the
+    # pre-flight's evidence, must be held by something a group cannot change: a ruleset
+    # requiring code-owner review, with a CODEOWNERS file naming the owner for those
+    # paths; a required workflow pinned to main, if the account offers one; or a status
+    # posted by an App running main's code. The queue must not be turned on until one
+    # exists.
     runs-on: ubuntu-latest
     permissions:
       contents: read
