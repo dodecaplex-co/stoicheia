@@ -88,6 +88,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import check_style as style  # noqa: E402
+import render  # noqa: E402
 import negative_tests as plants  # noqa: E402
 
 # ---------------------------------------------------------------------------------------
@@ -2094,6 +2095,96 @@ class Modern(unittest.TestCase):
                 names = style.modern_names(selected) if selected is not None else None
                 findings = modern_rules(MODERN_GOOD, "I.47", names=names)
                 self.assertEqual("S24" in findings, paragraph is None)
+
+    def test_render_placement(self):
+        count, faults = render.modern_figure_self_check()
+        self.assertEqual(count, len(render.MODERN_FIGURE_CASES))
+        self.assertEqual(faults, [])
+
+    def test_render_page(self):
+        """Exercise the page caller too, which must preserve leading code indentation."""
+        mishnah = render.ROOT / "mishnah" / "I" / "47.md"
+        figure = render.ROOT / "figures" / "I" / "47-modern.svg"
+        read_text, exists = Path.read_text, Path.exists
+        facts, docs, records = render.load_facts(), render.load_axiom_docs(), render.load_records()
+        count, titles = render.BOOKS["I"]
+        for source, want_figure in [("Ordinary commentary.", False), ("", False),
+                                    ("**The modern way** Put $b$ here.", False),
+                                    ("    " + style.MODERN_WAY + " Put $b$ here.", False),
+                                    (COMMENT_PARAGRAPH, True), (CODE_PARAGRAPH, True)]:
+            def read(path, *args, **kwargs):
+                return source + "\n" if path == mishnah else read_text(path, *args, **kwargs)
+
+            with self.subTest(source=source), patch.object(Path, "read_text", read), \
+                    patch.object(Path, "exists", lambda path: path == figure or exists(path)):
+                if not want_figure:
+                    with self.assertRaises(SystemExit) as error:
+                        render.page("I", 47, count, titles, facts, docs, records)
+                    self.assertEqual(str(error.exception),
+                                     "I.47: figures/I/47-modern.svg exists but the mishnah "
+                                     "has no paragraph 'The modern way'")
+                    continue
+                page = render.page("I", 47, count, titles, facts, docs, records)
+                self.assertIn(source, page)
+                marker = '<p align="center"><img src="../../figures/I/47-modern.svg"'
+                self.assertEqual(marker in page, want_figure)
+                if want_figure:
+                    self.assertIn(source + "\n\n" + marker, page)
+
+    def test_render_page_without_mishnah(self):
+        mishnah = render.ROOT / "mishnah" / "I" / "47.md"
+        figure = render.ROOT / "figures" / "I" / "47-modern.svg"
+        exists = Path.exists
+        facts, docs, records = render.load_facts(), render.load_axiom_docs(), render.load_records()
+        count, titles = render.BOOKS["I"]
+        for has_figure in (False, True):
+            def present(path):
+                if path == mishnah:
+                    return False
+                if path == figure:
+                    return has_figure
+                return exists(path)
+
+            with self.subTest(has_figure=has_figure), patch.object(Path, "exists", present):
+                if has_figure:
+                    with self.assertRaises(SystemExit) as error:
+                        render.page("I", 47, count, titles, facts, docs, records)
+                    self.assertEqual(str(error.exception),
+                                     "I.47: figures/I/47-modern.svg exists but the mishnah "
+                                     "has no paragraph 'The modern way'")
+                else:
+                    page = render.page("I", 47, count, titles, facts, docs, records)
+                    self.assertIn("_Commentary to come._", page)
+                    self.assertNotIn("47-modern.svg", page)
+
+    def test_render_page_normalizes_mishnah_without_modern_figure(self):
+        mishnah = render.ROOT / "mishnah" / "I" / "01.md"
+        figure = render.ROOT / "figures" / "I" / "01-modern.svg"
+        read_text, exists = Path.read_text, Path.exists
+        facts, docs, records = render.load_facts(), render.load_axiom_docs(), render.load_records()
+        count, titles = render.BOOKS["I"]
+
+        def read(path, *args, **kwargs):
+            if path == mishnah:
+                return " Ordinary commentary.\n"
+            return read_text(path, *args, **kwargs)
+
+        def present(path):
+            return False if path == figure else exists(path)
+
+        with patch.object(Path, "read_text", read), patch.object(Path, "exists", present):
+            page = render.page("I", 1, count, titles, facts, docs, records)
+        self.assertIn("\n\nOrdinary commentary.\n\n", page)
+        self.assertNotIn("\n\n Ordinary commentary.\n\n", page)
+
+    def test_render_without_modern_figure(self):
+        figure = render.ROOT / "figures" / "I" / "01-modern.svg"
+        exists = Path.exists
+        with patch.object(Path, "exists", lambda path: path != figure and exists(path)):
+            for source in ("", "Ordinary commentary.", "    " + style.MODERN_WAY,
+                           COMMENT_PARAGRAPH):
+                with self.subTest(source=source):
+                    self.assertEqual(render.with_modern_figure(source, "I", 1), source)
 
     test_modern_cases.__doc__ = (f"S24 and S25 read {len(MODERN_CASES)} figures of the "
                                  "modern way rightly")
