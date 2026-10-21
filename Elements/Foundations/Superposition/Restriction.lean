@@ -1,12 +1,14 @@
-import Staging.Superposition.Rule
+module
+
+public import Elements.Foundations.Superposition.Soundness
 
 /-!
 # Superposition, restricted: what the rule cannot do
 
-The restriction theorem of [brief 0009](../../docs/briefs/0009-superposition.md), for the
-prototype. Astra's third answer asks for evidence that the represented derivation system
-cannot export the placement's objects as witnesses, nor take construction steps inside the
-placement. Here it is, in four parts, with a fifth in `Rule.lean`. Parts 1, 2, 3 and 5 are
+The restriction theorem of [brief 0009](../../../docs/briefs/0009-superposition.md), for the
+interpreted calculus. The represented derivation system cannot export the placement's
+objects as witnesses, nor take construction steps inside the placement. Part 1 is in
+`Syntax.lean`, parts 2 to 4 below, and part 5 in `Soundness.lean`. Parts 1, 2, 3 and 5 are
 theorems; part 4 is read off the statement of `Rule.infer`, and its one theorem is
 `Metric.holds_const`.
 
@@ -26,7 +28,8 @@ theorems; part 4 is read off the statement of `Rule.infer`, and its one theorem 
    step needs a point or a straight line the symbols do not already stand for. Every law is
    a universal statement, with nothing to construct. And every law I.4 cites is proved with
    no rule that constructs (`Cited.holds_of_drawsNothing`, `Prop4.cites_drawNothing`); I.8
-   cites I.7, whose proof draws (brief 0009, open question 4).
+   cites I.7, whose proof draws (brief 0009, question 4, approved as prototyped on
+   20 October 2026; its finishing is tracked in #150).
 4. **No hypothesis of the rule speaks of the placement.** The rule's hypotheses are the cited
    laws (from a fixed list, each a universal statement over its letters), the given facts
    and the conclusion (data over the figure's numbered symbols: no point, no straight line,
@@ -35,14 +38,15 @@ theorems; part 4 is read off the statement of `Rule.infer`, and its one theorem 
    occur only as symbols inside the derivation, and no hypothesis gives them a point or a
    straight line or quantifies over them; Astra's second observation needs a premise that
    does. This part is read off the statement of `Rule.infer`, not proved; its one theorem,
-   `Metric.holds_const`, shows only that no exported formula is unsatisfiable.
+   `Metric.holds_const`, shows that no exported formula is unsatisfiable wherever a point
+   and the required valuation of line symbols are given.
 
 What part 4 does not say. A valuation can make a true given fact equivalent to any
 proposition the proof can name, "no placement exists" among them (`valuation_encodes`): the
 symbols carry nothing, but the points the valuation chooses can. The derivation cannot see
 that, since it works on symbols and holds under every valuation (`Derives.sound`). Whether
 such a premise could still recover the placement through what the rule asserts is the
-non-derivability question, which this prototype does not claim to settle.
+non-derivability question, which these results do not claim to settle.
 
 The two observations of Astra's answer are kept as theorems, as warnings for anyone who
 tries a shorter road: a Prop-valued eliminator over every conclusion is the existential rule
@@ -51,72 +55,23 @@ classically (`eliminator_false_gives_exists`). Astra checked both in Lean 4.35; 
 restated here with thanks.
 
 What is not here: a non-derivability result, that the restricted rule with the other laws
-cannot prove the present rule. Astra's third kind of evidence asks for one only if it is
-claimed, with the fragment of rules stated; this prototype claims none (brief 0009,
+cannot prove the existential placement principle. Astra's third kind of evidence asks for
+one only if it is claimed, with the fragment of rules stated; none is claimed here (brief 0009,
 "Evidence before landing").
 -/
 
+@[expose] public section
+
 namespace Elements.Superposition
 
-variable {P L : Type}
-
-/-! ## 1. No symbol of the placement is exported -/
-
-/-- **A formula of the placement can be exported exactly when it names only the figure's
-symbols.** The rule's conclusion is a `Metric` over the figure's symbols; a formula over the
-placement's symbols is the image of one exactly when every symbol in it is the figure's. -/
-theorem exportable_iff (m : Metric (Name P)) :
-    (∃ m₀ : Metric P, m₀.map Name.given = m) ↔ ∀ n ∈ m.names, ∃ p : P, n = .given p := by
-  constructor
-  · rintro ⟨m₀, rfl⟩ n hn
-    rw [Metric.names_map, List.mem_map] at hn
-    obtain ⟨p, -, rfl⟩ := hn
-    exact ⟨p, rfl⟩
-  · intro h
-    cases m with
-    | len p q r s =>
-      obtain ⟨p, rfl⟩ := h p (by simp [Metric.names])
-      obtain ⟨q, rfl⟩ := h q (by simp [Metric.names])
-      obtain ⟨r, rfl⟩ := h r (by simp [Metric.names])
-      obtain ⟨s, rfl⟩ := h s (by simp [Metric.names])
-      exact ⟨.len p q r s, rfl⟩
-    | angle p q r s t u =>
-      obtain ⟨p, rfl⟩ := h p (by simp [Metric.names])
-      obtain ⟨q, rfl⟩ := h q (by simp [Metric.names])
-      obtain ⟨r, rfl⟩ := h r (by simp [Metric.names])
-      obtain ⟨s, rfl⟩ := h s (by simp [Metric.names])
-      obtain ⟨t, rfl⟩ := h t (by simp [Metric.names])
-      obtain ⟨u, rfl⟩ := h u (by simp [Metric.names])
-      exact ⟨.angle p q r s t u, rfl⟩
-    | area p q r s t u =>
-      obtain ⟨p, rfl⟩ := h p (by simp [Metric.names])
-      obtain ⟨q, rfl⟩ := h q (by simp [Metric.names])
-      obtain ⟨r, rfl⟩ := h r (by simp [Metric.names])
-      obtain ⟨s, rfl⟩ := h s (by simp [Metric.names])
-      obtain ⟨t, rfl⟩ := h t (by simp [Metric.names])
-      obtain ⟨u, rfl⟩ := h u (by simp [Metric.names])
-      exact ⟨.area p q r s t u, rfl⟩
-
-/-- **B′ is never exported.** A formula of the placement that names B′ (`Name.second`) is the
-image of no conclusion the rule can give. -/
-theorem not_exportable_second {m : Metric (Name P)} (h : Name.second ∈ m.names) :
-    ¬ ∃ m₀ : Metric P, m₀.map Name.given = m := fun hm => by
-  obtain ⟨p, hp⟩ := (exportable_iff m).1 hm _ h
-  exact nomatch hp
-
-/-- **C′ is never exported.** A formula of the placement that names C′ (`Name.third`) is the
-image of no conclusion the rule can give. -/
-theorem not_exportable_third {m : Metric (Name P)} (h : Name.third ∈ m.names) :
-    ¬ ∃ m₀ : Metric P, m₀.map Name.given = m := fun hm => by
-  obtain ⟨p, hp⟩ := (exportable_iff m).1 hm _ h
-  exact nomatch hp
+variable {I : Interpretation} {P L : Type}
 
 /-! ## 2. The conclusion says nothing of where the placement's symbols went -/
 
 /-- **An exported formula reads the same wherever B′, C′ and the side are.** Read in the
 placement, with B′ and C′ at any points and the side along any straight line, an exported
 formula says exactly what it says of the figure. -/
-theorem Metric.holds_place (m : Metric P) (v : Val P L) (B' C' : Point) (N : Line) :
+theorem Metric.holds_place (m : Metric P) (v : Val I P L) (B' C' : I.Point) (N : I.Line) :
     (m.map Name.given).Holds (v.place B' C' N) ↔ m.Holds v :=
   Metric.holds_map Name.given LineName.given _ m
 
@@ -127,8 +82,8 @@ valuation of the figure's symbols and the placement's three that makes the place
 context true: the same valuation, not one extended by a new point or straight line. No step
 needs an object the symbols do not already stand for. (`Derives.sound`, said of the
 placement, so that a reader can find it.) -/
-theorem Derives.no_construction {cites : List Cited} (hcites : ∀ c ∈ cites, c.Holds)
-    {Γ : List (Lit P L)} {a b c d g h : P} {l : L} (w : Val (Name P) (LineName L))
+theorem Derives.no_construction {cites : List Cited} (hcites : ∀ c ∈ cites, c.Holds I)
+    {Γ : List (Lit P L)} {a b c d g h : P} {l : L} (w : Val I (Name P) (LineName L))
     (hw : ∀ ℓ ∈ branch Γ a b c d g h l, ℓ.Holds w) {ℓ : Lit (Name P) (LineName L)}
     (dℓ : Derives cites (branch Γ a b c d g h l) ℓ) : ℓ.Holds w :=
   Derives.sound hcites w hw dℓ
@@ -138,12 +93,13 @@ theorem Derives.no_construction {cites : List Cited} (hcites : ∀ c ∈ cites, 
 Part 4 is a reading of the rule's statement, not a theorem; this section holds its one
 theorem, `Metric.holds_const`, and the warning `valuation_encodes`. -/
 
-/-- **Every exportable formula is satisfiable.** Every equality of magnitudes holds when all
-the symbols it names stand for one point X. So the rule never concludes `False` itself, nor
-any formula that fails in every figure. (Under a given valuation an exported formula can
-still be false, and can contradict the given facts; see the module's note.) -/
-theorem Metric.holds_const (m : Metric P) (X : Point) (N : L → Line) :
-    m.Holds (⟨fun _ => X, N⟩ : Val P L) := by
+/-- **Every exportable formula holds at a constant point valuation.** Given a point X and a
+valuation of the line symbols, every equality of magnitudes holds when all the point symbols
+stand for X. So, wherever such a valuation is available, no exported formula fails in every
+figure. The rule never concludes `False` itself. Under a given valuation an exported formula
+can still be false, and can contradict the given facts; see the module's note. -/
+theorem Metric.holds_const (m : Metric P) (X : I.Point) (N : L → I.Line) :
+    m.Holds (⟨fun _ => X, N⟩ : Val I P L) := by
   cases m <;> exact rfl
 
 /-- **A valuation can make a literal say anything.** The literal "0 is 1", over two point
@@ -152,12 +108,11 @@ when Q fails, for X other than Y. So a true given fact can be equivalent to any 
 the proof can name, "no placement exists" among them. The symbols carry nothing; the points
 the valuation chooses can. The derivation cannot see this, since it works on symbols and holds
 under every valuation (`Derives.sound`); whether such a premise could recover the placement
-through what the rule asserts is the non-derivability question (brief 0009). The adversarial
-review of the first design compiled the same observation for names that were points. -/
-theorem valuation_encodes (Q : Prop) {X Y : Point} (hXY : X ≠ Y) :
+through what the rule asserts is the non-derivability question (brief 0009). -/
+theorem valuation_encodes (Q : Prop) {X Y : I.Point} (hXY : X ≠ Y) :
     (Lit.pos (.eq 0 1) : Lit (Fin 2) (Fin 0)).Holds
-      ⟨fun i => if i = 0 then (haveI := Classical.propDecidable Q; if Q then X else Y) else Y,
-       Fin.elim0⟩ ↔ ¬ Q := by
+      (⟨fun i => if i = 0 then (haveI := Classical.propDecidable Q; if Q then X else Y) else Y,
+       Fin.elim0⟩ : Val I (Fin 2) (Fin 0)) ↔ ¬ Q := by
   simp only [Lit.Holds, Atom.Holds]
   by_cases hQ : Q
   · simp [hQ, hXY]
@@ -168,8 +123,8 @@ theorem valuation_encodes (Q : Prop) {X Y : Point} (hXY : X ≠ Y) :
 /-- **Astra's first observation.** An eliminator that lets the placement prove any proposition
 Q whatever is the existential rule itself: take Q to be "such points exist". This is why the
 restricted rule is stated over derivations, not over propositions. -/
-theorem eliminator_iff_exists (placed : Point → Point → Prop) :
-    (∀ Q : Prop, (∀ B' C' : Point, placed B' C' → Q) → Q) ↔ ∃ B' C' : Point, placed B' C' :=
+theorem eliminator_iff_exists (placed : I.Point → I.Point → Prop) :
+    (∀ Q : Prop, (∀ B' C' : I.Point, placed B' C' → Q) → Q) ↔ ∃ B' C' : I.Point, placed B' C' :=
   ⟨fun h => h _ fun B' C' hp => ⟨B', C', hp⟩, fun ⟨B', C', hp⟩ _ hQ => hQ B' C' hp⟩
 
 /-- **Astra's second observation.** Even an eliminator allowed only the conclusion `False`,
@@ -178,8 +133,8 @@ classical logic turns that into existence. Its premise quantifies over the place
 says none of them is placed. No hypothesis of `Rule.infer` quantifies over the placement's
 points, which are symbols in a derivation, and no rule of a derivation concludes anything
 from a contradiction. -/
-theorem eliminator_false_gives_exists (placed : Point → Point → Prop)
-    (h : (∀ B' C' : Point, placed B' C' → False) → False) : ∃ B' C' : Point, placed B' C' :=
+theorem eliminator_false_gives_exists (placed : I.Point → I.Point → Prop)
+    (h : (∀ B' C' : I.Point, placed B' C' → False) → False) : ∃ B' C' : I.Point, placed B' C' :=
   Classical.byContradiction fun hne => h fun B' C' hp => hne ⟨B', C', hp⟩
 
 end Elements.Superposition
