@@ -4678,7 +4678,9 @@ findings:
   `scripts/render.py`, `scripts/heath.py`, `review/SCHEMA.md` and
   `tests/test_check_style.py` differ by tooling/figure-every-case's check change, merged at
   `0254f4cd`, which lands before this train with its own entry; this train uses it only in
-  III.25's record, whose figure draws every case.
+  III.25's record, whose figure draws every case. That branch, merged again at `62a10c91`,
+  brings main at `78fb461d` and `554dfb0f` (#232 and #239); the paths main changed since
+  `73b97ab1` are main's, named in main's entries, and change neither the lock nor any pin.
   The merge itself writes no statement, check or expected value: each is one train's.
 
 - **III.1's construction guard, brief 0008, step 4.** `Audit/Centre.lean`, imported
@@ -4790,10 +4792,12 @@ findings:
   neither the lock nor any pin; and again with the guard at `792458f1`, which brings train
   C6b at `0a7eddc2`: the owner's words for III.25's segment kinds, the check change
   tooling/figure-every-case (`752a84fb`, landing before train C6b with its own entry) and
-  III.25's figure of every case, and changes neither the lock nor any pin; and last with
-  main at `554dfb0f` (#232, the unrun tests in CI, and #239, decision entries one file
-  each), which changes neither the lock nor any pin. The restated Book III of this train
-  is kept whole; III.1's record and commentary are this train's, since its statement no
+  III.25's figure of every case, and changes neither the lock nor any pin; with main
+  at `554dfb0f` (#232, the unrun tests in CI, and #239, decision entries one file
+  each), which changes neither the lock nor any pin; and last with the guard at
+  `77e68399`, which brings train C6b with tooling/figure-every-case at `696181c5` and
+  changes neither the lock nor any pin. The restated Book III of this train is kept whole;
+  III.1's record and commentary are this train's, since its statement no
   longer takes a centre.
   `Certificate/axioms.lock`, written again by `python3 scripts/check_fidelity.py
   --write-lock` after `lake build` and `Certificate/Facts.lean`, holds the guard side's 80
@@ -4816,7 +4820,7 @@ findings:
   superposition. The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`,
   `model/`, `scripts/`, `.github/`, `review/SCHEMA.md`, `review/terms.toml`,
   `lakefile.toml` and `lean-toolchain` that differ from `lean/centre-guard` at
-  `792458f1`, each named whole:
+  `77e68399`, each named whole:
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
   `Audit/screen.py`,
