@@ -208,8 +208,7 @@ REACH_PENDING: dict[str, tuple[str, str]] = {
     "docs/reports/mixed-angles-prototype.md": ("S12", "the report text change after #66 (147 findings)"),
     # The front pages: render.py's FRONT_LEAN_I, once stage 3's change to render.py lands.
     "book/I/front.md": ("S12", "render.py's FRONT_LEAN_I, after stage 3 (#25)"),
-    # The notes of four proofs (S22): a change to the file needs its record read again.
-    "Elements/BookI/Prop08.lean": ("S22", "the records of Books I and II (#29), with the record"),
+    # The notes of three proofs (S22): a change to the file needs its record read again.
     "Elements/BookII/Prop14.lean": ("S22", "the records of Books I and II (#29), with the record"),
     "Elements/BookIII/Prop10.lean": ("S22", "the next change to the file, with its record"),
     "Elements/BookIII/Prop19.lean": ("S22", "the next change to the file, with its record"),

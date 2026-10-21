@@ -3403,7 +3403,7 @@ findings:
   `tests/model/MODEL.md`; renewed from the lock: `model/lock.sha256` and
   `tests/model/lock.sha256`. Every check and pin of both sides stays.
 
-- **Nineteen entries come out of `REACH_PENDING`
+- **Twenty entries come out of `REACH_PENDING`
   ([#159](https://github.com/jackChallis/stoicheia/issues/159)).** Run on `8e9a1879` with
   Lean, after `lake build` and `lake build Audit`, `scripts/check_style.py` reported 19 of
   the list's 38 entries done, with no finding of any of their rules left, and this change
@@ -3426,3 +3426,7 @@ findings:
   as its mender and nine name no issue. The protected file changed is
   `scripts/check_style.py`; `tests/test_check_style.py` is unchanged, since
   `test_done_cases` and `test_done_without_lean` already test the done report.
+  After origin/main was merged at `17ae8e2a`, where the restricted rule of superposition
+  rewrote I.8's Lean, the check reported one entry more done, `Elements/BookI/Prop08.lean`
+  (S22, which named #29), both with Lean and without; it comes out too, so 20 entries
+  come out and 18 remain, and both runs again pass with no "done" line.
