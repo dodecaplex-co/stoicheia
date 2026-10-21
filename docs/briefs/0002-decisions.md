@@ -3535,6 +3535,30 @@ findings:
   (S22, which named #29), both with Lean and without; it comes out too, so 20 entries
   come out and 18 remain, and both runs again pass with no "done" line.
 
+- **Heath's letters upright: required, the switch on
+  ([#159](https://github.com/jackChallis/stoicheia/issues/159)).** Every one of the 198
+  figures now sets Heath's letters upright (above), so the switch `UPRIGHT_LETTERS_REQUIRED`
+  in [`scripts/check_style.py`](../../scripts/check_style.py) is `True`: S15 fails an
+  italic letter in Euclid's figure, and S20 one in a figure at a glance, whether one letter
+  is italic or every one, and D15 is empty. D15 stays, empty, as D14 did when
+  `IDEA_LETTERS_REQUIRED` went `True`: the switch keeps its off position, and D15 is what
+  that position reports, so its description and STYLE's row say "while the switch for
+  upright letters is off". `GLYPHS_ITALIC` stays too: S26 still measures an italic letter
+  as Georgia draws it, and measuring it upright would change two of S26's clearance cases.
+  A new case in [`tests/test_check_style.py`](../../tests/test_check_style.py), `Upright`,
+  sets `font-style="italic"` in temporary copies of I.1's two figures, on one letter and on
+  the root, and requires S15's or S20's finding and no D15; on origin/main's check, where
+  the switch is `False`, its four planted cases fail. The figure fixture that the S26 and
+  SVG input cases share drew its letters italic, and now draws them upright; the sagitta
+  cases placed their near E by its italic hull, and now place the upright E at the same
+  clearance (1.975 and 1.981, against 1.979), still nearer 2 than a three-degree chord's
+  sagitta. No case is removed or loosened. [STYLE](../STYLE.md), sections 7 and 8,
+  describes the finished state: the switch clauses of S15 and S20, the D15 row and the
+  switch paragraph; its **[checked]** for upright letters, in Euclid's figure and at a
+  glance, now holds whole. The switch is never turned back to quiet a figure: the figure is
+  set upright. #159's items on `REACH_PENDING` are untouched. The protected files this
+  changes are `scripts/check_style.py` and `tests/test_check_style.py`.
+
 - **S24 to S26 grant a name only to a letter that is one, and refuse an arc that SVG does
   not draw as an arc ([#172](https://github.com/jackChallis/stoicheia/issues/172)).** The
   two gaps that the reviews of S24 to S26 left open at train H10 are closed in the
