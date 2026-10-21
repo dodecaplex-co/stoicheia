@@ -409,8 +409,10 @@ jobs:
           fi
 
       - name: Install the pinned YAML parser the tests read the workflow with
+        # Isolated, from the runner's temporary directory, as in queue-integrity.
         if: steps.paths.outputs.run == 'true'
-        run: python3 -m pip install -r scripts/requirements-test_safe_push.txt
+        working-directory: ${{ runner.temp }}
+        run: python3 -I -m pip install -r "$GITHUB_WORKSPACE/scripts/requirements-test_safe_push.txt"
 
       - name: Check the gate every pull request lands through, guard by guard
         if: steps.paths.outputs.run == 'true'
