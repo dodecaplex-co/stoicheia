@@ -316,7 +316,7 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
             j = _find(src, "\n", i)
             marks.append(("text", i, j))
         elif src.startswith("/-", i):
-            j, nested = i + 2, 1
+            j, nested = i + 3, 1
             while j < len(src) and nested:
                 pair = src[j:j + 2]
                 nested += (pair == "/-") - (pair == "-/")
@@ -452,7 +452,8 @@ def brought_in(module: str, read: dict) -> tuple[str, str | None] | None:
         if path.is_symlink() or not path.is_file():
             continue
         if path not in read:
-            read[path] = imports(read_lean(path.read_text())[0])
+            with path.open(encoding="utf-8", newline="") as source:
+                read[path] = imports(read_lean(source.read())[0])
         for _, imported in read[path]:
             if imported is None or proposition(imported):
                 return rel(path), imported
@@ -488,7 +489,8 @@ def check_rules() -> None:
             fail(f"{rel}: a symbolic link, which the source scan does not follow; "
                  "use a regular file or directory (docs/FORMALIZATION.md, section 7)")
             continue
-        src = path.read_text()
+        with path.open(encoding="utf-8", newline="") as source:
+            src = source.read()
         code, unsure = read_lean(src)
         generator_calls = ({m.start("command") for m in MODEL_CHECK_RUN_CMD.finditer(src)}
                            if rel == "model/Check.lean" or rel.startswith("model/Check/")

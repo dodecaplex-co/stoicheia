@@ -555,8 +555,22 @@ class BookZeroImportTests(unittest.TestCase):
         (self.root / (rel or self.rel)).write_text(text, encoding="utf-8")
         return [line for line in negative.rules_in(self.root).stdout.split("\n") if line]
 
+    def findings_bytes(self, data, rel=None):
+        (self.root / (rel or self.rel)).write_bytes(data)
+        return [line for line in negative.rules_in(self.root).stdout.split("\n") if line]
+
     def refused(self, line):
         return f"{self.rel}:{line}: Book Zero must not import a proposition"
+
+    def assert_refused_directly_and_through(self, payload, direct_line):
+        self.assertEqual(self.findings_bytes(payload), [self.refused(direct_line)])
+        bridge = "Elements/Foundations/Bridge.lean"
+        self.findings_bytes(payload, bridge)
+        module = "Elements.Foundations.Bridge"
+        self.assertEqual(
+            self.findings_bytes(b"\nimport Elements.Foundations.Bridge\n"),
+            [f"{self.refused(2)}, and `{module}` brings one in: {bridge} imports "
+             "`Elements.BookI.Prop01`"])
 
     def test_each_spelling_of_the_negative_plants_is_refused_on_its_line(self):
         for what, text, *extra in negative.BOOK_ZERO_SPELLINGS:
@@ -593,6 +607,25 @@ class BookZeroImportTests(unittest.TestCase):
                            ('def s := "{ import Elements.BookI.Prop01 }"\n', 1)):
             with self.subTest(text=text):
                 self.assertEqual(self.findings(text), [self.refused(line)])
+
+    def test_comment_entry_and_lone_carriage_return_match_lean(self):
+        for payload, line in (
+                (b"/-/- -/ import Elements.BookI.Prop01\n", 1),
+                (b"-- remark\r\"\nimport Elements.BookI.Prop01\n-- \"\n", 2)):
+            with self.subTest(payload=payload):
+                self.assert_refused_directly_and_through(payload, line)
+
+    def test_genuinely_nested_and_doc_comments_keep_imports_hidden(self):
+        for payload in (
+                b"/- /- nested -/ import Elements.BookI.Prop01 -/\n",
+                b"/--/ import Elements.BookI.Prop01 -/\n",
+                b"/-! /- nested -/ import Elements.BookI.Prop01 -/\n"):
+            with self.subTest(payload=payload):
+                self.assertEqual(self.findings_bytes(payload), [])
+        self.assertEqual(
+            self.findings_bytes(
+                b"/- /- nested -/ outer -/ import Elements.BookI.Prop01\n"),
+            [self.refused(1)])
 
     def test_plain_imports_and_lean_s_own_pass(self):
         text = ("module\n\nprelude\npublic import Elements.Figure.Lines\n"
