@@ -1,4 +1,5 @@
 import Staging.Figures.Loops
+import Staging.Figures.LoopFacts
 import Elements.Figure.Sides
 import Elements.Figure.Angles
 
@@ -12,7 +13,23 @@ namespace Elements.Figures
 /-- Every point off a simple boundary admits a ray avoiding all its vertices. -/
 theorem good_ray_exists {ps : List Point} (h : SimpleLoop ps) {X : Point}
     (hX : ¬ loopBoundary ps X) : ∃ Q : Point, GoodRay ps X Q := by
-  sorry
+  /- Every corner starts a side, so is on the boundary, and differs from X. -/
+  have hne : ∀ V ∈ ps, V ≠ X := by
+    intro V hV hVX
+    obtain ⟨E, hE⟩ := outgoing_side hV
+    exact hX ⟨(V, E), hE, Or.inl hVX.symm⟩
+  /- The straight lines joining X to the corners, and a frame of three corners from
+  simplicity. A point of the frame off all those lines gives the ray. -/
+  let line (V : Point) : Line := Classical.choose (collinear_of_two X V)
+  have hline (V : Point) : OnLine X (line V) ∧ OnLine V (line V) :=
+    Classical.choose_spec (collinear_of_two X V)
+  obtain ⟨A, hA, B, -, C, -, hABC⟩ := LoopFacts.simple_frame h
+  obtain ⟨Q, -, hQ⟩ := triangle_point_avoiding hABC (ps.map line)
+  refine ⟨Q, fun hXQ => ?_, fun V hV hcol => ?_⟩
+  · exact hQ (line A) (List.mem_map_of_mem hA) (hXQ ▸ (hline A).1)
+  · obtain ⟨M, hXM, hQM, hVM⟩ := hcol
+    have he : line V = M := Tacit.line_unique (hne V hV).symm (hline V).1 (hline V).2 hXM hVM
+    exact hQ (line V) (List.mem_map_of_mem hV) (he ▸ hQM)
 
 /-- Two good rays from the same point give the same crossing parity. -/
 theorem crossing_parity_independent {ps : List Point} (h : SimpleLoop ps)
@@ -36,14 +53,30 @@ theorem loop_reverse {ps : List Point} (h : SimpleLoop ps) :
     SimpleLoop ps.reverse ∧
       (∀ X : Point, loopBoundary ps.reverse X ↔ loopBoundary ps X) ∧
       (∀ X : Point, loopRegion ps.reverse X ↔ loopRegion ps X) := by
-  sorry
+  /- The reversed outline has the same sides, each read the other way. -/
+  have hf : ∀ s : Point × Point, Prod.swap s = s ∨ Prod.swap s = s.swap := fun _ => Or.inr rfl
+  have hperm := LoopFacts.sides_reverse_perm ps
+  obtain ⟨hb, hc, hg⟩ := LoopFacts.transfer hf hperm fun _ => List.mem_reverse
+  exact ⟨LoopFacts.simple_transfer hf hperm List.length_reverse
+      (List.reverse_perm ps).nodup_iff.mpr h,
+    hb, LoopFacts.region_transfer hb hc hg⟩
 
 /-- Starting at another vertex preserves simplicity, boundary and region. -/
 theorem loop_rotate (ps qs : List Point) (h : SimpleLoop (ps ++ qs)) :
     SimpleLoop (qs ++ ps) ∧
       (∀ X : Point, loopBoundary (qs ++ ps) X ↔ loopBoundary (ps ++ qs) X) ∧
       (∀ X : Point, loopRegion (qs ++ ps) X ↔ loopRegion (ps ++ qs) X) := by
-  sorry
+  /- Read from another corner, the outline has the same sides, in another order. -/
+  have hf : ∀ s : Point × Point, id s = s ∨ id s = s.swap := fun _ => Or.inl rfl
+  have hperm : (sides (qs ++ ps)).Perm ((sides (ps ++ qs)).map id) := by
+    rw [List.map_id]
+    exact LoopFacts.sides_rotate_perm qs ps
+  obtain ⟨hb, hc, hg⟩ := LoopFacts.transfer hf hperm fun _ => by
+    simp only [List.mem_append]
+    exact or_comm
+  exact ⟨LoopFacts.simple_transfer hf hperm (by simp only [List.length_append]; omega)
+      List.perm_append_comm.nodup_iff.mp h,
+    hb, LoopFacts.region_transfer hb hc hg⟩
 
 /-- Redundant collinear vertices can be removed without changing the figure. -/
 theorem loop_normalise {ps : List Point} (h : SimpleLoop ps) :
@@ -56,24 +89,85 @@ theorem loop_normalise {ps : List Point} (h : SimpleLoop ps) :
 theorem triangle_region {A B C : Point} (h : Triangle A B C) :
     SimpleLoop [A, B, C] ∧
       ∀ X : Point, loopRegion [A, B, C] X ↔ OnOrInsideTriangle X A B C := by
-  sorry
+  /- A triangle's corners make a convex outline, whose closed region is the closed
+  triangle (`closed_triangle_sides`). From a point inside it a good ray crosses one side;
+  from a point outside, none or two. -/
+  have hc := Ext.triangle_outline h
+  have hsimple := LoopFacts.convex_simple hc
+  refine ⟨hsimple, fun X => ?_⟩
+  rw [← LoopFacts.triangle_convexRegion h]
+  constructor
+  · rintro (hb | ⟨hXb, Q, hQ, hodd⟩)
+    · exact LoopFacts.convex_boundary_region hc hb
+    · refine Classical.byContradiction fun hX => ?_
+      rcases LoopFacts.convex_count_outside hc hX hXb hQ with h0 | h2
+      · rw [h0] at hodd
+        exact absurd hodd (by decide)
+      · rw [h2] at hodd
+        exact absurd hodd (by decide)
+  · intro hX
+    by_cases hXb : loopBoundary [A, B, C] X
+    · exact Or.inl hXb
+    · obtain ⟨Q, hQ⟩ := good_ray_exists hsimple hXb
+      exact Or.inr ⟨hXb, Q, hQ, by rw [LoopFacts.convex_count_inside hc hX hXb hQ]⟩
 
 /-- A single contour has exactly its loop's region. -/
 theorem single_region (ps : List Point) (h : SimpleLoop ps) (X : Point) :
     (singleOutline ps h).region X ↔ loopRegion ps X := by
-  sorry
+  /- With one contour, the boundary is its boundary, and the depth is one exactly when
+  the point is inside it. -/
+  have hb : (singleOutline ps h).boundary X ↔ loopBoundary ps X := by
+    simp [Outline.boundary, singleOutline]
+  have hd : (singleOutline ps h).depth X % 2 = 1 ↔ loopInside ps X := by
+    unfold Outline.depth
+    by_cases hi : loopInside ps X <;> simp [singleOutline, hi]
+  unfold Outline.region Outline.inside loopRegion
+  rw [hb, hd]
+  constructor
+  · rintro (hb | ⟨-, hi⟩)
+    · exact Or.inl hb
+    · exact Or.inr hi
+  · rintro (hb | hi)
+    · exact Or.inl hb
+    · exact Or.inr ⟨hi.1, hi⟩
 
 /-- A strictly convex outline is simple, and its loop region is exactly the
 intersection of its inward closed sides. -/
 theorem convex_loop_region {cs : List Point} (h : ConvexOutline cs) :
     SimpleLoop cs ∧ ∀ X : Point, loopRegion cs X ↔ ConvexRegion cs X := by
-  sorry
+  /- Two sides meet only at a common end, each other corner being strictly on one side of
+  a side's straight line. A boundary point is in the region. From a point strictly inside,
+  a good ray crosses exactly one side; from a point outside the region, none or two. -/
+  have hsimple := LoopFacts.convex_simple h
+  refine ⟨hsimple, fun X => ⟨?_, ?_⟩⟩
+  · rintro (hb | ⟨hXb, Q, hQ, hodd⟩)
+    · exact LoopFacts.convex_boundary_region h hb
+    · refine Classical.byContradiction fun hX => ?_
+      rcases LoopFacts.convex_count_outside h hX hXb hQ with h0 | h2
+      · rw [h0] at hodd
+        exact absurd hodd (by decide)
+      · rw [h2] at hodd
+        exact absurd hodd (by decide)
+  · intro hX
+    by_cases hXb : loopBoundary cs X
+    · exact Or.inl hXb
+    · obtain ⟨Q, hQ⟩ := good_ray_exists hsimple hXb
+      exact Or.inr ⟨hXb, Q, hQ, by rw [LoopFacts.convex_count_inside h hX hXb hQ]⟩
 
 /-- A supporting line cuts out exactly the finite side of a strictly convex outline. -/
 theorem convex_supporting_side {cs : List Point} (h : ConvexOutline cs)
     {s : Point × Point} (hs : s ∈ sides cs) (X : Point) :
     (ConvexRegion cs X ∧ Collinear s.1 s.2 X) ↔ OnFiniteLine X s.1 s.2 := by
-  sorry
+  /- Beyond either end, a point of the side's straight line crosses the straight line of
+  the neighbouring side there, away from the region (`LoopFacts.convex_supporting`).
+  Conversely, the finite side is on its straight line and in the region. -/
+  constructor
+  · rintro ⟨hX, hcol⟩
+    exact LoopFacts.convex_supporting h hs hX hcol
+  · intro hX
+    refine ⟨LoopFacts.convex_boundary_region h ⟨s, hs, hX⟩, ?_⟩
+    obtain ⟨L, h₁, h₂⟩ := collinear_of_two s.1 s.2
+    exact ⟨L, h₁, h₂, LoopFacts.onFiniteLine_onLine hX h₁ h₂⟩
 
 /-- Every admitted figure is bounded, with an enclosing triangle. -/
 theorem outline_bounded (F : Outline) :
