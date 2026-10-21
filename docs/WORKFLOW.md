@@ -300,6 +300,8 @@ python3 scripts/heath.py
 python3 scripts/check_fidelity.py
 python3 -I tests/test_check_style.py
 python3 -I tests/test_release_gate.py
+python3 -I tests/test_check_superposition_pins.py
+python3 -I scripts/check_superposition_pins.py
 python3 scripts/check_style.py
 python3 scripts/render.py
 git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md   # prints nothing
@@ -402,6 +404,15 @@ The ruleset and the remaining merge requirements are in
   checks the unfinished work section, the issues' state and labels, pagination and
   unreadable replies, and that an ordinary pull request skips the release hold; fixtures
   and stand-ins supply every reply.
+- **The restriction's theorems are pinned by their statements.**
+  `python3 -I scripts/check_superposition_pins.py` checks that every theorem brief 0009's
+  section "The restriction theorem" names has a statement pin in
+  `Audit/Superposition.lean`: an `info:` docstring, a bare `#guard_msgs in`, then `#check`,
+  or `#print` for a definition. A pin Lean never runs, in a comment or after `#exit`, or
+  one whose `#guard_msgs` has options, does not count. `lake build Audit` checks that each
+  pin is what Lean prints; the script checks that the pins exist, so that a theorem the
+  brief names cannot be weakened under the same name with only its axioms pinned. Its
+  cases, `python3 -I tests/test_check_superposition_pins.py`, need no Lean and run first.
 - **Counts in prose.** A count a script knows exactly goes between count markers and is
   rendered; the surrounding prose stays human ([STYLE](STYLE.md), section 4).
   `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`

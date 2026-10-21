@@ -274,6 +274,166 @@ class RestorationTests(unittest.TestCase):
                 commands.assert_not_called()
                 self.assertEqual(source.read_bytes(), original)
 
+    def test_cited_law_plant_restores_source_and_outputs(self):
+        source = self.root / negative.SYNTAX
+        original = (REPO / negative.SYNTAX).read_bytes()
+        for interrupt in (False, True):
+            with self.subTest(interrupt=interrupt):
+                negative.failures.clear()
+                self.write(source, original)
+                self.outputs("Elements/Foundations/Superposition/Syntax")
+                self.outputs("Elements/BookI/Prop08")
+                saved = self.files()
+                def run(*cmd):
+                    self.assertEqual(cmd, ("lake", "build", "Elements.BookI.Prop08"))
+                    if source.read_bytes() == original:
+                        return self.failed_rebuild(interrupt)
+                    self.assertIn(b"  | planted\n", source.read_bytes())
+                    self.damage_outputs()
+                    return subprocess.CompletedProcess(cmd, 1, "", f"error: {negative.HOLDS_ALL}"
+                                                       ":84:2: Missing cases:\nCited.planted\n")
+                with patch.object(negative, "run", side_effect=run) as commands:
+                    if interrupt:
+                        with self.assertRaises(KeyboardInterrupt):
+                            negative.cited_law_unproved()
+                    else:
+                        negative.cited_law_unproved()
+                        self.assertEqual(negative.failures, ["the restored I.8 build: exit 1"])
+                self.assertEqual(commands.call_count, 2)
+                self.assertEqual(source.read_bytes(), original)
+                self.assertEqual(self.files(), saved)
+
+    def test_cited_law_plant_marks_the_flag_only_where_it_stands(self):
+        source = self.root / negative.SYNTAX
+        with_flag = (REPO / negative.SYNTAX).read_text()
+        flag = "def Cited.drawsNothing : Cited → Bool\n"
+        without = re.sub(r"/-- The laws whose proofs[^\n]*\n[^\n]*\n" + re.escape(flag)
+                         + r"(  \|[^\n]*\n)*", "", with_flag) if flag in with_flag else with_flag
+        self.assertNotIn(flag, without)
+        for text, marked in ((with_flag, flag in with_flag), (without, False)):
+            with self.subTest(marked=marked):
+                negative.failures.clear()
+                self.write(source, text.encode())
+                calls = []
+                def run(*cmd):
+                    calls.append(source.read_text())
+                    if len(calls) == 2:
+                        return subprocess.CompletedProcess(cmd, 0, "", "")
+                    self.assertEqual("  | planted => false\n" in calls[0], marked)
+                    return subprocess.CompletedProcess(cmd, 1, "", f"error: {negative.HOLDS_ALL}"
+                                                       ":84:2: Missing cases:\nCited.planted\n")
+                with patch.object(negative, "run", side_effect=run):
+                    negative.cited_law_unproved()
+                self.assertEqual(negative.failures, [])
+                self.assertEqual(source.read_text(), text)
+
+    def test_cited_law_refused_elsewhere_is_not_holds_all(self):
+        source = self.root / negative.SYNTAX
+        source.parent.mkdir(parents=True, exist_ok=True)
+        source.write_bytes((REPO / negative.SYNTAX).read_bytes())
+        def run(*cmd):
+            return subprocess.CompletedProcess(cmd, 1, "", (
+                "error: Elements/Figure/Superposition.lean:109:2: Missing cases:\n"
+                f"error: {negative.HOLDS_ALL}:84:2: Missing cases:\nCited.planted\n"))
+        with patch.object(negative, "run", side_effect=run):
+            negative.cited_law_unproved()
+        self.assertTrue(any("also refused outside" in f and "Elements/Figure/Superposition.lean"
+                            in f for f in negative.failures), negative.failures)
+
+    def test_figure_guard_runs_differ_in_the_guard_alone(self):
+        original = (REPO / negative.RESTRICTION).read_text()
+        control = negative.plant_figure_guard(original, negative.OVER_THE_FIGURE)
+        plant = negative.plant_figure_guard(original, negative.OVER_ALL_POINTS)
+        self.assertEqual(control.replace(negative.OVER_THE_FIGURE, "GUARD"),
+                         plant.replace(negative.OVER_ALL_POINTS, "GUARD"))
+        for text in (control, plant):
+            proof = text[text.index(negative.RESTRICT):]
+            self.assertIn("hh hX hΓ", proof)
+            self.assertIn(negative.THROUGH_THE_EMBEDDING, proof)
+            self.assertTrue(text.endswith(f"#print axioms {negative.RESTRICT_NAME}\n"))
+            # Rule.iff_figure and its docstring are left out, and nothing else.
+            self.assertNotIn(negative.IFF_FIGURE, text)
+            self.assertNotIn("for laws that hold.**", text)
+            self.assertNotIn("\n\n\n", text)
+            self.assertIn("def Rule.Figure", text)
+            self.assertIn("structure Interpretation.Embedding", text)
+        start = original.index("/-- **The rule is its part about the figure")
+        iff = original[start:original.index("\n\n", original.index(negative.IFF_FIGURE))]
+        edited = ["      ¬ I.OnLine (v.pt h) (v.line l) → (∀ ℓ ∈ Γ, ℓ.Holds v) → φ.Holds v",
+                  "  intro n m Γ a b c d g h l φ dφ v hT hd hg hdg hh hΓ"]
+        removed = [line for line in original.splitlines() if line not in plant.splitlines()]
+        self.assertEqual(sorted(removed), sorted(iff.splitlines() + edited))
+
+    def test_figure_guard_needs_the_control_to_compile_and_the_plant_to_fail(self):
+        source = self.root / negative.RESTRICTION
+        original = (REPO / negative.RESTRICTION).read_bytes()
+        proved = (f"'{negative.RESTRICT_NAME}' depends on axioms: "
+                  "[propext, Classical.choice, Quot.sound]\n")
+        sorried = (f"'{negative.RESTRICT_NAME}' depends on axioms: "
+                   "[propext, sorryAx, Classical.choice, Quot.sound]\n")
+        # (label, the control's errors and axioms, the plant's, the failure expected); a
+        # run exits 1 when it has an error, or when a fourth item says so.
+        cases = (
+            ("caught", ([], proved), (["restrict"], sorried), None),
+            ("the control refused inside the theorem", (["restrict"], sorried),
+             (["restrict"], sorried), "the control"),
+            ("the control refused elsewhere", (["other"], proved), (["restrict"], sorried),
+             "the control"),
+            ("the control failing with no error read", ([], proved, 1),
+             (["restrict"], sorried), "the control"),
+            ("the control resting on sorry", ([], sorried), (["restrict"], sorried),
+             "the control"),
+            ("the control's axioms not printed", ([], ""), (["restrict"], sorried),
+             "the control"),
+            ("the plant refused outside the theorem", ([], proved), (["other"], proved),
+             "not caught by Rule.Figure.restrict alone"),
+            ("the plant refused inside and outside", ([], proved),
+             (["restrict", "other"], sorried), "not caught by Rule.Figure.restrict alone"),
+            ("the plant compiled", ([], proved), ([], proved),
+             "not caught by Rule.Figure.restrict alone"),
+            ("the plant refused but proved", ([], proved), (["restrict"], proved),
+             "not caught by Rule.Figure.restrict alone"),
+        )
+        for label, control, plant, expected in cases:
+            with self.subTest(label):
+                negative.failures.clear()
+                self.write(source, original)
+                calls = []
+                def run(*cmd):
+                    self.assertEqual(cmd, ("lake", "env", "lean", negative.RESTRICTION))
+                    text = source.read_text()
+                    is_control = negative.OVER_THE_FIGURE in text
+                    self.assertNotEqual(is_control, negative.OVER_ALL_POINTS in text)
+                    self.assertNotIn(negative.IFF_FIGURE, text)
+                    calls.append(is_control)
+                    line = {"restrict": negative.declaration_lines(text, negative.RESTRICT)[2],
+                            "other": 1}
+                    errors, axioms, *code = control if is_control else plant
+                    return subprocess.CompletedProcess(
+                        cmd, code[0] if code else int(bool(errors)), axioms, "".join(
+                            f"{negative.RESTRICTION}:{line[e]}:5: error: Type mismatch\n"
+                            for e in errors))
+                with patch.object(negative, "run", side_effect=run):
+                    negative.figure_guard_over_all_points()
+                self.assertEqual(source.read_bytes(), original)
+                if expected is None:
+                    self.assertEqual(negative.failures, [])
+                    self.assertEqual(calls, [True, False])
+                else:
+                    self.assertEqual(len(negative.failures), 1, negative.failures)
+                    self.assertIn(expected, negative.failures[0])
+                    if expected == "the control":
+                        self.assertEqual(calls, [True])
+
+    def test_figure_guard_restores_the_source_when_interrupted(self):
+        source = self.root / negative.RESTRICTION
+        original = (REPO / negative.RESTRICTION).read_bytes()
+        self.write(source, original)
+        with patch.object(negative, "run", side_effect=KeyboardInterrupt), \
+                self.assertRaises(KeyboardInterrupt):
+            negative.figure_guard_over_all_points()
+        self.assertEqual(source.read_bytes(), original)
+
     def test_failed_regressions_stop_before_any_plant(self):
         with patch.object(negative, "run", return_value=subprocess.CompletedProcess(
                 [], 1, "", "regression failed")) as commands, \
