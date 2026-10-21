@@ -72,7 +72,8 @@ theorem Prop1.within {A B D G : Point} {ABC : Circle} (hG : Centre G ABC) (hA : 
 /-- At a point A of the straight line AD, only one straight line is at right
 angles to it. Euclid takes this for granted in "the greater to the less". With E
 and F on one side of AD, the equal right angles put F on AE; on opposite
-sides, EA produced beyond A makes a right angle on F's side. -/
+sides, EA produced beyond A makes a right angle on F's side, since the two angles at
+A with AD, one of them right, together make two right angles [I. 13]. -/
 theorem Prop1.perpendicular {A D E F : Point} (hE : Triangle D A E) (hF : Triangle D A F)
     (hDAE : ∠ D A E = ∟) (hDAF : ∠ D A F = ∟) : Collinear A E F := by
   have hAD : A ≠ D := hE.ne₁₂.symm
@@ -85,7 +86,12 @@ theorem Prop1.perpendicular {A D E F : Point} (hE : Triangle D A E) (hF : Triang
     obtain ⟨E', hE'_M, hEAE', -⟩ := Postulate2 hE_M hA_M hE.ne₂₃.symm []
     have hD_M : ¬ OnLine D M := fun hD => hE ⟨M, hD, hA_M, hE_M⟩
     have hEAD : ∠ E A D = ∟ := by rw [angle_symm hE.ne₂₃.symm hE.ne₁₂]; exact hDAE
-    have hDAE' : ∠ D A E' = ∟ := (adjacent_eq_of_right hE_M hE'_M hEAE' hD_M hEAD).symm.trans hEAD
+    /- The angles EAD, DAE' together make two right angles [I. 13]; EAD is right, so
+       taking it away leaves DAE' right [C.N. 3]. -/
+    have h13 : ∠ E A D + ∠ D A E' = ∟ + ∟ :=
+      BookI.Prop13 hEAE' (Triangle.of_line hE_M hE'_M (ne_of_between_ends hEAE') hD_M)
+    rw [hEAD, add_comm ∟] at h13
+    have hDAE' : ∠ D A E' = ∟ := CommonNotion3 h13 rfl
     have hE'_L : ¬ OnLine E' L := fun h => hE_L (on_line_of_between (between_symm hEAE') h hA_L)
     have hFE' : SameSide F E' L := same_side_of_opposite_sides
       ⟨hE_L, hF_L, fun h => hs (same_side_symm h)⟩ ⟨hE_L, hE'_L, pasch3 hEAE' hA_L⟩

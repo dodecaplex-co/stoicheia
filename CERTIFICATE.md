@@ -129,8 +129,8 @@ What the proofs show:
 
 | | Prop | Statement | Argument | Heath's references | Lean cites | Postulates | Definitions | C.N. | Tacit rules (how many) | Own rules (all kinds) | Through lemmas (all kinds) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| ✅ | [III.1](book/III/01.md) | whole | Euclid's | I.8 | I.5, I.8, I.10, I.11, I.13, I.16, I.19 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 56 | 22 | 20 |
-| ✅ | &emsp;[III.1 Por.](book/III/01.md#porism) |  |  |  | I.8, I.13 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 51 | 19 | 14 |
+| ✅ | [III.1](book/III/01.md) | whole | Euclid's | I.8 | I.5, I.8, I.10, I.11, I.13, I.16, I.19 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 56 | 23 | 19 |
+| ✅ | &emsp;[III.1 Por.](book/III/01.md#porism) |  |  |  | I.8, I.13 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 51 | 20 | 13 |
 | ✅ | [III.2](book/III/02.md) | whole | Euclid's | I.5, I.16, I.19, III.1 | I.5, I.16, I.19, III.1 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 56 | 17 | 10 |
 | ✅ | [III.3](book/III/03.md) | whole | Euclid's | I.5, I.8, I.26 | I.5, I.8, I.13, I.26 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 52 | 9 | 6 |
 | ✅ | [III.4](book/III/04.md) | whole | Euclid's | III.1, III.3 | III.1, III.3 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 56 | 9 | 9 |

@@ -112,7 +112,7 @@ agreement with Heath's preferred local reading at the contact.
 | Former overlap | Why it is retired |
 |---|---|
 | I.7 and Circle 4 (`not_same_side_of_circles_meet`) | I.7, Definition I.15 and `circle_eq`, after I.7 in `Elements/BookI/Prop07.lean`. `Audit.I_7` now reaches I.7 through its own corollary, so it is circular as an independent proof of I.7. |
-| I.13's right-angle case and Diagram-angle 3 (`adjacent_eq_of_right`) | I.13 and Common Notion 3, after I.13 in `Elements/BookI/Prop13.lean`. The later proofs now use that theorem: [20 proofs, 19 calling it themselves](#i13s-rule-in-20-proofs), by the count of 21 October 2026. |
+| I.13's right-angle case and Diagram-angle 3 (`adjacent_eq_of_right`) | I.13 and Common Notion 3, after I.13 in `Elements/BookI/Prop13.lean`. The later proofs now use that theorem: [17 proofs, each calling it itself](#i13s-rule-in-17-proofs), by the recount of 21 October 2026. III.1, III.1 Por. and III.2 no longer reach it: III.1's helper takes the step by I.13 in its own Lean. |
 | III.1's centre uniqueness and Generalities 2 (`centre_unique`) | The foundations, in `Elements/Figure/Circles.lean`: two supposed centres bisect the same straight line through the circle, and equal doubles have equal halves. III.1 Por. no longer calls it: since 19 October 2026 the porism takes the argument of Euclid's reductio from its given centre, reaches neither III.1 nor the theorem, and rests on 51 tacit rules to III.1's 56 ([facts.json](../../facts.json)). III.14 is the first proposition whose own Lean calls the theorem, and III.36 the only other; [five proofs](#iii1s-corollary) rest on it without passing through another entry. |
 | III.2 and Circle 2 (`inside_of_between`) | Circle 3, in `Elements/Figure/Circles.lean`. The remaining axiom overlap is the Circle 3 row above. |
 | I.2, I.3 and I.23 and existential superposition | The restricted rule exports only an equality about the given figure. The three former audit lemmas returned placed corners, which no exported formula can name, and have been removed. |
@@ -129,54 +129,72 @@ constructs its points through I.22 and obtains its angle equality from I.8. It s
 inherits the restricted rule through I.8 and I.20, which supplies the triangle
 inequalities; this inherited dependency does not restore the construction shortcut.
 
-### I.13's rule in 20 proofs
+### I.13's rule in 17 proofs
 
-Recounted on 21 October 2026, after the retirement, on the revision that holds all 137
-certificate entries (99 propositions, three porisms and 35 companions): the theorem occurs
-in 20 proofs without passing through another certified entry. Of these, 19 call it in their
-own declarations or their proposition's helpers. Two earlier counts the same day, across 130
-entries and across 136, found the same 20 and 19; the count of 20 October, across the 122
-entries there were then, found 19 and 18. Of the eight companions that joined between the
-122 and the 130 (III.16's three, III.23's, III.24's two and III.31's two), one added to each
-count: `BookIII.Prop31.less`, which reaches the theorem through its own step
-`BookIII.Prop31.less_lt_right`. The other seven reach it only through entries they cite.
-No entry has left since the 130, and none of the seven companions that have joined adds to
-either count. Six reach the theorem only through entries they cite:
-`BookIII.Prop14.general` through III.14, `BookIII.Prop15.nearer` through III.15,
-`BookIII.Prop25.complete` through III.9, `BookIII.Prop25.kind` through III.2, III.21 and
-III.22, `BookIII.Prop25.of_circle` through III.2, III.25 and `BookIII.Prop25.complete`, and
-III.30's halves, `BookIII.Prop30.halves`, through III.2, III.21, III.22 and III.28. The
-seventh, `BookIII.Prop15.le_diameter`, cites only I.20 and does not reach it.
+Recounted on 21 October 2026, after III.1 came to take its step by I.13 in its own Lean
+([issue #168](https://github.com/jackChallis/stoicheia/issues/168)), on the revision that
+holds all 137 certificate entries (99 propositions, three porisms and 35 companions): the
+theorem occurs in 17 proofs without passing through another certified entry, and all 17
+call it in their own declarations or their proposition's helpers. III.1, its porism and
+III.19 have left the count, and no entry has joined it.
 
-Nineteen of the 20 proofs call Diagram-angle 3 (`adjacent_eq_of_right`) themselves:
-II.1 and its companion `BookII.Prop1.two`, II.3, II.4, II.5, II.9, II.11,
-II.14 and its companion `BookII.Prop14.rectangle`, III.3, III.10, III.15, III.16, III.17
-and III.25 in their own Lean, III.10 also in its helper `BookIII.Prop10.right_on_line` and
-III.15 in its helper `BookIII.Prop15.perp`; III.9 in its helper `BookIII.Prop9.apart`; III.1
-and its porism in III.1's helper `BookIII.Prop1.perpendicular`, which shows that at a point
-of a straight line only one straight line is at right angles to it; and III.31's companion
-`BookIII.Prop31.less` in its helper `BookIII.Prop31.less_lt_right`. III.19 reaches the rule
-only through `BookIII.Prop1.perpendicular`, which III.16 uses as well as calling the rule
-itself. Forty-seven more entries (24 propositions, III.16's porism and 22 companions) rest
-on it through these 20. I.13 does not rest on it. The rule gives the right angles Euclid
-reads off his figure, as for the rectangles of II.1, where his text says nothing of them.
+Earlier the same day, before that change, three counts, across 130 entries, 136 and 137,
+found 20 proofs, 19 of them calling the theorem themselves: these 17; III.1 and its porism,
+which called it in III.1's helper `BookIII.Prop1.perpendicular`; and III.19, which reached
+it only through that helper. The count of 20 October, across the 122 entries there were
+then, found 19 and 18. Of the eight companions that joined between the 122 and the 130
+(III.16's three, III.23's, III.24's two and III.31's two), one added to each count:
+`BookIII.Prop31.less`, which reaches the theorem through its own step
+`BookIII.Prop31.less_lt_right`. The other seven then reached it only through entries they
+cite. None of the seven companions that joined after the 130 added to either count. Six
+then reached the theorem only through entries they cite: `BookIII.Prop14.general` through
+III.14, `BookIII.Prop15.nearer` through III.15, `BookIII.Prop25.complete` through III.9,
+`BookIII.Prop25.kind` through III.2, III.21 and III.22, `BookIII.Prop25.of_circle` through
+III.2, III.25 and `BookIII.Prop25.complete`, and III.30's halves, `BookIII.Prop30.halves`,
+through III.2, III.21, III.22 and III.28. The seventh, `BookIII.Prop15.le_diameter`, cites
+only I.20 and does not reach it.
 
-The full dependency closure contains the theorem in 67 entries: 40 propositions,
-two porisms and 25 companions. The 47 additional entries above reach it only
-through entries they cite. These are uses of a proved rule, not axiom overlaps.
+All 17 proofs call Diagram-angle 3 (`adjacent_eq_of_right`) themselves: II.1 and its
+companion `BookII.Prop1.two`, II.3, II.4, II.5, II.9, II.11, II.14 and its companion
+`BookII.Prop14.rectangle`, III.3, III.10, III.15, III.16, III.17 and III.25 in their own
+Lean, III.10 also in its helper `BookIII.Prop10.right_on_line` and III.15 in its helper
+`BookIII.Prop15.perp`; III.9 in its helper `BookIII.Prop9.apart`; and III.31's companion
+`BookIII.Prop31.less` in its helper `BookIII.Prop31.less_lt_right`. III.1's helper
+`BookIII.Prop1.perpendicular`, which shows that at a point of a straight line only one
+straight line is at right angles to it, no longer calls the rule. Where it produces a
+straight line through the foot of a right angle, the two angles there together make two
+right angles (I.13), and taking the given right angle away leaves the other right (Common
+Notion 3): the theorem's own proof, written out in place. So III.1, its porism and III.19, which use
+that helper, do not reach the rule through it; III.16, which uses it too, still calls the
+rule itself. Twenty-four more entries (nine propositions, III.16's porism and 14
+companions) rest on it through these 17. I.13 does not rest on it. The rule gives the
+right angles Euclid reads off his figure, as for the rectangles of II.1, where his text
+says nothing of them.
+
+The full dependency closure contains the theorem in 41 entries: 23 propositions, one
+porism (III.16's) and 17 companions. The 24 additional entries above reach it only through
+entries they cite. Before the change it held 67: 40 propositions, two porisms and 25
+companions. The 26 that have left are III.1, its porism and III.19, and 23 entries that
+reached the theorem only through them: III.2, III.7, III.8, III.11, III.13, III.21, III.22,
+III.24 and III.26 to III.32, and eight companions, `BookIII.Prop7.general`,
+`BookIII.Prop8.general`, `BookIII.Prop23.point`, `BookIII.Prop24.equalCircles`,
+`BookIII.Prop24.equalMeasure`, `BookIII.Prop25.kind`, `BookIII.Prop30.halves` and
+`BookIII.Prop31.greater`. These are uses of a proved rule, not axiom overlaps.
 
 The recount walks Lean's elaborated declarations using the same type, value and
-constructor references as `Certificate/Facts.lean`. For the 20, it stops at another
-certificate entry or a Common Notion; for the 19, it also stops at a shared lemma
-outside the proposition's namespace, while following Lean's auxiliary declarations.
-For the 67, it follows every project declaration. Each walk counts an entry once
-when it reaches `Tacit.adjacent_eq_of_right`, before following that theorem's proof.
-Since the theorem's proof cites I.13, `facts.json` records I.13 among the citations of each
-of the 20; the first walk, stopping at the theorem, finds every entry's citations as
-`facts.json` gives them, save I.13 for exactly these 20. Run without that stop, as
-`Certificate/Facts.lean` runs it, it finds the citations of all 137 entries exactly as
-`facts.json` gives them; and the 67 are exactly the 20 with every entry whose citations in
-`facts.json` lead to one of them. Searching the Lean sources for the rule's name confirms the calls
+constructor references as `Certificate/Facts.lean`. For the 17, it stops at another
+certificate entry or a Common Notion; a second walk, which also stops at a shared lemma
+outside the proposition's namespace while following Lean's auxiliary declarations, finds
+the same 17 calling it themselves. For the 41, it follows every project declaration. Each
+walk counts an entry once when it reaches `Tacit.adjacent_eq_of_right`, before following
+that theorem's proof. Since the theorem's proof cites I.13, `facts.json` records I.13 among
+the citations of each of the 17; the first walk, stopping at the theorem, finds every
+entry's citations as `facts.json` gives them, save I.13 for 16 of these 17. III.16 keeps
+I.13 even so, through the I.13 step of `BookIII.Prop1.perpendicular`, which it uses. Run
+without that stop, as `Certificate/Facts.lean` runs it, it finds the citations of all 137
+entries exactly as `facts.json` gives them; and the 41 are exactly the 17 with every entry
+whose citations in `facts.json` lead to one of them. Given back the call III.1's helper
+made, the same walks find the earlier 20, 19 and 67 exactly. Searching the Lean sources for the rule's name confirms the calls
 listed above; in `Elements/BookIII/Prop16.lean` two shared lemmas call it too,
 `Segment.exists_tangent` and `Segment.angle_tangent_of_oppositeSidesOf`, which serve only
 `Segment.compare_alike`, a lemma no certificate entry uses. The retired name is absent
@@ -191,7 +209,8 @@ I.7 shortcut and the 17-proof right-angle census describe the earlier foundation
 the notes on III.5 and III.6 describe those propositions as they were stated before brief
 0008 restated them ([III.5](#iii5) and [III.6](#iii6) above give them as they are now).
 The later notes under I.2/I.3 and I.23 are dated updates about the retired construction
-shortcuts; their old rows remain here as history.
+shortcuts, and the second paragraph under III.1's corollary is a dated update about the
+rule's first user; their old rows remain here as history.
 
 Stoicheia takes the rules of System E (Jeremy Avigad, Edward Dean and John Mumma, 2009) as
 its axioms, and a few of them already say what Euclid later proves, or give it in a few
@@ -308,6 +327,13 @@ porism) rest on it through these 17. I.13 does not rest on it. The rule gives th
 angles Euclid reads off his figure, as for the rectangles of II.1, where his text says
 nothing of them.
 
+21 October 2026 update: III.1 and its porism no longer call the rule, now a theorem.
+`Prop1.perpendicular` takes its step by I.13 and Common Notion 3 in its own Lean, so
+neither they nor III.19 reach the rule through it, and III.2 no longer rests on it through
+III.1. The current census, [I.13's rule in 17 proofs](#i13s-rule-in-17-proofs) above,
+counts a different 17: the 14 propositions left here once III.1, its porism and III.19
+are taken out, with three companions.
+
 ##### I.13 in I.47
 
 The rule comes in through `Prop47.within`, I.47's helper. It shows that AD does not cross
@@ -343,27 +369,37 @@ existence; the construction and the proof that F is the centre are III.1's work.
 ##### III.1's corollary
 
 Heath calls uniqueness "a proposition which, if thought necessary, may be added to
-III. 1 as a corollary" (vol. 2, p. 8). The rule first enters at III.14, not at III.1's
-porism. Since 19 October 2026 our porism proves that the given centre lies on the cutting
-straight line by the argument of Euclid's reductio: on AB it is D; off AB, the equal
-adjacent angles put it on DC. It neither calls III.1 nor uses `centre_unique` or
-`exists_centre`, and rests on 51 tacit rules to III.1's 56. Two proofs call
-`centre_unique` themselves: III.14, to identify the centre III.1 finds with the centre E
-its statement names, and III.36, to show that the centre E it takes from `exists_centre`
-is off AC when DCA is not through the centre. III.17 now obtains its centre by
-`Prop1.of_circle` and has no such identification step. III.26 reaches it only through Book
-Zero's `EqualCircles.radii`, that equal circles have equal radii: a circle has only one
-centre, so the centres the definition of equal circles names are the given ones. III.28 and
-III.29 call that lemma too, and rest on the rule through III.26 and III.27 as well, which
-they cite. These five, III.14, III.26, III.28, III.29 and III.36, are the row's proofs.
-Seven more entries rest on the rule only through entries they cite: III.15 through III.14,
-III.27 through III.26, III.30 through III.28, III.37 through III.36, and the companions
-`Prop14.general` through III.14, `Prop15.nearer` through III.15 and `Prop30.halves` through
-III.28. Walking Lean's proof terms on 21 October 2026, as for I.13's rule above, finds the
-theorem in these twelve entries and in no other, none of them before III.14. Searching
-`Elements/` for the rule's name confirms the two calls, and finds three lemmas that call it:
-Book Zero's `EqualCircles.radii` and `Centre.every`, and `Arc.eq_of_aligned` in
-`Elements/BookIII/Squares.lean`. No certificate entry uses either of the last two.
+III. 1 as a corollary" (vol. 2, p. 8). III.1's porism calls the rule itself: it makes the
+centre III.1 finds the given centre, so that it lies on the cutting straight line. III.14,
+III.17 and III.36 call it themselves for the same step, making the centre III.1 finds the
+centre their statements speak of. III.26 reaches it only through Book Zero's
+`EqualCircles.radii`, that equal circles have equal radii: a circle has only one centre,
+so the centres the definition of equal circles names are the given ones. III.28 and III.29
+call that lemma too, and rest on the rule through III.26 and III.27 as well, which they
+cite.
+
+21 October 2026 update: the porism no longer calls the rule, which now first enters at
+III.14. Our porism proves that the given centre lies on the cutting straight line by the
+argument of Euclid's reductio: on AB it is D; off AB, the equal adjacent angles put it on
+DC. It neither calls III.1 nor uses `centre_unique` or `exists_centre`, and rests on 51
+tacit rules to III.1's 56. Two proofs call `centre_unique` themselves: III.14, to identify
+the centre III.1 finds with the centre E its statement names, and III.36, to show that the
+centre E it takes from `exists_centre` is off AC when DCA is not through the centre.
+III.17 now obtains its centre by `Prop1.of_circle` and has no such identification step.
+III.26 reaches it only through Book Zero's `EqualCircles.radii`, that equal circles have
+equal radii: a circle has only one centre, so the centres the definition of equal circles
+names are the given ones. III.28 and III.29 call that lemma too, and rest on the rule
+through III.26 and III.27 as well, which they cite. These five, III.14, III.26, III.28,
+III.29 and III.36, now use the rule. Seven more entries rest on the rule only through
+entries they cite: III.15 through III.14, III.27 through III.26, III.30 through III.28,
+III.37 through III.36, and the companions `Prop14.general` through III.14, `Prop15.nearer`
+through III.15 and `Prop30.halves` through III.28. Walking Lean's proof terms on 21
+October 2026, as for I.13's rule above, finds the theorem in these twelve entries and in
+no other, none of them before III.14. Searching `Elements/` for the rule's name confirms
+the two calls, and finds three lemmas that call it: Book Zero's `EqualCircles.radii` and
+`Centre.every`, and `Arc.eq_of_aligned` in `Elements/BookIII/Squares.lean`. No certificate
+entry uses either of the last two. [Former axiom overlaps](#former-axiom-overlaps) gives
+the rule as it is now.
 
 ##### III.2
 

@@ -18486,17 +18486,14 @@
    [{"name": "BookI.Prop5.base",
      "line": 27,
      "file": "Elements/BookI/Helpers.lean",
-     "brings_in": ["I.5"]},
-    {"name": "Tacit.adjacent_eq_of_right",
-     "line": 189,
-     "file": "Elements/BookI/Prop13.lean",
-     "brings_in": ["I.13"]}],
+     "brings_in": ["I.5"]}],
    "ref": "III.1",
    "own_axioms":
    ["Definition15",
     "Postulate1",
     "Postulate2",
     "Postulate4",
+    "Tacit.add_comm",
     "Tacit.angle_symm",
     "Tacit.between_of_between_right",
     "Tacit.between_of_inside_chord",
@@ -18639,13 +18636,6 @@
     [{"name": "Magnitude.eq_of_add_self_eq",
       "line": 52,
       "file": "Elements/Figure/Areas.lean"}],
-    "Tacit.add_comm":
-    [{"name": "Magnitude.eq_of_add_self_eq",
-      "line": 52,
-      "file": "Elements/Figure/Areas.lean"},
-     {"name": "Tacit.adjacent_eq_of_right",
-      "line": 189,
-      "file": "Elements/BookI/Prop13.lean"}],
     "Postulate3":
     [{"name": "exists_off_line",
       "line": 39,
@@ -21747,7 +21737,7 @@
      "file": "Elements/BookI/Helpers.lean",
      "brings_in": ["I.5"]},
     {"name": "BookIII.Prop1.perpendicular",
-     "line": 76,
+     "line": 77,
      "file": "Elements/BookIII/Prop01.lean",
      "brings_in": ["I.13"]},
     {"name": "Tacit.adjacent_eq_of_right",
@@ -21774,35 +21764,35 @@
    "inherited":
    {"Tacit.triple_incidence2":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.same_side_symm":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.same_side_or":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.same_ray_of_angle_eq_zero":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.pasch3":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.on_line_of_between":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.not_on_line_of_same_side":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.not_lt_zero":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.not_between_of_between":
     [{"name": "OnRay.of_between",
@@ -21810,7 +21800,7 @@
       "file": "Elements/Figure/Rays.lean"}],
     "Tacit.lt_trichotomy":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"},
      {"name": "Magnitude.lt_of_add_lt_add_left",
       "line": 60,
@@ -21824,7 +21814,7 @@
       "line": 27,
       "file": "Elements/BookI/Helpers.lean"},
      {"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"},
      {"name": "Triangle.ne₁₂",
       "line": 22,
@@ -21844,7 +21834,7 @@
       "file": "Elements/Figure/Angles.lean"}],
     "Tacit.angle_add_of_inside":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.add_lt_add_right":
     [{"name": "Magnitude.lt_of_add_lt_add_left",
@@ -21852,7 +21842,7 @@
       "file": "Elements/Figure/Lengths.lean"}],
     "Tacit.add_comm":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"},
      {"name": "Magnitude.lt_of_add_lt_add_left",
       "line": 60,
@@ -21865,7 +21855,7 @@
       "line": 27,
       "file": "Elements/BookI/Helpers.lean"},
      {"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}]},
    "enunciation":
    "The straight line drawn at right angles to the diameter of a circle from its extremity will fall\noutside the circle, and into the space between the straight line and the circumference another\nstraight line cannot be interposed; further the angle of the semicircle is greater, and the\nremaining angle less, than any acute rectilineal angle. ",
@@ -21967,7 +21957,7 @@
    "∀ {A : Elements.Point} {BCD : Elements.Circle}, Elements.OutsideCircle A BCD → Exists fun (B : Elements.Point) => And (Elements.OnCircle B BCD) (Elements.Touches A B BCD)",
    "shared_steps":
    [{"name": "BookIII.Prop1.of_circle",
-     "line": 260,
+     "line": 266,
      "file": "Elements/BookIII/Prop01.lean",
      "brings_in": ["III.1"]},
     {"name": "Tacit.adjacent_eq_of_right",
@@ -22065,7 +22055,7 @@
       "file": "Elements/Figure/Rectangles.lean"}],
     "Tacit.exists_point_on_circle":
     [{"name": "BookIII.Prop1.of_circle",
-      "line": 260,
+      "line": 266,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.exists_point":
     [{"name": "Triangle.ne₂₃",
@@ -22336,7 +22326,7 @@
    "∀ {A C D E : Elements.Point} {ABC : Elements.Circle}, Elements.OnCircle C ABC → Elements.Touches D E ABC → Elements.Collinear D E C → Not (Elements.Collinear D E A) → (∀ (P : Elements.Point), Elements.Collinear D E P → Ne P C → Eq (Elements.ang A C P) Elements.rightAngle) → ∀ (F : Elements.Point), Elements.Centre F ABC → Elements.Collinear A C F",
    "shared_steps":
    [{"name": "BookIII.Prop1.perpendicular",
-     "line": 76,
+     "line": 77,
      "file": "Elements/BookIII/Prop01.lean",
      "brings_in": ["I.13"]}],
    "ref": "III.19",
@@ -22351,51 +22341,51 @@
    "inherited":
    {"Tacit.triple_incidence2":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.same_side_symm":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.same_side_or":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.same_ray_of_angle_eq_zero":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.pasch3":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.on_line_of_between":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.not_on_line_of_same_side":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.not_lt_zero":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.ne_of_between_ends":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.ne_of_between":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.lt_trichotomy":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.lt_irrefl":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.line_meets_circle_of_inside":
     [{"name": "Touches.not_inside",
@@ -22403,23 +22393,23 @@
       "file": "Elements/Figure/OnCircles.lean"}],
     "Tacit.exists_point":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.between_symm":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.angle_add_of_inside":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Tacit.add_comm":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}],
     "Postulate2":
     [{"name": "BookIII.Prop1.perpendicular",
-      "line": 76,
+      "line": 77,
       "file": "Elements/BookIII/Prop01.lean"}]},
    "enunciation":
    "If a straight line touch a circle, and from the point of contact a straight line be drawn at\nright angles to the tangent, the centre of the circle will be on the straight line so drawn. ",
@@ -28199,17 +28189,14 @@
   {"status": "proved",
    "statement":
    "∀ {A B C D G : Elements.Point} {ABC : Elements.Circle}, Elements.Centre G ABC → Elements.OnCircle A ABC → Elements.OnCircle B ABC → Elements.Between A D B → Eq (Elements.len A D) (Elements.len D B) → Not (Elements.Collinear A B C) → Eq (Elements.ang A D C) Elements.rightAngle → Elements.Collinear D C G",
-   "shared_steps":
-   [{"name": "Tacit.adjacent_eq_of_right",
-     "line": 189,
-     "file": "Elements/BookI/Prop13.lean",
-     "brings_in": ["I.13"]}],
+   "shared_steps": [],
    "ref": "III.1 Por.",
    "own_axioms":
    ["Definition15",
     "Postulate1",
     "Postulate2",
     "Postulate4",
+    "Tacit.add_comm",
     "Tacit.angle_symm",
     "Tacit.between_of_between_right",
     "Tacit.between_of_inside_chord",
@@ -28305,14 +28292,7 @@
     "Tacit.add_lt_add_right":
     [{"name": "Magnitude.eq_of_add_self_eq",
       "line": 52,
-      "file": "Elements/Figure/Areas.lean"}],
-    "Tacit.add_comm":
-    [{"name": "Magnitude.eq_of_add_self_eq",
-      "line": 52,
-      "file": "Elements/Figure/Areas.lean"},
-     {"name": "Tacit.adjacent_eq_of_right",
-      "line": 189,
-      "file": "Elements/BookI/Prop13.lean"}]},
+      "file": "Elements/Figure/Areas.lean"}]},
    "enunciation":
    "The Porism to III.1: \"if in a circle a straight line cut a straight line into two\nequal parts and at right angles, the centre of the circle is on the cutting straight\nline.\" The straight line DC cuts AB, a straight line in the circle, at its\nmiddle point D and at right angles, and the centre G is on DC. III.9 and III.10\ncite it. ",
    "direct_axioms":
