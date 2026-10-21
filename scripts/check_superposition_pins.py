@@ -386,9 +386,9 @@ def lex(text: str) -> list[tuple[str, int, str]]:
 
 def comment_bodies(text: str) -> list[tuple[int, str]]:
     """Non-doc comments as their starting line and body, with consecutive line comments
-    joined after their `--` prefixes are removed. Strings and character literals are
-    skipped. Block comments are normalized with the same nesting scanner as `lex`, and
-    nested bodies are returned separately."""
+    joined across whitespace-only lines after their `--` prefixes are removed. Strings and
+    character literals are skipped. Block comments are normalized with the same nesting
+    scanner as `lex`, and nested bodies are returned separately."""
     found: list[tuple[int, str]] = []
     i, n = 0, len(text)
     while i < n:
@@ -404,12 +404,30 @@ def comment_bodies(text: str) -> list[tuple[int, str]]:
                     break
                 bodies.append(text[i + 2:end])
                 following = end + 1
-                while following < n and text[following] in " \t":
-                    following += 1
-                if not text.startswith("--", following):
-                    i = end
+                blanks = []
+                while following < n:
+                    next_end = text.find("\n", following)
+                    next_end = n if next_end < 0 else next_end
+                    line = text[following:next_end]
+                    comment = following
+                    while comment < next_end and text[comment] in " \t":
+                        comment += 1
+                    if text.startswith("--", comment):
+                        bodies.extend(blanks)
+                        i = comment
+                        break
+                    if line.strip(" \t\r"):
+                        i = following
+                        break
+                    blanks.append(line)
+                    if next_end == n:
+                        i = n
+                        break
+                    following = next_end + 1
+                else:
+                    i = n
+                if i >= n or not text.startswith("--", i):
                     break
-                i = following
             found.append((text.count("\n", 0, start) + 1, "\n".join(bodies)))
         elif text.startswith("/-", i):
             doc = text.startswith("/--", i)

@@ -810,6 +810,32 @@ class PinTests(unittest.TestCase):
             "is a statement pin inside a comment; commented pins do not run and are "
             "refused"),))
 
+    def test_line_comment_pin_across_blank_lines_is_refused_beside_an_active_duplicate(self):
+        active = PIN.format(name="Derives.sound")
+        for separator in ("\n", " \t\n"):
+            with self.subTest(separator=repr(separator)):
+                commented = (f"-- #guard_msgs in\n{separator}"
+                             f"-- #check @{SOUND}\n")
+                audit = commented + active
+                command = next((number, line.strip()) for number, line in
+                               enumerate(commented.splitlines(), 1)
+                               if f"#check @{SOUND}" in line)
+                self.assertEqual(command[0], 3)
+                code, out = self.run_check(self.brief("`Derives.sound` holds."), audit)
+                self.assertEqual(code, 1, out)
+                self.assertNotIn("has no statement pin", out)
+                self.assert_refused(out, [], ((
+                    *command, "is a statement pin inside a comment; commented pins do not "
+                    "run and are refused"),))
+
+    def test_line_comment_pin_does_not_cross_active_code(self):
+        active = PIN.format(name="Derives.sound")
+        audit = ("-- #guard_msgs in\n"
+                 "import Elements.BookI.Prop04\n"
+                 f"-- #check @{SOUND}\n" + active)
+        code, out = self.run_check(self.brief("`Derives.sound` holds."), audit)
+        self.assertEqual(code, 0, out)
+
     def test_ordinary_comments_and_active_pin_docstrings_are_allowed(self):
         pin = PIN.format(name="Derives.sound")
         audit = ("-- An ordinary comment mentions #check without a guard.\n"
