@@ -3698,7 +3698,10 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
                 "an account could have, and the merge commit's subject names it: look with "
                 f"`gh pr view {number} --json headRepositoryOwner`")
     body = view.get("body") or ""
-    template = show(ctx.repo, ctx.base, TEMPLATE) or show(ctx.repo, ctx.sha, TEMPLATE)
+    # The template in force is current main's (the harness's), also in queue mode, where
+    # ctx.base is the head's older merge base: a box main added since binds this merge.
+    policy = ctx.harness_sha or ctx.base
+    template = show(ctx.repo, policy, TEMPLATE) or show(ctx.repo, ctx.sha, TEMPLATE)
     problems = checklist_problems(body, template, bool(protected))
     if problems:
         rep.add("G", "checklist", "FAIL", "\n".join(problems))
@@ -4363,7 +4366,8 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         if merge_train_input(ctx, body_view) != train_body:
             raise Refusal("the train's body changed during the checks: run --merge again")
         body = body_view.get("body") or ""
-        template = show(ctx.repo, ctx.base, TEMPLATE) or show(ctx.repo, ctx.sha, TEMPLATE)
+        template = show(ctx.repo, ctx.harness_sha or ctx.base, TEMPLATE) \
+            or show(ctx.repo, ctx.sha, TEMPLATE)
         if unfinished_section(body, template) != unfinished_section(view.get("body") or "",
                                                                     template):
             raise Refusal(f"#{number}'s Unfinished work changed after the gates read it: "

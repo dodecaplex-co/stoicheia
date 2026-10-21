@@ -3274,6 +3274,21 @@ class Queue(Edge):
         self.assertIn(f"sha={sha} base={BASE} harness={main} -->",
                       self.gh_state()["prs"][0]["body"])
 
+    def test_queue_reads_main_s_current_template(self):
+        # In queue mode the head is judged against its merge base, but the template in
+        # force is current main's: a required box main added since binds the merge.
+        self.opened()
+        git(WORK, "checkout", "--quiet", "--detach", BASE)
+        template = ".github/pull_request_template.md"
+        self.new_base("Main's template gains a box", {
+            template: self.text(template)
+            + "- [ ] **Required:** A box main added after the branch.\n"})
+        r = self.run_entry()
+        out = r.stdout + r.stderr
+        self.assertNotEqual(r.returncode, 0, out)
+        self.assertIn("A box main added after the branch", out)
+        self.assertEqual(self.enqueues(), [])
+
     def test_queue_records_new_harness_separately_from_merge_base(self):
         sha = self.opened()
         git(WORK, "checkout", "--quiet", "--detach", BASE)

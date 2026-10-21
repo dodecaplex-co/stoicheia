@@ -317,6 +317,14 @@ class TrainChecks(Repository):
         row = {**self.row, "no_mistakes": "not run: time was short"}
         self.refused("reason needs at least five words", text=body([row]))
 
+    def test_review_cells_that_say_the_review_is_to_come_refuse(self):
+        for cell in ("pending", "Not run yet.", "In progress: a reader is on it.", "TBD"):
+            for key in ("code_review", "security_review"):
+                with self.subTest(cell=cell, key=key):
+                    row = dict(self.row, **{key: cell})
+                    self.refused("is not written, or says the review is not done",
+                                 text=body([row]))
+
     def test_recorded_reason(self):
         row = {**self.row, "no_mistakes": "not run: the required runner was unavailable"}
         self.assertEqual(self.problems(text=body([row])), [])

@@ -532,7 +532,8 @@ The train's `--body-file`, required on a dry run and on every update too, has th
 pull request sections and two more, `Members` and `What is new`. `Members` is a table
 with the columns `Branch`, `Head`, `/code-review`, `/security-review` and `/no-mistakes`,
 one row per member. `Head` is 12 to 40 lower-case hexadecimal digits naming the member
-head merged. The review cells contain written findings, not placeholders;
+head merged. The review cells contain written findings, not placeholders and not a
+review still to come ("pending", "not run", "in progress" and their like);
 `/security-review` may say "Not required" only if no protected path changed.
 `/no-mistakes` says `passed at <head>` for that same member head, or
 `not run: <reason>`, with at least five words giving the reason.

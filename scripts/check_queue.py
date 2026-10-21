@@ -238,7 +238,12 @@ def ordinary_entry(pr: dict, actors: dict, repo_slug: str) -> None:
     be. Trains are written and queued by people."""
     if pr["head_repo"] != repo_slug:
         raise Refused(f"#{pr['number']}: its head is not in {repo_slug}")
+    if pr["author"]["type"] == "Bot":
+        raise Refused(f"#{pr['number']}: a bot wrote, queued or edited a pull request that "
+                      "is not an automatic revert (a bot wrote it)")
     if pr["state"] == "MERGED":
+        # Already on main: GitHub's queue no longer lists it, so who queued it cannot be
+        # read here; it was judged by its own group when it merged.
         return
     if pr["number"] not in actors:
         raise ValueError(f"GitHub: #{pr['number']} is open but not in the queue read")

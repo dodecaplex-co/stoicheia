@@ -27,6 +27,10 @@ OID = re.compile(r"[0-9a-f]{40}")
 HEAD = re.compile(r"[0-9a-f]{12,40}")
 PASSED = re.compile(r"passed at ([0-9a-f]{12,40})(?:[ \t]+.*)?")
 FIELDS = ("branch", "head", "code_review", "security_review", "no_mistakes")
+# A review cell that says the review is still to come is no review's evidence. (/no-mistakes
+# has its own two forms, "passed at" and "not run:", read below.)
+UNDONE = re.compile(r"(?i)\s*(?:pending|waiting|to come|in progress|not (?:yet )?(?:run|done|"
+                    r"started|reviewed)|to do|todo|tbd|later|soon)\b")
 HEADINGS = ("Branch", "Head", "/code-review", "/security-review", "/no-mistakes")
 CHECK_PATHS = ("scripts/", "tests/", ".github/")
 FOUNDATION_PATHS = ("Elements/Foundations/", "Certificate/axioms.lock", "model/")
@@ -173,8 +177,9 @@ def _evidence(rows: list[dict]) -> list[str]:
         if not HEAD.fullmatch(head):
             problems.append(f"Members: {branch}: Head must be 12 to 40 lower-case hex digits")
         for key, label in zip(FIELDS[2:], HEADINGS[2:]):
-            if not written(row[key]):
-                problems.append(f"Members: {branch}: {label} is not written")
+            if not written(row[key]) or (key != "no_mistakes" and UNDONE.match(row[key])):
+                problems.append(f"Members: {branch}: {label} is not written, or says the "
+                                "review is not done")
         evidence = row["no_mistakes"]
         if match := PASSED.fullmatch(evidence):
             checked = match.group(1)
