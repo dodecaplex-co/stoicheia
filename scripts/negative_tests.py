@@ -117,6 +117,7 @@ Standard library only; Python 3.11 or later, for the review records.
 """
 
 import argparse
+from collections import Counter
 import json
 import os
 import re
@@ -1046,17 +1047,19 @@ def edited_note() -> None:
         # Prop01.lean: only a line it does not print, or one it prints that is now
         # missing, is the doing of the comment or the moved stamp.
         after = naming_i1(out)
-        new_lines = [line for line in after if line not in before]
-        gone = [line for line in before if line not in after]
-        if result.returncode != baseline.returncode or new_lines or gone or "Traceback" in out:
+        added = list((Counter(after) - Counter(before)).elements())
+        missing = list((Counter(before) - Counter(after)).elements())
+        if result.returncode != baseline.returncode or after != before or "Traceback" in out:
             detail = []
             if result.returncode != baseline.returncode:
                 detail.append(f"exit {result.returncode}, not {baseline.returncode} as with "
                               "the record unchanged")
-            if new_lines:
-                detail.append(f"says {new_lines[0]!r}")
-            if gone:
-                detail.append(f"no longer says {gone[0]!r}")
+            if added:
+                detail.append(f"has added line occurrences {added!r}")
+            if missing:
+                detail.append(f"has missing line occurrences {missing!r}")
+            if after != before and not added and not missing:
+                detail.append("has the same lines in a different order")
             if "Traceback" in out:
                 detail.append("a traceback")
             failures.append("a comment and a moved stamp in I.1's record: not as the record "
