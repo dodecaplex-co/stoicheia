@@ -15,7 +15,7 @@
     <circle cx="288.0" cy="200.0" r="4.5" fill="#222222"/>
   </g>
   <!-- Heath's letters -->
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="126.3" y="79.6">A</text><text x="30" y="219.6">B</text><text x="183" y="221">C</text>
   </g>
 </svg>
