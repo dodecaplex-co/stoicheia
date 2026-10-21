@@ -27,12 +27,13 @@ of its own, `key = "value"`, and is rewritten in place or added at the end of it
 section; nothing else in the file changes.
 
 `--migrate-text` is for the records stamped before `text` was introduced. It
-writes `text` alone, and only for a record whose text at its own stamp `commit` is its
-text now: what the reviewer read is then what the record says, so the stamp records no
-new reading. Every other record is listed as needing a reader, who reads it and stamps
-it with `--commit` (docs/WORKFLOW.md, section 6). It reads the records' history with
-git, so it needs a clone with that history; it changes nothing it cannot confirm, and
-it can be run again at any time, as at landing, after branches that change records.
+writes `text` alone, and only for a record whose own stamp `commit` is in the history of
+HEAD and whose text at that commit is its text now: what the reviewer read is then what
+the record says, so the stamp records no new reading. Every other record is listed as
+needing a reader, who reads it and stamps it with `--commit` (docs/WORKFLOW.md, section
+6). It reads the records' history with git, so it needs a clone with that history; it
+changes nothing it cannot confirm, and it can be run again at any time, as at landing,
+after branches that change records.
 
 Run it after `lake env lean Certificate/Facts.lean`. Standard library only; reading
 the records needs Python 3.11 or later (tomllib).
@@ -80,24 +81,40 @@ def set_stamp(text: str, section: str, key: str, value: str) -> str:
     return "\n".join(lines)
 
 
-def show_at(commit: str, path: Path) -> bytes | None:
-    """The file at `path` as it stands in `commit`, or None when the commit or the file
-    is not to be found there."""
+def resolve(commit: str) -> str | None:
+    """The full id of the commit that `commit` names, or None when it names no commit of
+    this clone (a shallow clone, or a commit never fetched), or more than one, or when git
+    reads it first as a branch or tag of that name: the full id must start with it."""
     try:
-        out = subprocess.run(["git", "show", f"{commit}:{rel(path)}"], cwd=ROOT,
+        out = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"{commit}^{{commit}}"],
+                             cwd=ROOT, capture_output=True, text=True, check=True)
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    full = out.stdout.strip()
+    return full if full.startswith(commit) else None
+
+
+def in_history(commit: str) -> bool:
+    """Is `commit`, a full id, HEAD or an ancestor of HEAD?"""
+    try:
+        return subprocess.run(["git", "merge-base", "--is-ancestor", commit, "HEAD"],
+                              cwd=ROOT, capture_output=True).returncode == 0
+    except OSError:
+        return False
+
+
+def show_at(commit: str, path: Path) -> bytes | None:
+    """The file at `path` as it stands in `commit`, read by the commit's full id (resolve),
+    or None when the commit or the file is not to be found there."""
+    full = resolve(commit)
+    if full is None:
+        return None
+    try:
+        out = subprocess.run(["git", "show", f"{full}:{rel(path)}"], cwd=ROOT,
                              capture_output=True, check=True)
     except (OSError, subprocess.CalledProcessError):
         return None
     return out.stdout
-
-
-def has_commit(commit: str) -> bool:
-    try:
-        subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"{commit}^{{commit}}"],
-                       cwd=ROOT, capture_output=True, check=True)
-    except (OSError, subprocess.CalledProcessError):
-        return False
-    return True
 
 
 def hash_at(commit: str, path: Path) -> str | None:
@@ -213,10 +230,11 @@ def write_checked(book: str, n: int, old: str, new: str, want: dict) -> None:
 
 
 def migrate_text(book: str, n: int, dry_run: bool) -> tuple[str, str]:
-    """Write the `text` stamp of a record stamped before it, when the record's text at its
-    own stamp commit is its text now. Returns (outcome, what was found): "written",
-    "current", or "reader" for a record that needs a reader; raises ValueError when the
-    record cannot be read, or its commit is not in this clone."""
+    """Write the `text` stamp of a record stamped before it, when its own stamp commit is
+    in the history of HEAD and its text at that commit is its text now. Returns (outcome,
+    what was found): "written", "current", or "reader" for a record that needs a reader;
+    raises ValueError when the record cannot be read, or its commit is not one commit of
+    this clone (resolve)."""
     ref, path = f"{book}.{n}", heath.review_path(book, n)
     if not path.exists():
         raise ValueError(f"{ref}: there is no record {rel(path)}")
@@ -233,10 +251,15 @@ def migrate_text(book: str, n: int, dry_run: bool) -> tuple[str, str]:
     if "commit" not in rv:
         return "reader", f"{ref}: no stamp commit to compare it with"
     commit = rv["commit"]
-    if not has_commit(commit):
-        raise ValueError(f"{ref}: its stamp commit {commit} is not in this clone (a shallow "
-                         "clone has no history: fetch it, then run this again)")
-    then = text_at(commit, path)
+    full = resolve(commit)
+    if full is None:
+        raise ValueError(f"{ref}: its stamp commit {commit} is not one commit of this clone (a "
+                         "shallow clone, or a commit never fetched; or an abbreviation of more "
+                         "than one, or a branch or tag of that name): fetch the history, then "
+                         "run this again")
+    if not in_history(full):
+        return "reader", f"{ref}: its stamp commit {commit} is not in the history of HEAD"
+    then = text_at(full, path)
     if then is None:
         return "reader", f"{ref}: {rel(path)} is not to be found, or does not read, at {commit}"
     if then != own:
@@ -281,8 +304,9 @@ def main(argv=None) -> int:
                         "when a stamp changes, and an existing commit is kept without it")
     parser.add_argument("--dry-run", action="store_true", help="say what would change; write nothing")
     parser.add_argument("--migrate-text", action="store_true",
-                        help="write `text` alone, for each record whose text at its stamp commit "
-                        "is its text now, and list the rest as needing a reader")
+                        help="write `text` alone, for each record whose text at its stamp commit, "
+                        "in the history of HEAD, is its text now, and list the rest as needing "
+                        "a reader")
     args = parser.parse_args(argv)
     if args.commit and not heath.COMMIT.fullmatch(args.commit):
         parser.error("--commit is a git commit, 7 to 40 lower-case hex digits")

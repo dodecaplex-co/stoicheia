@@ -75,7 +75,8 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 
 `render.py` writes this table, and CI checks that it is current. The propositions come
 from `facts.json`; the records from `review/`, current when their stamps match the
-statements and the Lean files, at the stage `exceptions` or `full`
+statements and the Lean files, and, where a record carries a `text` stamp, its own text,
+at the stage `exceptions` or `full`
 ([review/SCHEMA.md](../review/SCHEMA.md)); and the stage, the outside score and the
 release from [program.toml](program.toml), which the coordinator keeps with this page.
 The outside scores are Astra's reading of 17 October at `676244a`. The

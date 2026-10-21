@@ -42,7 +42,7 @@ its own. -->
 
 ## Review records
 
-<!-- Each record touched, and whether it was re-stamped: by whom, at which commit. -->
+<!-- Each record touched, and whether it was re-stamped: by whom, at which commit; or that it gained only its `text` stamp from `scripts/review_stamp.py --migrate-text`. -->
 
 <!-- safe_push: records -->
 
@@ -91,7 +91,7 @@ description, anything sent outside the repository. Quote the owner's OK, or writ
 - [ ] **Required:** The checks above are safe_push.py's pre-flight of this pull request's head commit.
 - [ ] **Required:** Each statement changed is named in its approving brief revision or decisions entry, or none changed.
 - [ ] **Required:** Each piece of unfinished work is named under "Unfinished work" with its open issue labelled blocks-release, or there is none.
-- [ ] **Required:** Each review record touched was re-stamped by its reviewer, or none was touched.
+- [ ] **Required:** Each review record touched was re-stamped by its reviewer, or gained only its `text` stamp from `scripts/review_stamp.py --migrate-text`, or none was touched.
 - [ ] **Required:** /code-review was run, and each blocking or material finding is resolved above.
 - [ ] **Required if protected:** /security-review was run, and each blocking or material finding is resolved above.
 - [ ] **Required:** /no-mistakes was run before merge, and each blocking or material finding is resolved above.

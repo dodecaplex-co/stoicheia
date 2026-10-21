@@ -3134,14 +3134,20 @@ findings:
   that a line shaped as a stamp inside a multi-line string, which changes the record's
   words, is judged. Its account of the records in a pull request's body is unchanged, so a
   record that gains `text` alone, its commit kept, is listed as "touched, not re-stamped",
-  which is what the migration below does to it. This is a check change on its own: it
-  changes no record.
+  which is what the migration below does to it. The required box on the review records
+  in [`.github/pull_request_template.md`](../../.github/pull_request_template.md), and its
+  comment under "Review records", therefore now admit a record that "gained only its
+  `text` stamp from `scripts/review_stamp.py --migrate-text`", so that the migration's
+  pull request can tick that box truly. This is a check change on its own: it changes no
+  record.
 - **The `text` stamps' migration, and what it does not do.** The existing records are not
-  stamped as read. `review_stamp.py --migrate-text` writes `text` alone, and only where a record's
-  text at its own stamp commit (`git show <commit>:review/<book>/NN.toml`, its `[review]`
-  table and fingerprint aside) is its text now: the hash then records what its reviewer
-  read, and no new reading. Every other record is listed as needing a reader, and is never
-  stamped by the migration. On main at `2e8aecf8` it would write 92 records; seven were
+  stamped as read. `review_stamp.py --migrate-text` writes `text` alone, and only where a
+  record's stamp commit is in the history of HEAD and its text at that commit (`git show
+  <commit>:review/<book>/NN.toml`, its `[review]` table and fingerprint aside) is its text
+  now: the hash then records what its reviewer read, and no new reading. It reads the
+  commit by its full id, so a branch or tag named as the commit is never read in its
+  place. Every other record is listed as needing a reader, and is never stamped by the
+  migration. On main at `8e9a1879` it would write 92 records; seven were
   edited after their stamp commit and need a reader: II.2, II.6, II.7, II.8 and II.10,
   whose passages name Book I's helpers as `BookI.…` since the renaming of 19 October;
   III.4, whose notes changed their quotation marks and a word; and III.13, whose
@@ -3150,12 +3156,26 @@ findings:
   the records read again), the Book III cascade's re-stamps (ship C7) and axiom wave two.
   It reads each record's own stamp commit, so it treats their stamps as any other, and it
   runs on main after them, in a records pull request of its own. Then a reader reads and
-  stamps the records it lists; then, in a check change of its own, `text` is required like
-  the other stamps: `check_fidelity.py` fails a record without it, and
-  `check_acceptance.py` asks it of a record at P2. Until then, failing on the records
-  without `text` would stop main, so `check_fidelity.py` names each record without it in
-  a note, and fails only on a `text` that no longer matches. P2's requirement waits too:
-  asked now, it would fail all 99 records, where main passes 62, and the 372 review items
-  of those 62 (P11 to P16) with them; and while every record failed it, the `acceptance`
-  job's ratchet could not catch a regression in those items as the branches above land.
+  stamps the records it lists, and with them #77's item 3: III.13's `[figure]` note read
+  against [`figures/III/13.svg`](../../figures/III/13.svg) and Heath's figure, and its page
+  re-rendered, so that its "Reviewed" row names the new commit. Then, in a check change of
+  its own, `text` is required like the other stamps: `check_fidelity.py` fails a record
+  without it, in place of its note naming them, and `check_acceptance.py` asks it of a
+  record at P2. That change also takes out every place that lets a record go without
+  `text`, or says "for now": `render.record_current`'s clause counting a record with no
+  `text` as current; `text` in `heath.FIELDS`, which becomes a stamp, with the comment
+  above FIELDS and `validate_review`'s "for now"; SCHEMA's "for now" in the `text` row,
+  and its paragraph on the records stamped before `text`; [WORKFLOW](../WORKFLOW.md),
+  section 6's "Until every record carries `text`"; ACCEPTANCE P2's "once it
+  carries one"; [CONTRIBUTING](../../CONTRIBUTING.md)'s "once it carries its `text` stamp";
+  [PROGRAM](../PROGRAM.md)'s "where a record carries a `text` stamp"; and the template's
+  words for the migration. It also considers covering `[review]`'s `stage` and `items` by
+  `text`: a page words its "Reviewed" row from `stage`, and P11 to P16 count `items`, yet
+  neither is caught by any stamp now (SCHEMA, "Stamps"). Until that change, failing on
+  the records without `text` would stop main, so `check_fidelity.py` names each record
+  without it in a note, and fails only on a `text` that no longer matches. P2's
+  requirement waits too: asked now, it would fail all 99 records, where main passes 62,
+  and the 372 review items of those 62 (P11 to P16) with them; and while every record
+  failed it, the `acceptance` job's ratchet could not catch a regression in those items
+  as the branches above land.
   The branch carries the work of the lane of 18 October that first built it, with thanks.

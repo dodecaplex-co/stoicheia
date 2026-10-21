@@ -1556,9 +1556,9 @@ STAMPS = {"statement": ("fingerprint",), "review": ("commit", "lean", "text", "r
 
 
 def stamp_only(repo, base, sha, path: str) -> bool:
-    """Is the change to `path` a review record's stamp alone: stamp lines rewritten or
-    added (as `text`), none taken away from its section, and nothing else changed, in
-    the lines or in the record as TOML reads it (so a stamp-shaped line inside a
+    """Is the change to `path` a review record's stamp alone: stamp lines rewritten, added
+    or moved within their own section, none taken away from it, and nothing else changed,
+    in the lines or in the record as TOML reads it (so a stamp-shaped line inside a
     multi-line string is no stamp)? A record TOML cannot read is judged."""
     if not re.fullmatch(r"review/[IVX]+/\d+\.toml", path):
         return False
