@@ -74,6 +74,22 @@ jobs:
         # an answer whose model is missing, empty or not a string.
         run: python3 -I tests/test_jev_models.py
 
+      - name: Check Jev's client against a stand-in for the service, with a key it makes up
+        # The self-test needs no network and no key: among other things, it checks that the
+        # key appears in no output, that a dry run sends nothing, and that a row's expected
+        # answer is never sent.
+        run: python3 scripts/audit/jev.py self-test
+
+      - name: Check the overlap screen's tries and its reading of Lean's logs, case by case
+        # tests/test_screen.py needs no Lean: it puts Audit/screen.py's own functions to small
+        # inputs. The screen itself needs Lean, takes minutes, and is not run here.
+        run: python3 -I tests/test_screen.py
+
+      - name: Check the limitations acceptance item P3 allows, case by case
+        # tests/test_acceptance_limits.py needs no Lean: it checks check_acceptance.py's list
+        # against docs/ACCEPTANCE.md's table, and P3 on review records varied in memory.
+        run: python3 -I tests/test_acceptance_limits.py
+
       - name: Check the house style's hard rules
         # S12 asks Lean about the names in every text it reads, the audit lemmas of the
         # overlap catalogue among them, so it runs on the built tree, after Audit.
@@ -335,6 +351,70 @@ jobs:
         with:
           name: acceptance
           path: ${{ runner.temp }}/acceptance/
+
+  safe-push-tests:
+    # scripts/test_safe_push.py, the tests of the gate every pull request lands through
+    # (docs/WORKFLOW.md, sections 8 and 10), on each pull request that changes scripts/,
+    # tests/, Certificate/, review/SCHEMA.md, review/terms.toml, .github/ (the pull request
+    # template among them) or docs/WORKFLOW.md: the check inputs safe_push guards (its
+    # CHECK_INPUTS, the gate's code and the tests among them), the workflows, and the page
+    # whose section 8 the tests compare with safe_push's CHECKS and the `check` job. On
+    # any other pull request the job passes at once and says why; on a push it is skipped.
+    # Those paths are not all the tests read: they also read content (heath/I/01.md, the
+    # decisions page, docs/briefs/book-I.md, docs/program.toml, docs/reading.md and
+    # facts.json) and run check_fidelity.py and render.py over the whole tree, so a pull
+    # request that changes only content can still break them, and the next run shows it.
+    # The tests need Git with the whole history, but no Lean and no network: FullChecks,
+    # which needs Lean, is skipped without
+    # STOICHEIA_SLOW_TESTS=1, as it is anywhere. The pre-flight leaves this job to CI, and
+    # main's ruleset does not require it; a failing run still holds the merge, for the
+    # merge gate refuses while any check fails.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # About seven minutes on a quiet machine, but 35 on a busy one: room to spare.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # The tests clone this repository, and the next step needs the base commit.
+          fetch-depth: 0
+          # No token stays in .git/config while the pull request's code runs.
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Decide whether the pull request changes safe_push's check inputs, .github/ or docs/WORKFLOW.md
+        id: paths
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        # Three dots: what the pull request changes since it left main, as GitHub's list of
+        # files changed shows it. An empty base or head, or a comparison that fails, fails
+        # the job; it never skips.
+        run: |
+          : "${BASE_SHA:?}" "${HEAD_SHA:?}"
+          changed=$(git diff --name-only "$BASE_SHA...$HEAD_SHA" -- \
+            scripts tests Certificate review/SCHEMA.md review/terms.toml .github docs/WORKFLOW.md)
+          if [ -n "$changed" ]; then
+            printf 'The pull request changes:\n%s\nso scripts/test_safe_push.py runs.\n' "$changed"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "The pull request changes nothing under scripts/, tests/, Certificate/ or .github/, nor review/SCHEMA.md, review/terms.toml or docs/WORKFLOW.md, so scripts/test_safe_push.py does not run."
+            echo "Its tests also read content elsewhere: if this pull request breaks them, the next run shows it."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install the pinned YAML parser the tests read the workflow with
+        if: steps.paths.outputs.run == 'true'
+        run: python3 -m pip install -r scripts/requirements-test_safe_push.txt
+
+      - name: Check the gate every pull request lands through, guard by guard
+        if: steps.paths.outputs.run == 'true'
+        run: python3 scripts/test_safe_push.py
 
   queue-integrity:
     # The judge of each merge group. It checks out the group, takes scripts/ from the

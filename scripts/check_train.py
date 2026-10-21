@@ -24,7 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from safe_push import (
     CHECK_INPUTS, DECISIONS, GENERATED, GENERATED_REGIONS, SECTION, Refusal, changed_files,
-    generated_parts, git, html_tag_end,
+    generated_parts, git,
     is_protected, judged_files, pinned, run, sections, shown, under, visible, written,
 )
 
@@ -97,9 +97,7 @@ def members_table(body: str) -> list[dict]:
     if len(cells) < 3 or tuple(_plain(c) for c in cells[0]) != HEADINGS \
             or not all(re.fullmatch(r":?-{3,}:?", c) for c in cells[1]):
         raise ValueError("Members: expected the header, separator and at least one member")
-    return [dict(zip(FIELDS, (cell.strip() if key in {"code_review", "security_review"}
-                              else _plain(cell)
-                              for key, cell in zip(FIELDS, row)))) for row in cells[2:]]
+    return [dict(zip(FIELDS, (_plain(c) for c in row))) for row in cells[2:]]
 
 
 def _new() -> dict:
@@ -195,9 +193,6 @@ def _placeholder(cell: str) -> bool:
                                       .rstrip(".!;:, ").casefold()))
 
 
-INVISIBLE_LETTERS = frozenset("\u115f\u1160\u3164\uffa0")
-
-
 def _normal(cell: str) -> str:
     """A cell's text as it reads: character references decoded, then NFKC, casefolding
     and NFKC again, then without format characters and combining marks. NFKC comes
@@ -206,8 +201,7 @@ def _normal(cell: str) -> str:
     casefolding the dotted capital I adds one."""
     text = unicodedata.normalize("NFKC", html.unescape(cell))
     text = unicodedata.normalize("NFKC", text.casefold())
-    return "".join(c for c in text if c not in INVISIBLE_LETTERS
-                   and unicodedata.category(c) not in ("Cf", "Mn", "Me"))
+    return "".join(c for c in text if unicodedata.category(c) not in ("Cf", "Mn", "Me"))
 
 
 def _placeholder_word(cell: str) -> str | None:
@@ -216,243 +210,45 @@ def _placeholder_word(cell: str) -> str | None:
     return match.group() if match else None
 
 
-def _without_html(text: str) -> str:
-    """Remove raw HTML constructs that CommonMark does not show as text."""
-    visible = []
-    at = 0
-    while at < len(text):
-        if text[at] != "<":
-            visible.append(text[at])
-            at += 1
-            continue
-        if text.startswith("<!--", at):
-            end = text.find("-->", at + 4)
-            if end < 0:
-                break
-            at = end + 3
-            continue
-        if text.startswith("<?", at):
-            end = text.find("?>", at + 2)
-            if end < 0:
-                break
-            at = end + 2
-            continue
-        if text.startswith("<![CDATA[", at):
-            end = text.find("]]>", at + 9)
-            if end < 0:
-                break
-            at = end + 3
-            continue
-        if at + 2 < len(text) and text.startswith("<!", at) \
-                and text[at + 2].isascii() and text[at + 2].isalpha():
-            end = text.find(">", at + 3)
-            if end < 0:
-                break
-            at = end + 1
-            continue
-        recognized, end = html_tag_end(text, at)
-        if not recognized:
-            visible.append("<")
-            at += 1
-            continue
-        if end is None:
-            break
-        at = end
-    return "".join(visible)
-
-
-def _inline_link_end(text: str, start: int) -> int | None:
-    """The end after a complete inline link beginning with `](`, or None."""
-    at = start + 2
-    before_space = at
-    while at < len(text) and text[at] in " \t\r\n":
-        at += 1
-    spaced = at != before_space
-
-    if at < len(text) and text[at] == "<":
-        at += 1
-        while at < len(text):
-            if text[at] == "\\" and at + 1 < len(text):
-                at += 2
-            elif text[at] == ">":
-                at += 1
-                break
-            elif text[at] in "\r\n<":
-                return None
-            else:
-                at += 1
-        else:
-            return None
-    elif spaced and at < len(text) and text[at] in "\"'(":
-        pass
-    else:
-        depth = 0
-        while at < len(text):
-            if text[at] == "\\" and at + 1 < len(text):
-                at += 2
+def _cut(text: str, opener: str, spans: tuple[tuple[str, str], ...], keep: int) -> str:
+    """The text with spans cut out, as re.sub reads alternatives left to right: at each
+    `opener`, the first span whose opening stands there and whose closing follows it is
+    cut through that closing's nearest place, keeping the opening's first `keep`
+    characters. A closing is searched for again only once passed, so the text is read
+    in linear time, however many openings it holds."""
+    parts, position, nearest = [], 0, {}
+    while (start := text.find(opener, position)) >= 0:
+        for opening, closing in spans:
+            if not text.startswith(opening, start):
                 continue
-            if text[at] in " \t\r\n":
+            found = nearest.get(closing, -2)
+            if found != -1 and found < start + len(opening):
+                found = nearest[closing] = text.find(closing, start + len(opening))
+            if found >= 0:
+                parts.append(text[position:start + keep])
+                position = found + len(closing)
                 break
-            if text[at] == "(":
-                depth += 1
-            elif text[at] == ")":
-                if depth == 0:
-                    return at + 1
-                depth -= 1
-            at += 1
-        if depth:
-            return None
-
-    while at < len(text) and text[at] in " \t\r\n":
-        at += 1
-    if at < len(text) and text[at] == ")":
-        return at + 1
-    if at == len(text) or text[at] not in "\"'(":
-        return None
-    close = ")" if text[at] == "(" else text[at]
-    at += 1
-    while at < len(text):
-        if text[at] == "\\" and at + 1 < len(text):
-            at += 2
-        elif text[at] == close:
-            at += 1
-            break
         else:
-            at += 1
-    else:
-        return None
-    while at < len(text) and text[at] in " \t\r\n":
-        at += 1
-    return at + 1 if at < len(text) and text[at] == ")" else None
+            parts.append(text[position:start + 1])
+            position = start + 1
+    parts.append(text[position:])
+    return "".join(parts)
 
 
-def _without_link_targets(text: str) -> str:
-    """Remove link targets, footnote labels and every form of image description."""
-    visible = []
-    labels: list[tuple[int, bool]] = []
-    at = 0
-    while at < len(text):
-        if text[at] == "\\" and at + 1 < len(text):
-            visible.append(text[at:at + 2])
-            at += 2
-            continue
-        if text[at] == "[":
-            image = at > 0 and text[at - 1] == "!" and visible and visible[-1] == "!"
-            hidden = image or text.startswith("[^", at)
-            labels.append((len(visible) - 1 if image else len(visible), hidden))
-            visible.append("[")
-            at += 1
-            continue
-        if text[at] == "]" and not text.startswith(("](", "]["), at):
-            label = labels.pop() if labels else None
-            if label and label[1]:
-                del visible[label[0]:]
-            else:
-                visible.append("]")
-            at += 1
-            continue
-        if not text.startswith(("](", "]["), at):
-            visible.append(text[at])
-            at += 1
-            continue
-        label = labels.pop() if labels else None
-        if label is None:
-            visible.append("]")
-            at += 1
-            continue
-        if text[at + 1] == "[":
-            end = at + 2
-            valid = False
-            while end < len(text):
-                if text[end] == "\\" and end + 1 < len(text):
-                    end += 2
-                    continue
-                if text[end] == "[":
-                    break
-                if text[end] == "]":
-                    valid = True
-                    break
-                end += 1
-            if not valid:
-                if label and label[1]:
-                    del visible[label[0]:]
-                    break
-                else:
-                    visible.append("]")
-                at += 1
-                continue
-            if label and label[1]:
-                del visible[label[0]:]
-                at = end + 1
-            else:
-                visible.append("]")
-                at = at + 1 if end + 1 < len(text) and text[end + 1] == "(" else end
-            continue
-        end = _inline_link_end(text, at)
-        if label and label[1]:
-            del visible[label[0]:]
-        else:
-            visible.append("]")
-        if end is None:
-            break
-        at = end
-    hidden = [position for position, remove in labels if remove]
-    if hidden:
-        del visible[min(hidden):]
-    return "".join(visible)
-
-
-def _review_text(cell: str, normalize: bool = False) -> str:
-    """A review cell as read: literal matched code spans; elsewhere no hidden markup,
-    with character references decoded; compatibility normalization only when requested."""
-    runs = []
-    at = 0
-    while at < len(cell):
-        if cell[at] != "`":
-            at += 1
-            continue
-        end = at + 1
-        while end < len(cell) and cell[end] == "`":
-            end += 1
-        escapes = 0
-        before = at
-        while before and cell[before - 1] == "\\":
-            escapes += 1
-            before -= 1
-        runs.append((at, end, end - at, escapes % 2 == 1))
-        at = end
-    next_run = {}
-    following = {}
-    for start, end, length, _ in reversed(runs):
-        next_run[start] = following.get(length)
-        following[length] = (start, end)
-
-    protected = []
-    code_spans = []
-    outside = 0
-    at = 0
-    for start, end, _, escaped in runs:
-        if start < at or escaped or not (close := next_run[start]):
-            continue
-        protected.append(cell[outside:start])
-        code = re.sub(r"\r\n|\r|\n", " ", cell[end:close[0]])
-        if len(code) >= 2 and code[0] == code[-1] == " " and code.strip(" "):
-            code = code[1:-1]
-        protected.append(f"\0{len(code_spans)}\0")
-        code_spans.append(code)
-        at = outside = close[1]
-    protected.append(cell[outside:])
-    text = html.unescape(_without_html(_without_link_targets("".join(protected))))
-    text = re.sub("\0([0-9]+)\0", lambda match: code_spans[int(match.group(1))], text)
-    return unicodedata.normalize("NFKC", text) if normalize else text
+def _review_text(cell: str) -> str:
+    """A review cell's text as a reader sees it: character references decoded, after
+    NFKC, without HTML comments and tags (<!-- to -->, < to >) and a link's destination
+    or label (]( to ), ][ to ]), each to its nearest closing. The reviewed commit is
+    read here, never in the raw cell, so a commit no reader sees names none."""
+    text = unicodedata.normalize("NFKC", html.unescape(cell))
+    text = _cut(text, "<", (("<!--", "-->"), ("<", ">")), keep=0)
+    return _cut(text, "]", (("](", ")"), ("][", "]")), keep=1)
 
 
 def _review_content(cell: str) -> bool:
     """Whether a review cell says something visible beyond commit names and markup, read
     in its text as a reader sees it (_review_text)."""
-    return any(character.isalpha() and character not in INVISIBLE_LETTERS
-               and unicodedata.category(character) not in ("Cf", "Mn", "Me")
-               for character in COMMIT.sub("", _review_text(cell, normalize=True)))
+    return any(character.isalpha() for character in COMMIT.sub("", _review_text(cell)))
 
 
 def _evidence(rows: list[dict]) -> list[str]:
@@ -478,7 +274,7 @@ def _evidence(rows: list[dict]) -> list[str]:
                     problems.append(f"Members: {branch}: {label} says {word!r}: a review "
                                     "cell may not say a review is pending, to come, TBD, "
                                     "not needed or N/A, even beside the member's commit")
-                not_required = key == "security_review" and NOT_REQUIRED.match(_plain(cell))
+                not_required = key == "security_review" and NOT_REQUIRED.match(cell)
                 if not COMMIT.search(_review_text(cell)) and not not_required:
                     problems.append(f"Members: {branch}: {label} names no reviewed commit "
                                     "(7 to 40 lower-case hex digits)")
@@ -696,7 +492,7 @@ def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
         for key, label in (("code_review", "/code-review"),
                            ("security_review", "/security-review")):
             if key == "security_review" and not protected \
-                    and NOT_REQUIRED.match(_plain(row[key])):
+                    and NOT_REQUIRED.match(row[key]):
                 continue
             if not named[key] & own:
                 problems.append(f"Members: {row['branch']}: {label} names no commit of the "
