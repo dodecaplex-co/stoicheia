@@ -3180,6 +3180,8 @@ findings:
   tag, until step 6 of [brief 0008](0008-centre.md) retires their uses. The meaning now
   says only what the tag records, which holds before and after the rule: the statement
   gives the circle its centre as a hypothesis, where Euclid's setting-out takes the centre
-  or a proof needs one. The term's kind and name do not change, no record changes, and no
+  or a proof needs one. It also says what the rule makes true: once the rule is in the
+  lock, every circle has a centre, so the hypothesis names a centre the circle already has
+  and excludes no circle. The term's kind and name do not change, no record changes, and no
   page changes. It is a check input, so it lands in a pull request of its own, before
   train C6a. Protected file changed: `review/terms.toml`.
