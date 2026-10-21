@@ -3475,3 +3475,44 @@ findings:
   with the counts. It reads III.1's tacit count from
   `tests/certificate_expectations.json`, so it holds before and after the content it
   describes. No guard is weakened.
+- **S24 to S26 grant a name only to a letter that is one, and refuse an arc that SVG does
+  not draw as an arc ([#172](https://github.com/jackChallis/stoicheia/issues/172)).** The
+  two gaps that the reviews of S24 to S26 left open at train H10 are closed in the
+  protected file [`scripts/check_style.py`](../../scripts/check_style.py). The names:
+  emphasis through a full stop or an apostrophe was refused only with a bare letter on its
+  other side, so `*e*.*g*.` was neither refused nor read as e.g., and granted e and g.
+  `modern_markup_findings` now refuses emphasis on either side of the stop or on both, the
+  stop escaped or not, and refused markup supplies no names. The same reading found three
+  more letters that are no names: `e\.g\.` granted e and g, an invisible format character
+  (a zero-width space, a soft hyphen) let a letter of one visible word stand alone, and the
+  p of Heath's page, "(vol. 1, p. 389)", was granted on five pages of main, II.6, II.7,
+  II.8, II.14 and III.8. `ABBREVIATION` now reads an escaped stop, a space inside e.g. and
+  i.e., and the p of a page before its number, and the markup check refuses a format
+  character. On main the names change only by those five p's, which no modern figure
+  draws. The arcs: by SVG's implementation notes for arcs, every choice of the large-arc
+  and sweep flags draws something once radii too short to reach the ends are enlarged
+  (F.6.6), for two distinct ends then lie on two ellipses of those radii, or on one when
+  the radii only just reach, and the flags take one arc of them from end to end (F.6.5); on
+  one ellipse both arcs are halves and the large-arc flag changes nothing. So no flag
+  choice is refused. What does not draw as an arc is an arc whose ends are one point,
+  which SVG omits, and one with a radius of 0, which it draws as a straight line (F.6.2).
+  The new `arc_fault` finds either, wherever the path stands when the arc begins, and S26's
+  `supported_svg` refuses the path, naming what SVG draws; S24's `modern_path` refuses the
+  same arcs in the modern figures. None of main's 317 arcs is either, and every figure and
+  page on main passes. The protected file
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains the cases, 77
+  subtests that fail on the check before this change and pass after it (two of them the
+  clearance case below), and
+  `test_arc_flags_always_draw`, which passes before and after: the four flag choices, with
+  radii enlarged, just reaching and ample, each draw on the side of the chord the sweep
+  flag gives, and the large-arc flag changes the arc only when the radii are ample. One
+  clearance case moves: the path whose omitted arc showed that such an arc does not break
+  a join is now refused at the figure entry points, so its join claim is held on the
+  strokes S26 measures, read directly, which equal those of the same path without the arc,
+  itself a case at the entry points; the refusal is asserted at both entry points. The
+  protected file [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains item
+  19, three plants in real files restored after: `*e*.*g*.` in II.7's modern way with an
+  italic e in its figure, an italic p in that figure beside Heath's "p. 389", and the two
+  arcs in I.1's figure. Each is caught by this check, and main's check passes each planted
+  tree. [STYLE](../STYLE.md), section 8, says each change in the rows of S24, S25 and S26.
+  No check, test or expected value is weakened.

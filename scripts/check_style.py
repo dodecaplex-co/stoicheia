@@ -128,6 +128,7 @@ import subprocess
 import sys
 import tempfile
 import tomllib
+import unicodedata
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from io import BytesIO
@@ -3539,6 +3540,40 @@ def supported_path(value: str) -> bool:
     return True
 
 
+def arc_fault(value: str) -> str | None:
+    """What SVG draws, in place of an arc, for the first arc of a supported path that it
+    does not draw as one; or None. SVG's implementation notes for arcs (F.6.2) omit an arc
+    whose ends are one point, and draw one with a radius of 0 as a straight line. Any
+    other arc draws, whatever its large-arc and sweep flags: radii too short to reach its
+    ends are enlarged until they reach (F.6.6), and two distinct ends then lie on two
+    ellipses of those radii, or on one when the radii only just reach; the flags take one
+    arc of them from the one end to the other (F.6.5), and on one ellipse both arcs are
+    halves, so that the large-arc flag changes nothing."""
+    parts = re.split(r"([A-Za-z])", value.strip(SVG_SPACE))
+    x = y = sx = sy = 0.0
+    for cmd, args in zip(parts[1::2], parts[2::2]):
+        if cmd == "Z":
+            x, y = sx, sy
+            continue
+        v = [float(n) for n in decimal_list(args)]
+        arity = PATH_ARITY[cmd.lower()]
+        for i in range(0, len(v), arity):
+            group = v[i:i + arity]
+            if cmd == "A" and (group[0] == 0 or group[1] == 0):
+                return f"a straight line for an arc with a radius of 0, from ({x:g}, {y:g})"
+            if cmd == "A" and (group[5], group[6]) == (x, y):
+                return f"nothing for an arc whose ends are one point, ({x:g}, {y:g})"
+            if cmd == "H":
+                x = group[0]
+            elif cmd == "V":
+                y = group[0]
+            else:
+                x, y = group[-2:]
+            if cmd == "M" and i == 0:
+                sx, sy = x, y
+    return None
+
+
 def supported_svg(path: Path, root) -> bool:
     """Refuse deep trees and unsupported SVG before recursive walks or measurements.
     Read raw XML attributes only; CSS is neither accepted nor interpreted."""
@@ -3600,6 +3635,12 @@ def supported_svg(path: Path, root) -> bool:
                 ok = letter_transform_of(value) is not None
             elif attr == "d":
                 ok = supported_path(value)
+                drawn = arc_fault(value) if ok else None
+                if drawn:
+                    fail("S26", path, 0, f"<{t}> d {value!r}: SVG draws {drawn}, so it is "
+                         "outside S26's SVG allow-list")
+                    valid = False
+                    continue
             else:
                 ok = attr == UNLETTERED
             if not ok:
@@ -4020,8 +4061,12 @@ TEX_COMMAND = re.compile(r"\\([A-Za-z]+)")
 # A lower-case letter standing alone in the paragraph's words, not the s of "A's" or
 # "Euclid’s" after an apostrophe.
 LONE_LOWER = re.compile(r"(?<![A-Za-z'’])[a-z](?![A-Za-z])")
-# The abbreviations whose letters are no names.
-ABBREVIATION = re.compile(r"(?<![A-Za-z])(?:[eE]\.g|[iI]\.e)\.")
+# The abbreviations whose letters are no names: e.g. and i.e., each full stop escaped or
+# not (e\.g\., which Markdown shows as e.g.) and a space after the first or not (e. g.);
+# and the p of Heath's page before its number, as STYLE, section 5, cites it (vol. 1,
+# p. 383).
+ABBREVIATION = re.compile(r"(?<![A-Za-z])(?:(?:[eE]\\?\.\s?g|[iI]\\?\.\s?e)\\?\."
+                          r"|p\\?\.(?=\s*\d))")
 # What stands beside the article "a", spaces between, when it is a name, as in "AC = a"
 # or "(a + b)²": a sign of an expression, a digit, raised or lowered, or a bracket.
 BESIDE_A_NAME = set("=+-−×·/<>≤≥()[]0123456789⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉")
@@ -4140,9 +4185,17 @@ def modern_markup_findings(text: str) -> list[str]:
     # ampersand, instead of letting the spelling supply names the reader does not see.
     if re.search(r"&(?:#[xX][0-9a-fA-F]+|#[0-9]+|[A-Za-z][A-Za-z0-9]*);", visible):
         found.append("unsupported character reference in the modern paragraph")
-    # Refuse emphasis touching a word, also through an apostrophe or full stop.
+    # A format character (Unicode's Cf: a zero-width space, a soft hyphen, a joiner) shows
+    # nothing, so a letter beside it would stand alone in a word the reader sees whole.
+    invisible = sorted({c for c in visible if unicodedata.category(c) == "Cf"})
+    if invisible:
+        found.append("unsupported invisible character "
+                     + ", ".join(f"U+{ord(c):04X}" for c in invisible)
+                     + " in the modern paragraph")
+    # Refuse emphasis touching a word, also through an apostrophe or full stop, escaped or
+    # not, with the emphasis on one side of it or both (*e*.g., *e*.*g*.).
     # Removing link syntax first also catches e[*x*](/reference)ponent.
-    if re.search(r"\w(?:\*+|['’.][*_]+|[*_]+['’.])\w", modern_paragraph(text)):
+    if re.search(r"\w(?:\*+|\\?['’.][*_]+|[*_]+\\?['’.][*_]*)\w", modern_paragraph(text)):
         found.append("unsupported intraword emphasis in the modern paragraph")
     if syntax.comments or any(backslashes_before(visible, m.start()) % 2 == 0
                               for m in INLINE_HTML.finditer(visible)):
@@ -4161,8 +4214,8 @@ def modern_names(paragraph: str) -> set[str]:
     their letters (\\theta, θ), what \\mathrm{…} sets upright left aside (Heath's points);
     and, outside the spans, each Greek letter, and each lower-case letter that stands
     alone, save the letters of English: one after an apostrophe (A's), those of e.g. and
-    i.e., and the article "a" when no sign of an expression, digit or bracket stands
-    beside it (BESIDE_A_NAME)."""
+    i.e. and the p of Heath's page (ABBREVIATION), and the article "a" when no sign of an
+    expression, digit or bracket stands beside it (BESIDE_A_NAME)."""
     names: set[str] = set()
 
     def span(m: re.Match) -> str:
@@ -4257,8 +4310,10 @@ def modern_transform(value: str) -> bool:
 
 
 def modern_path(value: str) -> bool:
-    """Main's paths use explicit M, L, A and final z, with space-separated decimals."""
-    parts, i = value.split(" "), 0
+    """Main's paths use explicit M, L, A and final z, with space-separated decimals. An
+    arc has positive radii and ends at another point than it begins, or SVG draws it as
+    a straight line or not at all (arc_fault)."""
+    parts, i, point = value.split(" "), 0, None
     if parts[0] != "M":
         return False
     while i < len(parts):
@@ -4269,11 +4324,14 @@ def modern_path(value: str) -> bool:
         if count is None:
             return False
         args = parts[i + 1:i + 1 + count]
-        if len(args) != count or any(modern_number(arg) is None for arg in args):
+        numbers = [modern_number(arg) for arg in args]
+        if len(args) != count or None in numbers:
             return False
-        if command == "A" and (any(modern_number(arg) < 0 for arg in args[:2])
-                               or any(arg not in {"0", "1"} for arg in args[3:5])):
+        if command == "A" and (any(n <= 0 for n in numbers[:2])
+                               or any(arg not in {"0", "1"} for arg in args[3:5])
+                               or numbers[5:] == point):
             return False
+        point = numbers[-2:]
         i += count + 1
     return True
 
