@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """Exercise queue refusals in throwaway git repositories, without network or Lean.
 
+    python3 -m pip install -r scripts/requirements-test_safe_push.txt
     python3 -I tests/test_check_queue.py
 
+The workflow cases read .github/workflows/ci.yml with PyYAML, pinned in
+scripts/requirements-test_safe_push.txt; install it in a virtual environment, since a
+system Python may refuse the install and python3 -I does not see a user install.
 Fixtures write objects with hash-object, mktree and commit-tree. Their own index
 and checkout use read-tree; the source repository's index and history never move.
 Every CLI invocation supplies --github-json, so missing fixture data cannot cause
@@ -18,7 +22,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import textwrap
 import time
 import unittest
 from pathlib import Path
@@ -49,6 +52,29 @@ def harness_source(comment, extra=()):
             + "CHECKS = [\n" + "".join(f"    ({n!r}, None),\n" for n in checks) + "]\n"
             + "NEGATIVE = [\n" + "".join(f"    ({n!r}, None),\n" for n in negative) + "]\n")
 
+
+def fixture_environment() -> dict:
+    """The environment of every fixture: no inherited Git, GitHub or acceptance settings,
+    and a fixed identity and time."""
+    env = {key: value for key, value in os.environ.items()
+           if not key.startswith(("GIT_", "GH_", "GITHUB_", "STOICHEIA_REVERT_"))
+           and key != "ACCEPTANCE_VERDICTS"}
+    env.update({
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_CONFIG_GLOBAL": os.devnull,
+        "GIT_AUTHOR_NAME": "Queue fixture",
+        "GIT_AUTHOR_EMAIL": "fixture@example.invalid",
+        "GIT_COMMITTER_NAME": "Queue fixture",
+        "GIT_COMMITTER_EMAIL": "fixture@example.invalid",
+        "GIT_AUTHOR_DATE": "2026-10-20T12:00:00+00:00",
+        "GIT_COMMITTER_DATE": "2026-10-20T12:00:00+00:00",
+        "GIT_TERMINAL_PROMPT": "0",
+        "GIT_ALLOW_PROTOCOL": "",
+        "STOICHEIA_REVERT_BOT": BOT,
+    })
+    return env
+
+
 class QueueTests(unittest.TestCase):
     """Build two real trains and GitHub-style group merges for each test."""
 
@@ -58,23 +84,7 @@ class QueueTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.repo = self.root / "repo"
         self.repo.mkdir()
-        env = {key: value for key, value in os.environ.items()
-               if not key.startswith(("GIT_", "GH_", "GITHUB_", "STOICHEIA_REVERT_"))
-               and key != "ACCEPTANCE_VERDICTS"}
-        env.update({
-            "GIT_CONFIG_NOSYSTEM": "1",
-            "GIT_CONFIG_GLOBAL": os.devnull,
-            "GIT_AUTHOR_NAME": "Queue fixture",
-            "GIT_AUTHOR_EMAIL": "fixture@example.invalid",
-            "GIT_COMMITTER_NAME": "Queue fixture",
-            "GIT_COMMITTER_EMAIL": "fixture@example.invalid",
-            "GIT_AUTHOR_DATE": "2026-10-20T12:00:00+00:00",
-            "GIT_COMMITTER_DATE": "2026-10-20T12:00:00+00:00",
-            "GIT_TERMINAL_PROMPT": "0",
-            "GIT_ALLOW_PROTOCOL": "",
-            "STOICHEIA_REVERT_BOT": BOT,
-        })
-        self.enterContext(patch.dict(os.environ, env, clear=True))
+        self.enterContext(patch.dict(os.environ, fixture_environment(), clear=True))
         self.git("init", "--quiet", "--initial-branch=main")
         self.trees, self.serial = {}, 0
         self.base = self.make([], {
@@ -536,6 +546,30 @@ class QueueTests(unittest.TestCase):
                                               changes={"README.md": rewritten})),
                      1, "batching", "conflicts or extra content")
 
+    def test_valid_later_train_restoring_readme_prose_is_caught(self):
+        # Rule (a)'s check of README's hand-written part, by trains each valid on its own:
+        # train 2 merges train 1's member, with its own row, and a reviewed member on it
+        # that puts back the prose train 1 changed. Every merge is automatic, so only
+        # the revert and reapplication of README's hand-written part refuses it.
+        readme = "Prose by hand.\n<!-- scope:I -->\nRow.\n<!-- /scope:I -->\n"
+        self.base = self.make([self.base], {"README.md": readme})
+        self.snapshot["main"]["sha"] = self.base
+        self.nodes().clear()
+        one = self.train(1, {"README.md": readme.replace("Prose by hand.", "Prose, reviewed.")})
+        member = queue.parents(self.repo, one)[1]
+        restore = self.make([member], {"README.md": readme.replace("Row.", "Row, regenerated.")})
+        head = self.merge(self.merge(self.base, member), restore)
+        rows = "".join(f"| content/{name} | {sha} | {REVIEW} {sha[:12]}: pass. | "
+                       f"{REVIEW} {sha[:12]}: pass. | passed at {sha} |\n"
+                       for name, sha in (("1b", member), ("2", restore)))
+        self.pr(2, head, "train/area-2", (
+            "## Members\n\n| Branch | Head | /code-review | /security-review | "
+            "/no-mistakes |\n|---|---|---|---|---|\n" + rows
+            + "\n## What is new\n\nNone.\n\n" + self.block(head)))
+        group = self.merge(self.merge(self.base, one, 1), head, 2)
+        self.verdict(self.cli(head=group), 1,
+                     "not overwriting: #1 changed lines were overwritten: README.md")
+
     def test_preflight_reads_the_current_writer_with_a_newer_harness(self):
         old_base = self.base
         self.base = self.make([old_base], {
@@ -689,180 +723,6 @@ class QueueTests(unittest.TestCase):
         self.verdict(self.cli(tree=True, prepare=False), 0, "queue: PASS")
         self.verdict(self.cli("--render", tree=True, prepare=False), 1, "render.py failed")
 
-    def test_tree_reads_dated_headings_as_they_render(self):
-        self.checkout(self.head)
-        page = self.repo / PAGE
-        original = page.read_text(encoding="utf-8")
-        cyrillic = "## 20 \u041ectober 2026"
-        for added, message in (
-                (" ## 20 October 2026", "repeated dated heading"),
-                ("   ## 20 October 2026", "repeated dated heading"),
-                ("## 20 October 2026\u200b", "repeated dated heading"),
-                ("## 20 october 2026", "repeated dated heading"),
-                ("20 October 2026\n---------------", "repeated dated heading"),
-                ("20 October 2026\n===", "repeated dated heading"),
-                ("## **20 October 2026**", "repeated dated heading"),
-                ("## 20 Oct 2026", "repeated dated heading"),
-                ("## October 20, 2026", "repeated dated heading"),
-                ("## 2026-10-20", "repeated dated heading"),
-                ("## 20\u00a0October\u00a02026", "repeated dated heading"),
-                ("## \uff12\uff10 October 2026", "repeated dated heading"),
-                (cyrillic, "letters outside ASCII")):
-            with self.subTest(added=added):
-                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
-                self.verdict(self.cli(tree=True, prepare=False), 1, PAGE, message)
-        for added in ("## 21 October 2026", "    ## 20 October 2026",
-                      "## 20 October 2026: a later note", "### 20 October 2026"):
-            with self.subTest(added=added):
-                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
-                self.verdict(self.cli(tree=True, prepare=False), 0, "queue: PASS")
-        page.write_text(original, encoding="utf-8")
-
-    def test_tree_reads_headings_through_html_links_and_containers(self):
-        # Character references, inline HTML, link syntax, block quotes and list items
-        # are read through; an HTML heading tag is refused rather than read.
-        self.checkout(self.head)
-        page = self.repo / PAGE
-        original = page.read_text(encoding="utf-8")
-        for added, message in (
-                ("## 20&nbsp;October 2026", "repeated dated heading"),
-                ("## 20 Octo&#98;er 2026", "repeated dated heading"),
-                ("## 20 October&#x20;2026", "repeated dated heading"),
-                ("## [20 October 2026](#x)", "repeated dated heading"),
-                ("## [20 October 2026](https://example.test/a(b))",
-                 "repeated dated heading"),
-                (r"## [20 October 2026](https://example.test/a\(b\))",
-                 "repeated dated heading"),
-                ("## [20 October 2026][x]", "repeated dated heading"),
-                ("## [20](#a) [October](#b) [2026](#c)", "repeated dated heading"),
-                ("## 20 Octo<!-- -->ber 2026", "repeated dated heading"),
-                ("## 20 October 2026<span></span>", "repeated dated heading"),
-                ("## <em>20 October</em> 2026", "repeated dated heading"),
-                ("## 20 October 2026 ##", "repeated dated heading"),
-                ("## 20 October 2026 ####   ", "repeated dated heading"),
-                ("> ## 20 October 2026", "repeated dated heading"),
-                (">## 20 October 2026", "repeated dated heading"),
-                ("- ## 20 October 2026", "repeated dated heading"),
-                ("1. ## 20 October 2026", "repeated dated heading"),
-                ("> - > ## 20 October 2026", "repeated dated heading"),
-                ("> 20 October 2026\n> ---", "repeated dated heading"),
-                ("<h2>20 October 2026</h2>", "an HTML heading tag"),
-                ("<H1 class=\"date\">Any heading</H1>", "an HTML heading tag"),
-                ("Some text <h2\nid=x>A heading</h2>", "an HTML heading tag")):
-            with self.subTest(added=added):
-                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
-                self.verdict(self.cli(tree=True, prepare=False), 1, PAGE, message)
-        for added in ("## 20 October 2026 [a later note](#x)", "## 20 October 2026 &amp; 21",
-                      "> ### 20 October 2026", "<h3>20 October 2026</h3>",
-                      "## 20 October 2026 <b>and after</b>", "- 20 October 2026"):
-            with self.subTest(added=added):
-                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
-                self.verdict(self.cli(tree=True, prepare=False), 0, "queue: PASS")
-        page.write_text(original, encoding="utf-8")
-
-    def test_tree_ignores_headings_in_code_and_html_blocks(self):
-        self.checkout(self.head)
-        page = self.repo / PAGE
-        original = page.read_text(encoding="utf-8")
-        for hidden in (
-                "```markdown\n## 20 October 2026\n```",
-                "~~~\n20 October 2026\n---\n~~~",
-                "    ## 20 October 2026\n\n    20 October 2026\n    ---",
-                "<!--\n## 20 October 2026\n-->",
-                "<div>\n## 20 October 2026\n</div>\n",
-                "<x title=\">\">\n## 20 October 2026\n\n",
-                "<x title='<'>\n## 20 October 2026\n\n",
-                "<pre>\n## 20 October 2026\n</pre>"):
-            with self.subTest(hidden=hidden.splitlines()[0]):
-                page.write_text(original + "\n" + hidden + "\n", encoding="utf-8")
-                self.verdict(self.cli(tree=True, prepare=False), 0, "queue: PASS")
-
-    def test_tree_resumes_headings_after_rendered_blocks(self):
-        self.checkout(self.head)
-        page = self.repo / PAGE
-        original = page.read_text(encoding="utf-8")
-        for added in (
-                "```\n## hidden\n```\n## 20 October 2026",
-                "<div>\n## hidden\n</div>\n\n## 20 October 2026",
-                "<pre>\n## hidden\n</pre>\n## 20 October 2026",
-                "> ```\n> ## hidden\n## 20 October 2026"):
-            with self.subTest(added=added.splitlines()[0]):
-                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
-                self.verdict(self.cli(tree=True, prepare=False), 1,
-                             "repeated dated heading")
-
-    def test_tree_reads_only_rendered_container_headings(self):
-        self.checkout(self.head)
-        page = self.repo / PAGE
-        original = page.read_text(encoding="utf-8")
-        for added in (
-                "> 20 October 2026",
-                "> quoted prose\n> 20 October 2026",
-                "- 20 October 2026"):
-            with self.subTest(added=added):
-                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
-                self.verdict(self.cli(tree=True, prepare=False), 0, "queue: PASS")
-        for added in (
-                "> ## 20 October 2026",
-                "> 20 October 2026\n> ---",
-                "- ## 20 October 2026"):
-            with self.subTest(added=added):
-                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
-                self.verdict(self.cli(tree=True, prepare=False), 1,
-                             "repeated dated heading")
-
-    def test_tree_tracks_container_and_heading_block_boundaries(self):
-        self.checkout(self.head)
-        page = self.repo / PAGE
-        original = page.read_text(encoding="utf-8")
-        for added in (
-                "- 20 October 2026\n---",
-                "### 20 October 2026\n---",
-                "> - 20 October 2026\n---"):
-            with self.subTest(added=added):
-                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
-                self.verdict(self.cli(tree=True, prepare=False), 0, "queue: PASS")
-        for added in (
-                "- 20 October 2026\n  ---",
-                "- ```\n  ## hidden\n## 20 October 2026",
-                "> - ## 20 October 2026"):
-            with self.subTest(added=added):
-                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
-                self.verdict(self.cli(tree=True, prepare=False), 1,
-                             "repeated dated heading")
-
-    def test_tree_refuses_raw_html_headings_even_in_hidden_blocks(self):
-        self.checkout(self.head)
-        page = self.repo / PAGE
-        original = page.read_text(encoding="utf-8")
-        for added in ("```html\n<h2>20 October 2026</h2>\n```",
-                      "<!-- <h1>hidden heading</h1> -->"):
-            with self.subTest(added=added.splitlines()[0]):
-                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
-                self.verdict(self.cli(tree=True, prepare=False), 1,
-                             "an HTML heading tag")
-
-    def test_long_heading_lines_are_read_in_linear_time(self):
-        # A 200,000-character line, in the shapes that once backtracked ("## a", spaces
-        # and a last word: about 0.45 s at 8,000 characters, and hours at 200,000) and in
-        # those the reading of HTML, links and containers could, is read in under a second.
-        size = 200_000
-        for line in ("## a" + " " * size + "b", "## a" + " " * size,
-                     "## " + "#" * size + " x", "## " + "<" * size,
-                     "## " + "<!--" * (size // 4), "## " + "<a" * (size // 2),
-                     "## " + "](" * (size // 2), "## " + "][" * (size // 2),
-                     "## " + "&#" * (size // 2), "> " * (size // 2) + "## 20 October 2026",
-                     "- " * (size // 2), "## 1 " + "a " * (size // 2),
-                     "## [20 October 2026](a" + "(" * size,
-                     "<x title=\"" + ">" * size + "\">",
-                     "## 20 October 2026" + " " * size + "#"):
-            with self.subTest(line=line[:12]):
-                self.assertGreaterEqual(len(line), size)
-                started = time.perf_counter()
-                for _, heading in queue.headings("Paragraph.\n\n" + line + "\n=\n"):
-                    queue.heading_date(heading)
-                self.assertLess(time.perf_counter() - started, 1.0)
-
     def test_repeated_dated_heading_refuses(self):
         page = self.trees[self.base][PAGE] + "\n## 20 October 2026\n\nRepeated date.\n"
         one = self.train(1, {PAGE: page})
@@ -882,8 +742,9 @@ class QueueTests(unittest.TestCase):
                                  new="- check: scripts/render.py")
                 first = self.merge(self.base, one, 1)
                 group = self.merge(first, self.two, 2)
-                # The judge runs no code of the group, so it does not render: the check
-                # job does, on the same group; --tree --render is the same reading.
+                # Judging a group runs none of the group's scripts, so the judge does not
+                # render: the check job does, on the same group; --tree --render is the
+                # same reading.
                 self.verdict(self.cli(head=group), 0, "queue: PASS")
                 self.checkout(group)
                 self.verdict(self.cli("--render", tree=True, prepare=False), 1,
@@ -1294,6 +1155,162 @@ class QueueTests(unittest.TestCase):
 
     def test_tree_mode_rejects_group_arguments(self):
         self.verdict(self.cli("--gaps", tree=True), 2, "--tree accepts only --render")
+
+
+class TreeTests(unittest.TestCase):
+    """Rule (d)'s line reading, each case run by --tree on a repository whose index holds
+    only the decisions page, which is all that --tree reads."""
+
+    ORIGINAL = "## 20 October 2026\n\nA previous decision.\n"
+    PLAIN = "which is not plain"
+    REPEATED = "repeated dated heading"
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.repo = Path(self.temp.name) / "repo"
+        self.page = self.repo / PAGE
+        self.page.parent.mkdir(parents=True)
+        self.enterContext(patch.dict(os.environ, fixture_environment(), clear=True))
+        self.page.write_text(self.ORIGINAL, encoding="utf-8")
+        for args in (("init", "--quiet", "--initial-branch=main"), ("add", "--", PAGE)):
+            subprocess.run(["git", *args], cwd=self.repo, check=True, capture_output=True)
+
+    def tree(self, added: str, original: str | None = None):
+        """Run --tree on the page with `added` as its last lines."""
+        text = (self.ORIGINAL if original is None else original) + "\n" + added + "\n"
+        self.page.write_bytes(text.encode("utf-8"))
+        return subprocess.run([sys.executable, "-I", str(SCRIPTS / "check_queue.py"),
+                               "--tree", str(self.repo)], cwd=self.repo,
+                              capture_output=True, text=True)
+
+    def refused(self, cases, original: str | None = None):
+        """Each (added, message) case is refused, naming the page and the message."""
+        for added, message in cases:
+            with self.subTest(added=added):
+                result = self.tree(added, original)
+                output = result.stdout + result.stderr
+                self.assertEqual(result.returncode, 1, output)
+                self.assertIn(f"queue: REFUSED: {PAGE}:", output)
+                self.assertIn(message, output)
+
+    def passes(self, cases, original: str | None = None):
+        for added in cases:
+            with self.subTest(added=added):
+                result = self.tree(added, original)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn("queue: PASS", result.stdout)
+
+    def test_the_page_as_written_passes(self):
+        self.passes(["## 21 October 2026", "### 20 October 2026", "#20 October 2026",
+                     "A paragraph of 20 October 2026, in prose.", "- 20 October 2026",
+                     "> 20 October 2026", "> quoted prose\n> 20 October 2026",
+                     "> ### 20 October 2026", "<h3>20 October 2026</h3>",
+                     "Prose that quotes the tag as &lt;h2&gt;, with <b>HTML</b> and a "
+                     "[link](#x).",
+                     "21 October 2026\n===\n\nNotes\n---", "## 21 October 2026 ##",
+                     "# Notes #", "##"])
+
+    def test_a_dated_heading_repeats_wherever_its_date_stands(self):
+        self.refused((added, self.REPEATED) for added in (
+            " ## 20 October 2026", "   ## 20 October 2026", "    ## 20 October 2026",
+            "# 20 October 2026", "## 20 october 2026", "## 20 Oct 2026", "## 20 OCT 2026",
+            "## 20th October 2026", "## October 20, 2026",
+            "## 2026-10-20", "## 20 October 2026: a later note",
+            "## A note of 20 October 2026", "## 20 October 2026 ##",
+            "## 20 October 2026 ####   ", "# 20 October 2026 #",
+            "20 October 2026\n---------------", "20 October 2026\n===",
+            "20 October 2026\n-", "20 October 2026\n- ", "20 October\n2026\n===",
+            "Prose.\r## 20 October 2026", "Prose.\r\n## 20 October 2026"))
+        self.refused([("## 20 October 2026", self.REPEATED)],
+                     original="\N{BYTE ORDER MARK}" + self.ORIGINAL)
+
+    def test_heading_text_must_be_plain(self):
+        # What a renderer would read through (character references, inline HTML, link
+        # syntax, emphasis, escapes and characters outside ASCII) refuses instead.
+        self.refused((added, self.PLAIN) for added in (
+            "## 20&nbsp;October 2026", "## 20 Octo&#98;er 2026", "## 20 October&#x20;2026",
+            "## [20 October 2026](#x)", "## [20 October 2026](https://example.test/a(b))",
+            r"## [20 October 2026](https://example.test/a\(b\))",
+            "## [20 October 2026][x]", "## [20](#a) [October](#b) [2026](#c)",
+            "## 20 Octo<!-- -->ber 2026", "## 20 October 2026<span></span>",
+            "## <em>20 October</em> 2026", "## **20 October 2026**", "## 20 `October` 2026",
+            "## 20 October\\_2026", "## 20_October 2026",
+            "## 20 October 2026\N{ZERO WIDTH SPACE}",
+            "## 20\N{NO-BREAK SPACE}October\N{NO-BREAK SPACE}2026",
+            "## \N{FULLWIDTH DIGIT TWO}\N{FULLWIDTH DIGIT ZERO} October 2026",
+            "## 20 \N{CYRILLIC CAPITAL LETTER O}ctober 2026",
+            "## 20 October 2026 [a later note](#x)",
+            "## 20 October 2026 &amp; 21", "## 20 October 2026 <b>and after</b>",
+            "## 20 October 2026#", "### 20 October 2026\n---", "20\tOctober 2026\n==="))
+
+    def test_containers_hide_no_heading(self):
+        self.refused((added, self.REPEATED) for added in (
+            "> ## 20 October 2026", ">## 20 October 2026", "- ## 20 October 2026",
+            "+ ## 20 October 2026", "1. ## 20 October 2026", "1) ## 20 October 2026",
+            "> - > ## 20 October 2026", "> - ## 20 October 2026", "* > 2. ## 20 October 2026",
+            "> 20 October 2026\n> ---", "- 20 October 2026\n---",
+            "- 20 October 2026\n  ---", "> - 20 October 2026\n---",
+            "1.  Item\n\n    ## 20 October 2026"))
+
+    def test_code_and_html_hide_no_heading(self):
+        # The cases a reading of blocks once passed, the third review's five among them.
+        self.refused((added, self.REPEATED) for added in (
+            "```markdown\n## 20 October 2026\n```", "~~~\n20 October 2026\n---\n~~~",
+            "    ## 20 October 2026\n\n    20 October 2026\n    ---",
+            "<!--\n## 20 October 2026\n-->", "<div>\n## 20 October 2026\n</div>\n",
+            "<x title=\">\">\n## 20 October 2026\n\n", "<x title='<'>\n## 20 October 2026\n\n",
+            "<pre>\n## 20 October 2026\n</pre>", "```\n## hidden\n```\n## 20 October 2026",
+            "<div>\n## hidden\n</div>\n\n## 20 October 2026",
+            "<pre>\n## hidden\n</pre>\n## 20 October 2026",
+            "> ```\n> ## hidden\n## 20 October 2026",
+            "- ```\n  ## hidden\n## 20 October 2026",
+            "- ```\n## 20 October 2026", "Some prose.\n<span>\n## 20 October 2026",
+            "- <div>\n## 20 October 2026", "20 October\n    2026\n===",
+            "- Item\n\n  ```\n## 20 October 2026"))
+
+    def test_an_underline_reads_back_to_the_blank_line(self):
+        # A line of no-break spaces, or one holding only a list marker, is not blank; a
+        # line of > is. A later underline's text holds an earlier one's.
+        self.refused((added, self.REPEATED) for added in (
+            "20 October\n*\n2026\n---", "20 October\n\N{NO-BREAK SPACE}\n2026\n===",
+            "20 October\n1.\n2026\n---", "20 October\n    ===\n2026\n---",
+            "21 October 2026\n===\nNotes\n---"))
+        self.refused([("21 October 2026\n===\nNotes\n---", self.PLAIN)])
+        self.passes(["20 October\n>\n2026\n===", "20 October\n\n2026\n==="])
+
+    def test_html_heading_tags_refuse_anywhere(self):
+        self.refused((added, "an HTML heading tag") for added in (
+            "<h2>20 October 2026</h2>", "<H1 class=\"date\">Any heading</H1>",
+            "Some text <h2\nid=x>A heading</h2>", "```html\n<h2>20 October 2026</h2>\n```",
+            "<!-- <h1>hidden heading</h1> -->"))
+
+    def test_long_lines_and_pages_are_read_in_linear_time(self):
+        # 200,000 characters, in the shapes that once backtracked ("## a", spaces and a
+        # last word: about 0.45 s at 8,000 characters, and hours at 200,000; "<a" and
+        # spaces, quadratic in a tag reader), in long runs of markers, digits and
+        # underlines, and as pages of many lines, are read in under a second.
+        size = 200_000
+        lines = ("## a" + " " * size + "b", "## a" + " " * size, "## " + "#" * size + " x",
+                 "## " + "<" * size, "## " + "<!--" * (size // 4), "## " + "<a" * (size // 2),
+                 "<a" + " " * size, "## " + "](" * (size // 2), "## " + "][" * (size // 2),
+                 "## " + "&#" * (size // 2),
+                 "> " * (size // 2) + "## 20 October 2026", "- " * (size // 2),
+                 "1. " * (size // 3 + 1), "1" * size + "x", "=" * size + "x",
+                 "-" * size + " -", "## 1 " + "a " * (size // 2),
+                 "## 1 January " + "2026 1 January " * (size // 15),
+                 "## [20 October 2026](a" + "(" * size, "<x title=\"" + ">" * size + "\">",
+                 "## 20 October 2026" + " " * size + "#", "<h2" * (size // 3 + 1))
+        pages = ("a\n=\n" * (size // 4), "a\n" * (size // 2) + "=",
+                 "x\n" + "-\n" * (size // 2), "1 January 2026\n=\n" * (size // 16 + 1),
+                 "## 20 October 2026\n" * (size // 19 + 1),
+                 "a\n" + "\N{NO-BREAK SPACE}\n" * (size // 2) + "=", ">\n" * (size // 2))
+        for page in (*("Paragraph.\n\n" + line + "\n=\n" for line in lines), *pages):
+            with self.subTest(page=page[:24]):
+                self.assertGreaterEqual(len(page), size)
+                started = time.perf_counter()
+                queue.heading_problems(page)
+                self.assertLess(time.perf_counter() - started, 1.0)
 
 
 if __name__ == "__main__":

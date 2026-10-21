@@ -3375,9 +3375,10 @@ findings:
     from the checkout or a member's `.gitattributes`; the train's own commits change only
     those; each `/code-review` and `/security-review` cell names, by 7 or more
     hexadecimal digits, a commit of the member's own history (its head, or an ancestor
-    of it not on origin/main) and is not only a placeholder, `/no-mistakes` says
-    `passed at` the member's own head or `not run: <reason>` with five words or more,
-    and `/security-review` says "Not required" only where no protected path changed,
+    of it not on origin/main), gives some visible verdict or findings beyond that name,
+    is not only a placeholder and holds nowhere, in any case, "pending", "TBD", "to
+    come", "not needed" or "N/A", `/no-mistakes` says `passed at` the member's own head
+    or `not run: <reason>` with five words or more, and `/security-review` says "Not required" only where no protected path changed,
     against any of the member's merge bases with main, a member with a protected path
     naming its commit there and saying "Not required" nowhere in the cell; checks and the
     content they judge travel apart, even when origin/main's checks pass; and
@@ -3398,11 +3399,16 @@ findings:
     passing verdict and every check that harness runs passing, and that each train's
     `Members` are still its actual merges; (c) that the group is main and the queued
     entries ahead, in order, as plain merge commits; and (d) that no dated decisions
-    heading repeats, read as it renders, in block quotes and list items too and through
-    character references, inline HTML and link syntax, with HTML heading tags of levels
-    one and two refused, wherever they stand on the page, which therefore quotes them
-    only as character references (the pages' freshness and conflict markers are the
-    `check` job's). Every
+    heading repeats, read line by line, never as the page renders, so that the reading
+    can only over-approximate: a line that could render as a level-one or level-two
+    heading counts, in code, HTML and every container too, its leading whitespace,
+    `>` and list markers taken off; its text must be plain, ASCII letters, digits,
+    spaces and `. , : ; ' ( ) - /` only, or the page is refused, naming the line; an
+    underline's text is every line back to the previous blank one; a heading is dated
+    when its text contains a date, and two with the same date are refused, naming both;
+    and an HTML heading tag of level one or two anywhere on the page is refused, so the
+    page quotes one only in prose, as character references (the pages' freshness and
+    conflict markers are the `check` job's). Every
     merge it computes reads merge attributes from the group's base. The pre-flight block
     is a declaration that anyone who can edit the pull request's body can type: the
     judge checks it for consistency, not as proof that a pre-flight ran. And GitHub runs
@@ -3422,9 +3428,12 @@ findings:
     no token in their environment, and prints the changed propositions' acceptance
     items.
   - *Now.* `queue-integrity` runs the offline cases of `tests/test_check_queue.py` and
-    `tests/test_check_train.py` on pull requests and pushes; it judges groups only once
-    CI runs on `merge_group`, which comes with the queue. The queue stays off until the
-    owner turns it on, and not before CI runs on `merge_group`. The step
+    `tests/test_check_train.py` on pull requests and pushes, after installing the YAML
+    parser pinned in `scripts/requirements-test_safe_push.txt`, with which they read
+    `ci.yml`; on a merge group it installs nothing, so the Python that runs the judge
+    holds nothing the group names. It judges groups only once CI runs on `merge_group`,
+    which comes with the queue. The queue stays off until the owner turns it on, and not
+    before CI runs on `merge_group`. The step
     `python3 scripts/check_queue.py --tree .` is now in the `check` job and in
     safe_push's `CHECKS`, after the generated pages' status, so WORKFLOW's section 8, CI
     and the pre-flight keep one list; negative test 19 plants a repeated dated heading

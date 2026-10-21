@@ -39,6 +39,13 @@ PLACEHOLDER = re.compile(
     r"(?:pending|waiting|awaiting(?: (?:review|the review))?|(?:still )?to come|to ?do|"
     r"tbd|tbc|wip|queued|skipped|later|soon|in progress|n/?a|none|nothing|-+|\?+|"
     r"not (?:yet )?(?:run|done|started|reviewed)(?: yet)?|will run after (?:the )?merge)")
+# Words that say a review is absent or still to come, which a review cell may not hold
+# anywhere, beside the member's commit too: in any case, with any separators between
+# words, and through character references, compatibility forms and invisible marks.
+# Each repeated part is followed by a character it cannot take, so no match backtracks
+# over more than one run of separators.
+PLACEHOLDER_WORD = re.compile(
+    r"\b(?:pending|tbd|to[\W_]*come|not[\W_]*needed|n(?:[^\w/]|_)*/(?:[^\w/]|_)*a)\b")
 # A review cell names the commit it reviewed, by 7 to 40 lower-case hex digits, and with
 # a repository that commit must be one of the member's own (check_train); on
 # /security-review, "Not required" stands instead, where no protected path changed.
@@ -185,11 +192,52 @@ def _placeholder(cell: str) -> bool:
                                       .rstrip(".!;:, ").casefold()))
 
 
-def _review_content(cell: str) -> bool:
-    """Whether a review cell says something visible beyond commit names and markup."""
+def _normal(cell: str) -> str:
+    """A cell's text as it reads: character references decoded, after NFKC, without
+    format characters and combining marks, in one case."""
     text = unicodedata.normalize("NFKC", html.unescape(cell))
-    text = re.sub(r"<!--.*?-->|<[^>]*>", "", text, flags=re.S)
-    text = re.sub(r"\]\([^)]*\)|\]\[[^]]*\]", "]", text)
+    return "".join(c for c in text
+                   if unicodedata.category(c) not in ("Cf", "Mn", "Me")).casefold()
+
+
+def _placeholder_word(cell: str) -> str | None:
+    """The first word anywhere in the cell that says the review is absent or to come."""
+    match = PLACEHOLDER_WORD.search(_normal(cell))
+    return match.group() if match else None
+
+
+def _cut(text: str, opener: str, spans: tuple[tuple[str, str], ...], keep: int) -> str:
+    """The text with spans cut out, as re.sub reads alternatives left to right: at each
+    `opener`, the first span whose opening stands there and whose closing follows it is
+    cut through that closing's nearest place, keeping the opening's first `keep`
+    characters. A closing is searched for again only once passed, so the text is read
+    in linear time, however many openings it holds."""
+    parts, position, nearest = [], 0, {}
+    while (start := text.find(opener, position)) >= 0:
+        for opening, closing in spans:
+            if not text.startswith(opening, start):
+                continue
+            found = nearest.get(closing, -2)
+            if found != -1 and found < start + len(opening):
+                found = nearest[closing] = text.find(closing, start + len(opening))
+            if found >= 0:
+                parts.append(text[position:start + keep])
+                position = found + len(closing)
+                break
+        else:
+            parts.append(text[position:start + 1])
+            position = start + 1
+    parts.append(text[position:])
+    return "".join(parts)
+
+
+def _review_content(cell: str) -> bool:
+    """Whether a review cell says something visible beyond commit names and markup: read
+    without HTML comments and tags (<!-- to -->, < to >) and a link's destination or
+    label (]( to ), ][ to ]), each to its nearest closing."""
+    text = unicodedata.normalize("NFKC", html.unescape(cell))
+    text = _cut(text, "<", (("<!--", "-->"), ("<", ">")), keep=0)
+    text = _cut(text, "]", (("](", ")"), ("][", "]")), keep=1)
     text = COMMIT.sub("", text)
     return any(character.isalpha() for character in text)
 
@@ -213,6 +261,10 @@ def _evidence(rows: list[dict]) -> list[str]:
                 problems.append(f"Members: {branch}: {label} is not written, or says the "
                                 "review is not done")
             elif key != "no_mistakes":
+                if word := _placeholder_word(cell):
+                    problems.append(f"Members: {branch}: {label} says {word!r}: a review "
+                                    "cell may not say a review is pending, to come, TBD, "
+                                    "not needed or N/A, even beside the member's commit")
                 not_required = key == "security_review" and NOT_REQUIRED.match(cell)
                 if not COMMIT.search(cell) and not not_required:
                     problems.append(f"Members: {branch}: {label} names no reviewed commit "
@@ -361,9 +413,7 @@ def _named_commits(repo: Path, cells: list[str]) -> set[str]:
 
 def _says_not_required(cell: str) -> bool:
     """Whether the cell says "Not required" anywhere, however spelt."""
-    text = unicodedata.normalize("NFKC", html.unescape(cell))
-    text = "".join(c for c in text if unicodedata.category(c) not in ("Cf", "Mn", "Me"))
-    return bool(SAYS_NOT_REQUIRED.search(text.casefold()))
+    return bool(SAYS_NOT_REQUIRED.search(_normal(cell)))
 
 
 def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:

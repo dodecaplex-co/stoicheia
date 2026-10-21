@@ -13,6 +13,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -405,16 +406,56 @@ class TrainChecks(Repository):
                     row = dict(self.row, **{key: cell})
                     self.assertEqual(self.problems(text=body([row])), [])
 
+    def test_long_review_cells_are_read_in_linear_time(self):
+        # 200,000 characters of openings that never close, which a regular expression
+        # rescanning to the end from each would read in quadratic time (3.4 s at 65,536
+        # characters of "<!--"), and of separators after a placeholder word's start.
+        size = 200_000
+        for cell in ("<!--" * (size // 4), "<a" * (size // 2), "](" * (size // 2),
+                     "][" * (size // 2), "n" + "/" * size, "to" + " " * size,
+                     "not" + "-" * size + "x", ("n" + " " * 50) * (size // 51 + 1)):
+            with self.subTest(cell=cell[:12]):
+                self.assertGreaterEqual(len(cell), size)
+                started = time.perf_counter()
+                train._review_content(f"{self.member} {cell}")
+                train._placeholder_word(f"{self.member} {cell}")
+                self.assertLess(time.perf_counter() - started, 1.0)
+
     def test_findings_that_begin_like_a_placeholder_pass(self):
         for cell in (f"To do so, the reader re-ran the checks at {self.member[:7]}: no "
                      "findings.",
                      f"Later commits after {self.member[:8]} change only the record's "
                      "stamp: no findings.",
-                     f"Pending items: none; reviewed at `{self.member[:10]}`."):
+                     f"Skipped nothing: every check re-ran at `{self.member[:10]}`.",
+                     f"Depending on the base, the reader re-ran {self.member[:9]}: no "
+                     "findings; the outcome is now known."):
             for key in ("code_review", "security_review"):
                 with self.subTest(cell=cell, key=key):
                     row = dict(self.row, **{key: cell})
                     self.assertEqual(self.problems(text=body([row])), [])
+
+    def test_review_cells_may_hold_no_placeholder_word_anywhere(self):
+        # Beside the member's own commit too, and in a protected member's security cell.
+        own = self.member[:12]
+        cells = (f"pending {own}", f"Not needed ({own})", f"TBD {own}",
+                 f"Reviewed {own}: pass; a second review to come.", f"{own}: N/A",
+                 f"Reviewed {own}: PENDING.", f"{own}: pass. Pending items: none.",
+                 f"{own}: pass; n / a for the rest.", f"{own}: not&#32;needed again.",
+                 f"Reviewed {own}: pass, to-come notes aside.", f"Reviewed {own}: t\N{ZERO WIDTH SPACE}bd.")
+        for cell in cells:
+            for key, label in (("code_review", "/code-review"),
+                               ("security_review", "/security-review")):
+                with self.subTest(cell=cell, key=key):
+                    self.refused(f"{label} says", text=body([dict(self.row, **{key: cell})]))
+                    self.assertIn("a review cell may not say", "\n".join(
+                        train.body_problems(body([dict(self.row, **{key: cell})]))))
+        member = self.commit([self.base], {CHECK: "print('reviewed check')\n"})
+        head = self.merge(self.base, member)
+        for cell in (f"Security reader at {member}: PASS; a second pass is pending.",
+                     f"Not needed ({member[:12]})", f"TBD {member[:12]}"):
+            with self.subTest(protected=cell):
+                self.refused("/security-review says", head=head, text=body(
+                    [member_row(member, security_review=cell)], f"- check: {CHECK}"))
 
     def own(self, cell: str, commit: str) -> str:
         """The cell as written, its first commit name standing for `commit`, by as many
