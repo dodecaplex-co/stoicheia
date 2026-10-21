@@ -3062,8 +3062,9 @@ findings:
   other refusals.
 
   `tests/test_jev_questions.py` adds four cases, each failing on the old generator. The
-  four import forms are read, with their exact spans, and make the imported file
-  visible; seven other headers are refused. While the second helper's path is a
+  four import forms and quoted module identifiers are read, with their exact spans, and
+  make the imported file visible; eleven other headers are refused. While the second
+  helper's path is a
   symlink, behind a symlinked folder, absolute, traversing, missing or a folder, neither
   planted helper runs, the first included; both run once both paths pass. A copy of the
   generator beside a symlinked `jev.py` refuses, and neither planted helper runs. On

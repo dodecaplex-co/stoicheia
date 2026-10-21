@@ -200,6 +200,9 @@ class Evidence:
 IDENT = r"[^\W\d][\w'₀-₉]*"
 NAME = IDENT + r'(?:\.' + IDENT + r')*'
 TOKEN = re.compile(NAME)
+MODULE_COMPONENT = r'(?:' + IDENT + r'|«[^»\n]*»)'
+MODULE_NAME = MODULE_COMPONENT + r'(?:\.' + MODULE_COMPONENT + r')*'
+MODULE_PART = re.compile(MODULE_COMPONENT)
 COMMAND = re.compile(
     r'^(?:@\[[^\n]*?\]\s*)?(?:(?:private|protected|noncomputable|unsafe)\s+)*'
     r'(theorem|lemma|def|abbrev|axiom|opaque|structure|inductive|instance|example|'
@@ -210,8 +213,9 @@ COMMAND = re.compile(
 # exactly one module before the end of its line: `import all` is not read.
 IMPORT = re.compile(r'^(?:public\s+)?(?:meta\s+)?(import)\b', re.M)
 PREFIXED_IMPORT = re.compile(
-    r'^(?:@\[[\s\S]*?\]\s*|(?:public|meta|private|protected|noncomputable|unsafe)\s+)+import\b', re.M)
-IMPORT_NAME = re.compile(r'\s+(' + NAME + r')[^\S\n]*(?:\n|\Z)')
+    r'^(?:@\[[\s\S]*?\]\s*|'
+    r'(?:public|meta|private|protected|noncomputable|unsafe|partial|nonrec)\s+)+import\b', re.M)
+IMPORT_NAME = re.compile(r'\s+(' + MODULE_NAME + r')[^\S\n]*(?:\n|\Z)')
 HEADER_WORDS = frozenset({'module', 'prelude', 'public', 'meta', 'all', 'import'})
 
 
@@ -277,6 +281,21 @@ def assignment(clean: str, start: int, end: int) -> int | None:
     return None
 
 
+def module_path(name: str) -> str:
+    parts = []
+    position = 0
+    while position < len(name):
+        found = MODULE_PART.match(name, position)
+        require(found is not None, f'invalid module name {name!r}')
+        part = found.group()
+        parts.append(part[1:-1] if part.startswith('«') else part)
+        position = found.end()
+        if position < len(name):
+            require(name[position] == '.', f'invalid module name {name!r}')
+            position += 1
+    return '/'.join(parts) + '.lean'
+
+
 @dataclass(frozen=True)
 class Declaration:
     name: str
@@ -315,6 +334,10 @@ class Index:
         imports = {match.start() for match in commands if match.re is IMPORT}
         for found in PREFIXED_IMPORT.finditer(clean):
             require(found.start() in imports, f'{path}: unsupported import {found.group()!r}')
+        for a, b in comments:
+            following = re.match(r'\s*', clean[b:])
+            if raw[a:a + 3] == '/--' and b + following.end() in imports:
+                raise Refusal(f'{path}: unsupported import {raw[a:b + following.end()]!r}')
         self.imports[path] = []
         namespace = ''
         frames: list[tuple[str, int, int]] = []
@@ -340,7 +363,8 @@ class Index:
                 # The import runs to the end of the line naming its module.
                 line_end = raw.find('\n', found.end(1))
                 line_end = len(raw) if line_end < 0 else line_end
-                self.imports[path].append((found.group(1).replace('.', '/') + '.lean', start, line_end + 1))
+                self.imports[path].append(
+                    (module_path(found.group(1)), start, line_end + 1))
                 continue
             if kind in ('namespace', 'section'):
                 frames.append((namespace, len(contexts), len(opens)))

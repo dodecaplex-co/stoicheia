@@ -55,12 +55,18 @@ LEAN_IMPORTS = {
     'Spaced.lean': ('module\n\n',
                     'public /- between words -/ meta\n  import\n    Elements.Base -- the module\n'),
 }
+RAW_IMPORTS = {
+    'QuotedDash.lean': ('areas-p5.lean', 'public import Elements.«areas-p5»\n'),
+    'QuotedDot.lean': ('areas.p5.lean', 'public import Elements.«areas.p5»\n'),
+}
 # Lean 4.35 refuses each header but the two with `import all`, which the generator does
 # not read. None of them may be read as an import.
 REFUSED_IMPORTS = (
     'meta public import Elements.Base', 'public public import Elements.Base',
     'private import Elements.Base', '@[expose] import Elements.Base',
     '@[\nexpose\n]\nimport Elements.Base',
+    'partial\nimport Elements.Base', 'nonrec\nimport Elements.Base',
+    '/-- declaration documentation -/\nimport Elements.Base',
     'import Elements.Base Elements.Base', 'import all Elements.Base',
     'import all\n  Elements.Base',
 )
@@ -580,7 +586,11 @@ class Imports(unittest.TestCase):
 
     def test_public_and_meta_imports_are_imports(self):
         sources = {name: prefix + text + BODY for name, (prefix, text) in LEAN_IMPORTS.items()}
-        index = self.index({'Base.lean': BASE, **sources})
+        raw_sources = {name: 'module\n\n' + text + BODY
+                       for name, (_, text) in RAW_IMPORTS.items()}
+        raw_targets = {target: 'namespace Elements\n\nend Elements\n'
+                       for target, _ in RAW_IMPORTS.values()}
+        index = self.index({'Base.lean': BASE, **raw_targets, **sources, **raw_sources})
         for name, (_, text) in LEAN_IMPORTS.items():
             path = 'Elements/' + name
             with self.subTest(name=name):
@@ -588,6 +598,14 @@ class Imports(unittest.TestCase):
                 self.assertEqual(target, 'Elements/Base.lean')
                 self.assertEqual(sources[name][start:end], text)
                 self.assertIn('Elements/Base.lean', index.visible(path))
+        for name, (target, text) in RAW_IMPORTS.items():
+            path = 'Elements/' + name
+            imported = 'Elements/' + target
+            with self.subTest(name=name):
+                [(actual, start, end)] = index.imports[path]
+                self.assertEqual(actual, imported)
+                self.assertEqual(raw_sources[name][start:end], text)
+                self.assertIn(imported, index.visible(path))
 
     def test_other_import_forms_are_refused(self):
         for header in REFUSED_IMPORTS:
