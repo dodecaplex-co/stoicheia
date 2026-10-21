@@ -63,7 +63,7 @@ The reach of #66, held file by file (REACH_PENDING). The Review notes, the overl
 catalogue, the Other reports, the Rendered docstrings, the front pages and the table of
 names came under the rules on 19 October, with S7 in the gap catalogues and the Generated
 files, S12 beyond the mishnah, and S22. A file that had findings of that reach on the
-day is listed with the rules it had findings of and whoever mends them, and while it is
+day was listed with the rules it had findings of and whoever mends them, and while it is
 listed its findings of those rules are reported (D16) and fail nothing; every other
 finding of the reach fails at once, in a listed file as in any other, and so does every
 finding a file was held to before. A rule of an entry whose file has no finding of it left
@@ -198,42 +198,21 @@ NOT_DECLARED = {
 # file, to quiet a new finding: mend the text.
 REACH_PENDING: dict[str, tuple[str, str]] = {
     # The review notes.
-    "review/I/09.toml": ("S7", "the records of Books I and II (#29)"),
-    "review/II/14.toml": ("S12", "the records of Books I and II (#29)"),
     "review/III/14.toml": ("S12", "stage 4's records (#28)"),
     "review/III/15.toml": ("S12", "stage 4's records (#28)"),
     "review/III/25.toml": ("S12", "stage 4's records (#28)"),
     # The catalogues and the reports.
-    "docs/reports/gaps-book-I.md": ("S7", "the text change that follows this one (#66)"),
-    "docs/reports/gaps-book-II.md": ("S7 S12", "the text change that follows this one (#66)"),
     "docs/reports/gaps-book-III.md": ("S12", "stage 3's gap entries (#25)"),
     "docs/reports/overlaps.md": ("S7", "stage 3's overlap entries (#25)"),
-    # S12's report inventory on bd3b72a: 147 and 2 findings, respectively. These are
-    # the initial findings of the new report reach, not later additions to a landed rule.
+    # S12's report inventory on bd3b72a: 147 findings. These are the initial findings of
+    # the new report reach, not later additions to a landed rule.
     "docs/reports/mixed-angles-prototype.md": ("S12", "the report text change after #66 (147 findings)"),
-    "docs/reports/read-through-01.md": ("S7 S12", "the report text change after #66 (2 S12 findings)"),
     # The front pages: render.py's FRONT_LEAN_I, once stage 3's change to render.py lands.
     "book/I/front.md": ("S12", "render.py's FRONT_LEAN_I, after stage 3 (#25)"),
-    # The notes of four proofs (S22): a change to the file needs its record read again.
-    "Elements/BookI/Prop08.lean": ("S22", "the records of Books I and II (#29), with the record"),
+    # The notes of three proofs (S22): a change to the file needs its record read again.
     "Elements/BookII/Prop14.lean": ("S22", "the records of Books I and II (#29), with the record"),
     "Elements/BookIII/Prop10.lean": ("S22", "the next change to the file, with its record"),
     "Elements/BookIII/Prop19.lean": ("S22", "the next change to the file, with its record"),
-    # Book Zero's notes (S22).
-    "Elements/Figure/Angles.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Areas.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Basics.lean": ("S22", "stage 3 (#25) and the mixed angles (#57)"),
-    "Elements/Figure/Circles.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Lengths.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Lines.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/OnCircles.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Parallelograms.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Parallels.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Rays.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Rectangles.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Rectilineal.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Sides.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Triangles.lean": ("S22", "the text change that follows this one (#66)"),
     # The foundations' notes (S22), and the rendered docstrings of Transfer.lean (S7): the
     # coordinator's files.
     "Elements/Foundations/Definitions.lean": ("S22", "the coordinator, who owns the foundations"),
