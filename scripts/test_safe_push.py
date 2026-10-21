@@ -4625,7 +4625,7 @@ class ProtectedPaths(Edge):
         expectations = json.loads(self.text(expect))
         for ref in ("III.1", "III.1 Por."):
             pin = next(x for x in expectations["expectations"]
-                       if (x["ref"], x["field"]) == (ref, "axioms") and "count" in x)
+                       if (x.get("ref"), x["field"]) == (ref, "axioms") and "count" in x)
             self.assertEqual(pin["count"]["prefix"], "Tacit.")
             pin["count"]["is"] -= 1
             if "equals" in pin:
@@ -4642,7 +4642,7 @@ class ProtectedPaths(Edge):
         # the content, origin/main's failure is noted, and the commit's own pass holds.
         expectations = json.loads(self.text(self.EXPECT))["expectations"]
         count = next(x["count"]["is"] for x in expectations
-                     if (x["ref"], x["field"]) == ("III.1", "axioms") and "count" in x)
+                     if (x.get("ref"), x["field"]) == ("III.1", "axioms") and "count" in x)
         self.regenerated_commit("Re-prove III.1, its expectations with it", self.reproof())
         r = self.safe_push("--dry-run")
         out = r.stdout + r.stderr
@@ -4683,9 +4683,9 @@ class ProtectedPaths(Edge):
                 p["axioms"] = sorted(p["axioms"] + ["Tacit.circle_eq"])
         data = json.loads(self.text(self.EXPECT))
         count = next(x["count"]["is"] for x in data["expectations"]
-                     if (x["ref"], x["field"]) == ("III.1", "axioms") and "count" in x)
+                     if (x.get("ref"), x["field"]) == ("III.1", "axioms") and "count" in x)
         data["expectations"] = [x for x in data["expectations"]
-                                if (x["ref"], x["field"]) != ("III.1", "axioms")]
+                                if (x.get("ref"), x["field"]) != ("III.1", "axioms")]
         changes = {lean: new_lean, record: stamped,
                    "facts.json": json.dumps(facts, indent=2, ensure_ascii=False) + "\n",
                    self.EXPECT: json.dumps(data, indent=2, ensure_ascii=False) + "\n"}
@@ -4719,7 +4719,7 @@ class ProtectedPaths(Edge):
         # and excludes the same or grown, and only count.is and equals take other values:
         # then the change moves with the content. Anything else is a check change.
         def entry(data, ref, field="axioms"):
-            return next(x for x in data["expectations"] if (x["ref"], x["field"]) == (ref, field))
+            return next(x for x in data["expectations"] if (x.get("ref"), x["field"]) == (ref, field))
 
         def drop(key, ref="III.1", field="axioms"):
             def change(data):
