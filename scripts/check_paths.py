@@ -596,6 +596,11 @@ def repository() -> tuple[Path, dict[str, str]]:
         fail(f"Git's directory is {git_dir}, not the script's repository Git directory "
              f"{expected_git_dir}" + (remedy or "; run the check from the repository's "
                                          "own work tree"))
+    index = active_env.get("GIT_INDEX_FILE")
+    if (index and not Path(index).is_absolute()
+            and all(name in os.environ for name in ("GIT_DIR", "GIT_WORK_TREE"))
+            and caller != top and top not in caller.parents):
+        active_env["GIT_INDEX_FILE"] = str((caller / index).resolve())
     return top, active_env
 
 
