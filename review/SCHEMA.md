@@ -255,9 +255,9 @@ d040117, and serve as test values: at that commit, `heath.review_fingerprint` gi
 `sha256:9fd59073303dbcdc` for III.16 (its statement, then III.16 Por.'s) and
 `sha256:5ea666d96871b7f8` for I.40.
 
-III.16 is partial: the clause about the angle of the semicircle and the horn-like angle
-is not stated, its porism is proved on its own, and one run of sentences has no Lean
-beneath it.
+At d040117, III.16 was partial: the clause about the angle of the semicircle and the
+horn-like angle was not stated, its porism was proved on its own, and one run of sentences
+had no Lean beneath it.
 
 ```toml
 # review/III/16.toml
@@ -312,6 +312,12 @@ commit = "d040117"
 lean = "sha256:061379c1f0411141"
 reviewer = "Claude Opus 5.5"
 ```
+
+III.16's mixed angles have since been stated: [its current record](III/16.toml) has full
+scope, lists `"III.16 semicircle"`, `"III.16 remaining"` and `"III.16 acute"` as
+companions, and carries `mixed-angles-local` where this example carries
+`mixed-angles-omitted`, which no record now carries. The example above remains the fixture
+from commit d040117.
 
 At d040117, I.40 was restricted: the theorem took the two bases end to end.
 

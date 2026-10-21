@@ -35,8 +35,6 @@ class AllowedLimits(unittest.TestCase):
         expected = {
             "I.45": ("restricted", "figure-with-dissection"),
             "II.14": ("restricted", "figure-with-dissection"),
-            "III.16": ("partial", "mixed-angles-omitted"),
-            "III.31": ("partial", "mixed-angles-omitted"),
         }
         self.assertEqual(acceptance.ALLOWED_LIMITS, expected)
         text = (ROOT / "docs/ACCEPTANCE.md").read_text(encoding="utf-8")
@@ -69,6 +67,27 @@ class AllowedLimits(unittest.TestCase):
             with self.subTest(ref=ref):
                 self.assertEqual(
                     self.p3_failures(ref, "partial", ["figure-with-dissection"]), [
+                        "the statement is partial: every statement of Books I-III is full "
+                        "but for the limitations docs/ACCEPTANCE.md names",
+                    ])
+
+    def test_mixed_angles_full_pass(self):
+        # III.16 and III.31 state their mixed angles, so their records are full.
+        for ref in ("III.16", "III.31"):
+            with self.subTest(ref=ref):
+                book, number = ref.split(".")
+                record = acceptance.heath.load_review(book, int(number), require_stamp=False)
+                self.assertEqual(record["statement"]["scope"], "full")
+                self.assertEqual(self.p3_failures(
+                    ref, "full", record["representation"]["tags"],
+                    route=record["route"]["kind"]), [])
+
+    def test_mixed_angles_partial_now_fail(self):
+        # Their allowance has gone: partial is refused, with the old tag or the new one.
+        for ref in ("III.16", "III.31"):
+            for tags in (["mixed-angles-omitted"], ["mixed-angles-local"]):
+                with self.subTest(ref=ref, tags=tags):
+                    self.assertEqual(self.p3_failures(ref, "partial", tags), [
                         "the statement is partial: every statement of Books I-III is full "
                         "but for the limitations docs/ACCEPTANCE.md names",
                     ])

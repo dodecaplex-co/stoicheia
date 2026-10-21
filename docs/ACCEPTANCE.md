@@ -169,15 +169,17 @@ this table, in a change to the check of its own.
 |---|---|---|---|
 | I.45 | restricted | `figure-with-dissection` | A figure given with its checked division into triangles, its area relative to that division. The outline proof is to come (#116); this row goes when it is proved and reviewed. |
 | II.14 | restricted | `figure-with-dissection` | A figure given with its checked division into triangles, its area relative to that division. The outline proof is to come (#116); this row goes when it is proved and reviewed. |
-| III.16 | partial | `mixed-angles-omitted` | The angle of the semicircle and the horn-like angle are angles of a straight line and a circumference, which our angles are not; a prototype of mixed angles is to decide whether they become full (issue #57). |
-| III.31 | partial | `mixed-angles-omitted` | The angles of the greater and the less segment, likewise. |
 
 For I.45 and II.14, the outline proof must establish that a division into triangles exists
 and that the area is independent of the division chosen (#116).
 
-If the prototype carries III.16 and III.31 to full, their rows go. An overlap is no
-limitation of scope: it is a disclosure, declared in the record's `[overlap]` and the
-overlap catalogue, and P4 and B2 check that it is.
+III.16 and III.31 were allowed partial, with `mixed-angles-omitted`, until their
+mixed-angle clauses were stated and proved ([brief 0011](briefs/0011-mixed-angles.md),
+issue #57). Both records are full, their rows have gone, and P3 now refuses either if
+partial.
+
+An overlap is no limitation of scope: it is a disclosure, declared in the record's
+`[overlap]` and the overlap catalogue, and P4 and B2 check that it is.
 
 ## Recording a review item
 

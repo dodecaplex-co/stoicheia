@@ -113,8 +113,6 @@ ALLOWED_LIMITS = {
     # #116: the owner's interim disclosure decision of 20 October 2026.
     "I.45": ("restricted", "figure-with-dissection"),
     "II.14": ("restricted", "figure-with-dissection"),
-    "III.16": ("partial", "mixed-angles-omitted"),
-    "III.31": ("partial", "mixed-angles-omitted"),
 }
 
 # P4. A sentence of a mishnah that says our statement or the Lean leaves something of
