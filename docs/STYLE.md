@@ -591,9 +591,10 @@ figure uses no name the paragraph does not **[checked]**. A name is a lower-case
 of the paragraph's `$…$`, or one standing alone in its words, as in Book II's "AC = a",
 that a reader sees (not in a comment, code, an HTML tag or a link's target or reference
 identifier) and that English does not use as a
-word: not the s of "A's", nor the letters of e.g. and i.e., nor the article "a" unless a
-sign of an expression, a digit or a bracket stands beside it. A capital stands alone, as
-one of Heath's letters: a length or a vector is named by its lower-case letter. The title is
+word: not the s of "A's", nor the letters of e.g. and i.e., nor a page reference such as
+p. 383, nor the article "a" unless a sign of an expression, a digit or a bracket stands
+beside it. A capital stands alone, as one of Heath's letters: a length or a vector is named
+by its lower-case letter. The title is
 "I.N: the modern way", with no caption, for its paragraph serves as one **[checked]**. A
 page with no modern way has no such figure **[checked]**, and a modern way that would only
 restate the proposition in symbols needs none. The figure shows what the paragraph says
