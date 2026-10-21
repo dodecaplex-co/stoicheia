@@ -1,5 +1,4 @@
 import Elements
-import Staging.Stage3.CircumferenceAdd
 
 /-!
 # Book IV, scratch: the prototype of the circle divided (`Polygon.arcs_sum`)
@@ -7,17 +6,19 @@ import Staging.Stage3.CircumferenceAdd
 Brief 0012, sections 7 and 9. The circumferences that the sides of a figure inscribed in a
 circle cut off, each named by the angle standing on it at the next corner, make up the
 whole circle, for any number of corners: by induction, taking away the second corner and
-adding its two circumferences into one (`Circumference.add`, from stage 3, imported from
-`Staging`). Until brief 0008's rule lands, the centre is a hypothesis (`hα`). Its own steps
-take a point of a chord within the circle by III.2 (`BookIII.Prop2.within` and
+adding its two circumferences into one (`Circumference.add`, from stage 3, staged when this
+prototype was written and now in `Elements/BookIII/Circumferences.lean`, which
+`import Elements` brings). Until brief 0008's rule lands, the centre is a hypothesis (`hα`).
+Its own steps take a point of a chord within the circle by III.2 (`BookIII.Prop2.within` and
 `BookIII.Prop2.triangle`), not by Circle 2, which no proof of the edition rests on since
-#60; it still rests on Circle 2 through the staged `Circumference.add`, which takes Book
-Zero's `exists_onCircle_oppositeSidesOf` where III.2's `Prop2.oppositeSide` would serve
-(stage 3's move, #25). Proved by a Codex sailor (OpenAI's Codex, at its highest reasoning
-setting) on 19 October 2026, at `89c5da4`; a second sailor, working independently,
-reported a complete proof too, and this one, the shorter, was kept. Its III.2 steps were
-put in place of Circle 2 in review, the same day. Nothing builds this file, and
-`lake env lean` checks it, once `Staging` is built.
+#60. When it was written it still rested on Circle 2 through the staged
+`Circumference.add`, which took Book Zero's `exists_onCircle_oppositeSidesOf` where III.2's
+`Prop2.oppositeSide` would serve (stage 3's move, #25); in its home `Circumference.add`
+takes `Prop2.oppositeSide`. Proved by a Codex sailor (OpenAI's Codex, at its highest
+reasoning setting) on 19 October 2026, at `89c5da4`; a second sailor, working
+independently, reported a complete proof too, and this one, the shorter, was kept. Its III.2
+steps were put in place of Circle 2 in review, the same day. Nothing builds this file, and
+`lake env lean` checks it.
 -/
 
 namespace Elements

@@ -8,17 +8,20 @@ import Elements.BookI.Prop13
 import Elements.BookI.Prop17
 import Elements.BookI.Prop23
 import Elements.BookI.Prop24
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop09
 import Elements.BookIII.Prop10
 import Elements.BookIII.Prop25
-import Staging.Stage3.Definitions
-import Staging.Stage3.Chord
+import Elements.Foundations.DefinitionsIII
 
 /-!
 # Stage 4, staged: III.25 restated
 
-Statements before proofs (brief 0006, stage 4). It uses stage 3's arcs (`Arc`, `OnArc`,
-`Arc.meets`).
+Statements before proofs (brief 0006, stage 4). It uses stage 3's arcs (`Arc`, `OnArc`), and
+the meeting fact for an arc, `Prop25.meets`, proved here from III.2. Brief 0006 put that fact
+in Book Zero as `Arc.meets`, resting on System E's Circle 2, which contains III.2; with no
+proof resting on Circle 2 it waits here, its statement unchanged, beside the one proof that
+uses it, and moves with III.25.
 
 Today III.25 is handed the circle whose segment it completes. Restated, its construction core
 receives the segment only as a predicate `S` on points, with the meeting fact Euclid reads off
@@ -37,13 +40,57 @@ which clause.
 
 When frozen, the core replaces `Elements.BookIII.Prop25`; here it is
 `Elements.BookIII.Staging.Prop25`. `Staging.Prop25.of_circle` checks the interfaces: from the
-core, `Arc.meets` and `Prop25.complete`, today's statement follows. It stays, as the companion
+core, `Prop25.meets` and `Prop25.complete`, today's statement follows. It stays, as the companion
 "III.25 of_circle", so that today's statement keeps its certificate.
 -/
 
 namespace Elements.BookIII
 
 open Tacit
+
+/-- **A straight line from within the base meets the arc.** For a drawn arc, a ray from a point
+X between the ends of the base, through a point Y on the arc's side, meets the arc. It is the
+meeting fact that III.25's construction core reads off the segment it is given, for the
+segment of a circle.
+
+Proved: X is within the circle [III. 2], so the straight line XY, produced beyond X backwards
+and then forwards, meets the circle on Y's side (Intersections 5, with Pasch 3 for the side).
+[III. 2] -/
+theorem Prop25.meets {a : Arc} (ha : a.Drawn) {X Y : Point} (hX : Between a.B X a.C)
+    (hY : SameSideOf Y a.K a.B a.C) : ∃ Q : Point, OnArc Q a ∧ OnRay Q X Y := by
+  /- X lies within the circle, since it is between the ends of the base [III. 2], and Y is
+     off the straight line BC. -/
+  have hX_in : InsideCircle X a.circle := Prop2 ha.1 ha.2.1 ha.2.2.1 X hX
+  obtain ⟨L, hB_L, hC_L⟩ := Postulate1 a.B a.C hY.1
+  have hX_L : OnLine X L := on_line_of_between_ends hX hB_L hC_L
+  have hY_L : ¬ OnLine Y L := hY.triangle.off_line hB_L hC_L
+  have hXY : X ≠ Y := fun e => hY_L (e ▸ hX_L)
+  /- Draw XY, and produce it backwards, beyond X away from Y, to meet the circle at A
+     (Intersections 5). -/
+  obtain ⟨N, hX_N, hY_N⟩ := Postulate1 X Y hXY
+  obtain ⟨A, hA, hA_N, hAXY⟩ := line_circle_beyond hX_in hX_N hY_N hXY.symm
+  /- A is off BC: otherwise XY and BC would share A and X, and Y would lie on BC. So BC,
+     through X, separates A from Y (Pasch 3). -/
+  have hAX : A ≠ X := fun e => inside_not_on hX_in (e ▸ hA)
+  have hA_L : ¬ OnLine A L := fun hA_L =>
+    hY_L ((line_unique hAX hA_N hX_N hA_L hX_L) ▸ hY_N)
+  have hAY : OppositeSidesOf A Y a.B a.C :=
+    OppositeSidesOf.of_line hY.1 hB_L hC_L ⟨hA_L, hY_L, pasch3 hAXY hX_L⟩
+  /- Produce AX forwards, beyond X, to meet the circle at Q (Intersections 5). Q is off
+     BC for the same reason. -/
+  obtain ⟨Q, hQ, hQ_N, hQXA⟩ := line_circle_beyond hX_in hX_N hA_N hAX
+  have hQX : Q ≠ X := fun e => inside_not_on hX_in (e ▸ hQ)
+  have hQ_L : ¬ OnLine Q L := fun hQ_L =>
+    hY_L ((line_unique hQX hQ_N hX_N hQ_L hX_L) ▸ hY_N)
+  /- BC separates Q from A too (Pasch 3), so Q is on Y's side, hence on K's side. -/
+  have hQA : OppositeSidesOf Q A a.B a.C :=
+    OppositeSidesOf.of_line hY.1 hB_L hC_L ⟨hQ_L, hA_L, pasch3 hQXA hX_L⟩
+  have hQY : SameSideOf Q Y a.B a.C := hQA.symm.sameSideOf hAY
+  /- Q lies on the arc and on XY. X cannot lie between Q and Y, since they are on one
+     side of BC (Pasch 3); so Q lies on the ray from X through Y. -/
+  exact ⟨Q, ⟨hQ, Or.inl (hQY.trans hY)⟩,
+    hXY, hQX, ⟨N, hX_N, hY_N, hQ_N⟩,
+    fun hQXY => pasch3 hQXY hX_L (hQY.sameSide hB_L hC_L)⟩
 
 /-- **III.25's circle is the segment's circle.** Let A, C be points of a circle α with a
 centre, and B a point of its arc on P's side of AC (B on P's side). Any circle γ, with a
@@ -275,10 +322,10 @@ theorem Prop25 {A C P : Point} {S : Point → Prop} (hP : ¬ Collinear A C P)
 
 /-- **Today's III.25, from the restated core.** Handed the circle ABC, the core run on the
 points of its arc on P's side (which meet every straight line from within the base, by
-`Arc.meets`) finds a circle that is ABC itself (`Prop25.complete`), so its centre E is the
+`Prop25.meets`) finds a circle that is ABC itself (`Prop25.complete`), so its centre E is the
 centre of ABC. This is the statement III.25 has today (the `example` below checks it), and
 it checks that the pieces fit. A companion of III.25 ("III.25 of_circle"), proved from the
-core, `Arc.meets` and `Prop25.complete`. -/
+core, `Prop25.meets` and `Prop25.complete`. -/
 theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Centre E ABC)
     (hA : OnCircle A ABC) (hC : OnCircle C ABC) :
     ∀ P : Point, ¬ Collinear A C P → ∃ B D E : Point, OnCircle B ABC ∧ SameSideOf B P A C ∧
@@ -288,7 +335,7 @@ theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Cen
   intro P hP
   have ha : Arc.Drawn ⟨ABC, A, C, P⟩ := ⟨hABC, hA, hC, hP⟩
   obtain ⟨B, D, E, γ, hSB, hBP, hADC, hAD, hADB, hE, hAγ, hBγ, hCγ, hDBE, k₁, k₂, k₃⟩ :=
-    Prop25 (S := (OnArc · ⟨ABC, A, C, P⟩)) hP (fun _ _ hX hY => Arc.meets ha hX hY)
+    Prop25 (S := (OnArc · ⟨ABC, A, C, P⟩)) hP (fun _ _ hX hY => BookIII.Prop25.meets ha hX hY)
   obtain ⟨hγ, -⟩ := BookIII.Prop25.complete hABC hA hC hSB hBP hE hAγ hBγ hCγ
   rw [hγ] at hE
   exact ⟨B, D, E, hSB.1, hBP, hADC, hAD, hADB, hE, hDBE, k₁, k₂, k₃⟩
