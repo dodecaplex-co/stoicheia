@@ -439,8 +439,8 @@ The ruleset and the remaining merge requirements are in
 
 ## 9. Release criteria and severity
 
-Until the acceptance checklist of brief 0005's stage 6 (`docs/ACCEPTANCE.md`) replaces it,
-a proposition meets the standard when:
+The acceptance checklist ([ACCEPTANCE.md](ACCEPTANCE.md#where-the-older-criteria-went))
+incorporates the criteria below. A proposition meets these criteria when:
 
 1. its reviewed brief and its final formal statements agree;
 2. every substantive clause, and its porism, is proved or exactly qualified;
