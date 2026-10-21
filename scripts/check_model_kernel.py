@@ -177,8 +177,8 @@ def run(cmd: list[str], cwd: Path, timeout: float | None = None,
         **kw) -> subprocess.CompletedProcess:
     """Run a command, capturing its output. Given a timeout, the command runs in a process
     group of its own, stopped whole if it outlives the timeout (which raises
-    subprocess.TimeoutExpired) or the script is interrupted: `lake env` runs its command
-    as a child, which stopping `lake` alone would leave running."""
+    subprocess.TimeoutExpired) or the script is interrupted or terminated: `lake env` runs
+    its command as a child, which stopping `lake` alone would leave running."""
     try:
         if timeout is None:
             return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, **kw)
@@ -595,6 +595,10 @@ def main() -> None:
                              "need no Mathlib, and expect the check to catch each")
     args = parser.parse_args()
 
+    # A terminated or hung-up script exits through SystemExit, so run() stops a timed
+    # command's process group and the temporary folder is removed, as on an interrupt.
+    for number in (signal.SIGTERM, signal.SIGHUP):
+        signal.signal(number, lambda n, frame: sys.exit(128 + n))
     bin_ = toolchain_bin()
     if args.self_test:
         self_test(bin_)
