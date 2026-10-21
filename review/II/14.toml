@@ -68,10 +68,10 @@ case = "BE greater than ED, as in Heath's figure, with the figure A of two trian
 
 [review]
 stage = "full"
-commit = "08ddfe3a"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:a1911148d8503c4f"
-run = "Q watch, independent re-read at e2b241fd"
+commit = "39df05a2"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:762d581715c6dcf3"
+run = "brief 0005 stage 5, ship F2 #168 re-read"
 
 [review.items]
 statement = "pass"

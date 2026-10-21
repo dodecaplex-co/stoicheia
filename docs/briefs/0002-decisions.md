@@ -3918,7 +3918,8 @@ findings:
   II.14's statement, its companions' statements, its `--` lines and every other step are
   unchanged. The record's passage at "But the squares on HE, EG are equal to the square
   on GH" now names `BookI.Prop13` and says what the Lean does; the interim restricted
-  disclosure (#116) is unchanged, and the record waits for a reader's stamp. A walk of
+  disclosure (#116) is unchanged; an independent reader re-read the record and stamped
+  it at `39df05a2`. A walk of
   every constant beneath II.14 and its six companions then found that II.14's own file no
   longer named any of the eight, and that one remained beneath it:
   `Tacit.adjacent_eq_of_right`, through II.5 (`BookII.Prop5`), which II.14 cites and which
@@ -3928,7 +3929,8 @@ findings:
   two right angles by I.13 (`BookI.Prop13`), and taking the square's right angle BDH from
   each leaves HDA right by Common Notion 3. Again no helper is added, and II.5's statement,
   its `--` lines and every other step are unchanged; the record's passage at "But AH is
-  the rectangle AD, DB" says what the Lean now does, and waits for a reader's stamp. The
+  the rectangle AD, DB" says what the Lean now does, and an independent reader re-read the
+  record and stamped it at `39df05a2`. The
   walk, run again beneath II.14, its six companions and II.5, now finds none of the eight;
   run as a control beneath II.4 and III.1, it still finds the rule there. The census in the
   [overlap catalogue](../reports/overlaps.md#i13s-rule-in-later-proofs) is recounted: 16
