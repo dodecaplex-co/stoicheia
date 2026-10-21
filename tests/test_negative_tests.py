@@ -137,6 +137,116 @@ class RestorationTests(unittest.TestCase):
                 self.assertEqual(commands.call_count, 2)
                 self.assertEqual(self.files(), saved)
 
+    def ill_typed_commands(self, replay, rebuild):
+        """Stand-ins for the ill-typed plant's commands: the compile must read a copy of I.1
+        outside the tree, with the plant, and write I.1's `.olean`; `replay` answers
+        leanchecker and `rebuild` the restoration build."""
+        source = self.root / "Elements/BookI/Prop01.lean"
+        self.write(source, b"import Elements.Figure.Basics\n")
+        path = self.build / "lib/lean/Elements/BookI/Prop01.olean"
+        def run(*cmd):
+            if cmd[:3] == ("lake", "env", "lean"):
+                copy = Path(cmd[-1])
+                self.assertFalse(copy.is_relative_to(self.root), "the copy must be outside")
+                self.assertEqual(copy, Path(cmd[cmd.index("-R") + 1])
+                                 / "Elements/BookI/Prop01.lean")
+                self.assertEqual(cmd[cmd.index("-o") + 1], str(path))
+                self.assertEqual(copy.read_text(), "import Lean.Elab.Command\n"
+                                 + source.read_text() + negative.ILL_TYPED_LEAN)
+                self.write(path, b"olean planted")
+                return subprocess.CompletedProcess(cmd, 0, "", "")
+            if cmd == ("lake", "build"):
+                return rebuild(cmd)
+            self.assertEqual(cmd, ("lake", "env", "toolchain/leanchecker", "--fresh", "Elements"))
+            return replay(cmd)
+        return path, run
+
+    def test_ill_typed_proof_rejected_then_rebuilt_and_replayed(self):
+        name = negative.ILL_TYPED
+        for message, caught in (
+                (f"while replaying declaration '{name}':\n(kernel) declaration type "
+                 f"mismatch, '{name}' has type\n  True\n", True),
+                ("failed to read file Elements/BookI/Prop01.olean: invalid header", False)):
+            with self.subTest(caught=caught):
+                negative.failures.clear()
+                self.outputs("Elements/BookI/Prop01")
+                replays = []
+                def replay(cmd):
+                    replays.append(path.read_bytes())
+                    return subprocess.CompletedProcess(cmd, 1 if len(replays) == 1 else 0,
+                                                       "", message)
+                def rebuild(cmd):
+                    self.assertFalse(path.exists(), "restoration must force the rebuild")
+                    self.write(path, b"olean rebuilt")
+                    return subprocess.CompletedProcess(cmd, 0, "", "")
+                path, run = self.ill_typed_commands(replay, rebuild)
+                with patch.object(negative, "run", side_effect=run) as commands, \
+                        patch.object(negative.check_kernel, "toolchain_bin",
+                                     return_value=Path("toolchain")):
+                    negative.ill_typed_proof()
+                self.assertEqual(commands.call_count, 4)
+                self.assertEqual(replays, [b"olean planted", b"olean rebuilt"])
+                if caught:
+                    self.assertEqual(negative.failures, [])
+                else:
+                    self.assertEqual(len(negative.failures), 1)
+                    self.assertIn("not caught", negative.failures[0])
+
+    def test_ill_typed_proof_restores_all_outputs(self):
+        for interrupt in (False, True):
+            with self.subTest(interrupt=interrupt):
+                negative.failures.clear()
+                self.outputs("Elements/BookI/Prop01")
+                self.outputs("Elements/BookI/Prop02")
+                saved = self.files()
+                path, run = self.ill_typed_commands(
+                    lambda cmd: subprocess.CompletedProcess(
+                        cmd, 1, "", f"while replaying declaration '{negative.ILL_TYPED}'"),
+                    lambda cmd: self.failed_rebuild(interrupt))
+                with patch.object(negative, "run", side_effect=run) as commands, \
+                        patch.object(negative.check_kernel, "toolchain_bin",
+                                     return_value=Path("toolchain")):
+                    if interrupt:
+                        with self.assertRaises(KeyboardInterrupt):
+                            negative.ill_typed_proof()
+                    else:
+                        negative.ill_typed_proof()
+                        self.assertIn("the Elements build restored after the ill-typed "
+                                      "proof: exit 1", negative.failures)
+                self.assertEqual(commands.call_count, 3)
+                self.assertEqual(self.files(), saved)
+
+    def test_missing_files_restored_byte_for_byte(self):
+        rels = ("figures/I/01.svg", "figures/I/01-idea.svg", "mishnah/I/01.md")
+        originals = {rel: f"<{rel}>\r\nno newline at the end".encode() for rel in rels}
+        for outcome in ("caught", "not caught", "interrupted"):
+            with self.subTest(outcome=outcome):
+                negative.failures.clear()
+                for rel, data in originals.items():
+                    self.write(self.root / rel, data)
+                def fidelity(*args):
+                    missing = [rel for rel in rels if not (self.root / rel).exists()]
+                    self.assertEqual(len(missing), 1)
+                    if outcome == "interrupted":
+                        raise KeyboardInterrupt("fidelity check interrupted")
+                    if outcome == "not caught":
+                        return subprocess.CompletedProcess([], 0, "", "")
+                    return subprocess.CompletedProcess(
+                        [], 1, f"✗ I.1: {missing[0]} is missing\n", "")
+                with patch.object(negative, "fidelity", side_effect=fidelity) as checks:
+                    if outcome == "interrupted":
+                        with self.assertRaises(KeyboardInterrupt):
+                            negative.missing_files()
+                    else:
+                        negative.missing_files()
+                self.assertEqual(checks.call_count, 1 if outcome == "interrupted" else 3)
+                for rel, data in originals.items():
+                    self.assertEqual((self.root / rel).read_bytes(), data)
+                if outcome == "caught":
+                    self.assertEqual(negative.failures, [])
+                elif outcome == "not caught":
+                    self.assertEqual(len(negative.failures), 3)
+
     def test_audit_restores_all_outputs(self):
         source = self.root / "Audit/Overlaps.lean"
         for multiline, interrupt in ((False, False), (False, True),
