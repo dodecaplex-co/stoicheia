@@ -351,8 +351,8 @@ def check_certificate(facts: dict) -> None:
 
 def check_style_rules() -> None:
     """check_style.py as CI runs it, each failure sorted by the file it names: a
-    proposition's review record to P9, whatever its rule. Each message is quoted whole,
-    without its backticks."""
+    proposition's review record to P9, whatever its rule. Each finding is quoted whole, as
+    one code span."""
     done = run([PY, "scripts/check_style.py", "--quiet"])
     found = 0
     for line in done.stdout.splitlines():
@@ -361,13 +361,17 @@ def check_style_rules() -> None:
             continue
         found += 1
         rule, path, number, msg = m.groups()
-        # The style check reads the report this run replaces. A name it backticks there (a
-        # revision, or a name B2 or E2 quotes because Lean does not know it), quoted back
-        # with its backticks, is a name S12 puts to Lean in the new report, away from the
-        # word "Revision", and each regeneration would quote the last finding again. So
-        # the backticks go, as verdicts() writes the revision (issue #178).
-        msg = msg.replace("`", "")
+        # The style check reads the report this run replaces, and E5 quotes its findings in
+        # the new one. Each finding goes in whole, as one code span whose fence is one
+        # backtick longer than the longest run of backticks in it, with a space inside each
+        # end. S12 then finds no name in it, for the span opens with the rule and the file,
+        # and S1, S7, S8 and the other text rules find nothing in quoted code; so no finding
+        # on the old report comes back in the next one (issue #178). And a reader sees each
+        # message exactly as the check printed it: GitHub takes no `<book>` for HTML and
+        # sets no `2*a*b` in italic.
         text = f"{rule} {path}{':' + number if number else ''}: {msg}"
+        fence = "`" * (max(map(len, re.findall(r"`+", text)), default=0) + 1)
+        text = f"{fence} {text} {fence}"
         who = owner(path)
         if who is None:
             fail("edition", "E5", text)

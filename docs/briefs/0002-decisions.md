@@ -3510,14 +3510,36 @@ findings:
   the old report, on a revision S12 put to Lean or on a name Lean does not know (B2 and
   E2 quote such names on purpose), came back in the new report away from the word
   "Revision"; S12 put it to Lean again, and each regeneration quoted the last finding
-  back. `check_style_rules` now quotes the style check's messages without their
-  backticks, as `verdicts()` already writes the revision: E5 still fails, once, with the
-  whole message, S12 finds no name in it, and the report after it passes. B2's and E2's
-  own messages are unchanged. A second test,
-  `Report.test_a_finding_on_the_old_report_is_not_quoted_back_to_s12`, gives the
-  generator three such findings through a stand-in for the style check (the old
-  report's four-digit revision, the twelve-digit one and an unknown name) and puts the
-  regenerated report to S12's plan: on the previous generator S12 would put all three
-  to Lean; now it asks about none. The protected files changed are
+  back. `check_style_rules` now quotes each of the style check's findings whole, as one
+  code span whose fence is one backtick longer than the longest run of backticks in it,
+  with a space inside each end. E5 still fails, once, with the whole finding, and a
+  reader sees it exactly as the check printed it. S12 reads a span as a name only when
+  the span is one name or opens with `name :`, and a quoted finding opens with its rule
+  and file, so S12 finds no name in it; S1, S7, S8 and S22, the style check's other
+  rules for a report, read it outside code and find nothing in it either. So the report
+  after a fixed finding passes every rule, not S12 alone. Taking the backticks away, as
+  a first version of this change did, closed S12's loop alone: GitHub would read a quoted
+  excerpt's `<book>` as an HTML tag and drop it, and set `2*a*b` in italic, and an em
+  dash or a curly quotation mark in a quoted excerpt's code would come out of code,
+  where S1 or S8 finds it in the next report, and every regeneration quotes it back. The
+  code span closes as well an older loop of the same kind, which main's generator has:
+  an S1 or S8 finding on the report itself. B2's and E2's own messages are unchanged. A
+  second test, `Report.test_a_finding_on_the_old_report_is_not_quoted_back_to_s12`,
+  gives the generator three such findings through a stand-in for the style check (the
+  old report's four-digit revision, the twelve-digit one and an unknown name) and puts
+  the regenerated report to S12's plan: on the previous generator S12 would put all
+  three to Lean; now it asks about none, and E5 gives each finding as one code span. Two
+  more tests hold the rest. The first,
+  `Report.test_quoted_code_is_shown_as_the_style_check_printed_it`, quotes findings
+  whose excerpts hold `figures/<book>/NN.svg`, `h : 2*a*b = c` and a name in double
+  backticks, and reads each back, as CommonMark reads a code span, exactly as printed.
+  The second,
+  `Report.test_a_finding_on_the_old_report_is_not_quoted_back_to_the_text_rules`, puts
+  an old report with an em dash, a definition without its book and curly quotation
+  marks to the style check's rules for a report, quotes their findings through the
+  generator with one whose excerpt holds an em dash only in code, and finds that those
+  rules and S12's plan find nothing in the regenerated report. Both fail on the
+  generator that took the backticks away, whose regenerated report fails S1, S7 and S8
+  nineteen times over, and pass now. The protected files changed are
   `scripts/test_safe_push.py`, `scripts/check_acceptance.py` and
   `tests/test_check_acceptance.py`.
