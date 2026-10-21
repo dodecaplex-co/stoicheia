@@ -13,7 +13,7 @@
   <line x1="342.0" y1="77.7" x2="342.0" y2="222.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line data-unlettered="DA produced beyond A, which Heath's figure leaves without a letter" x1="141.7" y1="188.3" x2="217.6" y2="278.7" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
   <line x1="170.0" y1="222.0" x2="342.0" y2="222.0" stroke="#222222" stroke-width="5" stroke-linecap="round"/>
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="157.7" y="237.2">A</text>
     <text x="353.5" y="236.5">B</text>
     <text x="28.0" y="177.9">C</text>

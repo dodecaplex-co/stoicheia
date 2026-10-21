@@ -15,7 +15,7 @@
   <line x1="262.0" y1="62.0" x2="220.0" y2="234.0" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
   <line x1="262.0" y1="62.0" x2="358.0" y2="234.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
   <!-- Heath's letters -->
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="84" y="49.6">A</text><text x="30" y="251.6">B</text><text x="185.3" y="255.8">C</text><text x="262" y="49.6">D</text>
     <text x="214.7" y="255.8">E</text><text x="370" y="251.6">F</text>
   </g>
