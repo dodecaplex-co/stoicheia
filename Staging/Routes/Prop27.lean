@@ -1,4 +1,5 @@
 import Elements.Figure.Basics
+import Elements.BookIII.Squares
 import Elements.BookIII.Circumferences
 import Elements.BookI.Prop23
 import Elements.BookIII.Prop02
@@ -27,7 +28,9 @@ points of the circles on the centres' sides are acute, and Euclid's argument mak
 equal. Then III.22 leaves the angles at A and D as what remains of two right angles, as in
 III.26's obtuse case, after Heath, who says his remarks there "apply here also" (vol. 2,
 p. 59). Where the angles are right, the centres lie on BC and EF, and each angle is an angle
-in a semicircle, and right (`Prop24.angle_type`). Nothing here uses `Circumference.standing`.
+in a semicircle, and right; `Prop24.angle_type` reads that off the measure of the
+circumference, so this case still rests on the measure. Nothing here uses
+`Circumference.standing`.
 
 Status: staged to replace the proof in Elements/BookIII/Prop27.lean when Book III's files
 are next moved.
@@ -186,7 +189,10 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
          lie on BC and EF, and our angles are never straight, so there is no angle BGC here
          for III.20 to halve. Each angle at A and D is an angle in a semicircle, and right
          (`Prop24.angle_type`, whose other two cases would put the centre off BC or EF); the
-         two are each the one right angle, and so equal. -/
+         two are each the one right angle, and so equal. This case still rests on the
+         measure of the circumference: `Prop24.angle_type` reads the right angle off it, the
+         semicircle being two right angles (`Circumference.semicircle`) and the angle in it
+         half of that (`Circumference.eq`). -/
       have hrt : ∠ B A C = ∟ := by
         rcases Prop24.angle_type hG hB hC hA hBAC.acb with ⟨hGA, -⟩ | ⟨-, h⟩ | ⟨hGA, -⟩
         · exact (hGA.triangle.acb (collinear_of_between hBGC)).elim

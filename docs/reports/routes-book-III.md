@@ -5,9 +5,10 @@
 This report answers issues #125, #126, #127, #129, #130 and #131. Five of them ask for
 Euclid's own argument where our proofs of Book III take another way, or for something his
 words say that our Lean does not yet say; the sixth asks which of our calls of III.1 do any
-work. The Lean is in seven files under `Staging/Routes/`, committed at 1265f23c, and every
-declaration in them is in the namespace `Elements.BookIII.Routes`. None of it is in
-`Elements/` yet.
+work. The Lean is in seven files under `Staging/Routes/`, as delivered and checked at
+4504fa48 (the docstrings of `AngleOfContact.lean` were revised after 1265f23c, its Lean
+unchanged), and every declaration in them is in the namespace `Elements.BookIII.Routes`.
+None of it is in `Elements/` yet.
 
 Two things stand between these files and `Elements/`. The first is the move itself. The
 next move of Book III's files is under way, and nothing here touches those files; once it
@@ -125,7 +126,10 @@ theorem Prop27.sides {A B C D E F G H : Point} {ABC DEF : Circle} (hG : Centre G
   leaves the angles at A and D as what remains of two right angles (C.N. 3). This is the
   treatment Heath proposes under III.26, which his remark carries over to III.27.
 - **Right**: the centres lie on BC and EF, and there is no angle at the centre to halve.
-  Each angle is an angle in a semicircle, and right (`Prop24.angle_type`).
+  Each angle is an angle in a semicircle, and right (`Prop24.angle_type`). That step still
+  rests on the measure of the circumference: `Prop24.angle_type` reads the right angle off
+  it, the semicircle being two right angles (`Circumference.semicircle`) and the angle in
+  it half of that (`Circumference.eq`).
 
 The file does not call `Circumference.standing`. Its theorem for III.27 has main's
 statement exactly; the file carries no check of that, and Lean checked it for this report
@@ -136,7 +140,8 @@ obtuse and right cases are argued another way, by III.22 and by the angle in a s
 each is labelled where it stands. As in main, K is laid on the ray of I.23 at the distance
 GB, so that it is on the circle, and "the less to the greater" is read from the angles at G
 (`Circumference.centre`). The obtuse and right cases lie within Euclid's statement, so the
-route stays modified; its note changes from the measure to III.22.
+route stays modified. Its note changes from the measure to III.22 for the obtuse case, and
+keeps the measure for the right case, which still rests on it through `Prop24.angle_type`.
 
 **What is left.** No approval is needed: nothing new is stated or defined, and the step
 that puts the centres alike is a helper of III.27, before it in its file. At the move the
@@ -539,12 +544,12 @@ nothing proposed here has been compiled.
 
 ## Checks
 
-Each of the seven files was built with `lake build`, at commit 1265f23c, and every theorem
+Each of the seven files was built with `lake build`, at commit 4504fa48, and every theorem
 the seven modules declare, other than the private steps the others use, was put to Lean's
 collectAxioms. The check looks for `sorryAx`, for an axiom declared outside
 `Elements/Foundations/` other than Lean's own three (`propext`, `Classical.choice`,
 `Quot.sound`), and for Circle 3, which Circle 2 now rests on, so that it finds both. It
-reported:
+reported, as it had at 1265f23c:
 
 ```text
 Build completed successfully (91 jobs).
@@ -558,4 +563,8 @@ the types of main's theorems (`type_of%` on each side, closed by `rfl`); the fil
 carries that check itself. And it checked that the statements for the angle of contact
 reach no proposition of Book III later than III.18.
 
-Each file was also read against Heath's text by a reader who did not write it.
+Each file was also read against Heath's text by a reader who did not write it, as its
+writer handed it back: the other six before 1265f23c, their readers' findings answered at
+that commit, and `AngleOfContact.lean` at its text of 1265f23c, its reader's five minor
+findings then answered in its docstrings alone. The whole branch was then reviewed at
+4504fa48.

@@ -9,7 +9,7 @@ import Elements.BookIII.Prop02
 # Book III, Proposition 20, for every angle at the centre
 
 This file answers issue #129, "III.20 for angles at the centre of two right angles or
-more". Heath observes that Euclid "had no idea of III. 20 applying *in terms* ... to the
+more". Heath observes that Euclid "had no idea of III. 20 applying *in terms* … to the
 case where the angle at the circumference, or the angle in the segment, is *obtuse*", and
 that III.21 and III.26, to cover every case, need "angles at the centre" equal to or
 greater than two right angles (vol. 2, pp. 48–49, 57). Our angles, `∠ B E C`, are always

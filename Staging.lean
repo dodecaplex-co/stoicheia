@@ -43,8 +43,9 @@ brief 0007, III.7, III.8 and III.17 with the point of contact. The others:
 * `Superposition/`: the prototype of a restricted superposition rule (brief 0009), carried
   as a hypothesis, with its proofs, which the coordinator approved on 18 October 2026;
 * `Routes/`: Euclid's own routes in Book III, proved: III.8, III.20 as main states it,
-  III.21, III.26 and III.27 by his arguments, to replace main's proofs, and drafts for the
-  owner's approval of Definition III.3 read at the point, the angle at the centre of any
-  size with III.20 in general, and the angle of contact after III.18
+  III.21, III.26 and III.27 by his arguments, to replace main's proofs (those of III.20,
+  III.21 and III.26 once the draft angle at the centre is approved), and drafts for the
+  owner's approval of Definition III.3 read at the point, the angle at the centre of
+  any size with III.20 in general, and the angle of contact after III.18
   (`docs/reports/routes-book-III.md`).
 -/

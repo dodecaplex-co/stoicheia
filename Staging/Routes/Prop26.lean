@@ -93,7 +93,7 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
     have hGC : ‖G C‖ = ‖H F‖ := hcircles.radii hG hH hC hF
     -- Thus the two straight lines BG, GC are equal to the two straight lines EH, HF;
     -- and the angle at G is equal to the angle at H;
-    /- "Thus ..." gathers the radii just found, which I.4 uses below. The angles at G and
+    /- "Thus …" gathers the radii just found, which I.4 uses below. The angles at G and
        H, being equal, are alike: both less than two right angles, both two right angles,
        or both greater, and so G and H lie alike (`Prop26.alike`). Euclid's figure has the
        first. -/
