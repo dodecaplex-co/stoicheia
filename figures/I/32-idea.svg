@@ -11,7 +11,7 @@
   <line x1="230.0" y1="222.0" x2="330.4" y2="110.5" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <polygon points="182.3,75.1 50.0,222.0 230.0,222.0" fill="none" stroke="#222222" stroke-width="4" stroke-linejoin="round"/>
   <!-- Heath's letters -->
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="182.3" y="64.6">A</text><text x="40" y="242.6">B</text><text x="230" y="244.6">C</text><text x="369" y="227.6">D</text><text x="341" y="103.6">E</text>
   </g>
 </svg>
