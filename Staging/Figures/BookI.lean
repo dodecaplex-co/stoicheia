@@ -1,4 +1,5 @@
 import Staging.Figures.OutlineArea
+import Staging.Figures.FanBoundary
 import Elements.BookI.Prop45
 
 /-!
@@ -23,7 +24,16 @@ theorem Prop45.fan_boundary {O A B : Point} {ps : List Point}
       ∃ R : Apart,
         R.pieces = (segments (A :: B :: ps)).map (fun s => (O, s.1, s.2)) ∧
         Divides F.region R := by
-  sorry
+  /- The triangles fit together (`Fitted.fan`, which cites I.13), so each meets the earlier
+  ones only along the straight line from O across which it is glued
+  (`FanBoundary.fitted_meet`). Glued onto the outline one at a time from the triangle OAB,
+  each keeps it simple and adds exactly its own points to the region
+  (`FanBoundary.fan_loop`). -/
+  have hfit := Fitted.fan htri hopp hang
+  obtain ⟨hs, hr⟩ := FanBoundary.fan_loop htri (FanBoundary.fitted_meet hfit)
+  refine ⟨singleOutline _ hs, rfl, Rectilineal.toApart ⟨_, hfit⟩, rfl, fun X => ?_⟩
+  rw [single_region]
+  exact (hr X).symm
 
 /-- Companion of I.45, certificate name I.45 outline. To construct, in the
 given rectilineal angle, a parallelogram equal to a figure given by its
