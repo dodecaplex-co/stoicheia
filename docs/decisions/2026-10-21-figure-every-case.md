@@ -26,9 +26,13 @@
   ([WORKFLOW](../WORKFLOW.md), section 10: a check lands first), which gives III.25 its
   three companions and sets `every_case` in its record. Whether III.35 may take it is for
   its own review, since its theorem also covers Simson's cases, which its figure does not
-  draw: the key means every case the theorem covers, as review/SCHEMA.md says. The
-  protected files changed are
+  draw: the key means every case the theorem covers, as review/SCHEMA.md says. This entry
+  is the first file in `docs/decisions/` beside its README, and `render.py` reports every
+  entry it checks there, so the protected test module `tests/test_decision_entries.py`,
+  which plants two entries in a copy of the sources, now expects the count of every entry
+  in the copy's folder rather than of its own two. The protected files changed are
   `scripts/render.py`,
   `scripts/heath.py`,
   `review/SCHEMA.md`,
-  `tests/test_check_style.py`.
+  `tests/test_check_style.py` and
+  `tests/test_decision_entries.py`.
