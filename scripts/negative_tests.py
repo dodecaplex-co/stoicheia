@@ -13,11 +13,13 @@ records current; CI runs it on every push.
    statements use, given another meaning no longer matches it either; a changed
    statement of III.1's porism makes III.1's review record stale; `Centre`, no
    longer among the opaque primitives (as if it had been made a `def`), is caught;
-   Circle 2 added to III.3's axioms, and Circle 3 to I.15's porism or II.1's general
-   companion, are each refused by the entry's name; Circle 3 renamed in the axiom lock
-   (restored after) and in the copy alike is caught as missing from the lock; and
-   placement among III.26's shared steps is caught, while III.24, given it too, is not
-   blamed.
+   the name of Circle 2, now a theorem, is deliberately added to III.3's axioms, and
+   Circle 3 to I.15's porism or II.1's general companion; all three are refused by the
+   entry's name. Circle 3 renamed in the axiom lock (restored after) and in the copy
+   alike is caught as missing from the lock; Circle 2 proved without a forbidden axiom
+   beneath it is refused by name, while Circle 2 proved from Circle 3 still in the lock
+   passes; and placement among III.26's shared steps is caught, while III.24, given it
+   too, is not blamed.
 4. A changed Lean file makes its review record stale (I.1).
 5. III.16's review record without the passage that declares its angle clauses, of
    whatever kind, leaves a run of `--` lines with no Lean beneath it undeclared.
@@ -28,13 +30,23 @@ records current; CI runs it on every push.
 8. Every command docs/FORMALIZATION.md, section 7, forbids, an attribute for each ending
    and prefix by which the scan knows one, and an axiom declared twice, once after
    another command on the same line, planted in a new file of each folder the
-   scan reads, `Elements/`, `Staging/` (in a folder of its own) and `Audit/`, with
+   scan reads, `Elements/`, `Staging/` (in a folder of its own), `Audit/`, `model/Model/`
+   and `model/Check/`, with
    `#exit` at the end of each root file, `Elements.lean`, `Staging.lean` and
-   `Audit.lean`, and a new Book Zero file that imports a proposition: each is caught on
+   `Audit.lean`, `model/Model.lean` and `model/Check.lean`, and a new Book Zero file that
+   imports a proposition: each is caught on
    its own line. Some of the commands stand after a string, a raw string or a character
    literal holding `/-`, `-/`, `]` or `"`, and one in an interpolated string's hole, so
    the scan must read Lean's literals as Lean does; a string whose braces Lean could
-   read as code is caught too. The files are read, not built.
+   read as code is caught too. Generator calls, plain and parenthesised, are caught
+   outside the model's Check files; there they are allowed only first on their line,
+   with other commands still caught on that line and in their arguments. The files are
+   read, not built; no tree is copied, so model/.lake is never copied either.
+   Symbolic links to a directory in model/Model/ and a file in model/Check/ are refused
+   by their own paths, without following them. An axiom in a `.lake` folder of
+   model/Model/ and of model/Check/ is caught, and one in model/.lake is not read. A
+   link named `.lake`, to a directory, a file or nothing, is refused in model/,
+   model/Model/ and model/Check/, each in a small tree of its own.
 9. A lemma of the `Placement` namespace named in Book III's shared steps
    (`Squares.lean`), outside placement's own files, III.24's and `Arcs.lean`, read from
    the source, is caught; the word in a comment there is not.
@@ -60,6 +72,21 @@ records current; CI runs it on every push.
     `check_kernel.py`, fails naming the file and its invalid header. The original
     bytes are restored, a rebuild is required, and on success the whole environment
     is replayed.
+16. Without a build, in a temporary copy of the tracked files without Git: opening,
+    base and closing merge markers, a middle between outer markers, and a lone middle
+    in a non-Markdown file, comment, fence or after a completed heading, indented code
+    or link reference definition (on one line or two) each fail S23 with their
+    file, line and kind.
+    Setext headings, including several lines and one after a comment containing a
+    fence, leave the unplanted copy's result unchanged. Symlinks are not copied.
+    This runs before the plants that build, and preserves any existing findings.
+17. Without a build, in a disposable source copy: a stale inline vocabulary count
+    and an unknown count name are refused by check_fidelity.py, and a correct count
+    passes. Missing or mismatched Git work trees and a Markdown symlink are refused
+    with diagnostics. Run just these plants and the file-only regressions with --counts-only.
+18. Counting congruence constructors instead of `Coincidence.step` in the certificate:
+    `tests/test_certificate.py` fails on transformers with no step. The restored
+    certificate must pass the same regression, including its real-step cases.
 
 These faults exercise the style and link checks, page freshness, an audit pin and
 leanchecker's loading of compiled files as well as the earlier checks. They do not
@@ -71,24 +98,31 @@ all renderer outputs.
 Tests 10, 14 and 15 attempt a restoration build; if it fails or is interrupted, every
 file in `.lake/build` returns to its saved contents and presence or absence before
 the plant, including dependent modules, hashes and traces. Test 10 always restores or
-removes `Planted.*` outputs in a nested `finally`. Tests 11 to 15 report elapsed time,
-restoration included. An outer `finally` compares Git status with the entry status,
-including on interruption, without replacing an exception already in flight.
+removes `Planted.*` outputs in a nested `finally`. Tests 11 to 15, the proved Circle 2
+plant and test 18 report elapsed time, restoration included. An outer `finally` compares
+Git status with the entry status, including on interruption, without replacing an
+exception already in flight.
 Temporary-directory regressions run first, without Lean. Exits non-zero if a fault
 goes unnoticed or a restoration check fails. Restoration needs writable files and
 an opportunity for `finally` to finish; a forced process kill cannot provide it.
 Standard library only; Python 3.11 or later, for the review records.
 """
 
+import argparse
 import json
+import os
+import re
+import shutil
 import subprocess
 import sys
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 from time import perf_counter
 
 import check_fidelity
 import check_kernel
+import generated_counts
 import heath
 
 ROOT = heath.ROOT
@@ -197,6 +231,90 @@ def style_error() -> None:
         path.write_bytes(saved)
 
 
+def copy_marker_files(root: Path, names: list[str]) -> None:
+    """Copy the tracked files for item 16, skipping symlinks without reading targets."""
+    for name in names:
+        source = ROOT / name
+        if name and not source.is_symlink() and source.is_file():
+            target = root / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, target)
+
+
+def merge_conflict_markers() -> None:
+    """Plant raw marker lines in copies of tracked text, with no Git or Lean needed
+    by the check. Compare the harmless heading with the baseline, so an existing
+    marker elsewhere cannot masquerade as a refusal of the planted heading.
+    """
+    listing = run("git", "ls-files", "-z")
+    if not expect_success("tracked files for marker plants", listing):
+        return
+    with tempfile.TemporaryDirectory(prefix="stoicheia-markers-") as tmp:
+        root = Path(tmp)
+        copy_marker_files(root, listing.stdout.split("\0"))
+
+        def check() -> subprocess.CompletedProcess:
+            return subprocess.run([sys.executable, "scripts/check_style.py", "--no-lean"],
+                                  cwd=root, capture_output=True, text=True)
+
+        baseline = check()
+        markdown = "CONTRIBUTING.md"
+        non_markdown = "NOTICE"
+        cases = [
+            ("opening", markdown, ["<" * 7 + " ours"], [(0, "opening")]),
+            ("base", markdown, ["|" * 7 + " base"], [(0, "base")]),
+            ("middle between markers", markdown,
+             ["<" * 7 + " ours", "A paragraph.", "=" * 7, ">" * 7 + " theirs"],
+             [(0, "opening"), (2, "middle"), (3, "closing")]),
+            ("lone middle", non_markdown, ["=" * 7], [(0, "middle")]),
+            ("closing", markdown, [">" * 7 + " theirs"], [(0, "closing")]),
+            ("middle in a comment", markdown,
+             ["<!--", "Comment text", "=" * 7, "-->"], [(2, "middle")]),
+            ("middle after a completed heading", markdown,
+             ["Heading", "=" * 3, "=" * 7], [(2, "middle")]),
+            ("middle after a hyphen heading", markdown,
+             ["Heading", "-" * 3, "=" * 7], [(2, "middle")]),
+            ("middle after indented code", markdown,
+             ["", "    code", "=" * 7], [(2, "middle")]),
+            ("middle after a reference definition", markdown,
+             ["", "[label]: destination", "=" * 7], [(2, "middle")]),
+            ("middle after a two-line reference definition", markdown,
+             ["", "[label]:", " /url", "=" * 7], [(3, "middle")]),
+            ("middle in a fence", markdown,
+             ["```", "Code text", "=" * 7, "```"], [(2, "middle")]),
+            ("middle after a fence inside a comment", markdown,
+             ["<!--", "```", "Comment text", "=" * 7, "-->"], [(3, "middle")]),
+        ]
+        for name, rel, lines, expected in cases:
+            path = root / rel
+            saved = path.read_bytes()
+            prefix = saved + b"\n"
+            first = prefix.count(b"\n") + 1
+            try:
+                path.write_bytes(prefix + ("\n".join(lines) + "\n").encode())
+                wanted = [f"S23 {rel}:{first + offset}: {kind} merge-conflict marker"
+                          for offset, kind in expected]
+                expect_failure(f"{name} merge marker", check(), *wanted)
+            finally:
+                path.write_bytes(saved)
+        path = root / markdown
+        saved = path.read_bytes()
+        for heading in ("A planted setext heading", "A planted heading\ncontinued",
+                        "<!--\n```\n-->\nA planted heading",
+                        "A planted heading\n    continued"):
+            try:
+                path.write_bytes(saved + ("\n" + heading + "\n" + "=" * 7 + "\n").encode())
+                result = check()
+                if (result.returncode, result.stdout, result.stderr) != (
+                        baseline.returncode, baseline.stdout, baseline.stderr):
+                    failures.append(f"a setext heading changed the style check's result: {heading!r}")
+                    print(result.stdout + result.stderr)
+                else:
+                    print(f"✓ a seven-equals setext heading ({heading!r}): no new refusal")
+            finally:
+                path.write_bytes(saved)
+
+
 def broken_link() -> None:
     path = ROOT / "README.md"
     target = "book/I/planted-missing-page.md"
@@ -219,6 +337,11 @@ def generated_files() -> set[Path]:
         if path.is_dir():
             paths.update(p for p in path.rglob("*") if p.is_file())
         elif path.exists():
+            paths.add(path)
+    for rel in generated_counts.tracked_markdown(ROOT):
+        path = ROOT / rel
+        if (not generated_counts.whole_output(rel) and not generated_counts.historical(rel)
+                and generated_counts.START.search(path.read_text())):
             paths.add(path)
     return paths
 
@@ -282,14 +405,21 @@ def changed_audit_pin() -> None:
     rel = "Audit/Overlaps.lean"
     path = ROOT / rel
     saved = path.read_bytes()
-    pin = b"'Audit.III_2' depends on axioms: [Elements.Tacit.inside_of_between]"
-    assert saved.count(pin) == 1, "Audit.III_2's pin has changed; update this test"
+    pins = list(re.finditer(rb"'Audit\.III_2' depends on axioms: \[([^\]]*)\]", saved))
+    assert len(pins) == 1, "expected exactly one Audit.III_2 axiom pin"
+    pin = pins[0]
+    axioms = [a.strip() for a in pin[1].split(b",") if a.strip()]
+    dropped = next((a for a in axioms if a.startswith(b"Elements.")), None)
+    assert dropped is not None, "Audit.III_2's pin has no project axiom to drop"
+    remaining = axioms.copy()
+    remaining.remove(dropped)
+    changed = saved[:pin.start(1)] + b", ".join(remaining) + saved[pin.end(1):]
     outputs = BuildOutputs()
     try:
-        path.write_bytes(saved.replace(pin, b"'Audit.III_2' depends on axioms: []"))
+        path.write_bytes(changed)
         expect_failure("an axiom dropped from Audit.III_2's pin", run("lake", "build", "Audit"),
                        f"{rel}:", "Docstring on `#guard_msgs` does not match generated message",
-                       "Audit.III_2", "Elements.Tacit.inside_of_between")
+                       "Audit.III_2", dropped.decode())
     finally:
         path.write_bytes(saved)
         rebuild_restored("the restored audit build", outputs, "Audit")
@@ -399,8 +529,8 @@ def circle_dependencies() -> None:
 
 def circle_renamed() -> None:
     """Circle 3 renamed in the lock and in a copy of facts.json alike: the two still agree,
-    and no review record names the rule, so only the missing name shows that the check no
-    longer refuses it."""
+    so the missing name is what must show that the check no longer refuses it. (III.2's
+    [overlap] names the rule and is refused as well; the plant does not rely on that.)"""
     old, new = "Tacit.outside_of_between", "Tacit.Circle.outside_of_between"
     rel = "Certificate/axioms.lock"
     saved = replace_once(rel, f'"{old}" =', f'"{new}" =')
@@ -414,6 +544,35 @@ def circle_renamed() -> None:
                        unwanted=("an assumption not in", "no longer an axiom"))
     finally:
         (ROOT / rel).write_text(saved)
+
+
+def circle_proved() -> None:
+    """A proved Circle 2 must still bring in Circle 3 as a locked axiom."""
+    inside, outside = "Tacit.inside_of_between", "Tacit.outside_of_between"
+    path = ROOT / "Certificate/axioms.lock"
+    saved = path.read_bytes()
+    saved_errors = list(check_fidelity.errors)
+    axioms, vocabulary = check_fidelity.read_lock(path)
+    axioms.pop(inside, None)
+    try:
+        path.write_text(check_fidelity.render_lock(axioms, vocabulary))
+        for dependencies in ([], [outside]):
+            facts = json.loads((ROOT / "facts.json").read_text())
+            for table in ("axiom_types", "axiom_modules"):
+                facts[table].pop(inside, None)
+            facts.setdefault("proved_rules", {})[inside] = dependencies
+            check_fidelity.errors.clear()
+            check_fidelity.check_lock(facts, path)
+            found = list(check_fidelity.errors)
+            result = subprocess.CompletedProcess([], int(bool(found)), "\n".join(found), "")
+            if not dependencies:
+                expect_failure("Circle 2 proved without a forbidden axiom", result,
+                               f"{inside} (Circle 2): proved without another forbidden circle rule")
+            elif expect_success("Circle 2 proved from locked Circle 3", result):
+                print("✓ Circle 2 proved from locked Circle 3: allowed")
+    finally:
+        path.write_bytes(saved)
+        check_fidelity.errors[:] = saved_errors
 
 
 def placement_called() -> None:
@@ -471,6 +630,10 @@ PLANTED_COMMANDS = (
      "set_option «doc».«verso» true in theorem planted_verso : True := trivial"),
     ("#eval", '#eval IO.println "planted"'),
     ("run_cmd", "run_cmd pure ()"),
+    ("run_cmd", 'run_cmd Lean.logInfo "x"'),
+    ("run_cmd", "example : True := trivial run_cmd Check.Generator.checkFiles"),
+    ("run_cmd", "run_cmd Check.GeneratorOther.checkFiles"),
+    ("run_cmd", "run_cmd Check.Generator.checkFiles.other"),
     ("run_elab", "run_elab pure ()"),
     ("run_meta", "run_meta pure ()"),
     ("run_tac", "theorem planted_tac : True := by run_tac pure ()"),
@@ -569,9 +732,13 @@ PLANTED_COMMANDS = (
     ("string", 'def plantedBraces := "{" ++ "}"'),
     ("#exit", "#exit"),
 )
-# A new file in each folder the scan reads; Staging's in a folder of its own, which
-# shows that the scan reads every folder beneath.
-PLANTED_FILES = ("Elements/Planted.lean", "Staging/Planted/Commands.lean", "Audit/Planted.lean")
+# A new file in each folder the scan reads, paired with its root module; Staging's in a
+# folder of its own, which shows that the scan reads every folder beneath.
+PLANTED_FILES = (("Elements", "Elements/Planted.lean"),
+                 ("Staging", "Staging/Planted/Commands.lean"),
+                 ("Audit", "Audit/Planted.lean"),
+                 ("model/Model", "model/Model/Planted.lean"),
+                 ("model/Check", "model/Check/Planted.lean"))
 # A new file of Book Zero, and the line of it that imports a proposition.
 BOOK_ZERO = ("Elements/Figure/Planted.lean", 2, "-- Planted by scripts/negative_tests.py: "
              "the import below must be caught.\nimport Elements.BookI.Prop01\n")
@@ -582,13 +749,15 @@ def forbidden_commands() -> None:
     on the same line, in a new file of each folder `check_fidelity.py` scans, `#exit` at
     the end of each root file, and a Book Zero file importing a proposition. Each must be
     caught, by its file and line."""
-    header = ["/-! Planted by scripts/negative_tests.py: every line below must be caught. -/",
+    header = ["/-! Planted by scripts/negative_tests.py: forbidden commands must be caught. -/",
               ""]
     body = [("axiom", "example : True := trivial axiom planted_inline : True"),
             ("axiom", "axiom planted_axiom : True"),
             ("native_decide", "theorem planted_native : 2 + 2 = 4 := by native_decide"),
             *PLANTED_COMMANDS]
-    text = "\n".join(header + [line for _, line in body]) + "\n"
+    generator = ["run_cmd Check.Generator.checkFiles",
+                 "  run_cmd (Check.Generator.checkFiles)"]
+    text = "\n".join(header + [line for _, line in body] + generator) + "\n"
 
     def caught(rel: str, line: int, word: str) -> str:
         if word == "axiom":
@@ -600,10 +769,11 @@ def forbidden_commands() -> None:
         return f"{rel}:{line}: uses `{word}`"
 
     wanted: dict[str, list[str]] = {}
+    allowed: list[str] = []
     planted: list[Path] = []          # files, then the folders made for them
     roots: dict[Path, str] = {}
     try:
-        for rel in PLANTED_FILES:
+        for tree, rel in PLANTED_FILES:
             path = ROOT / rel
             assert not path.exists(), f"{rel} exists; update this test"
             if not path.parent.exists():
@@ -611,15 +781,34 @@ def forbidden_commands() -> None:
                 planted.append(path.parent)
             path.write_text(text)
             planted.insert(0, path)
-            wanted[rel.split("/")[0]] = [caught(rel, len(header) + i, word)
-                                         for i, (word, _) in enumerate(body, 1)]
+            wanted[tree] = [caught(rel, len(header) + i, word)
+                            for i, (word, _) in enumerate(body, 1)]
+            calls = [caught(rel, len(header) + len(body) + i, "run_cmd")
+                     for i in range(1, len(generator) + 1)]
+            if tree == "model/Check":
+                allowed += calls
+                # The allowance covers only run_cmd, not another command or its arguments.
+                extra = ['run_cmd Check.Generator.checkFiles run_cmd Lean.logInfo "x"',
+                         'run_cmd (Check.Generator.checkFiles (by_elab pure (.str "x")))']
+                path.write_text(text + "\n".join(extra) + "\n")
+                first = len(header) + len(body) + len(generator) + 1
+                wanted[tree] += [caught(rel, first, "run_cmd"), caught(rel, first + 1, "by_elab")]
+                allowed.append(caught(rel, first + 1, "run_cmd"))
+            else:
+                wanted[tree] += calls
         for tree in wanted:
             root = ROOT / f"{tree}.lean"
             roots[root] = root.read_text()
-            changed = roots[root] + "\n#exit\n"
+            changed = roots[root] + "\n" + "\n".join(generator) + "\n#exit\n"
             root.write_text(changed)
             line = changed[:changed.rindex("#exit")].count("\n") + 1
             wanted[tree].append(caught(f"{tree}.lean", line, "#exit"))
+            calls = [caught(f"{tree}.lean", line - len(generator) + i, "run_cmd")
+                     for i in range(len(generator))]
+            if tree == "model/Check":
+                allowed += calls
+            else:
+                wanted[tree] += calls
         figure, line, text = BOOK_ZERO
         assert not (ROOT / figure).exists(), f"{figure} exists; update this test"
         (ROOT / figure).write_text(text)
@@ -627,7 +816,7 @@ def forbidden_commands() -> None:
         result = fidelity()
         for tree, messages in wanted.items():
             expect_failure(f"every forbidden command and an axiom in {tree}/ and {tree}.lean",
-                           result, *messages)
+                           result, *messages, unwanted=tuple(allowed))
         expect_failure("a proposition imported by Book Zero", result,
                        f"{figure}:{line}: Book Zero must not import a proposition")
     finally:
@@ -638,6 +827,106 @@ def forbidden_commands() -> None:
                 path.rmdir()
             else:
                 path.unlink(missing_ok=True)
+
+
+def symbolic_links() -> None:
+    """Refuse a directory link and a file link by their own paths."""
+    links = (("model/Model/PlantedLink", ROOT / "model/Check"),
+             ("model/Check/PlantedLink.lean", ROOT / "Elements.lean"))
+    planted: list[Path] = []
+    try:
+        for rel, target in links:
+            path = ROOT / rel
+            assert not path.exists() and not path.is_symlink(), f"{rel} exists; update this test"
+            assert target.exists(), f"{target.relative_to(ROOT)} is missing; update this test"
+            path.symlink_to(target, target_is_directory=target.is_dir())
+            planted.append(path)
+        result = fidelity()
+        for rel, _ in links:
+            expect_failure(f"a symbolic link at {rel}", result,
+                           f"{rel}: a symbolic link, which the source scan does not follow;",
+                           unwanted=("model/Model/PlantedLink/",))
+    finally:
+        for path in planted:
+            path.unlink(missing_ok=True)
+
+
+def model_lake() -> None:
+    """An axiom in a `.lake` folder of model/Model/ and of model/Check/ is caught, and one
+    in the package's own model/.lake is not read."""
+    plants = ("model/Model/.lake/Planted.lean", "model/Check/.lake/Planted.lean",
+              "model/.lake/Planted.lean")
+    planted: list[Path] = []          # files, then the folders made for them
+    try:
+        for rel in plants:
+            path = ROOT / rel
+            assert not path.exists() and not path.is_symlink(), f"{rel} exists; update this test"
+            if not path.parent.exists():
+                path.parent.mkdir()
+                planted.append(path.parent)
+            path.write_text("axiom planted_axiom : True\n")
+            planted.insert(0, path)
+        result = fidelity()
+        for rel in plants[:2]:
+            expect_failure(f"an axiom in {rel}", result,
+                           f"{rel}:1: declares an axiom outside Elements/Foundations/",
+                           unwanted=("model/.lake/",))
+    finally:
+        for path in planted:
+            if path.is_dir():
+                path.rmdir()
+            else:
+                path.unlink(missing_ok=True)
+
+
+def rules_in(root: Path) -> subprocess.CompletedProcess:
+    """check_fidelity's source scan, run on the tree at `root` instead of the edition's."""
+    saved_root, saved_errors = check_fidelity.ROOT, list(check_fidelity.errors)
+    check_fidelity.ROOT = root
+    check_fidelity.errors.clear()
+    try:
+        check_fidelity.check_rules()
+        found = list(check_fidelity.errors)
+    finally:
+        check_fidelity.ROOT = saved_root
+        check_fidelity.errors[:] = saved_errors
+    return subprocess.CompletedProcess([], 1 if found else 0, "\n".join(found) + "\n", "")
+
+
+def lake_links() -> None:
+    """A symbolic link named `.lake`, to a directory, to a file or to nothing, is refused
+    by its own path in model/, model/Model/ and model/Check/, never followed; a real
+    model/.lake directory holding an axiom and a link is not entered. Each case is a
+    small tree of its own, so the edition's model/.lake is never moved, copied or read."""
+    axiom = "axiom planted_axiom : True\n"
+    for folder in ("model", "model/Model", "model/Check"):
+        for kind in ("directory", "file", "dangling"):
+            with tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp).resolve()
+                (root / "model/Model").mkdir(parents=True)
+                (root / "model/Check").mkdir()
+                target = root / "Target"
+                if kind == "directory":
+                    target.mkdir()
+                    (target / "Planted.lean").write_text(axiom)
+                elif kind == "file":
+                    target.write_text(axiom)
+                rel = f"{folder}/.lake"
+                (root / rel).symlink_to(target, target_is_directory=kind == "directory")
+                expect_failure(f"a {kind} link at {rel}", rules_in(root),
+                               f"{rel}: a symbolic link, which the source scan does not follow;",
+                               unwanted=(f"{rel}/", f"{rel}:1:"))
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp).resolve()
+        (root / "model/.lake").mkdir(parents=True)
+        (root / "model/.lake/Planted.lean").write_text(axiom)
+        (root / "model/.lake/Link.lean").symlink_to(root / "model/.lake/Planted.lean")
+        result = rules_in(root)
+        if result.returncode != 0:
+            failures.append("a real model/.lake was read: " + result.stdout.strip())
+            print(result.stdout[-3000:])
+        else:
+            print("✓ a real model/.lake holding an axiom and a link: not read")
 
 
 def placement_named() -> None:
@@ -828,16 +1117,132 @@ def planted_assumptions() -> None:
             planted_outputs.restore()
 
 
-def main() -> int:
+def certificate_constructor_counting() -> None:
+    """Rebuilding constructors must not invent a coincidence step."""
+    rel = "Certificate/Facts.lean"
+    path = ROOT / rel
+    saved = path.read_bytes()
+    try:
+        replace_once(
+            rel, "used.contains coincidenceStep",
+            "([`Elements.Superposition.Derives.len_congr,\n"
+            "           `Elements.Superposition.Derives.angle_congr,\n"
+            "           `Elements.Superposition.Derives.area_congr]).any used.contains",
+        )
+        expect_failure(
+            "constructor counting reports a step in a transformer",
+            run(sys.executable, "-I", "tests/test_certificate.py"),
+            "FAIL: test_transformers_without_step_do_not_count",
+            "AssertionError: Lists differ: ['C.N. 4'] != []",
+        )
+    finally:
+        path.write_bytes(saved)
+    expect_success("the restored certificate regression",
+                   run(sys.executable, "-I", "tests/test_certificate.py"))
+
+
+@contextmanager
+def count_source_copy():
+    """Copy tracked sources plus current Python tools under /tmp, with no build or .git.
+
+    Git reads the original index through GIT_DIR; GIT_WORK_TREE points only at the
+    copy. No Git command writes. Include new Python sources before they are committed.
+    """
+    tracked = run("git", "ls-files", "-z")
+    tracked.check_returncode()
+    git_dir = run("git", "rev-parse", "--absolute-git-dir")
+    git_dir.check_returncode()
+    paths = {Path(p) for p in tracked.stdout.split("\0") if p}
+    paths.update(p.relative_to(ROOT) for p in (ROOT / "scripts").glob("*.py"))
+    with tempfile.TemporaryDirectory(prefix="stoicheia-counts-", dir="/tmp") as tmp:
+        copy = Path(tmp)
+        for rel in paths:
+            target = copy / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(ROOT / rel, target)
+        yield copy, {**os.environ, "GIT_DIR": git_dir.stdout.strip(),
+                     "GIT_WORK_TREE": str(copy)}
+
+
+def count_markers() -> None:
+    """Plant count faults and unsafe discovery paths in a copy, without Lean."""
+    with count_source_copy() as (copy, env):
+        path = copy / "docs/PROGRAM.md"
+        original = path.read_text()
+        line = original.count("\n") + 2
+        computed = generated_counts.vocabulary(copy)
+        for name, stated in (("vocabulary", str(computed + 1)),
+                             ("unknown-count", "0"), ("vocabulary", str(computed))):
+            path.write_text(original + f"\nVocabulary: <!-- count:{name} -->"
+                            f"{stated}<!-- /count -->.\n")
+            result = subprocess.run([sys.executable, "scripts/check_fidelity.py"],
+                                    cwd=copy, env=env, capture_output=True, text=True)
+            where = f"docs/PROGRAM.md:{line}:"
+            if name == "unknown-count":
+                expect_failure("an unknown count name", result, where,
+                               "unknown count name 'unknown-count'")
+            elif stated != str(computed):
+                expect_failure("a stale inline count", result, where, "count 'vocabulary'",
+                               f"stated '{stated}'", f"computed '{computed}'",
+                               "run python3 scripts/render.py")
+            elif expect_success("a correct inline count", result):
+                print("✓ a correct inline count: passed (without Lean)")
+        path.write_text(original)
+        for name, git_env, diagnostic in (
+                ("missing Git metadata",
+                 {k: v for k, v in env.items() if not k.startswith("GIT_")},
+                 "cannot resolve Git work tree"),
+                ("a mismatched Git work tree", {**env, "GIT_WORK_TREE": str(ROOT)},
+                 "does not match repository root")):
+            result = subprocess.run([sys.executable, "scripts/check_fidelity.py"],
+                                    cwd=copy, env=git_env, capture_output=True, text=True)
+            expect_failure(name, result, diagnostic, unwanted=("Traceback",))
+        with tempfile.TemporaryDirectory(prefix="stoicheia-count-target-", dir="/tmp") as tmp:
+            target = Path(tmp) / "notes.md"
+            text = "<!-- count:vocabulary -->0<!-- /count -->\n"
+            target.write_text(text)
+            path.unlink()
+            path.symlink_to(target)
+            try:
+                for script in ("check_fidelity.py", "render.py"):
+                    result = subprocess.run([sys.executable, f"scripts/{script}"],
+                                            cwd=copy, env=env, capture_output=True, text=True)
+                    expect_failure(f"a Markdown symlink in {script}", result,
+                                   "docs/PROGRAM.md: symlink is forbidden", unwanted=("Traceback",))
+                    if target.read_text() != text:
+                        failures.append(f"{script} wrote through a Markdown symlink")
+            finally:
+                path.unlink()
+                path.write_text(original)
+
+
+def main(argv=()) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--counts-only", action="store_true",
+                        help="only the count plants and file-only regressions; no build needed")
+    args = parser.parse_args(argv)
     if not expect_success("restoration regressions",
                           run(sys.executable, "-I", "tests/test_negative_tests.py")):
         return 1
     print("✓ restoration regressions passed (without Lean)")
+    if not expect_success("count regressions",
+                          run(sys.executable, "-I", "tests/test_generated_counts.py")):
+        return 1
+    print("✓ count regressions passed (without Lean)")
+    if args.counts_only:
+        count_markers()
+        if failures:
+            print("\n".join(failures))
+            return 1
+        print("✓ count plants passed; other plants were not run (--counts-only)")
+        return 0
     before = run("git", "status", "--porcelain")
     if not expect_success("entry Git status", before):
         return 1
     try:
         heath_word()
+        merge_conflict_markers()
+        count_markers()
         wrong_radii()
         weakened_postulate()
         changed_word()
@@ -851,14 +1256,24 @@ def main() -> int:
         remark_ends_run()
         native_decide()
         forbidden_commands()
+        symbolic_links()
+        model_lake()
+        lake_links()
         placement_named()
         planted_assumptions()
-        for test in (style_error, broken_link, stale_page, changed_audit_pin, corrupt_olean):
+        for test in (circle_proved, style_error, broken_link, stale_page,
+                     changed_audit_pin, corrupt_olean, certificate_constructor_counting):
             started = perf_counter()
             try:
                 test()
             finally:
                 print(f"  {test.__name__}: {perf_counter() - started:.2f}s (including restoration)")
+        restored = fidelity()
+        if restored.returncode != 0:
+            failures.append("the unplanted tree failed check_fidelity.py")
+            print((restored.stdout + restored.stderr)[-3000:])
+        else:
+            print("✓ the unplanted tree passes check_fidelity.py")
     finally:
         original = sys.exception()
         try:
@@ -887,4 +1302,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))

@@ -32,14 +32,16 @@ lake build Audit
 lake env lean Certificate/Facts.lean
 python3 scripts/check_acceptance.py           # every item, in about two minutes
 python3 scripts/check_acceptance.py --quick   # the kernel replay and the model tests not run
+python3 scripts/check_acceptance.py --json verdicts.json   # every verdict as JSON as well
+python3 scripts/check_acceptance.py --compare main.json verdicts.json   # no check run
 ```
 
 It writes [the report](reports/acceptance-books-I-III.md): a table of items by book, a table
 of every proposition against every item, and every failure, each with what to do about it.
-It changes no other file. It exits 0 only when every item passes and every check ran; 1
-when anything fails or was not run (a check not run is not a pass); and 2 when it cannot
-begin. It needs Python 3.11 or later, `lake` on the PATH, and the commits the records name,
-so a full clone rather than a shallow one.
+It changes no other file, save the verdicts `--json` asks for. It exits 0 only when every
+item passes and every check ran; 1 when anything fails or was not run (a check not run is
+not a pass); and 2 when it cannot begin. It needs Python 3.11 or later, `lake` on the
+PATH, and the commits the records name, so a full clone rather than a shallow one.
 
 The script stands on the checks already in place rather than restating them:
 `check_fidelity.py`'s functions, `check_style.py`, `check_links.py`, `check_kernel.py`,
@@ -48,10 +50,71 @@ proposition or book whose file it names; and `render.py`'s functions, which rege
 pages in memory to compare them with the files. An item passes only when the checks it
 names pass for that proposition, book or edition.
 
-It is not yet a step of CI; the coordinator decides when it becomes a required one. A CI
-step would fetch the whole history (`fetch-depth: 0`), for the records' commits, and would
-change, together, the CI workflow, the sequence in [WORKFLOW](WORKFLOW.md#8-validation-on-the-integrated-revision),
-section 8, and the `CHECKS` list of `scripts/safe_push.py`, which runs that sequence.
+`--json` writes every item's verdict, `pass`, `fail` or `not run`, with each failure's
+messages or the reason an item was not run, to the path given. `--compare` runs no check:
+it reads two such files, main's first, and compares their verdicts by the rule below
+([In CI](#in-ci)). It exits 0 when every pass holds under that rule; 1 for a regression,
+listing each; and 2 when a file cannot be read in the verdict format, or the two name
+different copies of the script by their hashes. CI uses both options.
+
+## In CI
+
+CI's required `acceptance` job runs on pull request events and is skipped on pushes.
+Its executable definitions are [the workflow](../.github/workflows/ci.yml),
+[`scripts/check_acceptance.py`](../scripts/check_acceptance.py) and
+[`scripts/copy_acceptance_checks.sh`](../scripts/copy_acceptance_checks.sh). It fetches
+the whole history (`fetch-depth: 0`) for the records' commits. Until the consolidation
+release, `ACCEPTANCE_GATE` is `ratchet`: **a pass on main may not turn into a fail on the
+pull request**, save the staging exception below. The
+[report committed on main](reports/acceptance-books-I-III.md) records failures
+at the revision it names; CI recomputes the individual verdicts for comparison on each
+run. The ratchet allows the checklist's exit 1, then weighs its verdicts. The checker's
+tests and the builds must also pass; a checker exit of 2 or more, or verdicts that cannot
+be compared, fail the job. In three steps:
+
+1. After its comparison tests, the builds of `Elements` and `Audit`, and the computation
+   of the certificate, the script checks every item on CI's checked-out revision,
+   normally the pull request's test merge commit, and writes its verdicts with `--json`.
+2. It checks main in a worktree beside it: the checkout's first parent if it has two
+   parents, otherwise the pull request's recorded base commit. Main is built and its
+   certificate computed with the pull request's own checks copied in (`scripts/`, `tests/`,
+   `Certificate/`, `review/SCHEMA.md` and `review/terms.toml`), so that one copy of the
+   checks judges both. Main keeps its own values pinned to its content:
+   `Certificate/axioms.lock`, `tests/certificate_expectations.json`,
+   `tests/model/lock.sha256`, `tests/model/laws.toml`, `tests/model/MODEL.md` and
+   `tests/model/results/` ([WORKFLOW](WORKFLOW.md#landing-work-pull-requests), section 10,
+   the pre-flight's step 4, "The full checks"). The formal model's `model/` directory is
+   not copied. An updated definition or expected count must not make unchanged main fail
+   and so hide a pull request's failure. A stricter check, which lands in a pull request
+   of its own before the content it judges
+   ([WORKFLOW](WORKFLOW.md#landing-work-pull-requests), section 10), judges both revisions.
+   An item it fails on main is reported but does not hold the pull request back.
+   Main's run is `--quick`: the kernel replay and the model tests (E1 and E4) are recorded
+   as `not run`, so the comparison does not hold them. The pull request's checklist run
+   runs them, and CI's `check` and `model` jobs require them to pass.
+3. `--compare` sets main's verdicts beside the pull request's, and fails for each item that
+   passes on main and does not pass on the pull request (a fail, a check not run, or an
+   item missing), save a staging item (P10 or E6) that turns into a fail, which it lists.
+   Both staging items read `Staging/` alone, where a statement that a stage adds or changes
+   is staged before its proof ([WORKFLOW](WORKFLOW.md#2-briefs-before-proofs), section 2).
+   A staging item that was passing and is now `not run` or missing still fails the
+   comparison.
+
+The run's artifact is named `acceptance`: the pull request's `report.md` and
+`verdicts.json`, and, when main is checked, its `main-report.md` and `main.json`. The
+upload step runs even after a failure and keeps whichever of these files were produced.
+
+**The full gate.** The consolidation release's pull request switches it on: it sets
+`ACCEPTANCE_GATE`, in the CI workflow, from `ratchet` to `full`, a change to a protected
+file with its decisions entry; from then on the job skips main and the comparison, and
+any failing item or check not run fails it, the staging items included. That is step 9
+of [WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10: the checklist
+passes in CI with no failures. Any other value fails the job before the checklist runs,
+so that no misspelling turns the gate off.
+
+The distinction between GitHub's five required checks and the merge gate's local presence
+test, including what a skipped job means, is in
+[WORKFLOW](WORKFLOW.md#8-validation-on-the-integrated-revision), section 8.
 
 ## For each proposition
 
@@ -66,7 +129,7 @@ All 99 of Books I–III, each with its porism and its companions.
 | P5 | Policies | machine | For the proposition, its porism and its companions (`check_fidelity.py`): no later citation; superposition used directly only by I.4 and I.8; nothing before I.29 resting on Postulate 5 or a rule of `Elements.Tacit.Euclidean`; no axiom and no forbidden command in its Lean file. Its entries pass `check_fidelity.py`'s checks of them: each porism Heath prints has its entry, word for word, and each porism and companion is tied to this proposition. Placement is cited only by III.24 and the theorems on arcs: no other file of `Elements/` names it. The lock is E2's. |
 | P6 | Runs | machine | Every run of `--` lines with no Lean beneath it, before the next run, is declared as a passage (`check_fidelity.py`, by the rule made stricter on 18 October: a `/- … -/` remark ends a run and carries none). Each passage begins at one of Euclid's sentences and names a helper that is declared, and each passage's note is on the page. |
 | P7 | Text | machine | The docstring is Heath's enunciation and the `--` lines are Heath's proof, word for word (`check_fidelity.py`); the record's quotations are Heath's (P2). Heath's letters are plain and the quotation marks straight (`check_style.py`, S9 and S8). The reading line links only works that [docs/reading.md](reading.md) gives (S17). Every relative link of the page, the mishnah and the reading line resolves (`check_links.py`). Heath's source note names the scan leaves, so the page links his page images; the links themselves go to the Internet Archive, and are not fetched. |
-| P8 | Figures | machine | Euclid's figure and the figure at a glance exist, and pass the figure rules (S13 to S16, S20 and S21): Heath's letters, all and only his, in both figures and at every point the figure at a glance shows; the palette, the strokes, the captions and the titles. When the theorem covers several cases (a `case` passage, or a companion), the record's `[figure]` gives the `case` its caption names. |
+| P8 | Figures | machine | Euclid's figure and the figure at a glance exist, and pass the figure rules (S13 to S16, S20, S21 and S26): Heath's letters, all and only his, in both figures and at every point the figure at a glance shows; each letter drawn once (once in each of Heath's figures where two or three stand side by side) and clear of every stroke; the palette, the strokes, the captions and the titles. A figure of the modern way, where the page has one, passes S24 and S25: it has a matching modern way paragraph, meets the canvas, palette and stroke rules for Euclid's figures, uses only letters drawn in its companion, and gives the paragraph's own names their mathematical style. S26 applies to Euclid's figure and the figure at a glance, not to the modern figure. When the theorem covers several cases (a `case` passage, or a companion), the record's `[figure]` gives the `case` its caption names. |
 | P9 | Style | machine | The hard rules of `check_style.py` hold in the mishnah, the reading line, the notes of the record that its page shows and the Lean notes of the proposition's file, S12 among them (every Lean name in the mishnah, the reading line and the record's notes is one Lean knows); the mishnah exists; and the committed page is exactly what `render.py` makes. |
 | P10 | Out of Staging | machine | No declaration under `Staging/` is for this proposition (a name with `PropN` under `Book<book>`, or in a file that imports that book's `PropN`): a statement once proved has moved to `Elements/`, and its staged copy is deleted ([WORKFLOW](WORKFLOW.md#2-briefs-before-proofs), section 2). |
 | P11 | Statement | review | The statement says what Euclid's enunciation says, or its qualification is exact. Quantifiers, conclusions, hypotheses and cases have been checked, by the questions of [FORMALIZATION](FORMALIZATION.md#coverage-does-it-say-what-euclid-says), section 2. |
@@ -81,9 +144,9 @@ All 99 of Books I–III, each with its porism and its companions.
 | # | Item | Kind | What passes |
 |---|---|---|---|
 | B1 | Pages | machine | The book's index (with its introduction) and front matter, and README.md's completion summary for the book, are exactly what `render.py` makes. They are generated from facts.json and the records, so the summary is true to them. The introduction, the index and the front matter pass `check_style.py` (S18 and S19 among its rules), and their links resolve. |
-| B2 | Catalogues | machine | The gap catalogue, `docs/reports/gaps-book-<book>.md`, passes `check_style.py`, and every Lean name it gives in backticks is one that Lean knows, asked of Lean with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open (a pattern's placeholder `PropN`, a field of facts.json and a tactic aside). Every record of the book with an `[overlap]` has a row of its own in [the overlap catalogue](reports/overlaps.md), its first cell the reference alone, naming its rules; and no such row is for a proposition whose record declares none. The rows on a rule's use in other proofs (I.13's, say, in 17 proofs from II.1 on) are read by no record, and not counted. |
+| B2 | Catalogues | machine | The gap catalogue, `docs/reports/gaps-book-<book>.md`, passes `check_style.py`, and every Lean name it gives in backticks is one that Lean knows, asked of Lean with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open (a pattern's placeholder `PropN`, a field of facts.json and a tactic aside). Every record of the book with an `[overlap]` has a row of its own in [the overlap catalogue](reports/overlaps.md), its first cell the reference alone, naming its rules; and no such row is for a proposition whose record declares none. The rows on a rule's use in other proofs (I.13's upper bound on an angle, used in I.47, for example; or its now-proved right-angle rule, used in 19 proofs from II.1 on, 18 calling it themselves) are read by no record, and not counted. |
 | B3 | Read-through | review | Read straight through, the book flows, and the voice is common. |
-| B4 | Limitations | review | The remaining limitations are deliberate, few and stated plainly where they occur: those allowed below, the overlaps of III.2's kind, and I.45's and II.14's convention, a figure that comes with a checked finite division, under which both are full (the decisions of 18 October). |
+| B4 | Limitations | review | The remaining limitations are deliberate, few and stated plainly where they occur: those allowed below and the overlaps of III.2's kind. The decisions of 18 October accepted I.45 and II.14 as full under the convention that a figure comes with a checked finite division; the owner's decision of 20 October instead allows them as restricted until the proof from the figure's outline is proved and reviewed (#116). |
 
 ## For the whole edition
 
@@ -104,8 +167,13 @@ this table, in a change to the check of its own.
 
 | Proposition | Scope | Tag | Why |
 |---|---|---|---|
+| I.45 | restricted | `figure-with-dissection` | A figure given with its checked division into triangles, its area relative to that division. The outline proof is to come (#116); this row goes when it is proved and reviewed. |
+| II.14 | restricted | `figure-with-dissection` | A figure given with its checked division into triangles, its area relative to that division. The outline proof is to come (#116); this row goes when it is proved and reviewed. |
 | III.16 | partial | `mixed-angles-omitted` | The angle of the semicircle and the horn-like angle are angles of a straight line and a circumference, which our angles are not; a prototype of mixed angles is to decide whether they become full (issue #57). |
 | III.31 | partial | `mixed-angles-omitted` | The angles of the greater and the less segment, likewise. |
+
+For I.45 and II.14, the outline proof must establish that a division into triangles exists
+and that the area is independent of the division chosen (#116).
 
 If the prototype carries III.16 and III.31 to full, their rows go. An overlap is no
 limitation of scope: it is a disclosure, declared in the record's `[overlap]` and the
@@ -205,9 +273,10 @@ section 10, step 9): the checklist with no failures, the independent audit, and 
 outside reading. The checklist is this page. The independent audit, by a model family that
 wrote none of the work, reads the [review] items afresh (brief 0005, stage 6), and its
 evidence goes under `docs/reports/acceptance/`. The cold outside reading scores the
-tagged candidate. On the candidate commit CI is green, with `check`, `model` and
-`negative`; the release notes are drafted from the generated summaries; and the owner
-approves them before the tag.
+tagged candidate. On the candidate's pull request all five required checks are green,
+with `acceptance` under its full gate. The separate release gate, including the two
+readings and the owner's approval of the notes, is
+[WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10, steps 8 and 10.
 
 The check that every Lean name a catalogue gives is declared, by asking Lean itself (B2,
 E2), follows Patrick Massot's [leanblueprint](https://github.com/PatrickMassot/leanblueprint),

@@ -1,5 +1,11 @@
 # Brief 0006: the statements of stages 2–4
 
+19 October 2026: the frozen instructions below use the former baseline of 87 axioms.
+[Eight rules are now theorems](../FORMALIZATION.md#rules-now-proved), keeping their
+names and exact types, so the baseline for the instruction to add no axioms is now
+79, including 73 tacit rules. Circle 2 in the proposed `Arc.meets` route is a theorem
+of Circle 3 in `Elements/Figure/Circles.lean`. No frozen statement changes here.
+
 *17 October 2026. This brief settles every new or changed statement of
 [brief 0005](0005-astra-review.md)'s stages 2–4 before any proof work, as
 [WORKFLOW.md](../WORKFLOW.md), section 2, requires. Each statement below was written with
@@ -111,6 +117,16 @@ companions in one step. No statement's hypotheses or conclusions changed.*
 to a changed lock now have one home, tests/model/MODEL.md, "Changing the axioms", and "No
 new axioms" below points to it in place of the steps it gave. No statement changes.*
 
+*Overtaken in part 20 October 2026
+([issue #116](https://github.com/jackChallis/stoicheia/issues/116)): the records of I.45 and
+II.14 now claim the scope `restricted`, with the limitation `figure-with-dissection`, in
+place of decision 1's `full`. On that day the owner approved the interim disclosure among
+the decisions for #116: the figure is given with its checked division into triangles, and
+its area is relative to that division, until the proofs that build a division from the
+figure's outline, and show that the area does not depend on the division chosen, are proved
+and reviewed. No statement or companion here changes; only the scope the two records claim
+does (the entry of 20 October 2026 in [the decisions page](0002-decisions.md)).*
+
 Base: the branch was written on main at `1e5b99a`, and has main merged in; the revision of
 18 October was written on main at `f17b427`, and the corrections after Astra's second answer
 on `b48640c`. The statements are in `Staging/`, as committed with this brief.
@@ -156,6 +172,10 @@ decided a fourth on 18 October; this brief is written to them:
    Astra's second answer (18 October) accepts `full` for these statements as they stood at
    `b48640c`, before the fan companions gained the conclusion that the fan fits (the note
    at the head of this brief).
+
+   **Overtaken in part 20 October 2026:** the scope is `restricted` for now, with the
+   limitation `figure-with-dissection`, until #116's outline proofs are proved and reviewed
+   (the note at the head of this brief).
 2. **III.24 is restated** to conclude that the segments are congruent, by Euclid's route:
    one segment is applied to the other. Today's proof by the radii is kept, as the
    labelled alternative proof, `Prop24.equalCircles`.

@@ -548,14 +548,6 @@ def gs_p4(rng):
     return None if r is None else dict(A=r[0], B=r[1], C=r[2], D=r[3])
 
 
-def gs_adj(rng):
-    r = g_right(rng)
-    if r is None:
-        return None
-    A, B, C, D, L = r   # here the right angle is at B: rename to the axiom's letters
-    return dict(A=A, B=D, C=B, D=C, L=L)
-
-
 def gs_ti(withE=False):
     def g(rng):
         A = rand_pt(rng)
@@ -655,6 +647,15 @@ def gs_chord(rng):
 def gs_convex(kind):
     def g(rng):
         c = g_circle(rng)
+        if kind == 'opposite':
+            A = rng.choice([SEEDS[c], pt_on_circle(c, rng), centre(c), rand_pt(rng)])
+            B = rng.choice([pt_on_circle(c, rng), centre(c), rand_pt(rng)])
+            if A is None or B is None or A == B:
+                return None
+            t = Fr(rng.randint(1, 4), 5)
+            X = (A[0] + t * (B[0] - A[0]), A[1] + t * (B[1] - A[1]))
+            L = g_line_thru(rng, X) if rng.random() < 0.8 else g_line_thru(rng, rand_pt(rng))
+            return dict(A=A, B=B, L=L, al=c)
         pool = [SEEDS[c], pt_on_circle(c, rng), centre(c)]
         A = rng.choice(pool) if rng.random() < 0.6 else rand_pt(rng)
         if kind == 'in':
@@ -738,18 +739,6 @@ def gs_lc(rng):
         return None
     L = g_line_thru(rng, B)
     return dict(B=B, C=g_pt_on(rng, L, [B]), L=L, al=c)
-
-
-def gs_lmc_opp(rng):
-    c = g_circle(rng)
-    A = rng.choice([SEEDS[c], pt_on_circle(c, rng), centre(c), rand_pt(rng)])
-    B = rng.choice([pt_on_circle(c, rng), centre(c), rand_pt(rng)])
-    if A is None or B is None or A == B:
-        return None
-    t = Fr(rng.randint(1, 4), 5)
-    X = (A[0] + t * (B[0] - A[0]), A[1] + t * (B[1] - A[1]))
-    L = g_line_thru(rng, X) if rng.random() < 0.8 else g_line_thru(rng, rand_pt(rng))
-    return dict(A=A, B=B, L=L, al=c)
 
 
 def g_along(A, B, t):
@@ -1025,17 +1014,6 @@ def _(c):
     return all(inside(w, al) for w in ws)
 
 
-@axiom('exists_point_outside_circle', dict(al=C_))
-def _(c):
-    al = c['al']
-    ws, j = [], 1
-    while len(ws) < 3 and j < 200:
-        s = 1 - Fr(1, 2 ** j)
-        w = (s * Fr(3, 5), s * Fr(4, 5))
-        if outside(w, al):
-            ws.append(w)
-        j += 1
-    return len(ws) == 3 and all(in_disc(w) for w in ws)
 
 
 @axiom('line_circle_between', dict(B=P, C=P, L=L_, al=C_), gs_lc)
@@ -1123,11 +1101,6 @@ def _(c):
     return L == M
 
 
-@axiom('centre_unique', dict(A=P, B=P, al=C_))
-def _(c):
-    if not (is_centre(c['A'], c['al']) and is_centre(c['B'], c['al'])):
-        return None
-    return c['A'] == c['B']
 
 
 @axiom('centre_inside', dict(A=P, al=C_))
@@ -1314,12 +1287,6 @@ def _(c):
     return same_side(c['B'], c['C'], c['N'])
 
 
-@axiom('triple_incidence3', dict(A=P, B=P, C=P, D=P, E=P, L=L_, M=L_, N=L_), gs_ti(True))
-def _(c):
-    if not (_ti_hyp(c) and same_side(c['C'], c['D'], c['L']) and same_side(c['B'], c['C'], c['N'])
-            and same_side(c['D'], c['E'], c['M']) and same_side(c['C'], c['E'], c['N'])):
-        return None
-    return same_side(c['C'], c['E'], c['L'])
 
 
 # ---- Circles
@@ -1332,12 +1299,6 @@ def _(c):
     return between(B, A, C)
 
 
-@axiom('inside_of_between', dict(A=P, B=P, C=P, al=C_), gs_convex('in'))
-def _(c):
-    A, B, C, al = c['A'], c['B'], c['C'], c['al']
-    if not (in_or_on(A, al) and in_or_on(B, al) and between(A, C, B)):
-        return None
-    return inside(C, al)
 
 
 @axiom('outside_of_between', dict(A=P, B=P, C=P, al=C_), gs_convex('out'))
@@ -1348,13 +1309,6 @@ def _(c):
     return outside(B, al)
 
 
-@axiom('not_same_side_of_circles_meet', dict(A=P, B=P, C=P, D=P, L=L_, al=C_, be=C_), gs_cm('nss'))
-def _(c):
-    A, B, C, D, L, al, be = (c[k] for k in ('A', 'B', 'C', 'D', 'L', 'al', 'be'))
-    if not (al != be and on_circle(C, al) and on_circle(C, be) and on_circle(D, al) and on_circle(D, be)
-            and C != D and is_centre(A, al) and is_centre(B, be) and on_line(A, L) and on_line(B, L)):
-        return None
-    return not same_side(C, D, L)
 
 
 # ---- Intersection (diagrammatic)
@@ -1366,12 +1320,6 @@ def _(c):
     return lines_meet(L, M)
 
 
-@axiom('line_meets_circle_of_opposite_sides', dict(A=P, B=P, L=L_, al=C_), gs_lmc_opp)
-def _(c):
-    A, B, L, al = c['A'], c['B'], c['L'], c['al']
-    if not (in_or_on(A, al) and in_or_on(B, al) and opposite(A, B, L)):
-        return None
-    return line_meets_circle(L, al)
 
 
 @axiom('line_meets_circle_of_inside', dict(A=P, L=L_, al=C_))
@@ -1529,22 +1477,8 @@ def _(c):
     return feq(ang(B, A, C), ang(B, A, D) + ang(D, A, C))
 
 
-@axiom('inside_of_angle_add', dict(A=P, B=P, C=P, D=P, L=L_, M=L_), gs_angle)
-def _(c):
-    if not _angle_inside_hyp(c):
-        return None
-    A, B, C, D = c['A'], c['B'], c['C'], c['D']
-    if abs(ang(B, A, D) + ang(D, A, C) - ang(B, A, C)) > 1e-9:
-        return None
-    return same_side(B, D, c['M']) and same_side(C, D, c['L'])
 
 
-@axiom('adjacent_eq_of_right', dict(A=P, B=P, C=P, D=P, L=L_), gs_adj)
-def _(c):
-    A, B, C, D, L = (c[k] for k in 'ABCDL')
-    if not (on_line(A, L) and on_line(B, L) and between(A, C, B) and not on_line(D, L) and is_right(A, C, D)):
-        return None
-    return ang_eq(A, C, D, D, C, B)
 
 
 @axiom('angle_eq_of_same_rays', dict(A=P, B=P, B2=P, C=P, C2=P, L=L_, M=L_), gs_rays)
