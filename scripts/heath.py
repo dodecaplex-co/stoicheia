@@ -681,9 +681,9 @@ def _self_test() -> int:
     for overlap, ok in [({"rule": "Tacit.circle_eq", "kind": "gives"}, True),
                         ({"rule": "Tacit.circle_eq", "kind": "states"}, True),
                         ({"rule": "Tacit.circle_eq"}, False),
-                        ({"rule": "Tacit.superposition", "kind": "step",
-                          "note": "Which step, in which proof."}, True),
-                        ({"rule": "Tacit.superposition", "kind": "step"}, False),
+                        ({"rule": "Tacit.angle_le_two_right", "kind": "step",
+                          "note": "Metric 5 supplies I.13's upper bound on an angle in Prop47.within."}, True),
+                        ({"rule": "Tacit.angle_le_two_right", "kind": "step"}, False),
                         ({"rule": "Tacit.circle_eq", "kind": "contains"}, False)]:
         record = {"statement": {"scope": "full"}, "route": {"kind": "euclid"},
                   "overlap": dict(overlap),

@@ -307,6 +307,7 @@ lake build
 lake build Audit
 lake build Staging
 lake env lean Certificate/Facts.lean
+python3 -I tests/test_certificate.py
 python3 scripts/check_kernel.py --self-test
 python3 scripts/heath.py
 python3 scripts/check_fidelity.py
@@ -342,13 +343,22 @@ the switch to the full gate at that release, the reports and the executable defi
 are in [ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci), the account of how CI runs the
 [acceptance checklist](ACCEPTANCE.md).
 
+The separate `release-gate` workflow runs its job only on pull requests labelled
+`release`, reading the open issues labelled `blocks-release` with `python3
+scripts/check_release_gate.py`; ordinary pull requests skip it. It runs main's copy of the
+script, from the base commit, but GitHub takes the workflow file itself from the pull
+request, which could change it, so the job only shows the hold: the authority is the merge
+gate, which reads the issues again when the coordinator merges (section 10).
+
 `scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on
 the head commit of every pull request (section 10), so a change to them is made there too,
 and in the CI workflow. It leaves the `formal-model` job to CI on purpose, since it
 fetches Mathlib's prebuilt files
 ([model/README.md](../model/README.md#the-ci-job)), and the `acceptance` job, since it builds
 main beside the pull request. Its merge gate refuses when any reported check fails, is
-cancelled or is still running. It requires a passing
+cancelled or is still running, apart from the `release-gate` job of the "Release gate"
+workflow on an ordinary pull request, even if a run remains from before its `release`
+label was removed. It requires a passing
 run of `check`, `model` and `negative`, the three names still in its `REQUIRED_CHECKS`;
 its local check judgement does not reject a skipped or missing `formal-model` or
 `acceptance` when those three pass and no other check fails, is cancelled or is still
@@ -370,15 +380,6 @@ with no token in their environment. Section 10 gives the rules. The `check` job 
 the same group and checks the pages are current, and its `check_queue.py --tree .` step
 checks that no dated decisions heading repeats; conflict markers in tracked text are
 S23's, in `scripts/check_style.py`.
-
-The separate `release-gate` workflow runs its job only on pull requests labelled
-`release`, reading the open issues labelled `blocks-release` with `python3
-scripts/check_release_gate.py`; ordinary pull requests skip it. It runs main's copy of the
-script, from the base commit, but GitHub takes the workflow file itself from the pull
-request, which could change it, so the job only shows the hold: the authority is the merge
-gate, which reads the issues again when the coordinator merges (section 10).
-`scripts/safe_push.py`'s `CHECKS` list does not include the `check_queue.py --tree .`
-step, which runs in CI.
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
@@ -402,6 +403,16 @@ step, which runs in CI.
   `tests/certificate_expectations.json`, or, for the style check's reading of a phrase or
   of a figure, a case in `tests/test_check_style.py`). Tests that only repeat a trivial
   prose change are not added.
+- **The certificate's coincidence cases need built foundations.**
+  `python3 -I tests/test_certificate.py` checks C.N. 4 detection directly, through helpers
+  and through transformers, with negative controls for derivations that supply no step,
+  while keeping the axiom fields unchanged. It rejects reached helpers from
+  `Staging.Hidden`, and from a `Lean.Hidden` compiled outside the Lean toolchain, while
+  allowing unused imports from foreign modules and reached declarations of the
+  toolchain's own. It needs the
+  foundation modules built by `lake build`, with the Lean tools on `PATH`. CI's `check`
+  job and the pre-flight run it immediately after `Certificate/Facts.lean` on the revision
+  delivered.
 - **The style check's cases run before it.** `tests/test_check_style.py` puts the readings
   of `scripts/check_style.py` that [STYLE.md](STYLE.md), section 8, names to short texts
   and small figures, including S20's ink and S26's clearance and repeated letters, each
@@ -522,16 +533,17 @@ looked into.
     (unfinished work, a prototype or a provisional answer may be on main only as such an
     issue, and holds every release until it closes); and the wiki refreshed, so that it is
     reasonably correct as of its date, as its pages say, and is not expected to be more
-    current than that. Then the notes are drafted from the generated summaries, the owner
-    approves them, and the tag (`book-I`, `book-II`, …) is made. The hold is checked by
-    `python3 scripts/check_release_gate.py`, by the `release-gate` job on the release pull
-    request (labelled `release`), and by `git safe-push --merge`, which refuses a pull
-    request labelled `release` while one is open, or when GitHub cannot be read; pull
-    requests carrying `blocks-release` count too, and the owner runs the script once more
-    just before the tag. The job runs on the pull request's events, not the issues', so
-    once the last blocker closes it is run again (or `release` removed and given again)
-    before `--merge`. PROGRAM.md is brought up to date: the status board, the lessons, the
-    costs.
+    current than that. The hold is checked by `python3 scripts/check_release_gate.py`, by
+    the `release-gate` job on the release's pull request, and by `git safe-push --merge`,
+    which refuses a pull request labelled `release` while any issue or pull request
+    labelled `blocks-release` is open, or when GitHub cannot be read. The job runs on the
+    pull request's events, not the issues', so once the last blocker closes it is run
+    again (or `release` removed and given again) before `--merge`, which counts its failed
+    run on a release pull request. Then the notes are drafted from the generated
+    summaries, the owner approves them, and the tag (`book-I`, `book-II`, …) is made.
+    `python3 scripts/check_release_gate.py` runs once more just before the tag, since the
+    hold rests on the labels. PROGRAM.md is brought up to date: the status board, the
+    lessons, the costs.
 
 A released book is not frozen. Its tag keeps the released text, and main carries the
 corrections and the common voice, as Books I and II have since their tags.
@@ -1043,9 +1055,11 @@ run, and without origin/main's copy the push is refused), and refuses to push or
 tag. With the owner's OK for
 a tag, it is pushed by name, `STOICHEIA_TAG_PUSH=<tag> git push origin refs/tags/<tag>`,
 and the hook still scans the commits it points to and an annotated tag's message.
-`python3 scripts/test_safe_push.py` plants a bad commit for each guard, gate and edge case
-on a throwaway clone, with a stand-in for gh, and checks that each is refused and a good
-one proposed and merged. Its cases include unfinished work left unwritten, closed or
-unlabelled issues, open labelled issues, the release held by an open blocker or an
-unreadable reply, and an ordinary pull request merging without reading the blockers;
+`python3 -m pip install -r scripts/requirements-test_safe_push.txt`, followed in the same
+Python environment by `python3 scripts/test_safe_push.py`, installs the pinned YAML parser
+and plants a bad commit for each guard, gate and edge case on a throwaway clone, with a
+stand-in for gh, and checks that each is refused and a good one proposed and merged. Its
+cases include unfinished work left unwritten, closed or unlabelled issues, open labelled
+issues, the release held by an open blocker or an unreadable reply, and an ordinary pull
+request merging without reading the blockers;
 `STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and all.

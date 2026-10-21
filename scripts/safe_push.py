@@ -278,6 +278,7 @@ CHECKS = [
     ("lake build Audit", ["lake", "build", "Audit"]),
     ("lake build Staging", ["lake", "build", "Staging"]),
     ("lake env lean Certificate/Facts.lean", ["lake", "env", "lean", "Certificate/Facts.lean"]),
+    ("python3 -I tests/test_certificate.py", [PY, "-I", "tests/test_certificate.py"]),
     ("python3 scripts/check_kernel.py --self-test",
      [PY, "scripts/check_kernel.py", "--self-test"]),
     ("python3 scripts/heath.py", [PY, "scripts/heath.py"]),
