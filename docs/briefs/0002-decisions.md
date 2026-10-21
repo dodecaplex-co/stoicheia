@@ -3472,3 +3472,8 @@ findings:
   Under [brief 0008's dated correction](0008-centre.md#correction-iii1-19-october-2026),
   this guard lands in a pull request of its own after step 3's construction and before
   step 6's restatements, never in a train with the content it checks.
+  After axiom wave one (merged 21 October 2026), Circle 2 and `Tacit.centre_unique` are
+  theorems, so their names can no longer appear in the pinned list. The pin still
+  excludes Circle 2 through Circle 3, on which its proof rests; a call to
+  `centre_unique` is left to the reader, as `Audit/Centre.lean` now says. The pinned
+  list itself is unchanged by the merge.
