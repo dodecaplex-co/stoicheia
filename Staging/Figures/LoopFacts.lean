@@ -8,8 +8,7 @@ import Staging.Figures.ExtHelpers
 # Staging: facts about loops, for the boundary bridges of brief 0013
 
 Helper lemmas for the proofs in `Outline.lean` (brief 0013, section 8, "Ray parity and the
-region"; D1 and D4 with its convex bridges). No proposition of the Elements is cited, and no
-statement still awaiting its proof.
+region"; D1 and D4 with its convex bridges). No proposition of the Elements is cited.
 
 * **Listing.** The sides of an outline read from another corner are the same sides in another
   order; read the other way round, each side is read backwards. Boundary, crossing counts,

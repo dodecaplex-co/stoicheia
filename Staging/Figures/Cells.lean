@@ -8,10 +8,9 @@ import Staging.Figures.CellFacts
 /-!
 # Staging: convex cells, and cutting them
 
-Words and statements for the route to brief 0013's content theorem (a draft for the owner's
-approval), with `sorry` where a proof is due. A convex cell is a convex outline taken as a
-piece of a figure; its area is its fan's sum, which does not depend on the corner the fan is
-drawn from (`fanSum_rotate`). A straight line cuts a cell into at most two cells; a cell may
+Words, statements and proofs for the route to brief 0013's content theorem (a draft for the
+owner's approval). A convex cell is a convex outline taken as a piece of a figure; its area
+is its fan's sum, which does not depend on the corner the fan is drawn from (`fanSum_rotate`). A straight line cuts a cell into at most two cells; a cell may
 be cut down to nothing, or to a segment or a point, which has no inside, and then it is
 `none`. Two regions that agree at every point off finitely many straight lines are said to
 agree off them (`AgreeOff`): a cut's pieces are pinned exactly by their insides, and up to
@@ -258,7 +257,8 @@ theorem cut_pieces_of_lists (P : ConvexCell) {L : Line} {A B : Point}
 /-- **The pieces of a genuine cut**: a straight line with corners of the cell strictly on
 both sides of it cuts the cell corner to corner, corner to side, or side to side; read from
 the first crossing, the outline splits into two chains, and each, closed by the cut, is the
-outline of a cell on one side. Its proof is due (route C1). -/
+outline of a cell on one side. It is proved by route C1, from the helpers of
+`CutPieces.lean`. -/
 theorem convex_cut_pieces (P : ConvexCell) {L : Line} {A B : Point}
     (hAB : OppositeSides A B L) (hA : ¬ ∀ C ∈ P.corners, Half C A L)
     (hB : ¬ ∀ C ∈ P.corners, Half C B L) :

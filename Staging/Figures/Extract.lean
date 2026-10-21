@@ -6,10 +6,13 @@ import Staging.Figures.ExtractEdges
 The proof of `apart_has_outline` in `Division.lean` (brief 0013, section 8, "The arrangement and
 general division"; D10): every figure supplied as triangles that lie apart (`Apart`) has an
 outline with exactly its closed coverage, holes, separate pieces and contacts at corners
-included. No proposition of the Elements is cited, and no statement still awaiting its proof.
+included. No proposition of the Elements is cited; through `Outline.lean` this file imports
+I.23, which only `outline_bounded` uses.
 
 **The route.** Not the route the brief sketches, which traces the boundary round each corner
-and splits closed walks where they return; this one examines no sector at a corner.
+and splits closed walks where they return; this one examines no sector at a corner. Nor does
+it cut the sides at all their intersections, as the brief proposes: cutting them at the
+triangles' corners alone suffices, since two sides never cross (`no_cross`).
 
 1. Cut the triangles' sides at all their corners into elementary finite straight lines
    (`ExtractEdges.lean`). One lies along the sides of one triangle or of two, never three; it

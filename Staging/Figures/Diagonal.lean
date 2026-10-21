@@ -1,6 +1,5 @@
 import Staging.Figures.Outline
 import Staging.Figures.CoverFacts
-import Staging.Figures.DivisionFacts
 import Staging.Figures.ArrangementFacts
 
 /-!
@@ -8,15 +7,16 @@ import Staging.Figures.ArrangementFacts
 
 Helper lemmas for the optional diagonal route of brief 0013 (section 8, "The arrangement and
 general division"; ledger D5 to D7): `simple_diagonal` and `simple_diagonal_partition` in
-`Arrangement.lean`. No proposition of the Elements is cited, and no statement still awaiting
-its proof. Neither the parallel postulate nor superposition is used.
+`Arrangement.lean`. No proposition of the Elements is cited; through `Outline.lean` this file
+imports I.23, which only `outline_bounded` uses. Neither the parallel postulate nor
+superposition is used.
 
 * **An interior diagonal** (`diagonal_exists`). A corner V with every other corner strictly
   across a straight line through it is found by wrapping from a point of an enclosing straight
   line (`extreme_corner`). If no corner is inside the triangle of V and its neighbours U and W,
-  or strictly between U and W, then UW is the diagonal (`ear_edge`). Otherwise a corner X
-  strictly within a straight line across V, with no corner inside the smaller triangle it cuts
-  off (`nearest`), gives the diagonal VX. No side meets such a triangle's inside (`clean`), and
+  or strictly between U and W, then UW is the diagonal (`ear_edge`). Otherwise a corner X on a
+  straight line across V, strictly between its meetings with VU and VW, with no corner inside
+  the smaller triangle it cuts off (`nearest`), gives the diagonal VX. No side meets such a triangle's inside (`clean`), and
   its points are inside the loop, being joined across the side VU to points from which a ray
   crosses nothing (`inside_near`). No parallels are drawn.
 * **Two chains and two pieces** (`piece_simple`, `inside_xor`). Read from A, the loop is a chain
@@ -385,7 +385,7 @@ theorem exit_beyond {V P Q Z Y₀ : Point} (h : Triangle V P Q) (hZ : InsideTria
     hVN (line_unique hne hYN hQN hYM hQM ▸ hVM))
   have hYV : SameSide Y V N :=
     same_side_trans (same_side_symm (pasch2 (between_symm hZYY₀) hY₀N hYN))
-      (hZ.1.sameSide hPN hQN) |> fun h' => h'
+      (hZ.1.sameSide hPN hQN)
   have hYQK : SameSide Y Q K := Avoid.same_side_between hZYY₀ (hZ.2.2.sameSide hVK hPK)
     (same_side_symm (pasch2 hY₀ hPK hQK))
   have hYV' : Y ≠ V := fun e => not_on_line_of_same_side hYQK (e ▸ hVK)
@@ -629,10 +629,11 @@ theorem filter_lt {α : Type} (p q : α → Bool) :
       cases hp : p a <;> cases hq : q a <;> simp [hp, hq] at ha ⊢ <;> omega
 
 open Classical in
-/-- **The corner nearest V.** Inside the triangle VUW lies a corner; cut the triangle by a
-straight line through it across V (`across`), and repeat with a corner inside the smaller
-triangle, while there is one. Each time fewer corners are inside, so this stops: at a corner
-X on a straight line U'W' across V, with no corner inside the triangle VU'W'. -/
+/-- **A corner on a cut across V, with no corner in the triangle cut off.** No distance is
+compared. Inside the triangle VUW lies a corner; cut the triangle by a straight line through it
+across V (`across`), and repeat with a corner inside the smaller triangle, while there is one.
+Each time fewer corners are inside, so this stops: at a corner X on a straight line U'W' across
+V, with no corner inside the triangle VU'W'. -/
 theorem nearest {ps : List Point} {V : Point} :
     ∀ (n : Nat) {U W X : Point}, Triangle V U W →
       (ps.filter fun C => decide (InsideTriangle C V U W)).length ≤ n →
@@ -999,9 +1000,7 @@ theorem inside_near {ps : List Point} (h : SimpleLoop ps) {U V W U' W' E : Point
     ((same_side_or hZ₂LU hWLU hP₀LU hZ₂W).resolve_right fun hs => hP₀W (same_side_symm hs))
   have hUE' : ¬ SameSide U E L := hUE.2.2
   have hZ₂P₁ : Z₂ ≠ P₁ := fun e => hUE' (same_side_trans hZ₂U (by rw [e]; exact hP₁E))
-  have hZ₂ps : Z₂ ∉ ps := fun hm => by
-    obtain ⟨F, hF⟩ := outgoing_side hm
-    exact hZ₂b ⟨(Z₂, F), hF, Or.inl rfl⟩
+  have hZ₂ps : Z₂ ∉ ps := fun hm => hZ₂b (OutlineFacts.vertex_boundary hm)
   obtain ⟨ℓ₂, hZ₂ℓ₂, hP₁ℓ₂⟩ := Postulate1 Z₂ P₁ hZ₂P₁
   have hgood : GoodRay ps Z₂ P₁ := CoverFacts.goodRay_of_line hZ₂P₁ hZ₂ℓ₂ hP₁ℓ₂
     (CoverFacts.joins_off hP₁a hZ₂ps hZ₂ℓ₂ hP₁ℓ₂)
@@ -1035,9 +1034,7 @@ theorem inside_near {ps : List Point} (h : SimpleLoop ps) {U V W U' W' E : Point
     exact absurd hin (by decide)
   have hZ₁i : loopInside ps Z₁ := hflip.mpr hZ₂out
   /- X is joined to Z₁ inside the triangle. -/
-  have hXps : X ∉ ps := fun hm => by
-    obtain ⟨F, hF⟩ := outgoing_side hm
-    exact hXb ⟨(X, F), hF, Or.inl rfl⟩
+  have hXps : X ∉ ps := fun hm => hXb (OutlineFacts.vertex_boundary hm)
   have hXZ₁ : X ≠ Z₁ := by
     intro e
     have hspec := Classical.choose_spec (collinear_of_two X V)

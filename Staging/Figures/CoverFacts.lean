@@ -6,25 +6,29 @@ import Staging.Figures.Cells
 
 Helper lemmas for `outline_cell_constant` and `outline_cells_cover` in `Arrangement.lean`
 (brief 0013, section 8, "The arrangement and general division"; D9). No proposition of the
-Elements is cited, and no statement still awaiting its proof.
+Elements is cited; through `Outline.lean` this file imports I.23, which only `outline_bounded`
+uses.
 
 * **Along a finite straight line that meets no side** (`inside_of_segment`). If a finite
   straight line XZ meets no side of a simple loop, and its straight line passes through no
   corner, then X is inside the loop exactly when Z is: a good ray from Z through X, and its
   continuation from X, cross the same sides.
 * **Across one side** (`inside_flip`). If the finite straight line meets the loop's boundary
-  only at one point strictly within one side, the two ends disagree: the ray from the near
-  end crosses that side once more than the ray from the far end.
+  only at one point strictly within one side, the two ends disagree. Produce it beyond one end
+  to Q: the good ray through Q from the end farther from Q crosses that side and every side
+  the ray from the nearer end crosses, and no other.
 * **A point of the boundary has filled points near it** (`boundary_filled`). Slide along a
   side from the point to a point M strictly within it, near the point and at no corner of any
   contour; there M is on that side alone, for two sides of one contour meet only at corners
   and two contours' boundaries only at corners. A short finite straight line through M,
   across that side, changes one contour's inside and no other's, so one of its ends is at odd
-  depth. No sector at a corner need be examined.
+  depth. Brief 0013 (section 8, "The arrangement and general division") divides a small
+  neighbourhood of a corner into sectors; here no sector at a corner need be examined.
 * **A cell's region and its inside** (`cell_point`, `cells_apart`). A point of a cell's
-  closed region off the figure's boundary has a point of the cell's inside within the same
-  contours, reached along a short finite straight line; and finitely many conditions, each
-  holding at a point, keep away every cell whose closed region misses that point.
+  closed region off the figure's boundary has a point of the cell's inside that is inside the
+  figure exactly when it is, reached along a short finite straight line that meets no side;
+  and finitely many conditions, each holding at a point, keep away every cell whose closed
+  region misses that point.
 
 Natural numbers count sides, contours and crossings; they measure nothing.
 -/
@@ -368,10 +372,10 @@ theorem core_region {Q : ConvexCell} {X : Point} (hX : Q.core X) : Q.region X :=
   fun s hs A hA h1 h2 => Or.inr (hX s hs A hA h1 h2)
 
 /-- **From a point of a cell's closed region to its inside.** A point of a cell's closed region
-off the figure's boundary has a point of the cell's inside within exactly the same contours, so
-inside the figure exactly when the first point is: go a little
-way towards a point of the inside off the straight lines to the corners, staying on the point's
-side of every side line that misses it. The finite straight line so drawn meets no side. -/
+off the figure's boundary has a point of the cell's inside that is inside the figure exactly
+when the first point is: go a little way towards a point of the inside off the straight lines
+to the corners, staying on the point's side of every side line that misses it. The finite
+straight line so drawn meets no side, so it changes no contour's inside. -/
 theorem cell_point (F : Outline) {ls : List Line}
     (hs : ∀ ps ∈ F.loops, ∀ s ∈ sides ps, ∃ L ∈ ls, OnLine s.1 L ∧ OnLine s.2 L)
     {Q : ConvexCell} (hQ : ∀ L ∈ ls, ∀ X Y : Point, Q.core X → Q.core Y → SameSide X Y L)

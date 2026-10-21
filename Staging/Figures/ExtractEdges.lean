@@ -4,8 +4,8 @@ import Staging.Figures.ExtractRay
 # Staging: the sides of triangles that lie apart, cut at their corners
 
 Helper lemmas for `apart_has_outline` in `Division.lean` (brief 0013, section 8, "The
-arrangement and general division"; D10). No proposition of the Elements is cited, and no
-statement still awaiting its proof.
+arrangement and general division"; D10). No proposition of the Elements is cited; through
+`Outline.lean` this file imports I.23, which only `outline_bounded` uses.
 
 Take triangles that lie apart (`Apart`). Their corners cut their sides into **elementary
 finite straight lines** (`Elem`): a finite straight line between two corners, along a side of

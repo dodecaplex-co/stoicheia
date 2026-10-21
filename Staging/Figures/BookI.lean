@@ -3,8 +3,10 @@ import Staging.Figures.FanBoundary
 import Elements.BookI.Prop45
 
 /-!
-Proposed companions of I.45. The general construction below is an interface
-derivation and remains conditional on the staged boundary and content results.
+Proposed companions of I.45, with their proofs. The general construction below takes a
+division of the outline (`division_exists`) and its area by the content theorem (`area_eq`),
+and rests on Postulate 5 and superposition through I.45. `Prop45.fan_boundary` rests on
+superposition only, through I.13 (`Fitted.fan`).
 -/
 
 namespace Elements.BookI.Staging
@@ -12,8 +14,7 @@ namespace Elements.BookI.Staging
 open Elements.Figures
 
 /-- The existing checked fan encloses the outline through its stated vertices.
-This bridge may cite I.13 through Fitted.fan, so it belongs beside I.45.
-Its own proof awaits approval. -/
+This bridge cites I.13 through `Fitted.fan`, so it belongs beside I.45. -/
 theorem Prop45.fan_boundary {O A B : Point} {ps : List Point}
     (htri : ∀ s ∈ segments (A :: B :: ps), Triangle O s.1 s.2)
     (hopp : ∀ t ∈ triples (A :: B :: ps),
@@ -37,8 +38,8 @@ theorem Prop45.fan_boundary {O A B : Point} {ps : List Point}
 
 /-- Companion of I.45, certificate name I.45 outline. To construct, in the
 given rectilineal angle, a parallelogram equal to a figure given by its
-outline. The division is obtained by a theorem. This derivation remains
-conditional on the staged existence and content results. -/
+outline. The division is obtained by a theorem (`division_exists`), and every
+division gives the outline's area (`area_eq`). -/
 theorem Prop45.outline {E₁ E E₂ : Point} (F : Outline)
     (hE : Triangle E₁ E E₂) :
     ∃ K P L M : Point, Parallelogram K P L M ∧
