@@ -11,11 +11,17 @@ kind = "euclid"
 tags = ["centre-given", "touching-whole-circles"]
 note = "The centres F and G are given, as the enunciation takes them. Touching within is read of the whole circles: a point of ADE is within ABC and no point of ADE is outside ABC, which carries what Heath says Euclid assumes, that touching circles cross nowhere. The point within serves through III.6 to distinguish F and G; the remaining proof uses the condition that none lies outside."
 
+[[passage]]
+at = "Then, since AG, GF are greater than FA"
+kind = "case"
+note = "A may lie on GF produced beyond F, a case Heath says Euclid would have left to the reader (vol. 2, p. 26). There FAG is no triangle for I.20, and the Lean finds AG, GF greater than FA directly, since AG is AF and FG together."
+
 [figure]
+case = "A off the straight line FG, as in Heath's figure"
 note = "Like Heath's, this figure draws the impossible supposition: FG produced falling as FGH, away from A, so the G drawn is not the centre of ADE."
 
 [review]
 stage = "exceptions"
-commit = "e707d55"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "0130b26c"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:9a934e1c10efbcc2"

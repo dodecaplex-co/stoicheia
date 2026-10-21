@@ -3410,24 +3410,42 @@ findings:
   the protected-path security review, which remain part of integration.
 - **The renderer's words follow the content.** The protected file
   [`scripts/render.py`](../../scripts/render.py) selects its Book III wording from
-  `facts.json`: `MixedAngle.ofSegment` enables the mixed-angle row; `Arc`, `InSegment`,
-  `OnArc` and `Arc.Congruent` enable the segment row; `Arc` with `Arc.measure` enables the
-  circumference row; `CirclesCut` enables the cutting and touching rows; `Foot` enables
-  the account of perpendicular feet in Definitions III.4 and III.5, including a diameter
-  at no distance from the centre; and III.24's
-  shared step `BookIII.placement` enables the account of its application of one segment
-  to another. Each keeps the present wording until its named content is there. Comments
-  about III.2's unused overlapping rule are corrected, and the clause-map docstring no
-  longer names particular propositions. The renderer distinguishes all, some and none of
-  a record's overlapping rules, using `facts.json`'s `axioms` for the proof's full
-  dependencies. When the proof uses all or none, the status line and Overlap row keep
-  their exact wording, with no added sentence repeating the record's note. Only partial
-  use adds a clause naming both the rules used and those unused in the status line, the
-  Overlap row and the book summaries. This applies to every record, including both kinds
-  that contain the proposition and rules that supply a step. On main's present content,
-  every generated page stays byte for byte unchanged. The protected file
-  [`review/SCHEMA.md`](../../review/SCHEMA.md) now states that the page's Overlap row also
-  carries this account and that partial use names each rule used and unused.
+  `facts.json`, read once for each root through the renderer's guarded paths, as its
+  other inputs are: `MixedAngle.ofSegment`, with a companion of III.16 and one of III.31,
+  enables the mixed-angle row; `Arc`, `InSegment`, `OnArc` and `Arc.Congruent`, with
+  III.24, III.26 and III.28, enable the segment row; `Arc` with `Arc.measure` enables the
+  circumference row; `CirclesCut` enables Definition III.3's row, on cutting and
+  touching, and the line on that definition on the pages where Heath's brackets cite it;
+  `Foot` enables the account of perpendicular feet in Definitions III.4 and III.5,
+  including a diameter at no distance from the centre, each row with the companion it
+  names, III.14 general or III.15 nearer; and III.24's shared step `BookIII.placement`
+  enables the account of its application of one segment to another. That account is
+  built from III.24's entry, so that it is true by construction: only when III.24's
+  `direct_axioms` leave superposition out, and a proposition `placement` cites rests on
+  it, does it say that `placement` uses superposition only through the propositions it
+  cites, and it names those of them that call on superposition themselves; otherwise it
+  says only that the proof applies the segment by `placement`. Each keeps the present
+  wording until its named content, and every proposition and companion it names, is
+  there. Comments about III.2's unused overlapping rule are corrected, and the
+  clause-map docstring no longer names particular propositions. The renderer
+  distinguishes all, some and none of a record's overlapping rules, using `facts.json`'s
+  `axioms` for the proof's full dependencies. When the proof uses all or none, the
+  status line and Overlap row keep their exact wording, with no added sentence repeating
+  the record's note. Only partial use adds a clause naming both the rules used and those
+  unused in the status line, the Overlap row and the book summaries. One rule unused
+  reads "does not use `b`", two "uses neither `b` nor `c`", and three or more "uses none
+  of `b`, `c` and `d`". This applies to every record, including both kinds that contain
+  the proposition and rules that supply a step. On main's present content, every
+  generated page stays byte for byte unchanged. The protected file
+  [`review/SCHEMA.md`](../../review/SCHEMA.md) now states that the line under the
+  enunciation and the book's summary say whether the proof rests on all, some or none of
+  the named rules, naming each rule used and unused for partial use, and that the
+  Overlap row gives the record's note word for word and adds that account only for
+  partial use. The protected test file
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains two wording cases
+  beside its cases of the page: the clause for rules left unused, and the account of
+  `placement` from `facts.json`, read afresh for each root. Each fails on the renderer
+  before this change.
   The protected file [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes
   brief 0008, section 7's approved III.5 signature (`CirclesCut`, without the separate
   inequality of circles) and its comment on cutting and contact within and without,
@@ -3436,9 +3454,10 @@ findings:
   approved statements; it was not run to rewrite any Lean file.
   This tooling change lands before the content it describes, so that the content's
   pull request changes no check input beyond the values pinned to that content:
-  the new lock makes main's checks fail, and `scripts/safe_push.py` keeps such content
-  apart from an accompanying change to `scripts/render.py`. No check, statement, lock
-  or review record changes here, apart from the approved signature in the scaffold.
+  the content's new lock makes main's checks fail, and `scripts/safe_push.py` keeps such
+  content apart from an accompanying change to `scripts/render.py`. No check, statement,
+  lock or review record changes here, apart from the approved signature in the scaffold
+  and the two cases the style test gains.
 - **III.1's porism has its whole axiom list pinned.** The first expectation in
   [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json), a
   protected file, gains `equals` holding the porism's full list regenerated from main at
@@ -3461,6 +3480,146 @@ findings:
   with the counts. It reads III.1's tacit count from
   `tests/certificate_expectations.json`, so it holds before and after the content it
   describes. No guard is weakened.
+
+- **The checks read a tree without the files a commit adds to them (#178).** The
+  pre-flight's pass with origin/main's checks (`scripts/safe_push.py`, steps 3 and 4)
+  takes the files a commit adds under the check inputs out of the work tree, while Git's
+  index still lists them. `scripts/negative_tests.py`, which runs in that pass in step 4,
+  copied every tracked path for its count plants, so on such a commit it stopped with
+  `FileNotFoundError` in `tests/test_generated_counts.py`, which uses the same copy,
+  before any count plant ran; the count plants, run alone, stopped the same way. A
+  tracked Markdown file taken out stopped the freshness plant's list of generated outputs
+  too, and the merge-marker copy passed such files over without a word.
+  `check_fidelity.py` and `render.py` read every tracked Markdown file for count markers
+  (`generated_counts.updates`), and both run in that pass in step 3 and again in step 4,
+  so a Markdown file the commit adds there, as `tests/notes.md`, failed both in that pass
+  with `No such file or directory`. A failure in that pass is only a note, but
+  `keep_apart` counts it, so a content pull request with a new test beside it was refused
+  as a check changed together with what it checks: the second item of #178.
+
+  One rule, `generated_counts.absent_tracked`, now holds wherever these checks list
+  tracked files: a tracked file absent from the work tree under the check inputs is named
+  on stdout as a note, and the check goes on with what is present; one absent anywhere
+  else, where the pre-flight takes nothing out, is a failure that names it.
+  `generated_counts.updates`, which `check_fidelity.py` and `render.py` share, follows
+  it, and so do the negative suite's two copies and its list of generated outputs; no
+  plant is skipped. A file is absent only when `lstat` raises `FileNotFoundError`. Any
+  other error, such as a permission error in a directory of mode 000, is raised to the
+  caller and fails the check: `generated_counts.updates` reports it as its one error
+  (before the rule, reading the file failed with the same error), and the negative suite
+  stops on it. `Path.exists()` would not do: on Python 3.14 it returns False for such an
+  error. Each name in a note or a failure is printed as `repr` writes it, so a control
+  character in a name cannot forge a line of the terminal. A path that is or passes
+  through a symlink is not absent, and each reader treats it as before:
+  `generated_counts.updates` refuses it by name; the negative suite's marker copy skips a
+  symlink and follows a symlinked directory; and its source copy (`shutil.copy2`)
+  follows both, copying the target, and stops with `FileNotFoundError` on a dangling
+  one. The check inputs stay listed once, as `scripts/safe_push.py`'s `CHECK_INPUTS`,
+  which `generated_counts.py` imports only when a tracked file is absent, so an ordinary
+  run of a check never loads the harness.
+
+  `tests/test_negative_tests.py` builds the case in a temporary repository: a commit
+  adding a check, its test and a Markdown note, each then unlinked as the pre-flight
+  unlinks it. It checks both copies, the list of generated outputs, a tracked file
+  absent outside the check inputs, and a directory of mode 000, whose permission error
+  both copies raise with nothing noted; against origin/main's `negative_tests.py`, four
+  of its five tests stop with that error and the fifth finds no file named.
+  `tests/test_generated_counts.py` does the same for the counts, in a temporary
+  repository: a Markdown file absent under the check inputs is noted while a stale count
+  beside it is still refused, one absent elsewhere is refused by name, a name with
+  control characters is printed escaped, a directory of mode 000 fails the run with its
+  permission error and is not noted, and a symlink in place of one is still refused as
+  a symlink. In the negative suite's source copy, `check_fidelity.py` and `render.py`
+  pass with the first tracked Markdown file under `tests/` taken out, noting it, and fail
+  naming the first one outside the check inputs taken out; both are chosen at run time
+  from Git's list, among the files present. Against origin/main's `generated_counts.py`
+  every one of these fails but the symlink case.
+
+  No other reader of Git's tracked files in that pass crashes or fails on such a file:
+  `check_style.py`'s S23 passes over a tracked path that is not a file, and its S12 reads
+  the names alone; `check_links.py` reads the Markdown files present; and
+  `generated_counts.review_stages` reads review records, which are never check inputs. A
+  link to a file the commit adds under the check inputs still fails `check_links.py` in
+  that pass, rightly: the content then depends on the check change, which lands first.
+  `scripts/safe_push.py` is unchanged: dropping the added files from the worktree's index
+  as well would change what every check in that pass reads, `check_style.py`'s list of
+  tracked files for S12 among them. This is a check change alone. Protected files
+  changed: `scripts/negative_tests.py`, `tests/test_negative_tests.py`,
+  `scripts/generated_counts.py` and `tests/test_generated_counts.py`.
+
+## 21 October 2026
+
+- **Train C6a meets axiom wave one: the lock is main's 79 axioms and the centre rule.**
+  Train C6a, which carries stage 3, the mixed angles, the rule that every circle has a
+  centre and brief 0008's section 7, was merged with main at `2e8aecf`, after the eight
+  retirements of axiom wave one (87 to 79), and then with the check train at `9c83d79`.
+  The counts in this train's entries of 19 October above ("The mixed-angle move integrated
+  with the Circle 2 proofs", "Every circle has a centre: the rule lands" and "III.5 and
+  III.6: section 7 lands before step 6": 88 axioms and 82 tacit rules, "the other 87", a
+  model over 88 laws, "still 87 axioms") predate wave one; they stand as written, and this
+  entry gives the counts after the merge. The lock, written by
+  `python3 scripts/check_fidelity.py --write-lock`, holds main's 79 axioms, each unchanged,
+  and `Tacit.exists_centre`: 80 axioms, of them 74 tacit rules, main's 73 and the rule, as
+  `facts.json` and the count markers say. Its vocabulary holds 121 words: main's 91 and this
+  train's 30 (the arcs and segments of stage 3, the mixed angles, and `CirclesCut`), with
+  `TouchesInternally` redefined as brief 0008, section 7, approved, asking for a point of
+  the inner circle within the outer; no other word of main's changes. Both
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) and
+  [`model/lock.sha256`](../../model/lock.sha256) were renewed on 21 October 2026 to hash
+  the regenerated lock, `46d2f009922f16cf4fe011630291b0ef99c4dd683adb19af5f1f69323207b9b1`.
+  [`tests/model/MODEL.md`](../../tests/model/MODEL.md) and the model results were written
+  again by `python3 tests/model/run.py --full --write`, on the merged tree (harness
+  sha256 `2a8771abcd95266d2253431e7b704cfff0bfffad4b9b567f5e9544586d9b7161`): 80 laws, no
+  counterexample in the plane, and all 15 mutations caught. The seven exact pins of
+  [`Audit/Crossing.lean`](../../Audit/Crossing.lean), for `III_5_today`, `III_6_today`,
+  `III_11_today`, `III_13_today`, `cut_point`, `CirclesCut.of_meet` and `within_point`,
+  were renewed from Lean's output, and change only by losing `Tacit.adjacent_eq_of_right`
+  and `Tacit.centre_unique`, now theorems; every other name in each list is unchanged.
+  The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`, `model/`, `scripts/`,
+  `lakefile.toml` and `lean-toolchain` that differ from main at `2e8aecf`, each named whole:
+  `Audit.lean`,
+  `Audit/Crossing.lean`,
+  `Audit/Overlaps.lean`,
+  `Audit/screen.py`,
+  `Certificate/FIELDS.md`,
+  `Certificate/axioms.lock`,
+  `model/Check/Hand.lean`,
+  `model/Check/Laws.lean`,
+  `model/Model/Assembly.lean`,
+  `model/Model/Audit.lean`,
+  `model/Model/Euclidean/Centre.lean`,
+  `model/Model/Hand.lean`,
+  `model/Model/Laws.lean`,
+  `model/README.md`,
+  `model/lock.sha256`,
+  `scripts/render.py`,
+  `scripts/scaffold_book.py`,
+  `scripts/test_safe_push.py`,
+  `tests/certificate_expectations.json`,
+  `tests/model/MODEL.md`,
+  `tests/model/hyperbolic.py`,
+  `tests/model/laws.toml`,
+  `tests/model/lock.sha256`,
+  `tests/model/results/angle_check.txt`,
+  `tests/model/results/exhaustive.txt`,
+  `tests/model/results/grid_check.txt`,
+  `tests/model/results/hyperbolic.txt`,
+  `tests/model/results/mutations.txt`,
+  `tests/model/results/search-seed1.txt`,
+  `tests/model/results/search-seed2.txt`,
+  `tests/model/results/search-seed3.txt`,
+  `tests/model/results/structured.txt`,
+  `tests/model/results/summary.txt`,
+  `tests/model/search.py` and
+  `tests/test_check_style.py`.
+  Of these, `scripts/render.py`, `scripts/scaffold_book.py`, `scripts/test_safe_push.py`,
+  `tests/certificate_expectations.json` and `tests/test_check_style.py` are the check
+  train's, as at `9c83d79`, with the two entries of 20 October above ("The renderer's words
+  follow the content" and "III.1's porism has its whole axiom list pinned"), and so is
+  `Certificate/FIELDS.md`'s `axioms` row; its vocabulary count, 91 to 121, is this train's.
+  `lakefile.toml` and `lean-toolchain` do not change. No statement, check or expected value
+  changes in this entry.
+
 - **III.1's construction guard, brief 0008, step 4.** `Audit/Centre.lean`, imported
   from `Audit.lean`, fixes the frozen type of `Elements.BookIII.Prop1.construction`
   and pins its full axiom list with `#guard_msgs`, read afresh from Lean at `34f2db57`.

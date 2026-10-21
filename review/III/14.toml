@@ -33,6 +33,6 @@ case = "two equal straight lines AB and CD, neither through E"
 
 [review]
 stage = "exceptions"
-commit = "bb1589c5"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:39ec7343c9e88e1a"
+commit = "eadf7a4c"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:112bba431f574912"
