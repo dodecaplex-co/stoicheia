@@ -10,7 +10,7 @@ kind = "euclid"
 [overlap]
 rule = "Tacit.exists_centre"
 kind = "step"
-note = "Our foundations assume that every circle has a centre. The rule supplies a centre for D within in the unchanged construction, by III.2's argument in `Prop1.within`, and supplies G for the correctness reductio. The construction's witness supplies none of its points: the bisections, perpendicular and proof that F is the centre remain III.1's work. The rule gives bare existence; `Prop1.of_circle` gives Euclid's construction for any circle, first taking its two points A, B."
+note = "Our foundations assume that every circle has a centre. The rule supplies two steps: inside `Prop1.construction`, a centre for the proof that D is within the circle, by III.2's argument in `Prop1.within`; and, in the reductio, the supposed centre G. The centre taken inside the construction supplies none of its points, so the bisections, the perpendicular and the proof that F is the centre are III.1's own work. The rule gives bare existence; `Prop1.of_circle` gives Euclid's construction for any circle, first taking two of its points, A and B."
 
 [[passage]]
 at = "Let a straight line AB be drawn through it at random"
