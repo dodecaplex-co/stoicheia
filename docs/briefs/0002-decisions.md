@@ -3535,6 +3535,102 @@ findings:
   (S22, which named #29), both with Lean and without; it comes out too, so 20 entries
   come out and 18 remain, and both runs again pass with no "done" line.
 
+- **Which laws' proofs draw: computed, not set by hand (#150, question 4).** Of the two
+  routes #150 offers, the coordinator takes route (b): the hand-set flag `Cited.drawsNothing` is retired,
+  in the content change that follows this one, and the certificate records what each cited
+  law's proof uses. Route (a) would have kept a flag that, under the permissive reading the
+  owner approved on 20 October ("as prototyped"), carries no logical weight, and a check of
+  it would only confirm a classification nothing depends on; the computed record serves both
+  the reader and the second retirement wave, after which four of I.4's seven laws are proved
+  with construction rules. "Construction rule" is now defined in
+  [FORMALIZATION](../FORMALIZATION.md#construction-rules), section 9: an axiom whose
+  conclusion asserts existence once the project's definitions are unfolded, a structure or
+  inductive type read as a word, and only an `∃` written out or given by a definition
+  counted. This check change lands first, under WORKFLOW, section 10.
+  Protected files changed:
+  [`Certificate/Facts.lean`](../../Certificate/Facts.lean) computes the top-level
+  `construction_rules` (20 of the 79 axioms at this revision) and, for I.4 and I.8, a
+  `cited_laws` field: each law the entry's own Lean cites, its proofs (name, file and line,
+  from Lean's declarations) and the construction rules beneath them; a law the entry names
+  with no proof found fails the run.
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) documents both fields and the walk.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) gains
+  eight expectations: I.4's seven cited laws and I.8's four, I.7's law carrying Postulate 1,
+  the three laws that stay clean (Metric 3, 4 and 9) with no construction rule in I.4,
+  Metric 3 likewise in I.8, and the construction rules themselves; an expectation may now read one cited law
+  (`law`) or a top-level field (no `ref`). [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py)
+  reads those forms and now refuses an expectation that asks nothing (none of `includes`,
+  `excludes`, `equals` or `count`), which used to pass: a check defect, fixed.
+  [`scripts/safe_push.py`](../../scripts/safe_push.py)'s `kept_expectations` reads an
+  expectation by its `ref`, `field` and `law`, so retargeting one no longer counts as
+  keeping it; only tighter. [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py)
+  tests that. [`scripts/render.py`](../../scripts/render.py) shows the cited laws on I.4's
+  and I.8's pages; [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
+  follows the new field. [`scripts/negative_tests.py`](../../scripts/negative_tests.py)
+  plants a construction rule in two clean laws' proofs with every audit pin rewritten to
+  match, so only the new expectations can catch it, and plants I.7's law removed from I.8's
+  list, which the build refuses. [`tests/test_certificate.py`](../../tests/test_certificate.py),
+  with its fixture [`tests/fixtures/CertificateCited.lean`](../../tests/fixtures/CertificateCited.lean),
+  and [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) test the walk,
+  the expectations' new forms and the plants' restoration. The fixture declares fourteen
+  stand-in axioms, one for each case of the definition; they are compiled only into the
+  test's temporary package, which no library of the edition builds, and the lock is
+  unchanged.
+
+- **The flag `Cited.drawsNothing` retired; I.4 proves its laws one by one (#150, question 4,
+  route (b)).** The content change that follows the check above. #150, the owner's issue
+  for finishing the answers approved "as prototyped" on 20 October, offers this route by
+  name: retire `drawsNothing`, `holds_of_drawsNothing` and `cites_drawNothing`, which carry
+  no logical weight under the permissive reading, and let I.4 prove its laws one by one, as
+  I.8 does. So the definition `Cited.drawsNothing` leaves
+  [`Elements/Foundations/Superposition/Syntax.lean`](../../Elements/Foundations/Superposition/Syntax.lean),
+  in the foundations, with the theorem `Cited.holds_of_drawsNothing` from
+  [`Elements/Figure/Superposition.lean`](../../Elements/Figure/Superposition.lean) and
+  `Prop4.cites_drawNothing` from [`Elements/BookI/Prop04.lean`](../../Elements/BookI/Prop04.lean),
+  whose derivation now discharges each cited law by its own theorem. No statement, no
+  `Cited` law and no other definition changes, and the lock is unchanged.
+  [`Elements/Foundations/Superposition/Restriction.lean`](../../Elements/Foundations/Superposition/Restriction.lean)'s
+  part 3 now points to question 4 and to `cited_laws` instead of saying that every law I.4
+  cites is proved with no rule that constructs; `Elements/BookI/Prop08.lean`'s note says
+  that I.7 draws its own lines and cites I.5. The protected file changed is
+  [`Audit/Superposition.lean`](../../Audit/Superposition.lean): its two pins of the retired
+  declarations go, every per-law pin and the pins of I.4 and I.8 stay exact, and its header
+  says which construction rules each law uses is computed by the certificate. Brief 0009
+  carries a dated note and points to the definition in FORMALIZATION. At this revision
+  every law I.4 cites is proved with no construction rule, as `cited_laws` shows; the
+  second retirement wave changes that for four of them, and its landing records it.
+  I.4's and I.8's records were read again in full and stamped by an independent reader.
+
+- **The restriction's part 4 as a theorem, and every cited law in one statement (#150,
+  question 2).** Part 4 of the restriction, that no hypothesis of the rule speaks of the
+  placement, was read off the statement of `Rule.infer`; it is now restated as a theorem,
+  `Rule.Figure.restrict`, and proved. In the foundations,
+  [`Elements/Foundations/Superposition/Restriction.lean`](../../Elements/Foundations/Superposition/Restriction.lean)
+  gains the definition `Rule.Figure` (the rule's statement without its cited-law
+  hypothesis), the theorem `Rule.iff_figure` tying it to the locked `Rule`, the structure
+  `Interpretation.Embedding` with its valuation `val` and the lemmas `atom_holds`,
+  `lit_holds`, `metric_holds`, `collinear` and `triangle`, and the theorem
+  `Rule.Figure.restrict`: each instance passes to a part of an interpretation that keeps the
+  primitive relations and magnitudes' equalities, keeps distinct points distinct, and keeps
+  the straight line through two of its distinct points and some straight line through any
+  one. One departure from #150's wording, recorded here: the issue asks that the part keep
+  the straight line through any two of its points; read for two points that may coincide,
+  that clause demands every straight line through a single point, which the rational part
+  of the plane, the brief's own example, lacks. So the structure asks it for two distinct
+  points (`line_through`) and asks only for some straight line through one (`on_line`); the
+  issue's clause implies both, so every part it admits is still covered. The proofs rest on
+  Lean's three axioms only, and Restriction.lean stays a pure module. `Cited.holds_all`, in
+  [`Elements/BookI/Prop08.lean`](../../Elements/BookI/Prop08.lean) after I.8's theorem,
+  gives all eight cited laws in one statement, by cases from the per-law theorems and I.7's
+  (a second departure: #150 names `holds_of_drawsNothing`, retired above); through I.7 it
+  rests on `Tacit.superposition`. `Rule`, the lock and every statement are unchanged, and
+  non-derivability stays unclaimed. The protected file changed is
+  [`Audit/Superposition.lean`](../../Audit/Superposition.lean): `#guard_msgs in #check @`
+  statement pins for the fourteen theorems #150 names and the three new ones, the two new
+  definitions pinned whole by `#print`, as are `Placed`, `Val.place` and `Metric.names`,
+  which pinned statements read, and axiom pins for the new theorems; nothing is removed. Brief 0009 carries a dated note. I.8's record was read again in full and stamped
+  by an independent reader.
+
 - **The numerical checks, made ready for the second axiom retirement.** This preparation
   keeps all 79 axioms in place. Under [WORKFLOW](../WORKFLOW.md), section 10, the check
   change lands in a pull request of its own before the retirement it judges. The 31 laws
@@ -3665,22 +3761,73 @@ findings:
   On integration with main after the restricted rule of superposition, at the merge of
   `d2c45450` with `bae3d09f`, the lock was regenerated, not merged: 48 axioms, with
   `Tacit.superposition` as main restates it, and the vocabulary unchanged at 208 words.
-  [`Audit/Superposition.lean`](../../Audit/Superposition.lean) updates nine exact pins to
-  what Lean now prints, since the proofs beneath them now reach the assumptions of the
-  retired rules' proofs: `Elements.BookI.Prop4`, `Elements.BookI.Prop8`,
+  It was then merged with #150's answers to questions 4 and 2, above, which land before it.
+  [`Audit/Superposition.lean`](../../Audit/Superposition.lean) takes their structure, with
+  the statement pins and no pin of the retired flag, and updates nine exact pins to what
+  Lean now prints, since the proofs beneath them now reach the assumptions of the retired
+  rules' proofs: `Elements.BookI.Prop4`, `Elements.BookI.Prop8`,
   `Elements.Superposition.onLine_of_angle_eq_named`, `Cited.holds_neOfLen`,
   `Cited.holds_rayUnique`, `Cited.holds_rayOfAngle`, `Cited.holds_rayOfAngleSide`,
-  `Cited.holds_of_drawsNothing` and `Prop8.holds_prop7`; every guard stays exact. The
-  review of `drawsNothing` and of these pins against question 4, which brief 0009's round 4
-  ties to this landing, follows in a change of its own.
+  `Prop8.holds_prop7` and `Cited.holds_all`; every guard stays exact, every statement pin
+  passes as it stands, and its header names the four laws whose pins now list
+  construction rules. The review of the cited laws' proofs that brief 0009's round 4 ties
+  to this landing is made here (#150, question 4's reconciliation and question 5's credit
+  to the side). With this retirement, four of the seven laws I.4 cites are proved with
+  construction rules, as question 4's entry above foresaw: `neOfLen` and `rayUnique`,
+  which I.8 cites too, through Metric 1 (`eq_of_len_eq_zero`), and `rayOfAngle` and
+  `rayOfAngleSide` through Same side 2, Triple incidence 2 and Pasch 3. `cited_laws` in
+  `facts.json` lists each law's construction rules, and only `lenSymm`, `angleSymm` and
+  `areaCongruent` have none. The proofs of both halves of one ray for one angle now join
+  the law's point P, in I.4 the placed corner C′, to another point by a straight line:
+  Pasch 3 by `Postulate1` in
+  [`Elements/Figure/RuleBase.lean`](../../Elements/Figure/RuleBase.lean), and `rayOfAngle`
+  through Same side 5 inside Triple incidence 2. Question 4's permissive reading admits
+  this: citing a law still draws nothing in the placement, and no retired axiom is
+  restored. Every expectation of question 4 still holds: the twelve construction rules it
+  requires stay axioms, and of the six rules it excludes only `Tacit.pasch3` is now a
+  theorem, as its reason says. The sentences that said or implied that I.4's laws are
+  proved with no construction rule are made true of this revision, and the side laid down
+  is credited where it works, to `ray_of_angle` and not to `ray_of_angle_side`, whose law
+  is now proved with a construction: in the docstrings of
+  [`Elements/Foundations/Superposition/Syntax.lean`](../../Elements/Foundations/Superposition/Syntax.lean)
+  and [`Elements/Figure/Superposition.lean`](../../Elements/Figure/Superposition.lean), the
+  coordinator's files, with no statement, `Cited` law or `--` line changed; in brief 0009,
+  by a dated note and corrections in place; and in
+  [`docs/briefs/book-I.md`](book-I.md), `mishnah/I/04.md`, `mishnah/I/08.md` and I.4's
+  record, `review/I/04.toml`, whose text changes.
   [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) keeps main's retirement of `I_2`,
   `I_3` and `I_23` and of their pins, and states that `III_5_crossing` now rests on
-  Diagram-segment 2. [`Audit/screen.py`](../../Audit/screen.py) is unchanged: its list of
-  circle rules still names nine of the 31, so the screen stops at its start and names them,
-  until that list follows; nothing in CI runs it.
+  Diagram-segment 2. [`Audit/screen.py`](../../Audit/screen.py) drops from its list of
+  circle rules the nine of the 31 it named, which are theorems now, and its docstring
+  gives the rules `grind` refuses after the retirement: six both ways (Postulates 1 to 3
+  and the three `exists_point` rules left) and thirteen more given forward, besides the
+  restricted rule. Run again on this revision, the screen closes III.5 alone, by
+  Diagram-segment 2: III.2 and III.6 no longer close, since the rules that closed them,
+  Circle 2 and Generalities 3 and 4, are theorems now and the screen tries only axioms. So
+  its list of rows it must find (`KNOWN`) keeps III.5 alone, a value that moves with the
+  axioms. The two cases of [`tests/test_screen.py`](../../tests/test_screen.py) that took
+  III.2 as the known row lost now take the first row of `KNOWN`, whichever it is, and
+  assert the same of it; they pass with the list before the retirement and after it. The
+  catalogue,
+  [`docs/reports/overlaps.md`](../reports/overlaps.md), records the run, and its III.2 and
+  III.6 rows rest on their audit lemmas as before.
   [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) keeps
-  all 29 of main's expectations, with the measured counts of III.1 and its porism now 38,
-  and adds the four pins above, 33 in all.
+  all 37 of main's expectations, question 4's eight among them, with the measured counts
+  of III.1 and its porism now 38 and the porism's pinned list now its own: the 23 retired
+  names it held leave, and six rules their proofs reach enter (`area_add_of_between`,
+  `area_degenerate` and `area_eq_zero_of_on_line` through `area_swap`, `circle_eq` and
+  `exists_point_inside_circle` through `centre_inside` and `eq_of_len_eq_zero`, and
+  `exists_point_on_line` through `same_side_symm` and `pasch3`). It adds the four pins
+  above, 41 in all. [`tests/model/MODEL.md`](../../tests/model/MODEL.md) and
+  `model/README.md` call the 39 "retired rules", and the README counts the 47 direct
+  declaration comparisons; MODEL.md's triple-incidence table, left with no rows, gives way
+  to a sentence, its mutations table's header no longer speaks of a guard, and its example
+  limits search.py to `pasch2`, still a law. `docs/reports/gaps-book-I.md`,
+  `docs/STYLE.md`, `mishnah/intro/I.md` and `mishnah/I/05.md` name what this revision's
+  certificate shows: the lemmas through which I.4 reaches Postulates 2 and 3, and both of
+  I.5's routes to Postulate 2, the order rule beneath `OnRay.between_of_len_lt` and
+  Metric 8 (`area_swap`). `docs/FORMALIZATION.md` counts the model's planted mutations as
+  MODEL.md does.
   `model/Model/Laws.lean`, `model/Check/Laws.lean` and `model/Model/Assembly.lean` were
   written again by the generator: the 48 laws reach 152 words of the vocabulary, the 153
   of main less `LineMeetsCircle`. Both `lock.sha256` files keep main's comments and are

@@ -438,7 +438,7 @@ the original means. These checks do that, at every build.
   swapped arguments or a change in the order of the binders fails it, and the build with
   it. This covers all <!-- count:axioms -->48<!-- /count --> laws and all 15 defined words they reach. The family checks in
   `Check/` retain the original library checks. They also compare each hand-translated law
-  with its generated field over any signature, except for the 39 retired axioms. Eight were
+  with its generated field over any signature, except for the 39 retired rules. Eight were
   retired first: `adjacent_eq_of_right`, `not_same_side_of_circles_meet`,
   `centre_unique`, `inside_of_between`, `exists_point_outside_circle`,
   `line_meets_circle_of_opposite_sides`, `triple_incidence3` and `inside_of_angle_add`;
@@ -474,7 +474,7 @@ the original means. These checks do that, at every build.
   hand translations of `Model/Hand.lean` and of seven files of `Model/Laws/`. The hand
   translations kept under suffixed names ([below](#proved-laws)), and the angle and
   superposition translations, which use words of their own written by hand, are compared
-  with the generated laws by the kernel in their files of `Check/`, apart from the eleven
+  with the generated laws by the kernel in their files of `Check/`, apart from the 47
   direct declaration comparisons just described.
 - **Completeness.** [Check/Generated.lean](Check/Generated.lean) checks that the axioms
   declared in `Elements.Foundations` are exactly the lock's `[axioms]`, so that none is

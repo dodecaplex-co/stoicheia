@@ -186,14 +186,26 @@ that absence into a contradiction, which classical logic turns into points (brie
 "The design").
 
 **What the laws' proofs draw.** Citing a law draws nothing in the placement; the law's own
-proof, a universal statement proved outside it, may. Every law but I.7 is proved from the
-library with no rule that constructs (`Cited.holds_of_drawsNothing`; brief 0009 lists the
-axioms). The law of one ray for one angle names all three of its straight lines, the third
-the one through the point it speaks of, so that its proof draws nothing: in I.4 that straight line
-is the side AC laid down, which the placement supplies. I.7's proof draws the six straight
-lines joining its points, produces two and cites I.5; Euclid's I.8 uses I.7 inside the
-placement (brief 0009, question 4, approved as prototyped on 20 October 2026; its
-finishing is tracked in #150).
+proof, a universal statement proved outside it, may. The rule asks only that each cited law
+hold, whatever its proof draws (brief 0009, question 4, approved as prototyped on
+20 October 2026; its finishing is tracked in #150). Each law is proved by a theorem of its
+own, and the certificate records the construction rules beneath each proof, law by law, for
+the propositions that cite it (`cited_laws` in `facts.json`; docs/FORMALIZATION.md,
+section 9). Since the second axiom retirement, four of the seven laws I.4 cites are proved
+with construction rules, through proved System E rules beneath them: distinct ends and one
+point at one distance on a ray through Metric 1, and both halves of one ray for one angle
+through Same side 2, Triple incidence 2 and Pasch 3; I.8 cites the first two. Only Metric 3,
+4 and 9 are proved with none. The law of one ray for one angle names all three of its
+straight lines, the third the one through the point it speaks of, so that the proof of its
+first half, `rayOfAngle`, need not draw any of them: in I.4 that straight line is the side
+AC laid down, which the placement supplies. Its second half, `rayOfAngleSide`, uses no
+side: it is Pasch 3, whose proof joins that point to a point of the line (Postulate 1), and
+in one case of its argument `rayOfAngle`'s proof joins it to another point through Same
+side 5. In I.4 that point is
+the placed corner C′; those straight lines are drawn in the laws' proofs, outside the
+placement, and citing the laws still draws nothing in it. I.7's proof draws the six
+straight lines joining its points, produces two and cites I.5; Euclid's I.8 uses I.7
+inside the placement.
 
 `Derives.sound` shows that every step holds of the very points its symbols stand for, under
 any valuation that makes the context true: the derivation needs no point and no straight
@@ -266,12 +278,6 @@ def Cited.law : Cited → Law
     ⟨[neg (.eq .A .B), pos (.onLine .A .L), pos (.onLine .B .L), pos (.sameSide .C .D .L),
       pos (.len .C .A .D .A), pos (.len .C .B .D .B)],
      pos (.eq .C .D)⟩
-
-/-- The laws whose proofs from the library draw nothing: every law but I.7, whose proof the theorem
-citing it supplies. -/
-def Cited.drawsNothing : Cited → Bool
-  | prop7 => false
-  | _ => true
 
 open Lit
 

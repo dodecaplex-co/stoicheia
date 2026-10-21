@@ -19,10 +19,11 @@ The rules `grind` refuses. Given a rule in which it finds nothing to match, `gri
 refuses the whole list, and the try fails with no search at all. So a pass before the
 attempts gives `grind` each rule alone, in each of the two ways, and each try leaves out
 the rules refused in its way; a try left with none is not made. Refused both ways are the
-eleven rules that only say that a point, a straight line or a circle exists (Postulates 1
-to 3 and the eight `exists_point` rules); refused forward as well are fourteen with no
-hypothesis `grind` can start from (`len_symm`, `add_comm` and the like), plus the restricted
-superposition rule, whose conclusion is the structure `Superposition.Rule`. Such a rule gives
+six rules that only say that a point, a straight line or a circle exists (Postulates 1 to 3
+and the three `exists_point` rules the second axiom retirement leaves); refused forward as
+well are thirteen with no hypothesis `grind` can start from (`len_symm`, `add_comm` and the
+like), plus the restricted superposition rule, whose conclusion is the structure
+`Superposition.Rule`. Such a rule gives
 `grind` nothing to work with in any case (see below); but while it stayed in, as in the
 families Postulates and Constructions and every pair with either, the try searched with
 none of its other rules.
@@ -90,8 +91,16 @@ which III.34 does not give and none of those rules draws. III.2 closes by Circle
 Generalities 4 (`inside_not_on`), and by the diagram rules together, but not by Circle 2
 alone: `grind` tries Circle 2 only on points of which the goal asks whether they are
 within the circle, and III.2 asks that only of E, until Generalities 4 brings in A and B.
-The screen checks that III.2, III.5 and III.6 still close by a rule (KNOWN, below), and
-says so when one does not.
+Run on the statements of the second axiom retirement's revision (21 October 2026), the
+15,860 attempts over the 122 statements made 28,060 tries (3,538 were left with no rule)
+and closed III.5 alone, by Diagram-segment 2 (`circle_eq`): alone, paired with each other
+rule about circles, and in its family, Transfer, alone or with any other family; no
+statement closed bare. 8 tries ran out of time again, all of them III.34
+from Postulate 4, as before. III.2 and III.6 no longer close: the rules that closed them,
+Circle 2 and Generalities 4 for III.2 and Generalities 3 for III.6, are theorems now, with
+others of the diagram rules, and the screen tries only axioms. Their rows in the catalogue
+rest on their audit lemmas, `Audit.III_2` and `Audit.III_6`. The screen checks that III.5
+still closes by a rule (KNOWN, below), and says so when it does not.
 
 usage (from the repository root, after `lake build`):
     python3 Audit/screen.py OUTDIR [--jobs N]
@@ -113,13 +122,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 # Rules that speak of circles: the pairs among these are screened against every statement.
-CIRCLE = """Definition15 Postulate3 Tacit.centre_inside Tacit.inside_not_on
-Tacit.between_of_inside_chord Tacit.outside_of_between
-Tacit.line_meets_circle_of_inside Tacit.circles_meet_of_on_inside_outside Tacit.circles_meet
-Tacit.line_circle_between Tacit.line_circle_beyond Tacit.circles_meet_same_side
-Tacit.circles_meet_opposite_side Tacit.exists_point_on_circle Tacit.exists_point_inside_circle
-Tacit.circle_eq Tacit.on_circle_of_len_eq
-Tacit.inside_of_len_lt Tacit.len_lt_of_inside""".split()
+CIRCLE = """Definition15 Postulate3 Tacit.between_of_inside_chord Tacit.outside_of_between
+Tacit.circles_meet Tacit.line_circle_between Tacit.line_circle_beyond
+Tacit.circles_meet_same_side Tacit.exists_point_inside_circle Tacit.circle_eq""".split()
 
 # The phrases, and the words for "any number", unfolded in every attempt.
 DEFS = """SameSideOf OppositeSidesOf OppositeSides OutsideCircle CirclesMeet LineMeetsCircle
@@ -137,8 +142,9 @@ CARRIERS = """Magnitude Length Angle Area instAddMagnitude instLTMagnitude
 instOfNatMagnitudeOfNatNat""".split()
 
 # The rows of the catalogue the screen has always found, each by a rule: a screen that
-# misses one is broken.
-KNOWN = ["BookIII.Prop2", "BookIII.Prop5", "BookIII.Prop6"]
+# misses one is broken. III.2 and III.6 left with the second axiom retirement, which made
+# the rules that closed them theorems.
+KNOWN = ["BookIII.Prop5"]
 
 # What each chosen definition says, proved from Lean's choice alone; nothing else.
 SPECS = """namespace Screen

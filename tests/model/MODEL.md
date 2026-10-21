@@ -69,7 +69,7 @@ depend on the corresponding declarations remaining in the axiom registry.
 - **[search.py](search.py)** draws configurations at random, biased hard toward the
   degenerate ones: repeated points, points on the lines and circles already drawn,
   centres, points between and beyond, equal and concentric and touching circles.
-- **[derived.py](derived.py)** keeps the 39 numerical predicates of the retired axioms,
+- **[derived.py](derived.py)** keeps the 39 numerical predicates of the retired rules,
   prepared to survive their retirement, under names beginning `derived.`.
 - **[exhaustive.py](exhaustive.py)** visits every configuration on small grids for 76
   predicates in all: 37 axiom laws and the 39 retained derived properties, with degenerate
@@ -314,8 +314,7 @@ Three different lines through one point `A` cut the plane into six angles. In ea
 the side conditions force the points other than `A` to be off the lines named, so the
 lines are different and the points are not `A`.
 
-| Axiom | Why it holds |
-|---|---|
+All three rules are now theorems, tested as derived properties.
 
 ### Circles
 
@@ -372,7 +371,7 @@ concern rules, assumed or now proved; M9 concerns the supporting placement const
 superposition. It tests why that construction requires a triangle, not whether the restricted derivation calculus
 fails without that guard.
 
-| Mutation | What goes wrong without the guard |
+| Mutation | What goes wrong |
 |---|---|
 | `circles_meet_of_on_inside_outside` with `A` on or inside `α` | a small circle wholly inside a large one (the form printed in System E) |
 | `triple_incidence2` without `D` off `M` | `D` on `M` |
@@ -611,5 +610,5 @@ python3 -I tests/model/run.py --ties            # the ties to the Lean alone, in
 ```
 
 Each program also runs on its own, for example `python3 -I tests/model/search.py 20000 2`
-(samples per axiom, then the seed), and `ONLY=pasch4,circles_meet` limits search.py and
+(samples per axiom, then the seed), and `ONLY=pasch2,circles_meet` limits search.py and
 hyperbolic.py to the axioms named.

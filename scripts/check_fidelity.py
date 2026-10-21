@@ -731,11 +731,16 @@ def check_entries(facts, by_ref) -> None:
 
 # Facts pinned by tests/certificate_expectations.json.
 
-def check_expectations(by_ref, path: Path = EXPECTATIONS) -> None:
+def check_expectations(by_ref, path: Path = EXPECTATIONS, facts: dict | None = None) -> None:
     """Each expectation names an entry (`ref`) and a list `field`, and asks that the
     list `includes` some names, `excludes` others, or holds exactly `count` names
     beginning with `prefix`; `equals` compares any field with a value. A field that is
-    an object, as `inherited` is, is read by its keys: the axioms it names."""
+    an object, as `inherited` is, is read by its keys: the axioms it names. A field that
+    is a list of objects, as `cited_laws` is, is read by each object's `law`; an
+    expectation that also names a `law` reads that law's `construction_rules` instead,
+    and fails when the entry cites no such law. An expectation with no `ref` reads a field
+    of facts.json's top level, as `construction_rules` is, from `facts`. An expectation
+    that asks nothing, with none of `includes`, `excludes`, `equals` and `count`, fails."""
     if not path.exists():
         fail(f"{rel(path)} is missing")
         return
@@ -745,37 +750,64 @@ def check_expectations(by_ref, path: Path = EXPECTATIONS) -> None:
     except (json.JSONDecodeError, KeyError, TypeError) as e:
         fail(f"{rel(path)}: expected a JSON object with a list `expectations` ({e})")
         return
-    known = {"ref", "field", "includes", "excludes", "equals", "count", "why"}
+    known = {"ref", "field", "law", "includes", "excludes", "equals", "count", "why"}
+    asks = {"includes", "excludes", "equals", "count"}
     for i, x in enumerate(expectations, 1):
         label = f"{rel(path)}, expectation {i}"
-        if not isinstance(x, dict) or not {"ref", "field", "why"} <= set(x) or set(x) - known:
-            fail(f"{label}: needs `ref`, `field` and `why`, and one or more of `includes`, "
+        if (not isinstance(x, dict) or not {"field", "why"} <= set(x) or set(x) - known
+                or not asks & set(x) or ("law" in x and "ref" not in x)):
+            fail(f"{label}: needs `field` and `why`, a `ref` unless it reads the top level "
+                 "of facts.json (and always with a `law`), and one or more of `includes`, "
                  "`excludes`, `equals`, `count`")
             continue
-        ref, field, why = x["ref"], x["field"], x["why"]
-        if ref not in by_ref:
-            fail(f"{ref}: pinned by {label}, but facts.json has no such entry")
-            continue
-        if field not in by_ref[ref][1]:
+        field, why = x["field"], x["why"]
+        if "ref" in x:
+            ref = x["ref"]
+            if ref not in by_ref:
+                fail(f"{ref}: pinned by {label}, but facts.json has no such entry")
+                continue
+            holder = by_ref[ref][1]
+        else:
+            ref = "facts.json"
+            if facts is None:
+                fail(f"{label}: reads the top level of facts.json, which was not given")
+                continue
+            holder = facts
+        if field not in holder:
             # Read as empty, a missing field would let every `excludes` pass.
-            fail(f"{ref}: pinned by {label}, but its entry has no field `{field}`")
+            where = "its entry" if "ref" in x else "its top level"
+            fail(f"{ref}: pinned by {label}, but {where} has no field `{field}`")
             continue
-        value = by_ref[ref][1].get(field)
+        value, what = holder.get(field), field
+        if "law" in x:
+            law = x["law"]
+            found = [v for v in value if isinstance(v, dict) and v.get("law") == law] \
+                if isinstance(value, list) else []
+            if len(found) != 1 or "construction_rules" not in found[0]:
+                fail(f"{ref}: pinned by {label}, but its {field} has no law {law} with "
+                     "construction_rules")
+                continue
+            value, what = found[0]["construction_rules"], \
+                f"construction_rules for the cited law {law}"
         if "equals" in x and value != x["equals"]:
-            fail(f"{ref}: its {field} is {value!r}, not {x['equals']!r} ({label}: {why})")
-        listed = value if isinstance(value, list) else list(value) if isinstance(value, dict) \
-            else []
+            fail(f"{ref}: its {what} is {value!r}, not {x['equals']!r} ({label}: {why})")
+        if isinstance(value, dict):
+            listed = list(value)
+        elif isinstance(value, list):
+            listed = [v.get("law") if isinstance(v, dict) else v for v in value]
+        else:
+            listed = []
         for name in x.get("includes", []):
             if name not in listed:
-                fail(f"{ref}: its {field} should include {name} ({label}: {why})")
+                fail(f"{ref}: its {what} should include {name} ({label}: {why})")
         for name in x.get("excludes", []):
             if name in listed:
-                fail(f"{ref}: its {field} should not include {name} ({label}: {why})")
+                fail(f"{ref}: its {what} should not include {name} ({label}: {why})")
         if "count" in x:
             prefix, want = x["count"].get("prefix", ""), x["count"].get("is")
             got = sum(1 for v in listed if isinstance(v, str) and v.startswith(prefix))
             if got != want:
-                fail(f"{ref}: its {field} has {got} names beginning {prefix!r}, not {want} "
+                fail(f"{ref}: its {what} has {got} names beginning {prefix!r}, not {want} "
                      f"({label}: {why})")
 
 
@@ -1055,7 +1087,7 @@ def check_facts(path: Path) -> None:
     check_axioms(facts, count)
     by_ref = entries_by_ref(facts)
     check_entries(facts, by_ref)
-    check_expectations(by_ref)
+    check_expectations(by_ref, EXPECTATIONS, facts)
     check_reviews(facts, by_ref)
 
 

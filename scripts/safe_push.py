@@ -1590,11 +1590,12 @@ def judged_files(repo, base, sha) -> list[str]:
 
 def kept_expectations(old: str | None, new: str | None) -> bool:
     """Does the expectations file `new` keep every expectation of `old`, origin/main's
-    (None when it has none)? Each of old's is still there, matched by its ref and field:
-    its includes and excludes the same or grown, its count's prefix the same, its equals
-    still there; only the values of count.is and equals may differ, and its why, the words
-    shown when it fails. New expectations are fine. A removed expectation or field, a list
-    shrunk, or a file that does not read, is not kept."""
+    (None when it has none)? Each of old's is still there, matched by its ref, field and
+    law, which say what it reads: a ref or a law added or dropped makes it read something
+    else. Its includes and excludes the same or grown, its count's prefix the same, its
+    equals still there; only the values of count.is and equals may differ, and its why, the
+    words shown when it fails. New expectations are fine. A removed expectation or field, a
+    list shrunk, or a file that does not read, is not kept."""
     def entries(text: str | None) -> list[dict] | None:
         try:
             found = json.loads(text)["expectations"]
@@ -1604,6 +1605,8 @@ def kept_expectations(old: str | None, new: str | None) -> bool:
         return found if ok else None
 
     def asks_as_much(y: dict, x: dict) -> bool:
+        if any((key in y) != (key in x) for key in ("ref", "law")):
+            return False
         for key, want in x.items():
             have = y.get(key)
             if key == "why":

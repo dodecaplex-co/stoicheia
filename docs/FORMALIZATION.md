@@ -614,7 +614,7 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | The edition review | Commentary, quotations, figures and scope descriptions agree with the reviewed mathematics. | |
 | Regeneration is clean | The pages, certificate and graph match the sources and the generator. | Whether their descriptions of scope and meaning are accurate. |
 | The figure checks pass | The files display, and their letters, palette and strokes meet the structural rules. | Whether the drawn geometry and the case shown agree with the proof. |
-| The numerical model tests (`tests/model/`) | The locked axioms held in the configurations sampled from a standard model of the plane, exactly where coordinates allow, and planted mutations of 15 rules, some of them now theorems, were caught. | A proof of consistency: a test can find a counterexample but cannot show there is none, and laws no harness reaches rest on a hand argument. |
+| The numerical model tests (`tests/model/`) | The locked axioms held in the configurations sampled from a standard model of the plane, exactly where coordinates allow, and planted mutations of 15 statements, fourteen rules, assumed or now proved, and the placement that supports superposition, were caught. | A proof of consistency: a test can find a counterexample but cannot show there is none, and laws no harness reaches rest on a hand argument. |
 | The hyperbolic check (`tests/model/hyperbolic.py`) | Every axiom but Postulate 5 held in the configurations sampled from the hyperbolic plane, and Postulate 5 failed there. | Non-derivability: numerical tests do not establish that a statement failing there cannot be proved without Postulate 5. |
 | The informal model argument | A reasoned interpretation of each law in the standard plane. | A machine-checked proof. |
 | The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->48<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
@@ -628,3 +628,30 @@ interpretation in which the other axioms hold and the result's own statement fai
 hypotheses met; that the postulate fails there is not enough, and a result whose statement
 stays true there needs a different analysis. The kind is numerical until a proof replaces
 it, and even then the pages keep "this proof uses".
+
+### Construction rules
+
+A construction rule is an axiom whose conclusion asserts that something exists. Set aside
+the axiom's leading "for all" binders and the hypotheses of its implications, and unfold
+this project's definitions in what remains: `CirclesMeet`, `LineMeetsCircle`, `LinesMeet`,
+`Collinear`, and an instance that gives an order its meaning. The axiom is a construction
+rule when an `∃` then stands in positive position. `And` and `Or` keep a position's sign;
+`Not` and the left of an implication reverse it; either side of an `Iff` counts at both.
+Only an `∃` written out, or one those definitions give, is counted: an existence stated
+another way, as `¬ ∀ x, ¬ P x` or by an axiom that is not a proposition, would not be, and
+no axiom in the lock states one so. Any other structure or inductive type is read as a word and never unfolded: what its
+fields or constructors say is not read. So Postulates 1, 2, 3 and 5, the rules that give a
+point (`exists_point` and its kin) and the rules that conclude that two circles, a straight
+line and a circle, or two straight lines meet are construction rules. A rule that concludes
+`Triangle`, which denies that three points lie on one straight line, is not; nor is one
+that assumes an existence only in a hypothesis. Nor is `Tacit.superposition`, and only
+because a structure is a word: it concludes the structure `Superposition.Rule`, whose one
+field assumes a triangle, and a triangle assumed, read through `Collinear`, would put an
+`∃` in positive position.
+
+The certificate computes the list from Lean's statements of the axioms
+(`construction_rules`), and, for each law that I.4's and I.8's derivations cite inside the
+placement, the construction rules beneath that law's proof (`cited_laws`;
+[FIELDS](../Certificate/FIELDS.md)). Like the rest of the certificate, these are facts
+about our proofs' dependencies. A law whose proof uses a construction rule still asserts
+no existence, and citing it draws nothing in the placement (brief 0009, question 4).

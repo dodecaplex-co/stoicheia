@@ -38,7 +38,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 
 ## I.4
 - "B will also coincide with E, because AB is equal to DE" uses the converse of C.N. 4 for straight lines (Heath, vol. 1, p. 250). `OnRay.eq_of_len_eq` proves it by Savile's argument: if B fell short of E or beyond it, the less would equal the greater.
-- "AC will also coincide with DF" needs that only one ray on that side of DE makes the given angle (`onRay_of_angle_eq`).
+- "AC will also coincide with DF" needs that only one ray on that side of DE makes the given angle: the law of one ray for one angle, cited inside the placement (`Superposition.Derives.ray_of_angle`) and proved with its three straight lines named (`Superposition.onLine_of_angle_eq_named`).
 - J. L. Heiberg's bracketed "two straight lines will enclose a space" is not needed: a finite straight line is fixed by its ends, and so is its length (`CommonNotion4`).
 - The moved triangle keeps its area (System E, Metric 9, `area_congruent`).
 
@@ -304,16 +304,20 @@ over a postulate, the reason is one of these.
   producing, so that proof uses no Postulate 2, though Heath's bracket gives it.
   In I.5 the statement hands us the produced sides, but Postulate 2 still underlies
   proved rules, including `OnRay.between_of_len_lt` through `between_of_between_right`
-  and `area_swap`. I.4 reaches it through `onRay_of_angle_eq`, and I.6 through
-  `area_swap` as well as I.4.
+  and `area_swap`. I.4 reaches it through the proof of a law its derivation cites,
+  one ray for one angle (`Superposition.Cited.holds_rayOfAngle`), by way of the proved
+  Triple incidence 2, and I.6 through `area_swap` as well as I.4.
 - **Postulate 3 and Definition I.15**: circles Euclid does not draw, which keep a
   chance point near enough (`exists_between_nearer`, I.5 and I.9), give a straight
   line room to be cut from (`produce_longer`), or lay a length along a ray
   (`OnRay.exists_len_eq`, I.24, I.44, I.46 and I.48); and circles he does draw, but
   without a bracket for the circle (I.22) or for its radii (I.2, I.12, I.22).
   Proved order and length rules also carry these assumptions: I.4 reaches them through
-  `OnRay.eq_of_len_eq`, `ne_of_len_eq` and `onRay_of_angle_eq`, although its own
-  construction draws no circle.
+  the proofs of four laws its derivation cites (`Superposition.Cited.holds_neOfLen`,
+  `Superposition.Cited.holds_rayUnique`, `Superposition.Cited.holds_rayOfAngle` and
+  `Superposition.Cited.holds_rayOfAngleSide`, by way of
+  `ne_of_len_eq`, `OnRay.eq_of_len_eq`, `Superposition.onLine_of_angle_eq_named` and
+  Pasch 3), although its own construction draws no circle.
 - **Postulate 4**: turning Definition I.10's right angles into the one magnitude `∟`
   that all right angles share.
 - **Postulate 5**: no difference. The Lean uses it directly just where Euclid

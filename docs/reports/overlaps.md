@@ -416,7 +416,10 @@ catalogue initially listed them as near misses, then as rows with audit lemmas, 
 I.7 likewise drew objects absent from its statement. All three superposition rows and
 their audit lemmas are now retired with that existential rule. These screening results
 are historical evidence for the revisions named above, not a fresh screen of the
-restricted rule.
+restricted rule. Run again on the second axiom retirement's revision (21 October 2026),
+the screen closes III.5 alone, by Diagram-segment 2: the rules that closed III.2 and III.6,
+Circle 2, Generalities 3 and Generalities 4, are theorems now, and the screen tries only
+axioms. Those two rows rest on their audit lemmas, `Audit.III_2` and `Audit.III_6`.
 
 **How each rule enters.** Argon's second review pointed out that `direct_axioms` counts a
 rule a proof reaches through a lemma as well as one its own Lean names, and found that
