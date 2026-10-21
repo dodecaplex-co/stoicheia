@@ -20,6 +20,16 @@ jobs:
           curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
+      - name: Check the path check's own reading, case by case, of names, types and modes in the index
+        # Needs no Lean; it runs first, so that a rule read wrongly stops the job before the
+        # path check's verdict.
+        run: python3 -I tests/test_check_paths.py
+
+      - name: Check every tracked path's name, type and mode against the standard (WORKFLOW, section 4)
+        # Reads the index, so it judges exactly what is committed; --self-test first plants
+        # a fault of each kind and expects each caught.
+        run: python3 scripts/check_paths.py --self-test
+
       - name: Check every proof
         run: lake build
 

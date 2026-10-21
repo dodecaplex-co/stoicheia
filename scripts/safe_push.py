@@ -59,7 +59,14 @@ order, and the first that fails stops it with a message saying why:
    - no review record is stale, and the generated pages are current (check_fidelity.py
      and render.py, on the commit as committed);
    - no whole directory under Elements/, heath/, review/, figures/ or mishnah/ is
-     deleted unless 0002-decisions.md gains a new line naming it.
+     deleted unless 0002-decisions.md gains a new line naming it;
+   - every path in the commit's tree is plain printable ASCII, with no space, and no two
+     paths, nor two folders of them, are one name once casefolded and NFC-normalised, as
+     a case-insensitive disk (macOS's default) compares them: such a twin, as
+     certificate/FIELDS.md beside Certificate/FIELDS.md, or Scripts/json.py beside
+     scripts/, is checked out over the file or into the folder the protected paths and
+     the check inputs name, unseen by both. It reads the tree, which such a disk cannot
+     hold, and when it refuses, nothing more runs in the worktree.
    A new line here is a mention the push adds: an old line that already named the
    thing, edited in place, does not count.
 4. The full check sequence of docs/WORKFLOW.md, section 8, in that worktree, and
@@ -263,6 +270,9 @@ TAIL = 40                 # lines of a failed step's output to print
 # The full local check sequence, exactly as docs/WORKFLOW.md, section 8, and CI's `check`
 # job run it, then the `model` job. Change it with them.
 CHECKS = [
+    ("python3 -I tests/test_check_paths.py", [PY, "-I", "tests/test_check_paths.py"]),
+    ("python3 scripts/check_paths.py --self-test",
+     [PY, "scripts/check_paths.py", "--self-test"]),
     ("lake build", ["lake", "build"]),
     ("lake build Audit", ["lake", "build", "Audit"]),
     ("lake build Staging", ["lake", "build", "Staging"]),
@@ -1433,6 +1443,75 @@ def guard_directories(repo, base, sha, rep: Report) -> None:
                 f"{', '.join(d + '/' for d in top)}")
 
 
+PLAIN_PATH = re.compile(r"[\x21-\x7e]+")      # printable ASCII, the space excluded
+
+
+def path_fold(s: str) -> str:
+    """A path as a case-insensitive disk compares it: NFC, casefolded, then NFC again."""
+    return unicodedata.normalize("NFC", unicodedata.normalize("NFC", s).casefold())
+
+
+def path_shown(path: str) -> str:
+    """A path as it is when plain, else escaped, so that a space shows, and two spellings
+    that look alike (é, and e with a combining accent) differ on the page."""
+    return path if PLAIN_PATH.fullmatch(path) else ascii(path)
+
+
+def path_faults(paths: list[str]) -> list[str]:
+    """What guard_paths refuses in a tree's paths, a line each: a path that is not plain
+    printable ASCII, since HFS+ and APFS ignore or fold some code points that casefolding
+    and NFC keep; and paths, or folders of them, equal under path_fold (a file listed
+    twice, or a file and a folder of one name, among them), named where they first meet,
+    with their twins."""
+    faults = []
+    for p in paths:
+        odd = sorted({c for c in p if not PLAIN_PATH.fullmatch(c)})
+        if odd:
+            faults.append(f"{path_shown(p)}: not plain printable ASCII "
+                          f"({', '.join(f'U+{ord(c):04X}' for c in odd)})")
+    met: dict[str, list[str]] = {}       # a fold -> its spellings: a folder once, with "/"
+    files: dict[str, list[str]] = {}     # a folder, with "/" -> the paths under it
+    for p in paths:
+        parts = p.split("/")
+        for i in range(1, len(parts)):
+            folder = "/".join(parts[:i]) + "/"
+            if folder not in files:
+                met.setdefault(path_fold(folder[:-1]), []).append(folder)
+            files.setdefault(folder, []).append(p)
+        met.setdefault(path_fold(p), []).append(p)
+    twins = {key for key, spellings in met.items() if len(spellings) > 1}
+    for key in sorted(twins):
+        if "/" in key and key.rsplit("/", 1)[0] in twins:
+            continue        # met already, at a folder above
+        names = []
+        for s in sorted(met[key]):
+            under = files.get(s, [])
+            listed = ", ".join(path_shown(f) for f in under[:3])
+            more = f" and {len(under) - 3} more" if len(under) > 3 else ""
+            names.append(f"{path_shown(s)} ({listed}{more})" if under else path_shown(s))
+        faults.append(f"{' and '.join(names)}: equal once casefolded and NFC-normalised, "
+                      "so a case-insensitive disk (macOS's default) checks them out as one, "
+                      "the one over the other")
+    return faults
+
+
+def guard_paths(repo, sha, rep: Report) -> bool:
+    """Every path in the commit's tree plain printable ASCII, and no two of them, nor two
+    folders of them, one name on a case-insensitive disk (#186): such a twin of a protected
+    file or a check input is checked out over it, unseen by the protected-path rule and
+    keep_apart. It reads the tree, not the worktree, which such a disk cannot hold.
+    Whether it passed."""
+    out = git(repo, "ls-tree", "-r", "-z", "--full-tree", "--name-only", sha, binary=True)
+    paths = [p.decode("utf-8", "surrogateescape") for p in out.split(b"\0") if p]
+    faults = path_faults(paths)
+    if faults:
+        rep.add("3", "paths", "FAIL", "\n".join(faults))
+        return False
+    rep.add("3", "paths", "ok", f"{plural(len(paths), 'path')}, each plain printable ASCII, "
+            "and no two of them, nor two folders, equal once casefolded and NFC-normalised")
+    return True
+
+
 def status_lines(wt: Path, excludes: list[str]) -> subprocess.CompletedProcess:
     return run(["git", "status", "--porcelain", "--", ".", *excludes], wt)
 
@@ -2081,6 +2160,12 @@ def guards(ctx, wt: Path, rep: Report, logs: Path) -> Guarded:
     protected = guard_protected(repo, base, sha, rep)
     guard_heath(repo, base, sha, wt, rep)
     guard_directories(repo, base, sha, rep)
+    if not guard_paths(repo, sha, rep):
+        # On a case-insensitive disk the worktree is not the commit's tree: a twin is
+        # written over what it shadows, and a module in a twin folder (Scripts/json.py)
+        # would run in the checks below. Nothing more runs in it.
+        failed = [s.name for s in rep.failed() if s.stage == "3"]
+        raise Refusal(f"the invariant guards refused: {', '.join(failed)}")
     inputs = [(s, p) for s, p in changed_files(repo, base, sha) if under(p, CHECK_INPUTS)]
     with contextlib.closing(passes(repo, base, wt, inputs)) as each:
         for label, fail, excludes in each:

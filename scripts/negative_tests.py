@@ -87,6 +87,13 @@ records current; CI runs it on every push.
 18. Counting congruence constructors instead of `Coincidence.step` in the certificate:
     `tests/test_certificate.py` fails on transformers with no step. The restored
     certificate must pass the same regression, including its real-step cases.
+19. Without a build, in a temporary copy of Git's index named by GIT_INDEX_FILE: a case
+    twin of README.md, a space in a page's name, an upper-case extension, a symbolic
+    link, an executable bit on a script outside the six, an svg under book/ and a
+    misnamed review record each make `check_paths.py` fail, naming the path and its
+    rule, on a copy that passes before it is planted. The real index and the work tree
+    are never written and no file is read; the real index's entries are compared before
+    and after. It runs with the file-only plants, and under --counts-only too.
 
 These faults exercise the style and link checks, page freshness, an audit pin and
 leanchecker's loading of compiled files as well as the earlier checks. They do not
@@ -122,6 +129,7 @@ from time import perf_counter
 
 import check_fidelity
 import check_kernel
+import check_paths
 import generated_counts
 import heath
 
@@ -1216,10 +1224,67 @@ def count_markers() -> None:
                 path.write_text(original)
 
 
+# Item 19: a fault of the file-name standard of each kind, planted in a copy of Git's
+# index: what it is, its mode and path, and the rule of check_paths.py that must name it.
+PATH_FAULTS = (
+    ("a case twin of README.md", "100644", "readme.md", "P2"),
+    ("a space in a page's name", "100644", "book/I/Planted page.md", "P1"),
+    ("an upper-case extension", "100644", "docs/planted.MD", "P3"),
+    ("a symbolic link", "120000", "docs/planted-link.md", "P6"),
+    ("an executable bit outside the six", "100755", "scripts/heath.py", "P6"),
+    ("an svg under book/", "100644", "book/I/01.svg", "P4"),
+    ("a misnamed review record", "100644", "review/I/1.toml", "P5"),
+)
+
+
+def path_faults() -> None:
+    """Plant each fault of PATH_FAULTS in a fresh copy of Git's index, named to Git by
+    GIT_INDEX_FILE, and run check_paths.py on that copy: each must fail, naming the path
+    and its rule, and the copy must pass before anything is planted, so that each fault
+    is caught for itself. Only the copy is written, so the real index, the work tree and
+    `git status` stay as they were; Git's listing of the real index is compared before
+    and after. No file is read: the planted entries reuse a tracked object's id."""
+    listing = ("git", "ls-files", "-s", "-z")
+    before = run(*listing)
+    index = run("git", "rev-parse", "--git-path", "index")
+    if not (expect_success("the index's entries before the path plants", before)
+            and expect_success("the index's place", index)):
+        return
+    real = ROOT / index.stdout.strip()
+    blob = before.stdout.split("\t", 1)[0].split(" ")[1]
+    with tempfile.TemporaryDirectory(prefix="stoicheia-paths-") as tmp:
+        copy = Path(tmp) / "index"
+        env = {**os.environ, "GIT_INDEX_FILE": str(copy)}
+        shutil.copyfile(real, copy)
+        if expect_success("check_paths.py on an unplanted copy of the index",
+                          subprocess.run([sys.executable, "scripts/check_paths.py"], cwd=ROOT,
+                                         env=env, capture_output=True, text=True)):
+            print("✓ an unplanted copy of the index passes check_paths.py")
+        for name, mode, path, rule in PATH_FAULTS:
+            shutil.copyfile(real, copy)
+            planted = subprocess.run(
+                ["git", "-c", "core.ignorecase=false", "-c", "core.precomposeunicode=false",
+                 "update-index", "--add", "--cacheinfo", f"{mode},{blob},{path}"],
+                cwd=ROOT, env=env, capture_output=True, text=True)
+            if not expect_success(f"planting {name} in a copy of the index", planted):
+                continue
+            expect_failure(f"{name} in the index",
+                           subprocess.run([sys.executable, "scripts/check_paths.py"], cwd=ROOT,
+                                          env=env, capture_output=True, text=True),
+                           f"✗ {rule} {check_paths.shown(path)}: ")
+    after = run(*listing)
+    if expect_success("the index's entries after the path plants", after):
+        if after.stdout != before.stdout:
+            failures.append("the path plants changed the real index")
+        else:
+            print("✓ the path plants left the real index as it was")
+
+
 def main(argv=()) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--counts-only", action="store_true",
-                        help="only the count plants and file-only regressions; no build needed")
+                        help="only the count and path plants and the file-only regressions; "
+                             "no build needed")
     args = parser.parse_args(argv)
     if not expect_success("restoration regressions",
                           run(sys.executable, "-I", "tests/test_negative_tests.py")):
@@ -1231,10 +1296,11 @@ def main(argv=()) -> int:
     print("✓ count regressions passed (without Lean)")
     if args.counts_only:
         count_markers()
+        path_faults()
         if failures:
             print("\n".join(failures))
             return 1
-        print("✓ count plants passed; other plants were not run (--counts-only)")
+        print("✓ count and path plants passed; other plants were not run (--counts-only)")
         return 0
     before = run("git", "status", "--porcelain")
     if not expect_success("entry Git status", before):
@@ -1243,6 +1309,7 @@ def main(argv=()) -> int:
         heath_word()
         merge_conflict_markers()
         count_markers()
+        path_faults()
         wrong_radii()
         weakened_postulate()
         changed_word()

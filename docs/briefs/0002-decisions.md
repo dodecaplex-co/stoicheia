@@ -3032,3 +3032,53 @@ findings:
   hold. `git safe-push --label release` creates the `release` label, with its
   description, the first time it is given; the consolidation release (#38) lands through
   a pull request carrying it. Tags and releases stay manual, by the owner.
+
+## 21 October 2026
+
+- **File names and types follow one standard
+  ([#186](https://github.com/jackChallis/stoicheia/issues/186)).** The owner asked: "Can we
+  standardize the file names and types so we don't have silliness with messy paths?" The
+  standard writes down the conventions the tree already keeps, in six rules, stated in
+  [WORKFLOW](../WORKFLOW.md#file-names), section 4, "File names", with their lists in
+  [`scripts/check_paths.py`](../../scripts/check_paths.py), each a named constant. A path
+  is ASCII letters, digits, `.`, `_`, `-` and `/`, with no empty, `.` or `..` segment, no
+  segment beginning or ending with `.` or `-` save `.github`, `.gitignore` and `.gitkeep`,
+  no Windows device name, and at most 160 characters, 100 in a segment. No two paths, and
+  no two of their folders, differ only in case or Unicode form. Extensions are in lower
+  case, from the fifteen the tree uses, and six named files have none. Each top-level
+  folder, and the root, holds only its listed types and files. A book's pages, Heath's
+  text, the mishnah, the reading lines, the review records, the figures and the briefs
+  have mechanical names; a Lean file of the edition's libraries has Lean module names,
+  with `BookR` and `PropNN` under `Elements/` and no `lakefile.lean`; a Python file's name
+  can be imported. A file is 100644, or 100755 for exactly six scripts, and there is no
+  symbolic link and no submodule. A new book's paths already fit, Book X's 115
+  propositions among them. The nine hand translations of the model's laws in
+  `model/Model/Laws/` (`angles.lean`, `areas-p5.lean` and seven more, imported as
+  `Model.Laws.«areas-p5»`) keep their lower-case names, the model's own convention, and
+  the rule codifies it: a file directly in that folder is named in lower-case words
+  joined by hyphens, every other Lean file keeps the module-name rule, and nothing was
+  renamed. Every one of main's 1,137 paths passes. The check reads Git's index, so it
+  judges exactly what is committed and never the working tree, and it runs first, before
+  `lake build`, in CI's `check` job, in `scripts/safe_push.py`'s checks and in WORKFLOW,
+  section 8: `python3 -I tests/test_check_paths.py`, then
+  `python3 scripts/check_paths.py --self-test`. The self-test plants a fault of each rule
+  in memory beside good paths, Book IV's and Book X's among them; the test file plants
+  faults straight into the indexes of throwaway repositories, where a case-insensitive
+  disk could not hold a twin as two files; and `scripts/negative_tests.py`, item 19,
+  plants seven (a case twin, a space, an upper-case extension, a symbolic link, an
+  executable bit, an svg under `book/` and a misnamed review record) in a copy of the
+  edition's index that passes unplanted, under `--counts-only` too, leaving the real
+  index and `git status` as they were. Every finding is one line of printable ASCII,
+  naming its rule and its path, with any name inside the reason escaped as Git quotes a
+  path. The pre-flight's step 3 also refuses a commit any of whose paths, or
+  folders, collides with another under case folding and NFC normalisation, or is not
+  plain printable ASCII, so that a twin of a protected path or a check input cannot
+  change it by the back door. A new extension, top-level folder, executable or named file
+  is a change to the check, landing first, in a pull request of its own. The protected
+  files changed are:
+  `.github/workflows/ci.yml`,
+  `scripts/check_paths.py`,
+  `scripts/negative_tests.py`,
+  `scripts/safe_push.py`,
+  `scripts/test_safe_push.py`,
+  `tests/test_check_paths.py`.

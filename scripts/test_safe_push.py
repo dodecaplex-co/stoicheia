@@ -91,6 +91,11 @@ one commit and runs safe_push.py against that origin:
   entry naming them, a protected path is named only whole (a line naming
   tests/model/lock.sha256 names no model/lock.sha256), and those
   paths stay what the checks judge, so a check change is still kept apart from them;
+- the case twins of issue #186, planted straight into an index, since this disk cannot
+  hold them: a twin of a protected file (certificate/FIELDS.md), a check input in a twin
+  folder (Scripts/json.py, which then runs in no check), two spellings of one name under
+  NFC, and a path with a space are each refused by step 3's paths guard, at the
+  pre-flight and at the merge, while an ordinary commit passes it;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -127,6 +132,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import unicodedata
 import unittest
 from dataclasses import dataclass
 from pathlib import Path
@@ -795,6 +801,23 @@ class Clone(unittest.TestCase):
         git(WORK, "commit", "-q", "-m", message, env=env)
         return git(WORK, "rev-parse", "HEAD").strip()
 
+    def plant(self, message: str, files: dict) -> str:
+        """A commit of HEAD's tree with `files` added straight into an index of its own,
+        since a case-insensitive disk cannot hold a case twin, nor two spellings of one
+        name. HEAD moves to it; the working tree and its index are left as they were."""
+        index = TMP / "planted.index"
+        env = dict(os.environ, GIT_INDEX_FILE=str(index))
+        git(WORK, "read-tree", "HEAD", env=env)
+        for path, text in files.items():
+            blob = subprocess.run(["git", "hash-object", "-w", "--stdin"], cwd=WORK,
+                                  input=text, capture_output=True, text=True, check=True)
+            # git on macOS writes an NFD path as NFC unless told not to.
+            git(WORK, "-c", "core.precomposeUnicode=false", "update-index", "--add",
+                "--cacheinfo", f"100644,{blob.stdout.strip()},{path}", env=env)
+        git(WORK, "commit", "-q", "-m", message, env=env)
+        index.unlink(missing_ok=True)
+        return git(WORK, "rev-parse", "HEAD").strip()
+
     def new_base(self, message: str, write: dict) -> str:
         """A commit on origin's main, as a merged pull request would leave it."""
         sha = self.commit(message, write)
@@ -874,7 +897,7 @@ class Accepts(Clone):
         self.assertEqual(self.origin_main(), BASE)
         self.assertIsNone(self.origin_branch())
         for name in ("commit", "fast-forward", "harness", "secrets", "statements", "axiom lock",
-                     "protected paths", "heath/", "directories", "review records"):
+                     "protected paths", "heath/", "directories", "paths", "review records"):
             self.assertEqual(self.guard(out, name), "ok", f"{name}:\n{out}")
         self.assertIn("leaf n261", out)
 
@@ -1102,6 +1125,59 @@ class Directories(Clone):
                     remove=["mishnah/intro"])
         r = self.safe_push("--dry-run")
         self.assertEqual(self.guard(r.stdout, "directories"), "ok", r.stdout)
+
+
+class CaseTwins(Clone):
+    """Issue #186: paths equal once casefolded and NFC-normalised are one file on a
+    case-insensitive disk (macOS's default), so a twin of a protected file or of a check
+    input is checked out over it, unseen by the protected-path rule and keep_apart. Each
+    commit is planted straight into an index, since this disk cannot hold both."""
+
+    def refused_by_paths(self, r) -> tuple[str, str]:
+        """The output of a run refused by the paths guard, and that guard's detail."""
+        out = self.assertRefused(r, "invariant guards refused: paths")
+        self.assertEqual(self.guard(out, "paths"), "FAIL", out)
+        detail = re.search(r"^\s+FAIL\s+paths: (.*(?:\n {8}.*)*)", out, re.M).group(1)
+        return out, detail
+
+    def test_case_twin_of_a_protected_file_refused(self):
+        self.plant("A case twin of a protected file",
+                   {"certificate/FIELDS.md": "Checked out over Certificate/FIELDS.md.\n"})
+        _, detail = self.refused_by_paths(self.safe_push())
+        self.assertIn("certificate/ (certificate/FIELDS.md)", detail)
+        self.assertIn("Certificate/ (Certificate/FIELDS.md", detail)
+
+    def test_case_twin_of_a_check_input_refused(self):
+        # Checked out on this disk, Scripts/json.py lands in scripts/, where
+        # check_fidelity.py's `import json` would run it: nothing more runs in step 3.
+        marker = TMP / "planted-module-ran"
+        self.plant("A case twin of a check input, in a twin folder", {
+            "Scripts/json.py": "import os\nopen(os.environ['STOICHEIA_TEST_PLANTED'], 'w')\n"})
+        env = dict(clean_env(), STOICHEIA_TEST_PLANTED=str(marker))
+        out, detail = self.refused_by_paths(self.safe_push(env=env))
+        self.assertIn("Scripts/ (Scripts/json.py)", detail)
+        self.assertIn("scripts/ (scripts/", detail)
+        self.assertIsNone(self.step(out, "review records"), out)
+        self.assertFalse(marker.exists(), "a module in a twin folder ran")
+
+    def test_unicode_twins_and_a_space_refused(self):
+        # No path on main has a second spelling under NFC, so the commit plants both.
+        nfc = "docs/café.md"
+        nfd = unicodedata.normalize("NFD", nfc)
+        space = "docs/a b.md"
+        self.assertNotEqual(nfc, nfd)
+        self.plant("Two spellings of one name, and a space",
+                   {nfc: "Composed.\n", nfd: "Decomposed.\n", space: "A space.\n"})
+        _, detail = self.refused_by_paths(self.safe_push())
+        for path in (nfc, nfd, space):
+            self.assertIn(f"{ascii(path)}: not plain printable ASCII", detail)
+        self.assertIn(f"{ascii(nfd)} and {ascii(nfc)}: equal once casefolded", detail)
+
+    def test_ordinary_commit_passes(self):
+        self.commit("A page of its own name", {"docs/style-notes.md": "Plain.\n"})
+        r = self.safe_push("--dry-run")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "paths"), "ok", r.stdout)
 
 
 class Hook(Clone):
@@ -2750,7 +2826,8 @@ class Merge(Edge):
         self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
         out = self.merge("--dry-run").stdout
         self.assertIn("the full checks are not repeated", out)
-        for name in ("secrets", "statements", "protected paths", "heath/", "review records"):
+        for name in ("secrets", "statements", "protected paths", "heath/", "paths",
+                     "review records"):
             self.assertEqual(self.guard(out, name), "ok", f"{name}:\n{out}")
 
     def test_forged_record_does_not_skip_the_scan_or_the_guards(self):
@@ -2797,6 +2874,21 @@ class Merge(Edge):
         self.assertEqual(r.returncode, 1, out)
         self.assertEqual(self.guard(out, "heath/"), "FAIL", out)
         self.assertEqual(self.origin_main(), BASE)
+
+    def test_case_twin_head_refused_at_the_merge(self):
+        # Issue #186: the guards the merge runs again include the paths.
+        self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        bad = self.plant("A case twin pushed by hand",
+                         {"certificate/FIELDS.md": "Checked out over Certificate/FIELDS.md.\n"})
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{bad}:refs/heads/{BRANCH}")
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "paths"), "FAIL", out)
+        self.assertIn("certificate/ (certificate/FIELDS.md)", out)
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertEqual(self.merges(), [])
 
     def test_protected_change_needs_its_label(self):
         path = "scripts/check_style.py"
@@ -4456,6 +4548,36 @@ class FullChecks(Edge):
 
 class Units(unittest.TestCase):
     """The scanner and the helpers, without git."""
+
+    def test_path_faults(self):
+        # Issue #186: paths equal once casefolded and NFC-normalised, each pair named once,
+        # where they first meet; and paths that are not plain printable ASCII.
+        faults = safe_push.path_faults
+        self.assertEqual(faults(["Certificate/FIELDS.md", "scripts/json.py", "docs/STYLE.md",
+                                 "docs/style-notes.md", "LICENSE", "LICENSE-PROSE.md"]), [])
+        nfc, sharp = "docs/café.md", "docs/straße.md"
+        nfd = unicodedata.normalize("NFD", nfc)
+        cases = (
+            (["Certificate/FIELDS.md", "certificate/FIELDS.md"],
+             "Certificate/ (Certificate/FIELDS.md) and certificate/ (certificate/FIELDS.md)"),
+            (["scripts/heath.py", "Scripts/json.py"],
+             "Scripts/ (Scripts/json.py) and scripts/ (scripts/heath.py)"),
+            (["A/b/x", "a/b/X", "a/c"], "A/ (A/b/x) and a/ (a/b/X, a/c)"),
+            (["docs/x", "docs/x/y"], "docs/x and docs/x/ (docs/x/y)"),
+            (["docs/x", "docs/x"], "docs/x and docs/x"),
+            (["docs/STRASSE.md", sharp], f"docs/STRASSE.md and {ascii(sharp)}"),
+            ([nfc, nfd], f"{ascii(nfd)} and {ascii(nfc)}"),
+        )
+        for paths, twins in cases:
+            with self.subTest(paths=paths):
+                found = [f for f in faults(paths) if "equal once casefolded" in f]
+                self.assertEqual(len(found), 1, found)
+                self.assertTrue(found[0].startswith(twins + ": "), found)
+        for path, code in (("docs/a b.md", "U+0020"), (nfd, "U+0301"), (nfc, "U+00E9"),
+                           ("docs/a\tb.md", "U+0009"), ("docs/a\x7fb.md", "U+007F")):
+            with self.subTest(path=path):
+                self.assertEqual(faults([path]),
+                                 [f"{ascii(path)}: not plain printable ASCII ({code})"])
 
     def configured_check_commands(self):
         checks = []

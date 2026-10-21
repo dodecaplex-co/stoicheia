@@ -185,6 +185,50 @@ files working in parallel, the renderers, and an integrator followed by blind re
   Do not push, open, merge or approve a pull request, or rebase a shared branch: the
   coordinator lands work, as pull requests (section 10, "Landing work: pull requests").
 
+### File names
+
+Every tracked path keeps one standard, which the owner asked for on
+[21 October 2026](briefs/0002-decisions.md#21-october-2026), so that a path reads the same on
+every disk and every system. Its lists live in one place,
+[`scripts/check_paths.py`](../scripts/check_paths.py), each a named constant; the script
+reads Git's index, so it judges exactly what is committed, never the working tree, and it
+never opens a file.
+
+1. **Characters.** ASCII letters, digits, `.`, `_`, `-` and `/`, and nothing else: no
+   empty segment, no `.` or `..` segment, and no segment that begins or ends with `.` or
+   `-`, save `.github` as the first segment and `.gitignore` and `.gitkeep` as a file's
+   name. A path is at most 160 characters and a segment at most 100, and no segment's stem
+   is a Windows device name (`CON`, `AUX`, `NUL`, `COM1` and the rest), in any case.
+2. **No case twins.** No two paths, and no two of their folders, are alike once case and
+   Unicode's normal forms are set aside: a disk that ignores case, as macOS's does by
+   default, checks the two out as one, so `Scripts/json.py` beside `scripts/heath.py` is
+   refused.
+3. **Extensions** are in lower case, from the fifteen the tree uses (`.md`, `.lean`,
+   `.toml`, `.py`, `.svg` and the rest; never `.MD`, `.markdown` or `.yaml`). A file without
+   one stands only at its own path: `LICENSE`, `NOTICE`, the two `lean-toolchain` files and
+   the two hooks.
+4. **Types by folder.** The top-level folders and the root's files are listed, with further
+   Markdown at the root named in capitals, as `README.md` is. Each folder holds its own
+   types (`figures/` only `.svg`, `review/` only `.toml` and its schema, `book/` only
+   Markdown), and the few files named by exact path, `.gitignore` and `.gitkeep` among them,
+   stand only where they stand now.
+5. **Names, where they are mechanical.** A book's pages, Heath's text, the mishnah, the
+   reading lines, the review records and the figures are named by the book's Roman numeral
+   and the proposition's number, two digits and three from 100 on (`review/III/16.toml`,
+   `figures/X/115-idea.svg`); a brief by four digits and a slug, or as a book's brief. A
+   Lean file of `Elements/`, `Staging/`, `Audit/`, `model/` or the root is named by Lean
+   module names, with `BookR` and `PropNN` under `Elements/` (`Prop01.lean`, never
+   `Prop1.lean`), save that the model's laws, directly in `model/Model/Laws/`, keep the
+   model's lower-case names (`areas-p5.lean`); `lakefile.lean` is refused anywhere. A
+   Python file's name can be imported.
+6. **Modes.** No symbolic links and no submodules. Six scripts are executable, and they
+   alone: the two hooks, `safe_push.py`, `check_release_gate.py`, `install_hooks.sh` and
+   `copy_acceptance_checks.sh`.
+
+A new book's paths already fit: Book IV's, and Book X's 115 propositions. A new extension,
+top-level folder, executable or named file is a change to the check, a protected path, and
+lands first, in a pull request of its own, before the file that needs it.
+
 ## 5. Proving in parallel: a voyage
 
 A voyage is one stretch of a book, run as a workflow:
@@ -290,6 +334,8 @@ run exactly what CI's `check` job runs, in its order:
 
 ```sh
 export PATH=$HOME/.elan/bin:$PATH
+python3 -I tests/test_check_paths.py
+python3 scripts/check_paths.py --self-test
 lake build
 lake build Audit
 lake build Staging
@@ -390,6 +436,13 @@ The ruleset and the remaining merge requirements are in
   foundation modules built by `lake build`, with the Lean tools on `PATH`. CI's `check`
   job and the pre-flight run it immediately after `Certificate/Facts.lean` on the revision
   delivered.
+- **The path check's cases run before it.** `python3 -I tests/test_check_paths.py` puts
+  each rule of `scripts/check_paths.py` ([section 4, "File names"](#file-names)) to paths
+  it must accept and refuse, and runs the script on throwaway repositories whose faults are
+  planted straight into the index. Neither needs Lean: both read Git's index, not the
+  files, and they run first, before `lake build`, so a misnamed path stops the checks
+  before anything is built. `negative_tests.py` plants seven of the faults in a copy of
+  the edition's index (its item 19), under `--counts-only` too.
 - **The style check's cases run before it.** `tests/test_check_style.py` puts the readings
   of `scripts/check_style.py` that [STYLE.md](STYLE.md), section 8, names to short texts
   and small figures, including S20's ink and S26's clearance and repeated letters, each
@@ -644,7 +697,12 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       - the generated pages current (`render.py`, on the commit as committed, changes
         nothing);
       - no whole directory of `Elements/`, `heath/`, `review/`, `figures/` or `mishnah/`
-        deleted unless the decisions page gains a new line naming it.
+        deleted unless the decisions page gains a new line naming it;
+      - no path of the commit, and no folder of one, that collides with another under case
+        folding and NFC normalisation, or that is not plain printable ASCII (#186): a disk
+        that ignores case checks out `Scripts/safe_push.py` as `scripts/safe_push.py`, so
+        a twin of a protected path or of a check input could otherwise change it by the
+        back door.
 
       For each of these, the push must add a mention: an old line that already named the
       thing, edited in place, does not count.
