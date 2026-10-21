@@ -3343,6 +3343,129 @@ findings:
   on condition that its reviews and /no-mistakes pass with no blocking finding; the
   independent review judged that it is not a weakening of keep_apart.
 
+- **Decision entries, one file each (tooling).** Nearly every pull request appended to
+  this page, so two queued together collide at its end. On main's first-parent history at
+  `250292bc`, 23 of the 29 merged pull requests numbered #98 to #148 changed this page,
+  and of their 28 consecutive pairs, 16 would have conflicted if queued together: all 16
+  on this page, 13 on this page alone. Each pull request's change was taken as its merge's
+  diff from that merge's first parent; for each pair, the later change was applied to the
+  earlier merge's first parent, and the result merged with the earlier merge over that
+  first parent, both with `git merge-tree --write-tree`, as GitHub merges, the pair
+  conflicting if either step did. With each change to this page replaced by a new file in
+  `docs/decisions/`, and the page left as it was, the same pairs give 3 conflicts, none in
+  the decisions record: one each in `book/III/06.md`, `docs/FORMALIZATION.md` and
+  `scripts/audit/jev.py`.
+
+  So each decision written after this entry is a file of its own,
+  `docs/decisions/<YYYY-MM-DD>-<slug>.md`: a valid date, no earlier than this entry's,
+  then a short name of lower-case letters and digits joined by hyphens. An entry is read
+  where it is, as a page of its own, its relative links resolving from `docs/decisions/`;
+  nothing assembles the entries into this page or any other, since any file that every
+  entry's pull request had to update would collide just as this page does. GitHub lists
+  the folder in name order, which is date order, as its README,
+  [`docs/decisions/README.md`](../decisions/README.md), says; the README stays the same
+  from one entry to the next. `scripts/render.py` checks the folder before it writes
+  anything, and CI and the pre-flight run it on every pull request: the folder, which may
+  be absent, lies under no link and is spelled `docs/decisions` on disk, with no other
+  spelling beside it that a Mac's file system reads as it (each name in Unicode's NFD
+  form, casefolded, so that `docs/Decisions`, or `docs/deciſions` with a long s, is
+  another spelling); it holds regular files alone, the README and entries, passing over a
+  file Git ignores by a rule of the root's `.gitignore`, of `.git/info/exclude` or of the
+  user's own excludes file, as Finder's `.DS_Store`, which Git never commits, but never
+  one that a nested `.gitignore`, which a commit could add, ignores, and stopping if Git
+  cannot say which files those are; no entry there is dated before this entry; every file
+  there is UTF-8, holds no count marker, so that `render.py` never writes into it, and
+  holds no control character but a tab and a line feed, no format character (Unicode's
+  Cf), no line or paragraph separator, no other default-ignorable character, no character
+  that renders blank though Unicode counts it neither white space nor default-ignorable (a
+  fixed list, since Unicode has no property for a blank glyph: the Braille pattern blank,
+  the musical symbol null notehead and the Khitan small script filler), and no code point
+  Unicode keeps for private use or leaves unassigned; and an entry holds text. Its
+  refusals print a name with its unprintable characters written as escapes. An entry needs
+  no date heading, and may hold headings, as any page may.
+  `tests/test_decision_entries.py` tests these refusals, and `scripts/negative_tests.py`
+  runs it after the count regressions, so that CI's `negative` job and the pre-flight run
+  it too.
+
+  Every guard that asks for a new line in this page (the axiom lock, a protected path, a
+  deleted directory) or in `docs/briefs/` (a statement changed) accepts a new line in a
+  dated entry the push adds, a relative link there resolved from `docs/decisions/`. In an
+  entry and on this page alike, a file or a directory counts only where its mention starts
+  the text or follows whitespace, `(`, `<`, `[`, a backtick, a quotation mark, an
+  apostrophe or `*`, where origin/main's guards counted one after any character but a
+  letter, a digit, `_`, `/`, `.` or `-`: so `~/mishnah/test/`,
+  `C:/scripts/check_style.py`, `x+mishnah/test/` or a URL ending in a path names nothing.
+  A deleted directory is named as a protected file is, from the root, anchored there or by
+  a relative link that resolves to it, where origin/main's guard counted the path only as
+  it stands; and a directory, as a file, may end a sentence, its full stop after it, when
+  its mention holds a slash. A directory at the root named bare, as `figures`, is a word
+  of prose too, and "the figures." names no `figures/`, as on origin/main. A line of an
+  entry counts only when it holds a word; when no line of this page or of any file under
+  `docs/decisions/` at origin/main matches it, each read as a skeleton: in Unicode's NFKC
+  form, casefolded, each Cyrillic or Greek letter that looks like a Latin one read as that
+  letter, and every space separator, and each character that renders blank (the three
+  above and the Hangul fillers, which this page may hold though no entry may), read as a
+  space, the whitespace collapsed; and when none of its words lies in a run of 12 or more
+  consecutive words, so read across lines, that this page or one file there at origin/main
+  holds too. So a copy of an older entry, re-wrapped, re-spaced, in capitals or in those
+  look-alike letters, renews nothing, kept beside its original or not. The comparison
+  catches no more than that: a copy with a word put in after every eleventh, one reworded
+  throughout, or one in look-alike letters of another script reads as an entry in words of
+  its own, and only the reviews can tell it from one. Each run of consecutive lines that
+  count is read on its own, so no mention is made by joining words across a blank line or
+  a line that does not count; and a guard that refuses names each line of an entry that
+  did not count and in which its own reading finds a mention of something it found no new
+  line naming, and why, so that a list of files repeated from this page or from an older
+  entry is seen for what it is, and a code fence, or another line that names nothing the
+  guard asks for, is never named. An entry names each file, statement and lock in a
+  sentence of its own. The comparison is for entries alone: a line added to this page is
+  compared with nothing, and any new line there counts, as before this entry; but its
+  mentions are read by the rules above, the same as an entry's, so where a mention may
+  start, a directory named by a link or the root's anchor, and a directory's full stop
+  are new for this page too.
+
+  Entries are history, only ever added: a new guard of the pre-flight's step 3, "decision
+  entries", refuses a push that modifies, deletes or renames an entry origin/main holds (a
+  move as Git's rename detection finds one); any other file, or a link, in the folder; a
+  path anywhere in the push that a Mac's file system reads as one under `docs/decisions/`,
+  as `render.py` reads names, but that is spelled otherwise; an entry whose name or
+  characters `render.py` would refuse; a README, added or changed, that is no UTF-8 text
+  or holds a character an entry may not; and an entry dated before this entry, or after
+  the day after the earlier of the pushed commit's committer date, which the pusher sets,
+  and the runner's own date, a day's grace for the time zones between the entry's writer
+  and the runner (`render.py`, which reads the working tree and has no commit, refuses
+  only the first). Its refusals print each path with its unprintable characters written as
+  escapes. It refuses no entry for copying another, in part or whole: the lines the
+  comparison finds copied count for nothing, and a routine entry that shares a line with
+  an older one, which Git's copy detection would call a copy, is still an entry. While the
+  guard refuses, entries supply no new line to the four guards, and their refusals say so.
+  The README may be edited, and approves nothing; once added it is never deleted, so that
+  origin/main always holds the folder. A correction is a new entry, in words of its own.
+  The revert that `scripts/safe_push.py` advises after a merge now restores from
+  origin/main `docs/decisions/` and this page, each that origin/main holds, after
+  `git revert --no-commit -m 1`, and adds an entry recording the revert, naming each
+  protected file, statement and lock in a sentence of its own.
+
+  WORKFLOW, FORMALIZATION, `docs/templates/orders.md`, the pull request template, the
+  model's account of a change to the axioms in `tests/model/MODEL.md`, the diagnostics of
+  `scripts/check_fidelity.py` and the account `scripts/safe_push.py` gives of its guards
+  now send a new decision to an entry, and the page stays valid history. So does the
+  header that `--write-lock` writes; the lock itself keeps its header until the next
+  decision that changes it, for its sha256 is pinned by `tests/model/lock.sha256`,
+  `model/lock.sha256` and the generated `model/Model/Laws.lean`, which that decision
+  renews in any case. The protected files changed: `.github/pull_request_template.md`,
+  `scripts/render.py`, `scripts/safe_push.py`, `scripts/test_safe_push.py`,
+  `scripts/negative_tests.py`, `scripts/check_fidelity.py`, `tests/model/MODEL.md` and
+  `tests/test_decision_entries.py`, which is new. The Jev question generator,
+  `scripts/audit/jev_questions.py`, now refuses to write its questions or its manifest
+  under `docs/decisions/`, which is the coordinator's as this page is, and
+  `tests/test_jev_questions.py` tests that refusal: two more protected files this
+  changes.
+
+  From this entry on, each new decision is a file of its own in
+  [`docs/decisions/`](../decisions/README.md); pull requests opened before it landed may
+  still add theirs to this page.
+
 ## 21 October 2026
 
 - **The tests nothing ran now run in CI (#157).** Four tests on main guarded real

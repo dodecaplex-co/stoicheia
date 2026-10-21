@@ -115,6 +115,33 @@ one commit and runs safe_push.py against that origin:
   worktree made), with every ignored file but the build's caches removed (a planted
   scripts/json.pyc); and `git safe-push`, run from a linked worktree as the lane runs it,
   drops the GIT_DIR its alias is given before any check runs;
+- the decision entries of docs/decisions/, each a page of its own: a new line in an
+  entry the push adds approves as one on the page does, a link there resolving from
+  docs/decisions/ for a protected path and a deleted directory alike, its words never
+  joined across a blank line or a line that does not count; an entry is only added, so
+  a rename or a deletion and re-addition, with edits or without, renews no approval, and
+  is refused, as is a copy with carriage returns, zero-width spaces, Braille blanks or
+  null noteheads in it; a copy (re-wrapped, re-spaced, reworded in a word, in capitals,
+  or with Cyrillic letters for Latin ones) renews no approval, though it is not refused
+  for being one, and an entry with a Greek word in it approves as any does; a guard that
+  refuses names each line of an entry that did not count and names what it asks for,
+  and why, a list of files repeated from the page or from an older entry among them, and
+  never a code fence or another line that names nothing it asks for; a short entry
+  sharing a line with an older one is an entry, though Git calls it a copy; the folder's
+  README may be edited, never deleted, and approves nothing, and is refused, added or
+  changed, when it is no UTF-8 text or holds a character an entry may not; a link, a
+  name spelled otherwise (a long s among the spellings, wherever it lies) or a file of
+  any other name is refused, its path printed with escapes, and so is an entry dated
+  before 20 October 2026 or after the day after the earlier of its commit's committer
+  date and the machine's own; in an entry and on the page, a mention of a file or a
+  directory starts the text or follows whitespace or an opening mark, so that a longer
+  path, a home folder's, a drive's or a URL's, names nothing, and every form the guards
+  counted before that starts so still counts; a directory whose mention holds a slash
+  may end a sentence, but "the figures." names no figures/; the page, deleted, refuses a
+  protected change rather than crashing; the revert that safe_push advises keeps the
+  record and passes the guards, its entry naming each file in a sentence of its own, and
+  restores only what origin/main holds; an abbreviated commit name is as wide as Git
+  makes it here;
 - the count markers of T1 (#177): a new word in the lock, with Certificate/FIELDS.md's
   count of the words moved with it, lands as content, origin/main's failure noted and the
   commit's own pass holding the count to the lock; while that page changed beyond the
@@ -151,16 +178,20 @@ from __future__ import annotations
 import ast
 import base64
 import contextlib
+import datetime
 import hashlib
 import io
+import itertools
 import json
 import os
 import re
+import shlex
 import shutil
 import signal
 import subprocess
 import sys
 import tempfile
+import textwrap
 import time
 import unicodedata
 import unittest
@@ -3472,7 +3503,9 @@ class Merge(Edge):
         merge = self.origin_main()
         self.assertEqual(git(ORIGIN, "rev-list", "--parents", "-n", "1", merge).split()[1:],
                          [side, sha])
-        self.assertIn(f"git revert --no-edit -m 1 {merge}", out)
+        self.assertIn(f"git revert --no-commit -m 1 {merge}", out)
+        self.assertIn("git restore --source=origin/main --staged --worktree -- docs/decisions/ "
+                      f"{DECISIONS}", out)
         self.assertIn(f"git safe-push --branch revert-{merge[:12]} --label docs", out)
 
     def test_merge_refuses_a_pull_request_it_may_not_merge(self):
@@ -3536,6 +3569,1102 @@ class Merge(Edge):
 
 # --------------------------------------------------------------------------------------
 # B: the review's findings, each with a planted commit
+
+
+def in_prose(text: str, change) -> str:
+    """`text` with `change` made to its prose alone, its code spans as they were."""
+    return "`".join(change(part) if i % 2 == 0 else part
+                    for i, part in enumerate(text.split("`")))
+
+
+class DecisionEntries(Clone):
+    """Dated entry files supply new mentions to every decision guard; being history, they
+    are only ever added, beside the folder's README, which approves nothing; a line counts
+    only when the record holds nothing like it, read as safe_push.skeleton reads it, its
+    words never joined across a line that does not count; and a guard that refuses names
+    each line of an entry that did not count and names what it asks for, and why."""
+
+    ENTRY = "docs/decisions/2026-10-20-test.md"
+    MOVED = "docs/decisions/2026-10-21-moved.md"
+    README = "docs/decisions/README.md"
+    PATH = "scripts/check_style.py"
+    # Its first line names all four things the guards protect; the rest is long enough
+    # that a move with a word of that line changed is still most of the file, as Git's
+    # rename detection measures it. (Its words date from when a copy was refused for
+    # being one.)
+    OLD = (f"- **An earlier decision for the test.** It names `{PATH}`, "
+           "`Certificate/axioms.lock`, I.1 and `mishnah/test/`.\n"
+           "  It gives its reasons at some length, so that a copy of it with one word\n"
+           "  changed is still most of the file, as Git's copy detection measures one,\n"
+           "  and is found as a copy: an entry is history, added once and never moved,\n"
+           "  copied or changed, and a correction is a new entry in words of its own.\n")
+    NEW = (f"- **A new decision for the test.** It names `{PATH}`, "
+           "`Certificate/axioms.lock`, I.1 and `mishnah/test/` afresh.\n")
+    RESPACED = OLD.replace(" It names ", " It  names\t").replace(".\n", ". \n")
+    SPACED_THROUGH = "".join("\t" + "  ".join(line.split()) + " \n"
+                             for line in OLD.splitlines())
+    REWORDED = OLD.replace("earlier", "revised")
+    # The same words wrapped at another width, so that no line is one of the original's.
+    REWRAPPED = textwrap.fill(" ".join(OLD.split()), 41) + "\n"
+    CARRIAGE = OLD.replace("\n", "\r")
+    ZERO_WIDTH = "".join(line[:2] + "\u200b" + line[2:] + "\n" for line in OLD.splitlines())
+    # The prose of the earlier entry, its code spans as they were, so that each still names
+    # what the earlier entry names: in capitals; with the Cyrillic letters U+0430, U+0435
+    # and U+043E for the Latin a, e and o, which look the same; with the Braille pattern
+    # blank (U+2800), which looks like a space and is none to str.split, for its spaces;
+    # and with the musical symbol null notehead (U+1D159), which renders blank, put in after
+    # each word's first letter, as the security re-review wrote it.
+    CAPITALS = in_prose(OLD, str.upper)
+    CYRILLIC = in_prose(OLD, lambda s: s.translate(str.maketrans("aeo", "\u0430\u0435\u043e")))
+    BRAILLE = in_prose(OLD, lambda s: s.replace(" ", "\u2800"))
+    NOTEHEADS = in_prose(OLD, lambda s: re.sub(r"\b(\w)", "\\1\U0001d159", s))
+    # An entry of its own words, with a Greek word in it.
+    GREEK = ("- **\u03a3\u03c4\u03bf\u03b9\u03c7\u03b5\u1fd6\u03b1, a new decision for the "
+             f"test.** It names `{PATH}`, "
+             "`Certificate/axioms.lock`, I.1 and `mishnah/test/` afresh.\n")
+    LOCK_LINE = "- **A new line for the test.** The axiom lock gains a comment.\n"
+    # What each kind writes at MOVED, and whether it removes the earlier entry.
+    MOVES = {"rename": (OLD, True), "rename re-spaced": (RESPACED, True),
+             "rename reworded": (REWORDED, True), "rename and add": (OLD + NEW, True),
+             "copy": (OLD, False), "copy re-spaced": (SPACED_THROUGH, False),
+             "copy reworded": (REWORDED, False), "copy re-wrapped": (REWRAPPED, False),
+             "copy re-wrapped and add": (REWRAPPED + "\n" + LOCK_LINE, False),
+             "copy with carriage returns": (CARRIAGE, False),
+             "copy with zero-width spaces": (ZERO_WIDTH, False),
+             "copy in capitals": (CAPITALS, False), "copy in Cyrillic": (CYRILLIC, False),
+             "copy with Braille blanks": (BRAILLE, False),
+             "copy with null noteheads": (NOTEHEADS, False),
+             "page copy": (OLD, False), "readme copy": (OLD, False),
+             "undated copy": (OLD, False), "new": (NEW, False), "new in Greek": (GREEK, False)}
+    # What each of the four guards asks for, as a line of OLD, and of each copy of it, names
+    # it (the lock is a protected file too): a refusal names a line that did not count only
+    # when it names one of those.
+    ASKS = {"guard_protected": (PATH, "Certificate/axioms.lock"), "guard_lock": ("axioms.lock",),
+            "guard_statements": ("I.1",), "guard_directories": ("mishnah/test/",)}
+
+    def four_guards(self):
+        """The guards that ask for a new line in the decisions record, with their
+        arguments."""
+        return ((safe_push.guard_protected, ()), (safe_push.guard_lock, ()),
+                (safe_push.guard_statements, (WORK,)), (safe_push.guard_directories, ()))
+
+    def protected_writes(self):
+        """A change to each thing the four guards protect, but a directory."""
+        return {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+            safe_push.LOCK: self.text(safe_push.LOCK) + "\n# A comment for the test.\n",
+            "Elements/BookI/Prop01.lean": self.replaced(
+                "Elements/BookI/Prop01.lean", SIGNATURE_OLD, SIGNATURE_NEW),
+        }
+
+    def restart(self, rev=None):
+        """Back to `rev` (BASE by default), as a test starts."""
+        git(WORK, "checkout", "--quiet", "--force", "--detach", rev or BASE)
+        git(WORK, "clean", "-fdq")
+
+    def decision_change(self, kind):
+        """Plant an earlier decision, then change each thing the four guards protect, with
+        the decisions record changed as `kind` says."""
+        source = {"page copy": DECISIONS, "readme copy": self.README,
+                  "undated copy": "docs/decisions/notes.md"}.get(kind, self.ENTRY)
+        base = self.commit("Record an earlier decision", {
+            source: self.text(DECISIONS) + "\n" + self.OLD if source == DECISIONS else self.OLD,
+            "mishnah/test/note.md": "A note.\n",
+        })
+        writes = self.protected_writes()
+        remove = ["mishnah/test"]
+        if kind.startswith("delete and re-add"):
+            self.commit("Remove the earlier entry", remove=[self.ENTRY])
+            writes[self.ENTRY] = self.RESPACED if kind.endswith("re-spaced") else self.OLD
+        elif kind == "edit":
+            writes[self.ENTRY] = self.REWORDED
+        elif kind == "edit and add":
+            writes[self.ENTRY] = self.OLD + self.NEW
+        else:
+            text, gone = self.MOVES[kind]
+            writes[self.MOVED] = text.encode()
+            if gone:
+                remove.append(self.ENTRY)
+        sha = self.commit("Change the guarded files", writes, remove=remove)
+        return base, sha
+
+    def check_guard(self, guard, base, sha, *args):
+        rep = safe_push.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            guard(WORK, base, sha, *args, rep)
+        return rep
+
+    def check_decision_change(self, kind, outcome, entries="ok", why=None, uncounted=None):
+        """The four guards' outcome, and the outcome of the guard of the entries, with what
+        it says when it refuses. `uncounted`, when given, maps each line of the entry `kind`
+        writes at MOVED that did not count to why: a guard's refusal names each of those
+        lines that names what the guard asks for (ASKS), with why, and no other line of the
+        entry, so never a line that names nothing it asks for."""
+        base, sha = self.decision_change(kind)
+        lines = self.MOVES[kind][0].splitlines() if uncounted else []
+        for guard, args in self.four_guards():
+            with self.subTest(guard=guard.__name__):
+                rep = self.check_guard(guard, base, sha, *args)
+                self.assertEqual(rep.steps[-1].outcome, outcome, rep.steps)
+                if outcome == "FAIL":
+                    detail = rep.failed()[0].detail
+                    self.assertIn("no new line", detail)
+                    if uncounted:
+                        asks = self.ASKS[guard.__name__]
+                        named = [n for n in uncounted
+                                 if any(ask in lines[n - 1] for ask in asks)]
+                        self.assertTrue(named and len(named) < len(lines), (asks, lines))
+                        for n, reason in uncounted.items():
+                            if n in named:
+                                self.assertIn(f"\n  {self.MOVED}:{n}: {reason}", detail)
+                            else:
+                                self.assertNotIn(f"{self.MOVED}:{n}:", detail)
+                    if entries == "FAIL":
+                        self.assertIn("no line of an entry counts while the guard of the "
+                                      "decision entries refuses", rep.failed()[0].detail)
+                else:
+                    self.assertFalse(rep.failed(), rep.steps)
+        rep = self.check_guard(safe_push.guard_entries, base, sha)
+        self.assertEqual([(s.name, s.outcome) for s in rep.steps],
+                         [("decision entries", entries)], rep.steps)
+        if why:
+            self.assertIn(why, rep.steps[-1].detail)
+            self.assertIn("a correction is a new entry", rep.steps[-1].detail)
+
+    def test_rename_renews_no_approval(self):
+        self.check_decision_change("rename", "FAIL", "FAIL",
+                                   f"{self.MOVED}: renamed from {self.ENTRY}")
+
+    def test_rename_with_interior_whitespace_renews_no_approval(self):
+        self.check_decision_change("rename re-spaced", "FAIL", "FAIL",
+                                   f"{self.MOVED}: renamed from {self.ENTRY}")
+
+    def test_rename_with_a_word_changed_renews_no_approval(self):
+        self.check_decision_change("rename reworded", "FAIL", "FAIL",
+                                   f"{self.MOVED}: renamed from {self.ENTRY}")
+
+    def test_rename_with_a_new_naming_line_is_refused(self):
+        self.check_decision_change("rename and add", "FAIL", "FAIL",
+                                   f"{self.MOVED}: renamed from {self.ENTRY}")
+
+    def every_line(self, why, text=OLD):
+        """Each line of `text`, written at MOVED, by its number, with `why`."""
+        return {n: why for n in range(1, len(text.splitlines()) + 1)}
+
+    # A copy is not refused for being one (an entry may share words with an older one),
+    # but its copied lines count for nothing, and a refusal names each of them that names
+    # what the guard asks for: OLD's first line, never its four lines of reasons.
+
+    def test_copy_renews_no_approval(self):
+        self.check_decision_change("copy", "FAIL",
+                                   uncounted=self.every_line(safe_push.IN_RECORD))
+
+    def test_copy_with_a_word_changed_renews_no_approval(self):
+        self.check_decision_change("copy reworded", "FAIL", uncounted={
+            **self.every_line(safe_push.IN_RECORD), 1: safe_push.IN_RUN})
+
+    def test_copy_with_its_whitespace_changed_renews_no_approval(self):
+        # Every line differs; but every line, its whitespace collapsed, is an old one.
+        self.check_decision_change("copy re-spaced", "FAIL",
+                                   uncounted=self.every_line(safe_push.IN_RECORD))
+
+    def test_re_wrapped_copy_renews_no_approval(self):
+        # No line is an old one; but every word lies in a run of twelve the old entry holds.
+        self.assertFalse(set(self.REWRAPPED.splitlines()) & set(self.OLD.splitlines()))
+        self.check_decision_change("copy re-wrapped", "FAIL", uncounted=self.every_line(
+            safe_push.IN_RUN, self.REWRAPPED))
+
+    def test_look_alike_copies_renew_no_approval(self):
+        # The copy in capitals, or with Cyrillic letters in its prose, each still naming
+        # every thing the earlier entry names, reads as the earlier entry: NFKC, the
+        # look-alike letters read as Latin ones, and casefolded.
+        for kind, text in (("copy in capitals", self.CAPITALS),
+                           ("copy in Cyrillic", self.CYRILLIC)):
+            with self.subTest(kind=kind):
+                self.restart()
+                self.assertNotEqual(text, self.OLD)
+                self.assertFalse(set(text.splitlines()) & set(self.OLD.splitlines()))
+                self.assertIn(f"`{self.PATH}`", text)
+                self.check_decision_change(kind, "FAIL",
+                                           uncounted=self.every_line(safe_push.IN_RECORD))
+
+    def test_copies_with_characters_that_render_blank_are_refused(self):
+        # The copy with Braille blanks for its spaces, or with null noteheads in its words,
+        # renders as the earlier entry does; Unicode counts neither character white space
+        # nor default-ignorable, so each is refused by name, as a zero-width space is.
+        for kind, char in (("copy with Braille blanks", "U+2800"),
+                           ("copy with null noteheads", "U+1D159")):
+            with self.subTest(kind=kind):
+                self.restart()
+                self.assertIn(f"`{self.PATH}`", self.MOVES[kind][0])
+                self.check_decision_change(kind, "FAIL", "FAIL",
+                                           f"{self.MOVED}:1: {char}, {safe_push.HIDDEN}")
+
+    def test_entry_with_a_greek_word_passes(self):
+        self.check_decision_change("new in Greek", "ok")
+
+    def test_re_wrapped_copy_beside_a_new_line_renews_only_that_line(self):
+        base, sha = self.decision_change("copy re-wrapped and add")
+        outcomes = {guard.__name__: self.check_guard(guard, base, sha, *args).steps[-1].outcome
+                    for guard, args in self.four_guards()}
+        self.assertEqual(outcomes, {"guard_protected": "FAIL", "guard_lock": "ok",
+                                    "guard_statements": "FAIL", "guard_directories": "FAIL"})
+        rep = self.check_guard(safe_push.guard_entries, base, sha)
+        self.assertEqual(rep.steps[-1].outcome, "ok", rep.steps)
+
+    def test_copy_with_carriage_returns_is_refused(self):
+        # Git reads the copy as one new line; render.py would read the old entry's lines.
+        self.check_decision_change("copy with carriage returns", "FAIL", "FAIL",
+                                   f"{self.MOVED}:1: U+000D, a character an entry or the "
+                                   "README may not hold")
+
+    def test_copy_with_zero_width_spaces_is_refused(self):
+        self.check_decision_change("copy with zero-width spaces", "FAIL", "FAIL",
+                                   f"{self.MOVED}:1: U+200B, a character an entry or the "
+                                   "README may not hold")
+
+    def test_copy_from_the_page_renews_no_approval(self):
+        self.check_decision_change("page copy", "FAIL",
+                                   uncounted=self.every_line(safe_push.IN_RECORD))
+
+    def test_copy_from_the_folder_readme_renews_no_approval(self):
+        self.check_decision_change("readme copy", "FAIL",
+                                   uncounted=self.every_line(safe_push.IN_RECORD))
+
+    def test_copy_from_an_undated_file_renews_no_approval(self):
+        self.check_decision_change("undated copy", "FAIL",
+                                   uncounted=self.every_line(safe_push.IN_RECORD))
+
+    def test_delete_and_re_add_renews_no_approval(self):
+        self.check_decision_change("delete and re-add", "FAIL")
+
+    def test_delete_and_re_add_with_interior_whitespace_renews_no_approval(self):
+        self.check_decision_change("delete and re-add re-spaced", "FAIL", "FAIL",
+                                   f"{self.ENTRY}: changed")
+
+    def test_old_entry_edited_in_place_renews_no_approval(self):
+        self.check_decision_change("edit", "FAIL", "FAIL", f"{self.ENTRY}: changed")
+
+    def test_old_entry_with_a_new_naming_line_is_refused(self):
+        self.check_decision_change("edit and add", "FAIL", "FAIL", f"{self.ENTRY}: changed")
+
+    def test_new_entry_beside_an_old_one_passes(self):
+        self.check_decision_change("new", "ok")
+
+    # Words that name a proposition and mention the axiom lock only when joined across a
+    # line: "III." and "16", as the security review found them, and "I." and "1".
+    SPLIT = ("- **Timing (tooling).** The queue now waits for Book {1}.\n{0}"
+             "{2} checks run in the second pass. Nothing in it touches an axiom\n{0}"
+             "lock or key; those stay as they were.\n")
+    STATEMENTS = {"III.16": ("Elements/BookIII/Prop16.lean", "theorem Prop16 {A B D E : Point}",
+                             "theorem Prop16 {A B D E X : Point}"),
+                  "I.1": ("Elements/BookI/Prop01.lean", SIGNATURE_OLD, SIGNATURE_NEW)}
+
+    def test_words_are_never_joined_across_a_blank_or_an_old_line(self):
+        # The book and the number, "axiom" and "lock", in lines kept apart by a blank line,
+        # or by a line the record holds, are in hunks of their own; in consecutive lines
+        # they are one mention, as a name wrapped on the page is.
+        old = "## 15 October 2026\n"
+        self.assertIn("\n" + old, self.text(DECISIONS))
+        for ref, (path, before, after) in self.STATEMENTS.items():
+            book, number = ref.split(".")
+            for between, outcome in (("", "ok"), ("\n", "FAIL"), (old, "FAIL"),
+                                     ("\n" + old + "\n", "FAIL")):
+                with self.subTest(ref=ref, between=between):
+                    self.restart()
+                    lock = self.text(safe_push.LOCK) + "\n# A comment for the test.\n"
+                    sha = self.commit("Name a statement and the lock across lines", {
+                        path: self.replaced(path, before, after), safe_push.LOCK: lock,
+                        self.ENTRY: self.SPLIT.format(between, book, number),
+                    })
+                    rep = self.check_guard(safe_push.guard_statements, BASE, sha, WORK)
+                    self.assertEqual(rep.steps[-1].outcome, outcome, rep.steps)
+                    self.assertRegex(rep.steps[-1].detail,
+                                     rf"{re.escape(ref)}(: | \()the Lean statement changed")
+                    rep = self.check_guard(safe_push.guard_lock, BASE, sha)
+                    self.assertEqual(rep.steps[-1].outcome, outcome, rep.steps)
+                    self.assertFalse(self.check_guard(safe_push.guard_entries, BASE, sha).failed())
+
+    def test_entry_lines_split_at_every_line_that_does_not_count(self):
+        record = safe_push.Record({"an old line"},
+                                  {" ".join(f"w{n}" for n in range(i, i + 12))
+                                   for i in range(20)})
+        quoted = " ".join(f"w{n}" for n in range(3, 15))
+        text = (f"new one\nnew two\n\n  An  OLD line \nnew three\nhalf {quoted} and more\n"
+                "new four\n")
+        lines = safe_push.entry_lines(self.ENTRY, text, record)
+        self.assertEqual([[(a.line, a.text) for a in h.added] for h in lines.runs],
+                         [[(1, "new one"), (2, "new two")], [(5, "new three")],
+                          [(7, "new four")]])
+        self.assertTrue(all(h.path == self.ENTRY and h.removed == [] for h in lines.runs))
+        self.assertEqual([str(u) for u in lines.uncounted],
+                         [f"{self.ENTRY}:4: {safe_push.IN_RECORD}",
+                          f"{self.ENTRY}:6: {safe_push.IN_RUN}"])
+        self.assertEqual([u.text for u in lines.uncounted],
+                         ["  An  OLD line ", f"half {quoted} and more"])
+
+    def test_skeleton(self):
+        # NFKC, the Cyrillic and Greek look-alikes read as Latin letters (capital Eta as H,
+        # small eta as n; the lunate sigmas, which NFKC makes sigmas, as C and c), casefolded,
+        # and every space separator, the Braille blank, the null notehead, the Khitan filler
+        # and the Hangul fillers read as spaces: an entry may hold none of those five, but
+        # the decisions page may.
+        line = safe_push.record_line
+        self.assertEqual(line("\ufb01ve\u00a0\u3000 words\t"), "five words")
+        self.assertEqual(line("A\u2800B\u1680C\u2003D\u3164E\u202fF"), "a b c d e f")
+        self.assertEqual(line("A\U0001d159B\U00016fe4C"), "a b c")
+        self.assertTrue(all(safe_push.invisible(c) for c in safe_push.BLANKS))
+        self.assertEqual(line("\u0397\u0435ll\u043e \u03b7\u03bft \u03f9\u03f2 \U0001d6c2"),
+                         "hello not cc a")
+        self.assertEqual(line("IT NAMES `Scripts/X.py`"), line("it names `scripts/x.py`"))
+        # A Greek word: its look-alikes read as Latin letters, its other letters as they
+        # are, casefolded; casefolding its iota with perispomeni gives an iota, read as i.
+        self.assertEqual(line("\u03a3\u03c4\u03bf\u03b9\u03c7\u03b5\u1fd6\u03b1"),
+                         "\u03c3\u03c4oix\u03b5i\u0342a")
+        # Every letter the table reads is Cyrillic or Greek, and is read as a Latin one.
+        for code, latin in safe_push.LOOK_ALIKES.items():
+            with self.subTest(char=hex(code)):
+                self.assertRegex(unicodedata.name(chr(code)), r"^(CYRILLIC|GREEK) ")
+                self.assertRegex(unicodedata.name(latin), r"^LATIN (CAPITAL|SMALL) LETTER ")
+
+    def test_entries_guard_runs_in_the_pre_flight(self):
+        self.new_base("An earlier decision", {self.ENTRY: self.OLD})
+        self.commit("Move the earlier decision", {self.MOVED: self.OLD}, remove=[self.ENTRY])
+        r = self.safe_push("--dry-run")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("REFUSED", out)
+        self.assertEqual(self.guard(out, "decision entries"), "FAIL", out)
+        self.assertIn(f"{self.MOVED}: renamed from {self.ENTRY}", out)
+
+    def planted(self, files: dict, mode="100644") -> str:
+        """A commit on HEAD holding `files` at exactly the paths given, made without the
+        working tree, so that no file system that ignores case can respell them."""
+        env = dict(os.environ, GIT_INDEX_FILE=str(TMP / "planted-index"))
+        head = git(WORK, "rev-parse", "HEAD").strip()
+        git(WORK, "read-tree", head, env=env)
+        for path, text in files.items():
+            blob = subprocess.run(["git", "hash-object", "-w", "--stdin"], cwd=WORK,
+                                  input=text, capture_output=True, text=True,
+                                  check=True).stdout.strip()
+            git(WORK, "update-index", "--add", "--cacheinfo", f"{mode},{blob},{path}", env=env)
+        tree = git(WORK, "write-tree", env=env).strip()
+        return git(WORK, "commit-tree", tree, "-p", head, "-m", "Planted", env=env).strip()
+
+    def test_entry_changes_reads_every_kind_of_change(self):
+        base = self.commit("Earlier entries", {
+            self.ENTRY: self.OLD, "docs/decisions/2026-10-19-kept.md": self.NEW,
+            "docs/decisions/2026-10-19-mode.md": "- A decision whose mode changes.\n",
+            self.README: "# Decision entries\n",
+        })
+        (WORK / "docs/decisions/2026-10-19-mode.md").chmod(0o755)
+        self.commit("Change them", {
+            "docs/decisions/2026-10-22-fresh.md": "- A fresh decision for the test.\n",
+            "docs/decisions/2026-02-30-bad-date.md": "- A decision with a bad date.\n",
+            "docs/decisions/notes.md": "- Notes for the test.\n",
+            "docs/decisions/sub/2026-10-22-deeper.md": "- A decision in a folder.\n",
+            "docs/decisions/2026-10-22-empty.md": " \n",
+            "docs/decisions/2026-10-22-latin.md": b"- A decision \xff.\n",
+            "docs/decisions/2026-10-22-hidden.md": "- A fresh\u2060 decision.\n",
+            "docs/decisions/2026-10-19-mode.md": "- A decision whose mode changes.\n",
+            self.README: "# Decision entries\n\nEach decision is a file.\n",
+        }, remove=[self.ENTRY])
+        sha = self.planted({"docs/Decisions/2026-10-22-case.md": "- A decision, recased.\n"})
+        refused, added = safe_push.entry_changes(WORK, base, sha)
+        self.assertEqual(sorted(refused), sorted([
+            "docs/Decisions/2026-10-22-case.md: spelled otherwise than docs/decisions/, "
+            "which Git and GitHub tell apart by case",
+            "docs/decisions/2026-02-30-bad-date.md: neither the README nor an entry named "
+            "<YYYY-MM-DD>-<slug>.md with a valid date",
+            "docs/decisions/2026-10-19-mode.md: changed",
+            "docs/decisions/2026-10-22-empty.md: holds no text",
+            "docs/decisions/2026-10-22-hidden.md:1: U+2060, a character an entry or the "
+            "README may not hold (a control character but a tab and a line feed, a format "
+            "character, a line or paragraph separator, another default-ignorable one, one "
+            "that renders blank, or a private-use or unassigned code point)",
+            "docs/decisions/2026-10-22-latin.md: not UTF-8 text",
+            "docs/decisions/notes.md: neither the README nor an entry named "
+            "<YYYY-MM-DD>-<slug>.md with a valid date",
+            "docs/decisions/sub/2026-10-22-deeper.md: neither the README nor an entry named "
+            "<YYYY-MM-DD>-<slug>.md with a valid date",
+            f"{self.ENTRY}: deleted"]))
+        self.assertEqual(list(added), ["docs/decisions/2026-10-22-fresh.md"])
+
+    def test_paths_a_mac_reads_as_the_folder_are_refused(self):
+        # A Mac's file system compares names in NFD form, casefolded, and finds each of
+        # these under docs/decisions/; Git and GitHub do not. A long s (U+017F) casefolds to
+        # an s, which Git's :(icase) does not see, so a .gitignore planted there could hide
+        # an entry from render.py on a Mac, as the security re-review found. Each is
+        # refused, wherever in the path the respelling lies; a folder of another name is not.
+        misspelled = ("docs/deciſions/2026-10-22-long-s.md",
+                      "docs/deciſions/.gitignore", "docſ/decisions/2026-10-22-docs.md",
+                      "docs/decisionſ/2026-10-22-last.md",
+                      "DOCS/DECISIONS/2026-10-22-capitals.md")
+        apart = ("docs/decisions-old/2026-10-22-apart.md", "docs/decision/2026-10-22-apart.md",
+                 "docs/deciſions-old/2026-10-22-apart.md")
+        sha = self.planted({**{path: "- A decision for the test.\n" for path in misspelled},
+                            **{path: "- A note for the test.\n" for path in apart}})
+        refused, added = safe_push.entry_changes(WORK, BASE, sha)
+        self.assertEqual(sorted(refused), sorted(
+            f"{path}: spelled otherwise than docs/decisions/, which Git and GitHub tell apart "
+            "by case" for path in misspelled))
+        self.assertEqual(added, {})
+        rep = self.check_guard(safe_push.guard_entries, BASE, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+
+    def test_refused_paths_are_printed_with_escapes(self):
+        # A path holding an escape sequence, a bell or a bidirectional mark is named with
+        # each written as an escape, so that a refusal gives a terminal nothing to act on.
+        sha = self.planted({"docs/decisions/2026-10-22-\x1b[31mred.md": "- A decision.\n",
+                            "docs/decisions/notes\u202e.md": "- Notes.\n",
+                            "docs/Decisions/\x07bell.md": "- A decision, recased.\n"})
+        rep = self.check_guard(safe_push.guard_entries, BASE, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+        detail = rep.steps[-1].detail
+        for shown in ("docs/decisions/2026-10-22-\\x1b[31mred.md: neither the README",
+                      "docs/decisions/notes\\u202e.md: neither the README",
+                      "docs/Decisions/\\x07bell.md: spelled otherwise"):
+            self.assertIn(shown, detail)
+        self.assertEqual([c for c in detail if not c.isprintable() and c != "\n"], [])
+
+    def test_readme_is_utf8_text_with_no_hidden_character(self):
+        # Added or changed, the README is read as an entry is read: one that is no UTF-8
+        # text would stop every later push that reads the record (the security
+        # re-review's case), and one holding a character an entry may not hold could hide
+        # what it says. Each is refused, by its line.
+        bare, held = self.readme_bases()
+        for start, text, why in (
+                (bare, b"# Decision entries \xff\n", f"{self.README}: not UTF-8 text"),
+                (held, "# Decision entries\n\nEach\u200b decision.\n".encode(),
+                 f"{self.README}:3: U+200B, {safe_push.HIDDEN}"),
+                (held, "# Decision\U0001d159 entries\n".encode(),
+                 f"{self.README}:1: U+1D159, {safe_push.HIDDEN}")):
+            with self.subTest(why=why):
+                self.restart(start)
+                sha = self.commit("The README for the test", {self.README: text})
+                rep = self.check_guard(safe_push.guard_entries, start, sha)
+                self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+                self.assertIn(why, rep.steps[-1].detail)
+
+    def readme_bases(self) -> tuple[str, str]:
+        """A commit with no README in the folder, and one with a README, as a regular file:
+        BASE is one of them, as it holds a README or not."""
+        if (WORK / self.README).is_file():
+            return self.commit("No README for the entries", remove=[self.README]), BASE
+        return BASE, self.commit("A README for the entries",
+                                 {self.README: "# Decision entries\n"})
+
+    def readme_status(self, start: str, sha: str) -> str:
+        """How Git reads the README's change from `start` to `sha`: A, M, T or D."""
+        return git(WORK, "diff", "--name-status", "--no-renames", start, sha, "--",
+                   self.README).split()[0]
+
+    def test_readme_may_be_edited_never_deleted_and_approves_nothing(self):
+        # Once added, the README stays, so that origin/main always holds the folder that
+        # the advised revert restores; added or edited, it approves nothing.
+        bare, held = self.readme_bases()
+        for change, status in (("added", "A"), ("edited", "M"), ("deleted", "D")):
+            with self.subTest(change=change):
+                start = bare if change == "added" else held
+                self.restart(start)
+                writes = {self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n"}
+                remove = [self.README] if change == "deleted" else []
+                if change != "deleted":
+                    writes[self.README] = f"# Decision entries\n\n`{self.PATH}` changes.\n"
+                sha = self.commit(f"The README {change}", writes, remove=remove)
+                self.assertEqual(self.readme_status(start, sha), status)
+                rep = self.check_guard(safe_push.guard_entries, start, sha)
+                if change == "deleted":
+                    self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+                    self.assertIn(f"{self.README}: deleted (the README, once added, stays)",
+                                  rep.steps[-1].detail)
+                else:
+                    self.assertEqual(rep.steps[-1].outcome, "ok", rep.steps)
+                    self.assertEqual(rep.steps[-1].detail, "no entry added")
+                rep = self.check_guard(safe_push.guard_protected, start, sha)
+                self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+                self.assertIn(f"naming them: {self.PATH}", rep.failed()[0].detail)
+
+    def test_readme_link_refused(self):
+        # A link added where there was no README, or put in the README's place, is refused
+        # as a link, though the README may change.
+        bare, held = self.readme_bases()
+        for start, status in ((bare, "A"), (held, "T")):
+            with self.subTest(status=status):
+                self.restart(start)
+                path = WORK / self.README
+                path.unlink(missing_ok=True)
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.symlink_to("../../" + self.PATH)
+                git(WORK, "add", "--", self.README)
+                sha = self.commit("A link for the README")
+                self.assertEqual(self.readme_status(start, sha), status)
+                rep = self.check_guard(safe_push.guard_entries, start, sha)
+                self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+                self.assertIn(f"{self.README}: not a regular file (mode 120000)",
+                              rep.steps[-1].detail)
+
+    def test_unreadable_base_record_refuses(self):
+        base, sha = self.decision_change("new")
+        original_git = safe_push.git
+
+        def unreadable(repo, *args, **kwargs):
+            if args[:2] == ("cat-file", "blob") and not args[2].startswith(sha):
+                raise safe_push.Refusal("cannot read the base decision blob")
+            return original_git(repo, *args, **kwargs)
+
+        with mock.patch.object(safe_push, "git", side_effect=unreadable):
+            with self.assertRaisesRegex(safe_push.Refusal, "cannot read the base decision"):
+                safe_push.decision_hunks(WORK, base, sha)
+
+    def test_undecodable_base_record_refuses(self):
+        base = self.commit("An unreadable earlier entry", {self.ENTRY: b"\xff\n"})
+        sha = self.protected_change(f"`{self.PATH}` changes.",
+                                    "docs/decisions/2026-10-20-new.md")
+        with self.assertRaisesRegex(safe_push.Refusal, "could not decode the decisions record"):
+            safe_push.decision_hunks(WORK, base, sha)
+
+    def protected_change(self, mention, entry=ENTRY):
+        return self.commit("Name a protected change in an entry", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+            entry: mention + "\n",
+        })
+
+    def test_new_entry_names_a_protected_path(self):
+        sha = self.protected_change(f"`{self.PATH}` changes.")
+        rep = self.check_guard(safe_push.guard_protected, BASE, sha)
+        self.assertFalse(rep.failed(), rep.steps)
+        self.assertEqual(rep.steps[-1].outcome, "ok")
+        self.assertIn(f"each named in {DECISIONS} or docs/decisions/: {self.PATH};",
+                      rep.steps[-1].detail)
+        self.assertEqual(self.text(DECISIONS), safe_push.show(WORK, BASE, DECISIONS))
+        self.assertEqual(safe_push.judged_files(WORK, BASE, sha), [])
+
+    def test_editing_an_old_entry_line_adds_no_mention(self):
+        base = self.commit("An earlier decision", {self.ENTRY: f"`{self.PATH}` changes.\n"})
+        sha = self.protected_change(f"`{self.PATH}` changes again.")
+        rep = self.check_guard(safe_push.guard_protected, base, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL")
+        self.assertIn(f"naming them: {self.PATH}", rep.failed()[0].detail)
+
+    def test_relative_entry_links_resolve_from_the_entry_folder(self):
+        for prefix, outcome in (("../../", "ok"), ("./../../", "ok"),
+                                ("../", "FAIL"), ("../../../", "FAIL"), ("./", "FAIL")):
+            with self.subTest(prefix=prefix):
+                base = git(WORK, "rev-parse", "HEAD").strip()
+                sha = self.protected_change(f"[the file]({prefix}{self.PATH}) changes.",
+                                            f"docs/decisions/2026-10-20-case-{len(prefix)}-"
+                                            f"{outcome.lower()}.md")
+                rep = self.check_guard(safe_push.guard_protected, base, sha)
+                self.assertEqual(rep.steps[-1].outcome, outcome, rep.steps)
+
+    def test_readme_and_undated_files_supply_no_approval(self):
+        for name in ("README.md", "notes.md", "2026-02-30-test.md", "0000-01-01-test.md"):
+            with self.subTest(name=name):
+                base = git(WORK, "rev-parse", "HEAD").strip()
+                sha = self.protected_change(f"`{self.PATH}` changes.",
+                                            f"docs/decisions/{name}")
+                rep = self.check_guard(safe_push.guard_protected, base, sha)
+                self.assertEqual(rep.steps[-1].outcome, "FAIL")
+                self.assertIn(f"naming them: {self.PATH}", rep.failed()[0].detail)
+
+    LATE = ("dated after {}, the day after the earlier of {}'s committer date and this "
+            "machine's date")
+
+    def check_entry_dates(self, committed, machine, cases):
+        """Each of `cases`, an entry's name and why it is refused (None when it is not),
+        committed with the committer date `committed`, on a machine whose date is
+        `machine`: the guard of the entries, and the protected-paths guard the entry
+        names a file for."""
+        env = dict(os.environ, GIT_COMMITTER_DATE=committed)
+        with mock.patch.object(safe_push, "today", lambda: machine):
+            for name, why in cases:
+                with self.subTest(name=name):
+                    self.restart()
+                    entry = f"docs/decisions/{name}"
+                    sha = self.commit("Name a protected change in a dated entry", {
+                        self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+                        entry: f"`{self.PATH}` changes.\n",
+                    }, env=env)
+                    self.assertEqual(safe_push.committed_on(WORK, sha),
+                                     datetime.date.fromisoformat(committed[:10]))
+                    entries = self.check_guard(safe_push.guard_entries, BASE, sha)
+                    protected = self.check_guard(safe_push.guard_protected, BASE, sha)
+                    if why is None:
+                        self.assertEqual([(s.outcome, s.detail) for s in entries.steps],
+                                         [("ok", f"added: {entry}")])
+                        self.assertFalse(protected.failed(), protected.steps)
+                    else:
+                        self.assertEqual(entries.steps[-1].outcome, "FAIL", entries.steps)
+                        self.assertIn(f"{entry}: {why.format(sha[:12])}",
+                                      entries.steps[-1].detail)
+                        self.assertEqual(protected.steps[-1].outcome, "FAIL", protected.steps)
+                        self.assertIn("no line of an entry counts while the guard of the "
+                                      "decision entries refuses", protected.failed()[0].detail)
+
+    def test_entry_dates_run_from_the_first_entry_to_the_day_after_the_commit(self):
+        # An entry is dated from 20 October 2026, the day the entries began, to the day after
+        # its commit's committer date, read on the committer's own calendar, when this
+        # machine's date is later: committed at 23:30 on 25 October at UTC-11, which is
+        # 26 October at UTC, an entry may be dated 26 October, and no later.
+        early = "dated before 2026-10-20, the day the entries began"
+        late = self.LATE.format("2026-10-26", "{}")
+        self.check_entry_dates("2026-10-25T23:30:00-11:00", datetime.date(2026, 10, 30), (
+            ("2026-10-20-first.md", None), ("2026-10-26-next-day.md", None),
+            ("2026-10-19-early.md", early), ("1900-01-01-old.md", early),
+            ("2026-10-27-later.md", late), ("9999-12-31-last-word.md", late)))
+
+    def test_entry_dates_run_to_the_day_after_this_machines_date_too(self):
+        # The pusher sets the committer date. Committed as of 1 January 2099, as in the
+        # security re-review's case, an entry is still dated no later than the day after
+        # this machine's date, 25 October 2026 here: 26 October, and no later.
+        late = self.LATE.format("2026-10-26", "{}")
+        self.check_entry_dates("2099-01-01T12:00:00+00:00", datetime.date(2026, 10, 25), (
+            ("2026-10-26-next-day.md", None), ("2026-10-27-later.md", late),
+            ("2099-01-01-future.md", late)))
+
+    def test_symlink_entry_supplies_no_approval(self):
+        path = WORK / self.ENTRY
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.symlink_to("../../" + self.PATH)
+        git(WORK, "add", "--", self.ENTRY)
+        sha = self.commit("A link is not a decision entry", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+        })
+        rep = self.check_guard(safe_push.guard_protected, BASE, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL")
+        self.assertIn(f"naming them: {self.PATH}", rep.failed()[0].detail)
+        rep = self.check_guard(safe_push.guard_entries, BASE, sha)
+        self.assertIn(f"{self.ENTRY}: not a regular file (mode 120000)", rep.steps[-1].detail)
+
+    def test_lock_named_in_an_entry_passes(self):
+        sha = self.commit("Name the lock in an entry", {
+            safe_push.LOCK: self.text(safe_push.LOCK) + "\n# A comment for the test.\n",
+            self.ENTRY: "`Certificate/axioms.lock` gains a comment.\n",
+        })
+        for guard in (safe_push.guard_lock, safe_push.guard_protected):
+            with self.subTest(guard=guard.__name__):
+                rep = self.check_guard(guard, BASE, sha)
+                self.assertFalse(rep.failed(), rep.steps)
+                self.assertEqual(rep.steps[-1].outcome, "ok")
+
+    def test_lock_mentioned_only_in_an_edited_old_entry_is_refused(self):
+        base = self.commit("An earlier lock decision", {
+            self.ENTRY: "`Certificate/axioms.lock` gains a comment.\n",
+        })
+        sha = self.commit("Edit the old decision", {
+            safe_push.LOCK: self.text(safe_push.LOCK) + "\n# A comment for the test.\n",
+            self.ENTRY: "`Certificate/axioms.lock` gains another comment.\n",
+        })
+        rep = self.check_guard(safe_push.guard_lock, base, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL")
+        self.assertIn("no new line", rep.failed()[0].detail)
+
+    def test_statement_named_in_an_entry_passes(self):
+        path = "Elements/BookI/Prop01.lean"
+        sha = self.commit("Name a statement change in an entry", {
+            path: self.replaced(path, SIGNATURE_OLD, SIGNATURE_NEW),
+            self.ENTRY: "I.1 changes its statement.\n",
+        })
+        rep = self.check_guard(safe_push.guard_statements, BASE, sha, WORK)
+        self.assertFalse(rep.failed(), rep.steps)
+        self.assertIn("I.1 (the Lean statement changed)", rep.steps[-1].detail)
+        self.assertIn("named in the docs/decisions/ lines added", rep.steps[-1].detail)
+
+    def test_deleted_directory_named_in_an_entry_passes(self):
+        base = self.commit("A directory for the test", {"mishnah/test/note.md": "A note.\n"})
+        sha = self.commit("Name a directory deletion in an entry", {
+            self.ENTRY: "`mishnah/test/` is removed.\n",
+        }, remove=["mishnah/test"])
+        rep = self.check_guard(safe_push.guard_directories, base, sha)
+        self.assertFalse(rep.failed(), rep.steps)
+        self.assertIn("mishnah/test/", rep.steps[-1].detail)
+
+    def deleted_directory(self, text, source=ENTRY, earlier=None):
+        """The directories guard on the deletion of mishnah/test/, with `text` added to
+        `source`, an entry or the page, from a base holding the directory and, when given,
+        `earlier` as an entry at ENTRY."""
+        self.restart()
+        write = {"mishnah/test/note.md": "A note.\n"}
+        if earlier is not None:
+            write[self.ENTRY] = earlier
+        base = self.commit("A directory for the test", write)
+        if source == DECISIONS:
+            text = self.text(DECISIONS) + "\n" + text
+        sha = self.commit("Delete the directory", {source: text}, remove=["mishnah/test"])
+        return self.check_guard(safe_push.guard_directories, base, sha)
+
+    def test_deleted_directory_linked_from_an_entry_resolves_from_its_folder(self):
+        # A link resolves from the folder of the file that holds it, as for a protected
+        # path; the directory counts only whole, never a longer path's tail or head.
+        for mention, outcome in (("[removed](../../mishnah/test/)", "ok"),
+                                 ("[removed](../../mishnah/test)", "ok"),
+                                 ("[removed](./../../mishnah/test/)", "ok"),
+                                 ("[removed](/mishnah/test/)", "ok"),
+                                 ("`mishnah/test/`", "ok"),
+                                 ("[removed](../mishnah/test/)", "FAIL"),
+                                 ("[removed](../../../mishnah/test/)", "FAIL"),
+                                 ("[removed](./mishnah/test/)", "FAIL"),
+                                 ("[removed](../../tests/mishnah/test/)", "FAIL"),
+                                 ("[removed](../../mishnah/test/note.md)", "FAIL"),
+                                 ("`tests/mishnah/test/`", "FAIL"),
+                                 ("`mishnah/test/note.md`", "FAIL"),
+                                 ("`mishnah/tests/`", "FAIL"),
+                                 ("`mishnah/test-old/`", "FAIL")):
+            with self.subTest(mention=mention):
+                rep = self.deleted_directory(f"- **A deletion for the test.** {mention}.\n")
+                self.assertEqual(rep.steps[-1].outcome, outcome, rep.steps)
+                if outcome == "FAIL":
+                    self.assertIn("no new line", rep.failed()[0].detail)
+                    self.assertIn("mishnah/test/", rep.failed()[0].detail)
+        rep = self.deleted_directory("- **A deletion for the test.** "
+                                     "[removed](../../mishnah/test/).\n", DECISIONS)
+        self.assertFalse(rep.failed(), rep.steps)
+
+    # Lines naming a path, `{}` standing for it, and whether they name it: a mention starts
+    # the text or follows whitespace or one of ( < [ ` " ' *, after no other character, so
+    # that a home folder's path, a drive's, a URL's or another longer one names nothing
+    # (the security re-review's forms among them); the forms origin/main counted that
+    # start so still count. No path ends a sentence here, so that only where its mention
+    # starts decides.
+    STARTS = (("{} goes.", "ok"), ("It goes: `{}` now.", "ok"), ("It goes ({}) now.", "ok"),
+              ("[{}](https://example.com) goes.", "ok"), ("It goes: <{}> now.", "ok"),
+              ('It goes: "{}" now.', "ok"), ("It goes: '{}' now.", "ok"),
+              ("It goes: *{}* now.", "ok"), ("It goes: **{}** now.", "ok"),
+              ("It goes:\t{} now.", "ok"),
+              ("It goes: ~/{} now.", "FAIL"), ("It goes: C:/{} now.", "FAIL"),
+              ("It goes: @/{} now.", "FAIL"), ("It goes: https://example.com/~/{} now.", "FAIL"),
+              ("It goes: https://example.com/{} now.", "FAIL"), ("It goes: x+{} now.", "FAIL"),
+              ("It goes: x:{} now.", "FAIL"), ("It goes: _{}_ now.", "FAIL"),
+              ("It goes: x_{} now.", "FAIL"))
+
+    def mention_outcome(self, kind, line, source=ENTRY):
+        """The outcome of the files guard ("file": PATH changed) or of the directories guard
+        ("directory": mishnah/test/ deleted), with `line` added to `source`, an entry or the
+        page."""
+        if kind == "directory":
+            return self.deleted_directory(line + "\n", source).steps[-1].outcome
+        self.restart()
+        text = self.text(DECISIONS) + "\n" + line + "\n" if source == DECISIONS else line + "\n"
+        sha = self.commit("Name the file", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n", source: text})
+        return self.check_guard(safe_push.guard_protected, BASE, sha).steps[-1].outcome
+
+    def test_a_mention_starts_the_text_or_follows_a_space_or_an_opening_mark(self):
+        for kind, path in (("file", self.PATH), ("directory", "mishnah/test/")):
+            for form, outcome in self.STARTS:
+                for source in (self.ENTRY, DECISIONS):
+                    with self.subTest(kind=kind, form=form, source=source):
+                        line = "- **A mention for the test.** " + form.format(path)
+                        if form.startswith("{}"):
+                            line = form.format(path)
+                        self.assertEqual(self.mention_outcome(kind, line, source), outcome)
+
+    def test_a_directory_may_end_a_sentence(self):
+        # As a file may, when its mention holds a slash: its full stop after it, with its
+        # closing slash or without; but not a full stop with another, or with a slash, after
+        # it.
+        for line, outcome in (("The folder removed is mishnah/test.", "ok"),
+                              ("The folder removed is mishnah/test/.", "ok"),
+                              ("The folder removed is mishnah/test..", "FAIL"),
+                              ("The folder removed is mishnah/test./", "FAIL"),
+                              ("The folder removed is mishnah/test.md.", "FAIL")):
+            for source in (self.ENTRY, DECISIONS):
+                with self.subTest(line=line, source=source):
+                    self.assertEqual(self.mention_outcome("directory", "- " + line, source),
+                                     outcome)
+
+    def test_a_bare_top_level_directory_ends_no_sentence(self):
+        # A directory at the root named bare is a word of prose too: "the figures." names
+        # no figures/, as origin/main's guards read it (the security re-review's case); its
+        # closing slash, the root's anchor or a link before the full stop names it, and so
+        # does the bare name with no full stop after it.
+        for line, outcome in (("Nothing changes in the figures.", "FAIL"),
+                              ("Nothing changes in figures.", "FAIL"),
+                              ("The folder removed is figures/.", "ok"),
+                              ("The folder removed is /figures.", "ok"),
+                              ("The folder removed is [it](../../figures).", "ok"),
+                              ("The folder removed is figures, all of it.", "ok")):
+            for source in (self.ENTRY, DECISIONS):
+                with self.subTest(line=line, source=source):
+                    self.restart()
+                    text = "- " + line + "\n"
+                    if source == DECISIONS:
+                        text = self.text(DECISIONS) + "\n" + text
+                    sha = self.commit("Delete the figures", {source: text}, remove=["figures"])
+                    rep = self.check_guard(safe_push.guard_directories, BASE, sha)
+                    self.assertEqual(rep.steps[-1].outcome, outcome, rep.steps)
+                    if outcome == "FAIL":
+                        self.assertIn("naming them: figures/", rep.failed()[0].detail)
+
+    def test_deleted_directory_needs_a_new_line_of_an_added_entry(self):
+        # The earlier entry names the directory by a link that resolves; a copy of its
+        # line, re-spaced or not, the entry edited in place, or the line left as it was,
+        # renews nothing.
+        earlier = "- **An earlier deletion for the test.** [removed](../../mishnah/test/).\n"
+        for case, source, text in (
+                ("copied", self.MOVED, earlier),
+                ("copied and re-spaced", self.MOVED, earlier.replace(" [", " \t [")),
+                ("edited in place", self.ENTRY, earlier.replace("earlier", "revised")),
+                ("unchanged", self.MOVED, "- **A new decision for the test.** It names "
+                                          "nothing.\n")):
+            with self.subTest(case=case):
+                rep = self.deleted_directory(text, source, earlier)
+                self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+                self.assertIn("no new line", rep.failed()[0].detail)
+        rep = self.deleted_directory("- **A later deletion for the test.** In words of its "
+                                     "own, [the folder](../../mishnah/test/) goes.\n",
+                                     self.MOVED, earlier)
+        self.assertFalse(rep.failed(), rep.steps)
+
+    def test_page_text_counts_wherever_it_stands(self):
+        # No part of the page is generated: a line appended at its end names the file.
+        sha = self.commit("Name a protected change on the page", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+            DECISIONS: self.text(DECISIONS) + f"\n- `{self.PATH}` changes.\n",
+        })
+        rep = self.check_guard(safe_push.guard_protected, BASE, sha)
+        self.assertFalse(rep.failed(), rep.steps)
+        self.assertIn(f"each named in {DECISIONS}: {self.PATH};", rep.steps[-1].detail)
+
+    def test_page_deleted_with_a_protected_change_is_refused(self):
+        # The page's removed lines name the file by a link resolved from the page's folder,
+        # though the deleted page's hunks have no path.
+        base = self.commit("A page line naming the file by a link", {
+            DECISIONS: self.text(DECISIONS) + f"\n- [The file](../../{self.PATH}) changes.\n",
+        })
+        sha = self.commit("Delete the page", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+        }, remove=[DECISIONS])
+        rep = self.check_guard(safe_push.guard_protected, base, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+        self.assertIn(f"naming them: {self.PATH}", rep.failed()[0].detail)
+
+    def protected_refusal(self, files, text, entry=ENTRY):
+        """guard_protected's refusal of a commit that gives each of `files` a comment and
+        adds `entry` holding `text`."""
+        writes = {path: self.text(path) + "\n# A comment for the test.\n" for path in files}
+        sha = self.commit("Change protected files, with an entry", {**writes, entry: text})
+        rep = self.check_guard(safe_push.guard_protected, BASE, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+        self.assertIn(f"naming them: {', '.join(sorted(files))} (", rep.failed()[0].detail)
+        return rep.failed()[0].detail
+
+    def test_files_listed_a_line_each_as_on_the_page_are_named_in_the_refusal(self):
+        # The re-review's first case: an entry lists its protected files one to a line, as
+        # the page's entry for #184 does. Those lines stand on the page already, so they
+        # name nothing, and the refusal says which lines did not count, and why. The same
+        # names in a sentence of the entry's own count.
+        files = ("scripts/safe_push.py", "scripts/check_release_gate.py")
+        for path in files:
+            self.assertIn(f"\n  `{path}`,\n", self.text(DECISIONS))
+        detail = self.protected_refusal(files, "- **The release gate, for the test "
+                                        "(tooling).** Each file gains a comment. The "
+                                        "protected files changed are:\n"
+                                        + "".join(f"  `{path}`,\n" for path in files))
+        self.assertIn("lines of the entries added that did not count", detail)
+        self.assertIn("in a sentence of its own, never on a line or in a list repeated from "
+                      "an older entry", detail)
+        for n in (2, 3):
+            self.assertIn(f"\n  {self.ENTRY}:{n}: {safe_push.IN_RECORD}", detail)
+        self.assertNotIn(f"{self.ENTRY}:1:", detail)
+        self.restart()
+        sha = self.commit("Change them, with an entry naming them in a sentence", {
+            **{path: self.text(path) + "\n# A comment for the test.\n" for path in files},
+            self.ENTRY: f"- **The release gate, for the test (tooling).** `{files[0]}` and "
+                        f"`{files[1]}` each gain a comment.\n"})
+        rep = self.check_guard(safe_push.guard_protected, BASE, sha)
+        self.assertFalse(rep.failed(), rep.steps)
+
+    def test_files_listed_after_an_older_entrys_words_are_named_in_the_refusal(self):
+        # The re-review's second case: a revert of #184 whose entry lists its seven
+        # protected files in #184's order, after the words #184's entry uses, wrapped
+        # otherwise: twelve words in a row that the page holds, so no line holding one of
+        # them counts.
+        listed = (".github/pull_request_template.md", ".github/workflows/ci.yml",
+                  ".github/workflows/release-gate.yml", "scripts/safe_push.py",
+                  "scripts/check_release_gate.py", "scripts/test_safe_push.py",
+                  "tests/test_release_gate.py")
+        text = textwrap.fill(
+            "- **#184 reverted, for the test (tooling).** It undoes the release hold. The "
+            "protected files changed are: " + ", ".join(f"`{path}`" for path in listed) + ".",
+            72, subsequent_indent="  ", break_long_words=False) + "\n"
+        self.assertFalse(set(text.splitlines()) & set(self.text(DECISIONS).splitlines()))
+        changed = ("scripts/check_release_gate.py", "tests/test_release_gate.py")
+        detail = self.protected_refusal(changed, text)
+        # Named: each line that did not count and names a file changed. Not named: the
+        # lines that did not count and name only files the push leaves alone.
+        lines = text.splitlines()
+        holding = [n for n, line in enumerate(lines, 1)
+                   if any(f"`{path}`" in line for path in changed)]
+        others = [n for n, line in enumerate(lines, 1) if "`" in line and n not in holding]
+        self.assertTrue(holding and others, lines)
+        for n in holding:
+            self.assertIn(f"\n  {self.ENTRY}:{n}: {safe_push.IN_RUN}", detail)
+        for n in others:
+            self.assertNotIn(f"{self.ENTRY}:{n}:", detail)
+
+    def test_refusal_names_no_line_that_names_nothing_asked_for(self):
+        # The re-review's case: an entry whose code fences, and a line of output between
+        # them, are lines the record holds already. They did not count, but name nothing a
+        # guard asks for, so no refusal names them; the line copied from the earlier
+        # entry that names the file changed is named. The lock changed too, which no line
+        # names: its refusal names no line of the entry at all.
+        base = self.commit("An earlier decision with a fence", {
+            self.ENTRY: "- **An earlier decision for the test.** It names one file:\n"
+                        f"  `{self.PATH}`, which gains a comment.\n"
+                        "  ```text\n  a line of output for the test\n  ```\n"})
+        sha = self.commit("A protected change with a fence", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+            safe_push.LOCK: self.text(safe_push.LOCK) + "\n# A comment for the test.\n",
+            self.MOVED: "- **A new decision for the test, in words of its own.** It changes "
+                        "this one:\n"
+                        f"  `{self.PATH}`, which gains a comment.\n"
+                        "```text\na line of output for the test\n```\n"})
+        refused, entries = safe_push.entry_changes(WORK, base, sha)
+        self.assertEqual(refused, [])
+        self.assertEqual([str(u) for u in entries[self.MOVED].uncounted],
+                         [f"{self.MOVED}:{n}: {safe_push.IN_RECORD}" for n in (2, 3, 4, 5)])
+        rep = self.check_guard(safe_push.guard_protected, base, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+        detail = rep.failed()[0].detail
+        self.assertIn(f"\n  {self.MOVED}:2: {safe_push.IN_RECORD}", detail)
+        for n in (1, 3, 4, 5):
+            self.assertNotIn(f"{self.MOVED}:{n}:", detail)
+        rep = self.check_guard(safe_push.guard_lock, base, sha)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+        self.assertNotIn(self.MOVED, rep.failed()[0].detail)
+        self.assertNotIn("lines of the entries added", rep.failed()[0].detail)
+
+    def test_short_entry_sharing_a_line_with_an_older_one_is_an_entry(self):
+        # Two routine entries, alike but for the proposition and sharing a line: Git's copy
+        # detection calls the second a copy of the first, but it is an entry of its own,
+        # accepted; its lines that copy the first count for nothing, and are named.
+        older = "docs/decisions/2026-10-21-iii-31.md"
+        newer = "docs/decisions/2026-10-21-iii-32.md"
+        shared = "  Its record is stamped, as WORKFLOW, section 6, asks of a review done.\n"
+        base = self.commit("III.31 checked", {older: "- **III.31 checked (text).**\n" + shared})
+        sha = self.commit("III.32 checked", {newer: "- **III.32 checked (text).**\n" + shared})
+        status, *paths = git(WORK, "diff", "--name-status", "-C", "-C", base, sha).split()
+        self.assertEqual((status[0], paths), ("C", [older, newer]))
+        rep = self.check_guard(safe_push.guard_entries, base, sha)
+        self.assertEqual([(s.outcome, s.detail) for s in rep.steps],
+                         [("ok", f"added: {newer}")])
+        refused, entries = safe_push.entry_changes(WORK, base, sha)
+        self.assertEqual((refused, list(entries)), ([], [newer]))
+        self.assertEqual([str(u) for u in entries[newer].uncounted],
+                         [f"{newer}:1: {safe_push.IN_RUN}", f"{newer}:2: {safe_push.IN_RECORD}"])
+
+    def test_advised_revert_keeps_the_record_and_passes_the_guards(self):
+        # A merged pull request that adds an entry listing its protected files a line each,
+        # appends to the page and changes the files, reverted as revert_advice says: the
+        # revert's entry names each file in a sentence of its own, and passes; a list
+        # repeated from the merge's entry names nothing, and the refusal says so.
+        other = "scripts/check_links.py"
+        feature = self.commit("A change with its entry", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+            other: self.text(other) + "\n# A comment for the test.\n",
+            self.ENTRY: "- **A change for the test.** Two files gain a comment. The protected "
+                        f"files changed are:\n  `{self.PATH}`,\n  `{other}`.\n",
+            DECISIONS: self.text(DECISIONS) + "\n- **A page line for the test.** It stays.\n",
+        })
+        self.restart()
+        git(WORK, "merge", "--quiet", "--no-ff", "--no-edit", feature)
+        merge = git(WORK, "rev-parse", "HEAD").strip()
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{merge}:refs/heads/main")
+        git(WORK, "fetch", "--quiet", "origin")
+        branch = f"revert-{merge[:12]}"
+        self.addCleanup(lambda: git(WORK, "branch", "-D", branch, check=False))
+        self.addCleanup(self.restart)
+        ctx = safe_push.Context(WORK, merge, BASE, 1, "", None, {})
+        advice = safe_push.revert_advice(ctx, "tooling")
+        entry = f"docs/decisions/{datetime.date.today().isoformat()}-revert-{merge[:12]}.md"
+        lines = [line.strip() for line in advice.splitlines()[1:]]
+        self.assertEqual(lines, [
+            f"git switch -c {branch} origin/main",
+            f"git revert --no-commit -m 1 {merge}",
+            f"git restore --source=origin/main --staged --worktree -- docs/decisions/ "
+            f"{DECISIONS}",
+            f"# write {entry}: the revert and why, naming each protected file, statement",
+            "# and lock that it changes, as an entry of any change must, each in a sentence",
+            "# of the entry's own, never on a line or in a list repeated from an older entry",
+            f"git add -- {entry}",
+            "git commit --no-edit",
+            f"git safe-push --branch {branch} --label tooling"])
+        for line in lines[:-1]:
+            if line.startswith("# write "):
+                (WORK / entry).write_text(f"- **The merge reverted, for the test.** "
+                                          f"Reverting it takes the comment out of "
+                                          f"`{self.PATH}`, and out of `{other}` too.\n")
+            elif not line.startswith("#"):
+                git(WORK, *shlex.split(line)[1:])
+        for path in (self.PATH, other):
+            self.assertEqual(self.text(path), safe_push.show(WORK, BASE, path))
+        for path in (DECISIONS, self.ENTRY):
+            self.assertEqual(self.text(path), safe_push.show(WORK, merge, path))
+        self.assertIn("Revert", git(WORK, "log", "-1", "--format=%s"))
+        head = git(WORK, "rev-parse", "HEAD").strip()
+        for guard, args in self.four_guards() + ((safe_push.guard_entries, ()),):
+            with self.subTest(guard=guard.__name__):
+                rep = self.check_guard(guard, merge, head, *args)
+                self.assertFalse(rep.failed(), rep.steps)
+        # The revert's entry written as the merge's lists the files: those lines name nothing.
+        listed = self.commit("The revert's entry as a list", {
+            entry: "- **The merge reverted, for the test.** The protected files changed "
+                   f"are:\n  `{self.PATH}`,\n  `{other}`.\n"})
+        rep = self.check_guard(safe_push.guard_protected, merge, listed)
+        self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+        self.assertIn(f"naming them: {other}, {self.PATH} (", rep.failed()[0].detail)
+        for n in (2, 3):
+            self.assertIn(f"\n  {entry}:{n}: {safe_push.IN_RECORD}", rep.failed()[0].detail)
+        # Without restoring the record, the revert deletes the merge's entry: refused.
+        self.restart(merge)
+        git(WORK, "revert", "--no-edit", "-m", "1", merge)
+        bare = git(WORK, "rev-parse", "HEAD").strip()
+        rep = self.check_guard(safe_push.guard_entries, merge, bare)
+        self.assertIn(f"{self.ENTRY}: deleted", rep.failed()[0].detail)
+
+    def test_advised_revert_restores_only_what_origin_main_holds(self):
+        # A main with no docs/decisions/, as before its README was added: the advice
+        # restores the page alone, since git restore stops at a path its source lacks, and,
+        # followed, passes the guards.
+        self.assertEqual(sorted(p.name for p in (WORK / safe_push.ENTRIES).iterdir()),
+                         ["README.md"])
+        start = self.commit("No folder of entries yet", remove=[self.README])
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{start}:refs/heads/main")
+        feature = self.commit("A change named on the page", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+            DECISIONS: self.text(DECISIONS) + f"\n- **A change for the test.** `{self.PATH}` "
+                                              "gains a comment.\n",
+        })
+        self.restart(start)
+        git(WORK, "merge", "--quiet", "--no-ff", "--no-edit", feature)
+        merge = git(WORK, "rev-parse", "HEAD").strip()
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{merge}:refs/heads/main")
+        git(WORK, "fetch", "--quiet", "origin")
+        branch = f"revert-{merge[:12]}"
+        self.addCleanup(lambda: git(WORK, "branch", "-D", branch, check=False))
+        self.addCleanup(self.restart)
+        advice = safe_push.revert_advice(safe_push.Context(WORK, merge, start, 1, "", None, {}),
+                                         "tooling")
+        entry = f"docs/decisions/{datetime.date.today().isoformat()}-revert-{merge[:12]}.md"
+        lines = [line.strip() for line in advice.splitlines()[1:]]
+        self.assertIn(f"git restore --source=origin/main --staged --worktree -- {DECISIONS}",
+                      lines)
+        for line in lines[:-1]:
+            if line.startswith("# write "):
+                (WORK / entry).parent.mkdir(parents=True, exist_ok=True)
+                (WORK / entry).write_text(f"- **The merge reverted, for the test.** Reverting "
+                                          f"it takes the comment out of `{self.PATH}`.\n")
+            elif not line.startswith("#"):
+                git(WORK, *shlex.split(line)[1:])
+        self.assertEqual(self.text(self.PATH), safe_push.show(WORK, start, self.PATH))
+        self.assertEqual(self.text(DECISIONS), safe_push.show(WORK, merge, DECISIONS))
+        head = git(WORK, "rev-parse", "HEAD").strip()
+        for guard, args in self.four_guards() + ((safe_push.guard_entries, ()),):
+            with self.subTest(guard=guard.__name__):
+                rep = self.check_guard(guard, merge, head, *args)
+                self.assertFalse(rep.failed(), rep.steps)
 
 
 class ProtectedPaths(Edge):
@@ -5980,10 +7109,90 @@ class Units(unittest.TestCase):
                pr(4, True, "test"), pr(5, None, "test"), pr(6, False, "test", "other")]
         self.assertEqual([p["number"] for p in safe_push.own_prs(ctx, prs)], [1, 2])
 
+    def test_mentions_count_nothing_the_guards_refused_before(self):
+        # The guards' patterns before a mention had to start the text or follow whitespace
+        # or one of ( < [ ` " ' * (main at 756bdbae): the files guard's, and the directories
+        # guard's, which took no prefix. Over every form below, the rule now counts none of
+        # the forms those refused, but a directory's own additions, each starting where a
+        # mention may: anchored at the root, by a relative link that resolves, or ending a
+        # sentence when the mention holds a slash, so that a directory at the root named
+        # bare, as "the figures.", names nothing. It counts every form those counted that
+        # starts so, and none other.
+        before = {"file": r"(?<![\w/.-])(?P<prefix>/|(?:\.\.?/)*)%s(?!\.?[\w/-])",
+                  "directory": r"(?<![\w/.-])(?P<prefix>)%s/?(?![\w./-])"}
+        paths = (("file", "scripts/check_style.py"), ("directory", "mishnah/test"),
+                 ("directory", "figures"))
+        # What stands before the path: a head, then a prefix. No head ends in / or ., so
+        # that the prefix, read whole, is the one given.
+        leads = ["", *"!#$%&()*+,-:;<=>?@[\\]^_`{|}~\"'aZ0 \t\u00a0\u201c\u2018\u00ab\u00e9"]
+        heads = [outer + lead for outer in ("", "x", "_", "*", "(") for lead in leads]
+        prefixes = ("", "/", ".", "../../", "./../../", "../", "~/", "C:/", "@/", "x/",
+                    "https://example.com/~/")
+        tails = ("", ".", "/", "/.", "..", "./", "_", "'s", ")", "`", "*", ",", "-old", ".md",
+                 "/x")
+        sources = (DECISIONS, "docs/decisions/2026-10-21-test.md")
+
+        def counts(pattern, path, text, source):
+            hunk = safe_push.Hunk(source, [], [safe_push.Added(source, 1, text)])
+            return safe_push.names_path([hunk], path, pattern)
+
+        newly, lost, elsewhere = [], [], []
+        for kind, path in paths:
+            now = safe_push.mention(path, kind == "directory")
+            then = re.compile(before[kind] % re.escape(path))
+            for source, head, prefix, tail in itertools.product(sources, heads, prefixes, tails):
+                text = head + prefix + path + tail
+                counted, was = counts(now, path, text, source), counts(then, path, text, source)
+                # Where a mention may start: a prefix of its own (none, the root's /, or
+                # the ./ and ../ steps of a link), after the start, a space or an opening mark.
+                starts = prefix in ("", "/", "../../", "./../../", "../") and (
+                    not head or head[-1].isspace() or head[-1] in "(<[`\"'*")
+                added = kind == "directory" and starts and (
+                    prefix in ("/", "../../", "./../../") or tail == "/."
+                    or (tail == "." and "/" in prefix + path))
+                if counted and not was and not added:
+                    newly.append((kind, source, text))
+                if was and starts and not counted:
+                    lost.append((kind, source, text))
+                if counted and not starts:
+                    elsewhere.append((kind, source, text))
+        self.assertEqual(newly, [])
+        self.assertEqual(lost, [])
+        self.assertEqual(elsewhere, [])
+        # The forms the security re-review found, refused now, and a few the guards counted
+        # before that start otherwise, refused too.
+        for kind, path, text in (
+                ("directory", "mishnah/test", "~/mishnah/test/"),
+                ("directory", "mishnah/test", "C:/mishnah/test/"),
+                ("directory", "mishnah/test", "@/mishnah/test/"),
+                ("directory", "mishnah/test", "https://example.com/~/mishnah/test/"),
+                ("directory", "mishnah/test", "x+mishnah/test/"),
+                ("file", "scripts/check_style.py", "x+scripts/check_style.py"),
+                ("file", "scripts/check_style.py", "~/scripts/check_style.py"),
+                ("file", "scripts/check_style.py", "x:scripts/check_style.py"),
+                ("directory", "figures", "Nothing changes in the figures.")):
+            with self.subTest(text=text):
+                pattern = safe_push.mention(path, kind == "directory")
+                self.assertFalse(counts(pattern, path, text, sources[1]))
+
     def test_revert_advice_and_slug(self):
         ctx = safe_push.Context(Path("."), "a" * 40, "b" * 40, 3, "", None, {})
-        advice = safe_push.revert_advice(ctx)
-        self.assertIn(f"git revert --no-edit -m 1 {'a' * 40}", advice)
+        # The record is restored from origin/main: each of the folder and the page that it
+        # holds, for git restore stops at a path its source lacks.
+        with mock.patch.object(safe_push, "git_ok", return_value=True):
+            advice = safe_push.revert_advice(ctx)
+        self.assertIn(f"git revert --no-commit -m 1 {'a' * 40}", advice)
+        self.assertIn("git restore --source=origin/main --staged --worktree -- docs/decisions/ "
+                      f"{DECISIONS}\n", advice)
+        page = mock.patch.object(safe_push, "git_ok",
+                                 side_effect=lambda repo, *args: args[-1].endswith(DECISIONS))
+        with page:
+            self.assertIn(f"git restore --source=origin/main --staged --worktree -- {DECISIONS}\n",
+                          safe_push.revert_advice(ctx))
+        with mock.patch.object(safe_push, "git_ok", return_value=False):
+            self.assertNotIn("git restore", safe_push.revert_advice(ctx))
+        self.assertIn(f"docs/decisions/{datetime.date.today().isoformat()}-revert-{'a' * 12}.md",
+                      advice)
         self.assertIn(f"git safe-push --branch revert-{'a' * 12} --label <kind>", advice)
         self.assertIn("--label tooling", safe_push.revert_advice(ctx, "tooling"))
         self.assertEqual(safe_push.github_slug("https://github.com/jackChallis/stoicheia.git"),
