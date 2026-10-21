@@ -1156,6 +1156,31 @@ class QueueTests(unittest.TestCase):
     def test_tree_mode_rejects_group_arguments(self):
         self.verdict(self.cli("--gaps", tree=True), 2, "--tree accepts only --render")
 
+    def test_entry_attributes_cannot_hide_a_repeated_heading_from_the_judge(self):
+        # A train gives the decisions page working-tree-encoding=UTF-7, with which Git
+        # writes "## 20 October 2026" to the group's checkout as "+ACMAIw- 20 October
+        # 2026": the judge reads the page's blob, as GitHub shows it, never the checkout.
+        page = self.trees[self.base][PAGE] + "\n## 20 October 2026\n\nRepeated date.\n"
+        one = self.train(1, {PAGE: page,
+                             ".gitattributes": f"{PAGE} working-tree-encoding=UTF-7\n"})
+        group = self.merge(self.merge(self.base, one, 1), self.two, 2)
+        self.checkout(group)
+        self.assertNotIn(b"\n## 20 October 2026\n\nRepeated", (self.repo / PAGE).read_bytes())
+        self.verdict(self.cli(head=group, prepare=False), 1, PAGE, "repeated dated heading")
+
+    def test_a_group_page_that_is_no_regular_file_is_unreadable(self):
+        blob = self.git("hash-object", "-w", "--stdin", data="## 20 October 2026\n").strip()
+        index = self.root / "page-index"
+        for mode in ("100755", "120000"):
+            with self.subTest(mode=mode), patch.dict(os.environ, GIT_INDEX_FILE=str(index)):
+                self.git("read-tree", self.head)
+                self.git("update-index", "--cacheinfo", f"{mode},{blob},{PAGE}")
+                head = self.make([self.head], tree=self.git("write-tree").strip())
+                with self.assertRaisesRegex(ValueError, "page at the group head is not a "
+                                                        "regular file"):
+                    queue.page_blob(self.repo, head)
+        self.assertEqual(queue.page_blob(self.repo, self.head), self.trees[self.head][PAGE])
+
 
 class TreeTests(unittest.TestCase):
     """Rule (d)'s line reading, each case run by --tree on a repository whose index holds
@@ -1164,6 +1189,7 @@ class TreeTests(unittest.TestCase):
     ORIGINAL = "## 20 October 2026\n\nA previous decision.\n"
     PLAIN = "which is not plain"
     REPEATED = "repeated dated heading"
+    YEAR = "a year in no date this check reads"
 
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -1180,6 +1206,10 @@ class TreeTests(unittest.TestCase):
         """Run --tree on the page with `added` as its last lines."""
         text = (self.ORIGINAL if original is None else original) + "\n" + added + "\n"
         self.page.write_bytes(text.encode("utf-8"))
+        return self.check()
+
+    def check(self):
+        """Run --tree on the repository as it stands."""
         return subprocess.run([sys.executable, "-I", str(SCRIPTS / "check_queue.py"),
                                "--tree", str(self.repo)], cwd=self.repo,
                               capture_output=True, text=True)
@@ -1251,7 +1281,14 @@ class TreeTests(unittest.TestCase):
             "> - > ## 20 October 2026", "> - ## 20 October 2026", "* > 2. ## 20 October 2026",
             "> 20 October 2026\n> ---", "- 20 October 2026\n---",
             "- 20 October 2026\n  ---", "> - 20 October 2026\n---",
-            "1.  Item\n\n    ## 20 October 2026"))
+            "1.  Item\n\n    ## 20 October 2026",
+            # GFM's footnote definitions and task items hold blocks too (the fourth review).
+            "[^n]: ## 20 October 2026", "[^n]:## 20 October 2026",
+            "   [^n]: ## 20 October 2026", "> [^n]: ## 20 October 2026",
+            "- [ ] ## 20 October 2026", "- [x] ## 20 October 2026",
+            "- [X] ## 20 October 2026", "* [ ] ## 20 October 2026",
+            # A list number that cannot open a list inside a paragraph is its text.
+            "Notes\n20. October 2026\n===", "Notes\n20) October 2026\n==="))
 
     def test_code_and_html_hide_no_heading(self):
         # The cases a reading of blocks once passed, the third review's five among them.
@@ -1270,14 +1307,67 @@ class TreeTests(unittest.TestCase):
             "- Item\n\n  ```\n## 20 October 2026"))
 
     def test_an_underline_reads_back_to_the_blank_line(self):
-        # A line of no-break spaces, or one holding only a list marker, is not blank; a
-        # line of > is. A later underline's text holds an earlier one's.
+        # A line of spaces and tabs is blank; a line of no-break spaces, or one holding
+        # only a list marker or a > (indented four columns or more, it is a paragraph's
+        # text), is not. A later underline's text holds an earlier one's.
         self.refused((added, self.REPEATED) for added in (
             "20 October\n*\n2026\n---", "20 October\n\N{NO-BREAK SPACE}\n2026\n===",
             "20 October\n1.\n2026\n---", "20 October\n    ===\n2026\n---",
-            "21 October 2026\n===\nNotes\n---"))
+            "21 October 2026\n===\nNotes\n---", "20 October\n>\n2026\n===",
+            "20 October 2026\n    >\n===", "20 October 2026\n\t>\n===",
+            "- 20 October 2026\n      >\n  ===", "> 20 October 2026\n>     >\n> ===",
+            "21 October 2026\n===\n>\nNotes\n---"))
         self.refused([("21 October 2026\n===\nNotes\n---", self.PLAIN)])
-        self.passes(["20 October\n>\n2026\n===", "20 October\n\n2026\n==="])
+        self.passes(["21 October 2026\n===\n \t\nNotes\n---"])
+        # The blank line ends the stretch: no date is read across it, though the heading
+        # "2026" below it holds a year in no date.
+        result = self.tree("20 October\n\n2026\n===")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn(self.YEAR, result.stdout)
+        self.assertNotIn(self.REPEATED, result.stdout)
+
+    def test_a_year_must_stand_in_a_date_the_check_reads(self):
+        # A date written in a way the check does not read refuses, never passes (the
+        # fourth review): every year from 1900 to 2199 must be a read date's year, in its
+        # own line, and a year in a list number or footnote marker never is.
+        self.refused((added, self.YEAR) for added in (
+            "## 20/10/2026", "## 20.10.2026", "## 20-10-2026", "## 10/20/2026",
+            "## The 20th of October 2026", "## 2026 October 20", "## October 2026",
+            "## 2026", "## 31 February 2026", "## 2026-02-31", "## FY2026",
+            "## 21 October 2026 (also 20/10/2026)", "# 20October2026",
+            "20 October\n2026\n===", "Notes\n2026. October 20\n===", "1. October 2026\n   =",
+            "Notes 20 October\n[^2026]:\n==="))
+        self.passes(["## 21 October 2026", "## October 21, 2026", "## 2026-10-21",
+                     "## 21st October 2026", "## 21 October 2026 to 22 October 2026",
+                     "## Book I, 1066 and after", "## 2200 propositions", "### 2026",
+                     "A paragraph of 2026, in prose.", "1. 21 October 2026\n   ---"])
+
+    def test_a_page_a_checkout_may_rewrite_is_unreadable(self):
+        # --tree reads the checkout, where Git writes the page through its attributes:
+        # with working-tree-encoding=UTF-7, "## 20 October 2026" stands there as
+        # "+ACMAIw- 20 October 2026" (the fourth review), which no line reading takes for
+        # a heading. So any attribute that can change how a checkout writes the page,
+        # from .gitattributes or from the repository's own attributes file, is unreadable.
+        written = ("+ACMAIw- 20 October 2026\n\nA previous decision.\n\n"
+                   "+ACMAIw- 20 October 2026\n")
+        cases = (("working-tree-encoding=UTF-7", "working-tree-encoding=UTF-7"),
+                 ("filter=hidden", "filter=hidden"), ("ident", "ident=set"),
+                 ("text", "text=set"), ("-text", "text=unset"), ("eol=crlf", "eol=crlf"),
+                 ("crlf", "crlf=set"))
+        for where in (".gitattributes", ".git/info/attributes"):
+            for value, reported in cases:
+                with self.subTest(where=where, value=value):
+                    attributes = self.repo / where
+                    attributes.write_text(f"{PAGE} {value}\n", encoding="utf-8")
+                    self.page.write_text(written, encoding="utf-8")
+                    result = self.check()
+                    attributes.unlink()
+                    self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                    self.assertIn(f"the decisions page has {reported}, with which",
+                                  result.stderr)
+                    self.assertIn("take the attribute off the page", result.stderr)
+        self.page.write_text(self.ORIGINAL, encoding="utf-8")
+        self.assertEqual(self.check().returncode, 0)
 
     def test_html_heading_tags_refuse_anywhere(self):
         self.refused((added, "an HTML heading tag") for added in (
@@ -1300,11 +1390,14 @@ class TreeTests(unittest.TestCase):
                  "-" * size + " -", "## 1 " + "a " * (size // 2),
                  "## 1 January " + "2026 1 January " * (size // 15),
                  "## [20 October 2026](a" + "(" * size, "<x title=\"" + ">" * size + "\">",
-                 "## 20 October 2026" + " " * size + "#", "<h2" * (size // 3 + 1))
+                 "## 20 October 2026" + " " * size + "#", "<h2" * (size // 3 + 1),
+                 "[^" + "a" * size, "[^" + "]" * size, "[^a]:" * (size // 5),
+                 "[ ] " * (size // 4), "1. " * (size // 3) + "2026", "Notes 2026 " * (size // 11))
         pages = ("a\n=\n" * (size // 4), "a\n" * (size // 2) + "=",
                  "x\n" + "-\n" * (size // 2), "1 January 2026\n=\n" * (size // 16 + 1),
                  "## 20 October 2026\n" * (size // 19 + 1),
-                 "a\n" + "\N{NO-BREAK SPACE}\n" * (size // 2) + "=", ">\n" * (size // 2))
+                 "a\n" + "\N{NO-BREAK SPACE}\n" * (size // 2) + "=", ">\n" * (size // 2),
+                 "1. a\n" * (size // 5) + "=", "[^a]: 2026\n" * (size // 11 + 1) + "=")
         for page in (*("Paragraph.\n\n" + line + "\n=\n" for line in lines), *pages):
             with self.subTest(page=page[:24]):
                 self.assertGreaterEqual(len(page), size)

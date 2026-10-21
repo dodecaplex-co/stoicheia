@@ -385,7 +385,13 @@ class TrainChecks(Repository):
                           ("code_review", "Not required: a documentation change."),
                           ("code_review", f"Reviewed at {self.member[:6]}: no findings."),
                           ("code_review", "Reviewed at ABCDEF1: no findings."),
-                          ("security_review", "Reviewed by hand: no findings.")):
+                          ("security_review", "Reviewed by hand: no findings."),
+                          # A commit no reader sees names none (the fourth review).
+                          ("code_review", f"<span title='{self.member[:12]}'>clean</span>"),
+                          ("security_review",
+                           f"<a href='#{self.member[:12]}'>Pass</a>: no findings."),
+                          ("code_review",
+                           f"[Pass, no findings](https://example.invalid/{self.member})")):
             with self.subTest(key=key, cell=cell):
                 label = "/code-review" if key == "code_review" else "/security-review"
                 self.refused(f"{label} names no reviewed commit",
@@ -441,6 +447,8 @@ class TrainChecks(Repository):
                  f"Reviewed {own}: pass; a second review to come.", f"{own}: N/A",
                  f"Reviewed {own}: PENDING.", f"{own}: pass. Pending items: none.",
                  f"{own}: pass; n / a for the rest.", f"{own}: not&#32;needed again.",
+                 # Casefolding the dotted capital I adds a mark (the fourth review).
+                 f"Reviewed {own}: PENDİNG.", f"{own}: pass; \N{MATHEMATICAL BOLD CAPITAL N}/A.",
                  f"Reviewed {own}: pass, to-come notes aside.", f"Reviewed {own}: t\N{ZERO WIDTH SPACE}bd.")
         for cell in cells:
             for key, label in (("code_review", "/code-review"),
@@ -559,7 +567,11 @@ class TrainChecks(Repository):
         for said in ("Not required", "not required", "NOT REQUIRED", "not  required",
                      "not-required", "not_required", "Notrequired", "not required",
                      "Not&nbsp;required", "Not&#32;required", "not​required",
-                     "**Not** required", "Ｎot required"):
+                     "**Not** required", "Ｎot required",
+                     # Casefolding the dotted capital I adds a mark (the fourth review); a
+                     # compatibility capital folds only after NFKC.
+                     "NOT REQUİRED", "Not \N{BLACK-LETTER CAPITAL R}equired",
+                     "\N{MATHEMATICAL BOLD CAPITAL N}ot required"):
             with self.subTest(said=said):
                 cell = f"Security reader at {member}: PASS; a second pass is {said}."
                 self.refused("/security-review says Not required for protected paths",

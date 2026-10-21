@@ -607,7 +607,8 @@ pull request sections and two more, `Members` and `What is new`. `Members` is a 
 with the columns `Branch`, `Head`, `/code-review`, `/security-review` and `/no-mistakes`,
 one row per member. `Head` is 12 to 40 lower-case hexadecimal digits naming the member
 head merged. Each `/code-review` and `/security-review` cell names the commit its review
-read, by 7 to 40 lower-case hexadecimal digits, with the findings, and that commit must
+read, by 7 to 40 lower-case hexadecimal digits that a reader sees (not in an HTML tag or
+comment, or a link's destination), with the findings, and that commit must
 be one of the member's own: the member's head, or an ancestor of it not on origin/main,
 named unambiguously by digits that begin its name (as `git rev-parse --verify
 <digits>^{commit}` resolves them; a ref whose name is hex digits does not count). Other
@@ -761,22 +762,28 @@ are:
 - **(d) A clean tree.** The decisions page has no repeated dated heading. The check reads
   lines, not the page as it renders, so it can only over-approximate: a line that could
   render as a level-one or level-two heading counts, in code, HTML and every container
-  too; its text must be plain; and no date may stand in two such headings. Each line is
-  read in time linear in its length. In full:
+  too; its text must be plain; every year in it must stand in a date the check reads; and
+  no date may stand in two such headings. Each line is read in time linear in its
+  length. In full:
   - Lines end at a line feed, a carriage return or both, as in CommonMark, and a byte
-    order mark that opens the page is skipped. Each line is read without its leading
-    whitespace, block quote markers (`>`) and list markers (`-`, `*` or `+`, or digits
-    followed by `.` or `)`, each followed by whitespace or the line's end), taken off
-    again and again. A line that holds only spaces, tabs and `>` is blank.
+    order mark that opens the page is skipped. A line of spaces and tabs is blank; a line
+    that holds anything else, a `>` among them, is not. Each line is read without its
+    leading whitespace and its container markers, taken off again and again: block quote
+    markers (`>`); list markers (`-`, `*` or `+`, or digits followed by `.` or `)`, each
+    followed by whitespace or the line's end); GFM's task markers (`[ ]`, `[x]` or `[X]`,
+    followed by whitespace or the line's end); and GFM's footnote markers (`[^label]:`).
   - A line that then begins with one or two `#` followed by a space, a tab or its end is
     a heading. Its text is what follows, without the spaces and tabs around it and
     without a closing run of `#` after a space or a tab.
   - A line that is then a run of `=` or of `-`, of any length from one, as in CommonMark
     (a lone `-` among them), with whitespace after it, underlines a heading when one or
     more lines that are not blank stand above it. Its text is every line back to the
-    previous blank line, each read as above, joined by spaces. So a later underline's
-    text holds an earlier one's: two headings underlined in one stretch of lines need a
-    blank line between them.
+    previous blank line, each read as above, joined by spaces, with the line's list
+    numbers and footnote markers before it: a list number that cannot open a list inside
+    a paragraph (any but a 1 followed by text) is the paragraph's own text, so `Notes`,
+    `20. October 2026` and `===` make the heading "Notes 20. October 2026". So a later
+    underline's text holds an earlier one's: two headings underlined in one stretch of
+    lines need a blank line between them.
   - Every heading's text is plain: ASCII letters, digits, spaces and `. , : ; ' ( ) - /`
     only. Any other character (`<`, `&`, `[`, `*`, `_`, a backtick, `\`, `#`, `=`, a
     tab, any character outside ASCII) refuses the page, naming the line: the page writes
@@ -786,6 +793,13 @@ are:
     name or its first three letters (or `Sept`), in any case, and a year of four digits,
     day first or month first; or the year, month and day in numbers, as `2026-10-20`.
     Two dated headings with the same date refuse the page, naming both.
+  - Every year in a heading's text, four digits from 1900 to 2199 standing apart from
+    other digits, must be the year of such a date, read within the year's own line (a
+    heading's text may begin at any of its lines), and a year in a list number or
+    footnote marker never is. Any other refuses the page, naming the line: so a date
+    written in a way the check does not read (`20/10/2026`, `the 20th of October 2026`,
+    `2026 October 20`) refuses rather than passes, and so does a heading of a year or a
+    month alone (`October 2026`).
   - An HTML `<h1>` or `<h2>` tag anywhere in the page, code included, refuses: the page
     quotes such a tag only in prose, as character references (`&lt;h2&gt;`), since a
     code span shows a reference as written.
@@ -793,12 +807,22 @@ are:
     group, and conflict markers are S23's of `scripts/check_style.py`, in the same job.
 
 Every merge the judge computes reads merge attributes from the group's base, main,
-never from the group's checkout, so an entry's `.gitattributes` cannot change a verdict.
+never from the group's checkout. And judging a group, it reads every file from Git's
+objects, the decisions page among them (its blob, a regular file), never from the
+checkout, which the group's own attributes shape (`working-tree-encoding` or a
+`filter`, say). So an entry's `.gitattributes` cannot change what is judged; it can at
+most make the checkout differ from the group's head, which refuses. `--tree` reads the
+page in the checkout it is given, so it refuses as unreadable (exit 2) a page to which
+Git gives an attribute that can change how a checkout writes it: `working-tree-encoding`,
+`filter`, `ident`, `text`, `eol` or `crlf`, set, unset or with a value.
 
 Every entry other than an automatic revert must have its head in this repository, and no
-bot, the revert App's above all, may have written it, put it in the queue or last edited
-its body: trains are written and queued by people. GraphQL names a bot by a login
-without the "[bot]" that REST adds, so the actor's type is read, not its login.
+bot, the revert App's above all, may have written it: trains are written and queued by
+people. Of an entry still in the queue, no bot may have put it there or last edited its
+body either; of one already merged, the merged prefix of the group, the judge reads only
+its head's repository and who wrote it, since GitHub's queue no longer lists it and its
+own group judged it when it merged. GraphQL names a bot by a login without the "[bot]"
+that REST adds, so the actor's type is read, not its login.
 
 The queue accepts a revert without an ordinary pre-flight only from the configured
 App bot (`STOICHEIA_REVERT_BOT`), on a `revert/` branch with the `auto-revert` label,

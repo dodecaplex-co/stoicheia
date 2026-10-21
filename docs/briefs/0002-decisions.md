@@ -3373,8 +3373,9 @@ findings:
     (with its entry files under `docs/decisions/` only once origin/main has that
     directory), Git's automatic merge reading merge attributes from origin/main, never
     from the checkout or a member's `.gitattributes`; the train's own commits change only
-    those; each `/code-review` and `/security-review` cell names, by 7 or more
-    hexadecimal digits, a commit of the member's own history (its head, or an ancestor
+    those; each `/code-review` and `/security-review` cell names, by 7 to 40 lower-case
+    hexadecimal digits that a reader sees (not in an HTML tag or comment, or a link's
+    destination), a commit of the member's own history (its head, or an ancestor
     of it not on origin/main), gives some visible verdict or findings beyond that name,
     is not only a placeholder and holds nowhere, in any case, "pending", "TBD", "to
     come", "not needed" or "N/A", `/no-mistakes` says `passed at` the member's own head
@@ -3401,15 +3402,22 @@ findings:
     entries ahead, in order, as plain merge commits; and (d) that no dated decisions
     heading repeats, read line by line, never as the page renders, so that the reading
     can only over-approximate: a line that could render as a level-one or level-two
-    heading counts, in code, HTML and every container too, its leading whitespace,
-    `>` and list markers taken off; its text must be plain, ASCII letters, digits,
-    spaces and `. , : ; ' ( ) - /` only, or the page is refused, naming the line; an
-    underline's text is every line back to the previous blank one; a heading is dated
-    when its text contains a date, and two with the same date are refused, naming both;
-    and an HTML heading tag of level one or two anywhere on the page is refused, so the
-    page quotes one only in prose, as character references (the pages' freshness and
-    conflict markers are the `check` job's). Every
-    merge it computes reads merge attributes from the group's base. The pre-flight block
+    heading counts, in code, HTML and every container too, its leading whitespace and
+    container markers taken off (`>`, list markers, and GFM's task markers and footnote
+    markers); a line of spaces and tabs is blank, and no other; its text must be plain,
+    ASCII letters, digits, spaces and `. , : ; ' ( ) - /` only, or the page is refused,
+    naming the line; an underline's text is every line back to the previous blank one,
+    each with its list numbers and footnote markers, which may be a paragraph's own text;
+    a heading is dated when its text contains a date, and two with the same date are
+    refused, naming both; every year in a heading must be the year of a date the check
+    reads, in its own line, so that a date written another way (`20/10/2026`) is refused,
+    never passed; and an HTML heading tag of level one or two anywhere on the page is
+    refused, so the page quotes one only in prose, as character references (the pages'
+    freshness and conflict markers are the `check` job's). Every merge it computes reads
+    merge attributes from the group's base, and judging a group it reads the decisions
+    page, like every file, from Git's objects, never from the checkout, which the group's
+    attributes shape; `--tree`, which reads the checkout, refuses as unreadable a page
+    with an attribute that can change how a checkout writes it. The pre-flight block
     is a declaration that anyone who can edit the pull request's body can type: the
     judge checks it for consistency, not as proof that a pre-flight ran. And GitHub runs
     the group's own copy of the workflow file, so the judge's verdict, and any check of
@@ -3419,9 +3427,9 @@ findings:
     requiring code-owner review, with a `CODEOWNERS` file naming the owner for those
     paths; a required workflow pinned to main, if the account offers one; or a status
     posted by an App that runs main's code. The owner chooses which, and the queue must
-    not be turned on until one exists. No entry may come from
-    another repository, or be written by a bot, put in the queue by one or last edited
-    by one, save one exception: an automatic revert from the configured App bot
+    not be turned on until one exists. No entry may come from another repository or be
+    written by a bot, nor, while it is queued, be put in the queue or last edited by
+    one, save one exception: an automatic revert from the configured App bot
     (`STOICHEIA_REVERT_BOT`), on a `revert/` branch with the `auto-revert` label, whose
     tree is exactly the revert of a failed post-merge push's merges, while an open
     `main-red` issue names that run. `--gaps` runs the tests of each changed check, with
@@ -3436,7 +3444,7 @@ findings:
     before CI runs on `merge_group`. The step
     `python3 scripts/check_queue.py --tree .` is now in the `check` job and in
     safe_push's `CHECKS`, after the generated pages' status, so WORKFLOW's section 8, CI
-    and the pre-flight keep one list; negative test 20 plants a repeated dated heading
+    and the pre-flight keep one list; a negative test plants a repeated dated heading
     and expects it refused. Both checks need Git 2.42 or later.
   - *The block.* A new pre-flight block's marker carries `harness=<commit>`, the main
     commit whose harness ran it (today, its base), and the block gains a
