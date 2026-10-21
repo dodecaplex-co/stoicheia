@@ -14,9 +14,10 @@ note = "The centres F and G are given, as the enunciation takes them. Touching w
 [[passage]]
 at = "Then, since AG, GF are greater than FA"
 kind = "case"
-note = "If A lies on GF produced beyond F, AG is AF and FG together, so AG already exceeds AF. Otherwise I.20 supplies the triangle inequality; the rest of the reductio is common to both cases."
+note = "A may lie on GF produced beyond F, a case Heath says Euclid would have left to the reader (vol. 2, p. 26). There FAG is no triangle for I.20, and the Lean finds AG, GF greater than FA directly, since AG is AF and FG together."
 
 [figure]
+case = "A off the straight line FG, as in Heath's figure"
 note = "Like Heath's, this figure draws the impossible supposition: FG produced falling as FGH, away from A, so the G drawn is not the centre of ADE."
 
 [review]

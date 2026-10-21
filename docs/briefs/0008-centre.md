@@ -28,15 +28,16 @@ Stage 4b's III.8 and III.17 companions are in [`Elements/BookIII/Prop08.lean`](.
 Still to do under #59: the prototype rename, centre rule, construction guard, restatements, tag revision and record migration.
 The frozen text below is kept as history.
 
-*Status, 21 October 2026, trains C6a and C6b:* the centre rule `exists_centre` is in the
-lock, by the owner's decision of 18 October (80 axioms, 74 tacit rules after wave one).
-Stages 3 and 4 and the mixed angles are in `Elements/`, and their staged copies are
-deleted. III.1's construction is at home in `Elements/BookIII/Prop01.lean` and takes a
-centre from the rule only inside the proof that D is within, as the dated correction in
-section 3 records; [staged III.1](https://github.com/jackChallis/stoicheia/blob/1cc743ec/Staging/Centre/Prop01.lean) now checks the
-restated III.1 against it and calls neither Circle 2 nor Circle 3. Still to do under #59:
-the construction guard, in a pull request of its own, then step 6's restatements, the tag
-revision and the record migration.
+*Status, 21 October 2026, after trains C6a and C6b, merged with axiom wave one:*
+
+The rule is in the foundations: `Tacit.exists_centre`, in [`Constructions.lean`](../../Elements/Foundations/Tacit/Constructions.lean), by the owner's decision of 18 October, and with it the lock holds 80 axioms and 74 tacit rules, main's 79 and 73 and the rule (step 5).
+Section 7 is in the edition: III.5 and III.6 read "cut" as crossing (`CirclesCut`), and contact within asks for a point of the inner circle within the outer; [`Audit/Crossing.lean`](../../Audit/Crossing.lean) recovers the earlier statements of III.5, III.6, III.11 and III.13.
+The prototype's rename landed with the mixed angles of III.16 and III.31: the theorem is `exists_circle_about`, in [`Elements/Figure/Regions.lean`](../../Elements/Figure/Regions.lean).
+The [formal model](../../model/Model/Assembly.lean) proves all 80 locked laws.
+Stages 3 and 4 and the mixed angles are in `Elements/`, and their staged copies are deleted.
+III.1's construction is at home in [`Elements/BookIII/Prop01.lean`](../../Elements/BookIII/Prop01.lean) and takes a centre from the rule only inside the proof that D is within, as the dated correction in section 3 records; [staged III.1](https://github.com/jackChallis/stoicheia/blob/1cc743ec/Staging/Centre/Prop01.lean) now checks the restated III.1 against it and calls neither Circle 2 nor Circle 3.
+Still to do under #59: the construction guard (step 4), in a pull request of its own, then the restatements and the record migration (step 6, train C6c), and the tag revision (step 7).
+This note changes no declaration of the brief, and the frozen text below is kept as history.
 
 *Correction, 21 October 2026, train C6c (C6a, C6b and step 6), for issue #152:* the two
 statuses above are kept as written, and this note corrects what step 6 has made false in
