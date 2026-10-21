@@ -1445,8 +1445,8 @@ CONTROLS = ["hused", "hline", "hauto", "hsimp", "hidle", "L", "hK", "h", "a", "b
 
 # Files the sweep must refuse (SweepError, exit 2). One sets the linter's options itself,
 # in several spellings and spacings, one behind a `/--/` and one behind a `/-/-` (every
-# comment's body begins at its fourth character, as Lean reads it), captures its messages with
-# `#guard_msgs`, or has a `sorry` that never runs, on the lines SILENCED_AT names; it
+# comment's body begins at its fourth character, as Lean reads it), captures its messages
+# with `#guard_msgs`, or has a `sorry` that never runs, on the lines SILENCED_AT names; it
 # elaborates, so that only the refusal stands between it and a quiet pass. The other does
 # not elaborate, and Lean would drop the hits of what fails while it reports the rest, as
 # hok.
