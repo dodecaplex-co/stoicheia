@@ -33,6 +33,7 @@ from unittest import mock
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+import run as runner  # noqa: E402
 from run import (COMMITTED, COUNTS, COUNTS_FROM, EUCLIDEAN, HARNESS, HARNESS_LINE,  # noqa: E402
                  LAWS, MODEL_MD, RESULTS, ROOT, SUMMARY, git, harness_hash, parse_results,
                  plan, result_file, search_names, short_commit, write, written)
@@ -231,10 +232,76 @@ def made_up_runs():
     return runs
 
 
+def write_guard_self_test():
+    """Drive --write with stable, invalid and changing provenance without running a harness."""
+    commit = 'a' * 40
+    harness = 'b' * 64
+
+    def prov(sha=commit, state=COMMITTED, digest=harness, date='2000-01-01'):
+        return dict(commit=f'{sha} ({state})', harness=digest,
+                    python=f'{platform.python_version()} (self-test)', date=date)
+
+    def exercise(provenances):
+        launched = []
+
+        class GuardRun:
+            key = 'hyperbolic'
+            seconds = 0.0
+            laws = {}
+            derived = {}
+
+            def go(self):
+                launched.append(self.key)
+
+        run = GuardRun()
+        writer = mock.Mock()
+        with mock.patch.object(runner.sys, 'argv', ['run.py', '--full', '--write']), \
+                mock.patch.object(runner, 'self_test'), \
+                mock.patch.object(runner, 'check_names', return_value=(0, [])), \
+                mock.patch.object(runner, 'check_lock', return_value=(True, 'self-test')), \
+                mock.patch.object(runner, 'plan', return_value=[run]), \
+                mock.patch.object(runner, 'judge', return_value=[]), \
+                mock.patch.object(runner, 'totals', return_value=({}, 0)), \
+                mock.patch.object(runner, 'derived_table', return_value=''), \
+                mock.patch.object(runner, 'EXPECTED_TO_FAIL', set()), \
+                mock.patch.object(runner, 'provenance', side_effect=provenances), \
+                mock.patch.object(runner, 'write', writer), \
+                mock.patch('builtins.print'):
+            try:
+                runner.main()
+                stopped = None
+            except SystemExit as e:
+                stopped = e.code
+        return launched, writer, stopped
+
+    before = prov()
+    launched, writer, stopped = exercise([before, prov(date='2000-01-02')])
+    if stopped is not None or launched != ['hyperbolic'] or writer.call_count != 1 \
+            or writer.call_args.args[1] is not before:
+        raise AssertionError('--write refused stable provenance or did not use its initial record')
+
+    for initial in (prov(state='harness files differ from this commit'),
+                    prov(sha='unknown', state='state unknown')):
+        launched, writer, stopped = exercise([initial])
+        if launched or writer.called or "not a commit's" not in str(stopped):
+            raise AssertionError('--write did not refuse invalid initial provenance before running')
+
+    changed = [prov(sha='c' * 40),
+               prov(state='harness files differ from this commit'),
+               prov(digest='d' * 64)]
+    for after in changed:
+        launched, writer, stopped = exercise([before, after])
+        if launched != ['hyperbolic'] or writer.called \
+                or 'provenance changed while it ran' not in str(stopped):
+            raise AssertionError('--write did not refuse changed provenance before writing')
+    print('model write guard self-test: stable provenance passed; 5 invalid changes refused')
+
+
 def self_test():
     """Write results as --write does, from made-up runs, into a temporary folder; plant each
     fault the check exists to catch in a fresh copy, and check that it is caught; and check
     that the results unchanged pass."""
+    write_guard_self_test()
     runs = sorted(written() - {SUMMARY})
     if len(runs) < 4:
         raise AssertionError('results self-test: the full plan writes fewer than four runs')

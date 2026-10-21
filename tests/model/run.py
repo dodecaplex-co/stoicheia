@@ -366,6 +366,12 @@ def provenance():
                 date=datetime.date.today().isoformat())
 
 
+def provenance_signature(prov):
+    """the commit, harness state and harness hash that decide whether --write may write"""
+    match = re.fullmatch(r'([0-9a-f]{40}) \(([^()]*)\)', prov['commit'])
+    return (match.group(1), match.group(2), prov['harness']) if match else None
+
+
 def short_commit(commit):
     """the commit as MODEL.md's counts name it"""
     return commit.split()[0][:12]
@@ -519,6 +525,13 @@ def main():
     if args == {'--ties'}:
         print('the ties to the Lean hold')
         return
+    write_prov = None
+    write_signature = None
+    if '--write' in args:
+        write_prov = provenance()
+        write_signature = provenance_signature(write_prov)
+        if write_signature is None or write_signature[1] != COMMITTED:
+            sys.exit("the model harness is not a commit's committed files, so nothing is written")
     runs = []
     for r in plan(full):
         print(f'  {r.key:14s} ...', end='', flush=True)
@@ -548,7 +561,9 @@ def main():
             print('  ' + b)
         sys.exit(1)
     if '--write' in args:
-        write(runs, provenance())
+        if provenance_signature(provenance()) != write_signature:
+            sys.exit('the model harness provenance changed while it ran, so nothing is written')
+        write(runs, write_prov)
         print('wrote tests/model/results/ and the counts in MODEL.md')
     print('model evidence: all checks pass')
 

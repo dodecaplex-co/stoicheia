@@ -677,7 +677,7 @@ def check_current(root: Path = ROOT, path: Path = RECORD) -> tuple[list[str], di
                  "OUTDIR --write` on this revision"], {}, [])
     try:
         rec = tomllib.loads(path.read_text(encoding="utf-8"))
-    except (tomllib.TOMLDecodeError, UnicodeDecodeError) as e:
+    except (OSError, tomllib.TOMLDecodeError, UnicodeDecodeError) as e:
         return [f"{name} does not read: {e}"], {}, []
     parts = rec.get("parts")
     if not isinstance(parts, dict) or set(parts) != set(PARTS) \

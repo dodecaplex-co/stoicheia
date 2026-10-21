@@ -436,6 +436,10 @@ class Record(unittest.TestCase):
         self.path.write_text('commit = "\n[parts\n', encoding="utf-8")
         self.assertIn("does not read", self.refused())
 
+    def test_a_record_that_raises_permission_error_is_refused(self):
+        with mock.patch.object(Path, "read_text", side_effect=PermissionError("denied")):
+            self.assertIn("does not read", self.refused())
+
     def test_a_record_whose_parts_and_total_disagree_is_refused(self):
         self.path.write_text(self.path.read_text(encoding="utf-8").replace(
             "statements = 2", "statements = 3"), encoding="utf-8")
