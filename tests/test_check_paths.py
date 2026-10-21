@@ -321,6 +321,19 @@ class Index(unittest.TestCase):
             self.fail(f"git {' '.join(args)}: {done.stderr.decode(errors='replace')}")
         return done.stdout.decode()
 
+    def mktree(self, records: list[tuple[str, str, str, str]]) -> str:
+        listing = "".join(f"{mode} {kind} {oid}\t{name}\n"
+                          for mode, kind, oid, name in records)
+        done = subprocess.run(["git", "mktree"], cwd=self.root, env=git_env(),
+                              input=listing.encode(), capture_output=True)
+        if done.returncode != 0:
+            self.fail("git mktree: " + done.stderr.decode(errors="replace"))
+        return done.stdout.decode().strip()
+
+    def tree_commit(self, records: list[tuple[str, str, str, str]], message: str) -> str:
+        tree = self.mktree(records)
+        return self.git("commit-tree", tree, "-p", "HEAD", "-m", message).strip()
+
     def plant(self, mode: str, name: str, check: bool = True) -> subprocess.CompletedProcess:
         """Put an entry straight into the index, with Git told not to fold case or Unicode,
         so that twins stay two entries on any disk."""
@@ -448,6 +461,50 @@ class Index(unittest.TestCase):
                           "-m", "README.md twice").strip()
         self.caught(2, "README.md", "--rev", commit)
         self.assertIn("✗ P2 README.md: listed 2 times", self.check("--rev", commit).stdout)
+
+    def test_rev_refuses_an_invalid_empty_directory(self):
+        empty = self.mktree([])
+        commit = self.tree_commit(
+            [("040000", "tree", empty, "bad directory")], "An invalid empty directory")
+        self.caught(1, "bad directory/", "--rev", commit)
+
+    def test_rev_refuses_duplicate_directories_with_disjoint_children(self):
+        left = self.mktree([(PLAIN, "blob", self.blob, "a.md")])
+        right = self.mktree([(PLAIN, "blob", self.blob, "b.md")])
+        commit = self.tree_commit([
+            ("040000", "tree", left, "docs"),
+            ("040000", "tree", right, "docs"),
+        ], "The docs directory twice")
+        self.caught(2, "docs/", "--rev", commit)
+        self.assertIn("✗ P2 docs/: listed 2 times", self.check("--rev", commit).stdout)
+
+    def test_rev_refuses_directory_twins_and_a_file_directory_collision(self):
+        leaf = self.mktree([(PLAIN, "blob", self.blob, "a.md")])
+        twins = self.tree_commit([
+            ("040000", "tree", leaf, "Docs"),
+            ("040000", "tree", leaf, "docs"),
+        ], "Twin directories")
+        self.caught(2, ("Docs/", "docs/"), "--rev", twins)
+        collision_tree = self.mktree([
+            (PLAIN, "blob", self.blob, "same"),
+            ("040000", "tree", leaf, "same"),
+        ])
+        collision = self.tree_commit(
+            [("040000", "tree", collision_tree, "docs")], "A file and directory collide")
+        self.caught(2, ("docs/same", "docs/same/"), "--rev", collision)
+
+    def test_rev_accepts_valid_nested_and_empty_directories(self):
+        empty = self.mktree([])
+        nested = self.mktree([(PLAIN, "blob", self.blob, "a.md")])
+        docs = self.mktree([
+            ("040000", "tree", empty, "empty"),
+            ("040000", "tree", nested, "nested"),
+        ])
+        commit = self.tree_commit(
+            [("040000", "tree", docs, "docs")], "Valid explicit directories")
+        result = self.check("--rev", commit)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("all 1 paths", result.stdout)
 
     def test_a_module_planted_beside_the_script_never_stands_in(self):
         # A module planted in scripts/ that would pass any tree: run as CI runs it, without

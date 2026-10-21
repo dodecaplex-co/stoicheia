@@ -214,6 +214,7 @@ import contextlib
 import datetime
 import hashlib
 import html
+import inspect
 import io
 import json
 import math
@@ -228,6 +229,7 @@ import tempfile
 import time
 import types
 import unicodedata
+from collections import Counter
 from pathlib import Path
 from typing import NamedTuple
 
@@ -2009,7 +2011,7 @@ def path_shown(path: str) -> str:
     return path if PLAIN_PATH.fullmatch(path) else ascii(path)
 
 
-def path_faults(paths: list[str]) -> list[str]:
+def path_faults(paths: list[str], directories: list[str] | tuple[str, ...] = ()) -> list[str]:
     """What guard_paths refuses in a tree's paths, a line each: a path that is not plain
     printable ASCII, since HFS+ and APFS ignore or fold some code points that casefolding
     and NFC keep; a protected path or a check input spelt otherwise (LAKEFILE.lean,
@@ -2022,7 +2024,8 @@ def path_faults(paths: list[str]) -> list[str]:
         return ", ".join(path_shown(f) for f in under[:3]) + more
 
     faults = []
-    for p in paths:
+    all_paths = [*paths, *directories]
+    for p in all_paths:
         odd = sorted({c for c in p if not PLAIN_PATH.fullmatch(c)})
         if odd:
             faults.append(f"{path_shown(p)}: not plain printable ASCII "
@@ -2031,7 +2034,7 @@ def path_faults(paths: list[str]) -> list[str]:
     # name they protect, spelt otherwise, is refused here, its twin in the tree or not.
     named = {path_fold(q.rstrip("/")): q for q in PROTECTED + CHECK_INPUTS}
     respelt: dict[str, tuple[str, list[str]]] = {}   # a spelling -> (the name, paths under it)
-    for p in paths:
+    for p in all_paths:
         parts = p.split("/")
         for i in range(1, len(parts) + 1):
             name = "/".join(parts[:i])
@@ -2048,12 +2051,29 @@ def path_faults(paths: list[str]) -> list[str]:
                       "protected-path rule and keep_apart")
     met: dict[str, list[str]] = {}       # a fold -> its spellings: a folder once, with "/"
     files: dict[str, list[str]] = {}     # a folder, with "/" -> the paths under it
+    directory_names = set()
+    for directory in directories:
+        folder = directory + "/"
+        if folder not in directory_names:
+            met.setdefault(path_fold(directory), []).append(folder)
+            directory_names.add(folder)
+        parts = directory.split("/")
+        for i in range(1, len(parts)):
+            parent = "/".join(parts[:i]) + "/"
+            if parent not in directory_names:
+                met.setdefault(path_fold(parent[:-1]), []).append(parent)
+                directory_names.add(parent)
+            files.setdefault(parent, []).append(directory)
+    for directory, n in Counter(directories).items():
+        if n > 1:
+            met.setdefault(path_fold(directory), []).extend([directory + "/"] * (n - 1))
     for p in paths:
         parts = p.split("/")
         for i in range(1, len(parts)):
             folder = "/".join(parts[:i]) + "/"
-            if folder not in files:
+            if folder not in directory_names:
                 met.setdefault(path_fold(folder[:-1]), []).append(folder)
+                directory_names.add(folder)
             files.setdefault(folder, []).append(p)
         met.setdefault(path_fold(p), []).append(p)
     twins = {key for key, spellings in met.items() if len(spellings) > 1}
@@ -2164,18 +2184,26 @@ def guard_paths(repo, base, sha, rep: Report) -> bool:
     for commit, tree in commits:
         if tree in counted:
             continue
-        out = git(repo, "ls-tree", "-r", "-z", "--full-tree", tree, binary=True)
+        out = git(repo, "ls-tree", "-r", "-t", "-z", "--full-tree", tree, binary=True)
         # Each entry: its mode, type and object, a tab and its path, as --rev reads them.
-        entries = [(fields.split(b" ", 1)[0].decode("ascii", "replace"),
-                    path.decode("utf-8", "surrogateescape"))
-                   for fields, _, path in (e.partition(b"\t") for e in out.split(b"\0") if e)]
+        records = [(fields.split(), path.decode("utf-8", "surrogateescape"))
+                   for fields, tab, path in (e.partition(b"\t") for e in out.split(b"\0") if e)
+                   if tab]
+        entries = [(fields[0].decode("ascii", "replace"), path)
+                   for fields, path in records if len(fields) == 3 and fields[1] != b"tree"]
+        directories = [path for fields, path in records
+                       if len(fields) == 3 and fields[1] == b"tree"]
         paths = [p for _, p in entries]
-        counted[tree] = len(paths)
-        for fault in path_faults(paths):
+        counted[tree] = len(set(paths))
+        for fault in path_faults(paths, directories):
             found.setdefault(fault, []).append(commit)
         if standard is not None:
             with off_path(repo):        # its imports in findings, too, read nothing planted
-                judged, crash = judge(lambda: [str(f) for f in standard.findings(entries)])
+                accepts_directories = len(inspect.signature(
+                    standard.findings).parameters) >= 2
+                judged, crash = judge(lambda: [str(f) for f in standard.findings(
+                    entries, directories)] if accepts_directories else
+                    [str(f) for f in standard.findings(entries)])
             if crash is not None:       # a crash of origin/main's check refuses, as a finding
                 judged = [f"origin/main's {PATH_STANDARD} fails on the tree: {crash}"]
             for finding in judged:
@@ -5180,29 +5208,47 @@ def main(argv=None) -> int:
         CI_POLL = float(os.environ.get("STOICHEIA_TEST_CI_POLL", CI_POLL))
         CI_APPEAR_TIMEOUT = float(os.environ.get("STOICHEIA_TEST_CI_APPEAR", CI_APPEAR_TIMEOUT))
 
-    r = run(["git", "rev-parse", "--show-toplevel"], Path.cwd())
-    if r.returncode != 0:
-        print("safe_push: run it inside the repository", file=sys.stderr)
-        return 2
-    repo = Path(r.stdout.strip())
-    if args.scan_push:
-        return scan_push_main(repo, *args.scan_push)
+    original_cwd = Path.cwd()
     # #186, a linked worktree's GIT_DIR: a shell alias run from one, as `git safe-push`
     # is, sets GIT_DIR (and GIT_PREFIX). Left set, it would point every git command in the
     # fresh worktrees at the caller's index and HEAD, and check_paths.py would refuse to
     # run. Every git call here names its directory, so the variables go, once they have
     # found the repository; and it must be the one git finds from there without them.
-    def located() -> list[Path]:
-        r = run(["git", "rev-parse", "--show-toplevel", "--absolute-git-dir"], repo)
-        return [Path(p).resolve() for p in r.stdout.splitlines()] if r.returncode == 0 else []
-    before = located()
+    def located(env=None) -> tuple[Path, Path] | None:
+        r = run(["git", "rev-parse", "--show-toplevel", "--absolute-git-dir"],
+                original_cwd, env=env)
+        lines = r.stdout.splitlines() if r.returncode == 0 else []
+        if len(lines) != 2 or not all(line.strip() for line in lines):
+            return None
+        return Path(lines[0]).resolve(), Path(lines[1]).resolve()
+
+    discovery_env = os.environ.copy()
+    for name in GIT_LOCATION:
+        discovery_env.pop(name, None)
+    expected = located(discovery_env)
+    active = located()
+    if expected is None:
+        print("safe_push: cannot independently find the repository from the current "
+              "directory with Git location variables unset", file=sys.stderr)
+        return 2
+    if active is None:
+        print("safe_push: cannot read the repository selected by Git location variables",
+              file=sys.stderr)
+        return 2
+    if active != expected:
+        print(f"safe_push: GIT_DIR, GIT_WORK_TREE or another such variable names a "
+              f"repository other than the one git finds from {original_cwd}: run it from "
+              "inside the checkout, with them unset", file=sys.stderr)
+        return 2
     for name in GIT_LOCATION:
         os.environ.pop(name, None)
-    if located() != before:
-        print(f"safe_push: GIT_DIR, GIT_WORK_TREE or another such variable names a "
-              f"repository other than the one git finds from {repo}: run it from inside "
-              "the checkout, with them unset", file=sys.stderr)
+    if located() != expected:
+        print("safe_push: the repository changed after Git location variables were unset",
+              file=sys.stderr)
         return 2
+    repo = expected[0]
+    if args.scan_push:
+        return scan_push_main(repo, *args.scan_push)
     signal.signal(signal.SIGTERM, _terminate)
     signal.signal(signal.SIGHUP, _terminate)
     if args.merge is not None:

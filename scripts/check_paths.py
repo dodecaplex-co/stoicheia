@@ -251,11 +251,16 @@ def fold(name: str) -> str:
     return unicodedata.normalize("NFC", unicodedata.normalize("NFC", name).casefold())
 
 
-def twins(paths: list[str]) -> list[tuple[str, str]]:
+def twins(paths: list[str], directories: list[str] | tuple[str, ...] = ()) -> list[tuple[str, str]]:
     """P2: each path or folder alike with another once folded, with the reason. A folder is
     named with a trailing '/' and the first path under it, and a file and a folder of one
     name are twins too, since a disk holds only one of them."""
     first: dict[str, str] = {}            # each path and folder, and the first path under it
+    for directory in sorted(set(directories)):
+        first.setdefault(directory + "/", directory)
+        parts = directory.split("/")
+        for i in range(1, len(parts)):
+            first.setdefault("/".join(parts[:i]) + "/", directory)
     for path in sorted(paths):
         first.setdefault(path, path)
         parts = path.split("/")
@@ -321,6 +326,15 @@ def placement(path: str) -> list[str]:
     if ext not in FOLDER_TYPES[top]:
         return [f".{ext} is not a type {top}/ holds ("
                 f"{' '.join('.' + t for t in sorted(FOLDER_TYPES[top]))})"]
+    return []
+
+
+def directory_placement(path: str) -> list[str]:
+    """P4 where an explicit directory may stand. Its leaves, not the directory itself,
+    determine the types it holds."""
+    top = path.split("/", 1)[0]
+    if top not in TOP_FOLDERS:
+        return [f"'{shown(top)}/' is not a top-level folder (TOP_FOLDERS)"]
     return []
 
 
@@ -391,10 +405,13 @@ def mode(mode_: str, path: str) -> list[str]:
     return []
 
 
-def findings(entries: list[tuple[str, str]]) -> list[str]:
+def findings(entries: list[tuple[str, str]],
+             directories: list[str] | tuple[str, ...] = ()) -> list[str]:
     """Every finding for the (mode, path) entries, one line each, by rule and then path:
     "P<rule> <path>: <reason>". A path among the entries more than once is P2's: a tree
-    names a path once, and a disk holds one of them. P4 judges only what P3 passes, and P5
+    names a path once, and a disk holds one of them. Explicit directories are separate
+    from leaves, so an ordinary directory and a child do not look like two listings of the
+    same folder; P3, P5 and P6 apply only to leaves. P4 judges only what P3 passes, and P5
     what both pass, so that one fault is not reported three times over."""
     found: set[tuple[int, str, str]] = set()
     paths = sorted({path for _, path in entries})
@@ -404,6 +421,13 @@ def findings(entries: list[tuple[str, str]]) -> list[str]:
                                 "holds one of them"))
     for mode_, path in set(entries):
         found.update((6, path, r) for r in mode(mode_, path))
+    for directory, n in Counter(directories).items():
+        if n > 1:
+            found.add((2, directory + "/", f"listed {n} times; a tree names a directory "
+                                            "once, and a disk holds one of them"))
+    for directory in sorted(set(directories)):
+        found.update((1, directory + "/", r) for r in characters(directory))
+        found.update((4, directory + "/", r) for r in directory_placement(directory))
     for path in paths:
         found.update((1, path, r) for r in characters(path))
         types = extension(path)
@@ -413,7 +437,7 @@ def findings(entries: list[tuple[str, str]]) -> list[str]:
             found.update((4, path, r) for r in where)
             if not where:
                 found.update((5, path, r) for r in names(path))
-    found.update((2, name, reason) for name, reason in twins(paths))
+    found.update((2, name, reason) for name, reason in twins(paths, directories))
     return [f"P{rule} {shown(path)}: {reason}" for rule, path, reason in sorted(found)]
 
 
@@ -596,6 +620,25 @@ def entries_of(listing: bytes) -> list[tuple[str, str]]:
     return sorted(entries)
 
 
+def tree_entries_of(listing: bytes) -> tuple[list[tuple[str, str]], list[str]]:
+    """The leaves and explicit directories of `git ls-tree -r -t -z`, kept separately."""
+    entries, directories = [], []
+    for record in listing.split(b"\0"):
+        if not record:
+            continue
+        fields, tab, raw_path = record.partition(b"\t")
+        words = fields.split()
+        if not tab or len(words) != 3:
+            fail(f"cannot read Git's tree entry {record!r}")
+        mode_, kind = words[:2]
+        path = raw_path.decode("utf-8", "surrogateescape")
+        if kind == b"tree":
+            directories.append(path)
+        else:
+            entries.append((mode_.decode("ascii", "replace"), path))
+    return sorted(entries), sorted(directories)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--rev", metavar="COMMIT",
@@ -619,14 +662,16 @@ def main(argv: list[str] | None = None) -> int:
         # so an entry repeated there is taken once; a tree's entries are all kept, and a
         # path listed twice among them is P2's.
         entries = sorted(set(entries_of(git(root, "ls-files", "-s", "-z"))))
+        directories = []
         judged = "tracked paths of the index"
     else:
         commit = git(root, "rev-parse", "--verify", "--quiet", "--end-of-options",
                      f"{args.rev}^{{commit}}").decode().strip()
-        entries = entries_of(git(root, "ls-tree", "-r", "-z", "--full-tree", commit))
+        entries, directories = tree_entries_of(
+            git(root, "ls-tree", "-r", "-t", "-z", "--full-tree", commit))
         judged = f"paths of {args.rev} ({commit[:12]})"
     count = len({path for _, path in entries})
-    found = findings(entries)
+    found = findings(entries, directories)
     if found:
         for finding in found:
             print(f"✗ {finding}")

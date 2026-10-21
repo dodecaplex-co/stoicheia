@@ -889,6 +889,24 @@ class Clone(unittest.TestCase):
         index.unlink(missing_ok=True)
         return git(WORK, "rev-parse", "HEAD").strip()
 
+    def mktree(self, records: list[tuple[str, str, str, str]]) -> str:
+        listing = "".join(f"{mode} {kind} {oid}\t{name}\n"
+                          for mode, kind, oid, name in records)
+        made = subprocess.run(["git", "mktree"], cwd=WORK, input=listing,
+                              capture_output=True, text=True)
+        self.assertEqual(made.returncode, 0, made.stdout + made.stderr)
+        return made.stdout.strip()
+
+    def tree_commit(self, records: list[tuple[str, str, str, str]], message: str) -> str:
+        tree = self.mktree(records)
+        return git(WORK, "commit-tree", tree, "-p", BASE, "-m", message).strip()
+
+    def path_guard(self, sha: str) -> safe_push.Report:
+        rep = safe_push.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            safe_push.guard_paths(WORK, BASE, sha, rep)
+        return rep
+
     def checkout_marker(self) -> Path:
         """A file that stays absent until a worktree is made: `git worktree add` runs the
         post-checkout hook, which writes it. The hook goes when the test ends."""
@@ -1405,6 +1423,49 @@ class CaseTwins(Clone):
         r = self.safe_push("--dry-run")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertEqual(self.guard(r.stdout, "paths"), "ok", r.stdout)
+
+    def test_explicit_tree_directories_are_validated_before_checkout(self):
+        empty = self.mktree([])
+        blob = git(WORK, "hash-object", "-w", os.devnull).strip()
+        child = self.mktree([("100644", "blob", blob, "a.md")])
+        collision = self.mktree([
+            ("100644", "blob", blob, "same"),
+            ("040000", "tree", child, "same"),
+        ])
+        cases = {
+            "invalid empty directory": [
+                ("040000", "tree", empty, "bad directory")],
+            "duplicate directories": [
+                ("040000", "tree", child, "docs"),
+                ("040000", "tree", self.mktree([("100644", "blob", blob, "b.md")]),
+                 "docs")],
+            "directory twins": [
+                ("040000", "tree", child, "Docs"),
+                ("040000", "tree", child, "docs")],
+            "file and directory collision": [
+                ("040000", "tree", collision, "docs")],
+        }
+        for label, records in cases.items():
+            with self.subTest(label=label):
+                sha = self.tree_commit(records, label)
+                rep = self.path_guard(sha)
+                self.assertEqual(rep.steps[0].name, "paths", rep.steps)
+                self.assertEqual(rep.steps[0].outcome, "FAIL", rep.steps)
+
+    def test_valid_nested_and_empty_tree_directories_pass_the_guard(self):
+        empty = self.mktree([])
+        blob = git(WORK, "hash-object", "-w", os.devnull).strip()
+        nested = self.mktree([("100644", "blob", blob, "a.md")])
+        docs = self.mktree([
+            ("040000", "tree", empty, "empty"),
+            ("040000", "tree", nested, "nested"),
+        ])
+        sha = self.tree_commit([("040000", "tree", docs, "docs")],
+                               "Valid explicit directories")
+        rep = self.path_guard(sha)
+        self.assertEqual([(step.name, step.outcome) for step in rep.steps],
+                         [("paths", "ok"), ("paths (origin/main's standard)", "ok")],
+                         rep.steps)
 
 
 class Hook(Clone):
@@ -6286,6 +6347,7 @@ class LinkedWorktree(Edge):
         gitdir = git(linked, "rev-parse", "--absolute-git-dir").strip()
         common = git(linked, "rev-parse", "--path-format=absolute", "--git-common-dir").strip()
         planted = {"GIT_DIR": gitdir, "GIT_PREFIX": "", "GIT_COMMON_DIR": common,
+                   "GIT_WORK_TREE": str(linked),
                    "GIT_OBJECT_DIRECTORY": str(Path(common) / "objects"),
                    "GIT_INDEX_FILE": str(Path(gitdir) / "index"), "GIT_NAMESPACE": "caller",
                    "GIT_CEILING_DIRECTORIES": str(TMP)}
@@ -6303,6 +6365,23 @@ class LinkedWorktree(Edge):
                     mock.patch.object(safe_push.signal, "signal"), contextlib.chdir(linked):
                 self.assertEqual(safe_push.main(argv), 0)
         self.assertEqual(seen, [(linked.resolve(), [])] * 2)
+
+    def test_a_foreign_git_dir_and_work_tree_pair_is_refused_before_dispatch(self):
+        other = TMP / "foreign-pair"
+        git(TMP, "init", "--quiet", str(other))
+        self.addCleanup(shutil.rmtree, other, ignore_errors=True)
+        planted = {"GIT_DIR": str(other / ".git"), "GIT_WORK_TREE": str(other)}
+        for argv in (["--dry-run"], ["--merge", "1", "--dry-run"]):
+            with self.subTest(argv=argv), mock.patch.dict(os.environ, planted), \
+                    mock.patch.object(safe_push, "preflight_main",
+                                      side_effect=AssertionError("the pre-flight ran")), \
+                    mock.patch.object(safe_push, "merge_main",
+                                      side_effect=AssertionError("the merge ran")), \
+                    mock.patch.object(safe_push.signal, "signal"), contextlib.chdir(WORK), \
+                    contextlib.redirect_stderr(io.StringIO()) as err:
+                self.assertEqual(safe_push.main(argv), 2)
+                self.assertIn("names a repository other than the one git finds",
+                              err.getvalue())
 
     def test_a_variable_naming_another_repository_refused(self):
         # Dropped, GIT_DIR must leave the repository git finds as it was: here it names
