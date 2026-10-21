@@ -6,25 +6,50 @@ companions = ["I.40 general", "I.40 join", "I.40 special"]
 fingerprint = "sha256:52e7cf8ad9eff8f3"
 
 [route]
-kind = "modified"
-note = "Heath prints the whole proposition in brackets, as an interpolation (vol. 1, p. 338). It is I.39's argument with I.38 for I.37, and the Lean makes its end direct, as in I.39. The companions follow the same argument for equal bases anywhere on one straight line: the parallel through A meets ED, and the areas put that point at D (`Prop40.general`)."
+kind = "euclid"
+note = "Heath prints the whole proposition in brackets, as an interpolation (vol. 1, p. 338). The proof follows I.39's reductio with I.38 for I.37: assuming AD is not parallel to BE makes F distinct from D, and either order on CD contradicts equal areas. Prop40.general follows the same reductio for equal bases anywhere on one straight line, including coincident vertices."
 
 [[passage]]
 at = "I say that they are also in the same parallels"
 kind = "given"
-note = "The statement gives the goal, AD parallel to BE, and nothing is drawn here: the parallel through A, drawn next, will pass through D and so be AD."
+note = "The statement gives the goal, AD parallel to BE. The distinct vertices A and D name AD; its parallelism remains to be proved, so nothing is drawn here."
+
+[[passage]]
+at = "For, if not, let AF be drawn through A parallel to BE"
+kind = "helper"
+helper = "Prop30.meet"
+note = "Euclid draws AF parallel to BE and takes its meeting with CD at F from the figure. The Lean draws the parallel by I.31 (`Prop31.line`), proves the meeting by I.30 (`Prop30.meet`), and joins FE by Postulate 1."
+
+[[passage]]
+at = "But the triangle ABC is equal to the triangle DCE"
+kind = "case"
+note = "If F lies between C and D, FCE is less than DCE; if F lies beyond D, DCE is less than FCE. Both contradict the equal areas, and the same-side condition excludes the opposite ray."
+
+[[passage]]
+at = "Therefore AF is not parallel to BE"
+kind = "grouped"
+note = "The preceding contradiction rules out the supposed parallel through A meeting CD away from D."
 
 [[passage]]
 at = "Similarly we can prove that neither is any other straight line except AD"
-kind = "different"
-note = "As in I.39, the Lean argues directly: the areas put F at D (`OnRay.eq_of_area_eq`), so the parallel through A is AD itself, and no other straight line needs trying."
+kind = "grouped"
+note = "The same reductio excludes any proposed parallel through A meeting CD away from D, in either order. The local conclusion is used beneath the closing sentences."
 
 [figure]
-case = "the bases BC and CE meeting at C, as in Heath's figure"
-note = "F is drawn between C and D, with AF level, as the proof supposes; Heath draws AD level and AF sloping."
+case = "the bases BC and CE meeting at C, with F on CD between C and D, as in Heath's figure"
+note = "Heath draws AD level and AF sloping; our drawing puts AF level, as the proof supposes. Like Heath's, this figure draws Euclid's impossible supposition: AF parallel to BE with F strictly between C and D, while the triangles ABC and DCE on equal bases BC and CE are assumed equal in area. Their drawn areas are unequal."
 
 [review]
-stage = "exceptions"
-commit = "5d6b1f6"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:26f3e7e66e5dc512"
+stage = "full"
+commit = "adbf6993"
+reviewer = "GPT-6 Astra, independent reader"
+run = "ship R1 wave 2, independent re-read of the merged record at adbf6993"
+lean = "sha256:42c6b5725278f449"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

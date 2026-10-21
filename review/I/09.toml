@@ -1,20 +1,47 @@
 # review/I/09.toml
 [statement]
 scope = "full"
-note = "The angle is given as the triangle BAC, its arms not in one straight line, as Definition 8 asks; the bisector AF is proved to fall within it."
+note = "The angle is given as the triangle BAC, its arms not in one straight line, as Definition I.8 asks; the bisector AF is proved to fall within it."
 fingerprint = "sha256:615a25d41eb9d01a"
 
 [route]
 kind = "euclid"
 
 [[passage]]
+at = "Let a point D be taken at random on AB"
+kind = "helper"
+helper = "exists_between_nearer"
+note = "Euclid takes D anywhere on AB and takes for granted that AC is long enough to cut off AE equal to AD. The Lean instead chooses D between A and B, nearer A than C is, by `exists_between_nearer`, so that I.3 applies."
+
+[[passage]]
+at = "let DE be joined, and on DE let the equilateral triangle DEF be constructed"
+kind = "helper"
+helper = "Prop1"
+note = "Euclid constructs the equilateral triangle DEF but leaves its side of DE to his figure. The Lean takes a point beyond DE from A by `exists_oppositeSidesOf` (System E, Points 6) and builds DEF on that point's side by I.1 (`Prop1`), for which Heath prints no reference here."
+
+[[passage]]
 at = "let AF be joined"
 kind = "helper"
 helper = "Prop9.crossing"
-note = "Euclid reads off his figure that AF falls within the angle; the Lean proves it as Proclus answers his objector, by I.5 and I.7: AF crosses DE between D and E."
+note = "Euclid reads off his figure that AF falls within the angle; the Lean answers Proclus' objector with I.5 and I.7 in `Prop9.crossing`, proving that AF crosses DE between D and E. The Lean then applies `Prop9.side` twice to put F on C's side of AB and on B's side of AC, as the statement requires."
+
+[[passage]]
+at = "Therefore the given rectilineal angle BAC has been bisected"
+kind = "helper"
+helper = "Tacit.angle_add_of_inside"
+note = "Euclid takes for granted that DAF and EAF are BAF and FAC, since D lies on AB and E on AC, and that BAF and FAC together make up BAC. The Lean identifies the angles by `angle_onRay_left` and, using the sides established above, adds them by `Tacit.angle_add_of_inside`, a rule we assume (System E, Diagram-angle 2), not a proved lemma."
 
 [review]
-stage = "exceptions"
-commit = "7339460"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "8b8162f7"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+run = "brief 0005 stage 5, R2, independent re-read at 8b8162f7"
 lean = "sha256:d385f2716fd5a8ad"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

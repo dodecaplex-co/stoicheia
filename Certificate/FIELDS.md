@@ -35,9 +35,10 @@ in Books I-III, I.15, III.1 and III.16.
 | `opaque` | list of names | Every `opaque` constant this project declares. |
 | `axiom_types` | object, name to string | **New.** The printed statement of every axiom in `axiom_modules`, with exactly the same keys. 87 at commit d040117. |
 | `vocabulary` | object, name to string | **New.** Every definition, instance, structure, inductive type and opaque of this project that the statement of an axiom, or of an entry, reaches (below). |
+| `proved_rules` | object, name to list of names | **New** (20 October 2026). Every theorem this project declares in `Elements.Tacit`, found in Lean's environment, with the axioms `collectAxioms` finds beneath it. Names omit the leading `Elements.`; Lean's three foundations and `sorryAx` are left out, as in an entry's `axioms`. Each list is sorted by string. |
 
 Names here are Lean's full names without the leading `Elements.`, as `axiom_modules`
-has always written them: `"Postulate1"`, `"Tacit.centre_unique"`, `"Magnitude.add"`.
+has always written them: `"Postulate1"`, `"Tacit.circle_eq"`, `"Magnitude.add"`.
 `Certificate/axioms.lock` is compared with `axiom_types` and `vocabulary` in both
 directions (stage 1c).
 
@@ -56,11 +57,11 @@ porisms; then the companions, each group in `prop_key` order. Read an entry by i
 | `attached` | list of refs | **New**, on propositions only: its porism, then its companions, in `prop_key` order; `[]` when it has none. |
 | `status` | `"proved"`, `"proved-pending"` or `"sketched"` | `"sketched"` if a `sorry` is in the declaration's own proof (through its helpers and shared steps); `"proved-pending"` if it rests on one only through what it cites; `"proved"` otherwise. A proposition, as before, also takes its porism's: it is not finished until its porism is. A companion's status is its own, and changes no other entry's. |
 | `cites` | list of refs | The entries the proof uses directly. **Changed**: a use of a porism is now recorded as the porism, `"III.1 Por."`, where it was recorded as `"III.1"`, and a use of a companion by its own ref. Sorted by string, as before. |
-| `common_notions` | list of strings | Every Common Notion beneath the proof, through what it cites too: `"C.N. 1"` and so on. |
-| `axioms` | list of names | Lean's `collectAxioms` of this declaration alone, without Lean's three foundations and `sorryAx`. It follows each proof's dependencies; `tests/certificate_expectations.json` pins what III.1's and its porism's lists must hold. |
+| `common_notions` | list of strings | Every Common Notion beneath the proof, through what it cites too: `"C.N. 1"` and so on. A walked local declaration's value that names `Elements.Superposition.Coincidence.step` records `"C.N. 4"`, the restricted calculus's coincidence step. |
+| `axioms` | list of names | Lean's `collectAxioms` of this declaration alone, without Lean's three foundations and `sorryAx`. `Tacit.centre_unique` is now a theorem, proved in `Elements/Figure/Circles.lean` from circle intersections, equal radii (Definition I.15) and the order of lengths; a list that rests on it holds its underlying axioms. It follows each proof's dependencies; `tests/certificate_expectations.json` pins what III.1's and its porism's lists must hold. |
 | `direct_axioms` | list of names | The axioms the proof uses itself, through its helpers and shared steps, but not through another entry it cites or a Common Notion: exactly `own_axioms` together with the keys of `inherited`, besides any of Lean's own foundations it lists (`propext`, in II.2, II.5, III.27, III.29 and III.30), which those two leave out, as `axioms` does. The policy on superposition reads it, so a proof may not reach that rule through a lemma either. |
-| `own_axioms` | list of names | **New** (18 October 2026, [#65](https://github.com/jackChallis/stoicheia/issues/65)). The axioms the proof's own Lean names: in the declaration itself, in a helper written for its proposition (in the proposition's namespace: `Prop7.figure`; for a porism or companion, its proposition's, as `Prop1.middle` is III.1 Por.'s), or in Lean's auxiliary declarations for them; Lean's three foundations and `sorryAx` left out, as in `axioms`. Sorted by string. III.2's has 17, Circle 2 (`Tacit.inside_of_between`) not among them. |
-| `inherited` | object, name to list of objects | **New** (18 October 2026, #65). The rest of `direct_axioms`, Lean's foundations aside: each axiom the proof's own Lean does not name but reaches through a lemma it calls, of Book Zero (`Elements/Figure/`) or a shared step (`Prop5.base`, or another proposition's helper, as `Prop1.perpendicular` is for III.19), with each such lemma: `name`, `file`, `line`, as in `shared_steps`, sorted by name. An axiom the proof's own Lean names is in `own_axioms` alone, even when a lemma brings it in too. I.5's has `"Postulate3": [{"name": "exists_between_nearer", "file": "Elements/Figure/Circles.lean", …}]`: its own Lean draws no circle, and the lemma that keeps a point taken at random near enough does. A proposition it cites may bring the same axiom in as well, as I.3 brings Postulate 3 into I.5. |
+| `own_axioms` | list of names | **New** (18 October 2026, [#65](https://github.com/jackChallis/stoicheia/issues/65)). The axioms the proof's own Lean names: in the declaration itself, in a helper written for its proposition (in the proposition's namespace: `Prop7.figure`; for a porism or companion, its proposition's, as `Prop1.middle` is III.1 Por.'s), or in Lean's auxiliary declarations for them; Lean's three foundations and `sorryAx` left out, as in `axioms`. Sorted by string. III.2's has 17, Circle 3 (`Tacit.outside_of_between`) not among them. Circle 2 (`Tacit.inside_of_between`) is now proved from Circle 3 in `Elements/Figure/Circles.lean`; neither occurs in any entry's `axioms`. |
+| `inherited` | object, name to list of objects | **New** (18 October 2026, #65). The rest of `direct_axioms`, Lean's foundations aside: each axiom the proof's own Lean does not name but reaches through a lemma it calls, of Book Zero (`Elements/Figure/`) or a shared step (`Prop5.base`, or another proposition's helper, as `Prop1.perpendicular` is for III.19), with each such lemma: `name`, `file`, `line`, as in `shared_steps`, sorted by name. An axiom the proof's own Lean names is in `own_axioms` alone, even when a lemma brings it in too. An excerpt from I.5's entry is `"Postulate3": [{"name": "exists_between_nearer", "file": "Elements/Figure/Circles.lean", …}]`: its own Lean draws no circle, and the lemma that keeps a point taken at random near enough does. A proposition it cites may bring the same axiom in as well, as I.3 brings Postulate 3 into I.5. |
 | `lean_foundations` | list of names | Which of `propext`, `Classical.choice` and `Quot.sound` it rests on. |
 | `shared_steps` | list of objects | The project's own lemmas outside the declaration's namespace that bring in at least one proposition: `name`, `brings_in` (refs), `file`, `line`. For a porism or companion, the parent's own helpers (`Prop1.middle`) count as its own, not as shared steps. |
 | `enunciation` | string | The declaration's docstring. For a proposition it is Heath's enunciation (check_fidelity insists on it); for a porism, our docstring, which quotes Heath's porism; for a companion, our docstring saying what it adds. |
@@ -68,16 +69,45 @@ porisms; then the companions, each group in `prop_key` order. Read an entry by i
 
 One walk, `mentions` (stage 1b), gives `cites`, `direct_axioms`, `own_axioms`,
 `inherited`, `common_notions` and `shared_steps`: it reads each declaration's type and
-value, opaque values included, and an inductive type's constructors. `own_axioms` comes
-from the walk that gives `direct_axioms`, stopped at each lemma the proof's own
-declarations call, as the walk for `shared_steps` is; what a lemma brings in is found by
-the walk for `direct_axioms`, started from the lemma. Facts.lean checks itself against
-Lean: each entry's `axioms` are exactly its `direct_axioms`, the axioms of its Common
-Notions and the `axioms` of every entry in `cites`; and its `direct_axioms`, Lean's
-foundations aside, are exactly its `own_axioms` and the keys of its `inherited`. So its
-`axioms` are its own, those it inherits, its Common Notions' and those of what it cites.
-The Common Notions count because they are theorems, and some rest on tacit rules (C.N. 3
-and C.N. 5 use `Tacit.add_lt_add_right`).
+value, opaque values included, and an inductive type's constructors. For
+`common_notions`, each local declaration visited is also checked for
+`Elements.Superposition.Coincidence.step` named in its value. Like `#print axioms`, this
+records what the proof term names, through the local declarations it names, without
+evaluating it. Each of `Derives.len_congr`, `Derives.angle_congr` and `Derives.area_congr`
+takes a first explicit argument of type `Coincidence`. A derivation taking the step
+supplies `Coincidence.step` (`.step` and `⟨⟩` elaborate to that constant too). A transformer
+such as `Derives.map` or `Derives.sound` that only passes a derivation's own marker along
+as a bound variable adds no step. If a helper itself names the constant, it counts even
+when evaluation would not take that branch. Merely reaching an inductive type's constructor
+list counts neither its congruence constructors nor the marker. No transformer is skipped.
+
+Every walk checks the declaring module of each constant it reaches, before stopping at
+an entry, axiom, Common Notion or shared step. A declaration in `Elements` or a module
+below it is local, as is a declaration in the emitter itself. Only declarations from
+Lean's own modules may be treated as external leaves: modules under the roots `Init`,
+`Std` and `Lean` whose `.olean`, as Lean's search path finds it for the import, lies in
+the library directory of the running `lean`, both paths resolved. These are exactly the
+roots, besides `Elements`, imported by the environment that Facts.lean loads with Lean
+4.35. Any other reached module fails the certificate before it writes `facts.json`, with
+a message naming the declaration and its module. The module comes from Lean's
+environment, regardless of the declaration's namespace: a helper named
+`Elements.Hidden.step` in `Staging.Hidden` is refused. Nor is a module's root evidence
+of its origin: a separately compiled `Lean.Hidden` is refused too. This applies to
+dependencies in types as well as values, and to the vocabulary walk. An imported helper
+that no walk reaches does not fail the certificate.
+
+`own_axioms` comes from the walk that gives `direct_axioms`, stopped at each lemma
+the proof's own declarations call, as the walk for `shared_steps` is; what a lemma brings
+in is found by the walk for `direct_axioms`, started from the lemma. Facts.lean checks
+itself against Lean: each entry's `axioms` are exactly its `direct_axioms`, the axioms of
+its Common Notions and the `axioms` of every entry in `cites`; and its `direct_axioms`,
+Lean's foundations aside, are exactly its `own_axioms` and the keys of its `inherited`.
+So its `axioms` are its own, those it inherits, its Common Notions' and those of what it
+cites. The Common Notions named as theorems count even though `collectAxioms` cannot see
+them, and some rest on tacit rules (C.N. 3 and C.N. 5 use
+`Tacit.add_lt_add_right`). The restricted calculus's marked coincidence steps count as
+C.N. 4; equality substitution justifies them, as it does the three `CommonNotion4`
+theorems. The marker adds no axiom and changes no axiom field.
 
 ## Printing a statement
 
@@ -119,8 +149,9 @@ entry: the propositions, the porisms and the companions. Take every constant the
 mention; for each word found, every constant in its type; for a definition or instance,
 also every constant in its value; and for an inductive type or structure, its
 constructors; and go on until nothing new appears. Keep what this project declares, apart
-from the axioms themselves (they are in `axiom_types`). Stop at anything from outside the
-project (`Eq`, `Exists`, `HAdd.hAdd`): Lean's own constants are fixed by the toolchain.
+from the axioms themselves (they are in `axiom_types`). Stop at Lean's own constants
+(`Eq`, `Exists`, `HAdd.hAdd`), fixed by the toolchain, under `Init`, `Std` and `Lean`.
+Refuse a reached declaration from any other module outside `Elements`, as above.
 
 So the vocabulary holds the words the assumptions are stated in and the words the claims
 are stated in. A word that only the entries' statements use, as `Touches`,
@@ -136,7 +167,7 @@ value is not printed: that Lean cannot see it is the point. An inductive type's 
 structure's constructors are entries of their own.
 
 At commit d040117 there were 37, all reached from the axioms; with the entries'
-statements, from 17 October 2026, there are 61. Among them:
+statements, from 17 October 2026, there are <!-- count:vocabulary -->125<!-- /count -->. Among them:
 
 ```text
 "Collinear": "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => Exists fun (L : Elements.Line) => And (Elements.OnLine A L) (And (Elements.OnLine B L) (Elements.OnLine C L))"

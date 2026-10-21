@@ -255,7 +255,7 @@ theorem Prop31.less_lt_right {A B C D E R : Point} {ABCD : Circle} (hE : Centre 
   have hAF : A ≠ F := ne_of_between (between_symm hBAF) |>.symm
   have hBF : OppositeSidesOf B F A C := (OppositeSidesOf.of_between hABC.cab hBAF).swap
   have hDF : SameSideOf D F A C := OppositeSidesOf.sameSideOf hBD hBF
-  /- The angle CAF is right, as its adjacent angle BAC is (System E, Diagram-angle 3). -/
+  /- The angle CAF is right, as its adjacent angle BAC is (I.13, `adjacent_eq_of_right`). -/
   have hCAF : ∠ C A F = ∟ := by
     rw [← (adjacent_eq_of_right hB_N hF_N hBAF hC_N hBAC), hBAC]
   have hRray : OnRay R A F := onRay_of_angle_eq (hR.trans hDF) (hCAR.trans hCAF.symm)

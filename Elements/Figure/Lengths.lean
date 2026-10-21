@@ -70,7 +70,7 @@ theorem len_ne_zero (h : A ≠ B) : ‖A B‖ ≠ 0 := fun h' => h (eq_of_len_eq
 /-- A finite straight line with different ends has some length. -/
 theorem len_pos (h : A ≠ B) : 0 < ‖A B‖ := Magnitude.pos_of_ne_zero (len_ne_zero h)
 
-/-- If a finite straight line `AB` has the length of one with different ends,
+/-- If a finite straight line AB has the length of one with different ends,
 its own ends are different. -/
 theorem ne_of_len_eq (h : ‖A B‖ = ‖C D‖) (hCD : C ≠ D) : A ≠ B := by
   intro e
@@ -78,15 +78,15 @@ theorem ne_of_len_eq (h : ‖A B‖ = ‖C D‖) (hCD : C ≠ D) : A ≠ B := by
   rw [len_self] at h
   exact len_ne_zero hCD h.symm
 
-/-- If `AB` is longer than something, its ends are different. -/
+/-- If AB is longer than something, its ends are different. -/
 theorem ne_of_len_gt {x : Length} (h : x < ‖A B‖) : A ≠ B := by
   intro e
   subst e
   rw [len_self] at h
   exact not_lt_zero x h
 
-/-- The part is less than the whole: if `B` lies between `A` and `C`, then `AB` is
-less than `AC`, for `AC` is `AB` and `BC` together. (System E, Diagram-segment 1,
+/-- The part is less than the whole: if B lies between A and C, then AB is
+less than AC, for AC is AB and BC together. (System E, Diagram-segment 1,
 and C.N. 5) -/
 theorem len_lt_of_between (h : Between A B C) : ‖A B‖ < ‖A C‖ := by
   rw [← len_add_of_between h]

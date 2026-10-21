@@ -1,3 +1,4 @@
+import Elements.Figure.Circles
 import Elements.BookIII.Prop01
 
 /-!

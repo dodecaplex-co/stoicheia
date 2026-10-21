@@ -62,7 +62,7 @@ Key to the tables: ✅ proved. The Lean statement is *whole*, as Euclid states i
 | ✅ | [I.42](I/42.md) A parallelogram equal to a given triangle, in a given angle | `Elements.BookI.Prop42` | [`Elements.BookI.Prop42`](../Elements/BookI/Prop42.lean) | whole | [what it rests on](I/42.md#what-it-rests-on) |
 | ✅ | [I.43](I/43.md) In any parallelogram the complements are equal | `Elements.BookI.Prop43` | [`Elements.BookI.Prop43`](../Elements/BookI/Prop43.lean) | whole | [what it rests on](I/43.md#what-it-rests-on) |
 | ✅ | [I.44](I/44.md) A parallelogram applied to a given straight line | `Elements.BookI.Prop44` | [`Elements.BookI.Prop44`](../Elements/BookI/Prop44.lean) | whole | [what it rests on](I/44.md#what-it-rests-on) |
-| ✅ | [I.45](I/45.md) A parallelogram equal to a given rectilineal figure | `Elements.BookI.Prop45` | [`Elements.BookI.Prop45`](../Elements/BookI/Prop45.lean) | whole | [what it rests on](I/45.md#what-it-rests-on) |
+| ✅ | [I.45](I/45.md) A parallelogram equal to a given rectilineal figure | `Elements.BookI.Prop45` | [`Elements.BookI.Prop45`](../Elements/BookI/Prop45.lean) | restricted | [what it rests on](I/45.md#what-it-rests-on) |
 | ✅ | &emsp;[I.45 apart](I/45.md#apart) | `Elements.BookI.Prop45.apart` | [`Elements.BookI.Prop45`](../Elements/BookI/Prop45.lean) |  | [what it rests on](I/45.md#what-it-rests-on) |
 | ✅ | &emsp;[I.45 append](I/45.md#append) | `Elements.BookI.Prop45.append` | [`Elements.BookI.Prop45`](../Elements/BookI/Prop45.lean) |  | [what it rests on](I/45.md#what-it-rests-on) |
 | ✅ | &emsp;[I.45 fan](I/45.md#fan) | `Elements.BookI.Prop45.fan` | [`Elements.BookI.Prop45`](../Elements/BookI/Prop45.lean) |  | [what it rests on](I/45.md#what-it-rests-on) |
@@ -70,6 +70,7 @@ Key to the tables: ✅ proved. The Lean statement is *whole*, as Euclid states i
 | ✅ | &emsp;[I.45 sum](I/45.md#sum) | `Elements.BookI.Prop45.sum` | [`Elements.BookI.Prop45`](../Elements/BookI/Prop45.lean) |  | [what it rests on](I/45.md#what-it-rests-on) |
 | ✅ | [I.46](I/46.md) A square on a given straight line | `Elements.BookI.Prop46` | [`Elements.BookI.Prop46`](../Elements/BookI/Prop46.lean) | whole | [what it rests on](I/46.md#what-it-rests-on) |
 | ✅ | [I.47](I/47.md) The square on the side subtending the right angle equals the other two | `Elements.BookI.Prop47` | [`Elements.BookI.Prop47`](../Elements/BookI/Prop47.lean) | whole | [what it rests on](I/47.md#what-it-rests-on) |
+| ✅ | &emsp;[I.47 general](I/47.md#general) | `Elements.BookI.Prop47.general` | [`Elements.BookI.Prop47`](../Elements/BookI/Prop47.lean) |  | [what it rests on](I/47.md#what-it-rests-on) |
 | ✅ | [I.48](I/48.md) If the square equals the other two, the angle is right | `Elements.BookI.Prop48` | [`Elements.BookI.Prop48`](../Elements/BookI/Prop48.lean) | whole | [what it rests on](I/48.md#what-it-rests-on) |
 
 ## Book II
@@ -93,7 +94,7 @@ Key to the tables: ✅ proved. The Lean statement is *whole*, as Euclid states i
 | ✅ | [II.11](II/11.md) A straight line cut so that the rectangle equals the square | `Elements.BookII.Prop11` | [`Elements.BookII.Prop11`](../Elements/BookII/Prop11.lean) | whole | [what it rests on](II/11.md#what-it-rests-on) |
 | ✅ | [II.12](II/12.md) The square on the side subtending the obtuse angle | `Elements.BookII.Prop12` | [`Elements.BookII.Prop12`](../Elements/BookII/Prop12.lean) | whole | [what it rests on](II/12.md#what-it-rests-on) |
 | ✅ | [II.13](II/13.md) The square on the side subtending the acute angle | `Elements.BookII.Prop13` | [`Elements.BookII.Prop13`](../Elements/BookII/Prop13.lean) | whole | [what it rests on](II/13.md#what-it-rests-on) |
-| ✅ | [II.14](II/14.md) A square equal to a given rectilineal figure | `Elements.BookII.Prop14` | [`Elements.BookII.Prop14`](../Elements/BookII/Prop14.lean) | whole | [what it rests on](II/14.md#what-it-rests-on) |
+| ✅ | [II.14](II/14.md) A square equal to a given rectilineal figure | `Elements.BookII.Prop14` | [`Elements.BookII.Prop14`](../Elements/BookII/Prop14.lean) | restricted | [what it rests on](II/14.md#what-it-rests-on) |
 | ✅ | &emsp;[II.14 apart](II/14.md#apart) | `Elements.BookII.Prop14.apart` | [`Elements.BookII.Prop14`](../Elements/BookII/Prop14.lean) |  | [what it rests on](II/14.md#what-it-rests-on) |
 | ✅ | &emsp;[II.14 fan](II/14.md#fan) | `Elements.BookII.Prop14.fan` | [`Elements.BookII.Prop14`](../Elements/BookII/Prop14.lean) |  | [what it rests on](II/14.md#what-it-rests-on) |
 | ✅ | &emsp;[II.14 figure](II/14.md#figure) | `Elements.BookII.Prop14.figure` | [`Elements.BookII.Prop14`](../Elements/BookII/Prop14.lean) |  | [what it rests on](II/14.md#what-it-rests-on) |
