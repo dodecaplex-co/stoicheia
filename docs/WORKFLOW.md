@@ -345,14 +345,21 @@ gate, which reads the issues again when the coordinator merges (section 10).
 
 The `safe-push-tests` job runs `python3 scripts/test_safe_push.py`, the tests of the gate
 every pull request lands through (section 10), on each pull request that changes
-`scripts/`, `tests/`, `.github/` (the pull request template among them) or this page,
-since the tests compare this section's first command block with safe_push's `CHECKS`
-and the `check` job. It decides with `git diff --name-only` from the pull request's base
-to its head, with three dots, so that only the pull request's own changes count. On any
-other pull request it passes at once and says why; on a push it is skipped. The tests
-need Git with the whole history and the pinned PyYAML, but no Lean and no network, and
-take about seven minutes; `FullChecks`, the one test that needs Lean, is skipped without
-`STOICHEIA_SLOW_TESTS=1`, there as anywhere.
+`scripts/`, `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`,
+`.github/` (the pull request template among them) or this page: the check inputs
+safe_push guards (its `CHECK_INPUTS`), the workflows, and this page, whose first command
+block the tests compare with safe_push's `CHECKS` and the `check` job. It decides with
+`git diff --name-only` from the pull request's base to its head, with three dots, so that
+only the pull request's own changes count; an empty base or head, or a comparison that
+fails, fails the job. On any other pull request it passes at once and says why; on a
+push it is skipped. Those paths are not all the tests read: they also read content
+(`heath/I/01.md`, the decisions page, `docs/briefs/book-I.md`, `docs/program.toml`,
+`docs/reading.md` and `facts.json`) and run `check_fidelity.py` and `render.py` over the
+whole tree, so a pull request that changes only content can still break them, and the
+next run of the job shows it. The tests need Git with the whole history and the pinned
+PyYAML, but no Lean and no network, and take about seven minutes; `FullChecks`, the one
+test that needs Lean, is skipped without `STOICHEIA_SLOW_TESTS=1`, there as anywhere.
+The job reads the repository with no other permission, and its checkout keeps no token.
 
 `scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on
 the head commit of every pull request (section 10), so a change to them is made there too,
@@ -369,8 +376,8 @@ in its `REQUIRED_CHECKS`: a required check that is missing, or whose every run w
 skipped, holds the merge. Main's ruleset does not require `safe-push-tests`, whose
 failing run holds a merge through the merge gate alone. GitHub uses the ruleset when
 merging, and there the two differ, for requiring `acceptance` does not by itself prove
-that the pull request's checklist ran: the workflow also runs on pushes, where that job is conditionally skipped, and
-GitHub accepts a skipped job even when it is required
+that the pull request's checklist ran: the workflow also runs on pushes, where that job
+is conditionally skipped, and GitHub accepts a skipped job even when it is required
 ([GitHub documentation](https://docs.github.com/en/pull-requests/reference/status-checks)).
 The merge gate does not count a skipped run as a pass, so it waits for the pull request's
 own run of `acceptance` to pass.
@@ -435,9 +442,12 @@ The ruleset and the remaining merge requirements are in
   `python3 -I tests/test_acceptance_limits.py` checks the limitations that acceptance item
   P3 allows against [ACCEPTANCE's table](ACCEPTANCE.md#the-limitations-allowed), and P3
   itself on review records varied in memory. The Jev question generator's tests,
-  `python3 -I tests/test_jev_questions.py`, are not in the sequence: one of them checks out
-  a commit of 19 October, `39ae65c2`, which the `check` job's shallow checkout does not
-  hold, so whoever changes the generator runs them.
+  `python3 -I tests/test_jev_questions.py`, are not in the sequence, for one of them
+  checks out a commit of 19 October, `39ae65c2`, which the `check` job's checkout, one
+  commit deep, does not hold. Two more of them now fail at any depth, on main too, with
+  "Elements.Superposition.Lit is not imported", since the superposition rule landed there
+  (#191); the generator's fix is in #185. The file can join a job with the whole history
+  once #185 lands.
 - **Counts in prose.** A count a script knows exactly goes between count markers and is
   rendered; the surrounding prose stays human ([STYLE](STYLE.md), section 4).
   `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`
