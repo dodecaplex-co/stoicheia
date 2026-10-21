@@ -3032,3 +3032,40 @@ findings:
   hold. `git safe-push --label release` creates the `release` label, with its
   description, the first time it is given; the consolidation release (#38) lands through
   a pull request carrying it. Tags and releases stay manual, by the owner.
+
+## 21 October 2026
+
+- **The model's results and the overlap screen say what they were made from, and the
+  release makes both again ([#160](https://github.com/jackChallis/stoicheia/issues/160)).**
+  `python3 -I tests/model/run.py --check-results` runs no harness. It fails, naming each
+  file, when a file in `tests/model/results/` names a harness hash other than the
+  harness's now, computed by the code that writes the results' headers (`harness_hash`,
+  which `provenance` calls); when the files name more than one commit or harness, or one
+  names none; when a file `--write` writes is missing, or one it does not write is
+  present; or when the counts in `tests/model/MODEL.md` name another commit. Its
+  self-test runs first: it plants each of those faults in a temporary copy of the results
+  and of MODEL.md, and checks that the copy unchanged, and what `--write` writes, pass.
+  CI's `model` job runs it after `--fast`, so a pull request that changes the harness runs
+  `--full --write` in the same pull request: generated facts are refused when stale
+  (WORKFLOW, section 10, step 8, Tier 1). The overlap screen gains `--write`, with which a
+  run that reaches its verdict records, in `Audit/screen-run.toml`, the commit, the number
+  of statements in `facts.json` and a sha256 of each part of what decides its result; and
+  `python3 Audit/screen.py --check-current`, which computes the parts again without Lean
+  and fails, naming each part that changed, when the record is missing or the inputs
+  differ. The parts are more than the statements, the rules and the script. Every file of
+  tries imports `Elements`, so the library's notation, in which the screen's own lemmas
+  are written, decides the result too, and so do its instances: `grind`'s AC solver, on by
+  default, looks for `Std.Associative` and `Std.Commutative`, which
+  `Elements/Figure/Areas.lean` gives the sum of magnitudes. So the record pins
+  `facts.json`'s statements (name, reference, kind and statement), rules (modules and
+  statements) and words (`vocabulary`), every Lean file of the library, the toolchain's
+  files, and `Audit/screen.py` without its docstring, which records the run and so is
+  written after it. The screen needs Lean and about an hour and a half of processor time,
+  so its check is a release step, not one of CI's; until the screen runs on the candidate,
+  `--check-current` fails, as it should, and nobody writes the record by hand. WORKFLOW,
+  section 10, step 10, lists both runs and both checks on the release candidate, and
+  section 8 lists the new command. Neither the model nor the screen is run again here.
+  The protected files changed are `tests/model/run.py`, `.github/workflows/ci.yml`,
+  `Audit/screen.py` and `scripts/safe_push.py` (a comment, which said that no check reads
+  the model's results); `Audit/screen-run.toml` joins them when the screen first writes
+  it.

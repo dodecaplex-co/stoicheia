@@ -114,6 +114,12 @@ jobs:
       - name: The axioms hold in the plane, every weakened axiom is caught, and only Postulate 5 fails in the hyperbolic plane
         run: python3 -I tests/model/run.py --fast
 
+      - name: The committed results and the counts in MODEL.md are the present harness's
+        # Reads only their headers, and runs no harness. So a pull request that changes the
+        # harness runs `run.py --full --write` in the same pull request: generated facts are
+        # refused when stale (docs/WORKFLOW.md, section 10, step 8, Tier 1).
+        run: python3 -I tests/model/run.py --check-results
+
   formal-model:
     # The formal model in model/ (model/README.md, "The CI job"): a Lake package of its
     # own, with a pinned Mathlib, in which Lean checks that the ordinary plane satisfies

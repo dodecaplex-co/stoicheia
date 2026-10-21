@@ -314,6 +314,7 @@ commands below run the acceptance job's tests and checklist without its CI compa
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
+python3 -I tests/model/run.py --check-results   # the `model` job's second step: results/ are current
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
                                        # CI's `formal-model` job: the formal model, with Mathlib
 python3 -I tests/test_check_acceptance.py   # CI's `acceptance` job: the comparison tests
@@ -366,6 +367,13 @@ The ruleset and the remaining merge requirements are in
   change to an axiom fails the `model` job until the model follows it, in the same pull
   request: [MODEL.md, "Changing the axioms"](../tests/model/MODEL.md#changing-the-axioms),
   says how.
+- **The model's results name their harness.** Each file in `tests/model/results/` names
+  the commit it was written at and the hash of the harness that wrote it (`HARNESS` in
+  `tests/model/run.py`), and MODEL.md's counts name the same commit.
+  `run.py --check-results` reads only those lines and fails when the harness now hashes
+  otherwise. So a pull request that changes a harness file runs
+  `python3 -I tests/model/run.py --full --write` (about seven minutes) and commits what it
+  writes, in the same pull request.
 - **Staging builds; it is not proved.** `lake build Staging` checks that the statements
   staged before their proofs (section 2), each with `sorry` where its proof is due, still
   build against the library they import. It builds every file under `Staging/`, whether or
@@ -516,8 +524,20 @@ looked into.
     labelled `blocks-release` is open, or when GitHub cannot be read. The job runs on the
     pull request's events, not the issues', so once the last blocker closes it is run
     again (or `release` removed and given again) before `--merge`, which counts its failed
-    run on a release pull request. Then the notes are drafted from the generated
-    summaries, the owner approves them, and the tag (`book-I`, `book-II`, …) is made.
+    run on a release pull request. Two generated accounts are then made again, both at
+    the release candidate's commit. The model's full run,
+    `python3 -I tests/model/run.py --full --write`, writes `tests/model/results/` and
+    MODEL.md's counts. The overlap screen, `python3 Audit/screen.py OUTDIR --write`, runs on
+    the candidate's statements and rules and writes `Audit/screen-run.toml`; then
+    [overlaps.md](reports/overlaps.md) and the screen's docstring record the revision
+    screened, the number of statements in `facts.json` and what closed. With what they
+    write committed, `python3 -I tests/model/run.py --check-results` and
+    `python3 Audit/screen.py --check-current` both pass. CI runs the first on every pull
+    request. The screen needs Lean and about an hour and a half of processor time, so its
+    check is a release step, not one of CI's; `Audit/` is protected, so the release's
+    decisions entry names `Audit/screen-run.toml`. Then the notes are drafted from the
+    generated summaries, the owner approves them, and the tag (`book-I`, `book-II`, …) is
+    made.
     `python3 scripts/check_release_gate.py` runs once more just before the tag, since the
     hold rests on the labels. PROGRAM.md is brought up to date: the status board, the
     lessons, the costs.
