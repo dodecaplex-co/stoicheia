@@ -414,7 +414,7 @@ class RenderLeavesTheRecord(unittest.TestCase):
             with self.subTest(a_real_entry_besides=besides):
                 self.render_leaves_the_record(besides)
 
-    def render_leaves_the_record(self, besides: bool) -> None:
+    def render_leaves_the_record(self, besides):
         from negative_tests import count_source_copy
 
         # Words found in no file of the sources, this one included, until they are planted.
@@ -422,6 +422,7 @@ class RenderLeavesTheRecord(unittest.TestCase):
         with count_source_copy() as (root, env):
             folder = root / "docs" / "decisions"
             if besides:
+                self.assertFalse((folder / "2026-10-21-render-real.md").exists())
                 (folder / "2026-10-21-render-real.md").write_text(
                     "- **A decision already in the folder, for the test.** It stands as an "
                     "entry main holds would.\n", encoding="utf-8")
@@ -439,6 +440,7 @@ class RenderLeavesTheRecord(unittest.TestCase):
                     f"## {words[1]}\n\nAnd more words under it.\n",
             }
             for path, text in entries.items():
+                self.assertFalse(path.exists(), path)
                 path.write_text(text, encoding="utf-8")
             record = [root / "docs" / "briefs" / "0002-decisions.md", folder / "README.md",
                       *existing, *entries]

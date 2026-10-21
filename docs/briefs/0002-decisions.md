@@ -4104,15 +4104,19 @@ findings:
   `RenderLeavesTheRecord` test runs `render.py` on a copy of the sources with two entries
   planted in `docs/decisions/`, required "decision entries: 2 checked", the planted entries
   alone. `render.py` checks every entry in the folder, so the first pull request to bring a
-  real entry failed the test, and with it `scripts/negative_tests.py`, which runs it: on
-  `tooling/book-zero-imports`, with one entry moved to the folder, `render.py` reported 3
-  and the test failed. Standing order 11, that a new decision is an entry file, waited on
-  this. The test now reads the entries the folder already holds before it plants its own,
-  requires the count `render.py` reports to be exactly those and the planted ones, and
-  holds the existing entries' bytes to stay as they were, with the README and the page. It
-  runs twice: as the folder stands, and with a real entry written into the copy besides
-  the two planted ones, where it requires 3. With the old assertion, the second run fails
-  with "decision entries: 2 checked" not found where `render.py` reported 3; now both pass.
-  The assertion stays exact. The coordinator, assigning the issue on 21 October 2026,
-  wrote: "I approve it as a correction, not a weakening." The protected file changed is
-  `tests/test_decision_entries.py`.
+  real entry would fail the test, and with it `scripts/negative_tests.py`, which runs it:
+  in a trial on `tooling/book-zero-imports`, with its entry moved into the folder and not
+  committed, `render.py` reported 3 and the test failed. The rule of 20 October 2026, that
+  a new decision is a file of its own in `docs/decisions/`
+  ([WORKFLOW](../WORKFLOW.md), section 10, "Decision entries"), waits on this fix, so this
+  entry stands on the page. The test now reads the entries the folder already holds before
+  it plants its own, requires the count `render.py` reports to be exactly those and the
+  planted ones, and holds the existing entries' bytes to stay as they were, with the README
+  and the page; it checks that no planted name is already taken. It runs twice: as the
+  folder stands, and with a real entry written into the copy besides the two planted ones,
+  where, with the folder as main holds it today, it requires 3. With the old assertion, the
+  second run fails with "decision entries: 2 checked" not found where `render.py` reported
+  3; now both pass. The assertion stays exact. The coordinator, assigning the issue on 21
+  October 2026, wrote: "the expected count read from the folder's existing entries, so the
+  assertion stays exact. I approve it as a correction, not a weakening." The protected file
+  changed is `tests/test_decision_entries.py`.
