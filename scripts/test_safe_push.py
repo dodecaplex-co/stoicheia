@@ -108,10 +108,11 @@ one commit and runs safe_push.py against that origin:
   even when the commit's render.py hides the path from the worktree's index, since each
   pass of the checks begins at the commit, its HEAD, index and files on disk unmoved as
   git sees them (a file flagged skip-worktree is refused, and so is a change hidden by
-  stat settings written into the shared config), with every ignored file but the build's
-  caches removed (a planted scripts/json.pyc); and `git safe-push`, run from a linked
-  worktree as the lane runs it, drops the GIT_DIR its alias is given before any check
-  runs;
+  stat settings or core.fileMode=false written into the shared config, or by the shared
+  info/attributes, while a hook planted there never runs, and core.autocrlf=true changes
+  no worktree made), with every ignored file but the build's caches removed (a planted
+  scripts/json.pyc); and `git safe-push`, run from a linked worktree as the lane runs it,
+  drops the GIT_DIR its alias is given before any check runs;
 - the count markers of T1 (#177): a new word in the lock, with Certificate/FIELDS.md's
   count of the words moved with it, lands as content, origin/main's failure noted and the
   commit's own pass holding the count to the lock; while that page changed beyond the
@@ -4627,6 +4628,89 @@ if _sp.run(["git", "ls-files", "--error-unmatch", "docs/templates/x.yaml"],
                 with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status lists  M "
                                             "README.md"):
                     next(safe_push.passes(WORK, BASE, BASE, wt, []))
+
+    def test_the_shared_git_folder_cannot_hide_a_change(self):
+        # The commit's own code can write the clone's shared .git, which every worktree
+        # reads: under core.fileMode=false git status passes a changed executable bit; a
+        # hook git status runs can write a file once git has looked; and info/attributes,
+        # or core.autocrlf=true set before a worktree is made, makes git's own checkout
+        # write bytes the commit does not hold. Each is planted in the test clone, never
+        # this repository, and taken out again, on a failure too and when the test ends.
+        common = Path(git(WORK, "rev-parse", "--path-format=absolute",
+                          "--git-common-dir").strip()).resolve()
+        self.assertEqual(common, (WORK / ".git").resolve())
+        self.assertTrue(common.is_relative_to(TMP.resolve()), common)
+
+        @contextlib.contextmanager
+        def setting(key: str, value: str):
+            was = git(WORK, "config", "--local", "--get", key, check=False).strip()
+            put_back = ("config", "--local", *((key, was) if was else ("--unset", key)))
+            self.addCleanup(git, WORK, *put_back, check=False)
+            git(WORK, "config", "--local", key, value)
+            try:
+                yield
+            finally:
+                git(WORK, *put_back, check=False)
+
+        @contextlib.contextmanager
+        def planted(path: Path, text: str):
+            self.assertTrue(path.resolve().is_relative_to(common), path)
+            self.addCleanup(path.unlink, missing_ok=True)
+            path.write_text(text)
+            try:
+                yield path
+            finally:
+                path.unlink(missing_ok=True)
+
+        disk = "the files on disk in the worktree"
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "check") as wt:
+            readme = wt / "README.md"
+            with self.subTest(setting="core.fileMode=false"), \
+                    setting("core.fileMode", "false"):
+                readme.chmod(0o755)
+                try:
+                    self.assertEqual(git(wt, "status", "--porcelain"), "")
+                    with self.assertRaisesRegex(safe_push.Refusal, f"{disk} .*git status "
+                                                "lists  M README.md"):
+                        safe_push.at_commit(wt, BASE)
+                finally:
+                    readme.chmod(0o644)
+            with self.subTest(hook="post-index-change"):
+                marker = TMP / "index-changed"
+                self.addCleanup(marker.unlink, missing_ok=True)
+                hook = f'#!/bin/sh\necho "$PWD" >> "{marker}"\n'
+                with planted(hooks_dir() / "post-index-change", hook) as path:
+                    path.chmod(0o755)
+                    # A new time on a file has git status write the refreshed index, and
+                    # run the hook: it runs under git's own settings, and not in at_commit.
+                    os.utime(readme, (1_600_000_000, 1_600_000_000))
+                    git(wt, "status", "--porcelain")
+                    self.assertTrue(marker.exists(), "the hook did not run")
+                    marker.unlink()
+                    os.utime(readme, (1_600_000_100, 1_600_000_100))
+                    safe_push.at_commit(wt, BASE)
+                    self.assertFalse(marker.exists(), "a hook ran in at_commit")
+            with self.subTest(attributes="info/attributes"):
+                path = Path(git(wt, "rev-parse", "--path-format=absolute", "--git-path",
+                                "info/attributes").strip())
+                named = re.escape(str(path))
+                with planted(path, "*.md eol=crlf\n"):
+                    with self.assertRaisesRegex(safe_push.Refusal,
+                                                f"{named} exists: attributes there apply"):
+                        safe_push.at_commit(wt, BASE)
+                safe_push.at_commit(wt, BASE)
+        # core.autocrlf=true, set before the worktree is made, would check README.md's LF
+        # endings out as CRLF, and git status, which trusts the times, would pass them.
+        held = safe_push.show_bytes(WORK, BASE, "README.md")
+        self.assertIn(b"\n", held)
+        self.assertNotIn(b"\r\n", held)
+        with self.subTest(setting="core.autocrlf=true"), \
+                setting("core.autocrlf", "true"), \
+                tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                safe_push.worktree(WORK, BASE, Path(tmp), "crlf") as wt:
+            self.assertEqual((wt / "README.md").read_bytes(), held)
+            safe_push.at_commit(wt, BASE)
 
     def test_an_ignored_file_left_between_passes_is_removed(self):
         # git status leaves ignored files out, and origin/main's checks would import a

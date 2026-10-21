@@ -3922,8 +3922,11 @@ findings:
   first; the test file loads the script from its file, and plants such modules to show
   that they never run. The check independently discovers the script's worktree and its
   worktree-specific Git directory. It accepts an explicit `GIT_DIR` and `GIT_WORK_TREE`
-  pair that identifies both, and refuses a foreign worktree or Git directory with a
-  message saying how to run the check. The pre-flight's step 3 begins
+  pair that identifies both, and refuses a foreign worktree or Git directory, and
+  `GIT_DIR` set alone, as a Git alias run from a linked worktree sets it, with a message
+  saying how to run the check
+  (`env -u GIT_DIR -u GIT_WORK_TREE python3 scripts/check_paths.py`). The pre-flight's
+  step 3 begins
   with two paths guards, which refuse outright, whatever the decisions page says, and run
   before the commit is checked out, so that a refusal comes before any worktree is made.
   The first refuses a commit whose tree, or the tree of any commit it brings since
@@ -3953,14 +3956,18 @@ findings:
   worktree at the commit, and is refused otherwise: its HEAD the commit, its index the
   commit's tree, no file flagged skip-worktree or assume-unchanged, and
   `git status --porcelain --untracked-files=all` empty, each asked of Git with its stat
-  settings at their defaults and no fsmonitor or untracked cache, whatever the shared
-  `.git/config` says; then every ignored file is removed but the build's caches, `.lake/`
-  and `model/.lake/`, a channel the commit's own build already has
-  ([#197](https://github.com/jackChallis/stoicheia/issues/197)). This asks Git, and is no
-  byte comparison of the disk with the commit: a hand-edited index, or a clean filter in
-  the shared `.git`, could still hide a change, though either needs the commit's own code
-  to have run first, a change to a protected script. origin/main's copies are taken out
-  again by a reset to the commit, never to HEAD. A new
+  settings at their defaults, no fsmonitor, untracked cache or hook, and, as the worktrees
+  are made, file modes compared and no line-ending conversion or global attributes file,
+  whatever the shared `.git/config` says, and refused while the shared
+  `.git/info/attributes` exists; then every ignored file is removed but the build's
+  caches, `.lake/` and `model/.lake/`, a channel the commit's own build already has
+  ([#197](https://github.com/jackChallis/stoicheia/issues/197)). This asks Git and is no
+  byte comparison of the disk with the commit, so routes past it remain (a hand-edited
+  index, a process left running, a `.git` below the root among them;
+  [#218](https://github.com/jackChallis/stoicheia/issues/218)), each needing the commit's
+  own code to have run first, through a change to a protected script or its Lean at
+  elaboration ([#197](https://github.com/jackChallis/stoicheia/issues/197)). origin/main's
+  copies are taken out again by a reset to the commit, never to HEAD. A new
   extension, top-level folder, executable or named file is a change to the check, landing
   first, in a pull request of its own; and since step 3 judges every commit a pull request
   brings by origin/main's standard, an entry is taken out of a list only when no open

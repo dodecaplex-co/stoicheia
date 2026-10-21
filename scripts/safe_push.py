@@ -95,14 +95,16 @@ order, and the first that fails stops it with a message saying why:
    commit, its index the commit's tree, no file flagged skip-worktree or assume-unchanged
    (either keeps git from looking at the file on disk), and `git status --porcelain
    --untracked-files=all` empty, each asked of git with its stat settings at their
-   defaults and no fsmonitor or untracked cache, whatever the shared .git/config says;
+   defaults, no fsmonitor, untracked cache or hook, and, as the worktrees are made, file
+   modes compared and no line-ending conversion or global attributes file, whatever the
+   shared .git/config says, and refused while the shared .git/info/attributes exists;
    then every ignored file is removed but the build's caches, .lake/ and model/.lake/, a
-   channel the commit's own build already has (#197). This asks git, and is no byte
-   comparison of the disk with the commit: a hand-edited index, or a clean filter in the
-   shared .git, could still hide a change, though either needs the commit's own code to
-   have run first, a change to a protected script. origin/main's copies are taken out
-   again by a reset to the commit. Two kinds of failure are not a check's verdict, and
-   are noted only:
+   channel the commit's own build already has (#197). This asks git and is no byte
+   comparison of the disk with the commit, so routes past it remain (a hand-edited index,
+   a process left running, a .git below the root among them; #218), each needing the
+   commit's own code to have run first, through a change to a protected script or its
+   Lean at elaboration (#197). origin/main's copies are taken out again by a reset to the
+   commit. Two kinds of failure are not a check's verdict, and are noted only:
    pages gone stale under origin/main's render.py (or facts.json rewritten by its
    certificate), which the pages' diff shows in full; and a failure on a commit whose
    only check inputs changed are values pinned to the edition (PINNED, below; the
@@ -1790,8 +1792,8 @@ def base_copies(repo, base, sha, wt: Path, changes: list[tuple[str, str]]):
     try:
         yield [f":(exclude,literal){p}" for _, p in changes]
     finally:
-        run(["git", "reset", "-q", "--hard", sha], wt)
-        run(["git", "clean", "-fdq"], wt)
+        run(["git", *DISK_AS_IS, "reset", "-q", "--hard", sha], wt)
+        run(["git", *DISK_AS_IS, "clean", "-fdq"], wt)
 
 
 BASE_PASS = " (origin/main's checks)"
@@ -1802,13 +1804,25 @@ BASE_PASS = " (origin/main's checks)"
 FRESHNESS = ("generated pages", "git status --porcelain is empty")
 
 
-# Git's stat settings at their defaults, and no fsmonitor or untracked cache, for
-# at_commit's commands: the commit's own code can write the shared .git/config, where
-# core.checkStat=minimal or core.trustctime=false lets git status pass a change of the
-# same size with its time put back, and the untracked cache or an fsmonitor hook can
-# answer in git's place.
+# No conversion between the commit and the disk, for `git worktree add` and with
+# DISK_AS_IS: the commit's own code can write the shared .git/config, where
+# core.fileMode=false lets git status pass a changed executable bit, and
+# core.autocrlf=true, or attributes (working-tree-encoding, eol) in the global attributes
+# file, core.attributesFile (by default ~/.config/git/attributes), make git's own
+# checkout write bytes the commit does not hold, which git status then compares through.
+# The shared .git/info/attributes, which no setting turns off, at_commit refuses.
+AS_COMMITTED = ("-c", "core.fileMode=true", "-c", "core.autocrlf=false",
+                "-c", "core.attributesFile=/dev/null")
+# Git's stat settings at their defaults, no fsmonitor, untracked cache or hook, and no
+# conversion (AS_COMMITTED), for at_commit's commands and base_copies' reset and clean:
+# in the shared .git/config, core.checkStat=minimal or core.trustctime=false lets git
+# status pass a change of the same size with its time put back; the untracked cache or
+# an fsmonitor hook can answer in git's place; and a hook in the shared .git/hooks
+# (post-index-change, which git status and a reset run) can write a file once git has
+# looked. core.hooksPath=/dev/null runs no hook, as git-config(1) documents.
 DISK_AS_IS = ("-c", "core.checkStat=default", "-c", "core.trustctime=true",
-              "-c", "core.fsmonitor=false", "-c", "core.untrackedCache=false")
+              "-c", "core.fsmonitor=false", "-c", "core.untrackedCache=false",
+              "-c", "core.hooksPath=/dev/null", *AS_COMMITTED)
 # The build's caches, which a pass keeps; at_commit removes every other ignored file.
 CACHES = ("/.lake", "/model/.lake")
 
@@ -1819,16 +1833,18 @@ def at_commit(wt: Path, sha: str) -> None:
     keep git from looking at the file on disk), and `git status --porcelain
     --untracked-files=all` empty, so that no file on disk differs from the index and none
     stands untracked beside them. Each is asked of git with its stat settings at their
-    defaults and no fsmonitor or untracked cache (DISK_AS_IS), whatever the shared
-    .git/config says; then every ignored file but the build's caches, .lake/ and
-    model/.lake/ (CACHES, a channel the commit's own build already has, #197), is removed,
-    so that the next pass reads no scripts/json.pyc the commit left. The commit's own
-    code, run in an earlier pass (its render.py, say), could have changed any of these,
-    and origin/main's checks, which read the index and the files, would judge another
-    tree. This asks git, and is no byte comparison of the disk with the commit: a
-    hand-edited index, or a clean filter in the shared .git, could still hide a change,
-    though either needs the commit's own code to have run first, which is a change to a
-    protected script."""
+    defaults, no fsmonitor, untracked cache or hook, and, as the worktrees are made, file
+    modes compared and no line-ending conversion or global attributes file (DISK_AS_IS),
+    whatever the shared .git/config says, and refused while the shared
+    .git/info/attributes exists; then every ignored file but the build's caches, .lake/
+    and model/.lake/ (CACHES, a channel the commit's own build already has, #197), is
+    removed, so that the next pass reads no scripts/json.pyc the commit left. The commit's
+    own code, run in an earlier pass (its render.py, say), could have changed any of
+    these, and origin/main's checks, which read the index and the files, would judge
+    another tree. This asks git and is no byte comparison of the disk with the commit, so
+    routes past it remain (a hand-edited index, a process left running, a .git below the
+    root among them; #218), each needing the commit's own code to have run first, through
+    a change to a protected script or its Lean at elaboration (#197)."""
     head = run(["git", *DISK_AS_IS, "rev-parse", "--verify", "--quiet", "HEAD"],
                wt).stdout.strip()
     indexed = git_ok(wt, *DISK_AS_IS, "diff-index", "--cached", "--quiet", sha, "--")
@@ -1836,6 +1852,20 @@ def at_commit(wt: Path, sha: str) -> None:
         raise Refusal(f"before a pass of the checks, the worktree {wt} is no longer the "
                       f"commit {sha[:12]} (its HEAD is {head[:12] or 'unreadable'}, or its "
                       "index differs): something run in an earlier pass changed it")
+    # The shared .git/info/attributes applies to every worktree whatever the settings say:
+    # working-tree-encoding or eol there makes git's own checkout write bytes the commit
+    # does not hold, and git status compare through them.
+    found = run(["git", *DISK_AS_IS, "rev-parse", "--path-format=absolute", "--git-path",
+                 "info/attributes"], wt)
+    attributes = found.stdout.strip()
+    if found.returncode != 0 or not attributes:
+        raise Refusal("before a pass of the checks, git cannot name the info/attributes of "
+                      f"the worktree {wt}")
+    if os.path.lexists(attributes):
+        raise Refusal(f"before a pass of the checks, {attributes} exists: attributes there "
+                      "apply to every worktree of the clone, whatever git's settings say, "
+                      f"and can make git's own checkout write bytes the commit {sha[:12]} "
+                      "does not hold; remove it")
     # ls-files -v tags an entry H, S when skip-worktree, M when unmerged, and in lower case
     # when assume-unchanged: any tag but H is refused. A fresh worktree's entries are all H.
     tags = run(["git", *DISK_AS_IS, "ls-files", "-v", "-z"], wt, binary=True)
@@ -2522,7 +2552,8 @@ def guards(ctx, wt: Path, rep: Report, logs: Path) -> Guarded:
 def worktree(repo, sha, parent: Path, name: str):
     """A fresh detached worktree of the commit, removed afterwards, on a failure too."""
     path = parent / name
-    git(repo, "worktree", "add", "--detach", "--quiet", str(path), sha)
+    # No hooksPath: the tests' checkout_marker needs post-checkout; hooks left over: #218.
+    git(repo, *AS_COMMITTED, "worktree", "add", "--detach", "--quiet", str(path), sha)
     try:
         yield path
     finally:

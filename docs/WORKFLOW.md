@@ -241,7 +241,9 @@ path it allows; otherwise that branch is first rebuilt without the path. The scr
 judges only its own repository: it independently discovers both the script's worktree and
 that worktree's Git directory, including a linked worktree's own directory. An explicit
 `GIT_DIR` and `GIT_WORK_TREE` pair for that worktree is accepted; a foreign Git directory
-or worktree is refused, with instructions for running the check without the override. A
+or worktree is refused, and so is `GIT_DIR` set alone, as a Git alias run from a linked
+worktree sets it, each with instructions for running the check without the override
+(`env -u GIT_DIR -u GIT_WORK_TREE python3 scripts/check_paths.py`). A
 module planted beside it, such as `scripts/unicodedata.py`, is never read in place of the
 standard library's.
 
@@ -763,14 +765,17 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       commit's own code may have run in an earlier one: its HEAD the commit, its index the
       commit's tree, no file flagged skip-worktree or assume-unchanged (either keeps Git
       from reading the file on disk), and `git status --porcelain --untracked-files=all`
-      empty, each asked of Git with its stat settings at their defaults and no fsmonitor
-      or untracked cache, whatever the shared `.git/config` says; then every ignored file
-      is removed but the build's caches, `.lake/` and `model/.lake/`, a channel the
-      commit's own build already has (#197). This asks Git, and is no byte comparison of
-      the disk with the commit: a hand-edited index, or a clean filter in the shared
-      `.git`, could still hide a change, though either needs the commit's own code to have
-      run first, a change to a protected script. origin/main's copies are taken out again
-      by a reset to the commit. Two kinds of failure are only noted. Pages gone stale under
+      empty, each asked of Git with its stat settings at their defaults, no fsmonitor,
+      untracked cache or hook, and, as the worktrees are made, file modes compared and no
+      line-ending conversion or global attributes file, whatever the shared `.git/config`
+      says, and refused while the shared `.git/info/attributes` exists; then every ignored
+      file is removed but the build's caches, `.lake/` and `model/.lake/`, a channel the
+      commit's own build already has (#197). This asks Git and is no byte comparison of
+      the disk with the commit, so routes past it remain (a hand-edited index, a process
+      left running, a `.git` below the root among them; #218), each needing the commit's
+      own code to have run first, through a change to a protected script or its Lean at
+      elaboration (#197). origin/main's copies are taken out again by a reset to the
+      commit. Two kinds of failure are only noted. Pages gone stale under
       origin/main's `render.py`, or `facts.json` rewritten by origin/main's certificate,
       show the generator's change in the pages' diff; a
       failure of `render.py` itself, its check of `docs/program.toml` among them, is a
