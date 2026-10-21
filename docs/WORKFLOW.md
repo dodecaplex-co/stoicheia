@@ -299,6 +299,7 @@ python3 scripts/check_kernel.py --self-test
 python3 scripts/heath.py
 python3 scripts/check_fidelity.py
 python3 -I tests/test_check_style.py
+python3 -I tests/test_release_gate.py
 python3 scripts/check_style.py
 python3 scripts/render.py
 git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md   # prints nothing
@@ -328,13 +329,22 @@ the switch to the full gate at that release, the reports and the executable defi
 are in [ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci), the account of how CI runs the
 [acceptance checklist](ACCEPTANCE.md).
 
+The separate `release-gate` workflow runs its job only on pull requests labelled
+`release`, reading the open issues labelled `blocks-release` with `python3
+scripts/check_release_gate.py`; ordinary pull requests skip it. It runs main's copy of the
+script, from the base commit, but GitHub takes the workflow file itself from the pull
+request, which could change it, so the job only shows the hold: the authority is the merge
+gate, which reads the issues again when the coordinator merges (section 10).
+
 `scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on
 the head commit of every pull request (section 10), so a change to them is made there too,
 and in the CI workflow. It leaves the `formal-model` job to CI on purpose, since it
 fetches Mathlib's prebuilt files
 ([model/README.md](../model/README.md#the-ci-job)), and the `acceptance` job, since it builds
 main beside the pull request. Its merge gate refuses when any reported check fails, is
-cancelled or is still running. It requires a passing
+cancelled or is still running, apart from the `release-gate` job of the "Release gate"
+workflow on an ordinary pull request, even if a run remains from before its `release`
+label was removed. It requires a passing
 run of `check`, `model` and `negative`, the three names still in its `REQUIRED_CHECKS`;
 its local check judgement does not reject a skipped or missing `formal-model` or
 `acceptance` when those three pass and no other check fails, is cancelled or is still
@@ -384,9 +394,14 @@ The ruleset and the remaining merge requirements are in
   of `scripts/check_style.py` that [STYLE.md](STYLE.md), section 8, names to short texts
   and small figures, including S20's ink and S26's clearance and repeated letters, each
   with the finding the rule should make, and needs no Lean.
-  It runs just before the script, so a rule that reads a case wrongly stops the checks
+  It runs before the script, so a rule that reads a case wrongly stops the checks
   before the script's findings are read. The script does not run them itself: whoever
   changes it runs the file too.
+- **The release gate's cases need no Lean and no network.**
+  `python3 -I tests/test_release_gate.py`, immediately after the style check's cases,
+  checks the unfinished work section, the issues' state and labels, pagination and
+  unreadable replies, and that an ordinary pull request skips the release hold; fixtures
+  and stand-ins supply every reply.
 - **Counts in prose.** A count a script knows exactly goes between count markers and is
   rendered; the surrounding prose stays human ([STYLE](STYLE.md), section 4).
   `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`
@@ -495,9 +510,17 @@ looked into.
     (unfinished work, a prototype or a provisional answer may be on main only as such an
     issue, and holds every release until it closes); and the wiki refreshed, so that it is
     reasonably correct as of its date, as its pages say, and is not expected to be more
-    current than that. Then the notes are drafted from the generated summaries, the owner
-    approves them, and the tag (`book-I`, `book-II`, …) is made. PROGRAM.md is brought up
-    to date: the status board, the lessons, the costs.
+    current than that. The hold is checked by `python3 scripts/check_release_gate.py`, by
+    the `release-gate` job on the release's pull request, and by `git safe-push --merge`,
+    which refuses a pull request labelled `release` while any issue or pull request
+    labelled `blocks-release` is open, or when GitHub cannot be read. The job runs on the
+    pull request's events, not the issues', so once the last blocker closes it is run
+    again (or `release` removed and given again) before `--merge`, which counts its failed
+    run on a release pull request. Then the notes are drafted from the generated
+    summaries, the owner approves them, and the tag (`book-I`, `book-II`, …) is made.
+    `python3 scripts/check_release_gate.py` runs once more just before the tag, since the
+    hold rests on the labels. PROGRAM.md is brought up to date: the status board, the
+    lessons, the costs.
 
 A released book is not frozen. Its tag keeps the released text, and main carries the
 corrections and the common voice, as Books I and II have since their tags.
@@ -526,6 +549,16 @@ one without; stage work carries its stage's label as well (`stage-2` to `stage-6
 brief 0005), and a change to a protected path carries `security-review`. A pull request
 opens as a draft (unless `--ready` is given), and is marked ready when its reviews are
 done; `--merge` refuses a draft.
+
+**Unfinished work may land on main, with its issue.** Each piece, a prototype, a
+provisional answer, a restricted or partial scope awaiting a proof, a deferred page, a
+test not yet in CI, anything a disclosure calls "to come", has an open issue labelled
+`blocks-release`, named as `#N` in the pull request's "Unfinished work" section; when
+there is none, the section says "None". Each list item names at least one issue. These
+issues hold the release until they are closed, as the owner's rule of
+[20 October 2026](briefs/0002-decisions.md#20-october-2026) says. The release lands
+through a pull request labelled `release`; `git safe-push --label release` creates that
+label, with its description, the first time it is given, as it does the others.
 
 **Trains.** Since every pull request must be up to date with main before it merges, and
 nearly every one touches the decisions page and the generated pages, reviewed branches can
@@ -675,9 +708,10 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       draft with `gh pr create --base main --draft` (or `gh pr edit` of the open one; `--ready`
       opens it ready, or marks the open one ready), with the labels given and
       `security-review` when a protected path changes. Then its CI is followed to its
-      conclusion. Once `git push` succeeds, an interruption, a failure to follow CI or a
-      refusal is reported as "pushed; CI not followed", exit 3, never as a refusal before
-      the push.
+      conclusion, judged as the merge judges it (step 4): a `release-gate` run left from
+      an earlier `release` label is waited for, never counted. Once `git push` succeeds,
+      an interruption, a failure to follow CI or a refusal is reported as "pushed; CI not
+      followed", exit 3, never as a refusal before the push.
 3. **Reviews,** recorded in the pull request, in the template's table: `/code-review`
    always; `/security-review` when a protected path changes; `/no-mistakes` before the
    merge, run without its push and pull request steps, since `git safe-push` alone
@@ -689,21 +723,44 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    pre-flight's record is a local file, which code the pre-flight ran (a commit's
    checks, Lean at elaboration) could have written, so it stands in only for the full
    checks, which CI runs as well, and only when origin/main's harness made it; otherwise
-   they run again too. The body's summary is written afresh when the full checks ran
-   again or when it is not of this head and origin/main, and the other parts safe_push
-   wrote whenever they are out of date. It merges only when those pass; CI on that head
-   is green, subject to the ruleset and the local check judgement described in
-   [section 8](#8-validation-on-the-integrated-revision); no box marked
-   **Required** in its checklist is unticked, nor one marked
-   **Required if protected** when a protected path changes, and none of the template's
+   they run again too. The body must already carry the summary of this head and
+   origin/main, and every other part safe_push wrote must be up to date. `--merge` never
+   writes the pull request body: when one of those parts is stale, it refuses before
+   writing, and the coordinator runs the pre-flight to refresh the body before starting
+   a fresh merge attempt. It merges only when those pass; CI on that head is green,
+   subject to the ruleset and the local check judgement described in
+   [section 8](#8-validation-on-the-integrated-revision); no box marked **Required** in
+   its checklist is unticked, nor one marked **Required if protected** when a protected
+   path changes, and none of the template's
    required boxes is missing (origin/main's template, or the head's while origin/main
    has none; the pre-flight's notes, such as a check that failed with origin/main's
    copies, are shown beside the checklist); the coordinator has written "What and why",
+   "Unfinished work" (once the template in force has that section),
    each review's commit and findings in the Reviews table (the security review's when a
-   protected path changes) and "Needs the owner's OK"; boxes and sections count only
-   where GitHub shows them, by CommonMark's rules: not in a comment, an HTML block or
-   code, and a box only as a list item (a `<!--` in a code span is text, and hides
-   nothing); the title and the branch name, which go into main's merge commit, hold
+   protected path changes) and "Needs the owner's OK". Boxes and other sections count
+   where GitHub shows them, by CommonMark's rules; "Unfinished work" is read as raw text,
+   so that nothing GitHub hides or shows differently can stand in for it. The body holds
+   the line `## Unfinished work` once, at the left edge, where GitHub shows it as a
+   heading (not in a comment, an HTML block, code or a part safe_push writes), and no
+   other line whose letters, with tags and entities taken out, begin "unfinished work"
+   or are just "unfinished" (in a comment or code too, so not even a sentence may start
+   with those words); a heading disguised on purpose, in another alphabet or in crafted
+   markup, is for the reviews to find, as a false "None" is. The section runs to the
+   template's next heading. Taking out the template's own comment for it, where it
+   stands on lines of its own, it is plain ASCII with no markup (no links, code, HTML,
+   other comments, headings or entities): "None", with an optional full stop, or a list,
+   each item `- ` or `* ` at the left edge, wrapped with two to five spaces, naming one
+   or more issues as tokens `#N` (perhaps in parentheses, or before punctuation); any
+   other `#`, or `GH-N`, is refused. Each
+   issue is open with `blocks-release`, not a pull request, and of this repository by
+   GitHub's canonical address for it, so a rename is allowed and a transfer is not;
+   the section is read again before the merge, and refused if it changed meanwhile.
+   A pull request labelled `release` has no open issue or pull request labelled
+   `blocks-release`; label comparisons ignore case. Malformed pull request labels refuse
+   the release gate and retain every CI check. Both issue gates read from
+   GitHub and fail closed on a failed read, malformed JSON or missing fields; the
+   release gate makes no issue-list read for an ordinary pull request. The title and
+   the branch name, which go into main's merge commit, hold
    nothing the secret scan refuses; it carries a label for its kind, and
    `security-review` when a protected path changes; and it is not a draft. Then
    `gh pr merge --merge --delete-branch --match-head-commit <head>`, with the merge
@@ -773,5 +830,8 @@ and the hook still scans the commits it points to and an annotated tag's message
 `python3 -m pip install -r scripts/requirements-test_safe_push.txt`, followed in the same
 Python environment by `python3 scripts/test_safe_push.py`, installs the pinned YAML parser
 and plants a bad commit for each guard, gate and edge case on a throwaway clone, with a
-stand-in for gh, and checks that each is refused and a good one proposed and merged;
+stand-in for gh, and checks that each is refused and a good one proposed and merged. Its
+cases include unfinished work left unwritten, closed or unlabelled issues, open labelled
+issues, the release held by an open blocker or an unreadable reply, and an ordinary pull
+request merging without reading the blockers;
 `STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and all.
