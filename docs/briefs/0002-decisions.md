@@ -1647,10 +1647,9 @@ findings:
   III.11, III.12 and III.13 keep their `[representation]` with this tag, and III.6 takes it
   too. It lands here, in a pull request of its own, before any record uses it, as
   [FORMALIZATION](../FORMALIZATION.md), section 3, asks and as step 1 of the brief's
-  section 6 orders; no record carries it yet, so no page changes. The definition of
-  contact within now changes with section 7, before step 6, under the correction below; the tag's meaning is to gain that the inner circle has passed
-  within the outer (question 16). Protected file changed: `review/terms.toml`.
-
+  section 6 orders; no record carries it yet, so no page changes. When the definition of
+  contact within changes, in the brief's step 6, the meaning gains that the inner circle has
+  passed within the outer (question 16). Protected file changed: `review/terms.toml`.
 - **An overlap always names its kind.** The last part of
   [#93](https://github.com/jackChallis/stoicheia/issues/93), as its comments list it. The
   decision of 18 October, "An overlap is worded by its kind, as the catalogue gives it",
@@ -1787,8 +1786,9 @@ findings:
   and `Audit/Overlaps.lean`'s example of III.24 is pointed at `Prop24.equalCircles`, whose
   measure clause still follows from the equal angles alone. III.26 and III.28 are upgraded
   as the brief froze them, each clause concluding that the circumferences are equal in
-  measure and congruent; III.27, III.28 and III.30 take the first conjunct where they cite
-  them, and `Audit/Overlaps.lean`'s example of III.26 gives way to a note that III.26 no
+  measure and congruent; III.27 and III.30 take the first conjunct, the measure, where they
+  cite them, while III.28 keeps both conjuncts of III.26's clause, measure and congruence,
+  and `Audit/Overlaps.lean`'s example of III.26 gives way to a note that III.26 no
   longer holds for any two circles. The records of III.23, III.24, III.26 and III.28 are
   rewritten for their reviewer, who read them in full with those of III.27 and III.30 and
   stamped all six at 8f37887. III.24's record carries `segment-with-circle`, `centre-given`
@@ -4145,20 +4145,159 @@ findings:
   name do not change, no record changes, and no page changes. It is a check input, so it
   lands in a pull request of its own, before train C6a. Protected file changed:
   `review/terms.toml`.
+- **The formal model's compiled proofs replayed by Lean's kernel, apart from the build
+  ([#121](https://github.com/jackChallis/stoicheia/issues/121)).** The other half of
+  #121, which the source scan's entry of 19 October left open: after `lake build`, CI's
+  `formal-model` job runs [`scripts/check_model_kernel.py`](../../scripts/check_model_kernel.py)
+  (new), in which leanchecker, from the pinned toolchain, replays through Lean's kernel
+  every declaration of every compiled module of the model's own two libraries, `Model`
+  and `Check`, private declarations included. The script lists the modules from the
+  files, the two roots and every `.lean` file under `model/Model/` and `model/Check/`,
+  walks the package's build folder (`model/.lake/build/lib/lean`) for every compiled
+  module, and fails unless leanchecker reports replaying exactly those listed, so a new
+  module is never missed; a source with no compiled file, a module compiled outside the
+  two libraries (from a new root or a new library in `model/lakefile.toml`), a build not
+  up to date with its sources and a compiled module whose source is gone each fail it, and
+  a rejection names the module and the declaration leanchecker names. The freshness check
+  gives `lake build --no-build` every compiled source as an explicit target, including a
+  module its library root does not import, so an old compiled file cannot hide a later edit
+  to that source. And what is replayed is the package's own compiled files, not a copy of
+  them: each module root lies in one folder of Lean's search path, since Lean loads a
+  module from the first folder that holds its root. So before either replay the script
+  reads the search path that leanchecker gets through `lake env`, and a root (a folder, or
+  an `.olean` file, at the top of one of its folders) found in two folders, its name
+  compared without case as macOS's file system compares it, fails the check, naming both: a
+  copy of `Check` in the build folder of a package that the model requires, earlier on the
+  path (the repository root's `.lake/build/lib/lean`, which Git ignores), would otherwise
+  be replayed in place of the package's own.
+  `Check/Write.lean` alone is not replayed, by name: it writes the generated files
+  whenever Lean elaborates it, so `lake build` never compiles it, and the check fails if
+  that file goes. It runs first as `scripts/check_kernel.py` runs leanchecker for
+  `Elements`, but without `--fresh`, so each module's imports are loaded from their
+  compiled files, not replayed. Then it runs with `--fresh` on `Check`, which never
+  imports Mathlib (`model/lakefile.toml`), and replays `Check`'s whole environment from
+  nothing: Lean's own library as `Check` loads it (`Init`, `Std` and `Lean`, through
+  `Check/Generator.lean`'s `import Lean`), the library's modules that `Check` imports, the
+  plain-Lean part of `Model`, and `Check`. The first replay is kept for `Check` as well,
+  rather than replaced: it accounts for every compiled module by name, and a module
+  compiled but not imported by `Check.lean` is one that `--fresh Check` would never load;
+  for `Check` it costs about half a minute. What that leaves: the declarations of Mathlib
+  and of the packages it requires are left to Mathlib's own checks, a daily job
+  (`.github/workflows/daily.yml` in Mathlib) that replays Mathlib and Batteries from
+  nothing with leanchecker and checks Mathlib with nanoda, on Mathlib's master branch
+  rather than the release pinned here. Of Lean's own library, everything that `Check`
+  loads is replayed here from nothing, on the pinned toolchain, all 1,227 of its `Lean`
+  modules among it: so the 435 of them that lie outside Mathlib's environment, which
+  Mathlib's daily job does not reach, are no longer a gap. All that `Model` loads lies
+  within it but five of `Lake`'s modules, which `Model` loads through Mathlib
+  (`Lake.Build.Trace`, `Lake.Config.Glob`, `Lake.Util.Date`, `Lake.Util.String`,
+  `Lake.Util.Version`); those lie within Mathlib's environment, which Mathlib's daily job
+  replays, on Mathlib's toolchain rather than the one pinned here. `Init`, and the
+  library's declarations that `Check` imports, are replayed from nothing by
+  `check_kernel.py` as well, in the `check` job, from that job's own build. leanchecker runs
+  the same kernel as `lake build`, so the replay catches a declaration that reached a
+  compiled file without the kernel's check, not a fault in the kernel, and it replays any
+  axiom it meets: which axioms the model's proofs rest on stays `model/Model/Audit.lean`'s
+  check. The planted fault: its `--self-test`, which runs first in the job and needs no
+  Mathlib, builds with `lake build`, in a temporary directory outside the repository,
+  small packages of the model's shape that import only Lean, and adds a theorem of
+  `False`, proved by `True.intro`, from a `run_cmd` with the kernel's check switched off
+  (`debug.skipKernelTC`, under which `addDecl` calls `addDeclWithoutChecking`), once in a
+  `Check` file and once in a `Model` module. `lake build` accepts both; the check must
+  fail on each, naming the module and the declaration, and must pass the control, which
+  adds a true theorem the same way. Two more theorems of `False` are planted outside the
+  libraries' names, where leanchecker, given the two roots, would never look: in a second
+  root of `Model` (`roots = ["Model", "Helper"]`) and in a third library that `Check`
+  imports. The check must fail on each at its walk of the build folder, naming the module;
+  without the walk, both passed. Another theorem of `False` is planted in a package of its
+  own that `Check` requires and imports, as the model's `Check` requires the edition: the
+  walk and the first replay pass it, and the replay from nothing must fail on it, naming
+  the declaration; without that replay, the check passed it. A last theorem of `False` is
+  planted in a `Check` file after a copy of `Check`, compiled without it, is put in the
+  build folder of such a required package, earlier on the search path: both replays replay
+  the copy and pass it, and the check must fail before them, naming `Check` and both
+  folders; without the search path's check, the check passed it. A source never compiled
+  and a compiled module without its source are planted too. The control also compiles a
+  module that its library root does not import; after that source is edited without another
+  build, the check must reject it by name.
+  leanchecker runs on two threads, since each module it replays loads its imports'
+  environment afresh, Mathlib's for each module that imports it: unthrottled on sixteen
+  threads one run reached a 49 GB footprint, and on two it peaked near 2.6 GB and took
+  about a minute. The replay from nothing is one task, which more threads do not speed:
+  it took 95 seconds on two threads and 112 on four, with a resident peak of 1.5 GB, on a
+  machine busy with other builds; with it the whole script took 205 seconds and the
+  self-test 162, in a job that stops at 30 minutes. The script stops the replay from
+  nothing after 15 minutes and fails, asking whether `Check` now imports Mathlib, so that
+  the job ends with a named cause rather than at its limit. Every command runs in a process
+  group of its own; on interruption or termination the script stops that whole group and
+  waits for its command before temporary-directory cleanup, as it does on the replay's
+  timeout. The self-test times out a command, interrupts an untimed one and terminates
+  another, after each starts a descendant, and requires each descendant to stop.
+  Kim Morrison and Sebastian Ullrich wrote leanchecker, which began as Kim Morrison's
+  [lean4checker](https://github.com/leanprover/lean4checker) and now ships with Lean; we
+  are warmly grateful to them both. `safe_push` still leaves the `formal-model` job to CI
+  ([WORKFLOW](../WORKFLOW.md), section 8). The sentences that called the replay open, in
+  `scripts/check_fidelity.py`'s docstring and [FORMALIZATION](../FORMALIZATION.md),
+  section 7, now say what is true;
+  [model/README.md](../../model/README.md#the-ci-job), "The CI job", lists the step. The
+  protected files changed are:
+  `.github/workflows/ci.yml`,
+  `scripts/check_fidelity.py`,
+  `scripts/check_model_kernel.py`.
+
+- **Two guards gain their planted faults
+  ([#158](https://github.com/jackChallis/stoicheia/issues/158)).** The check that a
+  complete book has every figure and mishnah, and leanchecker's kernel replay, each said it
+  had no planted fault to show that it works. Each now has one, in the protected file
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py), as new items 19 and 20,
+  each a function of its own with one call. Item 19 removes I.1's `figures/I/01.svg`, then
+  `figures/I/01-idea.svg`, then `mishnah/I/01.md`, one at a time. Book I is complete, so
+  `check_fidelity.py` must fail each time with "I.1: … is missing", naming that file and
+  not the other two; each file is put back byte for byte in `finally`. Item 20 plants
+  `True.intro` as a proof of `False` in I.1's compiled module, the way the first
+  read-through named ([read-through 01](../reports/read-through-01.md)):
+  `set_option debug.skipKernelTC true` and a `run_cmd` that calls `addDecl`. The source
+  scan refuses both, so I.1 is compiled with them by `lake env lean -o`, over its own
+  `.olean`, from a copy in a temporary folder outside the tree, importing
+  `Lean.Elab.Command`, which defines the monad `run_cmd` runs in and brings `addDecl`
+  with it. Then
+  `leanchecker --fresh Elements`, the command `scripts/check_kernel.py` runs, must fail
+  with "while replaying declaration 'Elements.BookI.planted_ill_typed'" and the kernel's
+  type mismatch, and not with a file it cannot read or an invalid header. The build is
+  restored as item 15 restores it: the original bytes, a forced rebuild, and on success
+  the whole environment replayed; no file is left in the tree. Tried by hand first with
+  Lean 4.35: without the option, the kernel refuses the same plant when I.1 compiles, so
+  the proof is ill-typed and the option is what lets it past. With the missing-file check
+  commented out in a scratch copy of `check_fidelity.py`, item 19 reports each of the three
+  files not caught; with a leanchecker that checks nothing, item 20 reports the proof not
+  caught. Item 20 takes about a minute, restoration included. The protected regression
+  test [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) gains three
+  tests, without Lean: the three files return byte for byte whether the check names them,
+  misses them or is interrupted; the build returns when the restoration build fails or is
+  interrupted; and a replay that fails on a header, not on the proof, is not counted as
+  caught. Neither file pinned the list of plants or its count.
+  [FORMALIZATION](../FORMALIZATION.md), section 7, and the README's row for the negative
+  tests now describe both plants. No check is weakened.
+
 - **Train C6a meets axiom wave one: the lock is main's 79 axioms and the centre rule.**
   Train C6a, which carries stage 3, the mixed angles, the rule that every circle has a
   centre and brief 0008's section 7, was merged with main at `2e8aecf`, after the eight
   retirements of axiom wave one (87 to 79), and then with the check train at `9c83d79`,
   with main again at `8e9a187`, `68b365c` and `f9017e1`, and with
   tooling/centre-given-meaning, whose `review/terms.toml` lands before this train with its
-  own entry above. Last, it was merged with main at `756bdbae`, through that branch's head
+  own entry above. Then it was merged with main at `756bdbae`, through that branch's head
   `980569da`, after main had landed the restricted rule of superposition (#191), the check
   train (#192), train Tw2 (#193), Heath's letters upright (#194) and the twenty entries out
   of `REACH_PENDING` (#195); and again with that branch at `4aadad20`, after its review,
   which brings main at `0a05f96f` (#196, the switch for upright letters, and #198, short
   hashes read from Git); with main at `001620f1` (#199, the carried helper's kind, and
-  #201, the five required checks); and last with main at `e7ffaf68` (#202, the gaps of S24
-  to S26, and #204, tooling/centre-given-meaning itself).
+  #201, the five required checks); with main at `e7ffaf68` (#202, the gaps of S24 to S26,
+  and #204, tooling/centre-given-meaning itself); with main at `6e0cdd27` (#208, the
+  model's kernel replay); and last with main at `73b97ab1` (#219, planted faults for two
+  guards). The 19 October entry "A new tag, `touching-whole-circles`"
+  expected the definition of contact within to change in step 6: it changes in this
+  train, with section 7, and the tag's meaning gains the point within in a check change
+  of its own after this train (question 16).
   The counts in this train's entries of 19 October above ("The mixed-angle move integrated
   with the Circle 2 proofs", "Every circle has a centre: the rule lands" and "III.5 and
   III.6: section 7 lands before step 6": 88 axioms and 82 tacit rules, "the other 87", a
@@ -4187,12 +4326,13 @@ findings:
   `III_11_today`, `III_13_today`, `cut_point`, `CirclesCut.of_meet` and `within_point`,
   were renewed from Lean's output, and change only by losing `Tacit.adjacent_eq_of_right`
   and `Tacit.centre_unique`, now theorems; every other name in each list is unchanged. On
-  the merges of `756bdbae`, `0a05f96f`, `001620f1` and `e7ffaf68` no pin was renewed: `lake build Audit` passes with every pin of
+  the merges of `756bdbae`, `0a05f96f`, `001620f1`, `e7ffaf68`, `6e0cdd27` and
+  `73b97ab1` no pin was renewed: `lake build Audit` passes with every pin of
   `Audit/Overlaps.lean`, `Audit/Crossing.lean` and main's `Audit/Superposition.lean` as
   written.
   The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`, `model/`, `scripts/`,
   `review/SCHEMA.md`, `lakefile.toml` and `lean-toolchain` that differ from main at
-  `e7ffaf68`, each named whole:
+  `73b97ab1`, each named whole:
   `Audit.lean`,
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
@@ -4234,13 +4374,16 @@ findings:
   `lakefile.toml` and `lean-toolchain` do not change. No statement, check or expected value
   changes in this entry.
 
+
 - **Train C6b reconciled after axiom wave one.** Train C6b carries III.1's construction
   and porism and stage 4, merged with C6a after axiom wave one, at `4db10cf2`, and again
   at `529c93f7`, which brings main's restricted rule of superposition (#191) and main at
   `0a05f96f`, and III.1's record and commentary saying the centre the statement takes
   without the edition's history (`996b3f8f`); at `d58ac22d`, which brings main at
-  `001620f1` (#199 and #201); and last at `ba839370`, which brings main at `e7ffaf68`
-  (#202 and #204); neither of the last two changes the lock or any pin. The 19 October stage 4 and III.25 entries'
+  `001620f1` (#199 and #201); at `ba839370`, which brings main at `e7ffaf68` (#202 and
+  #204); and last at `05e27335`, which brings main at `6e0cdd27` and `73b97ab1` (#208 and
+  #219) and III.10's record read afresh and stamped; none of the last three changes the
+  lock or any pin. The 19 October stage 4 and III.25 entries'
   88 axioms and vocabulary counts, and D1's 57 tacit rules for III.1, are their historical
   pre-wave-one measurements; they stand as written. On the integrated tree the lock holds
   train C6a's 80 axioms, of them 74 tacit rules, byte for byte, and 242 vocabulary words:
@@ -4278,7 +4421,7 @@ findings:
   `Audit/Superposition.lean` afresh and passes with every pin as written.
   The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`, `model/`, `scripts/`,
   `.github/`, `review/SCHEMA.md`, `review/terms.toml`, `lakefile.toml` and
-  `lean-toolchain` that differ from train C6a at `ba839370`, each named whole:
+  `lean-toolchain` that differ from train C6a at `05e27335`, each named whole:
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
   `Certificate/FIELDS.md`,
@@ -4307,17 +4450,19 @@ findings:
   from `Audit.lean`, fixes the frozen type of `Elements.BookIII.Prop1.construction`
   and pins its full axiom list with `#guard_msgs`, read afresh from Lean at `34f2db57`.
   The list has 64 names, including `Tacit.exists_centre`, admitted by the owner's
-  decision. Every renewal is read for `Tacit.inside_of_between`,
-  `Tacit.outside_of_between`, `Tacit.centre_unique` and `sorryAx`, all of which must
-  remain absent. The pin cannot establish that the centre is used only inside the
+  decision. Every renewal is read for `Tacit.outside_of_between` and `sorryAx`, which
+  must remain absent (the paragraph below says why Circle 2 and `Tacit.centre_unique` no
+  longer can appear). The pin cannot establish that the centre is used only inside the
   proof that D is within the circle; a reader checks that confinement in the proof.
   Under [brief 0008's dated correction](0008-centre.md#correction-iii1-19-october-2026),
   this guard lands in a pull request of its own after step 3's construction and before
   step 6's restatements, never in a train with the content it checks.
-  After axiom wave one (merged 21 October 2026), Circle 2 and `Tacit.centre_unique` are
+  After axiom wave one (#170, on main since 20 October 2026, merged into this branch on 21
+  October), Circle 2 and `Tacit.centre_unique` are
   theorems, so their names can no longer appear in the pinned list. The pin still
   excludes Circle 2 through Circle 3, on which its proof rests; a call to
-  `centre_unique` is left to the reader, as `Audit/Centre.lean` now says. The pinned
+  `centre_unique` is left to the reader of `Prop1.construction` and the lemmas it calls, as
+  `Audit/Centre.lean` now says; a pin on the proved rules each entry uses is #168's. The pinned
   list itself is unchanged by the merge.
 
 - **The scaffold follows the restated Book III statements.** The protected file
@@ -4405,7 +4550,11 @@ findings:
   review fixes (III.1's figure note from main, the current overlap row of III.1's centre
   rule, and the historical row of III.1's corollary as it stood), train C6a at `ba839370`
   and main at `e7ffaf68` (#199, #201, #202 and #204), and changes neither the lock nor any
-  pin. The restated Book III of this train is kept whole; III.1's record
+  pin; and last with the guard at `82a2894c`, which brings the guard's review fixes, train
+  C6b at `4adcfd95` (its second review's fixes: III.1's page, and a dated update under
+  III.1's corollary), train C6a at `05e27335` (III.10's record read afresh, with Heath's
+  statement under III.5 said truly) and main at `73b97ab1` (#208 and #219), and changes
+  neither the lock nor any pin. The restated Book III of this train is kept whole; III.1's record
   and commentary are this train's, since its statement no longer takes a centre.
   `Certificate/axioms.lock`, written again by `python3 scripts/check_fidelity.py
   --write-lock` after `lake build` and `Certificate/Facts.lean`, holds the guard side's 80
@@ -4428,7 +4577,7 @@ findings:
   superposition. The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`,
   `model/`, `scripts/`, `.github/`, `review/SCHEMA.md`, `review/terms.toml`,
   `lakefile.toml` and `lean-toolchain` that differ from `lean/centre-guard` at
-  `0d77f885`, each named whole:
+  `82a2894c`, each named whole:
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
   `Audit/screen.py`,
@@ -4449,8 +4598,9 @@ findings:
   `tests/model/results/summary.txt`.
   `Audit/Crossing.lean`, `Audit/Overlaps.lean` and `Audit/screen.py` differ by this train's
   restated calls and its screen account, which its 19 October entries give; the rest by
-  the lock's one changed word and what follows from it. No statement, check or expected
-  value changes in this merge.
+  the lock's one changed word and what follows from it. `scripts/scaffold_book.py` differs
+  by tooling/c6c-scaffold's comment, which lands before this train with its own entry. No
+  statement, check or expected value changes in this merge.
 
 - **III.30's halves, approved, proved and registered (#67).** The owner approved
   `Prop30.halves` on 20 October 2026: asked "Also approve the smaller items?

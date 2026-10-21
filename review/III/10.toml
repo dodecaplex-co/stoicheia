@@ -20,7 +20,7 @@ note = "The rule gives ABC its centre, which the Lean names P at once; that AC a
 [[passage]]
 at = "therefore the two circles ABC, DEF which cut one another"
 kind = "different"
-note = "The Lean ends by `circle_eq` (Diagram-segment 2), from the common centre P and the common point B, instead of III.5. This is the converse Heath gives under III.5 (vol. 2, p. 12), and applies also to circles that only meet."
+note = "The Lean ends by `circle_eq` (Diagram-segment 2), from the common centre P and the common point B, instead of III.5. Heath states this under III.5, beside the enunciation that joins III.5 and III.6: two circles with the same centre and one point of their circumferences in common coincide altogether (vol. 2, p. 12). It applies also to circles that only meet."
 
 [figure]
 note = "Like Heath's, this figure draws the impossible supposition: DEF meeting ABC at four points, B, G, F, H, and so drawn as an oval, since no second circle can."

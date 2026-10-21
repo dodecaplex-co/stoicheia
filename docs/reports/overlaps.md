@@ -209,7 +209,8 @@ I.7 shortcut and the 17-proof right-angle census describe the earlier foundation
 the notes on III.5 and III.6 describe those propositions as they were stated before brief
 0008 restated them ([III.5](#iii5) and [III.6](#iii6) above give them as they are now).
 The later notes under I.2/I.3 and I.23 are dated updates about the retired construction
-shortcuts; their old rows remain here as history.
+shortcuts, and the second paragraph under III.1's corollary is a dated update about the
+rule's first user; their old rows remain here as history.
 
 Stoicheia takes the rules of System E (Jeremy Avigad, Edward Dean and John Mumma, 2009) as
 its axioms, and a few of them already say what Euclid later proves, or give it in a few
@@ -368,27 +369,37 @@ existence; the construction and the proof that F is the centre are III.1's work.
 ##### III.1's corollary
 
 Heath calls uniqueness "a proposition which, if thought necessary, may be added to
-III. 1 as a corollary" (vol. 2, p. 8). The rule first enters at III.14, not at III.1's
-porism. Since 19 October 2026 our porism proves that the given centre lies on the cutting
-straight line by the argument of Euclid's reductio: on AB it is D; off AB, the equal
-adjacent angles put it on DC. It neither calls III.1 nor uses `centre_unique` or
-`exists_centre`, and rests on 51 tacit rules to III.1's 56. Two proofs call
-`centre_unique` themselves: III.14, to identify the centre III.1 finds with the centre E
-its statement names, and III.36, to show that the centre E it takes from `exists_centre`
-is off AC when DCA is not through the centre. III.17 now obtains its centre by
-`Prop1.of_circle` and has no such identification step. III.26 reaches it only through Book
-Zero's `EqualCircles.radii`, that equal circles have equal radii: a circle has only one
-centre, so the centres the definition of equal circles names are the given ones. III.28 and
-III.29 call that lemma too, and rest on the rule through III.26 and III.27 as well, which
-they cite. These five, III.14, III.26, III.28, III.29 and III.36, are the row's proofs.
-Seven more entries rest on the rule only through entries they cite: III.15 through III.14,
-III.27 through III.26, III.30 through III.28, III.37 through III.36, and the companions
-`Prop14.general` through III.14, `Prop15.nearer` through III.15 and `Prop30.halves` through
-III.28. Walking Lean's proof terms on 21 October 2026, as for I.13's rule above, finds the
-theorem in these twelve entries and in no other, none of them before III.14. Searching
-`Elements/` for the rule's name confirms the two calls, and finds three lemmas that call it:
-Book Zero's `EqualCircles.radii` and `Centre.every`, and `Arc.eq_of_aligned` in
-`Elements/BookIII/Squares.lean`. No certificate entry uses either of the last two.
+III. 1 as a corollary" (vol. 2, p. 8). III.1's porism calls the rule itself: it makes the
+centre III.1 finds the given centre, so that it lies on the cutting straight line. III.14,
+III.17 and III.36 call it themselves for the same step, making the centre III.1 finds the
+centre their statements speak of. III.26 reaches it only through Book Zero's
+`EqualCircles.radii`, that equal circles have equal radii: a circle has only one centre,
+so the centres the definition of equal circles names are the given ones. III.28 and III.29
+call that lemma too, and rest on the rule through III.26 and III.27 as well, which they
+cite.
+
+21 October 2026 update: the porism no longer calls the rule, which now first enters at
+III.14. Our porism proves that the given centre lies on the cutting straight line by the
+argument of Euclid's reductio: on AB it is D; off AB, the equal adjacent angles put it on
+DC. It neither calls III.1 nor uses `centre_unique` or `exists_centre`, and rests on 51
+tacit rules to III.1's 56. Two proofs call `centre_unique` themselves: III.14, to identify
+the centre III.1 finds with the centre E its statement names, and III.36, to show that the
+centre E it takes from `exists_centre` is off AC when DCA is not through the centre.
+III.17 now obtains its centre by `Prop1.of_circle` and has no such identification step.
+III.26 reaches it only through Book Zero's `EqualCircles.radii`, that equal circles have
+equal radii: a circle has only one centre, so the centres the definition of equal circles
+names are the given ones. III.28 and III.29 call that lemma too, and rest on the rule
+through III.26 and III.27 as well, which they cite. These five, III.14, III.26, III.28,
+III.29 and III.36, now use the rule. Seven more entries rest on the rule only through
+entries they cite: III.15 through III.14, III.27 through III.26, III.30 through III.28,
+III.37 through III.36, and the companions `Prop14.general` through III.14, `Prop15.nearer`
+through III.15 and `Prop30.halves` through III.28. Walking Lean's proof terms on 21
+October 2026, as for I.13's rule above, finds the theorem in these twelve entries and in
+no other, none of them before III.14. Searching `Elements/` for the rule's name confirms
+the two calls, and finds three lemmas that call it: Book Zero's `EqualCircles.radii` and
+`Centre.every`, and `Arc.eq_of_aligned` in `Elements/BookIII/Squares.lean`. No certificate
+entry uses either of the last two. [Former axiom overlaps](#former-axiom-overlaps) gives
+the rule as it is now.
 
 ##### III.2
 
