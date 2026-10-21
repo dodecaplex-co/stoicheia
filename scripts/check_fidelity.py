@@ -343,6 +343,7 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
         if src.startswith("--", i):
             j = _find(src, "\n", i)
             marks.append(("text", i, j))
+            can_project, field_dot = False, False
         elif src.startswith("/-", i):
             j, nested = min(i + 3, len(src)), 1
             while j < len(src) and nested:
@@ -350,6 +351,7 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
                 nested += (pair == "/-") - (pair == "-/")
                 j += 2 if pair in ("/-", "-/") else 1
             marks.append(("text", i, j))
+            can_project, field_dot = False, False
         elif c == '"':
             j, previous = _read_string(src, i, marks, previous in INTERPOLATED), c
             can_project, field_dot = True, False
@@ -385,6 +387,8 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
                 field_dot, can_project = can_project, False
             else:
                 can_project, field_dot = c in ")]}", False
+        else:
+            can_project, field_dot = False, False
         i = j
     return len(src)
 

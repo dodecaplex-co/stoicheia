@@ -1147,6 +1147,23 @@ SET_OPTION_SPELLINGS = (
     ("set_option«debug».", 'infixl:65 " +. " => Nat.add\n'
      "def planted_notation_separator : Nat := 2 +.1_0set_option«debug».byAsSorry true in "
      "theorem planted_after_notation_separator : (0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", 'infixl:65 " . " => Nat.add\n'
+     "def planted_dot_space_before : Nat := 2 .1e5set_option«debug».byAsSorry true in "
+     "theorem planted_after_dot_space_before : (0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", 'infixl:65 " . " => Nat.add\n'
+     "def planted_dot_space_after_lhs : Nat := 2\n"
+     "def planted_dot_space_after : Nat := planted_dot_space_after_lhs. "
+     "1_0set_option«debug».byAsSorry true in "
+     "theorem planted_after_dot_space_after : (0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", 'infixl:65 " . " => Nat.add\n'
+     "def planted_dot_comment_before : Nat := 2 /- gap -/ .0x1set_option«debug»."
+     "byAsSorry true in theorem planted_after_dot_comment_before : (0 : Nat) = 1 := by "
+     "decide"),
+    ("set_option«debug».", 'infixl:65 " . " => Nat.add\n'
+     "def planted_dot_comment_after_lhs : Nat := 2\n"
+     "def planted_dot_comment_after : Nat := planted_dot_comment_after_lhs.-- gap\n"
+     "  1e5set_option«debug».byAsSorry true in theorem planted_after_dot_comment_after : "
+     "(0 : Nat) = 1 := by decide"),
 )
 SET_OPTION_KEPT = (
     "/- /- -/ set_option«debug».skipKernelTC true in "
@@ -1157,6 +1174,9 @@ SET_OPTION_KEPT = (
     "def planted_kept_field : Nat := (1, 2).1.succ + 0x1F + 1_000",
     'infixl:65 " +. " => Nat.add\n'
     "def planted_kept_notation_numbers : Nat := 2 +.0x1 + 2 +.1e5 + 2 +.1_0",
+    'infixl:65 " . " => Nat.add\n'
+    "def planted_kept_spaced_dot_numbers : Nat := 2 . 0x1 + 2 . 1e5 + 2 . 1_0",
+    "def planted_kept_adjacent_projection : Nat := (1, 2).1",
 )
 # `#guard_msgs` with `drop`, in Lean 4.35's forms (#197): each kind of message and `all`,
 # the brackets closed up or spaced, `drop` after another filter or an option, twice, and a
