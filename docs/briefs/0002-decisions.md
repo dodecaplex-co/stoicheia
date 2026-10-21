@@ -3334,8 +3334,8 @@ findings:
 
 - **The restriction's part 4 as a theorem, and every cited law in one statement (#150,
   question 2).** Part 4 of the restriction, that no hypothesis of the rule speaks of the
-  placement, was read off the statement of `Rule.infer`; it is now proved. In the
-  foundations,
+  placement, was read off the statement of `Rule.infer`; it is now restated as a theorem,
+  `Rule.Figure.restrict`, and proved. In the foundations,
   [`Elements/Foundations/Superposition/Restriction.lean`](../../Elements/Foundations/Superposition/Restriction.lean)
   gains the definition `Rule.Figure` (the rule's statement without its cited-law
   hypothesis), the theorem `Rule.iff_figure` tying it to the locked `Rule`, the structure
@@ -3358,6 +3358,6 @@ findings:
   non-derivability stays unclaimed. The protected file changed is
   [`Audit/Superposition.lean`](../../Audit/Superposition.lean): `#guard_msgs in #check @`
   statement pins for the fourteen theorems #150 names and the three new ones, the two new
-  definitions pinned whole by `#print`, and axiom pins for the new theorems; nothing is
-  removed. Brief 0009 carries a dated note. I.8's record was read again in full and stamped
+  definitions pinned whole by `#print`, as are `Placed`, `Val.place` and `Metric.names`,
+  which pinned statements read, and axiom pins for the new theorems; nothing is removed. Brief 0009 carries a dated note. I.8's record was read again in full and stamped
   by an independent reader.
