@@ -413,15 +413,15 @@ def Elements.companions : List (Lean.Name × String) := [
 
 ABSENT_NOTE = ("note: tracked but absent from the work tree (under the check inputs, as a "
                "file the commit adds is in the pre-flight's pass with origin/main's "
-               "checks): {}\n")
-ABSENT_FAULT = "tracked but absent from the work tree, outside the check inputs: {}"
+               "checks): {!r}\n")
+ABSENT_FAULT = "tracked but absent from the work tree, outside the check inputs: {!r}"
 
 
 class AbsentTrackedMarkdownTests(unittest.TestCase):
-    """The pre-flight's pass with origin/main's checks (scripts/safe_push.py, step 4,
-    base_copies) takes the files a commit adds under the check inputs out of the work
-    tree, while Git's index still lists them. A tracked Markdown file absent there is
-    noted and passed over, and the rest is still checked; absent anywhere else, it is
+    """The pre-flight's pass with origin/main's checks (scripts/safe_push.py, steps 3
+    and 4, base_copies) takes the files a commit adds under the check inputs out of the
+    work tree, while Git's index still lists them. A tracked Markdown file absent there
+    is noted and passed over, and the rest is still checked; absent anywhere else, it is
     refused. Git runs only in a temporary repository, without user config."""
 
     files = {"Certificate/axioms.lock": '[axioms]\n[vocabulary]\nPoint = "word"\n',
@@ -460,6 +460,32 @@ class AbsentTrackedMarkdownTests(unittest.TestCase):
                 self.assertEqual(counts.updates(self.root, check=check),
                                  ({}, [ABSENT_FAULT.format("docs/notes.md")]))
         self.assertEqual(self.output.getvalue(), 2 * ABSENT_NOTE.format("tests/new_check.md"))
+
+    def test_names_are_escaped_in_the_note_and_the_fault(self):
+        names = ("tests/a\x1b[2K\rok  forged\nline.md", "docs/b\x1b[2K\rok\n.md")
+        for rel in names:
+            (self.root / rel).write_text("Notes.\n")
+        subprocess.run(["git", "add", "--", *names], cwd=self.root, capture_output=True,
+                       check=True)
+        for rel in names:
+            (self.root / rel).unlink()
+        note, fault = ABSENT_NOTE.format(names[0]), ABSENT_FAULT.format(names[1])
+        self.assertTrue(note.endswith("checks): 'tests/a\\x1b[2K\\rok  forged\\nline.md'\n"))
+        self.assertTrue(fault.endswith("inputs: 'docs/b\\x1b[2K\\rok\\n.md'"))
+        changes, errors = counts.updates(self.root, check=True)
+        self.assertEqual(errors, [fault, "docs/notes.md:1: count 'vocabulary': stated '2', "
+                                         "computed '1'; run python3 scripts/render.py"])
+        self.assertEqual(self.output.getvalue(), note)
+
+    def test_an_unreadable_directory_is_not_absent(self):
+        folder = self.root / "tests/folder"
+        folder.chmod(0)
+        self.addCleanup(folder.chmod, 0o755)
+        denied = f"[Errno 13] Permission denied: {str(folder / 'notes.md')!r}"
+        for check in (True, False):
+            with self.subTest(check=check):
+                self.assertEqual(counts.updates(self.root, check=check), ({}, [denied]))
+        self.assertEqual(self.output.getvalue(), "")
 
     def test_symlinks_in_place_of_absent_check_inputs_are_still_refused(self):
         (self.root / "tests/new_check.md").unlink()
@@ -640,9 +666,16 @@ class GitCountTests(unittest.TestCase):
 
     def test_public_checks_pass_over_only_an_absent_check_input(self):
         from negative_tests import count_source_copy
+        from safe_push import CHECK_INPUTS, under
 
-        for rel, under_inputs in (("tests/model/MODEL.md", True),
-                                  ("docs/reports/crew/voice-01.md", False)):
+        tracked = [rel.as_posix() for rel in counts.tracked_markdown(REPO)
+                   if (REPO / rel).is_file()]
+        inside = next((rel for rel in tracked if rel.startswith("tests/")), None)
+        outside = next((rel for rel in tracked if not under(rel, CHECK_INPUTS)), None)
+        self.assertIsNotNone(inside, "no tracked Markdown file under tests/ to take out")
+        self.assertIsNotNone(outside, "no tracked Markdown file outside the check inputs "
+                                      "to take out")
+        for rel, under_inputs in ((inside, True), (outside, False)):
             with self.subTest(path=rel), count_source_copy() as (root, env):
                 (root / rel).unlink()       # as base_copies takes out a file the commit adds
                 for script in ("check_fidelity.py", "render.py"):

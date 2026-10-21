@@ -2975,42 +2975,57 @@ findings:
   protected `model/lakefile.toml`, named above.
 
 - **The checks read a tree without the files a commit adds to them (#178).** The
-  pre-flight's pass with origin/main's checks (`scripts/safe_push.py`, step 4) takes the
-  files a commit adds under the check inputs out of the work tree, while Git's index still
-  lists them. `scripts/negative_tests.py` copied every tracked path for its count plants,
-  so on such a commit it stopped with `FileNotFoundError` in
-  `tests/test_generated_counts.py`, which uses the same copy, before any count plant ran;
-  the count plants, run alone, stopped the same way. A tracked Markdown file taken out
-  stopped the freshness plant's list of generated outputs too, and the merge-marker copy
-  passed such files over without a word. `check_fidelity.py` and `render.py` read every
-  tracked Markdown file for count markers (`generated_counts.updates`), so a Markdown
-  file the commit adds there, as `tests/notes.md`, failed both in that pass with `No such
-  file or directory`. A failure in that pass is only a note, but `keep_apart` counts it,
-  so a content pull request with a new test beside it was refused as a check changed
-  together with what it checks: the second item of #178.
+  pre-flight's pass with origin/main's checks (`scripts/safe_push.py`, steps 3 and 4)
+  takes the files a commit adds under the check inputs out of the work tree, while Git's
+  index still lists them. `scripts/negative_tests.py`, which runs in that pass in step 4,
+  copied every tracked path for its count plants, so on such a commit it stopped with
+  `FileNotFoundError` in `tests/test_generated_counts.py`, which uses the same copy,
+  before any count plant ran; the count plants, run alone, stopped the same way. A
+  tracked Markdown file taken out stopped the freshness plant's list of generated outputs
+  too, and the merge-marker copy passed such files over without a word.
+  `check_fidelity.py` and `render.py` read every tracked Markdown file for count markers
+  (`generated_counts.updates`), and both run in that pass in step 3 and again in step 4,
+  so a Markdown file the commit adds there, as `tests/notes.md`, failed both in that pass
+  with `No such file or directory`. A failure in that pass is only a note, but
+  `keep_apart` counts it, so a content pull request with a new test beside it was refused
+  as a check changed together with what it checks: the second item of #178.
 
   One rule, `generated_counts.absent_tracked`, now holds wherever these checks list
   tracked files: a tracked file absent from the work tree under the check inputs is named
   on stdout as a note, and the check goes on with what is present; one absent anywhere
-  else, where the pre-flight takes nothing out, is a failure that names it. A path that
-  is or passes through a symlink is not absent, and is refused as before.
+  else, where the pre-flight takes nothing out, is a failure that names it.
   `generated_counts.updates`, which `check_fidelity.py` and `render.py` share, follows
   it, and so do the negative suite's two copies and its list of generated outputs; no
-  plant is skipped. The check inputs stay listed once, as `scripts/safe_push.py`'s
-  `CHECK_INPUTS`, which `generated_counts.py` imports only when a tracked file is
-  absent, so an ordinary run of a check never loads the harness.
+  plant is skipped. A file is absent only when `lstat` raises `FileNotFoundError`. Any
+  other error, such as a permission error in a directory of mode 000, is raised to the
+  caller and fails the check: `generated_counts.updates` reports it as its one error
+  (before the rule, reading the file failed with the same error), and the negative suite
+  stops on it. `Path.exists()` would not do: on Python 3.14 it returns False for such an
+  error. Each name in a note or a failure is printed as `repr` writes it, so a control
+  character in a name cannot forge a line of the terminal. A path that is or passes
+  through a symlink is not absent, and each reader treats it as before:
+  `generated_counts.updates` refuses it by name; the negative suite's marker copy skips a
+  symlink and follows a symlinked directory; and its source copy (`shutil.copy2`)
+  follows both, copying the target, and stops with `FileNotFoundError` on a dangling
+  one. The check inputs stay listed once, as `scripts/safe_push.py`'s `CHECK_INPUTS`,
+  which `generated_counts.py` imports only when a tracked file is absent, so an ordinary
+  run of a check never loads the harness.
 
   `tests/test_negative_tests.py` builds the case in a temporary repository: a commit
   adding a check, its test and a Markdown note, each then unlinked as the pre-flight
-  unlinks it. It checks both copies, the list of generated outputs and a tracked file
-  absent outside the check inputs; against origin/main's `negative_tests.py`, three of its
-  four tests stop with that error and the fourth finds no file named.
+  unlinks it. It checks both copies, the list of generated outputs, a tracked file
+  absent outside the check inputs, and a directory of mode 000, whose permission error
+  both copies raise with nothing noted; against origin/main's `negative_tests.py`, four
+  of its five tests stop with that error and the fifth finds no file named.
   `tests/test_generated_counts.py` does the same for the counts, in a temporary
   repository: a Markdown file absent under the check inputs is noted while a stale count
-  beside it is still refused, one absent elsewhere is refused by name, and a symlink in
-  place of one is still refused as a symlink. In the negative suite's source copy,
-  `check_fidelity.py` and `render.py` pass with `tests/model/MODEL.md` taken out, noting
-  it, and fail naming a crew log taken out. Against origin/main's `generated_counts.py`
+  beside it is still refused, one absent elsewhere is refused by name, a name with
+  control characters is printed escaped, a directory of mode 000 fails the run with its
+  permission error and is not noted, and a symlink in place of one is still refused as
+  a symlink. In the negative suite's source copy, `check_fidelity.py` and `render.py`
+  pass with the first tracked Markdown file under `tests/` taken out, noting it, and fail
+  naming the first one outside the check inputs taken out; both are chosen at run time
+  from Git's list, among the files present. Against origin/main's `generated_counts.py`
   every one of these fails but the symlink case.
 
   No other reader of Git's tracked files in that pass crashes or fails on such a file:

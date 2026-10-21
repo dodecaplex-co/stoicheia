@@ -438,7 +438,8 @@ class AbsentTrackedFileTests(unittest.TestCase):
     pass with origin/main's checks (scripts/safe_push.py, step 4, base_copies) unlinks
     each from the work tree while Git's index still lists it. Every listing of tracked
     files names them and goes on with what is present; one absent outside the check
-    inputs is a failure. Git runs only in a temporary repository, without user config."""
+    inputs is a failure, and an error reading one, as in a directory of mode 000, is
+    raised. Git runs only in a temporary repository, without user config."""
 
     present = {"scripts/check.py": "# the check\n", "tests/test_check.py": "# its test\n",
                "docs/notes.md": "Words: <!-- count:vocabulary -->3<!-- /count -->.\n"}
@@ -470,7 +471,7 @@ class AbsentTrackedFileTests(unittest.TestCase):
     def note(self, rel):
         return ("note: tracked but absent from the work tree (under the check inputs, as a "
                 "file the commit adds is in the pre-flight's pass with origin/main's "
-                f"checks): {rel}\n")
+                f"checks): {rel!r}\n")
 
     def assert_named(self, failures=()):
         for rel in self.added:
@@ -502,7 +503,8 @@ class AbsentTrackedFileTests(unittest.TestCase):
 
     def test_absent_file_outside_the_check_inputs_fails(self):
         (self.root / "docs/notes.md").unlink()
-        message = "tracked but absent from the work tree, outside the check inputs: docs/notes.md"
+        message = ("tracked but absent from the work tree, outside the check inputs: "
+                   "'docs/notes.md'")
         with negative.count_source_copy() as (copy, _):
             copied = {p.relative_to(copy).as_posix() for p in copy.rglob("*") if p.is_file()}
             self.assertEqual(copied, {"scripts/check.py", "tests/test_check.py"})
@@ -510,6 +512,19 @@ class AbsentTrackedFileTests(unittest.TestCase):
                                    negative.run("git", "ls-files", "-z").stdout.split("\0"))
         self.assertEqual(self.output.getvalue().count(f"✗ {message}\n"), 2)
         self.assert_named([message])
+
+    def test_an_unreadable_directory_is_not_absent(self):
+        docs = self.root / "docs"
+        docs.chmod(0)
+        self.addCleanup(docs.chmod, 0o755)
+        listing = negative.run("git", "ls-files", "-z").stdout.split("\0")
+        with self.assertRaises(PermissionError), negative.count_source_copy():
+            pass
+        with self.assertRaises(PermissionError):
+            negative.copy_marker_files(Path(self.enterContext(tempfile.TemporaryDirectory())),
+                                       listing)
+        self.assertEqual(self.output.getvalue(), "")
+        self.assertEqual(negative.failures, [])
 
 
 if __name__ == "__main__":

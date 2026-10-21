@@ -238,14 +238,15 @@ def style_error() -> None:
         path.write_bytes(saved)
 
 
-def absent_tracked(rels: list) -> list:
+def absent_tracked(rels: list[str | Path]) -> list[str | Path]:
     """The tracked paths of `rels` absent from the work tree, each named on stdout.
 
     The rule is generated_counts.absent_tracked's, which the count checks follow too: one
     under the check inputs is noted, and the caller goes on with what is present, since the
     pre-flight's pass with origin/main's checks (scripts/safe_push.py, step 4) takes out
     the files a commit adds there while Git's index still lists them. One absent outside
-    the check inputs is a failure too, so none goes unseen.
+    the check inputs is a failure too, so none goes unseen. Any other error from the work
+    tree, as for a path in a directory of mode 000, is raised.
     """
     missing, faults = generated_counts.absent_tracked(ROOT, rels)
     for message in faults:
