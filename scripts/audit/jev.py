@@ -481,6 +481,10 @@ def _number(value: Any) -> bool:
     return isinstance(value, int) or (isinstance(value, float) and math.isfinite(value))
 
 
+def _model_id(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
 def answer_of(reply_json: Any, qid: str, q: dict) -> dict:
     """One answer, checked against its question; raises ValueError when it is malformed."""
     if not isinstance(reply_json, dict):
@@ -664,6 +668,8 @@ def cmd_run(args) -> int:
                     data = reply.json()
                     got = answer_of(data, "q", row["question"])
                     line["model"] = data.get("model")
+                    if not _model_id(line["model"]):
+                        raise ValueError("the reply's model is not a nonempty string")
                     line.update(got)
                     if "q" + REVERSED in body["questions"]:
                         again = answer_of(data, "q" + REVERSED, body["questions"]["q" + REVERSED])
@@ -722,7 +728,8 @@ def answered_lines(path: Path, made: dict[str, Any]) -> list[str]:
             raise Failure(f"{path.name} was made {'with' if made['order_check'] else 'without'} "
                           "--no-order-check; resume it as it was made, start afresh with "
                           "--overwrite, or write to another file")
-        if "error" not in line and isinstance(line.get("id"), str):
+        if ("error" not in line and _model_id(line.get("model"))
+                and isinstance(line.get("id"), str)):
             kept.append(text)
     return kept
 
@@ -735,6 +742,9 @@ def cmd_score(args) -> int:
         raise Failure(f"cannot read {Path(args.file).name}: {e}") from None
     answered = [r for r in rows if "error" not in r and ("choice" in r or "noul" in r)]
     for r in answered:
+        if not _model_id(r.get("model")):
+            raise Failure(f"{r.get('id')}: its answering model is not a nonempty string; score "
+                          "reads only lines that `run` wrote")
         if "reversed" in r and not isinstance(r["reversed"], dict):
             raise Failure(f"{r.get('id')}: its reversed asking is not an answer; score reads "
                           "only lines that `run` wrote")
@@ -1115,8 +1125,8 @@ def cmd_self_test(args) -> int:
         single_order["order_check"] = False
         confidence_cases.append(single_order)
         confidence_cases.extend([
-            {"id": "noul-low", "noul": 0.74},
-            {"id": "noul-boundary", "noul": 0.75},
+            {"id": "noul-low", "noul": 0.74, "model": DEFAULT_MODEL},
+            {"id": "noul-boundary", "noul": 0.75, "model": DEFAULT_MODEL},
         ])
         confidence_file = tmp / "confidence.jsonl"
         confidence_file.write_text("".join(json.dumps(row) + "\n" for row in confidence_cases))
