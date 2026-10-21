@@ -640,8 +640,8 @@ class Imports(LeanFiles):
 
 
 class CallReconciler(LeanFiles):
-    """The forms of I.4's and I.8's proofs on the superposition branch, and bars within a
-    constructor."""
+    """The forms of I.4's and I.8's proofs on the superposition branch, bars within a
+    constructor, and forms that could hide a use, each in a file Lean 4.35 accepts."""
 
     def test_every_constructor_on_a_line_is_a_member(self):
         calls = self.calls('namespace Elements\n\ninductive Pt where\n  | a | b | c\n\n'
@@ -717,23 +717,101 @@ class CallReconciler(LeanFiles):
     def test_a_bar_outside_every_bracket_begins_a_constructor_only_where_one_can(self):
         # In a family Lean accepts a pipe outside every bracket, so a name after `<|` is a use.
         # A command the index reads with the inductive, such as `partial def`, ends its
-        # constructors. A bar after `match`, `fun` or `matches` outside every bracket may begin
-        # an alternative or a pattern, and is refused.
+        # constructors. After each word ALTERNATIVES names, one row each, a bar outside every
+        # bracket may begin an alternative or a pattern, and is refused.
         self.assert_uses(self.known('inductive Q : Nat → Type where\n  | mk : Q <| Known.bar 0\n'
                                     '  | a : Q 0 | b : Known.bar 1 |> Q'),
                          'Elements.Q', {'mk', 'a', 'b'})
         self.assert_uses(self.known('inductive Pt where\n  | mk\n\npartial def f : Nat → Nat\n'
                                     '  | Known.bar n => f n\n  | _ => 0'), 'Elements.Pt', {'mk'})
-        for inductive, word in (('inductive Q : Nat → Type where\n'
-                                 '  | mk : Q <| match 0 with | Known.bar n => n | _ => 0', 'match'),
-                                ('inductive Q : (Nat → Nat) → Type where\n  | mk : Q fun\n'
-                                 '  | Known.bar n => n\n  | _ => 0', 'fun'),
-                                ('inductive Q : Bool → Type where\n'
-                                 '  | mk : Q <| 5 matches 0 | Known.bar 0', 'matches')):
-            with self.subTest(inductive=inductive):
+        family = 'inductive Q : Nat → Type where\n  | mk : Q <| '
+        for inductive, word in (
+                (family + 'match 0 with | Known.bar n => n | _ => 0', 'match'),
+                ('inductive Q : (Nat → Nat) → Type where\n  | mk : Q fun\n'
+                 '  | Known.bar n => n\n  | _ => 0', 'fun'),
+                ('inductive Q : Bool → Type where\n'
+                 '  | mk : Q <| 5 matches 0 | Known.bar 0', 'matches'),
+                ('inductive Q : (Nat → Nat) → Type where\n  | mk : Q λ\n'
+                 '  | Known.bar n => n\n  | _ => 0', 'λ'),
+                (family + 'match_expr Lean.mkNatLit 0 with | Known.bar _ => 0 | _ => 1',
+                 'match_expr'),
+                (family + 'let_expr Nat.succ _ := Lean.mkNatLit 0 | Known.bar 0; 1', 'let_expr'),
+                (family + 'by match 0 with | Known.bar n => exact n | _ => exact 0', 'by'),
+                (family + 'Id.run do match 0 with | Known.bar n => pure n | _ => pure 0', 'do'),
+                ('inductive Q where\n'
+                 '  | a | mk with @[computed_field] f : Q → Nat | _ => Known.bar 0', 'with'),
+                *((family + word + ' f : Nat → Nat | Known.bar n => n | _ => 0; f 0', word)
+                  for word in ('let', 'have', 'haveI', 'letI', 'let_fun', 'let_delayed', 'let_tmp'))):
+            with self.subTest(word=word):
+                # match_expr and let_expr read a Lean.Expr, so their files import Lean.
+                header = 'import Lean\n\n' if word in ('match_expr', 'let_expr') else ''
                 with self.assertRaisesRegex(questions.Refusal,
                                             f"unsupported bar after '{word}' in Elements.Q"):
+                    self.calls(header + self.known(inductive))
+
+    def test_a_declaration_keyword_ends_the_constructors_wherever_it_stands(self):
+        # Lean reads `def` as a command on a constructor's own line, and at three spaces: each
+        # equation after it is the def's, so its Known.bar is a use.
+        for inductive in ('  | mk def f : Nat → Nat\n  | Known.bar n => n\n  | _ => 0',
+                          '  | mk\n   def f : Nat → Nat\n  | Known.bar n => n\n  | _ => 0'):
+            with self.subTest(inductive=inductive):
+                self.assert_uses(self.known('inductive Pt where\n' + inductive), 'Elements.Pt',
+                                 {'mk'})
+
+    def test_an_inductive_holding_a_literal_or_quoted_name_is_refused(self):
+        # A char literal, a «...» name, a raw string, a '"' or an interpolated string, each
+        # holding one of a balanced pair of brackets, which would leave the second bar outside
+        # every bracket.
+        for g, zero, other in (("def g (_ : Char) (n : Nat) : Nat := n", "g ')' 0", "g '(' n"),
+                               ('def g (_ : Nat → Nat) (n : Nat) : Nat := n',
+                                'g (fun «a)» => 0) 0', 'g (fun «(b» => 0) n'),
+                               ('def g (_ : String) (n : Nat) : Nat := n',
+                                'g r#"")""# 0', 'g r#""(""# n'),
+                               ('def g (_ : Char) (_ : String) (_ : Char) (n : Nat) : Nat := n',
+                                'g \'"\' ")" \'"\' 0', 'g \'"\' "(" \'"\' n'),
+                               ('def g (_ : String) (n : Nat) : Nat := n',
+                                'g s!"{")"}" 0', 'g s!"{"("}" n')):
+            inductive = (f'{g}\n\ninductive Pt where\n  | mk (f : Nat → Nat := '
+                         f'fun | 0 => {zero} | Known.bar n => {other}) : Pt')
+            with self.subTest(inductive=inductive):
+                with self.assertRaisesRegex(questions.Refusal, 'unsupported string, char literal '
+                                            'or quoted name in Elements.Pt'):
                     self.calls(self.known(inductive))
+
+    def test_a_notation_with_a_bar_and_any_macro_or_elaborator_are_refused(self):
+        # A notation, local or not, can make a bar an operator, and a macro or an elaborator
+        # can give any syntax a meaning, as the macro here gives alternatives with no bar
+        # before them. Each file imports Lean, as the macros and elaborators need.
+        bar = '\n\ninductive Q : Nat → Type where\n  | mk : Q <| 0 | Known.bar 0'
+        pick = '\n\ninductive Q : Nat → Type where\n  | mk : Q pick'
+        for text, refused in (
+                ('infixl:65 " | " => Nat.add' + bar, 'infixl with a bar'),
+                ('local notation:65 a " | " b => Nat.add a b' + bar, 'notation with a bar'),
+                ('open Lean in\n'
+                 'macro "pick " alts:Lean.Parser.Term.matchAltsWhereDecls : term => do\n'
+                 '  let a : TSyntax ``Lean.Parser.Term.matchAlts := ⟨alts.raw[0]⟩\n'
+                 '  `(fun $a:matchAlts)\n\ninductive Q : (Nat → Nat) → Type where\n'
+                 '  | mk : Q <| pick\n  | Known.bar n => n\n  | _ => 0', 'command macro'),
+                ('syntax "pick" : term\n\nmacro_rules | `(pick) => `(0)' + pick,
+                 'command macro_rules'),
+                ('elab "pick" : term => return Lean.mkNatLit 0' + pick, 'command elab'),
+                ('syntax "pick" : term\n\nelab_rules : term | `(pick) => return Lean.mkNatLit 0'
+                 + pick, 'command elab_rules')):
+            with self.subTest(refused=refused):
+                with self.assertRaisesRegex(questions.Refusal, 'unsupported ' + refused):
+                    self.calls('import Lean\n\n' + self.known(text))
+
+    def test_any_other_bar_and_an_unbalanced_bracket_are_refused(self):
+        # Lean accepts constructors at four spaces, and on the inductive's own line, which the
+        # reconciler does not read. A command opening a line within an open bracket, here
+        # `open ... in`, ends the inductive for the index, so its bracket stays open.
+        for inductive, refused in (('\n    | a\n    | b', 'unsupported bar in an inductive, '),
+                                   (' | a | b', 'unsupported bar in an inductive, '),
+                                   ('\n  | mk ⦃h :\nopen Nat in succ 0 = 1⦄ : Pt',
+                                    'unbalanced brackets in ')):
+            with self.subTest(inductive=inductive):
+                with self.assertRaisesRegex(questions.Refusal, refused + 'Elements.Pt'):
+                    self.calls(self.known('inductive Pt where' + inductive))
 
 
 class HelperModules(unittest.TestCase):

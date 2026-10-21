@@ -218,6 +218,10 @@ COMMAND = re.compile(
 HEADER_WORDS = frozenset({'module', 'prelude', 'public', 'meta', 'all', 'import'})
 IMPORT_WORD = re.compile(r"(?<![\w'.«])import(?![\w'»])")
 QUOTED_NAME = re.compile(r'«[^»\n]*»')
+# A command that can declare a token: a notation whose words before `=>` hold a bar could make
+# a bar an operator, and a macro or an elaborator can give any syntax a meaning.
+SYNTAX_WORD = re.compile(r"(?<![\w'.«])(?:notation|infixl|infixr|infix|prefix|postfix"
+                         r"|(macro_rules|macro|elab_rules|elab))(?![\w'»])")
 
 
 def comment_end(src: str, i: int) -> int:
@@ -400,6 +404,7 @@ class Index:
         self.evidence = evidence
         self.decls: dict[str, Declaration] = {}
         self.clean: dict[str, str] = {}
+        self.raw: dict[str, str] = {}
         self.imports: dict[str, list[tuple[str, int, int]]] = {}
         self.notation: list[tuple[str, int, int]] = []
         self.visible_cache: dict[str, set[str]] = {}
@@ -413,6 +418,14 @@ class Index:
         raw = self.evidence.read(path)
         clean, comments, self.imports[path] = lean_source(path, raw)
         self.clean[path] = clean
+        self.raw[path] = raw
+        # Wherever one stands, local or scoped included. The bar is sought in the raw text, so
+        # within the notation's strings; the `=>` in the masked text, so outside them.
+        for found in SYNTAX_WORD.finditer(clean):
+            require(not found.group(1), f'{path}: unsupported command {found.group()}')
+            arrow = clean.find('=>', found.end())
+            require('|' not in raw[found.start():len(raw) if arrow < 0 else arrow],
+                    f'{path}: unsupported {found.group()} with a bar')
         commands = list(COMMAND.finditer(clean))
         namespace = ''
         frames: list[tuple[str, int, int]] = []
@@ -655,12 +668,18 @@ class Calls:
     CONSTRUCTOR = re.compile(r'\|\s*(' + IDENT + ')')
     CLOSERS = {')': '(', ']': '[', '}': '{', '⟩': '⟨', '⦄': '⦃', '⟧': '⟦', '›': '‹'}
     # The words of Lean 4.35's term syntax after which a `|` may begin an alternative or a
-    # pattern: of `fun`, `match` or `match_expr`, of a `let` or `have` by equations or of
-    # `let_expr`, of `matches`, of a tactic, of `do`, or of a computed field after `with`.
+    # pattern: of `fun`, `match` or `match_expr`, of a `let`, `have`, `haveI`, `letI`,
+    # `let_fun`, `let_delayed` or `let_tmp` by equations or of `let_expr`, of `matches`, of a
+    # tactic, of `do`, or of a computed field after `with`.
     ALTERNATIVES = re.compile(r"(?<![\w'.])(?:fun|match|match_expr|matches|let|let_expr|have|by"
-                              r"|do|with)(?![\w'])|λ")
+                              r"|do|with|haveI|letI|let_fun|let_delayed|let_tmp)(?![\w'])|λ")
     # A line that is blank, opens `  |` or opens with three spaces continues the constructors.
     CONSTRUCTORS_END = re.compile(r'(?! *$|  \||   )', re.M)
+    # A declaration's keyword begins a command wherever it stands on its line.
+    COMMAND_WORD = re.compile(r"(?<![\w'.«])(?:def|theorem|abbrev|instance|example|opaque|axiom"
+                              r"|structure|class|inductive|deriving|mutual)(?![\w'»])")
+    # A string, a char literal or a «...» name, whose brackets and bars the masking may misread.
+    LITERAL = re.compile(r"[\"«]|(?<![\w'₀-₉!?])'")
 
     def __init__(self, index: Index, facts: dict):
         self.index = index
@@ -685,21 +704,28 @@ class Calls:
         """Return each constructor name of inductive d: the name after a `|` outside every
         bracket in the declaration, on a line that opens `  |`.
 
-        Brackets are counted from the declaration's name across lines to the end of its
-        constructors, and an unbalanced one is refused. The constructors end before the first
-        line outside every bracket that is not blank and opens neither `  |` nor three spaces:
-        there a deriving clause begins, or a command the index reads with the inductive, such
-        as `partial def`. A bar within brackets, or of `||`, `<|` or `|>`, separates no
-        constructors, so a name after it stays a use. The rule for `<|` is needed: in a family
-        `Q : Nat → Type`, Lean accepts `| mk : Q <| Known.bar 0`. No name can follow the bar
-        of `|>` directly, so its rule is defence in depth. Outside every bracket, a bar after
-        one of the words ALTERNATIVES names, such as `match`, may begin an alternative, as in
-        `| mk : Q <| match 0 with | Known.bar n => n | _ => 0`, which Lean also accepts, so
-        such a bar before a name is refused."""
+        The masking may misread the brackets and bars within a string, a char literal or a
+        «...» name, so an inductive whose raw text holds one is refused. The index refuses a
+        notation whose words before `=>` hold a bar, and any macro or elaborator, so each bar
+        here is one of Lean's own. Brackets are counted from the declaration's name across
+        lines to the end of its constructors, and an unbalanced one is refused. The
+        constructors end before the first line outside every bracket that is not blank and
+        opens neither `  |` nor three spaces, where a deriving clause or a command begins, and
+        before a declaration's keyword outside every bracket wherever it stands on its line,
+        as in `| mk def f`; what follows is read for uses. A bar within brackets, or of `||`,
+        `<|` or `|>`, separates no constructors, so a name after it stays a use: in a family
+        `Q : Nat → Type`, Lean accepts `| mk : Q <| Known.bar 0`. Every other bar must
+        separate constructors, standing on a line that opens `  |` before a name, and is
+        refused otherwise. It is refused too after one of the words ALTERNATIVES names, such
+        as `match`, where it may begin an alternative, as in
+        `| mk : Q <| match 0 with | Known.bar n => n | _ => 0`, which Lean also accepts."""
+        require(not self.LITERAL.search(self.index.raw[d.path], d.name_end, d.end),
+                f'{d.path}: unsupported string, char literal or quoted name in {d.name}')
         lines = {line.start(): line.end()
                  for line in self.CONSTRUCTOR_LINE.finditer(clean, d.name_end, d.end)}
         words = {found.start(): found.group()
                  for found in self.ALTERNATIVES.finditer(clean, d.name_end, d.end)}
+        commands = {found.start() for found in self.COMMAND_WORD.finditer(clean, d.name_end, d.end)}
         found, stack, line_end, word = [], [], -1, None
         for i in range(d.name_end, d.end):
             if not stack and clean[i - 1] == '\n' and self.CONSTRUCTORS_END.match(clean, i):
@@ -713,15 +739,16 @@ class Calls:
                         f'{d.path}: unbalanced brackets in {d.name}')
             elif stack:
                 continue
+            elif i in commands:
+                break
             elif i in words:
                 word = word or words[i]
-            elif (c == '|' and i < line_end and clean[i - 1] not in '|<'
-                  and clean[i + 1:i + 2] not in ('|', '>')):
+            elif c == '|' and clean[i - 1] not in '|<' and clean[i + 1:i + 2] not in ('|', '>'):
+                # Off a constructor line, line_end is behind i and nothing matches.
                 match = self.CONSTRUCTOR.match(clean, i, line_end)
-                if match:
-                    require(word is None,
-                            f'{d.path}: unsupported bar after {word!r} in {d.name}')
-                    found.append(match)
+                require(word is None, f'{d.path}: unsupported bar after {word!r} in {d.name}')
+                require(match, f'{d.path}: unsupported bar in an inductive, {d.name}')
+                found.append(match)
         require(not stack, f'{d.path}: unbalanced brackets in {d.name}')
         return found
 
