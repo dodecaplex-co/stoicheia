@@ -14,10 +14,10 @@ note = "Euclid takes D to lie on AB between A and B. After I.9 gives a bisector 
 
 [review]
 stage = "full"
-commit = "a9bca05"
-reviewer = "Claude Opus 5.5, records review"
+commit = "206e3080"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:724cea2aa4407afd"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at 206e3080"
 
 [review.items]
 statement = "pass"

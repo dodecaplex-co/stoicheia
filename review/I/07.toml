@@ -37,10 +37,10 @@ note = "Like Heath's, this figure draws Euclid's impossible supposition. CA and 
 
 [review]
 stage = "full"
-commit = "d0de0df0"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-run = "brief 0005 stage 6, workflow J3-read-I7, independent re-read of the merged record at d0de0df0"
-lean = "sha256:b1e72bc213d450aa"
+commit = "206e3080"
+reviewer = "Claude Opus 5.5, independent reader"
+run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at 206e3080"
+lean = "sha256:e88aa082f83cd992"
 
 [review.items]
 statement = "pass"

@@ -45,10 +45,10 @@ case = "A on FG produced beyond F, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "40d340d"
-reviewer = "Claude Opus 5.5, records review"
+commit = "206e3080"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:69828f783bc4393e"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at 206e3080"
 
 [review.items]
 statement = "pass"

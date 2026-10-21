@@ -68,10 +68,10 @@ case = "BE greater than ED, and A four-sided, as in Heath's figure; the main the
 
 [review]
 stage = "full"
-commit = "08ddfe3a"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:a1911148d8503c4f"
-run = "Q watch, independent re-read at e2b241fd"
+commit = "206e3080"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:ff3205b2440424da"
+run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at 206e3080"
 
 [review.items]
 statement = "pass"
