@@ -4098,11 +4098,11 @@ findings:
   [FORMALIZATION](../FORMALIZATION.md), section 7, and the README's row for the negative
   tests now describe both plants. No check is weakened.
 - **A reductio's figure may draw the impossible supposition, as Heath's does (#220).** The
-  cross-family readings of #220 split over I.14's figure as the Jev audit's adjudications
-  had: Codex readers judged it defective, since its E stands off CB produced while the
-  construction puts E on it; Claude readers judged it right, since it draws the supposition
-  as Heath's printed figure does and its note says so. I.26 is the same case the other way
-  round. On 21 October 2026 the owner chose, of two conventions put to them, "Follow Heath,
+  Jev audit's adjudications split over two figures that draw a reductio's impossible
+  supposition: for I.14, whose E stands off CB produced while the construction puts E on it,
+  Claude agreed and Codex judged it defective; for I.26, whose BG and BH are drawn shorter
+  than the DE and EF they are cut off equal to, the other way round. In #220 a Codex reader
+  judged I.14's figure defective and a Claude reader judged I.26's right. On 21 October 2026 the owner chose, of two conventions put to them, "Follow Heath,
   disclosed": a reductio's figure may draw the impossible supposition as Heath's does,
   provided the note says so. The other option, redrawing to the Lean, was declined. I.14's
   and I.26's figures stand, and
