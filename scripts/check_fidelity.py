@@ -732,19 +732,19 @@ def check_entries(facts, by_ref) -> None:
 # Facts pinned by tests/certificate_expectations.json.
 
 def check_expectations(by_ref, path: Path = EXPECTATIONS, facts: dict | None = None) -> None:
-    """Each expectation names an entry (`ref`) and a list `field`, and asks that the
-    list `includes` some names, `excludes` others, or holds exactly `count` names
-    beginning with `prefix`; `equals` compares any field with a value. A field that is
-    an object, as `inherited` is, is read by its keys: the axioms it names. `cited_laws`,
-    a list of objects, is read by each object's `law`, and fails unless every object has
-    one; an expectation that also names a `law` reads that law's `construction_rules`
-    instead, and fails when the entry cites no such law. `includes`, `excludes` and
-    `count` read nothing else: on any other field, as `shared_steps` or a scalar is, they
-    fail rather than read it as empty. An expectation with no `ref` reads a field of
-    facts.json's top level, as `construction_rules` is, from `facts`. An expectation that
-    asks nothing fails: `includes` and `excludes` are effective only when nonempty lists
-    of names, while `equals` and `count`, an object with an integer `is`, are effective
-    whenever present."""
+    """Each expectation names a `field`, and usually an entry (`ref`), and asks that a
+    supported field of names `includes` some names, `excludes` others, or holds exactly
+    `count` names beginning with `prefix`; `equals` compares any field with a value. A
+    field that is an object, as `inherited` is, is read by its keys: the axioms it names.
+    `cited_laws` is a list of objects, read by each object's `law`, and fails unless every
+    object has one; an expectation that also names a `law` reads that law's
+    `construction_rules` instead, and fails when the entry cites no such law. `includes`,
+    `excludes` and `count` read nothing else: on any other field, as `shared_steps` or a
+    scalar is, they fail rather than read it as empty. An expectation with no `ref` reads
+    a field of facts.json's top level, as `construction_rules` is, from `facts`. An
+    expectation that asks nothing fails: `includes` and `excludes` are effective only
+    when nonempty lists of names, while `equals` and `count`, an object with an integer
+    `is`, are effective whenever present."""
     if not path.exists():
         fail(f"{rel(path)} is missing")
         return
