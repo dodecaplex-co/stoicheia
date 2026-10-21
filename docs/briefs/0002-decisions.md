@@ -3505,15 +3505,14 @@ findings:
   gives `lake build --no-build` every compiled source as an explicit target, including a
   module its library root does not import, so an old compiled file cannot hide a later edit
   to that source. And what is replayed is the package's own compiled files, not a copy of
-  them:
-  each module root lies in one folder of Lean's search path, since Lean loads a module
-  from the first folder that holds its root. So before either replay the script reads the
-  search path that leanchecker gets through `lake env`, and a root (a folder, or an
-  `.olean` file, at the top of one of its folders) found in two folders, its name compared
-  without case as macOS's file system compares it, fails the check, naming both: a copy of
-  `Check` in the build folder of a package that the model requires, earlier on the path
-  (the repository root's `.lake/build/lib/lean`, which Git ignores), would otherwise be
-  replayed in place of the package's own.
+  them: each module root lies in one folder of Lean's search path, since Lean loads a
+  module from the first folder that holds its root. So before either replay the script
+  reads the search path that leanchecker gets through `lake env`, and a root (a folder, or
+  an `.olean` file, at the top of one of its folders) found in two folders, its name
+  compared without case as macOS's file system compares it, fails the check, naming both: a
+  copy of `Check` in the build folder of a package that the model requires, earlier on the
+  path (the repository root's `.lake/build/lib/lean`, which Git ignores), would otherwise
+  be replayed in place of the package's own.
   `Check/Write.lean` alone is not replayed, by name: it writes the generated files
   whenever Lean elaborates it, so `lake build` never compiles it, and the check fails if
   that file goes. It runs first as `scripts/check_kernel.py` runs leanchecker for
@@ -3561,9 +3560,9 @@ findings:
   build folder of such a required package, earlier on the search path: both replays replay
   the copy and pass it, and the check must fail before them, naming `Check` and both
   folders; without the search path's check, the check passed it. A source never compiled
-  and a compiled module without its source are planted too. A current compiled module that
-  its library root does not import is a passing control; after its source is edited without
-  another build, the check must reject it by name.
+  and a compiled module without its source are planted too. The control also compiles a
+  module that its library root does not import; after that source is edited without another
+  build, the check must reject it by name.
   leanchecker runs on two threads, since each module it replays loads its imports'
   environment afresh, Mathlib's for each module that imports it: unthrottled on sixteen
   threads one run reached a 49 GB footprint, and on two it peaked near 2.6 GB and took
@@ -3573,10 +3572,10 @@ findings:
   self-test 162, in a job that stops at 30 minutes. The script stops the replay from
   nothing after 15 minutes and fails, asking whether `Check` now imports Mathlib, so that
   the job ends with a named cause rather than at its limit. Every command runs in a process
-  group of its own; on interruption or termination the script stops and reaps that group
-  before temporary-directory cleanup, as it does on the replay's timeout. The self-test
-  checks an interrupted untimed command and a timed command after each starts a descendant,
-  and requires both descendants to stop.
+  group of its own; on interruption or termination the script stops that whole group and
+  waits for its command before temporary-directory cleanup, as it does on the replay's
+  timeout. The self-test times out a command, interrupts an untimed one and terminates
+  another, after each starts a descendant, and requires each descendant to stop.
   Kim Morrison and Sebastian Ullrich wrote leanchecker, which began as Kim Morrison's
   [lean4checker](https://github.com/leanprover/lean4checker) and now ships with Lean; we
   are warmly grateful to them both. `safe_push` still leaves the `formal-model` job to CI

@@ -66,6 +66,8 @@ is installed. Run it from anywhere, with Python 3.11 or later:
 
     python3 scripts/check_model_kernel.py               the check, after `lake build` in model/
     python3 scripts/check_model_kernel.py --self-test   the planted faults and the control
+    python3 scripts/check_model_kernel.py --self-test-process-cleanup
+                                                        its process-cleanup part alone
 
 The self-test plants a fault of the kind the check exists to catch. In a temporary directory
 outside the repository it writes small packages of the model's shape, which import only
@@ -86,10 +88,11 @@ file, comes after a copy of `Check`, compiled without it, is put in the build fo
 a required package, earlier on the search path: both replays would replay the copy and pass
 it, so the check must fail before them, naming `Check` and both folders. A source the build
 never compiled, and a compiled module whose source is gone, must each fail too, naming the
-module. A current compiled module that its library root does not import must pass, while an
-edit to its source without another build must fail, naming it. The self-test also interrupts
-an untimed command and times out another after each has started a descendant, and requires
-both descendants to stop. Exits 1 on any failure. Standard library only.
+module. The control also compiles a module that its library root does not import, and an
+edit to that source without another build must fail, naming the module. Then the self-test
+times out a command, interrupts an untimed one and terminates another, after each has
+started a descendant, and requires each descendant to stop. Exits 1 on any failure.
+Standard library only.
 
 The first replay runs its modules in parallel, and each loads its imports' environment
 afresh, Mathlib's for each module that imports it: on a machine with sixteen threads one run
@@ -283,14 +286,17 @@ def to_replay(package: Path, modules: dict[tuple[str, ...], Path]) -> list[tuple
             listed.append(parts)
         elif parts not in NOT_COMPILED:
             raise Rejected(f"{shown(parts)} has a source, {rel(source)}, but no compiled "
-                           f"file, so nothing of it could be replayed: is it imported by "
+                           f"file, so nothing of it could be replayed: run `lake build` in "
+                           f"{rel(package)}, and if it still has none, is it imported by "
                            f"its library's root, {parts[0]}.lean?")
     targets = [parts[0] if len(parts) == 1 else "+" + shown(parts) for parts in listed]
     out = run(["lake", "build", "--no-build", *targets], package)
     if out.returncode != 0:
         raise Rejected(f"the build in {rel(package)} is not up to date with its sources, "
                        f"so its compiled files are not theirs: run `lake build` there "
-                       f"first\n{tail(out.stdout + out.stderr)}")
+                       f"first, and `lake build +<module>` for a compiled module that its "
+                       f"library's root does not import, or remove that module's compiled "
+                       f"files\n{tail(out.stdout + out.stderr)}")
     for parts in compiled(package):
         if parts[0] not in LIBRARIES:
             raise Rejected(f"{shown(parts)} is compiled in this package but is in "
@@ -478,8 +484,11 @@ REQUIRED_PACKAGE = {
 #  package in `required/`, and files then written over the package's own, which is built
 #  again.
 CASES = [
-    ("the control, with a true theorem added without the kernel's check",
-     {}, [], {}, [], None, None),
+    ("the control, with a true theorem added without the kernel's check, and a "
+     "current compiled module that its library root does not import",
+     {"Model/Unimported.lean":
+      "module\n\npublic theorem Unimported.holds : True := trivial\n"},
+     ["Model.Unimported"], {}, [], None, None),
     ("a theorem of False added without the kernel's check, in a Check file",
      {"Check.lean": "import Check.Sound\nimport Check.Planted\n",
       "Check/Planted.lean": unchecked("Planted.checkFalse", "False", "True.intro",
@@ -526,10 +535,6 @@ CASES = [
     ("a compiled module whose source is gone",
      {"Model/Gone.lean": "module\n\npublic theorem Gone.holds : True := trivial\n"},
      ["Model.Gone"], {}, ["Model/Gone.lean"], None, ["Model.Gone", "no source"]),
-    ("a current compiled module that its library root does not import",
-     {"Model/Unimported.lean":
-      "module\n\npublic theorem Unimported.holds : True := trivial\n"},
-     ["Model.Unimported"], {}, [], None, None),
     ("a stale compiled module that its library root does not import",
      {"Model/Unimported.lean":
       "module\n\npublic theorem Unimported.holds : True := trivial\n"},
@@ -610,7 +615,8 @@ import sys
 import time
 
 fd = os.open(sys.argv[1], os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
-while True:
+deadline = time.monotonic() + 30
+while time.monotonic() < deadline:
     os.write(fd, b"x")
     time.sleep(0.01)
 """
@@ -619,7 +625,9 @@ PARENT = """import subprocess
 import sys
 import time
 
-subprocess.Popen([sys.executable, "-c", sys.argv[2], sys.argv[1]])
+subprocess.Popen([sys.executable, "-I", "-c", sys.argv[2], sys.argv[1]],
+                 stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                 stderr=subprocess.DEVNULL)
 time.sleep(60)
 """
 
@@ -643,47 +651,62 @@ def require_stopped(path: Path, case: str) -> None:
         fail(f"process-cleanup self-test: {case} left its descendant running")
 
 
+def signal_when_started(path: Path, number: int) -> None:
+    """Send the script the signal once the descendant has written to the file, or after
+    five seconds."""
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        if path.is_file() and path.stat().st_size:
+            break
+        time.sleep(0.01)
+    os.kill(os.getpid(), number)
+
+
 def process_cleanup_self_test() -> None:
     with tempfile.TemporaryDirectory(prefix="check-model-kernel-processes-") as tmp:
         folder = Path(tmp)
         timed = folder / "timed"
         try:
-            run([sys.executable, "-c", PARENT, str(timed), DESCENDANT], ROOT, timeout=0.5)
+            run([sys.executable, "-I", "-c", PARENT, str(timed), DESCENDANT], folder,
+                timeout=0.5)
         except subprocess.TimeoutExpired:
             pass
         else:
             fail("process-cleanup self-test: the timed command did not time out")
         require_stopped(timed, "a timeout")
 
-        untimed = folder / "untimed"
-        previous = signal.getsignal(signal.SIGTERM)
-
-        def cancel(_number, _frame) -> None:
-            sys.exit(128 + signal.SIGTERM)
-
-        def interrupt() -> None:
-            deadline = time.monotonic() + 5
-            while time.monotonic() < deadline:
-                if untimed.is_file() and untimed.stat().st_size:
-                    break
-                time.sleep(0.01)
-            os.kill(os.getpid(), signal.SIGTERM)
-
-        signal.signal(signal.SIGTERM, cancel)
-        thread = threading.Thread(target=interrupt)
-        thread.start()
-        try:
+        # An untimed command, stopped by each signal under the handler the script has for
+        # it: Python's for an interrupt, which raises KeyboardInterrupt, and main()'s for a
+        # termination, which raises SystemExit.
+        for number, handler, done, case in (
+                (signal.SIGINT, signal.default_int_handler, "interrupted",
+                 "an interruption of an untimed command"),
+                (signal.SIGTERM, exit_on_signal, "terminated",
+                 "a termination of an untimed command")):
+            untimed = folder / f"untimed-{number.name}"
+            previous = signal.signal(number, handler)
+            thread = threading.Thread(target=signal_when_started, args=(untimed, number))
+            thread.start()
             try:
-                run([sys.executable, "-c", PARENT, str(untimed), DESCENDANT], ROOT)
-            except SystemExit as e:
-                if e.code != 128 + signal.SIGTERM:
-                    raise
-            else:
-                fail("process-cleanup self-test: the untimed command was not interrupted")
-        finally:
-            thread.join()
-            signal.signal(signal.SIGTERM, previous)
-        require_stopped(untimed, "an interruption of an untimed command")
+                try:
+                    run([sys.executable, "-I", "-c", PARENT, str(untimed), DESCENDANT],
+                        folder)
+                except KeyboardInterrupt:
+                    if number != signal.SIGINT:
+                        raise
+                except SystemExit as e:
+                    if e.code != 128 + number:
+                        raise
+                else:
+                    fail(f"process-cleanup self-test: the untimed command was not {done}")
+            finally:
+                thread.join()
+                signal.signal(number, previous)
+            require_stopped(untimed, case)
+
+
+def exit_on_signal(number: int, _frame) -> None:
+    sys.exit(128 + number)
 
 
 def main() -> None:
@@ -692,18 +715,18 @@ def main() -> None:
                         help="plant faults in small packages of the model's shape, which "
                              "need no Mathlib, and expect the check to catch each")
     parser.add_argument("--self-test-process-cleanup", action="store_true",
-                        help="interrupt and time out commands with descendants, and expect "
-                             "the whole process group to stop")
+                        help="interrupt, terminate and time out commands with descendants, "
+                             "and expect the whole process group to stop")
     args = parser.parse_args()
 
     # A terminated or hung-up script exits through SystemExit, so run() stops the command's
     # process group and the temporary folder is removed, as on an interrupt.
     for number in (signal.SIGTERM, signal.SIGHUP):
-        signal.signal(number, lambda n, frame: sys.exit(128 + n))
+        signal.signal(number, exit_on_signal)
     if args.self_test_process_cleanup:
         process_cleanup_self_test()
-        print("✓ model kernel process-cleanup self-test: an interruption of an untimed "
-              "command and a timeout stop their descendants")
+        print("✓ model kernel process-cleanup self-test: an interruption and a termination "
+              "of an untimed command, and a timeout, stop their descendants")
         return
     bin_ = toolchain_bin()
     if args.self_test:
@@ -714,10 +737,10 @@ def main() -> None:
               f"replay in Model and in Check, the build folder's walk in a second root and "
               f"in a third library, the replay from nothing in a package that Check "
               f"requires, and the search path's check where a copy of Check compiled "
-              f"without the plant lies earlier on it, naming both folders; the control "
-              f"and a current unimported module pass; a module without a compiled file "
-              f"or a source and a stale unimported module fail; interrupted and timed-out "
-              f"commands stop their descendants")
+              f"without the plant lies earlier on it, naming both folders; the control, "
+              f"with a current unimported module, passes; a module without a compiled file "
+              f"or a source and a stale unimported module fail; interrupted, terminated "
+              f"and timed-out commands stop their descendants")
         return
 
     try:

@@ -777,15 +777,16 @@ replay from nothing must fail on it, naming the declaration. A last plant, in a 
 file, comes after a copy of `Check`, compiled without it, is put in the build folder of
 such a required package, earlier on the search path: both replays would replay the copy and
 pass it, so the check must fail before them, naming `Check` and both folders. A control, a
-source never compiled and a compiled module without its source are tested the same way. A
-second control compiles a module that its root does not import; an edit to the same source
+source never compiled and a compiled module without its source are tested the same way. The
+control also compiles a module that its root does not import; an edit to the same source
 without another build must then fail, naming the module. Every command runs in a process
-group of its own. On interruption or termination the script stops and reaps the group
-before its temporary directory is removed, as it does when the replay from nothing reaches
-its time limit; the self-test checks both an interrupted untimed command and a timeout with
-a descendant. We thank Kim Morrison and Sebastian Ullrich warmly for leanchecker, which
-began as Kim Morrison's [lean4checker](https://github.com/leanprover/lean4checker) and now
-ships with Lean.
+group of its own. On interruption or termination the script stops that whole group and
+waits for its command before its temporary directory is removed, as it does when the replay
+from nothing reaches its time limit; the self-test times out a command, interrupts an
+untimed one and terminates another, each with a descendant, and requires each descendant to
+stop. We thank Kim Morrison and Sebastian Ullrich warmly for leanchecker, which began as
+Kim Morrison's [lean4checker](https://github.com/leanprover/lean4checker) and now ships
+with Lean.
 
 On the machine that built this package, from a fresh clone, `lake exe cache get` took about
 65 seconds (cloning the pinned Mathlib and its dependencies, downloading 9,031 files, 452 MB,
