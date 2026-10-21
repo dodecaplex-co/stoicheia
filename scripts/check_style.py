@@ -63,7 +63,7 @@ The reach of #66, held file by file (REACH_PENDING). The Review notes, the overl
 catalogue, the Other reports, the Rendered docstrings, the front pages and the table of
 names came under the rules on 19 October, with S7 in the gap catalogues and the Generated
 files, S12 beyond the mishnah, and S22. A file that had findings of that reach on the
-day is listed with the rules it had findings of and whoever mends them, and while it is
+day was listed with the rules it had findings of and whoever mends them, and while it is
 listed its findings of those rules are reported (D16) and fail nothing; every other
 finding of the reach fails at once, in a listed file as in any other, and so does every
 finding a file was held to before. A rule of an entry whose file has no finding of it left
@@ -128,6 +128,7 @@ import subprocess
 import sys
 import tempfile
 import tomllib
+import unicodedata
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from io import BytesIO
@@ -167,12 +168,12 @@ IDEA_LETTERS_REQUIRED = True
 
 # Upright letters, the switch (STYLE, sections 4, 7 and 8). Heath's letters take one style
 # in the text and in the figures, upright, by the owner's decision of 18 October. The
-# figures were drawn with italic letters and are set upright in a change of their own;
-# while they are, this is False: S15 and S20 take a figure's letters italic or upright, one
-# style in each figure, and D15 lists the figures still italic. Once every figure is
-# upright it is True, and S15 and S20 fail an italic letter. Never set it back to quiet a
-# figure: set the figure upright.
-UPRIGHT_LETTERS_REQUIRED = False
+# figures were drawn with italic letters, and while they were being set upright this was
+# False: S15 and S20 took a figure's letters italic or upright, one style in each figure,
+# and D15 listed the figures still italic. Every figure is now upright, so it is True, and
+# S15 and S20 fail an italic letter; D15 is empty. Never set it back to quiet a figure:
+# set the figure upright.
+UPRIGHT_LETTERS_REQUIRED = True
 
 # S12: backticked words that are Lean's, or the certificate's, but that no `#check` can
 # find, since they are not declarations. {word: why}. Each is printed on every run, and
@@ -197,42 +198,21 @@ NOT_DECLARED = {
 # file, to quiet a new finding: mend the text.
 REACH_PENDING: dict[str, tuple[str, str]] = {
     # The review notes.
-    "review/I/09.toml": ("S7", "the records of Books I and II (#29)"),
-    "review/II/14.toml": ("S12", "the records of Books I and II (#29)"),
     "review/III/14.toml": ("S12", "stage 4's records (#28)"),
     "review/III/15.toml": ("S12", "stage 4's records (#28)"),
     "review/III/25.toml": ("S12", "stage 4's records (#28)"),
     # The catalogues and the reports.
-    "docs/reports/gaps-book-I.md": ("S7", "the text change that follows this one (#66)"),
-    "docs/reports/gaps-book-II.md": ("S7 S12", "the text change that follows this one (#66)"),
     "docs/reports/gaps-book-III.md": ("S12", "stage 3's gap entries (#25)"),
     "docs/reports/overlaps.md": ("S7", "stage 3's overlap entries (#25)"),
-    # S12's report inventory on bd3b72a: 147 and 2 findings, respectively. These are
-    # the initial findings of the new report reach, not later additions to a landed rule.
+    # S12's report inventory on bd3b72a: 147 findings. These are the initial findings of
+    # the new report reach, not later additions to a landed rule.
     "docs/reports/mixed-angles-prototype.md": ("S12", "the report text change after #66 (147 findings)"),
-    "docs/reports/read-through-01.md": ("S7 S12", "the report text change after #66 (2 S12 findings)"),
     # The front pages: render.py's FRONT_LEAN_I, once stage 3's change to render.py lands.
     "book/I/front.md": ("S12", "render.py's FRONT_LEAN_I, after stage 3 (#25)"),
-    # The notes of four proofs (S22): a change to the file needs its record read again.
-    "Elements/BookI/Prop08.lean": ("S22", "the records of Books I and II (#29), with the record"),
+    # The notes of three proofs (S22): a change to the file needs its record read again.
     "Elements/BookII/Prop14.lean": ("S22", "the records of Books I and II (#29), with the record"),
     "Elements/BookIII/Prop10.lean": ("S22", "the next change to the file, with its record"),
     "Elements/BookIII/Prop19.lean": ("S22", "the next change to the file, with its record"),
-    # Book Zero's notes (S22).
-    "Elements/Figure/Angles.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Areas.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Basics.lean": ("S22", "stage 3 (#25) and the mixed angles (#57)"),
-    "Elements/Figure/Circles.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Lengths.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Lines.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/OnCircles.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Parallelograms.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Parallels.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Rays.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Rectangles.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Rectilineal.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Sides.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Triangles.lean": ("S22", "the text change that follows this one (#66)"),
     # The foundations' notes (S22), and the rendered docstrings of Transfer.lean (S7): the
     # coordinator's files.
     "Elements/Foundations/Definitions.lean": ("S22", "the coordinator, who owns the foundations"),
@@ -273,7 +253,7 @@ RULES = {
     "S17": "a further-reading file's shape or links",
     "S18": "a book with pages and no introduction",
     "S19": "a book introduction that does not link the book's brief",
-    "S20": "an idea figure's letter not Heath's, or not in the figure's one style, at 14 and in the ink of what it stands on",
+    "S20": "an idea figure's letter not Heath's, or not upright, at 14 and in the ink of what it stands on",
     "S21": "a point of an idea figure without its letter",
     "S22": "letters in backticks, where they are plain",
     "S23": "a merge-conflict marker",
@@ -292,7 +272,7 @@ REPORTS = {
     "D10": "S6 or S7 outside their failing scope",
     "D11": "Euclid's figure strokes or dots off the usual widths",
     "D14": "figures at a glance not yet lettered (S21 holds them once the switch is on)",
-    "D15": "figures whose letters are still italic (S15 and S20 hold them upright once the switch is on)",
+    "D15": "figures whose letters are all italic, while the switch for upright letters is off (with it on, S15 and S20 fail them)",
     "D16": "the reach of 19 October, of a rule its file is still listed for in REACH_PENDING (fails once it is out)",
 }
 
@@ -2653,7 +2633,8 @@ CURVE_MAX_DEPTH = 16         # at most 2**16 chords per curve; refuse if still n
 # draws it once, or once in each of Heath's figures where they stand side by side, and it
 # stands clear of every stroke, every dot and the canvas's edge, so that no line runs
 # through it and it is not read as another point's. A letter is measured as Georgia, the
-# figures' font, draws its capital, upright or italic as the figure sets it: by the convex
+# figures' font, draws its capital, upright or italic as the figure sets it (an italic
+# letter fails S15 and S20, and is still measured as it is drawn): by the convex
 # hull of the points of the capital's outline, on its curves and off them, which holds the
 # ink. GLYPHS_UPRIGHT and GLYPHS_ITALIC give each capital's advance and that hull's
 # corners, x and y in turn with y up, in the font's units, EM to the em: a coarse shape,
@@ -2763,7 +2744,8 @@ GLYPHS_ITALIC = {
 # {(file, reason): [elements, points]}
 idea_exemptions: dict[tuple[str, str], list[int]] = defaultdict(lambda: [0, 0])
 
-# The figures whose letters are still italic, while UPRIGHT_LETTERS_REQUIRED is False (D15):
+# The figures whose letters are all italic, which D15 lists while UPRIGHT_LETTERS_REQUIRED
+# is False; it is True, so S15 and S20 fail them and D15 is empty:
 # {book: {"of Euclid's figures": [NN, …], "figures at a glance": [NN, …]}}
 italic_figures: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
 
@@ -2774,9 +2756,9 @@ def letter_style(eff) -> str:
 
 
 def check_letter_style(path: Path, rule: str, found: list[tuple[str, str]]) -> None:
-    """S15's and S20's style of a figure's letters, each (letter, its font-style): upright,
-    or, while UPRIGHT_LETTERS_REQUIRED is False, italic, one style in each figure (STYLE,
-    sections 4 and 7). A figure still italic is listed for D15."""
+    """S15's and S20's style of a figure's letters, each (letter, its font-style): upright
+    (STYLE, sections 4 and 7). Were UPRIGHT_LETTERS_REQUIRED False, they could all be italic
+    instead, one style in each figure, and the figure would be listed for D15."""
     styles: dict[str, list[str]] = defaultdict(list)
     for s, style in found:
         styles[style].append(s)
@@ -3539,6 +3521,40 @@ def supported_path(value: str) -> bool:
     return True
 
 
+def arc_fault(value: str) -> str | None:
+    """What SVG draws, in place of an arc, for the first arc of a supported path that it
+    does not draw as one; or None. SVG's implementation notes for arcs (F.6.2) omit an arc
+    whose ends are one point, and then draw one with a radius of 0 as a straight line, so
+    that an arc with both draws nothing. Any other arc draws, whatever its large-arc and sweep flags: radii too short to reach its
+    ends are enlarged until they reach (F.6.6), and two distinct ends then lie on two
+    ellipses of those radii, or on one when the radii only just reach; the flags take one
+    arc of them from the one end to the other (F.6.5), and on one ellipse both arcs are
+    halves, so that the large-arc flag changes nothing."""
+    parts = re.split(r"([A-Za-z])", value.strip(SVG_SPACE))
+    x = y = sx = sy = 0.0
+    for cmd, args in zip(parts[1::2], parts[2::2]):
+        if cmd == "Z":
+            x, y = sx, sy
+            continue
+        v = [float(n) for n in decimal_list(args)]
+        arity = PATH_ARITY[cmd.lower()]
+        for i in range(0, len(v), arity):
+            group = v[i:i + arity]
+            if cmd == "A" and (group[5], group[6]) == (x, y):
+                return f"nothing for an arc whose ends are one point, ({x:g}, {y:g})"
+            if cmd == "A" and (group[0] == 0 or group[1] == 0):
+                return f"a straight line for an arc with a radius of 0, from ({x:g}, {y:g})"
+            if cmd == "H":
+                x = group[0]
+            elif cmd == "V":
+                y = group[0]
+            else:
+                x, y = group[-2:]
+            if cmd == "M" and i == 0:
+                sx, sy = x, y
+    return None
+
+
 def supported_svg(path: Path, root) -> bool:
     """Refuse deep trees and unsupported SVG before recursive walks or measurements.
     Read raw XML attributes only; CSS is neither accepted nor interpreted."""
@@ -3600,6 +3616,12 @@ def supported_svg(path: Path, root) -> bool:
                 ok = letter_transform_of(value) is not None
             elif attr == "d":
                 ok = supported_path(value)
+                drawn = arc_fault(value) if ok else None
+                if drawn:
+                    fail("S26", path, 0, f"<{t}> d {value!r}: SVG draws {drawn}, so it is "
+                         "outside S26's SVG allow-list")
+                    valid = False
+                    continue
             else:
                 ok = attr == UNLETTERED
             if not ok:
@@ -4018,10 +4040,26 @@ TEX_SPAN = re.compile(r"\$([^$\n]+)\$")
 TEX_UPRIGHT = re.compile(r"\\(?:mathrm|text|textrm|textup|operatorname)\s*\{")
 TEX_COMMAND = re.compile(r"\\([A-Za-z]+)")
 # A lower-case letter standing alone in the paragraph's words, not the s of "A's" or
-# "Euclid’s" after an apostrophe.
+# "Euclid’s" after an apostrophe. Python's patterns name no class of Unicode's, so a
+# letter of another script, a mark or a format character beside it is found by
+# joins_word, and keeps it in its word too (éxponent spelled with a combining accent,
+# eхponent with a Cyrillic х).
 LONE_LOWER = re.compile(r"(?<![A-Za-z'’])[a-z](?![A-Za-z])")
-# The abbreviations whose letters are no names.
-ABBREVIATION = re.compile(r"(?<![A-Za-z])(?:[eE]\.g|[iI]\.e)\.")
+# The abbreviations whose letters are no names: e.g. and i.e., each full stop escaped or
+# not (e\.g\., which Markdown shows as e.g.) and spaces after the first or not (e. g.,
+# e.  g., which a reader sees as e. g.); and the p of Heath's page before its number, as
+# STYLE, section 5, cites it (vol. 1, p. 383), with the number when it is a Roman one,
+# whose letters are no names either (p. ix, pp. v–vii).
+ABBREVIATION = re.compile(r"(?<![A-Za-z])(?:(?:[eE]\\?\.\s*g|[iI]\\?\.\s*e)\\?\."
+                          r"|pp?\\?\.(?:(?=\s*\d)|\s*[ivxlcdm]+(?:[–-][ivxlcdm]+)?"
+                          r"(?![A-Za-z])))")
+# The characters that show nothing and are not format characters (Unicode's Cf, which
+# their category finds): the rest of Unicode's Default_Ignorable_Code_Point, the Hangul
+# fillers, which it counts as letters, the combining grapheme joiner and the variation
+# selectors, which it counts as marks, and the code points it leaves unassigned among
+# them.
+INVISIBLE = re.compile(r"[͏ᅟᅠ឴឵᠋-᠏⁥ㅤ"
+                       r"︀-️ﾠ￰-￸\U000e0000-\U000e0fff]")
 # What stands beside the article "a", spaces between, when it is a name, as in "AC = a"
 # or "(a + b)²": a sign of an expression, a digit, raised or lowered, or a bracket.
 BESIDE_A_NAME = set("=+-−×·/<>≤≥()[]0123456789⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉")
@@ -4140,9 +4178,19 @@ def modern_markup_findings(text: str) -> list[str]:
     # ampersand, instead of letting the spelling supply names the reader does not see.
     if re.search(r"&(?:#[xX][0-9a-fA-F]+|#[0-9]+|[A-Za-z][A-Za-z0-9]*);", visible):
         found.append("unsupported character reference in the modern paragraph")
-    # Refuse emphasis touching a word, also through an apostrophe or full stop.
+    # A format character (Unicode's Cf: a zero-width space, a soft hyphen, a joiner) shows
+    # nothing, nor does a Hangul filler or a variation selector (INVISIBLE), so a letter
+    # beside one would stand alone in a word the reader sees whole: e.g. or exponent.
+    invisible = sorted({c for c in visible
+                        if unicodedata.category(c) == "Cf" or INVISIBLE.match(c)})
+    if invisible:
+        found.append("unsupported invisible character "
+                     + ", ".join(f"U+{ord(c):04X}" for c in invisible)
+                     + " in the modern paragraph")
+    # Refuse emphasis touching a word, also through an apostrophe or full stop, escaped or
+    # not, with the emphasis on one side of it or both (*e*.g., *e*.*g*.).
     # Removing link syntax first also catches e[*x*](/reference)ponent.
-    if re.search(r"\w(?:\*+|['’.][*_]+|[*_]+['’.])\w", modern_paragraph(text)):
+    if re.search(r"\w(?:\*+|\\?['’.][*_]+|[*_]+\\?['’.][*_]*)\w", modern_paragraph(text)):
         found.append("unsupported intraword emphasis in the modern paragraph")
     if syntax.comments or any(backslashes_before(visible, m.start()) % 2 == 0
                               for m in INLINE_HTML.finditer(visible)):
@@ -4155,14 +4203,22 @@ def modern_markup_findings(text: str) -> list[str]:
     return found
 
 
+def joins_word(c: str) -> bool:
+    """Whether a character beside a letter keeps it in one word: a letter of any script,
+    Greek too (the r of 2πr is a name in TeX, $2\\pi r$), a mark, which sits on the letter
+    before it, or a format character."""
+    return bool(c) and (c.isalpha() or unicodedata.category(c) in {"Mn", "Mc", "Me", "Cf"})
+
+
 def modern_names(paragraph: str) -> set[str]:
     """The names a modern-way paragraph uses: each lower-case Latin or Greek letter of a
     $…$ span, its commands taken out (\\vec, \\frac, \\sin) and its Greek ones read as
     their letters (\\theta, θ), what \\mathrm{…} sets upright left aside (Heath's points);
     and, outside the spans, each Greek letter, and each lower-case letter that stands
-    alone, save the letters of English: one after an apostrophe (A's), those of e.g. and
-    i.e., and the article "a" when no sign of an expression, digit or bracket stands
-    beside it (BESIDE_A_NAME)."""
+    alone, with no letter of any script, mark or format character beside it (joins_word),
+    save the letters of English: one after an apostrophe (A's), those of e.g. and i.e.
+    and of Heath's page (ABBREVIATION), and the article "a" when no sign of an expression,
+    digit or bracket stands beside it (BESIDE_A_NAME)."""
     names: set[str] = set()
 
     def span(m: re.Match) -> str:
@@ -4174,6 +4230,8 @@ def modern_names(paragraph: str) -> set[str]:
     rest = TEX_SPAN.sub(span, paragraph).translate(GREEK_VARIANTS)
     rest = ABBREVIATION.sub(_blank, rest)
     for m in LONE_LOWER.finditer(rest):
+        if joins_word(rest[m.start() - 1:m.start()]) or joins_word(rest[m.end():m.end() + 1]):
+            continue
         before, after = rest[:m.start()].rstrip()[-1:], rest[m.end():].lstrip()[:1]
         if m.group(0) != "a" or {before, after} & BESIDE_A_NAME:
             names.add(m.group(0))
@@ -4257,8 +4315,10 @@ def modern_transform(value: str) -> bool:
 
 
 def modern_path(value: str) -> bool:
-    """Main's paths use explicit M, L, A and final z, with space-separated decimals."""
-    parts, i = value.split(" "), 0
+    """Main's paths use explicit M, L, A and final z, with space-separated decimals. An
+    arc has positive radii and ends at another point than it begins, or SVG draws it as
+    a straight line or not at all (arc_fault)."""
+    parts, i, point = value.split(" "), 0, None
     if parts[0] != "M":
         return False
     while i < len(parts):
@@ -4269,11 +4329,14 @@ def modern_path(value: str) -> bool:
         if count is None:
             return False
         args = parts[i + 1:i + 1 + count]
-        if len(args) != count or any(modern_number(arg) is None for arg in args):
+        numbers = [modern_number(arg) for arg in args]
+        if len(args) != count or None in numbers:
             return False
-        if command == "A" and (any(modern_number(arg) < 0 for arg in args[:2])
-                               or any(arg not in {"0", "1"} for arg in args[3:5])):
+        if command == "A" and (any(n <= 0 for n in numbers[:2])
+                               or any(arg not in {"0", "1"} for arg in args[3:5])
+                               or numbers[5:] == point):
             return False
+        point = numbers[-2:]
         i += count + 1
     return True
 

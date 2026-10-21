@@ -3488,6 +3488,270 @@ findings:
   `tests/certificate_expectations.json`, so it holds before and after the content it
   describes. No guard is weakened.
 
+- **Heath's letters upright in both figures (#159).** The owner decided on 18 October
+  that Heath's letters take one style in the text and in both figures, which the voice
+  rules' check change, above, reads as upright. The figures are now set upright. Every
+  `figures/<book>/NN.svg` and `NN-idea.svg` of Books I to III, 198 in all, drew the letters
+  italic: 83 of Euclid's figures set `font-style="italic"` on the root `<svg>`, and the
+  other 16, with all 99 figures at a glance, on the `<g>` that holds the letters. That one
+  attribute is removed from each, so the letters take SVG's default, upright. Nothing else
+  in a figure changes, and no letter moves. Every text the attribute set italic was one of
+  Heath's letters, so nothing italic on purpose is lost. S26 now measures each letter by
+  the hull of the upright capital, and every letter still stands 2 clear of every stroke
+  and dot: the closest is III.33's F, at 2.05. `scripts/check_style.py` reports no D15.
+  The modern figures (`NN-modern.svg`) do not change: their capitals were upright already,
+  and the paragraph's own names stay italic, as S25 requires. The switch follows in a
+  change of its own to the check
+  ([#159](https://github.com/jackChallis/stoicheia/issues/159)):
+  `UPRIGHT_LETTERS_REQUIRED` set to `True`, a test that plants an italic letter, and
+  STYLE's wording for the switch. Until then S15 and S20 still accept a figure whose
+  letters are all italic. No protected file changes.
+
+- **Twenty entries come out of `REACH_PENDING`
+  ([#159](https://github.com/jackChallis/stoicheia/issues/159)).** Run on `8e9a1879` with
+  Lean, after `lake build` and `lake build Audit`, `scripts/check_style.py` reported 19 of
+  the list's 38 entries done, with no finding of any of their rules left, and this change
+  takes exactly those out: the fourteen notes of Book Zero, `Elements/Figure/*.lean`
+  (S22); `docs/reports/gaps-book-I.md` (S7); `docs/reports/gaps-book-II.md` and
+  `docs/reports/read-through-01.md` (S7 and S12); `review/I/09.toml` (S7); and
+  `review/II/14.toml` (S12), the two that the progress check of 20 October on #159 named.
+  Under `--no-lean` the same check reported 18 of them, the two "S7 S12" entries for S7
+  alone and `review/II/14.toml` not at all, since S12 alone asks Lean; with Lean their S12
+  is done too, so each of the 19 comes out whole and no entry is left with a rule fewer.
+  No rule of the 19 entries that remain was reported done, and none of them changes. D16
+  goes from 364 lines to 345 with Lean, and from 202 to 184 under `--no-lean`: the 19 and
+  18 done lines go, the findings are line for line the same, and both runs pass with no
+  "done" line. The comment over the reports' entries gave the S12 inventory of two of them
+  on `bd3b72a`, 147 and 2; it now gives the one left,
+  `docs/reports/mixed-angles-prototype.md`. The paragraphs on the list, in the script's
+  docstring and in [STYLE](../STYLE.md), section 8, now say that a file with findings on
+  19 October "was" listed, since a mended file no longer is; neither holds a count, and no
+  count marker counts the list. Of the 19 entries that remain, one names the closed #66
+  as its mender and nine name no issue. The protected file changed is
+  `scripts/check_style.py`; `tests/test_check_style.py` is unchanged, since
+  `test_done_cases` and `test_done_without_lean` already test the done report.
+  After origin/main was merged at `17ae8e2a`, where the restricted rule of superposition
+  rewrote I.8's Lean, the check reported one entry more done, `Elements/BookI/Prop08.lean`
+  (S22, which named #29), both with Lean and without; it comes out too, so 20 entries
+  come out and 18 remain, and both runs again pass with no "done" line.
+
+- **Heath's letters upright: required, the switch on
+  ([#159](https://github.com/jackChallis/stoicheia/issues/159)).** Every one of the 198
+  figures now sets Heath's letters upright (above), so the switch `UPRIGHT_LETTERS_REQUIRED`
+  in [`scripts/check_style.py`](../../scripts/check_style.py) is `True`: S15 fails an
+  italic letter in Euclid's figure, and S20 one in a figure at a glance, whether one letter
+  is italic or every one, and D15 is empty. D15 stays, empty, as D14 did when
+  `IDEA_LETTERS_REQUIRED` went `True`: the switch keeps its off position, and D15 is what
+  that position reports, so its description and STYLE's row say "while the switch for
+  upright letters is off". `GLYPHS_ITALIC` stays too: S26 still measures an italic letter
+  as Georgia draws it, and measuring it upright would change two of S26's clearance cases.
+  A new case in [`tests/test_check_style.py`](../../tests/test_check_style.py), `Upright`,
+  sets `font-style="italic"` in temporary copies of I.1's two figures, on one letter and on
+  the root, and requires S15's or S20's finding and no D15; on origin/main's check, where
+  the switch is `False`, its four planted cases fail. The figure fixture that the S26 and
+  SVG input cases share drew its letters italic, and now draws them upright; the sagitta
+  cases placed their near E by its italic hull, and now place the upright E at the same
+  clearance (1.975 and 1.981, against 1.979), still nearer 2 than a three-degree chord's
+  sagitta. No case is removed or loosened. [STYLE](../STYLE.md), sections 7 and 8,
+  describes the finished state: the switch clauses of S15 and S20, the D15 row and the
+  switch paragraph; its **[checked]** for upright letters, in Euclid's figure and at a
+  glance, now holds whole. The switch is never turned back to quiet a figure: the figure is
+  set upright. #159's items on `REACH_PENDING` are untouched. The protected files this
+  changes are `scripts/check_style.py` and `tests/test_check_style.py`.
+
+- **Short hashes are read from Git, and the acceptance report's revision has twelve
+  digits (#178, items one and three).** `scripts/test_safe_push.py` looked for the commits
+  a pull request's body lists by the first seven digits of each hash, and its clone
+  pinned `core.abbrev` to 7 to make that so. Git reads `core.abbrev` as a minimum width,
+  and its own width grows with the object count: eight digits on a clone of main today.
+  The pin is gone. A new helper, `short_sha`, asks the clone under test for a commit's
+  short form with `git log -1 --format=%h`, as `scripts/safe_push.py` writes the body,
+  and the three tests that sliced seven digits use it; any later test that needs a short
+  hash can too. Nothing they check is loosened. The other half of item one was already
+  done: the stage test reads the first stage line from `docs/program.toml` (the entry of
+  20 October above).
+  `scripts/check_acceptance.py` wrote the report's revision with `git rev-parse --short`.
+  Since the entry of 20 October on S12 and the word "Revision", S12 takes a hash of 7 to
+  40 digits beside "Revision" as a commit, so a regenerated report passed at Git's
+  usual widths. Under a `core.abbrev` of 4 to 6, though, the revision is shorter than
+  `heath.COMMIT` allows, and when it begins with a letter S12 puts it to Lean as a name;
+  and its width differs from one clone to another, so the same files gave different
+  reports. The generator now writes twelve digits (`REVISION_DIGITS`, with
+  `git rev-parse --short=12`), the width `safe_push.py`'s pre-flight summary gives
+  commits, in the form S12 already reads. S12, its exemptions and `REACH_PENDING` are
+  unchanged. A new test in
+  `tests/test_check_acceptance.py`, `Report.test_a_regenerated_report_passes_s12`, writes
+  the report through the generator in a small repository under `core.abbrev` 4, 9 and
+  Git's own width, and puts each report to S12's plan: on the old generator, S12 would
+  put the four-digit revision to Lean, and the three revisions differ; now each is the
+  same twelve digits, and S12 asks Lean about nothing. The committed report's revision,
+  `33602846`, is all digits, which S12 does not read as a name, so it passes as it
+  stands; its next regeneration writes twelve digits.
+  A review of that change found a second way for the report to fail S12, one that no
+  regeneration cleared. The style check reads the report a run replaces, and E5 quoted
+  each of its findings in the new report with the message's backticks. So a finding on
+  the old report, on a revision S12 put to Lean or on a name Lean does not know (B2 and
+  E2 quote such names on purpose), came back in the new report away from the word
+  "Revision"; S12 put it to Lean again, and each regeneration quoted the last finding
+  back. `check_style_rules` now quotes each of the style check's findings whole, as one
+  code span whose fence is one backtick longer than the longest run of backticks in it,
+  with a space inside each end. E5 still fails, once, with the whole finding, and a
+  reader sees it exactly as the check printed it. S12 reads a span as a name only when
+  the span is one name or opens with `name :`, and a quoted finding opens with its rule
+  and file, so S12 finds no name in it; S1, S7, S8 and S22, the style check's other
+  rules for a report, read it outside code and find nothing in it either. So the report
+  after a fixed finding passes every rule, not S12 alone. Taking the backticks away, as
+  a first version of this change did, closed S12's loop alone: GitHub would read a quoted
+  excerpt's `<book>` as an HTML tag and drop it, and set `2*a*b` in italic, and an em
+  dash or a curly quotation mark in a quoted excerpt's code would come out of code,
+  where S1 or S8 finds it in the next report, and every regeneration quotes it back. The
+  code span closes as well an older loop of the same kind, which main's generator has:
+  an S1, S8 or S22 finding on the report itself. B2's and E2's own messages are unchanged. A
+  second test, `Report.test_a_finding_on_the_old_report_is_not_quoted_back_to_s12`,
+  gives the generator three such findings through a stand-in for the style check (the
+  old report's four-digit revision, the twelve-digit one and an unknown name) and puts
+  the regenerated report to S12's plan: on the previous generator S12 would put all
+  three to Lean; now it asks about none, and E5 gives each finding as one code span. Two
+  more tests hold the rest. The first,
+  `Report.test_quoted_code_is_shown_as_the_style_check_printed_it`, quotes findings
+  whose excerpts hold `figures/<book>/NN.svg`, `h : 2*a*b = c` and a name in double
+  backticks, and reads each back, as CommonMark reads a code span, exactly as printed.
+  The second,
+  `Report.test_a_finding_on_the_old_report_is_not_quoted_back_to_the_text_rules`, puts
+  an old report with an em dash, a definition without its book and curly quotation
+  marks to the style check's rules for a report, quotes their findings through the
+  generator with one whose excerpt holds an em dash only in code, and finds that those
+  rules and S12's plan find nothing in the regenerated report. Both fail on the
+  generator that took the backticks away, whose regenerated report fails S1, S7 and S8
+  nineteen times over, and pass now. The protected files changed are
+  `scripts/test_safe_push.py`, `scripts/check_acceptance.py` and
+  `tests/test_check_acceptance.py`.
+
+- **A carried passage's helper is named by its kind
+  ([#163](https://github.com/jackChallis/stoicheia/issues/163)).** The sentence on how to
+  read a page's listing said "where a porism is proved as a theorem of its own" for every
+  carried passage that names a `helper`. Once III.25's core moves into Elements, its
+  companion `Prop25.complete` is to carry the step Heath cites as III. 9, and the page would
+  call it a porism. The protected file [`scripts/render.py`](../../scripts/render.py) now
+  finds the entry of facts.json's `attached` that the helper names, written in one of three
+  ways (`Prop16.porism`, `BookIII.Prop16.porism` or `Elements.BookIII.Prop16.porism`), and
+  takes it apart with `heath.parse_ref` (`carried_ref`). The sentence names each such
+  theorem by its kind, "a porism" for a porism, "a companion" for a companion; several
+  read, for example, "a porism and two companions are proved as theorems of their own". It
+  counts theorems, not passages: `Prop25.complete` is to carry the same [III. 9] step in
+  each of III.25's three cases, from "Therefore the circle drawn with centre E", from "D
+  will be the centre of the completed circle" and from "and if we construct, on the
+  straight line BA", and is one companion, as one theorem named two ways is one. A carried
+  helper of any other kind stops the render, naming the proposition, the helper and the
+  three ways render.py reads such a name: a lemma or another proposition that does a step
+  makes a `helper` passage, "Done by" it, and is not a theorem attached to the
+  proposition, so a word for it here would put a passage of the wrong kind on the page.
+  The comment above `PASSAGE_WORD` says the same, and CERTIFICATE.md's key gives *Proved
+  separately* for the kinds the records carry, today "a porism". `use_self_check` gains
+  nine cases, `CARRIED_CASES`: a porism; a companion; a porism with two companions, in the
+  three ways of naming one; one companion named two ways; one porism carrying two
+  passages; that porism beside a companion; and a lemma, another proposition and another
+  proposition's companion, each refused. Against origin/main's render.py (`ac6e5389`)
+  seven of them fail, the companion's read as "a porism", and the two with a porism alone
+  pass. Against this change's first round (`4d261614`), which counted passages, the three
+  that repeat a theorem fail, reading "two companions", "two porisms" and "two porisms and
+  a companion". The protected file [`review/SCHEMA.md`](../../review/SCHEMA.md) allows a
+  companion beside the porism as a carried passage's `helper`, gives the three ways of
+  writing it, says how the page names each, counting theorems, and says that render.py
+  stops on any other. `heath.py` and `check_fidelity.py` check no carried helper's kind:
+  check_fidelity asks only that it is declared, and finds a declaration by more names than
+  these three (`Elements.Prop16.porism`, or a short name that ends exactly one declared
+  name), so nothing refused a companion, render.py's refusal names the three it reads, and
+  no other validation changes. Every generated file stays byte for byte as it was: the three
+  pages that print the clause, I.15, III.1 and III.16, each carry a porism. The fourth
+  item of #163, III.25's page naming `Prop25.complete` a companion, waits for the core's
+  move.
+
+- **The merge gate requires the ruleset's five checks (#142).** On 20 October the owner
+  made `formal-model` and `acceptance` required status checks in the ruleset on main,
+  beside `check`, `model` and `negative`, as the entry of that date on content kept fresh
+  records. Read on 21 October with `gh api repos/{owner}/{repo}/rulesets/25333614`, the
+  ruleset's required status checks rule is:
+  ```json
+  {"parameters":{"do_not_enforce_on_create":false,"required_status_checks":[{"context":"check"},{"context":"model"},{"context":"negative"},{"context":"formal-model","integration_id":15368},{"context":"acceptance","integration_id":15368}],"strict_required_status_checks_policy":true},"type":"required_status_checks"}
+  ```
+  The integration 15368 is GitHub Actions, and the strict policy asks that a pull
+  request's branch be up to date with main before it merges. `REQUIRED_CHECKS` in
+  `scripts/safe_push.py` now names the same five, in the ruleset's order, so
+  `git safe-push --merge`, and the pre-flight's CI watcher, which judges as it does, give
+  "missing" when a pull request has no passing run of `formal-model` or of `acceptance`,
+  and "failure" when one fails, as for the first three. A skipped run is not a pass. The
+  CI workflow runs on pushes as well as pull requests and skips `acceptance` in the push
+  event's run; `judge_checks` counts a pass from any run reported for the head, so the
+  pull request's own run, which includes both jobs, is the one that must pass it, and a
+  check whose every run was skipped is "missing". GitHub, which accepts a skipped
+  required job, makes no such distinction
+  ([WORKFLOW](../WORKFLOW.md#8-validation-on-the-integrated-revision), section 8). The
+  docstrings of the module and of `judge_checks` name the five checks. In
+  `scripts/test_safe_push.py`, `PASSING` holds the five, and `Units.test_judge_checks`
+  shows that a missing `formal-model` and a missing `acceptance` each give "missing",
+  that a failing one gives "failure", and that a skipped run gives "missing" alone and
+  "success" beside a passing one; with main's list of three, the two missing cases give
+  "success" and the test fails. Nothing is loosened: no other check, expected value or
+  gate changes. WORKFLOW, section 8, and PROGRAM, section 4, no longer describe the gap,
+  and PROGRAM's account of 18 October notes the two checks added since. The entries of
+  18, 19 and 20 October that call these checks not required, or say that safe_push tests
+  for three, are true of their dates. The protected files changed are
+  `scripts/safe_push.py` and `scripts/test_safe_push.py`.
+
+- **S24 to S26 grant a name only to a letter that is one, and refuse an arc that SVG does
+  not draw as an arc ([#172](https://github.com/jackChallis/stoicheia/issues/172)).** The
+  two gaps that the reviews of S24 to S26 left open at train H10 are closed in the
+  protected file [`scripts/check_style.py`](../../scripts/check_style.py). The names:
+  emphasis through a full stop or an apostrophe was refused only with a bare letter on its
+  other side, so `*e*.*g*.` was neither refused nor read as e.g., and granted e and g.
+  `modern_markup_findings` now refuses emphasis on either side of the stop or on both, the
+  stop escaped or not, and refused markup supplies no names. The same reading found three
+  more letters that are no names: `e\.g\.` granted e and g, an invisible format character
+  (a zero-width space, a soft hyphen) let a letter of one visible word stand alone, and the
+  p of Heath's page, "(vol. 1, p. 389)", was granted on five pages of main, II.6, II.7,
+  II.8, II.14 and III.8. The independent review of this change found six more of the same
+  kind, none on main's pages: a combining accent (e and U+0301, éxponent), a Cyrillic
+  letter (eхponent), an accented word (déjà), a Hangul filler, which Unicode counts as a
+  letter and which shows nothing (e and U+3164 before .g.), two spaces in `e.  g.`, and a
+  Roman page number (p. ix). `ABBREVIATION` now reads an escaped stop, spaces inside e.g.
+  and i.e., and the p of a page before its number, taking a Roman number's letters with
+  it (p. ix, pp. v–vii). `modern_names` keeps a letter in its word when a letter of any
+  script, Greek too, a mark or a format character stands beside it (the new
+  `joins_word`), so that the r of 2πr is a name only in TeX. The markup check refuses a
+  format character and the rest of Unicode's default-ignorable characters (the new
+  `INVISIBLE`: the Hangul fillers, the variation selectors, the combining grapheme joiner).
+  On main the names change only by those five p's, which no modern figure draws, and no
+  paragraph is refused. The arcs: by SVG's implementation notes for arcs, every choice of the large-arc
+  and sweep flags draws something once radii too short to reach the ends are enlarged
+  (F.6.6), for two distinct ends then lie on two ellipses of those radii, or on one when
+  the radii only just reach, and the flags take one arc of them from end to end (F.6.5); on
+  one ellipse both arcs are halves and the large-arc flag changes nothing. So no flag
+  choice is refused. What does not draw as an arc is an arc whose ends are one point,
+  which SVG omits, and one with a radius of 0, which it draws as a straight line (F.6.2).
+  The new `arc_fault` finds either, wherever the path stands when the arc begins, testing
+  the ends first, as F.6.2 does, so that an arc with both is named as drawing nothing; S26's
+  `supported_svg` refuses the path, naming what SVG draws; S24's `modern_path` refuses the
+  same arcs in the modern figures. None of main's 317 arcs is either, and every figure and
+  page on main passes. The protected file
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains the cases, 95
+  subtests that fail on the check before this change and pass after it (two of them the
+  clearance case below), and
+  `test_arc_flags_always_draw`, which passes before and after: the four flag choices, with
+  radii enlarged, just reaching and ample, each draw on the side of the chord the sweep
+  flag gives, and the large-arc flag changes the arc only when the radii are ample. One
+  clearance case moves: the path whose omitted arc showed that such an arc does not break
+  a join is now refused at the figure entry points, so its join claim is held on the
+  strokes S26 measures, read directly with the default join, miter and round, as main
+  measured it, which equal those of the same path without the arc, itself a case at the
+  entry points; the refusal is asserted at both entry points. The
+  protected file [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains item
+  19, three plants in real files restored after: `*e*.*g*.` in II.7's modern way with an
+  italic e in its figure, an italic p in that figure beside Heath's "p. 389", and the two
+  arcs in I.1's figure. Each is caught by this check, and main's check passes each planted
+  tree. [STYLE](../STYLE.md), section 8, says each change in the rows of S24, S25 and S26.
+  No check, test or expected value is weakened.
+
 - **The citation sweep ([#32](https://github.com/jackChallis/stoicheia/issues/32)).**
   `scripts/sweep_citations.py`, standard library only, lists the candidates that brief
   0005's stage 5 names and [FORMALIZATION](../FORMALIZATION.md), section 5, forbids: the
@@ -3497,24 +3761,38 @@ findings:
   Lean's own judgement: each file is elaborated, in parallel and from a copy outside the
   tree, with the unused-variables linter (Sebastian Ullrich's and Mario Carneiro's, in
   Lean itself, with our thanks) and `linter.unusedVariables.analyzeTactics`, off by
-  default, switched on, so that a hypothesis `assumption`, `simp_all`, `omega` or `grind`
-  uses without naming it counts as used. A file that sets one of the linter's options
-  itself, as `set_option linter.unusedVariables false in` or its `.analyzeTactics`, in
-  any spelling, would silence it there, so the sweep refuses that file, exit 2, by its
-  name and line; it refuses a file that does not elaborate too, since Lean reports the
-  rest of such a file and drops the hits of what fails. The linter cannot see three
-  things: a name that begins with `_`, which it never checks; an anonymous `have`, whose
-  `this` it passes over; and the kept name of an `obtain` whose other parts are cleared
-  or unused, as `obtain ⟨KF, -, -⟩`, because the facts it clears mention KF in the tactic
-  states it reads. In the copy the first two are renamed, lines kept, so that Lean judges
-  them; a `_` name that the proof writes again keeps its name, so that the copy still
+  default, switched on, so that a hypothesis `assumption`, `simp_all`, `omega` or
+  `grind` uses without naming it counts as used. A file that sets one of the linter's
+  options itself, as `set_option linter.unusedVariables false in` or its
+  `.analyzeTactics`, in any spelling or spacing (`set_option«linter».unusedVariables`),
+  would silence it there, and so would any `#guard_msgs` but a pin of `#print`, which
+  swallows the linter's report with `(drop warning)`, `(drop all)` or a docstring that
+  expects the warning, as a review found; so would a `sorry` or `admit`, even one that
+  never runs, as `first | rfl | sorry`, since Lean's linter passes over the whole
+  declaration that holds one (its `hasSorry` reads the syntax, not the proof), as a
+  later review found. So the sweep refuses that file, exit 2, by its name and line; a
+  `sorry` or `admit` only outside Staging, whose statements await their proofs. The
+  `#guard_msgs` that Audit and Staging put around `#print axioms`, to pin what a proof
+  rests on, are not refused. The sweep reads the code through `check_fidelity.py`'s
+  reader, which now begins every comment's body at its fourth character, as Lean does:
+  it began a character early, so that in `/--/ " -/` it closed the comment at `/--/` and
+  opened a string at the `"`, and in `/-/- -/` it counted a second opener, which hid the
+  lines after them from the sweep and from check_fidelity's own scan for forbidden
+  commands. Its reading of every Lean file in the repository is unchanged by the fix.
+  The sweep refuses a file that does not elaborate too, since Lean reports the rest of
+  such a file and drops the hits of what fails. The linter cannot see three things: a
+  name that begins with `_`, which it never checks; an anonymous `have`, whose `this` it
+  passes over; and the kept name of an `obtain` whose other parts are cleared or unused,
+  as `obtain ⟨KF, -, -⟩`, because the facts it clears mention KF in the tactic states it
+  reads. In the copy the first two are renamed, lines kept, so that Lean judges them; a
+  `_` name that the proof writes again keeps its name, so that the copy still
   elaborates, and is listed as used by name. The third is found by a textual pass for
   exactly that shape, which stands aside where automation that uses a hypothesis without
   naming it follows in the declaration. A case split, as `rcases h with hp | hq`, is
-  never a discarded result: only Lean's warnings on its names are hits. A statement's own
-  unused hypotheses are not listed: they stay review prompts, tagged
-  `redundant-hypothesis` where that is the truth. A statement ends at its `:=`, or at the
-  first `|` of a proof by equations.
+  never a discarded result: only Lean's warnings on its names are hits. A statement's
+  own unused hypotheses are not listed: they stay review prompts, tagged
+  `redundant-hypothesis` where that is the truth. A statement ends at its `:=`, or at
+  the first `|` of a proof by equations.
 
   The helpers are read from Lean's proof terms, in one run with `import Lean`: an entry
   of facts.json is listed when its proof, past its intros, steps and case splits, comes
@@ -3523,13 +3801,15 @@ findings:
   structure, as a part of a conjunction or either way of an iff, and through a fact
   turned round (`.2`, `.mp`, `.symm`), to the helper, since Book I's figure helpers give
   several facts at once (`Prop7.figure` gives four); so a figure of the project's own is
-  named by the helper that gives it, never by its field. It is read on, too, from a step
-  bound to a helper's result, or a part of one taken apart, that a branch returns as it
-  is, as `have hw := pair h; exact hw.2` or `obtain ⟨-, hL⟩ := pair h; exact hL`, which a
-  review found passing; parts put together again by a constructor make a step of the
-  proof's own, and are not read on. A private helper counts, though Lean marks every
-  private name an internal detail. The foundations (axioms, Common Notions, proved rules)
-  are left to the overlap catalogue.
+  named by the helper that gives it, never by its field. A class's law, as
+  `Std.Commutative.comm`, is not read so: it would name the instance, such as Book Zero's
+  for the magnitudes, as the helper, as a review found. It is read on, too, from a step
+  bound to a helper's result, or a part of one taken apart (by a split of one term), that
+  a branch returns as it is, as `have hw := pair h; exact hw.2` or
+  `obtain ⟨-, hL⟩ := pair h; exact hL`, which a review found passing; parts put together
+  again by a constructor make a step of the proof's own, and are not read on. A private
+  helper counts, though Lean marks every private name an internal detail. The foundations
+  (axioms, Common Notions, proved rules) are left to the overlap catalogue.
 
   One rule declares a hit: its record has a passage whose `at` begins a sentence of the
   run of `--` lines over it, the runs read as `check_fidelity.py` reads them, and whose
@@ -3559,31 +3839,42 @@ findings:
   FORMALIZATION, section 5, has a helper supply one step, never a whole conclusion.
 
   The coordinator's ruling on the joins (#32), recorded by train Tw2, decides what is
-  declared rather than deleted: a step stays where a sentence of Euclid's stands over it,
-  and FORMALIZATION, section 5, allows a checked intermediate fact tied to one.
+  declared rather than deleted: a step stays where a sentence of Euclid's stands over
+  it, and FORMALIZATION, section 5, allows a checked intermediate fact tied to one.
   `--self-test` plants every kind of hit in Lean outside the tree, among them a `_` name
   written again, an `rcases … with` whose pattern, or whose `with`, is on the next line,
-  a case split, a `suffices`, a `have` in a proof by equations, and a helper behind a
-  whole proof: after a step that feeds it nothing, as a private theorem, in each branch
-  of a case split, through `.1`, `.2` (as Lean's primitive projection too), `.symm`,
-  `.mp` and `.mpr`, as a field of a figure, through a step bound to its result or a part
-  of it taken apart, and stated exactly. Its controls must pass, among them a binding
-  used later, one used by `assumption` or `simp_all`, a pattern's `_` part, a statement's
-  unused hypothesis, a helper fed by a step, a helper's parts put together again, an
-  entry citing an entry, an iff applied to the proof's own step, a case split of that
-  step, and a field of a figure the statement gives; a declared join is reported as
-  declared. Its record is read as TOML, and in it a name in a note or a `#` comment, or
-  in the `unused` of a passage over another run, declares nothing, and
+  a case split, a `suffices`, a `have` in a proof by equations, one under
+  `warningAsError`, and a helper behind a whole proof: after a step that feeds it
+  nothing, as a private theorem, in each branch of a case split (of a hypothesis, or by
+  excluded middle), behind a reductio's opening, a cast, a `show` or metadata, through
+  `.1`, `.2` (as Lean's primitive projection too), `.symm`, `.mp` and `.mpr`, as a field
+  of a figure, through a step bound to its result, or a part of it or of one of its
+  parts taken apart, or of it through `id`, fed only by a part of a hypothesis taken
+  apart, and stated exactly. Its controls must pass, among them a binding used later,
+  one used by `assumption` or `simp_all`, a pattern's `_` part, a statement's unused
+  hypothesis, a helper fed by a step, a helper's parts put together again, a part of a
+  helper's result taken apart and its part fed to another helper (once listed: a split
+  of a field of a citation is now the proof's own step, as a split of the citation was),
+  an entry citing an entry, an iff applied to the proof's own step, a case split of that
+  step, a field of a figure the statement gives, an `if` whose other branch is a rule of
+  the foundations, a proved rule of the foundations, and a class's law; a declared join
+  is reported as declared. Its record is read as TOML, and in it a name in a note or a
+  `#` comment, or in the `unused` of a passage over another run, declares nothing, and
   `check_fidelity.py` must report that last name as unbound; nor does one name declare a
   hit that keeps two, and no helper hit is declared. The sweep must refuse two files,
-  exit 2: one that sets the linter's options in four ways, naming each line, and one that
-  does not elaborate. The self-test needs the library built. CI's `negative` job runs it
-  after its build, then the sweep over `Elements/` as a report (139 files in 7 to 13
-  seconds on a 16-core laptop), and safe_push's `NEGATIVE` list runs the same two; the
-  release gate ([WORKFLOW](../WORKFLOW.md), section 10, step 10) runs it with
-  `--fail-on-undeclared` on the release candidate. On main's Lean at `09bc89f3` it lists
-  57 hits in Books I to III, none declared, as no record lists `unused` yet; the fixes
-  and declarations belong to a content train.
+  exit 2: one that silences the linter in eleven ways, seven settings of its options
+  (one behind a `/--/` and one behind a `/-/-`), three `#guard_msgs` and a `sorry` that
+  never runs, naming each line, and one that does not elaborate; it must not refuse a
+  remark that quotes them, nor a `#guard_msgs` around `#print`; and a run of Lean that
+  fails with no error at a line must fail the sweep too. Read without Lean, `admit` must
+  be refused as `sorry` is, but not in Staging, and the shared reader must begin every
+  comment's body at its fourth character, as Lean does. The self-test needs the library
+  built. CI's `negative` job runs it after its build, then the sweep over `Elements/` as
+  a report (139 files in 6 to 13 seconds on a 16-core laptop), and safe_push's
+  `NEGATIVE` list runs the same two; the release gate ([WORKFLOW](../WORKFLOW.md),
+  section 10, step 10) runs it with `--fail-on-undeclared` on the release candidate. On
+  main's Lean at `09bc89f3` it lists 57 hits in Books I to III, none declared, as no
+  record lists `unused` yet; the fixes and declarations belong to a content train.
 
   Some shapes pass it, and [README's table of checks](../../README.md) names them: a
   binding cleared with `clear h`, or handed to a function that ignores it,
@@ -3591,10 +3882,12 @@ findings:
   follows in its declaration, where the textual pass stands aside; a name an `obtain` or
   `rcases` keeps that a later binding writes again, which the textual pass counts as
   naming it; a `_` name inside a pattern or after `intro`; a citation whose result feeds
-  only another idle step, listed by that step alone; and a helper fed by one trivial
-  step, unless its statement is the entry's own. Elements has no `clear`, no
-  `(fun _ => …)` applied and no `_` name in a pattern or after `intro` today, and the
-  sweep finds the same 57 hits there with the stand-aside off.
+  only another idle step, listed by that step alone; a helper fed by one trivial step,
+  unless its statement is the entry's own; and a part of a helper's result returned from
+  a `match` on two or more terms at once. Elements has no `clear`, no `(fun _ => …)`
+  applied and no `_` name in a pattern or after `intro` today; its two entries that split
+  several terms at once, `Prop45.sum` and `Prop14.sum`, split only what their statements
+  bind; and the sweep finds the same 57 hits there with the stand-aside off.
 
   Open: no negative test plants a stale `unused` in a real record yet, to reach
   `check_review`'s failure from end to end. It waits for the stamp-text branch (#77),
