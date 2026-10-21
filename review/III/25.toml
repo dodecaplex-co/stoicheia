@@ -47,6 +47,10 @@ kind = "helper"
 helper = "Prop25.kind"
 note = "The core constructs the angle and circle and places E on DB within the segment, on B's side of AC; `Prop25.kind` supplies the resulting `Arc.Greater` classification and measure above two right angles. `Prop25.complete` identifies the constructed circle with the given arc's circle, transporting both conclusions to that arc."
 
+[figure]
+case = "the angle ABD greater than, equal to and less than the angle BAD, from left to right, as in Heath's three figures; the centre falls across AC from B, at D, and on B's side of AC"
+every_case = true
+
 [review]
 stage = "exceptions"
 commit = "eadf7a4c"
