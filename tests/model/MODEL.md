@@ -380,11 +380,11 @@ lines are different and the points are not `A`.
 ## The guards and the mutations
 
 Many axioms carry a guard that looks fussy: a point must be different from another, two
-lines or circles must differ, a point must be strictly inside. The mutation test drops or
-loosens 15 of them and finds a counterexample in each case. M9 concerns the supporting
-placement construction for superposition: it tests why that construction requires a
-triangle, not whether the restricted derivation calculus fails without that guard.
-The other mutations test the corresponding weakened laws.
+lines or circles must differ, a point must be strictly inside. The mutation test changes a
+hypothesis or conclusion in fifteen cases and finds a counterexample in each. Fourteen
+concern laws; M9 concerns the supporting placement construction for superposition. It tests
+why that construction requires a triangle, not whether the restricted derivation calculus
+fails without that guard.
 
 | Mutation | What goes wrong without the guard |
 |---|---|
