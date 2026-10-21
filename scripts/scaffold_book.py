@@ -439,7 +439,7 @@ FOLLOWUPS = {
         "    γ = α ∧ ∀ X : Point, OnArc X ⟨α, A, C, P⟩ → OnCircle X γ",
     ), (
         "of_circle",
-        "**Today's III.25, from the restated core** (companion of III.25, \"III.25 of_circle\").\n"
+        "**III.25, handed the whole circle** (companion of III.25, \"III.25 of_circle\").\n"
         "Handed the circle ABC, the core finds a circle that is ABC itself, so its centre E is the\n"
         "centre of ABC.",
         "{A C : Point} {ABC : Circle} (hA : OnCircle A ABC)\n"
