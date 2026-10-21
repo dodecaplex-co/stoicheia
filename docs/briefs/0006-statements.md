@@ -1757,7 +1757,9 @@ registered as "III.25 kind" in `Elements/Companions.lean`; fresh `facts.json` at
 `complete` and `of_circle` take no centre input. The approval and plan below are kept
 as history; the record's changed statement and Lean stamps still await renewed review.
 
-Approved by the owner on 19 October 2026; reviewed unchanged by both first mates.
+Approved by the owner on 19 October 2026, answering "Approve all." to the coordinator's
+list of new statements to approve, which named `Prop25.kind` (III.25's three kinds of
+segment); reviewed unchanged by both first mates.
 Brief 0006 freezes III.25; this is the addition to its frozen statements requested in plan lane 9.
 The construction core and its existing companions keep their statements. The new
 companion lives in `Elements/BookIII/Prop25.lean`, immediately after `Prop25.complete`,
