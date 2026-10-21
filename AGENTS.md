@@ -69,8 +69,9 @@ People start at [CONTRIBUTING.md](CONTRIBUTING.md); the state of the work is in
   (`Elements/Companions.lean`); the
   coordinator owns the foundations
   (`Elements/Foundations/`), `Certificate/axioms.lock`, the toolchain (`lean-toolchain`,
-  `lakefile.toml`, `lake-manifest.json`), the decisions page, PROGRAM.md and CI; your
-  orders name the owner of everything else ([WORKFLOW](docs/WORKFLOW.md), section 4).
+  `lakefile.toml`, `lake-manifest.json`), the decisions page and `docs/decisions/`,
+  PROGRAM.md and CI; your orders name the owner of everything else
+  ([WORKFLOW](docs/WORKFLOW.md), section 4).
 - Need something outside your files? Ask its owner in your handback, with a concrete
   proposal; a shared lemma is asked for with form 6 of the
   [templates](docs/templates/proposition.md).
