@@ -3805,9 +3805,8 @@ findings:
   Diagram-segment 2: III.2 and III.6 no longer close, since the rules that closed them,
   Circle 2 and Generalities 3 and 4, are theorems now and the screen tries only axioms. So
   its list of rows it must find (`KNOWN`) keeps III.5 alone, a value that moves with the
-  axioms. The two cases of [`tests/test_screen.py`](../../tests/test_screen.py) that took
-  III.2 as the known row lost now take the first row of `KNOWN`, whichever it is, and
-  assert the same of it; they pass with the list before the retirement and after it. The
+  axioms; the two cases of `tests/test_screen.py` that read it were made to hold with the
+  list before the retirement and after it in the preparation, which lands first. The
   catalogue,
   [`docs/reports/overlaps.md`](../reports/overlaps.md), records the run, and its III.2 and
   III.6 rows rest on their audit lemmas as before.
