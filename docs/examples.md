@@ -7,21 +7,22 @@ Copying their leads, their rhythm or their sentences onto another page would mak
 the voice passes were run to remove. Take from them how a decision was made, and make your
 own for your proposition.
 
-Each was read again at commit `a5f9c3c`, after the precision pass of brief 0005, its
-readers' notes and its wording sweep. When one of them changes, it is read again and its
-commit here brought up to date, or it is replaced.
+Each was read again at commit `79eb80c`, after the voice and records passes of brief 0005.
+I.1, I.7 and II.4 have revised commentary and records at the `full` stage; III.31 now uses
+III.2's helpers for its circle facts, with its record read again. When one of them changes,
+it is read again and its commit here brought up to date, or it is replaced.
 
 ## A short construction: I.1
 
 [Page](../book/I/01.md) · [Lean](../Elements/BookI/Prop01.lean) ·
 [mishnah](../mishnah/I/01.md) · [figure](../figures/I/01.svg)
 
-**Why this one.** The first proposition, and the smallest complete example of everything a
-page does.
+**Why this one.** The first proposition, a short construction whose circles, helper and
+side choice can be read together.
 
 - **The statement says a little more than Euclid's, and says so.** The triangle may be put
-  on the side of a given point P, because I.9 and I.11 need a particular side. The file's
-  header gives the reason, and the decision is recorded
+  on the side of a given point P when P is off AB, because I.9 and I.11 need a particular
+  side. The file's header gives the reason, and the decision is recorded
   ([0002-decisions.md](briefs/0002-decisions.md), 15 October).
 - **A helper supplies one named step.** `Prop1.figure` proves that C is off AB, so that ABC
   is a triangle: a fact Euclid reads off the figure. Its docstring says so; it does not hide
@@ -37,8 +38,9 @@ page does.
   credited warmly.
 
 **Do not copy.** "Lean wants it said" is allowed on I.1, I.5 and I.22 alone (STYLE,
-section 3). Every lead here is a question, which suits the first page; a run of pages that
-all open on questions is a rhythm, not a voice.
+section 3). The first three leads are questions; the last is **The modern way.** The
+questions suit the first page; a run of pages that all open on questions is a rhythm, not
+a voice.
 
 ## A hard diagram argument: I.7
 
@@ -50,6 +52,7 @@ reader to leave them to. I.7 shows how to make every case explicit without losin
 argument.
 
 - **Each helper settles one thing the figure shows.** `Prop7.triangle` (ACD is a triangle),
+  `Prop7.cross` (when BC separates D from A, AD meets BC within CB or beyond C),
   `Prop7.cases` (where D can fall), `Prop7.figure` (in Euclid's figure, CB falls within the
   angle ACD and DA within the angle CDB), and `Prop7.within` (the case Euclid leaves out,
   answered as Proclus answers it, by the second part of I.5). Each docstring says which step
@@ -60,9 +63,12 @@ argument.
   sentence.
 - **A missing step is told in Heath's words.** Where Heath says "It would be natural to
   insert here the step …", the remark quotes him and says what the figure supplies.
-- **The mishnah** keeps the formal story to one paragraph (**Four places for D.**) and gives
-  the rest to Heath, Dodgson and Proclus. Its modern way shows the two mirror-image answers,
-  one on each side, which is the proposition's point.
+- **The mishnah** keeps the formal story to its fourth paragraph (**Four places for D.**):
+  it names `Prop7.cases`, explains why there is no fifth place, and says why Euclid could
+  leave the other figures to his reader. The first three paragraphs have no bold leads;
+  they give Heath's reading of the enunciation, Charles Dodgson's hinged rods and Proclus's
+  answer to the missing case. The fifth, the modern way, shows the two mirror-image
+  answers, one on each side, which is the proposition's point.
 
 III.8 is a second example of the kind: its helpers are De Morgan's two assumptions, named as
 his, and where Euclid's "which was proved impossible" does not cover a third straight line
@@ -78,16 +84,20 @@ proves its equalities with figures that are. II.4 shows the representation (`rec
 meeting the drawn figure, and a shared step told on its home page.
 
 - **The statement is Euclid's, in areas:** the square on AB equals the squares on AC, CB
-  with twice the rectangle AC, CB. No numbers anywhere.
-- **The figure is drawn as Euclid draws it,** by shared steps with recognizable names: the
+  with twice the rectangle AC, CB. Twice the rectangle is the area added to itself; the
+  numerical and vector comparisons belong to the modern way.
+- **The figure is drawn as Euclid draws it,** by shared steps with recognisable names: the
   square by I.46 and `Square.described`, its side chosen by `exists_off_line`, and the
   parallels and the point G by `Parallelogram.figure`. Each drawn piece is then named as a
   rectangle or square of Euclid's words by the bridge lemmas of Book II's ground.
 - **Euclid's proof is followed in full,** down to every right angle of CGKB, and the mishnah
-  names the one unnamed step (Common Notion 3).
+  names the subtraction of a right angle as Common Notion 3. It also identifies I.43 behind
+  the equality of the complements, where Heath gives no reference.
 - **"For the same reason"** is Euclid's own, and the general fact behind it, the porism
   Heath calls interpolated, is proved once as `Square.about_diameter` and used again in
-  II.5–II.8. II.4 is its home page, so II.4's mishnah tells it; later pages give it a clause.
+  II.5–II.8. II.4's second mishnah paragraph tells it alongside the proof for CGKB; the
+  later mishnahs leave that history here. Its first paragraph links Book II's introduction
+  for the account of how the areas correspond to the pieces drawn.
 
 ## A page with a declared exception: III.31
 
@@ -110,15 +120,16 @@ proof where a later citer needs it.
   why.
 - **The record, and what the page makes of it.** The review record, `review/III/31.toml`,
   declares the statement partial, quotes the two omitted clauses, tags them
-  `mixed-angles-omitted`, and says how "in the segment" is put in Lean: a point on B's side
-  of AC, or on the other side. It declares two passages: the further case, where the Lean
-  reaches every point of the greater segment through III.22, and the closing sentences, left
-  in Euclid's words. The page says the exception in a few words in its status line, says it
-  in full once, in the clause map before the Lean, and points to that map from the table
-  and from the notes; the reason, that our angles are made by two straight lines, is given
-  in the Representation row and in the mishnah, and the Lean has a short remark where the
-  clause is left. The sentence above the listing names the passage the Lean does not carry
-  out, which is the defect Astra found in the page's old, generic sentence.
+  `mixed-angles-omitted`, and describes the segments by their side of AC: B's side, or the
+  other side. The Lean theorem additionally requires each point to lie on the circle. The
+  record declares two passages: the further case, where the Lean reaches every point of the
+  greater segment through III.22, and the closing sentences, left in Euclid's words. The page
+  says the exception in a few words in its status line, says it in full once, in the clause
+  map before the Lean, and points to that map from the table and from the notes; the reason,
+  that our angles are made by two straight lines, is given in the Representation row and in
+  the mishnah, and the Lean has a short remark where the clause is left. The sentence above
+  the listing names the passage the Lean does not carry out, which is the defect Astra found
+  in the page's old, generic sentence.
 
 After stage 3, III.24, with its alternative proof by the radii displayed as an alternative,
 may join or replace this example.
