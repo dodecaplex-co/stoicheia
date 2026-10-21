@@ -478,8 +478,8 @@ done; `--merge` refuses a draft.
 provisional answer, a restricted or partial scope awaiting a proof, a deferred page, a
 test not yet in CI, anything a disclosure calls "to come", has an open issue labelled
 `blocks-release`, named as `#N` in the pull request's "Unfinished work" section; when
-there is none, the section says "None". Each list item names its issue. These issues
-hold the release until they are closed, as the owner's rule of
+there is none, the section says "None". Each list item names at least one issue. These
+issues hold the release until they are closed, as the owner's rule of
 [20 October 2026](briefs/0002-decisions.md#20-october-2026) says. The release lands
 through a pull request labelled `release`; `git safe-push --label release` creates that
 label, with its description, the first time it is given, as it does the others.
@@ -675,9 +675,9 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    template's next heading. Taking out the template's own comment for it, where it
    stands on lines of its own, it is plain ASCII with no markup (no links, code, HTML,
    other comments, headings or entities): "None", with an optional full stop, or a list,
-   each item `- ` or `* ` at the left
-   edge, wrapped with two to five spaces, naming its issue as a token `#N` (perhaps in
-   parentheses, or before punctuation); any other `#`, or `GH-N`, is refused. Each
+   each item `- ` or `* ` at the left edge, wrapped with two to five spaces, naming one
+   or more issues as tokens `#N` (perhaps in parentheses, or before punctuation); any
+   other `#`, or `GH-N`, is refused. Each
    issue is open with `blocks-release`, not a pull request, and of this repository by
    GitHub's canonical address for it, so a rename is allowed and a transfer is not;
    the section is read again before the merge, and refused if it changed meanwhile.

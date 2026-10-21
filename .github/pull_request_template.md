@@ -35,9 +35,10 @@ or "None". -->
 answer, a restricted or partial scope awaiting a proof, a deferred page, a test not yet
 in CI, anything a disclosure calls "to come". Name each with its open issue labelled
 blocks-release, as #N; or write "None". Plain ASCII text, read as written: a list, each
-item "- " at the left edge, wrapped with two to five spaces, naming its issue as #N; no
-links, code, HTML, other comments or headings, and no other line of the body may begin
-with these two words of the heading. This comment may stay, on lines of its own. -->
+item "- " or "* " at the left edge, wrapped with two to five spaces, naming one or more
+issues as #N; no links, code, HTML, other comments or headings, and no other line of the
+body may begin with these two words of the heading. This comment may stay, on lines of
+its own. -->
 
 ## Review records
 
