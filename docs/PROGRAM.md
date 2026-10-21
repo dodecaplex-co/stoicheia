@@ -8,7 +8,8 @@ and why they are what they are.
 
 ## 1. The standard
 
-We aim at about 95/100 for every book, in the sense of [Astra's outside
+We aim at 95/100 or more for every book, as three cold outside reviewers score it by the
+[review rubric](RUBRIC.md); the first such reading was [Astra's outside
 review](reports/outside-review-01.md). A reader of any page should be able to answer four
 questions at once:
 
@@ -19,7 +20,7 @@ questions at once:
 
 A book meets the standard when its acceptance checklist (`ACCEPTANCE.md`)
 passes with no failures, an independent audit by a model family that wrote none of it
-agrees, and a cold outside reading scores it about 95. A few deliberate limitations are
+agrees, and all three cold outside reviewers score it 95 or more. A few deliberate limitations are
 allowed when they are stated plainly where they occur. For I.45 and II.14, the figure is
 supplied with its checked division into triangles and area is relative to that division; a
 proof of a division from the outline, and independence of area from the division chosen,
