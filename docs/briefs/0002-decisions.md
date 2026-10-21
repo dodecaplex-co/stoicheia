@@ -3357,3 +3357,22 @@ findings:
   definitions pinned whole by `#print`, and axiom pins for the new theorems; nothing is
   removed. Brief 0009 carries a dated note. I.8's record was read again in full and stamped
   by an independent reader.
+
+- **A check that the restriction's theorems are pinned by their statements (#150,
+  question 2).** A check change that lands after the content it reads, since it names the
+  theorems that change introduces. New: [`scripts/check_superposition_pins.py`](../../scripts/check_superposition_pins.py)
+  checks that every theorem named in backticks in brief 0009's section "The restriction
+  theorem" has a statement pin in `Audit/Superposition.lean`, a bare `#guard_msgs in`
+  over `#check @` or `#print`, under its full name; a pin under a weakening option
+  (`substring := true`, `drop` and the like), in a comment, in a string or after `#exit`
+  does not count, and a section that names nothing fails. Its cases are in the new
+  [`tests/test_check_superposition_pins.py`](../../tests/test_check_superposition_pins.py).
+  Both run in CI's check job ([`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)),
+  in [`scripts/safe_push.py`](../../scripts/safe_push.py)'s list of checks and in WORKFLOW,
+  section 8, in the same order. [`scripts/negative_tests.py`](../../scripts/negative_tests.py)
+  gains two plants, with their regressions in
+  [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py): a guard over every
+  point added to `Rule.Figure`, which must fail inside `Rule.Figure.restrict` while a
+  control, a guard over the figure alone, compiles (this shows the theorem's proof refuses
+  that guard, not that no proof could take it); and a new `Cited` law with no proof, which
+  must fail the build at `Cited.holds_all` and nowhere else. Nothing is loosened.
