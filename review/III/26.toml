@@ -32,6 +32,6 @@ case = "acute angles at A and D, with BKC and ELF less than semicircles"
 
 [review]
 stage = "exceptions"
-commit = "17987153"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "1c08feeb"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:a4c608069879bee5"

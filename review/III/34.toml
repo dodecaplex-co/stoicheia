@@ -21,6 +21,6 @@ case = "an acute given angle, with BAC the greater segment"
 
 [review]
 stage = "exceptions"
-commit = "d0508d6c"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "1c08feeb"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:be9733ec86b02a9d"
