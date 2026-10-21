@@ -7,7 +7,7 @@ Copying their leads, their rhythm or their sentences onto another page would mak
 the voice passes were run to remove. Take from them how a decision was made, and make your
 own for your proposition.
 
-Each was read again at commit `79eb80c`, after the voice and records passes of brief 0005.
+Each was read again at commit `6b3c462`, after the voice and records passes of brief 0005.
 I.1, I.7 and II.4 have revised commentary and records at the `full` stage; III.31 now uses
 III.2's helpers for its circle facts, with its record read again. When one of them changes,
 it is read again and its commit here brought up to date, or it is replaced.
