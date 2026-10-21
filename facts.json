@@ -862,52 +862,61 @@
    "kind": "proposition",
    "inherited":
    {"Tacit.triple_incidence2":
-    [{"name": "Superposition.Cited.holds_of_drawsNothing",
-      "line": 108,
+    [{"name": "Superposition.Cited.holds_rayOfAngle",
+      "line": 94,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.same_side_symm":
-    [{"name": "Superposition.Cited.holds_of_drawsNothing",
-      "line": 108,
+    [{"name": "Superposition.Cited.holds_rayOfAngle",
+      "line": 94,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.same_ray_of_angle_eq_zero":
-    [{"name": "Superposition.Cited.holds_of_drawsNothing",
-      "line": 108,
+    [{"name": "Superposition.Cited.holds_rayOfAngle",
+      "line": 94,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.pasch3":
-    [{"name": "Superposition.Cited.holds_of_drawsNothing",
-      "line": 108,
+    [{"name": "Superposition.Cited.holds_rayOfAngleSide",
+      "line": 102,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.not_on_line_of_same_side":
-    [{"name": "Superposition.Cited.holds_of_drawsNothing",
-      "line": 108,
+    [{"name": "Superposition.Cited.holds_rayOfAngle",
+      "line": 94,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.not_lt_zero":
-    [{"name": "Superposition.Cited.holds_of_drawsNothing",
-      "line": 108,
+    [{"name": "Superposition.Cited.holds_rayOfAngle",
+      "line": 94,
+      "file": "Elements/Figure/Superposition.lean"},
+     {"name": "Superposition.Cited.holds_rayUnique",
+      "line": 87,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.lt_trichotomy":
-    [{"name": "Superposition.Cited.holds_of_drawsNothing",
-      "line": 108,
+    [{"name": "Superposition.Cited.holds_rayOfAngle",
+      "line": 94,
+      "file": "Elements/Figure/Superposition.lean"},
+     {"name": "Superposition.Cited.holds_rayUnique",
+      "line": 87,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.lt_irrefl":
-    [{"name": "Superposition.Cited.holds_of_drawsNothing",
-      "line": 108,
+    [{"name": "Superposition.Cited.holds_rayOfAngle",
+      "line": 94,
+      "file": "Elements/Figure/Superposition.lean"},
+     {"name": "Superposition.Cited.holds_rayUnique",
+      "line": 87,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.line_unique":
-    [{"name": "Superposition.Cited.holds_of_drawsNothing",
-      "line": 108,
+    [{"name": "Superposition.Cited.holds_rayOfAngle",
+      "line": 94,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.len_symm":
-    [{"name": "Superposition.Cited.holds_of_drawsNothing",
-      "line": 108,
+    [{"name": "Superposition.Cited.holds_lenSymm",
+      "line": 65,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.len_self":
-    [{"name": "Superposition.Cited.holds_of_drawsNothing",
-      "line": 108,
+    [{"name": "Superposition.Cited.holds_neOfLen",
+      "line": 81,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.len_add_of_between":
-    [{"name": "Superposition.Cited.holds_of_drawsNothing",
-      "line": 108,
+    [{"name": "Superposition.Cited.holds_rayUnique",
+      "line": 87,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.exists_point":
     [{"name": "Triangle.ne₁₂",
@@ -920,24 +929,30 @@
       "line": 29,
       "file": "Elements/Figure/Triangles.lean"}],
     "Tacit.eq_of_len_eq_zero":
-    [{"name": "Superposition.Cited.holds_of_drawsNothing",
-      "line": 108,
+    [{"name": "Superposition.Cited.holds_neOfLen",
+      "line": 81,
+      "file": "Elements/Figure/Superposition.lean"},
+     {"name": "Superposition.Cited.holds_rayUnique",
+      "line": 87,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.between_cases":
-    [{"name": "Superposition.Cited.holds_of_drawsNothing",
-      "line": 108,
+    [{"name": "Superposition.Cited.holds_rayUnique",
+      "line": 87,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.area_congruent":
-    [{"name": "Superposition.Cited.holds_of_drawsNothing",
-      "line": 108,
+    [{"name": "Superposition.Cited.holds_areaCongruent",
+      "line": 74,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.angle_symm":
-    [{"name": "Superposition.Cited.holds_of_drawsNothing",
-      "line": 108,
+    [{"name": "Superposition.Cited.holds_angleSymm",
+      "line": 68,
+      "file": "Elements/Figure/Superposition.lean"},
+     {"name": "Superposition.Cited.holds_rayOfAngle",
+      "line": 94,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.angle_add_of_inside":
-    [{"name": "Superposition.Cited.holds_of_drawsNothing",
-      "line": 108,
+    [{"name": "Superposition.Cited.holds_rayOfAngle",
+      "line": 94,
       "file": "Elements/Figure/Superposition.lean"}]},
    "enunciation":
    "If two triangles have the two sides equal to two sides respectively, and have the angles\ncontained by the equal straight lines equal, they will also have the base equal to the base, the\ntriangle will be equal to the triangle, and the remaining angles will be equal to the remaining\nangles respectively, namely those which the equal sides subtend. ",
@@ -968,43 +983,43 @@
    "cited_laws":
    [{"proofs":
      [{"name": "Superposition.Cited.holds_lenSymm",
-       "line": 63,
+       "line": 65,
        "file": "Elements/Figure/Superposition.lean"}],
      "law": "lenSymm",
      "construction_rules": []},
     {"proofs":
      [{"name": "Superposition.Cited.holds_angleSymm",
-       "line": 66,
+       "line": 68,
        "file": "Elements/Figure/Superposition.lean"}],
      "law": "angleSymm",
      "construction_rules": []},
     {"proofs":
      [{"name": "Superposition.Cited.holds_areaCongruent",
-       "line": 72,
+       "line": 74,
        "file": "Elements/Figure/Superposition.lean"}],
      "law": "areaCongruent",
      "construction_rules": []},
     {"proofs":
      [{"name": "Superposition.Cited.holds_neOfLen",
-       "line": 79,
+       "line": 81,
        "file": "Elements/Figure/Superposition.lean"}],
      "law": "neOfLen",
      "construction_rules": []},
     {"proofs":
      [{"name": "Superposition.Cited.holds_rayUnique",
-       "line": 85,
+       "line": 87,
        "file": "Elements/Figure/Superposition.lean"}],
      "law": "rayUnique",
      "construction_rules": []},
     {"proofs":
      [{"name": "Superposition.Cited.holds_rayOfAngle",
-       "line": 92,
+       "line": 94,
        "file": "Elements/Figure/Superposition.lean"}],
      "law": "rayOfAngle",
      "construction_rules": []},
     {"proofs":
      [{"name": "Superposition.Cited.holds_rayOfAngleSide",
-       "line": 100,
+       "line": 102,
        "file": "Elements/Figure/Superposition.lean"}],
      "law": "rayOfAngleSide",
      "construction_rules": []}],
@@ -1594,15 +1609,15 @@
    "inherited":
    {"Tacit.not_lt_zero":
     [{"name": "Superposition.Cited.holds_rayUnique",
-      "line": 85,
+      "line": 87,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.lt_trichotomy":
     [{"name": "Superposition.Cited.holds_rayUnique",
-      "line": 85,
+      "line": 87,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.lt_irrefl":
     [{"name": "Superposition.Cited.holds_rayUnique",
-      "line": 85,
+      "line": 87,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.line_unique":
     [{"name": "SameSideOf.of_line",
@@ -1610,15 +1625,15 @@
       "file": "Elements/Figure/Sides.lean"}],
     "Tacit.len_symm":
     [{"name": "Superposition.Cited.holds_lenSymm",
-      "line": 63,
+      "line": 65,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.len_self":
     [{"name": "Superposition.Cited.holds_neOfLen",
-      "line": 79,
+      "line": 81,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.len_add_of_between":
     [{"name": "Superposition.Cited.holds_rayUnique",
-      "line": 85,
+      "line": 87,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.exists_point":
     [{"name": "Triangle.ne₂₃",
@@ -1626,14 +1641,14 @@
       "file": "Elements/Figure/Triangles.lean"}],
     "Tacit.eq_of_len_eq_zero":
     [{"name": "Superposition.Cited.holds_neOfLen",
-      "line": 79,
+      "line": 81,
       "file": "Elements/Figure/Superposition.lean"},
      {"name": "Superposition.Cited.holds_rayUnique",
-      "line": 85,
+      "line": 87,
       "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.between_cases":
     [{"name": "Superposition.Cited.holds_rayUnique",
-      "line": 85,
+      "line": 87,
       "file": "Elements/Figure/Superposition.lean"}]},
    "enunciation":
    "If two triangles have the two sides equal to two sides respectively, and have also the base\nequal to the base, they will also have the angles equal which are contained by the equal\nstraight lines. ",
@@ -1656,25 +1671,25 @@
    "cited_laws":
    [{"proofs":
      [{"name": "Superposition.Cited.holds_lenSymm",
-       "line": 63,
+       "line": 65,
        "file": "Elements/Figure/Superposition.lean"}],
      "law": "lenSymm",
      "construction_rules": []},
     {"proofs":
      [{"name": "Superposition.Cited.holds_neOfLen",
-       "line": 79,
+       "line": 81,
        "file": "Elements/Figure/Superposition.lean"}],
      "law": "neOfLen",
      "construction_rules": []},
     {"proofs":
      [{"name": "Superposition.Cited.holds_rayUnique",
-       "line": 85,
+       "line": 87,
        "file": "Elements/Figure/Superposition.lean"}],
      "law": "rayUnique",
      "construction_rules": []},
     {"proofs":
      [{"name": "BookI.Prop8.holds_prop7",
-       "line": 74,
+       "line": 77,
        "file": "Elements/BookI/Prop08.lean"}],
      "law": "prop7",
      "construction_rules":
