@@ -3418,8 +3418,9 @@ findings:
   renewed against the regenerated lock, and the numerical results were run again with
   `run.py --full --write`.
 - **The law allow-list and the examples follow the 31 retired axioms.** A check change of
-  its own, landed after the retirement of the 31 (79 to 48), which leaves the check code and
-  inputs alone. [`scripts/safe_push.py`](../../scripts/safe_push.py)'s `LAW_GLOBALS` loses
+  its own, landed directly after the retirement of the 31 (79 to 48), in the same batch:
+  between the two, the test that each allow-list entry is needed fails.
+  [`scripts/safe_push.py`](../../scripts/safe_push.py)'s `LAW_GLOBALS` loses
   the nine entries no remaining law uses (`_ti_hyp`, `line_meets_circle`, `lval` and `sgn` in
   search.py; `_ti_hyp`, `line_meets_circle`, `pt_on_circle`, `gs_pasch4` and `gs_ti` in
   hyperbolic.py), so its test that each entry is needed passes again; nothing is widened.
