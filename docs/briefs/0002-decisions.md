@@ -3154,10 +3154,16 @@ findings:
     "Identify main for this event" names: the first parent of a pull request's merge, a
     group's base, or a main push's `before`. `queue-integrity` runs the offline cases of
     `tests/test_auto_revert.py` too, and judges each group. The new job `queue-gaps`
-    runs the tests of each changed check, with no token in their environment, and
-    prints the changed propositions' acceptance items. With "only merge non-failing pull
-    requests", a train merges only when its own group passed; GitHub removes a failing
-    group's last train and rebuilds the groups after it.
+    prints the changed propositions' acceptance items and runs the tests of each
+    changed check. Those tests are the group's own code, and on Linux a process can
+    read its parent's environment, where A's `--gaps` held the token while it ran them;
+    so main's `check_queue.py --gaps --plan` now chooses them in the step that holds
+    the token, running none, and the job's last step, which holds none (nor does any
+    step after the choosing), runs them with `--run-plan`, which refuses to run a test
+    while any variable named with `TOKEN` is set. Before that step the job installs
+    main's pinned YAML parser, which the queue's tests import. With "only merge
+    non-failing pull requests", a train merges only when its own group passed; GitHub
+    removes a failing group's last train and rebuilds the groups after it.
   - *The CI model.* `scripts/test_safe_push.py` holds CI's `check` job, safe_push's
     `CHECKS` and WORKFLOW's section 8 to one list, and allowed no input on the check
     job's checkout. It now allows exactly one, `persist-credentials: false`, the boolean
@@ -3172,15 +3178,18 @@ findings:
     run passed, reverts the push's merges on a `revert/` branch and queues the revert,
     which the judge admits only as the exact revert of a failed push's merges, while an
     open `main-red` issue names that run. Decision entries are history: the revert keeps
-    `docs/decisions/` as at the failed push's tip, and with it the decisions page's
-    `decisions:entries` region, which `render.py` assembles from that folder, and the
-    judge, in `scripts/check_queue.py`, accepts exactly that difference and no other.
-    The workflow that holds the key is read from main, so code that has landed there
-    could take it; the App is bounded instead: no bypass, no permission to write
-    contents at all (the job's own token pushes the revert branch), and the judge's
-    refusal of any entry a bot wrote, queued or edited, save that revert. If the judge
-    reads the failed run before it has finished, since the revert job is one of its
-    jobs, it refuses, and the revert leaves the queue.
+    `docs/decisions/` as at the failed push's tip, and the judge, in
+    `scripts/check_queue.py`, accepts exactly that difference and no other. Each entry
+    is a page of its own, which nothing assembles into another page, so the decisions
+    page is reverted like any other file. The workflow that holds the key is read from
+    main, so code that has landed there could take it; the App is bounded instead: no
+    bypass, no permission to write contents at all (the job's own token pushes the
+    revert branch), and the judge's refusal of any entry a bot wrote, queued or edited,
+    save that revert. Since the revert job is one of the failed run's own jobs, the
+    judge may find that run still in progress: it reads the run again every 15 seconds,
+    for up to 10 minutes, and judges it once completed. A run that concluded failure
+    admits its revert and any other conclusion refuses it; a run not completed by then
+    refuses it too, and the revert leaves the queue.
   - *The merge.* When main's rules require a merge queue, `git safe-push --merge` keeps
     every gate, checks the head against its merge base with main, enqueues it with its
     head pinned, and follows it to a verified merge or an ejection. In both modes it
@@ -3210,14 +3219,19 @@ findings:
   Nothing is weakened: every existing refusal of `scripts/safe_push.py` stays, save
   three. In queue mode a head need not contain the latest main (the queue builds each
   group on it), and is judged against its merge base with main. `--merge` takes the
-  body's pre-flight summary as current when it names this head and base, by the running
-  harness (in queue mode, a harness that was main, as the judge requires), and for a
+  body's pre-flight summary as current when it names this head, its base and harness
+  held to the judge's own rule, read on current main, in both modes (the base the
+  newest commit of main's first-parent chain that the head contains, the harness that
+  base or a later commit of the chain; with the queue off, both main's tip), and for a
   train shows its train step passing, even when the full checks ran again at the merge,
-  which leaves that summary true. And a body edited in GitHub's page, which keeps CRLF
-  line ends, is up to date when it differs from the parts safe_push writes by line ends
-  alone. With the queue off `--merge` merges as before, save the new pause while main is
-  red and its one exit. The queue stays off until the owner turns it on, with the steps
-  the coordinator holds. The protected files this change adds or changes:
+  which leaves that summary true. So a summary the judge would refuse is never current,
+  and one it would accept is, even when the head's merge base with main lies off main's
+  chain (a member merged on its own before its train). And a body edited in GitHub's
+  page, which keeps CRLF line ends, is up to date when it differs from the parts
+  safe_push writes by line ends alone. With the queue off `--merge` merges as before,
+  save the new pause while main is red and its one exit. The queue stays off until the
+  owner turns it on, with the steps the coordinator holds. The protected files this
+  change adds or changes:
   `.github/workflows/ci.yml`,
   `.github/workflows/post-merge.yml`,
   `scripts/auto_revert.py`,

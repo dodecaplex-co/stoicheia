@@ -176,7 +176,8 @@ class AutoRevert(unittest.TestCase):
                                          side_effect=AssertionError("Network is forbidden"))
         self.network.start()
         self.addCleanup(self.network.stop)
-        no_http = mock.patch.object(ar, "request", side_effect=AssertionError("Real HTTP is forbidden"))
+        no_http = mock.patch.object(ar, "request",
+                                    side_effect=AssertionError("Real HTTP is forbidden"))
         no_http.start()
         self.addCleanup(no_http.stop)
 
@@ -296,15 +297,13 @@ class AutoRevert(unittest.TestCase):
                          [f"Reverts: {merge}"])
 
     PAGE = "docs/briefs/0002-decisions.md"
+    PAGE_TEXT = "# Decisions\n\n## 20 October 2026\n\n- **An earlier decision.**\n"
     ENTRY = "docs/decisions/2026-10-21-a-train.md"
 
-    def page(self, region="", above="## 20 October 2026\n\n- **An earlier decision.**\n"):
-        return (f"# Decisions\n\n{above}\n<!-- decisions:entries begin -->\n{region}"
-                "<!-- decisions:entries end -->\n")
-
-    def entries_landed(self):
-        """Main as tooling/decision-entries leaves it: the folder, and the page's markers."""
-        self.write(self.PAGE, self.page())
+    def entries_landed(self, page=PAGE_TEXT):
+        """Main as tooling/decision-entries leaves it: the folder, each entry a file of its
+        own, beside the decisions page."""
+        self.write(self.PAGE, page)
         self.write("docs/decisions/README.md", "One file for each decision.\n")
         self.commit("Decision entries")
         self.before = self.rev()
@@ -335,36 +334,44 @@ class AutoRevert(unittest.TestCase):
         return command(self.remote, "git", *(("rev-parse", revision) if name
                                               else ("show", revision)))
 
-    def test_decision_entries_and_their_page_region_are_kept(self):
-        # Entries are history: the revert keeps the folder as at the failed push, and the
-        # page's region render.py assembles from it; everything else is reverted.
+    def test_decision_entries_are_kept(self):
+        # Entries are history: the revert keeps the folder as at the failed push; all else,
+        # the decisions page included, is reverted.
         self.entries_landed()
         entry = "- **A train's decision.** Kept as history.\n"
-        region = f"\n## 21 October 2026\n\n{entry}\n"
         merge = self.train_files(11, {"chapter.txt": "Changed chapter.\n", self.ENTRY: entry,
-                                      self.PAGE: self.page(region)})
+                                      self.PAGE: self.PAGE_TEXT + "- **A page line.**\n"})
         status, output = self.run_revert()
         self.assertEqual(status, 0, output)
         self.assertEqual(self.pushed("chapter.txt"), "Original chapter.")
         self.assertEqual(self.pushed(self.ENTRY), entry.strip())
-        self.assertEqual(self.pushed(self.PAGE), self.page(region).strip())
-        for path in ("docs/decisions", self.PAGE):
-            self.assertEqual(self.pushed(path, name=True),
-                             self.git("rev-parse", f"{merge}:{path}"))
-        self.assertIn("Keep docs/decisions/ and its page region", self.pushes[0]["subjects"])
+        self.assertEqual(self.pushed(self.PAGE), self.PAGE_TEXT.strip())
+        self.assertEqual(self.pushed("docs/decisions", name=True),
+                         self.git("rev-parse", f"{merge}:docs/decisions"))
+        self.assertEqual(self.pushed(self.PAGE, name=True),
+                         self.git("rev-parse", f"{self.before}:{self.PAGE}"))
+        self.assertIn("Keep docs/decisions/ as at", self.pushes[0]["subjects"])
         self.assertIn("was enqueued", self.body())
 
-    def test_page_text_outside_the_entries_region_is_reverted(self):
-        self.entries_landed()
-        entry = "- **A train's decision.**\n"
-        region = f"\n## 21 October 2026\n\n{entry}\n"
-        above = "## 20 October 2026\n\n- **An earlier decision.**\n- **A page entry.**\n"
-        self.train_files(11, {"chapter.txt": "Changed chapter.\n", self.ENTRY: entry,
-                              self.PAGE: self.page(region, above)})
+    def reverts_the_page_exactly(self, before, after):
+        """Entries are never assembled into the page, so no part of it is kept: comments of
+        the shape an earlier design gave such a region change nothing."""
+        self.entries_landed(self.PAGE_TEXT + before)
+        self.train_files(11, {"chapter.txt": "Changed chapter.\n",
+                              self.PAGE: self.PAGE_TEXT + after})
         status, output = self.run_revert()
         self.assertEqual(status, 0, output)
-        self.assertEqual(self.pushed(self.PAGE), self.page(region).strip())
-        self.assertEqual(self.pushed(self.ENTRY), entry.strip())
+        self.assertEqual(self.pushes[0]["tree"], self.git("rev-parse", self.before + "^{tree}"))
+        self.assertNotIn("Keep docs/decisions/", self.pushes[0]["subjects"])
+
+    BEGIN, END = "<!-- decisions:entries begin -->", "<!-- decisions:entries end -->"
+
+    def test_paired_region_comments_in_the_page_are_reverted_like_the_rest(self):
+        self.reverts_the_page_exactly(f"{self.BEGIN}\n{self.END}\n",
+                                      f"{self.BEGIN}\n- **A train's line.**\n{self.END}\n")
+
+    def test_a_lone_region_comment_in_the_page_is_reverted_like_the_rest(self):
+        self.reverts_the_page_exactly(f"{self.END}\n", f"- **A train's line.**\n{self.END}\n")
 
     def test_a_push_that_leaves_the_entries_alone_reverts_exactly(self):
         self.entries_landed()
@@ -374,22 +381,12 @@ class AutoRevert(unittest.TestCase):
         self.assertEqual(self.pushes[0]["tree"], self.git("rev-parse", self.before + "^{tree}"))
         self.assertNotIn("Keep docs/decisions/", self.pushes[0]["subjects"])
 
-    def test_without_entries_or_markers_nothing_changes(self):
+    def test_without_entries_nothing_changes(self):
         self.train()
         status, output = self.run_revert()
         self.assertEqual(status, 0, output)
         self.assertEqual(self.pushes[0]["tree"], self.git("rev-parse", self.before + "^{tree}"))
         self.assertNotIn("Keep docs/decisions/", self.pushes[0]["subjects"])
-
-    def test_unreadable_entries_markers_leave_the_issue_only(self):
-        self.entries_landed()
-        page = self.page("- **A train's decision.**\n") + "<!-- decisions:entries end -->\n"
-        self.train_files(11, {"chapter.txt": "Changed chapter.\n", self.PAGE: page})
-        status, output = self.run_revert()
-        self.assertEqual(status, 1, output)
-        self.assertEqual(self.pushes, [])
-        self.assertIsNone(self.api.pr)
-        self.assertIn("decisions:entries markers are not one pair", self.body())
 
     def test_push_refuses_every_branch_outside_the_revert_format(self):
         branches = ["main", "train/test", "refs/heads/revert/123456789abc",
@@ -447,7 +444,8 @@ class AutoRevert(unittest.TestCase):
             nonlocal injected
             if args[0] == "revert" and not injected:
                 injected = True
-                (repo / "chapter.txt").write_text("A conflicting local revision.\n", encoding="utf-8")
+                (repo / "chapter.txt").write_text("A conflicting local revision.\n",
+                                                  encoding="utf-8")
                 original(repo, "add", "chapter.txt")
                 original(repo, "commit", "-m", "A concurrent local change")
             return original(repo, *args, **kwargs)
@@ -469,11 +467,13 @@ class AutoRevert(unittest.TestCase):
                          {"auto-revert", "tooling", "docs", "security-review"})
         self.assertEqual(self.api.issues[1000]["labels"], ["blocks-release", "main-red"])
         self.assertEqual(set(self.api.labels),
-                         {"blocks-release", "main-red", "auto-revert", "tooling", "docs", "security-review"})
+                         {"blocks-release", "main-red", "auto-revert", "tooling", "docs",
+                          "security-review"})
 
     def test_a_workflow_revert_is_left_to_the_coordinator(self):
         # The job's token cannot push a workflow change and the App writes no contents.
-        self.train(path=".github/workflows/example.yml", text="name: Example\n", labels=("tooling",))
+        self.train(path=".github/workflows/example.yml", text="name: Example\n",
+                   labels=("tooling",))
         status, output = self.run_revert()
         self.assertEqual(status, 1, output)
         self.assertEqual(self.pushes, [])
@@ -511,7 +511,8 @@ class AutoRevert(unittest.TestCase):
         payload = self.directory / "payload"
         payload.write_bytes(f"{header}.{claims}".encode())
         self.assertIn("Verified OK", command(self.directory, "openssl", "dgst", "-sha256",
-                                             "-verify", str(public), "-signature", str(signed), str(payload)))
+                                             "-verify", str(public), "-signature", str(signed),
+                                             str(payload)))
 
     def test_http_failure_leaves_an_issue_and_no_revert(self):
         self.train()
@@ -535,7 +536,8 @@ class AutoRevert(unittest.TestCase):
 
     def test_issue_creation_failure_prevents_app_activity(self):
         self.train()
-        self.api.broken = lambda method, path, token, data: method == "POST" and path.endswith("/issues")
+        self.api.broken = lambda method, path, token, data: (method == "POST"
+                                                             and path.endswith("/issues"))
         status, output = self.run_revert()
         self.assertEqual(status, 2, output)
         self.assertEqual(self.pushes, [])
@@ -623,12 +625,14 @@ class AutoRevert(unittest.TestCase):
         for node in tree.body:
             if isinstance(node, ast.Assign):
                 for target in node.targets:
-                    if isinstance(target, ast.Name) and target.id in {"PROTECTED", "PROTECTED_JUDGED", "KIND_LABELS"}:
+                    if isinstance(target, ast.Name) and target.id in {
+                            "PROTECTED", "PROTECTED_JUDGED", "KIND_LABELS"}:
                         values[target.id] = ast.literal_eval(node.value)
         self.assertEqual(ar.PROTECTED, values["PROTECTED"] + values["PROTECTED_JUDGED"])
         self.assertEqual(ar.KINDS, set(values["KIND_LABELS"]))
         for prefix in values["PROTECTED"] + values["PROTECTED_JUDGED"]:
-            self.assertTrue(ar.protected(prefix + "example.py" if prefix.endswith("/") else prefix))
+            self.assertTrue(ar.protected(prefix + "example.py" if prefix.endswith("/")
+                                         else prefix))
             self.assertFalse(ar.protected("unprotected/" + prefix))
         self.assertFalse(ar.protected("scripts-lookalike/example.py"))
         self.assertFalse(ar.protected("lean-toolchain.notes"))
@@ -704,14 +708,16 @@ class AutoRevert(unittest.TestCase):
         env = ar.git_env()
         env.update(GITHUB_EVENT_NAME=name, GITHUB_EVENT_PATH=str(event), GITHUB_ENV=str(output))
         result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script],
-                                cwd=self.repo, env=env, text=True, capture_output=True, check=False)
+                                cwd=self.repo, env=env, text=True, capture_output=True,
+                                check=False)
         return result, output.read_text(encoding="utf-8")
 
     def test_acceptance_push_compares_with_before_not_last_merge_parent(self):
         first = self.train()
         after = self.train(12, text="Second revision.\n")
         result, output = self.run_acceptance_event(
-            "push", {"before": self.before, "after": after, "ref": "refs/heads/main", "deleted": False})
+            "push", {"before": self.before, "after": after, "ref": "refs/heads/main",
+                     "deleted": False})
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(output, f"MAIN_SHA={self.before}\n")
         self.assertNotIn(first, output)
@@ -739,8 +745,10 @@ class AutoRevert(unittest.TestCase):
         cases = [
             ("workflow_call", {}),
             ("push", {"after": after, "ref": "refs/heads/main", "deleted": False}),
-            ("push", {"before": "0" * 40, "after": after, "ref": "refs/heads/main", "deleted": False}),
-            ("push", {"before": self.before, "after": self.before, "ref": "refs/heads/main", "deleted": False}),
+            ("push", {"before": "0" * 40, "after": after, "ref": "refs/heads/main",
+                      "deleted": False}),
+            ("push", {"before": self.before, "after": self.before, "ref": "refs/heads/main",
+                      "deleted": False}),
             ("merge_group", {"merge_group": {"head_sha": after, "base_sha": self.before,
                                             "base_ref": "refs/heads/other"}}),
         ]
@@ -758,7 +766,8 @@ class AutoRevert(unittest.TestCase):
                 env["ACCEPTANCE_RESULT"] = status
                 result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script],
                                         cwd=self.repo, env=env, capture_output=True, check=False)
-                self.assertEqual(result.returncode == 0, status == "success", result.stderr.decode())
+                self.assertEqual(result.returncode == 0, status == "success",
+                                 result.stderr.decode())
 
     @staticmethod
     def successful_run(before, **changes):
@@ -770,7 +779,8 @@ class AutoRevert(unittest.TestCase):
         directory = self.directory / "bin"
         directory.mkdir(exist_ok=True)
         fixture = self.directory / "workflow-api.json"
-        fixture.write_text(json.dumps({"pages": pages, "unreadable": unreadable}), encoding="utf-8")
+        fixture.write_text(json.dumps({"pages": pages, "unreadable": unreadable}),
+                           encoding="utf-8")
         gh = directory / "gh"
         gh.write_text(f"#!{sys.executable}\n" + textwrap.dedent('''\
             import json
@@ -820,25 +830,30 @@ class AutoRevert(unittest.TestCase):
             pages = [{"total_count": 1, "workflow_runs": [self.successful_run(before)]}]
         env = self.workflow_env(before, pages, unreadable=unreadable)
         result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script],
-                                cwd=self.repo, env=env, text=True, capture_output=True, check=False)
+                                cwd=self.repo, env=env, text=True, capture_output=True,
+                                check=False)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.trusted_outputs = dict(line.split("=", 1) for line in
-                                   Path(env["GITHUB_OUTPUT"]).read_text(encoding="utf-8").splitlines())
+        self.trusted_outputs = dict(
+            line.split("=", 1) for line in
+            Path(env["GITHUB_OUTPUT"]).read_text(encoding="utf-8").splitlines())
         self.workflow_environment = env
         return self.trusted_outputs["script"]
 
     def assert_fallback_issue(self, reason):
-        script = workflow_step("post-merge.yml",
-                               "Open the issue when the trusted script or failed jobs are unavailable")
+        script = workflow_step(
+            "post-merge.yml",
+            "Open the issue when the trusted script or failed jobs are unavailable")
         env = self.workflow_environment.copy()
         env["TRUST_FAILURE"] = self.trusted_outputs["reason"]
         result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script],
-                                cwd=self.repo, env=env, text=True, capture_output=True, check=False)
+                                cwd=self.repo, env=env, text=True, capture_output=True,
+                                check=False)
         self.assertEqual(result.returncode, 1, result.stderr)
         payload = json.loads(Path(env["ISSUE_PAYLOAD"]).read_text(encoding="utf-8"))
         self.assertIn(reason, payload["body"])
         self.assertIn("Failed run: 99\n", payload["body"])
-        self.assertIn("Issue only; no automatic revert or pull request was attempted.", payload["body"])
+        self.assertIn("Issue only; no automatic revert or pull request was attempted.",
+                      payload["body"])
         self.assertEqual(payload["labels"], ["blocks-release", "main-red"])
         calls = [json.loads(line) for line in Path(env["API_CALLS"]).read_text().splitlines()]
         self.assertEqual(sum(call[:3] == ["api", "--method", "POST"] for call in calls), 1)
@@ -847,13 +862,16 @@ class AutoRevert(unittest.TestCase):
         self.write("scripts/auto_revert.py", "print('Previous main script')\n")
         self.commit("Install trusted script")
         before = self.rev()
-        self.train(path="scripts/auto_revert.py", text="raise RuntimeError('Failed revision ran')\n")
+        self.train(path="scripts/auto_revert.py",
+                   text="raise RuntimeError('Failed revision ran')\n")
         extracted = self.run_trusted_extraction(before)
-        self.assertEqual(command(self.directory, sys.executable, "-I", extracted), "Previous main script")
+        self.assertEqual(command(self.directory, sys.executable, "-I", extracted),
+                         "Previous main script")
         self.assertEqual(self.trusted_outputs["reason"], "")
 
     def test_workflow_does_not_use_after_script_when_before_has_none(self):
-        self.train(path="scripts/auto_revert.py", text="raise RuntimeError('Failed revision ran')\n")
+        self.train(path="scripts/auto_revert.py",
+                   text="raise RuntimeError('Failed revision ran')\n")
         self.assertEqual(self.run_trusted_extraction(self.before), "")
         self.assert_fallback_issue("no readable revert script")
 
@@ -866,7 +884,8 @@ class AutoRevert(unittest.TestCase):
             ([{"total_count": 0, "workflow_runs": []}], False, "No post-merge run"),
             ([{"total_count": 1, "workflow_runs": [dict(good, conclusion="failure")]}],
              False, "did not conclude success"),
-            ([{"total_count": 1, "workflow_runs": [dict(good, status="in_progress", conclusion=None)]}],
+            ([{"total_count": 1,
+               "workflow_runs": [dict(good, status="in_progress", conclusion=None)]}],
              False, "did not conclude success"),
             ([{"total_count": 1, "workflow_runs": [good]}], True, "could not be read"),
             ([{"workflow_runs": [good]}], False, "could not be read"),
@@ -882,7 +901,8 @@ class AutoRevert(unittest.TestCase):
         ]
         for pages, unreadable, reason in cases:
             with self.subTest(pages=pages, unreadable=unreadable):
-                self.assertEqual(self.run_trusted_extraction(before, pages, unreadable=unreadable), "")
+                self.assertEqual(
+                    self.run_trusted_extraction(before, pages, unreadable=unreadable), "")
                 self.assert_fallback_issue(reason)
 
     def test_workflow_refuses_a_run_for_another_commit_branch_event_or_workflow(self):
@@ -894,7 +914,8 @@ class AutoRevert(unittest.TestCase):
                    {"id": 1.5}, {"id": True}, {"status": None}, {"conclusion": []}]
         for change in changes:
             with self.subTest(change=change):
-                pages = [{"total_count": 1, "workflow_runs": [self.successful_run(before, **change)]}]
+                pages = [{"total_count": 1,
+                          "workflow_runs": [self.successful_run(before, **change)]}]
                 self.assertEqual(self.run_trusted_extraction(before, pages), "")
                 self.assert_fallback_issue("could not be read")
 
@@ -906,7 +927,8 @@ class AutoRevert(unittest.TestCase):
         for conclusion in ("failure", "success"):
             with self.subTest(conclusion=conclusion):
                 pages = [{"total_count": 2, "workflow_runs": [good]},
-                         {"total_count": 2, "workflow_runs": [dict(good, id=99, conclusion=conclusion)]}]
+                         {"total_count": 2,
+                          "workflow_runs": [dict(good, id=99, conclusion=conclusion)]}]
                 extracted = self.run_trusted_extraction(before, pages)
                 if conclusion == "failure":
                     self.assertEqual(extracted, "")

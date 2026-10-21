@@ -386,9 +386,13 @@ jobs:
 
   queue-gaps:
     # The gaps of what is new, on each merge group: the tests of each check the group
-    # changes, chosen by main's copy of check_queue.py and run with no token in their
-    # environment, and the changed propositions' acceptance items, from the acceptance
-    # job's verdicts. These are the group's own tests: they test, they do not judge.
+    # changes, chosen by main's copy of check_queue.py, and the changed propositions'
+    # acceptance items, from the acceptance job's verdicts. These are the group's own
+    # tests: they test, they do not judge. They are its own code too, and on Linux a
+    # process can read its parent's environment (/proc/<ppid>/environ), so the step that
+    # holds the token, to read GitHub, chooses them and runs none; the last step, which
+    # holds no token, nor does any step after the choosing, runs them, and refuses to if
+    # a variable named with TOKEN is in its environment.
     needs: acceptance
     if: always()
     runs-on: ubuntu-latest
@@ -424,7 +428,9 @@ jobs:
           gh run download "$RUN_ID" --repo "$REPOSITORY" --name acceptance --dir "$RUNNER_TEMP/acceptance"
           test -s "$RUNNER_TEMP/acceptance/verdicts.json"
 
-      - name: Run the tests of what is new
+      - name: Choose the tests of what is new
+        # Main's check_queue.py reads GitHub with the token, prints the acceptance items,
+        # and writes the tests it chooses to a new file; it runs none of them.
         if: github.event_name == 'merge_group'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -439,4 +445,19 @@ jobs:
           mkdir "$RUNNER_TEMP/judge"
           git archive --format=tar "$GROUP_BASE:scripts" > "$RUNNER_TEMP/queue-judge.tar"
           tar -xf "$RUNNER_TEMP/queue-judge.tar" -C "$RUNNER_TEMP/judge"
-          python3 -I "$RUNNER_TEMP/judge/check_queue.py" --gaps --head "$GROUP_HEAD" --base "$GROUP_BASE" --repo "$REPOSITORY"
+          python3 -I "$RUNNER_TEMP/judge/check_queue.py" --gaps --head "$GROUP_HEAD" --base "$GROUP_BASE" --repo "$REPOSITORY" --plan "$RUNNER_TEMP/gaps-plan.json"
+
+      - name: Install the tests' pinned YAML parser, main's pin
+        # After the token's last step: what pip installs could run in any later Python.
+        if: github.event_name == 'merge_group'
+        run: python3 -m pip install -r "$RUNNER_TEMP/judge/requirements-test_safe_push.txt"
+
+      - name: Run the tests of what is new
+        # No token here: the tests are the group's own code. Main's check_queue.py runs
+        # the chosen tests and refuses to while a variable named with TOKEN is set.
+        if: github.event_name == 'merge_group'
+        env:
+          GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$GROUP_HEAD"
+          python3 -I "$RUNNER_TEMP/judge/check_queue.py" --run-plan "$RUNNER_TEMP/gaps-plan.json" --head "$GROUP_HEAD"

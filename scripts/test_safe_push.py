@@ -6049,22 +6049,31 @@ class Units(unittest.TestCase):
 
     def test_block_current_holds_the_queue_judge_s_harness_rule(self):
         # Main's first-parent chain, newest first: a harness may be the block's base or a
-        # later commit of the chain, never an older one, and never off the chain.
+        # later commit of the chain, never an older one, and never off the chain. The
+        # head holds the block's base and what is older, not main's later commits.
         tip, later, base, older = "d" * 40, "c" * 40, "b" * 40, "a" * 40
         sha = "e" * 40
         ctx = safe_push.Context(Path("."), sha, base, 1, "", None, {}, branch="docs-1",
                                 queue=True, harness_sha=tip)
         record = {"harness_sha": tip}
 
-        def block(harness, train_row=False):
+        def block(harness, train_row=False, at=base):
             return safe_push.BLOCK.search(
-                f"<!-- safe_push:preflight begin sha={sha} base={base} harness={harness} -->\n"
+                f"<!-- safe_push:preflight begin sha={sha} base={at} harness={harness} -->\n"
                 "Verdict: PASS.\n\n| Step | Outcome | Seconds |\n|---|---|---|\n"
                 + ("| 3. train | ok | 0.4 |\n" if train_row else "")
                 + "<!-- safe_push:preflight end -->")
 
-        chain = "\n".join((tip, later, base, older))
-        with mock.patch.object(safe_push, "git", return_value=chain):
+        def history(*first_parents):
+            """git as block_current asks it: main's first-parent chain, or what the head
+            holds."""
+            def answer(repo, *args, **kwargs):
+                held = (sha, base, older)
+                return "\n".join(first_parents if "--first-parent" in args else held)
+            return answer
+
+        chain = (tip, later, base, older)
+        with mock.patch.object(safe_push, "git", side_effect=history(*chain)):
             self.assertTrue(safe_push.block_current(ctx, block(tip), record))
             self.assertTrue(safe_push.block_current(ctx, block(later), record))
             self.assertTrue(safe_push.block_current(ctx, block(base), record))
@@ -6078,7 +6087,19 @@ class Units(unittest.TestCase):
             train = ctx._replace(branch="train/docs-1")
             self.assertFalse(safe_push.block_current(train, block(tip), record))
             self.assertTrue(safe_push.block_current(train, block(tip, train_row=True), record))
-        with mock.patch.object(safe_push, "git", return_value="\n".join((tip, later))):
+            # As b7aac65f: an old main commit as both base and harness, for a head built on
+            # newer main. The judge refuses it, so it is not current, even were this run
+            # to compare against that old commit.
+            self.assertFalse(safe_push.block_current(ctx, block(older, at=older), record))
+            self.assertFalse(safe_push.block_current(ctx._replace(base=older),
+                                                     block(older, at=older), record))
+            # And the reverse: the block the judge accepts is current, though the head's
+            # merge base with main, which this run compares against, is off main's chain.
+            self.assertTrue(safe_push.block_current(ctx._replace(base="9" * 40),
+                                                    block(base), record))
+            self.assertTrue(safe_push.block_current(ctx._replace(base="9" * 40),
+                                                    block(tip), record))
+        with mock.patch.object(safe_push, "git", side_effect=history(tip, later)):
             self.assertFalse(safe_push.block_current(ctx, block(later), record))
         self.assertFalse(safe_push.block_current(ctx, None, record))
 

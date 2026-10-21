@@ -9,10 +9,9 @@ the revert branch and writes the issue and its labels; the App's token, which re
 contents and writes none, opens, labels and enqueues the pull request.
 
 Only a first-parent chain of two-parent pull request merges can be reverted. Decision
-entries are history (docs/WORKFLOW.md, "Decision entries"): the revert keeps
-docs/decisions/ as at the reverted push's tip, and with it the region of the decisions
-page between its decisions:entries markers, which render.py assembles from that folder,
-so that the page stays as render.py writes it; everything else is the exact revert.
+entries are history (docs/WORKFLOW.md, "Decision entries"), each a file of its own that
+nothing assembles into another page: the revert keeps docs/decisions/ as at the reverted
+push's tip; everything else, the decisions page included, is the exact revert.
 Unreadable history or metadata, missing credentials and conflicts leave an issue
 without a pull request. Exit 0 means enqueued (or cleared), 1 means issue only or
 an incomplete revert, and 2 means the issue itself could not be recorded.
@@ -57,14 +56,8 @@ LABELS = {
     "lean": ("ededed", "Proofs and statements"),
     "docs": ("ededed", "Guides, briefs and reports"),
 }
-# Decision entries (tooling/decision-entries), and the decisions page's region that
-# render.py assembles from them, between these markers.
+# Decision entries (tooling/decision-entries), each a file of its own.
 ENTRIES = "docs/decisions"
-PAGE = "docs/briefs/0002-decisions.md"
-ENTRIES_BEGIN = "<!-- decisions:entries begin -->"
-ENTRIES_END = "<!-- decisions:entries end -->"
-ENTRIES_REGION = re.compile(r"(?ms)^" + re.escape(ENTRIES_BEGIN) + r"\n(.*?)^"
-                            + re.escape(ENTRIES_END) + r"$")
 SHA = re.compile(r"[0-9a-f]{40}")
 SLUG = re.compile(r"[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+")
 MERGE = re.compile(r"Merge pull request #([1-9][0-9]*) from \S+")
@@ -290,75 +283,31 @@ def push_branch(repo: Path, slug: str, branch: str, token: str) -> None:
         f"HEAD:refs/heads/{branch}", env=env)
 
 
-def show(repo: Path, rev: str, path: str) -> str | None:
-    """A file's exact text at a revision (git() strips the end), None when it has none."""
-    if not git(repo, "ls-tree", rev, "--", path):
-        return None
-    result = subprocess.run(
-        ["git", "-c", "core.hooksPath=/dev/null", "cat-file", "blob", f"{rev}:{path}"],
-        cwd=repo, env=git_env(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
-        timeout=120)
-    if result.returncode:
-        raise Refusal("git cat-file failed.")
-    try:
-        return result.stdout.decode("utf-8")
-    except UnicodeError:
-        raise Refusal(f"{path} is not UTF-8 text.") from None
-
-
-def entries_region(page: str):
-    """The decisions page's region between its decisions:entries markers, None when the
-    page has no markers; markers that are not one pair, each on a line of its own, refuse."""
-    if ENTRIES_BEGIN not in page and ENTRIES_END not in page:
-        return None
-    found = list(ENTRIES_REGION.finditer(page))
-    if len(found) != 1 or page.count(ENTRIES_BEGIN) != 1 or page.count(ENTRIES_END) != 1:
-        raise Refusal("The decisions page's decisions:entries markers are not one pair.")
-    return found[0]
-
-
-def kept_page(reverted: str, base: str) -> str:
-    """The reverted decisions page with its entries region as the base's page has it. A
-    page with no markers, on either side, is the exact revert."""
-    old, new = entries_region(reverted), entries_region(base)
-    if old is None or new is None:
-        return reverted
-    return reverted[:old.start(1)] + new.group(1) + reverted[old.end(1):]
-
-
 def keep_decisions(target: Path, after: str) -> None:
     """Put docs/decisions/ back as it was at `after`, the reverted push's tip and the
-    revert's base, and the decisions page's entries region with it, in a commit of its
-    own; nothing when the reverts left both as they were, or neither exists."""
-    changed = False
+    revert's base, in a commit of its own; nothing when the reverts left it as it was, or
+    it exists at neither. The decisions page is reverted like any other file."""
     kept = git(target, "ls-tree", after, "--", ENTRIES)
     if git(target, "ls-tree", "HEAD", "--", ENTRIES) != kept:
         git(target, "rm", "-r", "-q", "--ignore-unmatch", "--", ENTRIES)
         if kept:
             git(target, "checkout", after, "--", ENTRIES)
-        changed = True
-    reverted, base = show(target, "HEAD", PAGE), show(target, after, PAGE)
-    if reverted is not None and base is not None:
-        page = kept_page(reverted, base)
-        if page != reverted:
-            (target / PAGE).write_bytes(page.encode("utf-8"))
-            git(target, "add", "--", PAGE)
-            changed = True
-    if changed:
         git(target, "commit", "-q", "-m",
-            f"Keep {ENTRIES}/ and its page region as at {after[:12]}: decisions are history")
+            f"Keep {ENTRIES}/ as at {after[:12]}: decisions are history")
     if git(target, "ls-tree", "HEAD", "--", ENTRIES) != kept:
         raise Refusal(f"The revert could not keep {ENTRIES}/ as at the failed push.")
 
 
-def make_revert(source: Path, target: Path, after: str, entries: list[Train]) -> tuple[str, list[str]]:
+def make_revert(source: Path, target: Path, after: str,
+                entries: list[Train]) -> tuple[str, list[str]]:
     git(source, "clone", "--local", "--no-hardlinks", "--no-checkout", str(source), str(target))
     git(target, "switch", "--create", f"revert/{after[:12]}", after)
     for train in entries:
         try:
             git(target, "revert", "--no-edit", "-m", "1", train.sha)
         except Refusal:
-            raise Refusal(f"Revert of {train.sha} did not apply cleanly; no pull request opened.") from None
+            raise Refusal(f"Revert of {train.sha} did not apply cleanly; "
+                          "no pull request opened.") from None
     keep_decisions(target, after)
     head = git(target, "rev-parse", "HEAD")
     paths = git(target, "diff", "--no-renames", "--name-only", "-z", after, head).split("\0")
@@ -414,8 +363,10 @@ def dry_run(args, repo: Path, env: dict) -> int:
         return 0
     entries = trains(repo, args.before, args.after)
     for train in entries:
-        print(f"Would GET {root}/pulls/{train.number} and verify merge {train.sha} and its labels.")
-    print("Would list labels, create missing blocks-release and main-red labels, and open the issue.")
+        print(f"Would GET {root}/pulls/{train.number} and verify merge {train.sha} "
+              "and its labels.")
+    print("Would list labels, create missing blocks-release and main-red labels, "
+          "and open the issue.")
     print(issue_body(args, entries, "Dry run; no requests sent."))
     if not env.get("STOICHEIA_REVERT_APP_ID") or not env.get("STOICHEIA_REVERT_APP_KEY"):
         print("No App secrets: would record issue only, saying automatic revert is unavailable.")
@@ -423,11 +374,13 @@ def dry_run(args, repo: Path, env: dict) -> int:
     print(f"Would clone locally and create branch revert/{args.after[:12]} from {args.after}.")
     for train in entries:
         print(f"Would git revert --no-edit -m 1 {train.sha}.")
-    print(f"Would keep {ENTRIES}/ and the decisions page's entries region as at {args.after}.")
+    print(f"Would keep {ENTRIES}/ as at {args.after}: decision entries are history.")
     print("Would stop on any conflict, update the issue and open no pull request.")
     print("Would sign an RS256 JWT with openssl, find the installation and mint its scoped token.")
-    print("Would ensure auto-revert, the trains' kind labels and security-review for protected paths.")
-    print("Would check main still names after, push with the job's token and open the pull request with the App's.")
+    print("Would ensure auto-revert, the trains' kind labels and security-review "
+          "for protected paths.")
+    print("Would check main still names after, push with the job's token and open "
+          "the pull request with the App's.")
     print("Would label the pull request, verify its head and enqueue it with expectedHeadOid.")
     print("Would update the issue with the pull request and queue outcome using GITHUB_TOKEN.")
     return 0
@@ -468,7 +421,8 @@ def revert(args, source: Path, api: GitHub, env: dict, push) -> int:
                 # no contents: such a revert is the coordinator's, by hand.
                 raise Refusal("The revert changes .github/workflows/, which the job's token "
                               "cannot push: revert it by hand.")
-            labels = {"auto-revert"} | {label for t in entries for label in t.labels if label in KINDS}
+            labels = {"auto-revert"} | {label for t in entries for label in t.labels
+                                        if label in KINDS}
             if any(protected(path) for path in paths):
                 labels.add("security-review")
             api.ensure_labels(labels)
@@ -487,14 +441,16 @@ def revert(args, source: Path, api: GitHub, env: dict, push) -> int:
             pr = app.call("POST", api.root + "/pulls",
                           {"title": f"Revert failed main push {args.after[:12]}", "head": branch,
                            "base": "main", "body": "\n".join(f"Reverts: {t.sha}" for t in entries)
-                           + f"\nFailed run: {args.run_id}\n\nFailed jobs:\n{jobs}\n\nRun: {args.run_url}\n"})
+                           + f"\nFailed run: {args.run_id}\n\nFailed jobs:\n{jobs}\n\n"
+                           f"Run: {args.run_url}\n"})
             if (not isinstance(pr, dict) or type(pr.get("number")) is not int or pr["number"] <= 0
                     or not isinstance(pr.get("node_id"), str) or not pr["node_id"]
                     or pr.get("head", {}).get("sha") != head):
                 raise Refusal("GitHub did not confirm the revert pull request and its head.")
             number = pr["number"]
             stage = f"Pull request #{number} is open; enqueueing is not confirmed."
-            applied = app.call("POST", f"{api.root}/issues/{number}/labels", {"labels": sorted(labels)})
+            applied = app.call("POST", f"{api.root}/issues/{number}/labels",
+                               {"labels": sorted(labels)})
             if (not isinstance(applied, list) or any(not isinstance(row, dict) for row in applied)
                     or not labels.issubset({row.get("name") for row in applied})):
                 raise Refusal("GitHub did not confirm all revert labels.")
@@ -511,7 +467,8 @@ def revert(args, source: Path, api: GitHub, env: dict, push) -> int:
             outcome = f"Revert pull request #{number} was enqueued at {head}."
             result = 0
     except Exception as exc:
-        reason = str(exc) if isinstance(exc, Refusal) else "The automatic revert could not be completed."
+        reason = (str(exc) if isinstance(exc, Refusal)
+                  else "The automatic revert could not be completed.")
         outcome = f"{reason}\n{stage}"
     updated = api.call("PATCH", f"{api.root}/issues/{issue['number']}",
                        {"body": issue_body(args, entries, outcome)})
@@ -543,7 +500,8 @@ def main(argv=None, *, http=None, push=None, repo_dir=None, env=None) -> int:
     args.run_id = None
     if args.run_url:
         run = re.fullmatch(
-            rf"https://github\.com/{re.escape(args.repo)}/actions/runs/([1-9][0-9]*)(?:/attempts/[1-9][0-9]*)?",
+            rf"https://github\.com/{re.escape(args.repo)}/actions/runs/([1-9][0-9]*)"
+            r"(?:/attempts/[1-9][0-9]*)?",
             args.run_url)
         if not run:
             parser.error("--run-url must name a GitHub Actions run in --repo")

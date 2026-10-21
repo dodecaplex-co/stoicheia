@@ -2420,27 +2420,32 @@ def train_check(ctx: Context, body: str, rep: Report) -> None:
 
 def block_current(ctx: Context, m, record: dict) -> bool:
     """Is the body's pre-flight summary a true account of this head? It must name this
-    head and the base it was compared against, and, for a train, show the train step
-    passing. Its harness is this run's, or, in queue mode, where a head need not hold the
-    latest main, a harness that was main, as the queue's judge requires
-    (check_queue.preflight): the base on the first-parent chain of this run's main, and
-    the harness that base or a later commit of the same chain. That the full checks ran
-    again here, and passed, leaves a summary of the same head and base true."""
+    head and, for a train, show the train step passing. Its base and harness are held to
+    the queue's judge's rule (check_queue.preflight), read on this run's main: the base
+    is the newest commit of main's first-parent chain that the head contains, which is
+    what the pre-flight records (origin/main's tip, which the head held), and the
+    harness that base or a later commit of the same chain. So a summary the judge would
+    refuse is never current here, and one it would accept is current, in queue mode
+    even when the head's merge base with main, which the merge checks against, lies off
+    main's chain (a member merged before its train): the summary names the pre-flight's
+    base, not the merge's. Without the queue the base and the harness are both main's
+    tip, as the head holds it. That the full checks ran again here, and passed, leaves a
+    summary of the same head and base true."""
     if not m:
         return False
     sha, base, harness = m.group(1), m.group(2), m.group(3) or m.group(2)
-    if (sha, base) != (ctx.sha, ctx.base):
+    if sha != ctx.sha:
         return False
     # A branch renamed train/ after its pre-flight has a summary with no train step.
     if (ctx.branch or "").startswith("train/") and not TRAIN_ROW.search(m.group(0)):
         return False
-    current = record.get("harness_sha") or ctx.base
-    if harness == current:
-        return True
-    if not ctx.queue or FULL_OID.fullmatch(harness or "") is None:
+    main = record.get("harness_sha") or ctx.harness_sha or ctx.base
+    chain = git(ctx.repo, "rev-list", "--first-parent", main).split()
+    held = set(git(ctx.repo, "rev-list", ctx.sha).split())
+    newest = next((tip for tip in chain if tip in held), None)
+    if base != newest or harness not in chain or chain.index(harness) > chain.index(base):
         return False
-    chain = git(ctx.repo, "rev-list", "--first-parent", current).split()
-    return base in chain and harness in chain and chain.index(harness) <= chain.index(base)
+    return ctx.queue or (base, harness) == (ctx.base, main)
 
 
 def merge_train_input(ctx: Context, view: dict) -> str | None:

@@ -378,8 +378,10 @@ each with `python3 -I`; locally, install their pinned YAML parser first with
 runs that `check_queue.py` with the event's head, base and repository, running none of
 the group's scripts and building and rendering nothing, though GitHub runs the group's
 own copy of this workflow file (section 10 says what must hold it). `queue-gaps` waits
-for acceptance and, on a merge group, runs the tests of what the group changes
-(`--gaps`), with no token in their environment. Section 10 gives the rules. The `check`
+for acceptance and, on a merge group, chooses the tests of what the group changes in a
+step that holds the job's token, to read GitHub, and runs none of them
+(`--gaps --plan`); its last step, which holds no token, runs them (`--run-plan`).
+Section 10 gives the rules. The `check`
 job renders the same group and checks the pages are current, and its
 `check_queue.py --tree .` step, which the pre-flight runs too, checks that no dated
 decisions heading repeats, reading each heading as section 10's rule (d) describes;
@@ -736,12 +738,13 @@ are:
 - **(b) Nothing unchecked.** Each entry has one visible pre-flight block naming exactly
   its head, the base it was compared against and the harness: the main commit whose
   `scripts/safe_push.py` ran it (the pre-flight names its base as its harness; the judge
-  also accepts a later main commit, as `--merge` does in queue mode, where the base it
-  checks against is the head's merge base with main). The
+  also accepts a later main commit). The
   base must be the newest commit of the group base's first-parent chain that the head
   contains, which is what safe_push records (origin/main's tip when the pre-flight
   ran), so an old base cannot be named for a head built on a newer main; the harness
-  commit must be that base or a later commit of the same chain, never an older one. The
+  commit must be that base or a later commit of the same chain, never an older one.
+  `--merge` holds the body's block to this same rule, read on main as it finds it,
+  before it takes the block as current (step 4, below). The
   block must name the harness commit's blob, give a passing verdict, and show every full
   check that harness runs, by its own `CHECKS` and `NEGATIVE` lists, with no failure; a
   block written before the `Verdict` line existed does not pass, so its pull request
@@ -789,11 +792,25 @@ a changed `scripts/<name>.py` runs its existing `tests/test_<name>.py` or
 `python3 scripts/test_safe_push.py`. A file the group deletes asks for no test; when an
 entry has more than one merge base, it asks for the tests of what it changes against
 any of them, and a deletion excuses a test only if it is a deletion against all. Each
-selected command runs once, with no token in its environment, and a failure fails the
-job. Changed propositions have their acceptance items printed from the acceptance
-artifact, as a report of the verdict already judged there. Declared rules are printed
-for the reader. Foundations need no extra run here, since `model` and
-`formal-model` run on every group.
+selected command runs once, and a failure fails the job. Changed propositions have
+their acceptance items printed from the acceptance artifact, as a report of the
+verdict already judged there. Declared rules are printed for the reader. Foundations
+need no extra run here, since `model` and `formal-model` run on every group.
+
+The tests are the group's own code, and on Linux a process can read its parent's
+environment (`/proc/<ppid>/environ`), so no test runs beneath a process that holds a
+token. The step that holds the job's token, to read GitHub, runs main's
+`check_queue.py --gaps --plan <file>`, which chooses the tests, prints the reports above
+and writes the chosen commands to a new file, running none of them. The next step
+installs main's pinned YAML parser, which the queue's tests import, from
+`scripts/requirements-test_safe_push.txt` at the group's base; it comes after the
+token's last step, since what pip installs could run in any later Python. The last
+step declares no token, and neither does any step after the choosing: it runs main's
+`check_queue.py --run-plan <file> --head <sha>`, which reads no GitHub, checks that the
+plan is for that head and that the checkout is that head, unchanged, runs only
+commands of the forms above, for files of that checkout, and refuses to run any test
+while a variable whose name holds `TOKEN` is in its environment. `--gaps` without
+`--plan`, run by hand, refuses the same way.
 
 **Auto-eject.** With GitHub's "only merge non-failing pull requests" setting, a train
 merges only when its own group passed. If a group fails, GitHub removes its last
@@ -823,10 +840,9 @@ not trigger it.
 Decision entries, the files in `docs/decisions/` that tooling/decision-entries brings,
 are history, only ever added to, so a revert never takes one away: after the reverts, in
 a commit of its own, the script puts `docs/decisions/` back as it was at the failed
-push's tip, and with it the decisions page's region between its `decisions:entries`
-markers, which `render.py` assembles from that folder, so that the page stays as
-`render.py` writes it. Everything else is the exact revert. With neither the folder nor
-the markers, nothing changes; markers that are not one pair leave the issue alone.
+push's tip. Each entry is a page of its own, which nothing assembles into another page,
+so nothing else is kept: everything else, the decisions page included, is the exact
+revert. Without the folder, nothing changes.
 
 The workflow records an issue with `GITHUB_TOKEN`, labelled `blocks-release` and
 `main-red`, naming the trains, their merge commits, the failed jobs and the run. It
@@ -841,15 +857,17 @@ when its named run is a failed post-merge run of a push to main, its branch is
 `revert/` and that push's first 12 hexadecimal digits, an open issue labelled
 `main-red` names the run, the merges it names are exactly the merges of that push (its
 `before` and `after` read from GitHub's record of pushes to main), newest first, and
-its tree is exactly those merges reverted, save that `docs/decisions/` and the decisions
-page's `decisions:entries` region stay as at the revert's base, the failed push's tip,
-as above: nothing else may differ. The job that clears `main-red` runs no repository
-code at all.
+its tree is exactly those merges reverted, save that `docs/decisions/` stays as at the
+revert's base, the failed push's tip, as above: nothing else may differ, the decisions
+page included. The job that clears `main-red` runs no repository code at all.
 
-The judge reads the named run as GitHub reports it, and the revert job is one of that
-run's own jobs: a group judged before the run has finished finds no conclusion yet, and
-is refused, so the revert leaves the queue and the issue stays open. The coordinator
-then lands the revert as a red main's fix (below).
+The revert job is one of the named run's own jobs, so the revert's group can be judged
+while that run is still in progress. The judge then reads the run again every 15
+seconds, for up to 10 minutes, and judges it once GitHub reports it completed: a run
+that concluded failure admits the revert, under the rules above, and any other
+conclusion refuses it. A run still not completed after 10 minutes refuses it too, so
+the revert leaves the queue and the issue stays open; the coordinator then lands the
+revert as a red main's fix (below).
 
 Two limits are stated rather than closed. The workflow that holds the App's key is read
 from main, so code that has landed there could take the key. A key taken that way still
@@ -1070,9 +1088,15 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) or any protected
    path, since CI runs a head's own copies and its own workflow, and only the pre-flight
    runs origin/main's on it; otherwise they run again too. The body must already carry
-   the summary of this head and its base, by the running harness or, in queue mode, by
-   a harness that was main, as the queue's judge requires (rule (b), above); for a
-   train, with its train step passing. Every other part safe_push wrote must be up to
+   the summary of this head, its base and harness held to the queue's judge's rule
+   (rule (b), above), read on current origin/main, in both modes: the base the newest
+   commit of main's first-parent chain that the head contains, which is what the
+   pre-flight records, and the harness that base or a later commit of the chain (with
+   the queue off, both are main's tip); for a train, with its train step passing. So a
+   summary the judge would refuse is never taken as current, and one it would accept
+   is, even in queue mode when the head's merge base with main lies off main's chain
+   (a member merged on its own before its train), though the merge then checks against
+   that merge base. Every other part safe_push wrote must be up to
    date; a body edited in GitHub's page, which keeps CRLF line ends, is up to date when
    it differs from those parts by line ends alone. `--merge` never writes the
    pull request body: when one of those parts is stale, it refuses before writing, and
