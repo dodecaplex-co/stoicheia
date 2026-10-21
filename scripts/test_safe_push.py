@@ -4772,6 +4772,58 @@ class Units(unittest.TestCase):
                     review_stamp.stamp(facts, "I", 1, read_commit, False)
                 self.assertEqual(record.read_text(), current)
 
+    def test_review_stamp_ignores_replacement_objects(self):
+        facts = {"propositions": [{"ref": "I.1", "statement": "A test statement."}]}
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            lean = repo / "Elements/BookI/Prop01.lean"
+            source = repo / "heath/I/01.md"
+            record = repo / "review/I/01.toml"
+            for path in (lean, source, record):
+                path.parent.mkdir(parents=True, exist_ok=True)
+            lean.write_text("theorem Prop1 : True := by trivial\n")
+            source.write_text("A test enunciation.\n\nA test proof.\n")
+            fingerprint = review_stamp.heath.review_fingerprint(facts, "I.1")
+            lean_hash = review_stamp.heath.file_hash(lean)
+            old = (f'[statement]\nscope = "full"\nfingerprint = "{fingerprint}"\n\n'
+                   '[route]\nkind = "euclid"\nnote = "The old record text."\n\n'
+                   '[review]\nstage = "exceptions"\nreviewer = "Test reader"\n'
+                   f'lean = "{lean_hash}"\n')
+            record.write_text(old)
+            git(repo, "init", "-q")
+            git(repo, "config", "user.name", "review stamp test")
+            git(repo, "config", "user.email", "review-stamp-test@example.invalid")
+            git(repo, "config", "commit.gpgsign", "false")
+            git(repo, "add", ".")
+            git(repo, "commit", "-q", "-m", "The old record text")
+            read_full = git(repo, "rev-parse", "HEAD").strip()
+            read_commit = read_full[:12]
+            current = old.replace("The old record text.", "The changed record text.")
+            current = current.replace("[review]\n", f'[review]\ncommit = "{read_commit}"\n', 1)
+            record.write_text(current)
+            git(repo, "add", "review/I/01.toml")
+            git(repo, "commit", "-q", "-m", "Change the record text")
+            current_tree = git(repo, "rev-parse", "HEAD^{tree}").strip()
+            unrelated = git(repo, "commit-tree", current_tree, "-m", "An unrelated commit").strip()
+            replacement = git(repo, "commit-tree", current_tree, "-p", unrelated,
+                              "-m", "Replacement contents").strip()
+            git(repo, "replace", read_full, replacement)
+            self.assertEqual(git(repo, "show", f"{read_full}:review/I/01.toml"), current)
+            self.assertEqual(subprocess.run(
+                ["git", "merge-base", "--is-ancestor", unrelated, "HEAD"], cwd=repo,
+                capture_output=True).returncode, 0)
+            with mock.patch.object(review_stamp, "ROOT", repo), \
+                    mock.patch.object(review_stamp.heath, "ROOT", repo), \
+                    mock.patch.object(review_stamp.heath, "REVIEW", repo / "review"):
+                self.assertFalse(review_stamp.in_history(unrelated))
+                self.assertEqual(review_stamp.migrate_text("I", 1, False),
+                                 ("reader", f"I.1: edited since its stamp commit {read_commit}"))
+                self.assertEqual(record.read_text(), current)
+                with self.assertRaisesRegex(ValueError,
+                                            "says something other than it says now"):
+                    review_stamp.stamp(facts, "I", 1, read_commit, False)
+                self.assertEqual(record.read_text(), current)
+
     def test_review_stamp_migration_counts_an_unresolved_commit_a_problem(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)

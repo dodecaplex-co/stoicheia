@@ -86,6 +86,7 @@ def set_stamp(text: str, section: str, key: str, value: str) -> str:
 
 NO_COMMIT = "is not a commit of this clone (a shallow clone, or a commit never fetched)"
 AMBIGUOUS_COMMIT = "abbreviates more than one commit of this clone"
+GIT = ("git", "--no-replace-objects")
 
 
 @functools.lru_cache
@@ -93,7 +94,7 @@ def commit_objects(root: Path) -> tuple[str, ...]:
     """The full ids of all commit objects in the object store at `root`."""
     try:
         out = subprocess.run(
-            ["git", "cat-file", "--batch-all-objects",
+            [*GIT, "cat-file", "--batch-all-objects",
              "--batch-check=%(objectname) %(objecttype)", "--unordered"],
             cwd=root, capture_output=True, text=True, check=True)
     except (OSError, subprocess.CalledProcessError):
@@ -119,7 +120,7 @@ def resolve(commit: str) -> tuple[str | None, str | None]:
 def in_history(commit: str) -> bool:
     """Is `commit`, a full id, HEAD or an ancestor of HEAD?"""
     try:
-        return subprocess.run(["git", "merge-base", "--is-ancestor", commit, "HEAD"],
+        return subprocess.run([*GIT, "merge-base", "--is-ancestor", commit, "HEAD"],
                               cwd=ROOT, capture_output=True).returncode == 0
     except OSError:
         return False
@@ -132,7 +133,7 @@ def show_at(commit: str, path: Path) -> bytes | None:
     if full is None:
         return None
     try:
-        out = subprocess.run(["git", "show", f"{full}:{rel(path)}"], cwd=ROOT,
+        out = subprocess.run([*GIT, "show", f"{full}:{rel(path)}"], cwd=ROOT,
                              capture_output=True, check=True)
     except (OSError, subprocess.CalledProcessError):
         return None
