@@ -116,8 +116,9 @@ parts are facts.json's statements (name, reference, kind and statement), its rul
 toolchain's files; and this file without this docstring, which records the run and so is
 written after it, with any other Python module under Audit/, which a run without -I could
 import in place of a standard one. --write records only a run on a commit's inputs as
-committed, and stops before the run otherwise. `--check-current` refuses any other record,
-computes the parts again, without Lean, and exits 1, naming each part that changed, when
+committed, and stops before the run otherwise. `--check-current` refuses a record that
+does not name a commit's 40 hex digits in that state, computes the parts again, without
+Lean, and exits 1, naming each part that changed, when
 the record is missing or the inputs differ. The run needs Lean and takes the time above,
 so this is a release step (docs/WORKFLOW.md, section 10, step 10), not one of CI's
 checks. The record is written only by a run, never by hand. `--check-current` reads the

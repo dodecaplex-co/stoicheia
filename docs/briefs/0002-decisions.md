@@ -3520,7 +3520,8 @@ findings:
   with any other Python module under `Audit/`, which a run without `-I` could import in
   place of a standard one; every command for the screen is written with `-I`. `--write`
   records only a run on a commit's inputs as committed, never through a symbolic link, and
-  `--check-current` refuses any other record. Every try imports the build, not the
+  `--check-current` refuses a record that does not name a commit's 40 hex digits in that
+  state. Every try imports the build, not the
   sources, so a run stops before any Lean when `lake build --no-build Elements` finds the
   build stale. The screen's check needs no Lean, but any change to the library makes it
   fail, and only a run, with Lean and about an hour and a half of processor time, may make
@@ -3537,9 +3538,9 @@ findings:
   `python3 -I tests/model/run.py --full --write` was made at the commit that carries the
   change, with its harness files as committed, after main's superposition change
   ([#191](https://github.com/jackChallis/stoicheia/pull/191)) was merged in, and what it
-  wrote was committed after it. Its counts were compared with main's own run, and any
-  count that differs from those this branch recorded before the merge is a consequence of
-  main's change to the harness, not of this one. Its results are recorded in
+  wrote was committed after it. Its counts were compared with main's own run, at
+  dcf0dace (#191): every count is the same, and only the headers, the dates and the
+  timings are new. Its results are recorded in
   [`tests/model/results/angle_check.txt`](../../tests/model/results/angle_check.txt),
   [`tests/model/results/exhaustive.txt`](../../tests/model/results/exhaustive.txt),
   [`tests/model/results/grid_check.txt`](../../tests/model/results/grid_check.txt),
