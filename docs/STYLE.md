@@ -141,8 +141,8 @@ where to look:
    [FORMALIZATION.md](FORMALIZATION.md).
 4. **The figure at a glance,** with its caption.
 5. **Euclid's proof:** his figure with Heath's letters, a figure note under it where the
-   figure shows one case of several or our drawing departs from Heath's (section 7), and
-   Heath's proof in full.
+   figure shows one case of several, draws every case, or our drawing departs from Heath's
+   (section 7), and Heath's proof in full.
 6. **In Lean:** a short table of the formal facts (proof, statement, extra hypotheses,
    argument, representation, overlap with an axiom, and what was reviewed, at which
    commit); a clause map where the statement leaves a clause out, which says the omission
@@ -825,8 +825,8 @@ proposition, and a later book's numeral replaces `I` in the paths.
     figure gives that point, beside it and clear of every colour, or on the fill as section
     7 says; S21 sees only that a letter is near, and S26 that it is clear of the strokes.
     Each `data-unlettered` reason is true of Heath's figure.
-18. A departure from Heath's figure has its line in the figure note, and a figure of one
-    case among several names it.
+18. A departure from Heath's figure has its line in the figure note. A figure of one case
+    among several names it; a figure marked as every case draws them all and names them.
 
 **Heath's text**
 
