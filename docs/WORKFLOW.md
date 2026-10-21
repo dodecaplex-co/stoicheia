@@ -546,10 +546,10 @@ looked into.
     `python3 -I tests/model/run.py --full --write`, writes `tests/model/results/` and
     MODEL.md's counts. After `lake build`, the overlap screen,
     `python3 -I Audit/screen.py OUTDIR --write`, runs on the candidate's statements and
-    rules and writes `Audit/screen-run.toml`. Before replacing that record, it checks the
-    build again after all tries and retries, then rechecks the original revision and input
-    hashes; a failed final check leaves the existing record in place. These boundary checks
-    do not show that no transient concurrent modification occurred. Then
+    rules and writes `Audit/screen-run.toml`. Before it replaces that record, it checks the
+    build again, after every try and retry, and reads the commit and the inputs again; a
+    failed check leaves the record as it was. Checks at the two ends of a run cannot show
+    that nothing changed and changed back in between. Then
     [overlaps.md](reports/overlaps.md) and the screen's docstring record the revision
     screened, the number of statements in `facts.json` and what closed. Then
     `python3 -I tests/model/results_check.py` and

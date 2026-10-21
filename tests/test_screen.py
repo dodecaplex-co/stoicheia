@@ -2,7 +2,7 @@
 """The cases of Audit/screen.py, the overlap screen: which tries it makes, and how it reads
 what Lean says of them.
 
-    python3 -I tests/test_screen.py        # about a second; no Lean, no network
+    python3 -I tests/test_screen.py        # about five seconds; no Lean, no network
 
 The screen has Lean's `grind` try every statement of facts.json from no rule, each rule,
 each family of rules and each pair of them, and reports what closes

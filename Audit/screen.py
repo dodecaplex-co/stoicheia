@@ -103,10 +103,10 @@ and a half of processor time: some eight minutes with twelve jobs on an idle mac
 Every try imports what `lake build` built, not the sources. So a run reads the commit and
 its inputs, checks with `lake build --no-build Elements` that the build is current, and
 reads them again before any Lean runs. Before --write records a completed run, it checks
-the build again after all tries and retries, then reads the original commit and inputs
-again. It stops if either build check fails, or if the commit or the inputs changed around
-one of those checks, and a record names what it read first. These boundary checks do not
-show that no transient concurrent modification occurred.
+the build again, after every try and retry, and reads the commit and the inputs again. It
+stops if either build check fails, or if the commit or the inputs changed around one of
+those checks, and a record names what it read first. Checks at the two ends of a run
+cannot show that nothing changed and changed back in between.
 Standard library only. Its cases, which need no Lean, are in tests/test_screen.py.
 
 What a run read. With --write, a run that ends with every known row closed by a rule
@@ -120,8 +120,8 @@ parts are facts.json's statements (name, reference, kind and statement), its rul
 (modules and statements) and its words (`vocabulary`); every Lean file of the library; the
 toolchain's files; and this file without this docstring, which records the run and so is
 written after it, with any other Python module under Audit/, which a run without -I could
-import in place of a standard one. An ignored module among those actual input files still
-counts, and cannot be called committed; ignored files outside the input paths and modules
+import in place of a standard one. An ignored file among the input files counts, and the
+inputs are then not a commit's; ignored files outside the input paths and modules
 under __pycache__ do not count. No input file or its directory may be a symbolic link,
 since Git commits the link and the run would read its target. --write records only a run on
 a commit's inputs as committed, and stops before the run otherwise. `--check-current`
