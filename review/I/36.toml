@@ -32,10 +32,10 @@ case = "the bases BC and FG apart, with C and H on the same side of BE"
 
 [review]
 stage = "full"
-commit = "206e3080"
+commit = "c814e8fb"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:99d638f5b906dcc1"
-run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at 206e3080"
+run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at c814e8fb"
 
 [review.items]
 statement = "pass"
