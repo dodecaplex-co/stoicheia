@@ -78,9 +78,10 @@ depend on the corresponding declarations remaining in the axiom registry.
   hypotheses on purpose, where chance rarely meets them (three straight lines through one
   point, a right angle, two circles through a common point), over a large lattice and over
   fractions.
-- **[mutations.py](mutations.py)** weakens 15 rules on purpose, by dropping or loosening
-  one guard, and checks that each weakened rule has a counterexample. So the harness can
-  see a false rule when there is one.
+- **[mutations.py](mutations.py)** weakens 15 statements on purpose, each by changing a
+  hypothesis or a conclusion: fourteen rules, assumed or now proved, and the placement that
+  supports superposition (M9). It checks that each weakened statement has a counterexample.
+  So the harness can see a false statement when there is one.
 - **[grid_check.py](grid_check.py)** and **[angle_check.py](angle_check.py)** are a second
   opinion, written separately: the incidence, order and circle rules exactly on a grid,
   and the angle, area, Postulate 4, Postulate 5 and superposition rules in floating point.
@@ -105,7 +106,7 @@ run.py and hyperbolic.py are new.
 ## What the numbers say
 
 <!-- counts:begin -->
-Counts from `run.py --full --write` at commit `0f368b7ba2b7`, 2026-10-21, Python 3.11.9. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
+Counts from `run.py --full --write` at commit `dcf0dace5956`, 2026-10-20, Python 3.11.9. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
 
 In the plane: **6,590,542** configurations met an axiom's hypotheses (1,477,887 in the search, 3,688,278 exhaustive, 1,424,377 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 679,398 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
 
@@ -377,14 +378,16 @@ lines are different and the points are not `A`.
 
 | Axiom | Why it holds |
 |---|---|
-| `superposition` | Move the plane rigidly, taking `A` to `D` and the ray from `A` through `B` onto the ray from `D` through `G`, and reflect in `L` if `C` lands on the side away from `H`. Rigid motions keep lengths and angles. `B'` lies on the ray, so `D` is not between `B'` and `G`, and `C'` is off `L` because `ABC` is a triangle. |
+| `superposition` | Move the plane rigidly, taking `A` to `D` and the ray from `A` through `B` onto the ray from `D` through `G`, and reflect in `L` if `C` lands on the side away from `H`. Rigid motions keep lengths and angles. `B'` lies on the ray, so `D` is not between `B'` and `G`, and `C'` is off `L` because `ABC` is a triangle. Since `D` is on `L`, `D ≠ C'`; draw their straight line for the kept side. `Rule.of_placement` reduces the restricted inference rule to this placement with its side. The numerical harness checks this sufficient construction; the formal model proves the reduction and the construction in Lean. |
 
 ## The guards and the mutations
 
-Many rules, assumed or proved, carry a guard that looks fussy: a point must be different
-from another, two lines or circles must differ, a point must be strictly inside. The
-mutation test drops or loosens 15 of them and finds a counterexample to each weakened
-rule. So each guard is doing work, and the harness can see a false rule.
+Many rules, assumed or proved, carry a guard that looks fussy: a point must be different from another, two
+lines or circles must differ, a point must be strictly inside. The mutation test changes a
+hypothesis or conclusion in fifteen cases and finds a counterexample in each. Fourteen
+concern rules, assumed or now proved; M9 concerns the supporting placement construction for
+superposition. It tests why that construction requires a triangle, not whether the restricted derivation calculus
+fails without that guard.
 
 | Mutation | What goes wrong without the guard |
 |---|---|
@@ -396,7 +399,7 @@ rule. So each guard is doing work, and the harness can see a false rule.
 | `Postulate5` concluding the other side | the lines meet on the side of the small angles, not the other |
 | `pasch4` without `L ≠ M` | `A`, `B`, `C` all on `L`, in any order |
 | `between_of_inside_chord` with `A` on or inside | `A` at `B` |
-| `superposition` for a flat triangle | no point off `L` at the right distances |
+| The supporting superposition placement for a flat triangle (M9) | no point off `L` at the right distances; this tests the placement, not the derivation calculus |
 | Definition 10 without `¬ Collinear A B C` | `C` at `B`, both angles 0, and Postulate 4 false |
 | `line_circle_beyond` without `C ≠ B` | with `C` at `B`, no point `A` has `B` strictly between `A` and `B` |
 | `circles_meet_same_side` without `B` off `L` | no point is on the same side as a point of `L` |
@@ -444,7 +447,10 @@ plane circles do. Angles at a point add and are supplementary as in the plane, s
 angle is π/2. The defect adds up when a triangle is cut from a vertex, because the two
 angles at the cut make π, and it is kept by every motion and positive for every true
 triangle. And the hyperbolic plane's motions can lay any triangle down at any point,
-along any ray, on either side, so superposition holds. Marvin Jay Greenberg's
+along any ray, on either side. The harness also constructs and checks the straight line
+through the starting point and placed third corner, the kept side. These are numerical
+tests of the sufficient placement for the restricted rule, by `Rule.of_placement`;
+there is no Lean proof of the hyperbolic model here. Marvin Jay Greenberg's
 [*Euclidean and Non-Euclidean Geometries*](../../docs/reading.md#greenberg2008euclidean)
 tells this story in full, models and all.
 
@@ -481,7 +487,13 @@ as Astra advised, with our thanks. The model has four parts.
    <!-- count:axioms-but-postulate-5 -->78<!-- /count -->. A Lean program generates the laws from the elaborated declarations themselves, not
    from their printed text, and every build checks the translation: taken back to the
    library's words, each law is compared with the library's declaration, by the kernel
-   and expression by expression, and no word of the project is left untranslated.
+   and expression by expression. The four pure modules
+   `Elements.Foundations.Superposition.Syntax`, `.Semantics`, `.Soundness` and
+   `.Restriction` are shared by identity, preserving universe arguments. The generator
+   audits every declaration in those modules through types, values, proofs, constructors
+   and recursor rules: no geometric word, project axiom or `sorryAx` may be reached.
+   Other unsupported project or foreign constants are rejected. The library's
+   `primitives` is an ordinary generated interpretation over the signature.
 2. **The plane, with Mathlib.** The package reads the words as [the plane](#the-plane)
    above does: points as `EuclideanSpace ℝ (Fin 2)`, lines as its one-dimensional affine
    subspaces, circles as spheres of positive radius, magnitudes as `ℝ≥0`, length as
@@ -491,11 +503,14 @@ as Astra advised, with our thanks. The model has four parts.
 3. **Every law of the lock proved in the plane**, degenerate cases included: all <!-- count:axioms -->79<!-- /count -->, each
    a theorem of its own. The hardest were taken first, since they might have reshaped the
    representation: where circles meet, and on which side; angle addition, both ways; the
-   side on which Postulate 5's lines meet; superposition, reflections included; the area
-   rules; and the finite `avoid` lists. The generator gathers the <!-- count:axioms -->79<!-- /count --> into
+   side on which Postulate 5's lines meet; restricted superposition, from placement by
+   isometry and reflection, its kept side by Postulate 1, and `Rule.of_placement`; the area
+   rules; and the finite `avoid` lists. `superposition_placement` proves the supporting
+   placement construction; it is not a second locked law. The generator gathers the <!-- count:axioms -->79<!-- /count --> into
    `euclidean_laws`, which says that the plane satisfies `Laws`, with no hypothesis left,
    and `model_exists : ∃ S : Signature, Laws S` follows. Every build checks that nothing
-   in the model imports the library, and that beneath each of these proofs lie only
+   in the model imports an `Elements` module other than the four pure ones, retains the
+   unknown-`Elements.Point` sentinel, and checks that beneath each of these proofs lie only
    Lean's own axioms, `propext`, `Classical.choice` and `Quot.sound`: no axiom of the
    project and no `sorryAx`.
 4. **The lock's hash tying them.** [model/lock.sha256](../../model/lock.sha256) holds the
