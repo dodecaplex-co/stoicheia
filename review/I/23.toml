@@ -1,7 +1,7 @@
 # review/I/23.toml
 [statement]
 scope = "full"
-note = "The angle FAG is built with G on the ray from A through B and F on the side of AB where a given point P lies, as I.24, I.31 and I.42 need."
+note = "The angle FAG is built with G on the ray from A through B and F on the side of AB where a given point P lies, as I.24, I.31, I.42 and I.44 need."
 fingerprint = "sha256:a0045621afc2f9d1"
 
 [route]
