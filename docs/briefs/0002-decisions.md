@@ -3475,3 +3475,31 @@ findings:
   with the counts. It reads III.1's tacit count from
   `tests/certificate_expectations.json`, so it holds before and after the content it
   describes. No guard is weakened.
+
+- **A carried passage's helper is named by its kind
+  ([#163](https://github.com/jackChallis/stoicheia/issues/163)).** The sentence on how to
+  read a page's listing said "where a porism is proved as a theorem of its own" for every
+  carried passage that names a `helper`. Once III.25's core moves into Elements, its
+  companion `Prop25.complete` is to carry the step Heath cites as III. 9, and the page would
+  call it a porism. The protected file [`scripts/render.py`](../../scripts/render.py) now
+  reads the helper's kind with `heath.parse_ref`, from the entry of facts.json's `attached`
+  that it names (`carried_kind`): "a porism" for a porism, "a companion" for a companion,
+  and for several, as "a porism and two companions are proved as theorems of their own". A
+  carried helper of any other kind stops the render, naming the proposition and the
+  helper: a lemma or another proposition that does a step makes a `helper` passage, "Done
+  by" it, and is not a theorem attached to the proposition, so a word for it here would
+  put a passage of the wrong kind on the page. The comment above `PASSAGE_WORD` says the
+  same, and CERTIFICATE.md's key gives *Proved separately* for the kinds the records carry,
+  today "a porism". `use_self_check` gains six cases, `CARRIED_CASES`: a porism; a
+  companion; a porism with two companions, in the three spellings of a name it accepts;
+  and a lemma, another proposition and another proposition's companion, each refused.
+  Against origin/main's render.py (`09bc89f3`) five of them fail, the companion's read as
+  "a porism", and the porism's passes. The protected file
+  [`review/SCHEMA.md`](../../review/SCHEMA.md) allows a companion beside the porism as a
+  carried passage's `helper`, says how the page names each, and says that render.py stops
+  on any other. `heath.py` and `check_fidelity.py` check no carried helper's kind
+  (check_fidelity asks only that it is declared), so nothing refused a companion and no
+  other validation changes. Every generated file stays byte for byte as it was: the three
+  pages that print the clause, I.15, III.1 and III.16, each carry a porism. The fourth
+  item of #163, III.25's page naming `Prop25.complete` a companion, waits for the core's
+  move.
