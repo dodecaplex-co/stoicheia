@@ -7,7 +7,10 @@ The real brief, audit file and Audit.lean must pass. In copies, an invented theo
 the restriction section must fail with its line and name, and so must a name pinned only by
 its axioms, by a `#check` with no `#guard_msgs`, by a `#guard_msgs` with any option
 (`substring := true` among them), or by a pin in a comment. A name is pinned only under its
-full name, so a pin of `Rule.Figure.restrict` does not pin a bare `restrict`. The
+full name, so a pin of `Rule.Figure.restrict` does not pin a bare `restrict`, and only in
+`Elements.Superposition`: in copies of the real file, a decoy theorem `: True` of the same
+name in `Elements.BookI`, pinned by `#check` in place of `Interpretation.Embedding`'s
+`#print` or of `Rule.Figure.restrict`'s `#check`, fails with the brief's line. The
 exceptions (`Rule.infer`, `Metric`, `cite`, file names, Lean's axioms, single letters and
 spans that are not one identifier) pass with no pin, a name outside the section is not
 read, and a brief without the section, or whose section names no theorem, cannot be read.
@@ -28,17 +31,21 @@ hide nothing, since the file may no longer hold the `#eval`s that carry those ca
 A definition is pinned by `#print`. In copies of the real file, a `#check` pin of
 `Interpretation.Embedding` or of `Rule.Figure`, the two the section names, is refused by
 name with its line and does not count: with the docstring Lean prints for it, and, for
-`Embedding` declared `: id Type`, with one that shows neither sign. `Embedding` must keep
-its `#print` pin even with the section no longer naming it. A `#check` pin of a definition
-the section might name later is refused by the signs. `Placed`, `Val.place` and
-`Metric.names` must each have a `#print` pin: removed, or turned into a `#check`, each
-fails, and each is read by a theorem the section names, as the script says. A statement
-pin whose docstring holds `⋯` or `[...]`, as Lean prints a statement cut short, is
-refused with no option in the file, as if set outside it, and so is a proof printed as
-`⋯`. What shows a definition in Lean's print of a type is tested on the five
+`Embedding` declared `: id Type`, with one that shows neither sign. With its `#print` pin
+removed while the section names it, each of the two fails with the brief's line and the
+`#print` it needs; `Embedding` must keep its `#print` pin even with the section no longer
+naming it. And each must open its print as Lean's does today, `structure` for `Embedding`
+and `def` for `Rule.Figure`: `Embedding` made a `def` that names a new structure, and
+`Rule.Figure` made `protected`, each printed as Lean prints it, are refused with their
+lines. A `#check` pin of a definition the section might name later is refused by the signs.
+`Placed`, `Val.place` and `Metric.names` must each have a `#print` pin: removed, or turned
+into a `#check`, each fails, and each is read by a theorem the section names, as the script
+says. A statement pin whose docstring holds `⋯` or `[...]`, as Lean prints a statement cut
+short, is refused with no option in the file, as if set outside it, and so is a proof
+printed as `⋯`. What shows a definition in Lean's print of a type is tested on the five
 definitions' prints, on propositions that only look like definitions' types, and on types
-that show neither sign, definitions' among them; every `#check` pin in the real file
-shows nothing. Every docstring below said to be what Lean prints was printed by Lean 4.35.
+that show neither sign, definitions' among them; every `#check` pin in the real file shows
+nothing. Every docstring below said to be what Lean prints was printed by Lean 4.35.
 """
 
 import io
@@ -88,6 +95,10 @@ CHECKED = {
 # a sort spelt through a name: its print shows neither sign.
 ID_EMBEDDING = (f"{S}.Interpretation.Embedding : {S}.Interpretation →\n  "
                 f"{S}.Interpretation → id Type")
+# What Lean prints for `#print` of `Interpretation.Embedding` made a `def` that names a new
+# structure, `Interpretation.Embedding'`: none of the new structure's fields shows.
+DEF_EMBEDDING = (f"def {S}.Interpretation.Embedding : {S}.Interpretation →\n  "
+                 f"{S}.Interpretation → Type :=\nfun J I => J.Embedding' I")
 # What Lean prints for `Rule.Figure.restrict` and `Metric.names` cut short: under
 # `pp.deepTerms false` with threshold 0, under `pp.oneline`, and under `pp.maxSteps 1`.
 DEEP_RESTRICT = f"@{RESTRICT} : ∀ {{I J : {S}.Interpretation}}, ⋯"
@@ -97,9 +108,10 @@ STEPS_NAMES = f"def {S}.Metric.names : {{P : ⋯}} → ⋯ :=\nfun {{P}} x => �
 
 
 def prints(names) -> str:
-    """A `#print` pin of each of `names`, each printed as if it were `True`."""
-    return "".join(f"\n/--\ninfo: def {name} : Prop :=\nTrue\n-/\n#guard_msgs in\n#print {name}\n"
-                   for name in names)
+    """A `#print` pin of each of `names`, each printed as if it were `True`, opening with
+    the word Lean's print of it opens with today (`structure` for `Embedding`)."""
+    return "".join(f"\n/--\ninfo: {pins.DEFINITIONS.get(name, 'def')} {name} : Prop :=\nTrue"
+                   f"\n-/\n#guard_msgs in\n#print {name}\n" for name in names)
 
 
 # The five definitions the script requires `#print` pins of, for the cases that do not copy
@@ -137,10 +149,10 @@ class PinTests(unittest.TestCase):
 
     def run_check(self, brief: str, audit: str, library: str | None = None,
                   printed: bool = True) -> tuple[int, str]:
-        """The script's exit code and output. When `printed`, the definitions in
-        `pins.PRINTED` are printed at the end of the audit file, so that a case about
-        something else does not fail for their lack; a copy of the real file prints them
-        already, and passes False."""
+        """The script's exit code and output. When `printed`, the five definitions held to
+        `#print` are printed at the end of the audit file, so that a case about something
+        else does not fail for their lack; a copy of the real file prints them already, and
+        passes False."""
         (self.root / "brief.md").write_text(brief)
         (self.root / "Audit.lean").write_text(audit + (PRINTS if printed else ""))
         argv = ["--brief", str(self.root / "brief.md"), "--audit", str(self.root / "Audit.lean")]
@@ -377,6 +389,86 @@ class PinTests(unittest.TestCase):
                               "shows", out)
                 # Reported once, as a name the section names.
                 self.assertNotIn("no longer named", out)
+
+    def test_a_decoy_in_another_namespace_pins_nothing(self):
+        real = (REPO / pins.AUDIT).read_text()
+        brief = (REPO / pins.BRIEF).read_text()
+        self.assertEqual(pins.NAMESPACE, S)
+        # Every name the section writes is pinned in `Elements.Superposition`.
+        found = {span for _, span in pins.names(pins.section(brief))}
+        self.assertLessEqual({f"{S}.{span}" for span in found}, pins.pins(real))
+        # A theorem `: True` of the same name in `Elements.BookI`, pinned by the `#check`
+        # Lean prints for it, in place of `Embedding`'s `#print` or of `restrict`'s `#check`.
+        cases = {
+            "Interpretation.Embedding": (f"#print {S}.Interpretation.Embedding",
+                                         f"#print {S}.Interpretation.Embedding`"),
+            "Rule.Figure.restrict": (f"#check @{RESTRICT}",
+                                     f"#check @{RESTRICT}`, or `#print` for a definition"),
+        }
+        for short, (command, then) in cases.items():
+            decoy = f"Elements.BookI.{short}"
+            with self.subTest(short):
+                start, end = pin_span(real, command)
+                planted = real[:start] + check_pin(decoy, f"{decoy} : True") + real[end:]
+                # The reader counts the decoy's pin; it pins another declaration.
+                self.assertIn(decoy, pins.pins(planted))
+                code, out = self.run_check(brief, planted, printed=False)
+                self.assertEqual(code, 1, out)
+                self.assertIn(f"brief.md:{self.brief_line(short)}: `{short}` has no statement "
+                              f"pin in {self.root / 'Audit.lean'} (an `info:` docstring, a "
+                              f"bare `#guard_msgs in`, then `{then})", out)
+                self.assertIn(f"✗ 1 of {len(found)} names", out)
+                self.assertNotIn("refused", out)
+
+    def test_a_held_definition_the_section_names_needs_its_print(self):
+        real = (REPO / pins.AUDIT).read_text()
+        brief = (REPO / pins.BRIEF).read_text()
+        for name in pins.DEFINITIONS:
+            short = name.removeprefix(f"{S}.")
+            with self.subTest(short):
+                start, end = pin_span(real, f"#print {name}")
+                code, out = self.run_check(brief, real[:start] + real[end + 1:], printed=False)
+                self.assertEqual(code, 1, out)
+                self.assertIn(f"brief.md:{self.brief_line(short)}: `{short}` has no statement "
+                              f"pin in {self.root / 'Audit.lean'} (an `info:` docstring, a "
+                              f"bare `#guard_msgs in`, then `#print {name}`)", out)
+                # Reported once, as a name the section names.
+                self.assertNotIn("no longer named", out)
+                self.assertNotIn("refused", out)
+
+    def test_a_held_definition_must_open_its_print_as_lean_does_today(self):
+        real = (REPO / pins.AUDIT).read_text()
+        brief = (REPO / pins.BRIEF).read_text()
+        for name, word in pins.DEFINITIONS.items():
+            with self.subTest(name):
+                start, end = pin_span(real, f"#print {name}")
+                self.assertTrue(real[start:end].startswith(f"/--\ninfo: {word} {name} "))
+        # `Embedding` made a `def` that names a new structure, and `Rule.Figure` made
+        # `protected`, each printed as Lean prints it.
+        embedding, figure = f"{S}.Interpretation.Embedding", f"{S}.Rule.Figure"
+        start, end = pin_span(real, f"#print {embedding}")
+        self.assertEqual(real.count(f"info: def {figure} :"), 1)
+        cases = {
+            "Embedding a def": (embedding, "def", "structure", real[:start] + (
+                f"/--\ninfo: {DEF_EMBEDDING}\n-/\n#guard_msgs in\n#print {embedding}\n")
+                + real[end:]),
+            "Rule.Figure protected": (figure, "protected def", "def", real.replace(
+                f"info: def {figure} :", f"info: protected def {figure} :")),
+        }
+        for label, (name, opened, today, planted) in cases.items():
+            short = name.removeprefix(f"{S}.")
+            with self.subTest(label):
+                line = numbered(planted, f"#guard_msgs in\n#print {name}\n")[-1][0]
+                self.assertNotIn(name, pins.printed_pins(planted))
+                code, out = self.run_check(brief, planted, printed=False)
+                self.assertEqual(code, 1, out)
+                why = (f"prints `{opened} {name}`, where Lean prints `{today} {name}` today, as "
+                       "a definition held by name must, since a `#print` shows one level and "
+                       "does not pin the definitions its body or fields name")
+                self.assert_refused(out, [], ((line, f"#print {name}", why),))
+                self.assertIn(f"brief.md:{self.brief_line(short)}: `{short}` has no statement "
+                              f"pin in {self.root / 'Audit.lean'}: its pin at "
+                              f"{self.root / 'Audit.lean'}:{line} {why}", out)
 
     def test_a_definition_held_by_name_needs_its_print_though_the_section_drops_it(self):
         real = (REPO / pins.AUDIT).read_text()

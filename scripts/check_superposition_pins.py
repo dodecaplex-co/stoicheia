@@ -7,22 +7,29 @@
 The section is the one headed "## The restriction theorem" in
 docs/briefs/0009-superposition.md, up to the next heading of its level or above. Each
 name in backticks there, one Lean identifier, dotted or not, must have a statement pin in
-Audit/Superposition.lean, under its full name: the name in `Elements.Superposition`, where
-the restriction's theorems are, or else in `Elements.BookI`, as the brief writes I.4's and
-I.8's. A statement pin is an `info:` docstring whose first line names the declaration,
-then a bare `#guard_msgs in`, then `#check @<full name>` for a theorem, or `#print <full
-name>` for a definition, since `#check` shows only a definition's type and not its body.
-An axiom pin, `#print axioms`, is not a statement pin: a weaker statement under the same
-name can keep its axioms. The two definitions the section names, `Rule.Figure` and
+Audit/Superposition.lean, under its full name in `Elements.Superposition`, where the
+restriction's theorems and definitions are. That is its one namespace: a pin of the same
+name in another, such as `Elements.BookI`, pins another declaration and does not count. A
+statement pin is an `info:` docstring whose first line names the declaration, then a bare
+`#guard_msgs in`, then `#check @<full name>` for a theorem, or `#print <full name>` for a
+definition, since `#check` shows only a definition's type and not its body. An axiom pin,
+`#print axioms`, is not a statement pin: a weaker statement under the same name can keep
+its axioms. The two definitions the section names, `Rule.Figure` and
 `Interpretation.Embedding`, are held to `#print` by name: a `#check` pin of either is
-refused, whatever it prints, and each must have a `#print` pin, even if the section stops
-naming it. Three definitions the section does not name must have a `#print` pin as well,
-since theorems it names read them: `Placed`, read by `Rule.of_placement`; `Val.place`, by
-`Metric.holds_place`; and `Metric.names`, by `exportable_iff`, `not_exportable_second` and
-`not_exportable_third`. `lake build Audit` checks that each pin's docstring is what Lean
-prints; this script checks that the pins exist, and that the audit file holds nothing
-else, so that no option or declaration in it can change what a pin prints or which
-declaration it names.
+refused, whatever it prints, and each counts as pinned only by its `#print` pin, which it
+must have even if the section stops naming it. Three definitions the section does not
+name must have a `#print` pin as well, since theorems it names read them: `Placed`, read
+by `Rule.of_placement`; `Val.place`, by `Metric.holds_place`; and `Metric.names`, by
+`exportable_iff`, `not_exportable_second` and `not_exportable_third`. A `#print` pin shows
+one level: it does not pin the definitions its body or fields name, so a change to one of
+those passes under it. So the print of each of the two held by name must also open as
+Lean's does today, with `def` for `Rule.Figure` and `structure` for
+`Interpretation.Embedding`: `Embedding` cannot become a `def` that names a new structure,
+whose fields no pin would show. `Rule.Figure`'s body could still be made to name a new
+definition, which its print would show by name only. `lake build Audit` checks that each
+pin's docstring is what Lean prints; this script checks that the pins exist, and that the
+audit file holds nothing else, so that no option or declaration in it can change what a
+pin prints or which declaration it names.
 
 A `#check` pin of any other name is refused, with its line, when Lean's print of the
 type, in its docstring, shows that the type is not a proposition, so that what it pins is
@@ -37,16 +44,17 @@ neither sign cannot be told from a theorem's statement by its print, so a defini
 such a type that the section names later, pinned by `#check`, would pass: a type such as
 `Nat → Nat`, or one whose sort is spelt through a name, such as `id Type`, `outParam
 Type` or an `abbrev` of a sort, which Lean prints as it is written (`… → id Type`). That
-is why the five definitions above do not rest on the signs. And a statement pin whose docstring holds `⋯` or `[...]`,
-the marks Lean leaves where it cuts a print short, is refused with the line of the mark,
-wherever the option was set, in the audit file or outside it: `pp.deepTerms` and
-`pp.maxSteps`, at its default on a long enough statement, leave `⋯`, and `pp.oneline`
-leaves `[...]`. A docstring that matches a shortened print pins only part of the
-statement. The default `pp.proofs` also prints a proof inside a term as `⋯`, and such a pin
-is refused too; no pin has one. An option that hides part of a print with no mark, such
-as `pp.piBinderTypes false`, which drops the types of binders, is not seen: since the
-audit file may set no option, it could be set only outside the file, in the lakefile, a
-protected file, and that protection holds it off, not this script.
+is why the five definitions above do not rest on the signs. And a statement pin whose
+docstring holds `⋯` or `[...]`, the marks Lean leaves where it cuts a print short, is
+refused with the line of the mark, wherever the option was set, in the audit file or
+outside it: `pp.deepTerms` and `pp.maxSteps`, at its default on a long enough statement,
+leave `⋯`, and `pp.oneline` leaves `[...]`. A docstring that matches a shortened print
+pins only part of the statement. The default `pp.proofs` also prints a proof inside a
+term as `⋯`, and such a pin is refused too; no pin has one. An option that hides part of
+a print with no mark, such as `pp.piBinderTypes false`, which drops the types of binders,
+is not seen: since the audit file may set no option, it could be set only outside the
+file, in the lakefile, a protected file, and that protection holds it off, not this
+script.
 
 So the audit file may hold only its leading `import` lines, one module each; comments,
 `--`, `/- … -/` and the module doc `/-! … -/`; and pins, each a docstring `/-- … -/`, then
@@ -73,18 +81,21 @@ Not checked:
 * a single letter, which is a variable; and anything in backticks that is not one
   identifier, such as `Rule I` or `∀ c ∈ cites, c.Holds I`.
 
-Fenced code in the section is skipped. Exits 0 when every name is pinned, the five
-definitions are printed, the audit file holds nothing else and Audit.lean imports it; 1
-otherwise, printing `FILE:LINE: `name` has no statement pin in AUDIT` for each name not
-pinned, `AUDIT: `name`, read by …, has no `#print` pin` for each of the three not
-printed, `AUDIT: `name`, held to `#print` by name …, has no `#print` pin` for each of the
-two the section no longer names and that is not printed (one it names is reported as a
-name not pinned), `AUDIT:LINE: `…` is not a leading import, a comment or a pin` for each
-line refused, `AUDIT:LINE: `…` pins a definition by `#check`` for a `#check` of a
-definition, `AUDIT:LINE: `…` holds `⋯`` for a shortened print, and a line naming
-Audit.lean if it does not import the audit file; 2 when the brief, its section, the audit
-file or Audit.lean cannot be read, or when the section names no theorem at all, which
-means it was misread. Standard library only.
+Fenced code in the section is skipped. Exits 0 when every name is pinned, each of the five
+definitions has a `#print` pin that counts, the audit file holds nothing else and
+Audit.lean imports it; 1 otherwise, printing `FILE:LINE: `name` has no statement pin in
+AUDIT` for each name not pinned (one of the two held by name that the section names is
+among them when it has no `#print` pin that counts), `AUDIT: `name`, read by …, has no
+`#print` pin` for each of the three not printed, `AUDIT: `name`, held to `#print` by name
+…, has no `#print` pin` for each of the two the section no longer names and that is not
+printed, `AUDIT:LINE: `…` is not a leading import, a comment or a pin` for each line
+refused, `AUDIT:LINE: `…` pins a definition by `#check`` for a `#check` of a definition,
+`AUDIT:LINE: `…` prints `def …`, where Lean prints `structure …` today` (or the like) for
+a `#print` of one of the two held by name that does not open as Lean's does today,
+`AUDIT:LINE: `…` holds `⋯`` for a shortened print, and a line naming Audit.lean if it
+does not import the audit file; 2 when the brief, its section, the audit file or
+Audit.lean cannot be read, or when the section names no theorem at all, which means it was
+misread. Standard library only.
 """
 
 import argparse
@@ -101,17 +112,21 @@ AUDIT = Path("Audit/Superposition.lean")
 LIBRARY = Path("Audit.lean")
 MODULE = ".".join(AUDIT.with_suffix("").parts)
 HEADING = "## The restriction theorem"
-# The namespaces the brief writes names in, in the order they are tried: each gives a full
-# name, and a name is pinned only when one of these full names is.
-NAMESPACES = ("Elements.Superposition", "Elements.BookI")
+# The one namespace the brief writes the section's names in: a name is pinned only under
+# its full name there. A pin of the same name in another namespace, such as
+# `Elements.BookI`, pins another declaration, so none is tried.
+NAMESPACE = "Elements.Superposition"
 
-# The definitions the section names, held to `#print` by name: a `#check` pin of either is
-# refused whatever it prints, and each must have a `#print` pin, as each in `PRINTED` must.
-# The signs below are not enough for them: a sort spelt through a name, as in a structure
-# declared `: id Type`, shows neither sign, so a field added to it would pass under a
-# `#check`. The signs stay for a definition the section names later.
-DEFINITIONS = ("Elements.Superposition.Rule.Figure",
-               "Elements.Superposition.Interpretation.Embedding")
+# The definitions the section names, held to `#print` by name, each with the word Lean's
+# print of it opens with today: a `#check` pin of either is refused whatever it prints, each
+# counts as pinned only by its `#print` pin, which it must have as each in `PRINTED` must,
+# and that print must open with the word. The signs below are not enough for them: a sort
+# spelt through a name, as in a structure declared `: id Type`, shows neither sign, so a
+# field added to it would pass under a `#check`. And a `#print` shows one level, so
+# `Interpretation.Embedding` made a `def` that names a new structure would leave that
+# structure's fields unpinned. The signs stay for a definition the section names later.
+DEFINITIONS = {"Elements.Superposition.Rule.Figure": "def",
+               "Elements.Superposition.Interpretation.Embedding": "structure"}
 
 # Definitions the section does not name, each with the theorems the section names that
 # read it. Each must be printed whole by `#print` all the same: a change to its body would
@@ -145,8 +160,8 @@ GUARDED = re.compile(
     r"(?P<command>#check\s+@(?P<check>\S+)|#print\s+(?!axioms\b)(?P<print>\S+))")
 # The first line of the docstring, which must name the declaration: `@name :` or `name :`
 # for `#check`, `def name`, `structure name` and the like for `#print`.
-KEYWORD = r"(?:(?:private|protected|noncomputable|unsafe|partial)\s+)*" \
-          r"(?:def|theorem|structure|class|inductive|abbrev|opaque|instance)\s+"
+KEYWORD = r"(?P<keyword>(?:(?:private|protected|noncomputable|unsafe|partial)\s+)*" \
+          r"(?:def|theorem|structure|class|inductive|abbrev|opaque|instance))\s+"
 # What tells, in Lean's print of a type, that the type is not a proposition. A sort, as
 # Lean prints one: `Prop`, `Type`, `Sort u`, `Type (max u v)` and the like; a type that
 # ends in one is never a proposition.
@@ -190,10 +205,21 @@ class Pin(NamedTuple):
     options_line: int       # the line of the guard's options
     shortened: tuple[int, str] | None   # the line and mark of a shortened print
     sign: str | None        # for `#check`, what in its type shows a definition
+    keyword: str | None     # for `#print`, the word its print opens with, such as `def`
 
     def by_name(self) -> bool:
         """Whether the pin is a `#check` of a definition held to `#print` by name."""
         return self.command == "check" and self.name in DEFINITIONS
+
+    def opening(self) -> str | None:
+        """For a `#print` of a definition held by name whose print does not open with the
+        word Lean's does today, why it does not count, said after the pin; None otherwise."""
+        expected = DEFINITIONS.get(self.name)
+        if self.command != "print" or expected is None or self.keyword == expected:
+            return None
+        return (f"prints `{self.keyword} {self.name}`, where Lean prints `{expected} "
+                f"{self.name}` today, as a definition held by name must, since a `#print` "
+                "shows one level and does not pin the definitions its body or fields name")
 
     def fault(self) -> tuple[int, str] | None:
         """Why the pin does not pin its statement, with the line to point to, said after
@@ -211,6 +237,8 @@ class Pin(NamedTuple):
             return self.line, ("is a `#check` of a definition held to `#print` by name, "
                                "whatever its print shows, since `#check` shows only a "
                                "definition's type; only `#print` pins a definition")
+        if why := self.opening():
+            return self.line, why
         if self.sign:
             return self.line, (f"is a `#check`, but Lean prints the type {self.sign}, so "
                                "what it pins is a definition, of which `#check` shows only "
@@ -459,7 +487,8 @@ def read_pins(text: str) -> list[Pin]:
             options=guarded.group("options").strip(),
             options_line=line(after[1] + guarded.start("options")),
             shortened=shortened,
-            sign=definition_sign(printed[named.end():]) if guarded.group("check") else None))
+            sign=definition_sign(printed[named.end():]) if guarded.group("check") else None,
+            keyword=None if guarded.group("check") else " ".join(named["keyword"].split())))
     return found
 
 
@@ -492,14 +521,17 @@ def printed_pins(text: str) -> set[str]:
 
 def refused_pins(text: str) -> list[tuple[int, str]]:
     """Each line of a pin the audit file may not hold, though it is shaped as one, with
-    why: the mark of a shortened print, and a `#check` of a definition, held to `#print`
-    by name or showing a sign. (A guard with options is one of the `strays`.)"""
+    why: the mark of a shortened print; a `#check` of a definition, held to `#print` by
+    name or showing a sign; and a `#print` of one held by name that does not open as
+    Lean's does today. (A guard with options is one of the `strays`.)"""
     found = []
     for pin in read_pins(text):
         if pin.shortened:
             line, mark = pin.shortened
             found.append((line, f"holds `{mark}`, where Lean cut its print short, so the pin "
                                 f"of `{pin.name}` matches only part of the statement"))
+        if why := pin.opening():
+            found.append((pin.line, why))
         if pin.by_name():
             found.append((pin.line, f"pins a definition by `#check`, which shows only its "
                                     f"type (`{pin.name}` is held to `#print` by name, whatever "
@@ -512,9 +544,9 @@ def refused_pins(text: str) -> list[tuple[int, str]]:
     return found
 
 
-def full_names(name: str) -> list[str]:
-    """`name`, as the brief writes it, in full in each namespace it may be in."""
-    return [f"{space}.{name}" for space in NAMESPACES]
+def full_name(name: str) -> str:
+    """`name`, as the brief writes it, in full in its one namespace."""
+    return f"{NAMESPACE}.{name}"
 
 
 def read(path: Path) -> str:
@@ -541,7 +573,8 @@ def check(brief: Path, audit: Path, library: Path = ROOT / LIBRARY) \
     names without a statement pin, each as a message; the definitions in `PRINTED` without
     a `#print` pin, each as a message; those in `DEFINITIONS` the section no longer names
     and without a `#print` pin, each as a message (one it names is among the names without
-    a statement pin, since only a `#print` pins it); and how many names the section has."""
+    a statement pin, since only its `#print` pin counts); and how many names the section
+    has."""
     shown_brief, shown_audit = display(brief), display(audit)
     found = names(section(read(brief)))
     if not found:
@@ -558,25 +591,24 @@ def check(brief: Path, audit: Path, library: Path = ROOT / LIBRARY) \
     if MODULE not in imports(read(library)):
         refused.append(f"{display(library)}: does not import {MODULE} among its leading "
                        "imports, so `lake build Audit` does not run the pins")
+    printed, every_pin = printed_pins(text), read_pins(text)
     missing = []
     for number, name in found:
-        candidates = full_names(name)
-        if any(c in full for c in candidates):
+        qualified = full_name(name)
+        # A definition held by name counts only by its `#print` pin.
+        if qualified in (printed if qualified in DEFINITIONS else full):
             continue
         message = f"{shown_brief}:{number}: `{name}` has no statement pin in {shown_audit}"
-        weakly = [weak[c] for c in candidates if c in weak]
-        definition = next((c for c in candidates if c in DEFINITIONS), None)
-        if weakly:
-            line, why = weakly[0]
+        if qualified in weak:
+            line, why = weak[qualified]
             message += f": its pin at {shown_audit}:{line} {why}"
-        elif definition:
+        elif qualified in DEFINITIONS:
             message += (f" (an `info:` docstring, a bare `#guard_msgs in`, then `#print "
-                        f"{definition}`)")
+                        f"{qualified}`)")
         else:
             message += (f" (an `info:` docstring, a bare `#guard_msgs in`, then `#check "
-                        f"@{candidates[0]}`, or `#print` for a definition)")
+                        f"@{qualified}`, or `#print` for a definition)")
         missing.append(message)
-    printed, every_pin = printed_pins(text), read_pins(text)
 
     def no_print(name: str, what: str) -> str:
         message = f"{shown_audit}: `{name}`, {what}, has no `#print` pin"
@@ -591,7 +623,7 @@ def check(brief: Path, audit: Path, library: Path = ROOT / LIBRARY) \
             message += f" (an `info:` docstring, a bare `#guard_msgs in`, then `#print {name}`)"
         return message
 
-    named = {full for _, name in found for full in full_names(name)}
+    named = {full_name(name) for _, name in found}
     unprinted = [no_print(name, f"read by {readers(name)}") for name in PRINTED
                  if name not in printed]
     dropped = [no_print(name, "held to `#print` by name, though the section no longer names it")
@@ -625,7 +657,8 @@ def main(argv=None) -> int:
               "imports, comments and pins (a docstring, a bare `#guard_msgs in`, then "
               "`#check @name`, `#print name` or `#print axioms name`), so that nothing in it "
               "changes what a pin prints or which declaration it names; a definition is "
-              "pinned by `#print`, never `#check`; no statement pin may be cut short (`⋯`, "
+              "pinned by `#print`, never `#check`, and the two held by name open their prints "
+              "as Lean's do today; no statement pin may be cut short (`⋯`, "
               f"`[...]`); and {display(args.library)} must import {MODULE}")
     if missing:
         print(f"✗ {len(missing)} of {count} names in {HEADING!r} have no statement pin")
@@ -637,11 +670,11 @@ def main(argv=None) -> int:
               f"have no `#print` pin and are no longer named in {HEADING!r}")
     if refused or missing or unprinted or dropped:
         return 1
-    shown = [name.removeprefix(f"{NAMESPACES[0]}.") for name in PRINTED]
+    shown = [name.removeprefix(f"{NAMESPACE}.") for name in (*DEFINITIONS, *PRINTED)]
     print(f"✓ every name in {HEADING!r}, {count} in all, has a statement pin in "
-          f"{display(args.audit)}, by `#print` for a definition, and {', '.join(shown[:-1])} "
-          f"and {shown[-1]} are printed whole; the file holds only imports, comments and "
-          f"pins, none cut short, and {display(args.library)} imports it")
+          f"{display(args.audit)} under its name in {NAMESPACE}, and {', '.join(shown[:-1])} "
+          f"and {shown[-1]} each have a `#print` pin; the file holds only imports, comments "
+          f"and pins, none cut short, and {display(args.library)} imports it")
     return 0
 
 
