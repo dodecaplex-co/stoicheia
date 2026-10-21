@@ -309,9 +309,10 @@ python3 scripts/check_links.py
 ```
 
 Review the generated differences and commit them with their sources, so that regenerating
-leaves them unchanged and the `git status` line prints nothing. Four more jobs run on
-their own, each in isolation. The first three have direct local commands; the last two
-commands below run the acceptance job's tests and checklist without its CI comparison:
+leaves them unchanged and the `git status` line prints nothing. The `negative`, `model`,
+`formal-model` and `acceptance` jobs run on their own, each in isolation. The first three
+have direct local commands; the last two commands below run the acceptance job's tests and
+checklist without its CI comparison:
 
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
