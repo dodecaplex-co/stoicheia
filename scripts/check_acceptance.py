@@ -351,7 +351,8 @@ def check_certificate(facts: dict) -> None:
 
 def check_style_rules() -> None:
     """check_style.py as CI runs it, each failure sorted by the file it names: a
-    proposition's review record to P9, whatever its rule."""
+    proposition's review record to P9, whatever its rule. Each finding is quoted whole, as
+    one code span."""
     done = run([PY, "scripts/check_style.py", "--quiet"])
     found = 0
     for line in done.stdout.splitlines():
@@ -360,7 +361,17 @@ def check_style_rules() -> None:
             continue
         found += 1
         rule, path, number, msg = m.groups()
+        # The style check reads the report this run replaces, and E5 quotes its findings in
+        # the new one. Each finding goes in whole, as one code span whose fence is one
+        # backtick longer than the longest run of backticks in it, with a space inside each
+        # end. S12 then finds no name in it, for the span opens with the rule and the file,
+        # and S1, S7, S8 and the other text rules find nothing in quoted code; so no finding
+        # on the old report comes back in the next one (issue #178). And a reader sees each
+        # message exactly as the check printed it: GitHub takes no `<book>` for HTML and
+        # sets no `2*a*b` in italic.
         text = f"{rule} {path}{':' + number if number else ''}: {msg}"
+        fence = "`" * (max(map(len, re.findall(r"`+", text)), default=0) + 1)
+        text = f"{fence} {text} {fence}"
         who = owner(path)
         if who is None:
             fail("edition", "E5", text)
@@ -879,13 +890,22 @@ def check_book_record(book: str) -> None:
 # ---------------------------------------------------------------------------------------
 # The report.
 
+# The digits of the report's revision: heath.COMMIT's form (7 to 40), which the style
+# check's S12 reads as a commit beside the word "Revision" (STYLE, section 8). Git's own
+# short form varies with the clone and with core.abbrev, and a short form under 7 digits
+# that begins with a letter is a name S12 puts to Lean (issue #178).
+REVISION_DIGITS = 12
+
+
 def revision(output: Path, *more: Path) -> str:
-    """The commit whose files were read: HEAD, or, while HEAD's commits change nothing
-    but the report, the commit before them, so that regenerating the report on the same
-    files writes the same report. Any other change, staged, unstaged or untracked (a new
-    book record, say), is noted as not yet committed; the files this run writes (`output`
-    and `more`, the verdicts of --json) are not."""
-    head = run(["git", "rev-parse", "--short", "HEAD"])
+    """The commit whose files were read, with REVISION_DIGITS digits: HEAD, or, while
+    HEAD's commits change nothing but the report, the commit before them, so that
+    regenerating the report on the same files writes the same report. Any other change,
+    staged, unstaged or untracked (a new book record, say), is noted as not yet
+    committed; the files this run writes (`output` and `more`, the verdicts of --json)
+    are not."""
+    short = f"--short={REVISION_DIGITS}"
+    head = run(["git", "rev-parse", short, "HEAD"])
     if head.returncode != 0:
         return "not a git checkout"
     reports = {REPORT.relative_to(ROOT).as_posix()}
@@ -897,7 +917,7 @@ def revision(output: Path, *more: Path) -> str:
     commit = head.stdout.strip()
     while True:
         changed = run(["git", "diff", "--name-only", f"{commit}^", commit])
-        parent = run(["git", "rev-parse", "--short", f"{commit}^"])
+        parent = run(["git", "rev-parse", short, f"{commit}^"])
         if changed.returncode or parent.returncode or not changed.stdout.split() \
                 or not set(changed.stdout.split()) <= reports:
             break
