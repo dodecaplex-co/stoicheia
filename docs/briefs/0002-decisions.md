@@ -2194,6 +2194,12 @@ findings:
   theorems, while the existing Circle 3 exclusions still constrain dependencies.
   Every expectation value stays unchanged. No check, field or requirement changes.
 
+- **Review schema wording.** [review/SCHEMA.md](../../review/SCHEMA.md) now describes the
+  style check's reading of review notes, distinguishes items the schema permits from
+  verdicts that count for acceptance, and records I.40's completed stage-2 change, to match
+  the checks and records on main. The TOML fixtures read by `scripts/heath.py` and the
+  checks' requirements are unchanged.
+
 - **The stage test reads the program's words.**
   `test_renderer_validation_loosened_with_content_is_kept_apart` in
   [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py), a protected file,
@@ -2351,7 +2357,30 @@ findings:
   companion lookup on parse failure into H10, while the modern rules keep their byte
   parser and readers and S23 keeps main's helpers.
 
-
+- **The modern figure is shown beneath its paragraph (#49).**
+  [scripts/render.py](../../scripts/render.py) places each existing modern figure
+  immediately after its whole modern way paragraph, with a blank line on each side;
+  [STYLE](../STYLE.md), sections 2 and 7, now describes that placement as present.
+  It uses `check_style.modern_span`, preserving source indentation, comments and code,
+  and checks placement and refusal against ten cases before writing pages. An existing
+  modern figure with no valid paragraph stops the render with a diagnostic naming the
+  proposition, the figure and the missing paragraph, including when the mishnah file
+  is absent. With no modern figure, rendering is unchanged.
+  [tests/test_check_style.py](../../tests/test_check_style.py) gains the two renderer
+  regression tests for an absent mishnah and an absent modern figure; its placement and
+  page caller tests now require refusal when the paragraph is missing or invalid, while
+  keeping the positive cases. The original placement change was content:
+  [WORKFLOW](../WORKFLOW.md), section 10, says, "A change to what `render.py` writes is
+  not a check change in this sense, since the pages it regenerates show it".
+  These orders keep the output regression tests with that content; they add checks of
+  the output, while the source figure rules S24 and S25 precede it in train H10.
+  The refusal changes what the renderer accepts: `scripts/render.py` and
+  `tests/test_check_style.py` are the guard changes for `security-review`.
+  Train F1 carries the renderer and its regenerated pages. Because origin/main's
+  renderer would write those pages without the figures, `scripts/safe_push.py` counts
+  the change as a check change, which lands apart from content the checks judge; so
+  [ACCEPTANCE](../ACCEPTANCE.md)'s P8 words for S24 and S25 and for the letter rule S26
+  follow in train F2, with the eight further figures of the modern way.
 
 - **The Jev audit's question generator.** On 19 October 2026 the owner approved running Jev,
   TypeSafe's decision model, as the independent audit of brief 0005's stage 6

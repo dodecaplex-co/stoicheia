@@ -155,9 +155,8 @@ where to look:
    theorem, its porism, its companions), with Heath's references beside the Lean's
    citations, the postulates, definitions taken as axioms, Common Notions and tacit
    rules, and the generated line naming the shared steps that bring in propositions.
-8. **The mishnah,** our commentary (section 3). S24 checks the source paragraph for any
-   modern figure (section 7); the pending renderer change (train F1) will place that
-   figure under its paragraph "The modern way".
+8. **The mishnah,** our commentary (section 3). The page sets any modern figure under
+   its paragraph "The modern way" (section 7); S24 checks that the source has the paragraph.
 9. **Further reading,** when something apt exists (section 6).
 10. **The foot of the page:** links to the scan leaves of Heath's text and figure, the
     thanks to the authors of System E and LeanEuclid, and the navigation again.
@@ -389,8 +388,9 @@ strikethrough (write a space or `\sim`), and no backtick, which opens code; and 
 stands straight after a letter or a digit: `x_{1}^{2}`, not `x^{2}_{1}`, and
 `\mathrm{A_1}`, not `\mathrm{A}_1`. A shape not yet found may still break, so the reviewer
 sees each span rendered on GitHub (section 8, the reviewer's checklist, item 5).
-`scripts/render.py` copies the mishnah onto its page unchanged but for its count comments,
-so the page shows the same mathematics.
+`scripts/render.py` copies the mishnah onto its page unchanged but for its count comments
+and the insertion of its modern figure beneath "The modern way", so the page shows the
+same mathematics.
 
 **System E and LeanEuclid** are thanked by name in every page's footer, so the mishnah
 does not thank them again; a particular debt is still said where it falls (Intersection 4
@@ -476,9 +476,10 @@ would fit any page of the book is left out.
 
 ## 7. Figures
 
-Two standard figures per proposition, on the parchment card (`#fbf7ee`, a rect with
-`rx="10"` over the whole canvas), in Georgia. Where the modern way needs its own picture,
-it may have a third. Section 2 says what each figure does.
+Each proposition has two required figures, `NN-idea.svg` and `NN.svg`, on the parchment
+card (`#fbf7ee`, a rect with `rx="10"` over the whole canvas), in Georgia. It may also
+have `NN-modern.svg` beneath its paragraph **The modern way.** Section 2 says why the
+first two are required.
 
 **`NN-idea.svg`, the figure at a glance.** A canvas of 400 × 300 **[checked]**. Byrne's red
 `#d0312d`, yellow `#f2b705`, blue `#1f5aa6` and black `#222222`, and white only for grid
@@ -552,9 +553,8 @@ validate a figure. Before a changed figure is signed off, render it
 
 **`NN-modern.svg`, the figure of the modern way.** Where the paragraph that opens **The
 modern way.** is easier to follow with a picture (its coordinates, its vectors, Book II's
-lengths a and b), it has a figure of its own. S24 checks that the source has the paragraph
-for the figure to stand under; the pending renderer change (train F1) will put it there
-on the page.
+lengths a and b), it has a figure of its own. The page sets the figure under that paragraph;
+S24 checks that the source has the paragraph.
 It is drawn as Euclid's figure is: the same canvas, palette and strokes **[checked]**, and
 Euclid's figure's letters, upright at 17 **[checked]**, at the points his figure gives
 them, placed on the axes or in the plane as the paragraph places them. What the
