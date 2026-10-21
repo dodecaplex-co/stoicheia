@@ -3588,13 +3588,14 @@ findings:
   now: the hash then records what its reviewer read, and no new reading. It reads the
   commit by its full id, so a branch or tag named as the commit is never read in its
   place. Every other record is listed as needing a reader, and is never stamped by the
-  migration. On main at `8e9a1879` it would write 92 records; seven were
+  migration. On main at `756bdbae` it would write 92 records; seven were
   edited after their stamp commit and need a reader: II.2, II.6, II.7, II.8 and II.10,
   whose passages name Book I's helpers as `BookI.…` since the renaming of 19 October;
   III.4, whose notes changed their quotation marks and a word; and III.13, whose
   `[figure]` note was written after the commit its page names. The migration waits for
-  the branches in flight that re-stamp records: train Tw2 (Book I's Postulate 1 joins, and
-  the records read again), the Book III cascade's re-stamps (ship C7) and axiom wave two.
+  the branches in flight that re-stamp records, the Book III cascade's re-stamps (ship C7)
+  and axiom wave two, as it waited for train Tw2 (Book I's Postulate 1 joins), landed as
+  [#193](https://github.com/jackChallis/stoicheia/pull/193).
   It reads each record's own stamp commit, so it treats their stamps as any other, and it
   runs on main after them, in a records pull request of its own. Then a reader reads and
   stamps the records it lists, and with them #77's item 3: III.13's `[figure]` note read

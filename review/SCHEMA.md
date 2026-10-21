@@ -210,7 +210,7 @@ record as TOML reads it, with `[review]` set aside, which holds the stamps and t
 reviewer's account of the reading, and with `fingerprint` set aside, which stamps the
 statements: so writing a stamp never changes the text it stamps. Comments, layout and the
 order of keys are not part of the text; every key and value of the other sections is.
-`[review]`'s own `stage`, `run` and `items` are not part of the text: a change to them
+`[review]`'s own `stage`, `reviewer`, `run` and `items` are not part of the text: a change to them
 after the stamp is not caught by `text`, and is seen only by whoever reviews the pull
 request.
 
