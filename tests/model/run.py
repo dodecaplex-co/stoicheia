@@ -26,10 +26,10 @@ runs again from that copy, so that every module the run imports and every harnes
 is that commit's, whatever the checkout does meanwhile. It writes nothing unless the
 harness files are as committed when it begins, and the commit, their state and their hash
 are the same when it ends; stopped by SIGTERM, SIGHUP or SIGINT while it runs or
-publishes, it stops the run from the copy, rolls any publication back, removes the copy and
-writes nothing. Then it saves each harness's output in results/, under a header naming the commit,
-the harness's hash, the seeds and the Python; writes the axiom-by-axiom table to
-results/summary.txt; and brings the counts in MODEL.md up to date.
+publishes, it stops the run from the copy, rolls any publication back, removes the copy
+and writes nothing. Then it saves each harness's output in results/, under a header naming
+the commit, the harness's hash, the seeds and the Python; writes the axiom-by-axiom table
+to results/summary.txt; and brings the counts in MODEL.md up to date.
 results_check.py, beside this file but not one of HARNESS, holds what --write wrote to the
 harness as it hashes now, and to what `judge` accepts (docs/WORKFLOW.md, section 8).
 
@@ -554,14 +554,21 @@ def counts_block(runs, prov):
 
 def publish(outputs, expected_signature=None):
     """Replace every `(path, text)` as one publication, restoring every prior directory entry
-    if publication is interrupted. Destination symbolic links are replaced, not followed."""
+    if publication is interrupted. Destination symbolic links are replaced, not followed.
+    SIGTERM, SIGHUP and SIGINT are held back until every file is replaced or every file is
+    back, so that no handler runs during a rollback, not even a second signal's: a Ctrl-C
+    reaches both processes of a --write, and the one that made the copy then sends this
+    one SIGTERM."""
     stages = []
     journal = []
     stops = {getattr(signal, name) for name in ('SIGTERM', 'SIGHUP', 'SIGINT')
              if hasattr(signal, name)}
     caller_mask = (signal.pthread_sigmask(signal.SIG_BLOCK, stops)
                    if stops and hasattr(signal, 'pthread_sigmask') else None)
-    mask_restored = False
+    held = stops - set(caller_mask) if caller_mask is not None else set()
+
+    def interrupted():
+        return bool(held) and bool(signal.sigpending() & held)
 
     def remember(path):
         if not os.path.lexists(path):
@@ -625,28 +632,20 @@ def publish(outputs, expected_signature=None):
                     and provenance_signature(provenance()) != expected_signature:
                 sys.exit('the model harness provenance changed while it ran, so nothing is '
                          'written')
-            if caller_mask is not None:
-                deliverable = stops - set(caller_mask)
-                pending = signal.sigpending() & deliverable
-                signal.pthread_sigmask(signal.SIG_SETMASK, caller_mask)
-                if pending:
-                    raise InterruptedError('publication interrupted')
-                signal.pthread_sigmask(signal.SIG_BLOCK, stops)
+            if interrupted():
+                raise InterruptedError('publication interrupted')
             for _, backup, _ in journal:
                 if backup is not None:
                     os.unlink(backup)
             clean_stages()
-            if caller_mask is not None:
-                signal.pthread_sigmask(signal.SIG_SETMASK, caller_mask)
-                mask_restored = True
+            if interrupted():
+                raise InterruptedError('publication interrupted')
         except BaseException:
-            if caller_mask is not None:
-                signal.pthread_sigmask(signal.SIG_BLOCK, stops)
             restore()
             clean_stages()
             raise
     finally:
-        if caller_mask is not None and not mask_restored:
+        if caller_mask is not None:
             signal.pthread_sigmask(signal.SIG_SETMASK, caller_mask)
 
 

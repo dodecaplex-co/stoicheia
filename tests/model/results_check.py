@@ -32,10 +32,12 @@ unchanged pass. It drives --write's guards too, and runs `run.py --full --write`
 in a git repository of its own, on a made-up harness that changes and restores the
 checkout's harness while the run goes on, and on one stopped by SIGTERM partway. For each
 of SIGTERM, SIGHUP and SIGINT, it also stops publication after a file is moved to its
-backup, after a replacement, after the check for a pending signal, after the signals are
-blocked again and while the old files are removed, and checks each time that every earlier
-file returns; and it changes a harness file during publication and checks that the earlier
-files return.
+backup, after a replacement, after the first check for a pending signal, while the old
+files are removed and after they are, and checks each time that every earlier file
+returns. It sends SIGINT and SIGTERM together, as a Ctrl-C at a terminal reaches a --write,
+and SIGHUP and SIGTERM together, after a replacement and while the old files are removed,
+and checks the same. And it changes a harness file during publication and checks that the
+earlier files return.
 """
 import contextlib
 import hashlib
@@ -614,7 +616,8 @@ def output_tree(root):
 
 
 def publication_signal_self_test():
-    """Interrupt each publication boundary and require its whole prior tree back."""
+    """Stop publication at five points with each of SIGTERM, SIGHUP and SIGINT; require every
+    earlier file back."""
     stops = [getattr(signal, name) for name in ('SIGTERM', 'SIGHUP', 'SIGINT')
              if hasattr(signal, name)]
     if os.name != 'posix' or not hasattr(signal, 'pthread_sigmask') or not stops:
@@ -622,7 +625,7 @@ def publication_signal_self_test():
 
     for stop in stops:
         for timing in ('after backup rename', 'after replacement', 'after pending check',
-                       'after second block', 'during backup cleanup'):
+                       'during backup cleanup', 'after backup cleanup'):
             with tempfile.TemporaryDirectory() as tmp:
                 results = os.path.join(tmp, 'results')
                 model_md = os.path.join(tmp, 'MODEL.md')
@@ -642,10 +645,9 @@ def publication_signal_self_test():
                 new = dict(old, commit='c' * 40 + f' ({COMMITTED})', date='2000-01-02')
                 real_replace = os.replace
                 real_pending = signal.sigpending
-                real_mask = signal.pthread_sigmask
                 real_unlink = os.unlink
                 sent = False
-                blocks = 0
+                checks = 0
 
                 def interrupting_replace(source, destination):
                     nonlocal sent
@@ -661,22 +663,16 @@ def publication_signal_self_test():
                         os.kill(os.getpid(), stop)
 
                 def interrupting_pending():
-                    nonlocal sent
+                    nonlocal sent, checks
+                    checks += 1
+                    if timing == 'after backup cleanup' and checks == 2 and not sent:
+                        sent = True
+                        os.kill(os.getpid(), stop)
                     pending = real_pending()
                     if timing == 'after pending check' and not sent:
                         sent = True
                         os.kill(os.getpid(), stop)
                     return pending
-
-                def interrupting_mask(how, mask):
-                    nonlocal blocks, sent
-                    previous_mask = real_mask(how, mask)
-                    if how == signal.SIG_BLOCK and stop in set(mask):
-                        blocks += 1
-                        if timing == 'after second block' and blocks == 2 and not sent:
-                            sent = True
-                            os.kill(os.getpid(), stop)
-                    return previous_mask
 
                 def interrupting_unlink(path, *args, **kwargs):
                     nonlocal sent
@@ -699,8 +695,6 @@ def publication_signal_self_test():
                         stack.enter_context(mock.patch.object(
                             runner.signal, 'sigpending', side_effect=interrupting_pending))
                         stack.enter_context(mock.patch.object(
-                            runner.signal, 'pthread_sigmask', side_effect=interrupting_mask))
-                        stack.enter_context(mock.patch.object(
                             runner.os, 'unlink', side_effect=interrupting_unlink))
                         write(made_up_runs(), new, results, model_md)
                 except SystemExit as e:
@@ -720,6 +714,74 @@ def publication_signal_self_test():
                                          f'removed {sorted(before.keys() - after.keys())}')
     print('model publication self-test: SIGTERM, SIGHUP and SIGINT, sent at five points of '
           'publication, put every earlier file back and leave no temporary file')
+    publication_two_signals_self_test()
+
+
+TWO_SIGNALS = """import os, signal, sys
+from unittest import mock
+sys.path.insert(0, sys.argv[1])
+import results_check as check
+first, second, timing, results, model_md = int(sys.argv[2]), int(sys.argv[3]), *sys.argv[4:7]
+check.runner.stop_as_exit()
+signal.signal(signal.SIGINT, signal.default_int_handler)
+real_replace, real_unlink, sent = os.replace, os.unlink, []
+
+def send():
+    sent.append(True)
+    os.kill(os.getpid(), first)
+    os.kill(os.getpid(), second)
+
+def replace(source, destination):
+    real_replace(source, destination)
+    if timing == 'after replacement' and destination == model_md and not sent:
+        send()
+
+def unlink(path, *args, **kwargs):
+    real_unlink(path, *args, **kwargs)
+    if timing == 'during backup cleanup' and path.endswith('.old') and not sent:
+        send()
+
+new = dict(commit='c' * 40 + f' ({check.COMMITTED})', harness='b' * 64,
+           python='self-test', date='2000-01-02')
+with mock.patch.object(check.runner.os, 'replace', side_effect=replace), \\
+        mock.patch.object(check.runner.os, 'unlink', side_effect=unlink):
+    check.write(check.made_up_runs(), new, results, model_md)
+sys.exit(0 if not sent else 3)
+"""
+
+
+def publication_two_signals_self_test():
+    """Hold back two stops at once, as a Ctrl-C reaches a --write (SIGINT, then the first
+    process's SIGTERM); require every earlier file back."""
+    pairs = [(a, b) for a, b in (('SIGINT', 'SIGTERM'), ('SIGHUP', 'SIGTERM'))
+             if hasattr(signal, a) and hasattr(signal, b)]
+    if os.name != 'posix' or not hasattr(signal, 'pthread_sigmask') or not pairs:
+        return
+    for first, second in pairs:
+        for timing in ('after replacement', 'during backup cleanup'):
+            with tempfile.TemporaryDirectory() as tmp:
+                results = os.path.join(tmp, 'results')
+                model_md = os.path.join(tmp, 'MODEL.md')
+                with open(model_md, 'w', encoding='utf-8') as f:
+                    f.write(PAGE)
+                old = dict(commit='a' * 40 + f' ({COMMITTED})', harness='b' * 64,
+                           python='self-test', date='2000-01-01')
+                write(made_up_runs(), old, results, model_md)
+                before = output_tree(tmp)
+                a, b = getattr(signal, first), getattr(signal, second)
+                p = subprocess.run([sys.executable, '-I', '-c', TWO_SIGNALS, HERE, str(a), str(b),
+                                    timing, results, model_md], capture_output=True, text=True,
+                                   cwd=tmp, timeout=120)
+                after = output_tree(tmp)
+                if p.returncode not in (128 + a, 128 + b, -a, -b) or after != before:
+                    raise AssertionError(f'model publication self-test: {first} and {second} '
+                                         f'{timing} did not restore the previous output set: '
+                                         f'exit {p.returncode}; '
+                                         f'added {sorted(after.keys() - before.keys())}; '
+                                         f'removed {sorted(before.keys() - after.keys())}; '
+                                         f'{p.stderr.strip()[-300:]}')
+    print('model publication self-test: SIGINT and SIGTERM, and SIGHUP and SIGTERM, held back '
+          'together, put every earlier file back')
 
 
 def publication_provenance_self_test():

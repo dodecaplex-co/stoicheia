@@ -4143,10 +4143,13 @@ findings:
   lets a run that is not from a copy write that checkout's results, as a header written
   by hand could, and the security review, which reads the results' diff, is the guard
   there. SIGTERM, SIGHUP or SIGINT stops the run from the copy and the harness it is
-  running, and removes the copy. The run from the copy replaces its files as one publication and
-  checks the harness's provenance again once they are replaced; a signal, or a harness
-  found changed, puts every file back as it was, a link as a link and a file that was
-  not there removed, so a `--write` stopped while it runs or publishes writes nothing.
+  running, and removes the copy. The run from the copy replaces its files as one
+  publication, with the three signals held back until every file is replaced or every
+  file is back, and checks the harness's provenance again once they are replaced; a
+  signal, two at once among them (a Ctrl-C at a terminal reaches both processes of a
+  `--write`, and the first then sends the second SIGTERM), or a harness found changed,
+  puts every file back as it was, a link as a link and a file that was not there removed,
+  so a `--write` stopped while it runs or publishes writes nothing.
   SIGKILL, which no process can catch, ends only the process it is sent to: sent to the
   first, it leaves the run from the copy to finish and write what passes the guards, and
   leaves the copy in the temporary folder. The results check's self-test runs `--write`
@@ -4155,10 +4158,12 @@ findings:
   nothing; and, where there are POSIX signals, sent SIGTERM partway, which writes
   nothing and leaves no copy and no harness running. It stops publication too, with
   SIGTERM, with SIGHUP and with SIGINT, after a file is moved to its backup, after a
-  replacement, after the check for a pending signal,
-  after the signals are blocked again and while the old files are removed, and changes a
-  harness file and leaves it changed during publication; each time the earlier files
-  must all return, with no temporary file left.
+  replacement, after the first check for a pending signal, while the old files are
+  removed and after they are; with SIGINT and SIGTERM together, as a Ctrl-C at a terminal
+  reaches a `--write`, and with SIGHUP and SIGTERM together; and changes a harness file
+  and leaves it changed during publication. Each time the earlier files must all return,
+  with no temporary file left. The two-signal case was found by the independent review
+  TT-results-cr7, with our thanks, which wrote and tested the fix.
 - **The screen's record.** The overlap screen gains `--write`, with which a run that
   ends with every known row closed by a rule records, in `Audit/screen-run.toml`, the
   commit, the number of statements in `facts.json` and a sha256 of each part of what
