@@ -87,6 +87,18 @@ records current; CI runs it on every push.
 18. Counting congruence constructors instead of `Coincidence.step` in the certificate:
     `tests/test_certificate.py` fails on transformers with no step. The restored
     certificate must pass the same regression, including its real-step cases.
+19. One build with a construction rule planted in two clean laws' proofs: Postulate 1 in
+    Metric 3's (`Cited.holds_lenSymm`), `Tacit.circles_meet` in Metric 4's
+    (`Cited.holds_angleSymm`). Every pin of `Audit/Superposition.lean` is rewritten to
+    what Lean then prints, and `lake build Audit` must pass, so the pins cannot see the
+    plants. The certificate recomputed, `check_fidelity.py` fails on the expectations on
+    `cited_laws`, Metric 3's law in I.4 and in I.8 and Metric 4's in I.4, each with its
+    construction rule, and on nothing the unplanted tree did not already show.
+20. I.7's law, `.prop7`, removed from `Prop8.cites`, with the arm of I.8's case split that
+    proves it: Lean refuses I.8's file, as `lake build` would, at the derivation's citation
+    of the law (`Derives.prop7`), whose `by decide` finds `Cited.prop7 ∈ cites` false. The
+    build catches it, before the certificate runs; the expectation on I.8's `cited_laws`
+    is not reached.
 
 These faults exercise the style and link checks, page freshness, an audit pin and
 leanchecker's loading of compiled files as well as the earlier checks. They do not
@@ -95,11 +107,11 @@ plant an invalid proof term for leanchecker's kernel replay. `check_kernel.py`'s
 
 Every new plant restores its inputs in `finally`; the freshness plant also restores
 all renderer outputs.
-Tests 10, 14 and 15 attempt a restoration build; if it fails or is interrupted, every
-file in `.lake/build` returns to its saved contents and presence or absence before
+Tests 10, 14, 15 and 19 attempt a restoration build; if it fails or is interrupted,
+every file in `.lake/build` returns to its saved contents and presence or absence before
 the plant, including dependent modules, hashes and traces. Test 10 always restores or
 removes `Planted.*` outputs in a nested `finally`. Tests 11 to 15, the proved Circle 2
-plant and test 18 report elapsed time, restoration included. An outer `finally` compares
+plant and tests 18 and 19 report elapsed time, restoration included. An outer `finally` compares
 Git status with the entry status, including on interruption, without replacing an
 exception already in flight.
 Temporary-directory regressions run first, without Lean. Exits non-zero if a fault
@@ -460,6 +472,40 @@ def wrong_radii() -> None:
         expect_failure("the README's wrong radii in I.1", run("lake", "env", "lean", rel), "error")
     finally:
         (ROOT / rel).write_text(saved)
+
+
+# I.7's law taken out of I.8's list, with the arm of its case split that proves it, and the
+# derivation's citation of the law, where Lean must refuse it.
+PROP7_PLANT = (
+    ("abbrev cites : List Cited := [.lenSymm, .neOfLen, .rayUnique, .prop7]\n",
+     "abbrev cites : List Cited := [.lenSymm, .neOfLen, .rayUnique]\n"),
+    ("    rcases hc with rfl | rfl | rfl | rfl\n", "    rcases hc with rfl | rfl | rfl\n"),
+    ("    · exact Prop8.holds_prop7\n", ""),
+)
+PROP7_CITED = "    .prop7 Guard.ne_DG Guard.on_D Guard.on_G hGD_side hGE_DE hGF_DF\n"
+
+
+def prop7_uncited() -> None:
+    """`.prop7` removed from `Prop8.cites`, and the arm of I.8's case split that proves
+    I.7's law with it, so that nothing else fails: Lean refuses I.8's file, as `lake build`
+    would, at the derivation's citation of the law (`Derives.prop7`), whose `by decide`
+    finds `Cited.prop7 ∈ cites` false. The build catches it, before the certificate runs,
+    so the expectation on I.8's `cited_laws` is not what catches it (#150)."""
+    rel = "Elements/BookI/Prop08.lean"
+    path = ROOT / rel
+    saved = path.read_text()
+    planted = saved
+    for old, new in PROP7_PLANT:
+        assert planted.count(old) == 1, f"{rel}: expected one {old!r}"
+        planted = planted.replace(old, new)
+    assert planted.count(PROP7_CITED) == 1, f"{rel}: expected one citation of I.7's law"
+    line = planted[:planted.index(PROP7_CITED)].count("\n") + 1
+    try:
+        path.write_text(planted)
+        expect_failure("`.prop7` removed from I.8's cited laws", run("lake", "env", "lean", rel),
+                       f"{rel}:{line}:", "Cited.prop7 ∈ cites", "is false")
+    finally:
+        path.write_text(saved)
 
 
 def entry(facts: dict, ref: str) -> dict:
@@ -1117,6 +1163,121 @@ def planted_assumptions() -> None:
             planted_outputs.restore()
 
 
+# An audit pin: the message `#print axioms` gives, as `#guard_msgs` holds it. The message
+# stops at the first end of a docstring, so a pin never runs across another `#guard_msgs`
+# (a statement pin's `#check`) to the next `#print axioms`.
+AUDIT_PIN = re.compile(r"/--\n(info: (?:(?!\n-/\n).)*?)\n-/\n#guard_msgs in\n"
+                       r"#print axioms (\S+)\n", re.S)
+# Each clean law's proof, and the construction rule planted in it: the text that begins its
+# proof, and what replaces it.
+LAW_PLANTS = (
+    ("Postulate1", ":= fun v _ => len_symm (v.pt .A) (v.pt .B)\n",
+     ":= by\n  have _planted := @Postulate1\n  exact fun v _ => len_symm (v.pt .A) (v.pt .B)\n"),
+    ("Tacit.circles_meet",
+     "theorem Cited.holds_angleSymm : Cited.angleSymm.Holds primitives := by\n",
+     "theorem Cited.holds_angleSymm : Cited.angleSymm.Holds primitives := by\n"
+     "  have _planted := @Tacit.circles_meet\n"),
+)
+
+
+def rewritten_pins(rel: str) -> str | None:
+    """The audit file `rel` with every `#print axioms` pin rewritten to what Lean prints now,
+    as an author would after changing a proof: Lean prints the pinned names in a probe file
+    with the audit file's own imports, so each must be declared in what it imports, as
+    every name Audit/Superposition.lean pins is. Each message begins with its name, quoted,
+    and runs to the next. Every `#print axioms` command of the file must be read as a pin.
+    None, with the failure recorded, if they cannot all be read or printed."""
+    text = (ROOT / rel).read_text()
+    imports = [line for line in text.splitlines() if line.startswith("import ")]
+    names = [m[2] for m in AUDIT_PIN.finditer(text)]
+    commands = len(re.findall(r"^#print axioms ", text, re.M))
+    if len(names) != commands:
+        failures.append(f"printing the pins of {rel}: {commands} `#print axioms` commands, "
+                        f"but {len(names)} pins read; update this test")
+        return None
+    with tempfile.TemporaryDirectory(prefix="stoicheia-pins-") as tmp:
+        probe = Path(tmp) / "Pins.lean"
+        probe.write_text("\n".join(imports + [f"#print axioms {n}" for n in names]) + "\n")
+        result = run("lake", "env", "lean", str(probe))
+    if not expect_success(f"printing the pins of {rel}", result):
+        return None
+    out = re.sub(r"^\S*Pins\.lean:\d+:\d+: info: ", "", result.stdout, flags=re.M)
+    starts, at = [], 0
+    for name in names:
+        found = re.compile(rf"^'{re.escape(name)}' ", re.M).search(out, at)
+        if found is None:
+            break
+        starts.append(found.start())
+        at = found.end()
+    if not names or len(starts) != len(names) or out[:starts[0]].strip():
+        failures.append(f"printing the pins of {rel}: expected one message for each of "
+                        f"{len(names)} pins, in order, and nothing else")
+        print(result.stdout[-3000:])
+        return None
+    fresh = iter("info: " + out[a:b].rstrip() for a, b in zip(starts, starts[1:] + [len(out)]))
+    return AUDIT_PIN.sub(lambda m: m[0].replace(m[1], next(fresh), 1), text)
+
+
+def problems(result: subprocess.CompletedProcess) -> set[str]:
+    """The problems a check_fidelity.py run lists, one line each."""
+    return {line.strip() for line in result.stdout.splitlines() if line.strip().startswith("✗ ")}
+
+
+def construction_in_clean_laws() -> None:
+    """Postulate 1 planted in the proof of Metric 3's law, and `Tacit.circles_meet` in Metric
+    4's, two laws I.4 cites (I.8 cites the first too), with every pin of
+    Audit/Superposition.lean rewritten to what Lean then prints. The audit builds, so its
+    pins cannot see the plants; the certificate's expectations on `cited_laws` catch each,
+    by its entry and law, and check_fidelity.py finds nothing else that the unplanted tree
+    did not already show (#150)."""
+    rel, audit = "Elements/Figure/Superposition.lean", "Audit/Superposition.lean"
+    baseline = problems(fidelity())
+    saved = {p: (ROOT / p).read_text() for p in (rel, audit, "facts.json")}
+    outputs = BuildOutputs()
+    try:
+        for _, old, new in LAW_PLANTS:
+            replace_once(rel, old, new)
+        if not expect_success("the planted laws build", run("lake", "build")):
+            return
+        changed = rewritten_pins(audit)
+        if changed is None:
+            return
+        if changed == saved[audit]:
+            failures.append("the planted laws: no pin of Audit/Superposition.lean changed; "
+                            "update this test")
+            return
+        (ROOT / audit).write_text(changed)
+        if not expect_success("the planted laws' audit, its pins rewritten to match",
+                              run("lake", "build", "Audit")):
+            return
+        if not expect_success("the planted laws' certificate",
+                              run("lake", "env", "lean", "Certificate/Facts.lean")):
+            return
+        result = fidelity()
+        caught = {"Postulate 1 in the proof of Metric 3's law, its pins rewritten": (
+                      "I.4: its construction_rules for the cited law lenSymm is "
+                      "['Postulate1'], not []",
+                      "I.8: its construction_rules for the cited law lenSymm is "
+                      "['Postulate1'], not []"),
+                  "Tacit.circles_meet in the proof of Metric 4's law, its pins rewritten": (
+                      "I.4: its construction_rules for the cited law angleSymm is "
+                      "['Tacit.circles_meet'], not []",)}
+        for name, wanted in caught.items():
+            expect_failure(name, result, *wanted)
+        expected = [w for wanted in caught.values() for w in wanted]
+        others = sorted(p for p in problems(result) - baseline
+                        if not any(p.startswith(f"✗ {w}") for w in expected))
+        if others:
+            failures.append("the planted laws: check_fidelity.py also reported "
+                            + "; ".join(others))
+        else:
+            print("✓ the planted laws: nothing but the cited_laws expectations caught them")
+    finally:
+        for p, text in saved.items():
+            (ROOT / p).write_text(text)
+        rebuild_restored("the restored laws build", outputs, "Elements", "Audit")
+
+
 def certificate_constructor_counting() -> None:
     """Rebuilding constructors must not invent a coincidence step."""
     rel = "Certificate/Facts.lean"
@@ -1244,6 +1405,7 @@ def main(argv=()) -> int:
         merge_conflict_markers()
         count_markers()
         wrong_radii()
+        prop7_uncited()
         weakened_postulate()
         changed_word()
         stale_statement()
@@ -1262,7 +1424,8 @@ def main(argv=()) -> int:
         placement_named()
         planted_assumptions()
         for test in (circle_proved, style_error, broken_link, stale_page,
-                     changed_audit_pin, corrupt_olean, certificate_constructor_counting):
+                     changed_audit_pin, corrupt_olean, certificate_constructor_counting,
+                     construction_in_clean_laws):
             started = perf_counter()
             try:
                 test()

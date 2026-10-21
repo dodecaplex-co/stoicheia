@@ -3567,9 +3567,9 @@ class ProtectedPaths(Edge):
                            remove=[self.EXPECT] if result is False else ())
 
     def test_only_expectations_kept_whole_are_pinned_values(self):
-        # Each of origin/main's expectations stays, by its ref and field, its includes and
-        # excludes the same or grown, and only count.is and equals take other values: then
-        # the change moves with the content. Anything else is a check change.
+        # Each of origin/main's expectations stays, by its ref, field and law, its includes
+        # and excludes the same or grown, and only count.is and equals take other values:
+        # then the change moves with the content. Anything else is a check change.
         def entry(data, ref, field="axioms"):
             return next(x for x in data["expectations"] if (x["ref"], x["field"]) == (ref, field))
 
@@ -5261,6 +5261,48 @@ class Units(unittest.TestCase):
         self.assertIsNone(safe_push.model_laws('[laws]\n"Tacit.len_self" = "len_self"\n'))
         laws = (SOURCE / safe_push.MODEL_LAWS).read_text()
         self.assertEqual(safe_push.model_laws(laws)["Postulate5"], ("Postulate5", True))
+
+    def test_an_expectation_is_kept_by_its_ref_field_and_law(self):
+        # #150's review: a `law`, or a `ref`, says what an expectation reads, so one added,
+        # dropped or changed retargets it, and the expectation is not kept, even where the
+        # retargeted one would still pass.
+        def file(*expectations):
+            return json.dumps({"expectations": list(expectations)})
+
+        def without(x, key):
+            return {k: v for k, v in x.items() if k != key}
+
+        law = {"ref": "I.8", "field": "cited_laws", "law": "prop7",
+               "includes": ["Postulate1"], "why": "I.7's law is proved with constructions."}
+        listed = {"ref": "I.8", "field": "cited_laws", "includes": ["prop7"],
+                  "why": "I.8 cites I.7's law."}
+        top = {"field": "construction_rules", "includes": ["Postulate1"],
+               "excludes": ["Postulate4"], "why": "Postulate 1 constructs."}
+        old = file(law, listed, top)
+        retargeted = {
+            "its law dropped": file(without(law, "law"), listed, top),
+            "its law changed": file(dict(law, law="lenSymm"), listed, top),
+            "a law added": file(law, dict(listed, law="prop7"), top),
+            "its ref dropped": file(law, without(listed, "ref"), top),
+            "a ref added": file(law, listed, dict(top, ref="I.4")),
+            "its ref changed": file(dict(law, ref="I.4"), listed, top),
+            "its field changed": file(law, listed, dict(top, field="axiom_modules")),
+        }
+        for name, new in retargeted.items():
+            with self.subTest(name):
+                self.assertFalse(safe_push.kept_expectations(old, new))
+        kept = {
+            "unchanged": old,
+            "reordered": file(top, listed, law),
+            "a why reworded": file(dict(law, why="Reworded."), listed, top),
+            "its includes grown": file(dict(law, includes=["Postulate1", "Postulate3"]),
+                                       listed, top),
+            "an expectation added": file(law, listed, top, dict(law, law="lenSymm",
+                                                                 includes=[], equals=[])),
+        }
+        for name, new in kept.items():
+            with self.subTest(name):
+                self.assertTrue(safe_push.kept_expectations(old, new))
 
     def test_a_harness_cut_short_fails_the_run(self):
         # Issue #40, and the no-mistakes review's finding, with thanks: a harness that ends

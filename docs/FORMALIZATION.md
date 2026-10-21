@@ -584,3 +584,28 @@ interpretation in which the other axioms hold and the result's own statement fai
 hypotheses met; that the postulate fails there is not enough, and a result whose statement
 stays true there needs a different analysis. The kind is numerical until a proof replaces
 it, and even then the pages keep "this proof uses".
+
+### Construction rules
+
+A construction rule is an axiom whose conclusion asserts that something exists. Set aside
+the axiom's leading "for all" binders and the hypotheses of its implications, and unfold
+this project's definitions in what remains: `CirclesMeet`, `LineMeetsCircle`, `LinesMeet`,
+`Collinear`, and an instance that gives an order its meaning. The axiom is a construction
+rule when an `∃` then stands in positive position. `And` and `Or` keep a position's sign;
+`Not` and the left of an implication reverse it; either side of an `Iff` counts at both.
+Any other structure or inductive type is read as a word and never unfolded: what its
+fields or constructors say is not read. So Postulates 1, 2, 3 and 5, the rules that give a
+point (`exists_point` and its kin) and the rules that conclude that two circles, a straight
+line and a circle, or two straight lines meet are construction rules. A rule that concludes
+`Triangle`, which denies that three points lie on one straight line, is not; nor is one
+that assumes an existence only in a hypothesis. Nor is `Tacit.superposition`, and only
+because a structure is a word: it concludes the structure `Superposition.Rule`, whose one
+field assumes a triangle, and a triangle assumed, read through `Collinear`, would put an
+`∃` in positive position.
+
+The certificate computes the list from Lean's statements of the axioms
+(`construction_rules`), and, for each law that I.4's and I.8's derivations cite inside the
+placement, the construction rules beneath that law's proof (`cited_laws`;
+[FIELDS](../Certificate/FIELDS.md)). Like the rest of the certificate, these are facts
+about our proofs' dependencies. A law whose proof uses a construction rule still asserts
+no existence, and citing it draws nothing in the placement (brief 0009, question 4).
