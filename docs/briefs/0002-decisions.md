@@ -3209,6 +3209,18 @@ findings:
   hold. `git safe-push --label release` creates the `release` label, with its
   description, the first time it is given; the consolidation release (#38) lands through
   a pull request carrying it. Tags and releases stay manual, by the owner.
+- **The joins by Postulate 1 stay wherever Euclid writes them (part of
+  [#32](https://github.com/jackChallis/stoicheia/issues/32)).** Train Tw2 first removed the
+  joins by Postulate 1 from I.5, I.11, I.16, I.20 and I.26, since the later steps of those
+  proofs do not use the segment the join names. The coordinator ruled that a join stays
+  wherever a sentence of Euclid's stands over it, and goes only where none does: he writes
+  "let ... be joined" over each of these steps (`heath/I/05.md`, line 16; `heath/I/11.md`,
+  line 16; `heath/I/16.md`, line 12; `heath/I/20.md`, line 18; `heath/I/26.md`, lines 12
+  and 54). So all five joins stay, the five Lean files are as they were, and the records of
+  I.5 and I.11 now declare their joins as passages carried from the text. This is not a
+  dummy citation in the sense of [FORMALIZATION](../FORMALIZATION.md), section 5: the step
+  is Euclid's own, written where he writes it. A later sweep for unused steps keeps a join
+  that a sentence of Euclid's stands over, on this ground.
 
 - **The checks read a tree without the files a commit adds to them (#178).** The
   pre-flight's pass with origin/main's checks (`scripts/safe_push.py`, steps 3 and 4)
@@ -3403,7 +3415,125 @@ findings:
   `tests/model/MODEL.md`; renewed from the lock: `model/lock.sha256` and
   `tests/model/lock.sha256`. Every check and pin of both sides stays.
 
-## 21 October 2026
+- **The renderer's words follow the content.** The protected file
+  [`scripts/render.py`](../../scripts/render.py) selects its Book III wording from
+  `facts.json`, read once for each root through the renderer's guarded paths, as its
+  other inputs are: `MixedAngle.ofSegment`, with a companion of III.16 and one of III.31,
+  enables the mixed-angle row; `Arc`, `InSegment`, `OnArc` and `Arc.Congruent`, with
+  III.24, III.26 and III.28, enable the segment row; `Arc` with `Arc.measure` enables the
+  circumference row; `CirclesCut` enables Definition III.3's row, on cutting and
+  touching, and the line on that definition on the pages where Heath's brackets cite it;
+  `Foot` enables the account of perpendicular feet in Definitions III.4 and III.5,
+  including a diameter at no distance from the centre, each row with the companion it
+  names, III.14 general or III.15 nearer; and III.24's shared step `BookIII.placement`
+  enables the account of its application of one segment to another. That account is
+  built from III.24's entry, so that it is true by construction: only when III.24's
+  `direct_axioms` leave superposition out, and a proposition `placement` cites rests on
+  it, does it say that `placement` uses superposition only through the propositions it
+  cites, and it names those of them that call on superposition themselves; otherwise it
+  says only that the proof applies the segment by `placement`. Each keeps the present
+  wording until its named content, and every proposition and companion it names, is
+  there. Comments about III.2's unused overlapping rule are corrected, and the
+  clause-map docstring no longer names particular propositions. The renderer
+  distinguishes all, some and none of a record's overlapping rules, using `facts.json`'s
+  `axioms` for the proof's full dependencies. When the proof uses all or none, the
+  status line and Overlap row keep their exact wording, with no added sentence repeating
+  the record's note. Only partial use adds a clause naming both the rules used and those
+  unused in the status line, the Overlap row and the book summaries. One rule unused
+  reads "does not use `b`", two "uses neither `b` nor `c`", and three or more "uses none
+  of `b`, `c` and `d`". This applies to every record, including both kinds that contain
+  the proposition and rules that supply a step. On main's present content, every
+  generated page stays byte for byte unchanged. The protected file
+  [`review/SCHEMA.md`](../../review/SCHEMA.md) now states that the line under the
+  enunciation and the book's summary say whether the proof rests on all, some or none of
+  the named rules, naming each rule used and unused for partial use, and that the
+  Overlap row gives the record's note word for word and adds that account only for
+  partial use. The protected test file
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains two wording cases
+  beside its cases of the page: the clause for rules left unused, and the account of
+  `placement` from `facts.json`, read afresh for each root. Each fails on the renderer
+  before this change.
+  The protected file [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes
+  brief 0008, section 7's approved III.5 signature (`CirclesCut`, without the separate
+  inequality of circles) and its comment on cutting and contact within and without,
+  exactly as the supplied scaffold patch specifies. A search of `scripts/` and `tests/`
+  found no check that reads the scaffold's Book III strings. The scaffold records the
+  approved statements; it was not run to rewrite any Lean file.
+  This tooling change lands before the content it describes, so that the content's
+  pull request changes no check input beyond the values pinned to that content:
+  the content's new lock makes main's checks fail, and `scripts/safe_push.py` keeps such
+  content apart from an accompanying change to `scripts/render.py`. No check, statement,
+  lock or review record changes here, apart from the approved signature in the scaffold
+  and the two cases the style test gains.
+- **III.1's porism has its whole axiom list pinned.** The first expectation in
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json), a
+  protected file, gains `equals` holding the porism's full list regenerated from main at
+  `2e8aecf` (21 October 2026, after axiom wave one), in `facts.json`'s order. The porism's
+  own entry carries every assumption its proof uses: Definition I.15, Postulates 1 to 4
+  and the reviewed 55 tacit rules. `Tacit.centre_unique` is a theorem since wave one, so
+  the list holds the axioms beneath it. The `ref`, `field` and count of 55 tacit rules
+  stay as they are; no other expectation changes. This makes the check stricter on its
+  own, before the content it describes: an existing `equals` value and `count.is` may
+  move with that content, as pinned values. Train C6b can then reprove the porism by
+  Euclid's reductio and move the pinned list and count to that proof's assumptions in
+  its content pull request.
+  The `axioms` row of [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md), a protected
+  file, gave III.1's and its porism's counts as fixed; it now says that the list follows
+  each proof's dependencies and that the expectations pin what those two must hold, which
+  stays true when a re-proof moves the pinned values. The protected regression test
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) keeps its checks of
+  growing and emptying an `includes` list by exercising the still-list-shaped I.5
+  expectation, and its simulated future re-proof moves the porism's exact list together
+  with the counts. It reads III.1's tacit count from
+  `tests/certificate_expectations.json`, so it holds before and after the content it
+  describes. No guard is weakened.
+
+- **Heath's letters upright in both figures (#159).** The owner decided on 18 October
+  that Heath's letters take one style in the text and in both figures, which the voice
+  rules' check change, above, reads as upright. The figures are now set upright. Every
+  `figures/<book>/NN.svg` and `NN-idea.svg` of Books I to III, 198 in all, drew the letters
+  italic: 83 of Euclid's figures set `font-style="italic"` on the root `<svg>`, and the
+  other 16, with all 99 figures at a glance, on the `<g>` that holds the letters. That one
+  attribute is removed from each, so the letters take SVG's default, upright. Nothing else
+  in a figure changes, and no letter moves. Every text the attribute set italic was one of
+  Heath's letters, so nothing italic on purpose is lost. S26 now measures each letter by
+  the hull of the upright capital, and every letter still stands 2 clear of every stroke
+  and dot: the closest is III.33's F, at 2.05. `scripts/check_style.py` reports no D15.
+  The modern figures (`NN-modern.svg`) do not change: their capitals were upright already,
+  and the paragraph's own names stay italic, as S25 requires. The switch follows in a
+  change of its own to the check
+  ([#159](https://github.com/jackChallis/stoicheia/issues/159)):
+  `UPRIGHT_LETTERS_REQUIRED` set to `True`, a test that plants an italic letter, and
+  STYLE's wording for the switch. Until then S15 and S20 still accept a figure whose
+  letters are all italic. No protected file changes.
+
+- **Twenty entries come out of `REACH_PENDING`
+  ([#159](https://github.com/jackChallis/stoicheia/issues/159)).** Run on `8e9a1879` with
+  Lean, after `lake build` and `lake build Audit`, `scripts/check_style.py` reported 19 of
+  the list's 38 entries done, with no finding of any of their rules left, and this change
+  takes exactly those out: the fourteen notes of Book Zero, `Elements/Figure/*.lean`
+  (S22); `docs/reports/gaps-book-I.md` (S7); `docs/reports/gaps-book-II.md` and
+  `docs/reports/read-through-01.md` (S7 and S12); `review/I/09.toml` (S7); and
+  `review/II/14.toml` (S12), the two that the progress check of 20 October on #159 named.
+  Under `--no-lean` the same check reported 18 of them, the two "S7 S12" entries for S7
+  alone and `review/II/14.toml` not at all, since S12 alone asks Lean; with Lean their S12
+  is done too, so each of the 19 comes out whole and no entry is left with a rule fewer.
+  No rule of the 19 entries that remain was reported done, and none of them changes. D16
+  goes from 364 lines to 345 with Lean, and from 202 to 184 under `--no-lean`: the 19 and
+  18 done lines go, the findings are line for line the same, and both runs pass with no
+  "done" line. The comment over the reports' entries gave the S12 inventory of two of them
+  on `bd3b72a`, 147 and 2; it now gives the one left,
+  `docs/reports/mixed-angles-prototype.md`. The paragraphs on the list, in the script's
+  docstring and in [STYLE](../STYLE.md), section 8, now say that a file with findings on
+  19 October "was" listed, since a mended file no longer is; neither holds a count, and no
+  count marker counts the list. Of the 19 entries that remain, one names the closed #66
+  as its mender and nine name no issue. The protected file changed is
+  `scripts/check_style.py`; `tests/test_check_style.py` is unchanged, since
+  `test_done_cases` and `test_done_without_lean` already test the done report.
+  After origin/main was merged at `17ae8e2a`, where the restricted rule of superposition
+  rewrote I.8's Lean, the check reported one entry more done, `Elements/BookI/Prop08.lean`
+  (S22, which named #29), both with Lean and without; it comes out too, so 20 entries
+  come out and 18 remain, and both runs again pass with no "done" line.
 
 - **Which laws' proofs draw: computed, not set by hand (#150, question 4).** Of the two
   routes #150 offers, the coordinator takes route (b): the hand-set flag `Cited.drawsNothing` is retired,
