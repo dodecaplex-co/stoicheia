@@ -3768,20 +3768,23 @@ lists them.
 
 - **Euclid's routes in Book III staged; their statements await approval (#125, #126, #127,
   #129, #130, #131).** Seven Lean files under `Staging/Routes/` give Euclid's own arguments
-  where main's proofs of Book III take another way, and drafts where his words, or Heath's
-  reading of them, ask for more than our Lean says. The linked report owns the detailed
-  revision and check evidence. The proofs of main's statements (III.8, III.21, III.26,
-  III.27 and III.20's special case) are staged to replace main's proofs at the next move of
-  Book III's files; those of III.20's special case, III.21 and III.26 rest on the draft
-  angle at the centre, and wait for its approval too. The proofs in these files are held in
-  `Staging/` under the coordinator's orders for this work; recording `Staging/Routes/` as a
-  prototype under [WORKFLOW](../WORKFLOW.md), section 2, "What proofs `Staging/` may
-  hold", as the prototype of mixed angles was, is the coordinator's to confirm. The new
-  definitions and statements are drafts awaiting the owner's approval: the
-  point reading of Definition III.3 (`Staging/Routes/Touching.lean`), the angle at the
-  centre of any size and III.20 in general (`Staging/Routes/Prop20.lean`), and the angle of
-  contact after III.18 (`Staging/Routes/AngleOfContact.lean`). None of them is approved,
-  and no file of `Elements/` changes. #131 is an analysis, and changes no file: the five
-  calls of III.1 under Heath's "[III. 1]" do no work, and whether they stay under brief
-  0008's rule or go as dummy citations is the coordinator's question. The report is
+  where the proofs of Book III take another way, and drafts where his words, or Heath's
+  reading of them, ask for more than our Lean says. They stand on C7's statements (the
+  trains C6a to C6c, which carry brief 0008's restatements; the files were ported onto
+  train C6c's Lean as at 80292b0a), and land after C7's trains. The proofs of III.8,
+  III.20's special case, III.21, III.26 and III.27 prove C7's statements exactly and are
+  staged to replace its proofs; those of III.20's special case, III.21 and III.26 rest on
+  the draft angle at the centre, and wait for its approval too. The drafts await the
+  owner's approval in the text the port left them, which the report lists: the point
+  reading of Definition III.3 and its agreement with the whole-circle reading
+  (`Staging/Routes/Touching.lean`), the angle at the centre of any size with III.20 in
+  general (`Staging/Routes/Prop20.lean`), and the angle of contact after III.18
+  (`Staging/Routes/AngleOfContact.lean`). None of them is approved, and no file of
+  `Elements/` changes. #131 is an analysis, re-checked on C6c's Lean: C7 removes four of
+  main's nine calls of III.1 (III.35, III.36 twice, III.37), and the five under Heath's
+  "[III. 1]" (III.2, III.4, III.8, III.14, III.17) remain and do no work. Two questions are
+  the coordinator's: whether to record `Staging/Routes/` as a prototype under
+  [WORKFLOW](../WORKFLOW.md), section 2, "What proofs `Staging/` may hold", as the mixed
+  angles were; and whether the five bracketed calls stay under brief 0008's rule or go as
+  dummy citations. The report, which owns the detail, is
   [docs/reports/routes-book-III.md](../reports/routes-book-III.md).

@@ -23,10 +23,11 @@ restatements have also moved home, and so has III.30's halves (brief 0006), prov
 
 * `Superposition/`: the prototype of a restricted superposition rule (brief 0009), carried
   as a hypothesis, with its proofs, which the coordinator approved on 18 October 2026;
-* `Routes/`: Euclid's own routes in Book III, proved: III.8, III.20 as main states it,
-  III.21, III.26 and III.27 by his arguments, to replace main's proofs (those of III.20,
-  III.21 and III.26 once the draft angle at the centre is approved), and drafts for the
-  owner's approval of Definition III.3 read at the point, the angle at the centre of
-  any size with III.20 in general, and the angle of contact after III.18
+* `Routes/`: Euclid's own routes in Book III, proved on the statements now in
+  `Elements/`: III.8, III.20's special case, III.21, III.26 and III.27 by his arguments,
+  to replace the proofs there (those of III.20's special case, III.21 and III.26 rest on
+  the draft angle at the centre, and wait for its approval), and drafts for the owner's
+  approval of Definition III.3 read at the point, the angle at the centre of any size with
+  III.20 in general, and the angle of contact after III.18
   (`docs/reports/routes-book-III.md`).
 -/
