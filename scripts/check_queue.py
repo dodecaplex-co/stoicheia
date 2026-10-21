@@ -136,6 +136,8 @@ PREFLIGHT = re.compile(
     r"(?: harness=([0-9a-f]{40}))? -->[ \t\r]*$"
     r"(?:(?!<!-- safe_push:preflight begin).)*?"
     r"^<!-- safe_push:preflight end -->[ \t\r]*$")
+DECISION_HUNK = re.compile(
+    r"^@@ -([0-9]+)(?:,([0-9]+))? \+[0-9]+(?:,([0-9]+))? @@")
 
 
 class Refused(Exception):
@@ -582,6 +584,34 @@ def hand_written_intact(repo: Path, path: str, group: str, mb: str, train: str) 
     return clean and reapplied == g
 
 
+def decision_additions(repo: Path, old: str, new: str) -> dict[tuple[int, int], list[str]]:
+    """Decision lines added from `old` to `new`, grouped by their old-file hunk anchor."""
+    output = safe_push.git(
+        repo, "diff", "--no-color", "--text", "--no-ext-diff", "--no-textconv",
+        "--no-renames", "--unified=0", old, new, "--", safe_push.DECISIONS,
+        binary=True).decode("utf-8", errors="replace")
+    additions: dict[tuple[int, int], list[str]] = {}
+    old_left = new_left = 0
+    anchor = None
+    for line in output.split("\n"):
+        if old_left > 0 or new_left > 0:
+            if line.startswith("+"):
+                additions[anchor].append(line[1:])
+                new_left -= 1
+            elif line.startswith("-"):
+                old_left -= 1
+            elif not line.startswith("\\"):
+                old_left = new_left = 0
+            continue
+        match = DECISION_HUNK.match(line)
+        if match:
+            old_left = int(match.group(2)) if match.group(2) is not None else 1
+            new_left = int(match.group(3)) if match.group(3) is not None else 1
+            anchor = (int(match.group(1)), old_left)
+            additions.setdefault(anchor, [])
+    return {anchor: lines for anchor, lines in additions.items() if lines}
+
+
 def intact(repo: Path, base: str, head: str, pr: dict) -> None:
     """Require reversal then reapplication to preserve the non-exempt group tree, against
     every merge base of the entry with the group's base: after criss-cross merges there
@@ -607,13 +637,17 @@ def intact(repo: Path, base: str, head: str, pr: dict) -> None:
         if lost:
             raise Refused(f"not overwriting: #{pr['number']} changed lines were "
                           "overwritten: " + ", ".join(sorted(lost)))
-        added = [line.text for line in safe_push.added_lines(repo, mb, pr["head"],
-                                                              safe_push.DECISIONS)]
+        added = decision_additions(repo, mb, pr["head"])
         if added:
-            present = [line.text for line in safe_push.added_lines(repo, mb, head,
-                                                                   safe_push.DECISIONS)]
-            remaining = iter(present)
-            if not all(any(line == present for present in remaining) for line in added):
+            present = decision_additions(repo, mb, head)
+            preserved = True
+            for anchor, lines in added.items():
+                remaining = iter(present.get(anchor, []))
+                if not all(any(line == candidate for candidate in remaining)
+                           for line in lines):
+                    preserved = False
+                    break
+            if not preserved:
                 raise Refused(f"not overwriting: #{pr['number']} decisions added lines "
                               "are missing or out of order")
 

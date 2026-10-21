@@ -397,6 +397,8 @@ class TrainChecks(Repository):
                           ("security_review",
                            f"[Reviewed](https://example.invalid/a\\(b\\)/{self.member})"),
                           ("code_review",
+                           f"[Reviewed](https://example.invalid/&#41;{self.member})"),
+                          ("code_review",
                            f'<span title="> {self.member}">Reviewed</span>')):
             with self.subTest(key=key, cell=cell):
                 label = "/code-review" if key == "code_review" else "/security-review"
@@ -418,6 +420,8 @@ class TrainChecks(Repository):
                     row = dict(self.row, **{key: cell})
                     self.assertEqual(self.problems(text=body([row])), [])
         for cell in (f"[Reviewed {self.member}: no findings](https://example.invalid/(note))",
+                     f"[Reviewed {self.member}: no findings]"
+                     "(https://example.invalid/&#41;)",
                      f'<span title="> note">Reviewed {self.member}: no findings</span>'):
             with self.subTest(cell=cell):
                 row = dict(self.row, code_review=cell)

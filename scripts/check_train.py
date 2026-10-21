@@ -280,12 +280,12 @@ def _without_link_targets(text: str) -> str:
 
 
 def _review_text(cell: str) -> str:
-    """A review cell's text as a reader sees it: character references decoded, after
-    NFKC, without complete HTML comments and tags, inline link destinations or reference
-    labels. The reviewed commit is read here, never in the raw cell, so a commit no reader
-    sees names none."""
-    text = unicodedata.normalize("NFKC", html.unescape(cell))
-    return _without_link_targets(_without_html(text))
+    """A review cell's text as a reader sees it: without raw HTML comments and tags,
+    inline link destinations or reference labels, then with character references decoded
+    and NFKC applied to the visible text. The reviewed commit is read here, never in the
+    raw cell, so a commit no reader sees names none."""
+    text = _without_link_targets(_without_html(cell))
+    return unicodedata.normalize("NFKC", html.unescape(text))
 
 
 def _review_content(cell: str) -> bool:

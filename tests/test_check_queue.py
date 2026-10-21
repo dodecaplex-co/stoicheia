@@ -326,12 +326,22 @@ class QueueTests(unittest.TestCase):
                      "decisions added lines are missing or out of order")
 
     def test_decisions_added_duplicate_and_unrelated_addition_pass(self):
-        page = self.trees[self.base][PAGE] + "\nSame decision.\n"
+        page = self.trees[self.base][PAGE] + "\nA\nX\n"
         self.base = self.make([self.base], {PAGE: page})
-        one = self.train(1, {PAGE: page + "Same decision.\n"})
+        one = self.train(1, {PAGE: page.replace("A\nX\n", "A\nA\nX\n")})
         first = self.merge(self.base, one, 1)
-        group = self.make([first], {PAGE: page + "Same decision.\nAnother decision.\n"})
+        group = self.make([first], {PAGE: page.replace("A\nX\n", "A\nOther\nA\nX\n")})
         queue.intact(self.repo, self.base, group, {"number": 1, "head": one})
+
+    def test_decisions_readded_identical_line_at_another_anchor_refuses(self):
+        page = self.trees[self.base][PAGE] + "\nA\nX\n"
+        self.base = self.make([self.base], {PAGE: page})
+        one = self.train(1, {PAGE: page.replace("A\nX\n", "A\nA\nX\n")})
+        first = self.merge(self.base, one, 1)
+        moved = self.make([first], {PAGE: page + "A\n"})
+        with self.assertRaisesRegex(queue.Refused,
+                                    "decisions added lines are missing or out of order"):
+            queue.intact(self.repo, self.base, moved, {"number": 1, "head": one})
 
     def test_preflight_names_another_head(self):
         self.set_body(self.body().replace(f"sha={self.one}", f"sha={self.two}"))
