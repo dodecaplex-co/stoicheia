@@ -3960,6 +3960,20 @@ findings:
   and the only messages it skips are silent ones, which Lean's own code makes only for
   information.
 
+  And a number closed up to a command, which the /no-mistakes review of this change found,
+  with our thanks. Lean 4.35 ends a number where its digits end, so it reads
+  `def x : Nat := 1set_option«debug».byAsSorry true in` as `1` and the command, and a
+  theorem stating `0 = 1` after it builds on `sorryAx`; so do `p.1set_option…`, where `.1`
+  is a field, and `0xA`, `1e5`, `1.5` or `1_0` before it, and `1axiom planted : False`
+  declares an axiom. `read_lean` read `\d[\w.]*` as one number, and an identifier's `.`
+  before a digit as part of it, so the scan's `\b` before `set_option` and `axiom` found
+  no boundary. A number now ends where Lean's `numberFnAux` ends it, a field after a
+  single `.` is its digits alone, and either, with a letter, a digit or `_` just after it,
+  is blanked, so every pattern of `FORBIDDEN` and `AXIOM` sees the word after it begin.
+  No tracked `.lean` file reads differently. The set_option plant gains five such
+  spellings and, not to be refused, a name with a digit before `set_option` and fields
+  and numbers in plain use.
+
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains five plants,
   which plant each closed-up spelling, each form of `drop`, the closed-up `#eval`,
   `#exit` and `#guard_panic` (with `#guard_panic` after a remark or a line break), each

@@ -1047,10 +1047,12 @@ def lake_links() -> None:
 # Lean 4.35 reads as the option itself (#197): a guillemet closed up to the command, around
 # one part or each, in a command and in a tactic block, and after a comment opened
 # `/-/-` or `/--/`; with them, a guillemet after a space, a tab (which Lean refuses on its
-# own) and a line break, which the scan caught before. Each is planted as (the spelling
-# check_fidelity.py names, a line of Lean). SET_OPTION_KEPT holds what the rule does not
-# refuse: the command inside a nested comment, and `set_optiondebug.skipKernelTC` and
-# `set_optiondoc.verso`, with neither a space nor a guillemet, which Lean reads as one name.
+# own) and a line break, which the scan caught before; and the command closed up to a
+# number or a field before it, decimal, hexadecimal, scientific or with `_`, which Lean ends
+# before the command. Each is planted as (the spelling check_fidelity.py names, a line of
+# Lean). SET_OPTION_KEPT holds what the rule does not refuse: the command inside a nested
+# comment, `set_optiondebug.skipKernelTC` and `set_optiondoc.verso`, with neither a space
+# nor a guillemet, which Lean reads as one name, and names and fields with digits in them.
 SET_OPTION_SPELLINGS = (
     ("set_option«debug».",
      "set_option«debug».skipKernelTC true in theorem planted_closed : True := trivial"),
@@ -1071,12 +1073,24 @@ SET_OPTION_SPELLINGS = (
      "theorem planted_after_plain_slash : True := trivial"),
     ("set_option«debug».", "/--/ x -/\nset_option«debug».skipKernelTC true in "
      "theorem planted_after_doc_slash : True := trivial"),
+    ("set_option«debug».", "def planted_number : Nat := 1set_option«debug».byAsSorry true in "
+     "theorem planted_after_number : (0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", "def planted_field : Nat := (1, 2).1set_option«debug».byAsSorry "
+     "true in theorem planted_after_field : (0 : Nat) = 1 := by decide"),
+    ("set_option «debug».", "def planted_hex : Nat := 0xAset_option «debug».skipKernelTC "
+     "true in theorem planted_after_hex : True := trivial"),
+    ("set_option«debug».", "def planted_scientific : Float := 1.5e5set_option«debug»."
+     "byAsSorry true in theorem planted_after_scientific : (0 : Nat) = 1 := by decide"),
+    ("set_option«doc».", "def planted_separator : Nat := 1_0set_option«doc».verso true in "
+     "theorem planted_after_separator : True := trivial"),
 )
 SET_OPTION_KEPT = (
     "/- /- -/ set_option«debug».skipKernelTC true in "
     "theorem planted_nested : True := trivial -/",
     "theorem set_optiondebug.skipKernelTC : True := trivial",
     "def set_optiondoc.verso : Bool := true",
+    "def planted2set_option : Nat := 2",
+    "def planted_kept_field : Nat := (1, 2).1.succ + 0x1F + 1_000",
 )
 # `#guard_msgs` with `drop`, in Lean 4.35's forms (#197): each kind of message and `all`,
 # the brackets closed up or spaced, `drop` after another filter or an option, twice, and a

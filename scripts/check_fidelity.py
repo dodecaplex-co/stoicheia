@@ -279,7 +279,19 @@ def check_fidelity() -> None:
 # a raw string with `r`, any `#`s and `"`, a character literal with `'`; a number with a
 # digit, so that the `'` after one begins a character literal. A string just after one of
 # INTERPOLATED is read with its `{…}` holes, as Lean reads it.
-IDENT = re.compile(r"[^\W\d][\w'!?.]*|\d[\w.]*")
+# An identifier's parts are joined by a `.` before a letter or `_` only: Lean reads `p.1`
+# as `p` and the field `.1`, its digits alone, after a single `.` (FIELD). A number ends
+# where Lean 4.35's tokenizer ends it (its `numberFnAux`): binary, octal, hexadecimal or
+# decimal digits, `_` between them, and a decimal's point and exponent, never a `..`
+# after it. Lean reads `1set_option` as `1` and `set_option`, and `p.1set_option` as `p`,
+# `.1` and `set_option`, so a number or field with a letter, a digit or `_` just after it
+# is blanked: the scan's `\b` then sees the word after it begin (#197).
+IDENT = re.compile(r"[^\W\d][\w'!?]*(?:\.[^\W\d][\w'!?]*)*")
+NUMBER = re.compile(r"0[bB](?:_*[01])+|0[oO](?:_*[0-7])+|0[xX](?:_*[0-9a-fA-F])+|"
+                    r"[0-9](?:_*[0-9])*(?:(?!\.\.)\.(?:[0-9](?:_*[0-9])*)?)?"
+                    r"(?:[eE][+-]?[0-9](?:_*[0-9])*)?")
+FIELD = re.compile(r"[0-9]+")
+WORD = re.compile(r"\w")
 RAW = re.compile(r'r(#*)"')
 CHAR = re.compile(r"'(?:\\(?:x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|.)|[^\\\n'])'")
 INTERPOLATED = {"s!", "m!", "f!", "throwError"}
@@ -349,6 +361,11 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
             previous = src[i:j]
         elif m := IDENT.match(src, i):
             j, previous = m.end(), m[0]
+        elif m := (FIELD if src[i - 1:i] == "." != src[max(i - 2, 0):i - 1]
+                   else NUMBER).match(src, i):
+            j, previous = m.end(), m[0]
+            if WORD.match(src, j):
+                marks.append(("text", i, j))
         elif c == "'" and src[j:j + 1] != "'" and (m := CHAR.match(src, i)):
             marks.append(("text", i + 1, m.end() - 1))
             j, previous = m.end(), c
