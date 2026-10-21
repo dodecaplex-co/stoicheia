@@ -3522,21 +3522,37 @@ findings:
   Third, on `lean/superposition-restricted` the test then refused I.4 and I.8, whose new
   proofs the call reconciler could not yet read, for four reasons, each now fixed. It took
   only the first of several constructors on one line (`| a | b | c`). It resolved
-  `open Prop4 in` from the root and from `Elements.`, never from the current namespace;
-  each namespace enclosing the declaration now counts too. It read an inductive's own
-  constructor names as uses, so I.4's constructor `a` was taken for the abbreviation `a`
-  declared after it. A name is taken for a constructor only after a `|` outside every
-  bracket on its line, and never after one of `||`, `<|` or `|>`, so a bar within a
-  constructor's type, as in `| mk (n : Nat) (h : (n == 0 || Known.bar n) = true)`, cannot
-  hide the use after it from the refusals of a name not imported, used before its
-  declaration or unresolved. And `List.mem_nil_iff` and `List.forall_mem_cons` were not on its core
-  allowlist. **The core allowlist gains these two names, `mem_nil_iff` and
-  `forall_mem_cons`.** The list names lemmas of Lean core so that a call to one is not taken
-  for a missing project name; the coordinator ruled that adding a name which really is a
-  Lean core lemma is upkeep of the list, not a widening of its exemption, provided each is
-  shown to be core. Both are: the toolchain's `lean` (4.35.0, commit `eb6cafb7`), with no
-  Mathlib and no project import, run on a scratch file outside the repository holding
-  `#check @List.mem_nil_iff` and `#check @List.forall_mem_cons`, prints
+  `open Prop4 in` from the root and from `Elements.`, never from the current namespace; each
+  namespace enclosing the declaration now counts too. It read an inductive's own constructor
+  names as uses, so I.4's constructor `a` was taken for the abbreviation `a` declared after
+  it. A name is now taken for a constructor only after a `|` outside every bracket in the
+  declaration, on a line that opens `  |`, and never after one of `||`, `<|` or `|>`.
+  Brackets, `⦃ ⦄` among them, are counted across lines, and an unbalanced one is refused.
+  The constructors end at the first line outside every bracket that is not blank and opens
+  neither `  |` nor three spaces, where a deriving clause begins, or a command the index
+  reads with the inductive, such as `partial def`. Outside every bracket, a bar after a word
+  that opens alternatives or patterns (`fun`, `λ`, `match`, `matches`, `let`, `have`, `by`,
+  `do`, `with`, `match_expr` or `let_expr`) may begin one, not a constructor, so an
+  inductive with such a bar before a name is refused; no inductive on main has one. So a bar
+  within or after a constructor's type cannot hide the use after it from the refusals of a
+  name not imported, used before its declaration or unresolved. Each of these, a form Lean
+  4.35 accepts, keeps its use: `||`, in
+  `| mk (n : Nat) (h : (n == 0 || Known.bar n) = true)`; a bar within a bracket opened on an
+  earlier line, in `| mk (f : Nat → Nat := fun` followed by `| Known.bar n => n`; a bar
+  within `⦃ ⦄`; an equation `| Known.bar n => f n` of a `partial def` after the inductive;
+  and, in a family `Q : Nat → Type`, `<|`, in `| mk : Q <| Known.bar 0`, and an alternative,
+  in `| mk : Q <| match 0 with | Known.bar n => n | _ => 0`. In the toolchain's own syntax
+  (`Lean/Parser` and `Init` in its source) no other bar outside every bracket can come
+  before a name there, and no notation in the repository has a bar. No name can follow the
+  bar of `|>` directly, so its rule is defence in depth. And `List.mem_nil_iff` and
+  `List.forall_mem_cons` were not on its core allowlist. **The core allowlist gains these
+  two names, `mem_nil_iff` and `forall_mem_cons`.** The list names lemmas of Lean core so
+  that a call to one is not taken for a missing project name; the coordinator ruled that
+  adding a name which really is a Lean core lemma is upkeep of the list, not a widening of
+  its exemption, provided each is shown to be core. Both are: the toolchain's `lean`
+  (4.35.0, commit `eb6cafb7`), with no Mathlib and no project import, run on a scratch file
+  outside the repository holding `#check @List.mem_nil_iff` and
+  `#check @List.forall_mem_cons`, prints
 
   ```
   @List.mem_nil_iff : ∀ {α : Type u_1} (a : α), a ∈ [] ↔ False
@@ -3547,28 +3563,34 @@ findings:
   Only these two are added, the names the superposition branch needs, and the manifest's
   `core_projection_allowlist` lists them.
 
-  `tests/test_jev_questions.py` now has 44 cases. One table-driven case reads 14 headers,
-  each with its imports' exact spans, an `import_text` excerpt the excerpt check accepts
-  (an import ending the file without a newline among them) and every imported file
-  visible, and refuses 19 others as unsupported imports; twelve of its rows fail on the
-  generator before the parser: the five forms above (the last twice, with and without a
-  comment after the import), an indented import, a module doc comment before an import,
-  `prelude`, `«a/b»`, an import after a declaration, and a block comment running on from an
-  import's line. Five cases test the reconciler on small files, four in the shape of I.4's
-  proof and one with bars within a constructor's type, and each fails with its own fix
-  removed. While the second helper's path is a symlink, behind a symlinked
-  folder, absolute, traversing, missing or a folder, neither planted helper runs, the
-  first included; both run once both paths pass. A copy of the generator beside a
-  symlinked `jev.py` refuses, and neither planted helper runs.
+  `tests/test_jev_questions.py` now has 46 cases. One table-driven case reads 14 headers,
+  each with its imports' exact spans, an `import_text` excerpt the excerpt check accepts (an
+  import ending the file without a newline among them) and every imported file visible, and
+  refuses 19 others as unsupported imports; twelve of its rows fail on the generator before
+  the parser: the five forms above (the last twice, with and without a comment after the
+  import), an indented import, a module doc comment before an import, `prelude`, `«a/b»`, an
+  import after a declaration, and a block comment running on from an import's line. Seven
+  cases test the reconciler on small files: four in the shape of I.4's proof, and three with
+  the bars above, each in a file Lean 4.35 accepts. Each fails with its own fix removed, but
+  for the rule for `|>`, which no file can fail, and the last two fail on the generator the
+  third review read. While the second helper's path is a symlink, behind a symlinked folder,
+  absolute, traversing, missing or a folder, neither planted helper runs, the first
+  included; both run once both paths pass. A copy of the generator beside a symlinked
+  `jev.py` refuses, and neither planted helper runs.
 
-  Every Lean file on main (134 files, 735 imports) and on the superposition branch (139
-  files, 745 imports) reads the same imports with the same spans, comments and
-  declarations as before. On main (`2e8aecf8`) the parser alone generates questions and a
-  manifest byte for byte those of the old generator; with the reconciler's changes the
-  questions are still byte for byte the same, and the manifest differs only by the two
-  names in `core_projection_allowlist`. All 44 cases pass on main with this change, and on
-  `lean/superposition-restricted` at `99ba29d5`, a fresh clone with the two changed files
-  copied in, so the issue's third condition is met. The protected files changed are
-  `scripts/audit/jev_questions.py` and `tests/test_jev_questions.py`. No check is
-  weakened, and no expected value, schema or review record changes; the one allowlist
-  change is the two Lean core names above. CI does not run the test yet (#157).
+  Main now carries the superposition code (`17ae8e2a`). There, in all 139 Lean files, the
+  generator reads the same comments and declarations as the old one, and the same imports
+  with the same spans, 745 in all, but for the four the old one missed: the `public import`
+  of each of four files in `Elements/Foundations/Superposition/`. On the main before it
+  (`8e9a1879`: 134 files, 735 imports) every file reads the same imports, spans, comments
+  and declarations as with the old generator. There the parser alone generates questions and
+  a manifest byte for byte those of the old generator; with the reconciler's changes the
+  questions are still byte for byte the same, and the manifest differs only by the two names
+  in `core_projection_allowlist`. At `17ae8e2a` the old generator, and main's own copy of
+  the test, refuse I.4: "Elements.Superposition.Lit is not imported". With this change the
+  generator gives all 338 rows there with no unresolved name, and all 46 cases pass on a
+  fresh clone of `17ae8e2a` with the two changed files copied in, so the issue's third
+  condition is met. The protected files changed are `scripts/audit/jev_questions.py` and
+  `tests/test_jev_questions.py`. No check is weakened, and no expected value, schema or
+  review record changes; the one allowlist change is the two Lean core names above. CI does
+  not run the test yet (#157).

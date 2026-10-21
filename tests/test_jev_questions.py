@@ -673,8 +673,8 @@ class CallReconciler(LeanFiles):
         self.assertEqual(calls.direct('Elements.Pt'), [])
 
     def test_a_bar_within_a_constructor_begins_no_constructor(self):
-        # Only a `|` outside brackets, and not of `||`, begins a constructor; each
-        # Known.bar after another bar is a use.
+        # Only a `|` outside every bracket in the declaration, and not of `||`, begins a
+        # constructor; each Known.bar after another bar is a use.
         text = ('namespace Elements\n\ndef Known.bar (n : Nat) : Bool := n == 1\n\n'
                 'inductive Pt where\n  | a | b | c\n'
                 '  | mk (n : Nat) (h : (n == 0 || Known.bar n) = true)\n'
@@ -688,6 +688,52 @@ class CallReconciler(LeanFiles):
         self.assertEqual([c['start'] for c in calls.direct('Elements.Pt')
                           if c['name'] == 'Elements.Known.bar'], uses)
         self.assertEqual(len(uses), 3)
+
+    def known(self, inductive):
+        return ('namespace Elements\n\n@[match_pattern] def Known.bar (n : Nat) : Nat := n + 1\n\n'
+                f'{inductive}\n\nend Elements\n')
+
+    def assert_uses(self, text, name, members):
+        calls = self.calls(text)
+        self.assertEqual({member for member, owners in calls.members.items()
+                          if name in owners}, members)
+        uses = [i for i in range(text.index('inductive'), len(text))
+                if text.startswith('Known.bar', i)]
+        self.assertEqual([c['start'] for c in calls.direct(name)
+                          if c['name'] == 'Elements.Known.bar'], uses)
+
+    def test_a_bar_within_a_bracket_opened_on_an_earlier_line_begins_no_constructor(self):
+        # Brackets are counted across lines, ⦃ ⦄ among them: each bar here is within one, the
+        # last before a pipe, so each Known.bar is a use.
+        for inductive in ('  | mk (f : Nat → Nat := fun\n  | Known.bar n => n\n  | _ => 0)',
+                          '  | mk (n : Nat) (h : (match n with\n  | Known.bar k => k\n'
+                          '  | _ => 0) = 0)',
+                          '  | mk ⦃h : id = fun | Known.bar n => n | _ => 0⦄ : Pt',
+                          '  | mk (f : Nat → Nat := fun\n  | k => id <| Known.bar k)'):
+            with self.subTest(inductive=inductive):
+                self.assert_uses(self.known('inductive Pt where\n' + inductive), 'Elements.Pt',
+                                 {'mk'})
+
+    def test_a_bar_outside_every_bracket_begins_a_constructor_only_where_one_can(self):
+        # In a family Lean accepts a pipe outside every bracket, so a name after `<|` is a use.
+        # A command the index reads with the inductive, such as `partial def`, ends its
+        # constructors. A bar after `match`, `fun` or `matches` outside every bracket may begin
+        # an alternative or a pattern, and is refused.
+        self.assert_uses(self.known('inductive Q : Nat → Type where\n  | mk : Q <| Known.bar 0\n'
+                                    '  | a : Q 0 | b : Known.bar 1 |> Q'),
+                         'Elements.Q', {'mk', 'a', 'b'})
+        self.assert_uses(self.known('inductive Pt where\n  | mk\n\npartial def f : Nat → Nat\n'
+                                    '  | Known.bar n => f n\n  | _ => 0'), 'Elements.Pt', {'mk'})
+        for inductive, word in (('inductive Q : Nat → Type where\n'
+                                 '  | mk : Q <| match 0 with | Known.bar n => n | _ => 0', 'match'),
+                                ('inductive Q : (Nat → Nat) → Type where\n  | mk : Q fun\n'
+                                 '  | Known.bar n => n\n  | _ => 0', 'fun'),
+                                ('inductive Q : Bool → Type where\n'
+                                 '  | mk : Q <| 5 matches 0 | Known.bar 0', 'matches')):
+            with self.subTest(inductive=inductive):
+                with self.assertRaisesRegex(questions.Refusal,
+                                            f"unsupported bar after '{word}' in Elements.Q"):
+                    self.calls(self.known(inductive))
 
 
 class HelperModules(unittest.TestCase):

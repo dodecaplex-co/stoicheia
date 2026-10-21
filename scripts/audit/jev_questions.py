@@ -627,9 +627,10 @@ class Calls:
     restrict these conservative candidates, and no receiver type is guessed. Constructors
     and named structure projections are quoted through their enclosing declaration, which
     contains their exact signatures and docstrings. An inductive's constructors are each
-    named after a `|` outside any bracket on a line that opens `  |`, several to a line as
-    `| a | b | c`; there they are declared, not called. The glossary's supplied definitions
-    also expose their underlying types, including AreParallel within Parallelogram.
+    named after a `|` outside every bracket in the declaration, on a line that opens `  |`,
+    several to a line as `| a | b | c`; there they are declared, not called. The glossary's
+    supplied definitions also expose their underlying types, including AreParallel within
+    Parallelogram.
 
     The fixed core/projection allowlist is: 1, 2, symm, trans, refl, mp, mpr, elim, left, right,
     ne, imp, inl, inr, resolve_left, resolve_right, map, Pairwise, mem_append, mem_cons,
@@ -652,6 +653,14 @@ class Calls:
     REFERENCE = re.compile(r'(?:' + IDENT + r'|(?<=\.)[0-9]+)(?:\.(?:' + IDENT + r'|[0-9]+))*')
     CONSTRUCTOR_LINE = re.compile(r'^  \|[^\n]*', re.M)
     CONSTRUCTOR = re.compile(r'\|\s*(' + IDENT + ')')
+    CLOSERS = {')': '(', ']': '[', '}': '{', '⟩': '⟨', '⦄': '⦃', '⟧': '⟦', '›': '‹'}
+    # The words of Lean 4.35's term syntax after which a `|` may begin an alternative or a
+    # pattern: of `fun`, `match` or `match_expr`, of a `let` or `have` by equations or of
+    # `let_expr`, of `matches`, of a tactic, of `do`, or of a computed field after `with`.
+    ALTERNATIVES = re.compile(r"(?<![\w'.])(?:fun|match|match_expr|matches|let|let_expr|have|by"
+                              r"|do|with)(?![\w'])|λ")
+    # A line that is blank, opens `  |` or opens with three spaces continues the constructors.
+    CONSTRUCTORS_END = re.compile(r'(?! *$|  \||   )', re.M)
 
     def __init__(self, index: Index, facts: dict):
         self.index = index
@@ -673,23 +682,47 @@ class Calls:
                 self.members.setdefault(member, set()).add(name)
 
     def constructors(self, clean: str, d: Declaration) -> list[re.Match]:
-        """Return each constructor name of inductive d: the name after a `|` at bracket depth
-        zero on a line that opens `  |`. A bar within brackets, or of `||`, `<|` or `|>`,
-        separates no constructors, so a name after it stays a use."""
-        found = []
-        for line in self.CONSTRUCTOR_LINE.finditer(clean, d.name_end, d.end):
-            depth = 0
-            for i in range(line.start(), line.end()):
-                c = clean[i]
-                if c in '([{':
-                    depth += 1
-                elif c in ')]}':
-                    depth -= 1
-                elif (c == '|' and depth == 0 and clean[i - 1] not in '|<'
-                      and clean[i + 1:i + 2] not in ('|', '>')):
-                    match = self.CONSTRUCTOR.match(clean, i, line.end())
-                    if match:
-                        found.append(match)
+        """Return each constructor name of inductive d: the name after a `|` outside every
+        bracket in the declaration, on a line that opens `  |`.
+
+        Brackets are counted from the declaration's name across lines to the end of its
+        constructors, and an unbalanced one is refused. The constructors end before the first
+        line outside every bracket that is not blank and opens neither `  |` nor three spaces:
+        there a deriving clause begins, or a command the index reads with the inductive, such
+        as `partial def`. A bar within brackets, or of `||`, `<|` or `|>`, separates no
+        constructors, so a name after it stays a use. The rule for `<|` is needed: in a family
+        `Q : Nat → Type`, Lean accepts `| mk : Q <| Known.bar 0`. No name can follow the bar
+        of `|>` directly, so its rule is defence in depth. Outside every bracket, a bar after
+        one of the words ALTERNATIVES names, such as `match`, may begin an alternative, as in
+        `| mk : Q <| match 0 with | Known.bar n => n | _ => 0`, which Lean also accepts, so
+        such a bar before a name is refused."""
+        lines = {line.start(): line.end()
+                 for line in self.CONSTRUCTOR_LINE.finditer(clean, d.name_end, d.end)}
+        words = {found.start(): found.group()
+                 for found in self.ALTERNATIVES.finditer(clean, d.name_end, d.end)}
+        found, stack, line_end, word = [], [], -1, None
+        for i in range(d.name_end, d.end):
+            if not stack and clean[i - 1] == '\n' and self.CONSTRUCTORS_END.match(clean, i):
+                break
+            line_end = lines.get(i, line_end)
+            c = clean[i]
+            if c in '([{⟨⦃⟦‹':
+                stack.append(c)
+            elif c in self.CLOSERS:
+                require(stack and stack.pop() == self.CLOSERS[c],
+                        f'{d.path}: unbalanced brackets in {d.name}')
+            elif stack:
+                continue
+            elif i in words:
+                word = word or words[i]
+            elif (c == '|' and i < line_end and clean[i - 1] not in '|<'
+                  and clean[i + 1:i + 2] not in ('|', '>')):
+                match = self.CONSTRUCTOR.match(clean, i, line_end)
+                if match:
+                    require(word is None,
+                            f'{d.path}: unsupported bar after {word!r} in {d.name}')
+                    found.append(match)
+        require(not stack, f'{d.path}: unbalanced brackets in {d.name}')
         return found
 
     def type_names(self, text: str, consumer: Declaration) -> set[str]:
