@@ -6,11 +6,7 @@ fingerprint = "sha256:a0045621afc2f9d1"
 
 [route]
 kind = "euclid"
-
-[overlap]
-rule = "Tacit.superposition"
-kind = "step"
-note = "Superposition lays the triangle DCE down at A, along AB and on P's side, and so supplies I.23's step in the shortest proof we found from the rules alone (`Audit.I_23`), which takes eight. Our proof is Euclid's, by I.22 and I.8, with I.20 for I.22's condition; it rests on the rule through I.8 and I.20, and does not establish it."
+note = "I.22 constructs F and G, I.20 supplies its triangle inequalities, and I.8 proves the angle equality. The proof rests on restricted superposition through I.8 and I.20; the hypothetical placement returns no construction witnesses."
 
 [[passage]]
 at = "thus it is required to construct on the given straight line AB"
@@ -35,10 +31,10 @@ note = "Euclid applies I.22 without checking its condition on the three lengths.
 
 [review]
 stage = "full"
-commit = "ce5a881"
-reviewer = "Claude Opus 5.5, records review"
+commit = "bd86a7b6"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:03384cc241aed0a4"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "brief 0009 stage full, ship S3 A1-integration re-read"
 
 [review.items]
 statement = "pass"

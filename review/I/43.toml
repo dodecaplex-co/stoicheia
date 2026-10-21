@@ -19,10 +19,10 @@ note = "Euclid takes for granted that the triangle ABC is made up of AEK, the co
 
 [review]
 stage = "full"
-commit = "40d340d"
-reviewer = "Claude Opus 5.5, records review"
+commit = "b62518e5"
+reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:06cb87f7d11f0746"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "brief 0005 stage 5, ship T re-read"
 
 [review.items]
 statement = "pass"
