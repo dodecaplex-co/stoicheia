@@ -29,6 +29,6 @@ note = "Like Heath's, this figure draws the impossible supposition: the straight
 
 [review]
 stage = "exceptions"
-commit = "17987153"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "1c08feeb"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:833e3b1cd507afbf"

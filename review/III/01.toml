@@ -53,6 +53,6 @@ note = "Like Heath's, this figure draws the impossible supposition: G, off CE, a
 
 [review]
 stage = "exceptions"
-commit = "80292b0a"
+commit = "1c08feeb"
 reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:3a4f38de2bd18ca6"
+lean = "sha256:dfe361062dcb0271"
