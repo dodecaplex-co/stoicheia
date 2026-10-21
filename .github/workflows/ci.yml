@@ -36,6 +36,9 @@ jobs:
         # Facts.lean exits 1 if any entry's axioms differ from its own and its citations'.
         run: lake env lean Certificate/Facts.lean
 
+      - name: Check coincidence steps and module boundaries, rejecting reached Staging.Hidden and Lean.Hidden helpers and allowing unused foreign imports
+        run: python3 -I tests/test_certificate.py
+
       - name: Check every proof again, by Lean's kernel, and by nanoda admitting only the locked axioms and Lean's three
         # leanchecker --fresh replays the whole environment of Elements, Lean's own
         # included, through Lean's kernel; nanoda, written separately, checks the whole
