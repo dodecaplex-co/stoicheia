@@ -1052,7 +1052,8 @@ def lake_links() -> None:
 # before the command. Each is planted as (the spelling check_fidelity.py names, a line of
 # Lean). SET_OPTION_KEPT holds what the rule does not refuse: the command inside a nested
 # comment, `set_optiondebug.skipKernelTC` and `set_optiondoc.verso`, with neither a space
-# nor a guillemet, which Lean reads as one name, and names and fields with digits in them.
+# nor a guillemet, which Lean reads as one name, a name with a digit before `set_option`,
+# and fields and numbers in plain use.
 SET_OPTION_SPELLINGS = (
     ("set_option«debug».",
      "set_option«debug».skipKernelTC true in theorem planted_closed : True := trivial"),

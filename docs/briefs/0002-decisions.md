@@ -3970,9 +3970,12 @@ findings:
   no boundary. A number now ends where Lean's `numberFnAux` ends it, a field after a
   single `.` is its digits alone, and either, with a letter, a digit or `_` just after it,
   is blanked, so every pattern of `FORBIDDEN` and `AXIOM` sees the word after it begin.
-  No tracked `.lean` file reads differently. The set_option plant gains five such
-  spellings and, not to be refused, a name with a digit before `set_option` and fields
-  and numbers in plain use.
+  No tracked `.lean` file reads differently. One refusal goes, rightly: a raw string
+  closed up to a number, as in `infixl:65r#"{x"# => Nat.add`, which Lean builds, was read
+  as a plain string after the number `65r` and refused as one the scan could not read for
+  certain; it is now read as Lean reads it, a raw string, and passes. The set_option plant
+  gains five such spellings and, not to be refused, a name with a digit before
+  `set_option` and fields and numbers in plain use.
 
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains five plants,
   which plant each closed-up spelling, each form of `drop`, the closed-up `#eval`,
@@ -3997,6 +4000,6 @@ findings:
 
   [FORMALIZATION](../FORMALIZATION.md), section 7, the list's one home, now names each of
   these. The protected files this changes are `scripts/check_fidelity.py` and
-  `scripts/negative_tests.py`. Nothing is loosened: on 238 plants and probes, in each of
+  `scripts/negative_tests.py`. Nothing else is loosened: on 238 plants and probes, in each of
   the five folders the scan reads, the scan makes every finding origin/main's makes, and
   no file of the edition changes.

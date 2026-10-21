@@ -279,13 +279,14 @@ def check_fidelity() -> None:
 # a raw string with `r`, any `#`s and `"`, a character literal with `'`; a number with a
 # digit, so that the `'` after one begins a character literal. A string just after one of
 # INTERPOLATED is read with its `{…}` holes, as Lean reads it.
-# An identifier's parts are joined by a `.` before a letter or `_` only: Lean reads `p.1`
-# as `p` and the field `.1`, its digits alone, after a single `.` (FIELD). A number ends
-# where Lean 4.35's tokenizer ends it (its `numberFnAux`): binary, octal, hexadecimal or
-# decimal digits, `_` between them, and a decimal's point and exponent, never a `..`
-# after it. Lean reads `1set_option` as `1` and `set_option`, and `p.1set_option` as `p`,
-# `.1` and `set_option`, so a number or field with a letter, a digit or `_` just after it
-# is blanked: the scan's `\b` then sees the word after it begin (#197).
+# An identifier's parts are joined by a `.` before a word character other than a digit:
+# Lean reads `p.1` as `p` and the field `.1`, its digits alone, after a single `.` (FIELD).
+# A number ends where Lean 4.35's tokenizer ends it (its `numberFnAux`): binary, octal,
+# hexadecimal or decimal digits, `_` between them, and a decimal's point and exponent,
+# never a `..` after it. Lean reads `1set_option` as `1` and `set_option`, and
+# `p.1set_option` as `p`, `.1` and `set_option`, so a number or field with a letter, a
+# digit or `_` just after it is blanked: the scan's `\b` then sees the word after it
+# begin (#197).
 IDENT = re.compile(r"[^\W\d][\w'!?]*(?:\.[^\W\d][\w'!?]*)*")
 NUMBER = re.compile(r"0[bB](?:_*[01])+|0[oO](?:_*[0-7])+|0[xX](?:_*[0-9a-fA-F])+|"
                     r"[0-9](?:_*[0-9])*(?:(?!\.\.)\.(?:[0-9](?:_*[0-9])*)?)?"
