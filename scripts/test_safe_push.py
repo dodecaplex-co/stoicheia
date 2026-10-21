@@ -3499,6 +3499,8 @@ class ProtectedPaths(Edge):
                        if (x["ref"], x["field"]) == (ref, "axioms") and "count" in x)
             self.assertEqual(pin["count"]["prefix"], "Tacit.")
             pin["count"]["is"] -= 1
+            if "equals" in pin:
+                pin["equals"].remove("Tacit.area_swap")
         changes = {lean: new_lean, record: stamped,
                    "facts.json": json.dumps(facts, indent=2, ensure_ascii=False) + "\n",
                    expect: json.dumps(expectations, indent=2, ensure_ascii=False) + "\n"}
