@@ -31,10 +31,10 @@ note = "Euclid applies I.22 without checking its condition on the three lengths.
 
 [review]
 stage = "full"
-commit = "bda0636"
-reviewer = "Codex (gpt-6-astra), independent reader"
+commit = "bd86a7b6"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:03384cc241aed0a4"
-run = "brief 0009 stage full, workflow review commit f5bccaa4"
+run = "brief 0009, the A1 integration, ship S3"
 
 [review.items]
 statement = "pass"

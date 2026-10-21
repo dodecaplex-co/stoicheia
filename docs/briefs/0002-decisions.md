@@ -3144,10 +3144,15 @@ findings:
   in #150.
 
   The protected paths this merge changes from both of its parents are these. Reconciled by
-  hand: `Audit/Overlaps.lean`, `Audit/screen.py`, `tests/certificate_expectations.json`
-  (29 expectations, every one of both sides) and `model/Model/Audit.lean`; merged without
+  hand: `Audit/Overlaps.lean`, `Audit/screen.py`, `tests/certificate_expectations.json` (29
+  expectations, every one of both sides) and `model/Model/Audit.lean`; merged without
   conflict and kept from both sides: `tests/model/laws.toml`, `tests/model/search.py` and
   `tests/model/hyperbolic.py`. Regenerated: `Certificate/axioms.lock`, the count in
-  `Certificate/FIELDS.md` and `tests/model/results/`; reconciled by hand with its counts
-  regenerated: `tests/model/MODEL.md`; renewed from the lock: `model/lock.sha256` and
+  `Certificate/FIELDS.md` and the model's results, `tests/model/results/angle_check.txt`,
+  `tests/model/results/exhaustive.txt`, `tests/model/results/grid_check.txt`,
+  `tests/model/results/hyperbolic.txt`, `tests/model/results/mutations.txt`,
+  `tests/model/results/search-seed1.txt`, `tests/model/results/search-seed2.txt`,
+  `tests/model/results/search-seed3.txt`, `tests/model/results/structured.txt` and
+  `tests/model/results/summary.txt`; reconciled by hand with its counts regenerated:
+  `tests/model/MODEL.md`; renewed from the lock: `model/lock.sha256` and
   `tests/model/lock.sha256`. Every check and pin of both sides stays.
