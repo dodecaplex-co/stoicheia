@@ -3404,8 +3404,8 @@ findings:
   `tests/model/lock.sha256`. Every check and pin of both sides stays.
 
 - **Heath's letters upright in both figures (#159).** The owner decided on 18 October
-  that Heath's letters take one style, upright, in the text and in both figures (the
-  voice rules' check change, above). The figures are now set upright. Every
+  that Heath's letters take one style in the text and in both figures, which the voice
+  rules' check change, above, reads as upright. The figures are now set upright. Every
   `figures/<book>/NN.svg` and `NN-idea.svg` of Books I to III, 198 in all, drew the letters
   italic: 83 of Euclid's figures set `font-style="italic"` on the root `<svg>`, and the
   other 16, with all 99 figures at a glance, on the `<g>` that holds the letters. That one
