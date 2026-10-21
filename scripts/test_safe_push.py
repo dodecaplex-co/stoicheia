@@ -3901,12 +3901,13 @@ class ProtectedPaths(Edge):
                 self.assertIn(self.PAGE, out[out.index("pinned values"):])
 
     def test_model_page_markers_added_removed_or_renamed_kept_apart(self):
-        # The same change, with a count marker of MODEL.md added, removed or renamed, is
-        # no pinned value, and keep_apart refuses it when origin/main's checks fail: the
-        # commit's own pass checks each value against the marker that holds it. The first
-        # count of the axioms renamed to tacit-rules, its value moved to match, would have
-        # the page say that the proofs rest on as many axioms as there are tacit rules, and
-        # pass that check. Nor is the page deleted, made executable or left unreadable.
+        # The same change, with a count marker of MODEL.md added, removed, renamed,
+        # reordered or left unclosed, is no pinned value, and keep_apart refuses it when
+        # origin/main's checks fail: the commit's own pass checks each value against the
+        # marker that holds it. The first count of the axioms renamed to tacit-rules, its
+        # value moved to match, would have the page say that the proofs rest on as many
+        # axioms as there are tacit rules, and pass that check. Nor is the page deleted,
+        # made executable or left unreadable.
         def renamed(text):
             (tacit,) = re.findall(r"<!-- count:tacit-rules -->([0-9]+)<!-- /count -->", text)
             return self.AXIOM_COUNT.sub(
