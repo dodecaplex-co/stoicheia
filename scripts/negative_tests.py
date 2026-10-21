@@ -99,21 +99,33 @@ records current; CI runs it on every push.
     of the law (`Derives.prop7`), whose `by decide` finds `Cited.prop7 ∈ cites` false. The
     build catches it, before the certificate runs; the expectation on I.8's `cited_laws`
     is not reached.
+21. A guard added to `Rule.Figure` in the restriction, in two runs that differ in the
+    guard alone. In both, the proof of `Rule.Figure.restrict` (the rule's part about the
+    figure passes to a part of an interpretation) takes the new guard and passes it
+    from the part to the whole through the embedding, and `Rule.iff_figure`, which any
+    new hypothesis breaks, is left out. The control, a guard over the figure's own
+    points and straight line, compiles, and the theorem rests on no `sorryAx`. The
+    plant, a guard over every point (the straight line through D and G holds no other
+    point), fails inside the theorem's proof and nowhere else. Read, not built.
+22. A new law in `Cited` with no proof (were a hand-set flag such as the retired
+    `Cited.drawsNothing` present, it would be marked as drawing): the build of I.8 fails
+    at `Cited.holds_all`, naming the missing case, and nowhere else.
 
-These faults exercise the style and link checks, page freshness, an audit pin and
-leanchecker's loading of compiled files as well as the earlier checks. They do not
-plant an invalid proof term for leanchecker's kernel replay. `check_kernel.py`'s own
+These faults exercise the style and link checks, page freshness, an audit pin,
+leanchecker's loading of compiled files, part 4 of the restriction and the proof of
+every cited law as well as the earlier checks. They do not plant an invalid proof term
+for leanchecker's kernel replay. `check_kernel.py`'s own
 `--self-test` withholds Postulate 5 from nanoda alone.
 
 Every new plant restores its inputs in `finally`; the freshness plant also restores
 all renderer outputs.
-Tests 10, 14, 15 and 19 attempt a restoration build; if it fails or is interrupted,
+Tests 10, 14, 15, 19 and 22 attempt a restoration build; if it fails or is interrupted,
 every file in `.lake/build` returns to its saved contents and presence or absence before
 the plant, including dependent modules, hashes and traces. Test 10 always restores or
 removes `Planted.*` outputs in a nested `finally`. Tests 11 to 15, the proved Circle 2
-plant and tests 18 and 19 report elapsed time, restoration included. An outer `finally` compares
-Git status with the entry status, including on interruption, without replacing an
-exception already in flight.
+plant and tests 18, 19 and 22 report elapsed time, restoration included. An outer `finally`
+compares Git status with the entry status, including on interruption, without replacing
+an exception already in flight.
 Temporary-directory regressions run first, without Lean. Exits non-zero if a fault
 goes unnoticed or a restoration check fails. Restoration needs writable files and
 an opportunity for `finally` to finish; a forced process kill cannot provide it.
@@ -1302,6 +1314,163 @@ def certificate_constructor_counting() -> None:
                    run(sys.executable, "-I", "tests/test_certificate.py"))
 
 
+RESTRICTION = "Elements/Foundations/Superposition/Restriction.lean"
+RESTRICT = "theorem Rule.Figure.restrict"
+IFF_FIGURE = "theorem Rule.iff_figure"
+RESTRICT_NAME = "Elements.Superposition.Rule.Figure.restrict"
+# The two guards `figure_guard_over_all_points` adds to `Rule.Figure`. The control speaks of the figure's own points and
+# straight line, as the embedding keeps them; the plant ranges over every point: the
+# straight line through D and G holds no other point.
+OVER_THE_FIGURE = ("(I.Between (v.pt d) (v.pt a) (v.pt g) → "
+                   "I.SameSide (v.pt b) (v.pt h) (v.line l))")
+OVER_ALL_POINTS = "(∀ X : I.Point, I.OnLine X (v.line l) → X = v.pt d ∨ X = v.pt g)"
+# In both runs the proof of `Rule.Figure.restrict` introduces the new guard as `hX` and
+# passes it from J to I through the embedding.
+THROUGH_THE_EMBEDDING = ("(by simpa [Interpretation.Embedding.val, e.onLine_iff, e.between_iff, "
+                         "e.sameSide_iff] using hX)")
+
+
+def plant_figure_guard(text: str, guard: str) -> str:
+    """The restriction's text with `guard` added to `Rule.Figure` after the guards, the proof
+    of `Rule.Figure.restrict` taking it as `hX` and passing it through the embedding,
+    `Rule.iff_figure` and its docstring left out, and `#print axioms` of
+    `Rule.Figure.restrict` appended, to show whether it was proved."""
+    iff = declaration_lines(text, IFF_FIGURE)
+    lines = text.split("\n")
+    # Line numbers from 1: the docstring opens at `doc`, and a blank line follows the proof.
+    doc = max(n for n in range(1, iff.start) if lines[n - 1].startswith("/--"))
+    assert lines[iff.stop - 1] == "", f"{RESTRICTION}: expected a blank line after {IFF_FIGURE}"
+    text = "\n".join(lines[:doc - 1] + lines[iff.stop:])
+    edits = (
+        ("¬ I.OnLine (v.pt h) (v.line l) → (∀ ℓ ∈ Γ, ℓ.Holds v) → φ.Holds v",
+         f"¬ I.OnLine (v.pt h) (v.line l) →\n      {guard} →\n"
+         "      (∀ ℓ ∈ Γ, ℓ.Holds v) → φ.Holds v"),
+        ("intro n m Γ a b c d g h l φ dφ v hT hd hg hdg hh hΓ",
+         "intro n m Γ a b c d g h l φ dφ v hT hd hg hdg hh hX hΓ"),
+        ("(fun hh' => hh (e.onLine_iff.1 hh'))\n    fun ℓ hℓ",
+         f"(fun hh' => hh (e.onLine_iff.1 hh'))\n    {THROUGH_THE_EMBEDDING}\n    fun ℓ hℓ"),
+    )
+    for old, new in edits:
+        assert text.count(old) == 1, f"{RESTRICTION}: expected one {old!r}; update this test"
+        text = text.replace(old, new)
+    return text + f"\n#print axioms {RESTRICT_NAME}\n"
+
+
+def declaration_lines(text: str, head: str) -> range:
+    """The lines of the declaration that starts with `head`, up to the next blank line."""
+    assert text.count(head) == 1, f"{RESTRICTION}: expected one {head!r}; update this test"
+    start = text.index(head)
+    end = text.find("\n\n", start)
+    first = text[:start].count("\n") + 1
+    return range(first, text[:end if end >= 0 else len(text)].count("\n") + 2)
+
+
+def figure_guard_over_all_points() -> None:
+    """A guard of `Rule.Figure` that ranges over every point, against a control (#150,
+    question 2). Both runs add a guard to `Rule.Figure` after the others, and change the
+    proof of `Rule.Figure.restrict` alike: it introduces the guard as `hX` and passes it
+    from J to I through the embedding, by `simpa` with the embedding's laws. Both leave out
+    `Rule.iff_figure`, which any new hypothesis breaks, since `Rule.Figure` is then no
+    longer the statement of the locked rule; nothing else in the file uses it. So the runs
+    differ in the guard alone.
+
+    The control, a guard over the figure's own points and straight line (if D is between
+    A and G, then B and H are on one side of the straight line through D and G), must
+    compile: no error anywhere, and `sorryAx` not among `Rule.Figure.restrict`'s printed
+    axioms. The plant, a guard that the straight line through D and G holds no other point
+    of the interpretation, must fail, every error inside `Rule.Figure.restrict`'s own
+    lines, and the theorem then rests on `sorryAx`. So the proof passes a guard over the
+    figure from a part of an interpretation to the whole, and refuses, in the same proof,
+    one over every point. It does not show that no other proof could pass the second.
+    Read, not built: the file is compiled against the built modules it imports, and no
+    build output changes."""
+    path = ROOT / RESTRICTION
+    saved = path.read_bytes()
+    name = "a guard over every point added to Rule.Figure"
+    axioms_line = re.compile(rf"'{re.escape(RESTRICT_NAME)}' depends on axioms: \[([^\]]*)\]")
+    try:
+        caught = None
+        for guard in (OVER_THE_FIGURE, OVER_ALL_POINTS):
+            control = guard == OVER_THE_FIGURE
+            text = plant_figure_guard(saved.decode(), guard)
+            restrict = declaration_lines(text, RESTRICT)
+            path.write_text(text)
+            result = run("lake", "env", "lean", RESTRICTION)
+            out = result.stdout + result.stderr
+            errors = [int(n) for n in
+                      re.findall(rf"{re.escape(RESTRICTION)}:(\d+):\d+: error", out)]
+            within = [n for n in errors if n in restrict]
+            printed = axioms_line.search(out)
+            sorry = printed is not None and "sorryAx" in printed.group(1)
+            where = (f"errors at lines {errors or 'none'}; the theorem is at "
+                     f"{RESTRICTION}:{restrict.start}-{restrict.stop - 1}")
+            if control:
+                if result.returncode != 0 or errors or printed is None or sorry:
+                    failures.append(
+                        f"{name}: the control, a guard over the figure alone, does not "
+                        f"compile through Rule.Figure.restrict (exit {result.returncode}, "
+                        f"{where}; its axioms "
+                        f"{'not printed' if printed is None else printed.group(1)}), so "
+                        "the plant could not tell the guards apart")
+                    print(out[-3000:])
+                    return
+            elif (result.returncode == 0 or not within or len(within) < len(errors)
+                  or not sorry):
+                failures.append(f"{name}: not caught by Rule.Figure.restrict alone ({where})")
+                print(out[-3000:])
+                return
+            else:
+                caught = within[0]
+        print(f"✓ {name}: caught by Rule.Figure.restrict at {RESTRICTION}:{caught}, while a "
+              "guard over the figure alone compiles through it")
+    finally:
+        path.write_bytes(saved)
+
+
+SYNTAX = "Elements/Foundations/Superposition/Syntax.lean"
+HOLDS_ALL = "Elements/BookI/Prop08.lean"
+
+
+def cited_law_unproved() -> None:
+    """A new law in `Cited`, with its statement and no proof: `Cited.holds_all` in I.8's file
+    must fail, naming the missing case, and nothing else may. Where the hand-set flag
+    `Cited.drawsNothing` still stands, the planted law is marked as drawing, as I.7 is, so
+    that `Cited.holds_of_drawsNothing` passes it: left to the flag's wildcard, it would fail
+    there first, which says nothing of `holds_all`. Built to I.8, then restored and rebuilt."""
+    path = ROOT / SYNTAX
+    saved = path.read_bytes()
+    text = saved.decode()
+
+    def plant(old: str, new: str) -> None:
+        nonlocal text
+        assert text.count(old) == 1, f"{SYNTAX}: expected one {old!r}; update this test"
+        text = text.replace(old, new)
+
+    plant("  | prop7\n  deriving DecidableEq",
+          "  | prop7\n  /-- Planted by scripts/negative_tests.py: a law with no proof. -/\n"
+          "  | planted\n  deriving DecidableEq")
+    law = "def Cited.law : Cited → Law\n"
+    plant(law, law + "  | planted => ⟨[], pos (.eq .A .A)⟩\n")
+    flag = "def Cited.drawsNothing : Cited → Bool\n"
+    if flag in text:
+        plant(flag, flag + "  | planted => false\n")
+    outputs = BuildOutputs()
+    try:
+        path.write_text(text)
+        result = run("lake", "build", "Elements.BookI.Prop08")
+        name = "a new cited law without a proof"
+        expect_failure(name, result, f"error: {HOLDS_ALL}:", "Missing cases", "Cited.planted")
+        elsewhere = sorted({f for f in re.findall(r"error: ([^\s:]+\.lean):\d+",
+                                                  result.stdout + result.stderr)}
+                           - {HOLDS_ALL})
+        if elsewhere:
+            failures.append(f"{name}: also refused outside {HOLDS_ALL}, in "
+                            f"{', '.join(elsewhere)}, so Cited.holds_all is not what caught it")
+    finally:
+        path.write_bytes(saved)
+        rebuild_restored("the restored I.8 build", outputs, "Elements.BookI.Prop08")
+
+
 @contextmanager
 def count_source_copy():
     """Copy tracked sources plus current Python tools under /tmp, with no build or .git.
@@ -1406,6 +1575,7 @@ def main(argv=()) -> int:
         count_markers()
         wrong_radii()
         prop7_uncited()
+        figure_guard_over_all_points()
         weakened_postulate()
         changed_word()
         stale_statement()
@@ -1424,8 +1594,8 @@ def main(argv=()) -> int:
         placement_named()
         planted_assumptions()
         for test in (circle_proved, style_error, broken_link, stale_page,
-                     changed_audit_pin, corrupt_olean, certificate_constructor_counting,
-                     construction_in_clean_laws):
+                     changed_audit_pin, cited_law_unproved, corrupt_olean,
+                     certificate_constructor_counting, construction_in_clean_laws):
             started = perf_counter()
             try:
                 test()
