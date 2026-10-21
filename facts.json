@@ -22,6 +22,8 @@
   "def : Elements.Point → Elements.Point → Elements.Point → Elements.Point → Elements.Area := fun (A B C D : Elements.Point) => Classical.epsilon (Elements.Contain (Elements.len A B) (Elements.len C D))",
   "quadArea":
   "def : Elements.Point → Elements.Point → Elements.Point → Elements.Point → Elements.Area := fun (A B C D : Elements.Point) => HAdd.hAdd (Elements.area A B C) (Elements.area A C D)",
+  "primitives":
+  "def : Elements.Superposition.Interpretation := Elements.Superposition.Interpretation.mk Elements.Point Elements.Line Elements.OnLine Elements.Between Elements.SameSide Elements.Length Elements.Angle Elements.Area Elements.len Elements.ang Elements.area",
   "len": "opaque : Elements.Point → Elements.Point → Elements.Length",
   "instOfNatMagnitudeOfNatNat":
   "instance : {k : Elements.Kind} → OfNat (Elements.Magnitude k) 0 := fun {k : Elements.Kind} => OfNat.mk Elements.Magnitude.zero",
@@ -53,6 +55,215 @@
   "def : Elements.Circle → Elements.Circle → Elements.Point → Prop := fun (α β : Elements.Circle) (C : Elements.Point) => And (Elements.OnCircle C α) (And (Elements.OnCircle C β) (∀ (P : Elements.Point), Elements.InsideCircle P α → Not (Elements.InsideCircle P β)))",
   "Touches":
   "def : Elements.Point → Elements.Point → Elements.Circle → Prop := fun (A B : Elements.Point) (α : Elements.Circle) => And (Ne A B) (∀ (L : Elements.Line), Elements.OnLine A L → Elements.OnLine B L → And (Exists fun (P : Elements.Point) => And (Elements.OnLine P L) (Elements.OnCircle P α)) (Not (Elements.LineMeetsCircle L α)))",
+  "Superposition.rayOfAnglePremises":
+  "def : List (Elements.Superposition.Lit Elements.Superposition.Letter Elements.Superposition.LineLetter) := List.cons (Elements.Superposition.Lit.neg (Elements.Superposition.Atom.eq Elements.Superposition.Letter.D Elements.Superposition.Letter.E)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.onLine Elements.Superposition.Letter.D Elements.Superposition.LineLetter.L)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.onLine Elements.Superposition.Letter.E Elements.Superposition.LineLetter.L)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.onLine Elements.Superposition.Letter.D Elements.Superposition.LineLetter.M)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.onLine Elements.Superposition.Letter.F Elements.Superposition.LineLetter.M)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.onLine Elements.Superposition.Letter.D Elements.Superposition.LineLetter.N)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.onLine Elements.Superposition.Letter.P Elements.Superposition.LineLetter.N)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.sameSide Elements.Superposition.Letter.P Elements.Superposition.Letter.F Elements.Superposition.LineLetter.L)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.angle Elements.Superposition.Letter.E Elements.Superposition.Letter.D Elements.Superposition.Letter.P Elements.Superposition.Letter.E Elements.Superposition.Letter.D Elements.Superposition.Letter.F)) List.nil))))))))",
+  "Superposition.kept":
+  "def : {P L : Type} → P → P → P → P → P → P → L → List (Elements.Superposition.Lit (Elements.Superposition.Name P) (Elements.Superposition.LineName L)) := fun {P L : Type} (a b c d g h : P) (l : L) => List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.onLine Elements.Superposition.Name.second (Elements.Superposition.LineName.given l))) (List.cons (Elements.Superposition.Lit.neg (Elements.Superposition.Atom.between Elements.Superposition.Name.second (Elements.Superposition.Name.given d) (Elements.Superposition.Name.given g))) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.sameSide Elements.Superposition.Name.third (Elements.Superposition.Name.given h) (Elements.Superposition.LineName.given l))) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len (Elements.Superposition.Name.given d) Elements.Superposition.Name.second (Elements.Superposition.Name.given a) (Elements.Superposition.Name.given b))) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len Elements.Superposition.Name.second Elements.Superposition.Name.third (Elements.Superposition.Name.given b) (Elements.Superposition.Name.given c))) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len Elements.Superposition.Name.third (Elements.Superposition.Name.given d) (Elements.Superposition.Name.given c) (Elements.Superposition.Name.given a))) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.angle Elements.Superposition.Name.second (Elements.Superposition.Name.given d) Elements.Superposition.Name.third (Elements.Superposition.Name.given b) (Elements.Superposition.Name.given a) (Elements.Superposition.Name.given c))) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.angle (Elements.Superposition.Name.given d) Elements.Superposition.Name.third Elements.Superposition.Name.second (Elements.Superposition.Name.given a) (Elements.Superposition.Name.given c) (Elements.Superposition.Name.given b))) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.angle Elements.Superposition.Name.third Elements.Superposition.Name.second (Elements.Superposition.Name.given d) (Elements.Superposition.Name.given c) (Elements.Superposition.Name.given b) (Elements.Superposition.Name.given a))) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.onLine (Elements.Superposition.Name.given d) Elements.Superposition.LineName.side)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.onLine Elements.Superposition.Name.third Elements.Superposition.LineName.side)) List.nil))))))))))",
+  "Superposition.guards":
+  "def : {P L : Type} → P → P → P → L → List (Elements.Superposition.Lit P L) := fun {P L : Type} (d g h : P) (l : L) => List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.onLine d l)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.onLine g l)) (List.cons (Elements.Superposition.Lit.neg (Elements.Superposition.Atom.eq d g)) (List.cons (Elements.Superposition.Lit.neg (Elements.Superposition.Atom.onLine h l)) List.nil)))",
+  "Superposition.branch":
+  "def : {P L : Type} → List (Elements.Superposition.Lit P L) → P → P → P → P → P → P → L → List (Elements.Superposition.Lit (Elements.Superposition.Name P) (Elements.Superposition.LineName L)) := fun {P L : Type} (Γ : List (Elements.Superposition.Lit P L)) (a b c d g h : P) (l : L) => HAppend.hAppend (List.map (Elements.Superposition.Lit.map Elements.Superposition.Name.given Elements.Superposition.LineName.given) (HAppend.hAppend Γ (Elements.Superposition.guards d g h l))) (Elements.Superposition.kept a b c d g h l)",
+  "Superposition.Val.pt":
+  "def : {I : Elements.Superposition.Interpretation} → {P L : Type} → Elements.Superposition.Val I P L → P → Elements.Superposition.Interpretation.Point I := fun (I : Elements.Superposition.Interpretation) (P L : Type) (self : Elements.Superposition.Val I P L) => self.1",
+  "Superposition.Val.mk":
+  "constructor : {I : Elements.Superposition.Interpretation} → {P L : Type} → (P → Elements.Superposition.Interpretation.Point I) → (L → Elements.Superposition.Interpretation.Line I) → Elements.Superposition.Val I P L",
+  "Superposition.Val.line":
+  "def : {I : Elements.Superposition.Interpretation} → {P L : Type} → Elements.Superposition.Val I P L → L → Elements.Superposition.Interpretation.Line I := fun (I : Elements.Superposition.Interpretation) (P L : Type) (self : Elements.Superposition.Val I P L) => self.2",
+  "Superposition.Val":
+  "structure : Elements.Superposition.Interpretation → Type → Type → Type",
+  "Superposition.Triangle":
+  "def : (I : Elements.Superposition.Interpretation) → Elements.Superposition.Interpretation.Point I → Elements.Superposition.Interpretation.Point I → Elements.Superposition.Interpretation.Point I → Prop := fun (I : Elements.Superposition.Interpretation) (A B C : Elements.Superposition.Interpretation.Point I) => Not (Elements.Superposition.Collinear I A B C)",
+  "Superposition.Rule.mk":
+  "constructor : ∀ {I : Elements.Superposition.Interpretation}, (∀ {cites : List Elements.Superposition.Cited}, (∀ (c : Elements.Superposition.Cited), Membership.mem cites c → Elements.Superposition.Cited.Holds I c) → ∀ {n m : Nat} {Γ : List (Elements.Superposition.Lit (Fin n) (Fin m))} {a b c d g h : Fin n} {l : Fin m} {φ : Elements.Superposition.Metric (Fin n)}, Elements.Superposition.Derives cites (Elements.Superposition.branch Γ a b c d g h l) (Elements.Superposition.Lit.pos (Elements.Superposition.Metric.toAtom (Elements.Superposition.Metric.map Elements.Superposition.Name.given φ))) → ∀ (v : Elements.Superposition.Val I (Fin n) (Fin m)), Elements.Superposition.Triangle I (Elements.Superposition.Val.pt v a) (Elements.Superposition.Val.pt v b) (Elements.Superposition.Val.pt v c) → Elements.Superposition.Interpretation.OnLine I (Elements.Superposition.Val.pt v d) (Elements.Superposition.Val.line v l) → Elements.Superposition.Interpretation.OnLine I (Elements.Superposition.Val.pt v g) (Elements.Superposition.Val.line v l) → Ne (Elements.Superposition.Val.pt v d) (Elements.Superposition.Val.pt v g) → Not (Elements.Superposition.Interpretation.OnLine I (Elements.Superposition.Val.pt v h) (Elements.Superposition.Val.line v l)) → (∀ (ℓ : Elements.Superposition.Lit (Fin n) (Fin m)), Membership.mem Γ ℓ → Elements.Superposition.Lit.Holds v ℓ) → Elements.Superposition.Metric.Holds v φ) → Elements.Superposition.Rule I",
+  "Superposition.Rule":
+  "structure : Elements.Superposition.Interpretation → Prop",
+  "Superposition.Name.third":
+  "constructor : {P : Type} → Elements.Superposition.Name P",
+  "Superposition.Name.second":
+  "constructor : {P : Type} → Elements.Superposition.Name P",
+  "Superposition.Name.given":
+  "constructor : {P : Type} → P → Elements.Superposition.Name P",
+  "Superposition.Name": "inductive : Type → Type",
+  "Superposition.Metric.toAtom.match_1":
+  "def : {P : Type} → (motive : Elements.Superposition.Metric P → Sort u_1) → (x : Elements.Superposition.Metric P) → ((p q r s : P) → motive (Elements.Superposition.Metric.len p q r s)) → ((p q r s t u : P) → motive (Elements.Superposition.Metric.angle p q r s t u)) → ((p q r s t u : P) → motive (Elements.Superposition.Metric.area p q r s t u)) → motive x := fun {P : Type} (motive : Elements.Superposition.Metric P → Sort u_1) (x : Elements.Superposition.Metric P) (h_1 : (p q r s : P) → motive (Elements.Superposition.Metric.len p q r s)) (h_2 : (p q r s t u : P) → motive (Elements.Superposition.Metric.angle p q r s t u)) (h_3 : (p q r s t u : P) → motive (Elements.Superposition.Metric.area p q r s t u)) => Elements.Superposition.Metric.casesOn x (fun (p q r s : P) => h_1 p q r s) (fun (p q r s t u : P) => h_2 p q r s t u) fun (p q r s t u : P) => h_3 p q r s t u",
+  "Superposition.Metric.toAtom":
+  "def : {P L : Type} → Elements.Superposition.Metric P → Elements.Superposition.Atom P L := fun {P L : Type} (x : Elements.Superposition.Metric P) => Elements.Superposition.Metric.toAtom.match_1 (fun (x : Elements.Superposition.Metric P) => Elements.Superposition.Atom P L) x (fun (p q r s : P) => Elements.Superposition.Atom.len p q r s) (fun (p q r s t u : P) => Elements.Superposition.Atom.angle p q r s t u) fun (p q r s t u : P) => Elements.Superposition.Atom.area p q r s t u",
+  "Superposition.Metric.rec":
+  "recursor : {P : Type} → {motive : Elements.Superposition.Metric P → Sort u} → ((p q r s : P) → motive (Elements.Superposition.Metric.len p q r s)) → ((p q r s t u : P) → motive (Elements.Superposition.Metric.angle p q r s t u)) → ((p q r s t u : P) → motive (Elements.Superposition.Metric.area p q r s t u)) → (t : Elements.Superposition.Metric P) → motive t",
+  "Superposition.Metric.map":
+  "def : {P P' : Type} → (P → P') → Elements.Superposition.Metric P → Elements.Superposition.Metric P' := fun {P P' : Type} (f : P → P') (x : Elements.Superposition.Metric P) => Elements.Superposition.Metric.toAtom.match_1 (fun (x : Elements.Superposition.Metric P) => Elements.Superposition.Metric P') x (fun (p q r s : P) => Elements.Superposition.Metric.len (f p) (f q) (f r) (f s)) (fun (p q r s t u : P) => Elements.Superposition.Metric.angle (f p) (f q) (f r) (f s) (f t) (f u)) fun (p q r s t u : P) => Elements.Superposition.Metric.area (f p) (f q) (f r) (f s) (f t) (f u)",
+  "Superposition.Metric.len":
+  "constructor : {P : Type} → P → P → P → P → Elements.Superposition.Metric P",
+  "Superposition.Metric.casesOn":
+  "def : {P : Type} → {motive : Elements.Superposition.Metric P → Sort u} → (t : Elements.Superposition.Metric P) → ((p q r s : P) → motive (Elements.Superposition.Metric.len p q r s)) → ((p q r s t u : P) → motive (Elements.Superposition.Metric.angle p q r s t u)) → ((p q r s t u : P) → motive (Elements.Superposition.Metric.area p q r s t u)) → motive t := fun {P : Type} {motive : Elements.Superposition.Metric P → Sort u} (t : Elements.Superposition.Metric P) (len : (p q r s : P) → motive (Elements.Superposition.Metric.len p q r s)) (angle : (p q r s t u : P) → motive (Elements.Superposition.Metric.angle p q r s t u)) (area : (p q r s t u : P) → motive (Elements.Superposition.Metric.area p q r s t u)) => Elements.Superposition.Metric.rec (fun (p q r s : P) => len p q r s) (fun (p q r s t u : P) => angle p q r s t u) (fun (p q r s t u : P) => area p q r s t u) t",
+  "Superposition.Metric.area":
+  "constructor : {P : Type} → P → P → P → P → P → P → Elements.Superposition.Metric P",
+  "Superposition.Metric.angle":
+  "constructor : {P : Type} → P → P → P → P → P → P → Elements.Superposition.Metric P",
+  "Superposition.Metric.Holds":
+  "def : {I : Elements.Superposition.Interpretation} → {P L : Type} → Elements.Superposition.Val I P L → Elements.Superposition.Metric P → Prop := fun {I : Elements.Superposition.Interpretation} {P L : Type} (v : Elements.Superposition.Val I P L) (m : Elements.Superposition.Metric P) => Elements.Superposition.Atom.Holds v (Elements.Superposition.Metric.toAtom m)",
+  "Superposition.Metric": "inductive : Type → Type",
+  "Superposition.Lit.rec":
+  "recursor : {P L : Type} → {motive : Elements.Superposition.Lit P L → Sort u} → ((a : Elements.Superposition.Atom P L) → motive (Elements.Superposition.Lit.pos a)) → ((a : Elements.Superposition.Atom P L) → motive (Elements.Superposition.Lit.neg a)) → (t : Elements.Superposition.Lit P L) → motive t",
+  "Superposition.Lit.pos":
+  "constructor : {P L : Type} → Elements.Superposition.Atom P L → Elements.Superposition.Lit P L",
+  "Superposition.Lit.neg":
+  "constructor : {P L : Type} → Elements.Superposition.Atom P L → Elements.Superposition.Lit P L",
+  "Superposition.Lit.map.match_1":
+  "def : {P L : Type} → (motive : Elements.Superposition.Lit P L → Sort u_1) → (x : Elements.Superposition.Lit P L) → ((a : Elements.Superposition.Atom P L) → motive (Elements.Superposition.Lit.pos a)) → ((a : Elements.Superposition.Atom P L) → motive (Elements.Superposition.Lit.neg a)) → motive x := fun {P L : Type} (motive : Elements.Superposition.Lit P L → Sort u_1) (x : Elements.Superposition.Lit P L) (h_1 : (a : Elements.Superposition.Atom P L) → motive (Elements.Superposition.Lit.pos a)) (h_2 : (a : Elements.Superposition.Atom P L) → motive (Elements.Superposition.Lit.neg a)) => Elements.Superposition.Lit.casesOn x (fun (a : Elements.Superposition.Atom P L) => h_1 a) fun (a : Elements.Superposition.Atom P L) => h_2 a",
+  "Superposition.Lit.map":
+  "def : {P L P' L' : Type} → (P → P') → (L → L') → Elements.Superposition.Lit P L → Elements.Superposition.Lit P' L' := fun {P L P' L' : Type} (f : P → P') (g : L → L') (x : Elements.Superposition.Lit P L) => Elements.Superposition.Lit.map.match_1 (fun (x : Elements.Superposition.Lit P L) => Elements.Superposition.Lit P' L') x (fun (a : Elements.Superposition.Atom P L) => Elements.Superposition.Lit.pos (Elements.Superposition.Atom.map f g a)) fun (a : Elements.Superposition.Atom P L) => Elements.Superposition.Lit.neg (Elements.Superposition.Atom.map f g a)",
+  "Superposition.Lit.casesOn":
+  "def : {P L : Type} → {motive : Elements.Superposition.Lit P L → Sort u} → (t : Elements.Superposition.Lit P L) → ((a : Elements.Superposition.Atom P L) → motive (Elements.Superposition.Lit.pos a)) → ((a : Elements.Superposition.Atom P L) → motive (Elements.Superposition.Lit.neg a)) → motive t := fun {P L : Type} {motive : Elements.Superposition.Lit P L → Sort u} (t : Elements.Superposition.Lit P L) (pos : (a : Elements.Superposition.Atom P L) → motive (Elements.Superposition.Lit.pos a)) (neg : (a : Elements.Superposition.Atom P L) → motive (Elements.Superposition.Lit.neg a)) => Elements.Superposition.Lit.rec (fun (a : Elements.Superposition.Atom P L) => pos a) (fun (a : Elements.Superposition.Atom P L) => neg a) t",
+  "Superposition.Lit.Holds.match_1":
+  "def : {P L : Type} → (motive : Elements.Superposition.Lit P L → Sort u_1) → (x : Elements.Superposition.Lit P L) → ((a : Elements.Superposition.Atom P L) → motive (Elements.Superposition.Lit.pos a)) → ((a : Elements.Superposition.Atom P L) → motive (Elements.Superposition.Lit.neg a)) → motive x := fun {P L : Type} (motive : Elements.Superposition.Lit P L → Sort u_1) (x : Elements.Superposition.Lit P L) (h_1 : (a : Elements.Superposition.Atom P L) → motive (Elements.Superposition.Lit.pos a)) (h_2 : (a : Elements.Superposition.Atom P L) → motive (Elements.Superposition.Lit.neg a)) => Elements.Superposition.Lit.casesOn x (fun (a : Elements.Superposition.Atom P L) => h_1 a) fun (a : Elements.Superposition.Atom P L) => h_2 a",
+  "Superposition.Lit.Holds":
+  "def : {I : Elements.Superposition.Interpretation} → {P L : Type} → Elements.Superposition.Val I P L → Elements.Superposition.Lit P L → Prop := fun {I : Elements.Superposition.Interpretation} {P L : Type} (v : Elements.Superposition.Val I P L) (x : Elements.Superposition.Lit P L) => Elements.Superposition.Lit.Holds.match_1 (fun (x : Elements.Superposition.Lit P L) => Prop) x (fun (a : Elements.Superposition.Atom P L) => Elements.Superposition.Atom.Holds v a) fun (a : Elements.Superposition.Atom P L) => Not (Elements.Superposition.Atom.Holds v a)",
+  "Superposition.Lit": "inductive : Type → Type → Type",
+  "Superposition.LineName.side":
+  "constructor : {L : Type} → Elements.Superposition.LineName L",
+  "Superposition.LineName.given":
+  "constructor : {L : Type} → L → Elements.Superposition.LineName L",
+  "Superposition.LineName": "inductive : Type → Type",
+  "Superposition.LineLetter.N":
+  "constructor : Elements.Superposition.LineLetter",
+  "Superposition.LineLetter.M":
+  "constructor : Elements.Superposition.LineLetter",
+  "Superposition.LineLetter.L":
+  "constructor : Elements.Superposition.LineLetter",
+  "Superposition.LineLetter": "inductive : Type",
+  "Superposition.Letter.P": "constructor : Elements.Superposition.Letter",
+  "Superposition.Letter.F": "constructor : Elements.Superposition.Letter",
+  "Superposition.Letter.E": "constructor : Elements.Superposition.Letter",
+  "Superposition.Letter.D": "constructor : Elements.Superposition.Letter",
+  "Superposition.Letter.C": "constructor : Elements.Superposition.Letter",
+  "Superposition.Letter.B": "constructor : Elements.Superposition.Letter",
+  "Superposition.Letter.A": "constructor : Elements.Superposition.Letter",
+  "Superposition.Letter": "inductive : Type",
+  "Superposition.Law.premises":
+  "def : Elements.Superposition.Law → List (Elements.Superposition.Lit Elements.Superposition.Letter Elements.Superposition.LineLetter) := fun (self : Elements.Superposition.Law) => self.1",
+  "Superposition.Law.mk":
+  "constructor : List (Elements.Superposition.Lit Elements.Superposition.Letter Elements.Superposition.LineLetter) → Elements.Superposition.Lit Elements.Superposition.Letter Elements.Superposition.LineLetter → Elements.Superposition.Law",
+  "Superposition.Law.conclusion":
+  "def : Elements.Superposition.Law → Elements.Superposition.Lit Elements.Superposition.Letter Elements.Superposition.LineLetter := fun (self : Elements.Superposition.Law) => self.2",
+  "Superposition.Law.Holds":
+  "def : Elements.Superposition.Interpretation → Elements.Superposition.Law → Prop := fun (I : Elements.Superposition.Interpretation) (law : Elements.Superposition.Law) => ∀ (v : Elements.Superposition.Val I Elements.Superposition.Letter Elements.Superposition.LineLetter), (∀ (ℓ : Elements.Superposition.Lit Elements.Superposition.Letter Elements.Superposition.LineLetter), Membership.mem (Elements.Superposition.Law.premises law) ℓ → Elements.Superposition.Lit.Holds v ℓ) → Elements.Superposition.Lit.Holds v (Elements.Superposition.Law.conclusion law)",
+  "Superposition.Law": "structure : Type",
+  "Superposition.Interpretation.mk":
+  "constructor : (Point Line : Type) → (Point → Line → Prop) → (Point → Point → Point → Prop) → (Point → Point → Line → Prop) → (Length Angle Area : Type) → (Point → Point → Length) → (Point → Point → Point → Angle) → (Point → Point → Point → Area) → Elements.Superposition.Interpretation",
+  "Superposition.Interpretation.len":
+  "def : (self : Elements.Superposition.Interpretation) → Elements.Superposition.Interpretation.Point self → Elements.Superposition.Interpretation.Point self → Elements.Superposition.Interpretation.Length self := fun (self : Elements.Superposition.Interpretation) => self.9",
+  "Superposition.Interpretation.area":
+  "def : (self : Elements.Superposition.Interpretation) → Elements.Superposition.Interpretation.Point self → Elements.Superposition.Interpretation.Point self → Elements.Superposition.Interpretation.Point self → Elements.Superposition.Interpretation.Area self := fun (self : Elements.Superposition.Interpretation) => self.11",
+  "Superposition.Interpretation.ang":
+  "def : (self : Elements.Superposition.Interpretation) → Elements.Superposition.Interpretation.Point self → Elements.Superposition.Interpretation.Point self → Elements.Superposition.Interpretation.Point self → Elements.Superposition.Interpretation.Angle self := fun (self : Elements.Superposition.Interpretation) => self.10",
+  "Superposition.Interpretation.SameSide":
+  "def : (self : Elements.Superposition.Interpretation) → Elements.Superposition.Interpretation.Point self → Elements.Superposition.Interpretation.Point self → Elements.Superposition.Interpretation.Line self → Prop := fun (self : Elements.Superposition.Interpretation) => self.5",
+  "Superposition.Interpretation.Point":
+  "def : Elements.Superposition.Interpretation → Type := fun (self : Elements.Superposition.Interpretation) => self.1",
+  "Superposition.Interpretation.OnLine":
+  "def : (self : Elements.Superposition.Interpretation) → Elements.Superposition.Interpretation.Point self → Elements.Superposition.Interpretation.Line self → Prop := fun (self : Elements.Superposition.Interpretation) => self.3",
+  "Superposition.Interpretation.Line":
+  "def : Elements.Superposition.Interpretation → Type := fun (self : Elements.Superposition.Interpretation) => self.2",
+  "Superposition.Interpretation.Length":
+  "def : Elements.Superposition.Interpretation → Type := fun (self : Elements.Superposition.Interpretation) => self.6",
+  "Superposition.Interpretation.Between":
+  "def : (self : Elements.Superposition.Interpretation) → Elements.Superposition.Interpretation.Point self → Elements.Superposition.Interpretation.Point self → Elements.Superposition.Interpretation.Point self → Prop := fun (self : Elements.Superposition.Interpretation) => self.4",
+  "Superposition.Interpretation.Area":
+  "def : Elements.Superposition.Interpretation → Type := fun (self : Elements.Superposition.Interpretation) => self.8",
+  "Superposition.Interpretation.Angle":
+  "def : Elements.Superposition.Interpretation → Type := fun (self : Elements.Superposition.Interpretation) => self.7",
+  "Superposition.Interpretation": "structure : Type 1",
+  "Superposition.Derives.ne_symm":
+  "constructor : ∀ {P L : Type} {cites : List Elements.Superposition.Cited} {Γ : List (Elements.Superposition.Lit P L)} {p q : P}, Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.neg (Elements.Superposition.Atom.eq p q)) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.neg (Elements.Superposition.Atom.eq q p))",
+  "Superposition.Derives.len_trans":
+  "constructor : ∀ {P L : Type} {cites : List Elements.Superposition.Cited} {Γ : List (Elements.Superposition.Lit P L)} {p q r s t u : P}, Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len p q r s)) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len r s t u)) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len p q t u))",
+  "Superposition.Derives.len_symm":
+  "constructor : ∀ {P L : Type} {cites : List Elements.Superposition.Cited} {Γ : List (Elements.Superposition.Lit P L)} {p q r s : P}, Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len p q r s)) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len r s p q))",
+  "Superposition.Derives.len_refl":
+  "constructor : ∀ {P L : Type} {cites : List Elements.Superposition.Cited} {Γ : List (Elements.Superposition.Lit P L)} {p q : P}, Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len p q p q))",
+  "Superposition.Derives.len_congr":
+  "constructor : ∀ {P L : Type} {cites : List Elements.Superposition.Cited} {Γ : List (Elements.Superposition.Lit P L)}, Elements.Superposition.Coincidence → ∀ {p q p' q' : P}, Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.eq p p')) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.eq q q')) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len p q p' q'))",
+  "Superposition.Derives.given":
+  "constructor : ∀ {P L : Type} {cites : List Elements.Superposition.Cited} {Γ : List (Elements.Superposition.Lit P L)} {ℓ : Elements.Superposition.Lit P L}, Membership.mem Γ ℓ → Elements.Superposition.Derives cites Γ ℓ",
+  "Superposition.Derives.eq_symm":
+  "constructor : ∀ {P L : Type} {cites : List Elements.Superposition.Cited} {Γ : List (Elements.Superposition.Lit P L)} {p q : P}, Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.eq p q)) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.eq q p))",
+  "Superposition.Derives.eq_refl":
+  "constructor : ∀ {P L : Type} {cites : List Elements.Superposition.Cited} {Γ : List (Elements.Superposition.Lit P L)} {p : P}, Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.eq p p))",
+  "Superposition.Derives.cite":
+  "constructor : ∀ {P L : Type} {cites : List Elements.Superposition.Cited} {Γ : List (Elements.Superposition.Lit P L)} (c : Elements.Superposition.Cited) (σ : Elements.Superposition.Letter → P) (τ : Elements.Superposition.LineLetter → L), (∀ (ℓ : Elements.Superposition.Lit Elements.Superposition.Letter Elements.Superposition.LineLetter), Membership.mem (Elements.Superposition.Law.premises (Elements.Superposition.Cited.law c)) ℓ → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.map σ τ ℓ)) → Membership.mem cites c → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.map σ τ (Elements.Superposition.Law.conclusion (Elements.Superposition.Cited.law c)))",
+  "Superposition.Derives.area_trans":
+  "constructor : ∀ {P L : Type} {cites : List Elements.Superposition.Cited} {Γ : List (Elements.Superposition.Lit P L)} {p q r s t u x y z : P}, Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.area p q r s t u)) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.area s t u x y z)) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.area p q r x y z))",
+  "Superposition.Derives.area_symm":
+  "constructor : ∀ {P L : Type} {cites : List Elements.Superposition.Cited} {Γ : List (Elements.Superposition.Lit P L)} {p q r s t u : P}, Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.area p q r s t u)) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.area s t u p q r))",
+  "Superposition.Derives.area_refl":
+  "constructor : ∀ {P L : Type} {cites : List Elements.Superposition.Cited} {Γ : List (Elements.Superposition.Lit P L)} {p q r : P}, Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.area p q r p q r))",
+  "Superposition.Derives.area_congr":
+  "constructor : ∀ {P L : Type} {cites : List Elements.Superposition.Cited} {Γ : List (Elements.Superposition.Lit P L)}, Elements.Superposition.Coincidence → ∀ {p q r p' q' r' : P}, Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.eq p p')) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.eq q q')) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.eq r r')) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.area p q r p' q' r'))",
+  "Superposition.Derives.angle_trans":
+  "constructor : ∀ {P L : Type} {cites : List Elements.Superposition.Cited} {Γ : List (Elements.Superposition.Lit P L)} {p q r s t u x y z : P}, Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.angle p q r s t u)) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.angle s t u x y z)) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.angle p q r x y z))",
+  "Superposition.Derives.angle_symm":
+  "constructor : ∀ {P L : Type} {cites : List Elements.Superposition.Cited} {Γ : List (Elements.Superposition.Lit P L)} {p q r s t u : P}, Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.angle p q r s t u)) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.angle s t u p q r))",
+  "Superposition.Derives.angle_refl":
+  "constructor : ∀ {P L : Type} {cites : List Elements.Superposition.Cited} {Γ : List (Elements.Superposition.Lit P L)} {p q r : P}, Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.angle p q r p q r))",
+  "Superposition.Derives.angle_congr":
+  "constructor : ∀ {P L : Type} {cites : List Elements.Superposition.Cited} {Γ : List (Elements.Superposition.Lit P L)}, Elements.Superposition.Coincidence → ∀ {p q r p' q' r' : P}, Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.eq p p')) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.eq q q')) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.eq r r')) → Elements.Superposition.Derives cites Γ (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.angle p q r p' q' r'))",
+  "Superposition.Derives":
+  "inductive : {P L : Type} → List Elements.Superposition.Cited → List (Elements.Superposition.Lit P L) → Elements.Superposition.Lit P L → Prop",
+  "Superposition.Collinear":
+  "def : (I : Elements.Superposition.Interpretation) → Elements.Superposition.Interpretation.Point I → Elements.Superposition.Interpretation.Point I → Elements.Superposition.Interpretation.Point I → Prop := fun (I : Elements.Superposition.Interpretation) (A B C : Elements.Superposition.Interpretation.Point I) => Exists fun (L : Elements.Superposition.Interpretation.Line I) => And (Elements.Superposition.Interpretation.OnLine I A L) (And (Elements.Superposition.Interpretation.OnLine I B L) (Elements.Superposition.Interpretation.OnLine I C L))",
+  "Superposition.Coincidence.step":
+  "constructor : Elements.Superposition.Coincidence",
+  "Superposition.Coincidence": "inductive : Prop",
+  "Superposition.Cited.rec":
+  "recursor : {motive : Elements.Superposition.Cited → Sort u} → motive Elements.Superposition.Cited.lenSymm → motive Elements.Superposition.Cited.angleSymm → motive Elements.Superposition.Cited.areaCongruent → motive Elements.Superposition.Cited.neOfLen → motive Elements.Superposition.Cited.rayUnique → motive Elements.Superposition.Cited.rayOfAngle → motive Elements.Superposition.Cited.rayOfAngleSide → motive Elements.Superposition.Cited.prop7 → (t : Elements.Superposition.Cited) → motive t",
+  "Superposition.Cited.rayUnique": "constructor : Elements.Superposition.Cited",
+  "Superposition.Cited.rayOfAngleSide":
+  "constructor : Elements.Superposition.Cited",
+  "Superposition.Cited.rayOfAngle":
+  "constructor : Elements.Superposition.Cited",
+  "Superposition.Cited.prop7": "constructor : Elements.Superposition.Cited",
+  "Superposition.Cited.neOfLen": "constructor : Elements.Superposition.Cited",
+  "Superposition.Cited.lenSymm": "constructor : Elements.Superposition.Cited",
+  "Superposition.Cited.law.match_1":
+  "def : (motive : Elements.Superposition.Cited → Sort u_1) → (x : Elements.Superposition.Cited) → (Unit → motive Elements.Superposition.Cited.lenSymm) → (Unit → motive Elements.Superposition.Cited.angleSymm) → (Unit → motive Elements.Superposition.Cited.areaCongruent) → (Unit → motive Elements.Superposition.Cited.neOfLen) → (Unit → motive Elements.Superposition.Cited.rayUnique) → (Unit → motive Elements.Superposition.Cited.rayOfAngle) → (Unit → motive Elements.Superposition.Cited.rayOfAngleSide) → (Unit → motive Elements.Superposition.Cited.prop7) → motive x := fun (motive : Elements.Superposition.Cited → Sort u_1) (x : Elements.Superposition.Cited) (h_1 : Unit → motive Elements.Superposition.Cited.lenSymm) (h_2 : Unit → motive Elements.Superposition.Cited.angleSymm) (h_3 : Unit → motive Elements.Superposition.Cited.areaCongruent) (h_4 : Unit → motive Elements.Superposition.Cited.neOfLen) (h_5 : Unit → motive Elements.Superposition.Cited.rayUnique) (h_6 : Unit → motive Elements.Superposition.Cited.rayOfAngle) (h_7 : Unit → motive Elements.Superposition.Cited.rayOfAngleSide) (h_8 : Unit → motive Elements.Superposition.Cited.prop7) => Elements.Superposition.Cited.casesOn x (h_1 Unit.unit) (h_2 Unit.unit) (h_3 Unit.unit) (h_4 Unit.unit) (h_5 Unit.unit) (h_6 Unit.unit) (h_7 Unit.unit) (h_8 Unit.unit)",
+  "Superposition.Cited.law":
+  "def : Elements.Superposition.Cited → Elements.Superposition.Law := fun (x : Elements.Superposition.Cited) => Elements.Superposition.Cited.law.match_1 (fun (x : Elements.Superposition.Cited) => Elements.Superposition.Law) x (fun (_ : Unit) => Elements.Superposition.Law.mk List.nil (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len Elements.Superposition.Letter.A Elements.Superposition.Letter.B Elements.Superposition.Letter.B Elements.Superposition.Letter.A))) (fun (_ : Unit) => Elements.Superposition.Law.mk (List.cons (Elements.Superposition.Lit.neg (Elements.Superposition.Atom.eq Elements.Superposition.Letter.A Elements.Superposition.Letter.B)) (List.cons (Elements.Superposition.Lit.neg (Elements.Superposition.Atom.eq Elements.Superposition.Letter.C Elements.Superposition.Letter.B)) List.nil)) (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.angle Elements.Superposition.Letter.A Elements.Superposition.Letter.B Elements.Superposition.Letter.C Elements.Superposition.Letter.C Elements.Superposition.Letter.B Elements.Superposition.Letter.A))) (fun (_ : Unit) => Elements.Superposition.Law.mk (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len Elements.Superposition.Letter.A Elements.Superposition.Letter.B Elements.Superposition.Letter.D Elements.Superposition.Letter.E)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len Elements.Superposition.Letter.B Elements.Superposition.Letter.C Elements.Superposition.Letter.E Elements.Superposition.Letter.F)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len Elements.Superposition.Letter.C Elements.Superposition.Letter.A Elements.Superposition.Letter.F Elements.Superposition.Letter.D)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.angle Elements.Superposition.Letter.A Elements.Superposition.Letter.B Elements.Superposition.Letter.C Elements.Superposition.Letter.D Elements.Superposition.Letter.E Elements.Superposition.Letter.F)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.angle Elements.Superposition.Letter.B Elements.Superposition.Letter.C Elements.Superposition.Letter.A Elements.Superposition.Letter.E Elements.Superposition.Letter.F Elements.Superposition.Letter.D)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.angle Elements.Superposition.Letter.C Elements.Superposition.Letter.A Elements.Superposition.Letter.B Elements.Superposition.Letter.F Elements.Superposition.Letter.D Elements.Superposition.Letter.E)) List.nil)))))) (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.area Elements.Superposition.Letter.A Elements.Superposition.Letter.B Elements.Superposition.Letter.C Elements.Superposition.Letter.D Elements.Superposition.Letter.E Elements.Superposition.Letter.F))) (fun (_ : Unit) => Elements.Superposition.Law.mk (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len Elements.Superposition.Letter.A Elements.Superposition.Letter.B Elements.Superposition.Letter.C Elements.Superposition.Letter.D)) (List.cons (Elements.Superposition.Lit.neg (Elements.Superposition.Atom.eq Elements.Superposition.Letter.C Elements.Superposition.Letter.D)) List.nil)) (Elements.Superposition.Lit.neg (Elements.Superposition.Atom.eq Elements.Superposition.Letter.A Elements.Superposition.Letter.B))) (fun (_ : Unit) => Elements.Superposition.Law.mk (List.cons (Elements.Superposition.Lit.neg (Elements.Superposition.Atom.eq Elements.Superposition.Letter.A Elements.Superposition.Letter.B)) (List.cons (Elements.Superposition.Lit.neg (Elements.Superposition.Atom.eq Elements.Superposition.Letter.P Elements.Superposition.Letter.A)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.onLine Elements.Superposition.Letter.A Elements.Superposition.LineLetter.L)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.onLine Elements.Superposition.Letter.B Elements.Superposition.LineLetter.L)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.onLine Elements.Superposition.Letter.P Elements.Superposition.LineLetter.L)) (List.cons (Elements.Superposition.Lit.neg (Elements.Superposition.Atom.between Elements.Superposition.Letter.P Elements.Superposition.Letter.A Elements.Superposition.Letter.B)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len Elements.Superposition.Letter.A Elements.Superposition.Letter.P Elements.Superposition.Letter.A Elements.Superposition.Letter.B)) List.nil))))))) (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.eq Elements.Superposition.Letter.P Elements.Superposition.Letter.B))) (fun (_ : Unit) => Elements.Superposition.Law.mk Elements.Superposition.rayOfAnglePremises (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.onLine Elements.Superposition.Letter.P Elements.Superposition.LineLetter.M))) (fun (_ : Unit) => Elements.Superposition.Law.mk Elements.Superposition.rayOfAnglePremises (Elements.Superposition.Lit.neg (Elements.Superposition.Atom.between Elements.Superposition.Letter.P Elements.Superposition.Letter.D Elements.Superposition.Letter.F))) fun (_ : Unit) => Elements.Superposition.Law.mk (List.cons (Elements.Superposition.Lit.neg (Elements.Superposition.Atom.eq Elements.Superposition.Letter.A Elements.Superposition.Letter.B)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.onLine Elements.Superposition.Letter.A Elements.Superposition.LineLetter.L)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.onLine Elements.Superposition.Letter.B Elements.Superposition.LineLetter.L)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.sameSide Elements.Superposition.Letter.C Elements.Superposition.Letter.D Elements.Superposition.LineLetter.L)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len Elements.Superposition.Letter.C Elements.Superposition.Letter.A Elements.Superposition.Letter.D Elements.Superposition.Letter.A)) (List.cons (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.len Elements.Superposition.Letter.C Elements.Superposition.Letter.B Elements.Superposition.Letter.D Elements.Superposition.Letter.B)) List.nil)))))) (Elements.Superposition.Lit.pos (Elements.Superposition.Atom.eq Elements.Superposition.Letter.C Elements.Superposition.Letter.D))",
+  "Superposition.Cited.casesOn":
+  "def : {motive : Elements.Superposition.Cited → Sort u} → (t : Elements.Superposition.Cited) → motive Elements.Superposition.Cited.lenSymm → motive Elements.Superposition.Cited.angleSymm → motive Elements.Superposition.Cited.areaCongruent → motive Elements.Superposition.Cited.neOfLen → motive Elements.Superposition.Cited.rayUnique → motive Elements.Superposition.Cited.rayOfAngle → motive Elements.Superposition.Cited.rayOfAngleSide → motive Elements.Superposition.Cited.prop7 → motive t := fun {motive : Elements.Superposition.Cited → Sort u} (t : Elements.Superposition.Cited) (lenSymm : motive Elements.Superposition.Cited.lenSymm) (angleSymm : motive Elements.Superposition.Cited.angleSymm) (areaCongruent : motive Elements.Superposition.Cited.areaCongruent) (neOfLen : motive Elements.Superposition.Cited.neOfLen) (rayUnique : motive Elements.Superposition.Cited.rayUnique) (rayOfAngle : motive Elements.Superposition.Cited.rayOfAngle) (rayOfAngleSide : motive Elements.Superposition.Cited.rayOfAngleSide) (prop7 : motive Elements.Superposition.Cited.prop7) => Elements.Superposition.Cited.rec lenSymm angleSymm areaCongruent neOfLen rayUnique rayOfAngle rayOfAngleSide prop7 t",
+  "Superposition.Cited.areaCongruent":
+  "constructor : Elements.Superposition.Cited",
+  "Superposition.Cited.angleSymm": "constructor : Elements.Superposition.Cited",
+  "Superposition.Cited.Holds":
+  "def : Elements.Superposition.Interpretation → Elements.Superposition.Cited → Prop := fun (I : Elements.Superposition.Interpretation) (c : Elements.Superposition.Cited) => Elements.Superposition.Law.Holds I (Elements.Superposition.Cited.law c)",
+  "Superposition.Cited": "inductive : Type",
+  "Superposition.Atom.sameSide":
+  "constructor : {P L : Type} → P → P → L → Elements.Superposition.Atom P L",
+  "Superposition.Atom.rec":
+  "recursor : {P L : Type} → {motive : Elements.Superposition.Atom P L → Sort u} → ((p q : P) → motive (Elements.Superposition.Atom.eq p q)) → ((p : P) → (l : L) → motive (Elements.Superposition.Atom.onLine p l)) → ((p q r : P) → motive (Elements.Superposition.Atom.between p q r)) → ((p q : P) → (l : L) → motive (Elements.Superposition.Atom.sameSide p q l)) → ((p q r s : P) → motive (Elements.Superposition.Atom.len p q r s)) → ((p q r s t u : P) → motive (Elements.Superposition.Atom.angle p q r s t u)) → ((p q r s t u : P) → motive (Elements.Superposition.Atom.area p q r s t u)) → (t : Elements.Superposition.Atom P L) → motive t",
+  "Superposition.Atom.onLine":
+  "constructor : {P L : Type} → P → L → Elements.Superposition.Atom P L",
+  "Superposition.Atom.map.match_1":
+  "def : {P L : Type} → (motive : Elements.Superposition.Atom P L → Sort u_1) → (x : Elements.Superposition.Atom P L) → ((p q : P) → motive (Elements.Superposition.Atom.eq p q)) → ((p : P) → (l : L) → motive (Elements.Superposition.Atom.onLine p l)) → ((p q r : P) → motive (Elements.Superposition.Atom.between p q r)) → ((p q : P) → (l : L) → motive (Elements.Superposition.Atom.sameSide p q l)) → ((p q r s : P) → motive (Elements.Superposition.Atom.len p q r s)) → ((p q r s t u : P) → motive (Elements.Superposition.Atom.angle p q r s t u)) → ((p q r s t u : P) → motive (Elements.Superposition.Atom.area p q r s t u)) → motive x := fun {P L : Type} (motive : Elements.Superposition.Atom P L → Sort u_1) (x : Elements.Superposition.Atom P L) (h_1 : (p q : P) → motive (Elements.Superposition.Atom.eq p q)) (h_2 : (p : P) → (l : L) → motive (Elements.Superposition.Atom.onLine p l)) (h_3 : (p q r : P) → motive (Elements.Superposition.Atom.between p q r)) (h_4 : (p q : P) → (l : L) → motive (Elements.Superposition.Atom.sameSide p q l)) (h_5 : (p q r s : P) → motive (Elements.Superposition.Atom.len p q r s)) (h_6 : (p q r s t u : P) → motive (Elements.Superposition.Atom.angle p q r s t u)) (h_7 : (p q r s t u : P) → motive (Elements.Superposition.Atom.area p q r s t u)) => Elements.Superposition.Atom.casesOn x (fun (p q : P) => h_1 p q) (fun (p : P) (l : L) => h_2 p l) (fun (p q r : P) => h_3 p q r) (fun (p q : P) (l : L) => h_4 p q l) (fun (p q r s : P) => h_5 p q r s) (fun (p q r s t u : P) => h_6 p q r s t u) fun (p q r s t u : P) => h_7 p q r s t u",
+  "Superposition.Atom.map":
+  "def : {P L P' L' : Type} → (P → P') → (L → L') → Elements.Superposition.Atom P L → Elements.Superposition.Atom P' L' := fun {P L P' L' : Type} (f : P → P') (g : L → L') (x : Elements.Superposition.Atom P L) => Elements.Superposition.Atom.map.match_1 (fun (x : Elements.Superposition.Atom P L) => Elements.Superposition.Atom P' L') x (fun (p q : P) => Elements.Superposition.Atom.eq (f p) (f q)) (fun (p : P) (l : L) => Elements.Superposition.Atom.onLine (f p) (g l)) (fun (p q r : P) => Elements.Superposition.Atom.between (f p) (f q) (f r)) (fun (p q : P) (l : L) => Elements.Superposition.Atom.sameSide (f p) (f q) (g l)) (fun (p q r s : P) => Elements.Superposition.Atom.len (f p) (f q) (f r) (f s)) (fun (p q r s t u : P) => Elements.Superposition.Atom.angle (f p) (f q) (f r) (f s) (f t) (f u)) fun (p q r s t u : P) => Elements.Superposition.Atom.area (f p) (f q) (f r) (f s) (f t) (f u)",
+  "Superposition.Atom.len":
+  "constructor : {P L : Type} → P → P → P → P → Elements.Superposition.Atom P L",
+  "Superposition.Atom.eq":
+  "constructor : {P L : Type} → P → P → Elements.Superposition.Atom P L",
+  "Superposition.Atom.casesOn":
+  "def : {P L : Type} → {motive : Elements.Superposition.Atom P L → Sort u} → (t : Elements.Superposition.Atom P L) → ((p q : P) → motive (Elements.Superposition.Atom.eq p q)) → ((p : P) → (l : L) → motive (Elements.Superposition.Atom.onLine p l)) → ((p q r : P) → motive (Elements.Superposition.Atom.between p q r)) → ((p q : P) → (l : L) → motive (Elements.Superposition.Atom.sameSide p q l)) → ((p q r s : P) → motive (Elements.Superposition.Atom.len p q r s)) → ((p q r s t u : P) → motive (Elements.Superposition.Atom.angle p q r s t u)) → ((p q r s t u : P) → motive (Elements.Superposition.Atom.area p q r s t u)) → motive t := fun {P L : Type} {motive : Elements.Superposition.Atom P L → Sort u} (t : Elements.Superposition.Atom P L) (eq : (p q : P) → motive (Elements.Superposition.Atom.eq p q)) (onLine : (p : P) → (l : L) → motive (Elements.Superposition.Atom.onLine p l)) (between : (p q r : P) → motive (Elements.Superposition.Atom.between p q r)) (sameSide : (p q : P) → (l : L) → motive (Elements.Superposition.Atom.sameSide p q l)) (len : (p q r s : P) → motive (Elements.Superposition.Atom.len p q r s)) (angle : (p q r s t u : P) → motive (Elements.Superposition.Atom.angle p q r s t u)) (area : (p q r s t u : P) → motive (Elements.Superposition.Atom.area p q r s t u)) => Elements.Superposition.Atom.rec (fun (p q : P) => eq p q) (fun (p : P) (l : L) => onLine p l) (fun (p q r : P) => between p q r) (fun (p q : P) (l : L) => sameSide p q l) (fun (p q r s : P) => len p q r s) (fun (p q r s t u : P) => angle p q r s t u) (fun (p q r s t u : P) => area p q r s t u) t",
+  "Superposition.Atom.between":
+  "constructor : {P L : Type} → P → P → P → Elements.Superposition.Atom P L",
+  "Superposition.Atom.area":
+  "constructor : {P L : Type} → P → P → P → P → P → P → Elements.Superposition.Atom P L",
+  "Superposition.Atom.angle":
+  "constructor : {P L : Type} → P → P → P → P → P → P → Elements.Superposition.Atom P L",
+  "Superposition.Atom.Holds.match_1":
+  "def : {P L : Type} → (motive : Elements.Superposition.Atom P L → Sort u_1) → (x : Elements.Superposition.Atom P L) → ((p q : P) → motive (Elements.Superposition.Atom.eq p q)) → ((p : P) → (l : L) → motive (Elements.Superposition.Atom.onLine p l)) → ((p q r : P) → motive (Elements.Superposition.Atom.between p q r)) → ((p q : P) → (l : L) → motive (Elements.Superposition.Atom.sameSide p q l)) → ((p q r s : P) → motive (Elements.Superposition.Atom.len p q r s)) → ((p q r s t u : P) → motive (Elements.Superposition.Atom.angle p q r s t u)) → ((p q r s t u : P) → motive (Elements.Superposition.Atom.area p q r s t u)) → motive x := fun {P L : Type} (motive : Elements.Superposition.Atom P L → Sort u_1) (x : Elements.Superposition.Atom P L) (h_1 : (p q : P) → motive (Elements.Superposition.Atom.eq p q)) (h_2 : (p : P) → (l : L) → motive (Elements.Superposition.Atom.onLine p l)) (h_3 : (p q r : P) → motive (Elements.Superposition.Atom.between p q r)) (h_4 : (p q : P) → (l : L) → motive (Elements.Superposition.Atom.sameSide p q l)) (h_5 : (p q r s : P) → motive (Elements.Superposition.Atom.len p q r s)) (h_6 : (p q r s t u : P) → motive (Elements.Superposition.Atom.angle p q r s t u)) (h_7 : (p q r s t u : P) → motive (Elements.Superposition.Atom.area p q r s t u)) => Elements.Superposition.Atom.casesOn x (fun (p q : P) => h_1 p q) (fun (p : P) (l : L) => h_2 p l) (fun (p q r : P) => h_3 p q r) (fun (p q : P) (l : L) => h_4 p q l) (fun (p q r s : P) => h_5 p q r s) (fun (p q r s t u : P) => h_6 p q r s t u) fun (p q r s t u : P) => h_7 p q r s t u",
+  "Superposition.Atom.Holds":
+  "def : {I : Elements.Superposition.Interpretation} → {P L : Type} → Elements.Superposition.Val I P L → Elements.Superposition.Atom P L → Prop := fun {I : Elements.Superposition.Interpretation} {P L : Type} (v : Elements.Superposition.Val I P L) (x : Elements.Superposition.Atom P L) => Elements.Superposition.Atom.Holds.match_1 (fun (x : Elements.Superposition.Atom P L) => Prop) x (fun (p q : P) => Eq (Elements.Superposition.Val.pt v p) (Elements.Superposition.Val.pt v q)) (fun (p : P) (l : L) => Elements.Superposition.Interpretation.OnLine I (Elements.Superposition.Val.pt v p) (Elements.Superposition.Val.line v l)) (fun (p q r : P) => Elements.Superposition.Interpretation.Between I (Elements.Superposition.Val.pt v p) (Elements.Superposition.Val.pt v q) (Elements.Superposition.Val.pt v r)) (fun (p q : P) (l : L) => Elements.Superposition.Interpretation.SameSide I (Elements.Superposition.Val.pt v p) (Elements.Superposition.Val.pt v q) (Elements.Superposition.Val.line v l)) (fun (p q r s : P) => Eq (Elements.Superposition.Interpretation.len I (Elements.Superposition.Val.pt v p) (Elements.Superposition.Val.pt v q)) (Elements.Superposition.Interpretation.len I (Elements.Superposition.Val.pt v r) (Elements.Superposition.Val.pt v s))) (fun (p q r s t u : P) => Eq (Elements.Superposition.Interpretation.ang I (Elements.Superposition.Val.pt v p) (Elements.Superposition.Val.pt v q) (Elements.Superposition.Val.pt v r)) (Elements.Superposition.Interpretation.ang I (Elements.Superposition.Val.pt v s) (Elements.Superposition.Val.pt v t) (Elements.Superposition.Val.pt v u))) fun (p q r s t u : P) => Eq (Elements.Superposition.Interpretation.area I (Elements.Superposition.Val.pt v p) (Elements.Superposition.Val.pt v q) (Elements.Superposition.Val.pt v r)) (Elements.Superposition.Interpretation.area I (Elements.Superposition.Val.pt v s) (Elements.Superposition.Val.pt v t) (Elements.Superposition.Val.pt v u))",
+  "Superposition.Atom": "inductive : Type → Type → Type",
   "Square":
   "def : Elements.Point → Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C D : Elements.Point) => And (Eq (Elements.len A B) (Elements.len B C)) (And (Eq (Elements.len B C) (Elements.len C D)) (And (Eq (Elements.len C D) (Elements.len D A)) (And (Eq (Elements.ang D A B) Elements.rightAngle) (And (Eq (Elements.ang A B C) Elements.rightAngle) (And (Eq (Elements.ang B C D) Elements.rightAngle) (Eq (Elements.ang C D A) Elements.rightAngle))))))",
   "SameSideOf":
@@ -645,72 +856,59 @@
    "∀ {A B C D E F : Elements.Point}, Elements.Triangle A B C → Elements.Triangle D E F → Eq (Elements.len A B) (Elements.len D E) → Eq (Elements.len A C) (Elements.len D F) → Eq (Elements.ang B A C) (Elements.ang E D F) → And (Eq (Elements.len B C) (Elements.len E F)) (And (Eq (Elements.area A B C) (Elements.area D E F)) (And (Eq (Elements.ang A B C) (Elements.ang D E F)) (Eq (Elements.ang A C B) (Elements.ang D F E))))",
    "shared_steps": [],
    "ref": "I.4",
-   "own_axioms":
-   ["Postulate1",
-    "Tacit.angle_symm",
-    "Tacit.area_congruent",
-    "Tacit.len_symm",
-    "Tacit.superposition"],
+   "own_axioms": ["Postulate1", "Tacit.superposition"],
    "name": "BookI.Prop4",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "proposition",
    "inherited":
    {"Tacit.triple_incidence2":
-    [{"name": "onRay_of_angle_eq",
-      "line": 204,
-      "file": "Elements/Figure/Angles.lean"}],
+    [{"name": "Superposition.Cited.holds_of_drawsNothing",
+      "line": 108,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.same_side_symm":
-    [{"name": "onRay_of_angle_eq",
-      "line": 204,
-      "file": "Elements/Figure/Angles.lean"}],
+    [{"name": "Superposition.Cited.holds_of_drawsNothing",
+      "line": 108,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.same_ray_of_angle_eq_zero":
-    [{"name": "onRay_of_angle_eq",
-      "line": 204,
-      "file": "Elements/Figure/Angles.lean"}],
+    [{"name": "Superposition.Cited.holds_of_drawsNothing",
+      "line": 108,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.pasch3":
-    [{"name": "onRay_of_angle_eq",
-      "line": 204,
-      "file": "Elements/Figure/Angles.lean"}],
+    [{"name": "Superposition.Cited.holds_of_drawsNothing",
+      "line": 108,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.not_on_line_of_same_side":
-    [{"name": "onRay_of_angle_eq",
-      "line": 204,
-      "file": "Elements/Figure/Angles.lean"}],
+    [{"name": "Superposition.Cited.holds_of_drawsNothing",
+      "line": 108,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.not_lt_zero":
-    [{"name": "OnRay.eq_of_len_eq",
-      "line": 159,
-      "file": "Elements/Figure/Rays.lean"},
-     {"name": "onRay_of_angle_eq",
-      "line": 204,
-      "file": "Elements/Figure/Angles.lean"}],
+    [{"name": "Superposition.Cited.holds_of_drawsNothing",
+      "line": 108,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.lt_trichotomy":
-    [{"name": "OnRay.eq_of_len_eq",
-      "line": 159,
-      "file": "Elements/Figure/Rays.lean"},
-     {"name": "onRay_of_angle_eq",
-      "line": 204,
-      "file": "Elements/Figure/Angles.lean"}],
+    [{"name": "Superposition.Cited.holds_of_drawsNothing",
+      "line": 108,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.lt_irrefl":
-    [{"name": "OnRay.eq_of_len_eq",
-      "line": 159,
-      "file": "Elements/Figure/Rays.lean"},
-     {"name": "onRay_of_angle_eq",
-      "line": 204,
-      "file": "Elements/Figure/Angles.lean"}],
+    [{"name": "Superposition.Cited.holds_of_drawsNothing",
+      "line": 108,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.line_unique":
-    [{"name": "SameSideOf.of_line",
-      "line": 32,
-      "file": "Elements/Figure/Sides.lean"},
-     {"name": "onRay_of_angle_eq",
-      "line": 204,
-      "file": "Elements/Figure/Angles.lean"}],
+    [{"name": "Superposition.Cited.holds_of_drawsNothing",
+      "line": 108,
+      "file": "Elements/Figure/Superposition.lean"}],
+    "Tacit.len_symm":
+    [{"name": "Superposition.Cited.holds_of_drawsNothing",
+      "line": 108,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.len_self":
-    [{"name": "ne_of_len_eq",
-      "line": 75,
-      "file": "Elements/Figure/Lengths.lean"}],
+    [{"name": "Superposition.Cited.holds_of_drawsNothing",
+      "line": 108,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.len_add_of_between":
-    [{"name": "OnRay.eq_of_len_eq",
-      "line": 159,
-      "file": "Elements/Figure/Rays.lean"}],
+    [{"name": "Superposition.Cited.holds_of_drawsNothing",
+      "line": 108,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.exists_point":
     [{"name": "Triangle.ne₁₂",
       "line": 22,
@@ -720,25 +918,27 @@
       "file": "Elements/Figure/Triangles.lean"},
      {"name": "Triangle.ne₂₃",
       "line": 29,
-      "file": "Elements/Figure/Triangles.lean"},
-     {"name": "onRay_of_angle_eq",
-      "line": 204,
-      "file": "Elements/Figure/Angles.lean"}],
+      "file": "Elements/Figure/Triangles.lean"}],
     "Tacit.eq_of_len_eq_zero":
-    [{"name": "OnRay.eq_of_len_eq",
-      "line": 159,
-      "file": "Elements/Figure/Rays.lean"},
-     {"name": "ne_of_len_eq",
-      "line": 75,
-      "file": "Elements/Figure/Lengths.lean"}],
+    [{"name": "Superposition.Cited.holds_of_drawsNothing",
+      "line": 108,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.between_cases":
-    [{"name": "OnRay.eq_of_len_eq",
-      "line": 159,
-      "file": "Elements/Figure/Rays.lean"}],
+    [{"name": "Superposition.Cited.holds_of_drawsNothing",
+      "line": 108,
+      "file": "Elements/Figure/Superposition.lean"}],
+    "Tacit.area_congruent":
+    [{"name": "Superposition.Cited.holds_of_drawsNothing",
+      "line": 108,
+      "file": "Elements/Figure/Superposition.lean"}],
+    "Tacit.angle_symm":
+    [{"name": "Superposition.Cited.holds_of_drawsNothing",
+      "line": 108,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.angle_add_of_inside":
-    [{"name": "onRay_of_angle_eq",
-      "line": 204,
-      "file": "Elements/Figure/Angles.lean"}]},
+    [{"name": "Superposition.Cited.holds_of_drawsNothing",
+      "line": 108,
+      "file": "Elements/Figure/Superposition.lean"}]},
    "enunciation":
    "If two triangles have the two sides equal to two sides respectively, and have the angles\ncontained by the equal straight lines equal, they will also have the base equal to the base, the\ntriangle will be equal to the triangle, and the remaining angles will be equal to the remaining\nangles respectively, namely those which the equal sides subtend. ",
    "direct_axioms":
@@ -761,7 +961,8 @@
     "Tacit.same_ray_of_angle_eq_zero",
     "Tacit.same_side_symm",
     "Tacit.superposition",
-    "Tacit.triple_incidence2"],
+    "Tacit.triple_incidence2",
+    "propext"],
    "common_notions": ["C.N. 4", "C.N. 5"],
    "cites": [],
    "axioms":
@@ -1343,50 +1544,54 @@
    "∀ {A B C D E F : Elements.Point}, Elements.Triangle A B C → Elements.Triangle D E F → Eq (Elements.len A B) (Elements.len D E) → Eq (Elements.len A C) (Elements.len D F) → Eq (Elements.len B C) (Elements.len E F) → Eq (Elements.ang B A C) (Elements.ang E D F)",
    "shared_steps": [],
    "ref": "I.8",
-   "own_axioms": ["Postulate1", "Tacit.len_symm", "Tacit.superposition"],
+   "own_axioms": ["Postulate1", "Tacit.superposition"],
    "name": "BookI.Prop8",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "proposition",
    "inherited":
    {"Tacit.not_lt_zero":
-    [{"name": "OnRay.eq_of_len_eq",
-      "line": 159,
-      "file": "Elements/Figure/Rays.lean"}],
+    [{"name": "Superposition.Cited.holds_rayUnique",
+      "line": 85,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.lt_trichotomy":
-    [{"name": "OnRay.eq_of_len_eq",
-      "line": 159,
-      "file": "Elements/Figure/Rays.lean"}],
+    [{"name": "Superposition.Cited.holds_rayUnique",
+      "line": 85,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.lt_irrefl":
-    [{"name": "OnRay.eq_of_len_eq",
-      "line": 159,
-      "file": "Elements/Figure/Rays.lean"}],
+    [{"name": "Superposition.Cited.holds_rayUnique",
+      "line": 85,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.line_unique":
     [{"name": "SameSideOf.of_line",
       "line": 32,
       "file": "Elements/Figure/Sides.lean"}],
+    "Tacit.len_symm":
+    [{"name": "Superposition.Cited.holds_lenSymm",
+      "line": 63,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.len_self":
-    [{"name": "ne_of_len_eq",
-      "line": 75,
-      "file": "Elements/Figure/Lengths.lean"}],
+    [{"name": "Superposition.Cited.holds_neOfLen",
+      "line": 79,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.len_add_of_between":
-    [{"name": "OnRay.eq_of_len_eq",
-      "line": 159,
-      "file": "Elements/Figure/Rays.lean"}],
+    [{"name": "Superposition.Cited.holds_rayUnique",
+      "line": 85,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.exists_point":
     [{"name": "Triangle.ne₂₃",
       "line": 29,
       "file": "Elements/Figure/Triangles.lean"}],
     "Tacit.eq_of_len_eq_zero":
-    [{"name": "OnRay.eq_of_len_eq",
-      "line": 159,
-      "file": "Elements/Figure/Rays.lean"},
-     {"name": "ne_of_len_eq",
-      "line": 75,
-      "file": "Elements/Figure/Lengths.lean"}],
+    [{"name": "Superposition.Cited.holds_neOfLen",
+      "line": 79,
+      "file": "Elements/Figure/Superposition.lean"},
+     {"name": "Superposition.Cited.holds_rayUnique",
+      "line": 85,
+      "file": "Elements/Figure/Superposition.lean"}],
     "Tacit.between_cases":
-    [{"name": "OnRay.eq_of_len_eq",
-      "line": 159,
-      "file": "Elements/Figure/Rays.lean"}]},
+    [{"name": "Superposition.Cited.holds_rayUnique",
+      "line": 85,
+      "file": "Elements/Figure/Superposition.lean"}]},
    "enunciation":
    "If two triangles have the two sides equal to two sides respectively, and have also the base\nequal to the base, they will also have the angles equal which are contained by the equal\nstraight lines. ",
    "direct_axioms":
@@ -1401,7 +1606,8 @@
     "Tacit.lt_irrefl",
     "Tacit.lt_trichotomy",
     "Tacit.not_lt_zero",
-    "Tacit.superposition"],
+    "Tacit.superposition",
+    "propext"],
    "common_notions": ["C.N. 1", "C.N. 3", "C.N. 4", "C.N. 5"],
    "cites": ["I.7"],
    "axioms":
@@ -32529,8 +32735,7 @@
   "∀ {A B C D : Elements.Point} {L M N : Elements.Line}, Elements.OnLine A L → Elements.OnLine A M → Elements.OnLine A N → Elements.OnLine B L → Elements.OnLine C M → Elements.OnLine D N → Elements.SameSide C D L → Not (Elements.SameSide B D M) → Not (Elements.OnLine D M) → Ne B A → Elements.SameSide B C N",
   "Tacit.triple_incidence1":
   "∀ {A B C D : Elements.Point} {L M N : Elements.Line}, Elements.OnLine A L → Elements.OnLine A M → Elements.OnLine A N → Elements.OnLine B L → Elements.OnLine C M → Elements.OnLine D N → Elements.SameSide C D L → Elements.SameSide B C N → Not (Elements.SameSide B D M)",
-  "Tacit.superposition":
-  "∀ {A B C D G H : Elements.Point} {L : Elements.Line}, Elements.Triangle A B C → Elements.OnLine D L → Elements.OnLine G L → Ne D G → Not (Elements.OnLine H L) → Exists fun (B' : Elements.Point) => Exists fun (C' : Elements.Point) => And (Elements.OnLine B' L) (And (Not (Elements.Between B' D G)) (And (Elements.SameSide C' H L) (And (Eq (Elements.len D B') (Elements.len A B)) (And (Eq (Elements.len B' C') (Elements.len B C)) (And (Eq (Elements.len C' D) (Elements.len C A)) (And (Eq (Elements.ang B' D C') (Elements.ang B A C)) (And (Eq (Elements.ang D C' B') (Elements.ang A C B)) (Eq (Elements.ang C' B' D) (Elements.ang C B A)))))))))",
+  "Tacit.superposition": "Elements.Superposition.Rule Elements.primitives",
   "Tacit.same_side_trans":
   "∀ {A B C : Elements.Point} {L : Elements.Line}, Elements.SameSide A B L → Elements.SameSide A C L → Elements.SameSide B C L",
   "Tacit.same_side_symm":
