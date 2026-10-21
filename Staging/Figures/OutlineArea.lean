@@ -4,7 +4,7 @@ import Elements.Figure.Sums
 
 /-!
 The area of an outline proposed by brief 0013, using the content theorem.
-No proposition of the Elements is cited; through `Outline.lean` it imports I.23, which only
+No proposition of the Elements is cited; through `Outline.lean` this file imports I.23, which only
 `outline_bounded` uses.
 -/
 

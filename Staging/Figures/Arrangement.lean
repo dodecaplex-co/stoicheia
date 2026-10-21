@@ -318,10 +318,11 @@ theorem simple_diagonal {ps : List Point} (h : SimpleLoop ps) (hn : 4 ≤ ps.len
       ps.rotateLeft n = A :: (us ++ B :: vs) ∧ us ≠ [] ∧ vs ≠ [] ∧
         ∀ X : Point, Between A X B → loopInside ps X := by
   /- An extreme corner V, with every other corner strictly across a straight line through it,
-  has neighbours U and W. Either UW is an interior diagonal (an ear), or a corner of the
-  triangle VUW, on a straight line across V that cuts off a triangle with no corner inside it,
-  is joined to V by one (`Diag.diagonal_exists`). Two corners that are not neighbours split
-  the loop read from one of them (`Diag.diagonal_rotate`). -/
+  has neighbours U and W. Either UW is an interior diagonal (an ear), or a corner in the
+  triangle VUW (inside it, or strictly between U and W), on a straight line across V that cuts
+  off a triangle with no corner inside it, is joined to V by one (`Diag.diagonal_exists`). Two
+  corners that are not neighbours split the loop read from one of them
+  (`Diag.diagonal_rotate`). -/
   obtain ⟨A, hA, B, hB, hAB, h₁, h₂, hd⟩ := Diag.diagonal_exists h hn
   obtain ⟨n, us, vs, he, hu, hv⟩ := Diag.diagonal_rotate h.2.1 hA hB hAB h₁ h₂
   exact ⟨n, A, B, us, vs, he, hu, hv, hd⟩

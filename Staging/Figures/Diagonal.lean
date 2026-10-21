@@ -16,9 +16,9 @@ superposition is used.
   line (`extreme_corner`). If no corner is inside the triangle of V and its neighbours U and W,
   or strictly between U and W, then UW is the diagonal (`ear_edge`). Otherwise a corner X on a
   straight line across V, strictly between its meetings with VU and VW, with no corner inside
-  the smaller triangle it cuts off (`nearest`), gives the diagonal VX. No side meets such a triangle's inside (`clean`), and
-  its points are inside the loop, being joined across the side VU to points from which a ray
-  crosses nothing (`inside_near`). No parallels are drawn.
+  the smaller triangle it cuts off (`nearest`), gives the diagonal VX. No side meets such a
+  triangle's inside (`clean`), and its points are inside the loop, being joined across the
+  side VU to points from which a ray crosses nothing (`inside_near`). No parallels are drawn.
 * **Two chains and two pieces** (`piece_simple`, `inside_xor`). Read from A, the loop is a chain
   from A to B and a chain back; each piece is one chain closed by the diagonal. Off the sides
   and the diagonal, a good ray crosses the loop as often as both pieces together, less the

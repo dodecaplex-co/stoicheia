@@ -10,7 +10,8 @@ import Staging.Figures.CellFacts
 
 Words, statements and proofs for the route to brief 0013's content theorem (a draft for the
 owner's approval). A convex cell is a convex outline taken as a piece of a figure; its area
-is its fan's sum, which does not depend on the corner the fan is drawn from (`fanSum_rotate`). A straight line cuts a cell into at most two cells; a cell may
+is its fan's sum, which does not depend on the corner the fan is drawn from
+(`fanSum_rotate`). A straight line cuts a cell into at most two cells; a cell may
 be cut down to nothing, or to a segment or a point, which has no inside, and then it is
 `none`. Two regions that agree at every point off finitely many straight lines are said to
 agree off them (`AgreeOff`): a cut's pieces are pinned exactly by their insides, and up to
