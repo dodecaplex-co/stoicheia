@@ -52,8 +52,8 @@
   generated page changes.
 
   This entry approves the new meanings of two tags in `review/terms.toml`.
-  It approves the past tense and the new paragraph of the worked example in
-  `review/SCHEMA.md`.
+  It approves the past tense and the new paragraph of the worked
+  example in `review/SCHEMA.md`.
   It approves the two rows taken out of `ALLOWED_LIMITS` in `scripts/check_acceptance.py`.
-  It approves the shorter expected table and the two new cases of
-  `tests/test_acceptance_limits.py`.
+  It approves the shorter expected table and the two new
+  cases of `tests/test_acceptance_limits.py`.
