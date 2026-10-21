@@ -38,13 +38,14 @@ note = "Euclid supposes BC greater than EF; the Lean proves his argument once ov
 
 [figure]
 case = "AB supposed greater than DE, with G between B and A, and separately BC supposed greater than EF, with H between B and C; both suppositions appear on one triangle, as in Heath's figure"
+note = "Like Heath's, this figure draws Euclid's impossible suppositions. BG is drawn shorter than DE and BH shorter than EF, although Euclid cuts off BG equal to DE and BH equal to EF."
 
 [review]
 stage = "full"
-commit = "570e6fa"
-reviewer = "GPT-6 Astra (Codex), records re-read"
+commit = "4a4bd6ec"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:a39a56a942144b8d"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "brief 0005 stage 6, workflow Q-read-jev, independent re-read at 4a4bd6ec"
 
 [review.items]
 statement = "pass"
