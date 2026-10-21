@@ -9,12 +9,16 @@ simulated builds delete, replace and create them before failing or being interru
 A temporary repository stands in for the pre-flight's pass with origin/main's checks,
 whose work tree lacks the files a commit adds under the check inputs while Git's index
 still lists them. The plants are reached as the suite reaches them, through its loader
-of scripts/negative/, and the loader is tested on temporary folders of small plants.
+of scripts/negative/, and the loader is tested on temporary folders of small plants; one
+test runs the suite as a script, in a temporary copy, to see that its plants share the
+running module and that no bytecode runs in place of the runner or a plant.
 """
 
+import importlib.util
 import io
 import json
 import os
+import py_compile
 import re
 import shutil
 import subprocess
@@ -677,14 +681,27 @@ DOC = '"""A plant the loader\'s tests write."""'
 
 
 def plant_source(name, *, doc=DOC, builds="BUILDS = False", body='nt.refused("{name}: caught")',
-                 function=None):
+                 function=None, before=""):
     """A plant's file: it leaves planted-<name> in ROOT, so a test sees that it ran, and then
-    does `body`."""
+    does `body`; `before`, if given, is module-level code ahead of plant()."""
     if function is None:
         function = ("def plant() -> None:\n"
                     f'    (nt.ROOT / "planted-{name}").touch()\n'
                     f"    {body.format(name=name)}")
+    if before:
+        function = f"{before}\n\n\n{function}"
     return PLANT.format(doc=doc, builds=builds, plant=function)
+
+
+def unchecked_bytecode(source, cfile):
+    """Compile `source` to `cfile` as bytecode that Python's import never compares with the
+    source beside it (an unchecked hash), the bytecode a plant's or the runner's could be."""
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "stand_in.py"
+        path.write_text(source)
+        Path(cfile).parent.mkdir(parents=True, exist_ok=True)
+        py_compile.compile(str(path), cfile=str(cfile), doraise=True,
+                           invalidation_mode=py_compile.PycInvalidationMode.UNCHECKED_HASH)
 
 
 class LoaderTests(unittest.TestCase):
@@ -711,11 +728,16 @@ class LoaderTests(unittest.TestCase):
         (self.folder / name).write_text(text)
 
     def reset(self):
+        for path in (self.root / "scripts", self.folder):
+            if path.is_symlink():
+                path.unlink()
+        if (self.root / "elsewhere").exists():
+            shutil.rmtree(self.root / "elsewhere")
         if self.folder.is_dir():
             shutil.rmtree(self.folder)
         else:
             self.folder.unlink(missing_ok=True)
-        self.folder.mkdir()
+        self.folder.mkdir(parents=True)
         for path in self.root.glob("planted-*"):
             path.unlink()
         negative.failures.clear()
@@ -730,6 +752,9 @@ class LoaderTests(unittest.TestCase):
         return [cmd for cmd in self.calls if cmd[:2] == ("git", "status")]
 
     def assert_refused_before_planting(self, *faults):
+        """main() fails on `faults`, each the start of a failure, with nothing planted and no
+        closing check of the unplanted tree; the entry Git status, taken before loading, is
+        compared once more at the end."""
         self.assertEqual(negative.main(), 1)
         self.assertEqual(len(negative.failures), len(faults), negative.failures)
         for fault, failure in zip(faults, negative.failures):
@@ -738,7 +763,8 @@ class LoaderTests(unittest.TestCase):
         self.assertIn("loading the plants (scripts/negative/):\n  ✗ " + negative.failures[0],
                       self.output.getvalue())
         self.assertEqual(self.planted(), [])
-        self.assertEqual(self.git_status(), [])
+        self.assertEqual(len(self.git_status()), 2)
+        self.assertNotIn((sys.executable, "scripts/check_fidelity.py"), self.calls)
 
     def test_the_stable_order(self):
         for name, builds in (("zeta", False), ("alpha", True), ("beta", False),
@@ -784,6 +810,9 @@ class LoaderTests(unittest.TestCase):
             ("good.py.orig", file(plant_source("orig")), name),
             ("README", file("A folder of plants."), name),
             ("__pycache__", file(), name),
+            (".good.py.swp", file("an editor's swap file"), name),
+            (".DS_Store", directory, "a directory, not a plant's file"),
+            (".DS_Store", link(self.folder / "good.py"), "a symbolic link, which is not read"),
             ("linked.py", link(self.folder / "good.py"), "a symbolic link, which is not read"),
             ("dangling.py", link(self.root / "missing.py"), "a symbolic link, which is not read"),
             ("cached", link(self.root), "a symbolic link, which is not read"),
@@ -815,7 +844,7 @@ class LoaderTests(unittest.TestCase):
              "plant() must take no arguments"),
         ]
         for entry, make, reason in cases:
-            with self.subTest(entry=entry):
+            with self.subTest(entry=entry, reason=reason):
                 self.reset()
                 self.write("good.py", plant_source("good"))
                 make(self.folder / entry)
@@ -834,19 +863,168 @@ class LoaderTests(unittest.TestCase):
                   "scripts/negative: the plants' folder cannot be listed (NotADirectoryError"),
                  ("empty", lambda: None, "scripts/negative: no plants"),
                  ("only __pycache__", lambda: (self.folder / "__pycache__").mkdir(),
+                  "scripts/negative: no plants"),
+                 ("only .DS_Store", lambda: (self.folder / ".DS_Store").write_bytes(b"\0"),
                   "scripts/negative: no plants")]
+        linked = ("scripts/negative: the plants' folder is, or passes through, a symbolic "
+                  "link")
+
+        def a_linked_folder():
+            elsewhere = self.root / "elsewhere"
+            elsewhere.mkdir()
+            (elsewhere / "good.py").write_text(plant_source("good"))
+            self.folder.rmdir()
+            self.folder.symlink_to(elsewhere, target_is_directory=True)
+
+        def a_linked_scripts_folder():
+            scripts = self.root / "scripts"
+            elsewhere = self.root / "elsewhere"
+            scripts.rename(elsewhere)
+            (elsewhere / "negative/good.py").write_text(plant_source("good"))
+            scripts.symlink_to(elsewhere, target_is_directory=True)
+
+        cases += [("a link", a_linked_folder, linked),
+                  ("in a linked scripts/", a_linked_scripts_folder, linked)]
         for what, make, fault in cases:
             with self.subTest(folder=what):
                 self.reset()
                 make()
                 self.assert_refused_before_planting(fault)
+        with self.subTest(folder="an entry that resolves outside it"):
+            # As if the entry became a link after it was looked at: the loader still reads
+            # only a file directly in the folder.
+            self.reset()
+            (self.root / "elsewhere").mkdir()
+            (self.root / "elsewhere/outside.py").write_text(plant_source("outside"))
+            (self.folder / "outside.py").symlink_to(self.root / "elsewhere/outside.py")
+            with patch.object(Path, "is_symlink", lambda path: False):
+                self.assert_refused_before_planting(
+                    f"scripts/negative/outside.py: resolves to {self.root}/elsewhere/outside.py, "
+                    "which is not directly in the plants' folder")
+        self.reset()
 
-    def test_pycache_is_passed_over(self):
+    def test_pycache_and_ds_store_are_passed_over(self):
         self.write("good.py", plant_source("good"))
         (self.folder / "__pycache__").mkdir()
         (self.folder / "__pycache__/stale.cpython-312.pyc").write_bytes(b"not a plant")
+        (self.folder / ".DS_Store").write_bytes(b"\0\0\0\1Bud1")
         plants, faults = negative.load_plants()
         self.assertEqual(([p.name for p in plants], faults), (["good"], []))
+        self.assertIn("note: scripts/negative/.DS_Store passed over: Finder's settings for "
+                      "the folder, which Git ignores, not a plant\n", self.output.getvalue())
+
+    def test_a_plant_is_compiled_from_its_text_never_from_bytecode(self):
+        """Bytecode beside a plant, which Python's import would run without comparing it
+        with the source, is not read: the plant is the file's text."""
+        self.write("good.py", plant_source("good"))
+        unchecked_bytecode(plant_source("good", doc='"""From bytecode."""',
+                                        builds="BUILDS = True"),
+                           importlib.util.cache_from_source(str(self.folder / "good.py")))
+        plants, faults = negative.load_plants()
+        self.assertEqual(faults, [])
+        self.assertEqual([(p.name, p.description, p.builds) for p in plants],
+                         [("good", "A plant the loader's tests write.", False)])
+
+    def test_a_plant_that_exits_fails_and_the_run_goes_on(self):
+        self.write("a_exits.py", plant_source("a_exits", before="import sys",
+                                              body='nt.refused("{name}: caught"); sys.exit(0)'))
+        self.write("b_later.py", plant_source("b_later"))
+        self.assertEqual(negative.main(), 1)
+        message = "a_exits: plant() exited (0) instead of returning"
+        self.assertEqual(negative.failures, [message])
+        self.assertIn(f"a_exits (scripts/negative/a_exits.py):\n  ✗ {message}\n",
+                      self.output.getvalue())
+        self.assertEqual(self.planted(), ["a_exits", "b_later"])
+        self.assertIn((sys.executable, "scripts/check_fidelity.py"), self.calls)
+        self.assertEqual(len(self.git_status()), 2)
+
+    def test_a_run_that_stops_short_of_its_plants_fails(self):
+        """A plant that empties the runner's list of chosen plants stops the loop early;
+        the run counts the plants it ran against those chosen."""
+        self.write("a_clears.py", plant_source("a_clears", before="import sys", body=(
+            'nt.refused("{name}: caught"); sys._getframe(2).f_locals["chosen"].clear()')))
+        self.write("b_never.py", plant_source("b_never"))
+        self.assertEqual(negative.main(), 1)
+        self.assertEqual(negative.failures, ["only 1 of the 2 plants chosen were run"])
+        self.assertEqual(self.planted(), ["a_clears"])
+
+    def test_a_file_that_changes_a_shared_name_fails_by_name(self):
+        """A plant's file may not rebind or delete a name of the runner, nor of the modules
+        it shares, nor add one to the runner, as it loads or as its plant() runs; the name is
+        put back, so the plants after it are judged by the runner's own helpers."""
+        expect_failure = negative.expect_failure
+        check_lock = negative.check_fidelity.check_lock
+        # Each name is put back by these too, should the guard fail, so no later test meets
+        # a changed one.
+        for module, name in ((negative, "expect_failure"), (negative, "PLANT_FILE"),
+                             (negative.check_fidelity, "check_lock"), (negative.heath, "ROOT")):
+            self.enterContext(patch.object(module, name, getattr(module, name)))
+        self.addCleanup(lambda: vars(negative).pop("planted_name", None))
+        fake = "lambda *args, **kwargs: nt.refused('faked')"
+        later = plant_source("b_later", body=(
+            'nt.expect_failure("a check that passes", subprocess.CompletedProcess('
+            '[], 0, "", ""))'))
+        put_back = ("(put back); a plant leaves the names it shares with the runner as it "
+                    "finds them")
+        with self.subTest(when="as it loads"):
+            self.reset()
+            self.write("good.py", plant_source("good"))
+            self.write("rebinds.py", plant_source("rebinds", before=f"nt.expect_failure = {fake}"))
+            self.assert_refused_before_planting(
+                "scripts/negative/rebinds.py: rebinds negative_tests.expect_failure as it loads "
+                + put_back)
+            self.assertIs(negative.expect_failure, expect_failure)
+        for change, reason in (
+                (f"nt.expect_failure = {fake}", "rebinds negative_tests.expect_failure"),
+                ("nt.check_fidelity.check_lock = lambda *args: 0",
+                 "rebinds check_fidelity.check_lock"),
+                ("nt.failures = []", "rebinds negative_tests.failures"),
+                ("nt.planted_name = 1", "adds negative_tests.planted_name"),
+                ("del nt.PLANT_FILE", "deletes negative_tests.PLANT_FILE"),
+                ("del nt.heath.ROOT", "deletes heath.ROOT")):
+            with self.subTest(when="as it runs", change=change):
+                self.reset()
+                failures = negative.failures
+                self.write("a_changes.py", plant_source("a_changes", body=change))
+                self.write("b_later.py", later)
+                self.assertEqual(negative.main(), 1)
+                message = (f"a_changes: scripts/negative/a_changes.py {reason} as it runs "
+                           f"{put_back}")
+                self.assertIs(negative.failures, failures)
+                self.assertEqual(negative.failures,
+                                 [message, "a check that passes: not caught"])
+                self.assertIn(f"a_changes (scripts/negative/a_changes.py):\n  ✗ {message}\n",
+                              self.output.getvalue())
+                self.assertEqual(self.planted(), ["a_changes", "b_later"])
+                self.assertIs(negative.expect_failure, expect_failure)
+                self.assertIs(negative.check_fidelity.check_lock, check_lock)
+                self.assertFalse(hasattr(negative, "planted_name"))
+                self.assertTrue(hasattr(negative, "PLANT_FILE"))
+                self.assertEqual(negative.heath.ROOT, REPO)
+        with self.subTest(when="a name added to a shared module"):
+            self.reset()
+            self.addCleanup(lambda: vars(negative.check_fidelity).pop("planted_name", None))
+            self.write("adds.py", plant_source("adds", body=(
+                'nt.check_fidelity.planted_name = 1; nt.refused("{name}: caught")')))
+            self.assertEqual(negative.main(), 0)
+            self.assertEqual(negative.failures, [])
+
+    def test_a_file_written_as_a_plant_loads_shows(self):
+        """The entry Git status is taken before the plants' files are read, so a file that
+        one writes as it loads is a change the closing comparison sees."""
+        def run(*cmd):
+            self.calls.append(cmd)
+            written = sorted(p.name for p in self.root.glob("written-*"))
+            status = cmd[:2] == ("git", "status")
+            out = "".join(f"?? {name}\n" for name in written) if status else ""
+            return subprocess.CompletedProcess(cmd, 0, out, "")
+        self.write("writes.py", plant_source("writes", before=(
+            '(nt.ROOT / "written-as-it-loads").touch()')))
+        with patch.object(negative, "run", side_effect=run):
+            self.assertEqual(negative.main(), 1)
+        self.assertEqual(negative.failures,
+                         ["the working tree did not return to its entry Git status"])
+        self.assertIn("?? written-as-it-loads\n", self.output.getvalue())
 
     def test_a_plant_that_refuses_nothing_fails_by_name(self):
         self.write("quiet.py", plant_source("quiet", body='print("✓ a control, not a refusal")'))
@@ -881,9 +1059,10 @@ class LoaderTests(unittest.TestCase):
         self.assertEqual(negative.refusals[refusals:], ["a check that fails: caught",
                                                         "judged by hand"])
         for line in ("✓ a check that fails: caught\n", "✓ judged by hand\n",
-                     "✓ the unplanted tree passes check_fidelity.py\n",
-                     "✓ every planted change was caught\n"):
+                     "✓ the unplanted tree passes check_fidelity.py\n"):
             self.assertIn(line, self.output.getvalue())
+        self.assertTrue(self.output.getvalue().endswith(
+            "2 of 2 plants run\n✓ every planted change was caught\n"))
 
     def test_failures_outside_a_plant_have_a_heading_of_their_own(self):
         self.write("passes.py", plant_source("passes", body=(
@@ -908,6 +1087,17 @@ class LoaderTests(unittest.TestCase):
         output = self.output.getvalue()
         self.assertLess(output.index("\none (scripts/negative/one.py)\n"),
                         output.index("\ntwo (scripts/negative/two.py)\n"))
+        self.assertTrue(output.endswith("✓ every change planted by 2 of the 3 plants was "
+                                        "caught; the others were not run (--plant)\n"))
+        self.assertNotIn("every planted change was caught", output)
+        with self.subTest(names="all three"):
+            self.reset()
+            for name in ("one", "two", "three"):
+                self.write(f"{name}.py", plant_source(name))
+            self.assertEqual(negative.main(["--plant", "one", "--plant", "two",
+                                            "--plant", "three"]), 0)
+            self.assertTrue(self.output.getvalue().endswith(
+                "3 of 3 plants run\n✓ every planted change was caught\n"))
         for known, unknown in ((["one", "nine"], "'nine'"), (["ten", "nine"], "'ten', 'nine'")):
             with self.subTest(names=known):
                 for path in self.root.glob("planted-*"):
@@ -920,7 +1110,9 @@ class LoaderTests(unittest.TestCase):
                 self.assertIn(f"no plant {unknown} in scripts/negative/; the plants are one, "
                               "three, two", errors.getvalue())
                 self.assertEqual(self.planted(), [])
-                self.assertEqual(self.git_status(), [])
+                # The entry status is taken before loading, and compared again on the exit.
+                self.assertEqual(len(self.git_status()), 2)
+                self.assertNotIn((sys.executable, "scripts/check_fidelity.py"), self.calls)
         with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as raised:
             negative.main(["--plant", "one", "--counts-only"])
         self.assertEqual(raised.exception.code, 2)
@@ -941,12 +1133,64 @@ class LoaderTests(unittest.TestCase):
         self.assertEqual(faults, [])
         names = [p.name for p in plants]
         self.assertEqual(len(names), len(set(names)))
+        passed_over = {"__pycache__", ".DS_Store"}
         self.assertEqual(sorted(names), sorted(path.stem for path in folder.iterdir()
-                                               if path.name != "__pycache__"))
+                                               if path.name not in passed_over))
         self.assertEqual(plants, sorted(plants, key=lambda p: (p.builds, p.name)))
         for p in plants:
             self.assertEqual(p.path, folder / f"{p.name}.py")
             self.assertTrue(p.description)
+
+
+PROBE = '''"""A probe: is this plant's nt the module whose run_plant is running it?"""
+import sys
+
+import negative_tests as nt
+
+BUILDS = False
+
+
+def plant() -> None:
+    frame = sys._getframe(1)
+    while frame.f_code.co_name != "run_plant":
+        frame = frame.f_back
+    print(f"shared: {frame.f_globals is vars(nt)}; running: {nt is sys.modules['__main__']}")
+    nt.refused("the probe: caught")
+'''
+
+
+class ScriptTests(unittest.TestCase):
+    """The suite run as a script, as CI runs it, in a temporary copy of scripts/ whose three
+    regressions are empty stand-ins and whose one plant is a probe, named count_markers so
+    that --counts-only runs it without Git or Lean."""
+
+    def test_the_plants_share_the_running_module_and_no_bytecode_runs(self):
+        root = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        (root / "scripts/negative").mkdir(parents=True)
+        for path in (REPO / "scripts").glob("*.py"):
+            shutil.copyfile(path, root / "scripts" / path.name)
+        (root / "tests").mkdir()
+        for name in ("test_negative_tests.py", "test_generated_counts.py",
+                     "test_decision_entries.py"):
+            (root / "tests" / name).write_text("")
+        probe = root / "scripts/negative/count_markers.py"
+        probe.write_text(PROBE)
+        # Bytecode that Python's import would run in place of the runner's source, were the
+        # file imported a second time, or of the plant's, were it imported at all.
+        stand_in = 'print("{}: a stand-in from bytecode")\nraise SystemExit(0)\n'
+        unchecked_bytecode(stand_in.format("runner"), importlib.util.cache_from_source(
+            str(root / "scripts/negative_tests.py")))
+        unchecked_bytecode(stand_in.format("plant"),
+                           importlib.util.cache_from_source(str(probe)))
+        env = {k: v for k, v in os.environ.items() if not k.startswith("PYTHON")}
+        result = subprocess.run([sys.executable, "scripts/negative_tests.py", "--counts-only"],
+                                cwd=root, env=env, capture_output=True, text=True, timeout=300)
+        output = result.stdout + result.stderr
+        self.assertEqual(result.returncode, 0, output)
+        self.assertNotIn("a stand-in from bytecode", output)
+        self.assertIn("shared: True; running: True\n✓ the probe: caught\n", result.stdout)
+        self.assertTrue(result.stdout.endswith(
+            "✓ count plants passed; other plants were not run (--counts-only)\n"), output)
 
 
 if __name__ == "__main__":

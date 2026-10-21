@@ -4110,48 +4110,98 @@ findings:
   `lake build`, and `plant()`, which reaches the shared helpers as `nt.<name>`. The suite
   lists that folder, never Git's index, so the pre-flight's pass with origin/main's checks,
   which takes out the files a commit adds, runs main's plants. It runs every plant that
-  needs no build, by name, then every one that builds, by name, naming each with its file
-  before it and timing each after it, restoration included; the closing list gives each
-  failure, in its old words, under the plant that added it. Adding a plant is adding one
-  file, with no number to choose and no list to edit. `--plant NAME` runs the plants named,
-  inside the same Git bracket and with the same closing check of the unplanted tree, and
-  exits 2 on a name it does not know; `--counts-only` keeps its meaning. The loader is
-  checked too: a missing or empty folder, an entry other than `__pycache__` that is not a
-  regular file with a plant's name (a symbolic link or a directory among them), a file
-  that does not import, and one with no description, no `BUILDS` of True or False, or no
-  `plant()` callable with no arguments, each fails the run, named, before anything is
-  planted; and a plant that records no refusal and adds no failure fails the run by its
-  name. To count refusals, `expect_failure` records one where it printed "caught", through
-  a new `refused` that prints the same line, and stale_page, the one plant that judges its
-  refusal by hand, calls `refused` with the words it printed.
+  does not run `lake build`, by name, then every one that does, by name, naming each with
+  its file before it and timing each after it, restoration included; the closing list
+  gives each failure, in its old words, under the plant that added it. Adding a plant is
+  adding one file, with no number to choose and no list to edit. `--plant NAME` runs the
+  plants named, inside the same Git bracket and with the same closing check of the
+  unplanted tree, and exits 2 on a name it does not know; `--counts-only` keeps its
+  meaning. The loader is checked too: a missing or empty folder, an entry other than
+  `__pycache__` and `.DS_Store` that is not a regular file with a plant's name (a symbolic
+  link or a directory among them), a file that does not import, and one with no
+  description, no `BUILDS` of True or False, or no `plant()` callable with no arguments,
+  each fails the run, named, before anything is planted; and a plant that records no
+  refusal and adds no failure fails the run by its name. To count refusals,
+  `expect_failure` records one where it printed "caught", through a new `refused` that
+  prints the same line, and stale_page, the one plant that judges its refusal by hand,
+  calls `refused` with the words it printed. That guard catches a plant that runs no
+  check, or returns before its first; it does not catch one that calls `refused` with no
+  check behind it, nor one that drops some of its cases.
 
   Every one of main's 31 plants is carried over unchanged in behaviour: the same changes
-  planted and the same refusals expected. Each `plant()` is its old function's body,
-  character for character, but that each module-level name of `negative_tests.py` it uses
-  is written `nt.<name>`, and stale_page's printed refusal goes through `refused`. The
-  constants and helpers that one plant alone used move into its file with their comments:
-  `PLANTED_COMMANDS`, `PLANTED_FILES` and `BOOK_ZERO` into forbidden_commands, `toml_blocks`
-  into undeclared_run and `rules_in` into lake_links. The order of the run changes to the
-  one above, which keeps merge_conflict_markers before the plants that build, as its
-  description asks. The captain adds the evidence of equivalence, plant by plant, to this
-  entry. The protected test file
+  planted and the same refusals expected. Each `plant()`'s syntax tree is its old
+  function's, with `nt.` read as the bare name, apart from stale_page's printed refusal,
+  which now goes through `refused` in the same words; continuation lines were re-aligned,
+  which changes whitespace only. The constants and helpers that one plant alone used move
+  into its file with their comments: `PLANTED_COMMANDS`, `PLANTED_FILES` and `BOOK_ZERO`
+  into forbidden_commands, `toml_blocks` into undeclared_run and `rules_in` into
+  lake_links. The order departs on purpose from the issue's "by name": the 27 plants that
+  do not run `lake build` go first, so that a fault in one shows before the four that do,
+  each of which saves and restores `.lake/build`. `BUILDS` only orders the plants, so a
+  wrong value moves a plant and skips none.
+
+  The evidence of equivalence: the old suite, at e604deb0, and the new, at 2a39c2b7, were
+  run on the same main under a recording harness, which logged every check call, file
+  write and command, plant by plant. Both caught 68 planted changes, missed none and passed
+  16 expected successes, and each plant made the same check calls, with the same verdicts,
+  and ran the same commands. In what they wrote, 28 of the 29 plants match exactly, once
+  two things that follow from the tree, not the code, are set aside: the order of three
+  loops that put back files from a set (the same paths and the same bytes), and the 29 new
+  files, which count_markers and merge_conflict_markers copy with every other tracked
+  file. merge_conflict_markers differs besides only in the line numbers it expects,
+  because this change lengthens CONTRIBUTING.md, to which it appends; rebuilt from each
+  commit's own files, they match exactly. A plant file that refuses nothing, one that runs
+  no check, one that does not compile, one with a bad name and one without `BUILDS` each
+  failed the run. Main's two plants that landed after that comparison, missing_files and
+  ill_typed_proof (#158), were converted the same way: each `plant()`'s syntax tree is
+  main's function's, with `nt.` read as the bare name, and each, run alone with
+  `--plant`, caught what it planted and left the tree clean.
+
+  A review of the change then hardened the suite. It compiles each plant from its file's
+  text, and, run as a script, registers itself under the name
+  the plants import rather than importing its own file again, so no bytecode in a
+  `__pycache__` runs in place of a plant or of the runner. The loader refuses a plants'
+  folder that is, or passes through, a symbolic link, which would take every later plant
+  off the protected paths, and passes over Finder's `.DS_Store`, naming it. The names of
+  the runner and of the modules the plants reach through it (check_fidelity,
+  check_kernel, generated_counts, heath and subprocess) are noted before any plant's file
+  is read, and a file that changes one, as it loads or as it runs, fails the run, named,
+  with the name put back. A `plant()` that exits fails the run by its name, and the run
+  goes on to the next; the entry Git status is taken before the plants' files are read,
+  so a file one writes as it loads shows; and a run that `--plant` narrows closes by
+  saying how many of the plants it ran, while a full run gives its count before its
+  closing tick.
+
+  The protected test file
   [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) keeps every test and
-  assertion, reaching the plants through the loader, and gains `LoaderTests`, eleven tests
-  on temporary folders without Lean or Git: the order; each kind of fault, each failing
-  the run with nothing planted; a plant that refuses nothing, one whose check passes and
-  one that records a refusal; `--plant` and `--counts-only`; and the real folder loading
-  with no fault. [WORKFLOW](../WORKFLOW.md), section 8, and CONTRIBUTING say how to add a
-  plant, and that its file, being under `scripts/`, is named in a decisions entry and
-  carries `security-review`. CI's `negative` job and `scripts/safe_push.py` are unchanged.
-  No check, plant or expected value is weakened. The protected files this changes are
+  assertion, reaching the plants through the loader, and gains `LoaderTests`, sixteen
+  tests of the loader and of `main()` around it, all on temporary folders without Lean or
+  Git but one, which loads the real folder with no fault: the order; each kind of fault,
+  a linked folder and a linked `scripts/` among them, each failing the run with nothing
+  planted; `__pycache__` and `.DS_Store` passed over, and bytecode beside a plant not
+  read; a plant that exits, a run that stops short of its plants, a file that changes a
+  shared name as it loads or runs, and a file written as a plant loads, each failing the
+  run; a plant that refuses nothing, one whose check passes and one that records a
+  refusal; and `--plant` and `--counts-only`. It gains `ScriptTests` too, which runs the
+  suite as a script in a temporary copy and sees that a plant's `nt` is the running module
+  and that bytecode beside the runner and a plant is not run. Two assertions that a fault
+  in loading, or an unknown `--plant` name, took no Git status now expect the two of the
+  bracket, which opens before loading; each still asserts that nothing was planted and
+  that the closing check of the tree did not run. [WORKFLOW](../WORKFLOW.md), section 8,
+  and CONTRIBUTING say how to add a plant, what the guards catch and what they do not, and
+  that its file, being under `scripts/`, is named in a decision entry and carries
+  `security-review`. CI's `negative` job and `scripts/safe_push.py` are unchanged. No
+  check, plant or expected value is weakened. The protected files this changes are
   `scripts/negative_tests.py` and `tests/test_negative_tests.py`, and the 31 plants, each
-  new: `scripts/negative/broken_link.py`, `scripts/negative/certificate_constructor_counting.py`,
+  new: `scripts/negative/broken_link.py`,
+  `scripts/negative/certificate_constructor_counting.py`,
   `scripts/negative/changed_audit_pin.py`, `scripts/negative/changed_word.py`,
   `scripts/negative/circle_dependencies.py`, `scripts/negative/circle_proved.py`,
   `scripts/negative/circle_renamed.py`, `scripts/negative/corrupt_olean.py`,
   `scripts/negative/count_markers.py`, `scripts/negative/figure_names_and_arcs.py`,
-  `scripts/negative/forbidden_commands.py`, `scripts/negative/heath_word.py`, `scripts/negative/ill_typed_proof.py`,
-  `scripts/negative/lake_links.py`, `scripts/negative/merge_conflict_markers.py`, `scripts/negative/missing_files.py`,
+  `scripts/negative/forbidden_commands.py`, `scripts/negative/heath_word.py`,
+  `scripts/negative/ill_typed_proof.py`, `scripts/negative/lake_links.py`,
+  `scripts/negative/merge_conflict_markers.py`, `scripts/negative/missing_files.py`,
   `scripts/negative/model_lake.py`, `scripts/negative/native_decide.py`,
   `scripts/negative/placement_called.py`, `scripts/negative/placement_named.py`,
   `scripts/negative/planted_assumptions.py`, `scripts/negative/primitive_not_opaque.py`,

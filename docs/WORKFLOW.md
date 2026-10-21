@@ -391,20 +391,26 @@ The ruleset and the remaining merge requirements are in
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
   beside other contributors' builds in a shared tree. Each break is a plant, a file of its
-  own, `scripts/negative/<name>.py`, its name lower-case letters, digits and underscores:
-  its description as the module docstring (what it plants, which check must refuse it and
-  what that check must say); `import negative_tests as nt`, through which it reaches the
-  shared helpers (`nt.ROOT`, `nt.replace_once`, `nt.expect_failure` and the others);
-  `BUILDS`, True only when it runs `lake build`; and `def plant() -> None:`, which plants
-  the change, runs the check and puts everything back in `finally`. To add a plant, add one
-  such file and nothing else: there is no number to choose and no list to edit, for the
-  suite lists the folder and runs the plants that need no build, by name, before those that
-  build, by name, each named with its file and timed. Run it alone with
-  `python3 scripts/negative_tests.py --plant <name>`, which keeps the check that the work
-  tree returns to its entry Git status. A plant whose change no check refuses fails the
-  suite by its name, and so does a file that does not load. Every file under `scripts/` is
-  a protected path ([section 10](#landing-work-pull-requests)), so the pull request that
-  adds a plant names its file, by its whole path, in a new line of the decisions page,
+  own, `scripts/negative/<name>.py`, its name lower-case letters, digits and underscores,
+  beginning with a letter: its description as the module docstring (what it plants, which
+  check must refuse it and what that check must say); `import negative_tests as nt`,
+  through which it reaches the shared helpers (`nt.ROOT`, `nt.replace_once`,
+  `nt.expect_failure` and the others); `BUILDS`, True only when it runs `lake build`; and
+  `def plant() -> None:`, which plants the change, in the real files or a copy of them,
+  runs the check and puts everything back in `finally`. To add a plant, add one such file;
+  no other file of the suite is edited, for there is no number to choose and no list to
+  edit. The suite lists the folder and runs the plants that do not run `lake build`, by
+  name, before those that do, by name, each named with its file and timed. Run one alone
+  with `python3 scripts/negative_tests.py --plant <name>`, which keeps the check that the
+  work tree returns to its entry Git status, and closes by saying how many of the plants it
+  ran. The suite fails, naming the file, on a file that does not load, on a file that
+  changes a name of the runner or of the modules it shares, on a `plant()` that exits, and
+  on a plant whose change no check refuses. That last guard catches a plant that runs no
+  check, or returns before its first; it does not catch one that calls `nt.refused` with
+  no check behind it, nor one that drops some of its cases, so review still reads each
+  plant's cases. Like any file under `scripts/`, a plant's file is a protected path
+  ([section 10](#landing-work-pull-requests)): the pull request that adds or changes one
+  names it, by its whole path, in a new decision entry ("Decision entries", in section 10),
   carries the label `security-review` and records a `/security-review`.
 - **The model tests read the lock.** `tests/model/laws.toml` names a law for each axiom of
   `Certificate/axioms.lock`, and `tests/model/lock.sha256` pins the lock's hash, so a

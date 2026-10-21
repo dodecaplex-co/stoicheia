@@ -94,7 +94,7 @@ def plant() -> None:
                           "I.15 Por.: uses superposition directly (only I.4 and I.8 may)",
                           "I.15 Por.: cites I.22, which does not come before it",
                           unwanted=("✗ I.15: rests on", "✗ I.15: uses superposition",
-                                 "✗ I.15: cites"))
+                                    "✗ I.15: cites"))
         nt.expect_failure("a later proposition named only in a helper's statement", result,
                           "I.16: cites I.22, which does not come before it")
         nt.expect_failure("a sorry in I.16, in a complete book", result,

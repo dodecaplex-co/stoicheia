@@ -74,10 +74,13 @@ If you change a Lean file, its review record goes stale, even for a comment: say
 pull request, and leave the stamp to a reviewer (WORKFLOW.md, section 6).
 
 If you fix a check, add a test that shows the fault would now be caught. A negative test,
-which plants the fault in the real files and requires the check to refuse it, is one new
-file in `scripts/negative/`, with nothing else to edit;
+which plants the fault in the real files or a copy of them and requires the check to
+refuse it, is one new file in `scripts/negative/`, with no other file of the suite to
+edit. Like any file under `scripts/`, it is a protected path, so its pull request names
+it in a new decision entry and carries the label `security-review`;
 [WORKFLOW.md, section 8](docs/WORKFLOW.md#8-validation-on-the-integrated-revision), says
-what the file holds, how to run it alone, and what its pull request carries.
+what the file holds and how to run it alone, and
+[section 10](docs/WORKFLOW.md#landing-work-pull-requests) what its pull request carries.
 
 Working alone on a pull request, you are its integrator: commit the regenerated `book/`,
 `CERTIFICATE.md`, `GRAPH.md`, `facts.json`, README.md's rows between the

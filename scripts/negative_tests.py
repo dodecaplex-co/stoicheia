@@ -17,24 +17,47 @@ here. Adding a plant is adding one file: there is no number to choose and no lis
 
 The plants run in a stable order: every plant whose `BUILDS` is False, by name, then every
 plant whose `BUILDS` is True, by name. Each is named, with its file, before it runs, and
-its elapsed time is printed after it, restoration included. The closing list gives each
-failure under the plant that added it, and the run's own (the restoration and final
-checks) under a heading of their own. `--plant NAME`, given once or more, runs just those
-plants, inside the same Git bracket and with the same closing check of the unplanted tree;
-an unknown name exits 2, naming the plants there are. `--counts-only` runs the file-only
-regressions and count_markers alone, without the Git bracket.
+its elapsed time is printed after it, restoration included. The entry Git status is taken
+before any plant's file is read, so a file that a plant's file writes as it loads shows in
+the closing comparison too. The closing list gives each failure under the plant that added
+it, and the run's own (the restoration and final checks) under a heading of their own; a
+full run that passes prints how many plants it ran just before its closing tick.
+`--plant NAME`, given once or more, runs just those plants, inside the same Git bracket
+and with the same closing check of the unplanted tree, and a run it narrows closes by
+saying how many of the plants it ran and that the others were not run; an unknown name
+exits 2, naming the plants there are. `--counts-only` runs the file-only regressions and
+count_markers alone, without the Git bracket.
 
 The loader is checked too. It lists scripts/negative/ itself, never Git's index, so the
 pre-flight's pass with origin/main's checks, which takes out the files a commit adds, runs
-main's plants. A missing or empty folder; an entry, other than the directory
-`__pycache__`, that is not a regular file named `[a-z][a-z0-9_]*.py` (a symbolic link or a
-directory among them); a file that raises on import, a SyntaxError among them; and a file
-with no description, no `BUILDS` of True or False, or no `plant` callable with no
-arguments: each is a fault naming the file and the reason, and the run fails before
-anything is planted. Each check that catches its plant records a refusal (expect_failure
-does, and `refused` for a plant that judges a refusal itself, as stale_page does); a plant
-that records none and adds no failure fails the run by its name, since nothing refused
-what it planted.
+main's plants. It compiles each plant from the file's text, never from bytecode, so
+nothing in a `__pycache__` runs in a plant's place; and run as a script, this file
+registers itself as `negative_tests`, the name the plants import, rather than being
+imported a second time through Python's cache. A missing or empty folder; a folder that
+is, or passes through, a symbolic link; an entry that is not a regular file named
+`[a-z][a-z0-9_]*.py` (a symbolic link or a directory among them), other than the directory
+`__pycache__` and a regular file `.DS_Store`, the folder settings Finder writes and Git
+ignores, which is named on stdout and passed over; a file that raises on import, a
+SyntaxError or a SystemExit among them; and a file with no description, no `BUILDS` of
+True or False, or no `plant` callable with no arguments: each is a fault naming the file
+and the reason, and the run fails before anything is planted.
+
+The plants share this module, and the modules they reach through it (check_fidelity,
+check_kernel, generated_counts, heath and subprocess), so one plant's file could change
+how every later plant is judged. Before any plant's file is read, their names are noted
+with the object each holds. A file that adds, rebinds or deletes a name of this module,
+or rebinds or deletes a name of one of the others (adding one there is no fault), as it
+loads or while its plant() runs, is a fault naming the file, and the name is put back.
+This guard sees names only, not an object changed in place. A plant() that exits, by
+sys.exit or a check's `main` run in process, fails the run by its name, and the run goes
+on to the next plant; a run in which fewer plants ran than were chosen fails too.
+
+Each check that catches its plant records a refusal (expect_failure does, and `refused`
+for a plant that judges a refusal itself, as stale_page does); a plant that records none
+and adds no failure fails the run by its name, since nothing refused what it planted.
+That guard catches a plant that runs no check, or returns before its first. It does not
+catch a plant that calls `refused` with no check behind it, nor one that drops some of its
+cases: a single refusal satisfies it.
 
 The copies of merge_conflict_markers and count_markers, and stale_page's list of
 generated outputs, read Git's tracked files. One absent from the work tree is named on
@@ -46,8 +69,8 @@ tracked Markdown they read.
 
 These faults exercise the style and link checks, page freshness, an audit pin, a
 complete book's figures and mishnah, and leanchecker's loading of compiled files and its
-kernel replay, as well as the earlier checks. `check_kernel.py`'s own `--self-test`
-withholds Postulate 5 from nanoda alone.
+kernel replay, as well as check_fidelity.py's, which most plants run. `check_kernel.py`'s
+own `--self-test` withholds Postulate 5 from nanoda alone.
 
 Every new plant restores its inputs in `finally`; the freshness plant also restores
 all renderer outputs.
@@ -65,7 +88,6 @@ Standard library only; Python 3.11 or later, for the review records.
 """
 
 import argparse
-import importlib.util
 import inspect
 import json
 import os
@@ -74,6 +96,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import types
 from collections.abc import Callable
 from contextlib import contextmanager
 from pathlib import Path
@@ -95,6 +118,13 @@ GENERATED = ("facts.json", "book", "CERTIFICATE.md", "GRAPH.md", "README.md",
 # The plants' folder, from ROOT, and the name of a plant's file in it.
 PLANTS = Path("scripts", "negative")
 PLANT_FILE = re.compile(r"[a-z][a-z0-9_]*\.py")
+# The modules the plants reach through this one, as nt.<module>: a plant may add a name to
+# one, but not rebind or delete one (guard).
+SHARED = ("check_fidelity", "check_kernel", "generated_counts", "heath", "subprocess")
+# Names the guard passes over. Python's warnings machinery adds `__warningregistry__` to the
+# module a warning is attributed to, ignored warnings too, so a warning raised through a
+# helper here would read as a plant's change; it decides only which warnings repeat.
+UNGUARDED = frozenset({"__warningregistry__"})
 
 
 # `True.intro` given as a proof of `False`, added past the kernel as the read-through found
@@ -314,15 +344,53 @@ def shown(path: Path) -> str:
         return str(path)
 
 
+def guard() -> Callable[[], list[str]]:
+    """Note the names of this module and of SHARED, each with the object it holds, and
+    return a function that gives each change since as a reason (`rebinds
+    check_fidelity.check_lock`) and puts it back: a name of this module added, rebound or
+    deleted, or one of SHARED's rebound or deleted. A plant's file that changed one could
+    change how every later plant is judged: count a check that passes as a refusal, say,
+    or run no plant at all. The callers make the function before any plant's file is read
+    and hold it themselves, and it reads only what it noted, so no plant can rebind it."""
+    unguarded = UNGUARDED
+    noted = [("negative_tests", globals(), True)]
+    noted += [(name, vars(globals()[name]), False) for name in SHARED]
+    saved = [(label, names, dict(names), own) for label, names, own in noted]
+
+    def changes() -> list[str]:
+        reasons = []
+        for label, names, before, own in saved:
+            for name in sorted((before.keys() | names.keys()) - unguarded):
+                if name not in names:
+                    reasons.append(f"deletes {label}.{name}")
+                    names[name] = before[name]
+                elif name not in before:
+                    if own:
+                        reasons.append(f"adds {label}.{name}")
+                        del names[name]
+                elif names[name] is not before[name]:
+                    reasons.append(f"rebinds {label}.{name}")
+                    names[name] = before[name]
+        return reasons
+    return changes
+
+
+def shared_change(reason: str, when: str) -> str:
+    """How a fault names a change to a shared name (guard)."""
+    return (f"{reason} {when} (put back); a plant leaves the names it shares with the "
+            "runner as it finds them")
+
+
 def load_plant(path: Path) -> Plant | list[str]:
-    """The plant in `path`, imported under a module name of its own, or what is wrong
-    with it."""
+    """The plant in `path`, compiled from the file's text, never from bytecode, and run as
+    a module of its own, `negative_plant_<name>`; or what is wrong with it."""
     module_name = f"negative_plant_{path.stem}"
-    spec = importlib.util.spec_from_file_location(module_name, path)
-    module = importlib.util.module_from_spec(spec)
+    module = types.ModuleType(module_name)
+    module.__file__ = str(path)
     sys.modules[module_name] = module
     try:
-        spec.loader.exec_module(module)
+        code = compile(path.read_text(encoding="utf-8"), str(path), "exec", dont_inherit=True)
+        exec(code, vars(module))
     except (Exception, SystemExit) as error:
         sys.modules.pop(module_name, None)
         return [f"does not load: {type(error).__name__}: {error}"]
@@ -355,19 +423,35 @@ def load_plant(path: Path) -> Plant | list[str]:
 def load_plants(folder: Path | None = None) -> tuple[list[Plant], list[str]]:
     """The plants in `folder` (ROOT / PLANTS when None), in the stable order: those whose
     BUILDS is False, by name, then those whose BUILDS is True, by name. With them, the
-    faults, each naming its path: an entry other than the directory __pycache__ that is
-    not a regular file with a plant's name, a file that does not load or lacks a part,
-    and a missing or empty folder. The folder is listed, never Git, so a file the
-    pre-flight takes out is not looked for."""
+    faults, each naming its path: a folder that is, or passes through, a symbolic link
+    (below ROOT, resolved, when the folder lies beneath it); an entry other than the
+    directory __pycache__ and a regular file .DS_Store, which is named on stdout, that is
+    not a regular file with a plant's name directly in the folder; a file that does not
+    load, lacks a part, or changes a shared name as it loads (guard); and a missing or
+    empty folder. The folder is listed, never Git, so a file the pre-flight takes out is
+    not looked for."""
     folder = ROOT / PLANTS if folder is None else folder
+    try:
+        expected = ROOT.resolve() / folder.relative_to(ROOT)
+    except ValueError:
+        expected = folder.absolute()
+    real = folder.resolve()
+    if real != expected:
+        return [], [f"{shown(folder)}: the plants' folder is, or passes through, a symbolic "
+                    f"link (it resolves to {real}); plants are read only from a real folder"]
     try:
         entries = sorted(folder.iterdir())
     except OSError as error:
         return [], [f"{shown(folder)}: the plants' folder cannot be listed "
                     f"({type(error).__name__}: {error.strerror or error})"]
+    changes = guard()
     plants, faults = [], []
     for path in entries:
         if path.name == "__pycache__" and path.is_dir() and not path.is_symlink():
+            continue
+        if path.name == ".DS_Store" and path.is_file() and not path.is_symlink():
+            print(f"note: {shown(path)} passed over: Finder's settings for the folder, "
+                  "which Git ignores, not a plant")
             continue
         if path.is_symlink():
             faults.append(f"{shown(path)}: a symbolic link, which is not read; a plant is "
@@ -379,29 +463,49 @@ def load_plants(folder: Path | None = None) -> tuple[list[Plant], list[str]]:
         elif not PLANT_FILE.fullmatch(path.name):
             faults.append(f"{shown(path)}: not a plant's file name, which is "
                           "[a-z][a-z0-9_]*.py")
+        elif path.resolve().parent != real:
+            faults.append(f"{shown(path)}: resolves to {path.resolve()}, which is not "
+                          "directly in the plants' folder")
         else:
             loaded = load_plant(path)
-            if isinstance(loaded, Plant):
+            reasons = [shared_change(reason, "as it loads") for reason in changes()]
+            if isinstance(loaded, Plant) and not reasons:
                 plants.append(loaded)
             else:
-                faults += [f"{shown(path)}: {reason}" for reason in loaded]
+                reasons = ([] if isinstance(loaded, Plant) else loaded) + reasons
+                faults += [f"{shown(path)}: {reason}" for reason in reasons]
     if not plants and not faults:
         faults.append(f"{shown(folder)}: no plants")
     return sorted(plants, key=lambda p: (p.builds, p.name)), faults
 
 
-def run_plant(plant: Plant, sources: dict[int, str]) -> None:
-    """Run one plant, named before and timed after, and fail it if it neither recorded a
-    refusal nor added a failure. `sources` gains the plant's heading for each failure it
-    added, by its index in `failures`."""
+def run_plant(plant: Plant, sources: dict[int, str],
+              changes: Callable[[], list[str]]) -> None:
+    """Run one plant, named before and timed after. Fail it, by its name, if its plant()
+    exits, if it changes a shared name (`changes`, from guard, which puts the name back
+    first, in `finally`, so that what follows reads the runner's own), or if it neither
+    records a refusal nor adds a failure. `sources` gains the plant's heading for each
+    failure it added, by its index in `failures`."""
     path = shown(plant.path)
     print(f"{plant.name} ({path})")
     failed, caught = len(failures), len(refusals)
     started = perf_counter()
+    exited, code = False, None
     try:
         plant.plant()
+    except SystemExit as error:
+        exited, code = True, error.code
     finally:
+        changed = changes()
         print(f"  {plant.name}: {perf_counter() - started:.2f}s (including restoration)")
+        for reason in changed:
+            message = f"{plant.name}: {path} {shared_change(reason, 'as it runs')}"
+            failures.append(message)
+            print(f"✗ {message}")
+    if exited:
+        message = f"{plant.name}: plant() exited ({code!r}) instead of returning"
+        failures.append(message)
+        print(f"✗ {message}")
     if len(failures) == failed and len(refusals) == caught:
         message = f"{plant.name}: nothing refused what {path} planted"
         failures.append(message)
@@ -410,11 +514,38 @@ def run_plant(plant: Plant, sources: dict[int, str]) -> None:
         sources[i] = f"{plant.name} ({path}):"
 
 
-def close(sources: dict[int, str]) -> int:
+def choose(parser: argparse.ArgumentParser, args: argparse.Namespace,
+           sources: dict[int, str]) -> tuple[list[Plant], int] | None:
+    """The plants the run asks for, loaded, and how many plants there are; or None when
+    the folder has a fault, each recorded under the loader's heading. An unknown name for
+    --plant exits 2."""
+    plants, faults = load_plants()
+    if faults:
+        for fault in faults:
+            sources[len(failures)] = f"loading the plants ({PLANTS}/):"
+            failures.append(fault)
+            print(f"✗ {fault}")
+        return None
+    names = [p.name for p in plants]
+    wanted = ["count_markers"] if args.counts_only else args.plant or names
+    unknown = [name for name in dict.fromkeys(wanted) if name not in names]
+    if unknown:
+        parser.error(f"no plant {', '.join(map(repr, unknown))} in {PLANTS}/; "
+                     f"the plants are {', '.join(names)}")
+    return [p for p in plants if p.name in wanted], len(plants)
+
+
+def close(sources: dict[int, str], ran: int = 0, total: int = 0) -> int:
     """The closing list of failures, each under the plant that added it, and the exit
-    status."""
+    status. A run that passes gives how many of the `total` plants it `ran`: just before
+    its closing tick in a full run, and in it when --plant narrowed the run."""
     if not failures:
-        print("✓ every planted change was caught")
+        if ran < total:
+            print(f"✓ every change planted by {ran} of the {total} plants was caught; "
+                  "the others were not run (--plant)")
+        else:
+            print(f"{ran} of {total} plant{'' if total == 1 else 's'} run")
+            print("✓ every planted change was caught")
         return 0
     print(f"{len(failures)} negative-test failure(s):")
     groups: dict[str, list[str]] = {}
@@ -448,40 +579,42 @@ def main(argv=()) -> int:
                           run(sys.executable, "-I", "tests/test_decision_entries.py")):
         return 1
     print("✓ decision entry regressions passed (without Lean)")
-    plants, faults = load_plants()
+    # Made before any plant's file is read, and held here, so that no plant can rebind it.
+    changes = guard()
     sources: dict[int, str] = {}
-    if faults:
-        for fault in faults:
-            sources[len(failures)] = f"loading the plants ({PLANTS}/):"
-            failures.append(fault)
-            print(f"✗ {fault}")
-        return close(sources)
-    names = [p.name for p in plants]
-    wanted = ["count_markers"] if args.counts_only else args.plant or names
-    unknown = [name for name in dict.fromkeys(wanted) if name not in names]
-    if unknown:
-        parser.error(f"no plant {', '.join(map(repr, unknown))} in {PLANTS}/; "
-                     f"the plants are {', '.join(names)}")
-    chosen = [p for p in plants if p.name in wanted]
     if args.counts_only:
-        run_plant(chosen[0], sources)
+        loaded = choose(parser, args, sources)
+        if loaded is None:
+            return close(sources)
+        run_plant(loaded[0][0], sources, changes)
         if failures:
             print("\n".join(failures))
             return 1
         print("✓ count plants passed; other plants were not run (--counts-only)")
         return 0
+    # Before the plants' files are read, so that a file written as one loads shows too.
     before = run("git", "status", "--porcelain")
     if not expect_success("entry Git status", before):
         return 1
+    ran = total = 0
     try:
-        for plant in chosen:
-            run_plant(plant, sources)
-        restored = fidelity()
-        if restored.returncode != 0:
-            failures.append("the unplanted tree failed check_fidelity.py")
-            print((restored.stdout + restored.stderr)[-3000:])
-        else:
-            print("✓ the unplanted tree passes check_fidelity.py")
+        loaded = choose(parser, args, sources)
+        if loaded is not None:
+            chosen, total = loaded
+            expected = len(chosen)
+            for plant in chosen:
+                run_plant(plant, sources, changes)
+                ran += 1
+            if ran < expected:
+                message = f"only {ran} of the {expected} plants chosen were run"
+                failures.append(message)
+                print(f"✗ {message}")
+            restored = fidelity()
+            if restored.returncode != 0:
+                failures.append("the unplanted tree failed check_fidelity.py")
+                print((restored.stdout + restored.stderr)[-3000:])
+            else:
+                print("✓ the unplanted tree passes check_fidelity.py")
     finally:
         original = sys.exception()
         try:
@@ -500,11 +633,12 @@ def main(argv=()) -> int:
             if original is None:
                 raise
             print(f"Final Git status also failed: {type(error).__name__}: {error}")
-    return close(sources)
+    return close(sources, ran, total)
 
 
 if __name__ == "__main__":
-    # The plants import this module by its name; run that copy, not __main__, so that they
-    # and the runner share one `failures` and one `refusals`.
-    import negative_tests
-    sys.exit(negative_tests.main(sys.argv[1:]))
+    # The plants import this module by its name: register the running module under it,
+    # rather than importing the file a second time, through Python's cache, so that they
+    # and the runner share one module, with one `failures` and one `refusals`.
+    sys.modules["negative_tests"] = sys.modules[__name__]
+    sys.exit(main(sys.argv[1:]))
