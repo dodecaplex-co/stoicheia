@@ -2193,3 +2193,160 @@ findings:
   changes only its reasons: exclusions of retired names do not detect uses of the
   theorems, while the existing Circle 3 exclusions still constrain dependencies.
   Every expectation value stays unchanged. No check, field or requirement changes.
+
+- **The stage test reads the program's words.**
+  `test_renderer_validation_loosened_with_content_is_kept_apart` in
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py), a protected file,
+  quoted Book I's stage words from [`docs/program.toml`](../program.toml) to plant a
+  stage [`render.py`](../../scripts/render.py) does not know. It now reads the first
+  stage line from the file, so that the program's words can change without changing
+  this test. It plants the same fault and expects the same refusal; nothing it checks
+  is loosened. This test change lands on its own, in train H10, before the stage words
+  change in train D4 ([WORKFLOW](../WORKFLOW.md), section 10: a check lands first). The
+  protected file changed is `scripts/test_safe_push.py`.
+
+- **S12 reads "Revision" as "revision".** The acceptance report's "Revision" header
+  sent the commit identifier `d95125f0` to Lean as a name.
+  [scripts/check_style.py](../../scripts/check_style.py) now reads "Revision" as
+  "revision"; all other context words keep their case-sensitive matching. The
+  commit-shape test is unchanged and nothing else is excused.
+  [tests/test_check_style.py](../../tests/test_check_style.py) covers that
+  header, the same hex word without revision context and a non-commit word beside
+  "Revision", and keeps the unknown Lean name in sentences beginning "Read", "Reviewed"
+  and "Verification" subject to Lean checking. These are the two protected files changed.
+
+- **The modern figure's checks precede its place on the page.** The owner asked for
+  figures for the modern mathematics, drawn to match Euclid's figure and carrying the
+  same letters (#49). S24 checks `figures/<book>/NN-modern.svg`: Euclid's figure's canvas
+  width, palette and strokes; the title "I.N: the modern way", with no caption; a Euclid's
+  figure beside it; and a paragraph opening "**The modern way.**" in its mishnah.
+  S25 checks its text at size 17: Euclid's figure's letters upright, and the paragraph's
+  own lower-case names italic, with numbers and the signs of an expression. It reads names
+  in TeX and plain words, including Book II's "AC = a", but excludes English letters
+  after apostrophes, those of e.g. and i.e., and the article "a" unless a sign, digit or
+  bracket stands beside it. Comments, code and link targets supply no names.
+  The shared `check_style.modern_span` selects the paragraph from the original Markdown
+  blocks and retains its source offsets before comments and code are masked: indented
+  code supplies no paragraph, multiline inline comments preserve its boundaries, and
+  code spans across lines supply no names. Its regression cases stay with these checks.
+  The rules are S24 and S25, formerly S23 and S24 on this branch; S22 remains letters in
+  backticks, S23 checks merge-conflict markers (`tooling/no-conflict-markers`), and S26
+  checks one letter, one point (`tooling/letter-check`, #68). The hard rules now run from
+  S1 to S26.
+  Acceptance assigns both modern rules to P8 and each modern figure's findings
+  to its proposition; S22 remains a text rule.
+  These checks read the source paragraph and SVGs, not the generated page, and apply to
+  the thirty modern figures already on main. Train H10 carries the checks; the page
+  insertion, its two renderer tests, the regenerated pages and the checklist's P8 sentence
+  follow in train F1. `scripts/render.py` and `docs/ACCEPTANCE.md` keep main's copies.
+  The protected files changed are
+  [scripts/check_style.py](../../scripts/check_style.py),
+  [scripts/check_acceptance.py](../../scripts/check_acceptance.py) and
+  [tests/test_check_style.py](../../tests/test_check_style.py).
+  [STYLE](../STYLE.md), sections 2, 7 and 8, describes the figure and its rules.
+  The reviews' fixes close S24 and S25's input: the modern figure may use only the elements,
+  attributes and spellings the modern figures on main use, so no CSS is read; a malformed
+  figure is reported on its file and checking goes on; and a modern paragraph with inline
+  HTML or reference-link syntax is refused, its indentation counted in columns.
+  After merges `ce98e710` and `57a5a94f`, `scripts/check_style.py` restores `93d61b6c`'s
+  table reading as `modern_table_columns` and `modern_table_cell_ranges`, and its
+  companion lookup as `modern_drawn_letters`, with `modern_text_of` preserving internal
+  newlines, keeping S23, S26 and the idea-figure checks' helpers unchanged, with the S24
+  and S25 refusals covered in `tests/test_check_style.py`.
+  The fixes through `12667af1` retain these separate readers while tightening modern
+  SVG input and modern-paragraph markup checks; S23, S26 and the idea-figure checks
+  keep their existing readings.
+
+- **One letter, one point: S26.** Argon's second review of the book-III release found seven
+  letters of Euclid's figures crossed or all but touched by strokes: III.17's D, III.16's G,
+  III.8's K and L, III.33's F in two of its three figures, and I.2's E. We thank Argon
+  warmly for so careful an audit
+  ([#68](https://github.com/jackChallis/stoicheia/issues/68)). The issue read the seven as
+  letters naming two points; what Argon measured was strokes through letters, and the rule
+  holds a figure to both. [`scripts/check_style.py`](../../scripts/check_style.py) gains a
+  rule, S26, which fails a figure, Euclid's or at a glance, that draws a letter twice (save
+  once in each of Heath's figures side by side, in III.25, III.33, III.35 and III.36, split
+  at straight cuts the script gives), or that lets a stroke, a dot or the canvas's edge come
+  within 2 of a letter. A letter is measured as Georgia draws its capital, upright or italic
+  as the figure sets it, by the convex hull of its outline's points, which the script
+  carries as numbers (`GLYPHS_UPRIGHT`, `GLYPHS_ITALIC`), read once from the fonts, so that
+  it still needs only Python's standard library; `path_rings` now also says which subpaths a
+  Z closes. S20 now reads only figures the gate admits, flattens curves adaptively to within
+  0.001, and retains significant Unicode spaces in text rather than stripping them.
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains cases of S26,
+  among them one or more for each of seven faults that two reviews of the rule found: a
+  stroke's width taken at a transform's mean stretch, a rect's rounded corners read as
+  square, a circle of no radius read as drawn, an anchored label with a prime placed by its
+  capital alone, a letter drawn twice in one of the figures side by side counted as once in
+  each, a corner's radius spelled 5e1 read as none, and a line of no length with butt caps
+  read as drawn; and, from the independent review, cases for what none of them had pinned:
+  an ellipse, a polyline, a dot or a stroke wholly within a letter, the canvas's right, top
+  and foot, a letter's size and transform, and a prime; and, from a later review, three on
+  what a line through a letter is called: two dashed by itself or by its group, called a
+  dashed line, and one whose dasharray is none, called a line. A corner's radius is now
+  read in one pass, so reading a malformed radius takes time linear in its length.
+  The CSS width, scale transforms and exponent radius began as geometry cases; once the
+  gate closed the input language, their cases instead require their exact refusal, while
+  every admitted clearance case remains a test of the geometry.
+  Later reviews found, one after another, SVG spellings that a renderer reads one way and
+  S26 another; S26 now reads only the elements, attributes and spellings that the figures
+  on main use and refuses any other, so no CSS is read, and it measures circles, ellipses,
+  arcs, rounded corners and curves with a conservative allowance for their chords. The
+  final review's fixes in `scripts/check_style.py`, with regressions in
+  `tests/test_check_style.py`, refuse effective strokes and bold weights on point labels
+  (main's bold numbers remain allowed), retain significant Unicode spaces for refusal, and
+  require both ellipse radii and an effective `font-family` on point labels of `Georgia`,
+  `Georgia, serif` or `Georgia, 'Times New Roman', serif`, inherited or explicit.
+  Numeric inputs are limited to magnitude 10,000, against
+  main's largest input of 440 at `209d71fd`; cubic subdivision has a depth limit, and
+  non-finite intermediate results fail the figure; an iterative gate limits nesting to
+  16 levels below the root before recursive helpers run. Decoder errors are caught at the
+  parser call. Both entry points have regressions requiring the next figure's finding after an
+  arithmetic or encoding failure. Subdivision is bounded for each cubic; these limits do
+  not bound the input's length or its number of elements or path commands.
+  The protected files changed by the DTD correction are `scripts/check_style.py` and
+  `tests/test_check_style.py`. Every figure reader now scans the bytes for `<!DOCTYPE`
+  and `<!ENTITY` before constructing a parser, then parses those same bytes. The scan
+  removes NULs so UTF-16 and UTF-32 spellings are caught too, and deliberately refuses
+  declaration markers inside comments. ElementTree's pure-Python fallback omits the
+  doctype callback for bare declarations and internal subsets alone; the byte guard
+  makes refusal independent of that callback, which remains a second guard. The
+  tests pin the single S26 diagnostic and continuation for SYSTEM and PUBLIC
+  declarations with internal subsets, entities referenced in attributes and text,
+  a referenced parameter entity, undeclared references and markers throughout the
+  document. An isolated subprocess disables the C accelerator before import and
+  checks temporary copies of I.1's figures and the declaration cases with the real
+  fallback. Ordinary XML declarations, comments and character references remain
+  admitted; an undeclared reference without a DTD retains its malformed-SVG finding.
+  The combined parser guards supplied source bytes too, and S25's companion reader
+  shares that refusal, returning `None` while retaining `modern_text_of`'s exact
+  reading of the text; its regression also runs with the pure-Python parser.
+  Mitre joins now use original segments' endpoint tangents, with no joins between a
+  curve's flattened chords. The closed text language admits only Heath's letters and
+  ASCII integer annotations, so Greek, full-width and other unmeasured text cannot pass
+  unseen. Zero fill and stroke opacity are refused on shapes and ancestor groups, while
+  main's positive opacity spellings remain admitted. Each path subpath now keeps its own
+  conservative chord allowance, so a remote arc cannot widen an unrelated straight
+  subpath's clearance measure. The gate also requires the SVG namespace and the figures'
+  container-and-leaf structure before measuring anything. A point label with effective
+  fill none is refused, while a visible explicit fill still overrides an ancestor's none.
+  Both figure entry points have cases requiring an S26 finding. And
+  [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
+  files its findings under P8, the figures. The matching words in
+  [ACCEPTANCE](../ACCEPTANCE.md) follow in the content train; this branch keeps that
+  page exactly as it is on origin/main.
+  [STYLE](../STYLE.md), sections 7 and 8, gives the rule, and the reviewer's checklist, item
+  16, asks that a letter naming one of Heath's points name no straight line or circle in the
+  Lean. A rule is added and nothing is weakened. The earlier figure work for #68 corrects
+  fifteen labels, III.16's G among them, through `text/letter-collisions`. G's correction
+  is in `a4cb748c`, brought into train D3 by `c2424533`.
+
+  This check change lands in train H10 before the content it judges, with the checklist's
+  words following in the content train, as H9b followed H8b for style everywhere. Its number
+  is S26: S22 is "letters in backticks, where they are plain"; S23 checks merge-conflict
+  markers, and S24 and S25 check the modern figure. All four rules are included in train
+  H10. Main's checks, cases, REACH_PENDING and
+  reports, including D15 for italic figures and D16 for the pending reach, stay whole.
+  The follow-up through `daf4bec7` brings S26's processing-instruction refusal and quiet
+  companion lookup on parse failure into H10, while the modern rules keep their byte
+  parser and readers and S23 keeps main's helpers.
