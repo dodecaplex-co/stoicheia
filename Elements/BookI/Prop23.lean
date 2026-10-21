@@ -19,7 +19,7 @@ I.22 builds the triangle AFG with its corner at A and AG along AB, from
 lengths `A₁A₂ := CD`, `B₁B₂ := CE`, `C₁C₂ := DE`, in the order of Euclid's
 sentence (so its G is our G, and its K our F). It asks that two of these taken
 together be greater than the third; they are the sides of the triangle DCE, so
-that is I.20, as the bracket in I.22's enunciation says.
+that is I.20, as Heath's reference in I.22's enunciation says.
 -/
 
 namespace Elements.BookI

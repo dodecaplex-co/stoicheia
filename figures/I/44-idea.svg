@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.44 at a glance</title>
-  <desc>To lay the triangle C (yellow) on the straight line AB (blue), set an equal parallelogram BEFG at B and draw the diameter HK: the piece ABML across it, on AB and in the same angle (red), is equal too.</desc>
+  <desc>To apply to AB (blue) a parallelogram equal to the triangle C (yellow), set an equal parallelogram BEFG at B and draw the diameter HK: the piece ABML across it, in the same angle (red), is equal too.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="32.0,227.1 127.7,227.1 66.4,121.2" data-unlettered="the given triangle C, which Heath names by one letter, not by its corners" fill="#f2b705" fill-opacity="0.95"/>
   <polygon points="182.9,170.6 272.6,170.6 247.5,227.1 157.7,227.1" fill="#f2b705" fill-opacity="0.95"/>

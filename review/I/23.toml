@@ -6,7 +6,7 @@ fingerprint = "sha256:a0045621afc2f9d1"
 
 [route]
 kind = "euclid"
-note = "I.22 builds F and G, with I.20 for its condition on the three lengths, and I.8 gives the equal angle. Through I.8 and I.20 the proof rests on superposition, which lays a triangle down only in thought and builds no point."
+note = "I.22 builds F and G, with I.20 for its condition on the three lengths, and I.8 gives the equal angle; through I.8 and I.20 the proof rests on superposition."
 
 [[passage]]
 at = "thus it is required to construct on the given straight line AB"

@@ -366,7 +366,8 @@ representation of a segment includes its circle", "our foundations allow superpo
 only in I.4 and I.8". Not "Lean cannot" **[reported]**.
 
 **A figure given with its triangles.** I.45 and II.14 are restricted
-([ACCEPTANCE](ACCEPTANCE.md#the-limitations-allowed)), and every text that says so uses the
+([ACCEPTANCE](ACCEPTANCE.md#the-limitations-allowed)), and every text a reader meets that
+says so (a record, a commentary, a file's notes, an introduction, a gap catalogue) uses the
 same words. The figure is "given with a checked division into triangles", not "supplied",
 and not the tag's "dissection". Its triangles "do not overlap, no point inside two of
 them", in full at their first mention in a record, a commentary, a file's notes or an
@@ -374,8 +375,10 @@ introduction, and "lie apart" after. "Equal to the figure" means equal to those 
 together. What is "not yet proved"
 ([#116](https://github.com/jackChallis/stoicheia/issues/116)) is "that every rectilineal
 figure, given only by its boundary, has such a division, and that another division gives
-the same area". Where a main theorem takes its two triangles unchecked, the sentence that
-describes it says so. In these sentences the figure is divided, not cut; "outline" never
+the same area". A record's statement `note`, held to 160 characters, may say it short:
+"Not yet proved: that every figure has one, and that another gives the same area." Where a
+main theorem takes its two triangles unchecked, the sentence that describes it says so. In
+these sentences the figure is divided, not cut; "outline" never
 stands unexplained for its boundary; and what Euclid takes for granted there is not called
 "tacit", a word kept for the tacit rules.
 
