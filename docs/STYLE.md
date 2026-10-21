@@ -575,7 +575,11 @@ validate a figure. Before a changed figure is signed off, render it
 - the cases: a figure drawn for one case says so, in the caption or the figure note, and
   does not suggest that the other cases were proved by the drawing; where a theorem covers
   several cases, the review record's `[figure]` names the one shown;
-- a reductio: a figure that draws the impossible supposition is said to be one;
+- a reductio: a figure that draws the impossible supposition is said to be one. It may
+  draw it as Heath's printed figure does, with a point placed where the supposition and
+  not the construction puts it, provided the figure note says so (I.14's E off CB
+  produced; I.26's BG and BH, drawn shorter than the DE and EF they are cut off equal to);
+  the owner's ruling of 21 October;
 - the scope: the figure does not show more than the theorem proves;
 - legibility at the size the page shows it: nothing clipped, letters clear.
 

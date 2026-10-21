@@ -3974,3 +3974,13 @@ findings:
   caught. Neither file pinned the list of plants or its count.
   [FORMALIZATION](../FORMALIZATION.md), section 7, and the README's row for the negative
   tests now describe both plants. No check is weakened.
+- **A reductio's figure may draw the impossible supposition, as Heath's does (#220).** The
+  cross-family readings of #220 split over I.14's figure as the Jev audit's adjudications
+  had: Codex readers judged it defective, since its E stands off CB produced while the
+  construction puts E on it; Claude readers judged it right, since it draws the supposition
+  as Heath's printed figure does and its note says so. I.26 is the same case the other way
+  round. On 21 October 2026 the owner chose, of two conventions put to them, "Follow Heath,
+  disclosed": a reductio's figure may draw the impossible supposition as Heath's does,
+  provided the note says so. The other option, redrawing to the Lean, was declined. I.14's
+  and I.26's figures stand, and
+  [STYLE](../STYLE.md), section 7, says so under "Checked as geometry".
