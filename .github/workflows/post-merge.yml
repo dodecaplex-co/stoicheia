@@ -210,6 +210,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      # actions: read names the later push's run when main has moved on.
+      actions: read
       issues: write
     env:
       GH_TOKEN: ${{ github.token }}
@@ -217,6 +219,7 @@ jobs:
       REPOSITORY: ${{ github.repository }}
       BEFORE: ${{ github.event.before }}
       AFTER: ${{ github.event.after }}
+      RUNS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs
     steps:
       - uses: actions/checkout@v5
         with:
@@ -235,10 +238,30 @@ jobs:
             echo "Main's tip could not be read."
             exit 1
           fi
-          # A success of a main that is no longer the tip clears nothing: a later push's
-          # run decides, and its own clear or revert follows. This run still passed.
+          # Main has moved on only when its tip, read now, is another commit: then this
+          # success clears nothing, the later push's run decides, and this run still
+          # passed. Any other failure of the clear, at main's own tip, fails the job.
           if [[ "$tip" != "$AFTER" ]]; then
-            echo "Main has moved on from ${AFTER:0:12} to ${tip:0:12}: a later push's run decides, and no label was changed."
+            # The later run is read for this message alone; an unreadable answer says so.
+            later=$(mktemp "$RUNNER_TEMP/later-run.XXXXXX")
+            runs="repos/$REPOSITORY/actions/workflows/post-merge.yml/runs"
+            run=""
+            if gh api "$runs?head_sha=$tip&event=push&branch=main&per_page=100" \
+              | jq -er --arg tip "$tip" '
+                  [.workflow_runs[] | if type == "object" then . else error("Unreadable run") end
+                    | select(.head_sha == $tip and .head_branch == "main" and .event == "push"
+                        and .path == ".github/workflows/post-merge.yml") | .id]
+                  | if length > 0 and all(.[]; type == "number" and . == floor and . > 0)
+                    then max else error("No readable run") end' > "$later"; then
+              run=$(cat "$later")
+            fi
+            if [[ "$run" =~ ^[1-9][0-9]*$ ]]; then
+              echo "Main has moved on from $AFTER to $tip: the later push's post-merge run" \
+                "$run, $RUNS_URL/$run, decides, and no label was changed."
+            else
+              echo "Main has moved on from $AFTER to $tip: no post-merge run for $tip could" \
+                "be read yet; the later push's run decides, and no label was changed."
+            fi
             exit 0
           fi
           issues=$(mktemp "$RUNNER_TEMP/main-red-issues.XXXXXX")

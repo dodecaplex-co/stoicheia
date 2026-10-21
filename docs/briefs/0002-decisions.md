@@ -3520,7 +3520,15 @@ findings:
     While an open `main-red` issue exists, the judge also refuses every queued entry
     but that revert and a declared fix (below), so trains queued before main went red
     leave the queue. When main has moved on during a post-merge run whose integration
-    passed, its clear job changes no label and passes: a later push's run decides. The
+    passed, that is, when main's tip, read afresh, is readable and another commit, its
+    clear job and `auto_revert.py --clear --after` change no label and pass, naming that
+    commit and its post-merge run, which decides, or saying that no such run can be read
+    yet. A clear that fails at main's own tip still fails, as new tests of both check,
+    and so does one that cannot read the tip. So the clear test's expected exit changes
+    from 2 to 0 for a moved main only; approved by the coordinator on 21 October as a
+    correction of new behaviour, not a weakened check: the test,
+    `test_clear_old_success_does_not_clear_new_main`, still requires that no label is
+    removed, and now also that its message names the later push's run. The
     workflow that holds the key is read from main, so code that has landed there could
     take it; the App is bounded instead: no bypass, no permission to write contents at
     all (the job's own token pushes the revert branch), and the judge's refusal of any

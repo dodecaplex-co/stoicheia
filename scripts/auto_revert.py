@@ -28,6 +28,9 @@ issue could not be updated with that outcome.
 from every open issue, as the post-merge workflow's clear job does with the runner's
 tools alone, since that job runs no repository code; it stays for a clear by hand that
 must read every page, confirm each removal and change nothing once main has moved on.
+With --after, main has moved on only when its tip, read afresh, is readable and another
+commit: then it names that commit and its post-merge run, which decides (or says that
+no such run can be read yet), and exits 0. A clear that fails at main's own tip fails.
 """
 
 from __future__ import annotations
@@ -594,14 +597,36 @@ def main_tip(api: GitHub) -> str:
     return sha
 
 
-def clear(api: GitHub, after: str | None) -> int:
+def later_run(api: GitHub, repo: str, tip: str) -> str:
+    """The run that decides once main has moved on to tip, read for the message alone:
+    that push's post-merge run by id and address, or, when none can be read yet, so."""
+    try:
+        data = api.call("GET", f"{api.root}/actions/workflows/post-merge.yml/runs?"
+                               f"head_sha={tip}&event=push&branch=main&per_page=100")
+    except Refusal:
+        data = None
+    runs = data.get("workflow_runs") if isinstance(data, dict) else None
+    ids = []
+    if isinstance(runs, list) and all(isinstance(run, dict) for run in runs):
+        ids = [run.get("id") for run in runs
+               if run.get("head_sha") == tip and run.get("head_branch") == "main"
+               and run.get("event") == "push"
+               and run.get("path") == ".github/workflows/post-merge.yml"]
+    if not ids or any(type(run) is not int or run <= 0 for run in ids):
+        return f"no post-merge run for {tip} could be read yet; the later push's run decides"
+    return (f"the later push's post-merge run {max(ids)}, "
+            f"https://github.com/{repo}/actions/runs/{max(ids)}, decides")
+
+
+def clear(api: GitHub, repo: str, after: str | None) -> int:
     if after:
         tip = main_tip(api)
         if tip != after:
-            # The success is of a main that is no longer the tip: a later push's run
-            # decides, and its own clear or revert follows.
-            print(f"Main has moved on from {after[:12]} to {tip[:12]}: a later push's run "
-                  "decides, and no label was changed.")
+            # Main has moved on only when its tip, read now, is another commit: then
+            # this success clears nothing and the later push's run decides. Any other
+            # failure of the clear, at main's own tip, fails.
+            print(f"Main has moved on from {after} to {tip}: {later_run(api, repo, tip)}, "
+                  "and no label was changed.")
             return 0
     rows = api.pages(api.root + "/issues?state=open&labels=main-red")
     numbers = []
@@ -628,7 +653,7 @@ def dry_run(args, repo: Path, env: dict) -> int:
     if args.clear:
         if args.after:
             print(f"Would check main still names {args.after}, and change no label if "
-                  "it has moved on.")
+                  "it has moved on, naming the later push's post-merge run.")
         print(f"Would GET every page of {root}/issues?state=open&labels=main-red.")
         print("Would DELETE main-red from each open issue, keeping blocks-release and the issue.")
         return 0
@@ -811,7 +836,7 @@ def main(argv=None, *, http=None, push=None, repo_dir=None, env=None) -> int:
             raise Refusal("GITHUB_TOKEN is required to record or clear main-red.")
         api = GitHub(args.repo, token, http or request)
         if args.clear:
-            return clear(api, args.after)
+            return clear(api, args.repo, args.after)
         return revert(args, source, api, environment, push or push_branch)
     except Exception as exc:
         reason = str(exc) if isinstance(exc, Refusal) else "The operation could not be completed."

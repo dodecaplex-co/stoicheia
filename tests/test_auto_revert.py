@@ -811,15 +811,94 @@ class AutoRevert(unittest.TestCase):
         self.assertEqual(status, 2, output)
         self.assertEqual(self.api.deleted, [])
 
+    @staticmethod
+    def run_of(number, sha, **extra):
+        return {"id": number, "head_sha": sha, "head_branch": "main", "event": "push",
+                "path": ".github/workflows/post-merge.yml", **extra}
+
+    def unreadable_runs(self, later):
+        """GitHub's answers that name no post-merge run for later; None is a refusal."""
+        return {
+            "refused": None,
+            "not an object": [],
+            "no list": {"workflow_runs": None},
+            "an unreadable run": {"workflow_runs": [self.run_of(9, later), "run"]},
+            "no run yet": {"total_count": 0, "workflow_runs": []},
+            "only another commit's": {"workflow_runs": [self.run_of(11, "c" * 40)]},
+            "an unreadable id": {"workflow_runs": [self.run_of(9, later),
+                                                   self.run_of(True, later)]},
+            "a zero id": {"workflow_runs": [self.run_of(0, later)]},
+        }
+
     def test_clear_old_success_does_not_clear_new_main(self):
-        # Main has moved on: a later push's run decides, so the run that passed is not
-        # failed, and no label changes.
-        self.api.after = "b" * 40
+        # Main has moved on: its tip, read afresh, is another commit, so the run that
+        # passed is not failed, no label changes, and the later push's run is named.
+        later = "b" * 40
+        runs = (f"/repos/{SLUG}/actions/workflows/post-merge.yml/runs?head_sha={later}"
+                "&event=push&branch=main&per_page=100")
+        self.api.after = later
+        self.api.pages["GET", runs] = {"total_count": 4, "workflow_runs": [
+            self.run_of(7, later), self.run_of(9, later), self.run_of(11, "c" * 40),
+            self.run_of(12, later, head_branch="other")]}
         self.api.open_issues = [self.open_issue(4)]
         status, output = self.run_clear("--after", "a" * 40)
         self.assertEqual(status, 0, output)
         self.assertEqual(self.api.deleted, [])
-        self.assertIn("a later push's run decides, and no label was changed", output)
+        self.assertIn(f"Main has moved on from {'a' * 40} to {later}: the later push's "
+                      f"post-merge run 9, https://github.com/{SLUG}/actions/runs/9, decides, "
+                      "and no label was changed.", output)
+        self.assertEqual([(method, path) for method, path, _, _ in self.api.calls],
+                         [("GET", f"/repos/{SLUG}/git/ref/heads/main"), ("GET", runs)])
+
+    def test_clear_when_main_has_moved_names_its_commit_if_no_run_can_be_read(self):
+        later = "b" * 40
+        runs = (f"/repos/{SLUG}/actions/workflows/post-merge.yml/runs?head_sha={later}"
+                "&event=push&branch=main&per_page=100")
+        for name, answer in self.unreadable_runs(later).items():
+            with self.subTest(name):
+                self.api = GitHub()
+                self.api.after = later
+                self.api.open_issues = [self.open_issue(4)]
+                if answer is None:
+                    self.api.broken = lambda method, path, token, data: path == runs
+                else:
+                    self.api.pages["GET", runs] = answer
+                status, output = self.run_clear("--after", "a" * 40)
+                self.assertEqual(status, 0, output)
+                self.assertEqual(self.api.deleted, [])
+                self.assertIn(f"Main has moved on from {'a' * 40} to {later}: no post-merge "
+                              f"run for {later} could be read yet; the later push's run "
+                              "decides, and no label was changed.", output)
+                self.assertNotIn(WORKFLOW_TOKEN, output)
+
+    def test_clear_failing_at_main_s_own_tip_fails_and_removes_nothing(self):
+        # The opposite of a moved main: main's tip is the run's commit, so a clear that
+        # fails fails, removes no label and never reads as main having moved on.
+        root = f"/repos/{SLUG}"
+        failures = {
+            "an unreadable issue": ([self.open_issue(4), {"number": 5}], None),
+            "a refused issue list": (
+                [self.open_issue(4)],
+                lambda method, path, token, data: path.startswith(root + "/issues?")),
+            "a refused removal": (
+                [self.open_issue(4), self.open_issue(5)],
+                lambda method, path, token, data: method == "DELETE"),
+        }
+        for name, (issues, broken) in failures.items():
+            with self.subTest(name):
+                self.api = GitHub()
+                self.api.after = "a" * 40
+                self.api.open_issues = issues
+                self.api.broken = broken
+                status, output = self.run_clear("--after", "a" * 40)
+                self.assertEqual(status, 2, output)
+                self.assertEqual(self.api.deleted, [])
+                self.assertNotIn("moved on", output)
+                self.assertFalse(any("/actions/" in path for _, path, _, _ in self.api.calls))
+                # A refused removal is the last: no other issue's label is tried.
+                self.assertIn(
+                    [path for method, path, _, _ in self.api.calls if method == "DELETE"],
+                    ([], [f"{root}/issues/4/labels/main-red"]))
 
     def test_clear_with_main_s_tip_unreadable_removes_nothing(self):
         self.api.open_issues = [self.open_issue(4)]
@@ -831,15 +910,18 @@ class AutoRevert(unittest.TestCase):
                 self.assertIn("Main's tip could not be read", output)
                 self.assertEqual(self.api.deleted, [])
 
-    def run_clear_step(self, tip, *, issues=None):
+    def run_clear_step(self, tip, *, issues=None, runs=None, refused=()):
         """The clear job's step, run as the workflow runs it, with a stand-in for gh: the
-        step's output, its exit and the labels it removed."""
+        step's output, its exit and the labels it removed. runs is GitHub's answer for
+        the post-merge runs at tip, None a refusal; refused names the other operations
+        refused, "issues" or "delete"."""
         script = workflow_step("post-merge.yml",
                                "Clear main-red after successful integration of the current main")
         directory = self.directory / "clear-bin"
         directory.mkdir(exist_ok=True)
         state = self.directory / "clear-state.json"
-        state.write_text(json.dumps({"tip": tip, "issues": issues or [[]], "deleted": []}),
+        state.write_text(json.dumps({"tip": tip, "issues": issues or [[]], "runs": runs,
+                                     "refused": list(refused), "deleted": []}),
                          encoding="utf-8")
         gh = directory / "gh"
         gh.write_text(f"#!{sys.executable}\n" + textwrap.dedent('''\
@@ -856,10 +938,19 @@ class AutoRevert(unittest.TestCase):
                 if state["tip"] is None:
                     sys.exit(1)
                 print(state["tip"])
+            elif args == ["api", root + "/actions/workflows/post-merge.yml/runs?head_sha="
+                          + str(state["tip"]) + "&event=push&branch=main&per_page=100"]:
+                if state["runs"] is None:
+                    sys.exit(1)
+                print(json.dumps(state["runs"]))
             elif args == ["api", "--paginate", "--slurp",
                           root + "/issues?state=open&labels=main-red&per_page=100"]:
+                if "issues" in state["refused"]:
+                    sys.exit(1)
                 print(json.dumps(state["issues"]))
             elif args[:3] == ["api", "--method", "DELETE"]:
+                if "delete" in state["refused"]:
+                    sys.exit(1)
                 state["deleted"].append(args[3])
                 path.write_text(json.dumps(state))
                 print(json.dumps([{"name": "blocks-release"}]))
@@ -869,6 +960,7 @@ class AutoRevert(unittest.TestCase):
         gh.chmod(0o755)
         env = ar.git_env()
         env.update(PATH=str(directory) + ":" + env["PATH"], REPOSITORY=SLUG, AFTER="a" * 40,
+                   RUNS_URL=f"https://github.com/{SLUG}/actions/runs",
                    RUNNER_TEMP=str(self.directory), CLEAR_STATE=str(state))
         result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script],
                                 cwd=self.repo, env=env, text=True, capture_output=True,
@@ -877,14 +969,50 @@ class AutoRevert(unittest.TestCase):
         return result.stdout + result.stderr, result.returncode, deleted
 
     def test_workflow_clear_changes_nothing_and_passes_when_main_has_moved(self):
+        later = "b" * 40
         issues = [[self.open_issue(4)]]
-        output, code, deleted = self.run_clear_step("b" * 40, issues=issues)
+        runs = {"total_count": 4, "workflow_runs": [
+            self.run_of(7, later), self.run_of(9, later), self.run_of(11, "c" * 40),
+            self.run_of(12, later, head_branch="other")]}
+        output, code, deleted = self.run_clear_step(later, issues=issues, runs=runs)
         self.assertEqual(code, 0, output)
         self.assertEqual(deleted, [])
-        self.assertIn("a later push's run decides, and no label was changed", output)
-        output, code, deleted = self.run_clear_step("a" * 40, issues=issues)
+        self.assertIn(f"Main has moved on from {'a' * 40} to {later}: the later push's "
+                      f"post-merge run 9, https://github.com/{SLUG}/actions/runs/9, decides, "
+                      "and no label was changed.", output)
+        output, code, deleted = self.run_clear_step("a" * 40, issues=issues, runs=runs)
         self.assertEqual(code, 0, output)
         self.assertEqual(deleted, [f"repos/{SLUG}/issues/4/labels/main-red"])
+        self.assertNotIn("moved on", output)
+
+    def test_workflow_clear_when_main_has_moved_names_its_commit_if_no_run_can_be_read(self):
+        later = "b" * 40
+        for name, runs in self.unreadable_runs(later).items():
+            with self.subTest(name):
+                output, code, deleted = self.run_clear_step(
+                    later, issues=[[self.open_issue(4)]], runs=runs)
+                self.assertEqual(code, 0, output)
+                self.assertEqual(deleted, [])
+                self.assertIn(f"Main has moved on from {'a' * 40} to {later}: no post-merge "
+                              f"run for {later} could be read yet; the later push's run "
+                              "decides, and no label was changed.", output)
+
+    def test_workflow_clear_fails_at_main_s_own_tip_and_removes_nothing(self):
+        # The opposite of a moved main: main's tip is the run's commit, so a clear that
+        # fails fails the job, removes no label and never reads as main having moved on.
+        failures = {
+            "an unreadable issue": ([[self.open_issue(4), {"number": 5}]], ()),
+            "a refused issue list": ([[self.open_issue(4)]], ("issues",)),
+            "a refused removal": ([[self.open_issue(4), self.open_issue(5)]], ("delete",)),
+        }
+        for name, (issues, refused) in failures.items():
+            with self.subTest(name):
+                output, code, deleted = self.run_clear_step(
+                    "a" * 40, issues=issues, refused=refused,
+                    runs={"workflow_runs": [self.run_of(9, "a" * 40)]})
+                self.assertNotEqual(code, 0, output)
+                self.assertEqual(deleted, [])
+                self.assertNotIn("moved on", output)
 
     def test_workflow_clear_fails_when_main_s_tip_is_unreadable(self):
         for tip in (None, "", "not a commit"):
