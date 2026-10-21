@@ -3790,7 +3790,7 @@ class Upright(unittest.TestCase):
         idea = (folder / "01-idea.svg").read_text(encoding="utf-8")
         plants = (   # (where font-style="italic" goes, the letters it sets italic)
             ("<text ", "A"),                    # on the first letter alone
-            ("<svg ", "A, B, C, D, E"),         # on the root, as the figures were drawn
+            ("<svg ", "A, B, C, D, E"),         # on the root, so every letter inherits it
         )
         for name, rule in (("01.svg", "S15"), ("01-idea.svg", "S20")):
             for at, letters in ((None, None),) + plants:
