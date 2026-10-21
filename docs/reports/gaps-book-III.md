@@ -276,7 +276,8 @@ Heath's brackets give in most of the propositions of Book III.
 - "Therefore DE is equal to DB": equal squares are on equal straight lines (`BookI.Prop46.sq`), as in III.14.
 - I.8 needs DBF to be a triangle, which Euclid reads off his figure. Were B on DF, either D would be within the circle, or two sides of the triangle DEF would together equal the third, against I.20 (`Prop37.triangle`).
 - De Morgan finds here "the same defect as in I. 48, i.e. an apparent avoidance of indirect demonstration by drawing the tangent DE on the opposite side of DF from DB" (Heath, vol. 2, pp. 76–77). III.17 does not say which straight line it draws. Our proof holds for either, even with E at B, for our I.8 does not ask on which side of DF the triangles lie.
-- "And FB produced is a diameter": our porism to III.16 is said at the end of a radius, so FB need not be produced. "Similarly this can be proved to be the case even if the centre be on AC" is no case for our proof, for III.36 is cited by its statement, which holds wherever the centre lies.
+- "And FB produced is a diameter": our porism to III.16 is said at the end of a radius, so FB need not be produced.
+- "Similarly this can be proved to be the case even if the centre be on AC": Euclid leaves this case to the reader. `Prop37.centre_on_secant` proves it from `Prop36.through_centre`, III.36's diameter case, and the given equality, then by Euclid's comparison of two triangles through I.8.
 
 ## The postulates: what the Lean uses and what Heath's brackets give
 

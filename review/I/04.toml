@@ -10,25 +10,30 @@ kind = "euclid"
 at = "For, if the triangle ABC be applied to the triangle DEF"
 kind = "helper"
 helper = "Tacit.superposition"
-note = "Euclid relies on being able to lay ABC along DE on F's side with every side and angle intact. The Lean obtains the placed triangle DB'C' from `Tacit.superposition`, a rule we assume rather than prove, in LeanEuclid's stronger construction form of System E §3.7: it names DE with `Postulate1`, proves F is off DE, places A at D, B' on the ray from D through E and C' on F's side, and uses `ne_of_len_eq` to establish that D, B' and C' differ."
+note = "Postulate 1 names DE and DF before the hypothetical placement, with F off DE. `Tacit.superposition` admits a derivation over symbols for ABC laid along DE on F's side, keeping its sides, angles and laid-down side AC; only four equalities about ABC and DEF leave it."
 
 [[passage]]
 at = "then the point B will also coincide with E"
 kind = "helper"
-helper = "OnRay.eq_of_len_eq"
-note = "Euclid infers that B lands on E from the equality of AB and DE. `OnRay.eq_of_len_eq` proves that a point on the ray from D through E at distance DE must be E itself, ruling out a point short of E or beyond it."
+helper = "Superposition.Derives.ray_unique"
+note = "Inside the hypothetical placement, `Superposition.Derives.ray_unique` makes B' coincide with E because DB' equals DE on the ray from D through E. Its cited law is proved by `OnRay.eq_of_len_eq`, which rules out a point short of E or beyond it."
 
 [[passage]]
 at = "the straight line AC will also coincide with DF"
 kind = "helper"
-helper = "onRay_of_angle_eq"
-note = "Euclid infers that AC falls along DF from the equality of the angles at A and D. `onRay_of_angle_eq` proves that on F's side of DE only one ray from D makes that angle with DE, so C lands on the ray from D through F."
+helper = "Superposition.Derives.ray_of_angle"
+note = "The equal angles put C' on DF by `Superposition.Derives.ray_of_angle`, whose law is proved with all three straight lines named. `Superposition.Derives.ray_of_angle_side` puts it on F's side of D; the placement already supplies the side through D and C', so neither step draws a line."
 
 [[passage]]
 at = "hence the point C will also coincide with the point F"
 kind = "helper"
-helper = "OnRay.eq_of_len_eq"
-note = "Euclid infers that C lands on F from the equality of AC and DF. The Lean again uses `OnRay.eq_of_len_eq`, now on the ray from D through F."
+helper = "Superposition.Derives.ray_unique"
+note = "The kept length DC' equals AC and hence DF. `Superposition.Derives.ray_unique` therefore makes C' coincide with F on the ray from D through F."
+
+[[passage]]
+at = "But B also coincided with E"
+kind = "grouped"
+note = "The two coincidences are already proved inside the placement. The base equality is derived beneath the sentence following the bracketed scholium, by substituting E and F for B' and C' in the kept base length."
 
 [[passage]]
 at = "For if, when B coincides with E and C with F"
@@ -38,20 +43,33 @@ note = "Heiberg brackets this as an early scholium. A finite straight line enter
 [[passage]]
 at = "Thus the whole triangle ABC will coincide with the whole triangle DEF"
 kind = "helper"
-helper = "Tacit.area_congruent"
-note = "Euclid takes for granted that moving ABC leaves its area unchanged. The Lean identifies the placed triangle with DEF by `CommonNotion4.triangle`, and obtains its equality in area to ABC from the preserved sides and angles by `Tacit.area_congruent`, a rule we assume (System E, Metric 9)."
+helper = "Superposition.Derives.area_of_congruent"
+note = "Inside the placement, `Superposition.Derives.area_congr` identifies the area of DB'C' with that of DEF from the corner coincidences. Beneath the next sentence, `Superposition.Derives.area_of_congruent` uses the kept sides and angles and the cited Metric 9 to equate ABC with DB'C', giving the required area equality."
+
+[[passage]]
+at = "And the remaining angles will also coincide with the remaining angles"
+kind = "grouped"
+note = "The two remaining angle equalities follow inside the placement from the kept angles and the corner coincidences, with Metric 4 reversing the arms where needed. The restricted rule then exports these two equalities together with the base and area equalities, one application for each."
 
 [review]
 stage = "full"
-commit = "8bdf0ef"
-reviewer = "Claude Opus 5.5, records review"
-lean = "sha256:9aaf00e4e29e5634"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+commit = "bd86a7b6"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:6c1e94da2ef25d4e"
+run = "brief 0009 stage full, ship S3 A1-integration re-read"
 
 [review.items]
 statement = "pass"
 passages = "pass"
-representations = "n/a"
-commentary = "fail"
+# P13 applies to the represented derivation. Checked the six point symbols against A to F,
+# the line symbols against DE and DF, and every given literal and guard against its proof.
+# Checked Atom/Lit/Metric.Holds, their holds_map bridges, Derives.sound and Rule.apply.
+# The ABC placement is DB'C', with B' on the ray DE and C' on F's side of DE; all three
+# kept lengths and angles match their originals, with distinctness derived from lengths.
+# The kept side AC supplies the line through D and C' for the angle-to-ray laws; the cited
+# laws have their geometric proofs before I.4. Checked all four exported metric formulas:
+# only the base, area and two remaining angle equalities leave, with no B', C' or kept side.
+representations = "pass"
+commentary = "pass"
 figures = "pass"
 signoff = "pass"

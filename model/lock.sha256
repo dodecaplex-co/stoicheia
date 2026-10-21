@@ -19,7 +19,19 @@
 #     shasum -a 256 Certificate/axioms.lock
 # run from the repository root (keep these comment lines).
 #
-# Renewed on 19 October 2026, when eight axioms became theorems (the owner approved retirement
-# in principle that day, pending the evidence): their laws leave the generated translation;
+# Renewed on 19 October 2026, when eight axioms became theorems (the owner approved both
+# retirements that day): their laws leave the generated translation;
 # the other 79 axioms and every word are unchanged, byte for byte.
-da52a4969bf323512b82545ca01023038782d1c17a57e56da3273efdc93a1402  Certificate/axioms.lock
+#
+# Renewed on 19 October 2026, when the restricted rule of superposition (brief 0009, #75)
+# replaced the existential one: the generated law, its hand translation and its proof in
+# the plane were brought to it (model/README.md), and the other 86 laws are unchanged.
+# Renewed on 20 October 2026 after the coincidence marker was integrated (brief 0009,
+# #75): the vocabulary grows from 206 to 208 words. Coincidence and its step join
+# the lock, and the three Derives congruence constructors take the marker. All 87
+# axiom statements are unchanged. The marker records a step without changing its
+# interpretation; the existing placement proofs and numerical law still apply.
+# Renewed on 20 October 2026, when the restricted rule was merged after the first
+# retirement wave: the generated translation has the 79 laws of wave one with the
+# restricted superposition law and its words, and the lock's vocabulary stays at 208 words.
+7214fce515f3ffa876bba7e362535f719c6b370ebf5b1ba744b6f3d27ab60bef  Certificate/axioms.lock

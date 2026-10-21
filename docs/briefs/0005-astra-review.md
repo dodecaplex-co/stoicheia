@@ -242,7 +242,12 @@ Expected result: III.1 shows 56 tacit rules and III.1 Por. 57, including `centre
 **k. Additions that close every remaining review point.**
 
 *Certificate regressions* (the review asked for them by name):
-- `tests/certificate_expectations.json` pins facts the CI must keep: `III.1 Por.` includes `Tacit.centre_unique` and `III.1` does not. A negative test plants a dependency that occurs **only in a declaration's type** and checks the unified walk finds it.
+- `tests/certificate_expectations.json` originally pinned that `III.1 Por.` includes
+  `Tacit.centre_unique` and `III.1` does not. The membership pin was later dropped, with
+  the owner's approval, ahead of retiring that axiom; the
+  [decision record](0002-decisions.md#19-october-2026) owns that change. A negative test
+  plants a dependency that occurs **only in a declaration's type** and checks the unified
+  walk finds it.
 
 *Overlap catalogue columns*: proposition, rule, **where the rule first enters the development** (its first user), which dependencies bring it in, what the Lean proof does, and the audit lemma. Deriving these propositions from weaker assumptions is recorded as an optional, separate, dependency-audited workstream, not this plan.
 
@@ -362,6 +367,13 @@ What remains of stages 1 and 1b is kept in [docs/PROGRAM.md](../PROGRAM.md), sec
 *I.40 general*
 - `Prop40.general`: four base ends on one line L, equal bases, equal areas, same side ⇒ ∃ M parallel to L through A and D. Plus `Prop40.join` (A ≠ D ⇒ AD ∥ BC) and `Prop40.special` (the current statement as a corollary).
 - Proof: Euclid's own argument (`Prop31.line`, `Prop30.meet`, I.38 already general, `OnRay.eq_of_area_eq`). It covers separated, touching, overlapping and oppositely named bases.
+
+Reconciled 19 October 2026: `Prop40` and `Prop40.general` now retain Euclid's closing
+reductio. The contrary supposition makes the constructed intersection differ from D.
+I.38 and Common Notion 1 give equal areas; `between_cases` and `area_lt_of_cut`
+contradict them in either order on the ray. Neither proof calls `OnRay.eq_of_area_eq`.
+The route is `euclid`; the statements, admitted configurations and companion registration
+are unchanged, including the general companion's coverage of coincident vertices.
 
 *I.45 for a figure given by its corners* (revised 18 October, to the owner's decision later on 17 October)
 

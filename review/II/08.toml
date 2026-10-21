@@ -15,7 +15,7 @@ note = "Euclid produces AB to D with BD equal to CB. The statement takes every D
 at = "let the square AEFD be described on AD"
 kind = "helper"
 helper = "Prop8.cell"
-note = "Euclid reads each cell of the figure drawn double as a parallelogram; the Lean proves it once, for the corners where two pairs of parallels meet. The Lean draws the square by I.46 and the two figures by `Parallelogram.figure`, obtains their complements by `Parallelogram.complements`, proves CH parallel to BL and MN parallel to OP with `Prop30.parallel` (I.30, for which Heath gives no reference here) to form the cells and order points across three parallels, finds G and R with `Prop30.meet`, and establishes the order of their points with `Parallel.between`."
+note = "Euclid reads each cell of the figure drawn double as a parallelogram; the Lean proves it once, for the corners where two pairs of parallels meet. The Lean draws the square by I.46 and the two figures by `Parallelogram.figure`, obtains their complements by `Parallelogram.complements`, proves CH parallel to BL and MN parallel to OP with `BookI.Prop30.parallel` (I.30, for which Heath gives no reference here) to form the cells and order points across three parallels, finds G and R with `BookI.Prop30.meet`, and establishes the order of their points with `Parallel.between`."
 
 [[passage]]
 at = "while CB is equal to GK, and BD to KN"
@@ -61,10 +61,10 @@ note = "Euclid takes the gnomon STU and OH together as the whole square AEFD. `P
 
 [review]
 stage = "full"
-commit = "f86db3d"
-reviewer = "Claude Opus 5.5, records review"
+commit = "570e6fa"
+reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:d2669414e0cf5c4c"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "brief 0005 stage 5, ship C5 re-read"
 
 [review.items]
 statement = "pass"

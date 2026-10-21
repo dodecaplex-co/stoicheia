@@ -1,5 +1,5 @@
 Stoicheia
-Copyright 2026 Jack Challis and contributors
+Copyright 2026 Stoicheia Team and contributors
 
 This project is licensed under the Apache License, Version 2.0 (see LICENSE),
 except where noted below.
@@ -14,8 +14,8 @@ Review of Symbolic Logic 2(4), 2009). While writing them we kept LeanEuclid's
 Lean rendering of System E open beside the paper the whole time, and we owe
 it a great deal:
 
-  * our single superposition rule follows LeanEuclid's combined form of
-    System E's two superposition rules;
+  * the placement data within our restricted superposition rule follows
+    LeanEuclid's combined form of the placements in System E's two rules;
   * our Intersection rule 4 (circles_meet_of_on_inside_outside) uses
     LeanEuclid's corrected hypothesis ("on the circle"), which fixes a
     statement in the published paper that fails for a small circle lying

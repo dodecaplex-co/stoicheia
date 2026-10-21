@@ -15,13 +15,13 @@ note = "Euclid's figure puts D between C and B; D cannot be C, since the segment
 at = "and let BE be joined"
 kind = "grouped"
 helper = "Parallelogram.figure"
-note = "Euclid joins BE and draws the parallels through D and H. `Parallelogram.figure` carries these three constructions together, finding the intersections and their order on the sides of the square."
+note = "Euclid joins BE and draws the parallels through D and H. `Parallelogram.figure` carries these three constructions together, finding the intersections and their order on the sides of the square; it also uses `BookI.Prop30.parallel` (I.30, for which Heath prints no reference here) to prove the further parallels that Euclid's \"parallel to either\" takes for granted."
 
 [[passage]]
 at = "and again through A let AK be drawn parallel"
 kind = "helper"
-helper = "Prop31.parallelogram"
-note = "Euclid draws AK parallel to CL and takes K on KM from the figure. `Prop31.parallelogram` draws the parallel, finds K and proves that LCAK is a parallelogram."
+helper = "BookI.Prop31.parallelogram"
+note = "Euclid draws AK parallel to CL and takes K on KM from the figure. `BookI.Prop31.parallelogram` draws the parallel, finds K and proves that LCAK is a parallelogram."
 
 [[passage]]
 at = "Then, since the complement CH is equal to the complement HF"
@@ -45,7 +45,7 @@ note = "Euclid takes AH as AL and CH together. `Parallel.between` places L betwe
 at = "But AH is the rectangle AD, DB"
 kind = "helper"
 helper = "Square.about_diameter"
-note = "Euclid takes DH equal to DB from the square DM. `Square.about_diameter` proves that DM is a square; the Lean then proves that AH is a rectangle and identifies its area by `Rectangle.eq_rect`."
+note = "Euclid takes DH equal to DB from the square DM. `Square.about_diameter` proves that DM is a square; the Lean then proves that AH is a rectangle and identifies its area by `Rectangle.eq_rect`: `BookI.Prop30.parallel` (I.30, for which Heath prints no reference here) makes AK parallel to DG, `Tacit.adjacent_eq_of_right` (System E, Diagram-angle 3), now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, gives the adjacent right angle HDA, and `Rectangle.of_right` (I.29) proves the other angles right."
 
 [[passage]]
 at = "Let LG, which is equal to the square on CD"
@@ -64,10 +64,10 @@ case = "D between C and B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "7285f05"
-reviewer = "Claude Opus 5.5, records review"
+commit = "f3b45b70"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:4fabbaf36ec8e013"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "brief 0005 stage 5, ship C5 re-read"
 
 [review.items]
 statement = "pass"

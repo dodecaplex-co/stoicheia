@@ -322,7 +322,7 @@ FIELDS = {
                   "companions": (_LIST, False)},
     "route": {"kind": (_STR, True), "note": (_STR, False)},
     "representation": {"tags": (_LIST, True), "note": (_STR, False)},
-    "overlap": {"rule": (_STR, True), "also": (_LIST, False), "kind": (_STR, False),
+    "overlap": {"rule": (_STR, True), "also": (_LIST, False), "kind": (_STR, True),
                 "note": (_STR, False)},
     "coverage": {"checked": (_LIST, False), "explains": (_LIST, False),
                  "text_only": (_LIST, False)},
@@ -543,11 +543,11 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
         ov = record["overlap"]
         if any(re.search(r"\s", r) for r in [ov["rule"]] + ov.get("also", [])):
             bad("[overlap]: `rule` and `also` name axioms as facts.json writes them, "
-                "as 'Tacit.inside_of_between'")
-        if "kind" in ov and ov["kind"] not in OVERLAPS:
+                "as 'Tacit.outside_of_between'")
+        if ov["kind"] not in OVERLAPS:
             bad(f"[overlap]: `kind` is one of {', '.join(OVERLAPS)}, the overlap catalogue's "
                 f"three kinds, not {ov['kind']!r}")
-        elif ov.get("kind") == "step" and "note" not in ov:
+        elif ov["kind"] == "step" and "note" not in ov:
             bad("[overlap]: a rule that supplies a step needs a `note` saying which step, "
                 "and in which proof")
 
@@ -676,13 +676,14 @@ def _self_test() -> int:
                             where=f"review/SCHEMA.md, the example for {book}.{n}")
         except (ReviewError, tomllib.TOMLDecodeError) as e:
             faults.append(str(e))
-    # [overlap] `kind`: one of the catalogue's three kinds, and "step" with its note.
+    # [overlap] `kind`: required, one of the catalogue's three kinds, and "step" with its
+    # note. A record with no kind is rejected, so no page words an overlap by a guess.
     for overlap, ok in [({"rule": "Tacit.circle_eq", "kind": "gives"}, True),
                         ({"rule": "Tacit.circle_eq", "kind": "states"}, True),
-                        ({"rule": "Tacit.circle_eq"}, True),
-                        ({"rule": "Tacit.superposition", "kind": "step",
-                          "note": "Which step, in which proof."}, True),
-                        ({"rule": "Tacit.superposition", "kind": "step"}, False),
+                        ({"rule": "Tacit.circle_eq"}, False),
+                        ({"rule": "Tacit.angle_le_two_right", "kind": "step",
+                          "note": "Metric 5 supplies I.13's upper bound on an angle in Prop47.within."}, True),
+                        ({"rule": "Tacit.angle_le_two_right", "kind": "step"}, False),
                         ({"rule": "Tacit.circle_eq", "kind": "contains"}, False)]:
         record = {"statement": {"scope": "full"}, "route": {"kind": "euclid"},
                   "overlap": dict(overlap),

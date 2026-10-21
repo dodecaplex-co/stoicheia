@@ -5,36 +5,60 @@ fingerprint = "sha256:dd20d32592101253"
 
 [route]
 kind = "euclid"
+# Brief 0009, question 4: the owner approved this reading, as prototyped, on 20 October 2026
+# (docs/briefs/0002-decisions.md, 20 October 2026); its finishing is tracked in #150.
+note = "I.7 is cited inside the hypothetical placement as a proved statement asserting no existence, although its proof uses constructions."
 
 [[passage]]
 at = "For, if the triangle ABC be applied to the triangle DEF"
 kind = "helper"
 helper = "Tacit.superposition"
-note = "Euclid applies ABC to DEF; the Lean places B on E, C on the ray EF and A on D's side of EF by `Tacit.superposition`, a rule we assume, not a proof (System E, section 3.7, in LeanEuclid's form). The rule preserves every side and angle of ABC in the copy, with C at C' and A at G."
+note = "After naming EF and proving D off it, the Lean reasons over symbols for the hypothetical placement of BCA, with B on E, C' on the ray from E through F and G on D's side of EF. `Tacit.superposition` keeps every side and angle there and exports only the angle equality about the given triangles, with no constructed point."
 
 [[passage]]
 at = "the point C will also coincide with F"
 kind = "helper"
-helper = "OnRay.eq_of_len_eq"
-note = "Euclid makes C coincide with F because the bases are equal; `OnRay.eq_of_len_eq` proves that the placed point C', on the ray EF and as far from E as F, is F itself."
+helper = "Superposition.Derives.ray_unique"
+note = "Inside the placement, EC' equals BC and hence EF. `Superposition.Derives.ray_unique`, using the law proved by `OnRay.eq_of_len_eq`, makes C' coincide with F."
 
 [[passage]]
 at = "Then, BC coinciding with EF"
 kind = "grouped"
-helper = "Prop7"
-note = "Our I.7 is stated positively, so Euclid's reduction to the impossible is one step: I.7 shows that G, where A comes down, is D itself."
+note = "The kept sides and the coincidence of C' with F give GE equal to DE and GF equal to DF. These are the two length premises for the following use of I.7; coincidence of the other sides is concluded there."
+
+[[passage]]
+at = "But they cannot be so constructed"
+kind = "grouped"
+helper = "Prop8.holds_prop7"
+note = "The placement puts G and D on the same side of EF, and `Prop8.holds_prop7` supplies I.7 for this named straight line. Our I.7 is stated positively, so its cited law makes G coincide with D in one step, carrying Euclid's reduction to the impossible and its conclusion together."
+
+[[passage]]
+at = "so that the angle BAC will also coincide with the angle EDF"
+kind = "carried"
+note = "The kept angle at G equals BAC, and the coincidences G with D and C' with F identify it with EDF. This equality alone leaves the hypothetical placement."
+
+[figure]
+note = "This figure draws the impossible supposition: G distinct from D on the same side of EF, with EG supposed equal to ED and GF supposed equal to DF. I.7 rules out such a point."
 
 [review]
 stage = "full"
-commit = "2ac1625"
-reviewer = "Claude Opus 5.5, records review"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
-lean = "sha256:fcb1ba2567bc9c46"
+commit = "bd86a7b6"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+run = "brief 0009 stage full, ship S3 A1-integration re-read"
+lean = "sha256:357daf55d17591d1"
 
 [review.items]
 statement = "pass"
 passages = "pass"
-representations = "n/a"
+# P13 applies to the represented derivation. Checked the six point symbols against A to F,
+# the line symbol against EF, and every given literal and guard against its proof.
+# Checked Atom/Lit/Metric.Holds, their holds_map bridges, Derives.sound and Rule.apply.
+# The BCA placement is EC'G, with C' on the ray EF, G on D's side of EF, all three lengths
+# and angles kept, and BA kept as the side through E and G. Checked the cited laws,
+# including holds_prop7 and SameSideOf.of_line for that EF,
+# after I.7 in the dependency order. Only the equality of BAC and EDF is exported as an
+# angle equality about the given figure, with no C', G or kept side.
+representations = "pass"
 commentary = "pass"
 figures = "pass"
 signoff = "pass"
