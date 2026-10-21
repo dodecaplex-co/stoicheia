@@ -74,7 +74,7 @@ theorem Prop6 {A B C : Point} (hABC : Triangle A B C) (h : ∠ A B C = ∠ A C B
       ‖A C‖ < ‖A B‖ → False := by
     intro B C hABC h hAC_AB
     -- Let AB be greater; and from AB the greater let DB be cut off equal to AC the less;
-    /- Heath prints no reference here, but cutting off is I.3, from the end B. -/
+    /- Heath gives no reference here, but cutting off is I.3, from the end B. -/
     have hAC_BA : ‖A C‖ < ‖B A‖ := by rw [len_symm B A]; exact hAC_AB
     obtain ⟨D, hBDA, hBD⟩ := Prop3 (A := B) (B := A) hABC.ne₁₃ hAC_BA
     -- let DC be joined.

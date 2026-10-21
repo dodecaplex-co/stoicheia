@@ -20,7 +20,7 @@ note = "The main theorem takes the three outward squares as given, so it does no
 at = "through A let AL be drawn parallel"
 kind = "helper"
 helper = "Prop30.meet"
-note = "Euclid draws AL through A, taking for granted that a parallel to BD is also parallel to CE, and reads its meetings with DE and BC from the figure. The Lean draws AL by I.31, proves it parallel to CE with `Prop30.parallel` (I.30, which Heath does not cite here), uses `Prop30.meet` for L and the unnamed foot, and names the two parallelograms."
+note = "Euclid draws AL through A, taking for granted that a parallel to BD is also parallel to CE, and reads its meetings with DE and BC from the figure. The Lean draws AL by I.31, proves it parallel to CE with `Prop30.parallel` (I.30, for which Heath gives no reference here), uses `Prop30.meet` for L and the unnamed foot, and names the two parallelograms."
 
 [[passage]]
 at = "and let AD, FC be joined"

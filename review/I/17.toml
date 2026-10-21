@@ -11,7 +11,7 @@ kind = "euclid"
 at = "Let the angle ACB be added to each"
 kind = "helper"
 helper = "Tacit.add_lt_add_right"
-note = "Euclid adds the same angle to a greater and a less, keeping their order. The Lean uses `Tacit.add_lt_add_right`, an assumed rule of magnitudes (System E §3.5)."
+note = "Euclid adds the same angle to a greater and a less, keeping their order. The Lean uses `Tacit.add_lt_add_right`, a tacit rule of magnitude, which we assume (System E §3.5)."
 
 [[passage]]
 at = "Similarly we can prove that the angles BAC, ACB"

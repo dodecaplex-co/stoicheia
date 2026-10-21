@@ -10,7 +10,7 @@ kind = "euclid"
 at = "For, if not, AC is either equal to AB or less"
 kind = "helper"
 helper = "Tacit.lt_trichotomy"
-note = "Euclid takes equality and less as the only possibilities when AC is not greater than AB. The Lean obtains this division from `Tacit.lt_trichotomy`, a rule of magnitudes we assume (System E §3.5)."
+note = "Euclid takes equality and less as the only possibilities when AC is not greater than AB. The Lean obtains this division from `Tacit.lt_trichotomy`, a tacit rule of magnitude, which we assume (System E §3.5)."
 
 [review]
 stage = "full"
