@@ -310,6 +310,7 @@ class Report(unittest.TestCase):
         # beside the word "Revision", and S12 asks Lean about nothing in it.
         import check_style as style
         self.assertTrue(style.is_report(ca.REPORT), ca.REPORT)
+        self.assertEqual(ca.REVISION_DIGITS, 12)
         texts = {}
         with self.repository() as (head, git):
             for abbrev in ("4", "9", None):
@@ -329,6 +330,7 @@ class Report(unittest.TestCase):
                 self.assertEqual(self.s12_asks(text), [], "names S12 would put to Lean")
                 self.assertTrue(ca.heath.COMMIT.fullmatch(revision), revision)
                 self.assertTrue(head.startswith(revision), (revision, head))
+                self.assertEqual(revision, head[:ca.REVISION_DIGITS])
         self.assertEqual(len(revisions), 1, revisions)
 
     def test_a_finding_on_the_old_report_is_not_quoted_back_to_s12(self):

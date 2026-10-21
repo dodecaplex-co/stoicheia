@@ -3698,6 +3698,7 @@ findings:
   nineteen times over, and pass now. The protected files changed are
   `scripts/test_safe_push.py`, `scripts/check_acceptance.py` and
   `tests/test_check_acceptance.py`.
+
 - **The merge gate requires the ruleset's five checks (#142).** On 20 October the owner
   made `formal-model` and `acceptance` required status checks in the ruleset on main,
   beside `check`, `model` and `negative`, as the entry of that date on content kept fresh
