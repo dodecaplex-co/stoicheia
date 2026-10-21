@@ -3416,6 +3416,61 @@ findings:
   changed: `scripts/negative_tests.py`, `tests/test_negative_tests.py`,
   `scripts/generated_counts.py` and `tests/test_generated_counts.py`.
 
+- **A count moved with its content is a pinned value (#177, #75).** Train T1 (#177) put
+  the lock's count of its words in [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md)
+  between count markers, which `scripts/render.py` fills and `scripts/check_fidelity.py`
+  holds to the lock. FIELDS.md is a check input, and `pinned` in `scripts/safe_push.py`
+  did not count a change to it as a value pinned to the edition. A content change that
+  adds words to the lock, as the restricted rule of superposition (#75) does, must move
+  that count in the same commit, while origin/main's own `check_fidelity.py` fails on the
+  lock it changes; so `keep_apart` refused the content branch as a check change kept
+  apart, and it could land in no order. A dry run of the pre-flight for
+  `lean/superposition-restricted` found it. `pinned` now counts a change to the Markdown
+  of the check inputs that are not code, `Certificate/`, `review/SCHEMA.md` and Markdown
+  under `tests/` (`COUNTED_PROSE`), as a pinned value while nothing but the values
+  between its count markers changes: the same markers stand, by name and in order, every
+  byte outside their values is as it was, the file's mode is as it was, and a value
+  moves. The markers are read by origin/main's own `scripts/generated_counts.py`, loaded
+  from origin/main's tree, since the harness carries only `safe_push.py` and `heath.py`;
+  a commit that changes that reader changes `scripts/`, and is kept apart in any case, so
+  the commit's own `check_fidelity.py` reads the same markers and holds every value to
+  the files it counts. A marker added, removed or renamed, any other byte changed, or the
+  file added, deleted or given another mode, is still a check change, and the refusal now
+  names such a file. Check code is never pinned by this rule: nothing under `scripts/`,
+  and no code under `tests/`. `tests/model/MODEL.md` was already pinned whole, and stays
+  so: a count marker in it may still be added, removed or renamed with the model's
+  account, as before; holding its markers to stand is a check change of its own, for the
+  owner (#187). This is not a weakening: every check still runs, origin/main's failure is
+  still noted for the security review, and the commit's own `check_fidelity.py` must still
+  pass, holding each moved value exactly to the files it counts; the rule lets through
+  only a value that check already pins, and a change it could not judge (a marker added,
+  removed or renamed, any other byte, the file's mode, anything under `scripts/`) is still
+  kept apart. The docstrings, the comment on the pinned values, the module docstring and
+  the refusal's list of pinned values say so. `scripts/test_safe_push.py` gains six tests
+  beside the expectations' own: a new word in the lock, with FIELDS.md's count moved,
+  lands as content, with origin/main's failure noted and the commit's own pass holding;
+  FIELDS.md changed beyond those values (a line, a byte beside the marker, a marker added,
+  removed or renamed, the file deleted or made executable) is kept apart; and the same
+  count moved is a pinned value under `Certificate/`, `tests/` and `review/SCHEMA.md` and
+  never in `scripts/`, in code under `tests/` or elsewhere in `review/`, read by
+  origin/main's reader and never the commit's. Three more hold the rest: the text between
+  two markers, and their order, stands, and a page added with a count is a check change; a
+  page either side cannot read, a symbolic link, and origin/main's reader missing or not
+  loading pin nothing; and a count moved to a value the lock does not give is refused by
+  the commit's own `check_fidelity.py`, with the pinned values noted. No negative plant is
+  added: [WORKFLOW](../WORKFLOW.md), section 8, asks for a focused regression for a guard
+  defect, and the harness's own are in its suite. WORKFLOW, section 10, step 4, which
+  lists the pinned values, gains a sentence saying a count between count markers in such
+  Markdown is one, on the same terms. The protected files changed are
+  `scripts/safe_push.py` and `scripts/test_safe_push.py`; `docs/WORKFLOW.md` and this page
+  are not protected. A note for the security review: on a file system that ignores case,
+  as macOS's does, a case-twin path such as `certificate/FIELDS.md` escapes the
+  protected-path rule and `keep_apart`, and its text overwrites the real file in the
+  pre-flight's worktree; CI, on Linux, is the backstop. That gap is already on main, and
+  this change does not open it (#186). The owner approved this change on 20 October 2026,
+  on condition that its reviews and /no-mistakes pass with no blocking finding; the
+  independent review judged that it is not a weakening of keep_apart.
+
 ## 21 October 2026
 
 - **Train C6a meets axiom wave one: the lock is main's 79 axioms and the centre rule.**
