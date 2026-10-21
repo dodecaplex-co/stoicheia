@@ -2806,13 +2806,15 @@ class ProtectedPaths(Edge):
         # render.py checks docs/program.toml: a stage it did not know, allowed in render.py
         # and used in program.toml in one commit, makes origin/main's render.py fail
         # outright. That is a verdict, not stale pages.
-        path = "scripts/render.py"
+        # The first book's stage line is read from the file, so that the program's own
+        # words can change without this test.
+        path, program = "scripts/render.py", "docs/program.toml"
+        text = self.text(program)
+        stage = re.search(r'(?m)^stage = "[^"\n]*"$', text)
+        self.assertIsNotNone(stage, f"{program}: no stage line")
         changes = {path: self.replaced(path, 'PROGRAM_STAGES = ("brief",',
                                        'PROGRAM_STAGES = ("anything", "brief",'),
-                   "docs/program.toml": self.replaced(
-                       "docs/program.toml",
-                       'stage = "released (next: I.40 and I.45 in full generality)"',
-                       'stage = "anything"')}
+                   program: text[:stage.start()] + 'stage = "anything"' + text[stage.end():]}
         changes.update(self.decision(f"`{path}` is changed for the test."))
         self.regenerated_commit("Loosen render.py's check of program.toml, and use it", changes)
         out = self.assertRefused(self.safe_push("--dry-run"), "check change kept apart",
