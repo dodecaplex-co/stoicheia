@@ -999,6 +999,26 @@ class CallReconciler(LeanFiles):
             with self.subTest(text=text):
                 self.assert_refused(self.known(text), 'Elements/Proof.lean: unsupported ' + refused)
 
+    def test_a_header_lean_reads_within_a_comment_name_or_string_is_refused(self):
+        # The masking reads '"' as opening a string, so Lean may open a block comment or an
+        # interpolated string within it that the masking reads as code; and a «...» name over two
+        # lines is code to the masking. The inductive is then no inductive to Lean, and the
+        # Known after the bar is in g's `matches`. Lean leaves each at a `-/`, `»` or `{` that a
+        # masked comment hides.
+        for text, refused in (
+                ('def g : Bool := \'"\'.isAlpha || 5 matches 0 /- "\n'
+                 'inductive P : Type where -- -/\n  | Known.bar 0', '{ or -/ in a comment'),
+                ('def g : Bool := (fun «_a\ninductive P : Type where -- » => 5) 0 matches 0\n'
+                 '  | Known.bar 0', 'string, char literal or quoted name'),
+                ('def g : String := \'"\'.toString ++ s!"\n'
+                 'inductive P : Type where -- {5 matches 0\n  | Known.bar 0\n &&\n'
+                 'open Nat in true}" ++ \'"\'.toString', '{ or -/ in a comment'),
+                ('def g : String := \'"\'.toString ++ s!"\n'
+                 'inductive P : Type where /- {5 matches 0 -- -/\n  | Known.bar 0\n &&\n'
+                 'open Nat in true}" ++ \'"\'.toString', '{ or -/ in a comment')):
+            with self.subTest(text=text):
+                self.assert_refused(self.known(text), f'unsupported {refused} in Elements.P')
+
 
 class HelperModules(unittest.TestCase):
     def setUp(self):

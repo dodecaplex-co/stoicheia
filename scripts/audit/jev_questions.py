@@ -793,8 +793,9 @@ class Calls:
     COMMAND_WORD = re.compile(r"(?<![\w'.«])(?:def|theorem|abbrev|instance|example|opaque|axiom"
                               r"|structure|class|inductive|deriving|mutual|recall)(?![\w'»])")
     # Three forms would make the masked text, or the words in it, other than Lean reads them.
-    # A string, a char literal or a «...» name, whose brackets and bars the masking may misread.
-    LITERAL = re.compile(r"[\"«]|(?<![\w'₀-₉!?])'")
+    # A string, a char literal or a «...» name, whose brackets and bars the masking may misread,
+    # and a `»`, which may end a «...» name Lean opened before the inductive.
+    LITERAL = re.compile(r"[\"«»]|(?<![\w'₀-₉!?])'")
     # A number glued to a word or a quote, as in `0x5matches` or `0'a'`, where Lean ends the
     # number, so that a keyword after it would go unseen and a quote would open a char literal;
     # and a quote after a bare `!` or `?`, which opens one, as in `!'a'matches`.
@@ -846,10 +847,12 @@ class Calls:
         bar is refused, as are constructors at four spaces or on the inductive's own line.
 
         So that the masked text, and the words in it, are those Lean reads, the declaration's
-        raw text may hold no string, char literal or «...» name (LITERAL), no number glued to
-        a word or a quote (GLUED), and no comment opening after anything but whitespace or a
-        name character, where Lean may read the dash or slash within a token (OPENER); and
-        the index refuses, in any file it reads, `/--/`, after which Lean's doc comment runs
+        raw text may hold no string, char literal, «...» name or `»` (LITERAL), no number
+        glued to a word or a quote (GLUED), and no comment opening after anything but
+        whitespace or a name character, where Lean may read the dash or slash within a token
+        (OPENER); a comment in it may hold no `{`, and a line comment no `-/`, at which Lean,
+        put within a comment, a «...» name or an interpolated string by something earlier
+        such as `'"'`, would leave it; and the index refuses, in any file it reads, `/--/`, after which Lean's doc comment runs
         on to a later `-/` where the masking's ends at once, and a notation token holding
         `--` or `/-`, which Lean reads whole where the masking opens a comment. Some forms
         outside the plain forms are refused first, with a reason of their own: those
@@ -879,6 +882,19 @@ class Calls:
             require(clean[found.start() - 1] != before or before in WHITESPACE
                     or NAME_CHARACTER.match(before),
                     f'{d.path}: unsupported comment glued to {before!r} in {d.name}')
+        # Where the masking misread something before the inductive, as it reads '"', Lean may be
+        # within a comment, a «...» name or an interpolated string at its keyword, and leave it
+        # at `-/`, `»` or `{`. LITERAL refuses `»` and `"`; a comment here may hold no `{`, and a
+        # line comment no `-/`, so Lean leaves none of them where the masking reads no code.
+        i = d.name_end
+        while i < d.end:
+            if raw.startswith(('--', '/-'), i):
+                end = comment_end(raw, i)
+                require('{' not in raw[i:end] and not (raw[i] == '-' and '-/' in raw[i:end]),
+                        f'{d.path}: unsupported {{ or -/ in a comment in {d.name}')
+                i = end
+            else:
+                i += 1
         require(not self.DOT.search(clean, d.name_end, d.end),
                 f'{d.path}: unsupported dot glued to a symbol in {d.name}')
         lines = {line.start(): line.end()
