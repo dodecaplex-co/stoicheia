@@ -59,10 +59,10 @@ case = "BC cut at two points, D and E, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "206e3080"
+commit = "c814e8fb"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:dca5badf15c0dfbd"
-run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at 206e3080"
+run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at c814e8fb"
 
 [review.items]
 statement = "pass"

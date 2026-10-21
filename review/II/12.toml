@@ -14,10 +14,10 @@ note = "Euclid takes the foot D on CA produced beyond A; Heath gives no referenc
 
 [review]
 stage = "full"
-commit = "206e3080"
+commit = "c814e8fb"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:c8056e07b2db5b7d"
-run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at 206e3080"
+run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at c814e8fb"
 
 [review.items]
 statement = "pass"
