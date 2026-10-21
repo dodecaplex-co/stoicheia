@@ -302,6 +302,11 @@ lean = "sha256:061379c1f0411141"
 reviewer = "Claude Opus 5.5"
 ```
 
+III.16's current record has full scope, lists "III.16 semicircle", "III.16 remaining"
+and "III.16 acute" as companions, and uses `mixed-angles-local`; its route is `modified`
+because the companions prove the mixed-angle comparisons directly. The example above
+remains the fixture from commit d040117.
+
 At d040117, I.40 was restricted: the theorem took the two bases end to end.
 
 ```toml
