@@ -44,19 +44,19 @@ them (scripts/safe_push.py, step 4); as a failure anywhere else. The rule is
 generated_counts.absent_tracked's, which check_fidelity.py and render.py follow for the
 tracked Markdown they read.
 
-These faults exercise the style and link checks, page freshness, an audit pin and
-leanchecker's loading of compiled files as well as the earlier checks. They do not
-plant an invalid proof term for leanchecker's kernel replay. `check_kernel.py`'s own
-`--self-test` withholds Postulate 5 from nanoda alone.
+These faults exercise the style and link checks, page freshness, an audit pin, a
+complete book's figures and mishnah, and leanchecker's loading of compiled files and its
+kernel replay, as well as the earlier checks. `check_kernel.py`'s own `--self-test`
+withholds Postulate 5 from nanoda alone.
 
 Every new plant restores its inputs in `finally`; the freshness plant also restores
 all renderer outputs.
-The three that build, planted_assumptions, changed_audit_pin and corrupt_olean, attempt a
-restoration build; if it fails or is interrupted, every file in `.lake/build` returns to
-its saved contents and presence or absence before the plant, including dependent modules,
-hashes and traces. planted_assumptions always restores or removes `Planted.*` outputs in a
-nested `finally`. Every plant reports its elapsed time, restoration included. An outer
-`finally` compares Git status with the entry status, including on interruption, without
+The four that build, changed_audit_pin, corrupt_olean, ill_typed_proof and
+planted_assumptions, attempt a restoration build; if it fails or is interrupted, every
+file in `.lake/build` returns to its saved contents and presence or absence before the
+plant, including dependent modules, hashes and traces. planted_assumptions always
+restores or removes `Planted.*` outputs in a nested `finally`. Every plant reports its
+elapsed time, restoration included. An outer `finally` compares Git status with the entry status, including on interruption, without
 replacing an exception already in flight.
 Temporary-directory regressions run first, without Lean. Exits non-zero if a fault
 goes unnoticed or a restoration check fails. Restoration needs writable files and
@@ -95,6 +95,19 @@ GENERATED = ("facts.json", "book", "CERTIFICATE.md", "GRAPH.md", "README.md",
 # The plants' folder, from ROOT, and the name of a plant's file in it.
 PLANTS = Path("scripts", "negative")
 PLANT_FILE = re.compile(r"[a-z][a-z0-9_]*\.py")
+
+
+# `True.intro` given as a proof of `False`, added past the kernel as the read-through found
+# possible (docs/reports/read-through-01.md). The source scan refuses both commands, so they
+# are compiled from a copy of I.1 it never reads. `Lean.Elab.Command` defines the monad
+# `run_cmd` runs in, so it is the least of Lean's library the plant can import, and it
+# brings `addDecl` with it. Here, not in scripts/negative/ill_typed_proof.py, because
+# tests/test_negative_tests.py reads them.
+ILL_TYPED = "Elements.BookI.planted_ill_typed"
+ILL_TYPED_LEAN = ("\nopen Lean in\nset_option debug.skipKernelTC true in\n"
+                  "run_cmd Elab.Command.liftCoreM <| addDecl <| .thmDecl {\n"
+                  f"  name := `{ILL_TYPED}, levelParams := [],\n"
+                  "  type := mkConst ``False, value := mkConst ``True.intro }\n")
 
 
 def run(*cmd: str) -> subprocess.CompletedProcess:
@@ -431,6 +444,10 @@ def main(argv=()) -> int:
                           run(sys.executable, "-I", "tests/test_generated_counts.py")):
         return 1
     print("✓ count regressions passed (without Lean)")
+    if not expect_success("decision entry regressions",
+                          run(sys.executable, "-I", "tests/test_decision_entries.py")):
+        return 1
+    print("✓ decision entry regressions passed (without Lean)")
     plants, faults = load_plants()
     sources: dict[int, str] = {}
     if faults:

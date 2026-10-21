@@ -1,6 +1,7 @@
-"""A corrupt header in I.1's compiled `.olean`: leanchecker, invoked as in `check_kernel.py`,
-must fail naming the file and its invalid header. The original bytes are restored, a
-rebuild is required, and on success the whole environment is replayed.
+"""A corrupt header in I.1's compiled `.olean`, for leanchecker's loading of compiled files:
+leanchecker, invoked as in `check_kernel.py`, must fail naming the file and its invalid
+header. The original bytes are restored, a rebuild is required, and on success the whole
+environment is replayed.
 """
 
 import negative_tests as nt
