@@ -20,8 +20,9 @@ questions at once:
 
 A book meets the standard when its acceptance checklist (`ACCEPTANCE.md`)
 passes with no failures, an independent audit by a model family that wrote none of it
-agrees, and all three cold outside reviewers score it 95 or more. A few deliberate limitations are
-allowed when they are stated plainly where they occur. For I.45 and II.14, the figure is
+agrees, and a cold outside reading passes the gate of the [review rubric](RUBRIC.md). A few
+deliberate limitations are allowed when they are stated plainly where they occur. For I.45
+and II.14, the figure is
 supplied with its checked division into triangles and area is relative to that division; a
 proof of a division from the outline, and independence of area from the division chosen,
 remain pending under [#116](https://github.com/jackChallis/stoicheia/issues/116). In Book

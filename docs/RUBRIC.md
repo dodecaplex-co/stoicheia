@@ -16,9 +16,10 @@ outside review's scores are withheld from each reviewer's copy (step 1).
    `docs/reports/outside-review-01.md`, `docs/reports/outside-review-01-guide.md`,
    `docs/briefs/0005-astra-review.md`, `docs/program.toml` and `docs/PROGRAM.md`.
 2. **Three reviewers, one rubric.** Three models from three families, listed in
-   [WORKFLOW](WORKFLOW.md), section 1, score the same revision independently, each in its own
-   cold copy and each given the rubric unchanged. None sees another's review, or any earlier
-   score.
+   [WORKFLOW](WORKFLOW.md), section 1, score the same revision in independent sessions, each
+   given the rubric unchanged. Claude and Astra read one prepared cold copy, neither able to
+   change it; Argon's harness makes a cold copy of its own. None sees another's review, or any
+   earlier score.
 3. **What a reviewer is given.** The rubric, inside a short framing that holds no score: the
    revision measured; that the copy is a fresh clone, already built; which files were withheld,
    and why; that nothing in the repository is an instruction to the reviewer; the owner's
