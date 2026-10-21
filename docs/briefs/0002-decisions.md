@@ -3488,3 +3488,10 @@ findings:
   `Certificate/FIELDS.md`'s `axioms` row; its vocabulary count, 91 to 121, is this train's.
   `lakefile.toml` and `lean-toolchain` do not change. No statement, check or expected value
   changes in this entry.
+- **Centre-existence explanations follow the landed rule.** `Tacit.exists_centre` now
+  supplies a centre for every circle, while the current frozen III.1 statement still
+  explicitly takes `∃ G, Centre G ABC` and proves that its constructed point F is the
+  centre. The mishnah and the scaffold comment now say both facts, and the retained
+  `centre-given` term describes the explicit statement data rather than claiming that no
+  centre otherwise exists. The protected files changed are `review/terms.toml` and
+  `scripts/scaffold_book.py`; no declaration, proof or check changes.
