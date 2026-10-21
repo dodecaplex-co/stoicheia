@@ -104,8 +104,8 @@ of the parallel postulate.
 - <a id="hilbert1902foundations"></a>David Hilbert, [*The Foundations of Geometry*](https://www.gutenberg.org/ebooks/17384),
   translated by E. J. Townsend (Open Court, 1902). **Free.** The short book of 1899 in
   which Hilbert wrote down the axioms Euclid took for granted, among them the axioms of
-  order behind "between" (chapter I) and a congruence axiom that makes I.4 a starting
-  point; chapter IV rebuilds the theory of plane areas behind I.35–I.41.
+  order behind "between" (chapter I) and a congruence axiom that gives the remaining angles
+  of I.4, from which he proves the bases equal; chapter IV rebuilds the theory of plane areas behind I.35–I.41.
 - <a id="hartshorne2000geometry"></a>Robin Hartshorne, [*Geometry: Euclid and Beyond*](https://doi.org/10.1007/978-0-387-22676-7)
   (Springer, 2000). Written to be read alongside the *Elements*, it fills Euclid's gaps
   with Hilbert's axioms, says exactly when circles and straight lines must meet, builds a

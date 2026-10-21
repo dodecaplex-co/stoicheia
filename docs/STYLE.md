@@ -365,6 +365,20 @@ evidence ([FORMALIZATION.md](FORMALIZATION.md), section 9).
 representation of a segment includes its circle", "our foundations allow superposition
 only in I.4 and I.8". Not "Lean cannot" **[reported]**.
 
+**A figure given with its triangles.** I.45 and II.14 are restricted
+([ACCEPTANCE](ACCEPTANCE.md#the-limitations-allowed)), and every text that says so uses the
+same words. The figure is "given with a checked division into triangles", not "supplied",
+and not the tag's "dissection". Its triangles "do not overlap, no point inside two of
+them", in full at their first mention in a record, a commentary, a file's notes or an
+introduction, and "lie apart" after. "Equal to the figure" means equal to those triangles
+together. What is "not yet proved"
+([#116](https://github.com/jackChallis/stoicheia/issues/116)) is "that every rectilineal
+figure, given only by its boundary, has such a division, and that another division gives
+the same area". Where a main theorem takes its two triangles unchecked, the sentence that
+describes it says so. In these sentences the figure is divided, not cut; "outline" never
+stands unexplained for its boundary; and what Euclid takes for granted there is not called
+"tacit", a word kept for the tacit rules.
+
 **Numbers and names.** Our prose writes I.5, II.4, and I.1–I.24 with an en dash; Postulate
 3 and Common Notion 1 in a sentence, Post. 3 and C.N. 1 in parentheses and tables. A
 definition always keeps its book, since Books II and III have their own: "Definition I.15"
@@ -431,7 +445,8 @@ and the insertion of its modern figure beneath "The modern way", so the page sho
 same mathematics.
 
 **The modern way's notation.** In a `$…$` span, a vector is a bold lower-case letter,
-`$\mathbf{u}$`, never `$\vec{u}$`. A vector between Heath's points is written
+`$\mathbf{u}$`, never `$\vec{u}$`. The modern figure beneath sets the same name in italic,
+as section 7 asks; the bold is the paragraph's mark of a vector. A vector between Heath's points is written
 `$\mathrm{C - B}$` or with an arrow over the point letters, `$\overrightarrow{\mathrm{AC}}$`,
 as in Books II and III. A length or an absolute value takes plain bars, `$|\mathbf{u}|$`
 or `$|y|$`, never `\lvert` and `\rvert`. Write the dot product
