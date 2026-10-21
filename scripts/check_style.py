@@ -63,7 +63,7 @@ The reach of #66, held file by file (REACH_PENDING). The Review notes, the overl
 catalogue, the Other reports, the Rendered docstrings, the front pages and the table of
 names came under the rules on 19 October, with S7 in the gap catalogues and the Generated
 files, S12 beyond the mishnah, and S22. A file that had findings of that reach on the
-day is listed with the rules it had findings of and whoever mends them, and while it is
+day was listed with the rules it had findings of and whoever mends them, and while it is
 listed its findings of those rules are reported (D16) and fail nothing; every other
 finding of the reach fails at once, in a listed file as in any other, and so does every
 finding a file was held to before. A rule of an entry whose file has no finding of it left
@@ -167,12 +167,12 @@ IDEA_LETTERS_REQUIRED = True
 
 # Upright letters, the switch (STYLE, sections 4, 7 and 8). Heath's letters take one style
 # in the text and in the figures, upright, by the owner's decision of 18 October. The
-# figures were drawn with italic letters and are set upright in a change of their own;
-# while they are, this is False: S15 and S20 take a figure's letters italic or upright, one
-# style in each figure, and D15 lists the figures still italic. Once every figure is
-# upright it is True, and S15 and S20 fail an italic letter. Never set it back to quiet a
-# figure: set the figure upright.
-UPRIGHT_LETTERS_REQUIRED = False
+# figures were drawn with italic letters, and while they were being set upright this was
+# False: S15 and S20 took a figure's letters italic or upright, one style in each figure,
+# and D15 listed the figures still italic. Every figure is now upright, so it is True, and
+# S15 and S20 fail an italic letter; D15 is empty. Never set it back to quiet a figure:
+# set the figure upright.
+UPRIGHT_LETTERS_REQUIRED = True
 
 # S12: backticked words that are Lean's, or the certificate's, but that no `#check` can
 # find, since they are not declarations. {word: why}. Each is printed on every run, and
@@ -197,42 +197,21 @@ NOT_DECLARED = {
 # file, to quiet a new finding: mend the text.
 REACH_PENDING: dict[str, tuple[str, str]] = {
     # The review notes.
-    "review/I/09.toml": ("S7", "the records of Books I and II (#29)"),
-    "review/II/14.toml": ("S12", "the records of Books I and II (#29)"),
     "review/III/14.toml": ("S12", "stage 4's records (#28)"),
     "review/III/15.toml": ("S12", "stage 4's records (#28)"),
     "review/III/25.toml": ("S12", "stage 4's records (#28)"),
     # The catalogues and the reports.
-    "docs/reports/gaps-book-I.md": ("S7", "the text change that follows this one (#66)"),
-    "docs/reports/gaps-book-II.md": ("S7 S12", "the text change that follows this one (#66)"),
     "docs/reports/gaps-book-III.md": ("S12", "stage 3's gap entries (#25)"),
     "docs/reports/overlaps.md": ("S7", "stage 3's overlap entries (#25)"),
-    # S12's report inventory on bd3b72a: 147 and 2 findings, respectively. These are
-    # the initial findings of the new report reach, not later additions to a landed rule.
+    # S12's report inventory on bd3b72a: 147 findings. These are the initial findings of
+    # the new report reach, not later additions to a landed rule.
     "docs/reports/mixed-angles-prototype.md": ("S12", "the report text change after #66 (147 findings)"),
-    "docs/reports/read-through-01.md": ("S7 S12", "the report text change after #66 (2 S12 findings)"),
     # The front pages: render.py's FRONT_LEAN_I, once stage 3's change to render.py lands.
     "book/I/front.md": ("S12", "render.py's FRONT_LEAN_I, after stage 3 (#25)"),
-    # The notes of four proofs (S22): a change to the file needs its record read again.
-    "Elements/BookI/Prop08.lean": ("S22", "the records of Books I and II (#29), with the record"),
+    # The notes of three proofs (S22): a change to the file needs its record read again.
     "Elements/BookII/Prop14.lean": ("S22", "the records of Books I and II (#29), with the record"),
     "Elements/BookIII/Prop10.lean": ("S22", "the next change to the file, with its record"),
     "Elements/BookIII/Prop19.lean": ("S22", "the next change to the file, with its record"),
-    # Book Zero's notes (S22).
-    "Elements/Figure/Angles.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Areas.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Basics.lean": ("S22", "stage 3 (#25) and the mixed angles (#57)"),
-    "Elements/Figure/Circles.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Lengths.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Lines.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/OnCircles.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Parallelograms.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Parallels.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Rays.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Rectangles.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Rectilineal.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Sides.lean": ("S22", "the text change that follows this one (#66)"),
-    "Elements/Figure/Triangles.lean": ("S22", "the text change that follows this one (#66)"),
     # The foundations' notes (S22), and the rendered docstrings of Transfer.lean (S7): the
     # coordinator's files.
     "Elements/Foundations/Definitions.lean": ("S22", "the coordinator, who owns the foundations"),
@@ -273,7 +252,7 @@ RULES = {
     "S17": "a further-reading file's shape or links",
     "S18": "a book with pages and no introduction",
     "S19": "a book introduction that does not link the book's brief",
-    "S20": "an idea figure's letter not Heath's, or not in the figure's one style, at 14 and in the ink of what it stands on",
+    "S20": "an idea figure's letter not Heath's, or not upright, at 14 and in the ink of what it stands on",
     "S21": "a point of an idea figure without its letter",
     "S22": "letters in backticks, where they are plain",
     "S23": "a merge-conflict marker",
@@ -292,7 +271,7 @@ REPORTS = {
     "D10": "S6 or S7 outside their failing scope",
     "D11": "Euclid's figure strokes or dots off the usual widths",
     "D14": "figures at a glance not yet lettered (S21 holds them once the switch is on)",
-    "D15": "figures whose letters are still italic (S15 and S20 hold them upright once the switch is on)",
+    "D15": "figures whose letters are all italic, while the switch for upright letters is off (with it on, S15 and S20 fail them)",
     "D16": "the reach of 19 October, of a rule its file is still listed for in REACH_PENDING (fails once it is out)",
 }
 
@@ -2653,7 +2632,8 @@ CURVE_MAX_DEPTH = 16         # at most 2**16 chords per curve; refuse if still n
 # draws it once, or once in each of Heath's figures where they stand side by side, and it
 # stands clear of every stroke, every dot and the canvas's edge, so that no line runs
 # through it and it is not read as another point's. A letter is measured as Georgia, the
-# figures' font, draws its capital, upright or italic as the figure sets it: by the convex
+# figures' font, draws its capital, upright or italic as the figure sets it (an italic
+# letter fails S15 and S20, and is still measured as it is drawn): by the convex
 # hull of the points of the capital's outline, on its curves and off them, which holds the
 # ink. GLYPHS_UPRIGHT and GLYPHS_ITALIC give each capital's advance and that hull's
 # corners, x and y in turn with y up, in the font's units, EM to the em: a coarse shape,
@@ -2763,7 +2743,8 @@ GLYPHS_ITALIC = {
 # {(file, reason): [elements, points]}
 idea_exemptions: dict[tuple[str, str], list[int]] = defaultdict(lambda: [0, 0])
 
-# The figures whose letters are still italic, while UPRIGHT_LETTERS_REQUIRED is False (D15):
+# The figures whose letters are all italic, which D15 lists while UPRIGHT_LETTERS_REQUIRED
+# is False; it is True, so S15 and S20 fail them and D15 is empty:
 # {book: {"of Euclid's figures": [NN, …], "figures at a glance": [NN, …]}}
 italic_figures: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
 
@@ -2774,9 +2755,9 @@ def letter_style(eff) -> str:
 
 
 def check_letter_style(path: Path, rule: str, found: list[tuple[str, str]]) -> None:
-    """S15's and S20's style of a figure's letters, each (letter, its font-style): upright,
-    or, while UPRIGHT_LETTERS_REQUIRED is False, italic, one style in each figure (STYLE,
-    sections 4 and 7). A figure still italic is listed for D15."""
+    """S15's and S20's style of a figure's letters, each (letter, its font-style): upright
+    (STYLE, sections 4 and 7). Were UPRIGHT_LETTERS_REQUIRED False, they could all be italic
+    instead, one style in each figure, and the figure would be listed for D15."""
     styles: dict[str, list[str]] = defaultdict(list)
     for s, style in found:
         styles[style].append(s)
