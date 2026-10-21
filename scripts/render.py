@@ -638,6 +638,7 @@ def definitions_not_counted(refs, defs, book):
         if (where, num) in counted:
             continue
         lean = DEFINITION_LEAN.get((where, num))
+        lean = content_wording().get(lean, lean)
         parts.append(f"Def. {d} {lean}" if lean else f"Def. {d} is said in Lean's own terms")
     if not parts:
         return ""
@@ -852,9 +853,34 @@ def overlap_rules(overlap):
 
 
 def overlap_rests(p, overlap):
-    """Does the proof rest on the rules its [overlap] names (facts.json's `axioms`)?
-    I.7's does not; III.2's does, through III.1 alone."""
-    return bool(p) and all(r in p.get("axioms", []) for r in overlap_rules(overlap))
+    """Which rules its [overlap] names the proof rests on, from facts.json's `axioms`,
+    in the record's order. Using some of the rules is distinct from using all or none."""
+    axioms = (p or {}).get("axioms", [])
+    return [r for r in overlap_rules(overlap) if r in axioms]
+
+
+def overlap_use(p, overlap):
+    """A clause saying whether the proof uses all, some or none of the named rules. Of
+    those it does not use, one is "does not use `b`", two "uses neither `b` nor `c`", and
+    three or more "uses none of `b`, `c` and `d`", never "does not use `b` and `c`", which
+    could be read as "not both"."""
+    rules = overlap_rules(overlap)
+    used = overlap_rests(p, overlap)
+    if used == rules:
+        return "our proof rests on " + ("the rule" if len(rules) == 1 else "all these rules")
+    if not used:
+        return "our proof does not use " + ("the rule" if len(rules) == 1 else "any of these rules")
+    unused = [r for r in rules if r not in used]
+    def names(rs):
+        return [f"`{r.removeprefix('Tacit.')}`" for r in rs]
+    if len(unused) == 1:
+        rest = f"does not use {names(unused)[0]}"
+    elif len(unused) == 2:
+        rest = "uses neither {} nor {}".format(*names(unused))
+    else:
+        rest = f"uses none of {and_list(names(unused))}"
+    comma = "," if len(used) > 1 else ""
+    return f"of these rules, our proof rests on {and_list(names(used))}{comma} and {rest}"
 
 
 def overlap_steps(overlap):
@@ -912,11 +938,17 @@ def in_lean_line(p, record, book, n):
                       "alternative": "a different argument"}[route["kind"]])
     if "overlap" in record:
         ov = record["overlap"]
-        one = len(overlap_rules(ov)) == 1
+        rules = overlap_rules(ov)
+        used = overlap_rests(p, ov)
+        one = len(rules) == 1
         rule = "the rule" if one else "the rules"
-        if overlap_steps(ov):
+        if used and used != rules:
+            claim = ("supply a step of a proof of it" if overlap_steps(ov)
+                     else "already contain it")
+            parts.append(f"{overlap_word(ov)} {claim}; {overlap_use(p, ov)} (see Overlap)")
+        elif overlap_steps(ov):
             verb = "supplies" if one else "supply"
-            if overlap_rests(p, ov):
+            if used:
                 parts.append(f"{overlap_word(ov)} {verb} a step of a proof of it, and our "
                              f"proof rests on {rule} (see Overlap)")
             else:
@@ -924,7 +956,7 @@ def in_lean_line(p, record, book, n):
                              f"proof does not use {rule} (see Overlap)")
         else:
             verb = "contains" if one else "contain"
-            if overlap_rests(p, ov):
+            if used:
                 parts.append(f"{overlap_word(ov)} already {verb} it (see Overlap)")
             else:
                 parts.append(f"{overlap_word(ov)} {verb} it too, though this proof does not "
@@ -1011,6 +1043,10 @@ def field_table(book, n, p, record, attached, docs):
                         "proposition.")
             else:
                 text = f"{name} already {'contains' if one else 'contain'} this proposition."
+            used = overlap_rests(p, ov)
+            if used and used != overlap_rules(ov):
+                use = overlap_use(p, ov)
+                text += f" {use[0].upper()}{use[1:]}."
             if optional_path(ROOT / "docs" / "reports" / "overlaps.md") is not None:
                 text += " See [the overlap catalogue](../../docs/reports/overlaps.md)."
             rows.append(("Overlap", text))
@@ -1027,7 +1063,7 @@ def field_table(book, n, p, record, attached, docs):
 
 
 def clause_map(record):
-    """For a statement in part (III.16, III.31), the clause map from [coverage], shown
+    """For a statement in part, the clause map from [coverage], shown
     before the Lean: what the Lean checks, what it proves toward the clauses it leaves
     out, and what stays in Euclid's words."""
     cov = record.get("coverage") if record else None
@@ -1613,13 +1649,14 @@ def postulate5_sentence(book, facts, proved):
 def overlap_sentences(overlap, facts, records, links, up):
     """What a book's summary says of the propositions an axiom already contains, or
     supplies a step of a proof of, told apart by the record's [overlap] `kind` and by
-    whether the proof rests on that axiom (facts.json's `axioms`): "In III.2, III.5 and
-    III.6 our tacit rules already contain the proposition…, and our proofs rest on them…";
+    whether the proof rests on all, some or none of those axioms (facts.json's `axioms`):
     "In I.23 one of our tacit rules supplies a step of a proof of the proposition, and our
-    proof rests on it"; "In I.7 one of our tacit rules supplies a step of a proof of the
-    proposition, but our proof never uses that rule." Only a rule that states the
+    proof rests on it"; "In I.2 and I.3 our tacit rules supply a step of a proof of each
+    proposition, but our proofs never use those rules." Only a rule that states the
     proposition or gives it at once is said to contain it, as in the overlap catalogue.
-    Where a proposition needs two rules together (III.6), it says so."""
+    Where an overlap names several rules together, it says so, but not of rules that
+    contain the proposition and go unused; partial use names the rules used and unused
+    separately for each proposition."""
     def rules(r):
         return overlap_rules(records[r]["overlap"])
 
@@ -1632,7 +1669,9 @@ def overlap_sentences(overlap, facts, records, links, up):
               else "axioms")
     contain = [r for r in overlap if not overlap_steps(records[r]["overlap"])]
     step = [r for r in overlap if r not in contain]
-    rests = [r for r in overlap if overlap_rests(facts.get(r), records[r]["overlap"])]
+    used_rules = {r: overlap_rests(facts.get(r), records[r]["overlap"]) for r in overlap}
+    rests = [r for r in overlap if used_rules[r] == rules(r)]
+    partial = [r for r in overlap if used_rules[r] and r not in rests]
     out = []
     used = [r for r in contain if r in rests]
     if used:
@@ -1645,7 +1684,7 @@ def overlap_sentences(overlap, facts, records, links, up):
             out.append(f"In {and_list(links([r]) for r in used)} our {family} already contain "
                        f"the proposition{extra}, and our proofs rest on them, so each retraces "
                        "Euclid's argument within our rules and does not establish them.")
-    unused = [r for r in contain if r not in rests]
+    unused = [r for r in contain if not used_rules[r]]
     if unused:
         if len(unused) == 1:
             out.append(f"In {links(unused)} one of our {family} contains the proposition too, "
@@ -1662,7 +1701,7 @@ def overlap_sentences(overlap, facts, records, links, up):
         else:
             out.append(f"In {and_list(links([r]) for r in used)} our {family} supply a step of "
                        f"a proof of each proposition{extra}, and our proofs rest on them.")
-    unused = [r for r in step if r not in rests]
+    unused = [r for r in step if not used_rules[r]]
     if unused:
         extra = together(unused)
         if len(unused) == 1 and not extra:
@@ -1672,6 +1711,12 @@ def overlap_sentences(overlap, facts, records, links, up):
             out.append(f"In {and_list(links([r]) for r in unused)} our {family} supply a step "
                        f"of a proof of each proposition{extra}, but our proofs never use those "
                        "rules.")
+    for r in partial:
+        ov = records[r]["overlap"]
+        claim = ("supply a step of a proof of the proposition" if overlap_steps(ov)
+                 else "already contain the proposition")
+        out.append(f"In {links([r])} {overlap_word(ov)} {claim}; "
+                   f"{overlap_use(facts.get(r), ov)}.")
     out.append(f"[The overlap catalogue]({up}docs/reports/overlaps.md) gives each.")
     return " ".join(out)
 
@@ -1840,10 +1885,10 @@ FRONT_LEAN_III = {
     },
 }
 FRONT_LEAN = {"I": FRONT_LEAN_I, "II": FRONT_LEAN_II, "III": FRONT_LEAN_III}
-# Euclid's own proofs use some words with no Lean partner (Definition I.14's figure, as
-# "the given rectilineal figure" of I.45 and II.14; Definition III.7's mixed angle in
-# III.16 and III.31), so every front page says only that the Lean proofs never use them.
-# Helpers such as `Prop1.figure` are named for the diagram, not for Definition I.14.
+# Euclid's definitions include words with no Lean partner, such as Definition III.10's
+# sector, so every front page says only that the Lean proofs never use those words.
+# Helpers such as `Prop1.figure` are named for the diagram: Definition I.14's figure has
+# no Lean partner either.
 FRONT_UNUSED = "Words with no Lean partner are never used in a Lean proof."
 
 
@@ -1863,6 +1908,7 @@ def front(book):
         elif re.match(r"^\d+\. ", line) and section:
             num, rest = line.split(". ", 1)
             lean = FRONT_LEAN.get(book, {}).get(section, {}).get(int(num), "")
+            lean = content_wording().get(lean, lean)
             out.append(f"| {num} | {rest} | {lean} |")
         elif line.strip() and section and not line.startswith("#"):
             intro = [f"_{line.strip()}_", ""]
@@ -2062,10 +2108,112 @@ def postulate5_bullet(book, facts, proved, entries):
                                 "it, so any of its proofs may."))
 
 
-# What a book's line on superposition adds, where Euclid's text moves a figure that our
-# proof does not.
+# What a book's line on superposition adds about a proof in which Euclid moves a figure.
 SUPERPOSITION_NOTE = {"III": " Euclid's III.24 applies one segment to another, and our proof "
                              "of it compares the radii instead."}
+
+
+def content_wording():
+    """Text pairs selected by the vocabulary and proof dependencies in facts.json: each
+    old wording, and the new one that replaces it once the content it names is there.
+    Read once per render of a root; without the named content, keep the existing
+    wording."""
+    return content_wording_at(ROOT)
+
+
+def placement_note(props):
+    """The superposition line's words on III.24 when its proof applies one segment to
+    another by the shared step `BookIII.placement`, built from III.24's facts.json entry
+    so that they are true by construction. A proof reaches superposition only by its own
+    Lean, which III.24's `direct_axioms` record with its helpers and shared steps, or
+    through the entries it cites, since no Common Notion uses it. So where
+    `direct_axioms` leave it out and a proposition `placement` cites (`brings_in`) rests
+    on it, the line says that `placement` uses it only through the propositions it
+    cites, and names those among them that call on it themselves (check_fidelity.py keeps
+    them to I.4 and I.8). Otherwise it says only that the proof applies the segment by
+    `placement`. None when `placement` is not one of III.24's shared steps."""
+    sup = "Tacit.superposition"
+    p = props.get("III.24", {})
+    step = next((s for s in p.get("shared_steps", []) if s["name"] == "BookIII.placement"),
+                None)
+    if step is None:
+        return None
+    note = (" Euclid's III.24 applies one segment to another, and so does our proof of it, "
+            "by `placement`")
+    cited = [props.get(r, {}) for r in step.get("brings_in", [])]
+    if sup not in p.get("direct_axioms", []) and any(sup in c.get("axioms", []) for c in cited):
+        callers = [c["ref"] for c in cited if sup in c.get("direct_axioms", [])]
+        note += ", which uses superposition only through the propositions it cites"
+        if callers:
+            note += f", {and_list(callers)} among them"
+    return note + "."
+
+
+@functools.cache
+def content_wording_at(root):
+    """content_wording for one ROOT, read through the renderer's guarded paths."""
+    path = optional_path(root / "facts.json")
+    data = json.loads(read_text(path)) if path is not None else {}
+    words = data.get("vocabulary", {})
+    props = {p["ref"]: p for p in data.get("propositions", [])}
+
+    def stated(*refs):
+        """Is each proposition, porism or companion a passage names in facts.json?"""
+        return all(r in props for r in refs)
+
+    def companion_of(*refs):
+        """Does each of these propositions have a companion in facts.json?"""
+        return all(any(e.get("kind") == "companion" and e.get("of") == r
+                       for e in props.values()) for r in refs)
+
+    placement = placement_note(props)
+    definitions = FRONT_LEAN_III["Definitions"]
+    choices = (
+        ("MixedAngle.ofSegment" in words and companion_of("III.16", "III.31"), (
+            (definitions[7],
+             "`MixedAngle.ofSegment A B α S`: the angle of the segment on S's side of AB, "
+             "read as the region it opens near A; the companions of III.16 and III.31 "
+             "compare it there with rectilineal angles placed along AB on that side"),
+        )),
+        ({"Arc", "InSegment", "OnArc", "Arc.Congruent"} <= words.keys()
+         and stated("III.24", "III.26", "III.28"), (
+            (definitions[6],
+             "`Arc`: a circle, the ends A, B of a straight line in it, and a point E naming "
+             "its side, the segment AEB; its points, `InSegment`, and its circumference's, "
+             "`OnArc`; segments that coincide, `Arc.Congruent` (III.24, III.26, III.28)"),
+        )),
+        ({"Arc", "Arc.measure"} <= words.keys(), (
+            (definitions[9],
+             "`standing α B A C`, the circumference on which the angle BAC stands; the "
+             "circumference BKC is `circumference α B K C`, and an arc's is `Arc.measure`; "
+             "each measured as twice the angle that stands on it at the circumference"),
+        )),
+        ("CirclesCut" in words, (
+            (DEFINITION_LEAN["III", 3],
+             "is `CirclesCut`, `TouchesInternally` and `TouchesExternally` in Lean"),
+            (definitions[3],
+             "`CirclesCut α β`: the circles meet at two points and each has a point within "
+             "the other; `TouchesInternally α β C`: they meet at C, a point of β is within α, "
+             "and no point of β falls outside α; `TouchesExternally α β C`: they meet at C, "
+             "and no point is within both; `CirclesTouch α β C`: either touches the other "
+             "within, or they touch without. Touching is read of the whole circles"),
+        )),
+        ("Foot" in words and stated("III.14", "III.14 general"), (
+            (definitions[4],
+             "`‖E F‖ = ‖E G‖`, for the perpendiculars EF, EG from the centre E (III.14); "
+             "`Foot E A B F`: F is the foot of the perpendicular from E to AB, or E itself "
+             "when AB passes through E, so that a diameter is at no distance (III.14 general)"),
+        )),
+        ("Foot" in words and stated("III.15", "III.15 nearer"), (
+            (definitions[5],
+             "`‖E H‖ < ‖E K‖`, for the perpendiculars EH, EK from the centre E (III.15), "
+             "or for the feet H, K, `Foot` (III.15 nearer)"),
+        )),
+        (placement is not None, (
+            (SUPERPOSITION_NOTE["III"], placement),
+        )),
+    )
+    return {old: new for present, pairs in choices if present for old, new in pairs}
 
 
 def superposition_bullet(book, sup, complete):
@@ -2078,7 +2226,8 @@ def superposition_bullet(book, sup, complete):
                 "project only I.4 and I.8 do.")
     else:
         text = f"called on by {and_list(sup)}."
-    return f"- **Superposition**: {text}" + SUPERPOSITION_NOTE.get(book, "")
+    note = SUPERPOSITION_NOTE.get(book, "")
+    return f"- **Superposition**: {text}" + content_wording().get(note, note)
 
 
 def certificate(facts, docs, records):

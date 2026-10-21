@@ -191,11 +191,15 @@ BOOK_II = {
 # in Heath's letter; otherwise the circle comes with `∃ O, Centre O α` (in Heath's letter
 # for the centre where he has one), and the proof takes the centre by III.1. "Equal
 # circles" is `EqualCircles`; a straight line touching a circle is `Touches`; circles
-# touching one another are `TouchesInternally`, `TouchesExternally` or `CirclesTouch`;
-# the circumference BKC is `circumference α B K C`, and the circumference on which the
-# angle BAC stands is `standing α B A C` (Elements/Foundations/DefinitionsIII.lean).
-# Perpendiculars take I.12's form, as in II.12. The design is in
-# docs/briefs/0004-book-III.md.
+# touching one another are `TouchesInternally`, `TouchesExternally` or `CirclesTouch`.
+# Contact within includes a point of the inner circle within the outer and none outside;
+# contact without has no point within both. `CirclesCut` means meeting at two points with
+# a point of each circle within the other. The circumference BKC is
+# `circumference α B K C`, and the circumference on which the angle BAC stands is
+# `standing α B A C` (Elements/Foundations/DefinitionsIII.lean). Perpendiculars take
+# I.12's form, as in II.12. The design is in docs/briefs/0004-book-III.md; III.5's
+# statement, and the readings of cutting and of contact within and without, are as
+# docs/briefs/0008-centre.md, section 7, restates them.
 BOOK_III = {
     1: "{A B : Point} {ABC : Circle} (hABC : ∃ G : Point, Centre G ABC) (hA : OnCircle A ABC)\n"
        "    (hB : OnCircle B ABC) (hAB : A ≠ B) :\n"
@@ -213,7 +217,7 @@ BOOK_III = {
        "    (hB_AC : ¬ Collinear A C B) (hAC : ∀ F : Point, Centre F ABCD → ¬ Collinear A C F)\n"
        "    (hBD : ∀ F : Point, Centre F ABCD → ¬ Collinear B D F) :\n"
        "    ¬ (‖A E‖ = ‖E C‖ ∧ ‖B E‖ = ‖E D‖)",
-    5: "{E : Point} {ABC CDG : Circle} (hne : ABC ≠ CDG) (hcut : CirclesMeet ABC CDG) :\n"
+    5: "{E : Point} {ABC CDG : Circle} (hcut : CirclesCut ABC CDG) :\n"
        "    ¬ (Centre E ABC ∧ Centre E CDG)",
     6: "{C F : Point} {ABC CDE : Circle} (htouch : CirclesTouch ABC CDE C) :\n"
        "    ¬ (Centre F ABC ∧ Centre F CDE)",

@@ -23,7 +23,7 @@
     <circle cx="152.4824" cy="199.5176" r="2.6"/>
     <circle cx="267.2" cy="152" r="2.6"/>
   </g>
-  <g fill="#3b2f2f" font-family="Georgia, serif" font-size="17" font-style="italic">
+  <g fill="#3b2f2f" font-family="Georgia, serif" font-size="17">
     <text x="210" y="286">A</text>
     <text x="68" y="136">B</text>
     <text x="278" y="255">C</text>
