@@ -35,12 +35,14 @@ records, written by a reviewer and tied to the commit read).
 
 A page's listing names each declaration after the theorem by how the Lean uses it, its
 comments aside: one of the theorems later propositions use, a lemma for the proposition's
-own proofs, or a lemma beside the proposition; and the Proof row names the companions in
-the order the review record lists them. On every run, before anything else, the script
-checks both against the cases of USE_CASES and ORDER_CASES (`use_self_check`), and stops
-if one is read wrongly; MODERN_FIGURE_CASES (`modern_figure_self_check`) checks that a
-modern figure follows its whole paragraph, or is refused if that paragraph is missing,
-before any page is written.
+own proofs, or a lemma beside the proposition; the Proof row names the companions in the
+order the review record lists them; and the sentence on how to read the listing names a
+step proved as a theorem of its own by that theorem's kind, a porism or a companion, and
+stops on any other (`carried_ref`). On every run, before anything else, the script
+checks all three against the cases of USE_CASES, ORDER_CASES and CARRIED_CASES
+(`use_self_check`), and stops if one is read wrongly; MODERN_FIGURE_CASES
+(`modern_figure_self_check`) checks that a modern figure follows its whole paragraph, or
+is refused if that paragraph is missing, before any page is written.
 
 Run after `lake env lean Certificate/Facts.lean`. Standard library, and Python 3.11 or
 later for the review records (tomllib).
@@ -1082,7 +1084,8 @@ def clause_map(record):
 
 # The plain words that lead each note under "How the Lean follows the text", one for each
 # kind of passage in review/SCHEMA.md. A helper's word names it ("Done by `Prop6.less`"),
-# and a porism proved as its own theorem is "Proved separately, as `Prop16.porism`".
+# and a porism or a companion proved as its own theorem is "Proved separately, as
+# `Prop16.porism`"; the sentence above the list names it by its kind (`carried_ref`).
 PASSAGE_WORD = {"carried": "Carried", "helper": "Done by a lemma", "grouped": "Carried together",
                 "case": "A further case", "given": "Already given",
                 "different": "Argued another way", "unformalized": "Left in Euclid's words"}
@@ -1138,6 +1141,25 @@ def passage_notes(record, proof_text=""):
     return "\n".join(out)
 
 
+def carried_ref(p, helper):
+    """The theorem a carried passage of the proposition entry p is proved separately as:
+    the entry of p's `attached` that `helper` names, as `Prop16.porism`,
+    `BookIII.Prop16.porism` or `Elements.BookIII.Prop16.porism`, taken apart by
+    `heath.parse_ref`, so that its `kind` is "porism" or "companion" and two names for one
+    theorem give one Ref. Any other helper stops the render: a lemma or a proposition that
+    does a step makes a `helper` passage, "Done by" it, and has no entry of its own under p
+    to be proved separately as (review/SCHEMA.md)."""
+    for ref in p.get("attached", []):
+        r = heath.parse_ref(ref)
+        if helper in (f"Prop{r.n}.{r.name}", f"Book{r.book}.Prop{r.n}.{r.name}", r.lean):
+            return r
+    raise SystemExit(f"{p['ref']}: a carried passage names `{helper}`, which is not its "
+                     "porism or one of its companions in facts.json, in one of the three ways "
+                     "render.py reads such a name: `Prop16.porism`, `BookIII.Prop16.porism` or "
+                     "`Elements.BookIII.Prop16.porism`. A lemma or a proposition that does a "
+                     "step makes a `helper` passage (review/SCHEMA.md)")
+
+
 def how_to_read(p, record, proof_text=""):
     """The sentence under the field table on how to read the listing. It says the lines
     under each sentence carry it out only where that is so: a passage the Lean does not
@@ -1164,8 +1186,15 @@ def how_to_read(p, record, proof_text=""):
     carried = [q for q in passages if q["kind"] == "carried"]
     if any(not q.get("helper") for q in carried):
         marks.append(PASSAGE_PHRASE["carried"])
-    if any(q.get("helper") for q in carried):
-        marks.append("where a porism is proved as a theorem of its own")
+    # Counted by theorem, not by passage: one companion carrying two passages, or named two
+    # ways, is still one companion.
+    kinds = [r.kind for r in {carried_ref(p, q["helper"]) for q in carried if q.get("helper")}]
+    if kinds:
+        each = [f"a {k}" if kinds.count(k) == 1 else f"{number_word(kinds.count(k))} {k}s"
+                for k in heath.KINDS if k in kinds]
+        own = ("is proved as a theorem of its own" if len(kinds) == 1
+               else "are proved as theorems of their own")
+        marks.append(f"where {and_list(each)} {own}")
     if left:
         marks.append("where the Lean stops")
     return (how + f" The list below marks {and_list(marks)}; the `/- … -/` notes in the "
@@ -1332,10 +1361,34 @@ ORDER_CASES = [   # (the record's `companions`, as written; the order the row na
     (["I. 45 fan", "I. 45 sum", "I.45 append"], ["fan", "sum", "append"]),
 ]
 
+# And the sentence on how to read the listing names a step proved as a theorem of its own
+# by that theorem's kind (`carried_ref`), a porism or a companion, counting each theorem
+# once however many passages it carries, and stops on any other helper. CARRIED_ATTACHED is
+# a made-up `attached` for I.9, in facts.json's form.
+
+CARRIED_ATTACHED = ["I.9 Por.", "I.9 whole", "I.9 part"]
+
+CARRIED_CASES = [   # (the helpers of the carried passages; how the sentence marks them,
+                    # or None where the render stops)
+    (["Prop9.porism"], "a porism is proved as a theorem of its own"),
+    (["Prop9.whole"], "a companion is proved as a theorem of its own"),
+    (["Prop9.porism", "BookI.Prop9.whole", "Elements.BookI.Prop9.part"],
+     "a porism and two companions are proved as theorems of their own"),
+    (["Prop9.whole", "BookI.Prop9.whole"],         # one companion, named two ways
+     "a companion is proved as a theorem of its own"),
+    (["Prop9.porism", "Prop9.porism"],             # one porism carrying two passages
+     "a porism is proved as a theorem of its own"),
+    (["Prop9.porism", "Prop9.whole", "Prop9.porism"],
+     "a porism and a companion are proved as theorems of their own"),
+    (["Prop9.helper"], None),     # a lemma: a `helper` passage, "Done by" it
+    (["Prop10"], None),           # another proposition
+    (["Prop40.general"], None),   # another proposition's companion
+]
+
 
 def use_self_check():
-    """USE_CASES, read from USE_FILES, and ORDER_CASES; returns the number of cases and
-    the faults."""
+    """USE_CASES, read from USE_FILES, ORDER_CASES and CARRIED_CASES; returns the number
+    of cases and the faults."""
     code = {path: check_fidelity.without_comments(src) for path, src in USE_FILES.items()}
     declared = declared_names(code)
     own = next(iter(USE_FILES))
@@ -1349,7 +1402,20 @@ def use_self_check():
                                                        ORDER_ATTACHED, order))
         if got != want:
             faults.append(f"the companions of {order!r} named as {got!r}, not {want!r}")
-    return len(USE_CASES) + len(ORDER_CASES), faults
+    p = {"ref": "I.9", "status": "proved", "attached": CARRIED_ATTACHED}
+    for helpers, want in CARRIED_CASES:
+        record = {"passage": [{"kind": "carried", "helper": h} for h in helpers]}
+        try:
+            got = how_to_read(p, record)
+        except SystemExit as error:
+            if want is not None or f"`{helpers[0]}`" not in str(error):
+                faults.append(f"the carried {helpers!r}: unexpected refusal: {error}")
+            continue
+        if want is None:
+            faults.append(f"the carried {helpers!r} were not refused")
+        elif f" The list below marks where {want};" not in got:
+            faults.append(f"the carried {helpers!r} read as {got!r}, not as {want!r}")
+    return len(USE_CASES) + len(ORDER_CASES) + len(CARRIED_CASES), faults
 
 
 def lean_listing(book, n, facts):
@@ -1994,6 +2060,12 @@ def certificate_intro(facts, records):
               "the page's Representation row says what follows." if badges else "")
     bracketed = [f"{b}.{n}" for b, (count, _) in BOOKS.items() for n in range(1, count + 1)
                  if heath.bracketed(b, n)]
+    # What the pages prove a step separately as: a porism, a companion, or either.
+    kinds = {carried_ref(facts[ref], q["helper"]).kind for ref, r in records.items()
+             if r and ref in facts for q in r["passage"]
+             if q["kind"] == "carried" and q.get("helper")}
+    separately = (" or ".join(f"a {k}" for k in heath.KINDS if k in kinds)
+                  or "a porism or a companion")
     return [
         "This page keeps three things apart.", "",
         "- **Heath's references.** The column of that name gives the propositions in "
@@ -2050,7 +2122,7 @@ def certificate_intro(facts, records):
         "*Carried together*, for sentences one step carries; *A further case*, for a case "
         "his figure leaves aside; *Already given*, for a step the statement supplies; "
         "*Argued another way*; *Left in Euclid's words*, for a passage with no Lean beneath "
-        "it; and *Proved separately*, for a porism.",
+        f"it; and *Proved separately*, for {separately}.",
         "", shared, ""]
 
 
@@ -2845,9 +2917,11 @@ def main() -> None:
     count, faults = use_self_check()
     if faults:
         raise SystemExit(f"{len(faults)} fault(s) in render.py's reading of how a declaration "
-                         "is used, or of a record's order of companions; nothing was "
-                         "rendered:\n" + "\n".join("  ✗ " + f for f in faults))
-    print(f"self-check: the listing and the Proof row read {count} cases rightly")
+                         "is used, of a record's order of companions, or of what a carried "
+                         "passage is proved as; nothing was rendered:\n"
+                         + "\n".join("  ✗ " + f for f in faults))
+    print(f"self-check: the listing, the sentence on reading it and the Proof row read "
+          f"{count} cases rightly")
     count, faults = modern_figure_self_check()
     if faults:
         raise SystemExit(f"{len(faults)} fault(s) in the modern figure's placement; "
