@@ -563,7 +563,7 @@ def repository() -> tuple[Path, dict[str, str]]:
     discovery_env.pop("GIT_WORK_TREE", None)
     active_env = os.environ.copy()
     caller = Path.cwd()
-    for name in ("GIT_DIR", "GIT_WORK_TREE"):
+    for name in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE"):
         value = active_env.get(name)
         if value and not Path(value).is_absolute():
             active_env[name] = str((caller / value).resolve())

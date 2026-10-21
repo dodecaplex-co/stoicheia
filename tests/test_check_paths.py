@@ -433,6 +433,28 @@ class Index(unittest.TestCase):
         self.assertIn("✗ P6 docs/link.md: ", result.stdout)
         self.assertEqual(self.check().returncode, 0)    # the real index is untouched
 
+    def test_a_relative_index_file_is_resolved_from_the_callers_directory(self):
+        caller = self.root / "caller"
+        caller.mkdir()
+        alternate = caller / "alternate-index"
+        shutil.copyfile(self.root / ".git/index", alternate)
+        subprocess.run(
+            ["git", "update-index", "--add", "--cacheinfo",
+             f"120000,{self.blob},docs/link.md"],
+            cwd=self.root, env=git_env(GIT_INDEX_FILE=str(alternate)), check=True)
+        namesake = self.root / "alternate-index"
+        relative_env = git_env(GIT_INDEX_FILE="alternate-index")
+
+        for label, clean_namesake in (("absent", False), ("clean", True)):
+            with self.subTest(root_relative_namesake=label):
+                namesake.unlink(missing_ok=True)
+                if clean_namesake:
+                    shutil.copyfile(self.root / ".git/index", namesake)
+                result = self.check(cwd=caller, env=relative_env)
+                self.assertEqual(result.returncode, 1, result.stdout)
+                self.assertIn("✗ P6 docs/link.md: ", result.stdout)
+                self.assertNotIn("✓", result.stdout)
+
     def test_rev_judges_the_commit_and_not_the_index(self):
         self.plant("120000", "docs/link.md")
         self.caught(6, "docs/link.md")
