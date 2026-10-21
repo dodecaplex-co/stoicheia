@@ -2370,5 +2370,8 @@ findings:
   the output, while the source figure rules S24 and S25 precede it in train H10.
   The refusal changes what the renderer accepts: `scripts/render.py` and
   `tests/test_check_style.py` are the guard changes for `security-review`.
-  Train F1 carries the regenerated pages and [ACCEPTANCE](../ACCEPTANCE.md)'s P8 words
-  for S24 and S25 and for the letter rule S26, supplied by H10's letter branch.
+  Train F1 carries the renderer and its regenerated pages. Because origin/main's
+  renderer would write those pages without the figures, `scripts/safe_push.py` counts
+  the change as a check change, which lands apart from content the checks judge; so
+  [ACCEPTANCE](../ACCEPTANCE.md)'s P8 words for S24 and S25 and for the letter rule S26
+  follow in train F2, with the eight further figures of the modern way.
