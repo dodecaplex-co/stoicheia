@@ -10,7 +10,7 @@ kind = "euclid"
 at = "For, if AB is unequal to AC"
 kind = "helper"
 helper = "Tacit.lt_trichotomy"
-note = "Euclid takes for granted that one of two unequal lengths is greater; the Lean uses `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E §3.5)."
+note = "Euclid takes for granted that one of two unequal lengths is greater; the Lean uses `Tacit.lt_trichotomy`, a tacit rule of magnitude, which we assume (System E §3.5)."
 
 [[passage]]
 at = "Let AB be greater"

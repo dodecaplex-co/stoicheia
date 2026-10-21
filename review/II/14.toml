@@ -4,7 +4,7 @@ short = "figures supplied with a checked division into triangles"
 hypotheses = [
   "A division into non-overlapping triangles is supplied with the figure (`Apart` or `Rectilineal`); existence from an outline is not yet proved."
 ]
-note = "`Prop14.square` draws a square equal to a supplied triangle sum; outline coverage and independence of division remain unproved."
+note = "A square equal to a figure supplied with a checked division into triangles. Not yet proved: that every figure has one, or that another gives the same area."
 companions = ["II.14 rectangle", "II.14 sum", "II.14 apart", "II.14 figure", "II.14 square", "II.14 fan"]
 fingerprint = "sha256:9e83215b978b4220"
 

@@ -10,7 +10,7 @@ kind = "euclid"
 at = "For, if not, it is either equal to it or less"
 kind = "helper"
 helper = "Tacit.lt_trichotomy"
-note = "Euclid divides the possibilities for the two angles into greater, equal and less. The Lean uses `Tacit.lt_trichotomy`, a rule we assume for magnitudes (System E §3.5), to obtain the equal or less alternatives when the angle BAC is not greater."
+note = "Euclid divides the possibilities for the two angles into greater, equal and less. The Lean uses `Tacit.lt_trichotomy`, a tacit rule of magnitude, which we assume (System E §3.5), to obtain the equal or less alternatives when the angle BAC is not greater."
 
 [review]
 stage = "full"

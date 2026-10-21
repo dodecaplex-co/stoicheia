@@ -9,7 +9,7 @@ kind = "euclid"
 at = "let AC be bisected at the point E"
 kind = "helper"
 helper = "BookI.Prop10"
-note = "Euclid bisects AC at E without a reference here. The Lean uses I.10, then names the triangle AEB by its corners."
+note = "Euclid bisects AC at E; Heath gives no reference here. The Lean uses I.10, then names the triangle AEB by its corners."
 
 [[passage]]
 at = "let CA be drawn through to F"

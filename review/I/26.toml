@@ -23,7 +23,7 @@ note = "Euclid reads BCG as a part of BCA. Since G lies between B and A, `angle_
 [[passage]]
 at = "Therefore AB is not unequal to DE"
 kind = "case"
-note = "Euclid supposes AB greater than DE; the Lean proves his argument once over any letters and applies it again with the triangles exchanged to rule out DE greater than AB. The Lean concludes that AB equals DE by `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E §3.5): of two unequal lengths, one is greater."
+note = "Euclid supposes AB greater than DE; the Lean proves his argument once over any letters and applies it again with the triangles exchanged to rule out DE greater than AB. The Lean concludes that AB equals DE by `Tacit.lt_trichotomy`, a tacit rule of magnitude, which we assume (System E §3.5): of two unequal lengths, one is greater."
 
 [[passage]]
 at = "Let BC be greater, if possible, and let BH be made equal to EF"

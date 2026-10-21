@@ -60,7 +60,7 @@ theorem Prop6 {A B C : Point} (hABC : Triangle A B C) (h : ∠ A B C = ∠ A C B
   -- I say that the side AB is also equal to the side AC.
   -- For, if AB is unequal to AC, one of them is greater.
   /- That of two unequal lengths one is the greater is a tacit rule of
-     magnitudes (System E §3.5), `lt_trichotomy`. -/
+     magnitude (System E §3.5), `lt_trichotomy`. -/
   have one_greater : ‖A B‖ ≠ ‖A C‖ → ‖A C‖ < ‖A B‖ ∨ ‖A B‖ < ‖A C‖ := by
     intro hne
     rcases lt_trichotomy ‖A B‖ ‖A C‖ with hlt | heq | hgt
