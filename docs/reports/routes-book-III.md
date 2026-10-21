@@ -23,28 +23,26 @@ new drafts. No rule names a namespace for them, and the coordinator may rename t
 
 **The statements the files stand on.** [Brief 0008](../briefs/0008-centre.md) restates
 Book III so that every circle has a centre (`Tacit.exists_centre`). The trains C6a, C6b and
-C6c carry the next move of Book III's files into `Elements/`, those restatements among it,
-with main as at 2e8aecf. This branch merged their head, train C6c, three times: as at
-80292b0a (the merge is 9679f978); as at e8a375b7, which carries main as at 0a05f96f (the
-merge is 60dc26e0); and as at 50162c79, whose later work lies outside `Elements/`, the
-scaffold's restated statements of Book III among it (the merge is 33236005). The second
-merge brings to `Elements/` main's change between 2e8aecf and 0a05f96f, and nothing else:
-the foundations' rule of superposition restated as a restricted rule, with its home in
-`Elements/Foundations/Superposition/` and the laws its derivations cite proved in
-`Elements/Figure/Superposition.lean`; I.4 and I.8 proved by it; and words in the files of
-I.11 and I.44. It changes no file of `Elements/BookIII/`. Then 9a0f8ba1 merged main as at
-e7ffaf68, and bd69bb9b main as at 6e0cdd27 (#208, the formal model's proofs replayed by
-Lean's kernel). Neither of these two, nor the third merge of train C6c, changes a file of
-`Elements/` or of `Staging/`, or `facts.json`. As their head, train C6c carries
-the other two, and in this report it stands for all three. Main did not have the
-restatements when this report was written, and these files land after train C6c. In this
-report, **the statement in `Elements/`** or **the proof in `Elements/`** of a proposition is
-the one train C6c leaves in `Elements/BookIII/`, which is the one on this branch. The files
-were written on main's statements as at 2e8aecf and then moved onto those in `Elements/`:
-III.8, III.27, touching at a point and the angle of contact at 4a6d9a49, and III.20, III.21
-and III.26 at 9f8c8adb. Independent readers read both moves, and 86c5748d and c868a9fc
-answer their minor findings ("Who read what", at the end). For these files train C6c
-changes six things:
+C6c carry the next move of Book III's files into `Elements/`, those restatements among it.
+As their head, train C6c carries the other two, and in this report it stands for all three.
+This branch changes no file of `Elements/`, and not `facts.json`: they are those of the
+head of train C6c that it last merged, and, once train C6c is on main, those of the main it
+last merged. `git diff train/C6c HEAD -- Elements facts.json` shows it; at e09f40f6, where
+that head is e9bac796, it prints nothing. There `git diff train/C6c HEAD --stat` lists the
+eleven files the branch changes: the seven under `Staging/Routes/`; `Staging.lean`, in its
+imports and its paragraph on `Routes/`; this report; the decisions page,
+[brief 0002](../briefs/0002-decisions.md), in its routes bullet alone; and
+[docs/reports/overlaps.md](overlaps.md), the coordinator's file, in its sentence on staged
+work, which 5fca8529, a commit of the pre-merge validation (WORKFLOW, section 10), made
+true of `Staging/Routes/` with the coordinator's approval of 21 October 2026. Main did not
+have the restatements when this report was written, and these files land after train C6c.
+In this report, **the statement in `Elements/`** or **the proof in `Elements/`** of a
+proposition is the one train C6c leaves in `Elements/BookIII/`, which is the one on this
+branch. The files were written on main's statements as at 2e8aecf and then moved onto those
+in `Elements/`: III.8, III.27, touching at a point and the angle of contact at 4a6d9a49,
+and III.20, III.21 and III.26 at 9f8c8adb. Independent readers read both moves, and
+86c5748d and c868a9fc answer their minor findings ("Who read what", at the end). For these
+files train C6c changes six things:
 
 - a centre that a statement uses nowhere else is taken inside the proof, by the rule, and
   no longer given (brief 0008, section 4);
@@ -609,29 +607,14 @@ short. Their home in `Elements/` is part of their approval.
 ## The calls to III.1 that do no work (#131)
 
 *This section is analysis only.* It changes no file of Book III, and nothing of the Lean it
-proposes has been compiled. Its facts were read from this branch at 9f8c8adb, whose
-`Elements/` is train C6c's as at 80292b0a. That tree holds main as at 2e8aecf, with main's
-retirements of axioms, so `centre_unique` and `adjacent_eq_of_right` are theorems there, as
-they still are. For this report its certificate was built afresh (`lake build`, then `lake
-env lean Certificate/Facts.lean`), and the `facts.json` it wrote is, byte for byte, the one
-committed at 9f8c8adb. In the figures below the first number of each pair is measured, read
-from that `facts.json`. The second is computed: a Lean walk of the dependencies, as Lean's
-collectAxioms walks them, which takes the dropped call out of the proof that makes it and
-puts the rule in its place. Run with nothing dropped, the walk gives each of the 137 entries
-exactly its `axioms` in `facts.json`. An earlier version of this section measured main at
-2e8aecf and an earlier C6c (d3e9a8c), and estimated the tree that merges them; this tree is
-that merge, and its measurements replace the estimate.
-
-**At 9a0f8ba1, the `Elements/` these files land on.** Of the later commits on this branch,
-up to bd69bb9b, only the merge 60dc26e0 changes `Elements/` or `facts.json` (see the
-opening of this report). It changes no file of `Elements/BookIII/`, and every one of the
-137 entries of `facts.json` keeps exactly the `axioms` it had at 9f8c8adb. What changes in
-`facts.json` is the vocabulary (125 words, now 242), the type of the rule of superposition,
-and, for I.4 and I.8 alone, the record of which rules each proof calls itself and through
-which steps it reaches the others. The certificate built afresh at 9a0f8ba1 is, byte for
-byte, the `facts.json` committed there, and every figure below was found again on it: the
-measured numbers read from it, the computed ones by the walk run again, and the count of
-Heath's references by the page generator's functions ("Checks", at the end).
+proposes has been compiled. Its figures are those of `Elements/` and `facts.json` at
+e09f40f6, where `centre_unique` and `adjacent_eq_of_right` are theorems, not axioms. In the
+figures below the first number of each pair is measured, read from `facts.json`. The
+second is computed: a Lean walk of the dependencies, as Lean's collectAxioms walks them,
+which takes the dropped call out of the proof that makes it and puts the rule in its place.
+Run with nothing dropped, the walk gives each of the 137 entries exactly its `axioms` in
+`facts.json`. "Checks", at the end, says at which revisions the figures were found, and why
+they hold at e09f40f6 ("The figures of #131").
 
 **The finding.** On main as at 2e8aecf, III.1 is called nine times in eight proofs: III.2,
 III.4, III.8, III.14, III.17, III.35, III.36 (twice) and III.37. Train C6c removes four of
@@ -648,7 +631,7 @@ and FORMALIZATION, section 3, says that "proofs cite III.1 where Heath does". Of
 calls an earlier reading found doing work, two remain; the table marks them, and the third,
 the porism's, is gone.
 
-| Proposition | Call | Does work | On main, 2e8aecf | On train C6c, 80292b0a | The route that drops it |
+| Proposition | Call | Does work | On main, 2e8aecf | In `Elements/`, e09f40f6 | The route that drops it |
 |---|---|---|---|---|---|
 | III.2 | III.1, under "[III. 1]" | no | present | present | take D from the rule; a passage of the kind given |
 | III.4 | III.1, under "[III. 1]" | no | present | present | take F from the rule; a given passage, which adds that "not through the centre", said of every centre, applies to it |
@@ -683,7 +666,7 @@ does work.
 reaches III.1 through III.2 as well as by its own call, and III.37 reaches it through
 III.17.
 
-| Entry | On train C6c: measured, then computed | What leaves |
+| Entry | At e09f40f6: measured, then computed | What leaves |
 |---|---|---|
 | III.2 | 61 to 59 | `exists_point_same_side`, `inside_not_on` |
 | III.4 | 61 to 58 | `between_of_inside_chord`, `exists_point_same_side`, `inside_not_on`; I.18 and I.19 leave from beneath |
@@ -765,59 +748,77 @@ not built from changed Lean. How far the audit pins shrink is inferred, for they
 
 ## Checks
 
-Each check below names the revision it ran on. The first part, headed by bd69bb9b's full
-hash and ending with the checks of style and links, is the fresh evidence for the revision
-delivered; the parts after it are its history, as they were run, and none of them was run
-again here. No file under `Staging/Routes/` changed from 80e85ec6 to 9a0f8ba1; e786ffc3
-changes one of them, `Touching.lean`, in an import and its docstring, and no declaration;
-and from e786ffc3 to bd69bb9b no file of `Elements/`, `Staging/`, `Certificate/` or
-`Audit/` changes, nor `facts.json`, `Staging.lean` or the toolchain. The commit that
-carries this text changes this report alone: it is a follow-up to bd69bb9b in
-documentation only, and the Lean it reports on is bd69bb9b's.
+Each check below names the revision it ran on. The staged Lean is the same from e786ffc3
+to e09f40f6: in that span no file of `Staging/`, `Certificate/` or the toolchain changes,
+nor `Staging.lean`, and `Elements/` changes only in the proof of III.1's step
+`Prop1.perpendicular`, with its docstring, and in doc comments of two other files, as
+"The figures of #131", below, says. A later merge that changes no file of `Staging/`,
+`Elements/` or `facts.json`, or the toolchain, leaves the outcomes of the Lean checks below
+as they are, and one that does is checked again at the head the pull request lands. The
+checks of style and links read the texts of the whole repository, so their counts move
+with any merge; the pull request records the checks at the head it lands.
 
-**At bd69bb9b5e6790e00e9c25d8417b6d1898446733, the revision delivered.** The commands below
-were run in this order from the root of a clean checkout of that commit, with nothing
-uncommitted and no build of its own before them. The module the last of them elaborates
-was saved outside the repository, as `/tmp/routes-check-bd69bb9b/RoutesCheck.lean`, and is
-given whole below (SHA-256
-`358bcbd39808bfa4b690395d8b183a53ddbf8240bd07fdc92b548a7ad8846a0c`).
+**At e09f40f6, with this report's later edits, which change only this report.** The
+commands below were run in this order from the root of the worktree, where `git rev-parse
+HEAD` gave e09f40f6aae8b83ab70217f68a50b3b36ce6c6ff and `git status --porcelain` showed
+this report alone, modified. er_check.sh is a scratch script outside the repository: it
+builds the modules it is given, then puts every theorem they declare, but the internal
+ones, to Lean's collectAxioms, and finds `sorryAx`, Circle 3 (`Tacit.outside_of_between`,
+on which Circle 2 rests) and any axiom neither one of Lean's three nor declared under
+`Elements/Foundations/`. RoutesCheck.lean and Cutoff.lean are scratch files outside the
+repository, each given whole below with its SHA-256.
 
 ```sh
 export PATH=$HOME/.elan/bin:$PATH
-git rev-parse HEAD            # bd69bb9b5e6790e00e9c25d8417b6d1898446733
-git status --porcelain        # nothing
+git diff train/C6c HEAD -- Elements facts.json   # nothing
+git diff train/C6c HEAD --stat                   # the eleven files of the opening
+sh er_check.sh "$PWD" Staging.Routes.Prop08 Staging.Routes.Prop20 Staging.Routes.Prop21 \
+  Staging.Routes.Prop26 Staging.Routes.Prop27 Staging.Routes.Touching \
+  Staging.Routes.AngleOfContact
 lake build Staging.Routes.Prop08 Staging.Routes.Prop20 Staging.Routes.Prop21 \
   Staging.Routes.Prop26 Staging.Routes.Prop27 Staging.Routes.Touching \
   Staging.Routes.AngleOfContact
 for f in Prop08 Prop20 Prop21 Prop26 Prop27 Touching AngleOfContact; do
   lake env lean Staging/Routes/$f.lean
 done
-lake build Staging
-lake env lean /tmp/routes-check-bd69bb9b/RoutesCheck.lean
+lake env lean RoutesCheck.lean
+lake env lean Cutoff.lean
+python3 scripts/check_style.py
+python3 scripts/check_links.py
 ```
 
-The build of the seven modules completed, with no warning from `Staging/Routes/`; its only
-warnings are the two unused variables at lines 165 and 166 of
-`Elements/Figure/Circles.lean`. Each of the seven files, elaborated alone, exited 0 and
-gave no message at all, so the five type equalities they end with hold. `lake build
-Staging` completed with the same two warnings and no other. The two builds and the module,
-which exited 0, reported, in that order:
+Every command exited 0. Each of the seven files, elaborated alone, gave no message at all,
+so the five type equalities they end with hold. The build of the seven modules had no
+warning from `Staging/Routes/`; its only warnings are the two unused variables at lines 165
+and 166 of `Elements/Figure/Circles.lean`. The rest reported, in order, er_check.sh, the
+build, the two modules and the two scripts:
 
 ```text
 Build completed successfully (107 jobs).
-Build completed successfully (109 jobs).
+routes_check: 38 theorems, 0 findings
+Build completed successfully (107 jobs).
 routes_check: 7 modules, 51 declarations, 38 theorems, 5 type equalities, 7 contact roots, 1476 constants walked beneath them, 0 findings
 Book III modules reached from the contact roots: [Elements.BookIII.Prop16,
  Elements.BookIII.Prop02,
  Elements.BookIII.Prop01,
  Elements.BookIII.Prop18,
  Elements.BookIII.MixedAngles]
+modules reached: [Elements.BookIII.MixedAngles,
+ Elements.BookIII.Prop01,
+ Elements.BookIII.Prop02,
+ Elements.BookIII.Prop16,
+ Elements.BookIII.Prop18,
+ Staging.Routes.AngleOfContact]
+cutoff_check: 7 roots, 1462 constants walked, 0 findings
+✓ style: the hard rules hold (S1–S26)
+✓ links: all 14096 relative links and anchors in 485 Markdown files resolve
 ```
 
-The module takes its list from Lean's environment, not from a list written by hand: every
-declaration of the seven modules, 51, and among them the 38 theorems, those neither private
-nor internal. Each finding is an error, so that `lake env lean` fails on any. It finds any
-of the 51 declared as an axiom, and puts each to Lean's collectAxioms, finding `sorryAx`,
+RoutesCheck.lean takes its list from Lean's environment, not from a list written by
+hand: every declaration of the seven modules, 51, and among them the 38 theorems, those
+neither private nor internal. Each finding is an error, so that `lake env lean` fails on
+any. It finds any of the 51 declared as an axiom, and puts each to Lean's collectAxioms,
+finding `sorryAx`,
 Circle 3 (`Tacit.outside_of_between`), and any axiom that is neither one of Lean's three
 nor declared under `Elements/Foundations/`. It walks every constant beneath the 38
 theorems, statements and proofs, and finds Circle 2 (`Tacit.inside_of_between`, a theorem
@@ -828,26 +829,33 @@ included, with the same universe parameters: a stricter test than the `rfl` that
 each file. And it walks every constant beneath the seven theorems of `AngleOfContact.lean`,
 finding any of a proposition of Book III later than III.18 (in its module, or under its
 name) or staged in another file, and lists the modules of Book III reached. So, at
-bd69bb9b, none of the 38 theorems uses `sorry`, none of the seven files declares an axiom,
-nothing in them rests on an axiom beyond the foundations and Lean's three, or on Circle 2
-or Circle 3, the five staged theorems have exactly the types of the theorems in
-`Elements/`, and nothing beneath the angle of contact is later than III.18: the modules of
-Book III reached are those of III.1, III.2, III.16, III.18 and the mixed angles. The count
-of 1476 constants is this module's own. The scratch modules of the runs below were not
-kept, and counted 1462 beneath the same seven roots on the same Lean at 9a0f8ba1, so the
-two counts are of different walks, not of a change.
+e09f40f6 as at bd69bb9b (below), none of the 38 theorems uses `sorry`, none of the seven
+files declares an axiom, nothing in them rests on an axiom beyond the foundations and
+Lean's three, or on Circle 2 or Circle 3, the five staged theorems have exactly the types
+of the theorems in `Elements/`, and nothing beneath the angle of contact is later than
+III.18: the modules of Book III reached are those of III.1, III.2, III.16, III.18 and the
+mixed angles.
 
-Three copies of the module, run on the same build after it and then deleted, showed what
-it finds. The first printed the names of the 38 theorems: one each in `Prop08.lean` and
-`Prop21.lean`, two each in `Prop26.lean` and `Prop27.lean`, eleven in `Prop20.lean`, four
-of them in the namespace of a changed main theorem, fourteen in `Touching.lean` and seven
-in `AngleOfContact.lean`. The second added Circle 2 to the theorems walked and III.20 of
-`Elements/` to the roots of the angle of contact, Circle 2 and Circle 3 to the
-declarations put to collectAxioms, and paired the staged III.8 with III.8's general
-companion. It gave the seven findings those seeds call for: Circle 2 and Circle 3 beneath
-the theorems, Circle 3 declared as an axiom, Circle 3 beneath each of the two, the types
-unlike, and III.20 later than III.18. The third added a theorem resting on a new axiom and
-one proved by `sorry`, and gave a finding for each.
+Cutoff.lean, the cutoff walk of the run at 9a0f8ba1 below, walks every constant beneath
+the seven theorems of `AngleOfContact.lean`, statements and proofs, and finds any in the
+module of a proposition of Book III later than III.18, or in
+`Elements/BookIII/Circumferences.lean`, whose steps cite III.20 to III.22. It walks as
+RoutesCheck.lean does, but for the constructors of each inductive type it meets, which
+that module adds and this one does not: with them added, it too walks 1476 constants. So
+1476 and 1462 are counts of two walks, not of a change. A third scratch module, walking
+beneath all 51 declarations in the same way, found none of Book Zero's three lemmas
+`Triangle.of_onCircle`, `exists_onCircle_oppositeSidesOf` and `exists_onCircle_sameSideOf`
+beneath them, and Circle 3 among the axioms of each: so the sentence 5fca8529 writes in
+[docs/reports/overlaps.md](overlaps.md), that the staged theorems reach none of the three,
+holds. These checks built nothing beyond the seven modules and what they import. The style
+check's rule S12, which asks Lean, importing `Elements`, whether each name in backticks
+exists, read the modules the seven reach as built at e09f40f6, and the rest of
+`Elements/` and `Audit/` as built at 9a0f8ba1: they declare the same names, for since then
+`Elements/` has changed only in the proof of `Prop1.perpendicular` and in doc comments, and
+`Audit/` in a doc comment.
+
+RoutesCheck.lean, whole (SHA-256
+358bcbd39808bfa4b690395d8b183a53ddbf8240bd07fdc92b548a7ad8846a0c):
 
 ```lean
 import Lean
@@ -941,21 +949,93 @@ run_cmd do
     Book III modules reached from the contact roots: {reached.toList}"
 ```
 
-Then, with this text in place, `lake build Elements` completed (153 jobs), for the style
-check's S12 asks Lean about the names in backticks, and `scripts/check_style.py` and
-`scripts/check_links.py` passed:
+Cutoff.lean, whole (SHA-256
+aaf0e04f8d468c16cb1a7eded373104c34e6c2485ba813fb816c356f8a35367d):
 
-```text
-✓ style: the hard rules hold (S1–S26)
-✓ links: all 14071 relative links and anchors in 484 Markdown files resolve
+```lean
+import Lean
+import Staging.Routes.AngleOfContact
+
+/-! Scratch check, outside the repository: walk every constant beneath the seven theorems of
+`Staging/Routes/AngleOfContact.lean` (statements and proofs) and list the Book III modules
+they come from. A module `Elements.BookIII.PropNN` with NN > 18, or
+`Elements.BookIII.Circumferences` (steps citing III.20-III.22), is a finding. -/
+
+open Lean Elab Command
+
+def roots : List Name :=
+  [`Elements.BookIII.Routes.Prop18.diameter, `Elements.BookIII.Routes.Prop18.parts,
+   `Elements.BookIII.Routes.Prop18.branch, `Elements.BookIII.Routes.Prop18.contact_locallyEqual,
+   `Elements.BookIII.Routes.Prop18.contact_lt, `Elements.BookIII.Routes.Prop18.semicircle_gt,
+   `Elements.BookIII.Routes.Prop18.acute]
+
+def laterThan18 (m : Name) : Bool :=
+  let s := m.toString
+  if s == "Elements.BookIII.Circumferences" then true
+  else if s.startsWith "Elements.BookIII.Prop" then
+    match (s.drop "Elements.BookIII.Prop".length).toNat? with
+    | some n => n > 18
+    | none => false
+  else false
+
+elab "#cutoff_check" : command => do
+  let env ← getEnv
+  let mut seen : NameSet := {}
+  let mut todo : Array Name := roots.toArray
+  for r in roots do
+    unless env.contains r do logInfo m!"MISSING ROOT {r}"
+  while h : todo.size > 0 do
+    let n := todo.back
+    todo := todo.pop
+    if seen.contains n then continue
+    seen := seen.insert n
+    let some ci := env.find? n | continue
+    let mut used := ci.type.getUsedConstants
+    if let some v := ci.value? (allowOpaque := true) then
+      used := used ++ v.getUsedConstants
+    for c in used do
+      unless seen.contains c do todo := todo.push c
+  let mut mods : NameSet := {}
+  let mut bad : Nat := 0
+  for n in seen.toList do
+    let some idx := env.getModuleIdxFor? n | continue
+    let m := env.header.moduleNames[idx.toNat]!
+    if (`Elements.BookIII).isPrefixOf m || (`Staging).isPrefixOf m then
+      mods := mods.insert m
+    if laterThan18 m then
+      logInfo m!"LATER {n} ({m})"; bad := bad + 1
+  logInfo m!"modules reached: {mods.toList.map toString |>.toArray.qsort (· < ·)}"
+  logInfo m!"cutoff_check: {roots.length} roots, {seen.size} constants walked, {bad} findings"
+
+#cutoff_check
 ```
 
+**At bd69bb9b5e6790e00e9c25d8417b6d1898446733.** 70108dd0 records these checks, run in this
+order from the root of a clean checkout of that commit, with nothing uncommitted and no
+build of its own before them: the build of the seven modules, each file elaborated alone,
+`lake build Staging`, and RoutesCheck.lean. The build, the seven files and the module
+reported what they report at e09f40f6, above, and `lake build Staging` completed (109 jobs)
+with the same two warnings of `Elements/Figure/Circles.lean` and no other. Then, with
+70108dd0's edits to this report in place, `lake build Elements` completed (153 jobs), and
+`scripts/check_style.py` and `scripts/check_links.py` passed, the second reporting
+`all 14071 relative links and anchors in 484 Markdown files resolve`. Three copies of the
+module, run on the same build after it and then deleted, showed what it finds. The first
+printed the names of the 38 theorems: one each in `Prop08.lean` and `Prop21.lean`, two each
+in `Prop26.lean` and `Prop27.lean`, eleven in `Prop20.lean`, four of them in the namespace
+of a changed main theorem, fourteen in `Touching.lean` and seven in `AngleOfContact.lean`.
+The second added Circle 2 to the theorems walked and III.20 of `Elements/` to the roots of
+the angle of contact, Circle 2 and Circle 3 to the declarations put to collectAxioms, and
+paired the staged III.8 with III.8's general companion. It gave the seven findings those
+seeds call for: Circle 2 and Circle 3 beneath the theorems, Circle 3 declared as an axiom,
+Circle 3 beneath each of the two, the types unlike, and III.20 later than III.18. The third
+added a theorem resting on a new axiom and one proved by `sorry`, and gave a finding for
+each.
+
 **At 9a0f8ba1, with the edits that e786ffc3 commits.** The edits change no declaration:
-they delete from `Touching.lean` its
-import of I.12, which nothing in the file used; correct a sentence of its docstring and one
-of the doc comment of `Staging.lean`; and change this report. On that tree the seven modules
-were built, and the scratch module described at 80e85ec6, below, put the 38 theorems to
-Lean's collectAxioms. It reported:
+they delete from `Touching.lean` its import of I.12, which nothing in the file used;
+correct a sentence of its docstring and one of the doc comment of `Staging.lean`; and
+change this report. On that tree er_check.sh built the seven modules and put the 38
+theorems to Lean's collectAxioms. It reported:
 
 ```text
 Build completed successfully (107 jobs).
@@ -965,9 +1045,10 @@ routes_check: 38 theorems, 0 findings
 `lake build Staging` completed (109 jobs) with no warning from `Staging/Routes/`; its only
 warnings are the two unused variables at lines 165 and 166 of
 `Elements/Figure/Circles.lean`. Each of the seven files, elaborated alone with `lake env
-lean`, gave no message at all, so the five type equalities they end with hold. The scratch
-walk beneath the seven theorems for the angle of contact found no proposition of Book III
-later than III.18, and reached the modules of Book III it reached at 80e85ec6:
+lean`, gave no message at all, so the five type equalities they end with hold.
+Cutoff.lean, above, found no proposition of Book III later than III.18 beneath the seven
+theorems for the angle of contact, and reached the modules of Book III it reached at
+80e85ec6:
 
 ```text
 cutoff_check: 7 roots, 1462 constants walked, 0 findings
@@ -1020,8 +1101,8 @@ cutoff_check: 7 roots, 520 constants walked, 0 findings
 
 At 80e85ec6, `scripts/check_style.py` failed on six names in this report that Lean,
 importing `Elements` alone, does not know: the staged names written in backticks, and
-Lean's collectAxioms. This text writes them in words or in code blocks. With it in place,
-`lake build Staging`, `scripts/check_style.py` and `scripts/check_links.py` pass.
+Lean's collectAxioms. This report writes them in words or in code blocks, and the style
+check passes on it (above, at e09f40f6).
 
 **At bd9c4b76, in the code review.** The reviewer ran the same build and axiom check, with
 the same result but for the count of jobs (101), found no warning from `Staging/Routes/` in
@@ -1048,14 +1129,16 @@ before the port; the 19 copies of facts now in `Elements/` went with it. A scrat
 closed the five type equalities, and found nothing later than III.18 beneath the theorems
 for the angle of contact. c868a9fc changed `Prop20.lean` and `Prop26.lean` after it.
 
-**The certificate for #131, at 9f8c8adb.** `lake build` and `lake env lean
-Certificate/Facts.lean` wrote a `facts.json` identical to the one committed, which the
-figures of #131 read; the walk behind the computed figures agrees with it on all 137
-entries.
+**The figures of #131.** At 9f8c8adb, whose `Elements/` was train C6c's as at 80292b0a,
+`lake build` and `lake env lean Certificate/Facts.lean` wrote a `facts.json` identical to
+the one committed, which the figures of #131 read; the walk behind the computed figures
+agrees with it on all 137 entries. These measurements replaced the estimate of an earlier
+version of #131, made from main at 2e8aecf and an earlier train C6c (d3e9a8c).
 
-**The certificate for #131, at 9a0f8ba1.** The merge 60dc26e0 changes `Elements/` and
-`facts.json`, so the measurement was made again. `lake build` completed (153 jobs), and
-`lake env lean Certificate/Facts.lean` reported:
+At 9a0f8ba1 the measurement was made again, for the merge 60dc26e0 had brought to
+`Elements/` main's restricted rule of superposition, with I.4 and I.8 proved by it, and
+changed no file of `Elements/BookIII/`. `lake build` completed (153 jobs), and `lake env
+lean Certificate/Facts.lean` reported:
 
 ```text
 certificate: 99 propositions, 3 porisms and 35 companions written to facts.json, with 80 axioms and 242 words of the vocabulary they and the entries are stated in
@@ -1063,14 +1146,38 @@ certificate: 99 propositions, 3 porisms and 35 companions written to facts.json,
 
 The `facts.json` it wrote is, byte for byte, the one committed at 9a0f8ba1; the files the
 run writes were then restored, and none was left changed. Compared with the one at
-9f8c8adb, each of the 137 entries has the same `axioms`. A scratch walk outside the
-repository gives, with nothing dropped, each entry exactly its `axioms` there, and with the
-five calls dropped every computed figure of #131: each pair of the table, the rules that
-leave, III.8's call alone changing nothing, the 45 entries on the rule and 43 after, the 38
-that change and the 31 of them that lose only `exists_point_same_side`, and the 42 entries
-beneath III.1 and none after. The page generator's own functions, run on that `facts.json`,
-give two of Heath's 86 references in Book III uncited, III.5 in III.10 and III.10 in III.24,
-and seven with III.1 taken from the citations of the five proofs.
+9f8c8adb, each of the 137 entries has the same `axioms`; what changes is the vocabulary
+(125 words, now 242), the type of the rule of superposition, and, for I.4 and I.8 alone,
+the record of which rules each proof calls itself and through which steps it reaches the
+others. A scratch walk outside the repository gives, with nothing dropped, each entry
+exactly its `axioms` there, and with the five calls dropped every computed figure of #131:
+each pair of the table, the rules that leave, III.8's call alone changing nothing, the 45
+entries on the rule and 43 after, the 38 that change and the 31 of them that lose only
+`exists_point_same_side`, and the 42 entries beneath III.1 and none after. The page
+generator's own functions, run on that `facts.json`, give two of Heath's 86 references in
+Book III uncited, III.5 in III.10 and III.10 in III.24, and seven with III.1 taken from the
+citations of the five proofs. The third code review ("Who read what") ran the certificate
+and the walk again at bd69bb9b, whose `Elements/` and `facts.json` are those of 9a0f8ba1,
+and found the same.
+
+At e09f40f6 neither the certificate nor the walk, which imports all of `Elements`, was run
+again, for these checks built no more than the seven modules; the figures hold there all
+the same. The `facts.json` committed at e09f40f6, which is train C6c's, gives each of the
+137 entries exactly the `axioms` it has at 9a0f8ba1, so every measured figure stands, and
+45 entries rest on the rule, as before. It differs from the one at 9a0f8ba1 only in what
+five entries, III.1, its porism, III.16, III.17 and III.19, record of the steps through
+which they reach their rules, line numbers of steps in III.1's file among them, and, for
+III.1 and its porism, of the rules their proofs call themselves. The Lean of `Elements/`
+differs only in doc comments and in the proof of III.1's step `Prop1.perpendicular`, that
+at a point of a straight line only one straight line is at right angles to it, which now
+takes the right angle beside a right angle by I.13 and C.N. 3, where it called the theorem
+`adjacent_eq_of_right`. A scratch module that sets the old proof beside the new, in one
+environment, finds the same 58 axioms beneath each by Lean's collectAxioms. No dropped call
+lies beneath that step, so the walk finds beneath every entry, with the calls dropped or
+not, the axioms it found at 9a0f8ba1, and every computed figure stands. Run on that
+`facts.json` with `scripts/render.py` as it is at e09f40f6, the page generator's functions
+give again 86 references and two uncited, as [GRAPH.md](../../GRAPH.md) says, and seven
+with the five calls dropped.
 
 **Who read what.**
 
@@ -1081,12 +1188,13 @@ and seven with III.1 taken from the citations of the five proofs.
   text where a file has his sentences and against train C6c's tree: one `Prop08.lean` and
   `Prop27.lean`, and another `Touching.lean` and `AngleOfContact.lean`, at 4a6d9a49; the
   third `Prop20.lean`, `Prop21.lean` and `Prop26.lean`, at 9f8c8adb. Each passed it with
-  minor findings. 86c5748d answers the first two, and the third's request for a remark on F
-  in III.21: a remark wanted under III.26's step in III.27, the unused hypothesis that the
-  circles are two in the step from the straight line through the centres, docstrings that
-  named a centre the statement no longer has or told the history of the move, and the
-  remark on F. c868a9fc answers the third's other two: III.20 and III.26 import what they
-  cite, and III.26's docstring says that the segments are similar.
+  minor findings. 86c5748d answers the first two (a remark wanted under III.26's step in
+  III.27, the unused hypothesis that the circles are two in the step from the straight line
+  through the centres, and docstrings that named a centre the statement no longer has or
+  told the history of the move), and adds a remark on F in III.21, which the third reader,
+  reading 9f8c8adb, asked for independently. c868a9fc answers the third's other two: III.20
+  and III.26 import what they cite, and III.26's docstring says that the segments are
+  similar.
 - **The code review.** After this report was rewritten (78b3d913, bd9c4b76), an
   independent code review read the whole branch at bd9c4b76, against the repository's
   standards and the six issues. It found the five staged proofs of statements in
@@ -1120,9 +1228,30 @@ and seven with III.1 taken from the citations of the five proofs.
   this list; and a sentence of `Staging.lean` on its folders.
 - **The pre-merge validation at bd69bb9b** (WORKFLOW, section 10). Its review found that
   "Checks" tied the evidence for the revision delivered to 9a0f8ba1 and to edits it did not
-  name, with no command of its scratch checks written out. The commit that carries this
-  text answers it, and changes this report alone: the checks above at bd69bb9b, with the
-  module they ran, and the account of the merges after 9a0f8ba1 in this report's opening
-  and under #131.
-- **Not yet read independently.** e786ffc3, which the review of the pre-merge validation at
-  bd69bb9b read with the rest of the branch, and the commit that carries this text.
+  name, with no command of its scratch checks written out. 70108dd0, a follow-up to
+  bd69bb9b in documentation only, answers it, and changes this report alone: the checks at
+  bd69bb9b, with the module they ran given whole, an account of the merges after 9a0f8ba1
+  in this report's opening and under #131, and e786ffc3 named where the text meant it. Its
+  tests, run at 70108dd0, found the seven modules building and none of what the checks
+  above look for. Its documentation step found that this branch had made false the
+  sentence of [docs/reports/overlaps.md](overlaps.md) on staged work, and 5fca8529, as the
+  coordinator directed, changes that sentence alone: `Staging/Routes/` holds seven Lean
+  files, whose theorems rest on neither Circle 2 nor Circle 3, and so reach none of Book
+  Zero's three lemmas that rest on Circle 2. The writer of this report's later edits, who
+  wrote neither commit, read both in full. 5fca8529's sentence holds at e09f40f6
+  ("Checks"). Of
+  70108dd0's text, this report's later edits replace the account of the merges by what
+  holds at every merge (the opening), drop the scratch path it gave for the module, which
+  is given whole above, and correct its sentence that the scratch modules of the earlier
+  runs were not kept: the cutoff walk's was, and is given whole above too.
+- **The third code review.** An independent code review read e786ffc3 and the merges
+  33236005 and bd69bb9b, at bd69bb9b, and ran its checks again there, the certificate and
+  the walk of #131 among them. It found the second review's findings answered and every
+  claim of e786ffc3 true, and two findings of its own: a material one, of stale revision
+  ties, for the merges after e786ffc3 had made false this report's account of the merges
+  and the revision it tied its checks to; and a minor one, the chronology of the remark on
+  F, above. This report's later edits answer both: the opening says what holds of
+  `Elements/` and `facts.json` at every merge, in place of an account of each merge; #131
+  gives its figures at e09f40f6; "Checks" ties each check to the revision it ran on; and the
+  remark on F is told in the order it came.
+- **Not yet read independently.** This report's later edits, and the merge e09f40f6.
