@@ -400,9 +400,11 @@ dependencies.
     that option, the word `native`, wherever it stands, and `(config := …)`, spelled
     `config` or `«config»`, are refused;
   - `set_option debug.…`, and its escaped spelling `set_option «debug».…`, which Lean
-    reads the same way: `debug.skipKernelTC` skips the kernel, and `debug.byAsSorry` and
-    its kin put `sorry` in place of a proof;
-  - `set_option doc.…`, and its escaped spelling `set_option «doc».…`: with `doc.verso`
+    reads the same way, with or without a space before the guillemet
+    (`set_option«debug».skipKernelTC`): `debug.skipKernelTC` skips the kernel, and
+    `debug.byAsSorry` and its kin put `sorry` in place of a proof;
+  - `set_option doc.…`, and its escaped spelling `set_option «doc».…`, with or without
+    that space (`set_option«doc».verso`): with `doc.verso`
     or `doc.verso.module` on, Lean reads a docstring as Verso and runs the Lean in its
     code blocks, an `#eval` among it, while the file is built, though the scan takes
     docstrings out with the comments; refusing the options keeps every docstring inert;
@@ -435,6 +437,21 @@ dependencies.
     attributes each Lean release adds, so this one may not be complete, and review still
     reads every staged file and audit lemma;
   - `implemented_by`, `extern` and `unsafe` put code in place of a definition;
+  - `#guard_msgs` with `drop`, in any of its forms (`(drop all)`, `(drop error)`,
+    `(drop warning)`, `(drop info)`, `(warning, drop all)` and the rest, with or without
+    spaces), takes the messages it matches out of the build: with `drop all` or
+    `drop error` a theorem that Lean refused still builds, resting on `sorryAx`, and
+    with `drop warning` the warning that a declaration uses `sorry` is gone. It is
+    refused in every file the scan reads, the audit lemmas and the model among them, with
+    no exception, since no file needs it
+    ([decisions, 21 October 2026](briefs/0002-decisions.md#21-october-2026)); a need for
+    one is asked for in a change of its own. A `#guard_msgs` that checks its messages, as
+    the audit pins do, is not refused. A `#guard_msgs` can still hide an error without
+    `drop`: when its docstring pins that error, as `model/Check/RoundTrip.lean` pins the
+    generator's refusals on purpose, or with `substring := true`, which lets an empty
+    docstring, or none, match an error. The scan does not refuse these yet; review reads
+    them, and the certificate's axiom check finds the `sorryAx` beneath any certificate
+    entry that rests on such a theorem;
   - `#exit` stops Lean reading the file, though a reader and the checks here read on.
 - **Superposition** only in I.4 and I.8.
 - **Placement,** Euclid's application of one figure to another, only in III.24 and the
@@ -471,6 +488,9 @@ ending and prefix the scan knows, in each of those five folders, and `#exit` at 
 of each root; generator `run_cmd` calls, plain and parenthesised, outside the model's
 Check files, and calls there to another namespace or after another command on the line;
 other forbidden commands on an allowed generator call's line or in its arguments;
+`set_option«debug».skipKernelTC` and the other spellings of the `debug.` and `doc.`
+options with no space before the guillemet, and `#guard_msgs` with `drop` in each of its
+forms, in a scratch copy of I.1's file;
 a proposition imported by Book Zero; a `sorry` in a
 complete book; and a primitive word no longer opaque. Some of the forbidden commands
 stand after a string, a raw string or a character literal holding `/-`, `-/`, `]` or `"`,
@@ -483,7 +503,9 @@ that generator calls first on their line are allowed in `model/Check.lean` and
 `model/Check/`, that an axiom in a `.lake` folder of `model/Model/` or `model/Check/` is
 caught while one in `model/.lake` is not read, that a link named `.lake`, to a
 directory, a file or nothing, is refused in `model/`, `model/Model/` and `model/Check/`,
-and that the unplanted tree passes. They plant source files in place, the `.lake` links
+that a `#guard_msgs` that checks its messages or passes them on, and the words of a
+`drop` in a comment or a string, are not refused, and that the unplanted tree passes.
+They plant source files in place, the `.lake` links and the scratch copy of I.1's file
 in small trees of their own, and copy only `facts.json`, never `model/.lake`.
 
 The first two policies hold in `Staging/` (section 6), `Audit/` and `model/` as well,

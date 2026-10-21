@@ -3558,3 +3558,61 @@ findings:
   glance, now holds whole. The switch is never turned back to quiet a figure: the figure is
   set upright. #159's items on `REACH_PENDING` are untouched. The protected files this
   changes are `scripts/check_style.py` and `tests/test_check_style.py`.
+
+- **Three ways past the forbidden-command scan
+  ([#197](https://github.com/jackChallis/stoicheia/issues/197)).** An independent reviewer
+  found three files that `lake build` accepts and the source scan of
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) let through, and we thank
+  them warmly for each.
+
+  First, `set_option«debug».skipKernelTC true in`. Lean 4.35 needs no space between
+  `set_option` and a guillemet, and the scan's pattern,
+  `\bset_option\s+«?(?:debug|doc)»?\.`, asked for one. Plain `lean` accepts the closed-up
+  spelling and acts on it: under `set_option«debug».byAsSorry true in`, a theorem stating
+  `0 = 1` builds, resting on `sorryAx`. The pattern now takes `\s*`, so the scan refuses
+  `set_option«debug».…` and `set_option«doc».…`, with guillemets around one part or each,
+  in a command or a tactic block, as it refused the spaced spellings; it still refuses
+  those after a space, a tab or a line break. No other pattern of `FORBIDDEN` asks for a
+  space where Lean needs none: their only whitespace is `\s*`, and the scan's one
+  `[ \t]+`, in `MODEL_CHECK_RUN_CMD`, bounds the generator's allowance, so a missing space
+  there means a refusal.
+
+  Second, a command after a `/--/` doc-comment opener, where `read_lean` began the
+  comment's body one character before Lean does. No code changes here for it: it closes
+  with the correction of `read_lean` on `tooling/citation-sweep`
+  ([#32](https://github.com/jackChallis/stoicheia/issues/32)), when that tooling train
+  lands.
+
+  Third, `#guard_msgs (drop all) in` over a theorem that Lean refuses: the error leaves the
+  build, `lake env lean` exits 0 on the file, and the theorem rests on `sorryAx`, which the
+  certificate's axiom check sees only beneath a certificate entry. A new rule,
+  `GUARD_DROP`, refuses `#guard_msgs` with `drop` in each of Lean's forms (`(drop all)`,
+  `(drop error)`, `(drop warning)`, `(drop info)`, and `drop` after another filter or an
+  option, as in `(warning, drop all)`, with or without spaces, and with a remark or a line
+  break inside) in every `.lean` file the scan reads, with no allow-list. That is the
+  coordinator's ruling of 21 October: no file uses it, and a future need asks for an
+  exception in a change of its own. The issue had proposed to allow it in `Audit/` and
+  `model/Model/Audit.lean`, which pin messages on purpose; the ruling refuses it there
+  too. `git grep` finds 228 `#guard_msgs` commands, every one a plain `#guard_msgs in`: 13
+  in `Audit/Overlaps.lean`, 27 in `Audit/Superposition.lean`, 2 in
+  `Staging/Centre/Crossing.lean`, 79 in `model/Check/RoundTrip.lean` and 107 in
+  `model/Model/Audit.lean`. None is refused. Lean reads `drop` only as the plain word,
+  never as `«drop»`.
+
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains tests 19 and 20,
+  which plant each closed-up spelling and each form of `drop` in a scratch copy of I.1's
+  file, in a tree of their own, and require each to be refused on its line, by name; a
+  `#guard_msgs` that checks its messages or passes them on, and the words in a comment or
+  a string, must not be. Run with origin/main's check at `0a05f96f`, both fail: that scan
+  misses the five closed-up spellings and all eleven forms of `drop`, and catches only the
+  three spaced spellings. With this one, both pass.
+
+  Two more ways for `#guard_msgs` to hide an error, found while testing this, remain open,
+  and this entry decides nothing about them: a docstring that pins the error, as
+  `model/Check/RoundTrip.lean` pins the generator's refusals on purpose, and
+  `substring := true`, which lets an empty docstring, or none, match an error. The scan
+  does not refuse them yet. [FORMALIZATION](../FORMALIZATION.md), section 7, the list's
+  one home, now names the closed-up spellings and `drop`, with the two open ways. The
+  protected files this changes are `scripts/check_fidelity.py` and
+  `scripts/negative_tests.py`. Nothing is loosened: the scan refuses all it refused
+  before, and no file of the edition changes.

@@ -87,6 +87,17 @@ records current; CI runs it on every push.
 18. Counting congruence constructors instead of `Coincidence.step` in the certificate:
     `tests/test_certificate.py` fails on transformers with no step. The restored
     certificate must pass the same regression, including its real-step cases.
+19. Without a build, in a scratch copy of I.1's file in a temporary tree, read by the
+    source scan alone: `set_option«debug».skipKernelTC true in`, which Lean reads with no
+    space before the guillemet, and the other spellings of `set_option debug.…` and
+    `doc.…` with none, guillemets around one part or each, in a command and in a tactic
+    block, and after a space, a tab or a line break: each refused by its file, line and
+    spelling, and the unplanted copy passes (#197).
+20. Likewise, `#guard_msgs` with `drop`, in each of its forms: `(drop all)`, closed up
+    and spaced, `(drop error)`, `(drop warning)`, `(drop info)`, `drop` after another
+    filter or an option, twice, and with a remark or a line break inside: each refused by
+    its file and line, while a `#guard_msgs` that checks its messages or passes them on,
+    and the words in a comment or a string, are not (#197).
 
 The copies of items 16 and 17, and item 13's list of generated outputs, read Git's
 tracked files. One absent from the work tree is named on stdout and passed over: as a
@@ -970,6 +981,111 @@ def lake_links() -> None:
             print("✓ a real model/.lake holding an axiom and a link: not read")
 
 
+# The spellings of `set_option debug.…` and `doc.…` with no space before the option, which
+# Lean 4.35 reads as the option itself (#197): a guillemet closed up to the command, around
+# one part or each, in a command and in a tactic block; with them, a guillemet after a
+# space, a tab (which Lean refuses on its own) and a line break, which the scan caught
+# before. Each is planted as (the spelling check_fidelity.py names, a line of Lean).
+SET_OPTION_SPELLINGS = (
+    ("set_option«debug».",
+     "set_option«debug».skipKernelTC true in theorem planted_closed : True := trivial"),
+    ("set_option«debug».",
+     "set_option«debug».«skipKernelTC» true in theorem planted_closed_both : True := trivial"),
+    ("set_option«doc».",
+     "set_option«doc».verso true in theorem planted_closed_verso : True := trivial"),
+    ("set_option«doc».", "set_option«doc».x true in theorem planted_closed_doc : True := trivial"),
+    ("set_option«debug».", "theorem planted_closed_tactic : True := by\n"
+     "  set_option«debug».byAsSorry true in\n  trivial"),
+    ("set_option «debug».",
+     "set_option «debug».«skipKernelTC» true in theorem planted_both : True := trivial"),
+    ("set_option «debug».",
+     "set_option\t«debug».skipKernelTC true in theorem planted_tab : True := trivial"),
+    ("set_option «debug».",
+     "set_option\n  «debug».skipKernelTC true in theorem planted_break : True := trivial"),
+)
+# `#guard_msgs` with `drop`, in Lean 4.35's forms (#197): each kind of message and `all`,
+# the brackets closed up or spaced, `drop` after another filter or an option, twice, and a
+# remark or a line break inside; each is (the words check_fidelity.py names, a line of
+# Lean). GUARD_KEPT holds what the rule does not refuse: a `#guard_msgs` that checks its
+# messages or passes them on, and the words in a comment or a string.
+GUARD_DROPS = (
+    ("#guard_msgs (drop all)",
+     "#guard_msgs (drop all) in theorem planted_drop_all : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs(drop all)",
+     "#guard_msgs(drop all)in theorem planted_drop_closed : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (drop error)",
+     "#guard_msgs (drop error) in theorem planted_drop_error : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs ( drop error )",
+     "#guard_msgs ( drop error ) in theorem planted_drop_spaced : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (drop warning)",
+     "#guard_msgs (drop warning) in theorem planted_drop_warning : True := sorry"),
+    ("#guard_msgs (drop info)", "#guard_msgs (drop info) in #print axioms planted_drop_all"),
+    ("#guard_msgs (warning, drop all)",
+     "#guard_msgs (warning, drop all) in theorem planted_drop_after : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (whitespace := lax, drop all)", "#guard_msgs (whitespace := lax, drop all) "
+     "in theorem planted_drop_option : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (drop trace, drop error)", "#guard_msgs (drop trace, drop error) "
+     "in theorem planted_drop_twice : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (drop all)", "#guard_msgs /- a remark -/ (drop /- a remark -/ all) "
+     "in theorem planted_drop_remark : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (drop all)", "#guard_msgs\n  (drop\n  all) "
+     "in theorem planted_drop_break : (0 : Nat) = 1 := rfl"),
+)
+GUARD_KEPT = (
+    "#guard_msgs in #print axioms planted_drop_all",
+    "#guard_msgs (error) in #print axioms planted_drop_all",
+    "#guard_msgs (pass all) in #print axioms planted_drop_all",
+    "/- #guard_msgs (drop all) in -/ theorem planted_kept_remark : True := trivial",
+    'def plantedKeptWords := "#guard_msgs (drop all) in"',
+)
+
+
+def scratch_plants(name: str, plants: tuple, kept: tuple = ()) -> None:
+    """Plant each of `plants`, (word, Lean), and each line of `kept` in a scratch copy of
+    I.1's file, in a temporary tree whose only file it is, and run check_fidelity.py's
+    source scan on that tree (`rules_in`): the edition's own files are never touched. The
+    copy must pass unplanted. Planted, each of `plants` must be refused on the line of its
+    command, `set_option` or `#guard_msgs`, by `word`, and no line of `kept` refused."""
+    rel = "Elements/BookI/Prop01.lean"
+    marker = "\nend Elements.BookI\n"
+    source = (ROOT / rel).read_text()
+    assert source.count(marker) == 1, f"{rel}: expected one {marker!r}; update this test"
+    planted = source.replace(marker, "\n/-! Planted by scripts/negative_tests.py. -/\n"
+                             + "\n".join([lean for _, lean in plants] + list(kept)) + "\n"
+                             + marker)
+
+    def line(lean: str, anchor: str) -> int:
+        assert planted.count(lean) == 1, f"{lean!r}: planted more than once; update this test"
+        return planted[:planted.index(lean) + lean.index(anchor)].count("\n") + 1
+
+    command = re.compile(r"#?\w+")
+    wanted = [f"{rel}:{line(lean, command.match(word)[0])}: uses `{word}`"
+              for word, lean in plants]
+    unwanted = tuple(f"{rel}:{line(lean, lean)}:" for lean in kept)
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp).resolve()
+        path = root / rel
+        path.parent.mkdir(parents=True)
+        path.write_text(source)
+        if not expect_success(f"{name}: the unplanted scratch copy of {rel}", rules_in(root)):
+            return
+        path.write_text(planted)
+        expect_failure(name, rules_in(root), *wanted, unwanted=unwanted)
+
+
+def set_option_spellings() -> None:
+    """`set_option«debug».skipKernelTC true in`, and the other SET_OPTION_SPELLINGS, in a
+    scratch copy of I.1's file: each refused by its file, line and spelling."""
+    scratch_plants("set_option«debug».… and its kin, with no space before the option",
+                   SET_OPTION_SPELLINGS)
+
+
+def guard_msgs_drop() -> None:
+    """`#guard_msgs (drop all) in` and the other GUARD_DROPS in a scratch copy of I.1's file:
+    each refused by its file, line and words; nothing of GUARD_KEPT is."""
+    scratch_plants("#guard_msgs with drop, in each of its forms", GUARD_DROPS, GUARD_KEPT)
+
+
 def placement_named() -> None:
     """A lemma of the `Placement` namespace named in Squares.lean, Book III's shared steps,
     read from the source: caught on its line. The word in a comment on the line before
@@ -1302,6 +1418,8 @@ def main(argv=()) -> int:
         symbolic_links()
         model_lake()
         lake_links()
+        set_option_spellings()
+        guard_msgs_drop()
         placement_named()
         planted_assumptions()
         for test in (circle_proved, style_error, broken_link, stale_page,
