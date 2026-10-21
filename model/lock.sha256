@@ -55,6 +55,18 @@
 # retirements that day): their laws leave the generated translation;
 # the other 79 axioms and every word are unchanged, byte for byte.
 #
+# Renewed on 19 October 2026, when the restricted rule of superposition (brief 0009, #75)
+# replaced the existential one: the generated law, its hand translation and its proof in
+# the plane were brought to it (model/README.md), and the other 86 laws are unchanged.
+# Renewed on 20 October 2026 after the coincidence marker was integrated (brief 0009,
+# #75): the vocabulary grows from 206 to 208 words. Coincidence and its step join
+# the lock, and the three Derives congruence constructors take the marker. All 87
+# axiom statements are unchanged. The marker records a step without changing its
+# interpretation; the existing placement proofs and numerical law still apply.
+# Renewed on 20 October 2026, when the restricted rule was merged after the first
+# retirement wave: the generated translation has the 79 laws of wave one with the
+# restricted superposition law and its words, and the lock's vocabulary stays at 208 words.
+#
 # Renewed on 21 October 2026, when axiom wave one was merged into train C6a: the lock is
 # main's 79 rules and Tacit.exists_centre, 80 axioms, with 121 words of vocabulary. The
 # generator writes 80 laws, Model/Assembly.lean gathers all 80 with Euclidean.exists_centre
@@ -68,4 +80,22 @@
 # Renewed on 21 October 2026, when train C6c (brief 0008, step 6) was merged with the
 # guard after axiom wave one: Arc.Drawn no longer asks for a centre witness. The 80
 # axioms and the other 124 words are byte-identical; no model law changes.
-52d7991679c721c33576d4c0958d92f4a4f9a016fa98caa7d19368e9e2a3ef48  Certificate/axioms.lock
+#
+# Renewed on 21 October 2026, when main's restricted rule of superposition (#191) was
+# merged into train C6a, through tooling/centre-given-meaning at 980569da: the lock is
+# main's 79 axioms, with Tacit.superposition restated as Superposition.Rule primitives, and
+# Tacit.exists_centre, 80 in all, with 238 words of vocabulary, main's 208 and this train's
+# 30. The generator writes 80 laws, the restricted superposition law and exists_centre's
+# among them, and Model/Assembly.lean gathers all 80.
+#
+# Renewed on 21 October 2026, when train C6a at 529c93f7 was merged into train C6b: the
+# lock is train C6a's, 80 axioms and 238 words, with train C6b's four words, Foot,
+# Arc.Less, Arc.Semicircle and Arc.Greater, 242 words in all. The 80 axioms are
+# byte-identical to train C6a's, and the generator writes the same 80 laws.
+#
+# Renewed on 21 October 2026, when lean/centre-guard at 6b51608a, carrying train C6b and
+# train C6a with main's restricted rule of superposition (#191), was merged into train C6c:
+# the lock is the guard's, 80 axioms and 242 words, with train C6c's Arc.Drawn, which no
+# longer asks for a centre witness. The 80 axioms are byte-identical to the guard's, and
+# the generator writes the same 80 laws.
+8ecd3bade891a4c222a2c9037357e401bb116f52dc96e90e041f8102be908b5f  Certificate/axioms.lock

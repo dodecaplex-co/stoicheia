@@ -10,7 +10,7 @@
   <line x1="200.00" y1="150.00" x2="155.40" y2="106.93" stroke="#f2b705" stroke-width="6" stroke-linecap="round"/>
   <line x1="200.00" y1="150.00" x2="258.97" y2="169.16" stroke="#f2b705" stroke-width="6" stroke-linecap="round"/>
   <circle cx="200.00" cy="150.00" r="4.5" fill="#222222"/>
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="69.5" y="189.6">A</text>
     <text x="230.1" y="23.3">B</text>
     <text x="230.6" y="286.4">C</text>

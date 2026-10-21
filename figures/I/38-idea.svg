@@ -10,7 +10,7 @@
   </g>
   <line x1="60.0" y1="215.0" x2="160.0" y2="215.0" stroke="#d0312d" stroke-width="7" stroke-linecap="butt"/>
   <line x1="240.0" y1="215.0" x2="340.0" y2="215.0" stroke="#d0312d" stroke-width="7" stroke-linecap="butt"/>
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="125" y="74.2">A</text>
     <text x="195" y="74.2">D</text>
     <text x="60" y="236.2">B</text>

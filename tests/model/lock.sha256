@@ -63,6 +63,22 @@
 # Tacit.triple_incidence3 and Tacit.inside_of_angle_add. Their laws leave laws.toml, search.py
 # and hyperbolic.py; the other 79 axioms and every word are unchanged, byte for byte.
 #
+# Renewed on 19 October 2026, when the restricted rule of superposition (brief 0009, #75)
+# replaced the existential one: the axiom Tacit.superposition is restated as
+# Superposition.Rule primitives, and the lock's vocabulary gains the calculus's words. The
+# harness's superposition law now checks the placement the rule reduces to
+# (Rule.of_placement) with its kept side, as MODEL.md says; the other 86 axioms are
+# unchanged, byte for byte.
+# Renewed on 20 October 2026 after the coincidence marker was integrated (brief 0009,
+# #75): the vocabulary grows from 206 to 208 words. Coincidence and its step join
+# the lock, and the three Derives congruence constructors take the marker. All 87
+# axiom statements are unchanged. The marker records a step without changing its
+# interpretation; the existing placement proofs and numerical law still apply.
+# Renewed on 20 October 2026, when the restricted rule was merged after the first
+# retirement wave: the 79 axioms of wave one with Tacit.superposition restated as
+# Superposition.Rule primitives, and the vocabulary at 208 words; the harness keeps wave
+# one's removals and the restricted law's placement check with its kept side.
+#
 # Renewed on 21 October 2026, when axiom wave one was merged into train C6a: the lock is
 # main's 79 axioms and Tacit.exists_centre, 80 in all, with 121 words of vocabulary. The
 # eight retired rules stay out of laws.toml, search.py and hyperbolic.py, exists_centre's law
@@ -76,4 +92,25 @@
 # Renewed on 21 October 2026, when train C6c (brief 0008, step 6) was merged with the
 # guard after axiom wave one: Arc.Drawn no longer asks for a centre witness. The 80
 # axioms and the other 124 words are byte-identical; no model law changes.
-52d7991679c721c33576d4c0958d92f4a4f9a016fa98caa7d19368e9e2a3ef48  Certificate/axioms.lock
+#
+# Renewed on 21 October 2026, when main's restricted rule of superposition (#191) was
+# merged into train C6a, through tooling/centre-given-meaning at 980569da: 80 axioms, main's
+# 79 with Tacit.superposition restated as Superposition.Rule primitives, and
+# Tacit.exists_centre, with 238 words of vocabulary, main's 208 and this train's 30. The
+# harness keeps the restricted law's placement check with its kept side and exists_centre's
+# law, and MODEL.md's counts are written again by run.py --full --write in the same change.
+#
+# Renewed on 21 October 2026, when train C6a at 529c93f7 was merged into train C6b: the
+# lock is train C6a's, 80 axioms and 238 words, with train C6b's four words, Foot,
+# Arc.Less, Arc.Semicircle and Arc.Greater, 242 words in all. The 80 axioms are
+# byte-identical to train C6a's, so laws.toml, search.py and hyperbolic.py keep train C6a's
+# 80 laws, and MODEL.md's counts are written again by run.py --full --write in the same
+# change.
+#
+# Renewed on 21 October 2026, when lean/centre-guard at 6b51608a, carrying train C6b and
+# train C6a with main's restricted rule of superposition (#191), was merged into train C6c:
+# the lock is the guard's, 80 axioms and 242 words, with train C6c's Arc.Drawn, which no
+# longer asks for a centre witness. The 80 axioms are byte-identical to the guard's, so
+# laws.toml, search.py and hyperbolic.py keep its 80 laws, and MODEL.md's counts are
+# written again by run.py --full --write in the same change.
+8ecd3bade891a4c222a2c9037357e401bb116f52dc96e90e041f8102be908b5f  Certificate/axioms.lock
