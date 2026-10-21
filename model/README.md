@@ -1,6 +1,6 @@
 # The formal model
 
-Stoicheia's proofs rest on 79 laws: Euclid's postulates, Definition 15 and the tacit rules,
+Stoicheia's proofs rest on <!-- count:axioms -->79<!-- /count --> laws: Euclid's postulates, Definition 15 and the tacit rules,
 each an `axiom` about seventeen `opaque` words, with their exact statements in
 [Certificate/axioms.lock](../Certificate/axioms.lock). Lean checks that every proof follows
 from the laws. It cannot check that the laws can all be true at once.
@@ -10,9 +10,9 @@ package gives a formal proof: a Lake package of its own, with Mathlib, in which 
 words are the fields of a structure, the ordinary plane fills them, and Lean checks that
 the plane satisfies each law.
 
-**Where it stands.** The package builds, with the signature, the plane, and all 79 laws,
+**Where it stands.** The package builds, with the signature, the plane, and all <!-- count:axioms -->79<!-- /count --> laws,
 written by a generator from the library's elaborated declarations into one structure,
-`Laws`, and checked against those declarations. The plane satisfies all 79 locked laws.
+`Laws`, and checked against those declarations. The plane satisfies all <!-- count:axioms -->79<!-- /count --> locked laws.
 `Model/Assembly.lean` gathers these proofs into `euclidean_laws`, with no remaining
 hypotheses, and proves `model_exists`. This establishes a model relative to Lean's logic
 and Mathlib's construction of the real numbers.
@@ -195,7 +195,7 @@ what it writes.
 1. **Read the declarations, not the text.** The generator imports every module of
    `Elements.Foundations`, and checks that there is one for each file under
    `Elements/Foundations/`, so that no axiom is missed. It takes every axiom declared there,
-   which must be exactly the 79 names in the lock's `[axioms]`, as the expression Lean
+   which must be exactly the <!-- count:axioms -->79<!-- /count --> names in the lock's `[axioms]`, as the expression Lean
    elaborated: binders, binder kinds (implicit or explicit), the order of the binders, every
    guard, every instance argument. It checks too that the lock prints each one's statement
    as Lean prints it now, and each word they reach as the lock's `[vocabulary]` has it, so
@@ -240,7 +240,7 @@ what it writes.
      Postulate5 : Law.Postulate5 S
    ```
 
-   Postulate 5 stands apart from the other 78, so that a hyperbolic plane can later satisfy
+   Postulate 5 stands apart from the other <!-- count:axioms-but-postulate-5 -->78<!-- /count -->, so that a hyperbolic plane can later satisfy
    `Neutral` and fail it; so would any rule the library declared in
    `Elements.Tacit.Euclidean`, for the plane alone, of which there is none. The file's header
    records the sha256 of the lock it was written from, with a table of the 37 words and what
@@ -271,7 +271,7 @@ what it writes.
 The library's 99 proofs do not change. Rewriting the library over a signature, with
 wrappers that keep its present names, is a later and separate decision, and it would need
 care not to blur the certificate: if every theorem took one `Laws` hypothesis bundling all
-79 laws, Lean's dependency walk would report all 79 beneath every proof.
+<!-- count:axioms -->79<!-- /count --> laws, Lean's dependency walk would report all <!-- count:axioms -->79<!-- /count --> beneath every proof.
 
 ## How the translation is checked
 
@@ -293,7 +293,7 @@ the original means. These checks do that, at every build.
   declaration's statement and does not use the axiom. The kernel accepts the `rfl` only if
   the two are the same proposition, up to unfolding definitions; a dropped guard, two
   swapped arguments or a change in the order of the binders fails it, and the build with
-  it. This covers all 79 laws and all 16 defined words they reach. The family checks in
+  it. This covers all <!-- count:axioms -->79<!-- /count --> laws and all 16 defined words they reach. The family checks in
   `Check/` retain the original library checks. They also compare each hand-translated law
   with its generated field over any signature, except for the eight retired axioms:
   `adjacent_eq_of_right`, `not_same_side_of_circles_meet`,
@@ -456,7 +456,7 @@ bisector of the common points, as in Intersections 8 and 9.
 
 ## Proved laws
 
-The generated [assembly](Model/Assembly.lean) supplies **79 of the 79 locked laws** from
+The generated [assembly](Model/Assembly.lean) supplies **79 of the <!-- count:axioms -->79<!-- /count --> locked laws** from
 proofs in the plane. This list counts each law once, even where two families supply a proof.
 Names other than `Definition15` and the postulates are in `Elements.Tacit` in the lock.
 The proposed `exists_centre` is proved too, but is not a locked law and is not counted here.
@@ -531,12 +531,9 @@ downloading again. After a restore, `lake exe cache get` downloads nothing and u
 nothing. The job stops after 30 minutes, since without Mathlib's prebuilt files
 `lake build` would compile Mathlib from source for hours.
 
-It is not yet a required check: the ruleset on main requires `check`, `model` and
-`negative`, and making this one required is the owner's call
-([decisions](../docs/briefs/0002-decisions.md#18-october-2026), 18 October). Even so,
-`git safe-push --merge`, which lands every pull request, refuses one while any of its
-checks fails or is still running, this one among them
-([WORKFLOW](../docs/WORKFLOW.md#landing-work-pull-requests), section 10).
+`formal-model` is a required check. The five checks required by GitHub, and the present
+distinction between that ruleset and the merge gate's local presence test, are kept in
+[WORKFLOW](../docs/WORKFLOW.md#landing-work-pull-requests), section 10.
 
 ## Thanks
 
