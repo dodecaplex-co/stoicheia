@@ -68,10 +68,10 @@ case = "BE greater than ED, and A four-sided, as in Heath's figure; the main the
 
 [review]
 stage = "full"
-commit = "c814e8fb"
+commit = "9b7dad70"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:ff3205b2440424da"
-run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at c814e8fb"
+run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at 9b7dad70"
 
 [review.items]
 statement = "pass"
