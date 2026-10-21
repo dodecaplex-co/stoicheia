@@ -3032,3 +3032,54 @@ findings:
   hold. `git safe-push --label release` creates the `release` label, with its
   description, the first time it is given; the consolidation release (#38) lands through
   a pull request carrying it. Tags and releases stay manual, by the owner.
+
+## 21 October 2026
+
+- **The formal model's compiled proofs replayed by Lean's kernel, apart from the build
+  ([#121](https://github.com/jackChallis/stoicheia/issues/121)).** The other half of
+  #121, which the source scan's entry of 19 October left open: after `lake build`, CI's
+  `formal-model` job runs [`scripts/check_model_kernel.py`](../../scripts/check_model_kernel.py)
+  (new), in which leanchecker, from the pinned toolchain, replays through Lean's kernel
+  every declaration of every compiled module of the model's own two libraries, `Model`
+  and `Check`, private declarations included. The script lists the modules from the
+  files, the two roots and every `.lean` file under `model/Model/` and `model/Check/`,
+  and fails unless leanchecker reports replaying exactly those, so a new module is never
+  missed; a source with no compiled file, a build not up to date with its sources (`lake
+  build --no-build`) and a compiled module whose source is gone each fail it, and a
+  rejection names the module and the declaration leanchecker names. `Check/Write.lean`
+  alone is not replayed, by name: it writes the generated files whenever Lean elaborates
+  it, so `lake build` never compiles it, and the check fails if that file goes. It runs
+  as `scripts/check_kernel.py` runs leanchecker for `Elements`, but without `--fresh`, so
+  each module's imports are loaded from their compiled files, not replayed. What that
+  leaves: the declarations of Mathlib and of the packages it requires are left to
+  Mathlib's own checks, a daily job (`.github/workflows/daily.yml` in Mathlib) that
+  replays Mathlib and Batteries from nothing with leanchecker and checks Mathlib with
+  nanoda, on Mathlib's master branch rather than the release pinned here; the library's
+  declarations that `Check` imports, and Lean's own, are replayed from nothing by
+  `check_kernel.py` in the `check` job. leanchecker runs the same kernel as `lake build`,
+  so the replay catches a declaration that reached a compiled file without the kernel's
+  check, not a fault in the kernel, and it replays any axiom it meets: which axioms the
+  model's proofs rest on stays `model/Model/Audit.lean`'s check. The planted fault: its
+  `--self-test`, which runs first in the job and needs no Mathlib, builds with `lake
+  build`, in a temporary directory outside the repository, small packages of the model's
+  shape that import only Lean, and adds a theorem of `False`, proved by `True.intro`, from
+  a `run_cmd` with the kernel's check switched off (`debug.skipKernelTC`, under which
+  `addDecl` calls `addDeclWithoutChecking`), once in a `Check` file and once in a `Model`
+  module. `lake build` accepts both; the check must fail on each, naming the module and
+  the declaration, and must pass the control, which adds a true theorem the same way. A
+  source never compiled and a compiled module without its source are planted too.
+  leanchecker runs on two threads, since each module it replays loads its imports'
+  environment afresh, Mathlib's for each module that imports it: unthrottled on sixteen
+  threads one run reached a 49 GB footprint, and on two it peaked near 2.6 GB and took
+  about a minute.
+  Kim Morrison and Sebastian Ullrich wrote leanchecker, which began as Kim Morrison's
+  [lean4checker](https://github.com/leanprover/lean4checker) and now ships with Lean; we
+  are warmly grateful to them both. `safe_push` still leaves the `formal-model` job to CI
+  ([WORKFLOW](../WORKFLOW.md), section 8). The sentences that called the replay open, in
+  `scripts/check_fidelity.py`'s docstring and [FORMALIZATION](../FORMALIZATION.md),
+  section 7, now say what is true;
+  [model/README.md](../../model/README.md#the-ci-job), "The CI job", lists the step. The
+  protected files changed are:
+  `.github/workflows/ci.yml`,
+  `scripts/check_fidelity.py`,
+  `scripts/check_model_kernel.py`.

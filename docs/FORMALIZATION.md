@@ -504,8 +504,15 @@ by opening a comment or ending an attribute's brackets. Beyond that it reads wor
 Lean's grammar nor the tokens a file declares, so it catches a slip but not a command
 disguised from it on purpose, nor an attribute it does not list: review still reads every
 staged file, audit lemma and model file. In `Elements/` the certificate reads the axioms
-from Lean itself as well. The model's independent kernel replay, the other half of #121,
-is still open.
+from Lean itself as well. In `model/`, the scan reads words and the replay reads proofs:
+after `lake build`, CI's `formal-model` job runs `scripts/check_model_kernel.py`, in which
+leanchecker replays every compiled declaration of the model's `Model` and `Check` libraries
+through Lean's kernel again, apart from the build (#121). It runs without `--fresh`, so
+what those modules import is loaded, not replayed: Mathlib's declarations are left to
+Mathlib's own checks, and the library's and Lean's own are `check_kernel.py`'s. Its
+self-test plants a theorem of `False` added without the kernel's check, which `lake build`
+accepts and the replay must reject by name
+([model/README.md](../model/README.md#the-ci-job), "The CI job").
 The checks' own Lean, `Certificate/Facts.lean`, which writes `facts.json`, is not
 scanned: it is a protected path ([WORKFLOW.md](WORKFLOW.md), section 10), changed only
 with a decisions entry and a security review.
