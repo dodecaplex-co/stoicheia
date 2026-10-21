@@ -56,7 +56,7 @@ case = "the three squares standing outward from the right-angled triangle, as in
 stage = "full"
 commit = "78fb461d"
 reviewer = "Claude Opus 5.5, independent reader"
-run = "card 220, cross-family sign-off: Prop47's proof by OpenAI Codex, begun from the voyage 4 challenger's scratch proof X47 (54a08e61; the challenger's family is not recorded) and keeping many of its lines, read by Claude Opus 5.5 (those lines, and Prop47.within by the Claude first mate, read by GPT-6 Astra (Codex) at adbf6993); ship XS, reader XS-r-I44-I47, independent re-read at 78fb461d"
+run = "card 220, cross-family sign-off: Prop47's proof by OpenAI Codex, begun from the voyage 4 challenger's scratch proof X47 (54a08e61; the challenger's family is not recorded) and keeping many of its lines, read by Claude Opus 5.5 (those lines, and Prop47.within by the Claude first mate from the challenger's X47.within, read by GPT-6 Astra (Codex) at adbf6993); ship XS, reader XS-r-I44-I47, independent re-read at 78fb461d"
 lean = "sha256:0120b11abdd14b1b"
 
 [review.items]
