@@ -3152,12 +3152,13 @@ findings:
   protected `model/lakefile.toml`, named above.
 
 - **The restricted rule is integrated after axiom wave one (A1).** On 20 October 2026,
-  `lean/superposition-restricted` at `9fc4bdc9` merges
-  `tooling/superposition-model-check` at `5a848389`, which already contains main at
-  `7834e3a7`, A1 and both superposition tooling branches. This brings the eight proved
-  rules into the restricted-rule branch without restoring any retired axiom. A1 has
-  landed; the landing order is A1, then this restricted-rule replacement, then wave two
-  (A2, `lean/retire-axioms-2`). A2's landing carries the review of `drawsNothing`, its
+  the integration merge at `bd86a7b6` has the restricted-rule revision `9fc4bdc9` as one
+  parent and `tooling/superposition-model-check` at `5a848389` as the other. The tooling
+  parent already contains main at `7834e3a7`, A1 and both superposition tooling branches.
+  This brings the eight proved rules into the restricted-rule branch without restoring
+  any retired axiom. A1 has landed; the landing order is A1, then this restricted-rule
+  replacement, then wave two (A2, `lean/retire-axioms-2`). A2's landing carries the review
+  of `drawsNothing`, its
   supporting prose and the audit pins when cited-law proofs gain construction
   dependencies, as #119 and #150 require. A1 alone does not make that change: I.4's
   cited laws still use the retained `triple_incidence2`, `eq_of_len_eq_zero` and
@@ -3181,6 +3182,11 @@ findings:
   evidence for their dated revisions; the 19 October preparation entry is unchanged. The
   20 October approval "as prototyped" and round 4 remain in force, with finishing tracked
   in #150.
+
+  The required independent review of the integrated revision remains unresolved. The
+  repository has no attributable handback identifying the review stage and workflow for
+  the claimed reading at `bd86a7b6`; the six records retain their earlier attributable
+  review events and are not restamped for this integration.
 
   The protected paths this merge changes from both of its parents are these. Reconciled by
   hand: `Audit/Overlaps.lean`, `Audit/screen.py`, `tests/certificate_expectations.json` (29

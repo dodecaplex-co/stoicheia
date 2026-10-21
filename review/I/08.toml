@@ -42,9 +42,9 @@ note = "This figure draws the impossible supposition: G distinct from D on the s
 
 [review]
 stage = "full"
-commit = "bd86a7b6"
+commit = "87b45151"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-run = "brief 0009, the A1 integration, ship S3"
+run = "brief 0009 stage full, workflow review commit ab93fb96"
 lean = "sha256:357daf55d17591d1"
 
 [review.items]

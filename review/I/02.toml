@@ -45,10 +45,10 @@ case = "A apart from B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "bd86a7b6"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "bda0636"
+reviewer = "Codex (gpt-6-astra), independent reader"
 lean = "sha256:51c22d0c078729c6"
-run = "brief 0009, the A1 integration, ship S3"
+run = "brief 0009 stage full, workflow review commit f5bccaa4"
 
 [review.items]
 statement = "pass"

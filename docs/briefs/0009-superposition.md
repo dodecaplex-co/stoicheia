@@ -16,14 +16,15 @@ at `aa96ab8`, from `origin/main` at `39ae65c`, and the approval after main was m
 formalised; the brief, the review records and the pages must agree with it
 ([FORMALIZATION.md](../FORMALIZATION.md), section 1).*
 
-**Baseline update, 20 October 2026: A1 has landed.** This merge brings main at
-`7834e3a7` and both tooling branches through `tooling/superposition-model-check` at
-`5a848389` into the restricted-rule branch at `9fc4bdc9`. A1's eight retired axioms
+**Baseline update, 20 October 2026: A1 has landed.** The integration merge at
+`bd86a7b6` has the restricted-rule revision `9fc4bdc9` as one parent and
+`tooling/superposition-model-check` at `5a848389` as the other. The tooling parent carries
+main at `7834e3a7`, A1 and both superposition tooling branches. A1's eight retired axioms
 remain theorems: the foundation has 79 axioms, including 73 tacit rules, with
 `Tacit.superposition` restated as `Elements.Superposition.Rule Elements.primitives`.
-The combined vocabulary is expected to be 208 and the certificate has 29 expectations;
-the coordinator must confirm the counts after regeneration. Earlier 87-axiom and
-206/208-word measurements below describe their named revisions before this A1 integration.
+The regenerated vocabulary has 208 entries, and the certificate has 29 expectations.
+Earlier 87-axiom and 206/208-word measurements below describe their named revisions before
+this A1 integration.
 The landed retirements also change the overlap catalogue: Circle 4 is a corollary of
 I.7, Diagram-angle 3 follows I.13, and Generalities 2 is proved in Book Zero. Circle 2
 is proved from Circle 3, which remains III.2's axiom overlap. The restricted rule
@@ -623,12 +624,14 @@ and introduction, and the pages for I.4, I.8 and I.23 describe that restriction.
 our reading that I.7 may be cited although its proof constructs. `mishnah/I/23.md` keeps
 I.22's constructed points and I.8's angle equality distinct, and explains the inherited
 rule through I.8 and I.20. I.44's comment describes its existing construction of the
-parallelogram. The six records for I.2, I.3, I.4, I.8, I.23 and I.44 have been read and
-stamped independently; all retain full coverage and Euclid's route. The marker change
-made I.4's and I.8's records stale; an independent reader read both again and stamped
-them at `0085b443`.
-The pages were regenerated on the restricted-rule branch before this A1 merge. That
-earlier regeneration and those record readings do not validate the combined revision.
+parallelogram. The six records for I.2, I.3, I.4, I.8, I.23 and I.44 preserve their
+attributable independent reviews before A1; all retain full coverage and Euclid's route.
+The marker change made I.4's and I.8's records stale; an independent reader read both
+again and stamped them at `0085b443`. No attributable handback identifies the review
+stage and workflow for the claimed reading at `bd86a7b6`, so the required integration
+review remains unresolved and the records are not stamped at that revision. The pages
+were regenerated on the restricted-rule branch before the A1 merge. That earlier
+regeneration and those record readings do not validate the combined revision.
 
 ## Evidence before landing
 
@@ -726,9 +729,10 @@ branch, the lock kept all 87 axiom statements unchanged and its vocabulary grew 
 was removed, and no other locked word changed in that integration. The lock, both hashes,
 the model's three generated files and the edition were regenerated from those sources.
 The certificate has 99 propositions, 3 porisms and 20 companions, 122 entries in all.
-This A1 integration retains the restricted rule and the marker, removes the eight retired
-axioms, and expects 79 axioms and vocabulary 208 after fresh regeneration. The older
-measurements above do not validate that result.
+This A1 integration retains the restricted rule and the marker and removes the eight
+retired axioms. Its regenerated results are 79 axioms, including 73 tacit rules, 208
+vocabulary entries and 29 certificate expectations. The older measurements above do not
+validate that result.
 
 It does not prove equivalence with System E's two-rule presentation, or non-derivability of
 placement in the whole theory. Part 4 of the restriction remains chiefly an inspection of
