@@ -68,10 +68,10 @@ records current; CI runs it on every push.
     the page would be repaired back to HEAD and leave that status clean.
 14. An axiom dropped from an audit lemma's expected list: `lake build Audit` fails
     with the file's name and a `#guard_msgs` mismatch; the restored audit must build.
-15. A corrupt header in I.1's compiled `.olean`: leanchecker, invoked as in
-    `check_kernel.py`, fails naming the file and its invalid header. The original
-    bytes are restored, a rebuild is required, and on success the whole environment
-    is replayed.
+15. A corrupt header in I.1's compiled `.olean`, for leanchecker's loading of compiled
+    files: leanchecker, invoked as in `check_kernel.py`, fails naming the file and its
+    invalid header. The original bytes are restored, a rebuild is required, and on
+    success the whole environment is replayed.
 16. Without a build, in a temporary copy of the tracked files without Git: opening,
     base and closing merge markers, a middle between outer markers, and a lone middle
     in a non-Markdown file, comment, fence or after a completed heading, indented code
@@ -87,6 +87,17 @@ records current; CI runs it on every push.
 18. Counting congruence constructors instead of `Coincidence.step` in the certificate:
     `tests/test_certificate.py` fails on transformers with no step. The restored
     certificate must pass the same regression, including its real-step cases.
+19. I.1's figure, idea figure and mishnah, each removed in turn: Book I is complete, so
+    `check_fidelity.py` fails naming the missing file, and not the other two. Each is
+    restored byte for byte.
+20. An ill-typed proof in I.1's compiled module, for leanchecker's kernel replay:
+    `True.intro` as a proof of `False`, added past the kernel by
+    `set_option debug.skipKernelTC true` and a `run_cmd` that calls `addDecl`, the way
+    docs/reports/read-through-01.md names. The source scan refuses both, so I.1 is
+    compiled with them by `lake env lean -o`, over its own `.olean`, from a copy outside
+    the tree. leanchecker, invoked as in `check_kernel.py`, rejects the proof, naming the
+    declaration and the kernel's type mismatch, not a file it cannot read. The build is
+    restored as in item 15, and on success the whole environment is replayed.
 
 The copies of items 16 and 17, and item 13's list of generated outputs, read Git's
 tracked files. One absent from the work tree is named on stdout and passed over: as a
@@ -95,20 +106,20 @@ out the files a commit adds there while Git's index still lists them (scripts/sa
 step 4); as a failure anywhere else. The rule is generated_counts.absent_tracked's, which
 check_fidelity.py and render.py follow for the tracked Markdown they read.
 
-These faults exercise the style and link checks, page freshness, an audit pin and
-leanchecker's loading of compiled files as well as the earlier checks. They do not
-plant an invalid proof term for leanchecker's kernel replay. `check_kernel.py`'s own
-`--self-test` withholds Postulate 5 from nanoda alone.
+These faults exercise the style and link checks, page freshness, an audit pin, a
+complete book's figures and mishnah, and leanchecker's loading of compiled files and its
+kernel replay, as well as the earlier checks. `check_kernel.py`'s own `--self-test`
+withholds Postulate 5 from nanoda alone.
 
 Every new plant restores its inputs in `finally`; the freshness plant also restores
 all renderer outputs.
-Tests 10, 14 and 15 attempt a restoration build; if it fails or is interrupted, every
+Tests 10, 14, 15 and 20 attempt a restoration build; if it fails or is interrupted, every
 file in `.lake/build` returns to its saved contents and presence or absence before
 the plant, including dependent modules, hashes and traces. Test 10 always restores or
 removes `Planted.*` outputs in a nested `finally`. Tests 11 to 15, the proved Circle 2
-plant and test 18 report elapsed time, restoration included. An outer `finally` compares
-Git status with the entry status, including on interruption, without replacing an
-exception already in flight.
+plant and tests 18 and 20 report elapsed time, restoration included. An outer
+`finally` compares Git status with the entry status, including on interruption, without
+replacing an exception already in flight.
 Temporary-directory regressions run first, without Lean. Exits non-zero if a fault
 goes unnoticed or a restoration check fails. Restoration needs writable files and
 an opportunity for `finally` to finish; a forced process kill cannot provide it.
@@ -482,6 +493,49 @@ def corrupt_olean() -> None:
         path.write_bytes(saved)
         if rebuild_restored("the restored Elements build", outputs, force=path):
             expect_success("leanchecker's replay after restoration", run(*command))
+
+
+# `True.intro` given as a proof of `False`, added past the kernel as the read-through found
+# possible (docs/reports/read-through-01.md). The source scan refuses both commands, so they
+# are compiled from a copy of I.1 it never reads. `Lean.Elab.Command` defines the monad
+# `run_cmd` runs in, so it is the least of Lean's library the plant can import, and it
+# brings `addDecl` with it.
+ILL_TYPED = "Elements.BookI.planted_ill_typed"
+ILL_TYPED_LEAN = ("\nopen Lean in\nset_option debug.skipKernelTC true in\n"
+                  "run_cmd Elab.Command.liftCoreM <| addDecl <| .thmDecl {\n"
+                  f"  name := `{ILL_TYPED}, levelParams := [],\n"
+                  "  type := mkConst ``False, value := mkConst ``True.intro }\n")
+
+
+def ill_typed_proof() -> None:
+    """Exercise leanchecker's kernel replay with an ill-typed proof in I.1's compiled module,
+    rejected by name, not as a file it cannot read; the build is restored as in item 15."""
+    bin_ = check_kernel.toolchain_bin()
+    command = ("lake", "env", str(bin_ / "leanchecker"), "--fresh", "Elements")
+    rel = "Elements/BookI/Prop01.lean"
+    path = ROOT / ".lake/build/lib/lean/Elements/BookI/Prop01.olean"
+    saved = path.read_bytes()
+    outputs = BuildOutputs()
+    try:
+        with tempfile.TemporaryDirectory(prefix="stoicheia-kernel-") as tmp:
+            root = Path(tmp).resolve()
+            source = root / rel
+            source.parent.mkdir(parents=True)
+            source.write_text("import Lean.Elab.Command\n" + (ROOT / rel).read_text()
+                              + ILL_TYPED_LEAN)
+            if not expect_success("I.1 compiled with an ill-typed proof",
+                                  run("lake", "env", "lean", "-R", str(root), "-o", str(path),
+                                      str(source))):
+                return
+        expect_failure("an ill-typed proof in I.1's compiled module, replayed by leanchecker",
+                       run(*command), f"while replaying declaration '{ILL_TYPED}'",
+                       f"(kernel) declaration type mismatch, '{ILL_TYPED}'",
+                       unwanted=("failed to read file", "invalid header", "does not exist"))
+    finally:
+        path.write_bytes(saved)
+        if rebuild_restored("the Elements build restored after the ill-typed proof", outputs,
+                            force=path):
+            expect_success("leanchecker's replay after the ill-typed proof", run(*command))
 
 
 def heath_word() -> None:
@@ -1001,6 +1055,23 @@ def stale_lean() -> None:
         path.write_text(saved)
 
 
+def missing_files() -> None:
+    """I.1's figure, idea figure and mishnah, each taken away in turn: Book I is complete,
+    so `check_fidelity.py` names the one missing, and not the other two."""
+    rels = ("figures/I/01.svg", "figures/I/01-idea.svg", "mishnah/I/01.md")
+    for rel in rels:
+        path = ROOT / rel
+        saved = path.read_bytes()
+        try:
+            path.unlink()
+            expect_failure(f"I.1's {rel} missing from a complete book", fidelity(),
+                           f"I.1: {rel} is missing",
+                           unwanted=tuple(f"I.1: {other} is missing" for other in rels
+                                          if other != rel))
+        finally:
+            path.write_bytes(saved)
+
+
 def toml_blocks(text: str) -> list[str]:
     """A TOML file cut before each table header, so that whole tables can be dropped."""
     blocks, current = [], []
@@ -1303,9 +1374,11 @@ def main(argv=()) -> int:
         model_lake()
         lake_links()
         placement_named()
+        missing_files()
         planted_assumptions()
         for test in (circle_proved, style_error, broken_link, stale_page,
-                     changed_audit_pin, corrupt_olean, certificate_constructor_counting):
+                     changed_audit_pin, corrupt_olean, certificate_constructor_counting,
+                     ill_typed_proof):
             started = perf_counter()
             try:
                 test()

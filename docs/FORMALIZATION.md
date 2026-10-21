@@ -477,8 +477,9 @@ stand after a string, a raw string or a character literal holding `/-`, `-/`, `]
 and one in an interpolated string's hole, and a string whose braces Lean could read as
 code is planted too. The source scan names each finding's file and line, except for
 symbolic links to files or directories in the scanned trees and root files, which are
-refused by their paths and never followed, a link at `model/.lake` among them. A
-complete book's missing figure or mishnah has no planted break yet. The tests also check
+refused by their paths and never followed, a link at `model/.lake` among them. I.1's
+figure, idea figure and mishnah are each removed in turn, and the fidelity check names
+the one missing, since Book I is complete. The tests also check
 that generator calls first on their line are allowed in `model/Check.lean` and
 `model/Check/`, that an axiom in a `.lake` folder of `model/Model/` or `model/Check/` is
 caught while one in `model/.lake` is not read, that a link named `.lake`, to a
