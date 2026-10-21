@@ -243,6 +243,7 @@ Heath's brackets give in most of the propositions of Book III.
 - D, where CD meets the given circumference: C is within the circle (III.2), so the straight line meets the circle on the side of the given circumference (`line_circle_beyond`, with CD produced backwards first, Post. 2).
 - "And each of the circumferences AD, DB is less than a semicircle": Euclid gives no reason, yet III.28 pairs the less with the less. The angles DAB, ABD are equal (I.4), and two of them are less than two right angles (I.17), so each is less than a right angle; a circumference is twice the angle standing on it (`Circumference.standing`), so AD and DB are less than semicircles, and the circumferences remaining are greater (`Circumference.whole`).
 - III.28 is said of equal circles, and used here in one (`EqualCircles.refl`), as Heath allows under III.29.
+- "Therefore the given circumference has been bisected at the point D": Euclid takes from the figure that the circumferences AD, DB make up ADB and share only D. The companion `Prop30.halves` proves it: they add to the given circumference (`Circumference.add`), and divide it point by point by III.2.
 
 ## III.31
 - "Therefore each is right [I. Def. 10]": Postulate 4 makes each the one right angle `∟`, as in III.3.

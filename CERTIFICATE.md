@@ -176,6 +176,7 @@ What the proofs show:
 | ✅ | [III.28](book/III/28.md) | whole† | Euclid's, one step changed | I.8, III.26 | I.5, I.8, I.20, I.32, III.2, III.20, III.21, III.22, III.24, III.26 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 57 | 8 | 28 |
 | ✅ | [III.29](book/III/29.md) | whole† | Euclid's, one step changed | I.4, III.27 | I.4, I.5, I.32, III.2, III.20, III.21, III.22, III.27 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 58 | 7 | 29 |
 | ✅ | [III.30](book/III/30.md) | whole† | Euclid's | I.4, III.28 | I.4, I.10, I.11, I.17, III.2, III.21, III.22, III.28 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 58 | 16 | 15 |
+| ✅ | &emsp;[III.30 halves](book/III/30.md#halves) |  |  |  | I.6, I.17, I.32, III.2, III.21, III.22, III.28 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 20 | 14 |
 | ✅ | [III.31](book/III/31.md) | whole | Euclid's | I.5, I.17, I.32, III.22 | I.5, I.17, I.32, III.2, III.22 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 57 | 14 | 15 |
 | ✅ | &emsp;[III.31 greater](book/III/31.md#greater) |  |  |  | I.12, I.17, I.19, I.20, III.2, III.31 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 61 | 11 | 40 |
 | ✅ | &emsp;[III.31 less](book/III/31.md#less) |  |  |  | I.12, I.13, I.17, I.19, I.20, III.2, III.31 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 61 | 10 | 42 |

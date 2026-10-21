@@ -383,6 +383,9 @@ been completed. The earlier plans in sections 4 and 6 and Appendix A remain hist
   proposal staged with `sorry` in `Staging/Halves/Prop30.lean`, awaiting the owner's
   approval. It is unproved, unregistered and absent from the certificate; its proof
   is not assigned.
+  *21 October 2026:* the owner approved it on 20 October 2026; it is proved in
+  `Elements/BookIII/Prop30.lean`, registered as the companion "III.30 halves", and its
+  staging file is deleted (brief 0006, the note after its Addition).
 - **Remaining work.** The source and statement stamps still need independent review
   at the revision to be delivered. The scaffold's Book III types and the screen's
   circle-rule set need a separate tooling pull request, followed by a fresh screen.
@@ -1737,6 +1740,9 @@ All centre restatements now live in `Elements/` or `Audit/`; the last two files,
 `Staging/Centre/Restated.lean` and `Staging/Centre/Brief0006.lean`, are deleted, and
 there is no live import of that directory. `Staging/Halves/Prop30.lean` is a separate
 proposal awaiting the owner's approval, with `sorry` and no companion registration.
+**21 October 2026.** `Prop30.halves` is no longer staged: the owner approved it on 20
+October 2026, and it is proved in `Elements/BookIII/Prop30.lean` as the companion "III.30
+halves".
 
 The rule cannot be added before its pull request, so no staged statement can be proved from
 it. Each new statement is staged with `sorry`, and the rule's content enters only as a
