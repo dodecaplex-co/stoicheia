@@ -488,6 +488,21 @@ def uncommented(text: str) -> str:
     return "".join(out)
 
 
+def without_comment_delimiters(text: str) -> str:
+    """A position-preserving view with every comment delimiter blanked."""
+    out = list(text)
+    i = 0
+    while i < len(text):
+        size = (3 if text.startswith(("/--", "/-!"), i)
+                else 2 if text.startswith(("--", "/-", "-/"), i) else 0)
+        if size:
+            out[i:i + size] = " " * size
+            i += size
+        else:
+            i += 1
+    return "".join(out)
+
+
 def lean_pieces(text: str) -> list[tuple[str, int, str]]:
     """The pieces of `lex` that Lean runs: nothing after a `#exit` is read."""
     out = []
@@ -644,12 +659,12 @@ def commented_pins(text: str) -> list[tuple[int, str]]:
     """Guarded pin commands inside comments, with their line in the whole file."""
     found = []
     for start, body in comment_bodies(text):
-        code = uncommented(body)
-        for guarded in COMMENTED_GUARDED.finditer(code):
-            pin = (start + code.count("\n", 0, guarded.start("command")),
-                   guarded.group("command"))
-            if pin not in found:
-                found.append(pin)
+        for view in (body, uncommented(body), without_comment_delimiters(body)):
+            for guarded in COMMENTED_GUARDED.finditer(view):
+                pin = (start + view.count("\n", 0, guarded.start("command")),
+                       guarded.group("command"))
+                if pin not in found:
+                    found.append(pin)
     return found
 
 

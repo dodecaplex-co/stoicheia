@@ -871,6 +871,38 @@ class PinTests(unittest.TestCase):
                     *command, "is a pin inside a comment; commented pins do not run and "
                     "are refused"),))
 
+    def test_commented_pin_survives_every_comment_body_view(self):
+        active = PIN.format(name="Rule.Figure.restrict")
+        cases = {
+            "line comment inside block":
+                f"/- -- #guard_msgs in #check @{RESTRICT} -/\n",
+            "twice line-commented":
+                f"-- -- #guard_msgs in #check @{RESTRICT}\n",
+            "paired prose quotes":
+                (f"-- a 5\" segment\n-- #guard_msgs in\n-- #check @{RESTRICT}\n"
+                 "-- a 6\" one\n"),
+            "paired prose block markers":
+                (f"-- see /- here\n-- #guard_msgs in\n-- #check @{RESTRICT}\n"
+                 "-- and -/ there\n"),
+            "line-commented inside block":
+                f"/-\n-- #guard_msgs in\n-- #check @{RESTRICT}\n-/\n",
+            "twice line-commented inside block":
+                f"/-\n-- -- #guard_msgs in\n-- -- #check @{RESTRICT}\n-/\n",
+        }
+        for label, commented in cases.items():
+            with self.subTest(label):
+                audit = commented + active
+                command = next((number, line.strip()) for number, line in
+                               enumerate(commented.splitlines(), 1)
+                               if f"#check @{RESTRICT}" in line)
+                code, out = self.run_check(
+                    self.brief("`Rule.Figure.restrict` holds."), audit)
+                self.assertEqual(code, 1, out)
+                self.assertNotIn("has no statement pin", out)
+                self.assert_refused(out, [], ((
+                    *command, "is a pin inside a comment; commented pins do not run and "
+                    "are refused"),))
+
     def test_line_comment_pin_across_blank_lines_is_refused_beside_an_active_duplicate(self):
         active = PIN.format(name="Derives.sound")
         for separator in ("\n", " \t\n"):
