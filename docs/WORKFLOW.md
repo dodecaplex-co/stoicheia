@@ -667,12 +667,13 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       `tests/certificate_expectations.json`, `Certificate/axioms.lock`,
       `tests/model/lock.sha256`, the model's law names in `tests/model/laws.toml`, and its
       account of the laws, `tests/model/MODEL.md` and `tests/model/results/`, which no
-      check reads but for MODEL.md's count markers. A count between count markers ([STYLE](STYLE.md), section 4) in the
-      Markdown of a check input under `Certificate/` or `tests/`, or in
-      `review/SCHEMA.md`, such as `Certificate/FIELDS.md`'s count of the lock's words, is
-      such a value too: `render.py` generates its value and `check_fidelity.py` refuses a
-      stale one, so a change to that Markdown counts as a pinned value while nothing else
-      in it changes (the same markers stand, by name and in order, as origin/main's
+      check reads but for MODEL.md's count markers. A count between count markers
+      ([STYLE](STYLE.md), section 4) in the Markdown of a check input under
+      `Certificate/` or `tests/`, or in `review/SCHEMA.md`, such as
+      `Certificate/FIELDS.md`'s count of the lock's words, is such a value too:
+      `render.py` generates its value and `check_fidelity.py` refuses a stale one, so a
+      change to that Markdown counts as a pinned value while nothing else in it changes
+      (the same markers stand, by name and in order, as origin/main's
       `scripts/generated_counts.py` reads them, and every other byte and the file's mode
       are as they were). When they are the only check inputs a pull request changes,
       origin/main's failure is noted, and its own copies must pass. The expectations are
