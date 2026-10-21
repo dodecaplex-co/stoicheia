@@ -3064,3 +3064,46 @@ findings:
   stands; its next regeneration writes twelve digits. The protected files changed are
   `scripts/test_safe_push.py`, `scripts/check_acceptance.py` and
   `tests/test_check_acceptance.py`.
+
+- **The tests nothing ran now run in CI (#157).** Four tests on main guarded real
+  behaviour and passed, but neither CI nor safe_push's check sequence ran them. Three of
+  them need no Lean, and become steps of CI's `check` job, entries in safe_push's
+  `CHECKS` and lines of WORKFLOW section 8's command block, in the same order, straight
+  after `tests/test_release_gate.py`: `python3 scripts/audit/jev.py self-test`, then
+  `python3 -I tests/test_screen.py`, then `python3 -I tests/test_acceptance_limits.py`.
+  `Units.test_check_sequence_matches_workflow_and_ci`, in `scripts/test_safe_push.py`,
+  still compares the three lists exactly. The limitations' cases could have joined their
+  sibling, `tests/test_check_acceptance.py`, in the `acceptance` job; they go in the
+  `check` job instead, so that they run on every push as well as on every pull request,
+  and in each pre-flight, for about three seconds. `tests/test_screen.py` no longer says
+  that nothing runs it. The entries above that say CI does not run these tests yet (of
+  19 October, on the screen's cases, and of 20 October, on the Jev client's self-test and
+  on the limitations) stay as the records of their day.
+  `scripts/test_safe_push.py`, the tests of the gate every pull request lands through,
+  runs in a new CI job, `safe-push-tests`, on each pull request that changes `scripts/`,
+  `tests/`, `.github/` (the pull request template among them) or `docs/WORKFLOW.md`. The
+  issue named `scripts/`, `.github/` and the template; `tests/` and `docs/WORKFLOW.md`
+  join them because the tests copy files of `tests/` into the harness under test, plant
+  changes in the model's harnesses, and compare WORKFLOW's section 8 with `CHECKS` and the
+  `check` job, so a change to either can fail them. The job checks out the whole history
+  and decides with `git diff --name-only` from the pull request's base to its head, with
+  three dots, so that only the pull request's own changes count; a comparison that fails
+  fails the job. On any other pull request the job passes at once and says why, and on a
+  push it is skipped, as the `acceptance` job is. The tests need no Lean and no network:
+  `FullChecks`, which needs Lean, is skipped without `STOICHEIA_SLOW_TESTS=1`, as the file
+  has always skipped it. The job is not in `CHECKS`, every entry of which runs in each
+  pre-flight, nor among the checks main's ruleset requires, which are the owner's to set;
+  the merge gate refuses while it fails, as for any failing check, and a skipped run holds
+  nothing back.
+  `tests/test_jev_questions.py`, the Jev question generator's tests (#185 notes that they
+  wait on #157), stays out. One of its cases checks out `39ae65c2`, a commit of
+  19 October, which the `check` job's checkout, one commit deep, does not hold; and that
+  job's setup, which `scripts/test_safe_push.py` holds to the checkout, Python's version
+  and the elan install, cannot ask for more history without a change to that model, a
+  change of its own. In a clone one commit deep the case fails at `39ae65c2`, and the rest
+  of the file passes. A job with the whole history could run it. The issue's last item, a
+  green run in CI on main for each of the four, linked from the issue, waits for the
+  landing.
+  The protected files changed are `.github/workflows/ci.yml`, `scripts/safe_push.py` and
+  `tests/test_screen.py`; [WORKFLOW](../WORKFLOW.md), sections 8 and 10, records the steps
+  and the job. No check is weakened.

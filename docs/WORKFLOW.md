@@ -300,6 +300,9 @@ python3 scripts/heath.py
 python3 scripts/check_fidelity.py
 python3 -I tests/test_check_style.py
 python3 -I tests/test_release_gate.py
+python3 scripts/audit/jev.py self-test
+python3 -I tests/test_screen.py
+python3 -I tests/test_acceptance_limits.py
 python3 scripts/check_style.py
 python3 scripts/render.py
 git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md   # prints nothing
@@ -307,9 +310,10 @@ python3 scripts/check_links.py
 ```
 
 Review the generated differences and commit them with their sources, so that regenerating
-leaves them unchanged and the `git status` line prints nothing. Four more jobs run on
-their own, each in isolation. The first three have direct local commands; the last two
-commands below run the acceptance job's tests and checklist without its CI comparison:
+leaves them unchanged and the `git status` line prints nothing. Five more jobs run on
+their own, each in isolation. The first three have direct local commands; the next two
+commands below run the acceptance job's tests and checklist without its CI comparison, and
+the last two run the `safe-push-tests` job's:
 
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
@@ -319,6 +323,8 @@ grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cac
 python3 -I tests/test_check_acceptance.py   # CI's `acceptance` job: the comparison tests
 # After lake build, lake build Audit and Facts.lean, the checklist run:
 python3 scripts/check_acceptance.py --output "${RUNNER_TEMP:-/tmp}/acceptance/report.md" --json "${RUNNER_TEMP:-/tmp}/acceptance/verdicts.json"
+python3 -m pip install -r scripts/requirements-test_safe_push.txt
+python3 scripts/test_safe_push.py      # CI's `safe-push-tests` job: seven minutes, no Lean
 ```
 
 `RUNNER_TEMP` supplies GitHub Actions' temporary directory; the fallback writes under
@@ -336,19 +342,33 @@ script, from the base commit, but GitHub takes the workflow file itself from the
 request, which could change it, so the job only shows the hold: the authority is the merge
 gate, which reads the issues again when the coordinator merges (section 10).
 
+The `safe-push-tests` job runs `python3 scripts/test_safe_push.py`, the tests of the gate
+every pull request lands through (section 10), on each pull request that changes
+`scripts/`, `tests/`, `.github/` (the pull request template among them) or this page,
+since the tests compare this section's first command block with safe_push's `CHECKS`
+and the `check` job. It decides with `git diff --name-only` from the pull request's base
+to its head, with three dots, so that only the pull request's own changes count. On any
+other pull request it passes at once and says why; on a push it is skipped. The tests
+need Git with the whole history and the pinned PyYAML, but no Lean and no network, and
+take about seven minutes; `FullChecks`, the one test that needs Lean, is skipped without
+`STOICHEIA_SLOW_TESTS=1`, there as anywhere.
+
 `scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on
 the head commit of every pull request (section 10), so a change to them is made there too,
 and in the CI workflow. It leaves the `formal-model` job to CI on purpose, since it
 fetches Mathlib's prebuilt files
-([model/README.md](../model/README.md#the-ci-job)), and the `acceptance` job, since it builds
-main beside the pull request. Its merge gate refuses when any reported check fails, is
+([model/README.md](../model/README.md#the-ci-job)), the `acceptance` job, since it builds
+main beside the pull request, and the `safe-push-tests` job, whose seven minutes would
+hold up every pre-flight. Its merge gate refuses when any reported check fails, is
 cancelled or is still running, apart from the `release-gate` job of the "Release gate"
 workflow on an ordinary pull request, even if a run remains from before its `release`
 label was removed. It requires a passing
 run of `check`, `model` and `negative`, the three names still in its `REQUIRED_CHECKS`;
-its local check judgement does not reject a skipped or missing `formal-model` or
-`acceptance` when those three pass and no other check fails, is cancelled or is still
-running. Main's ruleset requires all five checks; aligning the local presence test with it
+its local check judgement does not reject a skipped or missing `formal-model`,
+`acceptance` or `safe-push-tests` when those three pass and no other check fails, is
+cancelled or is still running. Main's ruleset requires five checks, every job of the CI
+workflow but `safe-push-tests`, whose failing run holds a merge through the merge gate
+alone; aligning the local presence test with the ruleset
 needs a separate protected-check change, tracked by #142. GitHub uses the ruleset when
 merging, but requiring
 `acceptance` does not by itself prove that the pull request's checklist ran: the workflow
@@ -402,6 +422,19 @@ The ruleset and the remaining merge requirements are in
   checks the unfinished work section, the issues' state and labels, pagination and
   unreadable replies, and that an ordinary pull request skips the release hold; fixtures
   and stand-ins supply every reply.
+- **Three more sets of cases follow, each with no Lean.**
+  `python3 scripts/audit/jev.py self-test` runs every command of the Jev client against a
+  stand-in for the service on this machine, with a key it makes up, and needs no network
+  and no key; it checks, among other things, that the key appears in no output.
+  `python3 -I tests/test_screen.py` puts the overlap screen's own functions
+  (`Audit/screen.py`) to small inputs: the tries it makes and its reading of Lean's logs.
+  The screen itself needs Lean for hours and is not run by CI.
+  `python3 -I tests/test_acceptance_limits.py` checks the limitations that acceptance item
+  P3 allows against [ACCEPTANCE's table](ACCEPTANCE.md#the-limitations-allowed), and P3
+  itself on review records varied in memory. The Jev question generator's tests,
+  `python3 -I tests/test_jev_questions.py`, are not in the sequence: one of them checks out
+  a commit of 19 October, `39ae65c2`, which the `check` job's shallow checkout does not
+  hold, so whoever changes the generator runs them.
 - **Counts in prose.** A count a script knows exactly goes between count markers and is
   rendered; the surrounding prose stays human ([STYLE](STYLE.md), section 4).
   `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`
@@ -834,4 +867,6 @@ stand-in for gh, and checks that each is refused and a good one proposed and mer
 cases include unfinished work left unwritten, closed or unlabelled issues, open labelled
 issues, the release held by an open blocker or an unreadable reply, and an ordinary pull
 request merging without reading the blockers;
-`STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and all.
+`STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and all. CI's
+`safe-push-tests` job runs the tests, without that run, on each pull request that changes
+`scripts/`, `tests/`, `.github/` or this page (section 8).
