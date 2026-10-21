@@ -1,0 +1,122 @@
+{
+  "reviewer": "Claude replacement adjudicator",
+  "model": "Claude Opus 5.5 (claude-opus-5-5)",
+  "source_revision": "39ae65c21c6b8188c0fa53bf91b6fde3ce3b11a3",
+  "replacement_reason": "original adjudicator output unavailable",
+  "independence": "Worked read-only and edited no files. I did not open docs/reports/acceptance/jev/audit-books-I-II.md, the Jev answer JSONL, the manifest, or any earlier adjudication output, and I did not consult the current report's verdicts. docs/reports/acceptance/jev/audit-books-I-II.jsonl does not exist at 39ae65c2, so I read it from the working tree with one read-only Python command that printed only id, state and question for the seven rows; I never printed or inspected the expected field. Every verdict was checked against pinned sources via git show 39ae65c2:<path>: heath/I/01.md, heath/I/05.md, heath/II/01.md, 09.md, 11.md and 13.md; Elements/BookI/Prop01.lean, Prop05.lean (statement); Elements/BookII/Prop01.lean, Prop09.lean, Prop11.lean (statement and ending) and Prop13.lean (statement and the uses of rect and sq); Elements/BookII/Rectangles.lean; Elements/Figure/Rectangles.lean; Elements/Figure/Sums.lean; Elements/Foundations/DefinitionsII.lean, Phrases.lean, Definitions.lean (Square, IsAcute) and Magnitudes.lean (Magnitude.sum); review/I/01.toml, review/I/05.toml, review/II/01.toml, 09.toml, 11.toml and 13.toml; figures/I/05.svg (coordinates, title and the absent desc); docs/STYLE.md section 7 on figures; and book/I/05.md for the figure's alt text.",
+  "rows": [
+    {
+      "id": "09-I.1-scope",
+      "record_claim": "fully",
+      "verdict": "fully",
+      "checked_sources": [
+        "heath/I/01.md (enunciation and whole proof)",
+        "Elements/BookI/Prop01.lean:45-46 theorem Prop1",
+        "Elements/BookI/Prop01.lean:23-24 Prop1.figure",
+        "Elements/BookI/Prop01.lean:89 (Equilateral built as Triangle ∧ two length equalities)",
+        "review/I/01.toml [statement]"
+      ],
+      "supporting_evidence": "Prop1 gives, for any A ≠ B, a point C with Equilateral A B C. That includes Triangle A B C (Prop1.figure) and the three equal sides, so it is an equilateral triangle on AB. The hypothesis A ≠ B only names what 'a given finite straight line' already presupposes. The extra point P adds a conclusion (C on P's side when P is off AB) and holds vacuously when P is on AB, so no configuration is left out. The record's note describes this strengthening and no restriction.",
+      "consequence": "record confirmed",
+      "confidence": "high"
+    },
+    {
+      "id": "09-II.9-scope",
+      "record_claim": "fully",
+      "verdict": "fully",
+      "checked_sources": [
+        "heath/II/09.md (enunciation and whole proof)",
+        "Elements/BookII/Prop09.lean:33-35 theorem Prop9",
+        "Elements/BookII/Prop09.lean:43-44 internal `euclid` case",
+        "Elements/BookII/Prop09.lean:270-285 trichotomy on AD vs AC covering both sides of C",
+        "Elements/Foundations/DefinitionsII.lean:58-63 rect, sq",
+        "review/II/09.toml [statement]"
+      ],
+      "supporting_evidence": "The hypotheses are Between A C B, AC = CB, Between A D B and D ≠ C. They are exactly 'cut into equal segments at C and into unequal segments at D'. The conclusion is sq AD + sq DB = 2(sq AC + sq CD), and Euclid's 'double' is written as a sum of two equal terms. The proof covers D between C and B directly and D between A and C by exchanging A and B, so every configuration Euclid's words admit is covered. The record's note says the same.",
+      "consequence": "record confirmed",
+      "confidence": "high"
+    },
+    {
+      "id": "09-II.11-scope",
+      "record_claim": "fully",
+      "verdict": "fully",
+      "checked_sources": [
+        "heath/II/11.md (enunciation and whole proof)",
+        "Elements/BookII/Prop11.lean:31-32 theorem Prop11",
+        "Elements/BookII/Prop11.lean (final lines: hresult and exact hresult.trans (sq_symm H A))",
+        "Elements/Foundations/DefinitionsII.lean:58-63 rect, sq",
+        "review/II/11.toml [statement]"
+      ],
+      "supporting_evidence": "For any given straight line AB (A ≠ B, as 'given straight line' presupposes), Prop11 gives H strictly between A and B with rect A B B H = sq A H. That is the rectangle contained by the whole AB and the segment BH, equal to the square on the remaining segment AH. It is exactly the problem Euclid poses and solves, with no clause or configuration omitted.",
+      "consequence": "record confirmed",
+      "confidence": "high"
+    },
+    {
+      "id": "10-I.1-citations",
+      "record_claim": "all do work",
+      "verdict": "all do work",
+      "checked_sources": [
+        "Elements/BookI/Prop01.lean:45-89 theorem Prop1 proof",
+        "Elements/BookI/Prop01.lean:23-42 Prop1.figure",
+        "heath/I/01.md",
+        "review/I/01.toml [[passage]] entries"
+      ],
+      "supporting_evidence": "The proof calls no proposition of the Elements, so the citation part holds vacuously. Every foundational and helper call does work. Postulate3 twice gives the circles whose radii Definition15 equates. Postulate1 gives the line AB that circles_meet_same_side and SameSideOf.of_line need. circles_meet supplies C. CommonNotion1 yields CA = CB, which feeds hBC_CA in the conclusion. Prop1.figure supplies the Triangle part of Equilateral. As for hypotheses, hAB feeds Postulate3, Prop1.figure and of_line; hP selects the branch; and `fun h => absurd hP h` really discharges the implication when P is on AB. None is mentioned only to look used.",
+      "consequence": "record confirmed",
+      "confidence": "high"
+    },
+    {
+      "id": "11-II.1-representation",
+      "record_claim": "bridge stated",
+      "verdict": "bridge stated",
+      "checked_sources": [
+        "Elements/Foundations/DefinitionsII.lean:44-63 Rectangle, Contain, rect, sq",
+        "Elements/BookII/Rectangles.lean:67 Rectangle.congr",
+        "Elements/BookII/Rectangles.lean:85 Rectangle.contained",
+        "Elements/BookII/Rectangles.lean:98 Rectangle.eq_rect",
+        "Elements/BookII/Rectangles.lean:106 Square.eq_sq; :113 Square.described",
+        "Elements/Foundations/Phrases.lean:61 InOrder, :74 segments, :80 endOf",
+        "Elements/Foundations/Magnitudes.lean:68 Magnitude.sum",
+        "Elements/Figure/Sums.lean:49 InOrder.between_end",
+        "Elements/BookII/Prop01.lean:33, 169, 254, 283-290",
+        "review/II/01.toml [representation]"
+      ],
+      "supporting_evidence": "rect is a choice definition, so it needs a bridge, and Rectangle.contained and Rectangle.eq_rect supply it: any drawn Rectangle PQRS whose sides PQ and PS equal AB and CD has quadArea equal to rect A B C D. That covers 'the rectangle contained by A, BC'. Contain covers the degenerate case, where a side of nothing makes the area nothing, which the record's hypothesis-dropped note discloses for the companions. Square.eq_sq and Square.described tie sq to drawn squares. InOrder, segments, endOf and Magnitude.sum are plain definitions that themselves state 'cut at points in order', 'each of the segments', the whole line and their sum. InOrder.between_end links InOrder back to Between, and a checked example ties Prop1 to Prop1.general.",
+      "consequence": "record confirmed",
+      "confidence": "high"
+    },
+    {
+      "id": "11-II.13-representation",
+      "record_claim": "bridge stated",
+      "verdict": "bridge stated",
+      "checked_sources": [
+        "Elements/BookII/Prop13.lean:47-49 theorem Prop13",
+        "Elements/BookII/Prop13.lean:85-106 (rect C B B D via Prop7; sq via BookI.Prop47.sq)",
+        "Elements/Foundations/DefinitionsII.lean:44-63 Rectangle, Contain, rect, sq",
+        "Elements/Foundations/Definitions.lean:69 Square",
+        "Elements/BookII/Rectangles.lean:67, 85, 98, 106, 113",
+        "heath/II/13.md",
+        "review/II/13.toml [representation]"
+      ],
+      "supporting_evidence": "The statement uses sq A C, sq C B, sq B A and rect C B B D, so the choice-defined rect and sq need bridges. They are stated: Rectangle.eq_rect and Rectangle.contained identify any drawn rectangle with sides equal to CB and BD as rect C B B D, and Square.eq_sq and Square.described identify a drawn square, whether a parallelogram or one built by I.46, with sq on its side. All of this sits within the Contain convention. The record's hypothesis-dropped tag (no hypothesis on the angle at A) is a change of hypotheses, not a substitute for these bridges, so 'no bridge required' does not apply.",
+      "consequence": "record confirmed",
+      "confidence": "high"
+    },
+    {
+      "id": "13-I.5-figure",
+      "record_claim": "agrees",
+      "verdict": "agrees",
+      "checked_sources": [
+        "figures/I/05.svg (all coordinates, labels, angle arcs, title; no <desc>)",
+        "heath/I/05.md (enunciation and whole proof)",
+        "Elements/BookI/Prop05.lean:19 theorem Prop5",
+        "docs/STYLE.md section 7 (Euclid's figure: title 'Euclid I.N: …', no caption)",
+        "book/I/05.md:21 (alt text)",
+        "review/I/05.toml"
+      ],
+      "supporting_evidence": "The figure has A(200,32), B(150,132) and C(250,132), so AB = AC ≈ 111.8. D(78,276) and F(110,212) lie on line AB produced, with B at t≈0.41 and F at t≈0.74 along AD, so B lies between A and F and F between B and D. E(322,276) and G(290,212) mirror these on AC, so AG = AF and G lies on CE. FC and GB are drawn. The arcs at B and C mark ABC and ACB above the base and CBD and BCE below it, each spanning the correct rays. All seven letters are Heath's and stand beside their points, clear of strokes. This agrees with Heath's construction and with Prop5's hypotheses (Triangle A B C, AB = AC, Between A B D, Between A C E) and its two conclusions. The pinned caption is empty, as STYLE requires for Euclid's figure, and the title is accurate, so no caption claim conflicts. The arc colours and weights differ from STYLE's reported defaults, but those are stylistic defaults, not geometric defects.",
+      "consequence": "record confirmed",
+      "confidence": "high"
+    }
+  ]
+}
