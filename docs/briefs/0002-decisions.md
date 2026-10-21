@@ -3627,6 +3627,46 @@ findings:
   `scripts/test_safe_push.py`, `scripts/check_acceptance.py` and
   `tests/test_check_acceptance.py`.
 
+- **A carried passage's helper is named by its kind
+  ([#163](https://github.com/jackChallis/stoicheia/issues/163)).** The sentence on how to
+  read a page's listing said "where a porism is proved as a theorem of its own" for every
+  carried passage that names a `helper`. Once III.25's core moves into Elements, its
+  companion `Prop25.complete` is to carry the step Heath cites as III. 9, and the page would
+  call it a porism. The protected file [`scripts/render.py`](../../scripts/render.py) now
+  finds the entry of facts.json's `attached` that the helper names, written in one of three
+  ways (`Prop16.porism`, `BookIII.Prop16.porism` or `Elements.BookIII.Prop16.porism`), and
+  takes it apart with `heath.parse_ref` (`carried_ref`). The sentence names each such
+  theorem by its kind, "a porism" for a porism, "a companion" for a companion; several
+  read, for example, "a porism and two companions are proved as theorems of their own". It
+  counts theorems, not passages: `Prop25.complete` is to carry the same [III. 9] step in
+  each of III.25's three cases, from "Therefore the circle drawn with centre E", from "D
+  will be the centre of the completed circle" and from "and if we construct, on the
+  straight line BA", and is one companion, as one theorem named two ways is one. A carried
+  helper of any other kind stops the render, naming the proposition, the helper and the
+  three ways render.py reads such a name: a lemma or another proposition that does a step
+  makes a `helper` passage, "Done by" it, and is not a theorem attached to the
+  proposition, so a word for it here would put a passage of the wrong kind on the page.
+  The comment above `PASSAGE_WORD` says the same, and CERTIFICATE.md's key gives *Proved
+  separately* for the kinds the records carry, today "a porism". `use_self_check` gains
+  nine cases, `CARRIED_CASES`: a porism; a companion; a porism with two companions, in the
+  three ways of naming one; one companion named two ways; one porism carrying two
+  passages; that porism beside a companion; and a lemma, another proposition and another
+  proposition's companion, each refused. Against origin/main's render.py (`ac6e5389`)
+  seven of them fail, the companion's read as "a porism", and the two with a porism alone
+  pass. Against this change's first round (`4d261614`), which counted passages, the three
+  that repeat a theorem fail, reading "two companions", "two porisms" and "two porisms and
+  a companion". The protected file [`review/SCHEMA.md`](../../review/SCHEMA.md) allows a
+  companion beside the porism as a carried passage's `helper`, gives the three ways of
+  writing it, says how the page names each, counting theorems, and says that render.py
+  stops on any other. `heath.py` and `check_fidelity.py` check no carried helper's kind:
+  check_fidelity asks only that it is declared, and finds a declaration by more names than
+  these three (`Elements.Prop16.porism`, or a short name that ends exactly one declared
+  name), so nothing refused a companion, render.py's refusal names the three it reads, and
+  no other validation changes. Every generated file stays byte for byte as it was: the three
+  pages that print the clause, I.15, III.1 and III.16, each carry a porism. The fourth
+  item of #163, III.25's page naming `Prop25.complete` a companion, waits for the core's
+  move.
+
 - **The scaffold follows the restated Book III statements.** The protected file
   [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes [brief
   0008](0008-centre.md), step 6's restated signatures from `b260c826` for III.1, III.2,
