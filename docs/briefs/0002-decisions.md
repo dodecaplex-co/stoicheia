@@ -3343,7 +3343,202 @@ findings:
   on condition that its reviews and /no-mistakes pass with no blocking finding; the
   independent review judged that it is not a weakening of keep_apart.
 
+- **Decision entries, one file each (tooling).** Nearly every pull request appended to
+  this page, so two queued together collide at its end. On main's first-parent history at
+  `250292bc`, 23 of the 29 merged pull requests numbered #98 to #148 changed this page,
+  and of their 28 consecutive pairs, 16 would have conflicted if queued together: all 16
+  on this page, 13 on this page alone. Each pull request's change was taken as its merge's
+  diff from that merge's first parent; for each pair, the later change was applied to the
+  earlier merge's first parent, and the result merged with the earlier merge over that
+  first parent, both with `git merge-tree --write-tree`, as GitHub merges, the pair
+  conflicting if either step did. With each change to this page replaced by a new file in
+  `docs/decisions/`, and the page left as it was, the same pairs give 3 conflicts, none in
+  the decisions record: one each in `book/III/06.md`, `docs/FORMALIZATION.md` and
+  `scripts/audit/jev.py`.
+
+  So each decision written after this entry is a file of its own,
+  `docs/decisions/<YYYY-MM-DD>-<slug>.md`: a valid date, no earlier than this entry's,
+  then a short name of lower-case letters and digits joined by hyphens. An entry is read
+  where it is, as a page of its own, its relative links resolving from `docs/decisions/`;
+  nothing assembles the entries into this page or any other, since any file that every
+  entry's pull request had to update would collide just as this page does. GitHub lists
+  the folder in name order, which is date order, as its README,
+  [`docs/decisions/README.md`](../decisions/README.md), says; the README stays the same
+  from one entry to the next. `scripts/render.py` checks the folder before it writes
+  anything, and CI and the pre-flight run it on every pull request: the folder, which may
+  be absent, lies under no link and is spelled `docs/decisions` on disk, with no other
+  spelling beside it that a Mac's file system reads as it (each name in Unicode's NFD
+  form, casefolded, so that `docs/Decisions`, or `docs/deciſions` with a long s, is
+  another spelling); it holds regular files alone, the README and entries, passing over a
+  file Git ignores by a rule of the root's `.gitignore`, of `.git/info/exclude` or of the
+  user's own excludes file, as Finder's `.DS_Store`, which Git never commits, but never
+  one that a nested `.gitignore`, which a commit could add, ignores, and stopping if Git
+  cannot say which files those are; no entry there is dated before this entry; every file
+  there is UTF-8, holds no count marker, so that `render.py` never writes into it, and
+  holds no control character but a tab and a line feed, no format character (Unicode's
+  Cf), no line or paragraph separator, no other default-ignorable character, no character
+  that renders blank though Unicode counts it neither white space nor default-ignorable (a
+  fixed list, since Unicode has no property for a blank glyph: the Braille pattern blank,
+  the musical symbol null notehead and the Khitan small script filler), and no code point
+  Unicode keeps for private use or leaves unassigned; and an entry holds text. Its
+  refusals print a name with its unprintable characters written as escapes. An entry needs
+  no date heading, and may hold headings, as any page may.
+  `tests/test_decision_entries.py` tests these refusals, and `scripts/negative_tests.py`
+  runs it after the count regressions, so that CI's `negative` job and the pre-flight run
+  it too.
+
+  Every guard that asks for a new line in this page (the axiom lock, a protected path, a
+  deleted directory) or in `docs/briefs/` (a statement changed) accepts a new line in a
+  dated entry the push adds, a relative link there resolved from `docs/decisions/`. In an
+  entry and on this page alike, a file or a directory counts only where its mention starts
+  the text or follows whitespace, `(`, `<`, `[`, a backtick, a quotation mark, an
+  apostrophe or `*`, where origin/main's guards counted one after any character but a
+  letter, a digit, `_`, `/`, `.` or `-`: so `~/mishnah/test/`,
+  `C:/scripts/check_style.py`, `x+mishnah/test/` or a URL ending in a path names nothing.
+  A deleted directory is named as a protected file is, from the root, anchored there or by
+  a relative link that resolves to it, where origin/main's guard counted the path only as
+  it stands; and a directory, as a file, may end a sentence, its full stop after it, when
+  its mention holds a slash. A directory at the root named bare, as `figures`, is a word
+  of prose too, and "the figures." names no `figures/`, as on origin/main. A line of an
+  entry counts only when it holds a word; when no line of this page or of any file under
+  `docs/decisions/` at origin/main matches it, each read as a skeleton: in Unicode's NFKC
+  form, casefolded, each Cyrillic or Greek letter that looks like a Latin one read as that
+  letter, and every space separator, and each character that renders blank (the three
+  above and the Hangul fillers, which this page may hold though no entry may), read as a
+  space, the whitespace collapsed; and when none of its words lies in a run of 12 or more
+  consecutive words, so read across lines, that this page or one file there at origin/main
+  holds too. So a copy of an older entry, re-wrapped, re-spaced, in capitals or in those
+  look-alike letters, renews nothing, kept beside its original or not. The comparison
+  catches no more than that: a copy with a word put in after every eleventh, one reworded
+  throughout, or one in look-alike letters of another script reads as an entry in words of
+  its own, and only the reviews can tell it from one. Each run of consecutive lines that
+  count is read on its own, so no mention is made by joining words across a blank line or
+  a line that does not count; and a guard that refuses names each line of an entry that
+  did not count and in which its own reading finds a mention of something it found no new
+  line naming, and why, so that a list of files repeated from this page or from an older
+  entry is seen for what it is, and a code fence, or another line that names nothing the
+  guard asks for, is never named. An entry names each file, statement and lock in a
+  sentence of its own. The comparison is for entries alone: a line added to this page is
+  compared with nothing, and any new line there counts, as before this entry; but its
+  mentions are read by the rules above, the same as an entry's, so where a mention may
+  start, a directory named by a link or the root's anchor, and a directory's full stop
+  are new for this page too.
+
+  Entries are history, only ever added: a new guard of the pre-flight's step 3, "decision
+  entries", refuses a push that modifies, deletes or renames an entry origin/main holds (a
+  move as Git's rename detection finds one); any other file, or a link, in the folder; a
+  path anywhere in the push that a Mac's file system reads as one under `docs/decisions/`,
+  as `render.py` reads names, but that is spelled otherwise; an entry whose name or
+  characters `render.py` would refuse; a README, added or changed, that is no UTF-8 text
+  or holds a character an entry may not; and an entry dated before this entry, or after
+  the day after the earlier of the pushed commit's committer date, which the pusher sets,
+  and the runner's own date, a day's grace for the time zones between the entry's writer
+  and the runner (`render.py`, which reads the working tree and has no commit, refuses
+  only the first). Its refusals print each path with its unprintable characters written as
+  escapes. It refuses no entry for copying another, in part or whole: the lines the
+  comparison finds copied count for nothing, and a routine entry that shares a line with
+  an older one, which Git's copy detection would call a copy, is still an entry. While the
+  guard refuses, entries supply no new line to the four guards, and their refusals say so.
+  The README may be edited, and approves nothing; once added it is never deleted, so that
+  origin/main always holds the folder. A correction is a new entry, in words of its own.
+  The revert that `scripts/safe_push.py` advises after a merge now restores from
+  origin/main `docs/decisions/` and this page, each that origin/main holds, after
+  `git revert --no-commit -m 1`, and adds an entry recording the revert, naming each
+  protected file, statement and lock in a sentence of its own.
+
+  WORKFLOW, FORMALIZATION, `docs/templates/orders.md`, the pull request template, the
+  model's account of a change to the axioms in `tests/model/MODEL.md`, the diagnostics of
+  `scripts/check_fidelity.py` and the account `scripts/safe_push.py` gives of its guards
+  now send a new decision to an entry, and the page stays valid history. So does the
+  header that `--write-lock` writes; the lock itself keeps its header until the next
+  decision that changes it, for its sha256 is pinned by `tests/model/lock.sha256`,
+  `model/lock.sha256` and the generated `model/Model/Laws.lean`, which that decision
+  renews in any case. The protected files changed: `.github/pull_request_template.md`,
+  `scripts/render.py`, `scripts/safe_push.py`, `scripts/test_safe_push.py`,
+  `scripts/negative_tests.py`, `scripts/check_fidelity.py`, `tests/model/MODEL.md` and
+  `tests/test_decision_entries.py`, which is new. The Jev question generator,
+  `scripts/audit/jev_questions.py`, now refuses to write its questions or its manifest
+  under `docs/decisions/`, which is the coordinator's as this page is, and
+  `tests/test_jev_questions.py` tests that refusal: two more protected files this
+  changes.
+
+  From this entry on, each new decision is a file of its own in
+  [`docs/decisions/`](../decisions/README.md); pull requests opened before it landed may
+  still add theirs to this page.
+
 ## 21 October 2026
+
+- **The tests nothing ran now run in CI (#157).** Four tests on main guarded real
+  behaviour and passed, but neither CI nor safe_push's check sequence ran them. Three of
+  them need no Lean, and become steps of CI's `check` job, entries in safe_push's
+  `CHECKS` and lines of WORKFLOW section 8's command block, in the same order, after
+  `tests/test_release_gate.py` and the Jev client's model check (`tests/test_jev_models.py`,
+  the entry below): `python3 scripts/audit/jev.py self-test`, then
+  `python3 -I tests/test_screen.py`, then `python3 -I tests/test_acceptance_limits.py`.
+  `Units.test_check_sequence_matches_workflow_and_ci`, in `scripts/test_safe_push.py`,
+  still compares the three lists exactly. The limitations' cases could have joined their
+  sibling, `tests/test_check_acceptance.py`, in the `acceptance` job; they go in the
+  `check` job instead, so that they run on every push as well as on every pull request,
+  and in each pre-flight, for about three seconds. `tests/test_screen.py` no longer says
+  that nothing runs it. The entries above that say CI does not run these tests yet (of
+  19 October, on the screen's cases, and of 20 October, on the Jev client's self-test and
+  on the limitations) stay as the records of their day.
+  `scripts/test_safe_push.py`, the tests of the gate every pull request lands through,
+  runs in a new CI job, `safe-push-tests`, on each pull request that changes `scripts/`,
+  `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`, `.github/` (the pull
+  request template among them) or `docs/WORKFLOW.md`. The issue named `scripts/`,
+  `.github/` and the template; `tests/` and `docs/WORKFLOW.md` join them because the tests
+  copy files of `tests/` into the harness under test, plant changes in the model's
+  harnesses, and compare WORKFLOW's section 8 with `CHECKS` and the `check` job, so a
+  change to either can fail them. `Certificate/`, `review/SCHEMA.md` and
+  `review/terms.toml` join them since the second review, as the rest of safe_push's
+  `CHECK_INPUTS`, which the tests guard; `Certificate/axioms.lock` and
+  `Certificate/FIELDS.md` are among what they read. Those paths are still not all the
+  tests read, and the job's comment, its path step's name and WORKFLOW section 8 had said
+  they were. The tests also read content (`heath/I/01.md`, this page,
+  `docs/briefs/book-I.md`, `docs/program.toml`, `docs/reading.md` and `facts.json`) and
+  run the commit's own `check_fidelity.py` and `render.py` over the whole tree, so a pull
+  request that changes only content can still break them while the job passes at once on
+  it, and the next run of the job shows it; the three now say so. The job checks out the
+  whole history and decides with `git diff --name-only` from the pull request's base to
+  its head, with three dots, so that only the pull request's own changes count; a
+  comparison that fails fails the job, and so, since the second review, does an empty
+  base or head, which the step's first line refuses:
+  `: "${BASE_SHA:?}" "${HEAD_SHA:?}"`. The job's `if`, on the `pull_request` event, already
+  kept both from being empty. The job asks for `contents: read` and no other permission,
+  and its checkout sets `persist-credentials: false`, so that no token sits in
+  `.git/config` while the pull request's code and a package from PyPI run. The model of
+  the workflow in `scripts/test_safe_push.py` reads the `check` job alone, and `Units`
+  passes with both keys. On any other pull request the job passes at once and says why,
+  and on a push it is skipped, as the `acceptance` job is. The tests need no Lean and no
+  network: `FullChecks`, which needs Lean, is skipped without `STOICHEIA_SLOW_TESTS=1`, as
+  the file has always skipped it. The job is not in `CHECKS`, every entry of which runs in
+  each pre-flight, nor among the checks main's ruleset requires, which are the owner's to
+  set; the merge gate refuses while it fails, as for any failing check, and a skipped run
+  holds nothing back. Two new cases of `Units.test_judge_checks` pin both: beside the five
+  required checks passing, a failing run of `safe-push-tests` gives "failure", and a
+  skipped one "success".
+  `tests/test_jev_questions.py`, the Jev question generator's tests (#185 notes that they
+  wait on #157), stays out. One of its cases checks out `39ae65c2`, a commit of
+  19 October, which the `check` job's checkout, one commit deep, does not hold; and that
+  job's setup, which `scripts/test_safe_push.py` holds to the checkout, Python's version
+  and the elan install, cannot ask for more history without a change to that model, a
+  change of its own. That is why the file stays out. The first round said that the rest of
+  the file passed in a clone one commit deep. That was true at `87b27ac3`, where all 36
+  tests passed in a full clone, and stopped being true when this branch merged main at
+  `dd908004`: since main's superposition rule landed (#191), two more cases fail at any
+  depth, on main itself, the HEAD subtest of
+  `test_commentary_controls_at_evidence_commit_and_head` and
+  `test_full_generation_has_ten_controls_and_exact_commentary_changes`, each with
+  "Elements.Superposition.Lit is not imported". #185's branch,
+  `tooling/jev-questions-paths`, fixes the generator. So two cases fail in a full clone,
+  and a third, at `39ae65c2`, in a clone one commit deep. The file can join once #185
+  lands and a job with the whole history runs it. The issue's last item, a green run in
+  CI on main for each of the four, linked from the issue, waits for the landing.
+  The protected files changed are `.github/workflows/ci.yml`, `scripts/safe_push.py`,
+  `scripts/test_safe_push.py` and `tests/test_screen.py`; [WORKFLOW](../WORKFLOW.md),
+  sections 8 and 10, records the steps and the job. No check is weakened.
+
 - **The Jev client keeps no answer without its model's identifier
   ([#181](https://github.com/jackChallis/stoicheia/issues/181)).** `run` in
   [`scripts/audit/jev.py`](../../scripts/audit/jev.py) wrote a reply with no `model` as a
@@ -3666,7 +3861,6 @@ findings:
   pages that print the clause, I.15, III.1 and III.16, each carry a porism. The fourth
   item of #163, III.25's page naming `Prop25.complete` a companion, waits for the core's
   move.
-
 - **The merge gate requires the ruleset's five checks (#142).** On 20 October the owner
   made `formal-model` and `acceptance` required status checks in the ruleset on main,
   beside `check`, `model` and `negative`, as the entry of that date on content kept fresh
@@ -3869,6 +4063,40 @@ findings:
   `.github/workflows/ci.yml`,
   `scripts/check_fidelity.py`,
   `scripts/check_model_kernel.py`.
+
+- **Two guards gain their planted faults
+  ([#158](https://github.com/jackChallis/stoicheia/issues/158)).** The check that a
+  complete book has every figure and mishnah, and leanchecker's kernel replay, each said it
+  had no planted fault to show that it works. Each now has one, in the protected file
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py), as new items 19 and 20,
+  each a function of its own with one call. Item 19 removes I.1's `figures/I/01.svg`, then
+  `figures/I/01-idea.svg`, then `mishnah/I/01.md`, one at a time. Book I is complete, so
+  `check_fidelity.py` must fail each time with "I.1: … is missing", naming that file and
+  not the other two; each file is put back byte for byte in `finally`. Item 20 plants
+  `True.intro` as a proof of `False` in I.1's compiled module, the way the first
+  read-through named ([read-through 01](../reports/read-through-01.md)):
+  `set_option debug.skipKernelTC true` and a `run_cmd` that calls `addDecl`. The source
+  scan refuses both, so I.1 is compiled with them by `lake env lean -o`, over its own
+  `.olean`, from a copy in a temporary folder outside the tree, importing
+  `Lean.Elab.Command`, which defines the monad `run_cmd` runs in and brings `addDecl`
+  with it. Then
+  `leanchecker --fresh Elements`, the command `scripts/check_kernel.py` runs, must fail
+  with "while replaying declaration 'Elements.BookI.planted_ill_typed'" and the kernel's
+  type mismatch, and not with a file it cannot read or an invalid header. The build is
+  restored as item 15 restores it: the original bytes, a forced rebuild, and on success
+  the whole environment replayed; no file is left in the tree. Tried by hand first with
+  Lean 4.35: without the option, the kernel refuses the same plant when I.1 compiles, so
+  the proof is ill-typed and the option is what lets it past. With the missing-file check
+  commented out in a scratch copy of `check_fidelity.py`, item 19 reports each of the three
+  files not caught; with a leanchecker that checks nothing, item 20 reports the proof not
+  caught. Item 20 takes about a minute, restoration included. The protected regression
+  test [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) gains three
+  tests, without Lean: the three files return byte for byte whether the check names them,
+  misses them or is interrupted; the build returns when the restoration build fails or is
+  interrupted; and a replay that fails on a header, not on the proof, is not counted as
+  caught. Neither file pinned the list of plants or its count.
+  [FORMALIZATION](../FORMALIZATION.md), section 7, and the README's row for the negative
+  tests now describe both plants. No check is weakened.
 
 - **The model's results and the overlap screen say what they were made from, and the
   release makes both again

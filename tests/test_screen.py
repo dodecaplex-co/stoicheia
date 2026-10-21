@@ -48,8 +48,8 @@ functions to small inputs, each with the answer the screen should give.
   checked again; a build left stale during the main or retry pass stops the run and leaves
   the existing record in place.
 
-Nothing runs these in CI yet: whoever changes the screen runs this file. Python 3.11 or
-later; standard library.
+CI's `check` job and safe_push's check sequence run this file (docs/WORKFLOW.md, section 8);
+neither runs the screen itself, which needs Lean. Python 3.11 or later; standard library.
 """
 
 from __future__ import annotations
