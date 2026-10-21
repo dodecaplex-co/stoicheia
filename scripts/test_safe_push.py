@@ -4838,24 +4838,34 @@ class Units(unittest.TestCase):
                     '[route]\nkind = "euclid"\n\n[review]\nstage = "exceptions"\n'
                     'reviewer = "Test reader"\ncommit = "abcdef1"\n'
                     'lean = "sha256:0123456789abcdef"\n')
-            record.write_text(text)
             git(repo, "init", "-q")
             git(repo, "config", "user.name", "review stamp test")
             git(repo, "config", "user.email", "review-stamp-test@example.invalid")
             git(repo, "config", "commit.gpgsign", "false")
+            record.write_text(text)
             git(repo, "add", ".")
             git(repo, "commit", "-q", "-m", "A record whose stamp commit is not here")
-            out = io.StringIO()
-            with mock.patch.object(review_stamp, "ROOT", repo), \
-                    mock.patch.object(review_stamp.heath, "ROOT", repo), \
-                    mock.patch.object(review_stamp.heath, "REVIEW", repo / "review"), \
-                    contextlib.redirect_stdout(out):
-                code = review_stamp.migrate([("I", 1)], dry_run=True)
-            self.assertEqual(code, 1, out.getvalue())
-            self.assertIn(f"✗ I.1: its stamp commit abcdef1 {review_stamp.NO_COMMIT}",
-                          out.getvalue())
-            self.assertIn("0 need(s) a reader; 1 problem(s)", out.getvalue())
-            self.assertEqual(record.read_text(), text)
+            cases = {
+                "without text": text,
+                "matching text": with_text(text, review_stamp.heath.text_hash(text)),
+                "stale text": with_text(text, "sha256:0000000000000000"),
+            }
+            for label, body in cases.items():
+                with self.subTest(label=label):
+                    record.write_text(body)
+                    out = io.StringIO()
+                    with mock.patch.object(review_stamp, "ROOT", repo), \
+                            mock.patch.object(review_stamp.heath, "ROOT", repo), \
+                            mock.patch.object(review_stamp.heath, "REVIEW", repo / "review"), \
+                            contextlib.redirect_stdout(out):
+                        code = review_stamp.migrate([("I", 1)], dry_run=True)
+                    self.assertEqual(code, 1, out.getvalue())
+                    self.assertIn(
+                        f"✗ I.1: its stamp commit abcdef1 {review_stamp.NO_COMMIT}",
+                        out.getvalue())
+                    self.assertNotIn("needs a reader, who reads", out.getvalue())
+                    self.assertIn("0 need(s) a reader; 1 problem(s)", out.getvalue())
+                    self.assertEqual(record.read_text(), body)
 
     def test_review_stamp_rejects_an_ambiguous_prefix_even_when_a_ref_shadows_it(self):
         with tempfile.TemporaryDirectory() as tmp:

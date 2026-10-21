@@ -278,19 +278,21 @@ def migrate_text(book: str, n: int, dry_run: bool) -> tuple[str, str]:
         raise ValueError(f"not migrated: {e}") from None
     old = path.read_text()
     own = heath.text_hash(old)
+    full = None
+    if "commit" in rv:
+        commit = rv["commit"]
+        full, problem = resolve(commit)
+        if full is None:
+            recovery = ("fetch the missing history, then run this again" if problem == NO_COMMIT
+                        else "identify the intended commit without guessing, record enough of "
+                             "its id to distinguish it, then run this again")
+            raise ValueError(f"{ref}: its stamp commit {commit} {problem}: {recovery}")
     if "text" in rv:
         if rv["text"] == own:
             return "current", f"{ref}: current"
         return "reader", f"{ref}: edited since its `text` stamp"
-    if "commit" not in rv:
-        return "reader", f"{ref}: no stamp commit to compare it with"
-    commit = rv["commit"]
-    full, problem = resolve(commit)
     if full is None:
-        recovery = ("fetch the missing history, then run this again" if problem == NO_COMMIT
-                    else "identify the intended commit without guessing, record enough of "
-                         "its id to distinguish it, then run this again")
-        raise ValueError(f"{ref}: its stamp commit {commit} {problem}: {recovery}")
+        return "reader", f"{ref}: no stamp commit to compare it with"
     if not in_history(full):
         return "reader", f"{ref}: its stamp commit {commit} is not in the history of HEAD"
     then = text_at(full, path)
