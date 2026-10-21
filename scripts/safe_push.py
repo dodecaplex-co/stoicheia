@@ -59,7 +59,9 @@ order, and the first that fails stops it with a message saying why:
    - a protected path (PROTECTED, below, as docs/WORKFLOW.md lists them) changes only
      with a new line in the decisions record naming each file changed by its whole path,
      at either end, a relative link resolving from the folder of the file that holds it
-     (names_path), and the pull request then carries the label `security-review`;
+     (names_path), a mention starting the text or following whitespace or one of
+     ( < [ ` " ' * (mention), and the pull request then carries the label
+     `security-review`;
    - every changed file under `heath/` carries, in the change, a comment naming a scan
      leaf of its own pages, as origin/main's copy of the file lists them;
    - no review record is stale, and the generated pages are current (check_fidelity.py
@@ -67,9 +69,10 @@ order, and the first that fails stops it with a message saying why:
    - no whole directory under Elements/, heath/, review/, figures/ or mishnah/ is
      deleted unless the decisions record gains a new line naming it, as a protected path
      is named;
-   - docs/decisions/ holds regular files alone, its README.md and dated entries, and an
-     entry is only added: none there at origin/main is changed, deleted or renamed
-     (entry_changes).
+   - docs/decisions/ holds regular files alone, its README.md, which once added stays,
+     and dated entries, each dated from FIRST_ENTRY to the day after the commit's
+     committer date, and an entry is only added: none there at origin/main is changed,
+     deleted or renamed (entry_changes).
    A new line here is a mention the push adds: an old line that already named the
    thing, edited in place, does not count. A line of a dated entry the push adds counts
    only when the decisions record held none like it, nor a run of SHARED_RUN of its
@@ -201,6 +204,10 @@ ENTRIES = "docs/decisions/"
 ENTRIES_README = "docs/decisions/README.md"
 DECISION_ENTRY = re.compile(r"docs/decisions/([0-9]{4}-[0-9]{2}-[0-9]{2})-[a-z0-9]+"
                             r"(?:-[a-z0-9]+)*\.md")
+# The first day an entry may bear: the day of the decisions page's entry "Decision entries,
+# one file each", which began them (render.py's FIRST_ENTRY). The last is the day after the
+# pushed commit's committer date (entry_changes).
+FIRST_ENTRY = datetime.date(2026, 10, 20)
 # A run of this many consecutive words that an entry shares with the decisions record is
 # copied from it, however the lines are wrapped.
 SHARED_RUN = 12
@@ -1437,6 +1444,16 @@ def entry_lines(path: str, text: str, record: Record) -> EntryLines:
     return EntryLines(hunks, uncounted)
 
 
+def committed_on(repo, sha) -> datetime.date:
+    """The day of `sha`'s committer date, on the committer's own calendar (in the time
+    zone Git records with it); a refusal when Git gives none that can be read."""
+    out = git(repo, "log", "-1", "--format=%cI", sha, "--").strip()
+    try:
+        return datetime.datetime.fromisoformat(out).date()
+    except ValueError:
+        raise Refusal(f"could not read the committer date of {sha}") from None
+
+
 def entry_changes(repo, base, sha) -> tuple[list[str], dict[str, EntryLines]]:
     """What the commit does under docs/decisions/: the changes refused, and the entries it
     adds, each read against the record (entry_lines). An entry is dated history, added
@@ -1445,12 +1462,15 @@ def entry_changes(repo, base, sha) -> tuple[list[str], dict[str, EntryLines]]:
     finds a move with edits. An entry that copies another, or the page, in part or whole,
     is not refused for it: the lines entry_lines finds copied count for nothing, and a
     short entry that shares a line with an older one is still an entry. The README is no
-    entry: it may be edited or deleted, and supplies no approval, but it stays a regular
-    file, never a link. A file added there is a regular file: the README, or an entry
-    named <YYYY-MM-DD>-<slug>.md with a valid date, and UTF-8 text holding no character
-    that `invisible` refuses. Paths are read whatever their case, and one spelled
-    otherwise than docs/decisions/ is refused: a Mac's file system finds it there, and
-    Git does not."""
+    entry: it may be edited, and supplies no approval, but once added it stays, a regular
+    file, never a link, so that the folder origin/main holds is never taken away (the
+    revert that revert_advice gives restores it). A file added there is a regular file:
+    the README, or an entry named <YYYY-MM-DD>-<slug>.md with a valid date, from
+    FIRST_ENTRY to the day after the committer date of `sha` (a day's grace for the
+    time zones between the entry's writer and the committer), and UTF-8 text holding no
+    character that `invisible` refuses. Paths are read whatever their case, and one
+    spelled otherwise than docs/decisions/ is refused: a Mac's file system finds it there,
+    and Git does not."""
     out = git(repo, "diff", "--raw", "-z", "--no-abbrev", "-M", "-l0", base, sha,
               "--", f":(icase){ENTRIES}")
     parts = out.split("\0")
@@ -1471,7 +1491,9 @@ def entry_changes(repo, base, sha) -> tuple[list[str], dict[str, EntryLines]]:
             continue
         i += 2
         if path == ENTRIES_README and status in "MTD":
-            if status != "D" and mode not in ("100644", "100755"):
+            if status == "D":
+                refused.append(f"{path}: deleted (the README, once added, stays)")
+            elif mode not in ("100644", "100755"):
                 refused.append(f"{path}: not a regular file (mode {mode})")
             continue
         if status in "MT":
@@ -1484,17 +1506,26 @@ def entry_changes(repo, base, sha) -> tuple[list[str], dict[str, EntryLines]]:
             refused.append(f"{path}: not a regular file (mode {mode})")
         elif path.startswith(ENTRIES) and path != ENTRIES_README:
             added.append(path)
-    entries, record = {}, None
+    entries, record, last = {}, None, None
     for path in added:
         match = DECISION_ENTRY.fullmatch(path)
         if match:
             try:
-                datetime.date.fromisoformat(match.group(1))
+                day = datetime.date.fromisoformat(match.group(1))
             except ValueError:
                 match = None
         if not match:
             refused.append(f"{path}: neither the README nor an entry named "
                            "<YYYY-MM-DD>-<slug>.md with a valid date")
+            continue
+        if day < FIRST_ENTRY:
+            refused.append(f"{path}: dated before {FIRST_ENTRY}, the day the entries began")
+            continue
+        if last is None:
+            last = committed_on(repo, sha) + datetime.timedelta(days=1)
+        if day > last:
+            refused.append(f"{path}: dated after {last}, the day after {sha[:12]}'s "
+                           "committer date")
             continue
         try:
             text = git(repo, "cat-file", "blob", f"{sha}:{path}", binary=True).decode("utf-8")
@@ -1637,11 +1668,36 @@ def guard_lock(repo, base, sha, rep: Report) -> None:
                 "count)" + uncounted(repo, base, sha))
 
 
+# Where a mention of a path may start (mention): at the start of the text, or after
+# whitespace or one of ( < [ ` " ' *, as prose and Markdown set a path down; after no other
+# character, so that ~/mishnah/test/, C:/mishnah/test/, @/mishnah/test/,
+# https://example.com/mishnah/test/ or x+mishnah/test/ names no mishnah/test/. An
+# underscore is a word character, after which origin/main's guards counted no path:
+# _mishnah/test/ names the longer path _mishnah/test/, and an emphasis made with
+# underscores ends in one, which no mention may be followed by either.
+MENTION_START = r"(?<![^\s(<\[`\"'*])"
+
+
+def mention(path: str, directory: bool = False) -> re.Pattern:
+    """A mention of `path`, for names_path: whole, starting where MENTION_START allows,
+    its group `prefix` a / that anchors it at the root or the ./ and ../ steps of a
+    relative link, and never the head of a longer path. A file may be followed by a full
+    stop that ends a sentence, or by 's, but by no word character, / or -, after a full
+    stop or not, so that Audit.lean.orig names no Audit.lean. A directory may close with
+    its slash or not, and be followed by a full stop that ends a sentence, but by no word
+    character, / or -, nor by a full stop with one of those or another full stop after
+    it, so that mishnah/test/note.md, mishnah/tests/, mishnah/test-old/, mishnah/test.md
+    or mishnah/test.. names no mishnah/test/."""
+    end = r"/?(?![\w/-]|\.[\w./-])" if directory else r"(?!\.?[\w/-])"
+    return re.compile(r"%s(?P<prefix>/|(?:\.\.?/)*)%s%s"
+                      % (MENTION_START, re.escape(path), end))
+
+
 def names_path(hunks: list[Hunk], path: str, pattern: re.Pattern) -> bool:
     """Does a hunk of the decisions record gain a mention of `path`, as `pattern` finds
-    one, its group `prefix` what stands before the path? The path counts whole, from the
-    repository's root or anchored there (/model/lock.sha256), or by a relative link that
-    resolves from the folder of the hunk's file, docs/briefs/ for the page and
+    one (mention), its group `prefix` what stands before the path? The path counts whole,
+    from the repository's root or anchored there (/model/lock.sha256), or by a relative
+    link that resolves from the folder of the hunk's file, docs/briefs/ for the page and
     docs/decisions/ for an entry, to exactly `path`, as check_links.py reads one. Each
     hunk, and so each run of an entry's lines that count, is read on its own."""
     def count(text, source):
@@ -1666,14 +1722,13 @@ def guard_protected(repo, base, sha, rep: Report) -> list[str]:
 
     # The path whole, from the repository's root, or from the decision's file by a relative
     # link resolved from its folder (../../), or anchored at the root (/model/lock.sha256), as
-    # check_links.py reads one (names_path); never the tail of a longer path, so that a line
-    # naming tests/model/lock.sha256 names no model/lock.sha256, nor one naming
-    # model/lakefile.toml the root's lakefile.toml; nor its head, so that a line naming
-    # Audit.lean.orig names no Audit.lean, though Audit.lean. ending a sentence, or
-    # Audit.lean's, does.
+    # check_links.py reads one (names_path); never the tail of a longer path (mention), so
+    # that a line naming tests/model/lock.sha256 or ~/model/lock.sha256 names no
+    # model/lock.sha256, nor one naming model/lakefile.toml the root's lakefile.toml; nor its
+    # head, so that a line naming Audit.lean.orig names no Audit.lean, though Audit.lean.
+    # ending a sentence, or Audit.lean's, does.
     def named(path):
-        return names_path(decisions, path, re.compile(
-            r"(?<![\w/.-])(?P<prefix>/|(?:\.\.?/)*)%s(?!\.?[\w/-])" % re.escape(path)))
+        return names_path(decisions, path, mention(path))
 
     unnamed = [p for p in files if not named(p)]
     if unnamed:
@@ -1773,12 +1828,11 @@ def guard_directories(repo, base, sha, rep: Report) -> None:
     decisions = decision_hunks(repo, base, sha)
 
     # The directory whole, with its closing slash or without, read as guard_protected reads
-    # a path (names_path): never the tail of a longer path, nor its head, so that a line
-    # naming tests/mishnah/test/, mishnah/test/note.md or mishnah/tests/ names no
-    # mishnah/test/.
+    # a path (names_path, mention): never the tail of a longer path, nor its head, so that a
+    # line naming tests/mishnah/test/, ~/mishnah/test/, mishnah/test/note.md or
+    # mishnah/tests/ names no mishnah/test/, though mishnah/test. ending a sentence does.
     def named(d):
-        return names_path(decisions, d, re.compile(
-            r"(?<![\w/.-])(?P<prefix>/|(?:\.\.?/)*)%s/?(?![\w./-])" % re.escape(d)))
+        return names_path(decisions, d, mention(d, directory=True))
 
     unnamed = [d for d in top if not named(d)]
     if unnamed:
@@ -1793,8 +1847,9 @@ def guard_directories(repo, base, sha, rep: Report) -> None:
 
 
 def guard_entries(repo, base, sha, rep: Report) -> None:
-    """Decision entries are dated history: a commit only adds them, beside the README.
-    "no entry added" when it adds none, whatever it does to the README."""
+    """Decision entries are dated history: a commit only adds them, beside the README,
+    which stays once added. "no entry added" when it adds none, whatever edit it makes to
+    the README."""
     refused, added = entry_changes(repo, base, sha)
     if refused:
         rep.add("3", "decision entries", "FAIL",
@@ -4114,18 +4169,23 @@ def revert_advice(ctx: Context, kind: str | None = None) -> str:
     """How to undo a merge commit `ctx.sha`, through a pull request of its own, with the
     merged pull request's label for its kind. The decisions record stays as origin/main
     has it: the revert alone would delete the merge's entries, which guard_entries
-    refuses, so the record is restored from origin/main, and an entry of today's date
-    records the revert, naming what it changes as any change's entry must: in sentences
-    of its own, since a line or a list repeated from the merge's entry counts for nothing
-    (entry_lines)."""
+    refuses, so the record is restored from origin/main, docs/decisions/ and the page
+    each named only when origin/main holds it (git restore stops at a path its source
+    lacks), and an entry of today's date records the revert, naming what it changes as
+    any change's entry must: in sentences of its own, since a line or a list repeated
+    from the merge's entry counts for nothing (entry_lines)."""
     branch = f"revert-{ctx.sha[:12]}"
     entry = f"{ENTRIES}{datetime.date.today().isoformat()}-revert-{ctx.sha[:12]}.md"
+    held = [p for p in (ENTRIES, DECISIONS)
+            if git_ok(ctx.repo, "cat-file", "-e", f"origin/main:{p.rstrip('/')}")]
+    restore = ([f"    git restore --source=origin/main --staged --worktree -- {' '.join(held)}"]
+               if held else [])
     return "\n".join([
         "Nothing has been reverted. To undo the merge, in a pull request of its own, with "
         "the decisions record kept as origin/main has it:",
         f"    git switch -c {branch} origin/main",
         f"    git revert --no-commit -m 1 {ctx.sha}",
-        f"    git restore --source=origin/main --staged --worktree -- {ENTRIES} {DECISIONS}",
+        *restore,
         f"    # write {entry}: the revert and why, naming each protected file, statement",
         "    # and lock that it changes, as an entry of any change must, each in a sentence",
         "    # of the entry's own, never on a line or in a list repeated from an older entry",

@@ -3357,28 +3357,37 @@ findings:
   `scripts/audit/jev.py`.
 
   So each decision written after this entry is a file of its own,
-  `docs/decisions/<YYYY-MM-DD>-<slug>.md`: a valid date, then a short name of lower-case
-  letters and digits joined by hyphens. An entry is read where it is, as a page of its
-  own, its relative links resolving from `docs/decisions/`; nothing assembles the entries
-  into this page or any other, since any file that every entry's pull request had to
-  update would collide just as this page does. GitHub lists the folder in name order,
-  which is date order, as its README, [`docs/decisions/README.md`](../decisions/README.md),
-  says; the README stays the same from one entry to the next. `scripts/render.py` checks
-  the folder before it writes anything, and CI and the pre-flight run it on every pull
-  request: the folder, which may be absent, lies under no link and is spelled
-  `docs/decisions` on disk, with no other spelling beside it; it holds regular files
-  alone, the README and entries; every file there is UTF-8 and holds no count marker, so
-  that `render.py` never writes into it; and an entry holds text, and no control
-  character but a tab and a line feed, no format character (Unicode's Cf), no line or
-  paragraph separator and no other default-ignorable character. An entry needs no date
-  heading, and may hold headings, as any page may. `tests/test_decision_entries.py` tests
-  these refusals, and `scripts/negative_tests.py` runs it after the count regressions, so
-  that CI's `negative` job and the pre-flight run it too.
+  `docs/decisions/<YYYY-MM-DD>-<slug>.md`: a valid date, no earlier than this entry's,
+  then a short name of lower-case letters and digits joined by hyphens. An entry is read
+  where it is, as a page of its own, its relative links resolving from `docs/decisions/`;
+  nothing assembles the entries into this page or any other, since any file that every
+  entry's pull request had to update would collide just as this page does. GitHub lists
+  the folder in name order, which is date order, as its README,
+  [`docs/decisions/README.md`](../decisions/README.md), says; the README stays the same
+  from one entry to the next. `scripts/render.py` checks the folder before it writes
+  anything, and CI and the pre-flight run it on every pull request: the folder, which may
+  be absent, lies under no link and is spelled `docs/decisions` on disk, with no other
+  spelling beside it; it holds regular files alone, the README and entries, passing over
+  a file Git ignores, as Finder's `.DS_Store`, which Git never commits, and stopping if
+  Git cannot say which files those are; no entry there is dated before this entry; every
+  file there is UTF-8 and holds no count marker, so that `render.py` never writes into
+  it; and an entry holds text, and no control character but a tab and a line feed, no
+  format character (Unicode's Cf), no line or paragraph separator and no other
+  default-ignorable character. An entry needs no date heading, and may hold headings, as
+  any page may. `tests/test_decision_entries.py` tests these refusals, and
+  `scripts/negative_tests.py` runs it after the count regressions, so that CI's
+  `negative` job and the pre-flight run it too.
 
   Every guard that asks for a new line in this page (the axiom lock, a protected path, a
   deleted directory) or in `docs/briefs/` (a statement changed) accepts a new line in a
-  dated entry the push adds, a relative link there resolved from `docs/decisions/`. Such a
-  line counts only when it holds a word; when no line of this page or of any file under
+  dated entry the push adds, a relative link there resolved from `docs/decisions/`. In an
+  entry and on this page alike, a file or a directory counts only where its mention
+  starts the text or follows whitespace, `(`, `<`, `[`, a backtick, a quotation mark, an
+  apostrophe or `*`, where origin/main's guards counted one after any character but a
+  letter, a digit, `_`, `/`, `.` or `-`: so `~/mishnah/test/`,
+  `C:/scripts/check_style.py`, `x+mishnah/test/` or a URL ending in a path names nothing.
+  A directory, as a file, may end a sentence, its full stop after it. Such a line counts
+  only when it holds a word; when no line of this page or of any file under
   `docs/decisions/` at origin/main matches it, each read as a skeleton: in Unicode's NFKC
   form, casefolded, each Cyrillic or Greek letter that looks like a Latin one read as that
   letter, and every space separator, the Braille pattern blank and the Hangul fillers
@@ -3400,16 +3409,20 @@ findings:
   Entries are history, only ever added: a new guard of the pre-flight's step 3, "decision
   entries", refuses a push that modifies, deletes or renames an entry origin/main holds (a
   move as Git's rename detection finds one); any other file, or a link, in the folder; a
-  path spelled otherwise than `docs/decisions/`; and an entry whose date or characters
-  `render.py` would refuse. It refuses no entry for copying another, in part or whole:
-  the lines the comparison finds copied count for nothing, and a routine entry that
-  shares a line with an older one, which Git's copy detection would call a copy, is still
-  an entry. While the guard refuses, entries supply no new line to the four guards, and
-  their refusals say so. The README may be edited, and approves nothing. A correction is
-  a new entry, in words of its own. The revert that `scripts/safe_push.py` advises after
-  a merge now restores `docs/decisions/` and this page from origin/main after
-  `git revert --no-commit -m 1`, and adds an entry recording the revert, naming each
-  protected file, statement and lock in a sentence of its own.
+  path spelled otherwise than `docs/decisions/`; an entry whose name or characters
+  `render.py` would refuse; and an entry dated before this entry, or after the day after
+  the pushed commit's committer date, a day's grace for the time zones between the
+  entry's writer and the committer (`render.py`, which reads the working tree and has no
+  commit, refuses only the first). It refuses no entry for copying another, in part or
+  whole: the lines the comparison finds copied count for nothing, and a routine entry
+  that shares a line with an older one, which Git's copy detection would call a copy, is
+  still an entry. While the guard refuses, entries supply no new line to the four guards,
+  and their refusals say so. The README may be edited, and approves nothing; once added
+  it is never deleted, so that origin/main always holds the folder. A correction is a new
+  entry, in words of its own. The revert that `scripts/safe_push.py` advises after a
+  merge now restores from origin/main `docs/decisions/` and this page, each that
+  origin/main holds, after `git revert --no-commit -m 1`, and adds an entry recording the
+  revert, naming each protected file, statement and lock in a sentence of its own.
 
   WORKFLOW, FORMALIZATION, `docs/templates/orders.md`, the pull request template, the
   model's account of a change to the axioms in `tests/model/MODEL.md`, the diagnostics of
@@ -3421,7 +3434,11 @@ findings:
   renews in any case. The protected files changed: `.github/pull_request_template.md`,
   `scripts/render.py`, `scripts/safe_push.py`, `scripts/test_safe_push.py`,
   `scripts/negative_tests.py`, `scripts/check_fidelity.py`, `tests/model/MODEL.md` and
-  `tests/test_decision_entries.py`, which is new.
+  `tests/test_decision_entries.py`, which is new. The Jev question generator,
+  `scripts/audit/jev_questions.py`, now refuses to write its questions or its manifest
+  under `docs/decisions/`, which is the coordinator's as this page is, and
+  `tests/test_jev_questions.py` tests that refusal: two more protected files this
+  changes.
 
   From this entry on, each new decision is a file of its own in
   [`docs/decisions/`](../decisions/README.md); pull requests opened before it landed may

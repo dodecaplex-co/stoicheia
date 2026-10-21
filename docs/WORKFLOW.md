@@ -597,7 +597,8 @@ another page, and GitHub lists the folder in name order, which is date order
 ([the folder's README](decisions/README.md)). To write one, the coordinator:
 
 1. names it `docs/decisions/<YYYY-MM-DD>-<slug>.md`: the day of the decision, a valid
-   date, then a short name of lower-case letters and digits joined by hyphens, as
+   date no earlier than 20 October 2026, when the entries began, then a short name of
+   lower-case letters and digits joined by hyphens, as
    `docs/decisions/2026-10-21-entry-files.md`;
 2. writes the entry as the page's entries are written (`- **A title (area).** The
    decision, and why.`), with no date heading, since the name carries the date, and
@@ -615,9 +616,10 @@ another page, and GitHub lists the folder in name order, which is date order
 4. runs `python3 scripts/render.py`, which checks the folder before it writes anything,
    refusing, with the file's name, a link, a folder or any file but the README and
    entries, a folder spelled otherwise on disk (as `docs/Decisions/`, which a Mac finds
-   and Git does not), an entry that breaks the rules above, and an empty one; it writes
-   nothing into the folder, so the pull request carries the entry alone, beside the
-   change it records.
+   and Git does not), an entry that breaks the rules above, and an empty one; it passes
+   over a file Git ignores, as Finder's `.DS_Store`, which Git never commits, and stops
+   if Git cannot say which files those are; it writes nothing into the folder, so the
+   pull request carries the entry alone, beside the change it records.
 
 An entry is dated history, never edited: the pre-flight refuses a push that modifies,
 deletes or renames an entry origin/main holds (step 3, below), and a correction is a new
@@ -630,7 +632,8 @@ the decisions page as origin/main has them
 adds an entry recording the revert and why, naming each protected file, statement and
 lock the revert changes in a sentence of its own, as any entry must, and commits; the
 advice `--merge` prints when main is not what was checked gives these commands. The
-folder's README is no entry: it may be edited, and approves nothing.
+folder's README is no entry: it may be edited, and approves nothing; once added, it is
+never deleted, so that origin/main always holds the folder.
 
 ```sh
 sh scripts/install_hooks.sh                        # from a checkout of origin/main: once per
@@ -708,14 +711,15 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       - no whole directory of `Elements/`, `heath/`, `review/`, `figures/` or `mishnah/`
         deleted unless the decisions page or a dated entry gains a new line naming it;
       - `docs/decisions/` holding regular files alone, its README and dated entries, each
-        entry named and written as "Decision entries", above, says (a valid date, and
-        UTF-8 text holding none of the characters kept out there), every path there
-        spelled `docs/decisions/`, and no entry origin/main holds modified, deleted or
-        renamed: Git's rename detection (every file there a source, with no limit) finds
-        a move with edits. An entry that copies another is not refused for it, though
-        Git's copy detection would call it a copy; the lines the comparison below finds
-        copied count for nothing. The README may be edited or deleted, and approves
-        nothing.
+        entry named and written as "Decision entries", above, says (a valid date, from
+        20 October 2026 to the day after the commit's committer date, a day's grace for
+        time zones, and UTF-8 text holding none of the characters kept out there), every
+        path there spelled `docs/decisions/`, and no entry origin/main holds modified,
+        deleted or renamed: Git's rename detection (every file there a source, with no
+        limit) finds a move with edits. An entry that copies another is not refused for
+        it, though Git's copy detection would call it a copy; the lines the comparison
+        below finds copied count for nothing. The README may be edited, never deleted
+        once added, and approves nothing.
 
       For each of these, the push must add a mention: an old line that already named the
       thing, edited in place, does not count. A line added to the decisions page counts
@@ -908,9 +912,12 @@ for the page and `docs/decisions/` for an entry, to exactly that path: for
 `model/Model/Audit.lean`, `../../model/Model/Audit.lean` counts, but
 `../model/Model/Audit.lean`, `../../../model/Model/Audit.lean` and
 `./model/Model/Audit.lean` do not; a line naming `tests/model/lock.sha256` does not name
-`model/lock.sha256`), the label `security-review`, and a `/security-review` recorded in
-the pull request; weakening a check stays a decision of the owner's
-([FORMALIZATION.md](FORMALIZATION.md), section 1). `Audit/`, `Audit.lean`,
+`model/lock.sha256`; and a mention counts only where it starts the text or follows
+whitespace, `(`, `<`, `[`, a backtick, a quotation mark, an apostrophe or `*`, so that
+`~/model/lock.sha256` or a URL ending in the path names nothing), the label
+`security-review`, and a `/security-review` recorded in the pull request; weakening a
+check stays a decision of the owner's ([FORMALIZATION.md](FORMALIZATION.md), section 1).
+`Audit/`, `Audit.lean`,
 `model/Model/Audit.lean`, `model/Model.lean` and the model's build files are content the
 checks judge, not checks, so they stay judged when a check fails with origin/main's copies
 (step 4).

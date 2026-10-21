@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """The checks render.py makes of docs/decisions/, the dated decision entries, each a page
-of its own, before it writes anything; and that render.py, run whole on a copy of the
-sources, assembles no entry into another page and leaves the decisions record as it was.
+of its own, before it writes anything, passing over the files Git ignores; and that
+render.py, run whole on a copy of the sources, assembles no entry into another page and
+leaves the decisions record as it was.
 
     python3 -I tests/test_decision_entries.py
 
-Standard library only; no Lean or network. scripts/negative_tests.py runs it beside the
-count regressions, so CI's `negative` job and the pre-flight run it on every pull request.
+Standard library and Git only; no Lean or network. Each case's folder is in a Git
+repository of its own, read with no configuration or excludes file but its own.
+scripts/negative_tests.py runs it beside the count regressions, so CI's `negative` job and
+the pre-flight run it on every pull request.
 """
 
 import contextlib
@@ -25,16 +28,35 @@ import render  # noqa: E402
 import safe_push  # noqa: E402
 
 
+def git_environment(home):
+    """The environment, for Git, of a repository of a test's own: none named by GIT_DIR or
+    the like, and no configuration or excludes file but the repository's, so that what
+    Git ignores is what the test says (`home` stands for the user's home)."""
+    env = {name: value for name, value in os.environ.items() if not name.startswith("GIT_")}
+    return {**env, "HOME": str(home), "XDG_CONFIG_HOME": str(home / ".config"),
+            "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CEILING_DIRECTORIES": str(home.parent)}
+
+
 class DecisionEntries(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name).resolve()
+        self.root = Path(self.temp.name).resolve() / "repository"
         self.folder = self.root / "docs" / "decisions"
         self.folder.mkdir(parents=True)
+        home = Path(self.temp.name).resolve() / "home"
+        home.mkdir()
+        environment = mock.patch.dict(os.environ, git_environment(home), clear=True)
+        environment.start()
+        self.addCleanup(environment.stop)
+        self.git("init", "-q")
         root = mock.patch.object(render, "ROOT", self.root)
         root.start()
         self.addCleanup(root.stop)
+
+    def git(self, *args):
+        return subprocess.run(["git", *args], cwd=self.root, check=True, capture_output=True)
 
     def entry(self, name, text):
         path = self.folder / name
@@ -80,6 +102,75 @@ class DecisionEntries(unittest.TestCase):
                 with self.refused(f"docs/decisions/{name}: invalid date"):
                     render.decision_entries()
                 (self.folder / name).unlink()
+
+    def test_no_entry_dated_before_the_first(self):
+        # The entries began on 20 October 2026. The working tree has no commit, so no date
+        # is too late here: the pre-flight bounds it by the commit's (safe_push.py).
+        self.assertEqual(render.FIRST_ENTRY, safe_push.FIRST_ENTRY)
+        for name in ("2026-10-19-early.md", "1900-01-01-old.md", "0001-01-01-first-year.md"):
+            with self.subTest(name=name):
+                self.entry(name, "- A decision.\n")
+                with self.refused(f"^docs/decisions/{name}: dated before 2026-10-20, the day "
+                                  "the entries began$"):
+                    render.decision_entries()
+                (self.folder / name).unlink()
+        for name in ("2026-10-20-first.md", "9999-12-31-last-word.md"):
+            self.entry(name, "- A decision.\n")
+        self.assertEqual(render.decision_entries(),
+                         ["2026-10-20-first.md", "9999-12-31-last-word.md"])
+
+    def test_files_git_ignores_are_passed_over(self):
+        # Finder's .DS_Store and an editor's backup, ignored by the repository's rules, are
+        # no part of the record: Git never commits them. A file the rules do not cover is
+        # refused as before, and so is one they cover that is tracked, which Git commits.
+        (self.root / ".gitignore").write_text(".DS_Store\n*~\n.idea/\n")
+        self.entry("2026-10-20-test.md", "- A decision.\n")
+        self.entry(".DS_Store", b"\x00\x00\x00\x01Bud1")
+        self.entry("2026-10-20-test.md~", "- A decision, as it was.\r\n")
+        (self.folder / ".idea").mkdir()
+        self.assertEqual(render.decision_entries(), ["2026-10-20-test.md"])
+        self.entry("notes.md", "- Notes.\n")
+        with self.refused("^docs/decisions/notes.md: expected README.md or an entry"):
+            render.decision_entries()
+        (self.folder / "notes.md").unlink()
+        self.git("add", "-f", "--", "docs/decisions/.DS_Store")
+        with self.refused("^docs/decisions/.DS_Store: expected README.md or an entry"):
+            render.decision_entries()
+
+    def test_git_must_say_what_it_ignores(self):
+        # Where Git cannot be run, finds no repository, finds one whose work tree is not
+        # the root, or cannot read its index, nothing is passed over: render.py stops.
+        self.entry("2026-10-20-test.md", "- A decision.\n")
+        with mock.patch.object(render.subprocess, "run", side_effect=FileNotFoundError("git")):
+            with self.refused("^docs/decisions: cannot ask Git which files it ignores"):
+                render.decision_entries()
+        elsewhere = self.root.parent / "elsewhere"
+        elsewhere.mkdir()
+        with mock.patch.dict(os.environ, {"GIT_DIR": str(self.root / ".git"),
+                                          "GIT_WORK_TREE": str(elsewhere)}):
+            with self.refused("^docs/decisions: Git's work tree .*elsewhere is not the "
+                              "repository root"):
+                render.decision_entries()
+        (self.root / ".git" / "index").write_bytes(b"not an index")
+        with self.refused("^docs/decisions: git check-ignore failed: "):
+            render.decision_entries()
+        (self.root / ".git").rename(self.root / "git-metadata")
+        with self.refused("^docs/decisions: cannot ask Git which files it ignores"):
+            render.decision_entries()
+
+    def test_git_naming_a_file_it_was_not_asked_about_stops_render(self):
+        self.entry("2026-10-20-test.md", "- A decision.\n")
+        run = subprocess.run
+
+        def answer(command, **kwargs):
+            if "check-ignore" in command:
+                return subprocess.CompletedProcess(command, 0, b"docs/decisions/other\0", b"")
+            return run(command, **kwargs)
+
+        with mock.patch.object(render.subprocess, "run", side_effect=answer):
+            with self.refused("^docs/decisions: git check-ignore named a file it was not "
+                              "asked about$"):
+                render.decision_entries()
 
     def test_only_regular_files_the_readme_included(self):
         target = self.root / "elsewhere.md"

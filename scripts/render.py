@@ -50,6 +50,7 @@ import functools
 import json
 import os
 import re
+import subprocess
 import unicodedata
 from datetime import date
 
@@ -2437,6 +2438,11 @@ def program_page(text, facts, records, program):
 
 
 DECISION_FILE = re.compile(r"([0-9]{4}-[0-9]{2}-[0-9]{2})-[a-z0-9]+(?:-[a-z0-9]+)*\.md")
+# The first day an entry may bear: the day of the decisions page's entry "Decision entries,
+# one file each", which began them (scripts/safe_push.py's FIRST_ENTRY). render.py reads
+# the working tree, with no commit whose date could bound an entry's from above; the
+# pre-flight's guard of the entries does that.
+FIRST_ENTRY = date(2026, 10, 20)
 # Unicode's default-ignorable characters that are no format characters (Cf): the
 # combining grapheme joiner, the Hangul fillers, two Khmer vowels, the Mongolian and
 # other variation selectors, and the code points Unicode keeps for more of them.
@@ -2473,6 +2479,42 @@ def spelled_otherwise(path):
     return None
 
 
+def git_ignored(names):
+    """Those of `names`, the files of docs/decisions/, that Git ignores (`git
+    check-ignore`): untracked, and matched by a rule of .gitignore, .git/info/exclude or
+    the user's own excludes file, as Finder's .DS_Store is. Git never commits them, so
+    they are no part of the decisions record; a tracked file is never ignored. Git's work
+    tree must be ROOT. If Git cannot be run, cannot answer, or names a file it was not
+    asked about, render.py stops, so that no file is passed over on a guess."""
+    if not names:
+        return set()
+    asked = {f"docs/decisions/{name}": name for name in names}
+    cannot = ("docs/decisions: cannot ask Git which files it ignores ({}); a checkout, or "
+              "GIT_DIR and GIT_WORK_TREE, is needed")
+    try:
+        top = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=ROOT,
+                             capture_output=True, check=True)
+    except (subprocess.CalledProcessError, OSError) as error:
+        raise SystemExit(cannot.format(error)) from None
+    work_tree = os.fsdecode(top.stdout).removesuffix("\n")
+    if os.path.realpath(work_tree) != os.path.realpath(ROOT):
+        raise SystemExit(f"docs/decisions: Git's work tree {work_tree} is not the "
+                         f"repository root {ROOT}, so Git cannot say which files it ignores")
+    try:
+        result = subprocess.run(["git", "check-ignore", "-z", "--stdin"], cwd=ROOT,
+                                input=b"".join(os.fsencode(path) + b"\0" for path in asked),
+                                capture_output=True)
+    except OSError as error:
+        raise SystemExit(cannot.format(error)) from None
+    if result.returncode not in (0, 1):
+        raise SystemExit("docs/decisions: git check-ignore failed: "
+                         + os.fsdecode(result.stderr).strip())
+    named = [os.fsdecode(path) for path in result.stdout.split(b"\0") if path]
+    if any(path not in asked for path in named):
+        raise SystemExit("docs/decisions: git check-ignore named a file it was not asked about")
+    return {asked[path] for path in named}
+
+
 def decision_entries():
     """Check docs/decisions/, the folder of dated decision entries, and return the
     entries' names. Each entry is a page of its own, read where it is, and nothing is
@@ -2480,10 +2522,13 @@ def decision_entries():
     needs no date heading, since its name carries its date. The folder may be absent.
     Where it is not, it is a folder under no link, spelled so on disk with nothing beside
     it spelled otherwise, and holds regular files alone: its README.md, which is no entry,
-    and entries named `<YYYY-MM-DD>-<slug>.md`, a valid date and then lower-case letters
-    and digits joined by hyphens. Every file there is UTF-8 and holds no count marker, so
-    that render.py writes nothing into the folder; and every entry holds text, and no
-    character that `invisible` refuses."""
+    and entries named `<YYYY-MM-DD>-<slug>.md`, a valid date no earlier than FIRST_ENTRY
+    and then lower-case letters and digits joined by hyphens. A file Git ignores, as
+    Finder's .DS_Store, is passed over (git_ignored). Every file there is UTF-8 and holds
+    no count marker, so that render.py writes nothing into the folder; and every entry
+    holds text, and no character that `invisible` refuses. The working tree has no commit
+    date, so no date is too late here: the pre-flight's guard of the entries refuses one
+    later than the day after its commit's (scripts/safe_push.py, entry_changes)."""
     try:
         folder = generated_counts.repository_path(ROOT, ROOT / "docs" / "decisions")
     except ValueError as error:
@@ -2497,8 +2542,11 @@ def decision_entries():
         return []
     if not folder.is_dir():
         raise SystemExit("docs/decisions: expected a folder of entry files")
-    entries = []
-    for name in sorted(os.listdir(folder)):
+    entries, names = [], sorted(os.listdir(folder))
+    ignored = git_ignored(names)
+    for name in names:
+        if name in ignored:
+            continue
         where, path = f"docs/decisions/{name}", folder / name
         if path.is_symlink() or not path.is_file():
             raise SystemExit(f"{where}: expected a regular file, the README.md or an entry")
@@ -2509,9 +2557,12 @@ def decision_entries():
                              "and digits joined by hyphens")
         if match:
             try:
-                date.fromisoformat(match.group(1))
+                day = date.fromisoformat(match.group(1))
             except ValueError:
                 raise SystemExit(f"{where}: invalid date") from None
+            if day < FIRST_ENTRY:
+                raise SystemExit(f"{where}: dated before {FIRST_ENTRY}, the day the entries "
+                                 "began")
         try:
             text = path.read_bytes().decode("utf-8")
         except UnicodeDecodeError as error:

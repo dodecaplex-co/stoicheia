@@ -102,12 +102,17 @@ one commit and runs safe_push.py against that origin:
   for being one, and an entry with a Greek word in it approves as any does; a guard that
   refuses names each line of an entry that did not count, and why, a list of files
   repeated from the page or from an older entry among them; a short entry sharing a line
-  with an older one is an entry, though Git calls it a copy; the folder's README may
-  change and approves nothing; a link, a name spelled otherwise or a file of any other
-  name is refused; the page, deleted, refuses a protected change rather than crashing;
-  the revert that safe_push advises keeps the record and passes the guards, its entry
-  naming each file in a sentence of its own; an abbreviated commit name is as wide as
-  Git makes it here;
+  with an older one is an entry, though Git calls it a copy; the folder's README may be
+  edited, never deleted, and approves nothing; a link, a name spelled otherwise or a file
+  of any other name is refused, and so is an entry dated before 20 October 2026 or after
+  the day after its commit's committer date; in an entry and on the page, a mention of a
+  file or a directory starts the text or follows whitespace or an opening mark, so that
+  a longer path, a home folder's, a drive's or a URL's, names nothing, and every form
+  the guards counted before that starts so still counts; a directory may end a sentence;
+  the page, deleted, refuses a protected change rather than crashing; the revert that
+  safe_push advises keeps the record and passes the guards, its entry naming each file
+  in a sentence of its own, and restores only what origin/main holds; an abbreviated
+  commit name is as wide as Git makes it here;
 - the count markers of T1 (#177): a new word in the lock, with Certificate/FIELDS.md's
   count of the words moved with it, lands as content, origin/main's failure noted and the
   commit's own pass holding the count to the lock; while that page changed beyond the
@@ -147,6 +152,7 @@ import contextlib
 import datetime
 import hashlib
 import io
+import itertools
 import json
 import os
 import re
@@ -3680,7 +3686,9 @@ class DecisionEntries(Clone):
         return git(WORK, "diff", "--name-status", "--no-renames", start, sha, "--",
                    self.README).split()[0]
 
-    def test_readme_may_change_and_approves_nothing(self):
+    def test_readme_may_be_edited_never_deleted_and_approves_nothing(self):
+        # Once added, the README stays, so that origin/main always holds the folder that
+        # the advised revert restores; added or edited, it approves nothing.
         bare, held = self.readme_bases()
         for change, status in (("added", "A"), ("edited", "M"), ("deleted", "D")):
             with self.subTest(change=change):
@@ -3693,8 +3701,13 @@ class DecisionEntries(Clone):
                 sha = self.commit(f"The README {change}", writes, remove=remove)
                 self.assertEqual(self.readme_status(start, sha), status)
                 rep = self.check_guard(safe_push.guard_entries, start, sha)
-                self.assertEqual(rep.steps[-1].outcome, "ok", rep.steps)
-                self.assertEqual(rep.steps[-1].detail, "no entry added")
+                if change == "deleted":
+                    self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
+                    self.assertIn(f"{self.README}: deleted (the README, once added, stays)",
+                                  rep.steps[-1].detail)
+                else:
+                    self.assertEqual(rep.steps[-1].outcome, "ok", rep.steps)
+                    self.assertEqual(rep.steps[-1].detail, "no entry added")
                 rep = self.check_guard(safe_push.guard_protected, start, sha)
                 self.assertEqual(rep.steps[-1].outcome, "FAIL", rep.steps)
                 self.assertIn(f"naming them: {self.PATH}", rep.failed()[0].detail)
@@ -3781,6 +3794,38 @@ class DecisionEntries(Clone):
                 rep = self.check_guard(safe_push.guard_protected, base, sha)
                 self.assertEqual(rep.steps[-1].outcome, "FAIL")
                 self.assertIn(f"naming them: {self.PATH}", rep.failed()[0].detail)
+
+    def test_entry_dates_run_from_the_first_entry_to_the_day_after_the_commit(self):
+        # An entry is dated from 20 October 2026, the day the entries began, to the day after
+        # its commit's committer date, read on the committer's own calendar: committed at
+        # 23:30 on 25 October at UTC-11, which is 26 October at UTC, an entry may be dated
+        # 26 October, and no later.
+        env = dict(os.environ, GIT_COMMITTER_DATE="2026-10-25T23:30:00-11:00")
+        early = "dated before 2026-10-20, the day the entries began"
+        late = "dated after 2026-10-26, the day after {}'s committer date"
+        for name, why in (("2026-10-20-first.md", None), ("2026-10-26-next-day.md", None),
+                          ("2026-10-19-early.md", early), ("1900-01-01-old.md", early),
+                          ("2026-10-27-later.md", late), ("9999-12-31-last-word.md", late)):
+            with self.subTest(name=name):
+                self.restart()
+                entry = f"docs/decisions/{name}"
+                sha = self.commit("Name a protected change in a dated entry", {
+                    self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+                    entry: f"`{self.PATH}` changes.\n",
+                }, env=env)
+                self.assertEqual(safe_push.committed_on(WORK, sha), datetime.date(2026, 10, 25))
+                entries = self.check_guard(safe_push.guard_entries, BASE, sha)
+                protected = self.check_guard(safe_push.guard_protected, BASE, sha)
+                if why is None:
+                    self.assertEqual([(s.outcome, s.detail) for s in entries.steps],
+                                     [("ok", f"added: {entry}")])
+                    self.assertFalse(protected.failed(), protected.steps)
+                else:
+                    self.assertEqual(entries.steps[-1].outcome, "FAIL", entries.steps)
+                    self.assertIn(f"{entry}: {why.format(sha[:12])}", entries.steps[-1].detail)
+                    self.assertEqual(protected.steps[-1].outcome, "FAIL", protected.steps)
+                    self.assertIn("no line of an entry counts while the guard of the decision "
+                                  "entries refuses", protected.failed()[0].detail)
 
     def test_symlink_entry_supplies_no_approval(self):
         path = WORK / self.ENTRY
@@ -3879,6 +3924,58 @@ class DecisionEntries(Clone):
         rep = self.deleted_directory("- **A deletion for the test.** "
                                      "[removed](../../mishnah/test/).\n", DECISIONS)
         self.assertFalse(rep.failed(), rep.steps)
+
+    # Lines naming a path, `{}` standing for it, and whether they name it: a mention starts
+    # the text or follows whitespace or one of ( < [ ` " ' *, after no other character, so
+    # that a home folder's path, a drive's, a URL's or another longer one names nothing
+    # (the security re-review's forms among them); the forms origin/main counted that
+    # start so still count. No path ends a sentence here, so that only where its mention
+    # starts decides.
+    STARTS = (("{} goes.", "ok"), ("It goes: `{}` now.", "ok"), ("It goes ({}) now.", "ok"),
+              ("[{}](https://example.com) goes.", "ok"), ("It goes: <{}> now.", "ok"),
+              ('It goes: "{}" now.', "ok"), ("It goes: '{}' now.", "ok"),
+              ("It goes: *{}* now.", "ok"), ("It goes: **{}** now.", "ok"),
+              ("It goes:\t{} now.", "ok"),
+              ("It goes: ~/{} now.", "FAIL"), ("It goes: C:/{} now.", "FAIL"),
+              ("It goes: @/{} now.", "FAIL"), ("It goes: https://example.com/~/{} now.", "FAIL"),
+              ("It goes: https://example.com/{} now.", "FAIL"), ("It goes: x+{} now.", "FAIL"),
+              ("It goes: x:{} now.", "FAIL"), ("It goes: _{}_ now.", "FAIL"),
+              ("It goes: x_{} now.", "FAIL"))
+
+    def mention_outcome(self, kind, line, source=ENTRY):
+        """The outcome of the files guard ("file": PATH changed) or of the directories guard
+        ("directory": mishnah/test/ deleted), with `line` added to `source`, an entry or the
+        page."""
+        if kind == "directory":
+            return self.deleted_directory(line + "\n", source).steps[-1].outcome
+        self.restart()
+        text = self.text(DECISIONS) + "\n" + line + "\n" if source == DECISIONS else line + "\n"
+        sha = self.commit("Name the file", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n", source: text})
+        return self.check_guard(safe_push.guard_protected, BASE, sha).steps[-1].outcome
+
+    def test_a_mention_starts_the_text_or_follows_a_space_or_an_opening_mark(self):
+        for kind, path in (("file", self.PATH), ("directory", "mishnah/test/")):
+            for form, outcome in self.STARTS:
+                for source in (self.ENTRY, DECISIONS):
+                    with self.subTest(kind=kind, form=form, source=source):
+                        line = "- **A mention for the test.** " + form.format(path)
+                        if form.startswith("{}"):
+                            line = form.format(path)
+                        self.assertEqual(self.mention_outcome(kind, line, source), outcome)
+
+    def test_a_directory_may_end_a_sentence(self):
+        # As a file may: its full stop after it, with its closing slash or without; but not
+        # a full stop with another, or with a slash, after it.
+        for line, outcome in (("The folder removed is mishnah/test.", "ok"),
+                              ("The folder removed is mishnah/test/.", "ok"),
+                              ("The folder removed is mishnah/test..", "FAIL"),
+                              ("The folder removed is mishnah/test./", "FAIL"),
+                              ("The folder removed is mishnah/test.md.", "FAIL")):
+            for source in (self.ENTRY, DECISIONS):
+                with self.subTest(line=line, source=source):
+                    self.assertEqual(self.mention_outcome("directory", "- " + line, source),
+                                     outcome)
 
     def test_deleted_directory_needs_a_new_line_of_an_added_entry(self):
         # The earlier entry names the directory by a link that resolves; a copy of its
@@ -4067,6 +4164,48 @@ class DecisionEntries(Clone):
         bare = git(WORK, "rev-parse", "HEAD").strip()
         rep = self.check_guard(safe_push.guard_entries, merge, bare)
         self.assertIn(f"{self.ENTRY}: deleted", rep.failed()[0].detail)
+
+    def test_advised_revert_restores_only_what_origin_main_holds(self):
+        # A main with no docs/decisions/, as before its README was added: the advice
+        # restores the page alone, since git restore stops at a path its source lacks, and,
+        # followed, passes the guards.
+        self.assertEqual(sorted(p.name for p in (WORK / safe_push.ENTRIES).iterdir()),
+                         ["README.md"])
+        start = self.commit("No folder of entries yet", remove=[self.README])
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{start}:refs/heads/main")
+        feature = self.commit("A change named on the page", {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+            DECISIONS: self.text(DECISIONS) + f"\n- **A change for the test.** `{self.PATH}` "
+                                              "gains a comment.\n",
+        })
+        self.restart(start)
+        git(WORK, "merge", "--quiet", "--no-ff", "--no-edit", feature)
+        merge = git(WORK, "rev-parse", "HEAD").strip()
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{merge}:refs/heads/main")
+        git(WORK, "fetch", "--quiet", "origin")
+        branch = f"revert-{merge[:12]}"
+        self.addCleanup(lambda: git(WORK, "branch", "-D", branch, check=False))
+        self.addCleanup(self.restart)
+        advice = safe_push.revert_advice(safe_push.Context(WORK, merge, start, 1, "", None, {}),
+                                         "tooling")
+        entry = f"docs/decisions/{datetime.date.today().isoformat()}-revert-{merge[:12]}.md"
+        lines = [line.strip() for line in advice.splitlines()[1:]]
+        self.assertIn(f"git restore --source=origin/main --staged --worktree -- {DECISIONS}",
+                      lines)
+        for line in lines[:-1]:
+            if line.startswith("# write "):
+                (WORK / entry).parent.mkdir(parents=True, exist_ok=True)
+                (WORK / entry).write_text(f"- **The merge reverted, for the test.** Reverting "
+                                          f"it takes the comment out of `{self.PATH}`.\n")
+            elif not line.startswith("#"):
+                git(WORK, *shlex.split(line)[1:])
+        self.assertEqual(self.text(self.PATH), safe_push.show(WORK, start, self.PATH))
+        self.assertEqual(self.text(DECISIONS), safe_push.show(WORK, merge, DECISIONS))
+        head = git(WORK, "rev-parse", "HEAD").strip()
+        for guard, args in self.four_guards() + ((safe_push.guard_entries, ()),):
+            with self.subTest(guard=guard.__name__):
+                rep = self.check_guard(guard, merge, head, *args)
+                self.assertFalse(rep.failed(), rep.steps)
 
 
 class ProtectedPaths(Edge):
@@ -6013,12 +6152,81 @@ class Units(unittest.TestCase):
                pr(4, True, "test"), pr(5, None, "test"), pr(6, False, "test", "other")]
         self.assertEqual([p["number"] for p in safe_push.own_prs(ctx, prs)], [1, 2])
 
+    def test_mentions_count_nothing_the_guards_refused_before(self):
+        # The guards' patterns before a mention had to start the text or follow whitespace
+        # or one of ( < [ ` " ' * (main at 756bdbae): the files guard's, and the directories
+        # guard's, which took no prefix. Over every form below, the rule now counts none of
+        # the forms those refused, but a directory's own additions, each starting where a
+        # mention may: anchored at the root, by a relative link that resolves, or ending a
+        # sentence. It counts every form those counted that starts so, and none other.
+        before = {"file": r"(?<![\w/.-])(?P<prefix>/|(?:\.\.?/)*)%s(?!\.?[\w/-])",
+                  "directory": r"(?<![\w/.-])(?P<prefix>)%s/?(?![\w./-])"}
+        paths = {"file": "scripts/check_style.py", "directory": "mishnah/test"}
+        # What stands before the path: a head, then a prefix. No head ends in / or ., so
+        # that the prefix, read whole, is the one given.
+        leads = ["", *"!#$%&()*+,-:;<=>?@[\\]^_`{|}~\"'aZ0 \t\u00a0\u201c\u2018\u00ab\u00e9"]
+        heads = [outer + lead for outer in ("", "x", "_", "*", "(") for lead in leads]
+        prefixes = ("", "/", ".", "../../", "./../../", "../", "~/", "C:/", "@/", "x/",
+                    "https://example.com/~/")
+        tails = ("", ".", "/", "/.", "..", "./", "_", "'s", ")", "`", "*", ",", "-old", ".md",
+                 "/x")
+        sources = (DECISIONS, "docs/decisions/2026-10-21-test.md")
+
+        def counts(pattern, path, text, source):
+            hunk = safe_push.Hunk(source, [], [safe_push.Added(source, 1, text)])
+            return safe_push.names_path([hunk], path, pattern)
+
+        newly, lost, elsewhere = [], [], []
+        for kind, path in paths.items():
+            now = safe_push.mention(path, kind == "directory")
+            then = re.compile(before[kind] % re.escape(path))
+            for source, head, prefix, tail in itertools.product(sources, heads, prefixes, tails):
+                text = head + prefix + path + tail
+                counted, was = counts(now, path, text, source), counts(then, path, text, source)
+                # Where a mention may start: a prefix of its own (none, the root's /, or
+                # the ./ and ../ steps of a link), after the start, a space or an opening mark.
+                starts = prefix in ("", "/", "../../", "./../../", "../") and (
+                    not head or head[-1].isspace() or head[-1] in "(<[`\"'*")
+                added = kind == "directory" and starts and (
+                    prefix in ("/", "../../", "./../../") or tail in (".", "/."))
+                if counted and not was and not added:
+                    newly.append((kind, source, text))
+                if was and starts and not counted:
+                    lost.append((kind, source, text))
+                if counted and not starts:
+                    elsewhere.append((kind, source, text))
+        self.assertEqual(newly, [])
+        self.assertEqual(lost, [])
+        self.assertEqual(elsewhere, [])
+        # The forms the security re-review found, refused now, and a few the guards counted
+        # before that start otherwise, refused too.
+        for kind, text in (("directory", "~/mishnah/test/"), ("directory", "C:/mishnah/test/"),
+                           ("directory", "@/mishnah/test/"),
+                           ("directory", "https://example.com/~/mishnah/test/"),
+                           ("directory", "x+mishnah/test/"),
+                           ("file", "x+scripts/check_style.py"),
+                           ("file", "~/scripts/check_style.py"),
+                           ("file", "x:scripts/check_style.py")):
+            with self.subTest(text=text):
+                pattern = safe_push.mention(paths[kind], kind == "directory")
+                self.assertFalse(counts(pattern, paths[kind], text, sources[1]))
+
     def test_revert_advice_and_slug(self):
         ctx = safe_push.Context(Path("."), "a" * 40, "b" * 40, 3, "", None, {})
-        advice = safe_push.revert_advice(ctx)
+        # The record is restored from origin/main: each of the folder and the page that it
+        # holds, for git restore stops at a path its source lacks.
+        with mock.patch.object(safe_push, "git_ok", return_value=True):
+            advice = safe_push.revert_advice(ctx)
         self.assertIn(f"git revert --no-commit -m 1 {'a' * 40}", advice)
         self.assertIn("git restore --source=origin/main --staged --worktree -- docs/decisions/ "
-                      f"{DECISIONS}", advice)
+                      f"{DECISIONS}\n", advice)
+        page = mock.patch.object(safe_push, "git_ok",
+                                 side_effect=lambda repo, *args: args[-1].endswith(DECISIONS))
+        with page:
+            self.assertIn(f"git restore --source=origin/main --staged --worktree -- {DECISIONS}\n",
+                          safe_push.revert_advice(ctx))
+        with mock.patch.object(safe_push, "git_ok", return_value=False):
+            self.assertNotIn("git restore", safe_push.revert_advice(ctx))
         self.assertIn(f"docs/decisions/{datetime.date.today().isoformat()}-revert-{'a' * 12}.md",
                       advice)
         self.assertIn(f"git safe-push --branch revert-{'a' * 12} --label <kind>", advice)
