@@ -8,7 +8,7 @@
   <line x1="233.8" y1="256.8" x2="166.0" y2="180.0" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
   <line x1="166.0" y1="180.0" x2="98.2" y2="103.2" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
   <circle cx="200.0" cy="150.0" r="4.5" fill="#222222"/>
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="85.5" y="102.3">A</text>
     <text x="133.6" y="263.2">B</text>
     <text x="238.3" y="276">C</text>
