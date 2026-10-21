@@ -15,10 +15,11 @@ could read it there or, on Linux, in its parent's environment in /proc. So CI ch
 the tests in a step that holds the token, to read GitHub, and runs them in a later step
 that holds none.
 
---tree checks for repeated dated decisions headings, read as they render as far as
-headings and heading_date say, and refuses HTML <h1> and <h2> tags, adding freshness
-with --render. Conflict markers are checked by S23 in check_style.py, in the check job
-on the same merge group.
+--tree checks the decisions page line by line (heading_problems): a line that could
+render as a level-one or level-two heading counts, in code too; its text must be plain;
+no two of them may contain the same date; and no HTML <h1> or <h2> tag may stand
+anywhere. --render adds the generated pages' freshness. Conflict markers are checked by
+S23 in check_style.py, in the check job on the same merge group.
 
 Every merge-tree reads merge attributes from the group's base, main, never from the
 group's checkout (git --attr-source), so an entry's .gitattributes cannot change a
@@ -75,7 +76,6 @@ import argparse
 import ast
 import contextlib
 import datetime
-import html
 import json
 import os
 import re
@@ -84,7 +84,6 @@ import subprocess
 import sys
 import tempfile
 import time
-import unicodedata
 from pathlib import Path
 
 sys.dont_write_bytecode = True
@@ -103,36 +102,29 @@ SLUG = re.compile(r"[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+")
 SUBJECT = re.compile(r"Merge pull request #([1-9][0-9]*) from \S+")
 MONTHS = ("January", "February", "March", "April", "May", "June", "July",
           "August", "September", "October", "November", "December")
-# Level-one and level-two headings, as CommonMark reads them (headings), and the three
-# orders a date is written in (heading_date); \W between the parts takes punctuation and
-# separators that are not format characters, such as a no-break space. No pattern here
-# backtracks over a line: the closing # sequence is taken off with str.rstrip (atx).
-ATX = re.compile(r" {0,3}#{1,2}[ \t]+(.*)")
-SETEXT = re.compile(r" {0,3}(?:=+|-+)[ \t]*")
-FENCE = re.compile(r" {0,3}(`{3,}|~{3,})(.*)")
-# A block quote's marker before a heading or another container.
-QUOTE = re.compile(r" {0,3}>[ \t]?")
-# CommonMark's type-six HTML block names. Types six and seven end at a blank line;
-# the other five forms have explicit terminators.
-HTML_BLOCK_TAGS = (
-    "address", "article", "aside", "base", "basefont", "blockquote", "body", "caption",
-    "center", "col", "colgroup", "dd", "details", "dialog", "dir", "div", "dl", "dt",
-    "fieldset", "figcaption", "figure", "footer", "form", "frame", "frameset", "h1",
-    "h2", "h3", "h4", "h5", "h6", "head", "header", "hr", "html", "iframe",
-    "legend", "li", "link", "main", "menu", "menuitem", "nav", "noframes", "ol",
-    "optgroup", "option", "p", "param", "search", "section", "summary", "table",
-    "tbody", "td", "tfoot", "th", "thead", "title", "tr", "track", "ul",
-)
-HTML_BLOCK_TAG = re.compile(
-    rf"(?i) {{0,3}}</?(?:{'|'.join(HTML_BLOCK_TAGS)})(?=[ \t\n/>]|$)")
+# Rule (d) reads the decisions page line by line, never as blocks, so it can only
+# over-approximate what renders (heading_problems). Lines end as CommonMark's do, and a
+# line that holds only spaces, tabs and > is blank. Before a line is read, its leading
+# whitespace, block quote markers and list markers are taken off, again and again; a
+# list marker is -, * or +, or digits then . or ), each followed by whitespace or the
+# end. No pattern here backtracks over a line: each match starts where the last ended,
+# and a closing run of # is taken off with str.rstrip (_atx_text).
+LINE_END = re.compile(r"\r\n|\r|\n")
+BOM = "\N{BYTE ORDER MARK}"  # which a renderer skips at the start of a page
+BLANK = re.compile(r"[ \t>]*")
+CONTAINER = re.compile(r"\s+|>|[-*+](?=\s|$)|[0-9]+[.)](?=\s|$)")
+OPENER = re.compile(r"#{1,2}(?=[ \t]|$)")
+# A heading's text is plain: ASCII letters, digits, spaces and . , : ; ' ( ) - / only.
+PLAIN = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+                  " .,:;'()-/")
+# A date is three neighbouring words: a day (with st, nd, rd or th, or not), a month
+# and a year, day first or month first; or the year, month and day in numbers.
+WORD = re.compile(r"[A-Za-z0-9]+")
+DAY = re.compile(r"(?i)([0-9]{1,2})(?:st|nd|rd|th)?")
+NUMBER = re.compile(r"[0-9]{1,2}")
+YEAR = re.compile(r"[0-9]{4}")
 # An HTML heading tag of level one or two, which this reading refuses rather than reads.
 RAW_HEADING = re.compile(r"(?i)<h[12](?=[\s/>]|$)")
-# The Hangul fillers render as nothing, though Unicode counts them as letters.
-INVISIBLE = {"\u115f", "\u1160", "\u3164", "\uffa0"}
-ORDINAL = r"(?:st|nd|rd|th)?"
-ISO_DATE = re.compile(r"\W*(\d{4})\W+(\d{1,2})\W+(\d{1,2})\W*")
-DAY_FIRST = re.compile(rf"(?i)\W*(\d{{1,2}}){ORDINAL}\W+([^\W\d_]+)\W+(\d{{4}})\W*")
-MONTH_FIRST = re.compile(rf"(?i)\W*([^\W\d_]+)\W+(\d{{1,2}}){ORDINAL}\W+(\d{{4}})\W*")
 GENERATED = (*safe_push.GENERATED, "book/", safe_push.DECISIONS)
 # The decisions record: its entries (tooling/decision-entries), each a file of its own,
 # and its page. An automatic revert keeps both.
@@ -801,324 +793,38 @@ def exact_revert(repo: Path, pr: dict, api: GitHub) -> None:
         raise Refused("auto-revert: head is not the exact revert tree (extra change)")
 
 
-def atx(line: str) -> str | None:
-    """A level-one or level-two ATX heading's text, or None. The closing sequence, a run
-    of # after a space or tab, or the whole text, is taken off by str.rstrip, so no
-    pattern backtracks over the line."""
-    match = ATX.fullmatch(line)
-    if not match:
-        return None
-    text = match.group(1).rstrip(" \t")
+def _stripped(line: str) -> str:
+    """A line without its leading whitespace, block quote markers and list markers, taken
+    off again and again, each match starting where the last ended."""
+    position = 0
+    while (match := CONTAINER.match(line, position)) and match.end() > position:
+        position = match.end()
+    return line[position:]
+
+
+def _atx_text(rest: str) -> str:
+    """The text of a line that begins with one or two #, from what follows them: without
+    the spaces and tabs around it, and without a closing run of # that follows a space
+    or a tab, or that is the whole text."""
+    text = rest.strip(" \t")
     bare = text.rstrip("#")
     if not bare:
         return ""
     return bare.rstrip(" \t") if bare != text and bare[-1] in " \t" else text
 
 
-def _quoted(line: str) -> tuple[int, str]:
-    """A line without its block quote markers, and the number removed."""
-    position = depth = 0
-    while (match := QUOTE.match(line, position)) and match.end() > position:
-        position = match.end()
-        depth += 1
-    return depth, line[position:]
-
-
-def _fence_close(line: str, marker: str, size: int) -> bool:
-    """Whether line closes the active fenced code block."""
-    stripped = line.lstrip(" ")
-    if len(line) - len(stripped) > 3 or not stripped.startswith(marker):
-        return False
-    run = len(stripped) - len(stripped.lstrip(marker))
-    return run >= size and not stripped[run:].strip(" \t")
-
-
-def _complete_html_tag(line: str) -> bool:
-    """Whether a line consists of one CommonMark open or closing tag."""
-    at = len(line) - len(line.lstrip(" "))
-    if at > 3 or at >= len(line) or line[at] != "<":
-        return False
-    at += 1
-    closing = at < len(line) and line[at] == "/"
-    at += closing
-    if at >= len(line) or not line[at].isascii() or not line[at].isalpha():
-        return False
-    at += 1
-    while at < len(line) and line[at].isascii() and (line[at].isalnum()
-                                                      or line[at] == "-"):
-        at += 1
-    if closing:
-        while at < len(line) and line[at] in " \t":
-            at += 1
-        return at < len(line) and line[at] == ">" and not line[at + 1:].strip(" \t")
-    while at < len(line):
-        while at < len(line) and line[at] in " \t":
-            at += 1
-        if line.startswith("/>", at):
-            return not line[at + 2:].strip(" \t")
-        if at < len(line) and line[at] == ">":
-            return not line[at + 1:].strip(" \t")
-        if at >= len(line) or not (line[at].isascii() and
-                                   (line[at].isalpha() or line[at] in "_:")):
-            return False
-        at += 1
-        while at < len(line) and line[at].isascii() and (
-                line[at].isalnum() or line[at] in "_.:-"):
-            at += 1
-        while at < len(line) and line[at] in " \t":
-            at += 1
-        if at >= len(line) or line[at] != "=":
-            continue
-        at += 1
-        while at < len(line) and line[at] in " \t":
-            at += 1
-        if at >= len(line):
-            return False
-        if line[at] in "\"'":
-            quote = line[at]
-            at += 1
-            close = line.find(quote, at)
-            if close < 0:
-                return False
-            at = close + 1
-        else:
-            start = at
-            while at < len(line) and line[at] not in " \t\"'=<>`":
-                at += 1
-            if at == start:
-                return False
-    return False
-
-
-def _html_block(line: str, paragraph: bool) -> tuple[re.Pattern | None, bool] | None:
-    """An HTML block's explicit terminator, or its blank-line termination."""
-    stripped = line.lstrip(" ")
-    if len(line) - len(stripped) > 3:
-        return None
-    lower = stripped.casefold()
-    for tag in ("script", "pre", "style", "textarea"):
-        if re.match(rf"<{tag}(?=[ \t\n/>]|$)", lower):
-            return re.compile(rf"(?i)</{tag}[ \t]*>"), False
-    if stripped.startswith("<!--"):
-        return re.compile(r"-->"), False
-    if stripped.startswith("<?"):
-        return re.compile(r"\?>"), False
-    if re.match(r"<![A-Z]", stripped):
-        return re.compile(r">"), False
-    if stripped.startswith("<![CDATA["):
-        return re.compile(r"\]\]>"), False
-    if HTML_BLOCK_TAG.match(line) or not paragraph and _complete_html_tag(line):
-        return None, True
-    return None
-
-
-def headings(text: str) -> list[tuple[int, str]]:
-    """The page's level-one and level-two headings, with their line numbers, as they
-    render: an ATX heading indented by three spaces at most, and a setext heading, a
-    paragraph underlined with = or -, each also inside block quotes, and an ATX heading
-    inside list items. Fenced and indented code and HTML blocks supply no headings.
-    HTML heading tags are refused independently (tree_problems). Each line is read a
-    bounded number of times."""
-    found, paragraph = [], []
-    paragraph_start = paragraph_container = None
-    items: list[int] = []
-    item_quotes: list[int] = []
-    fence = None
-    fence_container = None
-    html_end = None
-    html_blank = False
-    html_container = None
-
-    def clear_paragraph():
-        nonlocal paragraph, paragraph_start, paragraph_container
-        paragraph, paragraph_start, paragraph_container = [], None, None
-
-    for number, raw in enumerate(text.splitlines(), 1):
-        quote_depth, quoted = _quoted(raw)
-        line = quoted.expandtabs(4)
-        spaces = len(line) - len(line.lstrip(" "))
-        blank = not line.strip()
-        depth = 0
-        while depth < len(items) and quote_depth >= item_quotes[depth] \
-                and spaces >= items[depth]:
-            depth += 1
-        col = items[depth - 1] if depth else 0
-        content = line[spaces:]
-        container = (quote_depth, tuple(items[:depth]))
-
-        if fence is not None:
-            if not blank and container != fence_container:
-                fence = None
-            else:
-                if _fence_close(content, *fence):
-                    fence = None
-                clear_paragraph()
-                continue
-        if html_end is not None or html_blank:
-            if not blank and container != html_container:
-                html_end, html_blank = None, False
-            elif html_blank and blank:
-                html_blank = False
-                clear_paragraph()
-                continue
-            else:
-                if html_end is not None and html_end.search(content):
-                    html_end = None
-                clear_paragraph()
-                continue
-
-        if depth < len(items):
-            del items[depth:]
-            del item_quotes[depth:]
-            clear_paragraph()
-            col = items[-1] if items else 0
-            container = (quote_depth, tuple(items))
-        if spaces - col >= 4:
-            if paragraph and paragraph_container == container:
-                paragraph.append(line[col:])
-            else:
-                clear_paragraph()
-            continue
-
-        container_text = content
-        position = 0
-        column = spaces
-        while match := safe_push.LIST_ITEM.match(container_text, position):
-            clear_paragraph()
-            gap_end = match.end()
-            while gap_end < len(container_text) and container_text[gap_end] == " ":
-                gap_end += 1
-            gap = gap_end - match.end()
-            item_col = column + match.end() - position + (gap if 1 <= gap <= 4 else 1)
-            items.append(item_col)
-            item_quotes.append(quote_depth)
-            col = item_col
-            column = item_col
-            position = gap_end
-            while quote := QUOTE.match(container_text, position):
-                quote_depth += 1
-                position = quote.end()
-        content = container_text[position:]
-        spaces = col
-        container = (quote_depth, tuple(items))
-        if paragraph and paragraph_container != container:
-            clear_paragraph()
-
-        if match := FENCE.fullmatch(content):
-            marker, info = match.groups()
-            if marker[0] != "`" or "`" not in info:
-                fence = marker[0], len(marker)
-                fence_container = container
-                clear_paragraph()
-                continue
-        if block := _html_block(content, bool(paragraph)):
-            html_end, html_blank = block
-            html_container = container
-            if html_end is not None and html_end.search(content):
-                html_end = None
-            clear_paragraph()
-            continue
-
-        if safe_push.HEADING.match(content):
-            clear_paragraph()
-            if (title := atx(content)) is not None:
-                found.append((number, title))
-        elif SETEXT.fullmatch(content):
-            if paragraph and paragraph_container == container:
-                found.append((paragraph_start, " ".join(paragraph)))
-            clear_paragraph()
-        elif blank or not content.strip():
-            clear_paragraph()
-        else:
-            if paragraph_container != container:
-                clear_paragraph()
-            if not paragraph:
-                paragraph_start, paragraph_container = number, container
-            paragraph.append(content)
-    return found
-
-
-def _without_html(text: str) -> str:
-    """The text without HTML comments and tags: a comment from <!-- to the next -->, and a
-    tag from < followed by a letter, /, ! or ? to the next >, with no < between; any other
-    < is text, as it renders. Each search resumes past the last, so a line is read in
-    linear time, however many < it holds."""
-    parts, position, nearest = [], 0, {}
-
-    def after(needle: str, start: int) -> int:
-        found = nearest.get(needle)
-        if found is None or 0 <= found < start:
-            found = nearest[needle] = text.find(needle, start)
-        return found
-
-    while (start := text.find("<", position)) >= 0:
-        parts.append(text[position:start])
-        position = start + 1
-        if text.startswith("<!--", start) and (end := after("-->", start + 2)) >= 0:
-            position = end + 3
-            continue
-        follower = text[start + 1:start + 3]
-        if follower[:1] in ("!", "?") or follower[:1].isascii() and follower[:1].isalpha() \
-                or follower[:1] == "/" and follower[1:].isascii() and follower[1:].isalpha():
-            close, reopen = after(">", start + 1), after("<", start + 1)
-            if close >= 0 and (reopen < 0 or close < reopen):
-                position = close + 1
-                continue
-        parts.append("<")
-    parts.append(text[position:])
-    return "".join(parts)
-
-
-def _without_link_tails(text: str) -> str:
-    """Remove inline destinations and reference labels while keeping link text."""
-    parts = []
-    at = 0
-    while at < len(text):
-        close = text.find("]", at)
-        if close < 0:
-            parts.append(text[at:])
-            break
-        if close + 1 >= len(text) or text[close + 1] not in "([":
-            parts.append(text[at:close + 1])
-            at = close + 1
-            continue
-        opener = text[close + 1]
-        closer = ")" if opener == "(" else "]"
-        depth = 1
-        quote = None
-        end = close + 2
-        while end < len(text):
-            char = text[end]
-            if char == "\\" and end + 1 < len(text):
-                end += 2
-                continue
-            if quote is not None:
-                if char == quote:
-                    quote = None
-            elif opener == "(" and char in "\"'" and text[end - 1].isspace():
-                quote = char
-            elif char == opener:
-                depth += 1
-            elif char == closer:
-                depth -= 1
-                if not depth:
-                    break
-            elif opener == "[" and char == "[":
-                break
-            end += 1
-        if depth:
-            parts.append(text[at:])
-            break
-        parts.append(text[at:close + 1])
-        at = end + 1
-    return "".join(parts)
+def _underline(stripped: str, line: str) -> bool:
+    """Whether a line that is not blank is, once stripped, a run of = or of -, of any
+    length, with whitespace after it. A lone -, which stripping takes for a list
+    marker, is one too: then the line's last character but whitespace is that -."""
+    core = stripped.rstrip()
+    if not core:
+        return line.rstrip().endswith("-")
+    return not core.strip("=") or not core.strip("-")
 
 
 def _month(word: str) -> int | None:
     """A month's number from its English name or first three letters, in any case."""
-    if not word.isascii():
-        raise Refused(f"a heading in the form of a date names its month with letters "
-                      f"outside ASCII, which may be a lookalike: {word}")
     word = word.casefold()
     for number, name in enumerate(MONTHS, 1):
         if word in (name.casefold(), name[:3].casefold()) or (number, word) == (9, "sept"):
@@ -1126,31 +832,112 @@ def _month(word: str) -> int | None:
     return None
 
 
-def heading_date(text: str) -> datetime.date | None:
-    """The date a heading's text names, read as it renders: with character references
-    (&nbsp;, &#98;) read by html.unescape, without HTML comments and tags or a link's
-    destination or label, after NFKC, without format characters (a zero-width space,
-    say), other invisible marks or emphasis and code marks, with the month in any case
-    or abbreviated, day first, month first or in ISO order, and punctuation or other
-    separators between the parts. A month spelt with letters outside ASCII is refused,
-    since it may be a lookalike of another. Each step is linear in the text."""
-    text = _without_link_tails(_without_html(html.unescape(text)))
-    text = unicodedata.normalize("NFKC", text)
-    text = "".join(c for c in text if c not in INVISIBLE
-                   and unicodedata.category(c) not in ("Cf", "Mn", "Me"))
-    text = re.sub(r"[*_`~]+", "", text)
-    if match := ISO_DATE.fullmatch(text):
-        year, month, day = (int(value) for value in match.groups())
-    elif match := DAY_FIRST.fullmatch(text):
-        day, month, year = int(match.group(1)), _month(match.group(2)), int(match.group(3))
-    elif match := MONTH_FIRST.fullmatch(text):
-        month, day, year = _month(match.group(1)), int(match.group(2)), int(match.group(3))
-    else:
-        return None
+def _date(first: str, second: str, third: str) -> datetime.date | None:
+    """The date three neighbouring words name, or None: a day, a month and a year, day
+    first or month first, or the year, month and day in numbers (ISO's order)."""
     try:
-        return datetime.date(year, month, day) if month else None
+        if YEAR.fullmatch(first) and NUMBER.fullmatch(second) and NUMBER.fullmatch(third):
+            return datetime.date(int(first), int(second), int(third))
+        if YEAR.fullmatch(third):
+            if (day := DAY.fullmatch(first)) and (month := _month(second)):
+                return datetime.date(int(third), month, int(day.group(1)))
+            if (month := _month(first)) and (day := DAY.fullmatch(second)):
+                return datetime.date(int(third), month, int(day.group(1)))
     except ValueError:
-        return None
+        pass
+    return None
+
+
+def heading_dates(text: str) -> list[datetime.date]:
+    """Every date a heading's text contains, once each, in the order found."""
+    words = WORD.findall(text)
+    found = (_date(*words[at:at + 3]) for at in range(len(words) - 2))
+    return list(dict.fromkeys(date for date in found if date))
+
+
+def heading_problems(page: str) -> list[str]:
+    """Rule (d), read line by line, never as the page renders, so that it can only
+    over-approximate: a line that could render as a level-one or level-two heading
+    counts wherever it stands, in code, HTML and every container too.
+
+    Each line is read stripped (_stripped). One that begins with one or two # followed
+    by a space, a tab or the end is a heading, its text what follows (_atx_text). One
+    that is a run of = or of - (_underline), under one or more lines that are not blank,
+    underlines a heading whose text is every line back to the previous blank line, each
+    stripped, joined by spaces. Every heading's text must be plain (PLAIN): any other
+    character refuses the page, naming the line. A heading is dated when its text
+    contains a date (heading_dates), and two headings with the same date refuse the page,
+    naming both. A later underline's text holds an earlier one's, so two underlines
+    in one stretch of lines repeat the first's dates. An HTML <h1> or <h2> tag anywhere
+    refuses too. Each line is read a bounded number of times, and a stretch's text is
+    never joined: its dates are read word by word as it grows."""
+    problems: list[str] = []
+    first: dict[datetime.date, str] = {}
+
+    def spoken(date: datetime.date) -> str:
+        return f"{date.day} {MONTHS[date.month - 1]} {date.year}"
+
+    def dated(dates, where: str) -> None:
+        for date in dates:
+            if date in first:
+                problems.append(f"{safe_push.DECISIONS}:{where}: repeated dated heading: "
+                                f"{spoken(date)} (first at {safe_push.DECISIONS}:"
+                                f"{first[date]})")
+            else:
+                first[date] = where
+
+    def plain(number: int, text: str) -> None:
+        if (odd := next((c for c in text if c not in PLAIN), None)) is not None:
+            problems.append(f"{safe_push.DECISIONS}:{number}: a line that could render as a "
+                            f"heading, or as part of one, holds {odd!r} "
+                            f"(U+{ord(odd):04X}), which is not plain: write it with ASCII "
+                            "letters, digits, spaces and . , : ; ' ( ) - / only")
+
+    # The stretch of lines that are not blank since the last blank one: its first line,
+    # its last two words, its dates in order and as a set, how many an underline has
+    # noted, its lines since its last underline (not yet read as a heading's), and its
+    # last underline, with whether that underline's text was dated.
+    start = last = None
+    words: list[str] = []
+    dates: list[datetime.date] = []
+    held: set[datetime.date] = set()
+    noted = 0
+    unread: list[tuple[int, str]] = []
+    for number, line in enumerate(LINE_END.split(page.removeprefix(BOM)), 1):
+        if RAW_HEADING.search(line):
+            problems.append(f"{safe_push.DECISIONS}:{number}: an HTML heading tag (<h1> or "
+                            "<h2>), which this check does not read: write the heading in "
+                            "Markdown")
+        if BLANK.fullmatch(line):
+            start = last = None
+            words, dates, held, noted, unread = [], [], set(), 0, []
+            continue
+        stripped = _stripped(line)
+        if opener := OPENER.match(stripped):
+            text = _atx_text(stripped[opener.end():])
+            plain(number, text)
+            dated(heading_dates(text), str(number))
+        elif start is not None and _underline(stripped, line):
+            where = f"{start}-{number}"
+            for read in unread:
+                plain(*read)
+            unread = []
+            if last is not None and last[1]:
+                problems.append(f"{safe_push.DECISIONS}:{where}: repeated dated heading: "
+                                f"{spoken(dates[0])} (first at {safe_push.DECISIONS}:"
+                                f"{last[0]}, whose text this one holds)")
+            dated(dates[noted:], where)
+            noted, last = len(dates), (where, bool(dates))
+        if start is None:
+            start = number
+        text = stripped.rstrip(" \t")
+        unread.append((number, text))
+        for word in WORD.findall(text):
+            words = [*words[-2:], word]
+            if len(words) == 3 and (date := _date(*words)) and date not in held:
+                held.add(date)
+                dates.append(date)
+    return problems
 
 
 def tree_problems(repo: Path, render: bool = False) -> list[str]:
@@ -1167,23 +954,7 @@ def tree_problems(repo: Path, render: bool = False) -> list[str]:
     data = path.read_bytes()
     if b"\0" in data:
         raise ValueError("the decisions page is not text")
-    problems, dates, page = [], set(), data.decode("utf-8")
-    for number, line in enumerate(page.splitlines(), 1):
-        if RAW_HEADING.search(line):
-            problems.append(f"{safe_push.DECISIONS}:{number}: an HTML heading tag (<h1> or "
-                            "<h2>), which this check does not read: write the heading in "
-                            "Markdown")
-    for number, heading in headings(page):
-        try:
-            date = heading_date(heading)
-        except Refused as error:
-            problems.append(f"{safe_push.DECISIONS}:{number}: {error}")
-            continue
-        if date is not None:
-            if date in dates:
-                problems.append(f"{safe_push.DECISIONS}:{number}: repeated dated heading: "
-                                f"{heading}")
-            dates.add(date)
+    problems = heading_problems(data.decode("utf-8"))
     if render:
         result = safe_push.run(["python3", "scripts/render.py"], repo)
         if result.returncode:

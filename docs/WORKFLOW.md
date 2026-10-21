@@ -371,25 +371,36 @@ event it does run on; GitHub would still accept a skipped job even when it is re
 The ruleset and the remaining merge requirements are in
 [section 10, "Landing work: pull requests"](#landing-work-pull-requests).
 
-On pull requests and post-merge main runs, `queue-integrity` runs the offline cases in
+On pull requests and post-merge main runs, `queue-integrity` installs the pinned YAML
+parser with which the offline cases read `ci.yml`, then runs the offline cases in
 `tests/test_check_queue.py`, `tests/test_check_train.py` and `tests/test_auto_revert.py`,
-each with `python3 -I`; locally, install their pinned YAML parser first with
-`python3 -m pip install -r scripts/requirements-test_safe_push.txt`. On a merge group
-`queue-integrity` is the queue's judge: it takes `scripts/` from the group's base and
-runs that `check_queue.py` with the event's head, base and repository, running none of
-the group's scripts and building and rendering nothing, though GitHub runs the group's
-own copy of this workflow file (section 10 says what must hold it). `queue-gaps` waits
-for acceptance and, on a merge group, chooses the tests of what the group changes in a
-step that holds the job's token, to read GitHub, and runs none of them
+each with `python3 -I`; on a merge group it installs nothing, so the Python that runs the
+judge holds nothing a group names. Locally, install the parser in a virtual environment
+outside the tree (a system Python may refuse the install, and `python3 -I` does not see a
+user install), then run what CI runs:
+
+```sh
+python3 -m venv "${TMPDIR:-/tmp}/stoicheia-queue" && . "${TMPDIR:-/tmp}/stoicheia-queue/bin/activate"
+python3 -m pip install -r scripts/requirements-test_safe_push.txt   # CI's `queue-integrity` job
+python3 -I tests/test_check_queue.py
+python3 -I tests/test_check_train.py
+python3 -I tests/test_auto_revert.py
+```
+
+On a merge group `queue-integrity` is the queue's judge: it takes `scripts/` from the
+group's base and runs that `check_queue.py` with the event's head, base and repository,
+running none of the group's scripts and building and rendering nothing, though GitHub
+runs the group's own copy of this workflow file (section 10 says what must hold it).
+`queue-gaps` waits for acceptance and, on a merge group, chooses the tests of what the
+group changes in a step that holds the job's token, to read GitHub, and runs none of them
 (`--gaps --plan`); its last step, which holds no token, runs them (`--run-plan`).
-Section 10 gives the rules. The `check`
-job renders the same group and checks the pages are current, and its
-`check_queue.py --tree .` step, which the pre-flight runs too, checks that no dated
-decisions heading repeats, reading each heading as section 10's rule (d) describes;
-conflict markers in tracked text are S23's, in `scripts/check_style.py`. The train and
-queue checks need Git 2.42 or later (`merge-tree --write-tree` came in 2.38, its
-`--merge-base` in 2.40 and `--attr-source`
-in 2.42); with an older Git they refuse every train and group as unreadable.
+Section 10 gives the rules. The `check` job renders the same group and checks the pages
+are current, and its `check_queue.py --tree .` step, which the pre-flight runs too,
+checks the decisions page line by line as section 10's rule (d) describes; conflict
+markers in tracked text are S23's, in `scripts/check_style.py`. The train and queue
+checks need Git 2.42 or later (`merge-tree --write-tree` came in 2.38, its
+`--merge-base` in 2.40 and `--attr-source` in 2.42); with an older Git they refuse every
+train and group as unreadable.
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
@@ -624,10 +635,12 @@ be one of the member's own: the member's head, or an ancestor of it not on origi
 named unambiguously by digits that begin its name (as `git rev-parse --verify
 <digits>^{commit}` resolves them; a ref whose name is hex digits does not count). Other
 digits in the cell, a coordinator's commit or a run's, may stand beside it. A cell that
-is only a placeholder or a review still to come ("pending", "not run", "awaiting
-review", "N/A" and their like) refuses; a finding that merely begins with such words
-("To do so, ...", "Later commits ...") does not. `/security-review` may instead say
-"Not required", and only if no protected path changed, read against every merge base of
+is only a placeholder ("not run", "awaiting review", "skipped" and their like) refuses,
+and so does one that holds, anywhere, in any case and beside the member's commit too,
+"pending", "TBD", "to come", "not needed" or "N/A" ("Pending items: none" among them);
+a finding that merely begins with another placeholder's words ("To do so, ...", "Later
+commits ...") does not. `/security-review` may instead say "Not required", and only
+if no protected path changed, read against every merge base of
 the member with origin/main; a member that changes a protected path must name its
 commit there, and its cell may not say "Not required" anywhere, in any case or
 spelling. Beyond that, the cells are the coordinator's words: the check reads that a
@@ -769,19 +782,39 @@ are:
   merge content, squash or rebase refuses. If a queue merge has no standard pull
   request subject, its second parent must uniquely identify a queued head; that
   fallback is not allowed for the already merged prefix.
-- **(d) A clean tree.** The decisions page has no repeated dated heading, read as it
-  renders: a level-one or level-two heading, indented by three spaces at most or
-  underlined, also inside a block quote, and an ATX heading inside a list item; its text
-  read with character references (`&nbsp;`, `&#98;`) decoded, without HTML comments and
-  tags or a link's destination, after NFKC and without format characters or emphasis,
-  its month in any case or abbreviated, in any of the three common orders. A heading in
-  the form of a date whose month has letters outside ASCII refuses, and so does an HTML
-  `<h1>` or `<h2>` tag anywhere in the page, code included, which the check refuses
-  rather than reads: headings there are written in Markdown, and the page quotes such a
-  tag only as character references (`&lt;h2&gt;`). Each line is read in time linear in
-  its length. That rendering the group changes no generated file is the `check` job's,
-  on the same group, and conflict markers are S23's of `scripts/check_style.py`, in the
-  same job.
+- **(d) A clean tree.** The decisions page has no repeated dated heading. The check reads
+  lines, not the page as it renders, so it can only over-approximate: a line that could
+  render as a level-one or level-two heading counts, in code, HTML and every container
+  too; its text must be plain; and no date may stand in two such headings. Each line is
+  read in time linear in its length. In full:
+  - Lines end at a line feed, a carriage return or both, as in CommonMark, and a byte
+    order mark that opens the page is skipped. Each line is read without its leading
+    whitespace, block quote markers (`>`) and list markers (`-`, `*` or `+`, or digits
+    followed by `.` or `)`, each followed by whitespace or the line's end), taken off
+    again and again. A line that holds only spaces, tabs and `>` is blank.
+  - A line that then begins with one or two `#` followed by a space, a tab or its end is
+    a heading. Its text is what follows, without the spaces and tabs around it and
+    without a closing run of `#` after a space or a tab.
+  - A line that is then a run of `=` or of `-`, of any length from one, as in CommonMark
+    (a lone `-` among them), with whitespace after it, underlines a heading when one or
+    more lines that are not blank stand above it. Its text is every line back to the
+    previous blank line, each read as above, joined by spaces. So a later underline's
+    text holds an earlier one's: two headings underlined in one stretch of lines need a
+    blank line between them.
+  - Every heading's text is plain: ASCII letters, digits, spaces and `. , : ; ' ( ) - /`
+    only. Any other character (`<`, `&`, `[`, `*`, `_`, a backtick, `\`, `#`, `=`, a
+    tab, any character outside ASCII) refuses the page, naming the line: the page writes
+    its section headings plainly.
+  - A heading is dated when its text contains a date: three neighbouring words, a day of
+    one or two digits (with `st`, `nd`, `rd` or `th`, or without), a month by its English
+    name or its first three letters (or `Sept`), in any case, and a year of four digits,
+    day first or month first; or the year, month and day in numbers, as `2026-10-20`.
+    Two dated headings with the same date refuse the page, naming both.
+  - An HTML `<h1>` or `<h2>` tag anywhere in the page, code included, refuses: the page
+    quotes such a tag only in prose, as character references (`&lt;h2&gt;`), since a
+    code span shows a reference as written.
+  - That rendering the group changes no generated file is the `check` job's, on the same
+    group, and conflict markers are S23's of `scripts/check_style.py`, in the same job.
 
 Every merge the judge computes reads merge attributes from the group's base, main,
 never from the group's checkout, so an entry's `.gitattributes` cannot change a verdict.
