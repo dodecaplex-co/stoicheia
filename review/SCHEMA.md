@@ -183,8 +183,13 @@ The section needs at least one of the two, and is left out when it has neither.
 | `run` | string | from stage `full` | The run the review was made in: the brief and stage, and the workflow, as `"brief 0005 stage 5, workflow wf_…"`. |
 | `items` | table | no | Acceptance items, each `"pass"`, `"fail"` or `"n/a"`. |
 
-The acceptance checklist, [docs/ACCEPTANCE.md](../docs/ACCEPTANCE.md), fixes the item keys
-and when an item counts, in "Recording a review item".
+`items` may be omitted or empty at either stage. `heath.load_review` checks each key's
+syntax and the three verdict values, but neither requires items nor limits keys to the
+acceptance checklist; `scripts/check_fidelity.py` adds no such requirement.
+`scripts/check_acceptance.py` rejects other keys (P2) and fails missing verdicts (P11 to
+P16). The keys and conditions for a verdict to count are in
+[docs/ACCEPTANCE.md](../docs/ACCEPTANCE.md#recording-a-review-item), "Recording a review
+item".
 
 ## Stamps
 
@@ -218,6 +223,14 @@ require_stamp=False)` reads a record without them.
 `scripts/check_fidelity.py` adds what needs facts.json and the Lean files: that every
 proposition has a record, that the stamps are current (if not, "statement changed since
 reviewed"), and that every run of `--` lines with no Lean beneath it is declared.
+
+`scripts/check_style.py` reads as "Review notes" the statement's `note`, `short` and
+`hypotheses`, the route, representation, overlap and passage notes, the figure's `case`
+and `note`, and the clause map's `checked` and `explains`. It also reads each tag's
+`meaning` and `badge` in `review/terms.toml`. S1 to S9 and S22 check their prose; S12 asks Lean
+about names in backticks, except the non-declarations listed in `NOT_DECLARED`.
+[STYLE](../docs/STYLE.md#8-checks), section 8, gives the rules and explains which findings
+`REACH_PENDING` reports without failing.
 
 ## Worked examples
 
@@ -285,7 +298,7 @@ lean = "sha256:061379c1f0411141"
 reviewer = "Claude Opus 5.5"
 ```
 
-I.40 is restricted: the theorem takes the two bases end to end.
+At d040117, I.40 was restricted: the theorem took the two bases end to end.
 
 ```toml
 # review/I/40.toml
@@ -312,6 +325,6 @@ lean = "sha256:5f353abf9022b4fd"
 reviewer = "Claude Opus 5.5"
 ```
 
-Once stage 2 adds `Prop40.general`, I.40's record would list `companions =
-["I.40 general"]`, its scope would become full, and its fingerprint would change with the
-new attached statement, so the record would be read again.
+Stage 2 has added `Prop40.general`; [I.40's current record](I/40.toml) has full scope and
+lists `"I.40 general"`, `"I.40 join"` and `"I.40 special"` as companions. The example above
+remains the fixture from commit d040117.

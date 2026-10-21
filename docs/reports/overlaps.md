@@ -37,7 +37,7 @@ proof uses.
 | Former overlap | What now proves the rule |
 |---|---|
 | I.7 and Circle 4 (`not_same_side_of_circles_meet`) | I.7, Definition I.15 and `circle_eq`, after I.7 in `Elements/BookI/Prop07.lean`. `Audit.I_7` now reaches I.7 through its own corollary, so it is circular as an independent proof of I.7. |
-| I.13's right-angle case and Diagram-angle 3 (`adjacent_eq_of_right`) | I.13 and Common Notion 3, after I.13 in `Elements/BookI/Prop13.lean`. The later proofs now use that theorem. |
+| I.13's right-angle case and Diagram-angle 3 (`adjacent_eq_of_right`) | I.13 and Common Notion 3, after I.13 in `Elements/BookI/Prop13.lean`. The later proofs now use that theorem: [19 proofs, 18 calling it themselves](#i13s-rule-in-19-proofs). |
 | III.1's centre uniqueness and Generalities 2 (`centre_unique`) | The foundations, in `Elements/Figure/Circles.lean`: two supposed centres bisect the same straight line through the circle, and equal doubles have equal halves. III.1 Por. still calls the theorem, but its axiom closure is now the same as III.1's. |
 | III.2 and Circle 2 (`inside_of_between`) | Circle 3, in `Elements/Figure/Circles.lean`. The remaining axiom overlap is the Circle 3 row above. |
 
@@ -47,6 +47,37 @@ Diagram-segment 2, so the old alternative between those two assumptions in the
 III.5 and III.6 discussion below now leaves Diagram-segment 2 as the retained axiom.
 The duplicate-circle argument there remains an informal model argument, not a Lean
 independence theorem.
+
+### I.13's rule in 19 proofs
+
+Recounted on 20 October 2026 after the retirement, across all 122 certificate
+entries: the theorem occurs in 19 proofs without passing through another certified
+entry. Of these, 18 call it in their own declarations or their proposition's helpers.
+
+Eighteen of the 19 proofs call Diagram-angle 3 (`adjacent_eq_of_right`) themselves:
+II.1 and its companion `BookII.Prop1.two`, II.3, II.4, II.5, II.9, II.11,
+II.14 and its companion `BookII.Prop14.rectangle`, III.3, III.10, III.15, III.16, III.17
+and III.25 in their own Lean; III.9 in its helper `BookIII.Prop9.apart`; and III.1 and its porism
+in III.1's helper `BookIII.Prop1.perpendicular`, which shows that at a point of a straight line
+only one straight line is at right angles to it. III.19 reaches the rule only through
+`BookIII.Prop1.perpendicular`, which III.16 uses as well as calling the rule itself. Thirty-four
+more entries (24 propositions, III.16's porism and nine companions) rest on it through
+these 19. I.13 does not rest on it. The rule gives the right angles Euclid reads off his
+figure, as for the rectangles of II.1, where his text says nothing of them.
+
+The full dependency closure contains the theorem in 53 entries: 40 propositions,
+two porisms and eleven companions. The 34 additional entries above reach it only
+through entries they cite. These are uses of a proved rule, not axiom overlaps.
+
+The recount walks Lean's elaborated declarations using the same type, value and
+constructor references as `Certificate/Facts.lean`. For the 19, it stops at another
+certificate entry or a Common Notion; for the 18, it also stops at a shared lemma
+outside the proposition's namespace, while following Lean's auxiliary declarations.
+For the 53, it follows every project declaration. Each walk counts an entry once
+when it reaches `Tacit.adjacent_eq_of_right`, before following that theorem's proof.
+Searching the merged Lean sources for the rule's name confirms the calls listed
+above. The retired name is absent from every axiom list; those lists alone cannot
+count uses of the theorem.
 
 ## Historical account, before 19 October 2026
 
@@ -289,8 +320,8 @@ both circles, and circles that touch without have none.
 
 **What the project already says.** The [gap catalogue for Book III](gaps-book-III.md) says
 that Circle 2 "already contains III.2", in its introduction and under III.1, where it also
-gives Generalities 2 as the corollary Heath would add to III.1. III.2's commentary has a
-paragraph headed "A rule that contains III.2", and III.5's and III.6's name `circle_eq` as
+gives Generalities 2 as the corollary Heath would add to III.1. III.2's commentary explains
+how Circle 2 and Circle 3 give III.2, and III.5's and III.6's name `circle_eq` as
 the rule that supplies the step Euclid leaves tacit there. The axiom docstrings name one
 more of Euclid's steps: Intersection 5 is "the step Euclid takes for granted in I.1". That
 is a gap Euclid leaves and the rule fills, not a proposition he proves later, and it
@@ -322,8 +353,8 @@ rest of the attempt, so that Postulates 4 and 5, for instance, were never tried 
 diagram rules.
 
 The revised screen of `tooling/overlap-screen-unfold` (commit `760b974`) was run against
-library revision `89c5da4`. The linked `Audit/screen.py` gains the behaviours described here
-when that tooling lands. In the revised screen, every definition a statement or a rule
+library revision `89c5da4`. The linked `Audit/screen.py` has had these behaviours on main
+since #138. In the revised screen, every definition a statement or a rule
 reaches is unfolded, but for the kinds of magnitude, with their sum, order and zero, in
 which the rules are stated, and the magnitudes Lean chooses (`circumference`, `standing` and
 the rectangle `rect`), which are given by what their definitions say; each try leaves out
