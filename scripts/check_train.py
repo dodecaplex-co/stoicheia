@@ -4,8 +4,11 @@
     python3 scripts/check_train.py --base <rev> --head <rev> --body-file <path>
 
 Exit 0 means pass, 1 a refused train, and 2 an unreadable input. The check reads
-committed trees; merge-tree writes temporary tree objects, never a checkout.
-Python 3.11 or later, the standard library and git.
+committed trees; merge-tree writes temporary tree objects, never a checkout, and reads
+merge attributes from the base, never from the checkout or the train, so a member's
+.gitattributes cannot turn a resolved conflict into an automatic merge. Python 3.11 or
+later, the standard library and Git 2.42 or later (merge-tree --write-tree came in 2.38,
+--attr-source in 2.42); an older Git makes every train unreadable.
 """
 
 from __future__ import annotations
@@ -27,10 +30,17 @@ OID = re.compile(r"[0-9a-f]{40}")
 HEAD = re.compile(r"[0-9a-f]{12,40}")
 PASSED = re.compile(r"passed at ([0-9a-f]{12,40})(?:[ \t]+.*)?")
 FIELDS = ("branch", "head", "code_review", "security_review", "no_mistakes")
-# A review cell that says the review is still to come is no review's evidence. (/no-mistakes
-# has its own two forms, "passed at" and "not run:", read below.)
-UNDONE = re.compile(r"(?i)\s*(?:pending|waiting|to come|in progress|not (?:yet )?(?:run|done|"
-                    r"started|reviewed)|to do|todo|tbd|later|soon)\b")
+# A review cell that is only a placeholder, as a whole, is no review's evidence; a finding
+# that begins "To do so" or "Later commits" is not one. (/no-mistakes has its own two
+# forms, "passed at" and "not run:", read below.)
+PLACEHOLDER = re.compile(
+    r"(?:pending|waiting|awaiting(?: (?:review|the review))?|(?:still )?to come|to ?do|"
+    r"tbd|tbc|wip|queued|skipped|later|soon|in progress|n/?a|none|nothing|-+|\?+|"
+    r"not (?:yet )?(?:run|done|started|reviewed)(?: yet)?|will run after (?:the )?merge)")
+# A review cell names the commit it reviewed, by 7 to 40 lower-case hex digits; on
+# /security-review, "Not required" stands instead, where no protected path changed.
+COMMIT = re.compile(r"(?<![0-9A-Za-z])[0-9a-f]{7,40}(?![0-9A-Za-z])")
+NOT_REQUIRED = re.compile(r"(?i)not required\b")
 HEADINGS = ("Branch", "Head", "/code-review", "/security-review", "/no-mistakes")
 CHECK_PATHS = ("scripts/", "tests/", ".github/")
 FOUNDATION_PATHS = ("Elements/Foundations/", "Certificate/axioms.lock", "model/")
@@ -163,6 +173,12 @@ def undeclared(derived: dict, declared: dict) -> list[str]:
     return problems
 
 
+def _placeholder(cell: str) -> bool:
+    """A cell that, as a whole, says only that the review is absent or still to come."""
+    return bool(PLACEHOLDER.fullmatch(" ".join(_plain(cell).split())
+                                      .rstrip(".!;:, ").casefold()))
+
+
 def _evidence(rows: list[dict]) -> list[str]:
     """Check the evidence that can be read without a repository."""
     problems = []
@@ -177,9 +193,14 @@ def _evidence(rows: list[dict]) -> list[str]:
         if not HEAD.fullmatch(head):
             problems.append(f"Members: {branch}: Head must be 12 to 40 lower-case hex digits")
         for key, label in zip(FIELDS[2:], HEADINGS[2:]):
-            if not written(row[key]) or (key != "no_mistakes" and UNDONE.match(row[key])):
+            cell = row[key]
+            if not written(cell) or (key != "no_mistakes" and _placeholder(cell)):
                 problems.append(f"Members: {branch}: {label} is not written, or says the "
                                 "review is not done")
+            elif key != "no_mistakes" and not COMMIT.search(cell) and not (
+                    key == "security_review" and NOT_REQUIRED.match(cell)):
+                problems.append(f"Members: {branch}: {label} names no reviewed commit "
+                                "(7 to 40 lower-case hex digits)")
         evidence = row["no_mistakes"]
         if match := PASSED.fullmatch(evidence):
             checked = match.group(1)
@@ -219,7 +240,10 @@ def body_problems(body: str) -> list[str]:
 
 
 def _decision_path(path: str) -> bool:
-    """The decisions page or one of its Markdown entry files."""
+    """The decisions page or one of its Markdown entry files. The entry files, one per
+    decision directly under docs/decisions/, come with tooling/decision-entries, which
+    lands before this check; until then main has none, and the allowance covers only
+    such an entry."""
     return path == DECISIONS or bool(
         re.fullmatch(r"docs/decisions/[^/]+\.md", path))
 
@@ -234,12 +258,15 @@ def _coordinator_path(path: str, repo: Path | None = None, old: str | None = Non
     return under(path, (*GENERATED, "book/")) or _decision_path(path)
 
 
-def _merge_problems(repo: Path, merge: str, parents: list[str]) -> list[str]:
-    """Compare a merge with git's automatic tree, including every conflicted path."""
-    result = run(["git", "merge-tree", "--write-tree", "--name-only", "-z",
-                  "--no-messages", *parents], repo)
+def _merge_problems(repo: Path, merge: str, parents: list[str], attrs: str) -> list[str]:
+    """Compare a merge with git's automatic tree, including every conflicted path. Merge
+    attributes (merge=union, say) are read from `attrs`, origin/main's commit, never from
+    the checkout or the merged sides."""
+    result = run(["git", f"--attr-source={attrs}", "merge-tree", "--write-tree",
+                  "--name-only", "-z", "--no-messages", *parents], repo)
     if result.returncode not in (0, 1):
-        raise ValueError(f"could not read automatic merge {merge}: {result.stderr.strip()}")
+        raise ValueError(f"could not read automatic merge {merge} (Git 2.42 or later is "
+                         f"needed): {result.stderr.strip()}")
     fields = result.stdout.split("\0")
     if not fields or not OID.fullmatch(fields[0]) or fields[-1] != "":
         raise ValueError(f"could not read automatic merge {merge}")
@@ -255,12 +282,20 @@ def _merge_problems(repo: Path, merge: str, parents: list[str]) -> list[str]:
             if not _coordinator_path(path, repo, tree, merge)]
 
 
-def _merge_base(repo: Path, left: str, right: str) -> str:
-    """Read a unique merge base; missing or ambiguous history is unreadable."""
+def _merge_bases(repo: Path, left: str, right: str) -> list[str]:
+    """Read every merge base, more than one after criss-cross merges; none is unreadable."""
     bases = git(repo, "merge-base", "--all", left, right).split()
-    if len(bases) != 1 or not OID.fullmatch(bases[0]):
-        raise ValueError("could not read a unique merge base")
-    return bases[0]
+    if not bases or not all(OID.fullmatch(b) for b in bases):
+        raise ValueError("could not read a merge base")
+    return bases
+
+
+def _contains(repo: Path, older: str, newer: str) -> bool:
+    """Whether `older` is an ancestor of `newer` or the same commit."""
+    result = run(["git", "merge-base", "--is-ancestor", older, newer], repo)
+    if result.returncode not in (0, 1):
+        raise ValueError("could not read ancestry")
+    return result.returncode == 0
 
 
 def _commits(repo: Path, *args: str) -> set[str]:
@@ -275,14 +310,15 @@ def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
     """Check rules 1 to 6, returning refusals; unreadable inputs raise ValueError or Refusal.
 
     The base is origin/main's supplied tip. The train's own first-parent chain is read:
-    its merges and its own commits; a member's history is the member's. Keep-apart is stricter than safe_push.keep_apart:
-    check changes with judged content refuse even when origin/main's checks pass.
+    its merges and its own commits; a member's history is the member's. Keep-apart is
+    stricter than safe_push.keep_apart: check changes with judged content refuse even
+    when origin/main's checks pass.
     """
     rows, declared = members_table(body), declared_new(body)
     base, sha = _commit(repo, base), _commit(repo, sha)
     if git(repo, "rev-parse", "--is-shallow-repository").strip() != "false":
         raise ValueError("could not read complete history: the repository is shallow")
-    if _merge_base(repo, base, sha) != base:
+    if not _contains(repo, base, sha):
         return ["train head does not contain the supplied base"]
     problems = _evidence(rows)
     history = _commits(repo, base)
@@ -303,7 +339,7 @@ def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
         elif len(parents) == 2:
             if parents[1] not in history:
                 members[parents[1]] += 1
-            problems.extend(_merge_problems(repo, commit, parents))
+            problems.extend(_merge_problems(repo, commit, parents, base))
     matched = Counter()
     for row in rows:
         heads = [head for head in members if HEAD.fullmatch(row["head"])
@@ -319,9 +355,14 @@ def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
             problem = f"Members: {row['branch']}: /no-mistakes names another head"
             if problem not in problems:
                 problems.append(problem)
-        member_base = _merge_base(repo, base, head)
-        protected = [p for _, p in changed_files(repo, member_base, head) if is_protected(p)]
-        if protected and row["security_review"].casefold().startswith("not required"):
+        # After criss-cross merges a member has several merge bases with main: the paths
+        # it changes against any of them count, so more bases never mean fewer paths.
+        try:
+            protected = {p for member_base in _merge_bases(repo, base, head)
+                         for _, p in changed_files(repo, member_base, head) if is_protected(p)}
+        except (ValueError, Refusal) as error:
+            raise ValueError(f"Members: {row['branch']} ({head[:12]}): {error}") from None
+        if protected and NOT_REQUIRED.match(row["security_review"]):
             problems.append(f"Members: {row['branch']}: /security-review says Not required "
                             f"for protected paths: {', '.join(sorted(protected))}")
     for head, count in sorted(members.items()):
@@ -342,9 +383,10 @@ def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
                                     f"path: {path}")
     inputs = sorted(p for _, p in changed_files(repo, base, sha)
                     if under(p, CHECK_INPUTS) and not pinned(repo, base, sha, p))
-    # Entry files have the same allowance as the decisions page, including when
-    # safe_push's guides do not yet include the entries directory.
-    judged = [p for p in judged_files(repo, base, sha) if not _decision_path(p)] if inputs else []
+    # Decision entry files (tooling/decision-entries) have the same allowance as the
+    # decisions page, including when safe_push's guides do not yet include their directory.
+    judged = [p for p in judged_files(repo, base, sha)
+              if not _decision_path(p)] if inputs else []
     if inputs and judged:
         problems.append(f"check changes must be kept apart from judged content: "
                         f"{', '.join(inputs)}; judged: {', '.join(judged)}")

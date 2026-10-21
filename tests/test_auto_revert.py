@@ -295,6 +295,102 @@ class AutoRevert(unittest.TestCase):
         self.assertEqual([line for line in lines if line.startswith("Reverts:")],
                          [f"Reverts: {merge}"])
 
+    PAGE = "docs/briefs/0002-decisions.md"
+    ENTRY = "docs/decisions/2026-10-21-a-train.md"
+
+    def page(self, region="", above="## 20 October 2026\n\n- **An earlier decision.**\n"):
+        return (f"# Decisions\n\n{above}\n<!-- decisions:entries begin -->\n{region}"
+                "<!-- decisions:entries end -->\n")
+
+    def entries_landed(self):
+        """Main as tooling/decision-entries leaves it: the folder, and the page's markers."""
+        self.write(self.PAGE, self.page())
+        self.write("docs/decisions/README.md", "One file for each decision.\n")
+        self.commit("Decision entries")
+        self.before = self.rev()
+
+    def train_files(self, number, files, labels=("text",)):
+        """A train whose one member changes several files, merged as main merges it."""
+        self.git("switch", "-c", f"train/test-{number}")
+        for name, text in files.items():
+            self.write(name, text)
+        self.commit(f"Member of train {number}")
+        head = self.rev()
+        self.git("switch", "main")
+        self.git("merge", "--no-ff", f"train/test-{number}", "-m",
+                 f"Merge pull request #{number} from owner/train/test-{number}")
+        merge = self.rev()
+        self.api.pulls[number] = {
+            "number": number, "title": f"Train {number}", "merged": True,
+            "merge_commit_sha": merge, "head": {"sha": head, "ref": f"train/test-{number}"},
+            "base": {"ref": "main", "repo": {"full_name": SLUG}},
+            "labels": [{"name": name} for name in labels],
+        }
+        self.api.after = merge
+        return merge
+
+    def pushed(self, path, *, name=False):
+        """A file of the pushed revert, as the receiving repository holds it, or its name."""
+        revision = f"{self.pushes[0]['head']}:{path}"
+        return command(self.remote, "git", *(("rev-parse", revision) if name
+                                              else ("show", revision)))
+
+    def test_decision_entries_and_their_page_region_are_kept(self):
+        # Entries are history: the revert keeps the folder as at the failed push, and the
+        # page's region render.py assembles from it; everything else is reverted.
+        self.entries_landed()
+        entry = "- **A train's decision.** Kept as history.\n"
+        region = f"\n## 21 October 2026\n\n{entry}\n"
+        merge = self.train_files(11, {"chapter.txt": "Changed chapter.\n", self.ENTRY: entry,
+                                      self.PAGE: self.page(region)})
+        status, output = self.run_revert()
+        self.assertEqual(status, 0, output)
+        self.assertEqual(self.pushed("chapter.txt"), "Original chapter.")
+        self.assertEqual(self.pushed(self.ENTRY), entry.strip())
+        self.assertEqual(self.pushed(self.PAGE), self.page(region).strip())
+        for path in ("docs/decisions", self.PAGE):
+            self.assertEqual(self.pushed(path, name=True),
+                             self.git("rev-parse", f"{merge}:{path}"))
+        self.assertIn("Keep docs/decisions/ and its page region", self.pushes[0]["subjects"])
+        self.assertIn("was enqueued", self.body())
+
+    def test_page_text_outside_the_entries_region_is_reverted(self):
+        self.entries_landed()
+        entry = "- **A train's decision.**\n"
+        region = f"\n## 21 October 2026\n\n{entry}\n"
+        above = "## 20 October 2026\n\n- **An earlier decision.**\n- **A page entry.**\n"
+        self.train_files(11, {"chapter.txt": "Changed chapter.\n", self.ENTRY: entry,
+                              self.PAGE: self.page(region, above)})
+        status, output = self.run_revert()
+        self.assertEqual(status, 0, output)
+        self.assertEqual(self.pushed(self.PAGE), self.page(region).strip())
+        self.assertEqual(self.pushed(self.ENTRY), entry.strip())
+
+    def test_a_push_that_leaves_the_entries_alone_reverts_exactly(self):
+        self.entries_landed()
+        self.train_files(11, {"chapter.txt": "Changed chapter.\n"})
+        status, output = self.run_revert()
+        self.assertEqual(status, 0, output)
+        self.assertEqual(self.pushes[0]["tree"], self.git("rev-parse", self.before + "^{tree}"))
+        self.assertNotIn("Keep docs/decisions/", self.pushes[0]["subjects"])
+
+    def test_without_entries_or_markers_nothing_changes(self):
+        self.train()
+        status, output = self.run_revert()
+        self.assertEqual(status, 0, output)
+        self.assertEqual(self.pushes[0]["tree"], self.git("rev-parse", self.before + "^{tree}"))
+        self.assertNotIn("Keep docs/decisions/", self.pushes[0]["subjects"])
+
+    def test_unreadable_entries_markers_leave_the_issue_only(self):
+        self.entries_landed()
+        page = self.page("- **A train's decision.**\n") + "<!-- decisions:entries end -->\n"
+        self.train_files(11, {"chapter.txt": "Changed chapter.\n", self.PAGE: page})
+        status, output = self.run_revert()
+        self.assertEqual(status, 1, output)
+        self.assertEqual(self.pushes, [])
+        self.assertIsNone(self.api.pr)
+        self.assertIn("decisions:entries markers are not one pair", self.body())
+
     def test_push_refuses_every_branch_outside_the_revert_format(self):
         branches = ["main", "train/test", "refs/heads/revert/123456789abc",
                     "revert/", "revert/123456789ab", "revert/123456789abcd",

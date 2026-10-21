@@ -34,7 +34,7 @@ SECOND = "notes/second.txt"
 CHECK = "scripts/check_sample.py"
 TEST = "tests/test_check_sample.py"
 BOT = "revert-fixture[bot]"
-
+REVIEW = "Independent reader at"
 
 
 def harness_source(comment, extra=()):
@@ -178,8 +178,8 @@ class QueueTests(unittest.TestCase):
             "## Members\n\n"
             "| Branch | Head | /code-review | /security-review | /no-mistakes |\n"
             "|---|---|---|---|---|\n"
-            f"| content/{number} | {member} | Independent reader: pass, no findings. | "
-            f"Independent reader: pass, no findings. | passed at {member} |\n\n"
+            f"| content/{number} | {member} | {REVIEW} {member[:12]}: pass, no findings. | "
+            f"{REVIEW} {member[:12]}: pass, no findings. | passed at {member} |\n\n"
             f"## What is new\n\n{new}\n\n" + self.block(head)
         )
         self.pr(number, head, f"train/area-{number}", body)
@@ -313,7 +313,8 @@ class QueueTests(unittest.TestCase):
         old = self.git("rev-parse", f"{self.base}:scripts/safe_push.py").strip()
         wrong = self.git("rev-parse", f"{self.base}:{TEXT}").strip()
         self.set_body(self.body().replace(old[:12], wrong[:12]))
-        self.verdict(self.cli(), 1, "harness blob is not the recorded harness commit's safe_push.py")
+        self.verdict(self.cli(), 1,
+                     "harness blob is not the recorded harness commit's safe_push.py")
 
     def test_preflight_hidden_duplicated_or_malformed_refuses(self):
         original = self.body()
@@ -325,7 +326,8 @@ class QueueTests(unittest.TestCase):
                 self.verdict(self.cli(), 1, "pre-flight:")
 
     def test_preflight_skipped_full_checks_refuses(self):
-        self.set_body(self.body().replace("by origin/main's", "full checks skipped; by origin/main's"))
+        self.set_body(self.body().replace("by origin/main's",
+                                          "full checks skipped; by origin/main's"))
         self.verdict(self.cli(), 1, "full checks skipped")
 
     def test_preflight_uses_its_recorded_base_harness(self):
@@ -345,7 +347,8 @@ class QueueTests(unittest.TestCase):
 
     def test_preflight_harness_may_be_newer_than_its_comparison_base(self):
         old_base = self.base
-        self.base = self.make([old_base], {"scripts/safe_push.py": harness_source('Updated main harness.')})
+        self.base = self.make([old_base], {
+            "scripts/safe_push.py": harness_source('Updated main harness.')})
         self.snapshot["main"]["sha"] = self.base
         for number, head in ((1, self.one), (2, self.two)):
             block = self.block(head, base=old_base, harness_commit=self.base)
@@ -354,8 +357,10 @@ class QueueTests(unittest.TestCase):
         self.verdict(self.cli(head=self.merge(first, self.two, 2)), 0, "queue: PASS")
 
     def test_preflight_harness_must_have_been_on_main(self):
-        off_main = self.make([self.base], {"scripts/safe_push.py": harness_source('Untrusted harness.')})
-        self.set_body(queue.PREFLIGHT.sub(self.block(self.one, harness_commit=off_main), self.body()))
+        off_main = self.make([self.base], {
+            "scripts/safe_push.py": harness_source('Untrusted harness.')})
+        self.set_body(queue.PREFLIGHT.sub(self.block(self.one, harness_commit=off_main),
+                                          self.body()))
         self.verdict(self.cli(), 1, "harness commit was never main")
 
     def test_preflight_is_judged_by_its_own_harness_checks(self):
@@ -433,6 +438,67 @@ class QueueTests(unittest.TestCase):
         self.verdict(self.cli(head=self.merge(first, self.two, 2)), 1,
                      "harness commit was never main")
 
+    def test_preflight_harness_older_than_its_base_refuses(self):
+        # The block names a harness on main's chain, but one older than the base it
+        # compared against: a harness that lacked checks main ran by then.
+        old_base = self.base
+        self.base = self.make([old_base], {
+            "scripts/safe_push.py": harness_source("A newer main harness.")})
+        self.snapshot["main"]["sha"] = self.base
+        self.nodes().clear()
+        one = self.train(1, {TEXT: "A train pre-flighted on the newer main.\n"})
+        self.set_body(queue.PREFLIGHT.sub(self.block(one, harness_commit=old_base),
+                                          self.body()))
+        self.verdict(self.cli(head=self.merge(self.base, one, 1)), 1,
+                     "harness commit is older than the recorded base")
+
+    def test_preflight_base_must_have_been_main(self):
+        # The block's base is an ancestor of the group's base, but by a merge's second
+        # parent: it was never main's tip.
+        side = self.make([self.base], {"notes/side.txt": "A side commit.\n"})
+        joined = self.merge(self.base, side)
+        self.nodes().clear()
+        one = self.train(1, {TEXT: "A train built on the side commit.\n"}, start=side)
+        self.base = joined
+        self.snapshot["main"]["sha"] = joined
+        self.set_body(queue.PREFLIGHT.sub(self.block(one, base=side, harness_commit=joined),
+                                          self.body()))
+        self.verdict(self.cli(head=self.merge(joined, one, 1)), 1,
+                     "recorded base was never main")
+
+    def test_entry_attributes_cannot_make_a_conflicted_merge_automatic(self):
+        # The second train adds merge=union for the first train's file. In the group's
+        # checkout git's own merge reads it and takes both lines as automatic; the judge
+        # reads attributes from the group's base, where the merge conflicts.
+        two = self.train(2, {TEXT: "The second train's competing line.\n",
+                             ".gitattributes": f"{TEXT} merge=union\n"})
+        self.checkout(two)
+        union = self.git("merge-tree", "--write-tree", self.first, two).strip()
+        group = self.make([self.first, two], tree=union,
+                          subject="Merge pull request #2 from owner/train-2")
+        self.assertIn("The first train's reviewed line.\n", self.trees[group][TEXT])
+        self.assertIn("The second train's competing line.\n", self.trees[group][TEXT])
+        self.verdict(self.cli(head=group), 1,
+                     f"batching: merge {group[:12]} has conflicts or extra content")
+
+    def test_criss_cross_entry_is_checked_against_every_merge_base(self):
+        ahead = self.make([self.base], {"notes/main.txt": "Main's line.\n"})
+        early = self.make([self.base], {SECOND: "The entry's early line.\n"})
+        main = self.merge(ahead, early)
+        entry = self.make([self.merge(early, ahead)], {TEXT: "The entry's reviewed line.\n"})
+        self.assertEqual(len(queue.merge_bases(self.repo, entry, main, 3)), 2)
+        group = self.merge(main, entry, 3)
+        queue.intact(self.repo, main, group, {"number": 3, "head": entry})
+        later = self.make([group], {TEXT: "A later entry's overwrite.\n"})
+        with self.assertRaisesRegex(queue.Refused,
+                                    f"#3 changed lines were overwritten: {TEXT}"):
+            queue.intact(self.repo, main, later, {"number": 3, "head": entry})
+
+    def test_entry_without_a_merge_base_is_unreadable_and_named(self):
+        unrelated = self.make([], {TEXT: "An unrelated history.\n"})
+        with self.assertRaisesRegex(ValueError, "#4: could not read a merge base"):
+            queue.merge_bases(self.repo, unrelated, self.base, 4)
+
     def test_later_train_rewriting_readme_prose_is_caught(self):
         readme = "Prose by hand.\n<!-- scope:I -->\nRow.\n<!-- /scope:I -->\n"
         old_base = self.base
@@ -452,7 +518,8 @@ class QueueTests(unittest.TestCase):
 
     def test_preflight_reads_the_current_writer_with_a_newer_harness(self):
         old_base = self.base
-        self.base = self.make([old_base], {"scripts/safe_push.py": harness_source('Newer harness.')})
+        self.base = self.make([old_base], {
+            "scripts/safe_push.py": harness_source('Newer harness.')})
         self.snapshot["main"]["sha"] = self.base
         blob = self.git("rev-parse", f"{self.base}:scripts/safe_push.py").strip()
         for number, head in ((1, self.one), (2, self.two)):
@@ -470,8 +537,10 @@ class QueueTests(unittest.TestCase):
         original = self.body()
         for body in (
             original.replace("Verdict: PASS.", "<!-- Verdict: PASS. -->"),
-            original.replace("| Step | Outcome | Seconds |", "```\n| Step | Outcome | Seconds |")
-                    .replace("<!-- safe_push:preflight end -->", "```\n<!-- safe_push:preflight end -->"),
+            original.replace("| Step | Outcome | Seconds |",
+                             "```\n| Step | Outcome | Seconds |")
+                    .replace("<!-- safe_push:preflight end -->",
+                             "```\n<!-- safe_push:preflight end -->"),
         ):
             with self.subTest(body=body):
                 self.set_body(body)
@@ -479,9 +548,13 @@ class QueueTests(unittest.TestCase):
 
     def test_train_body_evidence_and_declaration_refuse(self):
         original = self.body()
+        member = queue.parents(self.repo, self.one)[1]
+        review = f"{REVIEW} {member[:12]}: pass, no findings."
         for body, message in (
             (original.replace("## Members", "## No members"), "Members"),
-            (original.replace("Independent reader: pass, no findings.", "TODO"), "not written"),
+            (original.replace(review, "TODO"), "not written"),
+            (original.replace(review, "Independent reader: pass, no findings."),
+             "names no reviewed commit"),
             (original.replace("## What is new", "## Omitted"), "What is new"),
         ):
             with self.subTest(message=message):
@@ -496,7 +569,8 @@ class QueueTests(unittest.TestCase):
 
     def test_member_protected_path_needs_security_evidence(self):
         one = self.train(1, {CHECK: "print('new check')\n"}, new=f"- check: {CHECK}")
-        body = self.body().replace("| Independent reader: pass, no findings. | passed",
+        member = queue.parents(self.repo, one)[1]
+        body = self.body().replace(f"| {REVIEW} {member[:12]}: pass, no findings. | passed",
                                    "| Not required: no protected paths. | passed")
         self.set_body(body)
         first = self.merge(self.base, one, 1)
@@ -590,6 +664,35 @@ class QueueTests(unittest.TestCase):
         page.write_text(original, encoding="utf-8")
         self.verdict(self.cli(tree=True, prepare=False), 0, "queue: PASS")
         self.verdict(self.cli("--render", tree=True, prepare=False), 1, "render.py failed")
+
+    def test_tree_reads_dated_headings_as_they_render(self):
+        self.checkout(self.head)
+        page = self.repo / PAGE
+        original = page.read_text(encoding="utf-8")
+        cyrillic = "## 20 \u041ectober 2026"
+        for added, message in (
+                (" ## 20 October 2026", "repeated dated heading"),
+                ("   ## 20 October 2026", "repeated dated heading"),
+                ("## 20 October 2026\u200b", "repeated dated heading"),
+                ("## 20 october 2026", "repeated dated heading"),
+                ("20 October 2026\n---------------", "repeated dated heading"),
+                ("20 October 2026\n===", "repeated dated heading"),
+                ("## **20 October 2026**", "repeated dated heading"),
+                ("## 20 Oct 2026", "repeated dated heading"),
+                ("## October 20, 2026", "repeated dated heading"),
+                ("## 2026-10-20", "repeated dated heading"),
+                ("## 20\u00a0October\u00a02026", "repeated dated heading"),
+                ("## \uff12\uff10 October 2026", "repeated dated heading"),
+                (cyrillic, "letters outside ASCII")):
+            with self.subTest(added=added):
+                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
+                self.verdict(self.cli(tree=True, prepare=False), 1, PAGE, message)
+        for added in ("## 21 October 2026", "    ## 20 October 2026",
+                      "## 20 October 2026: a later note", "### 20 October 2026"):
+            with self.subTest(added=added):
+                page.write_text(original + "\n" + added + "\n", encoding="utf-8")
+                self.verdict(self.cli(tree=True, prepare=False), 0, "queue: PASS")
+        page.write_text(original, encoding="utf-8")
 
     def test_repeated_dated_heading_refuses(self):
         page = self.trees[self.base][PAGE] + "\n## 20 October 2026\n\nRepeated date.\n"
@@ -757,6 +860,15 @@ class QueueTests(unittest.TestCase):
                 self.snapshot = {key: value for key, value in original.items() if key != kind}
                 self.verdict(self.cli(head=head), 2, f"fixture lacks {kind}")
 
+    def test_auto_revert_with_two_merge_bases_with_main_refuses(self):
+        self.revert_group()
+        self.fixture.write_text(json.dumps(self.snapshot), encoding="utf-8")
+        pr = dict(queue.pull_request(self.snapshot["pull_requests"]["3"], 3), main=self.base)
+        api = queue.GitHub("owner/repository", self.fixture)
+        with patch.object(queue, "merge_bases", return_value=[self.base, self.one]), \
+                self.assertRaisesRegex(queue.Refused, "#3 has more than one merge base"):
+            queue.exact_revert(self.repo, pr, api)
+
     def test_auto_revert_cannot_omit_a_failed_push_merge(self):
         head, _ = self.revert_group(merges=2)
         self.set_body(self.body(3).replace(f"Reverts: {self.first}\n", ""), 3)
@@ -773,6 +885,92 @@ class QueueTests(unittest.TestCase):
         head, _ = self.revert_group()
         self.failed_run(self.base, self.two)
         self.verdict(self.cli(head=head), 1, "range is not on main's first-parent chain")
+
+    ENTRY = "docs/decisions/2026-10-21-a-train.md"
+    DECISION = "- **A train's decision.** Kept as history.\n"
+    REGION = "\n## 21 October 2026\n\n- **A train's decision.** Kept as history.\n\n"
+
+    def entries_page(self, region="", above=""):
+        """The decisions page as tooling/decision-entries leaves it: its own text, then the
+        region render.py assembles from docs/decisions/, between the markers."""
+        return (f"## 20 October 2026\n\nA previous decision.\n{above}\n"
+                f"{queue.ENTRIES_BEGIN}\n{region}{queue.ENTRIES_END}\n")
+
+    def entries_revert_group(self, revert=None, train=None):
+        """Main with decision entries; a train adding one, with its page region and a
+        reviewed line; that train's merge pushed and failed; and the bot's revert of it,
+        which keeps the folder and the region unless `revert` says otherwise."""
+        self.base = self.make([self.base], {
+            PAGE: self.entries_page(), "docs/decisions/README.md": "One file a decision.\n"})
+        original = self.trees[self.base]
+        one = self.train(1, {TEXT: "The first train's reviewed line.\n",
+                             self.ENTRY: self.DECISION, PAGE: self.entries_page(self.REGION),
+                             **(train or {})})
+        old_base, self.base = self.base, self.merge(self.base, one, 1)
+        self.snapshot["main"]["sha"] = self.base
+        head = self.make([self.base], {TEXT: original[TEXT], **(revert or {})})
+        self.nodes().clear()
+        self.pr(3, head, f"revert/{self.base[:12]}",
+                f"Failed run: 71\nReverts: {self.base}\n", ["auto-revert"],
+                {"login": BOT, "type": "Bot"})
+        self.failed_run(old_base, self.base)
+        return self.merge(self.base, head, 3)
+
+    def test_auto_revert_keeps_decision_entries_and_their_page_region(self):
+        # Entries are history: the revert keeps docs/decisions/ as at the failed push,
+        # and the page's region render.py assembles from it; the rest is reverted.
+        head = self.entries_revert_group()
+        self.verdict(self.cli(head=head), 0, "queue: PASS")
+
+    def test_auto_revert_that_takes_a_decision_entry_away_refuses(self):
+        # The plain git revert, which deletes the entry and empties the region.
+        head = self.entries_revert_group(
+            revert={self.ENTRY: None, PAGE: self.entries_page()})
+        self.verdict(self.cli(head=head), 1, "not the exact revert tree (extra change)")
+
+    def test_auto_revert_must_keep_the_page_region_with_the_folder(self):
+        head = self.entries_revert_group(revert={PAGE: self.entries_page()})
+        self.verdict(self.cli(head=head), 1, "not the exact revert tree (extra change)")
+
+    def test_auto_revert_may_change_nothing_else_under_decision_entries(self):
+        base, snapshot = self.base, copy.deepcopy(self.snapshot)
+        for change in ({self.ENTRY: "- **A train's decision.** Edited by the revert.\n"},
+                       {"docs/decisions/2026-10-21-another.md": "- **Another.**\n"},
+                       {"docs/decisions/README.md": None}):
+            with self.subTest(change=change):
+                self.base, self.snapshot = base, copy.deepcopy(snapshot)
+                head = self.entries_revert_group(revert=change)
+                self.verdict(self.cli(head=head), 1,
+                             "not the exact revert tree (extra change)")
+
+    ABOVE = "\nA page decision the train added.\n"
+
+    def test_auto_revert_reverts_the_page_s_own_text_outside_the_region(self):
+        head = self.entries_revert_group(
+            train={PAGE: self.entries_page(self.REGION, self.ABOVE)},
+            revert={PAGE: self.entries_page(self.REGION)})
+        self.verdict(self.cli(head=head), 0, "queue: PASS")
+
+    def test_auto_revert_that_keeps_the_page_s_own_text_refuses(self):
+        head = self.entries_revert_group(
+            train={PAGE: self.entries_page(self.REGION, self.ABOVE)})
+        self.verdict(self.cli(head=head), 1, "not the exact revert tree (extra change)")
+
+    def test_auto_revert_refuses_entries_markers_that_are_not_one_pair(self):
+        page = self.entries_page(self.REGION) + queue.ENTRIES_END + "\n"
+        head = self.entries_revert_group(train={PAGE: page}, revert={PAGE: page})
+        self.verdict(self.cli(head=head), 1, "decisions:entries markers are not one pair")
+
+    def test_auto_revert_without_decision_entries_adds_none(self):
+        # Without the folder, nothing changes: a revert that adds one is an extra change.
+        head, _ = self.revert_group()
+        self.verdict(self.cli(head=head), 0, "queue: PASS")
+        revert_head = self.snapshot["pull_requests"]["3"]["head"]["sha"]
+        added = self.make([revert_head], {self.ENTRY: self.DECISION})
+        self.snapshot["pull_requests"]["3"]["head"]["sha"] = added
+        self.nodes()[0]["pullRequest"]["headRefOid"] = added
+        self.verdict(self.cli(head=self.merge(self.base, added, 3)), 1,
+                     "not the exact revert tree (extra change)")
 
     def test_activity_boundary_requests_all_pages_for_both_types(self):
         with patch.dict(os.environ, {"GH_TOKEN": "fixture-token"}), \

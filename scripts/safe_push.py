@@ -22,8 +22,8 @@ refs/heads/<name> and opens the pull request, or updates the open one. The steps
 order, and the first that fails stops it with a message saying why:
 
 Branches named train/* require --body-file. Step "3. train" runs origin/main's
-check_train.py before the full checks. While main has no such module, only a commit
-adding it may use its own copy, with a bootstrap note for the security review.
+check_train.py before the full checks; while origin/main has none, every train is
+refused, and no commit's own copy runs in its place.
 
 1. Preconditions. The commit exists; `git fetch origin`; origin/main is an ancestor of
    the commit, so that the merge commit will hold exactly the tree checked; the branch,
@@ -138,7 +138,9 @@ When main's rules require a merge queue, --merge keeps these gates, checks the h
 against its merge base with origin/main, and enqueues it with expectedHeadOid pinned.
 It follows the queue to a verified merge or an ejection; an unreadable or timed out
 verdict is exit 3. In both modes, open main-red issues or a failed completed post-merge
-run at main's tip refuse the merge. Unreadable rules or main-health answers refuse too.
+run at main's tip refuse every merge but the fix's: a pull request whose body has the
+line "Fixes main-red: #<n>", naming every open main-red issue and no other, and whose
+own CI passes, as every merge's must. Unreadable rules or main-health answers refuse too.
 
 `--dry-run` does everything but the push, the pull request and the merge. The temporary
 worktrees are removed at the end, on a failure too. The pre-push hook,
@@ -288,6 +290,7 @@ CHECKS = [
     ("python3 scripts/check_style.py", [PY, "scripts/check_style.py"]),
     ("python3 scripts/render.py", [PY, "scripts/render.py"]),
     ("git status --porcelain is empty", None),
+    ("python3 scripts/check_queue.py --tree .", [PY, "scripts/check_queue.py", "--tree", "."]),
     ("python3 scripts/check_links.py", [PY, "scripts/check_links.py"]),
     ("python3 -I tests/model/run.py --fast", [PY, "-I", "tests/model/run.py", "--fast"]),
 ]
@@ -2277,23 +2280,26 @@ def check_installed(repo, base: str, rep: Report) -> None:
                     "(sh scripts/install_hooks.sh --force)")
 
 
-def harness_train(repo: Path, base: str, owner: str = "origin/main") -> bytes | None:
-    """Read the train module at a commit, distinguishing absent from unreadable."""
+def harness_train(repo: Path, base: str) -> bytes | None:
+    """origin/main's train module, distinguishing absent from unreadable."""
     entry = git(repo, "ls-tree", base, "--", "scripts/check_train.py").strip()
     if not entry:
         return None
-    if not re.fullmatch(r"100(?:644|755) blob [0-9a-f]{40,64}\tscripts/check_train\.py", entry):
-        raise Refusal(f"{owner}'s scripts/check_train.py is not a regular file")
+    if not re.fullmatch(r"100(?:644|755) blob [0-9a-f]{40,64}\tscripts/check_train\.py",
+                        entry):
+        raise Refusal("origin/main's scripts/check_train.py is not a regular file")
     return git(repo, "cat-file", "blob", f"{base}:scripts/check_train.py", binary=True)
 
 
-def harness_copy(theirs: bytes, theirs_heath: bytes, theirs_train: bytes | None = None) -> Path:
+def harness_copy(theirs: bytes, theirs_heath: bytes,
+                 theirs_train: bytes | None = None) -> Path:
     """origin/main's harness modules, written to a directory named by their
     blobs, beside the log (~/.cache/stoicheia/harness/): it needs no
     cleaning up, since the same harness always lands in the same place, and each file is
     written afresh, through a rename, so that nothing left there earlier is run."""
     train_id = blob_id(theirs_train) if theirs_train is not None else "no-train"
-    path = log_path().parent / "harness" / f"{blob_id(theirs)}-{blob_id(theirs_heath)}-{train_id}"
+    path = log_path().parent / "harness" / \
+        f"{blob_id(theirs)}-{blob_id(theirs_heath)}-{train_id}"
     path.mkdir(parents=True, exist_ok=True)
     for name, data in (("safe_push.py", theirs), ("heath.py", theirs_heath),
                        ("check_train.py", theirs_train)):
@@ -2331,10 +2337,10 @@ def harness(repo, base: str, rep: Report) -> None:
     if os.environ.get("STOICHEIA_HARNESS"):
         if not same:
             raise Refusal("STOICHEIA_HARNESS says this is origin/main's harness, but this "
-                          "copy of safe_push.py, heath.py or check_train.py is not origin/main's "
-                          f"(blob {blob_id(own)[:12]}): origin/main moved since the hand-over, "
-                          "or the variable was set by hand. Run safe_push again, with the "
-                          "variable unset.")
+                          "copy of safe_push.py, heath.py or check_train.py is not "
+                          f"origin/main's (blob {blob_id(own)[:12]}): origin/main moved "
+                          "since the hand-over, or the variable was set by hand. Run "
+                          "safe_push again, with the variable unset.")
         HARNESS = f"origin/main's `scripts/safe_push.py` (blob `{blob_id(own)[:12]}`)"
         HARNESS_BLOB = blob_id(own)
         rep.add("1", "harness", "ok", f"origin/main's scripts/safe_push.py (blob "
@@ -2352,8 +2358,8 @@ def harness(repo, base: str, rep: Report) -> None:
         rep.add("1", "harness", "ok", f"origin/main's scripts/safe_push.py "
                 f"(blob {blob_id(own)[:12]})")
         return
-    print("  this copy of safe_push.py, heath.py or check_train.py differs from origin/main's: running "
-          "origin/main's in its place", flush=True)
+    print("  this copy of safe_push.py, heath.py or check_train.py differs from "
+          "origin/main's: running origin/main's in its place", flush=True)
     path = harness_copy(theirs, theirs_heath, theirs_train) / "safe_push.py"
     env = dict(os.environ, STOICHEIA_HARNESS="origin/main")
     sys.stdout.flush()
@@ -2361,38 +2367,38 @@ def harness(repo, base: str, rep: Report) -> None:
     os.execve(PY, [PY, str(path), *ARGV], env)
 
 
-def train_input(ctx: Context, args) -> str | None:
-    """A train needs an explicit body, including on a dry run or an update."""
-    if not (ctx.branch or "").startswith("train/"):
-        return None
+def body_input(args) -> str | None:
+    """--body-file's text, read once, as UTF-8, before the checks: the train check, the
+    dry run's body and the pull request's body are all that same text."""
     if not args.body_file:
-        raise Refusal("a train/* branch requires --body-file")
+        return None
     try:
         return Path(args.body_file).read_text(encoding="utf-8")
     except (OSError, UnicodeError) as e:
-        raise Refusal(f"could not read the train's --body-file: {e}") from e
+        raise Refusal(f"could not read --body-file: {e}") from e
+
+
+def train_input(ctx: Context, body: str | None) -> str | None:
+    """A train needs an explicit body, including on a dry run or an update."""
+    if not (ctx.branch or "").startswith("train/"):
+        return None
+    if body is None:
+        raise Refusal("a train/* branch requires --body-file")
+    return body
 
 
 def train_check(ctx: Context, body: str, rep: Report) -> None:
-    """Run main's train checker, or the commit's newly added checker with a bootstrap note.
-    The queue's comparison base may precede main's harness revision."""
+    """Run origin/main's train checker on the commit and the body. While origin/main has
+    none, every train is refused: no commit's own copy ever runs in its place. In queue
+    mode the base compared against is the head's merge base with main, older than main's
+    tip, whose checker (ctx.harness_sha's) is the one that runs."""
     rep.heading("3. train")
     started = time.time()
     try:
         source = harness_train(ctx.repo, ctx.harness_sha or ctx.base)
-        origin = "origin/main's check_train"
         if source is None:
-            added = any(c.status == "A" and c.path == "scripts/check_train.py"
-                        for c in raw_changes(ctx.repo, ctx.base, ctx.sha))
-            if not added:
-                raise Refusal("origin/main has no scripts/check_train.py and the commit "
-                              "does not add it")
-            source = harness_train(ctx.repo, ctx.sha, "the commit")
-            if source is None:
-                raise Refusal("could not read the commit's added scripts/check_train.py")
-            rep.add("3", "train bootstrap", "note", "bootstrap: the commit's own check_train.py, "
-                    "for the security review")
-            origin = "the commit's check_train"
+            raise Refusal("origin/main has no scripts/check_train.py, so no train can be "
+                          "checked: land the train checker first, then the train")
         here = Path(__file__).resolve().parent
         path = harness_copy((here / "safe_push.py").read_bytes(),
                             (here / "heath.py").read_bytes(), source)
@@ -2409,25 +2415,32 @@ def train_check(ctx: Context, body: str, rep: Report) -> None:
     except (Exception, SystemExit) as e:
         rep.add("3", "train", "FAIL", str(e), time.time() - started)
         raise Refusal(f"the train check refused: {e}") from e
-    rep.add("3", "train", "ok", f"{origin} passed", time.time() - started)
+    rep.add("3", "train", "ok", "origin/main's check_train passed", time.time() - started)
 
 
 def block_current(ctx: Context, m, record: dict) -> bool:
     """Is the body's pre-flight summary a true account of this head? It must name this
-    head and the base it was compared against. Its harness is this run's, or, in queue
-    mode, where a head need not hold the latest main, a harness that was main (on the
-    first-parent chain of this run's), which the queue's judge accepts too. That the full
-    checks ran again here, and passed, leaves a summary of the same head and base true."""
+    head and the base it was compared against, and, for a train, show the train step
+    passing. Its harness is this run's, or, in queue mode, where a head need not hold the
+    latest main, a harness that was main, as the queue's judge requires
+    (check_queue.preflight): the base on the first-parent chain of this run's main, and
+    the harness that base or a later commit of the same chain. That the full checks ran
+    again here, and passed, leaves a summary of the same head and base true."""
     if not m:
         return False
     sha, base, harness = m.group(1), m.group(2), m.group(3) or m.group(2)
     if (sha, base) != (ctx.sha, ctx.base):
         return False
+    # A branch renamed train/ after its pre-flight has a summary with no train step.
+    if (ctx.branch or "").startswith("train/") and not TRAIN_ROW.search(m.group(0)):
+        return False
     current = record.get("harness_sha") or ctx.base
     if harness == current:
         return True
-    return ctx.queue and FULL_OID.fullmatch(harness or "") is not None and harness in git(
-        ctx.repo, "rev-list", "--first-parent", current).split()
+    if not ctx.queue or FULL_OID.fullmatch(harness or "") is None:
+        return False
+    chain = git(ctx.repo, "rev-list", "--first-parent", current).split()
+    return base in chain and harness in chain and chain.index(harness) <= chain.index(base)
 
 
 def merge_train_input(ctx: Context, view: dict) -> str | None:
@@ -2638,6 +2651,8 @@ BLOCK = re.compile(r"(?ms)^<!-- safe_push:preflight begin"
                    r"(?: sha=(\w+) base=(\w+)(?: harness=(\w+))?)? -->"
                    r"[ \t\r]*$(?:(?!<!-- safe_push:preflight begin).)*?"
                    r"^<!-- safe_push:preflight end -->[ \t\r]*$")
+# The train step's row in that summary, as preflight_block writes it when it passed.
+TRAIN_ROW = re.compile(r"(?m)^\| 3\. train \| ok \| [0-9.]* \|[ \t\r]*$")
 PLACEHOLDER = re.compile(r"(?m)^<!-- safe_push: (\w+) -->[ \t\r]*$")
 STAMP_FIELD = re.compile(r'(?m)^(fingerprint|commit|lean)\s*=\s*"([^"]*)"')
 
@@ -2861,18 +2876,20 @@ def check_kind_label(ctx: Context, args, rep: Report) -> None:
     rep.add("1", "kind label", "ok", f"on #{existing['number']}")
 
 
-def plan_pr(ctx: Context, pre: Preflight, record: dict, args) -> PRPlan:
+def plan_pr(ctx: Context, pre: Preflight, record: dict, args,
+            body_text: str | None) -> PRPlan:
     """Everything the pull request will carry, settled before the push: our open pull
     request for the branch (never a fork's of the same name), and the body, scanned. A
-    new pull request's body, or --body-file, is known in full; an open one's is fetched."""
+    new pull request's body, or --body-file's text (body_input, read once before the
+    checks), is known in full; an open one's is fetched."""
     labels = set(args.label) | ({SECURITY_LABEL} if pre.protected else set())
     existing = find_own_pr(ctx)
     try:
         pr_labels([] if existing is None else existing.get("labels"))
     except ValueError as e:
         raise Refusal(str(e)) from None
-    if args.body_file:
-        body = fill_body(ctx, pre, record, Path(args.body_file).read_text())
+    if body_text is not None:
+        body = fill_body(ctx, pre, record, body_text)
     elif existing:
         view = gh_json(ctx, "pr", "view", str(existing["number"]), "--json", "body")
         body = put_block(refreshed(view.get("body") or "", describe(ctx, pre)),
@@ -3687,10 +3704,10 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report):
     gh_ready(gh, repo, test_mode)
     ctx = Context(repo, "", base, 0, origin, slug, {}, None, gh, harness_sha=base)
     queued = queue_enabled(ctx, rep)
-    main_health(ctx, rep)
     view = gh_json(ctx, "pr", "view", str(number), "--json",
                    "number,state,isDraft,headRefName,headRefOid,baseRefName,body,labels,url,"
                    "isCrossRepository,title")
+    main_health(ctx, rep, (view or {}).get("body"))
     if not view or view.get("state") != "OPEN":
         raise Refusal(f"pull request #{number} is not open ({(view or {}).get('state')})")
     if view.get("baseRefName") != "main" or view.get("isCrossRepository"):
@@ -4011,8 +4028,32 @@ def queue_enabled(ctx: Context, rep: Report) -> bool:
     return queued
 
 
-def main_health(ctx: Context, rep: Report) -> None:
-    """Refuse red or unreadable main: open issues and completed post-merge runs at its tip."""
+# A pull request that fixes a red main says so in its body, on a line of its own that
+# GitHub shows: "Fixes main-red: #12", or "Fixes main-red: #12, #15".
+MAIN_RED_FIX = re.compile(r"Fixes main-red: (#[1-9][0-9]*(?:, #[1-9][0-9]*)*)\.?")
+
+
+def main_red_fix(body: str) -> set[int] | None:
+    """The main-red issues a pull request's body declares it fixes, read as GitHub shows
+    the body (visible), so that a line in a comment or in code is not one; None when it
+    declares none. More than one such line, or one not in the form, refuses."""
+    lines = [line.strip() for line in visible(body or "").splitlines()
+             if line.strip().startswith("Fixes main-red")]
+    if not lines:
+        return None
+    m = MAIN_RED_FIX.fullmatch(lines[0]) if len(lines) == 1 else None
+    numbers = [int(n) for n in re.findall(r"#([0-9]+)", m.group(1))] if m else []
+    if not m or len(set(numbers)) != len(numbers):
+        raise Refusal("unreadable main-red fix: write one line `Fixes main-red: #<n>`, "
+                      "naming each open main-red issue once")
+    return set(numbers)
+
+
+def main_health(ctx: Context, rep: Report, body: str | None = None) -> None:
+    """Refuse red or unreadable main: open issues and completed post-merge runs at its tip.
+    While main is red, only its fix lands: a pull request whose body (`body`) declares it
+    fixes every open main-red issue, and no other (main_red_fix). Its own CI, which the
+    gates require to pass, and in queue mode its group's, then check it on main."""
     issues = api_pages(api_json(
         ctx, f"repos/{ctx.github}/issues?state=open&labels=main-red&per_page=100",
         "--paginate", "--slurp"), "main-red issues")
@@ -4027,16 +4068,14 @@ def main_health(ctx: Context, rep: Report) -> None:
                 or ("pull_request" in issue and not isinstance(issue["pull_request"], dict)):
             raise Refusal("unreadable main-red issue entry")
         if "pull_request" not in issue:
-            red.append(f"#{issue['number']}")
-    if red:
-        raise Refusal("main is red: open main-red issues " + ", ".join(red))
+            red.append(issue["number"])
     workflow = ".github/workflows/post-merge.yml"
     absent = not git(ctx.repo, "ls-tree", ctx.base, "--", workflow).strip()
     pages = api_json(ctx, f"repos/{ctx.github}/actions/workflows/post-merge.yml/runs"
                      f"?branch=main&head_sha={ctx.base}&per_page=100",
                      "--paginate", "--slurp", missing=absent)
     if pages is None:
-        rep.add("1", "main health", "ok", "no main-red issues; no post-merge workflow")
+        red_or_fix(rep, red, None, "no post-merge workflow", body)
         return
     if not isinstance(pages, list) or not pages:
         raise Refusal("unreadable post-merge runs: expected pages")
@@ -4068,15 +4107,42 @@ def main_health(ctx: Context, rep: Report) -> None:
                 raise Refusal("unreadable unfinished post-merge run conclusion")
     if len(seen) != total:
         raise Refusal("unreadable post-merge runs: the pages do not cover the reported count")
+    failed = None
     if completed:
         latest = max(completed, key=lambda entry: (entry["run_number"], entry["run_attempt"]))
         if latest["conclusion"] not in ("success", "neutral", "skipped"):
-            raise Refusal(f"main is red: post-merge run {latest['id']} at {ctx.base[:12]} "
-                          f"concluded {latest['conclusion']}")
+            failed = (f"post-merge run {latest['id']} at {ctx.base[:12]} "
+                      f"concluded {latest['conclusion']}")
         detail = f"latest completed post-merge run {latest['id']} concluded {latest['conclusion']}"
     else:
         detail = "no completed post-merge run at main's tip"
-    rep.add("1", "main health", "ok", "no main-red issues; " + detail)
+    red_or_fix(rep, red, failed, detail, body)
+
+
+def red_or_fix(rep: Report, red: list[int], failed: str | None, detail: str,
+               body: str | None) -> None:
+    """main_health's verdict: green; or red, refused, unless the pull request's body
+    declares it fixes exactly the open main-red issues. A failed run with no open issue
+    has none to declare: its issue is labelled main-red again first."""
+    if not red and failed is None:
+        rep.add("1", "main health", "ok", "no main-red issues; " + detail)
+        return
+    why = "main is red: " + "; ".join(
+        (["open main-red issues " + ", ".join(f"#{n}" for n in red)] if red else [])
+        + ([failed] if failed else []))
+    fixes = main_red_fix(body or "")
+    if fixes is None:
+        raise Refusal(f"{why}. Only its fix lands: a pull request whose body has the line "
+                      "`Fixes main-red: #<n>`, naming every open main-red issue")
+    if not red:
+        raise Refusal(f"{why}, and no open main-red issue names it for this fix to declare: "
+                      "label the failed run's issue main-red again")
+    if fixes != set(red):
+        raise Refusal(f"{why}; this pull request declares it fixes "
+                      + ", ".join(f"#{n}" for n in sorted(fixes))
+                      + ", which is not every open main-red issue and no other")
+    rep.add("1", "main health", "note", f"{why}; this pull request declares it fixes them, "
+            "and lands as their fix, its own CI passing")
 
 
 def queue_base(ctx: Context, head: str) -> str:
@@ -4197,8 +4263,10 @@ def verify_queue_merge(ctx: Context, number: int, view: dict, rep: Report) -> st
     return oid
 
 
-def queue_main(ctx: Context, number: int, rep: Report, dry_run: bool, test_mode: bool) -> int:
-    """Enqueue once, then follow a known entry to merge or ejection, with bounded polling."""
+def queue_main(ctx: Context, number: int, rep: Report, dry_run: bool, test_mode: bool,
+               body: str | None) -> int:
+    """Enqueue once, then follow a known entry to merge or ejection, with bounded polling.
+    `body`, the gates' last read, may declare the pull request a red main's fix."""
     asked = False
     result, code = "refused", 1
     try:
@@ -4207,7 +4275,7 @@ def queue_main(ctx: Context, number: int, rep: Report, dry_run: bool, test_mode:
             result, code = "passed every gate (dry run, not queued)", 0
         else:
             tip = fetch_base(ctx.repo, ctx.origin, test_mode, rep)
-            main_health(ctx._replace(base=tip), rep)
+            main_health(ctx._replace(base=tip), rep, body)
             view = queue_view(ctx, number)
             if view["state"] != "OPEN":
                 raise Refusal(f"#{number} is no longer open")
@@ -4304,7 +4372,9 @@ def preflight_main(repo: Path, args) -> int:
         if ctx.branch:
             check_kind_label(ctx, args, rep)
         logs = logs_dir(sha)
-        pre = check_commit(ctx, rep, logs, args.test_mode, train_body=train_input(ctx, args))
+        body_text = body_input(args)
+        pre = check_commit(ctx, rep, logs, args.test_mode,
+                           train_body=train_input(ctx, body_text))
         record = make_record(ctx, pre, rep, full=not args.test_mode)
         save_record(record)
         if args.dry_run:
@@ -4312,8 +4382,8 @@ def preflight_main(repo: Path, args) -> int:
             where = f"refs/heads/{ctx.branch}, and open or update its pull request" \
                 if ctx.branch else "nowhere: no --branch given"
             if ctx.branch:
-                body = fill_body(ctx, pre, record, Path(args.body_file).read_text()) \
-                    if args.body_file else generated_body(ctx, pre, record)
+                body = fill_body(ctx, pre, record, body_text) \
+                    if body_text is not None else generated_body(ctx, pre, record)
                 check_body(body)
                 (logs / "pr-body.md").write_text(body)
                 print(f"  the body it would post: {logs / 'pr-body.md'}")
@@ -4321,7 +4391,7 @@ def preflight_main(repo: Path, args) -> int:
             result, code = "passed every check (dry run, not pushed)", 0
         else:
             # The pull request is settled, its body scanned, before anything is public.
-            plan = plan_pr(ctx, pre, record, args)
+            plan = plan_pr(ctx, pre, record, args, body_text)
             fresh = push_branch(ctx, rep)
             pushed = True       # from here on, a refusal or an interruption is exit 3
             result = f"pushed to {ctx.branch}"
@@ -4441,7 +4511,9 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         if unfinished_section(new, template) != unfinished_section(body, template):
             raise Refusal(f"refreshing #{number}'s parts would change its Unfinished work: "
                           "put safe_push's markers back where the template has them")
-        if new != body:
+        # A body edited in GitHub's page has CRLF line ends, and the parts are written
+        # afresh with LF: the parts are up to date when they differ by line ends alone.
+        if new.replace("\r\n", "\n") != body.replace("\r\n", "\n"):
             rep.add("3", "body", "FAIL", "its pre-flight summary or the parts safe_push "
                     f"wrote are out of date: run `git safe-push --branch {ctx.branch}` to "
                     "refresh them, then run --merge again")
@@ -4456,6 +4528,8 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
                           f"({', '.join(sorted(labels)) or 'none'} to "
                           f"{', '.join(sorted(refreshed_labels)) or 'none'}): run --merge again")
         current_view = gates(ctx, number, rep, record)
+        if merge_train_input(ctx, current_view) != train_body:
+            raise Refusal("the train's body changed during the checks: run --merge again")
         current_labels = pr_labels(current_view.get("labels"))
         if current_labels != labels:
             raise Refusal(f"#{number}'s labels changed after the gates read them "
@@ -4466,14 +4540,14 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         kind = next((k for k in KIND_LABELS if k in labels), None)
         rep.heading("4. Merge")
         if ctx.queue:
-            return queue_main(ctx, number, rep, dry_run, test_mode)
+            return queue_main(ctx, number, rep, dry_run, test_mode, view.get("body"))
         if dry_run:
             rep.add("4", "gh pr merge", "skip", f"dry run: would merge #{number} "
                     f"({ctx.sha[:12]}) with a merge commit, and delete {ctx.branch}")
             result, code = "passed every gate (dry run, not merged)", 0
         else:
             main_unmoved(ctx)
-            main_health(ctx, rep)
+            main_health(ctx, rep, view.get("body"))
             merging, started = "asked", time.time()
             r = merge(ctx, number, view)
             oid = merge_outcome(ctx, number, rep, r, started)
