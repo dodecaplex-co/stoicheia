@@ -19,10 +19,10 @@ Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
 "Let it be placed so that BE is in a straight line with AB": Euclid moves the
-parallelogram I.42 has made. Our one rule that moves a figure, superposition,
-moves a triangle, and the certificate lets only I.4 and I.8 call on it; so
-`Prop44.place` builds an equal parallelogram where Euclid puts his, and the proof
-cites it at that sentence.
+parallelogram I.42 has made. Superposition permits a hypothetical placement of a
+triangle in I.4 and I.8, and exports only equalities about the given figure. Here
+`Prop44.place` constructs an equal parallelogram where Euclid puts his, and the
+proof cites it at that sentence.
 -/
 
 namespace Elements.BookI
@@ -31,8 +31,8 @@ open Tacit
 
 /-- "Let it be placed so that BE is in a straight line with AB." Euclid moves the
 parallelogram made by I.42 into place without a word, as if picking it up. Our
-foundations move a figure only by superposition, kept for I.4 and I.8, so we
-build an equal one where Euclid puts his. Given the
+superposition rule supplies no constructed points, so we build an equal
+parallelogram where Euclid puts his. Given the
 parallelogram PQRS, with its angle RQP, and a straight line AB: produce AB to
 E, making BE equal to QR [I. 2]; at B on BE construct the angle EBG equal
 to the angle RQP, on the side of X [I. 23], with BG equal to QP [I. 2];

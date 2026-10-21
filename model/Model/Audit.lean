@@ -49,9 +49,10 @@ public import Model.Euclidean.TripleIncidence
 A model is evidence only if its proofs do not use the laws they are meant to satisfy. This
 file imports every module of the `Model` library, and checks two things at every build.
 
-* **The library's geometric vocabulary is not imported:** `Elements.Point` is unknown
-  here. The source and compiled-import checks permit only the four pure superposition
-  modules from the library, after auditing everything they reach.
+* **The library's geometric words remain unknown here.** The `Elements.Point` sentinel
+  below pins that absence. The import boundary is checked separately at every build by
+  `Check.Generator.checkModelImports`, called from `Check/RoundTrip.lean`: it reads every
+  Model source and the four pure calculus modules, checking the whole import closure.
 * **Each theorem that proves a law in the plane rests on Lean's own axioms alone,**
   `propext`, `Classical.choice` and `Quot.sound`, which Mathlib's real numbers use. No
   axiom of the library can appear, and neither can `sorryAx`, which an unfinished proof
@@ -67,7 +68,7 @@ The eight retired rules keep their individual audits as derived facts even thoug
 generated assembly no longer has assumption fields for them.
 -/
 
-/-! ## The geometric vocabulary is not imported -/
+/-! ## The exact shared-definition boundary -/
 
 /-- error: Unknown identifier `Elements.Point` -/
 #guard_msgs in
@@ -650,6 +651,12 @@ info: 'Model.Euclidean.Postulate5' depends on axioms: [propext, Classical.choice
 -/
 #guard_msgs in
 #print axioms Model.Euclidean.Postulate5
+
+/--
+info: 'Model.Euclidean.superposition_placement' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.superposition_placement
 
 /--
 info: 'Model.Euclidean.superposition' depends on axioms: [propext, Classical.choice, Quot.sound]
