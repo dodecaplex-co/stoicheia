@@ -3752,6 +3752,124 @@ findings:
   tree. [STYLE](../STYLE.md), section 8, says each change in the rows of S24, S25 and S26.
   No check, test or expected value is weakened.
 
+- **The centre-given tag says what the statement does, not why (#59).** The meaning of
+  `centre-given` in the protected file [`review/terms.toml`](../../review/terms.toml)
+  gave a reason: "a circle in Lean has a centre only when a hypothesis or Postulate 3
+  gives it one". Train C6a adds the owner's rule `Tacit.exists_centre`, which gives every
+  circle a centre, and the reason then becomes false under every record that carries the
+  tag, until step 6 of [brief 0008](0008-centre.md) retires their uses. The meaning now
+  says what the tag records, which holds before and after the rule: the statement
+  gives the circle its centre as a hypothesis, where Euclid's setting-out takes the centre
+  or a proof needs one. It also says what the rule makes true: once the rule is in the
+  lock, every circle has a centre, so the hypothesis asks only for a centre the circle
+  already has and excludes no circle. This is not the new meaning that brief 0008 rejected
+  (section 4, and question 9 in section 8), which would have kept the tag on the twelve
+  records that name a centre: the tag still leaves all 31 records in step 6, and the term
+  leaves `review/terms.toml` in step 7; until then its meaning stays true. The term's kind and
+  name do not change, no record changes, and no page changes. It is a check input, so it
+  lands in a pull request of its own, before train C6a. Protected file changed:
+  `review/terms.toml`.
+
+- **The formal model's compiled proofs replayed by Lean's kernel, apart from the build
+  ([#121](https://github.com/jackChallis/stoicheia/issues/121)).** The other half of
+  #121, which the source scan's entry of 19 October left open: after `lake build`, CI's
+  `formal-model` job runs [`scripts/check_model_kernel.py`](../../scripts/check_model_kernel.py)
+  (new), in which leanchecker, from the pinned toolchain, replays through Lean's kernel
+  every declaration of every compiled module of the model's own two libraries, `Model`
+  and `Check`, private declarations included. The script lists the modules from the
+  files, the two roots and every `.lean` file under `model/Model/` and `model/Check/`,
+  walks the package's build folder (`model/.lake/build/lib/lean`) for every compiled
+  module, and fails unless leanchecker reports replaying exactly those listed, so a new
+  module is never missed; a source with no compiled file, a module compiled outside the
+  two libraries (from a new root or a new library in `model/lakefile.toml`), a build not
+  up to date with its sources and a compiled module whose source is gone each fail it, and
+  a rejection names the module and the declaration leanchecker names. The freshness check
+  gives `lake build --no-build` every compiled source as an explicit target, including a
+  module its library root does not import, so an old compiled file cannot hide a later edit
+  to that source. And what is replayed is the package's own compiled files, not a copy of
+  them: each module root lies in one folder of Lean's search path, since Lean loads a
+  module from the first folder that holds its root. So before either replay the script
+  reads the search path that leanchecker gets through `lake env`, and a root (a folder, or
+  an `.olean` file, at the top of one of its folders) found in two folders, its name
+  compared without case as macOS's file system compares it, fails the check, naming both: a
+  copy of `Check` in the build folder of a package that the model requires, earlier on the
+  path (the repository root's `.lake/build/lib/lean`, which Git ignores), would otherwise
+  be replayed in place of the package's own.
+  `Check/Write.lean` alone is not replayed, by name: it writes the generated files
+  whenever Lean elaborates it, so `lake build` never compiles it, and the check fails if
+  that file goes. It runs first as `scripts/check_kernel.py` runs leanchecker for
+  `Elements`, but without `--fresh`, so each module's imports are loaded from their
+  compiled files, not replayed. Then it runs with `--fresh` on `Check`, which never
+  imports Mathlib (`model/lakefile.toml`), and replays `Check`'s whole environment from
+  nothing: Lean's own library as `Check` loads it (`Init`, `Std` and `Lean`, through
+  `Check/Generator.lean`'s `import Lean`), the library's modules that `Check` imports, the
+  plain-Lean part of `Model`, and `Check`. The first replay is kept for `Check` as well,
+  rather than replaced: it accounts for every compiled module by name, and a module
+  compiled but not imported by `Check.lean` is one that `--fresh Check` would never load;
+  for `Check` it costs about half a minute. What that leaves: the declarations of Mathlib
+  and of the packages it requires are left to Mathlib's own checks, a daily job
+  (`.github/workflows/daily.yml` in Mathlib) that replays Mathlib and Batteries from
+  nothing with leanchecker and checks Mathlib with nanoda, on Mathlib's master branch
+  rather than the release pinned here. Of Lean's own library, everything that `Check`
+  loads is replayed here from nothing, on the pinned toolchain, all 1,227 of its `Lean`
+  modules among it: so the 435 of them that lie outside Mathlib's environment, which
+  Mathlib's daily job does not reach, are no longer a gap. All that `Model` loads lies
+  within it but five of `Lake`'s modules, which `Model` loads through Mathlib
+  (`Lake.Build.Trace`, `Lake.Config.Glob`, `Lake.Util.Date`, `Lake.Util.String`,
+  `Lake.Util.Version`); those lie within Mathlib's environment, which Mathlib's daily job
+  replays, on Mathlib's toolchain rather than the one pinned here. `Init`, and the
+  library's declarations that `Check` imports, are replayed from nothing by
+  `check_kernel.py` as well, in the `check` job, from that job's own build. leanchecker runs
+  the same kernel as `lake build`, so the replay catches a declaration that reached a
+  compiled file without the kernel's check, not a fault in the kernel, and it replays any
+  axiom it meets: which axioms the model's proofs rest on stays `model/Model/Audit.lean`'s
+  check. The planted fault: its `--self-test`, which runs first in the job and needs no
+  Mathlib, builds with `lake build`, in a temporary directory outside the repository,
+  small packages of the model's shape that import only Lean, and adds a theorem of
+  `False`, proved by `True.intro`, from a `run_cmd` with the kernel's check switched off
+  (`debug.skipKernelTC`, under which `addDecl` calls `addDeclWithoutChecking`), once in a
+  `Check` file and once in a `Model` module. `lake build` accepts both; the check must
+  fail on each, naming the module and the declaration, and must pass the control, which
+  adds a true theorem the same way. Two more theorems of `False` are planted outside the
+  libraries' names, where leanchecker, given the two roots, would never look: in a second
+  root of `Model` (`roots = ["Model", "Helper"]`) and in a third library that `Check`
+  imports. The check must fail on each at its walk of the build folder, naming the module;
+  without the walk, both passed. Another theorem of `False` is planted in a package of its
+  own that `Check` requires and imports, as the model's `Check` requires the edition: the
+  walk and the first replay pass it, and the replay from nothing must fail on it, naming
+  the declaration; without that replay, the check passed it. A last theorem of `False` is
+  planted in a `Check` file after a copy of `Check`, compiled without it, is put in the
+  build folder of such a required package, earlier on the search path: both replays replay
+  the copy and pass it, and the check must fail before them, naming `Check` and both
+  folders; without the search path's check, the check passed it. A source never compiled
+  and a compiled module without its source are planted too. The control also compiles a
+  module that its library root does not import; after that source is edited without another
+  build, the check must reject it by name.
+  leanchecker runs on two threads, since each module it replays loads its imports'
+  environment afresh, Mathlib's for each module that imports it: unthrottled on sixteen
+  threads one run reached a 49 GB footprint, and on two it peaked near 2.6 GB and took
+  about a minute. The replay from nothing is one task, which more threads do not speed:
+  it took 95 seconds on two threads and 112 on four, with a resident peak of 1.5 GB, on a
+  machine busy with other builds; with it the whole script took 205 seconds and the
+  self-test 162, in a job that stops at 30 minutes. The script stops the replay from
+  nothing after 15 minutes and fails, asking whether `Check` now imports Mathlib, so that
+  the job ends with a named cause rather than at its limit. Every command runs in a process
+  group of its own; on interruption or termination the script stops that whole group and
+  waits for its command before temporary-directory cleanup, as it does on the replay's
+  timeout. The self-test times out a command, interrupts an untimed one and terminates
+  another, after each starts a descendant, and requires each descendant to stop.
+  Kim Morrison and Sebastian Ullrich wrote leanchecker, which began as Kim Morrison's
+  [lean4checker](https://github.com/leanprover/lean4checker) and now ships with Lean; we
+  are warmly grateful to them both. `safe_push` still leaves the `formal-model` job to CI
+  ([WORKFLOW](../WORKFLOW.md), section 8). The sentences that called the replay open, in
+  `scripts/check_fidelity.py`'s docstring and [FORMALIZATION](../FORMALIZATION.md),
+  section 7, now say what is true;
+  [model/README.md](../../model/README.md#the-ci-job), "The CI job", lists the step. The
+  protected files changed are:
+  `.github/workflows/ci.yml`,
+  `scripts/check_fidelity.py`,
+  `scripts/check_model_kernel.py`.
+
 - **File names and types follow one standard
   ([#186](https://github.com/jackChallis/stoicheia/issues/186)).** The owner asked: "Can we
   standardize the file names and types so we don't have silliness with messy paths?" The
