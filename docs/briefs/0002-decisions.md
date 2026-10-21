@@ -3867,7 +3867,7 @@ findings:
   (`17369f92`, whose `check_fidelity.py` is that of `0a05f96f`), all five fail: that scan
   misses the five closed-up spellings, all eleven forms of `drop`, all five commands of
   test 22, all nine forms of `substring`, all seven pins and the pin at the four new
-  files (as first run; tests 24's eighth pin and two further files came after review), and catches only the three spaced spellings. With this one, all five pass, and a
+  files (as first run; test 24's eighth pin and two further files came after review), and catches only the three spaced spellings. With this one, all five pass, and a
   copy of the scan with any one of these rules undone fails its test.
 
   [FORMALIZATION](../FORMALIZATION.md), section 7, the list's one home, now names each of
