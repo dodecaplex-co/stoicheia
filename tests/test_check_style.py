@@ -22,6 +22,10 @@ it, put to the script's own patterns and functions:
   from plain words alike, save the letters of English (A's, e.g., the article "a") and
   what a reader does not see, in a comment or in code; the paragraph selection keeps
   its source offsets and indentation.
+* the wording cases: render.py names the rules of an overlap that a proof leaves unused
+  as "does not use" for one, "neither … nor" for two and "none of" for more, and words
+  III.24's application of one segment to another by `placement` only from what its
+  facts.json entry shows, read afresh for each root;
 * the clearance cases: S26 finds a stroke through a letter, or nearer it than 2 less half
   its width (given as an attribute or inherited), and not one clear of it;
   reads a stroke of none as no stroke and a dashed one whole; closes a path's stroke only
@@ -49,6 +53,9 @@ it, put to the script's own patterns and functions:
   are bounded; non-finite geometry and decoder failures report the figure and leave
   subsequent figures checked. Cubic subdivision includes its chord error, and malformed
   lists take linear time;
+* the upright cases: S15 and S20 fail an italic letter planted in a copy of Euclid's figure
+  and of the figure at a glance, one letter or every one, as the figures were drawn until
+  21 October, and D15 lists nothing;
 * the scope cases (#66): which texts of a review record the rules read, and on which
   lines; the docstring render.py shows, found again in its file; S12's reading of a
   `name : type`; S22's reading of letters in backticks, one code span at a time; and the
@@ -72,6 +79,7 @@ section 8, "A guard defect gets a regression"). Python 3.11 or later; standard l
 from __future__ import annotations
 
 import io
+import json
 import os
 import runpy
 import subprocess
@@ -538,9 +546,9 @@ def figure_fixture(idea: bool):
         '<rect width="400" height="300" rx="10" fill="#fbf7ee"/>'
         f'<line x1="145" y1="150" x2="165" y2="150" stroke="{ink}" stroke-width="1.6"/>'
         f'<g fill="{ink}">'
-        + letter("A", x=132, y=172, size=size, anchor=anchor)
-        + letter("C", x=cx, y=cy, size=size, anchor=anchor)
-        + letter("E", x=ex, y=ey, size=size, anchor=anchor)
+        + letter("A", x=132, y=172, font_style="normal", size=size, anchor=anchor)
+        + letter("C", x=cx, y=cy, font_style="normal", size=size, anchor=anchor)
+        + letter("E", x=ex, y=ey, font_style="normal", size=size, anchor=anchor)
         + '</g></svg>')
 
 
@@ -2190,6 +2198,62 @@ class Modern(unittest.TestCase):
                                  "modern way rightly")
 
 
+class Wording(unittest.TestCase):
+    """render.py's words that facts.json decides: which of an overlap's rules the proof
+    uses, and III.24's application of one segment to another by `placement`."""
+
+    def test_overlap_use_names_the_unused_rules_plainly(self):
+        four = {"rule": "Tacit.a", "also": ["Tacit.b", "Tacit.c", "Tacit.d"], "kind": "gives"}
+        rules = render.overlap_rules(four)
+        for used, want in [
+                (rules, "our proof rests on all these rules"),
+                ([], "our proof does not use any of these rules"),
+                (rules[:3], "of these rules, our proof rests on `a`, `b` and `c`, and does not "
+                            "use `d`"),
+                (rules[:2], "of these rules, our proof rests on `a` and `b`, and uses neither "
+                            "`c` nor `d`"),
+                (rules[:1], "of these rules, our proof rests on `a` and uses none of `b`, `c` "
+                            "and `d`")]:
+            with self.subTest(used=used):
+                self.assertEqual(render.overlap_use({"axioms": used}, four), want)
+        two = {"rule": "Tacit.a", "also": ["Tacit.b"], "kind": "gives"}
+        self.assertEqual(render.overlap_use({"axioms": ["Tacit.b"]}, two),
+                         "of these rules, our proof rests on `b` and does not use `a`")
+
+    @staticmethod
+    def facts(direct=(), brings=("I.4", "I.8"), step="BookIII.placement"):
+        """A facts.json in which III.24's proof has the shared step `step`, citing
+        `brings`, and calls on superposition itself where `direct` says so."""
+        sup = "Tacit.superposition"
+        return {"propositions": [
+            {"ref": "III.24", "axioms": [sup], "direct_axioms": list(direct),
+             "shared_steps": [{"name": step, "brings_in": list(brings)}]},
+            {"ref": "I.4", "axioms": [sup], "direct_axioms": [sup]},
+            {"ref": "I.8", "axioms": [sup], "direct_axioms": [sup]},
+            {"ref": "I.26", "axioms": [sup], "direct_axioms": []},
+            {"ref": "I.5", "axioms": [], "direct_axioms": []}]}
+
+    def test_placement_is_worded_from_facts(self):
+        """The line on III.24 names only what its facts.json entry shows, read afresh for
+        each root."""
+        head = (" Euclid's III.24 applies one segment to another, and so does our proof of "
+                "it, by `placement`")
+        through = ", which uses superposition only through the propositions it cites"
+        old = render.SUPERPOSITION_NOTE["III"]
+        for facts, want in [
+                (self.facts(), head + through + ", I.4 and I.8 among them."),
+                (self.facts(brings=("I.8", "I.26")), head + through + ", I.8 among them."),
+                (self.facts(brings=("I.26",)), head + through + "."),
+                (self.facts(brings=("I.5",)), head + "."),
+                (self.facts(direct=("Tacit.superposition",)), head + "."),
+                (self.facts(step="BookIII.other"), old)]:
+            with self.subTest(facts=facts), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp).resolve()
+                (root / "facts.json").write_text(json.dumps(facts))
+                with patch.object(render, "ROOT", root):
+                    self.assertEqual(render.content_wording().get(old, old), want)
+
+
 def svg_refusal(kind, attr=None, value=None):
     """The diagnostic expected when a case is outside the declared input language."""
     what = f"<{kind}>" + (f" {attr} {value!r}" if attr is not None else "")
@@ -3580,7 +3644,7 @@ class Clearance(unittest.TestCase):
                         curve.append(svg_element(markup))
                         e = next(el for el in root.iter()
                                  if style.tag(el) == "text" and style.text_of(el) == "E")
-                        e.attrib.update(x="268.13", y=("47.38" if idea else "48.93")
+                        e.attrib.update(x="268.13", y=("47.49" if idea else "49.12")
                                         if near else "47")
                         found = figure_findings(root, idea)
                         if shape.startswith("transformed") or shape == "relative path":
@@ -3775,6 +3839,44 @@ class Clearance(unittest.TestCase):
 
     test_twice_cases.__doc__ = (f"S26 reads {len(TWICE_CASES)} figures drawing a letter "
                                 "once or more rightly")
+
+
+class Upright(unittest.TestCase):
+    """The upright cases: an italic letter planted in a copy of each of I.1's figures."""
+
+    def test_italic_letter_fails(self):
+        """S15 and S20 fail an italic letter, one or every one, and D15 lists nothing."""
+        folder = style.ROOT / "figures" / "I"
+        euclid = (folder / "01.svg").read_text(encoding="utf-8")
+        idea = (folder / "01-idea.svg").read_text(encoding="utf-8")
+        plants = (   # (where font-style="italic" goes, the letters it sets italic)
+            ("<text ", "A"),                    # on the first letter alone
+            ("<svg ", "A, B, C, D, E"),         # on the root, so every letter inherits it
+        )
+        for name, rule in (("01.svg", "S15"), ("01-idea.svg", "S20")):
+            for at, letters in ((None, None),) + plants:
+                with self.subTest(figure=name, at=at), \
+                        tempfile.TemporaryDirectory() as tmp, ExitStack() as stack:
+                    root = Path(tmp)
+                    copies = root / "figures" / "I"
+                    copies.mkdir(parents=True)
+                    for copy, raw in (("01.svg", euclid), ("01-idea.svg", idea)):
+                        if copy == name and at is not None:
+                            raw = raw.replace(at, at + 'font-style="italic" ', 1)
+                        (copies / copy).write_text(raw, encoding="utf-8")
+                    stack.enter_context(patch.object(style, "ROOT", root))
+                    stack.enter_context(patch.object(style, "books_with_pages",
+                                                     return_value=["I"]))
+                    stack.enter_context(patch.object(style, "failures", []))
+                    reports = stack.enter_context(patch.object(style, "reports",
+                                                               defaultdict(list)))
+                    stack.enter_context(patch.object(style, "italic_figures",
+                                                     defaultdict(lambda: defaultdict(list))))
+                    style.check_figures(True)
+                    self.assertEqual(style.failures, [] if at is None else [
+                        (rule, f"figures/I/{name}", 0, f"letter(s) {letters} italic: Heath's "
+                         "letters are upright (STYLE, section 4)")])
+                    self.assertNotIn("D15", reports)
 
 
 class Scopes(unittest.TestCase):

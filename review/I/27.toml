@@ -28,10 +28,10 @@ note = "Heath bends BG and DG to reach G; our drawing keeps them straight, so th
 
 [review]
 stage = "full"
-commit = "251129b"
-reviewer = "Claude Opus 5.5, records review"
+commit = "b58079e0"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:4cf303fe995ab67d"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "brief 0005 stage 5, ship F2 wave-two re-read"
 
 [review.items]
 statement = "pass"

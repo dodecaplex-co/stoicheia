@@ -31,7 +31,7 @@
   <polygon points="170,200 258,200 170,134" fill="none" stroke="#222222" stroke-width="3" stroke-linejoin="round"/>
   <polyline points="182,200 182,188 170,188" fill="none" stroke="#222222" stroke-width="1.6"/>
   </g>
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="137.4" y="207.9">A</text>
     <text x="246.6" y="207.9">B</text>
     <text x="137.4" y="120.6">C</text>

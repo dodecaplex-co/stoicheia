@@ -45,10 +45,10 @@ note = "Euclid assumes the converse too, that equal squares stand on equal strai
 
 [review]
 stage = "full"
-commit = "570e6fa"
+commit = "b62518e5"
 reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:538a031257fe1dd2"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "brief 0005 stage 5, ship T re-read"
 
 [review.items]
 statement = "pass"

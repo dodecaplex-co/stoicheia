@@ -68,9 +68,12 @@ Hypotheses come from the setting-out, conclusions from "I say that".
   distance on a ray; one ray for one angle, in its incidence and direction; and I.7. Each
   cited law is supplied with its proof. Our reading
   admits I.7 inside I.8's placement because its statement asserts no existence, though its
-  earlier proof uses constructions. These are restrictions on represented derivations:
-  equivalence with System E's two printed rules is not claimed, nor is non-derivability
-  of placement from the whole foundation. I.22 and I.23 construct congruent figures by
+  earlier proof uses constructions. Since the second axiom retirement the same holds of
+  four of the laws I.4 cites (distinct ends, one point at one distance on a ray, and both
+  halves of one ray for one angle), whose proofs now use construction rules, and of the
+  first two of them in I.8; only Metric 3, 4 and 9 are proved with none. These are
+  restrictions on represented derivations: equivalence with System E's two printed rules
+  is not claimed, nor is non-derivability of placement from the whole foundation. I.22 and I.23 construct congruent figures by
   Euclid's route.
 - **What the figure shows** is supplied by System E's tacit rules and the facts proved
   from them: an Intersection rule says when straight lines and circles must meet, and an

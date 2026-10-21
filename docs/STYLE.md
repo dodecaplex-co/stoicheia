@@ -238,8 +238,9 @@ proofs", names what each shared step brings in. So the mishnah does not restate 
 of Postulate 5, Postulates 1 to 4, Definition I.15, the Common Notions or the tacit rules.
 It speaks of them only when the reason is this proposition's story, and then says "the
 Lean cites": a departure from Euclid's route (I.2 uses no Postulate 2; I.5 takes the produced
-sides as given, but still rests on it through proved order rules such as
-`Tacit.between_of_between_right`, beneath `OnRay.between_of_len_lt`;
+sides as given, but still rests on it through proved rules, in its own Lean the order rule
+`Tacit.between_of_between_right`, beneath `OnRay.between_of_len_lt`, and Metric 8,
+`Tacit.area_swap`, and through I.4, which it cites;
 the Lean cites I.10 in I.42 and I.17 in II.12, where Heath gives no reference: one clause
 naming the step), a gap the text leaves (I.1's circles, I.35's G), or a landmark
 (Postulate 5, called on in the text at I.29, I.44 and II.10; I.31's proof, which does not
@@ -302,6 +303,24 @@ where Heath does not write it. "Diameter" is Euclid's word for a diagonal: gloss
 first use in each book (in Book III it is the circle's). Gloss "applied" (I.44) and
 "gnomon" (II.5). Modern words stay in the modern way, and a Lean word gets a plain gloss
 the first time it appears.
+
+**Tightening the language.** Section 1 sets the voice and the rule for vague hedges.
+These examples show what the language passes cut or replaced:
+
+- Repeated openings: the reading lines' "For algebra drawn as rectangles" gives way to
+  what Nelsen's book shows (II.1). Section 6 gives the reading lines their shape.
+- Announcing sentences: "The proof is short" gives way to "Euclid joins BC" (I.33);
+  "The proposition is old" goes, leaving Heath's evidence from Aristotle (I.27).
+- Sweeping closings: "Book II leans on it again and again" becomes "II.2 to II.8, II.11
+  and II.14 use it again", with a link to the introduction (II.1).
+- Recaps in threes: I.41 drops the closing "greater than, equal to or less than" summary
+  and keeps Proclus' construction. A list that supplies necessary cases stays.
+- Padded phrases: "does its multiplying" becomes "multiplies" (II.1); "has a name for
+  this cut" becomes "names the cut" (II.11).
+- Unsupported certainty: "Heron, whose proof for circles touching without became III.12"
+  gives way to "Heath thinks a later editor made III.12 out of Heron's proof for circles
+  touching without" (III.12's reading). This qualification belongs to the claim, as
+  section 1 requires.
 
 **Tacit rules,** never "tacit assumptions" or "tacit laws", outside Heath's words
 **[checked]**.
@@ -393,6 +412,16 @@ sees each span rendered on GitHub (section 8, the reviewer's checklist, item 5).
 `scripts/render.py` copies the mishnah onto its page unchanged but for its count comments
 and the insertion of its modern figure beneath "The modern way", so the page shows the
 same mathematics.
+
+**The modern way's notation.** In a `$…$` span, a vector is a bold lower-case letter,
+`$\mathbf{u}$`, never `$\vec{u}$`. A vector between Heath's points is written
+`$\mathrm{C - B}$` or with an arrow over the point letters, `$\overrightarrow{\mathrm{AC}}$`,
+as in Books II and III. A length or an absolute value takes plain bars, `$|\mathbf{u}|$`
+or `$|y|$`, never `\lvert` and `\rvert`. Write the dot product
+`$\mathbf{u} \cdot \mathbf{v}$` and the plane's cross product
+`$\mathbf{u} \times \mathbf{v}$`; the components `$u_{1}$`, `$u_{2}$` stay italic.
+For Heath's upright letters, see "Heath's letters, one style" above; for radians and
+the rules every span must obey, see "Mathematics".
 
 **System E and LeanEuclid** are thanked by name in every page's footer, so the mishnah
 does not thank them again; a particular debt is still said where it falls (Intersection 4
@@ -536,9 +565,9 @@ shows no point. A point Heath leaves without a letter stays without one here too
 draws it says why, on the element or on a `<g>` round several:
 `data-unlettered="the squares of the reading in areas, which Heath's figure does not draw"`
 (II.9). A letter Heath gives a straight line or a figure (I.3's C, II.14's A) may stand
-beside it or within it. How the script reads this, the switch that held the figures
-while they were being lettered, and the one that holds their letters while they are set
-upright, are in section 8.
+beside it or within it. How the script reads this, and the switches that held the figures
+while they were being lettered and while their letters were being set upright, are in
+section 8.
 
 **Checked as geometry, not only as a picture.** A label count or a colour check does not
 validate a figure. Before a changed figure is signed off, render it
@@ -665,12 +694,12 @@ serves S23 alone; S12 still requires Git's tracked-file index.
 | S12 | A backticked Lean name, other than a file name, that `#check` does not know, with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open; every book's namespace for a text with no book (the overlap catalogue, Other reports, `review/terms.toml`), so that a name two books share is written with its book; and `Elements` and `Elements.Tacit` alone for the Rendered docstrings. The name before the colon of a backticked `name : type` is read as well (section 1, "Hypotheses in words"). A word that is Lean's but no declaration, as a tactic or a field of `facts.json`, is listed in the script with its reason, and fails once no text uses it. Run when the tree is built; the overlap catalogue's audit lemmas once `lake build Audit` has run, and listed as not checked till then. The mishnah is asked as it always was, every name with `import Elements` alone: neither excuse holds there | Prose, Review notes, Catalogues, Other reports, Rendered docstrings, `book/<book>/front.md` |
 | S13 | A caption (`<desc>`) missing, or over 50 words | Idea figures |
 | S14 | A viewBox other than `0 0 400 300`; a colour other than `#fbf7ee`, `#d0312d`, `#f2b705`, `#1f5aa6`, `#222222` and white; a missing `<title>`, or one other than "I.N at a glance", with a name after a colon if it has one | Idea figures |
-| S15 | A viewBox width outside 400–440; a letter not at font-size 17, or not upright (while the switch for upright letters is off, below, italic letters too, if every letter of the figure is italic); a colour other than `#fbf7ee`, `#3b2f2f`, `#8c7b62`, `#a0522d`, `#e9dcc0`; a stroke-width under 1.2 or over 3.2; a `<desc>`; a missing `<title>`, or one other than "Euclid I.N: …" | Euclid's figures |
+| S15 | A viewBox width outside 400–440; a letter not at font-size 17, or, with the switch for upright letters on (below), not upright; a colour other than `#fbf7ee`, `#3b2f2f`, `#8c7b62`, `#a0522d`, `#e9dcc0`; a stroke-width under 1.2 or over 3.2; a `<desc>`; a missing `<title>`, or one other than "Euclid I.N: …" | Euclid's figures |
 | S16 | Letters drawn that are not Heath's, or Heath's letters not drawn: the letters of the figure's `<text>` elements against the capital letters of `heath/<book>/NN.md`, with comments, Heath's references, "Q. E. D.", "Q. E. F.", "I say" and "PORISM." taken out (the command is below). An exception is listed in the script with its reason | Euclid's figures |
 | S17 | A reading file of no lines or more than three, a line that is not a list item ("- "), or a web link that `docs/reading.md` does not give | `reading/<book>/NN.md` |
 | S18 | A book with pages and no `mishnah/intro/<book>.md` | `mishnah/intro/` |
 | S19 | A book introduction that does not link the book's brief in `docs/briefs/` (section 2 requires it) | `mishnah/intro/` |
-| S20 | A `<text>` holding a Latin letter that is not one letter (a capital, with a prime or a subscript) or not one that `NN.svg` draws; a letter not upright (while the switch for upright letters is off, below, italic letters too, if every letter of the figure is italic), not at font-size 14, or not in the ink of what its middle stands on: `#222222` on the parchment or yellow, `#fbf7ee` on a red, blue or black fill: a polygon, polyline, rect, circle, ellipse or path (an angle's wedge), transforms applied, its arcs and curves followed | Idea figures |
+| S20 | A `<text>` holding a Latin letter that is not one letter (a capital, with a prime or a subscript) or not one that `NN.svg` draws; a letter not upright (with the switch for upright letters on, below), not at font-size 14, or not in the ink of what its middle stands on: `#222222` on the parchment or yellow, `#fbf7ee` on a red, blue or black fill: a polygon, polyline, rect, circle, ellipse or path (an angle's wedge), transforms applied, its arcs and curves followed | Idea figures |
 | S21 | A point the figure shows with no letter within 30 of it: a dot (a filled `<circle>` of radius 6 at most), an end of a `<line>` 25 long or more in a Byrne colour or black, or a corner of a `<polygon>` filled or stroked in one. Transforms are applied; a letter stands at its glyph's middle, reckoned from its x, y, anchor and size; points within 8 of one another are one point. A point drawn by an element marked `data-unlettered`, or inside a `<g>` so marked, is excused, and each mark is printed on every run; a mark whose reason is under two words, or that excuses no point, fails. With the switch on (below), S21 holds every figure | Idea figures |
 | S22 | Letters in backticks: a code span that holds only letters, a capital or a run of capitals (each with its prime or subscript) or several such runs apart by commas or spaces, as `P`, `PQ`, `ABCD` or `AB, CD` (section 1, "Lean notes") | Prose, Review notes, Catalogues, Other reports, Lean notes, Generated |
 | S23 | A merge-conflict marker, with its kind: a line beginning with exactly seven `<`, `\|` or `>` followed by a space or the line's end; or exactly seven `=` with optional trailing spaces or tabs. A trailing CR is allowed. A middle is refused between opening and closing markers, outside `.md` files, or unless every line of the preceding block is ordinary paragraph text. Blank lines, markers, ATX or completed setext headings, thematic breaks, fences, HTML blocks and GFM tables bound or disqualify the block; indented code cannot start a paragraph, but indented continuations are allowed. Any possible reference definition prefix (up to three spaces, a bracketed label allowing escaped brackets, then a colon), block quote or list item disqualifies the whole block; within a paragraph, a list item counts only where it can interrupt one, as a bullet or an ordered item numbered 1, with some text, so `2. item` or a bare `*` goes on with the paragraph. S23 errs toward refusal: other lengths of equals are never examined as middles, so a refused heading can use eight. Fences inside comments or HTML blocks open no block | Every tracked text file except symlinks, or the files of the walk described above |
@@ -691,7 +720,7 @@ serves S23 alone; S12 still requires Git's tracked-file index.
 | D10 | S6 and S7 outside their failing scope | S6: Catalogues, README, Lean notes; S7: README, Lean notes; the Rendered docstrings aside |
 | D11 | Euclid's figure strokes other than lines 1.6, circles 1.3, the subject 2.4 to 2.6, angle marks 1.3, or dots of radius other than 2.6 | Euclid's figures |
 | D14 | The figures at a glance with no letter yet, book by book, with the points each has to letter, while the switch is off (below) | Idea figures |
-| D15 | The figures whose letters are still italic, book by book, while the switch for upright letters is off (below) | Idea figures, Euclid's figures |
+| D15 | The figures whose letters are all italic, book by book, while the switch for upright letters is off (below) | Idea figures, Euclid's figures |
 | D16 | A finding of the reach of 19 October, of a rule its file is still listed for (below), with the rule it would fail; and each rule of a listed file with no finding of it left, to be taken out of the file's entry, or the entry out of the list once each of its rules is | The files listed |
 
 **The switch for S21.** The figures at a glance were lettered one by one, and while they
@@ -701,19 +730,20 @@ lettered whole, and D14 listed the rest. Every figure now carries its letters, a
 switch is `True`: S21 fails any figure with a point unlettered, and D14 is empty. The
 switch is never turned back to quiet a figure: the figure is lettered.
 
-**The switch for upright letters.** The figures were drawn with italic letters, and are set
-upright (section 4) in a change of their own. While they are, `UPRIGHT_LETTERS_REQUIRED` in
-`scripts/check_style.py` is `False`: S15 and S20 take a figure whose letters are all italic
-as well as one whose letters are all upright, and fail a figure that mixes the two, so that
-a figure once begun is set upright whole; D15 lists the figures still italic. Once every
-figure is upright the switch is `True`, S15 and S20 fail an italic letter, and D15 is
-empty. The switch is never turned back to quiet a figure: the figure is set upright.
+**The switch for upright letters.** The figures were drawn with italic letters, and were
+set upright (section 4) in a change of their own. While they were,
+`UPRIGHT_LETTERS_REQUIRED` in `scripts/check_style.py` was `False`: S15 and S20 took a
+figure whose letters were all italic as well as one whose letters were all upright, and
+failed a figure that mixed the two, so that a figure once begun was set upright whole, and
+D15 listed the figures still italic. Every figure is now upright, and the switch is
+`True`: S15 and S20 fail an italic letter, and D15 is empty. The switch is never turned
+back to quiet a figure: the figure is set upright.
 
 **The reach of 19 October.** On that day the rules came to every text a reader meets
 ([#66](https://github.com/jackChallis/stoicheia/issues/66)): the Review notes, the overlap
 catalogue, the Other reports, the Rendered docstrings, the front pages and the table of
 names, with S7 in the gap catalogues and the Generated files, S12 beyond the mishnah (and
-the name of a `name : type`), and S22. A file that had findings of that reach on the day is
+the name of a `name : type`), and S22. A file that had findings of that reach on the day was
 listed in `REACH_PENDING` in `scripts/check_style.py`, with the rules it had findings of
 and whoever mends them; while it is listed, its findings of those rules are reported (D16)
 and fail nothing. Every other finding of the reach fails at once, in a listed file as in

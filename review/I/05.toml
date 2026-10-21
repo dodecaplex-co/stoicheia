@@ -14,13 +14,18 @@ note = "Definition I.20 distinguishes isosceles from equilateral triangles. The 
 [[passage]]
 at = "and let the straight lines BD, CE be produced further"
 kind = "given"
-note = "D and E come with the statement, already produced, so the Lean draws only AB and AC here. The proof still rests on Postulate 2 through proved rules, including `OnRay.between_of_len_lt`, which reaches it through `Tacit.between_of_between_right`. `Prop5.base` produces the sides for the propositions that cite only the angles at the base."
+note = "D and E come with the statement, already produced, so the Lean draws only AB and AC here. The proof's own Lean still rests on Postulate 2 through proved rules: the order rule `Tacit.between_of_between_right`, beneath `OnRay.between_of_len_lt`, and Metric 8, `Tacit.area_swap`; I.4, which it cites, rests on it too. `Prop5.base` produces the sides for the propositions that cite only the angles at the base."
 
 [[passage]]
 at = "Let a point F be taken at random on BD"
 kind = "helper"
 helper = "exists_between_nearer"
 note = "Euclid assumes he can find F on BD near enough to B that AF remains less than AE. The Lean applies `exists_between_nearer` to AB = AC < AE, using `len_lt_of_between` for C between A and E, and obtains F between B and D with AF < AE; it then derives the order A, B, F by `between_cut` and puts F on AB by `Tacit.on_line_of_between` (System E, Between 2), now proved in `Elements/Figure/Incidence.lean` from Postulate 1, incidence of the middle point and uniqueness of the line."
+
+[[passage]]
+at = "and let the straight lines FC, GB be joined"
+kind = "carried"
+note = "The Lean joins FC and GB by Postulate 1, as Euclid asks. The later steps use lengths, angles, triangles and areas named by their points and do not use either joined line; the lines are named here only to carry out this sentence."
 
 [[passage]]
 at = "and they contain a common angle"
@@ -53,10 +58,10 @@ note = "Euclid identifies FBC and GCB with the angles under the base. The Lean u
 
 [review]
 stage = "full"
-commit = "469171b"
-reviewer = "Codex (GPT-6), independent reader Aw2-reader-g"
-lean = "sha256:2734cd741f1edefc"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II; wave two closures review, Aw2-reader-g"
+commit = "07bdc4df"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:434da0bb3337847c"
+run = "ship Q orders, item (a): the Postulate 1 joins; stage full, independent re-read at 07bdc4df; workflow wf_012f714f-e1a (stoicheia-ship-q); reader run Q-read-p1c, Codex exec session 01a159fa-c971-7500-92b3-91e0f702bc1e, which wrote only this record's [review] lines and ran review_stamp.py itself; ship Q's lead (Claude Opus 5.5) committed them unchanged; this run text later amended with that provenance, no restamp"
 
 [review.items]
 statement = "pass"

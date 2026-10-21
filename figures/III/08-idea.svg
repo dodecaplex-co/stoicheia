@@ -12,7 +12,7 @@
   <line x1="62.0" y1="153.0" x2="130.0" y2="153.0" stroke="#f2b705" stroke-width="5" stroke-linecap="butt"/>
   <circle cx="236.0" cy="150.0" r="4.5" fill="#222222"/>
   <circle cx="62.0" cy="150.0" r="4.5" fill="#222222"/>
-  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+  <g font-size="14" fill="#222222" text-anchor="middle">
     <text x="355" y="154.9">A</text>
     <text x="124" y="101.9">B</text>
     <text x="48" y="154.9">D</text>

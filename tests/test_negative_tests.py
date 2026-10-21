@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
-"""Restoration regressions for scripts/negative_tests.py, without Lean or Git.
+"""Restoration regressions for scripts/negative_tests.py, without Lean, and without Git
+outside temporary repositories.
 
     python3 -I tests/test_negative_tests.py
 
 The negative suite runs these first. Temporary files stand in for Lake outputs;
 simulated builds delete, replace and create them before failing or being interrupted.
+A temporary repository stands in for the pre-flight's pass with origin/main's checks,
+whose work tree lacks the files a commit adds under the check inputs while Git's index
+still lists them.
 """
 
 import io
 import json
+import os
 import re
 import subprocess
 import sys
@@ -241,6 +246,160 @@ class RestorationTests(unittest.TestCase):
                     self.assertEqual((self.root / rel).read_bytes(), data)
                 self.assertEqual(self.files(), saved)
 
+    def test_law_plants_restore_sources_and_outputs(self):
+        # The plant in two clean laws' proofs (#150), at each of its stages: whether the
+        # planted build, the probe that prints the pins, the audit build or the certificate
+        # run fails or is interrupted, or the run goes through to check_fidelity.py, and
+        # whatever the restoration build does, the law proofs, the audit pins and
+        # facts.json come back, and so do the outputs when the restoration build fails.
+        rels = ("Elements/Figure/Superposition.lean", "Audit/Superposition.lean", "facts.json")
+        originals = {rel: (REPO / rel).read_bytes() for rel in rels}
+        names = [m[2] for m in negative.AUDIT_PIN.finditer(originals[rels[1]].decode())]
+        self.assertTrue(names)
+        steps = ("baseline", "planted", "probe", "audit", "certificate", "fidelity")
+        caught = ("✗ I.4: its construction_rules for the cited law lenSymm is ['Postulate1'], "
+                  "not []\n✗ I.8: its construction_rules for the cited law lenSymm is "
+                  "['Postulate1'], not []\n✗ I.4: its construction_rules for the cited law "
+                  "angleSymm is ['Tacit.circles_meet'], not []\n")
+        cases = [(stage, outcome, restoring)
+                 for stage in ("planted", "probe", "audit", "certificate")
+                 for outcome in ("failed", "interrupted")
+                 for restoring in ("success", "failed", "interrupted")]
+        cases += [(None, "completed", restoring)
+                  for restoring in ("success", "failed", "interrupted")]
+        for stage, outcome, restoring in cases:
+            with self.subTest(stage=stage, outcome=outcome, restoring=restoring):
+                for rel, data in originals.items():
+                    self.write(self.root / rel, data)
+                for path in self.build.rglob("*"):
+                    if path.is_file():
+                        path.unlink()
+                self.outputs("Elements/Figure/Superposition")
+                saved = self.files()
+                calls = []
+
+                def ends(step, cmd, ok):
+                    """The step's result: its failure or interruption at `stage`."""
+                    if step != stage:
+                        return ok
+                    self.damage_outputs()
+                    if outcome == "interrupted":
+                        raise KeyboardInterrupt(f"{step} interrupted")
+                    return subprocess.CompletedProcess(cmd, 1, "", f"{step} failed")
+
+                def run(*cmd):
+                    calls.append(cmd)
+                    step = steps[len(calls) - 1] if len(calls) <= len(steps) else None
+                    done = subprocess.CompletedProcess(cmd, 0, "", "")
+                    if cmd == ("lake", "build", "Elements", "Audit"):
+                        # The restoration build, with every source back.
+                        for rel, data in originals.items():
+                            self.assertEqual((self.root / rel).read_bytes(), data)
+                        if restoring == "success":
+                            return done
+                        return self.failed_rebuild(restoring == "interrupted")
+                    if step in ("baseline", "fidelity"):
+                        self.assertEqual(cmd, (sys.executable, "scripts/check_fidelity.py"))
+                        if step == "baseline":
+                            # The unplanted tree's problems, read before anything is planted.
+                            for rel, data in originals.items():
+                                self.assertEqual((self.root / rel).read_bytes(), data)
+                            return subprocess.CompletedProcess(cmd, 0, "✓ fidelity\n", "")
+                        return subprocess.CompletedProcess(cmd, 1, caught, "")
+                    if step == "planted":
+                        self.assertEqual(cmd, ("lake", "build"))
+                        laws = (self.root / rels[0]).read_text()
+                        self.assertIn("have _planted := @Postulate1", laws)
+                        self.assertIn("have _planted := @Tacit.circles_meet", laws)
+                        return ends(step, cmd, done)
+                    if step == "probe":
+                        self.assertEqual(cmd[:3], ("lake", "env", "lean"))
+                        probe = Path(cmd[3])
+                        self.assertEqual(probe.name, "Pins.lean")
+                        self.assertNotEqual(probe.parent, self.root)
+                        printed = [line.split(" ", 2)[2]
+                                   for line in probe.read_text().splitlines()
+                                   if line.startswith("#print axioms ")]
+                        self.assertEqual(printed, names)
+                        out = "".join(f"{probe}:{i}:0: info: '{n}' depends on axioms: "
+                                      f"[propext, Elements.Postulate1]\n"
+                                      for i, n in enumerate(names, 2))
+                        return ends(step, cmd, subprocess.CompletedProcess(cmd, 0, out, ""))
+                    if step == "audit":
+                        self.assertEqual(cmd, ("lake", "build", "Audit"))
+                        audit = (self.root / rels[1]).read_text()
+                        self.assertEqual(audit.count("[propext, Elements.Postulate1]"),
+                                         len(names))
+                        return ends(step, cmd, done)
+                    self.assertEqual(step, "certificate")
+                    self.assertEqual(cmd, ("lake", "env", "lean", "Certificate/Facts.lean"))
+                    (self.root / "facts.json").write_text("{}\n")
+                    return ends(step, cmd, done)
+
+                interrupted = "interrupted" in (outcome, restoring)
+                with patch.object(negative, "run", side_effect=run):
+                    if interrupted:
+                        with self.assertRaises(KeyboardInterrupt):
+                            negative.construction_in_clean_laws()
+                    else:
+                        negative.construction_in_clean_laws()
+                reached = len(steps) if stage is None else steps.index(stage) + 1
+                self.assertEqual(len(calls), reached + 1)
+                self.assertEqual(calls[-1], ("lake", "build", "Elements", "Audit"))
+                for rel, data in originals.items():
+                    self.assertEqual((self.root / rel).read_bytes(), data)
+                if restoring != "success":
+                    self.assertEqual(self.files(), saved)
+                if stage is None and restoring == "success":
+                    self.assertEqual(negative.failures, [])
+                negative.failures.clear()
+
+    @staticmethod
+    def axiom_pin(name, axioms="[propext]"):
+        return (f"/--\ninfo: '{name}' depends on axioms: {axioms}\n-/\n"
+                f"#guard_msgs in\n#print axioms {name}\n")
+
+    STATEMENT_PIN = ("/--\ninfo: Elements.law : ∀ c ∈ cites, c.Holds primitives\n-/\n"
+                     "#guard_msgs in\n#check Elements.law\n")
+
+    def test_audit_pins_never_run_across_a_statement_pin(self):
+        # #150's review: a statement pin (`#guard_msgs in` over `#check`) before an axiom
+        # pin must be neither read into its message nor rewritten.
+        rel = "Audit/Pins.lean"
+        text = ("import Elements\n\n" + self.STATEMENT_PIN + "\n" + self.axiom_pin("Elements.a")
+                + "\n" + self.STATEMENT_PIN + "\n" + self.axiom_pin("Elements.b"))
+        self.write(self.root / rel, text.encode())
+        found = list(negative.AUDIT_PIN.finditer(text))
+        self.assertEqual([m[2] for m in found], ["Elements.a", "Elements.b"])
+        for m in found:
+            self.assertNotIn("#check", m[0])
+
+        def run(*cmd):
+            self.assertEqual(cmd[:3], ("lake", "env", "lean"))
+            return subprocess.CompletedProcess(cmd, 0, "".join(
+                f"{cmd[3]}:{i}:0: info: '{n}' depends on axioms: [propext, Elements.P]\n"
+                for i, n in enumerate(("Elements.a", "Elements.b"), 2)), "")
+        with patch.object(negative, "run", side_effect=run):
+            changed = negative.rewritten_pins(rel)
+        self.assertEqual(negative.failures, [])
+        self.assertEqual(changed, text.replace("[propext]", "[propext, Elements.P]"))
+        self.assertEqual(changed.count(self.STATEMENT_PIN), 2)
+
+    def test_every_print_axioms_must_be_read_as_a_pin(self):
+        # A `#print axioms` the pattern does not read as a pin fails the plant, before Lean
+        # is run, rather than being left as it was.
+        rel = "Audit/Pins.lean"
+        self.write(self.root / rel, ("import Elements\n\n" + self.axiom_pin("Elements.a")
+                                     + "\n#print axioms Elements.b\n").encode())
+        with patch.object(negative, "run", side_effect=AssertionError("Lean was run")):
+            self.assertIsNone(negative.rewritten_pins(rel))
+        self.assertEqual(negative.failures, [
+            f"printing the pins of {rel}: 2 `#print axioms` commands, but 1 pins read; "
+            "update this test"])
+        text = (REPO / "Audit/Superposition.lean").read_text()
+        self.assertEqual(len(list(negative.AUDIT_PIN.finditer(text))),
+                         len(re.findall(r"^#print axioms ", text, re.M)))
+
     def test_certificate_plant_restores_source_on_interruption(self):
         source = self.root / "Certificate/Facts.lean"
         original = (REPO / "Certificate/Facts.lean").read_bytes()
@@ -426,6 +585,107 @@ class CircleRuleTests(unittest.TestCase):
                     self.assertEqual(self.lock.read_bytes(), saved)
                     self.assertEqual(self.errors, ["a previous finding"])
                     self.assertEqual(json.loads((self.root / "facts.json").read_text()), facts)
+
+
+class AbsentTrackedFileTests(unittest.TestCase):
+    """A commit adds a check and its test (and a note beside them), and the pre-flight's
+    pass with origin/main's checks (scripts/safe_push.py, step 4, base_copies) unlinks
+    each from the work tree while Git's index still lists it. Every listing of tracked
+    files names them and goes on with what is present; one absent outside the check
+    inputs is a failure, and an error reading one, as in a directory of mode 000, is
+    raised. Git runs only in a temporary repository, without user config."""
+
+    present = {"scripts/check.py": "# the check\n", "tests/test_check.py": "# its test\n",
+               "docs/notes.md": "Words: <!-- count:vocabulary -->3<!-- /count -->.\n"}
+    added = ("scripts/new_check.py", "tests/test_new_check.py", "tests/new_check.md",
+             "tests/a\x1b[2K\rforged\nline.py")
+
+    def setUp(self):
+        self.root = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+        env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+        self.enterContext(patch.dict(os.environ, {**env, "GIT_CONFIG_GLOBAL": os.devnull,
+                                                  "GIT_CONFIG_NOSYSTEM": "1"}, clear=True))
+        self.enterContext(patch.multiple(negative, ROOT=self.root, failures=[]))
+        self.output = self.enterContext(redirect_stdout(io.StringIO()))
+        files = {**self.present, **{rel: f"# added: {rel}\n" for rel in self.added}}
+        for rel, text in files.items():
+            (self.root / rel).parent.mkdir(parents=True, exist_ok=True)
+            (self.root / rel).write_text(text)
+        self.git("init", "-q")
+        self.git("add", "--", *files)
+        self.git("-c", "user.name=test", "-c", "user.email=test@example.invalid",
+                 "commit", "-q", "--no-verify", "-m", "add a check and its test")
+        for rel in self.added:
+            (self.root / rel).unlink()       # as base_copies takes out a file the commit adds
+        self.assertEqual(self.git_names(), sorted(files))
+
+    def git(self, *args):
+        return subprocess.run(["git", *args], cwd=self.root, capture_output=True, text=True,
+                              check=True).stdout
+
+    def git_names(self):
+        result = subprocess.run(["git", "ls-files", "-z"], cwd=self.root,
+                                capture_output=True, check=True)
+        return [name.decode() for name in result.stdout.split(b"\0") if name]
+
+    def note(self, rel):
+        return ("note: tracked but absent from the work tree (under the check inputs, as a "
+                "file the commit adds is in the pre-flight's pass with origin/main's "
+                f"checks): {rel!r}\n")
+
+    def assert_named(self, failures=()):
+        for rel in self.added:
+            self.assertIn(self.note(rel), self.output.getvalue())
+        self.assertEqual(negative.failures, list(failures))
+
+    def test_count_copy_names_absent_files_and_copies_the_rest(self):
+        with negative.count_source_copy() as (copy, env):
+            copied = {p.relative_to(copy).as_posix() for p in copy.rglob("*") if p.is_file()}
+            self.assertEqual(copied, set(self.present))
+            for rel in self.present:
+                self.assertEqual((copy / rel).read_bytes(), (self.root / rel).read_bytes())
+            self.assertEqual((env["GIT_DIR"], env["GIT_WORK_TREE"]),
+                             (str(self.root / ".git"), str(copy)))
+        self.assert_named()
+
+    def test_marker_copy_names_absent_files(self):
+        _, listing = negative.tracked_names()
+        copy = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        negative.copy_marker_files(copy, listing)
+        copied = {p.relative_to(copy).as_posix() for p in copy.rglob("*") if p.is_file()}
+        self.assertEqual(copied, set(self.present))
+        self.assert_named()
+
+    def test_generated_outputs_pass_over_absent_markdown(self):
+        self.assertEqual(negative.generated_files(), {self.root / "docs/notes.md"})
+        self.assertIn(self.note("tests/new_check.md"), self.output.getvalue())
+        self.assertEqual(negative.failures, [])
+
+    def test_absent_file_outside_the_check_inputs_fails(self):
+        (self.root / "docs/notes.md").unlink()
+        message = ("tracked but absent from the work tree, outside the check inputs: "
+                   "'docs/notes.md'")
+        with negative.count_source_copy() as (copy, _):
+            copied = {p.relative_to(copy).as_posix() for p in copy.rglob("*") if p.is_file()}
+            self.assertEqual(copied, {"scripts/check.py", "tests/test_check.py"})
+        _, listing = negative.tracked_names()
+        negative.copy_marker_files(Path(self.enterContext(tempfile.TemporaryDirectory())),
+                                   listing)
+        self.assertEqual(self.output.getvalue().count(f"✗ {message}\n"), 2)
+        self.assert_named([message])
+
+    def test_an_unreadable_directory_is_not_absent(self):
+        docs = self.root / "docs"
+        docs.chmod(0)
+        self.addCleanup(docs.chmod, 0o755)
+        _, listing = negative.tracked_names()
+        with self.assertRaises(PermissionError), negative.count_source_copy():
+            pass
+        with self.assertRaises(PermissionError):
+            negative.copy_marker_files(Path(self.enterContext(tempfile.TemporaryDirectory())),
+                                       listing)
+        self.assertEqual(self.output.getvalue(), "")
+        self.assertEqual(negative.failures, [])
 
 
 if __name__ == "__main__":
