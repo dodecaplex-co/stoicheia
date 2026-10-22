@@ -835,13 +835,13 @@ Both commands exited 0. The first gave no output; the second reported `✓ links
 relative links and anchors in 1 Markdown files resolve`. No style check was run on that
 working-tree version.
 
-At c8e23b2ee329752b71674e544b396986e8a829c0, with this report as the only working-tree
-modification and in the text it has here, the documentation step ran the same two
-commands and `python3 scripts/check_style.py --no-lean`. All three exited 0. The first
-gave no output; the second reported `✓ links: all 36 relative links and anchors in 1
-Markdown files resolve`; the third `✓ style: the hard rules hold (S1–S11 and S13–S26)`.
-That run skips S12, which asks Lean and needs `Elements` built, and no build was made for
-it, so S12 was last run on this report at 11bcfea5.
+At c8e23b2ee329752b71674e544b396986e8a829c0, with the report version later committed at
+14a18ce7418d29f90a0e57af37f784860003db16 as the only working-tree modification, the
+documentation step ran the same two commands and `python3 scripts/check_style.py
+--no-lean`. All three exited 0. The first gave no output; the second reported `✓ links: all
+36 relative links and anchors in 1 Markdown files resolve`; the third `✓ style: the hard
+rules hold (S1–S11 and S13–S26)`. That run skips S12, which asks Lean and needs `Elements`
+built, and no build was made for it, so S12 was last run on this report at 11bcfea5.
 
 RoutesCheck.lean takes its list from Lean's environment, not from a list written by
 hand: every declaration of the seven modules, 51, and among them the 38 theorems, those
