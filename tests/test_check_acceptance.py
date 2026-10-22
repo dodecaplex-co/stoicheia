@@ -565,8 +565,7 @@ class StagedImports(unittest.TestCase):
                 elif extra and "cannot read this import for certain" in extra[0]:
                     self.assertEqual(found, {("edition", "E6"): [
                         f"{self.rel}:{line}: an import the scan cannot read for certain, so "
-                        "which proposition this file stages declarations for cannot be told: "
-                        "each part of the module's name must be a plain name, in «…» or not, "
+                        "which propositions this file imports cannot be told: each part of the module's name must be a plain name, in «…» or not, "
                         "and whitespace must follow it",
                         self.no_one()]})
                 else:
@@ -582,6 +581,13 @@ class StagedImports(unittest.TestCase):
                      "def s := r#\"\nimport Elements.BookI.Prop01\"#\n"):
             with self.subTest(text=text):
                 self.assertNotIn(("I.1", "P10"), self.verdicts(text))
+
+    def test_the_file_is_read_from_its_bytes(self):
+        # A lone carriage return ends no `--` comment for Lean, so the import on the next
+        # line is real; read with universal newlines, it would end the comment and open a
+        # string holding the import, which would then tie the file to nothing.
+        self.assertEqual(self.verdicts('-- r\r"\nimport Elements.BookI.Prop01\n-- "\n'),
+                         self.ties("I.1"))
 
     def test_an_import_of_one_book_alone_ties_the_file(self):
         self.assertEqual(self.verdicts("import «Elements».«BookIII».Prop01\n"),

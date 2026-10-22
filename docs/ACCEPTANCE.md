@@ -157,7 +157,7 @@ All 99 of Books I–III, each with its porism and its companions.
 | E3 | Contracts | machine | `heath.py` passes: references, porisms, review terms and every record, against their contracts. |
 | E4 | Model | machine | `tests/model/run.py --fast` passes, as CI's `model` job runs it. |
 | E5 | The edition's pages | machine | CERTIFICATE.md, GRAPH.md and PROGRAM.md's status table are exactly what `render.py` makes, and the style rules and links hold in the files that belong to no proposition or book (README.md, the generated pages, the notes of the shared Lean modules, the overlap catalogue, the other reports and `review/terms.toml`). |
-| E6 | Nothing else staged | machine | No file under `Staging/` declares anything that P10 does not already assign to a proposition: every staged statement, definition and shared step has moved to `Elements/`, or been retired. |
+| E6 | Nothing else staged | machine | No file under `Staging/` declares anything that P10 does not already assign to a proposition: every staged statement, definition and shared step has moved to `Elements/`, or been retired; and no staged file that declares anything holds an import the scan cannot read for certain (#200). |
 
 ## The limitations allowed
 

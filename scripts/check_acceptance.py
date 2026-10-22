@@ -685,16 +685,16 @@ def check_propositions(facts: dict, records: dict) -> None:
 
 
 def check_staging() -> None:
-    """P10 and E6: nothing left in Staging. An import in a staged file that the scan
-    cannot read for certain fails E6, naming its file and line, since which proposition
-    the file's declarations are for cannot then be told."""
+    """P10 and E6: nothing left in Staging. An import in a staged file that declares
+    anything, which the scan cannot read for certain, fails E6, naming its file and line,
+    since which propositions the file imports cannot then be told; it fails closed, and
+    never lets a file pass."""
     for path, names in staged().items():
         if not names:
             continue
         for line in staged_imports(path)[1]:
             fail("edition", "E6", f"{path}:{line}: an import the scan cannot read for "
-                 "certain, so which proposition this file stages declarations for cannot be "
-                 "told: each part of the module's name must be a plain name, in «…» or not, "
+                 "certain, so which propositions this file imports cannot be told: each part of the module's name must be a plain name, in «…» or not, "
                  "and whitespace must follow it")
         found = staged_refs(path, names)
         for ref in sorted(found, key=heath.prop_key):
