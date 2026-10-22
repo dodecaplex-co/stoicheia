@@ -8,6 +8,35 @@ fingerprint = "sha256:8e256532a8501ef2"
 kind = "euclid"
 
 [[passage]]
+at = "For let a straight line DE touch the circle ABC at the point C"
+kind = "given"
+note = "The statement gives the tangent DE, the contact C and the centre F; the radius FC is named by its ends."
+
+[[passage]]
+at = "For, if not, let FG be drawn from F perpendicular to DE"
+kind = "helper"
+helper = "Prop12"
+note = "Euclid draws FG perpendicular to DE; the Lean uses I.12, for which Heath prints no reference here. Beneath the setting-out, the Lean first proves F off DE with `Touches.not_inside` and `Tacit.centre_inside`, the rule we assume as System E, Generalities 3."
+
+[[passage]]
+at = "and the greater angle is subtended by the greater side"
+kind = "grouped"
+helper = "Prop19"
+note = "Euclid invokes I.19 and concludes that FC is greater than FG. One call to I.19 carries both clauses."
+
+[[passage]]
+at = "But FC is equal to FB"
+kind = "helper"
+helper = "Tacit.line_circle_between"
+note = "Euclid reads B on FG between F and G and takes FC equal to FB. The Lean proves G outside the circle using `Touches.not_inside` and the definition of touching, takes B by `Tacit.line_circle_between`, the rule we assume as System E, Intersections 4, and equates the radii by `Definition15`, Euclid's definition of a circle, which we also assume as a rule."
+
+[[passage]]
+at = "the less than the greater: which is impossible"
+kind = "helper"
+helper = "len_lt_of_between"
+note = "Euclid reads FB as less than FG because B lies between F and G. The Lean obtains that strict inequality from `len_lt_of_between`, using length addition and Common Notion 5, and contradicts the inequality just proved."
+
+[[passage]]
 at = "Therefore FG is not perpendicular to DE."
 kind = "grouped"
 note = "The reductio shows that the foot G of the perpendicular from F is C itself, so FC is that perpendicular, and no other straight line is left to prove."
@@ -16,7 +45,8 @@ note = "The reductio shows that the foot G of the perpendicular from F is C itse
 note = "The figure shows the impossible supposition with G distinct from C: FG is supposed perpendicular to DE, but the perpendicular in the drawn geometry is FC."
 
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "d0508d6c"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:c05e2d0569c0489f"
+run = "brief 0005 stage 5, ship R3 (#29)"
