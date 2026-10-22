@@ -190,7 +190,7 @@ stage = "full"
 commit = "…"
 lean = "sha256:…"
 reviewer = "…, its role"
-run = "…"                    # Actual assignment and provenance; see the schema above.
+run = "brief …, stage …, workflow …"
 
 [review.items]
 statement = "pass"
