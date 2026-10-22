@@ -82,6 +82,9 @@ RULES = [
             "Elements/Companions.lean", "lakefile.lean", "scripts/check_model_kernel.py"]),
     ("R3", ["scripts/*", "tests/*", "review/SCHEMA.md", "review/terms.toml", "Certificate/*",
             "docs/WORKFLOW.md", "Audit/screen.py",
+            # The registry of checks, one file per check of CI's `check` job (#229): adding
+            # or changing a check is a change to the checks, whatever else it touches.
+            "checks/*",
             # A rule of these can hide a file from the whole-worktree cleanliness check, or
             # change how Git reads one, so they are checks, not docs.
             ".gitignore", "*/.gitignore", ".gitattributes", "*/.gitattributes"]),

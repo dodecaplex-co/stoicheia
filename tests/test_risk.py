@@ -72,6 +72,9 @@ class Table(unittest.TestCase):
             ("review/terms.toml", "R3"),
             ("scripts/check_style.py", "R3"),
             ("scripts/audit/jev.py", "R3"),          # `*` crosses `/`
+            ("checks/01-lake-build.toml", "R3"),     # the registry of checks (#229)
+            ("checks/README.md", "R3"),              # though README.md is R0
+            ("checks/99-a-new-check.toml", "R3"),
             ("Elements/BookI/Prop01.lean", "R2"),
             ("Audit/Overlaps.lean", "R2"),
             ("Overlap.lean", "R2"),                  # any .lean outside Elements
@@ -125,6 +128,18 @@ class Table(unittest.TestCase):
         top, per = risk.change_class(proof + ["Certificate/axioms.lock"])
         self.assertEqual(top, "R4")
         self.assertEqual(per["heath/I/01.md"], ("R1", True))
+
+    def test_a_check_added_to_the_registry_is_R3(self):
+        # Adding a check is one file in checks/, section 8's regenerated block and the
+        # decision entry naming the file (#229): R3, with neither safe_push.py nor a
+        # workflow, which would make it R5.
+        added = ["checks/19-a-new-check.toml", "docs/WORKFLOW.md",
+                 "docs/decisions/2026-10-22-a-new-check.md"]
+        top, per = risk.change_class(added)
+        self.assertEqual(top, "R3")
+        self.assertEqual(per["checks/19-a-new-check.toml"], ("R3", True))
+        self.assertEqual(risk.change_class(added + ["scripts/safe_push.py"])[0], "R5")
+        self.assertEqual(risk.change_class(added + [".github/workflows/ci.yml"])[0], "R5")
 
 
 class Header(unittest.TestCase):

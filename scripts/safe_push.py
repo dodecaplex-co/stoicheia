@@ -103,7 +103,13 @@ order, and the first that fails stops it with a message saying why:
    judged content (beyond_low), so keep_apart cannot arise; should origin/main's risk.py
    ever class one that does R0 to R2, the full checks run. For R3 to R5, the full check
    sequence of docs/WORKFLOW.md, section 8, in that worktree, and
-   `negative_tests.py` in a second one, each step timed. The checks run with
+   `negative_tests.py` in a second one, each step timed. The sequence is CI's `check`
+   job's as origin/main's registry of checks lists it (checks/, one file per check, read
+   out of git by origin/main's scripts/registry.py, run from a temporary directory: never
+   the commit's registry or reader, so that a change cannot alter the checks that judge
+   it), then the `model` job's (check_sequence; docs/decisions/2026-10-22-check-registry.md).
+   While origin/main holds no registry, the lists built in here stand in for it; when it
+   holds one that cannot be read, the pre-flight refuses. The checks run with
    origin/main's copies of the check scripts and their expected values (CHECK_INPUTS,
    below); when the commit changes any of those, they run again with the commit's own
    copies, which must pass. A check that fails with origin/main's copies is noted for the
@@ -319,10 +325,12 @@ GUARDED_DIRS = ("Elements", "heath", "review", "figures", "mishnah")
 # lakefile.lean is here although the repository has none: Lake reads it in preference to
 # lakefile.toml, and runs it. .gitignore is here because an added rule hides untracked
 # files from `git status`, and so from the check that the generated pages are current.
+# checks/ is the registry of CI's `check` job, one file per check (#229): a check added,
+# removed, or with its command, job or order changed, is named in a decisions entry.
 # PROTECTED_JUDGED, below, joins them.
 PROTECTED = ("scripts/", ".github/", "Certificate/", "tests/", "review/SCHEMA.md",
              "review/terms.toml", ".gitattributes", ".gitignore", "lakefile.toml",
-             "lakefile.lean", "lean-toolchain", "lake-manifest.json")
+             "lakefile.lean", "lean-toolchain", "lake-manifest.json", "checks/")
 # Protected, and still judged (#96): the audit lemmas of docs/reports/overlaps.md, whose
 # pinned axiom lists (`#guard_msgs`) back the catalogue's claims, and Audit.lean, the root
 # that decides which of them `lake build Audit` checks; the model's Model/Audit.lean and
@@ -337,8 +345,12 @@ PROTECTED_JUDGED = ("Audit/", "Audit.lean", "model/Model/Audit.lean", "model/Mod
                     "model/lakefile.toml", "model/lakefile.lean",
                     "model/lean-toolchain", "model/lake-manifest.json", "model/lock.sha256")
 PROTECTED += PROTECTED_JUDGED
-# The checks and what they expect: origin/main's copies judge the commit (step 4).
-CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "review/terms.toml")
+# The checks and what they expect: origin/main's copies judge the commit (step 4). The
+# registry, checks/, is one of them: a commit that changes it is a check change, kept apart
+# from what the checks judge, and the sequence step 4 runs is origin/main's registry in any
+# case (check_sequence).
+CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "review/terms.toml",
+                "checks/")
 # Of those, the values pinned to the edition, not code. The lock and the model's hash of it
 # are compared exactly, both ways: check_fidelity.py the lock with facts.json, and the
 # model's run its hash with the lock. The model's page and results are its account of the
@@ -406,12 +418,15 @@ SUITE_WORKFLOW = "safe-push-tests.yml"
 SUITE_PATH = f".github/workflows/{SUITE_WORKFLOW}"
 SUITE_JOBS = ("safe-push-tests", "negative-tests", "formal-model-kernel")
 SUITE_REPORT_JOB = "report"
-GENERATED = ("facts.json", "book/", "CERTIFICATE.md", "GRAPH.md", "README.md", "docs/PROGRAM.md")
-# Of these, two are generated only between their markers (render.py's SCOPE_MARKERS and
-# STATUS_MARKERS); the rest of each is written by hand.
+GENERATED = ("facts.json", "book/", "CERTIFICATE.md", "GRAPH.md", "README.md", "docs/PROGRAM.md",
+             "docs/WORKFLOW.md")
+# Of these, three are generated only between their markers (render.py's SCOPE_MARKERS and
+# STATUS_MARKERS, and registry.py's MARKERS, between which render.py writes section 8's
+# first command block from the registry of checks); the rest of each is written by hand.
 GENERATED_REGIONS = {
     "README.md": re.compile(r"<!-- scope:([IVX]+) -->.*?<!-- /scope:\1 -->", re.S),
     "docs/PROGRAM.md": re.compile(r"<!-- status -->\n.*?<!-- /status -->", re.S),
+    "docs/WORKFLOW.md": re.compile(r"<!-- checks -->\n.*?<!-- /checks -->", re.S),
 }
 CI_APPEAR_TIMEOUT = 300   # seconds to wait for the checks to appear after the push
 CI_POLL = 10              # seconds between looks for them (both shortened by the tests)
@@ -419,8 +434,15 @@ CI_WATCH_INTERVAL = "30"  # seconds between `gh pr checks --watch` refreshes
 HEAD_TIMEOUT = 60         # seconds to wait for GitHub to see the branch's new head
 TAIL = 40                 # lines of a failed step's output to print
 
-# The full local check sequence, exactly as docs/WORKFLOW.md, section 8, and CI's `check`
-# job run it, then the `model` job. Change it with them.
+# The registry of CI's `check` job, one file per check, and its one reader, both read at
+# origin/main for step 4 (check_sequence; docs/decisions/2026-10-22-check-registry.md).
+REGISTRY = "checks"
+REGISTRY_READER = "scripts/registry.py"
+REGISTRY_TIMEOUT = 120    # seconds origin/main's registry.py may take to read its registry
+# The `check` job's sequence, built in: it stands in for the registry only while
+# origin/main holds none, so that the train that adds the registry is judged by the
+# sequence every train was judged by before it (Units holds the two equal). These lines go
+# once the registry is on main.
 CHECKS = [
     ("lake build", ["lake", "build"]),
     ("lake build Audit", ["lake", "build", "Audit"]),
@@ -442,6 +464,10 @@ CHECKS = [
     ("python3 scripts/render.py", [PY, "scripts/render.py"]),
     ("git status --porcelain is empty", None),
     ("python3 scripts/check_links.py", [PY, "scripts/check_links.py"]),
+]
+# CI's `model` job, run after the `check` job's sequence, in the same worktree. The
+# registry holds the `check` job's checks alone, so this stays here, as NEGATIVE does.
+MODEL_JOB = [
     ("python3 -I tests/model/run.py --fast", [PY, "-I", "tests/model/run.py", "--fast"]),
 ]
 # CI's `negative` job, in a second disposable worktree: negative_tests.py plants breaks
@@ -2894,7 +2920,108 @@ def copy_build(src: Path, dst: Path) -> None:
         shutil.rmtree(dst / ".lake", ignore_errors=True)
 
 
-def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path) -> None:
+class CheckList(NamedTuple):
+    steps: list[tuple[str, list[str] | None]]   # (name, argv); None: `git status` is empty
+    why: str                                     # where they came from, for the step line
+
+
+def check_sequence(repo, base: str) -> CheckList:
+    """The checks step 4 runs on a commit against `base`, origin/main: the `check` job's,
+    as base's registry lists them, then the `model` job's (MODEL_JOB). The registry,
+    checks/, and its reader, scripts/registry.py, are base's: the reader is read out of git
+    and run from a temporary directory, and reads the registry out of git at base, both
+    with git's replacement objects off; never the commit's registry or reader, nor the
+    worktree's, so that a change cannot alter the checks that judge it. With neither at
+    base (the train that adds them), the built-in CHECKS. A Refusal when base holds either
+    and the registry cannot be read: the other missing or not a regular file or folder,
+    the reader failing, outlasting its time or printing anything but a list of checks of
+    the `check` job, or no check at all. Never an empty list."""
+    def refuse(why: str):
+        raise Refusal(f"origin/main's registry of checks could not be read: {why}")
+
+    listed = run(["git", "ls-tree", "-z", "--full-tree", base, "--", REGISTRY,
+                  REGISTRY_READER], repo, binary=True)
+    if listed.returncode != 0:
+        refuse(f"git could not list origin/main {base[:12]}: "
+               f"{printable_text(listed.stderr.decode(errors='replace').strip())}")
+    found = {}
+    for record in listed.stdout.split(b"\0"):
+        if record:
+            meta, _, path = record.partition(b"\t")
+            found[os.fsdecode(path)] = meta.split()
+    if not found:
+        return CheckList(CHECKS + MODEL_JOB, f"the {len(CHECKS)} built into this harness, "
+                         f"since origin/main {base[:12]} holds no registry yet ({REGISTRY}/ "
+                         f"and {REGISTRY_READER}), then the model job's")
+    reader, folder = found.get(REGISTRY_READER), found.get(REGISTRY)
+    if (reader is None or len(reader) != 3 or reader[0] not in (b"100644", b"100755")
+            or reader[1] != b"blob"):
+        refuse(f"origin/main {base[:12]} holds {REGISTRY}/ but no regular file "
+               f"{REGISTRY_READER} to read it")
+    if folder is None or len(folder) != 3 or folder[1] != b"tree":
+        refuse(f"origin/main {base[:12]} holds {REGISTRY_READER} but no folder {REGISTRY}/")
+    source = run(["git", "cat-file", "blob", reader[2].decode()], repo, binary=True)
+    if source.returncode != 0:
+        refuse(f"git could not read origin/main's {REGISTRY_READER}")
+    with tempfile.TemporaryDirectory(prefix="stoicheia-registry-") as tmp:
+        script = Path(tmp) / "registry.py"
+        script.write_bytes(source.stdout)
+        try:
+            r = subprocess.run([PY, "-I", str(script), "--rev", base, "--json", str(repo)],
+                               cwd=repo, env=without_replacements(), capture_output=True,
+                               text=True, errors="replace", timeout=REGISTRY_TIMEOUT)
+        except (OSError, subprocess.TimeoutExpired) as e:
+            refuse(f"its {REGISTRY_READER} could not be run: {type(e).__name__}")
+    if r.returncode != 0:
+        said = (r.stderr.strip().splitlines() or [""])[-1]
+        refuse(f"its {REGISTRY_READER} exited {r.returncode}"
+               + (f": {printable_text(said)[:300]}" if said else ""))
+    try:
+        entries = json.loads(r.stdout)
+    except json.JSONDecodeError:
+        entries = None
+    if not isinstance(entries, list):
+        refuse(f"its {REGISTRY_READER} printed no list of checks")
+    steps: list[tuple[str, list[str] | None]] = []
+    for item in entries:
+        name = item.get("name") if isinstance(item, dict) else None
+        command, empty = (item.get("command"), item.get("empty")) if name else (None, None)
+        words = isinstance(command, list) and bool(command) and all(
+            isinstance(w, str) and w for w in command)
+        if (not isinstance(name, str) or not name or not name.isprintable()
+                or not ((empty is True and command is None) or (empty is False and words))):
+            refuse(f"its {REGISTRY_READER} printed an entry that is not a check: "
+                   f"{printable_text(str(item))[:200]}")
+        if item.get("job") != "check":
+            refuse(f"its {REGISTRY_READER} gives {printable_text(name)} to the job "
+                   f"{printable_text(str(item.get('job')))}, which the pre-flight does not run")
+        steps.append((name, None if empty else
+                       [PY if i == 0 and w == "python3" else w for i, w in enumerate(command)]))
+    if not steps:
+        refuse(f"its {REGISTRY_READER} gives no check")
+    if len({name for name, _ in steps}) != len(steps):
+        refuse(f"its {REGISTRY_READER} gives two checks of one name")
+    return CheckList(steps + MODEL_JOB, f"the {len(steps)} of origin/main's registry, "
+                     f"{REGISTRY}/ (tree {folder[2].decode()[:12]}), as its {REGISTRY_READER} "
+                     f"(blob {reader[2].decode()[:12]}) reads them, then the model job's")
+
+
+def check_list(ctx, rep: Report) -> list[tuple[str, list[str] | None]]:
+    """check_sequence for the commit, as a step line: ok with how many and from where, or
+    FAIL and a Refusal."""
+    t = time.time()
+    try:
+        checks = check_sequence(ctx.repo, ctx.base)
+    except Refusal as e:
+        rep.add("4", "check list", "FAIL", str(e), time.time() - t)
+        raise
+    rep.add("4", "check list", "ok", f"{len(checks.steps)} checks: {checks.why}",
+            time.time() - t)
+    return checks.steps
+
+
+def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
+                checks: list[tuple[str, list[str] | None]]) -> None:
     def kept_apart(label):
         if label == BASE_PASS and keep_apart(ctx.repo, ctx.base, ctx.sha, rep, "4"):
             raise Refusal("a check changed together with what it checks")
@@ -2903,7 +3030,7 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path) ->
     # the worktree back before the worktree is removed.
     with contextlib.closing(passes(ctx.repo, ctx.base, wt, inputs)) as each:
         for label, fail, excludes in each:
-            for i, (name, cmd) in enumerate(CHECKS, 1):
+            for i, (name, cmd) in enumerate(checks, 1):
                 run_step("4", name + label, cmd, wt, rep, logs, 10 + i, fail, excludes)
             kept_apart(label)
     with worktree(ctx.repo, ctx.sha, parent, "negative") as neg:
@@ -2967,10 +3094,14 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
                         "self-test and the rest of section 8 on the pull request before "
                         "the merge, and --merge waits for them green; the negative tests "
                         "run on main after the merge and on the cadence")
-            elif test_mode:
-                rep.add("4", "full local checks", "skip", "internal test flag, local origin")
             else:
-                full_checks(ctx, wt, parent, g.check_inputs, rep, logs)
+                # origin/main's registry, read under the internal test flag too, so that
+                # the tests see which checks the full path would run.
+                checks = check_list(ctx, rep)
+                if test_mode:
+                    rep.add("4", "full local checks", "skip", "internal test flag, local origin")
+                else:
+                    full_checks(ctx, wt, parent, g.check_inputs, rep, logs, checks)
     return Preflight(g.statements, g.protected, short)
 
 
