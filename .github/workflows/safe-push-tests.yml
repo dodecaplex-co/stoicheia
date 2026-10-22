@@ -60,8 +60,8 @@ jobs:
   negative:
     # The negative tests in full, as CI's `negative` job runs them: break the project on
     # purpose, and check that every break is caught. CI runs them on pull requests of
-    # class R3 to R5 and on every push; here they run on main for what the pull requests
-    # of R0 to R2 landed without them.
+    # class R3 to R5 and on every push to main; here they run on main for what the pull
+    # requests of R0 to R2 landed without them.
     runs-on: ubuntu-latest
     permissions:
       contents: read

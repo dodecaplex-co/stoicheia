@@ -343,15 +343,16 @@ risk class, from R0 (docs) to R5 (the landing tool and CI), from the files it ch
 `scripts/risk.py`, the one source of the classes, gives each file the class of the first
 rule of its table that matches it, R5 when none does, and the pull request the highest of
 its files' classes. The job runs main's copy of the script, so a pull request cannot lower
-its own class by editing it; a push is R5. `check`, `model` and `acceptance` run for every
-class. `negative` runs in full for R3, R4 and R5, and `formal-model` for R4 and R5, the
-classes of every change to `model/`, to `Certificate/axioms.lock` and to
+its own class by editing it; a push to main is R5, and a push to another branch is
+classified against main as its pull request is. `check`, `model` and `acceptance` run for
+every class. `negative` runs in full for R3, R4 and R5, and `formal-model` for R4 and R5,
+the classes of every change to `model/`, to `Certificate/axioms.lock` and to
 `scripts/check_model_kernel.py`; for a lower class each passes at once and says why, since
 the `safe-push-tests` workflow runs both on main every six hours and a red run there holds
 the release ([the decision](decisions/2026-10-22-risk-lanes.md)). Each fails, and is never
 skipped, when `risk` does not succeed, for GitHub accepts a skipped required check.
-`python3 scripts/risk.py --paths <file>...` gives files' classes up front, and
-`python3 scripts/risk.py . origin/main` a branch's class.
+`python3 scripts/risk.py --paths <file>...` gives files' classes up front, and `python3
+scripts/risk.py . origin/main` a branch's class.
 
 The full `acceptance` job runs only in CI. Its ratchet before the consolidation release,
 the switch to the full gate at that release, the reports and the executable definitions
