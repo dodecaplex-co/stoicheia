@@ -86,7 +86,7 @@ theorem Prop12 {A B C : Point} (hAB : A ≠ B) (hC : ¬ Collinear A B C) :
   -- But, when a straight line set up on a straight line makes the adjacent angles equal to one
   -- another, each of the equal angles is right, and the straight line standing on the other is
   -- called a perpendicular to that on which it stands. [Def. 10]
-  /- Definition I.10 is `IsRightAngle`: the angle GHC is right, its neighbour being
+  /- Definition 10 is `IsRightAngle`: the angle GHC is right, its neighbour being
      CHE, and so is EHC, its neighbour being CHG. Each is then the right angle `∟`
      (Post. 4, as in I.11). -/
   have hGHC_right : IsRightAngle G H C :=

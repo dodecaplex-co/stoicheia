@@ -32,7 +32,7 @@ theorem Prop19 {A B C : Point} (hABC : Triangle A B C) (h : ∠ B C A < ∠ A B 
   -- I say that the side AC is also greater than the side AB.
   -- For, if not, AC is either equal to AB or less.
   /- That a length not greater than another is equal to it or less is the tacit
-     rule of magnitude `lt_trichotomy` (System E §3.5). -/
+     rule of magnitudes `lt_trichotomy` (System E §3.5). -/
   have either : ¬ ‖A B‖ < ‖A C‖ → ‖A C‖ = ‖A B‖ ∨ ‖A C‖ < ‖A B‖ := by
     intro hnot
     rcases lt_trichotomy ‖A C‖ ‖A B‖ with hlt | heq | hgt

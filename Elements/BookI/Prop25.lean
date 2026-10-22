@@ -32,7 +32,7 @@ theorem Prop25 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
   -- I say that the angle BAC is also greater than the angle EDF.
   -- For, if not, it is either equal to it or less.
   /- That an angle not greater than another is equal to it or less is the tacit
-     rule of magnitude `lt_trichotomy` (System E §3.5). -/
+     rule of magnitudes `lt_trichotomy` (System E §3.5). -/
   have either : ¬ ∠ E D F < ∠ B A C → ∠ B A C = ∠ E D F ∨ ∠ B A C < ∠ E D F := by
     intro hnot
     rcases lt_trichotomy (∠ B A C) (∠ E D F) with hlt | heq | hgt
