@@ -46,11 +46,18 @@
   it), or while the tree holds a `.gitattributes` anywhere (an encoding or filter there
   can make the text Lean reads from the checkout differ from the text Git holds, which the
   reader reads), `formal-model` runs in full for every change, and the log names the file.
-  So a header that Lean reads otherwise can only widen the set. Otherwise a gated job
-  passes at once and says why in its log. The `check` job also now requires, after the
-  build and the render, that `git status --porcelain` over the whole worktree print
-  nothing, as the pre-flight already requires: that covers the generated pages, as the
-  narrower form did, and every other file a check might leave changed or new.
+  So a header that Lean reads otherwise can only widen the set. It also fails closed on an
+  import that names a module for which the tree holds no file at the usual path, unless
+  the module's root is Check, Model, Mathlib, Lean, Init or Std
+  ([#296](https://github.com/jackChallis/stoicheia/issues/296)): the /no-mistakes pipeline
+  built that, and the captain kept it after reading it line by line, with the
+  coordinator's agreement of 22 October, since it only makes the formal model run more
+  often; on this tree every import of the model resolves, so nothing falls to it.
+  Otherwise a gated job passes at once and says why in its log. The `check` job also now
+  requires, after the build and the render, that `git status --porcelain` over the whole
+  worktree print nothing, as the pre-flight already requires: that covers the generated
+  pages, as the narrower form did, and every other file a check might leave changed or
+  new.
 
   Why this is safe. The five checks that main's ruleset requires keep their names
   (`check`, `model`, `negative`, `formal-model` and `acceptance`), so GitHub's settings
@@ -58,8 +65,8 @@
   `scripts/`, nor the classifier, so main's workflow and main's classifier judge it; one
   of R3 or R4 may change scripts, but neither of the other two. A gated job fails, and is
   never skipped, when `risk` fails or is cancelled, for GitHub would take a skipped
-  required check as passed. The negative tests still run in CI on every pull request of
-  R3 and above, and in the pre-flight of `git safe-push` on every pull request; the formal
+  required check as passed. The negative tests still run in CI on every pull request of R3
+  and above, and in the pre-flight of `git safe-push` on every pull request; the formal
   model on every one of R4 and above, on every one that touches a file the model imports,
   and on every one while a header among those files cannot be read; both on a pull request
   whose run starts with the `release` label; every push to main runs both in full, after
@@ -76,8 +83,8 @@
   reads every header among them.
 
   Left to a later part of #276. The card's rule that a red cadence run holds only the
-  classes it guards is not built here: for now any red job of the cadence opens or
-  updates the one `blocks-release` issue, which holds the release.
+  classes it guards is not built here: for now any red job of the cadence opens or updates
+  the one `blocks-release` issue, which holds the release.
 
   This entry approves the change to `.github/workflows/ci.yml`: the new `risk` job, the
   `negative` and `formal-model` jobs gated by what it finds, and the whole-worktree check
