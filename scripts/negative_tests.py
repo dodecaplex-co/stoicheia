@@ -1348,8 +1348,8 @@ CLOSED_UP_KEPT = (
 # `+x` and `+_`, `+z`, the second token of a notation written over two lines, and `+x'`,
 # `+x!` and `+x?`, whose last characters a name may hold though `\w` does not take them.
 # Each is
-# ("token " and the token check_fidelity.py names, the Lean), refused on the line of the
-# token's literal. DECLARED_TOKENS_KEPT holds what the rule does not refuse: a token ending
+# ("literal " and the token's text, the Lean), refused on the line of the token's literal.
+# DECLARED_TOKENS_KEPT holds what the rule does not refuse: a token ending
 # in a symbol, a string after a notation's `=>`, and a declaration in a comment and in a
 # string. DECLARED_TOKEN_READINGS pins which literals `declared_tokens` reads: each is (the
 # Lean, the (line, command, text) of each literal). Its token declarations, but Mathlib's
@@ -1387,21 +1387,26 @@ DECLARED_TOKEN_READINGS = (
     ('-- notation " +c "\ndef d := "notation \\" +c \\" => d"', []),
 )
 DECLARED_TOKENS = (
-    ("token +x", 'infixl:65 " +x " => Nat.add\ndef k : Nat := 2 +x1set_option«debug».byAsSorry '
+    ("literal +x", 'infixl:65 " +x " => Nat.add\ndef k : Nat := 2 +x1set_option«debug».byAsSorry '
      "true in theorem T : (0 : Nat) = 1 := by decide"),
-    ("token +℃", 'infixl:65 " +℃ " => Nat.add\ndef k : Nat := 2 +℃1set_option«debug».byAsSorry '
+    ("literal +℃", 'infixl:65 " +℃ " => Nat.add\ndef k : Nat := 2 +℃1set_option«debug».byAsSorry '
      "true in theorem T : (0 : Nat) = 1 := by decide"),
-    ("token +_", 'infixl:65 " +_ " => Nat.add\ndef k : Nat := 2 +_0set_option«debug».byAsSorry '
+    ("literal +_", 'infixl:65 " +_ " => Nat.add\ndef k : Nat := 2 +_0set_option«debug».byAsSorry '
      "true in theorem T : (0 : Nat) = 1 := by decide"),
-    ("token +z", 'notation:65 a:65 " ⊕⊕ " b:66\n  " +z " c:66 => Nat.add a (Nat.add b c)\n'
+    ("literal +z", 'notation:65 a:65 " ⊕⊕ " b:66\n  " +z " c:66 => Nat.add a (Nat.add b c)\n'
      "def k : Nat := 1 ⊕⊕ 2 +z3set_option«debug».byAsSorry true in "
      "theorem T : (0 : Nat) = 1 := by decide"),
-    ("token +x'", 'infixl:65 " +x\' " => Nat.add\ndef k : Nat := 2 +x\'1set_option«debug».'
+    ("literal +x'", 'infixl:65 " +x\' " => Nat.add\ndef k : Nat := 2 +x\'1set_option«debug».'
      "byAsSorry true in theorem T : (0 : Nat) = 1 := by decide"),
-    ("token +x!", 'infixl:65 " +x! " => Nat.add\ndef k : Nat := 2 +x!1set_option«debug».'
+    ("literal +x!", 'infixl:65 " +x! " => Nat.add\ndef k : Nat := 2 +x!1set_option«debug».'
      "byAsSorry true in theorem T : (0 : Nat) = 1 := by decide"),
-    ("token +x?", 'infixl:65 " +x? " => Nat.add\ndef k : Nat := 2 +x?1set_option«debug».'
+    ("literal +x?", 'infixl:65 " +x? " => Nat.add\ndef k : Nat := 2 +x?1set_option«debug».'
      "byAsSorry true in theorem T : (0 : Nat) = 1 := by decide"),
+)
+APPROXIMATE_DECLARATION_LITERALS = (
+    ("literal only", 'syntax &"only" : term'),
+    ("literal following", 'syntax "§" : term\n'
+     'lemma plantedLibrary : String := "following"\ndef plantedStop : Nat := 0'),
 )
 DECLARED_TOKENS_KEPT = (
     'infixl:65 " +* " => Nat.add',
@@ -1515,15 +1520,15 @@ GUARD_PIN_REFUSED = ("model/Check/Planted.lean", "model/Model/Planted.lean",
                      "Audit/Planted.lean", "Staging/Planted.lean")
 
 
-def scratch_plants(name: str, plants: tuple, kept: tuple = ()) -> None:
+def scratch_plants(name: str, plants: tuple, kept: tuple = (), prohibited: tuple = ()) -> None:
     """Plant each of `plants`, (word, Lean), and each line of `kept` in a scratch copy of
     I.1's file, in a temporary tree whose only file it is, and run check_fidelity.py's
     source scan on that tree (`rules_in`): the edition's own files are never touched. The
     copy must pass unplanted. Planted, each of `plants` must be refused on the line of its
-    command, `set_option` or `#guard_msgs`, by `word`, or, for a word `token …`, on the
-    line of that token's literal, as a token the file declares, or, for a plant (finding,
-    Lean, text), by that finding on the line where the text first stands; and no line of
-    `kept` refused."""
+    command, `set_option` or `#guard_msgs`, by `word`, or, for a word `literal …`, on the
+    line of that string literal, by the approximate token-declaration-span diagnostic, or,
+    for a plant (finding, Lean, text), by that finding on the line where the text first
+    stands; and no line of `kept` refused, nor any text in `prohibited` reported."""
     rel = "Elements/BookI/Prop01.lean"
     marker = "\nend Elements.BookI\n"
     source = (ROOT / rel).read_text()
@@ -1540,12 +1545,14 @@ def scratch_plants(name: str, plants: tuple, kept: tuple = ()) -> None:
     wanted = [f"{rel}:{line(lean, at[0])}: {word}" if at else
               (f"{rel}:{line(lean, word)}: declares an axiom outside "
                "Elements/Foundations/") if word == "axiom" else
-              (f"{rel}:{line(lean, word[6:])}: declares the token `{word[6:]}`")
-              if word.startswith("token ") else
+              (f"{rel}:{line(lean, word[8:])}: finds a string literal whose trimmed text is "
+               f"`{word[8:]}` in an approximate token-declaration span")
+              if word.startswith("literal ") else
               f"{rel}:{line(lean, command.match(word)[0])}: uses `{word}`"
               for word, lean, *at in plants]
-    unwanted = tuple(f"{rel}:{n}:" for lean in kept
-                     for n in range(line(lean, lean), line(lean, lean) + lean.count("\n") + 1))
+    unwanted = prohibited + tuple(f"{rel}:{n}:" for lean in kept
+                                   for n in range(line(lean, lean),
+                                                  line(lean, lean) + lean.count("\n") + 1))
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp).resolve()
         path = root / rel
@@ -1601,11 +1608,13 @@ def closed_up_commands() -> None:
     CLOSED_UP_KEPT is. `read_lean` leaves `#time`, `#with_exporting`, `#guard`, `#eval` and
     its kin whole, closed up or not, for FORBIDDEN to see, and `#guard_msgs` for
     GUARD_MSGS. Then DECLARED_TOKENS in another scratch copy: each refused by the line of
-    its token's literal; nothing of DECLARED_TOKENS_KEPT is; and `declared_tokens` reads
-    the literals of DECLARED_TOKEN_READINGS, and no others. Then each of
-    LITERALS_CLOSED_UP alone in a scratch copy, refused by its line; and `read_lean` marks
-    a character literal or a raw string where the run of name characters before it holds a
-    character outside ASCII, and reads an `s!` there as no interpolation, and no other."""
+    its token's literal; nothing of DECLARED_TOKENS_KEPT is. The non-token strings in
+    APPROXIMATE_DECLARATION_LITERALS are refused by their lines with the approximate-span
+    diagnostic; and `declared_tokens` reads the literals of DECLARED_TOKEN_READINGS, and
+    no others. Then each of LITERALS_CLOSED_UP alone in a scratch copy, refused by its
+    line; and `read_lean` marks a character literal or a raw string where the run of name
+    characters before it holds a character outside ASCII, and reads an `s!` there as no
+    interpolation, and no other."""
     scratch_plants("#eval, #exit and #guard_panic closed up to the word after them, "
                    "#time and #with_exporting closed up, before a def and alone, and #guard "
                    "closed up", CLOSED_UP_COMMANDS, CLOSED_UP_KEPT)
@@ -1623,7 +1632,11 @@ def closed_up_commands() -> None:
             failures.append(f"read_lean({source!r}) returned {(read, unsure)!r}, not "
                             f"{(expected, [])!r}")
     scratch_plants("a declared token ending in a character a name may hold, with set_option "
-                   "closed up to it", DECLARED_TOKENS, DECLARED_TOKENS_KEPT)
+                   "closed up to it", DECLARED_TOKENS, DECLARED_TOKENS_KEPT,
+                   prohibited=("declares the token",))
+    scratch_plants("non-token strings in approximate token-declaration spans",
+                   APPROXIMATE_DECLARATION_LITERALS,
+                   prohibited=("declares the token", "(`syntax`)"))
     for plant in LITERALS_CLOSED_UP:
         scratch_plants("a literal or a string closed up to a name or token holding a "
                        f"character outside ASCII ({plant[2]}), before set_option", (plant,))

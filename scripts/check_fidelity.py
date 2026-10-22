@@ -795,15 +795,17 @@ def check_rules() -> None:
             fail(f"{rel}:{line_of(src, offset)}: a string the scan cannot read for certain, "
                  "since Lean could read its braces as holes of code (docs/FORMALIZATION.md, "
                  "section 7)")
-        for offset, word, text in declared_tokens(code, strings):
+        for offset, _, text in declared_tokens(code, strings):
             token = text.strip(" \t\r\n")
             if token and NAME_CHAR.match(token[-1]):
-                fail(f"{rel}:{line_of(src, offset)}: declares the token `{token}` (`{word}`), "
-                     "which ends in a character a name may hold, as a letter, a digit, `_`, "
-                     "`'`, `!` or `?`: Lean reads the longest token it knows, so a command "
-                     f"closed up to it, as in `{token}1set_option`, could be hidden from this "
-                     "scan, which does not read the file's tokens (docs/FORMALIZATION.md, "
-                     "section 7)")
+                fail(f"{rel}:{line_of(src, offset)}: finds a string literal whose trimmed "
+                     f"text is `{token}` in an approximate token-declaration span; the scan "
+                     "cannot tell from that span alone whether Lean registers the text as a "
+                     "token. The text ends in a character a name may hold, as a letter, a "
+                     "digit, `_`, `'`, `!` or `?`; if registered, Lean reads the longest "
+                     "token it knows, so a command closed up to it, as in "
+                     f"`{token}1set_option`, could be hidden from this scan, which does not "
+                     "read the file's tokens (docs/FORMALIZATION.md, section 7)")
         if rel.startswith("Elements/Figure/"):
             for m in re.finditer(r"^import Elements\.Book", src, re.M):
                 fail(f"{rel}:{line_of(src, m.start())}: Book Zero must not import a proposition")
