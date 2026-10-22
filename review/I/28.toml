@@ -20,10 +20,10 @@ note = "Euclid again reads the angles as alternate. The Lean repeats `SameSideOf
 
 [review]
 stage = "full"
-commit = "d9048de"
-reviewer = "Claude Opus 5.5, records review"
+commit = "9b7dad70"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:620d018ada992821"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at 9b7dad70"
 
 [review.items]
 statement = "pass"
