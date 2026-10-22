@@ -4,12 +4,12 @@
 [statement]
 scope = "full"
 companions = ["I.47 general"]
-note = "Prop47 keeps Euclid's outward squares; Prop47.general proves the same area identity for squares on either side of each base."
+note = "`Prop47` keeps Euclid's outward squares; `Prop47.general` proves the same area identity for squares on either side of each base."
 fingerprint = "sha256:0443415760ef83f5"
 
 [route]
 kind = "euclid"
-note = "The main theorem follows Euclid's outward-square argument; Prop47.general transfers its result using equal squares on the same base."
+note = "The main theorem follows Euclid's outward-square argument; `Prop47.general` transfers its result using equal squares on the same base."
 
 [[passage]]
 at = "For let there be described on BC the square BDEC"
@@ -20,7 +20,7 @@ note = "The main theorem takes the three outward squares as given, so it does no
 at = "through A let AL be drawn parallel"
 kind = "helper"
 helper = "Prop30.meet"
-note = "Euclid draws AL through A, taking for granted that a parallel to BD is also parallel to CE, and reads its meetings with DE and BC from the figure. The Lean draws AL by I.31, proves it parallel to CE with `Prop30.parallel` (I.30, which Heath does not cite here), uses `Prop30.meet` for L and the unnamed foot, and names the two parallelograms."
+note = "Euclid draws AL through A, taking for granted that a parallel to BD is also parallel to CE, and reads its meetings with DE and BC from the figure. The Lean draws AL by I.31, proves it parallel to CE with `Prop30.parallel` (I.30, for which Heath gives no reference here), uses `Prop30.meet` for L and the unnamed foot, and names the two parallelograms."
 
 [[passage]]
 at = "and let AD, FC be joined"
@@ -50,13 +50,13 @@ kind = "given"
 note = "The main theorem takes BDEC, GB and HC as the squares on BC, BA and AC; `Prop47.general` transfers the outward result to squares on either side of each base by `Prop46.square_eq`. Book II separately restates I.47 using its areas of squares on straight lines for later citations."
 
 [figure]
-case = "the three squares standing outward from the right-angled triangle, as in the main theorem; Prop47.general also covers squares on either side of each base"
+case = "the three squares standing outward from the right-angled triangle, as in the main theorem; its companion also covers squares on either side of each base"
 
 [review]
 stage = "full"
-commit = "adbf6993"
-reviewer = "GPT-6 Astra, independent reader"
-run = "ship R1 wave 2, independent re-read of the merged record at adbf6993"
+commit = "18e4e614"
+reviewer = "Claude Opus 5.5, independent reader"
+run = "card 220, cross-family sign-off: original Prop47 by OpenAI Codex at 0c244bc0, begun from the voyage 4 challenger's X47 (54a08e61; family unrecorded) and keeping many lines; Prop47.within by the Claude first mate from X47.within; Prop47.general added at 16875e3b, its proof author's family unrecorded; current file read by GPT-6 Astra (Codex) at adbf6993 and Claude Opus 5.5; ship XS, reader XS-r-I44-I47, independent re-read at 78fb461d; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 18e4e614 (reader RT-c1)"
 lean = "sha256:0120b11abdd14b1b"
 
 [review.items]

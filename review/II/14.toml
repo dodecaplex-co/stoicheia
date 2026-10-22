@@ -1,10 +1,10 @@
 [statement]
 scope = "restricted"
-short = "figures supplied with a checked division into triangles"
+short = "figures given with a checked division into triangles"
 hypotheses = [
-  "A division into non-overlapping triangles is supplied with the figure (`Apart` or `Rectilineal`); existence from an outline is not yet proved."
+  "The figure is given with a checked division into triangles that do not overlap, no point inside two of them (`Apart` or `Rectilineal`, or the division from one corner that `Prop14.fan` checks); the main theorem takes I.45's two triangles unchecked. A figure given only by its boundary is not yet covered. Proved in the staging files ([#289](https://github.com/jackChallis/stoicheia/pull/289)), but not yet part of the edition's statements ([#116](https://github.com/jackChallis/stoicheia/issues/116)): that every rectilineal figure, given only by its boundary, has such a division, and that another division gives the same area."
 ]
-note = "`Prop14.square` draws a square equal to a supplied triangle sum; outline coverage and independence of division remain unproved."
+note = "`Prop14.square` squares a figure given with a checked division. Proved in staging only (#289): that every figure has one, and that another gives the same area."
 companions = ["II.14 rectangle", "II.14 sum", "II.14 apart", "II.14 figure", "II.14 square", "II.14 fan"]
 fingerprint = "sha256:9e83215b978b4220"
 
@@ -22,7 +22,7 @@ note = "Euclid asks I.45 for a rectangular parallelogram. The Lean first constru
 at = "But, if not, one of the straight lines BE, ED is greater."
 kind = "helper"
 helper = "Tacit.lt_trichotomy"
-note = "Euclid takes for granted that one of the unequal straight lines BE and ED is greater. The Lean obtains the two alternatives from `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E §3.5), not a proved lemma."
+note = "Euclid takes for granted that one of the unequal straight lines BE and ED is greater. The Lean obtains the two alternatives from `Tacit.lt_trichotomy`, a tacit rule of magnitude, which we assume (System E §3.5)."
 
 [[passage]]
 at = "Let BE be greater"
@@ -33,19 +33,19 @@ note = "Euclid takes BE the greater; when ED is, the Lean reads the rectangle th
 at = "let EF be made equal to ED"
 kind = "helper"
 helper = "OnRay.exists_len_eq"
-note = "Euclid makes EF equal to ED on BE produced, then bisects BF; Heath gives no reference for either step here. The Lean chooses F by `OnRay.exists_len_eq`, using Postulate 3 and `Tacit.line_circle_beyond` (the rule we assume as System E, Intersections 5), places E between B and F by `OnRay.between`, and bisects BF by I.10."
+note = "Euclid makes EF equal to ED on BE produced, then bisects BF; Heath gives no reference for either step here. The Lean chooses F by `OnRay.exists_len_eq`, using Postulate 3 and `Tacit.line_circle_beyond` (System E, Intersections 5), places E between B and F by `OnRay.between`, and bisects BF by I.10."
 
 [[passage]]
 at = "With centre G and distance one of the straight lines GB, GF"
 kind = "helper"
 helper = "Tacit.on_circle_of_len_eq"
-note = "Euclid's semicircle passes through both B and F. Postulate 3 draws the whole circle with centre G through B, and `Tacit.on_circle_of_len_eq`, the rule we assume as System E, Diagram-segment 3, puts F on it because GF equals GB."
+note = "Euclid's semicircle passes through both B and F. Postulate 3 draws the whole circle with centre G through B, and `Tacit.on_circle_of_len_eq` (System E, Diagram-segment 3) puts F on it because GF equals GB."
 
 [[passage]]
 at = "let DE be produced to H"
 kind = "helper"
 helper = "Tacit.line_circle_beyond"
-note = "Euclid takes DE produced to meet the semicircle at H; since BE is greater than ED = EF and G bisects BF, the Lean puts G between B and E by `OnRay.between_of_len_lt`, also giving E different from G for the unequal cut in II.5. The Lean then puts E inside the circle by `between_inner` and `InsideCircle.of_between_centre`; `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, finds H beyond E from D, and GH is named by its ends."
+note = "Euclid takes DE produced to meet the semicircle at H; since BE is greater than ED = EF and G bisects BF, the Lean puts G between B and E by `OnRay.between_of_len_lt`, also giving E different from G for the unequal cut in II.5. The Lean then puts E inside the circle by `between_inner` and `InsideCircle.of_between_centre`; `Tacit.line_circle_beyond` finds H beyond E from D, and GH is named by its ends."
 
 [[passage]]
 at = "But GF is equal to GH"
@@ -56,22 +56,22 @@ note = "Euclid uses the equality of the radii GF and GH without giving a reason.
 [[passage]]
 at = "But the squares on HE, EG are equal to the square on GH"
 kind = "helper"
-helper = "Tacit.adjacent_eq_of_right"
-note = "Euclid takes the right angle HEG for granted when he applies I.47. The Lean gets the adjacent right angle BEH from the rectangle's right angle DEB by `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, identifies it with HEG because the proved order B, G, E puts G on the ray EB, and applies `BookI.Prop47.sq`."
+helper = "BookI.Prop13"
+note = "Euclid takes the right angle HEG for granted when he applies I.47. The Lean proves it in place: the angles DEB, BEH on the straight line DH make two right angles by I.13, taking away the rectangle's right angle DEB leaves BEH right by Common Notion 3, and the proved order B, G, E puts G on the ray EB, so that HEG is the angle HEB; then `BookI.Prop47.sq` applies I.47."
 
 [representation]
 tags = ["figure-with-dissection", "side-not-square"]
-note = "A rectilineal figure is given with its division into triangles, checked, as in I.45: triangles that lie apart, allowing a figure with a hole (`Prop14.apart`, `Prop14.square`); triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop14.figure`); or Euclid's and Oliver Byrne's division from one corner, checked and shown to fit together (`Prop14.fan`). Equal to the figure means equal to those triangles together. Existence of such a division from the figure's outline, coverage of its region, and independence of the sum from the division chosen remain unproved ([#116](https://github.com/jackChallis/stoicheia/issues/116)); David Hilbert proved the last, for his measure of area. The main theorem is an area-sum theorem: it takes A₁A₂A₄ and A₄A₂A₃ unchecked, and they may overlap. It represents Euclid's pictured division when A₁ and A₃ lie on opposite sides of A₂A₄; that checked case is `Prop14.fan` for the corners A₄, A₁, A₂, A₃. The main theorem returns the straight line EH, and `sq E H` is the square on it, as Euclid ends with \"the square which can be described on EH\"; no four corners of a square are drawn there. `Prop14.square` draws them, on the side `Prop14.apart` finds, constructing the required square for a supplied checked division into triangles that lie apart."
+note = "The main theorem takes A₁A₂A₄ and A₄A₂A₃, I.45's ABD and DBC, unchecked, and they may overlap. They make Euclid's four-sided figure A, divided as in I.45, when A₁ and A₃ lie on opposite sides of A₂A₄; that checked case is `Prop14.fan` for the corners A₄, A₁, A₂, A₃. The main theorem returns the straight line EH, and `sq E H`, the square on it, is equal to the sum of the two triangles, as Euclid ends with \"the square which can be described on EH\"; no four corners of a square are drawn there. Four companions take a rectilineal figure given with a checked division into triangles, as in I.45: triangles that lie apart, so the figure may have a hole (`Prop14.apart`, and `Prop14.square`, which draws the square's four corners on the side `Prop14.apart` finds, by I.46); triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop14.figure`); or Euclid's and Oliver Byrne's division from one corner, checked and shown to fit together (`Prop14.fan`). Equal to the figure means equal to those triangles together. Proved in the staging files ([#289](https://github.com/jackChallis/stoicheia/pull/289)), but not yet part of the edition's statements ([#116](https://github.com/jackChallis/stoicheia/issues/116)): that every rectilineal figure, given only by its boundary, has such a division, and that another division gives the same area. David Hilbert proved the second, for his measure of area."
 
 [figure]
-case = "BE greater than ED, as in Heath's figure, with the figure A of two triangles"
+case = "BE greater than ED, and A four-sided, as in Heath's figure; the main theorem takes A as the two triangles a diameter divides it into, though no diameter is drawn"
 
 [review]
 stage = "full"
-commit = "08ddfe3a"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:a1911148d8503c4f"
-run = "Q watch, independent re-read at e2b241fd"
+commit = "a15b1cce"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:a4a6f6e7eb79eb27"
+run = "card 220, cross-family sign-off: Prop14 as first committed by OpenAI Codex (4bed3129, which says so); later surviving edits at 702c75e2 name BHF and hEG, explain why the angle HEG is right and rewrite the closing equality, in a commit whose message has a Claude Opus 5.5 co-author trailer but does not identify which writer made them. Prop14.rectangle, Prop14.square and Prop14.area_pos by the best of two sailors (c620b12c), which WORKFLOW section 5 gives to two Codex sailors; read by Claude Opus 5.5. Prop14.sum, .apart, .figure and .fan and the closing check written in staging (17fddffc, fdc56e9a, b48640cf, a854f707, 7c8167a5, 4317bc0b), in commits whose messages name no writer beyond the Claude Opus 5.5 co-author line they carry; the step putting E inside the circle adjusted at afc8cec6, whose message names no writer and carries no co-author line, so its writer is unrecorded, and carried into Prop14.rectangle at d15efad6, whose message has a Claude Opus 5.5 co-author trailer but does not identify which writer made it; that step first redone by one of two OpenAI Codex sailors working on separate files, then judged and grafted by their bosun (9c61ddd4). The 702c75e2 edits and the staged and later parts just named were read by GPT-6 Astra (Codex) at 08ddfe3a and by Claude Opus 5.5; ship XS, reader XS-r-II09-II14, independent re-read at 221ad5c2; card 168, the right angle BEH (and so HEG) proved in place by I.13 and Common Notion 3 in Prop14 and Prop14.rectangle, written by Claude Opus 5.5 at c1d03530, read with the whole record by GPT-6 Astra (Codex); ship F2, reader F2-ii14cx, independent re-read at d4b21d06; read-through 02 (#34) and #299: re-read whole after the staged proofs of #299, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at a15b1cce (reader RT-y11)"
 
 [review.items]
 statement = "pass"

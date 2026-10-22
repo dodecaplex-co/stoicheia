@@ -9,13 +9,13 @@ kind = "euclid"
 
 [representation]
 tags = ["touching-whole-circles"]
-note = "Touching is read of the whole circles: for contact within a point of the inner circle is within the outer and none is outside it. Both clauses carry unchanged from contact at D to a supposed second common point B, so the circles touch within at B too; III.13 applies III.11 at both points to show that they cannot meet again. Contact without is unchanged."
+note = "Touching is read of the whole circles: for contact within a point of the inner circle is within the outer and none is outside it. Both clauses carry unchanged from contact at D to a supposed second common point B, so the circles touch within at B too; III.13 applies III.11 at both points to show that they cannot meet again. For contact without no point is within both circles, so the point of AC that III.2 puts within both is at once absurd."
 
 [figure]
 note = "Like Heath's, this figure draws both impossible suppositions: EBFD touching ABDC internally at B and D, drawn as an oval, since no second circle can; and ACK touching ABDC externally at A and C, drawn as a true circle that crosses ABDC there."
 
 [review]
 stage = "exceptions"
-commit = "17987153"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:947ea3ed47e6ee68"
+commit = "3adf82dc"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:ae577fbed3d18152"
