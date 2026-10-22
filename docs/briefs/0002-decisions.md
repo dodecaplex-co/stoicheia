@@ -4689,7 +4689,8 @@ findings:
   from `Audit.lean`, fixes the frozen type of `Elements.BookIII.Prop1.construction`
   and pins its full axiom list with `#guard_msgs`, read afresh from Lean at `34f2db57`.
   The list has 64 names, including `Tacit.exists_centre`, admitted by the owner's
-  decision. Every renewal is read for `Tacit.outside_of_between` and `sorryAx`, which
+  decision of 18 October 2026 on issue #59, "approved, as Astra recommends". Every
+  renewal is read for `Tacit.outside_of_between` and `sorryAx`, which
   must remain absent (the paragraph below says why Circle 2 and `Tacit.centre_unique` no
   longer can appear). The pin cannot establish that the centre is used only inside the
   proof that D is within the circle; a reader checks that confinement in the proof.
