@@ -9,7 +9,7 @@ kind = "euclid"
 
 [representation]
 tags = ["centre-given"]
-note = "The circle comes with some centre G, Euclid's supposed centre, and with the two points A, B of the straight line he draws through it at random. The porism, too, is stated of a circle with a centre."
+note = "The circle comes with some centre G, Euclid's supposed centre, a hypothesis every circle meets by `Tacit.exists_centre`, and with the two points A, B of the straight line he draws through it at random. The porism names its centre G."
 
 [[passage]]
 at = "from D let DC be drawn at right angles to AB and let it be drawn through to E"
@@ -38,7 +38,7 @@ note = "The reductio shows that the supposed centre G lies on CE, and the Lean b
 at = "PORISM. From this it is manifest"
 kind = "carried"
 helper = "Prop1.porism"
-note = "Proved as its own theorem, III.1 Por., from this construction. It uses `Tacit.centre_unique`, now proved from the foundations in `Elements/Figure/Circles.lean` using circle intersections, equal radii (Definition I.15) and the order of lengths; III.1 itself does not use this theorem."
+note = "Proved as its own theorem, III.1 Por., from this construction. It uses `Tacit.centre_unique`, proved from the foundations in `Elements/Figure/Circles.lean` using circle intersections, equal radii (Definition I.15) and the order of lengths; III.1 itself does not use this theorem."
 
 [figure]
 case = "the supposed centre G off AB and off CE, as in Heath's figure"
@@ -46,6 +46,6 @@ note = "Like Heath's, this figure draws the impossible supposition: G, off CE, a
 
 [review]
 stage = "exceptions"
-commit = "6fbd90c0"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "529c93f7"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:fd968c0c90a4b364"
