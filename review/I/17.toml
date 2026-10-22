@@ -11,19 +11,22 @@ kind = "euclid"
 at = "Let the angle ACB be added to each"
 kind = "helper"
 helper = "Tacit.add_lt_add_right"
-note = "Euclid adds the same angle to a greater and a less, keeping their order. The Lean uses `Tacit.add_lt_add_right`, an assumed rule of magnitudes (System E §3.5)."
+note = "Euclid adds the same angle to a greater and a less, keeping their order. The Lean uses `Tacit.add_lt_add_right`, a tacit rule of magnitude, which we assume (System E §3.5)."
 
 [[passage]]
 at = "Similarly we can prove that the angles BAC, ACB"
 kind = "grouped"
 note = "Euclid leaves the argument for the other two pairs to the reader. The Lean proves his argument once over any letters, with BC produced in ABC, and applies it again to the triangles BAC and CAB, producing AC and AB respectively."
 
+[figure]
+case = "the angles ABC, BCA, with BC produced to D, as in Heath's figure"
+
 [review]
 stage = "full"
-commit = "570e6fa"
-reviewer = "GPT-6 Astra (Codex), records re-read"
-lean = "sha256:f35da40349c54986"
-run = "brief 0005 stage 5, ship C5 re-read"
+commit = "b7b41f51"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:4d0603f278028dde"
+run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y2)"
 
 [review.items]
 statement = "pass"
