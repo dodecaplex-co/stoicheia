@@ -7,23 +7,55 @@ fingerprint = "sha256:105a583195d3f19f"
 
 [route]
 kind = "euclid"
-
-[[passage]]
-at = "Let A be the given point, and BCD the given circle"
-kind = "case"
 note = "Euclid's A is outside the circle. `Prop17.general` takes A on the circle too, a case Euclid leaves out, Heath explains, because III.16's porism so directly indicates it (vol. 2, p. 44): AX drawn at right angles to the radius EA at A (I.11) touches by that porism. The construction is not on Euclid's page. The companion returns a straight line named by A and X; its point of contact is not returned beside X (`Touches.contact` reads it off). From a point within no straight line touches (`Prop17.inside`), so not being within is the condition for a solution."
 
 [[passage]]
 at = "For let the centre E of the circle be taken"
-kind = "helper"
-helper = "Prop1.of_circle"
+kind = "carried"
 note = "`Prop1.of_circle` takes two points of the circle and applies III.1's construction and correctness proof to obtain E. The proof then joins EA and takes its meeting D with BCD between E and A, before continuing Euclid's construction."
+
+[[passage]]
+at = "let AE be joined, and with centre E"
+kind = "helper"
+helper = "Tacit.line_circle_between"
+note = "Euclid joins AE and treats its meeting D with BCD as available. The Lean gets D between E and A from `Tacit.line_circle_between`, the rule we assume as System E, Intersections 4, and describes AFG by Postulate 3."
+
+[[passage]]
+at = "from D let DF be drawn at right angles to EA"
+kind = "helper"
+helper = "Prop11"
+note = "Euclid draws DF perpendicular to EA; the Lean uses I.11, for which Heath prints no reference here. `InsideCircle.of_between_centre` puts D within AFG, and `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, takes F on AFG beyond D from the point first supplied by I.11."
+
+[[passage]]
+at = "and let EF, AB be joined"
+kind = "helper"
+helper = "Tacit.line_circle_between"
+note = "Euclid's joining EF presupposes its meeting B with BCD. The Lean compares the radii to put F outside BCD by `outside_of_len_gt`, then gets B between E and F from `Tacit.line_circle_between`, the rule we assume as System E, Intersections 4."
+
+[[passage]]
+at = "For, since E is the centre of the circles BCD, AFG"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid uses equal radii in each of the two circles without giving a reason. The Lean obtains EA equal to EF and ED equal to EB from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
+
+[[passage]]
+at = "therefore the base DF is equal to the base AB"
+kind = "grouped"
+helper = "Prop4"
+note = "Euclid's three conclusions about the base, triangle and remaining angles come together from I.4. The Lean calls `BookI.Prop4` once and retains the angle equality needed in the next sentence."
+
+[[passage]]
+at = "But the angle EDF is right"
+kind = "helper"
+helper = "Tacit.adjacent_eq_of_right"
+note = "Euclid recalls the right angle at D, but the Lean's point F lies beyond D from the point first drawn by I.11. `Tacit.adjacent_eq_of_right`, proved from I.13 and Common Notion 3, transfers the right angle to DF; Heath prints no reference to I.13 here."
 
 [figure]
 case = "A outside the circle, as in Heath's figure"
 
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "b9f6a766"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:8fc1257893f4e28c"
+run = "brief 0005 stage 5, ship R3 (#29)"
