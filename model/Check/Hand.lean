@@ -61,6 +61,8 @@ example : Model.Hand.circles_meet_same_side original =
 example : Model.Hand.circles_meet_opposite_side original =
     type_of% @Elements.Tacit.circles_meet_opposite_side := rfl
 
+example : Model.Hand.exists_centre original = type_of% @Elements.Tacit.exists_centre := rfl
+
 /-! ## The magnitude laws
 
 These quantify over the kind of magnitude, and the model's `Kind` is a copy of the
@@ -147,6 +149,8 @@ example (S : Model.Signature) : Model.Hand.circles_meet_same_side S =
     Model.Law.Tacit.circles_meet_same_side S := rfl
 example (S : Model.Signature) : Model.Hand.circles_meet_opposite_side S =
     Model.Law.Tacit.circles_meet_opposite_side S := rfl
+example (S : Model.Signature) : Model.Hand.exists_centre S = Model.Law.Tacit.exists_centre S :=
+  rfl
 example (S : Model.Signature) : Model.Hand.add_assoc S = Model.Law.Tacit.add_assoc S := rfl
 example (S : Model.Signature) : Model.Hand.add_comm S = Model.Law.Tacit.add_comm S := rfl
 example (S : Model.Signature) : Model.Hand.add_lt_add_right S =
