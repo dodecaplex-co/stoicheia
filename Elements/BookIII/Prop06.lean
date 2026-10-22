@@ -24,19 +24,24 @@ theorem Prop6 {C F : Point} {ABC CDE : Circle} (htouch : CirclesTouch ABC CDE C)
   rintro ⟨hF₁, hF₂⟩
   /- Contact without, which Euclid leaves to the reader, ends here: F would be within
      each circle, as a centre is (`centre_inside`), and circles touching without have no
-     point within both. So the circles touch within, whichever is the inner, and are two. -/
-  have hne : ABC ≠ CDE := by
-    rcases htouch with ⟨-, -, hne, -⟩ | ⟨-, -, hne, -⟩ | ⟨-, -, hout⟩
-    · exact hne
-    · exact hne.symm
+     point within both. So the circles touch within, whichever is the inner, and the inner
+     has passed within the outer, at a point the definition gives. FC is drawn for the eye;
+     our proof uses only its ends. FEB is drawn through that point and produced beyond it to
+     the outer circle, so that E is on CDE and B on ABC, and the nearer F of the two is the
+     point of the inner circle: one straight line meeting the circles at two points, as
+     Heath answers Camerer. -/
+  obtain ⟨E, B, hE, hB, hnear⟩ : ∃ E B : Point, OnCircle E CDE ∧ OnCircle B ABC ∧
+      (Between F E B ∨ Between F B E) := by
+    rcases htouch with ⟨-, -, ⟨E, hE, hE_in⟩, -⟩ | ⟨-, -, ⟨B, hB, hB_in⟩, -⟩ | ⟨-, -, hout⟩
+    · have hEF : E ≠ F := ne_of_centre_of_on hF₂ hE
+      obtain ⟨L, hF_L, hE_L⟩ := Postulate1 F E hEF.symm
+      obtain ⟨B, hB, -, hBEF⟩ := line_circle_beyond hE_in hE_L hF_L hEF.symm
+      exact ⟨E, B, hE, hB, Or.inl (between_symm hBEF)⟩
+    · have hBF : B ≠ F := ne_of_centre_of_on hF₁ hB
+      obtain ⟨L, hF_L, hB_L⟩ := Postulate1 F B hBF.symm
+      obtain ⟨E, hE, -, hEBF⟩ := line_circle_beyond hB_in hB_L hF_L hBF.symm
+      exact ⟨E, B, hE, hB, Or.inr (between_symm hEBF)⟩
     · exact absurd (centre_inside hF₂) (hout F (centre_inside hF₁))
-  /- FC is drawn for the eye; our proof uses only its ends. An unlettered point
-     chooses the direction of FEB, which meets both circles beyond F. -/
-  obtain ⟨X, hX⟩ := exists_point [F]
-  have hXF : X ≠ F := fun h => hX (h ▸ List.mem_singleton_self F)
-  obtain ⟨L, hF_L, hX_L⟩ := Postulate1 F X hXF.symm
-  obtain ⟨B, hB, hB_L, hBFX⟩ := line_circle_beyond (centre_inside hF₁) hF_L hX_L hXF
-  obtain ⟨E, hE, hE_L, hEFX⟩ := line_circle_beyond (centre_inside hF₂) hF_L hX_L hXF
   -- Then, since the point F is the centre of the circle ABC,
   -- FC is equal to FB.
   have hFB : ‖F C‖ = ‖F B‖ := Definition15 hF₁ hC.1 hB
@@ -46,20 +51,15 @@ theorem Prop6 {C F : Point} {ABC CDE : Circle} (htouch : CirclesTouch ABC CDE C)
   -- But FC was proved equal to FB;
   -- therefore FE is also equal to FB, the less to the greater: which is impossible.
   have hEB : ‖F E‖ = ‖F B‖ := hFE.symm.trans hFB
-  /- That E and B are two points is the step Euclid leaves tacit, as in III.5. Were they
-     one, the circles, about the one centre F, would pass through one point and be one
-     circle (`circle_eq`); but circles touching within are two. -/
-  have hEB_ne : E ≠ B := by
-    rintro rfl
-    exact hne (circle_eq hF₁ hF₂ hB hE rfl)
-  /- E and B both lie beyond F from the unlettered point, so B is on the ray from F
-     through E, and only one point of a ray is at a given distance from its start
-     (`OnRay.eq_of_len_eq`, as in III.5): whichever is the nearer, the less would be
-     equal to the greater. Euclid's figure has E the nearer. -/
-  have hB_ray : OnRay B F E := ⟨(ne_of_between hEFX).symm, ne_of_between hBFX,
-    ⟨L, hF_L, hE_L, hB_L⟩,
-    not_between_of_between_between (between_symm hBFX) (between_symm hEFX)⟩
-  exact hEB_ne (OnRay.eq_of_len_eq hB_ray hEB.symm).symm
+  /- Whichever of E and B is the nearer F is the less; in Euclid's figure, CDE is the inner
+     circle, and E the nearer. -/
+  rcases hnear with h | h
+  · have hlt : ‖F E‖ < ‖F B‖ := len_lt_of_between h
+    rw [hEB] at hlt
+    exact lt_irrefl _ hlt
+  · have hlt : ‖F B‖ < ‖F E‖ := len_lt_of_between h
+    rw [← hEB] at hlt
+    exact lt_irrefl _ hlt
   -- Therefore F is not the centre of the circles ABC, CDE.
   -- Therefore etc.
   -- Q. E. D.

@@ -104,6 +104,37 @@ records current; CI runs it on every push.
     the tree. leanchecker, invoked as in `check_kernel.py`, rejects the proof, naming the
     declaration and the kernel's type mismatch, not a file it cannot read. The build is
     restored as in item 15, and on success the whole environment is replayed.
+22. Without a build, in a scratch copy of I.1's file in a temporary tree, read by the
+    source scan alone: `set_option«debug».skipKernelTC true in`, which Lean reads with no
+    space before the guillemet, and the other spellings of `set_option debug.…` and
+    `doc.…` with none, guillemets around one part or each, in a command and in a tactic
+    block, and after a space, a tab or a line break: each refused by its file, line and
+    spelling, and the unplanted copy passes (#197).
+23. Likewise, `#guard_msgs` with `drop`, in each of its forms: `(drop all)`, closed up
+    and spaced, `(drop error)`, `(drop warning)`, `(drop info)`, `drop` after another
+    filter or an option, twice, and with a remark or a line break inside: each refused by
+    its file and line, while a `#guard_msgs` that checks its messages or passes them on,
+    and the words in a comment or a string, are not (#197).
+24. Likewise, `#eval`, `#exit` and `#guard_panic` closed up to the word after them, which
+    Lean reads as the command and that word (`#evalIO.println`, `#guard_panicin`), and
+    `#guard_panic` after a remark or a line break: each refused by its file, line and
+    command, while the words in a comment or a string are not (#197). `#guard_panic`
+    spaced is among item 8's commands.
+25. Likewise, `#guard_msgs` with `substring`: `(substring := true)`, closed up and
+    spaced, after a filter or an option, with a remark or a line break inside, under a
+    docstring that is only part of the error, and `(substring := false)`: each refused by
+    its file and line, while a `#guard_msgs` with other options, and the words in a
+    comment or a string, are not (#197).
+26. Likewise, `#guard_msgs` under a docstring that pins an error: closed up, with a remark
+    or a comment between the two, under a filter or an option, with positions, two errors
+    at once, and `error:` alone on its line: each refused by its file and line. Not
+    refused: a docstring that pins only an info message or a warning, a theorem's own
+    docstring holding `error:`, `error:` in a comment or a module docstring before a
+    `#guard_msgs`, and the words in a comment or a string. Then the same pin alone in a
+    small tree of its own, at each path of the allow-list, `model/Check/RoundTrip.lean`
+    and `model/Model/Audit.lean`, must pass, and at a new file beside each of them, at
+    each one's name in the other's folder, in `Audit/` and in `Staging/`, is refused
+    (#197).
 
 The copies of items 16 and 17, and item 13's list of generated outputs, read Git's
 tracked files. One absent from the work tree is named on stdout and passed over: as a
@@ -767,6 +798,8 @@ PLANTED_COMMANDS = (
     ("set_option «doc».",
      "set_option «doc».«verso» true in theorem planted_verso : True := trivial"),
     ("#eval", '#eval IO.println "planted"'),
+    ("#guard_panic",
+     '#guard_panic in theorem planted_panic : (0 : Nat) = 1 := by fail "PANIC"'),
     ("run_cmd", "run_cmd pure ()"),
     ("run_cmd", 'run_cmd Lean.logInfo "x"'),
     ("run_cmd", "example : True := trivial run_cmd Check.Generator.checkFiles"),
@@ -1065,6 +1098,346 @@ def lake_links() -> None:
             print(result.stdout[-3000:])
         else:
             print("✓ a real model/.lake holding an axiom and a link: not read")
+
+
+# The spellings of `set_option debug.…` and `doc.…` with no space before the option, which
+# Lean 4.35 reads as the option itself (#197): a guillemet closed up to the command, around
+# one part or each, in a command and in a tactic block, and after a comment opened
+# `/-/-` or `/--/`; with them, a guillemet after a space, a tab (which Lean refuses on its
+# own) and a line break, which the scan caught before; and the command closed up to a
+# number or a field before it, decimal, hexadecimal, scientific or with `_`, which Lean ends
+# before the command, including numbers after notation ending in `.` and with whitespace or
+# a block comment breaking projection adjacency. Each is planted as (the spelling
+# check_fidelity.py names, a line of Lean). SET_OPTION_KEPT holds what the rule does not
+# refuse: the command inside a nested comment, `set_optiondebug.skipKernelTC` and
+# `set_optiondoc.verso`, with neither a space nor a guillemet, which Lean reads as one name,
+# a name with a digit before `set_option`, and fields and numbers in plain use. The explicit
+# read_lean cases below preserve ordinary projections after an identifier, `)`, `·`, `⟩`
+# and `›`, numbers after a declared notation, and a projection broken by a space or a
+# comment, whose digits are then a number.
+SET_OPTION_SPELLINGS = (
+    ("set_option«debug».",
+     "set_option«debug».skipKernelTC true in theorem planted_closed : True := trivial"),
+    ("set_option«debug».",
+     "set_option«debug».«skipKernelTC» true in theorem planted_closed_both : True := trivial"),
+    ("set_option«doc».",
+     "set_option«doc».verso true in theorem planted_closed_verso : True := trivial"),
+    ("set_option«doc».", "set_option«doc».x true in theorem planted_closed_doc : True := trivial"),
+    ("set_option«debug».", "theorem planted_closed_tactic : True := by\n"
+     "  set_option«debug».byAsSorry true in\n  trivial"),
+    ("set_option «debug».",
+     "set_option «debug».«skipKernelTC» true in theorem planted_both : True := trivial"),
+    ("set_option «debug».",
+     "set_option\t«debug».skipKernelTC true in theorem planted_tab : True := trivial"),
+    ("set_option «debug».",
+     "set_option\n  «debug».skipKernelTC true in theorem planted_break : True := trivial"),
+    ("set_option«debug».", "/-/- -/\nset_option«debug».skipKernelTC true in "
+     "theorem planted_after_plain_slash : True := trivial"),
+    ("set_option«debug».", "/--/ x -/\nset_option«debug».skipKernelTC true in "
+     "theorem planted_after_doc_slash : True := trivial"),
+    ("set_option«debug».", "def planted_number : Nat := 1set_option«debug».byAsSorry true in "
+     "theorem planted_after_number : (0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", "def planted_field : Nat := (1, 2).1set_option«debug».byAsSorry "
+     "true in theorem planted_after_field : (0 : Nat) = 1 := by decide"),
+    ("set_option «debug».", "def planted_hex : Nat := 0xAset_option «debug».skipKernelTC "
+     "true in theorem planted_after_hex : True := trivial"),
+    ("set_option«debug».", "def planted_scientific : Float := 1.5e5set_option«debug»."
+     "byAsSorry true in theorem planted_after_scientific : (0 : Nat) = 1 := by decide"),
+    ("set_option«doc».", "def planted_separator : Nat := 1_0set_option«doc».verso true in "
+     "theorem planted_after_separator : True := trivial"),
+    ("set_option«debug».", 'infixl:65 " +. " => Nat.add\n'
+     "def planted_notation_hex : Nat := 2 +.0x1set_option«debug».byAsSorry true in "
+     "theorem planted_after_notation_hex : (0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", 'infixl:65 " +. " => Nat.add\n'
+     "def planted_notation_scientific : Nat := 2 +.1e5set_option«debug».byAsSorry true in "
+     "theorem planted_after_notation_scientific : (0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", 'infixl:65 " +. " => Nat.add\n'
+     "def planted_notation_separator : Nat := 2 +.1_0set_option«debug».byAsSorry true in "
+     "theorem planted_after_notation_separator : (0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", 'infixl:65 " . " => Nat.add\n'
+     "def planted_dot_space_before : Nat := 2 .1e5set_option«debug».byAsSorry true in "
+     "theorem planted_after_dot_space_before : (0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", 'infixl:65 " . " => Nat.add\n'
+     "def planted_dot_space_after_lhs : Nat := 2\n"
+     "def planted_dot_space_after : Nat := planted_dot_space_after_lhs. "
+     "1_0set_option«debug».byAsSorry true in "
+     "theorem planted_after_dot_space_after : (0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", 'infixl:65 " . " => Nat.add\n'
+     "def planted_dot_comment_before_lhs : Nat := 2\n"
+     "def planted_dot_comment_before : Nat := planted_dot_comment_before_lhs/- gap -/."
+     "1e5set_option«debug».byAsSorry true in theorem planted_after_dot_comment_before : "
+     "(0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", 'infixl:65 " . " => Nat.add\n'
+     "def planted_dot_comment_after_lhs : Nat := 2\n"
+     "def planted_dot_comment_after : Nat := planted_dot_comment_after_lhs./- gap -/"
+     "1e5set_option«debug».byAsSorry true in theorem planted_after_dot_comment_after : "
+     "(0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", 'infixl:65 " . " => Nat.add\n'
+     "def planted_adjacent_separator_lhs : Nat := 2\n"
+     "def planted_adjacent_separator : Nat := planted_adjacent_separator_lhs."
+     "1_0set_option«debug».byAsSorry true in theorem planted_after_adjacent_separator : "
+     "(0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", 'infixl:65 " . " => Nat.add\n'
+     "def planted_adjacent_scientific_lhs : Nat := 2\n"
+     "def planted_adjacent_scientific : Nat := planted_adjacent_scientific_lhs."
+     "1e5set_option«debug».byAsSorry true in theorem planted_after_adjacent_scientific : "
+     "(0 : Nat) = 1 := by decide"),
+    ("axiom", 'infixl:65 " . " => Nat.add\n'
+     "def planted_adjacent_declaration_lhs : Nat := 2\n"
+     "def planted_adjacent_declaration : Nat := planted_adjacent_declaration_lhs.1_0axiom "
+     "planted_after_adjacent_axiom : False"),
+    ("set_option«debug».", 'infixl:65 " . " => Nat.add\n'
+     "def planted_adjacent_hex_lhs : Nat := 2\n"
+     "def planted_adjacent_hex : Nat := planted_adjacent_hex_lhs.0x1set_option«debug».byAsSorry "
+     "true in theorem planted_after_adjacent_hex : (0 : Nat) = 1 := by decide"),
+)
+SET_OPTION_KEPT = (
+    "/- /- -/ set_option«debug».skipKernelTC true in "
+    "theorem planted_nested : True := trivial -/",
+    "theorem set_optiondebug.skipKernelTC : True := trivial",
+    "def set_optiondoc.verso : Bool := true",
+    "def planted2set_option : Nat := 2",
+    "def planted_kept_field : Nat := (1, 2).1.succ + 0x1F + 1_000",
+)
+# `#guard_msgs` with `drop`, in Lean 4.35's forms (#197): each kind of message and `all`,
+# the brackets closed up or spaced, `drop` after another filter or an option, twice, and a
+# remark or a line break inside; each is (the words check_fidelity.py names, a line of
+# Lean). GUARD_KEPT holds what the rule does not refuse: a `#guard_msgs` that checks its
+# messages or passes them on, and the words in a comment or a string.
+GUARD_DROPS = (
+    ("#guard_msgs (drop all)",
+     "#guard_msgs (drop all) in theorem planted_drop_all : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs(drop all)",
+     "#guard_msgs(drop all)in theorem planted_drop_closed : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (drop error)",
+     "#guard_msgs (drop error) in theorem planted_drop_error : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs ( drop error )",
+     "#guard_msgs ( drop error ) in theorem planted_drop_spaced : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (drop warning)",
+     "#guard_msgs (drop warning) in theorem planted_drop_warning : True := sorry"),
+    ("#guard_msgs (drop info)", "#guard_msgs (drop info) in #print axioms planted_drop_all"),
+    ("#guard_msgs (warning, drop all)",
+     "#guard_msgs (warning, drop all) in theorem planted_drop_after : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (whitespace := lax, drop all)", "#guard_msgs (whitespace := lax, drop all) "
+     "in theorem planted_drop_option : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (drop trace, drop error)", "#guard_msgs (drop trace, drop error) "
+     "in theorem planted_drop_twice : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (drop all)", "#guard_msgs /- a remark -/ (drop /- a remark -/ all) "
+     "in theorem planted_drop_remark : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (drop all)", "#guard_msgs\n  (drop\n  all) "
+     "in theorem planted_drop_break : (0 : Nat) = 1 := rfl"),
+)
+GUARD_KEPT = (
+    "#guard_msgs in #print axioms planted_drop_all",
+    "#guard_msgs (error) in #print axioms planted_drop_all",
+    "#guard_msgs (pass all) in #print axioms planted_drop_all",
+    "/- #guard_msgs (drop all) in -/ theorem planted_kept_remark : True := trivial",
+    'def plantedKeptWords := "#guard_msgs (drop all) in"',
+)
+# `#eval`, `#exit` and `#guard_panic` closed up to the word after them, which Lean 4.35
+# reads as the command and that word, and `#guard_panic` after a remark or a line break
+# (#197); each is (the command check_fidelity.py names, a line of Lean). `#exit` comes
+# last, as it would in a file. CLOSED_UP_KEPT holds the same words in a comment and a
+# string, which are not refused.
+CLOSED_UP_COMMANDS = (
+    ("#eval", '#evalIO.println "planted"'),
+    ("#guard_panic",
+     '#guard_panicin theorem planted_panic_closed : (0 : Nat) = 1 := by fail "PANIC"'),
+    ("#guard_panic", "#guard_panic /- a remark -/ in theorem planted_panic_remark : "
+     '(0 : Nat) = 1 := by fail "PANIC"'),
+    ("#guard_panic", "#guard_panic\n  in theorem planted_panic_break : (0 : Nat) = 1 := by\n"
+     '  trace "PANIC"\n  exact rfl'),
+    ("#exit", "#exitplanted"),
+)
+CLOSED_UP_KEPT = (
+    "-- #guard_panicin, #evalx and #exitx, in a comment",
+    'def plantedKeptClosedUp := "#guard_panicin #evalx #exitx"',
+)
+# `#guard_msgs` with `substring` (#197), in Lean 4.35's forms: closed up and spaced, after a
+# filter or an option, with a remark or a line break inside, under a docstring that is only
+# part of the error, and set false; each is (the words check_fidelity.py names, a line of
+# Lean). GUARD_SUBSTRING_KEPT holds what the rule does not refuse.
+GUARD_SUBSTRINGS = (
+    ("#guard_msgs (substring := true)",
+     "#guard_msgs (substring := true) in theorem planted_sub : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs(substring:=true)",
+     "#guard_msgs(substring:=true)in theorem planted_sub_closed : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs ( substring := true )", "#guard_msgs ( substring := true ) "
+     "in theorem planted_sub_spaced : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (error, substring := true)", "#guard_msgs (error, substring := true) "
+     "in theorem planted_sub_filter : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (whitespace := lax, substring := true)",
+     "#guard_msgs (whitespace := lax, substring := true) "
+     "in theorem planted_sub_option : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (substring := true)", "#guard_msgs (substring /- a remark -/ := true) "
+     "in theorem planted_sub_remark : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (substring := true)", "#guard_msgs\n  (substring\n  := true) "
+     "in theorem planted_sub_break : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (substring := true)", "/-- error -/ #guard_msgs (substring := true) "
+     "in theorem planted_sub_partial : (0 : Nat) = 1 := rfl"),
+    ("#guard_msgs (substring := false)",
+     "#guard_msgs (substring := false) in #print axioms planted_sub"),
+)
+GUARD_SUBSTRING_KEPT = (
+    "#guard_msgs (whitespace := lax, ordering := sorted) in #print axioms planted_sub",
+    "-- #guard_msgs (substring := true) in, in a comment",
+    'def plantedKeptSubstring := "#guard_msgs (substring := true) in"',
+)
+# `#guard_msgs` under a docstring that pins an error (#197), in Lean 4.35's forms: plain,
+# closed up, with a comment or a remark between the two, under a filter or an option, with
+# positions, two errors at once, and the command closed up to `in`; each is (the command
+# check_fidelity.py names, the lines of Lean). GUARD_PIN_KEPT holds what the rule does not
+# refuse: a docstring that pins an info message, a theorem's own docstring, `error:` in a
+# comment, a module docstring or a remark before a `#guard_msgs`, and a string.
+GUARD_PINS = (
+    ("#guard_msgs", '/-- error: boom\n⊢ 0 = 1 -/\n#guard_msgs in\n'
+     'theorem planted_pin : (0 : Nat) = 1 := by fail "boom"'),
+    ("#guard_msgs", '/--error: boom\n⊢ 0 = 1-/#guard_msgs in theorem planted_pin_closed : '
+     '(0 : Nat) = 1 := by fail "boom"'),
+    ("#guard_msgs", "/-- error: boom\n⊢ 0 = 1 -/\n-- a remark between\n#guard_msgs (error) in\n"
+     'theorem planted_pin_comment : (0 : Nat) = 1 := by fail "boom"'),
+    ("#guard_msgs", "/-- error: boom ⊢ 0 = 1 -/ /- a remark -/ #guard_msgs (whitespace := lax) "
+     'in theorem planted_pin_lax : (0 : Nat) = 1 := by fail "boom"'),
+    ("#guard_msgs", "/--\n@ +1:42...53\nerror: boom\n⊢ 0 = 1\n-/\n"
+     "#guard_msgs (positions := true) in\n"
+     'theorem planted_pin_positions : (0 : Nat) = 1 := by fail "boom"'),
+    ("#guard_msgs", "/--\nerror: one\n⊢ 0 = 1\n---\nerror: two\n⊢ 1 = 2\n-/\n"
+     "#guard_msgs (ordering := sorted) in\ntheorem planted_pin_two : "
+     '(0 : Nat) = 1 ∧ (1 : Nat) = 2 := ⟨by fail "one", by fail "two"⟩'),
+    ("#guard_msgs", "/-- error: boom\n⊢ 0 = 1 -/\n#guard_msgsin\n"
+     'theorem planted_pin_keyword : (0 : Nat) = 1 := by fail "boom"'),
+    ("#guard_msgs", "/--\nerror:\nboom\n⊢ 0 = 1\n-/\n#guard_msgs in\n"
+     'theorem planted_pin_break : (0 : Nat) = 1 := by fail "boom"'),
+)
+GUARD_PIN_KEPT = (
+    "/-- info: planted_pin : 0 = 1 -/\n#guard_msgs in #check planted_pin",
+    "/-- error: a theorem's own docstring -/\ntheorem planted_pin_doc : True := trivial\n"
+    "#guard_msgs in theorem planted_pin_after : True := trivial",
+    "-- error: a remark before the command\n"
+    "#guard_msgs in theorem planted_pin_remark : True := trivial",
+    "/-! error: a module docstring -/\n"
+    "#guard_msgs in theorem planted_pin_module : True := trivial",
+    "/- /-- error: boom -/ #guard_msgs in -/ theorem planted_pin_words : True := trivial",
+    'def plantedKeptPin := "/-- error: boom -/ #guard_msgs in"',
+)
+# The allow-list of check_fidelity.py's GUARD_ERROR_PINS, written out here so that a change
+# to it fails this test; a new file beside each of its files, each of its file names in the
+# other's folder, and a new file in Audit/ and in Staging/.
+GUARD_PIN_ALLOWED = ("model/Check/RoundTrip.lean", "model/Model/Audit.lean")
+GUARD_PIN_REFUSED = ("model/Check/Planted.lean", "model/Model/Planted.lean",
+                     "model/Check/Audit.lean", "model/Model/RoundTrip.lean",
+                     "Audit/Planted.lean", "Staging/Planted.lean")
+
+
+def scratch_plants(name: str, plants: tuple, kept: tuple = ()) -> None:
+    """Plant each of `plants`, (word, Lean), and each line of `kept` in a scratch copy of
+    I.1's file, in a temporary tree whose only file it is, and run check_fidelity.py's
+    source scan on that tree (`rules_in`): the edition's own files are never touched. The
+    copy must pass unplanted. Planted, each of `plants` must be refused on the line of its
+    command, `set_option` or `#guard_msgs`, by `word`, and no line of `kept` refused."""
+    rel = "Elements/BookI/Prop01.lean"
+    marker = "\nend Elements.BookI\n"
+    source = (ROOT / rel).read_text()
+    assert source.count(marker) == 1, f"{rel}: expected one {marker!r}; update this test"
+    planted = source.replace(marker, "\n/-! Planted by scripts/negative_tests.py. -/\n"
+                             + "\n".join([lean for _, lean in plants] + list(kept)) + "\n"
+                             + marker)
+
+    def line(lean: str, anchor: str) -> int:
+        assert planted.count(lean) == 1, f"{lean!r}: planted more than once; update this test"
+        return planted[:planted.index(lean) + lean.index(anchor)].count("\n") + 1
+
+    command = re.compile(r"#?\w+")
+    wanted = [(f"{rel}:{line(lean, word)}: declares an axiom outside "
+               "Elements/Foundations/") if word == "axiom" else
+              f"{rel}:{line(lean, command.match(word)[0])}: uses `{word}`"
+              for word, lean in plants]
+    unwanted = tuple(f"{rel}:{n}:" for lean in kept
+                     for n in range(line(lean, lean), line(lean, lean) + lean.count("\n") + 1))
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp).resolve()
+        path = root / rel
+        path.parent.mkdir(parents=True)
+        path.write_text(source)
+        if not expect_success(f"{name}: the unplanted scratch copy of {rel}", rules_in(root)):
+            return
+        path.write_text(planted)
+        expect_failure(name, rules_in(root), *wanted, unwanted=unwanted)
+
+
+def set_option_spellings() -> None:
+    """`set_option«debug».skipKernelTC true in`, and the other SET_OPTION_SPELLINGS, in a
+    scratch copy of I.1's file: each refused by its file, line and spelling; nothing of
+    SET_OPTION_KEPT is."""
+    scratch_plants("set_option«debug».… and its kin, with no space before the option",
+                   SET_OPTION_SPELLINGS, SET_OPTION_KEPT)
+    for source, expected in (
+        ("p.1set_option", "p. set_option"),
+        ("p.1.succ", "p.1.succ"),
+        ("(·.2.toList)", "(·.2.toList)"),
+        ("⟨p, p⟩.1.succ", "⟨p, p⟩.1.succ"),
+        ("‹h›.1.succ", "‹h›.1.succ"),
+        ("(p).1.succ", "(p).1.succ"),
+        ("p .1.succ", "p .  succ"),
+        ("p/- c -/.1.succ", "p       .  succ"),
+        ("p./- c -/1.succ", "p.         succ"),
+        ("2 +.0x1 + 2 +.1e5 + 2 +.1_0", "2 +.0x1 + 2 +.1e5 + 2 +.1_0"),
+        ("2 . 0x1 + 2 . 1e5 + 2 . 1_0", "2 . 0x1 + 2 . 1e5 + 2 . 1_0"),
+        ("(1, 2).1", "(1, 2).1"),
+    ):
+        read, unsure = check_fidelity.read_lean(source)
+        if read != expected or unsure:
+            failures.append(f"read_lean({source!r}) returned {(read, unsure)!r}, not "
+                            f"{(expected, [])!r}")
+
+
+def guard_msgs_drop() -> None:
+    """`#guard_msgs (drop all) in` and the other GUARD_DROPS in a scratch copy of I.1's file:
+    each refused by its file, line and words; nothing of GUARD_KEPT is."""
+    scratch_plants("#guard_msgs with drop, in each of its forms", GUARD_DROPS, GUARD_KEPT)
+
+
+def closed_up_commands() -> None:
+    """`#guard_panicin`, `#evalIO.println` and the other CLOSED_UP_COMMANDS in a scratch copy
+    of I.1's file: each refused by its file, line and command; nothing of CLOSED_UP_KEPT
+    is."""
+    scratch_plants("#eval, #exit and #guard_panic closed up to the word after them",
+                   CLOSED_UP_COMMANDS, CLOSED_UP_KEPT)
+
+
+def guard_msgs_substring() -> None:
+    """`#guard_msgs (substring := true) in` and the other GUARD_SUBSTRINGS in a scratch copy
+    of I.1's file: each refused by its file, line and words; nothing of
+    GUARD_SUBSTRING_KEPT is."""
+    scratch_plants("#guard_msgs with substring, in each of its forms", GUARD_SUBSTRINGS,
+                   GUARD_SUBSTRING_KEPT)
+
+
+def guard_error_pins() -> None:
+    """`#guard_msgs` under a docstring that pins an error, GUARD_PINS, in a scratch copy of
+    I.1's file: each refused by its file and line; nothing of GUARD_PIN_KEPT is. Then the
+    first pin alone, in a small tree of its own: not refused at each path of
+    GUARD_PIN_ALLOWED, refused at each of GUARD_PIN_REFUSED."""
+    if check_fidelity.GUARD_ERROR_PINS != set(GUARD_PIN_ALLOWED):
+        failures.append("GUARD_ERROR_PINS differs from GUARD_PIN_ALLOWED: a change to the "
+                        "allow-list is made in both, with its decision")
+    scratch_plants("#guard_msgs under a docstring that pins an error, in each of its forms",
+                   GUARD_PINS, GUARD_PIN_KEPT)
+    pin = GUARD_PINS[0][1] + "\n"
+    line = pin[:pin.index("#guard_msgs")].count("\n") + 1
+    for rel in GUARD_PIN_ALLOWED + GUARD_PIN_REFUSED:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            path = root / rel
+            path.parent.mkdir(parents=True)
+            path.write_text(pin)
+            name = f"an error pinned by #guard_msgs's docstring in {rel}"
+            if rel in GUARD_PIN_ALLOWED:
+                if expect_success(f"{name}, on the allow-list", rules_in(root)):
+                    print(f"✓ {name}, on the allow-list: not refused")
+            else:
+                expect_failure(f"{name}, off the allow-list", rules_in(root),
+                               f"{rel}:{line}: uses `#guard_msgs` under a docstring")
 
 
 def placement_named() -> None:
@@ -1459,6 +1832,10 @@ def main(argv=()) -> int:
                           run(sys.executable, "-I", "tests/test_generated_counts.py")):
         return 1
     print("✓ count regressions passed (without Lean)")
+    if not expect_success("decision entry regressions",
+                          run(sys.executable, "-I", "tests/test_decision_entries.py")):
+        return 1
+    print("✓ decision entry regressions passed (without Lean)")
     if args.counts_only:
         count_markers()
         if failures:
@@ -1490,6 +1867,11 @@ def main(argv=()) -> int:
         symbolic_links()
         model_lake()
         lake_links()
+        set_option_spellings()
+        guard_msgs_drop()
+        closed_up_commands()
+        guard_msgs_substring()
+        guard_error_pins()
         placement_named()
         figure_names_and_arcs()
         missing_files()
