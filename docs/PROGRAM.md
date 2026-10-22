@@ -89,9 +89,8 @@ The scope of each book's statements, whole, restricted or in part,
 stands in the [README](../README.md) and on [the certificate](../CERTIFICATE.md).
 
 Book IV has a [draft brief](briefs/0012-book-IV.md), draft Lean statements and
-[scratch prototypes](reports/crew/scratch-IV/). It is not yet in the edition: its brief is
-first challenged and frozen; changes to the edition await its approval and Books I–III
-passing the [review rubric's](RUBRIC.md) gate, as the brief's order requires.
+[scratch prototypes](reports/crew/scratch-IV/). It is not yet in the edition: work there
+awaits approval and Books I–III each reaching 95, as the brief's gate requires.
 
 The work under way is [brief 0005](briefs/0005-astra-review.md):
 
