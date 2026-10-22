@@ -7298,8 +7298,7 @@ class MainChecksCache(Edge):
         # the toolchain's among them, git with replacement objects off (#256).
         wrapped = self.wrapped.read_text()
         for line in ("lean --version", "lake --version", f"{tools / 'elan'} which lean",
-                     f"git {' '.join(safe_push.NO_REPLACE_REFS)} -c core.quotePath=false "
-                     "--version"):
+                     f"git {' '.join(safe_push.NO_REPLACE_REFS)} --version"):
             self.assertIn(line, wrapped)
 
     def stand_in_tools(self) -> tuple[Path, dict]:
