@@ -64,7 +64,15 @@ case = "both straight lines through the centre E (left), and neither through F w
 
 [review]
 stage = "full"
-commit = "d0508d6c"
+commit = "e572d5c0"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:98c7b45c9b798d58"
 run = "brief 0005 stage 5, ship R3 (#29); line 95 of Prop35.lean, of unknown family, read also by GPT-6 Astra (Codex)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
