@@ -4582,3 +4582,143 @@ findings:
   October 2026, wrote: "the expected count read from the folder's existing entries, so the
   assertion stays exact. I approve it as a correction, not a weakening." The protected file
   changed is `tests/test_decision_entries.py`.
+
+- **Ways past the forbidden-command scan
+  ([#197](https://github.com/jackChallis/stoicheia/issues/197)).** An independent reviewer
+  found three files that `lake build` accepts and the source scan of
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) let through, and we thank
+  them warmly for each.
+
+  First, `set_option«debug».skipKernelTC true in`. Lean 4.35 needs no space between
+  `set_option` and a guillemet, and the scan's pattern,
+  `\bset_option\s+«?(?:debug|doc)»?\.`, asked for one. Plain `lean` accepts the closed-up
+  spelling and acts on it: under `set_option«debug».byAsSorry true in`, a theorem stating
+  `0 = 1` builds, resting on `sorryAx`. The pattern is now
+  `\bset_option(?:\s+«?|\s*«)(?:debug|doc)»?\.`, which lets a guillemet follow
+  `set_option` with no space, so the scan refuses `set_option«debug».…` and
+  `set_option«doc».…`, with guillemets around one part or each, in a command or a tactic
+  block, as it refused the spaced spellings; it still refuses those after a space, a tab or
+  a line break. A plain `debug` or `doc` still needs the space: Lean reads
+  `set_optiondebug.skipKernelTC` as one name, not the command, and the scan does not refuse
+  it or `set_optiondoc.verso`. Two more patterns of `FORBIDDEN`, found in
+  this change's second round, asked for a break where Lean needs none: `#eval\b` and
+  `#exit\b`. Lean reads the longest command it knows, so plain `lean` runs `#evalx` as
+  `#eval x` and stops reading at `#exitx`, exiting 0 on both, and the scan passed both.
+  They now end with no `\b`, as `#guard_panic` does (below). The other patterns'
+  only whitespace is `\s*`, and the `[ \t]+` of `MODEL_CHECK_RUN_CMD` bounds the
+  generator's allowance, so a missing space there means a refusal. Outside FORBIDDEN, the
+  Book Zero rule asks for one space, a gap of the same kind, left to its own issue.
+
+  Second, a command after a `/--/` doc-comment opener, where `read_lean` began the
+  comment's body one character before Lean does. It closes with the correction of
+  `read_lean` made on `tooling/citation-sweep`
+  ([#32](https://github.com/jackChallis/stoicheia/issues/32)), committed there at
+  `720569db` and completed at `f745017b`, and made here too, at `fd1db6c6`, its one line
+  alone: every comment's body begins at its fourth character, as Lean reads it, nesting
+  kept, so a `/-/-` opener, which the scan had read as opening a nested comment, whose
+  `-/` then closed only the inner one, hides nothing either. The set_option plant puts
+  `set_option«debug».skipKernelTC` after `/-/- -/` and after `/--/ x -/`, each to be
+  refused on its line, and the same command inside a nested comment, `/- /- -/ … -/`,
+  not to be.
+
+  Third, `#guard_msgs (drop all) in` over a theorem that Lean refuses: the error leaves the
+  build, `lake env lean` exits 0 on the file, and the theorem rests on `sorryAx`, which the
+  certificate's axiom check sees only beneath a certificate entry. A new rule,
+  `GUARD_DROP`, refuses `#guard_msgs` with `drop` in each of Lean's forms (`(drop all)`,
+  `(drop error)`, `(drop warning)`, `(drop info)`, and `drop` after another filter or an
+  option, as in `(warning, drop all)`, with or without spaces, and with a remark or a line
+  break inside) in every `.lean` file the scan reads, with no allow-list. That is the
+  coordinator's ruling of 21 October: no file uses it, and a future need asks for an
+  exception in a change of its own. The issue had proposed to allow it in `Audit/` and
+  `model/Model/Audit.lean`, which pin messages on purpose; the ruling refuses it there
+  too. `git grep` finds 228 `#guard_msgs` commands, every one a plain `#guard_msgs in`: 13
+  in `Audit/Overlaps.lean`, 27 in `Audit/Superposition.lean`, 2 in
+  `Staging/Centre/Crossing.lean`, 79 in `model/Check/RoundTrip.lean` and 107 in
+  `model/Model/Audit.lean`. None is refused. Lean reads `drop` only as the plain word,
+  never as `«drop»`.
+
+  Two more ways for `#guard_msgs` to hide an error were found while testing the third, and
+  the coordinator ruled on both on 21 October: each adds a refusal and loosens nothing.
+  `#guard_msgs` with `substring` is refused in any setting (`(substring := true)`, or
+  `false`), with or without spaces, beside any filter or option, in every file the scan
+  reads, with no allow-list (`GUARD_SUBSTRING`). With `substring := true` the docstring
+  need only appear somewhere in the messages, so one that is only part of the error
+  (`error`), an empty one, or none, matches it: plain `lake env lean` exits 0 on each, the
+  theorem resting on `sorryAx`. No file uses it. A `#guard_msgs` under a docstring that
+  pins an error is refused in every file the scan reads but an allow-list of two,
+  `model/Check/RoundTrip.lean` and `model/Model/Audit.lean` (`GUARD_ERROR_PINS`). Lean
+  writes each error it checks as `error:` and its text, so with `drop` and `substring`
+  refused, a docstring pins an error only if it holds `error:`. The docstring is the
+  `/--` comment among the comments and whitespace just before the `#guard_msgs`, read as
+  `read_lean` reads them: a remark between the two hides nothing, and `error:` in a
+  theorem's own docstring, a comment or a module docstring is not refused. Lean accepts
+  the pin plain, closed up, with a remark or a comment between, under a filter, with lax
+  whitespace or positions, over two errors and with `#guard_msgsin` closed up, exiting 0
+  with the theorem on `sorryAx`. The two files pin errors on purpose: the round trip pins
+  60 of the generator's refusals, each over a `run_cmd`, and the audit pins one refusal
+  of `#check`; neither wraps a declaration. The scan reads `model/`, both files among it,
+  so without the list it would refuse those 61 pins: the list names exactly what the
+  rule would otherwise refuse. Within the two files a new pin, over a declaration or not,
+  passes the scan, and review reads it.
+
+  Last, `#guard_panic`, which the independent review of this change found, and we thank
+  the reviewer warmly. Lean's `elabGuardPanic` empties the whole message log of the
+  command it wraps once any message holds the text `PANIC`, so
+  `#guard_panic in theorem bad : (0 : Nat) = 1 := by fail "PANIC"` exits 0, the theorem
+  resting on `sorryAx`; so does a `trace "PANIC"` before a failing tactic. It joins
+  `FORBIDDEN`, matched with no `\b` after it, since Lean reads `#guard_panicin` as
+  `#guard_panic in`. No tracked file uses it. A reading of Lean 4.35's
+  `Lean/Elab/GuardMsgs.lean` finds no other way for `#guard_msgs` to take an error out of
+  the build: a message it neither checks nor drops is passed on and stays in the build,
+  and the only messages it skips are silent ones, which Lean's own code makes only for
+  information.
+
+  And a number closed up to a command, which the /no-mistakes review of this change found,
+  with our thanks. Lean 4.35 ends a number where its digits end, so it reads `def x : Nat
+  := 1set_option«debug».byAsSorry true in` as `1` and the command, and a theorem stating
+  `0 = 1` after it builds on `sorryAx`; so do `p.1set_option…`, where `.1` is a field, and
+  `0xA`, `1e5`, `1.5` or `1_0` before it, and `1axiom planted : False` declares an axiom.
+  `read_lean` read `\d[\w.]*` as one number, and an identifier's `.` before a digit as
+  part of it, so the scan's `\b` before `set_option` and `axiom` found no boundary. A
+  number now ends where Lean's `numberFnAux` ends it. After an adjacent `.`, an ordinary
+  projection field ends at its digits, preserving `p.1.succ`, `(·.2.toList)` and
+  projections after `⟩`; but a declared `.` notation can make a scientific or
+  underscore-separated number the longer reading, so that longer boundary is kept.
+  Whitespace and comments clear the projection state, since Lean requires a projection to
+  be adjacent on both sides. A number or field with a letter, a digit or `_` just after it
+  is blanked, so every pattern of `FORBIDDEN` and `AXIOM` sees the word after it begin. No
+  tracked `.lean` file reads differently. One refusal goes, rightly: a raw string closed
+  up to a number, as in `infixl:65r#"{x"# => Nat.add`, which Lean builds, was read as a
+  plain string after the number `65r` and refused as one the scan could not read for
+  certain; it is now read as Lean reads it, a raw string, and passes. The set_option plant
+  covers numbers of each form and fields, dot notation beside whitespace or a block
+  comment, and ambiguous adjacent dot notation, a hexadecimal number after an adjacent
+  `.` among them, and requires the reader to leave numbers after a declared notation and
+  ordinary projections as they are. It also keeps names with a digit before `set_option` and the unspaced plain
+  names `set_optiondebug.skipKernelTC` and `set_optiondoc.verso`.
+
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains five plants,
+  which plant each closed-up spelling, each form of `drop`, the closed-up `#eval`,
+  `#exit` and `#guard_panic` (with `#guard_panic` after a remark or a line break), each
+  form of `substring` and each form of a pinned error in a scratch copy of I.1's file,
+  in a tree of their own, and require each to be refused on its line, by name. A
+  `#guard_msgs` that checks its messages or passes them on, one under a docstring that
+  pins an info message, `error:` in a theorem's own docstring, a comment or a module
+  docstring before a `#guard_msgs`, and the words of each command in a comment or a
+  string, must not be. The pin plant then puts the pin alone at each file of the
+  allow-list, where it must pass, and at a new file beside each, at each file's name in
+  the other's folder, in `Audit/` and in `Staging/`, where it must be refused; it also
+  fails if check_fidelity's allow-list differs from the one it writes out. The
+  forbidden-command plant's commands gain `#guard_panic`. Run with origin/main's check
+  (`17369f92`, whose `check_fidelity.py` is that of `0a05f96f`), all five fail: that
+  scan misses the new closed-up spellings and commands, every planted form of `drop` and
+  `substring`, and the error pins outside the allow-list, while catching only the spaced
+  set_option spellings. Review then added the comment-opener, exact allow-list and
+  number/projection boundary cases described above. With this scan all five plants pass,
+  and undoing any one of their rules makes its plant fail.
+
+  [FORMALIZATION](../FORMALIZATION.md), section 7, the list's one home, now names each of
+  these. The protected files this changes are `scripts/check_fidelity.py` and
+  `scripts/negative_tests.py`. Nothing else is loosened: on 238 plants and probes, in each of
+  the five folders the scan reads, the scan makes every finding origin/main's makes, and
+  no file of the edition changes.
