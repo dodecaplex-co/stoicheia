@@ -29,7 +29,8 @@ his arguments, to replace the proofs there (those of III.20's special case, III.
 III.26 rest on the draft angle at the centre, and wait for its approval), and drafts for
 the owner's approval of Definition III.3 read at the point, the angle at the centre of any
 size with III.20 in general (`Elements.BookIII.Staging.Prop20`), and the angle of contact
-after III.18. The coordinator's orders of 21 October 2026 directed these proofs here;
-whether they are recorded as the approval of a prototype is the coordinator's to confirm.
-The report is `docs/reports/routes-book-III.md`.
+after III.18. The coordinator's orders of 21 October 2026 directed these proofs here; they
+are not the owner's approval of a prototype, and the files stand here as unfinished work
+while an issue labelled `blocks-release` tracks their move into `Elements/`. The report is
+`docs/reports/routes-book-III.md`.
 -/

@@ -18,8 +18,8 @@ III.20 in general changes the statement of a main theorem, and FORMALIZATION, se
 stages a changed main theorem in the first namespace, under the proposition's own name,
 while the theorem it replaces is still declared in `Elements`; the three theorems that go
 with it are named after it. The rest are new proofs of statements that do not change, and
-new drafts. No rule names a namespace for them, and the coordinator may rename them (see
-"Open questions", below).
+new drafts. No rule names a namespace for them; the coordinator chose on 22 October 2026
+that they keep this one (see "Open questions", below).
 
 **The statements the files stand on.** [Brief 0008](../briefs/0008-centre.md) restates
 Book III so that every circle has a centre (`Tacit.exists_centre`). The trains C6a, C6b and
@@ -76,9 +76,12 @@ well.
 The coordinator's orders of 21 October 2026 for this work directed these proofs into new
 files under `Staging/Routes/`. WORKFLOW, section 2, admits in `Staging/` the proofs of a
 prototype the coordinator has approved, as the decisions page records for the mixed angles
-and for the restricted superposition rule; whether those orders are recorded as that
-approval is the coordinator's to confirm when the files land. Neither the orders nor such a
-record approves a statement or a definition, or a move into `Elements/`.
+and for the restricted superposition rule. On 22 October 2026 the coordinator confirmed
+that those orders were the coordinator's, and are not the owner's approval of a prototype;
+this report claims none. The files stand in `Staging/` as unfinished work, under the
+owner's rule of 20 October 2026 (WORKFLOW, section 10, "Unfinished work may land on main,
+with its issue"), while an issue labelled `blocks-release` tracks their move into
+`Elements/`. The orders approve no statement or definition, and no move into `Elements/`.
 
 | Issue | File | What it holds | Statement |
 |---|---|---|---|
@@ -93,14 +96,16 @@ record approves a statement or a definition, or a move into `Elements/`.
 of the theorem in `Elements/`, which each file checks with Lean in its last declaration
 (see "Checks", at the end).
 
-**Open questions.** Three are the coordinator's:
+**Open questions.** Three were the coordinator's, and the coordinator answered them on 22
+October 2026, under the owner's delegation of small calls that day:
 
 1. whether the orders of 21 October 2026 are recorded as the approval of a prototype under
-   WORKFLOW, section 2 (above);
+   WORKFLOW, section 2: they are not, for they were the coordinator's orders (above);
 2. whether the declarations other than those of III.20 in general keep the second
-   namespace above, which no rule names, or are renamed;
+   namespace above, which no rule names, or are renamed: they keep it;
 3. whether the five calls of III.1 under Heath's "[III. 1]", which do no work, stay under
-   brief 0008's rule or are dropped as dummy citations (#131, at the end).
+   brief 0008's rule or are dropped as dummy citations: they are dropped, in #131's own
+   train, after this one (#131, at the end).
 
 The owner's is the approval of each draft in the text it has now (the next section), and
 with it the question, under #126, of the clause that contact within at a point asks for.
@@ -713,11 +718,14 @@ references." Brief 0008 itself reasons so of III.10's last step, where splitting
 FORMALIZATION section 5 forbids that". For the rule, the same section says that "A checked
 intermediate fact tied to a real sentence of Euclid is legitimate, even if the final proof
 term could do without it", and that where the page promises Euclid's argument the Lean
-follows "the propositions he uses". The coordinator decides between these readings. We
+follows "the propositions he uses". We
 recommend dropping the five calls, each with a passage of the kind given: a passage of the
 kind different would make four routes modified with no change in the reasoning. The
 measurements on train C6c leave the recommendation as it was. The staged III.8 of #125
-repeats the call of III.8 in `Elements/`, and the same change would apply to it.
+repeats the call of III.8 in `Elements/`, and the same change would apply to it. On 22
+October 2026 the coordinator chose to drop the five calls, for a citation that does no work
+counts against the argument, and gave the change to #131's own train, after this one,
+which records the decision.
 
 **Changes for later, once train C6c has landed.**
 
@@ -1294,4 +1302,7 @@ with the five calls dropped.
   before they were accepted; the merges e32f4bed and a63196b4, which change no file of this
   branch but the decisions page, from which a63196b4 takes the routes bullet; the entry
   file that holds it now, in the same words, and the sentence of the opening that says so;
-  and this list's last two entries.
+  the merges cb942da7 and 0afcc617, which change no file of this branch, the second
+  bringing train C6c onto this branch through main; the record of the coordinator's
+  answers of 22 October 2026 in the entry file, `Staging.lean` and this report; and this
+  list's last two entries.
