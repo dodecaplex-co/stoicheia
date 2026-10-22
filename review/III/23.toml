@@ -16,14 +16,15 @@ note = "Each segment is given as its circle, the straight line AB and a point C 
 at = "let ACD be drawn through, and let CB, DB be joined"
 kind = "helper"
 helper = "Prop10"
-note = "Simson's preliminary (Heath, vol. 2, p. 53): by III.10 the circles meet only at A and B, so one segment falls within the other; III.21 carries the angle to where AC drawn through meets the other circle."
+note = "Simson's preliminary (Heath, vol. 2, p. 53): by III.10 the circles meet only at A and B, so one segment falls within the other; III.21 carries the angle to where AC drawn through meets the other circle. If C is outside ADB, the Lean uses III.2 and `Prop2.within` to reverse the roles through a point M between A and B; Heath prints no reference here for III.2, III.10 or III.21, and the meetings use `Tacit.line_circle_between` and `Tacit.line_circle_beyond`, rules we assume as System E, Intersections 4 and 5."
 
 [figure]
 case = "the segment ACB within ADB, as in Heath's figure"
 note = "Like Heath's, this figure draws the impossible supposition: two similar and unequal segments, ACB and ADB, on the same side of AB."
 
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "17987153"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:284fa78fec44b776"
+run = "brief 0005 stage 5, ship R3 (#29)"

@@ -6,8 +6,31 @@ fingerprint = "sha256:ef0c1e70ee18e3b1"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "Let AC, BD be joined"
+kind = "helper"
+helper = "OppositeSides.exists_between"
+note = "Euclid joins the diagonals and reads their crossing from the figure; `OppositeSides.exists_between` finds X between A and C on BD. The Lean puts X within the circle by III.2, for which Heath prints no reference here, then between B and D by `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1."
+
+[[passage]]
+at = "therefore the whole angle ADC is equal to the angles BAC, ACB"
+kind = "helper"
+helper = "angle_add_of_between"
+note = "Euclid reads DB within the angle ADC and adds its two parts. `angle_add_of_between` uses the crossing X found beneath the joining sentence to split ADC at DX, and the ray from D through X is DB."
+
+[[passage]]
+at = "Let the angle ABC be added to each"
+kind = "grouped"
+note = "Euclid adds ABC and states the equality of the resulting sums. The Lean carries both clauses in one equality, substituting the sum just proved for ADC and rearranging the additions."
+
+[[passage]]
+at = "Similarly we can prove that the angles BAD, DCB"
+kind = "grouped"
+note = "Euclid repeats the argument for the other pair of opposite angles. The Lean proves it once over any letters and applies it to ABCD and BCDA, using `Prop2.triangle` to supply the triangles in each application."
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "17987153"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:6e648f85a153eb0a"
+run = "brief 0005 stage 5, ship R3 (#29)"
