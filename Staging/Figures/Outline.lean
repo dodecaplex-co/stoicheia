@@ -295,9 +295,9 @@ theorem region_with_holes (F : Outline) (outer : List Point)
     F.region X ↔ loopRegion outer X ∧
       ∀ ps ∈ holes, ¬ loopInside ps X := by
   /- Off the boundary, the depth counts the outer contour and at most one hole, which lies
-  in it. On the boundary, no hole holds the point inside: near a point of any contour are
-  points inside that contour and outside the outer region, while near a point inside a hole
-  every point is inside it. -/
+  in it. On the boundary, no hole holds the point inside: near a point of a hole's boundary
+  are points inside that hole, and near a point of the outer contour are points outside the
+  outer region, while near a point inside a hole every point is inside it. -/
   exact OutlineFacts.region_holes F outer holes hl hin hapart X
 
 end Elements.Figures
