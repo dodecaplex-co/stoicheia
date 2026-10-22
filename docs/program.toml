@@ -26,7 +26,7 @@ outside = { score = 85, by = "Astra", commit = "676244a" }
 tag = "book-II"
 
 [III]
-stage = "released (next: stage 4 migration, #28; centre-rule restatements, #59; full records, #29)"
+stage = "released (next: centre-rule restatements, #59; full records, #29)"
 outside = { score = 80, by = "Astra", commit = "676244a" }
 tag = "book-III"
 
