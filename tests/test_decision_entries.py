@@ -9,8 +9,10 @@ into another page and leaves the decisions record as it was.
 
 Standard library and Git only; no Lean or network. Each case's folder is in a Git
 repository of its own, read with no configuration or excludes file but its own.
-scripts/negative_tests.py runs it beside the count regressions, so CI's `negative` job and
-the pre-flight run it on every pull request.
+scripts/negative_tests.py runs it beside the count regressions, so CI's `negative` job runs
+it on every push to main and on a pull request or a branch's push of class R3 and above
+(scripts/risk.py), the cadence every six hours on main, and the pre-flight on every pull
+request.
 """
 
 import contextlib
@@ -407,12 +409,29 @@ class RenderLeavesTheRecord(unittest.TestCase):
     it assembles them into no page, and writes nothing into the decisions record."""
 
     def test_render_assembles_no_entry_and_leaves_the_record_as_it_was(self):
+        # Run as the folder stands, and with a real entry besides the two planted (#242):
+        # render.py checks every entry in the folder, so the count it reports is the folder's
+        # entries and the planted ones, read from the folder, never the planted ones alone.
+        for besides in (False, True):
+            with self.subTest(a_real_entry_besides=besides):
+                self.render_leaves_the_record(besides)
+
+    def render_leaves_the_record(self, besides):
         from negative_tests import count_source_copy
 
         # Words found in no file of the sources, this one included, until they are planted.
         words = [f"entry-{uuid.uuid4().hex}" for _ in range(2)]
         with count_source_copy() as (root, env):
             folder = root / "docs" / "decisions"
+            if besides:
+                self.assertFalse((folder / "2026-10-21-render-real.md").exists())
+                (folder / "2026-10-21-render-real.md").write_text(
+                    "- **A decision already in the folder, for the test.** It stands as an "
+                    "entry main holds would.\n", encoding="utf-8")
+            existing = sorted(path for path in folder.iterdir()
+                              if path.suffix == ".md" and path.name != "README.md")
+            if besides:
+                self.assertIn(folder / "2026-10-21-render-real.md", existing)
             entries = {
                 folder / "2026-10-22-render-first.md":
                     f"- **A first decision for the test ({words[0]}).** It links "
@@ -423,17 +442,18 @@ class RenderLeavesTheRecord(unittest.TestCase):
                     f"## {words[1]}\n\nAnd more words under it.\n",
             }
             for path, text in entries.items():
+                self.assertFalse(path.exists(), path)
                 path.write_text(text, encoding="utf-8")
             record = [root / "docs" / "briefs" / "0002-decisions.md", folder / "README.md",
-                      *entries]
+                      *existing, *entries]
             self.assertTrue(all(path.is_file() for path in record))
             before = {path: path.read_bytes() for path in record}
             names = sorted(os.listdir(folder))
             result = subprocess.run([sys.executable, "scripts/render.py"], cwd=root, env=env,
                                     capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn(f"decision entries: {len(entries)} checked in docs/decisions/",
-                          result.stdout)
+            self.assertIn(f"decision entries: {len(existing) + len(entries)} checked in "
+                          "docs/decisions/", result.stdout)
             self.assertIn("rendered book pages", result.stdout)
             self.assertEqual({path: path.read_bytes() for path in record}, before)
             self.assertEqual(sorted(os.listdir(folder)), names)

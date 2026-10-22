@@ -20,10 +20,10 @@ note = "Euclid adds ACE and ECD to make ACD; `angle_add_of_within` justifies the
 
 [review]
 stage = "full"
-commit = "570e6fa"
-reviewer = "GPT-6 Astra (Codex), records re-read"
+commit = "18e4e614"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:fd7240af23c4b9fc"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, with the Claude Lean bosun's Prop29.alternate and Prop29.exterior substitutions and accompanying rewrite at ab0c30c5, those substitutions read by GPT-6 Astra (Codex) at 570e6fa, final proof read by Claude Opus 5.5; ship XS, reader XS-r-I32-I35, independent re-read at 78fb461d; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 18e4e614 (reader RT-c1)"
 
 [review.items]
 statement = "pass"
