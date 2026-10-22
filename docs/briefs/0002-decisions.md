@@ -4613,7 +4613,8 @@ findings:
   counted. This check change lands first, under WORKFLOW, section 10.
   Protected files changed:
   [`Certificate/Facts.lean`](../../Certificate/Facts.lean) computes the top-level
-  `construction_rules` (20 of the 79 axioms at this revision) and, for I.4 and I.8, a
+  `construction_rules` (21 of the 80 axioms at this revision, the centre rule
+  `Tacit.exists_centre` among them) and, for I.4 and I.8, a
   `cited_laws` field: each law the entry's own Lean cites, its proofs (name, file and line,
   from Lean's declarations) and the construction rules beneath them; a law the entry names
   with no proof found fails the run.
@@ -4636,6 +4637,26 @@ findings:
   list, which the build refuses. [`tests/test_certificate.py`](../../tests/test_certificate.py),
   with its fixture [`tests/fixtures/CertificateCited.lean`](../../tests/fixtures/CertificateCited.lean),
   and [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) test the walk,
+  the expectations' new forms and the plants' restoration. The fixture declares seventeen
+  stand-in axioms: one for each of the sixteen cases of the definition that it lists, and
+  the fixture's own law of I.7. They are compiled only into the test's temporary package,
+  which no library of the edition builds, and the lock is unchanged. A review correction
+  makes the projection reader follow a projection at the head of a structure value, as
+  when a structure is nested in another or a field is a function, and apply the field it
+  names to the projection's arguments. Three of the stand-in axioms exercise it: an
+  inherited order instance, reached through nested structures; a projection reached
+  through nested structures and through a function's arguments; and, beside it, a field of
+  the same structure that asserts no existence and must not be read in its place. A second
+  correction substitutes a `let` at the head of a structure value or of an application
+  into its body, so that a definition given through a `let` is read through it; two more
+  of the stand-in axioms now exercise a `let`-bound structure and a `let` at an
+  application's head. The new expectation on `construction_rules` reads facts.json's top
+  level and so has no `ref`; five lookups, in four places, in `scripts/test_safe_push.py`
+  that picked the lock's III.1 expectations out by `(x["ref"], x["field"])` met it and
+  failed in CI's `safe-push-tests` job with a `KeyError`, so they read the `ref` with
+  `x.get("ref")`, which picks out exactly the entries they picked before.
+  `check_fidelity.py` and `safe_push.py` already read an expectation without a `ref`.
+
   the expectations' new forms and the plants' restoration. The fixture declares fourteen
   stand-in axioms, one for each case of the definition; they are compiled only into the
   test's temporary package, which no library of the edition builds, and the lock is
@@ -4668,6 +4689,7 @@ findings:
   every law I.4 cites is proved with no construction rule, as `cited_laws` shows; the
   second retirement wave changes that for four of them, and its landing records it.
   I.4's and I.8's records were read again in full and stamped by an independent reader.
+
 - **The restriction's part 4 as a theorem, and every cited law in one statement (#150,
   question 2).** Part 4 of the restriction, that no hypothesis of the rule speaks of the
   placement, was read off the statement of `Rule.infer`; it is now restated as a theorem,
