@@ -36,10 +36,10 @@ case = "EF between AB and CD, so that GK crosses it, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "dc6e21f7"
-reviewer = "GPT-6 Astra (Codex), records re-read"
+commit = "6e0cdd27"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:2da81b72e5448168"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-I26-I30, independent re-read at 6e0cdd27"
 
 [review.items]
 statement = "pass"
