@@ -25,7 +25,7 @@ itself could not be recorded or updated, and 3 means the revert was enqueued but
 issue could not be updated with that outcome.
 --dry-run describes the actions without network access or changing the repository.
 --clear is the coordinator's, run by hand from a checkout of main: without --after it
-removes main-red from every open issue, as before. With --after it removes the label
+removes main-red from every open issue. With --after it removes the label
 only from an issue whose exact After line names that commit or one of its ancestors,
 and checks main again before each removal. The post-merge workflow's clear job does the
 same with the runner's tools alone, since that job runs no repository code. If main has
