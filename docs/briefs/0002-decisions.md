@@ -4473,7 +4473,8 @@ findings:
   counted. This check change lands first, under WORKFLOW, section 10.
   Protected files changed:
   [`Certificate/Facts.lean`](../../Certificate/Facts.lean) computes the top-level
-  `construction_rules` (20 of the 79 axioms at this revision) and, for I.4 and I.8, a
+  `construction_rules` (21 of the 80 axioms at this revision, the centre rule
+  `Tacit.exists_centre` among them) and, for I.4 and I.8, a
   `cited_laws` field: each law the entry's own Lean cites, its proofs (name, file and line,
   from Lean's declarations) and the construction rules beneath them; a law the entry names
   with no proof found fails the run.
