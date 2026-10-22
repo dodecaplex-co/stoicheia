@@ -11,10 +11,14 @@ C.N. 4 fixture, over the repository's compiled foundations, which an unmodified 
 
 The axioms of `CitedFixture` are the cases of the definition of a construction rule
 (docs/FORMALIZATION.md, section 9), declared here so that the test does not depend on
-which rules the lock holds: existence asserted directly, through a definition, through an
-instance's order, twice negated, in an `Iff` and in an `Or`; and existence negated, behind
-an implication, assumed in a hypothesis, or absent. They are stand-ins for the check, not
-laws of the plane, and nothing is proved from them but the fixture's own law of I.7.
+which rules the lock holds: existence asserted directly, through a definition, through a
+projection of a structure that a definition gives, through a projection reached through
+nested structures and through a function's arguments, through an inherited instance's
+order, through a `let`-bound structure, through a `let` at an application's head, twice
+negated, in an `Iff` and in an `Or`; and existence negated, outright or by a definition
+(`Triangle`), behind an implication, assumed in a hypothesis, absent, or only in a field
+that the statement does not read. They are stand-ins for the check, not laws of the
+plane, and nothing is proved from them but the fixture's own law of I.7.
 
 The entries cite laws in two shapes: through one shared theorem that proves every law of a
 list by cases (I.1), and law by law in their own proof, naming each law's proof (I.2). I.3
@@ -30,17 +34,59 @@ def companions : List (Lean.Name × String) := []
 
 namespace CitedFixture
 
-/-- A planted order on points, given by an instance of this project. -/
-instance : LE Point := ⟨fun A B => ∃ L : Line, OnLine A L ∧ OnLine B L⟩
+structure PointOrder extends LE Point
+
+def pointOrder : PointOrder := ⟨⟨fun A B => ∃ L : Line, OnLine A L ∧ OnLine B L⟩⟩
+
+/-- A planted order on points, inherited through a structure of this project. -/
+instance : LE Point := pointOrder.toLE
+
+structure LineCircleRelation where
+  holds : Line → Circle → Prop
+
+def lineCircleRelation : LineCircleRelation :=
+  ⟨fun L α => ∃ A : Point, OnLine A L ∧ OnCircle A α⟩
+
+/-- Two relations of a straight line and a circle: the second asserts existence, the first
+does not. -/
+structure TwoRelations where
+  other : Line → Circle → Prop
+  holds : Line → Circle → Prop
+
+def twoRelations : TwoRelations :=
+  ⟨fun _ _ => True, fun L α => ∃ A : Point, OnLine A L ∧ OnCircle A α⟩
+
+/-- Relations for each straight line, as the second field of a structure: a projection of
+what the field gives is reached through nested structures and the function's argument. -/
+structure TwoFamily where
+  tag : Nat
+  pick : Line → TwoRelations
+
+def twoFamily : TwoFamily := ⟨0, fun _ => twoRelations⟩
+
+structure CircleRelation where
+  holds : Circle → Circle → Prop
+
+/-- The meeting of circles, given through a `let`-bound structure. -/
+def circleRelation : CircleRelation :=
+  let r : CircleRelation := ⟨CirclesMeet⟩
+  r
+
+/-- The meeting of straight lines, given through a `let` at an application's head. -/
+def LetLinesMeet : Line → Line → Prop :=
+  let meets := LinesMeet
+  meets
 
 /-- Existence behind an implication, inside a definition. -/
 def Empty (L : Line) : Prop := (∃ A : Point, OnLine A L) → False
 
 /- Construction rules. -/
 axiom plain (A B : Point) : A ≠ B → ∃ C : Point, Between A C B
-axiom circles (α β : Circle) : CirclesMeet α β
+axiom circles (α β : Circle) : circleRelation.holds α β
 axiom line_circle (L : Line) (α : Circle) : LineMeetsCircle L α
-axiom lines (L M : Line) : L ≠ M → LinesMeet L M
+axiom lines (L M : Line) : L ≠ M → LetLinesMeet L M
+axiom by_projection (L : Line) (α : Circle) : lineCircleRelation.holds L α
+axiom by_nested_projection (L : Line) (α : Circle) : (twoFamily.pick L).holds L α
 axiom by_instance (A B : Point) : A ≤ B
 axiom twice_negated (L : Line) : ¬ ¬ ∃ A : Point, OnLine A L
 axiom in_iff (A B C : Point) : Collinear A B C ↔ Collinear B A C
@@ -52,6 +98,7 @@ axiom not_collinear (A B C : Point) : ¬ Collinear A B C
 axiom empty (L : Line) : Empty L
 axiom assumed (A : Point) (L : Line) : (∃ B : Point, OnLine B L) → OnLine A L
 axiom equal (A B : Point) : ‖A B‖ = ‖B A‖
+axiom other_field (L : Line) (α : Circle) : (twoFamily.pick L).other L α
 
 open Superposition
 
