@@ -26,7 +26,7 @@ note = "CA is perpendicular to DE by hypothesis, so its angle with the chosen po
 at = "the less to the greater: which is impossible"
 kind = "helper"
 helper = "Prop1.perpendicular"
-note = "At C only one straight line is at right angles to DE, which Euclid takes for granted here as in III.1; it puts F on CA on whichever side of DE A lies."
+note = "At C only one straight line is at right angles to DE, which Euclid takes for granted here as in III.1; it puts F on CA on whichever side of DE A lies. When A and F lie on opposite sides of DE, the Lean produces AC beyond C by Postulate 2 and makes the adjacent angle right by I.13 and Common Notion 3; Heath prints no reference to I.13 here."
 
 [[passage]]
 at = "Therefore F is not the centre of the circle ABC"

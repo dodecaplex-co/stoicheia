@@ -22,7 +22,7 @@ note = "Euclid draws FG perpendicular to DE; the Lean uses I.12, for which Heath
 at = "But FC is equal to FB"
 kind = "helper"
 helper = "Tacit.line_circle_between"
-note = "Euclid reads B on FG between F and G and takes FC equal to FB. The Lean proves G outside the circle using `Touches.not_inside` and the definition of touching, takes B by `Tacit.line_circle_between`, the rule we assume as System E, Intersections 4, and equates the radii by `Definition15`, Euclid's definition of a circle, which we also assume as a rule."
+note = "Euclid reads B on FG between F and G and takes FC equal to FB. The Lean proves G outside the circle using `Touches.not_inside` and the definition of touching, puts F within it by `Tacit.centre_inside` (System E, Generalities 3) and takes B by `Tacit.line_circle_between` (System E, Intersections 4), both rules we assume, and equates the radii by `Definition15`, Euclid's definition of a circle, which we also assume as a rule."
 
 [[passage]]
 at = "the less than the greater: which is impossible"
