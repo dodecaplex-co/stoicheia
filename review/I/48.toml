@@ -45,10 +45,10 @@ note = "Euclid assumes the converse too, that equal squares stand on equal strai
 
 [review]
 stage = "full"
-commit = "b62518e5"
-reviewer = "GPT-6 Astra (Codex), records re-read"
+commit = "a557715d"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:538a031257fe1dd2"
-run = "brief 0005 stage 5, ship T re-read"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, begun from the Claude first mate's scratch proof T48 (54a08e61) and keeping some of its lines, which GPT-6 Astra (Codex) read at b62518e5; read by Claude Opus 5.5; ship XS, reader XS-r-I35-I48, independent re-read at a557715d"
 
 [review.items]
 statement = "pass"
