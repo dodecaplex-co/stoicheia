@@ -485,6 +485,8 @@ Of the vague hedge that STYLE section 1 rules out ("note that", "strictly speaki
 
 ## Still open
 
+The next part is the addendum below, read at 99359055 and 275ae830: it gives item 1's addendum, closes item 1's findings on pages now free and item 2's commentary, caption and vocabulary, and closes, of the rows of "The material findings left" that wait for it, those for I.44 (I.37 to I.48, 3 and 4), for I.45's modern way and commentary (I.37 to I.48, 1; across pages, 16; pilot, 3) and for the pilot editor's note 1, with the first row save Book I's gap catalogue; the findings on files still held, item 6's lines for I.4 and I.27 among them, stay open, as the addendum's own "Still open" says.
+
 Every open item, with its issue.
 
 1. **The next part of this read-through**, a second train under #34. It reads the changes that landed on main after 2e8aecf8 and the findings that were held; this part's findings on those pages stay open until then.
@@ -654,3 +656,198 @@ A second code reviewer, another Claude Opus 5.5 instance that wrote nothing on t
 A third code reviewer, another Claude Opus 5.5 instance that wrote nothing on this branch, read 2853075b to b2c30b6d: the commit after 2853075b, and the merge of main at b2c30b6d, which it found clean. It found the sixteen records missing from "In short" and "Still open", a material point now mended there (item 8), and twelve minor points, nine on the standards and three on the spec, all mended in the commit after b2c30b6d. Its verdict was a pass with minor findings on the standards, with the second review's material point still open with the coordinator, and a fail on the spec, for that one point, before the mend.
 
 A fourth code reviewer, another Claude Opus 5.5 instance that wrote nothing on this branch, read that commit (74e8ad1f). It found one blocking point: the list of shared records left out II.5's, which the change for #168 had rewritten eleven minutes before; the list is now seventeen (item 8). Its other points are for the coordinator's order of landing: two sign-off branches (#220) since share six more stamped records (I.13, I.14, I.24, I.30, I.32 and I.43), and this read-through's own second part writes `mishnah/I/04.md` and `mishnah/I/08.md`, which the second axiom wave also changes.
+
+## Addendum, 21 October: the changes landed since 2e8aecf8, and the held findings
+
+*21 October 2026. Read at 99359055 and 275ae830, the second part's merges of the first part's branch; the branch head is 000d6791, which carries main at 554dfb0f. This is the dated addendum that #34's second condition asks for, for Books I and II.*
+
+### Who read what
+
+As in the first part, the writers and the readers were kept apart. Each was a Claude Opus 5.5 instance; no reader wrote a mend, and no writer stamped a record.
+
+- **The list.** One instance, which wrote nothing, read every finding the first part left open against the branch at 926e67d2 and against the three changes landed on main, and gathered them into one list of 96: 5 already fixed by those changes, 44 on files then free, and 47 on files still held or owned elsewhere.
+- **Five writers** mended what was free: the first, I.4 to I.29 (3d703e80); the second, I.37 to I.48, save I.45 (7d4e6866); the third, I.6's modern figure and I.23's statement note, which the first had left (956e01e4); the fourth, I.45's commentary, STYLE section 4, docs/reading.md, docs/references.bib, three reading lines and Book II's gap catalogue (5a41eb62); and the fifth, the readers' editorial findings below (0022c931). A one-line mend to STYLE section 4 followed the last reader (47230b33). Each writer checked each finding against its sources before mending it (Heath, the Lean, facts.json and the works cited), and said why where it wrote otherwise than proposed.
+- **Four readers** read every page of Books I and II at 99359055, against everything that had changed on it since 2e8aecf8: the three landed changes, the first part's mends and this part's. Two of them read at 32c168fa, which differs from 99359055 only in the stamps of four records. They took, in turn:
+  - Book I's index, introduction and front matter, with I.1 to I.16;
+  - I.17 to I.36;
+  - I.37 to I.48;
+  - Book II, with its index, introduction and front matter, and the shared documents the mends changed: STYLE section 4, docs/reading.md, docs/references.bib and Book II's gap catalogue.
+
+  They rendered all 162 figures of Books I and II and looked at each. They checked the quotations on the changed pages against the OCR of Heath's first volume, and some against the page images (n296 and n297 for I.14, n222 for I.29), and set each claim against the Lean, facts.json and the outside sources: Mueller's Open Library record, Hilbert's axiom IV, 6 and Theorem 10 in the Gutenberg text, and the publishers' chapter records at Crossref. A fifth reader, the last, read the fifth writer's mends at 275ae830.
+- **This addendum** was written by a further Claude Opus 5.5 instance, which read no page as a reader and wrote no mend. It checked each count and each open finding against the readers' and writers' handbacks, the commits named and the files at 000d6791.
+
+### What landed on main
+
+At 554dfb0f, main stands eighteen pull requests after 2e8aecf8. Three of them change book/, mishnah/, Elements/ or figures/ (`git log --first-parent 2e8aecf8..origin/main -- book mishnah Elements figures`), and all three change Books I and II: the superposition replacement (#191, at 17ae8e2a, for #75), the notation train (#193, at 09bc89f3, for #48) and the upright figure letters (#194, at ac6e5389, for #159). No other merge since 2e8aecf8 touches those four directories. Four change docs/STYLE.md: #195, #196 and #202 in what the checks of sections 7 and 8 require, and #239 in where section 4's count markers may stand. None of the four changes what a page of Books I or II says.
+
+### The superposition replacement (#191)
+
+It made superposition a restricted inference in System E's style, which only I.4 and I.8 call on. In Books I and II it rewrote the Lean, the records and the commentaries of I.4 and I.8; I.23's route note and commentary; I.44's Lean notes and record; the introduction's sentence on the rule; and the rule's docstring, which prints in the list of what each proof rests on, on 44 of Book I's pages and on all 14 of Book II's. It retired the overlap rows of I.2, I.3 and I.23, and brought the brief, README.md, FORMALIZATION and the overlap catalogue into line.
+
+**True.** The readers found the rule told truly wherever it is told. Only I.4 and I.8 call `Tacit.superposition`; I.20 rests on it through I.5 and I.4, and I.23 through I.8 and I.20, while I.22 does not rest on it (facts.json). No record of Books I and II now declares an overlap, and Book I's index no longer names overlaps at I.2, I.3 and I.23. I.4's four equalities and I.8's citation of I.7 inside the placement agree with Prop04.lean and Prop08.lean.
+
+**In the voice.** The first readers heard a logician's register come in with this change: "represented derivations", "export", "returned as constructed points". It is gone from the commentaries of I.4, I.8, I.23 and I.44, from the records of I.23 and I.44, and from Prop44.lean and Prop46.lean, which now say in one set of words that the rule "lays a triangle down only in thought and hands back no point" (3d703e80, 7d4e6866, 0022c931). I.4's commentary answers Peletier's danger again, and I.8's says truly what Hilbert's axiom gives. I.44's commentary now tells its "apply" apart from the "applied" of I.4 and I.8, and its caption says "apply" where it said "lay" (7d4e6866, 0022c931). The register remains in three places:
+
+- the rule's docstring, Elements/Foundations/Tacit/Superposition.lean:44–47, "permits a restricted derivation of metric equalities … and exports no symbol of the placement": a new point, for the coordinator, who owns the foundations ("The readers' findings", below);
+- Book I's introduction, mishnah/intro/I.md:7, "Its represented derivations draw nothing inside the placement, and no equality they export can name its hypothetical corners or side", held by the second axiom wave (#119);
+- the records of I.4 and I.8 and the module notes of Prop04.lean and Prop08.lean, such as review/I/04.toml:13, "admits a derivation over symbols", and review/I/08.toml:10, "a proved statement asserting no existence", held by the per-law superposition change (#150) and the second axiom wave (#119).
+
+**Consistent.** The two material findings the change left on I.44 and I.46, two reasons for one step and the notes of `Prop44.place` and `Prop46.side_eq`, are mended (7d4e6866), and both records are stamped. The one material point left is in Book I's gap catalogue, docs/reports/gaps-book-I.md:256, "Our Lean moves a figure only by superposition", which the second axiom wave (#119) holds. The reader of I.1 to I.16 added three editorial points to I.4's and I.8's held notes ("The readers' findings").
+
+### The notation train (#193)
+
+It added the paragraph on the modern way's notation to STYLE section 4 and set the modern ways of I.20, I.27, I.29, I.35, I.37, I.39, I.40, I.43, I.45 and I.48 by it, bold for a vector, with plain bars. It added the join passages to the records of I.5 and I.11 and "Definition I.10" to Prop11.lean, gave Nahin's and Morrow's first appearances, on I.11 and I.20, their linked years, and stamped the records it touched, I.45's among them.
+
+**True.** The vector algebra of the modern ways is right (the reader of I.17 to I.36 checked I.20, I.27, I.29 and I.35), and I.5's join passage agrees with Prop05.lean:57–58, where FC and GB are joined and never used. I.45's record, which the pilot editor feared would be stamped from an older base (note 1, material), landed stamped at ef3ca8dd, an ancestor of main, with the Lean hash of Prop45.lean as it stands; that note is closed.
+
+**Consistent.** The modern figures set in italic the names their paragraphs set in bold, and STYLE section 4 now says so: "the bold is the paragraph's mark of a vector" (5a41eb62; the reader of Book II found it true to section 7). Nahin's year on I.11, "(2010; first published 1998)", and Morrow's on I.20, "(1992 paperback; first published 1970)", agree with their repeats on I.46 and I.47, which settles the first re-readers' two points and the further reading's exception for them; "friendly" still stands on I.20's Steele line and on II.10, as the first part found. The definitions without their book and the plural "magnitudes" on the train's pages are mended: "Definition I.23" and "a tacit rule of magnitude" in Prop29.lean, "Def. I.22" in Prop48.lean, and I.29's two notes in I.17's words (3d703e80, 7d4e6866).
+
+**Left on its pages**, all in held files: the joins of I.5 and I.11 against I.1, I.6, I.7 and I.12, and I.11's passage key, review/I/11.toml:22 (the citation sweep, #32, and the second axiom wave, #119); I.20's case and "not a proof", review/I/20.toml:39 and :31 (#32); I.27's figure note (material, #30) and "not proofs", review/I/27.toml:27 and :13 (#119); "Proclus's" at review/I/35.toml:12 (#32, #119); the notes of I.39 and I.40, review/I/39.toml:7 and review/I/40.toml:4 and :10 (#32); and I.45's record ("I.45 and II.14", below).
+
+### The upright figure letters (#194)
+
+It set Heath's letters upright in every figure at a glance and every one of Euclid's figures, as the prose and the modern figures already set them. The four readers rendered all 162 figures of Books I and II and looked at each: every letter is upright, clear of the strokes and Heath's own, and italic stands only in the modern figures. Since #196 (cba27afa), S15 and S20 require it, with the switch for upright letters on (scripts/check_style.py:176). The readers found nothing to mend.
+
+### The held findings
+
+The list counts what the first part left open on files then held, with the open points of its writers and re-readers: 96 in all, 14 of them material. A finding open in part counts once, by what is left of it. These are the first part's findings gathered again, not new ones, and they are not added to its 191.
+
+| | Findings | Material |
+|---|---|---|
+| In the list, at 926e67d2 | 96 | 14 |
+| Settled before this part's writers began | 15 | 3 |
+| ... by changes landed on main (#191, #193, #195, #196) | 6 | 2 |
+| ... by the first part's later mends (a1ddfcf7) | 9 | 1 |
+| Mended in this part (3d703e80, 7d4e6866, 956e01e4, 5a41eb62) | 31 | 5 |
+| Mended in part | 2 | 0 |
+| Still held by work in flight | 30 | 4 |
+| For owners outside this work | 18 | 2 |
+
+- **Settled before, 15.** Six by changes on main: the replacement brought the shared documents into line and rewrote Prop08.lean's module note (#191); the notation train gave Nahin and Morrow their years and stamped I.45's record at an ancestor of main (#193); #195 answered a writer's point on the style check's list of files awaiting S12; and #196 turned on the switch for upright letters. Nine the first part had itself mended after the list was made, all in a1ddfcf7: I.43's "complements", I.40's "history of Euclid's text", II.14's commentary, Statement rows and Representation row, Book II's introduction and its sentence on I.13, Maor's line on II.12, and Kedlaya's date in docs/references.bib. They are counted there, not here.
+- **Mended in this part, 31**, each confirmed by a reader. In Book I: I.4's and I.8's commentaries in a reader's words, with Peletier's danger answered and Hilbert's axiom told truly; I.14's lemma; I.20's vectors tied to the triangle; I.23's commentary and route note, and its callers, I.42 and I.44 among them, named in its commentary, Lean note and statement note (956e01e4); I.29's notes, and Prop29.lean's definition and "rule of magnitude"; the digit labels of the modern figures of I.1, I.6 and I.16; I.37's Heiberg and Proclus' "describers of countries"; the notes of I.37 and I.44 on I.30, for which Heath gives no reference; the commentaries of I.39, I.40 and I.48, and Prop48.lean's definition; I.44's commentary (material) and record, the Lean notes of Prop44.lean and Prop46.lean (material), and "applied" glossed on I.44; and I.45's commentary (material: its modern way, its main theorem and what is not yet proved). In the shared documents: STYLE section 4's words for the restriction, and its sentence joining a vector's bold and italic names; Mueller's edition on I.18, I.38 and II.2; Hilbert's axiom in docs/reading.md; and "Heath gives no reference" for "has no bracket" in Book II's gap catalogue.
+- **Mended in part, 2.** "Proclus'" stands in the notes of I.43 and I.48 (7d4e6866), but the comment at review/I/43.toml:4, which no page shows, still says "Proclus's". And docs/references.bib now records the contents checked for the works whose chapters the reading lines give (5a41eb62, 0022c931), the first part's "record of which chapters were checked", save two: Courant and Robbins' chapters III and IV (docs/references.bib:981–990, given on I.22, I.31, II.14 and III.30), for which no contents page could be reached, and Yaglom's section titles on I.2, I.5 and I.34, which the reader of I.1 to I.16 checked against the 1962 contents (p. vii) and which are not yet recorded.
+- **Still held, 30**, by the work that holds each file:
+  - the second axiom wave (#119), 13: Book I's introduction, seven points (mishnah/intro/I.md:3, "Euclid's own figure" and the page's order; :5, the sentence on names that begin `Tacit.`; :7, the rule's register; :9, "(p. 316)"; :11, I.45's old words; :13, the two asides on Intersections 2 and 3, and "A bracket is Heath's pointer"); I.27's figure note (material, #30), review/I/27.toml:27, with the sentence of mishnah/I/27.md:5 that waits on it, and its "not proofs" at :13; Book I's gap catalogue, three points (docs/reports/gaps-book-I.md:256, material; "the tacit law of magnitudes" at :114, :139 and :188; "has no bracket", fifteen times); and Book Zero's "the laws of magnitudes" (Elements/Figure/Lengths.lean:10, :49, Areas.lean:16, Sums.lean:12);
+  - the per-law superposition change (#150), which the second axiom wave has merged, 3: I.4's figure note (material, #30: review/I/04.toml has no figure note, and Heath's figure also draws the bent base); the register of I.4's and I.8's records and module notes (review/I/04.toml:13, :19, :25, :52; review/I/08.toml:10, :16, :38; Prop04.lean:10–18; Prop08.lean:11–18); and Heiberg and Savile first named by surname (review/I/04.toml:41; Prop04.lean:159, :197);
+  - the citation sweep (#32), 11: Prop11.lean:39, "In Lean C may be any point"; I.20's case, "in Euclid's figure" (review/I/20.toml:39), its "not a proof" (:31) and "Heath gives no bracket here" at Prop20.lean:46, a free file whose change would make I.20's held record stale; I.39's note (review/I/39.toml:7); I.40's two notes (review/I/40.toml:4, and :10, where `Prop40.general` stands without its code mark); and I.45's record, four points (below);
+  - both the citation sweep (#32) and the second axiom wave (#119), 3: the joins of I.5 and I.11; I.11's passage key; and "Proclus's" on I.35.
+- **For owners outside this work, 18**, in files this work does not change:
+  - the coordinator, 8: scripts/render.py's line over every commentary (render.py:1508), Book I's front page mapping Definitions I.2 and I.3 to `Line` and listing `quadArea` for Definition I.14 (material), its italic "whole", "restricted" and "in part", and "Again by" for a repeated helper; the header of scripts/check_style.py (#145); a font for digits; "the tacit laws of magnitudes" in Elements/Foundations/CommonNotions.lean:14; and the three unused tags of review/terms.toml;
+  - README.md's owner, 2: README.md:23's echo of the generated line, and README.md:40's order of the page. The citation sweep and the second axiom wave also change README.md;
+  - heath/'s owner, 1: heath/I/front.md:1 gives pp. 153–155 with no scan leaves, so Book I's front page links none;
+  - docs/examples.md's owner, 1: an example of a restricted construction, once I.45's record tells it as II.14's does;
+  - Book III's read, 6: III.24's caption and commentary (material, provisional), its record's missing figure note and its bold leads; mishnah/III/32.md:3's "(p. 67)"; mishnah/III/28.md:5's "where Heath cites"; and the reading lines of III.26 and III.28 (Maor's year, a line in the list's own words, and a link out of Book III).
+- **Not taken up.** Of the 44 the list found free, four are in files the second axiom wave (#119) changes, Book I's gap catalogue and Book Zero, and were given to no writer; they are counted above as held. No other was left untaken. Of the six points the first part did not take up ("Still open", item 6):
+  - "applied" glossed two ways: mended (7d4e6866, 0022c931);
+  - the three unused tags: still not taken up, a decision for the coordinator;
+  - a record of which chapters were checked: in part (above);
+  - "cut" for figures: in part. STYLE section 4 now says that in the restriction's sentences a figure is divided, not cut (5a41eb62), and I.45's commentary and caption say "divides" and "divide" (5a41eb62, 0022c931). Book II's introduction (mishnah/intro/II.md:13, :15) and I.34's caption (figures/I/34-idea.svg:3) still say "cuts"; the writer left a sweep of the edition for the owner's decision;
+  - II.11's caption: mended, "(Drawn with AH to AB as 89 to 144: no whole numbers fit exactly.)" (0022c931);
+  - the lines for I.4's and I.27's figure notes (#30): still held (above).
+
+  Two points the writers found on the way were not taken up: Elements/BookI/HelpersParallels.lean:128, "(Def. 22)", in a docstring no page shows; and review/I/23.toml:4, whose statement note now names Book I's callers of I.23 but not Book III's six, which would take it past 160 characters (the writer of 956e01e4 offers "and Book III").
+
+### I.45 and II.14
+
+I.45's commentary now tells the restriction in II.14's words (5a41eb62, 0022c931). Both say that the main theorem takes Euclid's two triangles unchecked, and that they make his figure when the two corners off the diameter lie on opposite sides of it; that the companions take a figure "given with a checked division into triangles"; and, in one sentence, word for word: "Not yet proved ([#116](https://github.com/jackChallis/stoicheia/issues/116)): that every rectilineal figure, given only by its boundary, has such a division, and that another division gives the same area." Each then says that Euclid takes the second for granted and that Hilbert proved it, for his measure of area. I.45's modern way states its condition, and its caption divides the figure. STYLE section 4 now holds these words, "A figure given with its triangles", with a short form for a record's statement note (5a41eb62, 0022c931, 47230b33). The reader of I.37 to I.48 read I.45 and II.14 one after the other, and the last reader found their shared sentences the same, word for word.
+
+What remains is in five files, each held, with the words they need, as the reader of I.37 to I.48 gives them, checked against Prop45.lean.
+
+- **review/I/45.toml**, held by the citation sweep (#32): the pilot editor's notes 4 (material), 5, 12 and 13, and the first part's I.37 to I.48, 19.
+  - :4, the status line: "figures given with a checked division into triangles".
+  - :6, the Extra hypotheses: "The figure is given with a checked division into triangles that do not overlap, no point inside two of them (`Apart` or `Rectilineal`, or the division from one corner that `Prop45.fan` checks); the main theorem takes Euclid's two triangles, ABD and DBC, unchecked. A figure given only by its boundary is not yet covered."
+  - :8, the statement's note, 157 characters: "`Prop45.apart` covers a figure given with a checked division into triangles. Not yet proved: that every figure has one, and that another gives the same area."
+  - :18, the Representation note: "The main theorem takes Euclid's two triangles, ABD and DBC, unchecked, and they may overlap; they make Euclid's figure when A and C lie on opposite sides of DB, and that checked case is `Prop45.fan` for the corners D, A, B, C. Three companions take a rectilineal figure given with a checked division into triangles: triangles that lie apart, so the figure may have a hole (`Prop45.apart`); triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop45.figure`); or, as Euclid and Byrne divide it, triangles from one corner, each two neighbours on opposite sides of the straight line they share and their angles at that corner together less than four right angles, which `Fitted.fan` proves fit together (`Prop45.fan`). Equal to the figure means equal to those triangles together. The construction itself works for any triangles (`Prop45.sum`); the check is what makes their sum the figure's. The Lean does not state that the figure `Prop45.fan` makes is the one bounded by the closed line through its corners in order, though this is true in the plane. Not yet proved ([#116](https://github.com/jackChallis/stoicheia/issues/116)): that every rectilineal figure, given only by its boundary, has such a division, and that another division gives the same area. David Hilbert proved the second, for his measure of area."
+  - :29: "Euclid applies I.14 because KH and HM do not lie on the same side of GH. The Lean makes it so: it applies I.44's parallelogram to GH on the side away from K, and `SameSideOf.trans_opposite` puts M on the other side of GH from K. I.14 then puts H between K and M (D for H in the Lean)."
+  - :35: "as the representation note explains" becomes "as the Representation row explains".
+  - :38, the case: "Euclid's figure ABCD, divided by DB into the two triangles ABD and DBC".
+  - :39: "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart, as the figure at a glance does."
+- **Elements/BookI/Prop45.lean**, held by the citation sweep (#32). Lean notes only, after which I.45's record goes stale and is re-read:
+  - :19, "ABCD, cut by DB into the" becomes "ABCD, divided by DB into the";
+  - :29–30, "triangles that lie apart, no point inside two of them (`Apart`)" becomes "triangles that do not overlap, no point inside two of them (`Apart`)";
+  - :52, "gives the same sum" becomes "gives the same area";
+  - :355, "cut it into triangles" becomes "divide it into triangles".
+- **mishnah/intro/I.md:11**, held by the second axiom wave (#119), the whole paragraph, with "I.45" linked to its page as now: "**From triangles to a parallelogram.** Our I.45 takes the two triangles of Euclid's proof, unchecked; three of its companions take a figure given with a checked division into triangles that do not overlap, no point inside two of them, and repeat Euclid's construction for each triangle in turn. Equal to the figure means equal to those triangles together. I.45 is restricted. Not yet proved ([#116](https://github.com/jackChallis/stoicheia/issues/116)): that every rectilineal figure, given only by its boundary, has such a division, and that another division gives the same area."
+- **Elements/BookII/Prop14.lean:30–31 and :320**, changed by the change for #168: the first mention on II.14's page says "triangles that lie apart", where STYLE section 4 asks first for "triangles that do not overlap, no point inside two of them (`Apart`)", and the docstring's heading should read "for a figure given with triangles that do not overlap". It lands with Prop45.lean's notes, and makes II.14's record stale.
+- **docs/reports/gaps-book-I.md:262**, held by the second axiom wave (#119), still says "cuts", "every cutting gives the same whole" and "another cutting".
+
+The pilot editor's note 1 is closed (the notation train, above). B4 of the book acceptance record asks that I.45's limitation be stated plainly where it occurs: the commentary now does, and the record's Statement and Extra hypotheses rows (note 4) do not yet.
+
+### The material findings left, as they now stand
+
+| Finding | What | Now |
+|---|---|---|
+| I.1 to I.12, 1; I.13 to I.24, 2; across pages, 26 and 27 | The shared documents and the rule's docstring would describe the old rule; the overlap catalogue would keep rows B2 refuses | In part. The replacement itself brought the brief (docs/briefs/book-I.md:55–56), README.md:68, FORMALIZATION's table of rules (docs/FORMALIZATION.md:226) and the rule's docstring into line, and retired the catalogue's rows for I.2, I.3 and I.23 (docs/reports/overlaps.md:43); no record of Books I and II declares an overlap; I.44's half of across pages, 26 is mended (7d4e6866). Left: docs/reports/gaps-book-I.md:256, held by the second axiom wave (#119), #75 |
+| I.37 to I.48, 3 | I.44's commentary and record gave two reasons for one step | Closed in 7d4e6866: the commentary gives the rule's reason, and the record says how `Prop44.place` builds an equal parallelogram; stamped at 99359055 and 275ae830 |
+| I.37 to I.48, 4 | The Lean notes of `Prop44.place` and `Prop46.side_eq`, and the rule's docstring, described the retired form | Closed: the docstring by the replacement (17ae8e2a), the notes in 7d4e6866; I.44 and I.46 stamped. The docstring's register is a new editorial point |
+| I.1 to I.12, 2 | I.4's figure note | Open: review/I/04.toml still has no figure note; held by the per-law superposition change (#150) and the second axiom wave (#119), #30 |
+| I.25 to I.36, 2 | I.27's figure note | Open: review/I/27.toml:27; held by the second axiom wave (#119), #30 |
+| I.1 to I.12, 4; across pages, 33 | Book I's front page | Open: scripts/render.py, for the coordinator, #34 |
+| I.37 to I.48, 1 | I.45's modern way | Closed in 5a41eb62: "with A and C on opposite sides of DB, as in Euclid's figure" (mishnah/I/45.md:11) |
+| Across pages, 16 (in part); pilot, 3 (in part) | I.45's half: the main theorem said to "take the figure", and the issue link | Closed in 5a41eb62 and 0022c931, in II.14's words (above) |
+| Pilot, 4 (in part) | I.45's Statement and Extra hypotheses rows | Open: review/I/45.toml:4–8, held by the citation sweep (#32); the words are above, #116 |
+| Pilot, 1 | I.45's record stamped from an older base | Closed by the notation train as it landed (09bc89f3): the record names ef3ca8dd, an ancestor of main, and the Lean hash of Prop45.lean as it stands. It is stamped again when the record is mended |
+| Pilot, 16 | III.24 | Open: Book III's read, #34 |
+
+So, of the 27 material findings, the first part fixed 11, and of the 16 it left, nine are now closed: I.13 to I.24, 2; across pages, 26 and 27; I.37 to I.48, 1, 3 and 4; across pages, 16 and the pilot editor's note 3, for I.45; and the pilot editor's note 1. Their commits are #191 (17ae8e2a) and #193 (09bc89f3) on main, and 7d4e6866, 5a41eb62 and 0022c931 on this branch, which reach main when it lands. Seven stay open: I.1 to I.12, 1 (in part), 2 and 4; across pages, 33; I.25 to I.36, 2; and the pilot editor's notes 4 and 16.
+
+### The readers' findings
+
+The readers found no blocking point and no new material one. Their new findings are nineteen, counting once the point three readers made on the rule's docstring and the one two made on Prop14.lean; they added four points to findings already held.
+
+| Finding | Where (file:line at the revision read) | Severity | What | Resolution |
+|---|---|---|---|---|
+| Reader of I.1 to I.16, 1 | mishnah/I/01.md:7 | editorial | "explains beautifully", the inflated praise STYLE section 4 lists | Fixed in 0022c931 |
+| Reader of I.1 to I.16, 3; reader of I.17 to I.36, N3; reader of Book II, X | Elements/Foundations/Tacit/Superposition.lean:44–47 | editorial | The rule's docstring, from the replacement, printed on 44 of Book I's pages and all 14 of Book II's, keeps the register the mends removed elsewhere | Open: the foundations are the coordinator's. Proposed: "A triangle may be laid down in thought on a given ray and side, keeping its sides and angles, to prove equalities of lengths, angles or areas about the figure already given. Nothing is drawn in the placement, each law it uses is cited, and no point of it comes back out.", #34 |
+| Reader of I.1 to I.16, 4 | scripts/render.py:1898, :1902 (book/I/front.md:30–31) | editorial | Definitions I.17 and I.18 cite `Circumference.semicircle`, a theorem of Book III, without its book, so the name does not resolve in Book I | Open: scripts/render.py, proposed to the coordinator, `BookIII.Circumference.semicircle`, #34 |
+| Reader of I.1 to I.16, 9 | mishnah/I/16.md:7 | editorial | With the label "a + 1" gone from the figure, its arrow from B to A is a vector the paragraph never names | Fixed in 0022c931: the paragraph names BA as a + 1, and says all three angles lie between 0 and π |
+| Reader of I.17 to I.36, N1 | review/I/23.toml:9 | editorial | The route note retells why, which the commentary says | Fixed in 0022c931 |
+| Reader of I.17 to I.36, N2 | Elements/BookI/Prop23.lean:22 | editorial | "the bracket in I.22's enunciation", where brackets alone are Heiberg's | Fixed in 0022c931: "Heath's reference" |
+| Reader of I.37 to I.48, 1 | figures/I/44-idea.svg:3 | editorial | The caption "lays" the triangle on AB, where the commentary keeps "laid on" for I.4 and I.8 | Fixed in 0022c931: "To apply to AB (blue) a parallelogram equal to the triangle C (yellow) …" |
+| Reader of I.37 to I.48, 3 | mishnah/I/38.md:1 | editorial | J. L. Heiberg named in full again, after the record's note | Fixed in 0022c931 |
+| Reader of I.37 to I.48, 5 | figures/I/45-idea.svg:3 | editorial | "cut ABCD into triangles" | Fixed in 0022c931: "divide" |
+| Reader of I.37 to I.48, 6 | mishnah/I/45.md:3; mishnah/II/14.md:1 | editorial | Byrne and Hilbert named in full again, after the record's rows | Fixed in 0022c931, on both pages, so that their shared sentences stay the same |
+| Reader of I.37 to I.48, 7 | mishnah/I/45.md:3 | editorial | "taken together", where STYLE section 4 and II.14 say "together" | Fixed in 0022c931 |
+| Reader of Book II, F1 | mishnah/intro/II.md:7 | editorial | "We prove each once, in Rectangles.lean", no longer true once the sentence on `Tacit.adjacent_eq_of_right`, which I.13's file proves, was added | Fixed in 0022c931 |
+| Reader of Book II, F2 | figures/II/02-idea.svg:3 | editorial | "each piece", where II.1's caption now has Heath's "each segment" | Fixed in 0022c931 |
+| Reader of Book II, F3; reader of I.37 to I.48 | Elements/BookII/Prop14.lean:30–31, :320 | editorial | The first mention on II.14's page says "lie apart" | Open: Prop14.lean is changed by the change for #168; to land with Prop45.lean's notes ("I.45 and II.14"), #34, #116 |
+| Reader of Book II, F4 | docs/STYLE.md:369–380 | editorial | The new rule asked every text for the same words, which a record's 160-character note cannot give in full | Fixed in 0022c931: the texts named, and a short form for a record's statement note |
+| Reader of Book II, F5 | docs/references.bib:981–990, :1104–1113 | editorial | Courant and Robbins' and Stillwell's *Mathematics and Its History* had no "Contents checked" note, though reading lines give their chapters | In part: Stillwell's note added in 0022c931, its titles checked at Crossref by the reader and the writer; Courant and Robbins' chapters wait for a contents page (above), #34 |
+| Reader of Book II, F6 | figures/II/11-idea.svg:3 | editorial | "(Drawn 89 to 144: no whole numbers fit.)" no longer says what stands in that ratio; the last re-reader's F1 of the first part | Fixed in 0022c931 |
+| Last reader, F1 | Elements/BookI/Prop23.lean:55–56 | editorial | I.22 is said to point to I.20 ("and points to I.20 for it"), where the docstring above now says "Heath's reference" | Open: for whoever next changes Prop23.lean, since the change makes I.23's record stale, #34 |
+| Last reader, F2 | docs/STYLE.md:373–375 | editorial | The full words at first mention were asked of four kinds of text, not of the gap catalogues | Fixed in 47230b33 |
+| Reader of I.1 to I.16, 5 (added) | review/I/04.toml:19, :25, :31, :47 | editorial | The notes use B', C' and DB'C', which the page never introduces | Open, with I.4's other notes: held by the per-law superposition change (#150) and the second axiom wave (#119) |
+| Reader of I.1 to I.16, 6 (added) | Elements/BookI/Prop08.lean:16–17, against mishnah/I/08.md:5 | editorial | Two accounts of I.7's proof: "through I.5 and I.4", and "through I.5 and I.3 uses circles" | Open: held, as above |
+| Reader of I.1 to I.16, 6 (added) | Elements/BookI/Prop08.lean:123 | editorial | "(Savile's argument)", the page's first mention of Henry Savile | Open: held, as above |
+| Reader of I.1 to I.16, 7 (added) | review/I/05.toml:69 | editorial | `representations = "n/a"` beside a representation table, the only such pair in Books I and II; no page shows it | Open: held by the citation sweep (#32) and the second axiom wave (#119); "pass" at the next stamp |
+
+Of the nineteen, fourteen are fixed (0022c931, 47230b33), one in part, and four open, one of them held.
+
+The last reader read the fifth writer's twelve mends at 275ae830 and confirmed each. It checked I.16's three angles, I.23's record against the Lean line by line and its "through I.8 and I.20" against facts.json, I.44's caption against the figure's coordinates, the full names on the pages of I.38, I.45 and II.14, Book II's introduction against Prop13.lean and Rectangles.lean, and II.11's ratio against the figure, where AH is 89 and AB 144. One quotation added in this part, Proclus' "describers of countries" on I.37 (vol. 1, p. 332), was checked against the OCR by its writer and its reader, and not against the page image.
+
+### Re-read and stamped
+
+The readers were given twelve records to stamp, and stamped each with the reviewer "Claude Opus 5.5, independent reader":
+
+- at 99359055, with the run "brief 0005 stage 5, read-through 02 (#34), part 2: the changes landed since 2e8aecf8 and the held findings' mends, read at 99359055": I.1, I.14, I.23 and I.29 in 32c168fa, and I.37, I.43, I.44, I.46, I.48 and II.2 in 55606178;
+- at 275ae830, with the run "brief 0005 stage 5, read-through 02 (#34), part 2: the addendum readers' mends (0022c931), read at 275ae830": I.1, I.23, I.38, I.44, II.2 and II.11 in 4c83319a.
+
+At 000d6791, six records carry the first stamp (I.14, I.29, I.37, I.43, I.46 and I.48) and six the second (I.1, I.23, I.38, I.44, II.2 and II.11). Seven are stamped by this read-through for the first time (I.1, I.23, I.29, I.37, I.44, I.48 and II.2), so 50 of the 62 records of Books I and II now carry its stamp. The twelve without it are I.2, I.3, I.4, I.5, I.8, I.11, I.20, I.27, I.35, I.39, I.40 and I.45: all held by work in flight but I.3, which the reader of I.1 to I.16 read and confirmed and was not given to stamp. Every mend and every landed change the readers read was confirmed true. No stamp was given over a blocking or material point; the editorial points stamped over are in the table above. The pages in book/ show the new stamps once the integrator renders them.
+
+The checks, as the readers report them:
+
+- after the first stamps, check_fidelity reported only I.44, I.46 and I.48, whose Lean notes had changed in 7d4e6866, until the reader of I.37 to I.48 stamped them; it then reported that all 99 propositions quote Heath exactly and that the 99 review records hold. check_style passed (S1 to S26).
+- at 275ae830, `lake build Elements.BookI.Prop23` succeeded and check_fidelity passed. check_style failed at first, with three S12 failures because the tree was not built (no Prop24.olean), and passed after a full `lake build`. check_links found all 13771 relative links and anchors in 483 Markdown files resolving.
+
+### Still open after the addendum
+
+1. **Findings in files held by work in flight** (#34): the thirty above, four of them material (I.4's and I.27's figure notes, #30; I.45's Statement and Extra hypotheses rows, #116; Book I's gap catalogue at :256), with the readers' four additions and Prop14.lean. Each is mended, and its page read and stamped again, after the work that holds it lands: the citation sweep (#32), the second axiom wave (#119), with the per-law superposition change (#150) merged into it, and the change for #168.
+2. **Files shared with work in flight**, for the coordinator's order of landing (#34):
+   - mishnah/I/04.md:7 and mishnah/I/08.md:5, rewritten in this part (3d703e80) and by the second axiom wave (#119), as the fourth code review foresaw: whichever lands second merges the two and has both pages read again;
+   - docs/reports/gaps-book-II.md, changed here (5a41eb62) and, near II.14's entry, by the change for #168;
+   - the stamps. None of the twelve records stamped in this part is changed by the four changes in flight, so item 8's seventeen stand as they were. The cross-family sign-off (#220), not yet on main, restamps 21 records that carry this read-through's stamps, seven of them stamped in this part (I.1, I.14, I.37, I.43, I.44, I.48 and II.2); the fourth code review counted six. Whichever lands second has each shared record re-read and stamped again.
+3. **I.45 told as II.14 is** (#34, #116): its record, Prop45.lean, Book I's introduction, Book I's gap catalogue and Prop14.lean, in the words above; then docs/examples.md's example of a restricted construction (the pilot editor's note 19).
+4. **For the coordinator** (#34): the rule's docstring; scripts/render.py, for the line over every commentary, Book I's front page (material), its `Circumference.semicircle`, its italics and "Again by"; the header of scripts/check_style.py (#145); a font for digits, which now concerns only I.43's "(1 − s)u" and "(1 − t)v", since the labels of I.1 and I.16 are gone (3d703e80); "the tacit laws of magnitudes" in Elements/Foundations/CommonNotions.lean:14; the three unused tags; and the book-aware check of the reading lines (#144).
+5. **For other owners**: README.md:23 and :40; heath/I/front.md:1's scan leaves; Courant and Robbins' chapters and Yaglom's section titles, to record in docs/references.bib; the comment at review/I/43.toml:4; Elements/BookI/HelpersParallels.lean:128; Prop23.lean:55–56, for whoever next changes that file; and a sweep of "cut" for figures, for the owner's decision.
+6. **Book III's read** (#34): the six points above, with reading/III/09.md's Mueller "(1981)", which by I.18's line should read "(2006; first published 1981)".
+7. **The book acceptance records** (#156). B3 now has this addendum; it still needs this report on main, the seven material findings still open resolved by commits on main, and the [read-through] table of each record. B4 needs I.45's Statement and Extra hypotheses rows to state its limitation plainly, as its commentary now does. #34's second condition is met for Books I and II as main stood at 554dfb0f: each later change under book/, mishnah/, Elements/ or figures/ that lands before the release, the changes in flight above among them, needs its own dated reading.
