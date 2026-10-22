@@ -1,7 +1,7 @@
 - **Two corrections to the entry on the scan's token boundaries, and FORMALIZATION's
   sentence on the refused `#` commands
   ([#321](https://github.com/jackChallis/stoicheia/issues/321)).** The review of #234's
-  last fix round, TT-234-cr4, found four points of wording. Three are in the entry of 22
+  last fix round, TT-234-cr4, found four editorial points. Three are in the entry of 22
   October,
   [the source scan ends a name as Lean 4.35 does](2026-10-22-scan-token-boundaries.md),
   which, being history, is not edited; this entry corrects it instead.
