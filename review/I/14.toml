@@ -34,10 +34,10 @@ note = "Like Heath's, this figure is drawn for the impossible supposition that B
 
 [review]
 stage = "full"
-commit = "99359055"
-reviewer = "Claude Opus 5.5, independent reader"
+commit = "b18bca18"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:0bb35e43d7174b8c"
-run = "brief 0005 stage 5, read-through 02 (#34), part 2: the changes landed since 2e8aecf8 and the held findings' mends, read at 99359055"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I14c, independent re-read at ce345b79; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the proof (#220), independent re-read at b18bca18 (reader RT-x3)"
 
 [review.items]
 statement = "pass"
