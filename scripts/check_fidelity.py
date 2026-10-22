@@ -11,12 +11,17 @@
 4. None of the commands that `docs/FORMALIZATION.md`, section 7, forbids under
    `Elements/`, `Staging/`, `Audit/` or `model/` (LEAN_TREES), since they get round the kernel,
    bring in an axiom without the word, run a program when a file is built or imported,
-   or stop Lean reading a file: `native_decide`, `bv_decide`, the word `native`,
-   `(config := …)`, `set_option debug.…` and `set_option doc.…` (or `«debug».…` and
-   `«doc».…`), `#eval`, `#exit`, `run_cmd`, `elab`, `macro`, `simproc` and its kin,
+   stop Lean reading a file, or hide an error from the build: `native_decide`,
+   `bv_decide`, the word `native`, `(config := …)`, `set_option debug.…` and
+   `set_option doc.…` (or `«debug».…` and `«doc».…`, with or without a space after
+   `set_option`), `#eval`, `#exit` and `#guard_panic` (with or without a space before the
+   word after them), `run_cmd`, `elab`, `macro`, `simproc` and its kin,
    `implemented_by`, `extern`, `unsafe`, the attributes it knows to register code (by a
    name ending in `elab`, `tactic`, `init`, `proc`, `parser`, `handler`, `unexpander` and
-   others, or beginning `doc_`), and the rest of FORBIDDEN, below. The scan reads Lean's
+   others, or beginning `doc_`), and the rest of FORBIDDEN, below; `#guard_msgs` with
+   `drop` (GUARD_DROP) or `substring` (GUARD_SUBSTRING), in every file it reads, with no
+   exception; and `#guard_msgs` under a docstring that pins an error (`guard_docstring`),
+   in every file it reads but the two of GUARD_ERROR_PINS. The scan reads Lean's
    comments and its string and character literals as Lean does (`read_lean`), so a
    literal's text never opens a comment or ends an attribute's brackets, and is not read
    as code, while the code in an interpolated string's `{…}` holes is; a string whose
@@ -141,20 +146,27 @@ MODEL_CHECK_RUN_CMD = re.compile(
     r"^[ \t]*(?P<command>run_cmd)[ \t]+(?:\([ \t]*)?Check\.Generator\."
     r"[^\W\d][\w'!?]*(?=[ \t\r\n()]|$)", re.M)
 # Commands that could get round the kernel (`native_decide` and the `debug.` options, among
-# them `debug.skipKernelTC`, spelled `debug.` or `«debug».`), bring in an axiom without the
-# keyword, run a program when the file is built or imported (`#eval`, `run_cmd` and their
-# kin, `initialize`, the simproc commands and `set_library_suggestions`, whose code `simp`
-# and the suggestion tactics run, and the `doc.` options, spelled `doc.` or `«doc».`: with
+# them `debug.skipKernelTC`, spelled `debug.` or `«debug».`, and with no space after
+# `set_option` before a guillemet, as Lean reads `set_option«debug».skipKernelTC`, though
+# not before a plain `debug`, since `set_optiondebug.skipKernelTC` is one name), bring
+# in an axiom without the keyword, run a program when the file is built or imported
+# (`#eval`, `run_cmd` and their kin, `initialize`, the simproc commands and
+# `set_library_suggestions`, whose code `simp` and the suggestion tactics run, and the
+# `doc.` options, spelled in the same ways: with
 # `doc.verso` on, Lean runs the Lean in a docstring, which the scan takes out with the
 # comments), give syntax a meaning in code (`elab`, `macro`), swap code in for a definition,
-# or stop Lean reading the file (`#exit`). Matched as whole words, in the Lean as
-# `read_lean` gives it; so is an attribute that registers code Lean runs while a file is
-# built or printed, known by the end of its name (`command_elab`, `grind_tactic`, `init`,
-# `sym_simproc`, `app_unexpander`, `term_parser`, `cpass`, `missing_docs_handler`,
-# `simprocAttr` and the rest) or, for `builtin_doc` and the `doc_` attributes, its start,
-# and named in full in the finding. The list holds the attributes found in Lean 4.35 to run
-# code while a file is built; it may not be complete, and a later Lean may add more.
-# FORMALIZATION.md, section 7, is their one home.
+# stop Lean reading the file (`#exit`), or take every message of the command it wraps out
+# of the build, an error among them, once any one holds the word `PANIC` (`#guard_panic`).
+# Matched as whole words, in the Lean as `read_lean` gives it, but for `#eval`, `#exit` and
+# `#guard_panic`, which need no word boundary after them: Lean reads the longest command it
+# knows, so `#evalx` is `#eval x`, `#exitx` stops it reading and `#guard_panicin` is
+# `#guard_panic in` (#197). An attribute that registers code Lean runs while a file is
+# built or printed is matched too, known by the end of its name (`command_elab`,
+# `grind_tactic`, `init`, `sym_simproc`, `app_unexpander`, `term_parser`, `cpass`,
+# `missing_docs_handler`, `simprocAttr` and the rest) or, for `builtin_doc` and the `doc_`
+# attributes, its start, and named in full in the finding. The list holds the attributes
+# found in Lean 4.35 to run code while a file is built; it may not be complete, and a later
+# Lean may add more. FORMALIZATION.md, section 7, is their one home.
 # Lean 4.35 evaluates natively, and admits the result as an axiom, for `native_decide`, the
 # `bv_decide` family and `decide` with its `native` option, which `decide +zetaReduce
 # +native`, `decide (native := Bool.true)` or a whole configuration, `(config := ⟨false,
@@ -163,7 +175,7 @@ MODEL_CHECK_RUN_CMD = re.compile(
 FORBIDDEN = re.compile(
     r"\bnative_decide\b|\bdecide\s*\+\s*native\b|\bnative\s*:=\s*true\b|\bnative\b|"
     r"\(\s*«?config»?\s*:=|"
-    r"\bset_option\s+«?(?:debug|doc)»?\.|#eval\b|#exit\b|"
+    r"\bset_option(?:\s+«?|\s*«)(?:debug|doc)»?\.|#eval|#exit|#guard_panic|"
     r"\b(bv_decide|bv_check|run_cmd|run_elab|run_meta|run_tac|by_elab|elab|elab_rules|"
     r"macro|macro_rules|command_elab|term_elab|initialize|builtin_initialize|"
     r"(?:builtin_)?(?:sym_|cbv_)?d?simproc(?:_decl|_pattern)?|set_library_suggestions|"
@@ -172,6 +184,35 @@ FORBIDDEN = re.compile(
     r"tactic|init|proc|discharger|unexpander|precheck|formatter|parenthesizer|control_info|"
     r"code_action|rpc_method|linter|parser|pass|suggestions?|check|handler|provider|fn|module|"
     r"hooks|Attr))\b")
+# `#guard_msgs` with `drop` (#197): `(drop all)`, `(drop error)`, `(drop warning)`, `(drop
+# info)`, `(warning, drop all)` and the rest take the messages they match out of the build.
+# With `drop all` or `drop error` that is an error, so a theorem Lean refused still builds,
+# resting on `sorryAx`; `drop warning` takes out the warning that a declaration uses
+# `sorry`. Lean takes `drop` only as the plain word, never as `«drop»`, and needs no space
+# before the brackets or inside them. Refused in every file the scan reads, with no
+# exception: no file uses it (docs/briefs/0002-decisions.md, 21 October 2026), and a need
+# for one is asked for in a change of its own. Matched in the Lean as `read_lean` gives it,
+# so a remark inside the brackets hides nothing, and the words in a comment or a string
+# are not refused.
+GUARD_DROP = re.compile(r"#guard_msgs\s*\([^)]*\bdrop\b[^)]*\)")
+# `#guard_msgs` with `substring` (#197): with `substring := true` the docstring need only
+# appear somewhere in the messages, so one that is only part of them (`error`), an empty
+# one, or none, matches an error, which leaves the build as with `drop`. Refused in any
+# setting, `false` among them, with or without spaces, beside any filter or option, in
+# every file the scan reads, with no exception: no file uses it (the decisions of 21
+# October 2026). Matched as GUARD_DROP is.
+GUARD_SUBSTRING = re.compile(r"#guard_msgs\s*\([^)]*\bsubstring\b[^)]*\)")
+# `#guard_msgs` under a docstring that pins an error (#197). Lean writes each message it
+# checks as its kind, `error:` for an error, and its text; a docstring that matches them
+# takes them out of the build, so a theorem Lean refused still builds, resting on
+# `sorryAx`. With `drop` and `substring` refused, a docstring pins an error only if it
+# holds `error:`. Refused in every file the scan reads but these two, which pin errors on
+# purpose: the model's round trip pins the generator's refusals, each over a `run_cmd`,
+# and its audit pins one refusal of `#check`; neither wraps a declaration. The scan reads
+# both, so without them here it would refuse their pins (the decisions of 21 October
+# 2026).
+GUARD_MSGS = re.compile(r"#guard_msgs")
+GUARD_ERROR_PINS = {"model/Check/RoundTrip.lean", "model/Model/Audit.lean"}
 # An axiom, declared anywhere in a line: Lean reads `example : True := trivial axiom
 # planted : False` as two commands, the second an axiom.
 AXIOM = re.compile(r"\baxiom\b")
@@ -246,7 +287,26 @@ def check_fidelity() -> None:
 # a raw string with `r`, any `#`s and `"`, a character literal with `'`; a number with a
 # digit, so that the `'` after one begins a character literal. A string just after one of
 # INTERPOLATED is read with its `{…}` holes, as Lean reads it.
-IDENT = re.compile(r"[^\W\d][\w'!?.]*|\d[\w.]*")
+# An identifier's parts are joined by a `.` before a word character other than a digit.
+# After a term, an adjacent `.` can begin a projection field: Lean reads `p.1` as `p` and
+# the field `.1`, its digits alone (FIELD). It can also be a declared notation token. When
+# the number after it runs past FIELD through `_` or an exponent, keep NUMBER's longer
+# boundary, which is the reading Lean's longest parser can select for that notation; an
+# ordinary projection such as `p.1.succ` keeps FIELD. Lean's field index never begins with
+# 0, so `.0x1`, `.0b1` or `.01` after a `.` is always a number. Whitespace or a comment
+# ends the adjacency on which a projection depends.
+# A number ends where Lean 4.35's tokenizer ends it (its `numberFnAux`): binary, octal,
+# hexadecimal or decimal digits, `_` between them, and a decimal's point and exponent,
+# never a `..` after it. Lean reads `1set_option` as `1` and `set_option`, and
+# `p.1set_option` as `p`, `.1` and `set_option`, so a number or field with a letter, a
+# digit or `_` just after it is blanked: the scan's `\b` then sees the word after it
+# begin (#197).
+IDENT = re.compile(r"[^\W\d][\w'!?]*(?:\.[^\W\d][\w'!?]*)*")
+NUMBER = re.compile(r"0[bB](?:_*[01])+|0[oO](?:_*[0-7])+|0[xX](?:_*[0-9a-fA-F])+|"
+                    r"[0-9](?:_*[0-9])*(?:(?!\.\.)\.(?:[0-9](?:_*[0-9])*)?)?"
+                    r"(?:[eE][+-]?[0-9](?:_*[0-9])*)?")
+FIELD = re.compile(r"[1-9][0-9]*")
+WORD = re.compile(r"\w")
 RAW = re.compile(r'r(#*)"')
 CHAR = re.compile(r"'(?:\\(?:x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|.)|[^\\\n'])'")
 INTERPOLATED = {"s!", "m!", "f!", "throwError"}
@@ -290,12 +350,13 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
     """Read Lean from `i` to the end or, in a hole, to the `}` that closes it, and return
     that offset. `marks` gains the text of each comment and literal ("text"), each «…»
     name ("name") and each string the scan cannot read for certain ("unsure")."""
-    depth, previous = 0, ""
+    depth, previous, can_project, field_dot = 0, "", False, False
     while i < len(src):
         c, j = src[i], i + 1
         if src.startswith("--", i):
             j = _find(src, "\n", i)
             marks.append(("text", i, j))
+            can_project, field_dot = False, False
         elif src.startswith("/-", i):
             # a comment's body begins at its fourth character, as Lean reads it: after
             # `/--` or `/-!`, and past the third character of any other `/-`, which Lean
@@ -306,27 +367,48 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
                 nested += (pair == "/-") - (pair == "-/")
                 j += 2 if pair in ("/-", "-/") else 1
             marks.append(("text", i, j))
+            can_project, field_dot = False, False
         elif c == '"':
             j, previous = _read_string(src, i, marks, previous in INTERPOLATED), c
+            can_project, field_dot = True, False
         elif m := RAW.match(src, i):
             close = '"' + m[1]
             k = _find(src, close, m.end())
             marks.append(("text", m.end(), k))
             j, previous = min(k + len(close), len(src)), c
+            can_project, field_dot = True, False
         elif c == "«":
             j = min(_find(src, "»", i) + 1, len(src))
             marks.append(("name", i, j))
             previous = src[i:j]
+            can_project, field_dot = True, False
         elif m := IDENT.match(src, i):
             j, previous = m.end(), m[0]
+            can_project, field_dot = True, False
+        elif m := NUMBER.match(src, i):
+            if field_dot and (field := FIELD.match(src, i)):
+                tail = src[field.end():m.end()]
+                if "_" not in tail and "e" not in tail and "E" not in tail:
+                    m = field
+            j, previous = m.end(), m[0]
+            if WORD.match(src, j):
+                marks.append(("text", i, j))
+            can_project, field_dot = True, False
         elif c == "'" and src[j:j + 1] != "'" and (m := CHAR.match(src, i)):
             marks.append(("text", i + 1, m.end() - 1))
             j, previous = m.end(), c
+            can_project, field_dot = True, False
         elif c == "}" and hole and not depth:
             return i
         elif not c.isspace():
             depth += (c == "{") - (c == "}")
             previous = c
+            if c == ".":
+                field_dot, can_project = can_project, False
+            else:
+                can_project, field_dot = c in ")]}·⟩›", False
+        else:
+            can_project, field_dot = False, False
         i = j
     return len(src)
 
@@ -398,6 +480,21 @@ def line_of(text: str, offset: int) -> int:
     return text[:offset].count("\n") + 1
 
 
+def guard_docstring(src: str, code: str, at: int) -> str:
+    """The docstring of the `#guard_msgs` at offset `at`, with its `/--` and `-/`, or "" if
+    it has none: the `/--` comment among the comments and whitespace just before it, read
+    as `read_lean` reads them, which gave `code`. Lean takes no other docstring for it; a
+    `--` or `/- … -/` comment there, a `/-!` one, or a docstring before other code, is not
+    one."""
+    start = at
+    while start and code[start - 1].isspace():
+        start -= 1
+    marks: list[tuple[str, int, int]] = []
+    _read_code(src[start:at], 0, marks)
+    return "".join(src[start + i:start + j] for kind, i, j in marks
+                   if kind == "text" and src.startswith("/--", start + i))
+
+
 def check_rules() -> None:
     for path in lean_sources():
         rel = path.relative_to(ROOT).as_posix()
@@ -425,6 +522,21 @@ def check_rules() -> None:
                      "Lean's kernel, bring in an axiom unseen, run a program when the file is "
                      "built or imported, or stop Lean reading it (docs/FORMALIZATION.md, "
                      "section 7)")
+        for m in GUARD_DROP.finditer(code):
+            fail(f"{rel}:{line_of(code, m.start())}: uses `{' '.join(m.group(0).split())}`, "
+                 "whose `drop` takes the messages it matches out of the build, an error with "
+                 "`drop all` or `drop error` (docs/FORMALIZATION.md, section 7)")
+        for m in GUARD_SUBSTRING.finditer(code):
+            fail(f"{rel}:{line_of(code, m.start())}: uses `{' '.join(m.group(0).split())}`, "
+                 "whose `substring`, set true, lets a docstring that is only part of the "
+                 "messages, an empty one, or none, match an error and take it out of the "
+                 "build; it is refused in any setting (docs/FORMALIZATION.md, section 7)")
+        for m in GUARD_MSGS.finditer(code) if rel not in GUARD_ERROR_PINS else ():
+            if "error:" in guard_docstring(src, code, m.start()):
+                fail(f"{rel}:{line_of(code, m.start())}: uses `#guard_msgs` under a docstring "
+                     "holding `error:`, which pins an error and takes it out of the build; "
+                     "only " + " and ".join(sorted(GUARD_ERROR_PINS)) + " may "
+                     "(docs/FORMALIZATION.md, section 7)")
         for offset in unsure:
             fail(f"{rel}:{line_of(src, offset)}: a string the scan cannot read for certain, "
                  "since Lean could read its braces as holes of code (docs/FORMALIZATION.md, "

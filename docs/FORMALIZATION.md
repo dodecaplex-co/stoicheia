@@ -412,7 +412,8 @@ dependencies.
   line followed by `Check.Generator.<ident>` or `(Check.Generator.<ident>`, since those
   files run the generator. Every other forbidden command or attribute is still refused
   there, and an `axiom` is refused everywhere under `model/`. `check_fidelity.py` matches
-  each as a whole word, in
+  each as a whole word, and `#eval`, `#exit` and `#guard_panic` also closed up to the word
+  after them, since Lean reads the longest command it knows (`#evalx` is `#eval x`), in
   the Lean with its comments and the text of its string and character literals taken
   out, read as Lean reads them, raw strings and escapes among them (`native_decide` even
   in a comment or a string). The code in an interpolated string's `{…}` holes is read
@@ -425,9 +426,11 @@ dependencies.
     that option, the word `native`, wherever it stands, and `(config := …)`, spelled
     `config` or `«config»`, are refused;
   - `set_option debug.…`, and its escaped spelling `set_option «debug».…`, which Lean
-    reads the same way: `debug.skipKernelTC` skips the kernel, and `debug.byAsSorry` and
-    its kin put `sorry` in place of a proof;
-  - `set_option doc.…`, and its escaped spelling `set_option «doc».…`: with `doc.verso`
+    reads the same way, with or without a space before the guillemet
+    (`set_option«debug».skipKernelTC`): `debug.skipKernelTC` skips the kernel, and
+    `debug.byAsSorry` and its kin put `sorry` in place of a proof;
+  - `set_option doc.…`, and its escaped spelling `set_option «doc».…`, with or without
+    that space (`set_option«doc».verso`): with `doc.verso`
     or `doc.verso.module` on, Lean reads a docstring as Verso and runs the Lean in its
     code blocks, an `#eval` among it, while the file is built, though the scan takes
     docstrings out with the comments; refusing the options keeps every docstring inert;
@@ -460,6 +463,34 @@ dependencies.
     attributes each Lean release adds, so this one may not be complete, and review still
     reads every staged file and audit lemma;
   - `implemented_by`, `extern` and `unsafe` put code in place of a definition;
+  - `#guard_msgs` with `drop`, in any of its forms (`(drop all)`, `(drop error)`,
+    `(drop warning)`, `(drop info)`, `(warning, drop all)` and the rest, with or without
+    spaces), takes the messages it matches out of the build: with `drop all` or
+    `drop error` a theorem that Lean refused still builds, resting on `sorryAx`, and
+    with `drop warning` the warning that a declaration uses `sorry` is gone. It is
+    refused in every file the scan reads, the audit lemmas and the model among them, with
+    no exception, since no file needs it
+    ([decisions, 21 October 2026](briefs/0002-decisions.md#21-october-2026)); a need for
+    one is asked for in a change of its own;
+  - `#guard_msgs` with `substring`, in any setting (`(substring := true)`, or `false`),
+    with or without spaces, beside any filter or option: with `substring := true` the
+    docstring need only appear somewhere in the messages, so a docstring that is only
+    part of the messages (`error`), an empty one, or none, matches an error and takes it
+    out of the build. It is refused in every file the scan reads, with no exception,
+    since no file uses it;
+  - `#guard_msgs` under a docstring that pins an error, one that holds `error:`, the
+    word Lean writes before each error it checks: the docstring matches
+    the error, and the error leaves the build as with `drop`. It is refused in every
+    file the scan reads but two, which pin errors on purpose:
+    `model/Check/RoundTrip.lean` pins the generator's refusals, each over a `run_cmd`,
+    and `model/Model/Audit.lean` pins one refusal of `#check`. Neither wraps a
+    declaration, and review reads any new pin there. The scan reads both files, so the
+    allow-list names what it would otherwise refuse
+    ([decisions, 21 October 2026](briefs/0002-decisions.md#21-october-2026)). A
+    `#guard_msgs` whose docstring pins only info messages or warnings, as the audit
+    lemmas' pins do, or that has none, is not refused;
+  - `#guard_panic`, which takes every message of the command it wraps out of the build
+    once any one holds the word `PANIC`, an error among them;
   - `#exit` stops Lean reading the file, though a reader and the checks here read on.
 - **Superposition** only in I.4 and I.8.
 - **Placement,** Euclid's application of one figure to another, only in III.24 and the
@@ -496,6 +527,16 @@ ending and prefix the scan knows, in each of those five folders, and `#exit` at 
 of each root; generator `run_cmd` calls, plain and parenthesised, outside the model's
 Check files, and calls there to another namespace or after another command on the line;
 other forbidden commands on an allowed generator call's line or in its arguments;
+`set_option«debug».skipKernelTC` and the other spellings of the `debug.` and `doc.`
+options with no space before the guillemet, `#eval`, `#exit` and `#guard_panic` closed up
+to the word after them, and `#guard_msgs` with `drop`, with `substring`, and under a
+docstring that pins an error, each in each of its forms, in a scratch copy of I.1's file;
+`set_option` closed up to decimal, hexadecimal, scientific and underscore-separated
+numbers, after a projection and after a declared notation ending in `.`, with whitespace
+or a comment beside it, and `axiom` closed up to such a number, with controls that
+preserve ordinary projections;
+the same pin at a new file beside each file of its allow-list, at each file's name in the
+other's folder, in `Audit/` and in `Staging/`, and a pin whose `error:` ends its line;
 a proposition imported by Book Zero; a `sorry` in a
 complete book; and a primitive word no longer opaque. Some of the forbidden commands
 stand after a string, a raw string or a character literal holding `/-`, `-/`, `]` or `"`,
@@ -512,7 +553,12 @@ that generator calls first on their line are allowed in `model/Check.lean` and
 `model/Check/`, that an axiom in a `.lake` folder of `model/Model/` or `model/Check/` is
 caught while one in `model/.lake` is not read, that a link named `.lake`, to a
 directory, a file or nothing, is refused in `model/`, `model/Model/` and `model/Check/`,
-and that the unplanted tree passes. They plant source files in place, the `.lake` links
+that a `#guard_msgs` that checks its messages or passes them on, one under a docstring
+that pins an info message, `error:` in a theorem's own docstring, a comment or a module
+docstring before a `#guard_msgs`, and the words of each of these commands in a comment
+or a string, are not refused, that the pin passes at each file of its allow-list, and
+that the unplanted tree passes.
+They plant source files in place, the `.lake` links and the scratch copy of I.1's file
 in small trees of their own, and copy only `facts.json` and that one copy of I.1, never
 `model/.lake`.
 
@@ -525,14 +571,20 @@ without entering the directory `model/.lake`, whose contents go unscanned; a lin
 `model/.lake` is refused like any other link, and a `.lake` folder deeper in the model is
 read like any other. It refuses an `axiom` anywhere outside
 `Elements/Foundations/` and every command and attribute the list above names, with only
-the generator `run_cmd` allowance in `model/Check.lean` and `model/Check/`.
+two exceptions: the generator `run_cmd` allowance in `model/Check.lean` and
+`model/Check/`, and the error pins of `model/Check/RoundTrip.lean` and
+`model/Model/Audit.lean`.
 `MODEL_CHECK_RUN_CMD` names that allowance in the script; it exempts only `run_cmd`,
 so its arguments and any further command on the line are still scanned. Book Zero's
 import rule and the placement policy remain confined to `Elements/`. It reads
-comments and literals as Lean's tokenizer does, so a string cannot hide a command from it
-by opening a comment or ending an attribute's brackets. Beyond that it reads words, not
-Lean's grammar nor the tokens a file declares, so it catches a slip but not a command
-disguised from it on purpose, nor an attribute it does not list: review still reads every
+comments, literals and number endings as Lean 4.35's tokenizer does, so a string cannot
+hide a command by opening a comment or ending an attribute's brackets, and a word closed
+up to a number remains visible. An adjacent numeric projection stays a projection; where
+a declared `.` notation makes a longer number the competing reading, the longer boundary
+stays visible too. Whitespace and comments end projection adjacency, as they do in Lean.
+Beyond that it reads words, not Lean's grammar nor the tokens a file declares, so it
+catches a slip but not a command disguised from it on purpose, nor an attribute it does
+not list: review still reads every
 staged file, audit lemma and model file. In `Elements/` the certificate reads the axioms
 from Lean itself as well. In `model/`, the scan reads words and the replay reads proofs:
 after `lake build`, CI's `formal-model` job runs `scripts/check_model_kernel.py`, in which
