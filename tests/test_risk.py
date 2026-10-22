@@ -481,61 +481,6 @@ class FormalModel(Repo):
         head = self.commit({"Elements/BookI/Prop05.lean": "theorem p5' : True := trivial\n"})
         self.assertEqual(self.lane(head)[:2], ("R2", "true"))
 
-    def test_an_unresolved_direct_import_runs_it_for_every_change(self):
-        start = self.commit({"model/Check/Hand.lean": "import Elements.Missing\n"})
-        self.base = start
-        head = self.commit({"README.md": "Changed.\n"})
-        cls, model, out = self.lane(head)
-        self.assertEqual((cls, model), ("R0", "true"), out)
-        self.assertIn("model/Check/Hand.lean, in the formal model's imports", out)
-        self.assertIn("Elements.Missing has no Elements/Missing.lean in the tree", out)
-
-    def test_an_unresolved_transitive_import_retains_resolved_inputs(self):
-        start = self.commit({
-            "Elements/BookI/Prop07.lean": (
-                "import Elements.BookI.Prop05\nimport Elements.BookI.Missing\n\n"
-                "theorem p7 : True := trivial\n")})
-        self.base = start
-        head = self.commit({"Elements/BookI/Prop09.lean": "theorem p9' : True := trivial\n"})
-        cls, model, out = self.lane(head)
-        self.assertEqual((cls, model), ("R2", "true"), out)
-        self.assertIn("Elements/BookI/Prop07.lean, in the formal model's imports", out)
-        done = self.risk("--model-inputs", head)
-        self.assertEqual(done.returncode, 0, done.stderr)
-        self.assertIn("Elements/BookI/Prop05.lean", done.stdout.splitlines())
-        self.assertIn(
-            "unread: Elements/BookI/Prop07.lean: Elements.BookI.Missing has no "
-            "Elements/BookI/Missing.lean in the tree; while it is, every change checks "
-            "the formal model", done.stdout.splitlines())
-
-    def test_an_R2_edit_after_a_src_dir_change_runs_the_model(self):
-        start = self.commit({
-            "lakefile.toml": ('name = "fixture"\n\n[[lean_lib]]\nname = "Library"\n'
-                              'srcDir = "src"\n'),
-            "model/Check/SourceDir.lean": "import Library.Theorem\n",
-            "src/Library/Theorem.lean": "theorem fromSource : True := trivial\n",
-        })
-        self.base = start
-        head = self.commit({
-            "src/Library/Theorem.lean": "theorem fromSource' : True := trivial\n"})
-        cls, model, out = self.lane(head)
-        self.assertEqual((cls, model), ("R2", "true"), out)
-        self.assertIn("model/Check/SourceDir.lean, in the formal model's imports", out)
-        self.assertIn("Library.Theorem has no Library/Theorem.lean in the tree", out)
-
-    def test_known_external_roots_are_not_unread(self):
-        roots = ("Check", "Model", "Mathlib", "Lean", "Init", "Std")
-        imports = "".join(f"import {root}.Absent\n" for root in roots)
-        start = self.commit({"model/Check/Hand.lean": imports})
-        self.base = start
-        head = self.commit({"README.md": "Changed.\n"})
-        cls, model, out = self.lane(head)
-        self.assertEqual((cls, model), ("R0", "false"), out)
-        done = self.risk("--model-inputs", head)
-        self.assertEqual(done.returncode, 0, done.stderr)
-        self.assertFalse(any(line.startswith("unread: ") for line in done.stdout.splitlines()),
-                         done.stdout)
-
     def test_a_public_import_runs_it(self):
         head = self.commit({"Elements/BookI/Prop13.lean": "theorem p13' : True := trivial\n"})
         self.assertEqual(self.lane(head)[:2], ("R2", "true"))

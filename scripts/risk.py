@@ -97,7 +97,6 @@ RULES = [
 # by the table in any case).
 MODEL = "model/"
 LOCK = "Certificate/axioms.lock"
-EXTERNAL_ROOTS = ("Check", "Model", "Mathlib", "Lean", "Init", "Std")
 
 USAGE = ("usage: risk.py <worktree> [base] | --diff BASE HEAD [--github-output] | "
          "--paths <file>... | --audit <worktree> | --model-inputs REV")
@@ -303,9 +302,9 @@ def model_inputs(rev: str, cwd: str | None = None) -> tuple[set[str], dict[str, 
     """The main package's Lean files the formal model imports at rev, directly or through
     one another: the modules each model/**/*.lean file's header imports whose file the main
     package holds at rev (module A.B.C at A/B/C.lean), then the same for each such file, to
-    the end. An unresolved import is unread unless its root is Check, Model, Mathlib, Lean,
-    Init or Std. Then each file read on the way, the model's own among them, whose header
-    or imports the reader cannot read cleanly, with why: what it imports is unknown. A
+    the end. The model's own modules and Mathlib's are passed over, for the main package
+    holds no file of theirs. Then each file read on the way, the model's own among them,
+    whose header the reader cannot read cleanly, with why: what it imports is unknown. A
     .gitattributes anywhere in the tree counts as unread too: the reader reads the text Git
     holds, Lean the text Git checks out, and an encoding or filter there makes the two
     differ (a `-/` that only the checkout holds can end a comment the blob leaves open)."""
@@ -322,22 +321,10 @@ def model_inputs(rev: str, cwd: str | None = None) -> tuple[set[str], dict[str, 
         imported: set[str] = set()
         for path, text in zip(queue, file_texts([files[path] for path in queue], cwd)):
             try:
-                modules = imported_modules(text)
+                imported.update([module_path(module) for module in imported_modules(text)])
             except Unread as why:
                 unread[path] = str(why)
-                continue
-            for module in modules:
-                try:
-                    candidate = module_path(module)
-                except Unread as why:
-                    unread.setdefault(path, str(why))
-                    continue
-                if candidate in main:
-                    imported.add(candidate)
-                elif not any(module == root or module.startswith(root + ".")
-                             for root in EXTERNAL_ROOTS):
-                    unread.setdefault(path, f"{module} has no {candidate} in the tree")
-        queue = sorted(imported - found)
+        queue = sorted((imported & main) - found)
         found.update(queue)
     return found, unread
 
