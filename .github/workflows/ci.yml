@@ -1,7 +1,12 @@
 name: CI
 
 on:
+  # Each commit of a pull request runs once, on the pull request's events; a push runs CI
+  # only on main, after each merge, never on another branch as well, where it ran the same
+  # commit twice (docs/decisions/2026-10-22-checks-by-risk.md). A tag runs nothing here.
+  # git safe-push opens or updates the pull request with each push of its branch.
   push:
+    branches: [main]
   pull_request:
 
 jobs:
@@ -12,14 +17,16 @@ jobs:
     # copy of scripts/risk.py, never the change's own, classifies the files the change
     # brings to main, so a change cannot lower its own class by editing the classifier. A
     # pull request into main is classified so, exactly, from GitHub's merge commit; one
-    # whose run starts with the `release` label, one into any other branch, a push to main,
-    # a tag and every other event are R5, and every job runs in full. The label is read from
-    # the event that started the run, and git safe-push adds a pull request's labels after
-    # it pushes, so a label given with that push counts from the next push. Main's run after
-    # the merge runs every job in full, and requiring an R5 run at a release pull request's
-    # head is left to the merge gate, in a later part of #276. A push to another branch is
-    # classified by main's copy against main, from where the branch left it, and the merge
-    # gate waits for that run as well as the pull request's own.
+    # whose run starts with the `release` label, one into any other branch, a push to main
+    # and every other event are R5, and `negative` and `formal-model` run in full. The label
+    # is read from the event that started the run, and git safe-push adds a pull request's
+    # labels after it pushes, so a label given with that push counts from the next push.
+    # Main's run after the merge runs `negative` and `formal-model` in full (`acceptance`
+    # runs only on a pull request). A release pull request's run need not be R5: the merge
+    # gate holds a release until the full pre-flight has run on its head and a run there
+    # of the safe-push-tests workflow, the head's copy being main's, has passed each of its
+    # three jobs: the safe_push tests, the negative tests in full, and the formal model's
+    # build and kernel re-check (docs/decisions/2026-10-22-checks-by-risk.md).
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -34,7 +41,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Classify the change by main's scripts/risk.py; a push to main, a tag, a pull request whose run starts with the release label and any other event are R5
+      - name: Classify the change by main's scripts/risk.py; a push to main, a pull request whose run starts with the release label and any other event are R5
         id: classify
         env:
           EVENT: ${{ github.event_name }}
@@ -45,20 +52,13 @@ jobs:
         run: |
           set -euo pipefail
           r5() {
-            echo "$1: R5, every job runs in full"
+            echo "$1: R5, negative and formal-model run in full"
             { echo "class=R5"; echo "formal_model=true"; } >> "$GITHUB_OUTPUT"
             exit 0
           }
           case "$EVENT:$REF" in
             push:refs/heads/main)
               r5 "a push to main" ;;
-            push:refs/heads/*)
-              # A branch's push: its changes since it left main, classified by main's copy.
-              git rev-parse -q --verify refs/remotes/origin/main > /dev/null ||
-                r5 "a push of $REF, with no main to classify it against"
-              base=$(git rev-parse refs/remotes/origin/main)
-              head=$(git rev-parse HEAD)
-              what="the push of $REF" ;;
             pull_request:*)
               if [ "$RELEASE" = true ]; then r5 "a pull request labelled release"; fi
               if [ "$BASE_REF" != main ]; then r5 "a pull request into $BASE_REF, not main"; fi
@@ -191,12 +191,13 @@ jobs:
     # Break the project on purpose, and check that every break is caught: in full for a
     # change of class R3, R4 or R5, which every push to main is, and every pull request
     # whose run starts with the `release` label (`risk`); for R0 to R2 the job passes at
-    # once and says why, since git safe-push's pre-flight runs these tests on every pull
-    # request, main's run after the merge runs them in full, and the cadence
-    # (safe-push-tests.yml) runs them on main every six hours
-    # (docs/decisions/2026-10-22-risk-lanes.md). It runs whatever became of `risk`, and
-    # fails unless `risk` succeeded: GitHub accepts a skipped required check, so a failed
-    # or cancelled classification must fail it, never skip it.
+    # once and says why, since main's run after the merge runs the tests in full, and the
+    # cadence (safe-push-tests.yml) runs them on main every six hours
+    # (docs/decisions/2026-10-22-risk-lanes.md). git safe-push's pre-flight runs them as
+    # well for R3 to R5, and for R0 to R2 leaves them out with the rest of its step 4
+    # (docs/decisions/2026-10-22-checks-by-risk.md). The job runs whatever became of
+    # `risk`, and fails unless `risk` succeeded: GitHub accepts a skipped required check,
+    # so a failed or cancelled classification must fail it, never skip it.
     needs: risk
     if: always()
     runs-on: ubuntu-latest
@@ -216,7 +217,7 @@ jobs:
               echo "class $CLASS: the negative tests run in full"
               echo "full=true" >> "$GITHUB_OUTPUT" ;;
             R0|R1|R2)
-              echo "class $CLASS: the negative tests run in git safe-push's pre-flight, in main's run after the merge and on main on the cadence (docs/decisions/2026-10-22-risk-lanes.md)"
+              echo "class $CLASS: the negative tests run in main's run after the merge and on main on the cadence (docs/decisions/2026-10-22-risk-lanes.md, docs/decisions/2026-10-22-checks-by-risk.md)"
               echo "full=false" >> "$GITHUB_OUTPUT" ;;
             *)
               echo "the risk job gave no class from R0 to R5: '$CLASS'"
