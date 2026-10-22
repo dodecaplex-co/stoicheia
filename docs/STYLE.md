@@ -379,7 +379,7 @@ part of the edition's statements
 ([#116](https://github.com/jackChallis/stoicheia/issues/116))" is "that every rectilineal
 figure, given only by its boundary, has such a division, and that another division gives
 the same area". A record's statement `note`, held to 160 characters, may say it short:
-"Proved in staging only (#116): that every figure has one, and that another gives the same
+"Proved in staging only (#289): that every figure has one, and that another gives the same
 area." Where a main theorem takes its two triangles unchecked, the sentence that describes
 it says so. In these sentences the figure is divided, not cut; "outline" never stands
 unexplained for its boundary; and what Euclid takes for granted there is not called

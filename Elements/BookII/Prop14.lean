@@ -28,8 +28,8 @@ triangles:
 * `Prop14.sum` is the proof for any number of triangles, by I.45's `Prop45.sum`: the
   construction, which claims nothing of a figure.
 * `Prop14.apart` is the proposition for a figure given with triangles that do not overlap,
-  no point inside two of them (`Apart`), as in I.45's `Prop45.apart`; the figure may have a hole. `Prop14.square` is the
-  same with the square drawn.
+  no point inside two of them (`Apart`), as in I.45's `Prop45.apart`; the figure may have a
+  hole. `Prop14.square` is the same with the square drawn.
 * `Prop14.figure` is the proposition for a figure with one boundary, given with triangles
   fitted together in a suitable order (`Rectilineal`), as in I.45's `Prop45.figure`; it
   follows from `Prop14.apart`, since fitted triangles lie apart (`Fitted.inside_pairwise`).

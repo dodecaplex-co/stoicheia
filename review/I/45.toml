@@ -3,9 +3,9 @@
 scope = "restricted"
 short = "figures given with a checked division into triangles"
 hypotheses = [
-  "The figure is given with a checked division into triangles that do not overlap, no point inside two of them (`Apart` or `Rectilineal`, or the division from one corner that `Prop45.fan` checks); the main theorem takes Euclid's two triangles, ABD and DBC, unchecked. A figure given only by its boundary is not yet covered: that it has such a division, and that another gives the same area, is proved in the staging files (#289), not yet in the edition's statements (#116)."
+  "The figure is given with a checked division into triangles that do not overlap, no point inside two of them (`Apart` or `Rectilineal`, or the division from one corner that `Prop45.fan` checks); the main theorem takes Euclid's two triangles, ABD and DBC, unchecked. A figure given only by its boundary is not yet covered: that it has such a division, and that another gives the same area, is proved in the staging files (#289), but not yet part of the edition's statements (#116)."
 ]
-note = "`Prop45.apart` takes a figure given with a checked division. Proved in staging only (#116): that every figure has one, and that another gives the same area."
+note = "`Prop45.apart` takes a figure given with a checked division. Proved in staging only (#289): that every figure has one, and that another gives the same area."
 companions = ["I.45 append", "I.45 sum", "I.45 apart", "I.45 figure", "I.45 fan"]
 fingerprint = "sha256:82f17d662afe1ed5"
 
