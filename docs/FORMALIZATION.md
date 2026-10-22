@@ -23,7 +23,9 @@ code.
 **No guide grants authority.** This page, STYLE, WORKFLOW and every other guide describe
 the standard. None of them grants authority to change the foundations, weaken a check or
 publish. Those decisions belong to the repository's owner, working with the coordinator
-of the work ([WORKFLOW.md](WORKFLOW.md)), and each is recorded in
+of the work ([WORKFLOW.md](WORKFLOW.md)), and each is recorded in a decision entry of
+its own, `docs/decisions/<YYYY-MM-DD>-<slug>.md` ([WORKFLOW.md](WORKFLOW.md), section 10,
+"Decision entries"), as those written before entry files are in
 [0002-decisions.md](briefs/0002-decisions.md):
 
 - **The foundations:** everything in `Elements/Foundations/` (the postulates, Definition
@@ -106,7 +108,8 @@ three words are the home of these terms:
   `hypothesis-dropped`.
 - **restricted:** every clause, but only under extra hypotheses that exclude configurations
   his words admit (I.40's main theorem alone, its bases end to end).
-- **partial:** some clause has no formal conclusion (III.16, III.31); the record quotes it
+- **partial:** some clause has no formal conclusion (as in III.16 and III.31 before their
+  mixed-angle companions); the record quotes it
   and gives a clause map.
 
 **A statement, once approved, is frozen:** others write against it. Never change an
@@ -179,7 +182,7 @@ names are an interface, and they change only in the open.
   statement changes only by an approved correction (WORKFLOW, section 2). `PropN` names
   Euclid's proposition whatever its statement, so the name goes with the new statement,
   and where citers need the old one it stays beside it as a companion, as
-  [brief 0006](briefs/0006-statements.md) keeps III.24's present statement as
+  [brief 0006](briefs/0006-statements.md) keeps III.24's statement before stage 3 as
   `Prop24.equalCircles`. A helper's or a Book Zero fact's statement may change between
   releases; its name follows the rule above.
 - **The release notes list the changes:** every name deprecated or removed, and every
@@ -224,11 +227,12 @@ The representations Books I–III rest on:
 | superposition | `Tacit.superposition`, a restricted inference in System E's style, used directly only in I.4 and I.8 | a checked derivation over symbols exports one equality of lengths, angles or triangles about the given figure; it constructs nothing inside the placement and no exported formula names the placed corners or side ([the rule](../Elements/Foundations/Tacit/Superposition.lean), [Book I's reading](briefs/book-I.md#representations)) | |
 | the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `exists_rect`, `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
 | a rectilineal figure | given with its division into triangles, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | that every figure can be so divided, and that another division gives the same sum, are not proved; Hilbert proved the second, for his measure of area | `figure-with-dissection` |
-| a circle's centre | a hypothesis, `∃ O, Centre O α`, or Postulate 3's | III.1 finds it | `centre-given` |
-| a circumference | twice the angle standing on it, `circumference`, `standing`; no radius | proved facts in `Circumferences.lean`; arcs with membership are stage 3's work | `angle-measure`, `redundant-hypothesis` |
-| a segment | its circle, a straight line in it and one side | stage 3 | `segment-with-circle` |
-| an angle of a straight line and a circumference | none | the rectilineal facts Euclid proves it by are stated | `mixed-angles-omitted` |
-| circles touching | not crossing anywhere (the whole-circle reading Heath reports as Todhunter's) | III.13 keeps its content | |
+| a circle's centre | `exists_centre` gives one for every circle; most statements still supply one as a hypothesis, `∃ O, Centre O α`, or take Postulate 3's | III.1 finds it by Euclid's construction | `centre-given` where the statement supplies it |
+| a circumference | twice the angle standing on it, `circumference`, `standing`, and for an arc `Arc.measure`; no radius; equal circumferences in III.26 and III.28 are equal in measure and congruent, `Arc.Congruent` | proved facts in `Circumferences.lean`; `Arc.measure_eq_iff` and `Arc.congruent_iff`, in `Arcs.lean` after III.29, say what equal measures and congruence come to | `angle-measure`, `redundant-hypothesis` |
+| a segment | its circle, the ends of its base and a point naming its side, `Arc`, with its points, `InSegment`, and its circumference's, `OnArc`; equal segments read through Common Notion 4 as segments that coincide, `Arc.Congruent` | `placement`, from I.4 and I.8, lays one on another in III.24; only III.24 and `Arcs.lean` may cite it | `segment-with-circle` |
+| an angle of a straight line and a circumference | `MixedAngle`, the region it opens near its vertex, compared there with a rectilineal angle | the companions of III.16 and III.31 prove the comparisons; no addition, ratio or motion of mixed angles is claimed | `mixed-angles-local` |
+| circles cutting | `CirclesCut`: meeting at two points, each circle with a point within the other | `CirclesCut.symm` exchanges the circles; the bridge `CirclesCut.of_meet` in `Audit/` derives this reading from two different circles meeting at two points, given their centres, by III.7 and III.8 | |
+| circles touching | meeting without crossing anywhere (the whole-circle reading Heath reports as Todhunter's); contact within has a point of the inner circle within the outer and none outside it; contact without has no point within both | `within_point` in `Audit/`, by III.10, gives the point within for the earlier reading, given centres; these later bridges compare readings, not steps in III.5 or III.6. III.13 still proves uniqueness of contact | `touching-whole-circles` |
 
 The details, and the reasons, are in the book briefs.
 
@@ -285,7 +289,7 @@ construction, its premises, and the diagram fact or lemma it needed.
   unused-variable warning.
 - **Unused hypotheses and surprising dependencies are review prompts, not verdicts.** An
   unused hypothesis may mean the route is not Euclid's, or that our representation makes it
-  redundant (III.26 and III.27 hold for any two circles as stated). Say so in the handback;
+  redundant (III.27 holds for any two circles as stated). Say so in the handback;
   the record tags it `redundant-hypothesis` where that is the truth.
 - A checked intermediate fact tied to a real sentence of Euclid is legitimate, even if the
   final proof term could do without it.
@@ -297,8 +301,8 @@ construction, its premises, and the diagram fact or lemma it needed.
 
 Where the page promises Euclid's argument, the Lean follows it: the propositions he uses, in
 his order, and nothing later. Some propositions can be reached by a shortcut he did not take
-(III.2 by an axiom; III.26, III.27 and III.30 by the circumference measure alone); take his
-route, for his inferences are the proposition's content.
+(III.2 by an axiom; III.27, III.30 and III.26's measures by the circumference measure
+alone); take his route, for his inferences are the proposition's content.
 
 Where the Lean must part from him, keep his sentences, put Lean under them that does the same
 work, and label the change where it happens: a `/- … -/` remark in the Lean, and a passage in
@@ -366,12 +370,15 @@ dependencies.
 ## 7. The foundations, and the policies the checks enforce
 
 - **Every assumption is an `axiom` in `Elements/Foundations/`:** the five postulates,
-  Definition I.15 and <!-- count:tacit-rules -->73<!-- /count --> tacit rules, <!-- count:axioms -->79<!-- /count --> in all, each tacit rule from System E (or
-  LeanEuclid's corrections of it) with its citation. A new rule, or a change to one, is a
-  foundation decision (section 1); `Certificate/axioms.lock` holds every axiom's exact
-  statement, with every definition that the axioms' statements or the propositions',
-  porisms' and companions' statements reach (`Touches`, `rect`, `Parallel`), so that no
-  word can change what an axiom or a claim says. It changes only through
+  Definition I.15 and <!-- count:tacit-rules -->74<!-- /count --> tacit rules, <!-- count:axioms -->80<!-- /count --> in all, each tacit rule from System E (or
+  LeanEuclid's corrections of it) with its citation, save one of our own, added by the
+  owner's decision of 18 October 2026: every circle has a centre (`exists_centre`), whose
+  content is Euclid's Definitions I.15 and I.16 ([brief 0008](briefs/0008-centre.md),
+  section 2). A new rule, or a change to one, is a foundation decision (section 1);
+  `Certificate/axioms.lock` holds every axiom's exact statement, with every definition that
+  the axioms' statements or the propositions', porisms' and companions' statements reach
+  (`Touches`, `rect`, `Parallel`), so that no word can change what an axiom or a claim
+  says. It changes only through
   `check_fidelity.py --write-lock`, together with a decisions entry, and with the model
   brought to it in the same change, as
   [tests/model/MODEL.md, "Changing the axioms"](../tests/model/MODEL.md#changing-the-axioms),
@@ -387,7 +394,8 @@ dependencies.
   line followed by `Check.Generator.<ident>` or `(Check.Generator.<ident>`, since those
   files run the generator. Every other forbidden command or attribute is still refused
   there, and an `axiom` is refused everywhere under `model/`. `check_fidelity.py` matches
-  each as a whole word, in
+  each as a whole word, and `#eval`, `#exit` and `#guard_panic` also closed up to the word
+  after them, since Lean reads the longest command it knows (`#evalx` is `#eval x`), in
   the Lean with its comments and the text of its string and character literals taken
   out, read as Lean reads them, raw strings and escapes among them (`native_decide` even
   in a comment or a string). The code in an interpolated string's `{…}` holes is read
@@ -400,9 +408,11 @@ dependencies.
     that option, the word `native`, wherever it stands, and `(config := …)`, spelled
     `config` or `«config»`, are refused;
   - `set_option debug.…`, and its escaped spelling `set_option «debug».…`, which Lean
-    reads the same way: `debug.skipKernelTC` skips the kernel, and `debug.byAsSorry` and
-    its kin put `sorry` in place of a proof;
-  - `set_option doc.…`, and its escaped spelling `set_option «doc».…`: with `doc.verso`
+    reads the same way, with or without a space before the guillemet
+    (`set_option«debug».skipKernelTC`): `debug.skipKernelTC` skips the kernel, and
+    `debug.byAsSorry` and its kin put `sorry` in place of a proof;
+  - `set_option doc.…`, and its escaped spelling `set_option «doc».…`, with or without
+    that space (`set_option«doc».verso`): with `doc.verso`
     or `doc.verso.module` on, Lean reads a docstring as Verso and runs the Lean in its
     code blocks, an `#eval` among it, while the file is built, though the scan takes
     docstrings out with the comments; refusing the options keeps every docstring inert;
@@ -435,6 +445,34 @@ dependencies.
     attributes each Lean release adds, so this one may not be complete, and review still
     reads every staged file and audit lemma;
   - `implemented_by`, `extern` and `unsafe` put code in place of a definition;
+  - `#guard_msgs` with `drop`, in any of its forms (`(drop all)`, `(drop error)`,
+    `(drop warning)`, `(drop info)`, `(warning, drop all)` and the rest, with or without
+    spaces), takes the messages it matches out of the build: with `drop all` or
+    `drop error` a theorem that Lean refused still builds, resting on `sorryAx`, and
+    with `drop warning` the warning that a declaration uses `sorry` is gone. It is
+    refused in every file the scan reads, the audit lemmas and the model among them, with
+    no exception, since no file needs it
+    ([decisions, 21 October 2026](briefs/0002-decisions.md#21-october-2026)); a need for
+    one is asked for in a change of its own;
+  - `#guard_msgs` with `substring`, in any setting (`(substring := true)`, or `false`),
+    with or without spaces, beside any filter or option: with `substring := true` the
+    docstring need only appear somewhere in the messages, so a docstring that is only
+    part of the messages (`error`), an empty one, or none, matches an error and takes it
+    out of the build. It is refused in every file the scan reads, with no exception,
+    since no file uses it;
+  - `#guard_msgs` under a docstring that pins an error, one that holds `error:`, the
+    word Lean writes before each error it checks: the docstring matches
+    the error, and the error leaves the build as with `drop`. It is refused in every
+    file the scan reads but two, which pin errors on purpose:
+    `model/Check/RoundTrip.lean` pins the generator's refusals, each over a `run_cmd`,
+    and `model/Model/Audit.lean` pins one refusal of `#check`. Neither wraps a
+    declaration, and review reads any new pin there. The scan reads both files, so the
+    allow-list names what it would otherwise refuse
+    ([decisions, 21 October 2026](briefs/0002-decisions.md#21-october-2026)). A
+    `#guard_msgs` whose docstring pins only info messages or warnings, as the audit
+    lemmas' pins do, or that has none, is not refused;
+  - `#guard_panic`, which takes every message of the command it wraps out of the build
+    once any one holds the word `PANIC`, an error among them;
   - `#exit` stops Lean reading the file, though a reader and the checks here read on.
 - **Superposition** only in I.4 and I.8.
 - **Placement,** Euclid's application of one figure to another, only in III.24 and the
@@ -471,6 +509,16 @@ ending and prefix the scan knows, in each of those five folders, and `#exit` at 
 of each root; generator `run_cmd` calls, plain and parenthesised, outside the model's
 Check files, and calls there to another namespace or after another command on the line;
 other forbidden commands on an allowed generator call's line or in its arguments;
+`set_option«debug».skipKernelTC` and the other spellings of the `debug.` and `doc.`
+options with no space before the guillemet, `#eval`, `#exit` and `#guard_panic` closed up
+to the word after them, and `#guard_msgs` with `drop`, with `substring`, and under a
+docstring that pins an error, each in each of its forms, in a scratch copy of I.1's file;
+`set_option` closed up to decimal, hexadecimal, scientific and underscore-separated
+numbers, after a projection and after a declared notation ending in `.`, with whitespace
+or a comment beside it, and `axiom` closed up to such a number, with controls that
+preserve ordinary projections;
+the same pin at a new file beside each file of its allow-list, at each file's name in the
+other's folder, in `Audit/` and in `Staging/`, and a pin whose `error:` ends its line;
 a proposition imported by Book Zero; a `sorry` in a
 complete book; and a primitive word no longer opaque. Some of the forbidden commands
 stand after a string, a raw string or a character literal holding `/-`, `-/`, `]` or `"`,
@@ -487,7 +535,12 @@ that generator calls first on their line are allowed in `model/Check.lean` and
 `model/Check/`, that an axiom in a `.lake` folder of `model/Model/` or `model/Check/` is
 caught while one in `model/.lake` is not read, that a link named `.lake`, to a
 directory, a file or nothing, is refused in `model/`, `model/Model/` and `model/Check/`,
-and that the unplanted tree passes. They plant source files in place, the `.lake` links
+that a `#guard_msgs` that checks its messages or passes them on, one under a docstring
+that pins an info message, `error:` in a theorem's own docstring, a comment or a module
+docstring before a `#guard_msgs`, and the words of each of these commands in a comment
+or a string, are not refused, that the pin passes at each file of its allow-list, and
+that the unplanted tree passes.
+They plant source files in place, the `.lake` links and the scratch copy of I.1's file
 in small trees of their own, and copy only `facts.json` and that one copy of I.1, never
 `model/.lake`.
 
@@ -500,14 +553,20 @@ without entering the directory `model/.lake`, whose contents go unscanned; a lin
 `model/.lake` is refused like any other link, and a `.lake` folder deeper in the model is
 read like any other. It refuses an `axiom` anywhere outside
 `Elements/Foundations/` and every command and attribute the list above names, with only
-the generator `run_cmd` allowance in `model/Check.lean` and `model/Check/`.
+two exceptions: the generator `run_cmd` allowance in `model/Check.lean` and
+`model/Check/`, and the error pins of `model/Check/RoundTrip.lean` and
+`model/Model/Audit.lean`.
 `MODEL_CHECK_RUN_CMD` names that allowance in the script; it exempts only `run_cmd`,
 so its arguments and any further command on the line are still scanned. Book Zero's
 import rule and the placement policy remain confined to `Elements/`. It reads
-comments and literals as Lean's tokenizer does, so a string cannot hide a command from it
-by opening a comment or ending an attribute's brackets. Beyond that it reads words, not
-Lean's grammar nor the tokens a file declares, so it catches a slip but not a command
-disguised from it on purpose, nor an attribute it does not list: review still reads every
+comments, literals and number endings as Lean 4.35's tokenizer does, so a string cannot
+hide a command by opening a comment or ending an attribute's brackets, and a word closed
+up to a number remains visible. An adjacent numeric projection stays a projection; where
+a declared `.` notation makes a longer number the competing reading, the longer boundary
+stays visible too. Whitespace and comments end projection adjacency, as they do in Lean.
+Beyond that it reads words, not Lean's grammar nor the tokens a file declares, so it
+catches a slip but not a command disguised from it on purpose, nor an attribute it does
+not list: review still reads every
 staged file, audit lemma and model file. In `Elements/` the certificate reads the axioms
 from Lean itself as well. In `model/`, the scan reads words and the replay reads proofs:
 after `lake build`, CI's `formal-model` job runs `scripts/check_model_kernel.py`, in which
@@ -592,7 +651,7 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | The numerical model tests (`tests/model/`) | The locked axioms held in the configurations sampled from a standard model of the plane, exactly where coordinates allow, and planted mutations of them were caught. | A proof of consistency: a test can find a counterexample but cannot show there is none, and laws no harness reaches rest on a hand argument. |
 | The hyperbolic check (`tests/model/hyperbolic.py`) | Every axiom but Postulate 5 held in the configurations sampled from the hyperbolic plane, and Postulate 5 failed there. | Non-derivability: numerical tests do not establish that a statement failing there cannot be proved without Postulate 5. |
 | The informal model argument | A reasoned interpretation of each law in the standard plane. | A machine-checked proof. |
-| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->79<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
+| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all <!-- count:axioms -->80<!-- /count --> laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
 
 The certificate describes proof-term dependencies, and nothing more. "This proof uses
 Postulate 5" is a fact about our proof. By itself it establishes neither the consistency of

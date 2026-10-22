@@ -8,6 +8,8 @@ which the circles cut one another", without ever saying why such a point
 exists. These rules supply the reasons. They are the construction rules of
 System E, §3.3 (Avigad, Dean and Mumma, 2009). Postulates 1, 2 and 3 are the
 "lines and circles" rules and Points rule 4, and they live in `Postulates.lean`.
+One rule here is ours, not System E's: that every circle has a centre
+(`exists_centre`), whose content is Euclid's Definitions I.15 and I.16.
 Points rule 9 is proved in `Elements.Figure.Circles` from the remaining rules.
 
 The optional list `avoid` lets a new point be chosen different from any points
@@ -54,6 +56,20 @@ axiom exists_point_on_circle (α : Circle) (avoid : List Point) :
 /-- Let a point be taken inside the circle α. (Points 8) -/
 axiom exists_point_inside_circle (α : Circle) (avoid : List Point) :
     ∃ A : Point, InsideCircle A α ∧ A ∉ avoid
+
+/-! ## The centre of a circle (ours)
+
+Euclid's definitions give every circle a centre: in a circle "all the straight lines
+falling upon it from one point among those lying within the figure are equal to one
+another" (Definition I.15), "And the point is called the centre of the circle" (Definition
+I.16). System E lets a circle be given without its centre, and reads III.1 as finding one
+(Avigad, Dean and Mumma, 2009, §4.2), so this rule is ours. It says that a centre exists,
+and no more: that there is only one is `centre_unique`, Generalities 2, proved in
+`Elements.Figure.Circles`, and III.1 finds it by Euclid's construction. -/
+
+/-- Every circle has a centre. A rule of our own, not one of System E's: its content is
+Euclid's Definitions I.15 and I.16. -/
+axiom exists_centre (α : Circle) : ∃ O : Point, Centre O α
 
 /-! ## Intersections (System E §3.3)
 
