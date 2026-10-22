@@ -6,11 +6,12 @@ public import Model.Laws
 # Translated by hand
 
 **This file is written by hand.** It holds the laws first proved in the plane, translated
-by hand before the generator existed, and the proposed `exists_centre`. Each law here is
-the library's, word for word, with `S.Point` for `Elements.Point`, `S.OnCircle` for
-`Elements.OnCircle`, and so on, and the printed original is quoted above it, from
-`Certificate/axioms.lock`. The defined words the laws use (`S.CirclesMeet`,
-`S.OppositeSides`, `S.OutsideCircle`) are the generated ones, from `Model/Laws.lean`.
+by hand before the generator existed, and `exists_centre`, translated by hand and proved in
+the plane before it joined the library. Each law here is the library's, word for word, with
+`S.Point` for `Elements.Point`, `S.OnCircle` for `Elements.OnCircle`, and so on, and the
+printed original is quoted above it, from `Certificate/axioms.lock`. The defined words the
+laws use (`S.CirclesMeet`, `S.OppositeSides`, `S.OutsideCircle`) are the generated ones,
+from `Model/Laws.lean`.
 
 These laws are kept as the independent check they were written to be. `Check/Hand.lean`
 puts the library's own words in for `S` and asks Lean whether each result is the original
@@ -30,7 +31,7 @@ granted in I.1; Intersection 4, in the corrected form we owe to LeanEuclid (Loga
 Kaiyu Yang, Jialiang Sun, Zhaoyu Li, Anima Anandkumar and Xujie Si), with our thanks; and
 Intersections 8 and 9, which say on which side of the line of centres a crossing point
 lies. With them are the eight magnitude laws, which test the translation of the instances
-and of the kinds of magnitude.
+and of the kinds of magnitude, and the rule that every circle has a centre.
 -/
 
 @[expose] public section
@@ -127,16 +128,16 @@ def lt_trichotomy : Prop :=
 def not_lt_zero : Prop :=
   ∀ {k : Kind} (a : S.Magnitude k), ¬ a < 0
 
-/-! ## Proposed, and not yet in the library
+/-! ## Every circle has a centre
 
 A law proposed for the foundations is proved in the model before it lands, so that its
-model obligation is met when the library first rests on it. -/
+model obligation is met when the library first rests on it. This one was proposed in issue
+#59, proved in the plane (`Model/Euclidean/Centre.lean`), and then declared in the
+library. -/
 
-/-- Every circle has a centre: the law proposed in issue #59, to be declared as
-`axiom exists_centre (α : Circle) : ∃ O : Point, Centre O α`, which Lean would print as
-`∀ (α : Elements.Circle), Exists fun (O : Elements.Point) => Elements.Centre O α`. It is
-not in the library or the lock yet, so `Check/Hand.lean` has no original to compare it
-with; its check joins that file in the change that declares the axiom. -/
+/-- `Elements.Tacit.exists_centre`, by hand: every circle has a centre, the library's own
+rule, from Euclid's Definitions I.15 and I.16. The lock prints it as
+`∀ (α : Elements.Circle), Exists fun (O : Elements.Point) => Elements.Centre O α`. -/
 def exists_centre : Prop :=
   ∀ (α : S.Circle), ∃ O : S.Point, S.Centre O α
 

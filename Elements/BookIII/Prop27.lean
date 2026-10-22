@@ -72,8 +72,8 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
       obtain ⟨Y, hY, hYH⟩ := Prop2.sameSide ⟨H, hH⟩ hE hF hHR.triangle
       -- therefore the circumference BK is equal to the circumference EF.
       have hBK : circumference ABC B P K = circumference DEF E R F :=
-        (Prop26 hcircles hG hH hX hB hK hY hE hF (hXG.trans_opposite hPG.symm)
-          (hYH.trans_opposite hHR)).1 hPG.symm hHR hBGK
+        ((Prop26 hcircles hG hH hX hB hK hY hE hF (hXG.trans_opposite hPG.symm)
+          (hYH.trans_opposite hHR)).1 hPG.symm hHR hBGK).1
       -- But EF is equal to BC;
       have hEF_BC := hBC.symm
       -- therefore BK is also equal to BC, the less to the greater: which is impossible.
