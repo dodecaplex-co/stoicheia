@@ -25,9 +25,9 @@ The findings were then judged against the sources, and those found true and free
 
 While the two changes were in flight, nothing they held was mended on this branch. What they held was what a change in flight was rewriting, with the checks under scripts/, the foundations, docs/STYLE.md section 4, docs/examples.md, the README, the overlap catalogue and all of Book III. One mend made to Elements/BookI/Prop23.lean, whose record was held, was left out of the commit. STYLE section 4 was changed only after the notation train had landed and been merged into this branch.
 
-Seven re-readers, each Claude Opus 5.5 and none of whom wrote or prompted the mends, then read every changed page against Heath, the Lean and the reading list, and stamped the records: four at 206e3080, two at c814e8fb and one at 9b7dad70 ("Re-read and stamped", below). An independent code reviewer, another Claude Opus 5.5 instance, which wrote nothing on this branch and was none of its readers, reviewed the branch at 926e67d2 ("The code review", below). A second code reviewer, another Claude Opus 5.5 instance that wrote nothing on this branch, read its later commits, and a third the commits after those ("The code review", below). This report was written by a further Claude Opus 5.5 instance, which read no page as a reader and wrote none of the mends. It was brought up to date at b78e8ae5 by another, which likewise wrote no mend; after 2853075b by the eleventh writer and by the instance that directs this read-through, which added the account of the second code review; and after b2c30b6d by the twelfth writer, which added the account of the third. None of them read a page as a reader. Each resolution below was checked against the diff of the commit it names.
+Seven re-readers, each Claude Opus 5.5 and none of whom wrote or prompted the mends, then read every changed page against Heath, the Lean and the reading list, and stamped the records: four at 206e3080, two at c814e8fb and one at 9b7dad70 ("Re-read and stamped", below). An independent code reviewer, another Claude Opus 5.5 instance, which wrote nothing on this branch and was none of its readers, reviewed the branch at 926e67d2 ("The code review", below). A second code reviewer, another Claude Opus 5.5 instance that wrote nothing on this branch, read its later commits, a third the commits after those, and a fourth the commit after that ("The code review", below). This report was written by a further Claude Opus 5.5 instance, which read no page as a reader and wrote none of the mends. It was brought up to date at b78e8ae5 by another, which likewise wrote no mend; after 2853075b by the eleventh writer and by the instance that directs this read-through, which added the account of the second code review; after b2c30b6d by the twelfth writer, which added the account of the third; and after 74e8ad1f by the instance that directs this read-through, which added the account of the fourth. None of them read a page as a reader. Each resolution below was checked against the diff of the commit it names.
 
-The mends are eleven commits on the branch text/read-through-02; the eleventh, after b2c30b6d, carries the third code review's:
+The mends are twelve commits on the branch text/read-through-02:
 
 - 1eda7896: Book I, I.1 to I.36;
 - 307eb24f: Book II, I.37 to I.48, STYLE sections 5, 7 and 8, and the report on figures against Heath's scans;
@@ -38,7 +38,9 @@ The mends are eleven commits on the branch text/read-through-02; the eleventh, a
 - a1ddfcf7: II.14's restriction told in one set of words, with Book II's introduction; the later re-readers' points; and three points not taken up before, I.43's "complements", I.6's axis "0" and a sentence for Book II's introduction;
 - 9b7dad70: the first code review's findings;
 - b78e8ae5: the last re-reader's point on the scans report;
-- 4e9643cb: the second code review's points, in this report, the scans report and STYLE section 4.
+- 4e9643cb: the second code review's points, in this report, the scans report and STYLE section 4;
+- 74e8ad1f: the third code review's points, in this report and the scans report;
+- a0bc7896: the fourth code review's point, in this report.
 
 The re-readers' stamps are 4a7bc952, 787ea8ba, 44096af6 and 03676129.
 
@@ -539,7 +541,7 @@ Every open item, with its issue.
 
 ## Re-read and stamped
 
-Seven re-readers read the mends, each Claude Opus 5.5, and none of them wrote or prompted the mends. They read in three rounds, each at the commit that carried the mends it read, and each stamped the records it read that it was given to stamp, with the reviewer "Claude Opus 5.5, independent reader".
+Seven re-readers read the mends, each Claude Opus 5.5, and none of them wrote or prompted the mends. They read in three rounds, each at the commit that carried the mends it read, and each stamped the records it read that it was given to stamp, with the reviewer "Claude Opus 5.5, independent reader". A stamp names the revision its reader read. Main's changes merged into this branch after those revisions, the upright figure letters (pull request #194) among them, are read in this read-through's second part, a dated addendum on its own branch (#34); no record here was stamped by anyone but its reader.
 
 ### At 206e3080: four re-readers
 
