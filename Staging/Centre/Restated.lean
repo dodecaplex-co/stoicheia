@@ -25,9 +25,10 @@ Three new lemmas for Lean users, approved at the freeze (question 11), are prove
 III.13's two clauses, each with only the two circles it speaks of (`Prop13.internally`,
 `Prop13.externally`), and `Centre.every`, which turns a fact about a named centre into the
 condition said of every centre that III.4 and III.8 ask for. The names sit in
-`Elements.BookIII.Staging.Centre` and `Elements.Staging.Centre`, apart from brief 0006's
-staged III.24 and III.25. When the restated statements are proved they replace today's, and
-this file is deleted.
+`Elements.BookIII.Staging.Centre` and `Elements.Staging.Centre`. Brief 0006's III.24 and
+III.25 now live in `Elements.BookIII`; their centre-removal variants remain staged in
+`Elements.BookIII.Staging.Centre.Stage3` and `.Stage4`. When the restated statements are
+proved they replace today's, and this file is deleted.
 -/
 
 namespace Elements.BookIII.Staging.Centre
@@ -209,9 +210,10 @@ example : type_of% @Elements.BookIII.Prop24.equalCircles := fun _ _ => Centre.Pr
 
 /-- Given a segment of a circle, to describe the complete circle of which it is a segment.
 
-Today's statement of III.25, still handed the whole circle: dropping its centre does not
-give it the segment alone. Brief 0006 restates III.25 (its stage 4), and keeps this
-statement as the companion `Prop25.of_circle` (`Brief0006.lean`). -/
+III.25's statement before stage 4, still handed the whole circle: dropping its centre does
+not give it the segment alone. Brief 0006 restates III.25 (its stage 4) and keeps this
+statement as the companion `Prop25.of_circle`, against which it is checked here
+(`Brief0006.lean`). -/
 theorem Prop25 {A C : Point} {ABC : Circle} (hA : OnCircle A ABC) (hC : OnCircle C ABC) :
     ∀ P : Point, ¬ Collinear A C P → ∃ B D E : Point, OnCircle B ABC ∧ SameSideOf B P A C ∧
       Between A D C ∧ ‖A D‖ = ‖D C‖ ∧ ∠ A D B = ∟ ∧ Centre E ABC ∧ Collinear D B E ∧
@@ -220,8 +222,8 @@ theorem Prop25 {A C : Point} {ABC : Circle} (hA : OnCircle A ABC) (hC : OnCircle
   sorry
 
 example (exists_centre : ∀ α : Circle, ∃ O : Point, Centre O α) : type_of% @Centre.Prop25 :=
-  Elements.BookIII.Prop25 (exists_centre _)
-example : type_of% @Elements.BookIII.Prop25 := fun _ => Centre.Prop25
+  Elements.BookIII.Prop25.of_circle (exists_centre _)
+example : type_of% @Elements.BookIII.Prop25.of_circle := fun _ => Centre.Prop25
 
 /-- To bisect a given circumference. -/
 theorem Prop30 {A B : Point} {ADB : Circle} (hA : OnCircle A ADB) (hB : OnCircle B ADB) :
