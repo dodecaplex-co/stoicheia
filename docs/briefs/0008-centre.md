@@ -16,7 +16,7 @@ which stays an axiom. The old dependency counts must be measured again. A pin ex
 a retired name from an axiom list no longer detects calls to that theorem; any intended
 restriction on its use needs a separate check proposal. Section 7's restated III.5 and
 III.6 still cite neither `circle_eq` nor Circle 4, but the axioms pinned for them in
-`Staging/Centre/Crossing.lean` now include `circle_eq` and Postulate 3, through proved
+`Audit/Crossing.lean` now include `circle_eq` and Postulate 3, through proved
 rules such as `centre_inside`; where the frozen text below says they rest on neither, it
 records the state at the freeze. The historical readings and frozen statements below are
 preserved.
