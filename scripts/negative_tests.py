@@ -1777,10 +1777,12 @@ def certificate_constructor_counting() -> None:
 
 @contextmanager
 def count_source_copy():
-    """Copy tracked sources plus current Python tools under /tmp, with no build or .git.
+    """Copy tracked sources plus current Python tools and checks/ under /tmp, with no
+    build or .git.
 
     Git reads the original index through GIT_DIR; GIT_WORK_TREE points only at the
-    copy. No Git command writes. Include new Python sources before they are committed.
+    copy. No Git command writes. Include new Python sources, and the files of the registry
+    of checks, which render.py reads, before they are committed.
     A tracked file absent from the work tree is named (absent_tracked), not copied.
     """
     tracked, names = tracked_names()
@@ -1790,6 +1792,7 @@ def count_source_copy():
     paths = {Path(p) for p in names}
     paths.difference_update(absent_tracked(sorted(paths)))
     paths.update(p.relative_to(ROOT) for p in (ROOT / "scripts").glob("*.py"))
+    paths.update(p.relative_to(ROOT) for p in (ROOT / "checks").glob("*") if p.is_file())
     with tempfile.TemporaryDirectory(prefix="stoicheia-counts-", dir="/tmp") as tmp:
         copy = Path(tmp)
         for rel in paths:

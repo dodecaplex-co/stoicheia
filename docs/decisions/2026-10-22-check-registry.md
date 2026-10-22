@@ -20,65 +20,94 @@
   Git from a temporary directory, and a line of the step says how many checks it runs and
   from which tree.
 
-  What stays the same. The checks, their commands and their order. The negative tests,
-  in CI's `negative` job and in the pre-flight's `NEGATIVE`, which the coordinator ruled
-  out of this card's scope. CI's `model` job, whose one command stays a list of the
+  What stays the same. The checks, their commands and their order. The negative tests, in
+  CI's `negative` job and in the pre-flight's `NEGATIVE`, which the coordinator ruled out
+  of this card's scope. CI's `model` job, whose one command stays a list of the
   pre-flight's own beside `NEGATIVE`, since the registry holds the `check` job alone; a
-  card for other jobs can widen it. Every job's name, and so the ruleset's required checks.
-  While origin/main holds no registry, as for the train that brings it, the pre-flight runs
-  the sequence built into `scripts/safe_push.py`, which the tests hold equal to the
-  registry this train brings, and which goes once the registry is on main.
+  card for other jobs can widen it. Every job's name, and so the ruleset's required
+  checks. While origin/main holds no registry, as for the train that brings it, the
+  pre-flight runs the sequence built into `scripts/safe_push.py`, the one every train was
+  judged by before. The tests pin that list to one of their own, as they pin the `model`
+  and negative lists, and never to the registry, which grows without it. A follow-up card,
+  [#328](https://github.com/jackChallis/stoicheia/issues/328), removes the list, and the
+  fallback to it, once the registry is on main. Until then a train that deleted both
+  `checks/` and `scripts/registry.py` would, once merged, put every later pre-flight back
+  on that frozen list, with only the step line that names the list to show it, though each
+  file it deleted would be a protected path, named in its entry.
 
   Why it is safe. CI runs the pull request's registry, as it has always run the pull
-  request's own copy of the workflow; the pre-flight runs main's, never the train's own, so
-  no train can drop, empty or add a check that judges it. `scripts/risk.py` classes
-  `checks/` R3, so any train that touches the registry keeps the full local pre-flight.
-  `checks/` is a protected path, so each registry file a train adds, removes or changes is
-  named in a decision entry, and the pull request carries `security-review`. It is a check
-  input as well, so a change to it is kept apart from content the checks judge, as a
-  change to a script is. A registry at origin/main that cannot be read, or whose reader
+  request's own copy of the workflow, and the `check` job is a required check of the pull
+  request: a train that changes the registry changes the checks its own CI runs. Three
+  things keep that safe. Every train that touches `checks/` is R3 or above, so its
+  pre-flight runs main's whole registry on it, in both passes, whatever its CI runs. The
+  change is protected: each registry file a train adds, removes or changes is named in a
+  decision entry, and the pull request carries `security-review`. And the change judges
+  later trains only once it has merged. The registry is a check input as well, so a change
+  to it is kept apart from content the checks judge, as a change to a script is. The
+  reader, `scripts/registry.py`, and the runner, `scripts/run_checks.py`, are R5 by
+  `scripts/risk.py`, with the rest of the landing tool and CI: main's reader decides the
+  pre-flight's sequence, and the runner is CI's `check` job. The pre-flight holds the
+  names of the checks itself, whatever main's reader allows: only the check that `git
+  status --porcelain` prints nothing bears its name, and every other check is named by its
+  command's words, so that no command can bear a name whose failure the pre-flight passes
+  over as stale pages. A registry at origin/main that cannot be read, or whose reader
   fails, prints no list or gives no check, refuses the pre-flight: it never runs an empty
   list. Section 8 of `docs/WORKFLOW.md` now says all of this, and its section 10 says how
   to add a check.
 
   What it makes easier. Adding a check is now a change of class R3: one new file in
-  `checks/`, section 8's block as `render.py` regenerates it, and an entry naming the file.
-  Such a train touches neither `scripts/safe_push.py` nor the CI workflow, each of class R5.
-  The new check runs in its own pull request's CI, and joins the pre-flight once it merges.
+  `checks/`, section 8's block as `render.py` regenerates it, and an entry naming the
+  file. Such a train touches neither `scripts/safe_push.py` nor the CI workflow, each of
+  class R5, and the tests need no change for it: a test adds a file to a copy of the tree,
+  renders the block, and finds the copy agreeing as the tree does. The new check runs in
+  its own pull request's CI, and joins the pre-flight once it merges.
 
-  What it gives up. On GitHub the `check` job shows one step where it showed seventeen: each
-  check is a group of that step's log, and a failure names its check there and in an error
-  annotation. And a registry at origin/main that could not be read would hold every train
-  of R3 and above, its own repair among them, so that repair would need the owner's leave
-  to land without the pre-flight. `render.py`, in the pre-flight's guards, and CI's run of
-  the registry both refuse such a registry before it can merge, so only a change that went
-  round both could leave one on main.
+  What it gives up. On GitHub the `check` job shows one step where it showed seventeen:
+  each check is a group of that step's log, and a failure names its check there and in an
+  error annotation. And a registry at origin/main that could not be read would hold every
+  train of R3 and above, its own repair among them, so that repair would need the owner's
+  leave to land without the pre-flight. `render.py` and CI's run of the registry load the
+  reader from `scripts/` and read the worktree, so they cannot show that the reader works
+  as the pre-flight runs it, alone and out of Git: a reader that imports a module beside
+  it passes both. So step 3 of the pre-flight, in every class, reads the commit's own
+  registry with the commit's own reader as a later pre-flight will read it once the commit
+  is main's, and refuses the commit, naming why, when it cannot; it skips only a commit
+  that holds neither the registry nor its reader. The reader must stay one self-contained
+  file of the standard library, and its docstring says so.
 
   This entry approves `scripts/registry.py`, a new file: the registry's reader, from the
-  worktree or from a revision in Git, and the source of section 8's block.
+  worktree or from a revision in Git, and the source of section 8's block; it must stay
+  self-contained, of the standard library alone.
 
   This entry approves `scripts/run_checks.py`, a new file, which runs one job's checks as
   the worktree's registry lists them, for CI's `check` job.
 
   This entry approves `scripts/safe_push.py`, whose step 4 takes the `check` job's
   sequence from origin/main's registry with origin/main's reader and refuses one it cannot
-  read, keeps its old sequence as the stand-in while origin/main has none, and counts
-  `checks/` among its protected paths, its check inputs and, for section 8's block, its
-  generated pages.
+  read or whose names it does not hold, keeps its old sequence as the stand-in while
+  origin/main has none, and counts `checks/` among its protected paths, its check inputs
+  and, for section 8's block, its generated pages; and whose step 3 reads the commit's own
+  registry with the commit's own reader, as a later pre-flight will.
 
   This entry approves `scripts/test_safe_push.py`, whose tests of the sequence now hold
-  the registry, section 8's block, the one step of CI's `check` job and safe_push's
-  reading of the registry to one another, keep every refusal of a skipped, suppressed or
-  overridden step, and add a class of tests, `Registry`, beside new cases in
-  `RiskPreflight` and `ProtectedPaths`.
+  the registry, section 8's block and the one step of CI's `check` job to one another, pin
+  the built-in list to a list of their own, add a check to a copy of the tree with no
+  change to the harness, keep every refusal of a skipped, suppressed or overridden step,
+  and add a class of tests, `Registry`, beside new cases in `RiskPreflight` and
+  `ProtectedPaths`, step 3's reading of the commit's registry among them.
 
   This entry approves `scripts/render.py`, which writes section 8's first command block
   from the registry and refuses a registry its reader refuses.
 
-  This entry approves `scripts/risk.py`, whose table classes `checks/` R3.
+  This entry approves `scripts/risk.py`, whose table classes `checks/` R3, and
+  `scripts/registry.py` and `scripts/run_checks.py` R5.
 
-  This entry approves `tests/test_risk.py`, which holds that class, and the class of a
+  This entry approves `tests/test_risk.py`, which holds those classes, and the class of a
   train that adds one check.
+
+  This entry approves `scripts/negative_tests.py`, whose `count_source_copy` copies the
+  files of `checks/` beside the scripts, so that `render.py` finds the registry in its
+  copy before they are committed.
 
   This entry approves `.github/workflows/ci.yml`, whose `check` job keeps its setup and
   runs its checks by one step of `scripts/run_checks.py`, its other jobs as they were.
@@ -96,7 +125,8 @@
 
   This entry approves `checks/05-test-certificate.toml`, the certificate's own tests.
 
-  This entry approves `checks/06-check-kernel.toml`, the kernel's replay and its self-test.
+  This entry approves `checks/06-check-kernel.toml`, the kernel's replay and its
+  self-test.
 
   This entry approves `checks/07-heath.toml`, the check of the contracts.
 
@@ -122,3 +152,8 @@
   clean after them.
 
   This entry approves `checks/18-check-links.toml`, the check of links and anchors.
+
+  On 22 October 2026 the coordinator ruled that WORKFLOW section 8's command block between
+  the `<!-- checks -->` markers is generated output, and that a train that changes
+  `checks/` commits it regenerated with `render.py`, as for any generated output the train
+  causes; AGENTS.md lists the region with that rule, in this change.

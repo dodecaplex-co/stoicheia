@@ -149,8 +149,13 @@ one commit and runs safe_push.py against that origin:
   origin/main's registry unreadable, or its reader failing, refuses, and with no registry
   at origin/main the lists built in stand in; run_checks.py stops at the first check that
   fails and fails an `empty` check that prints anything; one file more is one check more
-  for safe_push, render.py and run_checks.py; and an entry removed without a decisions
-  entry naming it is refused, and with content it would judge, kept apart;
+  for safe_push, render.py and run_checks.py, and a copy of the tree with one file more
+  and its block rendered agrees as the tree does, the harness unchanged and its built-in
+  lists pinned to the tests' own; safe_push holds the checks' names itself, the `empty`
+  check alone bearing its name and every command named by its words; step 3 reads the
+  commit's own registry with the commit's own reader, alone, and refuses a reader that
+  works only beside a module of its own; and an entry removed without a decisions entry
+  naming it is refused, and with content it would judge, kept apart;
 - replacement objects (#256), which git reads in place of the objects they replace while
   a push sends the originals: a token behind a clean stand-in, by `git replace` or in a
   folder GIT_REPLACE_REF_BASE names, is refused by the pre-push hook and by the
@@ -419,7 +424,7 @@ def enforced_check_commands(job: WorkflowCheckJob) -> list[str]:
             continue
         if step.uses is not None or RUN_CHECKS not in step.run:
             raise AssertionError(f"CI check step {step.name!r} is neither the run of the "
-                                 "registry's checks nor the modeled setup")
+                                 "registry's checks nor the modelled setup")
         if setup_index != len(setup_order):
             raise AssertionError("CI check setup prefix is incomplete before the first check")
         if step.run != (RUN_CHECKS,):
@@ -6197,7 +6202,7 @@ class RiskPreflight(Edge):
     SHORT = "left to CI"
     FULL = "internal test flag, local origin"
     GUARDS = ("secrets", "statements", "axiom lock", "protected paths", "heath/",
-              "directories", "decision entries")
+              "directories", "decision entries", "registry of checks")
 
     def record(self, sha: str, base: str | None = None) -> dict:
         """The pre-flight's record of `sha` against `base`, BASE unless named."""
@@ -6386,13 +6391,16 @@ class RiskPreflight(Edge):
     def test_origin_main_whose_registry_cannot_be_read_refuses(self):
         # An entry origin/main's reader refuses, and a reader that fails: the pre-flight
         # refuses, never runs an empty or partial list, though the commit repairs it (the
-        # registry that judges is origin/main's). Its other failures are in Registry.
+        # registry that judges is origin/main's), and its own registry, which step 3 reads,
+        # is sound. Its other failures are in Registry. A repair to an entry is R3, to the
+        # reader R5.
         entry = "checks/07-heath.toml"
-        for label, write, why in (
+        for label, write, why, cls in (
                 ("an unknown field", {entry: lambda: self.text(entry) + 'colour = "red"\n'},
-                 f"exited 1: registry.py: {entry}: unknown field 'colour'"),
+                 f"exited 1: registry.py: {entry}: unknown field 'colour'", "R3"),
                 ("a reader that fails",
-                 {safe_push.REGISTRY_READER: lambda: "import sys\nsys.exit(4)\n"}, "exited 4")):
+                 {safe_push.REGISTRY_READER: lambda: "import sys\nsys.exit(4)\n"}, "exited 4",
+                 "R5")):
             with self.subTest(label):
                 git(ORIGIN, "update-ref", "refs/heads/main", BASE)
                 git(WORK, "fetch", "--quiet", "origin")
@@ -6402,20 +6410,50 @@ class RiskPreflight(Edge):
                 sha = self.restoring(main, f"Repair {label}", *write)
                 r = self.safe_push("--dry-run")
                 out = self.assertRegistryRefused(r, main, why)
+                self.assertEqual(self.guard(out, "registry of checks"), "ok", out)
                 self.assertEqual(self.guard(out, "class"), "ok", out)
-                self.assertTrue(self.detail(out, "class").startswith("R3, "), out)
+                self.assertTrue(self.detail(out, "class").startswith(f"{cls}, "), out)
                 self.assertNotIn(sha[:12], self.detail(out, "check list"))
+
+    def test_a_reader_that_works_only_beside_its_modules_is_refused_at_step_3(self):
+        # A reader that imports a module beside it loads as render.py and CI's
+        # run_checks.py load it, from scripts/, and reads the worktree's registry; alone,
+        # as a later pre-flight would run it once it is origin/main's, it cannot, and
+        # would refuse every train of R3 and above, its own repair among them. Step 3
+        # reads the commit's registry with the commit's own reader alone, and refuses it.
+        reader, sibling = safe_push.REGISTRY_READER, "scripts/registry_names.py"
+        leaning = self.replaced(reader, 'FOLDER = "checks"\n',
+                                "from registry_names import FOLDER\n")
+        self.commit("A reader that leans on a module beside it", dict(
+            {reader: leaning, sibling: 'FOLDER = "checks"\n'}, **self.decision(
+                f"`{reader}` takes its folder's name from `{sibling}`, for the test.")))
+        loaded = subprocess.run(
+            [sys.executable, "-c", "import sys; sys.path.insert(0, 'scripts'); "
+             "import registry; print(len(registry.load('.')))"],
+            cwd=WORK, capture_output=True, text=True)
+        self.assertEqual(loaded.returncode, 0, loaded.stderr)
+        self.assertEqual(int(loaded.stdout), len(registry.load(WORK, BASE)))
+        out = self.assertRefused(self.safe_push("--dry-run"),
+                                 "the invariant guards refused: registry of checks")
+        self.assertEqual(self.guard(out, "registry of checks"), "FAIL", out)
+        self.assertTrue(self.detail(out, "registry of checks").startswith(
+            "the commit's registry of checks could not be read: its scripts/registry.py "
+            "exited 1: ModuleNotFoundError: No module named 'registry_names'"), out)
+        for name in ("protected paths", "decision entries", "generated pages"):
+            self.assertEqual(self.step(out, name), "ok", f"{name}:\n{out}")
+        self.assertIsNone(self.step(out, "check list"), out)
 
     def test_origin_main_without_a_registry_takes_the_built_in_lists(self):
         # The train that brings the registry is judged by the sequence built into the
-        # harness, which Units holds equal to the registry it brings.
+        # harness, which Units pins, as it was before the registry came. The train brings
+        # the reader, so it is R5; its step 3 reads the registry it brings.
         paths = [p for p in HARNESS_FILES if p.startswith("checks/")] + [
             safe_push.REGISTRY_READER]
         main = self.main_without("A main without the registry", *paths)
         self.assertEqual(safe_push.check_sequence(WORK, main).steps,
                          safe_push.CHECKS + safe_push.MODEL_JOB)
         sha = self.restoring(main, "The registry brought", *paths)
-        out = self.assertPath(self.safe_push("--dry-run"), sha, "R3", "full", base=main)
+        out = self.assertPath(self.safe_push("--dry-run"), sha, "R5", "full", base=main)
         line = self.detail(out, "check list")
         self.assertTrue(line.startswith(
             f"{len(safe_push.CHECKS) + 1} checks: the {len(safe_push.CHECKS)} built into this "
@@ -6642,10 +6680,11 @@ class Registry(unittest.TestCase):
     """The registry of checks (#229), on folders and repositories of the tests' own: each
     rule of its reader, broken, refuses the whole registry with the file named, read from
     the worktree and from Git alike; safe_push reads origin/main's registry with
-    origin/main's reader, never the worktree's, and refuses whenever it cannot; run_checks.py
-    stops at the first check that fails, and fails an `empty` check that prints anything;
-    and one file more is one check more for safe_push, section 8's block and run_checks.py,
-    in the place its order gives it."""
+    origin/main's reader, never the worktree's, refuses whenever it cannot, and holds the
+    checks' names itself; step 3 reads the commit's own registry so, with the commit's own
+    reader alone; run_checks.py stops at the first check that fails, and fails an `empty`
+    check that prints anything; and one file more is one check more for safe_push, section
+    8's block and run_checks.py, in the place its order gives it."""
 
     IDENTITY = ("-c", "user.name=Registry test", "-c",
                 "user.email=registry-test@example.invalid", "-c", "commit.gpgsign=false")
@@ -6867,6 +6906,96 @@ class Registry(unittest.TestCase):
         checks = safe_push.check_sequence(root, "HEAD")
         self.assertEqual(checks.steps, safe_push.CHECKS + safe_push.MODEL_JOB)
         self.assertIn("holds no registry yet", checks.why)
+        self.assertTrue(checks.built_in)
+
+    def test_safe_push_holds_the_names_itself(self):
+        # FRESHNESS passes over a failure of a step named "generated pages" or "git status
+        # --porcelain is empty" when it keeps a check change apart. So check_sequence holds
+        # the names itself, never trusting the reader at origin/main, which a train may
+        # change: the `empty` entry, and only it, bears that name, and every command's name
+        # is its words joined by spaces.
+        root = self.committed(self.folder({"10-a.toml": self.FIRST}))
+        empty = safe_push.EMPTY_CHECK
+
+        def printing(*entries) -> str:
+            listed = [dict(e, job="check") for e in entries]
+            return f"import json\nprint(json.dumps({listed!r}))\n"
+        cases = (
+            ("the empty check named otherwise",
+             [{"name": "the worktree is clean", "command": None, "empty": True}],
+             f"gives the `empty` check the name 'the worktree is clean', not {empty!r}"),
+            ("a command named as the empty check, its words so",
+             [{"name": empty, "command": empty.split(), "empty": False}],
+             f"gives a command the name {empty!r}, which only the `empty` check may bear"),
+            ("a command named as the empty check",
+             [{"name": empty, "command": ["true"], "empty": False}],
+             f"names a check {empty!r}, not its command's words joined by spaces"),
+            ("a command named as stale pages",
+             [{"name": "generated pages", "command": ["generated", "pages"], "empty": False}],
+             "gives a command the name 'generated pages', which only the `empty` check"),
+            ("a command named otherwise than its words",
+             [{"name": "lake build", "command": ["true"], "empty": False}],
+             "names a check 'lake build', not its command's words joined by spaces"),
+        )
+        for label, entries, why in cases:
+            with self.subTest(label):
+                (root / "scripts" / "registry.py").write_text(printing(*entries))
+                self.committed(root, label)
+                with self.assertRaises(safe_push.Refusal) as raised:
+                    safe_push.check_sequence(root, "HEAD")
+                self.assertIn("origin/main's registry of checks could not be read",
+                              str(raised.exception))
+                self.assertIn(why, str(raised.exception))
+        # Each named as it should be: a command by its words, the `empty` check by its name.
+        (root / "scripts" / "registry.py").write_text(printing(
+            {"name": "true --quiet", "command": ["true", "--quiet"], "empty": False},
+            {"name": empty, "command": None, "empty": True}))
+        self.committed(root, "Names as they should be")
+        self.assertEqual(safe_push.check_sequence(root, "HEAD").steps,
+                         [("true --quiet", ["true", "--quiet"]), (empty, None),
+                          *safe_push.MODEL_JOB])
+
+    def test_step_3_reads_the_commits_registry_as_a_later_preflight_will(self):
+        # A reader that imports a module beside it loads as render.py and run_checks.py
+        # load it, from scripts/, and reads the worktree. Alone, with -I, from a temporary
+        # directory, as the pre-flight runs origin/main's, it cannot: so step 3 runs the
+        # commit's own reader so (guard_registry), and refuses it before it can merge and
+        # refuse every train after it. Sound, the guard is ok; with neither the folder nor
+        # the reader, as before the registry came, it is skipped.
+        def guarded(root: Path) -> list:
+            rep = safe_push.Report()
+            with contextlib.redirect_stdout(io.StringIO()):
+                safe_push.guard_registry(root, "HEAD", rep)
+            return [(s.stage, s.name, s.outcome, s.detail) for s in rep.steps]
+        root = self.committed(self.folder({"10-a.toml": self.FIRST,
+                                           "20-b.toml": registry_empty(20)}))
+        [(stage, name, outcome, detail)] = guarded(root)
+        self.assertEqual((stage, name, outcome), ("3", "registry of checks", "ok"))
+        self.assertTrue(detail.startswith("2 checks, as the commit's own scripts/registry.py "
+                                          "reads them"), detail)
+        reader = root / "scripts" / "registry.py"
+        reader.write_text(reader.read_text().replace(
+            'FOLDER = "checks"\n', "from registry_names import FOLDER\n", 1))
+        (root / "scripts" / "registry_names.py").write_text('FOLDER = "checks"\n')
+        self.committed(root, "A reader that leans on a module beside it")
+        r = self.run_checks(root)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("all 2 checks of the job check passed", r.stdout)
+        with self.assertRaises(safe_push.Refusal) as raised:
+            safe_push.check_sequence(root, "HEAD", "the commit")
+        said = ("the commit's registry of checks could not be read: its scripts/registry.py "
+                "exited 1: ModuleNotFoundError: No module named 'registry_names'")
+        self.assertEqual(str(raised.exception), said)
+        [(stage, name, outcome, detail)] = guarded(root)
+        self.assertEqual((stage, name, outcome), ("3", "registry of checks", "FAIL"))
+        self.assertTrue(detail.startswith(said + "; so it would refuse the pre-flight of "
+                                          "every train of R3 and above"), detail)
+        git(root, "rm", "-rq", "--", "checks", "scripts/registry.py",
+            "scripts/registry_names.py")
+        self.committed(root, "No registry")
+        self.assertEqual(guarded(root), [("3", "registry of checks", "skip",
+                                          "the commit holds neither checks/ nor "
+                                          "scripts/registry.py")])
 
     def test_run_checks_stops_at_the_first_check_that_fails(self):
         marker = Path(tempfile.mkdtemp(dir=TMP)) / "the-third-ran"
@@ -6965,12 +7094,12 @@ class Registry(unittest.TestCase):
 class Units(unittest.TestCase):
     """The scanner and the helpers, without git."""
 
-    def registry_commands(self):
+    def registry_commands(self, entries):
         """The registry's checks, in order, each as section 8 writes its command: the
         `empty` entry as `git status --porcelain`, every other by its name, which is its
         command (the reader holds them so)."""
         checks = []
-        for entry in registry.load(SOURCE):
+        for entry in entries:
             if entry.empty:
                 self.assertEqual(entry.name, "git status --porcelain is empty")
                 self.assertIsNone(entry.command)
@@ -6980,20 +7109,21 @@ class Units(unittest.TestCase):
                 checks.append(entry.name)
         return checks
 
-    def test_check_sequence_matches_workflow_and_ci(self):
-        # #229: the registry, checks/, is the one list. It is well formed, of the `check`
-        # job alone; section 8's first command block is what render.py writes from it;
-        # CI's `check` job is its setup and the one step that runs it; and the pre-flight's
-        # sequence while origin/main holds no registry, CHECKS, is the registry's own, as
-        # safe_push reads it, with the model job's after it and NEGATIVE unchanged.
-        entries = registry.load(SOURCE)
+    def assertSequenceAgrees(self, root: Path) -> list:
+        """#229: the registry at `root`, checks/, is the one list. It is well formed, of the
+        `check` job alone; section 8's first command block in root's docs/WORKFLOW.md is
+        what render.py writes from it; root's CI `check` job is its setup and the one step
+        that runs it; and root's CI `model` and `negative` jobs run what MODEL_JOB and
+        NEGATIVE run. Nothing here reads CHECKS, so the registry grows by a file and its
+        render alone. Its entries, in order."""
+        entries = registry.load(root)
         self.assertEqual({e.job for e in entries}, {"check"})
         self.assertEqual([e.order for e in entries], sorted(e.order for e in entries))
         for entry in entries:
             self.assertRegex(entry.path, r"^checks/[0-9]+-[a-z0-9-]+\.toml$")
             self.assertEqual(entry.section8.split("#", 1)[0].strip(),
                              FRESHNESS_COMMAND if entry.empty else entry.name)
-        workflow = (SOURCE / "docs/WORKFLOW.md").read_text()
+        workflow = (root / "docs/WORKFLOW.md").read_text()
         regions = registry.MARKERS.findall(workflow)
         self.assertEqual(len(regions), 1, "section 8's block stands between one pair of markers")
         self.assertEqual(regions[0][1], registry.section8_block(entries))
@@ -7003,11 +7133,10 @@ class Units(unittest.TestCase):
         block = block.split("```sh\n", 1)[1].split("```", 1)[0]
         documented = [line.split("#", 1)[0].strip() for line in block.splitlines()
                       if line.strip() and not line.startswith("export ")]
-        checks = self.registry_commands()
+        checks = self.registry_commands(entries)
         self.assertEqual(checks, documented)
-        ci_commands = enforced_check_commands(normalized_check_job(
-            (SOURCE / ".github/workflows/ci.yml").read_text()))
-        self.assertEqual(ci_commands, [RUN_CHECKS])
+        ci = (root / ".github/workflows/ci.yml").read_text()
+        self.assertEqual(enforced_check_commands(normalized_check_job(ci)), [RUN_CHECKS])
         certificate = checks.index("lake env lean Certificate/Facts.lean")
         self.assertEqual(checks[certificate + 1], "python3 -I tests/test_certificate.py")
         # The pages are rendered, then the whole worktree must be clean: the entry with
@@ -7016,20 +7145,8 @@ class Units(unittest.TestCase):
         freshness = checks.index(FRESHNESS_COMMAND)
         self.assertEqual(checks[freshness - 1], RENDER_COMMAND)
         self.assertEqual(entries[freshness].argv(), ["git", "status", "--porcelain"])
-        # safe_push's built-in sequence is the registry's, as safe_push reads one.
-        self.assertEqual(safe_push.CHECKS, [(e.name, e.argv(safe_push.PY)) if not e.empty
-                                            else (e.name, None) for e in entries])
-        self.assertEqual(safe_push.MODEL_JOB, [
-            ("python3 -I tests/model/run.py --fast",
-             [safe_push.PY, "-I", "tests/model/run.py", "--fast"])])
-        self.assertEqual(safe_push.NEGATIVE, [
-            ("negative: lake build", ["lake", "build"]),
-            ("negative: lake env lean Certificate/Facts.lean",
-             ["lake", "env", "lean", "Certificate/Facts.lean"]),
-            ("negative: python3 scripts/negative_tests.py",
-             [safe_push.PY, "scripts/negative_tests.py"])])
         # And CI's `model` and `negative` jobs run what MODEL_JOB and NEGATIVE run.
-        jobs = yaml.safe_load((SOURCE / ".github/workflows/ci.yml").read_text())["jobs"]
+        jobs = yaml.safe_load(ci)["jobs"]
         runs = [line.strip() for step in jobs["model"]["steps"]
                 for line in step.get("run", "").splitlines() if line.strip()]
         self.assertEqual(runs, [name for name, _ in safe_push.MODEL_JOB])
@@ -7038,6 +7155,72 @@ class Units(unittest.TestCase):
                 and not step.get("uses") and "elan" not in line]
         self.assertEqual(runs, [name.removeprefix("negative: ")
                                 for name, _ in safe_push.NEGATIVE])
+        return entries
+
+    def test_check_sequence_matches_workflow_and_ci(self):
+        self.assertSequenceAgrees(SOURCE)
+        # safe_push's own lists, each pinned to a list of the test's own: CHECKS, the
+        # `check` job's sequence that stands in while origin/main holds no registry, the
+        # sequence every train was judged by before the registry came (never the registry,
+        # which grows without it; a follow-up card removes it); MODEL_JOB; and NEGATIVE.
+        py = safe_push.PY
+        self.assertEqual(safe_push.CHECKS, [
+            ("lake build", ["lake", "build"]),
+            ("lake build Audit", ["lake", "build", "Audit"]),
+            ("lake build Staging", ["lake", "build", "Staging"]),
+            ("lake env lean Certificate/Facts.lean",
+             ["lake", "env", "lean", "Certificate/Facts.lean"]),
+            ("python3 -I tests/test_certificate.py", [py, "-I", "tests/test_certificate.py"]),
+            ("python3 scripts/check_kernel.py --self-test",
+             [py, "scripts/check_kernel.py", "--self-test"]),
+            ("python3 scripts/heath.py", [py, "scripts/heath.py"]),
+            ("python3 scripts/check_fidelity.py", [py, "scripts/check_fidelity.py"]),
+            ("python3 -I tests/test_check_style.py", [py, "-I", "tests/test_check_style.py"]),
+            ("python3 -I tests/test_release_gate.py",
+             [py, "-I", "tests/test_release_gate.py"]),
+            ("python3 -I tests/test_jev_models.py", [py, "-I", "tests/test_jev_models.py"]),
+            ("python3 scripts/audit/jev.py self-test",
+             [py, "scripts/audit/jev.py", "self-test"]),
+            ("python3 -I tests/test_screen.py", [py, "-I", "tests/test_screen.py"]),
+            ("python3 -I tests/test_acceptance_limits.py",
+             [py, "-I", "tests/test_acceptance_limits.py"]),
+            ("python3 scripts/check_style.py", [py, "scripts/check_style.py"]),
+            ("python3 scripts/render.py", [py, "scripts/render.py"]),
+            ("git status --porcelain is empty", None),
+            ("python3 scripts/check_links.py", [py, "scripts/check_links.py"])])
+        self.assertEqual(safe_push.MODEL_JOB, [
+            ("python3 -I tests/model/run.py --fast",
+             [py, "-I", "tests/model/run.py", "--fast"])])
+        self.assertEqual(safe_push.NEGATIVE, [
+            ("negative: lake build", ["lake", "build"]),
+            ("negative: lake env lean Certificate/Facts.lean",
+             ["lake", "env", "lean", "Certificate/Facts.lean"]),
+            ("negative: python3 scripts/negative_tests.py",
+             [py, "scripts/negative_tests.py"])])
+
+    def test_a_check_added_needs_no_change_to_safe_push(self):
+        # The review's probe (#229): a copy of the tree with one file more in checks/ and
+        # section 8's block rendered from it agrees as this tree does, with safe_push.py
+        # as it is: adding a check is the file and its render, and the built-in CHECKS
+        # neither holds the check nor needs to.
+        import render
+        root = Path(tempfile.mkdtemp(prefix="one-check-more-", dir=TMP))
+        shutil.copytree(SOURCE / "checks", root / "checks",
+                        ignore=shutil.ignore_patterns(".DS_Store"))
+        for path in ("docs/WORKFLOW.md", ".github/workflows/ci.yml"):
+            (root / path).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(SOURCE / path, root / path)
+        before = registry.load(root)
+        added = ["python3", "-I", "tests/test_one_check_more.py"]
+        (root / "checks" / "99-one-check-more.toml").write_text(
+            "# An example check, for the test.\n"
+            + registry_entry(max(e.order for e in before) + 10, added))
+        page = root / "docs/WORKFLOW.md"
+        page.write_text(render.workflow_page(page.read_text(), registry.load(root)))
+        entries = self.assertSequenceAgrees(root)
+        self.assertEqual([e.name for e in entries], [e.name for e in before] + [" ".join(added)])
+        self.assertIn(f"\n{' '.join(added)}\n```\n<!-- /checks -->", page.read_text())
+        self.assertNotIn(" ".join(added), [name for name, _ in safe_push.CHECKS])
 
     def test_the_generated_region_is_the_registrys(self):
         # safe_push's guards read section 8's block as generated (GENERATED_REGIONS), the
@@ -7124,7 +7307,7 @@ class Units(unittest.TestCase):
             "printf 'python3() { return 0; }\\n' > \"$RUNNER_TEMP/stub.sh\"\n"
             "echo \"BASH_ENV=$RUNNER_TEMP/stub.sh\" >> \"$GITHUB_ENV\"\n")}
         override = {"BASH_ENV": "stub.sh"}
-        unmodeled = "neither the run of the registry's checks nor the modeled setup"
+        unmodeled = "neither the run of the registry's checks nor the modelled setup"
 
         def step_running(job, command):
             return next(step for step in job["steps"] if step.get("run") == command)

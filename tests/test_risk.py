@@ -53,6 +53,8 @@ class Table(unittest.TestCase):
             ("scripts/safe_push.py", "R5"),          # though scripts/* is R3
             ("scripts/test_safe_push.py", "R5"),
             ("scripts/risk.py", "R5"),               # it decides which checks run
+            ("scripts/registry.py", "R5"),           # main's copy: the pre-flight's checks
+            ("scripts/run_checks.py", "R5"),         # CI's `check` job
             ("scripts/hooks/pre-push", "R5"),
             ("tests/test_safe_push.py", "R5"),       # though tests/* is R3
             (".github/workflows/ci.yml", "R5"),
@@ -140,6 +142,12 @@ class Table(unittest.TestCase):
         self.assertEqual(per["checks/19-a-new-check.toml"], ("R3", True))
         self.assertEqual(risk.change_class(added + ["scripts/safe_push.py"])[0], "R5")
         self.assertEqual(risk.change_class(added + [".github/workflows/ci.yml"])[0], "R5")
+        # The registry's reader and runner are the landing tool and CI: a change to either,
+        # with a check or without, is R5.
+        for path in ("scripts/registry.py", "scripts/run_checks.py"):
+            with self.subTest(path=path):
+                self.assertEqual(risk.change_class(added + [path])[0], "R5")
+                self.assertEqual(risk.change_class([path]), ("R5", {path: ("R5", True)}))
 
 
 class Header(unittest.TestCase):

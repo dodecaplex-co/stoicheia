@@ -9,7 +9,10 @@ block from them; and the pre-flight, `git safe-push`, runs origin/main's copy of
 read out of Git, never the copy of the commit it checks
 ([the decision](../docs/decisions/2026-10-22-check-registry.md)).
 [`scripts/registry.py`](../scripts/registry.py) is the one reader, and refuses the whole
-folder, naming the file, when any file breaks the rules below.
+folder, naming the file, when any file breaks the rules below. The reader and
+`scripts/run_checks.py` are of risk class R5, the landing tool and CI, and the reader
+stays one self-contained file of the standard library, since the pre-flight runs it
+alone.
 
 ## What a file holds
 
@@ -27,8 +30,8 @@ hyphens. It holds these fields, and no others:
 
 `order`, `name`, `job` and `section8` are required, and exactly one of `command` and
 `empty`. No two files share a name or an order, and the folder holds nothing but the
-checks and this README, which the reader passes over. A comment (`#`) says what the check
-is for, as a CI step's name and comment did.
+checks and this README, which the reader passes over, as it does a Finder `.DS_Store`. A
+comment (`#`) says what the check is for, as a CI step's name and comment did.
 
 ## Adding a check
 
@@ -43,6 +46,13 @@ is for, as a CI step's name and comment did.
    same: one file, named in the entry.
 
 A change to `checks/` is of risk class R3, and touches neither `scripts/safe_push.py` nor
-the CI workflow. Its pull request's CI runs its own registry, the new check with it; its
-pre-flight runs origin/main's, without it, so a train cannot change the checks that judge
-it. The check joins the pre-flight once the pull request has merged.
+the CI workflow. Its pull request's CI runs its own registry, the new check with it, and
+that run is a required check of the pull request, so the change does alter checks that
+judge it there. Three things keep that safe:
+
+- Every train that touches `checks/` is R3 or above, so its pre-flight runs origin/main's
+  whole registry on it, in both passes, whatever its CI runs.
+- The change is protected: each file is named in a decision entry, and the pull request
+  carries `security-review`.
+- The change judges later trains only once it has merged: the check joins the pre-flight
+  then.

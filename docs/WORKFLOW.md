@@ -326,14 +326,23 @@ its log, stopping at the first that fails; and they are the pre-flight's sequenc
 (section 10, step 4), which reads origin/main's copy of them out of Git, never the copy of
 the commit it checks ([the decision](decisions/2026-10-22-check-registry.md)). So CI runs
 the pull request's registry, as it runs the pull request's own workflow, while the
-pre-flight runs main's: a train cannot change the checks that judge it. To add a check,
-add one file to `checks/` ([its README](../checks/README.md) says what a file holds), run
-`render.py`, and commit the file with the regenerated block; to remove one, or change its
-command, job or order, change its file. `checks/` is a protected path and a check input
-(section 10), of class R3, and neither `scripts/safe_push.py` nor the CI workflow changes
-with it: a train that touches it takes the full pre-flight, which runs main's registry,
-never the train's own, and names each registry file it changes in a decision entry. The
-new check joins the pre-flight once its pull request has merged.
+pre-flight runs main's. CI's `check` job is a required check of the pull request, so a
+train that changes the registry does change checks that judge it there; three things keep
+that safe. Every train that touches `checks/` is R3 or above, so its pre-flight runs
+main's whole registry on it, in both passes, whatever its CI runs. The change is
+protected: each registry file it adds, removes or changes is named in a decision entry,
+and the pull request carries `security-review`. And the change judges later trains only
+once it has merged. To add a check, add one file to `checks/`
+([its README](../checks/README.md) says what a file holds), run `render.py`, and commit
+the file with the regenerated block; to remove one, or change its command, job or order,
+change its file. `checks/` is a protected path and a check input (section 10), of class
+R3, and neither `scripts/safe_push.py` nor the CI workflow changes with it. The registry's
+reader, `scripts/registry.py`, and its runner, `scripts/run_checks.py`, are R5, with the
+landing tool and CI: main's reader decides the pre-flight's sequence, and the runner is
+CI's `check` job. The reader stays one self-contained file of the standard library, since
+the pre-flight runs it alone, out of Git; step 3 of the pre-flight runs the commit's own
+reader so, and refuses the commit when it cannot read the commit's registry, before a
+broken reader can merge.
 
 Review the generated differences and commit them with their sources, so that regenerating
 leaves them unchanged and the `git status` line prints nothing. That line reads the whole
@@ -780,8 +789,9 @@ decision entry naming the file in a sentence of its own; it is R3, and touches n
 `scripts/safe_push.py` nor the CI workflow, so trains that each add a check no longer edit
 the same lines. Removing a check, or changing its command, job or order, is a change to
 its one file, named the same way. The train's CI runs the train's own registry, the new
-check with it, while its pre-flight runs origin/main's, without it: the check judges the
-trains after it from its merge, and never the train that brings it. A command of another
+check with it, while its pre-flight runs origin/main's whole registry, without it, in both
+passes: the check joins the pre-flight at its merge, and judges the trains after it
+there. A command of another
 job (`model`, `negative`, `formal-model`, `acceptance`) is still a step of the CI workflow
 and, where the pre-flight runs it, a line of `scripts/safe_push.py`.
 
@@ -929,6 +939,13 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       - no review record stale (`check_fidelity.py`, on the commit as committed);
       - the generated pages current (`render.py`, on the commit as committed, changes
         nothing, and refuses no decision entry);
+      - the commit's registry of checks readable as a later pre-flight will read it once
+        the commit is origin/main's: by the commit's own `scripts/registry.py`, taken out
+        of Git and run alone from a temporary directory, reading the commit's `checks/`
+        out of Git, its checks' names held as step 4 holds them (`render.py` and CI load
+        the reader from `scripts/` and read the worktree, so a reader that leans on a
+        module beside it would pass them both); skipped only while the commit holds
+        neither the registry nor its reader;
       - no whole directory of `Elements/`, `heath/`, `review/`, `figures/` or `mishnah/`
         deleted unless the decisions page or a dated entry gains a new line naming it, as
         a protected file is named (below), with a full stop after it only when its
@@ -1002,11 +1019,15 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       second, each step timed. The `check` job's checks are those of origin/main's
       registry, `checks/`, read out of Git by origin/main's `scripts/registry.py`, which
       runs from a temporary directory: never the pull request's registry or reader, so a
-      train cannot add, drop or change a check that judges it. A step line says how many
-      checks run and whose registry they come from. While origin/main holds no registry
-      (the train that brings it), the lists built into `safe_push.py` stand in for it; a
-      registry at origin/main that cannot be read, or whose reader fails or gives no
-      check, refuses the pre-flight. The check scripts and what they expect (`scripts/`,
+      train cannot add, drop or change a check its pre-flight runs. The pre-flight holds
+      the checks' names itself: only the check that `git status --porcelain` prints
+      nothing bears that name, and every other is named by its command's words, so that
+      no command bears a name whose failure is passed over as stale pages (below). A step
+      line says how many checks run and whose registry they come from. While origin/main
+      holds no registry (the train that brings it), the lists built into `safe_push.py`
+      stand in for it, until a follow-up card removes them; a registry at origin/main
+      that cannot be read, or whose reader fails or gives no check, refuses the
+      pre-flight. The check scripts and what they expect (`scripts/`,
       `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`, and the registry,
       `checks/`) are origin/main's
       copies; when the pull request changes any of them, the checks run again with its own

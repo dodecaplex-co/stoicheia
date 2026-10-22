@@ -38,6 +38,13 @@ error naming the file: the registry is read whole or not at all.
 ROOT is the repository's root, this file's parent's parent unless given. Exit 0 with the
 entries, 1 when the registry fails, 2 for a usage error. Standard library and Git only;
 scripts/test_safe_push.py tests it.
+
+This file must stay self-contained, importing the standard library alone. The pre-flight
+takes origin/main's copy out of Git and runs it on its own, with `python3 -I`, from a
+temporary directory, where no module beside it can be found; and its step 3 runs the
+commit's own copy the same way, refusing a commit whose copy fails so, since that copy
+would judge every train after it once merged. render.py and run_checks.py import it from
+scripts/, where a sibling module would load, so they cannot be what shows it works.
 """
 
 from __future__ import annotations

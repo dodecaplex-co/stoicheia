@@ -71,6 +71,10 @@ order, and the first that fails stops it with a message saying why:
      leaf of its own pages, as origin/main's copy of the file lists them;
    - no review record is stale, and the generated pages are current (check_fidelity.py
      and render.py, on the commit as committed);
+   - the commit's registry of checks reads, by the commit's own scripts/registry.py, as
+     the pre-flight of every later train will read it once the commit is origin/main's
+     (guard_registry): render.py and CI load the reader from scripts/ and read the
+     worktree, so a reader that works only so would pass them both;
    - no whole directory under Elements/, heath/, review/, figures/ or mishnah/ is
      deleted unless the decisions record gains a new line naming it, as a protected path
      is named;
@@ -106,8 +110,9 @@ order, and the first that fails stops it with a message saying why:
    `negative_tests.py` in a second one, each step timed. The sequence is CI's `check`
    job's as origin/main's registry of checks lists it (checks/, one file per check, read
    out of git by origin/main's scripts/registry.py, run from a temporary directory: never
-   the commit's registry or reader, so that a change cannot alter the checks that judge
-   it), then the `model` job's (check_sequence; docs/decisions/2026-10-22-check-registry.md).
+   the commit's registry or reader, so that a change cannot alter the checks its own
+   pre-flight runs), then the `model` job's (check_sequence;
+   docs/decisions/2026-10-22-check-registry.md).
    While origin/main holds no registry, the lists built in here stand in for it; when it
    holds one that cannot be read, the pre-flight refuses. The checks run with
    origin/main's copies of the check scripts and their expected values (CHECK_INPUTS,
@@ -439,10 +444,14 @@ TAIL = 40                 # lines of a failed step's output to print
 REGISTRY = "checks"
 REGISTRY_READER = "scripts/registry.py"
 REGISTRY_TIMEOUT = 120    # seconds origin/main's registry.py may take to read its registry
+# The name of the registry's one `empty` entry, the check that `git status --porcelain`
+# prints nothing; no command may bear it (check_sequence, FRESHNESS).
+EMPTY_CHECK = "git status --porcelain is empty"
 # The `check` job's sequence, built in: it stands in for the registry only while
 # origin/main holds none, so that the train that adds the registry is judged by the
-# sequence every train was judged by before it (Units holds the two equal). These lines go
-# once the registry is on main.
+# sequence every train was judged by before it. Units pins it to a list of its own, as it
+# pins MODEL_JOB and NEGATIVE, so that the registry grows without it. A follow-up card
+# removes these lines once the registry is on main.
 CHECKS = [
     ("lake build", ["lake", "build"]),
     ("lake build Audit", ["lake", "build", "Audit"]),
@@ -462,7 +471,7 @@ CHECKS = [
      [PY, "-I", "tests/test_acceptance_limits.py"]),
     ("python3 scripts/check_style.py", [PY, "scripts/check_style.py"]),
     ("python3 scripts/render.py", [PY, "scripts/render.py"]),
-    ("git status --porcelain is empty", None),
+    (EMPTY_CHECK, None),
     ("python3 scripts/check_links.py", [PY, "scripts/check_links.py"]),
 ]
 # CI's `model` job, run after the `check` job's sequence, in the same worktree. The
@@ -2153,7 +2162,7 @@ BASE_PASS = " (origin/main's checks)"
 # changed (render.py's output, or the certificate that writes facts.json), not a check's
 # verdict. render.py failing outright (step 3's "render.py", step 4's "python3
 # scripts/render.py") is a verdict: it checks docs/program.toml, for one.
-FRESHNESS = ("generated pages", "git status --porcelain is empty")
+FRESHNESS = ("generated pages", EMPTY_CHECK)
 
 
 def passes(repo, base, wt: Path, changes: list[tuple[str, str]]):
@@ -2859,6 +2868,7 @@ def guards(ctx, wt: Path, rep: Report, logs: Path) -> Guarded:
     guard_heath(repo, base, sha, wt, rep)
     guard_directories(repo, base, sha, rep)
     guard_entries(repo, base, sha, rep)
+    guard_registry(repo, sha, rep)
     inputs = [(s, p) for s, p in changed_files(repo, base, sha) if under(p, CHECK_INPUTS)]
     with contextlib.closing(passes(repo, base, wt, inputs)) as each:
         for label, fail, excludes in each:
@@ -2923,26 +2933,33 @@ def copy_build(src: Path, dst: Path) -> None:
 class CheckList(NamedTuple):
     steps: list[tuple[str, list[str] | None]]   # (name, argv); None: `git status` is empty
     why: str                                     # where they came from, for the step line
+    built_in: bool = False                       # CHECKS: the revision holds no registry
 
 
-def check_sequence(repo, base: str) -> CheckList:
+def check_sequence(repo, base: str, whose: str = "origin/main") -> CheckList:
     """The checks step 4 runs on a commit against `base`, origin/main: the `check` job's,
     as base's registry lists them, then the `model` job's (MODEL_JOB). The registry,
     checks/, and its reader, scripts/registry.py, are base's: the reader is read out of git
     and run from a temporary directory, and reads the registry out of git at base, both
     with git's replacement objects off; never the commit's registry or reader, nor the
-    worktree's, so that a change cannot alter the checks that judge it. With neither at
-    base (the train that adds them), the built-in CHECKS. A Refusal when base holds either
-    and the registry cannot be read: the other missing or not a regular file or folder,
-    the reader failing, outlasting its time or printing anything but a list of checks of
-    the `check` job, or no check at all. Never an empty list."""
+    worktree's, so that a change cannot alter the checks its own pre-flight runs. With
+    neither at base (the train that adds them), the built-in CHECKS (built_in). A Refusal
+    when base holds either and the registry cannot be read: the other missing or not a
+    regular file or folder, the reader failing, outlasting its time or printing anything
+    but a list of checks of the `check` job, or no check at all. Never an empty list.
+
+    The names are held here as well as by the reader, which a train may change: the
+    `empty` entry, and only it, is named EMPTY_CHECK, and every other entry's name is its
+    command's words joined by spaces, so that no command is ever named as a step whose
+    failure FRESHNESS passes over. Step 3 reads the commit's own registry so too, `whose`
+    naming it (guard_registry)."""
     def refuse(why: str):
-        raise Refusal(f"origin/main's registry of checks could not be read: {why}")
+        raise Refusal(f"{whose}'s registry of checks could not be read: {why}")
 
     listed = run(["git", "ls-tree", "-z", "--full-tree", base, "--", REGISTRY,
                   REGISTRY_READER], repo, binary=True)
     if listed.returncode != 0:
-        refuse(f"git could not list origin/main {base[:12]}: "
+        refuse(f"git could not list {whose} {base[:12]}: "
                f"{printable_text(listed.stderr.decode(errors='replace').strip())}")
     found = {}
     for record in listed.stdout.split(b"\0"):
@@ -2951,18 +2968,18 @@ def check_sequence(repo, base: str) -> CheckList:
             found[os.fsdecode(path)] = meta.split()
     if not found:
         return CheckList(CHECKS + MODEL_JOB, f"the {len(CHECKS)} built into this harness, "
-                         f"since origin/main {base[:12]} holds no registry yet ({REGISTRY}/ "
-                         f"and {REGISTRY_READER}), then the model job's")
+                         f"since {whose} {base[:12]} holds no registry yet ({REGISTRY}/ "
+                         f"and {REGISTRY_READER}), then the model job's", True)
     reader, folder = found.get(REGISTRY_READER), found.get(REGISTRY)
     if (reader is None or len(reader) != 3 or reader[0] not in (b"100644", b"100755")
             or reader[1] != b"blob"):
-        refuse(f"origin/main {base[:12]} holds {REGISTRY}/ but no regular file "
+        refuse(f"{whose} {base[:12]} holds {REGISTRY}/ but no regular file "
                f"{REGISTRY_READER} to read it")
     if folder is None or len(folder) != 3 or folder[1] != b"tree":
-        refuse(f"origin/main {base[:12]} holds {REGISTRY_READER} but no folder {REGISTRY}/")
+        refuse(f"{whose} {base[:12]} holds {REGISTRY_READER} but no folder {REGISTRY}/")
     source = run(["git", "cat-file", "blob", reader[2].decode()], repo, binary=True)
     if source.returncode != 0:
-        refuse(f"git could not read origin/main's {REGISTRY_READER}")
+        refuse(f"git could not read {whose}'s {REGISTRY_READER}")
     with tempfile.TemporaryDirectory(prefix="stoicheia-registry-") as tmp:
         script = Path(tmp) / "registry.py"
         script.write_bytes(source.stdout)
@@ -2995,15 +3012,53 @@ def check_sequence(repo, base: str) -> CheckList:
         if item.get("job") != "check":
             refuse(f"its {REGISTRY_READER} gives {printable_text(name)} to the job "
                    f"{printable_text(str(item.get('job')))}, which the pre-flight does not run")
+        if empty and name != EMPTY_CHECK:
+            refuse(f"its {REGISTRY_READER} gives the `empty` check the name "
+                   f"{printable_text(name)[:200]!r}, not {EMPTY_CHECK!r}")
+        if not empty and name != " ".join(command):
+            refuse(f"its {REGISTRY_READER} names a check {printable_text(name)[:200]!r}, "
+                   "not its command's words joined by spaces")
+        if not empty and name in FRESHNESS:
+            refuse(f"its {REGISTRY_READER} gives a command the name {name!r}, which only "
+                   "the `empty` check may bear: a failure of a step of that name is "
+                   "passed over when a check change is kept apart (FRESHNESS)")
         steps.append((name, None if empty else
                        [PY if i == 0 and w == "python3" else w for i, w in enumerate(command)]))
     if not steps:
         refuse(f"its {REGISTRY_READER} gives no check")
     if len({name for name, _ in steps}) != len(steps):
         refuse(f"its {REGISTRY_READER} gives two checks of one name")
-    return CheckList(steps + MODEL_JOB, f"the {len(steps)} of origin/main's registry, "
+    return CheckList(steps + MODEL_JOB, f"the {len(steps)} of {whose}'s registry, "
                      f"{REGISTRY}/ (tree {folder[2].decode()[:12]}), as its {REGISTRY_READER} "
                      f"(blob {reader[2].decode()[:12]}) reads them, then the model job's")
+
+
+def guard_registry(repo, sha, rep: Report) -> None:
+    """The commit's registry of checks reads as the pre-flight of every later train will
+    read it once the commit is origin/main's: by check_sequence at the commit, the
+    commit's own scripts/registry.py taken out of git and run alone from a temporary
+    directory, reading the commit's checks/ out of git. render.py and CI's run_checks.py
+    load the reader from scripts/ and read the worktree, so a reader that imports a module
+    beside it, or that fails only on a revision, passes them both, and once merged would
+    refuse every train of R3 and above, its own repair among them. Every class runs this.
+    Skipped only while the commit holds neither the registry nor its reader, when the lists
+    built in stand in for it, as they did before the registry came."""
+    t = time.time()
+    try:
+        own = check_sequence(repo, sha, "the commit")
+    except Refusal as e:
+        rep.add("3", "registry of checks", "FAIL", f"{e}; so it would refuse the "
+                "pre-flight of every train of R3 and above once it is origin/main's, as "
+                f"{REGISTRY_READER} reads it there, alone and out of git (check_sequence)",
+                time.time() - t)
+        return
+    if own.built_in:
+        rep.add("3", "registry of checks", "skip", f"the commit holds neither {REGISTRY}/ "
+                f"nor {REGISTRY_READER}", time.time() - t)
+    else:
+        rep.add("3", "registry of checks", "ok", f"{len(own.steps) - len(MODEL_JOB)} checks, "
+                f"as the commit's own {REGISTRY_READER} reads them alone and out of git, as "
+                "a later pre-flight will", time.time() - t)
 
 
 def check_list(ctx, rep: Report) -> list[tuple[str, list[str] | None]]:
@@ -3488,8 +3543,9 @@ def put_block(body: str, block: str) -> str:
 
 def generated_parts(repo, base, sha, path: str) -> tuple[bool, bool]:
     """Does the change touch what render.py writes in `path`, and does it touch the rest,
-    written by hand? Only README.md and PROGRAM.md have a rest: render.py writes them only
-    between their markers, and every other generated file whole."""
+    written by hand? Only the files of GENERATED_REGIONS have a rest (README.md,
+    docs/PROGRAM.md and docs/WORKFLOW.md): render.py writes them only between their
+    markers, and every other generated file whole."""
     pattern = GENERATED_REGIONS.get(path)
     if pattern is None:
         return True, False
