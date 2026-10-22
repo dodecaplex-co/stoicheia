@@ -35,10 +35,10 @@ case = "F beyond EG, on the opposite side from D, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "ce5a881"
-reviewer = "Claude Opus 5.5, records review"
+commit = "6e0cdd27"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:1fbf4c22b29ebd3f"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I22-I24b, independent re-read at 6e0cdd27"
 
 [review.items]
 statement = "pass"
