@@ -25,17 +25,17 @@ note = "Euclid takes the opposite sides FG and EH of the parallelogram EFGH as e
 [[passage]]
 at = "Therefore EBCH is a parallelogram"
 kind = "carried"
-note = "Euclid concludes that EBCH is a parallelogram, where Heath cites I.34. The Lean uses the definition: I.33 gives BE parallel to CH and `AreParallel.of_parallel` gives BC parallel to EH from the given parallels; I.34 supplies FG equal to EH above."
+note = "Euclid concludes that EBCH is a parallelogram, where Heath's reference is I.34. The Lean uses the definition: I.33 gives BE parallel to CH and `AreParallel.of_parallel` gives BC parallel to EH from the given parallels; I.34 supplies FG equal to EH above."
 
 [figure]
 case = "the bases BC and FG apart, with C and H on the same side of BE"
 
 [review]
 stage = "full"
-commit = "e8b6113"
-reviewer = "Claude Opus 5.5, records review"
+commit = "c814e8fb"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:99d638f5b906dcc1"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at c814e8fb"
 
 [review.items]
 statement = "pass"

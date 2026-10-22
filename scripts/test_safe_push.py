@@ -128,6 +128,15 @@ one commit and runs safe_push.py against that origin:
   moved to a value the lock does not give is refused by the commit's own
   check_fidelity.py; a count moved in scripts/, or in code under tests/, is never a pinned
   value; and the markers are read by origin/main's reader, never the commit's;
+- replacement objects (#256), which git reads in place of the objects they replace while
+  a push sends the originals: a token behind a clean stand-in, by `git replace` or in a
+  folder GIT_REPLACE_REF_BASE names, is refused by the pre-push hook and by the
+  pre-flight's scan, and so it is, by `git replace`, with core.useReplaceRefs=true in the
+  clone's config; a commit whose message holds a token, behind a clean commit, and a
+  stand-in for origin/main's allow-list that would allow a token are refused by the
+  pre-flight; a stand-in for origin/main's safe_push.py is not what the hook runs, the
+  launcher copies out, or the hand-over compares; and a clean push beside a replacement
+  passes, each test removing what it planted;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -315,8 +324,9 @@ def normalized_check_job(source: str) -> WorkflowCheckJob:
     )
 
 
-FRESHNESS_COMMAND = ("git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md "
-                     "README.md docs/PROGRAM.md")
+# The whole worktree, as safe_push's step "git status --porcelain is empty" reads it: the
+# generated pages and every other file a check might leave changed or new.
+FRESHNESS_COMMAND = "git status --porcelain"
 RENDER_COMMAND = "python3 scripts/render.py"
 FRESHNESS_ASSERTION = f'test -z "$({FRESHNESS_COMMAND})"'
 SETUP_ACTIONS = {"actions/checkout@v5": frozenset(),
@@ -418,7 +428,9 @@ def clean_env() -> dict:
                STOICHEIA_PYTHON=sys.executable)
     for name in ("STOICHEIA_SAFE_PUSH", "STOICHEIA_HARNESS", "STOICHEIA_TAG_PUSH",
                  "STOICHEIA_FAKE_GH_KILL", "STOICHEIA_FAKE_GH_MERGE", "STOICHEIA_TEST_CI_POLL",
-                 "STOICHEIA_TEST_CI_APPEAR", "STOICHEIA_TEST_CLOCK"):
+                 "STOICHEIA_TEST_CI_APPEAR", "STOICHEIA_TEST_CLOCK",
+                 # Git's replacement objects (#256): a test that plants one names it itself.
+                 "GIT_NO_REPLACE_OBJECTS", "GIT_REPLACE_REF_BASE"):
         env.pop(name, None)
     return env
 
@@ -900,6 +912,74 @@ class Clone(unittest.TestCase):
         change(state)
         GH_STATE.write_text(json.dumps(state))
 
+    # Issue #256: git reads a replacement object in place of the object it replaces, while
+    # a push sends the original. REPLACE_REFS: git's own folder of replacements, and the
+    # tests' own, which GIT_REPLACE_REF_BASE names in its place.
+    REPLACE_REFS = ("refs/replace/", "refs/stand-ins/")
+    CLEAN_NOTES = "Some notes.\n"
+
+    def blob(self, text: str) -> str:
+        """A blob holding `text`, written to WORK's objects."""
+        return subprocess.run(["git", "hash-object", "-w", "--stdin"], cwd=WORK, input=text,
+                              capture_output=True, text=True, check=True).stdout.strip()
+
+    def stand_in(self, original: str, text: str, base: str = "refs/replace/") -> dict:
+        """A blob holding `text` put in place of the blob `original` (replace_object)."""
+        return self.replace_object(original, self.blob(text), base)
+
+    def replace_object(self, original: str, replacement: str,
+                       base: str = "refs/replace/") -> dict:
+        """The object `replacement` put in place of `original` for git's reading in WORK:
+        by `git replace` under refs/replace/, or by a ref of the test's own under `base`.
+        The environment a git command needs to read it is returned: nothing more for
+        refs/replace/, GIT_REPLACE_REF_BASE for another folder. Clone.setUp removes no
+        replacement, so the ref is removed when the test ends, and WORK and origin are then
+        checked to hold none."""
+        if not getattr(self, "replacements_checked", False):
+            self.replacements_checked = True
+            self.addCleanup(self.assertNoReplacements)
+        self.addCleanup(git, WORK, "update-ref", "-d", base + original, check=False)
+        if base == "refs/replace/":
+            git(WORK, "replace", original, replacement)
+            return {}
+        git(WORK, "update-ref", base + original, replacement)
+        return {"GIT_REPLACE_REF_BASE": base}
+
+    def assertNoReplacements(self) -> None:
+        for repo in (WORK, ORIGIN):
+            left = git(repo, "for-each-ref", "--format=%(refname)", *self.REPLACE_REFS)
+            self.assertEqual(left, "", f"replacement refs left in {repo}")
+
+    def replace_refs_on_in_config(self) -> None:
+        """core.useReplaceRefs=true in WORK's own config, removed when the test ends, and
+        WORK's config then checked to hold none. Git from 2.19 to 2.41 lets it turn
+        replacements back on despite GIT_NO_REPLACE_OBJECTS; from 2.42 the variable wins,
+        so there a test that uses this passes with either the variable or the harness's
+        `-c core.useReplaceRefs=false` alone."""
+        def remove() -> None:
+            git(WORK, "config", "--local", "--unset-all", "core.useReplaceRefs", check=False)
+            left = git(WORK, "config", "--local", "--get-all", "core.useReplaceRefs",
+                       check=False)
+            self.assertEqual(left, "", "core.useReplaceRefs left in WORK's config")
+        self.addCleanup(remove)
+        git(WORK, "config", "--local", "core.useReplaceRefs", "true")
+
+    def assertStandsIn(self, rev: str, path: str, text: str, env: dict) -> None:
+        """git, as the planted environment has it, reads `text` at `rev`:`path`: so the
+        stand-in is live, and a scan that reads it would pass what the push sends."""
+        shown = git(WORK, "show", f"{rev}:{path}", env=dict(clean_env(), **env))
+        self.assertEqual(shown, text, "git does not read the stand-in")
+
+    def hidden_token(self, base: str = "refs/replace/") -> tuple[str, str, dict]:
+        """A commit adding a token to docs/notes.md, the token's blob replaced by a clean
+        one (stand_in): the commit, the token's blob, and the environment that reads the
+        stand-in."""
+        bad = self.commit("Plant a token", {"docs/notes.md": f"api_token = \"{TOKEN}\"\n"})
+        blob = git(WORK, "rev-parse", f"{bad}:docs/notes.md").strip()
+        env = self.stand_in(blob, self.CLEAN_NOTES, base)
+        self.assertStandsIn(bad, "docs/notes.md", self.CLEAN_NOTES, env)
+        return bad, blob, env
+
 
 class Accepts(Clone):
     def test_good_commit_dry_run_then_push_from_a_dirty_tree(self):
@@ -1006,6 +1086,69 @@ class Secrets(Clone):
         self.commit(f"Notes from {PRIVATE_DIR}", {
             "docs/reading.md": self.text("docs/reading.md") + "\nA line.\n"})
         self.assertRefused(self.safe_push(), "message", "private path")
+
+    def test_secret_behind_a_replacement_refused(self):
+        # Issue #256: the token's blob replaced by a clean one, by `git replace` and then by
+        # a folder GIT_REPLACE_REF_BASE names; the push would send the token, so the
+        # pre-flight's scan reads it, and step 2 refuses. Each subtest starts as setUp starts
+        # a test, so that one whose push went through cannot fail the next at its branch.
+        for base in self.REPLACE_REFS:
+            with self.subTest(base=base):
+                self.setUp()
+                _, blob, env = self.hidden_token(base)
+                try:
+                    if base != "refs/replace/":
+                        self.assertEqual(git(WORK, "for-each-ref", "refs/replace/"), "")
+                    out = self.assertRefused(self.safe_push(env=dict(clean_env(), **env)),
+                                             "REFUSED: the secret scan found 1 possible secret")
+                    self.assertEqual(self.guard(out, "secrets"), "FAIL", out)
+                    self.assertIn("docs/notes.md", out)
+                    self.assertNotIn(TOKEN, out, "the report repeats the secret")
+                finally:
+                    git(WORK, "update-ref", "-d", base + blob)
+        # A commit whose message holds a token (in its body: step 1 reads the subject),
+        # replaced by one with the same subject, tree and parent and no body: the push
+        # would send the token's message, so step 2 refuses it.
+        with self.subTest(replaced="a commit"):
+            self.setUp()
+            bad = self.commit(f"Notes\n\napi_token = \"{TOKEN}\"", {
+                "docs/reading.md": self.text("docs/reading.md") + "\nA line.\n"})
+            clean = git(WORK, "commit-tree", f"{bad}^{{tree}}", "-p", BASE, "-m",
+                        "Notes").strip()
+            self.replace_object(bad, clean)
+            try:
+                self.assertEqual(git(WORK, "log", "-1", "--format=%B", bad,
+                                     env=clean_env()).strip(), "Notes")
+                out = self.assertRefused(self.safe_push(), "message", "key, token or secret")
+                self.assertNotIn(TOKEN, out, "the report repeats the secret")
+            finally:
+                git(WORK, "update-ref", "-d", f"refs/replace/{bad}")
+        # origin/main's allow-list replaced by one with an entry that allows the token by
+        # its SHA-256: the scan reads origin/main's own, which allows nothing, and refuses.
+        with self.subTest(replaced="origin/main's allow-list"):
+            self.setUp()
+            path = safe_push.ALLOWLIST
+            theirs = git(WORK, "rev-parse", f"refs/remotes/origin/main:{path}").strip()
+            allowing = self.text(path) + "\n" + self.ALLOW
+            self.stand_in(theirs, allowing)
+            try:
+                self.assertStandsIn("refs/remotes/origin/main", path, allowing, {})
+                self.commit("A flagged line", {"docs/notes.md": f"api_token = \"{TOKEN}\"\n"})
+                out = self.assertRefused(self.safe_push(),
+                                         "REFUSED: the secret scan found 1 possible secret")
+                self.assertNotIn("A fixture for the test", out)
+            finally:
+                git(WORK, "update-ref", "-d", f"refs/replace/{theirs}")
+
+    def test_secret_behind_a_replacement_turned_on_in_config_refused(self):
+        # The same with core.useReplaceRefs=true in the clone's config, which git from 2.19
+        # to 2.41 let override GIT_NO_REPLACE_OBJECTS: run() sets it false on git's command
+        # line, which git reads last (Hook has the hook's twin of this test).
+        self.replace_refs_on_in_config()
+        self.hidden_token()
+        out = self.assertRefused(self.safe_push(),
+                                 "REFUSED: the secret scan found 1 possible secret")
+        self.assertNotIn(TOKEN, out, "the report repeats the secret")
 
     # The value is pinned by its SHA-256: written here, it would be flagged in turn.
     ALLOW = ('[[allow]]\npath = "docs/notes.md"\nmatch = "api_token"\n'
@@ -1242,6 +1385,68 @@ class Hook(Clone):
         r = self.push(f"{bad}:refs/heads/feature")
         self.assertNotEqual(r.returncode, 0, r.stderr)
         self.assertIn("pre-push: refusing the push to refs/heads/feature", r.stderr)
+
+    def refused_behind_a_replacement(self, base: str) -> None:
+        bad, _, env = self.hidden_token(base)
+        r = self.push(f"{bad}:refs/heads/feature", **env)
+        self.assertNotEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("pre-push: refusing the push to refs/heads/feature: the secret scan "
+                      "found 1 possible secret", r.stderr)
+        self.assertIsNone(self.origin_branch("feature"))
+        self.assertNotIn(TOKEN, r.stdout + r.stderr, "the hook repeats the secret")
+
+    def test_hook_reads_past_a_replacement(self):
+        # Issue #256: the token's blob replaced by a clean one with `git replace`. git shows
+        # the stand-in, but the push sends the token; the hook's scan reads the token.
+        self.refused_behind_a_replacement("refs/replace/")
+
+    def test_hook_reads_past_a_replace_ref_base(self):
+        # The same, the stand-in in a folder of refs that GIT_REPLACE_REF_BASE names in the
+        # push's environment, with nothing in refs/replace/.
+        self.refused_behind_a_replacement("refs/stand-ins/")
+        self.assertEqual(git(WORK, "for-each-ref", "refs/replace/"), "")
+
+    def test_hook_reads_past_a_replacement_turned_on_in_config(self):
+        # The first, with core.useReplaceRefs=true in the clone's config, which git from
+        # 2.19 to 2.41 let override GIT_NO_REPLACE_OBJECTS: the hook's git calls and the
+        # scan's set it false on git's command line, which git reads last.
+        self.replace_refs_on_in_config()
+        self.refused_behind_a_replacement("refs/replace/")
+
+    def test_hook_runs_origin_mains_scan_not_its_replacement(self):
+        # origin/main's safe_push.py replaced by a copy whose scan passes everything: the
+        # hook copies out origin/main's own, which refuses the token.
+        lame = self.replaced("scripts/safe_push.py", "def scan_push_main(",
+                             "def scan_push_main(*a):\n    return 0\n\n\ndef _unused(")
+        theirs = git(WORK, "rev-parse", "refs/remotes/origin/main:scripts/safe_push.py").strip()
+        env = self.stand_in(theirs, lame)
+        self.assertStandsIn("refs/remotes/origin/main", "scripts/safe_push.py", lame, env)
+        bad = self.commit("Plant a token", {"docs/notes.md": f"api_token = \"{TOKEN}\"\n"})
+        r = self.push(f"{bad}:refs/heads/feature")
+        self.assertNotEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("pre-push: refusing the push to refs/heads/feature", r.stderr)
+        self.assertIsNone(self.origin_branch("feature"))
+
+    def test_hook_passes_a_clean_push_beside_a_replacement(self):
+        # A replacement the push has no part in leaves a clean push alone; and one whose
+        # stand-in holds a token, for a blob the push sends clean, is not what is read.
+        sha = self.commit("A good commit", {
+            "docs/reading.md": self.text("docs/reading.md") + "\nA line for the test.\n"})
+        pushed = git(WORK, "rev-parse", f"{sha}:docs/reading.md").strip()
+        unrelated = git(WORK, "rev-parse", f"{BASE}:README.md").strip()
+        for name, blob, text in (
+                ("clean-beside", unrelated, "A stand-in for the README.\n"),
+                ("clean-under", pushed, f"api_token = \"{TOKEN}\"\n")):
+            with self.subTest(blob=name):
+                env = self.stand_in(blob, text)
+                try:
+                    r = self.push(f"{sha}:refs/heads/{name}", **env)
+                    self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+                    self.assertIn(f"the secret scan of the push to refs/heads/{name}",
+                                  r.stdout + r.stderr)
+                    self.assertEqual(self.origin_branch(name), sha)
+                finally:
+                    git(WORK, "update-ref", "-d", f"refs/replace/{blob}")
 
 
 # --------------------------------------------------------------------------------------
@@ -4356,10 +4561,26 @@ class DecisionEntries(Clone):
     def test_advised_revert_restores_only_what_origin_main_holds(self):
         # A main with no docs/decisions/, as before its README was added: the advice
         # restores the page alone, since git restore stops at a path its source lacks, and,
-        # followed, passes the guards.
-        self.assertEqual(sorted(p.name for p in (WORK / safe_push.ENTRIES).iterdir()),
-                         ["README.md"])
-        start = self.commit("No folder of entries yet", remove=[self.README])
+        # followed, passes the guards. That main is made in the test's own clone by
+        # removing whatever the folder holds there, the README and any entries, so the
+        # test holds however many entries the repository has.
+        self.advised_revert_without_entries()
+
+    def test_advised_revert_restores_only_what_origin_main_holds_with_entries(self):
+        # The same, from a baseline whose folder holds an entry besides the README, as main
+        # does once a pull request has added its first entry file.
+        self.commit("An entry in the baseline, for the test", {
+            "docs/decisions/2026-10-21-baseline-for-the-test.md":
+                "- **An entry in the baseline, for the test.** It names nothing.\n"})
+        self.advised_revert_without_entries()
+
+    def advised_revert_without_entries(self):
+        held = git(WORK, "ls-files", "-z", "--", safe_push.ENTRIES).split("\0")
+        held = sorted(p for p in held if p)
+        self.assertIn(self.README, held)
+        start = self.commit("No folder of entries yet", remove=held)
+        self.assertEqual(git(WORK, "ls-files", "--", safe_push.ENTRIES).strip(), "")
+        self.assertFalse((WORK / safe_push.ENTRIES).exists())
         git(WORK, "push", "--quiet", "--no-verify", "origin", f"{start}:refs/heads/main")
         feature = self.commit("A change named on the page", {
             self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
@@ -5596,6 +5817,41 @@ class HandOver(Edge):
         self.assertEqual(self.guard(out, "harness"), "ok", out)
         self.assertNotIn("running origin/main's in its place", out)
 
+    def test_launcher_copies_origin_mains_harness_not_its_replacement(self):
+        # Issue #256: origin/main's safe_push.py replaced by a copy that never hands over
+        # and does not scan. The launcher copies out and runs origin/main's own, which
+        # refuses the token.
+        lame = self.replaced("scripts/safe_push.py", "def harness(repo, base: str, rep: Report)"
+                             " -> None:\n", "def harness(repo, base, rep):\n    return None\n\n\n"
+                             "def _unused(repo, base: str, rep: Report) -> None:\n")
+        lame = lame.replace("def secret_scan(", "def secret_scan(*a, **k):\n    return None\n\n\n"
+                            "def _unused_scan(", 1)
+        theirs = git(WORK, "rev-parse", "refs/remotes/origin/main:scripts/safe_push.py").strip()
+        env = self.stand_in(theirs, lame)
+        self.assertStandsIn("refs/remotes/origin/main", "scripts/safe_push.py", lame, env)
+        self.commit("A token", {"docs/notes.md": f"api_token = \"{TOKEN}\"\n"})
+        r = subprocess.run(["git", "safe-push", "--_test-skip-checks", *with_branch(())],
+                           cwd=WORK, env=clean_env(), capture_output=True, text=True)
+        out = self.assertRefused(r, "secret scan")
+        self.assertEqual(self.guard(out, "harness"), "ok", out)
+
+    def test_hand_over_compares_origin_mains_harness_not_its_replacement(self):
+        # origin/main's safe_push.py replaced by the bytes of a copy that does not scan:
+        # that copy, run, still finds that it differs from origin/main's, and hands over.
+        copy = self.differing_copy(lambda text: text.replace(
+            "def secret_scan(", "def secret_scan(*a, **k):\n    return None\n\n\n"
+            "def _unused_scan(", 1))
+        theirs = git(WORK, "rev-parse", "refs/remotes/origin/main:scripts/safe_push.py").strip()
+        env = self.stand_in(theirs, copy.read_text())
+        self.assertStandsIn("refs/remotes/origin/main", "scripts/safe_push.py",
+                            copy.read_text(), env)
+        self.commit("A token", {"docs/notes.md": f"api_token = \"{TOKEN}\"\n"})
+        r = subprocess.run([sys.executable, str(copy), "--_test-skip-checks", "--dry-run",
+                            *with_branch(())], cwd=WORK, env=clean_env(), capture_output=True,
+                           text=True)
+        out = self.assertRefused(r, "secret scan")
+        self.assertIn("running origin/main's in its place", out)
+
     def test_install_hooks_installs_the_launcher(self):
         common = Path(git(WORK, "rev-parse", "--path-format=absolute",
                           "--git-common-dir").strip())
@@ -5869,6 +6125,9 @@ class Units(unittest.TestCase):
              "unsupported run body"),
             ("missing freshness assertion", "render", "run",
              f"{RENDER_COMMAND}\n{FRESHNESS_COMMAND}", "unsupported run body"),
+            ("freshness narrowed to the generated pages", "render", "run",
+             f"{RENDER_COMMAND}\n{FRESHNESS_COMMAND} -- facts.json book\n"
+             f'test -z "$({FRESHNESS_COMMAND} -- facts.json book)"', "unsupported run body"),
         )
         for label, scope, field, value, message in cases:
             with self.subTest(label=label):
@@ -6138,6 +6397,27 @@ class Units(unittest.TestCase):
         self.assertFalse(names("III.16 changes", "III.1"))
         self.assertFalse(names("III.1 changes", "I.1"))
         self.assertFalse(names("BookIII.Prop10 changes", "III.1"))
+
+    def test_without_replacements(self):
+        # Issue #256: the folder of replacements dropped, and the variable set to "1",
+        # whatever the caller set it to; the rest of the environment kept.
+        env = safe_push.without_replacements({"GIT_REPLACE_REF_BASE": "refs/stand-ins/",
+                                              "GIT_NO_REPLACE_OBJECTS": "0", "HOME": "/home"})
+        self.assertEqual(env, {"GIT_NO_REPLACE_OBJECTS": "1", "HOME": "/home"})
+
+    def test_run_pins_replacements_off_for_git_alone(self):
+        # run() gives a git command core.useReplaceRefs=false on its command line, right
+        # after the program, and an environment without replacements; another program is
+        # run as given. Nothing is spawned.
+        with mock.patch.object(safe_push.subprocess, "run") as spawn:
+            safe_push.run(["git", "status"], "/nowhere", env={"HOME": "/home"})
+            safe_push.run([sys.executable, "-c", "pass"], "/nowhere")
+        git_call, other_call = spawn.call_args_list
+        self.assertEqual(git_call.args[0], ["git", "-c", "core.useReplaceRefs=false", "status"])
+        self.assertEqual(git_call.kwargs["env"],
+                         {"HOME": "/home", "GIT_NO_REPLACE_OBJECTS": "1"})
+        self.assertEqual(other_call.args[0], [sys.executable, "-c", "pass"])
+        self.assertIsNone(other_call.kwargs["env"])
 
     def test_source_statement(self):
         src = (SOURCE / "Elements" / "BookIII" / "Prop01.lean").read_text()
@@ -6460,7 +6740,7 @@ class Units(unittest.TestCase):
         self.assertEqual(judge(PASSING + [{"name": "other", "bucket": "pending"}])[0], "pending")
         # A check outside REQUIRED_CHECKS, as safe-push-tests is, holds a merge while it
         # fails, and a skipped run of it holds nothing back (#157).
-        unrequired = {"name": "safe-push-tests", "workflow": "CI"}
+        unrequired = {"name": "safe-push-tests", "workflow": "Safe-push tests"}
         self.assertEqual(judge(PASSING + [dict(unrequired, bucket="fail", state="FAILURE")])[0],
                          "failure")
         self.assertEqual(judge(PASSING + [dict(unrequired, bucket="skipping",
