@@ -312,7 +312,7 @@ TAG_KINDS = ("scope", "representation")
 COMMIT = re.compile(r"[0-9a-f]{7,40}")
 WORD = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*")
 
-_STR, _LIST, _TABLE = "string", "list", "table"
+_STR, _LIST, _TABLE, _BOOL = "string", "list", "table", "boolean"
 # Each section's keys, as (type, required). A "stamp" key is written by
 # scripts/review_stamp.py, and required unless an unstamped record is asked for.
 FIELDS = {
@@ -328,7 +328,7 @@ FIELDS = {
                  "text_only": (_LIST, False)},
     "passage": {"at": (_STR, True), "kind": (_STR, True), "helper": (_STR, False),
                 "note": (_STR, False)},
-    "figure": {"case": (_STR, False), "note": (_STR, False)},
+    "figure": {"case": (_STR, False), "every_case": (_BOOL, False), "note": (_STR, False)},
     "review": {"stage": (_STR, True), "commit": (_STR, "stamp"), "lean": (_STR, "stamp"),
                "reviewer": (_STR, True), "run": (_STR, False), "items": (_TABLE, False)},
 }
@@ -434,6 +434,8 @@ def _shape(record, require_stamp: bool) -> list[str]:
                 bad(f"{label}: `{key}` must be a list of non-empty strings")
             elif kind == _TABLE and not isinstance(v, dict):
                 bad(f"{label}: `{key}` must be a table")
+            elif kind == _BOOL and not isinstance(v, bool):
+                bad(f"{label}: `{key}` must be true or false")
     return problems
 
 
@@ -560,9 +562,15 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
             if plain(q) not in enunciation and plain(q) not in proof_text:
                 bad(f"[coverage]: text_only {q!r} is not quoted from Heath")
 
-    # [figure]
-    if "figure" in record and not record["figure"]:
-        bad("[figure]: give its `case`, its `note`, or both; or leave the section out")
+    # [figure]: `every_case` says only which words lead the caption, so the section still
+    # needs a `case` or a `note`, and `every_case` the `case` that names the cases drawn.
+    if "figure" in record:
+        fig = record["figure"]
+        if "case" not in fig and "note" not in fig:
+            bad("[figure]: give its `case`, its `note`, or both; or leave the section out")
+        if fig.get("every_case") and "case" not in fig:
+            bad("[figure]: `every_case` needs the `case` that names the cases the figure "
+                "draws, for the caption \"Drawn for every case: …\"")
 
     # [[passage]]
     seen = set()
