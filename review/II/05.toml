@@ -45,7 +45,7 @@ note = "Euclid takes AH as AL and CH together. `Parallel.between` places L betwe
 at = "But AH is the rectangle AD, DB"
 kind = "helper"
 helper = "Square.about_diameter"
-note = "Euclid takes DH equal to DB from the square DM. `Square.about_diameter` proves that DM is a square; the Lean then proves that AH is a rectangle and identifies its area by `Rectangle.eq_rect`: `BookI.Prop30.parallel` (I.30, for which Heath prints no reference here) makes AK parallel to DG, `Tacit.adjacent_eq_of_right` (System E, Diagram-angle 3), now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, gives the adjacent right angle HDA, and `Rectangle.of_right` (I.29) proves the other angles right."
+note = "Euclid takes DH equal to DB from the square DM. `Square.about_diameter` proves that DM is a square; the Lean then proves that AH is a rectangle and identifies its area by `Rectangle.eq_rect`: `BookI.Prop30.parallel` (I.30, for which Heath prints no reference here) makes AK parallel to DG; the right angle HDA is proved in place, for the angles BDH, HDA on the straight line AB make two right angles by I.13, and taking away the square's right angle BDH leaves HDA right by Common Notion 3; and `Rectangle.of_right` (I.29) proves the other angles right."
 
 [[passage]]
 at = "Let LG, which is equal to the square on CD"
@@ -64,10 +64,10 @@ case = "D between C and B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "a421bdd1"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:4fabbaf36ec8e013"
-run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-II04-II08, independent re-read at a421bdd1"
+commit = "d4b21d06"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:32a63d68fefabf5f"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-II04-II08, independent re-read at a421bdd1; card 168, the right angle HDA proved in place by I.13 and Common Notion 3, written by Claude Opus 5.5 at cb01d567, read with the whole record by GPT-6 Astra (Codex); ship F2, reader F2-ii14cx, independent re-read at d4b21d06"
 
 [review.items]
 statement = "pass"
