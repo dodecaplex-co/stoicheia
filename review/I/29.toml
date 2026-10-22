@@ -29,10 +29,10 @@ note = "The drawing marks AGH, GHD and EGB equal, as the proof establishes."
 
 [review]
 stage = "full"
-commit = "99359055"
-reviewer = "Claude Opus 5.5, independent reader"
+commit = "34ac6d42"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:fef5171e679f2b16"
-run = "brief 0005 stage 5, read-through 02 (#34), part 2: the changes landed since 2e8aecf8 and the held findings' mends, read at 99359055"
+run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the proof (#220), independent re-read at 34ac6d42 (reader RT-x5)"
 
 [review.items]
 statement = "pass"
