@@ -3,7 +3,7 @@
 scope = "full"
 note = "`Prop45` treats two triangles; `Prop45.outline` covers any outline; other companions handle checked divisions, sums and adding a triangle."
 companions = ["I.45 outline", "I.45 append", "I.45 sum", "I.45 apart", "I.45 figure", "I.45 fan"]
-fingerprint = "sha256:82f17d662afe1ed5"
+fingerprint = "sha256:4bc8a67608702506"
 
 [route]
 kind = "euclid"
@@ -36,10 +36,10 @@ note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart
 
 [review]
 stage = "full"
-commit = "ef3ca8dd"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:2962833ecb6d5450"
-run = "train Tw2, merge of main at 9bde6758, independent re-read at ef3ca8dd (reader TS-r-tw2)"
+commit = "800443fb"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:a529ac6d6262d22e"
+run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr2, independent re-read at 800443fb"
 
 [review.items]
 statement = "pass"

@@ -2,7 +2,7 @@
 scope = "full"
 note = "`Prop14.outline` and `Prop14.outline_side` cover any outline; `Prop14` treats two triangles; other forms handle checked divisions, sums or rectangles."
 companions = ["II.14 outline", "II.14 outline_side", "II.14 rectangle", "II.14 sum", "II.14 apart", "II.14 figure", "II.14 square", "II.14 fan"]
-fingerprint = "sha256:9e83215b978b4220"
+fingerprint = "sha256:31d611e6d2d47392"
 
 [route]
 kind = "euclid"
@@ -64,10 +64,10 @@ case = "BE greater than ED, as in Heath's figure, with the figure A of two trian
 
 [review]
 stage = "full"
-commit = "d4b21d06"
+commit = "800443fb"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:762d581715c6dcf3"
-run = "card 220, cross-family sign-off: Prop14 as first committed by OpenAI Codex (4bed3129, which says so); later surviving edits at 702c75e2 name BHF and hEG, explain why the angle HEG is right and rewrite the closing equality, in a commit whose message has a Claude Opus 5.5 co-author trailer but does not identify which writer made them. Prop14.rectangle, Prop14.square and Prop14.area_pos by the best of two sailors (c620b12c), which WORKFLOW section 5 gives to two Codex sailors; read by Claude Opus 5.5. Prop14.sum, .apart, .figure and .fan and the closing check written in staging (17fddffc, fdc56e9a, b48640cf, a854f707, 7c8167a5, 4317bc0b), in commits whose messages name no writer beyond the Claude Opus 5.5 co-author line they carry; the step putting E inside the circle adjusted at afc8cec6, whose message names no writer and carries no co-author line, so its writer is unrecorded, and carried into Prop14.rectangle at d15efad6, whose message has a Claude Opus 5.5 co-author trailer but does not identify which writer made it; that step first redone by one of two OpenAI Codex sailors working on separate files, then judged and grafted by their bosun (9c61ddd4). The 702c75e2 edits and the staged and later parts just named were read by GPT-6 Astra (Codex) at 08ddfe3a and by Claude Opus 5.5; ship XS, reader XS-r-II09-II14, independent re-read at 221ad5c2; card 168, the right angle BEH (and so HEG) proved in place by I.13 and Common Notion 3 in Prop14 and Prop14.rectangle, written by Claude Opus 5.5 at c1d03530, read with the whole record by GPT-6 Astra (Codex); ship F2, reader F2-ii14cx, independent re-read at d4b21d06"
+lean = "sha256:6d00f135031161a5"
+run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr2, independent re-read at 800443fb"
 
 [review.items]
 statement = "pass"
