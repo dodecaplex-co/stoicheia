@@ -347,9 +347,9 @@ def projField? (env : Environment) (toolchain : NameSet) (s : Expr) (i : Nat) :
 /-- Does `e`, read at polarity `pos`, assert `Exists` in positive position? `And` and `Or`
 keep the polarity of their parts, `Not` and the left of an implication (a `∀` binder's type)
 flip it, and both sides of an `Iff` are read at both. A definition of this project is
-unfolded where it stands, a projection of a structure this project defines (an instance's
-`≤`) is read through the definition that gives it, and anything else is a leaf that asserts
-no existence. -/
+unfolded where it stands, a `let` is substituted into its body, a projection of a structure
+this project defines (an instance's `≤`) is read through the definition that gives it, and
+anything else is a leaf that asserts no existence. -/
 def assertsExists (env : Environment) (toolchain : NameSet) (fuel : Nat) (pos : Bool)
     (e : Expr) : m Bool := do
   match fuel with
