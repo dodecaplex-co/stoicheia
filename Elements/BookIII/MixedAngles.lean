@@ -14,7 +14,7 @@ in Book Zero (`Figure/Regions.lean`).
 
 * **Within the circle, by III.2.** A point between two points on or within a circle is
   within it; once a straight line has left a circle it does not come back; three points of
-  a circle are not on one straight line. Each is III.2's, for a circle with a centre.
+  a circle are not on one straight line. Each follows from III.2.
 * **Whole circles about a point.** A point on one side of a straight line, within a circle
   or without it, has a whole circle about it on that side, within, or without. The radius
   is the distance to the foot of the perpendicular [I. 12], or to the circumference along
@@ -41,10 +41,10 @@ variable {A B C D E F P Q : Point} {α γ : Circle}
 /-! ## Within the circle, by III.2 -/
 
 /-- **III.2 for points on or within the circle.** A point between two points on or within a
-circle that has a centre is within it. Produced beyond each end that is within, the
+circle is within it. Produced beyond each end that is within, the
 straight line meets the circle (System E, Intersections 5), and the point lies between the
 two points where it meets it. [III. 2] -/
-theorem InsideCircle.of_between (hα : ∃ O : Point, Centre O α)
+theorem InsideCircle.of_between
     (hA : InsideCircle A α ∨ OnCircle A α) (hB : InsideCircle B α ∨ OnCircle B α)
     (h : Between A C B) : InsideCircle C α := by
   obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B (ne_of_between_ends h)
@@ -60,37 +60,36 @@ theorem InsideCircle.of_between (hα : ∃ O : Point, Centre O α)
     · obtain ⟨Q, hQ, -, hQBP⟩ := line_circle_beyond hB hB_L hP_L (ne_of_between_ends hPCB)
       exact ⟨Q, hQ, between_of_between_left (between_symm hQBP) hPCB⟩
     · exact ⟨B, hB, hPCB⟩
-  exact BookIII.Prop2 hα hP hQ C hPCQ
+  exact BookIII.Prop2 hP hQ C hPCQ
 
-/-- **A straight line that has left the circle does not come back.** In a circle that has a
-centre, if C, not within the circle, lies between A, on or within it, and B, then B is
-without the circle: were B on or within it, C would be within. [III. 2] -/
-theorem OutsideCircle.of_between (hα : ∃ O : Point, Centre O α)
+/-- **A straight line that has left the circle does not come back.** If C, not within the
+circle, lies between A, on or within it, and B, then B is without the circle: were B on or within it, C would be within. [III. 2] -/
+theorem OutsideCircle.of_between
     (hA : InsideCircle A α ∨ OnCircle A α) (hC : ¬ InsideCircle C α) (h : Between A C B) :
     OutsideCircle B α :=
-  ⟨fun hB => hC (InsideCircle.of_between hα hA (Or.inl hB) h),
-    fun hB => hC (InsideCircle.of_between hα hA (Or.inr hB) h)⟩
+  ⟨fun hB => hC (InsideCircle.of_between hA (Or.inl hB) h),
+    fun hB => hC (InsideCircle.of_between hA (Or.inr hB) h)⟩
 
-/-- Three points of a circle that has a centre are not on one straight line: were they, one
+/-- Three points of a circle are not on one straight line: were they, one
 would lie between the other two, and so within the circle, not on it. [III. 2] -/
-theorem Triangle.of_onCircle_centre (hα : ∃ O : Point, Centre O α)
+theorem Triangle.of_onCircle_centre
     (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hAB : A ≠ B) (hBC : B ≠ C) (hAC : A ≠ C) : Triangle A B C := by
   rintro ⟨L, hA_L, hB_L, hC_L⟩
   rcases between_cases hAB hBC hAC hA_L hB_L hC_L with h | h | h
-  · exact inside_not_on (BookIII.Prop2 hα hA hC B h) hB
-  · exact inside_not_on (BookIII.Prop2 hα hB hC A h) hA
-  · exact inside_not_on (BookIII.Prop2 hα hA hB C h) hC
+  · exact inside_not_on (BookIII.Prop2 hA hC B h) hB
+  · exact inside_not_on (BookIII.Prop2 hB hC A h) hA
+  · exact inside_not_on (BookIII.Prop2 hA hB C h) hC
 
-/-- **The angle of a segment, as Euclid draws it.** For a straight line AC in a circle that
-has a centre, and a point S off AC, the angle of the segment on S's side is well formed: the
-ray AC passes within the circle, between A and C. [III. 2] -/
-theorem MixedAngle.wellFormed_ofSegment {S : Point} (hα : ∃ O : Point, Centre O α)
+/-- **The angle of a segment, as Euclid draws it.** For a straight line AC in a circle, and a
+point S off AC, the angle of the segment on S's side is well formed: the ray AC passes
+within the circle, between A and C. [III. 2] -/
+theorem MixedAngle.wellFormed_ofSegment {S : Point}
     (hA : OnCircle A α) (hC : OnCircle C α) (hAC : A ≠ C) (hS : ¬ Collinear A C S) :
     (MixedAngle.ofSegment A C α S).WellFormed := by
   obtain ⟨L, hA_L, hC_L⟩ := Postulate1 A C hAC
   obtain ⟨X, -, hAXC, -⟩ := exists_point_between hA_L hC_L hAC []
-  exact ⟨hA, ⟨X, OnRay.of_between hAXC, BookIII.Prop2 hα hA hC X hAXC⟩, hS⟩
+  exact ⟨hA, ⟨X, OnRay.of_between hAXC, BookIII.Prop2 hA hC X hAXC⟩, hS⟩
 
 /-! ## Whole circles about a point -/
 
@@ -179,10 +178,11 @@ theorem surrounds_sameSideOf (h : SameSideOf P C A B) :
 /-- **A point within a circle has a whole circle about it within the circle.** If P is not
 the centre O, the circle about P through K, where OP produced beyond P meets the
 circumference (System E, Intersections 5): a point Q within it is nearer O than K is, since
-OQ is less than OP, PQ together, and these are less than OP, PK together, which make OK.
+OQ is at most OP and PQ together, and their sum is less than OP and PK together, which make OK.
 [I. 20] -/
-theorem surrounds_inside {O : Point} (hO : Centre O α) (hP : InsideCircle P α) :
+theorem surrounds_inside (hP : InsideCircle P α) :
     Surrounds (fun Q => InsideCircle Q α) P := by
+  obtain ⟨O, hO⟩ := exists_centre α
   by_cases hPO : P = O
   · subst hPO
     exact ⟨α, hO, fun Q hQ => hQ⟩
@@ -199,8 +199,9 @@ theorem surrounds_inside {O : Point} (hO : Centre O α) (hP : InsideCircle P α)
 about P through K, where the straight line from the centre O to P crosses the circumference
 (System E, Intersections 4): were a point Q within it no farther from O than K is, OQ, QP
 together would be less than OK, KP together, which make OP. [I. 20] -/
-theorem surrounds_outside {O : Point} (hO : Centre O α) (hP : OutsideCircle P α) :
+theorem surrounds_outside (hP : OutsideCircle P α) :
     Surrounds (fun Q => OutsideCircle Q α) P := by
+  obtain ⟨O, hO⟩ := exists_centre α
   have hPO : P ≠ O := fun e => hP.1 (e ▸ centre_inside hO)
   obtain ⟨L, hO_L, hP_L⟩ := Postulate1 O P (Ne.symm hPO)
   obtain ⟨K, hK, -, hOKP⟩ := line_circle_between (centre_inside hO) hO_L hP hP_L
@@ -231,7 +232,7 @@ theorem NearVertexOpen.mono_near {T U : Point → Prop} {γ₀ : Circle} (h : Ne
   intro γ hγ
   obtain ⟨γ', hγ', hboth⟩ := exists_inside_both hγ hγ₀
   obtain ⟨P, hPγ', δ, hδ, hT⟩ := h γ' hγ'
-  obtain ⟨δ₁, hδ₁, hin⟩ := surrounds_inside hγ₀ (hboth P hPγ').2
+  obtain ⟨δ₁, hδ₁, hin⟩ := surrounds_inside (hboth P hPγ').2
   obtain ⟨δ', hδ', hδδ⟩ := exists_inside_both hδ hδ₁
   exact ⟨P, (hboth P hPγ').1, δ', hδ', fun Q hQ =>
     hTU Q (hin Q (hδδ Q hQ).2) (hT Q (hδδ Q hQ).1)⟩
@@ -326,7 +327,7 @@ The circle about A passes through N, the foot of the perpendicular from A to BC;
 point X of the straight line BC is farther from A. A point P of the angle within that
 circle lies on a ray from A that crosses BC at some X, nearer A than X, and so between A and
 a point within the circle. [I. 12, I. 17, I. 19, III. 2] -/
-theorem near_inside_of_angle (hα : ∃ O : Point, Centre O α)
+theorem near_inside_of_angle
     (hA : InsideCircle A α ∨ OnCircle A α) (hB : InsideCircle B α ∨ OnCircle B α)
     (hC : InsideCircle C α ∨ OnCircle C α) (hBAC : Triangle B A C) :
     LocallyWithin A (fun P => WithinAngle B A C P ∨ OnRay P A B ∨ OnRay P A C)
@@ -351,19 +352,19 @@ theorem near_inside_of_angle (hα : ∃ O : Point, Centre O α)
     exact OnRay.between_of_len_lt hPX (OnRay.self hPX.1) hlt
   rcases hP with hW | hPB | hPC
   · obtain ⟨X, hBXC, hXP⟩ := crossbar hW.1 hW.2
-    have hXα : InsideCircle X α := InsideCircle.of_between hα hB hC hBXC
-    exact InsideCircle.of_between hα hA (Or.inl hXα)
+    have hXα : InsideCircle X α := InsideCircle.of_between hB hC hBXC
+    exact InsideCircle.of_between hA (Or.inl hXα)
       (hnear X (on_line_of_between_ends hBXC hB_L hC_L) hXP.symm)
-  · exact InsideCircle.of_between hα hA hB (hnear B hB_L hPB)
-  · exact InsideCircle.of_between hα hA hC (hnear C hC_L hPC)
+  · exact InsideCircle.of_between hA hB (hnear B hB_L hPB)
+  · exact InsideCircle.of_between hA hC (hnear C hC_L hPC)
 
 /-- **Points on either side of the circumference, near the vertex.** Let UAV be a true angle,
-with the points of the ray AU near A within a circle about O, and every point of the ray AV
+with the points of the ray AU near A within a circle, and every point of the ray AV
 without it. Then every circle about A holds a point within the angle UAV and within the
 circle, and another within the angle and without it: on the straight line from a point Y of
 AU to a point W of AV, both near A, on either side of the point where it crosses the
 circumference (System E, Intersections 4). [III. 2] -/
-theorem exists_near_across {O U V : Point} (hO : Centre O α) (hUAV : Triangle U A V)
+theorem exists_near_across {U V : Point} (hUAV : Triangle U A V)
     (hU : LocallyWithin A (fun P => OnRay P A U) (fun P => InsideCircle P α))
     (hV : ∀ P : Point, OnRay P A V → OutsideCircle P α) (hγ : Centre A γ) :
     (∃ P : Point, InsideCircle P γ ∧ WithinAngle U A V P ∧ InsideCircle P α) ∧
@@ -384,43 +385,43 @@ theorem exists_near_across {O U V : Point} (hO : Centre O α) (hUAV : Triangle U
   have hYP₂W : Between Y P₂ W :=
     between_symm (between_of_between_left (between_symm hYXW) (between_symm hXP₂W))
   have hinγ : ∀ P : Point, Between Y P W → InsideCircle P γ := fun P h =>
-    (hboth P (InsideCircle.of_between ⟨A, hγ'⟩ (Or.inl hYγ') (Or.inl hWγ') h)).1
+    (hboth P (InsideCircle.of_between (Or.inl hYγ') (Or.inl hWγ') h)).1
   exact ⟨⟨P₁, hinγ P₁ hYP₁W, WithinAngle.of_between hUAV hY hW hYP₁W,
-      InsideCircle.of_between ⟨O, hO⟩ (Or.inl hYα) (Or.inr hXα) hYP₁X⟩,
+      InsideCircle.of_between (Or.inl hYα) (Or.inr hXα) hYP₁X⟩,
     ⟨P₂, hinγ P₂ hYP₂W, WithinAngle.of_between hUAV hY hW hYP₂W,
-      OutsideCircle.of_between ⟨O, hO⟩ (Or.inl hYα) (fun h => inside_not_on h hXα)
+      OutsideCircle.of_between (Or.inl hYα) (fun h => inside_not_on h hXα)
         (between_cut hYXW hXP₂W)⟩⟩
 
 /-- **Whole circles on either side of the circumference, near the vertex.** In the figure of
 `exists_near_across`, every circle about A holds a whole circle within the angle UAV and
 within the circle, and another within the angle and without it. [I. 12, I. 17, I. 19,
 I. 20, III. 2] -/
-theorem near_across {O U V : Point} (hO : Centre O α) (hUAV : Triangle U A V)
+theorem near_across {U V : Point} (hUAV : Triangle U A V)
     (hU : LocallyWithin A (fun P => OnRay P A U) (fun P => InsideCircle P α))
     (hV : ∀ P : Point, OnRay P A V → OutsideCircle P α) :
     NearVertexOpen A (fun P => WithinAngle U A V P ∧ InsideCircle P α) ∧
       NearVertexOpen A (fun P => WithinAngle U A V P ∧ OutsideCircle P α) :=
-  ⟨NearVertexOpen.of_nearVertex (fun _ hP => hP.1.surrounds.and (surrounds_inside hO hP.2))
-      (fun _ hγ => (exists_near_across hO hUAV hU hV hγ).1),
-    NearVertexOpen.of_nearVertex (fun _ hP => hP.1.surrounds.and (surrounds_outside hO hP.2))
-      (fun _ hγ => (exists_near_across hO hUAV hU hV hγ).2)⟩
+  ⟨NearVertexOpen.of_nearVertex (fun _ hP => hP.1.surrounds.and (surrounds_inside hP.2))
+      (fun _ hγ => (exists_near_across hUAV hU hV hγ).1),
+    NearVertexOpen.of_nearVertex (fun _ hP => hP.1.surrounds.and (surrounds_outside hP.2))
+      (fun _ hγ => (exists_near_across hUAV hU hV hγ).2)⟩
 
 /-- The points of a ray from a point A of a circle towards a point B on or within it are,
 near A, within the circle: some circle about A holds no point of the ray that is not between
 A and B. [III. 2] -/
-theorem near_inside_of_ray (hα : ∃ O : Point, Centre O α) (hA : OnCircle A α)
+theorem near_inside_of_ray (hA : OnCircle A α)
     (hB : InsideCircle B α ∨ OnCircle B α) (hAB : A ≠ B) :
     LocallyWithin A (fun P => OnRay P A B) (fun P => InsideCircle P α) := by
   obtain ⟨γ₀, hγ₀, hBγ₀⟩ := Postulate3 A B hAB
-  exact ⟨γ₀, hγ₀, fun P hP hPB => InsideCircle.of_between hα (Or.inr hA) hB
+  exact ⟨γ₀, hγ₀, fun P hP hPB => InsideCircle.of_between (Or.inr hA) hB
     (OnRay.between_of_len_lt hPB (OnRay.self hAB) (len_lt_of_inside hγ₀ hBγ₀ hP))⟩
 
 /-- The ray AC is, near A, within the circle if some point K of it is on or within the
 circle: the ray AC is the ray AK. [III. 2] -/
-theorem near_inside_of_onRay {K : Point} (hα : ∃ O : Point, Centre O α) (hA : OnCircle A α)
+theorem near_inside_of_onRay {K : Point} (hA : OnCircle A α)
     (hK : OnRay K A C) (hKα : InsideCircle K α ∨ OnCircle K α) :
     LocallyWithin A (fun P => OnRay P A C) (fun P => InsideCircle P α) := by
-  obtain ⟨γ₀, hγ₀, hnear⟩ := near_inside_of_ray hα hA hKα hK.2.1.symm
+  obtain ⟨γ₀, hγ₀, hnear⟩ := near_inside_of_ray hA hKα hK.2.1.symm
   exact ⟨γ₀, hγ₀, fun P hP hPC => hnear P hP (OnRay.of_sameRay hPC hK)⟩
 
 end Elements

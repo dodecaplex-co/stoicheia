@@ -109,12 +109,12 @@ theorem Prop13 {A B C D : Point} (hCBD : Between C B D) (hA : ¬ Collinear C D A
   have hAB : A ≠ B := fun e => hA_CD (e ▸ hB_CD)
   -- I say that the angles CBA, ABD are either two right angles or equal to two right angles.
   /- "Two right angles": each of them is right. "Equal to two right angles": together
-     they make two. In Lean a right angle has one size, `∟`, by Postulate 4, so the
-     first is a case of the second, and the statement asks only for the second. -/
+     they make two. Our Postulate 4 makes every right angle the one `∟`, as in I.11, so
+     the first is a case of the second, and the statement asks only for the second. -/
   -- Now, if the angle CBA is equal to the angle ABD,
   by_cases heq : ∠ C B A = ∠ A B D
   -- they are two right angles. [Def. 10]
-  /- Definition 10 says each is right, for they are adjacent angles (A is off the
+  /- Definition I.10 says each is right, for they are adjacent angles (A is off the
      straight line CD); each is then `∟` (Post. 4, as in I.11). -/
   · have hCBA : ∠ C B A = ∟ :=
       Postulate4 ⟨D, hCBD, Triangle.of_line hC_CD hB_CD hCB hA_CD, heq⟩
@@ -162,7 +162,7 @@ theorem Prop13 {A B C D : Point} (hCBD : Between C B D) (hA : ¬ Collinear C D A
     -- But the angles CBE, EBD were also proved equal to the same three angles;
     /- The same three, named from the other end and added in the other order: the
        angle CBA is the angle ABC (System E, Metric 4), and the order of adding does
-       not matter (a tacit rule of magnitudes). -/
+       not matter (a tacit rule of magnitude). -/
     have hsame : ∠ C B E + ∠ E B D = ∠ D B E + ∠ E B A + ∠ A B C := by
       rw [hthree, angle_symm hCB hAB, angle_symm hAB hEB, angle_symm hEB hDB,
         add_comm (∠ A B C + ∠ E B A), add_comm (∠ A B C), ← add_assoc]
@@ -183,9 +183,8 @@ theorem Prop13 {A B C D : Point} (hCBD : Between C B D) (hA : ¬ Collinear C D A
   -- Q. E. D.
 
 /-- A right angle is equal to the angle adjacent to it (System E, Diagram-angle 3).
-This was an assumption until 19 October 2026 and is now proved from I.13 and Common
-Notion 3: the two adjacent angles together equal two right angles, and taking the
-given right angle away leaves one right angle. -/
+We prove it from I.13 and Common Notion 3: the two adjacent angles together equal two
+right angles, and taking the given right angle away leaves one right angle. -/
 theorem _root_.Elements.Tacit.adjacent_eq_of_right
     {A B C D : Point} {L : Line}
     (hA : OnLine A L) (hB : OnLine B L) (h : Between A C B)
@@ -197,7 +196,9 @@ theorem _root_.Elements.Tacit.adjacent_eq_of_right
   rw [hright]
   exact (CommonNotion3 h13 rfl).symm
 
-/-- When one side condition holds, angle addition and positivity force the other. -/
+/-- When one side condition holds, so does the other. Were it to fail, C would lie within
+the angle BAD; and since the angle DAC is greater than nothing, each of the angles BAC,
+BAD would then be less than the other. -/
 private theorem inside_of_angle_add_one_side {A B C D : Point} {L M : Line}
     (hAL : OnLine A L) (hAM : OnLine A M) (hB : OnLine B L)
     (hC : OnLine C M) (hAB : A ≠ B) (hAC : A ≠ C)
@@ -224,7 +225,8 @@ private theorem inside_of_angle_add_one_side {A B C D : Point} {L M : Line}
   rw [← h] at hlt'
   exact lt_irrefl _ (lt_trans hlt hlt')
 
-/-- I.13 and positivity make a triangle angle less than two right angles. -/
+/-- An angle of a triangle is less than two right angles. Produce BA beyond A to E: by
+I.13 the angles BAC, CAE make two right angles, and CAE is greater than nothing. -/
 private theorem triangle_angle_lt_two_right {A B C : Point} (h : Triangle B A C) :
     ∠ B A C < ∟ + ∟ := by
   obtain ⟨L, hB, hA⟩ := Postulate1 B A h.ne₁₂
@@ -239,11 +241,12 @@ private theorem triangle_angle_lt_two_right {A B C : Point} (h : Triangle B A C)
   exact hlt
 
 /-- If the angle BAC is made up of BAD and DAC, then D lies within it (System E,
-Diagram-angle 2, converse). This was an assumption until 19 October 2026 and is now
-proved from I.13, angle addition and positivity, and the side rules. If just one side
-condition fails, one angle would be less than itself. If both fail, producing DA
-through A gives two decompositions whose sum forces BAC to equal two right angles,
-contrary to I.13 and the positive adjacent angle. -/
+Diagram-angle 2, converse). We prove it from I.13, the adding of angles, the fact
+that an angle of a triangle is greater than nothing, and the rules for the sides of a
+straight line. If just one side condition fails, one angle would be less than itself.
+If both fail, producing DA through A gives two decompositions whose sum forces BAC
+to equal two right angles, contrary to I.13, for the angle adjacent to BAC is greater
+than nothing. -/
 theorem _root_.Elements.Tacit.inside_of_angle_add {A B C D : Point} {L M : Line}
     (hAL : OnLine A L) (hAM : OnLine A M) (hB : OnLine B L)
     (hC : OnLine C M) (hAB : A ≠ B) (hAC : A ≠ C) (hDL : ¬ OnLine D L) (hDM : ¬ OnLine D M)
