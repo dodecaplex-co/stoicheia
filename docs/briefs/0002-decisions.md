@@ -4795,10 +4795,10 @@ findings:
   III.25's figure of every case, and changes neither the lock nor any pin; with main
   at `554dfb0f` (#232, the unrun tests in CI, and #239, decision entries one file
   each), which changes neither the lock nor any pin; and last with the guard at
-  `77e68399`, which brings train C6b with tooling/figure-every-case at `696181c5` and
-  changes neither the lock nor any pin. The restated Book III of this train is kept whole;
-  III.1's record and commentary are this train's, since its statement no
-  longer takes a centre.
+  `a4e0ffdd`, which brings train C6b with tooling/figure-every-case at `696181c5` and main
+  at `8674bce2` (#240, train C6a landed), and changes neither the lock nor any pin. The
+  restated Book III of this train is kept whole; III.1's record and commentary are this
+  train's, since its statement no longer takes a centre.
   `Certificate/axioms.lock`, written again by `python3 scripts/check_fidelity.py
   --write-lock` after `lake build` and `Certificate/Facts.lean`, holds the guard side's 80
   axioms, of them 74 tacit rules, each byte for byte, and its 242 words, with this train's
@@ -4820,7 +4820,7 @@ findings:
   superposition. The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`,
   `model/`, `scripts/`, `.github/`, `review/SCHEMA.md`, `review/terms.toml`,
   `lakefile.toml` and `lean-toolchain` that differ from `lean/centre-guard` at
-  `77e68399`, each named whole:
+  `a4e0ffdd`, each named whole:
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
   `Audit/screen.py`,
