@@ -1,10 +1,16 @@
 # Overlaps: where a rule already says what Euclid proves
 
 19 October 2026: eight axioms have become theorems with their names and exact types
-unchanged. The lock now holds 79 axioms, including 73 tacit rules. Their
+unchanged, taking the lock from 87 axioms to 79. Their
 [derivations and homes](../FORMALIZATION.md#rules-now-proved) explain what each proof
-uses. The current catalogue below distinguishes the remaining axiom overlaps from
-the former ones. The earlier catalogue and its measurements follow as history.
+uses. The lock has also gained one rule of our own, by the owner's decision of 18 October
+2026: every circle has a centre (`exists_centre`, [brief 0008](../briefs/0008-centre.md)).
+It now holds <!-- count:axioms -->80<!-- /count --> axioms, including <!-- count:tacit-rules -->74<!-- /count --> tacit rules. The same brief
+restates III.5 and III.6: circles that cut one another cross, each with a point within
+the other, and a circle touching another within has a point within it. The current
+catalogue below distinguishes the remaining axiom overlaps from the former ones, and
+gives III.5 and III.6 as restated. The earlier catalogue and its measurements follow as
+history.
 
 20 October 2026: the restricted rule of superposition also retires the construction
 shortcuts for I.2, I.3 and I.23. The current table reflects both changes.
@@ -15,8 +21,10 @@ shortcuts for I.2, I.3 and I.23. The current table reflects both changes.
 |---|---|---|---|---|
 | I.13, a consequence used in I.47 | Metric 5 (`angle_le_two_right`) | Supplies a step: the upper bound on an angle | I.47 | None |
 | [III.2](#iii2) | Circle 3 (`outside_of_between`) | Gives it at once: if the middle point were not inside, the second endpoint would be outside | Nowhere: no certificate entry rests on it | `Audit.III_2_outside`; `Audit.III_2` through the derived Circle 2 |
-| [III.5](#iii5) | Diagram-segment 2 (`circle_eq`) | Gives it at once: circles about one centre through one point coincide | III.5 | `Audit.III_5` |
-| [III.6](#iii6) | Diagram-segment 2 (`circle_eq`) and Generalities 3 (`centre_inside`) | Gives it at once: one rule settles contact within, the other contact without | Diagram-segment 2: III.5. Generalities 3: I.1 | `Audit.III_6` |
+| [III.5](#iii5) | Diagram-segment 2 (`circle_eq`) with Generalities 4 (`inside_not_on`) | Gives it at once: circles about one centre through one point coincide, and the point of one within the other would be within that circle and on it | Diagram-segment 2: III.10. Generalities 4: I.22 | `Audit.III_5` |
+| [III.5](#iii5) | Diagram-segment 4 (`len_lt_of_inside`) with Definition I.15 and a magnitude law (`lt_irrefl`) | Gives it at once: the point within is nearer the centre than the common point, yet as far from it | Diagram-segment 4: I.3. Definition I.15: I.1. The magnitude law: I.1 | `Audit.III_5_crossing` |
+| [III.5](#iii5) | Diagram-segment 3, second half (`on_circle_of_len_eq`), with Definition I.15 and Generalities 4 | Gives it at once: the point within is as far from the centre as the common point, so it is on the circle it is within | Diagram-segment 3, second half: II.14. Definition I.15: I.1. Generalities 4: I.22 | `Audit.III_5_radius` |
+| [III.6](#iii6) | Diagram-segment 2 (`circle_eq`) with Generalities 3 (`centre_inside`) and 4 (`inside_not_on`) | Gives it at once: for contact within the circles would coincide, and the point of the inner within the outer would be within that circle and on it; for contact without a common centre would be within both | Diagram-segment 2: III.10. Generalities 3: I.1. Generalities 4: I.22 | `Audit.III_6` |
 
 Fresh certificate facts at `1a2d37c1` show that no certificate entry rests on
 Circle 3. I.12 finds X on AB between the centre C and the point D on the circle;
@@ -32,12 +40,77 @@ III.2 and its corollaries `Prop2.triangle`, `Prop2.oppositeSide` and
 and I.19; its overlap with an available axiom is distinct from what its published
 proof uses.
 
+### III.5
+
+Our III.5 follows Euclid's argument, by Definition I.15 and the order on EFG. Cutting
+(`CirclesCut`) gives F on ABC and within CDG; producing EF beyond F meets CDG at G, so
+EF is the less. The proof uses neither Diagram-segment 2 nor Circle 4, nor the
+Diagram-segment 3 (second half) or 4 rules that give the other two short proofs. The rows
+say what the rules contain, separately from what our proof uses.
+
+The first row makes the circles one and contradicts F being both within and on that
+circle. The second compares the distance to a point within with the radius; Definition
+I.15 makes those lengths equal. The third uses Definition I.15 to make EF equal to EC,
+then Diagram-segment 3's second half to put F on CDG, though F is within it. Each audit
+lemma has the restated III.5's type. Diagram-segment 2 first enters at III.10, which calls
+it directly to identify circles with a common centre and point; III.23 reaches it through
+III.10. Generalities 4 first enters at I.22 through Book Zero's `ne_of_centre_of_on`,
+and Diagram-segment 4 at I.3 through `outside_of_len_gt`. The first propositions to call
+these two rules themselves are III.7 and III.17. Diagram-segment 3's second half is first
+called by II.14. The magnitude law `lt_irrefl` first enters at I.1 through
+`Magnitude.add_self_ne`.
+
+The earlier reading asked that the circles be different and meet at two points
+(`CirclesMeet`), without the points within. For that reading any proof must use
+Diagram-segment 2 or Circle 4, and Circle 4, now proved after I.7, has Diagram-segment 2
+beneath it: draw each ordinary circle twice, as two objects with the same centre, radius
+and points. Every other axiom still holds, but the two copies meet and share their
+centre. This is a model argument checked by hand, not by Lean. It does not apply to the
+restated III.5, since neither copy has a point within the other.
+
+The bridge `Audit.CirclesCut.of_meet` shows that two different circles meeting at
+two points do cross, given their centres. It uses III.7 and III.8, with `circle_eq`.
+Consequently the earlier statement of III.5 follows from the restated one, using the
+supposed common centre to supply both centres. This comparison of readings is separate
+from III.5's proof and cites later propositions. Heath's combined enunciation for III.5
+and III.6 concerns two different circles merely meeting (vol. 2, p. 12); Diagram-segment 2
+gives that assertion at once. It is not a proposition of ours, so it has no separate row.
+
+### III.6
+
+For contact within, our III.6 draws FEB through a point of the inner circle within the
+outer. The order of E and B, with Definition I.15, gives Euclid's contradiction, either
+circle the inner. It uses neither Diagram-segment 2 nor Circle 4. The catalogue's short
+proof instead makes the circles one by Diagram-segment 2 and uses Generalities 4 to
+contradict the point within.
+
+Contact without ends at once in both proofs: a supposed common centre would be within
+both circles (Generalities 3), which contact without forbids. Generalities 3 expresses
+Definition I.15's own clause that the centre lies within the figure. It ends the case
+Euclid leaves to the reader, which Heath regards as self-evident (vol. 2, p. 13).
+Diagram-segment 2, the row's main rule, is not used by our III.6. The alternative routes
+through Diagram-segment 3 or 4 need four rules once contact without is included, so they
+do not meet the catalogue's limit of three. Without Generalities 3 the row's other two
+rules do not suffice: in the ordinary plane with no point counted within any circle they
+hold, while a circle touches itself without and has the same centre as itself. This tests
+the short route, not the necessity of Diagram-segment 2 for III.6; our proof avoids that
+rule.
+
+The twin-circle argument under III.5 also applies to the earlier contact within: two
+copies are different objects meeting with no point of either outside the other. The new
+clause requiring a point within excludes them. The bridge `Audit.within_point`, by III.10,
+recovers that point from the earlier conditions when centres are given. It recovers the
+earlier statements of III.6, III.11 and III.13 with no extra hypothesis: III.6 supposes a
+common centre, and III.11 and III.13 are given their centres. This keeps the whole-circle
+reading of touching; it does not establish agreement with Heath's preferred local reading
+at the contact.
+
 ## Former axiom overlaps
 
 | Former overlap | Why it is retired |
 |---|---|
 | I.7 and Circle 4 (`not_same_side_of_circles_meet`) | I.7, Definition I.15 and `circle_eq`, after I.7 in `Elements/BookI/Prop07.lean`. `Audit.I_7` now reaches I.7 through its own corollary, so it is circular as an independent proof of I.7. |
-| I.13's right-angle case and Diagram-angle 3 (`adjacent_eq_of_right`) | I.13 and Common Notion 3, after I.13 in `Elements/BookI/Prop13.lean`. The later proofs now use that theorem: [19 proofs, 18 calling it themselves](#i13s-rule-in-19-proofs). |
+| I.13's right-angle case and Diagram-angle 3 (`adjacent_eq_of_right`) | I.13 and Common Notion 3, after I.13 in `Elements/BookI/Prop13.lean`. The later proofs now use that theorem: [20 proofs, 19 calling it themselves](#i13s-rule-in-20-proofs), by the count of 21 October 2026. |
 | III.1's centre uniqueness and Generalities 2 (`centre_unique`) | The foundations, in `Elements/Figure/Circles.lean`: two supposed centres bisect the same straight line through the circle, and equal doubles have equal halves. III.1 Por. still calls the theorem, but its axiom closure is now the same as III.1's. |
 | III.2 and Circle 2 (`inside_of_between`) | Circle 3, in `Elements/Figure/Circles.lean`. The remaining axiom overlap is the Circle 3 row above. |
 | I.2, I.3 and I.23 and existential superposition | The restricted rule exports only an equality about the given figure. The three former audit lemmas returned placed corners, which no exported formula can name, and have been removed. |
@@ -54,43 +127,55 @@ constructs its points through I.22 and obtains its angle equality from I.8. It s
 inherits the restricted rule through I.8 and I.20, which supplies the triangle
 inequalities; this inherited dependency does not restore the construction shortcut.
 
-### I.13's rule in 19 proofs
+### I.13's rule in 20 proofs
 
-Recounted on 20 October 2026 after the retirement, across all 122 certificate
-entries: the theorem occurs in 19 proofs without passing through another certified
-entry. Of these, 18 call it in their own declarations or their proposition's helpers.
+Recounted on 21 October 2026, after the retirement, on the revision that holds all 130
+certificate entries: the theorem occurs in 20 proofs without passing through another
+certified entry. Of these, 19 call it in their own declarations or their proposition's
+helpers. The count of 20 October, across the 122 entries there were then, found 19 and 18.
+Of the eight companions that have joined the certificate since (III.16's three, III.23's,
+III.24's two and III.31's two), one adds to each count: `BookIII.Prop31.less`, which
+reaches the theorem through its own step `BookIII.Prop31.less_lt_right`. The other seven
+reach it only through entries they cite.
 
-Eighteen of the 19 proofs call Diagram-angle 3 (`adjacent_eq_of_right`) themselves:
+Nineteen of the 20 proofs call Diagram-angle 3 (`adjacent_eq_of_right`) themselves:
 II.1 and its companion `BookII.Prop1.two`, II.3, II.4, II.5, II.9, II.11,
 II.14 and its companion `BookII.Prop14.rectangle`, III.3, III.10, III.15, III.16, III.17
-and III.25 in their own Lean; III.9 in its helper `BookIII.Prop9.apart`; and III.1 and its porism
+and III.25 in their own Lean; III.9 in its helper `BookIII.Prop9.apart`; III.1 and its porism
 in III.1's helper `BookIII.Prop1.perpendicular`, which shows that at a point of a straight line
-only one straight line is at right angles to it. III.19 reaches the rule only through
-`BookIII.Prop1.perpendicular`, which III.16 uses as well as calling the rule itself. Thirty-four
-more entries (24 propositions, III.16's porism and nine companions) rest on it through
-these 19. I.13 does not rest on it. The rule gives the right angles Euclid reads off his
+only one straight line is at right angles to it; and III.31's companion `BookIII.Prop31.less`
+in its helper `BookIII.Prop31.less_lt_right`. III.19 reaches the rule only through
+`BookIII.Prop1.perpendicular`, which III.16 uses as well as calling the rule itself. Forty-one
+more entries (24 propositions, III.16's porism and 16 companions) rest on it through
+these 20. I.13 does not rest on it. The rule gives the right angles Euclid reads off his
 figure, as for the rectangles of II.1, where his text says nothing of them.
 
-The full dependency closure contains the theorem in 53 entries: 40 propositions,
-two porisms and eleven companions. The 34 additional entries above reach it only
+The full dependency closure contains the theorem in 61 entries: 40 propositions,
+two porisms and 19 companions. The 41 additional entries above reach it only
 through entries they cite. These are uses of a proved rule, not axiom overlaps.
 
 The recount walks Lean's elaborated declarations using the same type, value and
-constructor references as `Certificate/Facts.lean`. For the 19, it stops at another
-certificate entry or a Common Notion; for the 18, it also stops at a shared lemma
+constructor references as `Certificate/Facts.lean`. For the 20, it stops at another
+certificate entry or a Common Notion; for the 19, it also stops at a shared lemma
 outside the proposition's namespace, while following Lean's auxiliary declarations.
-For the 53, it follows every project declaration. Each walk counts an entry once
+For the 61, it follows every project declaration. Each walk counts an entry once
 when it reaches `Tacit.adjacent_eq_of_right`, before following that theorem's proof.
-Searching the merged Lean sources for the rule's name confirms the calls listed
-above. The retired name is absent from every axiom list; those lists alone cannot
-count uses of the theorem.
+Since the theorem's proof cites I.13, `facts.json` records I.13 among the citations of each
+of the 20; the first walk, stopping at the theorem, finds every entry's citations as
+`facts.json` gives them, save I.13 for exactly these 20. Searching the Lean sources for the rule's name confirms the calls
+listed above; in `Elements/BookIII/Prop16.lean` two shared lemmas call it too,
+`Segment.exists_tangent` and `Segment.angle_tangent_of_oppositeSidesOf`, which serve only
+`Segment.compare_alike`, a lemma no certificate entry uses. The retired name is absent
+from every axiom list; those lists alone cannot count uses of the theorem.
 
 ## Historical account, before 19 October 2026
 
 The account below preserves the earlier readings, attributed findings and measured
 counts. Its axiom statuses, first users and statements about current dependencies
 are superseded by the dated catalogue above. In particular, the former seven-axiom
-I.7 shortcut and the 17-proof right-angle census describe the earlier foundations.
+I.7 shortcut and the 17-proof right-angle census describe the earlier foundations, and
+the notes on III.5 and III.6 describe those propositions as they were stated before brief
+0008 restated them ([III.5](#iii5) and [III.6](#iii6) above give them as they are now).
 The later notes under I.2/I.3 and I.23 are dated updates about the retired construction
 shortcuts; their old rows remain here as history.
 
@@ -138,7 +223,8 @@ rules a proof calls itself, those its own Lean or a helper written for its propo
 (`Prop47.within`, for I.47) names, and `inherited` the rules its own Lean does not name
 but reaches through a lemma it calls, of Book Zero (`Elements/Figure/`) or a shared step,
 each with the lemma that brings it in. A proposition it cites may rest on such a rule too.
-Each first user in the table calls its rule itself. A later proof may rest on a rule it
+A first user may call the rule itself or inherit it through a shared lemma; the notes
+below name those lemmas. A later proof may rest on a rule it
 never calls, as III.26 rests on Generalities 2 only through Book Zero's
 `EqualCircles.radii`; III.28 and III.29 call that lemma too, and rest on the rule through
 III.26 and III.27 as well, which they cite. The note under the table names the lemma the
@@ -165,8 +251,8 @@ rule's Lean name finds the same calls.
 | III.1's corollary, in III.1 Por. ([details](#iii1-por)) | Generalities 2 (`centre_unique`): a circle has only one centre | Supplies a step: "a proposition which, if thought necessary, may be added to III. 1 as a corollary" (Heath, vol. 2, p. 8) | III.1's porism; of the propositions themselves, III.14 | None |
 | III.2 ([details](#iii2)) | Circle 2 (`inside_of_between`): between two points on or within a circle, every point is within it | States it, and more: the ends may be within the circle as well as on it | Nowhere: no proposition rests on it | `Audit.III_2`, Astra's proof: Circle 2 alone |
 | III.2 ([details](#iii2)) | Circle 3 (`outside_of_between`): a straight line that has left a circle does not come back; Circle 2 turned round | Gives it at once: were a point between two points of the circle not within it, the second point would be outside the circle, not on it | Nowhere: no proposition rests on it | `Audit.III_2_outside`: Circle 3 alone |
-| III.5 ([details](#iii5)) | Diagram-segment 2 (`circle_eq`): a circle is fixed by its centre and radius | Gives it at once: two circles about one centre through one point are one circle | III.5 | `Audit.III_5`: Diagram-segment 2 alone |
-| III.6 ([details](#iii6)) | Diagram-segment 2 (`circle_eq`), and Generalities 3 (`centre_inside`): a circle's centre is within it | Gives it at once: circles touching within are two circles through one point; circles touching without have no point within both, and a common centre would be one | Diagram-segment 2: III.5. Generalities 3: I.1 | `Audit.III_6`: the two rules alone |
+| III.5 ([details](#iii5-1)) | Diagram-segment 2 (`circle_eq`): a circle is fixed by its centre and radius | Gives it at once: two circles about one centre through one point are one circle | III.5 | `Audit.III_5`: Diagram-segment 2 alone |
+| III.6 ([details](#iii6-1)) | Diagram-segment 2 (`circle_eq`), and Generalities 3 (`centre_inside`): a circle's centre is within it | Gives it at once: circles touching within are two circles through one point; circles touching without have no point within both, and a common centre would be one | Diagram-segment 2: III.5. Generalities 3: I.1 | `Audit.III_6`: the two rules alone |
 
 The review records pointed here: a proposition's `[overlap]` named its rule
 ([review/SCHEMA.md](../../review/SCHEMA.md)).
@@ -195,7 +281,7 @@ Generalities 2 to draw the circles and tell them apart.
 
 ##### I.13 in 17 proofs
 
-Sixteen of the 17 proofs call the rule themselves: II.1, II.3, II.4, II.5, II.9, II.11,
+Among propositions and porisms, sixteen of the 17 proofs call the rule themselves: II.1, II.3, II.4, II.5, II.9, II.11,
 II.14, III.3, III.10, III.15, III.16, III.17 and III.25 in their own Lean; III.9 in its
 helper `Prop9.apart`; and III.1 and its porism in III.1's helper `Prop1.perpendicular`,
 which shows that at a point of a straight line only one straight line is at right angles
@@ -264,27 +350,35 @@ by Definition I.15 and the rules that relate "within" to the radius, with no pro
 
 The later proofs that called Circle 2 take the step in one of three ways. Where both ends
 are on the circle, III.2's own case, they cite III.2: III.10, III.15, III.21, III.22,
-III.23, III.25, III.30, and III.32 in its helper `Prop32.sameSide`. Where one end is the
-centre and the other is on the circle, they use `InsideCircle.of_between_centre`: III.7,
-III.8, III.12, III.15, III.17, III.20, III.34 and III.37. III.15 also has L between the
-centre and the point K within the circle; `InsideCircle.of_between_centre_of_inside`
-uses the given point F of the circle to put L within. Where an end is within the circle
-and is not its centre, they cite III.2's corollary `Prop2.within`, III.2 for ends on or
-within the circle, whose proof produces the straight line to meet the circle and finds
-the point between the two points where it meets it: III.7, III.11, III.15 and III.23.
-III.13 cites III.2, where Heath's reference is III.2.
+III.23 and its companion `Prop23.point`, III.25, III.30, and III.32 in its helper
+`Prop32.sameSide`. Where one end is the centre and the other is on the circle, they use
+`InsideCircle.of_between_centre`: III.7, III.8, III.12, III.15, III.17, III.20, III.34 and
+III.37. III.15 also has L between the centre and the point K within the circle;
+`InsideCircle.of_between_centre_of_inside` uses the given point F of the circle to put L
+within. Where an end is within the circle and is not its centre, they cite III.2's
+corollary `Prop2.within`, III.2 for ends on or within the circle, whose proof produces the
+straight line to meet the circle and finds the point between the two points where it meets
+it: III.7, III.11, III.15 and III.23. III.13 cites III.2, where Heath's reference is
+III.2.
 
 Three more corollaries after III.2 take the place of Book Zero lemmas that rest on Circle 2:
 `Prop2.triangle`, that three points of a circle are not on one straight line, first used
 in III.8; and `Prop2.oppositeSide` and `Prop2.sameSide`, that a straight line in a circle
 has points of the circle on either side of it, first used in the shared steps of
-`Circumferences.lean`, which III.24 is the first to cite. Book Zero keeps its own three,
-`Triangle.of_onCircle`, `exists_onCircle_oppositeSidesOf` and
-`exists_onCircle_sameSideOf`, stated for a circle with no centre given: no proposition
-uses them, and the staged work (`Staging/`) still does, and calls Circle 2 and Circle 3
-itself in places. Since `Prop2.within` is Circle 2 for a circle with a centre,
-proved from the other rules, Circle 2 and Circle 3 tell us nothing about such a circle
-that the rest of our foundations do not.
+`Circumferences.lean`, which III.24's companions are the first to cite. Stage 3's ground
+had two more lemmas that called Circle 2, and both now come after III.2. That a point of
+the straight line through two points of a circle is on the circle exactly when it is one
+of them, and within it exactly when it lies between them, is `Prop24.chord_cases`, before
+III.24, by III.2 and `Prop2.triangle`. That a straight line drawn from within the base of
+a segment meets its circumference, which no proposition of the edition uses yet, is proved
+by III.2 beside the staged III.25, whose companion uses it, and moves with it. Book Zero
+keeps its own three, `Triangle.of_onCircle`, `exists_onCircle_oppositeSidesOf` and
+`exists_onCircle_sameSideOf`, stated for a circle with no centre given, and nothing uses
+them now ([below](#a-separate-piece-of-work)). The staged work (`Staging/`) calls Circle 2
+itself in one place, the staged III.1's construction in `Staging/Centre/Prop01.lean`, and
+Circle 3 nowhere. Since `Prop2.within` is Circle 2 for a circle with a centre, proved
+from the other rules, Circle 2 and Circle 3 tell us nothing about such a circle that the
+rest of our foundations do not.
 
 ##### III.5
 
@@ -334,19 +428,19 @@ both circles, and circles that touch without have none.
 **What the project already says.** The [gap catalogue for Book III](gaps-book-III.md) says
 that Circle 2 "already contains III.2", in its introduction and under III.1, where it also
 gives Generalities 2 as the corollary Heath would add to III.1. III.2's commentary explains
-how Circle 2 and Circle 3 give III.2, and III.5's and III.6's name `circle_eq` as
-the rule that supplies the step Euclid leaves tacit there. The axiom docstrings name one
+how Circle 2 and Circle 3 give III.2; III.5's and III.6's explain how the point within
+supplies the straight line and the order of its points; and III.10's names `circle_eq` as
+its changed final step. The axiom docstrings name one
 more of Euclid's steps: Intersection 5 is "the step Euclid takes for granted in I.1". That
 is a gap Euclid leaves and the rule fills, not a proposition he proves later, and it
 belongs to the [gap catalogue for Book I](gaps-book-I.md).
 
-**Small certificates.** Four certificates cite no proposition: I.1 and I.4, Euclid's own
+**Small certificates.** Four propositions cite no proposition: I.1 and I.4, Euclid's own
 beginnings, which rest on Postulate 3 with Intersection 5 and on superposition; and III.5
-and III.6, which are rows of the catalogue. When the catalogue was made, III.5 and III.6
-rested on six rules each, ending with Diagram-segment 2; now that they end by the order of
-the points, as Euclid does, each rests on eighteen, as many as I.1, and on Common Notion 5,
-so their certificates no longer stand out. Three others, I.23, I.25 and I.41, have the
-fewest rules in `direct_axioms`, three to five, but each cites propositions and carries
+and III.6, which are rows of the catalogue. In the restated readings, III.5 and III.6 each
+rest on thirteen tacit rules, with Definition I.15 and Postulate 1. The line through the point within and the order of
+its points carry Euclid's comparison, with Common Notion 5 through `len_lt_of_between`.
+Three others, I.23, I.25 and I.41, have the fewest rules in `direct_axioms`, three to five, but each cites propositions and carries
 Euclid's argument.
 
 **A sweep of every rule.** We read each of the 81 tacit rules, with the postulates and
@@ -388,8 +482,14 @@ statement that needs that step is not searched either. Nor does `grind` reason b
 or open a figure's fields of itself, so what a figure given with its triangles holds by its
 formation is not searched, which only the companions of I.45 and II.14 speak of. The revised
 screen is not one of CI's checks: that run took about an hour and a half of processor time,
-and nothing runs it of itself; it should be run again when a statement or a rule changes. It
-cannot draw a figure, for `grind` works with the points and circles a goal already names.
+and nothing runs it of itself; it should be run again when a statement or a rule changes.
+The restated III.5 and III.6 of brief 0008 are such a change: the screen unfolds
+`CirclesCut` and `TouchesInternally` like the other definitions, but its run must be
+renewed on the revision that holds them, for the earlier run does not validate the new
+readings. The Diagram-segment 3 and 4 rows for III.5 were found by reading: each takes
+three rules from three families, outside the screen's pairs, and `grind` did not close
+the Diagram-segment 4 route in a probe. The screen cannot draw a figure, for `grind` works
+with the points and circles a goal already names.
 I.7's overlap needs two circles its statement never mentions, so it came from reading.
 At that revision the I.23 overlap used a triangle laid down by the existential
 superposition rule. The I.2 and I.3 overlaps first drew a triangle to lay down; the
@@ -445,14 +545,18 @@ rule.
 - **I.4's last clause.** Metric 9 (`area_congruent`) makes the triangles equal once their
   sides and angles are. Euclid's reason there is that the triangles coincide (Common
   Notion 4), his own step in I.4, not a later proposition.
-- **Representation and scope.** III.24's second clause follows from its angle hypothesis
-  alone, and III.26 and III.27 hold without their equal circles, because of how a
-  circumference is measured: a definition, not a rule. `Audit.III_24_measure`,
-  `Audit.III_26_any` and `Audit.III_27_any` prove each so, with their axioms pinned, and
-  give back the propositions' own statements; they are meant to stop compiling when arcs
-  get a meaning of their own (brief 0005, stage 3). III.1 and III.25 take a centre from a
-  hypothesis. These belong to the review records, under `[representation]` and
-  `[statement]`.
+- **Representation and scope.** The measure clause of III.24's companion
+  `Prop24.equalCircles` follows from its angle hypothesis alone, and the equal measures of
+  III.26, and III.27 whole, hold without the equal circles, because of how a circumference
+  is measured: a definition, not a rule. `Audit.III_24_measure`, `Audit.III_26_any` and
+  `Audit.III_27_any` prove each so, with their axioms pinned, and the first and the last
+  give back the statements of `Prop24.equalCircles` and of III.27. Since arcs got a meaning
+  of their own (stage 3 of [brief 0006](../briefs/0006-statements.md)), III.24 concludes
+  that the segments are congruent, and III.26 and III.28 that the circumferences are
+  congruent too, which needs the equal bases and the equal circles: III.26 no longer holds
+  for any two circles, and its audit example has given way to a note saying so. III.1 and
+  III.25 take a centre from a hypothesis. These belong to the review records, under
+  `[representation]` and `[statement]`.
 
 - **III.30, by the same measure.** I.4 makes the angles DAB and ABD equal, and they stand
   on the halves DB and AD. Each half is measured by the angle standing on it, taken twice,
@@ -483,7 +587,11 @@ that rests on either rule. The Book Zero lemmas `Triangle.of_onCircle` and
 `exists_onCircle_oppositeSidesOf` in
 [`Elements/Figure/OnCircles.lean`](../../Elements/Figure/OnCircles.lean#L36) rest on
 Circle 2, as does any lemma built on them. They are not certificate entries: the check
-covers them only through the entries that use them.
+covers them only through the entries that use them. Nothing uses them now. In
+`Elements/`, `Staging/` and `Audit/` the three lemmas, these two and
+`exists_onCircle_sameSideOf`, are named only in that file, where the third is built on
+the second. Stage 3 and the mixed angles, which used them while staged, take those steps
+by III.2 and its corollaries since they moved into `Elements/`.
 
 ### Keeping it current
 

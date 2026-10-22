@@ -140,6 +140,11 @@ theorem EqualCircles.symm (h : EqualCircles α β) : EqualCircles β α := by
   obtain ⟨G, H, P, Q, hG, hH, hP, hQ, hr⟩ := h
   exact ⟨H, G, Q, P, hH, hG, hQ, hP, hr.symm⟩
 
+/-- Circles that cut one another each pass within the other, in either order. -/
+theorem CirclesCut.symm {α β : Circle} (h : CirclesCut α β) : CirclesCut β α := by
+  obtain ⟨⟨A, B, hAB, hAα, hAβ, hBα, hBβ⟩, hαβ, hβα⟩ := h
+  exact ⟨⟨A, B, hAB, hAβ, hAα, hBβ, hBα⟩, hβα, hαβ⟩
+
 /-- A circle is equal to itself. Heath remarks that III.26–III.29, said of equal circles,
 are "equally true if the same circle is taken" (vol. 2, p. 61); this is how a proof says
 so. -/
