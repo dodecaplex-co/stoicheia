@@ -716,6 +716,7 @@ class RestorationTests(unittest.TestCase):
             (sys.executable, "-I", "tests/test_negative_tests.py"),
             (sys.executable, "-I", "tests/test_generated_counts.py"),
             (sys.executable, "-I", "tests/test_decision_entries.py"),
+            (sys.executable, "-I", "tests/test_risk.py"),
         ])
         self.assertFalse(any(part in {"lake", "lean"}
                              for command in commands for part in command))
