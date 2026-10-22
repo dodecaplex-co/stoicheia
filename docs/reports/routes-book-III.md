@@ -27,9 +27,11 @@ C6c carry the next move of Book III's files into `Elements/`, those restatements
 As their head, train C6c carries the other two, and in this report it stands for all three.
 This branch changes no file of `Elements/`, and not `facts.json`: they are those of the
 head of train C6c that it last merged, and, once train C6c is on main, those of the main it
-last merged. `git diff train/C6c HEAD -- Elements facts.json` shows it; at e09f40f6, where
-that head is e9bac796, it prints nothing. There `git diff train/C6c HEAD --stat` lists the
-eleven files the branch changes: the seven under `Staging/Routes/`; `Staging.lean`, in its
+last merged. The immutable comparison `git diff
+e9bac7964aa1222d4fa3ca7c7a4a215abf7dbfc3
+e09f40f6aae8b83ab70217f68a50b3b36ce6c6ff -- Elements facts.json` prints nothing. The
+same comparison with `--stat` lists the eleven files the branch changes: the seven under
+`Staging/Routes/`; `Staging.lean`, in its
 imports and its paragraph on `Routes/`; this report; the decisions page,
 [brief 0002](../briefs/0002-decisions.md), in its routes bullet alone; and
 [docs/reports/overlaps.md](overlaps.md), the coordinator's file, in its sentence on staged
@@ -758,23 +760,22 @@ as they are, and one that does is checked again at the head the pull request lan
 checks of style and links read the texts of the whole repository, so their counts move
 with any merge; the pull request records the checks at the head it lands.
 
-**At e09f40f6, with this report's later edits, which change only this report.** The
-commands below were run in this order from the root of the worktree, where `git rev-parse
-HEAD` gave e09f40f6aae8b83ab70217f68a50b3b36ce6c6ff and `git status --porcelain` showed
-this report alone, modified. er_check.sh is a scratch script outside the repository: it
-builds the modules it is given, then puts every theorem they declare, but the internal
-ones, to Lean's collectAxioms, and finds `sorryAx`, Circle 3 (`Tacit.outside_of_between`,
-on which Circle 2 rests) and any axiom neither one of Lean's three nor declared under
-`Elements/Foundations/`. RoutesCheck.lean and Cutoff.lean are scratch files outside the
-repository, each given whole below with its SHA-256.
+**Historical execution at e09f40f6aae8b83ab70217f68a50b3b36ce6c6ff.** The validation
+ran from the root of the worktree at that revision, with this report's later edits as its
+only modification. Its retained evidence is the explicit build of the seven route modules,
+the separate elaboration of their seven files, and the runs of RoutesCheck.lean and
+Cutoff.lean. The two scratch files are given whole below with their SHA-256.
+
+**Reproduction.** In a clean checkout of that revision, first run the two immutable
+comparisons below. Save the complete Lean blocks below as RoutesCheck.lean and Cutoff.lean
+at the worktree root, then run the remaining commands in order:
 
 ```sh
 export PATH=$HOME/.elan/bin:$PATH
-git diff train/C6c HEAD -- Elements facts.json   # nothing
-git diff train/C6c HEAD --stat                   # the eleven files of the opening
-sh er_check.sh "$PWD" Staging.Routes.Prop08 Staging.Routes.Prop20 Staging.Routes.Prop21 \
-  Staging.Routes.Prop26 Staging.Routes.Prop27 Staging.Routes.Touching \
-  Staging.Routes.AngleOfContact
+git diff e9bac7964aa1222d4fa3ca7c7a4a215abf7dbfc3 \
+  e09f40f6aae8b83ab70217f68a50b3b36ce6c6ff -- Elements facts.json
+git diff e9bac7964aa1222d4fa3ca7c7a4a215abf7dbfc3 \
+  e09f40f6aae8b83ab70217f68a50b3b36ce6c6ff --stat
 lake build Staging.Routes.Prop08 Staging.Routes.Prop20 Staging.Routes.Prop21 \
   Staging.Routes.Prop26 Staging.Routes.Prop27 Staging.Routes.Touching \
   Staging.Routes.AngleOfContact
@@ -787,15 +788,13 @@ python3 scripts/check_style.py
 python3 scripts/check_links.py
 ```
 
-Every command exited 0. Each of the seven files, elaborated alone, gave no message at all,
-so the five type equalities they end with hold. The build of the seven modules had no
-warning from `Staging/Routes/`; its only warnings are the two unused variables at lines 165
-and 166 of `Elements/Figure/Circles.lean`. The rest reported, in order, er_check.sh, the
-build, the two modules and the two scripts:
+Every retained validation command exited 0. Each of the seven files, elaborated alone, gave
+no message at all, so the five type equalities they end with hold. The build of the seven
+modules had no warning from `Staging/Routes/`; its only warnings are the two unused
+variables at lines 165 and 166 of `Elements/Figure/Circles.lean`. The build, the two
+scratch modules and the two scripts reported, in order:
 
 ```text
-Build completed successfully (107 jobs).
-routes_check: 38 theorems, 0 findings
 Build completed successfully (107 jobs).
 routes_check: 7 modules, 51 declarations, 38 theorems, 5 type equalities, 7 contact roots, 1476 constants walked beneath them, 0 findings
 Book III modules reached from the contact roots: [Elements.BookIII.Prop16,
