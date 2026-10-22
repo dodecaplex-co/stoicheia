@@ -4475,6 +4475,100 @@ findings:
   [FORMALIZATION](../FORMALIZATION.md), section 7, and the README's row for the negative
   tests now describe both plants. No check is weakened.
 
+- **The Jev question generator reads Lean's module header with a parser, checks its
+  helpers' paths before running them, reads an inductive only in the plain forms main
+  writes, and passes its test on the superposition branch (#185).** Two defects in
+  `scripts/audit/jev_questions.py` (#179) were found while merging the superposition
+  replacement. First, the generator read an import only from a line beginning `import`, so
+  the `public import` of `Elements/Foundations/Superposition/` went unread, and on that
+  branch, as on main since it landed, `tests/test_jev_questions.py` refused I.4:
+  "Elements.Superposition.Lit is not imported". Line patterns misread header after header
+  in review, so a small parser now reads the header by Lean 4.35's grammar
+  (`Lean/Parser/Module/Syntax.lean`): an optional `module`, then any number of
+  `[public] [meta] import M`, each component of M a plain identifier or a whole `«...»`
+  one, with comments between the words. Each import ends its line, and `public section`
+  ends the header. Refused: a doc comment or any other word before an import, `prelude`,
+  `import all`, two imports on a line, a `/` in a component, a block comment running on
+  from an import's line, and an `import`, outside a `«...»` name, after the header.
+
+  Second, the generator ran `scripts/heath.py` and `scripts/audit/jev.py` as it loaded
+  them, before checking their paths (found by an independent security review). Both paths
+  now pass the evidence path checks and must name regular files before either helper runs,
+  and each runs from the bytes read through its checked path, never through a final
+  symlink.
+
+  Third, the call reconciler could not read the superposition branch's proofs of I.4 and
+  I.8: it took only the first of several constructors on a line, resolved `open Prop4 in`
+  without the enclosing namespaces, and read an inductive's constructor names as uses.
+  Review after review found another form Lean accepts in which the reader took a use for a
+  constructor, so **the reader of constructors accepts only the plain forms main's
+  inductives are written in, and refuses everything else.** From an inductive's name to
+  the end of its constructors, the masked text may hold only spaces, line breaks and name
+  characters; a dot after a name character, a bracket or a space, and before a name
+  character; the brackets `( ) [ ] { } ⦃ ⦄ ⟨ ⟩` and the symbols `: , → ∀ ∈ × + |`; and,
+  of the 282 tokens beginning with a letter or `_` in Lean 4.35's token table
+  (`KEYWORD_TOKENS`, from `Lean.Parser.getTokenTable` at commit `eb6cafb7`), only `Type`,
+  `Prop`, `Sort`, `where` and `_`. Each bar outside every bracket must then separate
+  constructors or stand beside another, as in `||`, and constructors at no space, one space
+  or four spaces, or on the inductive's own line, are refused. The constructors end at the
+  first line outside every bracket that is not blank and opens neither `  |` nor three
+  spaces, and at a declaration's keyword or `recall` outside every bracket, wherever it
+  stands. A refusal names the first form outside the plain forms, and some, such as a bar
+  after `fun` or `match`, are refused first with a reason of their own.
+
+  Six rules keep the masked text, and its words, those Lean reads, since the plain forms
+  cannot refuse what the masking hides. An inductive may hold no string, char literal,
+  `«...»` name or `»`, whose quoted brackets the masking could pair and which may end a
+  name Lean opened before the inductive; no comment holding `{`, nor a line comment
+  holding `-/`, at which Lean, put within a comment, a `«...»` name or an interpolated
+  string by something earlier such as `'"'`, would leave it while the masking reads no
+  code; no number glued to a word or a quote, as in `0x5matches`, where Lean reads
+  `matches`, nor a quote after a bare `!` or `?`; and no comment opening after anything
+  but a name character or Lean's whitespace (a space or a line break), as in
+  `False \/-(1 : Int)`, where Lean reads `\/` whole. The index refuses, in any file it
+  reads, `/--/`, after which Lean's doc comment, opening with all of `/--`, runs on to a
+  later `-/` where the masking's ends at once; and a notation token holding `--` or `/-`,
+  such as `/--+`, which Lean reads whole. It also refuses a notation with a bar before
+  `=>`, or whose token holds a name character and is no name, and every macro, elaborator
+  and binder-predicate command; `scripts/check_fidelity.py` refuses the elaborator and
+  parser attributes in `Elements/`.
+
+  Four forms hide a use from main's generator too, a limit shared with main and outside
+  #185, left for a follow-up issue: `open Nat in` at column 0 within a constructor; a
+  `'"'` beside a use, which the masking reads as a string (inside an inductive it is
+  refused, as above); an anonymous `instance … where` with equations, which the index does
+  not record; and, in any declaration but an inductive, a comment the masking opens within
+  a token, as in `\/-`. Nor does the index check a `syntax` command's tokens; with every
+  macro and elaborator refused, none is known to take a meaning in `Elements/`, but that
+  is untested.
+
+  Fourth, those proofs call `List.mem_nil_iff` and `List.forall_mem_cons`, so **the core
+  allowlist gains these two names, `mem_nil_iff` and `forall_mem_cons`,** which the
+  manifest's `core_projection_allowlist` lists. The coordinator ruled that adding a name
+  which really is a Lean core lemma is upkeep of the list, not a widening of its
+  exemption, provided each is shown to be core. Both are: the toolchain's `lean` (4.35.0,
+  commit `eb6cafb7`), with no Mathlib and no project import, on a scratch file outside the
+  repository holding `#check @List.mem_nil_iff` and `#check @List.forall_mem_cons`, prints
+
+  ```
+  @List.mem_nil_iff : ∀ {α : Type u_1} (a : α), a ∈ [] ↔ False
+  @List.forall_mem_cons : ∀ {α : Type u_1} {p : α → Prop} {a : α} {l : List α},
+    (∀ (x : α), x ∈ a :: l → p x) ↔ p a ∧ ∀ (x : α), x ∈ l → p x
+  ```
+
+  At the revisions tested then, `tests/test_jev_questions.py` had 58 cases, and Lean
+  compiled all 95 texts its reconciler cases built. On fresh clones of main (`73b97ab1`) and
+  of the superposition branch (`4c579527`), the generator gave 338 rows with no unresolved
+  name, byte for byte those of the generator before the `/--/` and notation-token rules, and
+  all 58 cases passed with the two changed files copied in, so the issue's third condition
+  was met. Before the superposition code (`8e9a1879`), the questions were byte for byte
+  those of main's own generator, and the manifest differed only by the two allowlist names.
+  The delivered revision adds cases for suffixed Lean identifiers, `import!` and `def!`
+  among them, dedented constructors and multiline comments within import headers; the
+  module has 60 cases, and all 60 pass. Protected files changed:
+  `scripts/audit/jev_questions.py` and `tests/test_jev_questions.py`. No expected value,
+  schema or review record changes; CI does not run the test yet (#157).
+
 - **Train C6a meets axiom wave one: the lock is main's 79 axioms and the centre rule.**
   Train C6a, which carries stage 3, the mixed angles, the rule that every circle has a
   centre and brief 0008's section 7, was merged with main at `2e8aecf`, after the eight
@@ -4569,7 +4663,6 @@ findings:
   train's.
   `lakefile.toml` and `lean-toolchain` do not change. No statement, check or expected value
   changes in this entry.
-
 - **The decision entries' render test counts the entries in the folder
   ([#242](https://github.com/jackChallis/stoicheia/issues/242)).**
   [`tests/test_decision_entries.py`](../../tests/test_decision_entries.py), whose
@@ -4592,7 +4685,6 @@ findings:
   October 2026, wrote: "the expected count read from the folder's existing entries, so the
   assertion stays exact. I approve it as a correction, not a weakening." The protected file
   changed is `tests/test_decision_entries.py`.
-
 - **Ways past the forbidden-command scan
   ([#197](https://github.com/jackChallis/stoicheia/issues/197)).** An independent reviewer
   found three files that `lake build` accepts and the source scan of
