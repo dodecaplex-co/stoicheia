@@ -72,7 +72,8 @@ theorem Prop1.within {A B D G : Point} {ABC : Circle} (hG : Centre G ABC) (hA : 
 /-- At a point A of the straight line AD, only one straight line is at right
 angles to it. Euclid takes this for granted in "the greater to the less". With E
 and F on one side of AD, the equal right angles put F on AE; on opposite
-sides, EA produced beyond A makes a right angle on F's side. -/
+sides, EA produced beyond A makes a right angle on F's side, since the two angles at
+A with AD, one of them right, together make two right angles [I. 13]. -/
 theorem Prop1.perpendicular {A D E F : Point} (hE : Triangle D A E) (hF : Triangle D A F)
     (hDAE : ∠ D A E = ∟) (hDAF : ∠ D A F = ∟) : Collinear A E F := by
   have hAD : A ≠ D := hE.ne₁₂.symm
@@ -85,7 +86,12 @@ theorem Prop1.perpendicular {A D E F : Point} (hE : Triangle D A E) (hF : Triang
     obtain ⟨E', hE'_M, hEAE', -⟩ := Postulate2 hE_M hA_M hE.ne₂₃.symm []
     have hD_M : ¬ OnLine D M := fun hD => hE ⟨M, hD, hA_M, hE_M⟩
     have hEAD : ∠ E A D = ∟ := by rw [angle_symm hE.ne₂₃.symm hE.ne₁₂]; exact hDAE
-    have hDAE' : ∠ D A E' = ∟ := (adjacent_eq_of_right hE_M hE'_M hEAE' hD_M hEAD).symm.trans hEAD
+    /- The angles EAD, DAE' together make two right angles [I. 13]; EAD is right, so
+       taking it away leaves DAE' right [C.N. 3]. -/
+    have h13 : ∠ E A D + ∠ D A E' = ∟ + ∟ :=
+      BookI.Prop13 hEAE' (Triangle.of_line hE_M hE'_M (ne_of_between_ends hEAE') hD_M)
+    rw [hEAD, add_comm ∟] at h13
+    have hDAE' : ∠ D A E' = ∟ := CommonNotion3 h13 rfl
     have hE'_L : ¬ OnLine E' L := fun h => hE_L (on_line_of_between (between_symm hEAE') h hA_L)
     have hFE' : SameSide F E' L := same_side_of_opposite_sides
       ⟨hE_L, hF_L, fun h => hs (same_side_symm h)⟩ ⟨hE_L, hE'_L, pasch3 hEAE' hA_L⟩
@@ -142,7 +148,7 @@ theorem Prop1.construction {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
     hCFE, hCF⟩
 
 /-- To find the centre of a given circle. -/
-theorem Prop1 {A B : Point} {ABC : Circle} (hABC : ∃ G : Point, Centre G ABC) (hA : OnCircle A ABC)
+theorem Prop1 {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
     (hB : OnCircle B ABC) (hAB : A ≠ B) :
     ∃ F C D E : Point, Centre F ABC ∧ Between A D B ∧ ‖A D‖ = ‖D B‖ ∧ OnCircle C ABC ∧
       OnCircle E ABC ∧ Between C D E ∧ ∠ A D C = ∟ ∧ Between C F E ∧ ‖C F‖ = ‖F E‖ := by
@@ -165,7 +171,7 @@ theorem Prop1 {A B : Point} {ABC : Circle} (hABC : ∃ G : Point, Centre G ABC) 
   have hC_L : ¬ OnLine C L := (show Triangle A B C from hC_AB).off_line hA_L hB_L
   -- I say that F is the centre of the circle ABC.
   -- For suppose it is not, but, if possible, let G be the centre,
-  obtain ⟨G, hG⟩ := hABC
+  obtain ⟨G, hG⟩ := exists_centre ABC
   have hG_N : OnLine G N := by
     refine Classical.byContradiction fun hG_N => ?_
     -- and let GA, GD, GB be joined.
@@ -250,5 +256,21 @@ theorem Prop1.porism {A B C D G : Point} {ABC : Circle} (hG : Centre G ABC) (hA 
   have hADG : ∠ A D G = ∟ := Postulate4 ⟨B, hADB, hDAG.bac, h8⟩
   have hDAC : Triangle D A C := Triangle.of_line hD_L hA_L hDA hC_L
   exact Prop1.perpendicular hDAC.bac hDAG.bac hADC hADG
+
+/-- **III.1 for a circle alone.** Given only a circle, Euclid's construction finds its
+centre: two points A, B of the circle are taken (Points 7), and III.1 runs on the straight
+line AB, drawn "through it at random". It returns A and B with III.1's points; that A and B
+differ follows from `Between A D B`. A lemma beside III.1, after its porism, with no
+certificate entry: it rests on what III.1 rests on and on Points 7, which III.1 does not
+use. For the bare existence of a centre, cite the rule itself. -/
+theorem Prop1.of_circle (ABC : Circle) :
+    ∃ A B F C D E : Point, OnCircle A ABC ∧ OnCircle B ABC ∧ Centre F ABC ∧
+      Between A D B ∧ ‖A D‖ = ‖D B‖ ∧ OnCircle C ABC ∧ OnCircle E ABC ∧ Between C D E ∧
+      ∠ A D C = ∟ ∧ Between C F E ∧ ‖C F‖ = ‖F E‖ := by
+  obtain ⟨A, hA, -⟩ := exists_point_on_circle ABC []
+  obtain ⟨B, hB, hBA⟩ := exists_point_on_circle ABC [A]
+  have hAB : A ≠ B := fun e => hBA (e ▸ List.mem_singleton_self A)
+  obtain ⟨F, C, D, E, h⟩ := Prop1 hA hB hAB
+  exact ⟨A, B, F, C, D, E, hA, hB, h⟩
 
 end Elements.BookIII

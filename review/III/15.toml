@@ -1,16 +1,17 @@
 # review/III/15.toml
 [statement]
 scope = "full"
-note = "With its companions: `Prop15.le_diameter` bounds every straight line by the diameter, `Prop15.nearer` compares any two; `Prop15` keeps Euclid's figure."
+note = "E and the feet are given. `Prop15.le_diameter` bounds any straight line; `Prop15.nearer` compares any two, a diameter at no distance; `Prop15` keeps the figure."
 companions = ["III.15 le_diameter", "III.15 nearer"]
 fingerprint = "sha256:c0f5cead6405c5bd"
 
 [route]
 kind = "euclid"
-note = "`Prop15.le_diameter` uses Euclid's triangle inequality step [I. 20] when BC does not pass through E, and treats diameters and coincident endpoints separately. `Prop15.nearer` takes two straight lines not through the centre from `Prop15`, by his argument [III. 14, I. 24], and a nearer diameter from `Prop15.le_diameter`."
+note = "`Prop15.le_diameter` uses Euclid's step [I. 20], two sides of a triangle together greater than the third, when BC does not pass through E, and treats diameters and coincident endpoints separately. `Prop15.nearer` takes two straight lines not through the centre from `Prop15`, by his argument [III. 14, I. 24], and a nearer diameter from `Prop15.le_diameter`. `Prop15` and `Prop15.nearer` rest on `Tacit.exists_centre` through III.14 and III.2; `Prop15.le_diameter` does not."
 
-[representation]
-tags = ["centre-given"]
+[[passage]]
+at = "For from the centre E let EH, EK be drawn"
+kind = "given"
 note = "The centre E and the perpendiculars EH, EK are given, since Definition III.5 measures from them, and \"nearer\" is `‖E H‖ < ‖E K‖`. The companion `Prop15.nearer` is given the feet as `Foot`, the foot of the perpendicular, which is E itself for a straight line through E, so that the nearer may be a diameter, at no distance."
 
 [[passage]]
@@ -33,6 +34,6 @@ case = "AD a diameter, neither BC nor FG through E, and EH less than EK"
 
 [review]
 stage = "exceptions"
-commit = "76d63fec"
+commit = "38b6a392"
 reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:a0e46ff3b62482ad"
+lean = "sha256:2a71c56e1b84004f"
