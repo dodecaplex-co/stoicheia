@@ -316,8 +316,10 @@ def unfoldHead? (env : Environment) (toolchain : NameSet) (e : Expr) : m (Option
 
 /-- Field `i` of the structure value `s`: `s`'s head unfolded while it is a definition of
 this project, and a `let` at its head substituted into its body, until it is a constructor
-applied to its arguments. `none` when it never is, as for a structure given by an opaque
-word or a variable. -/
+applied to its arguments. A projection at its head, of a structure nested in another or of
+a field that is a function, is read the same way, and the field it names, applied to the
+projection's arguments, takes its place. `none` when there is never a constructor, as for
+a structure given by an opaque word or a variable. -/
 def projField? (env : Environment) (toolchain : NameSet) (s : Expr) (i : Nat) :
     m (Option Expr) := do
   let mut s := s.consumeMData.headBeta
@@ -348,8 +350,8 @@ def projField? (env : Environment) (toolchain : NameSet) (s : Expr) (i : Nat) :
 keep the polarity of their parts, `Not` and the left of an implication (a `∀` binder's type)
 flip it, and both sides of an `Iff` are read at both. A definition of this project is
 unfolded where it stands, a `let` is substituted into its body, a projection of a structure
-this project defines (an instance's `≤`) is read through the definition that gives it, and
-anything else is a leaf that asserts no existence. -/
+that a definition of this project gives (an instance's `≤`) is read through that
+definition, and anything else is a leaf that asserts no existence. -/
 def assertsExists (env : Environment) (toolchain : NameSet) (fuel : Nat) (pos : Bool)
     (e : Expr) : m Bool := do
   match fuel with
@@ -369,10 +371,6 @@ def assertsExists (env : Environment) (toolchain : NameSet) (fuel : Nat) (pos : 
       match e.getAppFn with
       | .lam .. => go pos e.headBeta
       | .letE _ _ v b _ => go pos (mkAppN (b.instantiate1 v) args)
-      | .proj _ i s =>
-        match ← projField? env toolchain s i with
-        | some f => go pos (f.beta args)
-        | none => return false
       | .const n _ =>
         if n == ``Exists then
           if pos then return true

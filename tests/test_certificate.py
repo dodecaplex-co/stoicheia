@@ -29,17 +29,19 @@ own files, so a reached declaration of Lean.Data.Position still ends a walk.
 
 A third fixture, tests/fixtures/CertificateCited.lean, imports the repository's compiled
 foundations themselves. Its own axioms are the cases of a construction rule: existence
-asserted directly, through a definition, through an applied projection, through a
-let-bound structure, through a let at an application's head, through an inherited
-instance's order, twice negated, in an Iff and in an Or, each counted; existence
-negated (Triangle), behind an implication inside a definition, assumed in a hypothesis,
-or absent, none counted. Its entries cite laws through one shared theorem that proves a
-list of laws by cases (I.1), whose proofs the walk finds, and law by law, naming each law's
-proof (I.2), which is listed alone: each law with its proofs, where Lean declares them,
-and the construction rules beneath them, in the order of the Cited type. A proof reached
-only through another entry is not found (I.3); a named proof that leaves another proof
-reached outside it lists every proof reached, with all their rules (I.6); and a law named
-with no proof found fails the run (I.5).
+asserted directly, through a definition, through a projection of a structure that a
+definition gives, through a projection reached through nested structures and through a
+function's arguments, through an inherited instance's order, through a let-bound
+structure, through a let at an application's head, twice negated, in an Iff and in an
+Or, each counted; existence negated, outright or by a definition (Triangle), behind an
+implication inside a definition, assumed in a hypothesis, absent, or only in a field the
+statement does not read, none counted. Its entries cite laws through one shared theorem
+that proves a list of laws by cases (I.1), whose proofs the walk finds, and law by law,
+naming each law's proof (I.2), which is listed alone: each law with its proofs, where Lean
+declares them, and the construction rules beneath them, in the order of the Cited type. A
+proof reached only through another entry is not found (I.3); a named proof that leaves
+another proof reached outside it lists every proof reached, with all their rules (I.6);
+and a law named with no proof found fails the run (I.5).
 
 A fourth class reads the forms of tests/certificate_expectations.json as
 scripts/check_fidelity.py does, on small facts and without Lean: a cited law's
@@ -301,9 +303,10 @@ class ConstructionTests(unittest.TestCase):
     """The construction rules and the cited laws, on tests/fixtures/CertificateCited.lean
     over the repository's compiled foundations (#150, question 4)."""
 
-    CONSTRUCTS = ("plain", "circles", "line_circle", "lines", "by_instance", "twice_negated",
-                  "in_iff", "in_or")
-    DOES_NOT = ("triangle", "not_collinear", "empty", "assumed", "equal", "prop7_law")
+    CONSTRUCTS = ("plain", "circles", "line_circle", "lines", "by_projection",
+                  "by_nested_projection", "by_instance", "twice_negated", "in_iff", "in_or")
+    DOES_NOT = ("triangle", "not_collinear", "empty", "assumed", "equal", "other_field",
+                "prop7_law")
 
     @classmethod
     def setUpClass(cls):
@@ -344,8 +347,16 @@ class ConstructionTests(unittest.TestCase):
     def test_rule_through_an_inherited_instance_projection(self):
         self.assertIn("CitedFixture.by_instance", self.facts["construction_rules"])
 
-    def test_rule_through_an_applied_projection(self):
-        self.assertIn("CitedFixture.line_circle", self.facts["construction_rules"])
+    def test_rule_through_a_projection_of_a_definitions_structure(self):
+        self.assertIn("CitedFixture.by_projection", self.facts["construction_rules"])
+
+    def test_rule_through_nested_structures_and_a_functions_arguments(self):
+        # `(twoFamily.pick L).holds L α`: the second field of `twoFamily`, a function, is
+        # applied to `L`, and the second field of what it gives is read. Its first field,
+        # which asserts no existence, must not be read in its place.
+        rules = self.facts["construction_rules"]
+        self.assertIn("CitedFixture.by_nested_projection", rules)
+        self.assertNotIn("CitedFixture.other_field", rules)
 
     def test_rule_through_a_let_bound_structure(self):
         self.assertIn("CitedFixture.circles", self.facts["construction_rules"])
