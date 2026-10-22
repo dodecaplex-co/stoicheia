@@ -9,8 +9,9 @@ into another page and leaves the decisions record as it was.
 
 Standard library and Git only; no Lean or network. Each case's folder is in a Git
 repository of its own, read with no configuration or excludes file but its own.
-scripts/negative_tests.py runs it beside the count regressions, so CI's `negative` job and
-the pre-flight run it on every pull request.
+scripts/negative_tests.py runs it beside the count regressions, so CI's `negative` job runs
+it on every pull request of class R3 and above (scripts/risk.py), the cadence every six hours
+on main, and the pre-flight on every pull request.
 """
 
 import contextlib
