@@ -56,7 +56,7 @@ note = "Euclid takes the angles FBD and DFB to be equal because each is half a r
 [[passage]]
 at = "But the square on EF is equal to the squares on EG, GF"
 kind = "helper"
-helper = "Prop47.sq"
+helper = "BookI.Prop47.sq"
 note = "Euclid gives the square on EF as the squares on EG and GF together, without a reference here. The Lean applies I.47 to the triangle EGF, whose angle at G has been proved right."
 
 [[passage]]
