@@ -55,7 +55,15 @@ case = "AD a diameter, neither BC nor FG through E, and EH less than EK"
 
 [review]
 stage = "full"
-commit = "38b6a392"
+commit = "d8011767"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:2a71c56e1b84004f"
 run = "brief 0005 stage 5, ship R3 (#29)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "fail"
+figures = "pass"
+signoff = "pass"

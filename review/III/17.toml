@@ -49,7 +49,15 @@ case = "A outside the circle, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "b9f6a766"
+commit = "d8011767"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:8fc1257893f4e28c"
 run = "brief 0005 stage 5, ship R3 (#29); Prop1.of_circle, written by Claude, read also by GPT-6 Astra (Codex) (for III.1)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
