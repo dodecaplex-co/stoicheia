@@ -1414,6 +1414,11 @@ independent reader of the other model family reads both records again and stamps
 until then they are stale, as WORKFLOW, section 6, expects. #116 closes when that is done
 and the revision lands.
 
+*Status, 22 October 2026.* GPT-6 Astra (Codex), reading independently, stamped both
+records, last at `48092431`, after the merge of main's read-through. The withdrawal of the
+acceptance allowance is the check change that follows this one; #116 closes when both have
+landed.
+
 ## Appendix: the challenge of 19 October
 
 A first mate who wrote none of the draft read it and every staged file as an adversarial
