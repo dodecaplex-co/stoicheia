@@ -1,11 +1,11 @@
 # exhaustive: every configuration on small grids
 # command: python3 -I tests/model/exhaustive.py
 # seeds: 7 (for area_congruent's isometries)
-# commit: 82977b5ae716aca71a5755700bebee8f7d3e70d4 (harness files differ from this commit)
+# commit: 22252498cb7c5e4cd68caa48b2d5f1205706018e (harness files as committed)
 # harness sha256: 93382ee0c635ff0b9157b415c8511dcf2e8170309ec46cc58af43c0d895008c8
 # python: 3.14.2 (CPython, Darwin arm64)
 # date: 2026-10-21
-# time: 107.0 s
+# time: 101.6 s
 
 grid 25 pts, 140 lines; circle grid 81 pts, 72 circles
 axiom / derived property                    configs  hyp held    cex
@@ -29,15 +29,15 @@ derived.same_side_or                        2187500    595104      0     1.7s
 derived.pasch1                              2187500     17160      0     1.1s
 pasch2                                      2187500      3872      0     1.1s
 derived.pasch3                              2187500      3856      0     1.1s
-derived.same_side_symm                        87500     45192      0     0.1s
+derived.same_side_symm                        87500     45192      0     0.0s
 not_on_line_of_same_side                      87500     45192      0     0.0s
 derived.same_side_refl                         3500      3160      0     0.0s
 derived.pasch4                                41372      3552      0     0.0s
 lines_meet_of_opposite_sides                 131600     26248      0     0.1s
 line_unique                                  117100       600      0     0.0s
 derived.triple_incidence1                   1335532     77960      0     1.7s
-derived.triple_incidence2                   1335532     77960      0     1.8s
-derived.triple_incidence3                  33388300    315152      0    44.9s
+derived.triple_incidence2                   1335532     77960      0     1.7s
+derived.triple_incidence3                  33388300    315152      0    40.3s
 angle_add_of_inside                          885100     77960      0     1.0s
 derived.inside_of_angle_add                  885100     77960      0     1.1s
 derived.adjacent_eq_of_right                  76300      1072      0     0.1s
@@ -63,18 +63,18 @@ derived.centre_inside                          5832        72      0     0.0s
 derived.inside_not_on                          5832      1260      0     0.0s
 Definition15                                 268272      2448      0     0.1s
 derived.on_circle_of_len_eq                  268272      2448      0     0.1s
-derived.inside_of_len_lt                    8470728      5776      0     2.9s
-derived.len_lt_of_inside                    8470728      5776      0     2.9s
+derived.inside_of_len_lt                    8470728      5776      0     2.8s
+derived.len_lt_of_inside                    8470728      5776      0     2.8s
 circle_eq                                    156816      2448      0     0.1s
 between_of_inside_chord                       44924      3228      0     0.1s
 derived.inside_of_between                    857088     76104      0     2.2s
-outside_of_between                          1399680    281664      0     3.4s
+outside_of_between                          1399680    281664      0     3.3s
 derived.not_same_side_of_circles_meet         53976      1704      0     0.0s
-circles_meet_same_side                       802816    216488      0     1.0s
-derived.circles_meet_opposite_side           802816    216488      0     1.0s
+circles_meet_same_side                       802816    216488      0     0.9s
+derived.circles_meet_opposite_side           802816    216488      0     0.9s
 derived.circles_meet_of_on_inside_outside    2309472     49616      0     1.6s
 circles_meet                                 156816     10668      0     0.1s
-derived.line_meets_circle_of_opposite_sides   22578464   6161192      0    22.5s
+derived.line_meets_circle_of_opposite_sides   22578464   6161192      0    22.4s
 derived.line_meets_circle_of_inside          109728     30204      0     0.0s
 line_circle_between                          398880     44088      0     0.3s
 line_circle_beyond                           398880     80320      0     0.3s

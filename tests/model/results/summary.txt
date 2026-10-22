@@ -1,4 +1,4 @@
-# commit: 82977b5ae716aca71a5755700bebee8f7d3e70d4 (harness files differ from this commit)
+# commit: 22252498cb7c5e4cd68caa48b2d5f1205706018e (harness files as committed)
 # harness: 93382ee0c635ff0b9157b415c8511dcf2e8170309ec46cc58af43c0d895008c8
 # python: 3.14.2 (CPython, Darwin arm64)
 # date: 2026-10-21
