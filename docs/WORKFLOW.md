@@ -752,10 +752,11 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       its place, its rule, its value's SHA-256 and the reason, never by its line. The
       scan reads what the push sends: every git command `safe_push.py` runs itself, the
       scan's among them, reads with git's replacement objects off, whatever the caller's
-      environment holds (#256). The checks it runs keep the environment they are given,
-      which holds `GIT_NO_REPLACE_OBJECTS` under the launcher or after a hand-over, and
-      otherwise only if the caller set it; `check_acceptance.py`, the only check that
-      reads git's objects for its verdict, is #237's.
+      environment holds (#256), its `git status` check among them. The programs it runs
+      as checks keep the environment they are given, which holds `GIT_NO_REPLACE_OBJECTS`
+      under the launcher or after a hand-over, and otherwise only if the caller set it;
+      `check_acceptance.py`, the only check that reads git's objects for its verdict, is
+      #237's.
    3. *Invariant guards,* against origin/main, in the temporary worktree:
       - no statement changed (facts.json's `statement`, and the Lean source of the
         theorem, its porism and its companions, to its own `:=`, whitespace aside) unless

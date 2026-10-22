@@ -47,12 +47,12 @@
   replacements off, what the checks are given, and that an installed hook or launcher
   takes the change only when `sh scripts/install_hooks.sh` is run again from a checkout of
   origin/main.
-  What remains is not this entry's. The checks the pre-flight runs are not among the git
-  commands `safe_push.py` runs itself: they keep the environment `tool_env()` copies, so
-  under the launcher or after a hand-over they get the variable too, and otherwise only if
-  the caller set it, and they are not given the `-c`; `check_acceptance.py`, the only
-  check that reads git's objects for its verdict, is
-  [#237](https://github.com/jackChallis/stoicheia/issues/237)'s. And
+  What remains is not this entry's. The programs the pre-flight runs as checks are not
+  among the git commands `safe_push.py` runs itself, though its `git status` check is
+  one: they keep the environment `tool_env()` copies, so under the launcher or after a
+  hand-over they get the variable too, and otherwise only if the caller set it, and they
+  are not given the `-c`; `check_acceptance.py`, the only check that reads git's objects
+  for its verdict, is [#237](https://github.com/jackChallis/stoicheia/issues/237)'s. And
   [#218](https://github.com/jackChallis/stoicheia/issues/218) stays open. Its third item
   asks for replacement objects off in all of safe_push's own git calls, which `run()` now
   gives, and for `core.fsmonitor` pinned off there too, which this entry leaves to it. No

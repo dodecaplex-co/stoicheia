@@ -131,12 +131,12 @@ one commit and runs safe_push.py against that origin:
 - replacement objects (#256), which git reads in place of the objects they replace while
   a push sends the originals: a token behind a clean stand-in, by `git replace` or in a
   folder GIT_REPLACE_REF_BASE names, is refused by the pre-push hook and by the
-  pre-flight's scan, and so it is with core.useReplaceRefs=true in the clone's config; a
-  commit whose message holds a token, behind a clean commit, and a stand-in for
-  origin/main's allow-list that would allow a token are refused by the pre-flight; a
-  stand-in for origin/main's safe_push.py is not what the hook runs, the launcher copies
-  out, or the hand-over compares; and a clean push beside a replacement passes, each test
-  removing what it planted;
+  pre-flight's scan, and so it is, by `git replace`, with core.useReplaceRefs=true in the
+  clone's config; a commit whose message holds a token, behind a clean commit, and a
+  stand-in for origin/main's allow-list that would allow a token are refused by the
+  pre-flight; a stand-in for origin/main's safe_push.py is not what the hook runs, the
+  launcher copies out, or the hand-over compares; and a clean push beside a replacement
+  passes, each test removing what it planted;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks

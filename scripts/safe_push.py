@@ -46,9 +46,10 @@ order, and the first that fails stops it with a message saying why:
    An allowed finding is noted in the pull request by its place, its rule, its value's
    SHA-256 and the reason, never by its line. Every git command safe_push.py runs itself
    (run()) reads with git's replacement objects off, whatever the caller's environment
-   holds, since a push sends the originals (#256). The checks it runs are not among them:
-   they keep the environment tool_env() copies, which holds GIT_NO_REPLACE_OBJECTS under
-   the launcher or after a hand-over, and otherwise only if the caller set it.
+   holds, since a push sends the originals (#256); its `git status` check is one of them.
+   The programs it runs as checks are not: they keep the environment tool_env() copies,
+   which holds GIT_NO_REPLACE_OBJECTS under the launcher or after a hand-over, and
+   otherwise only if the caller set it.
 3. Invariant guards against origin/main, in a fresh temporary worktree of the commit. A
    new decision is a dated entry of its own, docs/decisions/<YYYY-MM-DD>-<slug>.md, which
    the push adds (docs/WORKFLOW.md, section 10, "Decision entries"); 0002-decisions.md,
@@ -434,7 +435,9 @@ class NothingToPush(Exception):
 
 
 def without_replacements(env=None) -> dict:
-    """A copy of `env` (os.environ when None) in which git reads no replacement objects."""
+    """A copy of `env` (os.environ when None) with GIT_NO_REPLACE_OBJECTS=1 and no
+    GIT_REPLACE_REF_BASE. Git from 2.19 to 2.41 still lets core.useReplaceRefs=true in
+    config override it, which run() pins off (NO_REPLACE_REFS)."""
     env = dict(os.environ if env is None else env)
     env.pop("GIT_REPLACE_REF_BASE", None)
     env["GIT_NO_REPLACE_OBJECTS"] = "1"
