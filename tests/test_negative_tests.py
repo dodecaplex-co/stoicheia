@@ -766,6 +766,17 @@ class BookZeroImportTests(unittest.TestCase):
             "the import scan does not follow",
         ])
 
+    def test_a_lone_carriage_return_in_a_followed_file_hides_no_import(self):
+        # Bridge.lean, a root module the scan does not read for rule 4, read from its bytes
+        # as Lean reads it: its `--` comment ends at the line feed, not at the lone `\r`, so
+        # the quote after the `\r` opens no string, and the import on the next line is read.
+        (self.root / "Bridge.lean").write_bytes(
+            b'-- a remark\r"\nimport Elements.BookI.Prop01\n-- "\n')
+        self.assertEqual(self.findings("import Bridge\n"), [
+            f"{self.refused(1)}, and `Bridge` brings one in: Bridge.lean imports "
+            "`Elements.BookI.Prop01`",
+        ])
+
     def test_a_cycle_ends_and_files_outside_book_zero_may_import_propositions(self):
         (self.root / "Elements/Foundations/Words.lean").write_text(
             "import Elements.Figure.Lines\n")

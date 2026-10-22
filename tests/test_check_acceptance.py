@@ -24,7 +24,12 @@ these cases put it to small files of verdicts, each with the outcome it should g
   the check printed it and in which neither S12 nor the report's other text rules find
   anything again (issue #178);
 * CI copies the pull request's checks into main but keeps main's content pins, so an
-  updated definition or expected count cannot hide a later E2 failure.
+  updated definition or expected count cannot hide a later E2 failure;
+* P10 and E6 read a staged file's imports as check_fidelity's rule 3 reads Book Zero's
+  (#200): in each spelling of an import that scripts/negative_tests.py's Book Zero plants
+  use, a file that imports I.1 stages a declaration for it, an import the scan cannot
+  read fails E6 on its line, and the same import only in a comment, a remark or a string
+  ties the file to nothing.
 
 CI runs this file before the checker. Python 3.11 or later; standard library, with sh and
 rsync for scripts/copy_acceptance_checks.sh, the helper the workflow runs.
@@ -46,6 +51,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import check_acceptance as ca  # noqa: E402
+import negative_tests as negative  # noqa: E402
 
 
 def run_file(verdicts: dict, checker: str = "sha256:same", revision: str = "abc1234",
@@ -515,6 +521,76 @@ class BaselineCopy(unittest.TestCase):
                 self.assertEqual(code, 1, out.getvalue())
                 self.assertIn("edition, E2 certificate: fail", out.getvalue())
                 self.assertEqual(before["verdicts"]["edition"]["E2"], "pass")
+
+
+class StagedImports(unittest.TestCase):
+    """P10 and E6 on a small tree, without Lean (#200): a staged file's imports read as
+    check_fidelity's rule 3 reads Book Zero's, through whitespace, comments and «…» names,
+    and never in a comment or a string."""
+
+    rel = "Staging/Planted/Planted.lean"
+    # `Prop1` with no book, in a folder that names none: only an import ties it to I.1.
+    declaration = "\ntheorem Planted.Prop1.statement : True := trivial\n"
+
+    def setUp(self):
+        self.root = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+        self.enterContext(patch.object(ca, "ROOT", self.root))
+        self.enterContext(patch.object(ca, "failures", {}))
+
+    def verdicts(self, text: str) -> dict:
+        """What P10 and E6 find with `text` and the declaration staged at `rel`."""
+        path = self.root / self.rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text + self.declaration, encoding="utf-8")
+        ca.failures.clear()
+        ca.check_staging()
+        return dict(ca.failures)
+
+    def ties(self, ref: str) -> dict:
+        return {(ref, "P10"): [f"{self.rel} still stages declarations for {ref}: once proved, "
+                               "a statement moves to Elements/ and its staged copy is deleted"]}
+
+    def no_one(self, count: int = 1) -> str:
+        return (f"{self.rel} still stages {count} declaration(s), for no one proposition: "
+                "move them to Elements/ or retire them")
+
+    def test_each_spelling_of_the_book_zero_plants_ties_the_file_to_its_proposition(self):
+        for what, text, *extra in negative.BOOK_ZERO_SPELLINGS:
+            with self.subTest(what=what):
+                found = self.verdicts(text)
+                line = text.count("\n", 0, text.rindex("import")) + 1
+                if "Elements.Companions" in text:
+                    # P10 reads the module a file names, not what that module brings in.
+                    self.assertEqual(found, {("edition", "E6"): [self.no_one()]})
+                elif extra and "cannot read this import for certain" in extra[0]:
+                    self.assertEqual(found, {("edition", "E6"): [
+                        f"{self.rel}:{line}: an import the scan cannot read for certain, so "
+                        "which proposition this file stages declarations for cannot be told: "
+                        "each part of the module's name must be a plain name, in «…» or not, "
+                        "and whitespace must follow it",
+                        self.no_one()]})
+                else:
+                    self.assertEqual(found, self.ties("I.1"))
+
+    def test_the_same_import_in_a_comment_or_a_string_ties_the_file_to_nothing(self):
+        _, text = negative.BOOK_ZERO_TEXT
+        self.assertEqual(self.verdicts(text), {("edition", "E6"): [self.no_one(3)]})
+        # Each holds the import at the start of a line, as a reading of the raw text found it.
+        for text in ("/-\nimport Elements.BookI.Prop01\n-/\n",
+                     "/- /- -/\nimport Elements.BookI.Prop01\n-/\n",
+                     'def s := "\nimport Elements.BookI.Prop01"\n',
+                     "def s := r#\"\nimport Elements.BookI.Prop01\"#\n"):
+            with self.subTest(text=text):
+                self.assertNotIn(("I.1", "P10"), self.verdicts(text))
+
+    def test_an_import_of_one_book_alone_ties_the_file(self):
+        self.assertEqual(self.verdicts("import «Elements».«BookIII».Prop01\n"),
+                         self.ties("III.1"))
+        self.assertEqual(self.verdicts("import Elements.BookII.Prop01.Aux\n"),
+                         self.ties("II.1"))
+        self.assertEqual(self.verdicts("import Elements.BookI.Prop01\n"
+                                       "import  Elements.BookII.Prop01\n"),
+                         {("edition", "E6"): [self.no_one()]})
 
 
 if __name__ == "__main__":
