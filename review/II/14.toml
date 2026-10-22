@@ -56,8 +56,8 @@ note = "Euclid uses the equality of the radii GF and GH without giving a reason.
 [[passage]]
 at = "But the squares on HE, EG are equal to the square on GH"
 kind = "helper"
-helper = "Tacit.adjacent_eq_of_right"
-note = "Euclid takes the right angle HEG for granted when he applies I.47. The Lean gets the adjacent right angle BEH from the rectangle's right angle DEB by `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, identifies it with HEG because the proved order B, G, E puts G on the ray EB, and applies `BookI.Prop47.sq`."
+helper = "BookI.Prop13"
+note = "Euclid takes the right angle HEG for granted when he applies I.47. The Lean proves it in place: the angles DEB, BEH on the straight line DH make two right angles by I.13, taking away the rectangle's right angle DEB leaves BEH right by Common Notion 3, and the proved order B, G, E puts G on the ray EB, so that HEG is the angle HEB; then `BookI.Prop47.sq` applies I.47."
 
 [representation]
 tags = ["figure-with-dissection", "side-not-square"]
@@ -68,10 +68,10 @@ case = "BE greater than ED, as in Heath's figure, with the figure A of two trian
 
 [review]
 stage = "full"
-commit = "b58079e0"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:a1911148d8503c4f"
-run = "card 220, cross-family sign-off: Prop14 as first committed by OpenAI Codex (4bed3129, which says so); later surviving edits at 702c75e2 name BHF and hEG, explain why the angle HEG is right and rewrite the closing equality, in a commit whose message has a Claude Opus 5.5 co-author trailer but does not identify which writer made them. Prop14.rectangle, Prop14.square and Prop14.area_pos by the best of two sailors (c620b12c), which WORKFLOW section 5 gives to two Codex sailors; read by Claude Opus 5.5. Prop14.sum, .apart, .figure and .fan and the closing check written in staging (17fddffc, fdc56e9a, b48640cf, a854f707, 7c8167a5, 4317bc0b), in commits whose messages name no writer beyond the Claude Opus 5.5 co-author line they carry; the step putting E inside the circle adjusted at afc8cec6, whose message names no writer and carries no co-author line, so its writer is unrecorded, and carried into Prop14.rectangle at d15efad6, whose message has a Claude Opus 5.5 co-author trailer but does not identify which writer made it; that step first redone by one of two OpenAI Codex sailors working on separate files, then judged and grafted by their bosun (9c61ddd4). The 702c75e2 edits and the staged and later parts just named were read by GPT-6 Astra (Codex) at 08ddfe3a and by Claude Opus 5.5; ship XS, reader XS-r-II09-II14, independent re-read at 221ad5c2; wave two's text of this record, read in full with the Lean: brief 0005 stage 5, ship F2 wave-two re-read, at b58079e0"
+commit = "d4b21d06"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:762d581715c6dcf3"
+run = "card 220, cross-family sign-off: Prop14 as first committed by OpenAI Codex (4bed3129, which says so); later surviving edits at 702c75e2 name BHF and hEG, explain why the angle HEG is right and rewrite the closing equality, in a commit whose message has a Claude Opus 5.5 co-author trailer but does not identify which writer made them. Prop14.rectangle, Prop14.square and Prop14.area_pos by the best of two sailors (c620b12c), which WORKFLOW section 5 gives to two Codex sailors; read by Claude Opus 5.5. Prop14.sum, .apart, .figure and .fan and the closing check written in staging (17fddffc, fdc56e9a, b48640cf, a854f707, 7c8167a5, 4317bc0b), in commits whose messages name no writer beyond the Claude Opus 5.5 co-author line they carry; the step putting E inside the circle adjusted at afc8cec6, whose message names no writer and carries no co-author line, so its writer is unrecorded, and carried into Prop14.rectangle at d15efad6, whose message has a Claude Opus 5.5 co-author trailer but does not identify which writer made it; that step first redone by one of two OpenAI Codex sailors working on separate files, then judged and grafted by their bosun (9c61ddd4). The 702c75e2 edits and the staged and later parts just named were read by GPT-6 Astra (Codex) at 08ddfe3a and by Claude Opus 5.5; ship XS, reader XS-r-II09-II14, independent re-read at 221ad5c2; card 168, the right angle BEH (and so HEG) proved in place by I.13 and Common Notion 3 in Prop14 and Prop14.rectangle, written by Claude Opus 5.5 at c1d03530, read with the whole record by GPT-6 Astra (Codex); ship F2, reader F2-ii14cx, independent re-read at d4b21d06"
 
 [review.items]
 statement = "pass"
