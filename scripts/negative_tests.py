@@ -1387,6 +1387,10 @@ def main(argv=()) -> int:
                           run(sys.executable, "-I", "tests/test_decision_entries.py")):
         return 1
     print("✓ decision entry regressions passed (without Lean)")
+    if not expect_success("lock regressions",
+                          run(sys.executable, "-I", "tests/test_axiom_lock.py")):
+        return 1
+    print("✓ lock regressions passed (without Lean)")
     if args.counts_only:
         count_markers()
         if failures:

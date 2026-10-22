@@ -450,6 +450,16 @@ def placement_step(step: dict) -> bool:
 
 # The axiom lock, Certificate/axioms.lock.
 
+# The lock's header, byte for byte as the committed lock has it: everything before its
+# `[axioms]` line, but the newline that render_lock's join adds. The header is part of
+# the lock's bytes, which model/lock.sha256, tests/model/lock.sha256 and the model's
+# generated files pin by the lock's sha256, so it changes only with the lock itself, as a
+# lock change: with a decision entry, and the model's hashes renewed.
+# tests/test_axiom_lock.py holds the two together: from the committed facts.json,
+# `--write-lock` gives back the committed lock exactly (#260). The header still names
+# docs/briefs/0002-decisions.md as where a decision is recorded; a new decision is a file
+# of docs/decisions/, as the messages say through DECISION_ENTRY. The header is renewed
+# with the next change of the lock.
 LOCK_HEADER = """\
 # Certificate/axioms.lock
 #
@@ -463,8 +473,7 @@ LOCK_HEADER = """\
 #
 # scripts/check_fidelity.py compares this file with facts.json in both directions, and
 # takes the number of Euclid's assumptions from it. Change it only with a decision,
-# recorded in a decision entry of its own, docs/decisions/<YYYY-MM-DD>-<slug>.md
-# (docs/WORKFLOW.md, section 10, "Decision entries"), and then only by running
+# recorded in docs/briefs/0002-decisions.md, and then only by running
 #
 #     python3 scripts/check_fidelity.py --write-lock
 """
