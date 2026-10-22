@@ -109,7 +109,7 @@ note = "Euclid uses the equality of MK and MB without giving a reason. The Lean 
 [[passage]]
 at = "that is, the nearer to the least DG equal to the more remote"
 kind = "different"
-note = "Euclid appeals to the convex order, which leaves out a DN ending on the concave circumference or a DK touching the circle; the Lean splits the angles at M by `Tacit.lt_trichotomy`, a rule we assume (System E §3.5), and uses I.24 for unequal angles, where Heath prints no reference. For equal angles the Lean uses `onRay_of_angle_eq` and `OnRay.eq_of_len_eq` to make the points coincide; for N on DA, `Prop8.on_diameter`, using `Prop2.triangle` (III.2, for which Heath prints no reference here), gives A or G, which the greatest and least clauses exclude; off DA, it compares N with K on K's side, or uses `same_side_of_opposite_sides` to put N on B's side and compares it with B."
+note = "Euclid appeals to the convex order, which does not cover K and B on the concave circumference, DK touching the circle, or, with K convex, DN ending on the concave circumference or at a point of contact; the Lean splits the angles at M by `Tacit.lt_trichotomy`, a rule we assume (System E §3.5), and uses I.24 for unequal angles, where Heath prints no reference. For equal angles the Lean uses `onRay_of_angle_eq` and `OnRay.eq_of_len_eq` to make the points coincide; for N on DA, `Prop8.on_diameter`, using `Prop2.triangle` (III.2, for which Heath prints no reference here), gives A or G, which the greatest and least clauses exclude; off DA, it compares N with K on K's side, or uses `same_side_of_opposite_sides` to put N on B's side and compares it with B."
 
 [figure]
 case = "DE, DF, DC and DK, DL, DH compared on one side of DA, as in Heath's figure"
