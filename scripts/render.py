@@ -318,10 +318,12 @@ DECLARATION = re.compile(
 class LeanParts:
     """A proposition file cut in three for its page (see `lean_parts`). Each part is
     Lean text, possibly empty, and each `*_names` lists the declarations in it, read from
-    the part's code alone (`before_code`, `after_code`: the same text with its comments
-    blanked), so a docstring line that begins "lemma beside III.13" declares nothing."""
+    its code alone: `before_code` and `after_code` are the same spans of
+    `check_fidelity.without_comments(src)`, comments, docstrings and literals blanked
+    ("" for a part that is empty), so a docstring line that begins "lemma beside III.13"
+    declares nothing."""
 
-    def __init__(self, before, main, after, before_code="", after_code=""):
+    def __init__(self, before, main, after, before_code, after_code):
         self.before, self.main, self.after = before, main, after
         self.before_names = DECLARATION.findall(before_code)
         self.after_names = DECLARATION.findall(after_code)
@@ -344,7 +346,7 @@ def lean_parts(book, n):
     end = end if end >= 0 else len(src)
     span = heath.theorem_span(src, n)
     if span is None:
-        return LeanParts("", src[start:end].strip("\n"), "")
+        return LeanParts("", src[start:end].strip("\n"), "", "", "")
     code = check_fidelity.without_comments(src)  # same offsets, comments blanked
     before = src[start:span.start].strip("\n")
     main = src[span.start:span.end].strip("\n")

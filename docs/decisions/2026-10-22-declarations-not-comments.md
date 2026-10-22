@@ -1,5 +1,6 @@
-- **A page lists only what its Lean declares, never a word from a comment.** III.13's
-  page said that three lemmas follow the theorem, among them `beside`, but
+- **A page lists only what its Lean declares, never a word from a comment
+  (render.py).** III.13's page said that three lemmas follow the theorem, among them
+  `beside`, but
   [`Elements/BookIII/Prop13.lean`](../../Elements/BookIII/Prop13.lean) declares two,
   `Prop13.internally` and `Prop13.externally`. A reader on the Book III records found it,
   and we thank them for it. The cause was in
