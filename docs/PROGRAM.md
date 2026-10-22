@@ -24,8 +24,9 @@ allowed when they are stated plainly where they occur. For I.45 and II.14, the f
 supplied with its checked division into triangles and area is relative to that division; a
 proof of a division from the outline, and independence of area from the division chosen,
 remain pending under [#116](https://github.com/jackChallis/stoicheia/issues/116). In Book
-III, the limitations are the mixed angles of III.16 and III.31, and the places where a
-System E rule already contains a proposition (III.2).
+III, the limitations are the restricted statements of III.14, III.15 and III.25, which
+stage 4 takes up, and the places where System E's rules already contain a proposition
+(III.2, and III.5 and III.6 with rules together).
 
 ## 2. How a book is made, in parallel
 
@@ -67,7 +68,7 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 |---|---|---|---|---|---|---|
 | I | 48 of 48 proved, and I.15's porism and nine companion theorems | released (next: I.45 outline coverage and independence of division, #116) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
 | II | 14 of 14 proved, and eight companion theorems | released (next: II.14 outline coverage and independence of division, #116) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
-| III | 37 of 37 proved, and the porisms of III.1 and III.16 and three companion theorems | released (next: stage 3/4 migrations; mixed angles; centre rule; full records) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
+| III | 37 of 37 proved, and the porisms of III.1 and III.16 and 11 companion theorems | released (next: stage 4 migration, #28; centre-rule restatements, #59; full records, #29) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
 | IV | not stated | brief (draft, awaiting approval) | — | — | — | — |
 | V–XIII | not begun | — | — | — | — | — |
 
@@ -98,8 +99,8 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 1b | Standards: AGENTS.md, STYLE, FORMALIZATION, WORKFLOW, templates, `check_style.py` | done, 17 Oct |
 | — | Release of Book III | [done, 17 Oct](https://github.com/jackChallis/stoicheia/releases/tag/book-III); Book I and II notes corrected |
 | 2 | I.40 and II.1 general; I.45 and II.14 with supplied divisions | done, 18 Oct: proved in Staging ([#88]), and in the edition with their records ([#19], [#102](https://github.com/jackChallis/stoicheia/pull/102)); I.45 and II.14 restricted from 20 Oct, for figures supplied with a checked division, until the proof from the outline ([#116]) |
-| 3 | Arcs and segments; III.24 | proved in Staging ([#89]); the move into `Elements/` next ([#25]) |
-| 4 | III.14, III.15, III.25 | proved in Staging ([#90]); the move into `Elements/` next ([#28]) |
+| 3 | Arcs and segments; III.24 | done: proved in Staging ([#89]), and in the edition ([#25]), save its meeting fact for an arc, which waits beside III.25 in `Staging/Stage4` |
+| 4 | III.14, III.15, III.25 | proved in Staging ([#90]); the move into `Elements/` is train C6b ([#28]) |
 | 5 | Consolidation review of all 99 | Books I and II: all records at `full` ([#115]); Book III: all at `exceptions`, full review after its migrations ([#29]) |
 | 6 | Acceptance, then a consolidation release of Books I–III | report exists; acceptance has not passed; CI checks regressions against main ([#148]) |
 
@@ -107,9 +108,9 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 
 Stages 1 and 1b are done, and the book-III release is made; the owner's decision that the
 figures at a glance carry Heath's letters came after them. On main, a GitHub ruleset
-requires a pull request and the checks `check`, `model` and `negative`, allows merge
-commits only, and blocks force pushes and deletion; secret scanning with push protection
-is on. On 18 October the items then open landed on main, each as a pull request of its
+requires a pull request and the checks `check`, `model` and `negative` (and, since 20
+October, `formal-model` and `acceptance`), allows merge commits only, and blocks force
+pushes and deletion; secret scanning with push protection is on. On 18 October the items then open landed on main, each as a pull request of its
 own, the figure letters as three:
 
 - **The pull-request harness, [#1]:** `scripts/safe_push.py` as the pre-flight and the
@@ -148,9 +149,14 @@ own, the figure letters as three:
 
 ### Open items
 
-What remains on 20 October. Stage 2 is in the edition; I.47 general, for squares on
-either side of each base, followed in [#134]. How work lands is in
-[WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull requests".
+What remains on 21 October, after train C6a. Stage 2 is in the edition; I.47 general, for
+squares on either side of each base, followed in [#134]. Stage 3 is in the edition too
+(#20 to #25): placement in all its cases, with superposition not among its direct axioms,
+III.23 point by point, III.24 restated to conclude congruence by Euclid's route, III.26 and
+III.28 upgraded, and `Arcs.lean`. So are the mixed angles of III.16 and III.31 ([#57]),
+the rule that every circle has a centre (`Tacit.exists_centre`, brief 0008's step 5), and
+III.5 and III.6 read with crossing and contact within (brief 0008, section 7). How work
+lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull requests".
 
 - **I.45 and II.14's representation** still takes a supplied division into triangles.
   The remaining work is to give the figure by its outline, prove that a division exists
@@ -159,18 +165,15 @@ either side of each base, followed in [#134]. How work lands is in
   supersedes the earlier full-scope call: both scopes are `restricted`, while their
   records remain at review stage `full`. That review stage does not settle this
   representation work.
-- **Stage 3's proofs** are done in `Staging/Stage3`, every statement of brief 0006's stage 3
-  proved with no new axiom: placement in all its cases, with superposition not among its
-  direct axioms, III.23 point by point, III.24 restated to conclude congruence by Euclid's
-  route, III.26 and III.28 upgraded, and `Arcs.lean` (#20 to #24). Next is the migration
-  into `Elements/`, in brief 0006's seven steps (#25).
 - **Stage 4's proofs** are done in `Staging/Stage4`: III.14 with diameters, III.15 both
   clauses for every straight line, the foot of the perpendicular, and III.25's construction
-  core, which never sees a circle or a centre, with its correctness (#26, #27). Next is the
-  move into `Elements/` with the records (#28).
-- **Mixed angles and the centre rule** await migration into the edition: the approved
-  mixed-angle prototype supplies III.16 and III.31's comparisons ([#57]), and frozen
-  [brief 0008](briefs/0008-centre.md) settles the centre rule and its restatements ([#59]).
+  core, which never sees a circle or a centre, with its correctness (#26, #27), beside
+  stage 3's meeting fact for an arc, which rests on III.2 and which only III.25 uses. Their
+  move into `Elements/` with the records (#28) is train C6b.
+- **The centre rule's restatements** remain under [#59]: frozen
+  [brief 0008](briefs/0008-centre.md)'s III.1 construction and its guard (steps 3 and 4),
+  the restatements of the statements that only assume a centre, with their records (step
+  6, train C6c), and the tag's revision (step 7).
 - **Book III's review records** remain at `exceptions`; they reach `full` after the
   migrations and review ([#29]). Books I and II's records are already at `full`
   ([#115]).
@@ -196,19 +199,18 @@ either side of each base, followed in [#134]. How work lands is in
 - **Solids** (Books XI–XIII): planes as primitives; one statement prototyped first.
 - **A formal model** of the axioms in Lean with Mathlib: done. Begun on 18 October 2026 in
   a package of its own, [`model/`](../model/README.md), with CI's `formal-model` job (#73,
-  a gate for the consolidation release), it proves all <!-- count:axioms -->79<!-- /count --> locked laws in the ordinary
+  a gate for the consolidation release), it proves all <!-- count:axioms -->80<!-- /count --> locked laws in the ordinary
   plane, and `model_exists` has no hypothesis left: a model relative to Lean's logic and
   Mathlib's construction of the real numbers. It does not show that a formal statement
   captures what Euclid meant. The independence of Postulate 5 still rests on the
   numerical hyperbolic check in [tests/model](../tests/model/), until a hyperbolic model
   is built. GitHub now requires all five checks: `check`, `model`, `negative`,
-  `formal-model` and `acceptance`. The merge gate in `scripts/safe_push.py` still tests
-  for the presence of a passing run only for the first three, while refusing any reported
-  failure or pending check; aligning that local test needs a separate protected-check
-  change.
+  `formal-model` and `acceptance`. The merge gate in `scripts/safe_push.py` requires a
+  passing run of the same five, and refuses any reported failure or pending check
+  ([WORKFLOW](WORKFLOW.md#8-validation-on-the-integrated-revision), section 8).
 - **The statements' vocabulary** (settled 17 Oct; extended for restricted superposition).
   The lock holds every word that the axioms' statements or the entries' statements
-  reach: <!-- count:vocabulary -->208<!-- /count -->, including the restricted calculus and its interpretation,
+  reach: <!-- count:vocabulary -->238<!-- /count -->, including the restricted calculus and its interpretation,
   as well as `Touches`, `EqualCircles`, `circumference`, `rect`, `Parallel` and others.
   A change to one is a decision, as a changed axiom is
   ([0002](briefs/0002-decisions.md), [FIELDS.md](../Certificate/FIELDS.md#the-vocabulary)).
