@@ -16,7 +16,7 @@ note = "The centre E and the perpendiculars EH, EK are given, since Definition I
 [[passage]]
 at = "Then, since BC is nearer to the centre and FG more remote"
 kind = "given"
-note = "The statement assumes it (`hnearer : ‖E H‖ < ‖E K‖`), for Definition III.5 is how it says that BC is nearer; no Lean is needed beneath."
+note = "The statement assumes that EH is less than EK (`‖E H‖ < ‖E K‖`), for Definition III.5 is how it says that BC is nearer; no Lean is needed beneath."
 
 [[passage]]
 at = "Again, since AE is equal to EM, and ED to EN"

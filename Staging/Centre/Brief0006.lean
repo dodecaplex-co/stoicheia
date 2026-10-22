@@ -9,12 +9,10 @@ import Staging.Centre.Restated
 
 Brief 0008. Six statements that brief 0006 froze, four moved to `Elements/` with stage 3
 and two with stage 4, ask that a circle have some centre, and its definition
-of a drawn arc asks it too. Once every circle has a centre (the rule `exists_centre`,
-approved, not yet landed), each loses that hypothesis, as below; nothing else in them
-changes. This is a revision of brief 0006, approved by the coordinator with brief 0008, at
-its freeze, and is made in brief 0006's files by their owners after the rule lands. All six
-original statements now live in `Elements.BookIII`; their centre-removal variants remain
-staged here.
+of a drawn arc asks it too. The rule `exists_centre` is now present in `Elements`, so each
+variant below loses that hypothesis; nothing else in it changes. This is a revision of
+brief 0006, approved by the coordinator with brief 0008, at its freeze. All six original
+statements now live in `Elements.BookIII`; their centre-removal variants remain staged here.
 
 As in `Restated.lean`, each statement carries `sorry` and two checks (checked by Lean): given
 the rule's content, taken as a hypothesis, brief 0006's statement gives the new one; and the

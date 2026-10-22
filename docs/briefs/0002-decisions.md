@@ -3772,8 +3772,8 @@ findings:
   this content. `Audit/Overlaps.lean` renews the dependency pins of `Audit.III_24_measure`,
   `Audit.III_26_any` and `Audit.III_27_any` from Lean's output: III.1's construction now
   brings `Tacit.exists_centre` into each. No proof, statement or check is weakened.
-- **III.1's construction home and its porism, 19 October 2026 (D1).** By the owner's
-  decision D1 of 19 October, `Elements.BookIII.Prop1.construction` moves home before
+- **III.1's construction home and its porism, 19 October 2026.** In this revision,
+  `Elements.BookIII.Prop1.construction` moves home before
   `Prop1`, with its frozen type: a circle and two points of it, no centre supplied,
   returning Euclid's bisections and perpendicular straight line. The rule
   `Tacit.exists_centre` supplies a centre only inside the proof that D is within the
@@ -4615,7 +4615,8 @@ findings:
   #204); and last at `05e27335`, which brings main at `6e0cdd27` and `73b97ab1` (#208 and
   #219) and III.10's record read afresh and stamped; none of the last three changes the
   lock or any pin. The 19 October stage 4 and III.25 entries'
-  88 axioms and vocabulary counts, and D1's 57 tacit rules for III.1, are their historical
+  88 axioms and vocabulary counts, and the 57 tacit rules for III.1 recorded by the
+  19 October entry on III.1's construction home and porism, are their historical
   pre-wave-one measurements; they stand as written. On the integrated tree the lock holds
   train C6a's 80 axioms, of them 74 tacit rules, byte for byte, and 242 vocabulary words:
   train C6a's 238 and this train's four, `Foot`, `Arc.Less`, `Arc.Semicircle` and
@@ -4673,8 +4674,9 @@ findings:
   `tests/model/results/structured.txt` and
   `tests/model/results/summary.txt`.
   `Audit/Crossing.lean`, `Audit/Overlaps.lean` and `tests/certificate_expectations.json`
-  differ by this train's pins, counts and reasons, which the D1 entry and the paragraph
-  above give; `Certificate/FIELDS.md` differs only by its vocabulary count, 238 to 242.
+  differ by this train's pins, counts and reasons, which the 19 October entry on III.1's
+  construction home and porism and the paragraph above give; `Certificate/FIELDS.md`
+  differs only by its vocabulary count, 238 to 242.
   `scripts/render.py`, `scripts/heath.py`, `review/SCHEMA.md` and
   `tests/test_check_style.py` differ by tooling/figure-every-case's check change, merged at
   `0254f4cd`, which lands before this train with its own entry; this train uses it only in
