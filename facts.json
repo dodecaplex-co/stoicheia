@@ -30813,7 +30813,7 @@
    "kind": "companion",
    "inherited": {},
    "enunciation":
-   "**II.14, for a figure given with triangles that lie apart** (companion of II.14). To\nconstruct a square equal to a given rectilineal figure, given with any division of it into\ntriangles, no point inside two of them (`Apart`), as in `Prop45.apart`: the square on PQ is\nequal to those triangles taken together (`Apart.area`). The figure may have a hole, touch\nitself at a corner, or be in more than one piece. It is `Prop14.sum` for the figure's\ntriangles. Nothing is claimed of another division of the figure. ",
+   "**II.14, for a figure given with triangles that do not overlap** (companion of II.14). To\nconstruct a square equal to a given rectilineal figure, given with any division of it into\ntriangles, no point inside two of them (`Apart`), as in `Prop45.apart`: the square on PQ is\nequal to those triangles taken together (`Apart.area`). The figure may have a hole, touch\nitself at a corner, or be in more than one piece. It is `Prop14.sum` for the figure's\ntriangles. Nothing is claimed of another division of the figure. ",
    "direct_axioms": [],
    "common_notions": ["C.N. 1", "C.N. 2", "C.N. 3", "C.N. 4", "C.N. 5"],
    "cites": ["II.14 sum"],
