@@ -157,21 +157,23 @@ one commit and runs safe_push.py against that origin:
   included, each note pointing to this run's copy of its log, and is kept apart as a
   miss is; a note made ok, another key's entry, a step missing, extra, out of order or
   of an unknown outcome, a step's seconds an integer of 400 digits, a lone surrogate in a
-  step's log, an entry of a tebibyte (sparse, never read), any error at all in reading
-  an entry, an entry or a directory that is a link or of the wrong mode, are each
-  refused and the pass recomputed; a directory on another device than the one above it
-  is not used; without the flag nothing is read or written, the directory not even
-  made, nor with it for a change of R0 to R2; without a sandbox there is no cache, nor
-  with a trial whose write fails otherwise than by the sandbox's refusal;
-  classification finishes before the sandbox is activated, commit checks start after
-  it, and their child runs through the sandbox; with platform's caches emptied, no
+  step's log, a malformed written time, an entry of a tebibyte (sparse, never read), any
+  error at all in reading an entry, an entry or a directory that is a link or of the
+  wrong mode, are each refused and the pass recomputed; a directory on another device
+  than the one above it is not used; without the flag nothing is read or written, the
+  directory not even made, nor with it for a change of R0 to R2; without a sandbox there
+  is no cache, nor with a trial whose write fails otherwise than by the sandbox's
+  refusal; classification finishes before origin/main's count-marker reader is loaded
+  and retained, then the sandbox is activated before commit checks start, and their
+  child runs through the sandbox; with platform's caches emptied, no
   process starts but the sandbox while the key is computed and the pass missed and hit;
   in a fresh interpreter, the allow-list is parsed, step 4 is missed and hit, no process
   starts but the sandbox and no module but a builtin is imported once the sandbox is set
   (and the watch refuses a module imported late, and on macOS plistlib, as environment()
-  imported it once), and the same watch covers a flagged dry run and push of an R3
-  commit; and on macOS a command run there cannot write the cache, nor rename a directory
-  above it, and a profile without the rules above the cache is caught;
+  imported it once); the retained count-marker reader cannot be replaced by a module a
+  sandboxed child plants beside the harness; the same watch covers a flagged dry run and
+  push of an R3 commit; and on macOS a command run there cannot write the cache, nor
+  rename a directory above it, and a profile without the rules above the cache is caught;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks

@@ -1035,23 +1035,25 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       `STOICHEIA_PYTHON`), and the terminal's (`LC_TERMINAL`, `LC_TERMINAL_VERSION`); and
       the lists of checks. An entry is used only when it is a
       regular file of the user's, mode 0600, its key is this run's and hashes to its
-      name, its digest matches it, its harness is the one running, and its steps are that
-      pass's, each once and in order, each "ok" or "note", with a time a step could take
-      and text the run can write and print; otherwise, when it is larger than 16 MiB (and
-      so never read), or when it cannot be read at all, the pass runs again, the run says
-      why, and the entry is written afresh. A hit is
+      name, its digest matches it, its harness is the one running, its written time is a
+      valid `YYYY-MM-DD HH:MM UTC`, and its steps are that pass's, each once and in order,
+      each "ok" or "note", with a time a step could take and text the run can write and
+      print; otherwise, when it is larger than 16 MiB (and so never read), or when it
+      cannot be read at all, the pass runs again, the run says why, and the entry is
+      written afresh. A hit is
       reported, for the pull request's record, and its steps carry their recorded
       outcomes, notes as notes, so `keep_apart` judges them as it would have; a note
       points to the copy of its log the run writes. The directory must be a real one,
       owned by the user, mode 0700, reached through no symbolic link, and on the device
-      of the directory above it. The cache is opened once the class is read, by
-      origin/main's `risk.py`, which runs outside the sandbox but before any of the
-      commit's code; from then on every command the pre-flight starts runs under macOS's
-      `sandbox-exec`, with a profile under which no command may write the directory, nor
-      rename or change a directory above it (which would carry the cache away), and the
-      harness starts no process but through it and imports no module but a builtin, each
-      other it needs being imported when it starts. Where the sandbox cannot be had (not
-      macOS, no
+      of the directory above it. Once the class is read by origin/main's `risk.py`, the
+      harness loads origin/main's count-marker reader and its dependencies, and retains
+      it for that repository and base. Both happen outside the sandbox but before any of
+      the commit's code; the cache is then opened, and from then on every command the
+      pre-flight starts runs under macOS's `sandbox-exec`, with a profile under which no
+      command may write the directory, nor rename or change a directory above it (which
+      would carry the cache away), and the harness starts no process but through it and
+      imports no module but a builtin, each other it needs being imported when it starts.
+      Where the sandbox cannot be had (not macOS, no
       `sandbox-exec`, already inside a sandbox, or a profile that does not stop a write to
       the directory or the one above it), there is no cache that run, and the pre-flight
       is otherwise unchanged.

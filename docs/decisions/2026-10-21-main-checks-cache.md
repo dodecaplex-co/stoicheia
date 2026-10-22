@@ -33,33 +33,43 @@
     user running the pre-flight, of mode 0700 exactly, reached through no symbolic link,
     and on the device of the directory above it, so that nothing mounted over it stands
     in for it.
-  - Once the class is read, and before any check runs, the harness tries macOS's
-    `sandbox-exec` with a profile that allows everything but a write to that directory
-    or to a directory above it: a command must run under it, a write into the directory
-    must fail and leave no file, and a harmless write to the directory above it
-    (`touch -c`, which makes nothing) must fail with the sandbox's own refusal,
-    "Operation not permitted", so that a profile that has lost the rules above the cache
-    is caught, and a write that fails for another reason passes nothing. From then on
-    every command the harness starts runs under that profile, wrapped in the one function
-    that starts commands, so Git, the guards' `check_fidelity.py` and `render.py`, every
-    step of both passes, and `gh` all do. The class comes first: origin/main's `risk.py`
-    runs outside that function, with a time limit, but before any of the commit's code.
+  - Once the class is read, the harness loads origin/main's count-marker reader and its
+    dependencies, and retains that reader for the exact repository and base. Then,
+    before any of the commit's code or any check runs, it tries macOS's `sandbox-exec`
+    with a profile that allows everything but a write to that directory or to a
+    directory above it: a command must run under it, a write into the directory must fail
+    and leave no file, and a harmless write to the directory above it (`touch -c`, which
+    makes nothing) must fail with the sandbox's own refusal, "Operation not permitted",
+    so that a profile that has lost the rules above the cache is caught, and a write that
+    fails for another reason passes nothing. From then on every command the harness
+    starts runs under that profile, wrapped in the one function that starts commands, so
+    Git, the guards' `check_fidelity.py` and `render.py`, every step of both passes, and
+    `gh` all do. The class comes first: origin/main's `risk.py` runs outside that
+    function, with a time limit. The Git read and module load of origin/main's
+    count-marker reader follow it, also outside the sandbox, but neither runs the
+    commit's code.
     Once the sandbox is set, nothing else in the harness starts a process, nor imports a
     module but a builtin (`atexit`), which no path holds: Python would look for any other
     first in the harness's own directory, one a sandboxed command may write. At first,
     `platform.mac_ver()` imported `plistlib`, with `xml.parsers.expat`, when the key was
     first computed, after step 3 had run the commit's code, and the allow-list imported
-    `tomllib` in step 2; both are now imported with the rest, at the top. Tests check
-    this as they run, by Python's own record of each process started and each module
-    imported, any import but a builtin's being refused: one over the key and
+    `tomllib` in step 2; both are now imported with the rest at the top on a supported
+    interpreter. The `tomllib` import is guarded on the Python version so that an older
+    interpreter reaches the harness's controlled refusal. Tests check this as they run,
+    by Python's own record of each process started and each module imported, any import
+    but a builtin's being refused: one over the key and
     origin/main's pass, missed and hit, in the test's own process; one over the same in a
     fresh interpreter, so that nothing the tests have loaded can hide a late import,
     which also parses the allow-list with `tomllib` forgotten from the module cache,
     shows the watch refusing a module imported late, and on macOS `plistlib`, imported as
     `environment()` once imported it; and one over a flagged dry run of the pre-flight
     (steps 1 to 3 and 5, step 4 being the internal test flag's skip) and its push. A
-    runtime test observes classification finishing before sandbox activation, the commit
-    checks starting after it, and a child of those checks going through the sandbox. The
+    runtime test observes classification finishing before the count-marker reader is
+    loaded, the reader being retained before sandbox activation, the commit checks
+    starting after it, and a child of those checks going through the sandbox. A fresh
+    interpreter also exercises counted prose and judged content after activation: a
+    sandboxed child can plant a `dataclasses.py` beside the harness, but the retained
+    reader does not load it and the refused run writes no cache entry. The
     harness first read the platform with `platform.platform()`, which starts `uname -p`
     and `file -b`, found on the `PATH`, outside the sandbox; it now reads `os.uname()` and
     macOS's version file. Only the harness's own Python writes an entry. Without the
@@ -92,14 +102,15 @@
     record, names the hit or the miss and why.
   - An entry is used only if it reads as JSON; its key fields are this run's exactly and
     hash to its name; its digest, over the rest of it, matches; its harness is the one
-    running; its steps are origin/main's pass, each once and in order, each "ok" or
-    "note", each with a time a step could take (none, or up to a week) and a detail and a
-    log the run can write as UTF-8 and print; and it is a regular file, not a symbolic
-    link, of the user's, mode 0600, no larger than 16 MiB (the one measured below is
-    156,119 bytes). A larger entry is refused unread, and no more than 16 MiB and a byte
-    is ever read, so that a sparse file of a tebibyte cannot hang the run. On any doubt,
-    and on any error at all in reading it, the pass runs again, the run says why, and a
-    bad entry is replaced only after the pass has finished.
+    running; its written time has the exact emitted form `YYYY-MM-DD HH:MM UTC`, with a
+    valid calendar date and time; its steps are origin/main's pass, each once and in
+    order, each "ok" or "note", each with a time a step could take (none, or up to a week)
+    and a detail and a log the run can write as UTF-8 and print; and it is a regular file,
+    not a symbolic link, of the user's, mode 0600, no larger than 16 MiB (the one measured
+    below is 156,119 bytes). A larger entry is refused unread, and no more than 16 MiB and
+    a byte is ever read, so that a sparse file of a tebibyte cannot hang the run. On any
+    doubt, and on any error at all in reading it, the pass runs again, the run says why,
+    and a bad entry is replaced only after the pass has finished.
 
   Two details are stricter than the ruling's words, and stay. The key
   holds the commit's own tree beside the base tree: the checks compare the tree they run

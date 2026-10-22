@@ -122,12 +122,12 @@ order, and the first that fails stops it with a message saying why:
    Step 3's two checks run the same way. With --main-checks-cache, for R3 to R5 (the
    classes that run this step in full), origin/main's pass here (both its loops) is
    reused from ~/.cache/stoicheia/main-checks/ when an earlier run checked the same trees
-   with the same harness, toolchain and environment (main_checks_fields), and every
-   command the run starts after the class is read runs under sandbox-exec, which stops it
-   writing that directory (open_cache); without the sandbox, there is no cache. It does
-   not stop a run without the flag, nor code run as the user outside a flagged run, nor
-   what a flagged run's code leaves for a later command or a later run to load before
-   its sandbox starts (run).
+   with the same harness, toolchain and environment (main_checks_fields). After the
+   class is read and origin/main's count-marker reader is loaded, every command the run
+   starts runs under sandbox-exec, which stops it writing that directory (open_cache);
+   without the sandbox, there is no cache. It does not stop a run without the flag, nor
+   code run as the user outside a flagged run, nor what a flagged run's code leaves for
+   a later command or a later run to load before its sandbox starts (run).
 5. The pull request settled first: our open one for the branch (a fork's of the same
    name is never touched), or a new one; its body, --body-file or generated from
    .github/pull_request_template.md (the commits, the statements, the review records
@@ -218,8 +218,8 @@ import math
 import os
 import platform
 # platform.mac_ver() imports plistlib, and with it xml.parsers.expat, when it is first
-# called: imported here, with tomllib, so that nothing is imported once the sandbox is set
-# (run).
+# called: imported here, with tomllib eagerly imported on supported interpreters, so that
+# nothing is imported once the sandbox is set (run).
 import plistlib  # noqa: F401
 import posixpath
 import re
@@ -517,14 +517,15 @@ NO_REPLACE_REFS = ("-c", "core.useReplaceRefs=false")
 def run(cmd, cwd, *, env=None, input=None, binary=False,
         capture=True) -> subprocess.CompletedProcess:
     """Every command the harness starts starts here, but origin/main's risk.py, which
-    risk_class runs with a time limit before the main-checks cache is opened. While the
-    cache is in use (open_cache), each runs under sandbox-exec with SANDBOX, a profile
-    that may not write the cache: git, the guards' check_fidelity.py and render.py, every
-    step of the full checks, gh. So the commands a flagged run starts cannot write the
-    cache directly. The sandbox does not stop a run without the flag (a ship's own dry
-    run among them), which starts its commands with no sandbox; nor anything code run as
-    the same user does outside a flagged run; nor anything a flagged run's code leaves
-    for a later command to run before its sandbox starts: the launcher in
+    risk_class runs with a time limit, and the Git read that loads origin/main's
+    count-marker reader, both before the main-checks cache is opened. While the cache is
+    in use (open_cache), each runs under sandbox-exec with SANDBOX, a profile that may
+    not write the cache: git, the guards' check_fidelity.py and render.py, every step of
+    the full checks, gh. So the commands a flagged run starts cannot write the cache
+    directly. The sandbox does not stop a run without the flag (a ship's own dry run
+    among them), which starts its commands with no sandbox; nor anything code run as the
+    same user does outside a flagged run; nor anything a flagged run's code leaves for a
+    later command to run before its sandbox starts: the launcher in
     .git/stoicheia/, alias.safe-push in .git/config, a program earlier on the PATH, the
     harness copy in ~/.cache/stoicheia/harness/, a module in the harness's own directory,
     which Python searches first, or in Python's standard library (the user's own under
@@ -534,9 +535,9 @@ def run(cmd, cwd, *, env=None, input=None, binary=False,
     narrow it; that is for the owner to decide. Nothing else in the harness may start a
     process while the cache is in use (platform.platform() did, running `uname -p` and
     `file -b` from the PATH: environment), nor import a module but a builtin, which
-    Python would look for first in the harness's own directory (so plistlib and tomllib,
-    which mac_ver and the allow-list imported late, are imported with the rest, at the
-    top)."""
+    Python would look for first in the harness's own directory (so plistlib, and tomllib
+    on a supported interpreter, which mac_ver and the allow-list imported late, are
+    imported with the rest at the top)."""
     # A push sends the original objects, but git reads a replacement (refs/replace/, or a
     # ref under GIT_REPLACE_REF_BASE) in their place: so git runs here with replacements
     # off, by its environment and by its command line, lest the scan or the hand-over read
