@@ -13,8 +13,8 @@ differs from what the generator writes. To write it again, run `lake lean Check/
 `model/`. The [README](../README.md) says how the laws are translated and checked.
 
 It was written from the lock, `Certificate/axioms.lock`, whose sha256 is
-`7fe6e851b6b154b614ab229e71ef8e0fdcbf395d2f4d4d6d45961421965dff34`,
-the hash that `model/lock.sha256` holds. The lock has 48 laws, and they reach 152 words of its
+`09e393d606e185e79552f9eb3e5057724cfb619ddbb841cd3f444cc5fd909a56`,
+the hash that `model/lock.sha256` holds. The lock has 49 laws, and they reach 152 words of its
 vocabulary. Each law here is the library's axiom with the words of a signature `S` put for the
 library's words:
 
@@ -357,6 +357,10 @@ def circles_meet_same_side : Prop :=
     S.Centre D β → S.OnLine C L → S.OnLine D L → ¬S.OnLine B L → ∃ A : S.Point, S.OnCircle A α ∧
     S.OnCircle A β ∧ S.SameSide A B L
 
+/-- `Elements.Tacit.exists_centre`, translated. -/
+def exists_centre : Prop :=
+  ∀ (α : S.Circle), ∃ O : S.Point, S.Centre O α
+
 /-- `Elements.Tacit.exists_point`, translated. -/
 def exists_point : Prop :=
   ∀ (avoid : List S.Point), ∃ A : S.Point, ¬A ∈ avoid
@@ -487,6 +491,7 @@ structure Neutral (S : Signature) : Prop where
   circle_eq : Law.Tacit.circle_eq S
   circles_meet : Law.Tacit.circles_meet S
   circles_meet_same_side : Law.Tacit.circles_meet_same_side S
+  exists_centre : Law.Tacit.exists_centre S
   exists_point : Law.Tacit.exists_point S
   exists_point_inside_circle : Law.Tacit.exists_point_inside_circle S
   exists_point_on_line : Law.Tacit.exists_point_on_line S

@@ -36,6 +36,17 @@ Stage 4b's III.8 and III.17 companions are in [`Elements/BookIII/Prop08.lean`](.
 Still to do under #59: the prototype rename, centre rule, construction guard, restatements, tag revision and record migration.
 The frozen text below is kept as history.
 
+*Status, 21 October 2026, after train C6a, merged with axiom wave one:*
+
+The rule is in the foundations: `Tacit.exists_centre`, in [`Constructions.lean`](../../Elements/Foundations/Tacit/Constructions.lean), and with it the lock holds 80 axioms and 74 tacit rules, main's 79 and 73 and the rule (step 5).
+Section 7 is in the edition: III.5 reads "cut" as crossing (`CirclesCut`), and in III.6 contact within asks for a point of the inner circle within the outer; [`Audit/Crossing.lean`](../../Audit/Crossing.lean) recovers the earlier statements of III.5, III.6, III.11 and III.13.
+The prototype's rename landed with the mixed angles of III.16 and III.31: the theorem is `exists_circle_about`, in [`Elements/Figure/Regions.lean`](../../Elements/Figure/Regions.lean).
+The [formal model](../../model/Model/Assembly.lean) proves all 80 locked laws.
+Stage 3 is in `Elements/`, save its meeting fact for an arc, which waits beside III.25 in `Staging/Stage4/`; stage 4 remains there, for train C6b.
+Staged III.1 still calls Circle 2, as the note of 20 October says.
+Still to do under #59: III.1's construction and its guard (steps 3 and 4), the restatements and the record migration (step 6, train C6c), and the tag revision (step 7).
+This note changes no declaration of the brief, and the frozen text below is kept as history.
+
 *The brief settles, before any proof work and as [WORKFLOW.md](../WORKFLOW.md), section 2,
 requires, the rule the owner approved, that every circle has a centre, and every statement
 the rule changes. Each new statement is written with `sorry` in the `Staging` library, in
@@ -621,6 +632,29 @@ the rule, nor do III.5, III.6 and III.19.
 - **`centre_unique`,** Generalities 2: the rule asserts existence only.
 - **III.9's and III.10's `hypothesis-dropped`, III.24's and III.30's other tags,** and every
   restriction other than the centre.
+
+### Dated correction, 19 October 2026: section 7 before step 6
+
+The coordinator corrects the order frozen on 18 October, under WORKFLOW section 2.
+
+- **Discrepancy:** section 7 waits for step 6 only to avoid reading III.10, III.11 and
+  III.13 twice, although its restatement needs neither the centre rule nor the other
+  restatements.
+- **Current declaration:** section 6, step 6, and section 7, "Order", put section 7 in
+  the same pull request as the centre restatements.
+- **Corrected declaration:** section 7 lands now, before step 6, by the coordinator's
+  order of 19 October. Step 6 reads III.10, III.11 and III.13 again when its own changes
+  reach them.
+- **Reason:** III.5 and III.6 need not wait for step 6; the cost is the second reading of
+  those three records.
+- **Consumers affected:** III.5 and III.6, the definitions of cutting and contact within,
+  III.10's final step, III.11–III.13's semantic reviews, the overlap audit and catalogue,
+  their review records and page prose, the lock and its two hashes, and the generated
+  edition. The figures stay as drawn. The [decisions entry](0002-decisions.md#19-october-2026)
+  records the work that accompanies this landing.
+- **Work that can go on meanwhile:** the remaining steps of section 6 continue under their
+  existing dependencies. This correction changes only section 7's place in the order;
+  the frozen text below is retained.
 
 ## 6. The order of work
 

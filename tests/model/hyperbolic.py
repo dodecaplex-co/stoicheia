@@ -206,14 +206,6 @@ def quad_along(P0, d, c):
     return al * al - rho * k * ga, -2 * al * be + 2 * rho * k * de, be * be + rho * k * ep
 
 
-def line_meets_circle(L, c):
-    """two points in common exactly when F_circ goes negative on L (its minimum is at a rational t)"""
-    P0, d = line_base(L)
-    A0, A1, A2 = quad_along(P0, d, c)
-    t = -A1 / (2 * A2)
-    return A0 + A1 * t + A2 * t * t < 0
-
-
 def dec(x):
     x = Fr(x)
     return Decimal(x.numerator) / Decimal(x.denominator)
@@ -548,23 +540,6 @@ def gs_p4(rng):
     return None if r is None else dict(A=r[0], B=r[1], C=r[2], D=r[3])
 
 
-def gs_ti(withE=False):
-    def g(rng):
-        A = rand_pt(rng)
-        L = g_line_thru(rng, A)
-        M = g_line_thru(rng, A) if rng.random() < 0.9 else L
-        Nn = g_line_thru(rng, A) if rng.random() < 0.9 else M
-        d = dict(A=A, B=g_pt_on(rng, L, [A]), C=g_pt_on(rng, M, [A]), D=g_pt_on(rng, Nn, [A]), L=L, M=M, N=Nn)
-        if withE:
-            E = rand_pt(rng)
-            if rng.random() < 0.5 and d['C'] != d['D']:
-                t = Fr(rng.randint(1, 4), 5)
-                E = (d['C'][0] + t * (d['D'][0] - d['C'][0]), d['C'][1] + t * (d['D'][1] - d['C'][1]))
-            d['E'] = E
-        return d
-    return g
-
-
 def gs_angle(rng):
     A = rand_pt(rng)
     L = g_line_thru(rng, A)
@@ -599,13 +574,6 @@ def gs_pasch(rng):
     pool = [A, B, C]
     L = g_line_thru(rng, rng.choice(pool)) if rng.random() < 0.4 else g_line_thru(rng, rand_pt(rng))
     return dict(A=A, B=B, C=C, L=L)
-
-
-def gs_pasch4(rng):
-    B = rand_pt(rng)
-    L = g_line_thru(rng, B)
-    M = g_line_thru(rng, B) if rng.random() < 0.9 else L
-    return dict(A=g_pt_on(rng, M, [B]), B=B, C=g_pt_on(rng, M, [B]), L=L, M=M)
 
 
 def gs_cong(rng):
@@ -646,6 +614,21 @@ def gs_chord(rng):
 
 def gs_convex(kind):
     def g(rng):
+        # Two kinds draw no circle: the lines of pasch4 and of the triple incidence laws.
+        # They are kinds of a generator the other laws use, so that they need no generator
+        # of their own.
+        if kind == 'pasch4':   # two lines through B, and A and C on the second
+            B = rand_pt(rng)
+            L = g_line_thru(rng, B)
+            M = g_line_thru(rng, B) if rng.random() < 0.9 else L
+            return dict(A=g_pt_on(rng, M, [B]), B=B, C=g_pt_on(rng, M, [B]), L=L, M=M)
+        if kind == 'ti':   # three lines through A, and B, C and D on them
+            A = rand_pt(rng)
+            L = g_line_thru(rng, A)
+            M = g_line_thru(rng, A) if rng.random() < 0.9 else L
+            Nn = g_line_thru(rng, A) if rng.random() < 0.9 else M
+            return dict(A=A, B=g_pt_on(rng, L, [A]), C=g_pt_on(rng, M, [A]), D=g_pt_on(rng, Nn, [A]),
+                        L=L, M=M, N=Nn)
         c = g_circle(rng)
         if kind == 'opposite':
             A = rng.choice([SEEDS[c], pt_on_circle(c, rng), centre(c), rand_pt(rng)])
@@ -966,6 +949,12 @@ def _(c):
 
 
 
+@axiom('exists_centre', dict(al=C_))
+def _(c):
+    al = c['al']
+    return is_centre(centre(al), al) and in_disc(centre(al))
+
+
 @axiom('line_circle_between', dict(B=P, C=P, L=L_, al=C_), gs_lc)
 def _(c):
     B, C, L, al = c['B'], c['C'], c['L'], c['al']
@@ -1094,12 +1083,6 @@ def _(c):
     if not (between(A, B, C) and on_line(A, L) and not on_line(B, L)):
         return None
     return same_side(B, C, L)
-
-
-def _ti_hyp(c):
-    A, B, C, D, L, M, Nn = (c[k] for k in 'ABCDLMN')
-    return (on_line(A, L) and on_line(A, M) and on_line(A, Nn) and on_line(B, L) and on_line(C, M)
-            and on_line(D, Nn))
 
 
 # ---- Circles

@@ -19,11 +19,11 @@ The rules `grind` refuses. Given a rule in which it finds nothing to match, `gri
 refuses the whole list, and the try fails with no search at all. So a pass before the
 attempts gives `grind` each rule alone, in each of the two ways, and each try leaves out
 the rules refused in its way; a try left with none is not made. Refused both ways are the
-six rules that only say that a point, a straight line or a circle exists (Postulates 1 to 3
-and the three `exists_point` rules the second axiom retirement leaves); refused forward as
-well are thirteen with no hypothesis `grind` can start from (`len_symm`, `add_comm` and the
-like), plus the restricted superposition rule, whose conclusion is the structure
-`Superposition.Rule`. Such a rule gives
+seven rules that only say that a point, a straight line or a circle exists (Postulates 1 to
+3, the three `exists_point` rules the second axiom retirement leaves, and `exists_centre`);
+refused forward as well are thirteen with no hypothesis `grind` can start from (`len_symm`,
+`add_comm` and the like), plus the restricted superposition rule, whose conclusion is the
+structure `Superposition.Rule`. Such a rule gives
 `grind` nothing to work with in any case (see below); but while it stayed in, as in the
 families Postulates and Constructions and every pair with either, the try searched with
 none of its other rules.
@@ -99,8 +99,10 @@ statement closed bare. 8 tries ran out of time again, all of them III.34
 from Postulate 4, as before. III.2 and III.6 no longer close: the rules that closed them,
 Circle 2 and Generalities 4 for III.2 and Generalities 3 for III.6, are theorems now, with
 others of the diagram rules, and the screen tries only axioms. Their rows in the catalogue
-rest on their audit lemmas, `Audit.III_2` and `Audit.III_6`. The screen checks that III.5
-still closes by a rule (KNOWN, below), and says so when it does not.
+rest on their audit lemmas, `Audit.III_2` and `Audit.III_6`. That run read III.5 and III.6
+as they were stated before brief 0008 restated them (cutting as crossing, contact within with
+a point within); a run on the restated readings is still to be made. The screen checks that
+III.5 still closes by a rule (KNOWN, below), and says so when it does not.
 
 usage (from the repository root, after `lake build`):
     python3 Audit/screen.py OUTDIR [--jobs N]
@@ -127,11 +129,11 @@ Tacit.circles_meet Tacit.line_circle_between Tacit.line_circle_beyond
 Tacit.circles_meet_same_side Tacit.exists_point_inside_circle Tacit.circle_eq""".split()
 
 # The phrases, and the words for "any number", unfolded in every attempt.
-DEFS = """SameSideOf OppositeSidesOf OppositeSides OutsideCircle CirclesMeet LineMeetsCircle
-CirclesTouch TouchesInternally TouchesExternally Touches LinesMeet Collinear Triangle OnRay
-InsideTriangle Equilateral IsRightAngle IsObtuse IsAcute Square Parallel AreParallel
-Parallelogram Rectangle EqualCircles Contain quadArea sq InOrder segments endOf triples
-Magnitude.sum Rectilineal.area Apart.area primitives""".split()
+DEFS = """SameSideOf OppositeSidesOf OppositeSides OutsideCircle CirclesMeet CirclesCut
+LineMeetsCircle CirclesTouch TouchesInternally TouchesExternally Touches LinesMeet Collinear
+Triangle OnRay InsideTriangle Equilateral IsRightAngle IsObtuse IsAcute Square Parallel
+AreParallel Parallelogram Rectangle EqualCircles Contain quadArea sq InOrder segments endOf
+triples Magnitude.sum Rectilineal.area Apart.area primitives""".split()
 
 # The chosen magnitudes, and the order "not greater", each given by its lemma in SPECS.
 CHOSEN = {"circumference": "Screen.circumference_spec", "standing": "Screen.standing_spec",

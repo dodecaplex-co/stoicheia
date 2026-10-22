@@ -2247,24 +2247,25 @@ def law_code(text: str | bytes | None) -> tuple[list[str], dict] | None:
 LAW_GLOBALS = {
     "tests/model/search.py": {
         "call": frozenset({
-            "Fr", "_angle_inside_hyp", "_area_line_hyp", "_cm_side", "ang", "area2",
-            "between", "circles_meet", "collinear", "d2", "dot", "f_ang", "f_between",
-            "f_lval", "f_on_circle", "f_on_line", "f_same_side", "feq", "fl", "in_or_on",
-            "inside", "is_centre", "is_right_angle", "lattice_on_line", "length",
-            "line_circle_points", "line_through", "lines_meet", "mag_vals", "on_circle",
-            "on_line", "opposite", "outside", "same_side", "sub", "triangle"}),
+            "Fr", "_angle_inside_hyp", "_area_line_hyp", "_cm_side", "ang",
+            "area2", "between", "circles_meet", "collinear", "d2", "dot", "f_ang",
+            "f_between", "f_lval", "f_on_circle", "f_on_line", "f_same_side", "feq", "fl",
+            "in_or_on", "inside", "is_centre", "is_right_angle", "lattice_on_line",
+            "length", "line_circle_points", "line_through",
+            "lines_meet", "mag_vals", "on_circle", "on_line", "opposite", "outside",
+            "same_side", "sub", "triangle"}),
         "value": frozenset({"RA"}),
     },
     "tests/model/hyperbolic.py": {
         "call": frozenset({
             "F_circ", "Fr", "H", "K", "_angle_inside_hyp", "_area_line_hyp", "_cm_side",
-            "ang", "ang_eq", "ang_zero", "area", "area_zero", "between", "centre", "ch2",
-            "circles_meet", "collinear", "dist", "expmap", "f_ang", "f_dist", "f_on_circle",
-            "f_point", "f_side", "feq", "in_disc", "in_or_on", "inside", "is_centre",
-            "is_right", "line_through", "lines_meet", "mag_vals", "make_circle",
-            "meet_point", "mink", "on_circle", "on_line", "opposite", "outside",
-            "pt_on_line", "pts_on_line", "roots_along", "same_side", "triangle",
-            "unit_toward"}),
+            "ang", "ang_eq", "ang_zero", "area", "area_zero", "between", "centre",
+            "ch2", "circles_meet", "collinear", "dist", "expmap", "f_ang", "f_dist",
+            "f_on_circle", "f_point", "f_side", "feq", "in_disc", "in_or_on", "inside",
+            "is_centre", "is_right", "line_through", "lines_meet",
+            "mag_vals", "make_circle", "meet_point", "mink", "on_circle", "on_line",
+            "opposite", "outside", "pt_on_line", "pts_on_line",
+            "roots_along", "same_side", "triangle", "unit_toward"}),
         "table": frozenset({"SEEDS"}),
         "generator": frozenset({
             "gs_angle", "gs_area_line", "gs_between", "gs_chord", "gs_circ_pts",

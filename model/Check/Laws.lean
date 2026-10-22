@@ -137,6 +137,8 @@ example : Law.Tacit.circles_meet original = type_of% @Elements.Tacit.circles_mee
 example : Law.Tacit.circles_meet_same_side original =
     type_of% @Elements.Tacit.circles_meet_same_side := rfl
 
+example : Law.Tacit.exists_centre original = type_of% @Elements.Tacit.exists_centre := rfl
+
 example : Law.Tacit.exists_point original = type_of% @Elements.Tacit.exists_point := rfl
 
 example : Law.Tacit.exists_point_inside_circle original =
