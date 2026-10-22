@@ -114,10 +114,11 @@ theorems. The marker adds no axiom and changes no axiom field.
 `construction_rules` reads statements, not proofs. For each axiom in `axiom_modules` it
 takes the statement's conclusion and reads it as the definition of a construction rule
 says, with its polarities: a definition of this project at the head of a term is unfolded
-there, and a projection of a structure that a definition of this project gives (the `≤` of
-an instance) is read through that definition. Everything else is a leaf that asserts no
-existence: an opaque word, an axiom, a theorem, a constructor, a `match` or recursor that
-is not reduced, Lean's own definitions, and every structure or inductive type but the
+there, a `let` there is substituted into its body, and a projection of a structure that a
+definition of this project gives (the `≤` of an instance, inherited through another
+structure or not) is read through that definition. Everything else is a leaf that asserts
+no existence: an opaque word, an axiom, a theorem, a constructor, a `match` or recursor
+that is not reduced, Lean's own definitions, and every structure or inductive type but the
 connectives the polarities read (`And`, `Or`, `Iff`, `Exists`), of this project or Lean's,
 which is read as a word and never unfolded: its fields and constructors are not read.
 That is why `Tacit.superposition`, whose statement is the structure `Superposition.Rule`,
@@ -199,7 +200,7 @@ value is not printed: that Lean cannot see it is the point. An inductive type's 
 structure's constructors are entries of their own.
 
 At commit d040117 there were 37, all reached from the axioms; with the entries'
-statements, from 17 October 2026, there are <!-- count:vocabulary -->208<!-- /count -->. Among them:
+statements, from 17 October 2026, there are <!-- count:vocabulary -->238<!-- /count -->. Among them:
 
 ```text
 "Collinear": "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => Exists fun (L : Elements.Line) => And (Elements.OnLine A L) (And (Elements.OnLine B L) (Elements.OnLine C L))"
