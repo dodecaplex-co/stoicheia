@@ -43,7 +43,15 @@ case = "non-diameter chords, with K on C's side of AB and L on F's side of DE"
 
 [review]
 stage = "full"
-commit = "17987153"
+commit = "1f8fa897"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:c973f49aeb59b649"
 run = "brief 0005 stage 5, ship R3 (#29)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

@@ -32,7 +32,15 @@ case = "circumferences BGC and EHF less than semicircles, with K and L beyond BC
 
 [review]
 stage = "full"
-commit = "d0508d6c"
+commit = "1f8fa897"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:c6ea841e06026dc5"
 run = "brief 0005 stage 5, ship R3 (#29)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
