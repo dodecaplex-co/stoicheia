@@ -64,10 +64,10 @@ case = "BE greater than ED, and A four-sided, as in Heath's figure; no diameter 
 
 [review]
 stage = "full"
-commit = "800443fb"
+commit = "48092431"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:6d00f135031161a5"
-run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr2, independent re-read at 800443fb"
+lean = "sha256:be972fd23a351f2e"
+run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr4, independent re-read at 48092431"
 
 [review.items]
 statement = "pass"
