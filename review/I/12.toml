@@ -34,7 +34,7 @@ stage = "full"
 commit = "251129b"
 reviewer = "GPT-6 Astra (Codex), independent reader Aw2-reader-e"
 lean = "sha256:a7f331efa89e7658"
-run = "brief 0005 stage 5, ship A wave-two records re-read, Aw2-reader-e"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I12-I13, independent re-read at 6e0cdd27; wave two's text of this record, read in full with the Lean: brief 0005 stage 5, ship A wave-two records re-read, Aw2-reader-e, at 251129b"
 
 [review.items]
 statement = "pass"
