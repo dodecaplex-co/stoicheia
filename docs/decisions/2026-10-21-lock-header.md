@@ -10,7 +10,8 @@
   written again then. So the writer takes back the committed header, byte for byte, and
   the lock itself does not change: this is no lock change. The header still names the
   decisions page as where a decision is recorded, which has been out of date since #239.
-  It is to be renewed by a lock change of its own, a follow-up card: `LOCK_HEADER` and the
+  It is to be renewed by a lock change of its own
+  ([#275](https://github.com/jackChallis/stoicheia/issues/275)): `LOCK_HEADER` and the
   lock together, `model/lock.sha256` and `tests/model/lock.sha256` renewed and the model's
   generated files written again, with its decision entry, and nothing else. A lock change
   that comes with Lean cannot carry it, for the pre-flight keeps check code apart from
