@@ -34,6 +34,6 @@ case = "AD a diameter, neither BC nor FG through E, and EH less than EK"
 
 [review]
 stage = "exceptions"
-commit = "80292b0a"
+commit = "38b6a392"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:2a71c56e1b84004f"

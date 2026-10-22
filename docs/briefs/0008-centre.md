@@ -69,7 +69,7 @@ them. No statement, declaration, record or lock changes, so no consumer is affec
 
 *19 October 2026: the [dated correction in section 3](#correction-iii1-19-october-2026)
 replaces the frozen construction, guard, porism, overlap and order claims it names below,
-by the owner's decision D1. The frozen text is retained as history.*
+while the frozen text is retained as history.*
 
 *19 October 2026: [step 6 is implemented](#completion-step6-19-october-2026) at
 `17987153`. The completion note records the current declarations and certificate counts;
@@ -237,10 +237,9 @@ axiom exists_centre (α : Circle) : ∃ O : Point, Centre O α
 
 ### Dated correction, 19 October 2026: III.1's construction and porism
 
-The coordinator records the owner's decision D1 of 19 October under
-[WORKFLOW.md](../WORKFLOW.md), section 2, "Correcting a frozen brief". This note replaces
-the claims named below, including their summaries in sections 4, 6 and 8 and Appendix B;
-the frozen text that follows is kept, not silently rewritten.
+This dated correction follows [WORKFLOW.md](../WORKFLOW.md), section 2, "Correcting a
+frozen brief". It replaces the claims named below, including their summaries in sections
+4, 6 and 8 and Appendix B; the frozen text that follows is kept, not silently rewritten.
 
 - **Discrepancy.** The frozen construction promises no use of a rule supplying a centre,
   but its staged proof used Circle 2 for D within. That would reintroduce the rule that
@@ -253,7 +252,7 @@ the frozen text that follows is kept, not silently rewritten.
   `hG : Centre G ABC` and concludes `Collinear D C G`. Their types do not change in
   corrected step 3. The restated `Prop1` and `Prop1.of_circle` remain staged for step 6.
 - **Corrected construction and reason, replacing "The construction, apart" and the
-  closure claims in "The correctness, with the rule".** D1 keeps the construction's
+  closure claims in "The correctness, with the rule".** The correction keeps the construction's
   frozen type and moves it home before `Prop1`. It receives no centre. It uses
   `exists_centre` only inside the proof that D is within the circle, through
   `Prop1.within`, by III.2's argument using I.5, I.16 and I.19:

@@ -11,8 +11,7 @@ import Elements.BookIII.Prop29
 A circumference is measured by twice the angle that stands on it (`circumference`), a
 measure that carries no radius, and two segments are equal when they coincide
 (`Arc.Congruent`). These bridge theorems say what each comes to for drawn segments
-(`Arc.Drawn`: the circle has a centre, the ends of the base are on it, and the point naming
-the side is off the base). In equal circles, the circumferences of two drawn segments are
+(`Arc.Drawn`). In equal circles, the circumferences of two drawn segments are
 equal in measure exactly when the straight lines that cut them off are equal and they are
 of one kind, both less than semicircles, both semicircles, or both greater
 (`Arc.measure_eq_iff`). And two drawn segments are congruent exactly when their circles are
