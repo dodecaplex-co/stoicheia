@@ -18,13 +18,15 @@ jobs:
     # brings to main, so a change cannot lower its own class by editing the classifier. A
     # pull request into main is classified so, exactly, from GitHub's merge commit; one
     # whose run starts with the `release` label, one into any other branch, a push to main
-    # and every other event are R5, and every job runs in full. The label is read from the
-    # event that started the run, and git safe-push adds a pull request's labels after it
-    # pushes, so a label given with that push counts from the next push. Main's run after
-    # the merge runs every job in full. A release pull request's run need not be R5: the
-    # merge gate holds a release until the full pre-flight has run on its head and a run of
-    # the safe-push-tests workflow there, which runs the negative tests and the formal
-    # model in full, is green (docs/decisions/2026-10-22-checks-by-risk.md).
+    # and every other event are R5, and `negative` and `formal-model` run in full. The label
+    # is read from the event that started the run, and git safe-push adds a pull request's
+    # labels after it pushes, so a label given with that push counts from the next push.
+    # Main's run after the merge runs `negative` and `formal-model` in full (`acceptance`
+    # runs only on a pull request). A release pull request's run need not be R5: the merge
+    # gate holds a release until the full pre-flight has run on its head and a run there
+    # of the safe-push-tests workflow, the head's copy being main's, has passed each of its
+    # three jobs: the safe_push tests, the negative tests in full, and the formal model's
+    # build and kernel re-check (docs/decisions/2026-10-22-checks-by-risk.md).
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -50,7 +52,7 @@ jobs:
         run: |
           set -euo pipefail
           r5() {
-            echo "$1: R5, every job runs in full"
+            echo "$1: R5, negative and formal-model run in full"
             { echo "class=R5"; echo "formal_model=true"; } >> "$GITHUB_OUTPUT"
             exit 0
           }

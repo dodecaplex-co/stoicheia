@@ -355,9 +355,10 @@ another branch or of a tag, so each commit of a pull request runs once
 with the `release` label, a pull request into another branch, a push to main and any
 other event are R5. The label is read from the event that started the run, and `git
 safe-push` adds a pull request's labels after it pushes, so a label given with that push
-counts from the next push; main's run after the merge runs every job in full; and the
-merge gate holds a release until the full pre-flight has run on its head and a run of the
-`safe-push-tests` workflow there is green ([section 10, "Landing work: pull
+counts from the next push; main's run after the merge runs `negative` and `formal-model`
+in full (`acceptance` runs only on a pull request); and the merge gate holds a release
+until the full pre-flight has run on its head and a run of the `safe-push-tests` workflow
+there has passed each of its three jobs ([section 10, "Landing work: pull
 requests"](#landing-work-pull-requests), step 4). `check`, `model` and
 `acceptance` run for every class. `negative` runs in full for R3, R4 and R5.
 `formal-model` runs in full for R4 and R5, the classes of every change to `model/`, to
@@ -381,24 +382,26 @@ scripts/risk.py --model-inputs HEAD` the files the model imports, then any among
 whose header it cannot read.
 
 **What runs for each class, at each stage.** A change's class sets what its pre-flight
-and its pull request's CI run; main's run after each merge, the cadence and a release run
-everything, whatever the class. The times are those of #290, a records train, on GitHub,
-and of the pre-flights `git safe-push` logged on 22 October
-([the decision](decisions/2026-10-22-checks-by-risk.md)):
+and its pull request's CI run. What runs after the merge, on the cadence and for a release
+does not depend on the class, and is set out after the table. The times are those of
+#290, a records train, on GitHub, and of the pre-flights `git safe-push` logged on 22
+October ([the decision](decisions/2026-10-22-checks-by-risk.md)):
 
 | Stage | R0 to R2 | R3 | R4 and R5 |
 |---|---|---|---|
 | Pre-flight ([section 10](#landing-work-pull-requests), step 2) | steps 1 to 3, the scans and the guards, 10 to 30 seconds; step 4 left to CI | steps 1 to 4, step 4 being this section's sequence and the negative tests, 9 to 19 minutes, and twice that when a check input changes | as R3 |
 | CI on the pull request | `check` (3.5 to 6.5 minutes), `model` and `acceptance` (4.5 minutes); `negative` passes at once, and `formal-model` too unless the change touches its inputs | as R0 to R2, and `negative` in full (15.5 minutes) | as R3, and `formal-model` in full (8 minutes) |
 
-Main's run after each merge runs every job in full. The cadence runs the safe_push tests
-(38 to 45 minutes), the negative tests and the formal model in full on main every six
-hours, whatever landed. A release runs everything at its own head: its label makes its
-pre-flight R5, and so the full one, and its merge waits for a green run of the
-`safe-push-tests` workflow there ([section 10](#landing-work-pull-requests), step 4). So
-the negative tests check a
-change of R0 to R2 only once it has landed, on main: a break they would have caught shows
-within six hours, and holds the release until its repair lands.
+Main's run after each merge is R5, and runs `negative` and `formal-model` in full beside
+`check` and `model`; `acceptance` runs only on a pull request. The cadence, the
+`safe-push-tests` workflow, runs its three jobs on main every six hours, whatever landed:
+the safe_push tests (38 to 45 minutes), the negative tests in full, and the formal model's
+build and kernel re-check. A release runs three things at its own head: the full
+pre-flight, since its label makes it R5; its pull request's CI, in full when its run
+starts with the label; and a run of the `safe-push-tests` workflow, whose three jobs must
+each pass ([section 10](#landing-work-pull-requests), step 4). So the negative tests check
+a change of R0 to R2 only once it has landed, on main: a break they would have caught
+shows within six hours, and holds the release until its repair lands.
 
 The full `acceptance` job runs only in CI. Its ratchet before the consolidation release,
 the switch to the full gate at that release, the reports and the executable definitions
@@ -426,10 +429,11 @@ run on main, any of the three jobs failed, cancelled or timed out, opens one iss
 that were red and the tests of `scripts/test_safe_push.py` that failed, so the release
 waits for it until the issue is closed, with a link to a later green run; that
 is done by a fourth job, the only one with leave to write issues, which runs no code of
-the repository. A red run holds the release alone: trains of every class go on landing
-while the issue is open, each by its own class, and so does the repair, which is a train
-like any other, classed by its files (a repair to a check is R3, to a proof R2, and takes
-that lane). The issue is closed with a link to a later run on main in which all three
+the repository. For now a red run holds the release alone (whether trains of tooling hold
+as well while the cadence is red is left to a later part of #274): trains of every class
+go on landing while the issue is open, each by its own class, and so does the repair,
+which is a train like any other, classed by its files (a repair to a check is R3, to a
+proof R2, and takes that lane). The issue is closed with a link to a later run on main in which all three
 jobs are green, and the release waits for that. The suite's tests read the whole tree,
 content as well as code: the check
 inputs safe_push guards, the workflows, this page, whose first command block they compare
@@ -662,8 +666,10 @@ looked into.
     which refuses a pull request labelled `release` while any issue or pull request
     labelled `blocks-release` is open, or when GitHub cannot be read. That merge also
     needs the full pre-flight of the release's head, which its label makes R5, and a green
-    run of the `safe-push-tests` workflow at that exact head, every job of it passed
-    (`gh workflow run safe-push-tests.yml --ref <branch>`; section 8). The job runs on the
+    run of the `safe-push-tests` workflow at that exact head, each of its three jobs passed
+    (`gh workflow run safe-push-tests.yml --ref <branch>`; section 8), the head's copy of
+    that workflow being origin/main's: a change to it lands first, in a pull request of
+    its own. The job runs on the
     pull request's events, not the issues', so once the last blocker closes it is run
     again (or `release` removed and given again) before `--merge`, which counts its failed
     run on a release pull request. Then the notes are drafted from the generated
@@ -1059,8 +1065,12 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    full pre-flight of its head, never one that left step 4 to CI (otherwise `--merge`
    refuses at once, saying to run the pre-flight again, which the label makes R5), and
    only with a green run of `.github/workflows/safe-push-tests.yml` at that exact head:
-   completed and successful, every job of it passed but `report`, which runs only for a
-   red run on main (#301). Malformed pull request labels refuse
+   completed and successful, its jobs `safe-push-tests`, `negative-tests` and
+   `formal-model-kernel` each there and passed (safe_push's `SUITE_JOBS`), and every other
+   job passed but `report`, which runs only for a red run on main (#301). A run at the head
+   runs the head's copy of that workflow, which could drop a job, so the head's copy must
+   be origin/main's: a release that changes it is refused, and the change lands first, in
+   a pull request of its own. Malformed pull request labels refuse
    the release gate and retain every CI check. Both issue gates read from
    GitHub and fail closed on a failed read, malformed JSON or missing fields; the
    release gate makes no issue-list read for an ordinary pull request. The title and

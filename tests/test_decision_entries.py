@@ -12,7 +12,7 @@ repository of its own, read with no configuration or excludes file but its own.
 scripts/negative_tests.py runs it beside the count regressions, so CI's `negative` job runs
 it on every push to main and on a pull request of class R3 and above
 (scripts/risk.py), the cadence every six hours on main, and the pre-flight on every pull
-request.
+request of R3 and above.
 """
 
 import contextlib

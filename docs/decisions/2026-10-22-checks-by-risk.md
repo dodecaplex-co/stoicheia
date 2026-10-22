@@ -31,10 +31,14 @@
   stands in for it only while the class, recomputed then by origin/main's classifier for
   that head against that base, is still R0 to R2. A pull request labelled `release`
   merges only on a record of the full pre-flight of its head, and only with a green run
-  of `.github/workflows/safe-push-tests.yml` at that exact head, in which every job passed
-  but `report`, which runs only for a red run on main (#301); `--merge` refuses
-  otherwise, naming what is missing. CI now runs on a push to main alone, with the pull
-  request's own events, so each commit of a pull request runs once.
+  of `.github/workflows/safe-push-tests.yml` at that exact head, in which its three jobs,
+  `safe-push-tests`, `negative-tests` and `formal-model-kernel`, are each there and
+  passed, and every other job passed but `report`, which runs only for a red run on main
+  (#301). A run at the head runs the head's copy of the workflow, which could drop or
+  empty a job, so the head's copy must be origin/main's: a change to that workflow lands
+  first, in a pull request of its own. `--merge` refuses otherwise, naming what is
+  missing. CI now runs on a push to main alone, with the pull request's own events, so
+  each commit of a pull request runs once.
 
   Why this is safe. A change of R0 to R2 can change no check, no script, no workflow and
   not the classifier, for the table puts `scripts/`, `tests/`, `.github/` and
@@ -46,11 +50,14 @@
   8 sequence on every pull request, of every class, before the merge, beside its `model`
   and `acceptance` jobs, on GitHub's merge of the head into main, whose tree is the
   head's, since origin/main must be an ancestor of the head; and `--merge` waits for
-  those checks green. Main's run after each merge runs every job in full, the cadence
-  runs the suite, the negative tests and the formal model on main every six hours, and a
-  release runs everything at its own head. The kernel's self-test stays in CI's `check` job for every
-  class: the pre-flight skips it for R0 to R2, CI does not, since the tests of
-  `scripts/test_safe_push.py` refuse a condition on any step of that job.
+  those checks green. Main's run after each merge runs `negative` and `formal-model` in
+  full (`acceptance` runs only on a pull request). The cadence runs its three jobs on main
+  every six hours: the safe_push tests, the negative tests in full, and the formal
+  model's build and kernel re-check. A release runs the full pre-flight, its pull
+  request's CI and, by the gate of #301, a run of those three jobs at its own head. The
+  kernel's self-test stays in CI's `check` job for every class: the pre-flight skips it
+  for R0 to R2, CI does not, since the tests of `scripts/test_safe_push.py` refuse a
+  condition on any step of that job.
 
   What it gives up. For a change of R0 to R2, the negative tests now run nowhere before
   the merge: until now the pre-flight ran them on every pull request, and CI's `negative`
@@ -64,19 +71,45 @@
   request with every push of its branch, and a tag is made on main, after its merge's
   run.
 
+  Not decided here: what a red run of the cadence holds. As the tools stand, its
+  `blocks-release` issue holds the release alone, and trains of every class go on
+  landing while it is open, as section 8 of `docs/WORKFLOW.md` says. The plan's
+  requirement that trains of tooling hold while the cadence is red is the later part of
+  #274, and is not built here.
+
   This entry approves the change to `scripts/safe_push.py`: the class from origin/main's
-  classifier, the short path for R0 to R2 with its fallback to the full one, the class
-  in the record and the summary, the record's use at `--merge`, and the release's two
-  new needs.
+  classifier, and R5 when the classifier gives a class below one it gives a file; the
+  short path for R0 to R2 with its fallback to the full one; the class in the
+  record and the summary; the record's use at `--merge`; and the release's two new needs,
+  the second met only by a run of origin/main's copy of the workflow with each of its
+  three jobs there and passed.
 
   This entry approves the change to `scripts/test_safe_push.py`: a new class of tests,
-  `RiskPreflight`, planted commits of each class and each failure; a stand-in for
-  GitHub's runs of the safe_push tests; the classifier among the files of the harness
-  under test; and the commits of the tests that need the full pre-flight's record, a
-  release's or a merge's that reads it, made R3 by a line in `docs/WORKFLOW.md`, each
-  checking what it checked before.
+  `RiskPreflight`, planted commits of each class and each failure, the classifier's
+  timeout among them; a stand-in for GitHub's runs of the safe_push tests and their jobs,
+  with runs that lack a job or hold one trivial job alone, a head that changes the
+  workflow, and a `release` label given while `--merge` runs; a test in `Units` holding
+  the gate's list of jobs to the workflow's own; the classifier among the files of the
+  harness under test; and the commits of the tests that need the full pre-flight's
+  record, a release's or a merge's that reads it, made R3 by a line in
+  `docs/WORKFLOW.md`, each checking what it checked before.
+
+  This entry approves the change to `.github/workflows/safe-push-tests.yml`, whose
+  comments on its `negative-tests` and `formal-model-kernel` jobs no longer say that CI
+  runs on a branch's push.
+
+  This entry approves the change to `scripts/negative_tests.py`, whose docstring no longer
+  says that CI runs on a branch's push.
+
+  This entry approves the change to `tests/test_risk.py`, whose docstring no longer says
+  that CI runs on a branch's push.
+
+  This entry approves the change to `tests/test_decision_entries.py`, whose docstring no
+  longer says that CI runs on a branch's push, and says that the pre-flight runs it on
+  every pull request of R3 and above, not on every one.
 
   This entry approves the change to `.github/workflows/ci.yml`: CI runs on a push to main
   and on the pull request's events, no longer on the push of another branch or a tag;
-  the `risk` job loses its case for a branch's push; and the comments and the log line of
-  `negative` say where the negative tests run now.
+  the `risk` job loses its case for a branch's push; its comments say what main's run and
+  a release's gate run; and the comments and the log line of `negative` say where the
+  negative tests run now.

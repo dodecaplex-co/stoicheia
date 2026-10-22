@@ -682,6 +682,14 @@ def main(argv):
                                cwd=ORIGIN, check=True)
                 pr["headRefName"] = rename["to"]
             save(s)
+        # "late_label": {"views": n, "label": name}: after n views, the pull request carries
+        # the label, as one given while --merge runs would leave it.
+        late = s.get("late_label")
+        if late:
+            late["seen"] = late.get("seen", 0) + 1
+            if late["seen"] > late["views"] and late["label"] not in pr["labels"]:
+                pr["labels"].append(late["label"])
+            save(s)
         # "reread_body": the body GitHub gives the merge's own read of the body alone,
         # as an edit made between the gates and that read would leave it.
         if opt(args, "--json") == "body" and "reread_body" in s:
@@ -5875,7 +5883,8 @@ class RiskPreflight(Edge):
     the pull request's record, and the pre-flight record's "class". Any failure to compute
     it is R5. --merge takes a record that left step 4 to CI only while the class,
     recomputed then, is still R0 to R2; a release merges only on the full pre-flight of its
-    head, and with a green run of safe-push-tests there, every job of it passed."""
+    head, and with a green run of safe-push-tests there, the head's copy of that workflow
+    being origin/main's, each of its three jobs there and passed."""
 
     SHORT = "left to CI"
     FULL = "internal test flag, local origin"
@@ -6024,16 +6033,24 @@ class RiskPreflight(Edge):
                 risk = safe_push.risk_class(WORK, base, head, labels)
                 self.assertEqual(risk.cls, "R5", risk)
                 self.assertIn(why, risk.why)
-        # And a classifier at origin/main that fails, or prints no class, or none of R0 to R5.
-        for text, why in (("import sys\nsys.exit(3)\n", "could not class it (exit 3)"),
-                          ("print('A class, perhaps.')\n", "printed no class"),
-                          ("print('R6 Beyond')\n", "printed no class")):
+        # And a classifier at origin/main that fails, or gives a class below one it gives a
+        # file, or outlasts its time, or prints no class, or none of R0 to R5 (the last case
+        # is the one the pre-flight below runs).
+        for text, why, timeout in (
+                ("import sys\nsys.exit(3)\n", "could not class it (exit 3)", 300),
+                ("print('R0 Docs')\nprint('  R0 docs/reading.md')\nprint('  R3 scripts/x.py')\n",
+                 "gave R0, below the R3 it gave scripts/x.py", 300),
+                ("import time\ntime.sleep(60)\nprint('R0 Docs')\n",
+                 "could not be run: TimeoutExpired", 1),
+                ("print('A class, perhaps.')\n", "printed no class", 300),
+                ("print('R6 Beyond')\n", "printed no class", 300)):
             with self.subTest(text=text):
                 git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
                 git(ORIGIN, "update-ref", "refs/heads/main", BASE)
                 main = self.new_base("A classifier that fails", {safe_push.RISK: text})
                 sha = self.good_commit()
-                risk = safe_push.risk_class(WORK, main, sha, set())
+                with mock.patch.object(safe_push, "RISK_TIMEOUT", timeout):
+                    risk = safe_push.risk_class(WORK, main, sha, set())
                 self.assertEqual(risk.cls, "R5", risk)
                 self.assertIn(why, risk.why)
         out = self.assertPath(self.safe_push("--dry-run"), sha, "R5", "full", base=main)
@@ -6103,6 +6120,15 @@ class RiskPreflight(Edge):
                   "negative-tests failure"),
                  ({"suite_runs": {"*": [with_job(506, "formal-model-kernel", "skipped")]}},
                   "formal-model-kernel skipped"),
+                 # A run of a workflow that dropped a job, or that ran one trivial job alone:
+                 # each of the workflow's three jobs must be there.
+                 ({"suite_runs": {"*": [dict(GREEN_SUITE, id=507, jobs=[
+                     j for j in SUITE_JOBS if j["name"] != "negative-tests"])]}},
+                  "run 507: negative-tests missing"),
+                 ({"suite_runs": {"*": [dict(GREEN_SUITE, id=508, jobs=[
+                     {"name": "trivial", "status": "completed", "conclusion": "success"}])]}},
+                  "run 508: safe-push-tests missing, negative-tests missing, "
+                  "formal-model-kernel missing"),
                  ({"suite_read_fail": True}, "unreadable"))
         for state, why in cases:
             with self.subTest(why=why):
@@ -6123,6 +6149,45 @@ class RiskPreflight(Edge):
         self.assertEqual(r.returncode, 0, out)
         self.assertIn("run 501 of safe-push-tests.yml", self.detail(out, "safe-push tests"))
         self.assertEqual(len(self.merges()), 1)
+
+    def test_release_refuses_a_head_that_changes_the_suite_workflow(self):
+        # A run at the head runs the head's copy of the workflow, which could drop a job:
+        # the head's copy must be origin/main's, whatever GitHub says of the runs.
+        path = safe_push.SUITE_PATH
+        change = {path: self.text(path) + "# A comment for the test.\n"}
+        change.update(self.decision(f"A comment in `{path}`, for the test."))
+        sha = self.pushed(self.commit("A comment in the suite's workflow", change),
+                          "--label", "release", "--label", "tooling")
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "safe-push tests"), "FAIL", out)
+        detail = out[out.index("safe-push tests:"):]
+        self.assertIn(f"the head {sha[:12]} changes {path}", detail)
+        self.assertIn("land that change first, in a pull request of its own", detail)
+        for name in ("release", "label", "CI"):
+            self.assertEqual(self.guard(out, name), "ok", f"{name}:\n{out}")
+        self.assertFalse([c for c in self.gh_state()["calls"]
+                          if c[0] == "api" and "/actions/" in c[-1]])
+        self.assertEqual(self.merges(), [])
+
+    def test_release_label_given_after_the_class_was_read_needs_the_full_preflight(self):
+        # The label is not on the pull request when --merge first reads it, so the class is
+        # R1 and the short record stands in for step 4; the gates' read finds it, and the
+        # record made then is still short: refused, by the second look.
+        sha = self.pushed(self.r1_commit())
+        self.set_gh(lambda s: s.update(late_label={"views": 1, "label": "release"}))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("its class R1 then and R1 now", self.detail(out, "pre-flight"))
+        self.assertEqual(self.guard(out, "safe-push tests"), "ok", out)
+        self.assertEqual(self.guard(out, "release record"), "FAIL", out)
+        self.assertIn("left the full checks to CI, for the class R1", out)
+        self.assertIn(f"#1 is labelled release, and a release merges only on the full "
+                      f"pre-flight of its head, {sha[:12]}", out)
+        self.assertIn("release", self.gh_state()["prs"][0]["labels"])
+        self.assertEqual(self.merges(), [])
 
 
 @unittest.skipUnless(os.environ.get("STOICHEIA_SLOW_TESTS") == "1",
@@ -6178,6 +6243,20 @@ class Units(unittest.TestCase):
         self.assertEqual(checks, ci_commands)
         certificate = checks.index("lake env lean Certificate/Facts.lean")
         self.assertEqual(checks[certificate + 1], "python3 -I tests/test_certificate.py")
+
+    def test_suite_jobs_are_the_workflows_own(self):
+        # The release's gate (suite_gate, #301) names the jobs a run of the safe-push-tests
+        # workflow must show passed: every job of the workflow but `report`, which needs
+        # them all. GitHub names a job with no name and no matrix by its id, as the gate
+        # reads it; a workflow that renames, splits or adds a job changes SUITE_JOBS too.
+        workflow = yaml.safe_load((SOURCE / safe_push.SUITE_PATH).read_text())
+        jobs = workflow["jobs"]
+        self.assertEqual(set(jobs), {*safe_push.SUITE_JOBS, safe_push.SUITE_REPORT_JOB})
+        for name, job in jobs.items():
+            self.assertFalse({"name", "strategy"} & set(job), name)
+        self.assertEqual(jobs[safe_push.SUITE_REPORT_JOB]["needs"], list(safe_push.SUITE_JOBS))
+        self.assertEqual([j["name"] for j in SUITE_JOBS],
+                         [*safe_push.SUITE_JOBS, safe_push.SUITE_REPORT_JOB])
 
     def test_ci_check_job_rejects_skip_and_failure_suppression(self):
         source = (SOURCE / ".github/workflows/ci.yml").read_text()

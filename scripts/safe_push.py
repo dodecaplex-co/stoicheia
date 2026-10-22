@@ -150,9 +150,11 @@ is not a draft; a pull request labelled release waits until no blocks-release is
 pull request is open, read from GitHub at the gate, with any unreadable response refusing
 the merge, merges only on a record of the full pre-flight of its head (never one that left
 step 4 to CI), and only with a green run of .github/workflows/safe-push-tests.yml at its
-exact head, every job passed but the one that reports a red run on main (suite_gate,
-#301). Malformed labels refuse; the merge and pre-flight watcher ignore a stale
-release-gate job from Release gate only on an ordinary pull request with readable labels.
+exact head, whose copy of that workflow is origin/main's, with each of the workflow's
+three jobs there and passed, and every job passed but the one that reports a red run on
+main (suite_gate, #301). Malformed labels refuse; the merge and pre-flight watcher ignore
+a stale release-gate job from Release gate only on an ordinary pull request with readable
+labels.
 The pre-flight's notes are shown beside the checklist. Then
 `gh pr merge <n> --merge --delete-branch --match-head-commit <head>` with the merge
 commit's subject and body given (GitHub's own words: the owner GitHub names for the head,
@@ -389,9 +391,13 @@ RISK = "scripts/risk.py"
 LOW_CLASSES = ("R0", "R1", "R2")
 RISK_TIMEOUT = 300        # seconds origin/main's risk.py may take to class a change
 # A release pull request merges only with a green run of this workflow at its exact head
-# (#301): every job of the run passed, save the one that reports a red run on main, which
-# a green run skips.
+# (#301), the head's copy of it being origin/main's, since a run at the head runs the
+# head's copy: each of its jobs in SUITE_JOBS there and passed, and every other job too,
+# save the one that reports a red run on main, which a green run skips. SUITE_JOBS are
+# the workflow's jobs but that one (Units holds them to the workflow).
 SUITE_WORKFLOW = "safe-push-tests.yml"
+SUITE_PATH = f".github/workflows/{SUITE_WORKFLOW}"
+SUITE_JOBS = ("safe-push-tests", "negative-tests", "formal-model-kernel")
 SUITE_REPORT_JOB = "report"
 GENERATED = ("facts.json", "book/", "CERTIFICATE.md", "GRAPH.md", "README.md", "docs/PROGRAM.md")
 # Of these, two are generated only between their markers (render.py's SCOPE_MARKERS and
@@ -2723,7 +2729,8 @@ def risk_class(repo, base: str, sha: str, labels: set[str] | None) -> Risk:
     lower its own class by editing the classifier. A label can only raise the class: a
     pull request labelled release is R5, and so is one whose labels cannot be read. A base
     with no scripts/risk.py is R5, and so is any failure to compute the class (fail
-    closed): Git failing, the script failing or printing no class, a timeout."""
+    closed): Git failing, the script failing or printing no class, a class below that of a
+    file it lists, a timeout."""
     t = time.time()
 
     def r5(why: str) -> Risk:
@@ -2762,8 +2769,15 @@ def risk_class(repo, base: str, sha: str, labels: set[str] | None) -> Risk:
     if not m:
         return r5(f"origin/main's {RISK} printed no class")
     cls, name = m.groups()
-    top = [p.group(2) for line in lines[1:] if (p := PATH_LINE.fullmatch(line))
-           and p.group(1) == cls]
+    # The class is the highest of its files': a class below one of the files it lists is
+    # no class.
+    listed = [(p.group(1), p.group(2)) for line in lines[1:]
+              if (p := PATH_LINE.fullmatch(line))]
+    higher = max(((c, path) for c, path in listed if c > cls), default=None)
+    if higher:
+        return r5(f"origin/main's {RISK} gave {cls}, below the {higher[0]} it gave "
+                  f"{printable_text(higher[1])[:200]}")
+    top = [path for c, path in listed if c == cls]
     files = ("no file changed" if not top else top[0] if len(top) == 1
              else f"{top[0]} and {len(top) - 1} more at {cls}")
     return Risk(cls, f"{name}, by origin/main's {RISK} (blob {meta[2].decode()[:12]}): "
@@ -4324,16 +4338,36 @@ def release_needs_full_record(ctx: Context, number: int, labels: set[str] | None
 def suite_gate(ctx: Context, labels: set[str] | None) -> tuple[str, str]:
     """A release pull request merges only with a green run of the safe-push-tests workflow
     at its exact head (#301): a completed, successful run of
-    .github/workflows/safe-push-tests.yml whose head is the pull request's, in which every
-    job passed, save `report`, which runs only for a red run on main and so is skipped in a
-    green one. Its jobs are the suite of scripts/test_safe_push.py, the negative tests in
-    full and the formal model's kernel re-check, which CI runs on a pull request only by
-    its class. An ordinary pull request asks GitHub nothing here; unreadable labels and
-    every unreadable answer hold the merge."""
+    .github/workflows/safe-push-tests.yml whose head is the pull request's, in which each
+    job of SUITE_JOBS is there and passed, and every other job passed too, save `report`,
+    which runs only for a red run on main and so is skipped in a green one. Those jobs are
+    the suite of scripts/test_safe_push.py, the negative tests in full and the formal
+    model's build and kernel re-check, which CI runs on a pull request only by its class.
+    A run at the head runs the head's copy of the workflow, which could drop or empty a
+    job, so the head's copy must be origin/main's: a change to it lands first, in a pull
+    request of its own. An ordinary pull request asks GitHub nothing here; unreadable
+    labels and every unreadable answer hold the merge."""
     if labels is None:
         return "FAIL", "the pull request's labels are unreadable"
     if RELEASE_LABEL not in {label.lower() for label in labels}:
         return "skip", "not a release pull request"
+
+    def entry(rev: str) -> str | None:
+        """The workflow's tree entry at `rev` (its mode, type and object), "" if absent."""
+        r = run(["git", "ls-tree", "--full-tree", rev, "--", SUITE_PATH], ctx.repo)
+        return r.stdout.strip() if r.returncode == 0 else None
+    mains, ours = entry(ctx.base), entry(ctx.sha)
+    if not mains:
+        return "FAIL", (f"origin/main {ctx.base[:12]} has no {SUITE_PATH}, or Git could not "
+                        "read it: no run can show that the suite passed")
+    if ours is None:
+        return "FAIL", f"Git could not read {SUITE_PATH} at the head {ctx.sha[:12]}"
+    if ours != mains:
+        return "FAIL", (f"the head {ctx.sha[:12]} changes {SUITE_PATH}, and a run at the head "
+                        "runs the head's copy of it, not origin/main's, so no run there can "
+                        "show that main's jobs passed: land that change first, in a pull "
+                        f"request of its own, then merge origin/main into {ctx.branch} and "
+                        "run the workflow at the new head")
     how = (f"run it at the head (`gh workflow run {SUITE_WORKFLOW} --ref {ctx.branch}`), "
            "wait for every job to pass, then --merge again")
     try:
@@ -4365,11 +4399,13 @@ def suite_gate(ctx: Context, labels: set[str] | None) -> tuple[str, str]:
             red = [f"{j['name']} {j.get('conclusion')}" for j in jobs
                    if j.get("conclusion") != "success"
                    and not (j["name"] == SUITE_REPORT_JOB and j.get("conclusion") == "skipped")]
-            if not red and any(j.get("conclusion") == "success" for j in jobs):
+            missing = [f"{name} missing" for name in SUITE_JOBS
+                       if name not in {j["name"] for j in jobs}]
+            if not red and not missing:
                 passed = ", ".join(sorted(j["name"] for j in jobs if j["name"] != SUITE_REPORT_JOB))
                 return "ok", (f"run {r['id']} of {SUITE_WORKFLOW} at {ctx.sha[:12]}: "
                               f"{printable_text(passed)[:300]} passed")
-            problems.append(f"run {r['id']}: " + printable_text(", ".join(red) or "no job ran"))
+            problems.append(f"run {r['id']}: " + printable_text(", ".join(red + missing)))
     except ValueError as e:
         return "FAIL", f"the runs of {SUITE_WORKFLOW} unreadable: {e}"
     return "FAIL", (f"no run of {SUITE_WORKFLOW} at the head {ctx.sha[:12]} has every job "
