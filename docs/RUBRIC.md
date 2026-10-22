@@ -12,8 +12,8 @@ outside review's scores are withheld from each reviewer's copy (step 1).
 
 1. **A cold copy.** A fresh clone of the revision measured, identified by its full commit SHA:
    the commit on main after a train, or the exact pull-request head commit of a release
-   candidate. It is built with `lake build`. Five files that record the first outside review and
-   show its scores are removed from the copy before the reviewer sees it:
+   candidate. It is built with `lake build`. Five files that record the first outside review,
+   four of them with its scores, are removed from the copy before the reviewer sees it:
    `docs/reports/outside-review-01.md`, `docs/reports/outside-review-01-guide.md`,
    `docs/briefs/0005-astra-review.md`, `docs/program.toml` and `docs/PROGRAM.md`.
 2. **Three reviewers, one rubric.** Three models from three families, listed in
@@ -37,14 +37,21 @@ outside review's scores are withheld from each reviewer's copy (step 1).
 4. **The gaps.** Each review ends with its open gaps. A gap that two or more reviewers name is a
    **consensus gap**: it must close before the book passes. A gap one reviewer names holds the
    book only if it is confirmed; it is then a **confirmed singleton gap** and must close before
-   the book passes. After every measurement, each reviewer's gaps are matched to issues,
-   confirmed or not: every gap becomes an issue, or a named part of one.
-5. **The gate.** A book passes the outside reading when all three reviewers score it 95 or more
-   and neither a consensus gap nor a confirmed singleton gap is open. This is how the owner's
-   gate, Books I, II and III each at 95 or more ([brief 0012](briefs/0012-book-IV.md), section
-   11), is measured. Acceptance also needs the checklist with no failures and the independent
-   audit ([WORKFLOW](WORKFLOW.md), section 10, step 9). Book IV's order of work (brief 0012,
-   section 11) begins only then.
+   the book passes. After every measurement, each reviewer's gaps are matched to issues: every
+   gap becomes an issue, or a named part of one. The coordinator assigns an independent
+   reviewer to examine each singleton against its cited evidence at the measured SHA. The
+   associated issue records the confirmation or rejection, reviewer, rationale and revision.
+   Acceptance is held until every singleton has that disposition.
+5. **The gate.** A book passes the outside reading only when one candidate revision, identified
+   by its full SHA, has all three reviewer scores at 95 or more, every singleton disposition
+   recorded, and neither a consensus gap nor a confirmed singleton gap open. The scores and gap
+   closure must apply to that same SHA. If a fix changes the candidate head, three reviewers
+   measure the new head afresh before the gate can pass; earlier scores remain evidence only for
+   their original SHA. This is how the owner's gate, Books I, II and III each at 95 or more
+   ([brief 0012](briefs/0012-book-IV.md), section 11), is measured. Acceptance also needs the
+   checklist with no failures and the independent audit ([WORKFLOW](WORKFLOW.md), section 10,
+   step 9). In Book IV's order of work, challenging, revising, approving and freezing its brief
+   is step 1. The gate and then the consolidation release are step 2; steps 3 to 6 follow them.
 
 ## The rubric, as given
 

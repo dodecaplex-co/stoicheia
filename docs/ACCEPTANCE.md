@@ -275,8 +275,10 @@ wrote none of the work, reads the [review] items afresh (brief 0005, stage 6), a
 evidence goes under `docs/reports/acceptance/`. The cold outside reading scores the
 release candidate's exact pull-request head commit, identified by its full SHA; how the
 measurement is made, and its gate, are in the [review rubric](RUBRIC.md). On that pull request
-all five required checks are green, with `acceptance` under its full gate. The separate release
-gate, including the two readings and the owner's approval of the notes, is
+the scores and gap closure that pass the gate apply to that same SHA; if a fix changes the head,
+the three reviewers measure the new head afresh, as the rubric requires. All five required
+checks are green, with `acceptance` under its full gate. The separate release gate, including
+the two readings and the owner's approval of the notes, is
 [WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10, steps 8 and 10.
 The final release tag is made after acceptance and the owner approves the release notes, as
 step 10 requires.
