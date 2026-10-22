@@ -6814,7 +6814,7 @@
      "file": "Elements/BookI/HelpersParallels.lean",
      "brings_in": ["I.30", "I.31"]},
     {"name": "BookI.Prop34.bisect",
-     "line": 100,
+     "line": 101,
      "file": "Elements/BookI/Prop34.lean",
      "brings_in": ["I.34"]}],
    "ref": "I.37",
@@ -6922,14 +6922,14 @@
       "file": "Elements/Figure/Parallelograms.lean"}],
     "Tacit.area_swap":
     [{"name": "BookI.Prop34.bisect",
-      "line": 100,
+      "line": 101,
       "file": "Elements/BookI/Prop34.lean"},
      {"name": "Parallelogram.quadArea_rotate",
       "line": 200,
       "file": "Elements/Figure/Parallelograms.lean"}],
     "Tacit.area_rotate":
     [{"name": "BookI.Prop34.bisect",
-      "line": 100,
+      "line": 101,
       "file": "Elements/BookI/Prop34.lean"},
      {"name": "Parallelogram.quadArea_rotate",
       "line": 200,
@@ -7089,7 +7089,7 @@
      "file": "Elements/BookI/HelpersParallels.lean",
      "brings_in": ["I.30", "I.31"]},
     {"name": "BookI.Prop34.bisect",
-     "line": 100,
+     "line": 101,
      "file": "Elements/BookI/Prop34.lean",
      "brings_in": ["I.34"]}],
    "ref": "I.38",
@@ -7197,7 +7197,7 @@
       "file": "Elements/Figure/Parallelograms.lean"}],
     "Tacit.area_swap":
     [{"name": "BookI.Prop34.bisect",
-      "line": 100,
+      "line": 101,
       "file": "Elements/BookI/Prop34.lean"},
      {"name": "Parallelogram.quadArea_rotate",
       "line": 200,
@@ -7205,7 +7205,7 @@
      {"name": "area_cba", "line": 74, "file": "Elements/Figure/Areas.lean"}],
     "Tacit.area_rotate":
     [{"name": "BookI.Prop34.bisect",
-      "line": 100,
+      "line": 101,
       "file": "Elements/BookI/Prop34.lean"},
      {"name": "Parallelogram.quadArea_rotate",
       "line": 200,
@@ -7840,7 +7840,7 @@
    "∀ {A B C D E : Elements.Point}, Elements.Parallelogram A B C D → Elements.Collinear A D E → Eq (Elements.quadArea A B C D) (HAdd.hAdd (Elements.area B E C) (Elements.area B E C))",
    "shared_steps":
    [{"name": "BookI.Prop34.bisect",
-     "line": 100,
+     "line": 101,
      "file": "Elements/BookI/Prop34.lean",
      "brings_in": ["I.34"]}],
    "ref": "I.41",
@@ -7855,12 +7855,12 @@
       "file": "Elements/Figure/Triangles.lean"}],
     "Tacit.area_swap":
     [{"name": "BookI.Prop34.bisect",
-      "line": 100,
+      "line": 101,
       "file": "Elements/BookI/Prop34.lean"},
      {"name": "area_bac", "line": 70, "file": "Elements/Figure/Areas.lean"}],
     "Tacit.area_rotate":
     [{"name": "BookI.Prop34.bisect",
-      "line": 100,
+      "line": 101,
       "file": "Elements/BookI/Prop34.lean"},
      {"name": "area_bac", "line": 70, "file": "Elements/Figure/Areas.lean"}]},
    "enunciation":
@@ -8380,7 +8380,7 @@
      "file": "Elements/BookI/HelpersParallels.lean",
      "brings_in": ["I.30", "I.31"]},
     {"name": "BookI.Prop34.bisect",
-     "line": 100,
+     "line": 101,
      "file": "Elements/BookI/Prop34.lean",
      "brings_in": ["I.34"]}],
    "ref": "I.44",
@@ -8556,7 +8556,7 @@
       "file": "Elements/Figure/Parallelograms.lean"}],
     "Tacit.area_swap":
     [{"name": "BookI.Prop34.bisect",
-      "line": 100,
+      "line": 101,
       "file": "Elements/BookI/Prop34.lean"},
      {"name": "Parallelogram.quadArea_rotate",
       "line": 200,
@@ -8567,7 +8567,7 @@
       "file": "Elements/Figure/Areas.lean"}],
     "Tacit.area_rotate":
     [{"name": "BookI.Prop34.bisect",
-      "line": 100,
+      "line": 101,
       "file": "Elements/BookI/Prop34.lean"},
      {"name": "Parallelogram.quadArea_rotate",
       "line": 200,
@@ -10285,7 +10285,7 @@
      "file": "Elements/BookII/Rectangles.lean",
      "brings_in": ["I.29"]},
     {"name": "Tacit.adjacent_eq_of_right",
-     "line": 189,
+     "line": 188,
      "file": "Elements/BookI/Prop13.lean",
      "brings_in": ["I.13"]}],
    "ref": "II.1",
@@ -10460,7 +10460,7 @@
       "line": 165,
       "file": "Elements/Figure/Angles.lean"},
      {"name": "Tacit.adjacent_eq_of_right",
-      "line": 189,
+      "line": 188,
       "file": "Elements/BookI/Prop13.lean"},
      {"name": "exists_off_line",
       "line": 39,
@@ -10612,7 +10612,7 @@
       "line": 53,
       "file": "Elements/BookII/Rectangles.lean"},
      {"name": "Tacit.adjacent_eq_of_right",
-      "line": 189,
+      "line": 188,
       "file": "Elements/BookI/Prop13.lean"},
      {"name": "quadArea_add_of_parallelograms",
       "line": 213,
@@ -11314,7 +11314,7 @@
      "file": "Elements/BookII/Rectangles.lean",
      "brings_in": ["I.4", "I.28", "I.34"]},
     {"name": "Tacit.adjacent_eq_of_right",
-     "line": 189,
+     "line": 188,
      "file": "Elements/BookI/Prop13.lean",
      "brings_in": ["I.13"]}],
    "ref": "II.3",
@@ -11688,7 +11688,7 @@
       "line": 149,
       "file": "Elements/BookII/Rectangles.lean"},
      {"name": "Tacit.adjacent_eq_of_right",
-      "line": 189,
+      "line": 188,
       "file": "Elements/BookI/Prop13.lean"},
      {"name": "quadArea_add_of_parallelograms",
       "line": 213,
@@ -11887,7 +11887,7 @@
      "file": "Elements/BookII/Rectangles.lean",
      "brings_in": ["I.4", "I.34"]},
     {"name": "Tacit.adjacent_eq_of_right",
-     "line": 189,
+     "line": 188,
      "file": "Elements/BookI/Prop13.lean",
      "brings_in": ["I.13"]}],
    "ref": "II.4",
@@ -15818,7 +15818,7 @@
      "file": "Elements/BookI/Helpers.lean",
      "brings_in": ["I.5"]},
     {"name": "Tacit.adjacent_eq_of_right",
-     "line": 189,
+     "line": 188,
      "file": "Elements/BookI/Prop13.lean",
      "brings_in": ["I.13"]}],
    "ref": "II.9",
@@ -16776,7 +16776,7 @@
      "file": "Elements/BookII/Rectangles.lean",
      "brings_in": ["I.4", "I.34"]},
     {"name": "Tacit.adjacent_eq_of_right",
-     "line": 189,
+     "line": 188,
      "file": "Elements/BookI/Prop13.lean",
      "brings_in": ["I.13"]}],
    "ref": "II.11",
@@ -18928,7 +18928,7 @@
      "file": "Elements/BookI/Helpers.lean",
      "brings_in": ["I.5"]},
     {"name": "Tacit.adjacent_eq_of_right",
-     "line": 189,
+     "line": 188,
      "file": "Elements/BookI/Prop13.lean",
      "brings_in": ["I.13"]}],
    "ref": "III.3",
@@ -18952,7 +18952,7 @@
       "file": "Elements/Figure/Rays.lean"}],
     "Tacit.line_unique":
     [{"name": "Tacit.adjacent_eq_of_right",
-      "line": 189,
+      "line": 188,
       "file": "Elements/BookI/Prop13.lean"},
      {"name": "Triangle.of_line",
       "line": 82,
@@ -18976,7 +18976,7 @@
       "file": "Elements/Figure/Angles.lean"}],
     "Tacit.add_comm":
     [{"name": "Tacit.adjacent_eq_of_right",
-      "line": 189,
+      "line": 188,
       "file": "Elements/BookI/Prop13.lean"}],
     "Postulate2":
     [{"name": "BookI.Prop5.base",
@@ -20090,7 +20090,7 @@
      "file": "Elements/BookIII/Prop02.lean",
      "brings_in": ["III.2"]},
     {"name": "Tacit.adjacent_eq_of_right",
-     "line": 189,
+     "line": 188,
      "file": "Elements/BookI/Prop13.lean",
      "brings_in": ["I.13"]}],
    "ref": "III.9",
@@ -20136,7 +20136,7 @@
       "file": "Elements/Figure/Angles.lean"}],
     "Tacit.add_comm":
     [{"name": "Tacit.adjacent_eq_of_right",
-      "line": 189,
+      "line": 188,
       "file": "Elements/BookI/Prop13.lean"}]},
    "enunciation":
    "If a point be taken within a circle, and more than two equal straight lines fall from the point\non the circle, the point taken is the centre of the circle. ",
@@ -20233,7 +20233,7 @@
      "file": "Elements/BookIII/Prop02.lean",
      "brings_in": ["III.2"]},
     {"name": "Tacit.adjacent_eq_of_right",
-     "line": 189,
+     "line": 188,
      "file": "Elements/BookI/Prop13.lean",
      "brings_in": ["I.13"]}],
    "ref": "III.10",
@@ -20279,7 +20279,7 @@
       "file": "Elements/Figure/Angles.lean"}],
     "Tacit.add_comm":
     [{"name": "Tacit.adjacent_eq_of_right",
-      "line": 189,
+      "line": 188,
       "file": "Elements/BookI/Prop13.lean"}]},
    "enunciation": "A circle does not cut a circle at more points than two. ",
    "direct_axioms":
@@ -21456,7 +21456,7 @@
      "file": "Elements/BookIII/Prop02.lean",
      "brings_in": ["III.2"]},
     {"name": "Tacit.adjacent_eq_of_right",
-     "line": 189,
+     "line": 188,
      "file": "Elements/BookI/Prop13.lean",
      "brings_in": ["I.13"]},
     {"name": "foot_between",
@@ -21733,7 +21733,7 @@
      "file": "Elements/BookIII/Prop01.lean",
      "brings_in": ["I.13"]},
     {"name": "Tacit.adjacent_eq_of_right",
-     "line": 189,
+     "line": 188,
      "file": "Elements/BookI/Prop13.lean",
      "brings_in": ["I.13"]}],
    "ref": "III.16",
@@ -21840,7 +21840,7 @@
       "line": 60,
       "file": "Elements/Figure/Lengths.lean"},
      {"name": "Tacit.adjacent_eq_of_right",
-      "line": 189,
+      "line": 188,
       "file": "Elements/BookI/Prop13.lean"}],
     "Postulate2":
     [{"name": "BookI.Prop5.base",
@@ -21953,7 +21953,7 @@
      "file": "Elements/BookIII/Prop01.lean",
      "brings_in": ["III.1"]},
     {"name": "Tacit.adjacent_eq_of_right",
-     "line": 189,
+     "line": 188,
      "file": "Elements/BookI/Prop13.lean",
      "brings_in": ["I.13"]}],
    "ref": "III.17",
@@ -22000,7 +22000,7 @@
       "line": 32,
       "file": "Elements/Figure/Rays.lean"},
      {"name": "Tacit.adjacent_eq_of_right",
-      "line": 189,
+      "line": 188,
       "file": "Elements/BookI/Prop13.lean"},
      {"name": "angle_onRay_right",
       "line": 47,
@@ -22074,7 +22074,7 @@
       "file": "Elements/Figure/Angles.lean"}],
     "Tacit.add_comm":
     [{"name": "Tacit.adjacent_eq_of_right",
-      "line": 189,
+      "line": 188,
       "file": "Elements/BookI/Prop13.lean"}]},
    "enunciation":
    "From a given point to draw a straight line touching a given circle. ",
@@ -23679,7 +23679,7 @@
    "∀ {A C P : Elements.Point} {S : Elements.Point → Prop}, Not (Elements.Collinear A C P) → (∀ (X Y : Elements.Point), Elements.Between A X C → Elements.SameSideOf Y P A C → Exists fun (B : Elements.Point) => And (S B) (Elements.OnRay B X Y)) → Exists fun (B : Elements.Point) => Exists fun (D : Elements.Point) => Exists fun (E : Elements.Point) => Exists fun (γ : Elements.Circle) => And (S B) (And (Elements.SameSideOf B P A C) (And (Elements.Between A D C) (And (Eq (Elements.len A D) (Elements.len D C)) (And (Eq (Elements.ang A D B) Elements.rightAngle) (And (Elements.Centre E γ) (And (Elements.OnCircle A γ) (And (Elements.OnCircle B γ) (And (Elements.OnCircle C γ) (And (Elements.Collinear D B E) (And (LT.lt (Elements.ang B A D) (Elements.ang A B D) → Elements.OppositeSidesOf E B A C) (And (Eq (Elements.ang A B D) (Elements.ang B A D) → Eq E D) (LT.lt (Elements.ang A B D) (Elements.ang B A D) → Elements.SameSideOf E B A C))))))))))))",
    "shared_steps":
    [{"name": "Tacit.adjacent_eq_of_right",
-     "line": 189,
+     "line": 188,
      "file": "Elements/BookI/Prop13.lean",
      "brings_in": ["I.13"]}],
    "ref": "III.25",
@@ -23787,7 +23787,7 @@
       "line": 32,
       "file": "Elements/Figure/Rays.lean"},
      {"name": "Tacit.adjacent_eq_of_right",
-      "line": 189,
+      "line": 188,
       "file": "Elements/BookI/Prop13.lean"},
      {"name": "angle_lt_of_between",
       "line": 108,
@@ -23846,7 +23846,7 @@
       "line": 43,
       "file": "Elements/Figure/Areas.lean"},
      {"name": "Tacit.adjacent_eq_of_right",
-      "line": 189,
+      "line": 188,
       "file": "Elements/BookI/Prop13.lean"},
      {"name": "angle_lt_of_between",
       "line": 108,
@@ -29343,7 +29343,7 @@
    "∀ {A₀ A₁ A₂ E₁ E E₂ : Elements.Point} {ps : List Elements.Point}, (∀ (s : Prod Elements.Point Elements.Point), Membership.mem (Elements.segments (List.cons A₁ (List.cons A₂ ps))) s → Elements.Triangle A₀ (Prod.fst s) (Prod.snd s)) → (∀ (t : Prod Elements.Point (Prod Elements.Point Elements.Point)), Membership.mem (Elements.triples (List.cons A₁ (List.cons A₂ ps))) t → Elements.OppositeSidesOf (Prod.fst t) (Prod.snd (Prod.snd t)) A₀ (Prod.fst (Prod.snd t))) → LT.lt (Elements.Magnitude.sum (List.map (fun (s : Prod Elements.Point Elements.Point) => Elements.ang (Prod.fst s) A₀ (Prod.snd s)) (Elements.segments (List.cons A₁ (List.cons A₂ ps))))) (HAdd.hAdd (HAdd.hAdd Elements.rightAngle Elements.rightAngle) (HAdd.hAdd Elements.rightAngle Elements.rightAngle)) → Elements.Triangle E₁ E E₂ → Exists fun (R : Elements.Rectilineal) => And (Eq (Elements.Rectilineal.pieces R) (List.map (fun (s : Prod Elements.Point Elements.Point) => Prod.mk A₀ (Prod.mk (Prod.fst s) (Prod.snd s))) (Elements.segments (List.cons A₁ (List.cons A₂ ps))))) (Exists fun (K : Elements.Point) => Exists fun (F : Elements.Point) => Exists fun (L : Elements.Point) => Exists fun (M : Elements.Point) => And (Elements.Parallelogram K F L M) (And (Eq (Elements.ang F K M) (Elements.ang E₁ E E₂)) (Eq (Elements.quadArea K F L M) (Elements.Rectilineal.area R))))",
    "shared_steps":
    [{"name": "Fitted.fan",
-     "line": 711,
+     "line": 714,
      "file": "Elements/BookI/Prop45.lean",
      "brings_in": ["I.13"]}],
    "ref": "I.45 fan",
@@ -29354,77 +29354,77 @@
    "kind": "companion",
    "inherited":
    {"Tacit.triple_incidence2":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.same_side_trans":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.same_side_symm":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.same_side_refl":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.same_side_or":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.same_ray_of_angle_eq_zero":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.pasch4":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.pasch3":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.pasch2":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.on_line_of_between_ends":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.on_line_of_between":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.not_on_line_of_same_side":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.not_lt_zero":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.not_between_of_between_between":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.not_between_of_between":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.ne_of_between_ends":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.ne_of_between":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.lt_trichotomy":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.lt_trans":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.lt_irrefl":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.line_unique":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.exists_point":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.between_symm":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.between_of_between_right":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.between_of_between_left":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.between_cases":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.angle_eq_of_same_rays":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.angle_add_of_inside":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.add_zero":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.add_lt_add_right":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.add_comm":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.add_assoc":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Postulate2":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Postulate1":
     [{"name": "Fitted.fan",
-      "line": 711,
+      "line": 714,
       "file": "Elements/BookI/Prop45.lean"}]},
    "enunciation":
-   "**I.45, for a figure divided from one corner** (companion of I.45), as Euclid and Oliver\nByrne divide it. A figure with corners A₀, A₁, A₂, …, Aₙ, the list `ps` being A₃, …, Aₙ\n(empty for a triangle), divided by the straight lines from A₀ into the triangles A₀A₁A₂,\nA₀A₂A₃, …, A₀Aₙ₋₁Aₙ, one on each side `segments (A₁ :: A₂ :: ps)`. The division is checked:\neach piece is a triangle; each two neighbouring triangles A₀Aᵢ₋₁Aᵢ and A₀AᵢAᵢ₊₁ lie on\nopposite sides of the straight line A₀Aᵢ they share (one condition for each of\n`triples (A₁ :: A₂ :: ps)`); and the angles A₁A₀A₂, …, Aₙ₋₁A₀Aₙ together are less than four\nright angles. Then those triangles, in that order, are fitted together into one figure\n(`Fitted.fan`); and, given a rectilineal angle E, there is a parallelogram KFLM, its angle\nat K equal to E, equal to that figure, that is, to the triangles taken together. The figure\nis read as the one with corners A₀, A₁, …, Aₙ in order round it; that its boundary is that\nclosed line is not stated in Lean. Nothing is claimed of another division.\n\nThe first conclusion is what the two conditions are for: without them the triangles from\nA₀ may overlap, and need not be fitted. The parallelogram alone would follow from each\npiece being a triangle, by `Prop45.sum`.\n\nEuclid's ABCD with DB joined is the figure with corners D, A, B, C, its triangles DAB and\nDBC: A and C lie on opposite sides of DB. Byrne's figure has its corners listed from its\nre-entrant corner, from which both his straight lines are drawn. ",
+   "**I.45, for a figure divided from one corner** (companion of I.45), as Euclid and Oliver\nByrne divide it. A figure with corners A₀, A₁, A₂, …, Aₙ, the list `ps` being A₃, …, Aₙ\n(empty for a triangle), divided by the straight lines from A₀ into the triangles A₀A₁A₂,\nA₀A₂A₃, …, A₀Aₙ₋₁Aₙ, one on each side `segments (A₁ :: A₂ :: ps)`. The division is checked:\neach piece is a triangle; each two neighbouring triangles A₀Aᵢ₋₁Aᵢ and A₀AᵢAᵢ₊₁ lie on\nopposite sides of the straight line A₀Aᵢ they share (one condition for each of\n`triples (A₁ :: A₂ :: ps)`); and the angles A₁A₀A₂, …, Aₙ₋₁A₀Aₙ together are less than four\nright angles. Then those triangles, in that order, are fitted together into one figure\n(`Fitted.fan`); and, given a rectilineal angle E, there is a parallelogram KFLM, its angle\nat K equal to E, equal to that figure, that is, to the triangles taken together. The figure\nis read as the one with corners A₀, A₁, …, Aₙ in order round it; that its boundary is that\nclosed line is not stated here, and is proved in the staging files (#289), but not yet part\nof the edition's statements (#116). Nothing is claimed here of another division.\n\nThe first conclusion is what the two conditions are for: without them the triangles from\nA₀ may overlap, and need not be fitted. The parallelogram alone would follow from each\npiece being a triangle, by `Prop45.sum`.\n\nEuclid's ABCD with DB joined is the figure with corners D, A, B, C, its triangles DAB and\nDBC: A and C lie on opposite sides of DB. Byrne's figure has its corners listed from its\nre-entrant corner, from which both his straight lines are drawn. ",
    "direct_axioms":
    ["Postulate1",
     "Postulate2",
@@ -30324,7 +30324,7 @@
      "file": "Elements/BookII/Rectangles.lean",
      "brings_in": ["I.29"]},
     {"name": "Tacit.adjacent_eq_of_right",
-     "line": 189,
+     "line": 188,
      "file": "Elements/BookI/Prop13.lean",
      "brings_in": ["I.13"]}],
    "ref": "II.1 two",
@@ -30500,7 +30500,7 @@
       "line": 165,
       "file": "Elements/Figure/Angles.lean"},
      {"name": "Tacit.adjacent_eq_of_right",
-      "line": 189,
+      "line": 188,
       "file": "Elements/BookI/Prop13.lean"},
      {"name": "exists_off_line",
       "line": 39,
@@ -30655,7 +30655,7 @@
       "line": 53,
       "file": "Elements/BookII/Rectangles.lean"},
      {"name": "Tacit.adjacent_eq_of_right",
-      "line": 189,
+      "line": 188,
       "file": "Elements/BookI/Prop13.lean"},
      {"name": "quadArea_add_of_parallelograms",
       "line": 213,
@@ -30822,7 +30822,7 @@
    "kind": "companion",
    "inherited": {},
    "enunciation":
-   "**II.14, for a figure given with triangles that lie apart** (companion of II.14). To\nconstruct a square equal to a given rectilineal figure, given with any division of it into\ntriangles, no point inside two of them (`Apart`), as in `Prop45.apart`: the square on PQ is\nequal to those triangles taken together (`Apart.area`). The figure may have a hole, touch\nitself at a corner, or be in more than one piece. It is `Prop14.sum` for the figure's\ntriangles. Nothing is claimed of another division of the figure. ",
+   "**II.14, for a figure given with triangles that do not overlap** (companion of II.14). To\nconstruct a square equal to a given rectilineal figure, given with any division of it into\ntriangles, no point inside two of them (`Apart`), as in `Prop45.apart`: the square on PQ is\nequal to those triangles taken together (`Apart.area`). The figure may have a hole, touch\nitself at a corner, or be in more than one piece. It is `Prop14.sum` for the figure's\ntriangles. Nothing is claimed of another division of the figure. ",
    "direct_axioms": [],
    "common_notions": ["C.N. 1", "C.N. 2", "C.N. 3", "C.N. 4", "C.N. 5"],
    "cites": ["II.14 sum"],
@@ -30902,7 +30902,7 @@
    "∀ {A₀ A₁ A₂ : Elements.Point} {ps : List Elements.Point}, (∀ (s : Prod Elements.Point Elements.Point), Membership.mem (Elements.segments (List.cons A₁ (List.cons A₂ ps))) s → Elements.Triangle A₀ (Prod.fst s) (Prod.snd s)) → (∀ (t : Prod Elements.Point (Prod Elements.Point Elements.Point)), Membership.mem (Elements.triples (List.cons A₁ (List.cons A₂ ps))) t → Elements.OppositeSidesOf (Prod.fst t) (Prod.snd (Prod.snd t)) A₀ (Prod.fst (Prod.snd t))) → LT.lt (Elements.Magnitude.sum (List.map (fun (s : Prod Elements.Point Elements.Point) => Elements.ang (Prod.fst s) A₀ (Prod.snd s)) (Elements.segments (List.cons A₁ (List.cons A₂ ps))))) (HAdd.hAdd (HAdd.hAdd Elements.rightAngle Elements.rightAngle) (HAdd.hAdd Elements.rightAngle Elements.rightAngle)) → Exists fun (R : Elements.Rectilineal) => And (Eq (Elements.Rectilineal.pieces R) (List.map (fun (s : Prod Elements.Point Elements.Point) => Prod.mk A₀ (Prod.mk (Prod.fst s) (Prod.snd s))) (Elements.segments (List.cons A₁ (List.cons A₂ ps))))) (Exists fun (P : Elements.Point) => Exists fun (Q : Elements.Point) => Eq (Elements.sq P Q) (Elements.Rectilineal.area R))",
    "shared_steps":
    [{"name": "Fitted.fan",
-     "line": 711,
+     "line": 714,
      "file": "Elements/BookI/Prop45.lean",
      "brings_in": ["I.13"]}],
    "ref": "II.14 fan",
@@ -30913,77 +30913,77 @@
    "kind": "companion",
    "inherited":
    {"Tacit.triple_incidence2":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.same_side_trans":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.same_side_symm":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.same_side_refl":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.same_side_or":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.same_ray_of_angle_eq_zero":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.pasch4":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.pasch3":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.pasch2":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.on_line_of_between_ends":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.on_line_of_between":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.not_on_line_of_same_side":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.not_lt_zero":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.not_between_of_between_between":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.not_between_of_between":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.ne_of_between_ends":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.ne_of_between":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.lt_trichotomy":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.lt_trans":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.lt_irrefl":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.line_unique":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.exists_point":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.between_symm":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.between_of_between_right":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.between_of_between_left":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.between_cases":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.angle_eq_of_same_rays":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.angle_add_of_inside":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.add_zero":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.add_lt_add_right":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.add_comm":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Tacit.add_assoc":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Postulate2":
-    [{"name": "Fitted.fan", "line": 711, "file": "Elements/BookI/Prop45.lean"}],
+    [{"name": "Fitted.fan", "line": 714, "file": "Elements/BookI/Prop45.lean"}],
     "Postulate1":
     [{"name": "Fitted.fan",
-      "line": 711,
+      "line": 714,
       "file": "Elements/BookI/Prop45.lean"}]},
    "enunciation":
-   "**II.14, for a figure divided from one corner** (companion of II.14), as Euclid and\nOliver Byrne divide it. A figure with corners A₀, A₁, A₂, …, Aₙ, divided by the straight\nlines from A₀ into the triangles A₀A₁A₂, …, A₀Aₙ₋₁Aₙ, with the division checked as in\n`Prop45.fan`: each piece a triangle, each two neighbouring triangles on opposite sides of\nthe straight line A₀Aᵢ they share, and the angles at A₀ together less than four right\nangles. Then those triangles, in that order, are fitted together into one figure\n(`Fitted.fan`), and the square on PQ is equal to that figure, that is, to the triangles\ntaken together. The figure is read as the one with corners A₀, A₁, …, Aₙ in order round it\n(that its boundary is that closed line is not stated in Lean). The square drawn is\n`Prop14.square R.toApart`, for the glued figure `R` returned.\n\nAs in `Prop45.fan`, the first conclusion is what the two conditions are for; the square\nalone would follow from each piece being a triangle, by `Prop14.sum`. ",
+   "**II.14, for a figure divided from one corner** (companion of II.14), as Euclid and\nOliver Byrne divide it. A figure with corners A₀, A₁, A₂, …, Aₙ, divided by the straight\nlines from A₀ into the triangles A₀A₁A₂, …, A₀Aₙ₋₁Aₙ, with the division checked as in\n`Prop45.fan`: each piece a triangle, each two neighbouring triangles on opposite sides of\nthe straight line A₀Aᵢ they share, and the angles at A₀ together less than four right\nangles. Then those triangles, in that order, are fitted together into one figure\n(`Fitted.fan`), and the square on PQ is equal to that figure, that is, to the triangles\ntaken together. The figure is read as the one with corners A₀, A₁, …, Aₙ in order round it\n(that its boundary is that closed line is not stated here, and is proved in the staging\nfiles (#289), but not yet part of the edition's statements (#116)). The square drawn is\n`Prop14.square R.toApart`, for the glued figure `R` returned.\n\nAs in `Prop45.fan`, the first conclusion is what the two conditions are for; the square\nalone would follow from each piece being a triangle, by `Prop14.sum`. ",
    "direct_axioms":
    ["Postulate1",
     "Postulate2",
@@ -31475,7 +31475,7 @@
       "file": "Elements/Figure/Rays.lean"},
      {"name": "produce", "line": 67, "file": "Elements/Figure/Lines.lean"}]},
    "enunciation":
-   "**II.14, for a rectangle** (companion of II.14). To construct a square equal to a given\nrectangle EBCD: the second part of Euclid's proof, with both of its cases. If BE is equal to\nED, the rectangle is a square already. If not, the greater, say BE, is produced to F with EF\nequal to ED, BF is bisected at G, the semicircle BHF is described with centre G, and DE is\nproduced to H; then the rectangle BE, EF with the square on EG is the square on GF [II. 5],\nwhich is the squares on HE, EG [I. 47], and the rectangle is the square on EH. This is\nthe proof of `Prop14` after the rectangle is made, written out again, for it does not cite\nII.14. The square is the square on PQ. ",
+   "**II.14, for a rectangle** (companion of II.14). To construct a square equal to a given\nrectangle EBCD: the second part of Euclid's proof, with both of its cases. If BE is equal to\nED, the rectangle is a square already. If not, the greater, say BE, is produced to F with EF\nequal to ED, BF is bisected at G, the semicircle BHF is described with centre G, and DE is\nproduced to H; then the rectangle BE, EF with the square on EG is the square on GF [II. 5],\nwhich is the squares on HE, EG [I. 47], and the rectangle is the square on EH. This is\nthe proof of `Prop14` after the rectangle is made, written out again so that it need not\ncite II.14. The square is the square on PQ. ",
    "direct_axioms":
    ["Definition15",
     "Postulate1",
@@ -37308,7 +37308,7 @@
      "file": "Elements/BookIII/MixedAngles.lean",
      "brings_in": ["III.2"]},
     {"name": "Tacit.adjacent_eq_of_right",
-     "line": 189,
+     "line": 188,
      "file": "Elements/BookI/Prop13.lean",
      "brings_in": ["I.13"]},
     {"name": "Triangle.of_onCircle_centre",
@@ -37653,7 +37653,7 @@
       "file": "Elements/BookIII/MixedAngles.lean"}],
     "Tacit.add_comm":
     [{"name": "Tacit.adjacent_eq_of_right",
-      "line": 189,
+      "line": 188,
       "file": "Elements/BookI/Prop13.lean"},
      {"name": "near_across",
       "line": 399,
