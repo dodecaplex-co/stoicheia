@@ -4998,10 +4998,13 @@ findings:
   tooling/figure-every-case (`752a84fb`, landing before train C6b with its own entry) and
   III.25's figure of every case, and changes neither the lock nor any pin; with main
   at `554dfb0f` (#232, the unrun tests in CI, and #239, decision entries one file
-  each), which changes neither the lock nor any pin; and last with the guard at
+  each), which changes neither the lock nor any pin; then with the guard at
   `1b5e3f2b`, which brings train C6b after its /no-mistakes run and its readers (III.15
   and III.25), tooling/figure-every-case at `696181c5` and main at `8674bce2` (#240, train
-  C6a landed) and `af90d71e` (#254), and changes neither the lock nor any pin. The
+  C6a landed) and `af90d71e` (#254), and changes neither the lock nor any pin; and last
+  with the guard at `eae7eed9`, which brings train C6b merged with main at `6d06c47b`
+  (#270, the check change tooling/figure-every-case landed, and main's tooling and text
+  trains #271 to #304), and changes neither the lock nor any pin. The
   restated Book III of this train is kept whole; III.1's record and commentary are this
   train's, since its statement no longer takes a centre.
   `Certificate/axioms.lock`, written again by `python3 scripts/check_fidelity.py
@@ -5025,7 +5028,7 @@ findings:
   superposition. The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`,
   `model/`, `scripts/`, `.github/`, `review/SCHEMA.md`, `review/terms.toml`,
   `lakefile.toml` and `lean-toolchain` that differ from `lean/centre-guard` at
-  `1b5e3f2b`, each named whole:
+  `eae7eed9`, each named whole:
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
   `Audit/screen.py`,
@@ -5050,7 +5053,7 @@ findings:
   the lock's one changed word and what follows from it. `scripts/scaffold_book.py` differs
   by tooling/c6c-scaffold's change, its restated Book III signatures, the companions it
   emits after III.24 and III.25, and its comment, which lands before this train with its
-  own entry. The paths main changed between `73b97ab1` and `554dfb0f` are main's, named
+  own entry. The paths main changed between `73b97ab1` and `6d06c47b` are main's, named
   in main's entries. No statement, check or expected value changes in this merge.
 
 - **III.30's halves, approved, proved and registered (#67).** The owner approved
