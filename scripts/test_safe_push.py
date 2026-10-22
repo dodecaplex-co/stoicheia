@@ -1504,6 +1504,23 @@ class Hook(Clone):
                 self.assertIsNone(self.origin_branch(ref.removeprefix("refs/heads/")))
         self.assertNotIn(TOKEN, r.stdout + r.stderr, "the hook repeats the secret")
 
+    def test_hook_scans_a_push_with_a_relative_pair_from_a_subfolder(self):
+        # #186: Git runs the hook at the top with GIT_DIR made absolute, but passes a
+        # relative GIT_WORK_TREE on unchanged; the scan still runs, and decides.
+        good = self.commit("A commit", {"docs/reading.md": self.text("docs/reading.md") + "\nX.\n"})
+        bad = self.commit("Plant a token", {"docs/notes.md": f"api_token = \"{TOKEN}\"\n"})
+        for sha, ref, passes in ((good, "refs/heads/good", True), (bad, "refs/heads/bad", False)):
+            with self.subTest(ref=ref):
+                r = subprocess.run(["git", "--git-dir=../.git", "--work-tree=..", "push",
+                                    "origin", f"{sha}:{ref}"], cwd=WORK / "scripts",
+                                   env=clean_env(), capture_output=True, text=True)
+                if passes:
+                    self.assertEqual(r.returncode, 0, r.stderr)
+                    self.assertIn(f"the secret scan of the push to {ref}", r.stdout + r.stderr)
+                else:
+                    self.assertNotEqual(r.returncode, 0, r.stderr)
+                    self.assertIn(f"pre-push: refusing the push to {ref}", r.stderr)
+
     def test_hook_never_runs_another_remotes_main(self):
         # Security review: a push to another remote (a contributor's fork, fetched) is
         # scanned with origin/main's copy, never with the copy on that remote's main.

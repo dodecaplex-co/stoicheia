@@ -2200,12 +2200,13 @@ def guard_paths(repo, base, sha, rep: Report) -> bool:
             found.setdefault(fault, []).append(commit)
         if standard is not None:
             with off_path(repo):        # its imports in findings, too, read nothing planted
-                # A copy from before its findings took the tree's folders judges the leaves.
-                accepts_directories = len(inspect.signature(
-                    standard.findings).parameters) >= 2
-                judged, crash = judge(lambda: [str(f) for f in standard.findings(
-                    entries, directories)] if accepts_directories else
-                    [str(f) for f in standard.findings(entries)])
+                # A copy from before its findings took the tree's folders judges the leaves;
+                # asked inside judge, so a findings missing or uncallable refuses by name.
+                def theirs_of():
+                    if "directories" in inspect.signature(standard.findings).parameters:
+                        return [str(f) for f in standard.findings(entries, directories)]
+                    return [str(f) for f in standard.findings(entries)]
+                judged, crash = judge(theirs_of)
             if crash is not None:       # a crash of origin/main's check refuses, as a finding
                 judged = [f"origin/main's {PATH_STANDARD} fails on the tree: {crash}"]
             for finding in judged:
@@ -5211,6 +5212,14 @@ def main(argv=None) -> int:
         CI_APPEAR_TIMEOUT = float(os.environ.get("STOICHEIA_TEST_CI_APPEAR", CI_APPEAR_TIMEOUT))
 
     original_cwd = Path.cwd()
+    if args.scan_push:
+        # The scan reads objects alone, so it runs as the hook's Git gives it, before the
+        # location check below: Git hands a hook a relative GIT_WORK_TREE unchanged (#186).
+        r = run(["git", "rev-parse", "--show-toplevel"], original_cwd)
+        if r.returncode != 0:
+            print("safe_push: run it inside the repository", file=sys.stderr)
+            return 2
+        return scan_push_main(Path(r.stdout.strip()), *args.scan_push)
     # #186, a linked worktree's GIT_DIR: a shell alias run from one, as `git safe-push`
     # is, sets GIT_DIR (and GIT_PREFIX). Left set, it would point every git command in the
     # fresh worktrees at the caller's index and HEAD, and check_paths.py would refuse to
@@ -5249,8 +5258,6 @@ def main(argv=None) -> int:
               file=sys.stderr)
         return 2
     repo = expected[0]
-    if args.scan_push:
-        return scan_push_main(repo, *args.scan_push)
     signal.signal(signal.SIGTERM, _terminate)
     signal.signal(signal.SIGHUP, _terminate)
     if args.merge is not None:
