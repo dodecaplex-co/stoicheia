@@ -96,8 +96,10 @@
 # law, and MODEL.md's counts are written again by run.py --full --write in the same change.
 #
 # Renewed on 21 October 2026, when the second retirement was merged with train C6a (#240):
-# 49 axioms, main's 80 less the 31 above, with main's 238 words of vocabulary, every other
-# line of the lock byte for byte. The 31 laws leave laws.toml, search.py and hyperbolic.py,
+# 49 axioms, main's 80 less the 31 above, with main's 238 words of vocabulary: the lock is
+# main's lock less the 31 lines of the retired axioms; every other axiom and every word is
+# main's byte for byte, and the header names decision entries as main's `--write-lock` now
+# writes it. The 31 laws leave laws.toml, search.py and hyperbolic.py,
 # exists_centre's law stays in them, and MODEL.md's counts are written again by
 # run.py --full --write in the same change.
 09e393d606e185e79552f9eb3e5057724cfb619ddbb841cd3f444cc5fd909a56  Certificate/axioms.lock
