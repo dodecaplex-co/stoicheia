@@ -195,7 +195,7 @@ def RegionBoundary (r : Point → Prop) (X : Point) : Prop :=
 
 /-! ## Cells -/
 
-/-- X is on none of the straight lines `ls`. -/
+/-- X is on none of the given straight lines. -/
 def Avoid (ls : List Line) (X : Point) : Prop := ∀ L ∈ ls, ¬ OnLine X L
 
 /-- **A convex cell**: a convex outline, taken as one piece of a figure. -/
@@ -244,12 +244,16 @@ def Tiles (P : ConvexCell) (qs : List ConvexCell) : Prop :=
   qs.Pairwise (fun Q R => ∀ X : Point, Q.Core X → ¬ R.Core X) ∧
     AgreeOff (fun X => ∃ Q ∈ qs, Q.Region X) P.Region
 
-/-- Q is what is left of the cell P on R's side of L. -/
+/-- Q is what is left of the cell P on R's side of L: its inside is exactly the part of P's
+inside on R's side of L, and its region agrees, off finitely many straight lines, with the
+part of P's region on that side of L or on L. A part with no inside is nothing (`none`). -/
 def Clips (P : ConvexCell) (L : Line) (R : Point) (Q : Cell) : Prop :=
   (∀ X : Point, CellCore Q X ↔ P.Core X ∧ SameSide X R L) ∧
     AgreeOff (CellRegion Q) (fun X => P.Region X ∧ Half X R L)
 
-/-- C is the common part of the cells P and Q. -/
+/-- C is the common part of the cells P and Q: its inside is exactly the common part of their
+insides, and its region agrees with the common part of their regions off finitely many
+straight lines. Two cells with no inside in common have nothing (`none`) in common. -/
 def Intersection (P Q : ConvexCell) (C : Cell) : Prop :=
   (∀ X : Point, CellCore C X ↔ P.Core X ∧ Q.Core X) ∧
     AgreeOff (CellRegion C) (fun X => P.Region X ∧ Q.Region X)

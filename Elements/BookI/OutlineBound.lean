@@ -1,4 +1,5 @@
 import Elements.Figure.Outlines.OutlineFacts
+import Elements.Figure.Sums
 import Elements.BookI.Prop23
 
 /-!
@@ -37,14 +38,6 @@ None of this uses Postulate 5. A finite straight line through a point of a strai
 produced past it, takes its two ends to the far side of every point within the angle they
 make there; so finitely many points lie on one side of some straight line, and, seen from a
 point beyond it, within one angle. -/
-
-/-- Less, then not greater: less. -/
-theorem mag_lt_of_lt_of_le {k : Kind} {a b c : Magnitude k} (h₁ : a < b) (h₂ : b ≤ c) :
-    a < c := by
-  rcases Tacit.lt_trichotomy a c with h | rfl | h
-  · exact h
-  · exact absurd h₁ h₂
-  · exact absurd (Tacit.lt_trans h h₁) h₂
 
 /-- **An angle of a triangle is less than two right angles.** Produce AC beyond C to E: the
 angle ABE is greater than the angle ABC, and no angle exceeds two right angles. -/
@@ -188,7 +181,7 @@ theorem cone_side {O B C B'' C'' : Point} (hOBC : Triangle O B C) (hB : Between 
   refine ⟨hOm, fun X hXC hXB => Classical.byContradiction fun hn => ?_⟩
   have hXC' : SameSide X C LB := hXC.sameSide hO_B hB_B
   have hXB' : SameSide X B LC := hXB.sameSide hO_C hC_C
-  /- A point of `m` within the angle. -/
+  /- Take a point of m within the angle. -/
   obtain ⟨Y, hYm, hYC, hYB⟩ : ∃ Y, OnLine Y m ∧ SameSide Y C LB ∧ SameSide Y B LC := by
     by_cases hX : OnLine X m
     · exact ⟨X, hX, hXC', hXB'⟩
@@ -317,7 +310,7 @@ theorem angle_triangle {O B C P : Point} (hPC : SameSideOf P C O B) (hPB : SameS
   have rayC : ∀ {X : Point}, OnLine X LC → SameSide X C LP → OnRay X O C := fun hX hXC =>
     OnRay.of_sameSideOf (SameSideOf.of_line hOP hO_P hP_P hXC) ⟨LC, hO_C, hC_C, hX⟩
       fun e => not_on_line_of_same_side hXC (e ▸ hO_P)
-  /- The angle POC at P, towards B. -/
+  /- Copy the angle POC at P, towards B. -/
   obtain ⟨V, hVB, hcopy⟩ := copy_angle hOPC hP_P hO_P hBLP
   have hVP : V ≠ P := fun e => not_on_line_of_same_side hVB (e ▸ hP_P)
   obtain ⟨LV, hP_V, hV_V⟩ := Postulate1 P V hVP.symm
@@ -385,7 +378,7 @@ theorem angle_triangle {O B C P : Point} (hPC : SameSideOf P C O B) (hPB : SameS
   have hB₁PC₂ : Between B₁ P C₂ := pasch4 hℓLP hP_P hPℓ hB₁ℓ hC₂ℓ
     (fun e => hB₁C₂ (by rw [← e]; exact same_side_refl hB₁LP)) hB₁P
     (fun e => hC₂LP (e ▸ hP_P)) hB₁C₂
-  /- C₁ beyond C₂. -/
+  /- Take C₁ beyond C₂. -/
   obtain ⟨C₁, hOC₂C₁⟩ := produce hOC₂
   have hC₁C : OnLine C₁ LC := on_line_of_between hOC₂C₁ hO_C hC₂C
   have hC₁c : SameSide C₁ C LP := same_side_trans (pasch2 hOC₂C₁ hO_P hC₂LP) hC₂c

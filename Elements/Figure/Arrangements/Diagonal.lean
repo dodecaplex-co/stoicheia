@@ -1,6 +1,7 @@
 import Elements.Figure.Outlines
 import Elements.Figure.Arrangements.CoverFacts
 import Elements.Figure.Arrangements.ArrangementFacts
+import Elements.Figure.Lists
 
 /-!
 # Book Zero: an interior diagonal of a simple outline
@@ -64,19 +65,6 @@ theorem side_at {ps : List Point} (h : ps.Nodup) {U V W : Point} (hUV : (U, V) �
   rcases hV with e | e
   · exact Or.inr (LoopFacts.sides_fst_inj h ht hVW e.symm)
   · exact Or.inl (Parity.sides_snd_inj h ht hUV e.symm)
-
-/-- Reading a list from a later point is a rotation. -/
-theorem rotate_split {ps us vs : List Point} (he : ps = us ++ vs) (hv : vs ≠ [])
-    (hlen : 2 ≤ ps.length) : ps.rotateLeft us.length = vs ++ us := by
-  have hlt : us.length < ps.length := by
-    rw [he, List.length_append]
-    have : vs.length ≠ 0 := fun h0 => hv (List.eq_nil_of_length_eq_zero h0)
-    omega
-  unfold List.rotateLeft
-  dsimp only
-  split
-  · omega
-  · rw [Nat.mod_eq_of_lt hlt, he, List.drop_left, List.take_left]
 
 /-- Some corner of a simple loop is off any given straight line: three of them make a
 triangle (`LoopFacts.simple_frame`). -/
@@ -178,7 +166,8 @@ theorem conds_between {hs : List (Point × Line)} {X Y Z : Point}
 /-! ## A corner with all the others strictly on one side of a straight line -/
 
 /-- **A straight line with every corner strictly on one side**: a side line of a convex cell
-holding all the corners strictly inside it (`Arrangement.enclose_list`, `Arrangement.strict_enclosure`). -/
+holding all the corners strictly inside it (`Arrangement.enclose_list`,
+`Arrangement.strict_enclosure`). -/
 theorem enclosing_line {ps : List Point} (h : SimpleLoop ps) :
     ∃ (K : Line) (R : Point), ∀ C ∈ ps, SameSide C R K := by
   obtain ⟨A, -, B, -, C, -, hABC⟩ := LoopFacts.simple_frame h
@@ -614,7 +603,7 @@ theorem nearest {ps : List Point} {V : Point} :
     obtain ⟨h₁, hsub⟩ := corner_triangle h hVU₁U hVW₁W
     by_cases hCex : ∃ C ∈ ps, InsideTriangle C V U₁ W₁
     · obtain ⟨C, hC, hCin⟩ := hCex
-      have hlt := Parity.countP_lt (p := fun C => decide (InsideTriangle C V U₁ W₁))
+      have hlt := countP_lt (p := fun C => decide (InsideTriangle C V U₁ W₁))
         (q := fun C => decide (InsideTriangle C V U W)) (l := ps)
         (fun Y _ hY => decide_eq_true (hsub Y (of_decide_eq_true hY)))
         ⟨X, hX, decide_eq_true hXin, by
@@ -953,7 +942,8 @@ theorem inside_near {ps : List Point} (h : SimpleLoop ps) {U V W U' W' E : Point
     · exact hP₀s p hp
   obtain ⟨A, B, C, hP₀in, hall⟩ := small_triangle _ hP₀c
   obtain ⟨P₁, hP₁in, hP₁a⟩ :=
-    triangle_point_avoiding hP₀in.1.symm.triangle.cab (ps.map fun V => Classical.choose (collinear_of_two Z₂ V))
+    triangle_point_avoiding hP₀in.1.symm.triangle.cab
+      (ps.map fun V => Classical.choose (collinear_of_two Z₂ V))
   have hP₁c := hall P₁ (Or.inl hP₁in)
   have hP₁E : SameSide P₁ E L := hP₁c (E, L) List.mem_cons_self
   have hP₁P₀ : SameSide P₁ P₀ LU := hP₁c (P₀, LU) (List.mem_cons_of_mem _ List.mem_cons_self)
@@ -1112,12 +1102,13 @@ theorem diagonal_exists {ps : List Point} (h : SimpleLoop ps) (hn : 4 ≤ ps.len
 
 /-! ## Two chains and two pieces
 
-For `simple_diagonal_partition`. The loop `A :: (us ++ B :: vs)` is read as two chains, from A
-through `us` to B and from B through `vs` back to A. The first piece is the first chain closed
-by the side BA, `A :: (us ++ [B])`; the second is the second chain closed by AB,
-`B :: (vs ++ [A])`. Read from B, the loop has the chains and the pieces exchanged
-(`rotate_config`), so what is proved of the first chain and the second piece holds of the
-second chain and the first piece. -/
+For `simple_diagonal_partition`. The loop `A :: (us ++ B :: vs)` is read as two chains: the
+first from A through the corners that follow it to B, the second from B through the corners
+that follow it back to A. A chain's corners other than A and B are its inner corners. The
+first piece is the first chain closed by the side BA, `A :: (us ++ [B])`; the second is the
+second chain closed by AB, `B :: (vs ++ [A])`. Read from B, the loop has the chains and the
+pieces exchanged (`rotate_config`), so what is proved of the first chain and the second piece
+holds of the second chain and the first piece. -/
 
 section Split
 
@@ -1291,8 +1282,9 @@ theorem piece_simple₂ (h : SimpleLoop (A :: (us ++ B :: vs))) (hv : vs ≠ [])
     SimpleLoop (B :: (vs ++ [A])) :=
   piece_simple (rotate_config h hd).1 hv (rotate_config h hd).2
 
-/-- **A ray crosses the loop as often as the two pieces together, less the diagonal twice.**
-The pieces' sides are the loop's and the diagonal, once each way round. -/
+/-- **The loop's crossing count has the parity of the two pieces' counts together.** The
+pieces' sides are the loop's and the diagonal, once each way round: the diagonal is counted
+once in each direction, so its contribution is even. -/
 theorem crossingCount_pieces (X R : Point) :
     crossingCount (A :: (us ++ B :: vs)) X R % 2 =
       (crossingCount (A :: (us ++ [B])) X R + crossingCount (B :: (vs ++ [A])) X R) % 2 := by
@@ -1492,7 +1484,8 @@ theorem seg_const {R : List Point} (hR : SimpleLoop R) {Y Y' : Point}
   /- From each end to Z, a finite straight line meeting no side, its straight line through
   no corner. -/
   have along {X : Point} (hXb : ¬ LoopBoundary R X) (hX : ∀ p ∈ hs, SameSide X p.1 p.2)
-      (hXa : Avoid (R.map fun V => Classical.choose (collinear_of_two X V)) Z) : LoopInside R X ↔ LoopInside R Z := by
+      (hXa : Avoid (R.map fun V => Classical.choose (collinear_of_two X V)) Z) :
+      LoopInside R X ↔ LoopInside R Z := by
     have hXZ : X ≠ Z := by
       intro e
       have hspec := Classical.choose_spec (collinear_of_two X V)
@@ -1584,8 +1577,8 @@ theorem chain_off (h : SimpleLoop (A :: (us ++ B :: vs)))
 
 /-- **Along the first chain, the second piece's inside is constant.** The first chain, but for
 A and B, is off the second piece's boundary (`chain_off`); along each of its finite straight
-lines inside is constant (`seg_const`), so from corner to corner of `us` (`chain_const`), and
-from any point of a side to an end of it among `us`. -/
+lines inside is constant (`seg_const`), so from one inner corner of the chain to another
+(`chain_const`), and from any point of a side to an end of it that is an inner corner. -/
 theorem chain_inside_const (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ [])
     (hv : vs ≠ []) (hd : ∀ X : Point, Between A X B → LoopInside (A :: (us ++ B :: vs)) X)
     {Y Y' : Point} (hY : OnChain (A :: us ++ [B]) Y) (hYA : Y ≠ A) (hYB : Y ≠ B)
@@ -1602,7 +1595,7 @@ theorem chain_inside_const (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ 
       ¬ LoopBoundary (B :: (vs ++ [A])) Z) →
       (LoopInside (B :: (vs ++ [A])) Y ↔ LoopInside (B :: (vs ++ [A])) Y') :=
     fun _ _ h' => seg_const hQ h'
-  /- A or B on a side with both ends among `us` would be one of those ends. -/
+  /- A or B on a side whose ends are both inner corners would be one of those ends. -/
   have not_end {s : Point × Point} (hs : s ∈ sides (A :: (us ++ B :: vs))) {V Z : Point}
       (hV : V ∈ A :: (us ++ B :: vs)) (hVus : V ∉ us) (hZ : OnFiniteLine Z s.1 s.2)
       (hZV : Z = V) (h₁ : s.1 ∈ us) (h₂ : s.2 ∈ us) : False := by
@@ -1611,7 +1604,7 @@ theorem chain_inside_const (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ 
     · exact hVus (e ▸ h₁)
     · exact hVus (e ▸ h₂)
   obtain ⟨u₀, us', rfl⟩ := List.exists_cons_of_ne_nil hu
-  /- The corners of `us` agree with the first. -/
+  /- The inner corners agree with the first of them. -/
   have corners : ∀ x ∈ u₀ :: us', LoopInside (B :: (vs ++ [A])) x ↔
       LoopInside (B :: (vs ++ [A])) u₀ := by
     intro x hx
@@ -1625,13 +1618,13 @@ theorem chain_inside_const (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ 
       have h₂ := (segment_corners hs).2
       exact chain_off h hd hs₁ hZ (fun e => not_end hs' hA hAus hZ e h₁ h₂)
         (fun e => not_end hs' hB hBus hZ e h₁ h₂)
-  /- A point of a side agrees with an end of it among `us`. -/
+  /- A point of a side agrees with an end of it that is an inner corner. -/
   have point : ∀ Y : Point, OnChain (A :: (u₀ :: us') ++ [B]) Y → Y ≠ A → Y ≠ B →
       (LoopInside (B :: (vs ++ [A])) Y ↔ LoopInside (B :: (vs ++ [A])) u₀) := by
     rintro Y ⟨s, hs, hYs⟩ hYA hYB
     have hs' := chain₁_side (vs := vs) hs
     have hne := h.2.2.1 s hs'
-    /- From Y to the end q among `us`, along the side from its other end p. -/
+    /- From Y to the end q that is an inner corner, along the side from its other end p. -/
     have to_end {p q : Point} (hpq : p ≠ q) (hY : OnFiniteLine Y p q) (hq : q ∈ u₀ :: us')
         (hside : ∀ Z : Point, OnFiniteLine Z p q → OnFiniteLine Z s.1 s.2)
         (hends : ∀ V : Point, (V = s.1 ∨ V = s.2) → V = p ∨ V = q) :
@@ -2002,7 +1995,8 @@ theorem across_diagonal (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ [])
   have hds : ∀ p ∈ hs, SameSide d p.1 p.2 := fun p hp => (hs1 p hp).1
   obtain ⟨a₁, a₂, a₃, hdT, hT⟩ := small_triangle hs hds
   obtain ⟨z, hzT, hza⟩ :=
-    triangle_point_avoiding hdT.1.symm.triangle.cab (ℓ :: (A :: (us ++ B :: vs)).map fun V => Classical.choose (collinear_of_two d V))
+    triangle_point_avoiding hdT.1.symm.triangle.cab
+      (ℓ :: (A :: (us ++ B :: vs)).map fun V => Classical.choose (collinear_of_two d V))
   have hzℓ : ¬ OnLine z ℓ := hza ℓ List.mem_cons_self
   have hzd : z ≠ d := fun e => hzℓ (e ▸ hdℓ)
   have hzs : ∀ p ∈ hs, SameSide z p.1 p.2 := hT z (Or.inl hzT)

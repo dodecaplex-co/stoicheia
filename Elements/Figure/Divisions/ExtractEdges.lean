@@ -1,4 +1,5 @@
 import Elements.Figure.Divisions.ExtractRay
+import Elements.Figure.Lists
 
 /-!
 # Book Zero: the sides of triangles that lie apart, cut at their corners
@@ -21,7 +22,8 @@ one of the triangles, with no corner strictly between its ends.
   line lie on opposite sides of it, and of three, two would be on one side.
 * **A side is cut into elementary lines** (`side_elem`), and **a corner of the figure is an
   end of exactly two elementary lines along the sides of any triangle through it**
-  (`two_at`): one in each direction along each side through it.
+  (`two_at`): at a corner of the triangle, one along each of the two sides that meet there;
+  strictly within a side, one in each direction along that side.
 -/
 
 namespace Elements.Figures
@@ -259,7 +261,7 @@ variable (R : Apart)
 theorem apart_ne {t t' : Point × Point × Point} (ht : t ∈ R.pieces) (ht' : t' ∈ R.pieces)
     (hne : t ≠ t') {Y : Point} (hY : InsideTriangle Y t.1 t.2.1 t.2.2) :
     ¬ InsideTriangle Y t'.1 t'.2.1 t'.2.2 := by
-  rcases LoopFacts.pairwise_mem R.apart ht ht' with e | h | h
+  rcases pairwise_mem R.apart ht ht' with e | h | h
   · exact absurd e hne
   · exact h Y hY
   · exact fun h' => h Y h' hY
@@ -385,18 +387,6 @@ theorem mult_of_same {e e' : Point × Point} (h : Same e e') : mult R e = mult R
 theorem mult_pos {P Q : Point} (h : Elem R P Q) : 0 < mult R (P, Q) := by
   obtain ⟨-, -, -, ⟨t, ht, hin⟩, -⟩ := h
   exact List.countP_pos_iff.mpr ⟨t, ht, decide_eq_true hin⟩
-
-/-- Two different members of a list passing a test count at least two. -/
-theorem two_le_countP {α : Type} {l : List α} {p : α → Bool} {x y : α} (hx : x ∈ l)
-    (hy : y ∈ l) (hxy : x ≠ y) (hpx : p x = true) (hpy : p y = true) : 2 ≤ l.countP p := by
-  rw [List.countP_eq_length_filter]
-  have hsub : [x, y] ⊆ l.filter p := by
-    intro z hz
-    simp only [List.mem_cons, List.not_mem_nil, or_false] at hz
-    rcases hz with rfl | rfl
-    · exact List.mem_filter.mpr ⟨hx, hpx⟩
-    · exact List.mem_filter.mpr ⟨hy, hpy⟩
-  exact List.Nodup.length_le_of_subset (by simp [hxy]) hsub
 
 /-- **Elementary lines that share an inner point are the same.** -/
 theorem elem_overlap {P Q P' Q' X : Point} (he : Elem R P Q) (he' : Elem R P' Q')

@@ -1,6 +1,7 @@
 import Elements.Figure.Cells
 import Elements.Figure.Outlines.LoopFacts
 import Elements.Figure.Convex.Area
+import Elements.Figure.Lists
 
 /-!
 # Book Zero: helpers for the enclosure and the arrangement
@@ -16,9 +17,10 @@ superposition.
   beyond every side, cutting off ears would leave a triangle with a point beyond all three of
   its sides, which no point is (`not_all_outer`). Where a side it is beyond meets a side it is
   within, the straight line from the corner to the point leaves the whole region on one side
-  (`tangent_same_side`). So the point, with the run of corners from one such corner to the next whose
-  sides it is within, makes a convex outline holding the old region (`insert_point`). This is
-  not a hull: the point added need not be one of the given points, only beyond it.
+  (`tangent_same_side`). So the point, with the run of corners from one such corner to the
+  next whose sides it is within, makes a convex outline holding the old region
+  (`insert_point`). This is not a hull: the point added need not be one of the given points,
+  only beyond it.
 * **A ray that crosses nothing.** From a point outside a convex region holding every corner
   of a loop, a ray leaving the region's side line behind crosses no side of the loop
   (`outside_ray`).
@@ -80,7 +82,7 @@ theorem first_seg (q : Point × Point → Prop) : ∀ l : List Point,
 /-- A chain ending in two points has the segment joining them. -/
 theorem last_seg {M : List Point} (hM : M ≠ []) (X : Point) :
     ∃ W : Point, (W, X) ∈ segments (M ++ [X]) := by
-  obtain ⟨M', W, rfl⟩ := Extreme.split_last M hM
+  obtain ⟨M', W, rfl⟩ := split_last M hM
   exact ⟨W, by simpa using Extreme.closing_segment X W M'⟩
 
 /-- **A junction**: when some sides of an outline of distinct corners pass a test and some
@@ -113,10 +115,9 @@ theorem junction {cs : List Point} (hnd : cs.Nodup) (p : Point × Point → Prop
 
 /-! ## A point beyond the sides of a convex outline -/
 
-/-- **Beyond two sides at a corner.** A point across `ac` from `b` and across `cb` from `a`
-is on `c`'s side of `ab`. Produced through `c`, the straight line from the point enters the
-angle `acb`, and so meets `ab` between `a` and `b` (the crossbar); `c` lies between the point
-and that meeting point. -/
+/-- **Beyond two sides at a corner.** A point across ac from b and across cb from a is on c's
+side of ab. Produced through c, the straight line from the point enters the angle acb, and so
+meets ab between a and b (the crossbar); c lies between the point and that meeting point. -/
 theorem outer_two {P a c b : Point} (hacb : Triangle a c b)
     (h₁ : OppositeSidesOf P b a c) (h₂ : OppositeSidesOf P a c b) :
     SameSideOf P c a b := by
@@ -449,7 +450,7 @@ theorem insert_point {cs : List Point} (h : ConvexOutline cs) (V : Point) :
     simp only [List.cons_append, List.cons.injEq] at he₂
     obtain ⟨rfl, he₂⟩ := he₂
     /- The run, from X to Y. -/
-    obtain ⟨R', z, hR'⟩ := Extreme.split_last (Y₂ :: B₂) (List.cons_ne_nil _ _)
+    obtain ⟨R', z, hR'⟩ := split_last (Y₂ :: B₂) (List.cons_ne_nil _ _)
     have hl : post ++ pre = M ++ Y :: R' := by
       rw [hR'] at he₂
       have := List.append_inj' (s₁ := post ++ pre) (t₁ := [X]) (s₂ := M ++ Y :: R') (t₂ := [z])
@@ -511,19 +512,6 @@ theorem enclose_list : ∀ (qs : List Point) {cs : List Point}, ConvexOutline cs
 
 /-! ## An enclosure with the region strictly inside -/
 
-/-- Between a point inside a convex outline and a point of its region, every point is inside:
-strictly within each side, by the open side of the first and the closed side of the second. -/
-theorem core_between {cs : List Point} (h : ConvexOutline cs) {O Z W : Point}
-    (hO : ∀ s ∈ sides cs, ∀ A ∈ cs, A ≠ s.1 → A ≠ s.2 → SameSideOf O A s.1 s.2)
-    (hW : ConvexRegion cs W) (hb : Between O Z W) :
-    ∀ s ∈ sides cs, ∀ A ∈ cs, A ≠ s.1 → A ≠ s.2 → SameSideOf Z A s.1 s.2 := by
-  intro s hs A hA h₁ h₂
-  have hne := convex_side_ne h hs
-  obtain ⟨L, hL₁, hL₂⟩ := Postulate1 s.1 s.2 hne
-  exact SameSideOf.of_line hne hL₁ hL₂ (Extreme.between_half_open
-    (Pieces.region_half h hs hL₁ hL₂ hA h₁ h₂ hW) ((hO s hs A hA h₁ h₂).sameSide hL₁ hL₂)
-    (between_symm hb))
-
 /-- When every corner of a convex outline is inside a cell, so is its whole region, which is
 made of triangles on its corners (`fan_covers`). -/
 theorem region_in_core {cs : List Point} (h : ConvexOutline cs) {Q : ConvexCell}
@@ -563,7 +551,8 @@ theorem strict_enclosure (P : ConvexCell) :
   let Q : ConvexCell := ⟨ds, hds⟩
   have hOQ : Q.Core O := Pieces.core_mono hds hin hO
   have hcQ : ∀ c ∈ P.corners, Q.Core c := fun c hc =>
-    core_between hds hOQ (hqs _ (List.mem_map_of_mem hc)) (hpush c hc)
+    ConvexCell.core_between (Q := Q) (hqs _ (List.mem_map_of_mem hc)) hOQ
+      (between_symm (hpush c hc))
   exact ⟨Q, fun X hX => region_in_core P.convex hcQ hX⟩
 
 /-! ## A ray that crosses nothing -/

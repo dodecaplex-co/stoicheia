@@ -54,10 +54,10 @@ theorem convex_diagonal_split {A B : Point} {us vs : List Point}
       (∀ X : Point,
         (ConvexRegion (A :: (us ++ [B])) X ∧ ConvexRegion (B :: (vs ++ [A])) X) ↔
           OnFiniteLine X A B) := by
-  /- The straight line AB has the corners `us` on one side and `vs` on the other
-  (`convex_diagonal_separates`), so it cuts the outline corner to corner
-  (`Pieces.form_corner_corner`): each chain, closed by AB, is a convex outline whose region
-  is the outline's region on one closed side of AB. -/
+  /- The straight line AB has the corners of one chain from A to B, other than A and B, on
+  one side, and those of the other chain on the other (`convex_diagonal_separates`), so it
+  cuts the outline corner to corner (`Pieces.form_corner_corner`): each chain, closed by AB,
+  is a convex outline whose region is the outline's region on one closed side of AB. -/
   have hsep := convex_diagonal_separates h
   obtain ⟨u, hu₀⟩ := List.exists_mem_of_ne_nil us hu
   obtain ⟨v, hv₀⟩ := List.exists_mem_of_ne_nil vs hv

@@ -1,4 +1,5 @@
 import Elements.Figure.Outlines.Parity
+import Elements.Figure.Lists
 
 /-!
 # Book Zero: closed walks through a boundary of even degree
@@ -10,9 +11,9 @@ Book Zero cites a proposition of the *Elements*.
 
 * **Finite straight lines read either way** (`Same`): two pairs of points name the same
   finite straight line when they have the same ends, in either order.
-* **Regrouping a sum** (`sum_regroup`): a sum over a list of pairs, each naming one of a list
-  of distinct finite straight lines, is a sum over those lines, each counted as often as it
-  is named.
+* **Regrouping a sum** (`sum_regroup`, in `Figure/Lists.lean`): a sum over a list of pairs,
+  each naming one of a list of distinct finite straight lines, is a sum over those lines, each
+  counted as often as it is named.
 * **Simple closed walks** (`cycles`). Take finitely many points and a symmetric joining
   relation, each join carrying a class, such that at every point the joins of each class are
   even in number. Then the joins are the sides of finitely many closed walks, each through
@@ -50,160 +51,6 @@ theorem same_trans {s t u : Point × Point} (h₁ : Same s t) (h₂ : Same t u) 
   · exact Or.inr rfl
   · exact Or.inl (Prod.swap_swap u)
 
-/-! ## Counting -/
-
-/-- Splitting a count by a second test. -/
-theorem countP_and_add {α : Type} (l : List α) (P Q : α → Prop) [DecidablePred P]
-    [DecidablePred Q] :
-    l.countP (fun x => decide (P x ∧ Q x)) + l.countP (fun x => decide (P x ∧ ¬ Q x)) =
-      l.countP (fun x => decide (P x)) := by
-  induction l with
-  | nil => rfl
-  | cons a l ih =>
-    simp only [List.countP_cons, decide_eq_true_eq]
-    by_cases hP : P a <;> by_cases hQ : Q a <;>
-      simp only [hP, hQ, and_true, and_false, not_true_eq_false, not_false_eq_true, ite_true,
-        ite_false] <;> omega
-
-/-- A test passed only by one member of a list of distinct members counts at most one. -/
-theorem countP_le_one {α : Type} {p : α → Bool} {x : α} :
-    ∀ {l : List α}, l.Nodup → (∀ z ∈ l, p z = true → z = x) → l.countP p ≤ 1
-  | [], _, _ => Nat.zero_le _
-  | a :: l, hnd, h => by
-    rw [List.nodup_cons] at hnd
-    rw [List.countP_cons]
-    cases ha : p a
-    · have := countP_le_one hnd.2 (fun z hz => h z (List.mem_cons_of_mem _ hz))
-      simp only [Bool.false_eq_true, ite_false]
-      omega
-    · have hax := h a List.mem_cons_self ha
-      have hl : l.countP p = 0 := by
-        rw [List.countP_eq_zero]
-        intro z hz hpz
-        have hzx := h z (List.mem_cons_of_mem _ hz) hpz
-        exact hnd.1 (hax ▸ hzx ▸ hz)
-      simp only [hl, ite_true]
-      omega
-
-/-- A test passed by exactly two distinct members of a list of distinct members counts two. -/
-theorem countP_two {α : Type} {l : List α} (hnd : l.Nodup) {p : α → Bool} {x y : α}
-    (hxy : x ≠ y) (h : ∀ z, (z ∈ l ∧ p z = true) ↔ (z = x ∨ z = y)) : l.countP p = 2 := by
-  rw [List.countP_eq_length_filter]
-  have hnd' : (l.filter p).Nodup := List.Pairwise.filter p hnd
-  have hxy' : [x, y].Nodup := by simp [hxy]
-  have hperm : (l.filter p).Perm [x, y] := by
-    rw [List.perm_ext_iff_of_nodup hnd' hxy']
-    intro z
-    rw [List.mem_filter, h z]
-    simp
-  rw [hperm.length_eq]
-  rfl
-
-theorem ite_of_pos {α : Sort _} {p : Prop} [Decidable p] {a b : α} (h : p) :
-    (if p then a else b) = a := by
-  simp [h]
-
-theorem ite_of_neg {α : Sort _} {p : Prop} [Decidable p] {a b : α} (h : ¬ p) :
-    (if p then a else b) = b := by
-  simp [h]
-
-theorem ite_one_pos {p : Prop} [Decidable p] (h : p) : (if p then (1 : Nat) else 0) = 1 := by
-  simp [h]
-
-theorem ite_one_neg {p : Prop} [Decidable p] (h : ¬ p) : (if p then (1 : Nat) else 0) = 0 := by
-  simp [h]
-
-/-! ## Sums of natural numbers over lists -/
-
-theorem sum_add_nat {α : Type} (l : List α) (f g : α → Nat) :
-    (l.map fun x => f x + g x).sum = (l.map f).sum + (l.map g).sum := by
-  induction l with
-  | nil => rfl
-  | cons a l ih =>
-    simp only [List.map_cons, List.sum_cons, ih]
-    omega
-
-theorem sum_eq_zero_of {α : Type} (l : List α) (f : α → Nat) (h : ∀ x ∈ l, f x = 0) :
-    (l.map f).sum = 0 := by
-  induction l with
-  | nil => rfl
-  | cons a l ih =>
-    simp only [List.map_cons, List.sum_cons, h a List.mem_cons_self,
-      ih fun x hx => h x (List.mem_cons_of_mem _ hx)]
-
-/-- A sum of sums, exchanged. -/
-theorem sum_exchange_nat {α β : Type} (xs : List α) (ys : List β) (f : α → β → Nat) :
-    (xs.map fun x => (ys.map fun y => f x y).sum).sum =
-      (ys.map fun y => (xs.map fun x => f x y).sum).sum := by
-  induction xs with
-  | nil =>
-    simp only [List.map_nil, List.sum_nil]
-    exact (sum_eq_zero_of ys _ fun _ _ => rfl).symm
-  | cons x xs ih =>
-    simp only [List.map_cons, List.sum_cons, ih]
-    exact (sum_add_nat ys (fun y => f x y) (fun y => (xs.map fun x => f x y).sum)).symm
-
-/-- The sum of the values of a test that passes once in a list, counting from where it passes. -/
-theorem sum_single {α : Type} (r : α → α → Prop) (f : α → Nat) (x : α) :
-    ∀ (D : List α), (∃ e ∈ D, r x e) →
-      (D.Pairwise fun d e => ∀ z, r z d → ¬ r z e) → (∀ e, r x e → f e = f x) →
-      (D.map fun e => (if r x e then 1 else 0) * f e).sum = f x
-  | [], ⟨_, h, _⟩, _, _ => absurd h List.not_mem_nil
-  | d :: D, ⟨e, he, hxe⟩, hpw, hf => by
-    rw [List.pairwise_cons] at hpw
-    simp only [List.map_cons, List.sum_cons]
-    by_cases hxd : r x d
-    · have hrest : (D.map fun e => (if r x e then 1 else 0) * f e).sum = 0 := by
-        refine sum_eq_zero_of D _ fun e' he' => ?_
-        simp only [hpw.1 e' he' x hxd, ite_false, Nat.zero_mul]
-      rw [hrest, ite_of_pos hxd, hf d hxd]
-      omega
-    · rcases List.mem_cons.mp he with rfl | he
-      · exact absurd hxe hxd
-      rw [ite_of_neg hxd, sum_single r f x D ⟨e, he, hxe⟩ hpw.2 hf]
-      omega
-
-/-- **Regrouping a sum.** If every member of M is related to some member of D, the members of D
-pairwise unrelated to a common member, and f constant on related members, then the sum of f
-over M is the sum over D of f, each member of D counted as often as M names it. -/
-theorem sum_regroup {α : Type} (r : α → α → Prop) (f : α → Nat) (D : List α)
-    (hD : D.Pairwise fun d e => ∀ z, r z d → ¬ r z e) :
-    ∀ (M : List α), (∀ x ∈ M, ∃ e ∈ D, r x e) → (∀ x e, r x e → f e = f x) →
-      (M.map f).sum = (D.map fun e => M.countP (fun x => decide (r x e)) * f e).sum
-  | [], _, _ => by
-    simp only [List.map_nil, List.sum_nil, List.countP_nil, Nat.zero_mul]
-    exact (sum_eq_zero_of D _ fun _ _ => rfl).symm
-  | x :: M, hM, hf => by
-    have ih := sum_regroup r f D hD M (fun y hy => hM y (List.mem_cons_of_mem _ hy)) hf
-    have hpt : ∀ e ∈ D, (x :: M).countP (fun y => decide (r y e)) * f e =
-        (if r x e then 1 else 0) * f e + M.countP (fun y => decide (r y e)) * f e := by
-      intro e _
-      rw [List.countP_cons, Nat.add_mul, Nat.add_comm]
-      simp only [decide_eq_true_eq]
-    rw [List.map_congr_left hpt, sum_add_nat,
-      sum_single r f x D (hM x List.mem_cons_self) hD (fun e h => hf x e h),
-      List.map_cons, List.sum_cons, ih]
-
-/-- A count, as a sum of ones and noughts. -/
-theorem countP_eq_sum {α : Type} (l : List α) (p : α → Prop) [DecidablePred p] :
-    l.countP (fun x => decide (p x)) = (l.map fun x => if p x then 1 else 0).sum := by
-  induction l with
-  | nil => rfl
-  | cons a l ih =>
-    simp only [List.countP_cons, List.map_cons, List.sum_cons, ih, decide_eq_true_eq]
-    omega
-
-/-- Termwise equal parities give sums of equal parity. -/
-theorem sum_mod_two {α : Type} (l : List α) (f g : α → Nat)
-    (h : ∀ x ∈ l, f x % 2 = g x % 2) : (l.map f).sum % 2 = (l.map g).sum % 2 := by
-  induction l with
-  | nil => rfl
-  | cons a l ih =>
-    have ih' := ih fun x hx => h x (List.mem_cons_of_mem _ hx)
-    have ha := h a List.mem_cons_self
-    simp only [List.map_cons, List.sum_cons]
-    omega
-
 /-! ## Distinct points, and pairs of them -/
 
 /-- A list's members, each once. -/
@@ -216,22 +63,22 @@ theorem mem_nub {x : Point} : ∀ {l : List Point}, x ∈ nub l ↔ x ∈ l
   | a :: l => by
     unfold nub
     by_cases ha : a ∈ l
-    · rw [ite_of_pos ha, mem_nub, List.mem_cons]
+    · rw [ite_eq_left ha, mem_nub, List.mem_cons]
       constructor
       · exact Or.inr
       · rintro (rfl | h)
         · exact ha
         · exact h
-    · rw [ite_of_neg ha, List.mem_cons, List.mem_cons, mem_nub]
+    · rw [ite_eq_right ha, List.mem_cons, List.mem_cons, mem_nub]
 
 theorem nodup_nub : ∀ (l : List Point), (nub l).Nodup
   | [] => List.nodup_nil
   | a :: l => by
     unfold nub
     by_cases ha : a ∈ l
-    · rw [ite_of_pos ha]
+    · rw [ite_eq_left ha]
       exact nodup_nub l
-    · rw [ite_of_neg ha, List.nodup_cons, mem_nub]
+    · rw [ite_eq_right ha, List.nodup_cons, mem_nub]
       exact ⟨ha, nodup_nub l⟩
 
 /-- All ordered pairs of points of a list. -/
@@ -259,9 +106,9 @@ theorem oneWay_sub : ∀ {l : List (Point × Point)} {e : Point × Point}, e ∈
   | a :: l, e, h => by
     unfold oneWay at h
     by_cases ha : ∃ d ∈ l, Same a d
-    · rw [ite_of_pos ha] at h
+    · rw [ite_eq_left ha] at h
       exact List.mem_cons_of_mem _ (oneWay_sub h)
-    · rw [ite_of_neg ha] at h
+    · rw [ite_eq_right ha] at h
       rcases List.mem_cons.mp h with rfl | h
       · exact List.mem_cons_self
       · exact List.mem_cons_of_mem _ (oneWay_sub h)
@@ -272,13 +119,13 @@ theorem oneWay_cover : ∀ {l : List (Point × Point)} {e : Point × Point}, e �
   | a :: l, e, h => by
     unfold oneWay
     by_cases ha : ∃ d ∈ l, Same a d
-    · rw [ite_of_pos ha]
+    · rw [ite_eq_left ha]
       rcases List.mem_cons.mp h with rfl | h
       · obtain ⟨d, hd, hed⟩ := ha
         obtain ⟨d', hd', hdd'⟩ := oneWay_cover hd
         exact ⟨d', hd', same_trans hed hdd'⟩
       · exact oneWay_cover h
-    · rw [ite_of_neg ha]
+    · rw [ite_eq_right ha]
       rcases List.mem_cons.mp h with rfl | h
       · exact ⟨e, List.mem_cons_self, same_refl e⟩
       · obtain ⟨d, hd, hed⟩ := oneWay_cover h
@@ -290,9 +137,9 @@ theorem oneWay_pairwise : ∀ (l : List (Point × Point)),
   | a :: l => by
     unfold oneWay
     by_cases ha : ∃ d ∈ l, Same a d
-    · rw [ite_of_pos ha]
+    · rw [ite_eq_left ha]
       exact oneWay_pairwise l
-    · rw [ite_of_neg ha, List.pairwise_cons]
+    · rw [ite_eq_right ha, List.pairwise_cons]
       exact ⟨fun d hd had => ha ⟨d, oneWay_sub hd, had⟩, oneWay_pairwise l⟩
 
 /-- Pairwise unrelated in the sense of `sum_regroup`. -/
@@ -414,8 +261,8 @@ theorem find_cycle_step (k : κ) (hvs : vs.Nodup) (hsymm : ∀ P Q, adj P Q → 
         exact ⟨hsymm v0 w hw, (hc w v0).trans hwc⟩
   · exact hgrow w hwvs hwp hw hwc
 
-/-- **Closing a walk.** A chain of distinct points joined by joins of class k, at whose first
-point the joins of class k are even in number, grows at its first point until a join of class k
+/-- **Closing a walk.** A chain of distinct points joined by joins of class k, with an even
+number of joins of class k at every point, grows at its first point until a join of class k
 leads back into it, closing a walk of at least three distinct points. -/
 theorem find_cycle (k : κ) (hvs : vs.Nodup) (hsymm : ∀ P Q, adj P Q → adj Q P)
     (hc : ∀ P Q, c P Q = c Q P) (hirr : ∀ P, ¬ adj P P) (hmem : ∀ P Q, adj P Q → Q ∈ vs)
@@ -581,7 +428,7 @@ theorem cycles {κ : Type} (vs : List Point) (hvs : vs.Nodup) (c : Point → Poi
         (allPairs vs).countP (fun e => decide (adj e.1 e.2)) := by
       obtain ⟨E, hE⟩ := outgoing_side (List.head_mem (List.ne_nil_of_length_pos (by omega)) :
         L.head (List.ne_nil_of_length_pos (by omega)) ∈ L)
-      refine Parity.countP_lt (fun e _ he => ?_) ⟨_, mem_allPairs.mpr (hmem _ _ (hLs _ hE).1), ?_⟩
+      refine countP_lt (fun e _ he => ?_) ⟨_, mem_allPairs.mpr (hmem _ _ (hLs _ hE).1), ?_⟩
       · simp only [decide_eq_true_eq] at he ⊢
         exact ((hadj' _ _).mp he).1
       · simp only [decide_eq_true_eq, decide_eq_false_iff_not]

@@ -1321,7 +1321,7 @@ open. With `outline_bounded` in Book I, no file of Book Zero imports a propositi
   `Outline.Boundary`, `CellCore`, `CellRegion`, `ConvexCell.Core`, `ConvexCell.Region`,
   `Extract.Cls` and `Extract.TCls`. `Avoid.inside_of_between` is now
   `inside_triangle_of_between`, with its users, and the general triangle facts beside it
-  leave the `Avoid` namespace. The namespaces `Ext`, `Arr` and `Diag` are `Extensionality`,
+  leave the `Avoid` namespace. The namespaces `Ext`, `Arr` and `Diag` are `Extreme`,
   `Arrangement` and `Diagonal`. The names to be settled are settled: the three
   `count_split`s are `OutlineFacts.crossingCount_split`, `CellFacts.count_split_some` and
   `Diagonal.crossingCount_pieces`; `Diag.not_both` and `Diag.corner_off` are
@@ -1370,6 +1370,29 @@ of `outline_bounded`, `Prop45.fan_boundary`, the three companions, `division_exi
 Postulate 5 and superposition appear only where they did at `b2c0580a`: in
 `outline_bounded`, and in the three companions, through Euclid's I.45 and II.14; and
 `Prop45.fan_boundary` shows superposition alone, through `Fitted.fan`.
+
+**Shared homes, after the first reading.** Four readers of the other model family read every
+promoted line, and their corrections are applied. The general facts about lists, counts and
+sums of natural numbers that stood in helper namespaces now have one home,
+`Elements/Figure/Lists.lean`, in Book Zero and in the namespace `Elements.Figures`, imported
+after `Sums.lean` and before every file that uses it: from `LoopFacts`, `pairwise_mem`,
+`exists_other` and `filter_length_one`; from `Parity`, `countP_parity`, `countP_odd_sum` and
+`countP_lt`; from `OutlineFacts`, `filter_or_length`, `count_flip`, `count_le_one`,
+`nodup_filterMap_of` and `nodup_flatMap_of`; from `Extreme`, `split_last`; from `CellFacts`,
+`exists_mem_map_iff`, `exists_mem_cons_iff`, `count_map_le`, `all_none_of_count`,
+`split_some` and `count_split_some`; from `Pieces`, `rotate_compose`, `first_fail`, `sub4` and
+`block`; from `CoverFacts`, `countP_succ` and `countP_flip`; from `Diagonal`, `rotate_split`;
+and from `Extract`, `two_le_countP` and the counting and sum facts of `ExtractLists.lean`,
+`countP_and_add` to `sum_mod_two`. `LoopFacts.filter_length_two` stated `Extract.countP_two`
+again and is gone; `Extract`'s four `ite_` lemmas give way to Lean's `ite_eq_left` and
+`ite_eq_right`; `CellFacts.third_corner` gives way to `convex_third`, which now cites
+`exists_other`; and the two proofs of `core_between` are one, `ConvexCell.core_between`, in
+`CellFacts.lean`. The two facts of magnitudes, `CellFacts.sum_eq_zero` and
+`OutlineBound.mag_lt_of_lt_of_le`, are in `Sums.lean`. The facts of order on a straight line
+and on a ray in `ExtractRay.lean`, `Extract.between_shift`, `Extract.onRay_of_between`,
+`Extract.onRay_of_beyond`, `Extract.nearest` and `Extract.farthest`, stay in their helper
+namespace for now: the second wave of axiom retirements, in flight, rewrites `Lines.lean` and
+`Rays.lean`, their homes, and they can move there once it has landed.
 
 **What follows.** The records of I.45 and II.14 return to `full`, through the outline
 companions (approval 5); `figure-with-dissection` stays, in `review/terms.toml` and on both

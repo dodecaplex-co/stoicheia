@@ -149,8 +149,8 @@ theorem first_hit {X Q : Point} {ℓ : Line} (hX : OnLine X ℓ) (hQ : OnLine Q 
   · exact hU2 e
   · exact hnear U (crossPts_mem hX hQ (fun s hs => (hoff s hs).1) ht hUr hUt) hU
 
-/-- **The last crossing.** If a ray crosses one of finitely many sides whose ends are off its
-straight line, some crossing point has no crossing point beyond it. -/
+/-- **The last crossing.** If a ray crosses one of finitely many sides whose first ends are off
+its straight line, some crossing point has no crossing point beyond it. -/
 theorem last_hit {X Q : Point} {ℓ : Line} (hX : OnLine X ℓ) (hQ : OnLine Q ℓ)
     {S : List (Point × Point)} (hoff : ∀ s ∈ S, ¬ OnLine s.1 ℓ)
     (hc : ∃ s ∈ S, RayCrosses X Q s) :
@@ -179,7 +179,8 @@ theorem line_avoiding {X : Point} {vs : List Point} (hX : X ∉ vs) {a b c : Poi
     (habc : Triangle a b c) :
     ∃ Q : Point, ∃ ℓ : Line, X ≠ Q ∧ OnLine X ℓ ∧ OnLine Q ℓ ∧ ∀ V ∈ vs, ¬ OnLine V ℓ := by
   obtain ⟨K, hXK⟩ := exists_line_through X
-  obtain ⟨Q, -, hQ⟩ := triangle_point_avoiding habc (K :: vs.map fun V => Classical.choose (collinear_of_two X V))
+  obtain ⟨Q, -, hQ⟩ := triangle_point_avoiding habc
+    (K :: vs.map fun V => Classical.choose (collinear_of_two X V))
   have hXQ : X ≠ Q := fun e => hQ K List.mem_cons_self (e ▸ hXK)
   obtain ⟨ℓ, hXℓ, hQℓ⟩ := Postulate1 X Q hXQ
   exact ⟨Q, ℓ, hXQ, hXℓ, hQℓ,

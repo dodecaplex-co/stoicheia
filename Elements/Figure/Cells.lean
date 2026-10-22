@@ -6,6 +6,7 @@ import Elements.Figure.Cells.ExtHelpers
 import Elements.Figure.Cells.CutHelpers
 import Elements.Figure.Cells.CutPieces
 import Elements.Figure.Cells.CellFacts
+import Elements.Figure.Lists
 
 /-!
 # Book Zero: convex cells, and cutting them
@@ -391,7 +392,7 @@ theorem agreeOff_exists_mem {α : Type} :
     obtain ⟨l₂, h₂⟩ := agreeOff_exists_mem l (fun b hb => h b (List.mem_cons_of_mem a hb))
     refine ⟨l₁ ++ l₂, fun X hX => ?_⟩
     show (∃ b ∈ a :: l, F b X) ↔ ∃ b ∈ a :: l, G b X
-    rw [CellFacts.exists_mem_cons_iff, CellFacts.exists_mem_cons_iff]
+    rw [exists_mem_cons_iff, exists_mem_cons_iff]
     exact or_congr (h₁ X (CellFacts.avoid_left hX)) (h₂ X (CellFacts.avoid_right hX))
 
 /-- A point inside a cell is in its region. -/
@@ -483,7 +484,7 @@ theorem agree_branch {U U' V V' H : Point → Prop} {ts : List Cell} {g : Cell �
   have e₃ := h₃ X (CellFacts.avoid_left (CellFacts.avoid_right (CellFacts.avoid_right hX)))
   have e₄ := h₄ X (CellFacts.avoid_right (CellFacts.avoid_right (CellFacts.avoid_right hX)))
   show (U' X ∨ ∃ t ∈ ts.map g, CellRegion t X) ↔ V' X
-  rw [CellFacts.exists_mem_map_iff ts g (fun t => CellRegion t X), e₃]
+  rw [exists_mem_map_iff ts g (fun t => CellRegion t X), e₃]
   constructor
   · rintro (h | h)
     · obtain ⟨hU, hH⟩ := e₂.mp h
@@ -503,17 +504,17 @@ theorem tiles_none {D : Cell} {ts : List Cell} (hall : ∀ t ∈ ts, t = none)
   have hD : D = none := eq_none_of_region (agreeOff_trans (agreeOff_symm hag)
     (agreeOff_of_iff fun X => ⟨fun ⟨t, ht, hr⟩ => by rw [hall t ht] at hr; exact hr,
       False.elim⟩))
-  rw [CellFacts.sum_eq_zero ts cellArea (fun t ht => by rw [hall t ht]; rfl), hD]
+  rw [sum_eq_zero ts cellArea (fun t ht => by rw [hall t ht]; rfl), hD]
   rfl
 
 /-- **The induction on one tile's sides** (brief 0013, section 8, "Content", step 4). A cell
-or nothing D is made up, off finitely many straight lines, of a cell Q and cells or
-nothings `ts`, with no point inside two of them; the half-planes `hs` remain of Q's sides,
-Q's inside is within all of them, and any of the `ts` inside all of them is inside Q.
-Granted content for at most `m` cells, where the `ts` hold at most `m`, the area of D is
-that of Q with the `ts`. Cut everything by the first remaining side: beyond it Q is gone,
-and content for at most `m` cells applies; within it, the induction goes on. When no side
-remains, the `ts` have no inside, and D is Q off finitely many straight lines. -/
+or nothing D is made up, off finitely many straight lines, of a cell Q and a list of cells or
+nothings, with no point inside two of them; a list of half-planes remains of Q's sides, Q's
+inside is within all of them, and any of the list inside all of them is inside Q. Granted
+content for at most m cells, where the list holds at most m, the area of D is that of Q with
+the list. Cut everything by the first remaining side: beyond it Q is gone, and content for
+at most m cells applies; within it, the induction goes on. When no side remains, the list
+has no inside, and D is Q off finitely many straight lines. -/
 theorem tiles_branch (m : Nat)
     (ih : ∀ (D : Cell) (ts : List Cell), (ts.filterMap id).length ≤ m →
       ts.Pairwise (fun a b => ∀ X : Point, CellCore a X → ¬ CellCore b X) →
@@ -535,7 +536,7 @@ theorem tiles_branch (m : Nat)
     have hnone : ∀ t ∈ ts, t = none := fun t ht =>
       eq_none_of_core fun X hX => hQt t ht X (hin t ht X hX (by simp)) hX
     have hsum : Magnitude.sum (ts.map cellArea) = 0 :=
-      CellFacts.sum_eq_zero ts cellArea (fun t ht => by rw [hnone t ht]; rfl)
+      sum_eq_zero ts cellArea (fun t ht => by rw [hnone t ht]; rfl)
     have hQD : AgreeOff Q.Region (CellRegion D) := by
       refine agreeOff_trans (agreeOff_of_iff fun X => ⟨Or.inl, ?_⟩) hag
       rintro (h | ⟨t, ht, hr⟩)
@@ -590,7 +591,7 @@ theorem tiles_branch (m : Nat)
         exact hr
       exact agree_branch hag hu (hf D).2.1 (fun t _ => (hf t).2.1)
     have hR := ih' (fun q hq => hoff q (List.mem_cons_of_mem p hq)) (f D).1 Q'
-      (ts.map fun t => (f t).1) (Nat.le_trans (CellFacts.count_map_le _ hR0 ts) hm)
+      (ts.map fun t => (f t).1) (Nat.le_trans (count_map_le _ hR0 ts) hm)
       (by
         intro t ht X hX htX
         obtain ⟨t₀, ht₀, rfl⟩ := List.mem_map.mp ht
@@ -612,7 +613,7 @@ theorem tiles_branch (m : Nat)
       exact agreeOff_trans (agreeOff_of_iff fun X =>
         ⟨Or.inr, fun h => h.elim (fun h => False.elim h) id⟩) hb
     have hB := ih (f D).2 (ts.map fun t => (f t).2)
-      (Nat.le_trans (CellFacts.count_map_le _ hB0 ts) hm)
+      (Nat.le_trans (count_map_le _ hB0 ts) hm)
       (List.Pairwise.map _ (fun a b hab X ha hb => hab X (hshB a X ha) (hshB b X hb)) hpw)
       hagB
     /- The areas: each piece's area is what the side leaves of it on its two sides. -/
@@ -641,14 +642,14 @@ theorem tiles_cells : ∀ (m : Nat) (D : Cell) (ts : List Cell),
   induction m with
   | zero =>
     intro D ts hm _ hag
-    exact tiles_none (CellFacts.all_none_of_count (Nat.le_zero.mp hm)) hag
+    exact tiles_none (all_none_of_count (Nat.le_zero.mp hm)) hag
   | succ m ih =>
     intro D ts hm hpw hag
     by_cases hall : ∀ t ∈ ts, t = none
     · exact tiles_none hall hag
-    obtain ⟨pre, Q, post, rfl⟩ := CellFacts.split_some hall
+    obtain ⟨pre, Q, post, rfl⟩ := split_some hall
     have hm' : ((pre ++ post).filterMap id).length ≤ m := by
-      rw [CellFacts.count_split_some] at hm
+      rw [count_split_some] at hm
       omega
     rw [List.pairwise_append, List.pairwise_cons] at hpw
     obtain ⟨hpre, ⟨hQpost, hpost⟩, hcross⟩ := hpw
@@ -704,7 +705,7 @@ theorem convex_tiles_area (P : ConvexCell) (qs : List ConvexCell) (h : Tiles P q
     exact List.length_filterMap_le _ _
   have hag : AgreeOff (fun X => ∃ t ∈ qs.map some, CellRegion t X) (CellRegion (some P)) :=
     Tiling.agreeOff_trans (Tiling.agreeOff_of_iff fun X =>
-      CellFacts.exists_mem_map_iff qs some (fun t => CellRegion t X)) h.2
+      exists_mem_map_iff qs some (fun t => CellRegion t X)) h.2
   have ha := Tiling.tiles_cells qs.length (some P) (qs.map some) hm
     (List.Pairwise.map some (fun _ _ hab => hab) h.1) hag
   rw [List.map_map] at ha

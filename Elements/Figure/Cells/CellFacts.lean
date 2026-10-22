@@ -10,8 +10,10 @@ section 8, "Content", steps 4 and 5). Each side of a convex outline has a straig
 the other corners lie on one side of it; so the outline's inside is the common part of
 finitely many open half-planes, and its region the common part of the same closed
 half-planes, each named by a straight line and one point on the inward side. The inside has
-a point off any finitely many straight lines, inside the first triangle of the fan. The
-route follows David Hilbert's theory of content, gratefully acknowledged in brief 0006.
+a point off any finitely many straight lines, inside the first triangle of the fan, and holds
+every point between a point of the region and a point of the inside
+(`ConvexCell.core_between`). The route follows David Hilbert's theory of content, gratefully
+acknowledged in brief 0006.
 
 Nothing in Book Zero cites a proposition of the *Elements*.
 -/
@@ -22,98 +24,13 @@ open Tacit
 
 namespace CellFacts
 
-/-- A point off the straight lines `l₁ ++ l₂` is off those of `l₁`. -/
+/-- A point off the straight lines of two lists joined is off those of the first. -/
 theorem avoid_left {l₁ l₂ : List Line} {X : Point} (h : Avoid (l₁ ++ l₂) X) : Avoid l₁ X :=
   fun L hL => h L (List.mem_append_left _ hL)
 
-/-- A point off the straight lines `l₁ ++ l₂` is off those of `l₂`. -/
+/-- A point off the straight lines of two lists joined is off those of the second. -/
 theorem avoid_right {l₁ l₂ : List Line} {X : Point} (h : Avoid (l₁ ++ l₂) X) : Avoid l₂ X :=
   fun L hL => h L (List.mem_append_right _ hL)
-
-/-- A sum whose terms are all nothing is nothing. -/
-theorem sum_eq_zero {α : Type} {k : Kind} (l : List α) (f : α → Magnitude k)
-    (h : ∀ a ∈ l, f a = 0) : Magnitude.sum (l.map f) = 0 := by
-  induction l with
-  | nil => rfl
-  | cons a l ih =>
-    change f a + Magnitude.sum (l.map f) = 0
-    rw [h a List.mem_cons_self, ih (fun b hb => h b (List.mem_cons_of_mem a hb)), add_zero]
-
-/-- Something holds of a member of a list's image exactly when it holds of the image of a
-member. -/
-theorem exists_mem_map_iff {α β : Type} (l : List α) (g : α → β) (p : β → Prop) :
-    (∃ b ∈ l.map g, p b) ↔ ∃ a ∈ l, p (g a) := by
-  constructor
-  · rintro ⟨b, hb, hp⟩
-    obtain ⟨a, ha, rfl⟩ := List.mem_map.mp hb
-    exact ⟨a, ha, hp⟩
-  · rintro ⟨a, ha, hp⟩
-    exact ⟨g a, List.mem_map.mpr ⟨a, ha, rfl⟩, hp⟩
-
-/-- Something holds of a member of `a :: l` exactly when it holds of `a` or of a member of
-`l`. -/
-theorem exists_mem_cons_iff {α : Type} {a : α} {l : List α} {p : α → Prop} :
-    (∃ b ∈ a :: l, p b) ↔ p a ∨ ∃ b ∈ l, p b := by
-  constructor
-  · rintro ⟨b, hb, hp⟩
-    rcases List.mem_cons.mp hb with rfl | hb
-    · exact Or.inl hp
-    · exact Or.inr ⟨b, hb, hp⟩
-  · rintro (hp | ⟨b, hb, hp⟩)
-    · exact ⟨a, List.mem_cons_self, hp⟩
-    · exact ⟨b, List.mem_cons_of_mem a hb, hp⟩
-
-/-! ## Lists of things that may be missing
-
-A piece of a cut may be nothing; the pieces present are counted by `filterMap id`. -/
-
-/-- Replacing each member by another, nothing by nothing, does not add to the members
-present. -/
-theorem count_map_le {α : Type} (g : Option α → Option α) (hg : g none = none) :
-    ∀ ts : List (Option α), ((ts.map g).filterMap id).length ≤ (ts.filterMap id).length
-  | [] => Nat.le_refl 0
-  | none :: ts => by
-    simpa [List.filterMap_cons, hg] using count_map_le g hg ts
-  | some a :: ts => by
-    have ih := count_map_le g hg ts
-    cases hga : g (some a) with
-    | none =>
-      simp only [List.map_cons, List.filterMap_cons, hga, id, List.length_cons]
-      omega
-    | some b =>
-      simp only [List.map_cons, List.filterMap_cons, hga, id, List.length_cons]
-      omega
-
-/-- When no member is present, every member is nothing. -/
-theorem all_none_of_count {α : Type} {ts : List (Option α)}
-    (h : (ts.filterMap id).length = 0) : ∀ t ∈ ts, t = none := by
-  intro t ht
-  cases t with
-  | none => rfl
-  | some a =>
-    have ha : a ∈ ts.filterMap id := List.mem_filterMap.mpr ⟨some a, ht, rfl⟩
-    rw [List.eq_nil_of_length_eq_zero h] at ha
-    simp at ha
-
-/-- When some member is present, the list can be split at it. -/
-theorem split_some {α : Type} {ts : List (Option α)} (h : ¬ ∀ t ∈ ts, t = none) :
-    ∃ (pre : List (Option α)) (a : α) (post : List (Option α)), ts = pre ++ some a :: post := by
-  have hex : ∃ t ∈ ts, t ≠ none :=
-    Classical.byContradiction fun hn =>
-      h fun t ht => Classical.byContradiction fun hne => hn ⟨t, ht, hne⟩
-  obtain ⟨t, ht, hne⟩ := hex
-  cases t with
-  | none => exact absurd rfl hne
-  | some a =>
-    obtain ⟨pre, post, he⟩ := List.append_of_mem ht
-    exact ⟨pre, a, post, he⟩
-
-/-- Taking out one member present leaves one fewer. -/
-theorem count_split_some {α : Type} (pre post : List (Option α)) (a : α) :
-    ((pre ++ some a :: post).filterMap id).length = ((pre ++ post).filterMap id).length + 1 := by
-  simp only [List.filterMap_append, List.filterMap_cons, id, List.length_append,
-    List.length_cons]
-  omega
 
 /-- A convex outline has three corners at least, so it can be read as three corners and the
 rest. -/
@@ -126,32 +43,6 @@ theorem three_corners {cs : List Point} (h : ConvexOutline cs) :
   · simp at hl
   · exact ⟨A, B, C, rest, rfl⟩
 
-/-- **A third corner**: given any two points, a convex outline has a corner that is neither. -/
-theorem third_corner {cs : List Point} (h : ConvexOutline cs) (a b : Point) :
-    ∃ R ∈ cs, R ≠ a ∧ R ≠ b := by
-  obtain ⟨A, B, C, rest, rfl⟩ := three_corners h
-  have hn := h.2.1
-  simp only [List.nodup_cons, List.mem_cons, not_or] at hn
-  by_cases hA : A = a ∨ A = b
-  · by_cases hB : B = a ∨ B = b
-    · refine ⟨C, by simp, ?_, ?_⟩
-      · rintro rfl
-        rcases hA with rfl | rfl
-        · exact hn.1.2.1 rfl
-        · rcases hB with rfl | rfl
-          · exact hn.2.1.1 rfl
-          · exact hn.1.1 rfl
-      · rintro rfl
-        rcases hA with rfl | rfl
-        · rcases hB with rfl | rfl
-          · exact hn.1.1 rfl
-          · exact hn.2.1.1 rfl
-        · exact hn.1.2.1 rfl
-    · simp only [not_or] at hB
-      exact ⟨B, by simp, hB.1, hB.2⟩
-  · simp only [not_or] at hA
-    exact ⟨A, by simp, hA.1, hA.2⟩
-
 /-- **One side's half-planes**: the straight line of a side of a convex outline, with a third
 corner, names the open half-plane holding the outline's inside, as the side's conditions in
 `ConvexCell.Core` say, and the closed half-plane holding its region, as those in
@@ -163,7 +54,7 @@ theorem side_halfplane {cs : List Point} (h : ConvexOutline cs) {s : Point × Po
         SameSide X R L) ∧
       (∀ X : Point, (∀ A ∈ cs, A ≠ s.1 → A ≠ s.2 → ClosedSide X A s.1 s.2) ↔
         Half X R L) := by
-  obtain ⟨R, hR, hR₁, hR₂⟩ := third_corner h s.1 s.2
+  obtain ⟨R, hR, hR₁, hR₂⟩ := convex_third h s
   have hRR := h.2.2 s hs R hR R hR hR₁ hR₂ hR₁ hR₂
   have hne : s.1 ≠ s.2 := hRR.1
   obtain ⟨L, h₁, h₂⟩ := Postulate1 s.1 s.2 hne
@@ -230,5 +121,19 @@ theorem core_point_avoiding {cs : List Point} (h : ConvexOutline cs) (ls : List 
     (corner_half h hs hD hD₁ hD₂ (by simp) h₁ h₂) hX)
 
 end CellFacts
+
+/-! ## Between a cell's region and its inside -/
+
+/-- A cell's inside holds every point between a point of its closed region and a point of
+its inside: strictly within each side, by the closed side of the first and the open side of
+the second. -/
+theorem ConvexCell.core_between {Q : ConvexCell} {X W Z : Point} (hX : Q.Region X)
+    (hZ : Q.Core Z) (hb : Between X W Z) : Q.Core W := by
+  intro s hs A hA h1 h2
+  have hne := convex_side_ne Q.convex hs
+  obtain ⟨L, hL1, hL2⟩ := Postulate1 s.1 s.2 hne
+  exact SameSideOf.of_line hne hL1 hL2 (Extreme.between_half_open
+    ((closedSide_iff_half hne hL1 hL2).mp (hX s hs A hA h1 h2))
+    ((hZ s hs A hA h1 h2).sameSide hL1 hL2) hb)
 
 end Elements.Figures

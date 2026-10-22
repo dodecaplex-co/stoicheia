@@ -26,13 +26,13 @@ open Tacit
 points, have the same sum. -/
 theorem Apart.area_eq_of_same_region (R S : Apart)
     (h : ∀ X : Point, Covers R.pieces X ↔ Covers S.pieces X) : R.area = S.area := by
-  /- One table of common parts, chosen once (`convex_intersection`): the triangle `r` of R
-  and the triangle `s` of S meet in a cell or in nothing, and `m r s` is its area. The
+  /- One table of common parts, chosen once (`convex_intersection`): the triangle r of R
+  and the triangle s of S meet in a cell or in nothing, and `m r s` is its area. The
   same chosen part is counted in its row and in its column. -/
   let m : Point × Point × Point → Point × Point × Point → Area := fun r s =>
     cellArea (Content.meet (Content.triCell r) (Content.triCell s))
   /- A row tiles its triangle of R: the triangles of S lie apart, and cover the points
-  of `r`, since R and S cover the same points. -/
+  of r, since R and S cover the same points. -/
   have hrow : ∀ r ∈ R.pieces, Magnitude.sum (S.pieces.map (m r)) = △ r.1 r.2.1 r.2.2 := by
     intro r hr
     obtain ⟨P, -, -, hPr, hPa⟩ := Content.triCell_eq (R.triangle r hr)

@@ -1,4 +1,5 @@
 import Elements.Figure.Cells.CutHelpers
+import Elements.Figure.Lists
 
 /-!
 # Book Zero: the two pieces of a genuine cut
@@ -8,11 +9,12 @@ brief 0013's route, section 8). A straight line with corners of a convex outline
 both sides of it meets the outline corner to corner, corner to side, or side to side. The
 corners strictly on one side come in one unbroken run, read cyclically: four corners in
 order whose diagonals cross cannot alternate between the sides (`no_alternation`), since
-the diagonals' common point would be on both. Each run, closed by the line's points on the
-outline, is the outline of a convex piece (`piece`), whose region is the outline's region on
-that closed side and whose inside is its inside on that open side. The corner-to-corner
-case (`form_corner_corner`) also gives B2, in `Convex/Diagonals.lean`. With thanks to David
-Hilbert, whose theory of content guides this route.
+the diagonals' common point would be on both; and a list with no four members in order that
+alternate is one run (`block`, in `Figure/Lists.lean`). Each run, closed by the line's points
+on the outline, is the outline of a convex piece (`piece`), whose region is the outline's
+region on that closed side and whose inside is its inside on that open side. The
+corner-to-corner case (`form_corner_corner`) also gives B2, in `Convex/Diagonals.lean`. With
+thanks to David Hilbert, whose theory of content guides this route.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing here uses Postulate 5
 or superposition.
@@ -191,8 +193,8 @@ theorem mem_sides_two {S₁ S₂ : Point} {ws : List Point} {s : Point × Point}
   change s ∈ (S₁, S₂) :: segments (S₂ :: (ws ++ [S₁])) ↔ _
   exact List.mem_cons
 
-/-- A chain from S₂ through the corners `ws` to S₁: its first segment, a segment of
-`ws`, or its last. -/
+/-- A chain from S₂ through a list of corners, from f to l, on to S₁: a segment of it is the
+first, from S₂ to f, one between those corners, or the last, from l to S₁. -/
 theorem mem_chain {S₁ S₂ f l : Point} {ws ws₁ ws₂ : List Point} (hf : ws = f :: ws₁)
     (hl : ws = ws₂ ++ [l]) {s : Point × Point} (hs : s ∈ segments (S₂ :: (ws ++ [S₁]))) :
     s = (S₂, f) ∨ s ∈ segments ws ∨ s = (l, S₁) := by
@@ -208,9 +210,9 @@ theorem mem_chain {S₁ S₂ f l : Point} {ws ws₁ ws₂ : List Point} (hf : ws
 
 /-! ## A piece of a convex outline -/
 
-/-- `qs` is the outline of what is left of the convex outline `cs` on R's side of the
-straight line L: a convex outline, whose region is the region of `cs` on the closed side
-of L towards R, and whose inside is the inside of `cs` on the open side. -/
+/-- A list of corners is the outline of what is left of a given convex outline on R's side of
+the straight line L: a convex outline, whose region is the given outline's region on the closed
+side of L towards R, and whose inside is the given outline's inside on the open side. -/
 def IsPiece (cs : List Point) (L : Line) (R : Point) (qs : List Point) : Prop :=
   ConvexOutline qs ∧
     (∀ Z : Point, ConvexRegion qs Z ↔ ConvexRegion cs Z ∧ Half Z R L) ∧
@@ -233,11 +235,11 @@ theorem IsPiece.rotate_whole {us vs : List Point} {L : Line} {R : Point} {qs : L
   · rw [h.2.1 Z, Extreme.region_rotate_prefix us vs Z]
   · rw [h.2.2 Z, core_rotate_prefix us vs Z]
 
-/-- **A piece of a convex outline.** Take the corners `ws` of a convex outline that run, in
-order, from `f` to `l`, all strictly on R's side of the straight line L; the corner `a`
-before them and the corner `b` after them. Let S₂ be `a`, or a point between `a` and `f`,
-and S₁ be `b`, or a point between `l` and `b`, two different points of L. Then S₁,
-S₂ and `ws`, in that order, make the outline of what is left on R's side. -/
+/-- **A piece of a convex outline.** Take the corners of a convex outline that run, in order,
+from f to l, all strictly on R's side of the straight line L; the corner a before them and
+the corner b after them. Let S₂ be a, or a point between a and f, and S₁ be b, or a point
+between l and b, two different points of L. Then S₁, S₂ and the corners from f to l, in that
+order, make the outline of what is left on R's side. -/
 theorem piece {cs : List Point} (h : ConvexOutline cs) {L : Line} {R : Point}
     {S₁ S₂ a b f l : Point} {ws ws₁ ws₂ : List Point}
     (hf : ws = f :: ws₁) (hl : ws = ws₂ ++ [l]) (hnd : ws.Nodup)
@@ -424,7 +426,7 @@ theorem piece {cs : List Point} (h : ConvexOutline cs) {L : Line} {R : Point}
 outline. -/
 theorem convex_erase_head {a : Point} {rest : List Point} (h : ConvexOutline (a :: rest))
     (hl : 3 ≤ rest.length) : ConvexOutline rest := by
-  obtain ⟨init, z, rfl⟩ := Extreme.split_last rest (by rintro rfl; simp at hl)
+  obtain ⟨init, z, rfl⟩ := split_last rest (by rintro rfl; simp at hl)
   have hr : ConvexOutline (z :: a :: init) := by
     simpa using Extreme.convex_rotate_prefix (a :: init) [z] (by simpa using h)
   cases init with
@@ -503,132 +505,6 @@ theorem pair_mem_sides (pre post : List Point) (x y : Point) :
     change (x, y) ∈ segments (c :: (pre ++ x :: y :: post) ++ [c])
     simpa using pair_mem_segments (c :: pre) (post ++ [c]) x y
 
-/-! ## One unbroken run -/
-
-/-- A rotation of a rotation is a rotation. -/
-theorem rotate_compose {cs pre post l₁ l₂ : List Point} (hc : cs = pre ++ post)
-    (hr : post ++ pre = l₁ ++ l₂) :
-    ∃ pre' post' : List Point, cs = pre' ++ post' ∧ post' ++ pre' = l₂ ++ l₁ := by
-  rcases List.append_eq_append_iff.mp hr with ⟨a', h₁, h₂⟩ | ⟨c', h₁, h₂⟩
-  · exact ⟨a', l₂ ++ post, by rw [hc, h₂]; simp, by rw [h₁]; simp⟩
-  · exact ⟨pre ++ l₁, c', by rw [hc, h₁]; simp, by rw [h₂]; simp⟩
-
-/-- The first member of a list that fails a test. -/
-theorem first_fail {α : Type} (p : α → Prop) :
-    ∀ l : List α, (∃ x ∈ l, ¬ p x) →
-      ∃ (T : List α) (x : α) (D : List α), l = T ++ x :: D ∧ (∀ y ∈ T, p y) ∧ ¬ p x
-  | [], ⟨_, hx, _⟩ => absurd hx List.not_mem_nil
-  | a :: l, ⟨x, hx, hpx⟩ => by
-    by_cases ha : p a
-    · have hxl : x ∈ l := (List.mem_cons.mp hx).resolve_left (fun e => hpx (e ▸ ha))
-      obtain ⟨T, y, D, he, hT, hy⟩ := first_fail p l ⟨x, hxl, hpx⟩
-      refine ⟨a :: T, y, D, by rw [he]; rfl, fun z hz => ?_, hy⟩
-      rcases List.mem_cons.mp hz with e | hz
-      · exact e ▸ ha
-      · exact hT z hz
-    · exact ⟨[], a, l, rfl, fun _ h => absurd h List.not_mem_nil, ha⟩
-
-/-- Four members, one from each of four lists, are in order in the lists joined. -/
-theorem sub4 {α : Type} {a b c d : α} {l₁ l₂ l₃ l₄ : List α} (ha : a ∈ l₁) (hb : b ∈ l₂)
-    (hc : c ∈ l₃) (hd : d ∈ l₄) : [a, b, c, d].Sublist (l₁ ++ l₂ ++ l₃ ++ l₄) := by
-  have hs := (((List.singleton_sublist.mpr ha).append (List.singleton_sublist.mpr hb)).append
-    (List.singleton_sublist.mpr hc)).append (List.singleton_sublist.mpr hd)
-  simpa using hs
-
-/-- **One unbroken run.** If no four members of a list, in order, alternate between passing
-and failing a test, and some pass and some fail, then the list, read from a suitable member,
-is a run that passes followed by a run that fails. -/
-theorem block {α : Type} (p : α → Prop) (l : List α) (hp : ∃ x ∈ l, p x)
-    (hn : ∃ x ∈ l, ¬ p x)
-    (h₁ : ∀ a b c d, [a, b, c, d].Sublist l → p a → ¬ p b → p c → ¬ p d → False)
-    (h₂ : ∀ a b c d, [a, b, c, d].Sublist l → ¬ p a → p b → ¬ p c → p d → False) :
-    ∃ pre post Ps Ns : List α, l = pre ++ post ∧ post ++ pre = Ps ++ Ns ∧ Ps ≠ [] ∧
-      Ns ≠ [] ∧ (∀ x ∈ Ps, p x) ∧ ∀ x ∈ Ns, ¬ p x := by
-  obtain ⟨T, x, D, hl, hT, hx⟩ := first_fail p l hn
-  cases T with
-  | cons t T =>
-    have ht := hT t List.mem_cons_self
-    by_cases hD : ∃ y ∈ D, p y
-    · obtain ⟨N, y, D₂, hD', hN, hy⟩ := first_fail (fun z => ¬ p z) D (by
-        obtain ⟨y, hy, hpy⟩ := hD
-        exact ⟨y, hy, Classical.not_not.mpr hpy⟩)
-      have hy' : p y := Classical.not_not.mp hy
-      have hD₂ : ∀ z ∈ D₂, p z := by
-        intro z hz
-        by_cases hpz : p z
-        · exact hpz
-        · exfalso
-          apply h₁ t x y z _ ht hx hy' hpz
-          rw [hl, hD']
-          simpa using sub4 (l₁ := t :: T) (l₂ := x :: N) (l₃ := [y]) (l₄ := D₂)
-            List.mem_cons_self List.mem_cons_self List.mem_cons_self hz
-      refine ⟨t :: T ++ x :: N, y :: D₂, y :: D₂ ++ t :: T, x :: N, ?_, by simp,
-        by simp, by simp, ?_, ?_⟩
-      · rw [hl, hD']
-        simp
-      · intro z hz
-        simp only [List.cons_append, List.mem_cons, List.mem_append] at hz
-        rcases hz with e | hz | e | hz
-        · exact e ▸ hy'
-        · exact hD₂ z hz
-        · exact e ▸ ht
-        · exact hT z (List.mem_cons_of_mem _ hz)
-      · intro z hz
-        rcases List.mem_cons.mp hz with e | hz
-        · exact e ▸ hx
-        · exact hN z hz
-    · refine ⟨[], t :: T ++ x :: D, t :: T, x :: D, by simp [hl], by simp, by simp, by simp,
-        hT, ?_⟩
-      intro z hz
-      rcases List.mem_cons.mp hz with e | hz
-      · exact e ▸ hx
-      · exact fun hpz => hD ⟨z, hz, hpz⟩
-  | nil =>
-    simp only [List.nil_append] at hl
-    obtain ⟨N, y, D₂, hD', hN, hy⟩ := first_fail (fun z => ¬ p z) D (by
-      obtain ⟨y, hy, hpy⟩ := hp
-      rw [hl] at hy
-      rcases List.mem_cons.mp hy with e | hy
-      · exact absurd (e ▸ hpy) hx
-      · exact ⟨y, hy, Classical.not_not.mpr hpy⟩)
-    have hy' : p y := Classical.not_not.mp hy
-    by_cases hD₂ : ∃ z ∈ D₂, ¬ p z
-    · obtain ⟨Q, z, D₃, hD₂', hQ, hz⟩ := first_fail p D₂ hD₂
-      have hD₃ : ∀ w ∈ D₃, ¬ p w := by
-        intro w hw hpw
-        apply h₂ x y z w _ hx hy' hz hpw
-        rw [hl, hD', hD₂']
-        simpa using sub4 (l₁ := [x]) (l₂ := N ++ [y]) (l₃ := Q ++ [z]) (l₄ := D₃)
-          List.mem_cons_self (by simp) (by simp) hw
-      refine ⟨x :: N, y :: Q ++ z :: D₃, y :: Q, z :: D₃ ++ x :: N, ?_, by simp,
-        by simp, by simp, ?_, ?_⟩
-      · rw [hl, hD', hD₂']
-        simp
-      · intro w hw
-        rcases List.mem_cons.mp hw with e | hw
-        · exact e ▸ hy'
-        · exact hQ w hw
-      · intro w hw
-        simp only [List.cons_append, List.mem_cons, List.mem_append] at hw
-        rcases hw with e | hw | e | hw
-        · exact e ▸ hz
-        · exact hD₃ w hw
-        · exact e ▸ hx
-        · exact hN w hw
-    · refine ⟨x :: N, y :: D₂, y :: D₂, x :: N, ?_, by simp, by simp, by simp, ?_, ?_⟩
-      · rw [hl, hD']
-        simp
-      · intro w hw
-        rcases List.mem_cons.mp hw with e | hw
-        · exact e ▸ hy'
-        · by_cases hpw : p w
-          · exact hpw
-          · exact absurd ⟨w, hw, hpw⟩ hD₂
-      · intro w hw
-        rcases List.mem_cons.mp hw with e | hw
-        · exact e ▸ hx
-        · exact hN w hw
-
 /-! ## The three kinds of cut -/
 
 /-- The segments of a piece of the outline, closed by its first corner, are sides. -/
@@ -656,14 +532,14 @@ theorem form_corner_corner {cs : List Point} (h : ConvexOutline cs) {L : Line} {
   have hclose : X :: (us ++ Y :: vs) ++ [X] = X :: (us ++ Y :: (vs ++ [X])) := by simp
   constructor
   · obtain ⟨f, ws₁, hf⟩ := List.exists_cons_of_ne_nil hus
-    obtain ⟨ws₂, l, hl⟩ := Extreme.split_last us hus
+    obtain ⟨ws₂, l, hl⟩ := split_last us hus
     have hp := piece (cs := X :: (us ++ Y :: vs)) h (R := R₁) (S₁ := Y) (S₂ := X) (a := X)
       (b := Y) hf hl (nodup_mid (pre := [X]) (post := Y :: vs) (by simpa using hnd))
       (fun s hs => sides_of_infix (pre := []) (post := vs ++ [X]) (by simp) hs)
       (by intro w hw; simp at hw ⊢; grind) hY hX (Ne.symm hXY) hu (Or.inl rfl) (Or.inl rfl)
     simpa using hp.rotate (us := [Y]) (vs := X :: us)
   · obtain ⟨f, ws₁, hf⟩ := List.exists_cons_of_ne_nil hvs
-    obtain ⟨ws₂, l, hl⟩ := Extreme.split_last vs hvs
+    obtain ⟨ws₂, l, hl⟩ := split_last vs hvs
     exact piece (cs := X :: (us ++ Y :: vs)) h (R := R₂) (S₁ := X) (S₂ := Y) (a := Y)
       (b := X) hf hl (nodup_mid (pre := X :: us ++ [Y]) (post := []) (by simpa using hnd))
       (fun s hs => sides_of_infix (pre := X :: us) (post := []) (by simp) hs)
@@ -693,7 +569,7 @@ theorem form_corner_side {cs : List Point} (h : ConvexOutline cs) {L : Line} {R�
       (fun s hs => sides_of_infix (pre := []) (post := vs ++ [X]) (by simp) hs)
       (by intro w hw; simp at hw ⊢; grind) hY hX (Ne.symm hXY) hu (Or.inl rfl) (Or.inr hCYD)
     simpa using hp.rotate (us := [Y]) (vs := X :: (us ++ [C]))
-  · obtain ⟨ws₂, l, hl⟩ := Extreme.split_last (D :: vs) (by simp)
+  · obtain ⟨ws₂, l, hl⟩ := split_last (D :: vs) (by simp)
     exact piece (cs := X :: (us ++ C :: D :: vs)) h (R := R₂) (S₁ := X) (S₂ := Y) (a := C)
       (b := X) (f := D) (ws₁ := vs) rfl hl
       (nodup_mid (pre := X :: us ++ [C]) (post := []) (by simpa using hnd))
@@ -766,7 +642,6 @@ theorem form_side_side {cs : List Point} (h : ConvexOutline cs) {L : Line} {R₁
       simp only [List.cons_append, List.mem_cons, List.mem_append, List.not_mem_nil,
         or_false] at hw hFm ⊢
       grind
-    obtain ⟨ws₂, l, hl⟩ := Extreme.split_last (D :: vs ++ [E]) (by simp)
     exact piece (cs := E :: (us ++ C :: D :: vs)) h (R := R₂) (S₁ := X) (S₂ := Y) (a := C)
       (b := F) (f := D) (ws₁ := vs ++ [E]) (ws₂ := D :: vs) (l := E) rfl rfl hnd' hch hmem
       hX hY hXY hv (Or.inr hCYD) (Or.inr hEXF)
@@ -905,7 +780,7 @@ theorem cut_lists {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Poi
     by_cases hre : rest = []
     · /- One corner strictly on B's side: read from the last corner on A's side. -/
       subst hre
-      obtain ⟨Ps', E', hPs'⟩ := Extreme.split_last Ps hPs
+      obtain ⟨Ps', E', hPs'⟩ := split_last Ps hPs
       have hPs'ne : Ps' ≠ [] := by
         rintro rfl
         rw [hNs', hPs'] at hlen
@@ -927,9 +802,9 @@ theorem cut_lists {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Poi
       refine Or.inr (Or.inr ⟨pre', post', D :: vs, [], vs, E', m, m, D, X, Y, hc',
         by rw [hr', hD]; simp, rfl, hEXF, hCYD, Or.inr ⟨htr _ _ _ hf.1, htr _ _ _ hf.2⟩⟩)
     · /- Read from the last corner strictly on B's side. -/
-      obtain ⟨M'', E, hrE⟩ := Extreme.split_last rest hre
+      obtain ⟨M'', E, hrE⟩ := split_last rest hre
       obtain ⟨F, Ps₁, hF⟩ := List.exists_cons_of_ne_nil hPs
-      obtain ⟨us, C, hC⟩ := Extreme.split_last Ps hPs
+      obtain ⟨us, C, hC⟩ := split_last Ps hPs
       obtain ⟨pre', post', hc', hr', hconv, htr⟩ :=
         rotated (l₁ := Ps ++ m :: M'') (l₂ := [E]) h hcs (by rw [hrot, hNs', hrE]; simp)
       have hEB : SameSide E B L := hrest E (by rw [hrE]; simp)
@@ -954,7 +829,7 @@ theorem cut_lists {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Poi
         Or.inl ⟨htr _ _ _ hf.1, htr _ _ _ hf.2⟩⟩)
   · /- Side to corner: read from the corner Y₀. -/
     subst hr'
-    obtain ⟨us, C, hC⟩ := Extreme.split_last Ps hPs
+    obtain ⟨us, C, hC⟩ := split_last Ps hPs
     obtain ⟨pre', post', hc', hr', hconv, htr⟩ :=
       rotated (l₁ := Ps ++ m :: M') (l₂ := [Y₀]) h hcs (by rw [hrot, hNs']; simp)
     have hCA : SameSide C A L := hPA' C (by rw [hC]; simp)
@@ -970,7 +845,7 @@ theorem cut_lists {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Poi
     exact Or.inr (Or.inl ⟨pre', post', us, M', Y₀, C, m, Y, hc', by rw [hr', hC]; simp,
       hCYD, Or.inl ⟨htr _ _ _ hf.1, htr _ _ _ hf.2⟩⟩)
   · /- Corner to side: read from the corner X. -/
-    obtain ⟨us, C, hC⟩ := Extreme.split_last (m :: rest) (by simp)
+    obtain ⟨us, C, hC⟩ := split_last (m :: rest) (by simp)
     obtain ⟨D, vs, hD⟩ := List.exists_cons_of_ne_nil hPs
     obtain ⟨pre', post', hc', hr', hconv, htr⟩ :=
       rotated (l₁ := Ps) (l₂ := X :: m :: rest) h hcs (by rw [hrot, hNs']; simp)

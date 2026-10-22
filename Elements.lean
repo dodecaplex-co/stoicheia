@@ -26,6 +26,7 @@ import Elements.Figure.Parallelograms
 import Elements.Figure.Rectangles
 import Elements.Figure.OnCircles
 import Elements.Figure.Sums
+import Elements.Figure.Lists
 import Elements.Figure.Rectilineal
 import Elements.Figure.Regions
 import Elements.Figure.Chords

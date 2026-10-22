@@ -6,6 +6,7 @@ import Elements.Figure.Outlines.Parity
 import Elements.Figure.Outlines.OutlineFacts
 import Elements.Figure.Sides
 import Elements.Figure.Angles
+import Elements.Figure.Lists
 
 /-!
 # Book Zero: the region of an outline, and its boundary
@@ -297,9 +298,12 @@ theorem region_with_holes (F : Outline) (outer : List Point)
     F.Region X ↔ LoopRegion outer X ∧
       ∀ ps ∈ holes, ¬ LoopInside ps X := by
   /- Off the boundary, the depth counts the outer contour and at most one hole, which lies
-  in it. On the boundary, no hole holds the point inside: near a point of any contour are
-  points inside that contour and outside the outer region, while near a point inside a hole
-  every point is inside it. -/
+  in it. On the boundary, no hole holds the point strictly inside, for then every point near
+  it would be inside that hole too. But at a point of the outer contour there are points
+  nearby outside the outer region, where no point of a hole is; at a point of another hole's
+  contour there are points nearby inside that other hole, where no point inside this hole
+  is, their insides being apart; and a point of the hole's own contour is not strictly
+  inside it. -/
   classical
   have hsimple : ∀ ps ∈ outer :: holes, SimpleLoop ps := by
     rw [← hl]
@@ -326,7 +330,7 @@ theorem region_with_holes (F : Outline) (outer : List Point)
           exact hiX.1 hq
         · obtain ⟨Y, Z, hY, -, hiY, -⟩ := OutlineFacts.near_boundary (hhole qs hqs) hq hXc
           have hiY' : LoopInside ps Y := (hcs Y hY).2.mpr hiX
-          rcases LoopFacts.pairwise_mem hapart hps hqs with e | hd | hd
+          rcases pairwise_mem hapart hps hqs with e | hd | hd
           · exact hqp e.symm
           · exact hd Y hiY' hiY
           · exact hd Y hiY hiY'
@@ -341,7 +345,7 @@ theorem region_with_holes (F : Outline) (outer : List Point)
     · obtain ⟨ps, hps, hiX⟩ := hh
       have hio : LoopInside outer X :=
         OutlineFacts.inside_iff_region.mpr ⟨hin ps hps X (Or.inr hiX), hbo⟩
-      have hle := OutlineFacts.count_le_one (fun ps => decide (LoopInside ps X)) holes
+      have hle := count_le_one (fun ps => decide (LoopInside ps X)) holes
         (hapart.imp fun {a b} hab ⟨ha, hb⟩ => hab X (by simpa using ha) (by simpa using hb))
       have hpos : 0 < (holes.filter fun ps => decide (LoopInside ps X)).length :=
         List.length_pos_of_mem (List.mem_filter.mpr ⟨hps, by simpa using hiX⟩)

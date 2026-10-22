@@ -328,7 +328,7 @@ theorem glue {O Z W : Point} {ws : List Point} (h : SimpleLoop (O :: (ws ++ [Z])
       rw [CoverFacts.inside_of_segment hnew hXY hXℓ hYℓ hoff hXn (hoffT Y hY).1 hseg]
       exact (key Y (hoffT Y hY).1 (hoffT Y hY).2).mpr (Or.inr (Or.inl hY))
     exact ⟨fun _ => Or.inl (Or.inl hXo), fun _ => Or.inr hin⟩
-  · /- Off both boundaries. -/
+  · /- The point is off both boundaries. -/
     have hk := key X hXn hXo
     unfold LoopRegion
     constructor
@@ -364,9 +364,9 @@ theorem covers_concat (ts : List (Point × Point × Point)) (t : Point × Point 
   simp only [List.mem_append, List.mem_cons, List.not_mem_nil, or_false, or_and_right,
     exists_or, exists_eq_left]
 
-/-- **Gluing the fan's triangles in order.** Given an outline from O round the chain `init`,
-simple, with region the fan's triangles over `init`, and the triangles over the longer chain
-`init ++ rest`, each meeting every earlier one only along its glued side: the outline round
+/-- **Gluing the fan's triangles in order.** Given an outline from O round a chain, simple,
+with region the fan's triangles over that chain, and the triangles over a longer chain that
+carries it on, each meeting every earlier one only along its glued side: the outline round
 the longer chain is simple, with region its fan's triangles. -/
 theorem fan_chain (O : Point) : ∀ (rest init : List Point), init ≠ [] →
     SimpleLoop (O :: init) →

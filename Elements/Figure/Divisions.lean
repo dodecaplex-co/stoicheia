@@ -58,14 +58,7 @@ theorem division_exists (F : Outline) : ∃ R : Apart, Divides F.Region R := by
 (`fan_triangle`), they lie apart (`fan_apart`), and they cover the region (`fan_covers`). -/
 theorem convex_fan {cs : List Point} (h : ConvexOutline cs) :
     ∃ R : Apart, R.pieces = fan cs ∧ Divides (ConvexRegion cs) R := by
-  have hne : fan cs ≠ [] := by
-    rcases cs with _ | ⟨O, cs⟩
-    · simp [ConvexOutline] at h
-    rcases cs with _ | ⟨A, cs⟩
-    · simp [ConvexOutline] at h
-    rcases cs with _ | ⟨B, cs⟩
-    · simp [ConvexOutline] at h
-    simp [fan, segments]
+  have hne : fan cs ≠ [] := DivisionFacts.fan_ne_nil h
   let R : Apart := ⟨fan cs, hne, fan_triangle h, fan_apart h⟩
   exact ⟨R, rfl, fun X => fan_covers h X⟩
 

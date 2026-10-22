@@ -1,5 +1,6 @@
 import Elements.Figure.Outlines
 import Elements.Figure.Cells
+import Elements.Figure.Lists
 
 /-!
 # Book Zero: the cells of an arrangement that fill an outline
@@ -92,26 +93,6 @@ theorem count_congr {ps : List Point} {X Y Q : Point}
   congr 1
   exact List.filter_congr fun t ht => decide_eq_decide.mpr (h t ht)
 
-/-- Two tests agreeing on a list of distinct members, except at one member, which passes the
-first and fails the second, count one more for the first. -/
-theorem countP_succ {α : Type} (p q : α → Bool) :
-    ∀ (l : List α) (s : α), l.Nodup → s ∈ l → p s = true → q s = false →
-      (∀ t ∈ l, t ≠ s → p t = q t) → l.countP p = l.countP q + 1
-  | [], _, _, hs, _, _, _ => absurd hs List.not_mem_nil
-  | a :: l, s, hnd, hs, hp, hq, h => by
-    rw [List.nodup_cons] at hnd
-    rcases List.mem_cons.mp hs with e | hs'
-    · subst e
-      have hl : l.countP p = l.countP q := List.countP_congr fun t ht => by
-        rw [h t (List.mem_cons_of_mem _ ht) (fun e => hnd.1 (e ▸ ht))]
-      simp only [List.countP_cons, hp, hq, hl]
-      simp
-    · have hne : a ≠ s := fun e => hnd.1 (e ▸ hs')
-      have ih := countP_succ p q l s hnd.2 hs' hp hq
-        (fun t ht => h t (List.mem_cons_of_mem _ ht))
-      simp only [List.countP_cons, h a List.mem_cons_self hne, ih]
-      omega
-
 /-- One side crossed by the first ray and not the second, and the others crossed alike: the
 first count is one more. -/
 theorem count_succ {ps : List Point} (hnd : ps.Nodup) {X Y Q : Point} {s : Point × Point}
@@ -197,18 +178,6 @@ theorem depth_congr (F : Outline) {X Y : Point}
   unfold Outline.depth
   congr 1
   exact List.filter_congr fun ps hps => decide_eq_decide.mpr (h ps hps)
-
-/-- Two tests agreeing on all but one member of a list, and disagreeing there: one of the two
-counts is odd. -/
-theorem countP_flip {α : Type} (pre post : List α) (a : α) (p q : α → Bool)
-    (h : ∀ x ∈ pre ++ post, p x = q x) (ha : p a = true ↔ q a = false) :
-    (pre ++ a :: post).countP p % 2 = 1 ∨ (pre ++ a :: post).countP q % 2 = 1 := by
-  have e1 : pre.countP p = pre.countP q := List.countP_congr fun x hx => by
-    rw [h x (List.mem_append_left _ hx)]
-  have e2 : post.countP p = post.countP q := List.countP_congr fun x hx => by
-    rw [h x (List.mem_append_right _ hx)]
-  simp only [List.countP_append, List.countP_cons, e1, e2]
-  cases hp : p a <;> cases hq : q a <;> simp only [hp, hq] at ha <;> simp at ha ⊢ <;> omega
 
 /-- **One contour changes, and no other**: then one of the two points has odd depth. -/
 theorem depth_flip (F : Outline) {pre post : List (List Point)} {ps : List Point}
@@ -345,17 +314,6 @@ theorem cell_constant (F : Outline) {ls : List Line}
 
 /-! ## A cell's closed region and its inside -/
 
-/-- A cell's inside holds every point between a point of its closed region and a point of
-its inside. -/
-theorem core_between {Q : ConvexCell} {X W Z : Point} (hX : Q.Region X) (hZ : Q.Core Z)
-    (hb : Between X W Z) : Q.Core W := by
-  intro s hs A hA h1 h2
-  have hne := convex_side_ne Q.convex hs
-  obtain ⟨L, hL1, hL2⟩ := Postulate1 s.1 s.2 hne
-  exact SameSideOf.of_line hne hL1 hL2 (Extreme.between_half_open
-    ((closedSide_iff_half hne hL1 hL2).mp (hX s hs A hA h1 h2))
-    ((hZ s hs A hA h1 h2).sameSide hL1 hL2) hb)
-
 /-- **From a point of a cell's closed region to its inside.** A point of a cell's closed region
 off the figure's boundary has a point of the cell's inside that is inside the figure exactly
 when the first point is: go a little way towards a point of the inside off the straight lines
@@ -377,7 +335,7 @@ theorem cell_point (F : Outline) {ls : List Line}
     hXℓ hZℓ
   obtain ⟨hp, hp1, hp2⟩ := pairs_off X ls
   obtain ⟨W, hXWZ, hW⟩ := shorten_off_lines hXZ hp hp1
-  have hWQ : Q.Core W := core_between hXQ hZQ hXWZ
+  have hWQ : Q.Core W := ConvexCell.core_between hXQ hZQ hXWZ
   have hWℓ : OnLine W ℓ := on_line_of_between_ends hXWZ hXℓ hZℓ
   have hXW : X ≠ W := ne_of_between hXWZ
   /- No point of the finite straight line XW but X is on a side line. -/

@@ -1,4 +1,5 @@
 import Elements.Figure.Outlines.LoopFacts
+import Elements.Figure.Lists
 
 /-!
 # Book Zero: two good rays give one parity
@@ -123,8 +124,8 @@ theorem between_order {A B Y Z : Point} (hY : Between A Y B) (hZ : Between A Z B
 
 /-! ## One finite straight line against an angle
 
-Throughout, the straight line `ℓ` joins X to Q and `m` joins X to R, with R off `ℓ` and Q
-off `m`; the finite straight line AB has its ends off both and does not pass through X. -/
+Throughout, the straight line ℓ joins X to Q and m joins X to R, with R off ℓ and Q off m;
+the finite straight line AB has its ends off both and does not pass through X. -/
 
 section Angle
 
@@ -214,59 +215,6 @@ end Angle
 
 /-! ## Counting round a closed outline -/
 
-/-- Two pairs of tests on each member of a list, the first pair agreeing exactly when the
-second pair agrees, give totals of the same parity. -/
-theorem countP_parity {α : Type} (l : List α) (p q u v : α → Bool)
-    (h : ∀ x ∈ l, (p x = q x ↔ u x = v x)) :
-    (l.countP p + l.countP q) % 2 = (l.countP u + l.countP v) % 2 := by
-  induction l with
-  | nil => rfl
-  | cons a l ih =>
-    have ha := h a List.mem_cons_self
-    have ih' := ih fun x hx => h x (List.mem_cons_of_mem _ hx)
-    simp only [List.countP_cons]
-    cases hp : p a <;> cases hq : q a <;> cases hu : u a <;> cases hv : v a <;>
-      simp only [hp, hq, hu, hv] at ha <;> simp at ha ⊢ <;> omega
-
-/-- Counting the members whose number is odd gives the parity of the sum. -/
-theorem countP_odd_sum {α : Type} (l : List α) (p : α → Prop) [DecidablePred p] (f : α → Nat)
-    (h : ∀ x ∈ l, p x ↔ f x % 2 = 1) :
-    l.countP (fun x => decide (p x)) % 2 = (l.map f).sum % 2 := by
-  induction l with
-  | nil => rfl
-  | cons a l ih =>
-    have ih' := ih fun x hx => h x (List.mem_cons_of_mem _ hx)
-    have ha := h a List.mem_cons_self
-    simp only [List.countP_cons, List.map_cons, List.sum_cons, decide_eq_true_eq]
-    by_cases hp : p a
-    · have := ha.mp hp
-      simp only [hp, ite_true]
-      omega
-    · have : f a % 2 = 0 := by
-        rcases Nat.mod_two_eq_zero_or_one (f a) with e | e
-        · exact e
-        · exact absurd (ha.mpr e) hp
-      simp only [hp, ite_false]
-      omega
-
-/-- A test that implies another, and fails somewhere the other passes, counts strictly less. -/
-theorem countP_lt {α : Type} {p q : α → Bool} :
-    ∀ {l : List α}, (∀ x ∈ l, p x = true → q x = true) →
-      (∃ x ∈ l, q x = true ∧ p x = false) → l.countP p < l.countP q
-  | [], _, ⟨_, h, _⟩ => absurd h List.not_mem_nil
-  | a :: l, hpq, ⟨x, hx, hqx, hpx⟩ => by
-    have hle : l.countP p ≤ l.countP q :=
-      List.countP_mono_left fun y hy => hpq y (List.mem_cons_of_mem _ hy)
-    rw [List.countP_cons, List.countP_cons]
-    rcases List.mem_cons.mp hx with rfl | hx
-    · simp only [hqx, hpx, Bool.false_eq_true, ite_false, ite_true]
-      omega
-    · have hlt := countP_lt (fun y hy => hpq y (List.mem_cons_of_mem _ hy)) ⟨x, hx, hqx, hpx⟩
-      cases hpa : p a
-      · cases q a <;> simp only [Bool.false_eq_true, ite_false, ite_true] <;> omega
-      · simp only [hpq a List.mem_cons_self hpa, ite_true]
-        omega
-
 /-- The second ends of a chain's segments are its points after the first. -/
 theorem segments_map_snd (a : Point) (l : List Point) :
     (segments (a :: l)).map Prod.snd = l := by
@@ -294,7 +242,7 @@ theorem sides_pairwise_snd {ps : List Point} (h : ps.Nodup) :
 /-- Two sides of a list of distinct corners that end at one corner are one side. -/
 theorem sides_snd_inj {ps : List Point} (h : ps.Nodup) {s t : Point × Point}
     (hs : s ∈ sides ps) (ht : t ∈ sides ps) (he : s.2 = t.2) : s = t := by
-  rcases LoopFacts.pairwise_mem (sides_pairwise_snd h) hs ht with e | e | e
+  rcases pairwise_mem (sides_pairwise_snd h) hs ht with e | e | e
   · exact e
   · exact False.elim (e he)
   · exact False.elim (e he.symm)
@@ -634,7 +582,7 @@ theorem side_meet {ps : List Point} (h : SimpleLoop ps) {s t : Point × Point}
     (hs : s ∈ sides ps) (ht : t ∈ sides ps) (hst : s ≠ t) (X : Point) :
     OnFiniteLine X s.1 s.2 → OnFiniteLine X t.1 t.2 →
       (X = s.1 ∨ X = s.2) ∧ (X = t.1 ∨ X = t.2) := by
-  rcases LoopFacts.pairwise_mem h.2.2.2 hs ht with e | e | e
+  rcases pairwise_mem h.2.2.2 hs ht with e | e | e
   · exact absurd e hst
   · exact e X
   · intro h₁ h₂

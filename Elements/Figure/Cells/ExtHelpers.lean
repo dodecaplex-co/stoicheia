@@ -3,6 +3,7 @@ import Elements.Figure.Convex.Cover
 import Elements.Figure.Convex.Area
 import Elements.Figure.Convex.Closed
 import Elements.Figure.Convex.Avoid
+import Elements.Figure.Lists
 
 /-!
 # Book Zero: supporting sides and extreme points of a convex outline
@@ -163,14 +164,6 @@ theorem head_not_between {A B V : Point} {ps : List Point}
     ((closedSide_iff_half hAV.symm hVM hAM).mp (hW (V, A) ht B hBm hBV hAB.symm)) hb hAM).1
   have he : M = L := line_unique (ne_of_between hb) hUM hAM hUL hAL
   exact hT.off_line hAL hBL (he ▸ hVM)
-
-/-- A nonempty list can be read as an initial list followed by its last member: Lean's
-`List.eq_nil_or_concat`, for a list known to be nonempty, with `concat` read as appending. -/
-theorem split_last {α : Type} (ps : List α) (h : ps ≠ []) :
-    ∃ us V, ps = us ++ [V] := by
-  rcases List.eq_nil_or_concat ps with he | ⟨us, V, he⟩
-  · exact False.elim (h he)
-  · exact ⟨us, V, by simpa using he⟩
 
 /-- No corner lies strictly between two points of the region. -/
 theorem corner_not_between {ps : List Point} (h : ConvexOutline ps) {X : Point}

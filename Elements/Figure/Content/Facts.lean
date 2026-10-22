@@ -1,4 +1,5 @@
 import Elements.Figure.Cells
+import Elements.Figure.Lists
 
 /-!
 # Book Zero: the cells of two divisions, and where they meet
@@ -134,9 +135,9 @@ theorem present_region (l : List Cell) (X : Point) :
     | some P => exact ⟨P, List.mem_filterMap.mpr ⟨some P, hc, rfl⟩, hX⟩
 
 /-- **A row tiles its cell** (brief 0013, section 8, "Content", step 5). A cell P lies within
-the triangles `ts`, which lie apart; to each triangle belongs a cell or nothing `f t`, inside
-it, whose region is, off finitely many straight lines, the part of P within or on it. Then
-the cells `f t` tile P, and their areas make up its area (`convex_tiles_area`). -/
+a list of triangles, which lie apart; to each triangle t belongs a cell or nothing `f t`,
+inside it, whose region is, off finitely many straight lines, the part of P within or on it.
+Then the cells `f t` tile P, and their areas make up its area (`convex_tiles_area`). -/
 theorem row_area (P : ConvexCell) (ts : List (Point × Point × Point))
     (hap : ts.Pairwise fun s s' => ∀ Y : Point,
       InsideTriangle Y s.1 s.2.1 s.2.2 → ¬ InsideTriangle Y s'.1 s'.2.1 s'.2.2)
@@ -171,7 +172,7 @@ theorem row_area (P : ConvexCell) (ts : List (Point × Point × Point))
   its triangle, and the triangles cover P. -/
   have hag : AgreeOff (fun X => ∃ Q ∈ (ts.map f).filterMap id, Q.Region X) P.Region := by
     refine Tiling.agreeOff_trans (Tiling.agreeOff_of_iff fun X =>
-      (present_region (ts.map f) X).trans (CellFacts.exists_mem_map_iff ts f
+      (present_region (ts.map f) X).trans (exists_mem_map_iff ts f
         (fun c => CellRegion c X))) (Tiling.agreeOff_trans
       (Tiling.agreeOff_exists_mem ts hreg) (Tiling.agreeOff_of_iff fun X => ?_))
     constructor

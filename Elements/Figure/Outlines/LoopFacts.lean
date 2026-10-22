@@ -5,6 +5,7 @@ import Elements.Figure.Convex.Avoid
 import Elements.Figure.Convex.Closed
 import Elements.Figure.Convex.Cover
 import Elements.Figure.Cells.ExtHelpers
+import Elements.Figure.Lists
 
 /-!
 # Book Zero: facts about loops, for the boundary bridges of brief 0013
@@ -60,19 +61,6 @@ theorem sides_pairwise_fst {ps : List Point} (h : ps.Nodup) :
 theorem sides_nodup {ps : List Point} (h : ps.Nodup) : (sides ps).Nodup :=
   List.Pairwise.imp (fun {s t} (hne : s.1 ≠ t.1) (he : s = t) => hne (by rw [he]))
     (sides_pairwise_fst h)
-
-/-- Two members of a list related pairwise are equal or related one way or the other. -/
-theorem pairwise_mem {α : Type} {R : α → α → Prop} {l : List α} (hl : l.Pairwise R)
-    {a b : α} (ha : a ∈ l) (hb : b ∈ l) : a = b ∨ R a b ∨ R b a := by
-  induction l with
-  | nil => simp at ha
-  | cons x l ih =>
-    rw [List.pairwise_cons] at hl
-    rcases List.mem_cons.mp ha with ha' | ha' <;> rcases List.mem_cons.mp hb with hb' | hb'
-    · exact Or.inl (ha'.trans hb'.symm)
-    · exact Or.inr (Or.inl (ha' ▸ hl.1 b hb'))
-    · exact Or.inr (Or.inr (hb' ▸ hl.1 a ha'))
-    · exact ih hl.2 ha' hb'
 
 /-- Two sides of a list of distinct corners that start at one corner are one side. -/
 theorem sides_fst_inj {ps : List Point} (h : ps.Nodup) {s t : Point × Point}
@@ -200,9 +188,9 @@ theorem crosses_transfer (X Q : Point) (s : Point × Point) :
   rcases hf s with e | e <;> rw [e]
   constructor <;> rintro ⟨Y, hY, hb⟩ <;> exact ⟨Y, hY, between_symm hb⟩
 
-/-- **The same sides give the same figure.** If the sides of `qs` are those of `ps`, each
-read the same way or the other way, in some order, and the two lists have the same corners,
-then the boundary, the crossing counts and the good rays agree. -/
+/-- **The same sides give the same figure.** If the sides of one list of corners are those of
+another, each read the same way or the other way, in some order, and the two lists have the
+same corners, then the boundary, the crossing counts and the good rays agree. -/
 theorem transfer {ps qs : List Point} (hperm : (sides qs).Perm ((sides ps).map f))
     (hmem : ∀ V, V ∈ qs ↔ V ∈ ps) :
     (∀ X, LoopBoundary qs X ↔ LoopBoundary ps X) ∧
@@ -358,21 +346,6 @@ theorem simple_frame {ps : List Point} (h : SimpleLoop ps) :
     (fun t ht => hstraight t (List.mem_cons_of_mem _ ht))
 
 /-! ## Convex outlines -/
-
-/-- Three or more distinct corners include one other than any two given points. -/
-theorem exists_other {ps : List Point} (hlen : 3 ≤ ps.length) (hnd : ps.Nodup)
-    (A B : Point) : ∃ P ∈ ps, P ≠ A ∧ P ≠ B := by
-  rcases ps with _ | ⟨x, _ | ⟨y, _ | ⟨z, rest⟩⟩⟩
-  · simp at hlen
-  · simp at hlen
-  · simp at hlen
-  simp only [List.nodup_cons, List.mem_cons, not_or] at hnd
-  by_cases hx : x ≠ A ∧ x ≠ B
-  · exact ⟨x, List.mem_cons_self, hx⟩
-  by_cases hy : y ≠ A ∧ y ≠ B
-  · exact ⟨y, List.mem_cons_of_mem _ List.mem_cons_self, hy⟩
-  refine ⟨z, List.mem_cons_of_mem _ (List.mem_cons_of_mem _ List.mem_cons_self), ?_⟩
-  grind
 
 /-- **No side read backwards**: in a closed outline of three or more distinct corners, no
 side is also a side read the other way. Read from its first end, a side's next corner is the
@@ -598,8 +571,8 @@ theorem triangle_convexRegion {A B C X : Point} (h : Triangle A B C) :
 
 /-! ## Crossings of a straight line, and of a ray -/
 
-/-- A finite straight line through a point of `ℓ`, with one end off it, joins points on
-opposite sides of `ℓ`. -/
+/-- A finite straight line through a point of ℓ, with one end off it, joins points on
+opposite sides of ℓ. -/
 theorem crosses_of_between {A Y B : Point} {ℓ : Line} (hY : Between A Y B)
     (hYℓ : OnLine Y ℓ) (hA : ¬ OnLine A ℓ) : OppositeSides A B ℓ :=
   ⟨hA, fun hB => hA (on_line_of_between (between_symm hY) hB hYℓ), pasch3 hY hYℓ⟩
@@ -698,41 +671,6 @@ theorem order_from {X Y Z : Point} {ℓ : Line} (hX : OnLine X ℓ) (hY : OnLine
 
 /-! ## Counting the crossings -/
 
-/-- A filter of a list of distinct members that keeps exactly one of them has length one. -/
-theorem filter_length_one {l : List (Point × Point)} (hnd : l.Nodup)
-    {q : Point × Point → Bool} {s : Point × Point} (hs : s ∈ l) (hq : q s = true)
-    (huniq : ∀ t ∈ l, q t = true → t = s) : (l.filter q).length = 1 := by
-  have hperm : (l.filter q).Perm [s] := by
-    rw [List.perm_ext_iff_of_nodup (hnd.sublist List.filter_sublist)
-      (List.nodup_cons.mpr ⟨List.not_mem_nil, List.nodup_nil⟩)]
-    intro t
-    simp only [List.mem_filter, List.mem_singleton]
-    constructor
-    · rintro ⟨ht, hqt⟩
-      exact huniq t ht hqt
-    · rintro rfl
-      exact ⟨hs, hq⟩
-  exact hperm.length_eq
-
-/-- A filter of a list of distinct members that keeps exactly two of them has length two. -/
-theorem filter_length_two {l : List (Point × Point)} (hnd : l.Nodup)
-    {q : Point × Point → Bool} {s t : Point × Point} (hs : s ∈ l) (ht : t ∈ l)
-    (hst : s ≠ t) (hqs : q s = true) (hqt : q t = true)
-    (hall : ∀ u ∈ l, q u = true → u = s ∨ u = t) : (l.filter q).length = 2 := by
-  have hperm : (l.filter q).Perm [s, t] := by
-    rw [List.perm_ext_iff_of_nodup (hnd.sublist List.filter_sublist)
-      (List.nodup_cons.mpr ⟨by simpa using hst,
-        List.nodup_cons.mpr ⟨List.not_mem_nil, List.nodup_nil⟩⟩)]
-    intro u
-    simp only [List.mem_filter, List.mem_cons, List.not_mem_nil, or_false]
-    constructor
-    · rintro ⟨hu, hqu⟩
-      exact hall u hu hqu
-    · rintro (rfl | rfl)
-      · exact ⟨hs, hqs⟩
-      · exact ⟨ht, hqt⟩
-  exact hperm.length_eq
-
 /-- One side crossed, and no other: the crossing count is one. -/
 theorem crossingCount_eq_one {ps : List Point} (hnd : ps.Nodup) {X Q : Point}
     {s : Point × Point} (hs : s ∈ sides ps) (hc : RayCrosses X Q s)
@@ -748,8 +686,12 @@ theorem crossingCount_eq_two {ps : List Point} (hnd : ps.Nodup) {X Q : Point}
     (hall : ∀ u ∈ sides ps, RayCrosses X Q u → u = s ∨ u = t) :
     crossingCount ps X Q = 2 := by
   unfold crossingCount
-  exact filter_length_two (sides_nodup hnd) hs ht hst (by simpa using hcs)
-    (by simpa using hct) (fun u hu hqu => hall u hu (by simpa using hqu))
+  rw [← List.countP_eq_length_filter]
+  refine countP_two (sides_nodup hnd) hst fun u =>
+    ⟨fun ⟨hu, hqu⟩ => hall u hu (by simpa using hqu), ?_⟩
+  rintro (rfl | rfl)
+  · exact ⟨hs, by simpa using hcs⟩
+  · exact ⟨ht, by simpa using hct⟩
 
 /-- No side crossed: the crossing count is nought. -/
 theorem crossingCount_eq_zero {ps : List Point} {X Q : Point}

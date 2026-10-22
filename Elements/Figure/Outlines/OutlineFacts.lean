@@ -1,4 +1,5 @@
 import Elements.Figure.Outlines.Parity
+import Elements.Figure.Lists
 
 /-!
 # Book Zero: facts about outlines, for the boundary bridges of brief 0013
@@ -236,21 +237,6 @@ theorem ray_split {Y Z Q : Point} {ℓ : Line} (hYZQ : Between Y Z Q) (hYℓ : O
       (on_line_of_between hYZR hYℓ hZℓ) (on_line_of_between_ends hsP h₁ h₂)
       (on_line_of_between_ends hsR h₁ h₂)
     exact hs (he ▸ h₁)
-
-/-- A filter by a test that is one of two exclusive tests has the two filters' lengths
-together. -/
-theorem filter_or_length {α : Type} (p q r : α → Bool) :
-    ∀ l : List α, (∀ x ∈ l, (p x = true ↔ q x = true ∨ r x = true) ∧
-        ¬ (q x = true ∧ r x = true)) →
-      (l.filter p).length = (l.filter q).length + (l.filter r).length
-  | [], _ => rfl
-  | a :: l, h => by
-    have ih := filter_or_length p q r l fun x hx => h x (List.mem_cons_of_mem _ hx)
-    obtain ⟨h₁, h₂⟩ := h a List.mem_cons_self
-    simp only [List.filter_cons]
-    cases hp : p a <;> cases hq : q a <;> cases hr : r a <;>
-      simp only [hp, hq, hr] at h₁ h₂ <;> simp at h₁ h₂ <;>
-      simp only [Bool.false_eq_true, ↓reduceIte, List.length_cons] <;> omega
 
 /-- **The count read on past a point.** The crossings of the ray from Y through Z are those of
 the open finite straight line YZ and those of the ray from Z on through Q. -/
@@ -502,7 +488,7 @@ theorem half_near {ps : List Point} (h : SimpleLoop ps) {s : Point × Point}
     have hsplit := crossingCount_split hY₁Y₂Q hY₁ℓ hY₂ℓ hoff hb₂
     have h1 : segCount ps Y₁ Y₂ = 1 := by
       unfold segCount
-      refine LoopFacts.filter_length_one (LoopFacts.sides_nodup h.2.1) hs
+      refine filter_length_one (LoopFacts.sides_nodup h.2.1) hs
         (by simp only [decide_eq_true_eq]; exact ⟨W, hY₁WY₂, hW⟩) fun t ht hqt => ?_
       refine Classical.byContradiction fun hts => ?_
       obtain ⟨P, hP, htP⟩ : SegCrosses Y₁ Y₂ t := by simpa using hqt
@@ -593,44 +579,7 @@ theorem near_boundary {ps : List Point} (h : SimpleLoop ps) {X : Point}
   · have hiZ : LoopInside ps Z := Classical.byContradiction fun hiZ => hiY (hdiff.mpr hiZ)
     exact ⟨Z, Y, hZ, hY, hiZ, fun hr => hiY (hr.resolve_left hbY)⟩
 
-/-! ## Counting contours -/
-
-/-- Two tests agreeing on every member but one, where they disagree, keep numbers of members
-of opposite parity, in a list without repetition. -/
-theorem count_flip {α : Type} (p q : α → Bool) {a : α} :
-    ∀ l : List α, l.Nodup → a ∈ l → p a = !q a → (∀ x ∈ l, x ≠ a → p x = q x) →
-      ((l.filter p).length + (l.filter q).length) % 2 = 1
-  | [], _, ha, _, _ => absurd ha List.not_mem_nil
-  | b :: l, hnd, ha, hpa, hsame => by
-    rw [List.nodup_cons] at hnd
-    simp only [List.filter_cons]
-    by_cases hba : b = a
-    · subst hba
-      have he : l.filter p = l.filter q := List.filter_congr fun x hx =>
-        hsame x (List.mem_cons_of_mem _ hx) fun e => hnd.1 (e ▸ hx)
-      rw [he, hpa]
-      cases q b <;>
-        simp only [Bool.not_true, Bool.not_false, Bool.false_eq_true, ↓reduceIte,
-          List.length_cons] <;> omega
-    · have ha' : a ∈ l := (List.mem_cons.mp ha).resolve_left fun e => hba e.symm
-      have ih := count_flip p q l hnd.2 ha' hpa fun x hx => hsame x (List.mem_cons_of_mem _ hx)
-      rw [hsame b List.mem_cons_self hba]
-      cases q b <;>
-        simp only [Bool.false_eq_true, ↓reduceIte, List.length_cons] <;> omega
-
-/-- A test that no two members pass together keeps at most one. -/
-theorem count_le_one {α : Type} (p : α → Bool) : ∀ l : List α,
-    l.Pairwise (fun a b => ¬ (p a = true ∧ p b = true)) → (l.filter p).length ≤ 1
-  | [], _ => by simp
-  | b :: l, h => by
-    rw [List.pairwise_cons] at h
-    simp only [List.filter_cons]
-    by_cases hb : p b = true
-    · have he : l.filter p = [] :=
-        List.filter_eq_nil_iff.mpr fun x hx hpx => h.1 x hx ⟨hb, hpx⟩
-      simp [hb, he]
-    · simp only [hb, Bool.false_eq_true, ↓reduceIte]
-      exact count_le_one p l h.2
+/-! ## Distinct contours, and the boundary of the region -/
 
 /-- No simple loop is compatible with itself: a point strictly within a side, away from the
 corners, is on its boundary twice over. -/
@@ -654,7 +603,7 @@ theorem outline_contact (F : Outline) {ps : List Point} (hps : ps ∈ F.loops) :
     ∀ qs ∈ F.loops, qs ≠ ps → ∀ P, LoopBoundary ps P → LoopBoundary qs P →
       P ∈ ps ∨ P ∈ qs := by
   intro qs hqs hqp P hp hq
-  rcases LoopFacts.pairwise_mem F.compatible hps hqs with e | hc | hc
+  rcases pairwise_mem F.compatible hps hqs with e | hc | hc
   · exact absurd e.symm hqp
   · exact hc.1 P hp hq
   · exact (hc.1 P hq hp).symm
@@ -778,37 +727,6 @@ theorem crossPts_length (ps : List Point) (X Q : Point) :
     rw [crossPt_isSome]
     simp)
 
-/-- A list of values of a partial map has no repetition, when no two members take one value. -/
-theorem nodup_filterMap_of {α β : Type} (f : α → Option β) : ∀ l : List α,
-    l.Pairwise (fun a b => ∀ x, f a = some x → f b ≠ some x) → (l.filterMap f).Nodup
-  | [], _ => List.nodup_nil
-  | a :: l, h => by
-    rw [List.pairwise_cons] at h
-    cases hfa : f a with
-    | none =>
-      simp only [List.filterMap_cons, hfa]
-      exact nodup_filterMap_of f l h.2
-    | some x =>
-      simp only [List.filterMap_cons, hfa]
-      refine List.nodup_cons.mpr ⟨fun hx => ?_, nodup_filterMap_of f l h.2⟩
-      obtain ⟨b, hb, hfb⟩ := List.mem_filterMap.mp hx
-      exact h.1 b hb x hfa hfb
-
-/-- Lists joined end to end have no repetition, when none has and no two share a member. -/
-theorem nodup_flatMap_of {α β : Type} (f : α → List β) : ∀ l : List α,
-    (∀ a ∈ l, (f a).Nodup) → l.Pairwise (fun a b => ∀ x, x ∈ f a → x ∉ f b) →
-      (l.flatMap f).Nodup
-  | [], _, _ => List.nodup_nil
-  | a :: l, h₁, h₂ => by
-    rw [List.pairwise_cons] at h₂
-    rw [List.flatMap_cons, List.nodup_append]
-    refine ⟨h₁ a List.mem_cons_self,
-      nodup_flatMap_of f l (fun b hb => h₁ b (List.mem_cons_of_mem _ hb)) h₂.2, ?_⟩
-    intro x hx y hy hxy
-    subst hxy
-    obtain ⟨b, hb, hxb⟩ := List.mem_flatMap.mp hy
-    exact h₂.1 b hb x hx hxb
-
 /-- **One good ray for a whole figure.** Along a straight line through no corner of any
 contour, the crossing points of all the contours, listed contour by contour, are without
 repetition, and are exactly the points of the ray on the boundary; their number has the parity
@@ -834,7 +752,7 @@ theorem family_count (K : Outline) {X Q : Point} {ℓ : Line} (hXQ : X ≠ Q) (h
         simp only [decide_eq_decide]
         exact inside_iff (K.simple ps hps) (hoffX ps hps) (hgood ps hps)
     rw [hd, ← List.countP_eq_length_filter,
-      Parity.countP_odd_sum K.loops (fun ps => crossingCount ps X Q % 2 = 1)
+      countP_odd_sum K.loops (fun ps => crossingCount ps X Q % 2 = 1)
         (fun ps => crossingCount ps X Q) (fun _ _ => Iff.rfl), List.length_flatMap]
     congr 2
     exact List.map_congr_left fun ps _ => (crossPts_length ps X Q).symm
@@ -966,8 +884,9 @@ theorem quadrant {X α β : Point} {N M : Line} (hXN : OnLine X N) (hXM : OnLine
   exact ⟨Y, hY, same_side_trans (same_side_symm (pasch2 hXYD hXN hYN)) hDα,
     same_side_trans (same_side_symm (pasch2 hXYD hXM hYM)) hDβ⟩
 
-/-- Four quarters, the first test fixed by the row and changing between rows, the second fixed
-by the column and changing between columns: every combination of the two tests occurs. -/
+/-- In four quarters, the first test is constant across each row and changes between rows;
+the second is constant down each column and changes between columns. The three combinations
+needed here occur: both tests hold, only the first holds, and only the second holds. -/
 theorem four_quarters {p₁₁ p₁₂ p₂₁ p₂₂ q₁₁ q₁₂ q₂₁ q₂₂ : Prop}
     (hp₁ : p₁₁ ↔ p₁₂) (hp₂ : p₂₁ ↔ p₂₂) (hp : p₁₁ ↔ ¬ p₂₁)
     (hq₁ : q₁₁ ↔ q₂₁) (hq₂ : q₁₂ ↔ q₂₂) (hq : q₁₁ ↔ ¬ q₁₂) :

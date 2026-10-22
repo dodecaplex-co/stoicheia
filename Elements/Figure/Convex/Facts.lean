@@ -1,6 +1,7 @@
 import Elements.Foundations.Figures
 import Elements.Figure.Basics
 import Elements.Figure.Rectilineal
+import Elements.Figure.Lists
 
 /-!
 # Book Zero: sides, half-planes and diagonals of a convex outline
@@ -373,31 +374,11 @@ theorem closedSide_iff_half {X P A B : Point} {L : Line}
     · exact Or.inl ⟨L, hAL, hBL, h⟩
     · exact Or.inr (SameSideOf.of_line hAB hAL hBL h)
 
-/-- Some corner of a convex outline is neither end of a given side. -/
+/-- Some corner of a convex outline is neither end of a given side: it has three or more
+distinct corners (`exists_other`). -/
 theorem convex_third {cs : List Point} (h : ConvexOutline cs) (s : Point × Point) :
-    ∃ G ∈ cs, G ≠ s.1 ∧ G ≠ s.2 := by
-  match cs, h with
-  | a :: b :: c :: rest, h =>
-    have hn := h.2.1
-    simp only [List.nodup_cons, List.mem_cons, not_or] at hn
-    by_cases ha : a ≠ s.1 ∧ a ≠ s.2
-    · exact ⟨a, List.mem_cons_self, ha⟩
-    by_cases hb : b ≠ s.1 ∧ b ≠ s.2
-    · exact ⟨b, List.mem_cons_of_mem _ List.mem_cons_self, hb⟩
-    refine ⟨c, List.mem_cons_of_mem _ (List.mem_cons_of_mem _ List.mem_cons_self), ?_, ?_⟩
-    · intro hc
-      apply ha
-      refine ⟨fun e => hn.1.2.1 (e.trans hc.symm), fun e => ?_⟩
-      apply hb
-      refine ⟨fun e' => hn.2.1.1 (e'.trans hc.symm), fun e' => hn.1.1 (e.trans e'.symm)⟩
-    · intro hc
-      apply ha
-      refine ⟨fun e => ?_, fun e => hn.1.2.1 (e.trans hc.symm)⟩
-      apply hb
-      exact ⟨fun e' => hn.1.1 (e.trans e'.symm), fun e' => hn.2.1.1 (e'.trans hc.symm)⟩
-  | [], h => have := h.1; simp at this
-  | [_], h => have := h.1; simp at this
-  | [_, _], h => have := h.1; simp at this
+    ∃ G ∈ cs, G ≠ s.1 ∧ G ≠ s.2 :=
+  exists_other h.1 h.2.1 s.1 s.2
 
 /-- The ends of a side of a convex outline differ. -/
 theorem convex_side_ne {cs : List Point} (h : ConvexOutline cs) {s : Point × Point}

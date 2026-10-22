@@ -17,9 +17,12 @@ cut off one segment at a time.
 
 The last section is step A1 of brief 0013's route (section 8), for its content theorem: a
 sum does not depend on the order of its terms, a sum of sums may be taken all at once, terms
-that are nothing may be left out, and a table of magnitudes has one total, by rows or by
-columns (`sum_exchange`, which the content theorem uses). They use only the laws of
-magnitudes.
+that are nothing may be left out, terms that are all nothing sum to nothing, and a table of
+magnitudes has one total, by rows or by columns (`sum_exchange`, which the content theorem
+uses). With them is one fact of order that the enclosing triangle of brief 0013 uses: a
+magnitude less than a second, which is not greater than a third, is less than the third. They
+use only the laws of magnitudes. Facts about lists alone, and sums of natural numbers, are
+in `Lists.lean`.
 
 Nothing in Book Zero cites a proposition of the *Elements*.
 -/
@@ -75,7 +78,8 @@ end Elements
 
 For brief 0013's content theorem (step A1 of its route): a sum does not depend on the order
 of its terms, a sum of sums may be taken all at once, and a table of magnitudes has one
-total, by rows or by columns. They use only the laws of `Tacit/Magnitudes.lean`. -/
+total, by rows or by columns. They use only the laws of `Tacit/Magnitudes.lean`, as does the
+fact of order at the end, for brief 0013's enclosing triangle. -/
 
 namespace Elements.Figures
 
@@ -152,5 +156,24 @@ theorem sum_filter_ne_zero {α : Type} {k : Kind} (xs : List α) (f : α → Mag
       | true =>
           simp only [List.filter_cons, hp, List.map_cons, ↓reduceIte]
           exact congrArg (fun s => f x + s) (ih ht)
+
+/-- A sum whose terms are all nothing is nothing. -/
+theorem sum_eq_zero {α : Type} {k : Kind} (l : List α) (f : α → Magnitude k)
+    (h : ∀ a ∈ l, f a = 0) : Magnitude.sum (l.map f) = 0 := by
+  induction l with
+  | nil => rfl
+  | cons a l ih =>
+    change f a + Magnitude.sum (l.map f) = 0
+    rw [h a List.mem_cons_self, ih (fun b hb => h b (List.mem_cons_of_mem a hb)), add_zero]
+
+/-! ## Less, then not greater -/
+
+/-- Less, then not greater: less. -/
+theorem mag_lt_of_lt_of_le {k : Kind} {a b c : Magnitude k} (h₁ : a < b) (h₂ : b ≤ c) :
+    a < c := by
+  rcases Tacit.lt_trichotomy a c with h | rfl | h
+  · exact h
+  · exact absurd h₁ h₂
+  · exact absurd (Tacit.lt_trans h h₁) h₂
 
 end Elements.Figures

@@ -1,4 +1,5 @@
 import Elements.Figure.Divisions.ExtractEdges
+import Elements.Figure.Lists
 
 /-!
 # Book Zero: the outline of triangles that lie apart
@@ -271,7 +272,7 @@ theorem elem_tri_parity (V W : Point) (k : (Point × Point × Point) → Prop) :
       intro t _ ht
       rw [decide_eq_true_eq] at ht
       exact he ht.2.1
-    rw [this, ite_one_neg (fun h => he h.1.1)]
+    rw [this, ite_eq_right (fun h => he h.1.1)]
   have he : Elem R V W := Classical.not_not.mp hne
   have hpos := mult_pos R he
   have hle := mult_le_two R he.1
@@ -288,16 +289,16 @@ theorem elem_tri_parity (V W : Point) (k : (Point × Point × Point) → Prop) :
             InSide (V, W) t)) :=
           List.countP_pos_iff.mpr ⟨t0, ht0, decide_eq_true ⟨hk, he, hin0⟩⟩
         omega
-      rw [hcount, ite_one_pos (p := Bdry R V W ∧ Cls R V W = k) ⟨⟨he, h1⟩, hc.trans hk⟩]
+      rw [hcount, ite_eq_left (c := Bdry R V W ∧ Cls R V W = k) ⟨⟨he, h1⟩, hc.trans hk⟩]
     · have hcount : (R.pieces.countP fun t => decide (TCls R t = k ∧ Elem R V W ∧
           InSide (V, W) t)) = 0 := by
         rw [List.countP_eq_zero]
         intro t ht htk
         rw [decide_eq_true_eq] at htk
         exact hk (huniq t ht htk.2.2 ▸ htk.1)
-      rw [hcount, ite_one_neg (fun h => hk (hc.symm.trans h.2))]
+      rw [hcount, ite_eq_right (fun h => hk (hc.symm.trans h.2))]
   · have h2 : mult R (V, W) = 2 := by omega
-    rw [ite_one_neg (fun h => h1 h.1.2)]
+    rw [ite_eq_right (fun h => h1 h.1.2)]
     /- The two triangles along it are linked, so of one class. -/
     have hF : (R.pieces.filter fun t => decide (InSide (V, W) t)).length = 2 := by
       unfold mult at h2
@@ -399,7 +400,7 @@ unique. -/
 theorem eq_of_same {l : List (Point × Point)} (h : l.Pairwise fun d e => ¬ Same d e)
     {a b c : Point × Point} (ha : a ∈ l) (hb : b ∈ l) (hac : Same a c) (hbc : Same b c) :
     a = b := by
-  rcases LoopFacts.pairwise_mem h ha hb with e | h' | h'
+  rcases pairwise_mem h ha hb with e | h' | h'
   · exact e
   · exact absurd (same_trans hac (same_symm hbc)) h'
   · exact absurd (same_trans hbc (same_symm hac)) h'
@@ -429,7 +430,7 @@ theorem side_count {t : Point × Point × Point} (ht : t ∈ R.pieces) {s : Poin
     have hs1 : ¬ OnLine s.1 ℓ := hoff _ (side_ends_mem R ht hs).1
     obtain ⟨P, P', he, hw, hPY⟩ := side_elem R ht hs hYb hYv
     obtain ⟨e0, he0, hs0⟩ := elems_cover R he
-    rw [ite_one_pos (p := RayCrosses X Q s) ⟨Y, hYr, hYb⟩]
+    rw [ite_eq_left (c := RayCrosses X Q s) ⟨Y, hYr, hYb⟩]
     have hle := countP_le_one (x := e0) (nodup_of_same (elems_pairwise R))
       (p := fun e => decide (Within e s ∧ RayCrosses X Q e)) (by
         intro z hz hpz
@@ -444,7 +445,7 @@ theorem side_count {t : Point × Point × Point} (ht : t ∈ R.pieces) {s : Poin
       List.countP_pos_iff.mpr ⟨e0, he0, decide_eq_true ⟨(within_of_same hs0).mp hw,
         (crosses_of_same hs0).mp ⟨Y, hYr, hPY⟩⟩⟩
     omega
-  · rw [ite_one_neg hc]
+  · rw [ite_eq_right hc]
     symm
     rw [List.countP_eq_zero]
     intro e _ hpe
@@ -478,7 +479,7 @@ theorem side_count_one {t : Point × Point × Point} (ht : t ∈ R.pieces) {e : 
   have htri := R.triangle t ht
   by_cases hin : InSide e t
   · obtain ⟨s0, hs0, hw0⟩ := hin
-    rw [ite_one_pos (p := InSide e t) ⟨s0, hs0, hw0⟩]
+    rw [ite_eq_left (c := InSide e t) ⟨s0, hs0, hw0⟩]
     have hnd : (triSides t).Nodup := LoopFacts.sides_nodup (by
       simp only [List.nodup_cons, List.mem_cons, List.not_mem_nil, or_false, not_or]
       exact ⟨⟨htri.ne₁₂, htri.ne₁₃⟩, htri.ne₂₃, fun h => h, List.nodup_nil⟩)
@@ -487,7 +488,7 @@ theorem side_count_one {t : Point × Point × Point} (ht : t ∈ R.pieces) {e : 
     have hpos : 0 < (triSides t).countP (fun s => decide (Within e s)) :=
       List.countP_pos_iff.mpr ⟨s0, hs0, decide_eq_true hw0⟩
     omega
-  · rw [ite_one_neg hin, List.countP_eq_zero]
+  · rw [ite_eq_right hin, List.countP_eq_zero]
     intro s hs hw
     exact hin ⟨s, hs, of_decide_eq_true hw⟩
 
@@ -544,10 +545,10 @@ theorem tri_parity {X Q : Point} {ℓ : Line} (hXℓ : OnLine X ℓ) (hQℓ : On
   have hle : mult R e ≤ 2 := mult_le_two R hel.1
   generalize (if RayCrosses X Q e then 1 else 0) = c
   by_cases h1 : mult R e = 1
-  · rw [h1, ite_one_pos (p := Bdry R e.1 e.2) ⟨hel, h1⟩]
+  · rw [h1, ite_eq_left (c := Bdry R e.1 e.2) ⟨hel, h1⟩]
   · have h2 : mult R e = 2 := by omega
     have hb : ¬ Bdry R e.1 e.2 := fun h => h1 h.2
-    rw [h2, ite_one_neg hb]
+    rw [h2, ite_eq_right hb]
     omega
 
 /-- **The contours' crossings are the boundary lines'**, when the contours' sides are the
@@ -574,7 +575,7 @@ theorem loop_crossings {loops : List (List Point)}
   refine congrArg List.sum (List.map_congr_left fun e he => ?_)
   congr 1
   by_cases hb : Bdry R e.1 e.2
-  · rw [ite_one_pos hb]
+  · rw [ite_eq_left hb]
     obtain ⟨L, hL, s, hs, hse⟩ := hcov e.1 e.2 hb
     have hsf : s ∈ loops.flatMap sides := List.mem_flatMap.mpr ⟨L, hL, hs⟩
     have hle := countP_le_one (x := s) (nodup_of_same hpw)
@@ -583,7 +584,7 @@ theorem loop_crossings {loops : List (List Point)}
     have hpos : 0 < (loops.flatMap sides).countP (fun x => decide (Same x e)) :=
       List.countP_pos_iff.mpr ⟨s, hsf, decide_eq_true hse⟩
     omega
-  · rw [ite_one_neg hb, List.countP_eq_zero]
+  · rw [ite_eq_right hb, List.countP_eq_zero]
     intro x hx hxe
     exact hb (bdry_of_same R (of_decide_eq_true hxe) (hflat x hx))
 
@@ -669,10 +670,10 @@ theorem parity_at {loops : List (List Point)} (hsimple : ∀ L ∈ loops, Simple
       obtain ⟨E, hE⟩ := outgoing_side hV
       exact hoff V (hside L hLm _ hE).1.2.1
     exact loop_inside_iff (hsimple L hLm) hXL hg
-  have e1 := Parity.countP_odd_sum loops (fun L => LoopInside L X) (fun L => crossingCount L X Q) hL
+  have e1 := countP_odd_sum loops (fun L => LoopInside L X) (fun L => crossingCount L X Q) hL
   rw [loop_crossings R hside hpw hcov X Q] at e1
   rw [← tri_parity R hXℓ hQℓ hoff] at e1
-  have e2 := Parity.countP_odd_sum R.pieces (fun t => InsideTriangle X t.1 t.2.1 t.2.2)
+  have e2 := countP_odd_sum R.pieces (fun t => InsideTriangle X t.1 t.2.1 t.2.2)
     (fun t => crossingCount [t.1, t.2.1, t.2.2] X Q)
     (fun t ht => inside_iff_count R ht hX hXQ hXℓ hQℓ hoff)
   rw [e1, ← e2, covers_iff_inside R hX]

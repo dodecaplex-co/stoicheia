@@ -46,8 +46,8 @@ theorem convex_enclosure (ps : List Point)
     (h : ∃ A ∈ ps, ∃ B ∈ ps, ∃ C ∈ ps, Triangle A B C) :
     ∃ P : ConvexCell, ∀ V ∈ ps, P.Region V := by
   /- Begin with the triangle, a convex outline, and add the points one after another
-  (`Arrangement.enclose_list`, by `Arrangement.insert_point`): each time, a convex outline holding the region
-  before and the new point. Its corners need not be among the points. -/
+  (`Arrangement.enclose_list`, by `Arrangement.insert_point`): each time, a convex outline
+  holding the region before and the new point. Its corners need not be among the points. -/
   obtain ⟨A, -, B, -, C, -, hABC⟩ := h
   obtain ⟨ds, hds, -, hps⟩ := Arrangement.enclose_list ps (Extreme.triangle_outline hABC)
   exact ⟨⟨ds, hds⟩, hps⟩
@@ -260,13 +260,14 @@ theorem simple_diagonal_partition {A B : Point} {us vs : List Point}
       (∀ X : Point,
         (LoopRegion (A :: (us ++ [B])) X ∧ LoopRegion (B :: (vs ++ [A])) X) ↔
           OnFiniteLine X A B) := by
-  /- Read the loop as two chains, A through `us` to B and B through `vs` to A; each piece is a
-  chain closed by the diagonal. The pieces are simple: the diagonal meets a side only at A or B,
-  its other points being inside (`Diagonal.piece_simple`). Off the sides and the diagonal, a good
-  ray crosses the loop as often as both pieces together, less the diagonal twice, so the loop's
-  inside is the points inside exactly one piece (`Diagonal.inside_xor`). That parity cancellation
-  does not keep the pieces apart; a separate argument does: along each chain the other piece's
-  inside is constant, and rays from either side of the diagonal show it is outside
+  /- Read the loop as two chains, from A through the corners before B to B, and from B through
+  the corners after it back to A; each piece is a chain closed by the diagonal. The pieces are
+  simple: the diagonal meets a side only at A or B, its other points being inside
+  (`Diagonal.piece_simple`). Off the sides and the diagonal, a good ray crosses the loop as
+  often as both pieces together, less the diagonal twice, so the loop's inside is the points
+  inside exactly one piece (`Diagonal.inside_xor`). That parity cancellation does not keep the
+  pieces apart; a separate argument does: along each chain the other piece's inside is
+  constant, and rays from either side of the diagonal show it is outside
   (`Diagonal.chains_outside`); so no point is inside both pieces (`Diagonal.pieces_apart`). -/
   have hP := Diagonal.piece_simple h hu hd
   have hQ := Diagonal.piece_simple₂ h hv hd
@@ -357,8 +358,8 @@ theorem simple_diagonal_partition {A B : Point} {us vs : List Point}
 diagonal route, splitting the outline along interior diagonals, could prove it too. -/
 theorem simple_triangulation {ps : List Point} (h : SimpleLoop ps) :
     ∃ R : Apart, Divides (LoopRegion ps) R := by
-  /- The arrangement route (ledger D9), not the diagonal route: the one-contour outline of
-  `ps` (`singleOutline`, whose compatibility is vacuous) has the loop's region
+  /- The arrangement route (ledger D9), not the diagonal route: the loop as an outline of one
+  contour (`singleOutline`, whose compatibility is vacuous) has the loop's region
   (`single_region`). A convex cell holds it strictly inside (`outline_enclosure`); the side
   lines (`outline_side_lines`) cut the cell into cells with disjoint insides
   (`convex_arrangement`); those with a point inside the outline make up its region exactly
