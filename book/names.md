@@ -158,6 +158,7 @@ Key to the tables: ✅ proved. The Lean statement is *whole*, as Euclid states i
 | ✅ | [III.28](III/28.md) Equal straight lines cut off equal circumferences | `Elements.BookIII.Prop28` | [`Elements.BookIII.Prop28`](../Elements/BookIII/Prop28.lean) | whole | [what it rests on](III/28.md#what-it-rests-on) |
 | ✅ | [III.29](III/29.md) Equal circumferences are subtended by equal straight lines | `Elements.BookIII.Prop29` | [`Elements.BookIII.Prop29`](../Elements/BookIII/Prop29.lean) | whole | [what it rests on](III/29.md#what-it-rests-on) |
 | ✅ | [III.30](III/30.md) A given circumference, bisected | `Elements.BookIII.Prop30` | [`Elements.BookIII.Prop30`](../Elements/BookIII/Prop30.lean) | whole | [what it rests on](III/30.md#what-it-rests-on) |
+| ✅ | &emsp;[III.30 halves](III/30.md#halves) | `Elements.BookIII.Prop30.halves` | [`Elements.BookIII.Prop30`](../Elements/BookIII/Prop30.lean) |  | [what it rests on](III/30.md#what-it-rests-on) |
 | ✅ | [III.31](III/31.md) The angle in the semicircle is right | `Elements.BookIII.Prop31` | [`Elements.BookIII.Prop31`](../Elements/BookIII/Prop31.lean) | whole | [what it rests on](III/31.md#what-it-rests-on) |
 | ✅ | &emsp;[III.31 greater](III/31.md#greater) | `Elements.BookIII.Prop31.greater` | [`Elements.BookIII.Prop31`](../Elements/BookIII/Prop31.lean) |  | [what it rests on](III/31.md#what-it-rests-on) |
 | ✅ | &emsp;[III.31 less](III/31.md#less) | `Elements.BookIII.Prop31.less` | [`Elements.BookIII.Prop31`](../Elements/BookIII/Prop31.lean) |  | [what it rests on](III/31.md#what-it-rests-on) |

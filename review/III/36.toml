@@ -1,17 +1,14 @@
 [statement]
 scope = "full"
-note = "The rectangle AD, DC is equal to the square on the tangent DB, whether or not DCA passes through the centre; the circle comes with a centre."
-fingerprint = "sha256:cbb9532a09c29817"
+note = "The rectangle AD, DC is equal to the square on the tangent DB, whether or not DCA passes through the centre."
+fingerprint = "sha256:7af5806c7b62458d"
 
 [route]
 kind = "euclid"
-
-[representation]
-tags = ["centre-given"]
-note = "The circle comes with a centre (`∃ F, Centre F ABC`), and the proof finds it by III.1 where Euclid takes it, in each of his two cases."
+note = "In each case the proof takes the centre from the rule where Euclid takes it without a bracket for III.1; the perpendiculars and the argument with squares remain his."
 
 [review]
 stage = "exceptions"
-commit = "6fbd90c0"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:23f23abce84167cb"
+commit = "b9f6a766"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:032a5eeb545ce97c"

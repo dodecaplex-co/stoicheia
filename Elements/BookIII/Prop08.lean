@@ -92,13 +92,13 @@ theorem Prop8.within {D M K L C : Point} {α : Circle} (hM : Centre M α) (hK : 
 /-- A point of the circle on the straight line DA is A or G, for no three points of a
 circle lie on one straight line. -/
 theorem Prop8.on_diameter {A G N : Point} {α : Circle} {L : Line}
-    (hα : ∃ O : Point, Centre O α) (hA : OnCircle A α)
+    (hA : OnCircle A α)
     (hG : OnCircle G α) (hN : OnCircle N α) (hAG : A ≠ G) (hA_L : OnLine A L)
     (hG_L : OnLine G L) (hN_L : OnLine N L) : N = A ∨ N = G := by
   refine Classical.byContradiction fun h => ?_
   have hNA : N ≠ A := fun e => h (Or.inl e)
   have hNG : N ≠ G := fun e => h (Or.inr e)
-  exact Prop2.triangle hα hA hG hN hAG hNG.symm hNA.symm ⟨L, hA_L, hG_L, hN_L⟩
+  exact Prop2.triangle hA hG hN hAG hNG.symm hNA.symm ⟨L, hA_L, hG_L, hN_L⟩
 
 /-- If a point be taken outside a circle and from the point straight lines be drawn through to the
 circle, one of which is through the centre and the others are drawn at random, then, of the
@@ -108,7 +108,7 @@ but, of the straight lines falling on the convex circumference, that between the
 diameter is least, while of the rest the nearer to the least is always less than the more
 remote, and only two equal straight lines will fall on the circle from the point, one on each
 side of the least. -/
-theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC)
+theorem Prop8 {A D G : Point} {ABC : Circle}
     (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hG : OnCircle G ABC)
     (hDGA : Between D G A) (hGA : ∀ M : Point, Centre M ABC → Between G M A) :
     (∀ E : Point, OnCircle E ABC → E ≠ A → ‖D E‖ < ‖D A‖) ∧
@@ -135,7 +135,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
   -- For let the centre of the circle ABC be taken [III. 1], and let it be M; let ME, MF, MC,
   -- MK, ML, MH be joined.
   have hAG : A ≠ G := ne_of_between (between_symm hDGA)
-  obtain ⟨M, -, -, -, hM, -⟩ := Prop1 hABC hA hG hAG
+  obtain ⟨M, -, -, -, hM, -⟩ := Prop1 hA hG hAG
   have hGMA : Between G M A := hGA M hM
   have hDGM : Between D G M := between_cut hDGA hGMA
   have hDMA : Between D M A :=
@@ -159,7 +159,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
     intro E hE hEA
     /- On DA, E must be G: the part DG is less than the whole DA. -/
     by_cases hE_Ld : OnLine E Ld
-    · rcases Prop8.on_diameter hABC hA hG hE hAG hA_Ld hG_Ld hE_Ld with rfl | rfl
+    · rcases Prop8.on_diameter hA hG hE hAG hA_Ld hG_Ld hE_Ld with rfl | rfl
       · exact absurd rfl hEA
       · exact len_lt_of_between hDGA
     -- Then, since AM is equal to EM,
@@ -204,7 +204,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
     intro K hK hKG
     /- On DA, K must be A, and DG is a part of DA. -/
     by_cases hK_Ld : OnLine K Ld
-    · rcases Prop8.on_diameter hABC hA hG hK hAG hA_Ld hG_Ld hK_Ld with rfl | rfl
+    · rcases Prop8.on_diameter hA hG hK hAG hA_Ld hG_Ld hK_Ld with rfl | rfl
       · exact len_lt_of_between hDGA
       · exact absurd rfl hKG
     -- Next, since MK, KD are greater than MD, [I. 20]
@@ -312,7 +312,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
         rw [len_symm N D, len_symm P D, hDN] at h24
         exact absurd h24 (lt_irrefl _)
     by_cases hN_Ld : OnLine N Ld
-    · rcases Prop8.on_diameter hABC hA hG hN hAG hA_Ld hG_Ld hN_Ld with rfl | rfl
+    · rcases Prop8.on_diameter hA hG hN hAG hA_Ld hG_Ld hN_Ld with rfl | rfl
       · have hlt := greatest K hK (fun e => hK_Ld (e ▸ hA_Ld))
         rw [← hDN] at hlt
         exact absurd hlt (lt_irrefl _)
@@ -343,7 +343,7 @@ third point of the circle is as far from D, shows that no other point is B; the 
 follows from the equal angles: a point of the circle beyond K on the straight line DK has
 its partner on the ray DB beyond B, and a point of the circle between D and K has its
 partner between D and B. -/
-theorem Prop8.partner {A D G K B : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC)
+theorem Prop8.partner {A D G K B : Point} {ABC : Circle}
     (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hG : OnCircle G ABC)
     (hDGA : Between D G A) (hGA : ∀ M : Point, Centre M ABC → Between G M A)
     (hK : OnCircle K ABC) (hB : OnCircle B ABC) (hBK : OppositeSidesOf B K D A)
@@ -353,9 +353,9 @@ theorem Prop8.partner {A D G K B : Point} {ABC : Circle} (hABC : ∃ M : Point, 
       (∃ C : Point, OnCircle C ABC ∧ Between D K C)) ∧
     ((∃ H : Point, OnCircle H ABC ∧ Between D H B) ↔
       (∃ H : Point, OnCircle H ABC ∧ Between D H K)) := by
-  have hpartner := (Prop8 hABC hD hA hG hDGA hGA).2.2.2.2
+  have hpartner := (Prop8 hD hA hG hDGA hGA).2.2.2.2
   /- Take the centre M from the given circle. -/
-  obtain ⟨M, hM⟩ := hABC
+  obtain ⟨M, hM⟩ := exists_centre ABC
   have hDMA : Between D M A :=
     between_symm (between_of_between_left (between_symm hDGA)
       (between_symm (hGA M hM)))
@@ -466,7 +466,7 @@ circumference; the comparisons speak only of points with a point of the circle b
 or beyond them, and that a point of contact has neither, which follows from Definition III.2,
 is not stated here. Each point K of the circle off DA has one partner B on the other side
 with DB equal to DK, and no third point of the circle is as far from D. -/
-theorem Prop8.general {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC)
+theorem Prop8.general {A D G : Point} {ABC : Circle}
     (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hG : OnCircle G ABC)
     (hDGA : Between D G A) (hGA : ∀ M : Point, Centre M ABC → Between G M A) :
     (∀ E : Point, OnCircle E ABC → E ≠ A → ‖D E‖ < ‖D A‖) ∧
@@ -482,7 +482,7 @@ theorem Prop8.general {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Cent
     (∀ K : Point, OnCircle K ABC → ¬ Collinear D A K → ∃ B : Point, OnCircle B ABC ∧
       OppositeSidesOf B K D A ∧ ‖D B‖ = ‖D K‖ ∧
       ∀ N : Point, OnCircle N ABC → ‖D N‖ = ‖D K‖ → N = K ∨ N = B) := by
-  obtain ⟨hgreatest, hconcave, hleast, hconvex, hpartner⟩ := Prop8 hABC hD hA hG hDGA hGA
+  obtain ⟨hgreatest, hconcave, hleast, hconvex, hpartner⟩ := Prop8 hD hA hG hDGA hGA
   have hDA : D ≠ A := ne_of_between_ends hDGA
   obtain ⟨Ld, hD_Ld, hA_Ld⟩ := Postulate1 D A hDA
   /- Two points off DA that are not on one side are on opposite sides. -/
@@ -501,7 +501,7 @@ theorem Prop8.general {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Cent
     have hEF' := hopposite E F hE_DA hF_DA hEF
     obtain ⟨B, hB, hBF, hDB, -⟩ := hpartner F hF hF_DA
     have hEB : SameSideOf E B D A := OppositeSidesOf.sameSideOf hEF'.symm hBF.symm
-    obtain ⟨hang, -, hclass⟩ := Prop8.partner hABC hD hA hG hDGA hGA hF hB hBF hDB
+    obtain ⟨hang, -, hclass⟩ := Prop8.partner hD hA hG hDGA hGA hF hB hBF hDB
     have hlt' : ∠ A D E < ∠ A D B := by rw [hang]; exact hlt
     have hless := hconcave E B hE hB hHE (hclass.mpr hLF) hEB hlt'
     rwa [hDB] at hless
@@ -512,7 +512,7 @@ theorem Prop8.general {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Cent
     have hKL' := hopposite K L hK_DA hL_DA hKL
     obtain ⟨B, hB, hBL, hDB, -⟩ := hpartner L hL hL_DA
     have hKB : SameSideOf K B D A := OppositeSidesOf.sameSideOf hKL'.symm hBL.symm
-    obtain ⟨hang, hclass, -⟩ := Prop8.partner hABC hD hA hG hDGA hGA hL hB hBL hDB
+    obtain ⟨hang, hclass, -⟩ := Prop8.partner hD hA hG hDGA hGA hL hB hBL hDB
     have hlt' : ∠ A D K < ∠ A D B := by rw [hang]; exact hlt
     have hless := hconvex K B hK hB hKC (hclass.mpr hLF) hKB hlt'
     rwa [hDB] at hless
@@ -520,9 +520,9 @@ theorem Prop8.general {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Cent
 /-- The check: the statement of `Prop8` follows from `Prop8.general` (checked by Lean).
 Two points on one side of DA are off it. -/
 example : type_of% @Elements.BookIII.Prop8 := by
-  intro A D G ABC hABC hD hA hG hDGA hGA
+  intro A D G ABC hD hA hG hDGA hGA
   obtain ⟨hgreatest, hconcave, hleast, hconvex, hpartner⟩ :=
-    Prop8.general hABC hD hA hG hDGA hGA
+    Prop8.general hD hA hG hDGA hGA
   exact ⟨hgreatest,
     fun E F hE hF hHE hLF hEF hlt =>
       hconcave E F hE hF hHE hLF hEF.triangle hEF.symm.triangle hlt,
