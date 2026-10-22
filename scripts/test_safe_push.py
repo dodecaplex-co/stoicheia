@@ -6318,12 +6318,28 @@ for run in ("miss", "hit"):
     os.makedirs(os.path.join(ARGS["logs"], run))
 for name in ARGS["forget"]:
     sys.modules.pop(name, None)
+reader = sp.count_markers(ctx.repo, ctx.base)
+if ARGS["apart"]:
+    sys.modules.pop("dataclasses", None)
 runs, allow_count, error = {}, None, None
+apart = None
 HARNESS.append(sp)
 sp.CACHE, sp.SANDBOX = Path(ARGS["cache"]), "(version 1) (allow default)"
 try:
     for name in ARGS["late"]:
         __import__(name)
+    if ARGS["apart"]:
+        payload = ("open(" + repr(ARGS["sentinel"]) + ", 'w').write('executed')\\n"
+                   "open(" + repr(ARGS["cache_plant"]) + ", 'w').write('written')\\n")
+        planted = sp.run(["/bin/sh", "-c", 'printf %s "$1" > "$2"', "sh", payload,
+                          os.path.join(ARGS["here"], "dataclasses.py")], ctx.repo)
+        if planted.returncode != 0:
+            raise RuntimeError("the sandboxed child did not plant dataclasses.py: "
+                               + planted.stderr)
+        apart_rep = sp.Report()
+        apart_rep.add("4", sp.CHECKS[0][0] + sp.BASE_PASS, "note", "for the test")
+        apart = {"refused": sp.keep_apart(ctx.repo, ctx.base, ctx.sha, apart_rep, "4"),
+                 "steps": [[s.name, s.outcome] for s in apart_rep.steps]}
     allow_count = len(sp.load_allowlist(ctx.repo, ctx.base))
     for run in ("miss", "hit"):
         rep = sp.Report()
@@ -6337,7 +6353,11 @@ except BaseException as e:
 finally:
     sp.SANDBOX = None
 with open(ARGS["out"], "w") as f:
-    json.dump({"seen": SEEN, "runs": runs, "allow_count": allow_count, "error": error}, f)
+    json.dump({"seen": SEEN, "runs": runs, "allow_count": allow_count, "error": error,
+               "reader": reader is not None, "apart": apart,
+               "planted": os.path.exists(os.path.join(ARGS["here"], "dataclasses.py")),
+               "executed": os.path.exists(ARGS["sentinel"]),
+               "cache_written": os.path.exists(ARGS["cache_plant"])}, f)
 """
 
 
@@ -6453,6 +6473,21 @@ class MainChecksCache(Edge):
         """A commit from BASE that changes one check, and nothing the checks judge."""
         git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
         return self.commit(f"A comment in {path}", {path: self.text(path) + "\n# for the test\n"})
+
+    def counted_judged_change(self) -> str:
+        git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+        fields = self.text("Certificate/FIELDS.md")
+        moved, count = re.subn(
+            r"(<!-- count:vocabulary -->)([0-9]+)(<!-- /count -->)",
+            lambda m: f"{m[1]}{int(m[2]) + 1}{m[3]}", fields)
+        self.assertEqual(count, 1)
+        return self.commit("A count, a check and judged content", {
+            "Certificate/FIELDS.md": moved,
+            "scripts/check_links.py": self.text("scripts/check_links.py")
+                                      + "\n# for the test\n",
+            "Elements/Foundations/Tacit/Metric.lean":
+                self.text("Elements/Foundations/Tacit/Metric.lean")
+                + "\n-- A line for the test.\n"})
 
     def entries(self) -> list[Path]:
         return sorted(p for p in self.dir.iterdir() if p.suffix == ".json")
@@ -6631,6 +6666,25 @@ class MainChecksCache(Edge):
         self.assertIn(f"git {' '.join(safe_push.NO_REPLACE_REFS)} -c core.quotePath=false "
                       "worktree add", self.wrapped.read_text())
 
+    def test_a_valid_written_timestamp_is_reused(self):
+        sha = self.check_change()
+        with self.active():
+            miss = self.checks(sha, stub=self.stub)
+            (path,) = self.entries()
+            entry = json.loads(path.read_bytes())
+            entry["written"] = "2024-02-29 23:59 UTC"
+            entry["digest"] = safe_push.sha256_of(
+                {k: v for k, v in entry.items() if k != "digest"})
+            self.put(path, json.dumps(entry).encode())
+            hit = self.checks(sha, stub=self.stub)
+        self.assertIsNone(miss.refusal, miss.out)
+        self.assertIsNone(hit.refusal, hit.out)
+        self.assertEqual(hit.ran, self.own_names(self.CHECKS) + self.own_names(self.NEGATIVE))
+        self.assertTrue(self.cache_lines(hit.rep)[0].startswith("hit: "), hit.out)
+        reused = [s.detail for s in hit.rep.steps if s.name in self.base_names()]
+        self.assertTrue(reused)
+        self.assertTrue(all("written 2024-02-29 23:59 UTC" in detail for detail in reused))
+
     def test_keep_apart_refuses_on_a_hit_as_on_a_miss(self):
         # The fixture of ProtectedPaths.test_stage_4_keeps_a_check_change_apart: origin/main's
         # check_style.py refuses a page of the edition the commit changes, with the check
@@ -6724,6 +6778,27 @@ class MainChecksCache(Edge):
                 changed(good, lambda e: e["steps"][1].update(log="half a pair: \ud800\n")),
                 refused + "its step check two (origin/main's checks) is not of this format "
                 "(its detail or its log is not text this run can write as UTF-8 and print)"),
+            "arbitrary text for the written time": (
+                changed(good, lambda e: e.update(written="not a timestamp")),
+                refused + "its written time is not of this format"),
+            "an embedded newline in the written time": (
+                changed(good, lambda e: e.update(written="2026-10-\n21 12:34 UTC")),
+                refused + "its written time is not of this format"),
+            "a trailing newline in the written time": (
+                changed(good, lambda e: e.update(written="2026-10-21 12:34 UTC\n")),
+                refused + "its written time is not of this format"),
+            "an invalid month in the written time": (
+                changed(good, lambda e: e.update(written="2026-13-21 12:34 UTC")),
+                refused + "its written time is not of this format"),
+            "an invalid day in the written time": (
+                changed(good, lambda e: e.update(written="2026-02-30 12:34 UTC")),
+                refused + "its written time is not of this format"),
+            "an invalid hour in the written time": (
+                changed(good, lambda e: e.update(written="2026-10-21 24:34 UTC")),
+                refused + "its written time is not of this format"),
+            "an invalid minute in the written time": (
+                changed(good, lambda e: e.update(written="2026-10-21 12:60 UTC")),
+                refused + "its written time is not of this format"),
             "not JSON": (good[:-1], refused + "it is not an entry of this format"),
         }
         large = f"it is larger than {safe_push.ENTRY_BYTES} bytes (16 MiB)"
@@ -7080,14 +7155,19 @@ class MainChecksCache(Edge):
             events.append("classification")
             return self.R3
 
-        def activate(rep, risk):
+        def preload(*args, **kwargs):
             self.assertEqual(events, ["classification"])
+            self.assertIsNone(safe_push.SANDBOX)
+            events.append("count reader")
+
+        def activate(rep, risk):
+            self.assertEqual(events, ["classification", "count reader"])
             self.assertIsNone(safe_push.SANDBOX)
             events.append("sandbox")
             safe_push.CACHE, safe_push.SANDBOX = self.dir, "(version 1) (allow default)"
 
         def check(*args, **kwargs):
-            self.assertEqual(events, ["classification", "sandbox"])
+            self.assertEqual(events, ["classification", "count reader", "sandbox"])
             self.assertIsNotNone(safe_push.SANDBOX)
             events.append("commit checks")
             r = safe_push.run(["/usr/bin/true"], WORK)
@@ -7101,6 +7181,7 @@ class MainChecksCache(Edge):
                 mock.patch.object(safe_push, "SANDBOX_EXEC", str(self.fake)), \
                 mock.patch.object(safe_push, "preconditions", return_value=ctx), \
                 mock.patch.object(safe_push, "risk_class", side_effect=classify), \
+                mock.patch.object(safe_push, "count_markers", side_effect=preload), \
                 mock.patch.object(safe_push, "open_cache", side_effect=activate), \
                 mock.patch.object(safe_push, "logs_dir", return_value=self.root / "logs"), \
                 mock.patch.object(safe_push, "check_commit", side_effect=check), \
@@ -7111,7 +7192,8 @@ class MainChecksCache(Edge):
                 watch_processes(str(self.fake)) as refused:
             code = safe_push.preflight_main(WORK, args)
         self.assertEqual(code, 0)
-        self.assertEqual(events, ["classification", "sandbox", "commit checks"])
+        self.assertEqual(events,
+                         ["classification", "count reader", "sandbox", "commit checks"])
         self.assertEqual(refused, [])
         self.assertIn("/usr/bin/true", self.wrapped.read_text())
 
@@ -7172,21 +7254,31 @@ class MainChecksCache(Edge):
             (tools / name).chmod(0o755)
         return tools, said
 
-    def step4_watched(self, sha: str, tools: Path, forget=(), late=()) -> dict:
+    def step4_watched(self, sha: str, tools: Path, forget=(), late=(), apart=False) -> dict:
         """STEP4_WATCH on `sha`, in a fresh interpreter, the modules `forget` names
         forgotten before the sandbox is set, and those `late` names imported once it is:
         what its watch saw, its runs' steps and any error, and what it printed."""
-        script = self.root / "step4_watch.py"
-        out = self.root / f"step4-{'-'.join((*forget, *late)) or 'plain'}.json"
+        name = "-".join((*forget, *late)) or "plain"
+        if apart:
+            name += "-apart"
+        script = self.root / f"step4-watch-{name}.py"
+        out = self.root / f"step4-{name}.json"
+        harness = self.root / f"harness-{name}"
+        harness.mkdir()
+        shutil.copy(SAFE_PUSH, harness / "safe_push.py")
+        shutil.copy(HERE / "heath.py", harness / "heath.py")
+        sentinel = self.root / f"executed-{name}"
+        cache_plant = self.dir / f"written-{name}"
         script.write_text(STEP4_WATCH)
-        given = {"events": sorted(PROCESS_EVENTS), "here": str(HERE), "work": str(WORK),
+        given = {"events": sorted(PROCESS_EVENTS), "here": str(harness), "work": str(WORK),
                  "sha": sha, "base": BASE, "origin": str(ORIGIN), "inputs": self.inputs(sha),
                  "checks": self.CHECKS, "negative": self.NEGATIVE,
                  "sandbox_exec": str(self.fake), "cache": str(self.dir),
                  "path": str(tools) + os.pathsep + os.environ.get("PATH", ""),
                  "logs": tempfile.mkdtemp(prefix="logs-", dir=self.root),
                  "tmp": str(TMP), "forget": list(forget), "late": list(late),
-                 "out": str(out)}
+                 "apart": apart, "sentinel": str(sentinel),
+                 "cache_plant": str(cache_plant), "out": str(out)}
         r = subprocess.run([sys.executable, "-I", str(script), json.dumps(given)], cwd=WORK,
                            env=clean_env(), capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
@@ -7225,6 +7317,20 @@ class MainChecksCache(Edge):
                 self.assertEqual(seen["seen"], [f"imported: {name}"], seen["printed"])
                 self.assertEqual(seen["error"], "PermissionError: a module imported once "
                                  f"the sandbox was set: {name}")
+
+    def test_the_count_reader_is_retained_before_sandboxed_code_can_plant_a_module(self):
+        sha = self.counted_judged_change()
+        tools, _ = self.stand_in_tools()
+        seen = self.step4_watched(sha, tools, forget=("dataclasses",), apart=True)
+        self.assertEqual((seen["seen"], seen["error"]), ([], None), seen["printed"])
+        self.assertTrue(seen["reader"], seen["printed"])
+        self.assertEqual(seen["apart"], {
+            "refused": True,
+            "steps": [["check one (origin/main's checks)", "note"],
+                      ["check change kept apart", "FAIL"]]})
+        self.assertTrue(seen["planted"])
+        self.assertFalse(seen["executed"])
+        self.assertFalse(seen["cache_written"])
 
 
 class RiskPreflight(Edge):

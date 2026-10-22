@@ -390,6 +390,7 @@ MODEL_LAW_CODE = ("tests/model/search.py", "tests/model/hyperbolic.py")
 # pinned.
 COUNTED_PROSE = ("Certificate/", "review/SCHEMA.md", "tests/")
 COUNT_READER = "scripts/generated_counts.py"
+COUNT_READERS: dict[tuple[str, str], object] = {}
 SECURITY_LABEL = "security-review"
 RELEASE_LABEL = "release"
 BLOCKS_RELEASE = "blocks-release"
@@ -2658,16 +2659,22 @@ def count_markers(repo, base):
     is the reader render.py and check_fidelity.py use, and the commit's own pass reads
     with the same one, since a commit that changes it changes scripts/, which is never
     pinned."""
+    key = os.path.realpath(repo), base
+    if key in COUNT_READERS:
+        return COUNT_READERS[key]
     source = show_bytes(repo, base, COUNT_READER)
     if source is None:
+        COUNT_READERS[key] = None
         return None
     module = types.ModuleType("generated_counts")
     try:        # compiled as an import compiles it, without this file's __future__ import
         exec(compile(source, f"origin/main:{COUNT_READER}", "exec", dont_inherit=True),
              vars(module))
     except Exception:       # a copy that does not load reads no marker: nothing is pinned
+        COUNT_READERS[key] = None
         return None
-    return getattr(module, "markers", None)
+    COUNT_READERS[key] = getattr(module, "markers", None)
+    return COUNT_READERS[key]
 
 
 def counts_moved(repo, base, sha, path: str) -> bool:
@@ -3246,6 +3253,8 @@ def base_pass_names() -> list[str]:
 
 
 STEP_SECONDS = 7 * 24 * 3600    # the longest a recorded step may have taken: a week
+WRITTEN_TIME = re.compile(
+    r"([0-9]{4})-([0-9]{2})-([0-9]{2}) ([0-9]{2}):([0-9]{2}) UTC")
 
 
 def step_time(seconds) -> bool:
@@ -3255,6 +3264,19 @@ def step_time(seconds) -> bool:
     return seconds is None or (isinstance(seconds, (int, float))
                                and not isinstance(seconds, bool)
                                and 0 <= seconds <= STEP_SECONDS)
+
+
+def written_time(value) -> bool:
+    """Is `value` the cache's UTC minute format, with a valid date and time?"""
+    match = WRITTEN_TIME.fullmatch(value) if isinstance(value, str) else None
+    if match is None:
+        return False
+    try:
+        datetime.datetime(*(int(part) for part in match.groups()),
+                          tzinfo=datetime.timezone.utc)
+    except (OverflowError, ValueError):
+        return False
+    return True
 
 
 def writable_text(value) -> bool:
@@ -3289,8 +3311,10 @@ def entry_problem(entry, key: str, fields: dict) -> str | None:
         return "its digest does not match its contents"
     if HARNESS_BLOB is None or entry["key"].get("harness_blob") != HARNESS_BLOB:
         return "it was written by another harness"
+    if not written_time(entry["written"]):
+        return "its written time is not of this format"
     steps = entry["steps"]
-    if not writable_text(entry["written"]) or not isinstance(steps, list) or not all(
+    if not isinstance(steps, list) or not all(
             isinstance(s, dict) and set(s) == STEP_FIELDS for s in steps):
         return "its steps are not of this format"
     if [s["name"] for s in steps] != base_pass_names():
@@ -5381,6 +5405,8 @@ def preflight_main(repo: Path, args) -> int:
         # After the class, which serves the cache (R3 to R5 alone), and after risk_class
         # runs origin/main's risk.py, outside run(); before any of the commit's code runs.
         if args.main_checks_cache:
+            if risk.cls not in LOW_CLASSES:
+                count_markers(ctx.repo, ctx.base)
             open_cache(rep, risk)
         logs = logs_dir(sha)
         pre = check_commit(ctx, rep, logs, args.test_mode, risk)
