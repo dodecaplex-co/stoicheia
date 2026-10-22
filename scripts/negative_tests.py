@@ -108,7 +108,9 @@ records current; CI runs it on every push.
     space before the guillemet, and the other spellings of `set_option debug.…` and
     `doc.…` with none, guillemets around one part or each, in a command and in a tactic
     block, and after a space, a tab or a line break: each refused by its file, line and
-    spelling, and the unplanted copy passes (#197).
+    spelling, and the unplanted copy passes (#197). With them, `set_option«debug».…` and
+    `axiom` closed up to the postfix `⁻¹`, which Lean reads as `⁻¹` and the word after it
+    (`1⁻¹set_option`, `1⁻¹axiom`), each refused by its line (#234).
 23. Likewise, `#guard_msgs` with `drop`, in each of its forms: `(drop all)`, closed up
     and spaced, `(drop error)`, `(drop warning)`, `(drop info)`, `drop` after another
     filter or an option, twice, and with a remark or a line break inside: each refused by
@@ -118,7 +120,9 @@ records current; CI runs it on every push.
     Lean reads as the command and that word (`#evalIO.println`, `#guard_panicin`), and
     `#guard_panic` after a remark or a line break: each refused by its file, line and
     command, while the words in a comment or a string are not (#197). `#guard_panic`
-    spaced is among item 8's commands.
+    spaced is among item 8's commands. With them, `set_option«debug».…` and `axiom` closed
+    up to `#time` and `#with_exporting`, which Lean reads as that token and the command
+    after it (`#timeaxiom`, `#with_exportingaxiom`): each refused by its line (#234).
 25. Likewise, `#guard_msgs` with `substring`: `(substring := true)`, closed up and
     spaced, after a filter or an option, with a remark or a line break inside, under a
     docstring that is only part of the error, and `(substring := false)`: each refused by
@@ -1114,14 +1118,17 @@ def lake_links() -> None:
 # own) and a line break, which the scan caught before; and the command closed up to a
 # number or a field before it, decimal, hexadecimal, scientific or with `_`, which Lean ends
 # before the command, including numbers after notation ending in `.` and with whitespace or
-# a block comment breaking projection adjacency. Each is planted as (the spelling
+# a block comment breaking projection adjacency; and the command, and `axiom`, closed up to
+# the postfix `⁻¹`, whose `¹` Python's `\w` takes but no Lean name holds, so that Lean reads
+# `1⁻¹set_option` as `1`, `⁻¹` and `set_option` (#234). Each is planted as (the spelling
 # check_fidelity.py names, a line of Lean). SET_OPTION_KEPT holds what the rule does not
 # refuse: the command inside a nested comment, `set_optiondebug.skipKernelTC` and
 # `set_optiondoc.verso`, with neither a space nor a guillemet, which Lean reads as one name,
 # a name with a digit before `set_option`, and fields and numbers in plain use. The explicit
 # read_lean cases below preserve ordinary projections after an identifier, `)`, `·`, `⟩`
 # and `›`, numbers after a declared notation, and a projection broken by a space or a
-# comment, whose digits are then a number.
+# comment, whose digits are then a number; and they blank the `¹` of `⁻¹` and the `ᵥ` and
+# `ᗮ` of Mathlib's `-ᵥ` and `ᗮ`, which no name holds, while a name's subscripts stay.
 SET_OPTION_SPELLINGS = (
     ("set_option«debug».",
      "set_option«debug».skipKernelTC true in theorem planted_closed : True := trivial"),
@@ -1197,6 +1204,11 @@ SET_OPTION_SPELLINGS = (
      "def planted_adjacent_hex_lhs : Nat := 2\n"
      "def planted_adjacent_hex : Nat := planted_adjacent_hex_lhs.0x1set_option«debug».byAsSorry "
      "true in theorem planted_after_adjacent_hex : (0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", "instance plantedInvNat : Inv Nat := ⟨id⟩\n"
+     "def planted_inverse : Nat := 1⁻¹set_option«debug».byAsSorry true in "
+     "theorem planted_after_inverse : (0 : Nat) = 1 := by decide"),
+    ("axiom", "instance plantedInvNatAxiom : Inv Nat := ⟨id⟩\n"
+     "def planted_inverse_declaration : Nat := 1⁻¹axiom planted_after_inverse_axiom : False"),
 )
 SET_OPTION_KEPT = (
     "/- /- -/ set_option«debug».skipKernelTC true in "
@@ -1243,9 +1255,11 @@ GUARD_KEPT = (
 )
 # `#eval`, `#exit` and `#guard_panic` closed up to the word after them, which Lean 4.35
 # reads as the command and that word, and `#guard_panic` after a remark or a line break
-# (#197); each is (the command check_fidelity.py names, a line of Lean). `#exit` comes
-# last, as it would in a file. CLOSED_UP_KEPT holds the same words in a comment and a
-# string, which are not refused.
+# (#197); each is (the command check_fidelity.py names, a line of Lean). With them,
+# `set_option` and `axiom` closed up to `#time` and `#with_exporting`, which wrap the
+# command after them: Lean reads the longest token it knows, so `#timeaxiom` is `#time`
+# and `axiom` (#234). `#exit` comes last, as it would in a file. CLOSED_UP_KEPT holds the
+# same words in a comment and a string, which are not refused.
 CLOSED_UP_COMMANDS = (
     ("#eval", '#evalIO.println "planted"'),
     ("#guard_panic",
@@ -1254,11 +1268,17 @@ CLOSED_UP_COMMANDS = (
      '(0 : Nat) = 1 := by fail "PANIC"'),
     ("#guard_panic", "#guard_panic\n  in theorem planted_panic_break : (0 : Nat) = 1 := by\n"
      '  trace "PANIC"\n  exact rfl'),
+    ("set_option«debug».", "#timeset_option«debug».byAsSorry true in "
+     "theorem planted_time_closed : (0 : Nat) = 1 := by decide"),
+    ("axiom", "#timeaxiom planted_time_axiom : False"),
+    ("axiom", "#with_exportingaxiom planted_exporting_axiom : False"),
     ("#exit", "#exitplanted"),
 )
 CLOSED_UP_KEPT = (
     "-- #guard_panicin, #evalx and #exitx, in a comment",
     'def plantedKeptClosedUp := "#guard_panicin #evalx #exitx"',
+    "-- #timeaxiom and #with_exportingaxiom, in a comment",
+    'def plantedKeptTokens := "#timeaxiom #with_exportingaxiom"',
 )
 # `#guard_msgs` with `substring` (#197), in Lean 4.35's forms: closed up and spaced, after a
 # filter or an option, with a remark or a line break inside, under a docstring that is only
@@ -1391,6 +1411,10 @@ def set_option_spellings() -> None:
         ("2 +.0x1 + 2 +.1e5 + 2 +.1_0", "2 +.0x1 + 2 +.1e5 + 2 +.1_0"),
         ("2 . 0x1 + 2 . 1e5 + 2 . 1_0", "2 . 0x1 + 2 . 1e5 + 2 . 1_0"),
         ("(1, 2).1", "(1, 2).1"),
+        ("1⁻¹set_option", "1⁻ set_option"),
+        ("x⁻¹.1.succ", "x⁻ .1.succ"),
+        ("P -ᵥ A + Kᗮ.1", "P -  A + K .1"),
+        ("hᵢ₂ + x₁'", "hᵢ₂ + x₁'"),
     ):
         read, unsure = check_fidelity.read_lean(source)
         if read != expected or unsure:
@@ -1405,11 +1429,25 @@ def guard_msgs_drop() -> None:
 
 
 def closed_up_commands() -> None:
-    """`#guard_panicin`, `#evalIO.println` and the other CLOSED_UP_COMMANDS in a scratch copy
-    of I.1's file: each refused by its file, line and command; nothing of CLOSED_UP_KEPT
-    is."""
-    scratch_plants("#eval, #exit and #guard_panic closed up to the word after them",
+    """`#guard_panicin`, `#evalIO.println`, `#timeaxiom` and the other CLOSED_UP_COMMANDS in
+    a scratch copy of I.1's file: each refused by its file, line and command; nothing of
+    CLOSED_UP_KEPT is. Then `read_lean` reads `#time` and `#with_exporting` as Lean's
+    tokens, blanked only when a word is closed up to them, and leaves `#eval` and its kin
+    whole."""
+    scratch_plants("#eval, #exit and #guard_panic closed up to the word after them, and "
+                   "set_option and axiom closed up to #time and #with_exporting",
                    CLOSED_UP_COMMANDS, CLOSED_UP_KEPT)
+    for source, expected in (
+        ("#timeaxiom", "     axiom"),
+        ("#with_exportingaxiom", "               axiom"),
+        ("#time axiom", "#time axiom"),
+        ("#time\naxiom", "#time\naxiom"),
+        ("#evalx #exitx #guard_panicin", "#evalx #exitx #guard_panicin"),
+    ):
+        read, unsure = check_fidelity.read_lean(source)
+        if read != expected or unsure:
+            failures.append(f"read_lean({source!r}) returned {(read, unsure)!r}, not "
+                            f"{(expected, [])!r}")
 
 
 def guard_msgs_substring() -> None:

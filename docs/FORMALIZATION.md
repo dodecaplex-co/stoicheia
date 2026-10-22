@@ -516,7 +516,8 @@ docstring that pins an error, each in each of its forms, in a scratch copy of I.
 `set_option` closed up to decimal, hexadecimal, scientific and underscore-separated
 numbers, after a projection and after a declared notation ending in `.`, with whitespace
 or a comment beside it, and `axiom` closed up to such a number, with controls that
-preserve ordinary projections;
+preserve ordinary projections; `set_option` and `axiom` closed up to the postfix `⁻¹`, and
+to `#time` and `#with_exporting`;
 the same pin at a new file beside each file of its allow-list, at each file's name in the
 other's folder, in `Audit/` and in `Staging/`, and a pin whose `error:` ends its line;
 a proposition imported by Book Zero; a `sorry` in a
@@ -565,7 +566,15 @@ line feed, as it does for Lean, and reads comments, literals and number endings 
 attribute's brackets, and a word closed up to a number remains visible. An adjacent
 numeric projection stays a projection; where a declared `.` notation makes a longer
 number the competing reading, the longer boundary stays visible too. Whitespace and
-comments end projection adjacency, as they do in Lean. A lone carriage return (a `\r` not
+comments end projection adjacency, as they do in Lean. A name ends where Lean 4.35 ends
+it, made only of the characters its `isIdFirst` and `isIdRest` take, so a letter or digit
+that no name holds, as the `¹` of the postfix `⁻¹`, does not join the word after it
+(`1⁻¹set_option` is `1`, `⁻¹` and `set_option`); and `#time` and `#with_exporting`, which
+wrap the command after them, are read as the tokens Lean takes them for, so `#timeaxiom`
+is `#time` and `axiom`. No other token whose last characters could be a name is read so,
+whether Lean's own (`#check`) or one that the file or a library it imports declares, as
+`+x` from `infixl:65 " +x " => Nat.add`: the scan takes `2 +x1set_option` for `+` and one
+name, where Lean reads `+x`, `1` and `set_option`. A lone carriage return (a `\r` not
 followed by `\n`) is refused in any scanned file: Lean refuses one between tokens but
 accepts it inside a comment or a literal, where a `--` comment does not end at it, so a
 reader with universal newlines would end the comment there and let a string open behind

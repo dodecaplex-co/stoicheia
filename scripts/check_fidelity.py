@@ -25,15 +25,17 @@
    comments and its string and character literals as Lean does (`read_lean`), so a
    literal's text never opens a comment or ends an attribute's brackets, and is not read
    as code, while the code in an interpolated string's `{…}` holes is; a string whose
-   braces Lean could read either way is refused. The scan reads each file's bytes decoded
-   as UTF-8, with no newline translation (`lean_text`), so a `--` comment ends only at a
-   line feed, as it does for Lean, not at a lone carriage return that Python's universal
-   newlines would make one. Such a lone carriage return (a `\\r` not followed by `\\n`),
-   which Lean refuses between tokens but accepts inside a comment or a literal, is refused
-   in any scanned file, since a reader with universal newlines would end a comment at it
-   and could miss the code after it. Each finding of 2, 3 and 4, and of a lone carriage
-   return, names its file and line; symbolic links are refused by their paths and never
-   followed.
+   braces Lean could read either way is refused. It ends a name where Lean does, and reads
+   `#time` and `#with_exporting` as the tokens Lean takes them for, so a word closed up to
+   `⁻¹`, or to either of them, is seen to begin (#234). The scan reads each file's bytes
+   decoded as UTF-8, with no newline translation (`lean_text`), so a `--` comment ends
+   only at a line feed, as it does for Lean, not at a lone carriage return that Python's
+   universal newlines would make one. Such a lone carriage return (a `\\r` not followed by
+   `\\n`), which Lean refuses between tokens but accepts inside a comment or a literal, is
+   refused in any scanned file, since a reader with universal newlines would end a comment
+   at it and could miss the code after it. Each finding of 2, 3 and 4, and of a lone
+   carriage return, names its file and line; symbolic links are refused by their paths and
+   never followed.
    Under `model/`, the package's own `model/.lake` directory is never entered or read
    (a link there is refused like any other), while a `.lake` folder deeper in the model
    is read like any other; Mathlib imports are allowed. Only in `model/Check.lean` and `model/Check/`, `run_cmd` may be the first
@@ -325,7 +327,35 @@ def check_fidelity() -> None:
 # `p.1set_option` as `p`, `.1` and `set_option`, so a number or field with a letter, a
 # digit or `_` just after it is blanked: the scan's `\b` then sees the word after it
 # begin (#197).
-IDENT = re.compile(r"[^\W\d][\w'!?]*(?:\.[^\W\d][\w'!?]*)*")
+# A name is made of the characters Lean 4.35 takes for one, `isIdFirst` to begin it and
+# `isIdRest` to go on (Init/Meta/Defs.lean): ID_FIRST and ID_REST, range by range. Outside
+# a name, any other character that Python's `\w` takes for a letter or a digit, as the `¹`
+# of the postfix `⁻¹`, which no name holds, the `ₐ` of `:=ₐ`, which no name begins with,
+# Mathlib's `ᗮ` or a `λ`, Lean reads as part of a token or not at all, so it is blanked:
+# Lean reads `1⁻¹set_option` as `1`, `⁻¹` and `set_option`, and the scan's `\b` then sees
+# `set_option` begin (#234). A token whose last characters could be a name is read as
+# Lean reads it only for COMMAND_TOKENS, the two tokens of Lean 4.35 that begin with `#`
+# and take a command just after them: Lean reads the longest token it knows, so
+# `#timeaxiom` is `#time` and `axiom`, and either of them with a letter, a digit or `_`
+# just after it is blanked, as a number is (#234). The commands FORBIDDEN names, `#eval`
+# and its kin, are never blanked: it matches them with no boundary after them. No other
+# such token is read so, whether Lean's own (`#check`) or one that a file or a library it
+# imports declares, as `+x` from `infixl:65 " +x " => Nat.add`: the scan reads `+` and
+# the name `x1set_option` where Lean reads `+x`, `1` and `set_option`.
+LETTER_LIKE = ("\u03b1-\u03ba\u03bc-\u03c9"                # Greek small letters, but λ
+               "\u0391-\u039f\u03a1\u03a2\u03a4-\u03a9"    # Greek capitals, but Π and Σ
+               "\u03ca-\u03fb"                             # Coptic
+               "\u1f00-\u1ffe"                             # polytonic Greek
+               "\u2100-\u214f"                             # the letterlike symbols
+               "\U0001d49c-\U0001d59f"                     # script, double-struck, Fraktur
+               "\u00c0-\u00d6\u00d8-\u00f6\u00f8-\u00ff"   # Latin-1 letters, but × and ÷
+               "\u0100-\u017f")                            # Latin Extended-A
+# isSubScriptAlnum: the subscript digits ₀ to ₉, the subscript letters ₐ to ₜ, ᵢ to ᵪ and ⱼ.
+SUBSCRIPT_ALNUM = "\u2080-\u2089\u2090-\u209c\u1d62-\u1d6a\u2c7c"
+ID_FIRST = "A-Za-z_" + LETTER_LIKE                          # isIdFirst
+ID_REST = ID_FIRST + "0-9'!?" + SUBSCRIPT_ALNUM             # isIdRest
+IDENT = re.compile(f"[{ID_FIRST}][{ID_REST}]*(?:\\.[{ID_FIRST}][{ID_REST}]*)*")
+COMMAND_TOKENS = re.compile(r"#(?:time|with_exporting)")
 NUMBER = re.compile(r"0[bB](?:_*[01])+|0[oO](?:_*[0-7])+|0[xX](?:_*[0-9a-fA-F])+|"
                     r"[0-9](?:_*[0-9])*(?:(?!\.\.)\.(?:[0-9](?:_*[0-9])*)?)?"
                     r"(?:[eE][+-]?[0-9](?:_*[0-9])*)?")
@@ -403,6 +433,11 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
             marks.append(("name", i, j))
             previous = src[i:j]
             can_project, field_dot = True, False
+        elif m := COMMAND_TOKENS.match(src, i):
+            j, previous = m.end(), m[0]
+            if WORD.match(src, j):
+                marks.append(("text", i, j))
+            can_project, field_dot = False, False
         elif m := IDENT.match(src, i):
             j, previous = m.end(), m[0]
             can_project, field_dot = True, False
@@ -414,6 +449,12 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
             j, previous = m.end(), m[0]
             if WORD.match(src, j):
                 marks.append(("text", i, j))
+            can_project, field_dot = True, False
+        elif WORD.match(c):
+            # Outside a name, a character `\w` takes that no name begins with, as the `¹`
+            # that ends `⁻¹`: blanked. After such a token Lean may read `.1` as a field.
+            marks.append(("text", i, j))
+            previous = c
             can_project, field_dot = True, False
         elif c == "'" and src[j:j + 1] != "'" and (m := CHAR.match(src, i)):
             marks.append(("text", i + 1, m.end() - 1))
