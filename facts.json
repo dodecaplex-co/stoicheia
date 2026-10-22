@@ -1755,7 +1755,7 @@
      "construction_rules": []},
     {"proofs":
      [{"name": "BookI.Prop8.holds_prop7",
-       "line": 77,
+       "line": 70,
        "file": "Elements/BookI/Prop08.lean"}],
      "law": "prop7",
      "construction_rules":
