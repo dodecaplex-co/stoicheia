@@ -34,7 +34,15 @@ case = "the segment BAED greater than a semicircle, with F on A's and E's side o
 
 [review]
 stage = "full"
-commit = "d0508d6c"
+commit = "85da23fb"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:54a61ea628e84e01"
 run = "brief 0005 stage 5, ship R3 (#29)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
