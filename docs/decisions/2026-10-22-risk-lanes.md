@@ -28,10 +28,10 @@
   other event, and a change whose base holds no classifier; a label can only raise the
   class. The label is read from the event that started the run, and `git safe-push` adds a
   pull request's labels after it pushes, so a label given with that push counts from the
-  next push; main's run after the merge runs every job in full; and requiring an R5 run
-  at a release pull request's head is left to the merge gate, in a later part of #276. A
-  push to another branch is classified by main's copy against main, from where the branch
-  left it, and the merge gate waits for that run as well as the pull request's own. The
+  next push; main's run after the merge runs every job in full; and requiring an R5 run at
+  a release pull request's head is left to the merge gate, in a later part of #276. A push
+  to another branch is classified by main's copy against main, from where the branch left
+  it, and the merge gate waits for that run as well as the pull request's own. The
   `check`, `model` and `acceptance` jobs run in full for every class. `negative` runs in
   full for R3, R4 and R5. `formal-model` runs in full for R4 and R5, the classes of every
   change to `model/`, to the axiom lock and to the model's kernel check, and for a change
@@ -43,12 +43,14 @@
   and fails closed rather than try to match Lean's, which reads more: while any file among
   them, at either end of the change, has a header it cannot read cleanly (a module part
   `«.»`, `«..»` or `«»`, a letter or symbol past ASCII, an `import` with no module after
-  it), `formal-model` runs in full for every change, and the log names the file. So a
-  header that Lean reads otherwise can only widen the set. Otherwise a gated job passes at
-  once and says why in its log. The `check` job also now requires, after the build and
-  the render, that `git status --porcelain` over the whole worktree print nothing, as the
-  pre-flight already requires: that covers the generated pages, as the narrower form did,
-  and every other file a check might leave changed or new.
+  it), or while the tree holds a `.gitattributes` anywhere (an encoding or filter there
+  can make the text Lean reads from the checkout differ from the text Git holds, which the
+  reader reads), `formal-model` runs in full for every change, and the log names the file.
+  So a header that Lean reads otherwise can only widen the set. Otherwise a gated job
+  passes at once and says why in its log. The `check` job also now requires, after the
+  build and the render, that `git status --porcelain` over the whole worktree print
+  nothing, as the pre-flight already requires: that covers the generated pages, as the
+  narrower form did, and every other file a check might leave changed or new.
 
   Why this is safe. The five checks that main's ruleset requires keep their names
   (`check`, `model`, `negative`, `formal-model` and `acceptance`), so GitHub's settings

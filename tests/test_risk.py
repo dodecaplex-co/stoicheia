@@ -570,6 +570,21 @@ class FormalModel(Repo):
                          "unread: Elements/BookI/Prop07.lean: Elements.BookI runs into '.'; "
                          "while it is, every change checks the formal model")
 
+    def test_a_gitattributes_anywhere_runs_it_for_every_change(self):
+        # An encoding there makes the checkout Lean reads differ from the blob the reader
+        # reads: under UTF-7 a blob's `℀/` checks out as `+IQA-/`, ending a comment the blob
+        # leaves open, so an import only Lean sees would follow. Any .gitattributes, root or
+        # nested, makes every change check the formal model.
+        for where in (".gitattributes", "Elements/BookI/.gitattributes"):
+            with self.subTest(where=where):
+                start = self.commit({where: "*.txt working-tree-encoding=UTF-7\n"})
+                self.base = start
+                head = self.commit({"README.md": f"Changed for {where}.\n"})
+                cls, model, out = self.lane(head)
+                self.assertEqual((cls, model), ("R0", "true"), out)
+                self.assertIn(f"{where}, in the formal model's imports", out)
+                self.base = self.commit({}, removed=[where])
+
     def test_a_model_file_the_reader_cannot_read_runs_it_for_every_change(self):
         start = self.commit({"model/Check/Hand.lean":
                              "import Elements.«.».Foundations.Postulates\n"})

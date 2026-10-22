@@ -350,29 +350,30 @@ files' classes. The job runs main's copy of the script, never the change's own, 
 change cannot lower its own class by editing it. A pull request into main is classified
 so, exactly, from GitHub's merge commit (a checkout that is not that merge of its head is
 R5), and a push to another branch against main, from where the branch left it; the merge
-gate waits for both runs. A pull request whose run starts with the `release` label, a
-pull request into another branch, a push to main, a tag and any other event are R5. The
-label is read from the event that started the run, and `git safe-push` adds a pull
-request's labels after it pushes, so a label given with that push counts from the next
-push; main's run after the merge runs every job in full; and requiring an R5 run at a
-release pull request's head is left to the merge gate, in a later part of #276. `check`,
-`model` and `acceptance` run for every class. `negative` runs in full for R3, R4 and R5.
+gate waits for both runs. A pull request whose run starts with the `release` label, a pull
+request into another branch, a push to main, a tag and any other event are R5. The label
+is read from the event that started the run, and `git safe-push` adds a pull request's
+labels after it pushes, so a label given with that push counts from the next push; main's
+run after the merge runs every job in full; and requiring an R5 run at a release pull
+request's head is left to the merge gate, in a later part of #276. `check`, `model` and
+`acceptance` run for every class. `negative` runs in full for R3, R4 and R5.
 `formal-model` runs in full for R4 and R5, the classes of every change to `model/`, to
 `Certificate/axioms.lock` and to `scripts/check_model_kernel.py`, and for a change of any
 class to a file of the main package that the formal model imports, directly or through
 others: `risk` reads them from the model's import lines, at both ends of the change, so
 the set follows the imports as they change. It reads them by a narrow grammar and fails
 closed: while a file among them has a header it cannot read cleanly (a module part `«.»`,
-`«..»` or `«»`, a letter or symbol past ASCII, an `import` with no module after it),
-`formal-model` runs in full for every change, and `risk`'s log names the file, so a
-header that Lean reads otherwise can only widen the set. For a lower class, and for
-`formal-model` a change that touches none of the
-model's inputs, each job passes at once and says why, since the `safe-push-tests` workflow
-runs both on main every six hours and a red run there holds the release ([the
+`«..»` or `«»`, a letter or symbol past ASCII, an `import` with no module after it), or
+while the tree holds a `.gitattributes` anywhere (which can make the text Lean reads
+differ from the text Git holds), `formal-model` runs in full for every change, and
+`risk`'s log names the file, so a header that Lean reads otherwise can only widen the set.
+For a lower class, and for `formal-model` a change that touches none of the model's
+inputs, each job passes at once and says why, since the `safe-push-tests` workflow runs
+both on main every six hours and a red run there holds the release ([the
 decision](decisions/2026-10-22-risk-lanes.md)). Each fails, and is never skipped, when
 `risk` does not succeed, for GitHub accepts a skipped required check. `python3
-scripts/risk.py --paths <file>...` gives files' classes up front; `python3 scripts/risk.py .
-origin/main` a branch's class, and whether the formal model runs; and `python3
+scripts/risk.py --paths <file>...` gives files' classes up front; `python3 scripts/risk.py
+. origin/main` a branch's class, and whether the formal model runs; and `python3
 scripts/risk.py --model-inputs HEAD` the files the model imports, then any among them
 whose header it cannot read.
 
