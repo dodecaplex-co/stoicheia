@@ -9,11 +9,12 @@ IV in Lean, the words they use, where each word and fact lives and who owns it, 
 convention for what a construction is given, the bridges from the new words to Book III's
 circumferences, and a prototype for each new foundation. The statements were written with
 `sorry` in a scratch file and compiled against main; the prototypes were proved there
-(section 9). Nothing in `Elements/`, `Staging/`, the scripts or the review records changes:
-the order of work in section 11 begins only after approval, and after the owner's gate,
-Books I to III each at 95 or more. Once approved, the brief is frozen, as
-[WORKFLOW.md](../WORKFLOW.md), section 2, says, and a later change is a revision of it. The
-code states what we formalized; where the code, this brief, a record and a page disagree,
+(section 9). Step 1 challenges, revises, approves and freezes this brief. Work in
+`Elements/`, `Staging/`, the scripts or the review records begins only after approval and
+after the owner's gate, Books I to III each at 95 or more. Once approved, the brief is
+frozen, as [WORKFLOW.md](../WORKFLOW.md), section 2, says, and a later change is a
+revision of it. The code states what we formalized; where the code, this brief, a record
+and a page disagree,
 the disagreement is recorded and reconciled ([FORMALIZATION.md](../FORMALIZATION.md),
 section 1).*
 
