@@ -60,9 +60,9 @@ note = "The conclusion of the second reductio, which the contradiction above has
 
 [[passage]]
 at = "I say further that the angle of the semicircle"
-kind = "different"
+kind = "carried"
 helper = "Prop16.semicircle"
-note = "Proved after the theorem, by the companions `Prop16.semicircle` and `Prop16.remaining`, directly: by the second part, the straight line of an acute angle falls within the circle. Euclid argues by reductio that no acute angle is greater than the one, or less than the other."
+note = "Proved as its own companion, III.16 semicircle."
 
 [[passage]]
 at = "and the remaining angle contained by the circumference CHA"
