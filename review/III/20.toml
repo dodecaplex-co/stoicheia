@@ -56,7 +56,7 @@ case = "E within the angle BAC and outside the angle BDC"
 
 [review]
 stage = "full"
-commit = "83207f5a"
+commit = "e572d5c0"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:ccd8afe1c9a04254"
 run = "brief 0005 stage 5, ship R3 (#29)"

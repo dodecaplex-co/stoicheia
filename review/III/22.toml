@@ -25,7 +25,7 @@ note = "Euclid leaves the other pair of opposite angles to the same argument wit
 
 [review]
 stage = "full"
-commit = "53d26240"
+commit = "e572d5c0"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:6e648f85a153eb0a"
 run = "brief 0005 stage 5, ship R3 (#29)"
@@ -34,6 +34,6 @@ run = "brief 0005 stage 5, ship R3 (#29)"
 statement = "pass"
 passages = "pass"
 representations = "n/a"
-commentary = "fail"
+commentary = "pass"
 figures = "pass"
 signoff = "pass"
