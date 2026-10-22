@@ -237,7 +237,8 @@ class FileContainment(unittest.TestCase):
             'model/lakefile.toml', 'model/lakefile.lean', 'model/lean-toolchain',
             'model/lake-manifest.json', 'model/lock.sha256', 'AGENTS.md',
             'Elements/Foundations/New.lean', 'Elements/Companions.lean',
-            'docs/briefs/0002-decisions.md', 'docs/PROGRAM.md', 'facts.json',
+            'docs/briefs/0002-decisions.md', 'docs/decisions/README.md',
+            'docs/decisions/2026-10-21-new.md', 'docs/PROGRAM.md', 'facts.json',
             'book/I/01.md', 'CERTIFICATE.md', 'GRAPH.md', 'README.md', 'heath/I/01.md',
         )
         for name in names:
