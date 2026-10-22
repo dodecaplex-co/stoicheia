@@ -109,10 +109,10 @@ rule to finish: `circle_eq` makes the two circles one, and only Generalities 4
 run of III.2, III.5 and III.6, by a copy of the screen kept to them, closed none of 690
 tries. The screen checks that the rows of KNOWN, below, still close by a rule, and says so
 when one does not. KNOWN still names III.5, and is stale until a check change gives the
-screen a new canary, tracked in issue #CARDNUM. And, already on main, the screen cannot
+screen a new canary, tracked in issue #160. And, already on main, the screen cannot
 run until DEFS takes the 18 words train C6a introduced, so the run on the restated
 readings is still to be made: its pass over the definitions stops on them, for none of
-the lists below names them (also in issue #CARDNUM). They are `Arc.Congruent`,
+the lists below names them (also in issue #160). They are `Arc.Congruent`,
 `Arc.Drawn`, `Arc.measure`, `InSegment`, `LocallyLess`, `LocallyWithin`,
 `MixedAngle.Exceeds`, `MixedAngle.FallsShort`, `MixedAngle.WellFormed`,
 `MixedAngle.casesOn`, `MixedAngle.region`, `MixedAngle.vertex`, `NearVertexOpen`, `OnArc`,
@@ -161,7 +161,7 @@ instOfNatMagnitudeOfNatNat""".split()
 # reports itself broken. III.2 and III.6 left with the second axiom retirement, which made
 # the rules that closed them theorems. III.5 is stale on this revision: the restated III.5
 # needs Generalities 4, a theorem now, and the screen tries axioms alone, so it no longer
-# closes. It stays until a check change gives the screen a new canary (issue #CARDNUM).
+# closes. It stays until a check change gives the screen a new canary (issue #160).
 KNOWN = ["BookIII.Prop5"]
 
 # What each chosen definition says, proved from Lean's choice alone; nothing else.

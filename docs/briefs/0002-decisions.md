@@ -4602,7 +4602,7 @@ findings:
   closed them are theorems, and `KNOWN` keeps III.5 alone. With the retirement,
   Generalities 4 is a theorem, so the screen no longer closes brief 0008's restated III.5
   either, which needs that rule to finish: `KNOWN` is then stale until a check change gives
-  the screen a new canary, tracked in issue #CARDNUM. The two cases now take the
+  the screen a new canary, tracked in issue #160. The two cases now take the
   first row of `KNOWN`, whichever it is, and assert the same of it as before: closed only
   by its bare try it is lost, and not closed it is lost. They pass with the list before
   the retirement and after it; no assertion is removed.
@@ -4751,12 +4751,12 @@ findings:
   screen, which tries axioms alone, no longer closes the restated III.5, which needs that
   rule to finish (a scratch run of III.2, III.5 and III.6 closed none of 690 tries).
   `KNOWN`, which still names III.5, is stale until a check change gives the screen a new
-  canary, tracked in issue #CARDNUM. And, already on main, the screen cannot run until its
+  canary, tracked in issue #160. And, already on main, the screen cannot run until its
   `DEFS` takes the 18 words train C6a introduced (`Arc.Congruent`, `Arc.Drawn`,
   `Arc.measure`, `InSegment`, `LocallyLess`, `LocallyWithin`, `MixedAngle.Exceeds`,
   `MixedAngle.FallsShort`, `MixedAngle.WellFormed`, `MixedAngle.casesOn`,
   `MixedAngle.region`, `MixedAngle.vertex`, `NearVertexOpen`, `OnArc`, `OnSideOrLine`,
-  `Places`, `Surrounds` and `WithinAngle`), also in issue #CARDNUM. The catalogue,
+  `Places`, `Surrounds` and `WithinAngle`), also in issue #160. The catalogue,
   [`docs/reports/overlaps.md`](../reports/overlaps.md), records the run and says both, and
   its III.2 and III.6 rows rest on their audit lemmas as before.
   [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) keeps
