@@ -65,8 +65,8 @@
   and II.14 for a figure given by its outline alone.
 
   This entry approves the return of `review/I/45.toml` and `review/II/14.toml` to the scope
-  `full`, through those companions, without the tag `figure-with-dissection` and without
-  the interim entries of 20 October; an independent reader reads and stamps both.
+  `full`, through those companions, without the interim entries of 20 October, the tag
+  `figure-with-dissection` staying on both for their older companions alone; an independent reader reads and stamps both.
 
   This entry approves the amendment of `docs/FORMALIZATION.md`, section 2: lengths, angles
   and areas stay magnitudes, no coordinates or real numbers appear in a statement or a

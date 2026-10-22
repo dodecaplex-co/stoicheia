@@ -1367,8 +1367,8 @@ Postulate 5 and superposition appear only where they did at `b2c0580a`: in
 `Prop45.fan_boundary` shows superposition alone, through `Fitted.fan`.
 
 **What follows.** The records of I.45 and II.14 return to `full`, through the outline
-companions (approval 5), without `figure-with-dissection`, which stays in
-`review/terms.toml` for the older supplied-division companions; the pages, the book
+companions (approval 5); `figure-with-dissection` stays, in `review/terms.toml` and on both
+records, for the older supplied-division companions alone, no longer a limitation; the pages, the book
 introductions, the book briefs, FORMALIZATION's representation table and section 6,
 PROGRAM's account and the gap catalogues say what is proved (approval 4); and FORMALIZATION,
 section 2, is amended (approval 7). Approval 6, the withdrawal of the acceptance allowance

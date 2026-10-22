@@ -94,7 +94,7 @@ Hypotheses come from the setting-out, conclusions from "I say that".
   the figure bounded by the closed line through the corners in order
   (`Prop45.fan_boundary`). Equal to the figure there means equal to those triangles
   together, which is its area. The tag `figure-with-dissection` names these older forms, and
-  no record carries it now. The main theorem keeps Euclid's two triangles ABD and DBC,
+  is no longer a limitation. The main theorem keeps Euclid's two triangles ABD and DBC,
   unchecked: an area-sum theorem, whose checked case is `Prop45.fan` for the corners D, A,
   B, C.
 
