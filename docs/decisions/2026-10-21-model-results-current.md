@@ -109,7 +109,7 @@
   `tests/model/run.py` is a file of the harness:
   `python3 -I tests/model/run.py --full --write` was made at the commit that carries the
   change, a1144ad6, with its harness files as committed, after main's centre rule
-  ([#204](https://github.com/jackChallis/stoicheia/pull/204)) was merged in, and what it
+  ([#240](https://github.com/jackChallis/stoicheia/pull/240)) was merged in, and what it
   wrote was committed after it. Its counts were compared with main's own run, at
   8ccb38ff ([#240](https://github.com/jackChallis/stoicheia/pull/240)): every count is
   the same, and only the headers and the timings are new. Its results are recorded in

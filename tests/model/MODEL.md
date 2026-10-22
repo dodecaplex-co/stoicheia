@@ -207,9 +207,9 @@ Separately, **6,887,189** configurations met a retained derived property's hypot
 | `derived.inside_of_angle_add` | 77,960 | 25,019 |
 <!-- counts:end -->
 
-The full output of each program, headed with the commit, the harness's hash, the seeds and
-the Python that produced it, is in [results/](results/), and [results/summary.txt](results/summary.txt)
-has the same table in plain text.
+The full output of each program, headed with the commit, the harness's hash, the seeds
+and the Python that produced it, is in [results/](results/), and
+[results/summary.txt](results/summary.txt) has the same table in plain text.
 
 ## The axioms one by one
 
