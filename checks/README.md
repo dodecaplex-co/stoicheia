@@ -3,12 +3,12 @@
 Each file here is one check of CI's `check` job, the sequence that
 [WORKFLOW, section 8](../docs/WORKFLOW.md#8-validation-on-the-integrated-revision) asks
 of every revision delivered. The files are the one list of those checks:
-[`scripts/run_checks.py`](../scripts/run_checks.py) runs them in CI, from the pull
+`scripts/run_checks.py` runs them in CI, from the pull
 request's own copy of this folder; `scripts/render.py` writes section 8's first command
 block from them; and the pre-flight, `git safe-push`, runs origin/main's copy of them,
 read out of Git, never the copy of the commit it checks
 ([the decision](../docs/decisions/2026-10-22-check-registry.md)).
-[`scripts/registry.py`](../scripts/registry.py) is the one reader, and refuses the whole
+`scripts/registry.py` is the one reader, and refuses the whole
 folder, naming the file, when any file breaks the rules below. The reader and
 `scripts/run_checks.py` are of risk class R5, the landing tool and CI, and the reader
 stays one self-contained file of the standard library, since the pre-flight runs it
