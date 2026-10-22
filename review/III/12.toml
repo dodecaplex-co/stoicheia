@@ -39,7 +39,15 @@ note = "Like Heath's, this figure draws the impossible supposition: FG passing a
 
 [review]
 stage = "full"
-commit = "80292b0a"
+commit = "a23ab83e"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:8420eb7838a02329"
 run = "brief 0005 stage 5, ship R3 (#29)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "fail"
+figures = "pass"
+signoff = "pass"
