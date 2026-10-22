@@ -3205,13 +3205,20 @@ def environment(repo) -> dict:
     never with platform.platform(), which starts `uname -p` and `file -b` from the PATH,
     outside run() and so outside the sandbox; mac_ver's plistlib is imported at the top
     (run)."""
+    env = tool_env()
+    try:
+        git_version = run(["git", "--version"], repo, env=env)
+    except OSError as e:
+        raise Refusal(f"`git --version` failed: {e.strerror or e}") from e
+    if git_version.returncode != 0:
+        raise Refusal(f"`git --version` failed: {git_version.stderr.strip() or 'no message'}")
     return {
         "python": sys.version,
         "executable": os.path.realpath(sys.executable),
         "platform": [platform.system(), platform.release(), platform.machine(),
                      platform.mac_ver()[0]],
-        "git --version": git(repo, "--version").strip(),
-        "PATH": tool_env()["PATH"],
+        "git --version": git_version.stdout.strip(),
+        "PATH": env["PATH"],
         "variables": sorted([name, value] for name, value in os.environ.items()
                             if (name.startswith(KEYED_VARIABLES) or name in KEYED_NAMES)
                             and name not in UNKEYED_VARIABLES | TERMINAL_VARIABLES),

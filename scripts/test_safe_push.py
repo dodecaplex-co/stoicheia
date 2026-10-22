@@ -7843,21 +7843,57 @@ class Units(unittest.TestCase):
         self.assertIn("UnicodeDecodeError", r.stderr)          # the handler ran
         self.assertIn("SEEN \n", r.stdout, r.stdout + r.stderr)  # and imported nothing
 
+    def test_environment_uses_git_on_the_checks_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            home = tmp / "home"
+            effective_bin = home / ".elan" / "bin"
+            caller_bin = tmp / "caller-bin"
+            effective_bin.mkdir(parents=True)
+            caller_bin.mkdir()
+            effective_git = effective_bin / "git"
+            caller_git = caller_bin / "git"
+            effective_git.write_text('#!/bin/sh\n/bin/cat "$0.version"\n')
+            caller_git.write_text("#!/bin/sh\necho 'git version caller'\n")
+            effective_git.chmod(0o755)
+            caller_git.chmod(0o755)
+            version = effective_git.with_suffix(".version")
+            caller_path = f"{caller_bin}:/usr/bin:/bin"
+            caller_source = caller_git.read_bytes()
+            with mock.patch.object(safe_push.Path, "home", return_value=home), \
+                    mock.patch.dict(os.environ, {"PATH": caller_path}, clear=True):
+                version.write_text("git version effective-one\n")
+                first = safe_push.environment(SOURCE)
+                version.write_text("git version effective-two\n")
+                second = safe_push.environment(SOURCE)
+                self.assertEqual(os.environ["PATH"], caller_path)
+                self.assertEqual(caller_git.read_bytes(), caller_source)
+                version.unlink()
+                with self.assertRaisesRegex(safe_push.Refusal, "`git --version` failed"):
+                    safe_push.environment(SOURCE)
+        self.assertEqual(first["PATH"], second["PATH"])
+        self.assertEqual(first["git --version"], "git version effective-one")
+        self.assertEqual(second["git --version"], "git version effective-two")
+        self.assertNotEqual(safe_push.sha256_of(first), safe_push.sha256_of(second))
+
     def test_only_is_preserved_and_changes_the_main_checks_key(self):
         ctx = safe_push.Context(Path("/repo"), "commit", "main", 1, "/origin", None, {})
 
         def fake_git(repo, *args, **kwargs):
-            if args == ("--version",):
-                return "git version 2.0\n"
             if args == ("rev-parse", "commit^{tree}"):
                 return "commit-tree\n"
             self.fail(args)
+
+        def fake_run(cmd, cwd, **kwargs):
+            self.assertEqual(cmd, ["git", "--version"])
+            return subprocess.CompletedProcess(cmd, 0, "git version 2.0\n", "")
 
         keys = []
         with mock.patch.object(safe_push, "HARNESS_BLOB", "harness-blob"), \
                 mock.patch.object(safe_push, "toolchain", return_value={"lean": "4.35"}), \
                 mock.patch.object(safe_push, "base_tree", return_value="base-tree"), \
-                mock.patch.object(safe_push, "git", side_effect=fake_git):
+                mock.patch.object(safe_push, "git", side_effect=fake_git), \
+                mock.patch.object(safe_push, "run", side_effect=fake_run):
             for only in (None, "between", "parallel"):
                 with mock.patch.dict(os.environ, {} if only is None else {"ONLY": only},
                                      clear=True):
