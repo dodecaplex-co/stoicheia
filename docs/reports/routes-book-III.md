@@ -760,15 +760,15 @@ as they are, and one that does is checked again at the head the pull request lan
 checks of style and links read the texts of the whole repository, so their counts move
 with any merge; the pull request records the checks at the head it lands.
 
-**Historical execution at e09f40f6aae8b83ab70217f68a50b3b36ce6c6ff.** The validation
-ran from the root of the worktree at that revision, with this report's later edits as its
-only modification. Its retained evidence is the explicit build of the seven route modules,
-the separate elaboration of their seven files, and the runs of RoutesCheck.lean and
-Cutoff.lean. The two scratch files are given whole below with their SHA-256.
+**Historical Lean execution at e09f40f6aae8b83ab70217f68a50b3b36ce6c6ff.** The retained
+Lean evidence is the explicit build of the seven route modules, the separate elaboration
+of their seven files, and the runs of RoutesCheck.lean and Cutoff.lean. The two scratch
+files are given whole below with their SHA-256.
 
-**Reproduction.** In a clean checkout of that revision, first run the two immutable
+**Lean reproduction.** In a clean checkout of that revision, first run the two immutable
 comparisons below. Save the complete Lean blocks below as RoutesCheck.lean and Cutoff.lean
-at the worktree root, then run the remaining commands in order:
+at the worktree root, then run the remaining commands in order. These commands reproduce
+the Lean evidence, not the editorial checks of the later report:
 
 ```sh
 export PATH=$HOME/.elan/bin:$PATH
@@ -784,15 +784,13 @@ for f in Prop08 Prop20 Prop21 Prop26 Prop27 Touching AngleOfContact; do
 done
 lake env lean RoutesCheck.lean
 lake env lean Cutoff.lean
-python3 scripts/check_style.py
-python3 scripts/check_links.py
 ```
 
-Every retained validation command exited 0. Each of the seven files, elaborated alone, gave
-no message at all, so the five type equalities they end with hold. The build of the seven
-modules had no warning from `Staging/Routes/`; its only warnings are the two unused
-variables at lines 165 and 166 of `Elements/Figure/Circles.lean`. The build, the two
-scratch modules and the two scripts reported, in order:
+Every retained Lean validation command exited 0. Each of the seven files, elaborated alone,
+gave no message at all, so the five type equalities they end with hold. The build of the
+seven modules had no warning from `Staging/Routes/`; its only warnings are the two unused
+variables at lines 165 and 166 of `Elements/Figure/Circles.lean`. The build and the two
+scratch modules reported, in order:
 
 ```text
 Build completed successfully (107 jobs).
@@ -809,9 +807,28 @@ modules reached: [Elements.BookIII.MixedAngles,
  Elements.BookIII.Prop18,
  Staging.Routes.AngleOfContact]
 cutoff_check: 7 roots, 1462 constants walked, 0 findings
-✓ style: the hard rules hold (S1–S26)
-✓ links: all 14096 relative links and anchors in 485 Markdown files resolve
 ```
+
+**Historical editorial validation at
+11bcfea5ddde58341627a76cf0dab242fd320951.** That commit has
+e09f40f6aae8b83ab70217f68a50b3b36ce6c6ff as its parent and changes this report alone, so
+it identifies exactly the later report text that the two full-repository editorial checks
+read. At that commit `python3 scripts/check_style.py` reported `✓ style: the hard rules
+hold (S1–S26)`, and `python3 scripts/check_links.py` reported `✓ links: all 14096 relative
+links and anchors in 485 Markdown files resolve`. Those are historical results for that
+committed report, not results reproduced by the clean e09f40f6 checkout above.
+
+**Current report validation.** At 4186e342ae9d66c7a36d32c8866c42280bbe57a0, with this
+report as the only working-tree modification, the review correction ran:
+
+```sh
+git diff --check -- docs/reports/routes-book-III.md
+python3 scripts/check_links.py docs/reports/routes-book-III.md
+```
+
+Both commands exited 0. The first gave no output; the second reported `✓ links: all 36
+relative links and anchors in 1 Markdown files resolve`. No style check was run on this
+working-tree version.
 
 RoutesCheck.lean takes its list from Lean's environment, not from a list written by
 hand: every declaration of the seven modules, 51, and among them the 38 theorems, those
