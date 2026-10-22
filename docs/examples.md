@@ -99,37 +99,41 @@ meeting the drawn figure, and a shared step told on its home page.
   later mishnahs leave that history here. Its first paragraph links Book II's introduction
   for the account of how the areas correspond to the pieces drawn.
 
-## A page with a declared exception: III.31
+## A page completed by companions: III.31
 
 [Page](../book/III/31.md) · [Lean](../Elements/BookIII/Prop31.lean) ·
 [mishnah](../mishnah/III/31.md) · [figure](../figures/III/31.svg)
 
-**Why this one.** The statement leaves out two of Euclid's clauses, and widens another. III.31
-shows how a limitation is stated plainly, and how a statement may say more than Euclid's
-proof where a later citer needs it.
+Read again against the Lean, record and page at commit `c7570f51`, on 19 October 2026.
 
-- **The omission.** The angles "of the greater segment" and "of the less segment" are
-  contained by a straight line and a circumference, and our angles are not. The statement
-  carries the rectilineal fact Euclid proves them by, the right angle BAC, and the proof
-  shows the angle FAC right on its way; his sentences about the mixed angles stand with no
-  Lean beneath them; and the mishnah's third paragraph says so, quoting Heath under
-  Definition III.7.
+**Why this one.** The main theorem and its companions cover the whole enunciation. III.31
+shows how to account for clauses proved after the main theorem, state the limits of a
+representation, and extend Euclid's worked case where a later citer needs it.
+
+- **The completion.** The angles "of the greater segment" and "of the less segment" are
+  contained by a straight line and a circumference. The main theorem proves the
+  rectilineal claims; `Prop31.greater` and `Prop31.less`, after it, prove the mixed-angle
+  comparisons for every straight line in the circle not through the centre, at either
+  end. The companions use the right angle BAC, and the less-segment proof obtains the
+  adjacent right angle CAF. The note beside Heath's closing sentences points to the
+  companions and says that the final `exact` returns only the main theorem's claims.
 - **The widening.** Euclid proves the angle in the greater segment less than a right angle
   at B, but IV.5 needs it at any point. The statement says it of every point of the segment,
   the Lean reaches the other points through III.22, and the mishnah's fourth paragraph says
   why.
-- **The record, and what the page makes of it.** The review record, `review/III/31.toml`,
-  declares the statement partial, quotes the two omitted clauses, tags them
-  `mixed-angles-omitted`, and describes the segments by their side of AC: B's side, or the
-  other side. The Lean theorem additionally requires each point to lie on the circle. The
-  record declares two passages: the further case, where the Lean reaches every point of the
-  greater segment through III.22, and the closing sentences, left in Euclid's words. The page
-  says the exception in a few words in its status line, says it in full once, in the clause
-  map before the Lean, and points to that map from the table and from the notes; the reason,
-  that our angles are made by two straight lines, is given in the Representation row and in
-  the mishnah, and the Lean has a short remark where the clause is left. The sentence above
-  the listing names the passage the Lean does not carry out, which is the defect Astra found
-  in the page's old, generic sentence.
+- **The representation still has limits.** The tag `mixed-angles-local` names a comparison
+  of regions near the vertex: near A the right angle BAC lies within the greater segment
+  with room to spare, and the less segment lies within the right angle CAF. The companions
+  also prove that the named points give well-formed mixed angles. No addition, ratio or
+  motion of mixed angles is claimed. The page's Representation row and the mishnah explain
+  this meaning beside the claim of full coverage.
+- **The record, and what the page makes of it.** The review record,
+  [review/III/31.toml](../review/III/31.toml), declares the statement's scope `full`, lists
+  both companions and keeps the route `euclid`. Its three passages record the further
+  case through III.22 and two `helper` passages naming `Prop31.greater` and `Prop31.less`.
+  The page says the whole enunciation is proved, names both companions in its table,
+  explains where they carry the closing sentences, and gives each its certificate.
 
-After stage 3, III.24, with its alternative proof by the radii displayed as an alternative,
-may join or replace this example.
+**Do not copy.** Full coverage does not make the representation's limits disappear, and a
+proof after the main theorem still needs a clear connection to the sentences it carries.
+The record and the page must describe the declarations that actually do the work.

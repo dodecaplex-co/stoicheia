@@ -15,6 +15,7 @@ published proof uses neither the Circle 2 theorem nor the Circle 3 axiom.
 - **Placement has no time limit and no fallback.** The owner decided on 17 October that III.24 waits for a proved placement lemma, and that a fact the axioms lack is a decision for the owner, never a quiet new axiom. "Timeboxed", the fallback congruence and "if the fallback was used" are removed; the verification line for placement, which could never pass, is restated; the corrections to the design and the order of work, spike first, are added under stage 3.
 - **I.45 and II.14 are stated as Euclid and Byrne state them.** The owner's decision, later on 17 October, replaces the general dissection (`Rectilineal`, `Fitted`) with a figure given by its corners and taken as divided by the straight lines from one corner (stage 2, and the places that named a dissection).
 - **I.45 and II.14 are full** (18 October, after the revision above). [Brief 0006](0006-statements.md), as revised and frozen, takes them `full`: the figure is given with its division into triangles, checked, as triangles that lie apart (`Apart`), as triangles glued edge to edge (`Fitted`, `Rectilineal`, restored), or as Euclid's and Byrne's from one corner, with the two conditions that make it a division. Its statements, proved, are now in the edition. The passages of stage 2 below that speak of a figure given by its corners alone are kept as they stood, each with a note.
+- **Stage 3 is in the edition** (18 October). [Brief 0006](0006-statements.md)'s statements of stage 3, proved, are now in `Elements/`: III.24 concludes that the segments are congruent, by `placement`, with the proof by the radii kept as `Prop24.equalCircles`; III.26 and III.28 conclude that the circumferences are congruent too; `Arcs.lean` follows III.29; and the placement policy is checked. The status notes of stage 1 that stage 3 overtook are kept as they stood, with a note.
 - **Landing work: pull requests,** a new section: a pointer to the pull-request discipline of docs/WORKFLOW.md, section 10, which lands with pull request #1, and the branches stages 2, 3 and 4 work on.
 - **The colour figures are to carry Heath's letters,** the owner's decision of 17 October, taken after stage 1b was done (stages 1b, 5 and 6).
 - **What remains of stages 1 and 1b** is kept in docs/PROGRAM.md, with the state of the work; a line at the end of stage 1b points to it.
@@ -345,6 +346,8 @@ Stage 1 also carries these status notes, with no Lean change:
 
 The review records carry tags for these: `redundant-hypothesis`, `angle-measure`, `segment-with-circle`.
 
+*Overtaken on 18 October by stage 3, as brief 0006 froze it: III.24 concludes that the segments are congruent, by placement, and its earlier statement, equal circles and equal measures, is its companion `Prop24.equalCircles`; III.26 and III.28 conclude that the circumferences are congruent too, so III.26 now needs its equal circles, and III.27 still holds for any two circles. The notes above are kept as they stood.*
+
 What remains of stages 1 and 1b is kept in [docs/PROGRAM.md](../PROGRAM.md), section 3, with the state of the work (added 18 October).
 
 ## Stages 2–4: representation and generality
@@ -360,7 +363,7 @@ What remains of stages 1 and 1b is kept in [docs/PROGRAM.md](../PROGRAM.md), sec
 - `Elements/Figure/Sums.lean`, plain Lean: `Magnitude.sum` over lists, `sum_append`, `sum_singleton`, `InOrder`, `segments`, `endOf`, `InOrder.between_end`.
 - Brief 0006 (statements of every companion and of the Book III restatements).
 - The certificate and render support for companions.
-- A policy check that only III.24, `Arcs.lean` and the placement files themselves (`Placement.lean` and its case files, whose assembly cites the `Placement.*` names) may cite `placement`. It matches the `Placement.*` names, since placement is split across several files (revised 18 October; stage 3).
+- A policy check that only III.24, `Arcs.lean` and the placement files themselves (`Placement.lean` and its case files, whose assembly cites the `Placement.*` names) may cite `placement`. It matches the `Placement.*` names, since placement is split across several files (revised 18 October; stage 3). (Added to `scripts/check_fidelity.py` on 18 October, with two negative tests: read from the source, and from the certificate's shared steps.)
 
 **Stage 2: Books I and II**
 
