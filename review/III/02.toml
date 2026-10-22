@@ -18,17 +18,41 @@ kind = "grouped"
 note = "That DE is less than DB does not need the supposition, so the Lean proves it first, and then refutes \"outside\" and \"on the circumference\" each by that one comparison."
 
 [[passage]]
+at = "and let DFE be drawn through"
+kind = "helper"
+helper = "Tacit.line_circle_between"
+note = "Euclid draws DFE through the circle, taking F between D and the supposed outside point E. The Lean obtains F after proving DE less than DB, using `Tacit.centre_inside` (System E, Generalities 3) and `Tacit.line_circle_between` (System E, Intersections 4), both rules we assume."
+
+[[passage]]
 at = "Then, since DA is equal to DB"
 kind = "case"
 helper = "Prop2.through_centre"
 note = "Euclid's figure keeps the centre D off AB. When AB passes through D there are no triangles DAE and DEB, and `Prop2.through_centre` shows DE less than DB directly: if E is D, DE has length zero and DB a positive length; otherwise DE is part of DA or of DB, which are equal."
+
+[[passage]]
+at = "But DB is equal to DF"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid uses equal radii here and in DA = DB without a reference from Heath. The Lean obtains both equalities from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
+
+[[passage]]
+at = "the less than the greater"
+kind = "helper"
+helper = "len_lt_of_between"
+note = "Euclid treats DF as less than DE because F lies between D and E. The Lean proves this by `len_lt_of_between`, adding DF and FE to make DE and applying Common Notion 5, so DF cannot also be greater than DE."
+
+[[passage]]
+at = "Similarly we can prove that neither will it fall on the circumference itself"
+kind = "grouped"
+note = "Euclid repeats the contradiction for a point on the circumference. The Lean reuses the comparison DE less than DB already proved, while `Definition15`, the assumed rule for equal radii, would make DE equal to DB."
 
 [figure]
 case = "the centre D off AB, as in Heath's figure"
 note = "Like Heath's, this figure draws the impossible supposition: the straight line AEB falling outside the circle, and so drawn bent, since no straight line can."
 
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "1c08feeb"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:833e3b1cd507afbf"
+run = "brief 0005 stage 5, ship R3 (#29); the corollaries Prop2.within, triangle, oppositeSide and sameSide, written by Claude, read also by GPT-6 Astra (Codex)"
