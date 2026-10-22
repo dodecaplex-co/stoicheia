@@ -112,6 +112,7 @@ contributor runs this much:
 
 ```sh
 export PATH=$HOME/.elan/bin:$PATH
+python3 scripts/check_paths.py      # the paths staged: git add a new file first
 lake build                          # the whole library: the certificate imports it all
 lake env lean Certificate/Facts.lean
 python3 scripts/check_fidelity.py
