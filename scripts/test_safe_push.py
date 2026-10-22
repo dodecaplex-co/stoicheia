@@ -7688,17 +7688,17 @@ class Shards(unittest.TestCase):
         self.assertEqual(job["strategy"]["fail-fast"], False)
         self.assertEqual(job["permissions"], {"contents": "read"})
         self.assertNotIn("continue-on-error", job)
-        # Each shard runs the pull request's head, the commit safe-push-paths judged, not
-        # GitHub's merge of it; lists the tests it ran, and keeps the list under a name of
+        # Each shard runs the commit the job ran before it was sharded, GitHub's merge of
+        # the pull request into main (checkout's default); lists the tests it ran, and keeps the list under a name of
         # its own, for 35 days, beyond the 30 in which GitHub lets a run's failed jobs be
         # run again, which reruns no shard that passed: a shard that stops before its end
         # lists nothing, and keeps nothing.
-        head = "${{ github.event.pull_request.head.sha }}"
-        self.assertEqual(paths["steps"][-1]["env"]["HEAD_SHA"], head)
+        self.assertEqual(paths["steps"][-1]["env"]["HEAD_SHA"],
+                         "${{ github.event.pull_request.head.sha }}")
         self.assertEqual([{key: value for key, value in step.items() if key != "name"}
                           for step in job["steps"]], [
             {"uses": "actions/checkout@v5",
-             "with": {"ref": head, "fetch-depth": 0, "persist-credentials": False}},
+             "with": {"fetch-depth": 0, "persist-credentials": False}},
             {"uses": "actions/setup-python@v5", "with": {"python-version": "3.12"}},
             {"run": "python3 -m pip install -r scripts/requirements-test_safe_push.txt"},
             {"run": "python3 scripts/test_safe_push.py "
@@ -7733,8 +7733,7 @@ class Shards(unittest.TestCase):
         self.assertEqual([{key: value for key, value in step.items() if key != "name"}
                           for step in steps[:-1]], [
             {"uses": "actions/checkout@v5", "if": ran,
-             "with": {"ref": "${{ github.event.pull_request.head.sha }}", "fetch-depth": 0,
-                      "persist-credentials": False}},
+             "with": {"fetch-depth": 0, "persist-credentials": False}},
             {"uses": "actions/setup-python@v5", "if": ran, "with": {"python-version": "3.12"}},
             {"id": "install", "if": ran,
              "run": "python3 -m pip install -r scripts/requirements-test_safe_push.txt"},

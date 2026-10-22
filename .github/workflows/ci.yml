@@ -370,10 +370,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          # The pull request's head, the commit safe-push-paths judged, not GitHub's merge
-          # of it into main.
-          ref: ${{ github.event.pull_request.head.sha }}
-          # The tests clone this repository.
+          # The commit the job ran on before it was sharded: GitHub's merge of the pull
+          # request into main, the same in every job of the run. The tests clone it.
           fetch-depth: 0
           # No token stays in .git/config while the pull request's code runs.
           persist-credentials: false
@@ -424,7 +422,6 @@ jobs:
       - uses: actions/checkout@v5
         if: needs.safe-push-paths.outputs.run == 'true'
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           # No token stays in .git/config while the pull request's code runs.
           persist-credentials: false

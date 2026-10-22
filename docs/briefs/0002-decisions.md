@@ -4131,8 +4131,8 @@ findings:
   tests it ran, each with its outcome (`--ran FILE`), and keeps the list as an artifact,
   a test having failed or not, for 35 days, beyond the 30 in which GitHub lets a run's
   failed jobs be run again, which reruns no shard that passed, and `safe-push-tests`,
-  whatever the shards' result, checks out the commit they ran, the pull request's head,
-  as they did, fetches every list and runs `--cover DIR`, before its verdict on that
+  whatever the shards' result, checks out the commit they ran, GitHub's merge of the pull
+  request into main, as they did and as the job did before it was sharded, fetches every list and runs `--cover DIR`, before its verdict on that
   result. That lists the tests with unittest's loader at the commit, reads N from the
   matrix, and fails, naming each, on a test no shard ran, a test run twice, a shard that
   left no list (as one that stops before its end leaves none), a test the loader does not
