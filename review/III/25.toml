@@ -84,7 +84,15 @@ every_case = true
 
 [review]
 stage = "full"
-commit = "35824383"
+commit = "4063cad6"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:239c66918e1815cb"
 run = "brief 0005 stage 5, ship R3 (#29); lines 92, 174 and 194 of Prop25.lean, of unknown family, read also by GPT-6 Astra (Codex)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
