@@ -2,6 +2,8 @@
 
 *21 October 2026. Read at main 2e8aecf8; the mends and their state as at b78e8ae5, then the head of this read-through's branch, with the second code review's mends in the commit after its merge of main at 2853075b, and the third code review's in the commit after its merge of main at b2c30b6d. This first part covers Books I and II. A second part reads the findings on pages that were held while the readers read, with the changes that have since landed on main, and a later part reads Book III once its moves into the edition land (#34).*
 
+*Each part gives its counts and states as at the revision it names. The second addendum, of 22 October, at the end, says how they changed when this read-through merged the cross-family sign-off (#220) and was read again across families, and gives the stamps as this read-through lands.*
+
 ## Who read what
 
 Seven readers read main at 2e8aecf8. Each was Claude Opus 5.5, working as an independent reader, and none of them wrote, prompted or edited the pages they judged. Their roles:
@@ -855,3 +857,61 @@ The checks, as the readers report them:
 5. **For other owners**: README.md:23 and :40; heath/I/front.md:1's scan leaves; Courant and Robbins' chapters, Yaglom's section titles, and Coxeter's, Greenberg's, *Theorem Proving in Lean 4*'s and Maor's chapters, to check and record in docs/references.bib; the comment at review/I/43.toml:4; Elements/BookI/HelpersParallels.lean:128; Prop23.lean:55–56, for whoever next changes that file; I.18's record, to re-stamp after its reading line's change (5a41eb62); and a sweep of "cut" for figures, for the owner's decision.
 6. **Book III's read** (#34): the six points above, with reading/III/09.md's Mueller "(1981)", which by I.18's line should read "(2006; first published 1981)".
 7. **The book acceptance records** (#156). B3 now has this addendum; it still needs this report on main, the seven material findings still open resolved by commits on main, and the [read-through] table of each record. B4 needs I.45's Statement and Extra hypotheses rows to state its limitation plainly, as its commentary now does. #34's second condition is met for Books I and II as main stood at 554dfb0f: each later change under book/, mishnah/, Elements/ or figures/ that lands before the release, #240 (8674bce2) first among them and the changes in flight above, needs its own dated reading.
+
+## Second addendum, 22 October: read again across families
+
+While this read-through waited to land, the cross-family sign-off (#220) landed in three parts, pull requests #272, #277 and #287, and a fourth, for #257, pull request #290. They re-stamp records that this read-through also changes. This addendum says what was done about it, on this branch, which now carries its second part as well (the two branches are one).
+
+### The merges
+
+This branch merged main four times on 22 October, after each part of the sign-off landed (dceb98ee, 01e0fe54, 09b32b47 and ddf3d618, the last with the figures' change, #289, as well). It also merged II.14's own step (#168; 5c03d00b), which lands before it, as posted for landing. Main had changed only the stamps of the records both sides change, with two exceptions. In II.4's and II.9's records the sign-off gave a helper its book, as this branch had already done, in the same words. In II.9's note on "But the square on EF is equal to the squares on EG, GF", the two sides worded Heath's missing reference differently, and this branch's "Heath gives no reference here", the pages' one phrase for it (STYLE section 4), is kept. II.14's own step rewrites one step of II.5's and II.14's records, the right angle each proves in place by I.13 and Common Notion 3, and Book II's gap catalogue's bullet on it; those take its side, and every other mend of this branch stays. So each shared record kept this branch's text, save those steps, and each was read again, as below. An independent code review checked each merge with `git show --cc` and found no text of either side lost.
+
+### Why the stamps were read again
+
+Every record of Books I and II carries, on main, the stamp of a reader from the family that did not write its proof: Claude wrote Book I's proofs except I.26, I.28, I.30, I.32 and I.33 to I.48, which are Codex's, as are Book II's (README.md, "How it was made"). This read-through's re-readers were all Claude Opus 5.5. Twenty of the records they stamped are of proofs that Claude wrote, and so those stamps would have undone #220's rule for those twenty. And the records the sign-off had stamped since this branch's readers read them carried text the sign-off's readers had not read.
+
+So each record that this read-through stamps, whose page it changes, was read again in full, against Heath and the Lean, at a revision carrying everything it now shows: by GPT-6 Astra (Codex) for Claude's proofs, and by Claude Opus 5.5 for Codex's. I.41 and I.46, whose proofs have parts that Claude wrote (#257), are read by Codex alone. None of these readers wrote, prompted or edited anything on this branch. Each run line keeps the provenance the sign-off wrote and adds this reading. Each stamp names a commit in this branch's history.
+
+| Reader | Family | Records | Read at | Stamped in | Verdict |
+|---|---|---|---|---|---|
+| RT-x1 | GPT-6 Astra (Codex) | I.9, I.10, I.15 | 01e0fe54 | 97205d2d | confirmed |
+| RT-x2 | GPT-6 Astra (Codex) | I.22, I.31; I.21 and I.24 held back on three material findings | 01e0fe54 | b9cd9ad0 | confirmed |
+| RT-x3 | GPT-6 Astra (Codex) | I.1, I.14 | b18bca18 | 05ea4b10 | confirmed |
+| RT-y1 | GPT-6 Astra (Codex) | I.6, I.7, I.12, I.13, I.16 | b7b41f51 | 02559a6b | confirmed |
+| RT-y2 | GPT-6 Astra (Codex) | I.17, I.18, I.19, I.21 | b7b41f51 | 02559a6b | confirmed |
+| RT-y3 | GPT-6 Astra (Codex) | I.23, I.24, I.25, I.29 | b7b41f51 | 02559a6b | confirmed |
+| RT-y5 | GPT-6 Astra (Codex) | I.41, I.46 (#257) | ddf3d618 | 02b285d2 | confirmed |
+| RT-c1 | Claude Opus 5.5 | I.26, I.32, I.47 | 18e4e614 | 1145683c | confirmed |
+| RT-c2 | Claude Opus 5.5 | I.37, I.43 | 387a590f | 30da0522 | confirmed |
+| RT-y4 | Claude Opus 5.5 | I.30, I.34, I.44, I.48 | b7b41f51 | d69430d9 | confirmed |
+| RT-c4 | Claude Opus 5.5 | II.1, II.3, II.4 | 09b32b47 | 5181f215 | confirmed |
+| RT-c5 | Claude Opus 5.5 | II.8, II.9, II.10 | 09b32b47 | 5181f215 | confirmed |
+| RT-c6 | Claude Opus 5.5 | II.2, II.11 | cf05b375 | 2bec4834 | confirmed |
+| RT-y6 | Claude Opus 5.5 | II.5, II.14 | 5c03d00b | a1092c01 | confirmed |
+Some of these records were read twice on 22 October. I.21 and I.24 were read again after the mends below. I.16, I.18 and the records whose Lean notes this branch changes were read again at b7b41f51, once the Lean notes were back on this branch (below), so that each stamp covers every file its page shows. A code review checked that, at each stamp's commit, the record, its Lean file, its commentary, its reading lines and its figures are those of the head.
+
+**Every record was confirmed.** One Codex reader found three material points first. Each was mended in the sources (b9cd9ad0), and the records were read again after the mends:
+
+| Finding | Where (file:line at 01e0fe54) | Tier | Severity | What | Resolution |
+|---|---|---|---|---|---|
+| Codex reader of I.21 to I.31, 1 | mishnah/I/21.md:3 | 2 | material | Proclus' illustration put D anywhere on BC of a triangle right-angled anywhere, where Heath's figure (vol. 1, p. 290; leaf n310) has the right angle at B and D between B and C; elsewhere DE may not be cut off at all | Fixed in b9cd9ad0 |
+| Codex reader of I.21 to I.31, 2 | mishnah/I/21.md:3 | 2 | material | Pappus' fourth proposition, on a ratio less than 2 : 1, was joined to the scope of the first, "in any triangle but…"; in a given triangle neither line can be longer than the longest side, so it holds only in a triangle chosen to suit the ratio | Fixed in b9cd9ad0, and told as ours, after Heath's words, in b7b41f51 |
+| Codex reader of I.21 to I.31, 3 | reading/I/24.md:1 | 2 | material | The reading line gave Hipparchus' table the standing of Ptolemy's, where Van Brummelen weighs scant evidence for it (pp. 41 to 44) | Fixed in b9cd9ad0, and "table of chords" made "table" in b7b41f51 |
+| Codex reader of I.6 to I.17, 1 | mishnah/I/13.md:1 | 2 | editorial | "AB cannot lie along BE" holds only in the unequal case | Fixed in b9cd9ad0: "In the unequal case, …" |
+
+The readers' other points are editorial, and none of them stopped a stamp. They wait for a follow-up under #34: the words of I.19's caption at a glance ("bigger", "longer"); the year given for Maor's book on I.25, which is the first edition's; I.21's ellipse, which passes through A (mishnah/I/21.md:7); the chapter of Van Brummelen's book on I.24; the letter of I.26's third angle in the modern way (mishnah/I/26.md:9); whose words I.32's quotation from Aristotle gives (mishnah/I/32.md:5); I.47's two reasons from Proclus, of which the page gives one (mishnah/I/47.md:1); I.37's Polybius, whom Heath gives after Cantor (mishnah/I/37.md:5); I.37's modern figure, which draws heights the paragraph does not use; "Proclus's" in a comment of I.43's record (:4); I.30's sentence on the straight line joined to the third (mishnah/I/30.md:3); `Prop44.place`'s docstring, which says Euclid moves the parallelogram "without a word" (Prop44.lean:32); I.34's caption at a glance, "the diagonal BC"; the years of Nahin's and Hahn's books on I.46, which are the first editions' where the links open later ones; a long line in Prop46.lean (:128); II.2's record (:24), which gives a reason as Euclid's; II.4's commentary (:3), where two other steps also go without a reference; II.10's commentary (:5), where "first printed in 1901" may be read of the whole commentary on the *Republic*; I.16's commentary (:1), where I.27 "draws" its parallels; I.44's record, where one clause on I.30 stands three times, and a straight line named K in `Prop44.place`; II.5's commentary (:3), where Heath's page follows the link to I.44; and, in II.5's and II.14's Lean notes, "(Common Notion 3)" beside Heath's "[I. 13]", plain letters in backticks, and `Prop45` names without their book.
+
+### The Lean notes, apart and together again
+
+On 22 October this branch's comment and docstring changes in sixteen Lean files, with the records of the fifteen propositions whose Lean they change, were moved to a branch of their own (fa4779ff, 3e583e4c), so that the text and the records could land apart from the Lean. An independent code review of both axes found that they do not stand alone. Those records carry reader-facing mends that the commentary and this report depend on: apart, II.14's page told its restriction two ways, reopening the pilot editor's notes 2, 4 and 6, and a STYLE example quoted a docstring the branch no longer had. So the two were merged back (0c004091), and the read-through lands as one change; the Lean files are again exactly as reviewed at 4248ed13. The stamps given on the other branch were given again here.
+
+### The stamps now
+
+50 of the 62 records of Books I and II carry a stamp of this read-through. 41 were given on 22 October by the readers above, each at a commit in this branch's history whose files are those of the head. Nine are from 21 October (I.28, I.33, I.36, I.38, I.42, II.6, II.7, II.12 and II.13), each a Claude reader's stamp on a proof Codex wrote, and their pages have not changed since. 22 carry a Codex reader's stamp: the twenty records of Claude's proofs, with I.41 and I.46. The twelve without one are those the first addendum lists (I.2, I.3, I.4, I.5, I.8, I.11, I.20, I.27, I.35, I.39, I.40 and I.45). Each of the 32 run lines the sign-off wrote on main (for #220 and #257) is kept, with this reading added.
+
+### Still open after the second addendum
+
+1. **The first part's items 8 and 9, and the addendum's item 2, on stamps shared with the sign-off, are settled** (#220): the sign-off's four parts are on main, and the shared records are read again above.
+2. **Shared with work still in flight** (#34): the second axiom wave (#119) also changes the records of I.12, I.22, I.31 and II.10 and the commentary of I.4 and I.8, and lands after this; its readers read the shared records again. The citation sweep (#32) is not in flight as this is written; the first part's item 8 stands for it.
+3. **The editorial points above**, for a follow-up under #34.
+4. **The first part's items 1 to 7 and the addendum's items 1, 3 to 7 stand**, save that I.18's record is now stamped after its reading line's change (the addendum's item 5).
