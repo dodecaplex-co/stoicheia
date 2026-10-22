@@ -19,10 +19,10 @@ Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
 "Let it be placed so that BE is in a straight line with AB": Euclid moves the
-parallelogram I.42 has made. Our superposition rule, which only I.4 and I.8 call on,
-lays a triangle down only in thought and hands back no point, so `Prop44.place`
-constructs an equal parallelogram where Euclid puts his, and the proof cites it at
-that sentence.
+parallelogram I.42 has made. Superposition permits a hypothetical placement of a
+triangle in I.4 and I.8, and exports only equalities about the given figure. Here
+`Prop44.place` constructs an equal parallelogram where Euclid puts his, and the
+proof cites it at that sentence.
 -/
 
 namespace Elements.BookI
@@ -30,10 +30,11 @@ namespace Elements.BookI
 open Tacit
 
 /-- "Let it be placed so that BE is in a straight line with AB." Euclid moves the
-parallelogram made by I.42 into place without a word, as if picking it up; we
-build an equal parallelogram where Euclid puts his. Given the parallelogram PQRS,
-with its angle RQP, and a straight line AB: produce AB to E, making BE equal to
-QR [I. 2]; at B on BE construct the angle EBG equal
+parallelogram made by I.42 into place without a word, as if picking it up. Our
+superposition rule supplies no constructed points, so we build an equal
+parallelogram where Euclid puts his. Given the
+parallelogram PQRS, with its angle RQP, and a straight line AB: produce AB to
+E, making BE equal to QR [I. 2]; at B on BE construct the angle EBG equal
 to the angle RQP, on the side of X [I. 23], with BG equal to QP [I. 2];
 through G and E draw parallels to BE and BG [I. 31], meeting at F
 (`Prop30.meet`). Then BEFG is a parallelogram, and it is equal to PQRS, for each

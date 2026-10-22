@@ -47,7 +47,7 @@ theorem Prop17 {A B C : Point} (hABC : Triangle A B C) :
       exact (Prop16 hABC hBCD).1
     -- Let the angle ACB be added to each;
     /- The same angle added to a greater and a less leaves the first sum greater: no
-       Common Notion says so, but a tacit rule of magnitude does (`add_lt_add_right`,
+       Common Notion says so, but a tacit rule of magnitudes does (`add_lt_add_right`,
        System E §3.5). -/
     have hadded : ∠ A B C + ∠ A C B < ∠ A C D + ∠ A C B := add_lt_add_right (∠ A C B) hABC_ACD
     -- therefore the angles ACD, ACB are greater than the angles ABC, BCA.

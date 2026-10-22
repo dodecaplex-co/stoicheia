@@ -189,8 +189,8 @@ ED, the rectangle is a square already. If not, the greater, say BE, is produced 
 equal to ED, BF is bisected at G, the semicircle BHF is described with centre G, and DE is
 produced to H; then the rectangle BE, EF with the square on EG is the square on GF [II. 5],
 which is the squares on HE, EG [I. 47], and the rectangle is the square on EH. This is
-the proof of `Prop14` after the rectangle is made, written out again so that it need not
-cite II.14. The square is the square on PQ. -/
+the proof of `Prop14` after the rectangle is made, written out again, for it does not cite
+II.14. The square is the square on PQ. -/
 theorem Prop14.rectangle {E B C D : Point} (h : Rectangle E B C D) :
     ∃ P Q : Point, sq P Q = quadArea E B C D := by
   /- If BE equals ED, the rectangle is already the square on EB. -/

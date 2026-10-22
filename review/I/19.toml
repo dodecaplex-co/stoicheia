@@ -10,14 +10,14 @@ kind = "euclid"
 at = "For, if not, AC is either equal to AB or less"
 kind = "helper"
 helper = "Tacit.lt_trichotomy"
-note = "Euclid takes equality and less as the only possibilities when AC is not greater than AB. The Lean obtains this division from `Tacit.lt_trichotomy`, a tacit rule of magnitude, which we assume (System E §3.5)."
+note = "Euclid takes equality and less as the only possibilities when AC is not greater than AB. The Lean obtains this division from `Tacit.lt_trichotomy`, a rule of magnitudes we assume, not a proof (System E §3.5)."
 
 [review]
 stage = "full"
-commit = "206e3080"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:883df5c8274b45d2"
-run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at 206e3080"
+commit = "882b90a4"
+reviewer = "GPT-6 Astra (Codex), records re-read"
+lean = "sha256:25107852e253b12a"
+run = "brief 0005 stage 5, ship C5 re-read"
 
 [review.items]
 statement = "pass"

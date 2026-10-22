@@ -10,7 +10,7 @@ Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
 Euclid's last step, "and they are alternate. Therefore AB is parallel to CD", is
-I.27, for which Heath gives no reference here; so this file imports it.
+I.27, though Heath prints no reference there; so this file imports it.
 -/
 
 namespace Elements.BookI

@@ -11,13 +11,13 @@ kind = "euclid"
 at = "let it be placed so that BE is in a straight line with AB"
 kind = "helper"
 helper = "Prop44.place"
-note = "Euclid places I.42's parallelogram at B without a construction. `Prop44.place` builds an equal one there, with I.2, I.23, I.31, I.4 and I.34; its construction finds F through `Prop31.parallelogram` and `Prop30.meet`, using I.30, for which Heath gives no reference here."
+note = "The restricted superposition rule supplies no constructed points; `Prop44.place` supplies Euclid's unproved placing step by constructing an equal parallelogram there, with I.2, I.23, I.31, I.4 and I.34. Its construction finds F through `Prop31.parallelogram` and `Prop30.meet`, using I.30, which Heath does not cite here."
 
 [[passage]]
 at = "let FG be drawn through to H"
 kind = "helper"
 helper = "Prop30.meet"
-note = "Euclid takes H where FG meets the parallel AH and treats AH as parallel to both BG and EF. The Lean draws AH by I.31, finds H with `Prop30.meet`, and proves AH parallel to EF with `Prop30.parallel`, both using I.30, for which Heath gives no reference here."
+note = "Euclid takes H where FG meets the parallel AH and treats AH as parallel to both BG and EF. The Lean draws AH by I.31, finds H with `Prop30.meet`, and proves AH parallel to EF with `Prop30.parallel`, both using I.30, which Heath does not cite here."
 
 [[passage]]
 at = "Therefore the angles BHG, GFE are less than two right angles"
@@ -29,7 +29,7 @@ note = "Euclid reads BHG as a part of AHF. The Lean puts B within AHF using the 
 at = "through the point K let KL be drawn parallel to either EA or FH"
 kind = "helper"
 helper = "Prop30.parallel"
-note = "Euclid takes a parallel to FH as parallel to EA too. The Lean draws KL by I.31 and uses `Prop30.parallel` (I.30, for which Heath gives no reference here) to prove it parallel to EA."
+note = "Euclid takes a parallel to FH as parallel to EA too. The Lean draws KL by I.31 and uses `Prop30.parallel` (I.30, which Heath does not cite here) to prove it parallel to EA."
 
 [[passage]]
 at = "and let HA, GB be produced to the points L, M"
@@ -54,10 +54,10 @@ note = "Euclid concludes that LB, equal to C, has been applied to AB in the angl
 
 [review]
 stage = "full"
-commit = "275ae830"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:85b0745263c930f7"
-run = "brief 0005 stage 5, read-through 02 (#34), part 2: the addendum readers' mends (0022c931), read at 275ae830"
+commit = "bd86a7b6"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:60fe314a429e1bf5"
+run = "brief 0009 stage full, ship S3 A1-integration re-read"
 
 [review.items]
 statement = "pass"
