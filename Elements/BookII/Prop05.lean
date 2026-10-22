@@ -129,11 +129,15 @@ theorem Prop5 {A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B
         AreParallel.of_parallel hLCAK.1.2.1 (ne_of_between hDHG).symm hA_AK hK_AK hH_DG hD_DG
           hAK_DG⟩
     have hH_AB : ¬ OnLine H AB := fun h => hKM_AB.not_onLine hH_KM h
+    /- The angle HDA is right. DH stands on the straight line AB, so the angles BDH,
+       HDA together are two right angles [I. 13]. BDH is the square's right angle;
+       taking it from each leaves HDA a right angle (Common Notion 3). -/
     have hright : ∠ H D A = ∟ := by
-      have h := hDM.2.2.2.2.1
-      rw [adjacent_eq_of_right hB_AB hA_AB (between_of_between_left (between_symm hACB) hBDC)
-        hH_AB h] at h
-      exact h
+      have hBDA : Between B D A := between_of_between_left (between_symm hACB) hBDC
+      have h13 : ∠ B D H + ∠ H D A = ∟ + ∟ :=
+        BookI.Prop13 hBDA (Triangle.of_line hB_AB hA_AB (ne_of_between_ends hBDA) hH_AB)
+      rw [hDM.2.2.2.2.1, add_comm ∟] at h13
+      exact CommonNotion3 h13 rfl
     have hAHrect : quadArea D A K H = rect A D D B :=
       (Rectangle.of_right hDAKH hright).eq_rect (len_symm D A) hDH_DB
     -- therefore the gnomon NOP is also equal to the rectangle AD, DB.
