@@ -36693,6 +36693,7 @@
   "Tacit.circles_meet_of_on_inside_outside",
   "Tacit.circles_meet_opposite_side",
   "Tacit.circles_meet_same_side",
+  "Tacit.exists_centre",
   "Tacit.exists_point",
   "Tacit.exists_point_between",
   "Tacit.exists_point_inside_circle",
