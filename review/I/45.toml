@@ -1,7 +1,7 @@
 # review/I/45.toml
 [statement]
 scope = "full"
-note = "`Prop45.outline` takes any figure by its outline; `Prop45` keeps Euclid's two triangles, as an area sum; the others take a figure given with its triangles."
+note = "`Prop45` treats two triangles; `Prop45.outline` covers any outline; other companions handle checked divisions, sums and adding a triangle."
 companions = ["I.45 outline", "I.45 append", "I.45 sum", "I.45 apart", "I.45 figure", "I.45 fan"]
 fingerprint = "sha256:82f17d662afe1ed5"
 

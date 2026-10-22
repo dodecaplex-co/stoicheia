@@ -34,9 +34,10 @@
   This entry approves the change to `Certificate/FIELDS.md`, where `scripts/render.py`
   fills the vocabulary's count with the new number, 258, and nothing else changes.
 
-  This entry approves the renewed hashes in `tests/model/lock.sha256` and
-  `model/lock.sha256`, each taking the lock's new hash with a dated note, since the twenty
-  new words are reached by the companions alone and no law of the model changes.
+  This entry approves the renewed hash in `tests/model/lock.sha256`, with its dated note.
+  This entry approves the renewed hash in `model/lock.sha256`, with its dated note. Each
+  takes the lock's new hash, since the twenty new words are reached by the companions alone
+  and no law of the model changes.
 
   This entry approves the change to `review/terms.toml`, where the meaning of
   `figure-with-dissection` now describes the older companions that take a figure with its
@@ -59,14 +60,17 @@
   This entry approves the move of the helper definitions `Outline.corners`, staged as
   `CoverFacts.corners`, and `OnChain`, staged as `Diag.OnChain`, into the foundations.
 
-  This entry approves the three companions registered in `Elements/Companions.lean`:
-  `Prop45.outline` as "I.45 outline", `Prop14.outline` as "II.14 outline", and
-  `Prop14.outline_side` as "II.14 outline_side", the edition's general statements of I.45
-  and II.14 for a figure given by its outline alone.
+  This entry approves `Prop45.outline`, registered as "I.45 outline" in
+  `Elements/Companions.lean`. This entry approves `Prop14.outline`, registered as "II.14
+  outline". This entry approves `Prop14.outline_side`, registered as "II.14 outline_side".
+  The three are the edition's general statements of I.45 and II.14 for a figure given by
+  its outline alone.
 
-  This entry approves the return of `review/I/45.toml` and `review/II/14.toml` to the scope
-  `full`, through those companions, without the interim entries of 20 October, the tag
-  `figure-with-dissection` staying on both for their older companions alone; an independent reader reads and stamps both.
+  This entry approves the return of `review/I/45.toml` to scope `full` through
+  `Prop45.outline`. This entry approves the return of `review/II/14.toml` to scope `full`
+  through `Prop14.outline` and `Prop14.outline_side`. Both lose the interim entries of 20
+  October, the tag `figure-with-dissection` staying on both for their older companions
+  alone, and an independent reader reads and stamps both.
 
   The amendment as first read, counts of a figure's corners alone, would have been false of
   the promoted Lean, whose definition of a figure also counts the sides a ray crosses

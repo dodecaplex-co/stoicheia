@@ -1,6 +1,6 @@
 [statement]
 scope = "full"
-note = "`Prop14.outline` squares any figure given by its outline; `Prop14` keeps I.45's two triangles, as an area sum; the others take a figure with its triangles."
+note = "`Prop14.outline` and `Prop14.outline_side` cover any outline; `Prop14` treats two triangles; other forms handle checked divisions, sums or rectangles."
 companions = ["II.14 outline", "II.14 outline_side", "II.14 rectangle", "II.14 sum", "II.14 apart", "II.14 figure", "II.14 square", "II.14 fan"]
 fingerprint = "sha256:9e83215b978b4220"
 

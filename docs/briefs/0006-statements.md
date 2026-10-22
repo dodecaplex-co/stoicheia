@@ -131,7 +131,7 @@ does (the entry of 20 October 2026 in [the decisions page](0002-decisions.md)).*
 and II.14 claim `full` again, through the companions `Prop45.outline`, `Prop14.outline` and
 `Prop14.outline_side`, which take a figure given by its outline alone, and an independent
 reader reads both records again before they land. The tag `figure-with-dissection` stays in the registry
-for the older supplied-division companions, and no record carries it
+for the older supplied-division companions, and both records carry it for those companions alone
 ([brief 0013](0013-figures.md), section 10, "Promotion, 22 October 2026"). No statement or
 companion here changes.*
 
@@ -186,7 +186,8 @@ decided a fourth on 18 October; this brief is written to them:
    (the note at the head of this brief).
 
    *Status, 22 October 2026:* the outline proofs are promoted, and the scope is `full`
-   again, through the outline companions, without the tag (the status note at the head of
+   again, through the outline companions, with the tag retained for the older supplied-division
+   companions (the status note at the head of
    this brief).
 2. **III.24 is restated** to conclude that the segments are congruent, by Euclid's route:
    one segment is applied to the other. Today's proof by the radii is kept, as the

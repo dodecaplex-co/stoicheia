@@ -169,7 +169,7 @@ was `restricted` to a supplied checked division from 20 October (#116):
 | Proposition | Scope | Main theorem | Companions | Tag |
 |---|---|---|---|---|
 | I.40 | full | the equal bases meet end to end, as BC and CE | `Prop40.general`, for equal bases anywhere on one straight line; `Prop40.join` and `Prop40.special` | |
-| I.45 | full | the figure is two triangles, unchecked | `Prop45.outline`, the main companion, for any figure given by its outline; `Prop45.apart`, `Prop45.figure` and `Prop45.fan`, for a figure given with a checked division into triangles; `Prop45.append` and `Prop45.sum`, the construction | |
+| I.45 | full | the figure is two triangles, unchecked | `Prop45.outline`, the main companion, for any figure given by its outline; `Prop45.apart`, `Prop45.figure` and `Prop45.fan`, for a figure given with a checked division into triangles; `Prop45.append` and `Prop45.sum`, the construction | `figure-with-dissection`, for the older supplied-division companions |
 | I.47 | full | the three squares stand outward from the triangle | `Prop47.general`, for squares independently on either side of each base | |
 
 These main theorems stay as Euclid's worked configuration, with companions extending them

@@ -114,7 +114,7 @@ it was `restricted` to a supplied checked division from 20 October (#116):
 | Proposition | Scope | Main theorem | Companions | Tags |
 |---|---|---|---|---|
 | II.1 | full | the straight line is cut into exactly three pieces | `Prop1.two` and `Prop1.general`, for any number of pieces in order; the uncut straight line may be nothing | `hypothesis-dropped` |
-| II.14 | full | the figure is two triangles, unchecked; the construction returns the side of the square | `Prop14.outline`, the main companion, drawing the square for any figure given by its outline, and `Prop14.outline_side`, its side; `Prop14.apart`, `Prop14.square`, `Prop14.figure` and `Prop14.fan`, for a figure given with a checked division into triangles; `Prop14.rectangle` and `Prop14.sum`, the construction | `side-not-square`, for the main theorem and the forms that return a side |
+| II.14 | full | the figure is two triangles, unchecked; the construction returns the side of the square | `Prop14.outline`, the main companion, drawing the square for any figure given by its outline, and `Prop14.outline_side`, its side; `Prop14.apart`, `Prop14.square`, `Prop14.figure` and `Prop14.fan`, for a figure given with a checked division into triangles; `Prop14.rectangle` and `Prop14.sum`, the construction | `side-not-square`, for the main theorem and the forms that return a side; `figure-with-dissection`, for the older supplied-division companions |
 
 Each main theorem keeps Euclid's worked configuration, with companions extending it under
 the hypotheses and limits above. `exists_rect` proves that a rectangle contained by any
