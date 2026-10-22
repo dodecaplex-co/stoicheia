@@ -3772,8 +3772,8 @@ findings:
   this content. `Audit/Overlaps.lean` renews the dependency pins of `Audit.III_24_measure`,
   `Audit.III_26_any` and `Audit.III_27_any` from Lean's output: III.1's construction now
   brings `Tacit.exists_centre` into each. No proof, statement or check is weakened.
-- **III.1's construction home and its porism, 19 October 2026 (D1).** By the owner's
-  decision D1 of 19 October, `Elements.BookIII.Prop1.construction` moves home before
+- **III.1's construction home and its porism, 19 October 2026.** In this revision,
+  `Elements.BookIII.Prop1.construction` moves home before
   `Prop1`, with its frozen type: a circle and two points of it, no centre supplied,
   returning Euclid's bisections and perpendicular straight line. The rule
   `Tacit.exists_centre` supplies a centre only inside the proof that D is within the
@@ -4605,6 +4605,28 @@ findings:
   `lakefile.toml` and `lean-toolchain` do not change. No statement, check or expected value
   changes in this entry.
 
+- **The decision entries' render test counts the entries in the folder
+  ([#242](https://github.com/jackChallis/stoicheia/issues/242)).**
+  [`tests/test_decision_entries.py`](../../tests/test_decision_entries.py), whose
+  `RenderLeavesTheRecord` test runs `render.py` on a copy of the sources with two entries
+  planted in `docs/decisions/`, required "decision entries: 2 checked", the planted entries
+  alone. `render.py` checks every entry in the folder, so the first pull request to bring a
+  real entry would fail the test, and with it `scripts/negative_tests.py`, which runs it:
+  in a trial on `tooling/book-zero-imports`, with its entry moved into the folder and not
+  committed, `render.py` reported 3 and the test failed. The rule of 20 October 2026, that
+  a new decision is a file of its own in `docs/decisions/`
+  ([WORKFLOW](../WORKFLOW.md), section 10, "Decision entries"), waits on this fix, so this
+  entry stands on the page. The test now reads the entries the folder already holds before
+  it plants its own, requires the count `render.py` reports to be exactly those and the
+  planted ones, and holds the existing entries' bytes to stay as they were, with the README
+  and the page; it checks that no planted name is already taken. It runs twice: as the
+  folder stands, and with a real entry written into the copy besides the two planted ones,
+  where, with the folder as main holds it today, it requires 3. With the old assertion, the
+  second run fails with "decision entries: 2 checked" not found where `render.py` reported
+  3; now both pass. The assertion stays exact. The coordinator, assigning the issue on 21
+  October 2026, wrote: "the expected count read from the folder's existing entries, so the
+  assertion stays exact. I approve it as a correction, not a weakening." The protected file
+  changed is `tests/test_decision_entries.py`.
 
 - **Train C6b reconciled after axiom wave one.** Train C6b carries III.1's construction
   and porism and stage 4, merged with C6a after axiom wave one, at `4db10cf2`, and again
@@ -4615,7 +4637,8 @@ findings:
   #204); and last at `05e27335`, which brings main at `6e0cdd27` and `73b97ab1` (#208 and
   #219) and III.10's record read afresh and stamped; none of the last three changes the
   lock or any pin. The 19 October stage 4 and III.25 entries'
-  88 axioms and vocabulary counts, and D1's 57 tacit rules for III.1, are their historical
+  88 axioms and vocabulary counts, and the 57 tacit rules for III.1 recorded by the
+  19 October entry on III.1's construction home and porism, are their historical
   pre-wave-one measurements; they stand as written. On the integrated tree the lock holds
   train C6a's 80 axioms, of them 74 tacit rules, byte for byte, and 242 vocabulary words:
   train C6a's 238 and this train's four, `Foot`, `Arc.Less`, `Arc.Semicircle` and
@@ -4673,21 +4696,25 @@ findings:
   `tests/model/results/structured.txt` and
   `tests/model/results/summary.txt`.
   `Audit/Crossing.lean`, `Audit/Overlaps.lean` and `tests/certificate_expectations.json`
-  differ by this train's pins, counts and reasons, which the D1 entry and the paragraph
-  above give; `Certificate/FIELDS.md` differs only by its vocabulary count, 238 to 242.
+  differ by this train's pins, counts and reasons, which the 19 October entry on III.1's
+  construction home and porism and the paragraph above give; `Certificate/FIELDS.md`
+  differs only by its vocabulary count, 238 to 242.
   `scripts/render.py`, `scripts/heath.py`, `review/SCHEMA.md` and
   `tests/test_check_style.py` differ by tooling/figure-every-case's check change, merged at
   `0254f4cd`, which lands before this train with its own entry; this train uses it only in
   III.25's record, whose figure draws every case. That branch, merged again at `62a10c91`,
-  brings main at `78fb461d` and `554dfb0f` (#232 and #239); the paths main changed since
-  `73b97ab1` are main's, named in main's entries, and change neither the lock nor any pin.
+  brings main at `78fb461d` and `554dfb0f` (#232 and #239), and this train was merged with
+  main again at `8674bce2` (#240, train C6a) and `af90d71e` (#254); the paths main changed
+  since `73b97ab1` are main's, named in main's entries, and change neither the lock nor any
+  pin.
   The merge itself writes no statement, check or expected value: each is one train's.
 
 - **III.1's construction guard, brief 0008, step 4.** `Audit/Centre.lean`, imported
   from `Audit.lean`, fixes the frozen type of `Elements.BookIII.Prop1.construction`
   and pins its full axiom list with `#guard_msgs`, read afresh from Lean at `34f2db57`.
   The list has 64 names, including `Tacit.exists_centre`, admitted by the owner's
-  decision. Every renewal is read for `Tacit.outside_of_between` and `sorryAx`, which
+  decision of 18 October 2026 on issue #59, "approved, as Astra recommends". Every
+  renewal is read for `Tacit.outside_of_between` and `sorryAx`, which
   must remain absent (the paragraph below says why Circle 2 and `Tacit.centre_unique` no
   longer can appear). The pin cannot establish that the centre is used only inside the
   proof that D is within the circle; a reader checks that confinement in the proof.
@@ -4795,8 +4822,9 @@ findings:
   III.25's figure of every case, and changes neither the lock nor any pin; with main
   at `554dfb0f` (#232, the unrun tests in CI, and #239, decision entries one file
   each), which changes neither the lock nor any pin; and last with the guard at
-  `a4e0ffdd`, which brings train C6b with tooling/figure-every-case at `696181c5` and main
-  at `8674bce2` (#240, train C6a landed), and changes neither the lock nor any pin. The
+  `1b5e3f2b`, which brings train C6b after its /no-mistakes run and its readers (III.15
+  and III.25), tooling/figure-every-case at `696181c5` and main at `8674bce2` (#240, train
+  C6a landed) and `af90d71e` (#254), and changes neither the lock nor any pin. The
   restated Book III of this train is kept whole; III.1's record and commentary are this
   train's, since its statement no longer takes a centre.
   `Certificate/axioms.lock`, written again by `python3 scripts/check_fidelity.py
@@ -4820,7 +4848,7 @@ findings:
   superposition. The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`,
   `model/`, `scripts/`, `.github/`, `review/SCHEMA.md`, `review/terms.toml`,
   `lakefile.toml` and `lean-toolchain` that differ from `lean/centre-guard` at
-  `a4e0ffdd`, each named whole:
+  `1b5e3f2b`, each named whole:
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
   `Audit/screen.py`,
