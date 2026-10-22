@@ -537,12 +537,12 @@ readings, Generalities 4 is a theorem, so the screen, which tries axioms alone, 
 closes the restated III.5, which needs that rule to finish (a scratch run of III.2, III.5
 and III.6 closed none of 690 tries). So the screen's list of the rows it must find, which
 still names III.5, is stale until a check change gives the screen a new canary, tracked in
-issue #CARDNUM. And, already on main, the screen cannot run until its list of the
+issue #160. And, already on main, the screen cannot run until its list of the
 definitions to unfold takes the 18 words train C6a introduced (`Arc.Congruent`, `Arc.Drawn`, `Arc.measure`,
 `InSegment`, `LocallyLess`, `LocallyWithin`, `MixedAngle.Exceeds`, `MixedAngle.FallsShort`,
 `MixedAngle.WellFormed`, `MixedAngle.casesOn`, `MixedAngle.region`, `MixedAngle.vertex`,
 `NearVertexOpen`, `OnArc`, `OnSideOrLine`, `Places`, `Surrounds` and `WithinAngle`), also in
-issue #CARDNUM; until then the run on the restated readings, above, cannot be made.
+issue #160; until then the run on the restated readings, above, cannot be made.
 
 **How each rule enters.** Argon's second review pointed out that `direct_axioms` counts a
 rule a proof reaches through a lemma as well as one its own Lean names, and found that
