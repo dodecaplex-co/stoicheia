@@ -121,8 +121,7 @@ the arc onto the arc, keeping every distance between points of the segment
 segments, and "equal" circumferences in III.26 and III.28, are read through Common Notion
 4 ("things which coincide with one another are equal to one another") as segments, or
 circumferences, that coincide. `Elements/BookIII/Arcs.lean` says what the measure and the
-congruence come to for drawn segments (`Arc.Drawn`: the circle has a centre, the ends of
-the base are on it, and the point naming the side is off the base): in equal circles, the
+congruence come to for drawn segments (`Arc.Drawn`): in equal circles, the
 circumferences of drawn segments are equal in measure exactly when they are cut off by
 equal straight lines and of one kind; and two drawn segments are congruent exactly when
 their circles are equal and their circumferences equal in measure.
