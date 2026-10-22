@@ -4598,3 +4598,74 @@ findings:
   `scripts/negative_tests.py`. Nothing else is loosened: on 238 plants and probes, in each of
   the five folders the scan reads, the scan makes every finding origin/main's makes, and
   no file of the edition changes.
+
+- **The source scan reads each Lean file as Lean does, and refuses a lone carriage return
+  ([#207](https://github.com/jackChallis/stoicheia/issues/207)).** `check_rules` in
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) read each `.lean` file
+  with `Path.read_text()`, whose universal newlines turn a lone carriage return into a
+  line feed. Lean does not: it reads `\r\n` as `\n`, refuses a lone `\r` between tokens but
+  accepts one inside a comment or a literal, and ends a `--` comment only at a line feed.
+  So in `-- a remark\r"` Lean sees one comment, the quote among it, while the scan saw the
+  comment end at the carriage return and a string open on the next line, which swallowed
+  the code after it up to a `"` in a later comment. Every forbidden command behind such a
+  comment was hidden from the scan that guards the axioms, `axiom` included: an
+  independent reviewer on ship TT (#197's final review) planted six behind one,
+  `#guard_msgs (drop all)`, `set_option debug.byAsSorry`, a pinned error, `#guard_panic`,
+  `set_option debug.skipKernelTC` and an `axiom`, and Lean accepted each while the scan
+  passed all six. The scan now reads each Lean source with
+  `path.read_bytes().decode("utf-8")` (`lean_text`), with no newline translation, so its
+  view of comments, strings and lines is Lean's; and it refuses a lone carriage return (a
+  `\r` not followed by `\n`) in any scanned `.lean` file, naming its file and line, since
+  a `--` comment does not end at it. CRLF files stay allowed, as Lean allows them (`\r\n`
+  normalised to `\n`); no tracked `.lean` file has a carriage return today
+  (`git grep -l $'\r' -- '*.lean'` finds none), so the scan's output over the tree is
+  unchanged. The two claims the hole made untrue are true again:
+  `check_fidelity.py`'s docstring and [FORMALIZATION](../FORMALIZATION.md), section 7,
+  both now say the scan reads the bytes and refuses a lone carriage return. The other four
+  readers of Lean comments (`check_style.py`, `check_acceptance.py`, `render.py` and
+  `generated_counts.py`, the readers of
+  [#206](https://github.com/jackChallis/stoicheia/issues/206)) still use `read_text()`;
+  #206, which follows this train, moves them to one shared reader with the same reading.
+  It is a check change, landing on its own: a hole in the scan that guards the axioms. No
+  check, test, expected value, lock or schema is weakened:
+  `scripts/negative_tests.py` gains one plant that hides the six probes behind a
+  carriage-return comment in a scratch copy of I.1's file and shows each refused, where
+  the check before #207 missed all six. Protected files changed:
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py),
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py),
+  [`docs/FORMALIZATION.md`](../FORMALIZATION.md) and this page.
+
+- **A figure that draws every case says so
+  ([#30](https://github.com/jackChallis/stoicheia/issues/30)).** `figure_note` in
+  [`scripts/render.py`](../../scripts/render.py) put a record's `[figure] case` after a
+  fixed "Drawn for one case:". That is false of a figure that draws every case its theorem
+  covers: III.25's, `figures/III/25.svg`, draws Euclid's three cases side by side, as
+  Heath's three figures do ([the figures against the scans](../reports/figures-against-scans.md)),
+  and III.35's, on main, draws Euclid's two. A record's `[figure]` may now give
+  `every_case = true`, and the caption under the figure, and its alternative text, then
+  read "Drawn for every case: …" in place of "Drawn for one case: …", with the `case`
+  naming the cases drawn. [`scripts/heath.py`](../../scripts/heath.py) reads the key as a
+  boolean, not required; `load_review` refuses, naming the record, an `every_case` that is
+  not true or false, and `every_case = true` with no `case`, and still refuses a `[figure]`
+  with neither `case` nor `note`, whatever its `every_case`. P8 of
+  `scripts/check_acceptance.py` is unchanged: it still asks a theorem of several cases for
+  the `case` text, which now names the cases drawn where the figure draws them all.
+  `scripts/check_style.py` is unchanged too: `REVIEW_SHOWN` lists the texts of `[figure]`
+  that the page shows, `case` and `note`, and `review_texts` reads only the keys it lists,
+  each only as a string, so a boolean is never read as text.
+  [review/SCHEMA.md](../../review/SCHEMA.md) gains the key's row and widens the meaning of
+  `case`; [STYLE](../STYLE.md), section 7, asks a figure that draws every case to say so,
+  with `every_case`. The protected test file
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains three tests, each
+  failing before the change and passing after it: the caption with and without
+  `every_case`, a record read with it, and the record refused. No record uses the key yet,
+  so no page changes. This check change lands on its own, before train C6b
+  ([WORKFLOW](../WORKFLOW.md), section 10: a check lands first), which gives III.25 its
+  three companions and sets `every_case` in its record. Whether III.35 may take it is for
+  its own review, since its theorem also covers Simson's cases, which its figure does not
+  draw: the key means every case the theorem covers, as review/SCHEMA.md says. The
+  protected files changed are
+  `scripts/render.py`,
+  `scripts/heath.py`,
+  `review/SCHEMA.md`,
+  `tests/test_check_style.py`.
