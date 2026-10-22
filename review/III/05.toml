@@ -38,7 +38,7 @@ stage = "full"
 commit = "535bd8cc"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:05eac8742fddcab6"
-run = "brief 0005 stage 5, ship R3 (#29); the supposition and the radii by Definition15, written by Codex, read also by Claude Opus 5.5"
+run = "brief 0005 stage 5, ship R3 (#29); the supposition, the radii by Definition15 and their equation, written by Codex, read also by Claude Opus 5.5"
 
 [review.items]
 statement = "pass"
