@@ -1416,8 +1416,9 @@ and the revision lands.
 
 *Status, 22 October 2026.* GPT-6 Astra (Codex), reading independently, stamped both
 records, last at `48092431`, after the merge of main's read-through. The withdrawal of the
-acceptance allowance is the check change that follows this one; #116 closes when both have
-landed.
+acceptance allowance is the check change that follows this one, and with it the meaning
+of `figure-with-dissection` in `review/terms.toml`, a check input, which may not change
+beside the content it judges; #116 closes when both have landed.
 
 ## Appendix: the challenge of 19 October
 
