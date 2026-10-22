@@ -6,10 +6,11 @@
 The real brief, audit file and Audit.lean must pass. In copies, an invented theorem name in
 the restriction section must fail with its line and name, and so must a name pinned only by
 its axioms, by a `#check` with no `#guard_msgs`, by a `#guard_msgs` with any option
-(`substring := true` among them), or by a pin in a comment, which is also refused with its
-line even beside an active duplicate. A name is pinned only under its full name, so a pin
-of `Rule.Figure.restrict` does not pin a bare `restrict`, and only in
-`Elements.Superposition`: in copies of the real file, a decoy theorem `: True` of the same
+(`substring := true` among them), or by each commented-pin form covered below, which is
+also refused with its line even beside an active duplicate. WORKFLOW section 8 records the
+one commented-pin form the reader can miss; it still never counts. A name is pinned only
+under its full name and in `Elements.Superposition`: a pin of `Rule.Figure.restrict` does
+not pin a bare `restrict`. In copies of the real file, a decoy theorem `: True` of the same
 name in `Elements.BookI`, pinned by `#check` in place of `Interpretation.Embedding`'s
 `#print` or of `Rule.Figure.restrict`'s `#check`, fails with the brief's line. The
 exceptions (`Rule.infer`, `Metric`, `cite`, file names, Lean's axioms, single letters and
