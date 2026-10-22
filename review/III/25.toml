@@ -34,7 +34,7 @@ note = "Euclid constructs BAE equal to ABD without a reference from Heath here. 
 at = "let DB be drawn through to E"
 kind = "helper"
 helper = "Postulate5"
-note = "Euclid takes for granted that AE meets DB drawn through; Postulate 5 gives it, the angles BAE, ABD being less than two right angles, since ABD is acute (I.17, for which Heath prints no reference here). Postulate 5 is a rule we assume (System E §3.6, diagram-angle transfer rule 5); the Lean then splits the possible orders by `Tacit.between_cases`, the rule we assume as System E, Between 6, and puts D between B and E by ruling out the other orders with `angle_lt_of_between`."
+note = "Euclid takes for granted that AE meets DB drawn through; Postulate 5 gives it, the angles BAE, ABD being less than two right angles, since ABD is acute (I.17, for which Heath prints no reference here). Postulate 5 is a rule we assume (System E §3.6, diagram-angle transfer rule 5); its side condition puts E on D's side of AB, so `OnRay.of_sameSideOf` excludes B between D and E, the equality BAE = ABD excludes E = D, and `Tacit.between_cases` (the rule we assume as System E, Between 6) leaves D between B and E once `angle_lt_of_between` excludes E between B and D."
 
 [[passage]]
 at = "and the angle ADE is equal to the angle CDE"
