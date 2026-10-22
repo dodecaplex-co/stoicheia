@@ -68,6 +68,17 @@
   `full`, through those companions, without the interim entries of 20 October, the tag
   `figure-with-dissection` staying on both for their older companions alone; an independent reader reads and stamps both.
 
+  The amendment as first read, counts of a figure's corners alone, would have been false of
+  the promoted Lean, whose definition of a figure also counts the sides a ray crosses
+  (`crossingCount`), the contours round a point (`Outline.depth`), the tiles of a division
+  and rotation steps. Asked to choose between a wider sentence and another representation,
+  the owner wrote on 22 October 2026, about 10:00: "whatever's reasonable and in spirit with
+  Euclid. I don't think we need all this, but sure whatever." Under that delegation the
+  coordinator chose the wider wording, as
+  [#116's comment of that day headed "Item 7, settled"](https://github.com/jackChallis/stoicheia/issues/116)
+  records: counts of a figure's corners and of what they make, disclosed as part of how a
+  figure is defined, not as Euclid's argument.
+
   This entry approves the amendment of `docs/FORMALIZATION.md`, section 2: lengths, angles
   and areas stay magnitudes, no coordinates or real numbers appear in a statement or a
   proof, and counts of a figure's corners, and of what they make, may appear.

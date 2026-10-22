@@ -72,7 +72,8 @@ that role ([WORKFLOW.md](WORKFLOW.md)).
   (`crossingCount`); the closed lines round a point (`Outline.depth`); and the tiles and
   triangles of a division, with the sides they share. Counts are added and compared, and
   two are compared by their remainders on division by two, as
-  `crossing_parity_independent` compares two crossing counts
+  `crossing_parity_independent` compares two crossing counts. They are part of how a figure
+  is defined, not of Euclid's argument
   ([decision of 22 October 2026](decisions/2026-10-22-figures-promoted.md)).
 - Each book's phrases, and how its statements say them, are in its brief.
 

@@ -1265,7 +1265,12 @@ above, under "What remains for #116: the owner's approvals", in these words: "as
 approvals 1 to 6 and 8 as proposed, and approval 7 by amending the sentence of
 FORMALIZATION, section 2, "No numbers, coordinates or real numbers appear in a statement or
 a proof", to allow counts of a figure's corners, since a count is part of what "a figure
-of n sides" means, with no separate exception recorded.
+of n sides" means, with no separate exception recorded. Corners alone would have been
+false of the promoted Lean, which counts the sides a ray crosses, the contours round a
+point, tiles and rotation steps too; asked, the owner wrote, about 10:00 the same day,
+"whatever's reasonable and in spirit with Euclid. I don't think we need all this, but sure
+whatever.", and under that delegation the coordinator chose the wording that allows counts
+of a figure's corners and of what they make, as part of how a figure is defined.
 [The decision entry of that day](../decisions/2026-10-22-figures-promoted.md) records the
 decision and the files it approves.
 
