@@ -15,13 +15,13 @@ note = "The statement gives the tangent DE, the contact C and the centre F; the 
 [[passage]]
 at = "For, if not, let FG be drawn from F perpendicular to DE"
 kind = "helper"
-helper = "Prop12"
+helper = "BookI.Prop12"
 note = "Euclid draws FG perpendicular to DE; the Lean uses I.12, for which Heath prints no reference here. Beneath the setting-out, the Lean first proves F off DE with `Touches.not_inside` and `Tacit.centre_inside`, the rule we assume as System E, Generalities 3."
 
 [[passage]]
 at = "and the greater angle is subtended by the greater side"
 kind = "grouped"
-helper = "Prop19"
+helper = "BookI.Prop19"
 note = "Euclid invokes I.19 and concludes that FC is greater than FG. One call to I.19 carries both clauses."
 
 [[passage]]
