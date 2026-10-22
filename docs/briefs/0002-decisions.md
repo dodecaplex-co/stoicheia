@@ -4980,3 +4980,23 @@ findings:
   since `73b97ab1` are main's, named in main's entries, and change neither the lock nor any
   pin.
   The merge itself writes no statement, check or expected value: each is one train's.
+
+- **III.1's construction guard, brief 0008, step 4.** `Audit/Centre.lean`, imported
+  from `Audit.lean`, fixes the frozen type of `Elements.BookIII.Prop1.construction`
+  and pins its full axiom list with `#guard_msgs`, read afresh from Lean at `34f2db57`.
+  The list has 64 names, including `Tacit.exists_centre`, admitted by the owner's
+  decision of 18 October 2026 on issue #59, "approved, as Astra recommends". Every
+  renewal is read for `Tacit.outside_of_between` and `sorryAx`, which
+  must remain absent (the paragraph below says why Circle 2 and `Tacit.centre_unique` no
+  longer can appear). The pin cannot establish that the centre is used only inside the
+  proof that D is within the circle; a reader checks that confinement in the proof.
+  Under [brief 0008's dated correction](0008-centre.md#correction-iii1-19-october-2026),
+  this guard lands in a pull request of its own after step 3's construction and before
+  step 6's restatements, never in a train with the content it checks.
+  After axiom wave one (#170, on main since 20 October 2026, merged into this branch on 21
+  October), Circle 2 and `Tacit.centre_unique` are
+  theorems, so their names can no longer appear in the pinned list. The pin still
+  excludes Circle 2 through Circle 3, on which its proof rests; a call to
+  `centre_unique` is left to the reader of `Prop1.construction` and the lemmas it calls, as
+  `Audit/Centre.lean` now says; a pin on the proved rules each entry uses is #168's. The pinned
+  list itself is unchanged by the merge.
