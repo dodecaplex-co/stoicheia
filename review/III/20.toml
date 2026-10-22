@@ -21,7 +21,7 @@ note = "Euclid takes the radii EA and EB to be equal without giving a reason. Th
 [[passage]]
 at = "For the same reason"
 kind = "grouped"
-note = "Euclid repeats the isosceles-triangle argument at C. The Lean proves that argument once over any letters, under the preceding sentences, and applies it to AEC as well as AEB."
+note = "Euclid gives the same reason at C without writing out the isosceles-triangle argument. The Lean proves that argument once over any letters, under the preceding sentences, and applies it to AEC as well as AEB."
 
 [[passage]]
 at = "Therefore the whole angle BEC is double of the whole angle BAC"
@@ -38,7 +38,7 @@ note = "Euclid draws DE through to G on the circle. As for F, the Lean names DE 
 [[passage]]
 at = "Similarly then we can prove that the angle GEC is double of the angle EDC"
 kind = "grouped"
-note = "Euclid repeats the isosceles-triangle argument for GEC and GEB. The Lean applies the same argument, proved above over any letters, to DEC and DEB."
+note = "Euclid invokes the same isosceles-triangle argument for GEC and GEB without writing it out. The Lean applies the same argument, proved above over any letters, to DEC and DEB."
 
 [[passage]]
 at = "therefore the angle BEC which remains is double of the angle BDC"

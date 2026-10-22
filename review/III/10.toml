@@ -51,7 +51,7 @@ note = "The rule gives ABC its centre, which the Lean names P at once; that AC a
 at = "Similarly we can prove that P is also the centre of the circle DEF"
 kind = "grouped"
 helper = "Prop1.porism"
-note = "Euclid repeats the argument for DEF. The Lean takes its centre from the same assumed rule `Tacit.exists_centre`, applies `Prop1.porism` to BH and BG again, and uses the unique meeting just proved to identify that centre with P."
+note = "Euclid invokes the same argument for DEF without writing it out. The Lean takes its centre from the same assumed rule `Tacit.exists_centre`, applies `Prop1.porism` to BH and BG again, and uses the unique meeting just proved to identify that centre with P."
 
 [[passage]]
 at = "therefore the two circles ABC, DEF which cut one another"
