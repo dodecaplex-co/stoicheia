@@ -368,18 +368,18 @@ only in I.4 and I.8". Not "Lean cannot" **[reported]**.
 
 **A figure given with its triangles.** I.45 and II.14 are restricted
 ([ACCEPTANCE](ACCEPTANCE.md#the-limitations-allowed)), and every text a reader meets that
-says so (a record, a commentary, a file's notes, an introduction, a gap catalogue) uses the
-same words. The figure is "given with a checked division into triangles", not "supplied",
-and not the tag's "dissection". Its triangles "do not overlap, no point inside two of
-them", in full at their first mention in each of these texts, and "lie apart" after.
-"Equal to the figure" means equal to those triangles together. What is "not yet proved"
-([#116](https://github.com/jackChallis/stoicheia/issues/116)) is "that every rectilineal
-figure, given only by its boundary, has such a division, and that another division gives
-the same area". A record's statement `note`, held to 160 characters, may say it short:
-"Not yet proved: that every figure has one, and that another gives the same area." Where a
-main theorem takes its two triangles unchecked, the sentence that describes it says so. In
-these sentences the figure is divided, not cut; "outline" never
-stands unexplained for its boundary; and what Euclid takes for granted there is not called
+says so (a record, a commentary, a file's notes, an introduction, a gap catalogue) uses
+the same words. The figure is "given with a checked division into triangles", not
+"supplied", and not the tag's "dissection". Its triangles "do not overlap, no point inside
+two of them", in full at their first mention in each of these texts, and "lie apart"
+after. "Equal to the figure" means equal to those triangles together. What is "not yet
+proved" ([#116](https://github.com/jackChallis/stoicheia/issues/116)) is "that every
+rectilineal figure, given only by its boundary, has such a division, and that another
+division gives the same area". A record's statement `note`, held to 160 characters, may
+say it short: "Not yet proved: that every figure has one, and that another gives the same
+area." Where a main theorem takes its two triangles unchecked, the sentence that describes
+it says so. In these sentences the figure is divided, not cut; "outline" never stands
+unexplained for its boundary; and what Euclid takes for granted there is not called
 "tacit", a word kept for the tacit rules.
 
 **Numbers and names.** Our prose writes I.5, II.4, and I.1–I.24 with an en dash; Postulate
@@ -450,11 +450,11 @@ same mathematics.
 
 **The modern way's notation.** In a `$…$` span, a vector is a bold lower-case letter,
 `$\mathbf{u}$`, never `$\vec{u}$`. The modern figure beneath sets the same name in italic,
-as section 7 asks; the bold is the paragraph's mark of a vector. A vector between Heath's points is written
-`$\mathrm{C - B}$` or with an arrow over the point letters, `$\overrightarrow{\mathrm{AC}}$`,
-as in Books II and III. A length or an absolute value takes plain bars, `$|\mathbf{u}|$`
-or `$|y|$`, never `\lvert` and `\rvert`. Write the dot product
-`$\mathbf{u} \cdot \mathbf{v}$` and the plane's cross product
+as section 7 asks; the bold is the paragraph's mark of a vector. A vector between Heath's
+points is written `$\mathrm{C - B}$` or with an arrow over the point letters,
+`$\overrightarrow{\mathrm{AC}}$`, as in Books II and III. A length or an absolute value
+takes plain bars, `$|\mathbf{u}|$` or `$|y|$`, never `\lvert` and `\rvert`.
+Write the dot product `$\mathbf{u} \cdot \mathbf{v}$` and the plane's cross product
 `$\mathbf{u} \times \mathbf{v}$`; the components `$u_{1}$`, `$u_{2}$` stay italic.
 For Heath's upright letters, see "Heath's letters, one style" above; for radians and
 the rules every span must obey, see "Mathematics".
