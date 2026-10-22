@@ -57,7 +57,15 @@ note = "Like Heath's, this figure draws the last supposition the text refutes: t
 
 [review]
 stage = "full"
-commit = "6b606dc2"
+commit = "2f2c3c2f"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:d3c238070470a784"
 run = "brief 0005 stage 5, ship R3 (#29); the companions and helpers half_lt, angle_type, isosceles, equalCircles, image and equalMeasure, written by Codex, read also by Claude Opus 5.5"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
