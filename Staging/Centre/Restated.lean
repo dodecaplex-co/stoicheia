@@ -192,9 +192,10 @@ example : type_of% @Elements.BookIII.Prop23 := fun _ _ => Centre.Prop23
 
 /-- Similar segments of circles on equal straight lines are equal to one another.
 
-Today's statement of III.24. Brief 0006 restates III.24 (its stage 3) and keeps this
-statement as the companion `Prop24.equalCircles`; whichever lands first, the hypotheses
-`∃ O, Centre O AEB` and `∃ O, Centre O CFD` go from both (`Brief0006.lean`). -/
+III.24's statement before stage 3. Brief 0006 restates III.24 (its stage 3) and keeps
+this statement as the companion `Prop24.equalCircles`, against which it is checked here;
+the hypotheses `∃ O, Centre O AEB` and `∃ O, Centre O CFD` go from both
+(`Brief0006.lean`). -/
 theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hA : OnCircle A AEB)
     (hB : OnCircle B AEB) (hE : OnCircle E AEB) (hC : OnCircle C CFD) (hD : OnCircle D CFD)
     (hF : OnCircle F CFD) (hE_AB : ¬ Collinear A B E) (hF_CD : ¬ Collinear C D F)
@@ -203,8 +204,8 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hA : OnCircle A AEB)
   sorry
 
 example (exists_centre : ∀ α : Circle, ∃ O : Point, Centre O α) : type_of% @Centre.Prop24 :=
-  Elements.BookIII.Prop24 (exists_centre _) (exists_centre _)
-example : type_of% @Elements.BookIII.Prop24 := fun _ _ => Centre.Prop24
+  Elements.BookIII.Prop24.equalCircles (exists_centre _) (exists_centre _)
+example : type_of% @Elements.BookIII.Prop24.equalCircles := fun _ _ => Centre.Prop24
 
 /-- Given a segment of a circle, to describe the complete circle of which it is a segment.
 
