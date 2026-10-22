@@ -10,17 +10,20 @@
   configuration it is given, and draws the same random numbers in the same order; no law
   that survives the retirement changes.
   [`tests/model/search.py`](../../tests/model/search.py) works out the line's value at a
-  point and its sign inside `exists_point_same_side` and `exists_point_opposite_side`, the
-  centre's value against the radius inside `line_meets_circle_of_inside`, and the six
+  point inside `exists_point_same_side` and `exists_point_opposite_side`, and its sign
+  inside the first, where the second's sign, which it never read, goes; the centre's value
+  against the radius inside `line_meets_circle_of_inside`, and the six
   incidences inside `triple_incidence1` and `triple_incidence2`, and drops its helper
   `_ti_hyp`, which nothing else called.
   [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py) writes out the conic's
   second point inside `exists_point_on_circle`, the least value along the chord inside
   `line_meets_circle_of_inside` and the six incidences inside the two triple incidence
   laws; it samples `pasch4` and those two laws with `gs_convex('pasch4')` and
-  `gs_convex('ti')`, into which the draws of `gs_pasch4` and `gs_ti` move unchanged, as
+  `gs_convex('ti')`, into which the draws of `gs_pasch4` and of `gs_ti()` move unchanged, as
   wave one moved a sampler into `gs_convex('opposite')`; and it drops `_ti_hyp`,
-  `line_meets_circle`, `gs_pasch4` and `gs_ti`, which nothing else used.
+  `line_meets_circle`, `gs_pasch4` and `gs_ti`, which nothing else used. The copies of
+  these laws in `tests/model/derived.py`, kept by the first preparation, are unchanged: they
+  now agree with the rewritten laws in what they decide, though no longer in their text.
   [`scripts/safe_push.py`](../../scripts/safe_push.py) takes out of `LAW_GLOBALS` the calls
   `_ti_hyp`, `lval`, `line_meets_circle` and `sgn` for search.py, the calls `pt_on_circle`,
   `_ti_hyp` and `line_meets_circle` for hyperbolic.py, its generator `gs_pasch4` and its
