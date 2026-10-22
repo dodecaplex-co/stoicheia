@@ -4129,12 +4129,13 @@ findings:
   succeed. So that no test can fall off that path unseen, the check also proves the
   coverage, from what the shards ran rather than from the dealing: each shard writes the
   tests it ran, each with its outcome (`--ran FILE`), and keeps the list as an artifact
-  for a day, and `safe-push-tests`, once the shards have passed, checks out the commit
-  they ran, as they did, fetches every list and runs `--cover DIR`. That lists the tests
-  with unittest's loader at the commit, reads N from the matrix, and fails, naming each,
-  on a test no shard ran, a test run twice, a shard that left no list (as one that stops
-  before its end leaves none), a test the loader does not list, and a test that did not
-  pass. Seven, because by the measured times each shard then holds about 330 seconds,
+  for a day, a test having failed or not, and `safe-push-tests`, whatever the shards'
+  result, checks out the commit they ran, the pull request's head, as they did, fetches
+  every list and runs `--cover DIR`, before its verdict on that result. That lists the
+  tests with unittest's loader at the commit, reads N from the matrix, and fails, naming
+  each, on a test no shard ran, a test run twice, a shard that left no list (as one that
+  stops before its end leaves none), a test the loader does not list, and a test that did
+  not pass. Seven, because by the measured times each shard then holds about 330 seconds,
   setup included (five and a half minutes), where six would hold 6.4 minutes; the time
   after comes from this pull request's own CI run, and the times file says that its
   figures are to be measured again from that run. `--times-from-log` does it: it reads a
@@ -4158,9 +4159,12 @@ findings:
   that each shard runs the checkout, Python, parser and command above and keeps its list;
   and that `safe-push-tests` is named so, needs the matrix job, runs if `always()`,
   refuses every result but success when the paths job says the tests must run, by running
-  its step's script under bash for each result, and then, and only then, fetches every
-  list and runs the proof. Main's ruleset still does not require the check; a failing
-  shard, like any failing check, holds a merge through the merge gate.
+  its verdict's script under bash for each result, its steps' conditions read as GitHub
+  reads them; that the proof runs before the verdict whatever the shards' result, and
+  after a failed fetch, which still fails the job; and that a failing shard keeps its
+  list, and the proof names the test that failed. Main's ruleset still does not require
+  the check; a failing shard, like any failing check, holds a merge through the merge
+  gate.
   [WORKFLOW](../WORKFLOW.md), sections 8 and 10, describes the shards and how to run one.
   The protected files changed are `.github/workflows/ci.yml`, `scripts/test_safe_push.py`
   and `scripts/test_safe_push_times.json`. No check is weakened.

@@ -370,6 +370,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          # The pull request's head, the commit safe-push-paths judged, not GitHub's merge
+          # of it into main.
+          ref: ${{ github.event.pull_request.head.sha }}
           # The tests clone this repository.
           fetch-depth: 0
           # No token stays in .git/config while the pull request's code runs.
@@ -387,8 +390,10 @@ jobs:
         run: python3 scripts/test_safe_push.py --shard ${{ matrix.shard }}/${{ strategy.job-total }} --ran "$RUNNER_TEMP/ran-${{ matrix.shard }}.json"
 
       - name: Keep the list of the tests this shard ran, for safe-push-tests's proof
-        # A shard that stops before its end writes no list and keeps none, and the proof
-        # then fails. A shard run again replaces its list.
+        # Kept when a test failed too, so that the proof names it. A shard that stops
+        # before its end writes no list and keeps none, and the proof then fails. A shard
+        # run again replaces its list.
+        if: always()
         uses: actions/upload-artifact@v5
         with:
           name: safe-push-ran-${{ matrix.shard }}
@@ -402,7 +407,9 @@ jobs:
     # tests guard changed, and otherwise only when the shards' result is success, so that a
     # shard that failed, was cancelled or was skipped fails it, and the shards' lists of
     # the tests they ran prove that every test ran once. It runs whatever happened before
-    # it (always()), so that it never passes by being skipped.
+    # it (always()), so that it never passes by being skipped. The proof runs first,
+    # whatever the shards' result, so that it names each test that failed or did not run;
+    # the verdict on the shards' result comes last, whatever the proof found.
     needs: [safe-push-paths, safe-push-shards]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -410,7 +417,51 @@ jobs:
       contents: read
     timeout-minutes: 10
     steps:
+      # When the tests ran, the proof that each ran once, from what the shards ran rather
+      # than from the dealing. The checkout is the shards': the same commit, the same way.
+      - uses: actions/checkout@v5
+        if: needs.safe-push-paths.outputs.run == 'true'
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          # No token stays in .git/config while the pull request's code runs.
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        if: needs.safe-push-paths.outputs.run == 'true'
+        with:
+          python-version: "3.12"
+
+      - name: Install the pinned YAML parser the proof reads the workflow with
+        id: install
+        if: needs.safe-push-paths.outputs.run == 'true'
+        run: python3 -m pip install -r scripts/requirements-test_safe_push.txt
+
+      - name: Fetch every shard's list of the tests it ran
+        # A fetch that fails fails the job, and the proof still runs, naming each list
+        # it lacks.
+        id: fetch
+        if: needs.safe-push-paths.outputs.run == 'true'
+        uses: actions/download-artifact@v5
+        with:
+          # Each list in a folder of its own, so that none can hide another.
+          pattern: safe-push-ran-*
+          path: ${{ runner.temp }}/safe-push-ran
+
+      - name: Prove that every test ran once, in one shard, and passed
+        # Against the tests unittest's loader lists at this commit and the matrix's N, it
+        # fails, naming each, on a test no shard ran, a test run twice, a shard that left
+        # no list, a test the loader does not list, and a test that did not pass. It runs
+        # once the checkout, Python and the parser are ready, whatever the shards' result
+        # and whether or not the fetch failed.
+        id: cover
+        if: always() && steps.install.outcome == 'success'
+        run: python3 scripts/test_safe_push.py --cover "$RUNNER_TEMP/safe-push-ran"
+
       - name: Pass only when every shard passed, or when the pull request changes none of those paths
+        # Whatever failed before it: a failed proof or fetch fails the job by itself.
+        id: verdict
+        if: always()
         env:
           PATHS: ${{ needs.safe-push-paths.result }}
           RUN: ${{ needs.safe-push-paths.outputs.run }}
@@ -431,41 +482,8 @@ jobs:
           fi
           case "$SHARDS" in
             success) echo "Every shard of scripts/test_safe_push.py passed." ;;
-            failure) echo "The shards ended in failure: a shard failed, and its log names the test."; exit 1 ;;
+            failure) echo "The shards ended in failure: a shard failed, and the proof above and its log name the test."; exit 1 ;;
             cancelled) echo "The shards ended cancelled: a shard was cancelled, so not every test ran."; exit 1 ;;
             skipped) echo "The shards were skipped, though the pull request changes what they test, so no test ran."; exit 1 ;;
             *) echo "The shards ended '$SHARDS', which is not success."; exit 1 ;;
           esac
-
-      # When the tests ran, the proof that each ran once, from what the shards ran rather
-      # than from the dealing. The checkout is the shards': the same commit, the same way.
-      - uses: actions/checkout@v5
-        if: needs.safe-push-paths.outputs.run == 'true'
-        with:
-          fetch-depth: 0
-          # No token stays in .git/config while the pull request's code runs.
-          persist-credentials: false
-
-      - uses: actions/setup-python@v5
-        if: needs.safe-push-paths.outputs.run == 'true'
-        with:
-          python-version: "3.12"
-
-      - name: Install the pinned YAML parser the proof reads the workflow with
-        if: needs.safe-push-paths.outputs.run == 'true'
-        run: python3 -m pip install -r scripts/requirements-test_safe_push.txt
-
-      - name: Fetch every shard's list of the tests it ran
-        if: needs.safe-push-paths.outputs.run == 'true'
-        uses: actions/download-artifact@v5
-        with:
-          # Each list in a folder of its own, so that none can hide another.
-          pattern: safe-push-ran-*
-          path: ${{ runner.temp }}/safe-push-ran
-
-      - name: Prove that every test ran once, in one shard, and passed
-        # Against the tests unittest's loader lists at this commit and the matrix's N, it
-        # fails, naming each, on a test no shard ran, a test run twice, a shard that left
-        # no list, a test the loader does not list, and a test that did not pass.
-        if: needs.safe-push-paths.outputs.run == 'true'
-        run: python3 scripts/test_safe_push.py --cover "$RUNNER_TEMP/safe-push-ran"

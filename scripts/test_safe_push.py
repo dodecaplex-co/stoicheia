@@ -7177,9 +7177,11 @@ def times_command(logs: list[Path]) -> int:
     return 0
 
 
-def stand_in_main(*, defaultTest: list[str], testRunner: RanRunner, **_) -> None:
+def stand_in_main(*, defaultTest: list[str], testRunner: RanRunner,
+                  failing: frozenset[str] = frozenset(), **_) -> None:
     """unittest.main as the Shards tests stub it: each test named, in turn, is a stand-in
-    that passes at once, run by the runner given."""
+    that passes at once, or fails at once if it is among `failing`, run by the runner
+    given."""
     class StandIn(unittest.TestCase):
         __module__ = "shard_stand_in"  # no module of that name, so no setUpModule runs
 
@@ -7188,7 +7190,8 @@ def stand_in_main(*, defaultTest: list[str], testRunner: RanRunner, **_) -> None
             self.key = key
 
         def runTest(self):
-            pass
+            if self.key in failing:
+                self.fail("planted")
 
         def id(self):
             return f"{self.__module__}.{self.key}"
@@ -7197,6 +7200,57 @@ def stand_in_main(*, defaultTest: list[str], testRunner: RanRunner, **_) -> None
             return f"{self.key} (a stand-in, which passes at once)"
 
     testRunner.run(unittest.TestSuite([StandIn(name) for name in defaultTest]))
+
+
+def step_runs(condition: str | None, context: dict[str, str], failed: bool) -> bool:
+    """Whether GitHub runs a step whose `if` is `condition`, a step before it having failed
+    or not, in the forms CI's safe-push jobs use: terms joined by &&, each a status
+    function or a context's value compared, by == or !=, with a quoted string, ignoring
+    case as GitHub does. A condition with no status function holds only when no step
+    before it failed. Any other form is a ValueError."""
+    text = (condition or "").strip()
+    if text.startswith("${{") and text.endswith("}}"):
+        text = text[3:-2].strip()
+    terms = [term.strip() for term in text.split("&&")] if text else []
+    status = {"always()": True, "!cancelled()": True, "success()": not failed,
+              "failure()": failed}
+    held = [] if set(terms) & set(status) else [not failed]
+    for term in terms:
+        compared = re.fullmatch(r"([\w.-]+) (==|!=) '([^']*)'", term)
+        if term in status:
+            held.append(status[term])
+        elif compared:
+            same = context[compared[1]].casefold() == compared[3].casefold()
+            held.append(same == (compared[2] == "=="))
+        else:
+            raise ValueError(f"a condition this model does not read: {condition!r}")
+    return all(held)
+
+
+def run_steps(steps: list[dict], context: dict[str, str], passes) -> tuple[list[str], bool]:
+    """A job's steps as GitHub runs them: each step whose condition holds, by step_runs,
+    passes or fails as `passes(step, env)` says, its env read from `context`; a step that
+    fails fails the job, and the steps after it see that, and each step's outcome. The
+    steps that ran, each by its id, else its action, else its name, and whether the job
+    passed. A step with a key this model does not read is a ValueError."""
+    context, failed, ran = dict(context), False, []
+
+    def value(text) -> str:
+        expression = re.fullmatch(r"\$\{\{ ([\w.-]+) \}\}", str(text))
+        return context[expression[1]] if expression else str(text)
+
+    for step in steps:
+        if set(step) - {"name", "id", "if", "uses", "with", "run", "env"}:
+            raise ValueError(f"a step this model does not read: {step!r}")
+        outcome = "skipped"
+        if step_runs(step.get("if"), context, failed):
+            ran.append(step.get("id") or step.get("uses") or step["name"])
+            env = {name: value(text) for name, text in step.get("env", {}).items()}
+            outcome = "success" if passes(step, env) else "failure"
+            failed = failed or outcome == "failure"
+        if "id" in step:
+            context[f"steps.{step['id']}.outcome"] = outcome
+    return ran, not failed
 
 
 class Shards(unittest.TestCase):
@@ -7213,21 +7267,48 @@ class Shards(unittest.TestCase):
     def ci_shard_count(self) -> int:
         return ci_shard_count(self.jobs())
 
-    def run_every_shard(self, count: int, directory: Path) -> tuple[list[list[str]], list[str]]:
+    def run_every_shard(self, count: int, directory: Path,
+                        failing: frozenset[str] = frozenset()) -> tuple[list[list[str]], list[str]]:
         """`--shard K/count --ran directory/ran-K.json` for each K, unittest.main stubbed so
-        that each test named is a stand-in that passes at once: the names each shard handed
-        unittest, and what each said before it ran."""
+        that each test named is a stand-in that passes at once, or fails if it is among
+        `failing`, its shard then exiting 1: the names each shard handed unittest, and what
+        each said before it ran."""
         dealt, said = [], []
         for shard in range(1, count + 1):
             err = io.StringIO()
-            with mock.patch.object(unittest, "main", side_effect=stand_in_main) as main, \
+            with mock.patch.object(unittest, "main", side_effect=lambda **kwargs: stand_in_main(
+                    failing=failing, **kwargs)) as main, \
                     contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as stopped:
                 run_shard(shard, count, directory / f"ran-{shard}.json")
-            self.assertEqual(stopped.exception.code, 0, err.getvalue())
+            names = main.call_args.kwargs["defaultTest"]
+            self.assertEqual(stopped.exception.code, 1 if failing & set(names) else 0,
+                             err.getvalue())
             self.assertIs(main.call_args.kwargs["exit"], False)
-            dealt.append(main.call_args.kwargs["defaultTest"])
+            dealt.append(names)
             said.append(err.getvalue())
         return dealt, said
+
+    def gather(self, paths: str, run: str, shards: str,
+               failing: frozenset[str] = frozenset()) -> tuple[list[str], bool, str]:
+        """safe-push-tests as GitHub runs it on a pull request whose safe-push-paths ended
+        `paths`, its output `run`, and whose shards ended `shards`: each step by run_steps,
+        those in `failing` failing, the others passing, and the verdict's script run by
+        bash, as GitHub runs a step's script on Linux, stopping at the first failure. The
+        steps that ran, whether the job passed, and what the verdict said."""
+        said = []
+
+        def passes(step: dict, env: dict[str, str]) -> bool:
+            if step.get("id") != "verdict":
+                return (step.get("id") or step.get("uses")) not in failing
+            r = subprocess.run(["bash", "-e", "-c", step["run"]], capture_output=True,
+                               text=True, env={"PATH": os.environ["PATH"], **env})
+            said.append(r.stdout + r.stderr)
+            return r.returncode == 0
+
+        ran, passed = run_steps(self.jobs()[GATHER_JOB]["steps"], {
+            f"needs.{PATHS_JOB}.result": paths, f"needs.{PATHS_JOB}.outputs.run": run,
+            f"needs.{SHARD_JOB}.result": shards}, passes)
+        return ran, passed, "".join(said)
 
     def test_ci_shards_hold_every_test_once(self):
         # What `--shard K/N --ran FILE` hands unittest.main, for each K of the N in CI's
@@ -7275,6 +7356,20 @@ class Shards(unittest.TestCase):
                 self.assertIn(f"No measured time for {planted} ", text)
             self.assertEqual(cover(Path(tmp), count, keys), [])
         self.assertNotIn(planted, [time_key(test) for test in loaded_tests()])
+
+    def test_a_failing_shard_keeps_its_list_and_the_proof_names_the_test(self):
+        # A shard one of whose tests fails exits 1, having written its list with that
+        # test's outcome; the proof over every list, the others complete, names it.
+        count = self.ci_shard_count()
+        keys = [time_key(test) for test in loaded_tests()]
+        failed = "Shards.test_a_failing_shard_keeps_its_list_and_the_proof_names_the_test"
+        with tempfile.TemporaryDirectory() as tmp:
+            dealt, _ = self.run_every_shard(count, Path(tmp), frozenset({failed}))
+            [shard] = [shard for shard, names in enumerate(dealt, 1) if failed in names]
+            self.assertIn([failed, "FAIL"], json.loads(
+                (Path(tmp) / f"ran-{shard}.json").read_text())["ran"])
+            self.assertEqual(cover(Path(tmp), count, keys),
+                             [f"{failed} did not pass in shard {shard}: FAIL."])
 
     def test_the_proof_names_each_test_not_run_once_and_each_list_missing(self):
         # Each list complete, then one fault planted in a copy of them: the dropped one, a
@@ -7593,43 +7688,61 @@ class Shards(unittest.TestCase):
         self.assertEqual(job["strategy"]["fail-fast"], False)
         self.assertEqual(job["permissions"], {"contents": "read"})
         self.assertNotIn("continue-on-error", job)
-        # Each shard lists the tests it ran, and keeps the list under a name of its own, for
-        # a day: a shard that stops before its end lists nothing, and keeps nothing.
+        # Each shard runs the pull request's head, the commit safe-push-paths judged, not
+        # GitHub's merge of it; lists the tests it ran, and keeps the list under a name of
+        # its own, for a day: a shard that stops before its end lists nothing, and keeps
+        # nothing.
+        head = "${{ github.event.pull_request.head.sha }}"
+        self.assertEqual(paths["steps"][-1]["env"]["HEAD_SHA"], head)
         self.assertEqual([{key: value for key, value in step.items() if key != "name"}
                           for step in job["steps"]], [
             {"uses": "actions/checkout@v5",
-             "with": {"fetch-depth": 0, "persist-credentials": False}},
+             "with": {"ref": head, "fetch-depth": 0, "persist-credentials": False}},
             {"uses": "actions/setup-python@v5", "with": {"python-version": "3.12"}},
             {"run": "python3 -m pip install -r scripts/requirements-test_safe_push.txt"},
             {"run": "python3 scripts/test_safe_push.py "
                     "--shard ${{ matrix.shard }}/${{ strategy.job-total }} "
                     '--ran "$RUNNER_TEMP/ran-${{ matrix.shard }}.json"'},
-            {"uses": "actions/upload-artifact@v5",
+            {"if": "always()", "uses": "actions/upload-artifact@v5",
              "with": {"name": "safe-push-ran-${{ matrix.shard }}",
                       "path": "${{ runner.temp }}/ran-${{ matrix.shard }}.json",
                       "if-no-files-found": "error", "retention-days": 1, "overwrite": True}}])
+        # A shard whose tests fail, having written its list, still keeps it, and fails.
+        tests = job["steps"][3]
+        for failing in (None, tests):
+            with self.subTest(tests_fail=failing is not None):
+                ran, passed = run_steps(job["steps"], {}, lambda step, env: step is not failing)
+                self.assertEqual(ran[-1], "actions/upload-artifact@v5")
+                self.assertEqual(len(ran), len(job["steps"]))
+                self.assertIs(passed, failing is None)
+        ran, passed = run_steps(job["steps"], {}, lambda step, env: step is not job["steps"][0])
+        self.assertEqual(ran, ["actions/checkout@v5", "actions/upload-artifact@v5"])
+        self.assertFalse(passed)
 
     def test_safe_push_tests_proves_from_what_the_shards_ran(self):
-        # When the tests ran, and only then, after the shards' verdict: the commit the
+        # When the tests ran, before the verdict on the shards' result: the commit the
         # shards ran, checked out as they checked it out, every shard's list fetched, and
-        # the proof run over them. Each shard's list has a name the fetch's pattern
-        # matches, and no other job keeps one that it matches.
+        # the proof run over them once the parser is in, whether or not the fetch failed.
+        # Each shard's list has a name the fetch's pattern matches, and no other job keeps
+        # one that it matches.
         jobs = self.jobs()
         ran = f"needs.{PATHS_JOB}.outputs.run == 'true'"
         steps = jobs[GATHER_JOB]["steps"]
-        self.assertNotIn("if", steps[0])
+        self.assertEqual(steps[0]["with"], jobs[SHARD_JOB]["steps"][0]["with"])
         self.assertEqual([{key: value for key, value in step.items() if key != "name"}
-                          for step in steps[1:]], [
+                          for step in steps[:-1]], [
             {"uses": "actions/checkout@v5", "if": ran,
-             "with": {"fetch-depth": 0, "persist-credentials": False}},
+             "with": {"ref": "${{ github.event.pull_request.head.sha }}", "fetch-depth": 0,
+                      "persist-credentials": False}},
             {"uses": "actions/setup-python@v5", "if": ran, "with": {"python-version": "3.12"}},
-            {"run": "python3 -m pip install -r scripts/requirements-test_safe_push.txt",
-             "if": ran},
-            {"uses": "actions/download-artifact@v5", "if": ran,
+            {"id": "install", "if": ran,
+             "run": "python3 -m pip install -r scripts/requirements-test_safe_push.txt"},
+            {"id": "fetch", "if": ran, "uses": "actions/download-artifact@v5",
              "with": {"pattern": "safe-push-ran-*", "path": "${{ runner.temp }}/safe-push-ran"}},
-            {"run": 'python3 scripts/test_safe_push.py --cover "$RUNNER_TEMP/safe-push-ran"',
-             "if": ran}])
-        pattern = steps[4]["with"]["pattern"]
+            {"id": "cover", "if": "always() && steps.install.outcome == 'success'",
+             "run": 'python3 scripts/test_safe_push.py --cover "$RUNNER_TEMP/safe-push-ran"'}])
+        self.assertEqual(steps[-1]["id"], "verdict")
+        pattern = steps[3]["with"]["pattern"]
         name = jobs[SHARD_JOB]["steps"][-1]["with"]["name"]
         for shard in range(1, self.ci_shard_count() + 1):
             self.assertTrue(fnmatch.fnmatchcase(name.replace("${{ matrix.shard }}", str(shard)),
@@ -7646,37 +7759,50 @@ class Shards(unittest.TestCase):
         self.assertEqual(job["if"], "always() && github.event_name == 'pull_request'")
         self.assertEqual(job["permissions"], {"contents": "read"})
         self.assertNotIn("continue-on-error", job)
-        step = job["steps"][0]
-        self.assertFalse({"if", "shell", "continue-on-error", "uses"} & set(step))
+        step = job["steps"][-1]
+        self.assertEqual(step["id"], "verdict")
+        self.assertEqual(step["if"], "always()")
+        self.assertFalse({"shell", "continue-on-error", "uses"} & set(step))
         self.assertEqual(step["env"], {"PATHS": f"${{{{ needs.{PATHS_JOB}.result }}}}",
                                        "RUN": f"${{{{ needs.{PATHS_JOB}.outputs.run }}}}",
                                        "SHARDS": f"${{{{ needs.{SHARD_JOB}.result }}}}"})
         self.assertNotIn("${{", step["run"])
+        every = ["actions/checkout@v5", "actions/setup-python@v5", "install", "fetch", "cover",
+                 "verdict"]
 
-        def verdict(paths: str, run: str, shards: str) -> tuple[int, str]:
-            # As GitHub runs a step's script on Linux: bash, stopping at the first failure.
-            r = subprocess.run(["bash", "-e", "-c", step["run"]], capture_output=True,
-                               text=True,
-                               env={"PATH": os.environ["PATH"], "PATHS": paths, "RUN": run,
-                                    "SHARDS": shards})
-            return r.returncode, r.stdout + r.stderr
-
-        status, out = verdict("success", "true", "success")
-        self.assertEqual(status, 0, out)
-        status, out = verdict("success", "false", "skipped")
-        self.assertEqual(status, 0, out)
-        self.assertIn("so scripts/test_safe_push.py does not run", out)
+        ran, passed, said = self.gather("success", "true", "success")
+        self.assertEqual((ran, passed), (every, True), said)
+        ran, passed, said = self.gather("success", "false", "skipped")
+        self.assertEqual((ran, passed), (["verdict"], True), said)
+        self.assertIn("so scripts/test_safe_push.py does not run", said)
+        # Whatever the shards' result, the proof runs, naming what failed or did not run,
+        # and then the verdict fails the job.
         for shards in ("failure", "cancelled", "skipped", ""):
             with self.subTest(shards=shards):
-                status, out = verdict("success", "true", shards)
-                self.assertNotEqual(status, 0, out)
-                self.assertIn(shards or "''", out)
+                ran, passed, said = self.gather("success", "true", shards)
+                self.assertEqual((ran, passed), (every, False), said)
+                self.assertIn(shards or "''", said)
         for paths, run in (("failure", ""), ("cancelled", ""), ("skipped", ""),
                            ("failure", "false"), ("failure", "true"), ("success", ""),
                            ("success", "maybe")):
             with self.subTest(paths=paths, run=run):
-                status, out = verdict(paths, run, "skipped")
-                self.assertNotEqual(status, 0, out)
+                ran, passed, said = self.gather(paths, run, "skipped")
+                self.assertFalse(passed, said)
+                self.assertEqual(ran[-1], "verdict")
+        # A fetch that fails, a list missing, fails the job, and the proof still runs; a
+        # proof that fails fails the job, though every shard passed; a checkout that fails
+        # leaves no proof to run, and fails the job.
+        for failing, proved in (("fetch", True), ("cover", True),
+                                ("actions/checkout@v5", False), ("install", False)):
+            with self.subTest(failing=failing):
+                ran, passed, said = self.gather("success", "true", "success",
+                                                frozenset({failing}))
+                self.assertFalse(passed)
+                self.assertIs("cover" in ran, proved)
+                self.assertEqual(ran[-1], "verdict")
+                self.assertIn("Every shard of scripts/test_safe_push.py passed.", said)
+        with self.assertRaises(ValueError):
+            step_runs("failure() || always()", {}, False)
 
 
 if __name__ == "__main__":
