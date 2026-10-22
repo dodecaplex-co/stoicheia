@@ -56,7 +56,7 @@ note = "Euclid takes the angles FBD and DFB to be equal because each is half a r
 [[passage]]
 at = "But the square on EF is equal to the squares on EG, GF"
 kind = "helper"
-helper = "Prop47.sq"
+helper = "BookI.Prop47.sq"
 note = "Euclid gives the square on EF as the squares on EG and GF together, without a reference here. The Lean applies I.47 to the triangle EGF, whose angle at G has been proved right."
 
 [[passage]]
@@ -70,10 +70,10 @@ case = "D between C and B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "f3b45b70"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "221ad5c2"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:d341a1520792f8c3"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "card 220, cross-family sign-off: original proof by OpenAI Codex, read by Claude Opus 5.5. Later proof edits at 3727c87e rewrite the half-right-angle equality and carry the angles EGF and FDB to Euclid's angle ECB; the commit has a Claude Opus 5.5 co-author trailer but does not identify which writer made them. Those edits were read by GPT-6 Astra (Codex) at f3b45b70 and by Claude Opus 5.5 at 221ad5c2; ship XS, reader XS-r-II09-II14, independent re-read at 221ad5c2"
 
 [review.items]
 statement = "pass"
