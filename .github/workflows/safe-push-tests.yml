@@ -61,7 +61,7 @@ jobs:
   negative-tests:
     # The negative tests in full, as CI's `negative` job runs them: break the project on
     # purpose, and check that every break is caught. CI runs them on every push to main,
-    # and on a pull request or a branch's push of class R3 and above; here they run on main
+    # and on a pull request of class R3 and above; here they run on main
     # for what the pull requests of R0 to R2 landed without them. Not named `negative`, so
     # that a run of this workflow on a pull request's branch posts no check of a required
     # check's name.
@@ -96,7 +96,7 @@ jobs:
     # The formal model in model/, as CI's `formal-model` job checks it: its build, with the
     # pinned Mathlib's prebuilt files, then its compiled proofs replayed by Lean's kernel
     # (model/README.md, "The CI job"). CI runs it on every push to main, and on a pull
-    # request or a branch's push of class R4 and above or that changes a file the model
+    # request of class R4 and above or that changes a file the model
     # imports; here it runs on main for what the other pull requests landed without it.
     runs-on: ubuntu-latest
     permissions:
