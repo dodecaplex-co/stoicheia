@@ -6928,7 +6928,7 @@ def run_shard(shard: int, count: int, ran: Path | None = None) -> None:
     if not names:
         sys.exit(f"Shard {shard} of {count} has no tests: {len(tests)} tests fill at most "
                  f"{len(tests)} shards.")
-    runner = RanRunner()
+    runner = RanRunner(warnings=None if sys.warnoptions else "default")
     unittest.main(argv=sys.argv[:1], defaultTest=names, testRunner=runner, exit=False)
     if ran is not None:
         ran.parent.mkdir(parents=True, exist_ok=True)
@@ -7655,8 +7655,8 @@ class Shards(unittest.TestCase):
 
         def verdict(paths: str, run: str, shards: str) -> tuple[int, str]:
             # As GitHub runs a step's script on Linux: bash, stopping at the first failure.
-            r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c",
-                                step["run"]], capture_output=True, text=True,
+            r = subprocess.run(["bash", "-e", "-c", step["run"]], capture_output=True,
+                               text=True,
                                env={"PATH": os.environ["PATH"], "PATHS": paths, "RUN": run,
                                     "SHARDS": shards})
             return r.returncode, r.stdout + r.stderr

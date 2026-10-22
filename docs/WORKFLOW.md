@@ -312,7 +312,7 @@ python3 scripts/check_links.py
 ```
 
 Review the generated differences and commit them with their sources, so that regenerating
-leaves them unchanged and the `git status` line prints nothing. Five more jobs run on
+leaves them unchanged and the `git status` line prints nothing. Five more checks run on
 their own, each in isolation. The first three have direct local commands; the next two
 commands below run the acceptance job's tests and checklist without its CI comparison, and
 the last three run the `safe-push-tests` check's, whole and then one shard as CI runs it:
@@ -361,10 +361,9 @@ tests read: they also read content (`heath/I/01.md`, the decisions page,
 `docs/briefs/book-I.md`, `docs/program.toml`, `docs/reading.md` and `facts.json`) and run
 `check_fidelity.py` and `render.py` over the whole tree, so a pull request that changes
 only content can still break them, and the next run of the check shows it. The tests need
-Git with the whole history and the pinned PyYAML, but no Lean and no network. They take
-about seven minutes on a quiet machine and have taken 35 on a busy one; in a single job
-they took 37.7 and 45.4 minutes on GitHub's runners, and once ran past its 60-minute
-limit. So CI runs them as seven shards side by side
+Git with the whole history and the pinned PyYAML, but no Lean and no network. In a
+single job they took 37.7 and 45.4 minutes on GitHub's runners, and once ran past its
+60-minute limit. So CI runs them as seven shards side by side
 ([#233](https://github.com/jackChallis/stoicheia/issues/233)): the `safe-push-shards`
 job's matrix runs `python3 scripts/test_safe_push.py --shard K/7 --ran FILE` for each K
 from 1 to 7, and the `safe-push-tests` job, which gives the check its name, passes only
