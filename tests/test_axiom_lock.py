@@ -8,9 +8,9 @@ word's definition changed in facts.json's data, read into memory.
 
     python3 -I tests/test_axiom_lock.py
 
-Standard library only; no Lean, Git or network. Each case works on a copy of the lock in a
-temporary directory of its own, never the lock or facts.json, and checks that both are as
-they were.
+Standard library only; no Lean, Git or network. Each case has a copy of the lock in a
+temporary directory of its own and writes only there, never to the lock or facts.json, and
+checks that both are as they were.
 scripts/negative_tests.py runs it after the decision entry regressions, so CI's `negative`
 job and the pre-flight run it on every pull request.
 """

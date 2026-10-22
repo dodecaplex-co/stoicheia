@@ -12,17 +12,19 @@
   decisions page as where a decision is recorded, which has been out of date since #239.
   It is renewed by a lock change of its own
   ([#CARD](https://github.com/jackChallis/stoicheia/issues/CARD)): `LOCK_HEADER` and the
-  lock together, both hashes renewed and the model's generated files written again, and
-  nothing else. A lock change that comes with Lean cannot carry it, for the pre-flight
-  keeps check code apart from what the checks judge.
+  lock together, `model/lock.sha256` and `tests/model/lock.sha256` renewed and the model's
+  generated files written again, with its decision entry, and nothing else. A lock change
+  that comes with Lean cannot carry it, for the pre-flight keeps check code apart from
+  what the checks judge.
 
   This entry approves the change to `scripts/check_fidelity.py`, whose `LOCK_HEADER` is
   the committed lock's header again, with a comment saying why it moves only with the
   lock. This entry approves the new `tests/test_axiom_lock.py`, which needs no Lean:
   written from the committed `facts.json`, the lock comes back byte for byte and the
   writer reports no change; the lock read and rendered again is the same text; and a
-  header changed by one character, or one word's definition changed in `facts.json`'s
-  data, read into memory, makes each comparison fail. This entry approves the change to
+  header changed by one character is seen in the bytes, though the writer still reports no
+  change, while one word's definition changed in `facts.json`'s data, read into memory, is
+  seen both in the bytes and in what the writer reports. This entry approves the change to
   `scripts/negative_tests.py`, which runs the new test after the decision entry
   regressions, before planting, and with `--counts-only` too. Section 8 of
   `docs/WORKFLOW.md` says so in one bullet.

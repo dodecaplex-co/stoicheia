@@ -461,8 +461,9 @@ def placement_step(step: dict) -> bool:
 # has been out of date since #239: a new decision is a file of docs/decisions/, as the
 # messages say through DECISION_ENTRY. It is renewed by a lock change of its own (#CARD):
 # LOCK_HEADER and the lock together, both hashes renewed and the model's generated files
-# written again, and nothing else. A lock change that comes with Lean cannot carry it,
-# for the pre-flight keeps check code apart from what the checks judge.
+# written again, with its decision entry, and nothing else. A lock change that comes with
+# Lean cannot carry it, for the pre-flight keeps check code apart from what the checks
+# judge.
 LOCK_HEADER = """\
 # Certificate/axioms.lock
 #
