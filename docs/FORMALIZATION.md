@@ -65,9 +65,10 @@ that role ([WORKFLOW.md](WORKFLOW.md)).
   right angle and Book II's `rect` and `sq`: they add and compare, and nothing more. "Greater
   than … by" is an equation (the less with the excess is the greater). No numbers,
   coordinates or real numbers appear in a statement or a proof, except that the zero
-  magnitude is written `0`, in some helpers and proofs: it stands for no magnitude (no
-  length, no angle, no area), never for a number Euclid uses. So `‖A B‖ ≠ 0` says that AB
-  is not nothing, and `0 < ∠ A C B` that the angle ACB is not nothing.
+  magnitude is written `0`, in some laws, definitions, helpers and proofs: it stands for
+  no magnitude (no length, no angle, no area), never for a number Euclid uses. So
+  `‖A B‖ ≠ 0` says that AB is not nothing, and `0 < ∠ A C B` that the angle ACB is not
+  nothing.
 - Each book's phrases, and how its statements say them, are in its brief.
 
 ### Coverage: does it say what Euclid says?
@@ -644,11 +645,11 @@ rest, and these stay open, each example built in Lean 4.35 as written:
   `#check1set_option«debug».byAsSorry true in theorem …` is `#check`, `1` and
   `set_option`, and builds on `sorryAx`, and `#whereaxiom planted : False` is `#where`
   and an axiom, while the scan reads the names `check1set_option` and `whereaxiom`. Those
-  the list above refuses, `#eval`, `#exit`, `#guard_panic`, `#time`, `#with_exporting` and
-  `#guard`, are refused closed up or not. A fixed list of the rest would not do: which
-  `#` tokens Lean has depends on what the file imports (`#widget` comes with
-  `import Lean`, not with `Init` alone), and a file may declare a longer one, so the list
-  would misread a file that lacks one and could hide the code after it
+  the list above refuses in every form, `#eval`, `#exit`, `#guard_panic`, `#time`,
+  `#with_exporting` and `#guard`, are refused closed up or not. A fixed list of the rest
+  would not do: which `#` tokens Lean has depends on what the file imports (`#widget`
+  comes with `import Lean`, not with `Init` alone), and a file may declare a longer one,
+  so the list would misread a file that lacks one and could hide the code after it
   (`s!"{5#widget'}'"`, where Lean reads `5#widget'` as a bit-vector literal and the `}`
   closes the hole).
 - Lean's other own tokens ([#317](https://github.com/jackChallis/stoicheia/issues/317)).
