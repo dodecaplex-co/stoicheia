@@ -329,7 +329,7 @@ python3 -I tests/test_check_acceptance.py   # CI's `acceptance` job: the compari
 python3 scripts/check_acceptance.py --output "${RUNNER_TEMP:-/tmp}/acceptance/report.md" --json "${RUNNER_TEMP:-/tmp}/acceptance/verdicts.json"
 python3 -m pip install -r scripts/requirements-test_safe_push.txt
 python3 scripts/test_safe_push.py      # CI's `safe-push-tests` check, every test: no Lean
-python3 scripts/test_safe_push.py --shard 3/7   # its third shard of seven, as CI runs it
+python3 scripts/test_safe_push.py --shard 3/7 --ran "${RUNNER_TEMP:-/tmp}/ran-3.json"   # its third shard of seven, as CI runs it
 ```
 
 `RUNNER_TEMP` supplies GitHub Actions' temporary directory; the fallback writes under
@@ -366,16 +366,31 @@ about seven minutes on a quiet machine and have taken 35 on a busy one; in a sin
 they took 37.7 and 45.4 minutes on GitHub's runners, and once ran past its 60-minute
 limit. So CI runs them as seven shards side by side
 ([#233](https://github.com/jackChallis/stoicheia/issues/233)): the `safe-push-shards`
-job's matrix runs `python3 scripts/test_safe_push.py --shard K/7` for each K from 1 to 7,
-and the `safe-push-tests` job, which gives the check its name, passes only when every
-shard passed, failing when a shard failed, was cancelled or was skipped. Every test still
-runs on each such pull request, in exactly one shard: `--shard` lists the tests with
-unittest's own loader, so that a new test is never missed, and deals them out by the
+job's matrix runs `python3 scripts/test_safe_push.py --shard K/7 --ran FILE` for each K
+from 1 to 7, and the `safe-push-tests` job, which gives the check its name, passes only
+when every shard passed, failing when a shard failed, was cancelled or was skipped, and
+when the shards' lists of the tests they ran prove that every test ran once. Every test
+still runs on each such pull request, in exactly one shard: `--shard` lists the tests
+with unittest's own loader, so that a new test is never missed, and deals them out by the
 seconds each took on a GitHub runner, kept in `scripts/test_safe_push_times.json`, the
 heaviest first, each to the shard with the least time so far. By those times each shard
-takes about five and a half minutes. A test the file does not name weighs the median, and
-each shard's log names it; the times are refreshed from a CI run's logs when the shards
-drift apart. To run one shard as CI does, give its number and the count, as in
+takes about five and a half minutes. A test the file does not name, one added or renamed
+since, weighs the median, and each shard's log names it. The proof is built from what the
+shards ran, not from the dealing. Each shard writes the tests it ran, each with its
+outcome, to the file `--ran` names, and keeps it as an artifact for a day; then
+`safe-push-tests` checks out the commit the shards ran, as they did, fetches every list
+and runs `python3 scripts/test_safe_push.py --cover DIR`, which lists the tests with
+unittest's loader at that commit, reads N from the matrix, and fails, naming each, on a
+test no shard ran, a test run twice, a shard that left no list (as one that stops before
+its end leaves none), a test the loader does not list, and a test that did not pass. The
+times were read from the CI run of
+[#239](https://github.com/jackChallis/stoicheia/pull/239), and are to be measured again
+from the run of the pull request that brought in the shards, and whenever the shards
+drift apart: `gh run view RUN --log > run.log` keeps a run's logs, each line timestamped
+by GitHub, and `python3
+scripts/test_safe_push.py --times-from-log run.log` reads the shards' verbose output there
+and writes the file, the setup's time measured up to the line `setUpModule` prints when
+its clone is ready. To run one shard as CI does, give its number and the count, as in
 `python3 scripts/test_safe_push.py --shard 3/7`; without `--shard` the whole suite runs.
 `FullChecks`, the one test that needs Lean, is skipped without `STOICHEIA_SLOW_TESTS=1`,
 there as anywhere. The three jobs read the repository with no other permission, and their

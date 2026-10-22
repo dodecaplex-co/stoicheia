@@ -297,8 +297,9 @@ jobs:
     # code and the tests among them), the workflows, and the page whose section 8 the tests
     # compare with safe_push's CHECKS and the `check` job. This job decides whether it
     # runs; safe-push-shards runs it, whole, in shards side by side; and safe-push-tests,
-    # the check's name, passes only when every shard passed, or at once, saying why, on any
-    # other pull request. On a push all three are skipped.
+    # the check's name, passes only when every shard passed and the shards' lists of what
+    # they ran prove that every test ran once, or at once, saying why, on any other pull
+    # request. On a push all three are skipped.
     # Those paths are not all the tests read: they also read content (heath/I/01.md, the
     # decisions page, docs/briefs/book-I.md, docs/program.toml, docs/reading.md and
     # facts.json) and run check_fidelity.py and render.py over the whole tree, so a pull
@@ -348,9 +349,11 @@ jobs:
     # `--shard K/N` lists the tests with unittest's own loader and deals them out by the
     # seconds each took on a GitHub runner (scripts/test_safe_push_times.json), so that
     # each test runs in exactly one shard: by those times each shard takes about five and a
-    # half minutes, its clone of the repository included. The tests need Git with the whole
-    # history and the pinned YAML parser, but no Lean and no network: FullChecks, which
-    # needs Lean, is skipped without STOICHEIA_SLOW_TESTS=1, as it is anywhere.
+    # half minutes, its clone of the repository included. A test missing from that file,
+    # one a later pull request adds or renames, weighs their median, and still runs. The
+    # tests need Git with the whole history and the pinned YAML parser, but no Lean and no
+    # network: FullChecks, which needs Lean, is skipped without STOICHEIA_SLOW_TESTS=1, as
+    # it is anywhere.
     needs: safe-push-paths
     if: needs.safe-push-paths.outputs.run == 'true'
     runs-on: ubuntu-latest
@@ -380,19 +383,32 @@ jobs:
         run: python3 -m pip install -r scripts/requirements-test_safe_push.txt
 
       - name: Check the gate every pull request lands through, guard by guard, one shard of the tests
-        run: python3 scripts/test_safe_push.py --shard ${{ matrix.shard }}/${{ strategy.job-total }}
+        # --ran: after its run the shard writes the tests it ran, each with its outcome.
+        run: python3 scripts/test_safe_push.py --shard ${{ matrix.shard }}/${{ strategy.job-total }} --ran "$RUNNER_TEMP/ran-${{ matrix.shard }}.json"
+
+      - name: Keep the list of the tests this shard ran, for safe-push-tests's proof
+        # A shard that stops before its end writes no list and keeps none, and the proof
+        # then fails. A shard run again replaces its list.
+        uses: actions/upload-artifact@v5
+        with:
+          name: safe-push-ran-${{ matrix.shard }}
+          path: ${{ runner.temp }}/ran-${{ matrix.shard }}.json
+          if-no-files-found: error
+          retention-days: 1
+          overwrite: true
 
   safe-push-tests:
     # The check, by its old name: it passes at once when safe-push-paths finds nothing the
     # tests guard changed, and otherwise only when the shards' result is success, so that a
-    # shard that failed, was cancelled or was skipped fails it. It runs whatever happened
-    # before it (always()), so that it never passes by being skipped.
+    # shard that failed, was cancelled or was skipped fails it, and the shards' lists of
+    # the tests they ran prove that every test ran once. It runs whatever happened before
+    # it (always()), so that it never passes by being skipped.
     needs: [safe-push-paths, safe-push-shards]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Pass only when every shard passed, or when the pull request changes none of those paths
         env:
@@ -420,3 +436,36 @@ jobs:
             skipped) echo "The shards were skipped, though the pull request changes what they test, so no test ran."; exit 1 ;;
             *) echo "The shards ended '$SHARDS', which is not success."; exit 1 ;;
           esac
+
+      # When the tests ran, the proof that each ran once, from what the shards ran rather
+      # than from the dealing. The checkout is the shards': the same commit, the same way.
+      - uses: actions/checkout@v5
+        if: needs.safe-push-paths.outputs.run == 'true'
+        with:
+          fetch-depth: 0
+          # No token stays in .git/config while the pull request's code runs.
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        if: needs.safe-push-paths.outputs.run == 'true'
+        with:
+          python-version: "3.12"
+
+      - name: Install the pinned YAML parser the proof reads the workflow with
+        if: needs.safe-push-paths.outputs.run == 'true'
+        run: python3 -m pip install -r scripts/requirements-test_safe_push.txt
+
+      - name: Fetch every shard's list of the tests it ran
+        if: needs.safe-push-paths.outputs.run == 'true'
+        uses: actions/download-artifact@v5
+        with:
+          # Each list in a folder of its own, so that none can hide another.
+          pattern: safe-push-ran-*
+          path: ${{ runner.temp }}/safe-push-ran
+
+      - name: Prove that every test ran once, in one shard, and passed
+        # Against the tests unittest's loader lists at this commit and the matrix's N, it
+        # fails, naming each, on a test no shard ran, a test run twice, a shard that left
+        # no list, a test the loader does not list, and a test that did not pass.
+        if: needs.safe-push-paths.outputs.run == 'true'
+        run: python3 scripts/test_safe_push.py --cover "$RUNNER_TEMP/safe-push-ran"

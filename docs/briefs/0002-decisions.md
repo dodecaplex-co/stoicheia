@@ -4126,19 +4126,40 @@ findings:
   only), and passes at once, with the old message, when nothing it guards changed, and
   otherwise only when the shards' result is success: a shard that failed, was cancelled or
   was skipped fails it, and its log says which, as it does when the paths job did not
-  succeed. Seven, because by the measured times each shard then holds about 329 seconds,
+  succeed. So that no test can fall off that path unseen, the check also proves the
+  coverage, from what the shards ran rather than from the dealing: each shard writes the
+  tests it ran, each with its outcome (`--ran FILE`), and keeps the list as an artifact
+  for a day, and `safe-push-tests`, once the shards have passed, checks out the commit
+  they ran, as they did, fetches every list and runs `--cover DIR`. That lists the tests
+  with unittest's loader at the commit, reads N from the matrix, and fails, naming each,
+  on a test no shard ran, a test run twice, a shard that left no list (as one that stops
+  before its end leaves none), a test the loader does not list, and a test that did not
+  pass. Seven, because by the measured times each shard then holds about 329 seconds,
   five and a half minutes with its setup, where six would hold 6.4; the time after comes
-  from this pull request's own CI run. Nothing is selected out: every test still runs on
-  every pull request that ran the job before. Running only the classes a change touches,
-  the issue's second part, is the owner's decision, and waits on it. A new class,
-  `Shards`, without git or network, checks that for the N of CI's matrix the names that
-  `--shard K/N` hands unittest, for each K, hold every test of the loader's list once, in
-  its order; that a test the file does not name is still dealt, and named; that the
-  dealing is the same whatever order its inputs come in; that `--shard` stands alone; that
-  each shard runs the checkout, Python, parser and command above; and that
-  `safe-push-tests` is named so, needs the matrix job, runs if `always()`, and refuses
-  every result but success when the paths job says the tests must run, by running its
-  step's script under bash for each result. Main's ruleset still does not require the
+  from this pull request's own CI run, and the times file says that its figures are to be
+  measured again from that run. `--times-from-log` does it: it reads a run's logs (`gh run
+  view RUN --log`), each line timestamped by GitHub, and writes the file, the setup's time
+  measured up to a line `setUpModule` now prints when its clone is ready. Given #239's
+  log, with that line put in, it gives back each of the 288 times the file holds. Nothing
+  is selected out: every test still runs on every pull request that ran the job before.
+  Running only the classes a change touches, the issue's second part, is the owner's
+  decision, and waits on it. A new class, `Shards`, without git or network, checks that
+  for the N of CI's matrix the names that `--shard K/N --ran FILE` hands unittest, and the
+  lists it writes, for each K, hold every test of the loader's list once, in its order,
+  and pass the proof; that a test the file does not name, planted as a later pull request
+  would add it, is dealt to one shard, run and listed there, and passes the proof; that
+  the proof, given the lists with one fault planted, names the test dropped, a test two
+  shards ran or one ran twice, a list missing, a test the loader does not list, a test
+  that failed, and a list too many or not a list; that a shard's list gives each test's
+  outcome, a failing subtest failing its test; that the times read from a few lines of a
+  CI log are those its timestamps give, and that a run cut short, miscounted or without
+  the setup's line is refused; that the dealing is the same whatever order its inputs come
+  in; that each form of the command line stands alone; that each shard runs the checkout,
+  Python, parser and command above and keeps its list; and that `safe-push-tests` is named
+  so, needs the matrix job, runs if `always()`, refuses every result but success when the
+  paths job says the tests must run, by running its step's script under bash for each
+  result, and then, and only then, fetches every list and runs the proof. Main's ruleset
+  still does not require the
   check; a failing shard, like any failing check, holds a merge through the merge gate.
   [WORKFLOW](../WORKFLOW.md), sections 8 and 10, describes the shards and how to run one.
   The protected files changed are `.github/workflows/ci.yml`, `scripts/test_safe_push.py`

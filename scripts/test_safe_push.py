@@ -4,6 +4,9 @@
     python3 -m pip install -r scripts/requirements-test_safe_push.txt
     python3 scripts/test_safe_push.py        # no Lean, no network; timing in WORKFLOW section 8
     python3 scripts/test_safe_push.py --shard 3/7   # one of CI's seven shards (#233)
+    python3 scripts/test_safe_push.py --shard 3/7 --ran ran-3.json   # and the list of what it ran
+    python3 scripts/test_safe_push.py --cover DIR   # every test ran once, by the lists in DIR
+    python3 scripts/test_safe_push.py --times-from-log run.log   # the times, from a CI run's log
     STOICHEIA_SLOW_TESTS=1 python3 scripts/test_safe_push.py FullChecks   # Lean, minutes
 
 The clone is made with `git clone --local --no-hardlinks` of this repository into a temporary
@@ -152,7 +155,10 @@ pre-flight. Python 3.11 or later; PyYAML at the version pinned beside this file,
 CI runs the suite as seven shards side by side, `--shard K/7` for each K (#233): the tests
 are listed by unittest's own loader and dealt out by the seconds each took on a GitHub
 runner, kept in test_safe_push_times.json beside this file, so that each test runs in
-exactly one shard. Without --shard the whole suite runs.
+exactly one shard; a test missing there weighs their median. Each shard writes the tests
+it ran, with their outcomes (`--ran FILE`), and `--cover DIR` proves from those lists that
+every test the loader lists ran once and passed. `--times-from-log` writes the times file
+from a CI run's log. Without --shard the whole suite runs.
 """
 
 from __future__ import annotations
@@ -161,6 +167,7 @@ import ast
 import base64
 import contextlib
 import datetime
+import fnmatch
 import hashlib
 import io
 import itertools
@@ -768,6 +775,11 @@ def reset_gh() -> None:
                                     "issues": [], "checks": {"*": PASSING}, "calls": []}))
 
 
+# The line setUpModule prints when it is done: GitHub stamps each line of a CI log with its
+# time, and --times-from-log measures the setup up to this one (#233).
+SETUP_DONE = "setUpModule is done: the throwaway clone and its bare origin are ready."
+
+
 def setUpModule():
     global TMP, ORIGIN, WORK, LOG, BASE, GH, GH_STATE, UNDER_TEST
     TMP = Path(tempfile.mkdtemp(prefix="stoicheia-safe-push-test-"))
@@ -809,6 +821,7 @@ def setUpModule():
     git(WORK, "fetch", "--quiet", "origin")
     r = subprocess.run(["sh", str(INSTALL_HOOKS)], cwd=WORK, capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
+    print(SETUP_DONE, file=sys.stderr, flush=True)
 
 
 def tearDownModule():
@@ -6745,11 +6758,17 @@ class Units(unittest.TestCase):
 
 # The shards (#233). In one job the suite took 38 to 45 minutes on a GitHub runner, so CI
 # runs it as `--shard K/N` for each K from 1 to N, side by side, and the safe-push-tests
-# job passes only when every shard passed. Each test runs in exactly one shard: the tests
-# are listed by unittest's own loader, so a new one is never missed, and dealt out by the
-# seconds each took on a GitHub runner, kept beside this file.
+# job passes only when every shard passed and the shards' lists of the tests they ran
+# prove that each test ran once. Each test runs in exactly one shard: the tests are listed
+# by unittest's own loader, so a new one is never missed, and dealt out by the seconds
+# each took on a GitHub runner, kept beside this file; a test missing there weighs their
+# median. The proof is built from what the shards ran, not from the dealing.
 TIMES = HERE / "test_safe_push_times.json"
 PATHS_JOB, SHARD_JOB, GATHER_JOB = "safe-push-paths", "safe-push-shards", "safe-push-tests"
+USAGE = ("usage: test_safe_push.py --shard K/N [--ran FILE], with 1 <= K <= N; "
+         "--cover DIR; or --times-from-log LOG..., each alone")
+# The outcomes, as unittest's log words them, of a test that passed or was skipped.
+PASSED = ("ok", "skipped", "expected failure")
 
 
 @dataclass(frozen=True)
@@ -6808,20 +6827,98 @@ def shard_report(plan: ShardPlan, shard: int) -> list[str]:
     return lines
 
 
-def shard_argument(argv: list[str]) -> tuple[int, int] | None:
-    """(K, N) for `--shard K/N`, which stands alone; None when there is no --shard."""
-    if not any(arg.startswith("--shard") for arg in argv):
+def script_command(argv: list[str]) -> tuple | None:
+    """What the command line asks of this script beyond unittest's own arguments, each form
+    standing alone: ("shard", K, N, FILE or None) for `--shard K/N [--ran FILE]`, ("cover",
+    DIR) for `--cover DIR` and ("times", [LOG, ...]) for `--times-from-log LOG...`; None
+    when it names none of them. Any other use of them exits with status 2."""
+    if not any(arg.startswith(("--shard", "--ran", "--cover", "--times-from-log"))
+               for arg in argv):
         return None
-    match = (re.fullmatch(r"([1-9][0-9]*)/([1-9][0-9]*)", argv[1])
-             if len(argv) == 2 and argv[0] == "--shard" else None)
-    if match is None or int(match[1]) > int(match[2]):
-        print("usage: test_safe_push.py --shard K/N, alone, with 1 <= K <= N", file=sys.stderr)
-        sys.exit(2)
-    return int(match[1]), int(match[2])
+
+    def plain(arg: str) -> bool:
+        return arg != "" and not arg.startswith("-")
+
+    if argv[0] == "--shard" and len(argv) in (2, 4):
+        match = re.fullmatch(r"([1-9][0-9]*)/([1-9][0-9]*)", argv[1])
+        if (match and int(match[1]) <= int(match[2])
+                and (len(argv) == 2 or (argv[2] == "--ran" and plain(argv[3])))):
+            return "shard", int(match[1]), int(match[2]), Path(argv[3]) if argv[2:] else None
+    elif argv[0] == "--cover" and len(argv) == 2 and plain(argv[1]):
+        return "cover", Path(argv[1])
+    elif argv[0] == "--times-from-log" and len(argv) > 1 and all(map(plain, argv[1:])):
+        return "times", [Path(arg) for arg in argv[1:]]
+    print(USAGE, file=sys.stderr)
+    sys.exit(2)
 
 
-def run_shard(shard: int, count: int) -> None:
-    """Run exactly the tests dealt to shard `shard` of `count`, in unittest's order."""
+class RanResult(unittest.TextTestResult):
+    """unittest's verbose result, which also keeps each test it ran, as Class.test_name,
+    with its outcome in the word its log gives: ok, skipped, expected failure, FAIL, ERROR
+    or unexpected success. A subtest's failure is its test's; a failing fixture of a module
+    or a class is no test, and the tests it kept from running are not listed."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.ran: list[list[str]] = []
+
+    def startTest(self, test):
+        super().startTest(test)
+        self.ran.append([time_key(test), "unfinished"])
+
+    def outcome(self, test, word: str) -> None:
+        test = getattr(test, "test_case", test)  # a subtest's test
+        if (isinstance(test, unittest.TestCase) and self.ran
+                and self.ran[-1][0] == time_key(test) and self.ran[-1][1] not in ("FAIL", "ERROR")):
+            self.ran[-1][1] = word
+
+    def addSuccess(self, test):
+        super().addSuccess(test)
+        self.outcome(test, "ok")
+
+    def addFailure(self, test, err):
+        super().addFailure(test, err)
+        self.outcome(test, "FAIL")
+
+    def addError(self, test, err):
+        super().addError(test, err)
+        self.outcome(test, "ERROR")
+
+    def addSkip(self, test, reason):
+        super().addSkip(test, reason)
+        self.outcome(test, "skipped")
+
+    def addExpectedFailure(self, test, err):
+        super().addExpectedFailure(test, err)
+        self.outcome(test, "expected failure")
+
+    def addUnexpectedSuccess(self, test):
+        super().addUnexpectedSuccess(test)
+        self.outcome(test, "unexpected success")
+
+    def addSubTest(self, test, subtest, err):
+        super().addSubTest(test, subtest, err)
+        if err is not None:
+            self.outcome(test, "FAIL" if issubclass(err[0], test.failureException) else "ERROR")
+
+
+class RanRunner(unittest.TextTestRunner):
+    """unittest's verbose runner, keeping the RanResult of its run."""
+    resultclass = RanResult
+
+    def __init__(self, **kwargs):
+        super().__init__(verbosity=2, **kwargs)
+        self.result: RanResult | None = None
+
+    def _makeResult(self):
+        self.result = super()._makeResult()
+        return self.result
+
+
+def run_shard(shard: int, count: int, ran: Path | None = None) -> None:
+    """Run exactly the tests dealt to shard `shard` of `count`, in unittest's order, and
+    exit with unittest's verdict. When `ran` is given, write to it the tests the shard ran,
+    each with its outcome: a shard that stops before its end writes nothing there."""
     tests = loaded_tests()
     setup, times = load_times()
     plan = shard_plan([time_key(test) for test in tests], count, times, setup)
@@ -6831,47 +6928,500 @@ def run_shard(shard: int, count: int) -> None:
     if not names:
         sys.exit(f"Shard {shard} of {count} has no tests: {len(tests)} tests fill at most "
                  f"{len(tests)} shards.")
-    unittest.main(argv=sys.argv[:1], defaultTest=names, verbosity=2)
+    runner = RanRunner()
+    unittest.main(argv=sys.argv[:1], defaultTest=names, testRunner=runner, exit=False)
+    if ran is not None:
+        ran.parent.mkdir(parents=True, exist_ok=True)
+        ran.write_text(json.dumps({"shard": shard, "count": count,
+                                   "ran": runner.result.ran if runner.result else []},
+                                  indent=1) + "\n")
+    sys.exit(0 if runner.result is not None and runner.result.wasSuccessful() else 1)
+
+
+def ci_jobs() -> dict:
+    return yaml.safe_load((SOURCE / ".github/workflows/ci.yml").read_text())["jobs"]
+
+
+def ci_shard_count(jobs: dict) -> int:
+    """N, from the matrix of CI's shard job, whose one dimension holds 1 to N in turn, each
+    once, N > 1: `strategy.job-total`, which each shard is given as N, is then N too."""
+    matrix = jobs[SHARD_JOB]["strategy"]["matrix"]
+    shards = matrix.get("shard") if isinstance(matrix, dict) else None
+    if (not isinstance(matrix, dict) or list(matrix) != ["shard"] or not isinstance(shards, list)
+            or len(shards) < 2 or any(type(shard) is not int for shard in shards)
+            or shards != list(range(1, len(shards) + 1))):
+        raise ValueError(f"The matrix of {SHARD_JOB} is {matrix!r}: it should have one "
+                         "dimension, shard, holding 1 to N in turn, N > 1, and nothing else.")
+    return len(shards)
+
+
+def read_ran(path: Path) -> tuple[int, int, list[tuple[str, str]]] | None:
+    """(K, N, [(test, outcome), ...]) from the list `--shard K/N --ran FILE` wrote; None
+    when the file is not such a list."""
+    try:
+        data = json.loads(path.read_text())
+    except (OSError, UnicodeDecodeError, ValueError):
+        return None
+    if not (isinstance(data, dict) and set(data) == {"shard", "count", "ran"}
+            and type(data["shard"]) is int and type(data["count"]) is int
+            and isinstance(data["ran"], list)
+            and all(isinstance(entry, list) and len(entry) == 2
+                    and all(isinstance(part, str) for part in entry) for entry in data["ran"])):
+        return None
+    return data["shard"], data["count"], [(key, outcome) for key, outcome in data["ran"]]
+
+
+def cover(directory: Path, count: int, discovered: list[str]) -> list[str]:
+    """What keeps the lists in `directory`, which the `count` shards wrote of the tests they
+    ran, from proving that each test of `discovered` ran once, in one shard, and passed or
+    was skipped: each fault named, or nothing when they prove it. A shard that stopped
+    before its end wrote no list, and its tests are then named as run in no shard."""
+    problems, lists = [], {}
+    files = sorted(path for path in directory.rglob("*") if path.is_file()) \
+        if directory.is_dir() else []
+    for path in files:
+        read = read_ran(path)
+        if read is None:
+            problems.append(f"{path} is not a shard's list of the tests it ran.")
+            continue
+        shard, total, ran = read
+        if total != count or not 1 <= shard <= count:
+            problems.append(f"{path} is the list of shard {shard} of {total}, but CI's matrix "
+                            f"has {count} shards.")
+        elif shard in lists:
+            problems.append(f"Shard {shard} left two lists, {lists[shard][0]} and {path}.")
+        else:
+            lists[shard] = (path, ran)
+    problems += [f"Shard {shard} of {count} left no list of the tests it ran: it stopped "
+                 "before its end, or its list was not kept."
+                 for shard in range(1, count + 1) if shard not in lists]
+    runs: dict[str, list[tuple[int, str]]] = {}
+    for shard in sorted(lists):
+        for key, outcome in lists[shard][1]:
+            runs.setdefault(key, []).append((shard, outcome))
+    problems += [f"{key} ran in no shard." for key in discovered if key not in runs]
+    listed = set(discovered)
+    for key, seen in runs.items():
+        if len(seen) > 1:
+            problems.append(f"{key} ran {len(seen)} times: by shard "
+                            + " and shard ".join(str(shard) for shard, _ in seen) + ".")
+        if key not in listed:
+            problems.append(f"{key} ran in shard {seen[0][0]}, but unittest's loader does not "
+                            "list it here.")
+        problems += [f"{key} did not pass in shard {shard}: {outcome}."
+                     for shard, outcome in seen if outcome not in PASSED]
+    return problems
+
+
+def cover_command(directory: Path) -> int:
+    """`--cover DIR`: the proof over the shards' lists in DIR, against this checkout's tests
+    as unittest's loader lists them and the N of CI's matrix."""
+    try:
+        count = ci_shard_count(ci_jobs())
+    except ValueError as error:
+        print(error, file=sys.stderr)
+        return 1
+    discovered = [time_key(test) for test in loaded_tests()]
+    problems = cover(directory, count, discovered)
+    if problems:
+        print(f"The shards' lists in {directory} do not prove that each of the "
+              f"{len(discovered)} tests ran once and passed:", file=sys.stderr)
+        for problem in problems:
+            print(f"  {problem}", file=sys.stderr)
+        return 1
+    words = [outcome for path in directory.rglob("*") if path.is_file()
+             for _, outcome in read_ran(path)[2]]
+    print(f"Each of the {len(discovered)} tests unittest's loader lists here ran once, in one "
+          f"of the {count} shards: "
+          + ", ".join(f"{words.count(word)} {word}" for word in sorted(set(words))) + ".")
+    return 0
+
+
+# A line of a CI log as `gh run view RUN --log` gives it, the job and the step before it, or
+# as a job's log gives it, without them: the time GitHub stamped on it, then the line.
+LOG_LINE = re.compile(r"(?:(?P<job>[^\t]*)\t[^\t]*\t)?\ufeff?(?P<stamp>\d{4}-\d\d-\d\dT"
+                      r"\d\d:\d\d:\d\d)(?P<fraction>\.\d+)?Z ?(?P<text>.*)")
+# A test's line at verbosity 2, `test_x (__main__.Class.test_x) ... ok`.
+TEST_LINE = re.compile(r"(?P<method>test\w*) \((?:\w+\.)*?(?P<cls>\w+)\.(?P=method)\)")
+RUN_STEP = "##[group]Run python3 scripts/test_safe_push.py"
+TIMES_ABOUT = (
+    "Seconds each test of scripts/test_safe_push.py took on a GitHub runner, to a tenth of "
+    "a second, written by `python3 scripts/test_safe_push.py --times-from-log` from the "
+    "times GitHub stamped on the lines of {source} on {date} ({shards} shards, {tests} "
+    "tests). Each shard's log is at verbosity 2, and a test's line is written when the "
+    "test ends, so a test's time runs from the line before its own to the last line of its "
+    "output. setUpModule is the module's setup, the clone of the repository, which every "
+    "shard pays once: the median of the shards' setups, each from the shard's report to "
+    "the line setUpModule prints when its clone is ready. `--shard K/N` deals the tests "
+    "out by these times; a test missing here weighs their median. Measure them again the "
+    "same way when the shards drift apart.")
+
+
+def stamp_seconds(stamp: str, fraction: str | None) -> float:
+    moment = datetime.datetime.strptime(stamp, "%Y-%m-%dT%H:%M:%S")
+    return moment.replace(tzinfo=datetime.timezone.utc).timestamp() + float(fraction or 0)
+
+
+def script_runs(lines: list[tuple[float, str]]):
+    """The lines of each step of one job's log that runs this script, after its first."""
+    run = None
+    for stamp, text in lines:
+        if text.startswith("##[group]Run ") or text == "Post job cleanup.":
+            if run is not None:
+                yield run
+            run = [] if text.startswith(RUN_STEP) else None
+        elif run is not None:
+            run.append((stamp, text))
+    if run is not None:
+        yield run
+
+
+def shard_times(lines: list[tuple[float, str]]) -> tuple[float, list[tuple[str, float]]]:
+    """The setup's seconds and each test's, in the order they ran, from one run of this
+    script in a CI log, each line with the time GitHub stamped on it. ValueError when the
+    run does not show them: a run cut short, a count that differs from unittest's, or no
+    line from setUpModule."""
+    starts = [index for index, (_, text) in enumerate(lines) if TEST_LINE.match(text)]
+    rule = next((index for index in range(starts[0], len(lines))
+                 if re.fullmatch(r"[-=]{70}", lines[index][1])), None)
+    ran = next((match for _, text in lines[starts[0]:]
+                if (match := re.fullmatch(r"Ran (\d+) tests? in [\d.]+s", text))), None)
+    if rule is None or ran is None:
+        raise ValueError("the run stops before unittest's summary, so its last test's time "
+                         "is unknown.")
+    starts = [index for index in starts if index < rule]
+    if int(ran[1]) != len(starts):
+        raise ValueError(f"unittest ran {ran[1]} tests, but {len(starts)} lines name one.")
+    marks = [index for index in range(1, starts[0]) if lines[index][1] == SETUP_DONE]
+    if len(marks) != 1:
+        raise ValueError(f"not exactly one line '{SETUP_DONE}' before the first test, so "
+                         "the setup's time is unknown.")
+    setup = lines[marks[0]][0] - lines[marks[0] - 1][0]
+    times, before = [], lines[starts[0] - 1][0]
+    for start, end in zip(starts, starts[1:] + [rule]):
+        block = lines[start:end]
+        while len(block) > 1 and not block[-1][1].strip():
+            block.pop()  # the blank line unittest writes before its summary
+        match = TEST_LINE.match(lines[start][1])
+        times.append((f"{match['cls']}.{match['method']}", round(block[-1][0] - before, 1)))
+        before = block[-1][0]
+    return setup, times
+
+
+def times_from_logs(logs: dict[str, str], discovered: list[str]) -> dict:
+    """The times file, from CI logs by name: each run of this script there with its tests'
+    lines, in any job (one job's log, or a whole run's from `gh run view RUN --log`).
+    ValueError, naming each fault, unless they give each test of `discovered` once."""
+    jobs: dict[tuple[str, str], list[tuple[float, str]]] = {}
+    for name, log in logs.items():
+        for raw in log.split("\n"):
+            line = LOG_LINE.fullmatch(raw.rstrip("\r"))
+            if line:
+                jobs.setdefault((name, line["job"] or ""), []).append(
+                    (stamp_seconds(line["stamp"], line["fraction"]), line["text"]))
+    problems, setups, seconds, where, firsts = [], [], {}, {}, []
+    for (name, job), lines in jobs.items():
+        label = f"{name}, {job}" if job else name
+        for run in script_runs(lines):
+            if not any(TEST_LINE.match(text) for _, text in run):
+                continue  # a step that runs no test, such as the proof
+            try:
+                setup, times = shard_times(run)
+            except ValueError as error:
+                problems.append(f"{label}: {error}")
+                continue
+            setups.append(setup)
+            firsts.append(run[0][0])
+            for key, value in times:
+                if key in seconds:
+                    problems.append(f"{key} ran in {where[key]} and again in {label}.")
+                seconds[key], where[key] = value, label
+    if not setups and not problems:
+        problems.append("These logs hold no run of scripts/test_safe_push.py with its tests' "
+                        "lines.")
+    if not problems:
+        problems += [f"{key} has no line in these logs." for key in discovered
+                     if key not in seconds]
+        problems += [f"{key} ran in {where[key]}, but unittest's loader does not list it here."
+                     for key in sorted(set(seconds) - set(discovered))]
+    if problems:
+        raise ValueError("\n".join(problems))
+    pulls = sorted({number for log in logs.values()
+                    for number in re.findall(r"refs/remotes/pull/(\d+)/merge", log)})
+    first = datetime.datetime.fromtimestamp(min(firsts), datetime.timezone.utc)
+    return {"about": TIMES_ABOUT.format(
+                source=(f"the CI run of pull request #{pulls[0]}" if len(pulls) == 1
+                        else "the CI logs " + ", ".join(logs)),
+                date=f"{first.day} {first:%B %Y}", shards=len(setups), tests=len(seconds)),
+            "setUpModule": round(statistics.median(setups), 1),
+            "tests": dict(sorted(seconds.items()))}
+
+
+def write_times(data: dict, path: Path = TIMES) -> None:
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+
+
+def times_command(logs: list[Path]) -> int:
+    """`--times-from-log LOG...`: the times file, written from the shards' CI logs, against
+    this checkout's tests as unittest's loader lists them."""
+    try:
+        data = times_from_logs({str(path): path.read_text(encoding="utf-8", errors="replace")
+                                for path in logs},
+                               [time_key(test) for test in loaded_tests()])
+    except (OSError, ValueError) as error:
+        print(f"No times written to scripts/{TIMES.name}:\n{error}", file=sys.stderr)
+        return 1
+    write_times(data)
+    print(f"Wrote scripts/{TIMES.name}: {len(data['tests'])} tests, setUpModule "
+          f"{data['setUpModule']} s.")
+    return 0
+
+
+def stand_in_main(*, defaultTest: list[str], testRunner: RanRunner, **_) -> None:
+    """unittest.main as the Shards tests stub it: each test named, in turn, is a stand-in
+    that passes at once, run by the runner given."""
+    class StandIn(unittest.TestCase):
+        __module__ = "shard_stand_in"  # no module of that name, so no setUpModule runs
+
+        def __init__(self, key: str):
+            super().__init__()
+            self.key = key
+
+        def runTest(self):
+            pass
+
+        def id(self):
+            return f"{self.__module__}.{self.key}"
+
+        def __str__(self):
+            return f"{self.key} (a stand-in, which passes at once)"
+
+    testRunner.run(unittest.TestSuite([StandIn(name) for name in defaultTest]))
 
 
 class Shards(unittest.TestCase):
-    """CI's shards of this suite and the job that gathers them (#233), without git: the
-    shards of CI's matrix hold every test once, and safe-push-tests passes only when every
-    shard passed, or when the pull request changes nothing the tests guard."""
+    """CI's shards of this suite and the job that gathers them (#233), without git or
+    network: the shards of CI's matrix hold every test once, a test the times do not name
+    among them; each shard lists the tests it ran, and the proof over those lists names
+    each test not run once and each list missing; the times are read from a CI log; and
+    safe-push-tests passes only when every shard passed and the proof holds, or when the
+    pull request changes nothing the tests guard."""
 
     def jobs(self) -> dict:
-        return yaml.safe_load((SOURCE / ".github/workflows/ci.yml").read_text())["jobs"]
+        return ci_jobs()
 
     def ci_shard_count(self) -> int:
-        """N, from the matrix of CI's shard job, whose one dimension holds 1 to N in turn,
-        each once: `strategy.job-total`, which each shard is given as N, is then N too."""
-        matrix = self.jobs()[SHARD_JOB]["strategy"]["matrix"]
-        self.assertEqual(list(matrix), ["shard"], "no other dimension, include or exclude")
-        self.assertEqual(matrix["shard"], list(range(1, len(matrix["shard"]) + 1)))
-        self.assertGreater(len(matrix["shard"]), 1)
-        return len(matrix["shard"])
+        return ci_shard_count(self.jobs())
+
+    def run_every_shard(self, count: int, directory: Path) -> tuple[list[list[str]], list[str]]:
+        """`--shard K/count --ran directory/ran-K.json` for each K, unittest.main stubbed so
+        that each test named is a stand-in that passes at once: the names each shard handed
+        unittest, and what each said before it ran."""
+        dealt, said = [], []
+        for shard in range(1, count + 1):
+            err = io.StringIO()
+            with mock.patch.object(unittest, "main", side_effect=stand_in_main) as main, \
+                    contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as stopped:
+                run_shard(shard, count, directory / f"ran-{shard}.json")
+            self.assertEqual(stopped.exception.code, 0, err.getvalue())
+            self.assertIs(main.call_args.kwargs["exit"], False)
+            dealt.append(main.call_args.kwargs["defaultTest"])
+            said.append(err.getvalue())
+        return dealt, said
 
     def test_ci_shards_hold_every_test_once(self):
-        # What `--shard K/N` hands unittest.main, for each K of the N in CI's matrix: each
-        # test of the loader's list once, in the loader's order.
+        # What `--shard K/N --ran FILE` hands unittest.main, for each K of the N in CI's
+        # matrix, and lists as run: each test of the loader's list once, in the loader's
+        # order. The proof over those lists, all of them complete, passes.
         count = self.ci_shard_count()
         keys = [time_key(test) for test in loaded_tests()]
         self.assertIn("Shards.test_ci_shards_hold_every_test_once", keys)
-        dealt = []
-        for shard in range(1, count + 1):
-            with mock.patch.object(unittest, "main") as main, \
-                    contextlib.redirect_stderr(io.StringIO()):
-                run_shard(shard, count)
-            names = main.call_args.kwargs["defaultTest"]
-            self.assertTrue(names, f"shard {shard} runs no test")
-            self.assertEqual(names, [key for key in keys if key in set(names)])
-            dealt.append(names)
+        with tempfile.TemporaryDirectory() as tmp:
+            dealt, _ = self.run_every_shard(count, Path(tmp))
+            for shard, names in enumerate(dealt, 1):
+                self.assertTrue(names, f"shard {shard} runs no test")
+                self.assertEqual(names, [key for key in keys if key in set(names)])
+                self.assertEqual(json.loads((Path(tmp) / f"ran-{shard}.json").read_text()),
+                                 {"shard": shard, "count": count,
+                                  "ran": [[name, "ok"] for name in names]})
+            self.assertEqual(cover(Path(tmp), count, keys), [])
         self.assertEqual(sorted(key for names in dealt for key in names), sorted(keys))
         setup, times = load_times()
         plan = shard_plan(keys, count, times, setup)
         for shard, names in enumerate(dealt, 1):
             self.assertAlmostEqual(plan.loads[shard - 1], setup + sum(
                 times.get(key, plan.median) for key in names))
+
+    def test_a_test_missing_from_the_times_runs_in_one_shard(self):
+        # The new test runs: a test a later train adds, or renames, which the times file
+        # does not name, is dealt to one shard, which hands it to unittest, lists it as run
+        # and names it in its log; and the proof, whose loader lists it too, passes.
+        class Planted(unittest.TestCase):
+            def test_added_by_a_later_train(self):
+                pass
+
+        planted = "Planted.test_added_by_a_later_train"
+        count = self.ci_shard_count()
+        self.assertNotIn(planted, load_times()[1])
+        with mock.patch.object(sys.modules[__name__], "Planted", Planted, create=True), \
+                tempfile.TemporaryDirectory() as tmp:
+            keys = [time_key(test) for test in loaded_tests()]
+            self.assertIn(planted, keys)
+            dealt, said = self.run_every_shard(count, Path(tmp))
+            [shard] = [shard for shard, names in enumerate(dealt, 1) if planted in names]
+            self.assertIn([planted, "ok"], json.loads(
+                (Path(tmp) / f"ran-{shard}.json").read_text())["ran"])
+            for text in said:
+                self.assertIn(f"No measured time for {planted} ", text)
+            self.assertEqual(cover(Path(tmp), count, keys), [])
+        self.assertNotIn(planted, [time_key(test) for test in loaded_tests()])
+
+    def test_the_proof_names_each_test_not_run_once_and_each_list_missing(self):
+        # Each list complete, then one fault planted in a copy of them: the dropped one, a
+        # test the loader lists that no shard ran; a test two shards ran, or one ran twice;
+        # a test the loader does not list; one that failed; a shard's list missing, as a
+        # shard that stopped before its end leaves it; and a list too many or not a list.
+        count = self.ci_shard_count()
+        keys = [time_key(test) for test in loaded_tests()]
+
+        def left_no_list(shard: int) -> str:
+            return (f"Shard {shard} of {count} left no list of the tests it ran: it stopped "
+                    "before its end, or its list was not kept.")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            whole = Path(tmp) / "whole"
+            dealt, _ = self.run_every_shard(count, whole)
+            self.assertEqual(cover(whole, count, keys), [])
+
+            def planted(case: str, change) -> tuple[Path, list[str]]:
+                directory = Path(tmp) / case
+                shutil.copytree(whole, directory)
+                change(directory)
+                return directory, cover(directory, count, keys)
+
+            def edit(shard: int, change):
+                def apply(directory: Path):
+                    path = directory / f"ran-{shard}.json"
+                    data = json.loads(path.read_text())
+                    change(data["ran"])
+                    path.write_text(json.dumps(data))
+                return apply
+
+            first, second = dealt[0][0], dealt[1][0]
+            self.assertEqual(planted("dropped", edit(2, lambda ran: ran.pop(0)))[1],
+                             [f"{second} ran in no shard."])
+            self.assertEqual(
+                planted("in two shards", edit(3, lambda ran: ran.append([first, "ok"])))[1],
+                [f"{first} ran 2 times: by shard 1 and shard 3."])
+            self.assertEqual(
+                planted("twice in one", edit(1, lambda ran: ran.append([first, "ok"])))[1],
+                [f"{first} ran 2 times: by shard 1 and shard 1."])
+            self.assertEqual(planted("unknown", edit(count, lambda ran: ran.append(
+                ["Renamed.test_old_name", "ok"])))[1],
+                [f"Renamed.test_old_name ran in shard {count}, but unittest's loader does "
+                 "not list it here."])
+            self.assertEqual(
+                planted("failed", edit(2, lambda ran: ran[0].__setitem__(1, "FAIL")))[1],
+                [f"{second} did not pass in shard 2: FAIL."])
+            self.assertEqual(
+                planted("a list missing", lambda directory: (directory / "ran-4.json").unlink())[1],
+                [left_no_list(4)] + [f"{key} ran in no shard." for key in keys
+                                     if key in dealt[3]])
+
+            def beyond(directory: Path):
+                (directory / "ran-extra.json").write_text(json.dumps(
+                    {"shard": count + 1, "count": count + 1, "ran": []}))
+            directory, problems = planted("beyond the matrix", beyond)
+            self.assertEqual(problems, [f"{directory / 'ran-extra.json'} is the list of shard "
+                                        f"{count + 1} of {count + 1}, but CI's matrix has "
+                                        f"{count} shards."])
+            directory, problems = planted(
+                "not a list", lambda directory: (directory / "stray.txt").write_text("ok\n"))
+            self.assertEqual(problems, [f"{directory / 'stray.txt'} is not a shard's list of "
+                                        "the tests it ran."])
+
+            def again(directory: Path):
+                (directory / "again").mkdir()
+                shutil.copy(directory / "ran-1.json", directory / "again")
+            directory, problems = planted("two lists for one shard", again)
+            self.assertEqual(problems, [f"Shard 1 left two lists, {directory / 'again/ran-1.json'}"
+                                        f" and {directory / 'ran-1.json'}."])
+            nothing = [left_no_list(shard) for shard in range(1, count + 1)] + [
+                f"{key} ran in no shard." for key in keys]
+            (Path(tmp) / "empty").mkdir()
+            self.assertEqual(cover(Path(tmp) / "empty", count, keys), nothing)
+            self.assertEqual(cover(Path(tmp) / "absent", count, keys), nothing)
+
+    def test_the_list_of_what_ran_gives_each_tests_outcome(self):
+        # The list a shard writes, from what unittest ran: each test with its outcome, a
+        # failing subtest failing its test; a class whose fixture failed ran no test.
+        class Outcomes(unittest.TestCase):
+            def test_a_pass(self):
+                pass
+
+            def test_b_failure(self):
+                self.fail("planted")
+
+            def test_c_error(self):
+                raise RuntimeError("planted")
+
+            @unittest.skip("planted")
+            def test_d_skip(self):
+                pass
+
+            @unittest.expectedFailure
+            def test_e_expected_failure(self):
+                self.fail("planted")
+
+            @unittest.expectedFailure
+            def test_f_unexpected_success(self):
+                pass
+
+            def test_g_a_subtest_fails(self):
+                for number in (1, 2, 3):
+                    with self.subTest(number=number):
+                        if number == 3:
+                            self.skipTest("planted")
+                        self.assertEqual(number, 1)
+
+            def test_h_subtests_pass(self):
+                with self.subTest(number=1):
+                    pass
+
+        class Unready(unittest.TestCase):
+            @classmethod
+            def setUpClass(cls):
+                raise RuntimeError("planted")
+
+            def test_never_runs(self):
+                pass
+
+        for case in (Outcomes, Unready):
+            case.__module__ = "shard_stand_in"  # no module of that name, so no setUpModule
+        runner = RanRunner(stream=io.StringIO())
+        runner.run(unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromTestCase(case)
+                                      for case in (Outcomes, Unready)))
+        self.assertEqual(runner.result.ran, [
+            ["Outcomes.test_a_pass", "ok"], ["Outcomes.test_b_failure", "FAIL"],
+            ["Outcomes.test_c_error", "ERROR"], ["Outcomes.test_d_skip", "skipped"],
+            ["Outcomes.test_e_expected_failure", "expected failure"],
+            ["Outcomes.test_f_unexpected_success", "unexpected success"],
+            ["Outcomes.test_g_a_subtest_fails", "FAIL"], ["Outcomes.test_h_subtests_pass", "ok"]])
+        self.assertFalse(runner.result.wasSuccessful())
+        self.assertEqual(len(runner.result.errors), 2, "test_c_error, and Unready's fixture")
+
+    def test_the_count_of_shards_is_read_from_the_matrix(self):
+        def jobs(matrix) -> dict:
+            return {SHARD_JOB: {"strategy": {"matrix": matrix}}}
+
+        self.assertEqual(ci_shard_count(jobs({"shard": [1, 2, 3]})), 3)
+        for matrix in ({"shard": [1]}, {"shard": [2, 3]}, {"shard": [1, 3]},
+                       {"shard": [1, 1, 2]}, {"shard": [True, 2]}, {"shard": [1, 2.0]},
+                       {"shard": [1, 2], "include": [{"shard": 3}]},
+                       {"shard": [1, 2], "os": ["ubuntu-latest"]}, {"shard": "1, 2"},
+                       "${{ fromJSON('[1, 2]') }}"):
+            with self.subTest(matrix=matrix), self.assertRaises(ValueError):
+                ci_shard_count(jobs(matrix))
 
     def test_a_test_with_no_measured_time_is_still_dealt(self):
         setup, times = load_times()
@@ -6902,18 +7452,135 @@ class Shards(unittest.TestCase):
                           {"A.test": 1.0, "B.test": 1.0, "C.test": 0.0, "D.test": 0.0}, 0.0)
         self.assertEqual(tied.shard_of, {"A.test": 1, "B.test": 2, "C.test": 1, "D.test": 2})
 
-    def test_shard_argument(self):
-        self.assertIsNone(shard_argument([]))
-        self.assertIsNone(shard_argument(["Units"]))
-        self.assertEqual(shard_argument(["--shard", "3/7"]), (3, 7))
+    def test_the_command_line(self):
+        self.assertIsNone(script_command([]))
+        self.assertIsNone(script_command(["Units"]))
+        self.assertIsNone(script_command(["Units.test_sections", "Shards"]))
+        self.assertEqual(script_command(["--shard", "3/7"]), ("shard", 3, 7, None))
+        self.assertEqual(script_command(["--shard", "3/7", "--ran", "ran-3.json"]),
+                         ("shard", 3, 7, Path("ran-3.json")))
+        self.assertEqual(script_command(["--cover", "lists"]), ("cover", Path("lists")))
+        self.assertEqual(script_command(["--times-from-log", "a.log", "b.log"]),
+                         ("times", [Path("a.log"), Path("b.log")]))
         for argv in (["--shard"], ["--shard", "0/7"], ["--shard", "8/7"], ["--shard", "3"],
                      ["--shard", "3/7", "Units"], ["Units", "--shard", "3/7"],
-                     ["--shard=3/7"], ["--shard", "-1/7"]):
+                     ["--shard=3/7"], ["--shard", "-1/7"], ["--shard", "3/7", "--ran"],
+                     ["--shard", "3/7", "--ran", "--cover"], ["--shard", "3/7", "--ran", ""],
+                     ["--shard", "3/7", "--ran", "a", "b"], ["--shard", "3/7", "--cover", "a"],
+                     ["--ran", "ran-3.json"], ["--ran", "ran-3.json", "--shard", "3/7"],
+                     ["--cover"], ["--cover", "a", "b"], ["--cover", "--shard"],
+                     ["Units", "--cover", "lists"], ["--cover=lists"], ["--times-from-log"],
+                     ["--times-from-log", "a.log", "--cover", "lists"],
+                     ["--times-from-log", ""]):
             with self.subTest(argv=argv):
                 with contextlib.redirect_stderr(io.StringIO()), \
                         self.assertRaises(SystemExit) as stopped:
-                    shard_argument(argv)
+                    script_command(argv)
                 self.assertEqual(stopped.exception.code, 2)
+
+    def test_the_times_from_a_ci_log(self):
+        # A few lines in the form of a CI log as `gh run view RUN --log` gives it: two
+        # shards, each with setUpModule's line, and a test whose output takes two lines;
+        # the step of the proof, which runs no test, and another job's tests, which are
+        # not this script's. A job's own log, without the job and step, reads the same.
+        def job(name: str, lines: list[str]) -> list[str]:
+            return [f"{name}\tUNKNOWN STEP\t{line}" for line in lines]
+
+        rule = "-" * 70
+        one = job("safe-push-shards (1)", [
+            "﻿2026-10-21T20:39:17.6326931Z Current runner version: '2.338.0'",
+            "2026-10-21T20:39:18.1000000Z [command]/usr/bin/git checkout --progress --force "
+            "refs/remotes/pull/239/merge",
+            "2026-10-21T20:39:22.2694272Z ##[group]Run python3 scripts/test_safe_push.py "
+            '--shard 1/7 --ran "$RUNNER_TEMP/ran-1.json"',
+            "2026-10-21T20:39:22.2743253Z shell: /usr/bin/bash -e {0}",
+            "2026-10-21T20:39:22.2745639Z ##[endgroup]",
+            "2026-10-21T20:39:23.0000000Z Shard 1 of 7: 2 of 4 tests, about 22 s by the times "
+            "measured on a GitHub runner, the module's setup included.",
+            f"2026-10-21T20:39:28.5000000Z {SETUP_DONE}",
+            "2026-10-21T20:39:39.0860550Z test_good_commit_dry_run_then_push_from_a_dirty_tree "
+            "(__main__.Accepts.test_good_commit_dry_run_then_push_from_a_dirty_tree) ... ok",
+            "2026-10-21T20:39:39.2395058Z test_nothing_to_push "
+            "(__main__.Accepts.test_nothing_to_push) ... ok",
+            "2026-10-21T20:39:39.6935317Z ",
+            f"2026-10-21T20:39:39.6935985Z {rule}",
+            "2026-10-21T20:39:39.6936467Z Ran 2 tests in 16.420s",
+            "2026-10-21T20:39:39.6936649Z ",
+            "2026-10-21T20:39:39.6936747Z OK",
+            "2026-10-21T20:39:39.7276141Z Post job cleanup."])
+        two = job("safe-push-shards (2)", [
+            "2026-10-21T20:39:24.0000000Z ##[group]Run python3 scripts/test_safe_push.py "
+            '--shard 2/7 --ran "$RUNNER_TEMP/ran-2.json"',
+            "2026-10-21T20:39:24.0100000Z ##[endgroup]",
+            "2026-10-21T20:39:25.0000000Z Shard 2 of 7: 2 of 4 tests, about 205 s by the "
+            "times measured on a GitHub runner, the module's setup included.",
+            f"2026-10-21T20:39:31.1000000Z {SETUP_DONE}",
+            "2026-10-21T20:39:33.0000000Z test_a_bare_top_level_directory_ends_no_sentence "
+            "(__main__.DecisionEntries.test_a_bare_top_level_directory_ends_no_sentence) ... "
+            "a line the test wrote",
+            "2026-10-21T20:39:36.6000000Z ok",
+            "2026-10-21T20:42:47.9927230Z test_full_sequence_on_a_good_commit "
+            "(__main__.FullChecks.test_full_sequence_on_a_good_commit) ... skipped 'the full "
+            "checks need Lean and take minutes: STOICHEIA_SLOW_TESTS=1'",
+            "2026-10-21T20:42:48.3000000Z ",
+            f"2026-10-21T20:42:48.3000100Z {rule}",
+            "2026-10-21T20:42:48.3000200Z Ran 2 tests in 197.000s",
+            "2026-10-21T20:42:48.3000300Z ",
+            "2026-10-21T20:42:48.3000400Z OK (skipped=1)",
+            "2026-10-21T20:42:48.4000000Z ##[group]Run actions/upload-artifact@v5"])
+        others = job("safe-push-tests", [
+            "2026-10-21T20:43:30.0000000Z ##[group]Run python3 scripts/test_safe_push.py "
+            '--cover "$RUNNER_TEMP/safe-push-ran"',
+            "2026-10-21T20:43:30.0100000Z ##[endgroup]",
+            "2026-10-21T20:43:31.0000000Z Each of the 4 tests unittest's loader lists here "
+            "ran once, in one of the 7 shards: 3 ok, 1 skipped."]) + job("acceptance", [
+            "2026-10-21T20:40:00.0000000Z ##[group]Run python3 -I tests/test_check_acceptance.py",
+            "2026-10-21T20:40:01.0000000Z test_compare (__main__.Compare.test_compare) ... ok"])
+        keys = ["Accepts.test_good_commit_dry_run_then_push_from_a_dirty_tree",
+                "Accepts.test_nothing_to_push",
+                "DecisionEntries.test_a_bare_top_level_directory_ends_no_sentence",
+                "FullChecks.test_full_sequence_on_a_good_commit"]
+
+        def times(lines: list[str], discovered: list[str] = keys) -> dict:
+            return times_from_logs({"run.log": "\n".join(lines) + "\n"}, discovered)
+
+        data = times(two + others + one)
+        self.assertEqual(data["tests"], {keys[0]: 10.6, keys[1]: 0.2, keys[2]: 5.5,
+                                         keys[3]: 191.4})
+        self.assertEqual(data["setUpModule"], 5.8)
+        self.assertIn("the CI run of pull request #239 on 21 October 2026 (2 shards, 4 tests)",
+                      data["about"])
+        with tempfile.TemporaryDirectory() as tmp:
+            write_times(data, Path(tmp) / "times.json")
+            self.assertEqual(load_times(Path(tmp) / "times.json"), (5.8, data["tests"]))
+        alone = times_from_logs({"job.txt": "\n".join(line.split("\t", 2)[2] for line in one)},
+                                keys[:2])
+        self.assertEqual((alone["setUpModule"], alone["tests"]),
+                         (5.5, {keys[0]: 10.6, keys[1]: 0.2}))
+
+        def refused(lines: list[str], discovered: list[str] = keys) -> str:
+            with self.assertRaises(ValueError) as caught:
+                times(lines, discovered)
+            return str(caught.exception)
+
+        label = "run.log, safe-push-shards"
+        self.assertEqual(refused([line.replace("Ran 2 tests", "Ran 3 tests") for line in one]
+                                 + two),
+                         f"{label} (1): unittest ran 3 tests, but 2 lines name one.")
+        self.assertEqual(refused(one + [line for line in two if SETUP_DONE not in line]),
+                         f"{label} (2): not exactly one line '{SETUP_DONE}' before the first "
+                         "test, so the setup's time is unknown.")
+        self.assertEqual(refused(one[:9] + two), f"{label} (1): the run stops before "
+                         "unittest's summary, so its last test's time is unknown.")
+        self.assertEqual(refused(one + two + [line.replace("(1)", "(3)") for line in one]),
+                         f"{keys[0]} ran in {label} (1) and again in {label} (3).\n"
+                         f"{keys[1]} ran in {label} (1) and again in {label} (3).")
+        self.assertEqual(refused(one + two, keys + ["Later.test_added"]),
+                         "Later.test_added has no line in these logs.")
+        self.assertEqual(refused(one + two, keys[1:]), f"{keys[0]} ran in {label} (1), but "
+                         "unittest's loader does not list it here.")
+        self.assertEqual(refused(others), "These logs hold no run of scripts/test_safe_push.py "
+                         "with its tests' lines.")
 
     def test_every_shard_runs_its_part_of_the_suite(self):
         jobs = self.jobs()
@@ -6926,6 +7593,8 @@ class Shards(unittest.TestCase):
         self.assertEqual(job["strategy"]["fail-fast"], False)
         self.assertEqual(job["permissions"], {"contents": "read"})
         self.assertNotIn("continue-on-error", job)
+        # Each shard lists the tests it ran, and keeps the list under a name of its own, for
+        # a day: a shard that stops before its end lists nothing, and keeps nothing.
         self.assertEqual([{key: value for key, value in step.items() if key != "name"}
                           for step in job["steps"]], [
             {"uses": "actions/checkout@v5",
@@ -6933,7 +7602,42 @@ class Shards(unittest.TestCase):
             {"uses": "actions/setup-python@v5", "with": {"python-version": "3.12"}},
             {"run": "python3 -m pip install -r scripts/requirements-test_safe_push.txt"},
             {"run": "python3 scripts/test_safe_push.py "
-                    "--shard ${{ matrix.shard }}/${{ strategy.job-total }}"}])
+                    "--shard ${{ matrix.shard }}/${{ strategy.job-total }} "
+                    '--ran "$RUNNER_TEMP/ran-${{ matrix.shard }}.json"'},
+            {"uses": "actions/upload-artifact@v5",
+             "with": {"name": "safe-push-ran-${{ matrix.shard }}",
+                      "path": "${{ runner.temp }}/ran-${{ matrix.shard }}.json",
+                      "if-no-files-found": "error", "retention-days": 1, "overwrite": True}}])
+
+    def test_safe_push_tests_proves_from_what_the_shards_ran(self):
+        # When the tests ran, and only then, after the shards' verdict: the commit the
+        # shards ran, checked out as they checked it out, every shard's list fetched, and
+        # the proof run over them. Each shard's list has a name the fetch's pattern
+        # matches, and no other job keeps one that it matches.
+        jobs = self.jobs()
+        ran = f"needs.{PATHS_JOB}.outputs.run == 'true'"
+        steps = jobs[GATHER_JOB]["steps"]
+        self.assertNotIn("if", steps[0])
+        self.assertEqual([{key: value for key, value in step.items() if key != "name"}
+                          for step in steps[1:]], [
+            {"uses": "actions/checkout@v5", "if": ran,
+             "with": {"fetch-depth": 0, "persist-credentials": False}},
+            {"uses": "actions/setup-python@v5", "if": ran, "with": {"python-version": "3.12"}},
+            {"run": "python3 -m pip install -r scripts/requirements-test_safe_push.txt",
+             "if": ran},
+            {"uses": "actions/download-artifact@v5", "if": ran,
+             "with": {"pattern": "safe-push-ran-*", "path": "${{ runner.temp }}/safe-push-ran"}},
+            {"run": 'python3 scripts/test_safe_push.py --cover "$RUNNER_TEMP/safe-push-ran"',
+             "if": ran}])
+        pattern = steps[4]["with"]["pattern"]
+        name = jobs[SHARD_JOB]["steps"][-1]["with"]["name"]
+        for shard in range(1, self.ci_shard_count() + 1):
+            self.assertTrue(fnmatch.fnmatchcase(name.replace("${{ matrix.shard }}", str(shard)),
+                                                pattern))
+        for other, job in jobs.items():
+            for step in job.get("steps", []):
+                if other != SHARD_JOB and "upload-artifact" in step.get("uses", ""):
+                    self.assertFalse(fnmatch.fnmatchcase(str(step["with"]["name"]), pattern))
 
     def test_safe_push_tests_passes_only_when_every_shard_passed(self):
         job = self.jobs()[GATHER_JOB]
@@ -6942,7 +7646,7 @@ class Shards(unittest.TestCase):
         self.assertEqual(job["if"], "always() && github.event_name == 'pull_request'")
         self.assertEqual(job["permissions"], {"contents": "read"})
         self.assertNotIn("continue-on-error", job)
-        [step] = job["steps"]
+        step = job["steps"][0]
         self.assertFalse({"if", "shell", "continue-on-error", "uses"} & set(step))
         self.assertEqual(step["env"], {"PATHS": f"${{{{ needs.{PATHS_JOB}.result }}}}",
                                        "RUN": f"${{{{ needs.{PATHS_JOB}.outputs.run }}}}",
@@ -6976,8 +7680,12 @@ class Shards(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    shard = shard_argument(sys.argv[1:])
-    if shard is None:
+    command = script_command(sys.argv[1:])
+    if command is None:
         unittest.main(verbosity=2)
+    elif command[0] == "shard":
+        run_shard(*command[1:])
+    elif command[0] == "cover":
+        sys.exit(cover_command(command[1]))
     else:
-        run_shard(*shard)
+        sys.exit(times_command(command[1]))
