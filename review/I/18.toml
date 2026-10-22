@@ -20,10 +20,10 @@ note = "Euclid reads off his figure that the angle ABD is part of ABC; the Lean 
 
 [review]
 stage = "full"
-commit = "570e6fa"
-reviewer = "GPT-6 Astra (Codex), records re-read"
+commit = "b7b41f51"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:d55c3dc89613050d"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y2)"
 
 [review.items]
 statement = "pass"

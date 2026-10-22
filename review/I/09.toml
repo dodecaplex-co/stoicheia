@@ -17,7 +17,7 @@ note = "Euclid takes D anywhere on AB and takes for granted that AC is long enou
 at = "let DE be joined, and on DE let the equilateral triangle DEF be constructed"
 kind = "helper"
 helper = "Prop1"
-note = "Euclid constructs the equilateral triangle DEF but leaves its side of DE to his figure. The Lean takes a point beyond DE from A by `exists_oppositeSidesOf` (System E, Points 6) and builds DEF on that point's side by I.1 (`Prop1`), for which Heath prints no reference here."
+note = "Euclid constructs the equilateral triangle DEF but leaves its side of DE to his figure. The Lean takes a point beyond DE from A by `exists_oppositeSidesOf` (System E, Points 6) and builds DEF on that point's side by I.1 (`Prop1`), for which Heath gives no reference here."
 
 [[passage]]
 at = "let AF be joined"
@@ -29,13 +29,13 @@ note = "Euclid reads off his figure that AF falls within the angle; the Lean ans
 at = "Therefore the given rectilineal angle BAC has been bisected"
 kind = "helper"
 helper = "Tacit.angle_add_of_inside"
-note = "Euclid takes for granted that DAF and EAF are BAF and FAC, since D lies on AB and E on AC, and that BAF and FAC together make up BAC. The Lean identifies the angles by `angle_onRay_left` and, using the sides established above, adds them by `Tacit.angle_add_of_inside`, a rule we assume (System E, Diagram-angle 2), not a proved lemma."
+note = "Euclid takes for granted that DAF and EAF are BAF and FAC, since D lies on AB and E on AC, and that BAF and FAC together make up BAC. The Lean identifies the angles by `angle_onRay_left` and, using the sides established above, adds them by `Tacit.angle_add_of_inside`, a rule we assume (System E, Diagram-angle 2)."
 
 [review]
 stage = "full"
-commit = "8b8162f7"
+commit = "01e0fe54"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-run = "brief 0005 stage 5, R2, independent re-read at 8b8162f7"
+run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at 01e0fe54 (reader RT-x1)"
 lean = "sha256:d385f2716fd5a8ad"
 
 [review.items]
