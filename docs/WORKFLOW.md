@@ -787,7 +787,8 @@ registry of checks", and [the folder's README](../checks/README.md)). The train 
 one carries that file, section 8's command block as `render.py` regenerates it, and a
 decision entry naming the file in a sentence of its own; it is R3, and touches neither
 `scripts/safe_push.py` nor the CI workflow, so trains that each add a check no longer edit
-the same lines. Removing a check, or changing its command, job or order, is a change to
+those two files, and a conflict in the block they both regenerate is settled by rendering
+it again. Removing a check, or changing its command, job or order, is a change to
 its one file, named the same way. The train's CI runs the train's own registry, the new
 check with it, while its pre-flight runs origin/main's whole registry, without it, in both
 passes: the check joins the pre-flight at its merge, and judges the trains after it

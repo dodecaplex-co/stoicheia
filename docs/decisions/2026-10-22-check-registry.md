@@ -23,12 +23,13 @@
   What stays the same. The checks, their commands and their order. The negative tests, in
   CI's `negative` job and in the pre-flight's `NEGATIVE`, which the coordinator ruled out
   of this card's scope. CI's `model` job, whose one command stays a list of the
-  pre-flight's own beside `NEGATIVE`, since the registry holds the `check` job alone; a
-  card for other jobs can widen it. Every job's name, and so the ruleset's required
-  checks. While origin/main holds no registry, as for the train that brings it, the
-  pre-flight runs the sequence built into `scripts/safe_push.py`, the one every train was
-  judged by before. The tests pin that list to one of their own, as they pin the `model`
-  and negative lists, and never to the registry, which grows without it. A follow-up card,
+  pre-flight's own beside `NEGATIVE`, since the registry holds the `check` job alone: on
+  22 October 2026 the coordinator ruled that it stays built in, as `NEGATIVE` does. Every
+  job's name, and so the ruleset's required checks. While origin/main holds no registry,
+  as for the train that brings it, the pre-flight runs the sequence built into
+  `scripts/safe_push.py`, the one every train was judged by before. The tests pin that
+  list to one of their own, as they pin the `model` and negative lists, and never to the
+  registry, which grows without it. A follow-up card,
   [#328](https://github.com/jackChallis/stoicheia/issues/328), removes the list, and the
   fallback to it, once the registry is on main. Until then a train that deleted both
   `checks/` and `scripts/registry.py` would, once merged, put every later pre-flight back
@@ -65,15 +66,16 @@
   What it gives up. On GitHub the `check` job shows one step where it showed seventeen:
   each check is a group of that step's log, and a failure names its check there and in an
   error annotation. And a registry at origin/main that could not be read would hold every
-  train of R3 and above, its own repair among them, so that repair would need the owner's
-  leave to land without the pre-flight. `render.py` and CI's run of the registry load the
-  reader from `scripts/` and read the worktree, so they cannot show that the reader works
-  as the pre-flight runs it, alone and out of Git: a reader that imports a module beside
-  it passes both. So step 3 of the pre-flight, in every class, reads the commit's own
-  registry with the commit's own reader as a later pre-flight will read it once the commit
-  is main's, and refuses the commit, naming why, when it cannot; it skips only a commit
-  that holds neither the registry nor its reader. The reader must stay one self-contained
-  file of the standard library, and its docstring says so.
+  train, of every class, its own repair among them, since step 3 reads the registry in
+  every class, so that repair would need the owner's leave to land without the pre-flight.
+  `render.py` and CI's run of the registry load the reader from `scripts/` and read the
+  worktree, so they cannot show that the reader works as the pre-flight runs it, alone and
+  out of Git: a reader that imports a module beside it passes both. So step 3 of the
+  pre-flight, in every class, reads the commit's own registry with the commit's own reader
+  as a later pre-flight will read it once the commit is main's, and refuses the commit,
+  naming why, when it cannot; it skips only a commit that holds neither the registry nor
+  its reader. The reader must stay one self-contained file of the standard library, and
+  its docstring says so.
 
   This entry approves `scripts/registry.py`, a new file: the registry's reader, from the
   worktree or from a revision in Git, and the source of section 8's block; it must stay

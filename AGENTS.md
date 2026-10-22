@@ -66,7 +66,7 @@ People start at [CONTRIBUTING.md](CONTRIBUTING.md); the state of the work is in
   generated output (`facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`, README.md's rows
   between the `<!-- scope:… -->` markers and PROGRAM.md's status table between the
   `<!-- status -->` markers, and inline `count:` values) and the companions list
-  (`Elements/Companions.lean`); WORKFLOW section 8's command block between the
+  (`Elements/Companions.lean`); WORKFLOW section 8's first command block between the
   `<!-- checks -->` markers is generated from `checks/` too, but a train that changes
   `checks/` commits it regenerated with `render.py`; the coordinator owns the foundations
   (`Elements/Foundations/`), `Certificate/axioms.lock`, the toolchain (`lean-toolchain`,

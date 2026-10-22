@@ -2868,7 +2868,7 @@ def guards(ctx, wt: Path, rep: Report, logs: Path) -> Guarded:
     guard_heath(repo, base, sha, wt, rep)
     guard_directories(repo, base, sha, rep)
     guard_entries(repo, base, sha, rep)
-    guard_registry(repo, sha, rep)
+    guard_registry(repo, sha, rep, base)
     inputs = [(s, p) for s, p in changed_files(repo, base, sha) if under(p, CHECK_INPUTS)]
     with contextlib.closing(passes(repo, base, wt, inputs)) as each:
         for label, fail, excludes in each:
@@ -3033,24 +3033,37 @@ def check_sequence(repo, base: str, whose: str = "origin/main") -> CheckList:
                      f"(blob {reader[2].decode()[:12]}) reads them, then the model job's")
 
 
-def guard_registry(repo, sha, rep: Report) -> None:
+def guard_registry(repo, sha, rep: Report, base: str | None = None) -> None:
     """The commit's registry of checks reads as the pre-flight of every later train will
     read it once the commit is origin/main's: by check_sequence at the commit, the
     commit's own scripts/registry.py taken out of git and run alone from a temporary
     directory, reading the commit's checks/ out of git. render.py and CI's run_checks.py
     load the reader from scripts/ and read the worktree, so a reader that imports a module
     beside it, or that fails only on a revision, passes them both, and once merged would
-    refuse every train of R3 and above, its own repair among them. Every class runs this.
+    refuse every train, its own repair among them. Every class runs this.
     Skipped only while the commit holds neither the registry nor its reader, when the lists
     built in stand in for it, as they did before the registry came."""
     t = time.time()
     try:
         own = check_sequence(repo, sha, "the commit")
     except Refusal as e:
-        rep.add("3", "registry of checks", "FAIL", f"{e}; so it would refuse the "
-                "pre-flight of every train of R3 and above once it is origin/main's, as "
-                f"{REGISTRY_READER} reads it there, alone and out of git (check_sequence)",
-                time.time() - t)
+        # Against origin/main (or, without it, the commit's parent): a commit that changes
+        # neither the folder nor the reader holds origin/main's registry, and the fault is
+        # main's; else the commit's own. Any doubt reads as the commit's.
+        old = base or (f"{sha}^" if git_ok(repo, "rev-parse", "--verify", "-q", f"{sha}^")
+                       else None)
+        try:
+            changed = changed_files(repo, old, sha, REGISTRY, REGISTRY_READER) if old \
+                else [("?", REGISTRY)]
+        except Exception:
+            changed = [("?", REGISTRY)]
+        whose = (f"{e}; so it would refuse the pre-flight of every train once it is "
+                 f"origin/main's, as {REGISTRY_READER} reads it there, alone and out of git "
+                 "(check_sequence)") if changed else (
+                 f"{e}; the commit changes neither {REGISTRY}/ nor {REGISTRY_READER}, so the "
+                 "registry it holds is origin/main's, which fails to read: a repair of the "
+                 "registry on main comes first")
+        rep.add("3", "registry of checks", "FAIL", whose, time.time() - t)
         return
     if own.built_in:
         rep.add("3", "registry of checks", "skip", f"the commit holds neither {REGISTRY}/ "

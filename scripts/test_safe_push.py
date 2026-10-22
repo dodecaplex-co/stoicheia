@@ -6989,7 +6989,16 @@ class Registry(unittest.TestCase):
         [(stage, name, outcome, detail)] = guarded(root)
         self.assertEqual((stage, name, outcome), ("3", "registry of checks", "FAIL"))
         self.assertTrue(detail.startswith(said + "; so it would refuse the pre-flight of "
-                                          "every train of R3 and above"), detail)
+                                          "every train once it is origin/main's"), detail)
+        # The same registry, which a commit that changes neither the folder nor the reader
+        # holds as origin/main's: the fault is main's, and the step says so.
+        rep = safe_push.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            safe_push.guard_registry(root, "HEAD", rep, base="HEAD")
+        [step] = rep.steps
+        self.assertEqual(step.outcome, "FAIL")
+        self.assertIn("the commit changes neither checks/ nor scripts/registry.py, so the "
+                      "registry it holds is origin/main's", step.detail)
         git(root, "rm", "-rq", "--", "checks", "scripts/registry.py",
             "scripts/registry_names.py")
         self.committed(root, "No registry")
