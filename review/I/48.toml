@@ -41,14 +41,14 @@ note = "Euclid applies I.47 to the square on DC without describing it. The Lean 
 at = "therefore the square on DC is equal to the square on BC"
 kind = "helper"
 helper = "Prop46.side_eq"
-note = "Euclid assumes the converse too, that equal squares stand on equal straight lines; Heath reports Proclus's proof, while the Lean's `Prop46.side_eq` takes another road, the square on the less being the less. Before applying that lemma in I.48, the Lean uses `Prop28.square` (I.28) to make both squares parallelograms and `Parallelogram.quadArea_rotate` to read their unchanged areas from C, as squares on CD and CB."
+note = "Euclid assumes the converse too, that equal squares stand on equal straight lines; Heath reports Proclus' proof, while the Lean's `Prop46.side_eq` takes another road, the square on the less being the less. Before applying that lemma in I.48, the Lean uses `Prop28.square` (I.28) to make both squares parallelograms and `Parallelogram.quadArea_rotate` to read their unchanged areas from C, as squares on CD and CB."
 
 [review]
 stage = "full"
-commit = "b62518e5"
-reviewer = "GPT-6 Astra (Codex), records re-read"
-lean = "sha256:538a031257fe1dd2"
-run = "brief 0005 stage 5, ship T re-read"
+commit = "99359055"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:16cb3a3ac6cb11b9"
+run = "brief 0005 stage 5, read-through 02 (#34), part 2: the changes landed since 2e8aecf8 and the held findings' mends, read at 99359055"
 
 [review.items]
 statement = "pass"
