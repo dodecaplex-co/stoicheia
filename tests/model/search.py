@@ -377,6 +377,12 @@ def _(c):
 
 
 
+@axiom('exists_centre', dict(al=C_))
+def _(c):
+    al = c['al']
+    return is_centre((al[0], al[1]), al)
+
+
 @axiom('line_circle_between', dict(B=P, C=P, L=L_, al=C_))
 def _(c):
     B, Cc, L, al = c['B'], c['C'], c['L'], c['al']
@@ -481,12 +487,6 @@ def _(c):
 
 
 # ---- Triple incidence
-def _ti_hyp(c):
-    A, B, Cc, D, L, M, N = (c[k] for k in 'ABCDLMN')
-    return (on_line(A, L) and on_line(A, M) and on_line(A, N) and on_line(B, L) and on_line(Cc, M)
-            and on_line(D, N))
-
-
 # ---- Circles
 @axiom('between_of_inside_chord', dict(A=P, B=P, C=P, L=L_, al=C_))
 def _(c):

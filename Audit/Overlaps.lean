@@ -14,11 +14,14 @@ or give it in a few lines. Astra found the clearest case, III.2, in the outside 
 (`docs/reports/outside-review-01.md`), and compiled its one-line proof; we are grateful.
 The catalogue in `docs/reports/overlaps.md` lists every case we found, and this file
 proves each "states it" or "gives it at once" row again, from the rules alone. The former
-I.7 audit is kept as a circular derivation through Circle 4, now a corollary of I.7.
-After III.6, `III_5_crossing` proves III.5 when "cut" is read as crossing. It now rests
-on Diagram-segment 2 through the proved radius comparison `len_lt_of_inside`.
-A second section proves III.24, III.26 and III.27 without the hypotheses our
-measure of circumferences leaves idle, the catalogue's near misses of representation.
+I.7 audit is kept as a circular derivation through Circle 4, now a corollary of I.7. After
+III.6, `III_5_crossing` and `III_5_radius` give III.5 from Definition I.15 with
+Diagram-segment 4 or Diagram-segment 3. Both rules have been theorems since the second
+axiom retirement, and through them each proof now rests on Diagram-segment 2 as well. A second
+section proves the measure clauses of
+III.24's companion `Prop24.equalCircles` and of III.26, and III.27 whole, without the
+hypotheses our measure of circumferences leaves idle, the catalogue's near misses of
+representation.
 
 A third section proves III.30 by the same measure, without III.28 (`III_30_measure`),
 another near miss of representation.
@@ -90,61 +93,75 @@ theorem III_2_outside : type_of% @Elements.BookIII.Prop2 :=
 
 /-- **III.5 from Diagram-segment 2.** A circle is fixed by its centre and radius
 (`circle_eq`, Diagram-segment 2). Two circles about one centre through one point are
-one circle, so two circles that cut one another cannot share a centre. Our III.5 takes
-Euclid's steps, and names this rule to show that F and G are two points. It also rests
-on the rule and Postulate 3 through proved rules such as `centre_inside`, whose proof
-uses circles to compare lengths. -/
+one circle. A point of one within the other would then be both within that circle and on
+it, which Generalities 4, proved since the second axiom retirement, forbids. Our III.5
+takes Euclid's steps and cites neither Diagram-segment 2 nor Circle 4, now a theorem proved
+from I.7 using Diagram-segment 2. It rests on Diagram-segment 2 and Postulate 3 all the
+same, through proved rules such as `centre_inside`, whose proof uses circles to compare
+lengths. -/
 theorem III_5 : type_of% @Elements.BookIII.Prop5 :=
-  fun hne ⟨_, _, _, hC₁, hC₂, _, _⟩ ⟨hE₁, hE₂⟩ => hne (circle_eq hE₁ hE₂ hC₁ hC₂ rfl)
+  fun ⟨⟨_, _, _, _, _, hC₁, hC₂⟩, ⟨_, hP₁, hP₂⟩, _⟩ ⟨hE₁, hE₂⟩ =>
+    inside_not_on (circle_eq hE₁ hE₂ hC₁ hC₂ rfl ▸ hP₂) hP₁
 
-/-- **III.6 from Diagram-segment 2 and Generalities 3.** Circles touching within are two
-circles through one point, so Diagram-segment 2 again forbids a common centre. Circles
+/-- **III.6 from Diagram-segment 2 and Generalities 3 and 4.** A common centre and the
+point of contact would make the circles one, so the point of the inner circle within the
+outer would be both within that circle and on it, which Generalities 4 forbids. Circles
 touching without have no point within both, and a common centre would be one, since a
 centre is within its circle (`centre_inside`, Generalities 3). Our III.6 ends contact
-without with Generalities 3, before drawing FEB; for contact within it takes Euclid's
-steps, and names Diagram-segment 2 to show that E and B are two points. Generalities 3
-has been a theorem since 19 October 2026 (`Elements/Figure/RuleBase.lean`), and itself
-rests on Diagram-segment 2 and Postulate 3 through its comparison of lengths. The
-closure pinned below is that of its proof with Diagram-segment 2. -/
+without with Generalities 3, Definition I.15's placement of the centre within the figure.
+For contact within it takes Euclid's steps. Neither case cites Diagram-segment 2, nor
+Circle 4, whose proof uses it. Generalities 3 and 4 have been theorems since 19 October 2026
+(`Elements/Figure/RuleBase.lean`), and Generalities 3 rests on Diagram-segment 2 and
+Postulate 3 through its comparison of lengths, so our III.6 rests on them too. The closure
+pinned below is that of their proofs with Diagram-segment 2. -/
 theorem III_6 : type_of% @Elements.BookIII.Prop6 := by
-  rintro C F ABC CDE (⟨hC₁, hC₂, hne, -⟩ | ⟨hC₂, hC₁, hne, -⟩ | ⟨-, -, hout⟩) ⟨hF₁, hF₂⟩
-  · exact hne (circle_eq hF₁ hF₂ hC₁ hC₂ rfl)
-  · exact hne (circle_eq hF₂ hF₁ hC₂ hC₁ rfl)
+  rintro C F ABC CDE (⟨hC₁, hC₂, ⟨P, hP, hP_in⟩, -⟩ | ⟨hC₂, hC₁, ⟨P, hP, hP_in⟩, -⟩ |
+    ⟨-, -, hout⟩) ⟨hF₁, hF₂⟩
+  · exact inside_not_on (circle_eq hF₂ hF₁ hC₂ hC₁ rfl ▸ hP_in) hP
+  · exact inside_not_on (circle_eq hF₁ hF₂ hC₁ hC₂ rfl ▸ hP_in) hP
   · exact hout F (centre_inside hF₁) (centre_inside hF₂)
 
-/-- **III.5 read with crossing.** If a point P of one circle is within the other, and the
+/-- **III.5 from Diagram-segment 4.** If a point P of one circle is within the other, and the
 two circles have a point C in common, they have no common centre: P is nearer the centre
 than C is (`len_lt_of_inside`, Diagram-segment 4), and yet, both being on the one circle,
-as far from it (Definition I.15). A circle and its copy, drawn twice over, do not cross
-so, for neither has a point within the other. Our III.5 reads "cut" as meeting at two
-points (`CirclesMeet`), which a circle and its copy do, and there the published proof
-uses Diagram-segment 2 (the catalogue, under III.5). The crossing proof below also
-rests on Diagram-segment 2, through the proved `len_lt_of_inside`; it no longer gives
-an independent derivation without that axiom. Circle 4 is now proved using
-Diagram-segment 2 as well. The same proof gives III.6 for circles
-touching within, read with a point of the inner circle within the outer. -/
-theorem III_5_crossing {C P E : Point} {ABC CDG : Circle} (hC₁ : OnCircle C ABC)
-    (hC₂ : OnCircle C CDG) (hP₂ : OnCircle P CDG) (hP₁ : InsideCircle P ABC) :
-    ¬ (Centre E ABC ∧ Centre E CDG) := by
-  rintro ⟨hE₁, hE₂⟩
+as far from it (Definition I.15). Our III.5 instead draws a straight line through the
+point within and compares its parts, without citing Diagram-segment 4. The same short
+proof gives III.6 for circles touching within, with the point of the inner circle within
+the outer. Diagram-segment 4 has been a theorem since 19 October 2026
+(`Elements/Figure/Incidence.lean`), and through it this proof rests on Diagram-segment 2,
+so it no longer gives a derivation without that axiom. -/
+theorem III_5_crossing : type_of% @Elements.BookIII.Prop5 := by
+  rintro E ABC CDG ⟨⟨_, C, _, _, _, hC₁, hC₂⟩, -, ⟨P, hP₂, hP₁⟩⟩ ⟨hE₁, hE₂⟩
   have h : ‖E P‖ < ‖E C‖ := len_lt_of_inside hE₁ hC₁ hP₁
   rw [Definition15 hE₂ hP₂ hC₂] at h
   exact lt_irrefl _ h
+
+/-- **III.5 from Diagram-segment 3.** F, a point of ABC,
+is as far from E as C is (Definition I.15); so it is on CDG (`on_circle_of_len_eq`, the
+half of Diagram-segment 3 that Definition I.15 does not give), yet it is within CDG,
+which Generalities 4 forbids. Both rules have been theorems since 19 October 2026; the
+proof of Diagram-segment 3's half takes the circle about the centre through the point to be
+the given one by Diagram-segment 2, so this proof rests on Diagram-segment 2 too. -/
+theorem III_5_radius : type_of% @Elements.BookIII.Prop5 := by
+  rintro E ABC CDG ⟨⟨_, C, _, _, _, hC₁, hC₂⟩, ⟨F, hF₁, hF₂⟩, -⟩ ⟨hE₁, hE₂⟩
+  exact inside_not_on hF₂ (on_circle_of_len_eq hE₂ hC₂ (Definition15 hE₁ hF₁ hC₁))
 
 /-! ## Hypotheses our measure of circumferences leaves idle
 
 Not overlaps with a rule, but with a definition: a circumference is measured by twice the
 angle standing on it (`circumference`, Definition III.9), a measure with no radius in it.
-So III.26 and III.27 hold in any two circles, and III.24's second clause follows from its
-angle hypothesis alone (the catalogue's "Near misses"). Each theorem below states the
-proposition without the hypothesis, and an `example` beneath it gives back the
-proposition's own statement from it, so a change to either statement shows up here. When
-arcs get a meaning of their own (brief 0005, stage 3), these are meant to stop compiling. -/
+So the equal measures of III.26, and III.27 whole, hold in any two circles, and the second
+clause of III.24's companion `Prop24.equalCircles` follows from its angle hypothesis alone
+(the catalogue's "Near misses"). Each theorem below states the measures without the
+hypothesis; an `example` beneath it gives back the statement of III.27, or of
+`Prop24.equalCircles`, so a change to either statement shows up here. III.26 is no longer
+among them: it concludes that the circumferences are congruent too, which in unequal circles
+equal angles do not give, so it is no longer provable for any two circles. -/
 
-/-- **III.26 in any two circles.** Equal angles at the centres, or at the circumferences,
-stand on circumferences of equal measure, whether or not the circles are equal: each
-measure is the angle at the centre (`Circumference.centre`), or twice the angle at the
-circumference (`Circumference.eq`). -/
+/-- **III.26's equal measures in any two circles.** Equal angles at the centres, or at the
+circumferences, stand on circumferences of equal measure, whether or not the circles are
+equal: each measure is the angle at the centre (`Circumference.centre`), or twice the angle
+at the circumference (`Circumference.eq`). -/
 theorem III_26_any {A B C D E F G H K L : Point} {ABC DEF : Circle}
     (hG : Centre G ABC) (hH : Centre H DEF) (hA : OnCircle A ABC) (hB : OnCircle B ABC)
     (hC : OnCircle C ABC) (hD : OnCircle D DEF) (hE : OnCircle E DEF)
@@ -159,8 +176,11 @@ theorem III_26_any {A B C D E F G H K L : Point} {ABC DEF : Circle}
       rw [BookIII.Circumference.eq ⟨G, hG⟩ hA hB hC hAK,
         BookIII.Circumference.eq ⟨H, hH⟩ hD hE hF hDL, h]⟩
 
-example : type_of% @Elements.BookIII.Prop26 :=
-  fun _ hG hH hA hB hC hD hE hF hAK hDL => III_26_any hG hH hA hB hC hD hE hF hAK hDL
+/- III.26 itself does not follow from `III_26_any`, and no longer holds for any two circles:
+it concludes that the circumferences are congruent as well as equal in measure, and in
+unequal circles equal angles give no congruence. So its example has gone; the measures
+above are the first conjunct of each of its clauses, and the check after III.26, in
+`Elements/BookIII/Prop26.lean`, gives them back from it. -/
 
 /-- **III.27 in any two circles.** Angles standing on circumferences of equal measure are
 equal, at the circumferences and at the centres, whether or not the circles are equal:
@@ -182,11 +202,12 @@ theorem III_27_any {A B C D E F G H : Point} {ABC DEF : Circle}
 example : type_of% @Elements.BookIII.Prop27 :=
   fun _ hG hH hA hB hC hD hE hF hBAC hEDF heq => III_27_any hG hH hA hB hC hD hE hF hBAC hEDF heq
 
-/-- **III.24's second clause from its angles alone.** Segments with equal angles AEB, CFD
-have circumferences of equal measure, whatever their bases: each circumference, with the
-one on the other side of its base, which is twice the angle at E or F, makes up the whole
-circle (`Circumference.whole`). III.24's first clause, that the circles are equal, needs
-the equal bases. -/
+/-- **The second clause of III.24's companion from its angles alone.** Segments with equal
+angles AEB, CFD have circumferences of equal measure, whatever their bases: each
+circumference, with the one on the other side of its base, which is twice the angle at E or
+F, makes up the whole circle (`Circumference.whole`). The first clause of
+`Prop24.equalCircles`, that the circles are equal, needs the equal bases, and so does III.24
+itself, which concludes that the segments are congruent. -/
 theorem III_24_measure {A B C D E F : Point} {AEB CFD : Circle}
     (hAEB : ∃ O : Point, Centre O AEB) (hCFD : ∃ O : Point, Centre O CFD)
     (hA : OnCircle A AEB) (hB : OnCircle B AEB) (hE : OnCircle E AEB) (hC : OnCircle C CFD)
@@ -201,9 +222,9 @@ theorem III_24_measure {A B C D E F : Point} {AEB CFD : Circle}
   rw [BookIII.Circumference.eq hCFD hF hC hD hYF.symm, ← hsim] at w₂
   exact CommonNotion3 (w₁.trans w₂.symm) rfl
 
-example : type_of% @Elements.BookIII.Prop24 :=
+example : type_of% @Elements.BookIII.Prop24.equalCircles :=
   fun hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hAB hsim =>
-    ⟨(BookIII.Prop24 hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hAB hsim).1,
+    ⟨(BookIII.Prop24.equalCircles hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hAB hsim).1,
      III_24_measure hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hsim⟩
 
 /-! ## III.30 by the measure
@@ -378,7 +399,13 @@ info: 'Audit.III_2_outside' depends on axioms: [propext, Classical.choice, Quot.
 #print axioms Audit.III_2_outside
 
 /--
-info: 'Audit.III_5' depends on axioms: [Classical.choice, Elements.Tacit.circle_eq]
+info: 'Audit.III_5' depends on axioms: [Classical.choice,
+ Elements.Postulate1,
+ Elements.Tacit.between_of_inside_chord,
+ Elements.Tacit.circle_eq,
+ Elements.Tacit.exists_point,
+ Elements.Tacit.line_circle_beyond,
+ Elements.Tacit.not_between_of_between]
 -/
 #guard_msgs in
 #print axioms Audit.III_5
@@ -395,6 +422,7 @@ info: 'Audit.III_6' depends on axioms: [propext,
  Elements.Tacit.add_zero,
  Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.circle_eq,
+ Elements.Tacit.exists_point,
  Elements.Tacit.exists_point_inside_circle,
  Elements.Tacit.len_add_of_between,
  Elements.Tacit.len_self,
@@ -409,6 +437,31 @@ info: 'Audit.III_6' depends on axioms: [propext,
 -/
 #guard_msgs in
 #print axioms Audit.III_6
+
+/--
+info: 'Audit.III_5_radius' depends on axioms: [propext,
+ Classical.choice,
+ Elements.Definition15,
+ Elements.Postulate1,
+ Elements.Postulate3,
+ Quot.sound,
+ Elements.Tacit.add_comm,
+ Elements.Tacit.add_lt_add_right,
+ Elements.Tacit.add_zero,
+ Elements.Tacit.between_of_inside_chord,
+ Elements.Tacit.circle_eq,
+ Elements.Tacit.exists_point,
+ Elements.Tacit.exists_point_inside_circle,
+ Elements.Tacit.len_add_of_between,
+ Elements.Tacit.len_self,
+ Elements.Tacit.len_symm,
+ Elements.Tacit.line_circle_beyond,
+ Elements.Tacit.lt_trichotomy,
+ Elements.Tacit.not_between_of_between,
+ Elements.Tacit.not_lt_zero]
+-/
+#guard_msgs in
+#print axioms Audit.III_5_radius
 
 /--
 info: 'Audit.III_5_crossing' depends on axioms: [propext,

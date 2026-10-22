@@ -38,6 +38,7 @@
 "Tacit.circle_eq" = "circle_eq"
 "Tacit.circles_meet" = "circles_meet"
 "Tacit.circles_meet_same_side" = "circles_meet_same_side"
+"Tacit.exists_centre" = "exists_centre"
 "Tacit.exists_point" = "exists_point"
 "Tacit.exists_point_inside_circle" = "exists_point_inside_circle"
 "Tacit.exists_point_on_line" = "exists_point_on_line"

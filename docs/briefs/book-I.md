@@ -22,7 +22,7 @@ Book I's words are the foundations every later book uses, in `Elements/Foundatio
 | `Phrases.lean` | Phrases Euclid never defines, as abbreviations: `SameSideOf`, `OppositeSidesOf`, `OnRay`, `InsideTriangle`, `AreParallel`, `Parallelogram` and its area `quadArea`; points in order on a straight line, `InOrder`, with `segments` and `endOf` (II.1); and a rectilineal figure given with its triangles (Definitions I.14 and I.19), as triangles that lie apart, `Apart`, or fitted together, `Fitted` and `Rectilineal`, each with its area as given, with `OnFiniteLine`, `OnOrInsideTriangle`, `Corners` and `triples`. |
 | `Postulates.lean` | The five postulates, each an `axiom`. |
 | `CommonNotions.lean` | The five Common Notions, each a theorem; Common Notions 3 and 5 rest on tacit laws of magnitudes. |
-| `Tacit/` | <!-- count:tacit-rules -->42<!-- /count --> tacit rules taken as axioms, from System E: `Diagram.lean`, `Transfer.lean`, `Constructions.lean`, `Metric.lean`, `Magnitudes.lean` and `Superposition.lean`. |
+| `Tacit/` | <!-- count:tacit-rules -->43<!-- /count --> tacit rules taken as axioms, from System E save one of our own, that every circle has a centre (`exists_centre`, from Definitions I.15 and I.16, by the owner's decision of 18 October 2026): `Diagram.lean`, `Transfer.lean`, `Constructions.lean`, `Metric.lean`, `Magnitudes.lean` and `Superposition.lean`. |
 
 ## How the statements say Euclid's phrases
 
@@ -186,7 +186,8 @@ corollaries after I.13. The other five retired rules are proved in Book Zero's
 `Circles.lean`. By the owner's decision of 19 October 2026 ("Please do both. 79 is rather large with so
 many books in front of us."), 31 more rules became
 theorems in Book Zero's `RuleBase.lean`, `Incidence.lean`, `AreaRules.lean` and
-`CirclePoints.lean`, proved that day and landed on 21 October. The lock now holds <!-- count:axioms -->48<!-- /count --> axioms, including <!-- count:tacit-rules -->42<!-- /count --> tacit rules.
+`CirclePoints.lean`, proved that day and landed on 21 October. With our own rule that every
+circle has a centre, the lock now holds <!-- count:axioms -->49<!-- /count --> axioms, including <!-- count:tacit-rules -->43<!-- /count --> tacit rules.
 
 The stage-5 review will give the hardest formal blocks (I.7, I.35, I.47) a paragraph of
 their own in the mishnah.

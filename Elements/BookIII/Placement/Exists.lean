@@ -7,15 +7,14 @@ import Elements.BookI.Prop20
 import Elements.BookI.Prop22
 
 /-!
-# Stage 3, staged: placement, where a point goes
+# Placement: where a point goes
 
-Statements frozen before their proofs (brief 0006, stage 3), and proved here. One file of
-`Elements/BookIII/Placement/`, so that parallel provers never share one. The assembly is in
-`Staging/Stage3/Placement.lean`.
-
+One of the five files of placement's cases (`Elements/BookIII/Placement.lean` gathers them).
 On equal straight lines AB, CD, a point P is sent to a point Q as far from C as P is from
-A, and as far from D as P is from B. These say that such a point exists, on F's side of
-CD when P is off AB, and on CD when P is on AB.
+A, and as far from D as P is from B. These say that such a point exists: on F's side of CD
+when P is off AB, by I.22, I.20 giving the triangle's condition; and on CD when P is on AB,
+by I.3 between the ends, and beyond them by producing CD, I.2 first placing the length at
+its end (`Placement.exists_on_beyond`).
 -/
 
 namespace Elements.BookIII

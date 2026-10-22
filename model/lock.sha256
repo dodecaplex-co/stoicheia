@@ -19,6 +19,30 @@
 #     shasum -a 256 Certificate/axioms.lock
 # run from the repository root (keep these comment lines).
 #
+# Renewed on 18 October 2026, with tests/model/lock.sha256, when the words of the mixed
+# angles (brief 0011) joined the vocabulary: words only the companions of III.16 and III.31
+# use, and no law of the model changes.
+#
+# Renewed on 18 October 2026, when the words of stage 3's statements (brief 0006) joined
+# the vocabulary: words only the propositions and their companions reach, so none of
+# the model's laws changes.
+#
+# Renewed on 19 October 2026, when the rule that every circle has a centre,
+# Tacit.exists_centre, joined the axioms (brief 0008, section 2): the generator writes its
+# law, Model/Assembly.lean gathers Euclidean.exists_centre, which proved it in the plane
+# before it landed, and Check/Hand.lean compares the hand translation with the library's
+# declaration. The other 87 laws and the 37 words they reach are unchanged.
+#
+# Renewed on 19 October 2026 for the combined vocabulary of stages 3 and mixed angles:
+# 88 axioms, byte-identical to the centre-rule revision, and 120 words of vocabulary.
+#
+# Renewed on 19 October 2026 for brief 0008, section 7: CirclesCut joins the vocabulary,
+# and TouchesInternally asks for a point within instead of distinct circles. The 87 axioms
+# and all 37 words they reach are unchanged; no model law changes.
+#
+# Renewed on 19 October 2026 for the merged vocabulary of stage 3, mixed angles and
+# brief 0008, section 7: 88 axioms, unchanged, and 121 words of vocabulary.
+#
 # Renewed on 19 October 2026, when eight axioms became theorems (the owner approved both
 # retirements that day): their laws leave the generated translation;
 # the other 79 axioms and every word are unchanged, byte for byte.
@@ -39,4 +63,23 @@
 # 19 October 2026), merged after the restricted rule: their laws leave the generated
 # translation, and Check/ compares each hand translation with the theorem's type directly;
 # the other 48 axioms and every word are unchanged, byte for byte.
-7fe6e851b6b154b614ab229e71ef8e0fdcbf395d2f4d4d6d45961421965dff34  Certificate/axioms.lock
+#
+# Renewed on 21 October 2026, when axiom wave one was merged into train C6a: the lock is
+# main's 79 rules and Tacit.exists_centre, 80 axioms, with 121 words of vocabulary. The
+# generator writes 80 laws, Model/Assembly.lean gathers all 80 with Euclidean.exists_centre
+# among them, and the eight retired rules keep their plane proofs and audits as derived
+# facts, with no field of Laws.
+#
+# Renewed on 21 October 2026, when main's restricted rule of superposition (#191) was
+# merged into train C6a, through tooling/centre-given-meaning at 980569da: the lock is
+# main's 79 axioms, with Tacit.superposition restated as Superposition.Rule primitives, and
+# Tacit.exists_centre, 80 in all, with 238 words of vocabulary, main's 208 and this train's
+# 30. The generator writes 80 laws, the restricted superposition law and exists_centre's
+# among them, and Model/Assembly.lean gathers all 80.
+#
+# Renewed on 21 October 2026, when the second retirement was merged with train C6a (#240):
+# the lock is the second retirement's 48 axioms and Tacit.exists_centre, 49 in all, with
+# 238 words of vocabulary; it is main's lock less the 31 lines of the retired axioms, every
+# other line byte for byte. The generator writes 49 laws, exists_centre's among them, and
+# Model/Assembly.lean gathers all 49.
+09e393d606e185e79552f9eb3e5057724cfb619ddbb841cd3f444cc5fd909a56  Certificate/axioms.lock
