@@ -3,14 +3,26 @@ import Elements.Figure.Basics
 import Elements.Figure.Rectilineal
 
 /-!
-# Sides, half-planes and diagonals of a convex outline
+# Book Zero: sides, half-planes and diagonals of a convex outline
 
-A supporting side excludes a corner from any triangle on three other corners.
-The diagonal AC therefore separates B from the later corners. Removing B leaves
-a convex outline when at least three corners remain. Repeated removals establish
-the crossings used to compare fans by diagonal changes.
+The facts that the convex steps of brief 0013's route share (section 8, rows A2 and B3 to
+B6 of its ledger), for figures given by their outlines (`Foundations/Figures.lean`):
 
-The half-plane and fan arguments build on the probe of 19 October.
+* **Chains and outlines.** The segments of a chain and the sides of an outline, read from
+  another corner, the other way round, or joined at a common corner.
+* **Half-planes.** A closed triangle is exactly the common part of the closed half-planes of
+  its sides towards the opposite corners (`triangle_halfplanes`, from which
+  `closed_triangle_sides` follows). A point inside a triangle lies between a corner and a
+  point of the opposite side (`inside_between`, `inside_through`), by the crossbar.
+* **Convex outlines.** The straight line of each side supports the outline: no corner lies
+  within or on a triangle of three other corners (`corner_not_in_triangle`). So the diagonal
+  AC separates B from the later corners (`ear_opposite`), and removing B leaves a convex
+  outline while three corners remain (`cut_convex`). Ears removed one after another give
+  the crossing diagonals by which fans from neighbouring corners are compared
+  (`ConvexOutline.fan_cross`, `diagonals_cross`).
+
+The half-plane and fan arguments build on the probe of 19 October (brief 0013, section 8).
+Nothing in Book Zero cites a proposition of the *Elements*.
 -/
 
 namespace Elements.Figures
@@ -230,7 +242,7 @@ theorem inside_between {X A B C : Point} (h : InsideTriangle X A B C) :
   · exact False.elim (pasch3 hb hYM (same_side_symm (h.1.sameSide hBM hCM)))
 
 /-- The straight line from a corner through a point inside a triangle meets the opposite
-side: from `B` through `D`, it meets `AC` between `A` and `C`. I.21 draws the same line;
+side: from B through D, it meets AC between A and C. I.21 draws the same line;
 here it follows from the crossbar, with no proposition cited. -/
 theorem inside_through {A B C D : Point} (hD : InsideTriangle D A B C) :
     ∃ E : Point, Between B D E ∧ Between A E C := by

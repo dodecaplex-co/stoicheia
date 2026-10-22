@@ -1,13 +1,16 @@
 import Elements.Figure.Cells
 
 /-!
-# Staging: cells that lie apart, divided by their fans
+# Book Zero: cells that lie apart, divided by their fans
 
-The last step of brief 0013's arrangement route to `division_exists`: the cells selected from
-an arrangement have disjoint insides, and drawing the fan in each cell and putting the fans
-together gives triangles that lie apart and cover exactly the cells' closed regions. Inside
-one cell the fan's triangles lie apart (`fan_apart`); across two cells they lie apart because
-the inside of each fan triangle lies inside its cell (`fan_inside_core`).
+The last step of brief 0013's arrangement route to `division_exists`, in the namespace
+`DivisionFacts` (section 8, D9): the cells selected from an arrangement have disjoint
+insides, and drawing the fan in each cell and putting the fans together gives triangles that
+lie apart and cover exactly the cells' closed regions (`cells_division`). Inside one cell the
+fan's triangles lie apart (`fan_apart`); across two cells they lie apart because the inside
+of each fan triangle lies inside its cell (`fan_inside_core`).
+
+Nothing in Book Zero cites a proposition of the *Elements*.
 -/
 
 namespace Elements.Figures

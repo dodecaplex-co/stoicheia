@@ -3,13 +3,15 @@ import Elements.Figure.Arrangements.CoverFacts
 import Elements.Figure.Arrangements.ArrangementFacts
 
 /-!
-# Staging: an interior diagonal of a simple outline
+# Book Zero: an interior diagonal of a simple outline
 
-Helper lemmas for the optional diagonal route of brief 0013 (section 8, "The arrangement and
-general division"; ledger D5 to D7): `simple_diagonal` and `simple_diagonal_partition` in
-`Arrangement.lean`. No proposition of the Elements is cited; through `Outline.lean` this file
-imports I.23, which only `outline_bounded` uses. Neither the parallel postulate nor
-superposition is used.
+Helper lemmas, in the namespace `Diagonal`, for the optional diagonal route of brief 0013
+(section 8, "The arrangement and general division"; ledger D5 to D7): `simple_diagonal` and
+`simple_diagonal_partition`, in `Arrangements.lean`. No proof elsewhere rests on them:
+`division_exists` takes the arrangement route, and so does `simple_triangulation`, D7.
+Nothing in Book Zero cites a proposition of the *Elements*, and nothing here uses the
+parallel postulate or superposition: the proof draws no parallel, so it cites neither I.30
+nor I.31 (section 8, "The routes taken", D5).
 
 * **An interior diagonal** (`diagonal_exists`). A corner V with every other corner strictly
   across a straight line through it is found by wrapping from a point of an enclosing straight

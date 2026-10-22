@@ -9,10 +9,29 @@ import Elements.Figure.Areas
 import Elements.Figure.Sums
 
 /-!
-Division statements proposed by brief 0013, with their proofs.
-The supplied Outline never contains a division witness.
-No proposition of the Elements is cited; through `Outline.lean` this file imports I.23,
-which only `outline_bounded` uses.
+# Book Zero: divisions of an outline, and its area
+
+The last steps of brief 0013's route (section 8: D9, D10 and E1). A figure is given by its
+outline alone (`Outline`, in `Foundations/Figures.lean`), which holds no division, triangle
+list or area; these theorems supply them.
+
+* **A division exists** (`division_exists`, D9). Every outline is divided into triangles
+  that lie apart (`Apart`) and cover exactly its region (`Divides`): the fans of the cells
+  selected from an arrangement of its side lines (`Arrangements.lean`). A convex outline's
+  own fan divides it (`convex_fan`).
+* **The figures given with triangles keep their place** (`apart_has_outline`, D10). Every
+  figure given with triangles that lie apart has an outline with exactly their region, holes,
+  separate pieces and contacts at corners included (helpers in `Divisions/`).
+* **One area** (E1, the last section). By the content theorem
+  (`Apart.area_eq_of_same_region`, in `Content.lean`), two divisions of an outline have one
+  sum (`divisions_equal`), so the area chosen from its divisions (`Outline.area`) is the sum
+  of every division (`area_eq`). Equal regions, and so equal boundaries, have equal areas
+  (`area_congr`, `area_of_same_boundary`), and a convex outline's area is its fan's sum
+  (`convex_fan_area`).
+
+Through these, I.45 and II.14 take a figure by its outline (`Prop45.outline`,
+`Prop14.outline`, `Prop14.outline_side`). Nothing in Book Zero cites a proposition of the
+*Elements*.
 -/
 
 namespace Elements.Figures
@@ -50,7 +69,7 @@ theorem convex_fan {cs : List Point} (h : ConvexOutline cs) :
   let R : Apart := ⟨fan cs, hne, fan_triangle h, fan_apart h⟩
   exact ⟨R, rfl, fun X => fan_covers h X⟩
 
-/-- Every figure previously supplied as an Apart has an outline with exactly
+/-- Every figure given with triangles that lie apart (`Apart`) has an outline with exactly
 the same region, including holes, separate pieces and contacts at corners. -/
 theorem apart_has_outline (R : Apart) : ∃ F : Outline, Divides F.Region R := by
   /- Cut the sides at the corners; the elementary lines along one triangle only, grouped by
@@ -64,11 +83,10 @@ theorem apart_has_outline (R : Apart) : ∃ F : Outline, Divides F.Region R := b
 
 end Elements.Figures
 
-/-!
-The area of an outline proposed by brief 0013, using the content theorem.
-No proposition of the Elements is cited; through `Outline.lean` this file imports I.23, which only
-`outline_bounded` uses.
--/
+/-! ## The area of an outline
+
+Step E1 of brief 0013's route: the area of a figure given by its outline, from the content
+theorem and a division of the outline. -/
 
 namespace Elements.Figures
 

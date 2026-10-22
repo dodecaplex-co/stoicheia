@@ -16,7 +16,11 @@ The folders follow the briefs' stages. The statements of stages 2 and 3, all pro
 moved to their homes in `Elements/`, and their folders with them, save stage 3's meeting fact
 for an arc, which rests on III.2 and waits beside III.25, the one proof that uses it. So have
 stage 4b's statements of brief 0007, III.7, III.8 and III.17 with the point of contact, and
-the mixed-angle prototype for III.16 and III.31 (brief 0011). The others:
+the mixed-angle prototype for III.16 and III.31 (brief 0011). So have brief 0013's
+rectilineal figures given by their outlines, all proved, and their folder `Figures/` with
+them: the words to `Elements/Foundations/Figures.lean`, the facts to Book Zero
+(`Elements/Figure/`), `outline_bounded` to Book I after I.29, and the companions to I.45 and
+II.14. The others:
 
 * `Stage4/`: III.14 and III.15 with the foot of the perpendicular, and III.25 restated, with
   the meeting fact for an arc (`Prop25.meets`);

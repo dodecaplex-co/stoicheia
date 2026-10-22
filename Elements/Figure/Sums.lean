@@ -15,6 +15,12 @@ first and the sum of the second; and, of three or more points in order, the seco
 between the first and the last, which II.1's companion for any number of segments uses to
 cut off one segment at a time.
 
+The last section is step A1 of brief 0013's route (section 8), for its content theorem: a
+sum does not depend on the order of its terms, a sum of sums may be taken all at once, terms
+that are nothing may be left out, and a table of magnitudes has one total, by rows or by
+columns (`sum_exchange`, which the content theorem uses). They use only the laws of
+magnitudes.
+
 Nothing in Book Zero cites a proposition of the *Elements*.
 -/
 
@@ -50,7 +56,7 @@ theorem InOrder.between_end {B P : Point} {ps : List Point} (h : InOrder (B :: P
     (hps : ps ≠ []) : Between B P (endOf P ps) := by
   induction ps generalizing B P with
   | nil =>
-      /- No point after P: `hps` rules this case out. -/
+      /- No point after P: there is one by hypothesis, so this case does not arise. -/
       exact absurd rfl hps
   | cons Q qs ih =>
       cases qs with
@@ -65,14 +71,11 @@ theorem InOrder.between_end {B P : Point} {ps : List Point} (h : InOrder (B :: P
 
 end Elements
 
-/-!
-# Staging: finite sums of magnitudes, in any order
+/-! ## Sums in any order
 
-Prototype facts for brief 0013's content theorem (a draft for the owner's approval): a sum
-does not depend on the order of its terms, a sum of sums may be
-taken all at once, and a table of magnitudes has one total, by rows or by columns. They use
-only the laws of Tacit/Magnitudes.lean.
--/
+For brief 0013's content theorem (step A1 of its route): a sum does not depend on the order
+of its terms, a sum of sums may be taken all at once, and a table of magnitudes has one
+total, by rows or by columns. They use only the laws of `Tacit/Magnitudes.lean`. -/
 
 namespace Elements.Figures
 

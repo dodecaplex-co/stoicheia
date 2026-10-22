@@ -7,18 +7,36 @@ import Elements.Figure.Arrangements.Diagonal
 import Elements.Figure.Divisions.DivisionFacts
 
 /-!
-# Staging: from side lines to a division of an outline
+# Book Zero: from side lines to a division of an outline
 
-Internal statements for brief 0013, with their proofs. The convex precursors make the
-proposed dependency order explicit. Regular rays and their parity are `good_ray_exists` and
-`crossing_parity_independent` in `Outline.lean`. No proposition of the Elements is cited;
-through `Outline.lean` this file imports I.23, which only `outline_bounded` uses.
+Brief 0013's route to a division selects cells of a finite arrangement (section 8, "The
+arrangement and general division"). Its statements are here, with their proofs:
 
-The recommended division route selects cells of a finite arrangement. The first two
-diagonal statements below describe splits joining original corners.
-`simple_triangulation` asserts division existence without restricting the triangle
-vertices, and the arrangement route proves it. A proof that cites Book I must move to a
-shared Book I module after its latest cited proposition, as brief 0013 requires.
+* **D2.** Finitely many points with a triangle among them lie in a convex cell, grown one
+  point at a time; it need not be their hull (`convex_enclosure`).
+* **D9, the enclosure.** So the whole region of an outline lies strictly inside a cell
+  (`outline_enclosure`).
+* **D8.** The straight lines of the outline's sides (`outline_side_lines`) cut that cell
+  into cells with disjoint insides, each off every side line (`convex_arrangement`).
+* **D9, the selection.** An outline's parity is constant inside each cell
+  (`outline_cell_constant`), and the cells with a point of their inside within the figure
+  make up exactly its closed region, holes, cuts and contacts at corners included
+  (`outline_cells_cover`). Their fans divide the outline (`division_exists`, in
+  `Divisions.lean`).
+
+Good rays and their parity are `good_ray_exists` and `crossing_parity_independent`, in
+`Outlines.lean`. The selection examines no sector at a corner: from a point of the boundary
+it slides to an ordinary point of a side, and across it (`CoverFacts.boundary_filled`;
+brief 0013, section 8, "The routes taken", D9).
+
+The ledger's optional diagonal route, D5 to D7, is here too. `simple_diagonal` and
+`simple_diagonal_partition` split a simple outline along an interior diagonal joining two of
+its original corners (helpers in `Arrangements/Diagonal.lean`); the proof draws no parallel.
+`simple_triangulation` asserts a division of a simple outline without restricting its
+triangles' corners to the original ones, and the arrangement route proves it. The convex
+precursors B1, B2 and B4's `fanSum_rotateLeft` are in `Convex/Diagonals.lean`.
+
+Nothing in Book Zero cites a proposition of the *Elements*.
 -/
 
 namespace Elements.Figures
@@ -112,7 +130,7 @@ theorem convex_arrangement (P : ConvexCell) (ls : List Line) :
     obtain ⟨qs, -, hpw, hcov, hside⟩ := ih
     obtain ⟨A, B, hAB⟩ := Arrangement.opposite_pair P L
     obtain ⟨f, hf⟩ := Arrangement.cut_cells hAB
-    /- The pieces make up the cells exactly, so the cell `P` too. -/
+    /- The pieces make up the cells exactly, so the cell P too. -/
     have hcov' : ∀ X : Point, P.Region X ↔ ∃ R ∈ qs.flatMap f, R.Region X := by
       intro X
       rw [hcov X]
@@ -124,7 +142,7 @@ theorem convex_arrangement (P : ConvexCell) (ls : List Line) :
       · rintro ⟨R, ⟨Q, hQ, hR⟩, hRX⟩
         exact ⟨Q, hQ, ((hf Q).1 X).mpr ⟨R, hR, hRX⟩⟩
     refine ⟨qs.flatMap f, ?_, ?_, hcov', ?_⟩
-    · /- A corner of `P` is in some piece. -/
+    · /- A corner of P is in some piece. -/
       obtain ⟨c, hc⟩ := List.exists_mem_of_ne_nil P.corners (by
         intro he
         have hl := P.convex.1

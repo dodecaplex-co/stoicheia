@@ -1,13 +1,14 @@
 import Elements.Figure.Arrangements.CoverFacts
 
 /-!
-# Staging: the outline of the checked fan of I.45
+# Book Zero: the outline of the checked fan of I.45
 
-Helper lemmas for `Prop45.fan_boundary` in `BookI.lean` (brief 0013, section 8, the
-"E2 bridge" of the lemma ledger). No proposition of the Elements is cited here; through
-`Outline.lean` this file imports I.23, which only `outline_bounded` uses. `Fitted.fan`, which
-cites I.13, is applied only in `BookI.lean`, and these lemmas take what it proves as a
-hypothesis.
+Helper lemmas, in the namespace `FanBoundary`, for `Prop45.fan_boundary`, at the end of
+`BookI/Prop45.lean` (brief 0013, section 8, the "E2 bridge" of the lemma ledger): the figure
+that a checked fan's triangles make is the one bounded by the closed line through its
+corners in order. `Fitted.fan`, which cites I.13, is applied only beside I.45, and these
+lemmas take what it proves as a hypothesis, so they can stand in Book Zero, which cites no
+proposition of the *Elements*.
 
 The fan's triangles O A₁ A₂, O A₂ A₃, …, O Aₙ₋₁ Aₙ are laid round O one at a time.
 

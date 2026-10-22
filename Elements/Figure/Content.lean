@@ -2,14 +2,20 @@ import Elements.Figure.Cells
 import Elements.Figure.Content.Facts
 
 /-!
-# Staging: the content of a figure does not depend on its division
+# Book Zero: the content of a figure does not depend on its division
 
-The central statement of brief 0013 (a draft for the owner's approval), with its proof: two
-divisions of a figure into triangles that lie apart, whose triangles cover the same points,
-have the same sum. The figure may have holes, touch itself at a
-corner, or be in pieces; the triangles may meet a side of another at a corner of their own.
-Euclid takes it for granted under I.45; David Hilbert proved it, for the measure of area he
-builds from his axioms (*The Foundations of Geometry*, chapter IV, section 20).
+The central theorem of brief 0013 (section 4, and step C4 of its route, section 8), with its
+proof: two divisions of a figure into triangles that lie apart, whose triangles cover the
+same points, have the same sum (`Apart.area_eq_of_same_region`). The figure may have holes,
+touch itself at a corner, or be in pieces; the triangles may meet a side of another at a
+corner of their own. Euclid takes it for granted under I.45; David Hilbert proved it, for the
+measure of area he builds from his axioms (*The Foundations of Geometry*, chapter IV, section
+20). The proof makes one table of common parts, chosen once, whose rows tile the triangles of
+one division and whose columns tile those of the other (`Content/Facts.lean`).
+
+With it, a figure given by its outline has one area, the sum of any of its divisions
+(`Outline.area`, `area_eq`, in `Divisions.lean`). Nothing in Book Zero cites a proposition of
+the *Elements*.
 -/
 
 namespace Elements.Figures
@@ -20,13 +26,13 @@ open Tacit
 points, have the same sum. -/
 theorem Apart.area_eq_of_same_region (R S : Apart)
     (h : ∀ X : Point, Covers R.pieces X ↔ Covers S.pieces X) : R.area = S.area := by
-  /- One table of common parts, chosen once (`convex_intersection`): the triangle `r` of `R`
-  and the triangle `s` of `S` meet in a cell or in nothing, and `m r s` is its area. The
+  /- One table of common parts, chosen once (`convex_intersection`): the triangle `r` of R
+  and the triangle `s` of S meet in a cell or in nothing, and `m r s` is its area. The
   same chosen part is counted in its row and in its column. -/
   let m : Point × Point × Point → Point × Point × Point → Area := fun r s =>
     cellArea (Content.meet (Content.triCell r) (Content.triCell s))
-  /- A row tiles its triangle of `R`: the triangles of `S` lie apart, and cover the points
-  of `r`, since `R` and `S` cover the same points. -/
+  /- A row tiles its triangle of R: the triangles of S lie apart, and cover the points
+  of `r`, since R and S cover the same points. -/
   have hrow : ∀ r ∈ R.pieces, Magnitude.sum (S.pieces.map (m r)) = △ r.1 r.2.1 r.2.2 := by
     intro r hr
     obtain ⟨P, -, -, hPr, hPa⟩ := Content.triCell_eq (R.triangle r hr)
@@ -41,7 +47,7 @@ theorem Apart.area_eq_of_same_region (R S : Apart)
           (Content.triCell_region (S.triangle s hs) X))
     · intro X hX
       exact (h X).mp ⟨r, hr, (hPr X).mp hX⟩
-  /- A column tiles its triangle of `S`, in the same way, with the same common parts. -/
+  /- A column tiles its triangle of S, in the same way, with the same common parts. -/
   have hcol : ∀ s ∈ S.pieces,
       Magnitude.sum (R.pieces.map fun r => m r s) = △ s.1 s.2.1 s.2.2 := by
     intro s hs

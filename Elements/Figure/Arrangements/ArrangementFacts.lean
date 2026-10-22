@@ -3,11 +3,13 @@ import Elements.Figure.Outlines.LoopFacts
 import Elements.Figure.Convex.Area
 
 /-!
-# Staging: helpers for the diagonals, the enclosure and the arrangement
+# Book Zero: helpers for the enclosure and the arrangement
 
-Helper lemmas for `Arrangement.lean` (brief 0013, section 8, "The arrangement and general
-division"; D2, D8 and the enclosure of D9). No proposition of the Elements is cited, and
-neither Postulate 5 nor superposition is used.
+Helper lemmas, in the namespace `Arrangement`, for `Arrangements.lean` (brief 0013, section
+8, "The arrangement and general division"; D2, D8 and the enclosure of D9); the diagonal
+route of `Arrangements/Diagonal.lean` uses the enclosure too (`enclose_list`). Nothing in
+Book Zero cites a proposition of the *Elements*, and nothing here uses Postulate 5 or
+superposition.
 
 * **A point added to a convex outline.** A point outside a convex outline, and off every
   side's straight line, is strictly beyond some sides and strictly within others: were it
@@ -33,7 +35,7 @@ namespace Arrangement
 
 /-! ## Sides -/
 
-/-- Two points on one side of the straight line `AB` are not on opposite sides of it. -/
+/-- Two points on one side of the straight line AB are not on opposite sides of it. -/
 theorem not_same_opposite {P Q A B : Point} (hs : SameSideOf P Q A B)
     (ho : OppositeSidesOf P Q A B) : False := by
   obtain ⟨L, hA, hB⟩ := Postulate1 A B hs.1
@@ -42,7 +44,7 @@ theorem not_same_opposite {P Q A B : Point} (hs : SameSideOf P Q A B)
 /-! ## Runs of segments -/
 
 /-- **The first failing segment** of a chain: the chain runs through segments that pass a
-test, up to a corner `Y` whose next segment fails it. -/
+test, up to a corner Y whose next segment fails it. -/
 theorem first_seg (q : Point × Point → Prop) : ∀ l : List Point,
     (∃ s ∈ segments l, ¬ q s) →
     ∃ (M : List Point) (Y Y₂ : Point) (B : List Point), l = M ++ Y :: Y₂ :: B ∧
@@ -199,12 +201,12 @@ theorem not_all_outer {P : Point} : ∀ (ds : List Point) {a b c : Point},
       exact hPb.trans_opposite (ear_opposite h hRds)
     · exact hall s (List.mem_cons_of_mem _ (List.mem_cons_of_mem _ hs)) R hRm hR₁ hR₂
 
-/-- **A tangent from a point outside.** At a corner `X` of a convex outline, a point `P`
-beyond the straight line of one side through `X` and within that of another sees the whole
-region, but `X`, strictly on one side of the straight line `XP`. A point of the region on
-`XP` would lie towards `P` from `X`, beyond the first side, or away from it, beyond the
-second; and a straight line between points on both sides of `XP` would cross it at such a
-point, or at `X`, which is between no two points of the region. -/
+/-- **A tangent from a point outside.** At a corner X of a convex outline, a point P
+beyond the straight line of one side through X and within that of another sees the whole
+region, but X, strictly on one side of the straight line XP. A point of the region on
+XP would lie towards P from X, beyond the first side, or away from it, beyond the
+second; and a straight line between points on both sides of XP would cross it at such a
+point, or at X, which is between no two points of the region. -/
 theorem tangent_same_side {cs : List Point} (h : ConvexOutline cs) {X P : Point} (hX : X ∈ cs)
     {s t : Point × Point} (hs : s ∈ sides cs) (ht : t ∈ sides cs)
     (hXs : X = s.1 ∨ X = s.2) (hXt : X = t.1 ∨ X = t.2)
@@ -226,7 +228,7 @@ theorem tangent_same_side {cs : List Point} (h : ConvexOutline cs) {X P : Point}
     Pieces.region_half h hs hM₁ hM₂ hRs hRs₁ hRs₂ hZ
   have halfN {Z : Point} (hZ : ConvexRegion cs Z) : Half Z Rt N :=
     Pieces.region_half h ht hN₁ hN₂ hRt hRt₁ hRt₂ hZ
-  /- No point of the region but `X` is on `XP`. -/
+  /- No point of the region but X is on XP. -/
   have off {Y : Point} (hY : ConvexRegion cs Y) (hYX : Y ≠ X) (hYK : OnLine Y K) : False := by
     have hYM : ¬ OnLine Y M := fun hy =>
       hPM.1 ((line_unique hYX hYK hXK hy hXM) ▸ hPK)
@@ -299,9 +301,9 @@ theorem mem_sides_cone {V X Y : Point} {M : List Point} {s : Point × Point} :
   rw [he]
   simp only [List.mem_cons, List.mem_append, List.not_mem_nil, or_false]
 
-/-- **The outline of a point and a run of corners.** A point `V` outside a convex outline,
-within the straight line of each side of a run of its corners from `X` to `Y`, and with the
-region (but `X`, and but `Y`) on one side of `XV` and of `YV`, makes with that run a convex
+/-- **The outline of a point and a run of corners.** A point V outside a convex outline,
+within the straight line of each side of a run of its corners from X to Y, and with the
+region (but X, and but Y) on one side of XV and of YV, makes with that run a convex
 outline, whose region holds every corner of the old one. -/
 theorem cone_outline {cs : List Point} (h : ConvexOutline cs) {V X Y : Point}
     {M : List Point} (hV : ¬ ConvexRegion cs V)
@@ -362,20 +364,20 @@ theorem cone_outline {cs : List Point} (h : ConvexOutline cs) {V X Y : Point}
         exact Or.inl ⟨L, h₁, h₂, hcY ▸ h₁⟩
       · exact Or.inr (htY c P hcr (hreg ((hcases hP).resolve_left hP₂)) hcY hP₁)
 
-/-- **One point added to a convex outline.** For any point `V` there is a convex outline whose
-region holds the old region and `V`. If `V` is outside, take `V'` beyond `V` from a point `O`
-inside, off every side's straight line. Some sides have `V'` beyond them, as it is outside, and
-some within, by `not_all_outer`; where a side with `V'` beyond it is followed by one with `V'`
-within, at the corner `X`, run on from `X` to the first corner `Y` whose next side has `V'`
-beyond it. The point `V'` and the run from `X` to `Y` make the outline (`cone_outline`), the
-straight lines `XV'` and `YV'` being tangents (`tangent_same_side`); and `V` lies between `O` and `V'`. -/
+/-- **One point added to a convex outline.** For any point V there is a convex outline whose
+region holds the old region and V. If V is outside, take V' beyond V from a point O
+inside, off every side's straight line. Some sides have V' beyond them, as it is outside, and
+some within, by `not_all_outer`; where a side with V' beyond it is followed by one with V'
+within, at the corner X, run on from X to the first corner Y whose next side has V'
+beyond it. The point V' and the run from X to Y make the outline (`cone_outline`), the
+straight lines XV' and YV' being tangents (`tangent_same_side`); and V lies between O and V'. -/
 theorem insert_point {cs : List Point} (h : ConvexOutline cs) (V : Point) :
     ∃ ds : List Point, ConvexOutline ds ∧
       (∀ X : Point, ConvexRegion cs X → ConvexRegion ds X) ∧ ConvexRegion ds V := by
   classical
   by_cases hV : ConvexRegion cs V
   · exact ⟨cs, h, fun _ hX => hX, hV⟩
-  /- A point inside, and a point beyond `V` off every side's straight line. -/
+  /- A point inside, and a point beyond V off every side's straight line. -/
   obtain ⟨O, -, hO⟩ := CellFacts.core_point_avoiding h []
   have hOr : ConvexRegion cs O := fun s hs A hA h₁ h₂ => Or.inr (hO s hs A hA h₁ h₂)
   have hOV : O ≠ V := fun e => hV (e ▸ hOr)
@@ -422,7 +424,7 @@ theorem insert_point {cs : List Point} (h : ConvexOutline cs) (V : Point) :
       fun s hs => hstrict s hs (fun hp => hn ⟨s, hs, hp⟩)
     obtain ⟨a, b, c, rest, rfl⟩ := CellFacts.three_corners h
     exact not_all_outer rest h hall
-  /- The junction `X`, and the run of sides from it with `V'` within them. -/
+  /- The junction X, and the run of sides from it with V' within them. -/
   obtain ⟨W₀, X, X₂, hWX, hnpWX, hXX₂, hpXX₂⟩ := junction h.2.1 p hinvis hvis
   have hX : X ∈ cs := (LoopFacts.side_mem hWX).2
   obtain ⟨pre, post, hcs⟩ := List.append_of_mem hX
@@ -446,7 +448,7 @@ theorem insert_point {cs : List Point} (h : ConvexOutline cs) (V : Point) :
   | cons m M =>
     simp only [List.cons_append, List.cons.injEq] at he₂
     obtain ⟨rfl, he₂⟩ := he₂
-    /- The run, from `X` to `Y`. -/
+    /- The run, from X to Y. -/
     obtain ⟨R', z, hR'⟩ := Extreme.split_last (Y₂ :: B₂) (List.cons_ne_nil _ _)
     have hl : post ++ pre = M ++ Y :: R' := by
       rw [hR'] at he₂
@@ -466,7 +468,7 @@ theorem insert_point {cs : List Point} (h : ConvexOutline cs) (V : Point) :
         simp [he₂]
       rw [he]
       exact segment_mem_append hs _
-    /- The tangents at `X` and at `Y`. -/
+    /- The tangents at X and at Y. -/
     have htX : ∀ Z₁ Z₂ : Point, ConvexRegion cs Z₁ → ConvexRegion cs Z₂ → Z₁ ≠ X → Z₂ ≠ X →
         SameSideOf Z₁ Z₂ X V' := by
       intro Z₁ Z₂ h₁ h₂ hZ₁ hZ₂
@@ -566,12 +568,12 @@ theorem strict_enclosure (P : ConvexCell) :
 
 /-! ## A ray that crosses nothing -/
 
-/-- **A ray that crosses nothing.** From a point `X` outside a convex region that holds every
-corner of a loop, some good ray crosses no side of the loop. `X` is beyond the straight line
-`L` of a side of the region; take `Z` on that side, off the straight lines from `X` to the
-corners, and produce `ZX` beyond `X`. The ray from `X` onwards stays strictly on `X`'s side
-of `L`, its straight line meeting `L` only at `Z`, behind `X`; and every side of the loop is
-within `L`'s other closed side. -/
+/-- **A ray that crosses nothing.** From a point X outside a convex region that holds every
+corner of a loop, some good ray crosses no side of the loop. X is beyond the straight line
+L of a side of the region; take Z on that side, off the straight lines from X to the
+corners, and produce ZX beyond X. The ray from X onwards stays strictly on X's side
+of L, its straight line meeting L only at Z, behind X; and every side of the loop is
+within L's other closed side. -/
 theorem outside_ray {ps cs : List Point} (hc : ConvexOutline cs)
     (hin : ∀ V ∈ ps, ConvexRegion cs V) {X : Point} (hX : ¬ ConvexRegion cs X) :
     ∃ Q : Point, GoodRay ps X Q ∧ crossingCount ps X Q = 0 := by
@@ -588,7 +590,7 @@ theorem outside_ray {ps cs : List Point} (hc : ConvexOutline cs)
   have hhalf {V : Point} (hV : ConvexRegion cs V) : Half V R L :=
     Pieces.region_half hc hs hL₁ hL₂ hR h₁ h₂ hV
   have hVX : ∀ V ∈ ps, V ≠ X := fun V hV e => hX (e ▸ hin V hV)
-  /- The straight lines from `X` to the corners, and a point `Z` of the side off them. -/
+  /- The straight lines from X to the corners, and a point Z of the side off them. -/
   let line (V : Point) : Line := Classical.choose (collinear_of_two X V)
   have hline (V : Point) : OnLine X (line V) ∧ OnLine V (line V) :=
     Classical.choose_spec (collinear_of_two X V)
@@ -606,7 +608,7 @@ theorem outside_ray {ps cs : List Point} (hc : ConvexOutline cs)
   have hJL : J ≠ L := fun e => hXL (e ▸ hXJ)
   have hZonly : ∀ T : Point, OnLine T J → OnLine T L → T = Z := fun T hTJ hTL =>
     Classical.byContradiction fun hTZ => hJL (line_unique hTZ hTJ hZJ hTL hZL)
-  /- Every point of the ray is strictly on `X`'s side of `L`. -/
+  /- Every point of the ray is strictly on X's side of L. -/
   have hray : ∀ Y : Point, OnRay Y X Q → SameSide Y X L := by
     intro Y hY
     have hYJ : OnLine Y J := hY.onLine hXJ hQJ

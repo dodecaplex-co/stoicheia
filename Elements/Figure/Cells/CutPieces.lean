@@ -1,17 +1,21 @@
 import Elements.Figure.Cells.CutHelpers
 
 /-!
-# Staging: the two pieces of a genuine cut
+# Book Zero: the two pieces of a genuine cut
 
-Helpers for `convex_cut_pieces` (route C1 of brief 0013). A straight line with corners of a
-convex outline strictly on both sides of it meets the outline corner to corner, corner to
-side, or side to side. The corners strictly on one side come in one unbroken run, read
-cyclically: four corners in order whose diagonals cross cannot alternate between the sides
-(`no_alternation`), since the diagonals' common point would be on both. Each run, closed by
-the line's points on the outline, is the outline of a convex piece (`piece`), whose region
-is the outline's region on that closed side and whose inside is its inside on that open
-side. No proposition of the Elements is cited, and neither Postulate 5 nor superposition is
-used. With thanks to David Hilbert, whose theory of content guides this route.
+Helpers, in the namespace `Pieces`, for `convex_cut_pieces`, in `Cells.lean` (step C1 of
+brief 0013's route, section 8). A straight line with corners of a convex outline strictly on
+both sides of it meets the outline corner to corner, corner to side, or side to side. The
+corners strictly on one side come in one unbroken run, read cyclically: four corners in
+order whose diagonals cross cannot alternate between the sides (`no_alternation`), since
+the diagonals' common point would be on both. Each run, closed by the line's points on the
+outline, is the outline of a convex piece (`piece`), whose region is the outline's region on
+that closed side and whose inside is its inside on that open side. The corner-to-corner
+case (`form_corner_corner`) also gives B2, in `Convex/Diagonals.lean`. With thanks to David
+Hilbert, whose theory of content guides this route.
+
+Nothing in Book Zero cites a proposition of the *Elements*, and nothing here uses Postulate 5
+or superposition.
 -/
 
 namespace Elements.Figures.Pieces
@@ -33,7 +37,7 @@ theorem not_both {A B Z : Point} {L : Line} (h : OppositeSides A B L)
     (hA : SameSide Z A L) (hB : SameSide Z B L) : False :=
   h.2.2 (same_side_trans hA hB)
 
-/-- A point not strictly on `A`'s side is on the closed side of `B`. -/
+/-- A point not strictly on A's side is on the closed side of B. -/
 theorem half_of_not {A B Z : Point} {L : Line} (h : OppositeSides A B L)
     (hZ : ¬ SameSide Z A L) : Half Z B L := by
   by_cases hz : OnLine Z L
@@ -51,15 +55,15 @@ theorem opposite_symm {A B : Point} {L : Line} (h : OppositeSides A B L) :
     OppositeSides B A L :=
   ⟨h.2.1, h.1, fun hs => h.2.2 (same_side_symm hs)⟩
 
-/-- On the closed side towards `G`, and `W` on `G`'s side: on the closed side towards `W`. -/
+/-- On the closed side towards G, and W on G's side: on the closed side towards W. -/
 theorem half_trans {Z G W : Point} {M : Line} (hZ : Half Z G M) (hW : SameSide W G M) :
     Half Z W M := by
   rcases hZ with hZ | hZ
   · exact Or.inl hZ
   · exact Or.inr (same_side_trans (same_side_symm hZ) (same_side_symm hW))
 
-/-- The crossing point of two finite straight lines cannot be strictly on `A`'s side by the
-first and on the closed side of `B` by the second. -/
+/-- The crossing point of two finite straight lines cannot be strictly on A's side by the
+first and on the closed side of B by the second. -/
 theorem cross_contra {A B P Q R S Z : Point} {L : Line} (hAB : OppositeSides A B L)
     (h₁ : Between P Z Q) (h₂ : Between R Z S) (hP : SameSide P A L) (hQ : SameSide Q A L)
     (hR : Half R B L) (hS : Half S B L) : False := by
@@ -187,7 +191,7 @@ theorem mem_sides_two {S₁ S₂ : Point} {ws : List Point} {s : Point × Point}
   change s ∈ (S₁, S₂) :: segments (S₂ :: (ws ++ [S₁])) ↔ _
   exact List.mem_cons
 
-/-- A chain from `S₂` through the corners `ws` to `S₁`: its first segment, a segment of
+/-- A chain from S₂ through the corners `ws` to S₁: its first segment, a segment of
 `ws`, or its last. -/
 theorem mem_chain {S₁ S₂ f l : Point} {ws ws₁ ws₂ : List Point} (hf : ws = f :: ws₁)
     (hl : ws = ws₂ ++ [l]) {s : Point × Point} (hs : s ∈ segments (S₂ :: (ws ++ [S₁]))) :
@@ -204,9 +208,9 @@ theorem mem_chain {S₁ S₂ f l : Point} {ws ws₁ ws₂ : List Point} (hf : ws
 
 /-! ## A piece of a convex outline -/
 
-/-- `qs` is the outline of what is left of the convex outline `cs` on `R`'s side of the
-straight line `L`: a convex outline, whose region is the region of `cs` on the closed side
-of `L` towards `R`, and whose inside is the inside of `cs` on the open side. -/
+/-- `qs` is the outline of what is left of the convex outline `cs` on R's side of the
+straight line L: a convex outline, whose region is the region of `cs` on the closed side
+of L towards R, and whose inside is the inside of `cs` on the open side. -/
 def IsPiece (cs : List Point) (L : Line) (R : Point) (qs : List Point) : Prop :=
   ConvexOutline qs ∧
     (∀ Z : Point, ConvexRegion qs Z ↔ ConvexRegion cs Z ∧ Half Z R L) ∧
@@ -230,10 +234,10 @@ theorem IsPiece.rotate_whole {us vs : List Point} {L : Line} {R : Point} {qs : L
   · rw [h.2.2 Z, core_rotate_prefix us vs Z]
 
 /-- **A piece of a convex outline.** Take the corners `ws` of a convex outline that run, in
-order, from `f` to `l`, all strictly on `R`'s side of the straight line `L`; the corner `a`
-before them and the corner `b` after them. Let `S₂` be `a`, or a point between `a` and `f`,
-and `S₁` be `b`, or a point between `l` and `b`, two different points of `L`. Then `S₁`,
-`S₂` and `ws`, in that order, make the outline of what is left on `R`'s side. -/
+order, from `f` to `l`, all strictly on R's side of the straight line L; the corner `a`
+before them and the corner `b` after them. Let S₂ be `a`, or a point between `a` and `f`,
+and S₁ be `b`, or a point between `l` and `b`, two different points of L. Then S₁,
+S₂ and `ws`, in that order, make the outline of what is left on R's side. -/
 theorem piece {cs : List Point} (h : ConvexOutline cs) {L : Line} {R : Point}
     {S₁ S₂ a b f l : Point} {ws ws₁ ws₂ : List Point}
     (hf : ws = f :: ws₁) (hl : ws = ws₂ ++ [l]) (hnd : ws.Nodup)
@@ -289,7 +293,7 @@ theorem piece {cs : List Point} (h : ConvexOutline cs) {L : Line} {R : Point}
     · rw [he]
       exact hreg_S₂
     · exact hreg_ws hW
-  /- Each side of the piece but the one on `L` lies on the straight line of a side of the
+  /- Each side of the piece but the one on L lies on the straight line of a side of the
   outline, with the piece's other corners off it. -/
   have good : ∀ s ∈ segments (S₂ :: (ws ++ [S₁])), s.1 ≠ s.2 ∧ ∃ t ∈ sides cs, ∃ M : Line,
       OnLine t.1 M ∧ OnLine t.2 M ∧ OnLine s.1 M ∧ OnLine s.2 M ∧
@@ -460,8 +464,8 @@ theorem quad_cross {cs : List Point} (h : ConvexOutline cs) {a b c d : Point}
   exact diagonals_cross h₁ h₂
 
 /-- **No alternation**: four corners of a convex outline, taken in order, are not first and
-third strictly on `A`'s side of a straight line, second and fourth on the closed side of
-`B`, the other side. -/
+third strictly on A's side of a straight line, second and fourth on the closed side of
+B, the other side. -/
 theorem no_alternation {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Point}
     (hAB : OppositeSides A B L) {a b c d : Point} (hs : [a, b, c, d].Sublist cs)
     (ha : SameSide a A L) (hb : Half b B L) (hc : SameSide c A L) (hd : Half d B L) :
@@ -469,7 +473,7 @@ theorem no_alternation {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B 
   obtain ⟨Z, hac, hbd⟩ := quad_cross h hs
   exact cross_contra hAB hac hbd ha hc hb hd
 
-/-- No alternation, the other way round: second and fourth strictly on `A`'s side. -/
+/-- No alternation, the other way round: second and fourth strictly on A's side. -/
 theorem no_alternation' {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Point}
     (hAB : OppositeSides A B L) {a b c d : Point} (hs : [a, b, c, d].Sublist cs)
     (ha : Half a B L) (hb : SameSide b A L) (hc : Half c B L) (hd : SameSide d A L) :
@@ -639,8 +643,8 @@ theorem sides_of_infix {c : Point} {rest pre mid post : List Point}
 theorem nodup_mid {pre mid post : List Point} (h : (pre ++ mid ++ post).Nodup) : mid.Nodup :=
   h.sublist (List.infix_append pre mid post).sublist
 
-/-- **Corner to corner.** The straight line through the corners `X` and `Y` cuts the outline
-into the corners from `X` to `Y` one way round and the corners from `Y` to `X` the other. -/
+/-- **Corner to corner.** The straight line through the corners X and Y cuts the outline
+into the corners from X to Y one way round and the corners from Y to X the other. -/
 theorem form_corner_corner {cs : List Point} (h : ConvexOutline cs) {L : Line} {R₁ R₂ : Point}
     {X Y : Point} {us vs : List Point} (he : cs = X :: (us ++ Y :: vs))
     (hX : OnLine X L) (hY : OnLine Y L) (hus : us ≠ []) (hvs : vs ≠ [])
@@ -665,9 +669,9 @@ theorem form_corner_corner {cs : List Point} (h : ConvexOutline cs) {L : Line} {
       (fun s hs => sides_of_infix (pre := X :: us) (post := []) (by simp) hs)
       (by intro w hw; simp at hw ⊢; grind) hX hY hXY hv (Or.inl rfl) (Or.inl rfl)
 
-/-- **Corner to side.** The straight line through the corner `X` that crosses the side `CD`
-at `Y` cuts the outline into the corners from `X` to `C` with `Y`, and `Y` with the corners
-from `D` round to `X`. -/
+/-- **Corner to side.** The straight line through the corner X that crosses the side CD
+at Y cuts the outline into the corners from X to C with Y, and Y with the corners
+from D round to X. -/
 theorem form_corner_side {cs : List Point} (h : ConvexOutline cs) {L : Line} {R₁ R₂ : Point}
     {X C D Y : Point} {us vs : List Point} (he : cs = X :: (us ++ C :: D :: vs))
     (hX : OnLine X L) (hY : OnLine Y L) (hCYD : Between C Y D)
@@ -696,9 +700,9 @@ theorem form_corner_side {cs : List Point} (h : ConvexOutline cs) {L : Line} {R�
       (fun s hs => sides_of_infix (pre := X :: us) (post := []) (by simp) hs)
       (by intro w hw; simp at hw ⊢; grind) hX hY hXY hv (Or.inr hCYD) (Or.inl rfl)
 
-/-- **Side to side.** The straight line that crosses the side `EF` at `X` and the side `CD`
-at `Y` cuts the outline into `X`, the corners from `F` to `C` and `Y`, and `X`, `Y` and the
-corners from `D` round to `E`. -/
+/-- **Side to side.** The straight line that crosses the side EF at X and the side CD
+at Y cuts the outline into X, the corners from F to C and Y, and X, Y and the
+corners from D round to E. -/
 theorem form_side_side {cs : List Point} (h : ConvexOutline cs) {L : Line} {R₁ R₂ : Point}
     (hR : OppositeSides R₁ R₂ L) {E F C D X Y : Point} {ps us vs : List Point}
     (he : cs = E :: F :: ps) (hps : F :: ps = us ++ C :: D :: vs)
@@ -822,7 +826,7 @@ theorem cut_lists {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Poi
     · exact absurd ⟨c, hcm, h'⟩ hc
   obtain ⟨cB, hcB, hcBB⟩ := strict hAB hA
   obtain ⟨cA, hcA, hcAA⟩ := strict hBA hB
-  /- The corners strictly on `A`'s side make one run. -/
+  /- The corners strictly on A's side make one run. -/
   obtain ⟨pre, post, Ps, Ns, hcs, hrot, hPs, hNs, hPA, hNA⟩ :=
     block (fun c => SameSide c A L) cs ⟨cA, hcA, hcAA⟩
       ⟨cB, hcB, fun h' => not_both hAB h' hcBB⟩
@@ -846,7 +850,7 @@ theorem cut_lists {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Poi
     rcases List.mem_append.mp (hmem cB hcB) with hc | hc
     · exact absurd hcBB (fun h' => not_both hAB (hPA' cB hc) h')
     · exact hc
-  /- In the other run, at most one corner on `L` at each end. -/
+  /- In the other run, at most one corner on L at each end. -/
   obtain ⟨Z₁, m, rest, hNs', hZ₁, hm⟩ :=
     first_fail (fun c => OnLine c L) Ns ⟨cB, hcBN, not_on_line_of_same_side hcBB⟩
   have hNm {c : Point} (hc : c ∈ Ns) (hoff : ¬ OnLine c L) : SameSide c B L :=
@@ -899,7 +903,7 @@ theorem cut_lists {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Poi
   rcases hZ₁' with hZ | ⟨X, hZ⟩ <;> subst hZ <;> rcases hrest with hrest | ⟨M', Y₀, hr', hM', hY₀⟩
   · /- Side to side. -/
     by_cases hre : rest = []
-    · /- One corner strictly on `B`'s side: read from the last corner on `A`'s side. -/
+    · /- One corner strictly on B's side: read from the last corner on A's side. -/
       subst hre
       obtain ⟨Ps', E', hPs'⟩ := Extreme.split_last Ps hPs
       have hPs'ne : Ps' ≠ [] := by
@@ -922,7 +926,7 @@ theorem cut_lists {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Poi
           simpa using hv)
       refine Or.inr (Or.inr ⟨pre', post', D :: vs, [], vs, E', m, m, D, X, Y, hc',
         by rw [hr', hD]; simp, rfl, hEXF, hCYD, Or.inr ⟨htr _ _ _ hf.1, htr _ _ _ hf.2⟩⟩)
-    · /- Read from the last corner strictly on `B`'s side. -/
+    · /- Read from the last corner strictly on B's side. -/
       obtain ⟨M'', E, hrE⟩ := Extreme.split_last rest hre
       obtain ⟨F, Ps₁, hF⟩ := List.exists_cons_of_ne_nil hPs
       obtain ⟨us, C, hC⟩ := Extreme.split_last Ps hPs
@@ -948,7 +952,7 @@ theorem cut_lists {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Poi
       refine Or.inr (Or.inr ⟨pre', post', Ps₁ ++ m :: M'', us, M'', E, F, C, m, X, Y, hc',
         by rw [hr', hF]; simp, by rw [← List.cons_append, ← hF, hC]; simp, hEXF, hCYD,
         Or.inl ⟨htr _ _ _ hf.1, htr _ _ _ hf.2⟩⟩)
-  · /- Side to corner: read from the corner `Y₀`. -/
+  · /- Side to corner: read from the corner Y₀. -/
     subst hr'
     obtain ⟨us, C, hC⟩ := Extreme.split_last Ps hPs
     obtain ⟨pre', post', hc', hr', hconv, htr⟩ :=
@@ -965,7 +969,7 @@ theorem cut_lists {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Poi
         · exact hM' v hv)
     exact Or.inr (Or.inl ⟨pre', post', us, M', Y₀, C, m, Y, hc', by rw [hr', hC]; simp,
       hCYD, Or.inl ⟨htr _ _ _ hf.1, htr _ _ _ hf.2⟩⟩)
-  · /- Corner to side: read from the corner `X`. -/
+  · /- Corner to side: read from the corner X. -/
     obtain ⟨us, C, hC⟩ := Extreme.split_last (m :: rest) (by simp)
     obtain ⟨D, vs, hD⟩ := List.exists_cons_of_ne_nil hPs
     obtain ⟨pre', post', hc', hr', hconv, htr⟩ :=

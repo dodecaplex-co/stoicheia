@@ -1,16 +1,18 @@
 import Elements.Figure.Cells
 
 /-!
-# Staging: the cells of two divisions, and where they meet
+# Book Zero: the cells of two divisions, and where they meet
 
-Helpers for brief 0013's content theorem (a draft for the owner's approval; route C4, brief
-0013, section 8, "Content", step 5). Each triangle of a division is a cell (`triangle_cell`);
-each triangle of one division meets each of the other in a cell or in nothing
-(`convex_intersection`), chosen once, so that the same common part is counted by its row and
-by its column. A row of common parts tiles its triangle, and its areas make up the
-triangle's (`convex_tiles_area`), because the triangles of the other division lie apart and
-cover the same points. The route follows David Hilbert's theory of content, gratefully
-acknowledged in brief 0006.
+Helpers, in the namespace `Content`, for brief 0013's content theorem,
+`Apart.area_eq_of_same_region`, in `Content.lean` (step C4 of its route: section 8,
+"Content", step 5). Each triangle of a division is a cell (`triangle_cell`); each triangle of
+one division meets each of the other in a cell or in nothing (`convex_intersection`), chosen
+once, so that the same common part is counted by its row and by its column. A row of common
+parts tiles its triangle, and its areas make up the triangle's (`convex_tiles_area`), because
+the triangles of the other division lie apart and cover the same points. The route follows
+David Hilbert's theory of content, gratefully acknowledged in brief 0006.
+
+Nothing in Book Zero cites a proposition of the *Elements*.
 -/
 
 namespace Elements.Figures
@@ -131,10 +133,10 @@ theorem present_region (l : List Cell) (X : Point) :
     | none => exact hX.elim
     | some P => exact ⟨P, List.mem_filterMap.mpr ⟨some P, hc, rfl⟩, hX⟩
 
-/-- **A row tiles its cell** (brief 0013, section 8, "Content", step 5). A cell `P` lies within
+/-- **A row tiles its cell** (brief 0013, section 8, "Content", step 5). A cell P lies within
 the triangles `ts`, which lie apart; to each triangle belongs a cell or nothing `f t`, inside
-it, whose region is, off finitely many straight lines, the part of `P` within or on it. Then
-the cells `f t` tile `P`, and their areas make up its area (`convex_tiles_area`). -/
+it, whose region is, off finitely many straight lines, the part of P within or on it. Then
+the cells `f t` tile P, and their areas make up its area (`convex_tiles_area`). -/
 theorem row_area (P : ConvexCell) (ts : List (Point × Point × Point))
     (hap : ts.Pairwise fun s s' => ∀ Y : Point,
       InsideTriangle Y s.1 s.2.1 s.2.2 → ¬ InsideTriangle Y s'.1 s'.2.1 s'.2.2)
@@ -165,8 +167,8 @@ theorem row_area (P : ConvexCell) (ts : List (Point × Point × Point))
         cases hR
         exact hX'
     exact hss' X (hcore s X hs) (hcore s' X hs')
-  /- Together they make up `P`, off finitely many straight lines: each is the part of `P` on
-  its triangle, and the triangles cover `P`. -/
+  /- Together they make up P, off finitely many straight lines: each is the part of P on
+  its triangle, and the triangles cover P. -/
   have hag : AgreeOff (fun X => ∃ Q ∈ (ts.map f).filterMap id, Q.Region X) P.Region := by
     refine Tiling.agreeOff_trans (Tiling.agreeOff_of_iff fun X =>
       (present_region (ts.map f) X).trans (CellFacts.exists_mem_map_iff ts f

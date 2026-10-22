@@ -3,24 +3,58 @@ import Elements.Foundations.Phrases
 /-!
 # Rectilineal figures given by their outlines: the words
 
-PROMOTION NOTE (phase A, to be rewritten): the definitions of brief 0013, moved from Staging/Figures (Convex.lean, Loops.lean, and the definitions of Avoid.lean, Cells.lean, Content.lean and OutlineArea.lean).
+I.45 and II.14 take "a given rectilineal figure". Euclid defines a figure as "that which is
+contained by any boundary or boundaries" (Definition I.14), and rectilineal figures as
+"those which are contained by straight lines" (Definition I.19). Here such a figure is
+given by its boundary alone, with no division or area supplied (brief 0013), and the words
+for it are defined once, from the undefined words and the phrases of `Phrases.lean`. None
+of them is an assumption. What is proved of them is in Book Zero (`Elements/Figure/`).
+
+* **Convex outlines** (`ConvexOutline`, `ConvexRegion`, `fan`). A convex figure is given by
+  its corners in order, either way round; its region is the points on the closed side of
+  each side's straight line towards the other corners; and the straight lines from its first
+  corner divide it into triangles, the fan.
+* **Loops and outlines** (`SimpleLoop`, `LoopInside`, `LoopRegion`, `Outline`). A contour is
+  a list of distinct corners in cyclic order whose sides meet only at common ends. A point
+  off it is inside when a ray from it whose straight line misses every corner crosses an odd
+  number of sides (`GoodRay`, `crossingCount`). A figure is a nonempty finite family of
+  contours that do not cross, whose insides are apart or nested; it is filled where a point
+  is inside an odd number of them (`Outline.depth`), so holes and islands need no
+  orientation, and its region includes every boundary. Natural numbers count sides,
+  crossings and contours; they measure nothing.
+* **Cells** (`ConvexCell`, `Cell`, `AgreeOff`, `Tiles`, `Clips`, `Intersection`,
+  `CutPieces`). A convex cell is a convex outline taken as one piece of a figure, with its
+  fan's sum for area; a cell cut down to no inside is nothing (`none`). These carry the
+  proof that a figure's area does not depend on its division
+  (`Elements/Figure/Content.lean`).
+* **A division, and the area** (`Covers`, `Divides`, `Outline.area`). Triangles divide a
+  region when a point is within or on one of them exactly when it is in the region.
+  `Outline.area` is an area that some division of the outline gives, chosen once; that a
+  division exists (`division_exists`) and that every division gives that area (`area_eq`)
+  are proved in `Elements/Figure/Divisions.lean`.
+
+The probe of 19 October (brief 0013, section 8) first tried the convex words: it proved the
+quadrilateral case of `fan_covers` and the step of `fanSum_rotate` across one side, from the
+axioms already in the library.
 -/
 
 namespace Elements.Figures
 
 open Tacit
 
+/-! ## Convex outlines -/
+
 /-- **The sides of an outline**: each corner with the next, and the last with the first. -/
 def sides : List Point → List (Point × Point)
   | [] => []
   | c :: cs => segments (c :: cs ++ [c])
 
-/-- `X` lies on the straight line `AB`, or on the same side of it as `P`: the closed side of
-`AB` towards `P`, when `A` and `B` differ and `P` is off `AB`. -/
+/-- X lies on the straight line AB, or on the same side of it as P: the closed side of
+AB towards P, when A and B differ and P is off AB. -/
 def ClosedSide (X P A B : Point) : Prop := Collinear A B X ∨ SameSideOf X P A B
 
-/-- `X` lies on the straight line `L`, or on the same side of it as `R`: the closed side of
-`L` towards `R`, when `R` is off `L` (if `R` is on `L`, only the points of `L`). -/
+/-- X lies on the straight line L, or on the same side of it as R: the closed side of
+L towards R, when R is off L (if R is on L, only the points of L). -/
 def Half (X R : Point) (L : Line) : Prop := OnLine X L ∨ SameSide X R L
 
 /-- **A convex outline**: three corners or more, all different, and for each side, every
@@ -43,13 +77,15 @@ def fan : List Point → List (Point × Point × Point)
   | [] => []
   | c :: cs => (segments cs).map fun s => (c, s.1, s.2)
 
-/-- `X` is within or on one of the triangles. -/
+/-- X is within or on one of the triangles. -/
 def Covers (ts : List (Point × Point × Point)) (X : Point) : Prop :=
   ∃ t ∈ ts, OnOrInsideTriangle X t.1 t.2.1 t.2.2
 
 /-- The sum of the triangles of a fan. -/
 noncomputable def fanSum (cs : List Point) : Area :=
   Magnitude.sum ((fan cs).map fun t => △ t.1 t.2.1 t.2.2)
+
+/-! ## Loops and outlines -/
 
 /-- A point is on the boundary when it is on one of the finite sides. -/
 def LoopBoundary (ps : List Point) (X : Point) : Prop :=
@@ -157,7 +193,9 @@ def RegionBoundary (r : Point → Prop) (X : Point) : Prop :=
     ∃ Y Z : Point, InsideTriangle Y A B C ∧ InsideTriangle Z A B C ∧
       r Y ∧ ¬ r Z
 
-/-- `X` is on none of the straight lines `ls`. -/
+/-! ## Cells -/
+
+/-- X is on none of the straight lines `ls`. -/
 def Avoid (ls : List Line) (X : Point) : Prop := ∀ L ∈ ls, ¬ OnLine X L
 
 /-- **A convex cell**: a convex outline, taken as one piece of a figure. -/
@@ -206,31 +244,28 @@ def Tiles (P : ConvexCell) (qs : List ConvexCell) : Prop :=
   qs.Pairwise (fun Q R => ∀ X : Point, Q.Core X → ¬ R.Core X) ∧
     AgreeOff (fun X => ∃ Q ∈ qs, Q.Region X) P.Region
 
-/-- `Q` is what is left of the cell `P` on `R`'s side of `L`. -/
+/-- Q is what is left of the cell P on R's side of L. -/
 def Clips (P : ConvexCell) (L : Line) (R : Point) (Q : Cell) : Prop :=
   (∀ X : Point, CellCore Q X ↔ P.Core X ∧ SameSide X R L) ∧
     AgreeOff (CellRegion Q) (fun X => P.Region X ∧ Half X R L)
 
-/-- `C` is the common part of the cells `P` and `Q`. -/
+/-- C is the common part of the cells P and Q. -/
 def Intersection (P Q : ConvexCell) (C : Cell) : Prop :=
   (∀ X : Point, CellCore C X ↔ P.Core X ∧ Q.Core X) ∧
     AgreeOff (CellRegion C) (fun X => P.Region X ∧ Q.Region X)
 
-/-- `U` and `V` are what the straight line `L` leaves of the cell `P`, the one on `A`'s side
-and the other on `B`'s, in either order, and together they make up `P` exactly. -/
+/-- U and V are what the straight line L leaves of the cell P, the one on A's side
+and the other on B's, in either order, and together they make up P exactly. -/
 def CutPieces (P : ConvexCell) (L : Line) (A B : Point) (U V : ConvexCell) : Prop :=
   (Clips P L A (some U) ∧ Clips P L B (some V) ∧
       ∀ X : Point, P.Region X ↔ CellRegion (some U) X ∨ CellRegion (some V) X) ∨
     (Clips P L A (some V) ∧ Clips P L B (some U) ∧
       ∀ X : Point, P.Region X ↔ CellRegion (some V) X ∨ CellRegion (some U) X)
 
-/-! ### The pieces of a genuine cut, as cells
+/-! ## A division, and the area -/
 
-Helpers for `convex_cut_pieces`: the geometry is in `CutPieces.lean`, on outlines; here its
-pieces become cells. -/
-
-/-- The triangles `R` divide the region `U`: a point is within or on one of them exactly when
-it is in `U`. -/
+/-- The triangles R divide the region U: a point is within or on one of them exactly when
+it is in U. -/
 def Divides (U : Point → Prop) (R : Apart) : Prop :=
   ∀ X : Point, Covers R.pieces X ↔ U X
 

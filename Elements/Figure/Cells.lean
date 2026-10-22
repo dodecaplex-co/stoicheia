@@ -8,19 +8,35 @@ import Elements.Figure.Cells.CutPieces
 import Elements.Figure.Cells.CellFacts
 
 /-!
-# Staging: convex cells, and cutting them
+# Book Zero: convex cells, and cutting them
 
-Words, statements and proofs for the route to brief 0013's content theorem (a draft for the
-owner's approval). A convex cell is a convex outline taken as a piece of a figure; its area
-is its fan's sum, which does not depend on the corner the fan is drawn from
-(`fanSum_rotate`). A straight line cuts a cell into at most two cells; a cell may
-be cut down to nothing, or to a segment or a point, which has no inside, and then it is
-`none`. Two regions that agree at every point off finitely many straight lines are said to
-agree off them (`AgreeOff`): a cut's pieces are pinned exactly by their insides, and up to
-finitely many lines by their regions. The final theorems about outlines are exact.
+Steps B0, B5, B6 and C1 to C3 of brief 0013's route to its content theorem: the convex-cut
+induction of section 8, route (b), after David Hilbert's theory of content. The words are in
+`Foundations/Figures.lean`. A convex cell is a convex outline taken as a piece of a figure
+(`ConvexCell`); its area is its fan's sum, which does not depend on the corner the fan is
+drawn from (`fanSum_rotate`).
 
-The route is the convex-cut induction of brief 0013's section on the proof route, after
-David Hilbert's theory of content.
+* **B0.** A triangle is a cell, with the same region and area (`triangle_cell`).
+* **B5.** A corner put in on a side, or a fan drawn from a point of a side, leaves the fan's
+  sum as it was (`fan_insert_between`, `boundary_fan_sum`).
+* **B6.** The corners of a cell are its region's extreme points, so a cell's area depends
+  only on its region (`convex_extreme_iff`, `convex_area_ext`).
+* **C1.** A straight line cuts a cell into at most two cells, which make up the cell and
+  whose areas make up its area (`convex_cut`); a cell may be cut down to nothing, or to a
+  segment or a point, which has no inside, and then it is `none`. A genuine cut's pieces are
+  `convex_cut_pieces`, from the helpers of `Cells/CutPieces.lean`. Where the cutting line
+  crosses a side, it crosses strictly within it, a crossing at a corner being a case of its
+  own; so the cut puts such a crossing in as a corner and measures by the library's
+  `area_cut`, for a point strictly between two others, not by A4's `area_cut_closed`
+  (brief 0013, section 8, "The routes taken", C1).
+* **C3 and C2.** The section after the cut clips cells by half-planes, for the common part of
+  two cells (`convex_intersection`) and for cells that tile a cell (`convex_tiles_area`).
+
+Two regions that agree at every point off finitely many straight lines are said to agree off
+them (`AgreeOff`): a cut's pieces are pinned exactly by their insides, and up to finitely many
+lines by their regions. The theorems about outlines that rest on them are exact.
+
+Nothing in Book Zero cites a proposition of the *Elements*.
 -/
 
 namespace Elements.Figures
@@ -153,7 +169,7 @@ theorem convex_area_ext (P Q : ConvexCell) (h : AgreeOff P.Region Q.Region) :
           _ = fanSum (A :: (vs ++ us)) := by simpa using fanSum_reverse hq'
           _ = fanSum (us ++ A :: vs) := Extreme.fanSum_rotate_prefix us (A :: vs) hq
 
-/-- A piece of a cell's outline on `R`'s side of a straight line is what the line leaves of
+/-- A piece of a cell's outline on R's side of a straight line is what the line leaves of
 the cell there. -/
 theorem clips_of_piece {P Q : ConvexCell} {L : Line} {R : Point}
     (h : Pieces.IsPiece P.corners L R Q.corners) : Clips P L R (some Q) :=
@@ -193,7 +209,7 @@ theorem cut_pieces_of_lists (P : ConvexCell) {L : Line} {A B : Point}
 both sides of it cuts the cell corner to corner, corner to side, or side to side; read from
 the first crossing, the outline splits into two chains, and each, closed by the cut, is the
 outline of a cell on one side. It is proved by route C1, from the helpers of
-`CutPieces.lean`. -/
+`Cells/CutPieces.lean`. -/
 theorem convex_cut_pieces (P : ConvexCell) {L : Line} {A B : Point}
     (hAB : OppositeSides A B L) (hA : ¬ ∀ C ∈ P.corners, Half C A L)
     (hB : ¬ ∀ C ∈ P.corners, Half C B L) :
@@ -331,9 +347,9 @@ theorem convex_cut (P : ConvexCell) {L : Line} {A B : Point} (hAB : OppositeSide
 Helpers for `convex_intersection` and `convex_tiles_area`. A cell or nothing is cut by a
 straight line as `convex_cut` cuts a cell. Clipping a cell by the half-planes of another's
 sides, one after another, leaves their common part. For content, the cell and every tile are
-cut by the sides of one tile, `Q`, one side after another (brief 0013, section 8, "Content",
-step 4): what lies beyond a side has lost `Q`, and so has fewer tiles; what lies within all of
-them has only `Q`, since the other tiles' insides are apart from `Q`'s. Pieces are pinned
+cut by the sides of one tile, Q, one side after another (brief 0013, section 8, "Content",
+step 4): what lies beyond a side has lost Q, and so has fewer tiles; what lies within all of
+them has only Q, since the other tiles' insides are apart from Q's. Pieces are pinned
 exactly by their insides, and up to finitely many straight lines by their regions. -/
 
 namespace Tiling
@@ -449,9 +465,9 @@ theorem clip_cells (hs : List (Point × Line)) (hoff : ∀ p ∈ hs, ¬ OnLine p
       rw [List.forall_mem_cons]
       exact and_assoc
 
-/-- **One branch of a cut**: a region `V` made up, off finitely many straight lines, of `U`
-and some cells; cut each, and `V`, by one closed half-plane `H`. Off finitely many straight
-lines, what is left of `V` is made up of what is left of `U` and of the cells. -/
+/-- **One branch of a cut**: a region V made up, off finitely many straight lines, of U
+and some cells; cut each, and V, by one closed half-plane H. Off finitely many straight
+lines, what is left of V is made up of what is left of U and of the cells. -/
 theorem agree_branch {U U' V V' H : Point → Prop} {ts : List Cell} {g : Cell → Cell}
     (hag : AgreeOff (fun X => U X ∨ ∃ t ∈ ts, CellRegion t X) V)
     (hu : AgreeOff U' (fun X => U X ∧ H X)) (hv : AgreeOff V' (fun X => V X ∧ H X))
@@ -491,13 +507,13 @@ theorem tiles_none {D : Cell} {ts : List Cell} (hall : ∀ t ∈ ts, t = none)
   rfl
 
 /-- **The induction on one tile's sides** (brief 0013, section 8, "Content", step 4). A cell
-or nothing `D` is made up, off finitely many straight lines, of a cell `Q` and cells or
-nothings `ts`, with no point inside two of them; the half-planes `hs` remain of `Q`'s sides,
-`Q`'s inside is within all of them, and any of the `ts` inside all of them is inside `Q`.
-Granted content for at most `m` cells, where the `ts` hold at most `m`, the area of `D` is
-that of `Q` with the `ts`. Cut everything by the first remaining side: beyond it `Q` is gone,
+or nothing D is made up, off finitely many straight lines, of a cell Q and cells or
+nothings `ts`, with no point inside two of them; the half-planes `hs` remain of Q's sides,
+Q's inside is within all of them, and any of the `ts` inside all of them is inside Q.
+Granted content for at most `m` cells, where the `ts` hold at most `m`, the area of D is
+that of Q with the `ts`. Cut everything by the first remaining side: beyond it Q is gone,
 and content for at most `m` cells applies; within it, the induction goes on. When no side
-remains, the `ts` have no inside, and `D` is `Q` off finitely many straight lines. -/
+remains, the `ts` have no inside, and D is Q off finitely many straight lines. -/
 theorem tiles_branch (m : Nat)
     (ih : ∀ (D : Cell) (ts : List Cell), (ts.filterMap id).length ≤ m →
       ts.Pairwise (fun a b => ∀ X : Point, CellCore a X → ¬ CellCore b X) →
@@ -547,7 +563,7 @@ theorem tiles_branch (m : Nat)
       fun t X h => (((hf t).1 X).mp h).1
     have hshB : ∀ (t : Cell) (X : Point), CellCore (f t).2 X → CellCore t X :=
       fun t X h => (((hf t).2.2.1 X).mp h).1
-    /- `Q` lies within the side: within, it keeps its inside; beyond, it is nothing. -/
+    /- Q lies within the side: within, it keeps its inside; beyond, it is nothing. -/
     have hQR : ∀ X : Point, CellCore (f (some Q)).1 X ↔ Q.Core X := fun X =>
       ((hf (some Q)).1 X).trans ⟨fun h => h.1, fun h => ⟨h, hQside X h⟩⟩
     have hQB : (f (some Q)).2 = none := eq_none_of_core fun X hX => by
@@ -587,7 +603,7 @@ theorem tiles_branch (m : Nat)
         obtain ⟨t₀, ht₀, rfl⟩ := List.mem_map.mp ht
         obtain ⟨hc, hs⟩ := ((hf t₀).1 X).mp htX
         exact (hQ'core X).mpr (hin t₀ ht₀ X hc (List.forall_mem_cons.mpr ⟨hs, hall⟩)))
-    /- Beyond the side: `Q` is gone, and content for fewer cells applies. -/
+    /- Beyond the side: Q is gone, and content for fewer cells applies. -/
     have hagB : AgreeOff (fun X => ∃ t ∈ ts.map (fun t => (f t).2), CellRegion t X)
         (CellRegion (f D).2) := by
       have hb := agree_branch hag (hf (some Q)).2.2.2.1 (hf D).2.2.2.1
@@ -671,7 +687,7 @@ end Tiling
 
 /-- **The common part of two cells** is a cell, or has no inside. -/
 theorem convex_intersection (P Q : ConvexCell) : ∃ C : Cell, Intersection P Q C := by
-  /- Clip `P` by the half-planes of `Q`'s sides, one after another. -/
+  /- Clip P by the half-planes of Q's sides, one after another. -/
   obtain ⟨hs, hoff, hcore, hreg⟩ := CellFacts.outline_halfplanes Q.convex
   obtain ⟨C, hC, hCr⟩ := Tiling.clip_cells hs hoff (some P)
   exact ⟨C, fun X => (hC X).trans (and_congr_right fun _ => (hcore X).symm),

@@ -22,10 +22,13 @@ carries it out.
 
 `Prop14` is Euclid's worked configuration, I.45's figure of two triangles, and returns the
 side of the square. His proof makes a rectangle equal to the figure [I. 45] and then a square
-equal to the rectangle. The companions after it take a rectilineal figure given with its
-triangles:
+equal to the rectangle. The companions after it carry his words to any rectilineal figure:
 
-* `Prop14.rectangle` is that second part.
+* `Prop14.outline`, the main companion, is the proposition in general: the figure given by
+  its outline alone (`Outline`), as in I.45's `Prop45.outline`, and a square drawn equal to
+  its area (`Outline.area`). `Prop14.outline_side` is the same with the side alone, whose
+  square equals that area. Both stand at the end of the file.
+* `Prop14.rectangle` is the second part of Euclid's proof.
 * `Prop14.sum` is the proof for any number of triangles, by I.45's `Prop45.sum`: the
   construction, which claims nothing of a figure.
 * `Prop14.apart` is the proposition for a figure given with triangles that lie apart
@@ -34,15 +37,20 @@ triangles:
 * `Prop14.figure` is the proposition for a figure with one boundary, given with triangles
   fitted together in a suitable order (`Rectilineal`), as in I.45's `Prop45.figure`; it
   follows from `Prop14.apart`, since fitted triangles lie apart (`Fitted.inside_pairwise`).
-* `Prop14.fan`, the main companion, is the proposition for a figure divided as Euclid and
-  Oliver Byrne divide it, from one corner, with the division checked as in `Prop45.fan`. As
-  there, it concludes that the triangles are fitted together into one figure (`Fitted.fan`),
-  and the square is equal to that figure (`Prop14.figure`).
+* `Prop14.fan` is the proposition for a figure divided as Euclid and Oliver Byrne divide it,
+  from one corner, with the division checked as in `Prop45.fan`. As there, it concludes that
+  the triangles are fitted together into one figure (`Fitted.fan`), and the square is equal
+  to that figure (`Prop14.figure`).
 
-As in I.45, the square is equal to the triangles the figure is given with, taken together,
-and nothing is claimed of another division. `Prop14` itself is an area-sum theorem: it
-follows from `Prop14.sum` (the check at the end), and its two triangles are not checked.
-Its checked case is `Prop14.fan` for the corners A₄, A₁, A₂, A₃, which are I.45's D, A, B, C.
+As in I.45, the figure given by its outline has one area: Book Zero proves that it has a
+division into triangles that lie apart (`division_exists`), and that every division gives
+the same sum (`Apart.area_eq_of_same_region`, `area_eq`). The squares of `Prop14.outline`
+and `Prop14.outline_side` are equal to that area. Those of `Prop14.apart`, `Prop14.square`,
+`Prop14.figure` and `Prop14.fan` are equal to the triangles the figure is given with, taken
+together, which is the figure's area, the same for every division. `Prop14` itself is an
+area-sum theorem: it follows from `Prop14.sum` (the check at the end), and its two triangles
+are not checked. Its checked case is `Prop14.fan` for the corners A₄, A₁, A₂, A₃, which are
+I.45's D, A, B, C.
 
 `Prop14.rectangle` is proved directly, by Euclid's second part, and never cites II.14:
 otherwise the companions would rest on the two-triangle statement rather than on Euclid's
@@ -323,7 +331,8 @@ construct a square equal to a given rectilineal figure, given with any division 
 triangles, no point inside two of them (`Apart`), as in `Prop45.apart`: the square on PQ is
 equal to those triangles taken together (`Apart.area`). The figure may have a hole, touch
 itself at a corner, or be in more than one piece. It is `Prop14.sum` for the figure's
-triangles. Nothing is claimed of another division of the figure. -/
+triangles. As in `Prop45.apart`, the statement speaks of the division given, and every
+division gives the same sum (`Apart.area_eq_of_same_region`). -/
 theorem Prop14.apart (R : Apart) : ∃ P Q : Point, sq P Q = R.area :=
   Prop14.sum R.pieces R.ne R.triangle
 
@@ -333,8 +342,8 @@ triangles fitted together
 in a suitable order, each glued across a side of an earlier one and meeting the earlier ones
 only along it (`Rectilineal`), as in `Prop45.figure`: the square on PQ is equal to those
 triangles taken together (`Rectilineal.area`). It is `Prop14.apart` for the figure's
-triangles, which lie apart (`Fitted.inside_pairwise`, `Rectilineal.toApart`). Nothing is
-claimed of another division of the figure. -/
+triangles, which lie apart (`Fitted.inside_pairwise`, `Rectilineal.toApart`), and every
+division gives the same sum (`Apart.area_eq_of_same_region`). -/
 theorem Prop14.figure (R : Rectilineal) : ∃ P Q : Point, sq P Q = R.area :=
   Prop14.apart R.toApart
 
@@ -361,7 +370,7 @@ theorem Prop14.area_pos (R : Apart) : 0 < R.area := by
 /-- **II.14, with the square drawn** (companion of II.14). To construct a square PQST equal
 to a given rectilineal figure, given with triangles that lie apart as in `Prop14.apart`: the
 square on the side that `Prop14.apart` finds, described on it [I. 46]. The square is a
-parallelogram, and it is equal to the figure's triangles taken together. A figure `R` given
+parallelogram, and it is equal to the figure's triangles taken together. A figure R given
 by gluing (`Rectilineal`) is taken here as `R.toApart`, the same triangles, which lie apart,
 with the same sum (`Rectilineal.area_toApart`); so is the glued figure that `Prop14.fan`
 returns for a checked fan. -/
@@ -392,9 +401,10 @@ lines from A₀ into the triangles A₀A₁A₂, …, A₀Aₙ₋₁Aₙ, with t
 the straight line A₀Aᵢ they share, and the angles at A₀ together less than four right
 angles. Then those triangles, in that order, are fitted together into one figure
 (`Fitted.fan`), and the square on PQ is equal to that figure, that is, to the triangles
-taken together. The figure is read as the one with corners A₀, A₁, …, Aₙ in order round it
-(that its boundary is that closed line is not stated in Lean). The square drawn is
-`Prop14.square R.toApart`, for the glued figure `R` returned.
+taken together. The figure is the one with corners A₀, A₁, …, Aₙ in order round it, bounded
+by that closed line (`Prop45.fan_boundary`), and the triangles' sum is its area, the same for
+every division of it (`area_eq`). The square drawn is `Prop14.square R.toApart`, for the
+glued figure R returned.
 
 As in `Prop45.fan`, the first conclusion is what the two conditions are for; the square
 alone would follow from each piece being a triangle, by `Prop14.sum`. -/
@@ -424,14 +434,22 @@ example : type_of% @Elements.BookII.Prop14 := by
   rw [hPQ]
   simp only [List.map, Magnitude.sum, add_zero]
 
-/-! ## PROMOTION NOTE (phase A): the outline companions, from Staging/Figures -/
+/-! ## A figure given by its outline
+
+As in I.45 (`Prop45.outline`): the figure is given by its outline alone (`Outline`), Book
+Zero divides it into triangles that lie apart (`division_exists`), and every division gives
+its area (`Outline.area`, `area_eq`). Euclid's construction, applied to the triangles, gives
+the square (`Prop14.square`) and its side (`Prop14.apart`). -/
 
 open Elements.Figures
 
-/-- Companion of II.14, certificate name II.14 outline. To construct a drawn
-square equal to a figure given by its outline. This derivation uses the
-existing rectangle-to-square construction after obtaining a division
-(`division_exists`), and every division gives the outline's area (`area_eq`). -/
+/-- **II.14, for a figure given by its outline** (companion of II.14, certificate name II.14
+outline; the proposition in general). To construct a square PQST, drawn, equal to a given
+rectilineal figure: the figure given by its outline alone (`Outline`), as in
+`Prop45.outline`, and "equal to the figure" meaning equal to its area (`Outline.area`), which
+every division of it gives. The square is a parallelogram. The division is obtained by a
+theorem (`division_exists`), Euclid's rectangle and then its square are made for its
+triangles (`Prop14.square`), and their sum is the outline's area (`area_eq`). -/
 theorem Prop14.outline (F : Outline) :
     ∃ P Q S T : Point, Square P Q S T ∧ Parallelogram P Q S T ∧
       quadArea P Q S T = F.area := by
@@ -439,9 +457,10 @@ theorem Prop14.outline (F : Outline) :
   obtain ⟨P, Q, S, T, hs, hp, he⟩ := Elements.BookII.Prop14.square R
   exact ⟨P, Q, S, T, hs, hp, he.trans (area_eq F R hR).symm⟩
 
-/-- Companion of II.14, certificate name II.14 outline_side. The side form
-of the construction also equals the outline's area, by a division
-(`division_exists`) and the content theorem (`area_eq`). -/
+/-- **II.14, the side, for a figure given by its outline** (companion of II.14, certificate
+name II.14 outline_side). The side form of `Prop14.outline`: a straight line PQ whose square
+equals the outline's area, from a division (`division_exists`), the side found for its
+triangles (`Prop14.apart`), and the content theorem (`area_eq`). -/
 theorem Prop14.outline_side (F : Outline) :
     ∃ P Q : Point, sq P Q = F.area := by
   obtain ⟨R, hR⟩ := division_exists F

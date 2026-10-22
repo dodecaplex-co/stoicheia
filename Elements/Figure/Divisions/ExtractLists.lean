@@ -1,11 +1,12 @@
 import Elements.Figure.Outlines.Parity
 
 /-!
-# Staging: closed walks through a boundary of even degree
+# Book Zero: closed walks through a boundary of even degree
 
-Helper lemmas for `apart_has_outline` in `Division.lean` (brief 0013, section 8, "The
-arrangement and general division"; D10). Pure bookkeeping of finite lists: no geometry is
-used, and no proposition of the Elements is cited.
+Helper lemmas, in the namespace `Extract`, for `apart_has_outline`, in `Divisions.lean`
+(brief 0013, section 8, "The arrangement and general division"; D10): the third step of
+`Divisions/Extract.lean`. Pure bookkeeping of finite lists: no geometry is used. Nothing in
+Book Zero cites a proposition of the *Elements*.
 
 * **Finite straight lines read either way** (`Same`): two pairs of points name the same
   finite straight line when they have the same ends, in either order.
@@ -356,7 +357,8 @@ section Walks
 variable {κ : Type} (vs : List Point) (adj : Point → Point → Prop) (c : Point → Point → κ)
 
 /-- One step of `find_cycle`: the first point has a second join of class k; if it leads to a
-new point the chain grows (`hgrow`), and otherwise it closes a walk. -/
+new point the chain grows, and the hypothesis on a longer chain gives a walk; otherwise it
+closes a walk. -/
 theorem find_cycle_step (k : κ) (hvs : vs.Nodup) (hsymm : ∀ P Q, adj P Q → adj Q P)
     (hc : ∀ P Q, c P Q = c Q P) (hirr : ∀ P, ¬ adj P P) (hmem : ∀ P Q, adj P Q → Q ∈ vs)
     (heven : ∀ V, (vs.countP fun W => decide (adj V W ∧ c V W = k)) % 2 = 0)

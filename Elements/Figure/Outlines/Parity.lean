@@ -1,10 +1,11 @@
 import Elements.Figure.Outlines.LoopFacts
 
 /-!
-# Staging: two good rays give one parity
+# Book Zero: two good rays give one parity
 
-Helper lemmas for `crossing_parity_independent` (brief 0013, D3) and `loop_normalise` (D4)
-in `Outline.lean`. No proposition of the Elements is cited.
+Helper lemmas, in the namespace `Parity`, for `crossing_parity_independent` (brief 0013,
+section 8, D3) and `loop_normalise` (D4), in `Outlines.lean`. Nothing in Book Zero cites a
+proposition of the *Elements*.
 
 The route compares the two rays through the angle between them, rather than through a fan.
 Let the rays from X run through Q and through R, not on one straight line, and call a point
@@ -21,7 +22,10 @@ straight line XR.
   and the second end of one other, so the ends within the angle, counted over all the sides,
   come in pairs. Hence the crossings of the two rays together are even.
 * **Rays on one straight line** (`parity_independent`). A third good ray off that straight
-  line, found inside a frame of three corners (`third_ray`), compares with each.
+  line, found inside a frame of three corners (`third_ray`), compares with each. It is found
+  by the avoidance construction that `good_ray_exists` uses too (`good_ray_avoiding`).
+  `parity_independent` is the statement of `crossing_parity_independent`, proved here
+  because the helpers that use it come before `Outlines.lean`, which states it.
 * **A corner between its neighbours** (`remove_corner`, `straight_corner`). A loop that is not
   reduced has three consecutive corners on one straight line, the middle one between the
   others. Removing it keeps the loop simple, its boundary, and the crossing count of every

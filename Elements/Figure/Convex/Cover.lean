@@ -1,12 +1,18 @@
 import Elements.Figure.Convex.Facts
 
 /-!
-# Staging: the fan of a convex outline covers its region
+# Book Zero: the fan of a convex outline covers its region
 
-With at least four corners, cutting off the first fan triangle leaves a smaller
-convex outline. The separating diagonal keeps the interiors apart and places every
-point of the region in the first triangle or the remaining fan. The words are in
-`Staging/Figures/Convex.lean`.
+Step B3 of brief 0013's route (section 8): the boundary bridge for every strictly convex
+outline. Its words, `ConvexOutline`, `ConvexRegion` and `fan`, are in
+`Foundations/Figures.lean`. A convex outline stays convex read from another corner or the
+other way round, and its region does not depend on the corner it is read from
+(`convexRegion_rotate`). With at least four corners, cutting off the first
+fan triangle leaves a smaller convex outline; the separating diagonal keeps the insides
+apart (`fan_apart`) and places every point of the region in the first triangle or the
+remaining fan, so the fan's triangles cover exactly the region (`fan_covers`).
+
+Nothing in Book Zero cites a proposition of the *Elements*.
 -/
 
 namespace Elements.Figures

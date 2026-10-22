@@ -1,18 +1,22 @@
 import Elements.Figure.Convex.Facts
 
 /-!
-# Staging: points off finitely many straight lines
+# Book Zero: points off finitely many straight lines
 
-Prototype proofs for brief 0013 (a draft for the owner's approval).
-Arguments about figures often take a point "in general position": off every straight
-line of a finite list. Here such a point is found inside any triangle, and about any point a
-small triangle is found that stays on the same side of finitely many straight lines as the
-point. The shortening uses finite constructions and plane separation. The initial frame
-for `small_triangle` comes from `exists_off_line`, whose proof draws circles and compares
-lengths. No coordinates or limiting argument is used.
+Step A3 of brief 0013's route (section 8). Arguments about figures often take a point "in
+general position": off every straight line of a finite list (`Avoid`, in
+`Foundations/Figures.lean`). Here such a point is found inside any triangle
+(`triangle_point_avoiding`), and about any point a small triangle is found that stays on
+the same side of finitely many straight lines as the point (`small_triangle`). The
+shortening uses finite constructions and plane separation, with the facts about a triangle
+that come first: a point between a corner and an inner point of the opposite side is inside
+it (`inside_triangle_of_between`), every triangle has an inner point, and every point is
+inside some triangle. The initial frame for `small_triangle` comes from `exists_off_line`,
+whose proof draws circles and compares lengths. No coordinates or limiting argument is used.
 
 These constructions support the route through David Hilbert's theory of content,
-gratefully acknowledged in brief 0006.
+gratefully acknowledged in brief 0006. Nothing in Book Zero cites a proposition of the
+*Elements*.
 -/
 
 namespace Elements.Figures
@@ -205,8 +209,8 @@ theorem surrounding_triangle (X : Point) :
   exact ⟨A, B, C, inside_triangle_of_between
     (Triangle.of_line hBL hCL hXBC.ne₂₃ hAL).cab hBDC (between_symm hDXA)⟩
 
-/-- **A small triangle about a point**: given a point `X` on the same side as `P` of each of
-finitely many straight lines `L` (the pairs `(P, L)`), there is a triangle with `X` inside
+/-- **A small triangle about a point**: given a point X on the same side as P of each of
+finitely many straight lines L (the pairs `(P, L)`), there is a triangle with X inside
 it, all of whose points, within or on it, are on those same sides. -/
 theorem small_triangle {X : Point} (hs : List (Point × Line))
     (hX : ∀ s ∈ hs, SameSide X s.1 s.2) :

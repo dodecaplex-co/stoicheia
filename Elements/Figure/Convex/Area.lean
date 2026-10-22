@@ -2,11 +2,15 @@ import Elements.Figure.Convex.Facts
 import Elements.Figure.Convex.AreaHelpers
 
 /-!
-# Staging: the fan of a convex outline has one sum, from any corner
+# Book Zero: the fan of a convex outline has one sum, from any corner
 
-Successive diagonal changes preserve the fan sum when its first corner changes.
-Reversing the corner order preserves the sum too. These results compare vertex
-fans of strictly convex outlines. The words are in `Staging/Figures/Convex.lean`.
+Step B4 of brief 0013's route (section 8). Successive diagonal changes preserve the fan sum
+when its first corner changes (`fanSum_rotate`), and reversing the corner order preserves it
+too (`fanSum_reverse`). These results compare vertex fans of strictly convex outlines; the
+words are in `Foundations/Figures.lean`, and the fan sum of a cell is its area
+(`ConvexCell.area`).
+
+Nothing in Book Zero cites a proposition of the *Elements*.
 -/
 
 namespace Elements.Figures

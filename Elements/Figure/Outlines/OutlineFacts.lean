@@ -1,13 +1,14 @@
 import Elements.Figure.Outlines.Parity
 
 /-!
-# Staging: facts about outlines, for the boundary bridges of brief 0013
+# Book Zero: facts about outlines, for the boundary bridges of brief 0013
 
-Helper lemmas for `region_with_holes`, `outline_boundary`, `same_boundary_region`,
-`outline_normalise` and `outline_bounded` in `Outline.lean` (brief 0013, section 8, "Ray parity
-and the region"). No proposition of the Elements is cited, and neither Postulate 5 nor
-superposition is used. What `outline_bounded` uses beyond this file, a triangle holding every
-corner, is found with Postulate 5 and I.23 in `OutlineBound.lean`.
+Helper lemmas, in the namespace `OutlineFacts`, for `region_with_holes`, `outline_boundary`,
+`same_boundary_region` and `outline_normalise`, in `Outlines.lean`, and for
+`outline_bounded`, in `BookI/OutlineBound.lean` (brief 0013, section 8, "Ray parity and the
+region"). Nothing in Book Zero cites a proposition of the *Elements*, and nothing here uses
+Postulate 5 or superposition. What `outline_bounded` uses beyond this file, a triangle
+holding every corner, is found with Postulate 5 and I.23 in Book I, after I.29.
 
 * **Sides of finitely many straight lines.** A point off a finite straight line has a straight
   line between them (`sep_segment`); so a point off every side of a loop has finitely many
@@ -29,8 +30,8 @@ corner, is found with Postulate 5 and I.23 in `OutlineBound.lean`.
   of each, their sides either overlap, giving infinitely many contacts, or cross, giving points
   inside one and not the other in all four combinations (`contact_vertex`).
 * **An enclosing triangle.** A triangle holding every corner holds the region
-  (`bounded_of_enclosure`). That some triangle holds them is `enclosing_triangle`, in
-  `OutlineBound.lean`.
+  (`bounded_of_enclosure`). That some triangle holds them is `OutlineBound.enclosing_triangle`,
+  in `BookI/OutlineBound.lean`.
 
 Natural numbers count sides, corners and contours only; they measure nothing.
 -/
@@ -43,7 +44,7 @@ namespace OutlineFacts
 
 /-! ## Prescribed sides of finitely many straight lines -/
 
-/-- `Y` lies on the side of each straight line `c.2` where `c.1` is. -/
+/-- Y lies on the side of each straight line `c.2` where `c.1` is. -/
 def Sat (cs : List (Point × Line)) (Y : Point) : Prop := ∀ c ∈ cs, SameSide Y c.1 c.2
 
 theorem sat_append {cs ds : List (Point × Line)} {Y : Point} :
@@ -1122,7 +1123,7 @@ theorem compatible_transfer {P Q P' Q' : List Point} (hP' : SimpleLoop P')
 What follows does not use Postulate 5. It reduces `outline_bounded` to a statement about
 finitely many points, that the corners lie within some triangle, which is where Postulate 5
 must enter (brief 0013, section 8, "The arrangement and general division"): that is
-`enclosing_triangle`, in `OutlineBound.lean`. -/
+`OutlineBound.enclosing_triangle`, in `BookI/OutlineBound.lean`. -/
 
 /-- A point of a straight line off finitely many other straight lines. -/
 theorem line_point_avoiding (L : Line) (ls : List Line) (hls : ∀ M ∈ ls, M ≠ L) :
@@ -1139,7 +1140,7 @@ theorem line_point_avoiding (L : Line) (ls : List Line) (hls : ∀ M ∈ ls, M �
   simp only [meet, h, ↓reduceDIte, e]
 
 /-- **A ray away from a straight line.** From a point on a straight line, or beyond it from
-`R`, a ray through no given corner whose points are none of them on `R`'s side. From a point
+R, a ray through no given corner whose points are none of them on R's side. From a point
 on the line, aim at a point on the far side; from a point beyond it, aim straight away from a
 point of the line. -/
 theorem away_ray {R : Point} {L : Line} (hR : ¬ OnLine R L) {X : Point}
@@ -1197,7 +1198,8 @@ theorem inner_side {ps : List Point} (h : SimpleLoop ps) {R : Point} {L : Line}
 /-- **The region lies within any triangle that holds every corner.** A boundary point lies
 between two corners, or is one; a point inside some contour is on the inner side of each of the
 triangle's straight lines, since that contour's corners are (`inner_side`). Postulate 5 is not
-used: it is needed only to find such a triangle for finitely many points. -/
+used here: it enters only where such a triangle is found for finitely many points
+(`OutlineBound.enclosing_triangle`). -/
 theorem bounded_of_enclosure (F : Outline) {A B C : Point}
     (hin : ∀ ps ∈ F.loops, ∀ V ∈ ps, InsideTriangle V A B C) :
     ∀ X : Point, F.Region X → InsideTriangle X A B C := by

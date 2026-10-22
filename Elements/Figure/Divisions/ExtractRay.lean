@@ -2,11 +2,12 @@ import Elements.Figure.Divisions.ExtractLists
 import Elements.Figure.Arrangements.CoverFacts
 
 /-!
-# Staging: two simple loops that do not cross
+# Book Zero: two simple loops that do not cross
 
-Helper lemmas for `apart_has_outline` in `Division.lean` (brief 0013, section 8, "The
-arrangement and general division"; D10). No proposition of the Elements is cited; through
-`Outline.lean` this file imports I.23, which only `outline_bounded` uses.
+Helper lemmas, in the namespace `Extract`, for `apart_has_outline`, in `Divisions.lean`
+(brief 0013, section 8, "The arrangement and general division"; D10): the compatibility of
+the contours in the fourth step of `Divisions/Extract.lean`. Nothing in Book Zero cites a
+proposition of the *Elements*.
 
 * **The first and the last crossing on a ray** (`first_hit`, `last_hit`). Of finitely many
   sides whose ends are off a ray's straight line, if the ray crosses one, some crossing point

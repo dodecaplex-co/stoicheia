@@ -1,11 +1,11 @@
 import Elements.Figure.Divisions.ExtractRay
 
 /-!
-# Staging: the sides of triangles that lie apart, cut at their corners
+# Book Zero: the sides of triangles that lie apart, cut at their corners
 
-Helper lemmas for `apart_has_outline` in `Division.lean` (brief 0013, section 8, "The
-arrangement and general division"; D10). No proposition of the Elements is cited; through
-`Outline.lean` this file imports I.23, which only `outline_bounded` uses.
+Helper lemmas, in the namespace `Extract`, for `apart_has_outline`, in `Divisions.lean`
+(brief 0013, section 8, "The arrangement and general division"; D10): the first step of
+`Divisions/Extract.lean`. Nothing in Book Zero cites a proposition of the *Elements*.
 
 Take triangles that lie apart (`Apart`). Their corners cut their sides into **elementary
 finite straight lines** (`Elem`): a finite straight line between two corners, along a side of

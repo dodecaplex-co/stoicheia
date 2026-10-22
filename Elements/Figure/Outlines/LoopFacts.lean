@@ -7,10 +7,11 @@ import Elements.Figure.Convex.Cover
 import Elements.Figure.Cells.ExtHelpers
 
 /-!
-# Staging: facts about loops, for the boundary bridges of brief 0013
+# Book Zero: facts about loops, for the boundary bridges of brief 0013
 
-Helper lemmas for the proofs in `Outline.lean` (brief 0013, section 8, "Ray parity and the
-region"; D1 and D4 with its convex bridges). No proposition of the Elements is cited.
+Helper lemmas, in the namespace `LoopFacts`, for the proofs in `Outlines.lean` (brief 0013,
+section 8, "Ray parity and the region"; D1, and D4 with its convex bridges). Nothing in Book
+Zero cites a proposition of the *Elements*.
 
 * **Listing.** The sides of an outline read from another corner are the same sides in another
   order; read the other way round, each side is read backwards. Boundary, crossing counts,

@@ -5,9 +5,21 @@ import Elements.Figure.Convex.Closed
 import Elements.Figure.Convex.Avoid
 
 /-!
-Supporting sides and extreme points for convex cells. With thanks to David Hilbert,
-whose theory of content guides this route. The supporting steps use closed-triangle
-characterisation, fan coverage, finite avoidance, outline symmetries and fan invariance.
+# Book Zero: supporting sides and extreme points of a convex outline
+
+Helpers, in the namespace `Extreme`, for step B6 of brief 0013's route (section 8):
+`convex_extreme_iff` and `convex_area_ext`, in `Cells.lean`, by which a cell's area depends
+only on its region. No corner of a convex outline lies strictly between two points of its
+region, and every other point of the region does (`corner_not_between`,
+`noncorner_segment`), so the region gives back the corners. With the first corner fixed,
+the same corners determine the outline one way round or the other (`head_order_unique`),
+so the region gives back their cyclic order up to reversal and rotation; and one region held
+in another off finitely many straight lines is held in it wholly (`region_inclusion`).
+The steps use the closed triangle's half-planes, fan coverage, finite avoidance, the
+outline's symmetries and the fan's invariance. With thanks to David Hilbert, whose theory of
+content guides this route.
+
+Nothing in Book Zero cites a proposition of the *Elements*.
 -/
 
 namespace Elements.Figures.Extreme

@@ -2,17 +2,22 @@ import Elements.Figure.Outlines.OutlineFacts
 import Elements.BookI.Prop23
 
 /-!
-# Staging: an enclosing triangle, for `outline_bounded`
+# Book I: a figure given by its outline lies within a triangle
 
-Helper lemmas for `outline_bounded` in `Outline.lean` (brief 0013, section 8): finitely many
-points lie within some triangle. `bounded_of_enclosure`, in `OutlineFacts.lean`, does the rest.
-The statement can fail without Postulate 5, which enters here, and an angle is copied by I.23,
-the one proposition of the Elements these helpers cite. I.23 reaches superposition only
-through I.4 and I.8, the two places FORMALIZATION (section 7) allows it; nothing here names
-superposition.
+`outline_bounded`, one of brief 0013's bridges for a figure given by its outline (section 2,
+and section 8, "The routes taken"), with the lemmas, in the namespace `OutlineBound`, that
+find a triangle holding finitely many points; `OutlineFacts.bounded_of_enclosure`, in Book
+Zero (`Figure/Outlines/OutlineFacts.lean`), does the rest, for a triangle that holds every
+corner holds the whole region. The statement can fail without Postulate 5, which enters
+here, and an angle is copied by I.23, the one proposition of the *Elements* the proof
+cites. So it cannot stand in Book Zero: it stands in Book I, after I.29, where Euclid first
+uses Postulate 5. I.23 reaches superposition only through I.4 and I.8, the two places
+FORMALIZATION (section 7) allows it; nothing here names superposition. No other proof uses
+`outline_bounded`: the division of an outline uses a convex enclosure, whose proof does not
+use Postulate 5 (`convex_enclosure`, `outline_enclosure`).
 
 * **Finitely many points in one angle.** Finitely many points lie on one side of a straight
-  line (`line_one_side`), so within an angle at a point beyond it (`cone_of_line`); these need
+  line (`line_one_side`), so within an angle at a point beyond it (`cone_of_line`); these use
   neither Postulate 5 nor I.23.
 * **A triangle cut off from the angle.** Through a point within an angle a straight line meets
   both arms (`angle_triangle`): there Postulate 5 enters, twice, with an angle copied from one
@@ -64,7 +69,7 @@ theorem line_span {ℓ : Line} : ∀ xs : List Point, (∀ X ∈ xs, OnLine X �
   | X :: xs, h => by
     obtain ⟨B, C, hB, hC, hBC, hxs⟩ := line_span xs fun Y hY => h Y (List.mem_cons_of_mem _ hY)
     have hX : OnLine X ℓ := h X List.mem_cons_self
-    /- Moving the end `B` out beyond it, or the end `C`, keeps every point between. -/
+    /- Moving the end B out beyond it, or the end C, keeps every point between. -/
     have outB : ∀ {B' : Point}, Between C B B' → ∀ Y ∈ xs, Between B' Y C := fun hCBB' Y hY =>
       between_symm (between_of_between_left hCBB' (between_symm (hxs Y hY)))
     have outC : ∀ {C' : Point}, Between B C C' → ∀ Y ∈ xs, Between B Y C' := fun hBCC' Y hY =>
@@ -102,8 +107,8 @@ theorem line_span {ℓ : Line} : ∀ xs : List Point, (∀ X ∈ xs, OnLine X �
       exact newC (between_of_between_left hBXC' hBCX) hBXC'
 
 /-- **An angle from beyond a straight line.** Points none of which is on the side of a
-straight line where `O` is lie within one angle at `O` whose arms run to two points of that
-straight line: each is seen from `O` through a point of the straight line, and those points lie
+straight line where O is lie within one angle at O whose arms run to two points of that
+straight line: each is seen from O through a point of the straight line, and those points lie
 between two of its points. -/
 theorem cone_of_line {O : Point} {ℓ : Line} (hO : ¬ OnLine O ℓ) (ws : List Point)
     (hws : ∀ W ∈ ws, ¬ SameSide W O ℓ) :
@@ -141,7 +146,7 @@ theorem cone_of_line {O : Point} {ℓ : Line} (hO : ¬ OnLine O ℓ) (ws : List 
   have hOC : O ≠ C := hOBC.ne₁₃
   obtain ⟨LB, hO_B, hB_B⟩ := Postulate1 O B hOB
   obtain ⟨LC, hO_C, hC_C⟩ := Postulate1 O C hOC
-  /- A point of the straight line between `B` and `C` is within the angle. -/
+  /- A point of the straight line between B and C is within the angle. -/
   have within : ∀ X ∈ xs, SameSideOf X C O B ∧ SameSideOf X B O C := by
     intro X hX
     have hBXC := hspan X hX
@@ -158,11 +163,11 @@ theorem cone_of_line {O : Point} {ℓ : Line} (hO : ¬ OnLine O ℓ) (ws : List 
   · have hray : OnRay W O X := OnRay.of_beyond hOXW
     exact ⟨SameSideOf.of_onRay hray (within X hX).1, SameSideOf.of_onRay hray (within X hX).2⟩
 
-/-- **Behind the corner of an angle.** Produce the arms `BO`, `CO` beyond `O` to `B''`, `C''`;
-every point within the angle `BOC` is on `O`'s side of the straight line `B''C''`, which does not
-pass through `O`. A point not on that side would be seen from `O` through a point of the
+/-- **Behind the corner of an angle.** Produce the arms BO, CO beyond O to B'', C'';
+every point within the angle BOC is on O's side of the straight line B''C'', which does not
+pass through O. A point not on that side would be seen from O through a point of the
 straight line within the angle; but that straight line meets the angle's arms, produced, only at
-`B''` and `C''`, behind `O`. -/
+B'' and C'', behind O. -/
 theorem cone_side {O B C B'' C'' : Point} (hOBC : Triangle O B C) (hB : Between B O B'')
     (hC : Between C O C'') {m : Line} (hBm : OnLine B'' m) (hCm : OnLine C'' m) :
     ¬ OnLine O m ∧ ∀ X : Point, SameSideOf X C O B → SameSideOf X B O C → SameSide X O m := by
@@ -263,8 +268,8 @@ the foundations relate such angles only through superposition and Postulate 4. S
 one point is copied to another, once, by I.23 (`copy_angle`), which reaches superposition only
 through I.4 and I.8. -/
 
-/-- **An angle copied to another corner.** The angle `POC` set up at `P` on the straight line
-`PO`, on the side of it where `H` is: I.23 sets it up on the ray from `P` through `O`, and an
+/-- **An angle copied to another corner.** The angle POC set up at P on the straight line
+PO, on the side of it where H is: I.23 sets it up on the ray from P through O, and an
 angle depends only on the rays of its arms. -/
 theorem copy_angle {O P C H : Point} (hOPC : Triangle O P C) {L : Line} (hP : OnLine P L)
     (hO : OnLine O L) (hH : ¬ OnLine H L) : ∃ V : Point, SameSide V H L ∧ ∠ O P V = ∠ P O C := by
@@ -276,12 +281,12 @@ theorem copy_angle {O P C H : Point} (hOPC : Triangle O P C) {L : Line} (hP : On
   exact hang
 
 /-- **Through a point within an angle, a straight line meeting both arms**, so that the point is
-within a triangle cut off from the angle. Set up at `P` on `PO`, towards `B`, the angle `POC`
-(`copy_angle`, by I.23). Its arm and `OB` make with `PO` angles less than two right angles, for
-together they are the angle `BOC`; so they meet, at `B₂` (Postulate 5). Take `B₁` beyond `B₂`,
-and produce `B₁P` beyond `P` to `W'`. The angles `W'PO` and `POC` are together the angle `W'PB₂`,
-for `POC` is `OPB₂`; so `B₁P` produced meets `OC`, at `C₂` (Postulate 5 again), and `P` is
-between `B₁` and `C₂`. Beyond `C₂` take `C₁`: `P` is within the triangle `OB₁C₁`. -/
+within a triangle cut off from the angle. Set up at P on PO, towards B, the angle POC
+(`copy_angle`, by I.23). Its arm and OB make with PO angles less than two right angles, for
+together they are the angle BOC; so they meet, at B₂ (Postulate 5). Take B₁ beyond B₂,
+and produce B₁P beyond P to W'. The angles W'PO and POC are together the angle W'PB₂,
+for POC is OPB₂; so B₁P produced meets OC, at C₂ (Postulate 5 again), and P is
+between B₁ and C₂. Beyond C₂ take C₁: P is within the triangle OB₁C₁. -/
 theorem angle_triangle {O B C P : Point} (hPC : SameSideOf P C O B) (hPB : SameSideOf P B O C) :
     ∃ B₁ C₁ : Point, OnRay B₁ O B ∧ OnRay C₁ O C ∧ InsideTriangle P O B₁ C₁ := by
   have hOB : O ≠ B := hPC.1
@@ -299,20 +304,20 @@ theorem angle_triangle {O B C P : Point} (hPC : SameSideOf P C O B) (hPB : SameS
   have hCLP : ¬ OnLine C LP := fun h => hPLC (line_unique hOC hO_P h hO_C hC_C ▸ hP_P)
   have hLBLC : ∀ {X : Point}, OnLine X LB → OnLine X LC → X = O := fun hXB hXC =>
     Classical.byContradiction fun hXO => hCLB (line_unique hXO hXB hO_B hXC hO_C ▸ hC_C)
-  /- `B` and `C` are on opposite sides of `OP` (the crossbar). -/
+  /- B and C are on opposite sides of OP (the crossbar). -/
   have hBC : ¬ SameSide B C LP := by
     obtain ⟨X, hBXC, hX⟩ := crossbar hPC hPB
     exact pasch3 hBXC (hX.onLine hO_P hP_P)
   have hBOC : Triangle B O C := hPC.symm.triangle.bac
   have hOPC : Triangle O P C := (Triangle.of_line hO_C hC_C hOC hPLC).acb
-  /- A point of the straight line `OB` on `B`'s side of `OP` is on the ray `OB`. -/
+  /- A point of the straight line OB on B's side of OP is on the ray OB. -/
   have rayB : ∀ {X : Point}, OnLine X LB → SameSide X B LP → OnRay X O B := fun hX hXB =>
     OnRay.of_sameSideOf (SameSideOf.of_line hOP hO_P hP_P hXB) ⟨LB, hO_B, hB_B, hX⟩
       fun e => not_on_line_of_same_side hXB (e ▸ hO_P)
   have rayC : ∀ {X : Point}, OnLine X LC → SameSide X C LP → OnRay X O C := fun hX hXC =>
     OnRay.of_sameSideOf (SameSideOf.of_line hOP hO_P hP_P hXC) ⟨LC, hO_C, hC_C, hX⟩
       fun e => not_on_line_of_same_side hXC (e ▸ hO_P)
-  /- The angle `POC` at `P`, towards `B`. -/
+  /- The angle POC at P, towards B. -/
   obtain ⟨V, hVB, hcopy⟩ := copy_angle hOPC hP_P hO_P hBLP
   have hVP : V ≠ P := fun e => not_on_line_of_same_side hVB (e ▸ hP_P)
   obtain ⟨LV, hP_V, hV_V⟩ := Postulate1 P V hVP.symm
@@ -320,7 +325,7 @@ theorem angle_triangle {O B C P : Point} (hPC : SameSideOf P C O B) (hPB : SameS
     have hadd : ∠ B O C = ∠ B O P + ∠ P O C := angle_add_of_within hPC hPB
     rw [angle_symm hVP hOP, hcopy, angle_symm hOP.symm hOB.symm, add_comm (∠ P O C), ← hadd]
     exact angle_lt_two_right hBOC
-  /- Postulate 5: the arm `PV` meets `OB`, at `B₂`. -/
+  /- Postulate 5: the arm PV meets OB, at B₂. -/
   obtain ⟨B₂, hB₂V, hB₂B, hB₂side⟩ :=
     Postulate5 hV_V hP_V hP_P hO_P hO_B hB_B hOP.symm hVB hsum₁
   have hB₂b : SameSide B₂ B LP := same_side_trans (same_side_symm hB₂side) hVB
@@ -333,7 +338,7 @@ theorem angle_triangle {O B C P : Point} (hPC : SameSideOf P C O B) (hPB : SameS
       hPB₂.symm
     rw [angle_onRay_right hray hOP]
     exact hcopy
-  /- `B₁` beyond `B₂`, and the straight line `B₁P`, produced beyond `P` to `W'`. -/
+  /- B₁ beyond B₂, and the straight line B₁P, produced beyond P to W'. -/
   obtain ⟨B₁, hOB₂B₁⟩ := produce hOB₂
   have hB₁B : OnLine B₁ LB := on_line_of_between hOB₂B₁ hO_B hB₂B
   have hB₁b : SameSide B₁ B LP := same_side_trans (pasch2 hOB₂B₁ hO_P hB₂LP) hB₂b
@@ -351,7 +356,7 @@ theorem angle_triangle {O B C P : Point} (hPC : SameSideOf P C O B) (hPB : SameS
     have h₂ : OppositeSides B₁ C LP :=
       ⟨hB₁LP, hCLP, fun hs => hBC (same_side_trans hB₁b hs)⟩
     exact same_side_of_opposite_sides h₁ h₂
-  /- `O` is within the angle `W'PB₂`. -/
+  /- O is within the angle W'PB₂. -/
   obtain ⟨K, hP_K, hB₂_K⟩ := Postulate1 P B₂ hPB₂
   have hKB : ∀ {X : Point}, OnLine X K → OnLine X LB → X = B₂ := fun hXK hXB =>
     Classical.byContradiction fun hX => hPLB (line_unique hX hXK hB₂_K hXB hB₂B ▸ hP_K)
@@ -368,7 +373,7 @@ theorem angle_triangle {O B C P : Point} (hPC : SameSideOf P C O B) (hPB : SameS
       (SameSideOf.of_line hPB₂ hP_K hB₂_K hOW')
     rw [← hang₂, ← hadd]
     exact angle_lt_two_right (Triangle.of_line hW'ℓ hPℓ hPW'.symm hB₂ℓ)
-  /- Postulate 5: `B₁P` produced meets `OC`, at `C₂`. -/
+  /- Postulate 5: B₁P produced meets OC, at C₂. -/
   obtain ⟨C₂, hC₂ℓ, hC₂C, hC₂side⟩ :=
     Postulate5 hW'ℓ hPℓ hP_P hO_P hO_C hC_C hOP.symm hW'c hsum₂
   have hC₂c : SameSide C₂ C LP := same_side_trans (same_side_symm hC₂side) hW'c
@@ -380,7 +385,7 @@ theorem angle_triangle {O B C P : Point} (hPC : SameSideOf P C O B) (hPB : SameS
   have hB₁PC₂ : Between B₁ P C₂ := pasch4 hℓLP hP_P hPℓ hB₁ℓ hC₂ℓ
     (fun e => hB₁C₂ (by rw [← e]; exact same_side_refl hB₁LP)) hB₁P
     (fun e => hC₂LP (e ▸ hP_P)) hB₁C₂
-  /- `C₁` beyond `C₂`. -/
+  /- C₁ beyond C₂. -/
   obtain ⟨C₁, hOC₂C₁⟩ := produce hOC₂
   have hC₁C : OnLine C₁ LC := on_line_of_between hOC₂C₁ hO_C hC₂C
   have hC₁c : SameSide C₁ C LP := same_side_trans (pasch2 hOC₂C₁ hO_P hC₂LP) hC₂c
@@ -405,8 +410,8 @@ theorem angle_triangle {O B C P : Point} (hPC : SameSideOf P C O B) (hPB : SameS
       ((SameSideOf.of_onRay hC₁ray hPC.symm).symm.sameSide hO_B hB_B)
 
 /-- A point within a triangle is within it still when one corner is moved out along its side
-from another: within the angle at `C`, it is seen from `C` through a point between `O` and `B`,
-so between `O` and `B'`. -/
+from another: within the angle at C, it is seen from C through a point between O and B,
+so between O and B'. -/
 theorem inside_beyond {P O B C B' : Point} (h : InsideTriangle P O B C) (hB : Between O B B') :
     InsideTriangle P O B' C := by
   obtain ⟨LB, hO_B, hB_B⟩ := Postulate1 O B (ne_of_between hB)
@@ -434,7 +439,7 @@ theorem inside_beyond' {P O B C C' : Point} (h : InsideTriangle P O B C) (hC : B
   have h' := inside_beyond (B := C) (C := B) ⟨h.1.swap, h.2.2.swap, h.2.1.swap⟩ hC
   exact ⟨h'.1.swap, h'.2.2.swap, h'.2.1.swap⟩
 
-/-- Two points of one ray from `O` both lie between `O` and a third point of it. -/
+/-- Two points of one ray from O both lie between O and a third point of it. -/
 theorem beyond_both {O U V X : Point} (hU : OnRay U O X) (hV : OnRay V O X) :
     ∃ W : Point, OnRay W O X ∧ Between O U W ∧ Between O V W := by
   obtain ⟨L, hO, hX⟩ := Postulate1 O X hU.1
@@ -493,7 +498,7 @@ theorem enclosing_triangle (vs : List Point) :
 
 end OutlineBound
 
-/-- Every admitted figure is bounded, with an enclosing triangle. -/
+/-- **A figure given by its outline is bounded**: some triangle holds its whole region. -/
 theorem outline_bounded (F : Outline) :
     ∃ A B C : Point, Triangle A B C ∧
       ∀ X : Point, F.Region X → InsideTriangle X A B C := by

@@ -2,12 +2,12 @@ import Elements.Figure.Outlines
 import Elements.Figure.Cells
 
 /-!
-# Staging: the cells of an arrangement that fill an outline
+# Book Zero: the cells of an arrangement that fill an outline
 
-Helper lemmas for `outline_cell_constant` and `outline_cells_cover` in `Arrangement.lean`
-(brief 0013, section 8, "The arrangement and general division"; D9). No proposition of the
-Elements is cited; through `Outline.lean` this file imports I.23, which only `outline_bounded`
-uses.
+Helper lemmas, in the namespace `CoverFacts`, for `outline_cell_constant` and
+`outline_cells_cover`, in `Arrangements.lean` (brief 0013, section 8, "The arrangement and
+general division"; D9). The diagonal route, the extraction of an outline and the fan's
+bridge beside I.45 use them too. Nothing in Book Zero cites a proposition of the *Elements*.
 
 * **Along a finite straight line that meets no side** (`inside_of_segment`). If a finite
   straight line XZ meets no side of a simple loop, and its straight line passes through no

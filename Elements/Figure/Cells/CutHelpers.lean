@@ -5,10 +5,21 @@ import Elements.Figure.Convex.Avoid
 import Elements.Figure.Cells.ExtHelpers
 
 /-!
-Finite fan identities and the side geometry used in cutting convex outlines. The
-content route owes its guiding decomposition argument to David Hilbert. These
-lemmas are proved; several restate, under the names the cut's proof uses, facts proved
-in ConvexFacts.lean, ExtHelpers.lean and Avoid.lean, and are proved by citing them.
+# Book Zero: fan identities and side facts for cutting a convex outline
+
+Helpers for steps B5 and C1 of brief 0013's route (section 8): `fan_insert_between`,
+`boundary_fan_sum` and `convex_cut`, in `Cells.lean`. The fan identities: a fan splits at
+any corner of its chain (`cut_fan_split`), a repeated apex adds nothing
+(`cut_fan_repeat`), and removing an ear takes the same triangle from every fan on the first
+side (`cut_boundary_flip`). Two of them are the change of diagonal,
+`area_diagonal_change`, in the forms the cut uses, and their docstrings say so:
+`cut_quad_flip` and `cut_vertex_flip`. The side facts keep the inside of a triangle strictly
+on one side of a straight line, and a convex region within a closed half-plane that holds
+its corners (`cut_region_half`), and find a small triangle within the region about a point
+strictly inside every side (`cut_core_neighbourhood`). The content
+route owes its guiding decomposition argument to David Hilbert.
+
+Nothing in Book Zero cites a proposition of the *Elements*.
 -/
 
 namespace Elements.Figures

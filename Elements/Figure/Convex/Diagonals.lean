@@ -2,12 +2,26 @@ import Elements.Figure.Cells.CutPieces
 import Elements.Figure.Outlines.LoopFacts
 
 /-!
-# The diagonals of a convex outline
+# Book Zero: the diagonals of a convex outline
 
-PROMOTION NOTE (to be written): the convex precursors of brief 0013 (B1, B2 and B4's
-`fanSum_rotateLeft`), moved from `Arrangements.lean` to their home with the convex facts. B2
-cites the corner-to-corner case of the cut's pieces (`Pieces.form_corner_corner`), so this file
-comes after `Cells/CutPieces.lean`. No proposition of the Elements is cited.
+The convex precursors of brief 0013's route (section 8, rows B1, B2 and B4 of its ledger),
+which the route proposed as steps to later rows:
+
+* **B1** (`convex_diagonal_separates`). The two chains of a convex outline between the ends
+  of a diagonal lie on opposite sides of it, by cutting off ears (`Pieces.convex_sublist`,
+  `ear_opposite`).
+* **B2** (`convex_diagonal_split`). A diagonal divides the convex region into two convex
+  regions whose common part is exactly the finite diagonal. By B1 the diagonal cuts the
+  outline corner to corner, so the proof cites that case of the cut's pieces
+  (`Pieces.form_corner_corner`) rather than prove it again by a fan induction; this file
+  therefore comes after `Cells/CutPieces.lean`.
+* **B4's `fanSum_rotateLeft`.** The fan has the same sum from any starting corner, from
+  `fanSum_rotate`, one corner at a time.
+
+As proved, no later step uses them: the convex enclosure grows one point at a time
+(`Arrangement.insert_point`), and the division of an outline selects cells of an
+arrangement (brief 0013, section 8, "The routes taken", B2 and D2). Nothing in Book Zero
+cites a proposition of the *Elements*.
 -/
 
 namespace Elements.Figures
@@ -16,9 +30,9 @@ namespace Elements.Figures
 theorem convex_diagonal_separates {A B : Point} {us vs : List Point}
     (h : ConvexOutline (A :: (us ++ B :: vs))) :
     ∀ U ∈ us, ∀ V ∈ vs, OppositeSidesOf U V A B := by
-  /- The corners `A`, `U`, `B`, `V`, taken in order, make a convex outline
-  (`Pieces.convex_sublist`, by cutting off ears, `cut_convex`), and its diagonal `AB`
-  separates `U` from the later corner `V` (`ear_opposite`). -/
+  /- The corners A, U, B, V, taken in order, make a convex outline
+  (`Pieces.convex_sublist`, by cutting off ears, `cut_convex`), and its diagonal AB
+  separates U from the later corner V (`ear_opposite`). -/
   intro U hU V hV
   have hs : [A, U, B, V].Sublist (A :: (us ++ B :: vs)) := by
     apply List.Sublist.cons_cons
@@ -40,10 +54,10 @@ theorem convex_diagonal_split {A B : Point} {us vs : List Point}
       (∀ X : Point,
         (ConvexRegion (A :: (us ++ [B])) X ∧ ConvexRegion (B :: (vs ++ [A])) X) ↔
           OnFiniteLine X A B) := by
-  /- The straight line `AB` has the corners `us` on one side and `vs` on the other
+  /- The straight line AB has the corners `us` on one side and `vs` on the other
   (`convex_diagonal_separates`), so it cuts the outline corner to corner
-  (`Pieces.form_corner_corner`): each chain, closed by `AB`, is a convex outline whose region
-  is the outline's region on one closed side of `AB`. -/
+  (`Pieces.form_corner_corner`): each chain, closed by AB, is a convex outline whose region
+  is the outline's region on one closed side of AB. -/
   have hsep := convex_diagonal_separates h
   obtain ⟨u, hu₀⟩ := List.exists_mem_of_ne_nil us hu
   obtain ⟨v, hv₀⟩ := List.exists_mem_of_ne_nil vs hv
@@ -58,7 +72,7 @@ theorem convex_diagonal_split {A B : Point} {us vs : List Point}
   have hreg₂ (X : Point) : ConvexRegion (B :: (vs ++ [A])) X ↔ ConvexRegion (A :: B :: vs) X :=
     convexRegion_rotate A (B :: vs) X
   refine ⟨h₁.1, (convexOutline_rotate_iff A (B :: vs)).mpr h₂.1, fun X => ?_, fun X => ?_⟩
-  · /- Off `AB`, a point of the region is on one side or the other. -/
+  · /- Off AB, a point of the region is on one side or the other. -/
     rw [h₁.2.1 X, hreg₂ X, h₂.2.1 X]
     constructor
     · intro hX
@@ -68,7 +82,7 @@ theorem convex_diagonal_split {A B : Point} {us vs : List Point}
         · exact Or.inl ⟨hX, Or.inr hs⟩
         · exact Or.inr ⟨hX, Or.inr hs⟩
     · rintro (⟨hX, -⟩ | ⟨hX, -⟩) <;> exact hX
-  · /- On both closed sides means on `AB`; there the first piece's region is its side `BA`
+  · /- On both closed sides means on AB; there the first piece's region is its side BA
     (`LoopFacts.convex_supporting`). -/
     rw [h₁.2.1 X, hreg₂ X, h₂.2.1 X]
     constructor

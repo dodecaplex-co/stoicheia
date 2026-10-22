@@ -2,16 +2,18 @@ import Elements.Figure.Cells.CutHelpers
 import Elements.Figure.Sums
 
 /-!
-# Staging: a convex outline as the common part of its sides' half-planes
+# Book Zero: a convex outline as the common part of its sides' half-planes
 
-Facts about lists of points and straight lines, for the common part of two cells and for
-cells that tile a cell (brief 0013, section 8, "Content", steps 4 and 5). Each side of a
-convex outline has a straight line, and the other corners lie on one side of it; so the
-outline's inside is the common part of finitely many open half-planes, and its region the
-common part of the same closed half-planes, each named by a straight line and one point on
-the inward side. The inside has a point off any finitely many straight lines, inside the
-first triangle of the fan. The route follows David Hilbert's theory of content, gratefully
-acknowledged in brief 0006.
+Facts about lists of points and straight lines, in the namespace `CellFacts`, for cells that
+tile a cell and for the common part of two cells (steps C2 and C3 of brief 0013's route:
+section 8, "Content", steps 4 and 5). Each side of a convex outline has a straight line, and
+the other corners lie on one side of it; so the outline's inside is the common part of
+finitely many open half-planes, and its region the common part of the same closed
+half-planes, each named by a straight line and one point on the inward side. The inside has
+a point off any finitely many straight lines, inside the first triangle of the fan. The
+route follows David Hilbert's theory of content, gratefully acknowledged in brief 0006.
+
+Nothing in Book Zero cites a proposition of the *Elements*.
 -/
 
 namespace Elements.Figures

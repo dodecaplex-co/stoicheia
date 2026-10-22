@@ -1,13 +1,13 @@
 import Elements.Figure.Divisions.ExtractEdges
 
 /-!
-# Staging: the outline of triangles that lie apart
+# Book Zero: the outline of triangles that lie apart
 
-The proof of `apart_has_outline` in `Division.lean` (brief 0013, section 8, "The arrangement and
-general division"; D10): every figure supplied as triangles that lie apart (`Apart`) has an
-outline with exactly its closed coverage, holes, separate pieces and contacts at corners
-included. No proposition of the Elements is cited; through `Outline.lean` this file imports
-I.23, which only `outline_bounded` uses.
+The proof, in the namespace `Extract`, of `apart_has_outline`, in `Divisions.lean` (brief
+0013, section 8, "The arrangement and general division"; D10): every figure given as
+triangles that lie apart (`Apart`) has an outline with exactly its closed coverage, holes,
+separate pieces and contacts at corners included. Nothing in Book Zero cites a proposition
+of the *Elements*.
 
 **The route.** Not the route the brief sketches, which traces the boundary round each corner
 and splits closed walks where they return; this one examines no sector at a corner. Nor does

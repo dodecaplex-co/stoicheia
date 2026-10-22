@@ -8,11 +8,36 @@ import Elements.Figure.Sides
 import Elements.Figure.Angles
 
 /-!
-The boundary bridges proposed by brief 0013, with their proofs.
-Only `outline_bounded` cites a proposition of the Elements: its enclosing triangle
-(`OutlineBound.lean`) copies an angle by I.23 and uses Postulate 5, so this file imports I.23
-and the propositions it rests on. The other statements cite no proposition and rest on
-neither Postulate 5 nor superposition.
+# Book Zero: the region of an outline, and its boundary
+
+Brief 0013's ray parity (section 2, and steps D1, D3 and D4 of its route: section 8, "Ray
+parity and the region"), with the proofs; the words are in `Foundations/Figures.lean`. A
+point off the boundary has a good ray (`good_ray_exists`, D1), and two good rays give one
+parity (`crossing_parity_independent`, D3), so any good ray decides the inside
+(`loop_inside_iff`). The region is the same when the outline is read the other way round,
+from another corner, or without its straight-through corners (`loop_reverse`,
+`loop_rotate`, `loop_normalise`, D4). The bridges tie the region to the edition's other
+words and to the boundary:
+
+* a triangle's outline encloses its closed triangle (`triangle_region`), a convex outline's
+  region is its `ConvexRegion` (`convex_loop_region`), and a supporting side cuts out the
+  finite side (`convex_supporting_side`);
+* the contours are exactly the boundary of the region (`outline_boundary`);
+* the same boundary gives the same region, however it is listed, read or split into
+  contours (`same_boundary_region`), and has a reduced description (`outline_normalise`);
+* one outer contour with holes is its closed region less the holes' insides
+  (`region_with_holes`).
+
+That the region lies within a triangle, `outline_bounded`, uses Postulate 5 and cites I.23,
+so it stands in Book I, after I.29 (`BookI/OutlineBound.lean`); nothing here uses it.
+
+The proofs depart from the brief's route where it helps, each departure described where it
+happens: two rays are compared through the angle between them (`Outlines/Parity.lean`); the
+triangle and convex bridges follow from crossing counts, without D3
+(`Outlines/LoopFacts.lean`); and the same boundary gives the same region by counting one
+ray's crossings as points of the boundary (`OutlineFacts.depth_parity_eq`). Nothing in Book
+Zero cites a proposition of the *Elements*, and nothing here uses Postulate 5 or
+superposition.
 -/
 
 namespace Elements.Figures

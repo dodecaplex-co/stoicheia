@@ -1,13 +1,18 @@
 import Elements.Figure.Convex.Facts
 
 /-!
-# Staging: a triangle with its sides, and a triangle cut in two
+# Book Zero: a triangle with its sides, and a triangle cut in two
 
-Prototype facts for brief 0013 (a draft for the owner's approval): a closed triangle is
-the three closed sides of its sides' straight lines, towards the
-opposite corners; and a straight line from a corner to a point of the opposite side cuts the
-triangle into two that cover it and whose areas make up its area. The half-plane arguments
-follow a probe of 19 October (brief 0013, section 8).
+Two steps of brief 0013's route (section 8, rows A2 and A4 of its ledger). A closed triangle
+is the three closed sides of its sides' straight lines, towards the opposite corners
+(`closed_triangle_sides`, A2). A straight line from a corner to a point of the opposite side,
+an end of it or between them, cuts the triangle into two that cover it and whose areas make
+up its area (`triangle_cut_cover`, `area_cut_closed`, A4). No proof of the route cites A4:
+the convex cut takes a crossing at an end of a side as a corner, and measures with the
+library's `area_cut` (brief 0013, section 8, "The routes taken", C1).
+
+The half-plane arguments follow the probe of 19 October (brief 0013, section 8). Nothing in
+Book Zero cites a proposition of the *Elements*.
 -/
 
 namespace Elements.Figures

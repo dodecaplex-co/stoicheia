@@ -1,15 +1,18 @@
 import Elements.Figure.Convex.Facts
 
 /-!
-# Areas of fans and changes of diagonal
+# Book Zero: areas of fans, and changes of diagonal
 
-At each crossing, the four small triangles show that changing a diagonal
-preserves the sum. Successive changes compare fans based at consecutive corners.
-David Hilbert's theory of content provides the classical route, which we
-gratefully acknowledge, together with the contributions of Gérard, F. Schur and
-O. Stolz recorded in brief 0006. Here the comparison is between vertex fans;
-independence from arbitrary divisions into triangles is the content theorem's further step
+For step B4 of brief 0013's route (section 8). At each crossing, the four small triangles
+show that changing a diagonal preserves the sum (`area_diagonal_change`). Successive
+changes compare fans based at consecutive corners (`fanArea_rotate`, after the probe of 19
+October). David Hilbert's theory of content provides the classical route, which we
+gratefully acknowledge, together with the contributions of Gérard, F. Schur and O. Stolz
+recorded in brief 0006. Here the comparison is between vertex fans; independence from
+arbitrary divisions into triangles is the content theorem's further step
 (`Apart.area_eq_of_same_region`, in `Content.lean`).
+
+Nothing in Book Zero cites a proposition of the *Elements*.
 -/
 
 namespace Elements.Figures
