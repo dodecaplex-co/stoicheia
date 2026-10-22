@@ -2204,7 +2204,8 @@ def guard_paths(repo, base, sha, rep: Report) -> bool:
                 # asked inside judge, so a findings missing or uncallable refuses by name.
                 def theirs_of():
                     if "directories" in inspect.signature(standard.findings).parameters:
-                        return [str(f) for f in standard.findings(entries, directories)]
+                        named = standard.findings(entries, directories=directories)
+                        return [str(f) for f in named]
                     return [str(f) for f in standard.findings(entries)]
                 judged, crash = judge(theirs_of)
             if crash is not None:       # a crash of origin/main's check refuses, as a finding
@@ -5213,8 +5214,9 @@ def main(argv=None) -> int:
 
     original_cwd = Path.cwd()
     if args.scan_push:
-        # The scan reads objects alone, so it runs as the hook's Git gives it, before the
-        # location check below: Git hands a hook a relative GIT_WORK_TREE unchanged (#186).
+        # The scan reads the repository Git hands the hook, never its work tree, so it runs
+        # as on origin/main, before the location check below: Git hands a hook a relative
+        # GIT_WORK_TREE unchanged (#186).
         r = run(["git", "rev-parse", "--show-toplevel"], original_cwd)
         if r.returncode != 0:
             print("safe_push: run it inside the repository", file=sys.stderr)

@@ -1520,6 +1520,8 @@ class Hook(Clone):
                 else:
                     self.assertNotEqual(r.returncode, 0, r.stderr)
                     self.assertIn(f"pre-push: refusing the push to {ref}", r.stderr)
+                    self.assertIn("the secret scan found", r.stdout + r.stderr)
+                    self.assertIsNone(self.origin_branch("bad"))
 
     def test_hook_never_runs_another_remotes_main(self):
         # Security review: a push to another remote (a contributor's fork, fetched) is
