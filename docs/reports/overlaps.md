@@ -485,7 +485,7 @@ Three others, I.23, I.25 and I.41, have the fewest rules in `direct_axioms`, thr
 Euclid's argument.
 
 **A sweep of every rule.** We read each of the 81 tacit rules, with the postulates and
-Definition 15, against the 99 statements and the three porisms, and later against the 19
+Definition I.15, against the 99 statements and the three porisms, and later against the 19
 companions that stages 2 and 4b brought in (I.40's, I.45's, II.1's and II.14's, and those
 of III.7, III.8 and III.17), and found no more. Then a mechanical screen,
 [Audit/screen.py](../../Audit/screen.py), had Lean's `grind` try every statement against
