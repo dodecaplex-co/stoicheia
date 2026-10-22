@@ -109,8 +109,9 @@ kinds, and `kind` names the row's kind in the catalogue's words:
   (historically, III.2 and Circle 2, before that rule became a theorem).
 - **gives**: the proposition follows from the rule at once, in a short proof from at most
   three rules that cites no proposition, any other rules only drawing or naming the figure
-  (III.2 from Circle 3; III.5 from Diagram-segment 2 with Generalities 4, and III.6 from
-  those two with Generalities 3; Generalities 3 and 4 are theorems now).
+  (III.2 from Circle 3; III.5 from Diagram-segment 2 with Generalities 4; III.6's
+  contact-within case from Diagram-segment 2 with Generalities 4 and its contact-without
+  case from Generalities 3; Generalities 3 and 4 are theorems now).
 - **step**: inside some proof, the rule carries a step that is the proposition's content,
   or a case of it, and does not give the proposition at once (as for I.13, a consequence of
   which, Metric 5, carries a step of I.47's proof).
