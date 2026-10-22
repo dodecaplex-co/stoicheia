@@ -4444,9 +4444,10 @@ findings:
   `scripts/check_fidelity.py` reads, so a pull request could add, remove or rename one of
   them together with judged content while origin/main's checks failed, where in the
   Markdown of every other check input only a marker's value may move (the entry of 20
-  October on #177). The owner ruled on 21 October 2026, in the issue: "yes. Hold
-  tests/model/MODEL.md's count markers to the rule for other check inputs: only a
-  marker's value may move, never the marker itself together with content." The page keeps
+  October on #177). On 21 October 2026 the owner chose, of two options put to them, "Yes,
+  tighten it": MODEL.md's count markers are held to the rule for the other check inputs,
+  so that only a marker's value may move, never the marker itself together with content
+  (the coordinator's record of the choice is on #187). The page keeps
   its pin for its prose, but a change to it is now a pinned value only while the same
   markers stand, by name and in order, as origin/main's `scripts/generated_counts.py`
   reads them, the file stays a regular file of the same mode, and both sides read.
