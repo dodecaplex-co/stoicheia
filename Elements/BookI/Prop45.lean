@@ -16,7 +16,7 @@ Euclid's text, in Heath's translation: [`heath/I/45.md`](../../heath/I/45.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
-`Prop45` is Euclid's worked configuration: the four-sided figure ABCD, cut by DB into the
+`Prop45` is Euclid's worked configuration: the four-sided figure ABCD, divided by DB into the
 triangles ABD and DBC. Euclid's proof makes a parallelogram for the first triangle [I. 42],
 applies one for the second to its side [I. 44], and shows that the two make one
 parallelogram; a figure of more triangles repeats the second step, as Oliver Byrne draws it
@@ -26,7 +26,7 @@ triangles:
 * `Prop45.append` is that second step.
 * `Prop45.sum` repeats it, for any number of triangles. It is the construction, and claims
   nothing of a figure: the triangles need not fit together.
-* `Prop45.apart` is the proposition for a figure given with triangles that lie apart,
+* `Prop45.apart` is the proposition for a figure given with triangles that do not overlap,
   no point inside two of them (`Apart`).
   The figure may have a hole (Definition I.14: "any boundary or boundaries").
 * `Prop45.figure` is the proposition for a figure with one boundary, given with triangles
@@ -49,8 +49,9 @@ three agree on the figures they share.
 **What "equal to the figure" means here.** The parallelogram is equal to the triangles the
 figure is given with, taken together. That sum is what Euclid adds up when he calls ABD and
 DBC "the whole rectilineal figure ABCD". Nothing here says that another division of the
-figure gives the same sum: Euclid takes that for granted, and David Hilbert proved it, for
-his measure of area (Book I's gap catalogue, under I.45). `Prop45` itself is an area-sum
+figure gives the same area: Euclid takes that for granted, and David Hilbert proved it, for
+his measure of area (Book I's gap catalogue, under I.45); it is proved in the staging files
+(#289), but not yet part of the edition's statements (#116). `Prop45` itself is an area-sum
 theorem: it follows from `Prop45.sum` (the check at the end), and its ABD and DBC need only
 be triangles, which may overlap. It represents Euclid's pictured division when A and C lie
 on opposite sides of DB, and that checked case is `Prop45.fan` for the corners D, A, B, C.
@@ -352,7 +353,7 @@ namespace Elements
 /-! ## Euclid's and Byrne's division, checked
 
 Euclid's DB, drawn from the corner D of ABCD, and Oliver Byrne's two straight lines from one
-corner of his figure (1847, p. 46), cut it into triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ from one
+corner of his figure (1847, p. 46), divide it into triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ from one
 corner A₀. `Fitted.fan` says when those triangles are a figure in the sense of `Fitted`: each
 two neighbouring triangles lie on opposite sides of the straight line A₀Aᵢ they share, and the
 angles A₁A₀A₂, …, Aₙ₋₁A₀Aₙ together are less than four right angles. Without the two
@@ -361,8 +362,9 @@ not equal the area of their union: a pentagon whose second and fourth corners li
 of the straight line from the first corner to the third has three triangles from the first
 corner together greater than it, and the first condition fails there. That the figure the
 fan's triangles make is the one bounded by the closed line A₀A₁…AₙA₀, its corners in that
-order, is a reading of the conditions, true in the plane, and is not stated in Lean:
-`Fitted.fan` says only that the triangles fit together into one figure.
+order, is not stated here: `Fitted.fan` says only that the triangles fit together into one
+figure. It is proved in the staging files (#289), but not yet part of the edition's
+statements (#116).
 
 Its proof goes by induction along the corners, each new triangle glued to the one before it
 along A₀Aᵢ. It carries the sector at A₀ swept from the ray A₀A₁, in the one orientation the
@@ -702,7 +704,8 @@ less than four right angles. Then those triangles, in that order, are fitted tog
 one figure: each is laid across the straight line A₀Aᵢ against the one before it, and meets
 the earlier ones only along that straight line. The figure they make is read as the figure
 with corners A₀, A₁, …, Aₙ in order round it; that its boundary is the closed line A₀A₁…AₙA₀
-is not stated in Lean.
+is not stated here, and is proved in the staging files (#289), but not yet part of the
+edition's statements (#116).
 
 The two conditions are what make the triangles turn one way round A₀ and not come round on
 themselves, so that they do not overlap. Euclid's ABCD, divided from D by DB, is the figure
@@ -855,7 +858,8 @@ right angles. Then those triangles, in that order, are fitted together into one 
 (`Fitted.fan`); and, given a rectilineal angle E, there is a parallelogram KFLM, its angle
 at K equal to E, equal to that figure, that is, to the triangles taken together. The figure
 is read as the one with corners A₀, A₁, …, Aₙ in order round it; that its boundary is that
-closed line is not stated in Lean. Nothing is claimed of another division.
+closed line is not stated here, and is proved in the staging files (#289), but not yet part
+of the edition's statements (#116). Nothing is claimed here of another division.
 
 The first conclusion is what the two conditions are for: without them the triangles from
 A₀ may overlap, and need not be fitted. The parallelogram alone would follow from each

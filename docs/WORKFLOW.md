@@ -52,7 +52,9 @@ their logs are in `docs/reports/crew/`:
   statements before proofs, and review records after.
 - **Range enforcers, blind readers and a polisher** keep one voice (section 7).
 - **An independent audit** comes from a model family that wrote none of the work (Jev, from
-  brief 0005's stage 6), and **a cold outside reading** from Astra.
+  brief 0005's stage 6), and **a cold outside reading** from three reviewers of three model
+  families, scoring by the [review rubric](RUBRIC.md): at present Claude Opus 5.5
+  (Anthropic), GPT-6 Astra through Codex (OpenAI) and Gemini 4 Argon (Google).
 
 ## 2. Briefs before proofs
 
@@ -307,16 +309,23 @@ python3 -I tests/test_screen.py
 python3 -I tests/test_acceptance_limits.py
 python3 scripts/check_style.py
 python3 scripts/render.py
-git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md   # prints nothing
+git status --porcelain                 # prints nothing
 python3 scripts/check_links.py
 ```
 
 Review the generated differences and commit them with their sources, so that regenerating
-leaves them unchanged and the `git status` line prints nothing. Five more jobs run on
-their own, each in isolation: four of CI's on each pull request, and `safe-push-tests`,
-which runs on a cadence (below). The first three have direct local commands; the next two
-commands below run the acceptance job's tests and checklist without its CI comparison, and
-the last two run the `safe-push-tests` job's:
+leaves them unchanged and the `git status` line prints nothing. That line reads the whole
+worktree, as the pre-flight's does: a file that any command above leaves changed or new,
+generated page or not, fails it, so the sequence runs on a committed revision. Eight
+more jobs run on their own, each in isolation: CI's `risk`, which classifies the change
+(below); four more of CI's on each pull request, two of them by the class `risk` gives;
+and three on a cadence, in the `safe-push-tests` workflow (below): `safe-push-tests`, and
+`negative-tests` and `formal-model-kernel`, which run on main the commands of CI's
+`negative` and `formal-model` jobs. Below, the first commands are those of CI's
+`negative`, `model` and `formal-model` jobs, and so of the cadence's two; the next two
+run the acceptance job's tests and checklist without its CI comparison, and the last two
+run the `safe-push-tests` job's; the commands of `risk` are under "Which jobs run for
+which class", after the block:
 
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
@@ -335,6 +344,70 @@ python3 scripts/test_safe_push.py      # the `safe-push-tests` job, on a cadence
 `RUNNER_TEMP` supplies GitHub Actions' temporary directory; the fallback writes under
 `/tmp` when the command is run locally.
 
+**Which jobs run for which class.** CI's first job, `risk`, computes the change's risk
+class, from R0 (docs) to R5 (the landing tool and CI), from the files it changes:
+`scripts/risk.py`, the one source of the classes, gives each file the class of the first
+rule of its table that matches it, R5 when none does, and the change the highest of its
+files' classes. The job runs main's copy of the script, never the change's own, so a
+change cannot lower its own class by editing it. A pull request into main is classified
+so, exactly, from GitHub's merge commit (a checkout that is not that merge of its head is
+R5). CI runs on a pull request's events and on a push to main, never on the push of
+another branch or of a tag, so each commit of a pull request runs once
+([the decision](decisions/2026-10-22-checks-by-risk.md)). A pull request whose run starts
+with the `release` label, a pull request into another branch, a push to main and any
+other event are R5. The label is read from the event that started the run, and `git
+safe-push` adds a pull request's labels after it pushes, so a label given with that push
+counts from the next push; main's run after the merge runs `negative` and `formal-model`
+in full (`acceptance` runs only on a pull request); and the merge gate holds a release
+until the full pre-flight has run on its head and a run of the `safe-push-tests` workflow
+there has passed each of its three jobs ([section 10, "Landing work: pull
+requests"](#landing-work-pull-requests), step 4). `check`, `model` and
+`acceptance` run for every class. `negative` runs in full for R3, R4 and R5.
+`formal-model` runs in full for R4 and R5, the classes of every change to `model/`, to
+`Certificate/axioms.lock` and to `scripts/check_model_kernel.py`, and for a change of any
+class to a file of the main package that the formal model imports, directly or through
+others: `risk` reads them from the model's import lines, at both ends of the change, so
+the set follows the imports as they change. It reads them by a narrow grammar and fails
+closed: while a file among them has a header it cannot read cleanly (a module part `«.»`,
+`«..»` or `«»`, a letter or symbol past ASCII, an `import` with no module after it),
+or imports a module for which the tree holds no file at the usual `A/B.lean` path, the
+module roots `Check`, `Model`, `Mathlib`, `Lean`, `Init` and `Std` excepted, or while the
+tree holds a `.gitattributes` anywhere (which can make the text Lean reads differ from the
+text Git holds), `formal-model` runs in full for every change, and `risk`'s log names the
+file. Thus a header that Lean reads otherwise, or a main-package source layout the narrow
+reader does not know, can only widen the set.
+For a lower class, and for `formal-model` a change that touches none of the model's
+inputs, each job passes at once and says why, since the `safe-push-tests` workflow runs
+both on main every six hours and a red run there holds the release ([the
+decision](decisions/2026-10-22-risk-lanes.md)). Each fails, and is never skipped, when
+`risk` does not succeed, for GitHub accepts a skipped required check. `python3
+scripts/risk.py --paths <file>...` gives files' classes up front; `python3 scripts/risk.py
+. origin/main` a branch's class, and whether the formal model runs; and `python3
+scripts/risk.py --model-inputs HEAD` the files the model imports, then any among them
+whose header or imports it cannot read or resolve.
+
+**What runs for each class, at each stage.** A change's class sets what its pre-flight
+and its pull request's CI run. What runs after the merge, on the cadence and for a release
+does not depend on the class, and is set out after the table. The times are those of
+#290, a records train, on GitHub, and of the pre-flights `git safe-push` logged on 22
+October ([the decision](decisions/2026-10-22-checks-by-risk.md)):
+
+| Stage | R0 to R2 | R3 | R4 and R5 |
+|---|---|---|---|
+| Pre-flight ([section 10](#landing-work-pull-requests), step 2) | steps 1 to 3, the scans and the guards, 10 to 30 seconds; step 4 left to CI | steps 1 to 4, step 4 being this section's sequence and the negative tests, 9 to 19 minutes, and twice that when a check input changes | as R3 |
+| CI on the pull request | `check` (3.5 to 6.5 minutes), `model` and `acceptance` (4.5 minutes); `negative` passes at once, and `formal-model` too unless the change touches its inputs | as R0 to R2, and `negative` in full (15.5 minutes) | as R3, and `formal-model` in full (8 minutes) |
+
+Main's run after each merge is R5, and runs `negative` and `formal-model` in full beside
+`check` and `model`; `acceptance` runs only on a pull request. The cadence, the
+`safe-push-tests` workflow, runs its three jobs on main every six hours, whatever landed:
+the safe_push tests (38 to 45 minutes), the negative tests in full, and the formal model's
+build and kernel re-check. A release runs three things at its own head: the full
+pre-flight, since its label makes it R5; its pull request's CI, in full when its run
+starts with the label; and a run of the `safe-push-tests` workflow, whose three jobs must
+each pass ([section 10](#landing-work-pull-requests), step 4). So the negative tests check
+a change of R0 to R2 only once it has landed, on main: a break they would have caught
+shows within six hours, and holds the release until its repair lands.
+
 The full `acceptance` job runs only in CI. Its ratchet before the consolidation release,
 the switch to the full gate at that release, the reports and the executable definitions
 are in [ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci), the account of how CI runs the
@@ -352,25 +425,39 @@ every pull request lands through (section 10), in a workflow of its own,
 `.github/workflows/safe-push-tests.yml`: every six hours on main, and on demand
 (`workflow_dispatch`), never on a pull request. The owner, 22 October 2026: "I'm fine that
 this needs to run on a cadence and blocks release but every run no. And it has to be fast"
-([the decision](decisions/2026-10-22-suite-on-cadence.md)). A red run on main, failed,
-cancelled or timed out, opens one issue labelled `blocks-release`, or adds the run to the
-one already open, with the run's link and the tests that failed, so the release waits for
-it until the issue is closed, with a link to a later green run; that is done by a second
-job, the only one with leave to write issues, which runs no code of the repository. The
-tests read the whole tree, content as well as code: the check inputs safe_push guards, the
-workflows, this page, whose first command block they compare with safe_push's `CHECKS` and
-the `check` job, and content such as `heath/I/01.md`, the decisions page,
-`docs/briefs/book-I.md`, `docs/program.toml`, `docs/reading.md` and `facts.json`, over
-which they run `check_fidelity.py` and `render.py`; so any change can break them, and the
-next run shows it. They need Git with the whole history and the pinned PyYAML, but no Lean
-and no network. The whole suite has taken 38 to 45 minutes on GitHub's runners, and past
-60 on a busy one, and the job may take 150; `FullChecks`, the one test that needs Lean, is
-skipped without `STOICHEIA_SLOW_TESTS=1`, there as anywhere. The tests' job reads the
-repository with no other permission, and its checkout keeps no token.
+([the decision](decisions/2026-10-22-suite-on-cadence.md)). On the same triggers the
+workflow runs two more jobs, as CI's `negative` and `formal-model` jobs run them:
+`negative-tests`, the build and the negative tests in full, and `formal-model-kernel`, the
+formal model's build and its kernel re-check, neither sharing a required check's name. A red
+run on main, any of the three jobs failed, cancelled or timed out, opens one issue labelled
+`blocks-release`, or adds the run to the one already open, with the run's link, the jobs
+that were red and the tests of `scripts/test_safe_push.py` that failed, so the release
+waits for it until the issue is closed, with a link to a later green run; that
+is done by a fourth job, the only one with leave to write issues, which runs no code of
+the repository. For now a red run holds the release alone (whether trains of tooling hold
+as well while the cadence is red is left to a later part of #274): trains of every class
+go on landing while the issue is open, each by its own class, and so does the repair,
+which is a train like any other, classed by its files (a repair to a check is R3, to a
+proof R2, and takes that lane). The issue is closed with a link to a later run on main
+in which all three jobs are green, and the release waits for that. The suite's tests
+read the whole tree,
+content as well as code: the check
+inputs safe_push guards, the workflows, this page, whose first command block they compare
+with safe_push's `CHECKS` and the `check` job, and content such as `heath/I/01.md`, the
+decisions page, `docs/briefs/book-I.md`, `docs/program.toml`, `docs/reading.md` and
+`facts.json`, over which they run `check_fidelity.py` and `render.py`; so any change can
+break them, and the next run shows it. They need Git with the whole history and the pinned
+PyYAML, but no Lean and no network. The whole suite has taken 38 to 45 minutes on GitHub's
+runners, and past 60 on a busy one, and the job may take 150; `FullChecks`, the one test
+that needs Lean, is skipped without `STOICHEIA_SLOW_TESTS=1`, there as anywhere. Each of
+the three jobs reads the repository with no other permission, and its checkout keeps no
+token.
 
 `scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on the
-head commit of every pull request (section 10), so a change to them is made there too, and
-in the CI workflow. It leaves the `formal-model` job to CI on purpose, since it fetches
+head commit of every pull request of R3 to R5 (section 10), so a change to them is made
+there too, and in the CI workflow; for R0 to R2 it leaves them to CI, which runs those of
+`check` and `model` on the pull request before the merge. It leaves the `formal-model`
+job to CI on purpose, since it fetches
 Mathlib's prebuilt files ([model/README.md](../model/README.md#the-ci-job)), the
 `acceptance` job, since it builds main beside the pull request, and the `safe-push-tests`
 job, whose full suite would hold up every pre-flight. Its merge gate refuses when any
@@ -381,9 +468,10 @@ checks that main's ruleset requires, `check`, `model`, `negative`, `formal-model
 `acceptance`, the names in its `REQUIRED_CHECKS`: a required check that is missing, or
 whose every run was skipped, holds the merge. `safe-push-tests` runs on no pull request,
 so it holds no merge, unless it is dispatched on a pull request's branch; a red run of it
-holds the release instead. GitHub uses the ruleset when merging, and there the two differ,
-for requiring `acceptance` does not by itself prove that the pull request's checklist ran:
-the workflow also runs on pushes, where that job is conditionally skipped, and GitHub
+holds the release instead, and a release's merge needs a green run of it at the release's
+own head. GitHub uses the ruleset when merging, and there the two differ, for requiring
+`acceptance` does not by itself prove that the pull request's checklist ran: the
+workflow also runs on pushes to main, where that job is conditionally skipped, and GitHub
 accepts a skipped job even when it is required ([GitHub
 documentation](https://docs.github.com/en/pull-requests/reference/status-checks)). The
 merge gate does not count a skipped run as a pass, so it waits for the pull request's own
@@ -473,6 +561,19 @@ run of `acceptance` to pass. The ruleset and the remaining merge requirements ar
   `check` job and the pre-flight refuse it. `tests/test_decision_entries.py` tests those
   refusals without Lean, and `negative_tests.py` runs it after the count regressions,
   before planting, with `--counts-only` too.
+- **The risk classes are tested without Lean.** `tests/test_risk.py` checks the table of
+  `scripts/risk.py`: the first rule that matches wins, a path no rule names is R5, and a
+  change takes its highest class. It runs `--diff` on a repository of its own (an empty
+  diff, a workflow changed, a path with a space, a path with a line break, printed escaped
+  so that no path can start a line of CI's log, a file moved, a submodule moved) and
+  `--audit` over this repository's tracked files, every one of which a rule must name. It
+  tests the formal model's inputs: the forms of a Lean header the classifier reads, those
+  it cannot read and imports it cannot resolve, each of which then runs the model for
+  every change; the files a model imports, directly, through another, or deleted by the
+  change, on a repository of its own; and this repository's,
+  `Elements/BookI/Prop07.lean` among them, whose every header and import it reads.
+  `negative_tests.py` runs it after the decision entry regressions, before planting, with
+  `--counts-only` too.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that
   branch; if integration changes the mathematics, the dependencies or a public description,
@@ -564,8 +665,8 @@ looked into.
      that later work overtakes gains a dated status note, never a quiet rewrite, and the
      issues and the tracker are kept current.
 9. **Acceptance:** from brief 0005's stage 6, the checklist passes in CI with no failures,
-   the independent audit agrees, and a cold outside reading scores the book. The switch
-   from the ratchet to the full gate is described in
+   the independent audit agrees, and a cold outside reading passes the gate of the
+   [review rubric](RUBRIC.md). The switch from the ratchet to the full gate is described in
    [ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci).
 10. **Release.** A release waits for its gate: both the page read-through and the
     stale-content audit of step 8 on the release candidate, with every Tier 0 to 2 finding
@@ -577,7 +678,12 @@ looked into.
     current than that. The hold is checked by `python3 scripts/check_release_gate.py`, by
     the `release-gate` job on the release's pull request, and by `git safe-push --merge`,
     which refuses a pull request labelled `release` while any issue or pull request
-    labelled `blocks-release` is open, or when GitHub cannot be read. The job runs on the
+    labelled `blocks-release` is open, or when GitHub cannot be read. That merge also
+    needs the full pre-flight of the release's head, which its label makes R5, and a green
+    run of the `safe-push-tests` workflow at that exact head, each of its three jobs passed
+    (`gh workflow run safe-push-tests.yml --ref <branch>`; section 8), the head's copy of
+    that workflow being origin/main's: a change to it lands first, in a pull request of
+    its own. The `release-gate` job runs on the
     pull request's events, not the issues', so once the last blocker closes it is run
     again (or `release` removed and given again) before `--merge`, which counts its failed
     run on a release pull request. Then the notes are drafted from the generated
@@ -637,6 +743,17 @@ the train passes the pre-flight and CI once and merges as one pull request, whos
 lists each branch with its reviews and the issue it closes. A train never carries a check
 change together with content that check judges: trains of checks and trains of content are
 separate, and a branch that fails the train's pre-flight leaves the train.
+
+**Splitting a train by risk.** A train takes the highest class among its files, and its
+class sets its checks (section 8, "What runs for each class, at each stage"): one script,
+workflow or foundation file in a train of records makes the whole train R3 or above, and
+its pre-flight the full one. So the coordinator gathers branches by class: docs, text,
+records and proofs (R0 to R2) in trains of their own, which land in minutes, and checks,
+foundations, the landing tool and CI (R3 to R5) in others, which take the full pre-flight
+and the longer CI. A branch whose files fall on both sides is split in two, as a check
+change already lands apart from the content it judges, the check first.
+`python3 scripts/risk.py --paths <file>...` gives a file's class before the work
+starts, and `python3 scripts/risk.py . origin/main` a branch's.
 
 **Decision entries.** A new decision is a file of its own in `docs/decisions/`, so that
 pull requests queued together do not collide at the end of
@@ -834,7 +951,24 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       names nothing it asks for. While a push refuses anything under `docs/decisions/`,
       entries supply no new line at all, and the guards' refusals say so; so a rename, or
       a deletion and re-addition of an entry, renews no approval.
-   4. *The full checks* of section 8 in that worktree, and `negative_tests.py` in a
+   4. *The full checks* of section 8, by the change's risk class
+      ([the decision](decisions/2026-10-22-checks-by-risk.md)). First the class, R0 to
+      R5, as origin/main's copy of `scripts/risk.py` gives it for `git diff
+      origin/main...<commit>`: read out of Git and run from a temporary directory, never
+      the commit's own copy, so that a change cannot lower its own class by editing the
+      classifier. A pull request labelled `release`, given with `--label` or on the open
+      pull request (read in step 1, before the checks), is R5: a label can only raise the
+      class. An origin/main with no `scripts/risk.py`, and any failure to compute the
+      class, is R5 too. The class and why are this step's first line, which the pull
+      request's summary shows, and the record keeps it. For R0, R1 and R2 the rest of this
+      step is skipped: CI runs the rest of section 8's sequence on the pull request before
+      the merge, and `--merge` waits for CI green, while the negative tests run on main
+      after the merge and on the cadence, as section 8 says; one line says so. Such a
+      change touches no
+      check input and no protected path but the judged content named below, so no check
+      change can need keeping apart; should origin/main's classifier ever class one that
+      does R0 to R2, the full checks run, and a note says why. For R3, R4 and R5, the full
+      checks of section 8 in that worktree, and `negative_tests.py` in a
       second, each step timed. The check scripts and what they expect (`scripts/`,
       `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) are origin/main's
       copies; when the pull request changes any of them, the checks run again with its own
@@ -918,8 +1052,11 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
    pre-flight's record is a local file, which code the pre-flight ran (a commit's
    checks, Lean at elaboration) could have written, so it stands in only for the full
    checks, which CI runs as well, and only when origin/main's harness made it; otherwise
-   they run again too. The body must already carry the summary of this head and
-   origin/main, and every other part safe_push wrote must be up to date. `--merge` never
+   they run again too. A record that left them to CI for its class stands in only while
+   the class, recomputed then by origin/main's classifier for that head against that
+   base, is still R0 to R2; otherwise step 4 runs again, by the class. The body must
+   already carry the summary of this head and origin/main, and every other part
+   safe_push wrote must be up to date. `--merge` never
    writes the pull request body: when one of those parts is stale, it refuses before
    writing, and the coordinator runs the pre-flight to refresh the body before starting
    a fresh merge attempt. It merges only when those pass; CI on that head is green,
@@ -951,7 +1088,16 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
    GitHub's canonical address for it, so a rename is allowed and a transfer is not;
    the section is read again before the merge, and refused if it changed meanwhile.
    A pull request labelled `release` has no open issue or pull request labelled
-   `blocks-release`; label comparisons ignore case. Malformed pull request labels refuse
+   `blocks-release`; label comparisons ignore case. It merges only on a record of the
+   full pre-flight of its head, never one that left step 4 to CI (otherwise `--merge`
+   refuses at once, saying to run the pre-flight again, which the label makes R5), and
+   only with a green run of `.github/workflows/safe-push-tests.yml` at that exact head:
+   completed and successful, its jobs `safe-push-tests`, `negative-tests` and
+   `formal-model-kernel` each there and passed (safe_push's `SUITE_JOBS`), and every other
+   job passed but `report`, which runs only for a red run on main (#301). A run at the head
+   runs the head's copy of that workflow, which could drop a job, so the head's copy must
+   be origin/main's: a release that changes it is refused, and the change lands first, in
+   a pull request of its own. Malformed pull request labels refuse
    the release gate and retain every CI check. Both issue gates read from
    GitHub and fail closed on a failed read, malformed JSON or missing fields; the
    release gate makes no issue-list read for an ordinary pull request. The title and

@@ -2,15 +2,15 @@
 scope = "full"
 note = "Stated as an equality: two circles through A and B with similar segments on one side of AB are one circle; `Prop23.point` says it point by point."
 companions = ["III.23 point"]
-fingerprint = "sha256:c23bab573b2dc820"
+fingerprint = "sha256:48c3c7a485375f21"
 
 [route]
 kind = "euclid"
 note = "The companion `Prop23.point` goes through a point M between A and B, within the circle [III. 2]: a point on the circle subtends the angle in the segment [III. 21]; one outside it, or within it, subtends a less, or a greater, angle, through a point Q where MP meets the circle [I. 21, III. 21], with `Prop23.insideTriangle_of_between` for the step read off the figure."
 
 [representation]
-tags = ["segment-with-circle", "centre-given"]
-note = "Each segment is given as its circle, the straight line AB and a point C or D on one side, and each circle comes with a centre, which III.10 and III.21 need."
+tags = ["segment-with-circle"]
+note = "Each segment is given as its circle, the straight line AB and a point C or D on one side. III.10 and III.21 obtain their centres internally."
 
 [[passage]]
 at = "let ACD be drawn through, and let CB, DB be joined"
@@ -24,6 +24,6 @@ note = "Like Heath's, this figure draws the impossible supposition: two similar 
 
 [review]
 stage = "exceptions"
-commit = "7f4fba99"
+commit = "17987153"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:2a92a8452370637b"
+lean = "sha256:284fa78fec44b776"

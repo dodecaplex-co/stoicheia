@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.18 at a glance</title>
-  <desc>The longer side (red) always faces the bigger angle (red), and the shorter side (blue) faces the smaller angle (blue).</desc>
+  <desc>The greater side (red) always faces the greater angle (red), and the less side (blue) the less angle (blue).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M82.0,238.0 L114.0,238.0 A32,32 0 0,0 88.7,206.7 Z" fill="#d0312d"/>
   <path d="M318.0,238.0 L294.6,216.2 A32,32 0 0,0 286.0,238.0 Z" fill="#1f5aa6"/>
