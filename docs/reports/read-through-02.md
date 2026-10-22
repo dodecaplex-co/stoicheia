@@ -915,3 +915,30 @@ On 22 October this branch's comment and docstring changes in sixteen Lean files,
 2. **Shared with work still in flight** (#34): the second axiom wave (#119) also changes the records of I.12, I.22, I.31 and II.10 and the commentary of I.4 and I.8, and lands after this; its readers read the shared records again. The citation sweep (#32) is not in flight as this is written; the first part's item 8 stands for it.
 3. **The editorial points above**, for a follow-up under #34.
 4. **The first part's items 1 to 7 and the addendum's items 1, 3 to 7 stand**, save that I.18's record is now stamped after its reading line's change (the addendum's item 5).
+
+## Correction, 22 October 2026: I.36 and six figure-stale stamps
+
+The account above that I.36 is wholly Codex-written is superseded. I.36 retains a
+Claude-written argument from scratch proof T36 at 54a08e61 (#257). At
+6ee662c95e4eac60fa3bf73a7cfaa6302b4899aa, an independent Codex reader read the complete
+delivered I.36 page against the source enunciation and proof, Prop36.lean, its commentary,
+both reading lines, its record and generated page, and both rendered figures. The statement
+covers the whole enunciation; the Lean follows the source route, with the other orientation
+handled as the record says; the passage classifications, commentary, reading lines, captions
+and figures agree with their sources and with one another. The verdict was confirmed, with
+no blocking, material or editorial finding. This supplies I.36's missing cross-family
+reading; it does not change its stamp.
+
+The claim above that all nine pages stamped on 21 October "have not changed since" is also
+corrected. Four of the six affected records name 206e3080 (I.33, I.42, II.6 and II.7), and
+two name c814e8fb (I.36 and II.13). Both figures on each of those six pages changed at
+2dee939b, when their letters were made upright. The later reading at 99359055 rendered and
+looked at all 162 figures of Books I and II, including those twelve changed figures, and
+confirmed them, but it did not update the six records' stamps. The figure-stamp correction
+does not concern the other three records named there: I.28, I.38 and II.12.
+
+No `[review]` table is changed here. Neither the later reading at 99359055 nor the I.36
+reading at 6ee662c9 updates a stamp or satisfies the schema's requirement that its commit
+name the revision whose current files were last confirmed. Reconciliation of those stamps
+remains unresolved for a follow-up card; re-stamping is outside this read-through's fixed
+scope.
