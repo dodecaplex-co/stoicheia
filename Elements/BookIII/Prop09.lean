@@ -109,15 +109,15 @@ theorem Prop9.meet_at {E F D O : Point} (h₁ : Collinear E D O) (h₂ : Colline
 
 /-- If a point be taken within a circle, and more than two equal straight lines fall from the point
 on the circle, the point taken is the centre of the circle. -/
-theorem Prop9 {A B C D : Point} {ABC : Circle} (hABC : ∃ O : Point, Centre O ABC)
+theorem Prop9 {A B C D : Point} {ABC : Circle}
     (hA : OnCircle A ABC) (hB : OnCircle B ABC)
     (hC : OnCircle C ABC) (hAB : A ≠ B) (hBC : B ≠ C) (hAC : A ≠ C)
     (hDA : ‖D A‖ = ‖D B‖) (hDB : ‖D B‖ = ‖D C‖) :
     Centre D ABC := by
   -- Let ABC be a circle and D a point within it, and from D let more than two equal straight
   -- lines, namely DA, DB, DC, fall on the circle ABC;
-  obtain ⟨O, hO⟩ := hABC
-  have hT : Triangle A B C := Prop2.triangle ⟨O, hO⟩ hA hB hC hAB hBC hAC
+  obtain ⟨O, hO⟩ := exists_centre ABC
+  have hT : Triangle A B C := Prop2.triangle hA hB hC hAB hBC hAC
   -- I say that the point D is the centre of the circle ABC.
   -- For let AB, BC be joined and bisected at the points E, F, and let ED, FD be joined and
   -- drawn through to the points G, K, H, L.

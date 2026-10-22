@@ -1,23 +1,22 @@
 # review/III/18.toml
 [statement]
 scope = "full"
-note = "The centre F is given, as Euclid's setting-out takes it."
+note = "The centre F is given; it is off DE because F is within the circle and no point of DE is."
 fingerprint = "sha256:8e256532a8501ef2"
 
 [route]
 kind = "euclid"
-
-[representation]
-tags = ["centre-given"]
-note = "The centre F is given, as Euclid's setting-out takes it; the proof shows it is off DE, since it is within the circle and no point of DE is."
 
 [[passage]]
 at = "Therefore FG is not perpendicular to DE."
 kind = "grouped"
 note = "The reductio shows that the foot G of the perpendicular from F is C itself, so FC is that perpendicular, and no other straight line is left to prove."
 
+[figure]
+note = "The figure shows the impossible supposition with G distinct from C: FG is supposed perpendicular to DE, but the perpendicular in the drawn geometry is FC."
+
 [review]
 stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+commit = "d0508d6c"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:c05e2d0569c0489f"

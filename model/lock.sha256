@@ -77,6 +77,10 @@
 # one: Foot, Arc.Less, Arc.Semicircle and Arc.Greater join the vocabulary, 125 words in
 # all. The 80 axioms are byte-identical to train C6a's; no model law changes.
 #
+# Renewed on 21 October 2026, when train C6c (brief 0008, step 6) was merged with the
+# guard after axiom wave one: Arc.Drawn no longer asks for a centre witness. The 80
+# axioms and the other 124 words are byte-identical; no model law changes.
+#
 # Renewed on 21 October 2026, when main's restricted rule of superposition (#191) was
 # merged into train C6a, through tooling/centre-given-meaning at 980569da: the lock is
 # main's 79 axioms, with Tacit.superposition restated as Superposition.Rule primitives, and
@@ -88,4 +92,10 @@
 # lock is train C6a's, 80 axioms and 238 words, with train C6b's four words, Foot,
 # Arc.Less, Arc.Semicircle and Arc.Greater, 242 words in all. The 80 axioms are
 # byte-identical to train C6a's, and the generator writes the same 80 laws.
-761e616d7bd1b535fa84085af023ae489a8f427986f06955cf2650034465198a  Certificate/axioms.lock
+#
+# Renewed on 21 October 2026, when lean/centre-guard at 6b51608a, carrying train C6b and
+# train C6a with main's restricted rule of superposition (#191), was merged into train C6c:
+# the lock is the guard's, 80 axioms and 242 words, with train C6c's Arc.Drawn, which no
+# longer asks for a centre witness. The 80 axioms are byte-identical to the guard's, and
+# the generator writes the same 80 laws.
+8ecd3bade891a4c222a2c9037357e401bb116f52dc96e90e041f8102be908b5f  Certificate/axioms.lock

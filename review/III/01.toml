@@ -1,20 +1,16 @@
 # review/III/01.toml
 [statement]
 scope = "full"
-note = "Given a circle with some centre and two points A, B of it, constructs D, C, E and F as Euclid does and proves that F is the centre."
-fingerprint = "sha256:60cc6db69c4d4310"
+note = "Given a circle and two of its points A, B, constructs D, C, E and F as Euclid does and proves that F is its centre; the porism keeps its given centre."
+fingerprint = "sha256:7d6a58eb751858ff"
 
 [route]
 kind = "euclid"
 
-[representation]
-tags = ["centre-given"]
-note = "The circle comes with some centre G, Euclid's supposed centre, a hypothesis every circle meets by `Tacit.exists_centre`, and with the two points A, B of the straight line he draws through it at random. The porism names its centre G."
-
 [overlap]
 rule = "Tacit.exists_centre"
 kind = "step"
-note = "Our foundations assume that every circle has a centre. In `Prop1.construction` the rule supplies a centre only for the proof that D is within the circle, by III.2's argument in `Prop1.within`; that witness supplies none of the constructed points. The bisections, perpendicular straight line and proof that F is the centre remain III.1's work. The statement's hypothesis that the circle has some centre, which every circle meets by the rule, supplies the centre G for the reductio."
+note = "Our foundations assume that every circle has a centre. The rule supplies two steps: inside `Prop1.construction`, a centre for the proof that D is within the circle, by III.2's argument in `Prop1.within`; and, in the reductio, the supposed centre G. The centre taken inside the construction supplies none of its points, so the bisections, the perpendicular and the proof that F is the centre are III.1's own work. The rule gives bare existence; `Prop1.of_circle` gives Euclid's construction for any circle, first taking two of its points, A and B."
 
 [[passage]]
 at = "Let a straight line AB be drawn through it at random"
@@ -57,6 +53,6 @@ note = "Like Heath's, this figure draws the impossible supposition: G, off CE, a
 
 [review]
 stage = "exceptions"
-commit = "fbcfd542"
+commit = "1c08feeb"
 reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:24b60078fb529b55"
+lean = "sha256:dfe361062dcb0271"
