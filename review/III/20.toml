@@ -27,7 +27,7 @@ note = "Euclid gives the same reason at C without writing out the isosceles-tria
 at = "Therefore the whole angle BEC is double of the whole angle BAC"
 kind = "helper"
 helper = "crossbar"
-note = "Euclid reads AE within BAC and EF within BEC from his figure. The Lean finds X between B and C by `crossbar`, puts E between A and X because E and A lie on one side of BC, and uses `angle_add_of_between` and `angle_add_of_within` to add the two doubles."
+note = "Euclid reads AE within BAC and EF within BEC from his figure. The Lean finds X between B and C by `crossbar`, puts E between A and X by `Tacit.between_cases` (System E, Between 6) and `Tacit.pasch3` (System E, Pasch 3), both rules we assume, because E and A lie on one side of BC, and uses `angle_add_of_between` and `angle_add_of_within` to add the two doubles."
 
 [[passage]]
 at = "let DE be joined and produced to G"
@@ -44,7 +44,7 @@ note = "Euclid invokes the same isosceles-triangle argument for GEC and GEB with
 at = "therefore the angle BEC which remains is double of the angle BDC"
 kind = "helper"
 helper = "angle_add_of_within"
-note = "Euclid reads DB within EDC and EB within GEC, then subtracts the smaller double. Beneath the construction of G, `OppositeSides.exists_between` finds Y between E and C, `InsideCircle.of_between_centre` puts Y inside the circle, and `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1, puts Y between D and B; the Lean then uses these orders and the side rules to split the angles by `angle_add_of_between` and `angle_add_of_within`, and subtracts by Common Notion 3."
+note = "Euclid reads DB within EDC and EB within GEC, then subtracts the smaller double. Beneath the construction of G, `OppositeSides.exists_between` finds Y between E and C, `InsideCircle.of_between_centre` puts Y inside the circle, and `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1, puts Y between D and B; the Lean then puts B on C's side of EG by two uses of `Tacit.pasch2` (System E, Pasch 2) and on G's side of EC using `Tacit.pasch3` (System E, Pasch 3), both rules we assume, splits the angles by `angle_add_of_between` and `angle_add_of_within`, and subtracts by Common Notion 3."
 
 [[passage]]
 at = "Therefore etc."
