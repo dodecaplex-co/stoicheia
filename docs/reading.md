@@ -91,9 +91,9 @@ ed., [*The Collected Works of Abraham Lincoln*](lincoln.md#basler1953collected),
 readers who share our interest in how the sixteenth president, raised in the backwoods of
 Kentucky and Indiana and self-taught on the Illinois prairie, set himself to master Euclid,
 [Lincoln and Euclid](lincoln.md) tells the story, with warm thanks to Glenn W. LaFantasie,
+through whose article its passages and their sources were found:
 ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext), *Journal
-of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, through which its passages and
-their sources were found.
+of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46. **Free.**
 
 ## The foundations of geometry
 
@@ -102,10 +102,11 @@ E, name each of those readings; these books tell the longer story of filling the
 of the parallel postulate.
 
 - <a id="hilbert1902foundations"></a>David Hilbert, [*The Foundations of Geometry*](https://www.gutenberg.org/ebooks/17384),
-  translated by E. J. Townsend (Open Court, 1902). **Free.** The short book of 1899 in
-  which Hilbert wrote down the axioms Euclid took for granted, among them the axioms of
-  order behind "between" (chapter I) and a congruence axiom that makes I.4 a starting
-  point; chapter IV rebuilds the theory of plane areas behind I.35–I.41.
+  translated by E. J. Townsend (Open Court, 1902). **Free.** The short book of 1899 in which
+  Hilbert wrote down the axioms Euclid took for granted, among them the axioms of order
+  behind "between" (chapter I) and a congruence axiom that gives the remaining angles of
+  I.4, from which he proves the bases equal; chapter IV rebuilds the theory of plane areas
+  behind I.35–I.41.
 - <a id="hartshorne2000geometry"></a>Robin Hartshorne, [*Geometry: Euclid and Beyond*](https://doi.org/10.1007/978-0-387-22676-7)
   (Springer, 2000). Written to be read alongside the *Elements*, it fills Euclid's gaps
   with Hilbert's axioms, says exactly when circles and straight lines must meet, builds a
