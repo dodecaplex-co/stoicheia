@@ -61,10 +61,10 @@ note = "Euclid takes the gnomon STU and OH together as the whole square AEFD. `P
 
 [review]
 stage = "full"
-commit = "570e6fa"
-reviewer = "GPT-6 Astra (Codex), records re-read"
+commit = "a421bdd1"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:d2669414e0cf5c4c"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-II04-II08, independent re-read at a421bdd1"
 
 [review.items]
 statement = "pass"
