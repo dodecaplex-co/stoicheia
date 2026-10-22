@@ -25,6 +25,6 @@
   header changed by one character is seen in the bytes, though the writer still reports no
   change, while one word's definition changed in `facts.json`'s data, read into memory, is
   seen both in the bytes and in what the writer reports. This entry approves the change to
-  `scripts/negative_tests.py`, which runs the new test after the decision entry
+  `scripts/negative_tests.py`, which runs the new test after the risk class
   regressions, before planting, and with `--counts-only` too. Section 8 of
   `docs/WORKFLOW.md` says so in one bullet.

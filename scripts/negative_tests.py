@@ -3,7 +3,9 @@
 Each test makes one small change that must be caught, runs the check that should
 catch it, and puts everything back. Run from the repo root after `lake build` and
 `lake env lean Certificate/Facts.lean`, with `Certificate/axioms.lock` and the review
-records current; CI runs it on every push.
+records current. CI's `negative` job runs it on every push to main, and on a pull request
+or a branch's push of class R3 and above (scripts/risk.py); the cadence runs it on main
+every six hours.
 
 1. An edited Heath word: `check_fidelity.py` fails on I.1.
 2. The README's "Try breaking it": I.1 takes its radii from the wrong circle, and
@@ -64,8 +66,9 @@ records current; CI runs it on every push.
 12. A relative link to a missing file in README.md: `check_links.py` names the link
     and its source file.
 13. I.1's generated page left stale beside a changed mishnah: after `render.py`, the
-    section 8 `git status --porcelain` command names the changed page. Editing just
-    the page would be repaired back to HEAD and leave that status clean.
+    section 8 `git status --porcelain` command, over the whole worktree, names the
+    changed page beside its source. Editing just the page would be repaired back to HEAD
+    and leave that status clean.
 14. An axiom dropped from an audit lemma's expected list: `lake build Audit` fails
     with the file's name and a `#guard_msgs` mismatch; the restored audit must build.
 15. A corrupt header in I.1's compiled `.olean`, for leanchecker's loading of compiled
@@ -134,6 +137,25 @@ records current; CI runs it on every push.
     and `model/Model/Audit.lean`, must pass, and at a new file beside each of them, at
     each one's name in the other's folder, in `Audit/` and in `Staging/`, is refused
     (#197).
+27. Without a build, the six probes an independent reviewer planted for #207, each a
+    forbidden command or an axiom hidden behind a carriage-return comment
+    (`-- a remark\\r"`), in one scratch copy of I.1's file in a temporary tree, read by the
+    source scan alone (`rules_in`): Lean ends a `--` comment only at a line feed, so a
+    scan that read the file with Python's universal newlines would end the comment at the
+    `\\r` and let a string open behind it that hides the command up to a later `"`. Read as
+    Lean reads the bytes, the lone `\\r` of each is refused by its file and line, and each
+    command, no longer hidden, is named too, by the rules of #197 for three of them. The
+    unplanted copy passes, and so does a copy of it with CRLF line endings, which Lean
+    allows; the check before #207, reading with universal newlines, missed all six.
+28. Without a build, in a temporary repository of its own, never this clone (#256): a
+    commit adding a token, its blob read through a clean stand-in, once by `git replace`
+    and once by a folder of refs that GIT_REPLACE_REF_BASE names, so that git shows the
+    stand-in while a push would send the token. `safe_push.py --scan-push`, as the
+    pre-push hook runs it, refuses each, naming the secret scan, and the repository's
+    clean commit passes while each stand-in is live. A git command that fails while the
+    repository is set up is reported, and the plant stops there. The token is built as
+    the plant runs, so this file passes the scan itself. Only item 17's plants run under
+    --counts-only; this one runs with the rest, before the plants that build.
 
 The copies of items 16 and 17, and item 13's list of generated outputs, read Git's
 tracked files. One absent from the work tree is named on stdout and passed over: as a
@@ -163,6 +185,8 @@ Standard library only; Python 3.11 or later, for the review records.
 """
 
 import argparse
+import base64
+import hashlib
 import json
 import os
 import re
@@ -470,25 +494,30 @@ def generated_files() -> set[Path]:
 
 
 def stale_page() -> None:
-    """A stale page after a source change, tested by the actual freshness command.
+    """A stale page after a source change, tested by the actual freshness command: the
+    whole-worktree `git status --porcelain` of section 8, CI's check job and the
+    pre-flight.
 
     Rendering a hand edit alone restores HEAD, so it cannot test the post-render
     Git status. Change the source too, then require both its rendered text and the
-    page's own status line. Save every output, including pre-existing local edits.
+    status lines of the page and its source beside the entry status, and nothing else.
+    Save every output, including pre-existing local edits.
     """
     source = ROOT / "mishnah/I/01.md"
     page = ROOT / "book/I/01.md"
     saved_source = source.read_bytes()
     saved = {p: p.read_bytes() for p in generated_files()}
-    command = ("git", "status", "--porcelain", "--", *GENERATED)
+    command = ("git", "status", "--porcelain")
     before = run(*command)
     if not expect_success("freshness entry status", before):
         return
-    page_status = run("git", "status", "--porcelain", "--", "book/I/01.md")
-    if not expect_success("I.1 page entry status", page_status):
+    planted_status = run("git", "status", "--porcelain", "--", "book/I/01.md",
+                         "mishnah/I/01.md")
+    if not expect_success("I.1 page and mishnah entry status", planted_status):
         return
-    if page_status.stdout:
-        failures.append("freshness: book/I/01.md must be clean before the plant")
+    if planted_status.stdout:
+        failures.append("freshness: book/I/01.md and mishnah/I/01.md must be clean "
+                        "before the plant")
         return
     current = b"A source sentence planted for the freshness check."
     obsolete = b"An obsolete sentence planted in the generated page."
@@ -503,10 +532,11 @@ def stale_page() -> None:
         if not expect_success("freshness status", status):
             return
         rendered = page.read_bytes()
+        expected = [*before.stdout.splitlines(), " M book/I/01.md", " M mishnah/I/01.md"]
         if (current not in rendered or obsolete in rendered
-                or status.stdout.splitlines() != sorted(
-                    [*before.stdout.splitlines(), " M book/I/01.md"], key=lambda s: s[3:])):
-            failures.append("freshness: expected the rendered source and ' M book/I/01.md'")
+                or sorted(status.stdout.splitlines()) != sorted(expected)):
+            failures.append("freshness: expected the rendered source, and ' M book/I/01.md' "
+                            "and ' M mishnah/I/01.md' beside the entry status")
             print(status.stdout)
         else:
             print("✓ a stale generated page: caught by git status:  M book/I/01.md")
@@ -519,9 +549,9 @@ def stale_page() -> None:
         after = run(*command)
         if expect_success("restored freshness status", after):
             if after.stdout != before.stdout:
-                failures.append("freshness: generated paths did not return to their entry status")
+                failures.append("freshness: the worktree did not return to its entry status")
             else:
-                print("✓ freshness: generated paths restored to their entry status")
+                print("✓ freshness: the worktree restored to its entry status")
 
 
 def changed_audit_pin() -> None:
@@ -1437,6 +1467,85 @@ def guard_error_pins() -> None:
                                f"{rel}:{line}: uses `#guard_msgs` under a docstring")
 
 
+# The six probes an independent reviewer planted for #207 (its issue lists them), each a
+# forbidden command or an axiom hidden behind a carriage-return comment: Lean ends a `--`
+# comment only at a line feed, so `-- a remark\r"` is one comment to Lean, the quote among
+# it, while a scan that reads the file with Python's universal newlines sees the comment
+# end at the `\r` and a string open on the next line, which swallows the command up to the
+# `"` of the closing `-- "`. Each is (a short name, the probe's exact bytes). Read as Lean
+# reads the bytes (`check_fidelity.lean_text`), the comment hides nothing: the lone `\r`
+# of each is refused, and the scan names the command of each, which the comment no longer
+# hides.
+CARRIAGE_RETURN_PROBES = (
+    ("#guard_msgs (drop all)", '-- a remark\r"\n#guard_msgs (drop all) in\n'
+     'theorem bad : (0 : Nat) = 1 := rfl\n-- "\n#print axioms bad\n'),
+    ("set_option debug.byAsSorry", '-- a remark\r"\nset_option debug.byAsSorry true in\n'
+     'theorem bad : (0 : Nat) = 1 := by decide\n-- "\n#print axioms bad\n'),
+    ("a pinned error", '-- a remark\r"\n/-- error: boom\n⊢ 0 = 1 -/\n#guard_msgs in\n'
+     'theorem bad : (0 : Nat) = 1 := by fail "boom"\n-- "\n#print axioms bad\n'),
+    ("#guard_panic", '-- a remark\r"\n#guard_panic in\n'
+     'theorem bad : (0 : Nat) = 1 := by fail "PANIC"\n-- "\n#print axioms bad\n'),
+    ("set_option debug.skipKernelTC", '-- a remark\r"\nset_option debug.skipKernelTC true in\n'
+     'theorem ok : True := trivial\n-- "\n'),
+    ("axiom", '-- a remark\r"\naxiom planted : (0 : Nat) = 1\n-- "\n#print axioms planted\n'),
+)
+# The command check_fidelity.py names in each probe once the carriage-return comment no
+# longer hides it: {probe index: (the words it names, the token that begins them in the
+# probe)}. The FORBIDDEN regex matches `set_option debug.` up to its dot; the axiom has its
+# own message; #197's rules name the `drop`, the pinned error and `#guard_panic`.
+CR_COMMANDS = {
+    0: ("uses `#guard_msgs (drop all)`", "#guard_msgs"),
+    1: ("uses `set_option debug.`", "set_option"),
+    2: ("uses `#guard_msgs` under a docstring holding `error:`", "#guard_msgs"),
+    3: ("uses `#guard_panic`", "#guard_panic"),
+    4: ("uses `set_option debug.`", "set_option"),
+    5: ("declares an axiom outside Elements/Foundations/", "axiom"),
+}
+
+
+def carriage_return_comment() -> None:
+    """The six CARRIAGE_RETURN_PROBES of #207, in one scratch copy of I.1's file in a
+    temporary tree, run through the source scan (`rules_in`): read as Lean reads the bytes,
+    the lone `\\r` of each is refused by its file and line, and its command, no longer
+    hidden, is named too. The unplanted copy passes, and so does a copy of it with CRLF
+    line endings, which Lean allows."""
+    rel = "Elements/BookI/Prop01.lean"
+    marker = "\nend Elements.BookI\n"
+    source = (ROOT / rel).read_text()
+    assert source.count(marker) == 1, f"{rel}: expected one {marker!r}; update this test"
+    header = "\n/-! Planted by scripts/negative_tests.py (#207). -/\n"
+    block = header + "".join(body for _, body in CARRIAGE_RETURN_PROBES)
+    planted = source.replace(marker, block + marker)
+    cr_message = ("an isolated carriage return (a `\\r` not followed by `\\n`), which Lean "
+                  "accepts inside a comment or a literal and a `--` comment does not "
+                  "end at")
+
+    def line(offset: int) -> int:
+        return planted[:offset].count("\n") + 1
+
+    wanted, at = [], planted.index(block) + len(header)
+    for i, (_, body) in enumerate(CARRIAGE_RETURN_PROBES):
+        wanted.append(f"{rel}:{line(at + body.index(chr(13)))}: {cr_message}")
+        if i in CR_COMMANDS:
+            msg, token = CR_COMMANDS[i]
+            wanted.append(f"{rel}:{line(at + body.index(token))}: {msg}")
+        at += len(body)
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp).resolve()
+        path = root / rel
+        path.parent.mkdir(parents=True)
+        path.write_text(source)
+        if not expect_success("the unplanted scratch copy of I.1 for #207's probes",
+                              rules_in(root)):
+            return
+        path.write_bytes(source.replace("\n", "\r\n").encode("utf-8"))
+        expect_success("the unplanted scratch copy of I.1 for #207's probes, with CRLF "
+                       "line endings", rules_in(root))
+        path.write_bytes(planted.encode("utf-8"))
+        expect_failure("the six #207 probes behind a carriage-return comment",
+                       rules_in(root), *wanted)
+
+
 def placement_named() -> None:
     """A lemma of the `Placement` namespace named in Squares.lean, Book III's shared steps,
     read from the source: caught on its line. The word in a comment on the line before
@@ -1743,6 +1852,78 @@ def count_markers() -> None:
                 path.write_text(original)
 
 
+def secret_behind_a_replacement() -> None:
+    """A token committed in a temporary repository of its own, never this clone, its blob
+    read through a clean stand-in (#256): git shows the stand-in, while a push sends the
+    token, so the scan must read past it. The token is built here, as
+    scripts/test_safe_push.py builds its TOKEN, so that this file passes the scan."""
+    token = base64.b64encode(hashlib.sha256(b"a planted token").digest()).decode()
+    # None of the caller's git environment: the temporary repository is the only one read.
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    scan = [sys.executable, str(ROOT / "scripts" / "safe_push.py"), "--scan-push"]
+
+    class SetUpFailed(Exception):
+        """A git command setting up the repository failed, and has been reported."""
+
+    with tempfile.TemporaryDirectory(prefix="stoicheia-replace-") as tmp:
+        repo = Path(tmp)
+
+        def git(*args: str, stdin: str | None = None) -> str:
+            result = subprocess.run(["git", *args], cwd=repo, env=env, input=stdin,
+                                    capture_output=True, text=True)
+            if not expect_success(f"a token behind a replacement: git {' '.join(args)}",
+                                  result):
+                raise SetUpFailed
+            return result.stdout.strip()
+
+        try:
+            git("init", "-q")
+            for key, value in (("user.name", "negative tests"),
+                               ("user.email", "negative-tests@example.invalid"),
+                               ("commit.gpgsign", "false")):
+                git("config", key, value)
+            notes = repo / "notes.md"
+            notes.write_text("Some notes.\n")
+            git("add", "notes.md")
+            git("commit", "-q", "--no-verify", "-m", "A clean commit")
+            clean = git("rev-parse", "HEAD")
+            notes.write_text(f'Some notes.\napi_token = "{token}"\n')
+            git("commit", "-q", "--no-verify", "-am", "A token")
+            planted, blob = git("rev-parse", "HEAD"), git("rev-parse", "HEAD:notes.md")
+            stand_in = git("hash-object", "-w", "--stdin", stdin="Some notes.\nNo more.\n")
+            for how, ref, extra in (("git replace", f"refs/replace/{blob}", {}),
+                                    ("GIT_REPLACE_REF_BASE", f"refs/stand-ins/{blob}",
+                                     {"GIT_REPLACE_REF_BASE": "refs/stand-ins/"})):
+                if extra:
+                    git("update-ref", ref, stand_in)
+                else:
+                    git("replace", blob, stand_in)
+                name = f"a token behind a replacement ({how})"
+                planted_env = {**env, **extra}
+                shown = subprocess.run(["git", "show", f"{planted}:notes.md"], cwd=repo,
+                                       env=planted_env, capture_output=True, text=True)
+                if shown.returncode != 0 or token in shown.stdout:
+                    # Then the plant hides nothing, and a refusal would prove nothing.
+                    failures.append(f"{name}: git does not read the stand-in")
+                    print(f"✗ {name}: git does not read the stand-in")
+                else:
+                    expect_failure(name, subprocess.run(
+                        [*scan, planted, clean, "refs/heads/planted"], cwd=repo,
+                        env=planted_env, capture_output=True, text=True),
+                        "pre-push: refusing the push to refs/heads/planted: the secret scan "
+                        "found", unwanted=(token,))
+                # The clean commit, scanned while the stand-in is still live, passes.
+                beside = f"the clean commit beside a replacement ({how})"
+                result = subprocess.run([*scan, clean, "0" * 40, "refs/heads/clean"],
+                                        cwd=repo, env=planted_env, capture_output=True,
+                                        text=True)
+                if expect_success(beside, result):
+                    print(f"✓ {beside}: passed (without Lean)")
+                git("update-ref", "-d", ref)
+        except SetUpFailed:
+            return
+
+
 def main(argv=()) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--counts-only", action="store_true",
@@ -1760,6 +1941,10 @@ def main(argv=()) -> int:
                           run(sys.executable, "-I", "tests/test_decision_entries.py")):
         return 1
     print("✓ decision entry regressions passed (without Lean)")
+    if not expect_success("risk class regressions",
+                          run(sys.executable, "-I", "tests/test_risk.py")):
+        return 1
+    print("✓ risk class regressions passed (without Lean)")
     if not expect_success("lock regressions",
                           run(sys.executable, "-I", "tests/test_axiom_lock.py")):
         return 1
@@ -1778,6 +1963,7 @@ def main(argv=()) -> int:
         heath_word()
         merge_conflict_markers()
         count_markers()
+        secret_behind_a_replacement()
         wrong_radii()
         weakened_postulate()
         changed_word()
@@ -1799,6 +1985,7 @@ def main(argv=()) -> int:
         closed_up_commands()
         guard_msgs_substring()
         guard_error_pins()
+        carriage_return_comment()
         placement_named()
         figure_names_and_arcs()
         missing_files()

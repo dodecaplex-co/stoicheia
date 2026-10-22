@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>II.11 at a glance: the golden section</title>
-  <desc>With E the middle of AC, swing EB round to EF on CA produced (blue): the rectangle contained by AB (black) and BH equals the square on AH (both yellow). (Drawn with 89 and 144: no whole numbers make this cut exactly.)</desc>
+  <desc>Halve AC at E, swing EB to EF (blue): the rectangle AB, BH equals the square on AH (both yellow), for each, with AK (red), equals the square on the black AB. (Drawn with AH to AB as 89 to 144: no whole numbers fit exactly.)</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="128.0,122.5 217.0,122.5 217.0,266.5 128.0,266.5" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
   <polygon points="128.0,122.5 128.0,33.5 217.0,33.5 217.0,122.5" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>

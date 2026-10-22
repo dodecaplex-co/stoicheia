@@ -25,8 +25,15 @@
    comments and its string and character literals as Lean does (`read_lean`), so a
    literal's text never opens a comment or ends an attribute's brackets, and is not read
    as code, while the code in an interpolated string's `{…}` holes is; a string whose
-   braces Lean could read either way is refused. Each finding of 2, 3 and 4 names its
-   file and line; symbolic links are refused by their paths and never followed.
+   braces Lean could read either way is refused. The scan reads each file's bytes decoded
+   as UTF-8, with no newline translation (`lean_text`), so a `--` comment ends only at a
+   line feed, as it does for Lean, not at a lone carriage return that Python's universal
+   newlines would make one. Such a lone carriage return (a `\\r` not followed by `\\n`),
+   which Lean refuses between tokens but accepts inside a comment or a literal, is refused
+   in any scanned file, since a reader with universal newlines would end a comment at it
+   and could miss the code after it. Each finding of 2, 3 and 4, and of a lone carriage
+   return, names its file and line; symbolic links are refused by their paths and never
+   followed.
    Under `model/`, the package's own `model/.lake` directory is never entered or read
    (a link there is refused like any other), while a `.lake` folder deeper in the model
    is read like any other; Mathlib imports are allowed. Only in `model/Check.lean` and `model/Check/`, `run_cmd` may be the first
@@ -213,6 +220,13 @@ GUARD_ERROR_PINS = {"model/Check/RoundTrip.lean", "model/Model/Audit.lean"}
 # An axiom, declared anywhere in a line: Lean reads `example : True := trivial axiom
 # planted : False` as two commands, the second an axiom.
 AXIOM = re.compile(r"\baxiom\b")
+# A lone carriage return: a `\r` not followed by `\n` (#207). Lean reads `\r\n` as `\n`,
+# so CRLF files are allowed (no tracked .lean file has a `\r` today). It refuses a lone
+# `\r` between tokens but accepts one inside a comment or a literal, and a `--` comment
+# does not end at it, so, read as Lean reads the bytes, it can sit between a comment's
+# words and a quote and hide the code after that quote; check_rules refuses it in every
+# scanned file.
+LONE_CR = re.compile(r"\r(?!\n)")
 # Placement (brief 0006, "Placement", the policy). `placement` carries the points on one
 # side of a straight line, and the line, onto those on one side of an equal straight line,
 # keeping every distance: Euclid's "let the segment AEB be applied to CFD" (III.24), with
@@ -242,6 +256,19 @@ def rel(path: Path) -> str:
         return str(path)
 
 
+def lean_text(path: Path) -> str:
+    """A Lean source file's bytes, decoded as UTF-8, with no newline translation (#207).
+    `Path.read_text()` uses Python's universal newlines, which turn a lone carriage return
+    into a line feed; Lean does not. Lean reads `\\r\\n` as `\\n`,
+    refuses a lone `\\r` between tokens but accepts one inside a comment or a literal, and
+    a `--` comment ends only at a line feed, so a scan that let `read_text()` shorten
+    `-- a remark\\r"` to a comment ending at the `\\r` would see a string open on the next
+    line and swallow the code after it, hiding a forbidden command, an `axiom` included.
+    Reading the bytes keeps the scan's view of comments, strings and lines exactly Lean's;
+    check_rules then refuses any lone `\\r`."""
+    return path.read_bytes().decode("utf-8")
+
+
 def theorem_block(src: str, n: int):
     """Return (docstring, proof_comment_text) for `theorem PropN`."""
     span = heath.theorem_span(src, n)
@@ -265,7 +292,7 @@ def check_fidelity() -> None:
             if not path.exists():
                 fail(f"{book}.{n}: missing {path.relative_to(ROOT)}")
                 continue
-            doc, words = theorem_block(path.read_text(), n)
+            doc, words = theorem_block(lean_text(path), n)
             if doc is None:
                 fail(f"{book}.{n}: no documented `theorem Prop{n}` found")
                 continue
@@ -496,8 +523,13 @@ def check_rules() -> None:
             fail(f"{rel}: a symbolic link, which the source scan does not follow; "
                  "use a regular file or directory (docs/FORMALIZATION.md, section 7)")
             continue
-        src = path.read_text()
+        src = lean_text(path)
         code, unsure = read_lean(src)
+        for m in LONE_CR.finditer(src):
+            fail(f"{rel}:{line_of(src, m.start())}: an isolated carriage return (a `\\r` not "
+                 "followed by `\\n`), which Lean accepts inside a comment or a literal "
+                 "and a `--` comment does not end at, so a reader with universal newlines "
+                 "could miss the code after it (docs/FORMALIZATION.md, section 7)")
         generator_calls = ({m.start("command") for m in MODEL_CHECK_RUN_CMD.finditer(src)}
                            if rel == "model/Check.lean" or rel.startswith("model/Check/")
                            else set())
@@ -1060,7 +1092,7 @@ def declared_names() -> frozenset:
     names = set()
     for path in (ROOT / "Elements").rglob("*.lean"):
         stack: list[list[str]] = []
-        for line in read_lean(path.read_text())[0].splitlines():
+        for line in read_lean(lean_text(path))[0].splitlines():
             m = re.match(r"^\s*(namespace|section|end)\b\s*(\S*)", line)
             if m:
                 word, name = m.groups()
@@ -1152,7 +1184,7 @@ def check_review(facts, by_ref, book: str, n: int) -> None:
              "scripts/review_stamp.py --commit (WORKFLOW.md, section 6)")
 
     # The passages begin at Euclid's sentences, and name helpers that exist.
-    src = lean.read_text()
+    src = lean_text(lean)
     starts = sentence_starts(proof_lines(src, n))
     for i, p in enumerate(record["passage"], 1):
         at = _plain(p["at"])

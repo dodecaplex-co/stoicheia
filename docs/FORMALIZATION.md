@@ -326,6 +326,11 @@ conclusion behind a name: if `Prop7.figure` proved I.7, the page would show noth
 Euclid's argument. I.7 is the example to follow: its helpers settle where D can fall and what
 the figure shows, and the main proof keeps every step of Euclid's reductio.
 
+A construction core kept apart under section 4, as III.1's `Prop1.construction`, carries
+Euclid's sentences of construction, not a step he takes for granted; the record shows it as
+a `grouped` passage naming it, and the proposition keeps the correctness argument under his
+sentences.
+
 ## 6. Where lemmas live
 
 Search the library before writing a helper, and cite what is there rather than keep a copy. A
@@ -558,13 +563,20 @@ two exceptions: the generator `run_cmd` allowance in `model/Check.lean` and
 `model/Model/Audit.lean`.
 `MODEL_CHECK_RUN_CMD` names that allowance in the script; it exempts only `run_cmd`,
 so its arguments and any further command on the line are still scanned. Book Zero's
-import rule and the placement policy remain confined to `Elements/`. It reads
-comments, literals and number endings as Lean 4.35's tokenizer does, so a string cannot
-hide a command by opening a comment or ending an attribute's brackets, and a word closed
-up to a number remains visible. An adjacent numeric projection stays a projection; where
-a declared `.` notation makes a longer number the competing reading, the longer boundary
-stays visible too. Whitespace and comments end projection adjacency, as they do in Lean.
-Beyond that it reads words, not Lean's grammar nor the tokens a file declares, so it
+import rule and the placement policy remain confined to `Elements/`. It reads each file's
+bytes decoded as UTF-8, with no newline translation, so a `--` comment ends only at a
+line feed, as it does for Lean, and reads comments, literals and number endings as Lean
+4.35's tokenizer does, so a string cannot hide a command by opening a comment or ending an
+attribute's brackets, and a word closed up to a number remains visible. An adjacent
+numeric projection stays a projection; where a declared `.` notation makes a longer
+number the competing reading, the longer boundary stays visible too. Whitespace and
+comments end projection adjacency, as they do in Lean. A lone carriage return (a `\r` not
+followed by `\n`) is refused in any scanned file: Lean refuses one between tokens but
+accepts it inside a comment or a literal, where a `--` comment does not end at it, so a
+reader with universal newlines would end the comment there and let a string open behind
+it that swallows the code, a forbidden command among it. CRLF files are allowed, as Lean
+allows them (it reads `\r\n` as `\n`), and no tracked `.lean` file has a carriage return
+today. Beyond that it reads words, not Lean's grammar nor the tokens a file declares, so it
 catches a slip but not a command disguised from it on purpose, nor an attribute it does
 not list: review still reads every
 staged file, audit lemma and model file. In `Elements/` the certificate reads the axioms
