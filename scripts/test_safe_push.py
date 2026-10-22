@@ -7100,6 +7100,83 @@ class Registry(unittest.TestCase):
                 render.workflow_page(text, registry.load(root))
 
 
+@unittest.skipUnless((shutil.which("jq") and shutil.which("bash"))
+                     or os.environ.get("GITHUB_ACTIONS") == "true",
+                     "the report step needs bash and jq, as GitHub's runners have (there, a "
+                     "missing one fails the test rather than skipping it)")
+class CadenceReport(unittest.TestCase):
+    """The cadence workflow's report step (.github/workflows/safe-push-tests.yml), run as
+    GitHub runs it, bash with -e and pipefail, on a log of a thousand long failures, with
+    a stand-in for gh: it opens the issue, listing the first hundred (#300)."""
+
+    def run_report(self, script: str, failures: int):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            (tmp / "log").mkdir()
+            # Each line longer than the 300 characters the step keeps, so the thousand it
+            # keeps (301,000 bytes) are far more than a pipe holds, and a reader that stops
+            # early closes it.
+            name = "test_" + "x" * 250
+            (tmp / "log" / "test_safe_push.log").write_text("".join(
+                f"FAIL: {name}_{i:04d} (__main__.Merge.{name}_{i:04d})\n"
+                for i in range(failures)) + "Ran 1000 tests\n")
+            bin_dir = tmp / "bin"
+            bin_dir.mkdir()
+            gh = bin_dir / "gh"
+            gh.write_text('#!/bin/sh\n'
+                          'if [ "$1" = api ]; then echo "[[]]"; exit 0; fi\n'
+                          'if [ "$1 $2" = "issue create" ]; then\n'
+                          '  while [ $# -gt 0 ]; do\n'
+                          '    if [ "$1" = --body-file ]; then cp "$2" "$RUNNER_TEMP/created.md"; fi\n'
+                          '    shift\n'
+                          '  done\n'
+                          '  exit 0\n'
+                          'fi\n'
+                          'exit 1\n')
+            gh.chmod(0o755)
+            env = dict(os.environ, PATH=f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+                       RUNNER_TEMP=str(tmp), GH_TOKEN="x", GH_REPO="owner/repo",
+                       TESTS="failure", NEGATIVE="success", KERNEL="success",
+                       RUN_URL="https://example.invalid/run", SHA="0" * 40)
+            r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c",
+                                script], env=env, capture_output=True, text=True)
+            created = tmp / "created.md"
+            return r, created.read_text() if created.exists() else None
+
+    def report_script(self) -> str:
+        workflow = yaml.safe_load((SOURCE / ".github/workflows/safe-push-tests.yml").read_text())
+        step = next(s for s in workflow["jobs"]["report"]["steps"]
+                    if s.get("name", "").startswith("Open or update"))
+        # GitHub runs `shell: bash` as bash -eo pipefail, which these tests run; without it,
+        # bash -e alone, which they would not.
+        self.assertEqual(step.get("shell"), "bash")
+        return step["run"]
+
+    def test_a_thousand_failures_open_the_issue_with_the_first_hundred(self):
+        r, body = self.run_report(self.report_script(), 1000)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIsNotNone(body, "no issue was opened")
+        self.assertIn("(the first 100)", body)
+        self.assertEqual(sum(line.startswith("FAIL: ") for line in body.splitlines()), 100)
+        self.assertIn("_0099 ", body)       # the first hundred, in order
+        self.assertNotIn("_0100 ", body)
+
+    def test_a_few_failures_are_listed_whole(self):
+        r, body = self.run_report(self.report_script(), 3)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIsNotNone(body, "no issue was opened")
+        self.assertNotIn("(the first 100)", body)
+        self.assertEqual(sum(line.startswith("FAIL: ") for line in body.splitlines()), 3)
+
+    def test_a_reader_that_stops_early_would_end_the_step(self):
+        # The form #300 replaced: head stops reading, printf meets a closed pipe, and
+        # pipefail ends the step before the issue opens. The test above would catch it.
+        script = self.report_script()
+        self.assertIn("sed -n '1,100p'", script)
+        r, body = self.run_report(script.replace("sed -n '1,100p'", "head -n 100"), 1000)
+        self.assertTrue(r.returncode != 0 and body is None, (r.returncode, r.stderr))
+
+
 class Units(unittest.TestCase):
     """The scanner and the helpers, without git."""
 
