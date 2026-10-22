@@ -33,8 +33,7 @@
    braces Lean could read either way is refused, and so is a character literal or a raw
    string closed up to a name or token that Lean may read on through its first character
    (`closed_up`). It ends a name where Lean does, or sooner, before a character that `\\w`
-   does not take, as `℃`, and reads Lean's own tokens that begin with `#` as Lean does
-   (HASH_TOKENS), so a word closed up to `⁻¹` or to `#check` is seen to begin (#234). The
+   does not take, as `℃`, so a word closed up to `⁻¹` is seen to begin (#234). The
    scan reads each file's bytes
    decoded as UTF-8, with no newline translation (`lean_text`), so a `--` comment ends
    only at a line feed, as it does for Lean, not at a lone carriage return that Python's
@@ -361,17 +360,10 @@ def check_fidelity() -> None:
 # Mathlib's `ᗮ` or a `λ`, Lean reads as part of a token or not at all, so it is blanked:
 # Lean reads `1⁻¹set_option` as `1`, `⁻¹` and `set_option`, and the scan's `\b` then sees
 # `set_option` begin (#234).
-# Lean reads the longest token it knows, so `#check1set_option` is `#check`, `1` and
-# `set_option`, and `#whereaxiom` is `#where` and `axiom`, where a reader of `#` and one
-# name would see neither command. So the scan reads each of Lean's own tokens that begin
-# with `#` as Lean does (HASH_TOKENS), and blanks one closed up to a word character, so
-# that `\b` sees the word after it begin; but it leaves whole those a rule here names
-# (HASH_KEPT: `#eval`, `#eval!`, `#exit`, `#guard`, `#guard_msgs`, `#guard_panic`, `#time`
-# and `#with_exporting`), which FORBIDDEN and GUARD_MSGS match closed up or not (the
-# coordinator's second decision of 22 October 2026, #234). check_rules refuses a token the
-# file itself declares that ends in a character a name may hold (DECLARES_TOKENS). Lean's
-# other tokens, and those of a library the file imports, are not read as tokens:
-# docs/FORMALIZATION.md, section 7, says which of them the scan may misread.
+# check_rules refuses a token the file itself declares that ends in a character a name
+# may hold (DECLARES_TOKENS). Lean's own tokens, and those of a library the file imports,
+# are not read as tokens: docs/FORMALIZATION.md, section 7, says which of them the scan
+# may misread.
 LETTER_LIKE = ("\u03b1-\u03ba\u03bc-\u03c9"                # Greek small letters, but λ
                "\u0391-\u039f\u03a1\u03a2\u03a4-\u03a9"    # Greek capitals, but Π and Σ
                "\u03ca-\u03fb"                             # Coptic
@@ -404,17 +396,6 @@ IDENT = re.compile(f"{FIRST}{REST}*(?:\\.{FIRST}{REST}*)*")
 NAME_CHAR = re.compile(f"[\\w{ID_REST}]")
 NAME_RUN = re.compile(f"[\\w{ID_REST}]+")
 NON_ASCII = re.compile(r"[^\x00-\x7f]")
-# Lean 4.35's own tokens that begin with `#`, but `#` itself, as its token table holds them
-# with Lean, Std and Lake imported: `Lean.Parser.getTokenTable`, printed by a scratch file
-# outside the tree, gives the same 30 with Lean alone. HASH_TOKEN takes the longest.
-HASH_TOKENS = (
-    "#[ #check #check_assertions #check_failure #check_simp #check_tactic "
-    "#check_tactic_failure #discr_tree_key #discr_tree_simp_key #dump_async_env_state "
-    "#eval #eval! #exit #grind_lint #guard #guard_expr #guard_msgs #guard_panic "
-    "#import_path #info_trees #print #reduce #show_deprecated_modules #synth #time #v[ "
-    "#version #where #widget #with_exporting").split()
-HASH_TOKEN = re.compile("|".join(map(re.escape, sorted(HASH_TOKENS, key=len, reverse=True))))
-HASH_KEPT = {token for token in HASH_TOKENS if FORBIDDEN.match(token) or GUARD_MSGS.match(token)}
 NUMBER = re.compile(r"0[bB](?:_*[01])+|0[oO](?:_*[0-7])+|0[xX](?:_*[0-9a-fA-F])+|"
                     r"[0-9](?:_*[0-9])*(?:(?!\.\.)\.(?:[0-9](?:_*[0-9])*)?)?"
                     r"(?:[eE][+-]?[0-9](?:_*[0-9])*)?")
@@ -591,13 +572,6 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
             marks.append(("text", i + 1, m.end() - 1))
             j, previous = m.end(), c
             can_project, field_dot = True, False
-        elif c == "#" and (m := HASH_TOKEN.match(src, i)):
-            # One of Lean's own `#` tokens, read whole; blanked when it is closed up to a
-            # word character, as `#where` in `#whereaxiom`, but for HASH_KEPT.
-            j, previous = m.end(), m[0]
-            if WORD.match(m[0][-1]) and WORD.match(src, j) and m[0] not in HASH_KEPT:
-                marks.append(("text", i, j))
-            can_project, field_dot = False, False
         elif c == "}" and hole and not depth:
             return i
         elif not c.isspace():

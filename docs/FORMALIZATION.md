@@ -555,10 +555,10 @@ docstring that pins an error, each in each of its forms, in a scratch copy of I.
 `set_option` closed up to decimal, hexadecimal, scientific and underscore-separated
 numbers, after a projection and after a declared notation ending in `.`, with whitespace
 or a comment beside it, and `axiom` closed up to such a number, with controls that
-preserve ordinary projections; `set_option` and `axiom` closed up to the postfix `⁻¹`, to
-Lean's own `#check`, `#version` and `#where`, and to `#time` and `#with_exporting`, which
-are refused too before a `def` and alone on their line; `#guard` closed up to the word
-after it; `set_option` closed up to a declared token ending in `℃`; a declared token
+preserve ordinary projections; `set_option` and `axiom` closed up to the postfix `⁻¹`,
+and to `#time` and `#with_exporting`, which are refused too before a `def` and alone on
+their line; `#guard` closed up to the word after it; `set_option` closed up to a
+declared token ending in `℃`; a declared token
 ending in a letter, a digit, `_`, `'`, `!` or `?`, after a notation's other token on its
 second line too, with `set_option` closed up to it; a character literal, a raw string and
 an `s!`'s string closed up to a name or token that holds a character outside ASCII, each
@@ -589,8 +589,8 @@ each of these commands in a comment or a string, are not refused, that the pin p
 each file of its allow-list, that the scan reads the literals of a declaration as Lean
 does, over two lines, after a spaced precedence, raw, escaped or with a gap, to the next
 command begun by `@[` or a `#` command, and no string outside one nor a dotted name's
-word, that it reads Lean's `#` tokens whole and marks a literal closed up as above but no
-other, and that the unplanted tree passes.
+word, that it marks a literal closed up as above but no other, and that the unplanted
+tree passes.
 They plant source files in place, the `.lake` links and the scratch copy of I.1's file
 in small trees of their own, and copy only `facts.json` and that one copy of I.1, never
 `model/.lake`.
@@ -626,23 +626,32 @@ uses, so that a word after a token ending in one, as a library's, is seen to beg
 words, and changes nothing else, but where a character literal, a raw string, or an
 `s!`, `m!`, `f!` or `throwError` follows closed up: Lean may read on through it as part
 of the name or a token, so the scan refuses the literal or the raw string, and takes no
-such word to begin an interpolated string (the list above). Lean reads the longest token
-it knows, and the scan reads Lean 4.35's own tokens that begin with `#`, 30 in all, as
-Lean does, so `#check1set_option` is `#check`, `1` and `set_option`, and `#whereaxiom` is
-`#where` and `axiom`: it blanks such a token closed up to a word, so the word is seen to
-begin, but leaves whole those the list above refuses, refused closed up or not, and
-`#guard_msgs`, for the rules on its pins. It refuses a token the file declares that ends in a character a
-name may hold (the list above). It does not read the rest, and these stay open, each
-example built in Lean 4.35 as written:
-- Lean's other own tokens. Of those that end in a name's character, four end in `'`,
-  `]'`, `×'`, `Σ'` and `⊕'`; the scan blanks the `Σ` and refuses a literal after it, but
+such word to begin an interpolated string (the list above). It refuses a token the file
+declares that ends in a character a name may hold (the list above). It does not read the
+rest, and these stay open, each example built in Lean 4.35 as written:
+- Lean's own tokens that begin with `#`, which the scan reads as `#` and the name after
+  it. Lean reads the longest token it knows, so
+  `#check1set_option«debug».byAsSorry true in theorem …` is `#check`, `1` and
+  `set_option`, and builds on `sorryAx`, and `#whereaxiom planted : False` is `#where`
+  and an axiom, while the scan reads the names `check1set_option` and `whereaxiom`. Those
+  the list above names, `#eval`, `#exit`, `#guard_panic`, `#time`, `#with_exporting` and
+  `#guard`, are refused closed up or not. A fixed list of the rest would not do: which
+  `#` tokens Lean has depends on what the file imports (`#widget` comes with
+  `import Lean`, not with `Init` alone), and a file may declare a longer one, so the list
+  would misread a file that lacks one and could hide the code after it
+  (`s!"{5#widget'}'"`, where Lean reads `5#widget'` as a bit-vector literal and the `}`
+  closes the hole).
+- Lean's other own tokens ([#317](https://github.com/jackChallis/stoicheia/issues/317)).
+  Of those that end in a name's character, four end in `'`, `]'`, `×'`, `Σ'` and `⊕'`;
+  the scan blanks the `Σ` and refuses a literal after it, but
   takes the `'` of the other three for a character literal's opening, so that
   `def T : Type := Nat ⊕'"' "`, with a coercion from `String` to `Type`, and
   `set_option«debug».byAsSorry true in theorem …` on the next line, builds on `sorryAx`
   while the scan reads the command as a string's text. Three end in `-` or `/`, `<-`,
   `//` and `\/`, and before a `-` the scan reads a comment where Lean reads none:
   `def S : Type := {x : Int //-1 < x}` and that `set_option` line build on `sorryAx`.
-- A token the file declares that ends in a symbol, which is allowed: one that holds a
+- A token the file declares that ends in a symbol, which is allowed
+  ([#317](https://github.com/jackChallis/stoicheia/issues/317)): one that holds a
   comment's opening or a quote hides the code after it, as `infixl:65 " ⊕-- " => Nat.add`
   and `def k : Nat := 1 ⊕--2set_option«debug».byAsSorry true in theorem …` do.
 - A token of a library a file imports, as Mathlib's `''` or `#find`, and a token declared

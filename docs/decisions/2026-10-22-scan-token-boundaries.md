@@ -1,13 +1,13 @@
-- **The source scan ends a name as Lean 4.35 does, reads Lean's own `#` tokens, refuses a
-  literal closed up to a name it may misread, and refuses `#time`, `#with_exporting`,
-  `#guard` and a declared token ending in a name's character (#234).** `check_rules` in
+- **The source scan ends a name as Lean 4.35 does, refuses a literal closed up to a name
+  it may misread, and refuses `#time`, `#with_exporting`, `#guard` and a declared token
+  ending in a name's character (#234).** `check_rules` in
   [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) finds each forbidden
   command, and `axiom`, as a whole word, by Python's `\b`, in the Lean as `read_lean`
   gives it. Its reader took any character that Python's `\w` takes for part of a name, and
-  read `#` as a token of its own, so closed-up text hid from it a word that Lean reads as
-  a command, in three ways. The first is a character that Python counts a letter or a
-  digit but that no Lean name holds, as the `¹` of the postfix `⁻¹` (`Init/Notation.lean`):
-  Lean reads `1⁻¹set_option` as `1`, `⁻¹` and `set_option`, so
+  read `#` as a token of its own, as it still does, so closed-up text hid from it a word
+  that Lean reads as a command, in three ways. The first is a character that Python
+  counts a letter or a digit but that no Lean name holds, as the `¹` of the postfix `⁻¹`
+  (`Init/Notation.lean`): Lean reads `1⁻¹set_option` as `1`, `⁻¹` and `set_option`, so
   `1⁻¹set_option«debug».byAsSorry true in theorem …` built on `sorryAx`, and
   `1⁻¹axiom planted : False` declared an axiom, while the scan saw neither. The second is
   a token of Lean's own that begins with `#`: Lean reads the longest token it knows, so
@@ -62,19 +62,25 @@
   The coordinator ruled on the rest on 22 October 2026, in two messages to ship TT;
   #234 is the card. The first decided the refusals of `#time`, `#with_exporting` and a
   declared token ending in a word character; the second widened that token's refusal to
-  every character a name may hold, and decided the reading of Lean's `#` tokens and the
-  refusal of `#guard`. Each is a tightening of the scan, which is the coordinator's to
-  decide. This entry claims no approval of the owner.
+  every character a name may hold, decided the refusal of `#guard`, and decided a reading
+  of Lean's own tokens that begin with `#`, to be taken out, and the other two kept, if
+  the review of that round found it wider than it looked. Each is a tightening of the
+  scan, which is the coordinator's to decide. This entry claims no approval of the owner.
 
-  The reader reads each of Lean 4.35's own tokens that begin with `#` as Lean does, the
-  longest first: `#check`, `#where`, `#version` and the rest, 30 in all, as Lean's token
-  table holds them with Lean, Std and Lake imported, printed through
-  `Lean.Parser.getTokenTable` by a scratch file outside the tree, which gives the same 30
-  with Lean alone. One closed up to a word character is blanked, so that the scan's `\b`
-  sees the word begin, and `#check1set_option…` and `#whereaxiom…` are refused by their
-  lines. Those a rule names stay whole, `#eval`, `#eval!`, `#exit`, `#guard`,
-  `#guard_msgs`, `#guard_panic`, `#time` and `#with_exporting`, so that FORBIDDEN and the
-  rules on `#guard_msgs` see them, closed up or not.
+  The reading was taken out after review, as the ruling provided: the review found it
+  wider than it looked. It read the 30 such tokens of Lean 4.35's table, with Lean
+  imported, in every file, so that `#check1set_option…` and `#whereaxiom…` would be
+  refused by their lines.
+  But which `#` tokens Lean has depends on what a file imports. In a file that imports no
+  more of Lean's library than `Init`, as every file under `Elements/`, `Staging/` and
+  `Audit/` does, `#widget` is none: after `def widget' : Nat := 4`, Lean reads
+  `def k : String := s!"{5#widget'}'"` with `5#widget'` as a bit-vector literal and the
+  `}` closing the hole, where the reading took `#widget` and the literal `'}'`, so that
+  `set_option«debug».byAsSorry true in theorem …` on the next line was a string's text to
+  it. That builds on `sorryAx`, and an `axiom` there is declared. A token the file
+  declares that extends one, as `#check'}`, hid a later command the same way. The scan
+  before this change refused both. So the scan reads `#` and the name after it, as it did
+  before this change, and `#check1set_option…` stays open, below.
 
   `#time`, `#with_exporting` and `#guard` join the commands that FORBIDDEN refuses,
   matched, as `#eval` is, with no word boundary after them, so that each is refused
@@ -128,28 +134,27 @@
   `‖`, `∠`, `△` or `∟`, and each `False`.
 
   Over the tree, the findings are unchanged: none before and none after, over all 255
-  files. Each file reads as it did with this change's scan before its fix round
-  (`b28449b3`), byte for byte, so the `#` tokens and the refusals of a closed-up literal
-  change no tracked file's reading. Against origin/main at `6d06c47b`, `Elements/`,
-  `Staging/` and `Audit/` read as they did, so what `render.py`, `check_acceptance.py` and
-  the inline counts read from the scan is unchanged, and thirteen files of `model/` read
+  files. Each file reads as it did with this change's scan before its fix rounds
+  (`b28449b3`, which merged origin/main at `84c71dff`), byte for byte, so the refusals of
+  a closed-up literal change no tracked file's reading. Against origin/main at
+  `6d06c47b`, `Elements/`, `Staging/` and `Audit/` read as they did, so what `render.py`,
+  `check_acceptance.py` and the inline counts read from the scan is unchanged, and
+  thirteen files of `model/` read
   differently, where Mathlib's `-ᵥ`, `≃ᵃⁱ[`, `!₂[` and `ᗮ` now end where Lean ends them.
   Of the review's 939,600 spellings, each forbidden command and `axiom` after each kind of
   character the reader blanks or ends a name before, none that the scan before this
-  change refuses passes this one. A wider set of 397,880, with Lean's `#` tokens among the
-  characters, finds 4,959 that the scan before this change refused and this one passes,
-  each after a `#` token, where the scan before read on through `#check'` or `#checks!` as
-  one name: built in Lean 4.35, 4,893 fail, and the 66 that build hold the command as a
-  string's text, as this scan reads it.
+  change refuses passes this one; nor does any of a wider set of 397,880, with Lean's `#`
+  tokens among those characters, nor of the 540,000 of the review of the first fix round,
+  after `#` tokens, after tokens a file declares that begin with one, and after `5#`.
   [FORMALIZATION](../FORMALIZATION.md), section 7, says what the scan now reads and
   refuses, and what it still does not.
 
   The scan's negative tests gain plants for each way. `set_option«debug».byAsSorry` and
-  `axiom` closed up to `1⁻¹`, to `#check`, `#version` and `#where`, and
-  `set_option«debug».byAsSorry` closed up to a declared `+℃`, stand beside the other
-  spellings of `set_option`, caught by the reading. `#time` and `#with_exporting` closed
-  up to `set_option«debug».byAsSorry` and to `axiom`, before a `def`, and `#time` alone on
-  its line before a theorem, and `#guard` closed up to `true` and to `_plantedTrue`, stand
+  `axiom` closed up to `1⁻¹`, and `set_option«debug».byAsSorry` closed up to a declared
+  `+℃`, stand beside the other spellings of `set_option`, caught by the reading. `#time`
+  and `#with_exporting` closed up to `set_option«debug».byAsSorry` and to `axiom`, before
+  a `def`, and `#time` alone on its line before a theorem, and `#guard` closed up to
+  `true` and to `_plantedTrue`, stand
   beside the other closed-up commands, and all three join the commands planted in each
   folder the scan reads, caught by FORBIDDEN, while `#guard_msgs` and `#guard_expr` are
   not refused. The declared tokens `+x`, `+_`, `+x'`, `+x!` and `+x?`, and `+z` on a
@@ -164,14 +169,19 @@
   at `6d06c47b` but two, which it catches by the `set_option` line: the `+℃` plant, which
   guards this change's reading of a name, and the literal after `¹'`, which this change's
   reading let through until its fix round. With any one rule taken out in a scratch copy,
-  the `#` reading, the whole tokens it leaves, `#guard`, the wider token refusal, or the
-  mark on a literal, a raw string or an `s!`, the plants and cases that it alone catches
-  fail. No check, test, expected value, lock or schema is weakened.
+  `#guard`, the wider token refusal, or the mark on a literal, a raw string or an `s!`,
+  the plants and cases that it alone catches fail. No check, test, expected value, lock
+  or schema is weakened.
 
-  These stay open, each built in Lean 4.35 as written. Lean's own `⊕'`, `×'` and `]'`,
-  whose `'` the scan takes for a character literal's opening: `def T : Type := Nat ⊕'"' "`,
-  with a coercion from `String` to `Type`, and the `set_option` line after it build on
-  `sorryAx`, as `×'` does. Lean's own `<-`, `//` and `\/` before a `-`, where the scan
+  These stay open, each built in Lean 4.35 as written. Lean's own tokens that begin with
+  `#`, but those FORBIDDEN refuses: `#check1set_option«debug».byAsSorry true in theorem …`
+  is `#check`, `1` and `set_option`, and builds on `sorryAx`, as `#versionset_option…`
+  does, and `#whereaxiom planted : False` declares an axiom, while the scan reads `#` and
+  one name; this one is open, for a card of its own. Three older routes, which
+  [#317](https://github.com/jackChallis/stoicheia/issues/317) holds: Lean's own `⊕'`,
+  `×'` and `]'`, whose `'` the scan takes for a character literal's opening:
+  `def T : Type := Nat ⊕'"' "`, with a coercion from `String` to `Type`, and the
+  `set_option` line after it build on `sorryAx`, as `×'` does. Lean's own `<-`, `//` and `\/` before a `-`, where the scan
   reads a comment and Lean none: `def S : Type := {x : Int //-1 < x}` and the
   `set_option` line build on `sorryAx`. A token the file declares that ends in a symbol
   but holds a comment's opening or a quote: after `infixl:65 " ⊕-- " => Nat.add`,
@@ -181,9 +191,9 @@
 
   This entry approves the change to [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py),
   whose reader ends a name where Lean 4.35 does, and sooner before a character `\w` does
-  not take, reads Lean's own `#` tokens, and refuses a character literal or a raw string
-  closed up to a name or token it may misread, and which refuses `#time`,
-  `#with_exporting`, `#guard` and a declared token ending in a character a name may hold.
+  not take, and refuses a character literal or a raw string closed up to a name or token
+  it may misread, and which refuses `#time`, `#with_exporting`, `#guard` and a declared
+  token ending in a character a name may hold.
 
   This entry approves the change to [`scripts/negative_tests.py`](../../scripts/negative_tests.py),
   which gains the plants of #234 and the reader cases that pin the new reading.

@@ -112,10 +112,7 @@ records current; CI runs it on every push.
     `axiom` closed up to the postfix `⁻¹`, which Lean reads as `⁻¹` and the word after it
     (`1⁻¹set_option`, `1⁻¹axiom`); `set_option«debug».…` closed up to a declared
     token ending in `℃`, which Lean lets a name hold and `\\w` does not take
-    (`2 +℃1set_option`), refused as a declared token too; and `set_option«debug».…` and
-    `axiom` closed up to Lean's own `#check`, `#version` and `#where`, which Lean reads as
-    the command and the word after it (`#check1set_option`, `#versionset_option`,
-    `#whereaxiom`): each refused by its line (#234).
+    (`2 +℃1set_option`), refused as a declared token too: each refused by its line (#234).
 23. Likewise, `#guard_msgs` with `drop`, in each of its forms: `(drop all)`, closed up
     and spaced, `(drop error)`, `(drop warning)`, `(drop info)`, `drop` after another
     filter or an option, twice, and with a remark or a line break inside: each refused by
@@ -1159,9 +1156,7 @@ def lake_links() -> None:
 # `1⁻¹set_option` as `1`, `⁻¹` and `set_option`; and the command closed up to a token the
 # file declares that ends in `℃`, which a Lean name may hold but `\w` does not take, so
 # that Lean reads `2 +℃1set_option` as `2`, `+℃`, `1` and `set_option`, which builds on
-# `sorryAx`, and which the refusal of such a token catches too; and the command, and
-# `axiom`, closed up to Lean's own `#check`, `#version` and `#where`, which Lean reads as
-# the command and the word after it, so that `#whereaxiom` declares an axiom (#234). Each
+# `sorryAx`, and which the refusal of such a token catches too (#234). Each
 # is planted as (the spelling
 # check_fidelity.py names, a line of Lean). SET_OPTION_KEPT holds what the rule does not
 # refuse: the command inside a nested comment, `set_optiondebug.skipKernelTC` and
@@ -1255,11 +1250,6 @@ SET_OPTION_SPELLINGS = (
     ("set_option«debug».", 'infixl:65 " +℃ " => Nat.add\n'
      "def planted_celsius : Nat := 2 +℃1set_option«debug».byAsSorry true in "
      "theorem planted_after_celsius : (0 : Nat) = 1 := by decide"),
-    ("set_option«debug».", "#check1set_option«debug».byAsSorry true in "
-     "theorem planted_after_check : (0 : Nat) = 1 := by decide"),
-    ("set_option«debug».", "#versionset_option«debug».byAsSorry true in "
-     "theorem planted_after_version : (0 : Nat) = 1 := by decide"),
-    ("axiom", "#whereaxiom planted_after_where : False"),
 )
 SET_OPTION_KEPT = (
     "/- /- -/ set_option«debug».skipKernelTC true in "
@@ -1581,12 +1571,6 @@ def set_option_spellings() -> None:
         ("hᵢ₂ + x₁'", "hᵢ₂ + x₁'"),
         ("2 +℃1set_option", "2 +℃ set_option"),
         ("ℝ₁ + αβ' + ℕ.succ", "ℝ₁ + αβ' + ℕ.succ"),
-        # Lean's own `#` tokens, read whole, and blanked when closed up to a word.
-        ("#check1set_option", "       set_option"),
-        ("#whereaxiom #check_x", "      axiom       _x"),
-        ("#check_failurex", "              x"),
-        ("#check x #[1] #v[2] #print axioms x ##check",
-         "#check x #[1] #v[2] #print axioms x ##check"),
     ):
         read, unsure = check_fidelity.read_lean(source)
         if read != expected or unsure:
@@ -1639,8 +1623,8 @@ def closed_up_commands() -> None:
         # An `s!` there is no interpolation, so a string whose braces Lean could read as
         # holes is refused; one whose readings agree is not.
         ('a℃s!"{" ++ "}" a℃s!"{x}"', [4]),
-        # Not marked: after ASCII alone, a number, a `#` token, a space or a symbol, or a
-        # name Lean reads whole; nor an `s!` there.
+        # Not marked: after ASCII alone, a number, a space or a symbol, or a name Lean
+        # reads whole; nor an `s!` there.
         ("1'a' #check'}' x 'a' (c == 'a') ⊕ 'b' α' r\"x\" 1r\"y\" αβ s!\"{x}\"", []),
     ):
         unsure = check_fidelity.read_lean(source)[1]
