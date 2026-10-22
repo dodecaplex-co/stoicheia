@@ -16,9 +16,11 @@
   and `#time` (`Init/Notation.lean`) and `#with_exporting` (`Lean/Parser/Command.lean`),
   each of which wraps the command after it, let `#timeaxiom planted : False`,
   `#timeset_option«debug».byAsSorry …` and `#with_exportingaxiom planted : False` build
-  too, where the scan read `#` and one name. The third is a token the file declares that
-  ends in a character a name can hold: after `infixl:65 " +x " => Nat.add`, Lean reads
-  `2 +x1set_option` as `2`, `+x`, `1` and `set_option`, so
+  too, where the scan read `#` and one name. Of this second way, the change closes only
+  `#time` and `#with_exporting`; the rest stay open, and #320 holds them. The third is a
+  token the file declares that ends in a character a name can hold: after
+  `infixl:65 " +x " => Nat.add`, Lean reads `2 +x1set_option` as `2`, `+x`, `1` and
+  `set_option`, so
   `def k : Nat := 2 +x1set_option«debug».byAsSorry true in theorem T : (0 : Nat) = 1 := by decide`
   builds on `sorryAx`, and so do `2 +_0set_option…` after `" +_ "` and `2 +x'1set_option…`
   after `" +x' "`, with `+x!` and `+x?` alike, while the scan reads `x1set_option` as one
@@ -63,9 +65,10 @@
   #234 is the card. The first decided the refusals of `#time`, `#with_exporting` and a
   declared token ending in a word character; the second widened that token's refusal to
   every character a name may hold, decided the refusal of `#guard`, and decided a reading
-  of Lean's own tokens that begin with `#`, to be taken out, and the other two kept, if
-  the review of that round found it wider than it looked. Each is a tightening of the
-  scan, which is the coordinator's to decide. This entry claims no approval of the owner.
+  of Lean's own tokens that begin with `#`, to be taken out, and the wider token refusal
+  and the refusal of `#guard` kept, if the review of that round found it wider than it
+  looked. Each is a tightening of the scan, which is the coordinator's to decide. This
+  entry claims no approval of the owner.
 
   The reading was taken out after review, as the ruling provided: the review found it
   wider than it looked. It read the 30 such tokens of Lean 4.35's table, with Lean
@@ -179,13 +182,14 @@
   does, and `#whereaxiom planted : False` declares an axiom, while the scan reads `#` and
   one name; this one is open, and
   [#320](https://github.com/jackChallis/stoicheia/issues/320) holds it. Three older
-  routes, which [#317](https://github.com/jackChallis/stoicheia/issues/317) holds: Lean's own `⊕'`,
-  `×'` and `]'`, whose `'` the scan takes for a character literal's opening:
+  routes, which [#317](https://github.com/jackChallis/stoicheia/issues/317) holds: Lean's
+  own `⊕'`, `×'` and `]'`, whose `'` the scan takes for a character literal's opening:
   `def T : Type := Nat ⊕'"' "`, with a coercion from `String` to `Type`, and the
-  `set_option` line after it build on `sorryAx`, as `×'` does. Lean's own `<-`, `//` and `\/` before a `-`, where the scan
-  reads a comment and Lean none: `def S : Type := {x : Int //-1 < x}` and the
-  `set_option` line build on `sorryAx`. A token the file declares that ends in a symbol
-  but holds a comment's opening or a quote: after `infixl:65 " ⊕-- " => Nat.add`,
+  `set_option` line after it build on `sorryAx`, as `×'` does. Lean's own `<-`, `//` and
+  `\/` before a `-`, where the scan reads a comment and Lean none:
+  `def S : Type := {x : Int //-1 < x}` and the `set_option` line build on `sorryAx`. A
+  token the file declares that ends in a symbol but holds a comment's opening or a quote:
+  after `infixl:65 " ⊕-- " => Nat.add`,
   `def k : Nat := 1 ⊕--2set_option«debug».byAsSorry true in theorem …` builds on
   `sorryAx`, and so does a `" ⊕\" "` alike. The scan before this change missed each of
   these too. And tokens of a library a file imports, as Mathlib's, are not read.
