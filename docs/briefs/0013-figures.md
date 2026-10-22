@@ -1024,6 +1024,10 @@ exercised, and decisions 7 and 8 are open; the status of each follows it.
    I.23 and uses Postulate 5; and the optional diagonal route in Book Zero, beside the
    arrangement, since its proof cites no proposition, if it is kept. Every approval the
    work waits for is listed in section 10, "Progress, 21 October 2026".
+   *Status, 22 October 2026: approved and built.* The owner approved the homes with the
+   promotion, `outline_bounded`'s in Book I among them, and the work stands in them, with
+   one departure that the table allows, `FanBoundary.lean` in Book Zero (section 10,
+   "Promotion, 22 October 2026").
 8. **Acceptance.** Close issue #116 only after the whole boundary domain, exact
    division, arbitrary content and construction companions pass section 10.
    Recommended. The convex prototype is an intermediate result, and D5 to D7 are
@@ -1032,6 +1036,11 @@ exercised, and decisions 7 and 8 are open; the status of each follows it.
    in `Staging/`, the optional D5 to D7 included; #116 stays open until they are promoted,
    reviewed and reflected in the pages, records and certificate (section 10, "Progress,
    21 October 2026").
+   *Status, 22 October 2026: promoted.* The proofs of section 10's obligations stand in
+   `Elements/`, D5 to D7 among them, and the records of I.45 and II.14 return to full. #116 stays open
+   until an independent reader has read and stamped both records, the acceptance allowance
+   is withdrawn in a check change of its own, and the pages and certificate are regenerated
+   on the revision that lands (section 10, "Promotion, 22 October 2026").
 
 ## 10. Validation and acceptance
 
@@ -1246,6 +1255,130 @@ Of the acceptance list above, the first six items are proved in `Staging/`, free
 homes chosen, the unchanged integrated pipeline at the delivered revision, the independent
 review of the domain, the boundary cases and the reading of Heath, and pages, records,
 book briefs, representation accounts and certificates that agree.
+
+### Promotion, 22 October 2026
+
+**What was approved.** On 22 October 2026 the owner answered the eight approvals listed
+above, under "What remains for #116: the owner's approvals", in these words: "as propose
+1-6,8 as is. 7 with amendment." The coordinator's record of them is
+[#116's comment of that morning](https://github.com/jackChallis/stoicheia/issues/116#issuecomment-6342080363):
+approvals 1 to 6 and 8 as proposed, and approval 7 by amending the sentence of
+FORMALIZATION, section 2, "No numbers, coordinates or real numbers appear in a statement or
+a proof", to allow counts of a figure's corners, since a count is part of what "a figure
+of n sides" means, with no separate exception recorded.
+[The decision entry of that day](../decisions/2026-10-22-figures-promoted.md) records the
+decision and the files it approves.
+
+**What moved where.** The branch `lean/figures-promoted` made the move in four commits:
+the move alone (`fd823f4d`), the choices of approval 8 (`f1d0d27c`), the Lean notes
+brought to the promoted state (`1c0bb843`), and the lock (`fe311b67`). The records, pages
+and accounts follow in a change of their own. Nothing is left in `Staging/Figures/`, and no
+declaration is kept twice. The homes are those of section 7's table:
+
+- the definitions, in `Elements/Foundations/Figures.lean`, with the helper definitions
+  `CoverFacts.corners` and `Diag.OnChain`, now `Outline.corners` and `OnChain`;
+  `CoverFacts.joins` is written out where it is used, since its definition needs a lemma
+  the foundations cannot reach;
+- the sums of lists, in `Elements/Figure/Sums.lean`;
+- the convex facts, in `Elements/Figure/Convex/`: `Avoid.lean`, `Closed.lean`, `Cover.lean`,
+  `Area.lean`, `AreaHelpers.lean` and `Facts.lean`, with the convex precursors B1, B2 and
+  `fanSum_rotateLeft`, which section 7 left in `Arrangement.lean`, in a file of their own,
+  `Diagonals.lean`;
+- the cells and the content, in `Elements/Figure/Cells.lean` and
+  `Elements/Figure/Content.lean`, with their helpers in `Cells/` and `Content/`;
+- the outlines, in `Elements/Figure/Outlines.lean`, with `LoopFacts.lean`,
+  `OutlineFacts.lean` and `Parity.lean` in `Outlines/`;
+- `outline_bounded`, in `Elements/BookI/OutlineBound.lean`, after I.29 (approval 3),
+  unchanged, its lemmas in a namespace of its own, `OutlineBound`, rather than another
+  file's;
+- the arrangement, in `Elements/Figure/Arrangements.lean`, with `ArrangementFacts.lean`,
+  `CoverFacts.lean` and `Diagonal.lean` in `Arrangements/`;
+- the division and the extraction of outlines, in `Elements/Figure/Divisions.lean`, with
+  `DivisionFacts.lean`, `Extract.lean`, `ExtractEdges.lean`, `ExtractLists.lean` and
+  `ExtractRay.lean` in `Divisions/`;
+- the bridge `Prop45.fan_boundary` and the companion `Prop45.outline`, in
+  `Elements/BookI/Prop45.lean`, and the companions `Prop14.outline` and
+  `Prop14.outline_side`, in `Elements/BookII/Prop14.lean`; the three companions are
+  registered in `Elements/Companions.lean` as "I.45 outline", "II.14 outline" and
+  "II.14 outline_side" (approval 4).
+
+One home departs from the table, as its row for `BookI.lean` allows: `FanBoundary.lean`,
+whose lemmas cite no proposition, stands in Book Zero, as `Elements/Figure/FanBoundary.lean`,
+while `Prop45.fan_boundary` itself, which cites I.13 through `Fitted.fan`, stays beside
+I.45. The helpers stand in folders named after the files they serve, which the table left
+open. With `outline_bounded` in Book I, no file of Book Zero imports a proposition
+(FORMALIZATION, section 6).
+
+**How approval 8 was settled.** Section 7, "Before promotion", gives the points.
+
+- *Names.* The twelve predicates named in lower camel case take UpperCamelCase:
+  `LoopInside`, `LoopBoundary`, `LoopRegion`, `Outline.Inside`, `Outline.Region`,
+  `Outline.Boundary`, `CellCore`, `CellRegion`, `ConvexCell.Core`, `ConvexCell.Region`,
+  `Extract.Cls` and `Extract.TCls`. `Avoid.inside_of_between` is now
+  `inside_triangle_of_between`, with its users, and the general triangle facts beside it
+  leave the `Avoid` namespace. The namespaces `Ext`, `Arr` and `Diag` are `Extensionality`,
+  `Arrangement` and `Diagonal`. The names to be settled are settled: the three
+  `count_split`s are `OutlineFacts.crossingCount_split`, `CellFacts.count_split_some` and
+  `Diagonal.crossingCount_pieces`; `Diag.not_both` and `Diag.corner_off` are
+  `Diagonal.between_asymm` and `Diagonal.exists_corner_off`;
+  `CoverFacts.cell_apart` and `CoverFacts.cells_apart` are `CoverFacts.clear_of_cell` and
+  `CoverFacts.clear_of_cells`; `Arr.tangent` is `Arrangement.tangent_same_side`,
+  `Parity.parity_of_triangle` is `Parity.parity_of_angle`, and `Extract.loc` is
+  `Extract.triangle_status`, each after what it states.
+- *Hypotheses.* The unused hypotheses are dropped, not recorded as redundant:
+  `convex_diagonal_separates` no longer asks that both chains have a corner, which its
+  conclusion never needed, and `outline_cells_cover` no longer asks that the cells' insides
+  lie apart, which its proof never used; its two users, `simple_triangulation` and
+  `division_exists`, changed with it. The helper `Pieces.side_third` lost the hypothesis its
+  proof did not use, and is one lemma with `LoopFacts.convex_third`, now `convex_third`.
+- *Duplicates.* Of the twelve pairs with identical statements, one of each is kept, save
+  two whose helper the import order puts before the staged statement:
+  `Parity.parity_independent`, which `crossing_parity_independent` applies, and
+  `OutlineFacts.inside_iff`, which `loop_inside_iff` now cites, so that each is proved once.
+  The five restatements of `CutHelpers.lean` go, each use citing the fact itself; of the
+  seven near-restatements, `cut_fan_close` and `cut_strict_between` go, and the other five
+  stay, each with a docstring naming the fact it specialises. Six more repeats found in the
+  work go too, and the avoidance construction that `good_ray_exists` and
+  `Parity.third_ray` repeated has one home, `Parity.good_ray_avoiding`. The six unused
+  helpers are dropped.
+- *What is kept.* Every proved staged statement is kept, those that no staged proof uses
+  among them: A4's, A1's `sum_perm`, `sum_flatMap` and `sum_filter_ne_zero`, B2, B4's
+  `fanSum_rotateLeft`, and D5 and D6. The convex precursors stand in
+  `Elements/Figure/Convex/Diagonals.lean`, and `Diagonal.lean` is kept, in Book Zero beside
+  the arrangement, as `Elements/Figure/Arrangements/Diagonal.lean` (decision 8).
+- *Left as they are.* `FanBoundary.sides_close` and `Diagonal.piece_sides` state one fact
+  with the lists joined in another order; each is used only in its own file.
+
+**The Lean notes, the foundations and the lock.** The notes of the promoted files were
+brought to the promoted state: none says that a proof is due, that a division or its
+independence is unproved, or that the fan's boundary is not stated, and the notes of
+`Elements/Foundations/Phrases.lean` that set division and its independence aside were
+rewritten, its Lean unchanged (approval 2). `Certificate/axioms.lock` gains the twenty
+words that the outline companions' statements reach, from 238 words to 258, with no axiom
+added, removed or restated, and the model's two copies of its hash are renewed, for no law
+of the model changes.
+
+**What the axioms show.** On the promoted Lean, `#print axioms` reports `sorryAx` for none
+of `outline_bounded`, `Prop45.fan_boundary`, the three companions, `division_exists`,
+`apart_has_outline`, `area_eq`, `Apart.area_eq_of_same_region`,
+`crossing_parity_independent`, `convex_diagonal_separates` and `outline_cells_cover`.
+Postulate 5 and superposition appear only where they did at `b2c0580a`: in
+`outline_bounded`, and in the three companions, through Euclid's I.45 and II.14; and
+`Prop45.fan_boundary` shows superposition alone, through `Fitted.fan`.
+
+**What follows.** The records of I.45 and II.14 return to `full`, through the outline
+companions (approval 5), without `figure-with-dissection`, which stays in
+`review/terms.toml` for the older supplied-division companions; the pages, the book
+introductions, the book briefs, FORMALIZATION's representation table and section 6,
+PROGRAM's account and the gap catalogues say what is proved (approval 4); and FORMALIZATION,
+section 2, is amended (approval 7). Approval 6, the withdrawal of the acceptance allowance
+for I.45 and II.14 (`ALLOWED_LIMITS` in `scripts/check_acceptance.py`, with ACCEPTANCE's B4
+sentence, the two rows of its table and the paragraph after them, and the cases of
+`tests/test_acceptance_limits.py` that allow them), lands after this, in a change to the
+check of its own, as [ACCEPTANCE](../ACCEPTANCE.md#the-limitations-allowed) requires. An
+independent reader of the other model family reads both records again and stamps them;
+until then they are stale, as WORKFLOW, section 6, expects. #116 closes when that is done
+and the revision lands.
 
 ## Appendix: the challenge of 19 October
 

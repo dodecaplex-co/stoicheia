@@ -127,6 +127,14 @@ figure's outline, and show that the area does not depend on the division chosen,
 and reviewed. No statement or companion here changes; only the scope the two records claim
 does (the entry of 20 October 2026 in [the decisions page](0002-decisions.md)).*
 
+*Status, 22 October 2026: the outline proofs are in the edition, and the records of I.45
+and II.14 claim `full` again, through the companions `Prop45.outline`, `Prop14.outline` and
+`Prop14.outline_side`, which take a figure given by its outline alone, and an independent
+reader reads both records again before they land. The tag `figure-with-dissection` stays in the registry
+for the older supplied-division companions, and no record carries it
+([brief 0013](0013-figures.md), section 10, "Promotion, 22 October 2026"). No statement or
+companion here changes.*
+
 Base: the branch was written on main at `1e5b99a`, and has main merged in; the revision of
 18 October was written on main at `f17b427`, and the corrections after Astra's second answer
 on `b48640c`. The statements are in `Staging/`, as committed with this brief.
@@ -176,6 +184,10 @@ decided a fourth on 18 October; this brief is written to them:
    **Overtaken in part 20 October 2026:** the scope is `restricted` for now, with the
    limitation `figure-with-dissection`, until #116's outline proofs are proved and reviewed
    (the note at the head of this brief).
+
+   *Status, 22 October 2026:* the outline proofs are promoted, and the scope is `full`
+   again, through the outline companions, without the tag (the status note at the head of
+   this brief).
 2. **III.24 is restated** to conclude that the segments are congruent, by Euclid's route:
    one segment is applied to the other. Today's proof by the radii is kept, as the
    labelled alternative proof, `Prop24.equalCircles`.

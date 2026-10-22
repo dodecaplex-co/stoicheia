@@ -2,7 +2,7 @@
 
 # Book II
 
-**All 14 propositions proved in Lean**: 13 as Euclid states them and 1 for a restricted statement ([II.14](14.md)). Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences. Every proof uses the parallel postulate: II.10's directly, where Euclid calls on it, and the others through the propositions they cite.
+**All 14 propositions proved in Lean**, every one as Euclid states it. Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences. Every proof uses the parallel postulate: II.10's directly, where Euclid calls on it, and the others through the propositions they cite.
 
 Key to the table: ✅ proved. The Lean statement is *whole*, as Euclid states it; *restricted*, with hypotheses that leave out cases his words admit; or *in part*, leaving a clause to his words. Each page says how.
 
@@ -10,7 +10,7 @@ Key to the table: ✅ proved. The Lean statement is *whole*, as Euclid states it
 
 **"The rectangle contained by AB, BC."** Book II has two definitions of its own. A rectangle is said to be contained by the two straight lines about its right angle, and Euclid often names it by them alone, "the rectangle AB, BC" (II.2). A gnomon is one of the parallelograms about the diameter of a parallelogram, Euclid's word for its diagonal, with the two complements (II.5). In our foundations, the rectangle contained by two straight lines, `rect`, and the square on one, `sq`, are areas, defined from the lengths rather than assumed. So we state each proposition as Euclid does, as a sum of areas with no numbers anywhere.
 
-Two main theorems keep the case Euclid's proof draws. II.1 is proved for two points of section, and its companion for any number. II.14 starts with the two triangles of I.45's proof; its companions take figures supplied with a checked division into non-overlapping triangles, and equal to the figure means equal to their sum. II.14 is restricted: we have yet to prove that every rectilineal outline has such a division covering its region, and that the area is independent of the division chosen ([#116](https://github.com/jackChallis/stoicheia/issues/116)).
+Two main theorems keep the case Euclid's proof draws. II.1 is proved for two points of section, and its companion for any number. II.14 starts with the two triangles of I.45's proof; its companion `Prop14.outline` takes any rectilineal figure, given by its outline, and draws a square equal to its area, the sum every division of it into triangles gives, as [Book I's introduction](../I/index.md) tells. Its companions for a figure that comes with a checked division into triangles stay beside it, and square those triangles together.
 
 **What Book II borrows from Book I.** Page after page, Euclid takes the same few things for granted. We prove each once, in [`Rectangles.lean`](../../Elements/BookII/Rectangles.lean), and the line under each page's table names those its proof calls on. A rectangle he draws is the rectangle contained by its sides, or by straight lines equal to them, by I.4 and I.34 (`Rectangle.eq_rect`). One right angle makes a parallelogram a rectangle, by I.29, which, Heath remarks under II.4, I.46 has already shown (`Rectangle.of_right`). And I.47 is said of the squares on straight lines, for II.9 to II.14 (`BookI.Prop47.sq`).
 
@@ -43,4 +43,4 @@ Books and papers to read alongside, from Proclus to Lean, are gathered by theme 
 | ✅ | [II.11](11.md) **A straight line cut so that the rectangle equals the square** | whole | To cut a given straight line so that the rectangle contained by the whole and one of the segments is equal… |
 | ✅ | [II.12](12.md) **The square on the side subtending the obtuse angle** | whole | In obtuse-angled triangles the square on the side subtending the obtuse angle is greater than the squares… |
 | ✅ | [II.13](13.md) **The square on the side subtending the acute angle** | whole | In acute-angled triangles the square on the side subtending the acute angle is less than the squares on… |
-| ✅ | [II.14](14.md) **A square equal to a given rectilineal figure** | restricted | To construct a square equal to a given rectilineal figure. |
+| ✅ | [II.14](14.md) **A square equal to a given rectilineal figure** | whole | To construct a square equal to a given rectilineal figure. |
