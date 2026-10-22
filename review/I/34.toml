@@ -21,10 +21,10 @@ note = "Euclid takes BC to run within the angles ABD and ACD. `Parallelogram.sam
 
 [review]
 stage = "full"
-commit = "5855416e"
+commit = "b7b41f51"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:c54fed7d6ad0c671"
-run = "proof by OpenAI Codex; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 5855416e (reader RT-c7)"
+run = "proof by OpenAI Codex; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y4)"
 
 [review.items]
 statement = "pass"
