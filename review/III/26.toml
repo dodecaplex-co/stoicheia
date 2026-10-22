@@ -1,23 +1,37 @@
 [statement]
 scope = "full"
-note = "Euclid's two cases, each stated on its own; since our measure carries no radius, the conclusion holds in any two circles, equal or not."
-fingerprint = "sha256:dd8fa4e5cb88ea35"
+note = "Euclid's two cases, each stated on its own, with equal circumferences read as equal in measure and congruent, which says more than Heath's words."
+fingerprint = "sha256:fdd1449580f76ce4"
 
 [route]
 kind = "modified"
-note = "Euclid's argument where the angles at the circumferences are acute; where they are right, BC and EF are diameters, and where obtuse, III.22 passes to the acute angle, as Heath proposes (vol. 2, p. 57)."
+note = "Euclid's argument where the angles at the circumferences are acute; where they are right, BC and EF are diameters, and where obtuse, III.22 passes to the acute angle, as Heath proposes (vol. 2, p. 57). The remainders are equal in measure by Euclid's subtraction, and congruent by III.24 applied to the remaining segments, since a congruence cannot be subtracted."
 
 [representation]
-tags = ["angle-measure", "redundant-hypothesis", "centre-given"]
-note = "\"In equal circles\" is kept from Euclid, and the proof uses the equal radii where he does, for I.4; but the circumferences are measured by angles, so the statement would hold without it. The centres G and H are given, as the enunciation speaks of angles at the centres."
+tags = ["angle-measure", "centre-given"]
+note = "\"Equal circumferences\" is read as equal in measure and congruent (`Arc.Congruent`), the congruence through Common Notion 4, as circumferences that coincide. So \"in equal circles\" does real work: in unequal circles equal angles give equal measures, but no congruence. The centres G and H are given, as the enunciation speaks of angles at the centres."
 
 [[passage]]
 at = "therefore the base BC is equal to the base EF"
 kind = "different"
 note = "Given the angles at A and D, the Lean sorts them as acute, right or obtuse: if right, BC and EF are diameters, each two radii; if obtuse, III.22 passes to the acute angle in the other segment."
 
+[[passage]]
+at = "therefore the segment BAC is equal to EDF"
+kind = "helper"
+helper = "Prop24.equalMeasure"
+note = "III.24 makes the segments BAC, EDF congruent, and its companion `Prop24.equalMeasure` gives what Euclid takes with them: their circumferences are equal in measure."
+
+[[passage]]
+at = "therefore the circumference BKC which remains is equal to the circumference ELF"
+kind = "different"
+note = "The remainders BKC, ELF are equal in measure by Euclid's subtraction [C.N. 3]. Their congruence cannot come by subtraction: it comes from III.24 applied to the remaining segments, which are similar, their angles making two right angles with the equal angles at A and D [III. 22]."
+
+[figure]
+case = "acute angles at A and D, with BKC and ELF less than semicircles"
+
 [review]
 stage = "exceptions"
-commit = "66e9871"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:5a67a2f1e380c06e"
+commit = "7f4fba99"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:bda125b8a98ed658"
