@@ -87,7 +87,15 @@ case = "two equal straight lines AB and CD, neither through E"
 
 [review]
 stage = "full"
-commit = "b9f6a766"
+commit = "9eae4df1"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:720ade15c16cf730"
 run = "brief 0005 stage 5, ship R3 (#29); lines 81 and 118 of Prop14.lean, of unknown family, read also by GPT-6 Astra (Codex)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
