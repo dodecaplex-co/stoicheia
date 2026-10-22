@@ -45,7 +45,15 @@ case = "D off both AB and BC, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "25d0fc84"
+commit = "b2484c70"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:005a52c72b917d00"
 run = "brief 0005 stage 5, ship R3 (#29)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

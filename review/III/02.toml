@@ -52,7 +52,15 @@ note = "Like Heath's, this figure draws the impossible supposition: the straight
 
 [review]
 stage = "full"
-commit = "1c08feeb"
+commit = "b2484c70"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:833e3b1cd507afbf"
 run = "brief 0005 stage 5, ship R3 (#29); the corollaries Prop2.within, triangle, oppositeSide and sameSide, written by Claude, read also by GPT-6 Astra (Codex)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
