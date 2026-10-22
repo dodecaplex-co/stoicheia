@@ -4141,7 +4141,10 @@ findings:
   unchanged. A review correction makes the projection reader continue through nested
   structure projections and apply the remaining arguments of a projection at an
   application's head; two of the same stand-in axioms now exercise an inherited order
-  instance and an applied projection. The new expectation on `construction_rules` reads
+  instance and an applied projection. A second correction substitutes a `let` at the head
+  of a structure value or of an application into its body, so that a definition given
+  through a `let` is read through it; two more of the stand-in axioms now exercise a
+  `let`-bound structure and a `let` at an application's head. The new expectation on `construction_rules` reads
   facts.json's top level and
   so has no `ref`; five fixtures of `scripts/test_safe_push.py` that picked the lock's
   III.1 expectations out by `(x["ref"], x["field"])` met it and failed in CI's

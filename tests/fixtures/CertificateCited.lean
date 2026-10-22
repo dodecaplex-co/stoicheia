@@ -12,8 +12,9 @@ C.N. 4 fixture, over the repository's compiled foundations, which an unmodified 
 The axioms of `CitedFixture` are the cases of the definition of a construction rule
 (docs/FORMALIZATION.md, section 9), declared here so that the test does not depend on
 which rules the lock holds: existence asserted directly, through a definition, through
-an applied projection, through an inherited instance's order, twice negated, in an `Iff`
-and in an `Or`; and existence negated, behind an implication, assumed in a hypothesis, or
+an applied projection, through a `let`-bound structure, through a `let` at an
+application's head, through an inherited instance's order, twice negated, in an `Iff` and
+in an `Or`; and existence negated, behind an implication, assumed in a hypothesis, or
 absent. They are stand-ins for the check, not laws of the plane, and nothing is proved
 from them but the fixture's own law of I.7.
 
@@ -44,14 +45,27 @@ structure LineCircleRelation where
 def lineCircleRelation : LineCircleRelation :=
   ⟨fun L α => ∃ A : Point, OnLine A L ∧ OnCircle A α⟩
 
+structure CircleRelation where
+  holds : Circle → Circle → Prop
+
+/-- The meeting of circles, given through a `let`-bound structure. -/
+def circleRelation : CircleRelation :=
+  let r : CircleRelation := ⟨CirclesMeet⟩
+  r
+
+/-- The meeting of straight lines, given through a `let` at an application's head. -/
+def LetLinesMeet : Line → Line → Prop :=
+  let meets := LinesMeet
+  meets
+
 /-- Existence behind an implication, inside a definition. -/
 def Empty (L : Line) : Prop := (∃ A : Point, OnLine A L) → False
 
 /- Construction rules. -/
 axiom plain (A B : Point) : A ≠ B → ∃ C : Point, Between A C B
-axiom circles (α β : Circle) : CirclesMeet α β
+axiom circles (α β : Circle) : circleRelation.holds α β
 axiom line_circle (L : Line) (α : Circle) : lineCircleRelation.holds L α
-axiom lines (L M : Line) : L ≠ M → LinesMeet L M
+axiom lines (L M : Line) : L ≠ M → LetLinesMeet L M
 axiom by_instance (A B : Point) : A ≤ B
 axiom twice_negated (L : Line) : ¬ ¬ ∃ A : Point, OnLine A L
 axiom in_iff (A B C : Point) : Collinear A B C ↔ Collinear B A C

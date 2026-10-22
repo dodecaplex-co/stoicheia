@@ -29,8 +29,9 @@ own files, so a reached declaration of Lean.Data.Position still ends a walk.
 
 A third fixture, tests/fixtures/CertificateCited.lean, imports the repository's compiled
 foundations themselves. Its own axioms are the cases of a construction rule: existence
-asserted directly, through a definition, through an applied projection, through an
-inherited instance's order, twice negated, in an Iff and in an Or, each counted; existence
+asserted directly, through a definition, through an applied projection, through a
+let-bound structure, through a let at an application's head, through an inherited
+instance's order, twice negated, in an Iff and in an Or, each counted; existence
 negated (Triangle), behind an implication inside a definition, assumed in a hypothesis,
 or absent, none counted. Its entries cite laws through one shared theorem that proves a
 list of laws by cases (I.1), whose proofs the walk finds, and law by law, naming each law's
@@ -345,6 +346,12 @@ class ConstructionTests(unittest.TestCase):
 
     def test_rule_through_an_applied_projection(self):
         self.assertIn("CitedFixture.line_circle", self.facts["construction_rules"])
+
+    def test_rule_through_a_let_bound_structure(self):
+        self.assertIn("CitedFixture.circles", self.facts["construction_rules"])
+
+    def test_rule_through_a_let_at_an_applications_head(self):
+        self.assertIn("CitedFixture.lines", self.facts["construction_rules"])
 
     def test_rules_not_asserting_existence_are_not(self):
         rules = self.facts["construction_rules"]

@@ -315,8 +315,9 @@ def unfoldHead? (env : Environment) (toolchain : NameSet) (e : Expr) : m (Option
   return some ((ci.instantiateValueLevelParams! us).beta e.getAppArgs)
 
 /-- Field `i` of the structure value `s`: `s`'s head unfolded while it is a definition of
-this project, until it is a constructor applied to its arguments. `none` when it never is,
-as for a structure given by an opaque word or a variable. -/
+this project, and a `let` at its head substituted into its body, until it is a constructor
+applied to its arguments. `none` when it never is, as for a structure given by an opaque
+word or a variable. -/
 def projField? (env : Environment) (toolchain : NameSet) (s : Expr) (i : Nat) :
     m (Option Expr) := do
   let mut s := s.consumeMData.headBeta
@@ -326,6 +327,7 @@ def projField? (env : Environment) (toolchain : NameSet) (s : Expr) (i : Nat) :
     | .proj _ j t =>
       pending := (j, s.getAppArgs) :: pending
       s := t.consumeMData.headBeta
+    | .letE _ _ v b _ => s := (mkAppN (b.instantiate1 v) s.getAppArgs).consumeMData.headBeta
     | .const n _ =>
       if let some (.ctorInfo c) := env.find? n then
         match pending with
@@ -366,6 +368,7 @@ def assertsExists (env : Environment) (toolchain : NameSet) (fuel : Nat) (pos : 
       let args := e.getAppArgs
       match e.getAppFn with
       | .lam .. => go pos e.headBeta
+      | .letE _ _ v b _ => go pos (mkAppN (b.instantiate1 v) args)
       | .proj _ i s =>
         match ← projField? env toolchain s i with
         | some f => go pos (f.beta args)
