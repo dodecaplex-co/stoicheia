@@ -41,7 +41,15 @@ case = "the given circumference ADB less than a semicircle"
 
 [review]
 stage = "full"
-commit = "05b34dc0"
+commit = "2f2c3c2f"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:284aea10fd6a6062"
 run = "brief 0005 stage 5, ship R3 (#29); Prop30.halves and its helpers, written by Claude, read also by GPT-6 Astra (Codex)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
