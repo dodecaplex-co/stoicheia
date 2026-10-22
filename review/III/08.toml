@@ -79,6 +79,12 @@ helper = "Definition15"
 note = "Euclid uses the equality of MK and ML without giving a reason. The Lean obtains both radii equal to MA from `Definition15`, the assumed rule for equal radii, and combines those equalities."
 
 [[passage]]
+at = "therefore the remainder DK is less than the remainder DL"
+kind = "helper"
+helper = "Magnitude.lt_of_add_lt_add_left"
+note = "Euclid keeps the strict inequality when the equal radii MK and ML are taken away. The Lean substitutes ML for MK and uses `Magnitude.lt_of_add_lt_add_left` to cancel the common length."
+
+[[passage]]
 at = "Similarly we can prove that DL is also less than DH"
 kind = "grouped"
 note = "Euclid leaves L and H to the same argument without writing it out. The Lean proves the comparison above for any two points of the convex circumference on one side of DA, so it includes L and H."
@@ -103,7 +109,7 @@ note = "Euclid uses the equality of MK and MB without giving a reason. The Lean 
 [[passage]]
 at = "that is, the nearer to the least DG equal to the more remote"
 kind = "different"
-note = "Euclid appeals to the convex order, which leaves out a DN ending on the concave circumference or a DK touching the circle; the Lean splits the angles at M by `Tacit.lt_trichotomy`, a rule we assume (System E §3.5), and uses I.24 for unequal angles, where Heath prints no reference. For equal angles the Lean uses `onRay_of_angle_eq` and `OnRay.eq_of_len_eq` to make the points coincide; for N on DA, `Prop8.on_diameter`, using `Prop2.triangle` (III.2, for which Heath prints no reference here), gives A or G, which the greatest and least clauses exclude."
+note = "Euclid appeals to the convex order, which leaves out a DN ending on the concave circumference or a DK touching the circle; the Lean splits the angles at M by `Tacit.lt_trichotomy`, a rule we assume (System E §3.5), and uses I.24 for unequal angles, where Heath prints no reference. For equal angles the Lean uses `onRay_of_angle_eq` and `OnRay.eq_of_len_eq` to make the points coincide; for N on DA, `Prop8.on_diameter`, using `Prop2.triangle` (III.2, for which Heath prints no reference here), gives A or G, which the greatest and least clauses exclude; off DA, it compares N with K on K's side, or uses `same_side_of_opposite_sides` to put N on B's side and compares it with B."
 
 [figure]
 case = "DE, DF, DC and DK, DL, DH compared on one side of DA, as in Heath's figure"

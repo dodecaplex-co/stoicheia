@@ -49,12 +49,6 @@ kind = "grouped"
 note = "Euclid leaves C and G to the same argument without writing it out. The Lean proves the comparison above for any two points B, C of the circle on one side of AD, so it includes C and G."
 
 [[passage]]
-at = "Again, since GF, FE are greater than EG"
-kind = "helper"
-helper = "BookI.Prop20"
-note = "Euclid uses the triangle inequality again for GF and FE, without a reference from Heath here. The Lean applies `BookI.Prop20` to the triangle FGE."
-
-[[passage]]
 at = "and EG is equal to ED"
 kind = "helper"
 helper = "Definition15"
