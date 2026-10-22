@@ -4848,8 +4848,12 @@ findings:
   `comparePlanted` to check the hand `LineMeetsCircle`'s type and body against the
   library's definition before translating it, including binder kinds and without
   unfolding. `model/Check/Intersections.lean` uses it for Intersections 2
-  and 3, retaining their kernel comparisons through `original` and a guarded regression:
-  making Intersection 3's point A explicit passes `rfl` but fails the structural comparison.
+  and 3, retaining their kernel comparisons through `original`; a guarded regression in
+  `model/Check/RoundTrip.lean`, beside the other planted faults, shows that making
+  Intersection 3's point A explicit passes `rfl` but fails the structural comparison. (On
+  22 October the regression moved there from `model/Check/Intersections.lean`, since main's
+  forbidden-command scan, #271, lets a `#guard_msgs` pin an error only in that file and
+  `model/Model/Audit.lean`.)
   All 39 retired rules have direct structural comparisons, including binder kinds.
   The formal model's generated laws, checks and assembly
   follow from its generator; its proofs in the plane stay, as derived facts, and

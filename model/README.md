@@ -453,8 +453,8 @@ the original means. These checks do that, at every build.
   without unfolding. It then compares both rules with their library declarations,
   including binder kinds. Their kernel comparisons through `original`, concrete plane
   proofs and pinned axiom audits remain. A guarded regression in
-  `Check/Intersections.lean` confirms that making Intersection 3's point A explicit passes
-  `rfl` but fails the structural comparison.
+  `Check/RoundTrip.lean`, beside the other planted faults, confirms that making
+  Intersection 3's point A explicit passes `rfl` but fails the structural comparison.
 - **The round trip, by syntax.** [Check/RoundTrip.lean](Check/RoundTrip.lean) takes each
   law and word as Lean elaborated them from `Model/Laws.lean`, translates each back, every
   field of `S` and every word over it replaced by the library's word, and compares it with
