@@ -26,8 +26,9 @@ note = "Carried by the placement under the sentence before, which puts B on D be
 
 [[passage]]
 at = "the segment AEB will also coincide with CFD"
-kind = "grouped"
-note = "The sentences after it show it; the Lean begins that argument here: a point on E's side of AB goes to a point on F's side of CD, and the angle AB subtends there is the angle CD subtends at its image, by I.8 (`BookI.Prop8`), for which Heath prints no reference here."
+kind = "helper"
+helper = "BookI.Prop8"
+note = "The sentences after it show the coincidence; the Lean begins that argument here with a step Euclid takes for granted, that the application keeps angles: a point on E's side of AB goes to a point on F's side of CD, and the angle AB subtends there is the angle CD subtends at its image, by I.8 (`BookI.Prop8`), for which Heath prints no reference here."
 
 [[passage]]
 at = "For, if the straight line AB coincide with CD but the segment AEB do not coincide"
@@ -48,11 +49,11 @@ note = "III.10 is not needed: the angles have settled every point of the circumf
 at = "Therefore, if the straight line AB be applied to CD"
 kind = "helper"
 helper = "Prop24.chord_cases"
-note = "On the bases the points are settled by their ends and their order: a point of AB is on the circle exactly when it is an end, and within it exactly when it lies between the ends (`Prop24.chord_cases`), and the placement keeps both. A point between the ends is within the circle by III.2, for which Heath prints no reference here, and a point of AB within the circle lies between the ends by `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1."
+note = "On the bases the points are settled by their ends and their order: a point of AB is on the circle exactly when it is an end, and within it exactly when it lies between the ends (`Prop24.chord_cases`), and the placement keeps both. A point between two points of the circle is within it by III.2, for which Heath prints no reference here, so no third point of AB is on the circle (`Prop2.triangle`); and a point of AB within the circle lies between the ends by `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1."
 
 [figure]
 case = "segments less than semicircles, as in Heath's figure"
-note = "Like Heath's, this figure draws the last supposition the text refutes: the segment falling awry, as CGD, so that a circle would cut a circle at more points than two."
+note = "Like Heath's, this figure draws the last supposition the text refutes: the segment falling awry, as CGD, so that a circle would cut a circle at more points than two. The figure at a glance draws another case: both segments greater than semicircles, with acute angles at E and F."
 
 [review]
 stage = "full"
