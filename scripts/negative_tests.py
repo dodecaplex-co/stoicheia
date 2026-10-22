@@ -140,11 +140,9 @@ records current; CI runs it on every push.
     source scan alone (`rules_in`): Lean ends a `--` comment only at a line feed, so a
     scan that read the file with Python's universal newlines would end the comment at the
     `\\r` and let a string open behind it that hides the command up to a later `"`. Read as
-    Lean reads the bytes, the lone `\\r` of each is refused by its file and line, and the
-    `set_option debug.…` pair and the `axiom`, no longer hidden, are named too; the other
-    three (`#guard_msgs (drop all)`, a pinned error and `#guard_panic`) are named by
-    command once #197's rules land, and here the lone `\\r` refuses all six. The unplanted
-    copy passes, and so does a copy of it with CRLF line endings, which Lean allows; the
+    Lean reads the bytes, the lone `\\r` of each is refused by its file and line, and each
+    command, no longer hidden, is named too, by the rules of #197 for three of them. The
+    unplanted copy passes, and so does a copy of it with CRLF line endings, which Lean allows; the
     check before #207, reading with universal newlines, missed all six.
 
 The copies of items 16 and 17, and item 13's list of generated outputs, read Git's
@@ -1456,8 +1454,8 @@ def guard_error_pins() -> None:
 # end at the `\r` and a string open on the next line, which swallows the command up to the
 # `"` of the closing `-- "`. Each is (a short name, the probe's exact bytes). Read as Lean
 # reads the bytes (`check_fidelity.lean_text`), the comment hides nothing: the lone `\r`
-# of each is refused, and the scan names the command of three of them (the
-# `set_option debug.…` pair and the `axiom`) once the comment no longer hides it.
+# of each is refused, and the scan names the command of each, which the comment no longer
+# hides.
 CARRIAGE_RETURN_PROBES = (
     ("#guard_msgs (drop all)", '-- a remark\r"\n#guard_msgs (drop all) in\n'
      'theorem bad : (0 : Nat) = 1 := rfl\n-- "\n#print axioms bad\n'),
@@ -1471,12 +1469,15 @@ CARRIAGE_RETURN_PROBES = (
      'theorem ok : True := trivial\n-- "\n'),
     ("axiom", '-- a remark\r"\naxiom planted : (0 : Nat) = 1\n-- "\n#print axioms planted\n'),
 )
-# The three probes whose command check_fidelity.py already names once the carriage-return
-# comment no longer hides it: {probe index: (the words it names, the token that begins
-# them in the probe)}. The FORBIDDEN regex matches `set_option debug.` up to its dot; the
-# axiom has its own message. The other three the lone `\r` alone refuses here.
+# The command check_fidelity.py names in each probe once the carriage-return comment no
+# longer hides it: {probe index: (the words it names, the token that begins them in the
+# probe)}. The FORBIDDEN regex matches `set_option debug.` up to its dot; the axiom has its
+# own message; #197's rules name the `drop`, the pinned error and `#guard_panic`.
 CR_COMMANDS = {
+    0: ("uses `#guard_msgs (drop all)`", "#guard_msgs"),
     1: ("uses `set_option debug.`", "set_option"),
+    2: ("uses `#guard_msgs` under a docstring holding `error:`", "#guard_msgs"),
+    3: ("uses `#guard_panic`", "#guard_panic"),
     4: ("uses `set_option debug.`", "set_option"),
     5: ("declares an axiom outside Elements/Foundations/", "axiom"),
 }
@@ -1485,8 +1486,8 @@ CR_COMMANDS = {
 def carriage_return_comment() -> None:
     """The six CARRIAGE_RETURN_PROBES of #207, in one scratch copy of I.1's file in a
     temporary tree, run through the source scan (`rules_in`): read as Lean reads the bytes,
-    the lone `\\r` of each is refused by its file and line, and the `set_option debug.…`
-    pair and the `axiom`, no longer hidden, are named too. The unplanted copy passes, and
+    the lone `\\r` of each is refused by its file and line, and its command, no longer
+    hidden, is named too. The unplanted copy passes, and
     so does a copy of it with CRLF line endings, which Lean allows."""
     rel = "Elements/BookI/Prop01.lean"
     marker = "\nend Elements.BookI\n"
