@@ -4,7 +4,6 @@ import Elements.BookIII.Circumferences
 import Elements.BookI.Prop08
 import Elements.BookI.Prop20
 import Elements.BookI.Prop46
-import Elements.BookIII.Prop01
 import Elements.BookIII.Prop16
 import Elements.BookIII.Prop17
 import Elements.BookIII.Prop18
@@ -60,7 +59,7 @@ theorem Prop37.centre_on_secant {A B C D F : Point} {ABC : Circle}
     (h : rect A D D C = sq D B) :
     Touches D B ABC := by
   /- Draw DE touching the circle, then use the diameter case of III.36. -/
-  obtain ⟨E, hE, hDE⟩ := Prop17 ⟨F, hF⟩ hD
+  obtain ⟨E, hE, hDE⟩ := Prop17 hD
   obtain ⟨L, hD_L, hE_L⟩ := Postulate1 D E hDE.1
   have hFED : ∠ F E D = ∟ :=
     Prop18 hF hE hDE ⟨L, hD_L, hE_L, hE_L⟩ D ⟨L, hD_L, hE_L, hD_L⟩ hDE.1
@@ -89,9 +88,9 @@ contained by the whole of the straight line which cuts the circle and the straig
 intercepted on it outside between the point and the convex circumference be equal to the square
 on the straight line which falls on the circle, the straight line which falls on it will touch
 the circle. -/
-theorem Prop37 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F ABC)
-    (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hB : OnCircle B ABC)
-    (hC : OnCircle C ABC) (hDCA : Between D C A) (h : rect A D D C = sq D B) :
+theorem Prop37 {A B C D : Point} {ABC : Circle} (hD : OutsideCircle D ABC)
+    (hA : OnCircle A ABC) (hB : OnCircle B ABC) (hC : OnCircle C ABC) (hDCA : Between D C A)
+    (h : rect A D D C = sq D B) :
     Touches D B ABC := by
   -- For let a point D be taken outside the circle ABC; from D let the two straight lines DCA,
   -- DB fall on the circle ACB; let DCA cut the circle and DB fall on it; and let the rectangle
@@ -106,8 +105,8 @@ theorem Prop37 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F 
       exact Prop37.centre_on_secant hF hD hA hB hC hDCA hACF h
     -- For let DE be drawn touching ABC; let the centre of the circle ABC be taken, and let it be
     -- F; let FE, FB, FD be joined.
-    · obtain ⟨E, hE, hDE⟩ := Prop17 hABC hD
-      obtain ⟨F, -, -, -, hF, -⟩ := Prop1 hABC hA hC (ne_of_between (between_symm hDCA))
+    · obtain ⟨E, hE, hDE⟩ := Prop17 hD
+      obtain ⟨F, hF⟩ := exists_centre ABC
       have hDE' : D ≠ E := hDE.1
       have hDB : D ≠ B := fun e => hD.2 (e ▸ hB)
       have hFE : F ≠ E := fun e => inside_not_on (centre_inside hF) (e ▸ hE)
@@ -118,7 +117,7 @@ theorem Prop37 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F 
         Prop18 hF hE hDE ⟨L, hD_L, hE_L, hE_L⟩ D ⟨L, hD_L, hE_L, hD_L⟩ hDE'
       -- Now, since DE touches the circle ABC, and DCA cuts it,
       -- the rectangle AD, DC is equal to the square on DE. [III. 36]
-      have h36 : rect A D D C = sq D E := Prop36 hABC hD hA hE hC hDCA hDE
+      have h36 : rect A D D C = sq D E := Prop36 hD hA hE hC hDCA hDE
       -- But the rectangle AD, DC was also equal to the square on DB;
       -- therefore the square on DE is equal to the square on DB;
       have hsq : sq D E = sq D B := CommonNotion1 h36.symm h.symm

@@ -1,18 +1,21 @@
 [statement]
-scope = "restricted"
-hypotheses = [
-  "the whole circle is given, with a centre, not only the segment (`ABC : Circle`, `hABC : ∃ E, Centre E ABC`)",
-]
-note = "Handed the whole circle and that it has a centre; constructs B, D and E as Euclid does and proves E the centre, in each of his three cases."
-short = "handed the whole circle and its centre"
-fingerprint = "sha256:cea48281c16e35be"
+scope = "full"
+note = "`Prop25` constructs a circle; `Prop25.complete` identifies it with the segment's; `Prop25.kind` classifies the arc; `Prop25.of_circle` takes its circle."
+companions = ["III.25 complete", "III.25 kind", "III.25 of_circle"]
+fingerprint = "sha256:45e8f59e48cffdcc"
 
 [route]
 kind = "euclid"
+note = "The core is Euclid's construction, in his three cases. His step \"[III. 9]\", that the circle described is the one the segment came from, is the companion `Prop25.complete`, by III.9 and `circle_eq`. `Prop25.of_circle` runs the core on the arc of a given circle, the meeting fact coming from `Prop25.meets` [III. 2]."
 
 [representation]
-tags = ["segment-with-circle", "centre-given"]
-note = "The given segment is the circle ABC, the straight line AC in it and a point P on the segment's side, so the statement is handed the circle and `∃ E, Centre E ABC`. Euclid's construction uses only points of the segment, but a statement handed the circle cannot show that."
+tags = ["segment-with-circle", "angle-measure"]
+note = "The core is given the base AC, a point P on the segment's side and the segment's points as a predicate S, with the fact Euclid reads off the figure: a straight line drawn from within the base towards P's side meets the segment. It never sees a circle or a centre, and describes its circle with centre E (Postulate 3). The companions are given the segment as the arc of a circle, the ends of its base and a point naming its side (`Arc`), and `Prop25.complete` shows that the core's circle is that circle, so the pair says all that Heath's enunciation says. `Prop25.kind` also compares the arc's circumference with two right angles; the measure is twice the angle standing on it and carries no radius."
+
+[[passage]]
+at = "For let AC be bisected at D"
+kind = "given"
+note = "That DB, drawn at right angles to AC, meets the segment's circumference at B Euclid reads off the figure. The core is given it, as the meeting fact; for the arc of a circle, `Prop25.meets` proves it, since D is within the circle [III. 2]."
 
 [[passage]]
 at = "let DB be drawn through to E"
@@ -21,22 +24,35 @@ helper = "Postulate5"
 note = "Euclid takes for granted that AE meets DB drawn through; Postulate 5 gives it, the angles BAE, ABD being less than two right angles, since ABD is acute (I.17)."
 
 [[passage]]
+at = "Therefore the circle drawn with centre E and distance one of the straight lines"
+kind = "carried"
+helper = "Prop25.complete"
+note = "The core describes the circle with centre E through A (Postulate 3), and B and C are on it, EB and EC being equal to EA. That it is the circle of the given segment, Euclid's [III. 9], is proved as its own theorem, the companion `Prop25.complete`, for each of the three cases. It takes a centre of the constructed circle from the rule internally; the construction still returns its centre E, which `Prop25.kind` uses."
+
+[[passage]]
 at = "And it is manifest that the segment ABC is less than a semicircle"
-kind = "unformalized"
-note = "The statement says where the centre falls, here across AC from B, which is Euclid's reason; it does not compare the segment with a semicircle."
+kind = "helper"
+helper = "Prop25.kind"
+note = "`Prop25.kind` proves `Arc.Less` and that the circumference measures less than two right angles, since E is across AC from P. `Prop25.complete` identifies the constructed circle with the given arc's circle, transporting both conclusions to that arc."
 
 [[passage]]
 at = "and ABC will clearly be a semicircle"
-kind = "unformalized"
-note = "The statement says that D is the centre; it does not say that the segment is then a semicircle."
+kind = "helper"
+helper = "Prop25.kind"
+note = "`Prop25.kind` proves `Arc.Semicircle` and that the circumference measures two right angles, since E is D, between A and C. `Prop25.complete` identifies the constructed circle with the given arc's circle, transporting both conclusions to that arc."
 
 [[passage]]
 at = "But, if the angle ABD be less than the angle BAD"
-kind = "unformalized"
-note = "The Lean carries the construction, and the statement says that the centre falls on DB, on B's side of AC; that the segment is greater than a semicircle is not stated."
+kind = "helper"
+helper = "Prop25.kind"
+note = "The core constructs the angle and circle and places E on DB within the segment, on B's side of AC; `Prop25.kind` supplies the resulting `Arc.Greater` classification and measure above two right angles. `Prop25.complete` identifies the constructed circle with the given arc's circle, transporting both conclusions to that arc."
+
+[figure]
+case = "the angle ABD greater than, equal to and less than the angle BAD, from left to right, as in Heath's three figures; the centre falls across AC from B, at D, and on B's side of AC"
+every_case = true
 
 [review]
 stage = "exceptions"
-commit = "2c3686e"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:fbc6c624a0c71cb9"
+commit = "35824383"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:239c66918e1815cb"

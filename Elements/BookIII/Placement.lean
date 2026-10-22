@@ -97,7 +97,7 @@ theorem Placement.dist_off_off {A B C D P Q P' Q' : Point} (hlen : ‖A B‖ = �
 
 /-- **Any two points of the half-plane keep their distance**, by where they lie: both on the
 base, one on it, or both off it. Whether a place is on the base is decided by the distances
-(`Prop20.collinear_congr`). -/
+(`BookI.Prop20.collinear_congr`). -/
 theorem Placement.dist {A B C D E F P Q P' Q' : Point} (hE : ¬ Collinear A B E)
     (hlen : ‖A B‖ = ‖C D‖) (hP : OnSideOrLine P E A B) (hQ : OnSideOrLine Q E A B)
     (hP' : OnSideOrLine P' F C D) (hQ' : OnSideOrLine Q' F C D)

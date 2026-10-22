@@ -95,7 +95,8 @@ Proposed record entries (review/SCHEMA.md):
 - [representation] tags:
 - [overlap] rule, also, kind (states / gives / step, always named), note (required for a step):
 - [[passage]] at, kind (helper / grouped / case / given / different / unformalized), helper, note, unused (bindings that stand for Euclid's words and are not used again):
-- [figure] case, and note (a line for under the figure, where the drawing departs from Heath's):
+- [figure] case, every_case, and note (a line for under the figure, where the drawing
+  departs from Heath's):
 
 Records made stale: the review records whose Lean file or statement this change touched,
 even by a comment; their owner reads and stamps them (WORKFLOW.md, section 6).
@@ -196,6 +197,7 @@ tags = []                      # from review/terms.toml
 
 # [figure]
 # case = "the case the figure shows"
+# every_case = true            # only when the figure draws every case the theorem covers
 # note = "where our drawing places a point otherwise than Heath's, and why"
 
 [review]
