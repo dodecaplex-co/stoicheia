@@ -192,7 +192,7 @@ The section needs at least one of the two, and is left out when it has neither.
 | `commit` | git commit, 7 to 40 hex digits | stamp | The commit whose files the record was last confirmed against: the reviewer's reading, or a later reading of each changed file against the record (docs/WORKFLOW.md, section 6). |
 | `lean` | `"sha256:"` and 16 hex digits | stamp | `heath.file_hash` of `Elements/Book<book>/PropNN.lean`, which holds the theorem, its helpers, porism and companions. |
 | `reviewer` | string | yes | Who reviewed it: a person's name, or the model, as `"Claude Opus 5.5"`. From stage `full`, the model and its role, as `"Claude Opus 5.5, records crew"`, so that a reader can tell the reviewer from the proofs' authors. |
-| `run` | string | from stage `full` | The run the review was made in: the brief and stage, and the workflow, as `"brief 0005 stage 5, workflow wf_…"`. |
+| `run` | string | from stage `full` | The assignment and run the review was made under: its brief, stage and workflow when those governed the work; otherwise its card, orders, train or other recorded authority. Do not invent a brief or stage. |
 | `items` | table | no | Acceptance items, each `"pass"`, `"fail"` or `"n/a"`. |
 
 `items` may be omitted or empty at either stage. `heath.load_review` checks each key's

@@ -228,8 +228,9 @@ matches, `check_fidelity.py` reports that the statement or the Lean file has cha
 it was reviewed, and the record is read again. At the stage `exceptions` a record declares
 every departure; at the stage `full` it classifies every substantive passage. The record's
 `reviewer` names who read it; from the stage `full` it names the model or person and the
-role, and `run` names the brief, stage and workflow, so that a reader can tell the reviewer
-from the authors of the proof.
+role, and `run` gives the review's actual assignment and provenance as the
+[record schema](../review/SCHEMA.md) requires, so that a reader can tell the reviewer from
+the authors of the proof.
 
 **Stamps.** A stamp says that a record has been read against the files as they now are.
 

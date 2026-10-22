@@ -202,7 +202,7 @@ stage = "exceptions"           # or "full"
 commit = "…"
 lean = "sha256:…"
 reviewer = "…"                 # from stage "full": the model or person, and the role
-# run = "brief …, stage …, workflow …"   # from stage "full"
+# run = "…"   # from stage "full": actual assignment and provenance; see the schema above
 # [review.items]               # acceptance (brief 0005, stage 6), in a "full" record
 # Keys fixed by docs/ACCEPTANCE.md, P11 to P16:
 # statement, passages, representations, commentary, figures, signoff = "pass" / "fail" / "n/a"
