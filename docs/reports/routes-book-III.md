@@ -756,10 +756,11 @@ which records the decision.
 7. **Optional**: the lemma on aligned arcs, as in the table; and, if the staged III.8 lands,
    the same change there.
 
-**What could not be settled here.** Whether FORMALIZATION, section 5, permits the bracketed
-calls is the coordinator's question. The second figure of each pair is computed by the walk,
+**What could not be settled here.** The coordinator settled the policy on 22 October 2026:
+#131's later train will drop the five bracketed calls. Their implementation and compiled
+verification remain for that train. The second figure of each pair is computed by the walk,
 not built from changed Lean. How far the audit pins shrink is inferred, for they are not in
-`facts.json`; `lake build Audit` will tell. And nothing proposed here has been compiled.
+`facts.json`; `lake build Audit` will tell.
 
 ## Checks
 
