@@ -227,12 +227,12 @@ The representations Books I–III rest on:
 | superposition | `Tacit.superposition`, a restricted inference in System E's style, used directly only in I.4 and I.8 | a checked derivation over symbols exports one equality of lengths, angles or triangles about the given figure; it constructs nothing inside the placement and no exported formula names the placed corners or side ([the rule](../Elements/Foundations/Tacit/Superposition.lean), [Book I's reading](briefs/book-I.md#representations)) | |
 | the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `exists_rect`, `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
 | a rectilineal figure | given with its division into triangles, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | that every figure can be so divided, and that another division gives the same sum, are not proved; Hilbert proved the second, for his measure of area | `figure-with-dissection` |
-| a circle's centre | `exists_centre` gives one for every circle; most statements still supply one as a hypothesis, `∃ O, Centre O α`, or take Postulate 3's | III.1 finds it by Euclid's construction | `centre-given` where the statement supplies it |
+| a circle's centre | `exists_centre` gives one for every circle; named centres remain where other hypotheses or conclusions use them geometrically | III.1 finds it by Euclid's construction; proofs cite III.1 where Heath does, and obtain other centres from the rule or the geometric data | |
 | a circumference | twice the angle standing on it, `circumference`, `standing`, and for an arc `Arc.measure`; no radius; equal circumferences in III.26 and III.28 are equal in measure and congruent, `Arc.Congruent` | proved facts in `Circumferences.lean`; `Arc.measure_eq_iff` and `Arc.congruent_iff`, in `Arcs.lean` after III.29, say what equal measures and congruence come to | `angle-measure`, `redundant-hypothesis` |
 | a segment | its circle, the ends of its base and a point naming its side, `Arc`, with its points, `InSegment`, and its circumference's, `OnArc`; equal segments read through Common Notion 4 as segments that coincide, `Arc.Congruent` | `placement`, from I.4 and I.8, lays one on another in III.24; only III.24 and `Arcs.lean` may cite it | `segment-with-circle` |
 | an angle of a straight line and a circumference | `MixedAngle`, the region it opens near its vertex, compared there with a rectilineal angle | the companions of III.16 and III.31 prove the comparisons; no addition, ratio or motion of mixed angles is claimed | `mixed-angles-local` |
-| circles cutting | `CirclesCut`: meeting at two points, each circle with a point within the other | `CirclesCut.symm` exchanges the circles; the bridge `CirclesCut.of_meet` in `Audit/` derives this reading from two different circles meeting at two points, given their centres, by III.7 and III.8 | |
-| circles touching | meeting without crossing anywhere (the whole-circle reading Heath reports as Todhunter's); contact within has a point of the inner circle within the outer and none outside it; contact without has no point within both | `within_point` in `Audit/`, by III.10, gives the point within for the earlier reading, given centres; these later bridges compare readings, not steps in III.5 or III.6. III.13 still proves uniqueness of contact | `touching-whole-circles` |
+| circles cutting | `CirclesCut`: meeting at two points, each circle with a point within the other | `CirclesCut.symm` exchanges the circles; the bridge `CirclesCut.of_meet` in `Audit/` derives this reading from two different circles meeting at two points, obtaining centres internally, by III.7 and III.8 | |
+| circles touching | meeting without crossing anywhere (the whole-circle reading Heath reports as Todhunter's); contact within has a point of the inner circle within the outer and none outside it; contact without has no point within both | `within_point` in `Audit/`, by III.10, gives the point within for the earlier reading, with no centre input; these later bridges compare readings, not steps in III.5 or III.6. III.13 still proves uniqueness of contact | `touching-whole-circles` |
 
 The details, and the reasons, are in the book briefs.
 
@@ -246,7 +246,8 @@ For a construction, say:
 - which properties show that it solves the problem.
 
 The existence of a background object is not circular. III.1 meaningfully shows that the
-point it constructs is the centre of a circle known to have one.
+point it constructs is the centre of a given circle; `exists_centre` supplies the
+background existence within the proof.
 
 Where a problem recovers an object from partial information, keep apart the construction
 core, which receives only the data the problem gives, and the correctness argument, which may

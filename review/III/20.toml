@@ -1,22 +1,21 @@
 [statement]
 scope = "full"
-note = "The centre is on A's side of BC, where the angle at the centre stands on the same circumference as BAC and is less than two right angles, as Euclid's are."
+note = "The given centre E is on A's side of BC: its angle stands on the same circumference as BAC and is less than two right angles, as Euclid's are."
 fingerprint = "sha256:fb6f51cf124385c5"
 
 [route]
 kind = "euclid"
 
-[representation]
-tags = ["centre-given"]
-note = "The centre E is given, as the enunciation names it."
-
 [[passage]]
 at = "For let AE be joined and drawn through to F"
-kind = "grouped"
+kind = "case"
 note = "Euclid leaves out E on AB or on AC, which his proof plainly covers (Heath, vol. 2, p. 49); the Lean writes it out with his argument for one isosceles triangle."
+
+[figure]
+case = "E within the angle BAC and outside the angle BDC"
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
-reviewer = "Claude Opus 5.5"
+commit = "d0508d6c"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:ccd8afe1c9a04254"

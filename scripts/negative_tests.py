@@ -4,7 +4,7 @@ Each test makes one small change that must be caught, runs the check that should
 catch it, and puts everything back. Run from the repo root after `lake build` and
 `lake env lean Certificate/Facts.lean`, with `Certificate/axioms.lock` and the review
 records current. CI's `negative` job runs it on every push to main, and on a pull request
-or a branch's push of class R3 and above (scripts/risk.py); the cadence runs it on main
+of class R3 and above (scripts/risk.py); the cadence runs it on main
 every six hours.
 
 1. An edited Heath word: `check_fidelity.py` fails on I.1.
