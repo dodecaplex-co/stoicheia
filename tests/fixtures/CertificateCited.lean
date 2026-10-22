@@ -11,10 +11,11 @@ C.N. 4 fixture, over the repository's compiled foundations, which an unmodified 
 
 The axioms of `CitedFixture` are the cases of the definition of a construction rule
 (docs/FORMALIZATION.md, section 9), declared here so that the test does not depend on
-which rules the lock holds: existence asserted directly, through a definition, through an
-instance's order, twice negated, in an `Iff` and in an `Or`; and existence negated, behind
-an implication, assumed in a hypothesis, or absent. They are stand-ins for the check, not
-laws of the plane, and nothing is proved from them but the fixture's own law of I.7.
+which rules the lock holds: existence asserted directly, through a definition, through
+an applied projection, through an inherited instance's order, twice negated, in an `Iff`
+and in an `Or`; and existence negated, behind an implication, assumed in a hypothesis, or
+absent. They are stand-ins for the check, not laws of the plane, and nothing is proved
+from them but the fixture's own law of I.7.
 
 The entries cite laws in two shapes: through one shared theorem that proves every law of a
 list by cases (I.1), and law by law in their own proof, naming each law's proof (I.2). I.3
@@ -30,8 +31,18 @@ def companions : List (Lean.Name × String) := []
 
 namespace CitedFixture
 
-/-- A planted order on points, given by an instance of this project. -/
-instance : LE Point := ⟨fun A B => ∃ L : Line, OnLine A L ∧ OnLine B L⟩
+structure PointOrder extends LE Point
+
+def pointOrder : PointOrder := ⟨⟨fun A B => ∃ L : Line, OnLine A L ∧ OnLine B L⟩⟩
+
+/-- A planted order on points, inherited through a structure of this project. -/
+instance : LE Point := pointOrder.toLE
+
+structure LineCircleRelation where
+  holds : Line → Circle → Prop
+
+def lineCircleRelation : LineCircleRelation :=
+  ⟨fun L α => ∃ A : Point, OnLine A L ∧ OnCircle A α⟩
 
 /-- Existence behind an implication, inside a definition. -/
 def Empty (L : Line) : Prop := (∃ A : Point, OnLine A L) → False
@@ -39,7 +50,7 @@ def Empty (L : Line) : Prop := (∃ A : Point, OnLine A L) → False
 /- Construction rules. -/
 axiom plain (A B : Point) : A ≠ B → ∃ C : Point, Between A C B
 axiom circles (α β : Circle) : CirclesMeet α β
-axiom line_circle (L : Line) (α : Circle) : LineMeetsCircle L α
+axiom line_circle (L : Line) (α : Circle) : lineCircleRelation.holds L α
 axiom lines (L M : Line) : L ≠ M → LinesMeet L M
 axiom by_instance (A B : Point) : A ≤ B
 axiom twice_negated (L : Line) : ¬ ¬ ∃ A : Point, OnLine A L

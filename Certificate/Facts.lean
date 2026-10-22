@@ -320,12 +320,26 @@ as for a structure given by an opaque word or a variable. -/
 def projField? (env : Environment) (toolchain : NameSet) (s : Expr) (i : Nat) :
     m (Option Expr) := do
   let mut s := s.consumeMData.headBeta
+  let mut pending : List (Nat × Array Expr) := [(i, #[])]
   for _ in [0:readDepth] do
-    let .const n _ := s.getAppFn | return none
-    if let some (.ctorInfo c) := env.find? n then return s.getAppArgs[c.numParams + i]?
-    match ← unfoldHead? env toolchain s with
-    | some s' => s := s'.consumeMData.headBeta
-    | none => return none
+    match s.getAppFn with
+    | .proj _ j t =>
+      pending := (j, s.getAppArgs) :: pending
+      s := t.consumeMData.headBeta
+    | .const n _ =>
+      if let some (.ctorInfo c) := env.find? n then
+        match pending with
+        | [] => return none
+        | (j, args) :: rest =>
+          let some f := s.getAppArgs[c.numParams + j]? | return none
+          let f := (f.beta args).consumeMData.headBeta
+          if rest.isEmpty then return some f
+          pending := rest
+          s := f
+      else match ← unfoldHead? env toolchain s with
+        | some s' => s := s'.consumeMData.headBeta
+        | none => return none
+    | _ => return none
   throwError "certificate: a structure value is too deep to read for construction rules"
 
 /-- Does `e`, read at polarity `pos`, assert `Exists` in positive position? `And` and `Or`
@@ -352,6 +366,10 @@ def assertsExists (env : Environment) (toolchain : NameSet) (fuel : Nat) (pos : 
       let args := e.getAppArgs
       match e.getAppFn with
       | .lam .. => go pos e.headBeta
+      | .proj _ i s =>
+        match ← projField? env toolchain s i with
+        | some f => go pos (f.beta args)
+        | none => return false
       | .const n _ =>
         if n == ``Exists then
           if pos then return true

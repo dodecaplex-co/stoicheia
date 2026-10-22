@@ -29,15 +29,16 @@ own files, so a reached declaration of Lean.Data.Position still ends a walk.
 
 A third fixture, tests/fixtures/CertificateCited.lean, imports the repository's compiled
 foundations themselves. Its own axioms are the cases of a construction rule: existence
-asserted directly, through a definition, through an instance's order, twice negated, in
-an Iff and in an Or, each counted; existence negated (Triangle), behind an implication
-inside a definition, assumed in a hypothesis, or absent, none counted. Its entries cite
-laws through one shared theorem that proves a list of laws by cases (I.1), whose proofs the
-walk finds, and law by law, naming each law's proof (I.2), which is listed alone: each law
-with its proofs, where Lean declares them, and the construction rules beneath them, in the
-order of the Cited type. A proof reached only through another entry is not found (I.3); a
-named proof that leaves another proof reached outside it lists every proof reached, with
-all their rules (I.6); and a law named with no proof found fails the run (I.5).
+asserted directly, through a definition, through an applied projection, through an
+inherited instance's order, twice negated, in an Iff and in an Or, each counted; existence
+negated (Triangle), behind an implication inside a definition, assumed in a hypothesis,
+or absent, none counted. Its entries cite laws through one shared theorem that proves a
+list of laws by cases (I.1), whose proofs the walk finds, and law by law, naming each law's
+proof (I.2), which is listed alone: each law with its proofs, where Lean declares them,
+and the construction rules beneath them, in the order of the Cited type. A proof reached
+only through another entry is not found (I.3); a named proof that leaves another proof
+reached outside it lists every proof reached, with all their rules (I.6); and a law named
+with no proof found fails the run (I.5).
 
 A fourth class reads the forms of tests/certificate_expectations.json as
 scripts/check_fidelity.py does, on small facts and without Lean: a cited law's
@@ -338,6 +339,12 @@ class ConstructionTests(unittest.TestCase):
             with self.subTest(axiom=name):
                 self.assertIn(f"CitedFixture.{name}", rules)
         self.assertIn("Postulate1", rules)
+
+    def test_rule_through_an_inherited_instance_projection(self):
+        self.assertIn("CitedFixture.by_instance", self.facts["construction_rules"])
+
+    def test_rule_through_an_applied_projection(self):
+        self.assertIn("CitedFixture.line_circle", self.facts["construction_rules"])
 
     def test_rules_not_asserting_existence_are_not(self):
         rules = self.facts["construction_rules"]

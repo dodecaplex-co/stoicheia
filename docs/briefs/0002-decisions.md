@@ -4138,7 +4138,11 @@ findings:
   the expectations' new forms and the plants' restoration. The fixture declares fourteen
   stand-in axioms, one for each case of the definition; they are compiled only into the
   test's temporary package, which no library of the edition builds, and the lock is
-  unchanged. The new expectation on `construction_rules` reads facts.json's top level and
+  unchanged. A review correction makes the projection reader continue through nested
+  structure projections and apply the remaining arguments of a projection at an
+  application's head; two of the same stand-in axioms now exercise an inherited order
+  instance and an applied projection. The new expectation on `construction_rules` reads
+  facts.json's top level and
   so has no `ref`; five fixtures of `scripts/test_safe_push.py` that picked the lock's
   III.1 expectations out by `(x["ref"], x["field"])` met it and failed in CI's
   `safe-push-tests` job with a `KeyError`, so they read the `ref` with `x.get("ref")`,
