@@ -37,10 +37,10 @@ note = "Euclid takes the gnomon and GD as the whole square ADEB and counts CF a 
 
 [review]
 stage = "full"
-commit = "206e3080"
+commit = "a91d97b4"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:1300a024e78c97c1"
-run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at 206e3080"
+run = "proof by OpenAI Codex; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at a91d97b4 (reader RT-y9)"
 
 [review.items]
 statement = "pass"
