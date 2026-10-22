@@ -77,6 +77,11 @@ helper = "Prop16.near_inside"
 note = "Euclid infers an interposed straight line from the supposed angle comparisons; the Lean instead uses `Prop16.near_inside` for containment and `near_across` for whole small circles of excess, through I.12, I.17, I.19, I.20 and III.2, for which Heath prints no references here. To put the interior point on the required ray, `Prop16.sameSideOf_of_inside` uses III.2 with `Tacit.lines_meet_of_opposite_sides` (System E, Intersection 1) and `Tacit.pasch4` (System E, Pasch 4); `near_across` takes a crossing of the circumference by `Tacit.line_circle_between` (System E, Intersections 4), all three rules we assume."
 
 [[passage]]
+at = "But such a straight line cannot be interposed"
+kind = "different"
+note = "Euclid invokes the second part to rule out the supposed interposition. The companions use it directly through `Prop16.near_inside` to find a point of the acute angle's straight line within the circle, as the route note explains."
+
+[[passage]]
 at = "therefore there will not be any acute angle contained by straight lines"
 kind = "carried"
 helper = "Prop16.acute"
