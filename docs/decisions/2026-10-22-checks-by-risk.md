@@ -18,20 +18,21 @@
   What changed. `git safe-push` now takes the class of the commit it checks from
   origin/main's copy of `scripts/risk.py`, read out of Git and run from a temporary
   directory, on `git diff origin/main...<commit>`, as CI's `risk` job runs it: never the
-  commit's own copy, and never a label, save that a pull request labelled `release`
-  (given with `--label`, or on the open pull request, which the pre-flight now reads
-  before its checks) is R5. A label can only raise the class. Any failure to compute it
-  is R5, and so is an origin/main with no classifier. The class and why are a step line
-  at the head of step 4, which reaches the summary in the pull request, and the record
-  keeps it as `class`. For R0, R1 and R2, steps 1 to 3 run as before, every guard and
-  scan with them, and step 4 (the builds, `Facts.lean`, the kernel's self-test, the
-  model's run, the rest of section 8 and the negative tests) is skipped, with one line
-  saying the class and that CI runs those checks before the merge. For R3, R4 and R5 the
-  pre-flight is the full one, unchanged. At `--merge`, a record that left step 4 to CI
-  stands in for it only while the class, recomputed then by origin/main's classifier for
-  that head against that base, is still R0 to R2. A pull request labelled `release`
-  merges only on a record of the full pre-flight of its head, and only with a green run
-  of `.github/workflows/safe-push-tests.yml` at that exact head, in which its three jobs,
+  commit's own copy, and never a label, save that a pull request labelled `release` (given
+  with `--label`, or on the open pull request, which the pre-flight now reads before its
+  checks) is R5. A label can only raise the class. Any failure to compute it is R5, and so
+  is an origin/main with no classifier. The class and why are a step line at the head of
+  step 4, which reaches the summary in the pull request, and the record keeps it as
+  `class`. For R0, R1 and R2, steps 1 to 3 run as before, every guard and scan with them,
+  and step 4 (the builds, `Facts.lean`, the kernel's self-test, the model's run, the rest
+  of section 8 and the negative tests) is skipped, with one line saying the class: CI runs
+  the rest of section 8's sequence before the merge, and the negative tests run on main
+  after the merge and on the cadence. For R3, R4 and R5 the pre-flight is the full one,
+  unchanged. At `--merge`, a record that left step 4 to CI stands in for it only while the
+  class, recomputed then by origin/main's classifier for that head against that base, is
+  still R0 to R2. A pull request labelled `release` merges only on a record of the full
+  pre-flight of its head, and only with a green run of
+  `.github/workflows/safe-push-tests.yml` at that exact head, in which its three jobs,
   `safe-push-tests`, `negative-tests` and `formal-model-kernel`, are each there and
   passed, and every other job passed but `report`, which runs only for a red run on main
   (#301). A run at the head runs the head's copy of the workflow, which could drop or
@@ -109,7 +110,7 @@
   every pull request of R3 and above, not on every one.
 
   This entry approves the change to `.github/workflows/ci.yml`: CI runs on a push to main
-  and on the pull request's events, no longer on the push of another branch or a tag;
-  the `risk` job loses its case for a branch's push; its comments say what main's run and
-  a release's gate run; and the comments and the log line of `negative` say where the
-  negative tests run now.
+  and on the pull request's events, no longer on the push of another branch or a tag; the
+  `risk` job loses its case for a branch's push; its comments say what main's run and a
+  release's gate run, and its R5 log line names the two jobs that run in full; and the
+  comments and the log line of `negative` say where the negative tests run now.

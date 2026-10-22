@@ -90,9 +90,11 @@ order, and the first that fails stops it with a message saying why:
    labelled release (given with --label, or on the open pull request) is R5, a label only
    ever raising the class; so is a base with no scripts/risk.py, and any failure to
    compute the class. The class and why are a step line, and the record's "class". For
-   R0 to R2 the rest of this step is left to CI, which runs it on the pull request before
-   the merge, and --merge waits for CI green (docs/decisions/2026-10-22-checks-by-risk.md):
-   one "skip" line says so. Such a change touches no check input and no protected path but
+   R0 to R2 the rest of this step is skipped: CI runs the rest of section 8's sequence on
+   the pull request before the merge, and --merge waits for CI green, while the negative
+   tests run on main after the merge and on the cadence
+   (docs/decisions/2026-10-22-checks-by-risk.md); one "skip" line says so. Such a change
+   touches no check input and no protected path but
    judged content (beyond_low), so keep_apart cannot arise; should origin/main's risk.py
    ever class one that does R0 to R2, the full checks run. For R3 to R5, the full check
    sequence of docs/WORKFLOW.md, section 8, in that worktree, and
@@ -2914,7 +2916,8 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
                  checked: dict | None = None) -> Preflight:
     """Steps 2 to 4 on the commit: the secret scan, the guards and the full checks.
     The class `risk` (risk_class) is reported at the head of step 4: for R0 to R2 the full
-    checks are left to CI (short_path), which runs them before the merge, and for R3 to R5
+    checks are skipped (short_path), CI running the rest of section 8's sequence before the
+    merge and the negative tests running on main after it and on the cadence; for R3 to R5
     they run. `checked`, a record of this commit against this origin/main by origin/main's
     harness, stands in for step 4 alone (--merge; checks_record); steps 2 and 3 always
     run."""

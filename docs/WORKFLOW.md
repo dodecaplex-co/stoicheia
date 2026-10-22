@@ -433,8 +433,9 @@ the repository. For now a red run holds the release alone (whether trains of too
 as well while the cadence is red is left to a later part of #274): trains of every class
 go on landing while the issue is open, each by its own class, and so does the repair,
 which is a train like any other, classed by its files (a repair to a check is R3, to a
-proof R2, and takes that lane). The issue is closed with a link to a later run on main in which all three
-jobs are green, and the release waits for that. The suite's tests read the whole tree,
+proof R2, and takes that lane). The issue is closed with a link to a later run on main
+in which all three jobs are green, and the release waits for that. The suite's tests
+read the whole tree,
 content as well as code: the check
 inputs safe_push guards, the workflows, this page, whose first command block they compare
 with safe_push's `CHECKS` and the `check` job, and content such as `heath/I/01.md`, the
@@ -669,7 +670,7 @@ looked into.
     run of the `safe-push-tests` workflow at that exact head, each of its three jobs passed
     (`gh workflow run safe-push-tests.yml --ref <branch>`; section 8), the head's copy of
     that workflow being origin/main's: a change to it lands first, in a pull request of
-    its own. The job runs on the
+    its own. The `release-gate` job runs on the
     pull request's events, not the issues', so once the last blocker closes it is run
     again (or `release` removed and given again) before `--merge`, which counts its failed
     run on a release pull request. Then the notes are drafted from the generated
@@ -937,8 +938,10 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       class. An origin/main with no `scripts/risk.py`, and any failure to compute the
       class, is R5 too. The class and why are this step's first line, which the pull
       request's summary shows, and the record keeps it. For R0, R1 and R2 the rest of this
-      step is left to CI, which runs it on the pull request before the merge, as section
-      8 says, and `--merge` waits for CI green; one line says so. Such a change touches no
+      step is skipped: CI runs the rest of section 8's sequence on the pull request before
+      the merge, and `--merge` waits for CI green, while the negative tests run on main
+      after the merge and on the cadence, as section 8 says; one line says so. Such a
+      change touches no
       check input and no protected path but the judged content named below, so no check
       change can need keeping apart; should origin/main's classifier ever class one that
       does R0 to R2, the full checks run, and a note says why. For R3, R4 and R5, the full
