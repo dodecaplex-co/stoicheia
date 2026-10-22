@@ -20,7 +20,7 @@ note = "Euclid takes F and G as the centres and treats them as different points,
 [[passage]]
 at = "For suppose it does not, but, if possible, let it pass as FCDG"
 kind = "case"
-note = "Euclid's figure has A off FG; the Lean first excludes A on FG produced either way, the case Heath says Euclid would have left to the reader (vol. 2, p. 29), because `InsideCircle.of_between_centre` would put one centre within the other circle. Each centre is within its own circle by `Tacit.centre_inside` (System E, Generalities 3), and `Prop12.centre_outside` proves it outside the other, so `Tacit.line_circle_between` (System E, Intersections 4) supplies C and D between F and G; both named tacit rules are assumptions."
+note = "Euclid's figure has A off FG; the Lean uses `Tacit.between_cases` (System E, Between 6) to split the three orders of F, A and G on FG and excludes A on FG produced either way, the case Heath says Euclid would have left to the reader (vol. 2, p. 29), because `InsideCircle.of_between_centre` would put one centre within the other circle. Each centre is within its own circle by `Tacit.centre_inside` (System E, Generalities 3), and `Prop12.centre_outside` proves it outside the other, so `Tacit.line_circle_between` (System E, Intersections 4) supplies C and D between F and G; all three named tacit rules are assumptions."
 
 [[passage]]
 at = "But FA was also proved equal to FC"
