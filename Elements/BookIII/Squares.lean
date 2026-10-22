@@ -200,13 +200,13 @@ theorem Arc.eq_of_aligned {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) (hB : a.B = 
     (hcircles : EqualCircles a.circle b.circle) (hkind : Arc.SameKind a b) :
     a.circle = b.circle ∧ (∀ P : Point, OnArc P a ↔ OnArc P b) ∧
       (∀ P : Point, InSegment P a ↔ InSegment P b) := by
-  obtain ⟨O, hO⟩ := ha.1
-  obtain ⟨O', hO'⟩ := hb.1
-  have hB_b : OnCircle a.B b.circle := hB.symm ▸ hb.2.1
-  have hC_b : OnCircle a.C b.circle := hC.symm ▸ hb.2.2.1
+  obtain ⟨O, hO⟩ := exists_centre a.circle
+  obtain ⟨O', hO'⟩ := exists_centre b.circle
+  have hB_b : OnCircle a.B b.circle := hB.symm ▸ hb.1
+  have hC_b : OnCircle a.C b.circle := hC.symm ▸ hb.2.1
   /- Equal circles have equal radii to each end of the common base. -/
-  have hOB : ‖O a.B‖ = ‖O' a.B‖ := hcircles.radii hO hO' ha.2.1 hB_b
-  have hOC : ‖O a.C‖ = ‖O' a.C‖ := hcircles.radii hO hO' ha.2.2.1 hC_b
+  have hOB : ‖O a.B‖ = ‖O' a.B‖ := hcircles.radii hO hO' ha.1 hB_b
+  have hOC : ‖O a.C‖ = ‖O' a.C‖ := hcircles.radii hO hO' ha.2.1 hC_b
   have hcentres : O = O' := by
     rcases hkind with ⟨⟨G, hG, hGK⟩, ⟨H, hH, hHK⟩⟩ | ⟨⟨G, hG, hGbase⟩, ⟨H, hH, hHbase⟩⟩ |
         ⟨⟨G, hG, hGK⟩, ⟨H, hH, hHK⟩⟩
@@ -222,7 +222,7 @@ theorem Arc.eq_of_aligned {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) (hB : a.B = 
       obtain rfl := centre_unique hO hG
       obtain rfl := centre_unique hO' hH
       rw [← hB, ← hC] at hHbase
-      have hBOC := Aligned.centre_between hK.1 hO ha.2.1 ha.2.2.1 hGbase
+      have hBOC := Aligned.centre_between hK.1 hO ha.1 ha.2.1 hGbase
       have hBO'C := Aligned.centre_between hK.1 hO' hB_b hC_b hHbase
       exact Aligned.eq_on_base hBOC hBO'C hOB
     · /- Greater than semicircles: both centres lie on the arcs' side of the base, so
@@ -233,7 +233,7 @@ theorem Arc.eq_of_aligned {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) (hB : a.B = 
       exact BookI.Prop7 ((hGK.trans hK).trans hHK.symm) hOB hOC
   /- The circles have one centre and the same radius to B. -/
   have hcircle : a.circle = b.circle :=
-    circle_eq hO (hcentres.symm ▸ hO') ha.2.1 hB_b rfl
+    circle_eq hO (hcentres.symm ▸ hO') ha.1 hB_b rfl
   /- Naming one side of the base by either K gives the same closed half-plane. -/
   have hside (P : Point) : OnSideOrLine P a.K a.B a.C ↔ OnSideOrLine P b.K b.B b.C := by
     rw [← hB, ← hC]

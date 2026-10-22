@@ -1,14 +1,10 @@
 [statement]
 scope = "full"
-note = "Both angles at the tangent are equal to the angles in the alternate segments, at every point of each segment; the circle comes with a centre."
-fingerprint = "sha256:7ea76618660f96c2"
+note = "Both angles at the tangent are equal to the angles in the alternate segments, at every point of each segment."
+fingerprint = "sha256:a0c5b22bb4f02820"
 
 [route]
 kind = "euclid"
-
-[representation]
-tags = ["centre-given"]
-note = "The circle comes with a centre (`∃ O, Centre O ABCD`), on which III.19 finds the diameter BA."
 
 [[passage]]
 at = "let a point C be taken at random on the circumference BD"
@@ -41,6 +37,6 @@ case = "D on F's side of BA and apart from A, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "39e9dbb"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:f90e259b1de276c5"
+commit = "b9f6a766"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:c66a4535c2813f36"

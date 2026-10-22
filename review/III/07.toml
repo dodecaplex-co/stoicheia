@@ -9,8 +9,9 @@ fingerprint = "sha256:089a6993dc3354e9"
 kind = "euclid"
 note = "Across AD the companion moves C to its partner on B's side, as far from F. Euclid's own I.4 step, which makes FH equal to FG, makes the angles at F equal too, so the partner is as near FA as C (`Prop7.partner`), as Heath reads the comparison across the diameter (vol. 2, p. 17); the comparison on one side finishes."
 
-[representation]
-tags = ["centre-given"]
+[[passage]]
+at = "on AD let a point F be taken"
+kind = "given"
 note = "The centre E is given, as Euclid's setting-out takes it. \"Nearer\" is Euclid's meaning, the less angle at F with the ray FA, unsigned: an obtuse angle is not exchanged for its acute supplement. F is a point strictly within the diameter, between E and D, so not the centre, since F at an end would make the least straight line nothing. The statement speaks of every point of the circle."
 
 [[passage]]
@@ -33,7 +34,6 @@ case = "FB, FC and FG compared on one side of AD, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "4f94369e"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-run = "R2, independent re-read at 4f94369e"
-lean = "sha256:073c88ece99418f8"
+commit = "b9f6a766"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:c17359dc02a3b53d"
