@@ -146,7 +146,7 @@ All 99 of Books I–III, each with its porism and its companions.
 | B1 | Pages | machine | The book's index (with its introduction) and front matter, and README.md's completion summary for the book, are exactly what `render.py` makes. They are generated from facts.json and the records, so the summary is true to them. The introduction, the index and the front matter pass `check_style.py` (S18 and S19 among its rules), and their links resolve. |
 | B2 | Catalogues | machine | The gap catalogue, `docs/reports/gaps-book-<book>.md`, passes `check_style.py`, and every Lean name it gives in backticks is one that Lean knows, asked of Lean with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open (a pattern's placeholder `PropN`, a field of facts.json and a tactic aside). Every record of the book with an `[overlap]` has a row of its own in [the overlap catalogue](reports/overlaps.md), its first cell the reference alone, naming its rules; and no such row is for a proposition whose record declares none. The rows on a rule's use in other proofs (I.13's upper bound on an angle, used in I.47, for example; or its now-proved right-angle rule, used in 17 proofs from II.1 on, 16 calling it themselves) are read by no record, and not counted. |
 | B3 | Read-through | review | Read straight through, the book flows, and the voice is common. |
-| B4 | Limitations | review | The remaining limitations are deliberate, few and stated plainly where they occur: those allowed below and the overlaps of III.2's kind. The decisions of 18 October accepted I.45 and II.14 as full under the convention that a figure comes with a checked finite division; the owner's decision of 20 October instead allows them as restricted until the proof from the figure's outline is proved and reviewed (#116). |
+| B4 | Limitations | review | The remaining limitations are deliberate, few and stated plainly where they occur: those allowed below and the overlaps of III.2's kind. I.45 and II.14 have been full since 22 October 2026, through their outline companions, which take a figure given by its outline alone (#116). |
 
 ## For the whole edition
 
@@ -167,13 +167,8 @@ this table, in a change to the check of its own.
 
 | Proposition | Scope | Tag | Why |
 |---|---|---|---|
-| I.45 | restricted | `figure-with-dissection` | A figure given with its checked division into triangles, its area relative to that division. The outline proof is to come (#116); this row goes when it is proved and reviewed. |
-| II.14 | restricted | `figure-with-dissection` | A figure given with its checked division into triangles, its area relative to that division. The outline proof is to come (#116); this row goes when it is proved and reviewed. |
 | III.16 | partial | `mixed-angles-omitted` | The angle of the semicircle and the horn-like angle are angles of a straight line and a circumference, which our angles are not; a prototype of mixed angles is to decide whether they become full (issue #57). |
 | III.31 | partial | `mixed-angles-omitted` | The angles of the greater and the less segment, likewise. |
-
-For I.45 and II.14, the outline proof must establish that a division into triangles exists
-and that the area is independent of the division chosen (#116).
 
 If the prototype carries III.16 and III.31 to full, their rows go. An overlap is no
 limitation of scope: it is a disclosure, declared in the record's `[overlap]` and the
