@@ -3181,10 +3181,10 @@ def toolchain(repo, sha, wt: Path) -> dict | None:
 
 # The variables the key holds, with their values: each whose name begins so (the Python
 # variables reach the steps run without -I, and the locale's reach the checks' reading
-# and writing of text), and LANG and LANGUAGE by name, so that no other variable that
-# merely begins LANG is written into an entry.
+# and writing of text), ONLY by name, and LANG and LANGUAGE by name, so that no other
+# variable that merely begins LANG is written into an entry.
 KEYED_VARIABLES = ("STOICHEIA_", "LEAN", "LAKE", "PYTHON", "LC_")
-KEYED_NAMES = frozenset({"LANG", "LANGUAGE"})
+KEYED_NAMES = frozenset({"LANG", "LANGUAGE", "ONLY"})
 # The harness's own plumbing, which no check reads: which copy runs (STOICHEIA_HARNESS,
 # set on a hand-over and not by the launcher), where the log is (STOICHEIA_PUSH_LOG, which
 # places the cache itself), and the interpreter the launcher picks (STOICHEIA_PYTHON,

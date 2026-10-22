@@ -7842,6 +7842,38 @@ class Units(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("UnicodeDecodeError", r.stderr)          # the handler ran
         self.assertIn("SEEN \n", r.stdout, r.stdout + r.stderr)  # and imported nothing
+
+    def test_only_is_preserved_and_changes_the_main_checks_key(self):
+        ctx = safe_push.Context(Path("/repo"), "commit", "main", 1, "/origin", None, {})
+
+        def fake_git(repo, *args, **kwargs):
+            if args == ("--version",):
+                return "git version 2.0\n"
+            if args == ("rev-parse", "commit^{tree}"):
+                return "commit-tree\n"
+            self.fail(args)
+
+        keys = []
+        with mock.patch.object(safe_push, "HARNESS_BLOB", "harness-blob"), \
+                mock.patch.object(safe_push, "toolchain", return_value={"lean": "4.35"}), \
+                mock.patch.object(safe_push, "base_tree", return_value="base-tree"), \
+                mock.patch.object(safe_push, "git", side_effect=fake_git):
+            for only in (None, "between", "parallel"):
+                with mock.patch.dict(os.environ, {} if only is None else {"ONLY": only},
+                                     clear=True):
+                    forwarded = safe_push.tool_env()
+                    fields, why = safe_push.main_checks_fields(ctx, Path("/worktree"), [])
+                self.assertEqual(why, "")
+                variables = dict(fields["environment"]["variables"])
+                if only is None:
+                    self.assertNotIn("ONLY", forwarded)
+                    self.assertNotIn("ONLY", variables)
+                else:
+                    self.assertEqual(forwarded["ONLY"], only)
+                    self.assertEqual(variables["ONLY"], only)
+                keys.append(safe_push.sha256_of(fields))
+        self.assertEqual(len(set(keys)), 3)
+
     def configured_check_commands(self):
         checks = []
         for name, command in safe_push.CHECKS:
