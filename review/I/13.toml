@@ -35,10 +35,10 @@ case = "AB leaning towards C, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "7285f05"
-reviewer = "Claude Opus 5.5, records review"
+commit = "6e0cdd27"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:2c2481ea33a0fd8d"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I12-I13, independent re-read at 6e0cdd27"
 
 [review.items]
 statement = "pass"
