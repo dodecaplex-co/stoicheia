@@ -394,8 +394,9 @@ dependencies.
   line followed by `Check.Generator.<ident>` or `(Check.Generator.<ident>`, since those
   files run the generator. Every other forbidden command or attribute is still refused
   there, and an `axiom` is refused everywhere under `model/`. `check_fidelity.py` matches
-  each as a whole word, and `#eval`, `#exit` and `#guard_panic` also closed up to the word
-  after them, since Lean reads the longest command it knows (`#evalx` is `#eval x`), in
+  each as a whole word, and `#eval`, `#exit`, `#guard_panic`, `#time` and
+  `#with_exporting` also closed up to the word after them, since Lean reads the longest
+  command it knows (`#evalx` is `#eval x`), in
   the Lean with its comments and the text of its string and character literals taken
   out, read as Lean reads them, raw strings and escapes among them (`native_decide` even
   in a comment or a string). The code in an interpolated string's `{…}` holes is read
@@ -473,6 +474,28 @@ dependencies.
     lemmas' pins do, or that has none, is not refused;
   - `#guard_panic`, which takes every message of the command it wraps out of the build
     once any one holds the word `PANIC`, an error among them;
+  - `#time` and `#with_exporting`, each of which wraps the command after it: Lean reads
+    the longest token it knows, so `#timeaxiom planted : False` is `#time` and an axiom,
+    which a reader of `#` and one name would miss. No file uses either, so both are
+    refused wherever they stand, closed up to a command or not (#234);
+  - a token declared in the file and ending in a letter, a digit or `_`, a character
+    Python's `\w` takes, once trimmed of blanks as Lean trims it: after
+    `infixl:65 " +x " => Nat.add`, Lean reads `2 +x1set_option` as `2`, `+x`, `1` and
+    `set_option`, so `2 +x1set_option«debug».byAsSorry true in theorem …` builds on
+    `sorryAx`, while the scan, which does not read a file's tokens, takes `x1set_option`
+    for one name. A token is each string literal of
+    `notation`, `infix`, `infixl`, `infixr`, `prefix`, `postfix`, `syntax`, `macro`,
+    `elab`, `binder_predicate`, `declare_simp_like_tactic` or Mathlib's `notation3`, read
+    as Lean reads it, escapes, gaps and raw strings among them, on any line of the
+    command: from the command's word to its first `=>` outside brackets, or, for a
+    `syntax` or `declare_simp_like_tactic`, which has none and may hold a literal after
+    a spaced precedence (`syntax "a" term :max " +x " : term`), to the next command,
+    known by a word of Lean's own that begins one, by `@[` or by a `#` before a letter.
+    Every literal there is read, a `&"…"`, which declares no token, among them, and a
+    string in the next command too when that command begins with a word of a library,
+    as Mathlib's `lemma`. It is refused in every file the scan reads, with no exception,
+    since none declares one: the only tokens they declare are `‖`, `∠`, `△` and `∟`, in
+    `Elements/Foundations/Magnitudes.lean` (#234);
   - `#exit` stops Lean reading the file, though a reader and the checks here read on.
 - **Superposition** only in I.4 and I.8.
 - **Placement,** Euclid's application of one figure to another, only in III.24 and the
@@ -517,7 +540,10 @@ docstring that pins an error, each in each of its forms, in a scratch copy of I.
 numbers, after a projection and after a declared notation ending in `.`, with whitespace
 or a comment beside it, and `axiom` closed up to such a number, with controls that
 preserve ordinary projections; `set_option` and `axiom` closed up to the postfix `⁻¹`, and
-to `#time` and `#with_exporting`;
+to `#time` and `#with_exporting`, which are refused too before a `def` and alone on their
+line; `set_option` closed up to a declared token ending in `℃`; a declared token ending in
+a letter, a digit or `_`, after a notation's other token on its second line too, with
+`set_option` closed up to it;
 the same pin at a new file beside each file of its allow-list, at each file's name in the
 other's folder, in `Audit/` and in `Staging/`, and a pin whose `error:` ends its line;
 a proposition imported by Book Zero; a `sorry` in a
@@ -538,9 +564,11 @@ caught while one in `model/.lake` is not read, that a link named `.lake`, to a
 directory, a file or nothing, is refused in `model/`, `model/Model/` and `model/Check/`,
 that a `#guard_msgs` that checks its messages or passes them on, one under a docstring
 that pins an info message, `error:` in a theorem's own docstring, a comment or a module
-docstring before a `#guard_msgs`, and the words of each of these commands in a comment
-or a string, are not refused, that the pin passes at each file of its allow-list, and
-that the unplanted tree passes.
+docstring before a `#guard_msgs`, a declared token ending in a symbol, a string after a
+notation's `=>`, and the words of each of these commands in a comment or a string, are
+not refused, that the pin passes at each file of its allow-list, that the scan reads the
+literals of a declaration as Lean does, over two lines, after a spaced precedence, raw,
+escaped or with a gap, and no string outside one, and that the unplanted tree passes.
 They plant source files in place, the `.lake` links and the scratch copy of I.1's file
 in small trees of their own, and copy only `facts.json` and that one copy of I.1, never
 `model/.lake`.
@@ -569,14 +597,21 @@ number the competing reading, the longer boundary stays visible too. Whitespace 
 comments end projection adjacency, as they do in Lean. A name ends where Lean 4.35 ends
 it, made only of the characters its `isIdFirst` and `isIdRest` take, so a letter or digit
 that no name holds, as the `¹` of the postfix `⁻¹`, does not join the word after it
-(`1⁻¹set_option` is `1`, `⁻¹` and `set_option`); and `#time` and `#with_exporting`, which
-wrap the command after them, are read as the tokens Lean takes them for, so `#timeaxiom`
-is `#time` and `axiom`. No other token whose last characters could be a name is read so,
-whether Lean's own (`#check`) or one that the file or a library it imports declares, as
-`+x` from `infixl:65 " +x " => Nat.add`: the scan takes `2 +x1set_option` for `+` and one
-name, where Lean reads `+x`, `1` and `set_option`. A lone carriage return (a `\r` not
-followed by `\n`) is refused in any scanned file: Lean refuses one between tokens but
-accepts it inside a comment or a literal, where a `--` comment does not end at it, so a
+(`1⁻¹set_option` is `1`, `⁻¹` and `set_option`); and it ends sooner, before any of the 96
+symbols a Lean name may hold that Python's `\w` does not take, as `℃`, which no file
+uses, so that a word after a declared token ending in one (`2 +℃1set_option`) is seen to
+begin. No other token whose last characters could be a name is read as Lean reads it,
+taking the longest token it knows: Lean reads `#check1set_option` as `#check`, `1` and
+`set_option`, and the scan as `#` and one name. So the scan refuses `#time` and
+`#with_exporting`, which wrap the command after them, wherever they stand, and a token
+the file declares that ends in a letter, a digit or `_`, both in the list above. It
+still does not read Lean's own tokens, as `#check`, nor those of a library a file
+imports, as Mathlib's, nor a token declared by a command the list above does not name;
+nor does it refuse a declared token ending in `'`, `!` or `?`, which a name may hold but
+`\w` does not take: after `infixl:65 " +x' " => Nat.add`, Lean reads `2 +x'1set_option`
+as `2`, `+x'`, `1` and `set_option`, where the scan reads `+` and one name. A lone
+carriage return (a `\r` not followed by `\n`) is refused in any scanned file: Lean
+refuses one between tokens but accepts it inside a comment or a literal, where a `--` comment does not end at it, so a
 reader with universal newlines would end the comment there and let a string open behind
 it that swallows the code, a forbidden command among it. CRLF files are allowed, as Lean
 allows them (it reads `\r\n` as `\n`), and no tracked `.lean` file has a carriage return

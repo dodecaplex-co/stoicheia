@@ -14,20 +14,23 @@
    stop Lean reading a file, or hide an error from the build: `native_decide`,
    `bv_decide`, the word `native`, `(config := …)`, `set_option debug.…` and
    `set_option doc.…` (or `«debug».…` and `«doc».…`, with or without a space after
-   `set_option`), `#eval`, `#exit` and `#guard_panic` (with or without a space before the
-   word after them), `run_cmd`, `elab`, `macro`, `simproc` and its kin,
-   `implemented_by`, `extern`, `unsafe`, the attributes it knows to register code (by a
-   name ending in `elab`, `tactic`, `init`, `proc`, `parser`, `handler`, `unexpander` and
-   others, or beginning `doc_`), and the rest of FORBIDDEN, below; `#guard_msgs` with
-   `drop` (GUARD_DROP) or `substring` (GUARD_SUBSTRING), in every file it reads, with no
-   exception; and `#guard_msgs` under a docstring that pins an error (`guard_docstring`),
-   in every file it reads but the two of GUARD_ERROR_PINS. The scan reads Lean's
+   `set_option`), `#eval`, `#exit`, `#guard_panic`, `#time` and `#with_exporting` (with or
+   without a space before the word after them), `run_cmd`, `elab`, `macro`, `simproc` and
+   its kin, `implemented_by`, `extern`, `unsafe`, the attributes it knows to register code
+   (by a name ending in `elab`, `tactic`, `init`, `proc`, `parser`, `handler`,
+   `unexpander` and others, or beginning `doc_`), and the rest of FORBIDDEN, below;
+   `#guard_msgs` with `drop` (GUARD_DROP) or `substring` (GUARD_SUBSTRING), in every file
+   it reads, with no exception; `#guard_msgs` under a docstring that pins an error
+   (`guard_docstring`), in every file it reads but the two of GUARD_ERROR_PINS; and a
+   token that the file declares, in a string literal of `notation`, `infix`, `syntax` or
+   another command of DECLARES_TOKENS, ending in a letter, a digit or `_` (`\\w`), in every
+   file it reads, with no exception (`declared_tokens`, #234). The scan reads Lean's
    comments and its string and character literals as Lean does (`read_lean`), so a
    literal's text never opens a comment or ends an attribute's brackets, and is not read
    as code, while the code in an interpolated string's `{…}` holes is; a string whose
-   braces Lean could read either way is refused. It ends a name where Lean does, and reads
-   `#time` and `#with_exporting` as the tokens Lean takes them for, so a word closed up to
-   `⁻¹`, or to either of them, is seen to begin (#234). The scan reads each file's bytes
+   braces Lean could read either way is refused. It ends a name where Lean does, or
+   sooner, before a symbol that `\\w` does not take, as `℃`, so a word closed up to `⁻¹`,
+   or to a declared `+℃`, is seen to begin (#234). The scan reads each file's bytes
    decoded as UTF-8, with no newline translation (`lean_text`), so a `--` comment ends
    only at a line feed, as it does for Lean, not at a lone carriage return that Python's
    universal newlines would make one. Such a lone carriage return (a `\\r` not followed by
@@ -161,12 +164,16 @@ MODEL_CHECK_RUN_CMD = re.compile(
 # `doc.` options, spelled in the same ways: with
 # `doc.verso` on, Lean runs the Lean in a docstring, which the scan takes out with the
 # comments), give syntax a meaning in code (`elab`, `macro`), swap code in for a definition,
-# stop Lean reading the file (`#exit`), or take every message of the command it wraps out
-# of the build, an error among them, once any one holds the word `PANIC` (`#guard_panic`).
-# Matched as whole words, in the Lean as `read_lean` gives it, but for `#eval`, `#exit` and
-# `#guard_panic`, which need no word boundary after them: Lean reads the longest command it
-# knows, so `#evalx` is `#eval x`, `#exitx` stops it reading and `#guard_panicin` is
-# `#guard_panic in` (#197). An attribute that registers code Lean runs while a file is
+# stop Lean reading the file (`#exit`), take every message of the command it wraps out
+# of the build, an error among them, once any one holds the word `PANIC` (`#guard_panic`),
+# or wrap the command just after them, so that a word closed up to one, as in
+# `#timeaxiom`, is a command that a reader of `#` and one name would miss (`#time`,
+# `#with_exporting`: no file uses either, the decisions of 22 October 2026, #234).
+# Matched as whole words, in the Lean as `read_lean` gives it, but for `#eval`,
+# `#exit`, `#guard_panic`, `#time` and `#with_exporting`, which need no word boundary
+# after them: Lean reads the longest command it knows, so `#evalx` is `#eval x`, `#exitx`
+# stops it reading and `#guard_panicin` is `#guard_panic in` (#197), and `#timeaxiom` is
+# `#time axiom` (#234). An attribute that registers code Lean runs while a file is
 # built or printed is matched too, known by the end of its name (`command_elab`,
 # `grind_tactic`, `init`, `sym_simproc`, `app_unexpander`, `term_parser`, `cpass`,
 # `missing_docs_handler`, `simprocAttr` and the rest) or, for `builtin_doc` and the `doc_`
@@ -181,7 +188,8 @@ MODEL_CHECK_RUN_CMD = re.compile(
 FORBIDDEN = re.compile(
     r"\bnative_decide\b|\bdecide\s*\+\s*native\b|\bnative\s*:=\s*true\b|\bnative\b|"
     r"\(\s*«?config»?\s*:=|"
-    r"\bset_option(?:\s+«?|\s*«)(?:debug|doc)»?\.|#eval|#exit|#guard_panic|"
+    r"\bset_option(?:\s+«?|\s*«)(?:debug|doc)»?\.|"
+    r"#eval|#exit|#guard_panic|#time|#with_exporting|"
     r"\b(bv_decide|bv_check|run_cmd|run_elab|run_meta|run_tac|by_elab|elab|elab_rules|"
     r"macro|macro_rules|command_elab|term_elab|initialize|builtin_initialize|"
     r"(?:builtin_)?(?:sym_|cbv_)?d?simproc(?:_decl|_pattern)?|set_library_suggestions|"
@@ -333,15 +341,14 @@ def check_fidelity() -> None:
 # of the postfix `⁻¹`, which no name holds, the `ₐ` of `:=ₐ`, which no name begins with,
 # Mathlib's `ᗮ` or a `λ`, Lean reads as part of a token or not at all, so it is blanked:
 # Lean reads `1⁻¹set_option` as `1`, `⁻¹` and `set_option`, and the scan's `\b` then sees
-# `set_option` begin (#234). A token whose last characters could be a name is read as
-# Lean reads it only for COMMAND_TOKENS, the two tokens of Lean 4.35 that begin with `#`
-# and take a command just after them: Lean reads the longest token it knows, so
-# `#timeaxiom` is `#time` and `axiom`, and either of them with a letter, a digit or `_`
-# just after it is blanked, as a number is (#234). The commands FORBIDDEN names, `#eval`
-# and its kin, are never blanked: it matches them with no boundary after them. No other
-# such token is read so, whether Lean's own (`#check`) or one that a file or a library it
-# imports declares, as `+x` from `infixl:65 " +x " => Nat.add`: the scan reads `+` and
-# the name `x1set_option` where Lean reads `+x`, `1` and `set_option`.
+# `set_option` begin (#234). A token whose last characters could be a name is not read as
+# Lean reads it: Lean reads the longest token it knows, so `#check1set_option` is
+# `#check`, `1` and `set_option`, where the scan reads `#` and one name. FORBIDDEN refuses
+# `#time` and `#with_exporting`, which take a command just after them, wherever they
+# stand, as it does `#eval` and its kin, so the reader leaves them whole for it to see; and
+# check_rules refuses a token the file itself declares that ends in a word character
+# (DECLARES_TOKENS). Lean's own tokens, as `#check`, and those of a library the file
+# imports, are not read.
 LETTER_LIKE = ("\u03b1-\u03ba\u03bc-\u03c9"                # Greek small letters, but λ
                "\u0391-\u039f\u03a1\u03a2\u03a4-\u03a9"    # Greek capitals, but Π and Σ
                "\u03ca-\u03fb"                             # Coptic
@@ -354,8 +361,13 @@ LETTER_LIKE = ("\u03b1-\u03ba\u03bc-\u03c9"                # Greek small letters
 SUBSCRIPT_ALNUM = "\u2080-\u2089\u2090-\u209c\u1d62-\u1d6a\u2c7c"
 ID_FIRST = "A-Za-z_" + LETTER_LIKE                          # isIdFirst
 ID_REST = ID_FIRST + "0-9'!?" + SUBSCRIPT_ALNUM             # isIdRest
-IDENT = re.compile(f"[{ID_FIRST}][{ID_REST}]*(?:\\.[{ID_FIRST}][{ID_REST}]*)*")
-COMMAND_TOKENS = re.compile(r"#(?:time|with_exporting)")
+# The scan's name, though, stops before a symbol of those ranges that `\w` does not take, as
+# `℃`, `№` or `⅋`, 96 in all, which no file uses: Lean reads the longest token it knows,
+# so after `infixl:65 " +℃ " => Nat.add` it reads `2 +℃1set_option` as `2`, `+℃`, `1` and
+# `set_option`, and a scan that took `℃1set_option` for one name would miss the command, as
+# the scan before #234 did not. Ending a name early can only show the scan more words.
+FIRST, REST = f"(?=\\w)[{ID_FIRST}]", f"(?:(?=[\\w'!?])[{ID_REST}])"
+IDENT = re.compile(f"{FIRST}{REST}*(?:\\.{FIRST}{REST}*)*")
 NUMBER = re.compile(r"0[bB](?:_*[01])+|0[oO](?:_*[0-7])+|0[xX](?:_*[0-9a-fA-F])+|"
                     r"[0-9](?:_*[0-9])*(?:(?!\.\.)\.(?:[0-9](?:_*[0-9])*)?)?"
                     r"(?:[eE][+-]?[0-9](?:_*[0-9])*)?")
@@ -364,22 +376,69 @@ WORD = re.compile(r"\w")
 RAW = re.compile(r'r(#*)"')
 CHAR = re.compile(r"'(?:\\(?:x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|.)|[^\\\n'])'")
 INTERPOLATED = {"s!", "m!", "f!", "throwError"}
+# The escapes of a Lean 4.35 string literal (`quotedCharCoreFn`): `\\`, `\"`, `\'`, `\n`,
+# `\t` and `\r`, `\x` and two hexadecimal digits, `\u` and four, and a gap, a `\` before a
+# line feed, which Lean reads, with the blanks after it, as nothing.
+ESCAPE = re.compile(r"\\(?:x([0-9a-fA-F]{2})|u([0-9a-fA-F]{4})|(\n[ \t\r\n]*)|(.))", re.S)
+# A token the file declares (#234). Lean reads the longest token it knows, so after
+# `infixl:65 " +x " => Nat.add` it reads `2 +x1set_option` as `2`, `+x`, `1` and
+# `set_option`, where the scan, which does not read a file's tokens, reads `+` and the name
+# `x1set_option`: `set_option«debug».byAsSorry true in theorem …` closed up so builds on
+# `sorryAx`, unseen. So check_rules refuses a token the file declares that ends in a word
+# character, one Python's `\w` takes (WORD), in every file it reads: no tracked file
+# declares one (the decisions of 22 October 2026). A token is declared by a string literal
+# of a command DECLARES_TOKENS names, Lean's own and Mathlib's `notation3`, which
+# `declared_tokens` reads from the command's word to the first `=>` outside brackets, which
+# ends the tokens of a notation, a macro or an elaborator, or to the next command,
+# whichever comes first (DECLARATION_END). A `syntax` command has no `=>` and may hold a
+# literal after a spaced precedence (`syntax "a" term :max " +x " : term`), so it is read
+# to the next command, known by a word of Lean's own that begins one, a keyword in every
+# file, which no command's tokens can hold, or by `@[` or a `#` before a letter: a
+# command whose first word is not among them, as Mathlib's `lemma`, is read as part of the
+# `syntax` before it. Each literal is read, on any line of the command, as Lean reads it,
+# its escapes and gaps resolved (`lean_string`), and a raw string as written; a `&"…"`,
+# which declares no token, is read too. The command's word is read only as Lean reads one,
+# not in a name (`Command.notation`, `«syntax»`).
+DECLARES_TOKENS = re.compile(
+    f"(?<![{ID_REST}.])(?:notation3?|infix[lr]?|prefix|postfix|syntax|macro|elab|"
+    f"binder_predicate|declare_simp_like_tactic)(?![{ID_REST}])(?!\\.[{ID_FIRST}«])")
+# The words of Lean 4.35's built-in tokens that begin a command (Lean.Parser's
+# builtinTokenTable holds each).
+COMMAND_WORDS = (
+    "def theorem abbrev instance example structure class inductive coinductive axiom opaque "
+    "namespace section end open export variable universe set_option attribute import "
+    "noncomputable private protected partial nonrec unsafe mutual deriving notation infix "
+    "infixl infixr prefix postfix syntax macro macro_rules elab elab_rules declare_syntax_cat "
+    "binder_predicate initialize builtin_initialize omit include").split()
+DECLARATION_END = re.compile(
+    f"=>|@\\[|#[A-Za-z]|(?<![{ID_REST}.])(?:{'|'.join(COMMAND_WORDS)})"
+    f"(?![{ID_REST}])(?!\\.[{ID_FIRST}«])")
+NAME = re.compile(r"«[^»]*(?:»|\Z)")
 
 
-def read_lean(src: str) -> tuple[str, list[int]]:
+def read_lean(src: str, strings: list | None = None) -> tuple[str, list[int]]:
     """The Lean as Lean's tokenizer reads it, with its comments (`--` to the end of the
     line, and `/- … -/` blocks, docstrings and nested ones among them), the text of its
     string and character literals, raw strings among them, and each `[` or `]` in a «…»
     name blanked; the code in an interpolated string's `{…}` holes is kept. Newlines stay,
     so lines keep their numbers. Also the offset of each string the scan cannot read for
     certain: one with a `{`, not after INTERPOLATED, whose two readings, plain and with
-    holes, end in different places, since its braces may be text or holes of code."""
+    holes, end in different places, since its braces may be text or holes of code.
+    `strings`, if given, gains each string literal read as code, raw strings among them,
+    as its offset and its text as Lean reads it (`lean_string`), for `declared_tokens`."""
     marks: list[tuple[str, int, int]] = []
     _read_code(src, 0, marks)
     out, unsure = list(src), []
     for kind, i, j in marks:
         if kind == "unsure":
             unsure.append(i)
+            continue
+        if kind in ("string", "raw"):
+            if strings is not None and kind == "raw":
+                strings.append((i, src[i:j]))
+            elif strings is not None:
+                closed = j - 1 > i and src[j - 1] == '"'
+                strings.append((i, lean_string(src[i + 1:j - 1 if closed else j])))
             continue
         for k in range(i, j):
             if out[k] != "\n" and (kind == "text" or out[k] in "[]"):
@@ -403,7 +462,9 @@ def _find(src: str, s: str, i: int) -> int:
 def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
     """Read Lean from `i` to the end or, in a hole, to the `}` that closes it, and return
     that offset. `marks` gains the text of each comment and literal ("text"), each «…»
-    name ("name") and each string the scan cannot read for certain ("unsure")."""
+    name ("name"), each string the scan cannot read for certain ("unsure"), and each
+    string literal, from its opening quote past its closing one ("string"), and raw
+    string's text ("raw")."""
     depth, previous, can_project, field_dot = 0, "", False, False
     while i < len(src):
         c, j = src[i], i + 1
@@ -421,11 +482,13 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
             can_project, field_dot = False, False
         elif c == '"':
             j, previous = _read_string(src, i, marks, previous in INTERPOLATED), c
+            marks.append(("string", i, j))
             can_project, field_dot = True, False
         elif m := RAW.match(src, i):
             close = '"' + m[1]
             k = _find(src, close, m.end())
             marks.append(("text", m.end(), k))
+            marks.append(("raw", m.end(), k))
             j, previous = min(k + len(close), len(src)), c
             can_project, field_dot = True, False
         elif c == "«":
@@ -433,11 +496,6 @@ def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
             marks.append(("name", i, j))
             previous = src[i:j]
             can_project, field_dot = True, False
-        elif m := COMMAND_TOKENS.match(src, i):
-            j, previous = m.end(), m[0]
-            if WORD.match(src, j):
-                marks.append(("text", i, j))
-            can_project, field_dot = False, False
         elif m := IDENT.match(src, i):
             j, previous = m.end(), m[0]
             can_project, field_dot = True, False
@@ -514,6 +572,34 @@ def _read_interpolated(src: str, i: int, marks: list) -> int | None:
     return None
 
 
+def lean_string(body: str) -> str:
+    """A string literal's text between its quotes, as Lean reads it (ESCAPE)."""
+    def escape(m: re.Match) -> str:
+        if m[1] or m[2]:
+            return chr(int(m[1] or m[2], 16))
+        return "" if m[3] else {"n": "\n", "t": "\t", "r": "\r"}.get(m[4], m[4])
+    return ESCAPE.sub(escape, body)
+
+
+def declared_tokens(code: str, strings: list) -> list[tuple[int, str, str]]:
+    """Each string literal of a command that declares tokens (DECLARES_TOKENS), as its
+    offset, the command's word and its text, in order: read in `code`, the Lean as
+    `read_lean` gives it, with its «…» names blanked, from the word to the first
+    DECLARATION_END outside brackets. `strings` is what `read_lean` gave for the literals.
+    A literal within two commands is given once, with the first."""
+    plain = NAME.sub(lambda m: re.sub(r"[^\n]", " ", m[0]), code)
+    found: dict[int, tuple[str, str]] = {}
+    for m in DECLARES_TOKENS.finditer(plain):
+        depth, end = 0, m.end()
+        while end < len(plain) and (depth or not DECLARATION_END.match(plain, end)):
+            depth = max(0, depth + (plain[end] in "([{") - (plain[end] in ")]}"))
+            end += 1
+        for offset, text in strings:
+            if m.end() <= offset < end:
+                found.setdefault(offset, (m[0], text))
+    return [(offset, word, text) for offset, (word, text) in sorted(found.items())]
+
+
 def lean_sources() -> list[Path]:
     """Every `.lean` file and symbolic link of LEAN_TREES, excluding what lies inside the
     directory model/.lake: each folder's root file, then the folder in sorted order. A
@@ -565,7 +651,8 @@ def check_rules() -> None:
                  "use a regular file or directory (docs/FORMALIZATION.md, section 7)")
             continue
         src = lean_text(path)
-        code, unsure = read_lean(src)
+        strings: list[tuple[int, str]] = []
+        code, unsure = read_lean(src, strings)
         for m in LONE_CR.finditer(src):
             fail(f"{rel}:{line_of(src, m.start())}: an isolated carriage return (a `\\r` not "
                  "followed by `\\n`), which Lean accepts inside a comment or a literal "
@@ -608,6 +695,14 @@ def check_rules() -> None:
             fail(f"{rel}:{line_of(src, offset)}: a string the scan cannot read for certain, "
                  "since Lean could read its braces as holes of code (docs/FORMALIZATION.md, "
                  "section 7)")
+        for offset, word, text in declared_tokens(code, strings):
+            token = text.strip(" \t\r\n")
+            if token and WORD.match(token[-1]):
+                fail(f"{rel}:{line_of(src, offset)}: declares the token `{token}` (`{word}`), "
+                     "which ends in a letter, a digit or `_`: Lean reads the longest token it "
+                     f"knows, so a command closed up to it, as in `{token}1set_option`, could "
+                     "be hidden from this scan, which does not read the file's tokens "
+                     "(docs/FORMALIZATION.md, section 7)")
         if rel.startswith("Elements/Figure/"):
             for m in re.finditer(r"^import Elements\.Book", src, re.M):
                 fail(f"{rel}:{line_of(src, m.start())}: Book Zero must not import a proposition")
