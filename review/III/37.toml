@@ -5,13 +5,42 @@ fingerprint = "sha256:3fa81505760e369a"
 
 [route]
 kind = "euclid"
-note = "The proof first splits on whether a centre lies on AC. In Euclid's case, the centre off AC, it takes F from the rule where Euclid takes the centre without a bracket for III.1; III.17 supplies the touching straight line, and III.36 the equality of squares. The case with the centre on AC names that centre F from the split."
+note = "The proof first splits on whether a centre lies on AC. In Euclid's case, the centre off AC, it takes F from the rule where Euclid takes the centre without a bracket for III.1; III.17 supplies the touching straight line, and III.36 the equality of squares. The case with the centre on AC names that centre F from the split. That branch uses III.17, III.18, III.36, the square comparison (I.3, I.4, I.28, I.34 and I.46), I.20, I.8 and III.16's porism as in the other branch; Heath prints no references in his closing sentence, and `Prop36.through_centre` first puts F between A and C by `Tacit.centre_inside` (System E, Generalities 3) and `Tacit.between_of_inside_chord` (System E, Circle 1), both rules we assume."
+
+[[passage]]
+at = "For let DE be drawn touching ABC"
+kind = "helper"
+helper = "Prop17"
+note = "Euclid draws DE touching ABC without a reference in Heath; III.17 supplies its contact E as well as its touching."
+
+[[passage]]
+at = "let the centre of the circle ABC be taken, and let it be F"
+kind = "helper"
+helper = "Tacit.exists_centre"
+note = "The rule supplying Euclid's centre F is `Tacit.exists_centre`, an assumption with no System E number."
+
+[[passage]]
+at = "let FE, FB, FD be joined"
+kind = "given"
+note = "FE, FB and FD are named by their ends, so the Lean needs no separate construction for these joins."
+
+[[passage]]
+at = "therefore DE is equal to DB"
+kind = "helper"
+helper = "BookI.Prop46.sq"
+note = "Euclid passes from equal squares to equal straight lines without a reference in Heath. The Lean uses `BookI.Prop46.sq`, which describes squares by I.46, identifies their areas through `Square.described` (I.4, I.28 and I.34), and applies `BookI.Prop46.side_eq` (also using I.3); Heath prints no references to these propositions here."
+
+[[passage]]
+at = "And FE is equal to FB"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid uses the equality of the radii FE and FB without giving a reason. The Lean obtains it from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
 
 [[passage]]
 at = "and FD is the common base of the triangles"
 kind = "helper"
 helper = "Prop37.triangle"
-note = "Euclid's figure makes DBF a triangle; the Lean proves it: B, with DB equal to DE, is not on the straight line through D and the centre F."
+note = "Euclid's figure makes DBF a triangle; the Lean proves it: B, with DB equal to DE, is not on the straight line through D and the centre F. It uses I.20, for which Heath prints no reference here, with the assumed rules `Tacit.between_cases` (System E, Between 6), `Tacit.len_add_of_between` (System E, Diagram-segment 1) and `Tacit.inside_of_len_lt` (System E, Diagram-segment 4); DEF is a triangle by `Touches.not_inside`, using `Tacit.line_meets_circle_of_inside` (System E, Intersection 3), and `Tacit.centre_inside` (System E, Generalities 3), also rules we assume."
 
 [[passage]]
 at = "And FB produced is a diameter"
@@ -28,7 +57,8 @@ note = "Euclid leaves the case with the centre on AC to the reader; `Prop37.cent
 case = "the centre F off AC, with distinct contacts B and E on opposite sides of DF"
 
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "b9f6a766"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:27dfde68b2204913"
+run = "brief 0005 stage 5, ship R3 (#29)"

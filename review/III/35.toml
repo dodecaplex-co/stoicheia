@@ -5,18 +5,60 @@ fingerprint = "sha256:260bca6886d9f981"
 
 [route]
 kind = "euclid"
+note = "Where Heath cites I.47, `BookI.Prop47.sq` describes the squares by I.46 and identifies their areas through `Square.described` (I.4, I.28 and I.34); Heath prints no references to these four propositions there."
 
 [[passage]]
 at = "Next let AC, DB not be through the centre"
-kind = "helper"
+kind = "case"
 helper = "Prop35.cut"
-note = "Euclid's argument is written once for any straight line through E: it covers Simson's cases, where one straight line passes through the centre, and E at G, and serves for DB. The proof takes F from the rule where Euclid takes the centre without a bracket for III.1."
+note = "Euclid next takes neither straight line through the centre; the Lean also takes AC through F with E distinct from F, one of Simson's intermediate cases. In that branch `Prop35.cut` applies II.5, for which Heath prints no reference at this transition, after `Tacit.centre_inside` (System E, Generalities 3) and `Tacit.between_of_inside_chord` (System E, Circle 1), both rules we assume, put F between A and C; `Definition15`, the assumed rule for equal radii, gives the equal halves."
+
+[[passage]]
+at = "let the centre of ABCD be taken, and let it be F"
+kind = "helper"
+helper = "Tacit.exists_centre"
+note = "Euclid takes the centre without a reference in Heath. The Lean obtains F from `Tacit.exists_centre`, a rule we assume that every circle has a centre, with no System E number."
+
+[[passage]]
+at = "from F let FG, FH be drawn perpendicular"
+kind = "helper"
+helper = "BookI.Prop12"
+note = "Euclid draws FG and FH perpendicular to AC and DB; the Lean draws FG by I.12, for which Heath prints no reference here. It draws FH later inside `Prop35.cut`, at the passage for DB; FB, FC and FE are named by their ends."
+
+[[passage]]
+at = "Then, since a straight line GF through the centre"
+kind = "helper"
+helper = "foot_between"
+note = "Euclid reads G between A and C from the figure. The Lean uses `foot_between`: I.17 and I.19, for which Heath prints no reference here, make FG shorter than a radius, and `Tacit.inside_of_len_lt` (System E, Diagram-segment 4) and `Tacit.between_of_inside_chord` (System E, Circle 1), both rules we assume, put G within the circle and between the ends."
+
+[[passage]]
+at = "Since, then, the straight line AC has been cut into equal parts at G"
+kind = "case"
+note = "Euclid takes E distinct from G for the unequal cut in II.5. When E is G, the Lean uses `sq_self` to make the square on EG nothing and `rect_congr` to identify the rectangle of the equal halves with the square on GC."
+
+[[passage]]
+at = "But the square on FE is equal to the squares on EG, GF"
+kind = "case"
+note = "Euclid uses I.47 for the right triangle FGE. When E is G, the Lean again uses `sq_self`: the square on EG is nothing, and the squares on FE and GF are the same."
+
+[[passage]]
+at = "And FC is equal to FB"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid uses the equality of the radii FC and FB without giving a reason. The Lean obtains it from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
+
+[[passage]]
+at = "For the same reason, also"
+kind = "grouped"
+helper = "Prop35.cut"
+note = "Euclid leaves DB to the same argument without writing it out; the Lean applies `Prop35.cut`, proved once over any letters, with D and B as the ends. It uses I.12, `foot_between` (I.17 and I.19), III.3, II.5 and I.47 as above, including DB through F and E at the perpendicular's foot; Heath prints no further references here."
 
 [figure]
 case = "both straight lines through the centre E (left), and neither through F with E distinct from G and H (right)"
 
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "d0508d6c"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:98c7b45c9b798d58"
+run = "brief 0005 stage 5, ship R3 (#29); line 95 of Prop35.lean, of unknown family, read also by GPT-6 Astra (Codex)"
