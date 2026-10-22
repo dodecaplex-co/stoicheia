@@ -36,7 +36,12 @@ imports and its paragraph on `Routes/`; this report; the decisions page,
 [brief 0002](../briefs/0002-decisions.md), in its routes bullet alone; and
 [docs/reports/overlaps.md](overlaps.md), the coordinator's file, in its sentence on staged
 work, which 5fca8529, a commit of the pre-merge validation (WORKFLOW, section 10), made
-true of `Staging/Routes/` with the coordinator's approval of 21 October 2026. Main did not
+true of `Staging/Routes/` with the coordinator's approval of 21 October 2026. Since then
+the routes bullet has left the decisions page for an entry file of its own,
+[docs/decisions/2026-10-21-routes-book-iii.md](../decisions/2026-10-21-routes-book-iii.md),
+in the same words, as [WORKFLOW](../WORKFLOW.md), section 10, "Decision entries", asks
+once entry files are in use: the branch now leaves the page as it finds it and adds that
+file in its place. Main did not
 have the restatements when this report was written, and these files land after train C6c.
 In this report, **the statement in `Elements/`** or **the proof in `Elements/`** of a
 proposition is the one train C6c leaves in `Elements/BookIII/`, which is the one on this
@@ -1286,5 +1291,7 @@ with the five calls dropped.
   six minor findings are proposed for a follow-up issue, and hold nothing here.
 - **Not yet read independently.** The pre-merge validation's three commits after 11bcfea5
   (4186e342, c8e23b2e and 14a18ce7), which change this report alone and were read in full
-  before they were accepted; the merge e32f4bed, which changes no file of this branch; and
-  this list's last two entries.
+  before they were accepted; the merges e32f4bed and a63196b4, which change no file of this
+  branch but the decisions page, from which a63196b4 takes the routes bullet; the entry
+  file that holds it now, in the same words, and the sentence of the opening that says so;
+  and this list's last two entries.
