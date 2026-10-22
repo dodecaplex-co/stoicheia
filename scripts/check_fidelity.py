@@ -23,7 +23,7 @@
    `#guard_msgs` with `drop` (GUARD_DROP) or `substring` (GUARD_SUBSTRING), in every file
    it reads, with no exception; `#guard_msgs` under a docstring that pins an error
    (`guard_docstring`), in every file it reads but the two of GUARD_ERROR_PINS; and a
-   token that the file declares, in a string literal of `notation`, `infix`, `syntax` or
+   string literal found in the approximate span of `notation`, `infix`, `syntax` or
    another command of DECLARES_TOKENS, ending in a character a name may hold or `\\w`
    takes, as a letter, a digit, `_`, `'`, `!` or `?` (NAME_CHAR), in every file it reads,
    with no exception (`declared_tokens`, #234). The scan reads Lean's
@@ -360,10 +360,10 @@ def check_fidelity() -> None:
 # Mathlib's `ᗮ` or a `λ`, Lean reads as part of a token or not at all, so it is blanked:
 # Lean reads `1⁻¹set_option` as `1`, `⁻¹` and `set_option`, and the scan's `\b` then sees
 # `set_option` begin (#234).
-# check_rules refuses a token the file itself declares that ends in a character a name
-# may hold (DECLARES_TOKENS). Lean's own tokens, and those of a library the file imports,
-# are not read as tokens: docs/FORMALIZATION.md, section 7, says which of them the scan
-# may misread.
+# check_rules conservatively refuses a string literal in the approximate span of a command
+# that may declare tokens when its text ends in a character a name may hold
+# (DECLARES_TOKENS). Lean's own tokens, and those of a library the file imports, are not
+# read as tokens: docs/FORMALIZATION.md, section 7, says which of them the scan may misread.
 LETTER_LIKE = ("\u03b1-\u03ba\u03bc-\u03c9"                # Greek small letters, but λ
                "\u0391-\u039f\u03a1\u03a2\u03a4-\u03a9"    # Greek capitals, but Π and Σ
                "\u03ca-\u03fb"                             # Coptic
@@ -408,18 +408,18 @@ INTERPOLATED = {"s!", "m!", "f!", "throwError"}
 # `\t` and `\r`, `\x` and two hexadecimal digits, `\u` and four, and a gap, a `\` before a
 # line feed, which Lean reads, with the blanks after it, as nothing.
 ESCAPE = re.compile(r"\\(?:x([0-9a-fA-F]{2})|u([0-9a-fA-F]{4})|(\n[ \t\r\n]*)|(.))", re.S)
-# A token the file declares (#234). Lean reads the longest token it knows, so after
+# An approximate token-declaration span (#234). Lean reads the longest token it knows, so after
 # `infixl:65 " +x " => Nat.add` it reads `2 +x1set_option` as `2`, `+x`, `1` and
 # `set_option`, where the scan, which does not read a file's tokens, reads `+` and the name
 # `x1set_option`: `set_option«debug».byAsSorry true in theorem …` closed up so builds on
 # `sorryAx`, unseen, and so does `2 +x'1set_option…` after `" +x' "`. So check_rules
-# refuses a token the file declares that ends in a character a name may hold or Python's
-# `\w` takes (NAME_CHAR), `'`, `!`, `?` and `℃` among them, in every file it reads: no
-# tracked file declares one (the coordinator's decisions of 22 October 2026, the second
-# widening the first from `\w`). A token is declared by a string literal
-# of a command DECLARES_TOKENS names, Lean's own and Mathlib's `notation3`, which
-# `declared_tokens` reads from the command's word to the first `=>` outside brackets, which
-# ends the tokens of a notation, a macro or an elaborator, or to the next command,
+# conservatively refuses every string literal it finds there that ends in a character a
+# name may hold or Python's `\w` takes (NAME_CHAR), `'`, `!`, `?` and `℃` among them, in
+# every file it reads: no tracked file declares such a token (the coordinator's decisions
+# of 22 October 2026, the second widening the first from `\w`). `declared_tokens` reads
+# literals from a command DECLARES_TOKENS names, Lean's own and Mathlib's `notation3`, from
+# the command's word to the first `=>` outside brackets, which ends the tokens of a
+# notation, a macro or an elaborator, or to the next command,
 # whichever comes first (DECLARATION_END). A `syntax` command has no `=>` and may hold a
 # literal after a spaced precedence (`syntax "a" term :max " +x " : term`), so it is read
 # to the next command, known by a word of Lean's own that begins one, a keyword in every
@@ -636,12 +636,14 @@ def lean_string(body: str) -> str:
 
 
 def declared_tokens(code: str, strings: list) -> list[tuple[int, str, str]]:
-    """Each string literal of a command that declares tokens (DECLARES_TOKENS), as its
-    offset, the command's word and its text, in order: read in `code`, the Lean as
+    """Each string literal in an approximate token-declaration span (DECLARES_TOKENS), as
+    its offset, the command's word and its text, in order: read in `code`, the Lean as
     `read_lean` gives it, with its «…» names blanked, from the word to the first
-    DECLARATION_END outside brackets. `strings` is what `read_lean` gave for the literals.
-    A literal within two commands is given once, with the first. In time that grows with
-    the length of `code`, however many commands there are (`_declaration_ends`)."""
+    DECLARATION_END outside brackets. The span can include a literal that declares no
+    token, or one in a following library command that DECLARATION_END does not know.
+    `strings` is what `read_lean` gave for the literals. A literal within two commands is
+    given once, with the first. In time that grows with the length of `code`, however many
+    commands there are (`_declaration_ends`)."""
     plain = NAME.sub(lambda m: re.sub(r"[^\n]", " ", m[0]), code)
     commands = [(m.end(), m[0]) for m in DECLARES_TOKENS.finditer(plain)]
     if not commands:
