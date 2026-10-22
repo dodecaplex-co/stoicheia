@@ -1,6 +1,6 @@
-# commit: a1144ad689552b10eadb6093cca6339db3b8a32a (harness files as committed)
-# harness: 31348f7c08c3b02819d24eb75ac8e02ce8dfc6dc02c937c726e2d8181f93b8a3
-# python: 3.11.9 (CPython, Darwin arm64)
+# commit: 3234193fc57a3e2c37371633772e4a2482b0d9d1 (harness files as committed)
+# harness: 9ec5d9c4a18dbbef546b8dd2bf2bea4d69a3f1326fb526a0001d62285ea487ac
+# python: 3.14.2 (CPython, Darwin arm64)
 # date: 2026-10-21
 
 configurations meeting an axiom's hypotheses in the plane: 6,650,199

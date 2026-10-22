@@ -106,7 +106,7 @@ run.py and hyperbolic.py are new.
 ## What the numbers say
 
 <!-- counts:begin -->
-Counts from `run.py --full --write` at commit `a1144ad68955`, 2026-10-21, Python 3.11.9. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
+Counts from `run.py --full --write` at commit `3234193fc57a`, 2026-10-21, Python 3.14.2. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
 
 In the plane: **6,650,199** configurations met an axiom's hypotheses (1,537,544 in the search, 3,688,278 exhaustive, 1,424,377 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 699,495 configurations met an axiom's hypotheses; `Postulate5` failed 1,189 times and every other axiom held.
 
@@ -207,9 +207,9 @@ Separately, **6,887,189** configurations met a retained derived property's hypot
 | `derived.inside_of_angle_add` | 77,960 | 25,019 |
 <!-- counts:end -->
 
-The full output of each program, headed with the commit, the harness's hash, the seeds
-and the Python that produced it, is in [results/](results/), and
-[results/summary.txt](results/summary.txt) has the same table in plain text.
+The full output of each program, headed with the commit, the seeds and the Python that
+produced it, is in [results/](results/), and [results/summary.txt](results/summary.txt)
+has the same table in plain text.
 
 ## The axioms one by one
 
@@ -614,11 +614,9 @@ the model follows the axiom in the same pull request as the Lean:
 4. **This page.** The axiom's row in [the axioms one by one](#the-axioms-one-by-one), with
    the reason it holds in the plane, a word on the hyperbolic plane where it needs one,
    and the counts in the prose. `run.py --full --write` brings the numbers above and
-   [results/](results/) up to date. CI's `model` job refuses the pull request until then:
-   [results_check.py](results_check.py) fails while a file of results/ names another
-   harness.
+   [results/](results/) up to date.
 5. **The run.** `python3 -I tests/model/run.py --ties` checks the names and the hash in a
-   second, and `--fast` and `python3 -I tests/model/results_check.py` run what CI runs.
+   second, and `--fast` runs what CI runs.
 
 A word that joins the lock's vocabulary, as a definition does when a statement first uses
 it, changes the lock and so its hash, while every axiom, and every word an axiom reaches,
@@ -633,21 +631,13 @@ lands in a pull request of its own ([WORKFLOW](../../docs/WORKFLOW.md), section 
 [model.py](model.py), so a changed definition changes code there, which lands on its own
 too.
 
-Any change to a file of the harness (`HARNESS` in run.py: model.py, search.py, derived.py,
-exhaustive.py, structured.py, mutations.py, grid_check.py, angle_check.py, hyperbolic.py,
-run.py and laws.toml) carries a new `run.py --full --write`, made on the change once it
-is committed, and what it writes, in the same pull request; its decisions entry names
-each file of results/ and this page. results_check.py is not a file of the harness, so a
-change to it alone needs no new run.
-
 ## Running it
 
 From the repository's root, or anywhere:
 
 ```
-python3 -I tests/model/run.py --fast            # what CI runs, about half a minute
-python3 -I tests/model/results_check.py         # and then this: results/ are this harness's
-python3 -I tests/model/run.py --full            # about eight minutes
+python3 -I tests/model/run.py --fast            # what CI runs, under 20 seconds
+python3 -I tests/model/run.py --full            # about seven minutes
 python3 -I tests/model/run.py --full --write    # and save results/ and the counts above
 python3 -I tests/model/run.py --ties            # the ties to the Lean alone, in a second
 ```

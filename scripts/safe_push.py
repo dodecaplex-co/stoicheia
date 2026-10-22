@@ -44,7 +44,12 @@ order, and the first that fails stops it with a message saying why:
    that part, or named by its SHA-256), to an entry, with its reason. A commit's message
    or identity cannot be allowed, and an entry added by the push itself does not count.
    An allowed finding is noted in the pull request by its place, its rule, its value's
-   SHA-256 and the reason, never by its line.
+   SHA-256 and the reason, never by its line. Every git command safe_push.py runs itself
+   (run()) reads with git's replacement objects off, whatever the caller's environment
+   holds, since a push sends the originals (#256); its `git status` check is one of them.
+   The programs it runs as checks are not: they keep the environment tool_env() copies,
+   which holds GIT_NO_REPLACE_OBJECTS under the launcher or after a hand-over, and
+   otherwise only if the caller set it.
 3. Invariant guards against origin/main, in a fresh temporary worktree of the commit. A
    new decision is a dated entry of its own, docs/decisions/<YYYY-MM-DD>-<slug>.md, which
    the push adds (docs/WORKFLOW.md, section 10, "Decision entries"); 0002-decisions.md,
@@ -431,7 +436,29 @@ class NothingToPush(Exception):
 # Running commands
 
 
+def without_replacements(env=None) -> dict:
+    """A copy of `env` (os.environ when None) with GIT_NO_REPLACE_OBJECTS=1 and no
+    GIT_REPLACE_REF_BASE. Git from 2.19 to 2.41 still lets core.useReplaceRefs=true in
+    config override it, which run() pins off (NO_REPLACE_REFS)."""
+    env = dict(os.environ if env is None else env)
+    env.pop("GIT_REPLACE_REF_BASE", None)
+    env["GIT_NO_REPLACE_OBJECTS"] = "1"
+    return env
+
+
+# Git from 2.19 to 2.41 lets core.useReplaceRefs=true in config turn replacements back on
+# despite GIT_NO_REPLACE_OBJECTS; configuration given on git's command line is read last.
+NO_REPLACE_REFS = ("-c", "core.useReplaceRefs=false")
+
+
 def run(cmd, cwd, *, env=None, input=None, binary=False) -> subprocess.CompletedProcess:
+    # A push sends the original objects, but git reads a replacement (refs/replace/, or a
+    # ref under GIT_REPLACE_REF_BASE) in their place: so git runs here with replacements
+    # off, by its environment and by its command line, lest the scan or the hand-over read
+    # a clean stand-in (#256).
+    if cmd and os.path.basename(cmd[0]) == "git":
+        cmd = [cmd[0], *NO_REPLACE_REFS, *cmd[1:]]
+        env = without_replacements(env)
     return subprocess.run(cmd, cwd=cwd, env=env, input=input, capture_output=True,
                           text=not binary)
 
@@ -2922,7 +2949,9 @@ def harness(repo, base: str, rep: Report) -> None:
     print("  this copy of safe_push.py or heath.py differs from origin/main's: running "
           "origin/main's in its place", flush=True)
     path = harness_copy(theirs, theirs_heath) / "safe_push.py"
-    env = dict(os.environ, STOICHEIA_HARNESS="origin/main")
+    # GIT_NO_REPLACE_OBJECTS=1, and no GIT_REPLACE_REF_BASE, for its git commands and its
+    # checks: so an older harness, whose run() sets neither, has them too (#256).
+    env = without_replacements(dict(os.environ, STOICHEIA_HARNESS="origin/main"))
     sys.stdout.flush()
     sys.stderr.flush()
     os.execve(PY, [PY, str(path), *ARGV], env)

@@ -29,6 +29,10 @@ it, put to the script's own patterns and functions:
   as "does not use" for one, "neither … nor" for two and "none of" for more, and words
   III.24's application of one segment to another by `placement` only from what its
   facts.json entry shows, read afresh for each root;
+* the figure cases: render.py's caption under Euclid's figure says "Drawn for one case"
+  before the case the record's [figure] names, or "Drawn for every case" where the record
+  says `every_case`, and heath.py refuses an `every_case` that is not true or false, or
+  that has no `case` for the caption to name;
 * the clearance cases: S26 finds a stroke through a letter, or nearer it than 2 less half
   its width (given as an attribute or inherited), and not one clear of it;
   reads a stroke of none as no stroke and a dashed one whole; closes a path's stroke only
@@ -102,6 +106,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import check_style as style  # noqa: E402
+import heath  # noqa: E402
 import render  # noqa: E402
 import negative_tests as plants  # noqa: E402
 
@@ -2322,6 +2327,65 @@ class Wording(unittest.TestCase):
                 (root / "facts.json").write_text(json.dumps(facts))
                 with patch.object(render, "ROOT", root):
                     self.assertEqual(render.content_wording().get(old, old), want)
+
+
+class FigureCaption(unittest.TestCase):
+    """The caption under Euclid's figure, from the review record's [figure]: "Drawn for
+    one case" before its `case`, or "Drawn for every case" where `every_case` says the
+    figure draws them all, as III.25's draws Euclid's three side by side."""
+
+    CASE = "the angle ABD greater than, equal to and less than the angle BAD"
+
+    def test_the_caption_says_one_case_or_every_case(self):
+        for figure, want in [
+                ({"case": "A outside the circle."}, "Drawn for one case: A outside the circle."),
+                ({"case": "A outside the circle", "every_case": False},
+                 "Drawn for one case: A outside the circle."),
+                ({"case": self.CASE, "every_case": True}, f"Drawn for every case: {self.CASE}."),
+                ({"case": self.CASE + ".", "every_case": True, "note": "N."},
+                 f"Drawn for every case: {self.CASE}. N."),
+                ({"every_case": True, "note": "N."}, "N.")]:
+            with self.subTest(figure=figure):
+                self.assertEqual(render.figure_note({"figure": figure}), want)
+
+    @staticmethod
+    def load(figure: str) -> dict:
+        """load_review on a record of III.25 whose [figure] is `figure`, in a tree of its
+        own that holds Heath's text of III.25 and that record."""
+        text = heath.heath_path("III", 25).read_text()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            (root / "heath" / "III").mkdir(parents=True)
+            (root / "heath" / "III" / "25.md").write_text(text)
+            (root / "review" / "III").mkdir(parents=True)
+            (root / "review" / "III" / "25.toml").write_text(
+                '[statement]\nscope = "full"\n\n[route]\nkind = "euclid"\n\n'
+                f'[figure]\n{figure}\n\n[review]\nstage = "exceptions"\nreviewer = "a test"\n')
+            with patch.object(heath, "ROOT", root), \
+                    patch.object(heath, "REVIEW", root / "review"):
+                return heath.load_review("III", 25, require_stamp=False)
+
+    def test_a_record_reads_every_case_with_its_case(self):
+        for figure, want in [(f'case = "{self.CASE}"\nevery_case = true',
+                              f"Drawn for every case: {self.CASE}."),
+                             (f'case = "{self.CASE}"\nevery_case = false',
+                              f"Drawn for one case: {self.CASE}.")]:
+            with self.subTest(figure=figure):
+                self.assertEqual(render.figure_note(self.load(figure)), want)
+
+    def test_a_record_refuses_every_case_without_its_case_or_not_true_or_false(self):
+        for figure, want in [
+                ('every_case = true\nnote = "N."', "`every_case` needs the `case`"),
+                ("every_case = true", "`every_case` needs the `case`"),
+                ("every_case = false", "give its `case`, its `note`, or both"),
+                (f'case = "{self.CASE}"\nevery_case = "yes"', "`every_case` must be true or false"),
+                (f'case = "{self.CASE}"\nevery_case = 1', "`every_case` must be true or false")]:
+            with self.subTest(figure=figure):
+                with self.assertRaises(heath.ReviewError) as caught:
+                    self.load(figure)
+                self.assertEqual(caught.exception.where, "review/III/25.toml")
+                self.assertTrue(any(want in p for p in caught.exception.problems),
+                                caught.exception.problems)
 
 
 def svg_refusal(kind, attr=None, value=None):
