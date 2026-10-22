@@ -64,10 +64,10 @@ case = "D between C and B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "f3b45b70"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "a421bdd1"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:4fabbaf36ec8e013"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-II04-II08, independent re-read at a421bdd1"
 
 [review.items]
 statement = "pass"
