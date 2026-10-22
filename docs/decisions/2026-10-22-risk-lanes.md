@@ -40,14 +40,12 @@
   own files, at both ends of the change, so the set follows the imports as they change;
   today it holds `Elements/BookI/Prop07.lean`, `Elements/BookI/Prop13.lean` and
   `Elements/Figure/Circles.lean`, among others. It reads those lines by a narrow grammar,
-  and fails closed rather than try to match Lean's, which reads more: while any file among
-  them, at either end of the change, has a header it cannot read cleanly (a module part
-  `«.»`, `«..»` or `«»`, a letter or symbol past ASCII, an `import` with no module after
-  it), or while the tree holds a `.gitattributes` anywhere (an encoding or filter there
-  can make the text Lean reads from the checkout differ from the text Git holds, which the
-  reader reads), `formal-model` runs in full for every change, and the log names the file.
-  So a header that Lean reads otherwise can only widen the set. Otherwise a gated job
-  passes at once and says why in its log. The `check` job also now requires, after the
+  and fails closed rather than try to match Lean's, which reads more. If the import graph
+  is unread, `formal-model` runs in full for every change and the log names the file; the
+  current reader and its fail-closed cases are specified in
+  [WORKFLOW, section 8](../WORKFLOW.md#8-validation-on-the-integrated-revision). So an import graph
+  that Lean reads otherwise can only widen the set. Otherwise a gated job passes at once
+  and says why in its log. The `check` job also now requires, after the
   build and the render, that `git status --porcelain` over the whole worktree print
   nothing, as the pre-flight already requires: that covers the generated pages, as the
   narrower form did, and every other file a check might leave changed or new.
@@ -61,7 +59,7 @@
   required check as passed. The negative tests still run in CI on every pull request of
   R3 and above, and in the pre-flight of `git safe-push` on every pull request; the formal
   model on every one of R4 and above, on every one that touches a file the model imports,
-  and on every one while a header among those files cannot be read; both on a pull request
+  and on every one while the import graph cannot be read; both on a pull request
   whose run starts with the `release` label; every push to main runs both in full, after
   each merge; and the cadence workflow now runs both on main every six hours, beside the
   safe_push tests, where a red run opens or updates the issue labelled `blocks-release`
@@ -73,7 +71,7 @@
   the cadence shows such a break within six hours, and the release waits for its repair.
   The formal model gives up nothing on the merge path for its own inputs: it leaves the
   merge path only of a change of R0 to R3 that touches none of them, while the classifier
-  reads every header among them.
+  reads their import graph or fails closed.
 
   Left to a later part of #276. The card's rule that a red cadence run holds only the
   classes it guards is not built here: for now any red job of the cadence opens or

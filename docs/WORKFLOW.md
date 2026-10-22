@@ -361,12 +361,15 @@ request's head is left to the merge gate, in a later part of #276. `check`, `mod
 `Certificate/axioms.lock` and to `scripts/check_model_kernel.py`, and for a change of any
 class to a file of the main package that the formal model imports, directly or through
 others: `risk` reads them from the model's import lines, at both ends of the change, so
-the set follows the imports as they change. It reads them by a narrow grammar and fails
-closed: while a file among them has a header it cannot read cleanly (a module part `«.»`,
-`«..»` or `«»`, a letter or symbol past ASCII, an `import` with no module after it), or
-while the tree holds a `.gitattributes` anywhere (which can make the text Lean reads
-differ from the text Git holds), `formal-model` runs in full for every change, and
-`risk`'s log names the file, so a header that Lean reads otherwise can only widen the set.
+the set follows the imports as they change. It reads them by a narrow grammar and resolves
+module `A.B` as `A/B.lean`, without interpreting Lake's `srcDir`. It fails closed while
+the import graph cannot be read cleanly: a file among the inputs has a header with, for
+example, a module part `«.»`, `«..»` or `«»`, a letter or symbol past ASCII, or an
+`import` with no module after it; an import has no corresponding file in the tree, unless
+its root is Check, Model, Mathlib, Lean, Init or Std; or the tree holds a `.gitattributes`
+anywhere, which can make the text Lean reads differ from the text Git holds. Then
+`formal-model` runs in full for every change and `risk`'s log names the file, so an import
+graph Lean reads otherwise can only widen the set.
 For a lower class, and for `formal-model` a change that touches none of the model's
 inputs, each job passes at once and says why, since the `safe-push-tests` workflow runs
 both on main every six hours and a red run there holds the release ([the
@@ -374,8 +377,8 @@ decision](decisions/2026-10-22-risk-lanes.md)). Each fails, and is never skipped
 `risk` does not succeed, for GitHub accepts a skipped required check. `python3
 scripts/risk.py --paths <file>...` gives files' classes up front; `python3 scripts/risk.py
 . origin/main` a branch's class, and whether the formal model runs; and `python3
-scripts/risk.py --model-inputs HEAD` the files the model imports, then any among them
-whose header it cannot read.
+scripts/risk.py --model-inputs HEAD` the files the model imports, then any file whose
+import graph it cannot read and why.
 
 The full `acceptance` job runs only in CI. Its ratchet before the consolidation release,
 the switch to the full gate at that release, the reports and the executable definitions
@@ -520,10 +523,12 @@ run of `acceptance` to pass. The ruleset and the remaining merge requirements ar
   so that no path can start a line of CI's log, a file moved, a submodule moved) and
   `--audit` over this repository's tracked files, every one of which a rule must name. It
   tests the formal model's inputs: the forms of a Lean header the classifier reads, and
-  those it cannot read, each of which then runs the model for every change; the files a
-  model imports, directly, through another, or deleted by the change, on a repository of
-  its own; and this repository's, `Elements/BookI/Prop07.lean` among them, whose every
-  header it reads. `negative_tests.py` runs it after the decision entry regressions,
+  those it cannot read, each of which then runs the model for every change; unresolved
+  direct and transitive imports, including one after a Lake `srcDir` change, while known
+  external roots remain accepted; the files a model imports, directly, through another,
+  or deleted by the change, on a repository of its own; and this repository's,
+  `Elements/BookI/Prop07.lean` among them, whose every header it reads.
+  `negative_tests.py` runs it after the decision entry regressions,
   before planting, with `--counts-only` too.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that

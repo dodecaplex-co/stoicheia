@@ -15,10 +15,11 @@ The formal model in model/ imports some of the main package's Lean files, and so
 checked whenever one of them changes, whatever the change's class: model_inputs finds them
 at a revision, from the model's own import lines, so the set follows the imports as they
 change. It reads a header by a narrow grammar and fails closed: while a file among the
-model's imports has a header it cannot read cleanly, the formal model is checked for every
-change, so a header Lean reads otherwise can only widen the set; and so it is while the
-tree holds a .gitattributes anywhere, which can make the text Lean reads from the checkout
-differ from the text Git holds, which this reads.
+model's imports has a header it cannot read cleanly, or an import cannot be resolved to a
+main-package file unless its root is Check, Model, Mathlib, Lean, Init or Std, the formal
+model is checked for every change. So an import graph Lean reads otherwise can only widen
+the set; and so it is while the tree holds a .gitattributes anywhere, which can make the
+text Lean reads from the checkout differ from the text Git holds, which this reads.
 
     python3 scripts/risk.py <worktree> [base]     the class of the worktree's HEAD against
                                                   base (origin/main), then each path's,
@@ -34,8 +35,8 @@ differ from the text Git holds, which this reads.
                                                   falls to the R5 default without a rule
     python3 scripts/risk.py --model-inputs REV    the main package's files the formal model
                                                   imports at REV, directly or through others,
-                                                  then each file among them whose header it
-                                                  cannot read, and why
+                                                  then each file among them whose import
+                                                  graph it cannot read, and why
 
 A rule matches a path whole, by fnmatch's rules, under which `*` matches `/` too, so
 `scripts/*` holds `scripts/audit/jev.py`. Git gives the paths separated by NUL bytes
@@ -108,8 +109,8 @@ class GitFailure(Exception):
 
 
 class Unread(Exception):
-    """A Lean header the reader cannot read cleanly, and why: while a file among the formal
-    model's imports has one, the model is checked for every change."""
+    """A Lean import graph the reader cannot read cleanly, and why: while a file among the
+    formal model's imports has one, the model is checked for every change."""
 
 
 def shown(text: str) -> str:
@@ -346,8 +347,8 @@ def formal_model(top: str, paths, base: str, head: str,
                  cwd: str | None = None) -> tuple[bool, str]:
     """Whether CI's formal-model job must run in full for the change `git diff base...head`,
     and why: for R4 and R5, for a change under model/ or to the axiom lock, for every
-    change while a file the model imports, at the diff's end or at its start, has a header
-    the reader cannot read cleanly, and for a change to a file the model imports, at
+    change while the import graph, at the diff's end or at its start, cannot be read
+    cleanly, and for a change to a file the model imports, at
     either end (at the start, a file the change deletes is still imported)."""
     if top >= "R4":
         return True, f"the class is {top}"
