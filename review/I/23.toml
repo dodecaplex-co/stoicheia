@@ -1,12 +1,12 @@
 # review/I/23.toml
 [statement]
 scope = "full"
-note = "The angle FAG is built with G on the ray from A through B and F on the side of AB where a given point P lies, as I.24, I.31 and I.42 need."
+note = "The angle FAG is built with G on the ray from A through B and F on the side of AB where a given point P lies, as I.24, I.31, I.42 and I.44 need."
 fingerprint = "sha256:a0045621afc2f9d1"
 
 [route]
 kind = "euclid"
-note = "I.22 constructs F and G, I.20 supplies its triangle inequalities, and I.8 proves the angle equality. The proof rests on restricted superposition through I.8 and I.20; the hypothetical placement returns no construction witnesses."
+note = "I.22 builds F and G, with I.20 for its condition on the three lengths, and I.8 gives the equal angle; through I.8 and I.20 the proof rests on superposition."
 
 [[passage]]
 at = "thus it is required to construct on the given straight line AB"
@@ -31,10 +31,10 @@ note = "Euclid applies I.22 without checking its condition on the three lengths.
 
 [review]
 stage = "full"
-commit = "bd86a7b6"
+commit = "34ac6d42"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:03384cc241aed0a4"
-run = "brief 0009 stage full, ship S3 A1-integration re-read"
+lean = "sha256:76721a98bbc6660f"
+run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the proof (#220), independent re-read at 34ac6d42 (reader RT-x5)"
 
 [review.items]
 statement = "pass"

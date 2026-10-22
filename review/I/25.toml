@@ -10,14 +10,14 @@ kind = "euclid"
 at = "For, if not, it is either equal to it or less"
 kind = "helper"
 helper = "Tacit.lt_trichotomy"
-note = "Euclid divides the possibilities for the two angles into greater, equal and less. The Lean uses `Tacit.lt_trichotomy`, a rule we assume for magnitudes (System E §3.5), to obtain the equal or less alternatives when the angle BAC is not greater."
+note = "Euclid divides the possibilities for the two angles into greater, equal and less. The Lean uses `Tacit.lt_trichotomy`, a tacit rule of magnitude, which we assume (System E §3.5), to obtain the equal or less alternatives when the angle BAC is not greater."
 
 [review]
 stage = "full"
-commit = "570e6fa"
-reviewer = "GPT-6 Astra (Codex), records re-read"
-lean = "sha256:12e2dae7d350dbbb"
-run = "brief 0005 stage 5, ship C5 re-read"
+commit = "34ac6d42"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:19c8f35df0568d46"
+run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the proof (#220), independent re-read at 34ac6d42 (reader RT-x5)"
 
 [review.items]
 statement = "pass"

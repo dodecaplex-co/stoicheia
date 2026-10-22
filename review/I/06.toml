@@ -10,7 +10,7 @@ kind = "euclid"
 at = "For, if AB is unequal to AC"
 kind = "helper"
 helper = "Tacit.lt_trichotomy"
-note = "Euclid takes for granted that one of two unequal lengths is greater; the Lean uses `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E §3.5), not a proved lemma."
+note = "Euclid takes for granted that one of two unequal lengths is greater; the Lean uses `Tacit.lt_trichotomy`, a tacit rule of magnitude, which we assume (System E §3.5)."
 
 [[passage]]
 at = "Let AB be greater"
@@ -32,7 +32,7 @@ note = "Our triangle DBC is named by its corners, so no straight line DC is draw
 at = "therefore the base DC is equal to the base AB"
 kind = "grouped"
 helper = "Prop4"
-note = "Euclid obtains the equal base and the equal triangle from the two sides and their included angle. The Lean first shows that DBC is a triangle by `Prop6.figure`, then applies I.4 (`Prop4`) once for both conclusions, though Heath prints no reference for I.4 here."
+note = "Euclid obtains the equal base and the equal triangle from the two sides and their included angle. The Lean first shows that DBC is a triangle by `Prop6.figure`, then applies I.4 (`Prop4`), for which Heath gives no reference here, once for both conclusions."
 
 [[passage]]
 at = "the less to the greater"
@@ -41,15 +41,15 @@ helper = "Prop6.less"
 note = "Euclid takes for granted that DBC is less than ACB; the Lean proves it with areas, the whole triangle being greater than its part."
 
 [figure]
-case = "AB supposed greater than AC, with DB cut off from AB equal to AC, as in Heath's figure"
-note = "Like Heath's, this figure draws Euclid's impossible supposition. DB is drawn shorter than AC, although it is cut off equal to AC."
+case = "DB cut off from AB, for the supposition that AB is greater than AC, as in Heath's figure"
+note = "Like Heath's, this figure is drawn for Euclid's impossible supposition, but keeps the angles at B and C equal, so AB and AC are drawn equal: D stands on AB, and DB, supposed equal to AC, is drawn shorter."
 
 [review]
 stage = "full"
-commit = "4a4bd6ec"
+commit = "34ac6d42"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-run = "brief 0005 stage 6, workflow Q-read-jev, independent re-read at 4a4bd6ec"
-lean = "sha256:8c6d2e5ec99a02cf"
+run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the proof (#220), independent re-read at 34ac6d42 (reader RT-x4)"
+lean = "sha256:4c78a638a8aea9f9"
 
 [review.items]
 statement = "pass"
