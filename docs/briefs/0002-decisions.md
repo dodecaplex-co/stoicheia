@@ -4488,8 +4488,10 @@ findings:
   record and stamped it at `39df05a2`. The
   walk, run again beneath II.14, its six companions and II.5, now finds none of the eight;
   run as a control beneath II.4 and III.1, it still finds the rule there. The census in the
-  [overlap catalogue](../reports/overlaps.md#i13s-rule-in-later-proofs) is recounted: 16
-  proofs reach the rule without passing through another entry, 15 of them calling it
-  themselves, and the full closure is 45 entries (it was 53: II.5, II.14 and II.14's six
-  companions have left it). The pins on #168 come later, once III.1, III.2 and III.1 Por.
+  [overlap catalogue](../reports/overlaps.md#i13s-rule-in-17-proofs) is recounted on all
+  130 certificate entries: 17 proofs reach the rule without passing through another entry,
+  16 of them calling it themselves, and the full closure is 53 entries. Before the change
+  they were 20, 19 and 61: II.5, II.14 and `Prop14.rectangle` have left the first two
+  counts, and II.5, II.14 and II.14's six companions the closure. The pins on #168 come
+  later, once III.1, III.2 and III.1 Por.
   are proved without the eight too.
