@@ -5,7 +5,7 @@
 # commentary.
 [statement]
 scope = "full"
-note = "The parallelograms about the diameter meet at a point K of AC, as Heath reads Euclid's words; Proclus's cases, apart or overlapping, are left to the commentary."
+note = "The parallelograms about the diameter meet at a point K of AC, as Heath reads Euclid's words; Proclus' cases, apart or overlapping, are left to the commentary."
 fingerprint = "sha256:9f1a9c51a2f67858"
 
 [route]
@@ -19,10 +19,10 @@ note = "Euclid takes for granted that the triangle ABC is made up of AEK, the co
 
 [review]
 stage = "full"
-commit = "78fb461d"
+commit = "387a590f"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:06cb87f7d11f0746"
-run = "card 220, cross-family sign-off: proof combines OpenAI Codex's voyage proof at fcd05a9c with the Claude first mate's T43 area reckoning in scratch-04/T36.lean (54a08e61), whose five-rewrite area-cut chain from w₁ within Prop43.cut, three I.34 steps and Common Notion 3 step remain; Claude-authored portions read by GPT-6 Astra (Codex) at b62518e5, final proof read by Claude Opus 5.5; ship XS, reader XS-r-I40-I43, independent re-read at 78fb461d"
+run = "card 220, cross-family sign-off: proof combines OpenAI Codex's voyage proof at fcd05a9c with the Claude first mate's T43 area reckoning in scratch-04/T36.lean (54a08e61), whose five-rewrite area-cut chain from w₁ within Prop43.cut, three I.34 steps and Common Notion 3 step remain; Claude-authored portions read by GPT-6 Astra (Codex) at b62518e5, final proof read by Claude Opus 5.5; ship XS, reader XS-r-I40-I43, independent re-read at 78fb461d; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 387a590f (reader RT-c2)"
 
 [review.items]
 statement = "pass"

@@ -8,7 +8,7 @@ kind = "modified"
 note = "Euclid's argument where the angles at the circumferences are acute; where they are right, BC and EF are diameters, and where obtuse, III.22 passes to the acute angle, as Heath proposes (vol. 2, p. 57). The remainders are equal in measure by Euclid's subtraction, and congruent by III.24 applied to the remaining segments, since a congruence cannot be subtracted."
 
 [representation]
-tags = ["angle-measure", "centre-given"]
+tags = ["angle-measure"]
 note = "\"Equal circumferences\" is read as equal in measure and congruent (`Arc.Congruent`), the congruence through Common Notion 4, as circumferences that coincide. So \"in equal circles\" does real work: in unequal circles equal angles give equal measures, but no congruence. The centres G and H are given, as the enunciation speaks of angles at the centres."
 
 [[passage]]
@@ -32,6 +32,6 @@ case = "acute angles at A and D, with BKC and ELF less than semicircles"
 
 [review]
 stage = "exceptions"
-commit = "7f4fba99"
-reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:bda125b8a98ed658"
+commit = "1c08feeb"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:a4c608069879bee5"

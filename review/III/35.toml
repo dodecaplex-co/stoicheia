@@ -1,23 +1,22 @@
 [statement]
 scope = "full"
-note = "The rectangles AE, EC and DE, EB are equal wherever the two straight lines cut within the circle; the circle comes with a centre."
-fingerprint = "sha256:c435ba685e4d22d2"
+note = "The rectangles AE, EC and DE, EB are equal wherever the two straight lines cut within the circle."
+fingerprint = "sha256:260bca6886d9f981"
 
 [route]
 kind = "euclid"
-
-[representation]
-tags = ["centre-given"]
-note = "The circle comes with a centre (`∃ F, Centre F ABCD`), and the proof finds it by III.1 where Euclid takes it."
 
 [[passage]]
 at = "Next let AC, DB not be through the centre"
 kind = "helper"
 helper = "Prop35.cut"
-note = "Euclid's argument is written once for any straight line through E: it covers Simson's cases, where one straight line passes through the centre, and E at G, and serves for DB."
+note = "Euclid's argument is written once for any straight line through E: it covers Simson's cases, where one straight line passes through the centre, and E at G, and serves for DB. The proof takes F from the rule where Euclid takes the centre without a bracket for III.1."
+
+[figure]
+case = "both straight lines through the centre E (left), and neither through F with E distinct from G and H (right)"
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:963cae5bb2629b9b"
+commit = "d0508d6c"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:98c7b45c9b798d58"

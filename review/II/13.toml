@@ -26,10 +26,10 @@ case = "an acute angle at A, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "7921e32"
-reviewer = "Claude Opus 5.5, records review"
+commit = "a91d97b4"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:d4220867a6bb2695"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "proof by OpenAI Codex; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at a91d97b4 (reader RT-y9)"
 
 [review.items]
 statement = "pass"
