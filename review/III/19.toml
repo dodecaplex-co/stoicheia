@@ -18,12 +18,6 @@ helper = "Touches.not_inside"
 note = "Euclid joins CF with F off the tangent, as the figure shows. The Lean proves F off DE by `Touches.not_inside` and `Tacit.centre_inside`, the rule we assume as System E, Generalities 3; CF itself is named by its ends."
 
 [[passage]]
-at = "Since a straight line DE touches the circle ABC"
-kind = "grouped"
-helper = "Prop18"
-note = "Euclid recalls the tangent and the joined radius, then concludes that FC is perpendicular to DE. One call to III.18 carries the three clauses."
-
-[[passage]]
 at = "But the angle ACE is also right"
 kind = "given"
 note = "CA is perpendicular to DE by hypothesis, so its angle with the chosen point of DE is right."
@@ -49,11 +43,3 @@ commit = "540726b7"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:be52672706f4acba"
 run = "brief 0005 stage 5, ship R3 (#29); the closing step by Prop1.perpendicular, written by Claude, read also by GPT-6 Astra (Codex); lines 58 to 62 of Prop19.lean, of unknown family, read by both"
-
-[review.items]
-statement = "pass"
-passages = "pass"
-representations = "n/a"
-commentary = "pass"
-figures = "pass"
-signoff = "pass"
