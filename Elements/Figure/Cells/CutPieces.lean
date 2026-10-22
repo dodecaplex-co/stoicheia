@@ -63,44 +63,12 @@ first and on the closed side of `B` by the second. -/
 theorem cross_contra {A B P Q R S Z : Point} {L : Line} (hAB : OppositeSides A B L)
     (h₁ : Between P Z Q) (h₂ : Between R Z S) (hP : SameSide P A L) (hQ : SameSide Q A L)
     (hR : Half R B L) (hS : Half S B L) : False := by
-  have hZA : SameSide Z A L := Avoid.same_side_between h₁ hP hQ
+  have hZA : SameSide Z A L := same_side_between h₁ hP hQ
   rcases half_between hR hS h₂ with hZ | hZ
   · exact not_on_line_of_same_side hZA hZ
   · exact not_both hAB hZA hZ
 
 /-! ## The sides of a convex outline -/
-
-/-- Each side of a convex outline has a corner off it. -/
-theorem side_third {cs : List Point} (h : ConvexOutline cs) {s : Point × Point}
-    (_hs : s ∈ sides cs) : ∃ G ∈ cs, G ≠ s.1 ∧ G ≠ s.2 := by
-  match cs, h with
-  | a :: b :: c :: rest, h =>
-    have hn := h.2.1
-    simp only [List.nodup_cons, List.mem_cons, not_or] at hn
-    by_cases ha : a ≠ s.1 ∧ a ≠ s.2
-    · exact ⟨a, List.mem_cons_self, ha⟩
-    by_cases hb : b ≠ s.1 ∧ b ≠ s.2
-    · exact ⟨b, List.mem_cons_of_mem _ List.mem_cons_self, hb⟩
-    refine ⟨c, List.mem_cons_of_mem _ (List.mem_cons_of_mem _ List.mem_cons_self), ?_, ?_⟩
-    · intro hc
-      apply ha
-      refine ⟨fun e => hn.1.2.1 (e.trans hc.symm), fun e => ?_⟩
-      apply hb
-      refine ⟨fun e' => hn.2.1.1 (e'.trans hc.symm), fun e' => hn.1.1 (e.trans e'.symm)⟩
-    · intro hc
-      apply ha
-      refine ⟨fun e => ?_, fun e => hn.1.2.1 (e.trans hc.symm)⟩
-      apply hb
-      exact ⟨fun e' => hn.1.1 (e.trans e'.symm), fun e' => hn.2.1.1 (e'.trans hc.symm)⟩
-  | [], h => have := h.1; simp at this
-  | [_], h => have := h.1; simp at this
-  | [_, _], h => have := h.1; simp at this
-
-/-- The ends of a side of a convex outline differ. -/
-theorem side_ne {cs : List Point} (h : ConvexOutline cs) {s : Point × Point}
-    (hs : s ∈ sides cs) : s.1 ≠ s.2 := by
-  obtain ⟨G, hG, hG₁, hG₂⟩ := side_third h hs
-  exact (h.2.2 s hs G hG G hG hG₁ hG₂ hG₁ hG₂).1
 
 /-- A corner off a side is off its straight line. -/
 theorem corner_off {cs : List Point} (h : ConvexOutline cs) {s : Point × Point}
@@ -113,7 +81,7 @@ theorem region_half {cs : List Point} (h : ConvexOutline cs) {s : Point × Point
     (hs : s ∈ sides cs) {M : Line} (h₁ : OnLine s.1 M) (h₂ : OnLine s.2 M)
     {G : Point} (hG : G ∈ cs) (hG₁ : G ≠ s.1) (hG₂ : G ≠ s.2)
     {Z : Point} (hZ : ConvexRegion cs Z) : Half Z G M :=
-  (closedSide_iff_half (side_ne h hs) h₁ h₂).mp (hZ s hs G hG hG₁ hG₂)
+  (closedSide_iff_half (convex_side_ne h hs) h₁ h₂).mp (hZ s hs G hG hG₁ hG₂)
 
 /-- A point of the region is on the closed side of each side towards any point of the
 region off its straight line. -/
@@ -121,7 +89,7 @@ theorem region_half_of {cs : List Point} (h : ConvexOutline cs) {s : Point × Po
     (hs : s ∈ sides cs) {M : Line} (h₁ : OnLine s.1 M) (h₂ : OnLine s.2 M)
     {W Z : Point} (hW : ConvexRegion cs W) (hWM : ¬ OnLine W M) (hZ : ConvexRegion cs Z) :
     Half Z W M := by
-  obtain ⟨G, hG, hG₁, hG₂⟩ := side_third h hs
+  obtain ⟨G, hG, hG₁, hG₂⟩ := convex_third h s
   exact half_trans (region_half h hs h₁ h₂ hG hG₁ hG₂ hZ)
     ((region_half h hs h₁ h₂ hG hG₁ hG₂ hW).resolve_left hWM)
 
@@ -132,30 +100,19 @@ theorem core_side_of {cs : List Point} (h : ConvexOutline cs) {s : Point × Poin
     {W Z : Point} (hW : ConvexRegion cs W) (hWM : ¬ OnLine W M)
     (hZ : ∀ s ∈ sides cs, ∀ A ∈ cs, A ≠ s.1 → A ≠ s.2 → SameSideOf Z A s.1 s.2) :
     SameSide Z W M := by
-  obtain ⟨G, hG, hG₁, hG₂⟩ := side_third h hs
+  obtain ⟨G, hG, hG₁, hG₂⟩ := convex_third h s
   have hw := (region_half h hs h₁ h₂ hG hG₁ hG₂ hW).resolve_left hWM
   exact same_side_trans (same_side_symm ((hZ s hs G hG hG₁ hG₂).sameSide h₁ h₂))
     (same_side_symm hw)
 
 /-! ## The region is convex -/
 
-/-- The region holds every point between two of its points. -/
-theorem region_between {cs : List Point} (h : ConvexOutline cs) {U W X : Point}
-    (hU : ConvexRegion cs U) (hW : ConvexRegion cs W) (hb : Between U X W) :
-    ConvexRegion cs X := by
-  intro s hs G hG hG₁ hG₂
-  have hne := side_ne h hs
-  obtain ⟨M, h₁, h₂⟩ := Postulate1 s.1 s.2 hne
-  exact (closedSide_iff_half hne h₁ h₂).mpr (half_between
-    ((closedSide_iff_half hne h₁ h₂).mp (hU s hs G hG hG₁ hG₂))
-    ((closedSide_iff_half hne h₁ h₂).mp (hW s hs G hG hG₁ hG₂)) hb)
-
 /-- The region holds every closed triangle on three of its points. -/
 theorem region_triangle {cs : List Point} (h : ConvexOutline cs) {A B C X : Point}
     (hA : ConvexRegion cs A) (hB : ConvexRegion cs B) (hC : ConvexRegion cs C)
     (hX : OnOrInsideTriangle X A B C) : ConvexRegion cs X := by
   intro s hs G hG hG₁ hG₂
-  have hne := side_ne h hs
+  have hne := convex_side_ne h hs
   obtain ⟨M, h₁, h₂⟩ := Postulate1 s.1 s.2 hne
   have conv {Y : Point} (hY : ConvexRegion cs Y) : Half Y G M :=
     (closedSide_iff_half hne h₁ h₂).mp (hY s hs G hG hG₁ hG₂)
@@ -166,7 +123,7 @@ theorem region_subset {cs qs : List Point} (h : ConvexOutline cs) (hq : ConvexOu
     (hW : ∀ W ∈ qs, ConvexRegion cs W) {Z : Point} (hZ : ConvexRegion qs Z) :
     ConvexRegion cs Z := by
   obtain ⟨t, ht, hZt⟩ := (fan_covers hq Z).mpr hZ
-  obtain ⟨h₁, h₂, h₃⟩ := Ext.fan_mem ht
+  obtain ⟨h₁, h₂, h₃⟩ := Extreme.fan_mem ht
   exact region_triangle h (hW _ h₁) (hW _ h₂) (hW _ h₃) hZt
 
 /-- A region within another has its inside within the other's inside. -/
@@ -176,7 +133,7 @@ theorem core_mono {cs qs : List Point} (h : ConvexOutline cs)
     ∀ s ∈ sides cs, ∀ A ∈ cs, A ≠ s.1 → A ≠ s.2 → SameSideOf Z A s.1 s.2 := by
   intro t ht G hG hG₁ hG₂
   obtain ⟨D, E, F, hi, htri⟩ := cut_core_neighbourhood hZ
-  have hne := side_ne h ht
+  have hne := convex_side_ne h ht
   obtain ⟨M, h₁, h₂⟩ := Postulate1 t.1 t.2 hne
   have hh {Y : Point} (hY : OnOrInsideTriangle Y D E F) : Half Y G M :=
     region_half h ht h₁ h₂ hG hG₁ hG₂ (hsub Y (htri Y hY))
@@ -261,15 +218,15 @@ def IsPiece (cs : List Point) (L : Line) (R : Point) (qs : List Point) : Prop :=
 /-- A piece read from another corner is a piece. -/
 theorem IsPiece.rotate {cs : List Point} {L : Line} {R : Point} {us vs : List Point}
     (h : IsPiece cs L R (us ++ vs)) : IsPiece cs L R (vs ++ us) :=
-  ⟨Ext.convex_rotate_prefix us vs h.1,
-    fun Z => (Ext.region_rotate_prefix us vs Z).trans (h.2.1 Z),
+  ⟨Extreme.convex_rotate_prefix us vs h.1,
+    fun Z => (Extreme.region_rotate_prefix us vs Z).trans (h.2.1 Z),
     fun Z => (core_rotate_prefix us vs Z).trans (h.2.2 Z)⟩
 
 /-- A piece of an outline read from another corner is a piece of the outline. -/
 theorem IsPiece.rotate_whole {us vs : List Point} {L : Line} {R : Point} {qs : List Point}
     (h : IsPiece (vs ++ us) L R qs) : IsPiece (us ++ vs) L R qs := by
   refine ⟨h.1, fun Z => ?_, fun Z => ?_⟩
-  · rw [h.2.1 Z, Ext.region_rotate_prefix us vs Z]
+  · rw [h.2.1 Z, Extreme.region_rotate_prefix us vs Z]
   · rw [h.2.2 Z, core_rotate_prefix us vs Z]
 
 /-- **A piece of a convex outline.** Take the corners `ws` of a convex outline that run, in
@@ -300,29 +257,29 @@ theorem piece {cs : List Point} (h : ConvexOutline cs) {L : Line} {R : Point}
     intro hm
     rcases ha with he | hab
     · exact hS₂ws (he ▸ hm)
-    · exact not_on_line_of_same_side (Avoid.same_side_between hab (hR a hm) hfR) hS₂
+    · exact not_on_line_of_same_side (same_side_between hab (hR a hm) hfR) hS₂
   have hbws : b ∉ ws := by
     intro hm
     rcases hb with he | hlb
     · exact hS₁ws (he ▸ hm)
-    · exact not_on_line_of_same_side (Avoid.same_side_between hlb hlR (hR b hm)) hS₁
+    · exact not_on_line_of_same_side (same_side_between hlb hlR (hR b hm)) hS₁
   have haf : (a, f) ∈ sides cs := hch _ (by rw [hf]; exact List.mem_cons_self)
   have hlb : (l, b) ∈ sides cs := hch _ (by
     rw [hl]
     simpa using pair_mem_segments (a :: ws₂) [] l b)
   have hws_sides {s : Point × Point} (hs : s ∈ segments ws) : s ∈ sides cs :=
     hch s (by simpa using segments_infix [a] ws [b] hs)
-  have hreg_ws {W : Point} (hW : W ∈ ws) : ConvexRegion cs W := Ext.corner_region h (hw_cs hW)
+  have hreg_ws {W : Point} (hW : W ∈ ws) : ConvexRegion cs W := Extreme.corner_region h (hw_cs hW)
   have hreg_S₂ : ConvexRegion cs S₂ := by
     rcases ha with he | hab
     · rw [he]
-      exact Ext.corner_region h ha_cs
-    · exact region_between h (Ext.corner_region h ha_cs) (hreg_ws hfw) hab
+      exact Extreme.corner_region h ha_cs
+    · exact convex_region_between h (Extreme.corner_region h ha_cs) (hreg_ws hfw) hab
   have hreg_S₁ : ConvexRegion cs S₁ := by
     rcases hb with he | hlb'
     · rw [he]
-      exact Ext.corner_region h hb_cs
-    · exact region_between h (hreg_ws hlw) (Ext.corner_region h hb_cs) hlb'
+      exact Extreme.corner_region h hb_cs
+    · exact convex_region_between h (hreg_ws hlw) (Extreme.corner_region h hb_cs) hlb'
   have hregQ : ∀ W ∈ S₁ :: S₂ :: ws, ConvexRegion cs W := by
     intro W hW
     rcases List.mem_cons.mp hW with he | hW
@@ -340,7 +297,7 @@ theorem piece {cs : List Point} (h : ConvexOutline cs) {L : Line} {R : Point}
     intro s hs
     rcases mem_chain hf hl hs with hs | hs | hs
     · subst hs
-      obtain ⟨M, haM, hfM⟩ := Postulate1 a f (side_ne h haf)
+      obtain ⟨M, haM, hfM⟩ := Postulate1 a f (convex_side_ne h haf)
       have hS₂M : OnLine S₂ M := by
         rcases ha with he | hab
         · rw [he]
@@ -358,7 +315,7 @@ theorem piece {cs : List Point} (h : ConvexOutline cs) {L : Line} {R : Point}
       · exact corner_off h haf haM hfM (hw_cs hW)
           (fun e => haws (by have e' : W = a := e; rw [← e']; exact hW)) hW₂
     · have hts := hws_sides hs
-      have hne' := side_ne h hts
+      have hne' := convex_side_ne h hts
       obtain ⟨M, h₁, h₂⟩ := Postulate1 s.1 s.2 hne'
       refine ⟨hne', s, hts, M, h₁, h₂, h₁, h₂, ?_⟩
       have hs₁ws := (segment_corners hs).1
@@ -374,7 +331,7 @@ theorem piece {cs : List Point} (h : ConvexOutline cs) {L : Line} {R : Point}
         · have hl_half : Half l b M := corner_half h hts hb_cs (fun e => hbws (e ▸ hs₁ws))
             (fun e => hbws (e ▸ hs₂ws)) (hw_cs hlw) h₁ h₂
           exact not_on_line_of_same_side
-            (cut_strict_between (same_side_refl hbM) hl_half (between_symm hlb'))
+            (Extreme.between_half_open hl_half (same_side_refl hbM) hlb')
       rcases List.mem_cons.mp hW with he | hW
       · rw [he]
         have haM := corner_off h hts h₁ h₂ ha_cs (fun e => haws (e ▸ hs₁ws))
@@ -385,10 +342,10 @@ theorem piece {cs : List Point} (h : ConvexOutline cs) {L : Line} {R : Point}
         · have hf_half : Half f a M := corner_half h hts ha_cs (fun e => haws (e ▸ hs₁ws))
             (fun e => haws (e ▸ hs₂ws)) (hw_cs hfw) h₁ h₂
           exact not_on_line_of_same_side
-            (cut_strict_between (same_side_refl haM) hf_half hab)
+            (Extreme.between_half_open hf_half (same_side_refl haM) (between_symm hab))
       · exact corner_off h hts h₁ h₂ (hw_cs hW) hW₁ hW₂
     · subst hs
-      obtain ⟨M, hlM, hbM⟩ := Postulate1 l b (side_ne h hlb)
+      obtain ⟨M, hlM, hbM⟩ := Postulate1 l b (convex_side_ne h hlb)
       have hS₁M : OnLine S₁ M := by
         rcases hb with he | hlb'
         · rw [he]
@@ -463,23 +420,23 @@ theorem piece {cs : List Point} (h : ConvexOutline cs) {L : Line} {R : Point}
 outline. -/
 theorem convex_erase_head {a : Point} {rest : List Point} (h : ConvexOutline (a :: rest))
     (hl : 3 ≤ rest.length) : ConvexOutline rest := by
-  obtain ⟨init, z, rfl⟩ := Ext.split_last rest (by rintro rfl; simp at hl)
+  obtain ⟨init, z, rfl⟩ := Extreme.split_last rest (by rintro rfl; simp at hl)
   have hr : ConvexOutline (z :: a :: init) := by
-    simpa using Ext.convex_rotate_prefix (a :: init) [z] (by simpa using h)
+    simpa using Extreme.convex_rotate_prefix (a :: init) [z] (by simpa using h)
   cases init with
   | nil => simp at hl
   | cons i init =>
     have hc := cut_convex hr (by rintro rfl; simp at hl)
-    simpa using Ext.convex_rotate_prefix [z] (i :: init) hc
+    simpa using Extreme.convex_rotate_prefix [z] (i :: init) hc
 
 /-- Leaving out any corner of a convex outline of four corners or more leaves a convex
 outline. -/
 theorem convex_erase {pre post : List Point} {a : Point} (h : ConvexOutline (pre ++ a :: post))
     (hl : 3 ≤ (pre ++ post).length) : ConvexOutline (pre ++ post) := by
   have h₁ : ConvexOutline (a :: (post ++ pre)) := by
-    simpa using Ext.convex_rotate_prefix pre (a :: post) h
+    simpa using Extreme.convex_rotate_prefix pre (a :: post) h
   have h₂ := convex_erase_head h₁ (by simp only [List.length_append] at hl ⊢; omega)
-  exact Ext.convex_rotate_prefix post pre h₂
+  exact Extreme.convex_rotate_prefix post pre h₂
 
 /-- Three or more corners of a convex outline, taken in order, make a convex outline. -/
 theorem convex_sublist (pre : List Point) {l₁ l₂ : List Point} (hs : l₁.Sublist l₂)
@@ -695,14 +652,14 @@ theorem form_corner_corner {cs : List Point} (h : ConvexOutline cs) {L : Line} {
   have hclose : X :: (us ++ Y :: vs) ++ [X] = X :: (us ++ Y :: (vs ++ [X])) := by simp
   constructor
   · obtain ⟨f, ws₁, hf⟩ := List.exists_cons_of_ne_nil hus
-    obtain ⟨ws₂, l, hl⟩ := Ext.split_last us hus
+    obtain ⟨ws₂, l, hl⟩ := Extreme.split_last us hus
     have hp := piece (cs := X :: (us ++ Y :: vs)) h (R := R₁) (S₁ := Y) (S₂ := X) (a := X)
       (b := Y) hf hl (nodup_mid (pre := [X]) (post := Y :: vs) (by simpa using hnd))
       (fun s hs => sides_of_infix (pre := []) (post := vs ++ [X]) (by simp) hs)
       (by intro w hw; simp at hw ⊢; grind) hY hX (Ne.symm hXY) hu (Or.inl rfl) (Or.inl rfl)
     simpa using hp.rotate (us := [Y]) (vs := X :: us)
   · obtain ⟨f, ws₁, hf⟩ := List.exists_cons_of_ne_nil hvs
-    obtain ⟨ws₂, l, hl⟩ := Ext.split_last vs hvs
+    obtain ⟨ws₂, l, hl⟩ := Extreme.split_last vs hvs
     exact piece (cs := X :: (us ++ Y :: vs)) h (R := R₂) (S₁ := X) (S₂ := Y) (a := Y)
       (b := X) hf hl (nodup_mid (pre := X :: us ++ [Y]) (post := []) (by simpa using hnd))
       (fun s hs => sides_of_infix (pre := X :: us) (post := []) (by simp) hs)
@@ -721,8 +678,8 @@ theorem form_corner_side {cs : List Point} (h : ConvexOutline cs) {L : Line} {R�
   have hXY : X ≠ Y := by
     intro e
     rw [← e] at hCYD
-    exact Ext.corner_not_between h (by simp) (Ext.corner_region h (by simp))
-      (Ext.corner_region h (by simp)) hCYD
+    exact Extreme.corner_not_between h (by simp) (Extreme.corner_region h (by simp))
+      (Extreme.corner_region h (by simp)) hCYD
   constructor
   · have hne : us ++ [C] ≠ [] := by simp
     obtain ⟨f, ws₁, hf⟩ := List.exists_cons_of_ne_nil hne
@@ -732,7 +689,7 @@ theorem form_corner_side {cs : List Point} (h : ConvexOutline cs) {L : Line} {R�
       (fun s hs => sides_of_infix (pre := []) (post := vs ++ [X]) (by simp) hs)
       (by intro w hw; simp at hw ⊢; grind) hY hX (Ne.symm hXY) hu (Or.inl rfl) (Or.inr hCYD)
     simpa using hp.rotate (us := [Y]) (vs := X :: (us ++ [C]))
-  · obtain ⟨ws₂, l, hl⟩ := Ext.split_last (D :: vs) (by simp)
+  · obtain ⟨ws₂, l, hl⟩ := Extreme.split_last (D :: vs) (by simp)
     exact piece (cs := X :: (us ++ C :: D :: vs)) h (R := R₂) (S₁ := X) (S₂ := Y) (a := C)
       (b := X) (f := D) (ws₁ := vs) rfl hl
       (nodup_mid (pre := X :: us ++ [C]) (post := []) (by simpa using hnd))
@@ -768,11 +725,11 @@ theorem form_side_side {cs : List Point} (h : ConvexOutline cs) {L : Line} {R₁
   have hXY : X ≠ Y := by
     intro e
     rw [← e] at hCYD
-    obtain ⟨M, hEM, hFM⟩ := Postulate1 E F (side_ne h hEF)
+    obtain ⟨M, hEM, hFM⟩ := Postulate1 E F (convex_side_ne h hEF)
     have hDoff := corner_off h hEF hEM hFM (by simp) hDE hDF
     have hCh : Half C D M := corner_half h hEF (by simp) hDE hDF (by simp) hEM hFM
     exact not_on_line_of_same_side
-      (cut_strict_between (same_side_refl hDoff) hCh (between_symm hCYD))
+      (Extreme.between_half_open hCh (same_side_refl hDoff) hCYD)
       (on_line_of_between_ends hEXF hEM hFM)
   constructor
   · have hp := piece (cs := E :: (us ++ C :: D :: vs)) h (R := R₁) (S₁ := Y) (S₂ := X)
@@ -805,7 +762,7 @@ theorem form_side_side {cs : List Point} (h : ConvexOutline cs) {L : Line} {R₁
       simp only [List.cons_append, List.mem_cons, List.mem_append, List.not_mem_nil,
         or_false] at hw hFm ⊢
       grind
-    obtain ⟨ws₂, l, hl⟩ := Ext.split_last (D :: vs ++ [E]) (by simp)
+    obtain ⟨ws₂, l, hl⟩ := Extreme.split_last (D :: vs ++ [E]) (by simp)
     exact piece (cs := E :: (us ++ C :: D :: vs)) h (R := R₂) (S₁ := X) (S₂ := Y) (a := C)
       (b := F) (f := D) (ws₁ := vs ++ [E]) (ws₂ := D :: vs) (l := E) rfl rfl hnd' hch hmem
       hX hY hXY hv (Or.inr hCYD) (Or.inr hEXF)
@@ -823,7 +780,7 @@ theorem rotated {cs pre post l₁ l₂ : List Point} (h : ConvexOutline cs)
   obtain ⟨pre', post', hc', hr'⟩ := rotate_compose hc hr
   refine ⟨pre', post', hc', hr', ?_, fun L R qs hq => ?_⟩
   · rw [← hr']
-    exact cut_convex_rotate_append pre' post' (hc' ▸ h)
+    exact Extreme.convex_rotate_prefix pre' post' (hc' ▸ h)
   · rw [← hr'] at hq
     rw [hc']
     exact hq.rotate_whole
@@ -875,7 +832,7 @@ theorem cut_lists {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Poi
         (half_of_not hAB hc) hd)
   have hPA' : ∀ c ∈ Ps, SameSide c A L := hPA
   have hNB : ∀ c ∈ Ns, Half c B L := fun c hc => half_of_not hAB (hNA c hc)
-  have h₁ : ConvexOutline (Ps ++ Ns) := hrot ▸ cut_convex_rotate_append pre post (hcs ▸ h)
+  have h₁ : ConvexOutline (Ps ++ Ns) := hrot ▸ Extreme.convex_rotate_prefix pre post (hcs ▸ h)
   have hmem : ∀ c ∈ cs, c ∈ Ps ++ Ns := by
     intro c hc
     rw [← hrot]
@@ -944,7 +901,7 @@ theorem cut_lists {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Poi
     by_cases hre : rest = []
     · /- One corner strictly on `B`'s side: read from the last corner on `A`'s side. -/
       subst hre
-      obtain ⟨Ps', E', hPs'⟩ := Ext.split_last Ps hPs
+      obtain ⟨Ps', E', hPs'⟩ := Extreme.split_last Ps hPs
       have hPs'ne : Ps' ≠ [] := by
         rintro rfl
         rw [hNs', hPs'] at hlen
@@ -966,9 +923,9 @@ theorem cut_lists {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Poi
       refine Or.inr (Or.inr ⟨pre', post', D :: vs, [], vs, E', m, m, D, X, Y, hc',
         by rw [hr', hD]; simp, rfl, hEXF, hCYD, Or.inr ⟨htr _ _ _ hf.1, htr _ _ _ hf.2⟩⟩)
     · /- Read from the last corner strictly on `B`'s side. -/
-      obtain ⟨M'', E, hrE⟩ := Ext.split_last rest hre
+      obtain ⟨M'', E, hrE⟩ := Extreme.split_last rest hre
       obtain ⟨F, Ps₁, hF⟩ := List.exists_cons_of_ne_nil hPs
-      obtain ⟨us, C, hC⟩ := Ext.split_last Ps hPs
+      obtain ⟨us, C, hC⟩ := Extreme.split_last Ps hPs
       obtain ⟨pre', post', hc', hr', hconv, htr⟩ :=
         rotated (l₁ := Ps ++ m :: M'') (l₂ := [E]) h hcs (by rw [hrot, hNs', hrE]; simp)
       have hEB : SameSide E B L := hrest E (by rw [hrE]; simp)
@@ -993,7 +950,7 @@ theorem cut_lists {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Poi
         Or.inl ⟨htr _ _ _ hf.1, htr _ _ _ hf.2⟩⟩)
   · /- Side to corner: read from the corner `Y₀`. -/
     subst hr'
-    obtain ⟨us, C, hC⟩ := Ext.split_last Ps hPs
+    obtain ⟨us, C, hC⟩ := Extreme.split_last Ps hPs
     obtain ⟨pre', post', hc', hr', hconv, htr⟩ :=
       rotated (l₁ := Ps ++ m :: M') (l₂ := [Y₀]) h hcs (by rw [hrot, hNs']; simp)
     have hCA : SameSide C A L := hPA' C (by rw [hC]; simp)
@@ -1009,7 +966,7 @@ theorem cut_lists {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Poi
     exact Or.inr (Or.inl ⟨pre', post', us, M', Y₀, C, m, Y, hc', by rw [hr', hC]; simp,
       hCYD, Or.inl ⟨htr _ _ _ hf.1, htr _ _ _ hf.2⟩⟩)
   · /- Corner to side: read from the corner `X`. -/
-    obtain ⟨us, C, hC⟩ := Ext.split_last (m :: rest) (by simp)
+    obtain ⟨us, C, hC⟩ := Extreme.split_last (m :: rest) (by simp)
     obtain ⟨D, vs, hD⟩ := List.exists_cons_of_ne_nil hPs
     obtain ⟨pre', post', hc', hr', hconv, htr⟩ :=
       rotated (l₁ := Ps) (l₂ := X :: m :: rest) h hcs (by rw [hrot, hNs']; simp)

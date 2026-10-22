@@ -30,7 +30,7 @@ noncomputable def triCell (t : Point × Point × Point) : Cell :=
 /-- The cell of a triangle has the triangle's corners, region and area. -/
 theorem triCell_eq {t : Point × Point × Point} (h : Triangle t.1 t.2.1 t.2.2) :
     ∃ P : ConvexCell, triCell t = some P ∧ P.corners = [t.1, t.2.1, t.2.2] ∧
-      (∀ X : Point, P.region X ↔ OnOrInsideTriangle X t.1 t.2.1 t.2.2) ∧
+      (∀ X : Point, P.Region X ↔ OnOrInsideTriangle X t.1 t.2.1 t.2.2) ∧
       P.area = △ t.1 t.2.1 t.2.2 := by
   refine ⟨Classical.choose (triangle_cell h), ?_, Classical.choose_spec (triangle_cell h)⟩
   unfold triCell
@@ -38,8 +38,8 @@ theorem triCell_eq {t : Point × Point × Point} (h : Triangle t.1 t.2.1 t.2.2) 
 
 /-- The inside of a cell with the corners of a triangle is within the triangle. -/
 theorem core_inside {P : ConvexCell} {A B C X : Point} (hc : P.corners = [A, B, C])
-    (h : Triangle A B C) (hX : P.core X) : InsideTriangle X A B C := by
-  unfold ConvexCell.core at hX
+    (h : Triangle A B C) (hX : P.Core X) : InsideTriangle X A B C := by
+  unfold ConvexCell.Core at hX
   rw [hc] at hX
   have side (s : Point × Point) (hs : s ∈ [(A, B), (B, C), (C, A)]) (D : Point)
       (hD : D ∈ [A, B, C]) (h₁ : D ≠ s.1) (h₂ : D ≠ s.2) : SameSideOf X D s.1 s.2 :=
@@ -49,7 +49,7 @@ theorem core_inside {P : ConvexCell} {A B C X : Point} (hc : P.corners = [A, B, 
     side (A, B) (by simp) C (by simp) h.ne₁₃.symm h.ne₂₃.symm⟩
 
 /-- A point inside the cell of a triangle is inside the triangle. -/
-theorem triCell_core (t : Point × Point × Point) {X : Point} (hX : cellCore (triCell t) X) :
+theorem triCell_core (t : Point × Point × Point) {X : Point} (hX : CellCore (triCell t) X) :
     InsideTriangle X t.1 t.2.1 t.2.2 := by
   by_cases h : Triangle t.1 t.2.1 t.2.2
   · obtain ⟨P, hP, hc, -, -⟩ := triCell_eq h
@@ -61,7 +61,7 @@ theorem triCell_core (t : Point × Point × Point) {X : Point} (hX : cellCore (t
 
 /-- The region of the cell of a triangle is the triangle, within or on it. -/
 theorem triCell_region {t : Point × Point × Point} (h : Triangle t.1 t.2.1 t.2.2) (X : Point) :
-    cellRegion (triCell t) X ↔ OnOrInsideTriangle X t.1 t.2.1 t.2.2 := by
+    CellRegion (triCell t) X ↔ OnOrInsideTriangle X t.1 t.2.1 t.2.2 := by
   obtain ⟨P, hP, -, hr, -⟩ := triCell_eq h
   rw [hP]
   exact hr X
@@ -75,8 +75,8 @@ noncomputable def meet : Cell → Cell → Cell
   | _, _ => none
 
 /-- A point inside the common part of two cells or nothings is inside both. -/
-theorem meet_core (c d : Cell) {X : Point} (hX : cellCore (meet c d) X) :
-    cellCore c X ∧ cellCore d X := by
+theorem meet_core (c d : Cell) {X : Point} (hX : CellCore (meet c d) X) :
+    CellCore c X ∧ CellCore d X := by
   cases c with
   | none => exact hX.elim
   | some P =>
@@ -87,7 +87,7 @@ theorem meet_core (c d : Cell) {X : Point} (hX : cellCore (meet c d) X) :
 /-- The region of the common part of two cells or nothings is the common part of their
 regions, off finitely many straight lines. -/
 theorem meet_region (c d : Cell) :
-    AgreeOff (cellRegion (meet c d)) (fun X => cellRegion c X ∧ cellRegion d X) := by
+    AgreeOff (CellRegion (meet c d)) (fun X => CellRegion c X ∧ CellRegion d X) := by
   cases c with
   | none => exact Tiling.agreeOff_of_iff fun X => ⟨False.elim, fun h => h.1⟩
   | some P =>
@@ -117,7 +117,7 @@ theorem sum_present (l : List Cell) :
 /-- A point is in a cell present in a list of cells or nothings exactly when it is in the
 region of one of the list. -/
 theorem present_region (l : List Cell) (X : Point) :
-    (∃ Q ∈ l.filterMap id, Q.region X) ↔ ∃ c ∈ l, cellRegion c X := by
+    (∃ Q ∈ l.filterMap id, Q.Region X) ↔ ∃ c ∈ l, CellRegion c X := by
   constructor
   · rintro ⟨Q, hQ, hX⟩
     obtain ⟨c, hc, he⟩ := List.mem_filterMap.mp hQ
@@ -139,25 +139,25 @@ theorem row_area (P : ConvexCell) (ts : List (Point × Point × Point))
     (hap : ts.Pairwise fun s s' => ∀ Y : Point,
       InsideTriangle Y s.1 s.2.1 s.2.2 → ¬ InsideTriangle Y s'.1 s'.2.1 s'.2.2)
     (f : Point × Point × Point → Cell)
-    (hcore : ∀ t X, cellCore (f t) X → InsideTriangle X t.1 t.2.1 t.2.2)
-    (hreg : ∀ t ∈ ts, AgreeOff (cellRegion (f t))
-      (fun X => P.region X ∧ OnOrInsideTriangle X t.1 t.2.1 t.2.2))
-    (hsub : ∀ X : Point, P.region X → Covers ts X) :
+    (hcore : ∀ t X, CellCore (f t) X → InsideTriangle X t.1 t.2.1 t.2.2)
+    (hreg : ∀ t ∈ ts, AgreeOff (CellRegion (f t))
+      (fun X => P.Region X ∧ OnOrInsideTriangle X t.1 t.2.1 t.2.2))
+    (hsub : ∀ X : Point, P.Region X → Covers ts X) :
     Magnitude.sum (ts.map fun t => cellArea (f t)) = P.area := by
   /- No point is inside two of the cells present: they are inside triangles that lie
   apart. -/
   have hp : ((ts.map f).filterMap id).Pairwise
-      (fun Q R => ∀ X : Point, Q.core X → ¬ R.core X) := by
+      (fun Q R => ∀ X : Point, Q.Core X → ¬ R.Core X) := by
     rw [List.pairwise_filterMap, List.pairwise_map]
     refine hap.imp fun {s s'} hss' Q hQ R hR X hX hX' => ?_
-    have hs : cellCore (f s) X := by
+    have hs : CellCore (f s) X := by
       cases hfs : f s with
       | none => simp [hfs] at hQ
       | some Q' =>
         rw [hfs] at hQ
         cases hQ
         exact hX
-    have hs' : cellCore (f s') X := by
+    have hs' : CellCore (f s') X := by
       cases hfs : f s' with
       | none => simp [hfs] at hR
       | some R' =>
@@ -167,10 +167,10 @@ theorem row_area (P : ConvexCell) (ts : List (Point × Point × Point))
     exact hss' X (hcore s X hs) (hcore s' X hs')
   /- Together they make up `P`, off finitely many straight lines: each is the part of `P` on
   its triangle, and the triangles cover `P`. -/
-  have hag : AgreeOff (fun X => ∃ Q ∈ (ts.map f).filterMap id, Q.region X) P.region := by
+  have hag : AgreeOff (fun X => ∃ Q ∈ (ts.map f).filterMap id, Q.Region X) P.Region := by
     refine Tiling.agreeOff_trans (Tiling.agreeOff_of_iff fun X =>
       (present_region (ts.map f) X).trans (CellFacts.exists_mem_map_iff ts f
-        (fun c => cellRegion c X))) (Tiling.agreeOff_trans
+        (fun c => CellRegion c X))) (Tiling.agreeOff_trans
       (Tiling.agreeOff_exists_mem ts hreg) (Tiling.agreeOff_of_iff fun X => ?_))
     constructor
     · rintro ⟨t, -, hX, -⟩

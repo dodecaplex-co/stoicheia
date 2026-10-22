@@ -361,6 +361,49 @@ theorem closedSide_iff_half {X P A B : Point} {L : Line}
     · exact Or.inl ⟨L, hAL, hBL, h⟩
     · exact Or.inr (SameSideOf.of_line hAB hAL hBL h)
 
+/-- Some corner of a convex outline is neither end of a given side. -/
+theorem convex_third {cs : List Point} (h : ConvexOutline cs) (s : Point × Point) :
+    ∃ G ∈ cs, G ≠ s.1 ∧ G ≠ s.2 := by
+  match cs, h with
+  | a :: b :: c :: rest, h =>
+    have hn := h.2.1
+    simp only [List.nodup_cons, List.mem_cons, not_or] at hn
+    by_cases ha : a ≠ s.1 ∧ a ≠ s.2
+    · exact ⟨a, List.mem_cons_self, ha⟩
+    by_cases hb : b ≠ s.1 ∧ b ≠ s.2
+    · exact ⟨b, List.mem_cons_of_mem _ List.mem_cons_self, hb⟩
+    refine ⟨c, List.mem_cons_of_mem _ (List.mem_cons_of_mem _ List.mem_cons_self), ?_, ?_⟩
+    · intro hc
+      apply ha
+      refine ⟨fun e => hn.1.2.1 (e.trans hc.symm), fun e => ?_⟩
+      apply hb
+      refine ⟨fun e' => hn.2.1.1 (e'.trans hc.symm), fun e' => hn.1.1 (e.trans e'.symm)⟩
+    · intro hc
+      apply ha
+      refine ⟨fun e => ?_, fun e => hn.1.2.1 (e.trans hc.symm)⟩
+      apply hb
+      exact ⟨fun e' => hn.1.1 (e.trans e'.symm), fun e' => hn.2.1.1 (e'.trans hc.symm)⟩
+  | [], h => have := h.1; simp at this
+  | [_], h => have := h.1; simp at this
+  | [_, _], h => have := h.1; simp at this
+
+/-- The ends of a side of a convex outline differ. -/
+theorem convex_side_ne {cs : List Point} (h : ConvexOutline cs) {s : Point × Point}
+    (hs : s ∈ sides cs) : s.1 ≠ s.2 := by
+  obtain ⟨P, hP, h₁, h₂⟩ := convex_third h s
+  exact (h.2.2 s hs P hP P hP h₁ h₂ h₁ h₂).1
+
+/-- The closed region of a convex outline holds every point between two of its points. -/
+theorem convex_region_between {cs : List Point} (h : ConvexOutline cs) {U X W : Point}
+    (hU : ConvexRegion cs U) (hW : ConvexRegion cs W) (hb : Between U X W) :
+    ConvexRegion cs X := by
+  intro s hs P hP hP₁ hP₂
+  have hne := convex_side_ne h hs
+  obtain ⟨L, h₁, h₂⟩ := Postulate1 s.1 s.2 hne
+  exact (closedSide_iff_half hne h₁ h₂).mpr (half_between
+    ((closedSide_iff_half hne h₁ h₂).mp (hU s hs P hP hP₁ hP₂))
+    ((closedSide_iff_half hne h₁ h₂).mp (hW s hs P hP hP₁ hP₂)) hb)
+
 /-- The diagonal AC separates B from every later corner of the convex outline. -/
 theorem ear_opposite {A B C D : Point} {ds : List Point}
     (h : ConvexOutline (A :: B :: C :: ds)) (hD : D ∈ ds) :

@@ -14,7 +14,7 @@ neither Postulate 5 nor superposition is used.
   beyond every side, cutting off ears would leave a triangle with a point beyond all three of
   its sides, which no point is (`not_all_outer`). Where a side it is beyond meets a side it is
   within, the straight line from the corner to the point leaves the whole region on one side
-  (`tangent`). So the point, with the run of corners from one such corner to the next whose
+  (`tangent_same_side`). So the point, with the run of corners from one such corner to the next whose
   sides it is within, makes a convex outline holding the old region (`insert_point`). This is
   not a hull: the point added need not be one of the given points, only beyond it.
 * **A ray that crosses nothing.** From a point outside a convex region holding every corner
@@ -29,7 +29,7 @@ namespace Elements.Figures
 
 open Tacit
 
-namespace Arr
+namespace Arrangement
 
 /-! ## Sides -/
 
@@ -78,8 +78,8 @@ theorem first_seg (q : Point × Point → Prop) : ∀ l : List Point,
 /-- A chain ending in two points has the segment joining them. -/
 theorem last_seg {M : List Point} (hM : M ≠ []) (X : Point) :
     ∃ W : Point, (W, X) ∈ segments (M ++ [X]) := by
-  obtain ⟨M', W, rfl⟩ := Ext.split_last M hM
-  exact ⟨W, by simpa using Ext.closing_segment X W M'⟩
+  obtain ⟨M', W, rfl⟩ := Extreme.split_last M hM
+  exact ⟨W, by simpa using Extreme.closing_segment X W M'⟩
 
 /-- **A junction**: when some sides of an outline of distinct corners pass a test and some
 fail it, some side failing it is followed by a side passing it. -/
@@ -205,7 +205,7 @@ region, but `X`, strictly on one side of the straight line `XP`. A point of the 
 `XP` would lie towards `P` from `X`, beyond the first side, or away from it, beyond the
 second; and a straight line between points on both sides of `XP` would cross it at such a
 point, or at `X`, which is between no two points of the region. -/
-theorem tangent {cs : List Point} (h : ConvexOutline cs) {X P : Point} (hX : X ∈ cs)
+theorem tangent_same_side {cs : List Point} (h : ConvexOutline cs) {X P : Point} (hX : X ∈ cs)
     {s t : Point × Point} (hs : s ∈ sides cs) (ht : t ∈ sides cs)
     (hXs : X = s.1 ∨ X = s.2) (hXt : X = t.1 ∨ X = t.2)
     {Rs Rt : Point} (hRs : Rs ∈ cs) (hRs₁ : Rs ≠ s.1) (hRs₂ : Rs ≠ s.2)
@@ -213,8 +213,8 @@ theorem tangent {cs : List Point} (h : ConvexOutline cs) {X P : Point} (hX : X �
     (hout : OppositeSidesOf P Rs s.1 s.2) (hin : SameSideOf P Rt t.1 t.2)
     {Z₁ Z₂ : Point} (h₁ : ConvexRegion cs Z₁) (h₂ : ConvexRegion cs Z₂)
     (hZ₁ : Z₁ ≠ X) (hZ₂ : Z₂ ≠ X) : SameSideOf Z₁ Z₂ X P := by
-  obtain ⟨M, hM₁, hM₂⟩ := Postulate1 s.1 s.2 (Pieces.side_ne h hs)
-  obtain ⟨N, hN₁, hN₂⟩ := Postulate1 t.1 t.2 (Pieces.side_ne h ht)
+  obtain ⟨M, hM₁, hM₂⟩ := Postulate1 s.1 s.2 (convex_side_ne h hs)
+  obtain ⟨N, hN₁, hN₂⟩ := Postulate1 t.1 t.2 (convex_side_ne h ht)
   have hXM : OnLine X M := by rcases hXs with e | e <;> rw [e] <;> assumption
   have hXN : OnLine X N := by rcases hXt with e | e <;> rw [e] <;> assumption
   have hPM := hout.oppositeSides hM₁ hM₂
@@ -252,9 +252,9 @@ theorem tangent {cs : List Point} (h : ConvexOutline cs) {X P : Point} (hX : X �
   have hZ₂K : ¬ OnLine Z₂ K := off h₂ hZ₂
   refine Classical.byContradiction fun hns => ?_
   obtain ⟨Y, hYK, hb⟩ := OppositeSides.exists_between ⟨hZ₁K, hZ₂K, hns⟩
-  have hY := Pieces.region_between h h₁ h₂ hb
+  have hY := convex_region_between h h₁ h₂ hb
   by_cases hYX : Y = X
-  · exact Ext.corner_not_between h hX h₁ h₂ (hYX ▸ hb)
+  · exact Extreme.corner_not_between h hX h₁ h₂ (hYX ▸ hb)
   · exact off hY hYX hYK
 
 /-- **A point between two others, off finitely many straight lines**, when none of them
@@ -315,14 +315,14 @@ theorem cone_outline {cs : List Point} (h : ConvexOutline cs) {V X Y : Point}
       SameSideOf Z₁ Z₂ Y V) :
     ConvexOutline (V :: X :: (M ++ [Y])) ∧
       ∀ c ∈ cs, ConvexRegion (V :: X :: (M ++ [Y])) c := by
-  have hVc : V ∉ X :: (M ++ [Y]) := fun hm => hV (Ext.corner_region h (hmem V hm))
+  have hVc : V ∉ X :: (M ++ [Y]) := fun hm => hV (Extreme.corner_region h (hmem V hm))
   have hreg {c : Point} (hc : c ∈ X :: (M ++ [Y])) : ConvexRegion cs c :=
-    Ext.corner_region h (hmem c hc)
+    Extreme.corner_region h (hmem c hc)
   have hcases {P : Point} (hP : P ∈ V :: X :: (M ++ [Y])) :
       P = V ∨ P ∈ X :: (M ++ [Y]) := List.mem_cons.mp hP
   have hVV {s : Point × Point} (hs : s ∈ segments (X :: (M ++ [Y]))) :
       SameSideOf V V s.1 s.2 := by
-    obtain ⟨R, hR, h₁, h₂⟩ := Pieces.side_third h (hsides s hs)
+    obtain ⟨R, hR, h₁, h₂⟩ := convex_third h s
     have hVR := hinv s hs R hR h₁ h₂
     exact hVR.trans hVR.symm
   refine ⟨⟨by simp, List.nodup_cons.mpr ⟨hVc, hnd⟩, ?_⟩, ?_⟩
@@ -341,7 +341,7 @@ theorem cone_outline {cs : List Point} (h : ConvexOutline cs) {V X Y : Point}
     · exact htY P Q (hreg ((hcases hP).resolve_left hP₂)) (hreg ((hcases hQ).resolve_left hQ₂))
         hP₁ hQ₁
   · intro c hc s hs P hP hP₁ hP₂
-    have hcr := Ext.corner_region h hc
+    have hcr := Extreme.corner_region h hc
     rcases mem_sides_cone.mp hs with rfl | hs' | rfl
     · by_cases hcX : c = X
       · obtain ⟨L, h₁, h₂⟩ := collinear_of_two V X
@@ -368,7 +368,7 @@ inside, off every side's straight line. Some sides have `V'` beyond them, as it 
 some within, by `not_all_outer`; where a side with `V'` beyond it is followed by one with `V'`
 within, at the corner `X`, run on from `X` to the first corner `Y` whose next side has `V'`
 beyond it. The point `V'` and the run from `X` to `Y` make the outline (`cone_outline`), the
-straight lines `XV'` and `YV'` being tangents (`tangent`); and `V` lies between `O` and `V'`. -/
+straight lines `XV'` and `YV'` being tangents (`tangent_same_side`); and `V` lies between `O` and `V'`. -/
 theorem insert_point {cs : List Point} (h : ConvexOutline cs) (V : Point) :
     ∃ ds : List Point, ConvexOutline ds ∧
       (∀ X : Point, ConvexRegion cs X → ConvexRegion ds X) ∧ ConvexRegion ds V := by
@@ -385,7 +385,7 @@ theorem insert_point {cs : List Point} (h : ConvexOutline cs) (V : Point) :
     Classical.choose_spec (collinear_of_two s.1 s.2)
   have hOoff : ∀ s ∈ sides cs, ¬ OnLine O (line s) := by
     intro s hs hOL
-    obtain ⟨R, hR, h₁, h₂⟩ := Pieces.side_third h hs
+    obtain ⟨R, hR, h₁, h₂⟩ := convex_third h s
     exact not_on_line_of_same_side ((hO s hs R hR h₁ h₂).sameSide (hline s).1 (hline s).2) hOL
   obtain ⟨V', hVV'W, hV'a⟩ := between_avoiding ((sides cs).map line)
     (ne_of_between (between_symm hOVW)).symm (by
@@ -395,16 +395,16 @@ theorem insert_point {cs : List Point} (h : ConvexOutline cs) (V : Point) :
   have hOVV' : Between O V V' := between_cut hOVW hVV'W
   have hV'off : ∀ s ∈ sides cs, ∀ L : Line, OnLine s.1 L → OnLine s.2 L → ¬ OnLine V' L := by
     intro s hs L h₁ h₂ hV'L
-    have he := line_unique (Pieces.side_ne h hs) (hline s).1 (hline s).2 h₁ h₂
+    have he := line_unique (convex_side_ne h hs) (hline s).1 (hline s).2 h₁ h₂
     exact hV'a (line s) (List.mem_map_of_mem hs) (he ▸ hV'L)
-  have hV'r : ¬ ConvexRegion cs V' := fun hr => hV (Pieces.region_between h hOr hr hOVV')
+  have hV'r : ¬ ConvexRegion cs V' := fun hr => hV (convex_region_between h hOr hr hOVV')
   /- Within a side's straight line, or strictly beyond it. -/
   let p (s : Point × Point) : Prop :=
     ∀ R ∈ cs, R ≠ s.1 → R ≠ s.2 → SameSideOf V' R s.1 s.2
   have hstrict : ∀ s ∈ sides cs, ¬ p s → ∀ R ∈ cs, R ≠ s.1 → R ≠ s.2 →
       OppositeSidesOf V' R s.1 s.2 := by
     intro s hs hnp R hR h₁ h₂
-    have hne := Pieces.side_ne h hs
+    have hne := convex_side_ne h hs
     obtain ⟨L, hL₁, hL₂⟩ := Postulate1 s.1 s.2 hne
     refine OppositeSidesOf.of_line hne hL₁ hL₂ ⟨hV'off s hs L hL₁ hL₂,
       Pieces.corner_off h hs hL₁ hL₂ hR h₁ h₂, fun hsame => hnp ?_⟩
@@ -447,7 +447,7 @@ theorem insert_point {cs : List Point} (h : ConvexOutline cs) (V : Point) :
     simp only [List.cons_append, List.cons.injEq] at he₂
     obtain ⟨rfl, he₂⟩ := he₂
     /- The run, from `X` to `Y`. -/
-    obtain ⟨R', z, hR'⟩ := Ext.split_last (Y₂ :: B₂) (List.cons_ne_nil _ _)
+    obtain ⟨R', z, hR'⟩ := Extreme.split_last (Y₂ :: B₂) (List.cons_ne_nil _ _)
     have hl : post ++ pre = M ++ Y :: R' := by
       rw [hR'] at he₂
       have := List.append_inj' (s₁ := post ++ pre) (t₁ := [X]) (s₂ := M ++ Y :: R') (t₂ := [z])
@@ -470,9 +470,9 @@ theorem insert_point {cs : List Point} (h : ConvexOutline cs) (V : Point) :
     have htX : ∀ Z₁ Z₂ : Point, ConvexRegion cs Z₁ → ConvexRegion cs Z₂ → Z₁ ≠ X → Z₂ ≠ X →
         SameSideOf Z₁ Z₂ X V' := by
       intro Z₁ Z₂ h₁ h₂ hZ₁ hZ₂
-      obtain ⟨Rs, hRs, hRs₁, hRs₂⟩ := Pieces.side_third h hWX
-      obtain ⟨Rt, hRt, hRt₁, hRt₂⟩ := Pieces.side_third h hXX₂
-      exact tangent h hX hWX hXX₂ (Or.inr rfl) (Or.inl rfl) hRs hRs₁ hRs₂ hRt hRt₁ hRt₂
+      obtain ⟨Rs, hRs, hRs₁, hRs₂⟩ := convex_third h (W₀, X)
+      obtain ⟨Rt, hRt, hRt₁, hRt₂⟩ := convex_third h (X, X₂)
+      exact tangent_same_side h hX hWX hXX₂ (Or.inr rfl) (Or.inl rfl) hRs hRs₁ hRs₂ hRt hRt₁ hRt₂
         (hstrict _ hWX hnpWX Rs hRs hRs₁ hRs₂) (hpXX₂ Rt hRt hRt₁ hRt₂) h₁ h₂ hZ₁ hZ₂
     have hYm : Y ∈ cs := (LoopFacts.side_mem hYY₂).1
     obtain ⟨Y₀, hY₀⟩ := last_seg (List.cons_ne_nil X M) Y
@@ -481,9 +481,9 @@ theorem insert_point {cs : List Point} (h : ConvexOutline cs) (V : Point) :
         SameSideOf Z₁ Z₂ Y V' := by
       intro Z₁ Z₂ h₁ h₂ hZ₁ hZ₂
       have hY₀Y := hsides _ hY₀'
-      obtain ⟨Rs, hRs, hRs₁, hRs₂⟩ := Pieces.side_third h hYY₂
-      obtain ⟨Rt, hRt, hRt₁, hRt₂⟩ := Pieces.side_third h hY₀Y
-      exact tangent h hYm hYY₂ hY₀Y (Or.inl rfl) (Or.inr rfl) hRs hRs₁ hRs₂ hRt hRt₁ hRt₂
+      obtain ⟨Rs, hRs, hRs₁, hRs₂⟩ := convex_third h (Y, Y₂)
+      obtain ⟨Rt, hRt, hRt₁, hRt₂⟩ := convex_third h (Y₀, Y)
+      exact tangent_same_side h hYm hYY₂ hY₀Y (Or.inl rfl) (Or.inr rfl) hRs hRs₁ hRs₂ hRt hRt₁ hRt₂
         (hstrict _ hYY₂ hY Rs hRs hRs₁ hRs₂)
         (hall₂ _ (by simpa using hY₀) Rt hRt hRt₁ hRt₂) h₁ h₂ hZ₁ hZ₂
     obtain ⟨hconv, hcorners⟩ := cone_outline h hV'r hnd hmem hsides
@@ -491,8 +491,8 @@ theorem insert_point {cs : List Point} (h : ConvexOutline cs) (V : Point) :
     have hincl : ∀ Z : Point, ConvexRegion cs Z → ConvexRegion (V' :: X :: (M ++ [Y])) Z :=
       fun Z hZ => Pieces.region_subset hconv h hcorners hZ
     exact ⟨V' :: X :: (M ++ [Y]), hconv, hincl,
-      Pieces.region_between hconv (hincl O hOr)
-        (Ext.corner_region hconv List.mem_cons_self) hOVV'⟩
+      convex_region_between hconv (hincl O hOr)
+        (Extreme.corner_region hconv List.mem_cons_self) hOVV'⟩
 
 /-- **Finitely many points added to a convex outline**, one after another. -/
 theorem enclose_list : ∀ (qs : List Point) {cs : List Point}, ConvexOutline cs →
@@ -516,22 +516,22 @@ theorem core_between {cs : List Point} (h : ConvexOutline cs) {O Z W : Point}
     (hW : ConvexRegion cs W) (hb : Between O Z W) :
     ∀ s ∈ sides cs, ∀ A ∈ cs, A ≠ s.1 → A ≠ s.2 → SameSideOf Z A s.1 s.2 := by
   intro s hs A hA h₁ h₂
-  have hne := Pieces.side_ne h hs
+  have hne := convex_side_ne h hs
   obtain ⟨L, hL₁, hL₂⟩ := Postulate1 s.1 s.2 hne
-  exact SameSideOf.of_line hne hL₁ hL₂ (Ext.between_half_open
+  exact SameSideOf.of_line hne hL₁ hL₂ (Extreme.between_half_open
     (Pieces.region_half h hs hL₁ hL₂ hA h₁ h₂ hW) ((hO s hs A hA h₁ h₂).sameSide hL₁ hL₂)
     (between_symm hb))
 
 /-- When every corner of a convex outline is inside a cell, so is its whole region, which is
 made of triangles on its corners (`fan_covers`). -/
 theorem region_in_core {cs : List Point} (h : ConvexOutline cs) {Q : ConvexCell}
-    (hc : ∀ c ∈ cs, Q.core c) {Z : Point} (hZ : ConvexRegion cs Z) : Q.core Z := by
+    (hc : ∀ c ∈ cs, Q.Core c) {Z : Point} (hZ : ConvexRegion cs Z) : Q.Core Z := by
   obtain ⟨t, ht, hZt⟩ := (fan_covers h Z).mpr hZ
-  obtain ⟨h₁, h₂, h₃⟩ := Ext.fan_mem ht
+  obtain ⟨h₁, h₂, h₃⟩ := Extreme.fan_mem ht
   intro s hs A hA hA₁ hA₂
-  have hne := Pieces.side_ne Q.convex hs
+  have hne := convex_side_ne Q.convex hs
   obtain ⟨L, hL₁, hL₂⟩ := Postulate1 s.1 s.2 hne
-  exact SameSideOf.of_line hne hL₁ hL₂ (Avoid.closed_same_side
+  exact SameSideOf.of_line hne hL₁ hL₂ (closed_same_side
     ((hc _ h₁ s hs A hA hA₁ hA₂).sameSide hL₁ hL₂)
     ((hc _ h₂ s hs A hA hA₁ hA₂).sameSide hL₁ hL₂)
     ((hc _ h₃ s hs A hA hA₁ hA₂).sameSide hL₁ hL₂) hZt)
@@ -541,13 +541,13 @@ first's whole region: produce the straight line from a point inside through each
 add the points beyond the corners (`enclose_list`). The point inside stays inside, and each
 corner lies between it and a point of the new region. -/
 theorem strict_enclosure (P : ConvexCell) :
-    ∃ Q : ConvexCell, ∀ X : Point, P.region X → Q.core X := by
+    ∃ Q : ConvexCell, ∀ X : Point, P.Region X → Q.Core X := by
   classical
   obtain ⟨O, -, hO⟩ := CellFacts.core_point_avoiding P.convex []
   have hOc : ∀ c ∈ P.corners, O ≠ c := by
     intro c hc hOc
     obtain ⟨E, hE⟩ := outgoing_side hc
-    obtain ⟨R, hR, h₁, h₂⟩ := Pieces.side_third P.convex hE
+    obtain ⟨R, hR, h₁, h₂⟩ := convex_third P.convex (c, E)
     have hs := hO (c, E) hE R hR h₁ h₂
     obtain ⟨L, hL₁, hL₂⟩ := Postulate1 c E hs.1
     exact not_on_line_of_same_side (hs.sameSide hL₁ hL₂) (hOc ▸ hL₁)
@@ -559,8 +559,8 @@ theorem strict_enclosure (P : ConvexCell) :
     exact Classical.choose_spec (produce hne)
   obtain ⟨ds, hds, hin, hqs⟩ := enclose_list (P.corners.map push) P.convex
   let Q : ConvexCell := ⟨ds, hds⟩
-  have hOQ : Q.core O := Pieces.core_mono hds hin hO
-  have hcQ : ∀ c ∈ P.corners, Q.core c := fun c hc =>
+  have hOQ : Q.Core O := Pieces.core_mono hds hin hO
+  have hcQ : ∀ c ∈ P.corners, Q.Core c := fun c hc =>
     core_between hds hOQ (hqs _ (List.mem_map_of_mem hc)) (hpush c hc)
   exact ⟨Q, fun X hX => region_in_core P.convex hcQ hX⟩
 
@@ -581,7 +581,7 @@ theorem outside_ray {ps cs : List Point} (hc : ConvexOutline cs)
     intro s hs R hR h₁ h₂
     exact Classical.byContradiction fun hcl => hn ⟨s, hs, R, hR, h₁, h₂, hcl⟩
   obtain ⟨s, hs, R, hR, h₁, h₂, hcl⟩ := hside
-  have hne := Pieces.side_ne hc hs
+  have hne := convex_side_ne hc hs
   obtain ⟨L, hL₁, hL₂⟩ := Postulate1 s.1 s.2 hne
   have hXL : ¬ OnLine X L := fun hx => hcl (Or.inl ⟨L, hL₁, hL₂, hx⟩)
   have hXR : ¬ SameSide X R L := fun hx => hcl (Or.inr (SameSideOf.of_line hne hL₁ hL₂ hx))
@@ -648,21 +648,21 @@ a cell make up its region exactly; each piece's inside is within its cell's insi
 side of the line; and no point is inside both pieces of one cell. -/
 theorem cut_cells {L : Line} {A B : Point} (hAB : OppositeSides A B L) :
     ∃ f : ConvexCell → List ConvexCell, ∀ Q : ConvexCell,
-      (∀ X : Point, Q.region X ↔ ∃ R ∈ f Q, R.region X) ∧
-      (∀ R ∈ f Q, ∀ X : Point, R.core X → Q.core X) ∧
-      (∀ R ∈ f Q, ∀ X Y : Point, R.core X → R.core Y → SameSide X Y L) ∧
-      (f Q).Pairwise (fun R S => ∀ X : Point, R.core X → ¬ S.core X) := by
+      (∀ X : Point, Q.Region X ↔ ∃ R ∈ f Q, R.Region X) ∧
+      (∀ R ∈ f Q, ∀ X : Point, R.Core X → Q.Core X) ∧
+      (∀ R ∈ f Q, ∀ X Y : Point, R.Core X → R.Core Y → SameSide X Y L) ∧
+      (f Q).Pairwise (fun R S => ∀ X : Point, R.Core X → ¬ S.Core X) := by
   have hcut (Q : ConvexCell) : ∃ uv : Cell × Cell, Clips Q L A uv.1 ∧ Clips Q L B uv.2 ∧
-      ∀ X : Point, Q.region X ↔ cellRegion uv.1 X ∨ cellRegion uv.2 X := by
+      ∀ X : Point, Q.Region X ↔ CellRegion uv.1 X ∨ CellRegion uv.2 X := by
     obtain ⟨U, V, hU, hV, hr, -⟩ := convex_cut Q hAB
     exact ⟨(U, V), hU, hV, hr⟩
   obtain ⟨g, hg⟩ := Classical.axiomOfChoice hcut
-  have hreg (c : Cell) (X : Point) : cellRegion c X ↔ ∃ R ∈ c.toList, R.region X := by
+  have hreg (c : Cell) (X : Point) : CellRegion c X ↔ ∃ R ∈ c.toList, R.Region X := by
     cases c with
-    | none => simp [cellRegion]
-    | some R => simp [cellRegion]
+    | none => simp [CellRegion]
+    | some R => simp [CellRegion]
   have hcore {c : Cell} {R : ConvexCell} (hR : R ∈ c.toList) (X : Point) :
-      cellCore c X ↔ R.core X := by
+      CellCore c X ↔ R.Core X := by
     rw [Option.mem_toList] at hR
     subst hR
     rfl
@@ -686,12 +686,12 @@ theorem cut_cells {L : Line} {A B : Point} (hAB : OppositeSides A B L) :
         (same_side_symm (((hg Q).1.1 Y).mp ((hcore hR Y).mpr hY)).2)
     · exact same_side_trans (same_side_symm (((hg Q).2.1.1 X).mp ((hcore hR X).mpr hX)).2)
         (same_side_symm (((hg Q).2.1.1 Y).mp ((hcore hR Y).mpr hY)).2)
-  · have hone (c : Cell) : c.toList.Pairwise (fun R S => ∀ X : Point, R.core X → ¬ S.core X) := by
+  · have hone (c : Cell) : c.toList.Pairwise (fun R S => ∀ X : Point, R.Core X → ¬ S.Core X) := by
       cases c <;> simp
     refine List.pairwise_append.mpr ⟨hone _, hone _, fun R hR S hS X hRX hSX => ?_⟩
     exact Pieces.not_both hAB (((hg Q).1.1 X).mp ((hcore hR X).mpr hRX)).2
       (((hg Q).2.1.1 X).mp ((hcore hS X).mpr hSX)).2
 
-end Arr
+end Arrangement
 
 end Elements.Figures

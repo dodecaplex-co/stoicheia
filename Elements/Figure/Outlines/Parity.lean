@@ -17,7 +17,7 @@ straight line XR.
   A point of the straight line XQ other than X is on the ray through Q exactly when it is on
   Q's side of XR (`onRay_iff_sameSide`); so it is a matter of where the finite straight line
   crosses the two straight lines, and in what order.
-* **Round a closed outline** (`parity_of_triangle`). Each corner is the first end of one side
+* **Round a closed outline** (`parity_of_angle`). Each corner is the first end of one side
   and the second end of one other, so the ends within the angle, counted over all the sides,
   come in pairs. Hence the crossings of the two rays together are even.
 * **Rays on one straight line** (`parity_independent`). A third good ray off that straight
@@ -224,6 +224,45 @@ theorem countP_parity {α : Type} (l : List α) (p q u v : α → Bool)
     cases hp : p a <;> cases hq : q a <;> cases hu : u a <;> cases hv : v a <;>
       simp only [hp, hq, hu, hv] at ha <;> simp at ha ⊢ <;> omega
 
+/-- Counting the members whose number is odd gives the parity of the sum. -/
+theorem countP_odd_sum {α : Type} (l : List α) (p : α → Prop) [DecidablePred p] (f : α → Nat)
+    (h : ∀ x ∈ l, p x ↔ f x % 2 = 1) :
+    l.countP (fun x => decide (p x)) % 2 = (l.map f).sum % 2 := by
+  induction l with
+  | nil => rfl
+  | cons a l ih =>
+    have ih' := ih fun x hx => h x (List.mem_cons_of_mem _ hx)
+    have ha := h a List.mem_cons_self
+    simp only [List.countP_cons, List.map_cons, List.sum_cons, decide_eq_true_eq]
+    by_cases hp : p a
+    · have := ha.mp hp
+      simp only [hp, ite_true]
+      omega
+    · have : f a % 2 = 0 := by
+        rcases Nat.mod_two_eq_zero_or_one (f a) with e | e
+        · exact e
+        · exact absurd (ha.mpr e) hp
+      simp only [hp, ite_false]
+      omega
+
+/-- A test that implies another, and fails somewhere the other passes, counts strictly less. -/
+theorem countP_lt {α : Type} {p q : α → Bool} :
+    ∀ {l : List α}, (∀ x ∈ l, p x = true → q x = true) →
+      (∃ x ∈ l, q x = true ∧ p x = false) → l.countP p < l.countP q
+  | [], _, ⟨_, h, _⟩ => absurd h List.not_mem_nil
+  | a :: l, hpq, ⟨x, hx, hqx, hpx⟩ => by
+    have hle : l.countP p ≤ l.countP q :=
+      List.countP_mono_left fun y hy => hpq y (List.mem_cons_of_mem _ hy)
+    rw [List.countP_cons, List.countP_cons]
+    rcases List.mem_cons.mp hx with rfl | hx
+    · simp only [hqx, hpx, Bool.false_eq_true, ite_false, ite_true]
+      omega
+    · have hlt := countP_lt (fun y hy => hpq y (List.mem_cons_of_mem _ hy)) ⟨x, hx, hqx, hpx⟩
+      cases hpa : p a
+      · cases q a <;> simp only [Bool.false_eq_true, ite_false, ite_true] <;> omega
+      · simp only [hpq a List.mem_cons_self hpa, ite_true]
+        omega
+
 /-- The second ends of a chain's segments are its points after the first. -/
 theorem segments_map_snd (a : Point) (l : List Point) :
     (segments (a :: l)).map Prod.snd = l := by
@@ -241,6 +280,20 @@ theorem sides_map_snd_perm (ps : List Point) : ((sides ps).map Prod.snd).Perm ps
     have he : (sides (c :: cs)).map Prod.snd = cs ++ [c] := segments_map_snd c (cs ++ [c])
     rw [he]
     exact List.perm_append_comm
+
+/-- No two sides of a list of distinct corners end at one corner. -/
+theorem sides_pairwise_snd {ps : List Point} (h : ps.Nodup) :
+    (sides ps).Pairwise (fun s t => s.2 ≠ t.2) := by
+  have hm : ((sides ps).map Prod.snd).Nodup := (sides_map_snd_perm ps).nodup_iff.mpr h
+  exact List.pairwise_map.mp hm
+
+/-- Two sides of a list of distinct corners that end at one corner are one side. -/
+theorem sides_snd_inj {ps : List Point} (h : ps.Nodup) {s t : Point × Point}
+    (hs : s ∈ sides ps) (ht : t ∈ sides ps) (he : s.2 = t.2) : s = t := by
+  rcases LoopFacts.pairwise_mem (sides_pairwise_snd h) hs ht with e | e | e
+  · exact e
+  · exact False.elim (e he)
+  · exact False.elim (e he.symm)
 
 /-- **Ends counted over the sides come in pairs.** Each corner is the first end of one side
 and the second end of one other. -/
@@ -262,7 +315,7 @@ theorem ends_count (ps : List Point) (w : Point → Bool) :
 /-- **Two good rays not on one straight line** give the same parity: each side crosses them
 together oddly exactly when its ends disagree about the angle between them, and those ends
 pair off round the outline. -/
-theorem parity_of_triangle {ps : List Point} {X Q R : Point} (hX : ¬ loopBoundary ps X)
+theorem parity_of_angle {ps : List Point} {X Q R : Point} (hX : ¬ LoopBoundary ps X)
     (hQ : GoodRay ps X Q) (hR : GoodRay ps X R) (hXQR : Triangle X Q R) :
     crossingCount ps X Q % 2 = crossingCount ps X R % 2 := by
   classical
@@ -290,30 +343,42 @@ theorem parity_of_triangle {ps : List Point} {X Q R : Point} (hX : ¬ loopBounda
   rw [← List.countP_eq_length_filter, ← List.countP_eq_length_filter]
   omega
 
-/-- **A third good ray**, off the straight line of a given one, found inside a frame of three
-corners away from the straight lines joining X to the corners. -/
-theorem third_ray {ps : List Point} (h : SimpleLoop ps) {X Q : Point} (hQ : GoodRay ps X Q) :
-    ∃ P : Point, GoodRay ps X P ∧ Triangle X Q P := by
+/-- **A good ray off finitely many straight lines.** From a point that is no corner, a ray
+through a point inside a frame of three corners (`LoopFacts.simple_frame`), away from the
+straight lines joining the point to the corners and from the given straight lines. -/
+theorem good_ray_avoiding {ps : List Point} (h : SimpleLoop ps) {X : Point} (hX : X ∉ ps)
+    (ls : List Line) : ∃ Q : Point, GoodRay ps X Q ∧ Avoid ls Q := by
   let line (V : Point) : Line := Classical.choose (collinear_of_two X V)
   have hline (V : Point) : OnLine X (line V) ∧ OnLine V (line V) :=
     Classical.choose_spec (collinear_of_two X V)
+  obtain ⟨A, hA, B, -, C, -, hABC⟩ := LoopFacts.simple_frame h
+  obtain ⟨Q, -, hQ⟩ := triangle_point_avoiding hABC (ls ++ ps.map line)
+  have hQl {V : Point} (hV : V ∈ ps) : ¬ OnLine Q (line V) :=
+    hQ (line V) (List.mem_append_right _ (List.mem_map_of_mem hV))
+  refine ⟨Q, ⟨fun hXQ => hQl hA (hXQ ▸ (hline A).1), fun V hV hcol => ?_⟩,
+    fun L hL => hQ L (List.mem_append_left _ hL)⟩
+  obtain ⟨M, hXM, hQM, hVM⟩ := hcol
+  have hVX : V ≠ X := fun e => hX (e ▸ hV)
+  have he : line V = M := line_unique hVX.symm (hline V).1 (hline V).2 hXM hVM
+  exact hQl hV (he ▸ hQM)
+
+/-- **A third good ray**, off the straight line of a given one (`good_ray_avoiding`). -/
+theorem third_ray {ps : List Point} (h : SimpleLoop ps) {X Q : Point} (hQ : GoodRay ps X Q) :
+    ∃ P : Point, GoodRay ps X P ∧ Triangle X Q P := by
   obtain ⟨ℓ, hXℓ, hQℓ⟩ := Postulate1 X Q hQ.1
-  obtain ⟨A, -, B, -, C, -, hABC⟩ := LoopFacts.simple_frame h
-  obtain ⟨P, -, hP⟩ := triangle_point_avoiding hABC (ℓ :: ps.map line)
-  have hPℓ : ¬ OnLine P ℓ := hP ℓ List.mem_cons_self
-  refine ⟨P, ⟨fun hXP => hPℓ (hXP ▸ hXℓ), fun V hV hcol => ?_⟩, ?_⟩
-  · obtain ⟨M, hXM, hPM, hVM⟩ := hcol
-    have hVX : V ≠ X := fun e => hQ.2 V hV ⟨ℓ, hXℓ, hQℓ, e ▸ hXℓ⟩
-    have he : line V = M := line_unique hVX.symm (hline V).1 (hline V).2 hXM hVM
-    exact hP (line V) (List.mem_cons_of_mem _ (List.mem_map_of_mem hV)) (he ▸ hPM)
-  · rintro ⟨M, hXM, hQM, hPM⟩
-    exact hPℓ (line_unique hQ.1 hXM hQM hXℓ hQℓ ▸ hPM)
+  have hX : X ∉ ps := fun hm => hQ.2 X hm ⟨ℓ, hXℓ, hQℓ, hXℓ⟩
+  obtain ⟨P, hP, hPa⟩ := good_ray_avoiding h hX [ℓ]
+  refine ⟨P, hP, ?_⟩
+  rintro ⟨M, hXM, hQM, hPM⟩
+  exact hPa ℓ List.mem_cons_self (line_unique hQ.1 hXM hQM hXℓ hQℓ ▸ hPM)
 
 /-- **Two good rays give the same parity.** Rays not on one straight line compare through
 the angle between them; rays on one straight line each compare with a third good ray off
-it. -/
+it. This is the statement of `crossing_parity_independent`, proved here because
+`remove_corner` below and `OutlineFacts.lean` use it, and come before `Outlines.lean`, which
+states it. -/
 theorem parity_independent {ps : List Point} (h : SimpleLoop ps) {X Q R : Point}
-    (hX : ¬ loopBoundary ps X) (hQ : GoodRay ps X Q) (hR : GoodRay ps X R) :
+    (hX : ¬ LoopBoundary ps X) (hQ : GoodRay ps X Q) (hR : GoodRay ps X R) :
     crossingCount ps X Q % 2 = crossingCount ps X R % 2 := by
   by_cases hXQR : Collinear X Q R
   · obtain ⟨P, hP, hXQP⟩ := third_ray h hQ
@@ -322,8 +387,8 @@ theorem parity_independent {ps : List Point} (h : SimpleLoop ps) {X Q R : Point}
       obtain ⟨L, hXL, hQL, hRL⟩ := hXQR
       have he : L = M := line_unique hR.1 hXL hRL hXM hRM
       exact hXQP ⟨L, hXL, hQL, he ▸ hPM⟩
-    exact (parity_of_triangle hX hQ hP hXQP).trans (parity_of_triangle hX hP hR hXPR)
-  · exact parity_of_triangle hX hQ hR hXQR
+    exact (parity_of_angle hX hQ hP hXQP).trans (parity_of_angle hX hP hR hXPR)
+  · exact parity_of_angle hX hQ hR hXQR
 
 /-! ## A corner between its neighbours
 
@@ -366,8 +431,8 @@ theorem sides_three : sides (a :: c :: rest) = (a, c) :: segments (c :: rest ++ 
 
 /-- Removing b leaves the boundary as it was. -/
 theorem remove_boundary (habc : Between a b c) (X : Point) :
-    loopBoundary (a :: c :: rest) X ↔ loopBoundary (a :: b :: c :: rest) X := by
-  unfold loopBoundary
+    LoopBoundary (a :: c :: rest) X ↔ LoopBoundary (a :: b :: c :: rest) X := by
+  unfold LoopBoundary
   rw [sides_three, sides_four]
   simp only [List.mem_cons, exists_eq_or_imp]
   rw [onFiniteLine_split habc, or_assoc]
@@ -475,10 +540,10 @@ good ray, off b's straight line from X, which is good for both. -/
 theorem remove_corner (h : SimpleLoop (a :: b :: c :: rest)) (hrest : rest ≠ [])
     (habc : Between a b c) :
     SimpleLoop (a :: c :: rest) ∧
-      (∀ X : Point, loopBoundary (a :: c :: rest) X ↔ loopBoundary (a :: b :: c :: rest) X) ∧
-      (∀ X : Point, loopRegion (a :: c :: rest) X ↔ loopRegion (a :: b :: c :: rest) X) := by
+      (∀ X : Point, LoopBoundary (a :: c :: rest) X ↔ LoopBoundary (a :: b :: c :: rest) X) ∧
+      (∀ X : Point, LoopRegion (a :: c :: rest) X ↔ LoopRegion (a :: b :: c :: rest) X) := by
   have hs := remove_simple h hrest habc
-  have hbd : ∀ X, loopBoundary (a :: c :: rest) X ↔ loopBoundary (a :: b :: c :: rest) X :=
+  have hbd : ∀ X, LoopBoundary (a :: c :: rest) X ↔ LoopBoundary (a :: b :: c :: rest) X :=
     remove_boundary habc
   have hmem : ∀ V ∈ a :: b :: c :: rest, V = b ∨ V ∈ a :: c :: rest := by
     intro V hV
@@ -496,11 +561,11 @@ theorem remove_corner (h : SimpleLoop (a :: b :: c :: rest)) (hrest : rest ≠ [
     · exact Or.inr (Or.inr (Or.inl e))
     · exact Or.inr (Or.inr (Or.inr e))
   refine ⟨hs, hbd, fun X => ?_⟩
-  unfold loopRegion loopInside
+  unfold LoopRegion LoopInside
   rw [hbd]
-  by_cases hXb : loopBoundary (a :: b :: c :: rest) X
+  by_cases hXb : LoopBoundary (a :: b :: c :: rest) X
   · exact ⟨fun _ => Or.inl hXb, fun _ => Or.inl hXb⟩
-  have hXbq : ¬ loopBoundary (a :: c :: rest) X := fun h' => hXb ((hbd X).mp h')
+  have hXbq : ¬ LoopBoundary (a :: c :: rest) X := fun h' => hXb ((hbd X).mp h')
   constructor
   · rintro (hb' | ⟨-, Q, hQ, hodd⟩)
     · exact Or.inl hb'

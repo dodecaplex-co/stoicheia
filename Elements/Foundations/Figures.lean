@@ -52,8 +52,11 @@ noncomputable def fanSum (cs : List Point) : Area :=
   Magnitude.sum ((fan cs).map fun t => △ t.1 t.2.1 t.2.2)
 
 /-- A point is on the boundary when it is on one of the finite sides. -/
-def loopBoundary (ps : List Point) (X : Point) : Prop :=
+def LoopBoundary (ps : List Point) (X : Point) : Prop :=
   ∃ s ∈ sides ps, OnFiniteLine X s.1 s.2
+
+/-- A point of a chain: on one of its finite straight lines. -/
+def OnChain (cs : List Point) (X : Point) : Prop := ∃ s ∈ segments cs, OnFiniteLine X s.1 s.2
 
 /-- A simple closed outline has distinct vertices and at least three sides.
 Different sides meet only at a common end. Collinear subdivisions are allowed. -/
@@ -85,23 +88,23 @@ noncomputable def crossingCount (ps : List Point) (X Q : Point) : Nat := by
 
 /-- Inside a loop means off its boundary and an odd number of crossings.
 Independence of the good ray is a theorem, not part of this definition. -/
-def loopInside (ps : List Point) (X : Point) : Prop :=
-  ¬ loopBoundary ps X ∧
+def LoopInside (ps : List Point) (X : Point) : Prop :=
+  ¬ LoopBoundary ps X ∧
     ∃ Q : Point, GoodRay ps X Q ∧ crossingCount ps X Q % 2 = 1
 
 /-- The closed region of one loop, defined without triangles. -/
-def loopRegion (ps : List Point) (X : Point) : Prop :=
-  loopBoundary ps X ∨ loopInside ps X
+def LoopRegion (ps : List Point) (X : Point) : Prop :=
+  LoopBoundary ps X ∨ LoopInside ps X
 
 /-- Two contours may touch at finitely many vertices, including a vertex
 against another contour's side. Their interiors are disjoint or nested.
 Shared sides and transverse crossings are excluded. -/
 def CompatibleLoops (ps qs : List Point) : Prop :=
-  (∀ X : Point, loopBoundary ps X → loopBoundary qs X →
+  (∀ X : Point, LoopBoundary ps X → LoopBoundary qs X →
     X ∈ ps ∨ X ∈ qs) ∧
-  ((∀ X : Point, loopInside ps X → ¬ loopInside qs X) ∨
-    (∀ X : Point, loopRegion ps X → loopRegion qs X) ∨
-    (∀ X : Point, loopRegion qs X → loopRegion ps X))
+  ((∀ X : Point, LoopInside ps X → ¬ LoopInside qs X) ∨
+    (∀ X : Point, LoopRegion ps X → LoopRegion qs X) ∨
+    (∀ X : Point, LoopRegion qs X → LoopRegion ps X))
 
 /-- A figure is a nonempty finite family of compatible simple contours.
 It contains no division, triangle list or area witness. -/
@@ -116,22 +119,25 @@ structure Outline where
   compatible : loops.Pairwise CompatibleLoops
 
 /-- Every contour, outer or inner, belongs to the figure's boundary. -/
-def Outline.boundary (F : Outline) (X : Point) : Prop :=
-  ∃ ps ∈ F.loops, loopBoundary ps X
+def Outline.Boundary (F : Outline) (X : Point) : Prop :=
+  ∃ ps ∈ F.loops, LoopBoundary ps X
 
 /-- The number of contours containing X strictly inside them. -/
 noncomputable def Outline.depth (F : Outline) (X : Point) : Nat := by
   classical
-  exact (F.loops.filter fun ps => decide (loopInside ps X)).length
+  exact (F.loops.filter fun ps => decide (LoopInside ps X)).length
 
 /-- The filled interior has odd nesting depth. Even depths describe the
 exterior and holes; a further nested contour can enclose an island. -/
-def Outline.inside (F : Outline) (X : Point) : Prop :=
-  ¬ F.boundary X ∧ F.depth X % 2 = 1
+def Outline.Inside (F : Outline) (X : Point) : Prop :=
+  ¬ F.Boundary X ∧ F.depth X % 2 = 1
 
 /-- The figure includes its outer and inner boundaries. -/
-def Outline.region (F : Outline) (X : Point) : Prop :=
-  F.boundary X ∨ F.inside X
+def Outline.Region (F : Outline) (X : Point) : Prop :=
+  F.Boundary X ∨ F.Inside X
+
+/-- All the corners of all the contours. -/
+def Outline.corners (F : Outline) : List Point := F.loops.flatten
 
 /-- A simple loop regarded as a figure with one contour. -/
 def singleOutline (ps : List Point) (h : SimpleLoop ps) : Outline where
@@ -162,10 +168,10 @@ structure ConvexCell where
   convex : ConvexOutline corners
 
 /-- The region of a cell, within or on its outline. -/
-def ConvexCell.region (P : ConvexCell) : Point → Prop := ConvexRegion P.corners
+def ConvexCell.Region (P : ConvexCell) : Point → Prop := ConvexRegion P.corners
 
 /-- The inside of a cell: strictly on the side of each side towards the other corners. -/
-def ConvexCell.core (P : ConvexCell) (X : Point) : Prop :=
+def ConvexCell.Core (P : ConvexCell) (X : Point) : Prop :=
   ∀ s ∈ sides P.corners, ∀ A ∈ P.corners, A ≠ s.1 → A ≠ s.2 → SameSideOf X A s.1 s.2
 
 /-- The area of a cell: its fan's sum. -/
@@ -175,14 +181,14 @@ noncomputable def ConvexCell.area (P : ConvexCell) : Area := fanSum P.corners
 abbrev Cell := Option ConvexCell
 
 /-- The region of a cell or of nothing. -/
-def cellRegion : Cell → Point → Prop
+def CellRegion : Cell → Point → Prop
   | none, _ => False
-  | some P, X => P.region X
+  | some P, X => P.Region X
 
 /-- The inside of a cell or of nothing. -/
-def cellCore : Cell → Point → Prop
+def CellCore : Cell → Point → Prop
   | none, _ => False
-  | some P, X => P.core X
+  | some P, X => P.Core X
 
 /-- The area of a cell, or of nothing. -/
 noncomputable def cellArea : Cell → Area
@@ -197,26 +203,26 @@ def AgreeOff (U V : Point → Prop) : Prop :=
 /-- **Cells that tile a cell**: no point is inside two of them, and together they make up the
 cell, off finitely many straight lines. -/
 def Tiles (P : ConvexCell) (qs : List ConvexCell) : Prop :=
-  qs.Pairwise (fun Q R => ∀ X : Point, Q.core X → ¬ R.core X) ∧
-    AgreeOff (fun X => ∃ Q ∈ qs, Q.region X) P.region
+  qs.Pairwise (fun Q R => ∀ X : Point, Q.Core X → ¬ R.Core X) ∧
+    AgreeOff (fun X => ∃ Q ∈ qs, Q.Region X) P.Region
 
 /-- `Q` is what is left of the cell `P` on `R`'s side of `L`. -/
 def Clips (P : ConvexCell) (L : Line) (R : Point) (Q : Cell) : Prop :=
-  (∀ X : Point, cellCore Q X ↔ P.core X ∧ SameSide X R L) ∧
-    AgreeOff (cellRegion Q) (fun X => P.region X ∧ Half X R L)
+  (∀ X : Point, CellCore Q X ↔ P.Core X ∧ SameSide X R L) ∧
+    AgreeOff (CellRegion Q) (fun X => P.Region X ∧ Half X R L)
 
 /-- `C` is the common part of the cells `P` and `Q`. -/
 def Intersection (P Q : ConvexCell) (C : Cell) : Prop :=
-  (∀ X : Point, cellCore C X ↔ P.core X ∧ Q.core X) ∧
-    AgreeOff (cellRegion C) (fun X => P.region X ∧ Q.region X)
+  (∀ X : Point, CellCore C X ↔ P.Core X ∧ Q.Core X) ∧
+    AgreeOff (CellRegion C) (fun X => P.Region X ∧ Q.Region X)
 
 /-- `U` and `V` are what the straight line `L` leaves of the cell `P`, the one on `A`'s side
 and the other on `B`'s, in either order, and together they make up `P` exactly. -/
 def CutPieces (P : ConvexCell) (L : Line) (A B : Point) (U V : ConvexCell) : Prop :=
   (Clips P L A (some U) ∧ Clips P L B (some V) ∧
-      ∀ X : Point, P.region X ↔ cellRegion (some U) X ∨ cellRegion (some V) X) ∨
+      ∀ X : Point, P.Region X ↔ CellRegion (some U) X ∨ CellRegion (some V) X) ∨
     (Clips P L A (some V) ∧ Clips P L B (some U) ∧
-      ∀ X : Point, P.region X ↔ cellRegion (some V) X ∨ cellRegion (some U) X)
+      ∀ X : Point, P.Region X ↔ CellRegion (some V) X ∨ CellRegion (some U) X)
 
 /-! ### The pieces of a genuine cut, as cells
 
@@ -232,6 +238,6 @@ def Divides (U : Point → Prop) (R : Apart) : Prop :=
 and any two have the same sum (`divisions_equal`), so every division gives this area
 (`area_eq`). -/
 noncomputable def Outline.area (F : Outline) : Area :=
-  Classical.epsilon fun a : Area => ∃ R : Apart, Divides F.region R ∧ R.area = a
+  Classical.epsilon fun a : Area => ∃ R : Apart, Divides F.Region R ∧ R.area = a
 
 end Elements.Figures

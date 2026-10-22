@@ -30,12 +30,12 @@ open Tacit
 /-- **A triangle is a cell**, with the same region and the same area. -/
 theorem triangle_cell {A B C : Point} (h : Triangle A B C) :
     ∃ P : ConvexCell, P.corners = [A, B, C] ∧
-      (∀ X : Point, P.region X ↔ OnOrInsideTriangle X A B C) ∧ P.area = △ A B C := by
-  let P : ConvexCell := ⟨[A, B, C], Ext.triangle_outline h⟩
+      (∀ X : Point, P.Region X ↔ OnOrInsideTriangle X A B C) ∧ P.area = △ A B C := by
+  let P : ConvexCell := ⟨[A, B, C], Extreme.triangle_outline h⟩
   refine ⟨P, rfl, ?_, ?_⟩
   · intro X
-    simpa [P, ConvexCell.region, Covers, fan, segments] using
-      (fan_covers (Ext.triangle_outline h) X).symm
+    simpa [P, ConvexCell.Region, Covers, fan, segments] using
+      (fan_covers (Extreme.triangle_outline h) X).symm
   · change Magnitude.sum [△ A B C] = △ A B C
     exact Magnitude.sum_singleton _
 
@@ -66,7 +66,8 @@ theorem boundary_fan_sum {A B X : Point} {ps : List Point}
     fanSum (X :: ((B :: ps) ++ [A])) = fanSum (A :: B :: ps) := by
   rcases hX with hX | hX | hX
   · subst X
-    rw [cut_fan_close, area_acb A (endOf B ps) A, area_degenerate, add_zero]
+    rw [fanSum_cons, fanSum_cons, fanArea_append, area_acb A (endOf B ps) A, area_degenerate,
+      add_zero]
   · subst X
     change fanSum (B :: B :: (ps ++ [A])) = _
     rw [cut_fan_repeat]
@@ -82,7 +83,7 @@ theorem boundary_fan_sum {A B X : Point} {ps : List Point}
         rw [area_cab X B C, area_bca X C A, area_cab A B C, add_comm]
         exact hc
       | cons D ps ih =>
-        have hi := ih D (cut_remove_third h)
+        have hi := ih D h.erase_third
         change △ X B C + (△ X C D + fanSum (X :: ((D :: ps) ++ [A]))) =
           △ A B C + (△ A C D + fanSum (A :: D :: ps))
         rw [← add_assoc, cut_boundary_flip h hX, add_assoc]
@@ -92,28 +93,28 @@ theorem boundary_fan_sum {A B X : Point} {ps : List Point}
 /-- **The corners of a cell are its region's extreme points**: the points of the region on
 no finite straight line between two other points of it. -/
 theorem convex_extreme_iff (P : ConvexCell) (X : Point) :
-    (P.region X ∧ ∀ A B : Point, P.region A → P.region B → ¬ Between A X B) ↔
+    (P.Region X ∧ ∀ A B : Point, P.Region A → P.Region B → ¬ Between A X B) ↔
       X ∈ P.corners := by
   classical
   constructor
   · rintro ⟨hX, he⟩
     apply Classical.byContradiction
     intro hn
-    obtain ⟨A, B, hA, hB, hb⟩ := Ext.noncorner_segment P.convex hX hn
+    obtain ⟨A, B, hA, hB, hb⟩ := Extreme.noncorner_segment P.convex hX hn
     exact he A B hA hB hb
   · intro hX
-    exact ⟨Ext.corner_region P.convex hX, fun _ _ hA hB =>
-      Ext.corner_not_between P.convex hX hA hB⟩
+    exact ⟨Extreme.corner_region P.convex hX, fun _ _ hA hB =>
+      Extreme.corner_not_between P.convex hX hA hB⟩
 
 /-- **A cell's area depends only on its region**: two cells whose regions agree off finitely
 many straight lines have the same area. -/
-theorem convex_area_ext (P Q : ConvexCell) (h : AgreeOff P.region Q.region) :
+theorem convex_area_ext (P Q : ConvexCell) (h : AgreeOff P.Region Q.Region) :
     P.area = Q.area := by
   obtain ⟨ls, hls⟩ := h
-  have hr : ∀ X, P.region X ↔ Q.region X := by
+  have hr : ∀ X, P.Region X ↔ Q.Region X := by
     intro X
-    exact ⟨Ext.region_inclusion P.convex ls (fun Y hy => (hls Y hy).mp) X,
-      Ext.region_inclusion Q.convex ls (fun Y hy => (hls Y hy).mpr) X⟩
+    exact ⟨Extreme.region_inclusion P.convex ls (fun Y hy => (hls Y hy).mp) X,
+      Extreme.region_inclusion Q.convex ls (fun Y hy => (hls Y hy).mpr) X⟩
   have hm : ∀ X, X ∈ P.corners ↔ X ∈ Q.corners := by
     intro X
     constructor
@@ -137,20 +138,20 @@ theorem convex_area_ext (P Q : ConvexCell) (h : AgreeOff P.region Q.region) :
     | nil => have := hp.1; simp at this
     | cons B ps =>
       obtain ⟨us, vs, rfl⟩ := List.mem_iff_append.mp ((hm A).mp (by simp))
-      have hq' : ConvexOutline (A :: (vs ++ us)) := Ext.convex_rotate_prefix us (A :: vs) hq
+      have hq' : ConvexOutline (A :: (vs ++ us)) := Extreme.convex_rotate_prefix us (A :: vs) hq
       have hm' : ∀ X, X ∈ A :: B :: ps ↔ X ∈ A :: (vs ++ us) := by
         intro X
         exact (hm X).trans (by simp only [List.mem_append, List.mem_cons, or_comm, or_left_comm])
-      rcases Ext.head_order_unique hp hq' hm' with he | he
+      rcases Extreme.head_order_unique hp hq' hm' with he | he
       · calc
           fanSum (A :: B :: ps) = fanSum (A :: (vs ++ us)) := congrArg fanSum he
-          _ = fanSum (us ++ A :: vs) := Ext.fanSum_rotate_prefix us (A :: vs) hq
+          _ = fanSum (us ++ A :: vs) := Extreme.fanSum_rotate_prefix us (A :: vs) hq
       · calc
           fanSum (A :: B :: ps) = fanSum (A :: (vs ++ us).reverse) := congrArg fanSum he
           _ = fanSum ((vs ++ us).reverse ++ [A]) :=
-            Ext.fanSum_rotate_prefix (vs ++ us).reverse [A] (by simpa using hq'.reverse)
+            Extreme.fanSum_rotate_prefix (vs ++ us).reverse [A] (by simpa using hq'.reverse)
           _ = fanSum (A :: (vs ++ us)) := by simpa using fanSum_reverse hq'
-          _ = fanSum (us ++ A :: vs) := Ext.fanSum_rotate_prefix us (A :: vs) hq
+          _ = fanSum (us ++ A :: vs) := Extreme.fanSum_rotate_prefix us (A :: vs) hq
 
 /-- A piece of a cell's outline on `R`'s side of a straight line is what the line leaves of
 the cell there. -/
@@ -167,7 +168,7 @@ theorem cut_pieces_of_lists (P : ConvexCell) {L : Line} {A B : Point}
     ∃ U V : ConvexCell, U.corners = qs ∧ V.corners = rs ∧ CutPieces P L A B U V := by
   have cover {S T : ConvexCell} (hS : Pieces.IsPiece P.corners L A S.corners)
       (hT : Pieces.IsPiece P.corners L B T.corners) (X : Point) :
-      P.region X ↔ cellRegion (some S) X ∨ cellRegion (some T) X := by
+      P.Region X ↔ CellRegion (some S) X ∨ CellRegion (some T) X := by
     change ConvexRegion P.corners X ↔ ConvexRegion S.corners X ∨ ConvexRegion T.corners X
     rw [hS.2.1 X, hT.2.1 X]
     constructor
@@ -224,20 +225,20 @@ theorem convex_cut_pieces (P : ConvexCell) {L : Line} {A B : Point}
 which together make up the cell exactly, and whose areas make up its area. -/
 theorem convex_cut (P : ConvexCell) {L : Line} {A B : Point} (hAB : OppositeSides A B L) :
     ∃ U V : Cell, Clips P L A U ∧ Clips P L B V ∧
-      (∀ X : Point, P.region X ↔ cellRegion U X ∨ cellRegion V X) ∧
+      (∀ X : Point, P.Region X ↔ CellRegion U X ∨ CellRegion V X) ∧
       P.area = cellArea U + cellArea V := by
   classical
   have whole {R S : Point} (hrs : OppositeSides R S L)
       (hc : ∀ C ∈ P.corners, Half C R L) :
       Clips P L R (some P) ∧ Clips P L S none := by
-    have side {X : Point} (hx : P.region X) : Half X R L :=
+    have side {X : Point} (hx : P.Region X) : Half X R L :=
       cut_region_half P.convex hc hx
-    have core_side {X : Point} (hx : P.core X) : SameSide X R L := by
+    have core_side {X : Point} (hx : P.Core X) : SameSide X R L := by
       obtain ⟨C, D, E, hi, ht⟩ := cut_core_neighbourhood hx
-      have hc : OnOrInsideTriangle C C D E := by simp [OnOrInsideTriangle]
-      have hd : OnOrInsideTriangle D C D E := by simp [OnOrInsideTriangle]
-      have he : OnOrInsideTriangle E C D E := by simp [OnOrInsideTriangle]
-      exact cut_inside_closed_half (side (ht C hc)) (side (ht D hd)) (side (ht E he)) hi
+      have hC : OnOrInsideTriangle C C D E := by simp [OnOrInsideTriangle]
+      have hD : OnOrInsideTriangle D C D E := by simp [OnOrInsideTriangle]
+      have hE : OnOrInsideTriangle E C D E := by simp [OnOrInsideTriangle]
+      exact cut_inside_closed_half (side (ht C hC)) (side (ht D hD)) (side (ht E hE)) hi
     have no_other {X : Point} (hr : SameSide X R L) (hs : SameSide X S L) : False :=
       hrs.2.2 (same_side_trans hr hs)
     constructor
@@ -259,16 +260,16 @@ theorem convex_cut (P : ConvexCell) {L : Line} {A B : Point} (hAB : OppositeSide
   the retained whole cell gives exact combined coverage. -/
   by_cases hA : ∀ C ∈ P.corners, Half C A L
   · obtain ⟨hu, hv⟩ := whole hAB hA
-    exact ⟨some P, none, hu, hv, fun _ => by simp [cellRegion], (add_zero P.area).symm⟩
+    exact ⟨some P, none, hu, hv, fun _ => by simp [CellRegion], (add_zero P.area).symm⟩
   have hBA : OppositeSides B A L :=
     ⟨hAB.2.1, hAB.1, fun hs => hAB.2.2 (same_side_symm hs)⟩
   by_cases hB : ∀ C ∈ P.corners, Half C B L
   · obtain ⟨hv, hu⟩ := whole hBA hB
-    refine ⟨none, some P, hu, hv, fun _ => by simp [cellRegion], ?_⟩
+    refine ⟨none, some P, hu, hv, fun _ => by simp [CellRegion], ?_⟩
     change P.area = 0 + P.area
     rw [add_comm, add_zero]
   let good (U V : Cell) : Prop := Clips P L A U ∧ Clips P L B V ∧
-    (∀ X : Point, P.region X ↔ cellRegion U X ∨ cellRegion V X)
+    (∀ X : Point, P.Region X ↔ CellRegion U X ∨ CellRegion V X)
   let fits (U V : ConvexCell) : Prop :=
     good (some U) (some V) ∨ good (some V) (some U)
   /- A genuine cut: its two pieces, by `convex_cut_pieces`. -/
@@ -288,11 +289,11 @@ theorem convex_cut (P : ConvexCell) {L : Line} {A B : Point} (hAB : OppositeSide
     convex_cut_pieces P hAB hA hB
   have rotate (pre post : List Point) (hp : P.corners = pre ++ post) :
       P.area = fanSum (post ++ pre) := by
-    have he := cut_fan_rotate_append pre post (hp ▸ P.convex)
+    have he := Extreme.fanSum_rotate_prefix pre post (hp ▸ P.convex)
     simpa only [ConvexCell.area, ← hp] using he.symm
   have finish (U V : ConvexCell) (hg : fits U V) (ha : P.area = U.area + V.area) :
       ∃ U V : Cell, Clips P L A U ∧ Clips P L B V ∧
-        (∀ X : Point, P.region X ↔ cellRegion U X ∨ cellRegion V X) ∧
+        (∀ X : Point, P.Region X ↔ CellRegion U X ∨ CellRegion V X) ∧
         P.area = cellArea U + cellArea V := by
     rcases hg with hg | hg
     · exact ⟨some U, some V, hg.1, hg.2.1, hg.2.2, ha⟩
@@ -315,7 +316,7 @@ theorem convex_cut (P : ConvexCell) {L : Line} {A B : Point} (hAB : OppositeSide
   · obtain ⟨pre, post, ps, us, vs, E, F, C, D, X, Y, U, V,
       hp, hr, hchain, hx, hy, hu, hv, hg⟩ := hg
     have hc : ConvexOutline (E :: F :: ps) :=
-      hr ▸ cut_convex_rotate_append pre post (hp ▸ P.convex)
+      hr ▸ Extreme.convex_rotate_prefix pre post (hp ▸ P.convex)
     apply finish U V hg
     change P.area = fanSum U.corners + fanSum V.corners
     rw [rotate pre post hp, hr, hu, hv,
@@ -378,15 +379,15 @@ theorem agreeOff_exists_mem {α : Type} :
     exact or_congr (h₁ X (CellFacts.avoid_left hX)) (h₂ X (CellFacts.avoid_right hX))
 
 /-- A point inside a cell is in its region. -/
-theorem core_region {P : ConvexCell} {X : Point} (h : P.core X) : P.region X :=
+theorem core_region {P : ConvexCell} {X : Point} (h : P.Core X) : P.Region X :=
   fun s hs A hA hA₁ hA₂ => Or.inr (h s hs A hA hA₁ hA₂)
 
 /-- **A cell's inside has a point off any finitely many straight lines.** -/
-theorem core_avoiding (P : ConvexCell) (ls : List Line) : ∃ X : Point, Avoid ls X ∧ P.core X :=
+theorem core_avoiding (P : ConvexCell) (ls : List Line) : ∃ X : Point, Avoid ls X ∧ P.Core X :=
   CellFacts.core_point_avoiding P.convex ls
 
 /-- A cell or nothing, with no inside, is nothing. -/
-theorem eq_none_of_core {c : Cell} (h : ∀ X : Point, ¬ cellCore c X) : c = none := by
+theorem eq_none_of_core {c : Cell} (h : ∀ X : Point, ¬ CellCore c X) : c = none := by
   cases c with
   | none => rfl
   | some P =>
@@ -394,7 +395,7 @@ theorem eq_none_of_core {c : Cell} (h : ∀ X : Point, ¬ cellCore c X) : c = no
     exact absurd hX (h X)
 
 /-- A cell or nothing, whose region is empty off finitely many straight lines, is nothing. -/
-theorem eq_none_of_region {c : Cell} (h : AgreeOff (cellRegion c) (fun _ => False)) :
+theorem eq_none_of_region {c : Cell} (h : AgreeOff (CellRegion c) (fun _ => False)) :
     c = none := by
   cases c with
   | none => rfl
@@ -408,10 +409,10 @@ theorem eq_none_of_region {c : Cell} (h : AgreeOff (cellRegion c) (fun _ => Fals
 nothing. -/
 theorem cut_cell {L : Line} {A B : Point} (hAB : OppositeSides A B L) (c : Cell) :
     ∃ uv : Cell × Cell,
-      (∀ X : Point, cellCore uv.1 X ↔ cellCore c X ∧ SameSide X A L) ∧
-      AgreeOff (cellRegion uv.1) (fun X => cellRegion c X ∧ Half X A L) ∧
-      (∀ X : Point, cellCore uv.2 X ↔ cellCore c X ∧ SameSide X B L) ∧
-      AgreeOff (cellRegion uv.2) (fun X => cellRegion c X ∧ Half X B L) ∧
+      (∀ X : Point, CellCore uv.1 X ↔ CellCore c X ∧ SameSide X A L) ∧
+      AgreeOff (CellRegion uv.1) (fun X => CellRegion c X ∧ Half X A L) ∧
+      (∀ X : Point, CellCore uv.2 X ↔ CellCore c X ∧ SameSide X B L) ∧
+      AgreeOff (CellRegion uv.2) (fun X => CellRegion c X ∧ Half X B L) ∧
       cellArea c = cellArea uv.1 + cellArea uv.2 := by
   cases c with
   | none =>
@@ -432,8 +433,8 @@ theorem opposite_point {R : Point} {L : Line} (hR : ¬ OnLine R L) :
 side of each of finitely many straight lines towards a point off it, is pinned exactly by its
 inside and, off finitely many straight lines, by its region. -/
 theorem clip_cells (hs : List (Point × Line)) (hoff : ∀ p ∈ hs, ¬ OnLine p.1 p.2) (c : Cell) :
-    ∃ C : Cell, (∀ X : Point, cellCore C X ↔ cellCore c X ∧ ∀ p ∈ hs, SameSide X p.1 p.2) ∧
-      AgreeOff (cellRegion C) (fun X => cellRegion c X ∧ ∀ p ∈ hs, Half X p.1 p.2) := by
+    ∃ C : Cell, (∀ X : Point, CellCore C X ↔ CellCore c X ∧ ∀ p ∈ hs, SameSide X p.1 p.2) ∧
+      AgreeOff (CellRegion C) (fun X => CellRegion c X ∧ ∀ p ∈ hs, Half X p.1 p.2) := by
   induction hs generalizing c with
   | nil => exact ⟨c, fun X => by simp, agreeOff_of_iff fun X => by simp⟩
   | cons p hs ih =>
@@ -452,10 +453,10 @@ theorem clip_cells (hs : List (Point × Line)) (hoff : ∀ p ∈ hs, ¬ OnLine p
 and some cells; cut each, and `V`, by one closed half-plane `H`. Off finitely many straight
 lines, what is left of `V` is made up of what is left of `U` and of the cells. -/
 theorem agree_branch {U U' V V' H : Point → Prop} {ts : List Cell} {g : Cell → Cell}
-    (hag : AgreeOff (fun X => U X ∨ ∃ t ∈ ts, cellRegion t X) V)
+    (hag : AgreeOff (fun X => U X ∨ ∃ t ∈ ts, CellRegion t X) V)
     (hu : AgreeOff U' (fun X => U X ∧ H X)) (hv : AgreeOff V' (fun X => V X ∧ H X))
-    (hg : ∀ t ∈ ts, AgreeOff (cellRegion (g t)) (fun X => cellRegion t X ∧ H X)) :
-    AgreeOff (fun X => U' X ∨ ∃ t ∈ ts.map g, cellRegion t X) V' := by
+    (hg : ∀ t ∈ ts, AgreeOff (CellRegion (g t)) (fun X => CellRegion t X ∧ H X)) :
+    AgreeOff (fun X => U' X ∨ ∃ t ∈ ts.map g, CellRegion t X) V' := by
   obtain ⟨l₁, h₁⟩ := hag
   obtain ⟨l₂, h₂⟩ := hu
   obtain ⟨l₃, h₃⟩ := hv
@@ -465,8 +466,8 @@ theorem agree_branch {U U' V V' H : Point → Prop} {ts : List Cell} {g : Cell �
   have e₂ := h₂ X (CellFacts.avoid_left (CellFacts.avoid_right hX))
   have e₃ := h₃ X (CellFacts.avoid_left (CellFacts.avoid_right (CellFacts.avoid_right hX)))
   have e₄ := h₄ X (CellFacts.avoid_right (CellFacts.avoid_right (CellFacts.avoid_right hX)))
-  show (U' X ∨ ∃ t ∈ ts.map g, cellRegion t X) ↔ V' X
-  rw [CellFacts.exists_mem_map_iff ts g (fun t => cellRegion t X), e₃]
+  show (U' X ∨ ∃ t ∈ ts.map g, CellRegion t X) ↔ V' X
+  rw [CellFacts.exists_mem_map_iff ts g (fun t => CellRegion t X), e₃]
   constructor
   · rintro (h | h)
     · obtain ⟨hU, hH⟩ := e₂.mp h
@@ -481,7 +482,7 @@ theorem agree_branch {U U' V V' H : Point → Prop} {ts : List Cell} {g : Cell �
 /-- Cells and nothings, all of them nothing, that make up a cell or nothing off finitely many
 straight lines: it is nothing too, and both areas are nothing. -/
 theorem tiles_none {D : Cell} {ts : List Cell} (hall : ∀ t ∈ ts, t = none)
-    (hag : AgreeOff (fun X => ∃ t ∈ ts, cellRegion t X) (cellRegion D)) :
+    (hag : AgreeOff (fun X => ∃ t ∈ ts, CellRegion t X) (CellRegion D)) :
     Magnitude.sum (ts.map cellArea) = cellArea D := by
   have hD : D = none := eq_none_of_region (agreeOff_trans (agreeOff_symm hag)
     (agreeOff_of_iff fun X => ⟨fun ⟨t, ht, hr⟩ => by rw [hall t ht] at hr; exact hr,
@@ -499,16 +500,16 @@ and content for at most `m` cells applies; within it, the induction goes on. Whe
 remains, the `ts` have no inside, and `D` is `Q` off finitely many straight lines. -/
 theorem tiles_branch (m : Nat)
     (ih : ∀ (D : Cell) (ts : List Cell), (ts.filterMap id).length ≤ m →
-      ts.Pairwise (fun a b => ∀ X : Point, cellCore a X → ¬ cellCore b X) →
-      AgreeOff (fun X => ∃ t ∈ ts, cellRegion t X) (cellRegion D) →
+      ts.Pairwise (fun a b => ∀ X : Point, CellCore a X → ¬ CellCore b X) →
+      AgreeOff (fun X => ∃ t ∈ ts, CellRegion t X) (CellRegion D) →
       Magnitude.sum (ts.map cellArea) = cellArea D) :
     ∀ hs : List (Point × Line), (∀ p ∈ hs, ¬ OnLine p.1 p.2) →
     ∀ (D : Cell) (Q : ConvexCell) (ts : List Cell), (ts.filterMap id).length ≤ m →
-      (∀ t ∈ ts, ∀ X : Point, Q.core X → ¬ cellCore t X) →
-      ts.Pairwise (fun a b => ∀ X : Point, cellCore a X → ¬ cellCore b X) →
-      AgreeOff (fun X => Q.region X ∨ ∃ t ∈ ts, cellRegion t X) (cellRegion D) →
-      (∀ X : Point, Q.core X → ∀ p ∈ hs, SameSide X p.1 p.2) →
-      (∀ t ∈ ts, ∀ X : Point, cellCore t X → (∀ p ∈ hs, SameSide X p.1 p.2) → Q.core X) →
+      (∀ t ∈ ts, ∀ X : Point, Q.Core X → ¬ CellCore t X) →
+      ts.Pairwise (fun a b => ∀ X : Point, CellCore a X → ¬ CellCore b X) →
+      AgreeOff (fun X => Q.Region X ∨ ∃ t ∈ ts, CellRegion t X) (CellRegion D) →
+      (∀ X : Point, Q.Core X → ∀ p ∈ hs, SameSide X p.1 p.2) →
+      (∀ t ∈ ts, ∀ X : Point, CellCore t X → (∀ p ∈ hs, SameSide X p.1 p.2) → Q.Core X) →
       cellArea D = Q.area + Magnitude.sum (ts.map cellArea) := by
   intro hs
   induction hs with
@@ -519,7 +520,7 @@ theorem tiles_branch (m : Nat)
       eq_none_of_core fun X hX => hQt t ht X (hin t ht X hX (by simp)) hX
     have hsum : Magnitude.sum (ts.map cellArea) = 0 :=
       CellFacts.sum_eq_zero ts cellArea (fun t ht => by rw [hnone t ht]; rfl)
-    have hQD : AgreeOff Q.region (cellRegion D) := by
+    have hQD : AgreeOff Q.Region (CellRegion D) := by
       refine agreeOff_trans (agreeOff_of_iff fun X => ⟨Or.inl, ?_⟩) hag
       rintro (h | ⟨t, ht, hr⟩)
       · exact h
@@ -537,17 +538,17 @@ theorem tiles_branch (m : Nat)
     intro hoff D Q ts hm hQt hpw hag hQin hin
     obtain ⟨B, hAB⟩ := opposite_point (hoff p List.mem_cons_self)
     obtain ⟨f, hf⟩ := Classical.axiomOfChoice (fun c : Cell => cut_cell hAB c)
-    have hQside : ∀ X : Point, Q.core X → SameSide X p.1 p.2 :=
+    have hQside : ∀ X : Point, Q.Core X → SameSide X p.1 p.2 :=
       fun X hX => hQin X hX p List.mem_cons_self
     /- Nothing is cut into nothing. -/
     have hR0 : (f none).1 = none := eq_none_of_core fun X hX => (((hf none).1 X).mp hX).1
     have hB0 : (f none).2 = none := eq_none_of_core fun X hX => (((hf none).2.2.1 X).mp hX).1
-    have hshR : ∀ (t : Cell) (X : Point), cellCore (f t).1 X → cellCore t X :=
+    have hshR : ∀ (t : Cell) (X : Point), CellCore (f t).1 X → CellCore t X :=
       fun t X h => (((hf t).1 X).mp h).1
-    have hshB : ∀ (t : Cell) (X : Point), cellCore (f t).2 X → cellCore t X :=
+    have hshB : ∀ (t : Cell) (X : Point), CellCore (f t).2 X → CellCore t X :=
       fun t X h => (((hf t).2.2.1 X).mp h).1
     /- `Q` lies within the side: within, it keeps its inside; beyond, it is nothing. -/
-    have hQR : ∀ X : Point, cellCore (f (some Q)).1 X ↔ Q.core X := fun X =>
+    have hQR : ∀ X : Point, CellCore (f (some Q)).1 X ↔ Q.Core X := fun X =>
       ((hf (some Q)).1 X).trans ⟨fun h => h.1, fun h => ⟨h, hQside X h⟩⟩
     have hQB : (f (some Q)).2 = none := eq_none_of_core fun X hX => by
       obtain ⟨hq, hb⟩ := ((hf (some Q)).2.2.1 X).mp hX
@@ -560,14 +561,14 @@ theorem tiles_branch (m : Nat)
         rw [hq] at hc
         exact False.elim hc
       | some Q' => exact ⟨Q', rfl⟩
-    have hQ'core : ∀ X : Point, Q'.core X ↔ Q.core X := fun X => by
+    have hQ'core : ∀ X : Point, Q'.Core X ↔ Q.Core X := fun X => by
       have hc := hQR X
       rw [hQ'] at hc
       exact hc
     /- Within the side: the induction on the remaining sides. -/
-    have hagR : AgreeOff (fun X => Q'.region X ∨ ∃ t ∈ ts.map (fun t => (f t).1),
-        cellRegion t X) (cellRegion (f D).1) := by
-      have hu : AgreeOff Q'.region (fun X => Q.region X ∧ Half X p.1 p.2) := by
+    have hagR : AgreeOff (fun X => Q'.Region X ∨ ∃ t ∈ ts.map (fun t => (f t).1),
+        CellRegion t X) (CellRegion (f D).1) := by
+      have hu : AgreeOff Q'.Region (fun X => Q.Region X ∧ Half X p.1 p.2) := by
         have hr := (hf (some Q)).2.1
         rw [hQ'] at hr
         exact hr
@@ -587,8 +588,8 @@ theorem tiles_branch (m : Nat)
         obtain ⟨hc, hs⟩ := ((hf t₀).1 X).mp htX
         exact (hQ'core X).mpr (hin t₀ ht₀ X hc (List.forall_mem_cons.mpr ⟨hs, hall⟩)))
     /- Beyond the side: `Q` is gone, and content for fewer cells applies. -/
-    have hagB : AgreeOff (fun X => ∃ t ∈ ts.map (fun t => (f t).2), cellRegion t X)
-        (cellRegion (f D).2) := by
+    have hagB : AgreeOff (fun X => ∃ t ∈ ts.map (fun t => (f t).2), CellRegion t X)
+        (CellRegion (f D).2) := by
       have hb := agree_branch hag (hf (some Q)).2.2.2.1 (hf D).2.2.2.1
         (fun t _ => (hf t).2.2.2.1)
       rw [hQB] at hb
@@ -617,8 +618,8 @@ cells and nothings, no point inside two of them, that make up a cell or nothing 
 many straight lines, have its area together. -/
 theorem tiles_cells : ∀ (m : Nat) (D : Cell) (ts : List Cell),
     (ts.filterMap id).length ≤ m →
-    ts.Pairwise (fun a b => ∀ X : Point, cellCore a X → ¬ cellCore b X) →
-    AgreeOff (fun X => ∃ t ∈ ts, cellRegion t X) (cellRegion D) →
+    ts.Pairwise (fun a b => ∀ X : Point, CellCore a X → ¬ CellCore b X) →
+    AgreeOff (fun X => ∃ t ∈ ts, CellRegion t X) (CellRegion D) →
     Magnitude.sum (ts.map cellArea) = cellArea D := by
   intro m
   induction m with
@@ -631,13 +632,13 @@ theorem tiles_cells : ∀ (m : Nat) (D : Cell) (ts : List Cell),
     · exact tiles_none hall hag
     obtain ⟨pre, Q, post, rfl⟩ := CellFacts.split_some hall
     have hm' : ((pre ++ post).filterMap id).length ≤ m := by
-      rw [CellFacts.count_split] at hm
+      rw [CellFacts.count_split_some] at hm
       omega
     rw [List.pairwise_append, List.pairwise_cons] at hpw
     obtain ⟨hpre, ⟨hQpost, hpost⟩, hcross⟩ := hpw
     obtain ⟨hs, hoff, hcore, -⟩ := CellFacts.outline_halfplanes Q.convex
-    have hag' : AgreeOff (fun X => Q.region X ∨ ∃ t ∈ pre ++ post, cellRegion t X)
-        (cellRegion D) := by
+    have hag' : AgreeOff (fun X => Q.Region X ∨ ∃ t ∈ pre ++ post, CellRegion t X)
+        (CellRegion D) := by
       refine agreeOff_trans (agreeOff_of_iff fun X => ?_) hag
       constructor
       · rintro (h | ⟨t, ht, hr⟩)
@@ -685,9 +686,9 @@ theorem convex_tiles_area (P : ConvexCell) (qs : List ConvexCell) (h : Tiles P q
   have hm : ((qs.map some).filterMap id).length ≤ qs.length := by
     rw [List.filterMap_map]
     exact List.length_filterMap_le _ _
-  have hag : AgreeOff (fun X => ∃ t ∈ qs.map some, cellRegion t X) (cellRegion (some P)) :=
+  have hag : AgreeOff (fun X => ∃ t ∈ qs.map some, CellRegion t X) (CellRegion (some P)) :=
     Tiling.agreeOff_trans (Tiling.agreeOff_of_iff fun X =>
-      CellFacts.exists_mem_map_iff qs some (fun t => cellRegion t X)) h.2
+      CellFacts.exists_mem_map_iff qs some (fun t => CellRegion t X)) h.2
   have ha := Tiling.tiles_cells qs.length (some P) (qs.map some) hm
     (List.Pairwise.map some (fun _ _ hab => hab) h.1) hag
   rw [List.map_map] at ha

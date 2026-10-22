@@ -45,6 +45,7 @@ import Elements.Figure.Cells
 import Elements.Figure.Content.Facts
 import Elements.Figure.Content
 import Elements.Figure.Outlines.LoopFacts
+import Elements.Figure.Convex.Diagonals
 import Elements.Figure.Outlines.Parity
 import Elements.Figure.Outlines.OutlineFacts
 import Elements.Figure.Outlines

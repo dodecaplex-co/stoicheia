@@ -178,14 +178,6 @@ theorem rot_side {t : Point × Point × Point} (h : Triangle t.1 t.2.1 t.2.2) {s
   · exact ⟨_, _, _, rfl, rot_next h⟩
   · exact ⟨_, _, _, rfl, rot_last h⟩
 
-/-- Read a triangle from any of its corners. -/
-theorem rot_corner {t : Point × Point × Point} (h : Triangle t.1 t.2.1 t.2.2) {V : Point}
-    (hV : V = t.1 ∨ V = t.2.1 ∨ V = t.2.2) : ∃ u v w, V = u ∧ Rot t u v w := by
-  rcases hV with rfl | rfl | rfl
-  · exact ⟨_, _, _, rfl, rot_self h⟩
-  · exact ⟨_, _, _, rfl, rot_next h⟩
-  · exact ⟨_, _, _, rfl, rot_last h⟩
-
 theorem Rot.inSide {t : Point × Point × Point} {u v w : Point} (hr : Rot t u v w)
     (e : Point × Point) :
     InSide e t ↔ (Within e (u, v) ∨ Within e (v, w) ∨ Within e (w, u)) := by
@@ -237,7 +229,7 @@ theorem inside_off_side {u v w X : Point} (hX : InsideTriangle X u v w) :
 /-- A point between an inner point of the side uv and the corner w is inside uvw. -/
 theorem inside_toward {u v w M Z : Point} (h : Triangle u v w) (hM : Between u M v)
     (hZ : Between M Z w) : InsideTriangle Z u v w :=
-  inside_rotate.mpr (inside_rotate.mpr (Avoid.inside_of_between h.cab hM (between_symm hZ)))
+  inside_rotate.mpr (inside_rotate.mpr (inside_triangle_of_between h.cab hM (between_symm hZ)))
 
 /-- A point strictly within the side uv is on u's side of vw, and on v's side of wu. -/
 theorem side_conds {u v w M : Point} (h : Triangle u v w) (hM : Between u M v) :
@@ -250,8 +242,8 @@ theorem side_conds {u v w M : Point} (h : Triangle u v w) (hM : Between u M v) :
   · intro p hp
     simp only [List.mem_cons, List.not_mem_nil, or_false] at hp
     rcases hp with rfl | rfl
-    · exact Avoid.same_side_between_on (between_symm hM) hvL (h.bca.off_line hvL hwL)
-    · exact Avoid.same_side_between_on hM huM (h.cab.off_line hwM huM)
+    · exact same_side_between_on (between_symm hM) hvL (h.bca.off_line hvL hwL)
+    · exact same_side_between_on hM huM (h.cab.off_line hwM huM)
   · intro Y hY N huN hvN hYw
     exact ⟨SameSideOf.of_line h.ne₂₃ hvL hwL (hY (u, L) (by simp)),
       SameSideOf.of_line h.ne₁₃.symm hwM huM (hY (v, M') (by simp)),
@@ -276,7 +268,7 @@ theorem apart_ne {t t' : Point × Point × Point} (ht : t ∈ R.pieces) (ht' : t
 theorem pieces_nodup : R.pieces.Nodup := by
   refine R.apart.imp_of_mem fun hs _ h e => ?_
   subst e
-  obtain ⟨Y, hY⟩ := Avoid.inside_exists (R.triangle _ hs)
+  obtain ⟨Y, hY⟩ := inside_exists (R.triangle _ hs)
   exact h Y hY hY
 
 /-- **No point of a side is inside a triangle.** -/
@@ -296,10 +288,10 @@ theorem int_not_on_side {t t' : Point × Point × Point} (ht : t ∈ R.pieces)
   obtain ⟨X', hX'uv, hX'⟩ : ∃ X', Between u X' v ∧ InsideTriangle X' t.1 t.2.1 t.2.2 := by
     rcases (hXs : OnFiniteLine X u v) with e | e | hb
     · subst e
-      obtain ⟨X', hb, hc⟩ := Avoid.shorten_sides h.ne₁₂ hs0 hs1
+      obtain ⟨X', hb, hc⟩ := shorten_off_lines h.ne₁₂ hs0 hs1
       exact ⟨X', hb, hs2 X' hc⟩
     · subst e
-      obtain ⟨X', hb, hc⟩ := Avoid.shorten_sides h.ne₁₂.symm hs0 hs1
+      obtain ⟨X', hb, hc⟩ := shorten_off_lines h.ne₁₂.symm hs0 hs1
       exact ⟨X', between_symm hb, hs2 X' hc⟩
     · exact ⟨X, hb, hX⟩
   /- Towards w from it, a point inside both triangles. -/
@@ -308,7 +300,7 @@ theorem int_not_on_side {t t' : Point × Point × Point} (ht : t ∈ R.pieces)
     rintro rfl
     obtain ⟨N, huN, hvN⟩ := Postulate1 u v h.ne₁₂
     exact h ⟨N, huN, hvN, on_line_of_between_ends hX'uv huN hvN⟩
-  obtain ⟨Z, hZ, hZc⟩ := Avoid.shorten_sides hX'w hs0' hs1'
+  obtain ⟨Z, hZ, hZc⟩ := shorten_off_lines hX'w hs0' hs1'
   exact apart_ne R ht ht' he (hs2' Z hZc) ((hr.inside Z).mpr (inside_toward h hX'uv hZ))
 
 /-- **Sides never cross.** -/
@@ -335,9 +327,9 @@ theorem no_cross {t t' : Point × Point × Point} (ht : t ∈ R.pieces) (ht' : t
     · exact ⟨_, Or.inr rfl, h'⟩
   have hXe : X ≠ e := fun hXe => not_on_line_of_same_side hew (hXe ▸ hXℓ)
   obtain ⟨hc, hc0, hc1⟩ := side_conds h hX
-  obtain ⟨Z, hZ, hZc⟩ := Avoid.shorten_sides hXe hc hc0
+  obtain ⟨Z, hZ, hZc⟩ := shorten_off_lines hXe hc hc0
   have hZw : SameSide Z w ℓ :=
-    same_side_trans (same_side_symm (Avoid.same_side_between_on hZ hXℓ
+    same_side_trans (same_side_symm (same_side_between_on hZ hXℓ
       (not_on_line_of_same_side hew))) hew
   have hZin := hc1 Z hZc ℓ h1 h2 hZw
   have hZs' : OnSeg Z s' := by
@@ -365,20 +357,6 @@ theorem side_ends_mem {t : Point × Point × Point} (ht : t ∈ R.pieces) {s : P
   · exact ⟨corner_mem R ht (Or.inl rfl), corner_mem R ht (Or.inr (Or.inl rfl))⟩
   · exact ⟨corner_mem R ht (Or.inr (Or.inl rfl)), corner_mem R ht (Or.inr (Or.inr rfl))⟩
   · exact ⟨corner_mem R ht (Or.inr (Or.inr rfl)), corner_mem R ht (Or.inl rfl)⟩
-
-/-- A corner of the figure is inside no triangle. -/
-theorem vert_not_inside {V : Point} (hV : V ∈ verts R) {t : Point × Point × Point}
-    (ht : t ∈ R.pieces) : ¬ InsideTriangle V t.1 t.2.1 t.2.2 := by
-  intro hin
-  unfold verts at hV
-  obtain ⟨t', ht', hV'⟩ := List.mem_flatMap.mp hV
-  have hs : (t'.1, t'.2.1) ∈ triSides t' := mem_triSides.mpr (Or.inl rfl)
-  have hs' : (t'.2.1, t'.2.2) ∈ triSides t' := mem_triSides.mpr (Or.inr (Or.inl rfl))
-  simp only [List.mem_cons, List.not_mem_nil, or_false] at hV'
-  rcases hV' with rfl | rfl | rfl
-  · exact int_not_on_side R ht ht' hin hs (Or.inl rfl)
-  · exact int_not_on_side R ht ht' hin hs (Or.inr (Or.inl rfl))
-  · exact int_not_on_side R ht ht' hin hs' (Or.inr (Or.inl rfl))
 
 /-- **An elementary finite straight line**: between two different corners, along a side of
 one of the triangles, with no corner strictly between its ends. -/
@@ -509,8 +487,8 @@ theorem same_side_false {t₁ t₂ : Point × Point × Point} (h₁ : t₁ ∈ R
   have hM₂ := between_within hw₂.1 hw₂.2 hM
   obtain ⟨hc, hc0, hc1⟩ := side_conds hr₂.tri hM₂
   have hMw : M ≠ w₁ := fun e => hw1off (e ▸ hMℓ)
-  obtain ⟨Z, hZ, hZc⟩ := Avoid.shorten_sides hMw hc hc0
-  have hZw₁ : SameSide Z w₁ ℓ := Avoid.same_side_between_on hZ hMℓ hw1off
+  obtain ⟨Z, hZ, hZc⟩ := shorten_off_lines hMw hc hc0
+  have hZw₁ : SameSide Z w₁ ℓ := same_side_between_on hZ hMℓ hw1off
   have hZw₂ : SameSide Z w₂ ℓ := same_side_trans (same_side_symm hZw₁) hs
   exact apart_ne R h₁ h₂ hne ((hr₁.inside Z).mpr (inside_toward hr₁.tri hM₁ hZ))
     ((hr₂.inside Z).mpr (hc1 Z hZc ℓ hu₂ hv₂ hZw₂))
@@ -603,7 +581,7 @@ theorem off_other_sides {u v w V : Point} (h : Triangle u v w) (hV : V = u ∨ B
   rcases hV with rfl | hV
   · exact h.bca.off_line hvL hwL hVL'
   · exact not_on_line_of_same_side
-      (Avoid.same_side_between_on (between_symm hV) hvL (h.bca.off_line hvL hwL)) hVL'
+      (same_side_between_on (between_symm hV) hvL (h.bca.off_line hvL hwL)) hVL'
 
 /-- At a corner u of a triangle, exactly two elementary lines run along its sides. -/
 theorem corner_two {t : Point × Point × Point} (ht : t ∈ R.pieces) {u v w : Point}

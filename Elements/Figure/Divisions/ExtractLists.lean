@@ -49,19 +49,6 @@ theorem same_trans {s t u : Point × Point} (h₁ : Same s t) (h₂ : Same t u) 
   · exact Or.inr rfl
   · exact Or.inl (Prod.swap_swap u)
 
-theorem same_swap_left {s t : Point × Point} : Same s.swap t ↔ Same s t := by
-  constructor
-  · rintro (h | h)
-    · exact Or.inr (by rw [← h, Prod.swap_swap])
-    · exact Or.inl (by rw [← Prod.swap_swap s, h, Prod.swap_swap])
-  · rintro (h | h)
-    · exact Or.inr (by rw [h])
-    · exact Or.inl (by rw [h, Prod.swap_swap])
-
-/-- `Same s (P, Q)` says that s has the ends P and Q. -/
-theorem same_pair {s : Point × Point} {P Q : Point} :
-    Same s (P, Q) ↔ s = (P, Q) ∨ s = (Q, P) := Iff.rfl
-
 /-! ## Counting -/
 
 /-- Splitting a count by a second test. -/
@@ -110,24 +97,6 @@ theorem countP_two {α : Type} {l : List α} (hnd : l.Nodup) {p : α → Bool} {
     simp
   rw [hperm.length_eq]
   rfl
-
-/-- A test that implies another, and fails somewhere the other passes, counts strictly less. -/
-theorem countP_lt {α : Type} {p q : α → Bool} :
-    ∀ {l : List α}, (∀ x ∈ l, p x = true → q x = true) →
-      (∃ x ∈ l, q x = true ∧ p x = false) → l.countP p < l.countP q
-  | [], _, ⟨_, h, _⟩ => absurd h List.not_mem_nil
-  | a :: l, hpq, ⟨x, hx, hqx, hpx⟩ => by
-    have hle : l.countP p ≤ l.countP q :=
-      List.countP_mono_left fun y hy => hpq y (List.mem_cons_of_mem _ hy)
-    rw [List.countP_cons, List.countP_cons]
-    rcases List.mem_cons.mp hx with rfl | hx
-    · simp only [hqx, hpx, Bool.false_eq_true, ite_false, ite_true]
-      omega
-    · have hlt := countP_lt (fun y hy => hpq y (List.mem_cons_of_mem _ hy)) ⟨x, hx, hqx, hpx⟩
-      cases hpa : p a
-      · cases q a <;> simp only [Bool.false_eq_true, ite_false, ite_true] <;> omega
-      · simp only [hpq a List.mem_cons_self hpa, ite_true]
-        omega
 
 theorem ite_of_pos {α : Sort _} {p : Prop} [Decidable p] {a b : α} (h : p) :
     (if p then a else b) = a := by
@@ -222,27 +191,6 @@ theorem countP_eq_sum {α : Type} (l : List α) (p : α → Prop) [DecidablePred
   | cons a l ih =>
     simp only [List.countP_cons, List.map_cons, List.sum_cons, ih, decide_eq_true_eq]
     omega
-
-/-- Counting the members whose number is odd gives the parity of the sum. -/
-theorem countP_odd_sum {α : Type} (l : List α) (p : α → Prop) [DecidablePred p] (f : α → Nat)
-    (h : ∀ x ∈ l, p x ↔ f x % 2 = 1) :
-    l.countP (fun x => decide (p x)) % 2 = (l.map f).sum % 2 := by
-  induction l with
-  | nil => rfl
-  | cons a l ih =>
-    have ih' := ih fun x hx => h x (List.mem_cons_of_mem _ hx)
-    have ha := h a List.mem_cons_self
-    simp only [List.countP_cons, List.map_cons, List.sum_cons, decide_eq_true_eq]
-    by_cases hp : p a
-    · have := ha.mp hp
-      simp only [hp, ite_true]
-      omega
-    · have : f a % 2 = 0 := by
-        rcases Nat.mod_two_eq_zero_or_one (f a) with e | e
-        · exact e
-        · exact absurd (ha.mpr e) hp
-      simp only [hp, ite_false]
-      omega
 
 /-- Termwise equal parities give sums of equal parity. -/
 theorem sum_mod_two {α : Type} (l : List α) (f g : α → Nat)
@@ -353,16 +301,6 @@ theorem pairwise_same {D : List (Point × Point)} (h : D.Pairwise fun d e => ¬ 
 
 /-! ## The neighbours of a corner of a closed walk -/
 
-/-- No two sides of a list of distinct corners end at one corner. -/
-theorem sides_snd_inj {ps : List Point} (h : ps.Nodup) {s t : Point × Point}
-    (hs : s ∈ sides ps) (ht : t ∈ sides ps) (he : s.2 = t.2) : s = t := by
-  have hnd : ((sides ps).map Prod.snd).Nodup := (Parity.sides_map_snd_perm ps).nodup_iff.mpr h
-  have hpw : (sides ps).Pairwise (fun a b => a.2 ≠ b.2) := List.pairwise_map.mp hnd
-  rcases LoopFacts.pairwise_mem hpw hs ht with e | e | e
-  · exact e
-  · exact absurd he e
-  · exact absurd he.symm e
-
 /-- The sides of a closed walk of three or more distinct corners name distinct finite straight
 lines. -/
 theorem sides_pairwise_same {L : List Point} (hlen : 3 ≤ L.length) (hnd : L.Nodup) :
@@ -392,7 +330,7 @@ theorem loop_nbrs {L : List Point} (hlen : 3 ≤ L.length) (hnd : L.Nodup) {V : 
     · have := LoopFacts.sides_fst_inj hnd hs hE (by rw [hsW])
       rw [hsW, Prod.mk.injEq] at this
       exact Or.inl this.2
-    · have := sides_snd_inj hnd hs hZ (by rw [hsW]; rfl)
+    · have := Parity.sides_snd_inj hnd hs hZ (by rw [hsW]; rfl)
       rw [hsW] at this
       simp only [Prod.swap_prod_mk, Prod.mk.injEq] at this
       exact Or.inr this.1
@@ -641,7 +579,7 @@ theorem cycles {κ : Type} (vs : List Point) (hvs : vs.Nodup) (c : Point → Poi
         (allPairs vs).countP (fun e => decide (adj e.1 e.2)) := by
       obtain ⟨E, hE⟩ := outgoing_side (List.head_mem (List.ne_nil_of_length_pos (by omega)) :
         L.head (List.ne_nil_of_length_pos (by omega)) ∈ L)
-      refine countP_lt (fun e _ he => ?_) ⟨_, mem_allPairs.mpr (hmem _ _ (hLs _ hE).1), ?_⟩
+      refine Parity.countP_lt (fun e _ he => ?_) ⟨_, mem_allPairs.mpr (hmem _ _ (hLs _ hE).1), ?_⟩
       · simp only [decide_eq_true_eq] at he ⊢
         exact ((hadj' _ _).mp he).1
       · simp only [decide_eq_true_eq, decide_eq_false_iff_not]

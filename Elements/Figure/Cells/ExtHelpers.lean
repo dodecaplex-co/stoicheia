@@ -10,12 +10,12 @@ whose theory of content guides this route. The supporting steps use closed-trian
 characterisation, fan coverage, finite avoidance, outline symmetries and fan invariance.
 -/
 
-namespace Elements.Figures.Ext
+namespace Elements.Figures.Extreme
 
 open Tacit
 
-
-/-- The closing segment joins the last point to the first. -/
+/-- A chain that ends with V and then A has VA among its segments: for an outline A, B, …, V it is
+the closing side. -/
 theorem closing_segment (A V : Point) (ps : List Point) :
     (V, A) ∈ segments (ps ++ [V, A]) := by
   induction ps with
@@ -79,7 +79,6 @@ theorem fan_mem {ps : List Point} {t : Point × Point × Point} (ht : t ∈ fan 
     obtain ⟨s, hs, rfl⟩ := List.mem_map.mp ht
     obtain ⟨h₁, h₂⟩ := segment_corners hs
     exact ⟨by simp, List.mem_cons_of_mem _ h₁, List.mem_cons_of_mem _ h₂⟩
-
 
 /-- A non-corner point of the region lies strictly between two region points. -/
 theorem noncorner_segment {ps : List Point} (h : ConvexOutline ps) {X : Point}
@@ -153,14 +152,15 @@ theorem head_not_between {A B V : Point} {ps : List Point}
   have he : M = L := line_unique (ne_of_between hb) hUM hAM hUL hAL
   exact hT.off_line hAL hBL (he ▸ hVM)
 
-/-- A nonempty list can be read as an initial list followed by its last member. -/
+/-- A nonempty list can be read as an initial list followed by its last member: Lean's
+`List.eq_nil_or_concat`, for a list known to be nonempty, with `concat` read as appending. -/
 theorem split_last {α : Type} (ps : List α) (h : ps ≠ []) :
     ∃ us V, ps = us ++ [V] := by
   rcases List.eq_nil_or_concat ps with he | ⟨us, V, he⟩
   · exact False.elim (h he)
   · exact ⟨us, V, by simpa using he⟩
 
-/-- Any corner cannot lie strictly between two region points. -/
+/-- No corner lies strictly between two points of the region. -/
 theorem corner_not_between {ps : List Point} (h : ConvexOutline ps) {X : Point}
     (hX : X ∈ ps) {U V : Point} (hU : ConvexRegion ps U) (hV : ConvexRegion ps V) :
     ¬ Between U X V := by
@@ -204,7 +204,6 @@ theorem between_triangle_open {A B C X Y Z : Point} (h : Triangle A B C)
   exact ⟨step h.ne₂₃ hc.1 hY.1, step h.ne₁₃.symm hc.2.1 hY.2.1,
     step h.ne₁₂ hc.2.2 hY.2.2⟩
 
-
 /-- Given a point within or on a triangle and off a straight line, another point
 within or on the triangle avoids a prescribed finite list of lines and remains
 on the same side of the first line as the given point. -/
@@ -216,7 +215,7 @@ theorem triangle_local_avoiding {A B C X : Point} {L : Line}
   have hz : ∃ Z, InsideTriangle Z A B C ∧ SameSide Z X L := by
     by_cases he : X = I
     · exact ⟨X, he ▸ hI, same_side_refl hXL⟩
-    · obtain ⟨Z, hb, hs⟩ := Avoid.shorten he hXL
+    · obtain ⟨Z, hb, hs⟩ := shorten_off_line he hXL
       exact ⟨Z, between_triangle_open h hX hI hb, hs⟩
   obtain ⟨Z, hZ, hZL⟩ := hz
   obtain ⟨BC, hB, hC⟩ := Postulate1 B C h.ne₂₃
@@ -406,4 +405,4 @@ theorem head_order_unique {A B : Point} {ps qs : List Point}
       have he := first_edge_unique hp (by simpa using hr) hm'
       exact Or.inr (by simp [he])
 
-end Elements.Figures.Ext
+end Elements.Figures.Extreme

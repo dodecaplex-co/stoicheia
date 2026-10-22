@@ -18,7 +18,7 @@ which only `outline_bounded` uses.
 namespace Elements.Figures
 
 /-- Every admitted outline has a division into nondegenerate triangles. -/
-theorem division_exists (F : Outline) : ∃ R : Apart, Divides F.region R := by
+theorem division_exists (F : Outline) : ∃ R : Apart, Divides F.Region R := by
   /- A convex cell holds the region strictly inside it (`outline_enclosure`); the straight
   lines of the contour sides (`outline_side_lines`) cut it into cells with disjoint insides
   (`convex_arrangement`). The cells with a point inside the figure make up its closed region
@@ -31,7 +31,7 @@ theorem division_exists (F : Outline) : ∃ R : Apart, Divides F.region R := by
     obtain ⟨L, h₁, h₂⟩ := collinear_of_two s.1 s.2
     exact ⟨L, (hls L).mpr ⟨ps, hps, s, hs, h₁, h₂⟩, h₁, h₂⟩
   obtain ⟨qs, -, ha, hc, hl⟩ := convex_arrangement P ls
-  obtain ⟨rs, hne, hsub, -, hcov⟩ := outline_cells_cover F P hP ls hs qs ha hc hl
+  obtain ⟨rs, hne, hsub, -, hcov⟩ := outline_cells_cover F P hP ls hs qs hc hl
   obtain ⟨R, -, hR⟩ := DivisionFacts.cells_division rs hne (List.Pairwise.sublist hsub ha)
   exact ⟨R, fun X => (hR X).trans (hcov X).symm⟩
 
@@ -52,7 +52,7 @@ theorem convex_fan {cs : List Point} (h : ConvexOutline cs) :
 
 /-- Every figure previously supplied as an Apart has an outline with exactly
 the same region, including holes, separate pieces and contacts at corners. -/
-theorem apart_has_outline (R : Apart) : ∃ F : Outline, Divides F.region R := by
+theorem apart_has_outline (R : Apart) : ∃ F : Outline, Divides F.Region R := by
   /- Cut the sides at the corners; the elementary lines along one triangle only, grouped by
   linked triangles, are even in number at every corner of each group, so they are the sides of
   simple contours (`Extract.cycles`). A contour lies wholly inside or outside another, off it,
@@ -75,14 +75,14 @@ namespace Elements.Figures
 /-- Two divisions of an outline have the same sum.
 This follows from the content theorem (`Apart.area_eq_of_same_region`). -/
 theorem divisions_equal (F : Outline) (R S : Apart)
-    (hR : Divides F.region R) (hS : Divides F.region S) : R.area = S.area := by
+    (hR : Divides F.Region R) (hS : Divides F.Region S) : R.area = S.area := by
   exact Apart.area_eq_of_same_region R S (fun X => (hR X).trans (hS X).symm)
 
 /-- Every division gives the selected area of the outline.
 This derivation depends on the content theorem; the division given is its own witness. -/
-theorem area_eq (F : Outline) (R : Apart) (hR : Divides F.region R) :
+theorem area_eq (F : Outline) (R : Apart) (hR : Divides F.Region R) :
     F.area = R.area := by
-  have hex : ∃ a : Area, ∃ T : Apart, Divides F.region T ∧ T.area = a :=
+  have hex : ∃ a : Area, ∃ T : Apart, Divides F.Region T ∧ T.area = a :=
     ⟨R.area, R, hR, rfl⟩
   obtain ⟨T, hT, ht⟩ := Classical.epsilon_spec hex
   exact ht.symm.trans (divisions_equal F T R hT hR)
@@ -90,15 +90,15 @@ theorem area_eq (F : Outline) (R : Apart) (hR : Divides F.region R) :
 /-- The area depends only on the region: a division of one region divides the other
 (`division_exists`, `area_eq`). -/
 theorem area_congr (F G : Outline)
-    (h : ∀ X : Point, F.region X ↔ G.region X) : F.area = G.area := by
+    (h : ∀ X : Point, F.Region X ↔ G.Region X) : F.area = G.area := by
   obtain ⟨R, hR⟩ := division_exists F
-  have hG : Divides G.region R := fun X => (hR X).trans (h X)
+  have hG : Divides G.Region R := fun X => (hR X).trans (h X)
   exact (area_eq F R hR).trans (area_eq G R hG).symm
 
 /-- Reading the same boundary another way leaves its area unchanged: the same boundary has
 the same region (`same_boundary_region`), and so the same area (`area_congr`). -/
 theorem area_of_same_boundary (F G : Outline)
-    (h : ∀ X : Point, F.boundary X ↔ G.boundary X) : F.area = G.area :=
+    (h : ∀ X : Point, F.Boundary X ↔ G.Boundary X) : F.area = G.area :=
   area_congr F G (same_boundary_region F G h)
 
 /-- A strictly convex outline has its explicit fan sum for area: the fan divides its region
@@ -107,7 +107,7 @@ area (`area_eq`). -/
 theorem convex_fan_area {cs : List Point} (h : ConvexOutline cs) :
     (singleOutline cs (convex_loop_region h).1).area = fanSum cs := by
   obtain ⟨R, hp, hd⟩ := convex_fan h
-  have hR : Divides (singleOutline cs (convex_loop_region h).1).region R := by
+  have hR : Divides (singleOutline cs (convex_loop_region h).1).Region R := by
     intro X
     exact (hd X).trans (((single_region cs (convex_loop_region h).1 X).trans
       ((convex_loop_region h).2 X)).symm)

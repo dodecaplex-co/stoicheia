@@ -24,7 +24,7 @@ uses.
   across that side, changes one contour's inside and no other's, so one of its ends is at odd
   depth. Brief 0013 (section 8, "The arrangement and general division") divides a small
   neighbourhood of a corner into sectors; here no sector at a corner need be examined.
-* **A cell's region and its inside** (`cell_point`, `cells_apart`). A point of a cell's
+* **A cell's region and its inside** (`cell_point`, `clear_of_cells`). A point of a cell's
   closed region off the figure's boundary has a point of the cell's inside that is inside the
   figure exactly when it is, reached along a short finite straight line that meets no side;
   and finitely many conditions, each holding at a point, keep away every cell whose closed
@@ -82,14 +82,6 @@ theorem crosses_once {Y₁ M Y₂ Q a b : Point} {ℓ : Line} (h : Between Y₁ 
   refine ⟨⟨M, OnRay.of_between hMQ, hab⟩, fun hc => ?_⟩
   exact ((Parity.crosses_at h2 hQ ha hab hMℓ).mp hc).2.2.2 (between_inner hM h)
 
-/-- A ray along a straight line through no corner is good. -/
-theorem goodRay_of_line {ps : List Point} {X Q : Point} {ℓ : Line} (hXQ : X ≠ Q)
-    (hX : OnLine X ℓ) (hQ : OnLine Q ℓ) (hoff : ∀ V ∈ ps, ¬ OnLine V ℓ) :
-    GoodRay ps X Q := by
-  refine ⟨hXQ, fun V hV hcol => ?_⟩
-  obtain ⟨M, hXM, hQM, hVM⟩ := hcol
-  exact hoff V hV (line_unique hXQ hXM hQM hX hQ ▸ hVM)
-
 /-! ## Counting crossings -/
 
 /-- Rays crossing the same sides have the same count. -/
@@ -139,14 +131,14 @@ then X is inside the loop exactly when Z is. Produce ZX beyond X to Q: the good 
 and from X through Q cross the same sides. -/
 theorem inside_of_segment {ps : List Point} (h : SimpleLoop ps) {X Z : Point} {ℓ : Line}
     (hXZ : X ≠ Z) (hXℓ : OnLine X ℓ) (hZℓ : OnLine Z ℓ) (hoff : ∀ V ∈ ps, ¬ OnLine V ℓ)
-    (hX : ¬ loopBoundary ps X) (hZ : ¬ loopBoundary ps Z)
-    (hseg : ∀ U : Point, Between X U Z → ¬ loopBoundary ps U) :
-    loopInside ps X ↔ loopInside ps Z := by
+    (hX : ¬ LoopBoundary ps X) (hZ : ¬ LoopBoundary ps Z)
+    (hseg : ∀ U : Point, Between X U Z → ¬ LoopBoundary ps U) :
+    LoopInside ps X ↔ LoopInside ps Z := by
   obtain ⟨Q, hZXQ⟩ := produce hXZ.symm
   have hQℓ : OnLine Q ℓ := on_line_of_between hZXQ hZℓ hXℓ
-  have hgZ : GoodRay ps Z Q := goodRay_of_line (ne_of_between_ends hZXQ) hZℓ hQℓ hoff
+  have hgZ : GoodRay ps Z Q := OutlineFacts.good_of_line (ne_of_between_ends hZXQ) hZℓ hQℓ hoff
   have hgX : GoodRay ps X Q :=
-    goodRay_of_line (ne_of_between (between_symm hZXQ)).symm hXℓ hQℓ hoff
+    OutlineFacts.good_of_line (ne_of_between (between_symm hZXQ)).symm hXℓ hQℓ hoff
   have hc : crossingCount ps Z Q = crossingCount ps X Q := by
     apply count_congr
     intro t ht
@@ -168,17 +160,17 @@ theorem inside_flip {ps : List Point} (h : SimpleLoop ps) {s : Point × Point}
     (hoff : ∀ V ∈ ps, ¬ OnLine V ℓ)
     (hseg : ∀ U : Point, OnFiniteLine U Y₁ Y₂ → ∀ t ∈ sides ps,
       OnFiniteLine U t.1 t.2 → U = M ∧ t = s) :
-    loopInside ps Y₁ ↔ ¬ loopInside ps Y₂ := by
+    LoopInside ps Y₁ ↔ ¬ LoopInside ps Y₂ := by
   have hY12 : Y₁ ≠ Y₂ := ne_of_between_ends hM
   obtain ⟨Q, hQ⟩ := produce hY12
   have hQℓ : OnLine Q ℓ := on_line_of_between hQ h1 h2
-  have hb1 : ¬ loopBoundary ps Y₁ := fun ⟨t, ht, hY⟩ =>
+  have hb1 : ¬ LoopBoundary ps Y₁ := fun ⟨t, ht, hY⟩ =>
     ne_of_between hM (hseg Y₁ (Or.inl rfl) t ht hY).1
-  have hb2 : ¬ loopBoundary ps Y₂ := fun ⟨t, ht, hY⟩ =>
+  have hb2 : ¬ LoopBoundary ps Y₂ := fun ⟨t, ht, hY⟩ =>
     ne_of_between (between_symm hM) (hseg Y₂ (Or.inr (Or.inl rfl)) t ht hY).1
-  have hg1 : GoodRay ps Y₁ Q := goodRay_of_line (ne_of_between_ends hQ) h1 hQℓ hoff
+  have hg1 : GoodRay ps Y₁ Q := OutlineFacts.good_of_line (ne_of_between_ends hQ) h1 hQℓ hoff
   have hg2 : GoodRay ps Y₂ Q :=
-    goodRay_of_line (ne_of_between (between_symm hQ)).symm h2 hQℓ hoff
+    OutlineFacts.good_of_line (ne_of_between (between_symm hQ)).symm h2 hQℓ hoff
   obtain ⟨c1, c2⟩ := crosses_once (b := s.2) hQ hM h1 hQℓ
     (hoff _ (LoopFacts.side_mem hs).1) hMs
   have hc : crossingCount ps Y₁ Q = crossingCount ps Y₂ Q + 1 := by
@@ -201,7 +193,7 @@ theorem inside_flip {ps : List Point} (h : SimpleLoop ps) {s : Point × Point}
 
 /-- Points inside the same contours have the same depth. -/
 theorem depth_congr (F : Outline) {X Y : Point}
-    (h : ∀ ps ∈ F.loops, loopInside ps X ↔ loopInside ps Y) : F.depth X = F.depth Y := by
+    (h : ∀ ps ∈ F.loops, LoopInside ps X ↔ LoopInside ps Y) : F.depth X = F.depth Y := by
   unfold Outline.depth
   congr 1
   exact List.filter_congr fun ps hps => decide_eq_decide.mpr (h ps hps)
@@ -221,8 +213,8 @@ theorem countP_flip {α : Type} (pre post : List α) (a : α) (p q : α → Bool
 /-- **One contour changes, and no other**: then one of the two points has odd depth. -/
 theorem depth_flip (F : Outline) {pre post : List (List Point)} {ps : List Point}
     (hF : F.loops = pre ++ ps :: post) {X Y : Point}
-    (h : ∀ qs ∈ pre ++ post, loopInside qs X ↔ loopInside qs Y)
-    (hps : loopInside ps X ↔ ¬ loopInside ps Y) :
+    (h : ∀ qs ∈ pre ++ post, LoopInside qs X ↔ LoopInside qs Y)
+    (hps : LoopInside ps X ↔ ¬ LoopInside ps Y) :
     F.depth X % 2 = 1 ∨ F.depth Y % 2 = 1 := by
   unfold Outline.depth
   rw [hF, ← List.countP_eq_length_filter, ← List.countP_eq_length_filter]
@@ -231,36 +223,30 @@ theorem depth_flip (F : Outline) {pre post : List (List Point)} {ps : List Point
   exact hps
 
 /-- Two points off the boundary, inside the same contours, are inside the figure together. -/
-theorem inside_congr (F : Outline) {X Y : Point} (hX : ¬ F.boundary X) (hY : ¬ F.boundary Y)
-    (h : ∀ ps ∈ F.loops, loopInside ps X ↔ loopInside ps Y) : F.inside X ↔ F.inside Y := by
-  unfold Outline.inside
+theorem inside_congr (F : Outline) {X Y : Point} (hX : ¬ F.Boundary X) (hY : ¬ F.Boundary Y)
+    (h : ∀ ps ∈ F.loops, LoopInside ps X ↔ LoopInside ps Y) : F.Inside X ↔ F.Inside Y := by
+  unfold Outline.Inside
   rw [depth_congr F h]
   exact ⟨fun hX' => ⟨hY, hX'.2⟩, fun hY' => ⟨hX, hY'.2⟩⟩
 
 /-! ## Corners and the straight lines to them -/
 
-/-- All the corners of all the contours. -/
-def corners (F : Outline) : List Point := F.loops.flatten
-
 /-- A corner of a contour is a corner of the figure. -/
 theorem mem_corners {F : Outline} {ps : List Point} (hps : ps ∈ F.loops) {V : Point}
-    (hV : V ∈ ps) : V ∈ corners F :=
+    (hV : V ∈ ps) : V ∈ F.corners :=
   List.mem_flatten.mpr ⟨ps, hps, hV⟩
 
 /-- A point off the boundary is no corner. -/
-theorem not_corner {F : Outline} {X : Point} (hX : ¬ F.boundary X) : X ∉ corners F := by
+theorem not_corner {F : Outline} {X : Point} (hX : ¬ F.Boundary X) : X ∉ F.corners := by
   intro hm
   obtain ⟨ps, hps, hV⟩ := List.mem_flatten.mp hm
   obtain ⟨E, hE⟩ := outgoing_side hV
   exact hX ⟨ps, hps, (X, E), hE, Or.inl rfl⟩
 
-/-- The straight lines joining a point to each of finitely many points. -/
-noncomputable def joins (X : Point) (vs : List Point) : List Line :=
-  vs.map fun V => Classical.choose (collinear_of_two X V)
-
 /-- A straight line through X and a point off all the joining lines passes through none of
 the points, when X is none of them. -/
-theorem joins_off {X Z : Point} {vs : List Point} (hZ : Avoid (joins X vs) Z) (hX : X ∉ vs)
+theorem joins_off {X Z : Point} {vs : List Point}
+    (hZ : Avoid (vs.map fun V => Classical.choose (collinear_of_two X V)) Z) (hX : X ∉ vs)
     {ℓ : Line} (hXℓ : OnLine X ℓ) (hZℓ : OnLine Z ℓ) : ∀ V ∈ vs, ¬ OnLine V ℓ := by
   intro V hV hVℓ
   have hspec := Classical.choose_spec (collinear_of_two X V)
@@ -297,15 +283,15 @@ theorem pairs_off (X : Point) : ∀ ls : List Line, ∃ hs : List (Point × Line
 /-- A point off every straight line holding a side is off the boundary. -/
 theorem off_boundary {F : Outline} {ls : List Line}
     (hs : ∀ ps ∈ F.loops, ∀ s ∈ sides ps, ∃ L ∈ ls, OnLine s.1 L ∧ OnLine s.2 L)
-    {X : Point} (hX : ∀ L ∈ ls, ¬ OnLine X L) : ¬ F.boundary X := by
+    {X : Point} (hX : ∀ L ∈ ls, ¬ OnLine X L) : ¬ F.Boundary X := by
   rintro ⟨ps, hps, s, hs', hXs⟩
   obtain ⟨L, hL, h1, h2⟩ := hs ps hps s hs'
   exact hX L hL (LoopFacts.onFiniteLine_onLine hXs h1 h2)
 
 /-- A point of a cell's inside is off every straight line its inside keeps to one side of. -/
 theorem core_off {Q : ConvexCell} {ls : List Line}
-    (hQ : ∀ L ∈ ls, ∀ X Y : Point, Q.core X → Q.core Y → SameSide X Y L) {X : Point}
-    (hX : Q.core X) : ∀ L ∈ ls, ¬ OnLine X L :=
+    (hQ : ∀ L ∈ ls, ∀ X Y : Point, Q.Core X → Q.Core Y → SameSide X Y L) {X : Point}
+    (hX : Q.Core X) : ∀ L ∈ ls, ¬ OnLine X L :=
   fun L hL => not_on_line_of_same_side (hQ L hL X X hX hX)
 
 /-- **Within one cell, along a straight line through no corner.** Two points of a cell's
@@ -313,10 +299,10 @@ inside, whose straight line passes through no corner, are inside the same contou
 finite straight line between them meets no side line. -/
 theorem core_segment (F : Outline) {ls : List Line}
     (hs : ∀ ps ∈ F.loops, ∀ s ∈ sides ps, ∃ L ∈ ls, OnLine s.1 L ∧ OnLine s.2 L)
-    {Q : ConvexCell} (hQ : ∀ L ∈ ls, ∀ X Y : Point, Q.core X → Q.core Y → SameSide X Y L)
-    {X Z : Point} (hX : Q.core X) (hZ : Q.core Z) (hXZ : X ≠ Z) {ℓ : Line}
-    (hXℓ : OnLine X ℓ) (hZℓ : OnLine Z ℓ) (hoff : ∀ V ∈ corners F, ¬ OnLine V ℓ) :
-    ∀ ps ∈ F.loops, loopInside ps X ↔ loopInside ps Z := by
+    {Q : ConvexCell} (hQ : ∀ L ∈ ls, ∀ X Y : Point, Q.Core X → Q.Core Y → SameSide X Y L)
+    {X Z : Point} (hX : Q.Core X) (hZ : Q.Core Z) (hXZ : X ≠ Z) {ℓ : Line}
+    (hXℓ : OnLine X ℓ) (hZℓ : OnLine Z ℓ) (hoff : ∀ V ∈ F.corners, ¬ OnLine V ℓ) :
+    ∀ ps ∈ F.loops, LoopInside ps X ↔ LoopInside ps Z := by
   intro ps hps
   refine inside_of_segment (F.simple ps hps) hXZ hXℓ hZℓ
     (fun V hV => hoff V (mem_corners hps hV))
@@ -330,21 +316,24 @@ theorem core_segment (F : Outline) {ls : List Line}
 third point of the cell's inside, off the straight lines from either point to the corners. -/
 theorem cell_constant (F : Outline) {ls : List Line}
     (hs : ∀ ps ∈ F.loops, ∀ s ∈ sides ps, ∃ L ∈ ls, OnLine s.1 L ∧ OnLine s.2 L)
-    {Q : ConvexCell} (hQ : ∀ L ∈ ls, ∀ X Y : Point, Q.core X → Q.core Y → SameSide X Y L)
-    {X Y : Point} (hX : Q.core X) (hY : Q.core Y) : F.inside X ↔ F.inside Y := by
+    {Q : ConvexCell} (hQ : ∀ L ∈ ls, ∀ X Y : Point, Q.Core X → Q.Core Y → SameSide X Y L)
+    {X Y : Point} (hX : Q.Core X) (hY : Q.Core Y) : F.Inside X ↔ F.Inside Y := by
   have hXb := off_boundary hs (core_off hQ hX)
   have hYb := off_boundary hs (core_off hQ hY)
   obtain ⟨KX, hKX⟩ := exists_line_through X
   obtain ⟨KY, hKY⟩ := exists_line_through Y
   obtain ⟨Z, hZa, hZ⟩ := CellFacts.core_point_avoiding Q.convex
-    (KX :: KY :: (joins X (corners F) ++ joins Y (corners F)))
-  have hZQ : Q.core Z := hZ
+    (KX :: KY :: ((F.corners.map fun V => Classical.choose (collinear_of_two X V)) ++
+      F.corners.map fun V => Classical.choose (collinear_of_two Y V)))
+  have hZQ : Q.Core Z := hZ
   have hXZ : X ≠ Z := fun e => hZa KX List.mem_cons_self (e ▸ hKX)
   have hYZ : Y ≠ Z := fun e =>
     hZa KY (List.mem_cons_of_mem _ List.mem_cons_self) (e ▸ hKY)
-  have hjX : Avoid (joins X (corners F)) Z := fun L hL =>
+  have hjX : Avoid (F.corners.map fun V => Classical.choose (collinear_of_two X V)) Z :=
+    fun L hL =>
     hZa L (List.mem_cons_of_mem _ (List.mem_cons_of_mem _ (List.mem_append_left _ hL)))
-  have hjY : Avoid (joins Y (corners F)) Z := fun L hL =>
+  have hjY : Avoid (F.corners.map fun V => Classical.choose (collinear_of_two Y V)) Z :=
+    fun L hL =>
     hZa L (List.mem_cons_of_mem _ (List.mem_cons_of_mem _ (List.mem_append_right _ hL)))
   obtain ⟨ℓ, hXℓ, hZℓ⟩ := Postulate1 X Z hXZ
   obtain ⟨m, hYm, hZm⟩ := Postulate1 Y Z hYZ
@@ -358,18 +347,14 @@ theorem cell_constant (F : Outline) {ls : List Line}
 
 /-- A cell's inside holds every point between a point of its closed region and a point of
 its inside. -/
-theorem core_between {Q : ConvexCell} {X W Z : Point} (hX : Q.region X) (hZ : Q.core Z)
-    (hb : Between X W Z) : Q.core W := by
+theorem core_between {Q : ConvexCell} {X W Z : Point} (hX : Q.Region X) (hZ : Q.Core Z)
+    (hb : Between X W Z) : Q.Core W := by
   intro s hs A hA h1 h2
-  have hne := LoopFacts.convex_side_ne Q.convex hs
+  have hne := convex_side_ne Q.convex hs
   obtain ⟨L, hL1, hL2⟩ := Postulate1 s.1 s.2 hne
-  exact SameSideOf.of_line hne hL1 hL2 (Ext.between_half_open
+  exact SameSideOf.of_line hne hL1 hL2 (Extreme.between_half_open
     ((closedSide_iff_half hne hL1 hL2).mp (hX s hs A hA h1 h2))
     ((hZ s hs A hA h1 h2).sameSide hL1 hL2) hb)
-
-/-- A cell's inside lies in its closed region. -/
-theorem core_region {Q : ConvexCell} {X : Point} (hX : Q.core X) : Q.region X :=
-  fun s hs A hA h1 h2 => Or.inr (hX s hs A hA h1 h2)
 
 /-- **From a point of a cell's closed region to its inside.** A point of a cell's closed region
 off the figure's boundary has a point of the cell's inside that is inside the figure exactly
@@ -378,20 +363,21 @@ to the corners, staying on the point's side of every side line that misses it. T
 straight line so drawn meets no side, so it changes no contour's inside. -/
 theorem cell_point (F : Outline) {ls : List Line}
     (hs : ∀ ps ∈ F.loops, ∀ s ∈ sides ps, ∃ L ∈ ls, OnLine s.1 L ∧ OnLine s.2 L)
-    {Q : ConvexCell} (hQ : ∀ L ∈ ls, ∀ X Y : Point, Q.core X → Q.core Y → SameSide X Y L)
-    {X : Point} (hX : ¬ F.boundary X) (hXQ : Q.region X) :
-    ∃ W : Point, Q.core W ∧ (F.inside W ↔ F.inside X) := by
+    {Q : ConvexCell} (hQ : ∀ L ∈ ls, ∀ X Y : Point, Q.Core X → Q.Core Y → SameSide X Y L)
+    {X : Point} (hX : ¬ F.Boundary X) (hXQ : Q.Region X) :
+    ∃ W : Point, Q.Core W ∧ (F.Inside W ↔ F.Inside X) := by
   obtain ⟨K, hXK⟩ := exists_line_through X
-  obtain ⟨Z, hZa, hZ⟩ := CellFacts.core_point_avoiding Q.convex (K :: joins X (corners F))
-  have hZQ : Q.core Z := hZ
+  obtain ⟨Z, hZa, hZ⟩ := CellFacts.core_point_avoiding Q.convex
+    (K :: F.corners.map fun V => Classical.choose (collinear_of_two X V))
+  have hZQ : Q.Core Z := hZ
   have hXZ : X ≠ Z := fun e => hZa K List.mem_cons_self (e ▸ hXK)
   have hZls := core_off hQ hZQ
   obtain ⟨ℓ, hXℓ, hZℓ⟩ := Postulate1 X Z hXZ
   have hoff := joins_off (fun L hL => hZa L (List.mem_cons_of_mem _ hL)) (not_corner hX)
     hXℓ hZℓ
   obtain ⟨hp, hp1, hp2⟩ := pairs_off X ls
-  obtain ⟨W, hXWZ, hW⟩ := Avoid.shorten_sides hXZ hp hp1
-  have hWQ : Q.core W := core_between hXQ hZQ hXWZ
+  obtain ⟨W, hXWZ, hW⟩ := shorten_off_lines hXZ hp hp1
+  have hWQ : Q.Core W := core_between hXQ hZQ hXWZ
   have hWℓ : OnLine W ℓ := on_line_of_between_ends hXWZ hXℓ hZℓ
   have hXW : X ≠ W := ne_of_between hXWZ
   /- No point of the finite straight line XW but X is on a side line. -/
@@ -411,7 +397,7 @@ theorem cell_point (F : Outline) {ls : List Line}
       rcases hU with e | hU
       · exact not_on_line_of_same_side hWX (e ▸ hUL)
       · exact pasch3 hU hUL (same_side_symm hWX)
-  have hoffF : ∀ U : Point, (U = W ∨ Between X U W) → ¬ F.boundary U :=
+  have hoffF : ∀ U : Point, (U = W ∨ Between X U W) → ¬ F.Boundary U :=
     fun U hU => off_boundary hs (hline U hU)
   refine ⟨W, hWQ, inside_congr F (hoffF W (Or.inl rfl)) hX fun ps hps => ?_⟩
   exact (inside_of_segment (F.simple ps hps) hXW hXℓ hWℓ
@@ -421,14 +407,14 @@ theorem cell_point (F : Outline) {ls : List Line}
 
 /-- **A cell whose closed region misses a point** is kept off it by one side line: every point
 on the point's side of that straight line is outside the cell. -/
-theorem cell_apart {Q : ConvexCell} {X : Point} (hX : ¬ Q.region X) :
-    ∃ L : Line, ¬ OnLine X L ∧ ∀ Y : Point, SameSide Y X L → ¬ Q.region Y := by
+theorem clear_of_cell {Q : ConvexCell} {X : Point} (hX : ¬ Q.Region X) :
+    ∃ L : Line, ¬ OnLine X L ∧ ∀ Y : Point, SameSide Y X L → ¬ Q.Region Y := by
   obtain ⟨s, hs, A, hA, h1, h2, hn⟩ : ∃ s ∈ sides Q.corners, ∃ A ∈ Q.corners,
       A ≠ s.1 ∧ A ≠ s.2 ∧ ¬ ClosedSide X A s.1 s.2 := by
     refine Classical.byContradiction fun hno => hX ?_
     intro s hs A hA h1 h2
     exact Classical.byContradiction fun hc => hno ⟨s, hs, A, hA, h1, h2, hc⟩
-  have hne := LoopFacts.convex_side_ne Q.convex hs
+  have hne := convex_side_ne Q.convex hs
   obtain ⟨L, hL1, hL2⟩ := Postulate1 s.1 s.2 hne
   have hiff := closedSide_iff_half (X := X) (P := A) hne hL1 hL2
   refine ⟨L, fun hXL => hn (hiff.mpr (Or.inl hXL)), fun Y hYX hY => ?_⟩
@@ -439,18 +425,18 @@ theorem cell_apart {Q : ConvexCell} {X : Point} (hX : ¬ Q.region X) :
 /-- **Near a point, only the cells holding it.** Finitely many conditions, each holding at X,
 such that a point satisfying them all lies in no cell of the list whose closed region misses X.
 -/
-theorem cells_apart (X : Point) : ∀ qs : List ConvexCell, ∃ hs : List (Point × Line),
+theorem clear_of_cells (X : Point) : ∀ qs : List ConvexCell, ∃ hs : List (Point × Line),
     (∀ p ∈ hs, SameSide X p.1 p.2) ∧
-      ∀ Y : Point, (∀ p ∈ hs, SameSide Y p.1 p.2) → ∀ Q ∈ qs, Q.region Y → Q.region X
+      ∀ Y : Point, (∀ p ∈ hs, SameSide Y p.1 p.2) → ∀ Q ∈ qs, Q.Region Y → Q.Region X
   | [] => ⟨[], by simp, by simp⟩
   | Q :: qs => by
-    obtain ⟨hs, h1, h2⟩ := cells_apart X qs
-    by_cases hQ : Q.region X
+    obtain ⟨hs, h1, h2⟩ := clear_of_cells X qs
+    by_cases hQ : Q.Region X
     · refine ⟨hs, h1, fun Y hY R hR hRY => ?_⟩
       rcases List.mem_cons.mp hR with e | hR
       · exact e ▸ hQ
       · exact h2 Y hY R hR hRY
-    · obtain ⟨L, hXL, hL⟩ := cell_apart hQ
+    · obtain ⟨L, hXL, hL⟩ := clear_of_cell hQ
       refine ⟨(X, L) :: hs, ?_, fun Y hY R hR hRY => ?_⟩
       · intro p hp
         rcases List.mem_cons.mp hp with e | hp
@@ -478,12 +464,12 @@ theorem side_point {a b X : Point} (hab : a ≠ b) (hX : OnFiniteLine X a b)
       exact ⟨a, hab.symm, fun M hM => between_symm hM⟩
     · exact ⟨b, (ne_of_between (between_symm hb)).symm, fun M hM =>
         between_symm (between_of_between_left (between_symm hb) (between_symm hM))⟩
-  obtain ⟨M₀, hXM₀E, hM₀⟩ := Avoid.shorten_sides hXE hs hXs
+  obtain ⟨M₀, hXM₀E, hM₀⟩ := shorten_off_lines hXE hs hXs
   have hXM₀ : X ≠ M₀ := ne_of_between hXM₀E
   obtain ⟨N, hXN, hM₀N⟩ := Postulate1 X M₀ hXM₀
   obtain ⟨M, -, hXMM₀, hMv⟩ := exists_point_between hXN hM₀N hXM₀ vs
   exact ⟨M, hE M (between_of_between_left hXM₀E hXMM₀), hMv,
-    fun p hp => Avoid.same_side_between hXMM₀ (hXs p hp) (hM₀ p hp)⟩
+    fun p hp => same_side_between hXMM₀ (hXs p hp) (hM₀ p hp)⟩
 
 /-- **A boundary point has filled points near it.** Given conditions that hold at a point of
 the boundary, some point inside the figure satisfies them too. Slide along a side through the
@@ -491,9 +477,9 @@ point to a point M strictly within it, at no corner; draw a short finite straigh
 the side through M, its straight line through no corner and its ends on M's side of every
 side line missing M. It meets the boundary only at M, so it changes one contour's inside and
 no other's, and one of its ends has odd depth. -/
-theorem boundary_filled (F : Outline) {X : Point} (hX : F.boundary X)
+theorem boundary_filled (F : Outline) {X : Point} (hX : F.Boundary X)
     (hs : List (Point × Line)) (hXs : ∀ p ∈ hs, SameSide X p.1 p.2) :
-    ∃ Y : Point, F.inside Y ∧ ∀ p ∈ hs, SameSide Y p.1 p.2 := by
+    ∃ Y : Point, F.Inside Y ∧ ∀ p ∈ hs, SameSide Y p.1 p.2 := by
   obtain ⟨ps, hps, s, hs₀, hXs₀⟩ := hX
   have hsimple := F.simple ps hps
   obtain ⟨pre, post, hF⟩ := List.append_of_mem hps
@@ -505,7 +491,7 @@ theorem boundary_filled (F : Outline) {X : Point} (hX : F.boundary X)
   have hss {qs : List Point} (hqs : qs ∈ F.loops) {t : Point × Point} (ht : t ∈ sides qs) :
       t ∈ ss := List.mem_flatMap.mpr ⟨qs, hqs, ht⟩
   /- A point M strictly within the side s, near X, at no corner. -/
-  obtain ⟨M, hMs, hMv, hMh⟩ := side_point (hsimple.2.2.1 s hs₀) hXs₀ hs hXs (corners F)
+  obtain ⟨M, hMs, hMv, hMh⟩ := side_point (hsimple.2.2.1 s hs₀) hXs₀ hs hXs F.corners
   have hMS : OnLine M (lineS s) := on_line_of_between_ends hMs (hlineS s).1 (hlineS s).2
   /- Conditions at M: those given, and M's side of every side line missing it. -/
   obtain ⟨hm, hm1, hm2⟩ := pairs_off M (ss.map lineS)
@@ -526,22 +512,22 @@ theorem boundary_filled (F : Outline) {X : Point} (hX : F.boundary X)
     · exact ⟨A₁, hA⟩
   have hMa : M ≠ s.1 := (ne_of_between hMs).symm
   have hT : Triangle M s.1 C := Triangle.of_line hMS (hlineS s).1 hMa hCS
-  obtain ⟨a', hMa'a, ha'⟩ := Avoid.shorten_sides hMa (hs ++ hm) hMall
-  obtain ⟨c', hMc'C, hc'⟩ := Avoid.shorten_sides hT.ne₁₃ (hs ++ hm) hMall
-  obtain ⟨Z, hZT, hZa⟩ := triangle_point_avoiding (Avoid.corner_triangle hT hMa'a hMc'C).1
-    (ss.map lineS ++ joins M (corners F))
+  obtain ⟨a', hMa'a, ha'⟩ := shorten_off_lines hMa (hs ++ hm) hMall
+  obtain ⟨c', hMc'C, hc'⟩ := shorten_off_lines hT.ne₁₃ (hs ++ hm) hMall
+  obtain ⟨Z, hZT, hZa⟩ := triangle_point_avoiding (corner_triangle hT hMa'a hMc'C).1
+    (ss.map lineS ++ F.corners.map fun V => Classical.choose (collinear_of_two M V))
   have hZs : ∀ p ∈ hs ++ hm, SameSide Z p.1 p.2 := fun p hp =>
-    Avoid.closed_same_side (hMall p hp) (ha' p hp) (hc' p hp) (Or.inl hZT)
+    closed_same_side (hMall p hp) (ha' p hp) (hc' p hp) (Or.inl hZT)
   have hZS : ∀ t ∈ ss, ¬ OnLine Z (lineS t) := fun t ht =>
     hZa _ (List.mem_append_left _ (List.mem_map_of_mem ht))
   have hZM : Z ≠ M := fun e => hZS s (hss hps hs₀) (e ▸ hMS)
   obtain ⟨ℓ, hZℓ, hMℓ⟩ := Postulate1 Z M hZM
-  have hoff : ∀ V ∈ corners F, ¬ OnLine V ℓ :=
+  have hoff : ∀ V ∈ F.corners, ¬ OnLine V ℓ :=
     joins_off (fun L hL => hZa L (List.mem_append_right _ hL)) hMv hMℓ hZℓ
   /- Across s from Z, through M, to Y₂ near M. -/
   obtain ⟨Y', hZMY'⟩ := produce hZM
   obtain ⟨Y₂, hMY₂Y', hY₂s⟩ :=
-    Avoid.shorten_sides (ne_of_between (between_symm hZMY')).symm (hs ++ hm) hMall
+    shorten_off_lines (ne_of_between (between_symm hZMY')).symm (hs ++ hm) hMall
   have hZMY₂ : Between Z M Y₂ := between_cut hZMY' hMY₂Y'
   have hY₂ℓ : OnLine Y₂ ℓ := on_line_of_between hZMY₂ hZℓ hMℓ
   have hY₂M : Y₂ ≠ M := (ne_of_between hMY₂Y').symm
@@ -563,12 +549,12 @@ theorem boundary_filled (F : Outline) {X : Point} (hX : F.boundary X)
       · exact absurd (e ▸ hUL) (not_on_line_of_same_side hYM')
       · exact absurd (same_side_trans (same_side_symm hZM') (same_side_symm hYM'))
           (pasch3 hb hUL)
-  have hZb : ¬ F.boundary Z := fun ⟨qs, hqs, t, ht, hZt⟩ =>
+  have hZb : ¬ F.Boundary Z := fun ⟨qs, hqs, t, ht, hZt⟩ =>
     hZM (hone t (hss hqs ht) Z (Or.inl rfl) hZt)
-  have hY₂b : ¬ F.boundary Y₂ := fun ⟨qs, hqs, t, ht, hYt⟩ =>
+  have hY₂b : ¬ F.Boundary Y₂ := fun ⟨qs, hqs, t, ht, hYt⟩ =>
     hY₂M (hone t (hss hqs ht) Y₂ (Or.inr (Or.inl rfl)) hYt)
   /- The contour of s changes across M. -/
-  have hflip : loopInside ps Z ↔ ¬ loopInside ps Y₂ := by
+  have hflip : LoopInside ps Z ↔ ¬ LoopInside ps Y₂ := by
     refine inside_flip hsimple hs₀ hZMY₂ hMs hZℓ hY₂ℓ
       (fun V hV => hoff V (mem_corners hps hV)) ?_
     intro U hU t ht hUt
@@ -582,14 +568,14 @@ theorem boundary_filled (F : Outline) {X : Point} (hX : F.boundary X)
   /- No other contour passes through M, so none changes. -/
   have hpw := F.compatible
   rw [hF, List.pairwise_append, List.pairwise_cons] at hpw
-  have hMps : loopBoundary ps M := ⟨s, hs₀, Or.inr (Or.inr hMs)⟩
+  have hMps : LoopBoundary ps M := ⟨s, hs₀, Or.inr (Or.inr hMs)⟩
   have hmemF : ∀ qs ∈ pre ++ post, qs ∈ F.loops := by
     intro qs hqs
     rw [hF]
     rcases List.mem_append.mp hqs with hq | hq
     · exact List.mem_append_left _ hq
     · exact List.mem_append_right _ (List.mem_cons_of_mem _ hq)
-  have hcomp : ∀ qs ∈ pre ++ post, ¬ loopBoundary qs M := by
+  have hcomp : ∀ qs ∈ pre ++ post, ¬ LoopBoundary qs M := by
     intro qs hqs hMq
     have hmem : M ∈ ps ∨ M ∈ qs := by
       rcases List.mem_append.mp hqs with hq | hq
@@ -598,7 +584,7 @@ theorem boundary_filled (F : Outline) {X : Point} (hX : F.boundary X)
     rcases hmem with h | h
     · exact hMv (mem_corners hps h)
     · exact hMv (mem_corners (hmemF qs hqs) h)
-  have hsame : ∀ qs ∈ pre ++ post, loopInside qs Z ↔ loopInside qs Y₂ := by
+  have hsame : ∀ qs ∈ pre ++ post, LoopInside qs Z ↔ LoopInside qs Y₂ := by
     intro qs hqs
     have hqF := hmemF qs hqs
     refine inside_of_segment (F.simple qs hqF) (ne_of_between_ends hZMY₂) hZℓ hY₂ℓ
@@ -614,9 +600,9 @@ theorem boundary_filled (F : Outline) {X : Point} (hX : F.boundary X)
 
 /-- **Every point of the figure has filled points near it**: given conditions holding at a
 point of the closed region, some point inside the figure satisfies them. -/
-theorem region_filled (F : Outline) {X : Point} (hX : F.region X)
+theorem region_filled (F : Outline) {X : Point} (hX : F.Region X)
     (hs : List (Point × Line)) (hXs : ∀ p ∈ hs, SameSide X p.1 p.2) :
-    ∃ Y : Point, F.inside Y ∧ ∀ p ∈ hs, SameSide Y p.1 p.2 := by
+    ∃ Y : Point, F.Inside Y ∧ ∀ p ∈ hs, SameSide Y p.1 p.2 := by
   rcases hX with hb | hi
   · exact boundary_filled F hb hs hXs
   · exact ⟨X, hi, hXs⟩

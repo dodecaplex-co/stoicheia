@@ -19,90 +19,19 @@ open Tacit
 theorem cut_fan_cons (O A B : Point) (ps : List Point) :
     fanSum (O :: A :: B :: ps) = △ O A B + fanSum (O :: B :: ps) := rfl
 
-/-- Closing the chain of a fan adds its last triangle. -/
-theorem cut_fan_close (O A B : Point) (ps : List Point) :
-    fanSum (O :: ((B :: ps) ++ [A])) =
-      fanSum (O :: B :: ps) + △ O (endOf B ps) A := by
-  induction ps generalizing B with
-  | nil => simp [fanSum, fan, segments, Magnitude.sum, endOf, add_zero, add_comm]
-  | cons C ps ih =>
-    change △ O B C + fanSum (O :: ((C :: ps) ++ [A])) =
-      (△ O B C + fanSum (O :: C :: ps)) + △ O (endOf C ps) A
-    rw [ih, add_assoc]
-
-/-- Closed half-planes contain the finite segments between their points. -/
-theorem cut_half_between {X Y Z R : Point} {L : Line}
-    (hX : OnLine X L ∨ SameSide X R L) (hZ : OnLine Z L ∨ SameSide Z R L)
-    (h : Between X Y Z) : OnLine Y L ∨ SameSide Y R L :=
-  half_between hX hZ h
-
-/-- A finite segment with one end strictly inside a half-plane is strict away from
-its other end. -/
-theorem cut_strict_between {X Y Z R : Point} {L : Line}
-    (hX : SameSide X R L) (hZ : OnLine Z L ∨ SameSide Z R L)
-    (h : Between X Y Z) : SameSide Y R L := by
-  have hoff : ¬ OnLine Y L := by
-    intro hY
-    rcases hZ with hZ | hZ
-    · exact not_on_line_of_same_side hX (on_line_of_between (between_symm h) hZ hY)
-    · exact pasch3 h hY (same_side_trans (same_side_symm hX) (same_side_symm hZ))
-  exact (cut_half_between (Or.inr hX) hZ h).resolve_left hoff
-
-/-- An interior point of a triangle lies strictly between a corner and the
-opposite side. This is the crossbar theorem in finite-segment form. -/
-theorem cut_inside_crossbar {X A B C : Point} (h : InsideTriangle X A B C) :
-    ∃ Y : Point, Between B Y C ∧ Between A X Y :=
-  inside_between h
-
 /-- A triangle contained in a closed half-plane, with its first corner strictly
 on that side, has its whole interior strictly on that side. -/
 theorem cut_inside_half {X A B C R : Point} {L : Line}
     (hA : SameSide A R L) (hB : OnLine B L ∨ SameSide B R L)
     (hC : OnLine C L ∨ SameSide C R L) (h : InsideTriangle X A B C) :
     SameSide X R L := by
-  obtain ⟨Y, hBYC, hAXY⟩ := cut_inside_crossbar h
-  exact cut_strict_between hA (cut_half_between hB hC hBYC) hAXY
-
-/-- The ends of each segment occur in its corner list. -/
-theorem cut_segment_mem {ps : List Point} {A B : Point} (h : (A, B) ∈ segments ps) :
-    A ∈ ps ∧ B ∈ ps :=
-  segment_corners h
-
-/-- Every corner of a nonempty closed outline begins a side. -/
-theorem cut_side_at {A : Point} {ps : List Point} {D : Point}
-    (hD : D ∈ A :: ps) : ∃ E : Point, (D, E) ∈ sides (A :: ps) :=
-  outgoing_side hD
-
-/-- A corner cannot lie in the closed triangle of three different corners. A
-supporting line through that corner excludes the triangle's interior and sides. -/
-theorem cut_corner_not_closed {ps : List Point} (h : ConvexOutline ps)
-    {A B C D : Point} (hABC : Triangle A B C)
-    (hA : A ∈ ps) (hB : B ∈ ps) (hC : C ∈ ps) (hD : D ∈ ps)
-    (hDA : D ≠ A) (hDB : D ≠ B) (hDC : D ≠ C) :
-    ¬ OnOrInsideTriangle D A B C :=
-  corner_not_in_triangle h hD hA hB hC hDA hDB hDC hABC
-
-/-- The ear at the second corner has every later corner strictly beyond its
-opposite side. -/
-theorem cut_ear_separates {A B C : Point} {ps : List Point}
-    (h : ConvexOutline (A :: B :: C :: ps)) {D : Point} (hD : D ∈ ps) :
-    OppositeSidesOf B D A C :=
-  ear_opposite h hD
-
-/-- Removing the third corner of an outline with at least four corners leaves a
-convex outline. Its new side is the diagonal opposite the removed ear. -/
-theorem cut_remove_third {A B C D : Point} {ps : List Point}
-    (h : ConvexOutline (A :: B :: C :: D :: ps)) :
-    ConvexOutline (A :: B :: D :: ps) :=
-  h.erase_third
-
-/-- An interior point of a segment from a line lies on the side of its other end. -/
-theorem cut_between_side {A X B : Point} {L : Line}
-    (h : Between A X B) (hB : OnLine B L) (hA : ¬ OnLine A L) : SameSide X A L :=
-  Avoid.same_side_between_on (between_symm h) hB hA
+  obtain ⟨Y, hBYC, hAXY⟩ := inside_between h
+  exact Extreme.between_half_open (half_between hB hC hBYC) hA (between_symm hAXY)
 
 /-- A separating diagonal and the two opposite supporting sides put the crossing
-on both finite diagonals, so the two triangle sums agree. -/
+on both finite diagonals, so the two triangle sums agree. This is `area_diagonal_change`
+with the second separating diagonal replaced by the two supporting sides, which the cut from
+a point of a side supplies. -/
 theorem cut_quad_flip {A B C D : Point}
     (hAC : OppositeSidesOf A C B D) (hAB : SameSideOf C D A B)
     (hCD : SameSideOf A B C D) :
@@ -112,10 +41,10 @@ theorem cut_quad_flip {A B C D : Point}
   obtain ⟨M, hAM, hBM⟩ := Postulate1 A B hAB.1
   obtain ⟨N, hCN, hDN⟩ := Postulate1 C D hCD.1
   have hXM : SameSide X D M := same_side_trans
-    (same_side_symm (cut_between_side (between_symm hAXC) hAM
+    (same_side_symm (same_side_between_on hAXC hAM
       (hAB.triangle.off_line hAM hBM))) (hAB.sameSide hAM hBM)
   have hXN : SameSide X B N := same_side_trans
-    (same_side_symm (cut_between_side hAXC hCN
+    (same_side_symm (same_side_between_on (between_symm hAXC) hCN
       (hCD.triangle.off_line hCN hDN))) (hCD.sameSide hCN hDN)
   have hBX : B ≠ X := fun e => not_on_line_of_same_side hXM (e ▸ hBM)
   have hXD : X ≠ D := fun e => not_on_line_of_same_side hXN (e.symm ▸ hDN)
@@ -135,15 +64,15 @@ theorem cut_boundary_flip {A B C D X : Point} {ps : List Point}
   have hABC : Triangle A B C := fan_triangle h (A, B, C) (List.mem_cons_self ..)
   have hACD : Triangle A C D := fan_triangle h (A, C, D)
     (List.mem_cons_of_mem _ (List.mem_cons_self ..))
-  have hABD : Triangle A B D := fan_triangle (cut_remove_third h) (A, B, D)
+  have hABD : Triangle A B D := fan_triangle h.erase_third (A, B, D)
     (List.mem_cons_self ..)
   have hBCD : Triangle B C D := fan_triangle h.rotate (B, C, D) (List.mem_cons_self ..)
   have hac : OppositeSidesOf A C B D :=
-    (cut_ear_separates h.rotate (D := A) (by simp)).symm
+    (ear_opposite h.rotate (D := A) (by simp)).symm
   have hxbc : SameSideOf X A B D := by
     obtain ⟨L, hBL, hDL⟩ := Postulate1 B D hABD.ne₂₃
     exact SameSideOf.of_line hABD.ne₂₃ hBL hDL
-      (cut_between_side hX hBL (hABD.bca.off_line hBL hDL))
+      (same_side_between_on (between_symm hX) hBL (hABD.bca.off_line hBL hDL))
   apply cut_quad_flip (hxbc.trans_opposite hac)
   · refine ⟨(ne_of_between (between_symm hX)).symm, ?_⟩
     intro L hXL hBL
@@ -158,23 +87,14 @@ theorem cut_boundary_flip {A B C D X : Point} {ps : List Point}
     exact SameSideOf.of_line hBCD.ne₂₃ hCL hDL
       (same_side_trans hax (hab.sameSide hCL hDL))
 
-/-- The first ear is the same triangle whichever diagonal measures the first
-four corners. -/
+/-- The first four corners have one sum whichever diagonal divides them: ABC with ACD, or BCD
+with ABD. This is `area_diagonal_change` for the first four corners of a convex outline, whose
+diagonals cross (`ConvexOutline.fan_cross`). -/
 theorem cut_vertex_flip {A B C D : Point} {ps : List Point}
     (h : ConvexOutline (A :: B :: C :: D :: ps)) :
     △ A B C + △ A C D = △ B C D + △ A B D := by
-  have hABC : Triangle A B C := fan_triangle h (A, B, C) (List.mem_cons_self ..)
-  have hACD : Triangle A C D := fan_triangle h (A, C, D)
-    (List.mem_cons_of_mem _ (List.mem_cons_self ..))
-  have hABD : Triangle A B D := fan_triangle (cut_remove_third h) (A, B, D)
-    (List.mem_cons_self ..)
-  have hBCD : Triangle B C D := fan_triangle h.rotate (B, C, D) (List.mem_cons_self ..)
-  apply cut_quad_flip (cut_ear_separates h.rotate (D := A) (by simp)).symm
-  · exact h.2.2 (A, B) (List.mem_cons_self ..) C (by simp) D (by simp)
-      hABC.ne₁₃.symm hABC.ne₂₃.symm hACD.ne₁₃.symm hABD.ne₂₃.symm
-  · exact h.2.2 (C, D)
-      (List.mem_cons_of_mem _ (List.mem_cons_of_mem _ (List.mem_cons_self ..)))
-      A (by simp) B (by simp) hACD.ne₁₂ hACD.ne₁₃ hBCD.ne₁₂ hBCD.ne₁₃
+  have hc := h.fan_cross (C, D) (List.mem_cons_self ..)
+  exact area_diagonal_change hc.1 hc.2
 
 /-- Repeating a fan's apex at the start of its chain contributes nothing. -/
 theorem cut_fan_repeat (A : Point) (ps : List Point) :
@@ -204,16 +124,6 @@ theorem cut_fan_split (O B : Point) (us vs : List Point) :
         (△ O A C + fanSum (O :: (C :: us ++ [B]))) + fanSum (O :: B :: vs)
       rw [ih, add_assoc]
 
-/-- Reading a convex outline after any initial chain preserves convexity. -/
-theorem cut_convex_rotate_append (us vs : List Point) (h : ConvexOutline (us ++ vs)) :
-    ConvexOutline (vs ++ us) :=
-  Ext.convex_rotate_prefix us vs h
-
-/-- Reading a convex outline after any initial chain preserves its fan sum. -/
-theorem cut_fan_rotate_append (us vs : List Point) (h : ConvexOutline (us ++ vs)) :
-    fanSum (vs ++ us) = fanSum (us ++ vs) :=
-  Ext.fanSum_rotate_prefix us vs h
-
 /-- If a closed half-plane contains a triangle, its interior is strictly on that
 side: at least one corner must be off the supporting line. -/
 theorem cut_inside_closed_half {X A B C R : Point} {L : Line}
@@ -227,14 +137,6 @@ theorem cut_inside_closed_half {X A B C R : Point} {L : Line}
     · exact cut_inside_half (hB.resolve_left hBL) hC hA ⟨h.2.1, h.2.2, h.1⟩
   · exact cut_inside_half (hA.resolve_left hAL) hB hC h
 
-/-- A closed half-plane containing a triangle's corners contains the whole
-closed triangle. -/
-theorem cut_closed_half {X A B C R : Point} {L : Line}
-    (hA : OnLine A L ∨ SameSide A R L) (hB : OnLine B L ∨ SameSide B R L)
-    (hC : OnLine C L ∨ SameSide C R L) (h : OnOrInsideTriangle X A B C) :
-    OnLine X L ∨ SameSide X R L :=
-  closed_in_half hA hB hC h
-
 /-- A closed half-plane containing the corners contains the convex region. -/
 theorem cut_region_half {ps : List Point} (h : ConvexOutline ps)
     {R : Point} {L : Line} (hc : ∀ A ∈ ps, OnLine A L ∨ SameSide A R L)
@@ -244,8 +146,8 @@ theorem cut_region_half {ps : List Point} (h : ConvexOutline ps)
   | nil => simp [fan] at ht
   | cons A ps =>
     obtain ⟨s, hs, rfl⟩ := List.mem_map.mp ht
-    obtain ⟨hB, hC⟩ := cut_segment_mem hs
-    exact cut_closed_half (hc A (List.mem_cons_self ..))
+    obtain ⟨hB, hC⟩ := segment_corners hs
+    exact closed_in_half (hc A (List.mem_cons_self ..))
       (hc s.1 (List.mem_cons_of_mem _ hB)) (hc s.2 (List.mem_cons_of_mem _ hC)) hXt
 
 /-- A point strictly inside every supporting side has a small triangle about it

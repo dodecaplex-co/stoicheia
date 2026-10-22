@@ -107,16 +107,6 @@ theorem crossPt_spec {X Q : Point} {s : Point × Point} (h : RayCrosses X Q s) :
   simp only [h, ↓reduceDIte]
   exact Classical.choose_spec h
 
-/-- A straight line meets a side whose end is off it in at most one point. -/
-theorem cross_unique {s : Point × Point} {ℓ : Line} (hs : ¬ OnLine s.1 ℓ) {Y Y' : Point}
-    (hY : OnLine Y ℓ) (hY' : OnLine Y' ℓ) (hb : Between s.1 Y s.2) (hb' : Between s.1 Y' s.2) :
-    Y = Y' := by
-  refine Classical.byContradiction fun hne => ?_
-  obtain ⟨M, h1, h2⟩ := Postulate1 s.1 s.2 (ne_of_between_ends hb)
-  have hYM := on_line_of_between_ends hb h1 h2
-  have hY'M := on_line_of_between_ends hb' h1 h2
-  exact hs (line_unique hne hYM hY'M hY hY' ▸ h1)
-
 theorem mem_crossPts {X Q : Point} {S : List (Point × Point)} {Y : Point}
     (hY : Y ∈ crossPts X Q S) : OnRay Y X Q ∧ ∃ s ∈ S, Between s.1 Y s.2 := by
   obtain ⟨s, hs, rfl⟩ := List.mem_map.mp hY
@@ -131,7 +121,7 @@ theorem crossPts_mem {X Q : Point} {ℓ : Line} (hX : OnLine X ℓ) (hQ : OnLine
   have hc : RayCrosses X Q s := ⟨Y, hY, hb⟩
   obtain ⟨h1, h2⟩ := crossPt_spec hc
   have he : crossPt X Q s = Y :=
-    cross_unique (hoff s hs) (h1.onLine hX hQ) (hY.onLine hX hQ) h2 hb
+    OutlineFacts.cross_unique (hoff s hs) (h1.onLine hX hQ) (hY.onLine hX hQ) h2 hb
   rw [← he]
   exact List.mem_map_of_mem (List.mem_filter.mpr ⟨hs, decide_eq_true hc⟩)
 
@@ -188,21 +178,21 @@ theorem line_avoiding {X : Point} {vs : List Point} (hX : X ∉ vs) {a b c : Poi
     (habc : Triangle a b c) :
     ∃ Q : Point, ∃ ℓ : Line, X ≠ Q ∧ OnLine X ℓ ∧ OnLine Q ℓ ∧ ∀ V ∈ vs, ¬ OnLine V ℓ := by
   obtain ⟨K, hXK⟩ := exists_line_through X
-  obtain ⟨Q, -, hQ⟩ := triangle_point_avoiding habc (K :: CoverFacts.joins X vs)
+  obtain ⟨Q, -, hQ⟩ := triangle_point_avoiding habc (K :: vs.map fun V => Classical.choose (collinear_of_two X V))
   have hXQ : X ≠ Q := fun e => hQ K List.mem_cons_self (e ▸ hXK)
   obtain ⟨ℓ, hXℓ, hQℓ⟩ := Postulate1 X Q hXQ
   exact ⟨Q, ℓ, hXQ, hXℓ, hQℓ,
     CoverFacts.joins_off (fun L hL => hQ L (List.mem_cons_of_mem _ hL)) hX hXℓ hQℓ⟩
 
 /-- A point off a loop's boundary is none of its corners. -/
-theorem not_mem_of_off {ps : List Point} {X : Point} (hX : ¬ loopBoundary ps X) : X ∉ ps := by
+theorem not_mem_of_off {ps : List Point} {X : Point} (hX : ¬ LoopBoundary ps X) : X ∉ ps := by
   intro hm
   obtain ⟨E, hE⟩ := outgoing_side hm
   exact hX ⟨(X, E), hE, Or.inl rfl⟩
 
 /-- A point strictly within a side of a loop is on its boundary. -/
 theorem boundary_of_side {ps : List Point} {s : Point × Point} (hs : s ∈ sides ps) {Y : Point}
-    (hY : Between s.1 Y s.2) : loopBoundary ps Y := ⟨s, hs, Or.inr (Or.inr hY)⟩
+    (hY : Between s.1 Y s.2) : LoopBoundary ps Y := ⟨s, hs, Or.inr (Or.inr hY)⟩
 
 /-! ## Two loops -/
 
@@ -221,9 +211,9 @@ theorem ends_off {ℓ : Line} (hoff : ∀ V ∈ A ++ B, ¬ OnLine V ℓ) :
       hoff _ (List.mem_append_right _ (LoopFacts.side_mem hs).2)⟩
 
 /-- A crossing point of a ray through no corner, on a side of A, is off B's boundary. -/
-theorem hit_off {ℓ : Line} (hmeet : ∀ X, loopBoundary A X → loopBoundary B X → X ∈ A ∨ X ∈ B)
+theorem hit_off {ℓ : Line} (hmeet : ∀ X, LoopBoundary A X → LoopBoundary B X → X ∈ A ∨ X ∈ B)
     (hoff : ∀ V ∈ A ++ B, ¬ OnLine V ℓ) {Y : Point} (hYℓ : OnLine Y ℓ)
-    (hYA : loopBoundary A Y) : ¬ loopBoundary B Y := by
+    (hYA : LoopBoundary A Y) : ¬ LoopBoundary B Y := by
   intro hYB
   rcases hmeet Y hYA hYB with h | h
   · exact hoff Y (List.mem_append_left _ h) hYℓ
@@ -233,11 +223,11 @@ theorem hit_off {ℓ : Line} (hmeet : ∀ X, loopBoundary A X → loopBoundary B
 corner: it is a point of A off B, with the same status for B as the start, or a point of B off
 A, with the same status for A. -/
 theorem first_crossing (hA : SimpleLoop A) (hB : SimpleLoop B)
-    (hmeet : ∀ X, loopBoundary A X → loopBoundary B X → X ∈ A ∨ X ∈ B)
-    {X : Point} (hXA : ¬ loopBoundary A X) (hXB : ¬ loopBoundary B X) (hin : loopInside A X)
+    (hmeet : ∀ X, LoopBoundary A X → LoopBoundary B X → X ∈ A ∨ X ∈ B)
+    {X : Point} (hXA : ¬ LoopBoundary A X) (hXB : ¬ LoopBoundary B X) (hin : LoopInside A X)
     {a b c : Point} (habc : Triangle a b c) :
-    (∃ Y, loopBoundary A Y ∧ ¬ loopBoundary B Y ∧ (loopInside B X ↔ loopInside B Y)) ∨
-      (∃ Y, loopBoundary B Y ∧ ¬ loopBoundary A Y ∧ (loopInside A X ↔ loopInside A Y)) := by
+    (∃ Y, LoopBoundary A Y ∧ ¬ LoopBoundary B Y ∧ (LoopInside B X ↔ LoopInside B Y)) ∨
+      (∃ Y, LoopBoundary B Y ∧ ¬ LoopBoundary A Y ∧ (LoopInside A X ↔ LoopInside A Y)) := by
   have hXv : X ∉ A ++ B := by
     rw [List.mem_append]
     rintro (h | h)
@@ -245,7 +235,7 @@ theorem first_crossing (hA : SimpleLoop A) (hB : SimpleLoop B)
     · exact not_mem_of_off hXB h
   obtain ⟨Q, ℓ, hXQ, hXℓ, hQℓ, hoff⟩ := line_avoiding hXv habc
   have hgA : GoodRay A X Q :=
-    CoverFacts.goodRay_of_line hXQ hXℓ hQℓ fun V hV => hoff V (List.mem_append_left _ hV)
+    OutlineFacts.good_of_line hXQ hXℓ hQℓ fun V hV => hoff V (List.mem_append_left _ hV)
   have hodd := (loop_inside_iff hA hXA hgA).mp hin
   have hcA : ∃ s ∈ sides A, RayCrosses X Q s := by
     refine Classical.byContradiction fun hno => ?_
@@ -259,9 +249,9 @@ theorem first_crossing (hA : SimpleLoop A) (hB : SimpleLoop B)
   have hY0ℓ : OnLine Y0 ℓ := hY0r.onLine hXℓ hQℓ
   have hXY0 : X ≠ Y0 := hY0r.2.1.symm
   /- The open finite straight line from X to the first crossing meets neither boundary. -/
-  have hclearA : ∀ U, Between X U Y0 → ¬ loopBoundary A U := fun U hU ⟨r, hr, hUr⟩ =>
+  have hclearA : ∀ U, Between X U Y0 → ¬ LoopBoundary A U := fun U hU ⟨r, hr, hUr⟩ =>
     hclear U hU r (List.mem_append_left _ hr) hUr
-  have hclearB : ∀ U, Between X U Y0 → ¬ loopBoundary B U := fun U hU ⟨r, hr, hUr⟩ =>
+  have hclearB : ∀ U, Between X U Y0 → ¬ LoopBoundary B U := fun U hU ⟨r, hr, hUr⟩ =>
     hclear U hU r (List.mem_append_right _ hr) hUr
   rcases List.mem_append.mp ht with ht | ht
   · have hY0A := boundary_of_side ht hY0t
@@ -270,7 +260,7 @@ theorem first_crossing (hA : SimpleLoop A) (hB : SimpleLoop B)
     exact CoverFacts.inside_of_segment hB hXY0 hXℓ hY0ℓ
       (fun V hV => hoff V (List.mem_append_right _ hV)) hXB hY0B hclearB
   · have hY0B := boundary_of_side ht hY0t
-    have hY0A : ¬ loopBoundary A Y0 := by
+    have hY0A : ¬ LoopBoundary A Y0 := by
       intro hY0A
       exact hit_off hmeet hoff hY0ℓ hY0A hY0B
     refine Or.inr ⟨Y0, hY0B, hY0A, ?_⟩
@@ -279,10 +269,10 @@ theorem first_crossing (hA : SimpleLoop A) (hB : SimpleLoop B)
 
 /-- **Neither inside the other: insides apart.** -/
 theorem insides_apart (hA : SimpleLoop A) (hB : SimpleLoop B)
-    (hmeet : ∀ X, loopBoundary A X → loopBoundary B X → X ∈ A ∨ X ∈ B)
-    (hsA : ∀ P, loopBoundary A P → ¬ loopBoundary B P → ¬ loopInside B P)
-    (hsB : ∀ P, loopBoundary B P → ¬ loopBoundary A P → ¬ loopInside A P) :
-    ∀ X, loopInside A X → ¬ loopInside B X := by
+    (hmeet : ∀ X, LoopBoundary A X → LoopBoundary B X → X ∈ A ∨ X ∈ B)
+    (hsA : ∀ P, LoopBoundary A P → ¬ LoopBoundary B P → ¬ LoopInside B P)
+    (hsB : ∀ P, LoopBoundary B P → ¬ LoopBoundary A P → ¬ LoopInside A P) :
+    ∀ X, LoopInside A X → ¬ LoopInside B X := by
   intro X hXA hXB
   obtain ⟨a, -, b, -, c, -, habc⟩ := LoopFacts.simple_frame hA
   rcases first_crossing hA hB hmeet hXA.1 hXB.1 hXA habc with
@@ -292,12 +282,12 @@ theorem insides_apart (hA : SimpleLoop A) (hB : SimpleLoop B)
 
 /-- **One inside the other: closed regions nested.** -/
 theorem region_nested (hA : SimpleLoop A) (hB : SimpleLoop B)
-    (hmeet : ∀ X, loopBoundary A X → loopBoundary B X → X ∈ A ∨ X ∈ B)
-    (hsA : ∀ P, loopBoundary A P → ¬ loopBoundary B P → loopInside B P)
-    (hsB : ∀ P, loopBoundary B P → ¬ loopBoundary A P → ¬ loopInside A P) :
-    ∀ X, loopRegion A X → loopRegion B X := by
+    (hmeet : ∀ X, LoopBoundary A X → LoopBoundary B X → X ∈ A ∨ X ∈ B)
+    (hsA : ∀ P, LoopBoundary A P → ¬ LoopBoundary B P → LoopInside B P)
+    (hsB : ∀ P, LoopBoundary B P → ¬ LoopBoundary A P → ¬ LoopInside A P) :
+    ∀ X, LoopRegion A X → LoopRegion B X := by
   intro X hX
-  by_cases hXB : loopBoundary B X
+  by_cases hXB : LoopBoundary B X
   · exact Or.inl hXB
   rcases hX with hXA | hXA
   · exact Or.inr (hsA X hXA hXB)
@@ -310,9 +300,9 @@ theorem region_nested (hA : SimpleLoop A) (hB : SimpleLoop B)
 /-- **Not each inside the other.** Beyond the last crossing along a ray from a point of A
 strictly within a side, nothing is inside either loop. -/
 theorem not_both_inside (hA : SimpleLoop A) (hB : SimpleLoop B)
-    (hmeet : ∀ X, loopBoundary A X → loopBoundary B X → X ∈ A ∨ X ∈ B)
-    (hsA : ∀ P, loopBoundary A P → ¬ loopBoundary B P → loopInside B P)
-    (hsB : ∀ P, loopBoundary B P → ¬ loopBoundary A P → loopInside A P) : False := by
+    (hmeet : ∀ X, LoopBoundary A X → LoopBoundary B X → X ∈ A ∨ X ∈ B)
+    (hsA : ∀ P, LoopBoundary A P → ¬ LoopBoundary B P → LoopInside B P)
+    (hsB : ∀ P, LoopBoundary B P → ¬ LoopBoundary A P → LoopInside A P) : False := by
   obtain ⟨a, -, b, -, c, -, habc⟩ := LoopFacts.simple_frame hA
   /- A point P strictly within a side of A, at no corner of either loop. -/
   obtain ⟨s, hs⟩ : ∃ s, s ∈ sides A := by
@@ -324,7 +314,7 @@ theorem not_both_inside (hA : SimpleLoop A) (hB : SimpleLoop B)
   obtain ⟨M, h1, h2⟩ := Postulate1 s.1 s.2 hs12
   obtain ⟨P, -, hP, hPv⟩ := exists_point_between h1 h2 hs12 (A ++ B)
   have hPA := boundary_of_side hs hP
-  have hPB : ¬ loopBoundary B P := by
+  have hPB : ¬ LoopBoundary B P := by
     intro hPB
     rcases hmeet P hPA hPB with h | h
     · exact hPv (List.mem_append_left _ h)
@@ -333,7 +323,7 @@ theorem not_both_inside (hA : SimpleLoop A) (hB : SimpleLoop B)
   /- A ray from P through no corner; it crosses B. -/
   obtain ⟨Q, ℓ, hPQ, hPℓ, hQℓ, hoff⟩ := line_avoiding hPv habc
   have hgB : GoodRay B P Q :=
-    CoverFacts.goodRay_of_line hPQ hPℓ hQℓ fun V hV => hoff V (List.mem_append_right _ hV)
+    OutlineFacts.good_of_line hPQ hPℓ hQℓ fun V hV => hoff V (List.mem_append_right _ hV)
   have hodd := (loop_inside_iff hB hPB hgB).mp hPin
   have hcB : ∃ t ∈ sides B, RayCrosses P Q t := by
     refine Classical.byContradiction fun hno => ?_
@@ -356,14 +346,14 @@ theorem not_both_inside (hA : SimpleLoop A) (hB : SimpleLoop B)
   · have hZA := boundary_of_side hu hZ0u
     have hZB := hit_off hmeet hoff hZ0ℓ hZA
     have hgB' : GoodRay B Z0 Q' :=
-      CoverFacts.goodRay_of_line hZQ' hZ0ℓ hQ'ℓ fun V hV => hoff V (List.mem_append_right _ hV)
+      OutlineFacts.good_of_line hZQ' hZ0ℓ hQ'ℓ fun V hV => hoff V (List.mem_append_right _ hV)
     have h := (loop_inside_iff hB hZB hgB').mp (hsA Z0 hZA hZB)
     rw [hzero fun r hr => List.mem_append_right _ hr] at h
     exact absurd h (by decide)
   · have hZB := boundary_of_side hu hZ0u
-    have hZA : ¬ loopBoundary A Z0 := fun hZA => hit_off hmeet hoff hZ0ℓ hZA hZB
+    have hZA : ¬ LoopBoundary A Z0 := fun hZA => hit_off hmeet hoff hZ0ℓ hZA hZB
     have hgA' : GoodRay A Z0 Q' :=
-      CoverFacts.goodRay_of_line hZQ' hZ0ℓ hQ'ℓ fun V hV => hoff V (List.mem_append_left _ hV)
+      OutlineFacts.good_of_line hZQ' hZ0ℓ hQ'ℓ fun V hV => hoff V (List.mem_append_left _ hV)
     have h := (loop_inside_iff hA hZA hgA').mp (hsB Z0 hZB hZA)
     rw [hzero fun r hr => List.mem_append_left _ hr] at h
     exact absurd h (by decide)
@@ -373,11 +363,11 @@ end TwoLoops
 /-- **Compatible from one side.** Two simple loops whose boundaries meet only at corners, each
 lying, off the other's boundary, wholly inside or wholly outside the other, are compatible. -/
 theorem compatible_of_status {A B : List Point} (hA : SimpleLoop A) (hB : SimpleLoop B)
-    (hmeet : ∀ X, loopBoundary A X → loopBoundary B X → X ∈ A ∨ X ∈ B)
-    (sA : Prop) (hsA : ∀ P, loopBoundary A P → ¬ loopBoundary B P → (loopInside B P ↔ sA))
-    (sB : Prop) (hsB : ∀ P, loopBoundary B P → ¬ loopBoundary A P → (loopInside A P ↔ sB)) :
+    (hmeet : ∀ X, LoopBoundary A X → LoopBoundary B X → X ∈ A ∨ X ∈ B)
+    (sA : Prop) (hsA : ∀ P, LoopBoundary A P → ¬ LoopBoundary B P → (LoopInside B P ↔ sA))
+    (sB : Prop) (hsB : ∀ P, LoopBoundary B P → ¬ LoopBoundary A P → (LoopInside A P ↔ sB)) :
     CompatibleLoops A B := by
-  have hmeet' : ∀ X, loopBoundary B X → loopBoundary A X → X ∈ B ∨ X ∈ A :=
+  have hmeet' : ∀ X, LoopBoundary B X → LoopBoundary A X → X ∈ B ∨ X ∈ A :=
     fun X hB' hA' => (hmeet X hA' hB').symm
   refine ⟨hmeet, ?_⟩
   by_cases ha : sA <;> by_cases hb : sB

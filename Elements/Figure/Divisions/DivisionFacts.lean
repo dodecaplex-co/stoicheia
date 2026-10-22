@@ -26,10 +26,10 @@ inward side of each side, so a point inside a triangle on three corners is stric
 side (`cut_inside_closed_half`). -/
 theorem fan_inside_core (P : ConvexCell) {t : Point × Point × Point}
     (ht : t ∈ fan P.corners) {Y : Point} (hY : InsideTriangle Y t.1 t.2.1 t.2.2) :
-    P.core Y := by
+    P.Core Y := by
   intro s hs D hD hD₁ hD₂
   have h := P.convex
-  obtain ⟨hA, hB, hC⟩ := Ext.fan_mem ht
+  obtain ⟨hA, hB, hC⟩ := Extreme.fan_mem ht
   have hss := h.2.2 s hs D hD D hD hD₁ hD₂ hD₁ hD₂
   obtain ⟨L, h₁, h₂⟩ := Postulate1 s.1 s.2 hss.1
   exact SameSideOf.of_line hss.1 h₁ h₂ (cut_inside_closed_half
@@ -41,9 +41,9 @@ theorem fan_inside_core (P : ConvexCell) {t : Point × Point × Point}
 cells, no point inside two of them, put together, are triangles that lie apart, and they cover
 exactly the points of the cells' closed regions. -/
 theorem cells_division (rs : List ConvexCell) (hne : rs ≠ [])
-    (ha : rs.Pairwise (fun Q R => ∀ X : Point, Q.core X → ¬ R.core X)) :
+    (ha : rs.Pairwise (fun Q R => ∀ X : Point, Q.Core X → ¬ R.Core X)) :
     ∃ R : Apart, R.pieces = rs.flatMap (fun Q => fan Q.corners) ∧
-      ∀ X : Point, Covers R.pieces X ↔ ∃ Q ∈ rs, Q.region X := by
+      ∀ X : Point, Covers R.pieces X ↔ ∃ Q ∈ rs, Q.Region X := by
   /- A cell gives at least one triangle, so the triangles are not none. -/
   have hpne : rs.flatMap (fun Q => fan Q.corners) ≠ [] := by
     obtain ⟨Q, hQ⟩ := List.exists_mem_of_ne_nil rs hne

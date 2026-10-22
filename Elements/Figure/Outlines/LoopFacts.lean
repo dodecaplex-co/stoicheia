@@ -204,11 +204,11 @@ read the same way or the other way, in some order, and the two lists have the sa
 then the boundary, the crossing counts and the good rays agree. -/
 theorem transfer {ps qs : List Point} (hperm : (sides qs).Perm ((sides ps).map f))
     (hmem : ∀ V, V ∈ qs ↔ V ∈ ps) :
-    (∀ X, loopBoundary qs X ↔ loopBoundary ps X) ∧
+    (∀ X, LoopBoundary qs X ↔ LoopBoundary ps X) ∧
       (∀ X Q, crossingCount qs X Q = crossingCount ps X Q) ∧
       (∀ X Q, GoodRay qs X Q ↔ GoodRay ps X Q) := by
   refine ⟨fun X => ?_, fun X Q => ?_, fun X Q => ?_⟩
-  · unfold loopBoundary
+  · unfold LoopBoundary
     constructor
     · rintro ⟨s, hs, hX⟩
       obtain ⟨t, ht, rfl⟩ := List.mem_map.mp (hperm.mem_iff.mp hs)
@@ -254,11 +254,11 @@ end Transfer
 
 /-- The region is fixed by the boundary, the crossing counts and the good rays. -/
 theorem region_transfer {ps qs : List Point}
-    (hb : ∀ X, loopBoundary qs X ↔ loopBoundary ps X)
+    (hb : ∀ X, LoopBoundary qs X ↔ LoopBoundary ps X)
     (hc : ∀ X Q, crossingCount qs X Q = crossingCount ps X Q)
     (hg : ∀ X Q, GoodRay qs X Q ↔ GoodRay ps X Q) (X : Point) :
-    loopRegion qs X ↔ loopRegion ps X := by
-  unfold loopRegion loopInside
+    LoopRegion qs X ↔ LoopRegion ps X := by
+  unfold LoopRegion LoopInside
   simp only [hb, hc, hg]
 
 /-! ## A frame of three corners -/
@@ -404,17 +404,6 @@ theorem sides_no_swap {ps : List Point} (hlen : 3 ≤ ps.length) (hnd : ps.Nodup
 
 variable {cs : List Point}
 
-/-- Some corner of a convex outline is neither end of a given side. -/
-theorem convex_third (h : ConvexOutline cs) (s : Point × Point) :
-    ∃ P ∈ cs, P ≠ s.1 ∧ P ≠ s.2 :=
-  exists_other h.1 h.2.1 s.1 s.2
-
-/-- The ends of a side of a convex outline differ. -/
-theorem convex_side_ne (h : ConvexOutline cs) {s : Point × Point} (hs : s ∈ sides cs) :
-    s.1 ≠ s.2 := by
-  obtain ⟨P, hP, h₁, h₂⟩ := convex_third h s
-  exact (h.2.2 s hs P hP P hP h₁ h₂ h₁ h₂).1
-
 /-- Only the ends of a side are corners on its straight line. -/
 theorem convex_on_side_line (h : ConvexOutline cs) {s : Point × Point} (hs : s ∈ sides cs)
     {L : Line} (h₁ : OnLine s.1 L) (h₂ : OnLine s.2 L) {P : Point} (hP : P ∈ cs)
@@ -471,23 +460,12 @@ theorem convex_simple (h : ConvexOutline cs) : SimpleLoop cs := by
         (onFiniteLine_onLine hXa h₁ h₂))
   exact ⟨endpoint ht hs (Ne.symm hst) hXt hXs, endpoint hs ht hst hXs hXt⟩
 
-/-- The closed region of a convex outline holds every point between two of its points. -/
-theorem convex_region_between (h : ConvexOutline cs) {U X W : Point}
-    (hU : ConvexRegion cs U) (hW : ConvexRegion cs W) (hb : Between U X W) :
-    ConvexRegion cs X := by
-  intro s hs P hP hP₁ hP₂
-  obtain ⟨L, h₁, h₂⟩ := Postulate1 s.1 s.2 (convex_side_ne h hs)
-  have hiff := closedSide_iff_half (X := X) (P := P) (convex_side_ne h hs) h₁ h₂
-  exact hiff.mpr (half_between
-    ((closedSide_iff_half (convex_side_ne h hs) h₁ h₂).mp (hU s hs P hP hP₁ hP₂))
-    ((closedSide_iff_half (convex_side_ne h hs) h₁ h₂).mp (hW s hs P hP hP₁ hP₂)) hb)
-
 /-- The boundary of a convex outline lies in its closed region. -/
 theorem convex_boundary_region (h : ConvexOutline cs) {X : Point}
-    (hX : loopBoundary cs X) : ConvexRegion cs X := by
+    (hX : LoopBoundary cs X) : ConvexRegion cs X := by
   obtain ⟨t, ht, hXt⟩ := hX
-  have h₁ := Ext.corner_region h (side_mem ht).1
-  have h₂ := Ext.corner_region h (side_mem ht).2
+  have h₁ := Extreme.corner_region h (side_mem ht).1
+  have h₂ := Extreme.corner_region h (side_mem ht).2
   rcases hXt with e | e | hb
   · exact e ▸ h₁
   · exact e ▸ h₂
@@ -542,7 +520,7 @@ theorem convex_supporting (h : ConvexOutline cs) {s : Point × Point} (hs : s �
 /-- A point of the closed region off the boundary is strictly on the inner side of every
 side's straight line. -/
 theorem convex_strict (h : ConvexOutline cs) {X : Point} (hX : ConvexRegion cs X)
-    (hXb : ¬ loopBoundary cs X) {s : Point × Point} (hs : s ∈ sides cs) {P : Point}
+    (hXb : ¬ LoopBoundary cs X) {s : Point × Point} (hs : s ∈ sides cs) {P : Point}
     (hP : P ∈ cs) (hP₁ : P ≠ s.1) (hP₂ : P ≠ s.2) {L : Line} (h₁ : OnLine s.1 L)
     (h₂ : OnLine s.2 L) : SameSide X P L := by
   rcases (closedSide_iff_half (convex_side_ne h hs) h₁ h₂).mp (hX s hs P hP hP₁ hP₂) with
@@ -553,7 +531,7 @@ theorem convex_strict (h : ConvexOutline cs) {X : Point} (hX : ConvexRegion cs X
 /-- From a point strictly inside a convex outline, a straight line that reaches a side's
 straight line goes on outside the closed region. -/
 theorem convex_beyond (h : ConvexOutline cs) {X Y Z : Point} (hX : ConvexRegion cs X)
-    (hXb : ¬ loopBoundary cs X) {s : Point × Point} (hs : s ∈ sides cs) {L : Line}
+    (hXb : ¬ LoopBoundary cs X) {s : Point × Point} (hs : s ∈ sides cs) {L : Line}
     (h₁ : OnLine s.1 L) (h₂ : OnLine s.2 L) (hY : OnLine Y L) (hb : Between X Y Z)
     (hZ : ConvexRegion cs Z) : False := by
   obtain ⟨P, hP, hP₁, hP₂⟩ := convex_third h s
@@ -788,7 +766,7 @@ it, since the closed region is made of triangles on corners; so two sides cross 
 crossing points are on opposite sides of the point, for otherwise the nearer side's line
 would separate the point from the farther. Two crossings on the ray would do the same. -/
 theorem convex_count_inside (h : ConvexOutline cs) {X Q : Point} (hX : ConvexRegion cs X)
-    (hXb : ¬ loopBoundary cs X) (hQ : GoodRay cs X Q) : crossingCount cs X Q = 1 := by
+    (hXb : ¬ LoopBoundary cs X) (hQ : GoodRay cs X Q) : crossingCount cs X Q = 1 := by
   obtain ⟨hXQ, hgood⟩ := hQ
   obtain ⟨ℓ, hXℓ, hQℓ⟩ := Postulate1 X Q hXQ
   have hoff : ∀ V ∈ cs, ¬ OnLine V ℓ := fun V hV hVℓ => hgood V hV ⟨ℓ, hXℓ, hQℓ, hVℓ⟩
@@ -808,9 +786,9 @@ theorem convex_count_inside (h : ConvexOutline cs) {X Q : Point} (hX : ConvexReg
     have hall : ∀ V ∈ cs, SameSide V c ℓ := fun V hV => Classical.byContradiction fun hVc =>
       hno ⟨V, hV, hoff c hc, hoff V hV, fun hcV => hVc (same_side_symm hcV)⟩
     obtain ⟨t, ht, hXt⟩ := (fan_covers h X).mpr hX
-    obtain ⟨h₁, h₂, h₃⟩ := Ext.fan_mem ht
+    obtain ⟨h₁, h₂, h₃⟩ := Extreme.fan_mem ht
     exact not_on_line_of_same_side
-      (Avoid.closed_same_side (hall _ h₁) (hall _ h₂) (hall _ h₃) hXt) hXℓ
+      (closed_same_side (hall _ h₁) (hall _ h₂) (hall _ h₃) hXt) hXℓ
   obtain ⟨V, hV, hcV⟩ := hsplit
   obtain ⟨s, hs, t, ht, hst, cs₁, ct₁⟩ := two_crossings hoff hc hV hcV
   obtain ⟨Ys, hYsℓ, hYs⟩ := cs₁.exists_between
@@ -849,7 +827,7 @@ convex outline crosses none of its sides or exactly two. If it crosses one, its 
 line crosses another, and that crossing is on the ray too, for otherwise the point would lie
 between two points of the region; and no third side crosses the line. -/
 theorem convex_count_outside (h : ConvexOutline cs) {X Q : Point}
-    (hX : ¬ ConvexRegion cs X) (hXb : ¬ loopBoundary cs X) (hQ : GoodRay cs X Q) :
+    (hX : ¬ ConvexRegion cs X) (hXb : ¬ LoopBoundary cs X) (hQ : GoodRay cs X Q) :
     crossingCount cs X Q = 0 ∨ crossingCount cs X Q = 2 := by
   obtain ⟨hXQ, hgood⟩ := hQ
   obtain ⟨ℓ, hXℓ, hQℓ⟩ := Postulate1 X Q hXQ

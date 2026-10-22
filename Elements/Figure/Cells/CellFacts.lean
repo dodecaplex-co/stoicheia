@@ -107,7 +107,7 @@ theorem split_some {α : Type} {ts : List (Option α)} (h : ¬ ∀ t ∈ ts, t =
     exact ⟨pre, a, post, he⟩
 
 /-- Taking out one member present leaves one fewer. -/
-theorem count_split {α : Type} (pre post : List (Option α)) (a : α) :
+theorem count_split_some {α : Type} (pre post : List (Option α)) (a : α) :
     ((pre ++ some a :: post).filterMap id).length = ((pre ++ post).filterMap id).length + 1 := by
   simp only [List.filterMap_append, List.filterMap_cons, id, List.length_append,
     List.length_cons]
@@ -152,7 +152,7 @@ theorem third_corner {cs : List Point} (h : ConvexOutline cs) (a b : Point) :
 
 /-- **One side's half-planes**: the straight line of a side of a convex outline, with a third
 corner, names the open half-plane holding the outline's inside, as the side's conditions in
-`ConvexCell.core` say, and the closed half-plane holding its region, as those in
+`ConvexCell.Core` say, and the closed half-plane holding its region, as those in
 `ConvexRegion` say. -/
 theorem side_halfplane {cs : List Point} (h : ConvexOutline cs) {s : Point × Point}
     (hs : s ∈ sides cs) :

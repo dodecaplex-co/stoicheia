@@ -24,7 +24,7 @@ namespace Elements.Figures
 
 open Tacit
 
-namespace OutlineFacts
+namespace OutlineBound
 
 /-! ## Finitely many points in one angle
 
@@ -491,17 +491,17 @@ theorem enclosing_triangle (vs : List Point) :
     hOBC.off_line hO_B hB_B (line_unique hC'.2.1 h hO_B (hC'.onLine hO_C hC_C) hO_C ▸ hC_C)
   exact ⟨O, B', C', Triangle.of_line hO_B (hB'.onLine hO_B hB_B) hB'.2.1.symm hC'B, hall⟩
 
-end OutlineFacts
+end OutlineBound
 
 /-- Every admitted figure is bounded, with an enclosing triangle. -/
 theorem outline_bounded (F : Outline) :
     ∃ A B C : Point, Triangle A B C ∧
-      ∀ X : Point, F.region X → InsideTriangle X A B C := by
+      ∀ X : Point, F.Region X → InsideTriangle X A B C := by
   /- The corners lie on one side of a straight line, so within an angle at a point beyond it,
   and so within a triangle cut off from that angle, by Postulate 5, with an angle copied by
-  I.23 (`OutlineFacts.enclosing_triangle`). A triangle holding every corner holds the
+  I.23 (`OutlineBound.enclosing_triangle`). A triangle holding every corner holds the
   whole region (`OutlineFacts.bounded_of_enclosure`). -/
-  obtain ⟨A, B, C, h, hin⟩ := OutlineFacts.enclosing_triangle F.loops.flatten
+  obtain ⟨A, B, C, h, hin⟩ := OutlineBound.enclosing_triangle F.loops.flatten
   exact ⟨A, B, C, h, OutlineFacts.bounded_of_enclosure F fun ps hps V hV =>
     hin V (List.mem_flatten.mpr ⟨ps, hps, hV⟩)⟩
 

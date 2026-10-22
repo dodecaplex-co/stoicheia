@@ -908,7 +908,7 @@ theorem Prop45.fan_boundary {O A B : Point} {ps : List Point}
     ∃ F : Outline, F.loops = [O :: A :: B :: ps] ∧
       ∃ R : Apart,
         R.pieces = (segments (A :: B :: ps)).map (fun s => (O, s.1, s.2)) ∧
-        Divides F.region R := by
+        Divides F.Region R := by
   /- The triangles fit together (`Fitted.fan`, which cites I.13), so each meets the earlier
   ones only along the straight line from O across which it is glued
   (`FanBoundary.fitted_meet`). Glued onto the outline one at a time from the triangle OAB,

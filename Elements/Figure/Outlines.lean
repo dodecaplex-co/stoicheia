@@ -19,28 +19,20 @@ namespace Elements.Figures
 
 /-- Every point off a simple boundary admits a ray avoiding all its vertices. -/
 theorem good_ray_exists {ps : List Point} (h : SimpleLoop ps) {X : Point}
-    (hX : ¬ loopBoundary ps X) : ∃ Q : Point, GoodRay ps X Q := by
-  /- Every corner starts a side, so is on the boundary, and differs from X. -/
-  have hne : ∀ V ∈ ps, V ≠ X := by
-    intro V hV hVX
-    obtain ⟨E, hE⟩ := outgoing_side hV
-    exact hX ⟨(V, E), hE, Or.inl hVX.symm⟩
-  /- The straight lines joining X to the corners, and a frame of three corners from
-  simplicity. A point of the frame off all those lines gives the ray. -/
-  let line (V : Point) : Line := Classical.choose (collinear_of_two X V)
-  have hline (V : Point) : OnLine X (line V) ∧ OnLine V (line V) :=
-    Classical.choose_spec (collinear_of_two X V)
-  obtain ⟨A, hA, B, -, C, -, hABC⟩ := LoopFacts.simple_frame h
-  obtain ⟨Q, -, hQ⟩ := triangle_point_avoiding hABC (ps.map line)
-  refine ⟨Q, fun hXQ => ?_, fun V hV hcol => ?_⟩
-  · exact hQ (line A) (List.mem_map_of_mem hA) (hXQ ▸ (hline A).1)
-  · obtain ⟨M, hXM, hQM, hVM⟩ := hcol
-    have he : line V = M := Tacit.line_unique (hne V hV).symm (hline V).1 (hline V).2 hXM hVM
-    exact hQ (line V) (List.mem_map_of_mem hV) (he ▸ hQM)
+    (hX : ¬ LoopBoundary ps X) : ∃ Q : Point, GoodRay ps X Q := by
+  /- Every corner starts a side, so is on the boundary, and is not X. A point of a frame of
+  three corners from simplicity, off the straight lines joining X to the corners, gives the ray
+  (`Parity.good_ray_avoiding`). -/
+  have hXps : X ∉ ps := by
+    intro hXV
+    obtain ⟨E, hE⟩ := outgoing_side hXV
+    exact hX ⟨(X, E), hE, Or.inl rfl⟩
+  obtain ⟨Q, hQ, -⟩ := Parity.good_ray_avoiding h hXps []
+  exact ⟨Q, hQ⟩
 
 /-- Two good rays from the same point give the same crossing parity. -/
 theorem crossing_parity_independent {ps : List Point} (h : SimpleLoop ps)
-    {X Q R : Point} (hX : ¬ loopBoundary ps X)
+    {X Q R : Point} (hX : ¬ LoopBoundary ps X)
     (hQ : GoodRay ps X Q) (hR : GoodRay ps X R) :
     crossingCount ps X Q % 2 = crossingCount ps X R % 2 := by
   /- Each side crosses two rays not on one straight line together oddly exactly when its
@@ -50,19 +42,15 @@ theorem crossing_parity_independent {ps : List Point} (h : SimpleLoop ps)
 
 /-- Any good ray decides interior membership, once the point is off the boundary. -/
 theorem loop_inside_iff {ps : List Point} (h : SimpleLoop ps)
-    {X Q : Point} (hX : ¬ loopBoundary ps X) (hQ : GoodRay ps X Q) :
-    loopInside ps X ↔ crossingCount ps X Q % 2 = 1 := by
-  constructor
-  · rintro ⟨_, R, hR, hodd⟩
-    exact (crossing_parity_independent h hX hQ hR).trans hodd
-  · intro hodd
-    exact ⟨hX, Q, hQ, hodd⟩
+    {X Q : Point} (hX : ¬ LoopBoundary ps X) (hQ : GoodRay ps X Q) :
+    LoopInside ps X ↔ crossingCount ps X Q % 2 = 1 :=
+  OutlineFacts.inside_iff h hX hQ
 
 /-- Reversing a simple outline preserves its boundary and its region. -/
 theorem loop_reverse {ps : List Point} (h : SimpleLoop ps) :
     SimpleLoop ps.reverse ∧
-      (∀ X : Point, loopBoundary ps.reverse X ↔ loopBoundary ps X) ∧
-      (∀ X : Point, loopRegion ps.reverse X ↔ loopRegion ps X) := by
+      (∀ X : Point, LoopBoundary ps.reverse X ↔ LoopBoundary ps X) ∧
+      (∀ X : Point, LoopRegion ps.reverse X ↔ LoopRegion ps X) := by
   /- The reversed outline has the same sides, each read the other way. -/
   have hf : ∀ s : Point × Point, Prod.swap s = s ∨ Prod.swap s = s.swap := fun _ => Or.inr rfl
   have hperm := LoopFacts.sides_reverse_perm ps
@@ -74,8 +62,8 @@ theorem loop_reverse {ps : List Point} (h : SimpleLoop ps) :
 /-- Starting at another vertex preserves simplicity, boundary and region. -/
 theorem loop_rotate (ps qs : List Point) (h : SimpleLoop (ps ++ qs)) :
     SimpleLoop (qs ++ ps) ∧
-      (∀ X : Point, loopBoundary (qs ++ ps) X ↔ loopBoundary (ps ++ qs) X) ∧
-      (∀ X : Point, loopRegion (qs ++ ps) X ↔ loopRegion (ps ++ qs) X) := by
+      (∀ X : Point, LoopBoundary (qs ++ ps) X ↔ LoopBoundary (ps ++ qs) X) ∧
+      (∀ X : Point, LoopRegion (qs ++ ps) X ↔ LoopRegion (ps ++ qs) X) := by
   /- Read from another corner, the outline has the same sides, in another order. -/
   have hf : ∀ s : Point × Point, id s = s ∨ id s = s.swap := fun _ => Or.inl rfl
   have hperm : (sides (qs ++ ps)).Perm ((sides (ps ++ qs)).map id) := by
@@ -91,8 +79,8 @@ theorem loop_rotate (ps qs : List Point) (h : SimpleLoop (ps ++ qs)) :
 /-- Redundant collinear vertices can be removed without changing the figure. -/
 theorem loop_normalise {ps : List Point} (h : SimpleLoop ps) :
     ∃ qs : List Point, SimpleLoop qs ∧ ReducedLoop qs ∧
-      (∀ X : Point, loopBoundary qs X ↔ loopBoundary ps X) ∧
-      (∀ X : Point, loopRegion qs X ↔ loopRegion ps X) := by
+      (∀ X : Point, LoopBoundary qs X ↔ LoopBoundary ps X) ∧
+      (∀ X : Point, LoopRegion qs X ↔ LoopRegion ps X) := by
   /- By induction on the number of corners. A loop that is not reduced has a corner between
   its neighbours (`Parity.straight_corner`); read from the corner before it, the loop loses
   that corner and keeps its boundary and region (`Parity.remove_corner`). A corner that
@@ -117,11 +105,11 @@ theorem loop_normalise {ps : List Point} (h : SimpleLoop ps) :
 /-- A triangle's outline encloses exactly its existing closed triangle. -/
 theorem triangle_region {A B C : Point} (h : Triangle A B C) :
     SimpleLoop [A, B, C] ∧
-      ∀ X : Point, loopRegion [A, B, C] X ↔ OnOrInsideTriangle X A B C := by
+      ∀ X : Point, LoopRegion [A, B, C] X ↔ OnOrInsideTriangle X A B C := by
   /- A triangle's corners make a convex outline, whose closed region is the closed
   triangle (`closed_triangle_sides`). From a point inside it a good ray crosses one side;
   from a point outside, none or two. -/
-  have hc := Ext.triangle_outline h
+  have hc := Extreme.triangle_outline h
   have hsimple := LoopFacts.convex_simple hc
   refine ⟨hsimple, fun X => ?_⟩
   rw [← LoopFacts.triangle_convexRegion h]
@@ -135,22 +123,22 @@ theorem triangle_region {A B C : Point} (h : Triangle A B C) :
       · rw [h2] at hodd
         exact absurd hodd (by decide)
   · intro hX
-    by_cases hXb : loopBoundary [A, B, C] X
+    by_cases hXb : LoopBoundary [A, B, C] X
     · exact Or.inl hXb
     · obtain ⟨Q, hQ⟩ := good_ray_exists hsimple hXb
       exact Or.inr ⟨hXb, Q, hQ, by rw [LoopFacts.convex_count_inside hc hX hXb hQ]⟩
 
 /-- A single contour has exactly its loop's region. -/
 theorem single_region (ps : List Point) (h : SimpleLoop ps) (X : Point) :
-    (singleOutline ps h).region X ↔ loopRegion ps X := by
+    (singleOutline ps h).Region X ↔ LoopRegion ps X := by
   /- With one contour, the boundary is its boundary, and the depth is one exactly when
   the point is inside it. -/
-  have hb : (singleOutline ps h).boundary X ↔ loopBoundary ps X := by
-    simp [Outline.boundary, singleOutline]
-  have hd : (singleOutline ps h).depth X % 2 = 1 ↔ loopInside ps X := by
+  have hb : (singleOutline ps h).Boundary X ↔ LoopBoundary ps X := by
+    simp [Outline.Boundary, singleOutline]
+  have hd : (singleOutline ps h).depth X % 2 = 1 ↔ LoopInside ps X := by
     unfold Outline.depth
-    by_cases hi : loopInside ps X <;> simp [singleOutline, hi]
-  unfold Outline.region Outline.inside loopRegion
+    by_cases hi : LoopInside ps X <;> simp [singleOutline, hi]
+  unfold Outline.Region Outline.Inside LoopRegion
   rw [hb, hd]
   constructor
   · rintro (hb | ⟨-, hi⟩)
@@ -163,7 +151,7 @@ theorem single_region (ps : List Point) (h : SimpleLoop ps) (X : Point) :
 /-- A strictly convex outline is simple, and its loop region is exactly the
 intersection of its inward closed sides. -/
 theorem convex_loop_region {cs : List Point} (h : ConvexOutline cs) :
-    SimpleLoop cs ∧ ∀ X : Point, loopRegion cs X ↔ ConvexRegion cs X := by
+    SimpleLoop cs ∧ ∀ X : Point, LoopRegion cs X ↔ ConvexRegion cs X := by
   /- Two sides meet only at a common end, each other corner being strictly on one side of
   a side's straight line. A boundary point is in the region. From a point strictly inside,
   a good ray crosses exactly one side; from a point outside the region, none or two. -/
@@ -178,7 +166,7 @@ theorem convex_loop_region {cs : List Point} (h : ConvexOutline cs) :
       · rw [h2] at hodd
         exact absurd hodd (by decide)
   · intro hX
-    by_cases hXb : loopBoundary cs X
+    by_cases hXb : LoopBoundary cs X
     · exact Or.inl hXb
     · obtain ⟨Q, hQ⟩ := good_ray_exists hsimple hXb
       exact Or.inr ⟨hXb, Q, hQ, by rw [LoopFacts.convex_count_inside h hX hXb hQ]⟩
@@ -200,7 +188,7 @@ theorem convex_supporting_side {cs : List Point} (h : ConvexOutline cs)
 
 /-- The stated contours are exactly the boundary of the independently defined region. -/
 theorem outline_boundary (F : Outline) (X : Point) :
-    F.boundary X ↔ RegionBoundary F.region X := by
+    F.Boundary X ↔ RegionBoundary F.Region X := by
   /- On a contour, the point is in the region, and across a side of its contour, away from
   every corner, the depth changes parity: no other contour passes there. Off the contours, a
   small triangle about the point misses every side, and no contour's inside changes in it. -/
@@ -212,16 +200,16 @@ theorem outline_boundary (F : Outline) (X : Point) :
 /-- The same boundary describes the same region, regardless of its listing,
 orientations, starting vertices or decomposition into simple contours. -/
 theorem same_boundary_region (F G : Outline)
-    (h : ∀ X : Point, F.boundary X ↔ G.boundary X) :
-    ∀ X : Point, F.region X ↔ G.region X := by
+    (h : ∀ X : Point, F.Boundary X ↔ G.Boundary X) :
+    ∀ X : Point, F.Region X ↔ G.Region X := by
   /- Off the boundary, the depth has the parity of the crossings of one good ray, through no
   corner of either description. Each crossing is a point of the boundary, read as a point set,
   strictly within exactly one side of one contour, however the sides are subdivided; so both
   descriptions count the same points. -/
   intro X
-  by_cases hX : F.boundary X
+  by_cases hX : F.Boundary X
   · exact ⟨fun _ => Or.inl ((h X).mp hX), fun _ => Or.inl hX⟩
-  · have hXG : ¬ G.boundary X := fun hg => hX ((h X).mpr hg)
+  · have hXG : ¬ G.Boundary X := fun hg => hX ((h X).mpr hg)
     rw [OutlineFacts.region_off hX, OutlineFacts.region_off hXG,
       OutlineFacts.depth_parity_eq F G h hX]
 
@@ -229,7 +217,7 @@ theorem same_boundary_region (F G : Outline)
 Contacts against the middle of a side remain allowed. -/
 theorem outline_normalise (F : Outline) :
     ∃ G : Outline, (∀ ps ∈ G.loops, ReducedLoop ps) ∧
-      ∀ X : Point, G.boundary X ↔ F.boundary X := by
+      ∀ X : Point, G.Boundary X ↔ F.Boundary X := by
   /- Normalise each contour (`loop_normalise`), keeping its boundary and region, so its
   inside. The reduced family is still compatible: a contact strictly within a side of each
   reduced contour would be, for the original contours, either an overlap of two sides on one
@@ -238,14 +226,14 @@ theorem outline_normalise (F : Outline) :
   that lies on another is a true corner of that other, and contacts survive. -/
   classical
   have hn : ∀ ps ∈ F.loops, ∃ qs : List Point, SimpleLoop qs ∧ ReducedLoop qs ∧
-      (∀ X : Point, loopBoundary qs X ↔ loopBoundary ps X) ∧
-      (∀ X : Point, loopRegion qs X ↔ loopRegion ps X) :=
+      (∀ X : Point, LoopBoundary qs X ↔ LoopBoundary ps X) ∧
+      (∀ X : Point, LoopRegion qs X ↔ LoopRegion ps X) :=
     fun ps hps => loop_normalise (F.simple ps hps)
   let f : List Point → List Point := fun ps =>
     if h : ps ∈ F.loops then Classical.choose (hn ps h) else ps
   have hf : ∀ ps ∈ F.loops, SimpleLoop (f ps) ∧ ReducedLoop (f ps) ∧
-      (∀ X : Point, loopBoundary (f ps) X ↔ loopBoundary ps X) ∧
-      (∀ X : Point, loopRegion (f ps) X ↔ loopRegion ps X) := by
+      (∀ X : Point, LoopBoundary (f ps) X ↔ LoopBoundary ps X) ∧
+      (∀ X : Point, LoopRegion (f ps) X ↔ LoopRegion ps X) := by
     intro ps hps
     have e : f ps = Classical.choose (hn ps hps) := by simp only [f, hps, ↓reduceDIte]
     rw [e]
@@ -277,16 +265,74 @@ strict interiors of the holes removed. All hole boundaries remain.
 Isolated contacts are allowed by the outline's compatibility condition. -/
 theorem region_with_holes (F : Outline) (outer : List Point)
     (holes : List (List Point)) (hl : F.loops = outer :: holes)
-    (hin : ∀ ps ∈ holes, ∀ X : Point, loopRegion ps X → loopRegion outer X)
+    (hin : ∀ ps ∈ holes, ∀ X : Point, LoopRegion ps X → LoopRegion outer X)
     (hapart : holes.Pairwise (fun ps qs =>
-      ∀ X : Point, loopInside ps X → ¬ loopInside qs X))
+      ∀ X : Point, LoopInside ps X → ¬ LoopInside qs X))
     (X : Point) :
-    F.region X ↔ loopRegion outer X ∧
-      ∀ ps ∈ holes, ¬ loopInside ps X := by
+    F.Region X ↔ LoopRegion outer X ∧
+      ∀ ps ∈ holes, ¬ LoopInside ps X := by
   /- Off the boundary, the depth counts the outer contour and at most one hole, which lies
   in it. On the boundary, no hole holds the point inside: near a point of any contour are
   points inside that contour and outside the outer region, while near a point inside a hole
   every point is inside it. -/
-  exact OutlineFacts.region_holes F outer holes hl hin hapart X
+  classical
+  have hsimple : ∀ ps ∈ outer :: holes, SimpleLoop ps := by
+    rw [← hl]
+    exact F.simple
+  have hout : SimpleLoop outer := hsimple outer List.mem_cons_self
+  have hhole : ∀ ps ∈ holes, SimpleLoop ps :=
+    fun ps hps => hsimple ps (List.mem_cons_of_mem _ hps)
+  have hbF : F.Boundary X ↔ LoopBoundary outer X ∨ ∃ ps ∈ holes, LoopBoundary ps X := by
+    unfold Outline.Boundary
+    rw [hl]
+    simp only [List.mem_cons, exists_eq_or_imp]
+  by_cases hb : F.Boundary X
+  · refine ⟨fun _ => ⟨?_, ?_⟩, fun _ => Or.inl hb⟩
+    · rcases hbF.mp hb with h | ⟨ps, hps, h⟩
+      · exact Or.inl h
+      · exact hin ps hps X (Or.inl h)
+    · intro ps hps hiX
+      obtain ⟨cs, hXc, hcs⟩ := OutlineFacts.const_near (hhole ps hps) hiX.1
+      rcases hbF.mp hb with hq | ⟨qs, hqs, hq⟩
+      · obtain ⟨Y, Z, -, hZ, -, hrZ⟩ := OutlineFacts.near_boundary hout hq hXc
+        exact hrZ (hin ps hps Z (Or.inr ((hcs Z hZ).2.mpr hiX)))
+      · by_cases hqp : qs = ps
+        · rw [hqp] at hq
+          exact hiX.1 hq
+        · obtain ⟨Y, Z, hY, -, hiY, -⟩ := OutlineFacts.near_boundary (hhole qs hqs) hq hXc
+          have hiY' : LoopInside ps Y := (hcs Y hY).2.mpr hiX
+          rcases LoopFacts.pairwise_mem hapart hps hqs with e | hd | hd
+          · exact hqp e.symm
+          · exact hd Y hiY' hiY
+          · exact hd Y hiY hiY'
+  · have hbo : ¬ LoopBoundary outer X := fun h => hb (hbF.mpr (Or.inl h))
+    have hdepth : F.depth X = (if LoopInside outer X then 1 else 0) +
+        (holes.filter fun ps => decide (LoopInside ps X)).length := by
+      unfold Outline.depth
+      rw [hl]
+      by_cases hio : LoopInside outer X <;> simp [hio] <;> omega
+    rw [OutlineFacts.region_off hb, hdepth]
+    by_cases hh : ∃ ps ∈ holes, LoopInside ps X
+    · obtain ⟨ps, hps, hiX⟩ := hh
+      have hio : LoopInside outer X :=
+        OutlineFacts.inside_iff_region.mpr ⟨hin ps hps X (Or.inr hiX), hbo⟩
+      have hle := OutlineFacts.count_le_one (fun ps => decide (LoopInside ps X)) holes
+        (hapart.imp fun {a b} hab ⟨ha, hb⟩ => hab X (by simpa using ha) (by simpa using hb))
+      have hpos : 0 < (holes.filter fun ps => decide (LoopInside ps X)).length :=
+        List.length_pos_of_mem (List.mem_filter.mpr ⟨hps, by simpa using hiX⟩)
+      simp only [hio, ↓reduceIte]
+      exact iff_of_false (by omega) fun ⟨_, h⟩ => h ps hps hiX
+    · have hh' : ∀ ps ∈ holes, ¬ LoopInside ps X := fun ps hps h => hh ⟨ps, hps, h⟩
+      have hzero : (holes.filter fun ps => decide (LoopInside ps X)).length = 0 := by
+        rw [List.length_eq_zero_iff, List.filter_eq_nil_iff]
+        intro ps hps
+        simpa using hh' ps hps
+      rw [hzero]
+      by_cases hio : LoopInside outer X
+      · simp only [hio, ↓reduceIte]
+        exact iff_of_true trivial ⟨Or.inr hio, hh'⟩
+      · simp only [hio, ↓reduceIte]
+        exact iff_of_false (by decide) fun ⟨hr, _⟩ =>
+          hio (OutlineFacts.inside_iff_region.mpr ⟨hr, hbo⟩)
 
 end Elements.Figures

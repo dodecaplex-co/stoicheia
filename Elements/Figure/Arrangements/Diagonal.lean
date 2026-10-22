@@ -42,7 +42,7 @@ namespace Elements.Figures
 
 open Tacit
 
-namespace Diag
+namespace Diagonal
 
 /-! ## Corners and sides of a simple loop -/
 
@@ -55,27 +55,13 @@ theorem corner_on_side {ps : List Point} (h : SimpleLoop ps) {V : Point} (hV : V
   · exact Or.inl (by rw [he])
   · exact (Parity.side_meet h hs hE he V hVs (Or.inl rfl)).1
 
-/-- No two sides of a list of distinct corners end at one corner. -/
-theorem sides_pairwise_snd {ps : List Point} (h : ps.Nodup) :
-    (sides ps).Pairwise (fun s t => s.2 ≠ t.2) := by
-  have hm : ((sides ps).map Prod.snd).Nodup := (Parity.sides_map_snd_perm ps).nodup_iff.mpr h
-  exact List.pairwise_map.mp hm
-
-/-- Two sides of a list of distinct corners that end at one corner are one side. -/
-theorem sides_snd_inj {ps : List Point} (h : ps.Nodup) {s t : Point × Point}
-    (hs : s ∈ sides ps) (ht : t ∈ sides ps) (he : s.2 = t.2) : s = t := by
-  rcases LoopFacts.pairwise_mem (sides_pairwise_snd h) hs ht with e | e | e
-  · exact e
-  · exact False.elim (e he)
-  · exact False.elim (e he.symm)
-
 /-- The only sides at a corner V are the one coming in from U and the one going on to W. -/
 theorem side_at {ps : List Point} (h : ps.Nodup) {U V W : Point} (hUV : (U, V) ∈ sides ps)
     (hVW : (V, W) ∈ sides ps) {t : Point × Point} (ht : t ∈ sides ps)
     (hV : V = t.1 ∨ V = t.2) : t = (U, V) ∨ t = (V, W) := by
   rcases hV with e | e
   · exact Or.inr (LoopFacts.sides_fst_inj h ht hVW e.symm)
-  · exact Or.inl (sides_snd_inj h ht hUV e.symm)
+  · exact Or.inl (Parity.sides_snd_inj h ht hUV e.symm)
 
 /-- Reading a list from a later point is a rotation. -/
 theorem rotate_split {ps us vs : List Point} (he : ps = us ++ vs) (hv : vs ≠ [])
@@ -92,7 +78,7 @@ theorem rotate_split {ps us vs : List Point} (he : ps = us ++ vs) (hv : vs ≠ [
 
 /-- Some corner of a simple loop is off any given straight line: three of them make a
 triangle (`LoopFacts.simple_frame`). -/
-theorem corner_off {ps : List Point} (h : SimpleLoop ps) (L : Line) :
+theorem exists_corner_off {ps : List Point} (h : SimpleLoop ps) (L : Line) :
     ∃ C ∈ ps, ¬ OnLine C L := by
   obtain ⟨A, hA, B, hB, C, hC, hABC⟩ := LoopFacts.simple_frame h
   by_cases hAL : OnLine A L
@@ -162,7 +148,7 @@ theorem conditions {ps : List Point} (h : SimpleLoop ps) {V : Point} (hV : V ∈
       · exact h2 u hu hu1 hu2
     · have hne := h.2.2.1 t ht
       obtain ⟨L, h₁, h₂⟩ := Postulate1 t.1 t.2 hne
-      obtain ⟨C, -, hC⟩ := corner_off h L
+      obtain ⟨C, -, hC⟩ := exists_corner_off h L
       have hVoff : ¬ OnFiniteLine V t.1 t.2 := fun hon => hVt (corner_on_side h hV ht hon)
       obtain ⟨K, hVK, hK⟩ := sep_finite hne h₁ h₂ hC hVoff
       refine ⟨(V, K) :: hs, ?_, fun u hu hu1 hu2 Y hY => ?_⟩
@@ -185,17 +171,17 @@ theorem conditions_self {hs : List (Point × Line)} {V : Point}
 theorem conds_between {hs : List (Point × Line)} {X Y Z : Point}
     (hX : ∀ p ∈ hs, SameSide X p.1 p.2) (hZ : ∀ p ∈ hs, SameSide Z p.1 p.2)
     (hb : Between X Y Z) : ∀ p ∈ hs, SameSide Y p.1 p.2 :=
-  fun p hp => Avoid.same_side_between hb (hX p hp) (hZ p hp)
+  fun p hp => same_side_between hb (hX p hp) (hZ p hp)
 
 /-! ## A corner with all the others strictly on one side of a straight line -/
 
 /-- **A straight line with every corner strictly on one side**: a side line of a convex cell
-holding all the corners strictly inside it (`Arr.enclose_list`, `Arr.strict_enclosure`). -/
+holding all the corners strictly inside it (`Arrangement.enclose_list`, `Arrangement.strict_enclosure`). -/
 theorem enclosing_line {ps : List Point} (h : SimpleLoop ps) :
     ∃ (K : Line) (R : Point), ∀ C ∈ ps, SameSide C R K := by
   obtain ⟨A, -, B, -, C, -, hABC⟩ := LoopFacts.simple_frame h
-  obtain ⟨ds, hds, -, hps⟩ := Arr.enclose_list ps (Ext.triangle_outline hABC)
-  obtain ⟨Q, hQ⟩ := Arr.strict_enclosure ⟨ds, hds⟩
+  obtain ⟨ds, hds, -, hps⟩ := Arrangement.enclose_list ps (Extreme.triangle_outline hABC)
+  obtain ⟨Q, hQ⟩ := Arrangement.strict_enclosure ⟨ds, hds⟩
   obtain ⟨a, b, c, rest, he⟩ := CellFacts.three_corners Q.convex
   have hnd := Q.convex.2.1
   rw [he] at hnd
@@ -215,13 +201,13 @@ theorem generic_point {ps : List Point} {K : Line} (hoff : ∀ C ∈ ps, ¬ OnLi
   obtain ⟨P₁, hP₁, -⟩ := exists_point_on_line K []
   obtain ⟨P₂, hP₂, hP₂₁⟩ := exists_point_on_line K [P₁]
   have h12 : P₁ ≠ P₂ := fun e => hP₂₁ (e ▸ List.mem_singleton_self P₁)
-  let ls : List Line := ps.flatMap fun C => CoverFacts.joins C ps
+  let ls : List Line := ps.flatMap fun C => ps.map fun V => Classical.choose (collinear_of_two C V)
   have hls : ∀ L ∈ ls, ∃ C ∈ ps, ∃ D ∈ ps, L = Classical.choose (collinear_of_two C D) := by
     intro L hL
     obtain ⟨C, hC, hL⟩ := List.mem_flatMap.mp hL
     obtain ⟨D, hD, rfl⟩ := List.mem_map.mp hL
     exact ⟨C, hC, D, hD, rfl⟩
-  obtain ⟨O, hO, hOa⟩ := Arr.between_avoiding ls h12 (by
+  obtain ⟨O, hO, hOa⟩ := Arrangement.between_avoiding ls h12 (by
     rintro L hL ⟨h1, h2⟩
     obtain ⟨C, hC, D, -, rfl⟩ := hls L hL
     have hspec := Classical.choose_spec (collinear_of_two C D)
@@ -283,7 +269,7 @@ theorem turn_trans {C V : Point} {M N : Line} (hOK : OnLine O K) (hEK : OnLine E
     exact pasch3 (pasch4 hMN hON hOM hGM hVM hGV hGO hVO hn) hOK hGV'
   have hGE : ¬ SameSide G E N := fun hGE => hVE.2.2 (same_side_trans hGV hGE)
   refine ⟨hCN, hVE.2.1, fun hCE => hGE ?_⟩
-  exact Avoid.same_side_between hCGE hCE (same_side_refl hVE.2.1)
+  exact same_side_between hCGE hCE (same_side_refl hVE.2.1)
 
 /-- **Gift wrapping**: among finitely many corners strictly on R's side of K, one, V, has all
 the others across the straight line OV from E. Take the corners one by one; a new corner on
@@ -386,7 +372,7 @@ theorem exit_beyond {V P Q Z Y₀ : Point} (h : Triangle V P Q) (hZ : InsideTria
   have hYV : SameSide Y V N :=
     same_side_trans (same_side_symm (pasch2 (between_symm hZYY₀) hY₀N hYN))
       (hZ.1.sameSide hPN hQN)
-  have hYQK : SameSide Y Q K := Avoid.same_side_between hZYY₀ (hZ.2.2.sameSide hVK hPK)
+  have hYQK : SameSide Y Q K := same_side_between hZYY₀ (hZ.2.2.sameSide hVK hPK)
     (same_side_symm (pasch2 hY₀ hPK hQK))
   have hYV' : Y ≠ V := fun e => not_on_line_of_same_side hYQK (e ▸ hVK)
   rcases between_cases (Ne.symm hYQ) hYV' h.ne₁₃.symm hQM hYM hVM with hb | hb | hb
@@ -496,7 +482,7 @@ theorem clean {ps : List Point} (h : SimpleLoop ps) {U V W U' W' : Point}
     (hUV : (U, V) ∈ sides ps) (hVW : (V, W) ∈ sides ps)
     (hU' : U' = U ∨ Between V U' U) (hW' : W' = W ∨ Between V W' W)
     (hT : Triangle V U' W') (hno : ∀ C ∈ ps, ¬ InsideTriangle C V U' W') :
-    ∀ Z : Point, InsideTriangle Z V U' W' → ¬ loopBoundary ps Z := by
+    ∀ Z : Point, InsideTriangle Z V U' W' → ¬ LoopBoundary ps Z := by
   rintro Z hZ ⟨t, ht, hZt⟩
   have hb : Between t.1 Z t.2 := by
     rcases hZt with e | e | hb
@@ -596,37 +582,10 @@ theorem across {V U W X : Point} (h : Triangle V U W) (hX : InsideTriangle X V U
     between_symm (between_of_between_left (between_symm hVPU) (between_symm hPU₁U))
   have hT : Triangle W V U₁ :=
     (Triangle.of_line hVL hU₁L (ne_of_between hVU₁U) (h.off_line hVL hUL)).cab
-  have hX' := Avoid.inside_of_between hT hVPU₁ hWXP
+  have hX' := inside_triangle_of_between hT hVPU₁ hWXP
   obtain ⟨W₁, hU₁XW₁, hVW₁W⟩ := inside_through (A := V) (B := U₁) (C := W) (D := X)
     ⟨hX'.2.1, hX'.2.2, hX'.1⟩
   exact ⟨U₁, W₁, hVU₁U, hVW₁W, hU₁XW₁⟩
-
-/-- A filter keeping fewer members: one test implying another, which some member passes and
-the first fails. -/
-theorem filter_lt {α : Type} (p q : α → Bool) :
-    ∀ l : List α, (∀ x ∈ l, p x = true → q x = true) → (∃ x ∈ l, q x = true ∧ p x = false) →
-      (l.filter p).length < (l.filter q).length
-  | [], _, ⟨_, hx, _⟩ => absurd hx List.not_mem_nil
-  | a :: l, hpq, ⟨x, hx, hqx, hpx⟩ => by
-    have hle : ∀ m : List α, (∀ x ∈ m, p x = true → q x = true) →
-        (m.filter p).length ≤ (m.filter q).length := by
-      intro m hm
-      induction m with
-      | nil => simp
-      | cons b m ih =>
-        have ih' := ih fun y hy => hm y (List.mem_cons_of_mem _ hy)
-        have hb := hm b List.mem_cons_self
-        simp only [List.filter_cons]
-        cases hp : p b <;> cases hq : q b <;> simp [hp, hq] at hb ⊢ <;> omega
-    have hpq' : ∀ y ∈ l, p y = true → q y = true := fun y hy => hpq y (List.mem_cons_of_mem _ hy)
-    have ha := hpq a List.mem_cons_self
-    rcases List.mem_cons.mp hx with rfl | hx
-    · simp only [List.filter_cons, hqx, hpx]
-      simp
-      exact Nat.lt_succ_of_le (hle l hpq')
-    · have ih := filter_lt p q l hpq' ⟨x, hx, hqx, hpx⟩
-      simp only [List.filter_cons]
-      cases hp : p a <;> cases hq : q a <;> simp [hp, hq] at ha ⊢ <;> omega
 
 open Classical in
 /-- **A corner on a cut across V, with no corner in the triangle cut off.** No distance is
@@ -650,11 +609,11 @@ theorem nearest {ps : List Point} {V : Point} :
   | succ n ih =>
     intro U W X h hn hX hXin
     obtain ⟨U₁, W₁, hVU₁U, hVW₁W, hU₁XW₁⟩ := across h hXin
-    obtain ⟨h₁, hsub⟩ := Avoid.corner_triangle h hVU₁U hVW₁W
+    obtain ⟨h₁, hsub⟩ := corner_triangle h hVU₁U hVW₁W
     by_cases hCex : ∃ C ∈ ps, InsideTriangle C V U₁ W₁
     · obtain ⟨C, hC, hCin⟩ := hCex
-      have hlt := filter_lt (fun C => decide (InsideTriangle C V U₁ W₁))
-        (fun C => decide (InsideTriangle C V U W)) ps
+      have hlt := Parity.countP_lt (p := fun C => decide (InsideTriangle C V U₁ W₁))
+        (q := fun C => decide (InsideTriangle C V U W)) (l := ps)
         (fun Y _ hY => decide_eq_true (hsub Y (of_decide_eq_true hY)))
         ⟨X, hX, decide_eq_true hXin, by
           rw [decide_eq_false_iff_not]
@@ -662,6 +621,7 @@ theorem nearest {ps : List Point} {V : Point} :
           obtain ⟨M, hU₁M, hW₁M⟩ := Postulate1 U₁ W₁ h₁.ne₂₃
           exact not_on_line_of_same_side (hX₁.1.sameSide hU₁M hW₁M)
             (on_line_of_between_ends hU₁XW₁ hU₁M hW₁M)⟩
+      rw [List.countP_eq_length_filter, List.countP_eq_length_filter] at hlt
       obtain ⟨U', W', X', hU', hW', hX', hb, hno⟩ := ih h₁ (by omega) hC hCin
       exact ⟨U', W', X', between_of_between_left hVU₁U hU',
         between_of_between_left hVW₁W hW', hX', hb, hno⟩
@@ -710,7 +670,7 @@ inside the triangle, which no side meets (`clean`). -/
 theorem ear_edge {ps : List Point} (h : SimpleLoop ps) (hlen : 4 ≤ ps.length) {U V W : Point}
     (hUV : (U, V) ∈ sides ps) (hVW : (V, W) ∈ sides ps) (hT : Triangle V U W)
     (hin : ∀ C ∈ ps, ¬ InsideTriangle C V U W) (hon : ∀ C ∈ ps, ¬ Between U C W) :
-    ∀ Z : Point, Between U Z W → ¬ loopBoundary ps Z := by
+    ∀ Z : Point, Between U Z W → ¬ LoopBoundary ps Z := by
   have hclean := clean h hUV hVW (Or.inl rfl) (Or.inl rfl) hT hin
   rintro Z hZ ⟨t, ht, hZt⟩
   have hU := (LoopFacts.side_mem hUV).1
@@ -781,7 +741,7 @@ theorem ear_edge {ps : List Point} (h : SimpleLoop ps) (hlen : 4 ≤ ps.length) 
       exact ⟨pasch2 hZ hULU hZLU, pasch2 (between_symm hZ) hWLW hZLW⟩
     have hsM : ¬ OnLine s M := not_on_line_of_same_side hsV
     have hZs : Z ≠ s := fun e => hsM (e ▸ hZM)
-    obtain ⟨Z', hZZ's, hZ'c⟩ := Avoid.shorten_sides hZs _ hconds
+    obtain ⟨Z', hZZ's, hZ'c⟩ := shorten_off_lines hZs _ hconds
     have hZ'M : ¬ OnLine Z' M := fun hZ'M => hsM (on_line_of_between hZZ's hZM hZ'M)
     have hZ'V : SameSide Z' V M :=
       same_side_trans (same_side_symm (pasch2 hZZ's hZM hZ'M)) hsV
@@ -849,9 +809,9 @@ theorem inside_near {ps : List Point} (h : SimpleLoop ps) {U V W U' W' E : Point
     (hUV : (U, V) ∈ sides ps) (hVW : (V, W) ∈ sides ps) (hVL : OnLine V L)
     (hext : ∀ C ∈ ps, C ≠ V → OppositeSides C E L)
     (hU' : U' = U ∨ Between V U' U) (hW' : W' = W ∨ Between V W' W) (hT : Triangle V U' W')
-    (hclean : ∀ Z : Point, InsideTriangle Z V U' W' → ¬ loopBoundary ps Z)
-    {X : Point} (hXb : ¬ loopBoundary ps X) (hX : OnOrInsideTriangle X V U' W') :
-    loopInside ps X := by
+    (hclean : ∀ Z : Point, InsideTriangle Z V U' W' → ¬ LoopBoundary ps Z)
+    {X : Point} (hXb : ¬ LoopBoundary ps X) (hX : OnOrInsideTriangle X V U' W') :
+    LoopInside ps X := by
   have hV : V ∈ ps := (LoopFacts.side_mem hVW).1
   have hU : U ∈ ps := (LoopFacts.side_mem hUV).1
   have hW : W ∈ ps := (LoopFacts.side_mem hVW).2
@@ -874,7 +834,7 @@ theorem inside_near {ps : List Point} (h : SimpleLoop ps) {U V W U' W' E : Point
   obtain ⟨hs, hs1, hs2⟩ := conditions h hV
   have hsV := conditions_self hs1
   have off_sides {Y : Point} (hY1 : ¬ OnLine Y LU) (hY2 : ¬ SameSide Y W LU)
-      (hY3 : ∀ p ∈ hs, SameSide Y p.1 p.2) : ¬ loopBoundary ps Y := by
+      (hY3 : ∀ p ∈ hs, SameSide Y p.1 p.2) : ¬ LoopBoundary ps Y := by
     rintro ⟨t, ht, hYt⟩
     by_cases hVt : V ≠ t.1 ∧ V ≠ t.2
     · exact hs2 t ht hVt.1 hVt.2 Y hY3 hYt
@@ -889,7 +849,7 @@ theorem inside_near {ps : List Point} (h : SimpleLoop ps) {U V W U' W' E : Point
       · exact hY2 (e ▸ same_side_refl hWLU)
       · exact hY2 (pasch2 hb hVLU hY1)
   /- M, strictly within VU', near V. -/
-  obtain ⟨M, hVMU', hMs⟩ := Avoid.shorten_sides hT.ne₁₂ hs hsV
+  obtain ⟨M, hVMU', hMs⟩ := shorten_off_lines hT.ne₁₂ hs hsV
   have hVMU : Between V M U := by
     rcases hU' with rfl | hb
     · exact hVMU'
@@ -904,7 +864,8 @@ theorem inside_near {ps : List Point} (h : SimpleLoop ps) {U V W U' W' E : Point
   have hMU : SameSide M U L := pasch2 hVMU hVL hML
   /- Z₁ inside the triangle, off the straight lines from X and from M to the corners. -/
   obtain ⟨Z₁, hZ₁in, hZ₁a⟩ := triangle_point_avoiding hT
-    (CoverFacts.joins X ps ++ CoverFacts.joins M ps)
+    ((ps.map fun V => Classical.choose (collinear_of_two X V)) ++
+      ps.map fun V => Classical.choose (collinear_of_two M V))
   have hZ₁b := hclean Z₁ hZ₁in
   have hZ₁W' : SameSide Z₁ W' LU := hZ₁in.2.2.sameSide hVLU hU'LU
   have hZ₁LU : ¬ OnLine Z₁ LU := not_on_line_of_same_side hZ₁W'
@@ -918,7 +879,7 @@ theorem inside_near {ps : List Point} (h : SimpleLoop ps) {U V W U' W' E : Point
     · exact hMU
     · exact hMs p hp
   obtain ⟨Z₂, hMZ₂Y', hZ₂c⟩ :=
-    Avoid.shorten_sides (ne_of_between (between_symm hZ₁MY')).symm _ hMc
+    shorten_off_lines (ne_of_between (between_symm hZ₁MY')).symm _ hMc
   have hZ₁MZ₂ : Between Z₁ M Z₂ := between_cut hZ₁MY' hMZ₂Y'
   have hZ₂U : SameSide Z₂ U L := hZ₂c (U, L) List.mem_cons_self
   have hZ₂s : ∀ p ∈ hs, SameSide Z₂ p.1 p.2 := fun p hp => hZ₂c p (List.mem_cons_of_mem _ hp)
@@ -929,7 +890,7 @@ theorem inside_near {ps : List Point} (h : SimpleLoop ps) {U V W U' W' E : Point
     exact ⟨hYLU, fun hYW => pasch3 hY hMLU
       (same_side_trans (same_side_symm hZ₁W) (same_side_symm hYW))⟩
   obtain ⟨hZ₂LU, hZ₂W⟩ := far hZ₁MZ₂
-  have hZ₂b : ¬ loopBoundary ps Z₂ := off_sides hZ₂LU hZ₂W hZ₂s
+  have hZ₂b : ¬ LoopBoundary ps Z₂ := off_sides hZ₂LU hZ₂W hZ₂s
   /- The finite straight line Z₁Z₂ meets the boundary only at M, on VU. -/
   obtain ⟨ℓ, hZ₁ℓ, hMℓ⟩ := Postulate1 Z₁ M hZ₁M
   have hZ₂ℓ : OnLine Z₂ ℓ := on_line_of_between hZ₁MZ₂ hZ₁ℓ hMℓ
@@ -951,7 +912,7 @@ theorem inside_near {ps : List Point} (h : SimpleLoop ps) {U V W U' W' E : Point
       rw [e] at hMt
       have hMLW := LoopFacts.onFiniteLine_onLine hMt hVLW hWLW
       exact hWLU (line_unique (ne_of_between hVMU).symm hMLW hVLW hMLU hVLU ▸ hWLW)
-  have hflip : loopInside ps Z₁ ↔ ¬ loopInside ps Z₂ := by
+  have hflip : LoopInside ps Z₁ ↔ ¬ LoopInside ps Z₂ := by
     refine CoverFacts.inside_flip h hUV hZ₁MZ₂ (between_symm hVMU) hZ₁ℓ hZ₂ℓ hoffℓ ?_
     intro Y hY t ht hYt
     rcases (Parity.onFiniteLine_split hZ₁MZ₂).mp hY with hY | hY
@@ -959,7 +920,7 @@ theorem inside_near {ps : List Point} (h : SimpleLoop ps) {U V W U' W' E : Point
       · exact absurd ⟨t, ht, hYt⟩ hZ₁b
       · exact ⟨rfl, atM ht hYt⟩
       · exact absurd ⟨t, ht, hYt⟩
-          (hclean Y (Ext.between_triangle_open hT hMclosed hZ₁in (between_symm hb)))
+          (hclean Y (Extreme.between_triangle_open hT hMclosed hZ₁in (between_symm hb)))
     · rcases hY with rfl | rfl | hb
       · exact ⟨rfl, atM ht hYt⟩
       · exact absurd ⟨t, ht, hYt⟩ hZ₂b
@@ -975,7 +936,7 @@ theorem inside_near {ps : List Point} (h : SimpleLoop ps) {U V W U' W' E : Point
     exact same_side_symm (same_side_of_opposite_sides hWE hWP)
   have hPLU : ¬ OnLine P LU := fun hPLU => hWLU (on_line_of_between (between_symm hWVP) hPLU hVLU)
   have hPW : ¬ SameSide P W LU := fun hs => pasch3 hWVP hVLU (same_side_symm hs)
-  obtain ⟨P₀, hVP₀P, hP₀s⟩ := Avoid.shorten_sides (ne_of_between (between_symm hWVP)).symm hs hsV
+  obtain ⟨P₀, hVP₀P, hP₀s⟩ := shorten_off_lines (ne_of_between (between_symm hWVP)).symm hs hsV
   have hP₀L : ¬ OnLine P₀ L := fun hP₀L => hPL (on_line_of_between hVP₀P hVL hP₀L)
   have hP₀E : SameSide P₀ E L := same_side_trans (same_side_symm (pasch2 hVP₀P hVL hP₀L)) hPE
   have hP₀LU : ¬ OnLine P₀ LU := fun hP₀LU => hPLU (on_line_of_between hVP₀P hVLU hP₀LU)
@@ -990,7 +951,7 @@ theorem inside_near {ps : List Point} (h : SimpleLoop ps) {U V W U' W' E : Point
     · exact hP₀s p hp
   obtain ⟨A, B, C, hP₀in, hall⟩ := small_triangle _ hP₀c
   obtain ⟨P₁, hP₁in, hP₁a⟩ :=
-    triangle_point_avoiding hP₀in.1.symm.triangle.cab (CoverFacts.joins Z₂ ps)
+    triangle_point_avoiding hP₀in.1.symm.triangle.cab (ps.map fun V => Classical.choose (collinear_of_two Z₂ V))
   have hP₁c := hall P₁ (Or.inl hP₁in)
   have hP₁E : SameSide P₁ E L := hP₁c (E, L) List.mem_cons_self
   have hP₁P₀ : SameSide P₁ P₀ LU := hP₁c (P₀, LU) (List.mem_cons_of_mem _ List.mem_cons_self)
@@ -1002,7 +963,7 @@ theorem inside_near {ps : List Point} (h : SimpleLoop ps) {U V W U' W' E : Point
   have hZ₂P₁ : Z₂ ≠ P₁ := fun e => hUE' (same_side_trans hZ₂U (by rw [e]; exact hP₁E))
   have hZ₂ps : Z₂ ∉ ps := fun hm => hZ₂b (OutlineFacts.vertex_boundary hm)
   obtain ⟨ℓ₂, hZ₂ℓ₂, hP₁ℓ₂⟩ := Postulate1 Z₂ P₁ hZ₂P₁
-  have hgood : GoodRay ps Z₂ P₁ := CoverFacts.goodRay_of_line hZ₂P₁ hZ₂ℓ₂ hP₁ℓ₂
+  have hgood : GoodRay ps Z₂ P₁ := OutlineFacts.good_of_line hZ₂P₁ hZ₂ℓ₂ hP₁ℓ₂
     (CoverFacts.joins_off hP₁a hZ₂ps hZ₂ℓ₂ hP₁ℓ₂)
   have hcount : crossingCount ps Z₂ P₁ = 0 := by
     refine LoopFacts.crossingCount_eq_zero fun t ht ⟨Y, hYray, hYt⟩ => ?_
@@ -1012,7 +973,7 @@ theorem inside_near {ps : List Point} (h : SimpleLoop ps) {U V W U' W' E : Point
       have hYc : (∀ p ∈ hs, SameSide Y p.1 p.2) ∧ SameSide Y P₀ LU := by
         rcases hY with rfl | hb
         · exact ⟨hP₁s, hP₁P₀⟩
-        · exact ⟨conds_between hZ₂s hP₁s hb, Avoid.same_side_between hb hZ₂P₀ hP₁P₀⟩
+        · exact ⟨conds_between hZ₂s hP₁s hb, same_side_between hb hZ₂P₀ hP₁P₀⟩
       exact off_sides (not_on_line_of_same_side hYc.2)
         (fun hs => hP₀W (same_side_trans hYc.2 hs)) hYc.1 ⟨t, ht, hYt'⟩
     by_cases hYP : Y = P₁
@@ -1028,11 +989,11 @@ theorem inside_near {ps : List Point} (h : SimpleLoop ps) {U V W U' W' E : Point
       refine Classical.byContradiction fun hYE => ?_
       have hYU : SameSide Y U L :=
         (same_side_or hYL hEL hUE.1 hYE).resolve_right fun hs => hUE' (same_side_symm hs)
-      exact hUE' (same_side_trans (Avoid.same_side_between hb hZ₂U hYU) hP₁E)
-  have hZ₂out : ¬ loopInside ps Z₂ := fun hin => by
+      exact hUE' (same_side_trans (same_side_between hb hZ₂U hYU) hP₁E)
+  have hZ₂out : ¬ LoopInside ps Z₂ := fun hin => by
     rw [loop_inside_iff h hZ₂b hgood, hcount] at hin
     exact absurd hin (by decide)
-  have hZ₁i : loopInside ps Z₁ := hflip.mpr hZ₂out
+  have hZ₁i : LoopInside ps Z₁ := hflip.mpr hZ₂out
   /- X is joined to Z₁ inside the triangle. -/
   have hXps : X ∉ ps := fun hm => hXb (OutlineFacts.vertex_boundary hm)
   have hXZ₁ : X ≠ Z₁ := by
@@ -1043,7 +1004,7 @@ theorem inside_near {ps : List Point} (h : SimpleLoop ps) {U V W U' W' E : Point
   obtain ⟨ℓX, hXℓX, hZ₁ℓX⟩ := Postulate1 X Z₁ hXZ₁
   refine (CoverFacts.inside_of_segment h hXZ₁ hXℓX hZ₁ℓX
     (CoverFacts.joins_off (fun K hK => hZ₁a K (List.mem_append_left _ hK)) hXps hXℓX hZ₁ℓX)
-    hXb hZ₁b fun Y hY => hclean Y (Ext.between_triangle_open hT hX hZ₁in hY)).mpr hZ₁i
+    hXb hZ₁b fun Y hY => hclean Y (Extreme.between_triangle_open hT hX hZ₁in hY)).mpr hZ₁i
 
 /-! ## An interior diagonal -/
 
@@ -1082,7 +1043,7 @@ theorem diagonal_rotate {ps : List Point} (h : ps.Nodup) {A B : Point} (hA : A �
     have he : A :: (us ++ [B]) ++ [A] = (A :: us) ++ [B, A] := by simp
     show (B, A) ∈ segments (A :: (us ++ [B]) ++ [A])
     rw [he]
-    exact Ext.closing_segment A B (A :: us)
+    exact Extreme.closing_segment A B (A :: us)
 
 /-- **A simple loop with four corners or more has an interior diagonal.** Take an extreme corner
 V, with every other corner strictly across a straight line through it (`extreme_corner`), and
@@ -1093,7 +1054,7 @@ triangle VU'W' (`nearest`, or a corner on UW itself), is joined to V by a finite
 inside that triangle, which no side meets (`clean`). -/
 theorem diagonal_exists {ps : List Point} (h : SimpleLoop ps) (hn : 4 ≤ ps.length) :
     ∃ A ∈ ps, ∃ B ∈ ps, A ≠ B ∧ (A, B) ∉ sides ps ∧ (B, A) ∉ sides ps ∧
-      ∀ X : Point, Between A X B → loopInside ps X := by
+      ∀ X : Point, Between A X B → LoopInside ps X := by
   obtain ⟨V, hV, L, E, hVL, -, hext⟩ := extreme_corner h
   obtain ⟨W, hVW⟩ := outgoing_side hV
   obtain ⟨U, hUV⟩ := LoopFacts.incoming_side hV
@@ -1124,7 +1085,7 @@ theorem diagonal_exists {ps : List Point} (h : SimpleLoop ps) (hn : 4 ≤ ps.len
     · obtain ⟨C, hC, hCin⟩ := hin
       obtain ⟨U', W', X', hU', hW', hX', hb, hno⟩ := nearest _ hT (Nat.le_refl _) hC hCin
       exact ⟨U', W', X', Or.inr hU', Or.inr hW', hX', hb,
-        (Avoid.corner_triangle hT hU' hW').1, hno⟩
+        (corner_triangle hT hU' hW').1, hno⟩
     · have hin' : ∀ C ∈ ps, ¬ InsideTriangle C V U W := fun C hC hCin => hin ⟨C, hC, hCin⟩
       obtain ⟨C, hC, hbC⟩ : ∃ C ∈ ps, Between U C W := Classical.byContradiction fun hno =>
         hear ⟨hin', fun C hC hbC => hno ⟨C, hC, hbC⟩⟩
@@ -1143,8 +1104,8 @@ theorem diagonal_exists {ps : List Point} (h : SimpleLoop ps) (hn : 4 ≤ ps.len
     hT' ⟨M, hVM, hU'M, on_line_of_between hb hU'M hX'M⟩
   refine ⟨V, hV, X', hX', hX'V, fun hs => ?_, fun hs => ?_, fun X hX => ?_⟩
   · exact hX'W (Prod.mk.inj (LoopFacts.sides_fst_inj h.2.1 hs hVW rfl)).2
-  · exact hX'U (Prod.mk.inj (sides_snd_inj h.2.1 hs hUV rfl)).1
-  · have hXin : InsideTriangle X V U' W' := Avoid.inside_of_between hT' hb hX
+  · exact hX'U (Prod.mk.inj (Parity.sides_snd_inj h.2.1 hs hUV rfl)).1
+  · have hXin : InsideTriangle X V U' W' := inside_triangle_of_between hT' hb hX
     exact inside_near h hUV hVW hVL hext hU' hW' hT' hclean (hclean X hXin) (Or.inl hXin)
 
 /-! ## Two chains and two pieces
@@ -1155,9 +1116,6 @@ by the side BA, `A :: (us ++ [B])`; the second is the second chain closed by AB,
 `B :: (vs ++ [A])`. Read from B, the loop has the chains and the pieces exchanged
 (`rotate_config`), so what is proved of the first chain and the second piece holds of the
 second chain and the first piece. -/
-
-/-- A point of a chain: on one of its finite straight lines. -/
-def OnChain (cs : List Point) (X : Point) : Prop := ∃ s ∈ segments cs, OnFiniteLine X s.1 s.2
 
 section Split
 
@@ -1244,7 +1202,7 @@ theorem chains_meet (h : SimpleLoop (A :: (us ++ B :: vs))) {s t : Point × Poin
 
 /-- A point of a side and of the diagonal AB is A or B, the diagonal's other points being
 inside. -/
-theorem side_diagonal (hd : ∀ X : Point, Between A X B → loopInside (A :: (us ++ B :: vs)) X)
+theorem side_diagonal (hd : ∀ X : Point, Between A X B → LoopInside (A :: (us ++ B :: vs)) X)
     {s : Point × Point} (hs : s ∈ sides (A :: (us ++ B :: vs))) {X : Point}
     (hXs : OnFiniteLine X s.1 s.2) (hX : OnFiniteLine X A B) : X = A ∨ X = B := by
   rcases hX with e | e | hb
@@ -1254,9 +1212,9 @@ theorem side_diagonal (hd : ∀ X : Point, Between A X B → loopInside (A :: (u
 
 /-- The loop's boundary is the two chains. -/
 theorem boundary_split (X : Point) :
-    loopBoundary (A :: (us ++ B :: vs)) X ↔
+    LoopBoundary (A :: (us ++ B :: vs)) X ↔
       OnChain (A :: us ++ [B]) X ∨ OnChain (B :: vs ++ [A]) X := by
-  unfold loopBoundary OnChain
+  unfold LoopBoundary OnChain
   rw [split_sides]
   simp only [List.mem_append]
   constructor
@@ -1269,8 +1227,8 @@ theorem boundary_split (X : Point) :
 
 /-- A piece's boundary is its chain and the diagonal. -/
 theorem boundary_piece (a b : Point) (l : List Point) (X : Point) :
-    loopBoundary (a :: (l ++ [b])) X ↔ OnChain (a :: l ++ [b]) X ∨ OnFiniteLine X a b := by
-  unfold loopBoundary OnChain
+    LoopBoundary (a :: (l ++ [b])) X ↔ OnChain (a :: l ++ [b]) X ∨ OnFiniteLine X a b := by
+  unfold LoopBoundary OnChain
   rw [piece_sides]
   simp only [List.mem_append, List.mem_singleton]
   constructor
@@ -1281,16 +1239,11 @@ theorem boundary_piece (a b : Point) (l : List Point) (X : Point) :
     · exact ⟨s, Or.inl hs, hX⟩
     · exact ⟨(b, a), Or.inr rfl, LoopFacts.onFiniteLine_comm.mp hX⟩
 
-/-- A corner is on the boundary. -/
-theorem corner_boundary {ps : List Point} {V : Point} (hV : V ∈ ps) : loopBoundary ps V := by
-  obtain ⟨E, hE⟩ := outgoing_side hV
-  exact ⟨(V, E), hE, Or.inl rfl⟩
-
 /-- **The first piece is simple.** Its sides are sides of the loop, and the side BA, which
 meets a side of the first chain only at A or B: the diagonal's other points are inside the
 loop, off every side. -/
 theorem piece_simple (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ [])
-    (hd : ∀ X : Point, Between A X B → loopInside (A :: (us ++ B :: vs)) X) :
+    (hd : ∀ X : Point, Between A X B → LoopInside (A :: (us ++ B :: vs)) X) :
     SimpleLoop (A :: (us ++ [B])) := by
   have hA : A ∈ A :: (us ++ B :: vs) := List.mem_cons_self
   have hB : B ∈ A :: (us ++ B :: vs) := by simp
@@ -1320,9 +1273,9 @@ theorem piece_simple (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ [])
 /-- **Read from B**, the loop is simple, with every point strictly between B and A inside:
 the same configuration, with the chains exchanged. -/
 theorem rotate_config (h : SimpleLoop (A :: (us ++ B :: vs)))
-    (hd : ∀ X : Point, Between A X B → loopInside (A :: (us ++ B :: vs)) X) :
+    (hd : ∀ X : Point, Between A X B → LoopInside (A :: (us ++ B :: vs)) X) :
     SimpleLoop (B :: (vs ++ A :: us)) ∧
-      ∀ X : Point, Between B X A → loopInside (B :: (vs ++ A :: us)) X := by
+      ∀ X : Point, Between B X A → LoopInside (B :: (vs ++ A :: us)) X := by
   obtain ⟨hs, hb, hg⟩ := loop_rotate (A :: us) (B :: vs) h
   refine ⟨hs, fun X hX => ?_⟩
   have hi := hd X (between_symm hX)
@@ -1332,13 +1285,13 @@ theorem rotate_config (h : SimpleLoop (A :: (us ++ B :: vs)))
 
 /-- The second piece is simple. -/
 theorem piece_simple₂ (h : SimpleLoop (A :: (us ++ B :: vs))) (hv : vs ≠ [])
-    (hd : ∀ X : Point, Between A X B → loopInside (A :: (us ++ B :: vs)) X) :
+    (hd : ∀ X : Point, Between A X B → LoopInside (A :: (us ++ B :: vs)) X) :
     SimpleLoop (B :: (vs ++ [A])) :=
   piece_simple (rotate_config h hd).1 hv (rotate_config h hd).2
 
 /-- **A ray crosses the loop as often as the two pieces together, less the diagonal twice.**
 The pieces' sides are the loop's and the diagonal, once each way round. -/
-theorem count_split (X R : Point) :
+theorem crossingCount_pieces (X R : Point) :
     crossingCount (A :: (us ++ B :: vs)) X R % 2 =
       (crossingCount (A :: (us ++ [B])) X R + crossingCount (B :: (vs ++ [A])) X R) % 2 := by
   have hc : RayCrosses X R (B, A) ↔ RayCrosses X R (A, B) :=
@@ -1354,27 +1307,27 @@ theorem count_split (X R : Point) :
 /-- **Off the diagonal, inside the loop means inside exactly one piece**: a good ray of the loop
 is good for both pieces, and crosses the loop as often as both, less the diagonal twice. -/
 theorem inside_xor (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ []) (hv : vs ≠ [])
-    (hd : ∀ X : Point, Between A X B → loopInside (A :: (us ++ B :: vs)) X) {X : Point}
-    (hX : ¬ loopBoundary (A :: (us ++ B :: vs)) X) (hXd : ¬ OnFiniteLine X A B) :
-    loopInside (A :: (us ++ B :: vs)) X ↔
-      (loopInside (A :: (us ++ [B])) X ↔ ¬ loopInside (B :: (vs ++ [A])) X) := by
+    (hd : ∀ X : Point, Between A X B → LoopInside (A :: (us ++ B :: vs)) X) {X : Point}
+    (hX : ¬ LoopBoundary (A :: (us ++ B :: vs)) X) (hXd : ¬ OnFiniteLine X A B) :
+    LoopInside (A :: (us ++ B :: vs)) X ↔
+      (LoopInside (A :: (us ++ [B])) X ↔ ¬ LoopInside (B :: (vs ++ [A])) X) := by
   have hP := piece_simple h hu hd
   have hQ := piece_simple₂ h hv hd
   obtain ⟨R, hR⟩ := good_ray_exists h hX
   have hRP : GoodRay (A :: (us ++ [B])) X R := ⟨hR.1, fun V hV => hR.2 V (piece_mem₁ hV)⟩
   have hRQ : GoodRay (B :: (vs ++ [A])) X R := ⟨hR.1, fun V hV => hR.2 V (piece_mem₂ hV)⟩
-  have hXP : ¬ loopBoundary (A :: (us ++ [B])) X := by
+  have hXP : ¬ LoopBoundary (A :: (us ++ [B])) X := by
     rw [boundary_piece]
     rintro (hc | hc)
     · exact hX ((boundary_split X).mpr (Or.inl hc))
     · exact hXd hc
-  have hXQ : ¬ loopBoundary (B :: (vs ++ [A])) X := by
+  have hXQ : ¬ LoopBoundary (B :: (vs ++ [A])) X := by
     rw [boundary_piece]
     rintro (hc | hc)
     · exact hX ((boundary_split X).mpr (Or.inr hc))
     · exact hXd (LoopFacts.onFiniteLine_comm.mp hc)
   rw [loop_inside_iff h hX hR, loop_inside_iff hP hXP hRP, loop_inside_iff hQ hXQ hRQ]
-  have hc := count_split (A := A) (B := B) (us := us) (vs := vs) X R
+  have hc := crossingCount_pieces (A := A) (B := B) (us := us) (vs := vs) X R
   generalize crossingCount (A :: (us ++ B :: vs)) X R = a at hc ⊢
   generalize crossingCount (A :: (us ++ [B])) X R = b at hc ⊢
   generalize crossingCount (B :: (vs ++ [A])) X R = c at hc ⊢
@@ -1461,7 +1414,7 @@ theorem sep_segments {Y Y' a b : Point} (hYY' : Y ≠ Y') (hab : a ≠ b)
         exact same_side_refl hYK
       · rw [e']
         exact same_side_symm hYY'K
-      · exact Avoid.same_side_between hb (same_side_refl hYK) (same_side_symm hYY'K)
+      · exact same_side_between hb (same_side_refl hYK) (same_side_symm hYY'K)
     have heK : ¬ OnLine e K := fun heK => hKn (line_unique hce hcK heK hcn hen)
     have heY : ¬ SameSide e Y K := fun h' =>
       pasch3 hWce hcK (same_side_trans (same_side_symm hWY) (same_side_symm h'))
@@ -1482,9 +1435,9 @@ theorem sep_segments {Y Y' a b : Point} (hYY' : Y ≠ Y') (hab : a ≠ b)
 lines, with both ends of it strictly on one side of each, such that a point on that side of
 all of them is on no side. -/
 theorem seg_conditions {R : List Point} (hR : SimpleLoop R) {Y Y' : Point}
-    (hseg : ∀ Z : Point, OnFiniteLine Z Y Y' → ¬ loopBoundary R Z) :
+    (hseg : ∀ Z : Point, OnFiniteLine Z Y Y' → ¬ LoopBoundary R Z) :
     ∃ hs : List (Point × Line), (∀ p ∈ hs, SameSide Y p.1 p.2 ∧ SameSide Y' p.1 p.2) ∧
-      ∀ Z : Point, (∀ p ∈ hs, SameSide Z p.1 p.2) → ¬ loopBoundary R Z := by
+      ∀ Z : Point, (∀ p ∈ hs, SameSide Z p.1 p.2) → ¬ LoopBoundary R Z := by
   suffices key : ∀ ts : List (Point × Point), (∀ t ∈ ts, t ∈ sides R) →
       ∃ hs : List (Point × Line), (∀ p ∈ hs, SameSide Y p.1 p.2 ∧ SameSide Y' p.1 p.2) ∧
         ∀ t ∈ ts, ∀ Z : Point, (∀ p ∈ hs, SameSide Z p.1 p.2) → ¬ OnFiniteLine Z t.1 t.2 by
@@ -1503,7 +1456,7 @@ theorem seg_conditions {R : List Point} (hR : SimpleLoop R) {Y Y' : Point}
       by_cases hYY' : Y = Y'
       · subst hYY'
         obtain ⟨L, h₁, h₂⟩ := Postulate1 t.1 t.2 hne
-        obtain ⟨C, -, hC⟩ := corner_off hR L
+        obtain ⟨C, -, hC⟩ := exists_corner_off hR L
         obtain ⟨K, hK, hKZ⟩ :=
           sep_finite hne h₁ h₂ hC fun hYt => hseg Y (Or.inl rfl) ⟨t, ht, hYt⟩
         exact ⟨K, hK, same_side_refl hK, hKZ⟩
@@ -1521,12 +1474,13 @@ theorem seg_conditions {R : List Point} (hR : SimpleLoop R) {Y Y' : Point}
 straight line passes through. Join both ends to a point near one end that keeps the conditions
 (`seg_conditions`) and is off the straight lines from either end to the corners. -/
 theorem seg_const {R : List Point} (hR : SimpleLoop R) {Y Y' : Point}
-    (hseg : ∀ Z : Point, OnFiniteLine Z Y Y' → ¬ loopBoundary R Z) :
-    loopInside R Y ↔ loopInside R Y' := by
+    (hseg : ∀ Z : Point, OnFiniteLine Z Y Y' → ¬ LoopBoundary R Z) :
+    LoopInside R Y ↔ LoopInside R Y' := by
   obtain ⟨hs, h1, h2⟩ := seg_conditions hR hseg
   obtain ⟨a, b, c, hYin, hall⟩ := small_triangle hs fun p hp => (h1 p hp).1
   obtain ⟨Z, hZin, hZa⟩ := triangle_point_avoiding hYin.1.symm.triangle.cab
-    (CoverFacts.joins Y R ++ CoverFacts.joins Y' R)
+    ((R.map fun V => Classical.choose (collinear_of_two Y V)) ++
+      R.map fun V => Classical.choose (collinear_of_two Y' V))
   have hZ : ∀ p ∈ hs, SameSide Z p.1 p.2 := hall Z (Or.inl hZin)
   obtain ⟨V, hV⟩ : ∃ V : Point, V ∈ R := by
     have hlen := hR.1
@@ -1535,15 +1489,15 @@ theorem seg_const {R : List Point} (hR : SimpleLoop R) {Y Y' : Point}
     | cons V _ => exact ⟨V, List.mem_cons_self⟩
   /- From each end to Z, a finite straight line meeting no side, its straight line through
   no corner. -/
-  have along {X : Point} (hXb : ¬ loopBoundary R X) (hX : ∀ p ∈ hs, SameSide X p.1 p.2)
-      (hXa : Avoid (CoverFacts.joins X R) Z) : loopInside R X ↔ loopInside R Z := by
+  have along {X : Point} (hXb : ¬ LoopBoundary R X) (hX : ∀ p ∈ hs, SameSide X p.1 p.2)
+      (hXa : Avoid (R.map fun V => Classical.choose (collinear_of_two X V)) Z) : LoopInside R X ↔ LoopInside R Z := by
     have hXZ : X ≠ Z := by
       intro e
       have hspec := Classical.choose_spec (collinear_of_two X V)
       exact hXa _ (List.mem_map_of_mem (f := fun V => Classical.choose (collinear_of_two X V))
         hV) (e ▸ hspec.1)
     obtain ⟨ℓ, hXℓ, hZℓ⟩ := Postulate1 X Z hXZ
-    have hXR : X ∉ R := fun hm => hXb (corner_boundary hm)
+    have hXR : X ∉ R := fun hm => hXb (OutlineFacts.vertex_boundary hm)
     exact CoverFacts.inside_of_segment hR hXZ hXℓ hZℓ (CoverFacts.joins_off hXa hXR hXℓ hZℓ)
       hXb (h2 Z hZ) fun U hU => h2 U (conds_between hX hZ hU)
   exact (along (hseg Y (Or.inl rfl)) (fun p hp => (h1 p hp).1)
@@ -1613,10 +1567,10 @@ variable {A B : Point} {us vs : List Point}
 /-- **A point of the first chain, other than A and B, is off the second piece's boundary**: the
 chains meet only at A and B, and a side meets the diagonal only there. -/
 theorem chain_off (h : SimpleLoop (A :: (us ++ B :: vs)))
-    (hd : ∀ X : Point, Between A X B → loopInside (A :: (us ++ B :: vs)) X)
+    (hd : ∀ X : Point, Between A X B → LoopInside (A :: (us ++ B :: vs)) X)
     {s : Point × Point} (hs : s ∈ segments (A :: us ++ [B])) {Z : Point}
     (hZ : OnFiniteLine Z s.1 s.2) (hZA : Z ≠ A) (hZB : Z ≠ B) :
-    ¬ loopBoundary (B :: (vs ++ [A])) Z := by
+    ¬ LoopBoundary (B :: (vs ++ [A])) Z := by
   rw [boundary_piece]
   rintro (⟨t, ht, hZt⟩ | hZd)
   · rcases chains_meet h hs ht hZ hZt with e | e
@@ -1631,10 +1585,10 @@ A and B, is off the second piece's boundary (`chain_off`); along each of its fin
 lines inside is constant (`seg_const`), so from corner to corner of `us` (`chain_const`), and
 from any point of a side to an end of it among `us`. -/
 theorem chain_inside_const (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ [])
-    (hv : vs ≠ []) (hd : ∀ X : Point, Between A X B → loopInside (A :: (us ++ B :: vs)) X)
+    (hv : vs ≠ []) (hd : ∀ X : Point, Between A X B → LoopInside (A :: (us ++ B :: vs)) X)
     {Y Y' : Point} (hY : OnChain (A :: us ++ [B]) Y) (hYA : Y ≠ A) (hYB : Y ≠ B)
     (hY' : OnChain (A :: us ++ [B]) Y') (hY'A : Y' ≠ A) (hY'B : Y' ≠ B) :
-    loopInside (B :: (vs ++ [A])) Y ↔ loopInside (B :: (vs ++ [A])) Y' := by
+    LoopInside (B :: (vs ++ [A])) Y ↔ LoopInside (B :: (vs ++ [A])) Y' := by
   have hQ := piece_simple₂ h hv hd
   have hA : A ∈ A :: (us ++ B :: vs) := List.mem_cons_self
   have hB : B ∈ A :: (us ++ B :: vs) := by simp
@@ -1643,8 +1597,8 @@ theorem chain_inside_const (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ 
   have hAus : A ∉ us := fun hm => hnd.1 (List.mem_append_left _ hm)
   have hBus : B ∉ us := fun hm => hnd.2.2.2 B hm B List.mem_cons_self rfl
   have hseg : ∀ Y Y' : Point, (∀ Z : Point, OnFiniteLine Z Y Y' →
-      ¬ loopBoundary (B :: (vs ++ [A])) Z) →
-      (loopInside (B :: (vs ++ [A])) Y ↔ loopInside (B :: (vs ++ [A])) Y') :=
+      ¬ LoopBoundary (B :: (vs ++ [A])) Z) →
+      (LoopInside (B :: (vs ++ [A])) Y ↔ LoopInside (B :: (vs ++ [A])) Y') :=
     fun _ _ h' => seg_const hQ h'
   /- A or B on a side with both ends among `us` would be one of those ends. -/
   have not_end {s : Point × Point} (hs : s ∈ sides (A :: (us ++ B :: vs))) {V Z : Point}
@@ -1656,8 +1610,8 @@ theorem chain_inside_const (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ 
     · exact hVus (e ▸ h₂)
   obtain ⟨u₀, us', rfl⟩ := List.exists_cons_of_ne_nil hu
   /- The corners of `us` agree with the first. -/
-  have corners : ∀ x ∈ u₀ :: us', loopInside (B :: (vs ++ [A])) x ↔
-      loopInside (B :: (vs ++ [A])) u₀ := by
+  have corners : ∀ x ∈ u₀ :: us', LoopInside (B :: (vs ++ [A])) x ↔
+      LoopInside (B :: (vs ++ [A])) u₀ := by
     intro x hx
     rcases List.mem_cons.mp hx with rfl | hx
     · exact Iff.rfl
@@ -1671,7 +1625,7 @@ theorem chain_inside_const (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ 
         (fun e => not_end hs' hB hBus hZ e h₁ h₂)
   /- A point of a side agrees with an end of it among `us`. -/
   have point : ∀ Y : Point, OnChain (A :: (u₀ :: us') ++ [B]) Y → Y ≠ A → Y ≠ B →
-      (loopInside (B :: (vs ++ [A])) Y ↔ loopInside (B :: (vs ++ [A])) u₀) := by
+      (LoopInside (B :: (vs ++ [A])) Y ↔ LoopInside (B :: (vs ++ [A])) u₀) := by
     rintro Y ⟨s, hs, hYs⟩ hYA hYB
     have hs' := chain₁_side (vs := vs) hs
     have hne := h.2.2.1 s hs'
@@ -1679,7 +1633,7 @@ theorem chain_inside_const (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ 
     have to_end {p q : Point} (hpq : p ≠ q) (hY : OnFiniteLine Y p q) (hq : q ∈ u₀ :: us')
         (hside : ∀ Z : Point, OnFiniteLine Z p q → OnFiniteLine Z s.1 s.2)
         (hends : ∀ V : Point, (V = s.1 ∨ V = s.2) → V = p ∨ V = q) :
-        loopInside (B :: (vs ++ [A])) Y ↔ loopInside (B :: (vs ++ [A])) u₀ := by
+        LoopInside (B :: (vs ++ [A])) Y ↔ LoopInside (B :: (vs ++ [A])) u₀ := by
       refine (hseg Y q fun Z hZ => ?_).trans (corners q hq)
       have hZs := hside Z (onFinite_sub hY hZ)
       /- A or B there would be an end of the side, not q, so p, which Y is not. -/
@@ -1818,7 +1772,7 @@ theorem ray_max {z Q : Point} : ∀ pts : List Point, pts ≠ [] → (∀ W ∈ 
         · exact Or.inr (between_of_between_left hb hb')
 
 /-- Two points of a straight line cannot each be between its start and the other. -/
-theorem not_both {z U W : Point} (h₁ : Between z U W) (h₂ : Between z W U) : False :=
+theorem between_asymm {z U W : Point} (h₁ : Between z U W) (h₂ : Between z W U) : False :=
   ne_of_between (between_symm (between_of_between_left h₁ h₂)) rfl
 
 /-- **The first point** of a ray on finitely many finite straight lines, each with an end off
@@ -1836,7 +1790,7 @@ theorem first_point {z Q : Point} {ρ : Line} (hz : OnLine z ρ) (hQ : OnLine Q 
   refine ⟨W, hWr, hWs, fun U hU s hs hUs => ?_⟩
   rcases hmin U ((hpts U).mpr ⟨onRay_trans hWr (OnRay.of_between hU), s, hs, hUs⟩) with e | hb
   · exact ne_of_between (between_symm hU) e.symm
-  · exact not_both hU hb
+  · exact between_asymm hU hb
 
 /-- **The last point** of a ray on finitely many finite straight lines, each with an end off the
 ray's straight line, if there is one: beyond it, the ray meets none of them. -/
@@ -1853,11 +1807,11 @@ theorem last_point {z Q : Point} {ρ : Line} (hz : OnLine z ρ) (hQ : OnLine Q �
   refine ⟨W, hWr, hWs, fun U hU s hs hUs => ?_⟩
   rcases hmax U ((hpts U).mpr ⟨onRay_trans hWr (OnRay.of_beyond hU), s, hs, hUs⟩) with e | hb
   · exact ne_of_between (between_symm hU) e
-  · exact not_both hU hb
+  · exact between_asymm hU hb
 
 /-- A good ray from a point inside a loop crosses one of its sides. -/
 theorem crosses_of_inside {R : List Point} (hR : SimpleLoop R) {X Q : Point}
-    (hQ : GoodRay R X Q) (hin : loopInside R X) : ∃ t ∈ sides R, RayCrosses X Q t := by
+    (hQ : GoodRay R X Q) (hin : LoopInside R X) : ∃ t ∈ sides R, RayCrosses X Q t := by
   refine Classical.byContradiction fun hno => ?_
   have h0 := LoopFacts.crossingCount_eq_zero (ps := R) (X := X) (Q := Q)
     fun t ht hc => hno ⟨t, ht, hc⟩
@@ -1893,12 +1847,12 @@ theorem piece_on₂ {t : Point × Point} (ht : t ∈ sides (B :: (vs ++ [A]))) {
 /-- **Where a straight line through no corner meets the sides or AB**: strictly between A and B,
 or at a point of one chain, at neither A nor B, off the other piece's boundary. -/
 theorem hit_cases (h : SimpleLoop (A :: (us ++ B :: vs)))
-    (hd : ∀ X : Point, Between A X B → loopInside (A :: (us ++ B :: vs)) X) {W : Point}
+    (hd : ∀ X : Point, Between A X B → LoopInside (A :: (us ++ B :: vs)) X) {W : Point}
     {ρ : Line} (hWρ : OnLine W ρ) (hoff : ∀ V ∈ A :: (us ++ B :: vs), ¬ OnLine V ρ)
     (hW : ∃ s ∈ sides (A :: (us ++ B :: vs)) ++ [(A, B)], OnFiniteLine W s.1 s.2) :
     Between A W B ∨
-      (OnChain (A :: us ++ [B]) W ∧ W ≠ A ∧ W ≠ B ∧ ¬ loopBoundary (B :: (vs ++ [A])) W) ∨
-      (OnChain (B :: vs ++ [A]) W ∧ W ≠ A ∧ W ≠ B ∧ ¬ loopBoundary (A :: (us ++ [B])) W) := by
+      (OnChain (A :: us ++ [B]) W ∧ W ≠ A ∧ W ≠ B ∧ ¬ LoopBoundary (B :: (vs ++ [A])) W) ∨
+      (OnChain (B :: vs ++ [A]) W ∧ W ≠ A ∧ W ≠ B ∧ ¬ LoopBoundary (A :: (us ++ [B])) W) := by
   have hWA : W ≠ A := fun e => hoff A List.mem_cons_self (e ▸ hWρ)
   have hWB : W ≠ B := fun e => hoff B (by simp) (e ▸ hWρ)
   obtain ⟨s, hs, hWs⟩ := hW
@@ -1920,18 +1874,18 @@ line through no corner: either it is strictly between A and B, and X is inside t
 is on one chain, at neither A nor B, and inside the other piece exactly when X is. Before it the
 ray meets no side and not AB (`first_point`, `inside_of_segment`). -/
 theorem first_hit (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ []) (hv : vs ≠ [])
-    (hd : ∀ X : Point, Between A X B → loopInside (A :: (us ++ B :: vs)) X) {X Q : Point}
+    (hd : ∀ X : Point, Between A X B → LoopInside (A :: (us ++ B :: vs)) X) {X Q : Point}
     {ρ : Line} (hXρ : OnLine X ρ) (hQρ : OnLine Q ρ)
     (hoff : ∀ V ∈ A :: (us ++ B :: vs), ¬ OnLine V ρ)
-    (hXb : ¬ loopBoundary (A :: (us ++ B :: vs)) X) (hXd : ¬ OnFiniteLine X A B)
+    (hXb : ¬ LoopBoundary (A :: (us ++ B :: vs)) X) (hXd : ¬ OnFiniteLine X A B)
     (hex : ∃ W : Point, OnRay W X Q ∧
       ∃ s ∈ sides (A :: (us ++ B :: vs)) ++ [(A, B)], OnFiniteLine W s.1 s.2) :
     ∃ W : Point, OnRay W X Q ∧
-      ((Between A W B ∧ loopInside (A :: (us ++ B :: vs)) X) ∨
+      ((Between A W B ∧ LoopInside (A :: (us ++ B :: vs)) X) ∨
         (OnChain (A :: us ++ [B]) W ∧ W ≠ A ∧ W ≠ B ∧
-          (loopInside (B :: (vs ++ [A])) W ↔ loopInside (B :: (vs ++ [A])) X)) ∨
+          (LoopInside (B :: (vs ++ [A])) W ↔ LoopInside (B :: (vs ++ [A])) X)) ∨
         (OnChain (B :: vs ++ [A]) W ∧ W ≠ A ∧ W ≠ B ∧
-          (loopInside (A :: (us ++ [B])) W ↔ loopInside (A :: (us ++ [B])) X))) := by
+          (LoopInside (A :: (us ++ [B])) W ↔ LoopInside (A :: (us ++ [B])) X))) := by
   have hss : ∀ s ∈ sides (A :: (us ++ B :: vs)) ++ [(A, B)], ¬ OnLine s.1 ρ := by
     intro s hs
     rcases List.mem_append.mp hs with hs | hs
@@ -1942,19 +1896,19 @@ theorem first_hit (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ []) (hv :
   have hWρ : OnLine W ρ := hWr.onLine hXρ hQρ
   have hXW : X ≠ W := hWr.2.1.symm
   /- Strictly before W, no side and not AB. -/
-  have hfb : ∀ U : Point, Between X U W → ¬ loopBoundary (A :: (us ++ B :: vs)) U :=
+  have hfb : ∀ U : Point, Between X U W → ¬ LoopBoundary (A :: (us ++ B :: vs)) U :=
     fun U hU ⟨s, hs, hUs⟩ => hfree U hU s (List.mem_append_left _ hs) hUs
   have hfd : ∀ U : Point, Between X U W → ¬ OnFiniteLine U A B :=
     fun U hU hUd => hfree U hU (A, B) (List.mem_append_right _ List.mem_cons_self) hUd
   /- Off the loop's boundary and AB means off both pieces' boundaries. -/
-  have offP {U : Point} (hb : ¬ loopBoundary (A :: (us ++ B :: vs)) U)
-      (hd' : ¬ OnFiniteLine U A B) : ¬ loopBoundary (A :: (us ++ [B])) U := by
+  have offP {U : Point} (hb : ¬ LoopBoundary (A :: (us ++ B :: vs)) U)
+      (hd' : ¬ OnFiniteLine U A B) : ¬ LoopBoundary (A :: (us ++ [B])) U := by
     rw [boundary_piece]
     rintro (hc | hc)
     · exact hb ((boundary_split U).mpr (Or.inl hc))
     · exact hd' hc
-  have offQ {U : Point} (hb : ¬ loopBoundary (A :: (us ++ B :: vs)) U)
-      (hd' : ¬ OnFiniteLine U A B) : ¬ loopBoundary (B :: (vs ++ [A])) U := by
+  have offQ {U : Point} (hb : ¬ LoopBoundary (A :: (us ++ B :: vs)) U)
+      (hd' : ¬ OnFiniteLine U A B) : ¬ LoopBoundary (B :: (vs ++ [A])) U := by
     rw [boundary_piece]
     rintro (hc | hc)
     · exact hb ((boundary_split U).mpr (Or.inr hc))
@@ -1974,15 +1928,15 @@ theorem first_hit (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ []) (hv :
 corner: either it is strictly between A and B, or it is on one chain, at neither A nor B, and
 outside the other piece, since the ray beyond it crosses nothing (`last_point`). -/
 theorem last_hit (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ []) (hv : vs ≠ [])
-    (hd : ∀ X : Point, Between A X B → loopInside (A :: (us ++ B :: vs)) X) {X Q : Point}
+    (hd : ∀ X : Point, Between A X B → LoopInside (A :: (us ++ B :: vs)) X) {X Q : Point}
     {ρ : Line} (hXρ : OnLine X ρ) (hQρ : OnLine Q ρ)
     (hoff : ∀ V ∈ A :: (us ++ B :: vs), ¬ OnLine V ρ)
     (hex : ∃ W : Point, OnRay W X Q ∧
       ∃ s ∈ sides (A :: (us ++ B :: vs)) ++ [(A, B)], OnFiniteLine W s.1 s.2) :
     ∃ W : Point, OnRay W X Q ∧
       (Between A W B ∨
-        (OnChain (A :: us ++ [B]) W ∧ W ≠ A ∧ W ≠ B ∧ ¬ loopInside (B :: (vs ++ [A])) W) ∨
-        (OnChain (B :: vs ++ [A]) W ∧ W ≠ A ∧ W ≠ B ∧ ¬ loopInside (A :: (us ++ [B])) W)) := by
+        (OnChain (A :: us ++ [B]) W ∧ W ≠ A ∧ W ≠ B ∧ ¬ LoopInside (B :: (vs ++ [A])) W) ∨
+        (OnChain (B :: vs ++ [A]) W ∧ W ≠ A ∧ W ≠ B ∧ ¬ LoopInside (A :: (us ++ [B])) W)) := by
   have hss : ∀ s ∈ sides (A :: (us ++ B :: vs)) ++ [(A, B)], ¬ OnLine s.1 ρ := by
     intro s hs
     rcases List.mem_append.mp hs with hs | hs
@@ -1995,10 +1949,10 @@ theorem last_hit (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ []) (hv : 
   have outside {R : List Point} (hR : SimpleLoop R) (hRV : ∀ V ∈ R, ¬ OnLine V ρ)
       (hRs : ∀ t ∈ sides R, ∀ U : Point, OnFiniteLine U t.1 t.2 →
         ∃ s ∈ sides (A :: (us ++ B :: vs)) ++ [(A, B)], OnFiniteLine U s.1 s.2)
-      (hWb : ¬ loopBoundary R W) : ¬ loopInside R W := by
+      (hWb : ¬ LoopBoundary R W) : ¬ LoopInside R W := by
     obtain ⟨Q', hXWQ'⟩ := produce hWr.2.1.symm
     have hQ'ρ : OnLine Q' ρ := on_line_of_between hXWQ' hXρ hWρ
-    have hg : GoodRay R W Q' := CoverFacts.goodRay_of_line
+    have hg : GoodRay R W Q' := OutlineFacts.good_of_line
       (ne_of_between (between_symm hXWQ')).symm hWρ hQ'ρ hRV
     have h0 : crossingCount R W Q' = 0 := by
       refine LoopFacts.crossingCount_eq_zero fun t ht ⟨U, hU, hUt⟩ => ?_
@@ -2021,19 +1975,19 @@ B, its straight line through no corner, near d and meeting no side: z and z' are
 as d is; across AB the first piece's inside changes (`inside_flip`), so one of them is inside the
 first piece only, and the other inside the second only (`inside_xor`). -/
 theorem across_diagonal (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ []) (hv : vs ≠ [])
-    (hd : ∀ X : Point, Between A X B → loopInside (A :: (us ++ B :: vs)) X) :
+    (hd : ∀ X : Point, Between A X B → LoopInside (A :: (us ++ B :: vs)) X) :
     ∃ (z z' d : Point) (ρ ℓ : Line), OnLine A ℓ ∧ OnLine B ℓ ∧ OnLine d ℓ ∧ OnLine d ρ ∧
       OnLine z ρ ∧ OnLine z' ρ ∧ (∀ V ∈ A :: (us ++ B :: vs), ¬ OnLine V ρ) ∧
       ¬ OnLine z ℓ ∧ ¬ OnLine z' ℓ ∧ z ≠ d ∧ z' ≠ d ∧
-      ¬ loopBoundary (A :: (us ++ B :: vs)) z ∧ ¬ loopBoundary (A :: (us ++ B :: vs)) z' ∧
-      (¬ loopInside (A :: (us ++ [B])) z ∧ loopInside (B :: (vs ++ [A])) z) ∧
-      (loopInside (A :: (us ++ [B])) z' ∧ ¬ loopInside (B :: (vs ++ [A])) z') := by
+      ¬ LoopBoundary (A :: (us ++ B :: vs)) z ∧ ¬ LoopBoundary (A :: (us ++ B :: vs)) z' ∧
+      (¬ LoopInside (A :: (us ++ [B])) z ∧ LoopInside (B :: (vs ++ [A])) z) ∧
+      (LoopInside (A :: (us ++ [B])) z' ∧ ¬ LoopInside (B :: (vs ++ [A])) z') := by
   have hP := piece_simple h hu hd
   have hA : A ∈ A :: (us ++ B :: vs) := List.mem_cons_self
   obtain ⟨ℓ, hAℓ, hBℓ⟩ := Postulate1 A B (ends_ne h.2.1)
   obtain ⟨d, hdℓ, hAdB, -⟩ := exists_point_between hAℓ hBℓ (ends_ne h.2.1) []
   have hdin := hd d hAdB
-  have hdps : d ∉ A :: (us ++ B :: vs) := fun hm => hdin.1 (corner_boundary hm)
+  have hdps : d ∉ A :: (us ++ B :: vs) := fun hm => hdin.1 (OutlineFacts.vertex_boundary hm)
   /- Conditions at d keeping off every side. -/
   obtain ⟨hs, hs1, hs2⟩ := seg_conditions h (Y := d) (Y' := d) fun Z hZ => by
     have hZd : Z = d := by
@@ -2046,7 +2000,7 @@ theorem across_diagonal (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ [])
   have hds : ∀ p ∈ hs, SameSide d p.1 p.2 := fun p hp => (hs1 p hp).1
   obtain ⟨a₁, a₂, a₃, hdT, hT⟩ := small_triangle hs hds
   obtain ⟨z, hzT, hza⟩ :=
-    triangle_point_avoiding hdT.1.symm.triangle.cab (ℓ :: CoverFacts.joins d (A :: (us ++ B :: vs)))
+    triangle_point_avoiding hdT.1.symm.triangle.cab (ℓ :: (A :: (us ++ B :: vs)).map fun V => Classical.choose (collinear_of_two d V))
   have hzℓ : ¬ OnLine z ℓ := hza ℓ List.mem_cons_self
   have hzd : z ≠ d := fun e => hzℓ (e ▸ hdℓ)
   have hzs : ∀ p ∈ hs, SameSide z p.1 p.2 := hT z (Or.inl hzT)
@@ -2054,13 +2008,13 @@ theorem across_diagonal (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ [])
   have hoff : ∀ V ∈ A :: (us ++ B :: vs), ¬ OnLine V ρ :=
     CoverFacts.joins_off (fun L hL => hza L (List.mem_cons_of_mem _ hL)) hdps hdρ hzρ
   obtain ⟨y', hzdy'⟩ := produce hzd
-  obtain ⟨z', hdz'y', hz's⟩ := Avoid.shorten_sides (ne_of_between (between_symm hzdy')).symm hs hds
+  obtain ⟨z', hdz'y', hz's⟩ := shorten_off_lines (ne_of_between (between_symm hzdy')).symm hs hds
   have hzdz' : Between z d z' := between_cut hzdy' hdz'y'
   have hz'ρ : OnLine z' ρ := on_line_of_between hzdz' hzρ hdρ
   have hz'ℓ : ¬ OnLine z' ℓ := fun h' => hzℓ (on_line_of_between (between_symm hzdz') h' hdℓ)
   have hz'd : z' ≠ d := ne_of_between (between_symm hzdz')
   /- Every point of zz' keeps the conditions, so is on no side. -/
-  have hseg : ∀ U : Point, OnFiniteLine U z z' → ¬ loopBoundary (A :: (us ++ B :: vs)) U := by
+  have hseg : ∀ U : Point, OnFiniteLine U z z' → ¬ LoopBoundary (A :: (us ++ B :: vs)) U := by
     intro U hU
     refine hs2 U ?_
     rcases hU with rfl | rfl | hb
@@ -2070,15 +2024,15 @@ theorem across_diagonal (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ [])
   have hzb := hseg z (Or.inl rfl)
   have hz'b := hseg z' (Or.inr (Or.inl rfl))
   /- z and z' are inside the loop, as d is. -/
-  have hzi : loopInside (A :: (us ++ B :: vs)) z :=
+  have hzi : LoopInside (A :: (us ++ B :: vs)) z :=
     (CoverFacts.inside_of_segment h hzd hzρ hdρ hoff hzb hdin.1 fun U hU =>
       hseg U (Or.inr (Or.inr (between_of_between_left hzdz' hU)))).mpr hdin
-  have hz'i : loopInside (A :: (us ++ B :: vs)) z' :=
+  have hz'i : LoopInside (A :: (us ++ B :: vs)) z' :=
     (CoverFacts.inside_of_segment h hz'd hz'ρ hdρ hoff hz'b hdin.1 fun U hU =>
       hseg U (Or.inr (Or.inr (between_symm (between_of_between_left (between_symm hzdz')
         hU))))).mpr hdin
   /- Across AB at d, the first piece's inside changes. -/
-  have hflip : loopInside (A :: (us ++ [B])) z ↔ ¬ loopInside (A :: (us ++ [B])) z' := by
+  have hflip : LoopInside (A :: (us ++ [B])) z ↔ ¬ LoopInside (A :: (us ++ [B])) z' := by
     refine CoverFacts.inside_flip hP (s := (B, A)) (by rw [piece_sides]; simp) hzdz'
       (between_symm hAdB) hzρ hz'ρ (fun V hV => hoff V (piece_mem₁ hV)) ?_
     intro U hU t ht hUt
@@ -2094,11 +2048,11 @@ theorem across_diagonal (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ [])
     hY (LoopFacts.onFiniteLine_onLine h' hAℓ hBℓ)
   have e := (inside_xor h hu hv hd hzb (offd hzℓ)).mp hzi
   have e' := (inside_xor h hu hv hd hz'b (offd hz'ℓ)).mp hz'i
-  by_cases h₁ : loopInside (A :: (us ++ [B])) z
+  by_cases h₁ : LoopInside (A :: (us ++ [B])) z
   · refine ⟨z', z, d, ρ, ℓ, hAℓ, hBℓ, hdℓ, hdρ, hz'ρ, hzρ, hoff, hz'ℓ, hzℓ, hz'd, hzd, hz'b,
       hzb, ⟨hflip.mp h₁, ?_⟩, ⟨h₁, e.mp h₁⟩⟩
     exact Classical.byContradiction fun h₂ => hflip.mp h₁ (e'.mpr h₂)
-  · have h₁' : loopInside (A :: (us ++ [B])) z' :=
+  · have h₁' : LoopInside (A :: (us ++ [B])) z' :=
       Classical.byContradiction fun h' => h₁ (hflip.mpr h')
     exact ⟨z, z', d, ρ, ℓ, hAℓ, hBℓ, hdℓ, hdρ, hzρ, hz'ρ, hoff, hzℓ, hz'ℓ, hzd, hz'd, hzb, hz'b,
       ⟨h₁, Classical.byContradiction fun h₂ => h₁ (e.mpr h₂)⟩, ⟨h₁', e'.mp h₁'⟩⟩
@@ -2112,11 +2066,11 @@ chain it is on; from z', the first is on the first chain outside the second piec
 second chain inside the first (`first_hit`, `last_hit`). Only the chains outside the other
 pieces fit all three. -/
 theorem chains_outside (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ []) (hv : vs ≠ [])
-    (hd : ∀ X : Point, Between A X B → loopInside (A :: (us ++ B :: vs)) X) :
+    (hd : ∀ X : Point, Between A X B → LoopInside (A :: (us ++ B :: vs)) X) :
     (∀ Y : Point, OnChain (A :: us ++ [B]) Y → Y ≠ A → Y ≠ B →
-      ¬ loopInside (B :: (vs ++ [A])) Y) ∧
+      ¬ LoopInside (B :: (vs ++ [A])) Y) ∧
     (∀ Y : Point, OnChain (B :: vs ++ [A]) Y → Y ≠ A → Y ≠ B →
-      ¬ loopInside (A :: (us ++ [B])) Y) := by
+      ¬ LoopInside (A :: (us ++ [B])) Y) := by
   have hP := piece_simple h hu hd
   have hQ := piece_simple₂ h hv hd
   have rc := rotate_config h hd
@@ -2139,25 +2093,25 @@ theorem chains_outside (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ []) 
   /- Each ray crosses a side: from z one of the second piece, from z' one of the first. -/
   have hexz : ∃ W : Point, OnRay W z Q ∧
       ∃ s ∈ sides (A :: (us ++ B :: vs)) ++ [(A, B)], OnFiniteLine W s.1 s.2 := by
-    obtain ⟨t, ht, U, hU, hUt⟩ := crosses_of_inside hQ (CoverFacts.goodRay_of_line hzQ hzρ hQρ
+    obtain ⟨t, ht, U, hU, hUt⟩ := crosses_of_inside hQ (OutlineFacts.good_of_line hzQ hzρ hQρ
       fun V hV => hoff V (piece_mem₂ hV)) hz₂
     exact ⟨U, hU, piece_on₂ ht (Or.inr (Or.inr hUt))⟩
   have hexz' : ∃ W : Point, OnRay W z' Q' ∧
       ∃ s ∈ sides (A :: (us ++ B :: vs)) ++ [(A, B)], OnFiniteLine W s.1 s.2 := by
-    obtain ⟨t, ht, U, hU, hUt⟩ := crosses_of_inside hP (CoverFacts.goodRay_of_line hz'Q' hz'ρ
+    obtain ⟨t, ht, U, hU, hUt⟩ := crosses_of_inside hP (OutlineFacts.good_of_line hz'Q' hz'ρ
       hQ'ρ fun V hV => hoff V (piece_mem₁ hV)) hz'₁
     exact ⟨U, hU, piece_on₁ ht (Or.inr (Or.inr hUt))⟩
   /- Points of each chain, but for A and B, agree about the other piece. -/
   have H₁ := @chain_inside_const A B us vs h hu hv hd
   have H₂ := @chain_inside_const B A vs us rc.1 hv hu rc.2
   let E₁ : Prop := ∃ Y : Point, OnChain (A :: us ++ [B]) Y ∧ Y ≠ A ∧ Y ≠ B ∧
-    ¬ loopInside (B :: (vs ++ [A])) Y
+    ¬ LoopInside (B :: (vs ++ [A])) Y
   let I₁ : Prop := ∃ Y : Point, OnChain (A :: us ++ [B]) Y ∧ Y ≠ A ∧ Y ≠ B ∧
-    loopInside (B :: (vs ++ [A])) Y
+    LoopInside (B :: (vs ++ [A])) Y
   let E₂ : Prop := ∃ Y : Point, OnChain (B :: vs ++ [A]) Y ∧ Y ≠ A ∧ Y ≠ B ∧
-    ¬ loopInside (A :: (us ++ [B])) Y
+    ¬ LoopInside (A :: (us ++ [B])) Y
   let I₂ : Prop := ∃ Y : Point, OnChain (B :: vs ++ [A]) Y ∧ Y ≠ A ∧ Y ≠ B ∧
-    loopInside (A :: (us ++ [B])) Y
+    LoopInside (A :: (us ++ [B])) Y
   have n₁ : E₁ → ¬ I₁ := fun ⟨Y, hY, hYA, hYB, hYo⟩ ⟨Y', hY', hY'A, hY'B, hY'i⟩ =>
     hYo ((H₁ hY hYA hYB hY' hY'A hY'B).mpr hY'i)
   have n₂ : E₂ → ¬ I₂ := fun ⟨Y, hY, hYA, hYB, hYo⟩ ⟨Y', hY', hY'A, hY'B, hY'i⟩ =>
@@ -2195,11 +2149,11 @@ a good ray from it, the first point on a side or on AB would be strictly between
 the point would be inside the loop, though inside both pieces it is outside (`inside_xor`); or
 on one chain inside the other piece, which `chains_outside` excludes. -/
 theorem pieces_apart (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ []) (hv : vs ≠ [])
-    (hd : ∀ X : Point, Between A X B → loopInside (A :: (us ++ B :: vs)) X) {X : Point}
-    (h₁ : loopInside (A :: (us ++ [B])) X) (h₂ : loopInside (B :: (vs ++ [A])) X) : False := by
+    (hd : ∀ X : Point, Between A X B → LoopInside (A :: (us ++ B :: vs)) X) {X : Point}
+    (h₁ : LoopInside (A :: (us ++ [B])) X) (h₂ : LoopInside (B :: (vs ++ [A])) X) : False := by
   have hP := piece_simple h hu hd
   obtain ⟨ho₁, ho₂⟩ := chains_outside h hu hv hd
-  have hXb : ¬ loopBoundary (A :: (us ++ B :: vs)) X := by
+  have hXb : ¬ LoopBoundary (A :: (us ++ B :: vs)) X := by
     rw [boundary_split]
     rintro (hc | hc)
     · exact h₁.1 ((boundary_piece A B us X).mpr (Or.inl hc))
@@ -2220,6 +2174,6 @@ theorem pieces_apart (h : SimpleLoop (A :: (us ++ B :: vs))) (hu : us ≠ []) (h
 
 end Split
 
-end Diag
+end Diagonal
 
 end Elements.Figures

@@ -125,19 +125,19 @@ theorem sides_glue (O Z W : Point) (ws : List Point) :
 
 /-- The boundary of the outline from O round to Z: the chain, or the closing side ZO. -/
 theorem boundary_close (O Z : Point) (ws : List Point) (X : Point) :
-    loopBoundary (O :: (ws ++ [Z])) X ↔
+    LoopBoundary (O :: (ws ++ [Z])) X ↔
       (∃ s ∈ segments (O :: (ws ++ [Z])), OnFiniteLine X s.1 s.2) ∨ OnFiniteLine X Z O := by
-  unfold loopBoundary
+  unfold LoopBoundary
   rw [sides_close]
   simp only [List.mem_append, List.mem_cons, List.not_mem_nil, or_false, or_and_right,
     exists_or, exists_eq_left]
 
 /-- The boundary of the outline continued to W: the chain, ZW or WO. -/
 theorem boundary_glue (O Z W : Point) (ws : List Point) (X : Point) :
-    loopBoundary (O :: (ws ++ [Z, W])) X ↔
+    LoopBoundary (O :: (ws ++ [Z, W])) X ↔
       (∃ s ∈ segments (O :: (ws ++ [Z])), OnFiniteLine X s.1 s.2) ∨
         OnFiniteLine X Z W ∨ OnFiniteLine X W O := by
-  unfold loopBoundary
+  unfold LoopBoundary
   rw [sides_glue]
   simp only [List.mem_append, List.mem_cons, List.not_mem_nil, or_false, or_and_right,
     exists_or, exists_eq_left]
@@ -166,11 +166,11 @@ continued from Z to W, and closed along WO, is simple, and its region is the old
 together with the closed triangle. -/
 theorem glue {O Z W : Point} {ws : List Point} (h : SimpleLoop (O :: (ws ++ [Z])))
     (hT : Triangle O Z W)
-    (hmeet : ∀ X : Point, loopRegion (O :: (ws ++ [Z])) X → OnOrInsideTriangle X O Z W →
+    (hmeet : ∀ X : Point, LoopRegion (O :: (ws ++ [Z])) X → OnOrInsideTriangle X O Z W →
       OnFiniteLine X O Z) :
     SimpleLoop (O :: (ws ++ [Z, W])) ∧
-      ∀ X : Point, loopRegion (O :: (ws ++ [Z, W])) X ↔
-        loopRegion (O :: (ws ++ [Z])) X ∨ OnOrInsideTriangle X O Z W := by
+      ∀ X : Point, LoopRegion (O :: (ws ++ [Z, W])) X ↔
+        LoopRegion (O :: (ws ++ [Z])) X ∨ OnOrInsideTriangle X O Z W := by
   have hold := h
   obtain ⟨hlen, hnd, hne, hpw⟩ := h
   have hbo := boundary_close O Z ws
@@ -227,7 +227,7 @@ theorem glue {O Z W : Point} {ws : List Point} (h : SimpleLoop (O :: (ws ++ [Z])
         have e : X = W := sides_meet hT.cba (LoopFacts.onFiniteLine_comm.mp hXZW) hXWO
         exact ⟨Or.inr e, Or.inl e⟩
       · intro a ha b hb X hXa hXb
-        have hXo : loopRegion (O :: (ws ++ [Z])) X :=
+        have hXo : LoopRegion (O :: (ws ++ [Z])) X :=
           Or.inl ((hbo X).mpr (Or.inl ⟨a, ha, hXa⟩))
         simp only [List.mem_cons, List.not_mem_nil, or_false] at hb
         rcases hb with rfl | rfl
@@ -241,10 +241,10 @@ theorem glue {O Z W : Point} {ws : List Point} (h : SimpleLoop (O :: (ws ++ [Z])
           exact ⟨hchain a ha X hXa (LoopFacts.onFiniteLine_comm.mp hXOZ), Or.inr e⟩
   /- A point inside the triangle is on neither boundary. -/
   have hoffT : ∀ U : Point, InsideTriangle U O Z W →
-      ¬ loopBoundary (O :: (ws ++ [Z, W])) U ∧ ¬ loopBoundary (O :: (ws ++ [Z])) U := by
+      ¬ LoopBoundary (O :: (ws ++ [Z, W])) U ∧ ¬ LoopBoundary (O :: (ws ++ [Z])) U := by
     intro U hU
     obtain ⟨h₁, h₂, h₃⟩ := inside_off_sides hT hU
-    have hUo : ¬ loopBoundary (O :: (ws ++ [Z])) U := fun hb =>
+    have hUo : ¬ LoopBoundary (O :: (ws ++ [Z])) U := fun hb =>
       h₁ (hmeet U (Or.inl hb) (Or.inl hU))
     refine ⟨fun hb => ?_, hUo⟩
     rcases (hbn U).mp hb with hs | hU' | hU'
@@ -253,13 +253,13 @@ theorem glue {O Z W : Point} {ws : List Point} (h : SimpleLoop (O :: (ws ++ [Z])
     · exact h₃ hU'
   /- Off both boundaries, the parity of a good ray decides: the old region and the triangle
   share no such point, so the new count is odd exactly when one of the others is. -/
-  have key : ∀ X : Point, ¬ loopBoundary (O :: (ws ++ [Z, W])) X →
-      ¬ loopBoundary (O :: (ws ++ [Z])) X →
-      (loopInside (O :: (ws ++ [Z, W])) X ↔
-        loopInside (O :: (ws ++ [Z])) X ∨ OnOrInsideTriangle X O Z W) := by
+  have key : ∀ X : Point, ¬ LoopBoundary (O :: (ws ++ [Z, W])) X →
+      ¬ LoopBoundary (O :: (ws ++ [Z])) X →
+      (LoopInside (O :: (ws ++ [Z, W])) X ↔
+        LoopInside (O :: (ws ++ [Z])) X ∨ OnOrInsideTriangle X O Z W) := by
     intro X hXn hXo
     obtain ⟨hTs, hTr⟩ := triangle_region hT
-    have hXt : ¬ loopBoundary [O, Z, W] X := by
+    have hXt : ¬ LoopBoundary [O, Z, W] X := by
       rintro ⟨s, hs, hXs⟩
       have e : sides [O, Z, W] = [(O, Z), (Z, W), (W, O)] := rfl
       rw [e] at hs
@@ -287,14 +287,14 @@ theorem glue {O Z W : Point} {ws : List Point} (h : SimpleLoop (O :: (ws ++ [Z])
     · intro h'
       omega
   refine ⟨hnew, fun X => ?_⟩
-  by_cases hXn : loopBoundary (O :: (ws ++ [Z, W])) X
+  by_cases hXn : LoopBoundary (O :: (ws ++ [Z, W])) X
   · /- On the new boundary: on the old one, or on a side of the triangle. -/
     refine ⟨fun _ => ?_, fun _ => Or.inl hXn⟩
     rcases (hbn X).mp hXn with hs | hX | hX
     · exact Or.inl (Or.inl ((hbo X).mpr (Or.inl hs)))
     · exact Or.inr (side_closed (Or.inr (Or.inl hX)))
     · exact Or.inr (side_closed (Or.inr (Or.inr hX)))
-  by_cases hXo : loopBoundary (O :: (ws ++ [Z])) X
+  by_cases hXo : LoopBoundary (O :: (ws ++ [Z])) X
   · /- Strictly within ZO, no longer a side. A finite straight line through no corner joins X
     to a point Y inside the triangle, meeting neither boundary on the way; Y is inside the
     new outline, and so is X. -/
@@ -321,15 +321,15 @@ theorem glue {O Z W : Point} {ws : List Point} (h : SimpleLoop (O :: (ws ++ [Z])
       intro V hV hVℓ
       have he : line V = ℓ := line_unique (hVX V hV).symm (hline V).1 (hline V).2 hXℓ hVℓ
       exact hYa (line V) (List.mem_map_of_mem hV) (he ▸ hYℓ)
-    have hseg : ∀ U : Point, Between X U Y → ¬ loopBoundary (O :: (ws ++ [Z, W])) U :=
-      fun U hU => (hoffT U (Ext.between_triangle_open hT hXT hY hU)).1
-    have hin : loopInside (O :: (ws ++ [Z, W])) X := by
+    have hseg : ∀ U : Point, Between X U Y → ¬ LoopBoundary (O :: (ws ++ [Z, W])) U :=
+      fun U hU => (hoffT U (Extreme.between_triangle_open hT hXT hY hU)).1
+    have hin : LoopInside (O :: (ws ++ [Z, W])) X := by
       rw [CoverFacts.inside_of_segment hnew hXY hXℓ hYℓ hoff hXn (hoffT Y hY).1 hseg]
       exact (key Y (hoffT Y hY).1 (hoffT Y hY).2).mpr (Or.inr (Or.inl hY))
     exact ⟨fun _ => Or.inl (Or.inl hXo), fun _ => Or.inr hin⟩
   · /- Off both boundaries. -/
     have hk := key X hXn hXo
-    unfold loopRegion
+    unfold LoopRegion
     constructor
     · rintro (hb | hi)
       · exact absurd hb hXn
@@ -369,14 +369,14 @@ simple, with region the fan's triangles over `init`, and the triangles over the 
 the longer chain is simple, with region its fan's triangles. -/
 theorem fan_chain (O : Point) : ∀ (rest init : List Point), init ≠ [] →
     SimpleLoop (O :: init) →
-    (∀ X : Point, loopRegion (O :: init) X ↔
+    (∀ X : Point, LoopRegion (O :: init) X ↔
       Covers ((segments init).map fun s => (O, s.1, s.2)) X) →
     (∀ s ∈ segments (init ++ rest), Triangle O s.1 s.2) →
     ((segments (init ++ rest)).map fun s => (O, s.1, s.2)).Pairwise (fun s t => ∀ Y : Point,
       OnOrInsideTriangle Y t.1 t.2.1 t.2.2 → OnOrInsideTriangle Y s.1 s.2.1 s.2.2 →
         OnFiniteLine Y t.1 t.2.1) →
     SimpleLoop (O :: (init ++ rest)) ∧
-      ∀ X : Point, loopRegion (O :: (init ++ rest)) X ↔
+      ∀ X : Point, LoopRegion (O :: (init ++ rest)) X ↔
         Covers ((segments (init ++ rest)).map fun s => (O, s.1, s.2)) X
   | [], init, _, hs, hr, _, _ => by simpa using ⟨hs, hr⟩
   | W :: rest, init, hne, hs, hr, htri, hpw => by
@@ -392,7 +392,7 @@ theorem fan_chain (O : Point) : ∀ (rest init : List Point), init ≠ [] →
       simp [segments])
     /- The triangle O Z W meets the region so far, the earlier triangles, only along OZ. -/
     rw [tris_append, List.pairwise_append] at hpw
-    have hmeet : ∀ X : Point, loopRegion (O :: (ws ++ [Z])) X → OnOrInsideTriangle X O Z W →
+    have hmeet : ∀ X : Point, LoopRegion (O :: (ws ++ [Z])) X → OnOrInsideTriangle X O Z W →
         OnFiniteLine X O Z := by
       intro X hX hXT
       obtain ⟨t, ht, hXt⟩ := (hr X).mp hX
@@ -403,7 +403,7 @@ theorem fan_chain (O : Point) : ∀ (rest init : List Point), init ≠ [] →
         (segments (ws ++ [Z])).map (fun s => (O, s.1, s.2)) ++ [(O, Z, W)] := by
       have e := tris_append O Z W ws []
       simpa [segments] using e
-    have hr'' : ∀ X : Point, loopRegion (O :: (ws ++ [Z, W])) X ↔
+    have hr'' : ∀ X : Point, LoopRegion (O :: (ws ++ [Z, W])) X ↔
         Covers ((segments (ws ++ [Z, W])).map fun s => (O, s.1, s.2)) X := by
       intro X
       rw [hr' X, hseg, covers_concat, hr X]
@@ -424,11 +424,11 @@ theorem fan_loop {O A B : Point} {ps : List Point}
       (fun s t => ∀ Y : Point, OnOrInsideTriangle Y t.1 t.2.1 t.2.2 →
         OnOrInsideTriangle Y s.1 s.2.1 s.2.2 → OnFiniteLine Y t.1 t.2.1)) :
     SimpleLoop (O :: A :: B :: ps) ∧
-      ∀ X : Point, loopRegion (O :: A :: B :: ps) X ↔
+      ∀ X : Point, LoopRegion (O :: A :: B :: ps) X ↔
         Covers ((segments (A :: B :: ps)).map fun s => (O, s.1, s.2)) X := by
   have hOAB : Triangle O A B := htri (A, B) List.mem_cons_self
   obtain ⟨hs, hr⟩ := triangle_region hOAB
-  have hr' : ∀ X : Point, loopRegion [O, A, B] X ↔
+  have hr' : ∀ X : Point, LoopRegion [O, A, B] X ↔
       Covers ((segments [A, B]).map fun s => (O, s.1, s.2)) X := by
     intro X
     rw [hr X]

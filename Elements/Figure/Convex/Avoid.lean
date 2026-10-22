@@ -19,9 +19,8 @@ namespace Elements.Figures
 
 open Tacit
 
-namespace Avoid
-
-/-- A point between two points on one side of a straight line stays on that side. -/
+/-- A point between two points on one side of a straight line stays on that side: the open
+form of `half_between`, for points strictly on the side. -/
 theorem same_side_between {A B X P : Point} {L : Line}
     (h : Between A X B) (hA : SameSide A P L) (hB : SameSide B P L) :
     SameSide X P L := by
@@ -37,7 +36,7 @@ theorem same_side_between_on {A B X : Point} {L : Line}
 
 /-- A segment starting off a straight line can be shortened to stay on its starting
 side. If it crosses the line, take the new end before the crossing. -/
-theorem shorten {A B : Point} {L : Line} (hAB : A ≠ B) (hA : ¬ OnLine A L) :
+theorem shorten_off_line {A B : Point} {L : Line} (hAB : A ≠ B) (hA : ¬ OnLine A L) :
     ∃ C : Point, Between A C B ∧ SameSide C A L := by
   obtain ⟨M, hAM, hBM⟩ := Postulate1 A B hAB
   by_cases hB : OnLine B L
@@ -54,7 +53,7 @@ theorem shorten {A B : Point} {L : Line} (hAB : A ≠ B) (hA : ¬ OnLine A L) :
 
 /-- A point between a corner and an inner point of the opposite side is inside
 the triangle. -/
-theorem inside_of_between {A B C D X : Point} (h : Triangle A B C)
+theorem inside_triangle_of_between {A B C D X : Point} (h : Triangle A B C)
     (hBDC : Between B D C) (hAXD : Between A X D) : InsideTriangle X A B C := by
   obtain ⟨L, hBL, hCL⟩ := Postulate1 B C h.ne₂₃
   obtain ⟨M, hCM, hAM⟩ := Postulate1 C A h.ne₁₃.symm
@@ -80,10 +79,11 @@ theorem inside_exists {A B C : Point} (h : Triangle A B C) :
   have hAD : A ≠ D := fun e => h.bca.off_line hB hC (e ▸ hD)
   obtain ⟨M, hAM, hDM⟩ := Postulate1 A D hAD
   obtain ⟨X, -, hAXD, -⟩ := exists_point_between hAM hDM hAD []
-  exact ⟨X, inside_of_between h hBDC hAXD⟩
+  exact ⟨X, inside_triangle_of_between h hBDC hAXD⟩
 
 /-- A triangle whose corners are on one side of a straight line lies wholly on that
-side: extend an inner segment from a corner to the opposite side (`inside_through`). -/
+side: extend an inner segment from a corner to the opposite side (`inside_through`). The open
+form of `closed_in_half`, for corners strictly on the side. -/
 theorem closed_same_side {A B C X P : Point} {L : Line}
     (hA : SameSide A P L) (hB : SameSide B P L) (hC : SameSide C P L)
     (hX : OnOrInsideTriangle X A B C) : SameSide X P L := by
@@ -122,27 +122,25 @@ theorem corner_triangle {A B C P Q : Point} (h : Triangle A B C)
     SameSideOf.of_line h.ne₁₂ hAL hBL
       (same_side_trans (same_side_symm (hX.2.2.sameSide hAL hPL)) hQCL)⟩
 
-end Avoid
-
 /-- **A point inside a triangle, off finitely many straight lines.** -/
 theorem triangle_point_avoiding {A B C : Point} (h : Triangle A B C) (ls : List Line) :
     ∃ X : Point, InsideTriangle X A B C ∧ Avoid ls X := by
   induction ls generalizing A B C with
   | nil =>
-      obtain ⟨X, hX⟩ := Avoid.inside_exists h
+      obtain ⟨X, hX⟩ := inside_exists h
       exact ⟨X, hX, by simp [Avoid]⟩
   | cons L ls ih =>
       have step {P Q R : Point} (ht : Triangle P Q R) (hP : ¬ OnLine P L) :
           ∃ X, InsideTriangle X P Q R ∧ Avoid (L :: ls) X := by
-        obtain ⟨Q', hPQ'Q, hQ'⟩ := Avoid.shorten ht.ne₁₂ hP
-        obtain ⟨R', hPR'R, hR'⟩ := Avoid.shorten ht.ne₁₃ hP
-        obtain ⟨ht', hsub⟩ := Avoid.corner_triangle ht hPQ'Q hPR'R
+        obtain ⟨Q', hPQ'Q, hQ'⟩ := shorten_off_line ht.ne₁₂ hP
+        obtain ⟨R', hPR'R, hR'⟩ := shorten_off_line ht.ne₁₃ hP
+        obtain ⟨ht', hsub⟩ := corner_triangle ht hPQ'Q hPR'R
         obtain ⟨X, hX, havoid⟩ := ih ht'
         refine ⟨X, hsub X hX, ?_⟩
         intro M hM
         rcases List.mem_cons.mp hM with rfl | hM
         · exact not_on_line_of_same_side
-            (Avoid.closed_same_side (same_side_refl hP) hQ' hR' (Or.inl hX))
+            (closed_same_side (same_side_refl hP) hQ' hR' (Or.inl hX))
         · exact havoid M hM
       by_cases hA : OnLine A L
       · by_cases hB : OnLine B L
@@ -152,11 +150,9 @@ theorem triangle_point_avoiding {A B C : Point} (h : Triangle A B C) (ls : List 
           exact ⟨X, ⟨hX.2.2, hX.1, hX.2.1⟩, ha⟩
       · exact step h hA
 
-namespace Avoid
-
 /-- Shorten a segment from X before each of finitely many straight lines. The new
 end is on the prescribed side of every line, as X is. -/
-theorem shorten_sides {X A : Point} (hXA : X ≠ A) (hs : List (Point × Line))
+theorem shorten_off_lines {X A : Point} (hXA : X ≠ A) (hs : List (Point × Line))
     (hX : ∀ s ∈ hs, SameSide X s.1 s.2) :
     ∃ B : Point, Between X B A ∧ ∀ s ∈ hs, SameSide B s.1 s.2 := by
   induction hs generalizing A with
@@ -169,7 +165,7 @@ theorem shorten_sides {X A : Point} (hXA : X ≠ A) (hs : List (Point × Line))
       have hXt : ∀ t ∈ hs, SameSide X t.1 t.2 :=
         fun t ht => hX t (List.mem_cons_of_mem s ht)
       obtain ⟨B, hXBA, hB⟩ := ih hXA hXt
-      obtain ⟨C, hXCB, hCX⟩ := shorten (ne_of_between hXBA)
+      obtain ⟨C, hXCB, hCX⟩ := shorten_off_line (ne_of_between hXBA)
         (not_on_line_of_same_side hXs)
       refine ⟨C, between_of_between_left hXBA hXCB, ?_⟩
       intro t ht
@@ -189,7 +185,7 @@ theorem inside_shorten {A B C X P : Point} (hX : InsideTriangle X A B C)
   have hP : Triangle P B C :=
     (Triangle.of_line hBL hCL hX.1.1
       (not_on_line_of_same_side (same_side_symm hXP_L))).cab
-  exact inside_of_between hP (between_symm hCDB)
+  exact inside_triangle_of_between hP (between_symm hCDB)
     (between_inner (between_symm hXP) hAXD)
 
 /-- **Every point is inside some triangle.** Take a triangle with X as one corner, then
@@ -206,10 +202,8 @@ theorem surrounding_triangle (X : Point) :
   obtain ⟨A, hDXA⟩ := produce hXD.symm
   have hAL : ¬ OnLine A L := fun hAL =>
     hXL (on_line_of_between_ends hDXA hDL hAL)
-  exact ⟨A, B, C, inside_of_between
+  exact ⟨A, B, C, inside_triangle_of_between
     (Triangle.of_line hBL hCL hXBC.ne₂₃ hAL).cab hBDC (between_symm hDXA)⟩
-
-end Avoid
 
 /-- **A small triangle about a point**: given a point `X` on the same side as `P` of each of
 finitely many straight lines `L` (the pairs `(P, L)`), there is a triangle with `X` inside
@@ -218,20 +212,20 @@ theorem small_triangle {X : Point} (hs : List (Point × Line))
     (hX : ∀ s ∈ hs, SameSide X s.1 s.2) :
     ∃ A B C : Point, InsideTriangle X A B C ∧
       ∀ Y : Point, OnOrInsideTriangle Y A B C → ∀ s ∈ hs, SameSide Y s.1 s.2 := by
-  obtain ⟨A, B, C, hABC⟩ := Avoid.surrounding_triangle X
+  obtain ⟨A, B, C, hABC⟩ := surrounding_triangle X
   have hXA : X ≠ A := hABC.2.2.triangle.ne₁₃.symm
   have hXB : X ≠ B := hABC.1.triangle.ne₁₃.symm
   have hXC : X ≠ C := hABC.2.1.triangle.ne₁₃.symm
-  obtain ⟨A', hXA', hA'⟩ := Avoid.shorten_sides hXA hs hX
-  obtain ⟨B', hXB', hB'⟩ := Avoid.shorten_sides hXB hs hX
-  obtain ⟨C', hXC', hC'⟩ := Avoid.shorten_sides hXC hs hX
-  have hA'BC := Avoid.inside_shorten hABC hXA'
-  have hB'CA' := Avoid.inside_shorten
+  obtain ⟨A', hXA', hA'⟩ := shorten_off_lines hXA hs hX
+  obtain ⟨B', hXB', hB'⟩ := shorten_off_lines hXB hs hX
+  obtain ⟨C', hXC', hC'⟩ := shorten_off_lines hXC hs hX
+  have hA'BC := inside_shorten hABC hXA'
+  have hB'CA' := inside_shorten
     (show InsideTriangle X B C A' from ⟨hA'BC.2.1, hA'BC.2.2, hA'BC.1⟩) hXB'
-  have hC'A'B' := Avoid.inside_shorten
+  have hC'A'B' := inside_shorten
     (show InsideTriangle X C A' B' from ⟨hB'CA'.2.1, hB'CA'.2.2, hB'CA'.1⟩) hXC'
   refine ⟨A', B', C', ⟨hC'A'B'.2.1, hC'A'B'.2.2, hC'A'B'.1⟩, ?_⟩
   intro Y hY s hs'
-  exact Avoid.closed_same_side (hA' s hs') (hB' s hs') (hC' s hs') hY
+  exact closed_same_side (hA' s hs') (hB' s hs') (hC' s hs') hY
 
 end Elements.Figures
