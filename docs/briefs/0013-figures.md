@@ -8,8 +8,8 @@ The proposal follows [WORKFLOW, section 2](../WORKFLOW.md), and [FORMALIZATION, 
 
 Base of the draft of 19 October: main at `39ae65c`. The revision that lands merges main into
 `b2c0580a`, the final Lean of the proofs, and adds these documents, this brief and its
-decisions entry; its `Staging/Figures/` is that of `b2c0580a` (section 10, "Progress, 21
-October 2026").
+[decision entry](../decisions/2026-10-21-figures-proved.md); its `Staging/Figures/` is that
+of `b2c0580a` (section 10, "Progress, 21 October 2026").
 Two agents drafted the statements and the proof route, one each;
 the coordinator's rulings merged their drafts, and a reader who wrote none of them
 challenged the result once (appendix). The probe of 19 October and the proofs of section 8
@@ -344,7 +344,9 @@ revision. None is a defect of a statement:
   (`ConvexFacts.lean`) and `OutlineFacts.inside_between` share a name and state different
   things.
 - Twelve pairs of declarations have identical statements, their types equal in Lean;
-  promotion keeps one of each, and cites it (FORMALIZATION, section 6). Four are aliases,
+  promotion keeps one of each, and cites it (FORMALIZATION, section 6); where one of a pair
+  is a staged statement (`crossing_parity_independent`, `region_with_holes`,
+  `loop_inside_iff`), the staged statement is the one kept. Four are aliases,
   the first of each pair proved by citing the second: `cut_convex_rotate_append` and
   `Ext.convex_rotate_prefix`, `cut_fan_rotate_append` and `Ext.fanSum_rotate_prefix`,
   `cut_remove_third` and `ConvexOutline.erase_third`, and `cut_inside_crossbar` and
@@ -418,9 +420,13 @@ revision. None is a defect of a statement:
 - Notes in `Elements/` that say a figure's boundary, or its division into triangles, is not
   stated in Lean, or that another division's sum is not proved, go stale when the bridges
   and content are promoted: in `Elements/BookI/Prop45.lean`, the docstring of `Fitted.fan`,
-  the note on Euclid's and Byrne's division before it and the docstring of `Prop45.fan`; in
-  `Elements/BookII/Prop14.lean`, the docstring of `Prop14.fan`; and in
-  `Elements/Foundations/Phrases.lean`, which is the foundations', and so the owner's to
+  the note on Euclid's and Byrne's division before it and the docstring of `Prop45.fan`; the
+  module note's paragraph on what "equal to the figure" means, whose "Nothing here says
+  that another division of the figure gives the same sum" stops being true once
+  `Prop45.outline` stands in the file; in `Elements/BookII/Prop14.lean`, the docstring of
+  `Prop14.fan`; the module note's paragraph that begins "As in I.45", whose "nothing is
+  claimed of another division" stops being true once `Prop14.outline` stands in the file;
+  and in `Elements/Foundations/Phrases.lean`, which is the foundations', and so the owner's to
   approve (section 10, item 2): the module note's paragraph "The convention, stated on the
   page", whose "Two things are not stated here" sets aside division and its independence,
   and which says that the records of I.45 and II.14 carry `figure-with-dissection`; the
@@ -455,7 +461,8 @@ says a proof is due, awaits approval or rests on stubs.
 ### Records and tags
 
 This draft and its proofs change only this brief, files under `Staging/Figures/` and the
-probe's two scratch files, with the decisions page's entry for them. They make no
+probe's two scratch files, with
+[their decision entry](../decisions/2026-10-21-figures-proved.md). They make no
 production review record stale and stamp none.
 
 Moving the work into the two proposition files makes `review/I/45.toml` and `review/II/14.toml` stale. Their owners must review and stamp the integrated revision. Any additional consumer whose statement or Lean file changes is listed separately.
@@ -777,7 +784,8 @@ its proof cites; and each changes the proof alone: no statement changed.
   library's `area_cut`, for a point strictly between two others, not by A4's
   `area_cut_closed`, as step 3 of route (b) above proposes. The reason: the closed form
   adds only the cases of a crossing at an end of its side, which the cut takes as a corner,
-  so no staged proof uses A4.
+  so no staged proof uses `area_cut_closed`; nor does any use `triangle_cut_cover`, since
+  the genuine cut's exact coverage is part of `convex_cut_pieces`.
 - **B2 and D2.** `convex_diagonal_split` is proved from B1 and the corner-to-corner case of
   C1's pieces (`Pieces.form_corner_corner`), and `convex_enclosure` grows a convex outline
   one point at a time (`Arr.insert_point`), not from B1 and B2. The reason: B1 puts the two
@@ -831,7 +839,7 @@ the intermediate obligations the route described in prose.
 | B4 | `fanSum_rotate`, `fanSum_reverse`, `fanSum_rotateLeft` | B1, probe flips and sums | `ConvexArea.lean`, staged; proved; `fanSum_rotateLeft` in `Arrangement.lean`, proved from `fanSum_rotate`, one corner at a time |
 | B5 | `fan_insert_between`, `boundary_fan_sum` | A4, B1, B4 | `Cells.lean`, staged; proved, with the library's `area_cut`, resting on A2, B3 and B4, not on A4 or B1 |
 | B6 | `convex_extreme_iff`, `convex_area_ext` | A2, A3, B2 to B4 | `Cells.lean`, staged; proved, citing no content |
-| C1 | `convex_cut` | A2 to A4, B1 to B5 | `Cells.lean`, staged; proved, with the genuine cut's pieces, `convex_cut_pieces`, now proved too (`CutPieces.lean`), resting on A2, A3 and B3 to B5, not on A4, B1 or B2 (departure, `Cells.lean`) |
+| C1 | `convex_cut` | A2 to A4, B1 to B5 | `Cells.lean`, staged; proved, with the genuine cut's pieces, `convex_cut_pieces`, now proved too (`CutPieces.lean`), resting on A2, A3 and B3 to B5, not on A4, B1 or B2 (departure, shown by the lemmas the proof cites in `Cells.lean`) |
 | C2 | `convex_tiles_area` | A1, A3, B6, C1 | `Cells.lean`, staged; proved, by induction on the tiles present in a branch (`Tiling`, `CellFacts.lean`) |
 | C3 | `convex_intersection` | C1 | `Cells.lean`, staged; proved, by clipping one cell by the half-planes of the other's sides |
 | C4 | `Apart.area_eq_of_same_region`, `triangle_division_area` | A1, B0, C2, C3 | `Content.lean`, staged; proved, by one table of common parts, chosen once (`ContentFacts.lean`) |
@@ -1097,7 +1105,8 @@ The proof and edition work is complete only when those obligations are met.
 `convex_cut_pieces`. The derivations of section 6 rest on no stub. No statement or
 definition changed from those assigned for proof, as they stand at `2bbf597d`, no axiom was
 added, and `Certificate/axioms.lock` is unchanged; outside `Staging/Figures/`, only this
-brief, the probe's two scratch files and the decisions page changed. The proofs follow
+brief and the probe's two scratch files changed, and
+[their decision entry](../decisions/2026-10-21-figures-proved.md) was added. The proofs follow
 section 8's route, with the departures recorded there under "The routes
 taken". Their helper lemmas are in files new on 21 October, `CutPieces.lean`,
 `CellFacts.lean`, `ContentFacts.lean`, `LoopFacts.lean`, `Parity.lean`,
