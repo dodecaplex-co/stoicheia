@@ -201,10 +201,11 @@ unused = ["FC", "GB"]
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `case` | string | no | The case the figure shows, when the theorem covers several. The caption names it. |
+| `case` | string | no | The case the figure shows, when the theorem covers several, or, with `every_case`, the cases it draws. The caption names it. |
+| `every_case` | boolean | no | True when the figure draws every case the theorem covers, side by side or on one figure, as III.25's draws Euclid's three: the caption then reads "Drawn for every case: …" rather than "Drawn for one case: …". Needs a `case`. |
 | `note` | string | no | Where our drawing of Euclid's figure places a point otherwise than Heath's, as the Lean does; shown under the figure (docs/STYLE.md, section 7). |
 
-The section needs at least one of the two, and is left out when it has neither.
+The section needs a `case` or a `note`, or both, and is left out when it has neither.
 
 ### `[review]`: who read it, and what they read
 
