@@ -1,5 +1,5 @@
 - **Brief 0013's figures are promoted into the edition, with I.45 and II.14 full (#116).**
-  On 22 October 2026 the owner wrote, of the eight approvals brief 0013 asks for, "as
+  On 22 October 2026, about 06:40, the owner wrote, of the eight approvals brief 0013 asks for, "as
   propose 1-6,8 as is. 7 with amendment." The coordinator's record of those words is
   [#116's comment of that day](https://github.com/jackChallis/stoicheia/issues/116#issuecomment-6342080363),
   which reads the amendment of approval 7 as one to the sentence of FORMALIZATION, section

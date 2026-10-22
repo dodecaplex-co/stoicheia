@@ -1258,7 +1258,7 @@ book briefs, representation accounts and certificates that agree.
 
 ### Promotion, 22 October 2026
 
-**What was approved.** On 22 October 2026 the owner answered the eight approvals listed
+**What was approved.** On 22 October 2026, about 06:40, the owner answered the eight approvals listed
 above, under "What remains for #116: the owner's approvals", in these words: "as propose
 1-6,8 as is. 7 with amendment." The coordinator's record of them is
 [#116's comment of that morning](https://github.com/jackChallis/stoicheia/issues/116#issuecomment-6342080363):
