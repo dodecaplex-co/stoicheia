@@ -40,8 +40,8 @@
   and no law of the model changes.
 
   This entry approves the change to `review/terms.toml`, where the meaning of
-  `figure-with-dissection` now describes the older companions that take a figure with its
-  division, and no longer says that a division's existence, or its independence, is open.
+  `figure-with-dissection` now describes the older companions that take a figure given with
+  a checked division into triangles, and no longer says that a division's existence, or its independence, is open.
 
   This entry approves the changed statement of `convex_diagonal_separates`, which loses its
   hypotheses that both chains have a corner, since its conclusion ranges over the corners
@@ -51,20 +51,30 @@
   hypothesis that the insides of the cells lie apart, since its proof never used it; its
   two users, `simple_triangulation` and `division_exists`, no longer pass it.
 
-  This entry approves the new names of the twelve predicates that brief 0013 staged in
-  lower camel case, now in the UpperCamelCase that FORMALIZATION, section 2, asks of a
-  predicate: `LoopInside`, `LoopBoundary`, `LoopRegion`, `Outline.Inside`,
-  `Outline.Region`, `Outline.Boundary`, `CellCore`, `CellRegion`, `ConvexCell.Core`,
-  `ConvexCell.Region`, `Extract.Cls` and `Extract.TCls`.
+  Brief 0013 staged twelve predicates in lower camel case; they now take the UpperCamelCase
+  that FORMALIZATION, section 2, asks of a predicate.
+  This entry approves the predicate name `LoopInside`.
+  This entry approves the predicate name `LoopBoundary`.
+  This entry approves the predicate name `LoopRegion`.
+  This entry approves the predicate name `Outline.Inside`.
+  This entry approves the predicate name `Outline.Region`.
+  This entry approves the predicate name `Outline.Boundary`.
+  This entry approves the predicate name `CellCore`.
+  This entry approves the predicate name `CellRegion`.
+  This entry approves the predicate name `ConvexCell.Core`.
+  This entry approves the predicate name `ConvexCell.Region`.
+  This entry approves the predicate name `Extract.Cls`.
+  This entry approves the predicate name `Extract.TCls`.
 
-  This entry approves the move of the helper definitions `Outline.corners`, staged as
-  `CoverFacts.corners`, and `OnChain`, staged as `Diag.OnChain`, into the foundations.
+  Two helper definitions move into the foundations.
+  This entry approves moving `CoverFacts.corners` into the foundations as `Outline.corners`.
+  This entry approves moving `Diag.OnChain` into the foundations as `OnChain`.
 
   This entry approves `Prop45.outline`, registered as "I.45 outline" in
   `Elements/Companions.lean`. This entry approves `Prop14.outline`, registered as "II.14
   outline". This entry approves `Prop14.outline_side`, registered as "II.14 outline_side".
   The three are the edition's general statements of I.45 and II.14 for a figure given by
-  its outline alone.
+  its boundary alone, represented by an outline.
 
   This entry approves the return of `review/I/45.toml` to scope `full` through
   `Prop45.outline`. This entry approves the return of `review/II/14.toml` to scope `full`

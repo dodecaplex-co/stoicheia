@@ -20,23 +20,26 @@ Euclid's text, in Heath's translation: [`heath/II/14.md`](../../heath/II/14.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
-`Prop14` is Euclid's worked configuration, I.45's figure of two triangles, and returns the
-side of the square. His proof makes a rectangle equal to the figure [I. 45] and then a square
-equal to the rectangle. The companions after it carry his words to any rectilineal figure:
+`Prop14` takes I.45's two triangles unchecked and returns the side of the square. Euclid's
+proof makes a rectangle equal to the figure [I. 45] and then a square equal to the rectangle.
+The companions after it carry his words to any rectilineal figure:
 
 * `Prop14.outline`, the main companion, is the proposition in general: the figure given by
-  its outline alone (`Outline`), as in I.45's `Prop45.outline`, and a square drawn equal to
-  its area (`Outline.area`). `Prop14.outline_side` is the same with the side alone, whose
-  square equals that area. Both stand at the end of the file.
+  its boundary alone, represented by an outline (`Outline`), as in I.45's
+  `Prop45.outline`, and a square drawn equal to its area (`Outline.area`).
+  `Prop14.outline_side` is the same with the side alone, whose square equals that area. Both
+  stand at the end of the file.
 * `Prop14.rectangle` is the second part of Euclid's proof.
 * `Prop14.sum` is the proof for any number of triangles, by I.45's `Prop45.sum`: the
   construction, which claims nothing of a figure.
-* `Prop14.apart` is the proposition for a figure given with triangles that do not overlap,
-  no point inside two of them (`Apart`), as in I.45's `Prop45.apart`; the figure may have a
-  hole. `Prop14.square` is the same with the square drawn.
-* `Prop14.figure` is the proposition for a figure with one boundary, given with triangles
-  fitted together in a suitable order (`Rectilineal`), as in I.45's `Prop45.figure`; it
-  follows from `Prop14.apart`, since fitted triangles lie apart (`Fitted.inside_pairwise`).
+* `Prop14.apart` is the proposition for a figure given with a checked division into
+  triangles that do not overlap, no point inside two of them (`Apart`), as in I.45's
+  `Prop45.apart`; the figure may have a hole. `Prop14.square` is the same with the square
+  drawn.
+* `Prop14.figure` is the proposition for a figure with one boundary, given with a checked
+  division into triangles fitted together in a suitable order (`Rectilineal`), as in I.45's
+  `Prop45.figure`; it follows from `Prop14.apart`, since fitted triangles lie apart
+  (`Fitted.inside_pairwise`).
 * `Prop14.fan` is the proposition for a figure divided as Euclid and Oliver Byrne divide it,
   from one corner, with the division checked as in `Prop45.fan`. As there, it concludes that
   the triangles are fitted together into one figure (`Fitted.fan`), and the square is equal
@@ -49,7 +52,7 @@ and `Prop14.outline_side` are equal to that area. Those of `Prop14.apart`, `Prop
 `Prop14.figure` and `Prop14.fan` are equal to the triangles the figure is given with, taken
 together, which is the figure's area, the same for every division. `Prop14` itself is an
 area-sum theorem: it follows from `Prop14.sum` (the check at the end), and its two triangles
-are not checked. Its checked case is `Prop14.fan` for the corners A₄, A₁, A₂, A₃, which are
+are unchecked. Its checked case is `Prop14.fan` for the corners A₄, A₁, A₂, A₃, which are
 I.45's D, A, B, C.
 
 `Prop14.rectangle` is proved directly, by Euclid's second part, and never cites II.14:
@@ -336,10 +339,11 @@ theorem Prop14.sum (ts : List (Point × Point × Point)) (hne : ts ≠ [])
     exact ⟨P, Q, hPQ.trans harea⟩
 
 /-- **II.14, for a figure given with triangles that do not overlap** (companion of II.14). To
-construct a square equal to a given rectilineal figure, given with any division of it into
-triangles, no point inside two of them (`Apart`), as in `Prop45.apart`: the square on PQ is
-equal to those triangles taken together (`Apart.area`). The figure may have a hole, touch
-itself at a corner, or be in more than one piece. It is `Prop14.sum` for the figure's
+construct a square equal to a given rectilineal figure, given with a checked division into
+triangles, any division of it whose triangles lie apart, no point inside two of them
+(`Apart`), as in `Prop45.apart`: the square on PQ is equal to those triangles taken together
+(`Apart.area`). The figure may have a hole, touch itself at a corner, or be in more than one
+piece. It is `Prop14.sum` for the figure's
 triangles. As in `Prop45.apart`, the statement speaks of the division given, and every
 division gives the same sum (`Apart.area_eq_of_same_region`). -/
 theorem Prop14.apart (R : Apart) : ∃ P Q : Point, sq P Q = R.area :=
@@ -347,10 +351,10 @@ theorem Prop14.apart (R : Apart) : ∃ P Q : Point, sq P Q = R.area :=
 
 /-- **II.14, for a figure with one boundary, given with triangles fitted together**
 (companion of II.14). To construct a square equal to a given rectilineal figure, given with
-triangles fitted together
-in a suitable order, each glued across a side of an earlier one and meeting the earlier ones
-only along it (`Rectilineal`), as in `Prop45.figure`: the square on PQ is equal to those
-triangles taken together (`Rectilineal.area`). It is `Prop14.apart` for the figure's
+a checked division into triangles, fitted together in a suitable order, each glued across a
+side of an earlier one and meeting the earlier ones only along it (`Rectilineal`), as in
+`Prop45.figure`: the square on PQ is equal to those triangles taken together
+(`Rectilineal.area`). It is `Prop14.apart` for the figure's
 triangles, which lie apart (`Fitted.inside_pairwise`, `Rectilineal.toApart`), and every
 division gives the same sum (`Apart.area_eq_of_same_region`). -/
 theorem Prop14.figure (R : Rectilineal) : ∃ P Q : Point, sq P Q = R.area :=
@@ -377,8 +381,9 @@ theorem Prop14.area_pos (R : Apart) : 0 < R.area := by
     exact not_lt_zero _ hwhole
 
 /-- **II.14, with the square drawn** (companion of II.14). To construct a square PQST equal
-to a given rectilineal figure, given with triangles that lie apart as in `Prop14.apart`: the
-square on the side that `Prop14.apart` finds, described on it [I. 46]. The square is a
+to a given rectilineal figure, given with a checked division into triangles that lie apart,
+as in `Prop14.apart`: the square on the side that `Prop14.apart` finds, described on it
+[I. 46]. The square is a
 parallelogram, and it is equal to the figure's triangles taken together. A figure R given
 by gluing (`Rectilineal`) is taken here as `R.toApart`, the same triangles, which lie apart,
 with the same sum (`Rectilineal.area_toApart`); so is the glued figure that `Prop14.fan`
