@@ -142,8 +142,8 @@ records current; CI runs it on every push.
     `\\r` and let a string open behind it that hides the command up to a later `"`. Read as
     Lean reads the bytes, the lone `\\r` of each is refused by its file and line, and each
     command, no longer hidden, is named too, by the rules of #197 for three of them. The
-    unplanted copy passes, and so does a copy of it with CRLF line endings, which Lean allows; the
-    check before #207, reading with universal newlines, missed all six.
+    unplanted copy passes, and so does a copy of it with CRLF line endings, which Lean
+    allows; the check before #207, reading with universal newlines, missed all six.
 
 The copies of items 16 and 17, and item 13's list of generated outputs, read Git's
 tracked files. One absent from the work tree is named on stdout and passed over: as a
@@ -1487,8 +1487,8 @@ def carriage_return_comment() -> None:
     """The six CARRIAGE_RETURN_PROBES of #207, in one scratch copy of I.1's file in a
     temporary tree, run through the source scan (`rules_in`): read as Lean reads the bytes,
     the lone `\\r` of each is refused by its file and line, and its command, no longer
-    hidden, is named too. The unplanted copy passes, and
-    so does a copy of it with CRLF line endings, which Lean allows."""
+    hidden, is named too. The unplanted copy passes, and so does a copy of it with CRLF
+    line endings, which Lean allows."""
     rel = "Elements/BookI/Prop01.lean"
     marker = "\nend Elements.BookI\n"
     source = (ROOT / rel).read_text()
