@@ -258,6 +258,13 @@ from the authors of the proof.
 - helpers that conceal a whole conclusion;
 - later citations, lemma placement, imports, and Book Zero importing no proposition.
 
+`python3 scripts/sweep_citations.py` lists the candidates for the dummy citations, the
+artificial hypothesis uses and the concealing helpers, and marks those the record already
+declares ([FORMALIZATION.md](FORMALIZATION.md), section 5). The reviewer judges each: a
+step a sentence of Euclid's stands over stays, and is declared by naming its binding in
+the `unused` of the passage over it ([review/SCHEMA.md](../review/SCHEMA.md)), which no
+note and no `#` comment can do; any other is fixed, deleted or its part cleared with `-`.
+
 For the page, the reviewer's checklist is in [STYLE.md](STYLE.md), section 8; figures are
 checked as geometry.
 
@@ -328,6 +335,9 @@ run the `safe-push-tests` job's; the commands of `risk` are under "Which jobs ru
 which class", after the block:
 
 ```sh
+python3 scripts/sweep_citations.py --self-test   # the sweep's plants, and below, the sweep,
+python3 scripts/sweep_citations.py     # which only lists: CI's `negative` job runs the two
+                                       # after lake build and Facts.lean, before the next line
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
@@ -486,6 +496,16 @@ run of `acceptance` to pass. The ruleset and the remaining merge requirements ar
   change to an axiom fails the `model` job until the model follows it, in the same pull
   request: [MODEL.md, "Changing the axioms"](../tests/model/MODEL.md#changing-the-axioms),
   says how.
+- **The citation sweep reads the build.** `python3 scripts/sweep_citations.py` elaborates
+  a copy of each file of `Elements/` with Lean's unused-variables linter and its tactic
+  analysis on, and reads every entry's proof term, so it needs `lake build` and
+  facts.json; `Staging` and `Audit` it reads when named, after their builds, though the
+  linter passes over any declaration with a `sorry` in it, even one that never runs, so a
+  staged statement gives no hit until its proof arrives; outside Staging, a file with
+  `sorry` or `admit` in its code is refused. Its `--self-test` plants each kind of hit,
+  and controls that must pass, in Lean outside the tree. CI's `negative` job runs both
+  after its build; the sweep there only lists, and the release gate (section 10, step
+  10) runs it with `--fail-on-undeclared`.
 - **Staging builds; it is not proved.** `lake build Staging` checks that the statements
   staged before their proofs (section 2), each with `sorry` where its proof is due, still
   build against the library they import. It builds every file under `Staging/`, whether or
@@ -666,7 +686,9 @@ looked into.
     from the audit fixed in the release's pull request and every Tier 3 record given its
     status note; no open issue labelled `blocks-release`
     (unfinished work, a prototype or a provisional answer may be on main only as such an
-    issue, and holds every release until it closes); and the wiki refreshed, so that it is
+    issue, and holds every release until it closes); the citation sweep, `python3
+    scripts/sweep_citations.py --fail-on-undeclared`, passing on the release candidate,
+    with each hit fixed or declared in its record; and the wiki refreshed, so that it is
     reasonably correct as of its date, as its pages say, and is not expected to be more
     current than that. The hold is checked by `python3 scripts/check_release_gate.py`, by
     the `release-gate` job on the release's pull request, and by `git safe-push --merge`,

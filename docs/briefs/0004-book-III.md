@@ -9,6 +9,11 @@ disagree, the disagreement is recorded and every document it touches is reconcil
 ([FORMALIZATION.md](../FORMALIZATION.md), section 1). The first mate's working detail, one
 note per proposition, is in [first-mate-III.md](../reports/crew/first-mate-III.md).*
 
+**19 October 2026, after brief 0008's step 6.** The current account below reflects the
+restated declarations at `17987153`: proofs obtain existence-only centres internally,
+and `Arc.Drawn` asks only for its endpoints and side. The earlier dated decisions and
+exception table remain historical; the dated notes say where they have been superseded.
+
 ## What Book III needs
 
 Book I draws circles and reads off them; Book III is about them. It finds a circle's
@@ -20,7 +25,8 @@ III.26–III.30 compares the circumferences themselves:
 > centres or at the circumferences. (III.26)
 
 Three things in it needed more than Books I and II built. Our foundations now give every
-circle a centre (`exists_centre`), though most statements still supply one. A circumference is a magnitude to Euclid, compared,
+circle a centre (`exists_centre`); statements keep named centres where their geometry uses
+them. A circumference is a magnitude to Euclid, compared,
 added and taken away, and we have only lengths, angles and areas. And twice (III.16,
 III.31) he speaks of angles "contained by a straight line and a circumference", which
 our rectilineal angles, each made by two straight lines, are not. The companions of III.16
@@ -163,38 +169,41 @@ and Heath's account of the quarrel over the horn-like angle are explained in the
 
 ## Circles and their centres
 
+**19 October 2026, step 6 complete.** These conventions replace the earlier convention
+of supplying a centre merely to have one; the rule's approval of 18 October stands.
+
 A circle in Lean has a centre by `exists_centre`, the rule approved on 18 October 2026
 in [brief 0008](0008-centre.md). `Postulate3` also makes each circle with its centre.
-Most statements still supply a centre as described below; removing those hypotheses is
-the brief's step 6. Simson
+After step 6, existence-only centre inputs have gone; named centres remain wherever
+another hypothesis or conclusion uses them geometrically. `Prop1.within` keeps its
+given-centre interface for the confined use in III.1's construction. Simson
 observed that the proof of III.1 must be by *reductio ad absurdum*, and Heath explains
 why: "At the beginning of Book III. we have nothing more to base the proof upon than the
 definition of a circle, and this cannot be made use of unless we assume some point to be
 the centre" (vol. 2, p. 8). So:
 
-- Where Euclid's setting-out names the centre, or speaks of a straight line through it,
+- Where another hypothesis or conclusion uses the centre geometrically,
   the centre is a hypothesis in Heath's letter: `Centre E ABCD` in III.7, `Centre F ABC`
   in III.18.
 - Where the enunciation itself measures from the centre, the centre is a hypothesis too:
   III.14 and III.15, "equally distant from the centre" and "nearer to the centre"
   (Definitions 4 and 5), with the feet of the perpendiculars from it. III.15's setting-out
   names it, "E the centre". III.14's takes it "[III. 1]": its proof finds a centre by
-  III.1 and that it is `E` (`centre_unique`), so that the bracket is cited, as in III.4
-  and III.8.
-- Otherwise the circle comes with `∃ O, Centre O α`, in Heath's letter for the centre
-  where he has one (`∃ D, Centre D ABC` in III.2, where "let it be D"), and the proof takes
-  the centre by III.1 under Euclid's "[III. 1]". III.1 needs two points of the circle;
-  where the statement gives none (III.17), the proof first finds two on a straight line
-  through the given centre (System E, Intersections 4 and 5), and identifies III.1's
-  centre with it.
+  III.1 and that it is `E` (`centre_unique`), so that the bracket is cited. III.4 and
+  III.8 also cite III.1, applying their universal geometric conditions to its centre.
+- Otherwise a centre is obtained inside the proof: by III.1 under Heath's "[III. 1]",
+  and by `exists_centre` at an unbracketed step where the geometric data supply none.
+  III.17 uses `Prop1.of_circle`, which chooses two points of the given circle and applies
+  III.1. III.28 and III.29 still take their centres from `EqualCircles`.
 - "Not through the centre" in III.4 and "through the centre" in III.8 are said of every
-  centre (`∀ F, Centre F ABCD → ¬ Collinear A C F`), with the circle's centre given
-  besides: the proof then takes it by III.1, as Euclid does.
+  centre (`∀ F, Centre F ABCD → ¬ Collinear A C F`); these geometric conditions stay,
+  and the proof takes a centre by III.1 without an existence hypothesis.
 
-III.1 itself finds the centre of a circle that has one: given two points `A`, `B` of the
+III.1 itself finds the centre of a given circle: given two points `A`, `B` of the
 circle, it constructs `D`, `C`, `E` and `F` as Euclid does and concludes `Centre F ABC`.
 The statement is the problem's answer with its construction; its content is the reductio,
-which shows that the point found is the centre, the circle having some centre `G`.
+which shows that the point found is the centre; the proof takes a centre `G` from
+`exists_centre` for the reductio.
 
 ## Where the facts live
 
@@ -209,7 +218,7 @@ circle has points of it on each side), `circumference_congr`, `standing_congr`,
 `standing_eq_circumference`, `EqualCircles.radii`, `.symm`, `.refl`, `Touches.not_inside`,
 `Touches.of_collinear`. The first three rest on System E's Circle 2, which contains III.2,
 and no proposition uses them: the propositions take the same facts from III.2's
-corollaries, for a circle with a centre (`Prop2.triangle`, `Prop2.oppositeSide`,
+corollaries, with no supplied centre (`Prop2.triangle`, `Prop2.oppositeSide`,
 `Prop2.sameSide`, and `Prop2.within` for ends on or within the circle).
 **`Elements/Figure/Chords.lean`**, from stage 3 of [brief 0006](0006-statements.md):
 `Arc.congr_side` and `Arc.Congruent.congr_side` (only the side names a segment). The
@@ -379,7 +388,9 @@ worth naming. The first mate's report has a note on every statement.
   points as a predicate with the meeting fact Euclid reads off it, and describes a circle
   through `A`, `B` and `C` with centre `E` (Postulate 3); the companion
   `Prop25.complete` shows, by III.9, that the circle is the segment's, and
-  `Prop25.of_circle` keeps the statement handed the whole circle, with a centre.
+  `Prop25.of_circle` keeps the statement handed the whole circle, without a supplied
+  centre. `Prop25.kind` gives all three segment kinds and measure comparisons; the
+  equality from `Prop25.complete` transports them to the given arc.
 - **III.26** says both of Euclid's cases as he enunciates them, "whether they stand at the
   centres or at the circumferences": equal angles at the centres (the circumferences less
   than semicircles) give equal circumferences, and so do equal angles at the
@@ -409,8 +420,9 @@ worth naming. The first mate's report has a note on every statement.
 - **III.32** concludes for every angle in each alternate segment, "the angle constructed
   in the segment BAD": the proof constructs Euclid's `A` and moves to any other point by
   III.21.
-- **III.33, III.34** construct the circle with its centre, so that what they make can be
-  used.
+- **III.33** constructs a circle and a point of its segment admitting the given angle,
+  without returning a centre clause. **III.34** takes its circle explicitly and cuts off
+  the required segment; its proof obtains a centre internally.
 - **III.36, III.37 (19 October 2026).** III.36's first branch carries the diameter
   calculation under Euclid's sentences through cancellation. `Prop36.through_centre`
   follows III.36 as a corollary proved from it, used by `Prop37.centre_on_secant`. III.37
@@ -421,6 +433,9 @@ worth naming. The first mate's report has a note on every statement.
   were challenged by an independent reader who wrote neither statement, and approved as
   written by the coordinator. On 19 October 2026 the layout was changed after a review
   finding under FORMALIZATION section 5, with all statements unchanged.
+  **19 October 2026, after step 6.** III.37's general branch now takes its centre F from
+  `exists_centre`, since Heath gives no reference for that step, and no longer by III.1;
+  DE, the straight line drawn touching, still comes from III.17.
 
 ## Book I and II's rules, in Book III
 
@@ -486,6 +501,11 @@ at once; the published proof still follows Euclid without that axiom.
 | [III.33](../../book/III/33.md) | whole | Euclid's |  | `segment-with-circle` |  |
 | [III.34](../../book/III/34.md) | whole | Euclid's |  | `segment-with-circle` |  |
 
+**19 October 2026, centre inputs.** The dated table's omission of `centre-given`
+records the former convention. Step 6 has removed that tag from every Book III record.
+Named centres remain where the geometry uses them; `Prop1.within` is the approved
+construction exception. The tag's definition in `review/terms.toml` awaits step 7.
+
 **19 October 2026, III.5, III.6 and III.10.** The dated table above is superseded for
 these three rows by brief 0008, section 7, landing before step 6. III.5 and III.6 cover
 the whole enunciations with Euclid's route: they draw through a point within and use the
@@ -525,7 +545,7 @@ and the mixed-angle comparisons have the scope described above.
   another. A type of their own over `Angle` would forbid comparisons with angles
   without new rules; every law of magnitudes, now axioms about `Magnitude k`, would have to
   be proved again for it. The captain's call.
-- **A circle's centre.** With `exists_centre` now a rule, brief 0008's step 6 removes the
-  `∃ O, Centre O α` hypotheses where its approved statements do so.
+- **A circle's centre.** Brief 0008's step 6 has removed existence-only centre inputs.
+  Named centres with geometric roles and the approved `Prop1.within` exception remain.
 - A gap catalogue for Book III. (It now exists:
   [gaps-book-III.md](../reports/gaps-book-III.md), and Book III's index page links it.)

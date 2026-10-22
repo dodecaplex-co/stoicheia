@@ -469,6 +469,9 @@ NEGATIVE = [
     ("negative: lake build", ["lake", "build"]),
     ("negative: lake env lean Certificate/Facts.lean",
      ["lake", "env", "lean", "Certificate/Facts.lean"]),
+    ("negative: python3 scripts/sweep_citations.py --self-test",
+     [PY, "scripts/sweep_citations.py", "--self-test"]),
+    ("negative: python3 scripts/sweep_citations.py", [PY, "scripts/sweep_citations.py"]),
     ("negative: python3 scripts/negative_tests.py", [PY, "scripts/negative_tests.py"]),
 ]
 

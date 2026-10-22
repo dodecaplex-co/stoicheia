@@ -1,4 +1,3 @@
-
 /-!
 # Staging: statements on their way to `Elements/`
 
@@ -11,9 +10,10 @@ its own.
 The folders follow the briefs' stages. The statements of brief 0006's stages 2, 3 and 4,
 all proved, have moved to their homes in `Elements/`, and their folders with them; so have
 stage 4b's statements of brief 0007, III.7, III.8 and III.17 with the point of contact, and
-the mixed-angle prototype for III.16 and III.31 (brief 0011). The others:
-
-* `Centre/`: brief 0008's restated propositions, using the rule now in the foundations
-  that every circle has a centre, with III.1's construction now in `Elements/` and III.5
-  and III.6 read with crossing and contact within.
+the mixed-angle prototype for III.16 and III.31 (brief 0011). Brief 0008's centre
+restatements have also moved home, and so has III.30's halves (brief 0006), proved on
+21 October 2026 as the companion "III.30 halves". The prototype of a restricted
+superposition rule (brief 0009) has its production home in
+`Elements/Foundations/Superposition/`, where the rule now in the foundations is stated.
+Nothing is staged now; `Staging/.gitkeep` keeps the folder for the next brief.
 -/
