@@ -14,13 +14,25 @@ note = "\"Equal circumferences\" is read as equal in measure and congruent (`Arc
 [[passage]]
 at = "therefore the base BC is equal to the base EF"
 kind = "different"
-note = "Given the angles at A and D, the Lean sorts them as acute, right or obtuse: if right, BC and EF are diameters, each two radii; if obtuse, III.22 passes to the acute angle in the other segment."
+note = "Given the angles at A and D, the Lean sorts them as acute, right or obtuse: if right, BC and EF are diameters, each two radii; if obtuse, III.22 passes to the acute angle in the other segment. The Lean uses `Prop24.angle_type`, which in the right-angle case puts each centre between the chord's ends by the assumed rules `Tacit.centre_inside` (System E, Generalities 3) and `Tacit.between_of_inside_chord` (System E, Circle 1); in the obtuse case `Prop2.sameSide` supplies points of the other segments, and III.20 doubles their angles for I.4."
+
+[[passage]]
+at = "And, since the angle at A is equal to the angle at D"
+kind = "helper"
+helper = "Prop20"
+note = "Euclid treats the equal angles at the centres and at the circumferences together. For the clause given only the central angles, the Lean obtains the equal angles at A and D by III.20 and `Magnitude.eq_of_add_self_eq`, with no reference from Heath here."
 
 [[passage]]
 at = "therefore the segment BAC is equal to EDF"
 kind = "helper"
 helper = "Prop24.equalMeasure"
 note = "III.24 makes the segments BAC, EDF congruent, and its companion `Prop24.equalMeasure` gives what Euclid takes with them: their circumferences are equal in measure."
+
+[[passage]]
+at = "But the whole circle ABC is also equal to the whole circle DEF"
+kind = "helper"
+helper = "Circumference.whole"
+note = "Euclid subtracts the equal segment circumferences from the equal whole circles. `Circumference.whole` proves that the two circumferences cut off by each chord together measure four right angles, using III.2, III.21 and III.22, for which Heath gives no references here."
 
 [[passage]]
 at = "therefore the circumference BKC which remains is equal to the circumference ELF"
@@ -31,7 +43,8 @@ note = "The remainders BKC, ELF are equal in measure by Euclid's subtraction [C.
 case = "acute angles at A and D, with BKC and ELF less than semicircles"
 
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "1c08feeb"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:a4c608069879bee5"
+run = "brief 0005 stage 5, ship R3 (#29); lines 66 and 67 of Prop26.lean, of unknown family, read also by GPT-6 Astra (Codex)"
