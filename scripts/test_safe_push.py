@@ -7206,25 +7206,6 @@ class MainChecksCache(Edge):
             self.assertIn(f"\nimport {name}", SAFE_PUSH.read_text())
 
 
-class RiskPreflight(Edge):
-    """Checks scaled to risk (#292, #301): the pre-flight takes the change's class from
-    origin/main's scripts/risk.py, judging the commit's paths against origin/main, never
-    from the commit's own copy of the classifier, nor from a label but `release`, which
-    only raises it to R5. R0 to R2 keep steps 1 to 3 and leave step 4 to CI, one "skip"
-    line saying so; R3 to R5 take the full path, here the internal test flag's skip, since
-    step 4 run in full needs Lean (FullChecks). The class is a step line, which reaches
-    the pull request's record, and the pre-flight record's "class". Any failure to compute
-    it is R5. --merge takes a record that left step 4 to CI only while the class,
-    recomputed then, is still R0 to R2; a release merges only on the full pre-flight of its
-    head, and with a green run of safe-push-tests there, the head's copy of that workflow
-    being origin/main's, each of its three jobs there and passed."""
-
-    SHORT = "left to CI"
-    FULL = "internal test flag, local origin"
-    GUARDS = ("secrets", "statements", "axiom lock", "protected paths", "heath/",
-              "directories", "decision entries")
-
-
     def test_the_preflight_activates_the_sandbox_after_classification_and_before_checks(self):
         sha = self.check_change()
         ctx = safe_push.Context(WORK, sha, BASE, 1, str(ORIGIN), None, {})

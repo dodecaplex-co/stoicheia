@@ -53,9 +53,9 @@
     first in the harness's own directory, one a sandboxed command may write. At first,
     `platform.mac_ver()` imported `plistlib`, with `xml.parsers.expat`, when the key was
     first computed, after step 3 had run the commit's code, and the allow-list imported
-    `tomllib` in step 2; both are now imported with the rest at the top on a supported
-    interpreter. The `tomllib` import is guarded on the Python version so that an older
-    interpreter reaches the harness's controlled refusal. Tests check this as they run,
+    `tomllib` in step 2; both are now imported with the rest at the top. The `tomllib`
+    import is unconditional at module load, so an unsupported interpreter can fail before
+    the harness reaches its controlled version refusal. Tests check this as they run,
     by Python's own record of each process started and each module imported, any import
     but a builtin's being refused: one over the key and
     origin/main's pass, missed and hit, in the test's own process; one over the same in a
