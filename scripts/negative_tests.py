@@ -1389,6 +1389,8 @@ DECLARED_TOKEN_READINGS = (
 DECLARED_TOKENS = (
     ("token +x", 'infixl:65 " +x " => Nat.add\ndef k : Nat := 2 +x1set_option«debug».byAsSorry '
      "true in theorem T : (0 : Nat) = 1 := by decide"),
+    ("token +℃", 'infixl:65 " +℃ " => Nat.add\ndef k : Nat := 2 +℃1set_option«debug».byAsSorry '
+     "true in theorem T : (0 : Nat) = 1 := by decide"),
     ("token +_", 'infixl:65 " +_ " => Nat.add\ndef k : Nat := 2 +_0set_option«debug».byAsSorry '
      "true in theorem T : (0 : Nat) = 1 := by decide"),
     ("token +z", 'notation:65 a:65 " ⊕⊕ " b:66\n  " +z " c:66 => Nat.add a (Nat.add b c)\n'
