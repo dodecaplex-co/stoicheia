@@ -18,7 +18,7 @@ note = "`Prop1.of_circle` takes two points of the circle and applies III.1's con
 at = "let AE be joined, and with centre E"
 kind = "helper"
 helper = "Tacit.line_circle_between"
-note = "Euclid joins AE and treats its meeting D with BCD as available. The Lean gets D between E and A from `Tacit.line_circle_between`, the rule we assume as System E, Intersections 4, and describes AFG by Postulate 3."
+note = "Euclid joins AE and treats its meeting D with BCD as available. The Lean puts E within BCD by `Tacit.centre_inside`, the rule we assume as System E, Generalities 3, gets D between E and A from `Tacit.line_circle_between`, the rule we assume as System E, Intersections 4, and describes AFG by Postulate 3."
 
 [[passage]]
 at = "from D let DF be drawn at right angles to EA"
@@ -30,7 +30,7 @@ note = "Euclid draws DF perpendicular to EA; the Lean uses I.11, for which Heath
 at = "and let EF, AB be joined"
 kind = "helper"
 helper = "Tacit.line_circle_between"
-note = "Euclid's joining EF presupposes its meeting B with BCD. The Lean compares the radii to put F outside BCD by `outside_of_len_gt`, then gets B between E and F from `Tacit.line_circle_between`, the rule we assume as System E, Intersections 4."
+note = "Euclid's joining EF presupposes its meeting B with BCD. The Lean compares the radii to put F outside BCD by `outside_of_len_gt`, puts E within BCD by `Tacit.centre_inside`, the rule we assume as System E, Generalities 3, then gets B between E and F from `Tacit.line_circle_between`, the rule we assume as System E, Intersections 4."
 
 [[passage]]
 at = "therefore the base DF is equal to the base AB"
