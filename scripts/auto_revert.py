@@ -24,13 +24,13 @@ main has moved on), 1 means issue only or an incomplete revert, 2 means the issu
 itself could not be recorded or updated, and 3 means the revert was enqueued but the
 issue could not be updated with that outcome.
 --dry-run describes the actions without network access or changing the repository.
---clear is the coordinator's, run by hand from a checkout of main: it removes main-red
-from every open issue, as the post-merge workflow's clear job does with the runner's
-tools alone, since that job runs no repository code; it stays for a clear by hand that
-must read every page, confirm each removal and change nothing once main has moved on.
-With --after, main has moved on only when its tip, read afresh, is readable and another
-commit: then it names that commit and its post-merge run, which decides (or says that
-no such run can be read yet), and exits 0. A clear that fails at main's own tip fails.
+--clear is the coordinator's, run by hand from a checkout of main: without --after it
+removes main-red from every open issue, as before. With --after it removes the label
+only from an issue whose exact After line names that commit or one of its ancestors,
+and checks main again before each removal. The post-merge workflow's clear job does the
+same with the runner's tools alone, since that job runs no repository code. If main has
+moved on, it names that commit and its post-merge run, which decides (or says that no
+such run can be read yet), and exits 0. A clear that fails at main's own tip fails.
 """
 
 from __future__ import annotations
@@ -83,6 +83,7 @@ KEPT = (ENTRIES, DECISIONS)
 SHA = re.compile(r"[0-9a-f]{40}")
 SLUG = re.compile(r"[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+")
 MERGE = re.compile(r"Merge pull request #([1-9][0-9]*) from \S+")
+AFTER_LINE = re.compile(r"^After: ([0-9a-f]{40})$", re.MULTILINE)
 
 
 class Refusal(Exception):
@@ -618,7 +619,27 @@ def later_run(api: GitHub, repo: str, tip: str) -> str:
             f"https://github.com/{repo}/actions/runs/{max(ids)}, decides")
 
 
-def clear(api: GitHub, repo: str, after: str | None) -> int:
+def issue_after(row: dict) -> str | None:
+    body = row.get("body")
+    if not isinstance(body, str):
+        return None
+    matches = AFTER_LINE.findall(body)
+    return matches[0] if len(matches) == 1 else None
+
+
+def is_ancestor(repo: Path, ancestor: str, descendant: str) -> bool:
+    try:
+        result = subprocess.run(
+            ["git", "-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false",
+             "merge-base", "--is-ancestor", ancestor, descendant],
+            cwd=repo, env=git_env(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            check=False, timeout=120)
+    except Exception:
+        return False
+    return result.returncode == 0
+
+
+def clear(api: GitHub, repo: str, after: str | None, source: Path) -> int:
     if after:
         tip = main_tip(api)
         if tip != after:
@@ -636,9 +657,26 @@ def clear(api: GitHub, repo: str, after: str | None) -> int:
                 or not any(isinstance(label, dict) and label.get("name") == "main-red"
                            for label in row["labels"])):
             raise Refusal("GitHub returned an unreadable main-red issue.")
-        if "pull_request" not in row:
-            numbers.append(row["number"])
+        if "pull_request" in row:
+            continue
+        number = row["number"]
+        if after:
+            recorded = issue_after(row)
+            if recorded is None:
+                print(f"Issue #{number} keeps main-red: its After line is missing or unreadable.")
+                continue
+            if not is_ancestor(source, recorded, after):
+                print(f"Issue #{number} keeps main-red: its After commit is not {after} "
+                      "or an ancestor of it.")
+                continue
+        numbers.append(number)
     for number in numbers:
+        if after:
+            tip = main_tip(api)
+            if tip != after:
+                print(f"Main has moved on from {after} to {tip}: {later_run(api, repo, tip)}, "
+                      "and no further label was changed.")
+                return 0
         labels = api.call("DELETE", f"{api.root}/issues/{number}/labels/main-red")
         if (not isinstance(labels, list) or any(not isinstance(label, dict)
                 or not isinstance(label.get("name"), str) or label["name"] == "main-red"
@@ -654,8 +692,11 @@ def dry_run(args, repo: Path, env: dict) -> int:
         if args.after:
             print(f"Would check main still names {args.after}, and change no label if "
                   "it has moved on, naming the later push's post-merge run.")
+            print("Would keep main-red on an issue without one exact After line naming "
+                  "that commit or its ancestor, and check main again before each removal.")
         print(f"Would GET every page of {root}/issues?state=open&labels=main-red.")
-        print("Would DELETE main-red from each open issue, keeping blocks-release and the issue.")
+        print("Would DELETE main-red from each eligible open issue, keeping blocks-release "
+              "and the issue.")
         return 0
     entries = trains(repo, args.before, args.after)
     for train in entries:
@@ -836,7 +877,7 @@ def main(argv=None, *, http=None, push=None, repo_dir=None, env=None) -> int:
             raise Refusal("GITHUB_TOKEN is required to record or clear main-red.")
         api = GitHub(args.repo, token, http or request)
         if args.clear:
-            return clear(api, args.repo, args.after)
+            return clear(api, args.repo, args.after, source)
         return revert(args, source, api, environment, push or push_branch)
     except Exception as exc:
         reason = str(exc) if isinstance(exc, Refusal) else "The operation could not be completed."

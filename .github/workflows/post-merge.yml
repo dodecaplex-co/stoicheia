@@ -231,18 +231,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # No repository code runs here, not even the previous main's: a fix that lands
-          # after a failed push must not run the failed push's script with issues: write.
-          tip=$(gh api "repos/$REPOSITORY/git/ref/heads/main" --jq '.object.sha')
-          if ! [[ "$tip" =~ ^[0-9a-f]{40}$ ]]; then
-            echo "Main's tip could not be read."
-            exit 1
-          fi
-          # Main has moved on only when its tip, read now, is another commit: then this
-          # success clears nothing, the later push's run decides, and this run still
-          # passed. Any other failure of the clear, at main's own tip, fails the job.
-          if [[ "$tip" != "$AFTER" ]]; then
-            # The later run is read for this message alone; an unreadable answer says so.
+          report_moved() {
+            local tip="$1"
+            local result="${2:-no label was changed}"
+            local later runs run
             later=$(mktemp "$RUNNER_TEMP/later-run.XXXXXX")
             runs="repos/$REPOSITORY/actions/workflows/post-merge.yml/runs"
             run=""
@@ -257,22 +249,58 @@ jobs:
             fi
             if [[ "$run" =~ ^[1-9][0-9]*$ ]]; then
               echo "Main has moved on from $AFTER to $tip: the later push's post-merge run" \
-                "$run, $RUNS_URL/$run, decides, and no label was changed."
+                "$run, $RUNS_URL/$run, decides, and $result."
             else
               echo "Main has moved on from $AFTER to $tip: no post-merge run for $tip could" \
-                "be read yet; the later push's run decides, and no label was changed."
+                "be read yet; the later push's run decides, and $result."
             fi
+          }
+          # No repository code runs here, not even the previous main's: a fix that lands
+          # after a failed push must not run the failed push's script with issues: write.
+          tip=$(gh api "repos/$REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          if ! [[ "$tip" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Main's tip could not be read."
+            exit 1
+          fi
+          # Main has moved on only when its tip, read now, is another commit: then this
+          # success clears nothing, the later push's run decides, and this run still
+          # passed. Any other failure of the clear, at main's own tip, fails the job.
+          if [[ "$tip" != "$AFTER" ]]; then
+            report_moved "$tip"
             exit 0
           fi
           issues=$(mktemp "$RUNNER_TEMP/main-red-issues.XXXXXX")
           gh api --paginate --slurp "repos/$REPOSITORY/issues?state=open&labels=main-red&per_page=100" \
-            | jq -r '
+            | jq -c '
                 if type != "array" or length == 0 or any(.[]; type != "array") then error("Unreadable issues")
                 else [.[][] | select(has("pull_request") | not)
                   | if .state == "open" and (.number | type) == "number" and .number > 0
-                      and any(.labels[]; .name == "main-red") then .number
+                      and any(.labels[]; .name == "main-red") then {number, body}
                     else error("Unreadable issue") end] | .[] end' > "$issues"
-          while IFS= read -r number; do
+          while IFS= read -r issue; do
+            number=$(jq -er '.number' <<< "$issue")
+            issue_after=$(jq -er '
+              if (.body | type) != "string" then error("Unreadable body") else
+                [.body | split("\n")[] | select(test("^After: [0-9a-f]{40}$"))] |
+                if length == 1 then .[0][7:] else error("Missing or repeated After line") end
+              end' <<< "$issue" 2> /dev/null) || {
+                echo "Issue #$number keeps main-red: its After line is missing or unreadable."
+                continue
+              }
+            if ! git -c core.hooksPath=/dev/null -c core.fsmonitor=false \
+              merge-base --is-ancestor "$issue_after" "$AFTER" 2> /dev/null; then
+              echo "Issue #$number keeps main-red: its After commit is not $AFTER or an ancestor of it."
+              continue
+            fi
+            tip=$(gh api "repos/$REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+            if ! [[ "$tip" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "Main's tip could not be read."
+              exit 1
+            fi
+            if [[ "$tip" != "$AFTER" ]]; then
+              report_moved "$tip" "no further label was changed"
+              exit 0
+            fi
             gh api --method DELETE "repos/$REPOSITORY/issues/$number/labels/main-red" \
               | jq -e 'type == "array" and all(.[]; (.name | type) == "string" and .name != "main-red")' > /dev/null
           done < "$issues"

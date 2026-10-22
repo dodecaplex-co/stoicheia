@@ -3776,8 +3776,11 @@ findings:
     clear job and `auto_revert.py --clear --after` change no label and pass, naming that
     commit and its post-merge run, which decides, or saying that no such run can be read
     yet. A clear that fails at main's own tip still fails, as new tests of both check,
-    and so does one that cannot read the tip. So the clear test's expected exit changes
-    from 2 to 0 for a moved main only; approved by the coordinator on 21 October as a
+    and so does one that cannot read the tip. At that tip, a clear removes `main-red` only
+    from an issue whose exact `After: <40 hex>` line names the successful commit or one of
+    its ancestors, and reads main again before each removal; a missing or unreadable line,
+    or one that names another commit, keeps the label. So the clear test's expected exit
+    changes from 2 to 0 for a moved main only; approved by the coordinator on 21 October as a
     correction of new behaviour, not a weakened check: the test,
     `test_clear_old_success_does_not_clear_new_main`, still requires that no label is
     removed, and now also that its message names the later push's run. The

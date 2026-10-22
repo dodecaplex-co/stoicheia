@@ -78,6 +78,7 @@ class GitHub:
         self.queue = None
         self.broken = None
         self.deleted = []
+        self.tip_reads = []
         self.issued_permissions = None
         self.jwt = None
         self.pages = {}
@@ -99,6 +100,9 @@ class GitHub:
         if method == "GET" and path.startswith(root + "/pulls/"):
             return copy.deepcopy(self.pulls[int(path.rsplit("/", 1)[1])])
         if method == "GET" and path == root + "/git/ref/heads/main":
+            if self.tip_reads:
+                tip = self.tip_reads.pop(0) if len(self.tip_reads) > 1 else self.tip_reads[0]
+                return {"object": {"sha": tip}}
             return {"object": {"sha": self.after}}
         if method == "GET" and path == root + "/installation":
             self.jwt = token
@@ -773,13 +777,18 @@ class AutoRevert(unittest.TestCase):
         output = io.StringIO()
         with contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
             status = ar.main(["--clear", "--repo", SLUG, *extra],
-                             http=self.api, env={"GITHUB_TOKEN": WORKFLOW_TOKEN})
+                             http=self.api, env={"GITHUB_TOKEN": WORKFLOW_TOKEN},
+                             repo_dir=self.repo)
         return status, output.getvalue()
 
     @staticmethod
     def open_issue(number, **extra):
         return {"number": number, "state": "open",
                 "labels": [{"name": "main-red"}, {"name": "blocks-release"}], **extra}
+
+    @classmethod
+    def failure_issue(cls, number, after):
+        return cls.open_issue(number, body=f"Main failed.\n\nAfter: {after}\n")
 
     def test_clear_removes_only_main_red_from_open_issues(self):
         self.api.open_issues = [self.open_issue(4), self.open_issue(5),
@@ -875,22 +884,23 @@ class AutoRevert(unittest.TestCase):
         # The opposite of a moved main: main's tip is the run's commit, so a clear that
         # fails fails, removes no label and never reads as main having moved on.
         root = f"/repos/{SLUG}"
+        after = self.rev()
         failures = {
             "an unreadable issue": ([self.open_issue(4), {"number": 5}], None),
             "a refused issue list": (
                 [self.open_issue(4)],
                 lambda method, path, token, data: path.startswith(root + "/issues?")),
             "a refused removal": (
-                [self.open_issue(4), self.open_issue(5)],
+                [self.failure_issue(4, after), self.failure_issue(5, after)],
                 lambda method, path, token, data: method == "DELETE"),
         }
         for name, (issues, broken) in failures.items():
             with self.subTest(name):
                 self.api = GitHub()
-                self.api.after = "a" * 40
+                self.api.after = after
                 self.api.open_issues = issues
                 self.api.broken = broken
-                status, output = self.run_clear("--after", "a" * 40)
+                status, output = self.run_clear("--after", after)
                 self.assertEqual(status, 2, output)
                 self.assertEqual(self.api.deleted, [])
                 self.assertNotIn("moved on", output)
@@ -899,6 +909,36 @@ class AutoRevert(unittest.TestCase):
                 self.assertIn(
                     [path for method, path, _, _ in self.api.calls if method == "DELETE"],
                     ([], [f"{root}/issues/4/labels/main-red"]))
+
+    def test_clear_after_removes_ancestor_issue_but_keeps_newer_and_unreadable_issues(self):
+        after = self.rev()
+        self.git("switch", "-c", "newer-failure")
+        self.write("chapter.txt", "A newer failed revision.\n")
+        self.commit("Newer failed revision")
+        newer = self.rev()
+        self.git("switch", "main")
+        self.api.after = after
+        self.api.open_issues = [self.failure_issue(4, after), self.failure_issue(5, newer),
+                                self.open_issue(6)]
+        status, output = self.run_clear("--after", after)
+        self.assertEqual(status, 0, output)
+        self.assertEqual(self.api.deleted, [4])
+        self.assertIn("Issue #5 keeps main-red", output)
+        self.assertIn("Issue #6 keeps main-red", output)
+
+    def test_clear_rechecks_main_before_removing_a_label(self):
+        after = self.rev()
+        self.git("switch", "-c", "later-main")
+        self.write("chapter.txt", "Later main.\n")
+        self.commit("Later main")
+        later = self.rev()
+        self.git("switch", "main")
+        self.api.tip_reads = [after, later]
+        self.api.open_issues = [self.failure_issue(4, after)]
+        status, output = self.run_clear("--after", after)
+        self.assertEqual(status, 0, output)
+        self.assertEqual(self.api.deleted, [])
+        self.assertIn(f"Main has moved on from {after} to {later}", output)
 
     def test_clear_with_main_s_tip_unreadable_removes_nothing(self):
         self.api.open_issues = [self.open_issue(4)]
@@ -910,7 +950,8 @@ class AutoRevert(unittest.TestCase):
                 self.assertIn("Main's tip could not be read", output)
                 self.assertEqual(self.api.deleted, [])
 
-    def run_clear_step(self, tip, *, issues=None, runs=None, refused=()):
+    def run_clear_step(self, tip, *, after=None, issues=None, runs=None, refused=(),
+                       tip_reads=None):
         """The clear job's step, run as the workflow runs it, with a stand-in for gh: the
         step's output, its exit and the labels it removed. runs is GitHub's answer for
         the post-merge runs at tip, None a refusal; refused names the other operations
@@ -920,7 +961,8 @@ class AutoRevert(unittest.TestCase):
         directory = self.directory / "clear-bin"
         directory.mkdir(exist_ok=True)
         state = self.directory / "clear-state.json"
-        state.write_text(json.dumps({"tip": tip, "issues": issues or [[]], "runs": runs,
+        state.write_text(json.dumps({"tip": tip, "tips": tip_reads or [tip],
+                                     "issues": issues or [[]], "runs": runs,
                                      "refused": list(refused), "deleted": []}),
                          encoding="utf-8")
         gh = directory / "gh"
@@ -935,9 +977,12 @@ class AutoRevert(unittest.TestCase):
             path = Path(os.environ["CLEAR_STATE"])
             state = json.loads(path.read_text())
             if args == ["api", root + "/git/ref/heads/main", "--jq", ".object.sha"]:
-                if state["tip"] is None:
+                tip = state["tips"].pop(0) if len(state["tips"]) > 1 else state["tips"][0]
+                state["tip"] = tip
+                path.write_text(json.dumps(state))
+                if tip is None:
                     sys.exit(1)
-                print(state["tip"])
+                print(tip)
             elif args == ["api", root + "/actions/workflows/post-merge.yml/runs?head_sha="
                           + str(state["tip"]) + "&event=push&branch=main&per_page=100"]:
                 if state["runs"] is None:
@@ -959,7 +1004,8 @@ class AutoRevert(unittest.TestCase):
             '''), encoding="utf-8")
         gh.chmod(0o755)
         env = ar.git_env()
-        env.update(PATH=str(directory) + ":" + env["PATH"], REPOSITORY=SLUG, AFTER="a" * 40,
+        env.update(PATH=str(directory) + ":" + env["PATH"], REPOSITORY=SLUG,
+                   AFTER=after or "a" * 40,
                    RUNS_URL=f"https://github.com/{SLUG}/actions/runs",
                    RUNNER_TEMP=str(self.directory), CLEAR_STATE=str(state))
         result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script],
@@ -980,7 +1026,9 @@ class AutoRevert(unittest.TestCase):
         self.assertIn(f"Main has moved on from {'a' * 40} to {later}: the later push's "
                       f"post-merge run 9, https://github.com/{SLUG}/actions/runs/9, decides, "
                       "and no label was changed.", output)
-        output, code, deleted = self.run_clear_step("a" * 40, issues=issues, runs=runs)
+        after = self.rev()
+        output, code, deleted = self.run_clear_step(
+            after, after=after, issues=[[self.failure_issue(4, after)]], runs=runs)
         self.assertEqual(code, 0, output)
         self.assertEqual(deleted, [f"repos/{SLUG}/issues/4/labels/main-red"])
         self.assertNotIn("moved on", output)
@@ -1000,19 +1048,52 @@ class AutoRevert(unittest.TestCase):
     def test_workflow_clear_fails_at_main_s_own_tip_and_removes_nothing(self):
         # The opposite of a moved main: main's tip is the run's commit, so a clear that
         # fails fails the job, removes no label and never reads as main having moved on.
+        after = self.rev()
         failures = {
             "an unreadable issue": ([[self.open_issue(4), {"number": 5}]], ()),
             "a refused issue list": ([[self.open_issue(4)]], ("issues",)),
-            "a refused removal": ([[self.open_issue(4), self.open_issue(5)]], ("delete",)),
+            "a refused removal": (
+                [[self.failure_issue(4, after), self.failure_issue(5, after)]], ("delete",)),
         }
         for name, (issues, refused) in failures.items():
             with self.subTest(name):
                 output, code, deleted = self.run_clear_step(
-                    "a" * 40, issues=issues, refused=refused,
-                    runs={"workflow_runs": [self.run_of(9, "a" * 40)]})
+                    after, after=after, issues=issues, refused=refused,
+                    runs={"workflow_runs": [self.run_of(9, after)]})
                 self.assertNotEqual(code, 0, output)
                 self.assertEqual(deleted, [])
                 self.assertNotIn("moved on", output)
+
+    def test_workflow_clear_removes_ancestor_issue_but_keeps_newer_and_unreadable_issues(self):
+        after = self.rev()
+        self.git("switch", "-c", "newer-workflow-failure")
+        self.write("chapter.txt", "A newer workflow failure.\n")
+        self.commit("Newer workflow failure")
+        newer = self.rev()
+        self.git("switch", "main")
+        issues = [[self.failure_issue(4, after), self.failure_issue(5, newer),
+                   self.open_issue(6)]]
+        output, code, deleted = self.run_clear_step(
+            after, after=after, issues=issues, runs={"workflow_runs": []})
+        self.assertEqual(code, 0, output)
+        self.assertEqual(deleted, [f"repos/{SLUG}/issues/4/labels/main-red"])
+        self.assertIn("Issue #5 keeps main-red", output)
+        self.assertIn("Issue #6 keeps main-red", output)
+
+    def test_workflow_clear_rechecks_main_before_removing_a_label(self):
+        after = self.rev()
+        self.git("switch", "-c", "later-workflow-main")
+        self.write("chapter.txt", "Later workflow main.\n")
+        self.commit("Later workflow main")
+        later = self.rev()
+        self.git("switch", "main")
+        runs = {"workflow_runs": [self.run_of(9, later)]}
+        output, code, deleted = self.run_clear_step(
+            after, after=after, issues=[[self.failure_issue(4, after)]], runs=runs,
+            tip_reads=[after, later])
+        self.assertEqual(code, 0, output)
+        self.assertEqual(deleted, [])
+        self.assertIn(f"Main has moved on from {after} to {later}", output)
 
     def test_workflow_clear_fails_when_main_s_tip_is_unreadable(self):
         for tip in (None, "", "not a commit"):

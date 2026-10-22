@@ -1058,14 +1058,17 @@ queued without `--merge`: in a group judged while an issue labelled `main-red` i
 it refuses every entry but the automatic revert and a declared fix (below), so the rest
 leave the queue. A group the judge passed before the issue opened, during the post-merge
 run, can still merge, since the judge runs once for each build of a group. It reads the
-open issues only, not the post-merge runs. Successful
-integration clears `main-red` only after confirming that the successful commit is still
-main's tip; the issue stays open with `blocks-release` for the coordinator. Main has
-moved on only when its tip, read afresh, is readable and another commit: then the clear
-job, like `auto_revert.py --clear --after`, changes no label and passes, naming that
-commit and its post-merge run, which decides, or saying that no run for it can be read
-yet. So a run whose integration passed is never marked failed for main's moving. A
-clear that fails at main's own tip still fails, as does one that cannot read the tip.
+open issues only, not the post-merge runs. Successful integration clears `main-red` only
+after confirming that the successful commit is still main's tip, and only from an issue
+whose exact `After: <40 hex>` line names that commit or one of its ancestors. An issue
+with a missing or unreadable line, or one naming another commit, keeps the label; the
+issue stays open with `blocks-release` for the coordinator. The clear reads main again
+before each removal. Main has moved on only when its tip, read afresh, is readable and
+another commit: then the clear job, like `auto_revert.py --clear --after`, changes no
+further label and passes, naming that commit and its post-merge run, which decides, or
+saying that no run for it can be read yet. So a run whose integration passed is never
+marked failed for main's moving. A clear that fails at main's own tip still fails, as
+does one that cannot read the tip.
 
 **Out of a red main.** While main is red, `--merge` lands only its fix. With the queue
 off, or without the revert App, only a merge moves main's tip, so the fix comes through
