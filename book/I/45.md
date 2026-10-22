@@ -925,10 +925,10 @@ it, joins Euclid's and Byrne's checked fan to the outline through its corners. -
 open Elements.Figures
 
 /-- **The checked fan's figure is bounded by its corners in order** (a bridge beside I.45).
-Take the triangles from one corner O to the sides of the chain A, B, then the corners `ps`,
+Take the triangles from one corner O to the sides of the chain A, B, then further corners,
 checked as in `Fitted.fan`: each a triangle, neighbours on opposite sides of the straight
 line from O they share, and the angles at O together less than four right angles. Then the
-closed line from O through A, B and the corners `ps` in order, and back to O, is the one
+closed line from O through A, B and the further corners in order, and back to O, is the one
 contour of an outline, and the fan's triangles, which lie apart, divide exactly its region.
 It cites I.13 through `Fitted.fan`, so it stands beside I.45, not in Book Zero. -/
 theorem Prop45.fan_boundary {O A B : Point} {ps : List Point}

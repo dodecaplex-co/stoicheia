@@ -1383,7 +1383,9 @@ after `Sums.lean` and before every file that uses it: from `LoopFacts`, `pairwis
 `split_some` and `count_split_some`; from `Pieces`, `rotate_compose`, `first_fail`, `sub4` and
 `block`; from `CoverFacts`, `countP_succ` and `countP_flip`; from `Diagonal`, `rotate_split`;
 and from `Extract`, `two_le_countP` and the counting and sum facts of `ExtractLists.lean`,
-`countP_and_add` to `sum_mod_two`. `LoopFacts.filter_length_two` stated `Extract.countP_two`
+`countP_and_add` to `sum_mod_two`. Four of them, `exists_other`, `filter_length_one`, `rotate_split` and
+`rotate_compose`, now take a list of any kind of member, not of points alone, since a module
+of lists names no point; every caller is unchanged. `LoopFacts.filter_length_two` stated `Extract.countP_two`
 again and is gone; `Extract`'s four `ite_` lemmas give way to Lean's `ite_eq_left` and
 `ite_eq_right`; `CellFacts.third_corner` gives way to `convex_third`, which now cites
 `exists_other`; and the two proofs of `core_between` are one, `ConvexCell.core_between`, in
