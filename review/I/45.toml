@@ -22,7 +22,7 @@ note = "I.42 builds FH on half of BD itself, so H falls on D: the Lean writes D 
 at = "Thus, with a straight line GH"
 kind = "helper"
 helper = "SameSideOf.trans_opposite"
-note = "Euclid uses KH and HM on opposite sides of GH to apply I.14. Beneath the first constructions, the Lean requests I.44's parallelogram across GH from K and uses `SameSideOf.trans_opposite` to put M on the other side; I.14 now puts H between K and M, with D for H in the Lean."
+note = "Euclid applies I.14 because KH and HM do not lie on the same side of GH. The Lean makes it so: it applies I.44's parallelogram to GH on the side away from K, and `SameSideOf.trans_opposite` puts M on the other side of GH from K. I.14 then puts H between K and M (D for H in the Lean)."
 
 [[passage]]
 at = "And, since the triangle ABD is equal to the parallelogram FH"
@@ -31,8 +31,8 @@ helper = "quadArea_add_of_parallelograms"
 note = "Euclid takes FH and GM together as KFLM, equal to the two triangles of ABCD. With H between K and M and G between F and L from the two applications of I.14, `quadArea_add_of_parallelograms` joins the areas; the Lean writes D for H and takes ABCD as the sum of ABD and DBC. For a figure given by its outline, the step from triangles to the whole figure is proved: the figure has a division into triangles that lie apart (`Figures.division_exists`), and every such division gives one sum, its area (`Figures.Apart.area_eq_of_same_region`, `Figures.area_eq`), so `Prop45.outline` makes the parallelogram equal to the figure itself."
 
 [figure]
-case = "Euclid's figure ABCD, cut by DB into the two triangles ABD and DBC"
-note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart."
+case = "Euclid's figure ABCD, divided by DB into the two triangles ABD and DBC"
+note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart, as the figure at a glance does."
 
 [review]
 stage = "full"

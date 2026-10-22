@@ -121,11 +121,11 @@ theorem Prop46.square_eq {A B C D A' B' C' D' : Point} (h : Square A B C D)
 this too in I.48 ("therefore the square on DC is equal to the square on BC, so that
 the side DC is also equal to BC"). Heath reports, under I.46, Proclus' proof, which
 places the two squares side by side and then reasons through I.39, I.27, I.34
-and I.26. We take another road, because a figure cannot be moved here (as
-`Prop44.place` explains): one square has to be described afresh, and described
-inside the other it is a part of it. Were AB less than A'B', cut off from A'B'
-a straight line A'X equal to AB [I. 3], and describe on it a square A'ZYX on
-the side of C' [I. 46]. It is equal to the square ABCD (`Prop46.square_eq`); Z
+and I.26. We take another road, because no rule of ours carries a square to a new
+place (`Prop44.place` meets the same limit): one square has to be described
+afresh, and described inside the other it is a part of it. Were AB less than
+A'B', cut off from A'B' a straight line A'X equal to AB [I. 3], and describe on
+it a square A'ZYX on the side of C' [I. 46]. It is equal to the square ABCD (`Prop46.square_eq`); Z
 falls on A'D', short of D'; and each square is double the triangle its diameter
 cuts off from A' [I. 34]. But the triangle XA'Z is a part of the triangle
 B'A'D', and so less. [I. 3, I. 4, I. 28, I. 34, I. 46] -/

@@ -18,7 +18,7 @@ Euclid's text, in Heath's translation: [`heath/I/45.md`](../../heath/I/45.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
-`Prop45` is Euclid's worked configuration: the four-sided figure ABCD, cut by DB into the
+`Prop45` is Euclid's worked configuration: the four-sided figure ABCD, divided by DB into the
 triangles ABD and DBC. Euclid's proof makes a parallelogram for the first triangle [I. 42],
 applies one for the second to its side [I. 44], and shows that the two make one
 parallelogram; a figure of more triangles repeats the second step, as Oliver Byrne draws it
@@ -31,7 +31,7 @@ for three (1847, p. 46). The companions after it carry his words to any rectilin
 * `Prop45.append` is the second step of Euclid's proof.
 * `Prop45.sum` repeats it, for any number of triangles. It is the construction, and claims
   nothing of a figure: the triangles need not fit together.
-* `Prop45.apart` is the proposition for a figure given with triangles that lie apart,
+* `Prop45.apart` is the proposition for a figure given with triangles that do not overlap,
   no point inside two of them (`Apart`).
   The figure may have a hole (Definition I.14: "any boundary or boundaries").
 * `Prop45.figure` is the proposition for a figure with one boundary, given with triangles
@@ -371,7 +371,7 @@ namespace Elements
 /-! ## Euclid's and Byrne's division, checked
 
 Euclid's DB, drawn from the corner D of ABCD, and Oliver Byrne's two straight lines from one
-corner of his figure (1847, p. 46), cut it into triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ from one
+corner of his figure (1847, p. 46), divide it into triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ from one
 corner A₀. `Fitted.fan` says when those triangles are a figure in the sense of `Fitted`: each
 two neighbouring triangles lie on opposite sides of the straight line A₀Aᵢ they share, and the
 angles A₁A₀A₂, …, Aₙ₋₁A₀Aₙ together are less than four right angles. Without the two

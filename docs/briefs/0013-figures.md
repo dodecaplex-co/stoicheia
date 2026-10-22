@@ -1359,7 +1359,7 @@ brought to the promoted state: none says that a proof is due, that a division or
 independence is unproved, or that the fan's boundary is not stated, and the notes of
 `Elements/Foundations/Phrases.lean` that set division and its independence aside were
 rewritten, its Lean unchanged (approval 2). `Certificate/axioms.lock` gains the twenty
-words that the outline companions' statements reach, from 238 words to 258, with no axiom
+words that the outline companions' statements reach, from 242 words to 262, with no axiom
 added, removed or restated, and the model's two copies of its hash are renewed, for no law
 of the model changes.
 

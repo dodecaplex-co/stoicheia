@@ -28,11 +28,11 @@
   `Figures.Outline.Region`, `Figures.Outline.area`, `Figures.Outline.depth`,
   `Figures.RayCrosses`, `Figures.SimpleLoop`, `Figures.crossingCount`, and `Figures.sides`
   with `Figures.sides.match_1`, the auxiliary Lean declares for it. So the vocabulary grows
-  from 238 words to 258, and no axiom is added, removed or restated. The lock's header
+  from 242 words to 262, and no axiom is added, removed or restated. The lock's header
   comment now says that a change to it is recorded in a decision entry of its own.
 
   This entry approves the change to `Certificate/FIELDS.md`, where `scripts/render.py`
-  fills the vocabulary's count with the new number, 258, and nothing else changes.
+  fills the vocabulary's count with the new number, 262, and nothing else changes.
 
   This entry approves the renewed hash in `tests/model/lock.sha256`, with its dated note.
   This entry approves the renewed hash in `model/lock.sha256`, with its dated note. Each
