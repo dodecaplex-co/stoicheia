@@ -6,73 +6,84 @@ on:
 
 jobs:
   risk:
-    # The pull request's risk class, R0 to R5 (docs/WORKFLOW.md, section 8), which the
-    # `negative` and `formal-model` jobs read; they never read a label. Main's copy of
-    # scripts/risk.py classifies the files the pull request changes, so a pull request
-    # cannot lower its own class by editing the classifier. A push to main is R5: every job
-    # runs in full. A push to another branch is classified as its pull request is, by
-    # main's copy, against main, so that the branch's own run, which the merge gate also
-    # waits for, does not run in full what the pull request's run would skip.
+    # The change's risk class, R0 to R5 (docs/WORKFLOW.md, section 8), and whether the
+    # formal model must be checked, which the `negative` and `formal-model` jobs read; they
+    # read no label. This job reads one, `release`, and it can only raise the class. Main's
+    # copy of scripts/risk.py, never the change's own, classifies the files the change
+    # brings to main, so a change cannot lower its own class by editing the classifier. A
+    # pull request into main is classified so; one labelled `release` or into any other
+    # branch, a push to main, a tag and every other event are R5, and every job runs in
+    # full. A push to another branch is classified by main's copy
+    # against main, from where the branch left it: the merge gate waits for that run too, so
+    # it takes the branch's class rather than R5, and since the branch's changes since it
+    # left main hold every path its pull request brings, that class is never less than the
+    # pull request's. The label is read from the event that started the run, so a `release`
+    # label added later counts from the next push.
     runs-on: ubuntu-latest
     permissions:
       contents: read
     timeout-minutes: 10
     outputs:
       class: ${{ steps.classify.outputs.class }}
+      formal_model: ${{ steps.classify.outputs.formal_model }}
     steps:
       - uses: actions/checkout@v5
         with:
-          # Main's commit and the pull request's, with what lies between them.
+          # Main's commit and the change's, with what lies between them.
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Classify the change by main's scripts/risk.py; a push to main is R5
+      - name: Classify the change by main's scripts/risk.py; a push to main, a tag, a release and any other event are R5
         id: classify
         env:
           EVENT: ${{ github.event_name }}
           REF: ${{ github.ref }}
+          BASE_REF: ${{ github.base_ref }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          RELEASE: ${{ contains(github.event.pull_request.labels.*.name, 'release') }}
         run: |
           set -euo pipefail
-          if [ "$EVENT" = push ] && [ "$REF" != refs/heads/main ] && \
-             git rev-parse -q --verify refs/remotes/origin/main > /dev/null; then
-            # A branch's push: its changes since it left main, classified by main's copy.
-            base=$(git rev-parse refs/remotes/origin/main)
-            git show "$base:scripts/risk.py" > "$RUNNER_TEMP/risk.py" 2> /dev/null || {
-              echo "main, at $base, has no scripts/risk.py yet: R5, every job runs in full"
-              echo "class=R5" >> "$GITHUB_OUTPUT"
-              exit 0
-            }
-            echo "main's scripts/risk.py, at $base, classifies the push of $REF"
-            python3 -I "$RUNNER_TEMP/risk.py" --diff "$base" HEAD --github-output
+          r5() {
+            echo "$1: R5, every job runs in full"
+            { echo "class=R5"; echo "formal_model=true"; } >> "$GITHUB_OUTPUT"
             exit 0
-          fi
-          if [ "$EVENT" != pull_request ]; then
-            echo "a $EVENT event of $REF is R5: every job runs in full"
-            echo "class=R5" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          # The checkout is the merge commit GitHub made of the pull request into main, as
-          # the acceptance job reads it: its first parent is main, whose workflow this run
-          # follows unless the pull request changes it, and its changes over that parent
-          # are what the pull request brings to main.
-          if [ "$(git rev-list --parents -n 1 HEAD | wc -w)" -eq 3 ]; then
-            base=$(git rev-parse HEAD^1)
-            head=$(git rev-parse HEAD)
-          else
-            base="$BASE_SHA"
-            head="$HEAD_SHA"
-          fi
+          }
+          case "$EVENT:$REF" in
+            push:refs/heads/main)
+              r5 "a push to main" ;;
+            push:refs/heads/*)
+              # A branch's push: its changes since it left main, classified by main's copy.
+              git rev-parse -q --verify refs/remotes/origin/main > /dev/null ||
+                r5 "a push of $REF, with no main to classify it against"
+              base=$(git rev-parse refs/remotes/origin/main)
+              head=$(git rev-parse HEAD)
+              what="the push of $REF" ;;
+            pull_request:*)
+              if [ "$RELEASE" = true ]; then r5 "a pull request labelled release"; fi
+              if [ "$BASE_REF" != main ]; then r5 "a pull request into $BASE_REF, not main"; fi
+              # The checkout is the merge commit GitHub made of the pull request into main,
+              # as the acceptance job reads it: its first parent is main, whose workflow
+              # this run follows unless the pull request changes it, and its changes over
+              # that parent are what the pull request brings to main.
+              if [ "$(git rev-list --parents -n 1 HEAD | wc -w)" -eq 3 ]; then
+                base=$(git rev-parse HEAD^1)
+                head=$(git rev-parse HEAD)
+              else
+                base="$BASE_SHA"
+                head="$HEAD_SHA"
+              fi
+              what="the pull request" ;;
+            *)
+              r5 "a $EVENT event of $REF" ;;
+          esac
           git cat-file -e "$base^{commit}"
           listed=$(git ls-tree --name-only "$base" -- scripts/risk.py)
-          if [ "$listed" = scripts/risk.py ]; then
-            git show "$base:scripts/risk.py" > "$RUNNER_TEMP/risk.py"
-            echo "main's scripts/risk.py, at $base, classifies the pull request"
-          else
-            cp scripts/risk.py "$RUNNER_TEMP/risk.py"
-            echo "main, at $base, has no scripts/risk.py yet, so the pull request's own copy classifies it"
+          if [ "$listed" != scripts/risk.py ]; then
+            r5 "main, at $base, has no scripts/risk.py to classify $what"
           fi
+          git show "$base:scripts/risk.py" > "$RUNNER_TEMP/risk.py"
+          echo "main's scripts/risk.py, at $base, classifies $what"
           python3 -I "$RUNNER_TEMP/risk.py" --diff "$base" "$head" --github-output
 
   check:
@@ -174,11 +185,13 @@ jobs:
 
   negative:
     # Break the project on purpose, and check that every break is caught: in full for a
-    # change of class R3, R4 or R5 and for every push to main; for R0 to R2 the job passes at
-    # once and says why, since the cadence (safe-push-tests.yml) and the release run these
-    # tests (docs/decisions/2026-10-22-risk-lanes.md). It runs whatever became of `risk`,
-    # and fails unless `risk` succeeded: GitHub accepts a skipped required check, so a
-    # failed or cancelled classification must fail it, never skip it.
+    # change of class R3, R4 or R5, which every push to main and every release's pull
+    # request is (`risk`); for R0 to R2 the job passes at once and says why, since the
+    # cadence (safe-push-tests.yml) runs these tests on main every six hours, and the
+    # release's pull request runs them here as R5 and in the pre-flight, which runs them
+    # on every pull request (docs/decisions/2026-10-22-risk-lanes.md). It runs whatever
+    # became of `risk`, and fails unless `risk` succeeded: GitHub accepts a skipped
+    # required check, so a failed or cancelled classification must fail it, never skip it.
     needs: risk
     if: always()
     runs-on: ubuntu-latest
@@ -198,7 +211,7 @@ jobs:
               echo "class $CLASS: the negative tests run in full"
               echo "full=true" >> "$GITHUB_OUTPUT" ;;
             R0|R1|R2)
-              echo "class $CLASS: the negative tests run on the cadence and at the release (docs/decisions/2026-10-22-risk-lanes.md)"
+              echo "class $CLASS: the negative tests run on main on the cadence, and on the release's pull request as R5 (docs/decisions/2026-10-22-risk-lanes.md)"
               echo "full=false" >> "$GITHUB_OUTPUT" ;;
             *)
               echo "the risk job gave no class from R0 to R5: '$CLASS'"
@@ -246,12 +259,15 @@ jobs:
     # The formal model in model/ (model/README.md, "The CI job"): a Lake package of its
     # own, with a pinned Mathlib, in which Lean checks that the ordinary plane satisfies
     # the laws translated so far. Not `model`, which is the numerical harness above. Every
-    # Lean step runs in model/: the main package never sees Mathlib. In full for a pull
-    # request of class R4 or R5, which every change to model/, to Certificate/axioms.lock
-    # or to scripts/check_model_kernel.py is, and for every push to main; for R0 to R3 the job
-    # passes at once and says why, since the cadence (safe-push-tests.yml) and the release
-    # run it (docs/decisions/2026-10-22-risk-lanes.md). Like `negative`, it fails unless
-    # `risk` succeeded, never skipped.
+    # Lean step runs in model/: the main package never sees Mathlib. In full for a change of
+    # class R4 or R5, which every change to model/, to Certificate/axioms.lock or to
+    # scripts/check_model_kernel.py is, as are every push to main and every release's pull
+    # request, and for a change of any class to a file of the main package the model
+    # imports, directly or through others, which `risk` finds from the model's import lines
+    # (scripts/risk.py, model_inputs). Otherwise the job passes at once and says why: the
+    # change touches none of the model's inputs, and the cadence (safe-push-tests.yml)
+    # checks the model on main every six hours (docs/decisions/2026-10-22-risk-lanes.md).
+    # Like `negative`, it fails unless `risk` succeeded, never skipped.
     needs: risk
     if: always()
     runs-on: ubuntu-latest
@@ -259,25 +275,29 @@ jobs:
     # Mathlib from source for hours, so the job stops long before that.
     timeout-minutes: 30
     steps:
-      - name: Read the class, and run in full for R4 and R5
+      - name: Read the class, and run in full for R4 and R5 and for a change to a file the model imports
         id: lane
         env:
           RESULT: ${{ needs.risk.result }}
           CLASS: ${{ needs.risk.outputs.class }}
+          FORMAL_MODEL: ${{ needs.risk.outputs.formal_model }}
         run: |
           if [ "$RESULT" != success ]; then
             echo "the risk job ended: $RESULT; without its class, the formal model cannot pass"
             exit 1
           fi
-          case "$CLASS" in
-            R4|R5)
+          case "$CLASS:$FORMAL_MODEL" in
+            R4:*|R5:*)
               echo "class $CLASS: the formal model is checked in full"
               echo "full=true" >> "$GITHUB_OUTPUT" ;;
-            R0|R1|R2|R3)
-              echo "class $CLASS: the pull request changes nothing under model/, nor the axiom lock, nor the model's kernel check, so the formal model is checked on the cadence and at the release (docs/decisions/2026-10-22-risk-lanes.md)"
+            R0:true|R1:true|R2:true|R3:true)
+              echo "class $CLASS, and the change touches a file the formal model imports, which the risk job's log names: the formal model is checked in full"
+              echo "full=true" >> "$GITHUB_OUTPUT" ;;
+            R0:false|R1:false|R2:false|R3:false)
+              echo "class $CLASS, and the change touches nothing under model/, nor the axiom lock, the model's kernel check or a file the formal model imports, so the formal model is checked on main on the cadence (docs/decisions/2026-10-22-risk-lanes.md)"
               echo "full=false" >> "$GITHUB_OUTPUT" ;;
             *)
-              echo "the risk job gave no class from R0 to R5: '$CLASS'"
+              echo "the risk job gave no class from R0 to R5, with formal_model true or false: '$CLASS', '$FORMAL_MODEL'"
               exit 1 ;;
           esac
 

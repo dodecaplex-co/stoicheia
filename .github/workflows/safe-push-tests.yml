@@ -6,7 +6,8 @@ name: Safe-push tests
 # release but every run no. And it has to be fast"; the decision entry
 # docs/decisions/2026-10-22-suite-on-cadence.md): every six hours on main, and on demand.
 # Beside them, on the same triggers, run the full negative tests and the formal model's
-# build and kernel re-check, which CI skips on pull requests of the lower risk classes
+# build and kernel re-check, which CI skips on pull requests of the lower risk classes,
+# the formal model only when the change touches none of its inputs
 # (docs/decisions/2026-10-22-risk-lanes.md). A red run of any of the three jobs opens one
 # issue labelled blocks-release, or adds the run to the one already open, so the release
 # waits for it.
@@ -57,11 +58,13 @@ jobs:
           retention-days: 35
           if-no-files-found: ignore
 
-  negative:
+  negative-tests:
     # The negative tests in full, as CI's `negative` job runs them: break the project on
-    # purpose, and check that every break is caught. CI runs them on pull requests of
-    # class R3 to R5 and on every push to main; here they run on main for what the pull
-    # requests of R0 to R2 landed without them.
+    # purpose, and check that every break is caught. CI runs them on every push to main,
+    # and on a pull request or a branch's push of class R3 and above; here they run on main
+    # for what the pull requests of R0 to R2 landed without them. Not named `negative`, so
+    # that a run of this workflow on a pull request's branch posts no check of a required
+    # check's name.
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -92,9 +95,9 @@ jobs:
   formal-model-kernel:
     # The formal model in model/, as CI's `formal-model` job checks it: its build, with the
     # pinned Mathlib's prebuilt files, then its compiled proofs replayed by Lean's kernel
-    # (model/README.md, "The CI job"). CI runs it on pull requests of class R4 and R5 and
-    # on every push; here it runs on main for what the pull requests of R0 to R3 landed
-    # without it.
+    # (model/README.md, "The CI job"). CI runs it on every push to main, and on a pull
+    # request or a branch's push of class R4 and above or that changes a file the model
+    # imports; here it runs on main for what the other pull requests landed without it.
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -142,10 +145,10 @@ jobs:
     # issues, and it runs no code of the repository: it reads the log the tests left and
     # calls gh. The issue's title is the one it had before the second and third jobs
     # joined, so an issue already open is found.
-    needs: [safe-push-tests, negative, formal-model-kernel]
+    needs: [safe-push-tests, negative-tests, formal-model-kernel]
     if: >-
       always() && github.ref == 'refs/heads/main' &&
-      (needs.safe-push-tests.result != 'success' || needs.negative.result != 'success' ||
+      (needs.safe-push-tests.result != 'success' || needs.negative-tests.result != 'success' ||
       needs.formal-model-kernel.result != 'success')
     concurrency:
       group: safe-push-tests-report
@@ -168,7 +171,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           TESTS: ${{ needs.safe-push-tests.result }}
-          NEGATIVE: ${{ needs.negative.result }}
+          NEGATIVE: ${{ needs.negative-tests.result }}
           KERNEL: ${{ needs.formal-model-kernel.result }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           SHA: ${{ github.sha }}
@@ -180,7 +183,7 @@ jobs:
             echo "The cadence run on main at \`$SHA\` was red in these jobs:"
             echo
             [ "$TESTS" = success ] || echo "- \`safe-push-tests\` (\`scripts/test_safe_push.py\`): $TESTS"
-            [ "$NEGATIVE" = success ] || echo "- \`negative\` (\`scripts/negative_tests.py\`, after the build): $NEGATIVE"
+            [ "$NEGATIVE" = success ] || echo "- \`negative-tests\` (\`scripts/negative_tests.py\`, after the build): $NEGATIVE"
             [ "$KERNEL" = success ] || echo "- \`formal-model-kernel\` (the formal model's build and kernel re-check): $KERNEL"
             echo
             echo "Run: $RUN_URL"

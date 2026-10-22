@@ -314,12 +314,14 @@ python3 scripts/check_links.py
 Review the generated differences and commit them with their sources, so that regenerating
 leaves them unchanged and the `git status` line prints nothing. That line reads the whole
 worktree, as the pre-flight's does: a file that any command above leaves changed or new,
-generated page or not, fails it, so the sequence runs on a committed revision. Five more
-jobs run on their own, each in isolation: four of CI's on each pull request, two of them
-by the pull request's risk class (below), and `safe-push-tests`, which runs on a cadence
-(below). The first three have direct local commands; the next two commands below run the
+generated page or not, fails it, so the sequence runs on a committed revision. Six more
+jobs run on their own, each in isolation: CI's `risk`, which classifies the change
+(below); four more of CI's on each pull request, two of them by the class `risk` gives;
+and `safe-push-tests`, which runs on a cadence (below). Below, the first commands are
+those of CI's `negative`, `model` and `formal-model` jobs; the next two run the
 acceptance job's tests and checklist without its CI comparison, and the last two run the
-`safe-push-tests` job's:
+`safe-push-tests` job's; the commands of `risk` are under "Which jobs run for which
+class", after the block:
 
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
@@ -338,21 +340,28 @@ python3 scripts/test_safe_push.py      # the `safe-push-tests` job, on a cadence
 `RUNNER_TEMP` supplies GitHub Actions' temporary directory; the fallback writes under
 `/tmp` when the command is run locally.
 
-**Which jobs run for which class.** CI's first job, `risk`, computes the pull request's
-risk class, from R0 (docs) to R5 (the landing tool and CI), from the files it changes:
+**Which jobs run for which class.** CI's first job, `risk`, computes the change's risk
+class, from R0 (docs) to R5 (the landing tool and CI), from the files it changes:
 `scripts/risk.py`, the one source of the classes, gives each file the class of the first
-rule of its table that matches it, R5 when none does, and the pull request the highest of
-its files' classes. The job runs main's copy of the script, so a pull request cannot lower
-its own class by editing it; a push to main is R5, and a push to another branch is
-classified against main as its pull request is. `check`, `model` and `acceptance` run for
-every class. `negative` runs in full for R3, R4 and R5, and `formal-model` for R4 and R5,
-the classes of every change to `model/`, to `Certificate/axioms.lock` and to
-`scripts/check_model_kernel.py`; for a lower class each passes at once and says why, since
-the `safe-push-tests` workflow runs both on main every six hours and a red run there holds
-the release ([the decision](decisions/2026-10-22-risk-lanes.md)). Each fails, and is never
-skipped, when `risk` does not succeed, for GitHub accepts a skipped required check.
-`python3 scripts/risk.py --paths <file>...` gives files' classes up front, and `python3
-scripts/risk.py . origin/main` a branch's class.
+rule of its table that matches it, R5 when none does, and the change the highest of its
+files' classes. The job runs main's copy of the script, never the change's own, so a
+change cannot lower its own class by editing it. A pull request into main is classified
+so, and a push to another branch against main, as its pull request is; a pull request
+labelled `release` when its run starts, a pull request into another branch, a push to
+main, a tag and any other event are R5. `check`, `model` and `acceptance` run for every
+class. `negative` runs in full for R3, R4 and R5. `formal-model` runs in full for R4 and
+R5, the classes of every change to `model/`, to `Certificate/axioms.lock` and to
+`scripts/check_model_kernel.py`, and for a change of any class to a file of the main
+package that the formal model imports, directly or through others: `risk` reads them from
+the model's import lines, at both ends of the change, so the set follows the imports as
+they change. For a lower class, and for `formal-model` a change that touches none of the
+model's inputs, each job passes at once and says why, since the `safe-push-tests` workflow
+runs both on main every six hours and a red run there holds the release ([the
+decision](decisions/2026-10-22-risk-lanes.md)). Each fails, and is never skipped, when
+`risk` does not succeed, for GitHub accepts a skipped required check. `python3
+scripts/risk.py --paths <file>...` gives files' classes up front; `python3 scripts/risk.py .
+origin/main` a branch's class, and whether the formal model runs; and `python3
+scripts/risk.py --model-inputs HEAD` the files the model imports.
 
 The full `acceptance` job runs only in CI. Its ratchet before the consolidation release,
 the switch to the full gate at that release, the reports and the executable definitions
@@ -372,12 +381,13 @@ every pull request lands through (section 10), in a workflow of its own,
 (`workflow_dispatch`), never on a pull request. The owner, 22 October 2026: "I'm fine that
 this needs to run on a cadence and blocks release but every run no. And it has to be fast"
 ([the decision](decisions/2026-10-22-suite-on-cadence.md)). On the same triggers the
-workflow runs two more jobs, as CI's `negative` and `formal-model` jobs run them: `negative`,
-the build and the negative tests in full, and `formal-model-kernel`, the formal model's
-build and its kernel re-check. A red run on main, any of the three jobs failed, cancelled
-or timed out, opens one issue labelled `blocks-release`, or adds the run to the one
-already open, with the run's link, the jobs that were red and the tests that failed, so
-the release waits for it until the issue is closed, with a link to a later green run; that
+workflow runs two more jobs, as CI's `negative` and `formal-model` jobs run them:
+`negative-tests`, the build and the negative tests in full, and `formal-model-kernel`, the
+formal model's build and its kernel re-check, neither sharing a required check's name. A red
+run on main, any of the three jobs failed, cancelled or timed out, opens one issue labelled
+`blocks-release`, or adds the run to the one already open, with the run's link, the jobs
+that were red and the tests of `scripts/test_safe_push.py` that failed, so the release
+waits for it until the issue is closed, with a link to a later green run; that
 is done by a fourth job, the only one with leave to write issues, which runs no code of
 the repository. The suite's tests read the whole tree, content as well as code: the check
 inputs safe_push guards, the workflows, this page, whose first command block they compare

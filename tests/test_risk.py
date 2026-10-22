@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 """scripts/risk.py, the risk class of a change: its table's first-match order, R5 for a
 path no rule names, a change's highest class, `--diff` on a repository of the test's own,
-and `--audit` over this repository's tracked files.
+paths printed so that none can start a line of CI's log, `--audit` over this repository's
+tracked files, and the formal model's inputs: the Lean headers it reads, the files a
+model imports, followed through, on a repository of the test's own and on this one.
 
     python3 -I tests/test_risk.py
 
 Standard library and Git only; no Lean or network. Each `--diff` case runs in a Git
 repository of its own, read with no configuration but its own. scripts/negative_tests.py
-runs it beside the decision entry regressions, so CI's `negative` job runs it on every
-pull request of class R3 and above (a change to scripts/risk.py is R5), on every push, and
-on the cadence.
+runs it beside the decision entry regressions, so CI's `negative` job runs it on every push
+to main, and on a pull request or a branch's push of class R3 and above (a change to
+scripts/risk.py is R5); the cadence runs it on main every six hours.
 """
 
 import os
@@ -85,13 +87,11 @@ class Table(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertClass(path, expected)
 
-    def test_formal_model_inputs_are_R4_or_above(self):
-        # CI's formal-model job reads the class alone, and runs for R4 and R5: every file of
-        # the model, the lock its hash ties, and the check the job runs must reach it.
-        for path in ("model/lock.sha256", "model/Model.lean", "model/Check/Generated.lean",
-                     "model/lakefile.toml", "model/lake-manifest.json",
-                     "Certificate/axioms.lock", "scripts/check_model_kernel.py",
-                     ".github/workflows/ci.yml"):
+    def test_the_formal_model_jobs_own_files_are_R4_or_above(self):
+        # The check the formal-model job runs, and the workflow that runs it; the model's
+        # own files and the lock are tested over this repository's tracked files below.
+        for path in ("model/lock.sha256", "Certificate/axioms.lock",
+                     "scripts/check_model_kernel.py", ".github/workflows/ci.yml"):
             with self.subTest(path=path):
                 self.assertIn(risk.classify(path)[0], ("R4", "R5"))
 
@@ -125,8 +125,53 @@ class Table(unittest.TestCase):
         self.assertEqual(per["heath/I/01.md"], ("R1", True))
 
 
-class Command(unittest.TestCase):
-    """The script itself, on a repository of the test's own."""
+class Header(unittest.TestCase):
+    """The imports of a Lean file's header, as Lean 4.35 reads them."""
+
+    def test_the_forms_of_an_import(self):
+        cases = (
+            ("import A.B\n", ["A.B"]),
+            ("public import A\n", ["A"]),
+            ("meta import A\npublic meta import B\n", ["A", "B"]),
+            ("import all A\n", ["A"]),
+            # Lean refuses `private import`; read as an import, it can only widen the set.
+            ("private import A\n", ["A"]),
+            ("module\n\npublic import A\n", ["A"]),
+            ("prelude\nimport A\n", ["A"]),
+            # Several modules on one line, each with its own `import`.
+            ("import A import B.C\n", ["A", "B.C"]),
+            ("public import A public import B -- and a remark\n", ["A", "B"]),
+            ("import A /- a remark -/ import B\n", ["A", "B"]),
+            # Comments anywhere, nested blocks and doc comments among them.
+            ("-- A remark.\n/- A block\n/- nested, with\nimport X -/\n-/\n/-! A module's doc.\n"
+             "import Y -/\nimport A\n", ["A"]),
+            ("import Model.Laws.«areas-p5»\n", ["Model.Laws.«areas-p5»"]),
+            # The header ends at the first command: an `import` after it is none.
+            ("import A\nnamespace N\nimport B\n", ["A"]),
+            ('import A\ndef s := "\npublic import B"\n', ["A"]),
+            ("import A\npublic section\nimport B\n", ["A"]),
+            ("import A\n#check 1\nimport B\n", ["A"]),
+            # Lean takes one module to an `import`, and refuses B here as a command.
+            ("import A B\n", ["A"]),
+            ("theorem t : True := trivial\n", []),
+            ("", []),
+        )
+        for text, expected in cases:
+            with self.subTest(text=text):
+                self.assertEqual(risk.imported_modules(text), expected)
+
+    def test_a_module_is_found_at_its_path(self):
+        for module, path in (("Elements.BookI.Prop07", "Elements/BookI/Prop07.lean"),
+                             ("Model.Laws.«areas-p5»", "Model/Laws/areas-p5.lean"),
+                             ("Elements", "Elements.lean")):
+            with self.subTest(module=module):
+                self.assertEqual(risk.module_path(module), path)
+
+
+class Repo(unittest.TestCase):
+    """A Git repository of the test's own, its first commit holding FILES."""
+
+    FILES: dict = {}
 
     def setUp(self):
         temp = tempfile.TemporaryDirectory()
@@ -140,13 +185,11 @@ class Command(unittest.TestCase):
         self.git("init", "-q")
         # Rename detection on, as in an ordinary clone: risk.py must turn it off.
         self.git("config", "diff.renames", "true")
-        self.base = self.commit({"README.md": "A reader's edition.\n",
-                                 ".github/workflows/ci.yml": "name: CI\n",
-                                 "docs/a b/notes.md": "Notes.\n"})
+        self.base = self.commit(self.FILES)
 
-    def git(self, *args):
-        done = subprocess.run(["git", *args], cwd=self.root, env=self.env,
-                              capture_output=True, text=True)
+    def git(self, *args, data=None):
+        done = subprocess.run(["git", *args], cwd=self.root, env=self.env, input=data,
+                              capture_output=True, text=data is None)
         self.assertEqual(done.returncode, 0, done.stderr)
         return done.stdout
 
@@ -161,6 +204,16 @@ class Command(unittest.TestCase):
         self.git("commit", "-q", "--allow-empty", "-m", "A change")
         return self.git("rev-parse", "HEAD").strip()
 
+    def commit_in_index(self, files):
+        """Commit files through Git's index alone, at paths a file system might refuse."""
+        records = b""
+        for name, text in files.items():
+            blob = self.git("hash-object", "-w", "--stdin", data=text.encode()).strip()
+            records += b"100644 " + blob + b"\t" + name.encode() + b"\0"
+        self.git("update-index", "-z", "--index-info", data=records)
+        self.git("commit", "-q", "-m", "A change at odd paths")
+        return self.git("rev-parse", "HEAD").strip()
+
     def risk(self, *args, env=None):
         return subprocess.run([sys.executable, "-I", str(RISK), *args], cwd=self.root,
                               env=env or self.env, capture_output=True, text=True)
@@ -170,12 +223,32 @@ class Command(unittest.TestCase):
         self.assertEqual(done.returncode, 0, done.stderr)
         return done.stdout.splitlines()[0].split()[0], done.stdout
 
+    def lane(self, head):
+        """The class and formal_model `--diff --github-output` writes, and what it prints."""
+        output = self.temp / "github-output"
+        output.write_text("", encoding="utf-8")
+        done = self.risk("--diff", self.base, head, "--github-output",
+                         env=dict(self.env, GITHUB_OUTPUT=str(output)))
+        self.assertEqual(done.returncode, 0, done.stderr)
+        values = dict(line.split("=", 1)
+                      for line in output.read_text(encoding="utf-8").splitlines())
+        self.assertEqual(sorted(values), ["class", "formal_model"])
+        return values["class"], values["formal_model"], done.stdout
+
+
+class Command(Repo):
+    """The script itself, on a repository of the test's own."""
+
+    FILES = {"README.md": "A reader's edition.\n", ".github/workflows/ci.yml": "name: CI\n",
+             "docs/a b/notes.md": "Notes.\n"}
+
     def test_an_empty_diff_is_R0(self):
         self.assertEqual(self.diff_class(self.base)[0], "R0")
         head = self.commit({})
         cls, out = self.diff_class(head)
         self.assertEqual(cls, "R0")
         self.assertIn("(no file changed)", out)
+        self.assertEqual(self.lane(head)[:2], ("R0", "false"))
 
     def test_a_workflow_change_is_R5(self):
         head = self.commit({"README.md": "Changed.\n",
@@ -184,6 +257,7 @@ class Command(unittest.TestCase):
         self.assertEqual(cls, "R5")
         self.assertIn("  R5 .github/workflows/ci.yml", out.splitlines())
         self.assertIn("  R0 README.md", out.splitlines())
+        self.assertIn("formal model: in full, since the class is R5", out.splitlines())
 
     def test_a_path_with_a_space_is_one_path(self):
         # Split on white space, the path would give `b/notes.md`, which no rule names: R5.
@@ -191,6 +265,44 @@ class Command(unittest.TestCase):
         cls, out = self.diff_class(head)
         self.assertEqual(cls, "R0", out)
         self.assertIn("  R0 docs/a b/notes.md", out.splitlines())
+
+    def test_no_path_can_start_a_line_of_the_log(self):
+        # GitHub takes a line of a step's log that starts `::`, after any spaces, for a
+        # workflow command. A path with a line break is still one path, printed on one
+        # line with the break escaped; one that starts `::` follows the class, as all do.
+        odd = {"docs/x\n::error::planted.md": "x\n", "docs/y\r::add-mask::R0.md": "y\n",
+               "::warning::z.md": "z\n"}
+        head = self.commit_in_index(odd)
+        cls, out = self.diff_class(head)
+        self.assertEqual(cls, "R5", out)        # `::warning::z.md` matches no rule
+        lines = out.splitlines()
+        self.assertIn("  R0 docs/x\\n::error::planted.md", lines)
+        self.assertIn("  R0 docs/y\\r::add-mask::R0.md", lines)
+        self.assertIn("  R5 ::warning::z.md  (no rule)", lines)
+        done = self.risk("--audit", str(self.root))
+        self.assertEqual(done.returncode, 1, done.stdout + done.stderr)
+        self.assertIn("  unruled (R5 by default): ::warning::z.md", done.stdout.splitlines())
+        paths = self.risk("--paths", *odd)
+        self.assertEqual(paths.returncode, 0, paths.stderr)
+        self.assertIn("R0 docs/x\\n::error::planted.md", paths.stdout.splitlines())
+        # Read as text, an unescaped carriage return would also end a line here.
+        for printed in (out, done.stdout, paths.stdout):
+            for line in printed.splitlines():
+                with self.subTest(line=line):
+                    self.assertFalse(line.lstrip().startswith("::"), line)
+
+    def test_a_submodule_change_counts_whatever_gitmodules_says(self):
+        # `ignore = all` in .gitmodules would hide the change from `git diff`.
+        self.commit({".gitmodules": ('[submodule "sub"]\n\tpath = scripts/sub\n'
+                                     "\turl = ./sub\n\tignore = all\n")})
+        self.git("update-index", "--add", "--cacheinfo", f"160000,{'1' * 40},scripts/sub")
+        self.git("commit", "-q", "-m", "A submodule")
+        self.base = self.git("rev-parse", "HEAD").strip()
+        self.git("update-index", "--cacheinfo", f"160000,{'2' * 40},scripts/sub")
+        self.git("commit", "-q", "-m", "The submodule moved")
+        cls, out = self.diff_class(self.git("rev-parse", "HEAD").strip())
+        self.assertEqual(cls, "R3", out)
+        self.assertIn("  R3 scripts/sub", out.splitlines())
 
     def test_a_file_moved_counts_where_it_was(self):
         # With rename detection, Git would name only docs/ci.md, which is R0.
@@ -218,7 +330,8 @@ class Command(unittest.TestCase):
         done = self.risk("--diff", self.base, head, "--github-output",
                          env=dict(self.env, GITHUB_OUTPUT=str(output)))
         self.assertEqual(done.returncode, 0, done.stderr)
-        self.assertEqual(output.read_text(encoding="utf-8"), "earlier=1\nclass=R5\n")
+        self.assertEqual(output.read_text(encoding="utf-8"),
+                         "earlier=1\nclass=R5\nformal_model=true\n")
         self.assertTrue(done.stdout.startswith("R5 "), done.stdout)
         # Asked for, GITHUB_OUTPUT must be set: no class otherwise.
         done = self.risk("--diff", self.base, head, "--github-output")
@@ -240,6 +353,11 @@ class Command(unittest.TestCase):
                 self.assertEqual(done.stdout, "")
                 self.assertEqual(output.read_text(encoding="utf-8"), "")
         self.assertFalse((self.root / "written...HEAD").exists())
+        for args in (("--model-inputs", "no-such-revision"), ("--model-inputs", "--all"),
+                     ("--model-inputs",)):
+            with self.subTest(args=args):
+                done = self.risk(*args)
+                self.assertEqual((done.returncode, done.stdout), (2, ""), done.stderr)
         # Outside any repository, too.
         outside = self.temp / "outside"
         outside.mkdir()
@@ -269,11 +387,122 @@ class Command(unittest.TestCase):
         self.assertEqual(done.returncode, 2, done.stdout + done.stderr)
 
 
+class FormalModel(Repo):
+    """formal_model: a change of any class to a file the model imports runs the model."""
+
+    FILES = {
+        "model/Check.lean": "import Check.Circles\nimport Check.Angles\n",
+        # Prop07 directly, and Prop05 through it; Mathlib's and the model's own modules
+        # have no file in the main package; Prop09 only in a string, after the header.
+        "model/Check/Circles.lean": (
+            "-- The model's check of circles.\n/- A block /- nested -/ remark. -/\n"
+            "import Elements.BookI.Prop07 import Mathlib.Data.Real.Basic\n"
+            "import Check.Hand\n\nnamespace Check\n"
+            'def text := "\nimport Elements.BookI.Prop09"\nend Check\n'),
+        "model/Check/Angles.lean": ("module\n\npublic import Elements.BookI.Prop13\n"
+                                    "meta import Model.Laws.«areas-p5»\n"),
+        "model/Check/Hand.lean": "import Elements.Foundations.Postulates\n",
+        "model/Model/Laws/areas-p5.lean": "theorem a : True := trivial\n",
+        "Elements/BookI/Prop07.lean": ("import Elements.BookI.Prop05\n\n"
+                                       "theorem p7 : True := trivial\n"),
+        "Elements/BookI/Prop05.lean": "theorem p5 : True := trivial\n",
+        "Elements/BookI/Prop09.lean": "theorem p9 : True := trivial\n",
+        "Elements/BookI/Prop13.lean": "theorem p13 : True := trivial\n",
+        "Elements/Foundations/Postulates.lean": "theorem p : True := trivial\n",
+        "Certificate/axioms.lock": "Postulates\n",
+        "README.md": "A reader's edition.\n",
+    }
+
+    def test_the_model_inputs_follow_the_imports(self):
+        done = self.risk("--model-inputs", self.base)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertEqual(done.stdout.splitlines(),
+                         ["Elements/BookI/Prop05.lean", "Elements/BookI/Prop07.lean",
+                          "Elements/BookI/Prop13.lean",
+                          "Elements/Foundations/Postulates.lean"])
+
+    def test_a_file_the_model_imports_runs_it(self):
+        head = self.commit({"Elements/BookI/Prop07.lean": "theorem p7 : True := trivial\n"})
+        cls, model, out = self.lane(head)
+        self.assertEqual((cls, model), ("R2", "true"), out)
+        self.assertIn("formal model: in full, since the formal model imports "
+                      "Elements/BookI/Prop07.lean", out.splitlines())
+
+    def test_a_file_imported_through_another_runs_it(self):
+        head = self.commit({"Elements/BookI/Prop05.lean": "theorem p5' : True := trivial\n"})
+        self.assertEqual(self.lane(head)[:2], ("R2", "true"))
+
+    def test_a_public_import_runs_it(self):
+        head = self.commit({"Elements/BookI/Prop13.lean": "theorem p13' : True := trivial\n"})
+        self.assertEqual(self.lane(head)[:2], ("R2", "true"))
+
+    def test_a_file_outside_the_imports_does_not(self):
+        head = self.commit({"Elements/BookI/Prop09.lean": "theorem p9' : True := trivial\n",
+                            "README.md": "Changed.\n"})
+        cls, model, out = self.lane(head)
+        self.assertEqual((cls, model), ("R2", "false"), out)
+        self.assertIn("formal model: passes at once, since the change touches nothing under "
+                      "model/, nor the axiom lock, nor a file the formal model imports",
+                      out.splitlines())
+
+    def test_a_file_the_change_deletes_still_counts(self):
+        # At the diff's end the file is gone, so only the diff's start shows that the model
+        # imported it, directly (Prop13) or through another (Prop05), which nothing changed.
+        for name in ("Elements/BookI/Prop13.lean", "Elements/BookI/Prop05.lean"):
+            with self.subTest(name=name):
+                self.git("checkout", "-q", "--detach", self.base)
+                head = self.commit({}, removed=(name,))
+                cls, model, out = self.lane(head)
+                self.assertEqual((cls, model), ("R2", "true"), out)
+                self.assertEqual(out.splitlines()[1:-1], [f"  R2 {name}"])
+
+    def test_a_new_import_counts_at_the_diffs_end(self):
+        # A proof change that also gives the model a new input is R4, by model/; the file
+        # it now imports counts from then on.
+        head = self.commit({"model/Check/Hand.lean": ("import Elements.Foundations.Postulates\n"
+                                                      "import Elements.BookI.Prop09\n")})
+        self.assertEqual(self.lane(head)[:2], ("R4", "true"))
+        self.base = head
+        head = self.commit({"Elements/BookI/Prop09.lean": "theorem p9' : True := trivial\n"})
+        self.assertEqual(self.lane(head)[:2], ("R2", "true"))
+
+    def test_the_lock_runs_it(self):
+        head = self.commit({"Certificate/axioms.lock": "Postulates, changed\n"})
+        self.assertEqual(self.lane(head)[:2], ("R4", "true"))
+
+
 class Repository(unittest.TestCase):
     def test_every_tracked_file_has_a_rule(self):
         done = subprocess.run([sys.executable, "-I", str(RISK), "--audit", str(ROOT)],
                               capture_output=True, text=True)
         self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+
+    def test_every_file_of_the_model_and_the_lock_is_R4_or_above(self):
+        # CI's formal-model job runs for R4 and R5 whatever else it reads, so a table edit
+        # must never take a file of the model, or the lock its hash ties, below R4.
+        done = subprocess.run(["git", "ls-files", "-z", "--", "model", "Certificate/axioms.lock"],
+                              cwd=ROOT, capture_output=True)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        paths = [os.fsdecode(path) for path in done.stdout.split(b"\0") if path]
+        self.assertIn("model/lock.sha256", paths)
+        self.assertIn("Certificate/axioms.lock", paths)
+        for path in paths:
+            with self.subTest(path=path):
+                self.assertIn(risk.classify(path)[0], ("R4", "R5"))
+
+    def test_the_model_imports_these_files(self):
+        done = subprocess.run([sys.executable, "-I", str(RISK), "--model-inputs", "HEAD"],
+                              cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        inputs = set(done.stdout.splitlines())
+        for path in ("Elements/BookI/Prop07.lean", "Elements/BookI/Prop13.lean",
+                     "Elements/Figure/Circles.lean"):
+            with self.subTest(path=path):
+                self.assertIn(path, inputs)
+        for path in inputs:
+            with self.subTest(path=path):
+                self.assertTrue(path.endswith(".lean") and not path.startswith("model/"), path)
+                self.assertTrue((ROOT / path).is_file(), path)
 
 
 if __name__ == "__main__":

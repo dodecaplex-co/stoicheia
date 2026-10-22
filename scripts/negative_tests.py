@@ -3,7 +3,9 @@
 Each test makes one small change that must be caught, runs the check that should
 catch it, and puts everything back. Run from the repo root after `lake build` and
 `lake env lean Certificate/Facts.lean`, with `Certificate/axioms.lock` and the review
-records current; CI runs it on every push.
+records current. CI's `negative` job runs it on every push to main, and on a pull request
+or a branch's push of class R3 and above (scripts/risk.py); the cadence runs it on main
+every six hours.
 
 1. An edited Heath word: `check_fidelity.py` fails on I.1.
 2. The README's "Try breaking it": I.1 takes its radii from the wrong circle, and
@@ -64,8 +66,9 @@ records current; CI runs it on every push.
 12. A relative link to a missing file in README.md: `check_links.py` names the link
     and its source file.
 13. I.1's generated page left stale beside a changed mishnah: after `render.py`, the
-    section 8 `git status --porcelain` command names the changed page. Editing just
-    the page would be repaired back to HEAD and leave that status clean.
+    section 8 `git status --porcelain` command, over the whole worktree, names the
+    changed page beside its source. Editing just the page would be repaired back to HEAD
+    and leave that status clean.
 14. An axiom dropped from an audit lemma's expected list: `lake build Audit` fails
     with the file's name and a `#guard_msgs` mismatch; the restored audit must build.
 15. A corrupt header in I.1's compiled `.olean`, for leanchecker's loading of compiled
@@ -470,25 +473,30 @@ def generated_files() -> set[Path]:
 
 
 def stale_page() -> None:
-    """A stale page after a source change, tested by the actual freshness command.
+    """A stale page after a source change, tested by the actual freshness command: the
+    whole-worktree `git status --porcelain` of section 8, CI's check job and the
+    pre-flight.
 
     Rendering a hand edit alone restores HEAD, so it cannot test the post-render
     Git status. Change the source too, then require both its rendered text and the
-    page's own status line. Save every output, including pre-existing local edits.
+    status lines of the page and its source beside the entry status, and nothing else.
+    Save every output, including pre-existing local edits.
     """
     source = ROOT / "mishnah/I/01.md"
     page = ROOT / "book/I/01.md"
     saved_source = source.read_bytes()
     saved = {p: p.read_bytes() for p in generated_files()}
-    command = ("git", "status", "--porcelain", "--", *GENERATED)
+    command = ("git", "status", "--porcelain")
     before = run(*command)
     if not expect_success("freshness entry status", before):
         return
-    page_status = run("git", "status", "--porcelain", "--", "book/I/01.md")
-    if not expect_success("I.1 page entry status", page_status):
+    planted_status = run("git", "status", "--porcelain", "--", "book/I/01.md",
+                         "mishnah/I/01.md")
+    if not expect_success("I.1 page and mishnah entry status", planted_status):
         return
-    if page_status.stdout:
-        failures.append("freshness: book/I/01.md must be clean before the plant")
+    if planted_status.stdout:
+        failures.append("freshness: book/I/01.md and mishnah/I/01.md must be clean "
+                        "before the plant")
         return
     current = b"A source sentence planted for the freshness check."
     obsolete = b"An obsolete sentence planted in the generated page."
@@ -503,10 +511,11 @@ def stale_page() -> None:
         if not expect_success("freshness status", status):
             return
         rendered = page.read_bytes()
+        expected = [*before.stdout.splitlines(), " M book/I/01.md", " M mishnah/I/01.md"]
         if (current not in rendered or obsolete in rendered
-                or status.stdout.splitlines() != sorted(
-                    [*before.stdout.splitlines(), " M book/I/01.md"], key=lambda s: s[3:])):
-            failures.append("freshness: expected the rendered source and ' M book/I/01.md'")
+                or sorted(status.stdout.splitlines()) != sorted(expected)):
+            failures.append("freshness: expected the rendered source, and ' M book/I/01.md' "
+                            "and ' M mishnah/I/01.md' beside the entry status")
             print(status.stdout)
         else:
             print("✓ a stale generated page: caught by git status:  M book/I/01.md")
@@ -519,9 +528,9 @@ def stale_page() -> None:
         after = run(*command)
         if expect_success("restored freshness status", after):
             if after.stdout != before.stdout:
-                failures.append("freshness: generated paths did not return to their entry status")
+                failures.append("freshness: the worktree did not return to its entry status")
             else:
-                print("✓ freshness: generated paths restored to their entry status")
+                print("✓ freshness: the worktree restored to its entry status")
 
 
 def changed_audit_pin() -> None:
