@@ -144,12 +144,17 @@ theorem Prop14 {A₁ A₂ A₃ A₄ : Point} (h₁ : Triangle A₁ A₂ A₄) (h
     have hHE : H ≠ E := ne_of_between hHED
     have hH_BF : ¬ OnLine H BF := fun hH =>
       hD_BF ((line_unique hHE hH_DE hE_DE hH hE_BF) ▸ hD_DE)
-    /- The angle HEG is right: it is the angle HEB, beside the rectangle's right angle
-       DEB, and G lies on EB. -/
+    /- The angle HEG is right. EB stands on the straight line DH, so the angles DEB,
+       BEH together are two right angles [I. 13]. DEB is the rectangle's right angle;
+       taking it from each leaves BEH a right angle (Common Notion 3). And HEG is the
+       angle HEB, for G lies on EB. -/
     have hBEH : ∠ B E H = ∟ := by
-      rw [← adjacent_eq_of_right hD_DE hH_DE (between_symm hHED)
-        (hDEB.off_line hD_DE hE_DE) h.2.1]
-      exact h.2.1
+      have h13 : ∠ D E B + ∠ B E H = ∟ + ∟ :=
+        BookI.Prop13 (between_symm hHED)
+          (Triangle.of_line hD_DE hH_DE (ne_of_between_ends (between_symm hHED))
+            (hDEB.off_line hD_DE hE_DE))
+      rw [h.2.1, add_comm ∟] at h13
+      exact CommonNotion3 h13 rfl
     have hHEG : ∠ H E G = ∟ := by
       rw [angle_symm hHE (Ne.symm hEG),
         angle_onRay_left (OnRay.of_between (between_symm hBGE)) hHE]
@@ -266,12 +271,16 @@ theorem Prop14.rectangle {E B C D : Point} (h : Rectangle E B C D) :
     have hHE : H ≠ E := ne_of_between hHED
     have hH_BF : ¬ OnLine H BF := fun hH =>
       hD_BF ((line_unique hHE hH_DE hE_DE hH hE_BF) ▸ hD_DE)
-    /- HEG is right: HEB is adjacent to the rectangle's right angle DEB,
-       and G lies on the ray EB. -/
+    /- HEG is right. The angles DEB, BEH on the straight line DH together are
+       two right angles [I. 13]; taking the rectangle's right angle DEB from each
+       leaves BEH right (Common Notion 3). G lies on the ray EB, so HEG is HEB. -/
     have hBEH : ∠ B E H = ∟ := by
-      rw [← adjacent_eq_of_right hD_DE hH_DE (between_symm hHED)
-        (hDEB.off_line hD_DE hE_DE) h.2.1]
-      exact h.2.1
+      have h13 : ∠ D E B + ∠ B E H = ∟ + ∟ :=
+        BookI.Prop13 (between_symm hHED)
+          (Triangle.of_line hD_DE hH_DE (ne_of_between_ends (between_symm hHED))
+            (hDEB.off_line hD_DE hE_DE))
+      rw [h.2.1, add_comm ∟] at h13
+      exact CommonNotion3 h13 rfl
     have hHEG : ∠ H E G = ∟ := by
       rw [angle_symm hHE (Ne.symm hEG),
         angle_onRay_left (OnRay.of_between (between_symm hBGE)) hHE]
