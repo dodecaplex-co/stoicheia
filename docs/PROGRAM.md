@@ -8,9 +8,11 @@ and why they are what they are.
 
 ## 1. The standard
 
-We aim at about 95/100 for every book, in the sense of [Astra's outside
-review](reports/outside-review-01.md). A reader of any page should be able to answer four
-questions at once:
+We aim at 95/100 or more for every book, as three cold outside reviewers score it by the
+[review rubric](RUBRIC.md). The first outside reading, [Astra's of 17
+October](reports/outside-review-01.md), scored the books against the README; the measurements
+by three reviewers on the rubric began on 19 October. A reader of any page should be able to
+answer four questions at once:
 
 1. What does Euclid claim?
 2. What does the formal theorem prove?
@@ -19,14 +21,14 @@ questions at once:
 
 A book meets the standard when its acceptance checklist (`ACCEPTANCE.md`)
 passes with no failures, an independent audit by a model family that wrote none of it
-agrees, and a cold outside reading scores it about 95. A few deliberate limitations are
-allowed when they are stated plainly where they occur. In Book III, they are the
-restricted statements of III.14, III.15 and III.25, which stage 4 takes up, and the places
-where System E's rules already contain a proposition (III.2, and III.5 and III.6 with rules
-together). I.45 and II.14, restricted from 20 October 2026 to a figure supplied with its
-checked division into triangles, take any rectilineal figure, given by its outline, from 22
-October: that the outline has a division, and that every division gives the same area, are
-proved ([#116](https://github.com/jackChallis/stoicheia/issues/116)).
+agrees, and a cold outside reading passes the gate of the [review rubric](RUBRIC.md). A few
+deliberate limitations are allowed when they are stated plainly where they occur. In Book
+III, they are the restricted statements of III.14, III.15 and III.25, which stage 4 takes
+up, and the places where System E's rules already contain a proposition (III.2, and III.5
+and III.6 with rules together). I.45 and II.14, restricted from 20 October 2026 to a figure
+supplied with its checked division into triangles, take any rectilineal figure, given by its
+outline, from 22 October: that the outline has a division, and that every division gives the
+same area, are proved ([#116](https://github.com/jackChallis/stoicheia/issues/116)).
 
 ## 2. How a book is made, in parallel
 
