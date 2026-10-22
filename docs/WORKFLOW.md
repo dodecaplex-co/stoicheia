@@ -868,40 +868,50 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       code changed with judged content is kept apart, pinned values or not. The guards'
       two checks in step 3 run the same way.
 
-      *origin/main's pass, cached* (#224). With `--main-checks-cache`, which the runs that
-      land a train pass (the yard's run and the lane's push) and a ship's own dry run does
-      not, origin/main's pass of step 4, both its loops, the checks and the negative
-      tests, is kept in `~/.cache/stoicheia/main-checks/` and reused when the same trees
-      come again: one train is pre-flighted several times at one head against one main.
-      Step 3's pass and the commit's own pass run every time; on a hit, the commit's own
-      pass builds what the skipped pass would have built. An entry's name is the SHA-256 of
-      its key, which the harness computes and never reads from the tree: origin/main's
+      *origin/main's pass, cached* (#224). With `--main-checks-cache`, origin/main's pass
+      of step 4, both its loops, the checks and the negative tests, is kept in
+      `~/.cache/stoicheia/main-checks/` and reused when the same trees come again, as
+      they do when the coordinator's dry run of a train is followed by its push, at one
+      head against one main. Only the runs that land a train pass the flag (the
+      coordinator ruled): the coordinator's dry run of the train and its push. Step 3's
+      pass and the commit's own pass run every time; on a hit, the commit's own pass
+      builds what the skipped pass would have built. An entry's name is the SHA-256 of its
+      key, which the harness computes, taking nothing from the tree as code: origin/main's
       commit; the tree the pass runs on (the commit's, with origin/main's copies of the
       check inputs it changes), and the commit's own tree, which `git status` and
       `git ls-files` compare it with; the harness's blob; the toolchain
       (`lean-toolchain`, `lean --version`, `lake --version`, the `lean` elan resolves);
-      the Python, the platform, Git, the checks' `PATH`, and the variables whose names
-      begin `STOICHEIA_`, `LEAN` or `LAKE`, but the harness's own, which no check reads
-      (`STOICHEIA_HARNESS`, `STOICHEIA_PUSH_LOG`, `STOICHEIA_SAFE_PUSH_LAUNCHER`,
-      `STOICHEIA_PYTHON`); and the lists of checks. An entry is used
-      only when it is a regular file of the user's, mode 0600, its key is this run's and
-      hashes to its name, its digest matches it, its harness is the one running, and its
-      steps are that pass's, each once and in order, each "ok" or "note"; otherwise the
-      pass runs again, the run says why, and the entry is written afresh. A hit is
+      the Python, the platform, Git, the checks' `PATH`, `LANG`, `LANGUAGE`, and the
+      variables whose names begin `STOICHEIA_`, `LEAN`, `LAKE`, `PYTHON` or `LC_`, but
+      the harness's own, which no check reads (`STOICHEIA_HARNESS`, `STOICHEIA_PUSH_LOG`,
+      `STOICHEIA_PYTHON`); and the lists of checks. An entry is used only when it is a
+      regular file of the user's, mode 0600, its key is this run's and hashes to its
+      name, its digest matches it, its harness is the one running, and its steps are that
+      pass's, each once and in order, each "ok" or "note", with a time a step could take
+      and text the run can write and print; otherwise, or when it cannot be read at all,
+      the pass runs again, the run says why, and the entry is written afresh. A hit is
       reported, for the pull request's record, and its steps carry their recorded
-      outcomes, notes as notes, so `keep_apart` judges them as it would have. The
-      directory must be a real one, owned by the user, mode 0700, reached through no
-      symbolic link; and while the cache is in use every command the pre-flight starts
-      runs under macOS's `sandbox-exec`, with a profile under which no command may write
-      the directory, nor rename or change a directory above it (which would carry the
-      cache away).
-      Where the sandbox cannot be had (not macOS, no `sandbox-exec`, or already inside a
-      sandbox), there is no cache that run, and the pre-flight is otherwise unchanged.
-      The digest is no signature: the sandbox protects the cache from train code the
-      pre-flight runs, not from code run as the same user outside it (a contributor's own
-      run of a train's tests, say, or a job such code leaves with the system's services
-      to run later), the same exposure the `--merge` step-4 record already has; a cache
-      owned by another Unix user, which would close it, is for the owner to decide.
+      outcomes, notes as notes, so `keep_apart` judges them as it would have; a note
+      points to the copy of its log the run writes. The directory must be a real one,
+      owned by the user, mode 0700, reached through no symbolic link, and on the device
+      of the directory above it; and while the cache is in use every command the
+      pre-flight starts runs under macOS's `sandbox-exec`, with a profile under which no
+      command may write the directory, nor rename or change a directory above it (which
+      would carry the cache away). Where the sandbox cannot be had (not macOS, no
+      `sandbox-exec`, already inside a sandbox, or a profile that does not stop a write to
+      the directory or the one above it), there is no cache that run, and the pre-flight
+      is otherwise unchanged.
+      The digest is no signature, and the sandbox stops only this: the commands a
+      flagged run starts writing the cache directly. It does not stop a run without the
+      flag, a ship's own dry run among them, which starts its commands with no sandbox;
+      nor anything code run as the same user does outside a flagged run; nor anything a
+      flagged run's code leaves for a later command to run before its sandbox starts: the
+      launcher in `.git/stoicheia/`, `alias.safe-push` in `.git/config`, a program
+      earlier on the `PATH`, the harness copy in `~/.cache/stoicheia/harness/`, or
+      Python's start-up files. That is the exposure the `--merge` step-4 record already
+      has, a local file any code run as the user can write. A profile that allows writes
+      only where the checks need them, or a cache owned by another Unix user, could
+      narrow it; either is for the owner to decide.
    5. *The push and the pull request.* First the pull request is settled: our open one
       for the branch (a fork's pull request of the same name is never touched), or a new
       one. Its body is `--body-file`, or is generated from the

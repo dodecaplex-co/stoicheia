@@ -130,14 +130,20 @@ one commit and runs safe_push.py against that origin:
   value; and the markers are read by origin/main's reader, never the commit's;
 - the main-checks cache of #224 (--main-checks-cache): the tree its key names is the one
   base_copies lays down; the key moves with origin/main, either tree, the harness, the
-  toolchain, a STOICHEIA_, LEAN or LAKE variable, and the lists of checks; a miss writes
-  an entry only once origin/main's pass has finished, and a hit runs none of it, reports
-  its outcomes as recorded, notes included, and is kept apart as a miss is; a note made
+  toolchain, a STOICHEIA_, LEAN, LAKE, PYTHON or LC_ variable, LANG and LANGUAGE, and the
+  lists of checks; a miss writes an entry only once origin/main's pass has finished, and
+  a hit runs none of it, reports its outcomes as recorded, notes included, each note
+  pointing to this run's copy of its log, and is kept apart as a miss is; a note made
   ok, another key's entry, a step missing, extra, out of order or of an unknown outcome,
-  an entry or a directory that is a link or of the wrong mode, are each refused and the
-  pass recomputed; without the flag nothing is read or written, the directory not even
-  made; without a sandbox there is no cache; every command starts in run(); and on
-  macOS a command run there cannot write the cache, nor rename a directory above it;
+  a step's seconds an integer of 400 digits, a lone surrogate in a step's log, any error
+  at all in reading an entry, an entry or a directory that is a link or of the wrong
+  mode, are each refused and the pass recomputed; a directory on another device than the
+  one above it is not used; without the flag nothing is read or written, the directory
+  not even made; without a sandbox there is no cache; every command starts in run(),
+  and, with platform's caches emptied, no process starts but the sandbox while the key
+  is computed and the pass missed and hit, nor in a flagged dry run once the sandbox is
+  in use; and on macOS a command run there cannot write the cache, nor rename a
+  directory above it, and a profile without the rules above the cache is caught;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -170,6 +176,7 @@ import io
 import itertools
 import json
 import os
+import platform
 import re
 import shlex
 import shutil
@@ -5837,15 +5844,99 @@ class CheckRun:
     logs: Path              # this run's logs
 
 
+# The audit events by which Python starts a process (PEP 578), whichever way it is
+# reached: subprocess, os.posix_spawn, the os.exec and os.spawn families, os.system,
+# os.fork and os.forkpty. While a test watches (watch_processes), each must start the one
+# program allowed, or it is refused, and noted.
+PROCESS_EVENTS = frozenset({"subprocess.Popen", "os.posix_spawn", "os.exec", "os.spawn",
+                            "os.system", "os.fork", "os.forkpty", "os.startfile"})
+WATCHING: list[tuple[str, list]] = []       # (the program allowed, the starts refused)
+
+
+def watch_hook(event: str, args: tuple) -> None:
+    if not WATCHING or event not in PROCESS_EVENTS:
+        return
+    allowed, refused = WATCHING[-1]
+    program, argv = None, [event]
+    if event == "subprocess.Popen":         # (executable, args, cwd, env)
+        executable, given = args[0], args[1]
+        argv = list(given) if isinstance(given, (list, tuple)) else [given]
+        program = executable if executable is not None else (argv[0] if argv else None)
+    elif event in ("os.posix_spawn", "os.exec"):        # (path, argv, env)
+        program, argv = args[0], list(args[1])
+    elif event == "os.spawn":               # (mode, path, args, env)
+        program, argv = args[1], list(args[2])
+    if program is not None and os.fsdecode(program) == allowed:
+        return
+    refused.append([os.fsdecode(a) if isinstance(a, (str, bytes, os.PathLike)) else repr(a)
+                    for a in argv])
+    raise PermissionError(f"a process started outside the sandbox: {argv}")
+
+
+# The same watch in a pre-flight run as its own process, put on its PYTHONPATH as
+# sitecustomize.py: once the harness has the sandbox in use (its SANDBOX set), each
+# process it starts is noted in the file @LOG@ names, as through the sandbox or not.
+WATCH_SITECUSTOMIZE = """import os
+import sys
+
+EVENTS = @EVENTS@
+LOG = @LOG@
+SEEN = []
+
+
+def hook(event, args):
+    if event not in EVENTS:
+        return
+    main = sys.modules.get("__main__")
+    if getattr(main, "SANDBOX", None) is None:
+        return
+    program, argv = None, [event]
+    if event == "subprocess.Popen":
+        argv = list(args[1]) if isinstance(args[1], (list, tuple)) else [args[1]]
+        program = args[0] if args[0] is not None else argv[0]
+    elif event in ("os.posix_spawn", "os.exec"):
+        program, argv = args[0], list(args[1])
+    elif event == "os.spawn":
+        program, argv = args[1], list(args[2])
+    inside = program is not None and os.fsdecode(program) == main.SANDBOX_EXEC
+    line = "through the sandbox" if inside else "outside: " + " ".join(map(str, argv))
+    if line not in SEEN:
+        SEEN.append(line)
+        with open(LOG, "a") as f:
+            f.write(line + "\\n")
+
+
+sys.addaudithook(hook)
+"""
+
+
+@contextlib.contextmanager
+def watch_processes(allowed: str):
+    """Every process started inside the block that is not `allowed` (by its path, as
+    run() names the sandbox) is refused, and listed in what this yields. The audit hook,
+    once added, stays for the life of the process, and does nothing while none watches."""
+    if not getattr(watch_processes, "hooked", False):
+        sys.addaudithook(watch_hook)
+        watch_processes.hooked = True
+    refused: list[list[str]] = []
+    WATCHING.append((allowed, refused))
+    try:
+        yield refused
+    finally:
+        WATCHING.pop()
+
+
 class MainChecksCache(Edge):
     """#224: --main-checks-cache keeps origin/main's pass of step 4 by the exact trees it
     ran on, and the harness, toolchain and environment it ran with. A miss runs the pass
     and writes an entry; a hit reports the recorded steps, notes as notes, runs none of
     them, and keep_apart refuses on it as on a miss. Every planted fault in an entry or its
     directory is refused, and the pass recomputed. Without the flag, or without a sandbox,
-    nothing is read or written. On macOS, a command run through run() cannot write the
-    cache, nor rename a directory above it, but can write elsewhere. No Lean: the
-    toolchain is a fixed stand-in, and the steps are stand-ins or Python checks."""
+    nothing is read or written. While the cache is in use, no process starts but through
+    the sandbox. On macOS, a command run through run() cannot write the cache, nor rename
+    a directory above it, but can write elsewhere, and a profile that has lost the rules
+    above the cache is caught. No Lean: the toolchain is a fixed stand-in, and the steps
+    are stand-ins or Python checks."""
 
     TOOLCHAIN = {"lean-toolchain": "leanprover/lean4:v4.35.0\n",
                  "lean --version": "Lean (version 4.35.0, a stand-in)",
@@ -6008,10 +6099,16 @@ class MainChecksCache(Edge):
         with self.active():
             first = key()
             self.assertEqual(key(), first, "the same trees and run, another key")
-            with mock.patch.dict(os.environ, {"UNRELATED_FOR_THE_TEST": "1"}):
-                self.assertEqual(key(), first, "a variable the key does not name moved it")
-            # The harness's own plumbing, which no check reads, parts no runs: a hand-over
-            # (the yard's run from a worktree) and the launcher (the lane's push) share keys.
+            # LANG is keyed by its name, not as a prefix: a variable that merely begins with
+            # it is not written into the entry.
+            for name in ("UNRELATED_FOR_THE_TEST", "LANGCHAIN_FOR_THE_TEST"):
+                with mock.patch.dict(os.environ, {name: "1"}):
+                    self.assertEqual(key(), first, f"{name}, which the key does not name, "
+                                     "moved it")
+            # The harness's own plumbing, which no check reads, parts no runs: a run handed
+            # over from a worktree and a run of the launcher share keys.
+            self.assertEqual(safe_push.UNKEYED_VARIABLES,
+                             {"STOICHEIA_HARNESS", "STOICHEIA_PUSH_LOG", "STOICHEIA_PYTHON"})
             for name in sorted(safe_push.UNKEYED_VARIABLES):
                 with mock.patch.dict(os.environ, {name: "/a/stand-in"}):
                     self.assertEqual(key(), first, f"{name} moved the key")
@@ -6030,7 +6127,10 @@ class MainChecksCache(Edge):
                     self.TOOLCHAIN, **{"lean --version": "Lean (version 4.36.0)"})):
                 moved["the toolchain"] = key()
             for name, value in (("STOICHEIA_FOR_THE_TEST", "1"), ("STOICHEIA_FOR_THE_TEST", "2"),
-                                ("LEAN_PATH", "/a/stand-in"), ("LAKE_HOME", "/a/stand-in")):
+                                ("LEAN_PATH", "/a/stand-in"), ("LAKE_HOME", "/a/stand-in"),
+                                ("PYTHONWARNINGS", "error"), ("PYTHONPATH", "/a/stand-in"),
+                                ("LANG", "C.for-the-test"), ("LANGUAGE", "for-the-test"),
+                                ("LC_ALL", "C.for-the-test"), ("LC_CTYPE", "C.for-the-test")):
                 with mock.patch.dict(os.environ, {name: value}):
                     moved[f"{name}={value}"] = key()
             with mock.patch.object(safe_push, "CHECKS", self.CHECKS + [("check four", ["true"])]):
@@ -6076,11 +6176,13 @@ class MainChecksCache(Edge):
                 self.assertTrue(step.detail.startswith(
                     f"reused from the cache, entry {key[:12]}, written "), step.detail)
                 self.assertIsNone(step.seconds)
-        noted = next(s for s in hit.rep.steps if s.name == "check two" + safe_push.BASE_PASS)
-        self.assertIn("full output in", noted.detail)
-        # Each recorded log is written among the hit's logs.
+        # Each recorded log is written among the hit's logs, and a note points to that
+        # copy, not to the log of the run that wrote the entry.
         log = hit.logs / f"12{safe_push.slug_of('check two' + safe_push.BASE_PASS)}.log"
         self.assertEqual(log.read_text(), "the output of check two (origin/main's checks)\n")
+        noted = next(s for s in hit.rep.steps if s.name == "check two" + safe_push.BASE_PASS)
+        self.assertIn(f"full output in {log}\n", noted.detail)
+        self.assertNotIn(str(miss.logs), noted.detail)
         # Every command went through the stand-in for sandbox-exec (run).
         self.assertIn("git -c core.quotePath=false worktree add", self.wrapped.read_text())
 
@@ -6167,22 +6269,39 @@ class MainChecksCache(Edge):
             "an unknown outcome": (changed(good, lambda e: e["steps"][0].update(outcome="pass")),
                                    refused + "its step check one (origin/main's checks) is not "
                                    "of this format (outcome 'pass')"),
+            # Each crashed the run once (math.isfinite overflowed; the log could not be
+            # written): S3 of the review of #224.
+            "a step's seconds an integer of 400 digits": (
+                changed(good, lambda e: e["steps"][0].update(seconds=10 ** 400)),
+                refused + "its step check one (origin/main's checks) is not of this format "
+                "(its seconds are no time a step could take)"),
+            "a lone surrogate in a step's log": (
+                changed(good, lambda e: e["steps"][1].update(log="half a pair: \ud800\n")),
+                refused + "its step check two (origin/main's checks) is not of this format "
+                "(its detail or its log is not text this run can write as UTF-8 and print)"),
             "not JSON": (good[:-1], refused + "it is not an entry of this format"),
         }
         elsewhere = self.root / "elsewhere.json"
         self.put(elsewhere, good)
-        cases = [(name, lambda data=data: self.put(path, data), why)
+        cases = [(name, lambda data=data: self.put(path, data), why, contextlib.nullcontext)
                  for name, (data, why) in faults.items()]
         cases += [
             ("the entry a symbolic link", lambda: (path.unlink(), path.symlink_to(elsewhere)),
-             "the entry is a symbolic link"),
+             "the entry is a symbolic link", contextlib.nullcontext),
             ("the entry of mode 0644", lambda: self.put(path, good, 0o644),
-             "the entry has mode 0644, not 0600"),
+             "the entry has mode 0644, not 0600", contextlib.nullcontext),
+            # Any error at all in reading an entry, whatever it holds, is a refusal: here
+            # entry_problem, which raises on none of the faults above, made to.
+            ("any error in reading the entry", lambda: self.put(path, good),
+             refused + "it is not an entry of this format (OverflowError)",
+             lambda: mock.patch.object(safe_push, "entry_problem",
+                                       side_effect=OverflowError("for the test"))),
         ]
-        for name, plant, why in cases:
+        for name, plant, why, during in cases:
             with self.subTest(name), self.active():
                 plant()
-                r = self.checks(sha, stub=self.stub)
+                with during():
+                    r = self.checks(sha, stub=self.stub)
                 self.assertIsNone(r.refusal, r.out)
                 (line,) = self.cache_lines(r.rep)
                 self.assertTrue(line.startswith(f"miss ({why}"), f"{line}\n{why}")
@@ -6246,14 +6365,25 @@ class MainChecksCache(Edge):
     def test_the_flag_in_a_pre_flight(self):
         # The directory is made, mode 0700; with macOS's sandbox the cache is in use, and
         # every command from there on (the guards' check_fidelity.py and render.py among
-        # them) runs under it; without it, the run says why and goes on.
+        # them) runs under it, and no process starts but through it (WATCH_SITECUSTOMIZE);
+        # without it, the run says why and goes on.
         self.good_commit()
         root = self.root / "flagged"
         env = clean_env()
         env["STOICHEIA_PUSH_LOG"] = str(root / "pushes.log")
+        watch, watched = self.root / "watch", self.root / "watched.log"
+        watch.mkdir()
+        (watch / "sitecustomize.py").write_text(
+            WATCH_SITECUSTOMIZE.replace("@EVENTS@", repr(sorted(PROCESS_EVENTS)))
+            .replace("@LOG@", repr(str(watched))))
+        env["PYTHONPATH"] = str(watch)
         r = self.safe_push("--dry-run", "--main-checks-cache", env=env)
         out = r.stdout + r.stderr
         self.assertEqual(r.returncode, 0, out)
+        seen = watched.read_text().splitlines() if watched.exists() else []
+        self.assertEqual([line for line in seen if line.startswith("outside: ")], [], out)
+        if sandbox_usable() is None:
+            self.assertEqual(seen, ["through the sandbox"], out)
         cache = root / "main-checks"
         self.assertTrue(cache.is_dir() and not cache.is_symlink(), out)
         self.assertEqual(stat.S_IMODE(cache.stat().st_mode), 0o700)
@@ -6281,11 +6411,26 @@ class MainChecksCache(Edge):
         cases["reached through a link"] = (self.root / "d", "is reached through a symbolic link")
         (self.root / 'e"').mkdir()
         cases["a quotation mark"] = (self.root / 'e"', "holds a quotation mark")
+        # Something mounted over the directory: its device is not that of the directory
+        # above it. (os.lstat stands in for a mount, which would need the system's help.)
+        (self.root / "f" / "main-checks").mkdir(parents=True)
+        (self.root / "f" / "main-checks").chmod(0o700)
+        cases["mounted over"] = (self.root / "f", f"is on another device than {self.root / 'f'}")
+        mounted, lstat = str(self.root / "f" / "main-checks"), os.lstat
+
+        def another_device(path, *args, **kwargs):
+            st = lstat(path, *args, **kwargs)
+            if os.fspath(path) != mounted:
+                return st
+            fields = list(st[:10])
+            fields[2] = st.st_dev + 1       # st_dev
+            return os.stat_result(fields)
         for name, (where, why) in cases.items():
             with self.subTest(name), \
                     mock.patch.dict(os.environ, {"STOICHEIA_PUSH_LOG": str(where / "pushes.log")}), \
                     mock.patch.object(safe_push, "CACHE", None), \
                     mock.patch.object(safe_push, "SANDBOX", None), \
+                    mock.patch.object(safe_push.os, "lstat", another_device), \
                     contextlib.redirect_stdout(io.StringIO()):
                 rep = safe_push.Report()
                 safe_push.open_cache(rep)
@@ -6357,6 +6502,32 @@ class MainChecksCache(Edge):
             self.assertEqual(safe_push.git(WORK, "rev-parse", "HEAD").strip(),
                              git(WORK, "rev-parse", "HEAD").strip())
 
+    def test_a_profile_without_the_rules_above_the_cache_is_caught(self):
+        # The trial in open_cache writes harmlessly to the directory above the cache
+        # (touch -c): a profile that keeps the directory's own rule and has lost the
+        # rules above it, under which a rename could carry the cache away, is no sandbox.
+        why = sandbox_usable()
+        if why:
+            self.skipTest(f"macOS's sandbox is needed: {why}")
+        log = self.root / "lost" / "pushes.log"
+
+        def lost(cache: Path) -> str:
+            return f'(version 1) (allow default) (deny file-write* (subpath "{cache}"))'
+        with mock.patch.dict(os.environ, {"STOICHEIA_PUSH_LOG": str(log)}), \
+                mock.patch.object(safe_push, "CACHE", None), \
+                mock.patch.object(safe_push, "SANDBOX", None), \
+                mock.patch.object(safe_push, "sandbox_profile", lost), \
+                contextlib.redirect_stdout(io.StringIO()):
+            rep = safe_push.Report()
+            safe_push.open_cache(rep)
+            self.assertIsNone(safe_push.CACHE)
+            self.assertIsNone(safe_push.SANDBOX)
+        (step,) = rep.steps
+        self.assertEqual(step.outcome, "note")
+        self.assertIn(f"sandbox-exec did not stop a write to {log.parent}, the directory "
+                      "above the cache", step.detail)
+        self.assertEqual(list((log.parent / "main-checks").iterdir()), [], "the trial left a file")
+
     def test_the_flag_is_the_pre_flights_alone(self):
         r = subprocess.run([sys.executable, str(SAFE_PUSH), "--merge", "1", "--main-checks-cache"],
                            cwd=WORK, env=clean_env(), capture_output=True, text=True)
@@ -6367,8 +6538,9 @@ class MainChecksCache(Edge):
         self.assertEqual(r.returncode, 0, r.stderr)
         text = " ".join(r.stdout.split())
         self.assertIn("--main-checks-cache the pre-flight only", text)
-        self.assertIn("Only the yard's run and the lane's push pass it; a ship's own dry run "
-                      "does not", text)
+        self.assertIn("Only the runs that land a train pass it (the coordinator ruled): the "
+                      "coordinator's dry run of the train and its push", text)
+        self.assertIn("The sandbox does not stop a run without the flag", text)
 
     def test_every_command_starts_in_run(self):
         # The sandbox wraps commands in run() alone, so every command must start there; the
@@ -6399,6 +6571,58 @@ class MainChecksCache(Edge):
                 found.add((getattr(where, "name", "<module>"), node.func.value.id,
                            node.func.attr))
         self.assertEqual(found, {("run", "subprocess", "run"), ("harness", "os", "execve")})
+
+    def test_no_process_starts_outside_the_sandbox_while_the_cache_is_in_use(self):
+        # The test above reads safe_push.py alone, so it cannot see a library start a
+        # process: platform.platform() ran `uname -p` and `file -b` from the PATH, outside
+        # run() and so outside the sandbox (S1 of the review of #224). Here every process
+        # started is watched, by Python's own audit events, while the key is computed,
+        # the toolchain read (stand-ins for lean, lake and elan, through the real
+        # toolchain()), and origin/main's pass missed, kept and hit: only the stand-in
+        # for sandbox-exec may start. platform's caches are emptied first, so that it
+        # reads afresh what it would read in a run of its own.
+        sha = self.check_change()
+        tools = self.root / "tools"
+        tools.mkdir()
+        said = {"lean": "Lean (version 4.35.0, a stand-in)",
+                "lake": "Lake version 5.0.0 (a stand-in)"}
+        for name, line in said.items():
+            (tools / name).write_text(f"#!/bin/sh\necho {shlex.quote(line)}\n")
+        (tools / "elan").write_text(f"#!/bin/sh\necho {shlex.quote(str(tools / 'lean'))}\n")
+        for name in ("lean", "lake", "elan"):
+            (tools / name).chmod(0o755)
+        env = dict(os.environ, PATH=str(tools) + os.pathsep + os.environ.get("PATH", ""))
+        ctx = safe_push.Context(WORK, sha, BASE, 1, str(ORIGIN), None, {})
+        toolchain = safe_push.toolchain
+        with self.active(), \
+                mock.patch.object(safe_push, "toolchain", toolchain), \
+                mock.patch.object(safe_push, "tool_env", lambda: dict(env)), \
+                mock.patch.object(platform, "_uname_cache", None), \
+                mock.patch.dict(platform._platform_cache, clear=True):
+            inputs = self.inputs(sha)
+            with watch_processes(str(self.fake)) as refused:
+                fields, why = safe_push.main_checks_fields(ctx, WORK, inputs)
+                miss = self.checks(sha, stub=self.stub)
+                hit = self.checks(sha, stub=self.stub)
+        self.assertEqual(refused, [], "a process started outside run(), and so outside "
+                         "the sandbox")
+        self.assertIsNotNone(fields, why)
+        self.assertEqual(fields["toolchain"]["lean --version"], said["lean"])
+        self.assertEqual(fields["toolchain"]["elan which lean"],
+                         os.path.realpath(tools / "lean"))
+        self.assertEqual(fields["environment"]["platform"][0], platform.system())
+        for r in (miss, hit):
+            self.assertIsNone(r.refusal, r.out)
+        self.assertTrue(self.cache_lines(miss.rep)[0].startswith("miss (no entry"),
+                        miss.out)
+        self.assertTrue(self.cache_lines(hit.rep)[0].startswith("hit: "), hit.out)
+        self.assertEqual(len(self.entries()), 1)
+        # And every command those runs started went through the stand-in for sandbox-exec,
+        # the toolchain's among them.
+        wrapped = self.wrapped.read_text()
+        for line in ("lean --version", "lake --version", f"{tools / 'elan'} which lean",
+                     "git -c core.quotePath=false --version"):
+            self.assertIn(line, wrapped)
 
 
 @unittest.skipUnless(os.environ.get("STOICHEIA_SLOW_TESTS") == "1",

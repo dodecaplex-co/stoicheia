@@ -104,7 +104,10 @@ order, and the first that fails stops it with a message saying why:
    here (both its loops) is reused from ~/.cache/stoicheia/main-checks/ when an earlier
    run checked the same trees with the same harness, toolchain and environment
    (main_checks_fields), and every command the run starts runs under sandbox-exec, which
-   may not write that directory (open_cache); without the sandbox, there is no cache.
+   stops it writing that directory (open_cache); without the sandbox, there is no cache.
+   It does not stop a run without the flag, nor code run as the user outside a flagged
+   run, nor what a flagged run's code leaves for a later command to run before its
+   sandbox starts (run).
 5. The pull request settled first: our open one for the branch (a fork's of the same
    name is never touched), or a new one; its body, --body-file or generated from
    .github/pull_request_template.md (the commits, the statements, the review records
@@ -449,8 +452,19 @@ def run(cmd, cwd, *, env=None, input=None, binary=False,
         capture=True) -> subprocess.CompletedProcess:
     """Every command the harness starts starts here. While the main-checks cache is in
     use (open_cache), each runs under sandbox-exec with SANDBOX, a profile that may not
-    write the cache, so that nothing a commit brings can write it: git, the guards'
-    check_fidelity.py and render.py, every step of the full checks, gh."""
+    write the cache: git, the guards' check_fidelity.py and render.py, every step of the
+    full checks, gh. So the commands a flagged run starts cannot write the cache
+    directly. The sandbox does not stop a run without the flag (a ship's own dry run
+    among them), which starts its commands with no sandbox; nor anything code run as the
+    same user does outside a flagged run; nor anything a flagged run's code leaves for a
+    later command to run before its sandbox starts: the launcher in .git/stoicheia/,
+    alias.safe-push in .git/config, a program earlier on the PATH, the harness copy in
+    ~/.cache/stoicheia/harness/, Python's start-up files. That is the exposure the --merge
+    step-4 record already has, a local file any code run as the user can write. A profile
+    that allows writes only where the checks need them, or a cache owned by another Unix
+    user, could narrow it; that is for the owner to decide. Nothing else in the harness
+    may start a process while the cache is in use (platform.platform() did, running
+    `uname -p` and `file -b` from the PATH: environment)."""
     if SANDBOX is not None:
         cmd = [SANDBOX_EXEC, "-p", SANDBOX, *cmd]
     return subprocess.run(cmd, cwd=cwd, env=env, input=input, capture_output=capture,
@@ -2823,10 +2837,12 @@ def sha256_of(value) -> str:
 
 def dir_problem(path: Path) -> str | None:
     """Why the cache's directory may not be used, or None: it is a directory, no symbolic
-    link and reached through none (its real path is its path), owned by this user, and of
-    mode 0700 exactly."""
+    link and reached through none (its real path is its path), owned by this user, of
+    mode 0700 exactly, and on the device of the directory above it, so that nothing
+    mounted over it stands in for it."""
     try:
         st = os.lstat(path)
+        above = os.lstat(path.parent)
     except OSError as e:
         return f"{path} cannot be read ({e.strerror or e})"
     if stat.S_ISLNK(st.st_mode):
@@ -2840,6 +2856,8 @@ def dir_problem(path: Path) -> str | None:
         return f"{path} is owned by another user"
     if stat.S_IMODE(st.st_mode) != 0o700:
         return f"{path} has mode {stat.S_IMODE(st.st_mode):04o}, not 0700 (chmod 700 it)"
+    if st.st_dev != above.st_dev:
+        return f"{path} is on another device than {path.parent}, as when one is mounted there"
     return None
 
 
@@ -2858,8 +2876,10 @@ def sandbox_profile(cache: Path) -> str | None:
 
 def sandbox_problem(profile: str, cache: Path) -> str | None:
     """Why the sandbox cannot be had, or None: sandbox-exec runs a command under the
-    profile, and stops a write to the cache, leaving no file. It runs before SANDBOX is
-    set, so run() adds no sandbox of its own."""
+    profile, stops a write to the cache, leaving no file, and stops a harmless write to
+    the directory above it (`touch -c`, which makes nothing), so that a profile that has
+    lost the rules above the cache is caught here. It runs before SANDBOX is set, so
+    run() adds no sandbox of its own."""
     if sys.platform != "darwin":
         return "the sandbox is macOS's sandbox-exec, and this is not macOS"
     if not (os.path.isfile(SANDBOX_EXEC) and os.access(SANDBOX_EXEC, os.X_OK)):
@@ -2873,6 +2893,8 @@ def sandbox_problem(profile: str, cache: Path) -> str | None:
                     f"inside another sandbox ({said})")
         r = run([SANDBOX_EXEC, "-p", profile, "/bin/sh", "-c", 'echo x > "$1"', "sh",
                  str(probe)], cache)
+        above = run([SANDBOX_EXEC, "-p", profile, "/usr/bin/touch", "-c", str(cache.parent)],
+                    cache)
     except OSError as e:
         return f"sandbox-exec could not be run ({e.strerror or e})"
     left = os.path.lexists(probe)
@@ -2881,6 +2903,9 @@ def sandbox_problem(profile: str, cache: Path) -> str | None:
             os.unlink(probe)
     if r.returncode == 0 or left:
         return "sandbox-exec did not stop a write to the cache"
+    if above.returncode == 0:
+        return (f"sandbox-exec did not stop a write to {cache.parent}, the directory above "
+                "the cache")
     return None
 
 
@@ -2969,28 +2994,37 @@ def toolchain(repo, sha, wt: Path) -> dict | None:
     return found
 
 
-KEYED_VARIABLES = ("STOICHEIA_", "LEAN", "LAKE")
+# The variables the key holds, with their values: each whose name begins so (the Python
+# variables reach the steps run without -I, and the locale's reach the checks' reading
+# and writing of text), and LANG and LANGUAGE by name, so that no other variable that
+# merely begins LANG is written into an entry.
+KEYED_VARIABLES = ("STOICHEIA_", "LEAN", "LAKE", "PYTHON", "LC_")
+KEYED_NAMES = frozenset({"LANG", "LANGUAGE"})
 # The harness's own plumbing, which no check reads: which copy runs (STOICHEIA_HARNESS,
 # set on a hand-over and not by the launcher), where the log is (STOICHEIA_PUSH_LOG, which
-# places the cache itself), the launcher's name for itself, and the interpreter it picks
-# (STOICHEIA_PYTHON, whose real path is keyed as "executable"). Keyed, they would part
-# the yard's run from the lane's push for nothing.
+# places the cache itself), and the interpreter the launcher picks (STOICHEIA_PYTHON,
+# whose real path is keyed as "executable"). Keyed, a run handed over from a worktree and
+# a run of the launcher would never share an entry.
 UNKEYED_VARIABLES = frozenset({"STOICHEIA_HARNESS", "STOICHEIA_PUSH_LOG",
-                               "STOICHEIA_SAFE_PUSH_LAUNCHER", "STOICHEIA_PYTHON"})
+                               "STOICHEIA_PYTHON"})
 
 
 def environment(repo) -> dict:
     """What else the checks' outcomes could turn on: the Python, the platform, Git, the
-    PATH the checks run with, and each variable whose name begins STOICHEIA_, LEAN or
-    LAKE, with its value, but the harness's own (UNKEYED_VARIABLES)."""
+    PATH the checks run with, and the variables KEYED_VARIABLES and KEYED_NAMES name,
+    with their values, but the harness's own (UNKEYED_VARIABLES). The platform is read
+    from os.uname() and macOS's version file, never with platform.platform(), which
+    starts `uname -p` and `file -b` from the PATH, outside run() and so outside the
+    sandbox."""
     return {
         "python": sys.version,
         "executable": os.path.realpath(sys.executable),
-        "platform": platform.platform(),
+        "platform": [platform.system(), platform.release(), platform.machine(),
+                     platform.mac_ver()[0]],
         "git --version": git(repo, "--version").strip(),
         "PATH": tool_env()["PATH"],
         "variables": sorted([name, value] for name, value in os.environ.items()
-                            if name.startswith(KEYED_VARIABLES)
+                            if (name.startswith(KEYED_VARIABLES) or name in KEYED_NAMES)
                             and name not in UNKEYED_VARIABLES),
     }
 
@@ -3032,11 +3066,40 @@ def base_pass_names() -> list[str]:
     return [name + BASE_PASS for name, _ in [*CHECKS, *NEGATIVE]]
 
 
+STEP_SECONDS = 7 * 24 * 3600    # the longest a recorded step may have taken: a week
+
+
+def step_time(seconds) -> bool:
+    """Is `seconds` a time a step could have taken: none recorded, or an int or a float
+    from 0 to STEP_SECONDS? Compared, not passed to math.isfinite, which overflows on an
+    integer of 400 digits; NaN and the infinities fail the comparison."""
+    return seconds is None or (isinstance(seconds, (int, float))
+                               and not isinstance(seconds, bool)
+                               and 0 <= seconds <= STEP_SECONDS)
+
+
+def writable_text(value) -> bool:
+    """Is `value` a string this run can write to a log as UTF-8 and print? A lone
+    surrogate, which JSON may carry, is neither."""
+    if not isinstance(value, str):
+        return False
+    out = sys.stdout
+    try:
+        value.encode("utf-8")
+        value.encode(getattr(out, "encoding", None) or "utf-8",
+                     getattr(out, "errors", None) or "strict")
+    except (UnicodeError, LookupError):
+        return False
+    return True
+
+
 def entry_problem(entry, key: str, fields: dict) -> str | None:
     """Why an entry read for `key` may not stand in for origin/main's pass, or None. Its
     key fields must be this run's, exactly, and hash to its name; its digest must match the
     rest of it; its harness must be this one; and its steps must be origin/main's pass,
-    each once, in order, each "ok" or "note". So no entry turns a note into an ok."""
+    each once, in order, each "ok" or "note", with a time a step could take and text this
+    run can write and print. So no entry turns a note into an ok, and replay cannot
+    fail on what it reads."""
     if not isinstance(entry, dict) or set(entry) != ENTRY_FIELDS:
         return "it is not an entry of this format"
     if entry["key"] != fields:
@@ -3048,26 +3111,29 @@ def entry_problem(entry, key: str, fields: dict) -> str | None:
     if HARNESS_BLOB is None or entry["key"].get("harness_blob") != HARNESS_BLOB:
         return "it was written by another harness"
     steps = entry["steps"]
-    if not isinstance(entry["written"], str) or not isinstance(steps, list) or not all(
+    if not writable_text(entry["written"]) or not isinstance(steps, list) or not all(
             isinstance(s, dict) and set(s) == STEP_FIELDS for s in steps):
         return "its steps are not of this format"
     if [s["name"] for s in steps] != base_pass_names():
         return "its steps are not origin/main's pass, each step once and in order"
     for s in steps:
-        seconds = s["seconds"]
-        timed = seconds is None or (isinstance(seconds, (int, float))
-                                    and not isinstance(seconds, bool)
-                                    and math.isfinite(seconds) and seconds >= 0)
-        if s["outcome"] not in ("ok", "note") or not timed \
-                or not isinstance(s["detail"], str) or not isinstance(s["log"], str):
-            return f"its step {s['name']} is not of this format (outcome {s['outcome']!r})"
+        if s["outcome"] not in ("ok", "note"):
+            return f"its step {s['name']} is not of this format (outcome {s['outcome']!r:.40})"
+        if not step_time(s["seconds"]):
+            return (f"its step {s['name']} is not of this format (its seconds are no time a "
+                    "step could take)")
+        if not (writable_text(s["detail"]) and writable_text(s["log"])):
+            return (f"its step {s['name']} is not of this format (its detail or its log is "
+                    "not text this run can write as UTF-8 and print)")
     return None
 
 
 def read_entry(cache: Path, key: str, fields: dict) -> tuple[dict | None, str]:
     """The entry for `key`, when it may stand in for origin/main's pass; else None, and
     why: it is a regular file, no symbolic link, owned by this user, of mode 0600, in a
-    directory that may be used (dir_problem), and its contents pass entry_problem."""
+    directory that may be used (dir_problem), and its contents pass entry_problem. Any
+    error in reading its contents, whatever JSON they hold, refuses it, and the pass runs
+    again: never a crash."""
     why = dir_problem(cache)
     if why:
         return None, why
@@ -3092,8 +3158,8 @@ def read_entry(cache: Path, key: str, fields: dict) -> tuple[dict | None, str]:
     try:
         entry = json.loads(data)
         why = entry_problem(entry, key, fields)
-    except (ValueError, TypeError, RecursionError):
-        why = "it is not an entry of this format"
+    except Exception as e:      # whatever JSON it holds: a doubt, never a crash
+        why = f"it is not an entry of this format ({type(e).__name__})"
     return (None, f"the entry was refused: {why}") if why else (entry, "")
 
 
@@ -3140,15 +3206,22 @@ class MainChecks:
 
     def replay(self, steps, first: int, rep: Report, logs: Path) -> None:
         """The recorded steps standing for `steps`, reported with their outcomes as
-        recorded, notes as notes, and their logs written among this run's; none is run."""
+        recorded, notes as notes, and their logs written among this run's, each note
+        pointing to the copy this run writes rather than to the log of the run that
+        wrote the entry; none is run."""
         recorded = self.entry["steps"][self.next:self.next + len(steps)]
         self.next += len(steps)
         for i, step in enumerate(recorded, 1):
-            (logs / f"{first + i:02d}{slug_of(step['name'])}.log").write_text(step["log"])
+            log = logs / f"{first + i:02d}{slug_of(step['name'])}.log"
+            log.write_text(step["log"], encoding="utf-8")
             then = f"{step['seconds']:.1f} s" if step["seconds"] is not None else "untimed"
+            said, newline, rest = step["detail"].partition("\n")
+            if said.startswith("full output in "):     # as run_step words it
+                said = f"full output in {log}"
+            detail = said + newline + rest
             rep.add("4", step["name"], step["outcome"],
                     f"reused from the cache, entry {self.key[:12]}, written "
-                    f"{self.entry['written']}: " + (step["detail"] or f"it passed then ({then})"))
+                    f"{self.entry['written']}: " + (detail or f"it passed then ({then})"))
 
     def collect(self, rep: Report, out) -> None:
         """The step origin/main's pass has just run, recorded for the entry."""
@@ -5225,10 +5298,13 @@ def main(argv=None) -> int:
                         help="the pre-flight only: reuse origin/main's pass of the full "
                         "checks from ~/.cache/stoicheia/main-checks/ when an earlier run "
                         "checked the same trees with the same harness, toolchain and "
-                        "environment, every command then running under macOS's "
-                        "sandbox-exec, which may not write it (no sandbox, no cache). Only "
-                        "the yard's run and the lane's push pass it; a ship's own dry run "
-                        "does not")
+                        "environment, every command the run starts then running under "
+                        "macOS's sandbox-exec, which stops it writing there (no sandbox, "
+                        "no cache). The sandbox does not stop a run without the flag, nor "
+                        "what a flagged run's code leaves for a later command to run "
+                        "before its sandbox starts. Only the runs that land a train pass "
+                        "it (the coordinator ruled): the coordinator's dry run of the "
+                        "train and its push")
     # The pre-push hook's entry point: the secret scan of one ref's push.
     parser.add_argument("--scan-push", nargs=3, metavar=("LOCAL", "REMOTE", "REF"),
                         help=argparse.SUPPRESS)
