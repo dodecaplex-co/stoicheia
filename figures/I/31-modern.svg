@@ -21,7 +21,5 @@
     <text font-size="17" x="125" y="229" text-anchor="middle">D</text>
     <text font-size="17" x="30" y="91" text-anchor="middle">E</text>
     <text font-size="17" x="362" y="91" text-anchor="middle">F</text>
-    <text font-size="17" x="105" y="65" text-anchor="middle" font-style="italic">t &lt; 0</text>
-    <text font-size="17" x="255" y="65" text-anchor="middle" font-style="italic">t &gt; 0</text>
   </g>
 </svg>

@@ -644,11 +644,15 @@ class MergeChecks(unittest.TestCase):
             del view["labels"]
         checks = [{"name": name, "bucket": "pass"} for name in safe_push.REQUIRED_CHECKS]
         report = safe_push.Report()
+        # The release's suite gate (#301) stands in passed here; test_safe_push.py's
+        # RiskPreflight tests its refusals. These tests judge the release-gate job alone.
         with mock.patch.object(safe_push, "gh_json", return_value=view), \
                 mock.patch.object(safe_push, "protected_files", return_value=[]), \
                 mock.patch.object(safe_push, "show", return_value=template), \
                 mock.patch.object(safe_push, "pr_checks", return_value=checks + [extra]), \
                 mock.patch.object(safe_push, "read_issues", return_value=[]), \
+                mock.patch.object(safe_push, "suite_gate",
+                                  return_value=("ok", "stand-in")), \
                 redirect_stdout(io.StringIO()):
             try:
                 safe_push.gates(ctx, 1, report)
