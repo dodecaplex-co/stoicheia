@@ -108,23 +108,25 @@
 - **The run here.** The screen is not run again here. The model's full run is, because
   `tests/model/run.py` is a file of the harness:
   `python3 -I tests/model/run.py --full --write` was made at the commit that carries the
-  change, 819119e7, with its harness files as committed, after main's C7-C6b
-  ([#319](https://github.com/jackChallis/stoicheia/pull/319)) was merged in, and what it
-  wrote was committed after it. It replaces an earlier run of this change, at a1144ad6,
+  change, 4cc96bc0, with its harness files as committed, after main's C7-C6c
+  ([#331](https://github.com/jackChallis/stoicheia/pull/331)) was merged in, and what it
+  wrote was committed after it. It replaces two earlier runs of this change, at a1144ad6,
   made after main's centre rule ([#240](https://github.com/jackChallis/stoicheia/pull/240)),
-  since C7-C6b wrote new results of its own. Its counts were compared with main's own run,
-  at 3234193f ([#319](https://github.com/jackChallis/stoicheia/pull/319)): every count is
+  and at 819119e7, made after main's C7-C6b
+  ([#319](https://github.com/jackChallis/stoicheia/pull/319)), since C7-C6b and then
+  C7-C6c each wrote new results of its own. Its counts were compared with main's own run, at
+  df6f901c ([#331](https://github.com/jackChallis/stoicheia/pull/331)): every count is
   the same, and only the headers and the timings are new. What it wrote is named here
-  file by file. At 819119e7 the angle check wrote `tests/model/results/angle_check.txt`.
-  At 819119e7 the exhaustive harness wrote `tests/model/results/exhaustive.txt`.
-  At 819119e7 the grid check wrote `tests/model/results/grid_check.txt`.
-  At 819119e7 the hyperbolic check wrote `tests/model/results/hyperbolic.txt`.
-  At 819119e7 the fifteen mutations wrote `tests/model/results/mutations.txt`.
-  At 819119e7 the search with its first seed wrote `tests/model/results/search-seed1.txt`.
-  At 819119e7 the search with its second seed wrote `tests/model/results/search-seed2.txt`.
-  At 819119e7 the search with its third seed wrote `tests/model/results/search-seed3.txt`.
-  At 819119e7 the structured harness wrote `tests/model/results/structured.txt`.
-  At 819119e7 the run's table went to `tests/model/results/summary.txt`, and its counts
+  file by file. At 4cc96bc0 the angle check wrote `tests/model/results/angle_check.txt`.
+  At 4cc96bc0 the exhaustive harness wrote `tests/model/results/exhaustive.txt`.
+  At 4cc96bc0 the grid check wrote `tests/model/results/grid_check.txt`.
+  At 4cc96bc0 the hyperbolic check wrote `tests/model/results/hyperbolic.txt`.
+  At 4cc96bc0 the fifteen mutations wrote `tests/model/results/mutations.txt`.
+  At 4cc96bc0 the search with its first seed wrote `tests/model/results/search-seed1.txt`.
+  At 4cc96bc0 the search with its second seed wrote `tests/model/results/search-seed2.txt`.
+  At 4cc96bc0 the search with its third seed wrote `tests/model/results/search-seed3.txt`.
+  At 4cc96bc0 the structured harness wrote `tests/model/results/structured.txt`.
+  At 4cc96bc0 the run's table went to `tests/model/results/summary.txt`, and its counts
   to [`tests/model/MODEL.md`](../../tests/model/MODEL.md). The protected
   files changed are `tests/model/run.py`; `tests/model/results_check.py`, which is new;
   `tests/test_screen.py`; `tests/model/MODEL.md`, its counts and how a change to the
