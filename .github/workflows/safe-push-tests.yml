@@ -1,0 +1,114 @@
+name: Safe-push tests
+
+# scripts/test_safe_push.py, the tests of the gate every pull request lands through
+# (docs/WORKFLOW.md, sections 8 and 10), run on a cadence rather than on each pull request
+# (the owner, 22 October 2026: "I'm fine that this needs to run on a cadence and blocks
+# release but every run no. And it has to be fast"; the decision entry
+# docs/decisions/2026-10-22-suite-on-cadence.md): every six hours on main, and on demand. A red run opens one issue labelled
+# blocks-release, or adds the run to the one already open, so the release waits for it.
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  safe-push-tests:
+    # The tests need Git with the whole history and the pinned YAML parser, but no Lean
+    # and no network: FullChecks, which needs Lean, is skipped without
+    # STOICHEIA_SLOW_TESTS=1, as it is anywhere.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # The whole suite has taken 38 to 45 minutes on GitHub's runners, and more on a busy
+    # day: room to spare.
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # The tests clone this repository.
+          fetch-depth: 0
+          # No token stays in .git/config while the tests run.
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the pinned YAML parser the tests read the workflow with
+        run: python3 -m pip install -r scripts/requirements-test_safe_push.txt
+
+      - name: Check the gate every pull request lands through, guard by guard
+        run: |
+          set -o pipefail
+          python3 scripts/test_safe_push.py 2>&1 | tee "$RUNNER_TEMP/test_safe_push.log"
+
+      - name: Keep the log, for the issue a red run opens
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: test_safe_push-log
+          path: ${{ runner.temp }}/test_safe_push.log
+          retention-days: 35
+          if-no-files-found: ignore
+
+  report:
+    # A red run of main (failed, cancelled or timed out) opens one issue labelled
+    # blocks-release, or comments on the one already open, with the run's link and the
+    # tests that failed. This job alone may write issues, and it runs no code of the
+    # repository: it reads the log the tests left and calls gh.
+    needs: safe-push-tests
+    if: always() && github.ref == 'refs/heads/main' && needs.safe-push-tests.result != 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    timeout-minutes: 10
+    steps:
+      - name: Fetch the tests' log
+        continue-on-error: true
+        uses: actions/download-artifact@v5
+        with:
+          name: test_safe_push-log
+          path: ${{ runner.temp }}/log
+
+      - name: Open or update the blocks-release issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RESULT: ${{ needs.safe-push-tests.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SHA: ${{ github.sha }}
+        run: |
+          title="safe-push-tests: the cadence run on main is red"
+          log="$RUNNER_TEMP/log/test_safe_push.log"
+          body="$RUNNER_TEMP/body.md"
+          {
+            echo "The cadence run of \`scripts/test_safe_push.py\` on main at \`$SHA\` ended: $RESULT."
+            echo
+            echo "Run: $RUN_URL"
+            echo
+            if [ -f "$log" ]; then
+              failed=$(grep -E '^(FAIL|ERROR): ' "$log" | sort -u | head -n 100 || true)
+              if [ -n "$failed" ]; then
+                echo "Tests that failed:"
+                echo
+                echo '```'
+                echo "$failed"
+                echo '```'
+              else
+                echo "No failing test is named in the log (a run cut off or cancelled, say); the run's log says why."
+              fi
+            else
+              echo "The run left no log; the run's page says why."
+            fi
+            echo
+            echo "This issue holds the release until a green run of the suite on main closes the question (docs/WORKFLOW.md, section 8)."
+          } > "$body"
+          number=$(gh issue list --state open --label blocks-release --limit 100 \
+                     --json number,title --jq ".[] | select(.title == \"$title\") | .number" | head -n 1)
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body-file "$body"
+          else
+            gh issue create --title "$title" --label blocks-release --body-file "$body"
+          fi
