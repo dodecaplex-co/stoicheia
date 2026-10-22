@@ -20,7 +20,8 @@ refuses the whole list, and the try fails with no search at all. So a pass befor
 attempts gives `grind` each rule alone, in each of the two ways, and each try leaves out
 the rules refused in its way; a try left with none is not made. Refused both ways are the
 twelve rules that only say that a point, a straight line or a circle exists (Postulates 1
-to 3, the eight `exists_point` rules and `exists_centre`); refused forward as well are fourteen with no
+to 3, the eight `exists_point` rules and `exists_centre`, which the pass's two cases, tried
+alone on 21 October 2026, found refused); refused forward as well are fourteen with no
 hypothesis `grind` can start from (`len_symm`, `add_comm` and the like), plus the restricted
 superposition rule, whose conclusion is the structure `Superposition.Rule`. Such a rule gives
 `grind` nothing to work with in any case (see below); but while it stayed in, as in the
@@ -92,6 +93,32 @@ alone: `grind` tries Circle 2 only on points of which the goal asks whether they
 within the circle, and III.2 asks that only of E, until Generalities 4 brings in A and B.
 The screen checks that III.2, III.5 and III.6 still close by a rule (KNOWN, below), and
 says so when one does not.
+
+The latest run of the screen recorded here was on 19 October 2026, on the centre
+restatements of brief 0008's step 6, with fresh certificates at commit b260c826 and
+Tacit.exists_centre added to CIRCLE. It used the screen as it then stood on that branch,
+which gave both tries one budget, unfolded only the phrases, made no bare try and left no
+rule out, over 88 axioms, 25 of them in CIRCLE: 135 statements (99 propositions, three
+porisms and 33 companions), 424 attempts each, 57,240 in all. Eleven
+attempts closed: seven for III.2, three for III.5 and one for III.6, with no other
+statement closing. No pair containing Tacit.exists_centre closed; but `grind` refuses
+that rule (above), so on that screen its single try and every pair with it searched with
+none of their rules, and the result says nothing of the rule. Of the remaining
+attempts, 57,196 fell back to sorry and 33 timed out at the 30,000-heartbeat limit.
+docs/reports/overlaps.md lists every closing and its rules. III.5 from the Magnitudes and
+Transfer families uses only Tacit.len_lt_of_inside, Tacit.lt_irrefl and Tacit.lt_trans,
+besides Lean's logical axioms: an uncatalogued candidate route already found by an
+earlier 51,600-attempt run, which also closed eleven attempts on these three
+propositions. No catalogue row is added by the screen.
+
+That run is no longer a true account of this screen. Axiom wave one (19 October 2026)
+had not reached that branch: eight rules are theorems now, five of them rules about
+circles, which have left CIRCLE. The screen tries the 80 axioms of the certificate, 20 of
+them in CIRCLE with Tacit.exists_centre, and it unfolds, budgets and leaves out rules as
+described above. III.2 closed by Circle 2 in the runs on 89c5da4 and on 19 October, and
+Circle 2 is one of the eight, so whether III.2 still closes by a rule (KNOWN) is part of
+what the next run will show.
+No run of this screen on the restated statements is recorded here.
 
 usage (from the repository root, after `lake build`):
     python3 -I Audit/screen.py OUTDIR [--jobs N] [--write]
@@ -172,7 +199,7 @@ PARTS = {
 }
 
 # Rules that speak of circles: the pairs among these are screened against every statement.
-CIRCLE = """Definition15 Postulate3 Tacit.centre_inside Tacit.inside_not_on
+CIRCLE = """Definition15 Postulate3 Tacit.exists_centre Tacit.centre_inside Tacit.inside_not_on
 Tacit.between_of_inside_chord Tacit.outside_of_between
 Tacit.line_meets_circle_of_inside Tacit.circles_meet_of_on_inside_outside Tacit.circles_meet
 Tacit.line_circle_between Tacit.line_circle_beyond Tacit.circles_meet_same_side
