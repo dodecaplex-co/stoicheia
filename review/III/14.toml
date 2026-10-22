@@ -7,7 +7,7 @@ fingerprint = "sha256:ce986697315c50ff"
 
 [route]
 kind = "euclid"
-note = "The companion takes Euclid's case, two straight lines not through the centre, from `Prop14`. A straight line through the centre is a diameter, two radii together (`Prop14.diameter_sum`), its foot the centre; and of a diameter and a straight line not through the centre, the diameter is the greater [I. 20]. Euclid's proof takes AB and CD not through the centre, and `Prop14` asks as much. `Prop14.general` takes diameters too: two diameters are equal, and both at no distance; a diameter is greater than a straight line not through the centre [I. 20], which is at some distance."
+note = "`Prop14.general` uses `Prop14` for two straight lines not through the centre. A diameter is two radii together (`Prop14.diameter_sum`), with its foot at the centre: two diameters are equal and both at no distance. When only one straight line is a diameter, I.20 makes it greater than the other, whose foot is at some distance from the centre."
 
 [[passage]]
 at = "For let the centre of the circle ABDC be taken"

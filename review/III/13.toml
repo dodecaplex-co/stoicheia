@@ -24,12 +24,6 @@ helper = "Tacit.between_of_inside_chord"
 note = "Euclid places B, G, H and D in that order. The Lean puts G between B and D by `Tacit.between_of_inside_chord` (System E, Circle 1) and `Tacit.centre_inside` (System E, Generalities 3), both rules we assume, and combines this with G, H, D from III.11 by `between_cut`."
 
 [[passage]]
-at = "Then, since the point G is the centre"
-kind = "helper"
-helper = "Definition15"
-note = "Euclid uses the equality of the radii BG and GD without giving a reason. The Lean obtains it from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
-
-[[passage]]
 at = "therefore BG is greater than HD"
 kind = "helper"
 helper = "len_lt_of_between"
@@ -40,12 +34,6 @@ at = "therefore BH is much greater than HD"
 kind = "helper"
 helper = "len_lt_of_between"
 note = "Euclid passes from BG to the greater straight line BH. The Lean uses `len_lt_of_between` on B, G, H and combines BG less than BH with the preceding inequality."
-
-[[passage]]
-at = "Again, since the point H is the centre"
-kind = "helper"
-helper = "Definition15"
-note = "Euclid uses the equality of the radii BH and HD without giving a reason. The Lean obtains it from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
 
 [[passage]]
 at = "Therefore a circle does not touch a circle internally"
