@@ -101,7 +101,7 @@ boundary it may also be `Fitted`: the triangles do not overlap (`Fitted.inside_p
 Book Zero), and each meets the figure already made only along one side, so they make up one
 figure. Either way their sum is what Euclid calls the whole of it. No phrase here assumes
 more, and what more is true is proved, in Book Zero, of a figure given by its outline alone
-(`Outline`, in `Foundations/Figures.lean`). Every outline can be cut into triangles that lie
+(`Outline`, in `Foundations/Figures.lean`). Every outline can be divided into triangles that lie
 apart (`division_exists`), and every figure given with such triangles has an outline with
 exactly their region (`apart_has_outline`). Two divisions of one figure give one sum
 (`Apart.area_eq_of_same_region`): the step Euclid takes for granted, which David Hilbert
@@ -222,7 +222,7 @@ with a smaller square cut from its middle has, may touch itself at a corner, and
 more than one piece. No order of the triangles is asked, and a triangle may lie against part
 of a side of another. A figure given by gluing is one of these, its triangles lying apart by
 `Fitted.inside_pairwise`. That every rectilineal figure given by its outline, with any
-boundaries, can be cut into triangles that lie apart is proved in Book Zero
+boundaries, can be divided into triangles that lie apart is proved in Book Zero
 (`division_exists`), and every figure given this way has an outline with exactly its region
 (`apart_has_outline`). -/
 structure Apart where
