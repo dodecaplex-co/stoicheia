@@ -21,10 +21,10 @@ note = "Euclid takes ABC to be a triangle once its sides are equal. `Prop1.figur
 
 [review]
 stage = "full"
-commit = "ab90f7e"
-reviewer = "Claude Opus 5.5, records review"
+commit = "6e0cdd27"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:02664b10a40223fd"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I01-I10b, independent re-read at 6e0cdd27"
 
 [review.items]
 statement = "pass"
