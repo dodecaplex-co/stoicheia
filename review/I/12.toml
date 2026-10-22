@@ -31,10 +31,10 @@ note = "Euclid concludes that CH is perpendicular to AB from the two right angle
 
 [review]
 stage = "full"
-commit = "34ac6d42"
+commit = "b7b41f51"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:a21edabcbb0d95db"
-run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I12-I13, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at 34ac6d42 (reader RT-x4)"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I12-I13, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y1)"
 
 [review.items]
 statement = "pass"

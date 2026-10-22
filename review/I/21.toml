@@ -44,10 +44,10 @@ note = "Euclid reads ED and DB together as EB because D lies between E and B. Th
 
 [review]
 stage = "full"
-commit = "389f69bf"
+commit = "b7b41f51"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:043c9336dae4f96b"
-run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at 389f69bf (reader RT-x6)"
+run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y2)"
 
 [review.items]
 statement = "pass"

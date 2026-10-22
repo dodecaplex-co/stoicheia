@@ -14,10 +14,10 @@ note = "Euclid takes equality and less as the only possibilities when AC is not 
 
 [review]
 stage = "full"
-commit = "34ac6d42"
+commit = "b7b41f51"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:883df5c8274b45d2"
-run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at 34ac6d42 (reader RT-x5)"
+run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y2)"
 
 [review.items]
 statement = "pass"
