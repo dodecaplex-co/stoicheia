@@ -97,7 +97,7 @@ A tag of kind `scope` may appear only when the statement is restricted or partia
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `rule` | string | yes | The axiom, named as facts.json names it: `"Tacit.outside_of_between"`. |
-| `also` | list of strings | no | Any further axioms that contain the proposition, or supply its step, only together with `rule`, as III.6 used `"Tacit.centre_inside"` before that rule became a theorem. |
+| `also` | list of strings | no | Any further axioms that contain the proposition, or supply its step, only together with `rule`, as III.6's record listed `"Tacit.centre_inside"` until that rule became a theorem. |
 | `kind` | `"states"`, `"gives"` or `"step"` | yes | The kind of the proposition's row in the catalogue (below). |
 | `note` | string | for `step` | What follows for the page: the proof reconstructs Euclid's reasoning within our foundations, and does not establish the rule. For a step, which step the rule carries, and in which proof. |
 
@@ -109,8 +109,8 @@ kinds, and `kind` names the row's kind in the catalogue's words:
   (historically, III.2 and Circle 2, before that rule became a theorem).
 - **gives**: the proposition follows from the rule at once, in a short proof from at most
   three rules that cites no proposition, any other rules only drawing or naming the figure
-  (III.2 from Circle 3; III.5, and III.6 for contact within, from Diagram-segment 2;
-  contact without is settled by Generalities 3, now a theorem).
+  (III.2 from Circle 3; III.5 from Diagram-segment 2 with Generalities 4, and III.6 from
+  those two with Generalities 3; Generalities 3 and 4 are theorems now).
 - **step**: inside some proof, the rule carries a step that is the proposition's content,
   or a case of it, and does not give the proposition at once (as for I.13, a consequence of
   which, Metric 5, carries a step of I.47's proof).
