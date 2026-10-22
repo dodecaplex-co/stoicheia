@@ -71,4 +71,11 @@
 # Tacit.exists_centre, 80 in all, with 238 words of vocabulary, main's 208 and this train's
 # 30. The generator writes 80 laws, the restricted superposition law and exists_centre's
 # among them, and Model/Assembly.lean gathers all 80.
-e3c5d7123a3b973dd79436c07409c30858acc2ac8c6507cb6805205fcb373296  Certificate/axioms.lock
+#
+# Renewed on 22 October 2026, when the words of brief 0013's outline companions joined the
+# vocabulary (#116): 20 new words, the definitions of Elements/Foundations/Figures.lean that
+# the statements of I.45 outline, II.14 outline and II.14 outline_side reach, with what Lean
+# declares for them. Only those companions use them, so no law of the model changes: the 80
+# axioms and every word already locked are unchanged, byte for byte, and the vocabulary grows
+# from 238 to 258 words.
+ac0ae72fb7fb4b83764d5ed0863797b2af992ce20b1dbac80fbaaffee87f41e1  Certificate/axioms.lock

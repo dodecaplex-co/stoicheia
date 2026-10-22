@@ -78,4 +78,10 @@
 # Tacit.exists_centre, with 238 words of vocabulary, main's 208 and this train's 30. The
 # harness keeps the restricted law's placement check with its kept side and exists_centre's
 # law, and MODEL.md's counts are written again by run.py --full --write in the same change.
-e3c5d7123a3b973dd79436c07409c30858acc2ac8c6507cb6805205fcb373296  Certificate/axioms.lock
+#
+# Renewed on 22 October 2026, when the words of brief 0013's outline companions joined the
+# vocabulary (#116): 20 new words, the definitions that the statements of I.45 outline,
+# II.14 outline and II.14 outline_side reach, with what Lean declares for them; the 80 axioms
+# and every word already locked are unchanged, byte for byte, so MODEL.md's account stands
+# as it was.
+ac0ae72fb7fb4b83764d5ed0863797b2af992ce20b1dbac80fbaaffee87f41e1  Certificate/axioms.lock
