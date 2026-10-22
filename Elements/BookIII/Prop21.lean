@@ -16,14 +16,14 @@ namespace Elements.BookIII
 open Tacit
 
 /-- In a circle the angles in the same segment are equal to one another. -/
-theorem Prop21 {A B D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centre F ABCD)
+theorem Prop21 {A B D E : Point} {ABCD : Circle}
     (hA : OnCircle A ABCD) (hB : OnCircle B ABCD) (hD : OnCircle D ABCD)
     (hE : OnCircle E ABCD) (hAE : SameSideOf A E B D) :
     ∠ B A D = ∠ B E D := by
   -- Let ABCD be a circle, and let the angles BAD, BED be angles in the same segment BAED;
   -- I say that the angles BAD, BED are equal to one another.
   -- For let the centre of the circle ABCD be taken, and let it be F; let BF, FD be joined.
-  obtain ⟨F, hF⟩ := hABCD
+  obtain ⟨F, hF⟩ := exists_centre ABCD
   have greater : ∀ {A B D E : Point}, OnCircle A ABCD → OnCircle B ABCD → OnCircle D ABCD →
       OnCircle E ABCD → SameSideOf F A B D → SameSideOf A E B D → ∠ B A D = ∠ B E D := by
     intro A B D E hA hB hD hE hFA hAE
@@ -71,10 +71,10 @@ theorem Prop21 {A B D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centre 
   obtain ⟨Z, hZ_L, hEZC⟩ := hEC_L.exists_between
   have hBYD : Between B Y D :=
     between_of_inside_chord hY_L hB_L hD_L
-      (Prop2 ⟨F, hF⟩ hA hC Y hAYC) hB hD hBD
+      (Prop2 hA hC Y hAYC) hB hD hBD
   have hBZD : Between B Z D :=
     between_of_inside_chord hZ_L hB_L hD_L
-      (Prop2 ⟨F, hF⟩ hE hC Z hEZC) hB hD hBD
+      (Prop2 hE hC Z hEZC) hB hD hBD
   have hBDA : Triangle B D A := Triangle.of_line hB_L hD_L hBD hA_L
   have hBDE : Triangle B D E := Triangle.of_line hB_L hD_L hBD hEC_L.1
   have hBDC : Triangle B D C := Triangle.of_line hB_L hD_L hBD hAC_L.2.1

@@ -128,10 +128,10 @@ theorem Prop35.between {A B C D E F : Point} (h₁ : Parallelogram A B C D) (h�
     ac_rfl
   rw [hL₁, hR₁, h4]
 
-/-- The other case Euclid leaves out, which Proclus also supplies: when E is D,
-that point lies between A and F. The triangles ADB, DFC are equal by I.34,
-I.29 and I.4; adding the common triangle DBC to each gives the two
-parallelograms. -/
+/-- The other case Euclid leaves out, which Proclus also supplies, though Heath does
+not say how: when E is D, that point lies between A and F. The triangles ADB, DFC
+are equal by I.34, I.29 and I.4, and we add the common triangle DBC to each to give
+the two parallelograms. -/
 theorem Prop35.same {A B C D F : Point} (h₁ : Parallelogram A B C D) (h₂ : Parallelogram D B C F)
     {AF : Line} (hA : OnLine A AF) (hD : OnLine D AF) (hF : OnLine F AF) :
     quadArea A B C D = quadArea D B C F := by
@@ -249,8 +249,9 @@ theorem Prop35 {A B C D E F : Point} (h₁ : Parallelogram A B C D) (h₂ : Para
       ac_rfl
     rw [hL, hR, hsum]
   /- E may also fall between A and D, or at either end. The helpers add equal
-     triangles to the common part, as Proclus does in the cases Heath reports.
-     When E is A, equal lengths on the same ray make F equal to D. -/
+     triangles to the common part: to the trapezium EBCD, as Heath reports Proclus
+     doing, or to the triangle DBC when E is D. When E is A, equal lengths on the
+     same ray make F equal to D. -/
   have oneway : ∀ {A D E F : Point}, Parallelogram A B C D → Parallelogram E B C F →
       OnLine A AF → OnLine D AF → OnLine E AF → OnLine F AF → (E = A ∨ SameSideOf C E A B) →
       quadArea A B C D = quadArea E B C F := by

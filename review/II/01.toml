@@ -46,23 +46,23 @@ note = "Euclid likewise treats BK as a rectangle. The Lean transfers the right a
 at = "and DL is the rectangle A, DE"
 kind = "helper"
 helper = "Rectangle.of_right"
-note = "Euclid takes DL to be right-angled, with DK equal to A by I.34. The Lean gets its angle at D from the adjacent right angle of BK by `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, then uses `Rectangle.of_right` and `Rectangle.eq_rect` to identify DL."
+note = "Euclid takes DL to be right-angled, with DK equal to A by I.34. The Lean gets its angle at D from the adjacent right angle of BK by `Tacit.adjacent_eq_of_right`, which I.13 and Common Notion 3 prove, then uses `Rectangle.of_right` and `Rectangle.eq_rect` to identify DL."
 
 [[passage]]
 at = "Similarly also EH is the rectangle A, EC"
 kind = "helper"
 helper = "Rectangle.of_right"
-note = "Euclid gives EH the same justification as DL. The Lean repeats I.34 for EL equal to A, makes BL a rectangle by `Rectangle.of_right`, and uses `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, for the angle at E before `Rectangle.of_right` and `Rectangle.eq_rect` identify EH."
+note = "Euclid gives EH the same justification as DL. The Lean repeats I.34 for EL equal to A, makes BL a rectangle by `Rectangle.of_right`, and uses `Tacit.adjacent_eq_of_right` again for the angle at E before `Rectangle.of_right` and `Rectangle.eq_rect` identify EH."
 
 [figure]
 case = "BC cut at two points, D and E, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "554dfb0f"
+commit = "09b32b47"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:dca5badf15c0dfbd"
-run = "card 220, cross-family sign-off: original Prop1 proof by OpenAI Codex (8ad3abd5, which says so). Prop1.two and Prop1.general were proved at 4f1e5018, whose message calls the work best of two and has a Claude Opus 5.5 co-author trailer but does not identify either individual writer. The closing check was introduced at 17fddffc, with its explanatory wording revised at f4b8bfbb; those messages name no writer beyond the Claude Opus 5.5 co-author trailers they carry. The original proof, companions and closing check were read by GPT-6 Astra (Codex) at f3b45b70 and by Claude Opus 5.5 at 554dfb0f, with the same Lean hash; ship XS, reader XS-r-II01-II02, independent re-read at 554dfb0f"
+run = "card 220, cross-family sign-off: original Prop1 proof by OpenAI Codex (8ad3abd5, which says so). Prop1.two and Prop1.general were proved at 4f1e5018, whose message calls the work best of two and has a Claude Opus 5.5 co-author trailer but does not identify either individual writer. The closing check was introduced at 17fddffc, with its explanatory wording revised at f4b8bfbb; those messages name no writer beyond the Claude Opus 5.5 co-author trailers they carry. The original proof, companions and closing check were read by GPT-6 Astra (Codex) at f3b45b70 and by Claude Opus 5.5 at 554dfb0f, with the same Lean hash; ship XS, reader XS-r-II01-II02, independent re-read at 554dfb0f; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 09b32b47 (reader RT-c4)"
 
 [review.items]
 statement = "pass"

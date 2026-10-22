@@ -23,7 +23,7 @@ note = "Euclid reads BCG as a part of BCA. Since G lies between B and A, `angle_
 [[passage]]
 at = "Therefore AB is not unequal to DE"
 kind = "case"
-note = "Euclid supposes AB greater than DE; the Lean proves his argument once over any letters and applies it again with the triangles exchanged to rule out DE greater than AB. The Lean concludes that AB equals DE by `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E §3.5), not a proof: of two unequal lengths, one is greater."
+note = "Euclid supposes AB greater than DE; the Lean proves his argument once over any letters and applies it again with the triangles exchanged to rule out DE greater than AB. The Lean concludes that AB equals DE by `Tacit.lt_trichotomy`, a tacit rule of magnitude, which we assume (System E §3.5): of two unequal lengths, one is greater."
 
 [[passage]]
 at = "Let BC be greater, if possible, and let BH be made equal to EF"
@@ -34,7 +34,7 @@ note = "Euclid cuts BH equal to EF; Heath gives no reference for the cut. The Le
 [[passage]]
 at = "Therefore BC is not unequal to EF"
 kind = "case"
-note = "Euclid supposes BC greater than EF; the Lean proves his argument once over any letters and applies it again with the triangles exchanged to rule out EF greater than BC. The Lean concludes that BC equals EF by `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E §3.5), not a proof: of two unequal lengths, one is greater."
+note = "Euclid supposes BC greater than EF; the Lean proves his argument once over any letters and applies it again with the triangles exchanged to rule out EF greater than BC. The Lean concludes that BC equals EF by the same rule, `Tacit.lt_trichotomy`."
 
 [figure]
 case = "AB supposed greater than DE, with G between B and A, and separately BC supposed greater than EF, with H between B and C; both suppositions appear on one triangle, as in Heath's figure"
@@ -42,10 +42,10 @@ note = "Like Heath's, this figure draws Euclid's impossible suppositions. BG is 
 
 [review]
 stage = "full"
-commit = "6e0cdd27"
+commit = "18e4e614"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:a39a56a942144b8d"
-run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-I26-I30, independent re-read at 6e0cdd27"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-I26-I30, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 18e4e614 (reader RT-c1)"
 
 [review.items]
 statement = "pass"
