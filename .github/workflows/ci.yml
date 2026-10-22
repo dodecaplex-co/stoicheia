@@ -269,7 +269,8 @@ jobs:
     # the main package the model imports, directly or through others, which `risk` finds
     # from the model's import lines (scripts/risk.py, model_inputs). It reads them by a
     # narrow grammar and fails closed: while a file among them has a header it cannot read
-    # cleanly, the job runs in full for every change, and `risk`'s log names the file.
+    # cleanly or an import it cannot resolve, the job runs in full for every change, and
+    # `risk`'s log names the file.
     # Otherwise the job passes at once and says why: the change touches none of the model's
     # inputs, and the cadence (safe-push-tests.yml) checks the model on main every six
     # hours (docs/decisions/2026-10-22-risk-lanes.md).

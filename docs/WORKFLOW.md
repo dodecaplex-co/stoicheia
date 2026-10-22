@@ -52,7 +52,9 @@ their logs are in `docs/reports/crew/`:
   statements before proofs, and review records after.
 - **Range enforcers, blind readers and a polisher** keep one voice (section 7).
 - **An independent audit** comes from a model family that wrote none of the work (Jev, from
-  brief 0005's stage 6), and **a cold outside reading** from Astra.
+  brief 0005's stage 6), and **a cold outside reading** from three reviewers of three model
+  families, scoring by the [review rubric](RUBRIC.md): at present Claude Opus 5.5
+  (Anthropic), GPT-6 Astra through Codex (OpenAI) and Gemini 4 Argon (Google).
 
 ## 2. Briefs before proofs
 
@@ -367,10 +369,13 @@ class to a file of the main package that the formal model imports, directly or t
 others: `risk` reads them from the model's import lines, at both ends of the change, so
 the set follows the imports as they change. It reads them by a narrow grammar and fails
 closed: while a file among them has a header it cannot read cleanly (a module part `«.»`,
-`«..»` or `«»`, a letter or symbol past ASCII, an `import` with no module after it), or
-while the tree holds a `.gitattributes` anywhere (which can make the text Lean reads
-differ from the text Git holds), `formal-model` runs in full for every change, and
-`risk`'s log names the file, so a header that Lean reads otherwise can only widen the set.
+`«..»` or `«»`, a letter or symbol past ASCII, an `import` with no module after it),
+or imports a module for which the tree holds no file at the usual `A/B.lean` path, the
+module roots `Check`, `Model`, `Mathlib`, `Lean`, `Init` and `Std` excepted, or while the
+tree holds a `.gitattributes` anywhere (which can make the text Lean reads differ from the
+text Git holds), `formal-model` runs in full for every change, and `risk`'s log names the
+file. Thus a header that Lean reads otherwise, or a main-package source layout the narrow
+reader does not know, can only widen the set.
 For a lower class, and for `formal-model` a change that touches none of the model's
 inputs, each job passes at once and says why, since the `safe-push-tests` workflow runs
 both on main every six hours and a red run there holds the release ([the
@@ -379,7 +384,7 @@ decision](decisions/2026-10-22-risk-lanes.md)). Each fails, and is never skipped
 scripts/risk.py --paths <file>...` gives files' classes up front; `python3 scripts/risk.py
 . origin/main` a branch's class, and whether the formal model runs; and `python3
 scripts/risk.py --model-inputs HEAD` the files the model imports, then any among them
-whose header it cannot read.
+whose header or imports it cannot read or resolve.
 
 **What runs for each class, at each stage.** A change's class sets what its pre-flight
 and its pull request's CI run. What runs after the merge, on the cadence and for a release
@@ -555,12 +560,13 @@ run of `acceptance` to pass. The ruleset and the remaining merge requirements ar
   diff, a workflow changed, a path with a space, a path with a line break, printed escaped
   so that no path can start a line of CI's log, a file moved, a submodule moved) and
   `--audit` over this repository's tracked files, every one of which a rule must name. It
-  tests the formal model's inputs: the forms of a Lean header the classifier reads, and
-  those it cannot read, each of which then runs the model for every change; the files a
-  model imports, directly, through another, or deleted by the change, on a repository of
-  its own; and this repository's, `Elements/BookI/Prop07.lean` among them, whose every
-  header it reads. `negative_tests.py` runs it after the decision entry regressions,
-  before planting, with `--counts-only` too.
+  tests the formal model's inputs: the forms of a Lean header the classifier reads, those
+  it cannot read and imports it cannot resolve, each of which then runs the model for
+  every change; the files a model imports, directly, through another, or deleted by the
+  change, on a repository of its own; and this repository's,
+  `Elements/BookI/Prop07.lean` among them, whose every header and import it reads.
+  `negative_tests.py` runs it after the decision entry regressions, before planting, with
+  `--counts-only` too.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that
   branch; if integration changes the mathematics, the dependencies or a public description,
@@ -652,8 +658,8 @@ looked into.
      that later work overtakes gains a dated status note, never a quiet rewrite, and the
      issues and the tracker are kept current.
 9. **Acceptance:** from brief 0005's stage 6, the checklist passes in CI with no failures,
-   the independent audit agrees, and a cold outside reading scores the book. The switch
-   from the ratchet to the full gate is described in
+   the independent audit agrees, and a cold outside reading passes the gate of the
+   [review rubric](RUBRIC.md). The switch from the ratchet to the full gate is described in
    [ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci).
 10. **Release.** A release waits for its gate: both the page read-through and the
     stale-content audit of step 8 on the release candidate, with every Tier 0 to 2 finding
@@ -817,11 +823,14 @@ git safe-push --merge <n>                          # the gates, then a merge com
 `git safe-push` is a launcher that `install_hooks.sh` puts outside the tracked tree
 (`scripts/hooks/safe-push`, copied to `.git/stoicheia/safe-push`, with the alias): it
 fetches origin and runs origin/main's `scripts/safe_push.py`, whatever the checkout holds,
-so a branch cannot judge itself. `python3 scripts/safe_push.py` from a checkout runs that
-checkout's copy, which hands over to origin/main's when it differs; that protection holds
-only while the copy run is one that hands over, so the launcher is the way in. While
-origin/main's copy predates running from origin/main, the launcher runs the checkout's,
-and says so. The launcher and the pre-push hook run Python 3.11 or later:
+so a branch cannot judge itself; it copies that harness out of git, and the harness reads
+git, both with git's replacement objects off (#256): git reads a replacement
+(`refs/replace/`, or a ref under `GIT_REPLACE_REF_BASE`) in place of the object it
+replaces, but a push sends the original. `python3 scripts/safe_push.py` from a checkout
+runs that checkout's copy, which hands over to origin/main's when it differs; that
+protection holds only while the copy run is one that hands over, so the launcher is the
+way in. While origin/main's copy predates running from origin/main, the launcher runs the
+checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or later:
 `STOICHEIA_PYTHON` when it is set, else the first of `python3.14`, `python3.13`,
 `python3.12`, `python3.11` and `python3` that is; without one, they refuse.
 
@@ -859,7 +868,14 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       to an entry, with its reason; so the entry excuses that value alone. A broad entry
       is refused, a commit's message or identity cannot be allowed, and an entry added by
       the push itself does not count. An allowed finding is noted in the pull request by
-      its place, its rule, its value's SHA-256 and the reason, never by its line.
+      its place, its rule, its value's SHA-256 and the reason, never by its line. The
+      scan reads what the push sends: every git command `safe_push.py` runs itself, the
+      scan's among them, reads with git's replacement objects off, whatever the caller's
+      environment holds (#256), its `git status` check among them. The programs it runs
+      as checks keep the environment they are given, which holds `GIT_NO_REPLACE_OBJECTS`
+      under the launcher or after a hand-over, and otherwise only if the caller set it;
+      `check_acceptance.py`, the only check that reads git's objects for its verdict, is
+      #237's.
    3. *Invariant guards,* against origin/main, in the temporary worktree:
       - no statement changed (facts.json's `statement`, and the Lean source of the
         theorem, its porism and its companions, to its own `:=`, whitespace aside) unless
@@ -1144,11 +1160,15 @@ in `preflight/`, which `--merge` reads; origin/main's harness, when it runs in p
 another copy, is written to `harness/`, named by its blobs. `sh scripts/install_hooks.sh`
 installs the launcher and the pre-push hook: the hook refuses every push to main, scans a
 push to any other branch (its name included) with origin/main's copy of the secret scan
-(`safe_push.py --scan-push`), whichever remote it goes to (another remote's main is never
-run, and without origin/main's copy the push is refused), and refuses to push or delete a
-tag. With the owner's OK for
-a tag, it is pushed by name, `STOICHEIA_TAG_PUSH=<tag> git push origin refs/tags/<tag>`,
-and the hook still scans the commits it points to and an annotated tag's message.
+(`safe_push.py --scan-push`), copied out of git and run with git's replacement objects
+off (#256), whichever remote it goes to (another remote's main is never run, and without
+origin/main's copy the push is refused), and refuses to push or delete a tag. With the
+owner's OK for a tag, it is pushed by name, `STOICHEIA_TAG_PUSH=<tag> git push origin
+refs/tags/<tag>`, and the hook still scans the commits it points to and an annotated
+tag's message. An installed hook or launcher takes a change to its source in
+`scripts/hooks/`, #256's among them, only when `sh scripts/install_hooks.sh` is run again
+from a checkout of origin/main; until then the pre-flight notes that the installed copy
+differs from origin/main's (when origin/main's harness is what runs).
 `python3 -m pip install -r scripts/requirements-test_safe_push.txt`, followed in the same
 Python environment by `python3 scripts/test_safe_push.py`, installs the pinned YAML parser
 and plants a bad commit for each guard, gate and edge case on a throwaway clone, with a
