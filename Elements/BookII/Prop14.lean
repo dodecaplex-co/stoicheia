@@ -11,6 +11,7 @@ import Elements.BookI.Prop45
 import Elements.BookI.Prop46
 import Elements.BookI.Prop47
 import Elements.BookII.Prop05
+import Elements.Figure.Divisions
 
 /-!
 # Book II, Proposition 14
@@ -422,5 +423,29 @@ example : type_of% @Elements.BookII.Prop14 := by
   refine ⟨P, Q, ?_⟩
   rw [hPQ]
   simp only [List.map, Magnitude.sum, add_zero]
+
+/-! ## PROMOTION NOTE (phase A): the outline companions, from Staging/Figures -/
+
+open Elements.Figures
+
+/-- Companion of II.14, certificate name II.14 outline. To construct a drawn
+square equal to a figure given by its outline. This derivation uses the
+existing rectangle-to-square construction after obtaining a division
+(`division_exists`), and every division gives the outline's area (`area_eq`). -/
+theorem Prop14.outline (F : Outline) :
+    ∃ P Q S T : Point, Square P Q S T ∧ Parallelogram P Q S T ∧
+      quadArea P Q S T = F.area := by
+  obtain ⟨R, hR⟩ := division_exists F
+  obtain ⟨P, Q, S, T, hs, hp, he⟩ := Elements.BookII.Prop14.square R
+  exact ⟨P, Q, S, T, hs, hp, he.trans (area_eq F R hR).symm⟩
+
+/-- Companion of II.14, certificate name II.14 outline_side. The side form
+of the construction also equals the outline's area, by a division
+(`division_exists`) and the content theorem (`area_eq`). -/
+theorem Prop14.outline_side (F : Outline) :
+    ∃ P Q : Point, sq P Q = F.area := by
+  obtain ⟨R, hR⟩ := division_exists F
+  obtain ⟨P, Q, he⟩ := Elements.BookII.Prop14.apart R
+  exact ⟨P, Q, he.trans (area_eq F R hR).symm⟩
 
 end Elements.BookII
