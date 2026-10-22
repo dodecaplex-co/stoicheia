@@ -1,32 +1,17 @@
 # review/III/16.toml
 [statement]
-scope = "partial"
-omitted = [
-  "the angle of the semicircle is greater, and the remaining angle less, than any acute rectilineal angle",
-]
-note = "Proves that AE falls outside the circle and that no other straight line can be interposed; the clause map below shows what stays in Euclid's words."
-short = "the angle clauses stay in Euclid's words"
-fingerprint = "sha256:9fd59073303dbcdc"
+scope = "full"
+note = "With its companions: `Prop16.semicircle` and `Prop16.remaining` compare the two angles with every acute angle placed at A; `Prop16.acute` with any acute angle."
+companions = ["III.16 semicircle", "III.16 remaining", "III.16 acute"]
+fingerprint = "sha256:bbe980064221ec4c"
 
 [route]
-kind = "euclid"
+kind = "modified"
+note = "Euclid proves the angle clauses by reductio from the second part, since a straight line would be interposed; the companions argue directly from it. The straight line of an acute angle falls within the circle, so near A the acute angle lies within the angle of the semicircle, and the remaining angle within the acute angle, each with whole small circles to spare (`Prop16.semicircle_gt`, `Prop16.horn_lt`). How near A is said by the perpendicular from A, by I.12, I.17 and I.19, which Euclid leaves unsaid."
 
 [representation]
-tags = ["mixed-angles-omitted", "centre-given"]
-note = "Our angles are made by two straight lines, so an angle contained by a straight line and a circumference has no Lean counterpart. The centre D is given, as Euclid's setting-out names it."
-
-[coverage]
-checked = [
-  "Every point of AE other than A is outside the circle.",
-  "Every other straight line through A has a point within the circle, so none can be interposed between AE and the circumference.",
-  "Porism: AE touches the circle (III.16 Por.).",
-]
-explains = [
-  "The second claim is what Euclid proves the angle clauses by. A rectilineal angle between them would need a straight line interposed.",
-]
-text_only = [
-  "the angle of the semicircle is greater, and the remaining angle less, than any acute rectilineal angle",
-]
+tags = ["mixed-angles-local", "centre-given"]
+note = "An angle contained by a straight line and a circumference is a mixed angle (`MixedAngle`), read as the region it opens near its vertex: the angle of the semicircle is the points within the circle on E's side of AB, and the remaining angle the points without it, between AE and the circumference. A mixed angle is greater than a rectilineal angle placed at A along its straight arm, on its side, when near A the rectilineal angle lies within it with whole small circles to spare, and less the other way about. The companions place every angle so, and prove that the named points give the angles Euclid draws (`MixedAngle.WellFormed`); no addition, ratio or motion of mixed angles is claimed. The centre D is given, as Euclid's setting-out names it."
 
 [[passage]]
 at = "Similarly we can prove that neither will it fall on the circumference"
@@ -51,8 +36,9 @@ note = "The conclusion of the second reductio, which the contradiction above has
 
 [[passage]]
 at = "I say further that the angle of the semicircle"
-kind = "unformalized"
-note = "Euclid's argument for the two angle clauses, which the clause map above accounts for."
+kind = "different"
+helper = "Prop16.semicircle"
+note = "Proved after the theorem, by the companions `Prop16.semicircle` and `Prop16.remaining`, directly: by the second part, the straight line of an acute angle falls within the circle. Euclid argues by reductio that no acute angle is greater than the one, or less than the other."
 
 [[passage]]
 at = "PORISM. From this it is manifest"
@@ -65,6 +51,6 @@ note = "G is drawn within the circle and H beyond G, on the circumference, as th
 
 [review]
 stage = "exceptions"
-commit = "2c3686e"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:345b933cddea9a50"
+commit = "97f6403e"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:25b5c722a51cdf88"
