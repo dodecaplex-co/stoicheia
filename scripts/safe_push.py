@@ -218,8 +218,9 @@ import math
 import os
 import platform
 # platform.mac_ver() imports plistlib, and with it xml.parsers.expat, when it is first
-# called: imported here, with tomllib eagerly imported on supported interpreters, so that
-# nothing is imported once the sandbox is set (run).
+# called; Python's own handling of an uncaught exception imports traceback, and with it
+# a dozen more: both imported here, with tomllib, so that nothing is imported once the
+# sandbox is set (run), not even when the run crashes there.
 import plistlib  # noqa: F401
 import posixpath
 import re
@@ -231,8 +232,8 @@ import subprocess
 import sys
 import tempfile
 import time
-if sys.version_info >= (3, 11):
-    import tomllib
+import tomllib
+import traceback  # noqa: F401
 import types
 import unicodedata
 from pathlib import Path

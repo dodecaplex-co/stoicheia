@@ -7147,6 +7147,84 @@ class MainChecksCache(Edge):
                       "coordinator's dry run of the train and its push", text)
         self.assertIn("The sandbox does not stop a run without the flag", text)
 
+    def test_every_command_starts_in_run(self):
+        # The sandbox wraps commands in run() alone, so every command must start there; the
+        # hand-over's os.execve, in harness(), comes before open_cache, and so does
+        # risk_class, which runs origin/main's risk.py with a time limit (#292).
+        tree = ast.parse(SAFE_PUSH.read_text())
+        parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
+        starters = {("subprocess", n) for n in ("run", "Popen", "call", "check_call",
+                                                "check_output", "getoutput",
+                                                "getstatusoutput")}
+        starters |= {("os", n) for n in ("system", "popen", "fork", "forkpty", "posix_spawn",
+                                         "posix_spawnp", "execv", "execve", "execvp",
+                                         "execvpe", "execl", "execle", "execlp", "execlpe",
+                                         "spawnv", "spawnve", "spawnvp", "spawnvpe")}
+        found = set()
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Import, ast.ImportFrom)):
+                if isinstance(node, ast.ImportFrom):
+                    self.assertNotIn(node.module, ("subprocess", "os"), ast.unparse(node))
+                for alias in node.names:
+                    self.assertIsNone(alias.asname if alias.name in ("subprocess", "os")
+                                      else None, ast.unparse(node))
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
+                    and isinstance(node.func.value, ast.Name) \
+                    and (node.func.value.id, node.func.attr) in starters:
+                where = node
+                while where in parents and not isinstance(where, ast.FunctionDef):
+                    where = parents[where]
+                found.add((getattr(where, "name", "<module>"), node.func.value.id,
+                           node.func.attr))
+        self.assertEqual(found, {("run", "subprocess", "run"), ("harness", "os", "execve"),
+                                 ("risk_class", "subprocess", "run")})
+        # In the pre-flight, the class is read before the cache is opened, and the
+        # commit's checks (check_commit) run after it.
+        preflight = next(node for node in tree.body if isinstance(node, ast.FunctionDef)
+                         and node.name == "preflight_main")
+        line: dict[str, int] = {}
+        for node in ast.walk(preflight):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                line[node.func.id] = min(node.lineno, line.get(node.func.id, node.lineno))
+        order = ["preconditions", "risk_class", "open_cache", "check_commit"]
+        self.assertEqual(sorted(order, key=line.__getitem__), order)
+
+
+    def test_every_import_is_at_the_top(self):
+        # A module imported in a function could be imported once the sandbox is set, and
+        # found first in the harness's own directory: so safe_push.py imports nothing
+        # but at its top, nor through importlib or __import__, which the audit event of
+        # an import does not always see.
+        tree = ast.parse(SAFE_PUSH.read_text())
+        late = [ast.unparse(node) for top in tree.body
+                if not isinstance(top, (ast.Import, ast.ImportFrom))
+                for node in ast.walk(top) if isinstance(node, (ast.Import, ast.ImportFrom))]
+        self.assertEqual(late, [])
+        names = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
+        self.assertFalse({"importlib", "__import__"} & names)
+        for name in ("plistlib", "tomllib"):
+            self.assertIn(f"\nimport {name}", SAFE_PUSH.read_text())
+
+
+class RiskPreflight(Edge):
+    """Checks scaled to risk (#292, #301): the pre-flight takes the change's class from
+    origin/main's scripts/risk.py, judging the commit's paths against origin/main, never
+    from the commit's own copy of the classifier, nor from a label but `release`, which
+    only raises it to R5. R0 to R2 keep steps 1 to 3 and leave step 4 to CI, one "skip"
+    line saying so; R3 to R5 take the full path, here the internal test flag's skip, since
+    step 4 run in full needs Lean (FullChecks). The class is a step line, which reaches
+    the pull request's record, and the pre-flight record's "class". Any failure to compute
+    it is R5. --merge takes a record that left step 4 to CI only while the class,
+    recomputed then, is still R0 to R2; a release merges only on the full pre-flight of its
+    head, and with a green run of safe-push-tests there, the head's copy of that workflow
+    being origin/main's, each of its three jobs there and passed."""
+
+    SHORT = "left to CI"
+    FULL = "internal test flag, local origin"
+    GUARDS = ("secrets", "statements", "axiom lock", "protected paths", "heath/",
+              "directories", "decision entries")
+
+
     def test_the_preflight_activates_the_sandbox_after_classification_and_before_checks(self):
         sha = self.check_change()
         ctx = safe_push.Context(WORK, sha, BASE, 1, str(ORIGIN), None, {})
@@ -7755,6 +7833,34 @@ class CadenceReport(unittest.TestCase):
 class Units(unittest.TestCase):
     """The scanner and the helpers, without git."""
 
+
+    def test_a_crash_once_the_sandbox_is_set_imports_nothing(self):
+        # A command's output that is not UTF-8 makes run() raise, and an exception that
+        # reaches Python's own handler imports traceback and a dozen more, found first in
+        # the harness's own directory, which sandboxed code may write. safe_push.py
+        # imports them at its top, so a crash once the sandbox is set imports nothing.
+        script = (
+            "import sys\n"
+            "sys.path.insert(0, sys.argv[1])\n"
+            "import safe_push\n"
+            "seen = []\n"
+            "def hook(event, args):\n"
+            "    if event == 'import' and safe_push.SANDBOX is not None \\\n"
+            "            and args[0] not in sys.builtin_module_names:\n"
+            "        seen.append(args[0])\n"
+            "sys.addaudithook(hook)\n"
+            "safe_push.SANDBOX = '(version 1) (allow default)'\n"
+            "try:\n"
+            "    b'\\xff'.decode('utf-8')\n"
+            "except UnicodeDecodeError:\n"
+            "    sys.excepthook(*sys.exc_info())\n"
+            "safe_push.SANDBOX = None\n"
+            "print('SEEN', ','.join(seen))\n")
+        r = subprocess.run([sys.executable, "-I", "-c", script, str(HERE)],
+                           capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("UnicodeDecodeError", r.stderr)          # the handler ran
+        self.assertIn("SEEN \n", r.stdout, r.stdout + r.stderr)  # and imported nothing
     def configured_check_commands(self):
         checks = []
         for name, command in safe_push.CHECKS:
