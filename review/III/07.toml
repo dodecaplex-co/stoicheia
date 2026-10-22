@@ -26,6 +26,12 @@ helper = "Definition15"
 note = "Euclid uses the equality of AE and BE without giving a reason. The Lean obtains it from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
 
 [[passage]]
+at = "therefore AF is greater than BF"
+kind = "helper"
+helper = "Tacit.len_add_of_between"
+note = "Euclid takes AF as AE and EF together. Beneath the setting-out, `between_cut` puts E between A and F; the Lean then identifies the sum by `Tacit.len_add_of_between`, a rule we assume (System E, Diagram-segment 1), and uses AE equal to BE."
+
+[[passage]]
 at = "Again, since BE is equal to CE"
 kind = "helper"
 helper = "Definition15"
@@ -35,12 +41,12 @@ note = "Euclid uses the equality of BE and CE without giving a reason. The Lean 
 at = "But the angle BEF is also greater than the angle CEF"
 kind = "helper"
 helper = "BookI.Prop24.within"
-note = "Euclid reads the greater angle BEF from his figure, without a reference from Heath. The Lean uses `BookI.Prop24.within` and `crossbar` to place M on EC and the ray FB, `InsideCircle.of_between_centre` to put F and M within the circle, and `Prop2.within` (III.2) to rule out B between F and M; `angle_lt_of_between` then gives the comparison at E."
+note = "Euclid reads the greater angle BEF from his figure, without a reference from Heath. The Lean uses `BookI.Prop24.within` and `crossbar` to place M on EC and the ray FB, `InsideCircle.of_between_centre` to put F and M within the circle, and `Tacit.between_cases`, a rule we assume (System E, Between 6), to split the orders of F, M and B; the ray excludes F between M and B, and `Prop2.within` (III.2, for which Heath prints no reference here) excludes B between F and M, leaving M between F and B, so `angle_lt_of_between` gives the comparison at E."
 
 [[passage]]
 at = "For the same reason"
 kind = "grouped"
-note = "Euclid's argument above is proved for any two points B, C of the circle on one side of AD; C and G are such a pair, so these words need no Lean of their own."
+note = "Euclid leaves C and G to the same argument without writing it out. The Lean proves the comparison above for any two points B, C of the circle on one side of AD, so it includes C and G."
 
 [[passage]]
 at = "Again, since GF, FE are greater than EG"
@@ -55,10 +61,15 @@ helper = "Definition15"
 note = "Euclid uses the equality of EG and ED without giving a reason. The Lean obtains it from `Definition15`, the assumed rule for equal radii."
 
 [[passage]]
+at = "Let EF be subtracted from each"
+kind = "helper"
+helper = "Tacit.len_add_of_between"
+note = "Euclid subtracts EF from ED, taking ED as EF and FD together. The Lean writes this sum using `Tacit.len_add_of_between`, a rule we assume (System E, Diagram-segment 1), with F between E and D, and cancels the common length by `Magnitude.lt_of_add_lt_add_left`."
+
+[[passage]]
 at = "Therefore FA is greatest, FD is least, and FB is greater than FC"
 kind = "carried"
 helper = "Prop7.general"
-note = "Euclid compares FB, FC and FG on one side of AD, as his figure has them. `Prop7.general` compares any two of the rest on opposite sides too, through the partner on the other side, as far from F and as near FA (`Prop7.partner`)."
 
 [[passage]]
 at = "For on the straight line EF, and at the point E on it"
