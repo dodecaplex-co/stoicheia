@@ -363,10 +363,13 @@ class to a file of the main package that the formal model imports, directly or t
 others: `risk` reads them from the model's import lines, at both ends of the change, so
 the set follows the imports as they change. It reads them by a narrow grammar and fails
 closed: while a file among them has a header it cannot read cleanly (a module part `«.»`,
-`«..»` or `«»`, a letter or symbol past ASCII, an `import` with no module after it), or
-while the tree holds a `.gitattributes` anywhere (which can make the text Lean reads
-differ from the text Git holds), `formal-model` runs in full for every change, and
-`risk`'s log names the file, so a header that Lean reads otherwise can only widen the set.
+`«..»` or `«»`, a letter or symbol past ASCII, an `import` with no module after it),
+or imports a module for which the tree holds no file at the usual `A/B.lean` path, the
+module roots `Check`, `Model`, `Mathlib`, `Lean`, `Init` and `Std` excepted, or while the
+tree holds a `.gitattributes` anywhere (which can make the text Lean reads differ from the
+text Git holds), `formal-model` runs in full for every change, and `risk`'s log names the
+file. Thus a header that Lean reads otherwise, or a main-package source layout the narrow
+reader does not know, can only widen the set.
 For a lower class, and for `formal-model` a change that touches none of the model's
 inputs, each job passes at once and says why, since the `safe-push-tests` workflow runs
 both on main every six hours and a red run there holds the release ([the
@@ -375,7 +378,7 @@ decision](decisions/2026-10-22-risk-lanes.md)). Each fails, and is never skipped
 scripts/risk.py --paths <file>...` gives files' classes up front; `python3 scripts/risk.py
 . origin/main` a branch's class, and whether the formal model runs; and `python3
 scripts/risk.py --model-inputs HEAD` the files the model imports, then any among them
-whose header it cannot read.
+whose header or imports it cannot read or resolve.
 
 The full `acceptance` job runs only in CI. Its ratchet before the consolidation release,
 the switch to the full gate at that release, the reports and the executable definitions
@@ -519,12 +522,13 @@ run of `acceptance` to pass. The ruleset and the remaining merge requirements ar
   diff, a workflow changed, a path with a space, a path with a line break, printed escaped
   so that no path can start a line of CI's log, a file moved, a submodule moved) and
   `--audit` over this repository's tracked files, every one of which a rule must name. It
-  tests the formal model's inputs: the forms of a Lean header the classifier reads, and
-  those it cannot read, each of which then runs the model for every change; the files a
-  model imports, directly, through another, or deleted by the change, on a repository of
-  its own; and this repository's, `Elements/BookI/Prop07.lean` among them, whose every
-  header it reads. `negative_tests.py` runs it after the decision entry regressions,
-  before planting, with `--counts-only` too.
+  tests the formal model's inputs: the forms of a Lean header the classifier reads, those
+  it cannot read and imports it cannot resolve, each of which then runs the model for
+  every change; the files a model imports, directly, through another, or deleted by the
+  change, on a repository of its own; and this repository's,
+  `Elements/BookI/Prop07.lean` among them, whose every header and import it reads.
+  `negative_tests.py` runs it after the decision entry regressions, before planting, with
+  `--counts-only` too.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that
   branch; if integration changes the mathematics, the dependencies or a public description,
