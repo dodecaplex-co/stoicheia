@@ -4475,41 +4475,6 @@ findings:
   [FORMALIZATION](../FORMALIZATION.md), section 7, and the README's row for the negative
   tests now describe both plants. No check is weakened.
 
-- **A figure that draws every case says so
-  ([#30](https://github.com/jackChallis/stoicheia/issues/30)).** `figure_note` in
-  [`scripts/render.py`](../../scripts/render.py) put a record's `[figure] case` after a
-  fixed "Drawn for one case:". That is false of a figure that draws every case its theorem
-  covers: III.25's, `figures/III/25.svg`, draws Euclid's three cases side by side, as
-  Heath's three figures do ([the figures against the scans](../reports/figures-against-scans.md)),
-  and III.35's, on main, draws Euclid's two. A record's `[figure]` may now give
-  `every_case = true`, and the caption under the figure, and its alternative text, then
-  read "Drawn for every case: …" in place of "Drawn for one case: …", with the `case`
-  naming the cases drawn. [`scripts/heath.py`](../../scripts/heath.py) reads the key as a
-  boolean, not required; `load_review` refuses, naming the record, an `every_case` that is
-  not true or false, and `every_case = true` with no `case`, and still refuses a `[figure]`
-  with neither `case` nor `note`, whatever its `every_case`. P8 of
-  `scripts/check_acceptance.py` is unchanged: it still asks a theorem of several cases for
-  the `case` text, which now names the cases drawn where the figure draws them all.
-  `scripts/check_style.py` is unchanged too: `REVIEW_SHOWN` lists the texts of `[figure]`
-  that the page shows, `case` and `note`, and `review_texts` reads only the keys it lists,
-  each only as a string, so a boolean is never read as text.
-  [review/SCHEMA.md](../../review/SCHEMA.md) gains the key's row and widens the meaning of
-  `case`; [STYLE](../STYLE.md), section 7, asks a figure that draws every case to say so,
-  with `every_case`. The protected test file
-  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains three tests, each
-  failing before the change and passing after it: the caption with and without
-  `every_case`, a record read with it, and the record refused. No record uses the key yet,
-  so no page changes. This check change lands on its own, before train C6b
-  ([WORKFLOW](../WORKFLOW.md), section 10: a check lands first), which gives III.25 its
-  three companions and sets `every_case` in its record. Whether III.35 may take it is for
-  its own review, since its theorem also covers Simson's cases, which its figure does not
-  draw: the key means every case the theorem covers, as review/SCHEMA.md says. The
-  protected files changed are
-  `scripts/render.py`,
-  `scripts/heath.py`,
-  `review/SCHEMA.md`,
-  `tests/test_check_style.py`.
-
 - **Train C6a meets axiom wave one: the lock is main's 79 axioms and the centre rule.**
   Train C6a, which carries stage 3, the mixed angles, the rule that every circle has a
   centre and brief 0008's section 7, was merged with main at `2e8aecf`, after the eight
@@ -4628,6 +4593,217 @@ findings:
   assertion stays exact. I approve it as a correction, not a weakening." The protected file
   changed is `tests/test_decision_entries.py`.
 
+- **Ways past the forbidden-command scan
+  ([#197](https://github.com/jackChallis/stoicheia/issues/197)).** An independent reviewer
+  found three files that `lake build` accepts and the source scan of
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) let through, and we thank
+  them warmly for each.
+
+  First, `set_option«debug».skipKernelTC true in`. Lean 4.35 needs no space between
+  `set_option` and a guillemet, and the scan's pattern,
+  `\bset_option\s+«?(?:debug|doc)»?\.`, asked for one. Plain `lean` accepts the closed-up
+  spelling and acts on it: under `set_option«debug».byAsSorry true in`, a theorem stating
+  `0 = 1` builds, resting on `sorryAx`. The pattern is now
+  `\bset_option(?:\s+«?|\s*«)(?:debug|doc)»?\.`, which lets a guillemet follow
+  `set_option` with no space, so the scan refuses `set_option«debug».…` and
+  `set_option«doc».…`, with guillemets around one part or each, in a command or a tactic
+  block, as it refused the spaced spellings; it still refuses those after a space, a tab or
+  a line break. A plain `debug` or `doc` still needs the space: Lean reads
+  `set_optiondebug.skipKernelTC` as one name, not the command, and the scan does not refuse
+  it or `set_optiondoc.verso`. Two more patterns of `FORBIDDEN`, found in
+  this change's second round, asked for a break where Lean needs none: `#eval\b` and
+  `#exit\b`. Lean reads the longest command it knows, so plain `lean` runs `#evalx` as
+  `#eval x` and stops reading at `#exitx`, exiting 0 on both, and the scan passed both.
+  They now end with no `\b`, as `#guard_panic` does (below). The other patterns'
+  only whitespace is `\s*`, and the `[ \t]+` of `MODEL_CHECK_RUN_CMD` bounds the
+  generator's allowance, so a missing space there means a refusal. Outside FORBIDDEN, the
+  Book Zero rule asks for one space, a gap of the same kind, left to its own issue.
+
+  Second, a command after a `/--/` doc-comment opener, where `read_lean` began the
+  comment's body one character before Lean does. It closes with the correction of
+  `read_lean` made on `tooling/citation-sweep`
+  ([#32](https://github.com/jackChallis/stoicheia/issues/32)), committed there at
+  `720569db` and completed at `f745017b`, and made here too, at `fd1db6c6`, its one line
+  alone: every comment's body begins at its fourth character, as Lean reads it, nesting
+  kept, so a `/-/-` opener, which the scan had read as opening a nested comment, whose
+  `-/` then closed only the inner one, hides nothing either. The set_option plant puts
+  `set_option«debug».skipKernelTC` after `/-/- -/` and after `/--/ x -/`, each to be
+  refused on its line, and the same command inside a nested comment, `/- /- -/ … -/`,
+  not to be.
+
+  Third, `#guard_msgs (drop all) in` over a theorem that Lean refuses: the error leaves the
+  build, `lake env lean` exits 0 on the file, and the theorem rests on `sorryAx`, which the
+  certificate's axiom check sees only beneath a certificate entry. A new rule,
+  `GUARD_DROP`, refuses `#guard_msgs` with `drop` in each of Lean's forms (`(drop all)`,
+  `(drop error)`, `(drop warning)`, `(drop info)`, and `drop` after another filter or an
+  option, as in `(warning, drop all)`, with or without spaces, and with a remark or a line
+  break inside) in every `.lean` file the scan reads, with no allow-list. That is the
+  coordinator's ruling of 21 October: no file uses it, and a future need asks for an
+  exception in a change of its own. The issue had proposed to allow it in `Audit/` and
+  `model/Model/Audit.lean`, which pin messages on purpose; the ruling refuses it there
+  too. `git grep` finds 228 `#guard_msgs` commands, every one a plain `#guard_msgs in`: 13
+  in `Audit/Overlaps.lean`, 27 in `Audit/Superposition.lean`, 2 in
+  `Staging/Centre/Crossing.lean`, 79 in `model/Check/RoundTrip.lean` and 107 in
+  `model/Model/Audit.lean`. None is refused. Lean reads `drop` only as the plain word,
+  never as `«drop»`.
+
+  Two more ways for `#guard_msgs` to hide an error were found while testing the third, and
+  the coordinator ruled on both on 21 October: each adds a refusal and loosens nothing.
+  `#guard_msgs` with `substring` is refused in any setting (`(substring := true)`, or
+  `false`), with or without spaces, beside any filter or option, in every file the scan
+  reads, with no allow-list (`GUARD_SUBSTRING`). With `substring := true` the docstring
+  need only appear somewhere in the messages, so one that is only part of the error
+  (`error`), an empty one, or none, matches it: plain `lake env lean` exits 0 on each, the
+  theorem resting on `sorryAx`. No file uses it. A `#guard_msgs` under a docstring that
+  pins an error is refused in every file the scan reads but an allow-list of two,
+  `model/Check/RoundTrip.lean` and `model/Model/Audit.lean` (`GUARD_ERROR_PINS`). Lean
+  writes each error it checks as `error:` and its text, so with `drop` and `substring`
+  refused, a docstring pins an error only if it holds `error:`. The docstring is the
+  `/--` comment among the comments and whitespace just before the `#guard_msgs`, read as
+  `read_lean` reads them: a remark between the two hides nothing, and `error:` in a
+  theorem's own docstring, a comment or a module docstring is not refused. Lean accepts
+  the pin plain, closed up, with a remark or a comment between, under a filter, with lax
+  whitespace or positions, over two errors and with `#guard_msgsin` closed up, exiting 0
+  with the theorem on `sorryAx`. The two files pin errors on purpose: the round trip pins
+  60 of the generator's refusals, each over a `run_cmd`, and the audit pins one refusal
+  of `#check`; neither wraps a declaration. The scan reads `model/`, both files among it,
+  so without the list it would refuse those 61 pins: the list names exactly what the
+  rule would otherwise refuse. Within the two files a new pin, over a declaration or not,
+  passes the scan, and review reads it.
+
+  Last, `#guard_panic`, which the independent review of this change found, and we thank
+  the reviewer warmly. Lean's `elabGuardPanic` empties the whole message log of the
+  command it wraps once any message holds the text `PANIC`, so
+  `#guard_panic in theorem bad : (0 : Nat) = 1 := by fail "PANIC"` exits 0, the theorem
+  resting on `sorryAx`; so does a `trace "PANIC"` before a failing tactic. It joins
+  `FORBIDDEN`, matched with no `\b` after it, since Lean reads `#guard_panicin` as
+  `#guard_panic in`. No tracked file uses it. A reading of Lean 4.35's
+  `Lean/Elab/GuardMsgs.lean` finds no other way for `#guard_msgs` to take an error out of
+  the build: a message it neither checks nor drops is passed on and stays in the build,
+  and the only messages it skips are silent ones, which Lean's own code makes only for
+  information.
+
+  And a number closed up to a command, which the /no-mistakes review of this change found,
+  with our thanks. Lean 4.35 ends a number where its digits end, so it reads `def x : Nat
+  := 1set_option«debug».byAsSorry true in` as `1` and the command, and a theorem stating
+  `0 = 1` after it builds on `sorryAx`; so do `p.1set_option…`, where `.1` is a field, and
+  `0xA`, `1e5`, `1.5` or `1_0` before it, and `1axiom planted : False` declares an axiom.
+  `read_lean` read `\d[\w.]*` as one number, and an identifier's `.` before a digit as
+  part of it, so the scan's `\b` before `set_option` and `axiom` found no boundary. A
+  number now ends where Lean's `numberFnAux` ends it. After an adjacent `.`, an ordinary
+  projection field ends at its digits, preserving `p.1.succ`, `(·.2.toList)` and
+  projections after `⟩`; but a declared `.` notation can make a scientific or
+  underscore-separated number the longer reading, so that longer boundary is kept.
+  Whitespace and comments clear the projection state, since Lean requires a projection to
+  be adjacent on both sides. A number or field with a letter, a digit or `_` just after it
+  is blanked, so every pattern of `FORBIDDEN` and `AXIOM` sees the word after it begin. No
+  tracked `.lean` file reads differently. One refusal goes, rightly: a raw string closed
+  up to a number, as in `infixl:65r#"{x"# => Nat.add`, which Lean builds, was read as a
+  plain string after the number `65r` and refused as one the scan could not read for
+  certain; it is now read as Lean reads it, a raw string, and passes. The set_option plant
+  covers numbers of each form and fields, dot notation beside whitespace or a block
+  comment, and ambiguous adjacent dot notation, a hexadecimal number after an adjacent
+  `.` among them, and requires the reader to leave numbers after a declared notation and
+  ordinary projections as they are. It also keeps names with a digit before `set_option` and the unspaced plain
+  names `set_optiondebug.skipKernelTC` and `set_optiondoc.verso`.
+
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains five plants,
+  which plant each closed-up spelling, each form of `drop`, the closed-up `#eval`,
+  `#exit` and `#guard_panic` (with `#guard_panic` after a remark or a line break), each
+  form of `substring` and each form of a pinned error in a scratch copy of I.1's file,
+  in a tree of their own, and require each to be refused on its line, by name. A
+  `#guard_msgs` that checks its messages or passes them on, one under a docstring that
+  pins an info message, `error:` in a theorem's own docstring, a comment or a module
+  docstring before a `#guard_msgs`, and the words of each command in a comment or a
+  string, must not be. The pin plant then puts the pin alone at each file of the
+  allow-list, where it must pass, and at a new file beside each, at each file's name in
+  the other's folder, in `Audit/` and in `Staging/`, where it must be refused; it also
+  fails if check_fidelity's allow-list differs from the one it writes out. The
+  forbidden-command plant's commands gain `#guard_panic`. Run with origin/main's check
+  (`17369f92`, whose `check_fidelity.py` is that of `0a05f96f`), all five fail: that
+  scan misses the new closed-up spellings and commands, every planted form of `drop` and
+  `substring`, and the error pins outside the allow-list, while catching only the spaced
+  set_option spellings. Review then added the comment-opener, exact allow-list and
+  number/projection boundary cases described above. With this scan all five plants pass,
+  and undoing any one of their rules makes its plant fail.
+
+  [FORMALIZATION](../FORMALIZATION.md), section 7, the list's one home, now names each of
+  these. The protected files this changes are `scripts/check_fidelity.py` and
+  `scripts/negative_tests.py`. Nothing else is loosened: on 238 plants and probes, in each of
+  the five folders the scan reads, the scan makes every finding origin/main's makes, and
+  no file of the edition changes.
+
+- **The source scan reads each Lean file as Lean does, and refuses a lone carriage return
+  ([#207](https://github.com/jackChallis/stoicheia/issues/207)).** `check_rules` in
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) read each `.lean` file
+  with `Path.read_text()`, whose universal newlines turn a lone carriage return into a
+  line feed. Lean does not: it reads `\r\n` as `\n`, refuses a lone `\r` between tokens but
+  accepts one inside a comment or a literal, and ends a `--` comment only at a line feed.
+  So in `-- a remark\r"` Lean sees one comment, the quote among it, while the scan saw the
+  comment end at the carriage return and a string open on the next line, which swallowed
+  the code after it up to a `"` in a later comment. Every forbidden command behind such a
+  comment was hidden from the scan that guards the axioms, `axiom` included: an
+  independent reviewer on ship TT (#197's final review) planted six behind one,
+  `#guard_msgs (drop all)`, `set_option debug.byAsSorry`, a pinned error, `#guard_panic`,
+  `set_option debug.skipKernelTC` and an `axiom`, and Lean accepted each while the scan
+  passed all six. The scan now reads each Lean source with
+  `path.read_bytes().decode("utf-8")` (`lean_text`), with no newline translation, so its
+  view of comments, strings and lines is Lean's; and it refuses a lone carriage return (a
+  `\r` not followed by `\n`) in any scanned `.lean` file, naming its file and line, since
+  a `--` comment does not end at it. CRLF files stay allowed, as Lean allows them (`\r\n`
+  normalised to `\n`); no tracked `.lean` file has a carriage return today
+  (`git grep -l $'\r' -- '*.lean'` finds none), so the scan's output over the tree is
+  unchanged. The two claims the hole made untrue are true again:
+  `check_fidelity.py`'s docstring and [FORMALIZATION](../FORMALIZATION.md), section 7,
+  both now say the scan reads the bytes and refuses a lone carriage return. The other four
+  readers of Lean comments (`check_style.py`, `check_acceptance.py`, `render.py` and
+  `generated_counts.py`, the readers of
+  [#206](https://github.com/jackChallis/stoicheia/issues/206)) still use `read_text()`;
+  #206, which follows this train, moves them to one shared reader with the same reading.
+  It is a check change, landing on its own: a hole in the scan that guards the axioms. No
+  check, test, expected value, lock or schema is weakened:
+  `scripts/negative_tests.py` gains one plant that hides the six probes behind a
+  carriage-return comment in a scratch copy of I.1's file and shows each refused, where
+  the check before #207 missed all six. Protected files changed:
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py),
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py),
+  [`docs/FORMALIZATION.md`](../FORMALIZATION.md) and this page.
+
+- **A figure that draws every case says so
+  ([#30](https://github.com/jackChallis/stoicheia/issues/30)).** `figure_note` in
+  [`scripts/render.py`](../../scripts/render.py) put a record's `[figure] case` after a
+  fixed "Drawn for one case:". That is false of a figure that draws every case its theorem
+  covers: III.25's, `figures/III/25.svg`, draws Euclid's three cases side by side, as
+  Heath's three figures do ([the figures against the scans](../reports/figures-against-scans.md)),
+  and III.35's, on main, draws Euclid's two. A record's `[figure]` may now give
+  `every_case = true`, and the caption under the figure, and its alternative text, then
+  read "Drawn for every case: …" in place of "Drawn for one case: …", with the `case`
+  naming the cases drawn. [`scripts/heath.py`](../../scripts/heath.py) reads the key as a
+  boolean, not required; `load_review` refuses, naming the record, an `every_case` that is
+  not true or false, and `every_case = true` with no `case`, and still refuses a `[figure]`
+  with neither `case` nor `note`, whatever its `every_case`. P8 of
+  `scripts/check_acceptance.py` is unchanged: it still asks a theorem of several cases for
+  the `case` text, which now names the cases drawn where the figure draws them all.
+  `scripts/check_style.py` is unchanged too: `REVIEW_SHOWN` lists the texts of `[figure]`
+  that the page shows, `case` and `note`, and `review_texts` reads only the keys it lists,
+  each only as a string, so a boolean is never read as text.
+  [review/SCHEMA.md](../../review/SCHEMA.md) gains the key's row and widens the meaning of
+  `case`; [STYLE](../STYLE.md), section 7, asks a figure that draws every case to say so,
+  with `every_case`. The protected test file
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains three tests, each
+  failing before the change and passing after it: the caption with and without
+  `every_case`, a record read with it, and the record refused. No record uses the key yet,
+  so no page changes. This check change lands on its own, before train C6b
+  ([WORKFLOW](../WORKFLOW.md), section 10: a check lands first), which gives III.25 its
+  three companions and sets `every_case` in its record. Whether III.35 may take it is for
+  its own review, since its theorem also covers Simson's cases, which its figure does not
+  draw: the key means every case the theorem covers, as review/SCHEMA.md says. The
+  protected files changed are
+  `scripts/render.py`,
+  `scripts/heath.py`,
+  `review/SCHEMA.md`,
+  `tests/test_check_style.py`.
+
 - **Train C6b reconciled after axiom wave one.** Train C6b carries III.1's construction
   and porism and stage 4, merged with C6a after axiom wave one, at `4db10cf2`, and again
   at `529c93f7`, which brings main's restricted rule of superposition (#191) and main at
@@ -4701,10 +4877,14 @@ findings:
   differs only by its vocabulary count, 238 to 242.
   `scripts/render.py`, `scripts/heath.py`, `review/SCHEMA.md` and
   `tests/test_check_style.py` differ by tooling/figure-every-case's check change, merged at
-  `0254f4cd`, which lands before this train with its own entry; this train uses it only in
+  `0254f4cd`, which landed before this train with its own entry, as #270; this train uses it only in
   III.25's record, whose figure draws every case. That branch, merged again at `62a10c91`,
   brings main at `78fb461d` and `554dfb0f` (#232 and #239), and this train was merged with
-  main again at `8674bce2` (#240, train C6a) and `af90d71e` (#254); the paths main changed
+  main again at `8674bce2` (#240, train C6a), `af90d71e` (#254), `6d06c47b` (#270, the
+  check change itself, after main's tooling and text trains #271 to #304) and `84c71dff`
+  (#309, II.5 and II.14 proving their right angles in place; the census of I.13's rule in
+  the overlap catalogue recounted on the merged 136 entries: 17 proofs, 16 calling it, 58
+  in the closure); the paths main changed
   since `73b97ab1` are main's, named in main's entries, and change neither the lock nor any
   pin.
   The merge itself writes no statement, check or expected value: each is one train's.
@@ -4821,10 +5001,17 @@ findings:
   tooling/figure-every-case (`752a84fb`, landing before train C6b with its own entry) and
   III.25's figure of every case, and changes neither the lock nor any pin; with main
   at `554dfb0f` (#232, the unrun tests in CI, and #239, decision entries one file
-  each), which changes neither the lock nor any pin; and last with the guard at
+  each), which changes neither the lock nor any pin; then with the guard at
   `1b5e3f2b`, which brings train C6b after its /no-mistakes run and its readers (III.15
   and III.25), tooling/figure-every-case at `696181c5` and main at `8674bce2` (#240, train
-  C6a landed) and `af90d71e` (#254), and changes neither the lock nor any pin. The
+  C6a landed) and `af90d71e` (#254), and changes neither the lock nor any pin; then
+  with the guard at `eae7eed9`, which brings train C6b merged with main at `6d06c47b`
+  (#270, the check change tooling/figure-every-case landed, and main's tooling and text
+  trains #271 to #304), and changes neither the lock nor any pin; and last with the guard
+  at `cdb9750e`, which brings train C6b merged with main at `84c71dff` (#309, II.5 and
+  II.14 proving their right angles in place), and changes neither the lock nor any pin.
+  The census of I.13's rule in the overlap catalogue was recounted on the merged 137
+  entries: 14 proofs, each calling the rule itself, and 33 entries in the closure. The
   restated Book III of this train is kept whole; III.1's record and commentary are this
   train's, since its statement no longer takes a centre.
   `Certificate/axioms.lock`, written again by `python3 scripts/check_fidelity.py
@@ -4848,7 +5035,7 @@ findings:
   superposition. The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`,
   `model/`, `scripts/`, `.github/`, `review/SCHEMA.md`, `review/terms.toml`,
   `lakefile.toml` and `lean-toolchain` that differ from `lean/centre-guard` at
-  `1b5e3f2b`, each named whole:
+  `cdb9750e`, each named whole:
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
   `Audit/screen.py`,
@@ -4873,7 +5060,7 @@ findings:
   the lock's one changed word and what follows from it. `scripts/scaffold_book.py` differs
   by tooling/c6c-scaffold's change, its restated Book III signatures, the companions it
   emits after III.24 and III.25, and its comment, which lands before this train with its
-  own entry. The paths main changed between `73b97ab1` and `554dfb0f` are main's, named
+  own entry. The paths main changed between `73b97ab1` and `84c71dff` are main's, named
   in main's entries. No statement, check or expected value changes in this merge.
 
 - **III.30's halves, approved, proved and registered (#67).** The owner approved

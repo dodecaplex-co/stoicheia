@@ -88,9 +88,10 @@ theorem Prop13 {A B C D : Point} {ABDC EBFD ACK : Circle} :
   exact ⟨hinternal, hexternal⟩
 
 /-- **III.13 for circles touching within**, with only the two circles it speaks of: circles
-touching within, either inside the other, have no common point but the point of contact. A
-lemma beside III.13, its first clause alone; it rests on whatever III.13 rests on. Without
-it, a citer of that clause names III.13's third circle, which the clause never mentions. -/
+touching within, either inside the other, have no common point but the point of contact.
+A lemma beside III.13, its first clause alone; it rests on whatever III.13 rests on.
+Without it, a citer of that clause names III.13's third circle, which the clause never
+mentions. -/
 theorem Prop13.internally {B D : Point} {α β : Circle}
     (h : TouchesInternally α β D ∨ TouchesInternally β α D) (hBα : OnCircle B α)
     (hBβ : OnCircle B β) : B = D :=
