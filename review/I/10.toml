@@ -14,10 +14,10 @@ note = "Euclid takes D to lie on AB between A and B. After I.9 gives a bisector 
 
 [review]
 stage = "full"
-commit = "206e3080"
-reviewer = "Claude Opus 5.5, independent reader"
+commit = "01e0fe54"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:724cea2aa4407afd"
-run = "brief 0005 stage 5, read-through 02 (#34), independent re-read of the mends at 206e3080"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I01-I10b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the proof (#220), independent re-read at 01e0fe54 (reader RT-x1)"
 
 [review.items]
 statement = "pass"
