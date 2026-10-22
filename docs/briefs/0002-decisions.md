@@ -3772,8 +3772,8 @@ findings:
   this content. `Audit/Overlaps.lean` renews the dependency pins of `Audit.III_24_measure`,
   `Audit.III_26_any` and `Audit.III_27_any` from Lean's output: III.1's construction now
   brings `Tacit.exists_centre` into each. No proof, statement or check is weakened.
-- **III.1's construction home and its porism, 19 October 2026 (D1).** By the owner's
-  decision D1 of 19 October, `Elements.BookIII.Prop1.construction` moves home before
+- **III.1's construction home and its porism, 19 October 2026.** In this revision,
+  `Elements.BookIII.Prop1.construction` moves home before
   `Prop1`, with its frozen type: a circle and two points of it, no centre supplied,
   returning Euclid's bisections and perpendicular straight line. The rule
   `Tacit.exists_centre` supplies a centre only inside the proof that D is within the

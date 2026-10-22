@@ -596,7 +596,8 @@ rule.
   that the segments are congruent, and III.26 and III.28 that the circumferences are
   congruent too, which needs the equal bases and the equal circles: III.26 no longer holds
   for any two circles, and its audit example has given way to a note saying so. III.1 and
-  III.25 take a centre from a hypothesis. These belong to the review records, under
+  III.25's companions take centres from hypotheses; III.25's construction core receives
+  neither a circle nor a centre. These belong to the review records, under
   `[representation]` and `[statement]`.
 
 - **III.30, by the same measure.** I.4 makes the angles DAB and ABD equal, and they stand
