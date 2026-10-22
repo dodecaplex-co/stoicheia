@@ -6,7 +6,7 @@ fingerprint = "sha256:45e8f59e48cffdcc"
 
 [route]
 kind = "euclid"
-note = "The core is Euclid's construction, in his three cases. His step \"[III. 9]\", that the circle described is the one the segment came from, is the companion `Prop25.complete`, by III.9 and `circle_eq`. `Prop25.of_circle` runs the core on the arc of a given circle, the meeting fact coming from `Prop25.meets` [III. 2]. The core puts B and C on its circle by `Tacit.on_circle_of_len_eq` (System E, Diagram-segment 3), a rule we assume. The completion uses two more assumed rules: `Tacit.exists_centre`, from Definitions I.15 and I.16 and not a rule of System E, and `Tacit.circle_eq` (System E, Diagram-segment 2). In the third case the Lean copies the angle by I.23, places its ray within BAD by `BookI.Prop24.within`, finds E between B and D by `crossbar`, and uses I.6 and I.4 as in the first case; Heath gives no references there. The final side statements use two assumed rules: `Tacit.pasch3` (System E, Pasch 3) puts E across AC from B in the first case, and `Tacit.pasch2` (System E, Pasch 2) puts E on B's side in the third."
+note = "The core is Euclid's construction, in his three cases. His step \"[III. 9]\", that the circle described is the one the segment came from, is the companion `Prop25.complete`, by III.9 and `circle_eq`. `Prop25.of_circle` runs the core on the arc of a given circle, the meeting fact coming from `Prop25.meets` [III. 2]. The core puts B and C on its circle by `Tacit.on_circle_of_len_eq` (System E, Diagram-segment 3), a rule we assume. The completion uses two more assumed rules: `Tacit.exists_centre`, from Definitions I.15 and I.16 and not a rule of System E, and `Tacit.circle_eq` (System E, Diagram-segment 2)."
 
 [representation]
 tags = ["segment-with-circle", "angle-measure"]
@@ -34,7 +34,7 @@ note = "Euclid constructs BAE equal to ABD without a reference from Heath here. 
 at = "let DB be drawn through to E"
 kind = "helper"
 helper = "Postulate5"
-note = "Euclid takes for granted that AE meets DB drawn through; Postulate 5 gives it, the angles BAE, ABD being less than two right angles, since ABD is acute (I.17). Postulate 5 is a rule we assume (System E §3.6, diagram-angle transfer rule 5); the Lean then puts D between B and E by ruling out the other orders with `angle_lt_of_between`."
+note = "Euclid takes for granted that AE meets DB drawn through; Postulate 5 gives it, the angles BAE, ABD being less than two right angles, since ABD is acute (I.17, for which Heath prints no reference here). Postulate 5 is a rule we assume (System E §3.6, diagram-angle transfer rule 5); the Lean then splits the possible orders by `Tacit.between_cases`, the rule we assume as System E, Between 6, and puts D between B and E by ruling out the other orders with `angle_lt_of_between`."
 
 [[passage]]
 at = "and the angle ADE is equal to the angle CDE"
@@ -58,25 +58,25 @@ note = "The core describes the circle with centre E through A (Postulate 3), and
 at = "And it is manifest that the segment ABC is less than a semicircle"
 kind = "carried"
 helper = "Prop25.kind"
-note = "`Prop25.kind` proves `Arc.Less` and that the circumference measures less than two right angles, since E is across AC from P. `Prop25.complete` identifies the constructed circle with the given arc's circle, transporting both conclusions to that arc."
+note = "The core puts E across AC from B by `Tacit.pasch3`, the rule we assume as System E, Pasch 3; `Prop25.kind` proves `Arc.Less` and that the circumference measures less than two right angles, using I.32, III.2, III.20 and III.21, for which Heath prints no references here. `Prop25.complete` identifies the constructed circle with the given arc's circle, transporting both conclusions to that arc."
 
 [[passage]]
 at = "D will be the centre of the completed circle"
 kind = "carried"
 helper = "Prop25.complete"
-note = "Euclid leaves this completion to the same argument without writing it out. The core draws the circle about D by Postulate 3, and `Prop25.complete` identifies it with the given circle."
+note = "Euclid leaves this completion to the same argument without writing it out. The core draws the circle about D by Postulate 3, and `Prop25.complete` identifies it with the given circle by III.9, for which Heath prints no reference here."
 
 [[passage]]
 at = "and ABC will clearly be a semicircle"
 kind = "carried"
 helper = "Prop25.kind"
-note = "`Prop25.kind` proves `Arc.Semicircle` and that the circumference measures two right angles, since E is D, between A and C. `Prop25.complete` identifies the constructed circle with the given arc's circle, transporting both conclusions to that arc."
+note = "`Prop25.kind` proves `Arc.Semicircle` and that the circumference measures two right angles, since E is D, between A and C, using I.5, I.32 and III.2, for which Heath prints no references here. `Prop25.complete` identifies the constructed circle with the given arc's circle, transporting both conclusions to that arc."
 
 [[passage]]
-at = "But, if the angle ABD be less than the angle BAD"
-kind = "carried"
-helper = "Prop25.kind"
-note = "The core constructs the angle and circle and places E on DB within the segment, on B's side of AC; `Prop25.kind` supplies the resulting `Arc.Greater` classification and measure above two right angles. `Prop25.complete` identifies the constructed circle with the given arc's circle, transporting both conclusions to that arc."
+at = "and if we construct, on the straight line BA"
+kind = "helper"
+helper = "BookI.Prop23"
+note = "Euclid refers to the first case's argument without writing it out (Heath, vol. 2, p. 56); the core copies the angle by I.23 (`BookI.Prop23`), places its ray within BAD by `BookI.Prop24.within`, finds E between B and D by `crossbar`, and makes EA, EB and EC equal by I.6 and I.4, with the adjacent right angle supplied by `Tacit.adjacent_eq_of_right` (I.13), then draws the circle by Postulate 3; Heath prints no references here. The assumed rule `Tacit.pasch2` (System E, Pasch 2) puts E on B's side of AC; `Prop25.kind` supplies only the resulting `Arc.Greater` classification and measure above two right angles, using I.32, III.2, III.20, III.21 and III.22, and `Prop25.complete` identifies the constructed circle with the given arc's circle by III.9, transporting both conclusions to that arc, again without references from Heath here."
 
 [figure]
 case = "the angle ABD greater than, equal to and less than the angle BAD, from left to right, as in Heath's three figures; the centre falls across AC from B, at D, and on B's side of AC"

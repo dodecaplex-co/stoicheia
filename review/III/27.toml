@@ -12,17 +12,6 @@ tags = ["angle-measure", "redundant-hypothesis"]
 note = "\"In equal circles\" is kept from Euclid, and the proof uses it through III.26 as he does; but the circumferences are measured by angles, so the statement would hold without it. The centres G and H are given, as the enunciation speaks of angles at the centres."
 
 [[passage]]
-at = "For, if the angle BGC is unequal to the angle EHF"
-kind = "helper"
-helper = "Tacit.lt_trichotomy"
-note = "Euclid takes for granted that one of two unequal angles is greater. The Lean uses `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E §3.5), at the conclusion of the reductio to rule out both inequalities."
-
-[[passage]]
-at = "Let the angle BGC be greater"
-kind = "case"
-note = "Euclid supposes BGC greater than EHF. The Lean proves the reductio once over any letters and applies it again with the circles exchanged to rule out EHF greater than BGC."
-
-[[passage]]
 at = "and on the straight line BG, and at the point G on it"
 kind = "helper"
 helper = "OnRay.exists_len_eq"
@@ -41,9 +30,14 @@ helper = "Circumference.centre"
 note = "Euclid reads BK as less than BC and rules out their equality. `Circumference.centre` turns that equality into equality of BGK and BGC, contradicting BGK equal to the smaller angle EHF; the lemma uses III.2, III.20 and III.21, for which Heath gives no references here."
 
 [[passage]]
+at = "Therefore the angle BGC is not unequal to the angle EHF"
+kind = "case"
+note = "Euclid supposes BGC greater than EHF; the Lean proves the reductio once over any letters and applies it again with the circles exchanged to rule out EHF greater than BGC. The Lean concludes that BGC equals EHF by `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E §3.5), not a proof: of two unequal angles, one is greater."
+
+[[passage]]
 at = "And the angle at A is half of the angle BGC"
 kind = "different"
-note = "For right or obtuse angles at the circumference, Circumference.standing expresses each circumference as twice the angle standing on it, and equal measures give equal halves. The acute case uses III.20."
+note = "For right or obtuse angles at the circumference, Circumference.standing expresses each circumference as twice the angle standing on it, and equal measures give equal halves. The acute case uses III.20; `Circumference.standing` uses III.21, for which Heath prints no reference here."
 
 [[passage]]
 at = "therefore the angle at A is also equal to the angle at D"
