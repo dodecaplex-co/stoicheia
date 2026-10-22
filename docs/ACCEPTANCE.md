@@ -136,7 +136,7 @@ All 99 of Books I–III, each with its porism and its companions.
 | P12 | Passages | review | Each substantive passage is carried, or its helper, grouping, case, alternative or omission is named truly. There are no dummy citations, no artificial hypothesis uses and no helpers that conceal a whole conclusion. |
 | P13 | Representations | review | The representations used here (`rect` and `sq`, arcs, segments, figures given by their corners) have their bridge theorems, placed correctly in the dependency order. `n/a` when the proposition uses none of them. |
 | P14 | Commentary | review | The commentary is accurate, specific to this proposition and in the common voice, explains the hardest block, and quotes and attributes exactly ([STYLE](STYLE.md), sections 3 and 5). |
-| P15 | Figures | review | The figures agree with the proof's geometry and its scope: the case drawn is one the theorem covers, and the caption names it. |
+| P15 | Figures | review | The figures agree with the proof's geometry and its scope: each case drawn is one the theorem covers, the caption names it, and a caption that says every case is drawn is exhaustive. |
 | P16 | Sign-off | review | A reviewer other than the author signs off: the reviewer wrote, prompted and edited none of the claims judged ([WORKFLOW](WORKFLOW.md#1-roles), section 1), and the record names the reviewer, with the role, the run and the commit read. |
 
 ## For each book
