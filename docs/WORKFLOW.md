@@ -52,7 +52,9 @@ their logs are in `docs/reports/crew/`:
   statements before proofs, and review records after.
 - **Range enforcers, blind readers and a polisher** keep one voice (section 7).
 - **An independent audit** comes from a model family that wrote none of the work (Jev, from
-  brief 0005's stage 6), and **a cold outside reading** from Astra.
+  brief 0005's stage 6), and **a cold outside reading** from three reviewers of three model
+  families, scoring by the [review rubric](RUBRIC.md): at present Claude Opus 5.5
+  (Anthropic), GPT-6 Astra through Codex (OpenAI) and Gemini 4 Argon (Google).
 
 ## 2. Briefs before proofs
 
@@ -620,8 +622,8 @@ looked into.
      that later work overtakes gains a dated status note, never a quiet rewrite, and the
      issues and the tracker are kept current.
 9. **Acceptance:** from brief 0005's stage 6, the checklist passes in CI with no failures,
-   the independent audit agrees, and a cold outside reading scores the book. The switch
-   from the ratchet to the full gate is described in
+   the independent audit agrees, and a cold outside reading passes the gate of the
+   [review rubric](RUBRIC.md). The switch from the ratchet to the full gate is described in
    [ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci).
 10. **Release.** A release waits for its gate: both the page read-through and the
     stale-content audit of step 8 on the release candidate, with every Tier 0 to 2 finding
