@@ -39,10 +39,6 @@
   takes the lock's new hash, since the twenty new words are reached by the companions alone
   and no law of the model changes.
 
-  This entry approves the change to `review/terms.toml`, where the meaning of
-  `figure-with-dissection` now describes the older companions that take a figure given with
-  a checked division into triangles, and no longer says that a division's existence, or its independence, is open.
-
   This entry approves the changed statement of `convex_diagonal_separates`, which loses its
   hypotheses that both chains have a corner, since its conclusion ranges over the corners
   of the two chains and never needed them.
