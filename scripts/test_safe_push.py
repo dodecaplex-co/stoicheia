@@ -328,8 +328,9 @@ def normalized_check_job(source: str) -> WorkflowCheckJob:
     )
 
 
-FRESHNESS_COMMAND = ("git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md "
-                     "README.md docs/PROGRAM.md")
+# The whole worktree, as safe_push's step "git status --porcelain is empty" reads it: the
+# generated pages and every other file a check might leave changed or new.
+FRESHNESS_COMMAND = "git status --porcelain"
 RENDER_COMMAND = "python3 scripts/render.py"
 FRESHNESS_ASSERTION = f'test -z "$({FRESHNESS_COMMAND})"'
 SETUP_ACTIONS = {"actions/checkout@v5": frozenset(),
@@ -6471,6 +6472,9 @@ class Units(unittest.TestCase):
              "unsupported run body"),
             ("missing freshness assertion", "render", "run",
              f"{RENDER_COMMAND}\n{FRESHNESS_COMMAND}", "unsupported run body"),
+            ("freshness narrowed to the generated pages", "render", "run",
+             f"{RENDER_COMMAND}\n{FRESHNESS_COMMAND} -- facts.json book\n"
+             f'test -z "$({FRESHNESS_COMMAND} -- facts.json book)"', "unsupported run body"),
         )
         for label, scope, field, value, message in cases:
             with self.subTest(label=label):
