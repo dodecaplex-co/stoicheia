@@ -35,7 +35,7 @@ note = "Like Heath's, this figure draws the impossible supposition: E as one cen
 
 [review]
 stage = "full"
-commit = "535bd8cc"
+commit = "e572d5c0"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:05eac8742fddcab6"
 run = "brief 0005 stage 5, ship R3 (#29); the supposition, the radii by Definition15 and their equation, written by Codex, read also by Claude Opus 5.5"
@@ -44,6 +44,6 @@ run = "brief 0005 stage 5, ship R3 (#29); the supposition, the radii by Definiti
 statement = "pass"
 passages = "pass"
 representations = "n/a"
-commentary = "fail"
+commentary = "pass"
 figures = "pass"
 signoff = "pass"
