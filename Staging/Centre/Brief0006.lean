@@ -1,26 +1,26 @@
-import Staging.Stage3.CircumferenceAdd
-import Staging.Stage3.Prop23Point
-import Staging.Stage3.Prop24
+import Elements.BookIII.Circumferences
+import Elements.BookIII.Prop23
+import Elements.BookIII.Prop24
 import Staging.Stage4.Prop25
 import Staging.Centre.Restated
 
 /-!
 # Staging: brief 0006's statements without `∃ O, Centre O α`
 
-Brief 0008. Six statements that brief 0006 froze, staged in `Stage3/` and `Stage4/`, ask that
-a circle have some centre, and its definition of a drawn arc asks it too. Once every circle
-has a centre (the rule `exists_centre`, approved, not yet landed), each loses that
-hypothesis, as below; nothing else in them changes. This is a revision of brief 0006,
-approved by the coordinator with brief 0008, at its freeze, and is made in brief 0006's
-files by their owners, after the rule lands: before or after those statements move into
-`Elements/`, whichever comes first.
+Brief 0008. Six statements that brief 0006 froze, four of them moved to `Elements/` with
+stage 3 and two staged in `Stage4/`, ask that a circle have some centre, and its definition
+of a drawn arc asks it too. Once every circle has a centre (the rule `exists_centre`,
+approved, not yet landed), each loses that hypothesis, as below; nothing else in them
+changes. This is a revision of brief 0006, approved by the coordinator with brief 0008, at
+its freeze, and is made in brief 0006's files by their owners, after the rule lands: before
+or after those statements move into `Elements/`, whichever comes first.
 
 As in `Restated.lean`, each statement carries `sorry` and two checks (checked by Lean): given
 the rule's content, taken as a hypothesis, brief 0006's statement gives the new one; and the
 new one gives brief 0006's. Two more checks show that brief 0006's pattern survives: the
-companions `Prop24.equalCircles` and `Prop25.of_circle` still have today's statements of
-III.24 and III.25, restated as `Restated.lean` restates them. The names sit in
-`Elements.BookIII.Staging.Centre.Stage3` and `.Stage4`, after brief 0006's folders.
+companions `Prop24.equalCircles` and `Prop25.of_circle` still have the statements of III.24
+before stage 3 and of III.25 today, restated as `Restated.lean` restates them. The names
+sit in `Elements.BookIII.Staging.Centre.Stage3` and `.Stage4`, after brief 0006's folders.
 -/
 
 namespace Elements.BookIII.Staging.Centre.Stage3
@@ -65,8 +65,8 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hA : OnCircle A AEB)
   sorry
 
 example (exists_centre : ∀ α : Circle, ∃ O : Point, Centre O α) : type_of% @Stage3.Prop24 :=
-  Elements.BookIII.Staging.Prop24 (exists_centre _) (exists_centre _)
-example : type_of% @Elements.BookIII.Staging.Prop24 := fun _ _ => Stage3.Prop24
+  Elements.BookIII.Prop24 (exists_centre _) (exists_centre _)
+example : type_of% @Elements.BookIII.Prop24 := fun _ _ => Stage3.Prop24
 
 /-- **III.24, the circles and the measures** (companion of III.24, "III.24 equalCircles").
 Similar segments on equal straight lines lie in equal circles, and their circumferences are
@@ -80,12 +80,12 @@ theorem Prop24.equalCircles {A B C D E F : Point} {AEB CFD : Circle} (hA : OnCir
 
 example (exists_centre : ∀ α : Circle, ∃ O : Point, Centre O α) :
     type_of% @Stage3.Prop24.equalCircles :=
-  Elements.BookIII.Staging.Prop24.equalCircles (exists_centre _) (exists_centre _)
-example : type_of% @Elements.BookIII.Staging.Prop24.equalCircles :=
+  Elements.BookIII.Prop24.equalCircles (exists_centre _) (exists_centre _)
+example : type_of% @Elements.BookIII.Prop24.equalCircles :=
   fun _ _ => Stage3.Prop24.equalCircles
 
-/-- The check of brief 0006's pattern: `Prop24.equalCircles` has III.24's statement of today,
-restated without its centres (`Restated.lean`). -/
+/-- The check of brief 0006's pattern: `Prop24.equalCircles` has III.24's statement before
+stage 3, restated without its centres (`Restated.lean`). -/
 example : type_of% @Centre.Prop24 := @Stage3.Prop24.equalCircles
 
 end Elements.BookIII.Staging.Centre.Stage3

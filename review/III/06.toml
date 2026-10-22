@@ -1,28 +1,26 @@
 # review/III/06.toml
 [statement]
 scope = "full"
-note = "Covers circles touching within, whichever is the inner, and circles touching without, the case Euclid leaves to the reader."
+note = "Covers contact within, either circle the inner, with a point within the outer, and contact without, the case Euclid leaves to the reader."
 fingerprint = "sha256:6300244ecb552653"
 
 [route]
 kind = "euclid"
 
+[representation]
+tags = ["touching-whole-circles"]
+note = "Touching is read of the whole circles. For contact within the inner has a point within the outer and none outside it; for contact without no point is within both. The point within does not make this Heath's preferred local reading of Definition III.3."
+
 [overlap]
 rule = "Tacit.circle_eq"
-also = ["Tacit.centre_inside"]
+also = ["Tacit.centre_inside", "Tacit.inside_not_on"]
 kind = "gives"
-note = "For contact within, System E's Diagram-segment 2 gives III.6 at once from the point of contact; for contact without, our definition of touching with Generalities 3 does. The proof follows Euclid, and calls on Diagram-segment 2 only for the step he leaves tacit, that E and B are two points."
+note = "Diagram-segment 2 with Generalities 4 ends contact within at once; Generalities 3 ends contact without, so the three rules give III.6 at once. Our proof uses neither Diagram-segment 2 nor Circle 4: contact within follows Euclid by Definition I.15 and the order on FEB. Contact without does end by Generalities 3, the clause of Definition I.15 placing the centre within the figure; it is the case Euclid leaves to the reader and Heath regards as self-evident (vol. 2, p. 13)."
 
 [[passage]]
 at = "For, if possible, let it be F"
 kind = "case"
-note = "Contact without, which Euclid leaves to the reader, ends here: F would be within both circles, as a centre is within its circle, and circles touching without have no point within both. Euclid's argument then runs for contact within, either circle the inner."
-
-[[passage]]
-at = "therefore FE is also equal to FB, the less to the greater"
-kind = "helper"
-helper = "Tacit.circle_eq"
-note = "That E and B are two points is the step Euclid leaves tacit: were they one, the circles, about the one centre F, would be one circle (System E, Diagram-segment 2), and circles touching within are two. Then whichever of E and B is the nearer F gives the less, as in his figure, where E is."
+note = "Contact without ends here: F would be within both circles, which contact without forbids. For contact within, either circle the inner, FEB is drawn through a point of the inner within the outer and produced to the outer, the one line meeting the circles at different points that Heath says suffices in his answer to J. G. Camerer (vol. 2, p. 13)."
 
 [[passage]]
 at = "Therefore F is not the centre of the circles ABC, CDE."
@@ -35,6 +33,6 @@ note = "Like Heath's, this figure draws the impossible supposition: F as one cen
 
 [review]
 stage = "exceptions"
-commit = "16243feef5f36514fd2c21c634be60443965808b"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:3a32d05edc76a5c7"
+commit = "e707d55"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:958b7aa40e178ec7"
