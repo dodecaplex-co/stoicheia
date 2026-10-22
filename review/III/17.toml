@@ -1,27 +1,29 @@
 # review/III/17.toml
 [statement]
 scope = "full"
-note = "With its companion: `Prop17.general` draws a touching straight line from any point not within the circle; `Prop17` keeps A outside."
+note = "`Prop17` draws AB touching at B from A outside; `Prop17.general` takes any A not within, returning a touching line AX whose contact may be A."
 companions = ["III.17 general"]
-fingerprint = "sha256:5dafebad74ae3ff0"
+fingerprint = "sha256:105a583195d3f19f"
 
 [route]
 kind = "euclid"
 
-[representation]
-tags = ["centre-given"]
-note = "The circle comes with a centre. III.1, which takes it, needs two points of the circle, and the proof finds them on the straight line from the centre to A. The companion concludes Definition III.2's `Touches A X BCD`, a straight line named by A and another point X; its point of contact is not returned beside X, and may be A itself (`Touches.contact` reads it off). Not being within the circle is the condition for a solution: from a point within, no straight line touches (`Prop17.inside`, a lemma beside the proposition)."
-
 [[passage]]
 at = "Let A be the given point, and BCD the given circle"
 kind = "case"
-note = "Euclid's A is outside the circle. `Prop17.general` takes A on the circle too, a case Euclid leaves out, Heath explains, because III.16's porism so directly indicates it (vol. 2, p. 44): AX drawn at right angles to the radius EA at A (I.11) touches by that porism. The construction is not on Euclid's page."
+note = "Euclid's A is outside the circle. `Prop17.general` takes A on the circle too, a case Euclid leaves out, Heath explains, because III.16's porism so directly indicates it (vol. 2, p. 44): AX drawn at right angles to the radius EA at A (I.11) touches by that porism. The construction is not on Euclid's page. The companion returns a straight line named by A and X; its point of contact is not returned beside X (`Touches.contact` reads it off). From a point within no straight line touches (`Prop17.inside`), so not being within is the condition for a solution."
+
+[[passage]]
+at = "For let the centre E of the circle be taken"
+kind = "helper"
+helper = "Prop1.of_circle"
+note = "`Prop1.of_circle` takes two points of the circle and applies III.1's construction and correctness proof to obtain E. The proof then joins EA and takes its meeting D with BCD between E and A, before continuing Euclid's construction."
 
 [figure]
 case = "A outside the circle, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "2c3686e"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:d48c1d35afd7c9e3"
+commit = "b9f6a766"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:8fc1257893f4e28c"

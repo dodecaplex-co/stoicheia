@@ -27,8 +27,8 @@
     <text font-size="17" x="312" y="50" text-anchor="middle">D</text>
     <text font-size="17" x="250" y="182.530743609" text-anchor="middle">E</text>
     <text font-size="17" x="374" y="182.530743609" text-anchor="middle">F</text>
-    <text font-size="17" x="61.234628196" y="82" text-anchor="middle" font-style="italic">b</text>
-    <text font-size="17" x="180.765371804" y="82" text-anchor="middle" font-style="italic">c</text>
+    <text font-size="17" x="61.234628196" y="82" text-anchor="middle" font-style="italic">c</text>
+    <text font-size="17" x="180.765371804" y="82" text-anchor="middle" font-style="italic">b</text>
     <text font-size="17" x="121" y="110" text-anchor="middle" font-style="italic">θ</text>
     <text font-size="17" x="121" y="147" text-anchor="middle" font-style="italic">|b − c|</text>
     <text font-size="17" x="312" y="135" text-anchor="middle" font-style="italic">π − θ</text>

@@ -311,8 +311,11 @@ VERDICTS = ("pass", "fail", "n/a")
 TAG_KINDS = ("scope", "representation")
 COMMIT = re.compile(r"[0-9a-f]{7,40}")
 WORD = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*")
+# A name as a proof binds it, for a passage's `unused`: one Lean identifier, with no dots,
+# as `hCHG_EHC` or `FC`, or `this`, the name of a `have` that gives none.
+BOUND_NAME = re.compile(r"[^\W\d][\w'!?₀-₉]*")
 
-_STR, _LIST, _TABLE = "string", "list", "table"
+_STR, _LIST, _TABLE, _NAMES, _BOOL = "string", "list", "table", "names", "boolean"
 # Each section's keys, as (type, required). A "stamp" key is written by
 # scripts/review_stamp.py, and required unless an unstamped record is asked for.
 FIELDS = {
@@ -327,8 +330,8 @@ FIELDS = {
     "coverage": {"checked": (_LIST, False), "explains": (_LIST, False),
                  "text_only": (_LIST, False)},
     "passage": {"at": (_STR, True), "kind": (_STR, True), "helper": (_STR, False),
-                "note": (_STR, False)},
-    "figure": {"case": (_STR, False), "note": (_STR, False)},
+                "note": (_STR, False), "unused": (_NAMES, False)},
+    "figure": {"case": (_STR, False), "every_case": (_BOOL, False), "note": (_STR, False)},
     "review": {"stage": (_STR, True), "commit": (_STR, "stamp"), "lean": (_STR, "stamp"),
                "reviewer": (_STR, True), "run": (_STR, False), "items": (_TABLE, False)},
 }
@@ -434,6 +437,20 @@ def _shape(record, require_stamp: bool) -> list[str]:
                 bad(f"{label}: `{key}` must be a list of non-empty strings")
             elif kind == _TABLE and not isinstance(v, dict):
                 bad(f"{label}: `{key}` must be a table")
+            elif kind == _NAMES:
+                if not (isinstance(v, list) and v and all(isinstance(x, str) for x in v)):
+                    bad(f"{label}: `{key}` must be a non-empty list of names; leave it out "
+                        "when there are none")
+                    continue
+                for x in v:
+                    if x == "_" or not BOUND_NAME.fullmatch(x):
+                        bad(f"{label}: `{key}`: {x!r} is not a name as a proof binds it: one "
+                            "Lean identifier, as 'hAB_FC' or 'FC', or 'this' for a `have` "
+                            "that gives no name")
+                for x in sorted({x for x in v if v.count(x) > 1}):
+                    bad(f"{label}: `{key}` lists {x!r} twice")
+            elif kind == _BOOL and not isinstance(v, bool):
+                bad(f"{label}: `{key}` must be true or false")
     return problems
 
 
@@ -560,9 +577,15 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
             if plain(q) not in enunciation and plain(q) not in proof_text:
                 bad(f"[coverage]: text_only {q!r} is not quoted from Heath")
 
-    # [figure]
-    if "figure" in record and not record["figure"]:
-        bad("[figure]: give its `case`, its `note`, or both; or leave the section out")
+    # [figure]: `every_case` says only which words lead the caption, so the section still
+    # needs a `case` or a `note`, and `every_case` the `case` that names the cases drawn.
+    if "figure" in record:
+        fig = record["figure"]
+        if "case" not in fig and "note" not in fig:
+            bad("[figure]: give its `case`, its `note`, or both; or leave the section out")
+        if fig.get("every_case") and "case" not in fig:
+            bad("[figure]: `every_case` needs the `case` that names the cases the figure "
+                "draws, for the caption \"Drawn for every case: …\"")
 
     # [[passage]]
     seen = set()
@@ -692,6 +715,23 @@ def _self_test() -> int:
             validate_review(record, "I", 7, require_stamp=False, where="a test record")
             if not ok:
                 faults.append(f"validate_review accepts [overlap] {overlap}")
+        except ReviewError as e:
+            if ok:
+                faults.append(str(e))
+    # [[passage]] `unused`: a non-empty list of distinct names, each as a proof binds it.
+    # Whether the Lean beneath binds them is check_fidelity's business.
+    for unused, ok in [(["FC", "GB"], True), (["this"], True), (["hAB_FC'", "h₁"], True),
+                       ([], False), ("FC", False), (["FC", "FC"], False), ([""], False),
+                       (["_"], False), (["h FC"], False), (["hAB.1"], False),
+                       (["2FC"], False), ([["FC"]], False)]:
+        record = {"statement": {"scope": "full"}, "route": {"kind": "euclid"},
+                  "passage": [{"at": "and let the straight lines FC, GB be joined",
+                               "kind": "carried", "unused": unused}],
+                  "review": {"stage": "exceptions", "reviewer": "Claude Opus 5.5"}}
+        try:
+            validate_review(record, "I", 5, require_stamp=False, where="a test record")
+            if not ok:
+                faults.append(f"validate_review accepts [[passage]] unused = {unused!r}")
         except ReviewError as e:
             if ok:
                 faults.append(str(e))

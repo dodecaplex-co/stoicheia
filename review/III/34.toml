@@ -1,14 +1,14 @@
 [statement]
 scope = "full"
-note = "Cuts off from the given circle a segment BAC admitting the given angle at A; the circle comes with a centre."
-fingerprint = "sha256:b3501a06d0f60e79"
+note = "Cuts off from the given circle a segment BAC admitting the given angle at A."
+fingerprint = "sha256:86be646b296586e5"
 
 [route]
 kind = "euclid"
 
 [representation]
-tags = ["segment-with-circle", "centre-given"]
-note = "The given circle comes with a centre (`∃ O, Centre O ABC`), which the proof needs to draw EF touching it by III.16's porism; the segment cut off is named by its points B, A and C."
+tags = ["segment-with-circle"]
+note = "The segment cut off from the given circle is named by its points B, A and C. The proof obtains a centre from the rule to draw EF touching the circle by III.16's porism."
 
 [[passage]]
 at = "and on the straight line FB"
@@ -16,8 +16,11 @@ kind = "helper"
 helper = "Prop16"
 note = "Euclid reads C off his figure. The Lean finds it: by III.16 the straight line BC passes within the circle, so it meets the circle again, on the centre's side of EF."
 
+[figure]
+case = "an acute given angle, with BAC the greater segment"
+
 [review]
 stage = "exceptions"
-commit = "66e9871"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:ead645aa8820f2bd"
+commit = "1c08feeb"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:be9733ec86b02a9d"
