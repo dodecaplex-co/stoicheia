@@ -91,18 +91,32 @@ which III.34 does not give and none of those rules draws. III.2 closes by Circle
 Generalities 4 (`inside_not_on`), and by the diagram rules together, but not by Circle 2
 alone: `grind` tries Circle 2 only on points of which the goal asks whether they are
 within the circle, and III.2 asks that only of E, until Generalities 4 brings in A and B.
-Run on the statements of the second axiom retirement's revision (21 October 2026), the
-15,860 attempts over the 122 statements made 28,060 tries (3,538 were left with no rule)
-and closed III.5 alone, by Diagram-segment 2 (`circle_eq`): alone, paired with each other
-rule about circles, and in its family, Transfer, alone or with any other family; no
-statement closed bare. 8 tries ran out of time again, all of them III.34
-from Postulate 4, as before. III.2 and III.6 no longer close: the rules that closed them,
-Circle 2 and Generalities 4 for III.2 and Generalities 3 for III.6, are theorems now, with
-others of the diagram rules, and the screen tries only axioms. Their rows in the catalogue
-rest on their audit lemmas, `Audit.III_2` and `Audit.III_6`. That run read III.5 and III.6
-as they were stated before brief 0008 restated them (cutting as crossing, contact within with
-a point within); a run on the restated readings is still to be made. The screen checks that
-III.5 still closes by a rule (KNOWN, below), and says so when it does not.
+Run on the statements of 58018a3 (21 October 2026), the second axiom retirement's before
+train C6a was merged into it, the 15,860 attempts over the 122 statements made 28,060 tries
+(3,538 were left with no rule) and closed III.5 alone, by Diagram-segment 2 (`circle_eq`):
+alone, paired with each other rule about circles, and in its family, Transfer, alone or
+with any other family; no statement closed bare. 8 tries ran out of time again, all of
+them III.34 from Postulate 4, as before. III.2 and III.6 no longer closed: the rules that
+closed them, Circle 2 and Generalities 4 for III.2 and Generalities 3 for III.6, are
+theorems now, with others of the diagram rules, and the screen tries only axioms. Their
+rows in the catalogue rest on their audit lemmas, `Audit.III_2` and `Audit.III_6`. That
+run read III.5 and III.6 as they were stated before brief 0008 restated them (cutting as
+crossing, contact within with a point within).
+On this revision, which holds the restated readings, Generalities 4 is a theorem, so the
+screen, which tries axioms alone, no longer closes the restated III.5, which needs that
+rule to finish: `circle_eq` makes the two circles one, and only Generalities 4
+(`inside_not_on`) then contradicts F being both within that circle and on it. A scratch
+run of III.2, III.5 and III.6, by a copy of the screen kept to them, closed none of 690
+tries. The screen checks that the rows of KNOWN, below, still close by a rule, and says so
+when one does not. KNOWN still names III.5, and is stale until a check change gives the
+screen a new canary, tracked in issue #CARDNUM. And, already on main, the screen cannot
+run until DEFS takes the 18 words train C6a introduced, so the run on the restated
+readings is still to be made: its pass over the definitions stops on them, for none of
+the lists below names them (also in issue #CARDNUM). They are `Arc.Congruent`,
+`Arc.Drawn`, `Arc.measure`, `InSegment`, `LocallyLess`, `LocallyWithin`,
+`MixedAngle.Exceeds`, `MixedAngle.FallsShort`, `MixedAngle.WellFormed`,
+`MixedAngle.casesOn`, `MixedAngle.region`, `MixedAngle.vertex`, `NearVertexOpen`, `OnArc`,
+`OnSideOrLine`, `Places`, `Surrounds` and `WithinAngle`.
 
 usage (from the repository root, after `lake build`):
     python3 Audit/screen.py OUTDIR [--jobs N]
@@ -143,9 +157,11 @@ CHOSEN = {"circumference": "Screen.circumference_spec", "standing": "Screen.stan
 CARRIERS = """Magnitude Length Angle Area instAddMagnitude instLTMagnitude
 instOfNatMagnitudeOfNatNat""".split()
 
-# The rows of the catalogue the screen has always found, each by a rule: a screen that
-# misses one is broken. III.2 and III.6 left with the second axiom retirement, which made
-# the rules that closed them theorems.
+# The rows of the catalogue the screen is to find, each by a rule: a screen that misses one
+# reports itself broken. III.2 and III.6 left with the second axiom retirement, which made
+# the rules that closed them theorems. III.5 is stale on this revision: the restated III.5
+# needs Generalities 4, a theorem now, and the screen tries axioms alone, so it no longer
+# closes. It stays until a check change gives the screen a new canary (issue #CARDNUM).
 KNOWN = ["BookIII.Prop5"]
 
 # What each chosen definition says, proved from Lean's choice alone; nothing else.

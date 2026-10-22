@@ -527,12 +527,22 @@ catalogue initially listed them as near misses, then as rows with audit lemmas, 
 I.7 likewise drew objects absent from its statement. All three superposition rows and
 their audit lemmas are now retired with that existential rule. These screening results
 are historical evidence for the revisions named above, not a fresh screen of the
-restricted rule. Run again on the second axiom retirement's revision (21 October 2026),
-the screen closes III.5 alone, by Diagram-segment 2: the rules that closed III.2 and III.6,
-Circle 2, Generalities 3 and Generalities 4, are theorems now, and the screen tries only
-axioms. Those two rows rest on their audit lemmas, `Audit.III_2` and `Audit.III_6`. That
-run read III.5 and III.6 as they were stated before brief 0008 restated them; the run on the
-restated readings, above, is still to be made.
+restricted rule. Run again on the statements of `58018a3` (21 October 2026), the second
+axiom retirement's before train C6a was merged into it, the screen closed III.5 alone, by
+Diagram-segment 2: the rules that closed III.2 and III.6, Circle 2, Generalities 3 and
+Generalities 4, are theorems now, and the screen tries only axioms. Those two rows rest on
+their audit lemmas, `Audit.III_2` and `Audit.III_6`. That run read III.5 and III.6 as they
+were stated before brief 0008 restated them. On this revision, which holds the restated
+readings, Generalities 4 is a theorem, so the screen, which tries axioms alone, no longer
+closes the restated III.5, which needs that rule to finish (a scratch run of III.2, III.5
+and III.6 closed none of 690 tries). So the screen's list of the rows it must find, which
+still names III.5, is stale until a check change gives the screen a new canary, tracked in
+issue #CARDNUM. And, already on main, the screen cannot run until its list of the
+definitions to unfold takes the 18 words train C6a introduced (`Arc.Congruent`, `Arc.Drawn`, `Arc.measure`,
+`InSegment`, `LocallyLess`, `LocallyWithin`, `MixedAngle.Exceeds`, `MixedAngle.FallsShort`,
+`MixedAngle.WellFormed`, `MixedAngle.casesOn`, `MixedAngle.region`, `MixedAngle.vertex`,
+`NearVertexOpen`, `OnArc`, `OnSideOrLine`, `Places`, `Surrounds` and `WithinAngle`), also in
+issue #CARDNUM; until then the run on the restated readings, above, cannot be made.
 
 **How each rule enters.** Argon's second review pointed out that `direct_axioms` counts a
 rule a proof reaches through a lemma as well as one its own Lean names, and found that

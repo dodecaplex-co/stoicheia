@@ -79,7 +79,8 @@
 #
 # Renewed on 21 October 2026, when the second retirement was merged with train C6a (#240):
 # the lock is the second retirement's 48 axioms and Tacit.exists_centre, 49 in all, with
-# 238 words of vocabulary; it is main's lock less the 31 lines of the retired axioms, every
-# other line byte for byte. The generator writes 49 laws, exists_centre's among them, and
-# Model/Assembly.lean gathers all 49.
+# 238 words of vocabulary; it is main's lock less the 31 lines of the retired axioms; every
+# other axiom and every word is main's byte for byte, and the header names decision entries
+# as main's `--write-lock` now writes it. The generator writes 49 laws, exists_centre's
+# among them, and Model/Assembly.lean gathers all 49.
 09e393d606e185e79552f9eb3e5057724cfb619ddbb841cd3f444cc5fd909a56  Certificate/axioms.lock
