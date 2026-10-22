@@ -44,7 +44,15 @@ case = "acute angles at A and D, with BKC and ELF less than semicircles"
 
 [review]
 stage = "full"
-commit = "1c08feeb"
+commit = "4fddce18"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:a4c608069879bee5"
 run = "brief 0005 stage 5, ship R3 (#29); lines 66 and 67 of Prop26.lean, of unknown family, read also by GPT-6 Astra (Codex)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
