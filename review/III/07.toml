@@ -15,14 +15,68 @@ kind = "given"
 note = "The centre E is given, as Euclid's setting-out takes it. \"Nearer\" is Euclid's meaning, the less angle at F with the ray FA, unsigned: an obtuse angle is not exchanged for its acute supplement. F is a point strictly within the diameter, between E and D, so not the centre, since F at an end would make the least straight line nothing. The statement speaks of every point of the circle."
 
 [[passage]]
+at = "For let BE, CE, GE be joined"
+kind = "case"
+note = "Euclid joins radii to points off AD; the Lean also compares the ends of the diameter, proving FD less than FA by parts of equal radii before either triangle inequality. Beneath the setting-out, `Tacit.centre_inside` (System E, Generalities 3) and `Tacit.between_of_inside_chord` (System E, Circle 1), both rules we assume, put E between A and any other point of the circle on AD; equal radii and `OnRay.eq_of_len_eq` make that point D."
+
+[[passage]]
+at = "But AE is equal to BE"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid uses the equality of AE and BE without giving a reason. The Lean obtains it from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
+
+[[passage]]
+at = "Again, since BE is equal to CE"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid uses the equality of BE and CE without giving a reason. The Lean obtains it from `Definition15`, the assumed rule for equal radii."
+
+[[passage]]
+at = "But the angle BEF is also greater than the angle CEF"
+kind = "helper"
+helper = "BookI.Prop24.within"
+note = "Euclid reads the greater angle BEF from his figure, without a reference from Heath. The Lean uses `BookI.Prop24.within` and `crossbar` to place M on EC and the ray FB, `InsideCircle.of_between_centre` to put F and M within the circle, and `Prop2.within` (III.2) to rule out B between F and M; `angle_lt_of_between` then gives the comparison at E."
+
+[[passage]]
 at = "For the same reason"
 kind = "grouped"
 note = "Euclid's argument above is proved for any two points B, C of the circle on one side of AD; C and G are such a pair, so these words need no Lean of their own."
 
 [[passage]]
+at = "Again, since GF, FE are greater than EG"
+kind = "helper"
+helper = "BookI.Prop20"
+note = "Euclid uses the triangle inequality again for GF and FE, without a reference from Heath here. The Lean applies `BookI.Prop20` to the triangle FGE."
+
+[[passage]]
+at = "and EG is equal to ED"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid uses the equality of EG and ED without giving a reason. The Lean obtains it from `Definition15`, the assumed rule for equal radii."
+
+[[passage]]
 at = "Therefore FA is greatest, FD is least, and FB is greater than FC"
-kind = "case"
+kind = "carried"
+helper = "Prop7.general"
 note = "Euclid compares FB, FC and FG on one side of AD, as his figure has them. `Prop7.general` compares any two of the rest on opposite sides too, through the partner on the other side, as far from F and as near FA (`Prop7.partner`)."
+
+[[passage]]
+at = "For on the straight line EF, and at the point E on it"
+kind = "helper"
+helper = "Tacit.line_circle_beyond"
+note = "Euclid constructs the equal angle by I.23 and takes its arm to meet the circle at H. After `BookI.Prop23`, the Lean finds H using `Tacit.centre_inside` (System E, Generalities 3) and `Tacit.line_circle_beyond` (System E, Intersections 5), both rules we assume, with Postulate 2 producing the arm backwards so the meeting lies on the chosen ray."
+
+[[passage]]
+at = "Then, since GE is equal to EH"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid uses the equality of GE and EH without giving a reason. The Lean obtains it from `Definition15`, the assumed rule for equal radii."
+
+[[passage]]
+at = "the nearer to the straight line through the centre being thus equal to the more remote"
+kind = "helper"
+helper = "onRay_of_angle_eq"
+note = "Euclid takes distinct points on one side of AD to give a nearer and a more remote straight line. The Lean compares their angles by `Tacit.lt_trichotomy`, a rule we assume (System E §3.5): unequal angles use the comparison already proved, equal angles put the points on one ray by `onRay_of_angle_eq` and make them coincide by `OnRay.eq_of_len_eq`; A and D are excluded by the greatest and least clauses, and the two sides of AD give G or H."
 
 [[passage]]
 at = "Therefore another straight line equal to GF will not fall"
@@ -31,9 +85,11 @@ note = "The conclusion of the argument above, which has shown that every point K
 
 [figure]
 case = "FB, FC and FG compared on one side of AD, as in Heath's figure"
+note = "K marks the supposed third point of Euclid's reductio, with FK equal to FG and FH. The drawing keeps K distinct from G and H, so it cannot make those three lengths equal."
 
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "b9f6a766"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:c17359dc02a3b53d"
+run = "brief 0005 stage 5, ship R3 (#29)"
