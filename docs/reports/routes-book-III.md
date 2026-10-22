@@ -1279,4 +1279,12 @@ with the five calls dropped.
   `Elements/` and `facts.json` at every merge, in place of an account of each merge; #131
   gives its figures at e09f40f6; "Checks" ties each check to the revision it ran on; and the
   remark on F is told in the order it came.
-- **Not yet read independently.** This report's later edits, and the merge e09f40f6.
+- **The fourth code review.** An independent code review read the merge e09f40f6 and this
+  report at 11bcfea5, against the repository's standards and the six issues, and ran its
+  Lean checks again there. It found the merge resolved as stated, `Elements/` and
+  `facts.json` those of train C6c, every claim it checked true, and nothing blocking; its
+  six minor findings are proposed for a follow-up issue, and hold nothing here.
+- **Not yet read independently.** The pre-merge validation's three commits after 11bcfea5
+  (4186e342, c8e23b2e and 14a18ce7), which change this report alone and were read in full
+  before they were accepted; the merge e32f4bed, which changes no file of this branch; and
+  this list's last two entries.
