@@ -40,10 +40,10 @@ note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart
 
 [review]
 stage = "full"
-commit = "a15b1cce"
+commit = "1e482112"
 reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:b9e6dd54e28fd0b7"
-run = "train Tw2, merge of main at 9bde6758, independent re-read at ef3ca8dd (reader TS-r-tw2); read-through 02 (#34) and #299: re-read whole after its restriction told in STYLE's words and the staged proofs of #299, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at a15b1cce (reader RT-y11)"
+lean = "sha256:8acb4f09c2fd2060"
+run = "train Tw2, merge of main at 9bde6758, independent re-read at ef3ca8dd (reader TS-r-tw2); read-through 02 (#34) and #299: re-read whole after its restriction told in STYLE's words and the staged proofs of #299, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at a15b1cce (reader RT-y11); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3"
 
 [review.items]
 statement = "pass"
