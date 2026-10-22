@@ -26,7 +26,7 @@ note = "Euclid adds ABC and states the equality of the resulting sums. The Lean 
 [[passage]]
 at = "Similarly we can prove that the angles BAD, DCB"
 kind = "grouped"
-note = "Euclid repeats the argument for the other pair of opposite angles. The Lean proves it once over any letters and applies it to ABCD and BCDA, using `Prop2.triangle` to supply the triangles in each application."
+note = "Euclid leaves the other pair of opposite angles to the same argument without writing it out. The Lean proves it once over any letters and applies it to ABCD and BCDA, using `Prop2.triangle` to supply the triangles in each application."
 
 [review]
 stage = "full"

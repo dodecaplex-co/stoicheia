@@ -32,7 +32,7 @@ note = "Euclid takes GK to bisect AB at right angles; the Lean has already const
 at = "For the same reason"
 kind = "grouped"
 helper = "Prop9.centre_on"
-note = "Euclid repeats the argument for HL. The Lean proves the I.8, Definition I.10 and III.1 Por. steps once over any letters in `Prop9.centre_on`, then applies them to BC and its middle point F."
+note = "Euclid gives the same reason for the centre lying on HL without writing out the argument. The Lean proves the I.8, Definition I.10 and III.1 Por. steps once over any letters in `Prop9.centre_on`, then applies them to BC and its middle point F."
 
 [[passage]]
 at = "And the straight lines GK, HL have no other point common but the point D"
@@ -49,11 +49,3 @@ commit = "25d0fc84"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:005a52c72b917d00"
 run = "brief 0005 stage 5, ship R3 (#29)"
-
-[review.items]
-statement = "pass"
-passages = "pass"
-representations = "n/a"
-commentary = "pass"
-figures = "pass"
-signoff = "pass"

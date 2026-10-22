@@ -44,7 +44,7 @@ note = "Euclid treats DF as less than DE because F lies between D and E. The Lea
 [[passage]]
 at = "Similarly we can prove that neither will it fall on the circumference itself"
 kind = "grouped"
-note = "Euclid repeats the contradiction for a point on the circumference. The Lean reuses the comparison DE less than DB already proved, while `Definition15`, the assumed rule for equal radii, would make DE equal to DB."
+note = "Euclid leaves the case of a point on the circumference to the same argument without writing it out. Under that supposition, the Lean obtains DE equal to DB from `Definition15`, the assumed rule for equal radii."
 
 [figure]
 case = "the centre D off AB, as in Heath's figure"
