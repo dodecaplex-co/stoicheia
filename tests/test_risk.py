@@ -12,7 +12,7 @@ header it reads.
 Standard library and Git only; no Lean or network. Each `--diff` case runs in a Git
 repository of its own, read with no configuration but its own. scripts/negative_tests.py
 runs it beside the decision entry regressions, so CI's `negative` job runs it on every push
-to main, and on a pull request or a branch's push of class R3 and above (a change to
+to main, and on a pull request of class R3 and above (a change to
 scripts/risk.py is R5); the cadence runs it on main every six hours.
 """
 
