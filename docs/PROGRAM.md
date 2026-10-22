@@ -8,9 +8,11 @@ and why they are what they are.
 
 ## 1. The standard
 
-We aim at about 95/100 for every book, in the sense of [Astra's outside
-review](reports/outside-review-01.md). A reader of any page should be able to answer four
-questions at once:
+We aim at 95/100 or more for every book, as three cold outside reviewers score it by the
+[review rubric](RUBRIC.md). The first outside reading, [Astra's of 17
+October](reports/outside-review-01.md), scored the books against the README; the measurements
+by three reviewers on the rubric began on 19 October. A reader of any page should be able to
+answer four questions at once:
 
 1. What does Euclid claim?
 2. What does the formal theorem prove?
@@ -19,8 +21,9 @@ questions at once:
 
 A book meets the standard when its acceptance checklist (`ACCEPTANCE.md`)
 passes with no failures, an independent audit by a model family that wrote none of it
-agrees, and a cold outside reading scores it about 95. A few deliberate limitations are
-allowed when they are stated plainly where they occur. For I.45 and II.14, the figure is
+agrees, and a cold outside reading passes the gate of the [review rubric](RUBRIC.md). A few
+deliberate limitations are allowed when they are stated plainly where they occur. For I.45
+and II.14, the figure is
 supplied with its checked division into triangles and area is relative to that division; a
 proof of a division from the outline, and independence of area from the division chosen,
 remain pending under [#116](https://github.com/jackChallis/stoicheia/issues/116). In Book
