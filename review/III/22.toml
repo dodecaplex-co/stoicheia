@@ -19,11 +19,6 @@ helper = "angle_add_of_between"
 note = "Euclid reads DB within the angle ADC and adds its two parts. `angle_add_of_between` uses the crossing X found beneath the joining sentence to split ADC at DX, and the ray from D through X is DB."
 
 [[passage]]
-at = "Let the angle ABC be added to each"
-kind = "grouped"
-note = "Euclid adds ABC and states the equality of the resulting sums. The Lean carries both clauses in one equality, substituting the sum just proved for ADC and rearranging the additions."
-
-[[passage]]
 at = "Similarly we can prove that the angles BAD, DCB"
 kind = "grouped"
 note = "Euclid leaves the other pair of opposite angles to the same argument without writing it out. The Lean proves it once over any letters and applies it to ABCD and BCDA, using `Prop2.triangle` to supply the triangles in each application."

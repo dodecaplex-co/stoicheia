@@ -27,7 +27,7 @@ note = "Euclid infers that BAD and BED are equal because both are halves of BFD.
 [[passage]]
 at = "Therefore etc."
 kind = "different"
-note = "For a segment equal to or less than a semicircle, the Lean uses Simson's completion: produce AF to C, apply Euclid's greater-segment case on BC and CD, and add the equal angles. The Lean puts the crossings of AC and EC with BD within the circle by III.2, for which Heath prints no reference here, and between B and D by `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1, so `angle_add_of_between` splits both angles."
+note = "For a segment equal to or less than a semicircle, the Lean uses Simson's completion: produce AF to C by `Tacit.line_circle_beyond` (System E, Intersections 5), with F within the circle by `Tacit.centre_inside` (System E, Generalities 3), both rules we assume, then apply Euclid's greater-segment case on BC and CD and add the equal angles. The Lean puts the crossings of AC and EC with BD within the circle by III.2, for which Heath prints no reference here, and between B and D by `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1, so `angle_add_of_between` splits both angles."
 
 [figure]
 case = "the segment BAED greater than a semicircle, with F on A's and E's side of BD"
