@@ -11,14 +11,15 @@ jobs:
     # read no label. This job reads one, `release`, and it can only raise the class. Main's
     # copy of scripts/risk.py, never the change's own, classifies the files the change
     # brings to main, so a change cannot lower its own class by editing the classifier. A
-    # pull request into main is classified so; one labelled `release` or into any other
-    # branch, a push to main, a tag and every other event are R5, and every job runs in
-    # full. A push to another branch is classified by main's copy
-    # against main, from where the branch left it: the merge gate waits for that run too, so
-    # it takes the branch's class rather than R5, and since the branch's changes since it
-    # left main hold every path its pull request brings, that class is never less than the
-    # pull request's. The label is read from the event that started the run, so a `release`
-    # label added later counts from the next push.
+    # pull request into main is classified so, exactly, from GitHub's merge commit; one
+    # whose run starts with the `release` label, one into any other branch, a push to main,
+    # a tag and every other event are R5, and every job runs in full. The label is read from
+    # the event that started the run, and git safe-push adds a pull request's labels after
+    # it pushes, so a label given with that push counts from the next push. Main's run after
+    # the merge runs every job in full, and requiring an R5 run at a release pull request's
+    # head is left to the merge gate, in a later part of #276. A push to another branch is
+    # classified by main's copy against main, from where the branch left it, and the merge
+    # gate waits for that run as well as the pull request's own.
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,13 +34,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Classify the change by main's scripts/risk.py; a push to main, a tag, a release and any other event are R5
+      - name: Classify the change by main's scripts/risk.py; a push to main, a tag, a pull request whose run starts with the release label and any other event are R5
         id: classify
         env:
           EVENT: ${{ github.event_name }}
           REF: ${{ github.ref }}
           BASE_REF: ${{ github.base_ref }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           RELEASE: ${{ contains(github.event.pull_request.labels.*.name, 'release') }}
         run: |
@@ -65,14 +65,15 @@ jobs:
               # The checkout is the merge commit GitHub made of the pull request into main,
               # as the acceptance job reads it: its first parent is main, whose workflow
               # this run follows unless the pull request changes it, and its changes over
-              # that parent are what the pull request brings to main.
-              if [ "$(git rev-list --parents -n 1 HEAD | wc -w)" -eq 3 ]; then
-                base=$(git rev-parse HEAD^1)
-                head=$(git rev-parse HEAD)
-              else
-                base="$BASE_SHA"
-                head="$HEAD_SHA"
+              # that parent are what the pull request brings to main. The first parent is
+              # taken for main only when the commit has two parents and the second is the
+              # pull request's head; anything else is R5.
+              if [ "$(git rev-list --parents -n 1 HEAD | wc -w)" -ne 3 ] ||
+                 [ "$(git rev-parse HEAD^2)" != "$HEAD_SHA" ]; then
+                r5 "a pull request whose checkout is not GitHub's merge of its head, $HEAD_SHA, into main"
               fi
+              base=$(git rev-parse HEAD^1)
+              head=$(git rev-parse HEAD)
               what="the pull request" ;;
             *)
               r5 "a $EVENT event of $REF" ;;
@@ -185,13 +186,14 @@ jobs:
 
   negative:
     # Break the project on purpose, and check that every break is caught: in full for a
-    # change of class R3, R4 or R5, which every push to main and every release's pull
-    # request is (`risk`); for R0 to R2 the job passes at once and says why, since the
-    # cadence (safe-push-tests.yml) runs these tests on main every six hours, and the
-    # release's pull request runs them here as R5 and in the pre-flight, which runs them
-    # on every pull request (docs/decisions/2026-10-22-risk-lanes.md). It runs whatever
-    # became of `risk`, and fails unless `risk` succeeded: GitHub accepts a skipped
-    # required check, so a failed or cancelled classification must fail it, never skip it.
+    # change of class R3, R4 or R5, which every push to main is, and every pull request
+    # whose run starts with the `release` label (`risk`); for R0 to R2 the job passes at
+    # once and says why, since git safe-push's pre-flight runs these tests on every pull
+    # request, main's run after the merge runs them in full, and the cadence
+    # (safe-push-tests.yml) runs them on main every six hours
+    # (docs/decisions/2026-10-22-risk-lanes.md). It runs whatever became of `risk`, and
+    # fails unless `risk` succeeded: GitHub accepts a skipped required check, so a failed
+    # or cancelled classification must fail it, never skip it.
     needs: risk
     if: always()
     runs-on: ubuntu-latest
@@ -211,7 +213,7 @@ jobs:
               echo "class $CLASS: the negative tests run in full"
               echo "full=true" >> "$GITHUB_OUTPUT" ;;
             R0|R1|R2)
-              echo "class $CLASS: the negative tests run on main on the cadence, and on the release's pull request as R5 (docs/decisions/2026-10-22-risk-lanes.md)"
+              echo "class $CLASS: the negative tests run in git safe-push's pre-flight, in main's run after the merge and on main on the cadence (docs/decisions/2026-10-22-risk-lanes.md)"
               echo "full=false" >> "$GITHUB_OUTPUT" ;;
             *)
               echo "the risk job gave no class from R0 to R5: '$CLASS'"
@@ -261,12 +263,15 @@ jobs:
     # the laws translated so far. Not `model`, which is the numerical harness above. Every
     # Lean step runs in model/: the main package never sees Mathlib. In full for a change of
     # class R4 or R5, which every change to model/, to Certificate/axioms.lock or to
-    # scripts/check_model_kernel.py is, as are every push to main and every release's pull
-    # request, and for a change of any class to a file of the main package the model
-    # imports, directly or through others, which `risk` finds from the model's import lines
-    # (scripts/risk.py, model_inputs). Otherwise the job passes at once and says why: the
-    # change touches none of the model's inputs, and the cadence (safe-push-tests.yml)
-    # checks the model on main every six hours (docs/decisions/2026-10-22-risk-lanes.md).
+    # scripts/check_model_kernel.py is, as are every push to main and every pull request
+    # whose run starts with the `release` label, and for a change of any class to a file of
+    # the main package the model imports, directly or through others, which `risk` finds
+    # from the model's import lines (scripts/risk.py, model_inputs). It reads them by a
+    # narrow grammar and fails closed: while a file among them has a header it cannot read
+    # cleanly, the job runs in full for every change, and `risk`'s log names the file.
+    # Otherwise the job passes at once and says why: the change touches none of the model's
+    # inputs, and the cadence (safe-push-tests.yml) checks the model on main every six
+    # hours (docs/decisions/2026-10-22-risk-lanes.md).
     # Like `negative`, it fails unless `risk` succeeded, never skipped.
     needs: risk
     if: always()
@@ -275,7 +280,7 @@ jobs:
     # Mathlib from source for hours, so the job stops long before that.
     timeout-minutes: 30
     steps:
-      - name: Read the class, and run in full for R4 and R5 and for a change to a file the model imports
+      - name: Read the class, and run in full for R4 and R5, for a change to a file the model imports, and for every change while one of their headers cannot be read
         id: lane
         env:
           RESULT: ${{ needs.risk.result }}
@@ -291,7 +296,7 @@ jobs:
               echo "class $CLASS: the formal model is checked in full"
               echo "full=true" >> "$GITHUB_OUTPUT" ;;
             R0:true|R1:true|R2:true|R3:true)
-              echo "class $CLASS, and the change touches a file the formal model imports, which the risk job's log names: the formal model is checked in full"
+              echo "class $CLASS, and the change touches a file the formal model imports, or a file among them has a header the classifier cannot read; the risk job's log names it: the formal model is checked in full"
               echo "full=true" >> "$GITHUB_OUTPUT" ;;
             R0:false|R1:false|R2:false|R3:false)
               echo "class $CLASS, and the change touches nothing under model/, nor the axiom lock, the model's kernel check or a file the formal model imports, so the formal model is checked on main on the cadence (docs/decisions/2026-10-22-risk-lanes.md)"

@@ -21,25 +21,34 @@
   finds a rule for every tracked file.
 
   CI's new first job, `risk`, runs main's copy of the classifier, never the change's own,
-  over what the pull request's merge commit brings to main. A pull request labelled
-  `release` when its run starts is R5, and so are a pull request into any branch but
-  main, a push to main, a tag, every other event, and a change whose base holds no
-  classifier; a label can only raise the class. A push to another branch is classified by
-  main's copy against main, from where the branch left it: the merge gate waits for that
-  run too, and the branch's changes hold every path its pull request brings, so the push
-  is never classed lower than the pull request. The `check`, `model` and `acceptance` jobs
-  run in full for every class. `negative` runs in full for R3, R4 and R5. `formal-model`
-  runs in full for R4 and R5, the classes of every change to `model/`, to the axiom lock
-  and to the model's kernel check, and for a change of any class to a file of the main
-  package that the formal model imports, directly or through others. The classifier finds
-  those files from the import lines of the model's own files, at both ends of the change,
-  so the set follows the imports as they change; today it holds
-  `Elements/BookI/Prop07.lean`, `Elements/BookI/Prop13.lean` and
-  `Elements/Figure/Circles.lean`, among others. Otherwise a gated job passes at once and
-  says why in its log. The `check` job also now requires, after the build and the render,
-  that `git status --porcelain` over the whole worktree print nothing, as the pre-flight
-  already requires: that covers the generated pages, as the narrower form did, and every
-  other file a check might leave changed or new.
+  over what the pull request's merge commit brings to main: the pull request's own run is
+  classed exactly, from GitHub's merge commit, and a checkout that is not that merge of
+  the pull request's head is R5. A pull request whose run starts with the `release` label
+  is R5, and so are a pull request into any branch but main, a push to main, a tag, every
+  other event, and a change whose base holds no classifier; a label can only raise the
+  class. The label is read from the event that started the run, and `git safe-push` adds a
+  pull request's labels after it pushes, so a label given with that push counts from the
+  next push; main's run after the merge runs every job in full; and requiring an R5 run
+  at a release pull request's head is left to the merge gate, in a later part of #276. A
+  push to another branch is classified by main's copy against main, from where the branch
+  left it, and the merge gate waits for that run as well as the pull request's own. The
+  `check`, `model` and `acceptance` jobs run in full for every class. `negative` runs in
+  full for R3, R4 and R5. `formal-model` runs in full for R4 and R5, the classes of every
+  change to `model/`, to the axiom lock and to the model's kernel check, and for a change
+  of any class to a file of the main package that the formal model imports, directly or
+  through others. The classifier finds those files from the import lines of the model's
+  own files, at both ends of the change, so the set follows the imports as they change;
+  today it holds `Elements/BookI/Prop07.lean`, `Elements/BookI/Prop13.lean` and
+  `Elements/Figure/Circles.lean`, among others. It reads those lines by a narrow grammar,
+  and fails closed rather than try to match Lean's, which reads more: while any file among
+  them, at either end of the change, has a header it cannot read cleanly (a module part
+  `«.»`, `«..»` or `«»`, a letter or symbol past ASCII, an `import` with no module after
+  it), `formal-model` runs in full for every change, and the log names the file. So a
+  header that Lean reads otherwise can only widen the set. Otherwise a gated job passes at
+  once and says why in its log. The `check` job also now requires, after the build and
+  the render, that `git status --porcelain` over the whole worktree print nothing, as the
+  pre-flight already requires: that covers the generated pages, as the narrower form did,
+  and every other file a check might leave changed or new.
 
   Why this is safe. The five checks that main's ruleset requires keep their names
   (`check`, `model`, `negative`, `formal-model` and `acceptance`), so GitHub's settings
@@ -47,19 +56,22 @@
   `scripts/`, nor the classifier, so main's workflow and main's classifier judge it; one
   of R3 or R4 may change scripts, but neither of the other two. A gated job fails, and is
   never skipped, when `risk` fails or is cancelled, for GitHub would take a skipped
-  required check as passed. The negative tests still run on every pull request of R3 and
-  above and on the release's own; the formal model on every one of R4 and above, on the
-  release's, and on every one that touches a file the model imports; every push to main
-  runs both in full, after each merge; and the cadence workflow now runs both on main
-  every six hours, beside the safe_push tests, where a red run opens or updates the issue
-  labelled `blocks-release` that holds the release.
+  required check as passed. The negative tests still run in CI on every pull request of
+  R3 and above, and in the pre-flight of `git safe-push` on every pull request; the formal
+  model on every one of R4 and above, on every one that touches a file the model imports,
+  and on every one while a header among those files cannot be read; both on a pull request
+  whose run starts with the `release` label; every push to main runs both in full, after
+  each merge; and the cadence workflow now runs both on main every six hours, beside the
+  safe_push tests, where a red run opens or updates the issue labelled `blocks-release`
+  that holds the release.
 
   What this gives up, as the owner decided. Skipping the negative tests on pull requests
   of R0 to R2 takes those tests off those pull requests' merge path. A text or proof
   change can still break them, for they plant their breaks in I.1 and in other content:
   the cadence shows such a break within six hours, and the release waits for its repair.
   The formal model gives up nothing on the merge path for its own inputs: it leaves the
-  merge path only of a change of R0 to R3 that touches none of them.
+  merge path only of a change of R0 to R3 that touches none of them, while the classifier
+  reads every header among them.
 
   Left to a later part of #276. The card's rule that a red cadence run holds only the
   classes it guards is not built here: for now any red job of the cadence opens or

@@ -2,8 +2,10 @@
 """scripts/risk.py, the risk class of a change: its table's first-match order, R5 for a
 path no rule names, a change's highest class, `--diff` on a repository of the test's own,
 paths printed so that none can start a line of CI's log, `--audit` over this repository's
-tracked files, and the formal model's inputs: the Lean headers it reads, the files a
-model imports, followed through, on a repository of the test's own and on this one.
+tracked files, and the formal model's inputs: the Lean headers it reads, and those it
+cannot read, each of which then checks the model for every change; the files a model
+imports, followed through, on a repository of the test's own and on this one, whose every
+header it reads.
 
     python3 -I tests/test_risk.py
 
@@ -126,7 +128,7 @@ class Table(unittest.TestCase):
 
 
 class Header(unittest.TestCase):
-    """The imports of a Lean file's header, as Lean 4.35 reads them."""
+    """The imports of a Lean file's header, read by a narrow grammar that fails closed."""
 
     def test_the_forms_of_an_import(self):
         cases = (
@@ -145,12 +147,19 @@ class Header(unittest.TestCase):
             # Comments anywhere, nested blocks and doc comments among them.
             ("-- A remark.\n/- A block\n/- nested, with\nimport X -/\n-/\n/-! A module's doc.\n"
              "import Y -/\nimport A\n", ["A"]),
+            ("import A--a remark\nimport B/-a remark-/import C\n", ["A", "B", "C"]),
+            ("import\nA\r\nimport -- a remark\nB\r\n", ["A", "B"]),
+            # A quoted part of plain characters, as the model's own headers use.
             ("import Model.Laws.«areas-p5»\n", ["Model.Laws.«areas-p5»"]),
+            ("public import «areas-p5».B\n", ["«areas-p5».B"]),
+            # Any character in a comment, as Lean reads it.
+            ("import A -- «.», ℀ and λ\nimport B /- «..» -/\n", ["A", "B"]),
             # The header ends at the first command: an `import` after it is none.
             ("import A\nnamespace N\nimport B\n", ["A"]),
             ('import A\ndef s := "\npublic import B"\n', ["A"]),
             ("import A\npublic section\nimport B\n", ["A"]),
             ("import A\n#check 1\nimport B\n", ["A"]),
+            ("import A\n«x» := 1\nimport B\n", ["A"]),
             # Lean takes one module to an `import`, and refuses B here as a command.
             ("import A B\n", ["A"]),
             ("theorem t : True := trivial\n", []),
@@ -160,12 +169,52 @@ class Header(unittest.TestCase):
             with self.subTest(text=text):
                 self.assertEqual(risk.imported_modules(text), expected)
 
+    def test_a_header_the_reader_cannot_read_cleanly_is_unread(self):
+        # Lean 4.35 reads a file for each of the first five (named on the right) that a
+        # reader matching Lean less closely would leave out of the set; this one fails
+        # closed on them, as on the rest.
+        cases = (
+            "import Elements.BookI.«.».Hidden\n",           # Lean reads Elements/BookI/Hidden
+            "import Q.«».A\nimport Q.B\n",                  # Q/A
+            "import Q.«..».R.B\n",                          # R/B
+            "import Q.X℀\nimport Q.B\n",                    # a letter-like symbol, then Q/B
+            "import Q.A\nimport",                           # an import with no module
+            "import Q.A\nimport all\n",
+            "import -- a remark\n",
+            "import all import Q.A\n",
+            "import public\nimport Q.B\n",
+            "import Q.℀\nimport Q.B\n",
+            "import Q.X₁\n",                                # a subscript
+            "import Q.α\n",
+            "import «Q.A»\n",
+            "import Q.«a/b»\n",
+            "import Q.«A»B\n",
+            "import Q.A.\n",
+            "﻿import Q.A\n",                           # a byte order mark
+            "import Q.A import Q.B\n",
+            "import Q.A\x0cimport Q.B\n",
+            "public℀ import Q.A\n",
+            "import Q.A\n℀\nimport Q.B\n",
+        )
+        for text in cases:
+            with self.subTest(text=text):
+                with self.assertRaises(risk.Unread):
+                    risk.imported_modules(text)
+
     def test_a_module_is_found_at_its_path(self):
         for module, path in (("Elements.BookI.Prop07", "Elements/BookI/Prop07.lean"),
                              ("Model.Laws.«areas-p5»", "Model/Laws/areas-p5.lean"),
-                             ("Elements", "Elements.lean")):
+                             ("Elements", "Elements.lean"),
+                             ("Q.«a/./b».C", "Q/a/b/C.lean")):
             with self.subTest(module=module):
                 self.assertEqual(risk.module_path(module), path)
+
+    def test_a_module_with_a_part_empty_dot_or_dot_dot_or_outside_the_tree_is_unread(self):
+        for module in ("Elements.BookI.«.».Hidden", "Q.«».A", "Q.«..».R.B", "«..»",
+                       "Q.«../..».B", "«/etc».B", "A..B", ""):
+            with self.subTest(module=module):
+                with self.assertRaises(risk.Unread):
+                    risk.module_path(module)
 
 
 class Repo(unittest.TestCase):
@@ -470,6 +519,67 @@ class FormalModel(Repo):
         head = self.commit({"Certificate/axioms.lock": "Postulates, changed\n"})
         self.assertEqual(self.lane(head)[:2], ("R4", "true"))
 
+    def test_a_header_the_reader_cannot_read_runs_it_for_every_change(self):
+        # Prop07, which the model imports, is given each header; a later change to Prop09,
+        # which the model does not import, then checks the model, naming Prop07.
+        proof = "\ntheorem p7 : True := trivial\n"
+        cases = (
+            ("«.»", "import Elements.BookI.«.».Prop05\n" + proof),
+            ("«»", "import Elements.BookI.«».Prop05\n" + proof),
+            ("«..»", "import Elements.«..».Elements.BookI.Prop05\n" + proof),
+            ("a letter-like symbol",
+             "import Elements.Note℀\nimport Elements.BookI.Prop05\n" + proof),
+            ("an import with no module", "import Elements.BookI.Prop05\nimport\n"),
+        )
+        for form, text in cases:
+            with self.subTest(form=form):
+                self.git("checkout", "-q", "--detach", self.base)
+                start = self.commit({"Elements/BookI/Prop07.lean": text})
+                head = self.commit({"Elements/BookI/Prop09.lean":
+                                    "theorem p9' : True := trivial\n"})
+                done = self.risk("--diff", start, head)
+                self.assertEqual(done.returncode, 0, done.stderr)
+                lines = done.stdout.splitlines()
+                self.assertEqual(lines[:2], ["R2 Proofs", "  R2 Elements/BookI/Prop09.lean"])
+                self.assertTrue(lines[-1].startswith(
+                    "formal model: in full, since Elements/BookI/Prop07.lean, in the formal "
+                    "model's imports, has a header the classifier cannot read ("), lines[-1])
+                self.assertTrue(lines[-1].endswith("), so every change checks the model"),
+                                lines[-1])
+
+    def test_a_file_hidden_behind_a_header_the_reader_cannot_read_still_runs_it(self):
+        # Two R2 changes: the first gives Prop07, which the model imports, an import of
+        # Hidden that Lean reads (Elements/BookI/Hidden.lean) and the reader cannot; the
+        # second changes Hidden alone. Both check the model.
+        head = self.commit({
+            "Elements/BookI/Prop07.lean": ("import Elements.BookI.«.».Hidden\n\n"
+                                           "theorem p7 : True := trivial\n"),
+            "Elements/BookI/Hidden.lean": "def hidden := 1\n"})
+        self.assertEqual(self.lane(head)[:2], ("R2", "true"))
+        self.base = head
+        head = self.commit({"Elements/BookI/Hidden.lean": "def hidden := 2\n"})
+        cls, model, out = self.lane(head)
+        self.assertEqual((cls, model), ("R2", "true"), out)
+        self.assertIn("formal model: in full, since Elements/BookI/Prop07.lean, in the formal "
+                      "model's imports, has a header the classifier cannot read "
+                      "(Elements/BookI/Prop07.lean: Elements.BookI runs into '.'), so every "
+                      "change checks the model", out.splitlines())
+        done = self.risk("--model-inputs", head)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertEqual(done.stdout.splitlines()[-1],
+                         "unread: Elements/BookI/Prop07.lean: Elements.BookI runs into '.'; "
+                         "while it is, every change checks the formal model")
+
+    def test_a_model_file_the_reader_cannot_read_runs_it_for_every_change(self):
+        start = self.commit({"model/Check/Hand.lean":
+                             "import Elements.«.».Foundations.Postulates\n"})
+        self.assertEqual(self.lane(start)[:2], ("R4", "true"))
+        self.base = start
+        head = self.commit({"README.md": "Changed.\n"})
+        cls, model, out = self.lane(head)
+        self.assertEqual((cls, model), ("R0", "true"), out)
+        self.assertIn("model/Check/Hand.lean, in the formal model's imports", out)
+
 
 class Repository(unittest.TestCase):
     def test_every_tracked_file_has_a_rule(self):
@@ -495,6 +605,7 @@ class Repository(unittest.TestCase):
                               cwd=ROOT, capture_output=True, text=True)
         self.assertEqual(done.returncode, 0, done.stderr)
         inputs = set(done.stdout.splitlines())
+        self.assertEqual([line for line in inputs if line.startswith("unread: ")], [])
         for path in ("Elements/BookI/Prop07.lean", "Elements/BookI/Prop13.lean",
                      "Elements/Figure/Circles.lean"):
             with self.subTest(path=path):
@@ -503,6 +614,25 @@ class Repository(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertTrue(path.endswith(".lean") and not path.startswith("model/"), path)
                 self.assertTrue((ROOT / path).is_file(), path)
+
+    def test_every_header_the_model_reaches_is_read_so_a_proof_outside_it_passes_at_once(self):
+        # The model's own headers, «areas-p5» among them, and those of every file they
+        # reach, read cleanly; so a change of R2 to a proof outside the set leaves the
+        # formal model to the cadence.
+        inputs, unread = risk.model_inputs("HEAD", str(ROOT))
+        self.assertEqual(unread, {})
+        done = subprocess.run(["git", "ls-files", "-z", "--", "Elements/BookI"], cwd=ROOT,
+                              capture_output=True)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        proofs = sorted(set(os.fsdecode(path) for path in done.stdout.split(b"\0") if path)
+                        - inputs)
+        self.assertTrue(proofs)
+        outside = proofs[0]
+        self.assertEqual(risk.classify(outside), ("R2", True))
+        full, why = risk.formal_model("R2", [outside], "HEAD", "HEAD", str(ROOT))
+        self.assertEqual((full, why), (False, "the change touches nothing under model/, nor "
+                                              "the axiom lock, nor a file the formal model "
+                                              "imports"))
 
 
 if __name__ == "__main__":

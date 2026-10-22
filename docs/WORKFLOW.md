@@ -314,14 +314,16 @@ python3 scripts/check_links.py
 Review the generated differences and commit them with their sources, so that regenerating
 leaves them unchanged and the `git status` line prints nothing. That line reads the whole
 worktree, as the pre-flight's does: a file that any command above leaves changed or new,
-generated page or not, fails it, so the sequence runs on a committed revision. Six more
-jobs run on their own, each in isolation: CI's `risk`, which classifies the change
+generated page or not, fails it, so the sequence runs on a committed revision. Eight
+more jobs run on their own, each in isolation: CI's `risk`, which classifies the change
 (below); four more of CI's on each pull request, two of them by the class `risk` gives;
-and `safe-push-tests`, which runs on a cadence (below). Below, the first commands are
-those of CI's `negative`, `model` and `formal-model` jobs; the next two run the
-acceptance job's tests and checklist without its CI comparison, and the last two run the
-`safe-push-tests` job's; the commands of `risk` are under "Which jobs run for which
-class", after the block:
+and three on a cadence, in the `safe-push-tests` workflow (below): `safe-push-tests`, and
+`negative-tests` and `formal-model-kernel`, which run on main the commands of CI's
+`negative` and `formal-model` jobs. Below, the first commands are those of CI's
+`negative`, `model` and `formal-model` jobs, and so of the cadence's two; the next two
+run the acceptance job's tests and checklist without its CI comparison, and the last two
+run the `safe-push-tests` job's; the commands of `risk` are under "Which jobs run for
+which class", after the block:
 
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
@@ -346,22 +348,33 @@ class, from R0 (docs) to R5 (the landing tool and CI), from the files it changes
 rule of its table that matches it, R5 when none does, and the change the highest of its
 files' classes. The job runs main's copy of the script, never the change's own, so a
 change cannot lower its own class by editing it. A pull request into main is classified
-so, and a push to another branch against main, as its pull request is; a pull request
-labelled `release` when its run starts, a pull request into another branch, a push to
-main, a tag and any other event are R5. `check`, `model` and `acceptance` run for every
-class. `negative` runs in full for R3, R4 and R5. `formal-model` runs in full for R4 and
-R5, the classes of every change to `model/`, to `Certificate/axioms.lock` and to
-`scripts/check_model_kernel.py`, and for a change of any class to a file of the main
-package that the formal model imports, directly or through others: `risk` reads them from
-the model's import lines, at both ends of the change, so the set follows the imports as
-they change. For a lower class, and for `formal-model` a change that touches none of the
+so, exactly, from GitHub's merge commit (a checkout that is not that merge of its head is
+R5), and a push to another branch against main, from where the branch left it; the merge
+gate waits for both runs. A pull request whose run starts with the `release` label, a
+pull request into another branch, a push to main, a tag and any other event are R5. The
+label is read from the event that started the run, and `git safe-push` adds a pull
+request's labels after it pushes, so a label given with that push counts from the next
+push; main's run after the merge runs every job in full; and requiring an R5 run at a
+release pull request's head is left to the merge gate, in a later part of #276. `check`,
+`model` and `acceptance` run for every class. `negative` runs in full for R3, R4 and R5.
+`formal-model` runs in full for R4 and R5, the classes of every change to `model/`, to
+`Certificate/axioms.lock` and to `scripts/check_model_kernel.py`, and for a change of any
+class to a file of the main package that the formal model imports, directly or through
+others: `risk` reads them from the model's import lines, at both ends of the change, so
+the set follows the imports as they change. It reads them by a narrow grammar and fails
+closed: while a file among them has a header it cannot read cleanly (a module part `«.»`,
+`«..»` or `«»`, a letter or symbol past ASCII, an `import` with no module after it),
+`formal-model` runs in full for every change, and `risk`'s log names the file, so a
+header that Lean reads otherwise can only widen the set. For a lower class, and for
+`formal-model` a change that touches none of the
 model's inputs, each job passes at once and says why, since the `safe-push-tests` workflow
 runs both on main every six hours and a red run there holds the release ([the
 decision](decisions/2026-10-22-risk-lanes.md)). Each fails, and is never skipped, when
 `risk` does not succeed, for GitHub accepts a skipped required check. `python3
 scripts/risk.py --paths <file>...` gives files' classes up front; `python3 scripts/risk.py .
 origin/main` a branch's class, and whether the formal model runs; and `python3
-scripts/risk.py --model-inputs HEAD` the files the model imports.
+scripts/risk.py --model-inputs HEAD` the files the model imports, then any among them
+whose header it cannot read.
 
 The full `acceptance` job runs only in CI. Its ratchet before the consolidation release,
 the switch to the full gate at that release, the reports and the executable definitions
@@ -502,9 +515,15 @@ run of `acceptance` to pass. The ruleset and the remaining merge requirements ar
 - **The risk classes are tested without Lean.** `tests/test_risk.py` checks the table of
   `scripts/risk.py`: the first rule that matches wins, a path no rule names is R5, and a
   change takes its highest class. It runs `--diff` on a repository of its own (an empty
-  diff, a workflow changed, a path with a space, a file moved) and `--audit` over this
-  repository's tracked files, every one of which a rule must name. `negative_tests.py`
-  runs it after the decision entry regressions, before planting, with `--counts-only` too.
+  diff, a workflow changed, a path with a space, a path with a line break, printed escaped
+  so that no path can start a line of CI's log, a file moved, a submodule moved) and
+  `--audit` over this repository's tracked files, every one of which a rule must name. It
+  tests the formal model's inputs: the forms of a Lean header the classifier reads, and
+  those it cannot read, each of which then runs the model for every change; the files a
+  model imports, directly, through another, or deleted by the change, on a repository of
+  its own; and this repository's, `Elements/BookI/Prop07.lean` among them, whose every
+  header it reads. `negative_tests.py` runs it after the decision entry regressions,
+  before planting, with `--counts-only` too.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that
   branch; if integration changes the mathematics, the dependencies or a public description,

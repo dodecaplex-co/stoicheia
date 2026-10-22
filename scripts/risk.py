@@ -14,7 +14,9 @@ is R5 by the table below.
 The formal model in model/ imports some of the main package's Lean files, and so is
 checked whenever one of them changes, whatever the change's class: model_inputs finds them
 at a revision, from the model's own import lines, so the set follows the imports as they
-change.
+change. It reads a header by a narrow grammar and fails closed: while a file among the
+model's imports has a header it cannot read cleanly, the formal model is checked for every
+change, so a header Lean reads otherwise can only widen the set.
 
     python3 scripts/risk.py <worktree> [base]     the class of the worktree's HEAD against
                                                   base (origin/main), then each path's,
@@ -29,7 +31,9 @@ change.
     python3 scripts/risk.py --audit <worktree>    every tracked file's class; exit 1 if any
                                                   falls to the R5 default without a rule
     python3 scripts/risk.py --model-inputs REV    the main package's files the formal model
-                                                  imports at REV, directly or through others
+                                                  imports at REV, directly or through others,
+                                                  then each file among them whose header it
+                                                  cannot read, and why
 
 A rule matches a path whole, by fnmatch's rules, under which `*` matches `/` too, so
 `scripts/*` holds `scripts/audit/jev.py`. Git gives the paths separated by NUL bytes
@@ -46,6 +50,7 @@ from __future__ import annotations
 
 import fnmatch
 import os
+import posixpath
 import re
 import subprocess
 import sys
@@ -97,6 +102,11 @@ USAGE = ("usage: risk.py <worktree> [base] | --diff BASE HEAD [--github-output] 
 
 class GitFailure(Exception):
     """Git could not list the paths: no class may be printed."""
+
+
+class Unread(Exception):
+    """A Lean header the reader cannot read cleanly, and why: while a file among the formal
+    model's imports has one, the model is checked for every change."""
 
 
 def shown(text: str) -> str:
@@ -153,34 +163,45 @@ def diff_paths(base: str, head: str, cwd: str | None = None) -> list[str]:
                       f"{revision(base)}...{revision(head)}", "--"], cwd)
 
 
-# A Lean file's header, as Lean 4.35 reads it: `module` and `prelude`, then the imports,
-# each `import`, after its modifiers and an optional `all`, taking one module, and several
-# imports to a line if need be (`import A import B`; Lean refuses `import A B`, reading B as
-# a command), with comments anywhere. `private import`, which Lean refuses, is read as an
-# import all the same, so a header Lean would not accept can only widen the set. The header
-# ends at the first other word: an `import` later in a file, in a string say, is no import.
-HEADER_TOKEN = re.compile(r"""
-    (?P<space>\s+)
-  | (?P<line>--[^\n]*)
-  | (?P<block>/-)
-  | (?P<name>(?:«[^»]*»|[^\W\d][\w'!?]*)(?:\.(?:«[^»]*»|[^\W\d][\w'!?]*))*)
-""", re.X)
-MODIFIERS = ("public", "private", "meta")
-MODULE_PART = re.compile(r"«([^»]*)»|([^.«]+)")
+# A Lean file's header, read by a narrow grammar that fails closed rather than try to match
+# Lean 4.35's, which reads more: a module part `«.»`, `«..»` or `«»`, and letters and
+# symbols past ASCII. The reader knows `module`, `prelude`, the modifiers `public`,
+# `private` and `meta`, and imports, each `import`, after an optional `all`, taking one
+# module, several to a line if need be (`import A import B`); and between them spaces,
+# tabs and line breaks, and comments as Lean reads them, `--` to the line's end and `/-` to
+# its matching `-/`, nested. A module's parts are plain, an ASCII letter or `_` then ASCII
+# letters, digits and `_'!?`, or quoted, of ASCII letters, digits and `_'!?-`
+# (`«areas-p5»`), joined by dots. The header ends at the first other word, or the first
+# other ASCII character, where Lean's ends too: an `import` later in a file, in a string
+# say, is no import. Anything else before the header ends is Unread: an `import` with no
+# module after it; a word of the header that runs into anything but white space, a
+# comment or the file's end (`Q.X℀`, or `Q.«.».A`); and any other character past ASCII,
+# any other guillemet among them. Where the reader passes over what Lean refuses, or reads
+# on where Lean's header ends, it can only widen the set: a tab, a lone carriage return, a
+# doc comment, and `private import`, read as an import.
+SPACE = " \t\r\n"
+PART = r"(?:[A-Za-z_][A-Za-z0-9_'!?]*|«[A-Za-z0-9_'!?-]+»)"
+NAME = re.compile(rf"{PART}(?:\.{PART})*")
+HEADER_WORDS = ("module", "prelude", "public", "private", "meta", "import")
+MODULE = re.compile(r"(?:«[^»]*»|[^.«»]+)(?:\.(?:«[^»]*»|[^.«»]+))*")
+MODULE_PART = re.compile(r"«([^»]*)»|([^.«»]+)")
 
 
-def imported_modules(text: str) -> list[str]:
-    """The modules a Lean file's header imports, in order, as the file names them."""
-    modules: list[str] = []
-    pos, importing, whole = 0, False, False
+def named(char: str) -> str:
+    """A character as a reason names it: '.' say, or U+2100."""
+    return repr(char) if char.isascii() and char.isprintable() else f"U+{ord(char):04X}"
+
+
+def past_space(text: str, pos: int) -> int:
+    """Where the white space and comments that start at pos end."""
     while pos < len(text):
-        match = HEADER_TOKEN.match(text, pos)
-        if not match:
-            break
-        pos = match.end()
-        if match["block"]:
-            # Lean's block comments nest; a doc comment is one too.
-            depth = 1
+        if text[pos] in SPACE:
+            pos += 1
+        elif text.startswith("--", pos):
+            end = text.find("\n", pos)
+            pos = len(text) if end < 0 else end
+        elif text.startswith("/-", pos):
+            depth, pos = 1, pos + 2
             while depth and pos < len(text):
                 if text.startswith("/-", pos):
                     depth, pos = depth + 1, pos + 2
@@ -188,28 +209,56 @@ def imported_modules(text: str) -> list[str]:
                     depth, pos = depth - 1, pos + 2
                 else:
                     pos += 1
-            continue
-        word = match["name"]
-        if word is None:
-            continue
-        if importing:
-            if word == "all" and not whole:
-                whole = True
-                continue
+        else:
+            break
+    return pos
+
+
+def imported_modules(text: str) -> list[str]:
+    """The modules a Lean file's header imports, in order, as the file names them; Unread
+    when the reader cannot read the header cleanly."""
+    modules: list[str] = []
+    pos, importing, whole = 0, False, False
+    while True:
+        pos = past_space(text, pos)
+        match = NAME.match(text, pos)
+        if not match:
+            if importing:
+                where = named(text[pos]) if pos < len(text) else "the file's end"
+                raise Unread(f"an import with no module after it, at {where}")
+            if pos < len(text) and not text[pos].isascii():
+                raise Unread(f"{named(text[pos])} in the header")
+            return modules
+        word = match.group()
+        if not importing and word not in HEADER_WORDS:
+            return modules
+        pos = match.end()
+        if pos < len(text) and not (text[pos] in SPACE or text.startswith(("--", "/-"), pos)):
+            raise Unread(f"{word} runs into {named(text[pos])}")
+        if not importing:
+            importing = word == "import"
+        elif word == "all" and not whole:
+            whole = True
+        elif word in HEADER_WORDS or word == "all":
+            raise Unread(f"an import with no module after it, at {word}")
+        else:
             modules.append(word)
             importing, whole = False, False
-        elif word == "import":
-            importing = True
-        elif word not in MODIFIERS and word not in ("module", "prelude"):
-            break
-    return modules
 
 
 def module_path(module: str) -> str:
     """The file in which Lake finds a module under its package's root: A.B.C at A/B/C.lean,
-    and «areas-p5» at areas-p5."""
-    parts = (quoted or plain for quoted, plain in MODULE_PART.findall(module))
-    return "/".join(parts) + ".lean"
+    and «areas-p5» at areas-p5.lean, normalised. Unread for a module with a part that is
+    empty, `.` or `..`, or whose file would lie outside the tree."""
+    if not MODULE.fullmatch(module):
+        raise Unread(f"{module} is no module name")
+    parts = [quoted or plain for quoted, plain in MODULE_PART.findall(module)]
+    if any(part in ("", ".", "..") for part in parts):
+        raise Unread(f"{module} has a part that is empty, . or ..")
+    path = posixpath.normpath("/".join(parts) + ".lean")
+    if path.startswith("/") or path == ".." or path.startswith("../"):
+        raise Unread(f"{module} names a file outside the tree")
+    return path
 
 
 def tree_files(rev: str, cwd: str | None = None) -> dict[str, bytes]:
@@ -247,41 +296,56 @@ def file_texts(names: list[bytes], cwd: str | None = None) -> list[str]:
     return texts
 
 
-def model_inputs(rev: str, cwd: str | None = None) -> set[str]:
+def model_inputs(rev: str, cwd: str | None = None) -> tuple[set[str], dict[str, str]]:
     """The main package's Lean files the formal model imports at rev, directly or through
     one another: the modules each model/**/*.lean file's header imports whose file the main
     package holds at rev (module A.B.C at A/B/C.lean), then the same for each such file, to
     the end. The model's own modules and Mathlib's are passed over, for the main package
-    holds no file of theirs."""
+    holds no file of theirs. Then each file read on the way, the model's own among them,
+    whose header the reader cannot read cleanly, with why: what it imports is unknown."""
     files = tree_files(rev, cwd)
     main = {path for path in files if not path.startswith(MODEL)}
     queue = sorted(path for path in files
                    if path.startswith(MODEL) and path.endswith(".lean"))
     found: set[str] = set()
+    unread: dict[str, str] = {}
     while queue:
-        imported = {module_path(module)
-                    for text in file_texts([files[path] for path in queue], cwd)
-                    for module in imported_modules(text)}
+        imported: set[str] = set()
+        for path, text in zip(queue, file_texts([files[path] for path in queue], cwd)):
+            try:
+                imported.update([module_path(module) for module in imported_modules(text)])
+            except Unread as why:
+                unread[path] = str(why)
         queue = sorted((imported & main) - found)
         found.update(queue)
-    return found
+    return found, unread
 
 
 def formal_model(top: str, paths, base: str, head: str,
                  cwd: str | None = None) -> tuple[bool, str]:
     """Whether CI's formal-model job must run in full for the change `git diff base...head`,
-    and why: for R4 and R5, for a change under model/ or to the axiom lock, and for a change
-    to a file the model imports, at the diff's end or at its start (where a file the
-    change deletes is still imported)."""
+    and why: for R4 and R5, for a change under model/ or to the axiom lock, for every
+    change while a file the model imports, at the diff's end or at its start, has a header
+    the reader cannot read cleanly, and for a change to a file the model imports, at
+    either end (at the start, a file the change deletes is still imported)."""
     if top >= "R4":
         return True, f"the class is {top}"
     for path in sorted(paths):
         if path.startswith(MODEL) or path == LOCK:
             return True, f"{shown(path)} changed"
     starts = git_bytes(["merge-base", "--all", revision(base), revision(head)], cwd)
-    inputs = model_inputs(head, cwd)
+    inputs, unread = model_inputs(head, cwd)
     for start in starts.decode().split():
-        inputs |= model_inputs(start, cwd)
+        more_inputs, more_unread = model_inputs(start, cwd)
+        inputs |= more_inputs
+        unread = {**more_unread, **unread}
+    if unread:
+        first = sorted(unread)[0]
+        files = (f"{shown(first)} and {len(unread) - 1} more of the formal model's imports "
+                 "have headers" if len(unread) > 1
+                 else f"{shown(first)}, in the formal model's imports, has a header")
+        return True, (f"{files} the classifier cannot read ({shown(first)}: "
+                      f"{shown(unread[first])}), so every change checks the model")
     imported = sorted(set(paths) & inputs)
     if imported:
         more = f", and {len(imported) - 1} more it imports" if len(imported) > 1 else ""
@@ -358,8 +422,12 @@ def main(argv: list[str]) -> int:
             if len(rest) != 1:
                 print(USAGE, file=sys.stderr)
                 return 2
-            for path in sorted(model_inputs(rest[0])):
+            inputs, unread = model_inputs(rest[0])
+            for path in sorted(inputs):
                 print(shown(path))
+            for path in sorted(unread):
+                print(f"unread: {shown(path)}: {shown(unread[path])}; while it is, every "
+                      "change checks the formal model")
             return 0
         if mode == "--diff":
             github = "--github-output" in rest
