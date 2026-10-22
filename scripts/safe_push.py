@@ -231,7 +231,8 @@ import subprocess
 import sys
 import tempfile
 import time
-import tomllib
+if sys.version_info >= (3, 11):
+    import tomllib
 import types
 import unicodedata
 from pathlib import Path
