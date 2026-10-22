@@ -1,11 +1,14 @@
 import Elements.Figure.Basics
-import Staging.Stage3.Degenerate
+import Elements.BookI.HelpersTriangles
 
 /-!
-# Stage 3, staged: placement, two points of the base
+# Placement: two points of the base
 
-Statements frozen before their proofs (brief 0006, stage 3), and proved here. One file of
-`Elements/BookIII/Placement/`.
+One of the five files of placement's cases (`Elements/BookIII/Placement.lean` gathers them).
+Two points of the straight line AB keep their distance when they are sent to CD: their
+order about A, decided by their distances from A and B (`Prop20.between_congr`), is their
+images' order about C, and the distance between them is the sum or the difference of their
+distances from A.
 -/
 
 namespace Elements.BookIII
