@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.11 at a glance</title>
-  <desc>Mark off equal lengths either side of the point (red) and join their ends with equal lines to a peak (blue): the line from the peak down to the point stands at right angles (yellow).</desc>
+  <desc>Mark off equal lengths either side of the point (red) and join their ends to a peak by two equal straight lines (blue): the straight line from the peak down to the point stands at right angles (yellow).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M200.0,223.3 L200.0,193.3 A30,30 0 0,0 170.0,223.3 Z" fill="#f2b705"/>
   <path d="M200.0,223.3 L230.0,223.3 A30,30 0 0,0 200.0,193.3 Z" fill="#f2b705"/>
