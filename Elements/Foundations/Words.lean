@@ -95,7 +95,8 @@ def LinesMeet (L M : Line) : Prop :=
 def LineMeetsCircle (L : Line) (α : Circle) : Prop :=
   ∃ A B : Point, A ≠ B ∧ OnLine A L ∧ OnCircle A α ∧ OnLine B L ∧ OnCircle B α
 
-/-- Two circles that cut one another (in two points). -/
+/-- Two circles that meet at two points. Circles that cut one another are `CirclesCut`,
+defined under Definition III.3. -/
 def CirclesMeet (α β : Circle) : Prop :=
   ∃ A B : Point, A ≠ B ∧ OnCircle A α ∧ OnCircle A β ∧ OnCircle B α ∧ OnCircle B β
 
