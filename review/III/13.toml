@@ -52,10 +52,10 @@ note = "Like Heath's, this figure draws both impossible suppositions: EBFD touch
 
 [review]
 stage = "full"
-commit = "9eae4df1"
+commit = "e572d5c0"
 reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:947ea3ed47e6ee68"
-run = "brief 0005 stage 5, ship R3 (#29)"
+lean = "sha256:ae577fbed3d18152"
+run = "brief 0005 stage 5, ship R3 (#29); read again at e572d5c0 only where train C6c changed it (its representation note and a docstring); full read at 9eae4df1"
 
 [review.items]
 statement = "pass"
