@@ -54,16 +54,18 @@
     imported, any import but a builtin's being refused: one over the key and
     origin/main's pass, missed and hit, in the test's own process; one over the same in a
     fresh interpreter, so that nothing the tests have loaded can hide a late import,
-    which also shows the watch refusing a module imported late, and on macOS `plistlib`,
-    imported as `environment()` once imported it; and one over a flagged dry run of the
-    pre-flight (steps 1 to 3 and 5, step 4 being the internal test flag's skip) and its
-    push. A fourth reads the harness and finds every import at its top. The harness first
-    read the platform with `platform.platform()`, which starts `uname -p` and `file -b`,
-    found on the `PATH`, outside the sandbox; it now reads `os.uname()` and macOS's
-    version file. Only the harness's own Python writes an entry. Without the sandbox
-    (not macOS, no `sandbox-exec`, a run already inside a sandbox, or a profile that
-    fails the trial) there is no cache that run, the run says why, and the pre-flight is
-    otherwise as before.
+    which also parses the allow-list with `tomllib` forgotten from the module cache,
+    shows the watch refusing a module imported late, and on macOS `plistlib`, imported as
+    `environment()` once imported it; and one over a flagged dry run of the pre-flight
+    (steps 1 to 3 and 5, step 4 being the internal test flag's skip) and its push. A
+    runtime test observes classification finishing before sandbox activation, the commit
+    checks starting after it, and a child of those checks going through the sandbox. The
+    harness first read the platform with `platform.platform()`, which starts `uname -p`
+    and `file -b`, found on the `PATH`, outside the sandbox; it now reads `os.uname()` and
+    macOS's version file. Only the harness's own Python writes an entry. Without the
+    sandbox (not macOS, no `sandbox-exec`, a run already inside a sandbox, or a profile
+    that fails the trial) there is no cache that run, the run says why, and the
+    pre-flight is otherwise as before.
   - An entry's name is the SHA-256 of a canonical JSON key the harness computes: a format
     version; origin/main's full commit; the exact base tree, made in a temporary index,
     which a test checks equals the tree the pass lays down; the harness's blob, with no

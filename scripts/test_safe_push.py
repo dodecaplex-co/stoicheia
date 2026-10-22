@@ -162,16 +162,16 @@ one commit and runs safe_push.py against that origin:
   refused and the pass recomputed; a directory on another device than the one above it
   is not used; without the flag nothing is read or written, the directory not even
   made, nor with it for a change of R0 to R2; without a sandbox there is no cache, nor
-  with a trial whose write fails otherwise than by the sandbox's refusal; every command
-  starts in run() but origin/main's risk.py, before the cache is opened, and every
-  import is at the top; with platform's caches emptied, no process starts but the
-  sandbox while the key is computed and the pass missed and hit; in a fresh
-  interpreter, no process starts but the sandbox and no module but a builtin is
-  imported once the sandbox is set, over step 4 missed and hit (and the watch refuses a
-  module imported late, and on macOS plistlib, as environment() imported it once), and
-  over a flagged dry run and push of an R3 commit; and on
-  macOS a command run there cannot write the cache, nor rename a directory above it,
-  and a profile without the rules above the cache is caught;
+  with a trial whose write fails otherwise than by the sandbox's refusal;
+  classification finishes before the sandbox is activated, commit checks start after
+  it, and their child runs through the sandbox; with platform's caches emptied, no
+  process starts but the sandbox while the key is computed and the pass missed and hit;
+  in a fresh interpreter, the allow-list is parsed, step 4 is missed and hit, no process
+  starts but the sandbox and no module but a builtin is imported once the sandbox is set
+  (and the watch refuses a module imported late, and on macOS plistlib, as environment()
+  imported it once), and the same watch covers a flagged dry run and push of an R3
+  commit; and on macOS a command run there cannot write the cache, nor rename a directory
+  above it, and a profile without the rules above the cache is caught;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -6260,10 +6260,11 @@ sys.addaudithook(hook)
 # loaded can hide one imported late: this script, run with -I, imports safe_push, sets it
 # up as open_cache leaves it (the stand-in for sandbox-exec, origin/main's harness, the
 # stand-in toolchain on the PATH, the steps given), forgets the modules named, imports
-# the late ones once the sandbox is set, and runs full_checks twice on the commit, a miss
-# and then a hit, with the same watch as WATCH_SITECUSTOMIZE's but refusing a process
-# outside the sandbox as well. It writes what it saw, each run's steps and any error to
-# the file named, as JSON.
+# the late ones once the sandbox is set, parses origin/main's allow-list, and runs
+# full_checks twice on the commit, a miss and then a hit, with the same watch as
+# WATCH_SITECUSTOMIZE's but refusing a process outside the sandbox as well. It writes
+# what it saw, the allow-list count, each run's steps and any error to the file named,
+# as JSON.
 STEP4_WATCH = """import json
 import os
 import sys
@@ -6316,13 +6317,14 @@ inputs = [tuple(change) for change in ARGS["inputs"]]
 for run in ("miss", "hit"):
     os.makedirs(os.path.join(ARGS["logs"], run))
 for name in ARGS["forget"]:
-    del sys.modules[name]
-runs, error = {}, None
+    sys.modules.pop(name, None)
+runs, allow_count, error = {}, None, None
 HARNESS.append(sp)
 sp.CACHE, sp.SANDBOX = Path(ARGS["cache"]), "(version 1) (allow default)"
 try:
     for name in ARGS["late"]:
         __import__(name)
+    allow_count = len(sp.load_allowlist(ctx.repo, ctx.base))
     for run in ("miss", "hit"):
         rep = sp.Report()
         with tempfile.TemporaryDirectory(dir=ARGS["tmp"]) as tmp:
@@ -6335,7 +6337,7 @@ except BaseException as e:
 finally:
     sp.SANDBOX = None
 with open(ARGS["out"], "w") as f:
-    json.dump({"seen": SEEN, "runs": runs, "error": error}, f)
+    json.dump({"seen": SEEN, "runs": runs, "allow_count": allow_count, "error": error}, f)
 """
 
 
@@ -7068,51 +7070,53 @@ class MainChecksCache(Edge):
                       "coordinator's dry run of the train and its push", text)
         self.assertIn("The sandbox does not stop a run without the flag", text)
 
-    def test_every_command_starts_in_run(self):
-        # The sandbox wraps commands in run() alone, so every command must start there; the
-        # hand-over's os.execve, in harness(), comes before open_cache, and so does
-        # risk_class, which runs origin/main's risk.py with a time limit (#292).
-        tree = ast.parse(SAFE_PUSH.read_text())
-        parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
-        starters = {("subprocess", n) for n in ("run", "Popen", "call", "check_call",
-                                                "check_output", "getoutput",
-                                                "getstatusoutput")}
-        starters |= {("os", n) for n in ("system", "popen", "fork", "forkpty", "posix_spawn",
-                                         "posix_spawnp", "execv", "execve", "execvp",
-                                         "execvpe", "execl", "execle", "execlp", "execlpe",
-                                         "spawnv", "spawnve", "spawnvp", "spawnvpe")}
-        found = set()
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.Import, ast.ImportFrom)):
-                if isinstance(node, ast.ImportFrom):
-                    self.assertNotIn(node.module, ("subprocess", "os"), ast.unparse(node))
-                for alias in node.names:
-                    self.assertIsNone(alias.asname if alias.name in ("subprocess", "os")
-                                      else None, ast.unparse(node))
-            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
-                    and isinstance(node.func.value, ast.Name) \
-                    and (node.func.value.id, node.func.attr) in starters:
-                where = node
-                while where in parents and not isinstance(where, ast.FunctionDef):
-                    where = parents[where]
-                found.add((getattr(where, "name", "<module>"), node.func.value.id,
-                           node.func.attr))
-        self.assertEqual(found, {("run", "subprocess", "run"), ("harness", "os", "execve"),
-                                 ("risk_class", "subprocess", "run")})
-        # In the pre-flight, the class is read before the cache is opened, and the
-        # commit's checks (check_commit) run after it.
-        preflight = next(node for node in tree.body if isinstance(node, ast.FunctionDef)
-                         and node.name == "preflight_main")
-        line: dict[str, int] = {}
-        for node in ast.walk(preflight):
-            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
-                line[node.func.id] = min(node.lineno, line.get(node.func.id, node.lineno))
-        order = ["preconditions", "risk_class", "open_cache", "check_commit"]
-        self.assertEqual(sorted(order, key=line.__getitem__), order)
+    def test_the_preflight_activates_the_sandbox_after_classification_and_before_checks(self):
+        sha = self.check_change()
+        ctx = safe_push.Context(WORK, sha, BASE, 1, str(ORIGIN), None, {})
+        events = []
+
+        def classify(*args, **kwargs):
+            self.assertIsNone(safe_push.SANDBOX)
+            events.append("classification")
+            return self.R3
+
+        def activate(rep, risk):
+            self.assertEqual(events, ["classification"])
+            self.assertIsNone(safe_push.SANDBOX)
+            events.append("sandbox")
+            safe_push.CACHE, safe_push.SANDBOX = self.dir, "(version 1) (allow default)"
+
+        def check(*args, **kwargs):
+            self.assertEqual(events, ["classification", "sandbox"])
+            self.assertIsNotNone(safe_push.SANDBOX)
+            events.append("commit checks")
+            r = safe_push.run(["/usr/bin/true"], WORK)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            return safe_push.Preflight([], [])
+
+        args = mock.Mock(dry_run=True, commit=sha, branch=None, test_mode=True, title=None,
+                         main_checks_cache=True)
+        with mock.patch.object(safe_push, "CACHE", None), \
+                mock.patch.object(safe_push, "SANDBOX", None), \
+                mock.patch.object(safe_push, "SANDBOX_EXEC", str(self.fake)), \
+                mock.patch.object(safe_push, "preconditions", return_value=ctx), \
+                mock.patch.object(safe_push, "risk_class", side_effect=classify), \
+                mock.patch.object(safe_push, "open_cache", side_effect=activate), \
+                mock.patch.object(safe_push, "logs_dir", return_value=self.root / "logs"), \
+                mock.patch.object(safe_push, "check_commit", side_effect=check), \
+                mock.patch.object(safe_push, "make_record", return_value={}), \
+                mock.patch.object(safe_push, "save_record"), \
+                mock.patch.object(safe_push, "summary"), \
+                contextlib.redirect_stdout(io.StringIO()), \
+                watch_processes(str(self.fake)) as refused:
+            code = safe_push.preflight_main(WORK, args)
+        self.assertEqual(code, 0)
+        self.assertEqual(events, ["classification", "sandbox", "commit checks"])
+        self.assertEqual(refused, [])
+        self.assertIn("/usr/bin/true", self.wrapped.read_text())
 
     def test_no_process_starts_outside_the_sandbox_while_the_cache_is_in_use(self):
-        # The test above reads safe_push.py alone, so it cannot see a library start a
-        # process: platform.platform() ran `uname -p` and `file -b` from the PATH, outside
+        # platform.platform() once ran `uname -p` and `file -b` from the PATH, outside
         # run() and so outside the sandbox (S1 of the review of #224). Here every process
         # started is watched, by Python's own audit events, while the key is computed,
         # the toolchain read (stand-ins for lean, lake and elan, through the real
@@ -7193,13 +7197,14 @@ class MainChecksCache(Edge):
         # imported late: platform.mac_ver() imported plistlib when the key was first
         # computed, after step 3 had run the commit's code, and Python looks for it first
         # in the harness's own directory, which that code may write (N1 of the re-review
-        # of #224). Here step 4 runs in a fresh interpreter, missed and then hit: once the
-        # sandbox is set, no process starts but through it, and no module is imported but
-        # a builtin.
+        # of #224). Here the allow-list and step 4 run in a fresh interpreter, the latter
+        # missed and then hit: once the sandbox is set, no process starts but through it,
+        # and no module is imported but a builtin.
         sha = self.check_change()
         tools, said = self.stand_in_tools()
-        seen = self.step4_watched(sha, tools)
+        seen = self.step4_watched(sha, tools, forget=("tomllib",))
         self.assertEqual((seen["seen"], seen["error"]), ([], None), seen["printed"])
+        self.assertEqual(seen["allow_count"], len(safe_push.load_allowlist(WORK, BASE)))
         cache = {run: [d for name, _, d in steps if name == "main-checks cache"]
                  for run, steps in seen["runs"].items()}
         self.assertTrue(cache["miss"][0].startswith("miss (no entry"), seen["printed"])
@@ -7220,21 +7225,6 @@ class MainChecksCache(Edge):
                 self.assertEqual(seen["seen"], [f"imported: {name}"], seen["printed"])
                 self.assertEqual(seen["error"], "PermissionError: a module imported once "
                                  f"the sandbox was set: {name}")
-
-    def test_every_import_is_at_the_top(self):
-        # A module imported in a function could be imported once the sandbox is set, and
-        # found first in the harness's own directory: so safe_push.py imports nothing
-        # but at its top, nor through importlib or __import__, which the audit event of
-        # an import does not always see.
-        tree = ast.parse(SAFE_PUSH.read_text())
-        late = [ast.unparse(node) for top in tree.body
-                if not isinstance(top, (ast.Import, ast.ImportFrom))
-                for node in ast.walk(top) if isinstance(node, (ast.Import, ast.ImportFrom))]
-        self.assertEqual(late, [])
-        names = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
-        self.assertFalse({"importlib", "__import__"} & names)
-        for name in ("plistlib", "tomllib"):
-            self.assertIn(f"\nimport {name}", SAFE_PUSH.read_text())
 
 
 class RiskPreflight(Edge):
