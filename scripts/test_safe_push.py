@@ -128,6 +128,16 @@ one commit and runs safe_push.py against that origin:
   moved to a value the lock does not give is refused by the commit's own
   check_fidelity.py; a count moved in scripts/, or in code under tests/, is never a pinned
   value; and the markers are read by origin/main's reader, never the commit's;
+- the main-checks cache of #224 (--main-checks-cache): the tree its key names is the one
+  base_copies lays down; the key moves with origin/main, either tree, the harness, the
+  toolchain, a STOICHEIA_, LEAN or LAKE variable, and the lists of checks; a miss writes
+  an entry only once origin/main's pass has finished, and a hit runs none of it, reports
+  its outcomes as recorded, notes included, and is kept apart as a miss is; a note made
+  ok, another key's entry, a step missing, extra, out of order or of an unknown outcome,
+  an entry or a directory that is a link or of the wrong mode, are each refused and the
+  pass recomputed; without the flag nothing is read or written, the directory not even
+  made; without a sandbox there is no cache; every command starts in run(); and on
+  macOS a command run there cannot write the cache, nor rename a directory above it;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -164,6 +174,7 @@ import re
 import shlex
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import tempfile
@@ -5790,6 +5801,604 @@ class AllowList(Edge):
         with self.assertRaises(safe_push.Refusal) as refused:
             safe_push.load_allowlist(WORK, broad)
         self.assertIn("a glob in path", str(refused.exception))
+
+
+# Stands in for sandbox-exec where a test wants the main-checks cache in use without
+# macOS's sandbox (CI runs these tests on Linux): it writes the command down, drops
+# "-p PROFILE", and runs the rest.
+FAKE_SANDBOX = """#!/bin/sh
+printf '%s\\n' "$*" >> @LOG@
+shift 2
+exec "$@"
+"""
+
+
+def sandbox_usable() -> str | None:
+    """Why macOS's sandbox-exec cannot be used here, or None when it can."""
+    if sys.platform != "darwin":
+        return "not macOS, so there is no sandbox-exec"
+    try:
+        r = subprocess.run(["/usr/bin/sandbox-exec", "-p", "(version 1) (allow default)",
+                            "/usr/bin/true"], capture_output=True, text=True)
+    except OSError as e:
+        return f"sandbox-exec cannot be run here ({e})"
+    if r.returncode != 0:
+        return ("sandbox-exec cannot apply a profile here, as inside another sandbox: "
+                + r.stderr.strip())
+    return None
+
+
+@dataclass
+class CheckRun:
+    refusal: str | None     # full_checks' refusal, if any
+    out: str                # what it printed
+    rep: safe_push.Report
+    ran: list[str]          # the steps run_step was asked to run, in order
+    logs: Path              # this run's logs
+
+
+class MainChecksCache(Edge):
+    """#224: --main-checks-cache keeps origin/main's pass of step 4 by the exact trees it
+    ran on, and the harness, toolchain and environment it ran with. A miss runs the pass
+    and writes an entry; a hit reports the recorded steps, notes as notes, runs none of
+    them, and keep_apart refuses on it as on a miss. Every planted fault in an entry or its
+    directory is refused, and the pass recomputed. Without the flag, or without a sandbox,
+    nothing is read or written. On macOS, a command run through run() cannot write the
+    cache, nor rename a directory above it, but can write elsewhere. No Lean: the
+    toolchain is a fixed stand-in, and the steps are stand-ins or Python checks."""
+
+    TOOLCHAIN = {"lean-toolchain": "leanprover/lean4:v4.35.0\n",
+                 "lean --version": "Lean (version 4.35.0, a stand-in)",
+                 "lake --version": "Lake version 5.0.0 (a stand-in)",
+                 "elan which lean": "/opt/a-stand-in/bin/lean"}
+    CHECKS = [("check one", ["true"]), ("check two", ["true"])]
+    NEGATIVE = [("negative: check three", ["true"])]
+    # The stand-in steps that fail with origin/main's copies, and are noted.
+    NOTES = {"check two" + safe_push.BASE_PASS, "negative: check three" + safe_push.BASE_PASS}
+
+    def setUp(self):
+        super().setUp()
+        self.root = Path(os.path.realpath(tempfile.mkdtemp(prefix="main-checks-", dir=TMP)))
+        self.dir = self.root / "main-checks"
+        self.dir.mkdir()
+        self.dir.chmod(0o700)
+        self.wrapped = self.root / "sandboxed.log"
+        self.fake = self.root / "sandbox-exec"
+        self.fake.write_text(FAKE_SANDBOX.replace("@LOG@", shlex.quote(str(self.wrapped))))
+        self.fake.chmod(0o755)
+
+    @contextlib.contextmanager
+    def active(self, cache: Path | None = None):
+        """The cache in use, as open_cache leaves it, with the stand-in for sandbox-exec,
+        origin/main's harness running, and the stand-in toolchain."""
+        with mock.patch.object(safe_push, "CACHE", cache or self.dir), \
+                mock.patch.object(safe_push, "SANDBOX", "(version 1) (allow default)"), \
+                mock.patch.object(safe_push, "SANDBOX_EXEC", str(self.fake)), \
+                mock.patch.object(safe_push, "HARNESS_BLOB",
+                                  safe_push.blob_id(SAFE_PUSH.read_bytes())), \
+                mock.patch.object(safe_push, "toolchain",
+                                  lambda repo, sha, wt: dict(self.TOOLCHAIN)):
+            yield
+
+    def stub(self, stage, name, cmd, cwd, rep, logs, index, fail="FAIL", excludes=()):
+        """run_step for the stand-in steps: the NOTES fail, the rest pass; nothing runs."""
+        out = f"the output of {name}\n"
+        log = logs / f"{index:02d}{safe_push.slug_of(name)}.log"
+        log.write_text(out)
+        if name not in self.NOTES:
+            rep.add(stage, name, "ok", "", 0.25)
+            return out
+        rep.add(stage, name, fail, f"full output in {log}\n{safe_push.tail(out)}", 0.5)
+        if fail == "FAIL":
+            raise safe_push.Refusal(f"`{name}` failed on the commit")
+        return out
+
+    def inputs(self, sha: str) -> list[tuple[str, str]]:
+        return [(st, p) for st, p in safe_push.changed_files(WORK, BASE, sha)
+                if safe_push.under(p, safe_push.CHECK_INPUTS)]
+
+    def checks(self, sha: str, checks=None, negative=None, stub=None) -> CheckRun:
+        """safe_push.full_checks on `sha` in a throwaway worktree, as step 4 runs it, with
+        CHECKS and NEGATIVE the stand-ins unless given, and run_step watched (and stood in
+        for, when `stub` is given)."""
+        rep, out, ran = safe_push.Report(), io.StringIO(), []
+        ctx = safe_push.Context(WORK, sha, BASE, 1, str(ORIGIN), None, {})
+        logs = Path(tempfile.mkdtemp(prefix="logs-", dir=self.root))
+        real = safe_push.run_step
+
+        def watched(stage, name, *args, **kwargs):
+            ran.append(name)
+            return (stub or real)(stage, name, *args, **kwargs)
+        refusal = None
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                mock.patch.object(safe_push, "CHECKS", self.CHECKS if checks is None else checks), \
+                mock.patch.object(safe_push, "NEGATIVE",
+                                  self.NEGATIVE if negative is None else negative), \
+                mock.patch.object(safe_push, "run_step", watched), \
+                contextlib.redirect_stdout(out):
+            parent = Path(tmp)
+            with safe_push.worktree(WORK, sha, parent, "check") as wt:
+                try:
+                    safe_push.full_checks(ctx, wt, parent, self.inputs(sha), rep, logs)
+                except safe_push.Refusal as e:
+                    refusal = str(e)
+        return CheckRun(refusal, out.getvalue(), rep, ran, logs)
+
+    def check_change(self, path: str = "scripts/check_links.py") -> str:
+        """A commit from BASE that changes one check, and nothing the checks judge."""
+        git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+        return self.commit(f"A comment in {path}", {path: self.text(path) + "\n# for the test\n"})
+
+    def entries(self) -> list[Path]:
+        return sorted(p for p in self.dir.iterdir() if p.suffix == ".json")
+
+    @staticmethod
+    def cache_lines(rep: safe_push.Report) -> list[str]:
+        return [s.detail for s in rep.steps if s.name == "main-checks cache"]
+
+    @staticmethod
+    def outcomes(rep: safe_push.Report) -> list[tuple[str, str]]:
+        return [(s.name, s.outcome) for s in rep.steps
+                if s.stage == "4" and s.name != "main-checks cache"]
+
+    def base_names(self, steps=None) -> list[str]:
+        return [n + safe_push.BASE_PASS for n, _ in (steps or self.CHECKS + self.NEGATIVE)]
+
+    def own_names(self, steps) -> list[str]:
+        return [n + " (the commit's checks)" for n, _ in steps]
+
+    @staticmethod
+    def put(path: Path, data: bytes, mode: int = 0o600) -> None:
+        if path.is_symlink() or path.exists():
+            path.unlink()
+        path.write_bytes(data)
+        path.chmod(mode)
+
+    def test_the_base_tree_is_the_tree_base_copies_lays_down(self):
+        # A check changed, one added, one deleted, one made executable, and one made a
+        # symbolic link: each kind of change base_copies undoes.
+        git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+        (WORK / "scripts/check_links.py").write_text(self.text("scripts/check_links.py")
+                                                     + "\n# for the test\n")
+        (WORK / "scripts/a_check_for_the_test.py").write_text("print('added')\n")
+        (WORK / "tests/a_directory_for_the_test").mkdir()
+        (WORK / "tests/a_directory_for_the_test/x.py").write_text("print('added')\n")
+        (WORK / "scripts/check_kernel.py").chmod(0o755)
+        (WORK / "review/terms.toml").unlink()
+        os.symlink("SCHEMA.md", WORK / "review/terms.toml")
+        git(WORK, "add", "-A", "--", "scripts", "tests", "review")
+        git(WORK, "rm", "-q", "--", "tests/test_screen.py")
+        sha = self.commit("Five kinds of change to the check inputs")
+        inputs = self.inputs(sha)
+        self.assertEqual({s for s, _ in inputs}, {"A", "M", "D", "T"}, inputs)
+        tree = safe_push.base_tree(WORK, BASE, sha, inputs)
+        self.assertEqual(git(WORK, "status", "--porcelain"), "", "the repository's index moved")
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp:
+            parent = Path(tmp)
+            env = dict(os.environ, GIT_INDEX_FILE=str(parent / "index"))
+            with safe_push.worktree(WORK, sha, parent, "check") as wt:
+                with safe_push.base_copies(WORK, BASE, wt, inputs):
+                    git(wt, "read-tree", "HEAD", env=env)
+                    git(wt, "add", "-A", env=env)
+                    laid = git(wt, "write-tree", env=env).strip()
+        self.assertEqual(tree, laid)
+        self.assertNotEqual(tree, git(WORK, "rev-parse", f"{sha}^{{tree}}").strip())
+        for _, path in inputs:
+            self.assertEqual(git(WORK, "ls-tree", tree, "--", path),
+                             git(WORK, "ls-tree", BASE, "--", path), path)
+
+    def test_the_key_changes_with_each_field(self):
+        sha = self.check_change()
+        other_check = self.check_change("scripts/check_kernel.py")
+        git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+        content_too = self.commit("A check, and a line of reading", {
+            "scripts/check_links.py": self.text("scripts/check_links.py") + "\n# for the test\n",
+            "docs/reading.md": self.text("docs/reading.md") + "\nA line for the test.\n"})
+        ctx = safe_push.Context(WORK, sha, BASE, 1, str(ORIGIN), None, {})
+
+        def fields(ctx=ctx, sha=sha) -> dict:
+            found, why = safe_push.main_checks_fields(ctx._replace(sha=sha), WORK,
+                                                      self.inputs(sha))
+            self.assertIsNotNone(found, why)
+            return found
+
+        def key(**kwargs) -> str:
+            return safe_push.sha256_of(fields(**kwargs))
+
+        with self.active():
+            first = key()
+            self.assertEqual(key(), first, "the same trees and run, another key")
+            with mock.patch.dict(os.environ, {"UNRELATED_FOR_THE_TEST": "1"}):
+                self.assertEqual(key(), first, "a variable the key does not name moved it")
+            # The harness's own plumbing, which no check reads, parts no runs: a hand-over
+            # (the yard's run from a worktree) and the launcher (the lane's push) share keys.
+            for name in sorted(safe_push.UNKEYED_VARIABLES):
+                with mock.patch.dict(os.environ, {name: "/a/stand-in"}):
+                    self.assertEqual(key(), first, f"{name} moved the key")
+            # Two commits with one base tree (origin/main's, both changing a check alone)
+            # differ in the tree the checks compare it with, so in the key.
+            self.assertEqual(fields(sha=other_check)["base_tree"], fields()["base_tree"])
+            moved = {
+                "origin/main": key(ctx=ctx._replace(base=git(WORK, "rev-parse",
+                                                             f"{BASE}^").strip())),
+                "the base tree": key(sha=content_too),
+                "the commit's tree": key(sha=other_check),
+            }
+            with mock.patch.object(safe_push, "HARNESS_BLOB", "0" * 40):
+                moved["the harness"] = key()
+            with mock.patch.object(safe_push, "toolchain", lambda repo, sha, wt: dict(
+                    self.TOOLCHAIN, **{"lean --version": "Lean (version 4.36.0)"})):
+                moved["the toolchain"] = key()
+            for name, value in (("STOICHEIA_FOR_THE_TEST", "1"), ("STOICHEIA_FOR_THE_TEST", "2"),
+                                ("LEAN_PATH", "/a/stand-in"), ("LAKE_HOME", "/a/stand-in")):
+                with mock.patch.dict(os.environ, {name: value}):
+                    moved[f"{name}={value}"] = key()
+            with mock.patch.object(safe_push, "CHECKS", self.CHECKS + [("check four", ["true"])]):
+                moved["CHECKS"] = key()
+            with mock.patch.object(safe_push, "NEGATIVE", self.NEGATIVE[:0]):
+                moved["NEGATIVE"] = key()
+            for name, value in moved.items():
+                self.assertNotEqual(value, first, name)
+            self.assertEqual(len(set(moved.values())), len(moved), moved)
+            # No key without origin/main's harness, or without the toolchain.
+            with mock.patch.object(safe_push, "HARNESS_BLOB", None):
+                self.assertEqual(safe_push.main_checks_fields(ctx, WORK, self.inputs(sha)),
+                                 (None, "the harness running is not origin/main's"))
+            with mock.patch.object(safe_push, "toolchain", lambda repo, sha, wt: None):
+                self.assertIsNone(safe_push.main_checks_fields(ctx, WORK, self.inputs(sha))[0])
+
+    def test_a_miss_writes_an_entry_and_a_hit_runs_nothing_of_origin_mains_pass(self):
+        sha = self.check_change()
+        with self.active():
+            miss = self.checks(sha, stub=self.stub)
+            (path,) = self.entries()
+            hit = self.checks(sha, stub=self.stub)
+        for r in (miss, hit):
+            self.assertIsNone(r.refusal, r.out)
+        key = path.stem
+        self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
+        self.assertEqual(key, safe_push.sha256_of(json.loads(path.read_bytes())["key"]))
+        (line,) = self.cache_lines(miss.rep)
+        self.assertTrue(line.startswith("miss (no entry for this key)"), line)
+        (line,) = self.cache_lines(hit.rep)
+        self.assertTrue(line.startswith(f"hit: origin/main's checks of these trees reused from "
+                                        f"entry {key[:12]}"), line)
+        # The miss ran both passes; the hit, the commit's own alone.
+        self.assertEqual(miss.ran, self.base_names(self.CHECKS) + self.own_names(self.CHECKS)
+                         + self.base_names(self.NEGATIVE) + self.own_names(self.NEGATIVE))
+        self.assertEqual(hit.ran, self.own_names(self.CHECKS) + self.own_names(self.NEGATIVE))
+        # The same outcomes, in the same order, notes included.
+        self.assertEqual(self.outcomes(hit.rep), self.outcomes(miss.rep))
+        self.assertEqual([o for n, o in self.outcomes(hit.rep) if n in self.NOTES],
+                         ["note", "note"])
+        for step in hit.rep.steps:
+            if step.name in self.base_names():
+                self.assertTrue(step.detail.startswith(
+                    f"reused from the cache, entry {key[:12]}, written "), step.detail)
+                self.assertIsNone(step.seconds)
+        noted = next(s for s in hit.rep.steps if s.name == "check two" + safe_push.BASE_PASS)
+        self.assertIn("full output in", noted.detail)
+        # Each recorded log is written among the hit's logs.
+        log = hit.logs / f"12{safe_push.slug_of('check two' + safe_push.BASE_PASS)}.log"
+        self.assertEqual(log.read_text(), "the output of check two (origin/main's checks)\n")
+        # Every command went through the stand-in for sandbox-exec (run).
+        self.assertIn("git -c core.quotePath=false worktree add", self.wrapped.read_text())
+
+    def test_keep_apart_refuses_on_a_hit_as_on_a_miss(self):
+        # The fixture of ProtectedPaths.test_stage_4_keeps_a_check_change_apart: origin/main's
+        # check_style.py refuses a page of the edition the commit changes, with the check
+        # loosened; here it runs in the negative tests' loop, so that origin/main's pass
+        # finishes and is kept before keep_apart refuses.
+        path = "scripts/check_style.py"
+        sha = self.commit("Loosen check_style.py, and break one of its rules", {
+            path: self.replaced(path, "    sys.exit(main())", "    sys.exit(0)"),
+            "mishnah/I/01.md": self.text("mishnah/I/01.md") + "\nA tacit assumption, here.\n"})
+        name, cmd = ProtectedPaths.STYLE
+        negative = [("negative: " + name, cmd)]
+        with self.active():
+            miss = self.checks(sha, checks=[], negative=negative)
+            hit = self.checks(sha, checks=[], negative=negative)
+        base = "negative: " + name + safe_push.BASE_PASS
+        for r in (miss, hit):
+            self.assertEqual(r.refusal, "a check changed together with what it checks", r.out)
+            self.assertEqual(self.guard(r.out, base), "note", r.out)
+            self.assertEqual(self.guard(r.out, "check change kept apart"), "FAIL", r.out)
+        self.assertEqual(miss.ran, [base])
+        self.assertEqual(hit.ran, [])
+        self.assertIn("hit:", self.cache_lines(hit.rep)[0])
+
+        def kept(r: CheckRun) -> str:
+            return next(s.detail for s in r.rep.steps if s.name == "check change kept apart")
+        self.assertEqual(kept(hit), kept(miss))
+        self.assertIn("mishnah/I/01.md", kept(hit))
+
+    def test_nothing_is_written_unless_origin_mains_pass_finished(self):
+        # A check change with judged content, kept apart after the checks' loop: the
+        # negative tests' loop of origin/main's pass never runs, so nothing is kept.
+        sha = self.commit("A check, and a line of the edition", {
+            "scripts/check_links.py": self.text("scripts/check_links.py") + "\n# for the test\n",
+            "mishnah/I/01.md": self.text("mishnah/I/01.md") + "\nA line for the test.\n"})
+        with self.active():
+            r = self.checks(sha, stub=self.stub)
+        self.assertEqual(r.refusal, "a check changed together with what it checks", r.out)
+        self.assertEqual(r.ran, self.base_names(self.CHECKS))
+        self.assertEqual(self.entries(), [])
+
+    def test_planted_faults_are_refused_and_the_pass_recomputed(self):
+        sha = self.check_change()
+        with self.active():
+            self.checks(self.check_change("scripts/check_kernel.py"), stub=self.stub)
+            (another,) = self.entries()
+            self.checks(sha, stub=self.stub)
+            (path,) = [p for p in self.entries() if p != another]
+        good, theirs, key = path.read_bytes(), another.read_bytes(), path.stem
+
+        def changed(data: bytes, change, digest=True) -> bytes:
+            entry = json.loads(data)
+            change(entry)
+            if digest:
+                entry["digest"] = safe_push.sha256_of(
+                    {k: v for k, v in entry.items() if k != "digest"})
+            return json.dumps(entry).encode()
+
+        def noted_made_ok(entry):
+            step = next(s for s in entry["steps"] if s["outcome"] == "note")
+            step["outcome"] = "ok"
+
+        refused = "the entry was refused: "
+        faults = {
+            "a note made ok, the digest left as it was": (
+                changed(good, noted_made_ok, digest=False),
+                refused + "its digest does not match its contents"),
+            "another key's entry, a note made ok and its digest recomputed, under this name": (
+                changed(theirs, noted_made_ok), refused + "its key fields are not this run's"),
+            "a key field written as true, equal to 1 in Python but not in JSON": (
+                changed(good, lambda e: e["key"].update(format=True)),
+                refused + "its key fields do not hash to its name"),
+            "a wrong harness blob": (
+                changed(good, lambda e: e["key"].update(harness_blob="0" * 40)),
+                refused + "its key fields are not this run's"),
+            "a step missing": (changed(good, lambda e: e["steps"].pop(0)),
+                               refused + "its steps are not origin/main's pass"),
+            "a step extra": (changed(good, lambda e: e["steps"].append(dict(e["steps"][-1]))),
+                             refused + "its steps are not origin/main's pass"),
+            "the steps out of order": (changed(good, lambda e: e["steps"].reverse()),
+                                       refused + "its steps are not origin/main's pass"),
+            "an unknown outcome": (changed(good, lambda e: e["steps"][0].update(outcome="pass")),
+                                   refused + "its step check one (origin/main's checks) is not "
+                                   "of this format (outcome 'pass')"),
+            "not JSON": (good[:-1], refused + "it is not an entry of this format"),
+        }
+        elsewhere = self.root / "elsewhere.json"
+        self.put(elsewhere, good)
+        cases = [(name, lambda data=data: self.put(path, data), why)
+                 for name, (data, why) in faults.items()]
+        cases += [
+            ("the entry a symbolic link", lambda: (path.unlink(), path.symlink_to(elsewhere)),
+             "the entry is a symbolic link"),
+            ("the entry of mode 0644", lambda: self.put(path, good, 0o644),
+             "the entry has mode 0644, not 0600"),
+        ]
+        for name, plant, why in cases:
+            with self.subTest(name), self.active():
+                plant()
+                r = self.checks(sha, stub=self.stub)
+                self.assertIsNone(r.refusal, r.out)
+                (line,) = self.cache_lines(r.rep)
+                self.assertTrue(line.startswith(f"miss ({why}"), f"{line}\n{why}")
+                self.assertEqual(r.ran[:2], self.base_names(self.CHECKS), "not recomputed")
+                # Recomputed and written afresh, in place of the bad entry: a hit again.
+                self.assertFalse(path.is_symlink())
+                self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
+                fresh = json.loads(path.read_bytes())
+                with mock.patch.object(safe_push, "CHECKS", self.CHECKS), \
+                        mock.patch.object(safe_push, "NEGATIVE", self.NEGATIVE):
+                    self.assertIsNone(safe_push.entry_problem(fresh, key, fresh["key"]))
+                self.assertEqual([(s["name"], s["outcome"]) for s in fresh["steps"]],
+                                 [(s["name"], s["outcome"]) for s in json.loads(good)["steps"]])
+        self.assertEqual(elsewhere.read_bytes(), good, "the link's target was written")
+        # The entry's harness is checked by itself too, beside the key.
+        with self.active(), mock.patch.object(safe_push, "HARNESS_BLOB", "0" * 40):
+            entry = json.loads(good)
+            self.assertEqual(safe_push.entry_problem(entry, key, entry["key"]),
+                             "it was written by another harness")
+        # The directory a symbolic link, or of mode 0755: refused, recomputed, nothing written.
+        link = self.root / "a-link"
+        link.symlink_to(self.dir)
+        for name, cache, before, after, why in (
+                ("the directory a symbolic link", link, lambda: None, lambda: None,
+                 f"{link} is a symbolic link"),
+                ("the directory of mode 0755", self.dir, lambda: self.dir.chmod(0o755),
+                 lambda: self.dir.chmod(0o700), f"{self.dir} has mode 0755, not 0700")):
+            with self.subTest(name), self.active(cache):
+                self.put(path, good)
+                before()
+                try:
+                    r = self.checks(sha, stub=self.stub)
+                finally:
+                    after()
+                lines = self.cache_lines(r.rep)
+                self.assertTrue(lines[0].startswith(f"miss ({why}"), lines)
+                self.assertTrue(lines[1].startswith(f"entry {key[:12]} not written: {why}"), lines)
+                self.assertEqual(r.ran[:2], self.base_names(self.CHECKS), "not recomputed")
+                self.assertEqual(path.read_bytes(), good)
+
+    def test_without_the_flag_nothing_is_read_or_written(self):
+        # In a pre-flight: the directory is not even made.
+        self.good_commit()
+        root = self.root / "unflagged"
+        env = clean_env()
+        env["STOICHEIA_PUSH_LOG"] = str(root / "pushes.log")
+        r = self.safe_push("--dry-run", env=env)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertFalse((root / "main-checks").exists(), out)
+        self.assertNotIn("main-checks cache", out)
+        # In step 4: origin/main's pass runs, and the cache is neither read nor written.
+        sha = self.check_change()
+        with mock.patch.object(safe_push, "read_entry", side_effect=AssertionError("read")), \
+                mock.patch.object(safe_push, "write_entry", side_effect=AssertionError("written")):
+            r = self.checks(sha, stub=self.stub)
+        self.assertIsNone(r.refusal, r.out)
+        self.assertEqual(r.ran[:2], self.base_names(self.CHECKS))
+        self.assertEqual(self.cache_lines(r.rep), [])
+
+    def test_the_flag_in_a_pre_flight(self):
+        # The directory is made, mode 0700; with macOS's sandbox the cache is in use, and
+        # every command from there on (the guards' check_fidelity.py and render.py among
+        # them) runs under it; without it, the run says why and goes on.
+        self.good_commit()
+        root = self.root / "flagged"
+        env = clean_env()
+        env["STOICHEIA_PUSH_LOG"] = str(root / "pushes.log")
+        r = self.safe_push("--dry-run", "--main-checks-cache", env=env)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        cache = root / "main-checks"
+        self.assertTrue(cache.is_dir() and not cache.is_symlink(), out)
+        self.assertEqual(stat.S_IMODE(cache.stat().st_mode), 0o700)
+        self.assertEqual(list(cache.iterdir()), [], "the probe left a file")
+        self.assertEqual(self.step(out, "main-checks cache"),
+                         "ok" if sandbox_usable() is None else "note", out)
+        self.assertEqual(self.step(out, "review records"), "ok", out)
+        self.assertEqual(self.step(out, "generated pages"), "ok", out)
+
+    def test_open_cache_refuses_a_directory_it_may_not_use(self):
+        real = self.root / "real"
+        real.mkdir(mode=0o700)
+        cases = {}
+        (self.root / "a").mkdir()
+        (self.root / "a" / "main-checks").symlink_to(real)
+        cases["a symbolic link"] = (self.root / "a", "is a symbolic link")
+        (self.root / "b" / "main-checks").mkdir(parents=True)
+        (self.root / "b" / "main-checks").chmod(0o755)
+        cases["mode 0755"] = (self.root / "b", "has mode 0755, not 0700")
+        (self.root / "c").mkdir()
+        (self.root / "c" / "main-checks").write_text("")
+        cases["a file"] = (self.root / "c", "is not a directory")
+        (self.root / "d-real").mkdir()
+        (self.root / "d").symlink_to(self.root / "d-real")
+        cases["reached through a link"] = (self.root / "d", "is reached through a symbolic link")
+        (self.root / 'e"').mkdir()
+        cases["a quotation mark"] = (self.root / 'e"', "holds a quotation mark")
+        for name, (where, why) in cases.items():
+            with self.subTest(name), \
+                    mock.patch.dict(os.environ, {"STOICHEIA_PUSH_LOG": str(where / "pushes.log")}), \
+                    mock.patch.object(safe_push, "CACHE", None), \
+                    mock.patch.object(safe_push, "SANDBOX", None), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                rep = safe_push.Report()
+                safe_push.open_cache(rep)
+                self.assertIsNone(safe_push.CACHE)
+                self.assertIsNone(safe_push.SANDBOX)
+                (step,) = rep.steps
+                self.assertEqual((step.stage, step.name, step.outcome),
+                                 ("1", "main-checks cache", "note"))
+                self.assertIn(why, step.detail)
+                self.assertTrue(step.detail.startswith("not used this run: "), step.detail)
+
+    def test_without_a_sandbox_there_is_no_cache(self):
+        missing = str(self.root / "no-sandbox-exec")
+        here = "/no-sandbox-exec is not there" if sys.platform == "darwin" else "not macOS"
+        for name, patch, why in (
+                ("sandbox-exec missing", mock.patch.object(safe_push, "SANDBOX_EXEC", missing),
+                 here),
+                ("not macOS", mock.patch.object(safe_push.sys, "platform", "linux"),
+                 "this is not macOS")):
+            with self.subTest(name), patch, \
+                    mock.patch.dict(os.environ, {"STOICHEIA_PUSH_LOG":
+                                                 str(self.root / "probe" / "pushes.log")}), \
+                    mock.patch.object(safe_push, "CACHE", None), \
+                    mock.patch.object(safe_push, "SANDBOX", None), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                rep = safe_push.Report()
+                safe_push.open_cache(rep)
+                self.assertIsNone(safe_push.CACHE)
+                self.assertIsNone(safe_push.SANDBOX)
+                (step,) = rep.steps
+                self.assertEqual(step.outcome, "note")
+                self.assertIn(why, step.detail)
+                self.assertEqual(safe_push.run(["git", "--version"], WORK).args[0], "git")
+        # And the pre-flight's step 4 is as without the flag.
+        sha = self.check_change()
+        r = self.checks(sha, stub=self.stub)
+        self.assertIsNone(r.refusal, r.out)
+        self.assertEqual(r.ran[:2], self.base_names(self.CHECKS))
+        self.assertEqual(self.cache_lines(r.rep), [])
+        self.assertEqual(self.entries(), [])
+
+    def test_the_sandbox_keeps_every_command_from_the_cache(self):
+        why = sandbox_usable()
+        if why:
+            self.skipTest(f"macOS's sandbox is needed: {why}")
+        log = self.root / "sandboxed" / "pushes.log"
+        with mock.patch.dict(os.environ, {"STOICHEIA_PUSH_LOG": str(log)}), \
+                mock.patch.object(safe_push, "CACHE", None), \
+                mock.patch.object(safe_push, "SANDBOX", None), \
+                contextlib.redirect_stdout(io.StringIO()):
+            rep = safe_push.Report()
+            safe_push.open_cache(rep)
+            cache = log.parent / "main-checks"
+            self.assertEqual(safe_push.CACHE, cache, rep.steps)
+            self.assertEqual(rep.steps[-1].outcome, "ok")
+            write = ["/bin/sh", "-c", 'echo x > "$1"', "sh"]
+            r = safe_push.run([*write, str(cache / "planted.json")], self.root)
+            self.assertNotEqual(r.returncode, 0)
+            self.assertFalse(os.path.lexists(cache / "planted.json"))
+            r = safe_push.run([*write, str(self.root / "elsewhere.txt")], self.root)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertEqual((self.root / "elsewhere.txt").read_text(), "x\n")
+            # Nor may a command rename a directory above the cache, which would carry the
+            # cache out from under the rule, to be written and put back.
+            for above in (log.parent, log.parent.parent):
+                r = safe_push.run(["/bin/mv", str(above), str(self.root / "moved")], self.root)
+                self.assertNotEqual(r.returncode, 0, above)
+            self.assertTrue(cache.is_dir())
+            self.assertEqual(safe_push.git(WORK, "rev-parse", "HEAD").strip(),
+                             git(WORK, "rev-parse", "HEAD").strip())
+
+    def test_the_flag_is_the_pre_flights_alone(self):
+        r = subprocess.run([sys.executable, str(SAFE_PUSH), "--merge", "1", "--main-checks-cache"],
+                           cwd=WORK, env=clean_env(), capture_output=True, text=True)
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertIn("--merge takes only --dry-run", r.stderr)
+        r = subprocess.run([sys.executable, str(SAFE_PUSH), "--help"], cwd=WORK,
+                           env=clean_env(), capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        text = " ".join(r.stdout.split())
+        self.assertIn("--main-checks-cache the pre-flight only", text)
+        self.assertIn("Only the yard's run and the lane's push pass it; a ship's own dry run "
+                      "does not", text)
+
+    def test_every_command_starts_in_run(self):
+        # The sandbox wraps commands in run() alone, so every command must start there; the
+        # hand-over's os.execve, in harness(), comes before open_cache.
+        tree = ast.parse(SAFE_PUSH.read_text())
+        parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
+        starters = {("subprocess", n) for n in ("run", "Popen", "call", "check_call",
+                                                "check_output", "getoutput",
+                                                "getstatusoutput")}
+        starters |= {("os", n) for n in ("system", "popen", "fork", "forkpty", "posix_spawn",
+                                         "posix_spawnp", "execv", "execve", "execvp",
+                                         "execvpe", "execl", "execle", "execlp", "execlpe",
+                                         "spawnv", "spawnve", "spawnvp", "spawnvpe")}
+        found = set()
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Import, ast.ImportFrom)):
+                if isinstance(node, ast.ImportFrom):
+                    self.assertNotIn(node.module, ("subprocess", "os"), ast.unparse(node))
+                for alias in node.names:
+                    self.assertIsNone(alias.asname if alias.name in ("subprocess", "os")
+                                      else None, ast.unparse(node))
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
+                    and isinstance(node.func.value, ast.Name) \
+                    and (node.func.value.id, node.func.attr) in starters:
+                where = node
+                while where in parents and not isinstance(where, ast.FunctionDef):
+                    where = parents[where]
+                found.add((getattr(where, "name", "<module>"), node.func.value.id,
+                           node.func.attr))
+        self.assertEqual(found, {("run", "subprocess", "run"), ("harness", "os", "execve")})
 
 
 @unittest.skipUnless(os.environ.get("STOICHEIA_SLOW_TESTS") == "1",

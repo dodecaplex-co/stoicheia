@@ -867,6 +867,41 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       what the list lacks waits for the list to grow, in a pull request of its own. Check
       code changed with judged content is kept apart, pinned values or not. The guards'
       two checks in step 3 run the same way.
+
+      *origin/main's pass, cached* (#224). With `--main-checks-cache`, which the runs that
+      land a train pass (the yard's run and the lane's push) and a ship's own dry run does
+      not, origin/main's pass of step 4, both its loops, the checks and the negative
+      tests, is kept in `~/.cache/stoicheia/main-checks/` and reused when the same trees
+      come again: one train is pre-flighted several times at one head against one main.
+      Step 3's pass and the commit's own pass run every time; on a hit, the commit's own
+      pass builds what the skipped pass would have built. An entry's name is the SHA-256 of
+      its key, which the harness computes and never reads from the tree: origin/main's
+      commit; the tree the pass runs on (the commit's, with origin/main's copies of the
+      check inputs it changes), and the commit's own tree, which `git status` and
+      `git ls-files` compare it with; the harness's blob; the toolchain
+      (`lean-toolchain`, `lean --version`, `lake --version`, the `lean` elan resolves);
+      the Python, the platform, Git, the checks' `PATH`, and the variables whose names
+      begin `STOICHEIA_`, `LEAN` or `LAKE`, but the harness's own, which no check reads
+      (`STOICHEIA_HARNESS`, `STOICHEIA_PUSH_LOG`, `STOICHEIA_SAFE_PUSH_LAUNCHER`,
+      `STOICHEIA_PYTHON`); and the lists of checks. An entry is used
+      only when it is a regular file of the user's, mode 0600, its key is this run's and
+      hashes to its name, its digest matches it, its harness is the one running, and its
+      steps are that pass's, each once and in order, each "ok" or "note"; otherwise the
+      pass runs again, the run says why, and the entry is written afresh. A hit is
+      reported, for the pull request's record, and its steps carry their recorded
+      outcomes, notes as notes, so `keep_apart` judges them as it would have. The
+      directory must be a real one, owned by the user, mode 0700, reached through no
+      symbolic link; and while the cache is in use every command the pre-flight starts
+      runs under macOS's `sandbox-exec`, with a profile under which no command may write
+      the directory, nor rename or change a directory above it (which would carry the
+      cache away).
+      Where the sandbox cannot be had (not macOS, no `sandbox-exec`, or already inside a
+      sandbox), there is no cache that run, and the pre-flight is otherwise unchanged.
+      The digest is no signature: the sandbox protects the cache from train code the
+      pre-flight runs, not from code run as the same user outside it (a contributor's own
+      run of a train's tests, say, or a job such code leaves with the system's services
+      to run later), the same exposure the `--merge` step-4 record already has; a cache
+      owned by another Unix user, which would close it, is for the owner to decide.
    5. *The push and the pull request.* First the pull request is settled: our open one
       for the branch (a fork's pull request of the same name is never touched), or a new
       one. Its body is `--body-file`, or is generated from the
@@ -999,21 +1034,21 @@ and closes the fork's with a link to it.
 The summary is printed and appended to `~/.cache/stoicheia/pushes.log`, outside the
 repository, with each step's full output beside it in `logs/`, and the pre-flight's record
 in `preflight/`, which `--merge` reads; origin/main's harness, when it runs in place of
-another copy, is written to `harness/`, named by its blobs. `sh scripts/install_hooks.sh`
-installs the launcher and the pre-push hook: the hook refuses every push to main, scans a
-push to any other branch (its name included) with origin/main's copy of the secret scan
-(`safe_push.py --scan-push`), whichever remote it goes to (another remote's main is never
-run, and without origin/main's copy the push is refused), and refuses to push or delete a
-tag. With the owner's OK for
-a tag, it is pushed by name, `STOICHEIA_TAG_PUSH=<tag> git push origin refs/tags/<tag>`,
-and the hook still scans the commits it points to and an annotated tag's message.
-`python3 -m pip install -r scripts/requirements-test_safe_push.txt`, followed in the same
-Python environment by `python3 scripts/test_safe_push.py`, installs the pinned YAML parser
-and plants a bad commit for each guard, gate and edge case on a throwaway clone, with a
-stand-in for gh, and checks that each is refused and a good one proposed and merged. Its
-cases include unfinished work left unwritten, closed or unlabelled issues, open labelled
-issues, the release held by an open blocker or an unreadable reply, and an ordinary pull
-request merging without reading the blockers;
-`STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and all. CI's
-`safe-push-tests` job runs the tests, without that run, on each pull request that changes
-one of the paths section 8 lists.
+another copy, is written to `harness/`, named by its blobs; and, with
+`--main-checks-cache`, origin/main's pass of step 4 in `main-checks/`. `sh
+scripts/install_hooks.sh` installs the launcher and the pre-push hook: the hook refuses
+every push to main, scans a push to any other branch (its name included) with
+origin/main's copy of the secret scan (`safe_push.py --scan-push`), whichever remote it
+goes to (another remote's main is never run, and without origin/main's copy the push is
+refused), and refuses to push or delete a tag. With the owner's OK for a tag, it is pushed
+by name, `STOICHEIA_TAG_PUSH=<tag> git push origin refs/tags/<tag>`, and the hook still
+scans the commits it points to and an annotated tag's message. `python3 -m pip install -r
+scripts/requirements-test_safe_push.txt`, followed in the same Python environment by
+`python3 scripts/test_safe_push.py`, installs the pinned YAML parser and plants a bad
+commit for each guard, gate and edge case on a throwaway clone, with a stand-in for gh,
+and checks that each is refused and a good one proposed and merged. Its cases include
+unfinished work left unwritten, closed or unlabelled issues, open labelled issues, the
+release held by an open blocker or an unreadable reply, and an ordinary pull request
+merging without reading the blockers; `STOICHEIA_SLOW_TESTS=1` adds one run of the full
+checks, Lean and all. CI's `safe-push-tests` job runs the tests, without that run, on each
+pull request that changes one of the paths section 8 lists.

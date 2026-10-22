@@ -2,9 +2,9 @@
 """The pre-flight of a pull request, and its merge: the way work reaches main.
 
     git safe-push --branch <name> [--label L]... [--title T] [--body-file F] [--ready]
-                  [--commit <sha>] [--dry-run]
+                  [--commit <sha>] [--dry-run] [--main-checks-cache]
     git safe-push --merge <pr-number> [--dry-run]
-    git safe-push --dry-run [--commit <sha>]                      # the checks alone
+    git safe-push --dry-run [--commit <sha>] [--main-checks-cache]  # the checks alone
 
 `git safe-push` is the launcher scripts/install_hooks.sh installs outside the tracked
 tree (scripts/hooks/safe-push): it runs origin/main's copy of this file, whatever the
@@ -100,7 +100,11 @@ order, and the first that fails stops it with a message saying why:
    the check inputs that are not code (COUNTED_PROSE) only while nothing but the values
    between its count markers changes), which move with the content they pin. A crash of
    origin/main's render.py, its check of docs/program.toml among them, is a verdict.
-   Step 3's two checks run the same way.
+   Step 3's two checks run the same way. With --main-checks-cache, origin/main's pass
+   here (both its loops) is reused from ~/.cache/stoicheia/main-checks/ when an earlier
+   run checked the same trees with the same harness, toolchain and environment
+   (main_checks_fields), and every command the run starts runs under sandbox-exec, which
+   may not write that directory (open_cache); without the sandbox, there is no cache.
 5. The pull request settled first: our open one for the branch (a fork's of the same
    name is never touched), or a new one; its body, --body-file or generated from
    .github/pull_request_template.md (the commits, the statements, the review records
@@ -182,10 +186,13 @@ import html
 import json
 import math
 import os
+import platform
 import posixpath
 import re
+import secrets
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import tempfile
@@ -416,6 +423,15 @@ ARGV: list[str] = []      # this run's arguments, for origin/main's harness to r
 HARNESS = "this copy of `scripts/safe_push.py`"   # which harness ran, for the record
 HARNESS_BLOB: str | None = None     # its blob, when it is origin/main's
 
+# The cache of origin/main's pass of step 4 (--main-checks-cache; open_cache, MainChecks).
+# CACHE is its directory while this run uses it, and SANDBOX the sandbox-exec profile that
+# every command then runs under (run), which may not write it. Both stay None without the
+# flag, or when the directory or the sandbox cannot be had.
+MAIN_CHECKS_FORMAT = 1
+SANDBOX_EXEC = "/usr/bin/sandbox-exec"
+CACHE: Path | None = None
+SANDBOX: str | None = None
+
 
 class Refusal(Exception):
     """A step failed: nothing is pushed or merged (or, after it, nothing more is done)."""
@@ -429,8 +445,15 @@ class NothingToPush(Exception):
 # Running commands
 
 
-def run(cmd, cwd, *, env=None, input=None, binary=False) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, cwd=cwd, env=env, input=input, capture_output=True,
+def run(cmd, cwd, *, env=None, input=None, binary=False,
+        capture=True) -> subprocess.CompletedProcess:
+    """Every command the harness starts starts here. While the main-checks cache is in
+    use (open_cache), each runs under sandbox-exec with SANDBOX, a profile that may not
+    write the cache, so that nothing a commit brings can write it: git, the guards'
+    check_fidelity.py and render.py, every step of the full checks, gh."""
+    if SANDBOX is not None:
+        cmd = [SANDBOX_EXEC, "-p", SANDBOX, *cmd]
+    return subprocess.run(cmd, cwd=cwd, env=env, input=input, capture_output=capture,
                           text=not binary)
 
 
@@ -2715,7 +2738,9 @@ def worktree(repo, sha, parent: Path, name: str):
 
 
 def run_step(stage, name, cmd, cwd: Path, rep: Report, logs: Path, index: int,
-             fail="FAIL", excludes=()) -> None:
+             fail="FAIL", excludes=()) -> str:
+    """One step of the full checks, timed and logged; its output, which the main-checks
+    cache keeps for origin/main's pass."""
     t = time.time()
     log = logs / f"{index:02d}{slug_of(name)}.log"
     if cmd is None:     # the generated pages are current
@@ -2728,10 +2753,11 @@ def run_step(stage, name, cmd, cwd: Path, rep: Report, logs: Path, index: int,
     seconds = time.time() - t
     if ok:
         rep.add(stage, name, "ok", "", seconds)
-        return
+        return out
     rep.add(stage, name, fail, f"full output in {log}\n{tail(out)}", seconds)
     if fail == "FAIL":
         raise Refusal(f"`{name}` failed on the commit")
+    return out
 
 
 def copy_build(src: Path, dst: Path) -> None:
@@ -2749,20 +2775,451 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path) ->
         if label == BASE_PASS and keep_apart(ctx.repo, ctx.base, ctx.sha, rep, "4"):
             raise Refusal("a check changed together with what it checks")
 
+    # With --main-checks-cache, origin/main's pass is taken from the cache on a hit, and
+    # kept for it on a miss; keep_apart then reads its steps as it reads them run.
+    cache = main_checks(ctx, wt, inputs, rep) if CACHE is not None else None
+
+    def checks(steps, where: Path, label, fail, excludes, first: int) -> None:
+        if label == BASE_PASS and cache is not None and cache.hit:
+            cache.replay(steps, first, rep, logs)
+            return
+        for i, (name, cmd) in enumerate(steps, 1):
+            out = run_step("4", name + label, cmd, where, rep, logs, first + i, fail, excludes)
+            if label == BASE_PASS and cache is not None:
+                cache.collect(rep, out)
+        if label == BASE_PASS and cache is not None:
+            cache.save(rep)
+
     # A refusal inside origin/main's pass leaves passes() at its yield: closing it puts
     # the worktree back before the worktree is removed.
     with contextlib.closing(passes(ctx.repo, ctx.base, wt, inputs)) as each:
         for label, fail, excludes in each:
-            for i, (name, cmd) in enumerate(CHECKS, 1):
-                run_step("4", name + label, cmd, wt, rep, logs, 10 + i, fail, excludes)
+            checks(CHECKS, wt, label, fail, excludes, 10)
             kept_apart(label)
     with worktree(ctx.repo, ctx.sha, parent, "negative") as neg:
         copy_build(wt, neg)
         with contextlib.closing(passes(ctx.repo, ctx.base, neg, inputs)) as each:
             for label, fail, excludes in each:
-                for i, (name, cmd) in enumerate(NEGATIVE, 1):
-                    run_step("4", name + label, cmd, neg, rep, logs, 30 + i, fail, excludes)
+                checks(NEGATIVE, neg, label, fail, excludes, 30)
                 kept_apart(label)
+
+
+# --------------------------------------------------------------------------------------
+# Step 4's main-checks cache (--main-checks-cache): origin/main's pass, reused for the same
+# trees. Its directory is beside the log (~/.cache/stoicheia/main-checks/), outside every
+# worktree; each entry is <key>.json, written by the harness alone, while every command the
+# run starts runs under a sandbox that may not write the directory (open_cache, run).
+
+
+def canonical(value) -> bytes:
+    """The JSON a key and a digest are taken of: its keys sorted, no spaces, ASCII."""
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True,
+                      allow_nan=False).encode()
+
+
+def sha256_of(value) -> str:
+    return hashlib.sha256(canonical(value)).hexdigest()
+
+
+def dir_problem(path: Path) -> str | None:
+    """Why the cache's directory may not be used, or None: it is a directory, no symbolic
+    link and reached through none (its real path is its path), owned by this user, and of
+    mode 0700 exactly."""
+    try:
+        st = os.lstat(path)
+    except OSError as e:
+        return f"{path} cannot be read ({e.strerror or e})"
+    if stat.S_ISLNK(st.st_mode):
+        return f"{path} is a symbolic link"
+    if not stat.S_ISDIR(st.st_mode):
+        return f"{path} is not a directory"
+    if os.path.realpath(path) != str(path):
+        return (f"{path} is reached through a symbolic link (its real path is "
+                f"{os.path.realpath(path)})")
+    if st.st_uid != os.getuid():
+        return f"{path} is owned by another user"
+    if stat.S_IMODE(st.st_mode) != 0o700:
+        return f"{path} has mode {stat.S_IMODE(st.st_mode):04o}, not 0700 (chmod 700 it)"
+    return None
+
+
+def sandbox_profile(cache: Path) -> str | None:
+    """The profile every command runs under while the cache is in use: anything but a
+    write to the cache's directory or within it, or to a directory above it, since a
+    rename of one would carry the cache out from under the rule, to be written and put
+    back. None when the path holds what the profile's quoted strings could not."""
+    path = str(cache)
+    if '"' in path or "\\" in path or not path.isprintable():
+        return None
+    rules = [f'(subpath "{path}")'] + [f'(literal "{p}")' for p in map(str, cache.parents)
+                                      if p != "/"]
+    return f"(version 1) (allow default) (deny file-write* {' '.join(rules)})"
+
+
+def sandbox_problem(profile: str, cache: Path) -> str | None:
+    """Why the sandbox cannot be had, or None: sandbox-exec runs a command under the
+    profile, and stops a write to the cache, leaving no file. It runs before SANDBOX is
+    set, so run() adds no sandbox of its own."""
+    if sys.platform != "darwin":
+        return "the sandbox is macOS's sandbox-exec, and this is not macOS"
+    if not (os.path.isfile(SANDBOX_EXEC) and os.access(SANDBOX_EXEC, os.X_OK)):
+        return f"{SANDBOX_EXEC} is not there"
+    probe = cache / f".probe-{secrets.token_hex(8)}"
+    try:
+        r = run([SANDBOX_EXEC, "-p", profile, "/usr/bin/true"], cache)
+        if r.returncode != 0:
+            said = (r.stderr.strip().splitlines() or ["no message"])[-1]
+            return ("sandbox-exec cannot run a command under the profile, as when it runs "
+                    f"inside another sandbox ({said})")
+        r = run([SANDBOX_EXEC, "-p", profile, "/bin/sh", "-c", 'echo x > "$1"', "sh",
+                 str(probe)], cache)
+    except OSError as e:
+        return f"sandbox-exec could not be run ({e.strerror or e})"
+    left = os.path.lexists(probe)
+    if left:
+        with contextlib.suppress(OSError):
+            os.unlink(probe)
+    if r.returncode == 0 or left:
+        return "sandbox-exec did not stop a write to the cache"
+    return None
+
+
+def open_cache(rep: Report) -> None:
+    """--main-checks-cache, before any check runs: the cache's directory, beside the log
+    (made here, mode 0700, when it is missing), and the sandbox that keeps every command
+    this run starts from writing it (run). Without either, the run goes on as it would
+    without the flag, and says why."""
+    global CACHE, SANDBOX
+    path = Path(os.path.abspath(log_path().parent / "main-checks"))
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if not os.path.lexists(path):
+            os.mkdir(path, 0o700)
+            os.chmod(path, 0o700)       # whatever the umask took away
+        why = dir_problem(path)
+    except OSError as e:
+        why = f"{path} could not be made ({e.strerror or e})"
+    profile = None
+    if why is None:
+        profile = sandbox_profile(path)
+        why = sandbox_problem(profile, path) if profile else (
+            f"{path} holds a quotation mark, a backslash or an unprintable character, which "
+            "the sandbox's profile cannot hold")
+    if why:
+        rep.add("1", "main-checks cache", "note", f"not used this run: {why}; origin/main's "
+                "checks run in full, as without --main-checks-cache")
+        return
+    CACHE, SANDBOX = path, profile
+    rep.add("1", "main-checks cache", "ok", f"{path}: from here on, every command this run "
+            "starts runs under sandbox-exec, which may not write it")
+
+
+def base_tree(repo, base, sha, changes: list[tuple[str, str]]) -> str:
+    """The tree base_copies lays down in the worktree, made in a temporary index: the
+    commit's, with origin/main's entry for each check input the commit changes, and those
+    it adds taken out. Neither the worktree nor the repository's own index is touched."""
+    with tempfile.TemporaryDirectory(prefix="stoicheia-index-") as tmp:
+        env = dict(os.environ, GIT_INDEX_FILE=str(Path(tmp) / "index"))
+
+        def index(*args, input=None) -> str:
+            r = run(["git", *args], repo, env=env, input=input)
+            if r.returncode != 0:
+                raise Refusal(f"`git {' '.join(args)}` failed: {r.stderr.strip()}")
+            return r.stdout
+
+        index("read-tree", sha)
+        removed, restored = [], []
+        for status, path in changes:
+            entry = "" if status == "A" else \
+                git(repo, "ls-tree", "-z", base, "--", path).split("\0")[0]
+            if entry:
+                restored.append(entry)      # "<mode> <type> <oid>\t<path>", as ls-tree gives it
+            else:
+                removed.append(path)
+        if removed:
+            index("update-index", "-z", "--force-remove", "--stdin",
+                  input="".join(p + "\0" for p in removed))
+        if restored:
+            index("update-index", "-z", "--index-info",
+                  input="".join(e + "\0" for e in restored))
+        return index("write-tree").strip()
+
+
+def toolchain(repo, sha, wt: Path) -> dict | None:
+    """The Lean the checks run with: the tree's lean-toolchain, `lean --version` and
+    `lake --version` as run in the worktree, and the real path of the lean that elan
+    resolves, when elan is there; None when any of them cannot be read."""
+    env = tool_env()
+    found: dict = {"lean-toolchain": show(repo, sha, "lean-toolchain")}
+    try:
+        for tool in ("lean", "lake"):
+            r = run([tool, "--version"], wt, env=env)
+            if r.returncode != 0 or not r.stdout.strip():
+                return None
+            found[f"{tool} --version"] = r.stdout.strip()
+        found["elan which lean"] = None
+        elan = shutil.which("elan", path=env["PATH"])
+        if elan:
+            r = run([elan, "which", "lean"], wt, env=env)
+            if r.returncode != 0 or not r.stdout.strip():
+                return None
+            found["elan which lean"] = os.path.realpath(r.stdout.strip())
+    except OSError:
+        return None
+    return found
+
+
+KEYED_VARIABLES = ("STOICHEIA_", "LEAN", "LAKE")
+# The harness's own plumbing, which no check reads: which copy runs (STOICHEIA_HARNESS,
+# set on a hand-over and not by the launcher), where the log is (STOICHEIA_PUSH_LOG, which
+# places the cache itself), the launcher's name for itself, and the interpreter it picks
+# (STOICHEIA_PYTHON, whose real path is keyed as "executable"). Keyed, they would part
+# the yard's run from the lane's push for nothing.
+UNKEYED_VARIABLES = frozenset({"STOICHEIA_HARNESS", "STOICHEIA_PUSH_LOG",
+                               "STOICHEIA_SAFE_PUSH_LAUNCHER", "STOICHEIA_PYTHON"})
+
+
+def environment(repo) -> dict:
+    """What else the checks' outcomes could turn on: the Python, the platform, Git, the
+    PATH the checks run with, and each variable whose name begins STOICHEIA_, LEAN or
+    LAKE, with its value, but the harness's own (UNKEYED_VARIABLES)."""
+    return {
+        "python": sys.version,
+        "executable": os.path.realpath(sys.executable),
+        "platform": platform.platform(),
+        "git --version": git(repo, "--version").strip(),
+        "PATH": tool_env()["PATH"],
+        "variables": sorted([name, value] for name, value in os.environ.items()
+                            if name.startswith(KEYED_VARIABLES)
+                            and name not in UNKEYED_VARIABLES),
+    }
+
+
+def main_checks_fields(ctx, wt: Path, inputs) -> tuple[dict | None, str]:
+    """The fields of the key of origin/main's pass on this commit, computed by the harness
+    and never read from the tree as code; or None, and why there is no key."""
+    if HARNESS_BLOB is None:
+        return None, "the harness running is not origin/main's"
+    lean = toolchain(ctx.repo, ctx.sha, wt)
+    if lean is None:
+        return None, ("the toolchain could not be read (`lean --version`, `lake --version` "
+                      "or `elan which lean` failed)")
+    try:
+        fields = {
+            "format": MAIN_CHECKS_FORMAT,
+            "main": ctx.base,
+            "base_tree": base_tree(ctx.repo, ctx.base, ctx.sha, inputs),
+            # The checks compare the tree they run on with the commit's own (git status,
+            # git ls-files), so two commits with one base tree may still differ there.
+            "commit_tree": git(ctx.repo, "rev-parse", f"{ctx.sha}^{{tree}}").strip(),
+            "harness_blob": HARNESS_BLOB,
+            "toolchain": lean,
+            "environment": environment(ctx.repo),
+            "checks": [[name, cmd] for name, cmd in CHECKS],
+            "negative": [[name, cmd] for name, cmd in NEGATIVE],
+        }
+    except Refusal as e:
+        return None, f"the trees could not be read ({e})"
+    return json.loads(canonical(fields)), ""
+
+
+ENTRY_FIELDS = frozenset({"key", "written", "steps", "digest"})
+STEP_FIELDS = frozenset({"name", "outcome", "detail", "seconds", "log"})
+
+
+def base_pass_names() -> list[str]:
+    """origin/main's pass of step 4, step by step: CHECKS, then NEGATIVE."""
+    return [name + BASE_PASS for name, _ in [*CHECKS, *NEGATIVE]]
+
+
+def entry_problem(entry, key: str, fields: dict) -> str | None:
+    """Why an entry read for `key` may not stand in for origin/main's pass, or None. Its
+    key fields must be this run's, exactly, and hash to its name; its digest must match the
+    rest of it; its harness must be this one; and its steps must be origin/main's pass,
+    each once, in order, each "ok" or "note". So no entry turns a note into an ok."""
+    if not isinstance(entry, dict) or set(entry) != ENTRY_FIELDS:
+        return "it is not an entry of this format"
+    if entry["key"] != fields:
+        return "its key fields are not this run's"
+    if sha256_of(entry["key"]) != key:
+        return "its key fields do not hash to its name"
+    if entry["digest"] != sha256_of({k: v for k, v in entry.items() if k != "digest"}):
+        return "its digest does not match its contents"
+    if HARNESS_BLOB is None or entry["key"].get("harness_blob") != HARNESS_BLOB:
+        return "it was written by another harness"
+    steps = entry["steps"]
+    if not isinstance(entry["written"], str) or not isinstance(steps, list) or not all(
+            isinstance(s, dict) and set(s) == STEP_FIELDS for s in steps):
+        return "its steps are not of this format"
+    if [s["name"] for s in steps] != base_pass_names():
+        return "its steps are not origin/main's pass, each step once and in order"
+    for s in steps:
+        seconds = s["seconds"]
+        timed = seconds is None or (isinstance(seconds, (int, float))
+                                    and not isinstance(seconds, bool)
+                                    and math.isfinite(seconds) and seconds >= 0)
+        if s["outcome"] not in ("ok", "note") or not timed \
+                or not isinstance(s["detail"], str) or not isinstance(s["log"], str):
+            return f"its step {s['name']} is not of this format (outcome {s['outcome']!r})"
+    return None
+
+
+def read_entry(cache: Path, key: str, fields: dict) -> tuple[dict | None, str]:
+    """The entry for `key`, when it may stand in for origin/main's pass; else None, and
+    why: it is a regular file, no symbolic link, owned by this user, of mode 0600, in a
+    directory that may be used (dir_problem), and its contents pass entry_problem."""
+    why = dir_problem(cache)
+    if why:
+        return None, why
+    path = cache / f"{key}.json"
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    except FileNotFoundError:
+        return None, "no entry for this key"
+    except OSError as e:
+        if os.path.islink(path):
+            return None, "the entry is a symbolic link"
+        return None, f"the entry cannot be opened ({e.strerror or e})"
+    with os.fdopen(fd, "rb") as f:
+        st = os.fstat(f.fileno())
+        if not stat.S_ISREG(st.st_mode):
+            return None, "the entry is not a regular file"
+        if st.st_uid != os.getuid():
+            return None, "the entry is owned by another user"
+        if stat.S_IMODE(st.st_mode) != 0o600:
+            return None, f"the entry has mode {stat.S_IMODE(st.st_mode):04o}, not 0600"
+        data = f.read()
+    try:
+        entry = json.loads(data)
+        why = entry_problem(entry, key, fields)
+    except (ValueError, TypeError, RecursionError):
+        why = "it is not an entry of this format"
+    return (None, f"the entry was refused: {why}") if why else (entry, "")
+
+
+def write_entry(cache: Path, key: str, entry: dict) -> str | None:
+    """`entry`, written as <key>.json through a temporary file in the directory, synced
+    and renamed into place, mode 0600; or why it could not be."""
+    tmp = None
+    try:
+        fd, tmp = tempfile.mkstemp(prefix=f".{key[:12]}-", suffix=".tmp", dir=cache)
+        with os.fdopen(fd, "wb") as f:
+            f.write(canonical(entry))
+            f.flush()
+            os.fsync(f.fileno())
+        os.chmod(tmp, 0o600)
+        os.replace(tmp, cache / f"{key}.json")
+        tmp = None
+    except (OSError, ValueError) as e:
+        return f"{getattr(e, 'strerror', None) or e}"
+    finally:
+        if tmp is not None:
+            with contextlib.suppress(OSError):
+                os.unlink(tmp)
+    with contextlib.suppress(OSError):
+        fd = os.open(cache, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    return None
+
+
+class MainChecks:
+    """origin/main's pass of step 4 for one key. On a hit it holds the entry, whose steps
+    stand in for the pass (replay); on a miss it records the pass as it runs (collect),
+    and writes it as an entry once both its loops are done in this run (save)."""
+
+    def __init__(self, key: str, fields: dict, entry: dict | None):
+        self.key, self.fields, self.entry = key, fields, entry
+        self.hit = entry is not None
+        self.steps: list[dict] = []     # on a miss, the steps recorded as they ran
+        self.spoiled = ""               # why they may not be written
+        self.done = False               # written, or given up
+        self.next = 0                   # on a hit, the recorded steps replayed so far
+
+    def replay(self, steps, first: int, rep: Report, logs: Path) -> None:
+        """The recorded steps standing for `steps`, reported with their outcomes as
+        recorded, notes as notes, and their logs written among this run's; none is run."""
+        recorded = self.entry["steps"][self.next:self.next + len(steps)]
+        self.next += len(steps)
+        for i, step in enumerate(recorded, 1):
+            (logs / f"{first + i:02d}{slug_of(step['name'])}.log").write_text(step["log"])
+            then = f"{step['seconds']:.1f} s" if step["seconds"] is not None else "untimed"
+            rep.add("4", step["name"], step["outcome"],
+                    f"reused from the cache, entry {self.key[:12]}, written "
+                    f"{self.entry['written']}: " + (step["detail"] or f"it passed then ({then})"))
+
+    def collect(self, rep: Report, out) -> None:
+        """The step origin/main's pass has just run, recorded for the entry."""
+        names = base_pass_names()
+        s = rep.steps[-1] if rep.steps else None
+        if self.spoiled or s is None or len(self.steps) >= len(names) \
+                or s.name != names[len(self.steps)] or s.outcome not in ("ok", "note") \
+                or not isinstance(out, str):
+            self.spoiled = self.spoiled or "a step of origin/main's pass was not recorded as it ran"
+            return
+        self.steps.append({"name": s.name, "outcome": s.outcome, "detail": s.detail,
+                           "seconds": s.seconds, "log": out})
+
+    def save(self, rep: Report) -> None:
+        """The entry, written once both loops of origin/main's pass have run in this run,
+        under the sandbox, by the harness its key names; a note if it cannot be."""
+        if self.hit or self.done:
+            return
+        if not self.spoiled and len(self.steps) < len(base_pass_names()):
+            return      # the negative tests' loop is still to run
+        self.done = True
+        why = self.spoiled or self.unwritable()
+        if not why:
+            entry = {"key": self.fields, "steps": self.steps,
+                     "written": datetime.datetime.now(datetime.timezone.utc)
+                     .strftime("%Y-%m-%d %H:%M UTC")}
+            entry["digest"] = sha256_of(entry)
+            why = write_entry(CACHE, self.key, entry)
+        if why:
+            rep.add("4", "main-checks cache", "note", f"entry {self.key[:12]} not written: {why}")
+
+    def unwritable(self) -> str:
+        """Why this run may not write the entry, or "": the sandbox was on throughout, the
+        harness is the one the key names and its file is unchanged, and the directory may
+        still be used."""
+        if SANDBOX is None or CACHE is None:
+            return "the sandbox was not on"
+        if HARNESS_BLOB is None or HARNESS_BLOB != self.fields["harness_blob"]:
+            return "the harness is not the one its key names"
+        try:
+            here = blob_id(Path(__file__).read_bytes())
+        except OSError:
+            here = None
+        if here != HARNESS_BLOB:
+            return "the harness's file changed while it ran"
+        return dir_problem(CACHE) or ""
+
+
+def main_checks(ctx, wt: Path, inputs, rep: Report) -> MainChecks | None:
+    """The cache's answer for origin/main's pass on this commit, reported in one line, for
+    the pull request's record: a hit; a miss, and why; or why the cache does not serve."""
+    if not inputs:
+        rep.add("4", "main-checks cache", "skip", "the commit changes no check input: there "
+                "is no pass with origin/main's copies to reuse")
+        return None
+    fields, why = main_checks_fields(ctx, wt, inputs)
+    if fields is None:
+        rep.add("4", "main-checks cache", "note", f"not used for this commit: {why}; "
+                "origin/main's checks run in full")
+        return None
+    key = sha256_of(fields)
+    entry, why = read_entry(CACHE, key, fields)
+    if entry is not None:
+        rep.add("4", "main-checks cache", "note", f"hit: origin/main's checks of these trees "
+                f"reused from entry {key[:12]}, written {entry['written']} by this harness; "
+                "the commit's own checks run in full")
+        return MainChecks(key, fields, entry)
+    rep.add("4", "main-checks cache", "note", f"miss ({why}): origin/main's checks run, and "
+            f"once both their loops have run they are kept as entry {key[:12]}, for the next "
+            "run on the same trees")
+    return MainChecks(key, fields, None)
 
 
 class Preflight(NamedTuple):
@@ -3492,8 +3949,8 @@ def watch_checks(ctx: Context, pr: PR, rep: Report) -> str:
                 f"{CI_APPEAR_TIMEOUT} s: `gh pr checks {pr.number}`")
         return "unknown"
     print(f"  following the checks of #{pr.number}: {pr.url}", flush=True)
-    subprocess.run([*ctx.gh, "pr", "checks", str(pr.number), "--watch", "--interval",
-                    CI_WATCH_INTERVAL, "-R", ctx.github], cwd=ctx.repo)
+    run([*ctx.gh, "pr", "checks", str(pr.number), "--watch", "--interval",
+         CI_WATCH_INTERVAL, "-R", ctx.github], ctx.repo, capture=False)
     checks = pr_checks(ctx, pr.number)
     label_problem = None
     try:
@@ -4494,6 +4951,8 @@ def preflight_main(repo: Path, args) -> int:
         ctx = preconditions(repo, args.commit, args.branch, args.dry_run, args.test_mode, rep,
                             title=args.title)
         sha, base = ctx.sha, ctx.base
+        if args.main_checks_cache:
+            open_cache(rep)
         if ctx.branch:
             check_kind_label(ctx, args, rep)
         logs = logs_dir(sha)
@@ -4762,6 +5221,14 @@ def main(argv=None) -> int:
     parser.add_argument("--commit", default="HEAD", help="the commit to check (default HEAD)")
     parser.add_argument("--dry-run", action="store_true",
                         help="everything but the push, the pull request and the merge")
+    parser.add_argument("--main-checks-cache", action="store_true",
+                        help="the pre-flight only: reuse origin/main's pass of the full "
+                        "checks from ~/.cache/stoicheia/main-checks/ when an earlier run "
+                        "checked the same trees with the same harness, toolchain and "
+                        "environment, every command then running under macOS's "
+                        "sandbox-exec, which may not write it (no sandbox, no cache). Only "
+                        "the yard's run and the lane's push pass it; a ship's own dry run "
+                        "does not")
     # The pre-push hook's entry point: the secret scan of one ref's push.
     parser.add_argument("--scan-push", nargs=3, metavar=("LOCAL", "REMOTE", "REF"),
                         help=argparse.SUPPRESS)
@@ -4771,7 +5238,8 @@ def main(argv=None) -> int:
                         help=argparse.SUPPRESS)
     args = parser.parse_args(ARGV)
     if args.merge is not None and (args.branch or args.title or args.body_file or args.ready
-                                   or args.label or args.commit != "HEAD"):
+                                   or args.label or args.commit != "HEAD"
+                                   or args.main_checks_cache):
         parser.error("--merge takes only --dry-run")
     if not args.branch and (args.title or args.body_file or args.ready or args.label):
         parser.error("--title, --body-file, --ready and --label go with --branch")
