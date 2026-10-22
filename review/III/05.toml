@@ -27,6 +27,7 @@ note = "Like Heath's, this figure draws the impossible supposition: E as one cen
 
 [review]
 stage = "exceptions"
-commit = "e707d55"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "4c3ab3a3"
+reviewer = "Claude Opus 5.5, independent reader"
+run = "brief 0005 stage 5, ship F2 #119 re-read after C6a"
 lean = "sha256:05eac8742fddcab6"
