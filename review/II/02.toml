@@ -31,10 +31,10 @@ note = "Euclid treats CE as a rectangle with BE equal to AB. The Lean reads CE f
 
 [review]
 stage = "full"
-commit = "275ae830"
+commit = "cf05b375"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:7b299b042dbabba1"
-run = "brief 0005 stage 5, read-through 02 (#34), part 2: the addendum readers' mends (0022c931), read at 275ae830"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-II01-II02, independent re-read at 554dfb0f; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the proof (#220), independent re-read at cf05b375 (reader RT-c6)"
 
 [review.items]
 statement = "pass"
