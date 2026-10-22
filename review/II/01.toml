@@ -59,10 +59,10 @@ case = "BC cut at two points, D and E, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "f3b45b70"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "554dfb0f"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:dca5badf15c0dfbd"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "card 220, cross-family sign-off: original Prop1 proof by OpenAI Codex (8ad3abd5, which says so). Prop1.two and Prop1.general were proved at 4f1e5018, whose message calls the work best of two and has a Claude Opus 5.5 co-author trailer but does not identify either individual writer. The closing check was introduced at 17fddffc, with its explanatory wording revised at f4b8bfbb; those messages name no writer beyond the Claude Opus 5.5 co-author trailers they carry. The original proof, companions and closing check were read by GPT-6 Astra (Codex) at f3b45b70 and by Claude Opus 5.5 at 554dfb0f, with the same Lean hash; ship XS, reader XS-r-II01-II02, independent re-read at 554dfb0f"
 
 [review.items]
 statement = "pass"
