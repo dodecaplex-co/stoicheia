@@ -724,8 +724,9 @@ theorem not_regionBoundary (F : Outline) {X : Point} (hX : ¬ F.boundary X) :
   exact hrZ ((key Z (hcl Z (Or.inl hZ))).mpr ((key Y (hcl Y (Or.inl hY))).mp hrY))
 
 /-- **One outer contour with unnested holes.** On the boundary, a point of a hole's boundary is
-in the outer region, and is inside no hole: inside is unchanged near it, while near any
-boundary point are points inside its contour and outside the outer region. Off the boundary,
+in the outer region, and is inside no hole: inside is unchanged near it, while near a point of
+a hole's boundary are points inside that hole, and near a point of the outer contour are
+points outside the outer region. Off the boundary,
 the depth counts the outer contour and at most one hole. -/
 theorem region_holes (F : Outline) (outer : List Point) (holes : List (List Point))
     (hl : F.loops = outer :: holes)

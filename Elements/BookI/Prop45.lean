@@ -16,7 +16,7 @@ Euclid's text, in Heath's translation: [`heath/I/45.md`](../../heath/I/45.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
-`Prop45` is Euclid's worked configuration: the four-sided figure ABCD, cut by DB into the
+`Prop45` is Euclid's worked configuration: the four-sided figure ABCD, divided by DB into the
 triangles ABD and DBC. Euclid's proof makes a parallelogram for the first triangle [I. 42],
 applies one for the second to its side [I. 44], and shows that the two make one
 parallelogram; a figure of more triangles repeats the second step, as Oliver Byrne draws it
@@ -26,7 +26,7 @@ triangles:
 * `Prop45.append` is that second step.
 * `Prop45.sum` repeats it, for any number of triangles. It is the construction, and claims
   nothing of a figure: the triangles need not fit together.
-* `Prop45.apart` is the proposition for a figure given with triangles that lie apart,
+* `Prop45.apart` is the proposition for a figure given with triangles that do not overlap,
   no point inside two of them (`Apart`).
   The figure may have a hole (Definition I.14: "any boundary or boundaries").
 * `Prop45.figure` is the proposition for a figure with one boundary, given with triangles
@@ -49,7 +49,7 @@ three agree on the figures they share.
 **What "equal to the figure" means here.** The parallelogram is equal to the triangles the
 figure is given with, taken together. That sum is what Euclid adds up when he calls ABD and
 DBC "the whole rectilineal figure ABCD". Nothing here says that another division of the
-figure gives the same sum: Euclid takes that for granted, and David Hilbert proved it, for
+figure gives the same area: Euclid takes that for granted, and David Hilbert proved it, for
 his measure of area (Book I's gap catalogue, under I.45). `Prop45` itself is an area-sum
 theorem: it follows from `Prop45.sum` (the check at the end), and its ABD and DBC need only
 be triangles, which may overlap. It represents Euclid's pictured division when A and C lie
@@ -352,7 +352,7 @@ namespace Elements
 /-! ## Euclid's and Byrne's division, checked
 
 Euclid's DB, drawn from the corner D of ABCD, and Oliver Byrne's two straight lines from one
-corner of his figure (1847, p. 46), cut it into triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ from one
+corner of his figure (1847, p. 46), divide it into triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ from one
 corner A₀. `Fitted.fan` says when those triangles are a figure in the sense of `Fitted`: each
 two neighbouring triangles lie on opposite sides of the straight line A₀Aᵢ they share, and the
 angles A₁A₀A₂, …, Aₙ₋₁A₀Aₙ together are less than four right angles. Without the two

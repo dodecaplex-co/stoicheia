@@ -1,11 +1,11 @@
 # review/I/45.toml
 [statement]
 scope = "restricted"
-short = "figures supplied with a checked division into triangles"
+short = "figures given with a checked division into triangles"
 hypotheses = [
-  "A division into non-overlapping triangles is supplied with the figure (`Apart` or `Rectilineal`); existence from an outline is not yet proved."
+  "The figure is given with a checked division into triangles that do not overlap, no point inside two of them (`Apart` or `Rectilineal`, or the division from one corner that `Prop45.fan` checks); the main theorem takes Euclid's two triangles, ABD and DBC, unchecked. A figure given only by its boundary is not yet covered: that it has such a division, and that another gives the same area, is proved in the staging files (#289), but not yet part of the edition's statements (#116)."
 ]
-note = "`Prop45.apart` constructs a parallelogram equal to a supplied triangle sum; outline coverage and independence of division remain unproved."
+note = "`Prop45.apart` takes a figure given with a checked division. Proved in staging only (#289): that every figure has one, and that another gives the same area."
 companions = ["I.45 append", "I.45 sum", "I.45 apart", "I.45 figure", "I.45 fan"]
 fingerprint = "sha256:82f17d662afe1ed5"
 
@@ -15,7 +15,7 @@ note = "Euclid shows two triangles. The companions repeat his second step for ea
 
 [representation]
 tags = ["figure-with-dissection"]
-note = "A rectilineal figure is given with its division into triangles, and the division is checked: as triangles that lie apart, no point inside two of them, allowing a figure with a hole (`Prop45.apart`); as triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop45.figure`); or as Euclid and Oliver Byrne divide it, from one corner, neighbours on opposite sides of the straight line they share and the angles at that corner together less than four right angles, the triangles then shown to fit together (`Prop45.fan`, by `Fitted.fan`). Equal to the figure means equal to those triangles together. Existence of such a division from the figure's outline, coverage of its region, and independence of the sum from the division chosen remain unproved ([#116](https://github.com/jackChallis/stoicheia/issues/116)); David Hilbert proved the last, for his measure of area. In `Prop45.fan`, `Fitted.fan` proves that the triangles fit together; the Lean does not state that their figure is bounded by the closed line through the corners in order, though this is true in the plane. The construction does not use that the triangles lie apart, which is what makes their sum the figure's: it is `Prop45.sum`'s, for any triangles. The main theorem is an area-sum theorem: it takes ABD and DBC unchecked, and they may overlap. It represents Euclid's pictured division when A and C lie on opposite sides of DB; that checked case is `Prop45.fan` for the corners D, A, B, C. `Prop45.apart` constructs the required parallelogram for a supplied checked division into triangles that lie apart."
+note = "The main theorem takes Euclid's two triangles, ABD and DBC, unchecked, and they may overlap; they make Euclid's figure when A and C lie on opposite sides of DB, and that checked case is `Prop45.fan` for the corners D, A, B, C. Three companions take a rectilineal figure given with a checked division into triangles: triangles that lie apart, so the figure may have a hole (`Prop45.apart`); triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop45.figure`); or, as Euclid and Byrne divide it, triangles from one corner, each two neighbours on opposite sides of the straight line they share and their angles at that corner together less than four right angles, which `Fitted.fan` proves fit together (`Prop45.fan`). Equal to the figure means equal to those triangles together. The construction itself works for any triangles (`Prop45.sum`); the check is what makes their sum the figure's. The Lean does not state that the figure `Prop45.fan` makes is the one bounded by the closed line through its corners in order, though this is true in the plane. Proved in the staging files ([#289](https://github.com/jackChallis/stoicheia/pull/289)), but not yet part of the edition's statements ([#116](https://github.com/jackChallis/stoicheia/issues/116)): that every rectilineal figure, given only by its boundary, has such a division, and that another division gives the same area. David Hilbert proved the second, for his measure of area."
 
 [[passage]]
 at = "Let DB be joined, and let the parallelogram FH be constructed equal to the triangle ABD"
@@ -26,17 +26,17 @@ note = "I.42 builds FH on half of BD itself, so H falls on D: the Lean writes D 
 at = "Thus, with a straight line GH"
 kind = "helper"
 helper = "SameSideOf.trans_opposite"
-note = "Euclid uses KH and HM on opposite sides of GH to apply I.14. Beneath the first constructions, the Lean requests I.44's parallelogram across GH from K and uses `SameSideOf.trans_opposite` to put M on the other side; I.14 now puts H between K and M, with D for H in the Lean."
+note = "Euclid applies I.14 because KH and HM do not lie on the same side of GH. The Lean makes it so: it applies I.44's parallelogram to GH on the side away from K, and `SameSideOf.trans_opposite` puts M on the other side of GH from K. I.14 then puts H between K and M (D for H in the Lean)."
 
 [[passage]]
 at = "And, since the triangle ABD is equal to the parallelogram FH"
 kind = "helper"
 helper = "quadArea_add_of_parallelograms"
-note = "Euclid takes FH and GM together as KFLM, equal to the two triangles of ABCD. With H between K and M and G between F and L from the two applications of I.14, `quadArea_add_of_parallelograms` joins the areas; the Lean writes D for H and takes ABCD as the given sum of ABD and DBC, as the representation note explains."
+note = "Euclid takes FH and GM together as KFLM, equal to the two triangles of ABCD. With H between K and M and G between F and L from the two applications of I.14, `quadArea_add_of_parallelograms` joins the areas; the Lean writes D for H and takes ABCD as the given sum of ABD and DBC, as the Representation row explains."
 
 [figure]
-case = "Euclid's figure ABCD, cut by DB into the two triangles ABD and DBC"
-note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart."
+case = "Euclid's figure ABCD, divided by DB into the two triangles ABD and DBC"
+note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart, as the figure at a glance does."
 
 [review]
 stage = "full"

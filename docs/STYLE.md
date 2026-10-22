@@ -373,11 +373,13 @@ says so (a record, a commentary, a file's notes, an introduction, a gap catalogu
 the same words. The figure is "given with a checked division into triangles", not
 "supplied", and not the tag's "dissection". Its triangles "do not overlap, no point inside
 two of them", in full at their first mention in each of these texts, and "lie apart"
-after. "Equal to the figure" means equal to those triangles together. What is "not yet
-proved" ([#116](https://github.com/jackChallis/stoicheia/issues/116)) is "that every
-rectilineal figure, given only by its boundary, has such a division, and that another
-division gives the same area". A record's statement `note`, held to 160 characters, may
-say it short: "Not yet proved: that every figure has one, and that another gives the same
+after. "Equal to the figure" means equal to those triangles together. What is "proved in
+the staging files ([#289](https://github.com/jackChallis/stoicheia/pull/289)), but not yet
+part of the edition's statements
+([#116](https://github.com/jackChallis/stoicheia/issues/116))" is "that every rectilineal
+figure, given only by its boundary, has such a division, and that another division gives
+the same area". A record's statement `note`, held to 160 characters, may say it short:
+"Proved in staging only (#289): that every figure has one, and that another gives the same
 area." Where a main theorem takes its two triangles unchecked, the sentence that describes
 it says so. In these sentences the figure is divided, not cut; "outline" never stands
 unexplained for its boundary; and what Euclid takes for granted there is not called
