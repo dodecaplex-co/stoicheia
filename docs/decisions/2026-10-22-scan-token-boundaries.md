@@ -177,8 +177,9 @@
   `#`, but those FORBIDDEN refuses: `#check1set_option«debug».byAsSorry true in theorem …`
   is `#check`, `1` and `set_option`, and builds on `sorryAx`, as `#versionset_option…`
   does, and `#whereaxiom planted : False` declares an axiom, while the scan reads `#` and
-  one name; this one is open, for a card of its own. Three older routes, which
-  [#317](https://github.com/jackChallis/stoicheia/issues/317) holds: Lean's own `⊕'`,
+  one name; this one is open, and
+  [#320](https://github.com/jackChallis/stoicheia/issues/320) holds it. Three older
+  routes, which [#317](https://github.com/jackChallis/stoicheia/issues/317) holds: Lean's own `⊕'`,
   `×'` and `]'`, whose `'` the scan takes for a character literal's opening:
   `def T : Type := Nat ⊕'"' "`, with a coercion from `String` to `Type`, and the
   `set_option` line after it build on `sorryAx`, as `×'` does. Lean's own `<-`, `//` and `\/` before a `-`, where the scan

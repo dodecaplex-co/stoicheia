@@ -629,8 +629,9 @@ of the name or a token, so the scan refuses the literal or the raw string, and t
 such word to begin an interpolated string (the list above). It refuses a token the file
 declares that ends in a character a name may hold (the list above). It does not read the
 rest, and these stay open, each example built in Lean 4.35 as written:
-- Lean's own tokens that begin with `#`, which the scan reads as `#` and the name after
-  it. Lean reads the longest token it knows, so
+- Lean's own tokens that begin with `#`
+  ([#320](https://github.com/jackChallis/stoicheia/issues/320)), which the scan reads as
+  `#` and the name after it. Lean reads the longest token it knows, so
   `#check1set_option«debug».byAsSorry true in theorem …` is `#check`, `1` and
   `set_option`, and builds on `sorryAx`, and `#whereaxiom planted : False` is `#where`
   and an axiom, while the scan reads the names `check1set_option` and `whereaxiom`. Those
