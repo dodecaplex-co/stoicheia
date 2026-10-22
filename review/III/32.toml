@@ -7,15 +7,32 @@ fingerprint = "sha256:a0c5b22bb4f02820"
 kind = "euclid"
 
 [[passage]]
+at = "For let BA be drawn from B at right angles to EF"
+kind = "helper"
+helper = "BookI.Prop11"
+note = "Euclid draws the perpendicular BA without a printed reference from Heath. The Lean first obtains a point X on that perpendicular by I.11, on D's side of EF; A is its meeting with the circle, found below."
+
+[[passage]]
 at = "let a point C be taken at random on the circumference BD"
 kind = "given"
 note = "The statement's second conclusion is said of every point C of the segment DCB, so C comes with it; the Lean takes C up where that conclusion is proved."
 
 [[passage]]
+at = "and let AD, DC, CB be joined"
+kind = "given"
+note = "The angles and triangles are named by their points, so joining AD, DC and CB requires no further construction in the Lean."
+
+[[passage]]
+at = "the centre of the circle ABCD is on BA"
+kind = "helper"
+helper = "Tacit.exists_centre"
+note = "Euclid places the centre on BA by III.19. The Lean first obtains a centre O by `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16 with no System E counterpart, then applies III.19."
+
+[[passage]]
 at = "Therefore BA is a diameter of the circle ABCD"
 kind = "helper"
 helper = "Prop32.sameSide"
-note = "Euclid takes for granted that A and D lie on one side of EF; the Lean proves it: on opposite sides, AD would cross EF within the circle (III.2), and no point of a straight line touching a circle is within it, as in III.18."
+note = "Euclid takes for granted that A and D lie on one side of EF; the Lean proves it: on opposite sides, AD would cross EF within the circle (III.2), and no point of a straight line touching a circle is within it, as in III.18. Heath prints no reference to III.2 here; before this comparison the Lean takes A beyond O from B by `Tacit.line_circle_beyond` (System E, Intersections 5), with O within by `Tacit.centre_inside` (System E, Generalities 3), both rules we assume."
 
 [[passage]]
 at = "therefore the angle ADB, being an angle in a semicircle, is right"
@@ -24,19 +41,33 @@ note = "When D is A, BD is itself the diameter and there is no triangle ABD: eve
 
 [[passage]]
 at = "Let the angle ABD be subtracted from each"
-kind = "case"
-note = "Euclid's figure has D on F's side of BA, within the angle ABF; when D is on E's side, the Lean gives the same argument with E and F exchanged."
+kind = "helper"
+helper = "angle_add_of_within"
+note = "Euclid reads ABD as part of ABF before subtracting it. In the chosen case D is on F's side of BA, and `Prop32.sameSide` has put D on A's side of BF, so `angle_add_of_within` splits ABF into ABD and DBF."
 
 [[passage]]
 at = "therefore the angle DBF which remains"
+kind = "helper"
+helper = "Prop21"
+note = "Euclid's A is the end of the diameter; the statement says this of every point of the segment BAD, and III.21 makes each such angle equal to BAD. Heath prints no reference to III.21 or to III.2 here: the Lean uses `Prop2.triangle` and `crossbar` to locate A across BD from F, with `Tacit.pasch3`, the rule we assume as System E, Pasch 3, separating the ends of AF at its crossing with BD."
+
+[[passage]]
+at = "But the angles DBF, DBE are also equal to two right angles"
+kind = "helper"
+helper = "BookI.Prop13"
+note = "Euclid takes the adjacent angles DBF and DBE to make two right angles. The Lean applies I.13, for which Heath prints no reference here."
+
+[[passage]]
+at = "Therefore etc."
 kind = "case"
-note = "Euclid's A is the end of the diameter; the statement says this of every point of the segment BAD, and III.21 makes each such angle equal to BAD."
+note = "Euclid's figure has D on F's side of BA, within the angle ABF; when D is on E's side, the Lean gives the same argument with E and F exchanged. After the diameter case described above, `Prop2.triangle` (III.2, for which Heath prints no reference here) excludes any other D on BA; `OppositeSidesOf.of_between` separates E and F across BA by `Tacit.pasch3` (System E, Pasch 3), and `OppositeSidesOf.sameSideOf` puts D on E's side when it is not on F's by `Tacit.same_side_or` (System E, Same side 5), both rules we assume."
 
 [figure]
 case = "D on F's side of BA and apart from A, as in Heath's figure"
 
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "b9f6a766"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:c66a4535c2813f36"
+run = "brief 0005 stage 5, ship R3 (#29)"
