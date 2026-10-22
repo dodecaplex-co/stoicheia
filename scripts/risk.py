@@ -15,10 +15,12 @@ The formal model in model/ imports some of the main package's Lean files, and so
 checked whenever one of them changes, whatever the change's class: model_inputs finds them
 at a revision, from the model's own import lines, so the set follows the imports as they
 change. It reads a header by a narrow grammar and fails closed: while a file among the
-model's imports has a header it cannot read cleanly, the formal model is checked for every
-change, so a header Lean reads otherwise can only widen the set; and so it is while the
-tree holds a .gitattributes anywhere, which can make the text Lean reads from the checkout
-differ from the text Git holds, which this reads.
+model's imports has a header it cannot read cleanly, or imports a module for which the
+tree holds no file at the usual path unless its root is explicitly external, the formal
+model is checked for every change. Thus a header Lean reads otherwise, or a main-package
+source layout this narrow reader does not know, can only widen the set; and so it is while
+the tree holds a .gitattributes anywhere, which can make the text Lean reads from the
+checkout differ from the text Git holds, which this reads.
 
     python3 scripts/risk.py <worktree> [base]     the class of the worktree's HEAD against
                                                   base (origin/main), then each path's,
@@ -34,8 +36,8 @@ differ from the text Git holds, which this reads.
                                                   falls to the R5 default without a rule
     python3 scripts/risk.py --model-inputs REV    the main package's files the formal model
                                                   imports at REV, directly or through others,
-                                                  then each file among them whose header it
-                                                  cannot read, and why
+                                                  then each file among them whose header or
+                                                  imports it cannot read or resolve, and why
 
 A rule matches a path whole, by fnmatch's rules, under which `*` matches `/` too, so
 `scripts/*` holds `scripts/audit/jev.py`. Git gives the paths separated by NUL bytes
@@ -97,6 +99,7 @@ RULES = [
 # by the table in any case).
 MODEL = "model/"
 LOCK = "Certificate/axioms.lock"
+EXTERNAL_ROOTS = ("Check", "Model", "Mathlib", "Lean", "Init", "Std")
 
 USAGE = ("usage: risk.py <worktree> [base] | --diff BASE HEAD [--github-output] | "
          "--paths <file>... | --audit <worktree> | --model-inputs REV")
@@ -107,8 +110,8 @@ class GitFailure(Exception):
 
 
 class Unread(Exception):
-    """A Lean header the reader cannot read cleanly, and why: while a file among the formal
-    model's imports has one, the model is checked for every change."""
+    """A Lean header or import the reader cannot read or resolve cleanly, and why: while a
+    file among the formal model's imports has one, the model is checked for every change."""
 
 
 def shown(text: str) -> str:
@@ -302,9 +305,9 @@ def model_inputs(rev: str, cwd: str | None = None) -> tuple[set[str], dict[str, 
     """The main package's Lean files the formal model imports at rev, directly or through
     one another: the modules each model/**/*.lean file's header imports whose file the main
     package holds at rev (module A.B.C at A/B/C.lean), then the same for each such file, to
-    the end. The model's own modules and Mathlib's are passed over, for the main package
-    holds no file of theirs. Then each file read on the way, the model's own among them,
-    whose header the reader cannot read cleanly, with why: what it imports is unknown. A
+    the end. An unresolved import is unread unless its root is Check, Model, Mathlib, Lean,
+    Init or Std. Then each file read on the way, the model's own among them, whose header
+    or imports the reader cannot read cleanly, with why: what it imports is unknown. A
     .gitattributes anywhere in the tree counts as unread too: the reader reads the text Git
     holds, Lean the text Git checks out, and an encoding or filter there makes the two
     differ (a `-/` that only the checkout holds can end a comment the blob leaves open)."""
@@ -321,10 +324,22 @@ def model_inputs(rev: str, cwd: str | None = None) -> tuple[set[str], dict[str, 
         imported: set[str] = set()
         for path, text in zip(queue, file_texts([files[path] for path in queue], cwd)):
             try:
-                imported.update([module_path(module) for module in imported_modules(text)])
+                modules = imported_modules(text)
             except Unread as why:
                 unread[path] = str(why)
-        queue = sorted((imported & main) - found)
+                continue
+            for module in modules:
+                try:
+                    candidate = module_path(module)
+                except Unread as why:
+                    unread.setdefault(path, str(why))
+                    continue
+                if candidate in main:
+                    imported.add(candidate)
+                elif not any(module == root or module.startswith(root + ".")
+                             for root in EXTERNAL_ROOTS):
+                    unread.setdefault(path, f"{module} has no {candidate} in the tree")
+        queue = sorted(imported - found)
         found.update(queue)
     return found, unread
 
@@ -334,8 +349,9 @@ def formal_model(top: str, paths, base: str, head: str,
     """Whether CI's formal-model job must run in full for the change `git diff base...head`,
     and why: for R4 and R5, for a change under model/ or to the axiom lock, for every
     change while a file the model imports, at the diff's end or at its start, has a header
-    the reader cannot read cleanly, and for a change to a file the model imports, at
-    either end (at the start, a file the change deletes is still imported)."""
+    or import the reader cannot read or resolve cleanly, and for a change to a file the
+    model imports, at either end (at the start, a file the change deletes is still
+    imported)."""
     if top >= "R4":
         return True, f"the class is {top}"
     for path in sorted(paths):
