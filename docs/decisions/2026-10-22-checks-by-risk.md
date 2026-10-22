@@ -114,3 +114,8 @@
   `risk` job loses its case for a branch's push; its comments say what main's run and a
   release's gate run, and its R5 log line names the two jobs that run in full; and the
   comments and the log line of `negative` say where the negative tests run now.
+
+  This entry approves the change to `tests/test_release_gate.py`, whose helper that judges
+  a release pull request's checks now stands the suite gate in as passed, so that its
+  tests still judge the release-gate job alone, while `test_safe_push.py` tests the gate's
+  refusals.
