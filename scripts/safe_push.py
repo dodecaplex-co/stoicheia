@@ -44,7 +44,8 @@ order, and the first that fails stops it with a message saying why:
    that part, or named by its SHA-256), to an entry, with its reason. A commit's message
    or identity cannot be allowed, and an entry added by the push itself does not count.
    An allowed finding is noted in the pull request by its place, its rule, its value's
-   SHA-256 and the reason, never by its line.
+   SHA-256 and the reason, never by its line. Every git process the harness starts runs
+   with git's replacement objects off, since a push sends the originals (#256).
 3. Invariant guards against origin/main, in a fresh temporary worktree of the commit. A
    new decision is a dated entry of its own, docs/decisions/<YYYY-MM-DD>-<slug>.md, which
    the push adds (docs/WORKFLOW.md, section 10, "Decision entries"); 0002-decisions.md,
@@ -429,7 +430,20 @@ class NothingToPush(Exception):
 # Running commands
 
 
+def without_replacements(env=None) -> dict:
+    """A copy of `env` (os.environ when None) in which git reads no replacement objects."""
+    env = dict(os.environ if env is None else env)
+    env.pop("GIT_REPLACE_REF_BASE", None)
+    env["GIT_NO_REPLACE_OBJECTS"] = "1"
+    return env
+
+
 def run(cmd, cwd, *, env=None, input=None, binary=False) -> subprocess.CompletedProcess:
+    # A push sends the original objects, but git reads a replacement (refs/replace/, or a
+    # ref under GIT_REPLACE_REF_BASE) in their place: so git runs here with replacements
+    # off, lest the scan or the hand-over read a clean stand-in (#256).
+    if cmd and os.path.basename(cmd[0]) == "git":
+        env = without_replacements(env)
     return subprocess.run(cmd, cwd=cwd, env=env, input=input, capture_output=True,
                           text=not binary)
 
@@ -2920,7 +2934,8 @@ def harness(repo, base: str, rep: Report) -> None:
     print("  this copy of safe_push.py or heath.py differs from origin/main's: running "
           "origin/main's in its place", flush=True)
     path = harness_copy(theirs, theirs_heath) / "safe_push.py"
-    env = dict(os.environ, STOICHEIA_HARNESS="origin/main")
+    # With replacement objects off for its git runs too, an older harness among them (#256).
+    env = without_replacements(dict(os.environ, STOICHEIA_HARNESS="origin/main"))
     sys.stdout.flush()
     sys.stderr.flush()
     os.execve(PY, [PY, str(path), *ARGV], env)

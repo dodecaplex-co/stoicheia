@@ -704,11 +704,14 @@ git safe-push --merge <n>                          # the gates, then a merge com
 `git safe-push` is a launcher that `install_hooks.sh` puts outside the tracked tree
 (`scripts/hooks/safe-push`, copied to `.git/stoicheia/safe-push`, with the alias): it
 fetches origin and runs origin/main's `scripts/safe_push.py`, whatever the checkout holds,
-so a branch cannot judge itself. `python3 scripts/safe_push.py` from a checkout runs that
-checkout's copy, which hands over to origin/main's when it differs; that protection holds
-only while the copy run is one that hands over, so the launcher is the way in. While
-origin/main's copy predates running from origin/main, the launcher runs the checkout's,
-and says so. The launcher and the pre-push hook run Python 3.11 or later:
+so a branch cannot judge itself; it copies that harness out of git, and the harness reads
+git, with git's replacement objects off (#256), since git reads a replacement
+(`refs/replace/`, or a ref under `GIT_REPLACE_REF_BASE`) in place of the object it
+replaces, while a push sends the original. `python3 scripts/safe_push.py` from a checkout
+runs that checkout's copy, which hands over to origin/main's when it differs; that
+protection holds only while the copy run is one that hands over, so the launcher is the
+way in. While origin/main's copy predates running from origin/main, the launcher runs the
+checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or later:
 `STOICHEIA_PYTHON` when it is set, else the first of `python3.14`, `python3.13`,
 `python3.12`, `python3.11` and `python3` that is; without one, they refuse.
 
@@ -746,7 +749,9 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       to an entry, with its reason; so the entry excuses that value alone. A broad entry
       is refused, a commit's message or identity cannot be allowed, and an entry added by
       the push itself does not count. An allowed finding is noted in the pull request by
-      its place, its rule, its value's SHA-256 and the reason, never by its line.
+      its place, its rule, its value's SHA-256 and the reason, never by its line. The
+      scan reads with git's replacement objects off, as every git command of the harness
+      does, so it reads what the push sends (#256).
    3. *Invariant guards,* against origin/main, in the temporary worktree:
       - no statement changed (facts.json's `statement`, and the Lean source of the
         theorem, its porism and its companions, to its own `:=`, whitespace aside) unless
@@ -1002,11 +1007,15 @@ in `preflight/`, which `--merge` reads; origin/main's harness, when it runs in p
 another copy, is written to `harness/`, named by its blobs. `sh scripts/install_hooks.sh`
 installs the launcher and the pre-push hook: the hook refuses every push to main, scans a
 push to any other branch (its name included) with origin/main's copy of the secret scan
-(`safe_push.py --scan-push`), whichever remote it goes to (another remote's main is never
+(`safe_push.py --scan-push`), copied out of git and run with git's replacement objects off
+(#256), whichever remote it goes to (another remote's main is never
 run, and without origin/main's copy the push is refused), and refuses to push or delete a
 tag. With the owner's OK for
 a tag, it is pushed by name, `STOICHEIA_TAG_PUSH=<tag> git push origin refs/tags/<tag>`,
-and the hook still scans the commits it points to and an annotated tag's message.
+and the hook still scans the commits it points to and an annotated tag's message. An
+installed hook or launcher takes a change to its source in `scripts/hooks/`, #256's among
+them, only when `sh scripts/install_hooks.sh` is run again; until then the pre-flight notes
+that the installed copy differs from origin/main's.
 `python3 -m pip install -r scripts/requirements-test_safe_push.txt`, followed in the same
 Python environment by `python3 scripts/test_safe_push.py`, installs the pinned YAML parser
 and plants a bad commit for each guard, gate and edge case on a throwaway clone, with a

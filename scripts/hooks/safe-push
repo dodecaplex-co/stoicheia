@@ -13,7 +13,10 @@
 # fetches origin, copies origin/main's safe_push.py and heath.py out of git into a
 # directory named by their blobs (~/.cache/stoicheia/harness/<blob>-<blob>/, beside
 # STOICHEIA_PUSH_LOG when that is set), writing each afresh, and execs it with the
-# arguments given, so its signals and its exit status are the run's own. While
+# arguments given, so its signals and its exit status are the run's own. The copies are
+# read, and safe_push runs, with git's replacement objects off (#256): git reads a
+# replacement (refs/replace/, or a ref under GIT_REPLACE_REF_BASE) in place of the object
+# it replaces, so one could otherwise stand in for origin/main's harness. While
 # origin/main's copy predates running from origin/main (no HARNESS_PROTOCOL in it), the
 # checkout's copy runs, and the launcher says so.
 #
@@ -21,6 +24,11 @@
 # of python3.14, python3.13, python3.12, python3.11 and python3 that is Python 3.11 or
 # later (safe_push reads TOML with tomllib). Without one, it refuses.
 set -eu
+
+# No replacement objects for git here, nor for safe_push, which inherits this (#256).
+export GIT_NO_REPLACE_OBJECTS=1
+# Nor a folder of replacements named in place of refs/replace/.
+unset GIT_REPLACE_REF_BASE
 
 # The interpreter (the pre-push hook, scripts/hooks/pre-push, picks it the same way).
 find_python() {
