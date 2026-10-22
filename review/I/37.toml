@@ -29,10 +29,10 @@ case = "the vertices A and D apart"
 
 [review]
 stage = "full"
-commit = "99359055"
+commit = "387a590f"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:d59da7f6e4de693e"
-run = "brief 0005 stage 5, read-through 02 (#34), part 2: the changes landed since 2e8aecf8 and the held findings' mends, read at 99359055"
+run = "card 220, cross-family sign-off: proof combines the Claude first mate's scratch T37 (54a08e61), whose area argument remains, OpenAI Codex's voyage proof at 74c1dcca, and Claude's construction rewrite at ab0c30c5; Claude-authored portions read by GPT-6 Astra (Codex) at b62518e5, final proof read by Claude Opus 5.5; ship XS, reader XS-r-I37-I39, independent re-read at 78fb461d; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the proof (#220), independent re-read at 387a590f (reader RT-c2)"
 
 [review.items]
 statement = "pass"
