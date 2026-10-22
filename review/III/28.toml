@@ -12,46 +12,20 @@ tags = ["angle-measure"]
 note = "\"Equal circumferences\" is read as in III.26, equal in measure and congruent (`Arc.Congruent`), which says more than Heath's words. The equal circles do real work: equal straight lines in unequal circles cut off unequal measures, and no congruent circumferences."
 
 [[passage]]
-at = "For let the centres K, L of the circles be taken"
-kind = "given"
-note = "Euclid takes K and L as centres and joins the radii. The hypothesis that the circles are equal supplies both centres through `EqualCircles`, and the radii are named by their ends."
-
-[[passage]]
 at = "the radii are also equal"
 kind = "different"
-note = "Euclid's figure has the centre K off AB, on C's side. If K is on AB, AB and DE are diameters and the four circumferences semicircles, and with no angle at the centre the congruence comes from the right angle in each semicircle (`Prop28.right`) and III.24; `Prop28.beyond` shows K is not on G's side; `Prop28.sides` sorts the positions, `Prop28.diameter` uses I.20, and `Prop28.right` through `Prop24.angle_type`, `Prop28.beyond`, `Circumference.semicircle` and `Prop2.sameSide` use I.5, I.32, III.2, III.20, III.21 and III.22, for which, as for I.20 and III.24, Heath prints no references here; the placing of the centres between the diameter's ends uses `Tacit.centre_inside` (System E, Generalities 3) and `Tacit.between_of_inside_chord` (System E, Circle 1), and the sum of the radii uses `Tacit.len_add_of_between` (System E, Diagram-segment 1), all rules we assume."
-
-[[passage]]
-at = "But equal angles stand on equal circumferences"
-kind = "helper"
-helper = "Prop2.oppositeSide"
-note = "Euclid applies III.26 to the equal central angles. Since C and F name sides and need not be on their circles, the Lean takes points X and Y there by `Prop2.oppositeSide` (III.2, for which Heath prints no reference here), supplying the points at the circumferences that III.26 also asks for."
-
-[[passage]]
-at = "And the whole circle ABC is also equal to the whole circle DEF"
-kind = "helper"
-helper = "Circumference.whole"
-note = "Euclid subtracts the equal lesser circumferences from the equal whole circles. `Circumference.whole` proves that the two circumferences cut off by each chord together measure four right angles, using III.2, III.21 and III.22, for which Heath prints no references here."
+note = "Euclid's figure has the centre K off AB, on C's side. If K is on AB, AB and DE are diameters and the four circumferences semicircles, and with no angle at the centre the congruence comes from the right angle in each semicircle (`Prop28.right`) and III.24; `Prop28.beyond` shows K is not on G's side."
 
 [[passage]]
 at = "therefore the circumference ACB which remains"
 kind = "different"
-note = "The greater circumferences are equal in measure as the remainders [C.N. 3]; their congruence comes from III.24, the angles AXB, DYE at points of the greater circumferences being the halves of the equal angles AKB, DLE at the centres [III. 20], so that the greater segments are similar; Heath prints no reference here for III.20 or III.24, called as `Prop20` and `Prop24`, and `Magnitude.eq_of_add_self_eq` supplies the equality of the halves."
+note = "The greater circumferences are equal in measure as the remainders [C.N. 3]; their congruence comes from III.24, the angles AXB, DYE at points of the greater circumferences being the halves of the equal angles AKB, DLE at the centres [III. 20], so that the greater segments are similar."
 
 [figure]
 case = "non-diameter chords, with K on C's side of AB and L on F's side of DE"
 
 [review]
-stage = "full"
-commit = "1f8fa897"
-reviewer = "Claude Opus 5.5, independent reader"
+stage = "exceptions"
+commit = "17987153"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:c973f49aeb59b649"
-run = "brief 0005 stage 5, ship R3 (#29)"
-
-[review.items]
-statement = "pass"
-passages = "pass"
-representations = "pass"
-commentary = "pass"
-figures = "pass"
-signoff = "pass"

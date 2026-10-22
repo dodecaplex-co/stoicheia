@@ -14,45 +14,24 @@ note = "\"Equal circumferences\" is read as equal in measure and congruent (`Arc
 [[passage]]
 at = "therefore the base BC is equal to the base EF"
 kind = "different"
-note = "Given the angles at A and D, the Lean sorts them as acute, right or obtuse: if right, BC and EF are diameters, each two radii; if obtuse, III.22 passes to the acute angle in the other segment. The Lean uses `Prop24.angle_type` (I.5, I.32, III.2, III.20, III.21 and III.22, for which Heath prints no references here), which in the right-angle case puts each centre between the chord's ends by the assumed rules `Tacit.centre_inside` (System E, Generalities 3) and `Tacit.between_of_inside_chord` (System E, Circle 1), then `Tacit.len_add_of_between`, the rule we assume as System E, Diagram-segment 1, writes BC as BG and GC together and EF as EH and HF together; in the obtuse case `Prop2.sameSide` supplies points of the other segments, and III.20 doubles their angles for I.4."
-
-[[passage]]
-at = "And, since the angle at A is equal to the angle at D"
-kind = "helper"
-helper = "Prop20"
-note = "Euclid treats the equal angles at the centres and at the circumferences together. For the clause given only the central angles, the Lean obtains the equal angles at A and D by III.20 and `Magnitude.eq_of_add_self_eq`, with no reference from Heath here."
+note = "Given the angles at A and D, the Lean sorts them as acute, right or obtuse: if right, BC and EF are diameters, each two radii; if obtuse, III.22 passes to the acute angle in the other segment."
 
 [[passage]]
 at = "therefore the segment BAC is equal to EDF"
 kind = "helper"
 helper = "Prop24.equalMeasure"
-note = "III.24 makes the segments BAC, EDF congruent, and its companion `Prop24.equalMeasure` gives what Euclid takes with them: their circumferences are equal in measure. That companion uses I.8, III.2, III.21 and III.22, for which Heath prints no references here, to compare angles at corresponding points and subtract their doubles from the whole circles."
-
-[[passage]]
-at = "But the whole circle ABC is also equal to the whole circle DEF"
-kind = "helper"
-helper = "Circumference.whole"
-note = "Euclid subtracts the equal segment circumferences from the equal whole circles. `Circumference.whole` proves that the two circumferences cut off by each chord together measure four right angles, using III.2, III.21 and III.22, for which Heath gives no references here."
+note = "III.24 makes the segments BAC, EDF congruent, and its companion `Prop24.equalMeasure` gives what Euclid takes with them: their circumferences are equal in measure."
 
 [[passage]]
 at = "therefore the circumference BKC which remains is equal to the circumference ELF"
 kind = "different"
-note = "The remainders BKC, ELF are equal in measure by Euclid's subtraction [C.N. 3]. Their congruence cannot come by subtraction: `Prop2.sameSide` (III.2) supplies points of the remaining segments, III.22 makes their angles supplementary to the equal angles at A and D, and III.24 makes the similar segments congruent, with `Arc.Congruent.congr_side` transferring the result to K and L; Heath prints no references here."
+note = "The remainders BKC, ELF are equal in measure by Euclid's subtraction [C.N. 3]. Their congruence cannot come by subtraction: it comes from III.24 applied to the remaining segments, which are similar, their angles making two right angles with the equal angles at A and D [III. 22]."
 
 [figure]
 case = "acute angles at A and D, with BKC and ELF less than semicircles"
 
 [review]
-stage = "full"
-commit = "4fddce18"
+stage = "exceptions"
+commit = "1c08feeb"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:a4c608069879bee5"
-run = "brief 0005 stage 5, ship R3 (#29); lines 66 and 67 of Prop26.lean, of unknown family, read also by GPT-6 Astra (Codex)"
-
-[review.items]
-statement = "pass"
-passages = "pass"
-representations = "pass"
-commentary = "pass"
-figures = "pass"
-signoff = "pass"

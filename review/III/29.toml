@@ -12,35 +12,20 @@ tags = ["angle-measure"]
 note = "Equal circumferences are equal measures, which in equal circles is what Euclid means; the equal circles do real work here, giving I.4 its equal radii."
 
 [[passage]]
-at = "and let the straight lines BC, EF be joined"
-kind = "helper"
-helper = "Prop2.oppositeSide"
-note = "Euclid's figure puts A and D on the circles beyond BC and EF from G and H. The Lean supplies those points by `Prop2.oppositeSide` (III.2, for which Heath prints no reference here), to give III.27 points at the circumferences as well as the centres."
-
-[[passage]]
 at = "For let the centres of the circles be taken"
 kind = "different"
-note = "When K lies on BC, BGC is a semicircle and `Prop29.size` makes EHF one too. BC and EF are diameters, each twice the equal radius, so the Lean adds the equal radii instead of applying III.27 and I.4; `EqualCircles` supplies K and L, `Tacit.centre_inside` (System E, Generalities 3) and `Tacit.between_of_inside_chord` (System E, Circle 1) place each between the diameter's ends, and `Tacit.len_add_of_between` (System E, Diagram-segment 1) adds the radii, all three rules assumed; `Circumference.semicircle` and the size comparisons in `Prop29.size` use I.5, I.32, III.2, III.20, III.21 and III.22, for which Heath prints no references here."
+note = "When K lies on BC, BGC is a semicircle and `Prop29.size` makes EHF one too. BC and EF are diameters, each twice the equal radius, so the Lean adds the equal radii instead of applying III.27 and I.4."
 
 [[passage]]
 at = "Now, since the circumference BGC is equal to the circumference EHF"
 kind = "different"
-note = "`Prop29.size` puts both circumferences in the same size case. For circumferences greater than semicircles, the Lean subtracts them from the whole circles and applies III.27 to the equal remaining circumferences BAC and EDF; the size comparisons use I.5, I.32, III.2, III.20, III.21 and III.22 as above, while `Prop2.sameSide` (III.2) takes the points at the circumferences and `Circumference.whole` (III.2, III.21 and III.22) supplies the equal wholes for Common Notion 3, none referenced by Heath here."
+note = "`Prop29.size` puts both circumferences in the same size case. For circumferences greater than semicircles, the Lean subtracts them from the whole circles and applies III.27 to the equal remaining circumferences BAC and EDF."
 
 [figure]
 case = "circumferences BGC and EHF less than semicircles, with K and L beyond BC and EF from G and H"
 
 [review]
-stage = "full"
-commit = "1f8fa897"
-reviewer = "Claude Opus 5.5, independent reader"
+stage = "exceptions"
+commit = "d0508d6c"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:c6ea841e06026dc5"
-run = "brief 0005 stage 5, ship R3 (#29)"
-
-[review.items]
-statement = "pass"
-passages = "pass"
-representations = "pass"
-commentary = "pass"
-figures = "pass"
-signoff = "pass"

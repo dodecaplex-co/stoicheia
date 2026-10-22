@@ -7,7 +7,7 @@ fingerprint = "sha256:a9259e6b54eb5360"
 
 [route]
 kind = "modified"
-note = "Euclid's argument, but the last step, that no third straight line equals DK, compares the angles at the centre M by I.24, which reaches every point of the circle. Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`); the companion takes M from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, with no System E counterpart."
+note = "Euclid's argument, but the last step, that no third straight line equals DK, compares the angles at the centre M by I.24, which reaches every point of the circle. Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`)."
 
 [[passage]]
 at = "Let ABC be a circle"
@@ -15,117 +15,35 @@ kind = "given"
 note = "\"Nearer\" is the less angle at D with the ray DA, unsigned. The convex circumference is read as where a straight line from D first meets the circle, the concave as where it meets it again, and the two orders are kept apart: the two meetings of one straight line make one angle with DA. A straight line touching the circle from D falls on neither, by convention, as Euclid's lines are drawn through; that its point of contact has no point of the circle before it or beyond it follows from Definition III.2, and is not stated in Lean. The last clause covers a point of contact too."
 
 [[passage]]
-at = "For let the centre of the circle ABC be taken"
-kind = "case"
-helper = "Prop8.on_diameter"
-note = "Euclid takes M by III.1 and joins radii to points off DA. The Lean also treats E = G and K = A in the greatest and least comparisons: `Prop8.on_diameter`, using `Prop2.triangle` (III.2, which Heath does not cite here), leaves only the two ends of the diameter, and `len_lt_of_between` makes DG less than DA."
-
-[[passage]]
-at = "Then, since AM is equal to EM"
-kind = "helper"
-helper = "Definition15"
-note = "Euclid uses the equality of AM and EM without giving a reason. The Lean obtains it from `Definition15`, Euclid's definition of a circle, which we assume as a rule, through the equal radii established beneath the taking of M."
-
-[[passage]]
-at = "therefore AD is equal to EM, MD"
-kind = "helper"
-helper = "Tacit.len_add_of_between"
-note = "Euclid takes AD as AM and MD together. The Lean writes this sum using `Tacit.len_add_of_between`, a rule we assume (System E, Diagram-segment 1), with M between A and D, then substitutes EM for AM."
-
-[[passage]]
-at = "Again, since ME is equal to MF"
-kind = "helper"
-helper = "Definition15"
-note = "Euclid uses the equality of ME and MF without giving a reason. The Lean obtains both radii equal to MA from `Definition15`, the assumed rule for equal radii, and combines those equalities."
-
-[[passage]]
-at = "and the angle EMD is greater than the angle FMD"
-kind = "helper"
-helper = "Prop8.outside"
-note = "Euclid reads E outside the triangle DFM from his figure, without a reference from Heath. In `Prop8.outside`, the Lean uses `BookI.Prop24.within` and `crossbar` to find Y on MF and DE, puts Y within the circle by `InsideCircle.of_between_centre`, and uses `Tacit.between_of_inside_chord`, a rule we assume (System E, Circle 1), to put Y between H and E; `angle_lt_of_between` then compares the angles at M."
-
-[[passage]]
 at = "Similarly we can prove that FD is greater than CD"
 kind = "grouped"
-note = "Euclid leaves F and C to the same argument without writing it out. The Lean proves the comparison above for any two points of the concave circumference on one side of DA, so it includes F and C."
+note = "The comparison above is proved for any two points of the concave circumference on one side of DA, F and C among them, so these sentences need no Lean of their own."
 
 [[passage]]
 at = "therefore DA is greatest, while DE is greater than DF"
-kind = "carried"
-helper = "Prop8.general"
-
-[[passage]]
-at = "and MG is equal to MK"
-kind = "helper"
-helper = "Definition15"
-note = "Euclid uses the equality of MG and MK without giving a reason. The Lean obtains both radii equal to MA from `Definition15`, the assumed rule for equal radii, and combines those equalities."
-
-[[passage]]
-at = "therefore the remainder KD is greater than the remainder GD"
-kind = "helper"
-helper = "Tacit.len_add_of_between"
-note = "Euclid takes MD as MG and GD together before subtracting the equal radii MK and MG. The Lean writes this sum using `Tacit.len_add_of_between`, a rule we assume (System E, Diagram-segment 1), with G between M and D, and cancels the common length by `Magnitude.lt_of_add_lt_add_left`."
-
-[[passage]]
-at = "And, since on MD, one of the sides of the triangle MLD"
-kind = "helper"
-helper = "Prop8.within"
-note = "Euclid reads K within the triangle DLM from his figure. In `Prop8.within`, the Lean uses `BookI.Prop24.within`, `crossbar` and `InsideCircle.of_between_centre` to find Z on ML and DK within the circle; `Tacit.between_of_inside_chord` (System E, Circle 1), a rule we assume, puts Z between K and C, so K is between D and Z, and the assumed rule `Tacit.pasch2` (System E, Pasch 2) puts K on D's side of ML."
-
-[[passage]]
-at = "and MK is equal to ML"
-kind = "helper"
-helper = "Definition15"
-note = "Euclid uses the equality of MK and ML without giving a reason. The Lean obtains both radii equal to MA from `Definition15`, the assumed rule for equal radii, and combines those equalities."
-
-[[passage]]
-at = "therefore the remainder DK is less than the remainder DL"
-kind = "helper"
-helper = "Magnitude.lt_of_add_lt_add_left"
-note = "Euclid keeps the strict inequality when the equal radii MK and ML are taken away. The Lean substitutes ML for MK and uses `Magnitude.lt_of_add_lt_add_left` to cancel the common length."
+kind = "case"
+note = "Euclid compares DE, DF and DC on one side of DA, as his figure has them. `Prop8.general` compares any two points of the concave circumference on opposite sides too, through the partner on the other side, as far from D, as near DA and concave too (`Prop8.partner`)."
 
 [[passage]]
 at = "Similarly we can prove that DL is also less than DH"
 kind = "grouped"
-note = "Euclid leaves L and H to the same argument without writing it out. The Lean proves the comparison above for any two points of the convex circumference on one side of DA, so it includes L and H."
+note = "The comparison above is proved for any two points of the convex circumference on one side of DA, L and H among them, so these sentences need no Lean of their own."
 
 [[passage]]
 at = "therefore DG is least, while DK is less than DL"
-kind = "carried"
-helper = "Prop8.general"
-
-[[passage]]
-at = "On the straight line MD, and at the point M on it"
-kind = "helper"
-helper = "BookI.Prop23"
-note = "Euclid constructs the equal angle at M and takes B on the circle, without a reference from Heath for the construction. The Lean uses `BookI.Prop23` on K's other side and `OnRay.exists_len_eq` to set MB equal to MK, using Postulate 3 and `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5; `Tacit.on_circle_of_len_eq`, the rule we assume as System E, Diagram-segment 3, puts B on ABC."
-
-[[passage]]
-at = "Then, since MK is equal to MB"
-kind = "helper"
-helper = "Definition15"
-note = "Euclid uses the equality of MK and MB without giving a reason. The Lean obtains both radii equal to MA from `Definition15`, the assumed rule for equal radii, and combines those equalities."
+kind = "case"
+note = "Euclid compares DK, DL and DH on one side of DA. `Prop8.general` compares any two points of the convex circumference on opposite sides too, through the partner on the other side, as far from D, as near DA and convex too (`Prop8.partner`)."
 
 [[passage]]
 at = "that is, the nearer to the least DG equal to the more remote"
 kind = "different"
-note = "Euclid appeals to the convex order, which does not cover K and B on the concave circumference, DK touching the circle, or, with K convex, DN ending on the concave circumference or at a point of contact; the Lean splits the angles at M by `Tacit.lt_trichotomy`, a rule we assume (System E §3.5), and uses I.24 for unequal angles, where Heath prints no reference. For equal angles the Lean uses `onRay_of_angle_eq` and `OnRay.eq_of_len_eq` to make the points coincide; for N on DA, `Prop8.on_diameter`, using `Prop2.triangle` (III.2, for which Heath prints no reference here), gives A or G, which the greatest and least clauses exclude; off DA, it compares N with K on K's side, or uses `same_side_of_opposite_sides` to put N on B's side and compares it with B."
+note = "The Lean does not appeal to the convex order, which misses a DN ending on the concave circumference or a DK touching the circle; I.24 at the centre M rules out equal straight lines on one side."
 
 [figure]
 case = "DE, DF, DC and DK, DL, DH compared on one side of DA, as in Heath's figure"
-note = "N marks the supposed third point of Euclid's reductio, with DN equal to DK and DB. The drawing keeps N distinct from K and B, so it cannot make those three lengths equal."
 
 [review]
-stage = "full"
-commit = "77b0a759"
-reviewer = "Claude Opus 5.5, independent reader"
+stage = "exceptions"
+commit = "17987153"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:4f1dea9a8e1ffdea"
-run = "brief 0005 stage 5, ship R3 (#29)"
-
-[review.items]
-statement = "pass"
-passages = "pass"
-representations = "n/a"
-commentary = "pass"
-figures = "pass"
-signoff = "pass"
