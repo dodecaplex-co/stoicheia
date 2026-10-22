@@ -1,8 +1,8 @@
 - **A page lists only what its Lean declares, never a word from a comment
-  (render.py).** On train C6c, III.13's page said that three lemmas follow the theorem,
-  among them `beside`, but its `Elements/BookIII/Prop13.lean` declares two,
-  Prop13.internally and Prop13.externally. A reader on the Book III records found it,
-  and we thank them for it. The cause is in
+  ([#313](https://github.com/jackChallis/stoicheia/issues/313)).** On train C6c, III.13's
+  page said that three lemmas follow the theorem, among them `beside`, but its
+  `Elements/BookIII/Prop13.lean` declares two, Prop13.internally and Prop13.externally. A
+  reader on the Book III records found it, and we thank them for it. The cause is in
   [`scripts/render.py`](../../scripts/render.py): `lean_parts` looked for a line that
   begins with a declaration's keyword (`theorem`, `lemma`, `def` and the rest) in the raw
   Lean, comments and docstrings included, and a docstring there wrapped so that a line
