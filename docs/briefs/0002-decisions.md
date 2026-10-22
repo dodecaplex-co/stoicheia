@@ -4880,8 +4880,11 @@ findings:
   `0254f4cd`, which landed before this train with its own entry, as #270; this train uses it only in
   III.25's record, whose figure draws every case. That branch, merged again at `62a10c91`,
   brings main at `78fb461d` and `554dfb0f` (#232 and #239), and this train was merged with
-  main again at `8674bce2` (#240, train C6a), `af90d71e` (#254) and `6d06c47b` (#270, the
-  check change itself, after main's tooling and text trains #271 to #304); the paths main changed
+  main again at `8674bce2` (#240, train C6a), `af90d71e` (#254), `6d06c47b` (#270, the
+  check change itself, after main's tooling and text trains #271 to #304) and `84c71dff`
+  (#309, II.5 and II.14 proving their right angles in place; the census of I.13's rule in
+  the overlap catalogue recounted on the merged 136 entries: 17 proofs, 16 calling it, 58
+  in the closure); the paths main changed
   since `73b97ab1` are main's, named in main's entries, and change neither the lock nor any
   pin.
   The merge itself writes no statement, check or expected value: each is one train's.
@@ -5001,10 +5004,14 @@ findings:
   each), which changes neither the lock nor any pin; then with the guard at
   `1b5e3f2b`, which brings train C6b after its /no-mistakes run and its readers (III.15
   and III.25), tooling/figure-every-case at `696181c5` and main at `8674bce2` (#240, train
-  C6a landed) and `af90d71e` (#254), and changes neither the lock nor any pin; and last
+  C6a landed) and `af90d71e` (#254), and changes neither the lock nor any pin; then
   with the guard at `eae7eed9`, which brings train C6b merged with main at `6d06c47b`
   (#270, the check change tooling/figure-every-case landed, and main's tooling and text
-  trains #271 to #304), and changes neither the lock nor any pin. The
+  trains #271 to #304), and changes neither the lock nor any pin; and last with the guard
+  at `cdb9750e`, which brings train C6b merged with main at `84c71dff` (#309, II.5 and
+  II.14 proving their right angles in place), and changes neither the lock nor any pin.
+  The census of I.13's rule in the overlap catalogue was recounted on the merged 137
+  entries: 14 proofs, each calling the rule itself, and 33 entries in the closure. The
   restated Book III of this train is kept whole; III.1's record and commentary are this
   train's, since its statement no longer takes a centre.
   `Certificate/axioms.lock`, written again by `python3 scripts/check_fidelity.py
@@ -5028,7 +5035,7 @@ findings:
   superposition. The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`,
   `model/`, `scripts/`, `.github/`, `review/SCHEMA.md`, `review/terms.toml`,
   `lakefile.toml` and `lean-toolchain` that differ from `lean/centre-guard` at
-  `eae7eed9`, each named whole:
+  `cdb9750e`, each named whole:
   `Audit/Crossing.lean`,
   `Audit/Overlaps.lean`,
   `Audit/screen.py`,
@@ -5053,7 +5060,7 @@ findings:
   the lock's one changed word and what follows from it. `scripts/scaffold_book.py` differs
   by tooling/c6c-scaffold's change, its restated Book III signatures, the companions it
   emits after III.24 and III.25, and its comment, which lands before this train with its
-  own entry. The paths main changed between `73b97ab1` and `6d06c47b` are main's, named
+  own entry. The paths main changed between `73b97ab1` and `84c71dff` are main's, named
   in main's entries. No statement, check or expected value changes in this merge.
 
 - **III.30's halves, approved, proved and registered (#67).** The owner approved
