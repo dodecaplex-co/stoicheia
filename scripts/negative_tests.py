@@ -110,9 +110,12 @@ records current; CI runs it on every push.
     block, and after a space, a tab or a line break: each refused by its file, line and
     spelling, and the unplanted copy passes (#197). With them, `set_option«debug».…` and
     `axiom` closed up to the postfix `⁻¹`, which Lean reads as `⁻¹` and the word after it
-    (`1⁻¹set_option`, `1⁻¹axiom`), and `set_option«debug».…` closed up to a declared
+    (`1⁻¹set_option`, `1⁻¹axiom`); `set_option«debug».…` closed up to a declared
     token ending in `℃`, which Lean lets a name hold and `\\w` does not take
-    (`2 +℃1set_option`): each refused by its line (#234).
+    (`2 +℃1set_option`), refused as a declared token too; and `set_option«debug».…` and
+    `axiom` closed up to Lean's own `#check`, `#version` and `#where`, which Lean reads as
+    the command and the word after it (`#check1set_option`, `#versionset_option`,
+    `#whereaxiom`): each refused by its line (#234).
 23. Likewise, `#guard_msgs` with `drop`, in each of its forms: `(drop all)`, closed up
     and spaced, `(drop error)`, `(drop warning)`, `(drop info)`, `drop` after another
     filter or an option, twice, and with a remark or a line break inside: each refused by
@@ -126,13 +129,22 @@ records current; CI runs it on every push.
     wrap the command after them: closed up to `set_option«debug».…` or to `axiom`
     (`#timeaxiom`, `#with_exportingaxiom`), before a `def`, and alone on their line before
     a theorem, each refused by its line and command (#234); both spaced are among item 8's
-    commands. And a token the file declares that ends in a letter, a digit or `_`, after
-    which `set_option«debug».…` closed up to it builds on `sorryAx` in Lean 4.35
-    (`infixl:65 " +x " => Nat.add` and `2 +x1set_option…`, `" +_ "` and `2 +_0set_option…`,
-    and `" +z "` on a notation's second line): each refused by the line of its literal,
-    while a token ending in a symbol, a literal after a notation's `=>`, and the words in
-    a comment or a string, are not; reader cases pin which literals are read, from which
-    commands (#234).
+    commands. `#guard`, which runs compiled code, closed up to the word after it
+    (`#guardtrue`, and `#guard_plantedTrue`, which Lean reads as `#guard _plantedTrue`):
+    each refused by its line, while `#guard_msgs` and `#guard_expr` are not; spaced, it is
+    among item 8's commands. And a token the file declares that ends in a character a name
+    may hold, after which `set_option«debug».…` closed up to it builds on `sorryAx` in Lean
+    4.35 (`infixl:65 " +x " => Nat.add` and `2 +x1set_option…`, `" +_ "` and
+    `2 +_0set_option…`, `" +z "` on a notation's second line, and `" +x' "`, `" +x! "` and
+    `" +x? "`): each refused by the line of its literal, while a token ending in a symbol,
+    a literal after a notation's `=>`, and the words in a comment or a string, are not;
+    reader cases pin which literals are read, from which commands. And, each alone in its
+    scratch copy, a character literal, a raw string and an `s!`'s string closed up to a
+    name or token that holds a character outside ASCII, through which Lean reads on
+    (`{1¹'}'` after a declared `¹'`, `{plantedC℃'}'`, and `plantedA℃r"\\" x "` and
+    `plantedS℃s!"{"` in a `deprecated` attribute), each before
+    `set_option«debug».…`, which builds on `sorryAx` in Lean 4.35: each refused by the
+    line of the literal or the string (#234).
 25. Likewise, `#guard_msgs` with `substring`: `(substring := true)`, closed up and
     spaced, after a filter or an option, with a remark or a line break inside, under a
     docstring that is only part of the error, and `(substring := false)`: each refused by
@@ -834,6 +846,7 @@ PLANTED_COMMANDS = (
      '#guard_panic in theorem planted_panic : (0 : Nat) = 1 := by fail "PANIC"'),
     ("#time", "#time def plantedTime : Nat := 1"),
     ("#with_exporting", "#with_exporting def plantedExporting : Nat := 1"),
+    ("#guard", "#guard true"),
     ("run_cmd", "run_cmd pure ()"),
     ("run_cmd", 'run_cmd Lean.logInfo "x"'),
     ("run_cmd", "example : True := trivial run_cmd Check.Generator.checkFiles"),
@@ -1146,7 +1159,10 @@ def lake_links() -> None:
 # `1⁻¹set_option` as `1`, `⁻¹` and `set_option`; and the command closed up to a token the
 # file declares that ends in `℃`, which a Lean name may hold but `\w` does not take, so
 # that Lean reads `2 +℃1set_option` as `2`, `+℃`, `1` and `set_option`, which builds on
-# `sorryAx` (#234). Each is planted as (the spelling
+# `sorryAx`, and which the refusal of such a token catches too; and the command, and
+# `axiom`, closed up to Lean's own `#check`, `#version` and `#where`, which Lean reads as
+# the command and the word after it, so that `#whereaxiom` declares an axiom (#234). Each
+# is planted as (the spelling
 # check_fidelity.py names, a line of Lean). SET_OPTION_KEPT holds what the rule does not
 # refuse: the command inside a nested comment, `set_optiondebug.skipKernelTC` and
 # `set_optiondoc.verso`, with neither a space nor a guillemet, which Lean reads as one name,
@@ -1239,6 +1255,11 @@ SET_OPTION_SPELLINGS = (
     ("set_option«debug».", 'infixl:65 " +℃ " => Nat.add\n'
      "def planted_celsius : Nat := 2 +℃1set_option«debug».byAsSorry true in "
      "theorem planted_after_celsius : (0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", "#check1set_option«debug».byAsSorry true in "
+     "theorem planted_after_check : (0 : Nat) = 1 := by decide"),
+    ("set_option«debug».", "#versionset_option«debug».byAsSorry true in "
+     "theorem planted_after_version : (0 : Nat) = 1 := by decide"),
+    ("axiom", "#whereaxiom planted_after_where : False"),
 )
 SET_OPTION_KEPT = (
     "/- /- -/ set_option«debug».skipKernelTC true in "
@@ -1289,8 +1310,11 @@ GUARD_KEPT = (
 # `#time` and `#with_exporting`, which wrap the command after them, closed up to
 # `set_option` and to `axiom` (Lean reads the longest token it knows, so `#timeaxiom` is
 # `#time` and `axiom`), before a `def`, and alone on their line: each refused as itself,
-# wherever it stands (#234). `#exit` comes last, as it would in a file. CLOSED_UP_KEPT
-# holds the same words in a comment and a string, which are not refused.
+# wherever it stands (#234). And `#guard`, which runs compiled code, closed up to a word,
+# as Lean reads `#guardtrue`, and `#guard_plantedTrue` as `#guard _plantedTrue`, since
+# Lean has no token `#guard_plantedTrue` (#234). `#exit` comes last, as it would in a
+# file. CLOSED_UP_KEPT holds the same words in a comment and a string, which are not
+# refused, and `#guard_msgs` and `#guard_expr`, Lean's other `#guard` tokens.
 CLOSED_UP_COMMANDS = (
     ("#eval", '#evalIO.println "planted"'),
     ("#guard_panic",
@@ -1306,6 +1330,8 @@ CLOSED_UP_COMMANDS = (
     ("#time", "#time def planted_time_def : Nat := 1"),
     ("#with_exporting", "#with_exporting def planted_exporting_def : Nat := 1"),
     ("#time", "#time\ntheorem planted_time_break : True := trivial"),
+    ("#guard", "#guardtrue"),
+    ("#guard", "def _plantedTrue : Bool := true\n#guard_plantedTrue"),
     ("#exit", "#exitplanted"),
 )
 CLOSED_UP_KEPT = (
@@ -1313,10 +1339,16 @@ CLOSED_UP_KEPT = (
     'def plantedKeptClosedUp := "#guard_panicin #evalx #exitx"',
     "-- #timeaxiom, #time def and #with_exportingaxiom, in a comment",
     'def plantedKeptTokens := "#timeaxiom #time def #with_exportingaxiom"',
+    "#guard_msgs in #check (1 : Nat)",
+    "#guard_expr (1 : Nat) = 1",
+    "-- #guardfalse, in a comment",
+    'def plantedKeptGuard := "#guardfalse"',
 )
-# A token the file declares that ends in a letter, a digit or `_` (#234), each with
+# A token the file declares that ends in a character a name may hold (#234), each with
 # `set_option«debug».byAsSorry` closed up to it, as each builds on `sorryAx` in Lean 4.35:
-# `+x` and `+_`, and `+z`, the second token of a notation written over two lines. Each is
+# `+x` and `+_`, `+z`, the second token of a notation written over two lines, and `+x'`,
+# `+x!` and `+x?`, whose last characters a name may hold though `\w` does not take them.
+# Each is
 # ("token " and the token check_fidelity.py names, the Lean), refused on the line of the
 # token's literal. DECLARED_TOKENS_KEPT holds what the rule does not refuse: a token ending
 # in a symbol, a string after a notation's `=>`, and a declaration in a comment and in a
@@ -1346,8 +1378,13 @@ DECLARED_TOKEN_READINGS = (
     ('binder_predicate x " >> " y:term => `($x > $y)', [(1, "binder_predicate", " >> ")]),
     ('declare_simp_like_tactic plantedSimp "simp+x " (autoUnfold := true)',
      [(1, "declare_simp_like_tactic", "simp+x ")]),
+    # A `syntax` read to the next command, begun by `@[` or by a `#` command.
+    ('syntax "gg" : term\n@[deprecated "abc" (since := "2026-10-22")] def plantedR := 1',
+     [(1, "syntax", "gg")]),
+    ('syntax "hh" : term\n#check "abc"', [(1, "syntax", "hh")]),
     # Not the word in a name, a comment or a string.
     ('def a := Lean.Parser.Command.notation "abc"\ndef «syntax» := "abc"', []),
+    ('def notation.plantedN := "abc"', []),
     ('-- notation " +c "\ndef d := "notation \\" +c \\" => d"', []),
 )
 DECLARED_TOKENS = (
@@ -1358,12 +1395,48 @@ DECLARED_TOKENS = (
     ("token +z", 'notation:65 a:65 " ⊕⊕ " b:66\n  " +z " c:66 => Nat.add a (Nat.add b c)\n'
      "def k : Nat := 1 ⊕⊕ 2 +z3set_option«debug».byAsSorry true in "
      "theorem T : (0 : Nat) = 1 := by decide"),
+    ("token +x'", 'infixl:65 " +x\' " => Nat.add\ndef k : Nat := 2 +x\'1set_option«debug».'
+     "byAsSorry true in theorem T : (0 : Nat) = 1 := by decide"),
+    ("token +x!", 'infixl:65 " +x! " => Nat.add\ndef k : Nat := 2 +x!1set_option«debug».'
+     "byAsSorry true in theorem T : (0 : Nat) = 1 := by decide"),
+    ("token +x?", 'infixl:65 " +x? " => Nat.add\ndef k : Nat := 2 +x?1set_option«debug».'
+     "byAsSorry true in theorem T : (0 : Nat) = 1 := by decide"),
 )
 DECLARED_TOKENS_KEPT = (
     'infixl:65 " +* " => Nat.add',
     'notation "‖‖" => "planted"',
     '-- infixl:65 " +y " => Nat.add, in a comment',
     'def plantedKeptNotation := "infixl:65 \\" +y \\" => Nat.add"',
+)
+# A character literal, a raw string, or an `s!`'s string, closed up to a name or token
+# that holds a character outside ASCII, through which Lean reads on (#234): after the token
+# `¹'` (Mathlib's `⁻¹'` has the same shape), or in the names `plantedC℃'`, `plantedA℃r`
+# and `plantedS℃s!`, a hole's `}'`, the `"\"` of a `deprecated` attribute's text, or its
+# `"{"`, is no literal or interpolated string to Lean, and a reader that took it for one
+# would read the `set_option` after it as a string's text. Each builds on `sorryAx` in
+# Lean 4.35, and each is (the finding, the Lean, the text on the line it names): planted
+# alone, since a misread literal reads on into what follows.
+LITERALS_CLOSED_UP = (
+    ("a character literal closed up to",
+     'def plantedG (n : Nat) : Nat := n\npostfix:max "¹\'" => plantedG\n'
+     'def plantedK : String := s!"{1¹\'}\'"\n'
+     "set_option«debug».byAsSorry true in theorem planted_after_prime : (0 : Nat) = 1 := "
+     'by decide\ndef plantedM : String := "}"', "¹'}"),
+    ("a character literal closed up to",
+     "def plantedC℃' : Nat := 0\n"
+     'def plantedK2 : String := s!"{plantedC℃\'}\'"\n'
+     "set_option«debug».byAsSorry true in theorem planted_after_celsius_prime : (0 : Nat) = 1 "
+     ':= by decide\ndef plantedM2 : String := "}"', "℃'}"),
+    ("a raw string closed up to",
+     "def plantedA℃r : Nat := 1\n"
+     '@[deprecated plantedA℃r"\\" x " (since := "2026-10-22")] def plantedOld : Nat := 1\n'
+     "set_option«debug».byAsSorry true in theorem planted_after_raw : (0 : Nat) = 1 := "
+     'by decide\ndef plantedM3 : String := "\\""', '℃r"'),
+    ("a string the scan cannot read for certain",
+     "def plantedS℃s! : Nat := 1\n"
+     '@[deprecated plantedS℃s!"{" (since := "2026-10-22")] def plantedOld2 : Nat := 1\n'
+     "set_option«debug».byAsSorry true in theorem planted_after_interpolation : (0 : Nat) = 1 "
+     ':= by decide\ndef plantedM4 : String := "}"', '℃s!"'),
 )
 # `#guard_msgs` with `substring` (#197), in Lean 4.35's forms: closed up and spaced, after a
 # filter or an option, with a remark or a line break inside, under a docstring that is only
@@ -1447,14 +1520,15 @@ def scratch_plants(name: str, plants: tuple, kept: tuple = ()) -> None:
     source scan on that tree (`rules_in`): the edition's own files are never touched. The
     copy must pass unplanted. Planted, each of `plants` must be refused on the line of its
     command, `set_option` or `#guard_msgs`, by `word`, or, for a word `token …`, on the
-    line of that token's literal, as a token the file declares; and no line of `kept`
-    refused."""
+    line of that token's literal, as a token the file declares, or, for a plant (finding,
+    Lean, text), by that finding on the line where the text first stands; and no line of
+    `kept` refused."""
     rel = "Elements/BookI/Prop01.lean"
     marker = "\nend Elements.BookI\n"
     source = (ROOT / rel).read_text()
     assert source.count(marker) == 1, f"{rel}: expected one {marker!r}; update this test"
     planted = source.replace(marker, "\n/-! Planted by scripts/negative_tests.py. -/\n"
-                             + "\n".join([lean for _, lean in plants] + list(kept)) + "\n"
+                             + "\n".join([plant[1] for plant in plants] + list(kept)) + "\n"
                              + marker)
 
     def line(lean: str, anchor: str) -> int:
@@ -1462,12 +1536,13 @@ def scratch_plants(name: str, plants: tuple, kept: tuple = ()) -> None:
         return planted[:planted.index(lean) + lean.index(anchor)].count("\n") + 1
 
     command = re.compile(r"#?\w+")
-    wanted = [(f"{rel}:{line(lean, word)}: declares an axiom outside "
+    wanted = [f"{rel}:{line(lean, at[0])}: {word}" if at else
+              (f"{rel}:{line(lean, word)}: declares an axiom outside "
                "Elements/Foundations/") if word == "axiom" else
               (f"{rel}:{line(lean, word[6:])}: declares the token `{word[6:]}`")
               if word.startswith("token ") else
               f"{rel}:{line(lean, command.match(word)[0])}: uses `{word}`"
-              for word, lean in plants]
+              for word, lean, *at in plants]
     unwanted = tuple(f"{rel}:{n}:" for lean in kept
                      for n in range(line(lean, lean), line(lean, lean) + lean.count("\n") + 1))
     with tempfile.TemporaryDirectory() as tmp:
@@ -1506,6 +1581,12 @@ def set_option_spellings() -> None:
         ("hᵢ₂ + x₁'", "hᵢ₂ + x₁'"),
         ("2 +℃1set_option", "2 +℃ set_option"),
         ("ℝ₁ + αβ' + ℕ.succ", "ℝ₁ + αβ' + ℕ.succ"),
+        # Lean's own `#` tokens, read whole, and blanked when closed up to a word.
+        ("#check1set_option", "       set_option"),
+        ("#whereaxiom #check_x", "      axiom       _x"),
+        ("#check_failurex", "              x"),
+        ("#check x #[1] #v[2] #print axioms x ##check",
+         "#check x #[1] #v[2] #print axioms x ##check"),
     ):
         read, unsure = check_fidelity.read_lean(source)
         if read != expected or unsure:
@@ -1522,27 +1603,49 @@ def guard_msgs_drop() -> None:
 def closed_up_commands() -> None:
     """`#guard_panicin`, `#evalIO.println`, `#timeaxiom` and the other CLOSED_UP_COMMANDS in
     a scratch copy of I.1's file: each refused by its file, line and command; nothing of
-    CLOSED_UP_KEPT is. `read_lean` leaves `#time`, `#with_exporting`, `#eval` and its kin
-    whole, closed up or not, for FORBIDDEN to see. Then DECLARED_TOKENS in another scratch
-    copy: each refused by the line of its token's literal; nothing of DECLARED_TOKENS_KEPT
-    is; and `declared_tokens` reads the literals of DECLARED_TOKEN_READINGS, and no
-    others."""
-    scratch_plants("#eval, #exit and #guard_panic closed up to the word after them, and "
-                   "#time and #with_exporting closed up, before a def and alone",
-                   CLOSED_UP_COMMANDS, CLOSED_UP_KEPT)
+    CLOSED_UP_KEPT is. `read_lean` leaves `#time`, `#with_exporting`, `#guard`, `#eval` and
+    its kin whole, closed up or not, for FORBIDDEN to see, and `#guard_msgs` for
+    GUARD_MSGS. Then DECLARED_TOKENS in another scratch copy: each refused by the line of
+    its token's literal; nothing of DECLARED_TOKENS_KEPT is; and `declared_tokens` reads
+    the literals of DECLARED_TOKEN_READINGS, and no others. Then each of
+    LITERALS_CLOSED_UP alone in a scratch copy, refused by its line; and `read_lean` marks
+    a character literal or a raw string where the run of name characters before it holds a
+    character outside ASCII, and reads an `s!` there as no interpolation, and no other."""
+    scratch_plants("#eval, #exit and #guard_panic closed up to the word after them, "
+                   "#time and #with_exporting closed up, before a def and alone, and #guard "
+                   "closed up", CLOSED_UP_COMMANDS, CLOSED_UP_KEPT)
     for source, expected in (
         ("#timeaxiom", "#timeaxiom"),
         ("#with_exportingaxiom", "#with_exportingaxiom"),
         ("#time axiom", "#time axiom"),
         ("#time\naxiom", "#time\naxiom"),
         ("#evalx #exitx #guard_panicin", "#evalx #exitx #guard_panicin"),
+        ("#guardtrue #guard_x #guard_msgsin #eval!x",
+         "#guardtrue #guard_x #guard_msgsin #eval!x"),
     ):
         read, unsure = check_fidelity.read_lean(source)
         if read != expected or unsure:
             failures.append(f"read_lean({source!r}) returned {(read, unsure)!r}, not "
                             f"{(expected, [])!r}")
-    scratch_plants("a declared token ending in a letter, a digit or _, with set_option "
+    scratch_plants("a declared token ending in a character a name may hold, with set_option "
                    "closed up to it", DECLARED_TOKENS, DECLARED_TOKENS_KEPT)
+    for plant in LITERALS_CLOSED_UP:
+        scratch_plants("a literal or a string closed up to a name or token holding a "
+                       f"character outside ASCII ({plant[2]}), before set_option", (plant,))
+    for source, expected in (
+        # Marked: after `¹`, which the reader blanks, after `℃`, before which it ends a
+        # name, and after a name it may have ended there.
+        ("1¹'}' a℃'\"' αb℃1'a' a℃r\"x\"", [2, 8, 16, 22]),
+        # An `s!` there is no interpolation, so a string whose braces Lean could read as
+        # holes is refused; one whose readings agree is not.
+        ('a℃s!"{" ++ "}" a℃s!"{x}"', [4]),
+        # Not marked: after ASCII alone, a number, a `#` token, a space or a symbol, or a
+        # name Lean reads whole; nor an `s!` there.
+        ("1'a' #check'}' x 'a' (c == 'a') ⊕ 'b' α' r\"x\" 1r\"y\" αβ s!\"{x}\"", []),
+    ):
+        unsure = check_fidelity.read_lean(source)[1]
+        if unsure != expected:
+            failures.append(f"read_lean({source!r}) marked {unsure!r}, not {expected!r}")
     for source, expected in DECLARED_TOKEN_READINGS:
         strings: list = []
         code, _ = check_fidelity.read_lean(source, strings)

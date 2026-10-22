@@ -394,15 +394,21 @@ dependencies.
   line followed by `Check.Generator.<ident>` or `(Check.Generator.<ident>`, since those
   files run the generator. Every other forbidden command or attribute is still refused
   there, and an `axiom` is refused everywhere under `model/`. `check_fidelity.py` matches
-  each as a whole word, and `#eval`, `#exit`, `#guard_panic`, `#time` and
-  `#with_exporting` also closed up to the word after them, since Lean reads the longest
+  each as a whole word, and `#eval`, `#exit`, `#guard_panic`, `#time`, `#with_exporting`
+  and `#guard` also closed up to the word after them, since Lean reads the longest
   command it knows (`#evalx` is `#eval x`), in
   the Lean with its comments and the text of its string and character literals taken
   out, read as Lean reads them, raw strings and escapes among them (`native_decide` even
   in a comment or a string). The code in an interpolated string's `{…}` holes is read
   too; a string whose braces Lean could read either as text or as holes of code, one not
   just after `s!`, `m!`, `f!` or `throwError` whose two readings end in different places,
-  is refused, since the scan cannot tell which Lean will do:
+  is refused, since the scan cannot tell which Lean will do. So is a character literal
+  or a raw string closed up to a name or a token that holds a character outside ASCII
+  (`a℃'}'`, Mathlib's `⁻¹'`, `a℃r"\" …"`): Lean may read on through the `'` or the `r`
+  as part of that name or token, and then a `"` or `}` the scan took for a literal's
+  text opens a string or closes a hole, hiding the code after it; an `s!`, `m!`, `f!`
+  or `throwError` so closed up (`a℃s!"{"`) is not taken to begin an interpolated string,
+  so the string after it is refused if its braces could be holes (#234):
   - `native_decide`, `bv_decide` and `bv_check`, and `decide` with its `native` option,
     have the compiler vouch for a proof in the kernel's place; since `decide +native`,
     `decide (native := …)` and a whole configuration given by `(config := …)` all set
@@ -478,12 +484,22 @@ dependencies.
     the longest token it knows, so `#timeaxiom planted : False` is `#time` and an axiom,
     which a reader of `#` and one name would miss. No file uses either, so both are
     refused wherever they stand, closed up to a command or not (#234);
-  - a token declared in the file and ending in a letter, a digit or `_`, a character
-    Python's `\w` takes, once trimmed of blanks as Lean trims it: after
+  - `#guard`, which evaluates its test by compiling and running it while the file is
+    built, as `#eval` does. Lean has no token `#guard_x`, so it reads `#guard_x` as
+    `#guard _x`, and the scan refuses `#guard` before anything but the rest of Lean's
+    other `#guard` tokens, `#guard_msgs` and `#guard_expr`, which run nothing and are not
+    refused (`#guard_panic` has its own item). No file uses `#guard`; the coordinator
+    decided its refusal on 22 October 2026, as a tightening (#234);
+  - a token declared in the file and ending in a character a name may hold, or one
+    Python's `\w` takes, a letter, a digit, `_`, `'`, `!`, `?` or `℃` among them, once
+    trimmed of blanks as Lean trims it: after
     `infixl:65 " +x " => Nat.add`, Lean reads `2 +x1set_option` as `2`, `+x`, `1` and
     `set_option`, so `2 +x1set_option«debug».byAsSorry true in theorem …` builds on
     `sorryAx`, while the scan, which does not read a file's tokens, takes `x1set_option`
-    for one name. A token is each string literal of
+    for one name; and the same holds of `" +x' "`, `" +x! "` and `" +x? "`. The
+    coordinator decided the refusal on 22 October 2026 for a token ending in a word
+    character, and widened it the same day to the rest of a name's characters, as
+    tightenings (#234). A token is each string literal of
     `notation`, `infix`, `infixl`, `infixr`, `prefix`, `postfix`, `syntax`, `macro`,
     `elab`, `binder_predicate`, `declare_simp_like_tactic` or Mathlib's `notation3`, read
     as Lean reads it, escapes, gaps and raw strings among them, on any line of the
@@ -494,8 +510,8 @@ dependencies.
     Every literal there is read, a `&"…"`, which declares no token, among them, and a
     string in the next command too when that command begins with a word of a library,
     as Mathlib's `lemma`. It is refused in every file the scan reads, with no exception,
-    since none declares one: the only tokens they declare are `‖`, `∠`, `△` and `∟`, in
-    `Elements/Foundations/Magnitudes.lean` (#234);
+    since none declares one ([the decision entry](decisions/2026-10-22-scan-token-boundaries.md)
+    gives the count);
   - `#exit` stops Lean reading the file, though a reader and the checks here read on.
 - **Superposition** only in I.4 and I.8.
 - **Placement,** Euclid's application of one figure to another, only in III.24 and the
@@ -539,11 +555,14 @@ docstring that pins an error, each in each of its forms, in a scratch copy of I.
 `set_option` closed up to decimal, hexadecimal, scientific and underscore-separated
 numbers, after a projection and after a declared notation ending in `.`, with whitespace
 or a comment beside it, and `axiom` closed up to such a number, with controls that
-preserve ordinary projections; `set_option` and `axiom` closed up to the postfix `⁻¹`, and
-to `#time` and `#with_exporting`, which are refused too before a `def` and alone on their
-line; `set_option` closed up to a declared token ending in `℃`; a declared token ending in
-a letter, a digit or `_`, after a notation's other token on its second line too, with
-`set_option` closed up to it;
+preserve ordinary projections; `set_option` and `axiom` closed up to the postfix `⁻¹`, to
+Lean's own `#check`, `#version` and `#where`, and to `#time` and `#with_exporting`, which
+are refused too before a `def` and alone on their line; `#guard` closed up to the word
+after it; `set_option` closed up to a declared token ending in `℃`; a declared token
+ending in a letter, a digit, `_`, `'`, `!` or `?`, after a notation's other token on its
+second line too, with `set_option` closed up to it; a character literal, a raw string and
+an `s!`'s string closed up to a name or token that holds a character outside ASCII, each
+before `set_option`, each in a scratch copy of its own;
 the same pin at a new file beside each file of its allow-list, at each file's name in the
 other's folder, in `Audit/` and in `Staging/`, and a pin whose `error:` ends its line;
 a proposition imported by Book Zero; a `sorry` in a
@@ -564,11 +583,14 @@ caught while one in `model/.lake` is not read, that a link named `.lake`, to a
 directory, a file or nothing, is refused in `model/`, `model/Model/` and `model/Check/`,
 that a `#guard_msgs` that checks its messages or passes them on, one under a docstring
 that pins an info message, `error:` in a theorem's own docstring, a comment or a module
-docstring before a `#guard_msgs`, a declared token ending in a symbol, a string after a
-notation's `=>`, and the words of each of these commands in a comment or a string, are
-not refused, that the pin passes at each file of its allow-list, that the scan reads the
-literals of a declaration as Lean does, over two lines, after a spaced precedence, raw,
-escaped or with a gap, and no string outside one, and that the unplanted tree passes.
+docstring before a `#guard_msgs`, `#guard_msgs` and `#guard_expr` beside `#guard`, a
+declared token ending in a symbol, a string after a notation's `=>`, and the words of
+each of these commands in a comment or a string, are not refused, that the pin passes at
+each file of its allow-list, that the scan reads the literals of a declaration as Lean
+does, over two lines, after a spaced precedence, raw, escaped or with a gap, to the next
+command begun by `@[` or a `#` command, and no string outside one nor a dotted name's
+word, that it reads Lean's `#` tokens whole and marks a literal closed up as above but no
+other, and that the unplanted tree passes.
 They plant source files in place, the `.lake` links and the scratch copy of I.1's file
 in small trees of their own, and copy only `facts.json` and that one copy of I.1, never
 `model/.lake`.
@@ -598,19 +620,35 @@ comments end projection adjacency, as they do in Lean. A name ends where Lean 4.
 it, made only of the characters its `isIdFirst` and `isIdRest` take, so a letter or digit
 that no name holds, as the `¹` of the postfix `⁻¹`, does not join the word after it
 (`1⁻¹set_option` is `1`, `⁻¹` and `set_option`); and it ends sooner, before any of the 96
-symbols a Lean name may hold that Python's `\w` does not take, as `℃`, which no file
-uses, so that a word after a declared token ending in one (`2 +℃1set_option`) is seen to
-begin. No other token whose last characters could be a name is read as Lean reads it,
-taking the longest token it knows: Lean reads `#check1set_option` as `#check`, `1` and
-`set_option`, and the scan as `#` and one name. So the scan refuses `#time` and
-`#with_exporting`, which wrap the command after them, wherever they stand, and a token
-the file declares that ends in a letter, a digit or `_`, both in the list above. It
-still does not read Lean's own tokens, as `#check`, nor those of a library a file
-imports, as Mathlib's, nor a token declared by a command the list above does not name;
-nor does it refuse a declared token ending in `'`, `!` or `?`, which a name may hold but
-`\w` does not take: after `infixl:65 " +x' " => Nat.add`, Lean reads `2 +x'1set_option`
-as `2`, `+x'`, `1` and `set_option`, where the scan reads `+` and one name. A lone
-carriage return (a `\r` not followed by `\n`) is refused in any scanned file: Lean
+characters a Lean name may hold that Python's `\w` does not take, as `℃`, which no file
+uses, so that a word after a token ending in one, as a library's, is seen to begin
+(`2 +℃1set_option`). Ending a name early, or blanking a character, shows the scan more
+words, and changes nothing else, but where a character literal, a raw string, or an
+`s!`, `m!`, `f!` or `throwError` follows closed up: Lean may read on through it as part
+of the name or a token, so the scan refuses the literal or the raw string, and takes no
+such word to begin an interpolated string (the list above). Lean reads the longest token
+it knows, and the scan reads Lean 4.35's own tokens that begin with `#`, 30 in all, as
+Lean does, so `#check1set_option` is `#check`, `1` and `set_option`, and `#whereaxiom` is
+`#where` and `axiom`: it blanks such a token closed up to a word, so the word is seen to
+begin, but leaves whole those the list above refuses, refused closed up or not, and
+`#guard_msgs`, for the rules on its pins. It refuses a token the file declares that ends in a character a
+name may hold (the list above). It does not read the rest, and these stay open, each
+example built in Lean 4.35 as written:
+- Lean's other own tokens. Of those that end in a name's character, four end in `'`,
+  `]'`, `×'`, `Σ'` and `⊕'`; the scan blanks the `Σ` and refuses a literal after it, but
+  takes the `'` of the other three for a character literal's opening, so that
+  `def T : Type := Nat ⊕'"' "`, with a coercion from `String` to `Type`, and
+  `set_option«debug».byAsSorry true in theorem …` on the next line, builds on `sorryAx`
+  while the scan reads the command as a string's text. Three end in `-` or `/`, `<-`,
+  `//` and `\/`, and before a `-` the scan reads a comment where Lean reads none:
+  `def S : Type := {x : Int //-1 < x}` and that `set_option` line build on `sorryAx`.
+- A token the file declares that ends in a symbol, which is allowed: one that holds a
+  comment's opening or a quote hides the code after it, as `infixl:65 " ⊕-- " => Nat.add`
+  and `def k : Nat := 1 ⊕--2set_option«debug».byAsSorry true in theorem …` do.
+- A token of a library a file imports, as Mathlib's `''` or `#find`, and a token declared
+  by a command the list above does not name: neither is read.
+
+A lone carriage return (a `\r` not followed by `\n`) is refused in any scanned file: Lean
 refuses one between tokens but accepts it inside a comment or a literal, where a `--` comment does not end at it, so a
 reader with universal newlines would end the comment there and let a string open behind
 it that swallows the code, a forbidden command among it. CRLF files are allowed, as Lean
