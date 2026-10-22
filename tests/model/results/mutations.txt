@@ -1,11 +1,11 @@
 # mutations: 15 deliberately weakened statements
 # command: python3 -I tests/model/mutations.py
 # seeds: none (deterministic)
-# commit: 0dd8349f8e41a46ed8f6f12f11d44fc3b90b7b17 (harness files as committed)
-# harness sha256: ddbc9078e17598e2e98db2ef737477dd2ada7f366e15d1e2499dab34609bddb8
-# python: 3.11.9 (CPython, Darwin arm64)
+# commit: 8ccb38ffb7578da9ef32d827a351a979fe8fc5e6 (harness files as committed)
+# harness sha256: 9ec5d9c4a18dbbef546b8dd2bf2bea4d69a3f1326fb526a0001d62285ea487ac
+# python: 3.14.2 (CPython, Darwin arm64)
 # date: 2026-10-21
-# time: 0.3 s
+# time: 0.2 s
 
 Intersection 4 as printed (A on OR inside alpha)               counterexample found
       ((-1, -1, 2), (-1, -1, 1), (-1, -1), (-2, -2))
