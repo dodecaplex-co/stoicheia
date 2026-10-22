@@ -51,7 +51,8 @@ them at work.
    [FORMALIZATION.md](docs/FORMALIZATION.md) says.
 3. **Never add an `axiom`.** All assumptions live in `Elements/Foundations/`. If you believe
    Euclid needs a rule that is not there, open an issue: new rules come from System E, or
-   LeanEuclid's corrections of it, with a citation.
+   LeanEuclid's corrections of it, with a citation, or are our own, as `exists_centre` is,
+   by the owner's decision.
 4. **Don't change a statement** without opening an issue first: other propositions are
    written against it.
 5. **One warm voice,** generous with credit and never competitive
