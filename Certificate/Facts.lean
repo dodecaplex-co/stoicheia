@@ -315,25 +315,43 @@ def unfoldHead? (env : Environment) (toolchain : NameSet) (e : Expr) : m (Option
   return some ((ci.instantiateValueLevelParams! us).beta e.getAppArgs)
 
 /-- Field `i` of the structure value `s`: `s`'s head unfolded while it is a definition of
-this project, until it is a constructor applied to its arguments. `none` when it never is,
-as for a structure given by an opaque word or a variable. -/
+this project, and a `let` at its head substituted into its body, until it is a constructor
+applied to its arguments. A projection at its head, of a structure nested in another or of
+a field that is a function, is read the same way, and the field it names, applied to the
+projection's arguments, takes its place. `none` when there is never a constructor, as for
+a structure given by an opaque word or a variable. -/
 def projField? (env : Environment) (toolchain : NameSet) (s : Expr) (i : Nat) :
     m (Option Expr) := do
   let mut s := s.consumeMData.headBeta
+  let mut pending : List (Nat × Array Expr) := [(i, #[])]
   for _ in [0:readDepth] do
-    let .const n _ := s.getAppFn | return none
-    if let some (.ctorInfo c) := env.find? n then return s.getAppArgs[c.numParams + i]?
-    match ← unfoldHead? env toolchain s with
-    | some s' => s := s'.consumeMData.headBeta
-    | none => return none
+    match s.getAppFn with
+    | .proj _ j t =>
+      pending := (j, s.getAppArgs) :: pending
+      s := t.consumeMData.headBeta
+    | .letE _ _ v b _ => s := (mkAppN (b.instantiate1 v) s.getAppArgs).consumeMData.headBeta
+    | .const n _ =>
+      if let some (.ctorInfo c) := env.find? n then
+        match pending with
+        | [] => return none
+        | (j, args) :: rest =>
+          let some f := s.getAppArgs[c.numParams + j]? | return none
+          let f := (f.beta args).consumeMData.headBeta
+          if rest.isEmpty then return some f
+          pending := rest
+          s := f
+      else match ← unfoldHead? env toolchain s with
+        | some s' => s := s'.consumeMData.headBeta
+        | none => return none
+    | _ => return none
   throwError "certificate: a structure value is too deep to read for construction rules"
 
 /-- Does `e`, read at polarity `pos`, assert `Exists` in positive position? `And` and `Or`
 keep the polarity of their parts, `Not` and the left of an implication (a `∀` binder's type)
 flip it, and both sides of an `Iff` are read at both. A definition of this project is
-unfolded where it stands, a projection of a structure this project defines (an instance's
-`≤`) is read through the definition that gives it, and anything else is a leaf that asserts
-no existence. -/
+unfolded where it stands, a `let` is substituted into its body, a projection of a structure
+that a definition of this project gives (an instance's `≤`) is read through that
+definition, and anything else is a leaf that asserts no existence. -/
 def assertsExists (env : Environment) (toolchain : NameSet) (fuel : Nat) (pos : Bool)
     (e : Expr) : m Bool := do
   match fuel with
@@ -352,6 +370,7 @@ def assertsExists (env : Environment) (toolchain : NameSet) (fuel : Nat) (pos : 
       let args := e.getAppArgs
       match e.getAppFn with
       | .lam .. => go pos e.headBeta
+      | .letE _ _ v b _ => go pos (mkAppN (b.instantiate1 v) args)
       | .const n _ =>
         if n == ``Exists then
           if pos then return true
