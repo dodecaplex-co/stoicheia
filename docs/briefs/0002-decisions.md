@@ -4866,23 +4866,25 @@ findings:
   `Staging/Halves/Prop30.lean` and its import in `Staging.lean` are deleted. An
   independent reader read the record afresh and stamped it at `05b34dc0`.
 
-- **Euclid's routes in Book III staged; their statements await approval (#125, #126, #127,
-  #129, #130, #131).** Seven Lean files under `Staging/Routes/`, which stand on the
-  statements train C6c leaves in `Elements/` and land after it, give Euclid's own arguments
-  where the proofs of Book III take another way, and drafts where his words, or Heath's
-  reading of them, ask for more than our Lean says. The proofs of III.8, III.20's special
-  case, III.21, III.26 and III.27 prove the statements in `Elements/` exactly; those of
-  III.20's special case, III.21 and III.26 rest on the draft angle at the centre. The
-  coordinator's orders of 21 October 2026 directed these proofs into new files under
-  `Staging/Routes/`; they approve no statement or definition and no move into `Elements/`,
-  and no file of `Elements/` changes. Three questions are the coordinator's: whether those
-  orders are recorded as the approval of a prototype that [WORKFLOW](../WORKFLOW.md),
-  section 2, admits in `Staging/`; whether the declarations outside
-  `Elements.BookIII.Staging.Prop20`, where [FORMALIZATION](../FORMALIZATION.md), section 6,
-  stages III.20 in general, keep the namespace `Elements.BookIII.Routes`, which no rule
-  names; and whether the five calls of III.1 under Heath's "[III. 1]", which do no work,
-  stay under brief 0008's rule or are dropped as dummy citations (#131). The owner's is the
-  approval of each draft in its current text: Definition III.3 read at the point, the angle
-  at the centre of any size with III.20 in general, and the angle of contact after III.18.
-  The report, which owns the detail, is
-  [docs/reports/routes-book-III.md](../reports/routes-book-III.md).
+- **The decision entries' render test counts the entries in the folder
+  ([#242](https://github.com/jackChallis/stoicheia/issues/242)).**
+  [`tests/test_decision_entries.py`](../../tests/test_decision_entries.py), whose
+  `RenderLeavesTheRecord` test runs `render.py` on a copy of the sources with two entries
+  planted in `docs/decisions/`, required "decision entries: 2 checked", the planted entries
+  alone. `render.py` checks every entry in the folder, so the first pull request to bring a
+  real entry would fail the test, and with it `scripts/negative_tests.py`, which runs it:
+  in a trial on `tooling/book-zero-imports`, with its entry moved into the folder and not
+  committed, `render.py` reported 3 and the test failed. The rule of 20 October 2026, that
+  a new decision is a file of its own in `docs/decisions/`
+  ([WORKFLOW](../WORKFLOW.md), section 10, "Decision entries"), waits on this fix, so this
+  entry stands on the page. The test now reads the entries the folder already holds before
+  it plants its own, requires the count `render.py` reports to be exactly those and the
+  planted ones, and holds the existing entries' bytes to stay as they were, with the README
+  and the page; it checks that no planted name is already taken. It runs twice: as the
+  folder stands, and with a real entry written into the copy besides the two planted ones,
+  where, with the folder as main holds it today, it requires 3. With the old assertion, the
+  second run fails with "decision entries: 2 checked" not found where `render.py` reported
+  3; now both pass. The assertion stays exact. The coordinator, assigning the issue on 21
+  October 2026, wrote: "the expected count read from the folder's existing entries, so the
+  assertion stays exact. I approve it as a correction, not a weakening." The protected file
+  changed is `tests/test_decision_entries.py`.
