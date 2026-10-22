@@ -4,8 +4,9 @@ name: Safe-push tests
 # (docs/WORKFLOW.md, sections 8 and 10), run on a cadence rather than on each pull request
 # (the owner, 22 October 2026: "I'm fine that this needs to run on a cadence and blocks
 # release but every run no. And it has to be fast"; the decision entry
-# docs/decisions/2026-10-22-suite-on-cadence.md): every six hours on main, and on demand. A red run opens one issue labelled
-# blocks-release, or adds the run to the one already open, so the release waits for it.
+# docs/decisions/2026-10-22-suite-on-cadence.md): every six hours on main, and on demand.
+# A red run opens one issue labelled blocks-release, or adds the run to the one already
+# open, so the release waits for it.
 on:
   schedule:
     - cron: "17 */6 * * *"
@@ -63,7 +64,6 @@ jobs:
     concurrency:
       group: safe-push-tests-report
       cancel-in-progress: false
-      queue: max
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -94,9 +94,14 @@ jobs:
             echo "Run: $RUN_URL"
             echo
             if [ -f "$log" ]; then
-              failed=$(grep -E '^(FAIL|ERROR): ' "$log" | sort -u | head -n 100 || true)
-              if [ -n "$failed" ]; then
-                echo "Tests that failed:"
+              all=$(grep -E '^(FAIL|ERROR): ' "$log" | sort -u | cut -c1-300 || true)
+              failed=$(printf '%s\n' "$all" | head -n 100)
+              if [ -n "$all" ]; then
+                if [ "$(printf '%s\n' "$all" | wc -l)" -gt 100 ]; then
+                  echo "Tests that failed (the first 100):"
+                else
+                  echo "Tests that failed:"
+                fi
                 echo
                 echo '```'
                 echo "$failed"
@@ -108,7 +113,7 @@ jobs:
               echo "The run left no log; the run's page says why."
             fi
             echo
-            echo "This issue holds the release until a green run of the suite on main closes the question (docs/WORKFLOW.md, section 8)."
+            echo "This issue holds the release until it is closed, with a link to a later green run of the suite on main (docs/WORKFLOW.md, section 8)."
           } > "$body"
           number=$(
             gh api --method GET --paginate --slurp "repos/$GH_REPO/issues" \

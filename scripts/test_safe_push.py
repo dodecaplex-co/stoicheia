@@ -6476,7 +6476,7 @@ class Units(unittest.TestCase):
         self.assertEqual(judge(PASSING + [{"name": "other", "bucket": "pending"}])[0], "pending")
         # A check outside REQUIRED_CHECKS, as safe-push-tests is, holds a merge while it
         # fails, and a skipped run of it holds nothing back (#157).
-        unrequired = {"name": "safe-push-tests", "workflow": "CI"}
+        unrequired = {"name": "safe-push-tests", "workflow": "Safe-push tests"}
         self.assertEqual(judge(PASSING + [dict(unrequired, bucket="fail", state="FAILURE")])[0],
                          "failure")
         self.assertEqual(judge(PASSING + [dict(unrequired, bucket="skipping",

@@ -4,12 +4,12 @@
   cadence. The whole of `scripts/test_safe_push.py` had come to take 38 to 45 minutes on
   GitHub's runners, and past its 60-minute limit on some, on every pull request that
   touched a check input, `.github/` or WORKFLOW; and a defect in one of its tests failed
-  every pull request that added a decision entry file. So one pull request had landed in
-  eight hours. This takes the `safe-push-tests` job off the pull requests: it runs every
-  six hours on main, and on demand, and a red run on main opens one issue labelled
-  `blocks-release`, or adds the run to the one already open, with the run's link and the
-  tests that failed, so the release waits for it. The five checks main's ruleset requires,
-  the pre-flight and its guards are unchanged.
+  every run of the suite on a pull request that added a decision entry file. So one pull
+  request had landed in eight hours. This takes the `safe-push-tests` job off the pull
+  requests: it runs every six hours on main, and on demand, and a red run on main opens
+  one issue labelled `blocks-release`, or adds the run to the one already open, with the
+  run's link and the tests that failed, so the release waits for it. The five checks
+  main's ruleset requires, the pre-flight and its guards are unchanged.
 
   The plan adds three requirements, which a later change carries, not this one: a change
   to the landing tool posts only with its whole suite run at its head; tooling trains land
