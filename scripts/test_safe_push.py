@@ -131,9 +131,12 @@ one commit and runs safe_push.py against that origin:
 - replacement objects (#256), which git reads in place of the objects they replace while
   a push sends the originals: a token behind a clean stand-in, by `git replace` or in a
   folder GIT_REPLACE_REF_BASE names, is refused by the pre-push hook and by the
-  pre-flight's scan; a stand-in for origin/main's safe_push.py is not what the hook runs,
-  the launcher copies out, or the hand-over compares; and a clean push beside a
-  replacement passes, each test removing what it planted;
+  pre-flight's scan, and so it is with core.useReplaceRefs=true in the clone's config; a
+  commit whose message holds a token, behind a clean commit, and a stand-in for
+  origin/main's allow-list that would allow a token are refused by the pre-flight; a
+  stand-in for origin/main's safe_push.py is not what the hook runs, the launcher copies
+  out, or the hand-over compares; and a clean push beside a replacement passes, each test
+  removing what it planted;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -909,8 +912,8 @@ class Clone(unittest.TestCase):
         GH_STATE.write_text(json.dumps(state))
 
     # Issue #256: git reads a replacement object in place of the object it replaces, while
-    # a push sends the original. git's own folder of replacements, and one of the tests'
-    # own, which GIT_REPLACE_REF_BASE names in its place.
+    # a push sends the original. REPLACE_REFS: git's own folder of replacements, and the
+    # tests' own, which GIT_REPLACE_REF_BASE names in its place.
     REPLACE_REFS = ("refs/replace/", "refs/stand-ins/")
     CLEAN_NOTES = "Some notes.\n"
 
@@ -920,13 +923,17 @@ class Clone(unittest.TestCase):
                               capture_output=True, text=True, check=True).stdout.strip()
 
     def stand_in(self, original: str, text: str, base: str = "refs/replace/") -> dict:
-        """A blob holding `text` put in place of `original` for git's reading in WORK: by
-        `git replace` under refs/replace/, or by a ref of the test's own under `base`. The
-        environment a git command needs to read it is returned: nothing more for
+        """A blob holding `text` put in place of the blob `original` (replace_object)."""
+        return self.replace_object(original, self.blob(text), base)
+
+    def replace_object(self, original: str, replacement: str,
+                       base: str = "refs/replace/") -> dict:
+        """The object `replacement` put in place of `original` for git's reading in WORK:
+        by `git replace` under refs/replace/, or by a ref of the test's own under `base`.
+        The environment a git command needs to read it is returned: nothing more for
         refs/replace/, GIT_REPLACE_REF_BASE for another folder. Clone.setUp removes no
         replacement, so the ref is removed when the test ends, and WORK and origin are then
         checked to hold none."""
-        replacement = self.blob(text)
         if not getattr(self, "replacements_checked", False):
             self.replacements_checked = True
             self.addCleanup(self.assertNoReplacements)
@@ -941,6 +948,20 @@ class Clone(unittest.TestCase):
         for repo in (WORK, ORIGIN):
             left = git(repo, "for-each-ref", "--format=%(refname)", *self.REPLACE_REFS)
             self.assertEqual(left, "", f"replacement refs left in {repo}")
+
+    def replace_refs_on_in_config(self) -> None:
+        """core.useReplaceRefs=true in WORK's own config, removed when the test ends, and
+        WORK's config then checked to hold none. Git from 2.19 to 2.41 lets it turn
+        replacements back on despite GIT_NO_REPLACE_OBJECTS; from 2.42 the variable wins,
+        so there a test that uses this passes with either the variable or the harness's
+        `-c core.useReplaceRefs=false` alone."""
+        def remove() -> None:
+            git(WORK, "config", "--local", "--unset-all", "core.useReplaceRefs", check=False)
+            left = git(WORK, "config", "--local", "--get-all", "core.useReplaceRefs",
+                       check=False)
+            self.assertEqual(left, "", "core.useReplaceRefs left in WORK's config")
+        self.addCleanup(remove)
+        git(WORK, "config", "--local", "core.useReplaceRefs", "true")
 
     def assertStandsIn(self, rev: str, path: str, text: str, env: dict) -> None:
         """git, as the planted environment has it, reads `text` at `rev`:`path`: so the
@@ -1068,10 +1089,11 @@ class Secrets(Clone):
     def test_secret_behind_a_replacement_refused(self):
         # Issue #256: the token's blob replaced by a clean one, by `git replace` and then by
         # a folder GIT_REPLACE_REF_BASE names; the push would send the token, so the
-        # pre-flight's scan reads it, and step 2 refuses.
+        # pre-flight's scan reads it, and step 2 refuses. Each subtest starts as setUp starts
+        # a test, so that one whose push went through cannot fail the next at its branch.
         for base in self.REPLACE_REFS:
             with self.subTest(base=base):
-                git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+                self.setUp()
                 _, blob, env = self.hidden_token(base)
                 try:
                     if base != "refs/replace/":
@@ -1083,6 +1105,49 @@ class Secrets(Clone):
                     self.assertNotIn(TOKEN, out, "the report repeats the secret")
                 finally:
                     git(WORK, "update-ref", "-d", base + blob)
+        # A commit whose message holds a token (in its body: step 1 reads the subject),
+        # replaced by one with the same subject, tree and parent and no body: the push
+        # would send the token's message, so step 2 refuses it.
+        with self.subTest(replaced="a commit"):
+            self.setUp()
+            bad = self.commit(f"Notes\n\napi_token = \"{TOKEN}\"", {
+                "docs/reading.md": self.text("docs/reading.md") + "\nA line.\n"})
+            clean = git(WORK, "commit-tree", f"{bad}^{{tree}}", "-p", BASE, "-m",
+                        "Notes").strip()
+            self.replace_object(bad, clean)
+            try:
+                self.assertEqual(git(WORK, "log", "-1", "--format=%B", bad,
+                                     env=clean_env()).strip(), "Notes")
+                out = self.assertRefused(self.safe_push(), "message", "key, token or secret")
+                self.assertNotIn(TOKEN, out, "the report repeats the secret")
+            finally:
+                git(WORK, "update-ref", "-d", f"refs/replace/{bad}")
+        # origin/main's allow-list replaced by one with an entry that allows the token by
+        # its SHA-256: the scan reads origin/main's own, which allows nothing, and refuses.
+        with self.subTest(replaced="origin/main's allow-list"):
+            self.setUp()
+            path = safe_push.ALLOWLIST
+            theirs = git(WORK, "rev-parse", f"refs/remotes/origin/main:{path}").strip()
+            allowing = self.text(path) + "\n" + self.ALLOW
+            self.stand_in(theirs, allowing)
+            try:
+                self.assertStandsIn("refs/remotes/origin/main", path, allowing, {})
+                self.commit("A flagged line", {"docs/notes.md": f"api_token = \"{TOKEN}\"\n"})
+                out = self.assertRefused(self.safe_push(),
+                                         "REFUSED: the secret scan found 1 possible secret")
+                self.assertNotIn("A fixture for the test", out)
+            finally:
+                git(WORK, "update-ref", "-d", f"refs/replace/{theirs}")
+
+    def test_secret_behind_a_replacement_turned_on_in_config_refused(self):
+        # The same with core.useReplaceRefs=true in the clone's config, which git from 2.19
+        # to 2.41 let override GIT_NO_REPLACE_OBJECTS: run() sets it false on git's command
+        # line, which git reads last (Hook has the hook's twin of this test).
+        self.replace_refs_on_in_config()
+        self.hidden_token()
+        out = self.assertRefused(self.safe_push(),
+                                 "REFUSED: the secret scan found 1 possible secret")
+        self.assertNotIn(TOKEN, out, "the report repeats the secret")
 
     # The value is pinned by its SHA-256: written here, it would be flagged in turn.
     ALLOW = ('[[allow]]\npath = "docs/notes.md"\nmatch = "api_token"\n'
@@ -1339,6 +1404,13 @@ class Hook(Clone):
         # push's environment, with nothing in refs/replace/.
         self.refused_behind_a_replacement("refs/stand-ins/")
         self.assertEqual(git(WORK, "for-each-ref", "refs/replace/"), "")
+
+    def test_hook_reads_past_a_replacement_turned_on_in_config(self):
+        # The first, with core.useReplaceRefs=true in the clone's config, which git from
+        # 2.19 to 2.41 let override GIT_NO_REPLACE_OBJECTS: the hook's git calls and the
+        # scan's set it false on git's command line, which git reads last.
+        self.replace_refs_on_in_config()
+        self.refused_behind_a_replacement("refs/replace/")
 
     def test_hook_runs_origin_mains_scan_not_its_replacement(self):
         # origin/main's safe_push.py replaced by a copy whose scan passes everything: the
@@ -6305,6 +6377,27 @@ class Units(unittest.TestCase):
         self.assertFalse(names("III.16 changes", "III.1"))
         self.assertFalse(names("III.1 changes", "I.1"))
         self.assertFalse(names("BookIII.Prop10 changes", "III.1"))
+
+    def test_without_replacements(self):
+        # Issue #256: the folder of replacements dropped, and the variable set to "1",
+        # whatever the caller set it to; the rest of the environment kept.
+        env = safe_push.without_replacements({"GIT_REPLACE_REF_BASE": "refs/stand-ins/",
+                                              "GIT_NO_REPLACE_OBJECTS": "0", "HOME": "/home"})
+        self.assertEqual(env, {"GIT_NO_REPLACE_OBJECTS": "1", "HOME": "/home"})
+
+    def test_run_pins_replacements_off_for_git_alone(self):
+        # run() gives a git command core.useReplaceRefs=false on its command line, right
+        # after the program, and an environment without replacements; another program is
+        # run as given. Nothing is spawned.
+        with mock.patch.object(safe_push.subprocess, "run") as spawn:
+            safe_push.run(["git", "status"], "/nowhere", env={"HOME": "/home"})
+            safe_push.run([sys.executable, "-c", "pass"], "/nowhere")
+        git_call, other_call = spawn.call_args_list
+        self.assertEqual(git_call.args[0], ["git", "-c", "core.useReplaceRefs=false", "status"])
+        self.assertEqual(git_call.kwargs["env"],
+                         {"HOME": "/home", "GIT_NO_REPLACE_OBJECTS": "1"})
+        self.assertEqual(other_call.args[0], [sys.executable, "-c", "pass"])
+        self.assertIsNone(other_call.kwargs["env"])
 
     def test_source_statement(self):
         src = (SOURCE / "Elements" / "BookIII" / "Prop01.lean").read_text()
