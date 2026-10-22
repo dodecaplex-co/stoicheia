@@ -314,11 +314,10 @@ theorem Prop7 {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A‖ = �
   -- Q. E. D.
 
 /-- Two distinct common points of two distinct circles cannot lie on the same side of
-the straight line through their centres (System E, Circle 4). This was an assumption
-until 19 October 2026 and is now proved from I.7, Definition I.15 and `circle_eq`.
-The centres differ, since circles with the same centre and a common point coincide.
-The common points have equal distances from each centre, so I.7 excludes their
-lying on the same side. -/
+the straight line through their centres (System E, Circle 4). We prove it from I.7,
+Definition I.15 and `Tacit.circle_eq`. The centres differ, since circles with the same
+centre and a common point coincide. The common points have equal distances from each
+centre, so I.7 excludes their lying on the same side. -/
 theorem _root_.Elements.Tacit.not_same_side_of_circles_meet
     {A B C D : Point} {L : Line} {α β : Circle}
     (hαβ : α ≠ β) (hCα : OnCircle C α) (hCβ : OnCircle C β)

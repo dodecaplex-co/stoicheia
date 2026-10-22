@@ -132,6 +132,18 @@ one commit and runs safe_push.py against that origin:
   and its counts moved with it, lands as content, its prose free to move; while a count
   marker of the page added, removed, renamed or reordered, or the page deleted, made executable or
   left unreadable, is a check change, kept apart;
+- checks scaled to risk (#292, #301): an R1 commit (a line in a review record) and an R2
+  one (a proof file, its record stamped) leave step 4 to CI, with their class reported
+  and recorded and every guard run; an R3 commit touching a check, and commits of prose
+  with a script or a workflow, take the full path; the commit's own classifier, made to
+  class every file R0, does not lower its class, which origin/main's gives; origin/main
+  with no classifier, a classifier that fails or prints no class, Git failing and
+  unreadable labels are R5; the label release, given or on the open pull request, is R5;
+  a classifier at origin/main that disagrees with the check inputs is overruled by them;
+  --merge takes a record that left step 4 to CI while the class is still low, and a
+  release only on the full pre-flight of its head and with a green run of
+  safe-push-tests there, every job passed (none, red, running, at another head, a job
+  failed or skipped, or GitHub unreadable each refuse);
 - replacement objects (#256), which git reads in place of the objects they replace while
   a push sends the originals: a token behind a clean stand-in, by `git replace` or in a
   folder GIT_REPLACE_REF_BASE names, is refused by the pre-push hook and by the
@@ -156,10 +168,12 @@ one commit and runs safe_push.py against that origin:
 
 The long checks of step 4 (the build and the rest) are skipped by the internal flag
 `--_test-skip-checks`, used here and nowhere else; safe_push honours it only against a
-local origin, and with it calls only the gh stand-in. The checks the guards run
-themselves (check_fidelity.py and render.py on the commit as committed) still run. The
-opt-in FullChecks test runs step 4 for real, once, on a good commit, as a dry run of the
-pre-flight. Python 3.11 or later; PyYAML at the version pinned beside this file, and git.
+local origin, and with it calls only the gh stand-in. A commit of R0 to R2 skips them by
+its class instead, as it would without the flag, and its skip line says so. The checks
+the guards run themselves (check_fidelity.py and render.py on the commit as committed)
+still run. The opt-in FullChecks test runs step 4 for real, once, on a good commit of
+R3, as a dry run of the pre-flight. Python 3.11 or later; PyYAML at the version pinned
+beside this file, and git.
 """
 
 from __future__ import annotations
@@ -211,7 +225,8 @@ HARNESS_FILES = ("scripts/safe_push.py", "scripts/heath.py", "scripts/test_safe_
                  "scripts/hooks/pre-push", "scripts/hooks/safe-push", "scripts/install_hooks.sh",
                  "scripts/safe_push_allow.toml", ".github/pull_request_template.md",
                  "scripts/check_release_gate.py", "tests/test_release_gate.py",
-                 "tests/certificate_expectations.json", "tests/model/hyperbolic.py")
+                 "tests/certificate_expectations.json", "tests/model/hyperbolic.py",
+                 "scripts/risk.py")
 
 
 @dataclass(frozen=True)
@@ -328,8 +343,9 @@ def normalized_check_job(source: str) -> WorkflowCheckJob:
     )
 
 
-FRESHNESS_COMMAND = ("git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md "
-                     "README.md docs/PROGRAM.md")
+# The whole worktree, as safe_push's step "git status --porcelain is empty" reads it: the
+# generated pages and every other file a check might leave changed or new.
+FRESHNESS_COMMAND = "git status --porcelain"
 RENDER_COMMAND = "python3 scripts/render.py"
 FRESHNESS_ASSERTION = f'test -z "$({FRESHNESS_COMMAND})"'
 SETUP_ACTIONS = {"actions/checkout@v5": frozenset(),
@@ -451,6 +467,14 @@ SCRATCHPAD = "/private" + "/tmp/" + "claude" + "-501/" + FOLDED_HOME + "/0123/sc
 
 PASSING = [{"name": n, "bucket": "pass", "state": "SUCCESS", "workflow": "CI"}
            for n in ("check", "model", "negative", "formal-model", "acceptance")]
+# A green run of the safe-push-tests workflow, as GitHub's API gives it, with its jobs: the
+# stand-in for gh gives it at every head unless a test says otherwise, as it gives PASSING
+# (a release's merge gate asks for one at its head, #301). `report` runs only for a red
+# run on main, so a green one skips it.
+SUITE_JOBS = [{"name": n, "status": "completed", "conclusion": "success"}
+              for n in ("safe-push-tests", "negative-tests", "formal-model-kernel")] + \
+    [{"name": "report", "status": "completed", "conclusion": "skipped"}]
+GREEN_SUITE = {"id": 501, "status": "completed", "conclusion": "success", "jobs": SUITE_JOBS}
 
 # Judges the runs of a passing --fast run made by hand, then the same with the structured
 # run's last line dropped; prints the two lists of failures.
@@ -490,7 +514,7 @@ print(json.dumps([run.judge(runs('structured total counterexamples: 0\n')),
 # A stand-in for gh: pull requests in a JSON file; checks as each test sets them; a merge
 # made in the bare origin with a merge commit, as GitHub makes it.
 FAKE_GH = r'''#!@PYTHON@
-import json, os, subprocess, sys, time
+import json, os, re, subprocess, sys, time
 
 STATE = os.environ["STOICHEIA_FAKE_GH_STATE"]
 ORIGIN = os.environ["STOICHEIA_FAKE_GH_ORIGIN"]
@@ -564,6 +588,29 @@ def main(argv):
         return 0
     if args[0] == "api":
         path = args[-1]
+        # The runs of safe-push-tests at a head, and a run's jobs: "suite_runs" maps a head
+        # (or "*", any other) to its runs, each with its jobs; a run's own "head_sha", when
+        # it has one, stands for a run at another head; "suite_read_fail" fails the read.
+        if path.startswith("repos/test/stoicheia/actions/"):
+            if s.get("suite_read_fail"):
+                return 1
+            suite = s.get("suite_runs", {})
+            m = re.fullmatch(r"repos/test/stoicheia/actions/workflows/safe-push-tests\.yml/"
+                             r"runs\?head_sha=([0-9a-f]+)&per_page=100", path)
+            if m:
+                found = [dict({k: v for k, v in r.items() if k != "jobs"},
+                              head_sha=r.get("head_sha", m.group(1)),
+                              path=".github/workflows/safe-push-tests.yml")
+                         for r in suite.get(m.group(1), suite.get("*", []))]
+                print(json.dumps({"total_count": len(found), "workflow_runs": found}))
+                return 0
+            m = re.fullmatch(r"repos/test/stoicheia/actions/runs/(\d+)/jobs\?per_page=100",
+                             path)
+            for run in (r for listed in suite.values() for r in listed):
+                if m and run["id"] == int(m.group(1)):
+                    print(json.dumps({"total_count": len(run["jobs"]), "jobs": run["jobs"]}))
+                    return 0
+            return 1
         if path == "repos/test/stoicheia":
             print(s.get("repository_output", json.dumps({
                 "url": "https://api.github.com/repos/test/stoicheia"})))
@@ -649,6 +696,14 @@ def main(argv):
                 subprocess.run(["git", "update-ref", "-d", "refs/heads/" + pr["headRefName"]],
                                cwd=ORIGIN, check=True)
                 pr["headRefName"] = rename["to"]
+            save(s)
+        # "late_label": {"views": n, "label": name}: after n views, the pull request carries
+        # the label, as one given while --merge runs would leave it.
+        late = s.get("late_label")
+        if late:
+            late["seen"] = late.get("seen", 0) + 1
+            if late["seen"] > late["views"] and late["label"] not in pr["labels"]:
+                pr["labels"].append(late["label"])
             save(s)
         # "reread_body": the body GitHub gives the merge's own read of the body alone,
         # as an edit made between the gates and that read would leave it.
@@ -773,7 +828,8 @@ sys.exit(main(sys.argv[1:]))
 
 def reset_gh() -> None:
     GH_STATE.write_text(json.dumps({"prs": [], "labels": ["release", "blocks-release"],
-                                    "issues": [], "checks": {"*": PASSING}, "calls": []}))
+                                    "issues": [], "checks": {"*": PASSING},
+                                    "suite_runs": {"*": [GREEN_SUITE]}, "calls": []}))
 
 
 def setUpModule():
@@ -2454,7 +2510,7 @@ class Merge(Edge):
         self.assertEqual(self.merges(), [])
 
     def test_final_gates_refuse_a_blocker_opened_after_body_refresh(self):
-        self.opened()
+        self.opened_r3()
         self.unfinished_body("None")
         self.set_gh(lambda s: (s["prs"][0]["labels"].append("release"),
                                s.update(after_body={"issues": [self.blocker()]})))
@@ -2466,7 +2522,7 @@ class Merge(Edge):
         self.assertEqual(self.merges(), [])
 
     def test_final_gates_refuse_an_unreadable_blocker_reply(self):
-        self.opened()
+        self.opened_r3()
         self.unfinished_body("None")
         self.set_gh(lambda s: (s["prs"][0]["labels"].append("release"),
                                s.update(after_body={"issue_read_fail": True})))
@@ -2494,7 +2550,7 @@ class Merge(Edge):
                 self.set_gh(lambda s: s.update(issues=[self.blocker()]))
 
     def test_final_gates_refuse_release_ci_changed_after_body_refresh(self):
-        sha = self.opened()
+        sha = self.opened_r3()
         self.unfinished_body("None")
         self.set_gh(lambda s: s["prs"][0]["labels"].append("release"))
         for bucket, state in (("pending", "IN_PROGRESS"), ("fail", "FAILURE")):
@@ -2781,7 +2837,7 @@ class Merge(Edge):
                 self.assertEqual(self.merges(), [])
 
     def test_release_label_case_holds_the_merge_for_blockers_and_bad_reads(self):
-        self.opened()
+        self.opened_r3()
         self.unfinished_body("None")
         self.set_gh(lambda s: s["prs"][0]["labels"].append("Release"))
         for reply, reason in (
@@ -2798,7 +2854,7 @@ class Merge(Edge):
                 self.assertEqual(self.merges(), [])
 
     def removed_release_label_merges(self, bucket):
-        sha = self.opened()
+        sha = self.opened_r3()
         self.unfinished_body("None")
         self.set_gh(lambda s: s["prs"][0]["labels"].append("release"))
         check = {"name": "release-gate", "workflow": "Release gate", "bucket": bucket,
@@ -2833,7 +2889,7 @@ class Merge(Edge):
                 self.assertEqual(self.merges(), [])
 
     def test_release_waits_for_all_open_blockers_then_merges(self):
-        self.opened()
+        self.opened_r3()
         self.unfinished_body("None")
         self.set_gh(lambda s: s["prs"][0]["labels"].append("release"))
         self.set_gh(lambda s: s.update(issues=[
@@ -2853,7 +2909,7 @@ class Merge(Edge):
         self.assertEqual(len(self.merges()), 1)
 
     def test_release_issue_read_failures_refused(self):
-        self.opened()
+        self.opened_r3()
         self.unfinished_body("None")
         self.set_gh(lambda s: s["prs"][0]["labels"].append("release"))
         for reply in ({"issue_read_fail": True}, {"issue_output": "[]\n{"},
@@ -2885,6 +2941,15 @@ class Merge(Edge):
         r = self.safe_push(*args, *(("--ready",) if ready else ()))
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         return sha
+
+    def opened_r3(self, *args, ready=True) -> str:
+        """Opened as `opened` opens it, its commit R3 by scripts/risk.py: a line in
+        docs/WORKFLOW.md, the guide to the checks, which no guard protects. Its pre-flight
+        takes step 4's full path (under the internal test flag, its skip), as a release
+        needs, and leaves a record of the full checks; good_commit's, R0, would leave the
+        full checks to CI (docs/decisions/2026-10-22-checks-by-risk.md)."""
+        return self.opened(*args, ready=ready, **{"docs/WORKFLOW.md": (
+            self.text("docs/WORKFLOW.md") + "\nA line for the test.\n")})
 
     def merge(self, *args) -> subprocess.CompletedProcess:
         return self.safe_push("--merge", "1", *args)
@@ -3002,7 +3067,7 @@ class Merge(Edge):
 
     def test_merge_runs_the_scan_and_the_guards_again(self):
         # Review note 6: the pre-flight's record stands in for the full checks alone.
-        self.opened()
+        self.opened_r3()
         self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
         out = self.merge("--dry-run").stdout
         self.assertIn("the full checks are not repeated", out)
@@ -3469,7 +3534,7 @@ class Merge(Edge):
     def test_step_4_notes_reach_the_merge(self):
         # When the pre-flight's record stands in for step 4 at the merge, its step-4 notes
         # (a check that failed with origin/main's copies) are shown beside the checklist.
-        sha = self.opened()
+        sha = self.opened_r3()
         self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
         path = LOG.parent / "preflight" / f"{sha}-{BASE}.json"
         record = json.loads(path.read_text())
@@ -6139,6 +6204,323 @@ class AllowList(Edge):
         self.assertIn("a glob in path", str(refused.exception))
 
 
+class RiskPreflight(Edge):
+    """Checks scaled to risk (#292, #301): the pre-flight takes the change's class from
+    origin/main's scripts/risk.py, judging the commit's paths against origin/main, never
+    from the commit's own copy of the classifier, nor from a label but `release`, which
+    only raises it to R5. R0 to R2 keep steps 1 to 3 and leave step 4 to CI, one "skip"
+    line saying so; R3 to R5 take the full path, here the internal test flag's skip, since
+    step 4 run in full needs Lean (FullChecks). The class is a step line, which reaches
+    the pull request's record, and the pre-flight record's "class". Any failure to compute
+    it is R5. --merge takes a record that left step 4 to CI only while the class,
+    recomputed then, is still R0 to R2; a release merges only on the full pre-flight of its
+    head, and with a green run of safe-push-tests there, the head's copy of that workflow
+    being origin/main's, each of its three jobs there and passed."""
+
+    SHORT = "left to CI"
+    FULL = "internal test flag, local origin"
+    GUARDS = ("secrets", "statements", "axiom lock", "protected paths", "heath/",
+              "directories", "decision entries")
+
+    def record(self, sha: str, base: str | None = None) -> dict:
+        """The pre-flight's record of `sha` against `base`, BASE unless named."""
+        return json.loads((LOG.parent / "preflight" / f"{sha}-{base or BASE}.json").read_text())
+
+    def detail(self, out: str, name: str) -> str:
+        """The first line of a step's report after its name: its detail, without its time."""
+        m = re.search(r"^\s+(?:ok|FAIL|skip|note)\s+%s: (.*?)(?:  \(\d+\.\d s\))?$"
+                      % re.escape(name), out, re.M)
+        return m.group(1) if m else ""
+
+    def assertPath(self, r, sha: str, cls: str, path: str, *named: str,
+                   base: str | None = None) -> str:
+        """The pre-flight of `sha` passed with every guard of steps 1 to 3, classed `cls`
+        for the files `named`, and took the `short` path, step 4 left to CI, or the `full`
+        one; and its record says so."""
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        for name in self.GUARDS:
+            self.assertEqual(self.guard(out, name), "ok", f"{name}:\n{out}")
+        for name in ("review records", "generated pages"):
+            self.assertRegex(out, r"(?m)^\s+ok\s+%s\b" % re.escape(name))
+        self.assertEqual(self.guard(out, "class"), "ok", out)
+        line = self.detail(out, "class")
+        self.assertTrue(line.startswith(f"{cls}, "), out)
+        for name in named:
+            self.assertIn(name, line)
+        self.assertEqual(self.step(out, "full local checks"), "skip", out)
+        skip = self.detail(out, "full local checks")
+        record = self.record(sha, base)
+        self.assertEqual(record["class"], cls)
+        self.assertEqual(record["class_why"], line.removeprefix(f"{cls}, "))
+        if path == "short":
+            self.assertTrue(skip.startswith(f"class {cls}: {self.SHORT}"), out)
+            self.assertNotIn(self.FULL, out)
+            self.assertEqual((record["short"], record["full"]), (True, False))
+            self.assertEqual([s[:3] for s in record["steps"] if s[0] == "4"],
+                             [["4", "class", "ok"], ["4", "full local checks", "skip"]])
+        else:
+            self.assertEqual(skip, self.FULL, out)
+            self.assertFalse(record["short"])
+        return out
+
+    def r1_commit(self) -> str:
+        """A line in a review record: R1, text and records."""
+        return self.commit("A line in a review record", {
+            "review/I/01.toml": self.text("review/I/01.toml") + "\n# A line for the test.\n"})
+
+    def lowered(self) -> str:
+        """scripts/risk.py made to class every file R0, by a first rule that matches all."""
+        return self.replaced(safe_push.RISK, "RULES = [\n", 'RULES = [\n    ("R0", ["*"]),\n')
+
+    def pushed(self, sha: str, *args) -> str:
+        """The pre-flight of `sha`, its pull request opened ready, and the body completed
+        as the coordinator completes it."""
+        r = self.safe_push("--ready", *args)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        return sha
+
+    def merge(self) -> subprocess.CompletedProcess:
+        return self.safe_push("--merge", "1")
+
+    def test_r1_commit_takes_the_short_path(self):
+        sha = self.r1_commit()
+        self.assertPath(self.safe_push(), sha, "R1", "short", "review/I/01.toml",
+                        "by origin/main's scripts/risk.py")
+        # The class reaches the pull request's record: its line, and the steps' table.
+        body = self.gh_state()["prs"][0]["body"]
+        self.assertIn("Risk class R1: Text and records, by origin/main's scripts/risk.py", body)
+        self.assertIn("the full local checks left to CI, for the class R1", body)
+        self.assertIn("| 4. class | ok |", body)
+        self.assertIn("| 4. full local checks | skip |", body)
+
+    def test_r2_commit_takes_the_short_path(self):
+        # A proof file changed, its review record stamped for it, and the pages rendered.
+        lean, record = "Elements/BookI/Prop01.lean", "review/I/01.toml"
+        new_lean = self.text(lean) + "\n"
+        stamped = re.sub(r'(?m)^lean = "[^"]*"',
+                         f'lean = "{safe_push.heath._sha(new_lean.encode())}"', self.text(record))
+        sha = self.regenerated_commit("A proof file, its record stamped",
+                                      {lean: new_lean, record: stamped})
+        self.assertPath(self.safe_push("--dry-run"), sha, "R2", "short", lean)
+
+    def test_r3_commit_touching_a_check_takes_the_full_path(self):
+        path = "scripts/check_links.py"
+        change = {path: self.text(path) + "\n# A comment for the test.\n"}
+        change.update(self.decision(f"A comment in `{path}`, for the test."))
+        sha = self.commit("A comment in a check", change)
+        self.assertPath(self.safe_push("--dry-run"), sha, "R3", "full", path)
+
+    def test_prose_paths_with_a_script_or_a_workflow_are_classed_high(self):
+        for path, cls in ((".github/workflows/ci.yml", "R5"), ("scripts/x.py", "R3")):
+            with self.subTest(path=path):
+                git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+                text = (self.text(path) if (WORK / path).exists() else "") + "# For the test.\n"
+                change = {"docs/x.md": "A page of prose, for the test.\n", path: text}
+                change.update(self.decision(f"`{path}` changes, for the test."))
+                sha = self.commit("A page of prose, and a script or a workflow", change)
+                self.assertPath(self.safe_push("--dry-run"), sha, cls, "full", path)
+
+    def test_the_commits_own_classifier_does_not_lower_its_class(self):
+        change = {safe_push.RISK: self.lowered(),
+                  "docs/reading.md": self.text("docs/reading.md") + "\nA line for the test.\n"}
+        change.update(self.decision(f"`{safe_push.RISK}` classes every file R0, for the test."))
+        sha = self.commit("Every file R0, by the commit's own classifier", change)
+        # The commit's own copy would class it R0; origin/main's judges it, R5, for it
+        # changes the classifier.
+        own = subprocess.run([sys.executable, "-I", str(WORK / safe_push.RISK), "--diff", BASE,
+                              sha], cwd=WORK, capture_output=True, text=True)
+        self.assertEqual(own.stdout.splitlines()[:1], ["R0 Docs"], own.stdout + own.stderr)
+        self.assertPath(self.safe_push("--dry-run"), sha, "R5", "full", safe_push.RISK)
+
+    def test_origin_main_without_the_classifier_is_r5(self):
+        main = self.commit("A main without the classifier", remove=(safe_push.RISK,))
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{main}:refs/heads/main")
+        git(WORK, "fetch", "--quiet", "origin")
+        sha = self.good_commit()
+        out = self.assertPath(self.safe_push("--dry-run"), sha, "R5", "full", base=main)
+        self.assertIn(f"has no {safe_push.RISK} to class it", self.detail(out, "class"))
+
+    def test_release_label_is_r5(self):
+        sha = self.good_commit()
+        out = self.assertPath(self.safe_push("--dry-run", "--label", "release", "--label", "docs"),
+                              sha, "R5", "full")
+        self.assertIn("the pull request is labelled release", self.detail(out, "class"))
+        # The open pull request's label counts as much, read before the checks.
+        self.assertPath(self.safe_push(), sha, "R0", "short")
+        self.set_gh(lambda s: s["prs"][0]["labels"].append("Release"))
+        sha = self.good_commit("A second line, the fix.")
+        out = self.assertPath(self.safe_push(), sha, "R5", "full")
+        self.assertIn("the pull request is labelled release", self.detail(out, "class"))
+
+    def test_class_fails_closed(self):
+        sha = self.good_commit()
+        self.assertEqual(safe_push.risk_class(WORK, BASE, sha, set()).cls, "R0")
+        for base, head, labels, why in ((BASE, "0" * 40, set(), "could not class it (exit 2"),
+                                        ("f" * 40, sha, set(), "git could not read"),
+                                        (BASE, sha, None, "labels could not be read")):
+            with self.subTest(why=why):
+                risk = safe_push.risk_class(WORK, base, head, labels)
+                self.assertEqual(risk.cls, "R5", risk)
+                self.assertIn(why, risk.why)
+        # And a classifier at origin/main that fails, or gives a class below one it gives a
+        # file, or outlasts its time, or prints no class, or none of R0 to R5 (the last case
+        # is the one the pre-flight below runs).
+        for text, why, timeout in (
+                ("import sys\nsys.exit(3)\n", "could not class it (exit 3)", 300),
+                ("print('R0 Docs')\nprint('  R0 docs/reading.md')\nprint('  R3 scripts/x.py')\n",
+                 "gave R0, below the R3 it gave scripts/x.py", 300),
+                ("import time\ntime.sleep(60)\nprint('R0 Docs')\n",
+                 "could not be run: TimeoutExpired", 1),
+                ("print('A class, perhaps.')\n", "printed no class", 300),
+                ("print('R6 Beyond')\n", "printed no class", 300)):
+            with self.subTest(text=text):
+                git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+                git(ORIGIN, "update-ref", "refs/heads/main", BASE)
+                main = self.new_base("A classifier that fails", {safe_push.RISK: text})
+                sha = self.good_commit()
+                with mock.patch.object(safe_push, "RISK_TIMEOUT", timeout):
+                    risk = safe_push.risk_class(WORK, main, sha, set())
+                self.assertEqual(risk.cls, "R5", risk)
+                self.assertIn(why, risk.why)
+        out = self.assertPath(self.safe_push("--dry-run"), sha, "R5", "full", base=main)
+        self.assertIn("printed no class", self.detail(out, "class"))
+
+    def test_classifier_and_check_inputs_disagreeing_take_the_full_path(self):
+        # origin/main's classifier made to class every file R0: a commit that changes a
+        # check is still no change of R0 to R2 by safe_push's own lists, so the full path.
+        main = self.new_base("A classifier that classes every file R0",
+                             {safe_push.RISK: self.lowered()})
+        path = "scripts/check_links.py"
+        change = {path: self.text(path) + "\n# A comment for the test.\n"}
+        change.update(self.decision(f"A comment in `{path}`, for the test."))
+        sha = self.commit("A comment in a check", change)
+        out = self.assertPath(self.safe_push("--dry-run"), sha, "R0", "full", base=main)
+        self.assertEqual(self.guard(out, "class and check inputs"), "note", out)
+        self.assertIn(path, self.detail(out, "class and check inputs"))
+
+    def test_merge_takes_a_short_record_while_the_class_is_low(self):
+        sha = self.pushed(self.r1_commit())
+        self.assertTrue(self.record(sha)["short"])
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertIn("its class R1 then and R1 now", self.detail(out, "pre-flight"))
+        self.assertTrue(self.detail(out, "full local checks").startswith(
+            f"class R1: {self.SHORT}"), out)
+        self.assertEqual(self.step(out, "safe-push tests"), "skip", out)
+        self.assertFalse([c for c in self.gh_state()["calls"] if c[0] == "api"])
+        self.assertEqual(len(self.merges()), 1)
+
+    def test_release_merges_only_on_the_full_preflight_of_its_head(self):
+        sha = self.pushed(self.r1_commit())
+        self.set_gh(lambda s: s["prs"][0]["labels"].append("release"))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "release record"), "FAIL", out)
+        self.assertIn("left the full checks to CI, for the class R1", out)
+        self.assertIn("Run the pre-flight again", out)
+        self.assertEqual(self.merges(), [])
+        # The pre-flight again: the open pull request's label makes it R5, and it takes the
+        # full path; then the release merges.
+        r = self.safe_push()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual((self.record(sha)["class"], self.record(sha)["short"]), ("R5", False))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.guard(out, "safe-push tests"), "ok", out)
+        self.assertEqual(len(self.merges()), 1)
+
+    def test_release_needs_a_green_safe_push_tests_run_at_its_head(self):
+        # #301: a run at the head, completed and green, every job passed but `report`.
+        sha = self.pushed(self.good_commit(), "--label", "release", "--label", "docs")
+        other = dict(GREEN_SUITE, id=502, head_sha="f" * 40)
+
+        def with_job(run_id, name, conclusion):
+            return dict(GREEN_SUITE, id=run_id, jobs=[
+                dict(j, conclusion=conclusion) if j["name"] == name else j for j in SUITE_JOBS])
+        cases = (({"suite_runs": {"*": []}}, "no green run of safe-push-tests.yml at the head"),
+                 ({"suite_runs": {"*": [other]}}, "no green run"),
+                 ({"suite_runs": {"*": [dict(GREEN_SUITE, id=503, conclusion="failure"),
+                                        dict(GREEN_SUITE, id=504, status="in_progress",
+                                             conclusion=None)]}}, "no green run"),
+                 ({"suite_runs": {"*": [with_job(505, "negative-tests", "failure")]}},
+                  "negative-tests failure"),
+                 ({"suite_runs": {"*": [with_job(506, "formal-model-kernel", "skipped")]}},
+                  "formal-model-kernel skipped"),
+                 # A run of a workflow that dropped a job, or that ran one trivial job alone:
+                 # each of the workflow's three jobs must be there.
+                 ({"suite_runs": {"*": [dict(GREEN_SUITE, id=507, jobs=[
+                     j for j in SUITE_JOBS if j["name"] != "negative-tests"])]}},
+                  "run 507: negative-tests missing"),
+                 ({"suite_runs": {"*": [dict(GREEN_SUITE, id=508, jobs=[
+                     {"name": "trivial", "status": "completed", "conclusion": "success"}])]}},
+                  "run 508: safe-push-tests missing, negative-tests missing, "
+                  "formal-model-kernel missing"),
+                 ({"suite_read_fail": True}, "unreadable"))
+        for state, why in cases:
+            with self.subTest(why=why):
+                self.set_gh(lambda s: (s.pop("suite_read_fail", None),
+                                       s.update(suite_runs={"*": [GREEN_SUITE]}), s.update(state)))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertEqual(self.guard(out, "safe-push tests"), "FAIL", out)
+                self.assertIn(why, out[out.index("safe-push tests:"):])
+                self.assertIn(f"gh workflow run safe-push-tests.yml --ref {BRANCH}"
+                              if why != "unreadable" else "unreadable", out)
+                self.assertEqual(self.merges(), [])
+        self.set_gh(lambda s: (s.pop("suite_read_fail", None),
+                               s.update(suite_runs={sha: [other, GREEN_SUITE]})))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertIn("run 501 of safe-push-tests.yml", self.detail(out, "safe-push tests"))
+        self.assertEqual(len(self.merges()), 1)
+
+    def test_release_refuses_a_head_that_changes_the_suite_workflow(self):
+        # A run at the head runs the head's copy of the workflow, which could drop a job:
+        # the head's copy must be origin/main's, whatever GitHub says of the runs.
+        path = safe_push.SUITE_PATH
+        change = {path: self.text(path) + "# A comment for the test.\n"}
+        change.update(self.decision(f"A comment in `{path}`, for the test."))
+        sha = self.pushed(self.commit("A comment in the suite's workflow", change),
+                          "--label", "release", "--label", "tooling")
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "safe-push tests"), "FAIL", out)
+        detail = out[out.index("safe-push tests:"):]
+        self.assertIn(f"the head {sha[:12]} changes {path}", detail)
+        self.assertIn("land that change first, in a pull request of its own", detail)
+        for name in ("release", "label", "CI"):
+            self.assertEqual(self.guard(out, name), "ok", f"{name}:\n{out}")
+        self.assertFalse([c for c in self.gh_state()["calls"]
+                          if c[0] == "api" and "/actions/" in c[-1]])
+        self.assertEqual(self.merges(), [])
+
+    def test_release_label_given_after_the_class_was_read_needs_the_full_preflight(self):
+        # The label is not on the pull request when --merge first reads it, so the class is
+        # R1 and the short record stands in for step 4; the gates' read finds it, and the
+        # record made then is still short: refused, by the second look.
+        sha = self.pushed(self.r1_commit())
+        self.set_gh(lambda s: s.update(late_label={"views": 1, "label": "release"}))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("its class R1 then and R1 now", self.detail(out, "pre-flight"))
+        self.assertEqual(self.guard(out, "safe-push tests"), "ok", out)
+        self.assertEqual(self.guard(out, "release record"), "FAIL", out)
+        self.assertIn("left the full checks to CI, for the class R1", out)
+        self.assertIn(f"#1 is labelled release, and a release merges only on the full "
+                      f"pre-flight of its head, {sha[:12]}", out)
+        self.assertIn("release", self.gh_state()["prs"][0]["labels"])
+        self.assertEqual(self.merges(), [])
+
+
 @unittest.skipUnless(os.environ.get("STOICHEIA_SLOW_TESTS") == "1",
                      "the full checks need Lean and take minutes: STOICHEIA_SLOW_TESTS=1")
 class FullChecks(Edge):
@@ -6146,7 +6528,10 @@ class FullChecks(Edge):
     flag, as a dry run of the pre-flight (the real gh is never called by the tests)."""
 
     def test_full_sequence_on_a_good_commit(self):
-        self.good_commit()
+        # R3 by scripts/risk.py, a line in the guide to the checks: an R0 to R2 commit's
+        # pre-flight leaves step 4 to CI (docs/decisions/2026-10-22-checks-by-risk.md).
+        self.commit("A good commit", {
+            "docs/WORKFLOW.md": self.text("docs/WORKFLOW.md") + "\nA line for the test.\n"})
         r = subprocess.run([sys.executable, str(SAFE_PUSH), "--branch", BRANCH, "--dry-run"],
                            cwd=WORK, env=clean_env(), capture_output=True, text=True)
         out = r.stdout + r.stderr
@@ -6157,6 +6542,83 @@ class FullChecks(Edge):
         self.assertEqual(self.origin_main(), BASE)
         self.assertEqual(len(git(WORK, "worktree", "list").splitlines()), 1,
                          "a temporary worktree was left behind")
+
+
+@unittest.skipUnless((shutil.which("jq") and shutil.which("bash"))
+                     or os.environ.get("GITHUB_ACTIONS") == "true",
+                     "the report step needs bash and jq, as GitHub's runners have (there, a "
+                     "missing one fails the test rather than skipping it)")
+class CadenceReport(unittest.TestCase):
+    """The cadence workflow's report step (.github/workflows/safe-push-tests.yml), run as
+    GitHub runs it, bash with -e and pipefail, on a log of a thousand long failures, with
+    a stand-in for gh: it opens the issue, listing the first hundred (#300)."""
+
+    def run_report(self, script: str, failures: int):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            (tmp / "log").mkdir()
+            # Each line longer than the 300 characters the step keeps, so the thousand it
+            # keeps (301,000 bytes) are far more than a pipe holds, and a reader that stops
+            # early closes it.
+            name = "test_" + "x" * 250
+            (tmp / "log" / "test_safe_push.log").write_text("".join(
+                f"FAIL: {name}_{i:04d} (__main__.Merge.{name}_{i:04d})\n"
+                for i in range(failures)) + "Ran 1000 tests\n")
+            bin_dir = tmp / "bin"
+            bin_dir.mkdir()
+            gh = bin_dir / "gh"
+            gh.write_text('#!/bin/sh\n'
+                          'if [ "$1" = api ]; then echo "[[]]"; exit 0; fi\n'
+                          'if [ "$1 $2" = "issue create" ]; then\n'
+                          '  while [ $# -gt 0 ]; do\n'
+                          '    if [ "$1" = --body-file ]; then cp "$2" "$RUNNER_TEMP/created.md"; fi\n'
+                          '    shift\n'
+                          '  done\n'
+                          '  exit 0\n'
+                          'fi\n'
+                          'exit 1\n')
+            gh.chmod(0o755)
+            env = dict(os.environ, PATH=f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+                       RUNNER_TEMP=str(tmp), GH_TOKEN="x", GH_REPO="owner/repo",
+                       TESTS="failure", NEGATIVE="success", KERNEL="success",
+                       RUN_URL="https://example.invalid/run", SHA="0" * 40)
+            r = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c",
+                                script], env=env, capture_output=True, text=True)
+            created = tmp / "created.md"
+            return r, created.read_text() if created.exists() else None
+
+    def report_script(self) -> str:
+        workflow = yaml.safe_load((SOURCE / ".github/workflows/safe-push-tests.yml").read_text())
+        step = next(s for s in workflow["jobs"]["report"]["steps"]
+                    if s.get("name", "").startswith("Open or update"))
+        # GitHub runs `shell: bash` as bash -eo pipefail, which these tests run; without it,
+        # bash -e alone, which they would not.
+        self.assertEqual(step.get("shell"), "bash")
+        return step["run"]
+
+    def test_a_thousand_failures_open_the_issue_with_the_first_hundred(self):
+        r, body = self.run_report(self.report_script(), 1000)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIsNotNone(body, "no issue was opened")
+        self.assertIn("(the first 100)", body)
+        self.assertEqual(sum(line.startswith("FAIL: ") for line in body.splitlines()), 100)
+        self.assertIn("_0099 ", body)       # the first hundred, in order
+        self.assertNotIn("_0100 ", body)
+
+    def test_a_few_failures_are_listed_whole(self):
+        r, body = self.run_report(self.report_script(), 3)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIsNotNone(body, "no issue was opened")
+        self.assertNotIn("(the first 100)", body)
+        self.assertEqual(sum(line.startswith("FAIL: ") for line in body.splitlines()), 3)
+
+    def test_a_reader_that_stops_early_would_end_the_step(self):
+        # The form #300 replaced: head stops reading, printf meets a closed pipe, and
+        # pipefail ends the step before the issue opens. The test above would catch it.
+        script = self.report_script()
+        self.assertIn("sed -n '1,100p'", script)
+        r, body = self.run_report(script.replace("sed -n '1,100p'", "head -n 100"), 1000)
+        self.assertTrue(r.returncode != 0 and body is None, (r.returncode, r.stderr))
 
 
 class Units(unittest.TestCase):
@@ -6190,6 +6652,20 @@ class Units(unittest.TestCase):
         certificate = checks.index("lake env lean Certificate/Facts.lean")
         self.assertEqual(checks[certificate + 1], "python3 -I tests/test_certificate.py")
 
+    def test_suite_jobs_are_the_workflows_own(self):
+        # The release's gate (suite_gate, #301) names the jobs a run of the safe-push-tests
+        # workflow must show passed: every job of the workflow but `report`, which needs
+        # them all. GitHub names a job with no name and no matrix by its id, as the gate
+        # reads it; a workflow that renames, splits or adds a job changes SUITE_JOBS too.
+        workflow = yaml.safe_load((SOURCE / safe_push.SUITE_PATH).read_text())
+        jobs = workflow["jobs"]
+        self.assertEqual(set(jobs), {*safe_push.SUITE_JOBS, safe_push.SUITE_REPORT_JOB})
+        for name, job in jobs.items():
+            self.assertFalse({"name", "strategy"} & set(job), name)
+        self.assertEqual(jobs[safe_push.SUITE_REPORT_JOB]["needs"], list(safe_push.SUITE_JOBS))
+        self.assertEqual([j["name"] for j in SUITE_JOBS],
+                         [*safe_push.SUITE_JOBS, safe_push.SUITE_REPORT_JOB])
+
     def test_ci_check_job_rejects_skip_and_failure_suppression(self):
         source = (SOURCE / ".github/workflows/ci.yml").read_text()
         certificate = "python3 -I tests/test_certificate.py"
@@ -6216,6 +6692,9 @@ class Units(unittest.TestCase):
              "unsupported run body"),
             ("missing freshness assertion", "render", "run",
              f"{RENDER_COMMAND}\n{FRESHNESS_COMMAND}", "unsupported run body"),
+            ("freshness narrowed to the generated pages", "render", "run",
+             f"{RENDER_COMMAND}\n{FRESHNESS_COMMAND} -- facts.json book\n"
+             f'test -z "$({FRESHNESS_COMMAND} -- facts.json book)"', "unsupported run body"),
         )
         for label, scope, field, value, message in cases:
             with self.subTest(label=label):
@@ -6834,8 +7313,9 @@ class Units(unittest.TestCase):
         self.assertEqual(judge(PASSING + [dict(unrequired, bucket="skipping",
                                                state="SKIPPED")])[0], "success")
         # The two checks the ruleset gained on 20 October (#142) hold a merge as the first
-        # three do. `acceptance` is skipped in the push event's run, so a skipped run beside
-        # the pull request's passing one is a pass, and a skipped run alone is not.
+        # three do. `acceptance` runs only on a pull request, and a push's run skips it, so
+        # a skipped run beside the pull request's passing one is a pass, and a skipped run
+        # alone is not.
         for name in ("formal-model", "acceptance"):
             with self.subTest(name=name):
                 own = next(c for c in PASSING if c["name"] == name)
