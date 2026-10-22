@@ -4099,11 +4099,11 @@ findings:
   tests now describe both plants. No check is weakened.
 
 - **II.14 and II.5 prove their right angles in place
-  ([#168](https://github.com/jackChallis/stoicheia/issues/168)).** The owner ruled on #168
-  on 21 October 2026: "**remove the uses first.** III.1, III.2, II.14 and III.1 Por. are
-  to be proved without the eight retired rules (today III.1, III.2 and II.14 use
-  `adjacent_eq_of_right`, and III.1 Por. also uses `centre_unique`), and then the pins say
-  what was approved on 19 October: none of the eight. ... II.14 with ship F2." II.14 and
+  ([#168](https://github.com/jackChallis/stoicheia/issues/168)).** On 21 October 2026 the
+  owner chose, of two options put to them, "Remove the uses first". As the coordinator's
+  record on #168 gives the choice, III.1, III.2, II.14 and III.1 Por. are to be proved
+  without the eight rules the first retirement made theorems, and the pins on #168 then
+  say that none of the eight is used. II.14 and
   its companion `Prop14.rectangle` took the right angle BEH, beside the rectangle's right
   angle DEB with DE produced to H, from `Tacit.adjacent_eq_of_right`. Each now proves it
   in place in [`Elements/BookII/Prop14.lean`](../../Elements/BookII/Prop14.lean): the
