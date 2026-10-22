@@ -4605,6 +4605,28 @@ findings:
   `lakefile.toml` and `lean-toolchain` do not change. No statement, check or expected value
   changes in this entry.
 
+- **The decision entries' render test counts the entries in the folder
+  ([#242](https://github.com/jackChallis/stoicheia/issues/242)).**
+  [`tests/test_decision_entries.py`](../../tests/test_decision_entries.py), whose
+  `RenderLeavesTheRecord` test runs `render.py` on a copy of the sources with two entries
+  planted in `docs/decisions/`, required "decision entries: 2 checked", the planted entries
+  alone. `render.py` checks every entry in the folder, so the first pull request to bring a
+  real entry would fail the test, and with it `scripts/negative_tests.py`, which runs it:
+  in a trial on `tooling/book-zero-imports`, with its entry moved into the folder and not
+  committed, `render.py` reported 3 and the test failed. The rule of 20 October 2026, that
+  a new decision is a file of its own in `docs/decisions/`
+  ([WORKFLOW](../WORKFLOW.md), section 10, "Decision entries"), waits on this fix, so this
+  entry stands on the page. The test now reads the entries the folder already holds before
+  it plants its own, requires the count `render.py` reports to be exactly those and the
+  planted ones, and holds the existing entries' bytes to stay as they were, with the README
+  and the page; it checks that no planted name is already taken. It runs twice: as the
+  folder stands, and with a real entry written into the copy besides the two planted ones,
+  where, with the folder as main holds it today, it requires 3. With the old assertion, the
+  second run fails with "decision entries: 2 checked" not found where `render.py` reported
+  3; now both pass. The assertion stays exact. The coordinator, assigning the issue on 21
+  October 2026, wrote: "the expected count read from the folder's existing entries, so the
+  assertion stays exact. I approve it as a correction, not a weakening." The protected file
+  changed is `tests/test_decision_entries.py`.
 
 - **Train C6b reconciled after axiom wave one.** Train C6b carries III.1's construction
   and porism and stage 4, merged with C6a after axiom wave one, at `4db10cf2`, and again
@@ -4681,8 +4703,10 @@ findings:
   `tests/test_check_style.py` differ by tooling/figure-every-case's check change, merged at
   `0254f4cd`, which lands before this train with its own entry; this train uses it only in
   III.25's record, whose figure draws every case. That branch, merged again at `62a10c91`,
-  brings main at `78fb461d` and `554dfb0f` (#232 and #239); the paths main changed since
-  `73b97ab1` are main's, named in main's entries, and change neither the lock nor any pin.
+  brings main at `78fb461d` and `554dfb0f` (#232 and #239), and this train was merged with
+  main again at `8674bce2` (#240, train C6a) and `af90d71e` (#254); the paths main changed
+  since `73b97ab1` are main's, named in main's entries, and change neither the lock nor any
+  pin.
   The merge itself writes no statement, check or expected value: each is one train's.
 
 - **III.1's construction guard, brief 0008, step 4.** `Audit/Centre.lean`, imported
