@@ -14,7 +14,7 @@ Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
 Each square is described on its side: its two far corners lie on one side of the
-side it stands on (Def. 22 alone does not say so). Either side will do.
+side it stands on (Def. I.22 alone does not say so). Either side will do.
 -/
 
 namespace Elements.BookI
