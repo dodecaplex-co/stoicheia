@@ -2,7 +2,7 @@
 scope = "restricted"
 short = "figures given with a checked division into triangles"
 hypotheses = [
-  "The figure is given with a checked division into triangles that do not overlap, no point inside two of them (`Apart` or `Rectilineal`, or the division from one corner that `Prop14.fan` checks); the main theorem takes I.45's two triangles unchecked. A figure given only by its boundary is not yet covered: that it has such a division, and that another gives the same area, is proved in the staging files (#289), but not yet part of the edition's statements (#116)."
+  "The figure is given with a checked division into triangles that do not overlap, no point inside two of them (`Apart` or `Rectilineal`, or the division from one corner that `Prop14.fan` checks); the main theorem takes I.45's two triangles unchecked. A figure given only by its boundary is not yet covered. Proved in the staging files ([#289](https://github.com/jackChallis/stoicheia/pull/289)), but not yet part of the edition's statements ([#116](https://github.com/jackChallis/stoicheia/issues/116)): that every rectilineal figure, given only by its boundary, has such a division, and that another division gives the same area."
 ]
 note = "`Prop14.square` squares a figure given with a checked division. Proved in staging only (#289): that every figure has one, and that another gives the same area."
 companions = ["II.14 rectangle", "II.14 sum", "II.14 apart", "II.14 figure", "II.14 square", "II.14 fan"]

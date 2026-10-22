@@ -401,7 +401,8 @@ the straight line A₀Aᵢ they share, and the angles at A₀ together less than
 angles. Then those triangles, in that order, are fitted together into one figure
 (`Fitted.fan`), and the square on PQ is equal to that figure, that is, to the triangles
 taken together. The figure is read as the one with corners A₀, A₁, …, Aₙ in order round it
-(that its boundary is that closed line is not stated in Lean). The square drawn is
+(that its boundary is that closed line is not stated here, and is proved in the staging
+files (#289), but not yet part of the edition's statements (#116)). The square drawn is
 `Prop14.square R.toApart`, for the glued figure `R` returned.
 
 As in `Prop45.fan`, the first conclusion is what the two conditions are for; the square
