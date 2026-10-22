@@ -192,7 +192,10 @@ jobs:
               echo "The tests of \`scripts/test_safe_push.py\` passed; the run's page has the red jobs' logs."
             elif [ -f "$log" ]; then
               all=$(grep -E '^(FAIL|ERROR): ' "$log" | sort -u | cut -c1-300 || true)
-              failed=$(printf '%s\n' "$all" | head -n 100)
+              # sed reads all its input, so printf never meets a closed pipe: head would
+              # stop early, printf would take SIGPIPE, and under bash's pipefail the step
+              # would end before the issue opens (#300).
+              failed=$(printf '%s\n' "$all" | sed -n '1,100p')
               if [ -n "$all" ]; then
                 if [ "$(printf '%s\n' "$all" | wc -l)" -gt 100 ]; then
                   echo "Tests of \`scripts/test_safe_push.py\` that failed (the first 100):"
