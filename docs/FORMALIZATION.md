@@ -294,6 +294,21 @@ construction, its premises, and the diagram fact or lemma it needed.
   the record tags it `redundant-hypothesis` where that is the truth.
 - A checked intermediate fact tied to a real sentence of Euclid is legitimate, even if the
   final proof term could do without it.
+- **The sweep lists the candidates.** `python3 scripts/sweep_citations.py` lists every
+  binding in a proof that Lean's unused-variables linter, its tactic analysis on, finds
+  unused; every `obtain` whose whole result goes unused, as
+  `obtain ⟨KF, -, -⟩ := Postulate1 …`, which the linter cannot see; every `have`, `let`
+  or `obtain` whose name begins with `_` (`have _ := h…`); and every helper that is a
+  proof's whole conclusion (below).
+  Each hit is fixed, or, where a sentence of Euclid's stands over the step, declared in
+  the record: the passage whose `at` begins a sentence of that run of `--` lines lists
+  the binding, by the name the proof gives it, in its `unused`, as `unused = ["FC", "GB"]`
+  for the joins by Postulate 1 in I.5, or `this` for an anonymous `have`; and
+  `check_fidelity.py` fails a name there that the Lean beneath does not bind
+  ([review/SCHEMA.md](../review/SCHEMA.md);
+  [decisions, 21 October 2026](briefs/0002-decisions.md#21-october-2026)). Nothing else
+  declares a hit, and a helper hit is fixed, never declared. The release waits until each
+  hit is fixed or declared ([WORKFLOW](WORKFLOW.md), section 10).
 - Cite further earlier results when the argument needs them, and say what each does.
 - Prefer local proofs whose facts and cases follow the argument. Automation (`ac_rfl` to
   close a sum of magnitudes, and the like) is fine for a local step it checks.
@@ -325,7 +340,10 @@ A helper supplies one identified step: what Euclid reads off the figure, a case 
 the reader, a fact he takes for granted. Its docstring says which. It never hides the whole
 conclusion behind a name: if `Prop7.figure` proved I.7, the page would show nothing of
 Euclid's argument. I.7 is the example to follow: its helpers settle where D can fall and what
-the figure shows, and the main proof keeps every step of Euclid's reductio.
+the figure shows, and the main proof keeps every step of Euclid's reductio. The sweep above
+reads each proof term and lists a proposition, porism or companion whose proof comes down,
+in every case, to one helper that none of its own steps feeds, or that cites a helper
+stating exactly what it states.
 
 A construction core kept apart under section 4, as III.1's `Prop1.construction`, carries
 Euclid's sentences of construction, not a step he takes for granted; the record shows it as
