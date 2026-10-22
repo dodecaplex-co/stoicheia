@@ -64,7 +64,7 @@ stage = "full"
 commit = "a421bdd1"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:d2669414e0cf5c4c"
-run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-II04-II08, independent re-read at a421bdd1"
+run = "card 220, cross-family sign-off: original proof by OpenAI Codex, read by Claude Opus 5.5. Later proof edits at ad50305f use Common Notion 2 to add OH and simplify the equality CG = GQ; the commit has a Claude Opus 5.5 co-author trailer but does not identify which writer made them. Those edits were read by GPT-6 Astra (Codex) at 570e6fa and by Claude Opus 5.5 at a421bdd1; ship XS, reader XS-r-II04-II08, independent re-read at a421bdd1"
 
 [review.items]
 statement = "pass"
