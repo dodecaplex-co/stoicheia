@@ -108,11 +108,11 @@
 - **The run here.** The screen is not run again here. The model's full run is, because
   `tests/model/run.py` is a file of the harness:
   `python3 -I tests/model/run.py --full --write` was made at the commit that carries the
-  change, with its harness files as committed, after main's superposition change
-  ([#191](https://github.com/jackChallis/stoicheia/pull/191)) was merged in, and what it
+  change, a1144ad6, with its harness files as committed, after main's centre rule
+  ([#204](https://github.com/jackChallis/stoicheia/pull/204)) was merged in, and what it
   wrote was committed after it. Its counts were compared with main's own run, at
-  dcf0dace (#191): every count is the same, and only the headers, the dates and the
-  timings are new. Its results are recorded in
+  8ccb38ff ([#240](https://github.com/jackChallis/stoicheia/pull/240)): every count is
+  the same, and only the headers and the timings are new. Its results are recorded in
   [`tests/model/results/angle_check.txt`](../../tests/model/results/angle_check.txt),
   [`tests/model/results/exhaustive.txt`](../../tests/model/results/exhaustive.txt),
   [`tests/model/results/grid_check.txt`](../../tests/model/results/grid_check.txt),
@@ -127,9 +127,10 @@
   files changed are `tests/model/run.py`; `tests/model/results_check.py`, which is new;
   `tests/test_screen.py`; `tests/model/MODEL.md`, its counts and how a change to the
   harness carries a new run; the ten files of results above; `.github/workflows/ci.yml`;
-  `Audit/screen.py`; and `scripts/safe_push.py` (a comment, which said that no check reads
-  the model's results). `Audit/screen-run.toml` joins them when the screen first writes
-  it.
+  `Audit/screen.py`; and `scripts/safe_push.py` (two comments: one said that no check
+  reads the model's results, and the one above `CHECKS` now names `results_check.py` as
+  the command of CI's `model` job it does not yet run). `Audit/screen-run.toml` joins them
+  when the screen first writes it.
 - **Open.** A hardening not made here: when git has the commit the results name, the check
   could confirm that it is an ancestor of `HEAD` and that its harness files hash to the
   hash named, and say in a shallow clone that it could not.
