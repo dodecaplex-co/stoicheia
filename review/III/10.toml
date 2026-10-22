@@ -37,12 +37,6 @@ helper = "Tacit.exists_centre"
 note = "Euclid places the centre on AC by the porism to III.1. The Lean first takes that centre, named P, from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E, then applies `Prop1.porism`."
 
 [[passage]]
-at = "Again, since in the same circle ABC a straight line NO"
-kind = "helper"
-helper = "Prop1.porism"
-note = "Euclid puts the centre on NO by the same reasoning as for AC. The Lean applies `Prop1.porism` to BG, with no further reference from Heath here."
-
-[[passage]]
 at = "But it was also proved to be on AC"
 kind = "helper"
 helper = "Prop10.meet_once"
@@ -72,4 +66,4 @@ stage = "full"
 commit = "1c08feeb"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:1eecfe36ac5f86e8"
-run = "brief 0005 stage 5, ship R3 (#29)"
+run = "brief 0005 stage 5, ship R3 (#29); the last step by circle_eq, written by Claude, read also by GPT-6 Astra (Codex)"
