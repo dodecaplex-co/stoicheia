@@ -371,16 +371,4 @@ theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Cen
   rw [hγ] at hE
   exact ⟨B, D, E, hSB.1, hBP, hADC, hAD, hADB, hE, hDBE, k₁, k₂, k₃⟩
 
-example : type_of% @Prop25.of_circle :=
-  (show
-    ∀ {A C : Point} {ABC : Circle}, (∃ E : Point, Centre E ABC) →
-      OnCircle A ABC → OnCircle C ABC →
-      ∀ P : Point, ¬ Collinear A C P →
-        ∃ B D E : Point, OnCircle B ABC ∧ SameSideOf B P A C ∧
-          Between A D C ∧ ‖A D‖ = ‖D C‖ ∧ ∠ A D B = ∟ ∧ Centre E ABC ∧ Collinear D B E ∧
-          (∠ B A D < ∠ A B D → OppositeSidesOf E B A C) ∧
-          (∠ A B D = ∠ B A D → E = D) ∧
-          (∠ A B D < ∠ B A D → SameSideOf E B A C)
-    from @Prop25.of_circle)
-
 end Elements.BookIII
