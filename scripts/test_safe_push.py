@@ -4364,10 +4364,26 @@ class DecisionEntries(Clone):
     def test_advised_revert_restores_only_what_origin_main_holds(self):
         # A main with no docs/decisions/, as before its README was added: the advice
         # restores the page alone, since git restore stops at a path its source lacks, and,
-        # followed, passes the guards.
-        self.assertEqual(sorted(p.name for p in (WORK / safe_push.ENTRIES).iterdir()),
-                         ["README.md"])
-        start = self.commit("No folder of entries yet", remove=[self.README])
+        # followed, passes the guards. That main is made in the test's own clone by
+        # removing whatever the folder holds there, the README and any entries, so the
+        # test holds however many entries the repository has.
+        self.advised_revert_without_entries()
+
+    def test_advised_revert_restores_only_what_origin_main_holds_with_entries(self):
+        # The same, from a baseline whose folder holds an entry besides the README, as main
+        # does once a pull request has added its first entry file.
+        self.commit("An entry in the baseline, for the test", {
+            "docs/decisions/2026-10-21-baseline-for-the-test.md":
+                "- **An entry in the baseline, for the test.** It names nothing.\n"})
+        self.advised_revert_without_entries()
+
+    def advised_revert_without_entries(self):
+        held = git(WORK, "ls-files", "-z", "--", safe_push.ENTRIES).split("\0")
+        held = sorted(p for p in held if p)
+        self.assertIn(self.README, held)
+        start = self.commit("No folder of entries yet", remove=held)
+        self.assertEqual(git(WORK, "ls-files", "--", safe_push.ENTRIES).strip(), "")
+        self.assertFalse((WORK / safe_push.ENTRIES).exists())
         git(WORK, "push", "--quiet", "--no-verify", "origin", f"{start}:refs/heads/main")
         feature = self.commit("A change named on the page", {
             self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
@@ -6830,7 +6846,7 @@ class Units(unittest.TestCase):
         self.assertEqual(judge(PASSING + [{"name": "other", "bucket": "pending"}])[0], "pending")
         # A check outside REQUIRED_CHECKS, as safe-push-tests is, holds a merge while it
         # fails, and a skipped run of it holds nothing back (#157).
-        unrequired = {"name": "safe-push-tests", "workflow": "CI"}
+        unrequired = {"name": "safe-push-tests", "workflow": "Safe-push tests"}
         self.assertEqual(judge(PASSING + [dict(unrequired, bucket="fail", state="FAILURE")])[0],
                          "failure")
         self.assertEqual(judge(PASSING + [dict(unrequired, bucket="skipping",
