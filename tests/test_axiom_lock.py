@@ -11,8 +11,9 @@ word's definition changed in facts.json's data, read into memory.
 Standard library only; no Lean, Git or network. Each case has a copy of the lock in a
 temporary directory of its own and writes only there, never to the lock or facts.json, and
 checks that both are as they were.
-scripts/negative_tests.py runs it after the decision entry regressions, so CI's `negative`
-job and the pre-flight run it on every pull request.
+scripts/negative_tests.py runs it immediately after the risk class regressions. CI's
+`negative` job runs it for R3--R5; R0--R2 rely on the pre-flight, post-merge and cadence
+runs.
 """
 
 import contextlib
