@@ -24,7 +24,7 @@ stage = "full"
 commit = "b18bca18"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:02664b10a40223fd"
-run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I01-I10b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the proof (#220), independent re-read at b18bca18 (reader RT-x3)"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I01-I10b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b18bca18 (reader RT-x3)"
 
 [review.items]
 statement = "pass"

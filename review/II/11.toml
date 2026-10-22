@@ -46,7 +46,7 @@ stage = "full"
 commit = "cf05b375"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:e2b8b978884c935f"
-run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-II09-II14, independent re-read at 221ad5c2; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the proof (#220), independent re-read at cf05b375 (reader RT-c6)"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-II09-II14, independent re-read at 221ad5c2; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at cf05b375 (reader RT-c6)"
 
 [review.items]
 statement = "pass"
