@@ -60,6 +60,9 @@ jobs:
     # repository: it reads the log the tests left and calls gh.
     needs: safe-push-tests
     if: always() && github.ref == 'refs/heads/main' && needs.safe-push-tests.result != 'success'
+    concurrency:
+      group: safe-push-tests-report
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     permissions:
       issues: write
