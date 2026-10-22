@@ -4880,8 +4880,11 @@ findings:
   `0254f4cd`, which landed before this train with its own entry, as #270; this train uses it only in
   III.25's record, whose figure draws every case. That branch, merged again at `62a10c91`,
   brings main at `78fb461d` and `554dfb0f` (#232 and #239), and this train was merged with
-  main again at `8674bce2` (#240, train C6a), `af90d71e` (#254) and `6d06c47b` (#270, the
-  check change itself, after main's tooling and text trains #271 to #304); the paths main changed
+  main again at `8674bce2` (#240, train C6a), `af90d71e` (#254), `6d06c47b` (#270, the
+  check change itself, after main's tooling and text trains #271 to #304) and `84c71dff`
+  (#309, II.5 and II.14 proving their right angles in place; the census of I.13's rule in
+  the overlap catalogue recounted on the merged 136 entries: 17 proofs, 16 calling it, 58
+  in the closure); the paths main changed
   since `73b97ab1` are main's, named in main's entries, and change neither the lock nor any
   pin.
   The merge itself writes no statement, check or expected value: each is one train's.
