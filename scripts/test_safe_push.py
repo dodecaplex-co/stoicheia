@@ -605,10 +605,13 @@ def queue_merge(s, pr):
 
 
 def release_api(path):
-    """The release gate's reads (the repository, blocks-release issues, one issue), which
-    the release tests answer; every other API read goes to api()."""
+    """The release gate's reads (the repository, blocks-release issues, one issue, the
+    safe-push-tests runs at a head and a run's jobs), which the release tests answer;
+    every other API read goes to api()."""
     return path == "repos/test/stoicheia" or "labels=blocks-release" in path \
-        or re.fullmatch(r"repos/test/stoicheia/issues/\d+", path) is not None
+        or re.fullmatch(r"repos/test/stoicheia/issues/\d+", path) is not None \
+        or path.startswith("repos/test/stoicheia/actions/workflows/safe-push-tests.yml/") \
+        or path.startswith("repos/test/stoicheia/actions/runs/")
 
 
 def api(s, args):
@@ -7342,7 +7345,12 @@ class RiskPreflight(Edge):
         self.assertTrue(self.detail(out, "full local checks").startswith(
             f"class R1: {self.SHORT}"), out)
         self.assertEqual(self.step(out, "safe-push tests"), "skip", out)
-        self.assertFalse([c for c in self.gh_state()["calls"] if c[0] == "api"])
+        # The only API reads are --merge's preconditions, main's rules and its health: the
+        # release gate reads nothing for a pull request not labelled release.
+        reads = [c[1] for c in self.gh_state()["calls"] if c[0] == "api"]
+        preconditions = ("/rules/branches/main", "labels=main-red",
+                         "/actions/workflows/post-merge.yml/runs?")
+        self.assertFalse([p for p in reads if not any(k in p for k in preconditions)], reads)
         self.assertEqual(len(self.merges()), 1)
 
     def test_release_merges_only_on_the_full_preflight_of_its_head(self):
