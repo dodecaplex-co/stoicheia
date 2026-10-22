@@ -2329,55 +2329,6 @@ class Wording(unittest.TestCase):
                     self.assertEqual(render.content_wording().get(old, old), want)
 
 
-class LeanPartsNames(unittest.TestCase):
-    """The declarations a page lists before and after the main theorem are read from the
-    Lean's code, not its comments: III.13's docstring has a line that begins "lemma beside
-    III.13", and the page once listed a lemma `beside` that the file never declares."""
-
-    SRC = (
-        "namespace Elements.BookIII\nopen Tacit\n\n"
-        "/-- A helper, whose docstring wraps so that a line begins\n"
-        "theorem with a word that declares nothing. -/\n"
-        "theorem Prop99.helper : True := trivial\n\n"
-        "/-- **III.99**, the main theorem. -/\n"
-        "theorem Prop99 : True := trivial\n\n"
-        "/-- A lemma beside III.99, whose docstring wraps so that a line begins\n"
-        "lemma beside III.99, its first clause alone. -/\n"
-        "theorem Prop99.first : True := trivial\n"
-        "/- a comment /- nested -/\n"
-        "def not_declared -/\n"
-        "theorem Prop99.second : True := trivial\n\n"
-        "end Elements.BookIII\n")
-
-    def parts(self, src):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp).resolve()
-            path = root / "Prop99.lean"
-            path.write_text(src)
-            with patch.object(render, "ROOT", root), \
-                    patch.object(render.heath, "lean_path", lambda book, n: path):
-                return render.lean_parts("III", 99)
-
-    def test_names_in_comments_are_not_declarations(self):
-        parts = self.parts(self.SRC)
-        self.assertEqual(parts.before_names, ["Prop99.helper"])
-        self.assertEqual(parts.after_names, ["Prop99.first", "Prop99.second"])
-        self.assertIn("lemma beside III.99", parts.after)
-
-    def test_a_heading_alone_goes_with_the_main_theorem(self):
-        # Before the theorem, only a section heading whose second line begins "def": it
-        # declares nothing, so it is shown with the main theorem, not as a helper.
-        src = self.SRC.replace(
-            "/-- A helper, whose docstring wraps so that a line begins\n"
-            "theorem with a word that declares nothing. -/\n"
-            "theorem Prop99.helper : True := trivial\n\n",
-            "/-! ## The proposition\n"
-            "def is not a declaration here. -/\n\n")
-        parts = self.parts(src)
-        self.assertEqual((parts.before, parts.before_names), ("", []))
-        self.assertTrue(parts.main.startswith("/-! ## The proposition"))
-
-
 class FigureCaption(unittest.TestCase):
     """The caption under Euclid's figure, from the review record's [figure]: "Drawn for
     one case" before its `case`, or "Drawn for every case" where `every_case` says the

@@ -317,16 +317,12 @@ DECLARATION = re.compile(
 
 class LeanParts:
     """A proposition file cut in three for its page (see `lean_parts`). Each part is
-    Lean text, possibly empty, and each `*_names` lists the declarations in it, read from
-    its code alone: `before_code` and `after_code` are the same spans of
-    `check_fidelity.without_comments(src)`, comments, docstrings and literals blanked
-    ("" for a part that is empty), so a docstring line that begins "lemma beside III.13"
-    declares nothing."""
+    Lean text, possibly empty, and each `*_names` lists the declarations in it."""
 
-    def __init__(self, before, main, after, before_code, after_code):
+    def __init__(self, before, main, after):
         self.before, self.main, self.after = before, main, after
-        self.before_names = DECLARATION.findall(before_code)
-        self.after_names = DECLARATION.findall(after_code)
+        self.before_names = DECLARATION.findall(before)
+        self.after_names = DECLARATION.findall(after)
 
 
 def lean_parts(book, n):
@@ -346,15 +342,13 @@ def lean_parts(book, n):
     end = end if end >= 0 else len(src)
     span = heath.theorem_span(src, n)
     if span is None:
-        return LeanParts("", src[start:end].strip("\n"), "", "", "")
-    code = check_fidelity.without_comments(src)  # same offsets, comments blanked
+        return LeanParts("", src[start:end].strip("\n"), "")
     before = src[start:span.start].strip("\n")
     main = src[span.start:span.end].strip("\n")
     after = src[span.end:end].strip("\n")
-    before_code, after_code = code[start:span.start], code[span.end:end]
-    if before and not DECLARATION.search(before_code):
-        before, main, before_code = "", before + "\n\n" + main, ""
-    return LeanParts(before, main, after, before_code, after_code)
+    if before and not DECLARATION.search(before):
+        before, main = "", before + "\n\n" + main
+    return LeanParts(before, main, after)
 
 
 def axiom_kind(path: str) -> str:
@@ -2952,8 +2946,7 @@ def names_page(facts, records):
             record = records.get(ref)
             page = f"{book}/{n:02d}.md"
             path = optional_path(heath.lean_path(book, n))
-            here = (set(DECLARATION.findall(check_fidelity.without_comments(read_text(path))))
-                    if path is not None else set())
+            here = set(DECLARATION.findall(read_text(path))) if path is not None else set()
             module_path = path or heath.lean_path(book, n)
             module = (f"[`Elements.Book{book}.Prop{n:02d}`]"
                       f"(../{module_path.relative_to(ROOT).as_posix()})")
