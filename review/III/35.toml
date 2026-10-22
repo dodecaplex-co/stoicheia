@@ -8,10 +8,16 @@ kind = "euclid"
 note = "Where Heath cites I.47, `BookI.Prop47.sq` describes the squares by I.46 and identifies their areas through `Square.described` (I.4, I.28 and I.34); Heath prints no references to these four propositions there."
 
 [[passage]]
+at = "it is manifest that, AE, EC, DE, EB being equal"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid takes AE, EC, DE and EB to be equal without giving a reason. The Lean obtains the equalities from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
+
+[[passage]]
 at = "Next let AC, DB not be through the centre"
 kind = "case"
 helper = "Prop35.cut"
-note = "Euclid next takes neither straight line through the centre; the Lean also takes AC through F with E distinct from F, one of Simson's intermediate cases. In that branch `Prop35.cut` applies II.5, for which Heath prints no reference at this transition, after `Tacit.centre_inside` (System E, Generalities 3) and `Tacit.between_of_inside_chord` (System E, Circle 1), both rules we assume, put F between A and C; `Definition15`, the assumed rule for equal radii, gives the equal halves."
+note = "Euclid next takes neither straight line through the centre; the Lean also takes AC through F with E distinct from F, covering both of Simson's intermediate cases, according as AC cuts DB at right angles or not. In that branch `Prop35.cut` applies II.5, for which Heath prints no reference at this transition, after `Tacit.centre_inside` (System E, Generalities 3) and `Tacit.between_of_inside_chord` (System E, Circle 1), both rules we assume, put F between A and C; `Definition15`, the assumed rule for equal radii, gives the equal halves."
 
 [[passage]]
 at = "let the centre of ABCD be taken, and let it be F"
