@@ -404,14 +404,23 @@ The ruleset and the remaining merge requirements are in
   with `python3 scripts/negative_tests.py --plant <name>`, which keeps the check that the
   work tree returns to its entry Git status, and closes by saying how many of the plants it
   ran. The suite fails, naming the file, on a file that does not load, on a file that
-  changes a name of the runner or of the modules it shares, on a `plant()` that exits, and
-  on a plant whose change no check refuses. That last guard catches a plant that runs no
-  check, or returns before its first; it does not catch one that calls `nt.refused` with
-  no check behind it, nor one that drops some of its cases, so review still reads each
-  plant's cases. Like any file under `scripts/`, a plant's file is a protected path
-  ([section 10](#landing-work-pull-requests)): the pull request that adds or changes one
-  names it, by its whole path, in a new decision entry ("Decision entries", in section 10),
-  carries the label `security-review` and records a `/security-review`.
+  changes a name of the runner or of the modules it shares as it loads or as its plant
+  runs, on a `plant()` that changes the failures or refusals recorded before it, on a
+  `plant()` that raises `SystemExit`, after which the run goes on, and on a plant whose
+  change no check refuses; the names are looked at once more after the closing check of
+  the tree, where a change fails the run with no file to name. That last guard catches a plant that runs no check, or returns before its
+  first; it does not catch one that calls `nt.refused` with no check behind it, nor one
+  that drops some of its cases, so review still reads each plant's cases. The guards
+  catch a mistake, not a file written to deceive: a plant's file runs in the runner's
+  process with its full power, so the security review reads each plant's file as code of
+  the runner. They do not see a shared object changed in place other than those two lists
+  (a helper's `__code__` replaced, a dict of a helper module changed), nor a process ended
+  by `os._exit` or a signal, which is not caught in process and leaves with the status it
+  chooses; review reads each plant's file for them. Like any file under `scripts/`, a
+  plant's file is a protected path ([section 10](#landing-work-pull-requests)): the pull
+  request that adds, changes or deletes one names it, by its whole path, in a new decision
+  entry ("Decision entries", in section 10), carries the label `security-review` and
+  records a `/security-review`.
 - **The model tests read the lock.** `tests/model/laws.toml` names a law for each axiom of
   `Certificate/axioms.lock`, and `tests/model/lock.sha256` pins the lock's hash, so a
   change to an axiom fails the `model` job until the model follows it, in the same pull

@@ -18,10 +18,12 @@ here. Adding a plant is adding one file: there is no number to choose and no lis
 The plants run in a stable order: every plant whose `BUILDS` is False, by name, then every
 plant whose `BUILDS` is True, by name. Each is named, with its file, before it runs, and
 its elapsed time is printed after it, restoration included. The entry Git status is taken
-before any plant's file is read, so a file that a plant's file writes as it loads shows in
-the closing comparison too. The closing list gives each failure under the plant that added
-it, and the run's own (the restoration and final checks) under a heading of their own; a
-full run that passes prints how many plants it ran just before its closing tick.
+first of all, before the regressions, the first of which loads the plants' folder in a
+process of its own, and so before any plant's file is read: a file that a plant's file
+writes as it loads shows in the closing comparison too. The closing list gives each
+failure under the plant that added it, and the run's own (the restoration and final
+checks) under a heading of their own; a full run that passes prints how many plants it
+ran just before its closing tick.
 `--plant NAME`, given once or more, runs just those plants, inside the same Git bracket
 and with the same closing check of the unplanted tree, and a run it narrows closes by
 saying how many of the plants it ran and that the others were not run; an unknown name
@@ -37,7 +39,7 @@ imported a second time through Python's cache. A missing or empty folder; a fold
 is, or passes through, a symbolic link; an entry that is not a regular file named
 `[a-z][a-z0-9_]*.py` (a symbolic link or a directory among them), other than the directory
 `__pycache__` and a regular file `.DS_Store`, the folder settings Finder writes and Git
-ignores, which is named on stdout and passed over; a file that raises on import, a
+ignores, which is named on stdout and passed over; a file that raises as it loads, a
 SyntaxError or a SystemExit among them; and a file with no description, no `BUILDS` of
 True or False, or no `plant` callable with no arguments: each is a fault naming the file
 and the reason, and the run fails before anything is planted.
@@ -47,10 +49,14 @@ check_kernel, generated_counts, heath and subprocess), so one plant's file could
 how every later plant is judged. Before any plant's file is read, their names are noted
 with the object each holds. A file that adds, rebinds or deletes a name of this module,
 or rebinds or deletes a name of one of the others (adding one there is no fault), as it
-loads or while its plant() runs, is a fault naming the file, and the name is put back.
-This guard sees names only, not an object changed in place. A plant() that exits, by
-sys.exit or a check's `main` run in process, fails the run by its name, and the run goes
-on to the next plant; a run in which fewer plants ran than were chosen fails too.
+loads or while its plant() runs, is a fault naming the file, and the name is put back;
+the names are looked at once more after the closing check of the unplanted tree, where a
+change fails the run "after the closing check". The failures and refusals recorded before
+a plant only grow, so a plant() that changes them fails by its name, and they are put
+back as they were, with any it added after them kept. A plant() that raises SystemExit,
+by sys.exit or a check's `main` run in process, fails the run by its name, and the run
+goes on to the next plant. A run that ran fewer plants than it chose fails too: its loop
+ends early only when the list of the plants chosen changes as it runs.
 
 Each check that catches its plant records a refusal (expect_failure does, and `refused`
 for a plant that judges a refusal itself, as stale_page does); a plant that records none
@@ -58,6 +64,13 @@ and adds no failure fails the run by its name, since nothing refused what it pla
 That guard catches a plant that runs no check, or returns before its first. It does not
 catch a plant that calls `refused` with no check behind it, nor one that drops some of its
 cases: a single refusal satisfies it.
+
+These guards catch a mistake, not a file written to deceive: a plant's file runs in the
+runner's process with its full power, so the security review reads each plant's file as
+code of the runner. They do not see a shared object changed in place other than those two
+lists (a helper's `__code__` replaced, a dict of a helper module changed); and a file that
+ends the process itself (os._exit, a signal) is not caught in process, and leaves with the
+status it chooses. Review reads each plant's file for them.
 
 The copies of merge_conflict_markers and count_markers, and stale_page's list of
 generated outputs, read Git's tracked files. One absent from the work tree is named on
@@ -81,8 +94,8 @@ plant, including dependent modules, hashes and traces. planted_assumptions alway
 restores or removes `Planted.*` outputs in a nested `finally`. Every plant reports its
 elapsed time, restoration included. An outer `finally` compares Git status with the entry status, including on interruption, without
 replacing an exception already in flight.
-Temporary-directory regressions run first, without Lean. Exits non-zero if a fault
-goes unnoticed or a restoration check fails. Restoration needs writable files and
+Temporary-directory regressions run before the plants, without Lean. Exits non-zero if a
+fault goes unnoticed or a restoration check fails. Restoration needs writable files and
 an opportunity for `finally` to finish; a forced process kill cannot provide it.
 Standard library only; Python 3.11 or later, for the review records.
 """
@@ -482,13 +495,16 @@ def load_plants(folder: Path | None = None) -> tuple[list[Plant], list[str]]:
 def run_plant(plant: Plant, sources: dict[int, str],
               changes: Callable[[], list[str]]) -> None:
     """Run one plant, named before and timed after. Fail it, by its name, if its plant()
-    exits, if it changes a shared name (`changes`, from guard, which puts the name back
-    first, in `finally`, so that what follows reads the runner's own), or if it neither
-    records a refusal nor adds a failure. `sources` gains the plant's heading for each
-    failure it added, by its index in `failures`."""
+    raises SystemExit; if it changes a shared name (`changes`, from guard, which puts the
+    name back) or the failures or refusals recorded before it, which only grow (put back
+    as they were, with any after them kept), both seen first, in `finally`, so that what
+    follows reads the runner's own; or if it neither records a refusal nor adds a failure.
+    `sources` gains the plant's heading for each failure it added, by its index in
+    `failures`."""
     path = shown(plant.path)
     print(f"{plant.name} ({path})")
     failed, caught = len(failures), len(refusals)
+    recorded = failures[:], refusals[:]
     started = perf_counter()
     exited, code = False, None
     try:
@@ -497,9 +513,18 @@ def run_plant(plant: Plant, sources: dict[int, str],
         exited, code = True, error.code
     finally:
         changed = changes()
+        rewritten = False
+        for entries, earlier in zip((failures, refusals), recorded):
+            if entries[:len(earlier)] != earlier:
+                entries[:] = earlier + entries[len(earlier):]
+                rewritten = True
         print(f"  {plant.name}: {perf_counter() - started:.2f}s (including restoration)")
         for reason in changed:
             message = f"{plant.name}: {path} {shared_change(reason, 'as it runs')}"
+            failures.append(message)
+            print(f"✗ {message}")
+        if rewritten:
+            message = f"{plant.name}: changed the failures or refusals recorded before it"
             failures.append(message)
             print(f"✗ {message}")
     if exited:
@@ -558,6 +583,21 @@ def close(sources: dict[int, str], ran: int = 0, total: int = 0) -> int:
     return 1
 
 
+REGRESSIONS = (("restoration regressions", "tests/test_negative_tests.py"),
+               ("count regressions", "tests/test_generated_counts.py"),
+               ("decision entry regressions", "tests/test_decision_entries.py"))
+
+
+def regressions() -> bool:
+    """Run the file-only regressions, in order, each without Lean; False at the first that
+    fails, which expect_success records."""
+    for name, test in REGRESSIONS:
+        if not expect_success(name, run(sys.executable, "-I", test)):
+            return False
+        print(f"✓ {name} passed (without Lean)")
+    return True
+
+
 def main(argv=()) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     only = parser.add_mutually_exclusive_group()
@@ -567,22 +607,12 @@ def main(argv=()) -> int:
                       help=f"only the plant {PLANTS}/NAME.py, in the usual Git bracket; "
                            "may be given more than once")
     args = parser.parse_args(argv)
-    if not expect_success("restoration regressions",
-                          run(sys.executable, "-I", "tests/test_negative_tests.py")):
-        return 1
-    print("✓ restoration regressions passed (without Lean)")
-    if not expect_success("count regressions",
-                          run(sys.executable, "-I", "tests/test_generated_counts.py")):
-        return 1
-    print("✓ count regressions passed (without Lean)")
-    if not expect_success("decision entry regressions",
-                          run(sys.executable, "-I", "tests/test_decision_entries.py")):
-        return 1
-    print("✓ decision entry regressions passed (without Lean)")
-    # Made before any plant's file is read, and held here, so that no plant can rebind it.
-    changes = guard()
     sources: dict[int, str] = {}
     if args.counts_only:
+        if not regressions():
+            return 1
+        # Made before any plant's file is read, and held here, so no plant can rebind it.
+        changes = guard()
         loaded = choose(parser, args, sources)
         if loaded is None:
             return close(sources)
@@ -592,29 +622,37 @@ def main(argv=()) -> int:
             return 1
         print("✓ count plants passed; other plants were not run (--counts-only)")
         return 0
-    # Before the plants' files are read, so that a file written as one loads shows too.
+    # First of all: the restoration regressions load the real plants' folder, so a file
+    # that a plant's file writes as it loads, there or here, shows at the close.
     before = run("git", "status", "--porcelain")
     if not expect_success("entry Git status", before):
         return 1
     ran = total = 0
     try:
-        loaded = choose(parser, args, sources)
-        if loaded is not None:
-            chosen, total = loaded
-            expected = len(chosen)
-            for plant in chosen:
-                run_plant(plant, sources, changes)
-                ran += 1
-            if ran < expected:
-                message = f"only {ran} of the {expected} plants chosen were run"
-                failures.append(message)
-                print(f"✗ {message}")
-            restored = fidelity()
-            if restored.returncode != 0:
-                failures.append("the unplanted tree failed check_fidelity.py")
-                print((restored.stdout + restored.stderr)[-3000:])
-            else:
-                print("✓ the unplanted tree passes check_fidelity.py")
+        if regressions():
+            changes = guard()  # as for --counts-only
+            loaded = choose(parser, args, sources)
+            if loaded is not None:
+                chosen, total = loaded
+                expected = len(chosen)
+                for plant in chosen:
+                    run_plant(plant, sources, changes)
+                    ran += 1
+                # Fewer only when the list of the plants chosen changes as the loop runs.
+                if ran < expected:
+                    message = f"only {ran} of the {expected} plants chosen were run"
+                    failures.append(message)
+                    print(f"✗ {message}")
+                restored = fidelity()
+                if restored.returncode != 0:
+                    failures.append("the unplanted tree failed check_fidelity.py")
+                    print((restored.stdout + restored.stderr)[-3000:])
+                else:
+                    print("✓ the unplanted tree passes check_fidelity.py")
+                for reason in changes():
+                    message = shared_change(reason, "after the closing check")
+                    failures.append(message)
+                    print(f"✗ {message}")
     finally:
         original = sys.exception()
         try:

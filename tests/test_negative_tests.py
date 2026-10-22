@@ -25,6 +25,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import warnings
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -411,12 +412,19 @@ class RestorationTests(unittest.TestCase):
 
     def test_failed_regressions_stop_before_any_plant(self):
         loaded, first = stand_in(self.root)
-        with patch.object(negative, "run", return_value=subprocess.CompletedProcess(
-                [], 1, "", "regression failed")) as commands, \
+
+        def run(*cmd):
+            if cmd[:2] == ("git", "status"):
+                return subprocess.CompletedProcess(cmd, 0, "", "")
+            return subprocess.CompletedProcess(cmd, 1, "", "regression failed")
+        with patch.object(negative, "run", side_effect=run) as commands, \
                 patch.object(negative, "load_plants", return_value=loaded) as load:
             self.assertEqual(negative.main(), 1)
-        self.assertEqual(commands.call_args.args,
-                         (sys.executable, "-I", "tests/test_negative_tests.py"))
+        # The bracket's entry status comes before the regressions, and its closing one after.
+        self.assertEqual([call.args for call in commands.call_args_list],
+                         [("git", "status", "--porcelain"),
+                          (sys.executable, "-I", "tests/test_negative_tests.py"),
+                          ("git", "status", "--porcelain")])
         first.assert_not_called()
         load.assert_not_called()
 
@@ -1008,6 +1016,76 @@ class LoaderTests(unittest.TestCase):
                 'nt.check_fidelity.planted_name = 1; nt.refused("{name}: caught")')))
             self.assertEqual(negative.main(), 0)
             self.assertEqual(negative.failures, [])
+
+    def test_a_name_changed_by_the_closing_check_fails(self):
+        """The names are looked at once more after the closing check of the unplanted tree,
+        so a change made after the last plant's guard, as by a hook that a file left as it
+        loaded, fails the run, and the name is put back."""
+        check_lock = negative.check_fidelity.check_lock
+        self.enterContext(patch.object(negative.check_fidelity, "check_lock", check_lock))
+
+        def run(*cmd):
+            self.calls.append(cmd)
+            if cmd[1:] == ("scripts/check_fidelity.py",):
+                negative.check_fidelity.check_lock = lambda *args: 0
+            return subprocess.CompletedProcess(cmd, 0, "", "")
+        self.write("good.py", plant_source("good"))
+        with patch.object(negative, "run", side_effect=run):
+            self.assertEqual(negative.main(), 1)
+        message = ("rebinds check_fidelity.check_lock after the closing check (put back); a "
+                   "plant leaves the names it shares with the runner as it finds them")
+        self.assertEqual(negative.failures, [message])
+        self.assertIn(f"outside any plant:\n  ✗ {message}\n", self.output.getvalue())
+        self.assertIs(negative.check_fidelity.check_lock, check_lock)
+
+    def test_a_plant_that_changes_earlier_failures_or_refusals_fails(self):
+        """The failures and refusals recorded before a plant only grow: a plant() that
+        clears the failures, or pops a refusal, fails by its name, and the earlier entries
+        are put back, so the closing list still holds the earlier failure."""
+        earlier = ('nt.refused("{name}: caught"); nt.expect_failure("a check that passes", '
+                   'subprocess.CompletedProcess([], 0, "", ""))')
+        message = "b_changes: changed the failures or refusals recorded before it"
+        for change in ("nt.failures.clear()", "nt.refusals.pop()"):
+            with self.subTest(change=change):
+                self.reset()
+                refusals = len(negative.refusals)
+                self.write("a_earlier.py", plant_source("a_earlier", body=earlier))
+                self.write("b_changes.py", plant_source("b_changes", body=(
+                    change + '; nt.refused("{name}: caught")')))
+                self.write("c_later.py", plant_source("c_later"))
+                self.assertEqual(negative.main(), 1)
+                self.assertEqual(negative.failures, ["a check that passes: not caught", message])
+                self.assertEqual(negative.refusals[refusals], "a_earlier: caught")
+                self.assertTrue(self.output.getvalue().endswith(
+                    "2 negative-test failure(s):\n"
+                    "a_earlier (scripts/negative/a_earlier.py):\n"
+                    "  ✗ a check that passes: not caught\n"
+                    f"b_changes (scripts/negative/b_changes.py):\n  ✗ {message}\n"))
+                self.assertEqual(self.planted(), ["a_earlier", "b_changes", "c_later"])
+
+    def test_a_warning_recorded_against_the_runner_is_passed_over(self):
+        """Python's warnings machinery adds `__warningregistry__` to the module a warning is
+        attributed to, ignored warnings too, so the guard passes over that one name
+        (UNGUARDED): a plant whose helper raises a warning is not refused for it."""
+        vars(negative).pop("__warningregistry__", None)
+        self.addCleanup(lambda: vars(negative).pop("__warningregistry__", None))
+        self.write("warns.py", plant_source("warns", before="import warnings", body=(
+            'warnings.warn_explicit("probe", UserWarning, "negative_tests.py", 1, '
+            'registry=vars(nt).setdefault("__warningregistry__", {{}})); '
+            'nt.refused("{name}: caught")')))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.assertEqual(negative.main(), 0)
+        self.assertEqual(negative.failures, [])
+        self.assertIn("__warningregistry__", vars(negative))
+
+    def test_the_entry_git_status_comes_first_of_all(self):
+        """The restoration regressions load the real plants' folder, so the entry Git status
+        is taken before them, as main()'s first command."""
+        self.write("good.py", plant_source("good"))
+        self.assertEqual(negative.main(), 0)
+        self.assertEqual(self.calls[0], ("git", "status", "--porcelain"))
+        self.assertEqual(self.calls[1], (sys.executable, "-I", "tests/test_negative_tests.py"))
 
     def test_a_file_written_as_a_plant_loads_shows(self):
         """The entry Git status is taken before the plants' files are read, so a file that
