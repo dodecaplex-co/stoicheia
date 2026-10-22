@@ -465,8 +465,8 @@ The ruleset and the remaining merge requirements are in
   refusals without Lean, and `negative_tests.py` runs it after the count regressions,
   before planting, with `--counts-only` too.
 - **The lock is written again as it is committed.** `check_fidelity.py --write-lock`, run
-  on the committed `facts.json`, gives back `Certificate/axioms.lock` byte for byte, its
-  header included, since `model/lock.sha256` and `tests/model/lock.sha256` pin its bytes.
+  on the committed `facts.json`, must give back `Certificate/axioms.lock` byte for byte, its
+  header included, for `model/lock.sha256` and `tests/model/lock.sha256` pin its bytes.
   `tests/test_axiom_lock.py` tests that without Lean, and `negative_tests.py` runs it after
   the decision entry regressions, before planting, with `--counts-only` too.
 - **Record the revision and the outcome** of each command. A command not run is not a

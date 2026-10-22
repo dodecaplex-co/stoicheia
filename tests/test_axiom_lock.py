@@ -4,12 +4,13 @@ facts.json, with no axiom and no word changed, the writer gives back
 Certificate/axioms.lock byte for byte, its header and layout included, for the lock's bytes
 are pinned by model/lock.sha256, tests/model/lock.sha256 and the model's generated files.
 And the comparisons can fail: a header changed by one character is seen, and so is one
-word's statement changed in a copy of facts.json.
+word's definition changed in facts.json's data, read into memory.
 
     python3 -I tests/test_axiom_lock.py
 
-Standard library only; no Lean, Git or network. Each case writes its lock in a temporary
-directory of its own, never the lock or facts.json, and checks that both are as they were.
+Standard library only; no Lean, Git or network. Each case works on a copy of the lock in a
+temporary directory of its own, never the lock or facts.json, and checks that both are as
+they were.
 scripts/negative_tests.py runs it after the decision entry regressions, so CI's `negative`
 job and the pre-flight run it on every pull request.
 """
