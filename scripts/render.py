@@ -317,11 +317,10 @@ DECLARATION = re.compile(
 
 class LeanParts:
     """A proposition file cut in three for its page (see `lean_parts`). Each part is
-    Lean text, possibly empty, and each `*_names` lists the declarations in it, read from
-    its code alone: `before_code` and `after_code` are the same spans of
-    `check_fidelity.without_comments(src)`, comments, docstrings and literals blanked
-    ("" for a part that is empty), so a docstring line that begins "lemma beside III.13"
-    declares nothing."""
+    Lean text, possibly empty, and each `*_names` lists the declarations in it. The names
+    are read from the corresponding spans of `check_fidelity.without_comments(src)`, with
+    comments, docstrings and literals blanked, so a docstring line that begins "lemma
+    beside III.13" declares nothing."""
 
     def __init__(self, before, main, after, before_code, after_code):
         self.before, self.main, self.after = before, main, after
