@@ -95,7 +95,7 @@ convex or not, and need have no corner from which the straight lines to the othe
 it.
 
 **The convention, stated on the page:** a figure given in these forms comes with its
-division, and the division is checked, as a division supplied with a figure must be. For any
+division, and the division is checked, as a division given with a figure must be. For any
 division the check is `Apart`: no point is inside two of the triangles. For a figure with one
 boundary it may also be `Fitted`: the triangles do not overlap (`Fitted.inside_pairwise`, in
 Book Zero), and each meets the figure already made only along one side, so they make up one

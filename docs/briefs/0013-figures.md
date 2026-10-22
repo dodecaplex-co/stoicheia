@@ -1,5 +1,9 @@
 # Brief 0013: rectilineal figures given by their outlines
 
+**Current status, 22 October 2026.** The owner approved the promotion, and it is carried out
+on the branch that lands it: see section 10, "Promotion, 22 October 2026". The opening
+account below records the draft of 21 October.
+
 *19 October 2026, revised 21 October 2026. A draft for the owner's approval. On 20 October 2026 the owner "approved … decisions for #116, including" decision 5 of section 9, as the decisions page's entry of that day records, quoting that decision's request. Every staged statement is now proved in `Staging/Figures/`; promoting them into `Elements/` awaits the owner's approval. Nothing is frozen: the staged statements are those assigned for proof, as they stand at `2bbf597d`, and none has changed since; nothing in `Elements/`, the foundations, the lock or the review records changes with this draft.*
 
 This brief proposes the missing ground beneath I.45 and II.14: a figure described by its boundary, a proved division into triangles covering exactly its region, and a proof that every such division gives the same area. The constructions then apply to that area.
@@ -1359,7 +1363,7 @@ brought to the promoted state: none says that a proof is due, that a division or
 independence is unproved, or that the fan's boundary is not stated, and the notes of
 `Elements/Foundations/Phrases.lean` that set division and its independence aside were
 rewritten, its Lean unchanged (approval 2). `Certificate/axioms.lock` gains the twenty
-words that the outline companions' statements reach, from 238 words to 258, with no axiom
+words that the outline companions' statements reach, from 242 words to 262, with no axiom
 added, removed or restated, and the model's two copies of its hash are renewed, for no law
 of the model changes.
 

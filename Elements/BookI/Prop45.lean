@@ -18,25 +18,27 @@ Euclid's text, in Heath's translation: [`heath/I/45.md`](../../heath/I/45.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
-`Prop45` is Euclid's worked configuration: the four-sided figure ABCD, cut by DB into the
-triangles ABD and DBC. Euclid's proof makes a parallelogram for the first triangle [I. 42],
-applies one for the second to its side [I. 44], and shows that the two make one
-parallelogram; a figure of more triangles repeats the second step, as Oliver Byrne draws it
-for three (1847, p. 46). The companions after it carry his words to any rectilineal figure:
+`Prop45` takes the triangles ABD and DBC unchecked; they represent Euclid's worked four-sided
+figure when A and C lie on opposite sides of DB. Euclid's proof makes a parallelogram for the
+first triangle [I. 42], applies one for the second to its side [I. 44], and shows that the
+two make one parallelogram; a figure of more triangles repeats the second step, as Oliver
+Byrne draws it for three (1847, p. 46). The companions after it carry his words to any
+rectilineal figure:
 
 * `Prop45.outline`, the main companion, is the proposition in general: the figure given by
-  its outline alone (`Outline`), with any number of sides, and holes, separate pieces or
-  contacts at corners if it has them, and the parallelogram equal to its area
+  its boundary alone, represented by an outline (`Outline`), with any number of sides, and
+  holes, separate pieces or contacts at corners if it has them, and the parallelogram equal
+  to its area
   (`Outline.area`). It stands at the end of the file.
 * `Prop45.append` is the second step of Euclid's proof.
 * `Prop45.sum` repeats it, for any number of triangles. It is the construction, and claims
   nothing of a figure: the triangles need not fit together.
-* `Prop45.apart` is the proposition for a figure given with triangles that lie apart,
-  no point inside two of them (`Apart`).
+* `Prop45.apart` is the proposition for a figure given with a checked division into
+  triangles that do not overlap, no point inside two of them (`Apart`).
   The figure may have a hole (Definition I.14: "any boundary or boundaries").
-* `Prop45.figure` is the proposition for a figure with one boundary, given with triangles
-  fitted together in a suitable order (`Rectilineal`, `Fitted`). It follows from
-  `Prop45.apart`, since fitted triangles lie apart (`Fitted.inside_pairwise`).
+* `Prop45.figure` is the proposition for a figure with one boundary, given with a checked
+  division into triangles fitted together in a suitable order (`Rectilineal`, `Fitted`). It
+  follows from `Prop45.apart`, since fitted triangles lie apart (`Fitted.inside_pairwise`).
 * `Prop45.fan` is the proposition for a figure divided as Euclid and Byrne divide it, by the
   straight lines from one corner A₀, with the two conditions that make those triangles a
   figure: neighbouring triangles on opposite sides of the straight line they share, and the
@@ -54,23 +56,23 @@ companion for a figure glued together has it; `apart` names the figure whose tri
 apart; `fan` names the division Euclid draws, from one corner, which not every figure
 admits; `outline` names the figure given by its boundary. A checked fan is a fitted figure,
 and a fitted figure's triangles lie apart, so the three agree on the figures they share; and
-every figure given with triangles that lie apart has an outline with exactly their region
-(`apart_has_outline`), whose area is their sum.
+every figure given with a checked division into triangles that lie apart has an outline with
+exactly their region (`apart_has_outline`), whose area is their sum.
 
 **What "equal to the figure" means here.** Euclid adds up ABD and DBC and calls them "the
 whole rectilineal figure ABCD", taking for granted that another division of the figure would
 give the same sum; David Hilbert proved that, for his measure of area (Book I's gap
-catalogue, under I.45). Book Zero proves it here, after Hilbert: every figure given by its
-outline has a division into triangles that lie apart (`division_exists`), and any two
-divisions of one figure have the same sum (`Apart.area_eq_of_same_region`), so the figure
-has one area, the sum of every division (`Outline.area`, `area_eq`). The parallelogram of
-`Prop45.outline` is equal to that area. Those of `Prop45.apart`, `Prop45.figure` and
+catalogue, under I.45). Book Zero proves it here, after Hilbert: any two divisions of one
+figure have the same sum (`Apart.area_eq_of_same_region`). It proves separately that every
+figure given by its outline has a division into triangles that lie apart
+(`division_exists`). So the figure has one area, the sum of every division (`Outline.area`,
+`area_eq`). The parallelogram of `Prop45.outline` is equal to that area. Those of `Prop45.apart`, `Prop45.figure` and
 `Prop45.fan` are equal to the triangles the figure is given with, taken together; that sum
 is the figure's area, the same for every division.
 `Prop45` itself is an area-sum theorem: it follows from `Prop45.sum` (the check at the end),
-and its ABD and DBC need only be triangles, which may overlap. It represents Euclid's
-pictured division when A and C lie on opposite sides of DB, and that checked case is
-`Prop45.fan` for the corners D, A, B, C.
+and its ABD and DBC are unchecked: they need only be triangles, and may overlap. It
+represents Euclid's pictured division when A and C lie on opposite sides of DB, and that
+checked case is `Prop45.fan` for the corners D, A, B, C.
 -/
 
 namespace Elements.BookI
@@ -336,10 +338,11 @@ theorem Prop45.sum {E₁ E E₂ : Point} (ts : List (Point × Point × Point)) (
 
 /-- **I.45, for a figure given with triangles that lie apart** (companion of I.45). To
 construct, in a given rectilineal angle E, a parallelogram KFLM, its angle at K equal to E,
-equal to a given rectilineal figure: the figure given with any division of it into
-triangles, no point inside two of them (`Apart`), and "equal to the figure" meaning equal
-to those triangles taken together (`Apart.area`). The figure may have a hole, touch itself
-at a corner, or be in more than one piece. It is `Prop45.sum` for the figure's triangles;
+equal to a given rectilineal figure: the figure given with a checked division into
+triangles, any division of it whose triangles lie apart, no point inside two of them
+(`Apart`), and "equal to the figure" meaning equal to those triangles taken together
+(`Apart.area`). The figure may have a hole, touch itself at a corner, or be in more than one
+piece. It is `Prop45.sum` for the figure's triangles;
 lying apart is what makes their sum the figure's. The statement speaks of the division given;
 that every division of the figure gives the same sum is the content theorem
 (`Apart.area_eq_of_same_region`), and the figure by its outline is `Prop45.outline`. -/
@@ -350,11 +353,10 @@ theorem Prop45.apart {E₁ E E₂ : Point} (R : Apart) (hE : Triangle E₁ E E�
 
 /-- **I.45, for a figure with one boundary, given with triangles fitted together**
 (companion of I.45). To construct, in a given rectilineal angle E, a parallelogram KFLM,
-its angle at K equal to E,
-equal to a given rectilineal figure: the figure given with triangles fitted together in a
-suitable order, each glued across a side of an earlier one and meeting the earlier ones only
-along it (`Rectilineal`), and "equal to the figure" meaning equal to those triangles taken
-together (`Rectilineal.area`). The figure may be convex or not, and need have no corner from
+its angle at K equal to E, equal to a given rectilineal figure: the figure given with a
+checked division into triangles, fitted together in a suitable order, each glued across a
+side of an earlier one and meeting the earlier ones only along it (`Rectilineal`), and
+"equal to the figure" meaning equal to those triangles taken together (`Rectilineal.area`). The figure may be convex or not, and need have no corner from
 which the straight lines to the others divide it. It is `Prop45.apart` for the figure's
 triangles, which lie apart (`Fitted.inside_pairwise`, `Rectilineal.toApart`). As there, the
 statement speaks of the division given, and every division gives the same sum
@@ -371,7 +373,7 @@ namespace Elements
 /-! ## Euclid's and Byrne's division, checked
 
 Euclid's DB, drawn from the corner D of ABCD, and Oliver Byrne's two straight lines from one
-corner of his figure (1847, p. 46), cut it into triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ from one
+corner of his figure (1847, p. 46), divide it into triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ from one
 corner A₀. `Fitted.fan` says when those triangles are a figure in the sense of `Fitted`: each
 two neighbouring triangles lie on opposite sides of the straight line A₀Aᵢ they share, and the
 angles A₁A₀A₂, …, Aₙ₋₁A₀Aₙ together are less than four right angles. Without the two

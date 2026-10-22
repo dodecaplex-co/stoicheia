@@ -43,6 +43,14 @@
 # Renewed on 19 October 2026 for the merged vocabulary of stage 3, mixed angles and
 # brief 0008, section 7: 88 axioms, unchanged, and 121 words of vocabulary.
 #
+# Renewed on 19 October 2026 for stage 4 with stage 3, mixed angles and brief 0008,
+# section 7: 88 axioms, byte-identical to the preceding integration, and its 121 words
+# plus Foot, 122 words of vocabulary. No model law changes.
+#
+# Renewed on 19 October 2026 for III.25's kind companion (brief 0006): Arc.Less,
+# Arc.Semicircle and Arc.Greater join the vocabulary, 125 words in all. The 88 axioms
+# and every previously locked word are byte-identical; no model law changes.
+#
 # Renewed on 19 October 2026, when eight axioms became theorems (the owner approved both
 # retirements that day): their laws leave the generated translation;
 # the other 79 axioms and every word are unchanged, byte for byte.
@@ -65,6 +73,10 @@
 # among them, and the eight retired rules keep their plane proofs and audits as derived
 # facts, with no field of Laws.
 #
+# Renewed on 21 October 2026, when train C6b was merged with train C6a after axiom wave
+# one: Foot, Arc.Less, Arc.Semicircle and Arc.Greater join the vocabulary, 125 words in
+# all. The 80 axioms are byte-identical to train C6a's; no model law changes.
+#
 # Renewed on 21 October 2026, when main's restricted rule of superposition (#191) was
 # merged into train C6a, through tooling/centre-given-meaning at 980569da: the lock is
 # main's 79 axioms, with Tacit.superposition restated as Superposition.Rule primitives, and
@@ -72,10 +84,15 @@
 # 30. The generator writes 80 laws, the restricted superposition law and exists_centre's
 # among them, and Model/Assembly.lean gathers all 80.
 #
+# Renewed on 21 October 2026, when train C6a at 529c93f7 was merged into train C6b: the
+# lock is train C6a's, 80 axioms and 238 words, with train C6b's four words, Foot,
+# Arc.Less, Arc.Semicircle and Arc.Greater, 242 words in all. The 80 axioms are
+# byte-identical to train C6a's, and the generator writes the same 80 laws.
+#
 # Renewed on 22 October 2026, when the words of brief 0013's outline companions joined the
 # vocabulary (#116): 20 new words, the definitions of Elements/Foundations/Figures.lean that
 # the statements of I.45 outline, II.14 outline and II.14 outline_side reach, with what Lean
 # declares for them. Only those companions use them, so no law of the model changes: the 80
 # axioms and every word already locked are unchanged, byte for byte, and the vocabulary grows
-# from 238 to 258 words.
-ac0ae72fb7fb4b83764d5ed0863797b2af992ce20b1dbac80fbaaffee87f41e1  Certificate/axioms.lock
+# from 242 to 262 words.
+edbdfabd855ae82a6509f914a98b456151cf2a863107c16b1fe8503be95d649c  Certificate/axioms.lock

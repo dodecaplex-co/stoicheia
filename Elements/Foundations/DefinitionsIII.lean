@@ -33,11 +33,17 @@ Book III is about circles, and most of its words need no Lean word of their own:
 
 * Definitions 4 and 5 compare perpendiculars, `‖E F‖ = ‖E G‖` and `‖E H‖ < ‖E K‖`,
   for the feet `F`, `G`, `H`, `K` of perpendiculars from the centre `E` (III.14, III.15).
+  Every straight line has its foot (`Foot`, the last word here), so that a diameter is at
+  no distance from the centre.
 * A segment (Definition 6) is a circle `α`, a straight line `AB` in it, and the
   circumference on one side of `AB`; "the segment AEB" names that side by a point `E` of
-  its circumference. So a statement given a segment is given its whole circle too:
-  III.25, which completes the circle of a given segment, is handed that circle. The
-  segment as a figure, with its points, is an `Arc` (below).
+  its circumference. The segment as a figure, with its points, is an `Arc` (below).
+  III.25's construction core is given only A, C, a point P naming the side, the segment's
+  points as a predicate S, the noncollinearity of A, C, P, and the fact that a ray from
+  within AC towards P's side meets S. `Prop25.complete` proves that the circle constructed
+  from those data is the circle from which the segment came. The companion
+  `Prop25.of_circle` keeps the earlier, circle-backed statement, which is handed the whole
+  circle.
 * The angle in a segment (Definition 8) is the angle `AEB`, for a point `E` of its
   circumference; similar segments (Definition 11) are those whose angles `AEB`, `CFD` are
   equal.
@@ -354,5 +360,16 @@ first arc on the second. -/
 def Arc.Congruent (a b : Arc) : Prop :=
   ∃ f : Point → Point, f a.B = b.B ∧ f a.C = b.C ∧
     Places f (InSegment · a) (InSegment · b) ∧ Places f (OnArc · a) (OnArc · b)
+
+/-- **Definitions III.4 and III.5.** The foot of the perpendicular drawn from E to the
+straight line AB. F is on the straight line AB; if E is not on it, every other point
+P of the straight line makes the angle EFP right; and if E is on it, the foot is E
+itself. If A and B are one point, every point is on a straight line with them, so the
+foot is E. EF is then the distance of AB from E (Definitions III.4 and III.5,
+extended: it is nothing when AB passes through E, a case Euclid's definitions do not
+take). Every straight line has one foot (`Foot.exists`, `Foot.unique`, by I.12 and I.17). -/
+def Foot (E A B F : Point) : Prop :=
+  Collinear A B F ∧ (Collinear A B E → F = E) ∧
+    (¬ Collinear A B E → ∀ P : Point, Collinear A B P → P ≠ F → ∠ E F P = ∟)
 
 end Elements

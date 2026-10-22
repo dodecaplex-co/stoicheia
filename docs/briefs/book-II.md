@@ -47,7 +47,9 @@ In `Elements/Foundations/DefinitionsII.lean`; none is an assumption.
 - **Squares.** The square I.46 describes is a parallelogram, and the square on its side
   (`Square.described`); Book I's statements about drawn squares stay as they are, and
   `BookI.Prop47.sq` says I.47 of `sq`.
-- **No numbers.** Every statement is a sum of areas, as Euclid's are.
+- **Areas remain magnitudes.** No number measures a length, an angle or an area; the
+  definitions of a figure given by its outline use the finite counts that FORMALIZATION,
+  section 2, describes.
 
 How the areas correspond to the pieces drawn (which expression is which piece, and why the
 pieces make up the whole) is told once in Book II's introduction and linked where it

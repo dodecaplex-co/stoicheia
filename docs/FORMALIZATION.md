@@ -336,6 +336,11 @@ conclusion behind a name: if `Prop7.figure` proved I.7, the page would show noth
 Euclid's argument. I.7 is the example to follow: its helpers settle where D can fall and what
 the figure shows, and the main proof keeps every step of Euclid's reductio.
 
+A construction core kept apart under section 4, as III.1's `Prop1.construction`, carries
+Euclid's sentences of construction, not a step he takes for granted; the record shows it as
+a `grouped` passage naming it, and the proposition keeps the correctness argument under his
+sentences.
+
 ## 6. Where lemmas live
 
 Search the library before writing a helper, and cite what is there rather than keep a copy. A

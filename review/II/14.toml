@@ -1,12 +1,12 @@
 [statement]
 scope = "full"
-note = "`Prop14.outline` and `Prop14.outline_side` cover any outline; `Prop14` treats two triangles; other forms handle checked divisions, sums or rectangles."
+note = "`Prop14.outline` and `Prop14.outline_side` cover any outline; `Prop14` takes two triangles unchecked; other forms cover checked divisions, sums or rectangles."
 companions = ["II.14 outline", "II.14 outline_side", "II.14 rectangle", "II.14 sum", "II.14 apart", "II.14 figure", "II.14 square", "II.14 fan"]
 fingerprint = "sha256:31d611e6d2d47392"
 
 [route]
 kind = "euclid"
-note = "`Prop14.rectangle` is the second part of Euclid's proof, the main theorem's argument after the rectangle is made, written out again so as not to cite II.14; `Prop14.sum` makes the rectangle for any number of triangles by I.45's `BookI.Prop45.sum`, in a right angle from I.11; and `Prop14.square` describes the square on the side found, by I.46, as Euclid's last words name it. `Prop14.outline` and `Prop14.outline_side` take the figure by its outline alone, as I.45's `BookI.Prop45.outline` does: Book Zero divides it into triangles that lie apart (`Figures.division_exists`), `Prop14.square` and `Prop14.apart` make the square and its side for those triangles, and their sum is the figure's area, the same for every division (`Figures.area_eq`)."
+note = "`Prop14.rectangle` is the second part of Euclid's proof, the main theorem's argument after the rectangle is made, written out again so as not to cite II.14; `Prop14.sum` makes the rectangle for any number of triangles by I.45's `BookI.Prop45.sum`, in a right angle from I.11; and `Prop14.square` describes the square on the side found, by I.46, as Euclid's last words name it. `Prop14.outline` and `Prop14.outline_side` take the figure by its boundary alone, represented by an outline, as I.45's `BookI.Prop45.outline` does: Book Zero divides it into triangles that do not overlap, no point inside two of them (`Figures.division_exists`), `Prop14.square` and `Prop14.apart` make the square and its side for those triangles, and their sum is the figure's area, the same for every division (`Figures.area_eq`)."
 
 [[passage]]
 at = "For let there be constructed the rectangular parallelogram BD"
@@ -18,7 +18,7 @@ note = "Euclid asks I.45 for a rectangular parallelogram. The Lean first constru
 at = "But, if not, one of the straight lines BE, ED is greater."
 kind = "helper"
 helper = "Tacit.lt_trichotomy"
-note = "Euclid takes for granted that one of the unequal straight lines BE and ED is greater. The Lean obtains the two alternatives from `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E §3.5), not a proved lemma."
+note = "Euclid takes for granted that one of the unequal straight lines BE and ED is greater. The Lean obtains the two alternatives from `Tacit.lt_trichotomy`, a tacit rule of magnitude, which we assume (System E §3.5)."
 
 [[passage]]
 at = "Let BE be greater"
@@ -29,19 +29,19 @@ note = "Euclid takes BE the greater; when ED is, the Lean reads the rectangle th
 at = "let EF be made equal to ED"
 kind = "helper"
 helper = "OnRay.exists_len_eq"
-note = "Euclid makes EF equal to ED on BE produced, then bisects BF; Heath gives no reference for either step here. The Lean chooses F by `OnRay.exists_len_eq`, using Postulate 3 and `Tacit.line_circle_beyond` (the rule we assume as System E, Intersections 5), places E between B and F by `OnRay.between`, and bisects BF by I.10."
+note = "Euclid makes EF equal to ED on BE produced, then bisects BF; Heath gives no reference for either step here. The Lean chooses F by `OnRay.exists_len_eq`, using Postulate 3 and `Tacit.line_circle_beyond` (System E, Intersections 5), places E between B and F by `OnRay.between`, and bisects BF by I.10."
 
 [[passage]]
 at = "With centre G and distance one of the straight lines GB, GF"
 kind = "helper"
 helper = "Tacit.on_circle_of_len_eq"
-note = "Euclid's semicircle passes through both B and F. Postulate 3 draws the whole circle with centre G through B, and `Tacit.on_circle_of_len_eq`, the rule we assume as System E, Diagram-segment 3, puts F on it because GF equals GB."
+note = "Euclid's semicircle passes through both B and F. Postulate 3 draws the whole circle with centre G through B, and `Tacit.on_circle_of_len_eq` (System E, Diagram-segment 3) puts F on it because GF equals GB."
 
 [[passage]]
 at = "let DE be produced to H"
 kind = "helper"
 helper = "Tacit.line_circle_beyond"
-note = "Euclid takes DE produced to meet the semicircle at H; since BE is greater than ED = EF and G bisects BF, the Lean puts G between B and E by `OnRay.between_of_len_lt`, also giving E different from G for the unequal cut in II.5. The Lean then puts E inside the circle by `between_inner` and `InsideCircle.of_between_centre`; `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, finds H beyond E from D, and GH is named by its ends."
+note = "Euclid takes DE produced to meet the semicircle at H; since BE is greater than ED = EF and G bisects BF, the Lean puts G between B and E by `OnRay.between_of_len_lt`, also giving E different from G for the unequal cut in II.5. The Lean then puts E inside the circle by `between_inner` and `InsideCircle.of_between_centre`; `Tacit.line_circle_beyond` finds H beyond E from D, and GH is named by its ends."
 
 [[passage]]
 at = "But GF is equal to GH"
@@ -57,17 +57,17 @@ note = "Euclid takes the right angle HEG for granted when he applies I.47. The L
 
 [representation]
 tags = ["figure-with-dissection", "side-not-square"]
-note = "The main theorem returns the straight line EH, and `sq E H` is the square on it, as Euclid ends with \"the square which can be described on EH\"; no four corners of a square are drawn there. The other side forms return a side in the same way: `Prop14.outline_side`, `Prop14.apart`, `Prop14.figure`, `Prop14.fan`, and the constructions `Prop14.rectangle` and `Prop14.sum`. `Prop14.outline` and `Prop14.square` draw the square, a parallelogram with its four corners. The main theorem is an area-sum theorem: it takes A₁A₂A₄ and A₄A₂A₃ unchecked, and they may overlap. It represents Euclid's pictured division when A₁ and A₃ lie on opposite sides of A₂A₄; that checked case is `Prop14.fan` for the corners A₄, A₁, A₂, A₃. `Prop14.outline` and `Prop14.outline_side` take the figure by its outline alone (`Figures.Outline`), as in I.45, with no division supplied; the older companions take a figure given with its division into triangles, checked, and square those triangles together: triangles that lie apart, allowing a figure with a hole (`Prop14.apart`, `Prop14.square`); triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop14.figure`); or Euclid's and Oliver Byrne's division from one corner, checked and shown to fit together (`Prop14.fan`). Their sum is the figure's area too, the same for every division."
+note = "The main theorem takes its two triangles unchecked and returns the straight line EH, and `sq E H` is the square on it, as Euclid ends with \"the square which can be described on EH\"; no four corners of a square are drawn there. The other side forms return a side in the same way: `Prop14.outline_side`, `Prop14.apart`, `Prop14.figure`, `Prop14.fan`, and the constructions `Prop14.rectangle` and `Prop14.sum`. `Prop14.outline` and `Prop14.square` draw the square, a parallelogram with its four corners. The main theorem is an area-sum theorem: it takes A₁A₂A₄ and A₄A₂A₃ unchecked, and they may overlap. It represents Euclid's pictured division when A₁ and A₃ lie on opposite sides of A₂A₄; that checked case is `Prop14.fan` for the corners A₄, A₁, A₂, A₃. `Prop14.outline` and `Prop14.outline_side` take the figure by its outline alone (`Figures.Outline`), as in I.45, with no division supplied; the older companions take a figure given with a checked division into triangles, and square those triangles together: triangles that lie apart, allowing a figure with a hole (`Prop14.apart`, `Prop14.square`); triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop14.figure`); or Euclid's and Oliver Byrne's division from one corner, checked and shown to fit together (`Prop14.fan`). Their sum is the figure's area too, the same for every division."
 
 [figure]
-case = "BE greater than ED, as in Heath's figure, with the figure A of two triangles"
+case = "BE greater than ED, and A four-sided, as in Heath's figure; no diameter is drawn"
 
 [review]
 stage = "full"
-commit = "800443fb"
+commit = "48092431"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:6d00f135031161a5"
-run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr2, independent re-read at 800443fb"
+lean = "sha256:be972fd23a351f2e"
+run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr4, independent re-read at 48092431"
 
 [review.items]
 statement = "pass"

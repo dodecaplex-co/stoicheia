@@ -23,12 +23,13 @@ A book meets the standard when its acceptance checklist (`ACCEPTANCE.md`)
 passes with no failures, an independent audit by a model family that wrote none of it
 agrees, and a cold outside reading passes the gate of the [review rubric](RUBRIC.md). A few
 deliberate limitations are allowed when they are stated plainly where they occur. In Book
-III, they are the restricted statements of III.14, III.15 and III.25, which stage 4 takes
-up, and the places where System E's rules already contain a proposition (III.2, and III.5
-and III.6 with rules together). I.45 and II.14, restricted from 20 October 2026 to a figure
-supplied with its checked division into triangles, take any rectilineal figure, given by its
-outline, from 22 October: that the outline has a division, and that every division gives the
-same area, are proved ([#116](https://github.com/jackChallis/stoicheia/issues/116)).
+III, every statement has full scope. Its records remain at review stage `exceptions`, and
+the overlap catalogue names the places where System E's rules already contain a
+proposition (III.2, and III.5 and III.6 with rules together). I.45 and II.14, restricted
+from 20 October 2026 to a figure given with a checked division into triangles, take
+any rectilineal figure, given by its outline, from 22 October: that the outline has a
+division, and that every division gives the same area, are proved
+([#116](https://github.com/jackChallis/stoicheia/issues/116)).
 
 ## 2. How a book is made, in parallel
 
@@ -70,7 +71,7 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 |---|---|---|---|---|---|---|
 | I | 48 of 48 proved, and I.15's porism and ten companion theorems | released (I.45 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
 | II | 14 of 14 proved, and ten companion theorems | released (II.14 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
-| III | 37 of 37 proved, and the porisms of III.1 and III.16 and 11 companion theorems | released (next: stage 4 migration, #28; centre-rule restatements, #59; full records, #29) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
+| III | 37 of 37 proved, and the porisms of III.1 and III.16 and 17 companion theorems | released (next: centre-rule restatements, #59; full records, #29) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
 | IV | not stated | brief (draft, awaiting approval) | — | — | — | — |
 | V–XIII | not begun | — | — | — | — | — |
 
@@ -101,8 +102,8 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 1b | Standards: AGENTS.md, STYLE, FORMALIZATION, WORKFLOW, templates, `check_style.py` | done, 17 Oct |
 | — | Release of Book III | [done, 17 Oct](https://github.com/jackChallis/stoicheia/releases/tag/book-III); Book I and II notes corrected |
 | 2 | I.40 and II.1 general; I.45 and II.14 with supplied divisions | done, 18 Oct: proved in Staging ([#88]), and in the edition with their records ([#19], [#102](https://github.com/jackChallis/stoicheia/pull/102)); I.45 and II.14 restricted from 20 Oct, for figures supplied with a checked division, and full again from 22 Oct, for a figure given by its outline, with the division and the independence of area proved ([#116]) |
-| 3 | Arcs and segments; III.24 | done: proved in Staging ([#89]), and in the edition ([#25]), save its meeting fact for an arc, which waits beside III.25 in `Staging/Stage4` |
-| 4 | III.14, III.15, III.25 | proved in Staging ([#90]); the move into `Elements/` is train C6b ([#28]) |
+| 3 | Arcs and segments; III.24 | done: proved in Staging ([#89]), and in the edition ([#25]); its meeting fact for an arc is `Prop25.meets` in `Elements/BookIII/Prop25.lean` |
+| 4 | III.14, III.15, III.25 | done: proved in Staging ([#90]), then moved into `Elements/` in train C6b ([#28]) |
 | 5 | Consolidation review of all 99 | Books I and II: all records at `full` ([#115]); Book III: all at `exceptions`, full review after its migrations ([#29]) |
 | 6 | Acceptance, then a consolidation release of Books I–III | report exists; acceptance has not passed; CI checks regressions against main ([#148]) |
 
@@ -151,27 +152,25 @@ own, the figure letters as three:
 
 ### Open items
 
-What remains on 21 October, after train C6a. Stage 2 is in the edition; I.47 general, for
+What remains on 21 October, after trains C6a and C6b. Stage 2 is in the edition; I.47 general, for
 squares on either side of each base, followed in [#134]. Stage 3 is in the edition too
 (#20 to #25): placement in all its cases, with superposition not among its direct axioms,
 III.23 point by point, III.24 restated to conclude congruence by Euclid's route, III.26 and
 III.28 upgraded, and `Arcs.lean`. So are the mixed angles of III.16 and III.31 ([#57]),
 the rule that every circle has a centre (`Tacit.exists_centre`, brief 0008's step 5), and
-III.5 and III.6 read with crossing and contact within (brief 0008, section 7). On 22
-October, with the owner's approval, brief 0013's figures followed ([#116]): I.45 and II.14
-hold for any rectilineal figure, given by its outline (`Prop45.outline`, `Prop14.outline`),
-and their records are full again, to be read again and stamped. How work lands is in
-[WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull requests".
+III.5 and III.6 read with crossing and contact within (brief 0008, section 7). Stage 4 is
+in the edition as well: `Foot`, III.14 and III.15's companions, III.25 with `Prop25.kind`,
+and `Prop25.meets` beside III.25 in `Elements/BookIII/Prop25.lean`. III.1's construction
+is at home in `Elements/BookIII/Prop01.lean`. On 22 October, with the owner's approval,
+brief 0013's figures followed ([#116]): I.45 and II.14 hold for any rectilineal figure,
+given by its outline (`Prop45.outline`, `Prop14.outline`), and their records are full
+again. How work lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull
+requests".
 
-- **Stage 4's proofs** are done in `Staging/Stage4`: III.14 with diameters, III.15 both
-  clauses for every straight line, the foot of the perpendicular, and III.25's construction
-  core, which never sees a circle or a centre, with its correctness (#26, #27), beside
-  stage 3's meeting fact for an arc, which rests on III.2 and which only III.25 uses. Their
-  move into `Elements/` with the records (#28) is train C6b.
 - **The centre rule's restatements** remain under [#59]: frozen
-  [brief 0008](briefs/0008-centre.md)'s III.1 construction and its guard (steps 3 and 4),
-  the restatements of the statements that only assume a centre, with their records (step
-  6, train C6c), and the tag's revision (step 7).
+  [brief 0008](briefs/0008-centre.md)'s construction guard (step 4), the restatements of
+  the statements that only assume a centre, with their records (step 6, train C6c), and
+  the tag's revision (step 7). The construction itself, step 3, is already at home.
 - **Book III's review records** remain at `exceptions`; they reach `full` after the
   migrations and review ([#29]). Books I and II's records are already at `full`
   ([#115]).
@@ -209,7 +208,7 @@ and their records are full again, to be read again and stamped. How work lands i
 - **The statements' vocabulary** (settled 17 Oct; extended for restricted superposition,
   and on 22 Oct for the figures given by their outlines).
   The lock holds every word that the axioms' statements or the entries' statements
-  reach: <!-- count:vocabulary -->258<!-- /count -->, including the restricted calculus and its interpretation,
+  reach: <!-- count:vocabulary -->262<!-- /count -->, including the restricted calculus and its interpretation,
   as well as `Touches`, `EqualCircles`, `circumference`, `rect`, `Parallel` and others.
   A change to one is a decision, as a changed axiom is
   ([0002](briefs/0002-decisions.md), [FIELDS.md](../Certificate/FIELDS.md#the-vocabulary)).
