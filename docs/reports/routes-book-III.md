@@ -818,8 +818,8 @@ hold (S1–S26)`, and `python3 scripts/check_links.py` reported `✓ links: all 
 links and anchors in 485 Markdown files resolve`. Those are historical results for that
 committed report, not results reproduced by the clean e09f40f6 checkout above.
 
-**Current report validation.** At 4186e342ae9d66c7a36d32c8866c42280bbe57a0, with this
-report as the only working-tree modification, the review correction ran:
+**Report validation after 11bcfea5.** At 4186e342ae9d66c7a36d32c8866c42280bbe57a0, with
+this report as the only working-tree modification, the review correction ran:
 
 ```sh
 git diff --check -- docs/reports/routes-book-III.md
@@ -827,8 +827,16 @@ python3 scripts/check_links.py docs/reports/routes-book-III.md
 ```
 
 Both commands exited 0. The first gave no output; the second reported `✓ links: all 36
-relative links and anchors in 1 Markdown files resolve`. No style check was run on this
+relative links and anchors in 1 Markdown files resolve`. No style check was run on that
 working-tree version.
+
+At c8e23b2ee329752b71674e544b396986e8a829c0, with this report as the only working-tree
+modification and in the text it has here, the documentation step ran the same two
+commands and `python3 scripts/check_style.py --no-lean`. All three exited 0. The first
+gave no output; the second reported `✓ links: all 36 relative links and anchors in 1
+Markdown files resolve`; the third `✓ style: the hard rules hold (S1–S11 and S13–S26)`.
+That run skips S12, which asks Lean and needs `Elements` built, and no build was made for
+it, so S12 was last run on this report at 11bcfea5.
 
 RoutesCheck.lean takes its list from Lean's environment, not from a list written by
 hand: every declaration of the seven modules, 51, and among them the 38 theorems, those
@@ -1050,8 +1058,9 @@ each.
 **At 9a0f8ba1, with the edits that e786ffc3 commits.** The edits change no declaration:
 they delete from `Touching.lean` its import of I.12, which nothing in the file used;
 correct a sentence of its docstring and one of the doc comment of `Staging.lean`; and
-change this report. On that tree er_check.sh built the seven modules and put the 38
-theorems to Lean's collectAxioms. It reported:
+change this report. On that tree er_check.sh, a scratch script outside the repository,
+built the seven modules and put the 38 theorems to Lean's collectAxioms, looking for what
+the scratch module at 80e85ec6, below, looks for. It reported:
 
 ```text
 Build completed successfully (107 jobs).
@@ -1118,7 +1127,7 @@ cutoff_check: 7 roots, 520 constants walked, 0 findings
 At 80e85ec6, `scripts/check_style.py` failed on six names in this report that Lean,
 importing `Elements` alone, does not know: the staged names written in backticks, and
 Lean's collectAxioms. This report writes them in words or in code blocks, and the style
-check passes on it (above, at e09f40f6).
+check passes on it (above, at 11bcfea5).
 
 **At bd9c4b76, in the code review.** The reviewer ran the same build and axiom check, with
 the same result but for the count of jobs (101), found no warning from `Staging/Routes/` in
