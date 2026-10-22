@@ -392,14 +392,16 @@ jobs:
       - name: Keep the list of the tests this shard ran, for safe-push-tests's proof
         # Kept when a test failed too, so that the proof names it. A shard that stops
         # before its end writes no list and keeps none, and the proof then fails. A shard
-        # run again replaces its list.
+        # run again replaces its list. Kept for 35 days, beyond the 30 in which GitHub lets
+        # a run's failed jobs be run again: those run again only the failed shards and
+        # safe-push-tests, whose proof needs the other shards' lists still kept.
         if: always()
         uses: actions/upload-artifact@v5
         with:
           name: safe-push-ran-${{ matrix.shard }}
           path: ${{ runner.temp }}/ran-${{ matrix.shard }}.json
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 35
           overwrite: true
 
   safe-push-tests:

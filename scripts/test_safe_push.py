@@ -7690,8 +7690,9 @@ class Shards(unittest.TestCase):
         self.assertNotIn("continue-on-error", job)
         # Each shard runs the pull request's head, the commit safe-push-paths judged, not
         # GitHub's merge of it; lists the tests it ran, and keeps the list under a name of
-        # its own, for a day: a shard that stops before its end lists nothing, and keeps
-        # nothing.
+        # its own, for 35 days, beyond the 30 in which GitHub lets a run's failed jobs be
+        # run again, which reruns no shard that passed: a shard that stops before its end
+        # lists nothing, and keeps nothing.
         head = "${{ github.event.pull_request.head.sha }}"
         self.assertEqual(paths["steps"][-1]["env"]["HEAD_SHA"], head)
         self.assertEqual([{key: value for key, value in step.items() if key != "name"}
@@ -7706,7 +7707,7 @@ class Shards(unittest.TestCase):
             {"if": "always()", "uses": "actions/upload-artifact@v5",
              "with": {"name": "safe-push-ran-${{ matrix.shard }}",
                       "path": "${{ runner.temp }}/ran-${{ matrix.shard }}.json",
-                      "if-no-files-found": "error", "retention-days": 1, "overwrite": True}}])
+                      "if-no-files-found": "error", "retention-days": 35, "overwrite": True}}])
         # A shard whose tests fail, having written its list, still keeps it, and fails.
         tests = job["steps"][3]
         for failing in (None, tests):

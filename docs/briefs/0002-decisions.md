@@ -4128,14 +4128,15 @@ findings:
   was skipped fails it, and its log says which, as it does when the paths job did not
   succeed. So that no test can fall off that path unseen, the check also proves the
   coverage, from what the shards ran rather than from the dealing: each shard writes the
-  tests it ran, each with its outcome (`--ran FILE`), and keeps the list as an artifact
-  for a day, a test having failed or not, and `safe-push-tests`, whatever the shards'
-  result, checks out the commit they ran, the pull request's head, as they did, fetches
-  every list and runs `--cover DIR`, before its verdict on that result. That lists the
-  tests with unittest's loader at the commit, reads N from the matrix, and fails, naming
-  each, on a test no shard ran, a test run twice, a shard that left no list (as one that
-  stops before its end leaves none), a test the loader does not list, and a test that did
-  not pass. Seven, because by the measured times each shard then holds about 330 seconds,
+  tests it ran, each with its outcome (`--ran FILE`), and keeps the list as an artifact,
+  a test having failed or not, for 35 days, beyond the 30 in which GitHub lets a run's
+  failed jobs be run again, which reruns no shard that passed, and `safe-push-tests`,
+  whatever the shards' result, checks out the commit they ran, the pull request's head,
+  as they did, fetches every list and runs `--cover DIR`, before its verdict on that
+  result. That lists the tests with unittest's loader at the commit, reads N from the
+  matrix, and fails, naming each, on a test no shard ran, a test run twice, a shard that
+  left no list (as one that stops before its end leaves none), a test the loader does not
+  list, and a test that did not pass. Seven, because by the measured times each shard then holds about 330 seconds,
   setup included (five and a half minutes), where six would hold 6.4 minutes; the time
   after comes from this pull request's own CI run, and the times file says that its
   figures are to be measured again from that run. `--times-from-log` does it: it reads a

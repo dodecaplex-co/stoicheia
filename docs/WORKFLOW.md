@@ -376,12 +376,13 @@ heaviest first, each to the shard with the least time so far. By those times eac
 takes about five and a half minutes. A test the file does not name, one added or renamed
 since, weighs the median, and each shard's log names it. The proof is built from what the
 shards ran, not from the dealing. Each shard writes the tests it ran, each with its
-outcome, to the file `--ran` names, and keeps it as an artifact for a day, a test having
-failed or not; then `safe-push-tests`, whatever the shards' result and before its verdict
-on it, checks out the commit the shards ran, the pull request's head, as they did,
-fetches every list and runs `python3 scripts/test_safe_push.py --cover DIR`, which lists
-the tests with unittest's loader at that commit, reads N from the matrix, and fails,
-naming each, on a test no shard ran, a test run twice, a shard that left no list (as one
+outcome, to the file `--ran` names, and keeps it as an artifact, a test having failed or
+not, for 35 days, beyond the 30 in which GitHub lets a run's failed jobs be run again,
+which reruns no shard that passed; then `safe-push-tests`, whatever the shards' result
+and before its verdict on it, checks out the commit the shards ran, the pull request's
+head, as they did, fetches every list and runs
+`python3 scripts/test_safe_push.py --cover DIR`, which lists the tests with unittest's
+loader at that commit, reads N from the matrix, and fails, naming each, on a test no shard ran, a test run twice, a shard that left no list (as one
 that stops before its end leaves none), a test the loader does not list, and a test that
 did not pass. The times were read from the CI run of
 [#239](https://github.com/jackChallis/stoicheia/pull/239), and are to be measured again
