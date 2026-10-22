@@ -5829,8 +5829,10 @@ class FullChecks(Edge):
                          "a temporary worktree was left behind")
 
 
-@unittest.skipUnless(shutil.which("jq") and shutil.which("bash"),
-                     "the report step needs bash and jq, as GitHub's runners have")
+@unittest.skipUnless((shutil.which("jq") and shutil.which("bash"))
+                     or os.environ.get("GITHUB_ACTIONS") == "true",
+                     "the report step needs bash and jq, as GitHub's runners have (there, a "
+                     "missing one fails the test rather than skipping it)")
 class CadenceReport(unittest.TestCase):
     """The cadence workflow's report step (.github/workflows/safe-push-tests.yml), run as
     GitHub runs it, bash with -e and pipefail, on a log of a thousand long failures, with
@@ -5840,8 +5842,9 @@ class CadenceReport(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tmp = Path(tmp)
             (tmp / "log").mkdir()
-            # Each line near the 300 characters the step keeps, so that a thousand of them
-            # are far more than a pipe holds, and a reader that stops early closes it.
+            # Each line longer than the 300 characters the step keeps, so the thousand it
+            # keeps (301,000 bytes) are far more than a pipe holds, and a reader that stops
+            # early closes it.
             name = "test_" + "x" * 250
             (tmp / "log" / "test_safe_push.log").write_text("".join(
                 f"FAIL: {name}_{i:04d} (__main__.Merge.{name}_{i:04d})\n"
@@ -5873,6 +5876,9 @@ class CadenceReport(unittest.TestCase):
         workflow = yaml.safe_load((SOURCE / ".github/workflows/safe-push-tests.yml").read_text())
         step = next(s for s in workflow["jobs"]["report"]["steps"]
                     if s.get("name", "").startswith("Open or update"))
+        # GitHub runs `shell: bash` as bash -eo pipefail, which these tests run; without it,
+        # bash -e alone, which they would not.
+        self.assertEqual(step.get("shell"), "bash")
         return step["run"]
 
     def test_a_thousand_failures_open_the_issue_with_the_first_hundred(self):
@@ -5881,10 +5887,13 @@ class CadenceReport(unittest.TestCase):
         self.assertIsNotNone(body, "no issue was opened")
         self.assertIn("(the first 100)", body)
         self.assertEqual(sum(line.startswith("FAIL: ") for line in body.splitlines()), 100)
+        self.assertIn("_0099 ", body)       # the first hundred, in order
+        self.assertNotIn("_0100 ", body)
 
     def test_a_few_failures_are_listed_whole(self):
         r, body = self.run_report(self.report_script(), 3)
         self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIsNotNone(body, "no issue was opened")
         self.assertNotIn("(the first 100)", body)
         self.assertEqual(sum(line.startswith("FAIL: ") for line in body.splitlines()), 3)
 
