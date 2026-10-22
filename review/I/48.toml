@@ -41,14 +41,14 @@ note = "Euclid applies I.47 to the square on DC without describing it. The Lean 
 at = "therefore the square on DC is equal to the square on BC"
 kind = "helper"
 helper = "Prop46.side_eq"
-note = "Euclid assumes the converse too, that equal squares stand on equal straight lines; Heath reports Proclus's proof, while the Lean's `Prop46.side_eq` takes another road, the square on the less being the less. Before applying that lemma in I.48, the Lean uses `Prop28.square` (I.28) to make both squares parallelograms and `Parallelogram.quadArea_rotate` to read their unchanged areas from C, as squares on CD and CB."
+note = "Euclid assumes the converse too, that equal squares stand on equal straight lines; Heath reports Proclus' proof, while the Lean's `Prop46.side_eq` takes another road, the square on the less being the less. Before applying that lemma in I.48, the Lean uses `Prop28.square` (I.28) to make both squares parallelograms and `Parallelogram.quadArea_rotate` to read their unchanged areas from C, as squares on CD and CB."
 
 [review]
 stage = "full"
-commit = "b62518e5"
-reviewer = "GPT-6 Astra (Codex), records re-read"
-lean = "sha256:538a031257fe1dd2"
-run = "brief 0005 stage 5, ship T re-read"
+commit = "b7b41f51"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:16cb3a3ac6cb11b9"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, begun from the Claude first mate's scratch proof T48 (54a08e61) and keeping some of its lines, which GPT-6 Astra (Codex) read at b62518e5; read by Claude Opus 5.5; ship XS, reader XS-r-I35-I48, independent re-read at a557715d; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y4)"
 
 [review.items]
 statement = "pass"

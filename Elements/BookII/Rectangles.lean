@@ -25,7 +25,7 @@ so that "the gnomon NOP and LG are the whole square CEFB" (II.5). Each of these
 cites a proposition of Book I, so they live here, before Book II's propositions,
 and not in Book Zero.
 
-At the end, I.47 is said once more of the squares on straight lines (`Prop47.sq`),
+At the end, I.47 is said once more of the squares on straight lines (`BookI.Prop47.sq`),
 as Book II cites it again and again: "the square on EA is equal to the squares on
 AC, CE, for the angle ACE is right [I. 47]".
 
