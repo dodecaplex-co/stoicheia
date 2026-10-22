@@ -7689,10 +7689,10 @@ class Shards(unittest.TestCase):
         self.assertEqual(job["permissions"], {"contents": "read"})
         self.assertNotIn("continue-on-error", job)
         # Each shard runs the commit the job ran before it was sharded, GitHub's merge of
-        # the pull request into main (checkout's default); lists the tests it ran, and keeps the list under a name of
-        # its own, for 35 days, beyond the 30 in which GitHub lets a run's failed jobs be
-        # run again, which reruns no shard that passed: a shard that stops before its end
-        # lists nothing, and keeps nothing.
+        # the pull request into main (checkout's default); lists the tests it ran, and keeps
+        # the list under a name of its own, for 35 days, beyond the 30 in which GitHub lets
+        # a run's failed jobs be run again, which reruns no shard that passed: a shard that
+        # stops before its end lists nothing, and keeps nothing.
         self.assertEqual(paths["steps"][-1]["env"]["HEAD_SHA"],
                          "${{ github.event.pull_request.head.sha }}")
         self.assertEqual([{key: value for key, value in step.items() if key != "name"}
