@@ -4237,7 +4237,10 @@ class Queue(Edge):
         r = self.run_entry()
         out = r.stdout + r.stderr
         self.assertEqual(r.returncode, 0, out)
-        self.assertIn("the full checks are not repeated", out)
+        # The pre-flight's record of this head and base stands in: for this R0 head, one
+        # that left the full checks to CI (#329); either kind makes the step "ok".
+        self.assertEqual(self.guard(out, "pre-flight"), "ok", out)
+        self.assertIn(f"{sha[:12]} checked against origin/main {BASE[:12]} (", out)
         self.assertEqual(git(ORIGIN, "rev-list", "--parents", "-n", "1", "main").split()[1:],
                          [main, sha])
         self.assertNotEqual(git(ORIGIN, "rev-parse", "main^{tree}").strip(),
@@ -4267,7 +4270,8 @@ class Queue(Edge):
         self.assertEqual(r.returncode, 0, out)
         self.assertIn(f"2 commits onto origin/main {BASE[:12]}", out)
         self.assertIn(f"{sha[:12]} checked against origin/main {BASE[:12]}", out)
-        self.assertIn("the full checks are not repeated", out)
+        # The record stands in, for this R0 head one that left the full checks to CI (#329).
+        self.assertEqual(self.guard(out, "pre-flight"), "ok", out)
         self.assertEqual(git(ORIGIN, "rev-list", "--parents", "-n", "1", "main").split()[1:],
                          [main, sha])
         self.assertIn(f"sha={sha} base={BASE} harness={BASE} -->",
