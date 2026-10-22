@@ -23,7 +23,7 @@ stage = "full"
 commit = "78fb461d"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:fd7240af23c4b9fc"
-run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-I32-I35, independent re-read at 78fb461d"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, with the Claude Lean bosun's Prop29.alternate and Prop29.exterior substitutions and accompanying rewrite at ab0c30c5, those substitutions read by GPT-6 Astra (Codex) at 570e6fa, final proof read by Claude Opus 5.5; ship XS, reader XS-r-I32-I35, independent re-read at 78fb461d"
 
 [review.items]
 statement = "pass"
