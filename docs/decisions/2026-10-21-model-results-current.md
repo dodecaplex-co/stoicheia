@@ -112,18 +112,18 @@
   ([#240](https://github.com/jackChallis/stoicheia/pull/240)) was merged in, and what it
   wrote was committed after it. Its counts were compared with main's own run, at
   8ccb38ff ([#240](https://github.com/jackChallis/stoicheia/pull/240)): every count is
-  the same, and only the headers and the timings are new. Its results are recorded in
-  [`tests/model/results/angle_check.txt`](../../tests/model/results/angle_check.txt),
-  [`tests/model/results/exhaustive.txt`](../../tests/model/results/exhaustive.txt),
-  [`tests/model/results/grid_check.txt`](../../tests/model/results/grid_check.txt),
-  [`tests/model/results/hyperbolic.txt`](../../tests/model/results/hyperbolic.txt),
-  [`tests/model/results/mutations.txt`](../../tests/model/results/mutations.txt),
-  [`tests/model/results/search-seed1.txt`](../../tests/model/results/search-seed1.txt),
-  [`tests/model/results/search-seed2.txt`](../../tests/model/results/search-seed2.txt),
-  [`tests/model/results/search-seed3.txt`](../../tests/model/results/search-seed3.txt),
-  [`tests/model/results/structured.txt`](../../tests/model/results/structured.txt) and
-  [`tests/model/results/summary.txt`](../../tests/model/results/summary.txt),
-  and in the counts of [`tests/model/MODEL.md`](../../tests/model/MODEL.md). The protected
+  the same, and only the headers and the timings are new. What it wrote is named here
+  file by file. At a1144ad6 the angle check wrote `tests/model/results/angle_check.txt`.
+  At a1144ad6 the exhaustive harness wrote `tests/model/results/exhaustive.txt`.
+  At a1144ad6 the grid check wrote `tests/model/results/grid_check.txt`.
+  At a1144ad6 the hyperbolic check wrote `tests/model/results/hyperbolic.txt`.
+  At a1144ad6 the fifteen mutations wrote `tests/model/results/mutations.txt`.
+  At a1144ad6 the search with its first seed wrote `tests/model/results/search-seed1.txt`.
+  At a1144ad6 the search with its second seed wrote `tests/model/results/search-seed2.txt`.
+  At a1144ad6 the search with its third seed wrote `tests/model/results/search-seed3.txt`.
+  At a1144ad6 the structured harness wrote `tests/model/results/structured.txt`.
+  At a1144ad6 the run's table went to `tests/model/results/summary.txt`, and its counts
+  to [`tests/model/MODEL.md`](../../tests/model/MODEL.md). The protected
   files changed are `tests/model/run.py`; `tests/model/results_check.py`, which is new;
   `tests/test_screen.py`; `tests/model/MODEL.md`, its counts and how a change to the
   harness carries a new run; the ten files of results above; `.github/workflows/ci.yml`;
