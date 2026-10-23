@@ -241,6 +241,16 @@ jobs:
           lake build
           lake env lean Certificate/Facts.lean
 
+      - name: The citation sweep finds a planted unused have, a discarded join, a `have _ :=` and a concealing helper, and passes its controls
+        # Its plants are Lean outside the tree, built against the library above
+        # (docs/WORKFLOW.md, section 8).
+        run: python3 scripts/sweep_citations.py --self-test
+
+      - name: List the candidates for dummy citations, artificial hypothesis uses and concealing helpers in Elements/
+        # Report only, the list in the log: the release gate runs it with
+        # --fail-on-undeclared (docs/WORKFLOW.md, section 10).
+        run: python3 scripts/sweep_citations.py
+
       - name: An edited Heath word, wrong radii in I.1, a weakened axiom, a statements' word changed, a primitive no longer opaque, stale and incomplete review records, a native_decide, planted assumptions in I.15's porism and I.16, and a sorry in a complete book
         if: steps.lane.outputs.full == 'true'
         run: python3 scripts/negative_tests.py
