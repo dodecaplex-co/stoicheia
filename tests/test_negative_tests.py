@@ -1042,6 +1042,36 @@ class OverlapWayTests(unittest.TestCase):
         self.assertIn("The file has no theorem there of type "
                       "`type_of% @Elements.BookIII.Prop7` with its axioms pinned", self.errors[0])
 
+    def test_the_initial_combination_names_each_rule_once(self):
+        base = negative.heath.load_review("III", 5)
+        further = [["Definition15", "Tacit.len_lt_of_inside", "Tacit.lt_irrefl"]]
+        for duplicate, also in (
+                ("Tacit.circle_eq", ["Tacit.circle_eq"]),
+                ("Tacit.inside_not_on", ["Tacit.inside_not_on", "Tacit.inside_not_on"])):
+            for ways in (None, further):
+                with self.subTest(duplicate=duplicate, ways=ways is not None):
+                    overlap = {"rule": "Tacit.circle_eq", "also": also, "kind": "gives"}
+                    if ways is not None:
+                        overlap["ways"] = ways
+                    with self.assertRaises(negative.heath.ReviewError) as caught:
+                        negative.heath.validate_review(base | {"overlap": overlap}, "III", 5,
+                                                       require_stamp=False,
+                                                       where="the test record")
+                    self.assertIn(
+                        f"[overlap]: `rule` and `also` lists {duplicate!r} twice",
+                        caught.exception.problems)
+
+        for ways in (None, further):
+            with self.subTest(valid=True, ways=ways is not None):
+                overlap = {"rule": "Tacit.circle_eq", "also": ["Tacit.inside_not_on"],
+                           "kind": "gives"}
+                if ways is not None:
+                    overlap["ways"] = ways
+                checked = negative.heath.validate_review(base | {"overlap": overlap}, "III", 5,
+                                                          require_stamp=False,
+                                                          where="the test record")
+                self.assertEqual(checked["overlap"], overlap)
+
     def test_the_plant_adds_one_way_and_keeps_the_rest_of_the_record(self):
         import tomllib
         text = negative.heath.review_path("III", 5).read_text()

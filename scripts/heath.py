@@ -579,13 +579,15 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
         if ways and ov["kind"] == "step":
             bad("[overlap]: only rules that state the proposition or give it at once have "
                 "further `ways`; a rule that supplies a step does not contain it")
-        seen_ways = [frozenset([ov["rule"]] + ov.get("also", []))]
-        for i, way in enumerate(ways, 1):
+        seen_ways = []
+        combinations = [([ov["rule"]] + ov.get("also", []), "`rule` and `also`")]
+        combinations += [(way, f"`ways` {i}") for i, way in enumerate(ways, 1)]
+        for way, label in combinations:
             for x in sorted({x for x in way if way.count(x) > 1}):
-                bad(f"[overlap]: `ways` {i} lists {x!r} twice")
+                bad(f"[overlap]: {label} lists {x!r} twice")
             same = [j for j, s in enumerate(seen_ways) if s == frozenset(way)]
             if same:
-                bad(f"[overlap]: `ways` {i} names the same rules as "
+                bad(f"[overlap]: {label} names the same rules as "
                     + ("`rule` and `also`" if same[0] == 0 else f"`ways` {same[0]}")
                     + "; each combination is a different set of rules")
             seen_ways.append(frozenset(way))
