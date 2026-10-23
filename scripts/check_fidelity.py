@@ -108,24 +108,20 @@
      theorem of that file's section "Rules that state a proposition, give it at once, or
      supply its step" whose type is the proposition's own, as the theorem's `#guard_msgs`
      pin of `#print axioms` gives them (`overlap_proofs`, read from the file's text, whose
-     pins `lake build Audit` checks), and not one of AUDIT_NOT_OVERLAPS. The scan reads
-     the file's text, not what Lean makes of it, and refuses the file whole for each of
-     these forms, naming its line: an import outside `Elements`; a `variable`, `include`
-     or `export`, or a command that declares a token (`notation`, `infix` and the rest of
-     HIDDEN), before the section's end; a namespace, or a declaration by `theorem`, `def`
-     or another word the scan reads (a constructor among them), whose name, with only
-     whitespace between it and that word, has a part `Elements`, or a part in «…» that
-     holds a dot (`declared_in`); or a theorem it reads whose name the file declares
-     twice. The scan trusts the modules of `Elements` the file imports: a declaration
-     there under `Audit.Elements`, or a notation there that reads `type_of% … :=`
-     otherwise, would mislead it. Nor does it read the name of a `where` or `let rec`
-     auxiliary, or tell a syntax quotation's text from commands: an auxiliary named
-     `Elements.BookIII.Prop5`, read inside a namespace named after its declaration, or a
-     `theorem` or `namespace` inside "`(command| …)", would mislead it too. Nor does it
-     read the name in `theorem«Elements».BookIII.Prop5`, closed up to its word, or in
-     `instance (priority := (10)) Elements.Inst`, after a priority that holds a bracket;
-     Lean reads both. The full cure, a follow-up, is for Lean itself to report each audit
-     theorem's type and axioms.
+     pins `lake build Audit` checks), and not one of AUDIT_NOT_OVERLAPS. The scan refuses
+     the file whole for each of these forms, naming its line: an import outside
+     `Elements`; a `variable`, `include` or `export`, or a command that declares a token
+     (`notation`, `infix` and the rest of HIDDEN), before the section's end; a namespace,
+     or a declaration by `theorem`, `def` or another word the scan reads (a constructor
+     among them), with a name it reads that has a part `Elements`, or a part in «…» that
+     holds a dot (`declared_in`); or a theorem of the section whose type is a
+     proposition's own, not one of AUDIT_NOT_OVERLAPS, whose full name, as the scan reads
+     it, another declaration of the file has. The scan reads the file's text, not Lean's
+     elaboration of it, and trusts the modules of `Elements` the file imports: it refuses
+     the forms above, but a text it does not recognise as one of them may still make a
+     theorem's type read otherwise than Lean elaborates it. It is a guard against honest
+     slips, not a proof; the full cure, a follow-up, is for Lean itself to report each
+     audit theorem's type and axioms.
 7. Inline count markers in tracked Markdown match the exact file-derived counts in
    generated_counts.py, and stand only where that module allows. Unknown and
    malformed markers are refused, as are unsafe paths and a missing or mismatched Git
@@ -1680,18 +1676,18 @@ def lean_words(*words: str) -> re.Pattern:
 
 
 # The scan reads a theorem's type in AUDIT_OVERLAPS as it is written, where Lean
-# elaborates it (#293): so it follows the namespaces the file's commands open and close,
+# elaborates it (#293): so it follows the namespace and section commands it recognises,
 # and refuses the file for each form `declared_in` lists that could make a type mean
-# another; `declared_in` says too what the scan does not read. DECLARES: the words of the
-# commands the scan follows, each of which opens or closes a scope or declares a name,
-# read wherever they stand, even in a syntax quotation's text. Lean opens a scope for each
-# part of `namespace A.B` or `section A.B`, and `end B` closes one; `noncomputable
-# section` is a section, and a `mutual` block ends with `end` too.
+# another; `declared_in` says too what the scan trusts, and that it is a guard, not a
+# proof. DECLARES: the words of the commands the scan follows, each of which opens or
+# closes a scope or declares a name. Lean opens a scope for each part of `namespace A.B`
+# or `section A.B`, and `end B` closes one; `noncomputable section` is a section, and a
+# `mutual` block ends with `end` too.
 DECLARES = lean_words("namespace", "section", "mutual", "end", "theorem", "lemma", "def",
                       "abbrev", "instance", "structure", "class", "inductive", "coinductive",
                       "opaque", "axiom")
-# The name Lean reads after such a word, on its line or a later one, but never a word
-# that begins a command; after `instance`, past its priority.
+# The name the scan reads after such a word, on its line or a later one, but never a word
+# that begins a command; after `instance`, past a priority that PRIORITY matches.
 DECLARED_NAME = re.compile(
     rf"\s+(?!(?:{'|'.join(COMMAND_WORDS)})(?![{ID_REST}]))"
     r"((?:«[^»]*»|[^\s:({\[«.]+)(?:\.(?:«[^»]*»|[^\s:({\[«.]+))*)")
@@ -1739,22 +1735,18 @@ def misleading_name(parts: list[str]) -> str:
 def declared_in(where: str, src: str, code: str, end: int) -> tuple[dict[int, str], str]:
     """Each declaration of `code`, the Lean that `read_lean` gives from the file `where`'s
     text `src`, by a word of DECLARES and with a name the scan reads, by the offset of its
-    word, with its full name, following the namespaces the file's commands open and close.
-    Or {} and the first of the forms it refuses, named by its line, each of which could
-    make a theorem's type mean other than its text reads: an import outside `Elements`,
-    whose names it does not read; a `variable`, `include` or `export`, or a command that
+    word, with its full name, following the namespace and section commands it recognises.
+    Or {} and one of the forms it refuses, named by its line, each of which could make a
+    theorem's type mean other than its text reads: an import outside `Elements`, whose
+    names it does not read; a `variable`, `include` or `export`, or a command that
     declares a token, before the offset `end` (HIDDEN); or a namespace, or a declaration
-    by `theorem`, `def` or another word the scan reads (a constructor among them), whose
-    name, with only whitespace between it and that word, could mislead it
-    (`misleading_name`). It refuses only these: the scan trusts the modules of `Elements`
-    the file imports, and a declaration there under `Audit.Elements`, or a notation there
-    that reads `type_of% … :=` otherwise, would mislead it. Nor does it read the name of a
-    `where` or `let rec` auxiliary, or tell a syntax quotation's text from commands: an
-    auxiliary named `Elements.BookIII.Prop5`, read inside a namespace named after its
-    declaration, or a `theorem` or `namespace` inside "`(command| …)", would mislead it
-    too. Nor does it read the name in `theorem«Elements».BookIII.Prop5`, closed up to its
-    word, or in `instance (priority := (10)) Elements.Inst`, after a priority that holds a
-    bracket; Lean reads both."""
+    by `theorem`, `def` or another word the scan reads (a constructor among them), with a
+    name it reads that could mislead it (`misleading_name`). The scan reads the file's
+    text, not Lean's elaboration of it, and trusts the modules of `Elements` the file
+    imports: it refuses the forms above, but a text it does not recognise as one of them
+    may still make a theorem's type read otherwise than Lean elaborates it. It is a guard
+    against honest slips, not a proof; the full cure, a follow-up, is for Lean itself to
+    report each audit theorem's type and axioms."""
     def at(offset):
         return f"{where}:{line_of(src, offset)}"
     why = ("so a theorem's type could mean other than it reads, and the scan reads only "
@@ -1800,16 +1792,18 @@ def declared_in(where: str, src: str, code: str, end: int) -> tuple[dict[int, st
 @functools.lru_cache(maxsize=None)
 def overlap_proofs(path: Path) -> tuple[dict, str]:
     """What the section AUDIT_SECTION of Audit/Overlaps.lean proves: for each proposition,
-    as "III.5", each theorem there whose type is the proposition's own (`type_of%
-    @Elements.BookIII.Prop5`), by its full name, with the axioms that its `#guard_msgs` pin
-    of `#print axioms` gives, named as facts.json names them, without `Elements.` (one
-    outside `Elements` keeps its name after `_root_.`, so it matches none), and without
-    LEAN_FOUNDATIONS. A theorem with no such pin proves nothing here, nor does one of
-    AUDIT_NOT_OVERLAPS. The pins are read from the file's text, as `read_lean` reads it;
-    `lake build Audit` checks that Lean reports what they say. Returns the map and "", or
-    {} and why the file cannot be read: among the reasons, a symbolic link, each form that
-    `declared_in` refuses, and a theorem whose name the file declares twice, since the
-    scan could not tell which declaration its pin reports."""
+    as "III.5", each theorem there that `declared_in` reads whose type is the proposition's
+    own (`type_of% @Elements.BookIII.Prop5`), by its full name, with the axioms that its
+    `#guard_msgs` pin of `#print axioms` gives, named as facts.json names them, without
+    `Elements.` (one outside `Elements` keeps its name after `_root_.`, so it matches
+    none), and without LEAN_FOUNDATIONS. A theorem with no such pin proves nothing here,
+    nor does one of AUDIT_NOT_OVERLAPS. The pins are read from the file's text, as
+    `read_lean` reads it; `lake build Audit` checks that Lean reports what they say.
+    Returns the map and "", or {} and why the file cannot be read: among the reasons, a
+    symbolic link, each form that `declared_in` refuses, and a theorem of the section
+    whose type is a proposition's own, not one of AUDIT_NOT_OVERLAPS, whose full name, as
+    the scan reads it, another declaration of the file has, since the scan could not tell
+    which declaration its pin reports."""
     if path.is_symlink():
         # Named as written: `rel` would name the file the link points to.
         return {}, (f"{rel(path.parent)}/{path.name} is a symbolic link, which the scan "

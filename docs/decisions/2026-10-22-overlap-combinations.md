@@ -21,31 +21,28 @@
   supply its step" whose type is the proposition's own, as that theorem's `#guard_msgs`
   pin of `#print axioms` gives them, less Lean's own `propext`, `Classical.choice` and
   `Quot.sound`. `Audit.I_7`, the section's circular derivation of I.7 through I.7's own
-  corollary, is named as proving no overlap, and is not read. The check reads the file's
+  corollary, is named as proving no overlap, and is left out. The check reads the file's
   text, whose pins `lake build Audit` checks, and a fault names the record, the
   combination, and the theorems the file proves the proposition by, with their rules.
 
   Lean elaborates a theorem's type where the check reads it as written, so the check
-  follows the namespaces the file's commands open and close, wherever a command stands
-  and a dotted namespace a part at a time, and refuses the whole file, naming the line,
-  for each of these forms: an import outside `Elements`; a `variable`, `include` or
-  `export`, or a command that declares a token (`notation`, `infix`, `infixl`, `infixr`,
-  `prefix`, `postfix`, `syntax`, `binder_predicate` or `declare_simp_like_tactic`),
-  before the section's end; a namespace, or a declaration by `theorem`, `def` or another
-  word the scan reads (a constructor among them), whose name, with only whitespace
-  between it and that word, has a part `Elements`, or a part in «…» that holds a dot,
-  which the check cannot tell from a longer name; or a theorem it reads whose name the
-  file declares twice. `macro`, `elab` and their `_rules` are refused by the source scan,
-  in `Audit/` and `Elements/` alike. Main's file has none of these. The scan trusts the
-  modules of `Elements` the file imports: a declaration there under `Audit.Elements`, or
-  a notation there that reads `type_of% … :=` otherwise, would mislead it. Nor does it
-  read the name of a `where` or `let rec` auxiliary, or tell a syntax quotation's text
-  from commands: an auxiliary named `Elements.BookIII.Prop5`, read inside a namespace
-  named after its declaration, or a `theorem` or `namespace` inside `` `(command| …) ``,
-  would mislead it too. Nor does it read the name in `theorem«Elements».BookIII.Prop5`,
-  closed up to its word, or in `instance (priority := (10)) Elements.Inst`, after a
-  priority that holds a bracket; Lean reads both. The full cure, a follow-up, is for Lean
-  itself to report each audit theorem's type and axioms.
+  follows the namespace and section commands it recognises, a dotted namespace a part at
+  a time, and refuses the whole file, naming the line, for each of these forms: an import
+  outside `Elements`; a `variable`, `include` or `export`, or a command that declares a
+  token (`notation`, `infix`, `infixl`, `infixr`, `prefix`, `postfix`, `syntax`,
+  `binder_predicate` or `declare_simp_like_tactic`), before the section's end; a
+  namespace, or a declaration by `theorem`, `def` or another word the scan reads (a
+  constructor among them), with a name it reads that has a part `Elements`, or a part in
+  «…» that holds a dot, which the check cannot tell from a longer name; or a theorem of
+  the section whose type is a proposition's own, other than `Audit.I_7`, whose full name,
+  as the scan reads it, another declaration of the file has. `macro`, `elab` and their
+  `_rules` are refused by the source scan, in `Audit/` and `Elements/` alike. Main's file
+  has none of these. The scan reads the file's text, not Lean's elaboration of it, and
+  trusts the modules of `Elements` the file imports: it refuses the forms above, but a
+  text it does not recognise as one of them may still make a theorem's type read
+  otherwise than Lean elaborates it. It is a guard against honest slips, not a proof; the
+  full cure, a follow-up, is for Lean itself to report each audit theorem's type and
+  axioms.
 
   The check holds soundness alone, that each combination a record names is proved there,
   as the scan reads the file. Completeness, that each combination the file proves is in
@@ -71,8 +68,9 @@
   several combinations, and lists what the machine checks of them.
 
   This entry approves the change to `scripts/heath.py`: `validate_review` reads `ways`,
-  and refuses it on a `step` overlap, a combination that repeats another and a rule named
-  twice in one, with self-test cases that are accepted and refused.
+  and refuses it on a `step` overlap and a combination that repeats another, and refuses
+  a rule named twice in any combination, `rule` with `also` among them; its self-test has
+  cases that are accepted and refused.
 
   This entry approves the change to `scripts/check_fidelity.py`, whose review check holds
   each combination of a `states` or `gives` overlap to `Audit/Overlaps.lean`
@@ -92,9 +90,9 @@
   refuse.
 
   This entry approves the change to `tests/test_negative_tests.py`, which puts small Lean
-  texts in place of `Audit/Overlaps.lean`, never built, to test how the check reads them,
-  each form it refuses and a symbolic link among them, and tests the record the plant
-  writes.
+  texts in place of `Audit/Overlaps.lean`, never built, to test how the check reads them
+  and forms it refuses, a symbolic link among them; tests that `validate_review` refuses
+  `rule` with `also` when it names a rule twice; and tests the record the plant writes.
 
   This entry approves the change to `tests/test_check_style.py`, whose wording cases now
   hold the words for `ways` in the line under the enunciation, the Overlap row and the

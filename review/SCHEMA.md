@@ -137,25 +137,21 @@ a proposition, give it at once, or supply its step" has the proposition's own ty
 (`type_of% @Elements.BookIII.Prop5`), and the `#guard_msgs` pin of its `#print axioms`
 gives exactly those rules, less Lean's own `propext`, `Classical.choice` and `Quot.sound`.
 `Audit.I_7`, a circular derivation through I.7's own corollary, proves no overlap, and
-is not read. The check reads the file's text, not what Lean makes of it, and refuses the
-whole file, naming the line, for each of these forms: an import outside `Elements`; a
-`variable`, `include` or `export`, or a command that declares a token (`notation`,
-`infix`, `infixl`, `infixr`, `prefix`, `postfix`, `syntax`, `binder_predicate` or
-`declare_simp_like_tactic`), before the section's end; a namespace, or a declaration by
-`theorem`, `def` or another word the scan reads (a constructor among them), whose name,
-with only whitespace between it and that word, has a part `Elements`, or a part in «…»
-that holds a dot, which the check cannot tell from a longer name; or a theorem it reads
-whose name the file declares twice. `macro`, `elab` and their `_rules` are refused by the
-source scan, in `Audit/` and `Elements/` alike. The scan trusts the modules of
-`Elements` the file imports: a declaration there under `Audit.Elements`, or a notation
-there that reads `type_of% … :=` otherwise, would mislead it. Nor does it read the name
-of a `where` or `let rec` auxiliary, or tell a syntax quotation's text from commands: an
-auxiliary named `Elements.BookIII.Prop5`, read inside a namespace named after its
-declaration, or a `theorem` or `namespace` inside `` `(command| …) ``, would mislead it
-too. Nor does it read the name in `theorem«Elements».BookIII.Prop5`, closed up to its
-word, or in `instance (priority := (10)) Elements.Inst`, after a priority that holds a
-bracket; Lean reads both. The full cure, a follow-up, is for Lean itself to report each
-audit theorem's type and axioms.
+is left out. The check refuses the whole file, naming the line, for each of these forms:
+an import outside `Elements`; a `variable`, `include` or `export`, or a command that
+declares a token (`notation`, `infix`, `infixl`, `infixr`, `prefix`, `postfix`, `syntax`,
+`binder_predicate` or `declare_simp_like_tactic`), before the section's end; a
+namespace, or a declaration by `theorem`, `def` or another word the scan reads (a
+constructor among them), with a name it reads that has a part `Elements`, or a part in
+«…» that holds a dot, which the check cannot tell from a longer name; or a theorem of
+the section whose type is a proposition's own, other than `Audit.I_7`, whose full name,
+as the scan reads it, another declaration of the file has. `macro`, `elab` and their
+`_rules` are refused by the source scan, in `Audit/` and `Elements/` alike. The scan
+reads the file's text, not Lean's elaboration of it, and trusts the modules of
+`Elements` the file imports: it refuses the forms above, but a text it does not
+recognise as one of them may still make a theorem's type read otherwise than Lean
+elaborates it. It is a guard against honest slips, not a proof; the full cure, a
+follow-up, is for Lean itself to report each audit theorem's type and axioms.
 
 The page words its overlap by the kind, in the line under the enunciation and in the
 book's summary, which also heads the book's index, its section of CERTIFICATE.md and its
@@ -294,7 +290,8 @@ require_stamp=False)` reads a record without them.
   values above; an `[overlap]` names its `kind`, and one of the kind `step` has a `note`;
 - an `[overlap]`'s `ways` is a list of combinations, each a list of axiom names, in an
   overlap of the kind `states` or `gives` alone; each combination is a different set of
-  rules from `rule` with `also` and from every other, and names no rule twice;
+  rules from `rule` with `also` and from every other; and no combination, `rule` with
+  `also` among them, names a rule twice;
 - a restricted statement lists `hypotheses` and has no `omitted`; a partial one lists
   `omitted` and has `[coverage]`; a full one has neither; both kinds need a `note`;
 - `note` is one line of at most 160 characters;
@@ -318,8 +315,8 @@ holds an `[overlap]` to them too: each rule it names, in `rule`, `also` or `ways
 axiom in facts.json, and, for the kinds `states` and `gives`, each combination is one
 that `Audit/Overlaps.lean` proves the proposition from, as `[overlap]` says above, read
 from the file's text, whose pins `lake build Audit` checks. A fault names the record,
-the combination and the rules that the file proves the proposition from, or the line of
-the file that the check refuses it for.
+the combination and the rules that the file proves the proposition from, or why the
+check refuses the file, naming the line of any form it refuses there.
 `scripts/render.py` reads a carried passage's `helper` as the porism or a companion
 facts.json attaches to the proposition, and stops, naming the proposition and the helper,
 on any other.
