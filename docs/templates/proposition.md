@@ -94,12 +94,13 @@ Proposed record entries (review/SCHEMA.md):
 - [route] kind, note:
 - [representation] tags:
 - [overlap] rule, also, kind (states / gives / step, always named), note (required for a step):
-- [[passage]] at, kind (helper / grouped / case / given / different / unformalized), helper, note:
+- [[passage]] at, kind (helper / grouped / case / given / different / unformalized), helper, note, unused (bindings that stand for Euclid's words and are not used again):
 - [figure] case, every_case, and note (a line for under the figure, where the drawing
   departs from Heath's):
 
 Records made stale: the review records whose Lean file or statement this change touched,
-even by a comment; their owner reads and stamps them (WORKFLOW.md, section 6).
+even by a comment, and those whose own text it edited; their owner reads and stamps them
+(WORKFLOW.md, section 6).
 
 Dependencies:
 - Helpers added or changed, with their signatures.
@@ -155,7 +156,7 @@ defect nobody has looked into.
 ### The record
 
 What the review leaves in the repository: `review/<book>/NN.toml`, read by
-`heath.load_review`. The stamps (`fingerprint`, `commit`, `lean`) are written by
+`heath.load_review`. The stamps (`fingerprint`, `commit`, `lean`, `text`) are written by
 `scripts/review_stamp.py`, never by hand. Delete the sections that have nothing to say;
 `[statement]`, `[route]` and `[review]` are always present.
 
@@ -193,6 +194,7 @@ tags = []                      # from review/terms.toml
 # kind = "helper"              # carried, helper, grouped, case, given, different, unformalized
 # helper = "PropN.something"
 # note = "One or two plain sentences, shown on the page."
+# unused = ["FC", "this"]      # bindings for Euclid's words, not used again; not shown
 
 # [figure]
 # case = "the case the figure shows"
@@ -203,6 +205,7 @@ tags = []                      # from review/terms.toml
 stage = "exceptions"           # or "full"
 commit = "…"
 lean = "sha256:…"
+text = "sha256:…"
 reviewer = "…"                 # from stage "full": the model or person, and the role
 # run = "brief …, stage …, workflow …"   # from stage "full"
 # [review.items]               # acceptance (brief 0005, stage 6), in a "full" record

@@ -224,27 +224,44 @@ rendered page.
 
 **Review records are tied to a commit.** Every proposition has a record,
 `review/<book>/NN.toml` ([schema](../review/SCHEMA.md)). `scripts/review_stamp.py` stamps it
-with a fingerprint of the statements reviewed, a hash of the Lean file, and the commit whose
-files the record was last confirmed against. When the fingerprint or the hash no longer
-matches, `check_fidelity.py` reports that the statement or the Lean file has changed since
-it was reviewed, and the record is read again. At the stage `exceptions` a record declares
-every departure; at the stage `full` it classifies every substantive passage. The record's
-`reviewer` names who read it; from the stage `full` it names the model or person and the
-role, and `run` names the brief, stage and workflow, so that a reader can tell the reviewer
-from the authors of the proof.
+with a fingerprint of the statements reviewed, a hash of the Lean file, a hash of the
+record's own text without its `[review]` table and fingerprint, and the commit whose files
+the record was last confirmed against. When any of the three no longer matches,
+`check_fidelity.py` reports that the statement, the Lean file or the record has changed
+since it was reviewed, and the record is read again. At the stage `exceptions` a record
+declares every departure; at the stage `full` it classifies every substantive passage. The
+record's `reviewer` names who read it; from the stage `full` it names the model or person
+and the role, and `run` names the brief, stage and workflow, so that a reader can tell the
+reviewer from the authors of the proof.
 
 **Stamps.** A stamp says that a record has been read against the files as they now are.
 
 - The reviewer stamps, after reading, with the commit whose files were read:
   `python3 scripts/review_stamp.py --commit <commit> III.16`. Commit the change first,
-  then stamp; the script checks that the Lean file at that commit is the file as it is now.
+  then stamp; the script checks that the commit is in the history of HEAD, and that the
+  Lean file and the record at that commit are as they are now, the record's `[review]`
+  table and fingerprint aside.
 - The integrator re-stamps only after reading each changed file against its record, and
   then stamps with the commit read. A record the integrator cannot confirm goes back to the
   records' owner.
 - On a contributor's branch, "changed since it was reviewed" is expected whenever a Lean
-  file under a record changes, even by a comment. The contributor lists the records made
-  stale in the handback (form 3, "Records made stale"), and never runs `review_stamp.py` on
-  a record they did not review.
+  file under a record changes, even by a comment, and whenever the record's own text is
+  edited. The contributor lists the records made stale in the handback (form 3, "Records
+  made stale"), and never runs `review_stamp.py` on a record they did not review.
+- The records stamped before the `text` stamp was introduced gain it by
+  `python3 scripts/review_stamp.py --migrate-text`, which writes `text` alone, and only
+  for a record whose own stamp commit is in the history of HEAD and whose text at that
+  commit is its text now: what was read is then what the record says, so it records no
+  new reading. It reads the records' history, so it runs in a full clone. A record whose
+  text it cannot confirm is listed as needing a reader, who reads it and stamps it as
+  above. A stamp commit absent from the clone or abbreviated ambiguously is a problem, and
+  so, for a record without `text`, is one a shallow clone cannot place in the history of
+  HEAD: the command exits 1 without listing that record for a reader. Fetch missing
+  history and run it again; for an ambiguous id, a reader identifies the intended commit
+  without guessing, reads the record and stamps it as above with enough of the id to name
+  that commit alone; then run it again. The migration may be run again at any time, as at
+  landing, after the branches that change records. Until every record carries `text`,
+  `check_fidelity.py` names those without it in a note.
 
 **What a reviewer of the Lean looks for:**
 
@@ -257,6 +274,13 @@ from the authors of the proof.
 - artificial hypothesis uses: `have _ := h…` and the like;
 - helpers that conceal a whole conclusion;
 - later citations, lemma placement, imports, and Book Zero importing no proposition.
+
+`python3 scripts/sweep_citations.py` lists the candidates for the dummy citations, the
+artificial hypothesis uses and the concealing helpers, and marks those the record already
+declares ([FORMALIZATION.md](FORMALIZATION.md), section 5). The reviewer judges each: a
+step a sentence of Euclid's stands over stays, and is declared by naming its binding in
+the `unused` of the passage over it ([review/SCHEMA.md](../review/SCHEMA.md)), which no
+note and no `#` comment can do; any other is fixed, deleted or its part cleared with `-`.
 
 For the page, the reviewer's checklist is in [STYLE.md](STYLE.md), section 8; figures are
 checked as geometry.
@@ -298,6 +322,8 @@ lake build Audit
 lake build Staging
 lake env lean Certificate/Facts.lean
 python3 -I tests/test_certificate.py
+python3 scripts/sweep_citations.py --self-test
+python3 scripts/sweep_citations.py
 python3 scripts/check_kernel.py --self-test
 python3 scripts/heath.py
 python3 scripts/check_fidelity.py
@@ -312,26 +338,29 @@ python3 -I scripts/check_superposition_pins.py
 python3 scripts/check_style.py
 python3 scripts/render.py
 git status --porcelain                 # prints nothing
+python3 scripts/check_queue.py --tree .
 python3 scripts/check_links.py
 ```
 
 Review the generated differences and commit them with their sources, so that regenerating
 leaves them unchanged and the `git status` line prints nothing. That line reads the whole
 worktree, as the pre-flight's does: a file that any command above leaves changed or new,
-generated page or not, fails it, so the sequence runs on a committed revision. Eight
-more jobs run on their own, each in isolation: CI's `risk`, which classifies the change
-(below); four more of CI's on each pull request, two of them by the class `risk` gives;
-and three on a cadence, in the `safe-push-tests` workflow (below): `safe-push-tests`, and
+generated page or not, fails it, so the sequence runs on a committed revision. More jobs
+run on their own, each in isolation: CI's `risk`, which classifies the change (below);
+`negative`, `model`, `formal-model`, `acceptance` and `queue-integrity`, more of CI's on
+each pull request, `negative` and `formal-model` of them by the class `risk` gives; and
+three on a cadence, in the `safe-push-tests` workflow (below): `safe-push-tests`, and
 `negative-tests` and `formal-model-kernel`, which run on main the commands of CI's
 `negative` and `formal-model` jobs. Below, the first commands are those of CI's
 `negative`, `model` and `formal-model` jobs, and so of the cadence's two; the next two
 run the acceptance job's tests and checklist without its CI comparison, and the last two
 run the `safe-push-tests` job's; the commands of `risk` are under "Which jobs run for
-which class", after the block:
+which class", after the block, and those of `queue-integrity` after that:
 
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
+python3 -I tests/model/results_check.py   # the `model` job's second step: results/ are current
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
 python3 scripts/check_model_kernel.py --self-test && python3 scripts/check_model_kernel.py
                                        # CI's `formal-model` job: the formal model, with Mathlib,
@@ -363,8 +392,9 @@ counts from the next push; main's run after the merge runs `negative` and `forma
 in full (`acceptance` runs only on a pull request); and the merge gate holds a release
 until the full pre-flight has run on its head and a run of the `safe-push-tests` workflow
 there has passed each of its three jobs ([section 10, "Landing work: pull
-requests"](#landing-work-pull-requests), step 4). `check`, `model` and
-`acceptance` run for every class. `negative` runs in full for R3, R4 and R5.
+requests"](#landing-work-pull-requests), step 4). `check`, `model`,
+`acceptance` and `queue-integrity` run for every class. `negative` runs in full for R3,
+R4 and R5.
 `formal-model` runs in full for R4 and R5, the classes of every change to `model/`, to
 `Certificate/axioms.lock` and to `scripts/check_model_kernel.py`, and for a change of any
 class to a file of the main package that the formal model imports, directly or through
@@ -456,8 +486,10 @@ the three jobs reads the repository with no other permission, and its checkout k
 token.
 
 `scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on the
-head commit of every pull request of R3 to R5 (section 10), so a change to them is made
-there too, and in the CI workflow; for R0 to R2 it leaves them to CI, which runs those of
+head commit of every pull request of R3 to R5 (section 10), but one: it does not yet run
+`python3 -I tests/model/results_check.py`, which only CI's `model` job runs until the
+command joins safe_push's `CHECKS`. A change to the commands is made there too, and in the
+CI workflow; for R0 to R2 it leaves them to CI, which runs those of
 `check` and `model` on the pull request before the merge. It leaves the `formal-model`
 job to CI on purpose, since it fetches
 Mathlib's prebuilt files ([model/README.md](../model/README.md#the-ci-job)), the
@@ -480,6 +512,30 @@ merge gate does not count a skipped run as a pass, so it waits for the pull requ
 run of `acceptance` to pass. The ruleset and the remaining merge requirements are in
 [section 10, "Landing work: pull requests"](#landing-work-pull-requests).
 
+On pull requests and pushes, `queue-integrity` installs the pinned YAML parser with which
+the offline cases read `ci.yml`, then runs those cases; on a merge group it installs
+nothing, so the Python that runs the judge holds nothing a group names. Locally, install
+the parser in a virtual environment outside the tree (a system Python may refuse the
+install, and `python3 -I` does not see a user install), then run what CI runs:
+
+```sh
+python3 -m venv "${TMPDIR:-/tmp}/stoicheia-queue" && . "${TMPDIR:-/tmp}/stoicheia-queue/bin/activate"
+python3 -m pip install -r scripts/requirements-test_safe_push.txt   # CI's `queue-integrity` job
+python3 -I tests/test_check_queue.py
+python3 -I tests/test_check_train.py
+```
+
+Its other step is the merge queue's judge: it takes `scripts/` from a group's base and
+runs that `check_queue.py`, running none of the group's scripts, though GitHub runs the
+group's own copy of this workflow file (section 10 says what must hold it). It has no
+event to run on yet, since this workflow does not run on `merge_group` until the queue
+lands (section 10). The `check` job's `check_queue.py --tree .` step, which the
+pre-flight runs too, checks the decisions page line by line as section 10's rule (d)
+describes; conflict markers in tracked text are S23's, in `scripts/check_style.py`. The
+train and queue checks need Git 2.42 or later (`merge-tree --write-tree` came in 2.38,
+its `--merge-base` in 2.40 and `--attr-source` in 2.42); with an older Git they refuse
+every train and group as unreadable.
+
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
   beside other contributors' builds in a shared tree.
@@ -488,6 +544,33 @@ run of `acceptance` to pass. The ruleset and the remaining merge requirements ar
   change to an axiom fails the `model` job until the model follows it, in the same pull
   request: [MODEL.md, "Changing the axioms"](../tests/model/MODEL.md#changing-the-axioms),
   says how.
+- **The model's results name their harness.** Each file in `tests/model/results/` names
+  the commit it was written at, with the harness files as committed, and the hash of the
+  harness that wrote it (`HARNESS` in `tests/model/run.py`), and MODEL.md's counts name
+  the same commit. `tests/model/results_check.py`, which is not a file of the harness,
+  fails when the harness now hashes otherwise, when a run read harness files other than
+  its commit's, when the runs' output is what `run.py` refuses to write, or when
+  `summary.txt` and the counts are not what `--write` makes of the runs' output. So a pull
+  request that changes a harness file commits the change, runs
+  `python3 -I tests/model/run.py --full --write` on it (about eight minutes) and commits
+  what it writes, in the same pull request; its decisions entry names each file the run
+  changes. `--write` runs from a copy of the harness taken out of git at the commit, so
+  what it writes is that commit's harness's. Apart from its self-test, which runs `run.py`
+  on a made-up harness of its own, the check runs no harness, so it cannot tell a header
+  written by hand from a run's, and the output records no exit status, which only
+  `--write` sees; the security review, which every change under `tests/` gets, reads the
+  results' diff.
+- **The citation sweep reads the build.** `python3 scripts/sweep_citations.py` elaborates
+  a copy of each file of `Elements/` with Lean's unused-variables linter and its tactic
+  analysis on, and reads every entry's proof term, so it needs `lake build` and
+  facts.json; `Staging` and `Audit` it reads when named, after their builds, though the
+  linter passes over any declaration with a `sorry` in it, even one that never runs, so a
+  staged statement gives no hit until its proof arrives; outside Staging, a file with
+  `sorry` or `admit` in its code is refused. Its `--self-test` plants each kind of hit,
+  and controls that must pass, in Lean outside the tree. CI's `check` job runs both sweep
+  commands for every risk class, after `test_certificate.py` and before the whole-worktree
+  cleanliness check; the sweep there only lists, and the release gate (section 10, step
+  10) runs it with `--fail-on-undeclared`.
 - **Staging builds; it is not proved.** `lake build Staging` checks that the statements
   staged before their proofs (section 2), each with `sorry` where its proof is due, still
   build against the library they import. It builds every file under `Staging/`, whether or
@@ -617,6 +700,11 @@ run of `acceptance` to pass. The ruleset and the remaining merge requirements ar
   `Elements/BookI/Prop07.lean` among them, whose every header and import it reads.
   `negative_tests.py` runs it after the decision entry regressions, before planting, with
   `--counts-only` too.
+- **The lock is written again as it is committed.** `check_fidelity.py --write-lock`, run
+  on the committed `facts.json`, must give back `Certificate/axioms.lock` byte for byte, its
+  header included, for `model/lock.sha256` and `tests/model/lock.sha256` pin its bytes.
+  `tests/test_axiom_lock.py` tests that without Lean, and `negative_tests.py` runs it after
+  the risk class regressions, before planting, with `--counts-only` too.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that
   branch; if integration changes the mathematics, the dependencies or a public description,
@@ -677,9 +765,7 @@ looked into.
 6. **One voice** (section 7).
 7. **Review records** completed: each record written in step 3 is read again against its
    finished proof (section 6), and every one reaches the stage `full` before acceptance.
-   Books I and II have reached `full` in all their records; Book III's remain at
-   `exceptions` and reach `full` in brief 0005's stage 5, after the moves from Staging
-   into Elements in stages 3 and 4 (#25, #28; the records are #29).
+   Books I, II and III are at `full` in all their records (Book III's are #29).
 8. **The page read-through and the stale-content audit.** Before every release or
    consolidation, readers go through the rendered pages as visitors, as section 7 requires.
    Separately, before every release and at the end of each programme stage, the coordinator
@@ -716,7 +802,9 @@ looked into.
     from the audit fixed in the release's pull request and every Tier 3 record given its
     status note; no open issue labelled `blocks-release`
     (unfinished work, a prototype or a provisional answer may be on main only as such an
-    issue, and holds every release until it closes); and the wiki refreshed, so that it is
+    issue, and holds every release until it closes); the citation sweep, `python3
+    scripts/sweep_citations.py --fail-on-undeclared`, passing on the release candidate,
+    with each hit fixed or declared in its record; and the wiki refreshed, so that it is
     reasonably correct as of its date, as its pages say, and is not expected to be more
     current than that. The hold is checked by `python3 scripts/check_release_gate.py`, by
     the `release-gate` job on the release's pull request, and by `git safe-push --merge`,
@@ -729,8 +817,32 @@ looked into.
     its own. The `release-gate` job runs on the
     pull request's events, not the issues', so once the last blocker closes it is run
     again (or `release` removed and given again) before `--merge`, which counts its failed
-    run on a release pull request. Then the notes are drafted from the generated
-    summaries, the owner approves them, and the tag (`book-I`, `book-II`, …) is made.
+    run on a release pull request. Before that `--merge`, and after every other change the
+    release's pull request carries, two generated accounts are made again at its head, and
+    what they write is committed to it. The model's full run,
+    `python3 -I tests/model/run.py --full --write`, writes `tests/model/results/` and
+    MODEL.md's counts. After `lake build`, the overlap screen,
+    `python3 -I Audit/screen.py OUTDIR --write`, runs on the candidate's statements and
+    rules and writes `Audit/screen-run.toml`. Before it replaces that record, it checks the
+    build again, after every try and retry, and reads the commit and the inputs again; a
+    failed check leaves the record as it was. Checks at the two ends of a run cannot show
+    that nothing changed and changed back in between. Then
+    [overlaps.md](reports/overlaps.md) and the screen's docstring record the revision
+    screened, the number of statements in `facts.json` and what closed. Then
+    `python3 -I tests/model/results_check.py` and
+    `python3 -I Audit/screen.py --check-current` both pass: CI runs the first on every pull
+    request, and the coordinator runs the second on the head that `--merge` merges and
+    again just before the tag, and the pull request quotes the screen's closing lines. The
+    screen's check needs no Lean, but any change to the library makes it fail, and only a
+    run, with Lean and about an hour and a half of processor time, may make it pass again;
+    so it is a release step, not one of CI's. The check reads the record, not the run, so
+    it cannot tell a record written by hand from a run's, and the security review reads the
+    run's closing lines, which the pull request quotes. `Audit/` and `tests/` are
+    protected, so the release's decisions entry names each file the runs and their records
+    change: the ten files of `tests/model/results/`, `tests/model/MODEL.md`,
+    `Audit/screen-run.toml` and `Audit/screen.py`. Then the notes are drafted from the
+    generated summaries, the owner approves them, and the tag (`book-I`, `book-II`, …) is
+    made.
     `python3 scripts/check_release_gate.py` runs once more just before the tag, since the
     hold rests on the labels. PROGRAM.md is brought up to date: the status board, the
     lessons, the costs.
@@ -775,17 +887,114 @@ label, with its description, the first time it is given, as it does the others.
 
 **Trains.** Since every pull request must be up to date with main before it merges, and
 nearly every one touches the generated pages, reviewed branches can land together, as a
-train (the owner, 18 October 2026). A train is a branch `train/<area>-<n>` that merges
-several branches, each already one coherent change with its own reviews and
-`/no-mistakes` run, as merge commits of their own, so history keeps each change whole.
-Each branch brings its decision entries as files of its own ("Decision entries", below),
-so they merge side by side, untouched; the coordinator resolves the decisions page only
-for a branch opened before entry files that added its entry there, and regenerates the
-pages once;
-the train passes the pre-flight and CI once and merges as one pull request, whose body
-lists each branch with its reviews and the issue it closes. A train never carries a check
-change together with content that check judges: trains of checks and trains of content are
-separate, and a branch that fails the train's pre-flight leaves the train.
+train (the owner, 18 October 2026). A train is a branch `train/<area>-<n>` that gathers
+reviewed branches as merge commits, each member already one coherent change with its own
+checks and reviews, so history keeps each change whole. Each member brings its decision
+entries as files of its own ("Decision entries", below), so they merge side by side,
+untouched; the coordinator resolves the decisions page only for a member opened before
+entry files that added its entry there, and regenerates the pages once. The train passes
+the pre-flight of its combined head and CI once, and merges as one pull request, whose
+body lists each branch with its reviews (the `Members` table below) and the issue it
+closes. A train never carries a check change together with content that check judges:
+trains of checks and trains of content are separate, and this rule refuses the
+combination even when origin/main's checks pass. A branch that fails the train's
+pre-flight leaves the train.
+
+The train's `--body-file`, required on a dry run and on every update too, has the usual
+pull request sections and two more, `Members` and `What is new`. `Members` is a table
+with the columns `Branch`, `Head`, `/code-review`, `/security-review` and `/no-mistakes`,
+one row per member. `Head` is 12 to 40 lower-case hexadecimal digits naming the member
+head merged. Each `/code-review` and `/security-review` cell names the commit its review
+read, by 7 to 40 lower-case hexadecimal digits that a reader sees (not in an HTML tag or
+comment, or a link's destination), with the findings, and that commit must
+be one of the member's own: the member's head, or an ancestor of it not on origin/main,
+named unambiguously by digits that begin its name (as `git rev-parse --verify
+<digits>^{commit}` resolves them; a ref whose name is hex digits does not count). Other
+digits in the cell, a coordinator's commit or a run's, may stand beside it. A cell that
+is only a placeholder ("not run", "awaiting review", "skipped" and their like) refuses,
+and so does one that holds, anywhere, in any case and beside the member's commit too,
+"pending", "TBD", "to come", "not needed" or "N/A" ("Pending items: none" among them);
+a finding that merely begins with another placeholder's words ("To do so, ...", "Later
+commits ...") does not. `/security-review` may instead say "Not required", and only
+if no protected path changed, read against every merge base of
+the member with origin/main; a member that changes a protected path must name its
+commit there, and its cell may not say "Not required" anywhere, in any case or
+spelling. Beyond that, the cells are the coordinator's words: the check reads that a
+review of the member is named and that some visible verdict or findings stand beyond the
+commit name and its punctuation or markup. It imposes no verdict vocabulary or prose
+length. `/no-mistakes` says
+`passed at <head>` for that same member head, or `not run: <reason>`, with at least
+five words giving the reason.
+
+`What is new` says `None.` or gives bullet lines of these forms:
+
+```text
+- check: scripts/check_queue.py
+- check: tests/test_check_queue.py
+- rule: trains go through the merge queue
+- propositions: I.5, II.3
+- foundations: Elements/Foundations/Plane.lean
+```
+
+Every changed file under `scripts/`, `tests/` and `.github/` needs a `check:` line.
+Every changed proposition, whether in its Lean, review record, Heath text, commentary
+or figures, is named under `propositions:`. Every changed file under
+`Elements/Foundations/` or `model/`, and `Certificate/axioms.lock`, needs a
+`foundations:` line. More may be declared; an omission refuses. Rule prose is written
+by the coordinator, since a file diff cannot derive it.
+
+At the pre-flight, origin/main's `scripts/check_train.py` reads the train's own
+first-parent chain and checks that each member was merged exactly once and has exactly
+one row; that each of the train's merges has two parents and adds or resolves nothing
+outside the generated files (README.md and PROGRAM.md only between their markers) and
+the decisions page; that the train's own commits change only those; and that the
+evidence, separation of checks from content, and declarations hold. Git's automatic
+merge, to which each of the train's merges is compared, reads merge attributes from
+origin/main, never from the checkout or a member's `.gitattributes`: a member's
+`merge=union` cannot make a resolution by hand count as automatic. A member's own
+history, a merge of main into it with its resolution included, is the member's, judged
+by its reviews. Decisions here are the page and, when origin/main's tree has a
+`docs/decisions/` directory (tooling/decision-entries brings it), the Markdown decision
+entry files directly under it; while origin/main has none, an entry file is refused like
+any other path. A merge of main needs no member row, but its tree is checked too.
+While origin/main has no `scripts/check_train.py`, every train is refused, one that
+adds the checker too: no commit's own copy ever judges it, so the checker lands first,
+as an ordinary pull request. An unreadable checker or a refused train stops the
+pre-flight. `--body-file` is read once, as UTF-8, before the checks: the train check,
+the dry run's body and the body posted are that same text. `--merge` runs the train
+check again, on the pull request's current body, and refuses if a later read of the
+body, by the gates, by the merge's own read or by the last gates before the merge,
+differs from the text checked.
+
+**Building a train that passes.** Start the train from origin/main, never from a
+member. Merge each member once, at its final head, after its reviews and `/no-mistakes`
+have run on that head; if a member moves, build the train again from origin/main rather
+than merging the member a second time. A merge of origin/main into the train is
+allowed, and its tree is checked like the members' merges. The train itself resolves
+and adds nothing beyond the generated pages and the decisions page. A conflict between
+members, or between a member and origin/main, and a review record's stamp of a member's
+change, are made in a branch that contains the sides it resolves or stamps: merge
+origin/main, or the other member, into the member, resolve or stamp there, and review
+that head, with its own `/no-mistakes`; the train then merges it, with one row (a
+member it contains may still be merged before it, with its own row). A branch from
+origin/main cannot hold them: a resolution made there conflicts again when
+the train merges it beside the members, and `scripts/review_stamp.py` stamps a record
+with the hashes of the files in the checkout it runs in, refusing a `--commit` whose Lean
+file differs. A stamp or an edit that stands alone, touching no file a member changes,
+may come from origin/main: a branch of its own, with its own reviews and its own
+`Members` row, merged like the others.
+Then regenerate and commit the generated pages, and write the body: `Members`, one row
+for each member merge, with the head merged; and `What is new`, covering at least what
+`derive_new` in `scripts/check_train.py` gives for origin/main to the train's head,
+which this prints, with the rule lines the coordinator writes:
+
+```sh
+python3 -I -c 'import sys; from pathlib import Path; sys.path.insert(0, "scripts")
+import check_train; print(check_train.derive_new(Path("."), "origin/main", "HEAD"))'
+```
+
+`git safe-push --branch train/<area>-<n> --body-file <path> --dry-run` then runs the
+same train check as the push.
 
 **Splitting a train by risk.** A train takes the highest class among its files, and its
 class sets its checks (section 8, "What runs for each class, at each stage"): one script,
@@ -797,6 +1006,154 @@ and the longer CI. A branch whose files fall on both sides is split in two, as a
 change already lands apart from the content it judges, the check first.
 `python3 scripts/risk.py --paths <file>...` gives a file's class before the work
 starts, and `python3 scripts/risk.py . origin/main` a branch's.
+
+**The merge queue's judge.** The merge queue is not in use: the owner has not enabled
+it, and CI does not yet run on `merge_group`. Its judge, `scripts/check_queue.py`, is on
+main first, so that the change that brings the queue in is reviewed against it. The
+post-merge workflow, the automatic revert and `safe_push.py`'s queue mode follow in a
+pull request of their own. That pull request lands as an ordinary one: it meets the
+`--tree` step and the offline cases of `queue-integrity`, not the judge, which runs only
+on merge groups. The queue must not be turned on before CI runs on `merge_group`: until
+then no required check reports on a group, so every group would time out and leave the
+queue.
+
+Once the queue is on, GitHub makes a group for each queued train: main plus the trains
+ahead of it, then that train, in queue order. Several passing entries can be batched
+into a push to main. CI runs the integration checks on each group and the
+`queue-integrity` job runs `scripts/check_queue.py`, taken with the scripts beside it
+from the group's base, main, never from the group, in a job that runs none of the
+group's scripts (it builds and renders nothing): a train's scripts cannot change the
+checker that judges it, and the job fails while main has none. It refuses an unreadable
+input, record or GitHub answer. But GitHub runs the group's own copy of the workflow
+file, so the judge's verdict, and any check of the pre-flight's evidence added to it,
+counts only while the group's `.github/workflows/ci.yml` still calls it: a group that
+changed the job's step would pass unjudged. So the protection of `.github/`, `scripts/`
+and `tests/`, and the authenticity of the pre-flight's evidence, must be held by
+something a group cannot change: a ruleset requiring code-owner review, with a
+`CODEOWNERS` file naming the owner for those paths; a required workflow pinned to main,
+if the account offers one; or a status posted by an App that runs main's code. The
+queue must not be turned on until one exists; the owner chooses which. Its four rules
+are:
+
+- **(a) No change overwritten.** Each train's change is reverted from the group tree and
+  applied again, by three-way merges, and the result must be the group's tree on every
+  path the rule covers: so a later train that restores, removes or re-adds what an
+  earlier one changed is caught, as well as one that alters it. When a train has more
+  than one merge base with the group's base, after criss-cross merges, each is used, and
+  each must preserve the group. Generated files are checked by regeneration instead. For
+  the decisions page, every line the train adds must remain in the group's page in the
+  same order.
+- **(b) Nothing unchecked.** Each entry has one visible pre-flight block naming exactly
+  its head, the base it was compared against and the harness: the main commit whose
+  `scripts/safe_push.py` ran it (today's pre-flight names its base as its harness; the
+  judge also accepts a later main commit, which the queue mode to come may record). The
+  base must be the newest commit of the group base's first-parent chain that the head
+  contains, which is what safe_push records (origin/main's tip when the pre-flight
+  ran), so an old base cannot be named for a head built on a newer main; the harness
+  commit must be that base or a later commit of the same chain, never an older one. The
+  block must name the harness commit's blob, give a passing verdict, and show every full
+  check that harness runs, by its own `CHECKS` and `NEGATIVE` lists, with no failure; a
+  block written before the `Verdict` line existed does not pass, so its pull request
+  needs a fresh pre-flight. The block is a declaration: anyone who can edit the pull
+  request's body can type one, and the judge checks it for consistency with the
+  repository, not as proof that a pre-flight ran. Its authenticity must be held by
+  something a group cannot change, as above, before the queue is turned on. A `train/`
+  entry's Members table is matched again to its actual member merges with
+  `check_train.py`, against the pull request's current body. The queue does not repeat
+  member review. An automatic revert has the narrowly checked exception below.
+- **(c) Batching in order.** From the group's base to its head, the first-parent chain
+  consists of two-parent merges whose trees are exactly their automatic merges.
+  An already merged prefix must be held by main; the rest must be the queue's entries
+  from position one through this group's last entry, in order. A skipped train, added
+  merge content, squash or rebase refuses. If a queue merge has no standard pull
+  request subject, its second parent must uniquely identify a queued head; that
+  fallback is not allowed for the already merged prefix.
+- **(d) A clean tree.** The decisions page has no repeated dated heading. The check reads
+  lines, not the page as it renders, so it can only over-approximate: a line that could
+  render as a level-one or level-two heading counts, in code, HTML and every container
+  too; its text must be plain; every year in it must stand in a date the check reads; and
+  no date may stand in two such headings. Each line is read in time linear in its
+  length. In full:
+  - Lines end at a line feed, a carriage return or both, as in CommonMark, and a byte
+    order mark that opens the page is skipped. A line of spaces and tabs is blank; a line
+    that holds anything else, a `>` among them, is not. Each line is read without its
+    leading whitespace and its container markers, taken off again and again: block quote
+    markers (`>`); list markers (`-`, `*` or `+`, or digits followed by `.` or `)`, each
+    followed by whitespace or the line's end); GFM's task markers (`[ ]`, `[x]` or `[X]`,
+    followed by whitespace or the line's end); and GFM's footnote markers (`[^label]:`).
+  - A line that then begins with one or two `#` followed by a space, a tab or its end is
+    a heading. Its text is what follows, without the spaces and tabs around it and
+    without a closing run of `#` after a space or a tab.
+  - A line that is then a run of `=` or of `-`, of any length from one, as in CommonMark
+    (a lone `-` among them), with whitespace after it, underlines a heading when one or
+    more lines that are not blank stand above it. Its text is every line back to the
+    previous blank line, each read as above, joined by spaces, with the line's list
+    numbers and footnote markers before it: a list number that cannot open a list inside
+    a paragraph (any but a 1 followed by text) is the paragraph's own text, so `Notes`,
+    `20. October 2026` and `===` make the heading "Notes 20. October 2026". So a later
+    underline's text holds an earlier one's: two headings underlined in one stretch of
+    lines need a blank line between them.
+  - Every heading's text is plain: ASCII letters, digits, spaces and `. , : ; ' ( ) - /`
+    only. Any other character (`<`, `&`, `[`, `*`, `_`, a backtick, `\`, `#`, `=`, a
+    tab, any character outside ASCII) refuses the page, naming the line: the page writes
+    its section headings plainly.
+  - A heading is dated when its text contains a date: three neighbouring words, a day of
+    one or two digits (with `st`, `nd`, `rd` or `th`, or without), a month by its English
+    name or its first three letters (or `Sept`), in any case, and a year of four digits,
+    day first or month first; or the year, month and day in numbers, as `2026-10-20`.
+    Two dated headings with the same date refuse the page, naming both.
+  - Every year in a heading's text, four digits from 1900 to 2199 standing apart from
+    other digits, must be the year of such a date, read within the year's own line (a
+    heading's text may begin at any of its lines), and a year in a list number or
+    footnote marker never is. Any other refuses the page, naming the line: so a date
+    written in a way the check does not read (`20/10/2026`, `the 20th of October 2026`,
+    `2026 October 20`) refuses rather than passes, and so does a heading of a year or a
+    month alone (`October 2026`).
+  - An HTML `<h1>` or `<h2>` tag anywhere in the page, code included, refuses: the page
+    quotes such a tag only in prose, as character references (`&lt;h2&gt;`), since a
+    code span shows a reference as written.
+  - That rendering the group changes no generated file is the `check` job's, on the same
+    group, and conflict markers are S23's of `scripts/check_style.py`, in the same job.
+
+Every merge the judge computes reads merge attributes from the group's base, main,
+never from the group's checkout. And judging a group, it reads every file from Git's
+objects, the decisions page among them (its blob, a regular file), never from the
+checkout, which the group's own attributes shape (`working-tree-encoding` or a
+`filter`, say). So an entry's `.gitattributes` cannot change what is judged: it can
+shape only the checkout, and no verdict reads the checkout. `--tree` reads the
+page in the checkout it is given, so it refuses as unreadable (exit 2) a page to which
+Git gives an attribute that can change how a checkout writes it: `working-tree-encoding`,
+`filter`, `ident`, `text`, `eol` or `crlf`, set, unset or with a value.
+
+Every entry other than an automatic revert must have its head in this repository, and no
+bot, the revert App's above all, may have written it: trains are written and queued by
+people. Of an entry still in the queue, no bot may have put it there or last edited its
+body either; of one already merged, the merged prefix of the group, the judge reads only
+its head's repository and who wrote it, since GitHub's queue no longer lists it and its
+own group judged it when it merged. GraphQL names a bot by a login without the "[bot]"
+that REST adds, so the actor's type is read, not its login.
+
+The queue accepts a revert without an ordinary pre-flight only from the configured
+App bot (`STOICHEIA_REVERT_BOT`), on a `revert/` branch with the `auto-revert` label,
+when its named run is a failed post-merge run of a push to main, its branch is
+`revert/` and that push's first 12 hexadecimal digits, an open issue labelled
+`main-red` names the run, the merges it names are exactly the merges of that push (its
+`before` and `after` read from GitHub's record of pushes to main), newest first, and
+its tree is exactly those merges reverted.
+
+**The gaps of what is new.** `check_queue.py --gaps`, for the `queue-gaps` job that lands
+with the queue, takes the union of the entries' derived changes and their declarations.
+A changed `tests/test_*.py` runs with `python3 -I`, and a changed `scripts/test_*.py`
+runs itself; a changed `scripts/<name>.py` runs its existing `tests/test_<name>.py` or
+`scripts/test_<name>.py` tests. The safe_push test command is
+`python3 scripts/test_safe_push.py`. A file the group deletes asks for no test; when an
+entry has more than one merge base, it asks for the tests of what it changes against
+any of them, and a deletion excuses a test only if it is a deletion against all. Each
+selected command runs once, with no token in its environment, and a failure fails the
+job. Changed propositions have their acceptance items printed from the acceptance
+artifact, as a report of the verdict already judged there. Declared rules are printed
+for the reader. Foundations need no extra run here, since `model` and
+`formal-model` run on every group.
 
 **Decision entries.** A new decision is a file of its own in `docs/decisions/`, so that
 pull requests queued together do not collide at the end of
@@ -869,6 +1226,8 @@ gh pr ready <n>                                    # when the reviews are done
 git safe-push --merge <n> --dry-run                # the gates, and no merge
 git safe-push --merge <n>                          # the gates, then a merge commit
 ```
+
+For `train/*`, add `--body-file <path>` to every `--branch` command above.
 
 `git safe-push` is a launcher that `install_hooks.sh` puts outside the tracked tree
 (`scripts/hooks/safe-push`, copied to `.git/stoicheia/safe-push`, with the alias): it
@@ -994,6 +1353,9 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       names nothing it asks for. While a push refuses anything under `docs/decisions/`,
       entries supply no new line at all, and the guards' refusals say so; so a rename, or
       a deletion and re-addition of an entry, renews no approval.
+
+      For `train/*`, step "3. train" then runs origin/main's train checker against the
+      committed head and the supplied body, as described above.
    4. *The full checks* of section 8, by the change's risk class
       ([the decision](decisions/2026-10-22-checks-by-risk.md)). First the class, R0 to
       R5, as origin/main's copy of `scripts/risk.py` gives it for `git diff
@@ -1013,7 +1375,8 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       does R0 to R2, the full checks run, and a note says why. For R3, R4 and R5, the full
       checks of section 8 in that worktree, and `negative_tests.py` in a
       second, each step timed. The check scripts and what they expect (`scripts/`,
-      `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) are origin/main's
+      `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`, and `checks/`,
+      the registry of checks that #229 brings) are origin/main's
       copies; when the pull request changes any of them, the checks run again with its own
       copies, which must pass. A check that fails with origin/main's copies is noted in
       the pull request for the security review, and refuses the pull request if it also
@@ -1029,9 +1392,10 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       changes an expected count, a new word in the lock, an axiom added):
       `tests/certificate_expectations.json`, `Certificate/axioms.lock`,
       `tests/model/lock.sha256`, the model's law names in `tests/model/laws.toml`, and its
-      account of the laws, `tests/model/MODEL.md` and `tests/model/results/`, which no
-      check reads but for MODEL.md's count markers. A count between count markers
-      ([STYLE](STYLE.md), section 4) in the Markdown of a check input under
+      account of the laws, `tests/model/MODEL.md` and `tests/model/results/`, which
+      `tests/model/results_check.py` holds to the present harness (section 8), as
+      `check_fidelity.py` holds MODEL.md's count markers to what they count. A count
+      between count markers ([STYLE](STYLE.md), section 4) in the Markdown of a check input under
       `Certificate/` or `tests/`, or in `review/SCHEMA.md`, such as
       `Certificate/FIELDS.md`'s count of the lock's words, is such a value too:
       `render.py` generates its value and `check_fidelity.py` refuses a stale one, so a
@@ -1173,6 +1537,7 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
 
 **Protected paths.** `scripts/` (the hook and the launcher included), `.github/`,
 `Certificate/` (the lock included), `tests/`, `review/SCHEMA.md`, `review/terms.toml`,
+`checks/` (the registry of checks that #229 brings, one file per check),
 `.gitattributes`, `.gitignore` (a rule added there hides untracked files from
 `git status`, and so from the check that the generated pages are current), the
 toolchain files (`lakefile.toml`, `lakefile.lean`, which Lake reads in preference to
