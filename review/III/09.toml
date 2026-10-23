@@ -12,15 +12,48 @@ tags = ["hypothesis-dropped"]
 note = "The rule supplies a centre, which the proof shows is D. Euclid's proof never uses that D is within, and the statement does not ask it."
 
 [[passage]]
+at = "Let ABC be a circle and D a point within it"
+kind = "helper"
+helper = "Tacit.exists_centre"
+note = "Euclid uses the circle's centre without constructing it; the Lean takes O from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E. It also uses `Prop2.triangle` (III.2, for which Heath prints no reference here) to show that A, B and C are not on one straight line."
+
+[[passage]]
 at = "For let AB, BC be joined and bisected at the points E, F"
 kind = "case"
 note = "If AB or BC passes through D, the Lean also bisects CA and applies the same I.8 and III.1 Por. argument to the two straight lines that miss D, using `Prop9.centre_on`. In Euclid's case ED and FD name GK and HL, so G, K, H and L need no further construction."
+
+[[passage]]
+at = "therefore GK cuts AB into two equal parts and at right angles"
+kind = "grouped"
+helper = "Prop1.porism"
+note = "Euclid takes GK to bisect AB at right angles; the Lean has already constructed E and F by I.10 (`BookI.Prop10`), for which Heath prints no reference here. The Lean carries these sentences together in one call to `Prop1.porism`, putting the centre O on ED, which names GK."
+
+[[passage]]
+at = "For the same reason"
+kind = "grouped"
+helper = "Prop9.centre_on"
+note = "Euclid gives the same reason for the centre lying on HL without writing out the argument. The Lean proves the I.8, Definition I.10 and III.1 Por. steps once over any letters in `Prop9.centre_on`, then applies them to BC and its middle point F."
+
+[[passage]]
+at = "And the straight lines GK, HL have no other point common but the point D"
+kind = "helper"
+helper = "Prop9.apart"
+note = "Euclid reads from the figure that GK and HL are two straight lines with only D in common. The Lean proves they differ by `Prop9.apart`, using I.13 and I.17, for which Heath prints no reference here, then identifies their common centre O with D by `Prop9.meet_at` and the assumed rule `Tacit.line_unique` (System E, Generalities 1)."
 
 [figure]
 case = "D off both AB and BC, as in Heath's figure"
 
 [review]
-stage = "exceptions"
-commit = "b9f6a766"
+stage = "full"
+commit = "b2484c70"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:005a52c72b917d00"
+run = "brief 0005 stage 5, ship R3 (#29)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
