@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.36 at a glance</title>
-  <desc>From D outside the circle, let DCA cut it (DC black, CA red) and DB touch it (blue): the rectangle contained by AD, DC equals the square on DB (both yellow).</desc>
+  <desc>From D outside the circle, let DCA cut it (DC black, CA red) and DB (blue) touch it: the rectangle contained by AD, DC equals the square on DB (both yellow).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="92.0" cy="122.0" r="68.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <g data-unlettered="the rectangle AD, DC and the square on DB drawn apart, which Heath's figure does not draw">
