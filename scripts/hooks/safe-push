@@ -4,9 +4,9 @@
 # $(git rev-parse --git-common-dir)/stoicheia/safe-push, and run as `git safe-push`:
 #
 #     git safe-push --branch <name> [--label L]... [--title T] [--body-file F] [--ready]
-#                   [--commit <sha>] [--dry-run]
+#                   [--commit <sha>] [--dry-run] [--main-checks-cache]
 #     git safe-push --merge <pr-number> [--dry-run]
-#     git safe-push --dry-run [--commit <sha>]
+#     git safe-push --dry-run [--commit <sha>] [--main-checks-cache]
 #
 # It runs origin/main's scripts/safe_push.py whatever the checkout holds, so that a branch
 # cannot judge itself, even one whose own copy no longer hands over to origin/main's: it

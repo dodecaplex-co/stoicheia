@@ -30,7 +30,10 @@
   safe_push finds its repository from the working directory it is run in, as
   `git rev-parse --show-toplevel` gives it there: run outside a repository with a
   `GIT_DIR` naming one, it refuses ("run it inside the repository"), and run inside one,
-  it never follows a `GIT_DIR` naming another.
+  it never follows a `GIT_DIR` naming another. The one such variable the harness sets on
+  purpose, the temporary `GIT_INDEX_FILE` in which `base_tree` builds origin/main's tree
+  for the main-checks cache ([#392](https://github.com/jackChallis/stoicheia/pull/392)), is
+  named to `run()` as kept, and its environment is otherwise built by `own_env()`.
 
   This entry approves the change to `scripts/safe_push.py`, whose `run()`,
   `without_replacements()`, `risk_class()` launch, CI watch and hand-over give no command
