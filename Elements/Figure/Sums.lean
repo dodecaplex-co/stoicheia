@@ -90,11 +90,11 @@ theorem sum_perm {k : Kind} {xs ys : List (Magnitude k)} (h : xs.Perm ys) :
     Magnitude.sum xs = Magnitude.sum ys := by
   induction h with
   | nil => rfl
-  | cons a h ih => exact congrArg (fun s => a + s) ih
+  | cons a _ ih => exact congrArg (fun s => a + s) ih
   | swap a b xs =>
       change b + (a + Magnitude.sum xs) = a + (b + Magnitude.sum xs)
       rw [← add_assoc, add_comm b a, add_assoc]
-  | trans h₁ h₂ ih₁ ih₂ => exact ih₁.trans ih₂
+  | trans _ _ ih₁ ih₂ => exact ih₁.trans ih₂
 
 /-- The sum of a list of lists, taken all at once, is the sum of their sums. -/
 theorem sum_flatMap {α : Type} {k : Kind} (xs : List α) (f : α → List (Magnitude k)) :

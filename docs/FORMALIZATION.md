@@ -63,17 +63,28 @@ that role ([WORKFLOW.md](WORKFLOW.md)).
   off the letters (`hAB : A ≠ B`, `hA_BCD`).
 - Magnitudes are lengths, angles and areas, `‖A B‖`, `∠ A B C`, `△ A B C`, with `∟` the
   right angle and Book II's `rect` and `sq`: they add and compare, and nothing more. "Greater
-  than … by" is an equation (the less with the excess is the greater). No coordinates or
-  real numbers appear in a statement or a proof, and no number measures a length, an angle
-  or an area. Counts may appear, natural numbers, of a figure's corners and of what
-  they make, since a count is part of what "a figure of n sides" means: the corners
-  of a closed line of sides, or within a triangle, and a corner's place in their list,
-  turned round some number of steps; the sides a ray or a finite straight line crosses
-  (`crossingCount`); the closed lines round a point (`Outline.depth`); and the tiles and
-  triangles of a division, with the sides they share. Counts are added and compared, and
-  two are compared by their remainders on division by two, as
-  `crossing_parity_independent` compares two crossing counts. They are part of how a figure
-  is defined, not of Euclid's argument
+  than … by" is an equation (the less with the excess is the greater). In a proposition's
+  statement and the geometric steps of its proof, no coordinates or real numbers appear,
+  and no number measures a length, an angle or an area. Beneath those steps, numbers may
+  serve the machinery and say nothing of a figure: the superposition rule numbers its
+  symbols (`Symbols`, in `Elements/Foundations/Superposition/Soundness.lean`), so I.4 and
+  I.8 number the points and straight lines of their figures beside their proofs
+  (`card := 6`, and `.a => 0` to `.f => 5`;
+  [#312](https://github.com/jackChallis/stoicheia/issues/312) is to take them out), as
+  `valuation_encodes` writes a literal over two numbered symbols (`Fin 2`, in
+  `Elements/Foundations/Superposition/Restriction.lean`); and a tactic may take a count,
+  as `congr 1` does in Book Zero. The zero magnitude is written `0`, in some laws,
+  definitions, helpers and proofs: it stands for no magnitude (no length, no angle, no
+  area), never for a number Euclid uses. So `‖A B‖ ≠ 0` says that AB is not nothing, and
+  `0 < ∠ A C B` that the angle ACB is not nothing. Counts may appear, natural numbers, of
+  a figure's corners and of what they make, since a count is part of what "a figure of n
+  sides" means: the corners of a closed line of sides, or within a triangle, and a
+  corner's place in their list, turned round some number of steps; the sides a ray or a
+  finite straight line crosses (`crossingCount`); the closed lines round a point
+  (`Outline.depth`); and the tiles and triangles of a division, with the sides they share.
+  Counts are added and compared, and two are compared by their remainders on division by
+  two, as `crossing_parity_independent` compares two crossing counts. They are part of how
+  a figure is defined, not of Euclid's argument
   ([decision of 22 October 2026](decisions/2026-10-22-figures-promoted.md)).
 - Each book's phrases, and how its statements say them, are in its brief.
 
@@ -672,11 +683,11 @@ rest, and these stay open, each example built in Lean 4.35 as written:
   `#check1set_option«debug».byAsSorry true in theorem …` is `#check`, `1` and
   `set_option`, and builds on `sorryAx`, and `#whereaxiom planted : False` is `#where`
   and an axiom, while the scan reads the names `check1set_option` and `whereaxiom`. Those
-  the list above names, `#eval`, `#exit`, `#guard_panic`, `#time`, `#with_exporting` and
-  `#guard`, are refused closed up or not. A fixed list of the rest would not do: which
-  `#` tokens Lean has depends on what the file imports (`#widget` comes with
-  `import Lean`, not with `Init` alone), and a file may declare a longer one, so the list
-  would misread a file that lacks one and could hide the code after it
+  the list above refuses in every form, `#eval`, `#exit`, `#guard_panic`, `#time`,
+  `#with_exporting` and `#guard`, are refused closed up or not. A fixed list of the rest
+  would not do: which `#` tokens Lean has depends on what the file imports (`#widget`
+  comes with `import Lean`, not with `Init` alone), and a file may declare a longer one,
+  so the list would misread a file that lacks one and could hide the code after it
   (`s!"{5#widget'}'"`, where Lean reads `5#widget'` as a bit-vector literal and the `}`
   closes the hole).
 - Lean's other own tokens ([#317](https://github.com/jackChallis/stoicheia/issues/317)).
