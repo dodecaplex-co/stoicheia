@@ -358,6 +358,7 @@ which class", after the block, and those of `queue-integrity` after that:
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
+python3 -I tests/model/results_check.py   # the `model` job's second step: results/ are current
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
 python3 scripts/check_model_kernel.py --self-test && python3 scripts/check_model_kernel.py
                                        # CI's `formal-model` job: the formal model, with Mathlib,
@@ -483,8 +484,10 @@ the three jobs reads the repository with no other permission, and its checkout k
 token.
 
 `scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on the
-head commit of every pull request of R3 to R5 (section 10), so a change to them is made
-there too, and in the CI workflow; for R0 to R2 it leaves them to CI, which runs those of
+head commit of every pull request of R3 to R5 (section 10), but one: it does not yet run
+`python3 -I tests/model/results_check.py`, which only CI's `model` job runs until the
+command joins safe_push's `CHECKS`. A change to the commands is made there too, and in the
+CI workflow; for R0 to R2 it leaves them to CI, which runs those of
 `check` and `model` on the pull request before the merge. It leaves the `formal-model`
 job to CI on purpose, since it fetches
 Mathlib's prebuilt files ([model/README.md](../model/README.md#the-ci-job)), the
@@ -539,6 +542,22 @@ every train and group as unreadable.
   change to an axiom fails the `model` job until the model follows it, in the same pull
   request: [MODEL.md, "Changing the axioms"](../tests/model/MODEL.md#changing-the-axioms),
   says how.
+- **The model's results name their harness.** Each file in `tests/model/results/` names
+  the commit it was written at, with the harness files as committed, and the hash of the
+  harness that wrote it (`HARNESS` in `tests/model/run.py`), and MODEL.md's counts name
+  the same commit. `tests/model/results_check.py`, which is not a file of the harness,
+  fails when the harness now hashes otherwise, when a run read harness files other than
+  its commit's, when the runs' output is what `run.py` refuses to write, or when
+  `summary.txt` and the counts are not what `--write` makes of the runs' output. So a pull
+  request that changes a harness file commits the change, runs
+  `python3 -I tests/model/run.py --full --write` on it (about eight minutes) and commits
+  what it writes, in the same pull request; its decisions entry names each file the run
+  changes. `--write` runs from a copy of the harness taken out of git at the commit, so
+  what it writes is that commit's harness's. Apart from its self-test, which runs `run.py`
+  on a made-up harness of its own, the check runs no harness, so it cannot tell a header
+  written by hand from a run's, and the output records no exit status, which only
+  `--write` sees; the security review, which every change under `tests/` gets, reads the
+  results' diff.
 - **The citation sweep reads the build.** `python3 scripts/sweep_citations.py` elaborates
   a copy of each file of `Elements/` with Lean's unused-variables linter and its tactic
   analysis on, and reads every entry's proof term, so it needs `lake build` and
@@ -750,8 +769,32 @@ looked into.
     its own. The `release-gate` job runs on the
     pull request's events, not the issues', so once the last blocker closes it is run
     again (or `release` removed and given again) before `--merge`, which counts its failed
-    run on a release pull request. Then the notes are drafted from the generated
-    summaries, the owner approves them, and the tag (`book-I`, `book-II`, …) is made.
+    run on a release pull request. Before that `--merge`, and after every other change the
+    release's pull request carries, two generated accounts are made again at its head, and
+    what they write is committed to it. The model's full run,
+    `python3 -I tests/model/run.py --full --write`, writes `tests/model/results/` and
+    MODEL.md's counts. After `lake build`, the overlap screen,
+    `python3 -I Audit/screen.py OUTDIR --write`, runs on the candidate's statements and
+    rules and writes `Audit/screen-run.toml`. Before it replaces that record, it checks the
+    build again, after every try and retry, and reads the commit and the inputs again; a
+    failed check leaves the record as it was. Checks at the two ends of a run cannot show
+    that nothing changed and changed back in between. Then
+    [overlaps.md](reports/overlaps.md) and the screen's docstring record the revision
+    screened, the number of statements in `facts.json` and what closed. Then
+    `python3 -I tests/model/results_check.py` and
+    `python3 -I Audit/screen.py --check-current` both pass: CI runs the first on every pull
+    request, and the coordinator runs the second on the head that `--merge` merges and
+    again just before the tag, and the pull request quotes the screen's closing lines. The
+    screen's check needs no Lean, but any change to the library makes it fail, and only a
+    run, with Lean and about an hour and a half of processor time, may make it pass again;
+    so it is a release step, not one of CI's. The check reads the record, not the run, so
+    it cannot tell a record written by hand from a run's, and the security review reads the
+    run's closing lines, which the pull request quotes. `Audit/` and `tests/` are
+    protected, so the release's decisions entry names each file the runs and their records
+    change: the ten files of `tests/model/results/`, `tests/model/MODEL.md`,
+    `Audit/screen-run.toml` and `Audit/screen.py`. Then the notes are drafted from the
+    generated summaries, the owner approves them, and the tag (`book-I`, `book-II`, …) is
+    made.
     `python3 scripts/check_release_gate.py` runs once more just before the tag, since the
     hold rests on the labels. PROGRAM.md is brought up to date: the status board, the
     lessons, the costs.
@@ -1301,9 +1344,10 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       changes an expected count, a new word in the lock, an axiom added):
       `tests/certificate_expectations.json`, `Certificate/axioms.lock`,
       `tests/model/lock.sha256`, the model's law names in `tests/model/laws.toml`, and its
-      account of the laws, `tests/model/MODEL.md` and `tests/model/results/`, which no
-      check reads but for MODEL.md's count markers. A count between count markers
-      ([STYLE](STYLE.md), section 4) in the Markdown of a check input under
+      account of the laws, `tests/model/MODEL.md` and `tests/model/results/`, which
+      `tests/model/results_check.py` holds to the present harness (section 8), as
+      `check_fidelity.py` holds MODEL.md's count markers to what they count. A count
+      between count markers ([STYLE](STYLE.md), section 4) in the Markdown of a check input under
       `Certificate/` or `tests/`, or in `review/SCHEMA.md`, such as
       `Certificate/FIELDS.md`'s count of the lock's words, is such a value too:
       `render.py` generates its value and `check_fidelity.py` refuses a stale one, so a
