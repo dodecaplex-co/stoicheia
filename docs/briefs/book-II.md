@@ -29,7 +29,7 @@ In `Elements/Foundations/DefinitionsII.lean`; none is an assumption.
 | "greater than … by", "less than … by" | an equation: the less with the excess is the greater |
 | "the straight line A" (II.1) | two points, `A₁ A₂` |
 | "the square described on AB, BC as on one straight line" (II.8) | `sq A D` for every D with B between A and D and BD equal to CB |
-| "the rectilineal figure A" (II.14) | in the main theorem, two triangles, `△ A₁ A₂ A₄ + △ A₄ A₂ A₃`, the figure I.45's main theorem takes; in the companions, restricted to a figure supplied with a checked division into triangles, as I.45's companions take it (`Apart`, `Rectilineal`), and its area relative to that division, the triangle sum (`Apart.area`, `Rectilineal.area`); outline coverage and independence of division remain unproved (#116) |
+| "the rectilineal figure A" (II.14) | in the main theorem, two triangles, `△ A₁ A₂ A₄ + △ A₄ A₂ A₃`, the figure I.45's main theorem takes; in `Prop14.outline` and `Prop14.outline_side`, any figure given by its outline (`Outline`), and its area (`Outline.area`), the sum that every division of it into triangles that lie apart gives, as in I.45; in the older companions, a figure given with a checked division into triangles (`Apart`, `Rectilineal`), and the sum of those triangles (`Apart.area`, `Rectilineal.area`), which is its area too |
 | "cut into any number of segments whatever" (II.1) | the points of section and the end, in order along the straight line (`InOrder`), and the sum of the rectangles on the `segments` (`Magnitude.sum`) |
 | "let BD be drawn perpendicular" (II.12, II.13) | I.12's form: D on the straight line, and every angle there right |
 
@@ -47,7 +47,9 @@ In `Elements/Foundations/DefinitionsII.lean`; none is an assumption.
 - **Squares.** The square I.46 describes is a parallelogram, and the square on its side
   (`Square.described`); Book I's statements about drawn squares stay as they are, and
   `BookI.Prop47.sq` says I.47 of `sq`.
-- **No numbers.** Every statement is a sum of areas, as Euclid's are.
+- **Areas remain magnitudes.** No number measures a length, an angle or an area; the
+  definitions of a figure given by its outline use the finite counts that FORMALIZATION,
+  section 2, describes.
 
 How the areas correspond to the pieces drawn (which expression is which piece, and why the
 pieces make up the whole) is told once in Book II's introduction and linked where it
@@ -86,11 +88,13 @@ System E's rules, as I.1 does); `Parallel.between` and `quadArea_add_of_parallel
   falls ("CA produced", "cut off within") from the obtuse or acute angles; II.13 asks only
   the angles at B and C to be acute, the angle at A playing no part.
 - **II.14** squares the figure of I.45's main theorem, two triangles, and returns the side
-  of the square, a straight line EH with `sq E H` equal to the figure; its companions square
-  figures supplied with a checked division into triangles, as I.45's do, and
-  `Prop14.square` draws the square. The scope is `restricted`: existence of a division from
-  the figure's outline, coverage of its region, and independence of the sum from the
-  division chosen remain unproved ([#116](https://github.com/jackChallis/stoicheia/issues/116)).
+  of the square, a straight line EH with `sq E H` equal to the figure. `Prop14.outline`
+  draws the square for any figure given by its outline, and `Prop14.outline_side` finds its
+  side, by I.45's division of the outline and the content theorem
+  ([Book I's brief](book-I.md#representations)); the scope is `full`
+  ([#116](https://github.com/jackChallis/stoicheia/issues/116)). The older companions square
+  figures given with a checked division into triangles, as I.45's do, and `Prop14.square`
+  draws the square for them.
 
 ## Policies
 
@@ -106,13 +110,13 @@ System E's rules, as I.1 does); `Parallel.between` and `quadArea_add_of_parallel
 
 The review records in `review/II/` are the authority. These are the exceptions the outside
 review named, and stage 2 of [brief 0006](0006-statements.md) supplies companions for both.
-II.1 has scope `full`; II.14 is `restricted` to a supplied checked division, with outline
-coverage and independence of division still unproved (#116):
+II.1 has scope `full`; so does II.14, through `Prop14.outline`, from 22 October 2026, after
+it was `restricted` to a supplied checked division from 20 October (#116):
 
 | Proposition | Scope | Main theorem | Companions | Tags |
 |---|---|---|---|---|
 | II.1 | full | the straight line is cut into exactly three pieces | `Prop1.two` and `Prop1.general`, for any number of pieces in order; the uncut straight line may be nothing | `hypothesis-dropped` |
-| II.14 | restricted | the figure is two triangles, unchecked; the construction returns the side of the square | `Prop14.apart`, for a supplied checked division into triangles that lie apart, and `Prop14.square`, returning a drawn square; `Prop14.figure` and `Prop14.fan`, the main companion, beside them; `Prop14.rectangle` and `Prop14.sum`, the construction | `figure-with-dissection`, `side-not-square` |
+| II.14 | full | the figure is two triangles, unchecked; the construction returns the side of the square | `Prop14.outline`, the main companion, drawing the square for any figure given by its outline, and `Prop14.outline_side`, its side; `Prop14.apart`, `Prop14.square`, `Prop14.figure` and `Prop14.fan`, for a figure given with a checked division into triangles; `Prop14.rectangle` and `Prop14.sum`, the construction | `side-not-square`, for the main theorem and the forms that return a side; `figure-with-dissection`, for the older supplied-division companions |
 
 Each main theorem keeps Euclid's worked configuration, with companions extending it under
 the hypotheses and limits above. `exists_rect` proves that a rectangle contained by any

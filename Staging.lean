@@ -20,8 +20,11 @@ all proved, have moved to their homes in `Elements/`, and their folders with the
 stage 4b's statements of brief 0007, III.7, III.8 and III.17 with the point of contact, and
 the mixed-angle prototype for III.16 and III.31 (brief 0011). Brief 0008's centre
 restatements have also moved home, and so has III.30's halves (brief 0006), proved on
-21 October 2026 as the companion "III.30 halves". The prototype of a restricted
-superposition rule (brief 0009) has its production home in
+21 October 2026 as the companion "III.30 halves". So have brief 0013's rectilineal figures
+given by their outlines, all proved, and their folder `Figures/` with them: the words to
+`Elements/Foundations/Figures.lean`, the facts to Book Zero (`Elements/Figure/`),
+`outline_bounded` to Book I after I.29, and the companions to I.45 and II.14. The prototype
+of a restricted superposition rule (brief 0009) has its production home in
 `Elements/Foundations/Superposition/`, where the rule now in the foundations is stated.
 The remaining work is in `Routes/`: Euclid's own routes in Book III, proved on the
 statements now in `Elements/`: III.8, III.20's special case, III.21, III.26 and III.27 by
