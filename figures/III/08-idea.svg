@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.8 at a glance</title>
-  <desc>Stand outside the circle and look in: the straight line through the centre is longest (red), its part outside shortest (yellow), and the others pair off equal, one each side, to the far circumference (blue) or the near (black).</desc>
+  <desc>Stand outside the circle and look in: the straight line through the centre is longest (red), its part outside shortest (yellow), and the others pair off equal, one each side, to the far circumference (the blue pair) or the near (the black pair).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="236.0" cy="150.0" r="106.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <line x1="62.0" y1="150.0" x2="317.0" y2="218.3" data-unlettered="an equal pair falling on the concave circumference, which Heath's figure does not draw" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>

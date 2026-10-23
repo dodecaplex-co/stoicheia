@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.34 at a glance</title>
-  <desc>Draw EF touching the circle at B (blue) and lay the given angle at D (red) against it there, as FBC: BC cuts off a segment BAC (yellow) whose angles all equal the angle at D.</desc>
+  <desc>Draw EF (blue) touching the circle at B and lay the given angle at D (red) against it there, as FBC: BC cuts off a segment BAC (yellow) whose angles all equal the angle at D.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="252.0" cy="140.0" r="100.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M32.0,96.0 L62.0,96.0 A30,30 0 0,0 47.9,70.6 Z" fill="#d0312d"/>
