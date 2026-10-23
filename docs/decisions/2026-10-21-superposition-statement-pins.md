@@ -1,6 +1,6 @@
 - **A check that the restriction's theorems are pinned by their statements (#150,
   question 2).** A check change that lands after the content it reads, since it names the
-  theorems that change introduces. New: [`scripts/check_superposition_pins.py`](../../scripts/check_superposition_pins.py)
+  theorems that change introduces. New: `scripts/check_superposition_pins.py`
   checks that every theorem and definition named in backticks in brief 0009's section "The
   restriction theorem" has a statement pin in `Audit/Superposition.lean`, a bare
   `#guard_msgs in` over `#check @` for a theorem or `#print` for a definition, under its
@@ -46,7 +46,7 @@
   could be set only in the lakefile, a protected file, and that protection holds it off, not
   this check. `Audit.lean` must import the audit file, since the `Audit` library builds only
   what its root imports. Its cases are in the new
-  [`tests/test_check_superposition_pins.py`](../../tests/test_check_superposition_pins.py).
+  `tests/test_check_superposition_pins.py`.
   Both run in CI's check job ([`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)),
   in [`scripts/safe_push.py`](../../scripts/safe_push.py)'s list of checks and in WORKFLOW,
   section 8, in the same order.
