@@ -357,7 +357,9 @@ GUARDED_DIRS = ("Elements", "heath", "review", "figures", "mishnah")
 # files from `git status`, and so from the check that the generated pages are current.
 # checks/ is to be the registry of CI's `check` job, one file per check (#229): a check
 # added, removed, or with its command, job or order changed, is named in a decisions entry.
-# PROTECTED_JUDGED, below, joins them.
+# PROTECTED_JUDGED, below, joins them. scripts/auto_revert.py keeps its own copy of the
+# two, in this order, since it must not import the revision it reverts; a change here is
+# made there too (tests/test_auto_revert.py compares them).
 PROTECTED = ("scripts/", ".github/", "Certificate/", "tests/", "review/SCHEMA.md",
              "review/terms.toml", ".gitattributes", ".gitignore", "lakefile.toml",
              "lakefile.lean", "lean-toolchain", "lake-manifest.json", "checks/")
