@@ -7,7 +7,7 @@ fingerprint = "sha256:a9259e6b54eb5360"
 
 [route]
 kind = "modified"
-note = "Euclid's argument, but the centre M, which Euclid takes by III.1 (Heath's reference), comes from the rule `Tacit.exists_centre`, and the last step, that no third straight line equals DK, compares the angles at the centre M by I.24 only where neither the convex order nor the concave reaches: N and the point it is compared with on different circumferences, or one of them a point of contact. Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`); the companion takes M from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, with no System E counterpart."
+note = "Euclid's argument, but the centre M, which Euclid takes by III.1 (Heath's reference), comes from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, with no System E counterpart, as in the companion's step `Prop8.partner`; and the last step, that no third straight line equals DK, compares the angles at the centre M by I.24 only where neither the convex order nor the concave reaches: N and the point it is compared with on different circumferences, or one of them a point of contact. Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`)."
 
 [[passage]]
 at = "Let ABC be a circle"

@@ -143,6 +143,8 @@ theorem Prop8 {A D G : Point} {ABC : Circle}
   -- less than the more remote, namely DK than DL, and DL than DH.
   -- For let the centre of the circle ABC be taken [III. 1], and let it be M; let ME, MF, MC,
   -- MK, ML, MH be joined.
+  /- III.1 is not needed: the proof uses the centre alone, which the rule `exists_centre`
+     gives, so the centre is taken from it, and Heath's reference stays on the page. -/
   obtain ⟨M, hM⟩ := exists_centre ABC
   have hAG : A ≠ G := ne_of_between (between_symm hDGA)
   have hGMA : Between G M A := hGA M hM
