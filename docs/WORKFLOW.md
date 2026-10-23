@@ -606,6 +606,11 @@ run of `acceptance` to pass. The ruleset and the remaining merge requirements ar
   `Elements/BookI/Prop07.lean` among them, whose every header and import it reads.
   `negative_tests.py` runs it after the decision entry regressions, before planting, with
   `--counts-only` too.
+- **The lock is written again as it is committed.** `check_fidelity.py --write-lock`, run
+  on the committed `facts.json`, must give back `Certificate/axioms.lock` byte for byte, its
+  header included, for `model/lock.sha256` and `tests/model/lock.sha256` pin its bytes.
+  `tests/test_axiom_lock.py` tests that without Lean, and `negative_tests.py` runs it after
+  the risk class regressions, before planting, with `--counts-only` too.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that
   branch; if integration changes the mathematics, the dependencies or a public description,

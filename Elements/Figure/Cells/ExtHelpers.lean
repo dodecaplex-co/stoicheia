@@ -304,7 +304,7 @@ theorem tails_unique (ps : List Point) : ∀ (qs us : List Point) (A B : Point),
     (∀ X, X ∈ ps ↔ X ∈ qs) → ps = qs := by
   induction ps with
   | nil =>
-    intro qs us A B hp hq hm
+    intro qs us A B _ hq hm
     cases qs with
     | nil => rfl
     | cons C qs => exact False.elim (List.not_mem_nil ((hm C).mpr (by simp)))
