@@ -8398,7 +8398,35 @@ class OwnGitUnderHook(Edge):
         self.assertEqual(sorted(set(env) & safe_push.REPOSITORY_VARIABLES),
                          ["GIT_INDEX_FILE", "GIT_NO_REPLACE_OBJECTS"])
 
+    def test_only_base_tree_keeps_a_repository_variable(self):
+        # `keep` lets a variable that ties git to one repository through: only base_tree
+        # may name one, its own temporary GIT_INDEX_FILE, and run() and
+        # without_replacements only pass `keep` along (#357, #392).
+        tree = ast.parse((SOURCE / "scripts" / "safe_push.py").read_text())
+        kept = []
+
+        def visit(node, where):
+            # Each call is counted once, under the innermost function that holds it.
+            for child in ast.iter_child_nodes(node):
+                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    visit(child, f"{where}.{child.name}" if where else child.name)
+                    continue
+                if (isinstance(child, ast.Call) and isinstance(child.func, ast.Name)
+                        and child.func.id in ("run", "own_env", "without_replacements")):
+                    values = [k.value for k in child.keywords if k.arg in ("keep", None)]
+                    if child.func.id != "run" and len(child.args) > 1:
+                        values.append(child.args[1])
+                    kept.extend((where, ast.unparse(value)) for value in values)
+                visit(child, where)
+        visit(tree, "")
+        self.assertEqual(sorted(kept), [("base_tree.index", "('GIT_INDEX_FILE',)"),
+                                        ("run", "keep"), ("run", "keep"),
+                                        ("without_replacements", "keep")])
+
     def test_base_tree_uses_only_its_temporary_index(self):
+        # base_tree's temporary index, and no caller's or repository's, in each index
+        # command; beside the source test above, which holds that no other place names a
+        # variable in `keep`.
         path = "docs/reading.md"
         sha = self.commit("A changed base-tree input", {
             path: self.text(path) + "\nA line for the test.\n"})
