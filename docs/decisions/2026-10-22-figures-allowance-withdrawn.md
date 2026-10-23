@@ -28,6 +28,7 @@
 
   This entry approves the change to `review/terms.toml`, where the meaning of the tag
   `figure-with-dissection` now names the older companions of I.45 and II.14, which take a
-  figure given with a checked division into triangles, and no longer says that a figure's
-  division, or the independence of its area, is unproved: Book Zero, promoted before this change, proves both, the independence after
-  David Hilbert's theory of content.
+  figure given with a checked division into triangles. The meaning no longer says that a
+  figure's division, or the independence of its area, is unproved: Book Zero, promoted
+  before this change, proves both, the independence after David Hilbert's theory of
+  content.
