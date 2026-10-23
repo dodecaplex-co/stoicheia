@@ -22,7 +22,8 @@ every six hours.
    beneath it is refused by name, while Circle 2 proved from Circle 3 still in the lock
    passes; and placement among III.26's shared steps is caught, while III.24, given it
    too, is not blamed.
-4. A changed Lean file makes its review record stale (I.1).
+4. A changed Lean file makes its review record stale (I.1). So does an edited note in
+   I.1's record; a comment added to the record and a stamp moved do not.
 5. III.16's review record without the passage that declares its angle clauses, of
    whatever kind, leaves a run of `--` lines with no Lean beneath it undeclared.
 6. A remark planted in I.5 between two sentences that share one step of Lean leaves the
@@ -179,7 +180,9 @@ every six hours.
     repository is set up is reported, and the plant stops there. The token is built as
     the plant runs, so this file passes the scan itself. Only item 17's plants run under
     --counts-only; this one runs with the rest, before the plants that build.
-29. Without a build, Book Zero's imports (#200): a new file of Book Zero imports a
+29. A repeated dated heading in the decisions page makes `check_queue.py --tree .`
+    refuse with exit 1.
+30. Without a build, Book Zero's imports (#200): a new file of Book Zero imports a
     proposition in each spelling Lean 4.35 accepts that the rule once passed: two
     spaces, a line break, a remark, a line comment or a nested remark between the words,
     nothing before «…» or a remark, `«Elements»`, `«BookI»` and a second import on one
@@ -224,6 +227,7 @@ Standard library only; Python 3.11 or later, for the review records.
 import argparse
 import base64
 import hashlib
+from collections import Counter
 import json
 import os
 import re
@@ -239,6 +243,7 @@ import check_fidelity
 import check_kernel
 import generated_counts
 import heath
+import review_stamp
 
 ROOT = heath.ROOT
 PLANTED = ROOT / "Elements" / "Foundations" / "Tacit" / "Planted.lean"
@@ -507,6 +512,23 @@ def broken_link() -> None:
         expect_failure("a relative link to a missing page",
                        run(sys.executable, "scripts/check_links.py"),
                        f"README.md:{line}: {target}: no such file: {target}")
+    finally:
+        path.write_bytes(saved)
+
+
+def queue_repeated_heading() -> None:
+    """The tree scan must refuse a date heading repeated in the decisions page."""
+    rel = "docs/briefs/0002-decisions.md"
+    path = ROOT / rel
+    saved = path.read_bytes()
+    heading = next(line for line in saved.splitlines() if line.startswith(b"## "))
+    try:
+        path.write_bytes(saved + b"\n" + heading + b"\n")
+        result = run(sys.executable, "scripts/check_queue.py", "--tree", ".")
+        expect_failure("a repeated dated heading in the decisions page", result,
+                       rel, "repeated dated heading")
+        if result.returncode != 1:
+            failures.append(f"queue repeated heading: expected exit 1, got {result.returncode}")
     finally:
         path.write_bytes(saved)
 
@@ -1883,6 +1905,79 @@ def stale_lean() -> None:
         path.write_text(saved)
 
 
+def edited_note() -> None:
+    """An edited note under a current `text` stamp. I.1's record is given its `text` stamp
+    first if it has none yet (docs/WORKFLOW.md, section 6), so the test holds before and
+    after the records are migrated; then the first letter of its first note changes case,
+    and the check must say the record changed. With a comment added and its stamp moved,
+    and its words as they were, the check must say what it says of the record unchanged:
+    the same outcome, the same lines naming I.1 or its record, and no traceback."""
+    path = heath.review_path("I", 1)
+    saved = path.read_text()
+    stamped = review_stamp.set_stamp(saved, "review", "text", heath.text_hash(saved))
+    lines = stamped.split("\n")
+    at = next((i for i, line in enumerate(lines) if line.startswith('note = "')), None)
+    # One letter changed, not a word added: the note keeps its length, so it stays within
+    # heath.NOTE_LIMIT, and the check finds the edit, not the length.
+    start = len('note = "')
+    planted = None if at is None else \
+        lines[at][:start] + lines[at][start:start + 1].swapcase() + lines[at][start + 1:]
+    if planted is None or planted == lines[at]:
+        failures.append("an edited note: review/I/01.toml has no `note` beginning with a "
+                        "letter; update this test")
+        return
+    edited = lines[:at] + [planted] + lines[at + 1:]
+    try:
+        path.write_text("\n".join(edited))
+        expect_failure("an edited note in a review record", fidelity(),
+                       "I.1: its record has changed since it was reviewed")
+        # The words as they were, under a current `text` stamp: what the check says then.
+        path.write_text(stamped)
+        baseline = fidelity()
+        before = naming_i1(baseline.stdout + baseline.stderr)
+        # The same words with a comment above them and the `text` stamp first in
+        # [review]: comments and layout are not the record's text.
+        moved = [line for line in lines if not line.startswith("text = ")]
+        review = moved.index("[review]")
+        moved.insert(review + 1, f'text = "{heath.text_hash(saved)}"')
+        moved.insert(0, "# A comment planted by scripts/negative_tests.py.")
+        path.write_text("\n".join(moved))
+        result = fidelity()
+        out = result.stdout + result.stderr
+        # On a contributor's branch the baseline may name I.1 too, say for a changed
+        # Prop01.lean: the lines naming I.1 must then be the same lines, as many times and
+        # in the same order.
+        after = naming_i1(out)
+        added = list((Counter(after) - Counter(before)).elements())
+        missing = list((Counter(before) - Counter(after)).elements())
+        if result.returncode != baseline.returncode or after != before or "Traceback" in out:
+            detail = []
+            if result.returncode != baseline.returncode:
+                detail.append(f"exit {result.returncode}, not {baseline.returncode} as with "
+                              "the record unchanged")
+            if added:
+                detail.append(f"also says {added!r}")
+            if missing:
+                detail.append(f"no longer says {missing!r}")
+            if after != before and not added and not missing:
+                detail.append("says the same lines in another order")
+            if "Traceback" in out:
+                detail.append("a traceback")
+            failures.append("a comment and a moved stamp in I.1's record: not as the record "
+                            f"unchanged ({'; '.join(detail)})")
+            print(out[-3000:])
+        else:
+            print("✓ a comment and a moved stamp in I.1's record: not called a change")
+    finally:
+        path.write_text(saved)
+
+
+def naming_i1(out: str) -> list[str]:
+    """The lines of a check's output that name I.1 or its review record."""
+    return [line for line in out.splitlines()
+            if re.search(r"\bI\.1\b|review/I/01\.toml", line)]
+
+
 def missing_files() -> None:
     """I.1's figure, idea figure and mishnah, each taken away in turn: Book I is complete,
     so `check_fidelity.py` names the one missing, and not the other two."""
@@ -2251,6 +2346,10 @@ def main(argv=()) -> int:
                           run(sys.executable, "-I", "tests/test_risk.py")):
         return 1
     print("✓ risk class regressions passed (without Lean)")
+    if not expect_success("lock regressions",
+                          run(sys.executable, "-I", "tests/test_axiom_lock.py")):
+        return 1
+    print("✓ lock regressions passed (without Lean)")
     if args.counts_only:
         count_markers()
         if failures:
@@ -2275,6 +2374,7 @@ def main(argv=()) -> int:
         circle_renamed()
         placement_called()
         stale_lean()
+        edited_note()
         undeclared_run()
         remark_ends_run()
         native_decide()
@@ -2291,6 +2391,7 @@ def main(argv=()) -> int:
         carriage_return_comment()
         placement_named()
         figure_names_and_arcs()
+        queue_repeated_heading()
         missing_files()
         planted_assumptions()
         for test in (circle_proved, style_error, broken_link, stale_page,
