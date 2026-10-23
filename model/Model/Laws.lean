@@ -13,7 +13,7 @@ differs from what the generator writes. To write it again, run `lake lean Check/
 `model/`. The [README](../README.md) says how the laws are translated and checked.
 
 It was written from the lock, `Certificate/axioms.lock`, whose sha256 is
-`e3c5d7123a3b973dd79436c07409c30858acc2ac8c6507cb6805205fcb373296`,
+`1431ed4a2de9c92c99fba0d32aaba0d4905302d9c31b57e9fb074b180584f792`,
 the hash that `model/lock.sha256` holds. The lock has 80 laws, and they reach 153 words of its
 vocabulary. Each law here is the library's axiom with the words of a signature `S` put for the
 library's words:

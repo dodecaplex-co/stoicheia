@@ -141,8 +141,8 @@ where to look:
    [FORMALIZATION.md](FORMALIZATION.md).
 4. **The figure at a glance,** with its caption.
 5. **Euclid's proof:** his figure with Heath's letters, a figure note under it where the
-   figure shows one case of several or our drawing departs from Heath's (section 7), and
-   Heath's proof in full.
+   figure shows one case of several, draws every case, or our drawing departs from Heath's
+   (section 7), and Heath's proof in full.
 6. **In Lean:** a short table of the formal facts (proof, statement, extra hypotheses,
    argument, representation, overlap with an axiom, and what was reviewed, at which
    commit); a clause map where the statement leaves a clause out, which says the omission
@@ -250,10 +250,11 @@ I.31's, and `Prop30.meet`, credited to Proclus (Heath, vol. 1, pp. 207 and 316).
 tells the steps of `Elements/BookII/Rectangles.lean`, with `Parallel.between`,
 `quadArea_add_of_parallelograms` and the unlettered point of `exists_off_line`, and how
 Book II's areas correspond to the pieces drawn: which expression is which piece, and why
-the pieces make up the whole. Book III's tells the rule that every circle has a centre,
-the centre hypotheses its statements still carry, and III.1; the constructions the text
-makes with no reference (III.1, I.10, I.11, I.12, I.23), its
-definitions and the circumference measured by twice its angle, the steps of `Squares.lean`
+the pieces make up the whole. Book III's tells how proofs take a circle's centre: by
+III.1 where Heath cites it, by `exists_centre` where none is supplied, or from geometric
+data such as equal circles. It tells the constructions whose references the text leaves
+unstated (I.10, I.11, I.12, I.23), its definitions and the circumference measured by
+twice its angle, the steps of `Squares.lean`
 and `Circumferences.lean`, the porisms of III.1 and III.16, and where its statements part
 from Euclid's. A shared step may be told on its home page (II.1's rectangle contained,
 II.4's "For the same reason"); elsewhere it gets a clause at most ("as in II.4"). A
@@ -296,29 +297,50 @@ not named **[checked]**; what the list says besides is judged by a reader:
 **Euclid's words for Euclid's things:** straight line, produced, joined, greater and less,
 the angle ABC, the square on AB, the rectangle contained by AB, BC, circumference (an arc),
 touches (a tangent), segment, the angle in the segment, the angle at the centre. Never
-"chord" or "segment" for a straight line, "arc" outside the modern way, or "the tangent"
-where Heath does not write it. "Diameter" is Euclid's word for a diagonal: gloss it at its
+"chord" or "segment" for a straight line (save Heath's segments of a straight line cut at
+a point, in Book II and III.35), "arc" outside the modern way, or "the tangent" where
+Heath does not write it. "Diameter" is Euclid's word for a diagonal: gloss it at its
 first use in each book (in Book III it is the circle's). Gloss "applied" (I.44) and
 "gnomon" (II.5). Modern words stay in the modern way, and a Lean word gets a plain gloss
 the first time it appears.
 
-**Tightening the language.** Section 1 sets the voice and the rule for vague hedges.
-These examples show what the language passes cut or replaced:
+**Tightening the language.** These are the habits that the language passes
+([#111](https://github.com/jackChallis/stoicheia/pull/111) and
+[#115](https://github.com/jackChallis/stoicheia/pull/115)) and read-through 02 removed from
+the commentary, the reading lines, the records and the Lean notes, each with one example;
+section 1 sets the voice and the rule for vague hedges.
 
-- Repeated openings: the reading lines' "For algebra drawn as rectangles" gives way to
-  what Nelsen's book shows (II.1). Section 6 gives the reading lines their shape.
-- Announcing sentences: "The proof is short" gives way to "Euclid joins BC" (I.33);
-  "The proposition is old" goes, leaving Heath's evidence from Aristotle (I.27).
-- Sweeping closings: "Book II leans on it again and again" becomes "II.2 to II.8, II.11
-  and II.14 use it again", with a link to the introduction (II.1).
-- Recaps in threes: I.41 drops the closing "greater than, equal to or less than" summary
-  and keeps Proclus' construction. A list that supplies necessary cases stays.
-- Padded phrases: "does its multiplying" becomes "multiplies" (II.1); "has a name for
-  this cut" becomes "names the cut" (II.11).
-- Unsupported certainty: "Heron, whose proof for circles touching without became III.12"
-  gives way to "Heath thinks a later editor made III.12 out of Heron's proof for circles
-  touching without" (III.12's reading). This qualification belongs to the claim, as
-  section 1 requires.
+- Labels for leads: I.21's lead "Three facts in one word." goes, and the paragraph opens on
+  its claim, "Our statement reads 'within the triangle' as three facts".
+- Announcing sentences, caught in the passes' own reviews: "The proof is short" gave way
+  to "Euclid joins BC" (I.33).
+- One opening for every reading line: each opened "For …", and II.1's "For algebra drawn
+  as rectangles" gives way to what Nelsen's book shows. Section 6 gives the reading lines
+  their shape.
+- Inflated praise: Fowler's chapter on II.10 loses its "beautifully argued".
+- Padded phrases: "Book VI has a name for this cut" becomes "Book VI names the cut" (II.11).
+- Recaps in threes: I.41's commentary drops its retelling of Heath's summary of Proclus'
+  three results, "greater than, equal to or less than double the triangle", and keeps
+  Proclus' construction.
+- Sweeping closings: "Book II leans on it again and again" becomes "II.2 to II.8, II.11 and
+  II.14 use it again" (II.1).
+- Stock closings: II.2 ended on a modern way that only restated it, "the whole times each
+  part, added together, is the whole times itself"; it now ends on Heath's count of the
+  words in Euclid's proof.
+- Retelling the Lean notes: I.17's commentary drops "we prove his case for any triangle and
+  call on it three times", which its Lean note tells.
+- Refrains: I.21's record said "a rule we assume, not a proof" at four steps; now each of
+  its two rules is "a rule we assume" once, and pointed back to after.
+- Change-logs on the page: a docstring on I.13's page, "This was an assumption until 19
+  October 2026 and is now proved from I.13 and Common Notion 3", now says "We prove it from
+  I.13 and Common Notion 3".
+- Blaming Lean for our choices: I.7's "Lean has no reader to leave cases to" becomes "A
+  proof that leaves no case to its reader must find D in four places".
+- Certainty beyond the evidence: I.18's "We prove both", of two steps, one of them a rule
+  we assume, now says "we prove it" of the first and "which we assume" of the rule.
+
+Two things stay: a list that supplies necessary cases, and a qualification that belongs to
+the claim, which section 1 requires.
 
 **Tacit rules,** never "tacit assumptions" or "tacit laws", outside Heath's words
 **[checked]**.
@@ -345,6 +367,19 @@ evidence ([FORMALIZATION.md](FORMALIZATION.md), section 9).
 **Our representation, not Lean's limits.** What is our choice is said as ours: "our
 representation of a segment includes its circle", "our foundations allow superposition
 only in I.4 and I.8". Not "Lean cannot" **[reported]**.
+
+**A figure given with its triangles.** I.45 and II.14 are full through their outline
+companions ([#116](https://github.com/jackChallis/stoicheia/issues/116)), which take a figure
+given by its outline alone; their older companions take a figure "given with a checked
+division into triangles", and every text a reader meets that describes those (a record, a
+commentary, a file's notes, an introduction, a gap catalogue) uses the same words: given
+with, not "supplied", and not the tag's "dissection". Its triangles "do not overlap, no
+point inside two of them", in full at their first mention in each of these texts, and "lie
+apart" after. "Equal to the figure" there means equal to those triangles together, which is
+the figure's area, the same for every division. Where a main theorem takes its two
+triangles unchecked, the sentence that describes it says so. In these sentences the figure
+is divided, not cut; "outline" never stands unexplained for its boundary; and what Euclid
+takes for granted there is not called "tacit", a word kept for the tacit rules.
 
 **Numbers and names.** Our prose writes I.5, II.4, and I.1–I.24 with an en dash; Postulate
 3 and Common Notion 1 in a sentence, Post. 3 and C.N. 1 in parentheses and tables. A
@@ -413,11 +448,12 @@ and the insertion of its modern figure beneath "The modern way", so the page sho
 same mathematics.
 
 **The modern way's notation.** In a `$…$` span, a vector is a bold lower-case letter,
-`$\mathbf{u}$`, never `$\vec{u}$`. A vector between Heath's points is written
-`$\mathrm{C - B}$` or with an arrow over the point letters, `$\overrightarrow{\mathrm{AC}}$`,
-as in Books II and III. A length or an absolute value takes plain bars, `$|\mathbf{u}|$`
-or `$|y|$`, never `\lvert` and `\rvert`. Write the dot product
-`$\mathbf{u} \cdot \mathbf{v}$` and the plane's cross product
+`$\mathbf{u}$`, never `$\vec{u}$`. The modern figure beneath sets the same name in italic,
+as section 7 asks; the bold is the paragraph's mark of a vector. A vector between Heath's
+points is written `$\mathrm{C - B}$` or with an arrow over the point letters,
+`$\overrightarrow{\mathrm{AC}}$`, as in Books II and III. A length or an absolute value
+takes plain bars, `$|\mathbf{u}|$` or `$|y|$`, never `\lvert` and `\rvert`.
+Write the dot product `$\mathbf{u} \cdot \mathbf{v}$` and the plane's cross product
 `$\mathbf{u} \times \mathbf{v}$`; the components `$u_{1}$`, `$u_{2}$` stay italic.
 For Heath's upright letters, see "Heath's letters, one style" above; for radians and
 the rules every span must obey, see "Mathematics".
@@ -451,13 +487,18 @@ a quotation is first checked against. The page image decides.
 - Heath's exact 1908 words, in straight double quotes **[checked]**, with the page: "(vol.
   1, p. 242)", "(vol. 2, pp. 63–64)" when the passage crosses a page, and "(Heath, vol. 1,
   p. 252)" when the sentence does not name him. Those Heath reports (Proclus, Todhunter, De
-  Morgan) take his page, and the sentence makes the chain plain. Never invent a quotation
-  or a page.
+  Morgan) take his page, and the sentence makes the chain plain. Every reference to Heath
+  keeps its volume, however close the one before it: "(vol. 1, p. 243)" after "(vol. 1,
+  p. 242)", never "(p. 243)", since Heath's volumes share page numbers and each reference
+  must be checkable on its own. Never invent a quotation or a page.
 - Single quotes inside, "…" for a cut, and brackets inside are Heath's own.
 - Heath's prose has em dashes, and a page has none (section 1): end the quotation at his
   dash, or cut it there with "…".
 - **Italics.** Keep Heath's italics for his emphasis and his titles: those he printed, all
-  of them, and only those ("the two circles *will* meet"), as `*…*`. Add none.
+  of them, and only those ("the two circles *will* meet"), as `*…*`. Add none. Heath sets
+  every enunciation in italic type, which is his setting, not his emphasis, so words quoted
+  from an enunciation stay roman (I.14, I.17, I.33, II.1); a theorem he states in italic in
+  a note keeps its italic (Heron's converse, under II.12).
 - **The letters rule.** Heath's letters are plain everywhere, inside his quotations too
   **[checked]**. His page sets them in italic; ours writes them as the rest of the page
   does: "the middle point of CE" (vol. 2, p. 8), not "of *CE*". Where his italic runs on
@@ -515,10 +556,12 @@ first two are required.
 `#d0312d`, yellow `#f2b705`, blue `#1f5aa6` and black `#222222`, and white only for grid
 lines and for numbers on a fill, as in I.47 **[checked]**. Equal things share a colour, and
 Heath's letters name every point it shows; any letter is Heath's, and may name a line or a
-figure as well (below). The title is "I.N at a glance", with a name if it has one (": the
-bridge of asses"). The `<desc>` is the caption on the page: one or two short sentences in
-the house voice, the colours named in brackets, about 40 words **[reported]** and 50 at
-most **[checked]**.
+figure as well (below). The title is `<book>.N at a glance`, the proposition's book by its
+numeral and its number with no leading zero ("II.4 at a glance", "III.17 at a glance"),
+with a name after a colon if it has one ("I.5 at a glance: the bridge of asses", "III.31 at
+a glance: the angle in a semicircle"). The `<desc>` is the caption on the page: one or two
+short sentences in the house voice, the colours named in brackets, about 40 words
+**[reported]** and 50 at most **[checked]**.
 
 **`NN.svg`, Euclid's figure.** 400 wide, and 440 at most where two or three of Heath's
 figures stand side by side (III.25, III.33, III.35, III.36) **[checked]**. Upright letters
@@ -527,7 +570,9 @@ figures stand side by side (III.25, III.33, III.35, III.36) **[checked]**. Uprig
 `#e9dcc0` at 0.55; no other colour **[checked]**. Dots of radius 2.6, lines 1.6, circles
 1.3, what the proposition is about 2.4 to 2.6, angle marks in `#8c7b62` at 1.3
 **[reported]**, and no stroke thinner than 1.2 or heavier than 3.2 **[checked]**. The title
-is "Euclid I.N: …", with no caption **[checked]**.
+is `Euclid <book>.N: …`, a name after the colon ("Euclid II.1: a rectangle cut into three
+rectangles", "Euclid III.1: finding the centre of a given circle"), with no caption
+**[checked]**.
 
 **Heath's letters, all and only [checked].** Each point stands where the proof puts it
 (I.6: D on AB). The Lean uses the same letters, save in a helper written once over any
@@ -576,7 +621,9 @@ validate a figure. Before a changed figure is signed off, render it
   it, and each crossing is where it should be;
 - the cases: a figure drawn for one case says so, in the caption or the figure note, and
   does not suggest that the other cases were proved by the drawing; where a theorem covers
-  several cases, the review record's `[figure]` names the one shown;
+  several cases, the review record's `[figure]` names the one shown; a figure that draws
+  every case, side by side or on one figure, says so too, with `every_case` in the
+  record's `[figure]` and its `case` naming the cases drawn;
 - a reductio: a figure that draws the impossible supposition is said to be one. It may
   draw it as Heath's printed figure does, departing from the construction so that the
   supposition can be seen, provided the figure note says so (I.14's E, drawn off CB produced
@@ -600,12 +647,12 @@ identifier) and that English does not use as a
 word: not the s of "A's", nor the letters of e.g. and i.e., nor a page reference such as
 p. 383, nor the article "a" unless a sign of an expression, a digit or a bracket stands
 beside it. A capital stands alone, as one of Heath's letters: a length or a vector is named
-by its lower-case letter. The title is
-"I.N: the modern way", with no caption, for its paragraph serves as one **[checked]**. A
+by its lower-case letter. The title is `<book>.N: the modern way` ("I.47: the modern way",
+"II.3: the modern way"), with no caption, for its paragraph serves as one **[checked]**. A
 page with no modern way has no such figure **[checked]**, and a modern way that would only
 restate the proposition in symbols needs none. The figure shows what the paragraph says
-and no more, with the paragraph's conditions (A = (0, 0), b > 0), and is checked as
-geometry, as Euclid's is.
+and no more, drawn under the conditions the paragraph states (A = (0, 0), b > 0), and is
+checked as geometry, as Euclid's is.
 
 **Departures go in the figure note.** Where our drawing places a point otherwise than
 Heath's figure, because the Lean does, draw the proof and say so in one line under the
@@ -697,8 +744,8 @@ serves S23 alone; S12 still requires Git's tracked-file index.
 | S11 | A retired refrain of section 3, on a page not allowed it: "certificate cites", "certificate records", "Of the postulates", "besides Euclid's", "just Euclid's three" (nowhere); "comes in through" (I.29 only); "Lean wants it said", "Lean asks why", "Lean makes us say so" (I.1, I.5, I.22 only); "uses Postulate 1", "brings it in" (I.1, I.3 only); "with no letter", "proves it once", "We give his argument once", "and the Lean cites it.", and "under I.31" in a sentence naming Proclus (nowhere); a paragraph opening `**What Lean made us say.**`, `**What else Lean made us say.**`, `**What it rests on.**`, `**Where the parallels meet.**`, `**Naming the pieces.**`, or `**Where X falls.**` with X a run of capitals (nowhere) | Mishnah |
 | S12 | A backticked Lean name, other than a file name, that `#check` does not know, with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open; every book's namespace for a text with no book (the overlap catalogue, Other reports, `review/terms.toml`), so that a name two books share is written with its book; and `Elements` and `Elements.Tacit` alone for the Rendered docstrings. The name before the colon of a backticked `name : type` is read as well (section 1, "Hypotheses in words"). A word that is Lean's but no declaration, as a tactic or a field of `facts.json`, is listed in the script with its reason, and fails once no text uses it. Run when the tree is built; the overlap catalogue's audit lemmas once `lake build Audit` has run, and listed as not checked till then. The mishnah is asked as it always was, every name with `import Elements` alone: neither excuse holds there | Prose, Review notes, Catalogues, Other reports, Rendered docstrings, `book/<book>/front.md` |
 | S13 | A caption (`<desc>`) missing, or over 50 words | Idea figures |
-| S14 | A viewBox other than `0 0 400 300`; a colour other than `#fbf7ee`, `#d0312d`, `#f2b705`, `#1f5aa6`, `#222222` and white; a missing `<title>`, or one other than "I.N at a glance", with a name after a colon if it has one | Idea figures |
-| S15 | A viewBox width outside 400–440; a letter not at font-size 17, or, with the switch for upright letters on (below), not upright; a colour other than `#fbf7ee`, `#3b2f2f`, `#8c7b62`, `#a0522d`, `#e9dcc0`; a stroke-width under 1.2 or over 3.2; a `<desc>`; a missing `<title>`, or one other than "Euclid I.N: …" | Euclid's figures |
+| S14 | A viewBox other than `0 0 400 300`; a colour other than `#fbf7ee`, `#d0312d`, `#f2b705`, `#1f5aa6`, `#222222` and white; a missing `<title>`, or one other than `<book>.N at a glance` ("II.4 at a glance", "III.17 at a glance"), with a name after a colon if it has one | Idea figures |
+| S15 | A viewBox width outside 400–440; a letter not at font-size 17, or, with the switch for upright letters on (below), not upright; a colour other than `#fbf7ee`, `#3b2f2f`, `#8c7b62`, `#a0522d`, `#e9dcc0`; a stroke-width under 1.2 or over 3.2; a `<desc>`; a missing `<title>`, or one other than `Euclid <book>.N: …` ("Euclid II.1: …", "Euclid III.1: …") | Euclid's figures |
 | S16 | Letters drawn that are not Heath's, or Heath's letters not drawn: the letters of the figure's `<text>` elements against the capital letters of `heath/<book>/NN.md`, with comments, Heath's references, "Q. E. D.", "Q. E. F.", "I say" and "PORISM." taken out (the command is below). An exception is listed in the script with its reason | Euclid's figures |
 | S17 | A reading file of no lines or more than three, a line that is not a list item ("- "), or a web link that `docs/reading.md` does not give | `reading/<book>/NN.md` |
 | S18 | A book with pages and no `mishnah/intro/<book>.md` | `mishnah/intro/` |
@@ -707,7 +754,7 @@ serves S23 alone; S12 still requires Git's tracked-file index.
 | S21 | A point the figure shows with no letter within 30 of it: a dot (a filled `<circle>` of radius 6 at most), an end of a `<line>` 25 long or more in a Byrne colour or black, or a corner of a `<polygon>` filled or stroked in one. Transforms are applied; a letter stands at its glyph's middle, reckoned from its x, y, anchor and size; points within 8 of one another are one point. A point drawn by an element marked `data-unlettered`, or inside a `<g>` so marked, is excused, and each mark is printed on every run; a mark whose reason is under two words, or that excuses no point, fails. With the switch on (below), S21 holds every figure | Idea figures |
 | S22 | Letters in backticks: a code span that holds only letters, a capital or a run of capitals (each with its prime or subscript) or several such runs apart by commas or spaces, as `P`, `PQ`, `ABCD` or `AB, CD` (section 1, "Lean notes") | Prose, Review notes, Catalogues, Other reports, Lean notes, Generated |
 | S23 | A merge-conflict marker, with its kind: a line beginning with exactly seven `<`, `\|` or `>` followed by a space or the line's end; or exactly seven `=` with optional trailing spaces or tabs. A trailing CR is allowed. A middle is refused between opening and closing markers, outside `.md` files, or unless every line of the preceding block is ordinary paragraph text. Blank lines, markers, ATX or completed setext headings, thematic breaks, fences, HTML blocks and GFM tables bound or disqualify the block; indented code cannot start a paragraph, but indented continuations are allowed. Any possible reference definition prefix (up to three spaces, a bracketed label allowing escaped brackets, then a colon), block quote or list item disqualifies the whole block; within a paragraph, a list item counts only where it can interrupt one, as a bullet or an ordered item numbered 1, with some text, so `2. item` or a bare `*` goes on with the paragraph. S23 errs toward refusal: other lengths of equals are never examined as middles, so a refused heading can use eight. Fences inside comments or HTML blocks open no block | Every tracked text file except symlinks, or the files of the walk described above |
-| S24 | A viewBox width outside 400–440 or non-positive height; a colour other than Euclid's figure's five, or a shape or a `<text>` with no fill, which SVG paints black; a stroke-width under 1.2 or over 3.2; a `<desc>`; anything but exactly one `<title>` directly under the root, with the text "I.N: the modern way"; no `NN.svg` beside it, or no paragraph opening `**The modern way.**` in `mishnah/<book>/NN.md` for it to stand under, read as Markdown reads it (not in a comment or a code block). The modern figure is UTF-8 with no NUL, DTD, entity declaration, stylesheet processing instruction or `@import`, and may use only the elements, attributes and spellings that the modern figures on main use; a character reference in a serialised attribute is refused before XML can normalise it. An arc with a radius of 0, or whose ends are one point, is refused, for SVG draws it as a straight line or not at all. | Modern figures |
+| S24 | A viewBox width outside 400–440 or non-positive height; a colour other than Euclid's figure's five, or a shape or a `<text>` with no fill, which SVG paints black; a stroke-width under 1.2 or over 3.2; a `<desc>`; anything but exactly one `<title>` directly under the root, with the text `<book>.N: the modern way` ("II.3: the modern way"); no `NN.svg` beside it, or no paragraph opening `**The modern way.**` in `mishnah/<book>/NN.md` for it to stand under, read as Markdown reads it (not in a comment or a code block). The modern figure is UTF-8 with no NUL, DTD, entity declaration, stylesheet processing instruction or `@import`, and may use only the elements, attributes and spellings that the modern figures on main use; a character reference in a serialised attribute is refused before XML can normalise it. An arc with a radius of 0, or whose ends are one point, is refused, for SVG draws it as a straight line or not at all. | Modern figures |
 | S25 | A `<text>` not at font-size 17, or a `<tspan>`; an explicit `font-style` other than `italic` (an upright letter omits it); a capital letter (with a prime or a subscript) that `NN.svg` does not draw, or not upright; a capital in a longer text; any other text holding a character besides lower-case Latin and Greek letters, digits and the signs of an expression, or with letters not italic, or with a letter that is not a name of the page's modern way: in its `$…$` spans, each lower-case letter once the commands are taken out (`\vec`, `\frac`, `\mathrm{…}` and what it sets) and the Greek ones read as their letters (`\theta` as θ, and a variant such as ϑ as the letter it is a form of); outside them, each Greek letter, and each lower-case letter standing alone, with no letter of any script (Greek too: the r of 2πr is a name only in TeX), mark or format character beside it, save one straight after an apostrophe (`'` or `’`, the s of "A's"), the letters of e.g. and i.e. (a full stop escaped or not, spaces after the first or not) and the p of Heath's page before its number (p. 383), with a Roman number's letters (p. ix, pp. v–vii), and the article a with no sign of an expression (=, +, -, −, ×, ·, /, <, >, ≤, ≥), digit (raised or lowered, as ²) or bracket beside it, spaces between; and none of it from an HTML tag or comment, a code span or a link's target or resolved reference identifier, which a reader does not see, the paragraph being read as Markdown reads it, so that a line holding only a code span goes on with it. A character reference, an invisible character (a format character of Unicode's, such as a zero-width space or a soft hyphen, or another of its default-ignorable characters, such as a Hangul filler or a variation selector), emphasis inside a word (through an apostrophe or a full stop too, escaped or not, with the emphasis on one side of it or both: `*e*.g.`, `*e*.*g*.`), inline HTML, a reference-style link, a reference definition in the selected block or one used by a link in the paragraph is refused; an unrelated definition elsewhere is not. | Modern figures |
 | S26 | One letter, one point: a letter drawn twice in a figure, or twice in one of Heath's figures where two or three stand side by side (III.25, III.33, III.35, III.36, each split at the x of the straight cuts the script gives, a letter belonging to the figure its middle stands in), or across such a cut; or a letter that a stroke, a dot or the canvas's edge comes within 2 of. S26 reads only the elements, attributes and spellings that the figures on main use, and refuses any other. It refuses an arc whose ends are one point, for which SVG's implementation notes for arcs (F.6.2) draw nothing, whatever its radii, and one with a radius of 0 and two ends, which they draw as a straight line; every other arc draws, whatever its large-arc and sweep flags, its radii enlarged when they cannot reach its ends (F.6.6). Every element is in the SVG namespace; only the root `<svg>` and a `<g>` may contain elements, so titles and descriptions are text-only and drawn elements are leaves. A text payload is one Heath letter or an ASCII integer annotation; text children, an invisible point label with fill none, zero fill or stroke opacity, processing instructions (an `<?xml-stylesheet?>` among them) and every other payload fail. Before parsing, every figure reader refuses `<!DOCTYPE` or `<!ENTITY` anywhere in the bytes, including UTF-16 and UTF-32 spellings and such text inside comments. The refusal is independent of ElementTree's C accelerator; the doctype callback remains a second guard. A letter is measured as Georgia draws its capital, upright or italic as the figure sets it, by the convex hull of the points of its outline, at its x, y and size, anchored by the whole label's advance (a prime or a subscript after it included, though not itself measured), transforms applied; a stroke (a `<line>`, `<polyline>`, `<polygon>`, `<rect>` with its corners rounded as rx and ry round them, `<circle>`, `<ellipse>`, or each subpath of a `<path>`, closed only where a Z closes it, a dashed one read whole, a single-point subpath closed by Z retained for round caps, a shape that SVG does not draw left out) less half its width and that subpath's conservative chord allowance. Literal `stroke-dasharray="none"` is solid; a numeric dash array must contain a positive component, so an all-zero array is refused rather than named as dashed. Mitre joins include their filled corners, transformed after applying the inherited stroke-linejoin (by default miter, with a mitre limit of 4), with round joins and mitres over the limit covered by the existing half-width measure; a dot (a filled `<circle>` of radius 6 at most) less its radius; a width and a radius each taken at the most its transform stretches it. The hull holds the ink and spans its hollows, so a stroke that ends in an L's corner or a K's notch is found while the ink is clear: move the letter | Idea figures, Euclid's figures |
 
@@ -799,7 +846,9 @@ proposition, and a later book's numeral replaces `I` in the paths.
     character with `italic="true"` on its `<formatting>`; on the quoted page (the `<page>`
     of its leaf, counting from 0) every word inside the quotation so flagged is in italics
     in F, save the names of points, straight lines and figures, which Heath also sets in
-    italic and we write plain (S9). Where a flag is doubtful, the page image decides.
+    italic and we write plain (S9), and the words of an enunciation, which he sets wholly
+    in italic type and we quote in roman (section 5). Where a flag is doubtful, the page
+    image decides.
 11. What it says of the Lean's citations and postulates matches `facts.json`:
     `python3 -c "import json,sys; p={x['ref']:x for x in json.load(open('facts.json'))['propositions']}[sys.argv[1]]; print(*p['direct_axioms']); print('cites', *p['cites'])" I.N`.
 12. Every letter named is Heath's, every name spelled as Heath spells it, and each person
@@ -829,8 +878,8 @@ proposition, and a later book's numeral replaces `I` in the paths.
     figure gives that point, beside it and clear of every colour, or on the fill as section
     7 says; S21 sees only that a letter is near, and S26 that it is clear of the strokes.
     Each `data-unlettered` reason is true of Heath's figure.
-18. A departure from Heath's figure has its line in the figure note, and a figure of one
-    case among several names it.
+18. A departure from Heath's figure has its line in the figure note. A figure of one case
+    among several names it; a figure marked as every case draws them all and names them.
 
 **Heath's text**
 

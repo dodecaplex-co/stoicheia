@@ -39,7 +39,7 @@ note = "Euclid takes the complements AG and GE to be equal. The Lean applies I.4
 at = "and AG is the rectangle AC, CB"
 kind = "helper"
 helper = "Rectangle.of_right"
-note = "Euclid treats AG as a rectangle, with GC equal to CB. The Lean gets the adjacent right angle at C from `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, then uses `Rectangle.of_right` (I.29) and `Rectangle.eq_rect` to identify AG."
+note = "Euclid treats AG as a rectangle, with GC equal to CB. The Lean gets the adjacent right angle at C from `Tacit.adjacent_eq_of_right` (I.13), then uses `Rectangle.of_right` (I.29) and `Rectangle.eq_rect` to identify AG."
 
 [[passage]]
 at = "But HF, CK, AG, GE are the whole ADEB"
@@ -49,10 +49,10 @@ note = "Euclid takes the four areas as the whole square ADEB. `Parallelogram.abo
 
 [review]
 stage = "full"
-commit = "a421bdd1"
+commit = "09b32b47"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:2c13e8bdc74e3aa0"
-run = "card 220, cross-family sign-off: original proof by OpenAI Codex, read by Claude Opus 5.5. Later proof edits at 96d7bcd7 add the second I.34 application and the step identifying the whole figure with the square on AB; the commit has a Claude Opus 5.5 co-author trailer but does not identify which writer made them. Those edits were read by GPT-6 Astra (Codex) at f3b45b70 and by Claude Opus 5.5 at a421bdd1; ship XS, reader XS-r-II04-II08, independent re-read at a421bdd1"
+run = "card 220, cross-family sign-off: original proof by OpenAI Codex, read by Claude Opus 5.5. Later proof edits at 96d7bcd7 add the second I.34 application and the step identifying the whole figure with the square on AB; the commit has a Claude Opus 5.5 co-author trailer but does not identify which writer made them. Those edits were read by GPT-6 Astra (Codex) at f3b45b70 and by Claude Opus 5.5 at a421bdd1; ship XS, reader XS-r-II04-II08, independent re-read at a421bdd1; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 09b32b47 (reader RT-c4)"
 
 [review.items]
 statement = "pass"
