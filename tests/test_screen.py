@@ -41,7 +41,10 @@ functions to small inputs, each with the answer the screen should give.
   cannot receive committed provenance or make a matching record current, while ignored
   files outside the inputs remain excluded; a symbolic-link input, a linked input directory
   or a dangling input link is refused before a run, a record or a current verdict; and the
-  real inputs compute, which takes most of the time.
+  real inputs compute, which takes most of the time. The cases that need a real commit
+  make a repository of their own in a temporary directory, with git's environment cleared
+  of GIT_DIR and the like, so that a run under a hook, which names the enclosing
+  repository, neither commits to it nor writes its index.
 * Before any Lean: --check-current takes no OUTDIR and no --write; a stale build, --write
   on inputs that are not a commit's, or a move to another commit or other inputs after the
   build checks as current, stops a run. Before a successful --write, an unchanged build is
@@ -58,6 +61,7 @@ import contextlib
 import io
 import itertools
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -359,10 +363,20 @@ def git_at(commit: str | None = COMMIT, status: str | None = ""):
     return mock.patch.object(screen, "git", git)
 
 
+def own_git_environment() -> dict[str, str]:
+    """The environment, for git, of a repository of a test's own: none named by GIT_DIR,
+    GIT_INDEX_FILE or the like, which a hook sets for the enclosing repository, and no
+    configuration but the repository's."""
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    return {**env, "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"}
+
+
 class GitProvenance(unittest.TestCase):
     def setUp(self):
         self.tmp = self.enterContext(tempfile.TemporaryDirectory())
         self.root = Path(self.tmp)
+        # The screen's own git, which these cases run, reads os.environ too.
+        self.enterContext(mock.patch.dict(os.environ, own_git_environment(), clear=True))
         self.facts = {"propositions": [
             {"name": "BookI.Prop1", "ref": "I.1", "kind": "proposition", "statement": "P1"}],
             "axiom_modules": {"Postulate1": "Elements.Foundations.Postulates"},
@@ -390,8 +404,8 @@ class GitProvenance(unittest.TestCase):
         path.write_text(text, encoding="utf-8")
 
     def git(self, *args: str) -> subprocess.CompletedProcess:
-        return subprocess.run(["git", *args], cwd=self.root, capture_output=True, text=True,
-                              check=True)
+        return subprocess.run(["git", "-C", str(self.root), *args], cwd=self.root,
+                              capture_output=True, text=True, check=True)
 
     def add_ignored_module(self) -> dict[str, str]:
         clean = screen.inputs(self.root, self.facts)
@@ -503,6 +517,35 @@ class GitProvenance(unittest.TestCase):
         at = screen.revision(self.root)
         self.assertNotEqual(at[1], screen.COMMITTED)
         self.matching_record_is_refused(parts)
+
+
+class FixtureIsolation(unittest.TestCase):
+    """GitProvenance's repository is its own. Under a hook, git's environment names the
+    enclosing repository (GIT_DIR, GIT_INDEX_FILE); a fixture that kept it committed its
+    files there, deleting every other file in that commit, and wrote that index."""
+
+    def test_the_fixture_leaves_the_enclosing_repository_as_it_was(self):
+        outer = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        env = own_git_environment()
+
+        def git(*args: str) -> str:
+            return subprocess.run(["git", "-C", str(outer), *args], env=env,
+                                  capture_output=True, text=True, check=True).stdout
+
+        (outer / "kept.txt").write_text("kept\n", encoding="utf-8")
+        git("init", "-q")
+        git("add", "kept.txt")
+        git("-c", "user.name=Screen test", "-c", "user.email=screen@example.invalid",
+            "commit", "-qm", "enclosing")
+        head, index = git("rev-parse", "HEAD"), (outer / ".git" / "index").read_bytes()
+        hook = {"GIT_DIR": str(outer / ".git"), "GIT_INDEX_FILE": str(outer / ".git" / "index")}
+        with mock.patch.dict(os.environ, hook):
+            result = unittest.TestResult()
+            GitProvenance("test_a_clean_committed_fixture_can_record_and_check").run(result)
+        self.assertEqual((result.errors, result.failures), ([], []))
+        self.assertEqual(git("rev-parse", "HEAD"), head)
+        self.assertEqual((outer / ".git" / "index").read_bytes(), index)
+        self.assertEqual(git("status", "--porcelain"), "")
 
 
 class Record(unittest.TestCase):
