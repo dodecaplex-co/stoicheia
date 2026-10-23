@@ -7,7 +7,9 @@ the small contracts the other scripts share:
 * fingerprints of statements, files and records: `fingerprint`, `review_fingerprint`,
   `file_hash`, `text_hash`;
 * the review records, review/<book>/NN.toml: `load_review`, `validate_review`,
-  `load_terms` (the schema is review/SCHEMA.md).
+  `load_terms` (the schema is review/SCHEMA.md);
+* Lean read as Lean 4.35's tokenizer reads it, its comments, literals and names:
+  `read_lean`, `without_comments`, `lean_comments` and `comment_end` (#206, #349).
 
 Shared by scaffold_book.py, check_fidelity.py and render.py. Standard library only.
 Reading review records needs Python 3.11 or later, for tomllib; the rest runs on older
@@ -787,6 +789,7 @@ def _self_test() -> int:
               f"review/SCHEMA.md and {records} review records hold")
     return len(faults)
 
+
 # #206's one reader of Lean: its comments, strings, character literals, raw strings
 # and names, read as Lean 4.35's tokenizer reads them. It moved here from
 # check_fidelity.py, which imports it, so that safe_push.py, which carries this file
@@ -858,7 +861,7 @@ NUMBER = re.compile(r"0[bB](?:_*[01])+|0[oO](?:_*[0-7])+|0[xX](?:_*[0-9a-fA-F])+
                     r"[0-9](?:_*[0-9])*(?:(?!\.\.)\.(?:[0-9](?:_*[0-9])*)?)?"
                     r"(?:[eE][+-]?[0-9](?:_*[0-9])*)?")
 FIELD = re.compile(r"[1-9][0-9]*")
-WORD_CHAR = re.compile(r"\w")   # one character `\w` takes (not WORD, a key)
+WORD_CHAR = re.compile(r"\w")   # one character `\w` takes (not WORD, a key or a tag)
 RAW = re.compile(r'r(#*)"')
 CHAR = re.compile(r"'(?:\\(?:x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|.)|[^\\\n'])'")
 INTERPOLATED = {"s!", "m!", "f!", "throwError"}
@@ -866,6 +869,7 @@ INTERPOLATED = {"s!", "m!", "f!", "throwError"}
 # `\t` and `\r`, `\x` and two hexadecimal digits, `\u` and four, and a gap, a `\` before a
 # line feed, which Lean reads, with the blanks after it, as nothing.
 ESCAPE = re.compile(r"\\(?:x([0-9a-fA-F]{2})|u([0-9a-fA-F]{4})|(\n[ \t\r\n]*)|(.))", re.S)
+
 
 def read_lean(src: str, strings: list | None = None) -> tuple[str, list[int]]:
     """The Lean as Lean's tokenizer reads it, with its comments (`--` to the end of the
