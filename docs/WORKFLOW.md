@@ -465,11 +465,13 @@ run on main, any of the three jobs failed, cancelled or timed out, opens one iss
 that were red and the tests of `scripts/test_safe_push.py` that failed, so the release
 waits for it until the issue is closed, with a link to a later green run; that
 is done by a fourth job, the only one with leave to write issues, which runs no code of
-the repository. For now a red run holds the release alone (whether trains of tooling hold
-as well while the cadence is red is left to a later part of #274): trains of every class
-go on landing while the issue is open, each by its own class, and so does the repair,
-which is a train like any other, classed by its files (a repair to a check is R3, to a
-proof R2, and takes that lane). The issue is closed with a link to a later run on main
+the repository. For now a red run holds the release alone under these repository rules:
+they permit trains of every class to go on landing while the issue is open, each by its
+own class, and so does the repair, which is a train like any other, classed by its files
+(a repair to a check is R3, to a proof R2, and takes that lane). The coordinator's
+separate tooling lane is recorded in the
+[timeout decision](decisions/2026-10-23-cadence-timeout.md). The issue is closed with a
+link to a later run on main
 in which all three jobs are green, and the release waits for that. The suite's tests
 read the whole tree,
 content as well as code: the check
