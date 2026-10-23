@@ -227,9 +227,9 @@ the I.24 step now serves only where his order cannot.
 
 **What is left.** No approval is needed. On 22 October 2026, under card #332, the staged
 proof replaced the proof in `Elements/BookIII/Prop08.lean`, and the mishnah's paragraph on
-"which was proved impossible" now says what changed. Still to come: the record, read again,
-with its passage at "that is, the nearer to the least DG equal to the more remote" and its
-route note rewritten; and the gap catalogue's entry, revised. The companions
+"which was proved impossible" now says what changed. The same change revises the gap catalogue's entry, and reads the
+record again, with its passage at "that is, the nearer to the least DG equal to the more
+remote" and its route note rewritten. The companions
 `Prop8.partner` and `Prop8.general` use the statement, which did not change. The proof
 still takes the centre by III.1 under Heath's "[III. 1]" (#131, below).
 
@@ -313,9 +313,9 @@ angles at A and D are read off the measure: now the right case alone.
 **What is left.** No approval is needed: nothing new is stated or defined, and the step that
 puts the centres alike is a helper of III.27, before it in its file. On 22 October 2026,
 under card #332, the staged proof replaced the proof in `Elements/`, and the mishnah now
-tells the obtuse and right cases as the proof takes them. Still to come: the record, read
-again with its route note, and the gap catalogue's entry for III.27, which tells of
-`Circumference.standing`, revised.
+tells the obtuse and right cases as the proof takes them. The same change revises the gap
+catalogue's entry for III.27, which told of `Circumference.standing`, and reads the record
+again, with its route note.
 
 ## Definition III.3 read at the point of contact (#126)
 
@@ -742,7 +742,8 @@ follows "the propositions he uses". We
 recommend dropping the five calls, each with a passage of the kind given: a passage of the
 kind different would make four routes modified with no change in the reasoning. The
 measurements on train C6c leave the recommendation as it was. The staged III.8 of #125
-repeats the call of III.8 in `Elements/`, and the same change would apply to it. On 22
+repeated the call of III.8 in `Elements/`; since 22 October 2026 (#332) it is the proof in
+`Elements/`, so the change to III.8 covers it. On 22
 October 2026 the coordinator chose to drop the five calls, for a citation that does no work
 counts against the argument, and gave the change to #131's own train, after this one,
 which records the decision.
@@ -773,8 +774,8 @@ which records the decision.
    [tests/certificate_expectations.json](../../tests/certificate_expectations.json) ("III.1,
    which it cites"), whose pinned value stands.
 6. **The integrator** makes the pages, CERTIFICATE.md and GRAPH.md afresh.
-7. **Optional**: the lemma on aligned arcs, as in the table; and, if the staged III.8 lands,
-   the same change there.
+7. **Optional**: the lemma on aligned arcs, as in the table. (The staged III.8 moved into
+   `Elements/` on 22 October 2026, under #332, so item 3's change to III.8 covers it.)
 
 **What could not be settled here.** The coordinator settled the policy on 22 October 2026:
 #131's later train will drop the five bracketed calls. Their implementation and compiled
