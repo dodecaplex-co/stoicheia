@@ -224,27 +224,44 @@ rendered page.
 
 **Review records are tied to a commit.** Every proposition has a record,
 `review/<book>/NN.toml` ([schema](../review/SCHEMA.md)). `scripts/review_stamp.py` stamps it
-with a fingerprint of the statements reviewed, a hash of the Lean file, and the commit whose
-files the record was last confirmed against. When the fingerprint or the hash no longer
-matches, `check_fidelity.py` reports that the statement or the Lean file has changed since
-it was reviewed, and the record is read again. At the stage `exceptions` a record declares
-every departure; at the stage `full` it classifies every substantive passage. The record's
-`reviewer` names who read it; from the stage `full` it names the model or person and the
-role, and `run` names the brief, stage and workflow, so that a reader can tell the reviewer
-from the authors of the proof.
+with a fingerprint of the statements reviewed, a hash of the Lean file, a hash of the
+record's own text without its `[review]` table and fingerprint, and the commit whose files
+the record was last confirmed against. When any of the three no longer matches,
+`check_fidelity.py` reports that the statement, the Lean file or the record has changed
+since it was reviewed, and the record is read again. At the stage `exceptions` a record
+declares every departure; at the stage `full` it classifies every substantive passage. The
+record's `reviewer` names who read it; from the stage `full` it names the model or person
+and the role, and `run` names the brief, stage and workflow, so that a reader can tell the
+reviewer from the authors of the proof.
 
 **Stamps.** A stamp says that a record has been read against the files as they now are.
 
 - The reviewer stamps, after reading, with the commit whose files were read:
   `python3 scripts/review_stamp.py --commit <commit> III.16`. Commit the change first,
-  then stamp; the script checks that the Lean file at that commit is the file as it is now.
+  then stamp; the script checks that the commit is in the history of HEAD, and that the
+  Lean file and the record at that commit are as they are now, the record's `[review]`
+  table and fingerprint aside.
 - The integrator re-stamps only after reading each changed file against its record, and
   then stamps with the commit read. A record the integrator cannot confirm goes back to the
   records' owner.
 - On a contributor's branch, "changed since it was reviewed" is expected whenever a Lean
-  file under a record changes, even by a comment. The contributor lists the records made
-  stale in the handback (form 3, "Records made stale"), and never runs `review_stamp.py` on
-  a record they did not review.
+  file under a record changes, even by a comment, and whenever the record's own text is
+  edited. The contributor lists the records made stale in the handback (form 3, "Records
+  made stale"), and never runs `review_stamp.py` on a record they did not review.
+- The records stamped before the `text` stamp was introduced gain it by
+  `python3 scripts/review_stamp.py --migrate-text`, which writes `text` alone, and only
+  for a record whose own stamp commit is in the history of HEAD and whose text at that
+  commit is its text now: what was read is then what the record says, so it records no
+  new reading. It reads the records' history, so it runs in a full clone. A record whose
+  text it cannot confirm is listed as needing a reader, who reads it and stamps it as
+  above. A stamp commit absent from the clone or abbreviated ambiguously is a problem, and
+  so, for a record without `text`, is one a shallow clone cannot place in the history of
+  HEAD: the command exits 1 without listing that record for a reader. Fetch missing
+  history and run it again; for an ambiguous id, a reader identifies the intended commit
+  without guessing, reads the record and stamps it as above with enough of the id to name
+  that commit alone; then run it again. The migration may be run again at any time, as at
+  landing, after the branches that change records. Until every record carries `text`,
+  `check_fidelity.py` names those without it in a note.
 
 **What a reviewer of the Lean looks for:**
 

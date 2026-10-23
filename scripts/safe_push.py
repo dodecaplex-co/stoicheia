@@ -2166,18 +2166,36 @@ def passes(repo, base, wt: Path, changes: list[tuple[str, str]]):
 GUIDES = ("AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "docs/WORKFLOW.md",
           "docs/FORMALIZATION.md", "docs/STYLE.md", "docs/briefs/", "docs/templates/",
           "docs/decisions/")
-# A review record's stamp: its reviewer's reading of a statement and a Lean file, as a
-# change to the certificate's output asks for (WORKFLOW, section 6). Not its stage.
-STAMP_LINE = re.compile(r'(?m)^(?:fingerprint|commit|lean|reviewer)\s*=\s*"[^"]*"[ \t]*$')
+# A review record's stamp: its reviewer's reading of a statement, a Lean file and the
+# record's own text, as a change to the certificate's output asks for (WORKFLOW, section
+# 6). Not its stage. STAMPS: the stamp keys of each section.
+STAMP_LINE = re.compile(r'(?m)^(?:fingerprint|commit|lean|text|reviewer)\s*=\s*"[^"]*"[ \t]*$\n?')
+STAMPS = {"statement": ("fingerprint",), "review": ("commit", "lean", "text", "reviewer")}
 
 
 def stamp_only(repo, base, sha, path: str) -> bool:
-    """Is the change to `path` a review record's stamp alone?"""
+    """Is the change to `path` a review record's stamp alone: stamp lines rewritten, added
+    or moved within their own section, none taken away from it, and nothing else changed,
+    in the lines or in the record as TOML reads it (so a stamp-shaped line inside a
+    multi-line string is no stamp)? A record TOML cannot read is judged."""
     if not re.fullmatch(r"review/[IVX]+/\d+\.toml", path):
         return False
     old, new = show(repo, base, path), show(repo, sha, path)
-    return old is not None and new is not None \
-        and STAMP_LINE.sub("", old) == STAMP_LINE.sub("", new)
+    if old is None or new is None or STAMP_LINE.sub("", old) != STAMP_LINE.sub("", new):
+        return False
+    import tomllib
+    try:
+        before, after = tomllib.loads(old), tomllib.loads(new)
+    except tomllib.TOMLDecodeError:
+        return False
+    for section, keys in STAMPS.items():
+        if isinstance(before.get(section), dict) and isinstance(after.get(section), dict):
+            if any(key in before[section] and key not in after[section] for key in keys):
+                return False
+            for table in (before[section], after[section]):
+                for key in keys:
+                    table.pop(key, None)
+    return before == after
 
 
 def judged_files(repo, base, sha) -> list[str]:
@@ -3408,7 +3426,7 @@ BLOCK = re.compile(r"(?ms)^<!-- safe_push:preflight begin"
                    r"[ \t\r]*$(?:(?!<!-- safe_push:preflight begin).)*?"
                    r"^<!-- safe_push:preflight end -->[ \t\r]*$")
 PLACEHOLDER = re.compile(r"(?m)^<!-- safe_push: (\w+) -->[ \t\r]*$")
-STAMP_FIELD = re.compile(r'(?m)^(fingerprint|commit|lean)\s*=\s*"([^"]*)"')
+STAMP_FIELD = re.compile(r'(?m)^(fingerprint|commit|lean|text)\s*=\s*"([^"]*)"')
 
 
 def sanitized(text: str) -> str:
@@ -3486,8 +3504,16 @@ def describe(ctx: Context, pre: Preflight) -> dict[str, str]:
             continue
         old = dict(STAMP_FIELD.findall(show(repo, base, path) or ""))
         new = dict(STAMP_FIELD.findall(show(repo, sha, path) or ""))
+        lost = sorted(old.keys() - new.keys())
         if status == "D":
             records.append(f"- `{path}`: deleted")
+        elif lost:
+            records.append(f"- `{path}`: {'a stamp' if len(lost) == 1 else 'stamps'} taken "
+                           f"away ({', '.join(f'`{key}`' for key in lost)})")
+        elif old != new and new.get("commit") and new["commit"] == old.get("commit"):
+            records.append(f"- `{path}`: its stamps written, its commit kept at "
+                           f"`{new['commit'][:12]}`" if stamp_only(repo, base, sha, path)
+                           else f"- `{path}`: touched, not re-stamped")
         elif old != new and new.get("commit"):
             records.append(f"- `{path}`: re-stamped at `{new['commit'][:12]}`")
         else:

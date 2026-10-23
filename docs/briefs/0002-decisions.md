@@ -4985,6 +4985,100 @@ findings:
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py),
   [`docs/FORMALIZATION.md`](../FORMALIZATION.md) and this page.
 
+- **A review stamp covers the record's own text.** A record's stamps went stale when its
+  statements or its Lean file changed, but not when the record itself was edited, so a
+  note, a scope or a passage could change under "Reviewed at" with no one reading it. Two
+  lanes found it on 18 October, the one correcting the errors from Argon's review
+  ([#64](https://github.com/jackChallis/stoicheia/issues/64)) and the fidelity runs
+  ([#61](https://github.com/jackChallis/stoicheia/issues/61)), and we thank them both
+  ([#77](https://github.com/jackChallis/stoicheia/issues/77)). A record now carries a
+  fourth stamp, `text` in `[review]`: `heath.text_hash` of the record as TOML reads it,
+  with `[review]` and `fingerprint` set aside, so that writing a stamp, or moving a record
+  from the stage `exceptions` to `full`, never changes the text it stamps, and with
+  comments and layout aside ([`review/SCHEMA.md`](../../review/SCHEMA.md#stamps), "Stamps",
+  whose two worked examples now carry it as test values).
+  [`scripts/review_stamp.py`](../../scripts/review_stamp.py) writes it with the other
+  stamps, and, whenever `--commit` names a commit, checks that the commit named is in the
+  history of HEAD, and both the Lean file and the record at that commit (before, it checked
+  the Lean file only, and only when the commit changed).
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) fails on a record whose
+  text no longer matches its stamp: "its record has changed since it was reviewed".
+  [`scripts/heath.py`](../../scripts/heath.py) knows the key and checks the examples'
+  values; [`scripts/render.py`](../../scripts/render.py) counts such a record as not
+  current, and writes nothing new; [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
+  is unchanged, and fails P2 on that finding of `check_fidelity.py`'s, as
+  [ACCEPTANCE](../ACCEPTANCE.md), P2, now says;
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants an edited note in
+  I.1's record and expects it caught, and a comment and a moved stamp not;
+  [`scripts/safe_push.py`](../../scripts/safe_push.py) counts a `text` line as a stamp.
+  That widens its `stamp_only` a little: a stamp line added or moved now counts as a stamp
+  alone, where before it was judged, so that the records' `text` stamps travel past
+  `keep_apart` as the other stamps do. Two guards hold it, and
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) tests both: no stamp key
+  is taken away, and the record as TOML reads it, its stamps set aside, is unchanged, so
+  that a line shaped as a stamp inside a multi-line string, which changes the record's
+  words, is judged. Its account of the records in a pull request's body counts `text` as a
+  stamp: a record whose stamps alone change, its commit kept, is listed as "its stamps
+  written, its commit kept at …", which is what the migration below does to it; one that
+  loses a stamp, as "a stamp taken away"; and one whose words change under a kept commit,
+  as "touched, not re-stamped". The required box on the review records
+  in [`.github/pull_request_template.md`](../../.github/pull_request_template.md), and its
+  comment under "Review records", therefore now admit a record that "gained only its
+  `text` stamp from `scripts/review_stamp.py --migrate-text`", so that the migration's
+  pull request can tick that box truly. Once this lands, any pull request open with the
+  box's old words must have that box rewritten in its body before `--merge`, which
+  otherwise refuses it as missing the box's new words. After this lands, an open pull
+  request whose body's records part was written with the old words is refreshed with
+  `git safe-push --branch` before `--merge`, which otherwise fails its body as out of date.
+  This is a check change on its own: it changes no record.
+- **The `text` stamps' migration, and what it does not do.** The existing records are not
+  stamped as read. `review_stamp.py --migrate-text` writes `text` alone, and only where a
+  record's stamp commit is in the history of HEAD and its text at that commit (`git show
+  <commit>:review/<book>/NN.toml`, its `[review]` table and fingerprint aside) is its text
+  now: the hash then records what its reviewer read, and no new reading. It reads the
+  commit by its full id, so a branch or tag named as the commit is never read in its
+  place. A record whose text it cannot confirm is listed as needing a reader, and is never
+  stamped by the migration. A stamp commit that is absent or ambiguous is instead a
+  problem, and so, for a record without `text`, is one that a shallow clone cannot place
+  in the history of HEAD: the command exits 1 without listing that record for a reader.
+  Missing history is fetched, or, for an ambiguous id, a reader identifies the intended
+  commit without guessing, reads the record and stamps it with enough of the id to name
+  that commit alone, before running it again.
+  On main at `756bdbae` it would write 92 records; seven were edited after their stamp
+  commit and need a reader: II.2, II.6, II.7, II.8 and II.10, whose passages name Book I's
+  helpers as `BookI.…` since the renaming of 19 October; III.4, whose notes changed their
+  quotation marks and a word; and III.13, whose `[figure]` note was written after the
+  commit its page names. The migration waits for the branches in flight that re-stamp
+  records, the Book III cascade's re-stamps (ship C7) and axiom wave two, as it waited for
+  train Tw2 (Book I's Postulate 1 joins), landed as
+  [#193](https://github.com/jackChallis/stoicheia/pull/193).
+  It reads each record's own stamp commit, so it treats their stamps as any other, and it
+  runs on main after them, in a records pull request of its own. Then a reader reads and
+  stamps the records it lists, and with them #77's item 3: III.13's `[figure]` note read
+  against [`figures/III/13.svg`](../../figures/III/13.svg) and Heath's figure, and its page
+  re-rendered, so that its "Reviewed" row names the new commit. Then, in a check change of
+  its own, `text` is required like the other stamps: `check_fidelity.py` fails a record
+  without it, in place of its note naming them, and `check_acceptance.py` asks it of a
+  record at P2. That change also takes out every place that lets a record go without
+  `text`, or says "for now": `render.record_current`'s clause counting a record with no
+  `text` as current; `text` in `heath.FIELDS`, which becomes a stamp, with the comment
+  above FIELDS and `validate_review`'s "for now"; `check_fidelity.py`'s docstring, which
+  says a record with no `text` stamp yet is named in a note; SCHEMA's "for now" in the
+  `text` row, and its paragraph on the records stamped before `text`;
+  [WORKFLOW](../WORKFLOW.md), section 6's "Until every record carries `text`"; ACCEPTANCE
+  P2's "once it carries one"; [CONTRIBUTING](../../CONTRIBUTING.md)'s "once it carries its `text` stamp";
+  [PROGRAM](../PROGRAM.md)'s "where a record carries a `text` stamp"; and the template's
+  words for the migration. It also considers covering `[review]`'s `stage` and `items` by
+  `text`: a page words its "Reviewed" row from `stage`, and P11 to P16 count `items`, yet
+  neither is caught by any stamp now (SCHEMA, "Stamps"). Until that change, failing on
+  the records without `text` would stop main, so `check_fidelity.py` names each record
+  without it in a note, and fails only on a `text` that no longer matches. P2's
+  requirement waits too: asked now, it would fail all 99 records, where main passes 62,
+  and the 372 review items of those 62 (P11 to P16) with them; and while every record
+  failed it, the `acceptance` job's ratchet could not catch a regression in those items
+  as the branches above land.
+  The branch carries the work of the lane of 18 October that first built it, with thanks.
+
 - **A figure that draws every case says so
   ([#30](https://github.com/jackChallis/stoicheia/issues/30)).** `figure_note` in
   [`scripts/render.py`](../../scripts/render.py) put a record's `[figure] case` after a
@@ -5019,7 +5113,6 @@ findings:
   `scripts/heath.py`,
   `review/SCHEMA.md`,
   `tests/test_check_style.py`.
-
 - **Train C6b reconciled after axiom wave one.** Train C6b carries III.1's construction
   and porism and stage 4, merged with C6a after axiom wave one, at `4db10cf2`, and again
   at `529c93f7`, which brings main's restricted rule of superposition (#191) and main at
@@ -5104,7 +5197,6 @@ findings:
   since `73b97ab1` are main's, named in main's entries, and change neither the lock nor any
   pin.
   The merge itself writes no statement, check or expected value: each is one train's.
-
 - **III.1's construction guard, brief 0008, step 4.** `Audit/Centre.lean`, imported
   from `Audit.lean`, fixes the frozen type of `Elements.BookIII.Prop1.construction`
   and pins its full axiom list with `#guard_msgs`, read afresh from Lean at `34f2db57`.
@@ -5124,7 +5216,6 @@ findings:
   `centre_unique` is left to the reader of `Prop1.construction` and the lemmas it calls, as
   `Audit/Centre.lean` now says; a pin on the proved rules each entry uses is #168's. The pinned
   list itself is unchanged by the merge.
-
 - **The scaffold follows the restated Book III statements.** The protected file
   [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes [brief
   0008](0008-centre.md), step 6's restated signatures from `b260c826` for III.1, III.2,
@@ -5145,7 +5236,6 @@ findings:
   and `tests/` confirms that no check reads the scaffold's Book III strings. The scaffold
   creates only missing files, so it never rewrites a proof. This change lands before the
   content it describes, in a pull request of its own, since `scripts/` is a check input.
-
 - **Brief 0008, step 6: a drawn arc needs no centre (19 October 2026).** As
   [brief 0008](0008-centre.md), section 4, approved, `Arc.Drawn` in the foundations file
   [`Elements/Foundations/DefinitionsIII.lean`](../../Elements/Foundations/DefinitionsIII.lean)
@@ -5292,7 +5382,6 @@ findings:
   axiom.
   `Staging/Halves/Prop30.lean` and its import in `Staging.lean` are deleted. An
   independent reader read the record afresh and stamped it at `05b34dc0`.
-
 - **The citation sweep ([#32](https://github.com/jackChallis/stoicheia/issues/32)).**
   `scripts/sweep_citations.py`, standard library only, lists the candidates that brief
   0005's stage 5 names and [FORMALIZATION](../FORMALIZATION.md), section 5, forbids: the
