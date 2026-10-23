@@ -637,8 +637,11 @@ def run(cmd, cwd, *, env=None, input=None, binary=False,
         env = own_env(env, keep)
     if SANDBOX is not None:
         cmd = [SANDBOX_EXEC, "-p", SANDBOX, *cmd]
+    # A time limit only when one is given: the CI watch, among others, has none, and its
+    # call carries none (tests/test_release_gate.py).
+    limit = {} if timeout is None else {"timeout": timeout}
     return subprocess.run(cmd, cwd=cwd, env=env, input=input, capture_output=capture,
-                          text=not binary, timeout=timeout)
+                          text=not binary, **limit)
 
 
 def git(repo, *args, check=True, binary=False) -> str | bytes:
