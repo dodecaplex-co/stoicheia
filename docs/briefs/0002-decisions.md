@@ -5704,3 +5704,10 @@ findings:
   `tests/model/results/search-seed2.txt`, `tests/model/results/search-seed3.txt`,
   `tests/model/results/structured.txt` and `tests/model/results/summary.txt`.
   The generator wrote the model's laws again: 49 laws, reaching the same 152 words.
+  On integration with main at 5e5e51dc (22 October 2026),
+  [`Audit/Centre.lean`](../../Audit/Centre.lean), which main's Book III cascade added, has
+  its pin of III.1's construction set to what Lean now prints: the retired rules leave the
+  list, and `exists_centre` stays in it.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) keeps
+  this train's pins, and main's entries for III.1 and its porism are recounted on
+  `facts.json`: 39 tacit rules for III.1, with `exists_centre`, and 38 for the porism.

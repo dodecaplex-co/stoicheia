@@ -25,6 +25,18 @@ kind = "helper"
 helper = "Prop22.meet"
 note = "Euclid takes K where the circles meet without proving they meet; `Prop22.meet` finds a point of the circle about G inside the circle about F, including when that point is F itself, and H outside it. The lemma concludes that the circles cut one another by `Tacit.circles_meet_of_on_inside_outside` (System E, Intersection 4, in LeanEuclid's corrected form), now proved from Intersection 5, Circle 1 and `line_circle_between` in `Elements/Figure/Incidence.lean`; the main proof then chooses K on P's side of DE by `Tacit.circles_meet_same_side` (System E, Intersections 8), as the statement asks, a rule we still assume."
 
+[[passage]]
+at = "and let KF, KG be joined"
+kind = "carried"
+note = "The Lean joins KF and KG by Postulate 1, as Euclid asks. The later steps use lengths named by their points and do not use either joined line."
+unused = ["KF", "KG"]
+
+[[passage]]
+at = "I say that the triangle KFG has been constructed"
+kind = "carried"
+note = "The Lean checks that KFG is a triangle, K being off DE and F and G on it. No later step uses the fact: the conclusion gives K's side of FE and the three lengths, from which it follows."
+unused = ["this"]
+
 [review]
 stage = "full"
 commit = "01e0fe54"
