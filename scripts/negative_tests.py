@@ -89,10 +89,10 @@ own `--self-test` withholds Postulate 5 from nanoda alone.
 
 Every new plant restores its inputs in `finally`; the freshness plant also restores
 all renderer outputs.
-The four that build, changed_audit_pin, corrupt_olean, ill_typed_proof and
-planted_assumptions, attempt a restoration build; if it fails or is interrupted, every
-file in `.lake/build` returns to its saved contents and presence or absence before the
-plant, including dependent modules, hashes and traces. planted_assumptions always
+The five that build, changed_audit_pin, construction_in_clean_laws, corrupt_olean,
+ill_typed_proof and planted_assumptions, attempt a restoration build; if it fails or is
+interrupted, every file in `.lake/build` returns to its saved contents and presence or
+absence before the plant, including dependent modules, hashes and traces. planted_assumptions always
 restores or removes `Planted.*` outputs in a nested `finally`. Every plant reports its
 elapsed time, restoration included. An outer `finally` compares Git status with the entry status, including on interruption, without
 replacing an exception already in flight.
@@ -439,6 +439,53 @@ def scratch_plants(name: str, plants: tuple, kept: tuple = (), prohibited: tuple
             return
         path.write_text(planted)
         expect_failure(name, rules_in(root), *wanted, unwanted=unwanted)
+
+
+# An audit pin: the message `#print axioms` gives, as `#guard_msgs` holds it. The message
+# stops at the first end of a docstring, so a pin never runs across another `#guard_msgs`
+# (a statement pin's `#check`) to the next `#print axioms`. Here, with rewritten_pins, not
+# in scripts/negative/construction_in_clean_laws.py, because tests/test_negative_tests.py
+# reads them.
+AUDIT_PIN = re.compile(r"/--\n(info: (?:(?!\n-/\n).)*?)\n-/\n#guard_msgs in\n"
+                       r"#print axioms (\S+)\n", re.S)
+
+
+def rewritten_pins(rel: str) -> str | None:
+    """The audit file `rel` with every `#print axioms` pin rewritten to what Lean prints now,
+    as an author would after changing a proof: Lean prints the pinned names in a probe file
+    with the audit file's own imports, so each must be declared in what it imports, as
+    every name Audit/Superposition.lean pins is. Each message begins with its name, quoted,
+    and runs to the next. Every `#print axioms` command of the file must be read as a pin.
+    None, with the failure recorded, if they cannot all be read or printed."""
+    text = (ROOT / rel).read_text()
+    imports = [line for line in text.splitlines() if line.startswith("import ")]
+    names = [m[2] for m in AUDIT_PIN.finditer(text)]
+    commands = len(re.findall(r"^#print axioms ", text, re.M))
+    if len(names) != commands:
+        failures.append(f"printing the pins of {rel}: {commands} `#print axioms` commands, "
+                        f"but {len(names)} pins read; update this test")
+        return None
+    with tempfile.TemporaryDirectory(prefix="stoicheia-pins-") as tmp:
+        probe = Path(tmp) / "Pins.lean"
+        probe.write_text("\n".join(imports + [f"#print axioms {n}" for n in names]) + "\n")
+        result = run("lake", "env", "lean", str(probe))
+    if not expect_success(f"printing the pins of {rel}", result):
+        return None
+    out = re.sub(r"^\S*Pins\.lean:\d+:\d+: info: ", "", result.stdout, flags=re.M)
+    starts, at = [], 0
+    for name in names:
+        found = re.compile(rf"^'{re.escape(name)}' ", re.M).search(out, at)
+        if found is None:
+            break
+        starts.append(found.start())
+        at = found.end()
+    if not names or len(starts) != len(names) or out[:starts[0]].strip():
+        failures.append(f"printing the pins of {rel}: expected one message for each of "
+                        f"{len(names)} pins, in order, and nothing else")
+        print(result.stdout[-3000:])
+        return None
+    fresh = iter("info: " + out[a:b].rstrip() for a, b in zip(starts, starts[1:] + [len(out)]))
+    return AUDIT_PIN.sub(lambda m: m[0].replace(m[1], next(fresh), 1), text)
 
 
 class Plant(NamedTuple):

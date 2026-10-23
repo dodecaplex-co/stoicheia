@@ -379,6 +379,174 @@ class RestorationTests(unittest.TestCase):
                     self.assertEqual((self.root / rel).read_bytes(), data)
                 self.assertEqual(self.files(), saved)
 
+    def test_law_plants_restore_sources_and_outputs(self):
+        # The plant in two clean laws' proofs (#150), at each of its stages: whether the
+        # planted build, the probe that prints the pins, the audit build or the certificate
+        # run fails or is interrupted, or the run goes through to check_fidelity.py, and
+        # whatever the restoration build does, the law proofs, the audit pins and
+        # facts.json come back, and so do the outputs when the restoration build fails.
+        rels = ("Elements/Figure/Superposition.lean", "Audit/Superposition.lean", "facts.json")
+        originals = {rel: (REPO / rel).read_bytes() for rel in rels}
+        names = [m[2] for m in negative.AUDIT_PIN.finditer(originals[rels[1]].decode())]
+        self.assertTrue(names)
+        steps = ("baseline", "planted", "probe", "audit", "certificate", "fidelity")
+        caught = ("✗ I.4: its construction_rules for the cited law lenSymm is ['Postulate1'], "
+                  "not []\n✗ I.8: its construction_rules for the cited law lenSymm is "
+                  "['Postulate1'], not []\n✗ I.4: its construction_rules for the cited law "
+                  "angleSymm is ['Tacit.circles_meet'], not []\n")
+        cases = [(stage, outcome, restoring)
+                 for stage in ("planted", "probe", "audit", "certificate")
+                 for outcome in ("failed", "interrupted")
+                 for restoring in ("success", "failed", "interrupted")]
+        cases += [(None, "completed", restoring)
+                  for restoring in ("success", "failed", "interrupted")]
+        for stage, outcome, restoring in cases:
+            with self.subTest(stage=stage, outcome=outcome, restoring=restoring):
+                for rel, data in originals.items():
+                    self.write(self.root / rel, data)
+                for path in self.build.rglob("*"):
+                    if path.is_file():
+                        path.unlink()
+                self.outputs("Elements/Figure/Superposition")
+                saved = self.files()
+                calls = []
+
+                def ends(step, cmd, ok):
+                    """The step's result: its failure or interruption at `stage`."""
+                    if step != stage:
+                        return ok
+                    self.damage_outputs()
+                    if outcome == "interrupted":
+                        raise KeyboardInterrupt(f"{step} interrupted")
+                    return subprocess.CompletedProcess(cmd, 1, "", f"{step} failed")
+
+                def run(*cmd):
+                    calls.append(cmd)
+                    step = steps[len(calls) - 1] if len(calls) <= len(steps) else None
+                    done = subprocess.CompletedProcess(cmd, 0, "", "")
+                    if cmd == ("lake", "build", "Elements", "Audit"):
+                        # The restoration build, with every source back.
+                        for rel, data in originals.items():
+                            self.assertEqual((self.root / rel).read_bytes(), data)
+                        if restoring == "success":
+                            return done
+                        return self.failed_rebuild(restoring == "interrupted")
+                    if step in ("baseline", "fidelity"):
+                        self.assertEqual(cmd, (sys.executable, "scripts/check_fidelity.py"))
+                        if step == "baseline":
+                            # The unplanted tree's problems, read before anything is planted.
+                            for rel, data in originals.items():
+                                self.assertEqual((self.root / rel).read_bytes(), data)
+                            return subprocess.CompletedProcess(cmd, 0, "✓ fidelity\n", "")
+                        return subprocess.CompletedProcess(cmd, 1, caught, "")
+                    if step == "planted":
+                        self.assertEqual(cmd, ("lake", "build"))
+                        laws = (self.root / rels[0]).read_text()
+                        self.assertIn("have _planted := @Postulate1", laws)
+                        self.assertIn("have _planted := @Tacit.circles_meet", laws)
+                        return ends(step, cmd, done)
+                    if step == "probe":
+                        self.assertEqual(cmd[:3], ("lake", "env", "lean"))
+                        probe = Path(cmd[3])
+                        self.assertEqual(probe.name, "Pins.lean")
+                        self.assertNotEqual(probe.parent, self.root)
+                        printed = [line.split(" ", 2)[2]
+                                   for line in probe.read_text().splitlines()
+                                   if line.startswith("#print axioms ")]
+                        self.assertEqual(printed, names)
+                        out = "".join(f"{probe}:{i}:0: info: '{n}' depends on axioms: "
+                                      f"[propext, Elements.Postulate1]\n"
+                                      for i, n in enumerate(names, 2))
+                        return ends(step, cmd, subprocess.CompletedProcess(cmd, 0, out, ""))
+                    if step == "audit":
+                        self.assertEqual(cmd, ("lake", "build", "Audit"))
+                        audit = (self.root / rels[1]).read_text()
+                        self.assertEqual(audit.count("[propext, Elements.Postulate1]"),
+                                         len(names))
+                        return ends(step, cmd, done)
+                    self.assertEqual(step, "certificate")
+                    self.assertEqual(cmd, ("lake", "env", "lean", "Certificate/Facts.lean"))
+                    (self.root / "facts.json").write_text("{}\n")
+                    return ends(step, cmd, done)
+
+                interrupted = "interrupted" in (outcome, restoring)
+                with patch.object(negative, "run", side_effect=run):
+                    if interrupted:
+                        with self.assertRaises(KeyboardInterrupt):
+                            plant("construction_in_clean_laws")()
+                    else:
+                        plant("construction_in_clean_laws")()
+                reached = len(steps) if stage is None else steps.index(stage) + 1
+                self.assertEqual(len(calls), reached + 1)
+                self.assertEqual(calls[-1], ("lake", "build", "Elements", "Audit"))
+                for rel, data in originals.items():
+                    self.assertEqual((self.root / rel).read_bytes(), data)
+                if restoring != "success":
+                    self.assertEqual(self.files(), saved)
+                if stage is None and restoring == "success":
+                    self.assertEqual(negative.failures, [])
+                negative.failures.clear()
+
+    @staticmethod
+    def axiom_pin(name, axioms="[propext]"):
+        return (f"/--\ninfo: '{name}' depends on axioms: {axioms}\n-/\n"
+                f"#guard_msgs in\n#print axioms {name}\n")
+
+    STATEMENT_PIN = ("/--\ninfo: Elements.law : ∀ c ∈ cites, c.Holds primitives\n-/\n"
+                     "#guard_msgs in\n#check Elements.law\n")
+
+    def test_audit_pins_never_run_across_a_statement_pin(self):
+        # #150's review: a statement pin (`#guard_msgs in` over `#check`) before an axiom
+        # pin must be neither read into its message nor rewritten.
+        rel = "Audit/Pins.lean"
+        text = ("import Elements\n\n" + self.STATEMENT_PIN + "\n" + self.axiom_pin("Elements.a")
+                + "\n" + self.STATEMENT_PIN + "\n" + self.axiom_pin("Elements.b"))
+        self.write(self.root / rel, text.encode())
+        found = list(negative.AUDIT_PIN.finditer(text))
+        self.assertEqual([m[2] for m in found], ["Elements.a", "Elements.b"])
+        for m in found:
+            self.assertNotIn("#check", m[0])
+
+        def run(*cmd):
+            self.assertEqual(cmd[:3], ("lake", "env", "lean"))
+            return subprocess.CompletedProcess(cmd, 0, "".join(
+                f"{cmd[3]}:{i}:0: info: '{n}' depends on axioms: [propext, Elements.P]\n"
+                for i, n in enumerate(("Elements.a", "Elements.b"), 2)), "")
+        with patch.object(negative, "run", side_effect=run):
+            changed = negative.rewritten_pins(rel)
+        self.assertEqual(negative.failures, [])
+        self.assertEqual(changed, text.replace("[propext]", "[propext, Elements.P]"))
+        self.assertEqual(changed.count(self.STATEMENT_PIN), 2)
+
+    def test_every_print_axioms_must_be_read_as_a_pin(self):
+        # A `#print axioms` the pattern does not read as a pin fails the plant, before Lean
+        # is run, rather than being left as it was.
+        rel = "Audit/Pins.lean"
+        self.write(self.root / rel, ("import Elements\n\n" + self.axiom_pin("Elements.a")
+                                     + "\n#print axioms Elements.b\n").encode())
+        with patch.object(negative, "run", side_effect=AssertionError("Lean was run")):
+            self.assertIsNone(negative.rewritten_pins(rel))
+        self.assertEqual(negative.failures, [
+            f"printing the pins of {rel}: 2 `#print axioms` commands, but 1 pins read; "
+            "update this test"])
+        negative.failures.clear()
+        text = ("import Elements\n\n" + self.axiom_pin("Elements.a")
+                + "\n" + self.axiom_pin("Elements.b"))
+        self.write(self.root / rel, text.encode())
+
+        def run(*cmd):
+            self.assertEqual(cmd[:3], ("lake", "env", "lean"))
+            self.assertEqual(Path(cmd[3]).read_text().splitlines(), [
+                "import Elements", "#print axioms Elements.a", "#print axioms Elements.b"])
+            return subprocess.CompletedProcess(cmd, 0, "".join(
+                f"{cmd[3]}:{i}:0: info: '{name}' depends on axioms: [propext, Elements.P]\n"
+                for i, name in enumerate(("Elements.a", "Elements.b"), 2)), "")
+
+        with patch.object(negative, "run", side_effect=run):
+            changed = negative.rewritten_pins(rel)
+        self.assertEqual(negative.failures, [])
+        self.assertEqual(changed, text.replace("[propext]", "[propext, Elements.P]"))
+
     def test_certificate_plant_restores_source_on_interruption(self):
         source = self.root / "Certificate/Facts.lean"
         original = (REPO / "Certificate/Facts.lean").read_bytes()
