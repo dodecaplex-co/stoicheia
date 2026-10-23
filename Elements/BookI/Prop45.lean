@@ -94,7 +94,7 @@ theorem Prop45 {A B C D E₁ E E₂ : Point} (hABD : Triangle A B D) (hDBC : Tri
   /- I.42 builds on half of the triangle's own base, so KH lies along BD and H
      falls on D: the Lean writes D wherever Euclid writes H, and in our figure KFLM
      overlaps ABCD. K lies between B and D, and F is on A's side of BD. -/
-  obtain ⟨K, F, G, hBKD, hFA, hFKHG, hHKF, hFH⟩ := Prop42 hABD hE
+  obtain ⟨K, F, G, -, -, hFKHG, hHKF, hFH⟩ := Prop42 hABD hE
   have hGHK : Triangle G D K := hFKHG.1.symm.swap_right.triangle.bac
   /- I.44's point for the side is taken across GH from K, so that KH and HM are
      "not lying on the same side", as I.14 will ask. -/
