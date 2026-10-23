@@ -10,7 +10,7 @@ One of the five files of placement's cases (`Elements/BookIII/Placement.lean` ga
 A point is fixed by its distances from C and D together with whether it is on F's side of
 CD or on CD: on one side, by I.7; on the straight line, by the order of points on it. (A
 point on the side and a point on the line cannot share both distances: that is
-`Prop20.collinear_congr`, used in the assembly.)
+`BookI.Prop20.collinear_congr`, used in the assembly.)
 -/
 
 namespace Elements.BookIII

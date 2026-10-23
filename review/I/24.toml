@@ -16,7 +16,7 @@ note = "Euclid places G on the new arm with DG equal to DF; the Lean sets this l
 at = "the angle DGF is also equal to the angle DFG"
 kind = "case"
 helper = "Prop24.cases"
-note = "Euclid draws F beyond EG and leaves the rest to the reader. The Lean takes Proclus's other two cases (Heath, vol. 1, p. 297): F on EG, where EF is a part of EG, and F within the triangle DEG, by I.21."
+note = "Euclid draws F beyond EG and leaves the rest to the reader. The Lean takes Proclus' other two cases (Heath, vol. 1, p. 297): F on EG, where EF is a part of EG, and F within the triangle DEG, by I.21."
 
 [[passage]]
 at = "therefore the angle DFG is greater than the angle EGF"
@@ -35,10 +35,10 @@ case = "F beyond EG, on the opposite side from D, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "6e0cdd27"
+commit = "b7b41f51"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:1fbf4c22b29ebd3f"
-run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I22-I24b, independent re-read at 6e0cdd27"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I22-I24b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y3)"
 
 [review.items]
 statement = "pass"

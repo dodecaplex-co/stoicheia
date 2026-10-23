@@ -16,14 +16,14 @@ note = "Euclid reads off the crossing lines that A is off CD and D is off AB. Be
 at = "PORISM. From this it is manifest"
 kind = "carried"
 helper = "Prop15.porism"
-note = "Heath brackets the Porism, after Heiberg. It is proved as its own theorem, with its own certificate entry, I.15 Por."
+note = "Heath brackets the Porism, after J. L. Heiberg. It is proved as its own theorem, with its own certificate entry, I.15 Por."
 
 [review]
 stage = "full"
-commit = "570e6fa"
-reviewer = "GPT-6 Astra (Codex), records re-read"
+commit = "01e0fe54"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:eb3dee5d6e74fb41"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at 01e0fe54 (reader RT-x1)"
 
 [review.items]
 statement = "pass"

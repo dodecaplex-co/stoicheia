@@ -1,7 +1,7 @@
 # review/I/22.toml
 [statement]
 scope = "full"
-note = "Euclid's condition is taken as three hypotheses; the triangle is built with its corner at F, a side along the ray FE and its third corner on P's side."
+note = "Euclid's condition is three hypotheses; the triangle has a corner at F, a side on the ray FE, and its third corner on the side of FE where a given point P lies."
 fingerprint = "sha256:ece8cab1243b4f20"
 
 [route]
@@ -23,14 +23,14 @@ note = "Euclid's DE has an end D and extends endlessly towards E; the Lean start
 at = "again, with centre G and distance GH let the circle KLH be described"
 kind = "helper"
 helper = "Prop22.meet"
-note = "Euclid takes K where the circles meet without proving they meet; `Prop22.meet` finds a point of the circle about G inside the circle about F, including when that point is F itself, and H outside it. The lemma concludes that the circles cut one another by `Tacit.circles_meet_of_on_inside_outside` (System E, Intersection 4, in LeanEuclid's corrected form), now proved from Intersection 5, Circle 1 and `line_circle_between` in `Elements/Figure/Incidence.lean`; the main proof then chooses K on P's side of DE by `Tacit.circles_meet_same_side` (System E, Intersections 8), which remains an axiom."
+note = "Euclid takes K where the circles meet without proving they meet; `Prop22.meet` finds a point of the circle about G inside the circle about F, including when that point is F itself, and H outside it. The lemma concludes that the circles cut one another by `Tacit.circles_meet_of_on_inside_outside` (System E, Intersection 4, in LeanEuclid's corrected form), now proved from Intersection 5, Circle 1 and `line_circle_between` in `Elements/Figure/Incidence.lean`; the main proof then chooses K on P's side of DE by `Tacit.circles_meet_same_side` (System E, Intersections 8), as the statement asks, a rule we still assume."
 
 [review]
 stage = "full"
-commit = "251129b"
-reviewer = "GPT-6 Astra (Codex), independent reader Aw2-reader-e"
+commit = "01e0fe54"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:7231552689f848f2"
-run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I22-I24b, independent re-read at 6e0cdd27; wave two's text of this record, read in full with the Lean: brief 0005 stage 5, ship A wave-two records re-read, Aw2-reader-e, at 251129b"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I22-I24b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at 01e0fe54 (reader RT-x2)"
 
 [review.items]
 statement = "pass"

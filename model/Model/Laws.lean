@@ -13,8 +13,8 @@ differs from what the generator writes. To write it again, run `lake lean Check/
 `model/`. The [README](../README.md) says how the laws are translated and checked.
 
 It was written from the lock, `Certificate/axioms.lock`, whose sha256 is
-`09e393d606e185e79552f9eb3e5057724cfb619ddbb841cd3f444cc5fd909a56`,
-the hash that `model/lock.sha256` holds. The lock has 49 laws, and they reach 152 words of its
+`1431ed4a2de9c92c99fba0d32aaba0d4905302d9c31b57e9fb074b180584f792`,
+the hash that `model/lock.sha256` holds. The lock has 80 laws, and they reach 153 words of its
 vocabulary. Each law here is the library's axiom with the words of a signature `S` put for the
 library's words:
 
@@ -35,6 +35,7 @@ library's words:
 | `Elements.Kind.length` | `Kind.length` |
 | `Elements.Length` | `S.Length`, in `Model/Signature.lean` |
 | `Elements.Line` | `S.Line`, a field of `Signature` |
+| `Elements.LineMeetsCircle` | `S.LineMeetsCircle`, below |
 | `Elements.LinesMeet` | `S.LinesMeet`, below |
 | `Elements.Magnitude` | `S.Magnitude`, in `Model/Signature.lean` |
 | `Elements.Magnitude.add` | `S.add`, a field of `Signature` |
@@ -203,6 +204,10 @@ def Collinear (A B C : S.Point) : Prop :=
 def IsRightAngle (A B C : S.Point) : Prop :=
   ∃ D : S.Point, S.Between A B D ∧ ¬S.Collinear A B C ∧ S.ang A B C = S.ang C B D
 
+/-- `Elements.LineMeetsCircle`, translated. -/
+def LineMeetsCircle (L : S.Line) (α : S.Circle) : Prop :=
+  ∃ A B : S.Point, A ≠ B ∧ S.OnLine A L ∧ S.OnCircle A α ∧ S.OnLine B L ∧ S.OnCircle B α
+
 /-- `Elements.LinesMeet`, translated. -/
 def LinesMeet (L M : S.Line) : Prop :=
   L ≠ M ∧ ∃ A : S.Point, S.OnLine A L ∧ S.OnLine A M
@@ -327,10 +332,27 @@ def area_eq_zero_of_on_line : Prop :=
 def area_rotate : Prop :=
   ∀ (A B C : S.Point), S.area A B C = S.area C A B
 
+/-- `Elements.Tacit.area_swap`, translated. -/
+def area_swap : Prop :=
+  ∀ (A B C : S.Point), S.area A B C = S.area A C B
+
 /-- `Elements.Tacit.between_cases`, translated. -/
 def between_cases : Prop :=
   ∀ {A B C : S.Point} {L : S.Line}, A ≠ B → B ≠ C → A ≠ C → S.OnLine A L → S.OnLine B L →
     S.OnLine C L → S.Between A B C ∨ S.Between B A C ∨ S.Between A C B
+
+/-- `Elements.Tacit.between_of_area_add`, translated. -/
+def between_of_area_add : Prop :=
+  ∀ {A B C D : S.Point} {L : S.Line}, S.OnLine A L → S.OnLine B L → S.OnLine C L → A ≠ B → A ≠ C →
+    B ≠ C → ¬S.OnLine D L → S.area A C D + S.area D C B = S.area A D B → S.Between A C B
+
+/-- `Elements.Tacit.between_of_between_left`, translated. -/
+def between_of_between_left : Prop :=
+  ∀ {A B C D : S.Point}, S.Between A B C → S.Between A D B → S.Between A D C
+
+/-- `Elements.Tacit.between_of_between_right`, translated. -/
+def between_of_between_right : Prop :=
+  ∀ {A B C D : S.Point}, S.Between A B C → S.Between B C D → S.Between A B D
 
 /-- `Elements.Tacit.between_of_inside_chord`, translated. -/
 def between_of_inside_chord : Prop :=
@@ -340,6 +362,10 @@ def between_of_inside_chord : Prop :=
 /-- `Elements.Tacit.between_symm`, translated. -/
 def between_symm : Prop :=
   ∀ {A B C : S.Point}, S.Between A B C → S.Between C B A
+
+/-- `Elements.Tacit.centre_inside`, translated. -/
+def centre_inside : Prop :=
+  ∀ {A : S.Point} {α : S.Circle}, S.Centre A α → S.InsideCircle A α
 
 /-- `Elements.Tacit.circle_eq`, translated. -/
 def circle_eq : Prop :=
@@ -351,11 +377,26 @@ def circles_meet : Prop :=
   ∀ {A B : S.Point} {α β : S.Circle}, S.OnCircle A α → S.InsideCircle B α → S.InsideCircle A β →
     S.OnCircle B β → S.CirclesMeet α β
 
+/-- `Elements.Tacit.circles_meet_of_on_inside_outside`, translated. -/
+def circles_meet_of_on_inside_outside : Prop :=
+  ∀ {A B : S.Point} {α β : S.Circle}, S.OnCircle A α → S.InsideCircle B α ∨ S.OnCircle B α →
+    S.InsideCircle A β → S.OutsideCircle B β → S.CirclesMeet α β
+
+/-- `Elements.Tacit.circles_meet_opposite_side`, translated. -/
+def circles_meet_opposite_side : Prop :=
+  ∀ {α β : S.Circle} {B C D : S.Point} {L : S.Line}, S.CirclesMeet α β → S.Centre C α →
+    S.Centre D β → S.OnLine C L → S.OnLine D L → ¬S.OnLine B L → ∃ A : S.Point, S.OnCircle A α ∧
+    S.OnCircle A β ∧ S.OppositeSides A B L
+
 /-- `Elements.Tacit.circles_meet_same_side`, translated. -/
 def circles_meet_same_side : Prop :=
   ∀ {α β : S.Circle} {B C D : S.Point} {L : S.Line}, S.CirclesMeet α β → S.Centre C α →
     S.Centre D β → S.OnLine C L → S.OnLine D L → ¬S.OnLine B L → ∃ A : S.Point, S.OnCircle A α ∧
     S.OnCircle A β ∧ S.SameSide A B L
+
+/-- `Elements.Tacit.eq_of_len_eq_zero`, translated. -/
+def eq_of_len_eq_zero : Prop :=
+  ∀ {A B : S.Point}, S.len A B = 0 → A = B
 
 /-- `Elements.Tacit.exists_centre`, translated. -/
 def exists_centre : Prop :=
@@ -365,17 +406,55 @@ def exists_centre : Prop :=
 def exists_point : Prop :=
   ∀ (avoid : List S.Point), ∃ A : S.Point, ¬A ∈ avoid
 
+/-- `Elements.Tacit.exists_point_between`, translated. -/
+def exists_point_between : Prop :=
+  ∀ {B C : S.Point} {L : S.Line}, S.OnLine B L → S.OnLine C L → B ≠ C → ∀ (avoid : List S.Point),
+    ∃ A : S.Point, S.OnLine A L ∧ S.Between B A C ∧ ¬A ∈ avoid
+
 /-- `Elements.Tacit.exists_point_inside_circle`, translated. -/
 def exists_point_inside_circle : Prop :=
   ∀ (α : S.Circle) (avoid : List S.Point), ∃ A : S.Point, S.InsideCircle A α ∧ ¬A ∈ avoid
+
+/-- `Elements.Tacit.exists_point_on_circle`, translated. -/
+def exists_point_on_circle : Prop :=
+  ∀ (α : S.Circle) (avoid : List S.Point), ∃ A : S.Point, S.OnCircle A α ∧ ¬A ∈ avoid
 
 /-- `Elements.Tacit.exists_point_on_line`, translated. -/
 def exists_point_on_line : Prop :=
   ∀ (L : S.Line) (avoid : List S.Point), ∃ A : S.Point, S.OnLine A L ∧ ¬A ∈ avoid
 
+/-- `Elements.Tacit.exists_point_on_line_off_line`, translated. -/
+def exists_point_on_line_off_line : Prop :=
+  ∀ {L M : S.Line}, L ≠ M → ∀ (avoid : List S.Point), ∃ A : S.Point, S.OnLine A L ∧ ¬S.OnLine A M ∧
+    ¬A ∈ avoid
+
+/-- `Elements.Tacit.exists_point_opposite_side`, translated. -/
+def exists_point_opposite_side : Prop :=
+  ∀ {B : S.Point} {L : S.Line}, ¬S.OnLine B L → ∀ (avoid : List S.Point), ∃ A : S.Point,
+    S.OppositeSides A B L ∧ ¬A ∈ avoid
+
+/-- `Elements.Tacit.exists_point_same_side`, translated. -/
+def exists_point_same_side : Prop :=
+  ∀ {B : S.Point} {L : S.Line}, ¬S.OnLine B L → ∀ (avoid : List S.Point), ∃ A : S.Point,
+    S.SameSide A B L ∧ ¬A ∈ avoid
+
+/-- `Elements.Tacit.inside_not_on`, translated. -/
+def inside_not_on : Prop :=
+  ∀ {A : S.Point} {α : S.Circle}, S.InsideCircle A α → ¬S.OnCircle A α
+
+/-- `Elements.Tacit.inside_of_len_lt`, translated. -/
+def inside_of_len_lt : Prop :=
+  ∀ {A B C : S.Point} {α : S.Circle}, S.Centre A α → S.OnCircle B α → S.len A C < S.len A B →
+    S.InsideCircle C α
+
 /-- `Elements.Tacit.len_add_of_between`, translated. -/
 def len_add_of_between : Prop :=
   ∀ {A B C : S.Point}, S.Between A B C → S.len A B + S.len B C = S.len A C
+
+/-- `Elements.Tacit.len_lt_of_inside`, translated. -/
+def len_lt_of_inside : Prop :=
+  ∀ {A B C : S.Point} {α : S.Circle}, S.Centre A α → S.OnCircle B α → S.InsideCircle C α →
+    S.len A C < S.len A B
 
 /-- `Elements.Tacit.len_self`, translated. -/
 def len_self : Prop :=
@@ -395,6 +474,11 @@ def line_circle_between : Prop :=
 def line_circle_beyond : Prop :=
   ∀ {B C : S.Point} {L : S.Line} {α : S.Circle}, S.InsideCircle B α → S.OnLine B L → S.OnLine C L →
     C ≠ B → ∃ A : S.Point, S.OnCircle A α ∧ S.OnLine A L ∧ S.Between A B C
+
+/-- `Elements.Tacit.line_meets_circle_of_inside`, translated. -/
+def line_meets_circle_of_inside : Prop :=
+  ∀ {A : S.Point} {L : S.Line} {α : S.Circle}, S.InsideCircle A α → S.OnLine A L →
+    S.LineMeetsCircle L α
 
 /-- `Elements.Tacit.line_unique`, translated. -/
 def line_unique : Prop :=
@@ -418,9 +502,21 @@ def lt_trans : Prop :=
 def lt_trichotomy : Prop :=
   ∀ {k : Kind} (a b : S.Magnitude k), a < b ∨ a = b ∨ b < a
 
+/-- `Elements.Tacit.ne_of_between`, translated. -/
+def ne_of_between : Prop :=
+  ∀ {A B C : S.Point}, S.Between A B C → A ≠ B
+
+/-- `Elements.Tacit.ne_of_between_ends`, translated. -/
+def ne_of_between_ends : Prop :=
+  ∀ {A B C : S.Point}, S.Between A B C → A ≠ C
+
 /-- `Elements.Tacit.not_between_of_between`, translated. -/
 def not_between_of_between : Prop :=
   ∀ {A B C : S.Point}, S.Between A B C → ¬S.Between B A C
+
+/-- `Elements.Tacit.not_between_of_between_between`, translated. -/
+def not_between_of_between_between : Prop :=
+  ∀ {A B C D : S.Point}, S.Between A B C → S.Between A B D → ¬S.Between C B D
 
 /-- `Elements.Tacit.not_lt_zero`, translated. -/
 def not_lt_zero : Prop :=
@@ -430,25 +526,64 @@ def not_lt_zero : Prop :=
 def not_on_line_of_same_side : Prop :=
   ∀ {A B : S.Point} {L : S.Line}, S.SameSide A B L → ¬S.OnLine A L
 
+/-- `Elements.Tacit.on_circle_of_len_eq`, translated. -/
+def on_circle_of_len_eq : Prop :=
+  ∀ {A B C : S.Point} {α : S.Circle}, S.Centre A α → S.OnCircle B α → S.len A C = S.len A B →
+    S.OnCircle C α
+
 /-- `Elements.Tacit.on_line_of_area_eq_zero`, translated. -/
 def on_line_of_area_eq_zero : Prop :=
   ∀ {A B C : S.Point} {L : S.Line}, S.OnLine A L → S.OnLine B L → A ≠ B → S.area A B C = 0 →
     S.OnLine C L
+
+/-- `Elements.Tacit.on_line_of_between`, translated. -/
+def on_line_of_between : Prop :=
+  ∀ {A B C : S.Point} {L : S.Line}, S.Between A B C → S.OnLine A L → S.OnLine B L → S.OnLine C L
+
+/-- `Elements.Tacit.on_line_of_between_ends`, translated. -/
+def on_line_of_between_ends : Prop :=
+  ∀ {A B C : S.Point} {L : S.Line}, S.Between A B C → S.OnLine A L → S.OnLine C L → S.OnLine B L
 
 /-- `Elements.Tacit.outside_of_between`, translated. -/
 def outside_of_between : Prop :=
   ∀ {A B C : S.Point} {α : S.Circle}, S.InsideCircle A α ∨ S.OnCircle A α → ¬S.InsideCircle C α →
     S.Between A C B → S.OutsideCircle B α
 
+/-- `Elements.Tacit.pasch1`, translated. -/
+def pasch1 : Prop :=
+  ∀ {A B C : S.Point} {L : S.Line}, S.Between A B C → S.SameSide A C L → S.SameSide A B L
+
 /-- `Elements.Tacit.pasch2`, translated. -/
 def pasch2 : Prop :=
   ∀ {A B C : S.Point} {L : S.Line}, S.Between A B C → S.OnLine A L → ¬S.OnLine B L →
     S.SameSide B C L
 
+/-- `Elements.Tacit.pasch3`, translated. -/
+def pasch3 : Prop :=
+  ∀ {A B C : S.Point} {L : S.Line}, S.Between A B C → S.OnLine B L → ¬S.SameSide A C L
+
+/-- `Elements.Tacit.pasch4`, translated. -/
+def pasch4 : Prop :=
+  ∀ {A B C : S.Point} {L M : S.Line}, L ≠ M → S.OnLine B L → S.OnLine B M → S.OnLine A M →
+    S.OnLine C M → A ≠ C → A ≠ B → C ≠ B → ¬S.SameSide A C L → S.Between A B C
+
 /-- `Elements.Tacit.same_ray_of_angle_eq_zero`, translated. -/
 def same_ray_of_angle_eq_zero : Prop :=
   ∀ {A B C : S.Point} {L : S.Line}, A ≠ B → A ≠ C → S.OnLine A L → S.OnLine B L → S.ang B A C = 0 →
     S.OnLine C L ∧ ¬S.Between B A C
+
+/-- `Elements.Tacit.same_side_or`, translated. -/
+def same_side_or : Prop :=
+  ∀ {A B C : S.Point} {L : S.Line}, ¬S.OnLine A L → ¬S.OnLine B L → ¬S.OnLine C L →
+    ¬S.SameSide A B L → S.SameSide A C L ∨ S.SameSide B C L
+
+/-- `Elements.Tacit.same_side_refl`, translated. -/
+def same_side_refl : Prop :=
+  ∀ {A : S.Point} {L : S.Line}, ¬S.OnLine A L → S.SameSide A A L
+
+/-- `Elements.Tacit.same_side_symm`, translated. -/
+def same_side_symm : Prop :=
+  ∀ {A B : S.Point} {L : S.Line}, S.SameSide A B L → S.SameSide B A L
 
 /-- `Elements.Tacit.same_side_trans`, translated. -/
 def same_side_trans : Prop :=
@@ -457,6 +592,18 @@ def same_side_trans : Prop :=
 /-- `Elements.Tacit.superposition`, translated. -/
 def superposition : Prop :=
   Elements.Superposition.Rule S.primitives
+
+/-- `Elements.Tacit.triple_incidence1`, translated. -/
+def triple_incidence1 : Prop :=
+  ∀ {A B C D : S.Point} {L M N : S.Line}, S.OnLine A L → S.OnLine A M → S.OnLine A N →
+    S.OnLine B L → S.OnLine C M → S.OnLine D N → S.SameSide C D L → S.SameSide B C N →
+    ¬S.SameSide B D M
+
+/-- `Elements.Tacit.triple_incidence2`, translated. -/
+def triple_incidence2 : Prop :=
+  ∀ {A B C D : S.Point} {L M N : S.Line}, S.OnLine A L → S.OnLine A M → S.OnLine A N →
+    S.OnLine B L → S.OnLine C M → S.OnLine D N → S.SameSide C D L → ¬S.SameSide B D M →
+    ¬S.OnLine D M → B ≠ A → S.SameSide B C N
 
 end Law.Tacit
 
@@ -485,35 +632,66 @@ structure Neutral (S : Signature) : Prop where
   area_degenerate : Law.Tacit.area_degenerate S
   area_eq_zero_of_on_line : Law.Tacit.area_eq_zero_of_on_line S
   area_rotate : Law.Tacit.area_rotate S
+  area_swap : Law.Tacit.area_swap S
   between_cases : Law.Tacit.between_cases S
+  between_of_area_add : Law.Tacit.between_of_area_add S
+  between_of_between_left : Law.Tacit.between_of_between_left S
+  between_of_between_right : Law.Tacit.between_of_between_right S
   between_of_inside_chord : Law.Tacit.between_of_inside_chord S
   between_symm : Law.Tacit.between_symm S
+  centre_inside : Law.Tacit.centre_inside S
   circle_eq : Law.Tacit.circle_eq S
   circles_meet : Law.Tacit.circles_meet S
+  circles_meet_of_on_inside_outside : Law.Tacit.circles_meet_of_on_inside_outside S
+  circles_meet_opposite_side : Law.Tacit.circles_meet_opposite_side S
   circles_meet_same_side : Law.Tacit.circles_meet_same_side S
+  eq_of_len_eq_zero : Law.Tacit.eq_of_len_eq_zero S
   exists_centre : Law.Tacit.exists_centre S
   exists_point : Law.Tacit.exists_point S
+  exists_point_between : Law.Tacit.exists_point_between S
   exists_point_inside_circle : Law.Tacit.exists_point_inside_circle S
+  exists_point_on_circle : Law.Tacit.exists_point_on_circle S
   exists_point_on_line : Law.Tacit.exists_point_on_line S
+  exists_point_on_line_off_line : Law.Tacit.exists_point_on_line_off_line S
+  exists_point_opposite_side : Law.Tacit.exists_point_opposite_side S
+  exists_point_same_side : Law.Tacit.exists_point_same_side S
+  inside_not_on : Law.Tacit.inside_not_on S
+  inside_of_len_lt : Law.Tacit.inside_of_len_lt S
   len_add_of_between : Law.Tacit.len_add_of_between S
+  len_lt_of_inside : Law.Tacit.len_lt_of_inside S
   len_self : Law.Tacit.len_self S
   len_symm : Law.Tacit.len_symm S
   line_circle_between : Law.Tacit.line_circle_between S
   line_circle_beyond : Law.Tacit.line_circle_beyond S
+  line_meets_circle_of_inside : Law.Tacit.line_meets_circle_of_inside S
   line_unique : Law.Tacit.line_unique S
   lines_meet_of_opposite_sides : Law.Tacit.lines_meet_of_opposite_sides S
   lt_irrefl : Law.Tacit.lt_irrefl S
   lt_trans : Law.Tacit.lt_trans S
   lt_trichotomy : Law.Tacit.lt_trichotomy S
+  ne_of_between : Law.Tacit.ne_of_between S
+  ne_of_between_ends : Law.Tacit.ne_of_between_ends S
   not_between_of_between : Law.Tacit.not_between_of_between S
+  not_between_of_between_between : Law.Tacit.not_between_of_between_between S
   not_lt_zero : Law.Tacit.not_lt_zero S
   not_on_line_of_same_side : Law.Tacit.not_on_line_of_same_side S
+  on_circle_of_len_eq : Law.Tacit.on_circle_of_len_eq S
   on_line_of_area_eq_zero : Law.Tacit.on_line_of_area_eq_zero S
+  on_line_of_between : Law.Tacit.on_line_of_between S
+  on_line_of_between_ends : Law.Tacit.on_line_of_between_ends S
   outside_of_between : Law.Tacit.outside_of_between S
+  pasch1 : Law.Tacit.pasch1 S
   pasch2 : Law.Tacit.pasch2 S
+  pasch3 : Law.Tacit.pasch3 S
+  pasch4 : Law.Tacit.pasch4 S
   same_ray_of_angle_eq_zero : Law.Tacit.same_ray_of_angle_eq_zero S
+  same_side_or : Law.Tacit.same_side_or S
+  same_side_refl : Law.Tacit.same_side_refl S
+  same_side_symm : Law.Tacit.same_side_symm S
   same_side_trans : Law.Tacit.same_side_trans S
   superposition : Law.Tacit.superposition S
+  triple_incidence1 : Law.Tacit.triple_incidence1 S
+  triple_incidence2 : Law.Tacit.triple_incidence2 S
 
 /-- Every law of the lock, a field for each: those of `Neutral`, and Postulate 5. A model of
 the laws is a signature `S` with `Laws S`. -/

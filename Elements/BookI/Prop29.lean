@@ -56,7 +56,7 @@ theorem Prop29 {A B C D E F G H : Point} (hpar : AreParallel A B C D) (hAGB : Be
     -- Let the angle AGH be greater.
     intro hGHD_AGH
     -- Let the angle BGH be added to each;
-    /- Adding the same thing to both keeps "less than", a tacit rule of magnitudes
+    /- Adding the same thing to both keeps "less than", a tacit rule of magnitude
        (`add_lt_add_right`), as in I.17. -/
     have hadd : ∠ G H D + ∠ B G H < ∠ A G H + ∠ B G H :=
       add_lt_add_right (∠ B G H) hGHD_AGH
@@ -88,7 +88,7 @@ theorem Prop29 {A B C D E F G H : Point} (hpar : AreParallel A B C D) (hAGB : Be
       (Postulate5 hB_AB hG_AB hG_GH hH_GH hH_CD hD_CD hBD.1 (hBD.sameSide hG_GH hH_GH)
         hless).imp fun _ h => ⟨h.1, h.2.1⟩
     -- but they do not meet, because they are by hypothesis parallel.
-    /- That is Definition 23, said of the straight lines AB and CD. -/
+    /- That is Definition I.23, said of the straight lines AB and CD. -/
     exact (hpar.parallel hA_AB hB_AB hC_CD hD_CD).2 hmeet
   -- Therefore the angle AGH is not unequal to the angle GHD,
   /- Neither is the greater. The angle AGH is not, by Euclid's argument. Nor is the

@@ -1,14 +1,11 @@
 [statement]
 scope = "full"
-note = "A straight line DB whose square is the rectangle AD, DC touches the circle; the circle comes with a centre."
-fingerprint = "sha256:68600420107e4625"
+note = "A straight line DB whose square is the rectangle AD, DC touches the circle."
+fingerprint = "sha256:3fa81505760e369a"
 
 [route]
 kind = "euclid"
-
-[representation]
-tags = ["centre-given"]
-note = "The circle comes with a centre (`∃ F, Centre F ABC`). The explicit case names a centre on AC; the other branch retains the III.1 call where Euclid takes the centre."
+note = "The proof first splits on whether a centre lies on AC. In Euclid's case, the centre off AC, it takes F from the rule where Euclid takes the centre without a bracket for III.1; III.17 supplies the touching straight line, and III.36 the equality of squares. The case with the centre on AC names that centre F from the split."
 
 [[passage]]
 at = "and FD is the common base of the triangles"
@@ -28,10 +25,10 @@ helper = "Prop37.centre_on_secant"
 note = "Euclid leaves the case with the centre on AC to the reader; `Prop37.centre_on_secant` proves it in the first branch. It uses `Prop36.through_centre`, proved from III.36, and the given equality to obtain equal squares on DE and DB, and Euclid's argument with the two triangles finishes the proof."
 
 [figure]
-case = "the centre F off AC, with DE and DB touching on opposite sides of DF"
+case = "the centre F off AC, with distinct contacts B and E on opposite sides of DF"
 
 [review]
 stage = "exceptions"
-commit = "b24a95ab"
-reviewer = "GPT-6 Astra, independent reader"
-lean = "sha256:3be7dfc86a0014c8"
+commit = "b9f6a766"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:27dfde68b2204913"

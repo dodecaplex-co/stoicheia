@@ -49,15 +49,16 @@
         "Tacit.same_side_trans",
         "Tacit.superposition"
       ],
+      "excludes": ["Tacit.centre_unique"],
       "count": {"prefix": "Tacit.", "is": 38},
-      "why": "The porism's own entry carries every assumption its proof uses, pinned in full: since the second retirement the list holds 38 tacit rules, counted separately from III.1's construction."
+      "why": "The porism's own entry pins every assumption of its proof by the argument of Euclid's reductio from the given centre: since the second retirement, 38 tacit rules, counted separately from III.1's construction. Since centre_unique is now a theorem, excluding its name from axioms cannot detect a call to it; the claim that this proof avoids it rests on proof review. The proof neither calls III.1 nor uses exists_centre."
     },
     {
       "ref": "III.1",
       "field": "axioms",
       "excludes": ["Tacit.centre_unique"],
-      "count": {"prefix": "Tacit.", "is": 38},
-      "why": "III.1's own certificate is its construction alone: 38 tacit rules, counted separately from its porism. Since centre_unique is now a theorem, excluding its name from the axiom list no longer distinguishes the construction from the porism."
+      "count": {"prefix": "Tacit.", "is": 39},
+      "why": "III.1's certificate now also carries exists_centre through its construction, for D within by III.2's argument: since the second retirement, 39 tacit rules, counted separately from its porism. Since centre_unique is now a theorem, excluding its name from axioms cannot detect a call to it; the claim that this proof avoids it rests on proof review."
     },
     {
       "ref": "III.1 Por.",

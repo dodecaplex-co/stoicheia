@@ -157,7 +157,7 @@ All 99 of Books I–III, each with its porism and its companions.
 | E3 | Contracts | machine | `heath.py` passes: references, porisms, review terms and every record, against their contracts. |
 | E4 | Model | machine | `tests/model/run.py --fast` passes, as CI's `model` job runs it. |
 | E5 | The edition's pages | machine | CERTIFICATE.md, GRAPH.md and PROGRAM.md's status table are exactly what `render.py` makes, and the style rules and links hold in the files that belong to no proposition or book (README.md, the generated pages, the notes of the shared Lean modules, the overlap catalogue, the other reports and `review/terms.toml`). |
-| E6 | Nothing else staged | machine | No file under `Staging/` declares anything that P10 does not already assign to a proposition: every staged statement, definition and shared step has moved to `Elements/`, or been retired. |
+| E6 | Nothing else staged | machine | No file under `Staging/` declares anything that P10 does not already assign to a proposition: every staged statement, definition and shared step has moved to `Elements/`, or been retired; and no staged file that declares anything holds an import the scan cannot read for certain (#200). |
 
 ## The limitations allowed
 
@@ -273,10 +273,13 @@ section 10, step 9): the checklist with no failures, the independent audit, and 
 outside reading. The checklist is this page. The independent audit, by a model family that
 wrote none of the work, reads the [review] items afresh (brief 0005, stage 6), and its
 evidence goes under `docs/reports/acceptance/`. The cold outside reading scores the
-tagged candidate. On the candidate's pull request all five required checks are green,
-with `acceptance` under its full gate. The separate release gate, including the two
-readings and the owner's approval of the notes, is
+release candidate's exact pull-request head commit, identified by its full SHA; how the
+measurement is made, and its gate, are in the [review rubric](RUBRIC.md). On that pull request
+all five required checks are green, with `acceptance` under its full gate. The separate release
+gate, including the two readings and the owner's approval of the notes, is
 [WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10, steps 8 and 10.
+The final release tag is made after acceptance and the owner approves the release notes, as
+step 10 requires.
 
 The check that every Lean name a catalogue gives is declared, by asking Lean itself (B2,
 E2), follows Patrick Massot's [leanblueprint](https://github.com/PatrickMassot/leanblueprint),

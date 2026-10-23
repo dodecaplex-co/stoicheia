@@ -251,13 +251,17 @@ containment is local.
 | `sameSideOf_self`, `onLine_of_collinear`, `Collinear.change_point`, `sameSideOf_congr_collinear`, `sameSideOf_congr_line`, `sameSideOf_congr_point`, `OnRay.of_sameRay`, `SameSideOf.of_between_line` | Sides, rays and straight lines: Book Zero's kind of fact. |
 | `exists_circle_about`, `exists_onRay_inside`, `exists_inside_both` | Every point is a centre; a ray from the centre has points within the circle; of two circles about one point, one lies within the other. |
 
-Two of these overlap statements that brief 0006 stages. `foot_nearest` takes the foot of
-the perpendicular as I.12 gives it, which for A off BC is the staged `Foot A B C N`
-(`Staging/Stage4/Foot.lean`); it is not stated through `Foot`, which is not yet approved
-and whose existence and uniqueness are still stubs. `len_lt_of_add_lt` is I.20 with its
-degenerate case, which `Staging/Stage3/Degenerate.lean` states as an equality,
-`Prop20.collinear_iff`, still a stub; derived from it, it would rest on the stub. Condition 3
-gives their homes.
+Two of these overlap statements that brief 0006 introduced, and that its stages 3 and 4 have
+since moved into `Elements`. `foot_nearest` takes the foot of the perpendicular as I.12
+gives it, which for A off BC is `Foot A B C N`, the approved definition in
+`Elements/Foundations/DefinitionsIII.lean`; its existence and uniqueness, `Foot.exists` and
+`Foot.unique`, are proved in `Elements/BookIII/Squares.lean`. `foot_nearest` was written
+while `Foot` was staged, and is not stated through it: it keeps its current interface, and
+adapting it to take `Foot` as its hypothesis is future work. `len_lt_of_add_lt` is I.20 with
+its degenerate case, which `Prop20.collinear_iff` states as an equality, now proved in
+`Elements/BookI/HelpersTriangles.lean`; `len_lt_of_add_lt` keeps its own proof from
+`between_cases`, and deriving it from that fact is future work too. Condition 3 gives their
+homes.
 
 ### The routes
 
@@ -303,9 +307,10 @@ angle of the semicircle and the angle of contact this holds in any two circles
   the representation has no such word, since `LocallyEqual` compares regions at one vertex.
   The foundations move only triangles (superposition, in I.4 and I.8), and the proof moves
   nothing but the triangles of I.8.
-- The staged placement of brief 0006 (`Staging/Stage3/Placement.lean`) is not used. It is
-  assembled from cases still stubbed with `sorry`, and brief 0006 lets only III.24 and
-  `Arcs.lean` cite it; the route by I.8 does without it.
+- Brief 0006's placement is not used. When this prototype was written it was staged, and
+  assembled from cases still stubbed with `sorry`; stage 3 has since proved it, in
+  `Elements/BookIII/Placement.lean`. Brief 0006 lets only III.24 and `Arcs.lean` cite it,
+  and the route by I.8 does without it.
 
 The coordinator takes this form as the check of "congruent placement" that Astra asked for
 and #56 lists ([decisions](../briefs/0002-decisions.md), 18 October 2026, "Mixed angles: the
@@ -389,11 +394,14 @@ What is not proved is named in section 3, and neither proposition needs it. The 
 3. **The shared steps.** Each goes after the propositions it rests on, so nothing that
    cites Book I goes into the foundations.
    - `len_lt_of_add_lt` (I.20) goes beside `Prop20.collinear_iff` in
-     `Elements/BookI/HelpersTriangles.lean`, which brief 0006 adds.
-   - What rests on I.12, I.17, I.19 or I.20 goes to `Elements/BookIII/Squares.lean`, with
-     Book III's other steps that cite Book I: `foot_nearest` (beside `Foot.exists` and
-     `Foot.unique`, and stated through `Foot` if `Foot` is adopted first),
-     `near_inside_of_angle`, `near_across`, the `surrounds_` facts, `WithinAngle.surrounds`
+     `Elements/BookI/HelpersTriangles.lean`, where brief 0006's stage 3 put it.
+   - The original plan put what rests on I.12, I.17, I.19 or I.20 in
+     `Elements/BookIII/Squares.lean`, with Book III's other steps that cite Book I. It put
+     `foot_nearest` beside `Foot.exists` and `Foot.unique`, adapted to take `Foot` as its
+     hypothesis. The landed theorem remains in `Elements/BookIII/MixedAngles.lean` with
+     its point-and-right-angle interface; moving it beside `Foot` and adapting it are
+     still pending. The plan put `near_inside_of_angle`, `near_across`, the `surrounds_`
+     facts, `WithinAngle.surrounds`
      and `WithinAngle.nearVertexOpen`, `NearVertexOpen.mono_near`, and the checks and order
      laws that use them: `WithinAngle.locallyLess_of_lt`, `.locallyLess_iff`,
      `.locallyEqual_iff`, `LocallyLess.trans`, `.congr_left` and `.congr_right`.
@@ -466,7 +474,7 @@ Every finding below was answered with a change, in
 | *Standards, material.* `h1` and `h2` repeated as a clump in many signatures | III.16's parts are written once, as `Prop16.Outside` and `Prop16.FallsWithin`, and the hypotheses are named `hAE_out` and `hAE_in` |
 | *Standards, editorial.* "chord" for a straight line | Removed; `chord_greater_gt_right` and `chord_less_lt_right` renamed `any_greater_gt_right` and `any_less_lt_right` |
 | *Standards, editorial.* The body of `LocallyWithin` written out in six places | Stated through `LocallyWithin` |
-| *Standards, editorial.* Overlaps with the staged `Foot` and `Prop20.collinear_iff` | Not reused, for the reasons in section 2 and in the file's section on small facts; their homes are in condition 3 |
+| *Standards, editorial.* Overlaps with the staged `Foot` and `Prop20.collinear_iff` | Not reused, for the reasons in section 2 and in the file's section on small facts; their homes are in condition 3. Both were staged then; brief 0006's stages 3 and 4 have since moved them into `Elements` (section 2) |
 | *Standards, editorial.* Mysterious names; companions not in `Elements.BookIII` | Renamed: `Collinear.change_point`, `OnRay.of_sameRay`, `SameSideOf.of_between_line`, `WithinAngle.mono_left` and `mono_right`, and the locals `hEE'_AB` and `hEE'_AB'`. The namespace stays while staged (section 3) |
 | *Standards, editorial.* Issue numbers and check labels in the docstrings of declarations meant to move; long notes | No declaration docstring carries either now; the module docstring keeps its issue numbers, since it does not move. The long notes are cut on the move (condition 1) |
 | *Standards, editorial.* "(Heath, volume II, p. 40, on Proclus)" | Written in STYLE's form, "(Heath, vol. 2, p. 40)" |
