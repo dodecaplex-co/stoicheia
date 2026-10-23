@@ -5928,23 +5928,29 @@ class HandOver(Edge):
         self.assertNotIn(foreign_blob, " ".join(copied))
 
     def test_launcher_unsets_every_repository_variable(self):
-        # The launcher's list is safe_push's REPOSITORY_VARIABLES but GIT_NO_REPLACE_OBJECTS,
-        # which it sets, and GIT_REPLACE_REF_BASE, which it unsets on a line of its own.
-        text = (HERE / "hooks" / "safe-push").read_text()
-        match = re.search(r"(?m)^unset (GIT_ALTERNATE_OBJECT_DIRECTORIES(?:[^\n]*\\\n)*[^\n]*)$",
-                          text)
-        self.assertIsNotNone(match)
-        names = set(match.group(1).replace("\\\n", " ").split())
-        self.assertEqual(names, safe_push.REPOSITORY_VARIABLES
-                         - {"GIT_NO_REPLACE_OBJECTS", "GIT_REPLACE_REF_BASE"})
-        # Before the git() wrapper and before every other mention of git outside a
-        # comment, whatever the line it stands on.
-        code = [(m.start(), line) for m in re.finditer(r"(?m)^.*$", text)
-                for line in [m.group(0)] if not line.lstrip().startswith("#")]
-        first_git = min(start for start, line in code if re.search(r"\bgit\b", line)
-                        and not line.startswith("unset "))
-        self.assertLess(match.start(), first_git)
-        self.assertIn("\nunset GIT_REPLACE_REF_BASE\n", text[:first_git])
+        tmp = Path(tempfile.mkdtemp(prefix="launcher-env-359-", dir=TMP))
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        bindir, recorded = tmp / "bin", tmp / "git-environment.json"
+        bindir.mkdir()
+        program = ("import json, os, pathlib, sys; "
+                   "pathlib.Path(sys.argv[1]).write_text(json.dumps(dict(os.environ))); "
+                   "sys.exit(73)")
+        shim = bindir / "git"
+        shim.write_text(f"#!/bin/sh\nexec {shlex.quote(sys.executable)} -c "
+                        f"{shlex.quote(program)} {shlex.quote(str(recorded))}\n")
+        shim.chmod(0o755)
+        env = clean_env()
+        env.update({name: "/planted" for name in safe_push.REPOSITORY_VARIABLES})
+        env["PATH"] = f"{bindir}{os.pathsep}{env['PATH']}"
+        r = subprocess.run(["/bin/sh", str(HERE / "hooks" / "safe-push"), "--dry-run"],
+                           cwd=WORK, env=env, capture_output=True, text=True)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 73, out)
+        self.assertTrue(recorded.is_file(), f"the launcher did not invoke git:\n{out}")
+        seen = json.loads(recorded.read_text())
+        repository_environment = {name: value for name, value in seen.items()
+                                  if name in safe_push.REPOSITORY_VARIABLES}
+        self.assertEqual(repository_environment, {"GIT_NO_REPLACE_OBJECTS": "1"})
 
     def test_launcher_copies_origin_mains_harness_not_its_replacement(self):
         # Issue #256: origin/main's safe_push.py replaced by a copy that never hands over

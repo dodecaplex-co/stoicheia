@@ -29,6 +29,7 @@
 
   This entry approves the change to `scripts/test_safe_push.py`, whose new tests run the
   launcher from the test clone under a foreign `GIT_DIR` and `GIT_INDEX_FILE` and find
-  that it copied the clone's origin/main harness and never ran the foreign one, and
-  check that its list is `REPOSITORY_VARIABLES` less those two names and stands before
-  its first git command.
+  that it copied the clone's origin/main harness and never ran the foreign one. They also
+  execute the launcher with every `REPOSITORY_VARIABLES` name planted and check the two
+  explicit exceptions, `GIT_NO_REPLACE_OBJECTS` and `GIT_REPLACE_REF_BASE`: its first
+  git command receives from that set only `GIT_NO_REPLACE_OBJECTS=1`.
