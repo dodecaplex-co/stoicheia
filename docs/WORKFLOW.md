@@ -305,6 +305,8 @@ lake build Audit
 lake build Staging
 lake env lean Certificate/Facts.lean
 python3 -I tests/test_certificate.py
+python3 scripts/sweep_citations.py --self-test
+python3 scripts/sweep_citations.py
 python3 scripts/check_kernel.py --self-test
 python3 scripts/heath.py
 python3 scripts/check_fidelity.py
@@ -335,9 +337,6 @@ run the `safe-push-tests` job's; the commands of `risk` are under "Which jobs ru
 which class", after the block:
 
 ```sh
-python3 scripts/sweep_citations.py --self-test   # the sweep's plants, and below, the sweep,
-python3 scripts/sweep_citations.py     # which only lists: CI's `negative` job runs the two
-                                       # after lake build and Facts.lean, before the next line
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
@@ -503,8 +502,9 @@ run of `acceptance` to pass. The ruleset and the remaining merge requirements ar
   linter passes over any declaration with a `sorry` in it, even one that never runs, so a
   staged statement gives no hit until its proof arrives; outside Staging, a file with
   `sorry` or `admit` in its code is refused. Its `--self-test` plants each kind of hit,
-  and controls that must pass, in Lean outside the tree. CI's `negative` job runs both
-  after its build; the sweep there only lists, and the release gate (section 10, step
+  and controls that must pass, in Lean outside the tree. CI's `check` job runs both sweep
+  commands for every risk class, after `test_certificate.py` and before the whole-worktree
+  cleanliness check; the sweep there only lists, and the release gate (section 10, step
   10) runs it with `--fail-on-undeclared`.
 - **Staging builds; it is not proved.** `lake build Staging` checks that the statements
   staged before their proofs (section 2), each with `sorry` where its proof is due, still
@@ -986,7 +986,8 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       does R0 to R2, the full checks run, and a note says why. For R3, R4 and R5, the full
       checks of section 8 in that worktree, and `negative_tests.py` in a
       second, each step timed. The check scripts and what they expect (`scripts/`,
-      `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) are origin/main's
+      `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`, and `checks/`,
+      the registry of checks that #229 brings) are origin/main's
       copies; when the pull request changes any of them, the checks run again with its own
       copies, which must pass. A check that fails with origin/main's copies is noted in
       the pull request for the security review, and refuses the pull request if it also
@@ -1145,6 +1146,7 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
 
 **Protected paths.** `scripts/` (the hook and the launcher included), `.github/`,
 `Certificate/` (the lock included), `tests/`, `review/SCHEMA.md`, `review/terms.toml`,
+`checks/` (the registry of checks that #229 brings, one file per check),
 `.gitattributes`, `.gitignore` (a rule added there hides untracked files from
 `git status`, and so from the check that the generated pages are current), the
 toolchain files (`lakefile.toml`, `lakefile.lean`, which Lake reads in preference to
