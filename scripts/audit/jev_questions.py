@@ -11,8 +11,9 @@ at a glance. Helper signatures expose their use, not the work inside their proof
 Ten synthetic defect controls change generated rows only. Expectations report the
 review records' claims and remain local, as do provenance, mutations and coverage.
 
-Run from anywhere with Python 3.11 or later, using only the standard library and the
-repository's heath.py and jev.py, imported by path:
+Run from anywhere with Python 3.11 or later, using only the standard library, the
+repository's heath.py and jev.py, imported by path, and the comment reader the scripts
+share, `comment_end`, taken alone from the repository's check_fidelity.py:
 
     python3 scripts/audit/jev_questions.py --commit REV
     python3 scripts/audit/jev_questions.py --commit REV --check
@@ -22,9 +23,11 @@ Generation reads no credentials and sends nothing. Every evidence file is compar
 `git show REV:path`; every excerpt records its exact source slice and hash. Failure to read
 the committed evidence, missing evidence, ambiguous names and differences from the revision
 are errors. Evidence paths must be relative, without parent traversal or symlinks, and
-resolve inside the repository. Both helpers' paths pass those checks, and must name regular
-files, before either helper runs. Each Lean file's header is read by a small parser following
-Lean 4.35's grammar, before any masking: an optional `module`, then imports in the four forms
+resolve inside the repository. Both helpers' paths and the reader's pass those checks and
+must name regular files; their accepted code is read and compiled before any of it runs.
+Each Lean file's header is read by a small parser following Lean 4.35's grammar, before any
+masking:
+an optional `module`, then imports in the four forms
 `import`, `public import`, `meta import` and `public meta import`, each naming one module of
 plain or «...» components and ending its line, with ordinary comments between the words. A
 doc comment or any other word before an import, `prelude`, `import all`, a block comment
@@ -127,17 +130,18 @@ HELPERS = (('jev_questions_heath', 'scripts/heath.py'),
            ('jev_questions_client', 'scripts/audit/jev.py'))
 
 
-def helper_modules(helpers: tuple[tuple[str, str], ...]) -> list:
-    """Check every helper's path, then read and compile each, before any helper runs."""
+def _prepare_modules(helpers: tuple[tuple[str, str], ...]) -> list:
     checked = []
     for name, path in helpers:
         resolved = evidence_path(path)
         require(resolved.is_file(), f'{path}: helper module is missing or not a regular file')
         checked.append((name, path, resolved))
-    # Each helper runs from the bytes read here, never through a final symlink.
-    code = [(name, path, resolved, compile(read_no_follow(resolved), str(resolved), 'exec',
-                                           dont_inherit=True))
+    return [(name, path, resolved, compile(read_no_follow(resolved), str(resolved), 'exec',
+                                            dont_inherit=True))
             for name, path, resolved in checked]
+
+
+def _execute_modules(code: list) -> list:
     result = []
     for name, path, resolved, compiled in code:
         spec = importlib.util.spec_from_file_location(name, resolved)
@@ -149,8 +153,49 @@ def helper_modules(helpers: tuple[tuple[str, str], ...]) -> list:
     return result
 
 
+def helper_modules(helpers: tuple[tuple[str, str], ...]) -> list:
+    """Check every helper's path, then read and compile each, before any helper runs."""
+    return _execute_modules(_prepare_modules(helpers))
+
+
+# check_fidelity's reader of where a Lean comment ends, shared with it (#206). The file
+# imports heath and generated_counts by name, which a generator run by path, as with
+# `python3 -I`, cannot import, so the function is taken alone and nothing else of it runs.
+READER = ('jev_questions_reader', 'scripts/check_fidelity.py', 'comment_end')
+
+
+def _prepare_function(name: str, path: str, function: str) -> tuple[str, object]:
+    resolved = evidence_path(path)
+    require(resolved.is_file(), f'{path}: helper module is missing or not a regular file')
+    tree = ast.parse(read_no_follow(resolved), str(resolved))
+    found = [node for node in tree.body
+             if isinstance(node, ast.FunctionDef) and node.name == function]
+    require(len(found) == 1, f'{path}: defines no single function {function}')
+    compiled = compile(ast.Module(found, type_ignores=[]), str(resolved), 'exec',
+                       dont_inherit=True)
+    return name, compiled
+
+
+def _execute_function(prepared: tuple[str, object]):
+    name, compiled = prepared
+    namespace = {'__name__': name}
+    exec(compiled, namespace)
+    functions = [value for value in namespace.values() if callable(value)]
+    require(len(functions) == 1, f'{name}: prepared no single function')
+    return functions[0]
+
+
+def shared_function(name: str, path: str, function: str):
+    """Check a helper's path, then define its top-level `function` alone, from the bytes
+    read."""
+    return _execute_function(_prepare_function(name, path, function))
+
+
 try:
-    heath, jev = helper_modules(HELPERS)
+    prepared_helpers = _prepare_modules(HELPERS)
+    prepared_reader = _prepare_function(*READER)
+    heath, jev = _execute_modules(prepared_helpers)
+    shared_comment_end = _execute_function(prepared_reader)
 except (Refusal, OSError) as error:
     if __name__ != '__main__':
         raise
@@ -295,23 +340,11 @@ KEYWORD_TOKENS = frozenset('''
 
 
 def comment_end(src: str, i: int) -> int:
-    """Return the end of the line comment or nested block comment that starts at i."""
-    if src.startswith('--', i):
-        end = src.find('\n', i)
-        return len(src) if end < 0 else end
-    depth = 1
-    i += 2
-    while i < len(src) and depth:
-        if src.startswith('/-', i):
-            depth += 1
-            i += 2
-        elif src.startswith('-/', i):
-            depth -= 1
-            i += 2
-        else:
-            i += 1
-    require(depth == 0, 'unterminated Lean comment')
-    return i
+    """Return the end of the line comment or nested block comment that starts at i, as Lean
+    reads it (check_fidelity.py's `comment_end`)."""
+    end = shared_comment_end(src, i)
+    require(end is not None, 'unterminated Lean comment')
+    return end
 
 
 def string_literals(src: str, start: int, end: int) -> list[str]:
@@ -506,8 +539,9 @@ class Index:
 
     def add(self, path: str) -> None:
         raw = self.evidence.read(path)
-        # Lean's doc comment opens with all of `/--`, the masking's comment with `/-`, so in
-        # `/--/` the masking's ends at once and Lean's runs on to a later `-/`.
+        # Refused since the masking, which opened a comment with `/-` alone, ended `/--/` at
+        # once where Lean's doc comment runs on to a later `-/`. The masking now reads it as
+        # Lean does (`comment_end`, #206), and the refusal stands.
         require('/--/' not in raw, f'{path}: unsupported doc comment opening /--/')
         clean, comments, self.imports[path] = lean_source(path, raw)
         self.clean[path] = clean
@@ -864,11 +898,10 @@ class Calls:
         slash within a token (OPENER); a comment in it may hold no `{`, and a line comment
         no `-/`, at which Lean, put within a comment, a «...» name or an interpolated string
         by something earlier such as `'"'`, would leave it; and the index refuses, in any
-        file it reads, `/--/`, after which Lean's doc comment runs on to a later `-/` where
-        the masking's ends at once, and a notation token holding `--` or `/-`, which Lean
-        reads whole where the masking opens a comment. Some forms outside the plain forms
-        are refused first, with a reason of their own: those FOREIGN and DOT name, anywhere
-        in the declaration, and a bar after a word ALTERNATIVES names.
+        file it reads, a doc comment opening `/--/`, and a notation token holding `--` or
+        `/-`, which Lean reads whole where the masking opens a comment. Some forms outside
+        the plain forms are refused first, with a reason of their own: those FOREIGN and
+        DOT name, anywhere in the declaration, and a bar after a word ALTERNATIVES names.
 
         The constructors end before the first line outside every bracket that is not blank
         and opens neither `  |` nor three spaces, where a deriving clause or a command
