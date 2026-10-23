@@ -77,6 +77,9 @@ class Table(unittest.TestCase):
             ("checks/01-lake-build.toml", "R3"),     # the registry of checks (#229)
             ("checks/README.md", "R3"),              # though README.md is R0
             ("checks/99-a-new-check.toml", "R3"),
+            ("docs/ACCEPTANCE.md", "R3"),            # a check input (#249), not R1
+            ("docs/ACCEPTANCE.md.orig", "R0"),
+            ("docs/STYLE.md", "R1"),
             ("Elements/BookI/Prop01.lean", "R2"),
             ("Audit/Overlaps.lean", "R2"),
             ("Overlap.lean", "R2"),                  # any .lean outside Elements
