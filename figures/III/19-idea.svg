@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.19 at a glance</title>
-  <desc>Where DE touches the circle at C (red), draw CA at right angles to it (yellow): it runs through the centre F (black), where the conclusion puts it. Heath's F is a centre supposed off CA, which the proof rules out.</desc>
+  <desc>Where DE (red) touches the circle at C, draw CA at right angles to it (yellow): it runs through the centre F (black), where the conclusion puts it. Heath's F is a centre supposed off CA, which the proof rules out.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="206.00" cy="136.00" r="98.00" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M175.72,229.20 L149.09,220.55 A28,28 0 0,1 184.37,202.57 Z" fill="#f2b705"/>
