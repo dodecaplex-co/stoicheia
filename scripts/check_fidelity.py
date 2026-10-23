@@ -114,9 +114,10 @@
      (`notation`, `infix` and the rest of HIDDEN), before the section's end; a namespace,
      or a declaration by `theorem`, `def` or another word the scan reads (a constructor
      among them), with a name it reads that has a part `Elements`, or a part in «…» that
-     holds a dot (`declared_in`); or a theorem of the section whose type is a
+     holds a dot (`declared_in`); or a theorem of the section whose type is written as a
      proposition's own, not one of AUDIT_NOT_OVERLAPS, whose full name, as the scan reads
-     it, another declaration of the file has. The scan reads the file's text, not Lean's
+     it, is the name it reads for another declaration of the file. The scan reads the
+     file's text, not Lean's
      elaboration of it, and trusts the modules of `Elements` the file imports: it refuses
      the forms above, but a text it does not recognise as one of them may still make a
      theorem's type read otherwise than Lean elaborates it. It is a guard against honest
@@ -1801,8 +1802,9 @@ def overlap_proofs(path: Path) -> tuple[dict, str]:
     `read_lean` reads it; `lake build Audit` checks that Lean reports what they say.
     Returns the map and "", or {} and why the file cannot be read: among the reasons, a
     symbolic link, each form that `declared_in` refuses, and a theorem of the section
-    whose type is a proposition's own, not one of AUDIT_NOT_OVERLAPS, whose full name, as
-    the scan reads it, another declaration of the file has, since the scan could not tell
+    whose type is written as a proposition's own, not one of AUDIT_NOT_OVERLAPS, whose
+    full name, as the scan reads it, is the name it reads for another declaration of the
+    file, since the scan could not tell
     which declaration its pin reports."""
     if path.is_symlink():
         # Named as written: `rel` would name the file the link points to.

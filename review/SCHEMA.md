@@ -144,8 +144,9 @@ declares a token (`notation`, `infix`, `infixl`, `infixr`, `prefix`, `postfix`, 
 namespace, or a declaration by `theorem`, `def` or another word the scan reads (a
 constructor among them), with a name it reads that has a part `Elements`, or a part in
 «…» that holds a dot, which the check cannot tell from a longer name; or a theorem of
-the section whose type is a proposition's own, other than `Audit.I_7`, whose full name,
-as the scan reads it, another declaration of the file has. `macro`, `elab` and their
+the section whose type is written as a proposition's own, other than `Audit.I_7`, whose
+full name, as the scan reads it, is the name it reads for another declaration of the
+file. `macro`, `elab` and their
 `_rules` are refused by the source scan, in `Audit/` and `Elements/` alike. The scan
 reads the file's text, not Lean's elaboration of it, and trusts the modules of
 `Elements` the file imports: it refuses the forms above, but a text it does not
