@@ -347,8 +347,8 @@ worth naming. The first mate's report has a note on every statement.
   ([brief 0006](0006-statements.md), stage 4).
 - **III.14, III.15** take the centre and the feet of the perpendiculars as hypotheses,
   since Definitions 4 and 5 measure from them; III.14's proof takes no other centre,
-  though Heath gives "[III. 1]" there (above). The perpendiculars are given, so I.12 is not cited; that the feet
-  fall within the straight lines is `foot_between`.
+  though Heath gives "[III. 1]" there (above). The perpendiculars are given, so I.12 is
+  not cited; that the feet fall within the straight lines is `foot_between`.
 - **III.15** says "the diameter is greatest" together with the more remote `FG` and
   `‖E H‖ < ‖E K‖`, as Euclid does: his proof that `AD` is greater than `BC` goes through
   `MN`, made on `EK` by cutting off `EL` equal to the less `EH` (I.3), so it uses the

@@ -433,9 +433,9 @@ point near enough by the order of the points on the straight line and the adding
 lengths, not by a rule about circles.
 
 Our III.2 is Euclid's reductio, by I.5, I.16 and I.19, with its centre from
-`exists_centre`, where Heath's reference is III.1, and it rests on neither rule. Circle 2 used to reach it through III.1, which called the rule to
-put D, the middle point of AB, within the circle, so that the straight line drawn through
-D at right angles to AB meets the circle on both sides of it: "a fact which Euclid first
+`exists_centre`, where Heath's reference is III.1, and it rests on neither rule. Circle 2
+used to reach it through III.1, which called the rule to put D, the middle point of AB,
+within the circle, so that the straight line drawn through D at right angles to AB meets the circle on both sides of it: "a fact which Euclid first
 demonstrates in III. 2", as Isaac Todhunter observes (Heath, vol. 2, p. 7). III.1's
 helper `Prop1.within` proves it by III.2's own argument, from a centre that III.1's
 construction takes from `exists_centre` and passes to the helper: on AB that centre is

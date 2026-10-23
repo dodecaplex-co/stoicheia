@@ -252,8 +252,8 @@ tells the steps of `Elements/BookII/Rectangles.lean`, with `Parallel.between`,
 Book II's areas correspond to the pieces drawn: which expression is which piece, and why
 the pieces make up the whole. Book III's tells how proofs take a circle's centre: by
 `exists_centre` where none is supplied, under Heath's "[III. 1]" as elsewhere, or from
-geometric data such as equal circles. It tells the constructions whose references the text leaves
-unstated (I.10, I.11, I.12, I.23), its definitions and the circumference measured by
+geometric data such as equal circles. It tells the constructions whose references the text
+leaves unstated (I.10, I.11, I.12, I.23), its definitions and the circumference measured by
 twice its angle, the steps of `Squares.lean`
 and `Circumferences.lean`, the porisms of III.1 and III.16, and where its statements part
 from Euclid's. A shared step may be told on its home page (II.1's rectangle contained,

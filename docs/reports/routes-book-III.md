@@ -816,9 +816,8 @@ by losing `exists_point_same_side`; and III.1 beneath 42 entries and then none. 
 certificate is run again on the integrated revision (item 2). Items 1, 3 and 5 are done
 in this train, but for the reason given for III.2's expectation in
 `tests/certificate_expectations.json`, whose owner is asked to change it; items 4 and 6
-remain. Two passages outside this section speak of the state before this train: the row
-for #131 in the opening table, "analysis only", and the last sentence of the section on
-III.8, that its proof takes the centre by III.1.
+remain. The row for #131 in the opening table and the last sentence of the section on
+III.8 are brought up to date in this train.
 
 ## Checks
 
