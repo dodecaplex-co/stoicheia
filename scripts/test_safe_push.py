@@ -5886,6 +5886,59 @@ class HandOver(Edge):
         self.assertEqual(self.guard(out, "harness"), "ok", out)
         self.assertNotIn("running origin/main's in its place", out)
 
+    def test_launcher_follows_no_foreign_git_dir(self):
+        # #359: run from the clone under a GIT_DIR naming another repository, whose
+        # origin/main holds a harness of its own, the launcher fetches, copies and runs the
+        # clone's origin/main harness, never the other's.
+        plain = {name: value for name, value in clean_env().items()
+                 if not name.startswith("GIT_")}
+        plain.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
+        tmp = Path(tempfile.mkdtemp(prefix="launcher-359-", dir=TMP))
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        marker, foreign = tmp / "the-foreign-harness-ran", tmp / "foreign"
+        git(tmp, "init", "-q", str(foreign), env=plain)
+        (foreign / "scripts").mkdir()
+        (foreign / "scripts" / "safe_push.py").write_text(
+            f"HARNESS_PROTOCOL = 1\nopen({str(marker)!r}, 'w').close()\n")
+        (foreign / "scripts" / "heath.py").write_text("# The foreign harness's heath.\n")
+        git(foreign, "add", "scripts", env=plain)
+        git(foreign, "-c", "user.name=Foreign", "-c", "user.email=foreign@example.invalid",
+            "commit", "-q", "--no-verify", "-m", "A foreign harness", env=plain)
+        git(foreign, "branch", "-M", "main", env=plain)
+        git(foreign, "remote", "add", "origin", str(foreign), env=plain)
+        git(foreign, "fetch", "-q", "origin", env=plain)
+        foreign_blob = git(foreign, "rev-parse", "refs/remotes/origin/main:scripts/safe_push.py",
+                           env=plain).strip()
+        env = dict(plain, GIT_DIR=str(foreign / ".git"),
+                   GIT_INDEX_FILE=str(foreign / ".git" / "index"),
+                   STOICHEIA_PUSH_LOG=str(tmp / "pushes.log"))
+        r = subprocess.run(["/bin/sh", str(HERE / "hooks" / "safe-push"),
+                            "--_test-skip-checks", "--dry-run"], cwd=WORK, env=env,
+                           capture_output=True, text=True)
+        out = r.stdout + r.stderr
+        self.assertFalse(marker.exists(), f"the launcher ran the foreign harness:\n{out}")
+        own = git(WORK, "rev-parse", "refs/remotes/origin/main:scripts/safe_push.py",
+                  env=plain).strip()
+        own_heath = git(WORK, "rev-parse", "refs/remotes/origin/main:scripts/heath.py",
+                        env=plain).strip()
+        copied = sorted(p.name for p in (tmp / "harness").iterdir())
+        self.assertEqual(copied, [f"{own}-{own_heath}"], out)
+        self.assertNotIn(foreign_blob, " ".join(copied))
+
+    def test_launcher_unsets_every_repository_variable(self):
+        # The launcher's list is safe_push's REPOSITORY_VARIABLES but GIT_NO_REPLACE_OBJECTS,
+        # which it sets, and GIT_REPLACE_REF_BASE, which it unsets on a line of its own.
+        text = (HERE / "hooks" / "safe-push").read_text()
+        match = re.search(r"(?m)^unset (GIT_ALTERNATE_OBJECT_DIRECTORIES(?:[^\n]*\\\n)*[^\n]*)$",
+                          text)
+        self.assertIsNotNone(match)
+        names = set(match.group(1).replace("\\\n", " ").split())
+        self.assertEqual(names, safe_push.REPOSITORY_VARIABLES
+                         - {"GIT_NO_REPLACE_OBJECTS", "GIT_REPLACE_REF_BASE"})
+        first_git = re.search(r"(?m)^[a-z_]+=\$\(git |^git ", text).start()
+        self.assertLess(match.start(), first_git)
+        self.assertIn("\nunset GIT_REPLACE_REF_BASE\n", text[:first_git])
+
     def test_launcher_copies_origin_mains_harness_not_its_replacement(self):
         # Issue #256: origin/main's safe_push.py replaced by a copy that never hands over
         # and does not scan. The launcher copies out and runs origin/main's own, which
