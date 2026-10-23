@@ -217,9 +217,9 @@ def comment_end(src: str, i: int) -> int | None:
     if none does. A block's body begins at its fourth character, after `/--` or `/-!`,
     and past the third of any other `/-`, which Lean passes over, so that `/-/- -/` is a
     whole comment and the `-/` of `/--/` closes nothing. `_read_code`, and so
-    `read_lean` and `lean_comments`, check_style's notes and the Jev generator call this
-    (#206); it uses nothing else of this file, for scripts/audit/jev_questions.py takes
-    it alone."""
+    `read_lean` and `lean_comments`, and check_style's notes call this (#206). It uses
+    nothing else of this file: risk.py and the Jev generator, which cannot import it,
+    each hold a copy, word for word, which their tests hold to this one (#349)."""
     if src.startswith("--", i):
         end = src.find("\n", i)
         return len(src) if end < 0 else end
