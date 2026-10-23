@@ -124,7 +124,7 @@ theorem Prop7 {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCir
       rcases between_cases hMF.symm hMB hBF.symm hF_N hM_N hB_N with h | h | h
       · exact h
       · exact absurd h hMFB
-      · exact absurd hB (inside_not_on (Prop2.within ⟨E, hE⟩ (Or.inl hF_in) (Or.inl hM_in) h))
+      · exact absurd hB (inside_not_on (Prop2.within (Or.inl hF_in) (Or.inl hM_in) h))
     have hBFE : Triangle B F E := hBC'.triangle.cab
     have hang : ∠ C E F < ∠ B E F := by
       rw [← angle_onRay_left (OnRay.of_between hEMC) hEF.symm]

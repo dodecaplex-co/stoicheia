@@ -71,7 +71,7 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 |---|---|---|---|---|---|---|
 | I | 48 of 48 proved, and I.15's porism and ten companion theorems | released (I.45 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
 | II | 14 of 14 proved, and ten companion theorems | released (II.14 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
-| III | 37 of 37 proved, and the porisms of III.1 and III.16 and 17 companion theorems | released (next: centre-rule restatements, #59; full records, #29) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
+| III | 37 of 37 proved, and the porisms of III.1 and III.16 and 18 companion theorems | released (next: centre-rule restatements, #59; full records, #29) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
 | IV | not stated | brief (draft, awaiting approval) | — | — | — | — |
 | V–XIII | not begun | — | — | — | — | — |
 
@@ -152,7 +152,7 @@ own, the figure letters as three:
 
 ### Open items
 
-What remains on 21 October, after trains C6a and C6b. Stage 2 is in the edition; I.47 general, for
+What remains on 21 October, after trains C6a, C6b and C6c. Stage 2 is in the edition; I.47 general, for
 squares on either side of each base, followed in [#134]. Stage 3 is in the edition too
 (#20 to #25): placement in all its cases, with superposition not among its direct axioms,
 III.23 point by point, III.24 restated to conclude congruence by Euclid's route, III.26 and
@@ -161,16 +161,18 @@ the rule that every circle has a centre (`Tacit.exists_centre`, brief 0008's ste
 III.5 and III.6 read with crossing and contact within (brief 0008, section 7). Stage 4 is
 in the edition as well: `Foot`, III.14 and III.15's companions, III.25 with `Prop25.kind`,
 and `Prop25.meets` beside III.25 in `Elements/BookIII/Prop25.lean`. III.1's construction
-is at home in `Elements/BookIII/Prop01.lean`. On 22 October, with the owner's approval,
-brief 0013's figures followed ([#116]): I.45 and II.14 hold for any rectilineal figure,
-given by its outline (`Prop45.outline`, `Prop14.outline`), and their records are full
-again. How work lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull
-requests".
+is at home in `Elements/BookIII/Prop01.lean`, with its guard, `Audit/Centre.lean` (brief
+0008's step 4). Brief 0008's step 6 is done as well: the Book III statements that only
+assumed a centre now take it inside their proofs, and III.30's halves is proved as the
+companion "III.30 halves" ([#67]). On 22 October, with the owner's approval, brief
+0013's figures followed ([#116]): I.45 and II.14 hold for any rectilineal figure, given by
+its outline (`Prop45.outline`, `Prop14.outline`), and their records are full again. How
+work lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull requests".
 
-- **The centre rule's restatements** remain under [#59]: frozen
-  [brief 0008](briefs/0008-centre.md)'s construction guard (step 4), the restatements of
-  the statements that only assume a centre, with their records (step 6, train C6c), and
-  the tag's revision (step 7). The construction itself, step 3, is already at home.
+- **The centre rule's tag revision** remains under [#59]: step 7 of frozen
+  [brief 0008](briefs/0008-centre.md) removes the unused `centre-given` from
+  `review/terms.toml`. The construction (step 3), its guard (step 4) and the restatements
+  with their records (step 6) are done.
 - **Book III's review records** remain at `exceptions`; they reach `full` after the
   migrations and review ([#29]). Books I and II's records are already at `full`
   ([#115]).
@@ -316,6 +318,7 @@ in the voyage logs).
 [#29]: https://github.com/jackChallis/stoicheia/issues/29
 [#57]: https://github.com/jackChallis/stoicheia/issues/57
 [#59]: https://github.com/jackChallis/stoicheia/issues/59
+[#67]: https://github.com/jackChallis/stoicheia/issues/67
 [#115]: https://github.com/jackChallis/stoicheia/pull/115
 [#116]: https://github.com/jackChallis/stoicheia/issues/116
 [#134]: https://github.com/jackChallis/stoicheia/pull/134

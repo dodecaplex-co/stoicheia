@@ -89,6 +89,10 @@
 # one: Foot, Arc.Less, Arc.Semicircle and Arc.Greater join the vocabulary, 125 words in
 # all. The 80 axioms are byte-identical to train C6a's; no model law changes.
 #
+# Renewed on 21 October 2026, when train C6c (brief 0008, step 6) was merged with the
+# guard after axiom wave one: Arc.Drawn no longer asks for a centre witness. The 80
+# axioms and the other 124 words are byte-identical; no model law changes.
+#
 # Renewed on 21 October 2026, when main's restricted rule of superposition (#191) was
 # merged into train C6a, through tooling/centre-given-meaning at 980569da: 80 axioms, main's
 # 79 with Tacit.superposition restated as Superposition.Rule primitives, and
@@ -103,9 +107,16 @@
 # 80 laws, and MODEL.md's counts are written again by run.py --full --write in the same
 # change.
 #
+# Renewed on 21 October 2026, when lean/centre-guard at 6b51608a, carrying train C6b and
+# train C6a with main's restricted rule of superposition (#191), was merged into train C6c:
+# the lock is the guard's, 80 axioms and 242 words, with train C6c's Arc.Drawn, which no
+# longer asks for a centre witness. The 80 axioms are byte-identical to the guard's, so
+# laws.toml, search.py and hyperbolic.py keep its 80 laws, and MODEL.md's counts are
+# written again by run.py --full --write in the same change.
+#
 # Renewed on 22 October 2026, when the words of brief 0013's outline companions joined the
 # vocabulary (#116): 20 new words, the definitions that the statements of I.45 outline,
 # II.14 outline and II.14 outline_side reach, with what Lean declares for them; the 80 axioms
 # and every word already locked are unchanged, byte for byte, so MODEL.md's account stands
 # as it was.
-edbdfabd855ae82a6509f914a98b456151cf2a863107c16b1fe8503be95d649c  Certificate/axioms.lock
+1431ed4a2de9c92c99fba0d32aaba0d4905302d9c31b57e9fb074b180584f792  Certificate/axioms.lock

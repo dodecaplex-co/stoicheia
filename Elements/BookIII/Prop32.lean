@@ -28,21 +28,20 @@ opposite sides, the straight line joining them would cross EF at a point within 
 circle by III.2, and no point of a straight line touching a circle is within
 it, as in III.18. -/
 theorem Prop32.sameSide {B E F P Q : Point} {α : Circle} {L : Line}
-    (hα : ∃ O : Point, Centre O α) (hEF : Touches E F α)
+    (hEF : Touches E F α)
     (hE_L : OnLine E L) (hF_L : OnLine F L) (hB_L : OnLine B L) (hB : OnCircle B α)
     (hP : OnCircle P α) (hQ : OnCircle Q α) (hPB : P ≠ B) (hQB : Q ≠ B) : SameSide P Q L := by
   have off : ∀ {R : Point}, OnCircle R α → R ≠ B → ¬ OnLine R L := fun hR hRB h =>
     (hEF.2 L hE_L hF_L).2 ⟨B, _, hRB.symm, hB_L, hB, h, hR⟩
   refine Classical.byContradiction fun hs => ?_
   obtain ⟨Y, hY_L, hPYQ⟩ := OppositeSides.exists_between ⟨off hP hPB, off hQ hQB, hs⟩
-  exact hEF.not_inside ⟨L, hE_L, hF_L, hY_L⟩ (Prop2 hα hP hQ Y hPYQ)
+  exact hEF.not_inside ⟨L, hE_L, hF_L, hY_L⟩ (Prop2 hP hQ Y hPYQ)
 
 /-- If a straight line touch a circle, and from the point of contact there be drawn across, in the
 circle, a straight line cutting the circle, the angles which it makes with the tangent will be
 equal to the angles in the alternate segments of the circle. -/
-theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre O ABCD)
-    (hB : OnCircle B ABCD) (hD : OnCircle D ABCD) (hBD : B ≠ D) (hEF : Touches E F ABCD)
-    (hEBF : Between E B F) :
+theorem Prop32 {B D E F : Point} {ABCD : Circle} (hB : OnCircle B ABCD)
+    (hD : OnCircle D ABCD) (hBD : B ≠ D) (hEF : Touches E F ABCD) (hEBF : Between E B F) :
     (∀ A : Point, OnCircle A ABCD → OppositeSidesOf A F B D → ∠ F B D = ∠ B A D) ∧
     (∀ C : Point, OnCircle C ABCD → SameSideOf C F B D → ∠ E B D = ∠ D C B) := by
   -- For let a straight line EF touch the circle ABCD at the point B, and from the point B let
@@ -69,7 +68,7 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
   -- Then, since a straight line EF touches the circle ABCD at B,
   -- and BA has been drawn from the point of contact at right angles to the tangent,
   -- the centre of the circle ABCD is on BA. [III. 19]
-  obtain ⟨O, hO⟩ := hABCD
+  obtain ⟨O, hO⟩ := exists_centre ABCD
   have hXBO : Collinear X B O :=
     Prop19 hB hEF ⟨L, hE_L, hF_L, hB_L⟩ (fun h => hX_L (onL h))
       (fun P hP hPB => (angle_symm hXB hPB).trans (hX P hP hPB)) O hO
@@ -81,7 +80,7 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
   /- A is on X's side of EF, the side of the circle, so the straight line BA is the one
      drawn at right angles to EF. -/
   have hAD_L : SameSide A D L :=
-    Prop32.sameSide ⟨O, hO⟩ hEF hE_L hF_L hB_L hB hA hD hAB hBD.symm
+    Prop32.sameSide hEF hE_L hF_L hB_L hB hA hD hAB hBD.symm
   have hAX : OnRay A B X :=
     OnRay.of_sameSideOf (E := F) (SameSideOf.of_line (ne_of_between (between_symm hEBF)).symm
       hB_L hF_L (same_side_trans (same_side_symm hAD_L) (same_side_symm (hXD.sameSide hE_L hF_L))))
@@ -126,15 +125,15 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
       hD_L ((line_unique hFB.symm hB_N h hB_L hF_L) ▸ hD_N)
     have hAF : OppositeSidesOf A F B D :=
       OppositeSidesOf.of_line hBD hB_N hD_N
-        ⟨(Prop2.triangle ⟨O, hO⟩ hB hD hA hBD hBAD.ne₂₃.symm hAB.symm).off_line hB_N hD_N,
+        ⟨(Prop2.triangle hB hD hA hBD hBAD.ne₂₃.symm hAB.symm).off_line hB_N hD_N,
           hF_N, pasch3 hAYF hY_N⟩
     refine ⟨fun A' hA' hA'F => ?_, fun C hC hCF => ?_⟩
     · /- Any angle in that segment is the angle BAD [III. 21]. -/
       rw [angle_symm hFB hBD.symm, hDBF,
-        Prop21 ⟨O, hO⟩ hA hB hD hA' (OppositeSidesOf.sameSideOf hAF.symm hA'F.symm)]
+        Prop21 hA hB hD hA' (OppositeSidesOf.sameSideOf hAF.symm hA'F.symm)]
     -- Next, since ABCD is a quadrilateral in a circle,
     -- its opposite angles are equal to two right angles. [III. 22]
-    have h22 := (Prop22 ⟨O, hO⟩ hA hB hC hD (hCF.trans_opposite hAF.symm).symm).2
+    have h22 := (Prop22 hA hB hC hD (hCF.trans_opposite hAF.symm).symm).2
     -- But the angles DBF, DBE are also equal to two right angles;
     have h13 : ∠ F B D + ∠ D B E = ∟ + ∟ :=
       BookI.Prop13 (between_symm hEBF) (fun ⟨K, hF_K, hE_K, hD_K⟩ =>
@@ -167,7 +166,7 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
       rw [angle_symm (ne_of_between hEBF) hBD.symm, hright hE_L (ne_of_between hEBF)]
       exact ((Prop31 hO hC hD hB hAOB hT.ne₂₃.symm hT.ne₁₃.symm).1).symm
   · have hDBA : ¬ OnLine D M := fun h =>
-      (Prop2.triangle ⟨O, hO⟩ hD hB hA hBD.symm hAB.symm hDA) ⟨M, h, hB_M, hA_M⟩
+      (Prop2.triangle hD hB hA hBD.symm hAB.symm hDA) ⟨M, h, hB_M, hA_M⟩
     have hA_L : ¬ OnLine A L := off hA hAB
     have hEF_BA : OppositeSidesOf E F B A :=
       (OppositeSidesOf.of_between (Triangle.of_line hB_L hE_L (ne_of_between hEBF).symm hA_L).cab
