@@ -171,13 +171,9 @@ and Heath's account of the quarrel over the horn-like angle are explained in the
 
 **19 October 2026, step 6 complete.** These conventions replace the earlier convention
 of supplying a centre merely to have one; the rule's approval of 18 October stands.
-
-**22 October 2026, #131.** A proof now takes a centre from `exists_centre` wherever a
-call of III.1 would do no work, and Heath's "[III. 1]" stays on the page as his
-reference, by the coordinator's
-[decision of that day](../decisions/2026-10-22-iii1-calls-dropped.md), which corrects
-brief 0008's rule "a bracket means III.1, none means the rule". The bullets below give
-the convention as it now stands, and no statement changes.
+The account through the paragraph on III.1 below is the 19 October account; the
+coordinator's correction of 22 October, after it, supersedes its centre convention for
+III.2, III.4, III.8, III.14 and III.17.
 
 A circle in Lean has a centre by `exists_centre`, the rule approved on 18 October 2026
 in [brief 0008](0008-centre.md). `Postulate3` also makes each circle with its centre.
@@ -195,24 +191,38 @@ the centre" (vol. 2, p. 8). So:
 - Where the enunciation itself measures from the centre, the centre is a hypothesis too:
   III.14 and III.15, "equally distant from the centre" and "nearer to the centre"
   (Definitions 4 and 5), with the feet of the perpendiculars from it. III.15's setting-out
-  names it, "E the centre". III.14's takes it "[III. 1]", but its statement already
-  names `E`, so its proof takes no centre there, and Heath's bracket stays as his
-  reference.
-- Otherwise a centre is obtained inside the proof, by `exists_centre`, where the
-  geometric data supply none: under Heath's "[III. 1]" in III.2, III.4, III.8 and III.17,
-  each of which needs the centre alone, so that a call of III.1 would do no work, and at
-  the steps he gives no reference, as in III.35 to III.37. III.28 and III.29 still take
-  their centres from `EqualCircles`.
+  names it, "E the centre". III.14's takes it "[III. 1]": its proof finds a centre by
+  III.1 and that it is `E` (`centre_unique`), so that the bracket is cited. III.4 and
+  III.8 also cite III.1, applying their universal geometric conditions to its centre.
+- Otherwise a centre is obtained inside the proof: by III.1 under Heath's "[III. 1]",
+  and by `exists_centre` at an unbracketed step where the geometric data supply none.
+  III.17 uses `Prop1.of_circle`, which chooses two points of the given circle and applies
+  III.1. III.28 and III.29 still take their centres from `EqualCircles`.
 - "Not through the centre" in III.4 and "through the centre" in III.8 are said of every
   centre (`∀ F, Centre F ABCD → ¬ Collinear A C F`); these geometric conditions stay,
-  and the proof applies them to the centre it takes from `exists_centre`, with no
-  existence hypothesis.
+  and the proof takes a centre by III.1 without an existence hypothesis.
 
 III.1 itself finds the centre of a given circle: given two points `A`, `B` of the
 circle, it constructs `D`, `C`, `E` and `F` as Euclid does and concludes `Centre F ABC`.
 The statement is the problem's answer with its construction; its content is the reductio,
 which shows that the point found is the centre; the proof takes a centre `G` from
 `exists_centre` for the reductio.
+
+**22 October 2026, #131.** A proof now takes a centre from `exists_centre` wherever a
+call of III.1 would do no work, and Heath's "[III. 1]" stays on the page as his
+reference, by the coordinator's
+[decision of that day](../decisions/2026-10-22-iii1-calls-dropped.md), which corrects
+brief 0008's rule "a bracket means III.1, none means the rule". The convention now
+stands as follows, and no statement changes:
+
+- III.2, III.4, III.8 and III.17 obtain their centres through `exists_centre`; each needs
+  the centre alone, so a call of III.1 would do no work.
+- III.14 uses the centre `E` supplied by its statement and takes no other centre.
+- Heath's brackets remain his references on each page. III.28 and III.29 still take
+  their centres from `EqualCircles`; unbracketed steps such as III.35 to III.37 still use
+  `exists_centre`.
+- III.4 and III.8 apply their universal geometric conditions to the centre obtained
+  through `exists_centre`, with no existence hypothesis.
 
 ## Where the facts live
 
@@ -346,9 +356,12 @@ worth naming. The first mate's report has a note on every statement.
   the enunciation does: it measures each straight line to its foot, `Foot`
   ([brief 0006](0006-statements.md), stage 4).
 - **III.14, III.15** take the centre and the feet of the perpendiculars as hypotheses,
-  since Definitions 4 and 5 measure from them; III.14's proof takes no other centre,
-  though Heath gives "[III. 1]" there (above). The perpendiculars are given, so I.12 is
-  not cited; that the feet fall within the straight lines is `foot_between`.
+  since Definitions 4 and 5 measure from them; III.14's proof takes the centre by III.1
+  all the same (above). The perpendiculars are given, so I.12 is not cited; that the feet
+  fall within the straight lines is `foot_between`.
+
+  This is the historical 19 October account. The 22 October correction in "Circles and
+  their centres" supersedes its account of III.14.
 - **III.15** says "the diameter is greatest" together with the more remote `FG` and
   `‖E H‖ < ‖E K‖`, as Euclid does: his proof that `AD` is greater than `BC` goes through
   `MN`, made on `EK` by cutting off `EL` equal to the less `EH` (I.3), so it uses the
