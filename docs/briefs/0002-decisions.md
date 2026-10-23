@@ -5318,7 +5318,6 @@ findings:
   `scripts/heath.py`,
   `scripts/check_fidelity.py`,
   `review/SCHEMA.md`.
-
 - **Which laws' proofs draw: computed, not set by hand (#150, question 4).** Of the two
   routes #150 offers, the coordinator takes route (b): the hand-set flag `Cited.drawsNothing` is retired,
   in the content change that follows this one, and the certificate records what each cited
@@ -5409,6 +5408,7 @@ findings:
   every law I.4 cites is proved with no construction rule, as `cited_laws` shows; the
   second retirement wave changes that for four of them, and its landing records it.
   I.4's and I.8's records were read again in full and stamped by an independent reader.
+
 - **The restriction's part 4 as a theorem, and every cited law in one statement (#150,
   question 2).** Part 4 of the restriction, that no hypothesis of the rule speaks of the
   placement, was read off the statement of `Rule.infer`; it is now restated as a theorem,
@@ -5438,6 +5438,7 @@ findings:
   definitions pinned whole by `#print`, as are `Placed`, `Val.place` and `Metric.names`,
   which pinned statements read, and axiom pins for the new theorems; nothing is removed. Brief 0009 carries a dated note. I.8's record was read again in full and stamped
   by an independent reader.
+
 - **The numerical checks, made ready for the second axiom retirement.** This preparation
   keeps all 79 axioms in place. Under [WORKFLOW](../WORKFLOW.md), section 10, the check
   change lands in a pull request of its own before the retirement it judges. The 31 laws
