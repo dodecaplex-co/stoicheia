@@ -1028,7 +1028,8 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       does R0 to R2, the full checks run, and a note says why. For R3, R4 and R5, the full
       checks of section 8 in that worktree, and `negative_tests.py` in a
       second, each step timed. The check scripts and what they expect (`scripts/`,
-      `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) are origin/main's
+      `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`, and `checks/`,
+      the registry of checks that #229 brings) are origin/main's
       copies; when the pull request changes any of them, the checks run again with its own
       copies, which must pass. A check that fails with origin/main's copies is noted in
       the pull request for the security review, and refuses the pull request if it also
@@ -1188,6 +1189,7 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
 
 **Protected paths.** `scripts/` (the hook and the launcher included), `.github/`,
 `Certificate/` (the lock included), `tests/`, `review/SCHEMA.md`, `review/terms.toml`,
+`checks/` (the registry of checks that #229 brings, one file per check),
 `.gitattributes`, `.gitignore` (a rule added there hides untracked files from
 `git status`, and so from the check that the generated pages are current), the
 toolchain files (`lakefile.toml`, `lakefile.lean`, which Lake reads in preference to
