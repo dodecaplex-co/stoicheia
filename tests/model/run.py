@@ -1,7 +1,7 @@
 """Run the model evidence for the axioms and retained derived properties.
 
     python3 -I tests/model/run.py --fast           # CI: well under two minutes
-    python3 -I tests/model/run.py --full [--write] # about seven minutes
+    python3 -I tests/model/run.py --full [--write] # about eight minutes
     python3 -I tests/model/run.py --ties           # the ties to the Lean alone
 
 Two checks tie the model to the Lean before anything runs:
@@ -20,9 +20,18 @@ angle checks, and the hyperbolic model at 300 per axiom (seed 1).
 --full runs the search at 20,000 per axiom with seeds 1, 2 and 3, the exhaustive
 enumeration, the structured run at 100,000 per axiom (seed 11), the mutations, both
 independent checks, and the hyperbolic model at 20,000 per axiom (seed 1).  With --write
-it saves each harness's output in results/, under a header naming the commit, the
-seeds and the Python; writes the axiom-by-axiom table to results/summary.txt; and brings
-the counts in MODEL.md up to date.
+it first copies the files of HARNESS as the commit checked out has them, out of git's
+objects, into a private folder, checks that they hash as the files checked out do, and
+runs again from that copy, so that every module the run imports and every harness it runs
+is that commit's, whatever the checkout does meanwhile. It writes nothing unless the
+harness files are as committed when it begins, and the commit, their state and their hash
+are the same when it ends; stopped by SIGTERM, SIGHUP or SIGINT while it runs or
+publishes, it stops the run from the copy, rolls any publication back, removes the copy
+and writes nothing. Then it saves each harness's output in results/, under a header naming
+the commit, the harness's hash, the seeds and the Python; writes the axiom-by-axiom table
+to results/summary.txt; and brings the counts in MODEL.md up to date.
+results_check.py, beside this file but not one of HARNESS, holds what --write wrote to the
+harness as it hashes now, and to what `judge` accepts (docs/WORKFLOW.md, section 8).
 
 The run passes when every harness runs to its last line, no harness finds a counterexample
 in the plane or reports a law or derived property twice, every mutation is caught,
@@ -34,23 +43,140 @@ its unchanged predicate also supplies evidence that the axiom's hypotheses were 
 """
 import datetime
 import hashlib
+import io
 import json
 import os
 import platform
 import re
+import signal
 import subprocess
 import sys
+import tempfile
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(os.path.dirname(HERE))
-RESULTS = os.path.join(HERE, 'results')
+SNAPSHOT = 'MODEL_HARNESS_SNAPSHOT'   # set for a run from a copy: the checkout, the provenance
+FROM_SNAPSHOT = (json.loads(os.environ.pop(SNAPSHOT))
+                 if __name__ == '__main__' and SNAPSHOT in os.environ else None)
+ROOT = FROM_SNAPSHOT['root'] if FROM_SNAPSHOT else os.path.dirname(os.path.dirname(HERE))
+CHECKOUT = os.path.join(ROOT, 'tests', 'model')   # HERE, unless this run is from a copy
+RESULTS = os.path.join(CHECKOUT, 'results')
 LOCK = os.path.join(ROOT, 'Certificate', 'axioms.lock')
-LOCK_HASH = os.path.join(HERE, 'lock.sha256')
-MODEL_MD = os.path.join(HERE, 'MODEL.md')
+LOCK_HASH = os.path.join(CHECKOUT, 'lock.sha256')
+MODEL_MD = os.path.join(CHECKOUT, 'MODEL.md')
 HARNESS = ['model.py', 'search.py', 'derived.py', 'exhaustive.py', 'structured.py', 'mutations.py',
            'grid_check.py', 'angle_check.py', 'hyperbolic.py', 'run.py', 'laws.toml']
 PLACEHOLDER = 'TODO'
+SUMMARY = 'summary.txt'
+COUNTS = re.compile(r'(<!-- counts:begin -->\n).*?(\n<!-- counts:end -->)', re.S)   # in MODEL.md
+COUNTS_FROM = 'Counts from `run.py --full --write` at commit `'   # the counts' first words
+HARNESS_LINE = 'harness sha256'   # a run's header names its harness so; the summary, `harness`
+COMMITTED = 'harness files as committed'   # a commit's state, when the run read its harness
+
+
+def arguments(argv):
+    args = set(argv)
+    if args != {'--ties'} and (not args or not args <= {'--fast', '--full', '--write'}
+                               or ('--fast' in args) == ('--full' in args)
+                               or ('--write' in args and '--full' not in args)):
+        sys.exit(__doc__)
+    return args
+
+
+def git(*args):
+    try:
+        p = subprocess.run(['git', *args], capture_output=True, text=True, cwd=ROOT)
+        return p.stdout.strip() if p.returncode == 0 else None
+    except OSError:
+        return None
+
+
+def harness_hash(here=HERE):
+    """the sha256 of the harness: each file of HARNESS, in order, by its name and its bytes.
+    The results name it (provenance), and results_check.py compares it with theirs."""
+    h = hashlib.sha256()
+    for f in HARNESS:
+        with open(os.path.join(here, f), 'rb') as fh:
+            h.update(f.encode() + b'\0' + fh.read())
+    return h.hexdigest()
+
+
+def provenance():
+    sha = git('rev-parse', 'HEAD') or 'unknown'
+    changed = git('status', '--porcelain', '--', *[f'tests/model/{f}' for f in HARNESS])
+    state = (COMMITTED if changed == '' else
+             'harness files differ from this commit' if changed else 'state unknown')
+    py = f'{platform.python_version()} ({platform.python_implementation()}, {platform.system()} {platform.machine()})'
+    return dict(commit=f'{sha} ({state})', harness=harness_hash(CHECKOUT), python=py,
+                date=datetime.date.today().isoformat())
+
+
+def provenance_signature(prov):
+    """the commit, harness state and harness hash that decide whether --write may write"""
+    match = re.fullmatch(r'([0-9a-f]{40}) \(([^()]*)\)', prov['commit'])
+    return (match.group(1), match.group(2), prov['harness']) if match else None
+
+
+def committed_file(commit, name):
+    """a file of HARNESS as `commit` has it, out of git's objects, or None"""
+    try:
+        p = subprocess.run(['git', 'cat-file', 'blob', f'{commit}:tests/model/{name}'],
+                           capture_output=True, cwd=ROOT)
+    except OSError:
+        return None
+    return p.stdout if p.returncode == 0 else None
+
+
+def stop_as_exit():
+    """SIGTERM and SIGHUP end this process as sys.exit does, so that its temporary folder
+    is removed and the run it waits on is stopped"""
+    for name in ('SIGTERM', 'SIGHUP'):
+        if hasattr(signal, name):
+            signal.signal(getattr(signal, name), lambda n, _: sys.exit(128 + n))
+
+
+def run_from_snapshot(argv):
+    """--write: run this file again, with `argv`, from a copy of the harness as the commit
+    checked out has it, made in a private folder out of git's objects, once it hashes as the
+    harness checked out does; the run's exit status"""
+    stop_as_exit()
+    prov = provenance()
+    signature = provenance_signature(prov)
+    if signature is None or signature[1] != COMMITTED:
+        sys.exit("the model harness is not a commit's committed files, so nothing is written")
+    commit = signature[0]
+    with tempfile.TemporaryDirectory(prefix='model-harness-') as snap:
+        for name in HARNESS:
+            data = committed_file(commit, name)
+            if data is None:
+                sys.exit(f'git has no tests/model/{name} at {commit[:12]}, so nothing is written')
+            with open(os.path.join(snap, name), 'xb') as f:
+                f.write(data)
+        if harness_hash(snap) != prov['harness']:
+            sys.exit(f'the harness as {commit[:12]} has it does not hash as the harness checked '
+                     'out does, so nothing is written')
+        print(f'running the harness as {commit[:12]} has it, from a copy out of git', flush=True)
+        env = dict(os.environ, **{SNAPSHOT: json.dumps({'root': ROOT, 'provenance': prov})})
+        with subprocess.Popen([sys.executable, '-I', os.path.join(snap, 'run.py'), *argv],
+                              env=env) as child:
+            try:
+                return child.wait()
+            except BaseException:
+                child.terminate()
+                child.wait()
+                raise
+
+
+def bootstrap(argv):
+    args = arguments(argv)
+    return run_from_snapshot(argv) if '--write' in args and FROM_SNAPSHOT is None else None
+
+
+if __name__ == '__main__':
+    bootstrap_status = bootstrap(sys.argv[1:])
+    if bootstrap_status is not None:
+        sys.exit(bootstrap_status)
+
 
 sys.path.insert(0, HERE)
 _argv, sys.argv = sys.argv, sys.argv[:1]   # the harness modules read sys.argv when imported
@@ -330,25 +456,20 @@ def self_test():
 
 # ---------------------------------------------------------------- writing the results
 
-def git(*args):
-    try:
-        p = subprocess.run(['git', *args], capture_output=True, text=True, cwd=ROOT)
-        return p.stdout.strip() if p.returncode == 0 else None
-    except OSError:
-        return None
+
+def short_commit(commit):
+    """the commit as MODEL.md's counts name it"""
+    return commit.split()[0][:12]
 
 
-def provenance():
-    sha = git('rev-parse', 'HEAD') or 'unknown'
-    changed = git('status', '--porcelain', '--', *[f'tests/model/{f}' for f in HARNESS])
-    state = ('harness files as committed' if changed == '' else
-             'harness files differ from this commit' if changed else 'state unknown')
-    h = hashlib.sha256()
-    for f in HARNESS:
-        h.update(f.encode() + b'\0' + open(os.path.join(HERE, f), 'rb').read())
-    py = f'{platform.python_version()} ({platform.python_implementation()}, {platform.system()} {platform.machine()})'
-    return dict(commit=f'{sha} ({state})', harness=h.hexdigest(), python=py,
-                date=datetime.date.today().isoformat())
+def result_file(r):
+    """the file in results/ that --write writes a run's output to"""
+    return r.key + '.txt'
+
+
+def written():
+    """the files --write writes in results/: one for each run of the full plan, and the summary"""
+    return {result_file(r) for r in plan(True)} | {SUMMARY}
 
 
 def header(r, prov):
@@ -356,7 +477,7 @@ def header(r, prov):
              f'command: {r.command}',
              f'seeds: {r.seeds or "none (deterministic)"}',
              f'commit: {prov["commit"]}',
-             f'harness sha256: {prov["harness"]}',
+             f'{HARNESS_LINE}: {prov["harness"]}',
              f'python: {prov["python"]}',
              f'date: {prov["date"]}',
              f'time: {r.seconds:.1f} s']
@@ -411,7 +532,7 @@ def counts_block(runs, prov):
     fails = '; '.join(f'`{lean_name(law)}` failed {h.laws.get(law, (0, 0, 0))[2]:,} times'
                       for law in sorted(EXPECTED_TO_FAIL))
     return '\n'.join([
-        f'Counts from `run.py --full --write` at commit `{prov["commit"].split()[0][:12]}`, '
+        f'{COUNTS_FROM}{short_commit(prov["commit"])}`, '
         f'{prov["date"]}, Python {platform.python_version()}. Each number is how many configurations '
         'met the axiom\'s hypotheses (for the search, over the three seeds); none of them was a '
         'counterexample. A dot means that harness does not enumerate the axiom.',
@@ -431,13 +552,109 @@ def counts_block(runs, prov):
         derived_table(runs)])
 
 
-def write(runs, prov):
-    os.makedirs(RESULTS, exist_ok=True)
+def publish(outputs, expected_signature=None):
+    """Replace every `(path, text)` as one publication, restoring every prior directory entry
+    if publication is interrupted. Destination symbolic links are replaced, not followed.
+    SIGTERM, SIGHUP and SIGINT are held back until every file is replaced or every file is
+    back, so that no handler runs during a rollback, not even a second signal's: a Ctrl-C
+    reaches both processes of a --write, and the one that made the copy then sends this
+    one SIGTERM."""
+    stages = []
+    journal = []
+    stops = {getattr(signal, name) for name in ('SIGTERM', 'SIGHUP', 'SIGINT')
+             if hasattr(signal, name)}
+    caller_mask = (signal.pthread_sigmask(signal.SIG_BLOCK, stops)
+                   if stops and hasattr(signal, 'pthread_sigmask') else None)
+    held = stops - set(caller_mask) if caller_mask is not None else set()
+
+    def interrupted():
+        return bool(held) and bool(signal.sigpending() & held)
+
+    def remember(path):
+        if not os.path.lexists(path):
+            return None
+        if os.path.islink(path):
+            return ('link', os.readlink(path))
+        if not os.path.isfile(path):
+            raise OSError(f'{path} is not a regular file or symbolic link')
+        details = os.stat(path, follow_symlinks=False)
+        with open(path, 'rb') as f:
+            return ('file', f.read(), details.st_mode & 0o7777,
+                    details.st_atime_ns, details.st_mtime_ns)
+
+    def remake(path, prior):
+        if prior is None:
+            return
+        if prior[0] == 'link':
+            os.symlink(prior[1], path)
+            return
+        with open(path, 'xb') as f:
+            f.write(prior[1])
+        os.chmod(path, prior[2])
+        os.utime(path, ns=(prior[3], prior[4]))
+
+    def restore():
+        for path, backup, prior in reversed(journal):
+            if os.path.lexists(path):
+                os.unlink(path)
+            if backup is not None and os.path.lexists(backup):
+                os.replace(backup, path)
+            else:
+                remake(path, prior)
+
+    def clean_stages():
+        for _, new in stages:
+            if os.path.lexists(new):
+                os.unlink(new)
+
+    try:
+        try:
+            for path, text in outputs:
+                new = os.path.join(os.path.dirname(path),
+                                   f'.{os.path.basename(path)}.{os.getpid()}.new')
+                with open(new, 'x') as f:
+                    stages.append((path, new))
+                    f.write(text)
+            for path, new in stages:
+                if os.path.isdir(path) and not os.path.islink(path):
+                    raise IsADirectoryError(path)
+                prior = remember(path)
+                backup = None
+                if os.path.lexists(path):
+                    backup = os.path.join(os.path.dirname(path),
+                                          f'.{os.path.basename(path)}.{os.getpid()}.old')
+                    if os.path.lexists(backup):
+                        raise FileExistsError(backup)
+                    os.replace(path, backup)
+                journal.append((path, backup, prior))
+                os.replace(new, path)
+            if expected_signature is not None \
+                    and provenance_signature(provenance()) != expected_signature:
+                sys.exit('the model harness provenance changed while it ran, so nothing is '
+                         'written')
+            if interrupted():
+                raise InterruptedError('publication interrupted')
+            for _, backup, _ in journal:
+                if backup is not None:
+                    os.unlink(backup)
+            clean_stages()
+            if interrupted():
+                raise InterruptedError('publication interrupted')
+        except BaseException:
+            restore()
+            clean_stages()
+            raise
+    finally:
+        if caller_mask is not None:
+            signal.pthread_sigmask(signal.SIG_SETMASK, caller_mask)
+
+
+def write(runs, prov, results=RESULTS, model_md=MODEL_MD, expected_signature=None):
+    outputs = []
     for r in runs:
-        with open(os.path.join(RESULTS, r.key + '.txt'), 'w') as f:
-            f.write(header(r, prov) + r.out)
+        outputs.append((os.path.join(results, result_file(r)), header(r, prov) + r.out))
     met, total = totals(runs)
-    with open(os.path.join(RESULTS, 'summary.txt'), 'w') as f:
+    with io.StringIO() as f:
         f.write(''.join(f'# {k}: {v}\n' for k, v in prov.items()) + '\n')
         f.write(f'configurations meeting an axiom\'s hypotheses in the plane: {total:,}\n')
         for k, v in met.items():
@@ -450,24 +667,27 @@ def write(runs, prov):
             if v:
                 f.write(f'  {k}: {v:,}\n')
         f.write(derived_table(runs) + '\n')
-    with open(MODEL_MD) as f:
+        outputs.append((os.path.join(results, SUMMARY), f.getvalue()))
+    with open(model_md) as f:
         md = f.read()
-    new, n = re.subn(r'(<!-- counts:begin -->\n).*?(\n<!-- counts:end -->)',
-                     lambda m: m.group(1) + counts_block(runs, prov) + m.group(2), md, flags=re.S)
+    new, n = COUNTS.subn(lambda m: m.group(1) + counts_block(runs, prov) + m.group(2), md)
     if n != 1:
         sys.exit('MODEL.md has no counts block to update')
-    with open(MODEL_MD, 'w') as f:
-        f.write(new)
+    outputs.append((model_md, new))
+    made_results = not os.path.lexists(results)
+    try:
+        os.makedirs(results, exist_ok=True)
+        publish(outputs, expected_signature)
+    except BaseException:
+        if made_results and os.path.isdir(results) and not os.listdir(results):
+            os.rmdir(results)
+        raise
 
 
 # ---------------------------------------------------------------- main
 
 def main():
-    args = set(sys.argv[1:])
-    if args != {'--ties'} and (not args or not args <= {'--fast', '--full', '--write'}
-                               or ('--fast' in args) == ('--full' in args)
-                               or ('--write' in args and '--full' not in args)):
-        sys.exit(__doc__)
+    args = arguments(sys.argv[1:])
     full = '--full' in args
     self_test()
     n, problems = check_names()
@@ -482,6 +702,20 @@ def main():
     if args == {'--ties'}:
         print('the ties to the Lean hold')
         return
+    write_prov = None
+    write_signature = None
+    if '--write' in args:
+        if os.path.realpath(HERE) == os.path.realpath(CHECKOUT):
+            sys.exit(f'{SNAPSHOT} is set, but this run is not from a copy of the harness, so '
+                     'nothing is written')
+        stop_as_exit()
+        write_prov = FROM_SNAPSHOT['provenance']
+        write_signature = provenance_signature(write_prov)
+        if write_signature is None or write_signature[1] != COMMITTED:
+            sys.exit("the model harness is not a commit's committed files, so nothing is written")
+        if harness_hash() != write_prov['harness']:
+            sys.exit('this copy of the harness does not hash as its provenance says, so nothing '
+                     'is written')
     runs = []
     for r in plan(full):
         print(f'  {r.key:14s} ...', end='', flush=True)
@@ -511,7 +745,9 @@ def main():
             print('  ' + b)
         sys.exit(1)
     if '--write' in args:
-        write(runs, provenance())
+        if provenance_signature(provenance()) != write_signature:
+            sys.exit('the model harness provenance changed while it ran, so nothing is written')
+        write(runs, write_prov, expected_signature=write_signature)
         print('wrote tests/model/results/ and the counts in MODEL.md')
     print('model evidence: all checks pass')
 

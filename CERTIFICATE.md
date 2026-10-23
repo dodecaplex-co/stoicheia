@@ -6,7 +6,7 @@ This page keeps three things apart.
 
 - **Heath's references.** The column of that name gives the propositions in square brackets in Heath's translation, read from his text. They are Heath's editorial references, not Euclid's words. Of an Arabic version that names the earlier propositions it uses, Heath remarks: "Such specific quotations of earlier propositions are rare in Euclid" ([vol. 1, p. 83](https://archive.org/details/thirteenbookseu02heibgoog/page/n103)). So an absent bracket does not mean Euclid gave no reason, and a bracket is Heath's, not a machine-checked reconstruction of the argument.
 - **The Lean's dependencies.** "Lean cites" lists the propositions the proof itself calls on, directly or through a [shared step](#shared-steps). The columns "Postulates", "Definitions", "C.N." and "Tacit rules (how many)" count everything beneath the proof, including what those propositions rest on. All of them are computed from the Lean proofs themselves by [`Certificate/Facts.lean`](Certificate/Facts.lean): Lean's `#print axioms` gives exactly which postulates, definitions and tacit rules each proof rests on, and a walk through the same proofs gives the propositions it cites and the Common Notions. None of this is typed in by hand. Definitions that Lean defines rather than assumes (the right angle and parallels of Book I, Book II's rectangle and square, Book III's equal circles and touching) are not assumptions, and so do not appear: the only definition taken as an axiom is Def. I.15. Of the postulates, definitions and tacit rules, "Own rules (all kinds)" counts those the proof's own Lean calls, in the proof or a helper written for its proposition, and "Through lemmas (all kinds)" those it does not call itself but reaches through a lemma it calls, of [Book Zero](Elements/Figure) or a [shared step](#shared-steps) (a proposition it cites may rest on them too); the rest come in only through the propositions it cites or the Common Notions (C.N. 3 and C.N. 5 rest on tacit rules). Each proposition's page lists its tacit rules by name, and marks each one its own Lean calls, or the lemmas it comes in through.
-- **The reconstruction of the argument.** What each Lean statement covers of Euclid's enunciation, and whose argument each proof follows, is a reviewer's reading, not the machine's. The columns "Statement" and "Argument" come from the [review records](review/) ([their schema](review/SCHEMA.md)), each tied to a commit. A record is made in two stages: *for exceptions*, which every record has reached at least, where the statement and the argument are read against Heath's text and every departure from Euclid is recorded; and *in full*, where every passage of the argument is classified as well. Each page says how the Lean follows the passages of Euclid's proof, and the steps Euclid takes without a word are gathered, proposition by proposition, in the catalogues for [Book I](docs/reports/gaps-book-I.md), [Book II](docs/reports/gaps-book-II.md) and [Book III](docs/reports/gaps-book-III.md).
+- **The reconstruction of the argument.** What each Lean statement covers of Euclid's enunciation, and whose argument each proof follows, is a reviewer's reading, not the machine's. The columns "Statement" and "Argument" come from the [review records](review/) ([their schema](review/SCHEMA.md)), each tied to a commit. A record is made in two stages: *for exceptions*, which every record has passed, where the statement and the argument are read against Heath's text and every departure from Euclid is recorded; and *in full*, where every passage of the argument is classified as well. Each page says how the Lean follows the passages of Euclid's proof, and the steps Euclid takes without a word are gathered, proposition by proposition, in the catalogues for [Book I](docs/reports/gaps-book-I.md), [Book II](docs/reports/gaps-book-II.md) and [Book III](docs/reports/gaps-book-III.md).
 
 **How to read the table.** ✅: proved in Lean, and nothing it rests on contains `sorryAx`, Lean's mark of a step left unproved. In "Statement", *whole* is the whole enunciation, as Euclid states it; *restricted* adds hypotheses that exclude cases Euclid's words admit; *in part* leaves some clause to Euclid's words. A † marks a statement read in our measure of circumferences, which has no radius in it; the page's Representation row says what follows. In "Argument", *Euclid's* is his argument, with the lemmas, groupings and further cases each page notes; *Euclid's, one step changed* is his argument with one step argued another way, which the page names; *different* is another proof altogether; and *the text's* is the argument Heath prints for a proposition he brackets as a later addition (I.40 and III.12). A porism has a row of its own under its proposition, with its own certificate, and a proposition counts as proved only when its porism is too.
 
@@ -16,7 +16,7 @@ On each page, the notes under "How the Lean follows the text" open with a plain 
 
 ## Book I
 
-**All 48 propositions proved in Lean**: 47 as Euclid states them and 1 for a restricted statement ([I.45](book/I/45.md)). Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences.
+**All 48 propositions proved in Lean**, every one as Euclid states it. Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences.
 
 What the proofs show:
 
@@ -73,11 +73,12 @@ What the proofs show:
 | ✅ | [I.42](book/I/42.md) | whole | Euclid's | I.23, I.31, I.38, I.41 | I.10, I.23, I.30, I.31, I.38, I.41 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 59 | 5 | 17 |
 | ✅ | [I.43](book/I/43.md) | whole | Euclid's | I.34 | I.34 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 56 | 10 | 16 |
 | ✅ | [I.44](book/I/44.md) | whole | Euclid's | I.15, I.29, I.31, I.42, I.43 | I.2, I.4, I.15, I.23, I.29, I.30, I.31, I.34, I.42, I.43 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 13 | 35 |
-| ✅ | [I.45](book/I/45.md) | restricted | Euclid's | I.14, I.29, I.30, I.33, I.34, I.42, I.44 | I.14, I.29, I.30, I.33, I.34, I.42, I.44 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 11 | 25 |
+| ✅ | [I.45](book/I/45.md) | whole | Euclid's | I.14, I.29, I.30, I.33, I.34, I.42, I.44 | I.14, I.29, I.30, I.33, I.34, I.42, I.44 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 11 | 25 |
 | ✅ | &emsp;[I.45 apart](book/I/45.md#apart) |  |  |  | I.45 sum | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 0 | 0 |
 | ✅ | &emsp;[I.45 append](book/I/45.md#append) |  |  |  | I.14, I.29, I.30, I.33, I.34, I.44 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 11 | 25 |
 | ✅ | &emsp;[I.45 fan](book/I/45.md#fan) |  |  |  | I.13, I.45 figure | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 0 | 34 |
 | ✅ | &emsp;[I.45 figure](book/I/45.md#figure) |  |  |  | I.45 apart | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 0 | 3 |
+| ✅ | &emsp;[I.45 outline](book/I/45.md#outline) |  |  |  | I.45 apart | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 61 | 0 | 46 |
 | ✅ | &emsp;[I.45 sum](book/I/45.md#sum) |  |  |  | I.42, I.45 append | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 3 | 24 |
 | ✅ | [I.46](book/I/46.md) | whole | Euclid's | I.11, I.29, I.31, I.34 | I.11, I.29, I.30, I.31, I.34 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 56 | 4 | 23 |
 | ✅ | [I.47](book/I/47.md) | whole | Euclid's | I.4, I.14, I.41, I.46 | I.4, I.13, I.14, I.17, I.28, I.30, I.31, I.41 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 16 | 23 |
@@ -86,7 +87,7 @@ What the proofs show:
 
 ## Book II
 
-**All 14 propositions proved in Lean**: 13 as Euclid states them and 1 for a restricted statement ([II.14](book/II/14.md)). Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences.
+**All 14 propositions proved in Lean**, every one as Euclid states it. Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences.
 
 What the proofs show:
 
@@ -110,10 +111,12 @@ What the proofs show:
 | ✅ | [II.11](book/II/11.md) | whole | Euclid's | I.46, I.47, II.6 | I.4, I.10, I.13, I.17, I.19, I.20, I.28, I.29, I.30, I.34, I.46, I.47, II.6 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 63 | 12 | 42 |
 | ✅ | [II.12](book/II/12.md) | whole | Euclid's | I.47, II.4 | I.4, I.17, I.28, I.34, I.46, I.47, II.4 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 63 | 9 | 28 |
 | ✅ | [II.13](book/II/13.md) | whole | Euclid's | I.47, II.7 | I.4, I.13, I.17, I.28, I.34, I.46, I.47, II.7 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 63 | 12 | 24 |
-| ✅ | [II.14](book/II/14.md) | restricted | Euclid's | I.45, I.47, II.5 | I.4, I.10, I.11, I.13, I.28, I.29, I.34, I.45, I.46, I.47, II.5 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 64 | 17 | 31 |
+| ✅ | [II.14](book/II/14.md) | whole | Euclid's | I.45, I.47, II.5 | I.4, I.10, I.11, I.13, I.28, I.29, I.34, I.45, I.46, I.47, II.5 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 64 | 17 | 31 |
 | ✅ | &emsp;[II.14 apart](book/II/14.md#apart) |  |  |  | II.14 sum | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 64 | 0 | 0 |
 | ✅ | &emsp;[II.14 fan](book/II/14.md#fan) |  |  |  | I.13, II.14 figure | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 64 | 0 | 34 |
 | ✅ | &emsp;[II.14 figure](book/II/14.md#figure) |  |  |  | II.14 apart | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 64 | 0 | 3 |
+| ✅ | &emsp;[II.14 outline](book/II/14.md#outline) |  |  |  | II.14 square | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 64 | 0 | 46 |
+| ✅ | &emsp;[II.14 outline_side](book/II/14.md#outline_side) |  |  |  | II.14 apart | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 64 | 0 | 46 |
 | ✅ | &emsp;[II.14 rectangle](book/II/14.md#rectangle) |  |  |  | I.4, I.10, I.13, I.28, I.34, I.46, I.47, II.5 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 64 | 17 | 31 |
 | ✅ | &emsp;[II.14 square](book/II/14.md#square) |  |  |  | I.4, I.28, I.34, I.46, II.14 apart | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 64 | 3 | 39 |
 | ✅ | &emsp;[II.14 sum](book/II/14.md#sum) |  |  |  | I.11, I.29, I.45 sum, II.14 rectangle | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 64 | 2 | 11 |
