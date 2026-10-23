@@ -39,7 +39,7 @@ theorem Prop14 {A B C D E F G : Point} {ABDC : Circle} (hE : Centre E ABDC) (hA 
   -- I say that AB, CD are equally distant from the centre.
   -- For let the centre of the circle ABDC be taken [III. 1], and let it be E; from E let EF,
   -- EG be drawn perpendicular to AB, CD, and let AE, EC be joined.
-  obtain ⟨E₀, -, -, -, hE₀, -⟩ := Prop1 ⟨E, hE⟩ hA hB (Triangle.ne₁₂ hE_AB)
+  obtain ⟨E₀, -, -, -, hE₀, -⟩ := Prop1 hA hB (Triangle.ne₁₂ hE_AB)
   obtain rfl : E = E₀ := centre_unique hE hE₀
   /- The given perpendiculars fall between the ends of their straight lines. -/
   have hAFB : Between A F B := foot_between hE hA hB hE_AB hF hEF

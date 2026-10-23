@@ -320,10 +320,12 @@ GUARDED_DIRS = ("Elements", "heath", "review", "figures", "mishnah")
 # lakefile.lean is here although the repository has none: Lake reads it in preference to
 # lakefile.toml, and runs it. .gitignore is here because an added rule hides untracked
 # files from `git status`, and so from the check that the generated pages are current.
+# checks/ is to be the registry of CI's `check` job, one file per check (#229): a check
+# added, removed, or with its command, job or order changed, is named in a decisions entry.
 # PROTECTED_JUDGED, below, joins them.
 PROTECTED = ("scripts/", ".github/", "Certificate/", "tests/", "review/SCHEMA.md",
              "review/terms.toml", ".gitattributes", ".gitignore", "lakefile.toml",
-             "lakefile.lean", "lean-toolchain", "lake-manifest.json")
+             "lakefile.lean", "lean-toolchain", "lake-manifest.json", "checks/")
 # Protected, and still judged (#96): the audit lemmas of docs/reports/overlaps.md, whose
 # pinned axiom lists (`#guard_msgs`) back the catalogue's claims, and Audit.lean, the root
 # that decides which of them `lake build Audit` checks; the model's Model/Audit.lean and
@@ -338,8 +340,11 @@ PROTECTED_JUDGED = ("Audit/", "Audit.lean", "model/Model/Audit.lean", "model/Mod
                     "model/lakefile.toml", "model/lakefile.lean",
                     "model/lean-toolchain", "model/lake-manifest.json", "model/lock.sha256")
 PROTECTED += PROTECTED_JUDGED
-# The checks and what they expect: origin/main's copies judge the commit (step 4).
-CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "review/terms.toml")
+# The checks and what they expect: origin/main's copies judge the commit (step 4). The
+# registry of checks, checks/ (#229), is to be one of them: a commit that changes it is a
+# check change, kept apart from what the checks judge.
+CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "review/terms.toml",
+                "checks/")
 # Of those, the values pinned to the edition, not code. The lock and the model's hash of it
 # are compared exactly, both ways: check_fidelity.py the lock with facts.json, and the
 # model's run its hash with the lock. The model's page and results are its account of the
@@ -429,6 +434,9 @@ CHECKS = [
     ("lake build Staging", ["lake", "build", "Staging"]),
     ("lake env lean Certificate/Facts.lean", ["lake", "env", "lean", "Certificate/Facts.lean"]),
     ("python3 -I tests/test_certificate.py", [PY, "-I", "tests/test_certificate.py"]),
+    ("python3 scripts/sweep_citations.py --self-test",
+     [PY, "scripts/sweep_citations.py", "--self-test"]),
+    ("python3 scripts/sweep_citations.py", [PY, "scripts/sweep_citations.py"]),
     ("python3 scripts/check_kernel.py --self-test",
      [PY, "scripts/check_kernel.py", "--self-test"]),
     ("python3 scripts/heath.py", [PY, "scripts/heath.py"]),

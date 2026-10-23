@@ -5742,8 +5742,13 @@ class ProtectedPaths(Edge):
                      "Audit/screen.py", "Audit.lean", "model/lakefile.toml",
                      "model/Model/Audit.lean", "model/Model.lean",
                      "model/lakefile.lean", "model/lean-toolchain", "model/lake-manifest.json",
-                     "model/lock.sha256"):
+                     "model/lock.sha256", "checks/01-lake-build.toml", "checks/README.md",
+                     "checks/99-a-new-check.toml"):
             self.assertTrue(safe_push.is_protected(path), path)
+        # The registry is a check input too, never judged content (#229).
+        self.assertTrue(safe_push.under("checks/01-lake-build.toml", safe_push.CHECK_INPUTS))
+        self.assertFalse(safe_push.under("checks/01-lake-build.toml",
+                                         safe_push.PROTECTED_JUDGED))
         # One home: WORKFLOW.md's "Protected paths" names every one of them, and the
         # template points to it rather than copying the list.
         workflow = (SOURCE / "docs" / "WORKFLOW.md").read_text()

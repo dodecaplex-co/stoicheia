@@ -1,27 +1,63 @@
 # review/III/17.toml
 [statement]
 scope = "full"
-note = "With its companion: `Prop17.general` draws a touching straight line from any point not within the circle; `Prop17` keeps A outside."
+note = "`Prop17` draws AB touching at B from A outside; `Prop17.general` takes any A not within, returning a touching line AX whose contact may be A."
 companions = ["III.17 general"]
-fingerprint = "sha256:5dafebad74ae3ff0"
+fingerprint = "sha256:105a583195d3f19f"
 
 [route]
 kind = "euclid"
-
-[representation]
-tags = ["centre-given"]
-note = "The circle comes with a centre. III.1, which takes it, needs two points of the circle, and the proof finds them on the straight line from the centre to A. The companion concludes Definition III.2's `Touches A X BCD`, a straight line named by A and another point X; its point of contact is not returned beside X, and may be A itself (`Touches.contact` reads it off). Not being within the circle is the condition for a solution: from a point within, no straight line touches (`Prop17.inside`, a lemma beside the proposition)."
+note = "Euclid's A is outside the circle. `Prop17.general` takes A on the circle too, a case Euclid leaves out, Heath explains, because III.16's porism so directly indicates it (vol. 2, p. 44): AX drawn at right angles to the radius EA at A (I.11) touches by that porism. The construction is not on Euclid's page. The companion returns a straight line named by A and X; its point of contact is not returned beside X (`Touches.contact` reads it off). From a point within no straight line touches (`Prop17.inside`), so not being within is the condition for a solution."
 
 [[passage]]
-at = "Let A be the given point, and BCD the given circle"
-kind = "case"
-note = "Euclid's A is outside the circle. `Prop17.general` takes A on the circle too, a case Euclid leaves out, Heath explains, because III.16's porism so directly indicates it (vol. 2, p. 44): AX drawn at right angles to the radius EA at A (I.11) touches by that porism. The construction is not on Euclid's page."
+at = "For let the centre E of the circle be taken"
+kind = "carried"
+note = "`Prop1.of_circle` takes two points of the circle and applies III.1's construction and correctness proof to obtain E."
+
+[[passage]]
+at = "let AE be joined, and with centre E"
+kind = "helper"
+helper = "Tacit.line_circle_between"
+note = "Euclid joins AE and treats its meeting D with BCD as available. The Lean puts E within BCD by `Tacit.centre_inside`, the rule we assume as System E, Generalities 3, gets D between E and A from `Tacit.line_circle_between`, the rule we assume as System E, Intersections 4, and describes AFG by Postulate 3."
+
+[[passage]]
+at = "from D let DF be drawn at right angles to EA"
+kind = "helper"
+helper = "BookI.Prop11"
+note = "Euclid draws DF perpendicular to EA; the Lean uses I.11, for which Heath prints no reference here. `InsideCircle.of_between_centre` puts D within AFG, and `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, takes F on AFG beyond D from the point first supplied by I.11."
+
+[[passage]]
+at = "and let EF, AB be joined"
+kind = "helper"
+helper = "Tacit.line_circle_between"
+note = "Euclid's joining EF presupposes its meeting B with BCD. The Lean compares the radii to put F outside BCD by `outside_of_len_gt`, puts E within BCD by `Tacit.centre_inside`, the rule we assume as System E, Generalities 3, then gets B between E and F from `Tacit.line_circle_between`, the rule we assume as System E, Intersections 4."
+
+[[passage]]
+at = "therefore the base DF is equal to the base AB"
+kind = "grouped"
+helper = "BookI.Prop4"
+note = "Euclid's three conclusions about the base, triangle and remaining angles come together from I.4. The Lean calls `BookI.Prop4` once and retains the angle equality needed in the next sentence."
+
+[[passage]]
+at = "But the angle EDF is right"
+kind = "helper"
+helper = "Tacit.adjacent_eq_of_right"
+note = "Euclid recalls the right angle at D, but the Lean's point F lies beyond D from the point first drawn by I.11. `Tacit.adjacent_eq_of_right`, proved from I.13 and Common Notion 3, transfers the right angle to DF; Heath prints no reference to I.13 here."
 
 [figure]
 case = "A outside the circle, as in Heath's figure"
 
 [review]
-stage = "exceptions"
-commit = "2c3686e"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:d48c1d35afd7c9e3"
+stage = "full"
+commit = "d8011767"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:8fc1257893f4e28c"
+run = "brief 0005 stage 5, ship R3 (#29); Prop1.of_circle, written by Claude, read also by GPT-6 Astra (Codex) (for III.1)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
