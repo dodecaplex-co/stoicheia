@@ -51,7 +51,13 @@ order, and the first that fails stops it with a message saying why:
    The programs it runs as checks are not: they keep the environment tool_env() copies,
    which holds GIT_NO_REPLACE_OBJECTS under the launcher or after a hand-over, and
    otherwise only if the caller set it, and no other variable of git's, so that a check
-   finds its repository by its working directory, never by a hook's GIT_DIR (#355).
+   finds its repository by its working directory, never by a hook's GIT_DIR (#355). Nor
+   does any command safe_push.py runs itself, git's or another's, get a variable that
+   ties git to one repository (REPOSITORY_VARIABLES: GIT_DIR, GIT_INDEX_FILE,
+   GIT_WORK_TREE and their kin, as `git rev-parse --local-env-vars` lists them) from
+   the caller, but GIT_NO_REPLACE_OBJECTS as above: each finds its repository by its
+   working directory too, the hand-over's included (#357). The harness sets one itself,
+   on purpose: base_tree's temporary GIT_INDEX_FILE, named to run() in `keep`.
 3. Invariant guards against origin/main, in a fresh temporary worktree of the commit. A
    new decision is a dated entry of its own, docs/decisions/<YYYY-MM-DD>-<slug>.md, which
    the push adds (docs/WORKFLOW.md, section 10, "Decision entries"); 0002-decisions.md,
@@ -551,12 +557,39 @@ class NothingToPush(Exception):
 # Running commands
 
 
-def without_replacements(env=None) -> dict:
-    """A copy of `env` (os.environ when None) with GIT_NO_REPLACE_OBJECTS=1 and no
-    GIT_REPLACE_REF_BASE. Git from 2.19 to 2.41 still lets core.useReplaceRefs=true in
-    config override it, which run() pins off (NO_REPLACE_REFS)."""
-    env = dict(os.environ if env is None else env)
-    env.pop("GIT_REPLACE_REF_BASE", None)
+# The variables that tie git to one repository, as `git rev-parse --local-env-vars` lists
+# them. A hook sets some of them (GIT_DIR, GIT_INDEX_FILE, GIT_WORK_TREE) for the
+# repository it runs in; left set, they would send safe_push's own commands to that
+# repository and its index: `git worktree add` would check the commit out into a linked
+# worktree's index under a hook's GIT_INDEX_FILE (#357). So no command safe_push runs gets
+# one of the caller's but GIT_NO_REPLACE_OBJECTS (KEPT_GIT_VARIABLES), and git finds its
+# repository by the working directory each command names; the one the harness sets itself,
+# base_tree's temporary GIT_INDEX_FILE, is named to run() in `keep`. The list is git
+# 2.50's, with GIT_INTERNAL_SUPER_PREFIX, which older git printed too.
+REPOSITORY_VARIABLES = frozenset({
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_CONFIG", "GIT_CONFIG_COUNT",
+    "GIT_CONFIG_PARAMETERS", "GIT_DIR", "GIT_GRAFT_FILE", "GIT_IMPLICIT_WORK_TREE",
+    "GIT_INDEX_FILE", "GIT_INTERNAL_SUPER_PREFIX", "GIT_NO_REPLACE_OBJECTS",
+    "GIT_OBJECT_DIRECTORY", "GIT_PREFIX", "GIT_REPLACE_REF_BASE", "GIT_SHALLOW_FILE",
+    "GIT_WORK_TREE"})
+
+
+def own_env(env=None, keep=()) -> dict:
+    """A copy of `env` (os.environ when None) with none of REPOSITORY_VARIABLES but those
+    KEPT_GIT_VARIABLES names, so that a check started with tool_env() keeps
+    GIT_NO_REPLACE_OBJECTS (#355, #357), and those `keep` names, which the harness sets
+    itself, on purpose (base_tree's temporary GIT_INDEX_FILE)."""
+    return {name: value for name, value in (os.environ if env is None else env).items()
+            if name not in REPOSITORY_VARIABLES or name in KEPT_GIT_VARIABLES
+            or name in frozenset(keep)}
+
+
+def without_replacements(env=None, keep=()) -> dict:
+    """A copy of `env` (os.environ when None) with none of REPOSITORY_VARIABLES but
+    GIT_NO_REPLACE_OBJECTS, set to 1, so no GIT_REPLACE_REF_BASE. Git from 2.19 to 2.41
+    still lets core.useReplaceRefs=true in config override it, which run() pins off
+    (NO_REPLACE_REFS)."""
+    env = own_env(env, keep)
     env["GIT_NO_REPLACE_OBJECTS"] = "1"
     return env
 
@@ -567,7 +600,7 @@ NO_REPLACE_REFS = ("-c", "core.useReplaceRefs=false")
 
 
 def run(cmd, cwd, *, env=None, input=None, binary=False,
-        capture=True, timeout=None) -> subprocess.CompletedProcess:
+        capture=True, keep=(), timeout=None) -> subprocess.CompletedProcess:
     """Every command the harness starts starts here, but origin/main's risk.py, which
     risk_class runs with a time limit, and the Git read that loads origin/main's
     count-marker reader, both before the main-checks cache is opened. While the cache is
@@ -594,10 +627,14 @@ def run(cmd, cwd, *, env=None, input=None, binary=False,
     # A push sends the original objects, but git reads a replacement (refs/replace/, or a
     # ref under GIT_REPLACE_REF_BASE) in their place: so git runs here with replacements
     # off, by its environment and by its command line, lest the scan or the hand-over read
-    # a clean stand-in (#256).
+    # a clean stand-in (#256). No command, git's or another's, gets one of the caller's
+    # variables that tie git to one repository, but GIT_NO_REPLACE_OBJECTS; only a name in
+    # `keep`, which the harness sets itself (base_tree's GIT_INDEX_FILE), passes (#357).
     if cmd and os.path.basename(cmd[0]) == "git":
         cmd = [cmd[0], *NO_REPLACE_REFS, *cmd[1:]]
-        env = without_replacements(env)
+        env = without_replacements(env, keep)
+    else:
+        env = own_env(env, keep)
     if SANDBOX is not None:
         cmd = [SANDBOX_EXEC, "-p", SANDBOX, *cmd]
     return subprocess.run(cmd, cwd=cwd, env=env, input=input, capture_output=capture,
@@ -2922,8 +2959,8 @@ def risk_class(repo, base: str, sha: str, labels: set[str] | None) -> Risk:
         script.write_bytes(source.stdout)
         try:
             r = subprocess.run([PY, "-I", str(script), "--diff", base, sha], cwd=repo,
-                               capture_output=True, text=True, errors="replace",
-                               timeout=RISK_TIMEOUT)
+                               env=without_replacements(), capture_output=True, text=True,
+                               errors="replace", timeout=RISK_TIMEOUT)
         except (OSError, subprocess.TimeoutExpired) as e:
             return r5(f"origin/main's {RISK} could not be run: {type(e).__name__}")
     if r.returncode != 0:
@@ -3380,10 +3417,13 @@ def base_tree(repo, base, sha, changes: list[tuple[str, str]]) -> str:
     commit's, with origin/main's entry for each check input the commit changes, and those
     it adds taken out. Neither the worktree nor the repository's own index is touched."""
     with tempfile.TemporaryDirectory(prefix="stoicheia-index-") as tmp:
-        env = dict(os.environ, GIT_INDEX_FILE=str(Path(tmp) / "index"))
+        # Besides GIT_NO_REPLACE_OBJECTS, the one repository variable the harness sets on
+        # purpose, kept by run() (#357): every other but GIT_NO_REPLACE_OBJECTS is
+        # dropped, a hook's GIT_INDEX_FILE among them.
+        env = dict(own_env(), GIT_INDEX_FILE=str(Path(tmp) / "index"))
 
         def index(*args, input=None) -> str:
-            r = run(["git", *args], repo, env=env, input=input)
+            r = run(["git", *args], repo, env=env, input=input, keep=("GIT_INDEX_FILE",))
             if r.returncode != 0:
                 raise Refusal(f"`git {' '.join(args)}` failed: {r.stderr.strip()}")
             return r.stdout
@@ -3989,7 +4029,8 @@ def harness(repo, base: str, rep: Report) -> None:
           "origin/main's: running origin/main's in its place", flush=True)
     path = harness_copy(theirs, theirs_heath, theirs_train) / "safe_push.py"
     # GIT_NO_REPLACE_OBJECTS=1, and no GIT_REPLACE_REF_BASE, for its git commands and its
-    # checks: so an older harness, whose run() sets neither, has them too (#256).
+    # checks: so an older harness, whose run() sets neither, has them too (#256). No other
+    # variable that ties git to one repository goes with them (#357).
     env = without_replacements(dict(os.environ, STOICHEIA_HARNESS="origin/main"))
     sys.stdout.flush()
     sys.stderr.flush()
