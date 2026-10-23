@@ -7637,13 +7637,20 @@ class Units(unittest.TestCase):
             "(s : String := \"a := b\") : True := trivial",
             "(h : «a := b» = 1) : True := trivial",
             "{n : Nat} (h : n = n := rfl) : n = n := h",
+            # «…» names, at depth 0 and holding a bracket: a name is blanked whole.
+            "{a : Nat} : «x := y» = a := rfl",
+            "(h : «)» = 1 := rfl) : True := trivial",
+            "{a : Nat} : «(» = a := rfl",
         )
         for text in cases:
             with self.subTest(text=text):
                 end = safe_push.statement_end(text)
                 self.assertEqual(text[end:], text[text.rindex(":= "):])
-        # With no `:=` of its own, a statement runs to the end, an unclosed block among it.
-        for text in ("{a : Nat} : a = a", "{a : Nat} /- := never closed : a = a := rfl"):
+        # With no `:=` of its own, a statement runs to the end, an unclosed block among it;
+        # and so does one with a literal before its `:=` that the reader cannot read for
+        # certain, so the guard compares more, never less.
+        for text in ("{a : Nat} : a = a", "{a : Nat} /- := never closed : a = a := rfl",
+                     "(h : a℃'('x') = a℃'('x') := rfl) : True := trivial"):
             with self.subTest(text=text):
                 self.assertEqual(safe_push.statement_end(text), len(text))
 

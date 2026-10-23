@@ -1329,25 +1329,32 @@ def secret_scan(repo, base: str | None, sha: str, rep: Report, allow_rev: str | 
 
 
 OPEN, CLOSE = "([{⟨⦃⦗", ")]}⟩⦄⦘"
+# A «…» name, to the `»` that ends it or the end of the text, as check_fidelity reads one.
+LEAN_NAME = re.compile(r"«[^»]*(?:»|\Z)")
 
 
 def statement_end(text: str) -> int:
     """Where a declaration's statement ends: at its own `:=`, the first one outside
     brackets, comments and strings, so that a binder's default value (`(h : p := by
     simp)`) or a comment holding `:=` does not end it early. The end of `text` if none.
-    Comments, string and character literals and «…» names are read as Lean reads them,
-    by the scripts' one reader (heath.read_lean, #206, #349), which blanks them in place:
-    so `/-/- -/` is a whole comment, and a `'"'` or a `'('` is a character, not a string
-    or a bracket."""
-    code, n = heath.read_lean(text)[0], len(text)
-    depth = 0
+    Comments and string and character literals are read as Lean reads them, by the
+    scripts' one reader (heath.read_lean, #206, #349), which blanks them in place: so
+    `/-/- -/` is a whole comment, a `'"'` is a character, not a string, and a `'('` is a
+    character, not a bracket. Each «…» name is blanked here too, whole (LEAN_NAME), as
+    check_fidelity blanks them, since the reader blanks only a name's `[` and `]`: so a
+    `:=` or a bracket within a name is no `:=` and no bracket. Where the reader cannot
+    read a literal for certain before the `:=` it finds, the statement runs to the end of
+    the text, so that the guard compares more of it, never less."""
+    code, unsure = heath.read_lean(text)
+    code = LEAN_NAME.sub(lambda m: re.sub(r"[^\n]", " ", m[0]), code)
+    n, depth = len(text), 0
     for i, c in enumerate(code):
         if c in OPEN:
             depth += 1
         elif c in CLOSE:
             depth = max(0, depth - 1)
         elif depth == 0 and code.startswith(":=", i):
-            return i
+            return n if any(k < i for k in unsure) else i
     return n
 
 

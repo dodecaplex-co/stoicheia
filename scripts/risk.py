@@ -180,8 +180,9 @@ def diff_paths(base: str, head: str, cwd: str | None = None) -> list[str]:
 # symbols past ASCII. The reader knows `module`, `prelude`, the modifiers `public`,
 # `private` and `meta`, and imports, each `import`, after an optional `all`, taking one
 # module, several to a line if need be (`import A import B`); and between them spaces,
-# tabs and line breaks, and comments as Lean reads them, `--` to the line's end and `/-` to
-# its matching `-/`, nested. A module's parts are plain, an ASCII letter or `_` then ASCII
+# tabs and line breaks, and comments as Lean reads them (comment_end, below): `--` to the
+# line's end, and `/-` to its matching `-/`, nested, its body beginning past its third
+# character, so that `/-/- -/` is one comment. A module's parts are plain, an ASCII letter or `_` then ASCII
 # letters, digits and `_'!?`, or quoted, of ASCII letters, digits and `_'!?-`
 # (`«areas-p5»`), joined by dots. The header ends at the first other word, or the first
 # other ASCII character, where Lean's ends too: an `import` later in a file, in a string

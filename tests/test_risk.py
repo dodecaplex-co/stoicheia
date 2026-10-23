@@ -194,9 +194,11 @@ class Header(unittest.TestCase):
 
     def test_comments_are_read_as_lean_reads_them(self):
         # #349: a block's body begins past its third character, so `/-/- -/` is a whole
-        # comment and the `-/` of `/--/` closes nothing. Read the old way, the first hid
-        # the import after it (a narrower set of the model's inputs), and the second read
-        # one inside a doc comment and missed the one after it.
+        # comment and the `-/` of `/--/` closes nothing, as Lean's tokenizer ends them.
+        # Read the old way, the first hid the import after it (a narrower set of the
+        # model's inputs), and the second read one inside a doc comment and missed the one
+        # after it. (Lean refuses a doc comment before an import; reading the import after
+        # it all the same is the reader's widening, as above.)
         cases = (
             ("/-/- -/\nimport A\n", ["A"]),
             ("/--/\nimport X -/\nimport A\n", ["A"]),
@@ -209,8 +211,10 @@ class Header(unittest.TestCase):
 
     def test_the_comment_reader_is_heath_s_word_for_word(self):
         # risk.py runs alone, so it keeps a copy of the scripts' one comment reader,
-        # heath.comment_end (#206, #349): the same function, by its source, and reading
-        # the same on a corpus of comments, strings, character literals and «…» names.
+        # heath.comment_end (#206, #349): the same function, by its syntax tree (its code
+        # and its docstring; a comment inside it is not compared), and, in the test after
+        # this, reading the same on a corpus of comments, strings, character literals and
+        # «…» names.
         import ast
         import inspect
         import heath
@@ -218,6 +222,10 @@ class Header(unittest.TestCase):
             tree = ast.parse(inspect.getsource(function))
             return ast.dump(tree)
         self.assertEqual(body(risk.comment_end), body(heath.comment_end))
+
+    def test_the_comment_reader_reads_as_heath_s(self):
+        # Apart from its source, so that a drift in either copy fails this on its own.
+        import heath
         corpus = (
             "/-/- -/ import A", "/--/ x -/ y", "/-- doc -/ theorem t", "/-! module -/",
             "/- a /- nested /- deeper -/ -/ -/ after", "/- unclosed /- -/", "-- line\nnext",
