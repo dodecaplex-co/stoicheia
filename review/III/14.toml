@@ -52,7 +52,7 @@ note = "Euclid uses the equality of the radii AE and EC without giving a reason.
 [[passage]]
 at = "therefore EF is equal to EG"
 kind = "helper"
-helper = "Prop46.sq"
+helper = "BookI.Prop46.sq"
 note = "Euclid passes from equal squares to equal straight lines without a reference in Heath. The Lean uses `BookI.Prop46.sq`, which describes the squares by I.46 and applies `BookI.Prop46.side_eq` to their equal areas."
 
 [[passage]]
@@ -74,7 +74,7 @@ note = "Euclid again uses the equality of two radii without giving a reason. The
 [[passage]]
 at = "therefore AF is equal to CG"
 kind = "helper"
-helper = "Prop46.sq"
+helper = "BookI.Prop46.sq"
 note = "Euclid again passes from equal squares to equal straight lines without a reference in Heath. The Lean applies `BookI.Prop46.sq`, using I.46 and `BookI.Prop46.side_eq` to obtain AF equal to CG."
 
 [[passage]]
