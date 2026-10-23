@@ -6620,7 +6620,45 @@ class OwnGitUnderHook(Edge):
         self.assertEqual([env.get("GIT_NO_REPLACE_OBJECTS") for _, env in seen],
                          ["1", "/planted", "1", "/planted"])
 
-    def test_every_launch_outside_run_is_given_its_environment(self):
+    MUTATORS = frozenset({"update", "setdefault", "pop", "popitem", "clear", "__setitem__",
+                          "__delitem__", "__ior__"})
+
+    def bindings(self, function, name: str) -> list:
+        """The values `name` is bound to in `function`: an assignment's, an annotated
+        one's or a walrus's value. A binding that holds no single value (an augmented
+        assignment, unpacking, a for or with target) counts as None, and so does any
+        change to what the name holds: a subscript stored or deleted, or a mutating
+        method called on it."""
+        values = []
+        def stores(target) -> bool:  # the name itself, whether read or stored
+            return isinstance(target, ast.Name) and target.id == name
+        for node in ast.walk(function):
+            if isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if stores(target):
+                        values.append(node.value)
+                    elif isinstance(target, (ast.Tuple, ast.List)) and any(
+                            stores(e) for e in ast.walk(target)):
+                        values.append(None)
+            elif isinstance(node, (ast.AnnAssign, ast.NamedExpr)) and stores(node.target):
+                values.append(node.value)
+            elif isinstance(node, ast.AugAssign) and stores(node.target):
+                values.append(None)
+            elif isinstance(node, (ast.For, ast.AsyncFor)) and any(
+                    stores(e) for e in ast.walk(node.target)):
+                values.append(None)
+            elif isinstance(node, ast.withitem) and node.optional_vars is not None and any(
+                    stores(e) for e in ast.walk(node.optional_vars)):
+                values.append(None)
+            elif (isinstance(node, ast.Subscript) and stores(node.value)
+                  and isinstance(node.ctx, (ast.Store, ast.Del))):
+                values.append(None)
+            elif (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                  and stores(node.func.value) and node.func.attr in self.MUTATORS):
+                values.append(None)
+        return values
+
+    def test_every_launch_is_given_a_built_environment(self):
         # risk.py's launch, the CI watch and the hand-over start their processes without
         # run(): each names an environment built by own_env() or without_replacements(),
         # never the caller's as it is (#357).
@@ -6662,17 +6700,15 @@ class OwnGitUnderHook(Edge):
                     env = next((k.value for k in node.keywords if k.arg == "env"), None)
                 self.assertIsNotNone(env, f"{where} names no environment")
                 if isinstance(env, ast.Name):
-                    # A name (run()'s own env, the hand-over's): every assignment to it in
-                    # the function is a call of one of the builders.
-                    values = [n.value for n in ast.walk(function)
-                              if isinstance(n, ast.Assign)
-                              and any(isinstance(t, ast.Name) and t.id == env.id
-                                      for t in n.targets)]
+                    # A name (run()'s own env, the hand-over's): every binding of it in the
+                    # function binds a call of one of the builders, and nothing changes
+                    # what it holds afterwards.
+                    values = self.bindings(function, env.id)
                     self.assertTrue(values, f"{where}: {env.id} is never assigned")
                     for value in values:
-                        shown = ast.unparse(value)
-                        self.assertIsInstance(value, ast.Call, shown)
-                        self.assertIn(ast.unparse(value.func), builders, shown)
+                        shown = ast.unparse(value) if value is not None else env.id
+                        self.assertIsInstance(value, ast.Call, f"{where}: {shown}")
+                        self.assertIn(ast.unparse(value.func), builders, f"{where}: {shown}")
                     continue
                 self.assertIsInstance(env, ast.Call, ast.unparse(env))
                 self.assertIn(ast.unparse(env.func), builders, ast.unparse(env))
@@ -7139,8 +7175,8 @@ class Units(unittest.TestCase):
                          {"HOME": "/home", "GIT_NO_REPLACE_OBJECTS": "1"})
         self.assertEqual(other_call.args[0], [sys.executable, "-c", "pass"])
         self.assertNotIn("GIT_DIR", other_call.kwargs["env"])
-        self.assertEqual(other_call.kwargs["env"]["GIT_NO_REPLACE_OBJECTS"], "kept-as-given")
         self.assertEqual(other_call.kwargs["env"], expected)
+        self.assertEqual(other_call.kwargs["env"]["GIT_NO_REPLACE_OBJECTS"], "kept-as-given")
 
     def test_source_statement(self):
         src = (SOURCE / "Elements" / "BookIII" / "Prop01.lean").read_text()

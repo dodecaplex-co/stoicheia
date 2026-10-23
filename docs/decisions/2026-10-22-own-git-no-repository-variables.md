@@ -16,8 +16,9 @@
   printed too. Each command finds its repository by its working directory, as the checks
   do, and so do origin/main's `risk.py`, which classes the change, and origin/main's
   harness after a hand-over; `gh pr checks --watch`, which is given its repository by
-  `-R`, gets none of them either. `GIT_NO_REPLACE_OBJECTS` stays where it was: every git
-  command safe_push runs itself gets it set to 1, with the `-c` of the
+  `-R`, gets none of them but `GIT_NO_REPLACE_OBJECTS` either. `GIT_NO_REPLACE_OBJECTS`
+  stays where it was: every git command safe_push runs itself gets it set to 1, with the
+  `-c` of the
   [entry for #256](2026-10-21-scan-no-replace.md), whose rules stand, and a check gets it
   as `tool_env()` keeps it, so under the launcher or after a hand-over the checks still
   have it, as that entry says. origin/main's `risk.py` now always gets it set to 1 too,
@@ -44,9 +45,11 @@
   another program and a check started with `tool_env()`; and checks, reading the source,
   that each place safe_push starts a process, `run()`'s own among them, gives it an
   environment built by `own_env()` or `without_replacements()`, directly or by a name
-  every assignment of which is one of those calls, and that none uses a function that
-  takes no environment. `HookEnvironment`'s planted check now also records the git
-  variables it is started with, which must be `GIT_NO_REPLACE_OBJECTS=1` alone. And the unit test of `run()` now expects a program
-  other than git to get the caller's environment less those variables but
-  `GIT_NO_REPLACE_OBJECTS`, which it keeps as given, where it expected the caller's
-  environment as it was.
+  every binding of which in its function is one of those calls and which nothing there
+  changes afterwards (no item stored or deleted, no `update()` or the like), and that
+  none uses a function that takes no environment. `HookEnvironment`'s planted check now
+  also records the git variables it is started with, which must be
+  `GIT_NO_REPLACE_OBJECTS=1` alone. And the
+  unit test of `run()` now expects a program other than git to get the caller's
+  environment less those variables but `GIT_NO_REPLACE_OBJECTS`, which it keeps as
+  given, where it expected the caller's environment as it was.
