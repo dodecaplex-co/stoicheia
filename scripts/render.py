@@ -827,7 +827,57 @@ def rests_on(p, docs, depth, book, refs, attached=()):
                         f"- `{name}`{here}: not declared in `Elements/Foundations/`\n")
             out += "\n"
         out += "</details>\n"
+    laws = cited_laws_table(p, docs, up)
+    if laws:
+        out += f"\n{laws}"
     return out
+
+
+@functools.lru_cache(maxsize=None)
+def law_docs():
+    """law -> what it says: the docstring of each constructor of the `Cited` type, the laws
+    a derivation inside a hypothetical placement may cite."""
+    src = read_text(ROOT / "Elements" / "Foundations" / "Superposition" / "Syntax.lean")
+    body = re.search(r"^inductive Cited where\n(.*?)^\s*deriving\b", src, re.M | re.S)
+    if body is None:
+        return {}
+    return {m.group(2): " ".join(m.group(1).split())
+            for m in re.finditer(r"/--((?:(?!-/).)*?)-/\s*\|\s*(\w+)", body.group(1), re.S)}
+
+
+def cited_laws_table(p, docs, up):
+    """The laws a derivation inside the placement cites (facts.json's `cited_laws`, on I.4
+    and I.8): what each says, the theorem that proves it, linked where Lean says it is
+    declared, and the construction rules beneath that proof. "" for an entry that cites
+    none."""
+    laws = (p or {}).get("cited_laws") or []
+    if not laws:
+        return ""
+
+    def proof(found):
+        name = found["name"]
+        short = name.split(".", 1)[1] if name.startswith(("Superposition.", "BookI.")) else name
+        return f"[`{short}`]({up}{found['file']}#L{found['line']})" if found["file"] \
+            else f"`{short}`"
+
+    def rule(name):
+        _, path, line = docs.get(name, ("", "", 0))
+        short = name.replace("Tacit.", "")
+        return f"[`{short}`]({up}{path}#L{line})" if path else f"`{short}`"
+
+    lines = ["**The laws cited inside the placement.** The derivation cites each law below as "
+             "proved. Each is a statement about every figure, proved outside the placement, so "
+             "citing it draws nothing there. The last column names the "
+             f"[construction rules]({up}docs/FORMALIZATION.md#construction-rules) beneath its "
+             "proof, as the certificate finds them (`cited_laws`).", "",
+             "| Law | Proved by | Construction rules beneath the proof |", "|---|---|---|"]
+    for law in laws:
+        said = law_docs().get(law["law"], "")
+        lines.append("| " + (f"{cell(said)} (`{law['law']}`)" if said else f"`{law['law']}`")
+                     + " | " + (", ".join(proof(f) for f in law["proofs"]) or "none found")
+                     + " | " + (", ".join(rule(r) for r in law["construction_rules"]) or "none")
+                     + " |")
+    return "\n".join(lines) + "\n"
 
 
 # What the review record says, on the page (review/SCHEMA.md). Brief 0005, stage 1d.
