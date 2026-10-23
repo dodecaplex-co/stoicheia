@@ -63,8 +63,18 @@ that role ([WORKFLOW.md](WORKFLOW.md)).
   off the letters (`hAB : A ≠ B`, `hA_BCD`).
 - Magnitudes are lengths, angles and areas, `‖A B‖`, `∠ A B C`, `△ A B C`, with `∟` the
   right angle and Book II's `rect` and `sq`: they add and compare, and nothing more. "Greater
-  than … by" is an equation (the less with the excess is the greater). No numbers,
-  coordinates or real numbers appear in a statement or a proof.
+  than … by" is an equation (the less with the excess is the greater). No coordinates or
+  real numbers appear in a statement or a proof, and no number measures a length, an angle
+  or an area. Counts may appear, natural numbers, of a figure's corners and of what
+  they make, since a count is part of what "a figure of n sides" means: the corners
+  of a closed line of sides, or within a triangle, and a corner's place in their list,
+  turned round some number of steps; the sides a ray or a finite straight line crosses
+  (`crossingCount`); the closed lines round a point (`Outline.depth`); and the tiles and
+  triangles of a division, with the sides they share. Counts are added and compared, and
+  two are compared by their remainders on division by two, as
+  `crossing_parity_independent` compares two crossing counts. They are part of how a figure
+  is defined, not of Euclid's argument
+  ([decision of 22 October 2026](decisions/2026-10-22-figures-promoted.md)).
 - Each book's phrases, and how its statements say them, are in its brief.
 
 ### Coverage: does it say what Euclid says?
@@ -130,7 +140,7 @@ the porism by its own name, as Heath's "[III. 1, Por.]" does.
 
 Where a statement is narrower than Euclid's words, the general result is a companion
 theorem beside the unchanged `PropN`, which stays as Euclid's worked configuration under his
-sentences: `Prop40.general`, `Prop45.figure`, `Prop14.square`, and the old statement as a
+sentences: `Prop40.general`, `Prop45.outline`, `Prop14.outline`, and the old statement as a
 corollary (`Prop40.special`) where it helps citers. The fidelity check reads only
 `theorem PropN`, so Heath's sentences stay where they are. A companion is listed in the
 edition's companions list, [`Elements/Companions.lean`](../Elements/Companions.lean)
@@ -226,7 +236,7 @@ The representations Books I–III rest on:
 | a right angle | Definition I.10 as a predicate, and Postulate 4 making every right angle `∟` | | |
 | superposition | `Tacit.superposition`, a restricted inference in System E's style, used directly only in I.4 and I.8 | a checked derivation over symbols exports one equality of lengths, angles or triangles about the given figure; it constructs nothing inside the placement and no exported formula names the placed corners or side ([the rule](../Elements/Foundations/Tacit/Superposition.lean), [Book I's reading](briefs/book-I.md#representations)) | |
 | the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `exists_rect`, `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
-| a rectilineal figure | given with its division into triangles, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | that every figure can be so divided, and that another division gives the same sum, are not proved; Hilbert proved the second, for his measure of area | `figure-with-dissection` |
+| a rectilineal figure | given by its outline, `Outline`: finitely many simple closed lines of sides, apart or nested, so that a figure may have holes, separate pieces or contacts at corners; its region read from the sides by the parity of a ray's crossings (`Outline.Region`); and equal to the figure meaning equal to its area, `Outline.area`, the sum of every division of it into triangles that lie apart. The older forms take the figure with its division, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | in Book Zero, `division_exists` divides every outline, the content theorem, `Apart.area_eq_of_same_region`, after David Hilbert's theory of content, gives every division of it the same sum (`area_eq`, `area_congr`, `area_of_same_boundary`), and `apart_has_outline` gives every `Apart` an outline with exactly its region; beside I.45, `Prop45.fan_boundary` gives the checked fan its outline, the closed line through its corners in order; and `outline_bounded`, in Book I after I.29, puts every figure within a triangle | `figure-with-dissection`, for the older forms |
 | a circle's centre | `exists_centre` gives one for every circle; named centres remain where other hypotheses or conclusions use them geometrically | III.1 finds it by Euclid's construction; proofs cite III.1 where Heath does, and obtain other centres from the rule or the geometric data | |
 | a circumference | twice the angle standing on it, `circumference`, `standing`, and for an arc `Arc.measure`; no radius; equal circumferences in III.26 and III.28 are equal in measure and congruent, `Arc.Congruent` | proved facts in `Circumferences.lean`; `Arc.measure_eq_iff` and `Arc.congruent_iff`, in `Arcs.lean` after III.29, say what equal measures and congruence come to | `angle-measure`, `redundant-hypothesis` |
 | a segment | its circle, the ends of its base and a point naming its side, `Arc`, with its points, `InSegment`, and its circumference's, `OnArc`; equal segments read through Common Notion 4 as segments that coincide, `Arc.Congruent` | `placement`, from I.4 and I.8, lays one on another in III.24; only III.24 and `Arcs.lean` may cite it | `segment-with-circle` |
@@ -368,9 +378,12 @@ helper another page has proved is imported and cited with a pointer ("as in III.
   `Elements/BookI/HelpersParallels.lean` if it cites I.28, I.30 or I.31 (`Prop30.meet`,
   `Prop31.parallelogram`); in `Elements/BookII/Rectangles.lean` for Book II's steps that
   cite Book I; in `Elements/BookIII/Squares.lean` for Book III's that cite Books I or II; and
-  in `Elements/BookIII/Circumferences.lean` for those that cite III.20–III.22. A new shared
-  module (stage 2's `Elements/Figure/Sums.lean`, stage 3's placement and arcs) has an owner,
-  and its place in the order is set in the brief.
+  in `Elements/BookIII/Circumferences.lean` for those that cite III.20–III.22; and in
+  `Elements/BookI/OutlineBound.lean`, after I.29, for `outline_bounded`, which cites I.23
+  and uses Postulate 5 (brief 0013). A new shared module (stage 2's
+  `Elements/Figure/Sums.lean`, stage 3's placement and arcs, brief 0013's figures given by
+  their outlines, in `Elements/Figure/` and `Elements/Foundations/Figures.lean`) has an
+  owner, and its place in the order is set in the brief.
 - **Imports.** Import `Elements.Figure.Basics`, the book's ground, every proposition cited,
   and the module of every shared step cited (`Elements.BookI.Helpers`,
   `Elements.BookI.HelpersParallels`). A proof cites an earlier book as `BookI.PropN`, `BookII.PropN`, and does not open
