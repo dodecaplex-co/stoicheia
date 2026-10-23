@@ -7,7 +7,7 @@ fingerprint = "sha256:c0f5cead6405c5bd"
 
 [route]
 kind = "euclid"
-note = "`Prop15` constructs MN beside the more remote FG, makes MN equal to BC by III.14, and uses I.20 and I.24 to compare it with AD and FG. `Prop15.le_diameter` uses I.20 on BE and EC when BC does not pass through E; if BC is a diameter it equals AD, and if B and C coincide its length is zero. `Prop15.nearer` uses `Prop15` when neither straight line passes through the centre and `Prop15.le_diameter` when BC is a diameter; FG, being more remote, cannot pass through E. `Prop15` and `Prop15.nearer` rest on `Tacit.exists_centre` through III.14 and III.2; `Prop15.le_diameter` does not."
+note = "`Prop15` constructs MN beside the more remote FG, makes MN equal to BC by III.14, and uses I.20 and I.24 to compare it with AD and FG. `Prop15.le_diameter` uses I.20 on BE and EC when BC does not pass through E; if BC is a diameter it equals AD, and if B and C coincide its length is zero. `Prop15.nearer` uses `Prop15` when neither straight line passes through the centre and `Prop15.le_diameter` when BC is a diameter; FG, being more remote, cannot pass through E. `Prop15` and `Prop15.nearer` rest on `Tacit.exists_centre` through III.2 and its corollary `Prop2.within`, which `Prop15.half` uses; `Prop15.le_diameter` does not."
 
 [[passage]]
 at = "For from the centre E let EH, EK be drawn"
@@ -58,12 +58,4 @@ stage = "full"
 commit = "e572d5c0"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:2a71c56e1b84004f"
-run = "brief 0005 stage 5, ship R3 (#29)"
-
-[review.items]
-statement = "pass"
-passages = "pass"
-representations = "n/a"
-commentary = "pass"
-figures = "pass"
-signoff = "pass"
+run = "card #131, ship ER: its note re-read after III.1's call was dropped"

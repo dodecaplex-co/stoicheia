@@ -16,9 +16,15 @@ note = "\"Nearer\" is the less angle at D with the ray DA, unsigned. The convex 
 
 [[passage]]
 at = "For let the centre of the circle ABC be taken"
+kind = "helper"
+helper = "Tacit.exists_centre"
+note = "Euclid takes the centre M, with Heath's reference to III.1. The proof needs the centre alone, so a call of III.1 would do no work: the Lean takes M from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E, and the statement, which asks of every centre that it lie between G and A, puts M there."
+
+[[passage]]
+at = "let ME, MF, MC, MK, ML, MH be joined"
 kind = "case"
 helper = "Prop8.on_diameter"
-note = "Euclid takes M by III.1 and joins radii to points off DA. The Lean also treats E = G and K = A in the greatest and least comparisons: `Prop8.on_diameter`, using `Prop2.triangle` (III.2, which Heath does not cite here), leaves only the two ends of the diameter, and `len_lt_of_between` makes DG less than DA."
+note = "Euclid joins radii to points off DA. The Lean also treats E = G and K = A in the greatest and least comparisons: `Prop8.on_diameter`, using `Prop2.triangle` (III.2, which Heath does not cite here), leaves only the two ends of the diameter, and `len_lt_of_between` makes DG less than DA."
 
 [[passage]]
 at = "Then, since AM is equal to EM"
@@ -126,12 +132,4 @@ stage = "full"
 commit = "d166f843"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:279314587c3b647d"
-run = "card #332, ship ER (#125, #347): re-read after Euclid's route moved into Elements/; the added lines of the move (the last step's convex and concave branches), written by Claude, read also by GPT-6 Astra (Codex)"
-
-[review.items]
-statement = "pass"
-passages = "pass"
-representations = "n/a"
-commentary = "pass"
-figures = "pass"
-signoff = "pass"
+run = "card #131, ship ER: re-read after III.1's call was dropped; the added lines of the move (the last step's convex and concave branches), written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex)"

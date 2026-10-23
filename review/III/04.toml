@@ -8,6 +8,12 @@ fingerprint = "sha256:fed861dbbfcf4968"
 kind = "euclid"
 
 [[passage]]
+at = "let the centre of the circle ABCD be taken"
+kind = "helper"
+helper = "Tacit.exists_centre"
+note = "Euclid takes the centre F, with Heath's reference to III.1. The proof needs the centre alone, so a call of III.1 would do no work: the Lean takes F from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E, and \"not through the centre\", said of every centre, puts F off AC and BD, so that FE can be joined."
+
+[[passage]]
 at = "therefore the angle FEA is equal to the angle FEB"
 kind = "case"
 note = "If B is on A's side of FE, the equal right angles put B on EA; otherwise D is on that side and the angle FED is right, so the same argument puts D on EA. Either would make BD and AC one straight line."
@@ -32,12 +38,4 @@ stage = "full"
 commit = "f34cfd07"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:39764bc40a45a681"
-run = "brief 0005 stage 5, ship R3 (#29); the closing comparison, written by Claude, read also by GPT-6 Astra (Codex)"
-
-[review.items]
-statement = "pass"
-passages = "pass"
-representations = "n/a"
-commentary = "pass"
-figures = "pass"
-signoff = "pass"
+run = "card #131, ship ER: re-read after III.1's call was dropped; the closing comparison, written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex)"

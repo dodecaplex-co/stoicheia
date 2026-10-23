@@ -11,8 +11,9 @@ note = "Euclid's A is outside the circle. `Prop17.general` takes A on the circle
 
 [[passage]]
 at = "For let the centre E of the circle be taken"
-kind = "carried"
-note = "`Prop1.of_circle` takes two points of the circle and applies III.1's construction and correctness proof to obtain E."
+kind = "helper"
+helper = "Tacit.exists_centre"
+note = "Euclid takes the centre E, with Heath's reference to III.1. The proof needs the centre alone, so a call of III.1 would do no work: the Lean takes E from `Tacit.exists_centre`, a rule we assume from Definitions I.15 and I.16, not a proved lemma or a rule of System E."
 
 [[passage]]
 at = "let AE be joined, and with centre E"
@@ -52,12 +53,4 @@ stage = "full"
 commit = "d8011767"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:8fc1257893f4e28c"
-run = "brief 0005 stage 5, ship R3 (#29); Prop1.of_circle, written by Claude, read also by GPT-6 Astra (Codex) (for III.1)"
-
-[review.items]
-statement = "pass"
-passages = "pass"
-representations = "n/a"
-commentary = "pass"
-figures = "pass"
-signoff = "pass"
+run = "card #131, ship ER: re-read after III.1's call was dropped; the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex)"
