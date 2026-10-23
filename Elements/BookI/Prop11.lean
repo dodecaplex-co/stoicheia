@@ -58,7 +58,7 @@ theorem Prop11 {A B C Q : Point} (hAB : A ≠ B) (hC : Collinear A B C) (hQ : ¬
   -- on DE let the equilateral triangle FDE be constructed, [I. 1]
   /- On Q's side of DE, which is Q's side of AB: one straight line passes
      through D and E. -/
-  obtain ⟨F, ⟨-, hDE_EF, hEF_FD⟩, hFQ⟩ := Prop1 D E hDE Q
+  obtain ⟨F, ⟨-, -, hEF_FD⟩, hFQ⟩ := Prop1 D E hDE Q
   have hF_Q : SameSide F Q AB :=
     (hFQ (Triangle.of_line hD_AB hE_AB hDE hQ_AB)).sameSide hD_AB hE_AB
   have hF_AB : ¬ OnLine F AB := not_on_line_of_same_side hF_Q

@@ -63,8 +63,29 @@ that role ([WORKFLOW.md](WORKFLOW.md)).
   off the letters (`hAB : A ≠ B`, `hA_BCD`).
 - Magnitudes are lengths, angles and areas, `‖A B‖`, `∠ A B C`, `△ A B C`, with `∟` the
   right angle and Book II's `rect` and `sq`: they add and compare, and nothing more. "Greater
-  than … by" is an equation (the less with the excess is the greater). No numbers,
-  coordinates or real numbers appear in a statement or a proof.
+  than … by" is an equation (the less with the excess is the greater). In a proposition's
+  statement and the geometric steps of its proof, no coordinates or real numbers appear,
+  and no number measures a length, an angle or an area. Beneath those steps, numbers may
+  serve the machinery and say nothing of a figure: the superposition rule numbers its
+  symbols (`Symbols`, in `Elements/Foundations/Superposition/Soundness.lean`), so I.4 and
+  I.8 number the points and straight lines of their figures beside their proofs
+  (`card := 6`, and `.a => 0` to `.f => 5`;
+  [#312](https://github.com/jackChallis/stoicheia/issues/312) is to take them out), as
+  `valuation_encodes` writes a literal over two numbered symbols (`Fin 2`, in
+  `Elements/Foundations/Superposition/Restriction.lean`); and a tactic may take a count,
+  as `congr 1` does in Book Zero. The zero magnitude is written `0`, in some laws,
+  definitions, helpers and proofs: it stands for no magnitude (no length, no angle, no
+  area), never for a number Euclid uses. So `‖A B‖ ≠ 0` says that AB is not nothing, and
+  `0 < ∠ A C B` that the angle ACB is not nothing. Counts may appear, natural numbers, of
+  a figure's corners and of what they make, since a count is part of what "a figure of n
+  sides" means: the corners of a closed line of sides, or within a triangle, and a
+  corner's place in their list, turned round some number of steps; the sides a ray or a
+  finite straight line crosses (`crossingCount`); the closed lines round a point
+  (`Outline.depth`); and the tiles and triangles of a division, with the sides they share.
+  Counts are added and compared, and two are compared by their remainders on division by
+  two, as `crossing_parity_independent` compares two crossing counts. They are part of how
+  a figure is defined, not of Euclid's argument
+  ([decision of 22 October 2026](decisions/2026-10-22-figures-promoted.md)).
 - Each book's phrases, and how its statements say them, are in its brief.
 
 ### Coverage: does it say what Euclid says?
@@ -130,7 +151,7 @@ the porism by its own name, as Heath's "[III. 1, Por.]" does.
 
 Where a statement is narrower than Euclid's words, the general result is a companion
 theorem beside the unchanged `PropN`, which stays as Euclid's worked configuration under his
-sentences: `Prop40.general`, `Prop45.figure`, `Prop14.square`, and the old statement as a
+sentences: `Prop40.general`, `Prop45.outline`, `Prop14.outline`, and the old statement as a
 corollary (`Prop40.special`) where it helps citers. The fidelity check reads only
 `theorem PropN`, so Heath's sentences stay where they are. A companion is listed in the
 edition's companions list, [`Elements/Companions.lean`](../Elements/Companions.lean)
@@ -226,7 +247,7 @@ The representations Books I–III rest on:
 | a right angle | Definition I.10 as a predicate, and Postulate 4 making every right angle `∟` | | |
 | superposition | `Tacit.superposition`, a restricted inference in System E's style, used directly only in I.4 and I.8 | a checked derivation over symbols exports one equality of lengths, angles or triangles about the given figure; it constructs nothing inside the placement and no exported formula names the placed corners or side ([the rule](../Elements/Foundations/Tacit/Superposition.lean), [Book I's reading](briefs/book-I.md#representations)) | |
 | the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `exists_rect`, `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
-| a rectilineal figure | given with its division into triangles, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | that every figure can be so divided, and that another division gives the same sum, are not proved; Hilbert proved the second, for his measure of area | `figure-with-dissection` |
+| a rectilineal figure | given by its outline, `Outline`: finitely many simple closed lines of sides, apart or nested, so that a figure may have holes, separate pieces or contacts at corners; its region read from the sides by the parity of a ray's crossings (`Outline.Region`); and equal to the figure meaning equal to its area, `Outline.area`, the sum of every division of it into triangles that lie apart. The older forms take the figure with its division, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | in Book Zero, `division_exists` divides every outline, the content theorem, `Apart.area_eq_of_same_region`, after David Hilbert's theory of content, gives every division of it the same sum (`area_eq`, `area_congr`, `area_of_same_boundary`), and `apart_has_outline` gives every `Apart` an outline with exactly its region; beside I.45, `Prop45.fan_boundary` gives the checked fan its outline, the closed line through its corners in order; and `outline_bounded`, in Book I after I.29, puts every figure within a triangle | `figure-with-dissection`, for the older forms |
 | a circle's centre | `exists_centre` gives one for every circle; named centres remain where other hypotheses or conclusions use them geometrically | III.1 finds it by Euclid's construction; proofs cite III.1 where Heath does, and obtain other centres from the rule or the geometric data | |
 | a circumference | twice the angle standing on it, `circumference`, `standing`, and for an arc `Arc.measure`; no radius; equal circumferences in III.26 and III.28 are equal in measure and congruent, `Arc.Congruent` | proved facts in `Circumferences.lean`; `Arc.measure_eq_iff` and `Arc.congruent_iff`, in `Arcs.lean` after III.29, say what equal measures and congruence come to | `angle-measure`, `redundant-hypothesis` |
 | a segment | its circle, the ends of its base and a point naming its side, `Arc`, with its points, `InSegment`, and its circumference's, `OnArc`; equal segments read through Common Notion 4 as segments that coincide, `Arc.Congruent` | `placement`, from I.4 and I.8, lays one on another in III.24; only III.24 and `Arcs.lean` may cite it | `segment-with-circle` |
@@ -291,7 +312,13 @@ construction, its premises, and the diagram fact or lemma it needed.
 - **Unused hypotheses and surprising dependencies are review prompts, not verdicts.** An
   unused hypothesis may mean the route is not Euclid's, or that our representation makes it
   redundant (III.27 holds for any two circles as stated). Say so in the handback;
-  the record tags it `redundant-hypothesis` where that is the truth.
+  the record tags it `redundant-hypothesis` where that is the truth. A hypothesis of
+  Euclid's that goes unused in his own argument as well as ours stays as he states it,
+  with no tag, for the tag marks a redundancy our representation makes
+  ([decisions, 22 October 2026](decisions/2026-10-22-euclids-idle-hypotheses.md)). In
+  III.8, Euclid's proof and ours compare DE with DF on the concave circumference without
+  using that F, the more remote, is on it, and DK with DL on the convex circumference
+  without using that L, the more remote, is on it.
 - A checked intermediate fact tied to a real sentence of Euclid is legitimate, even if the
   final proof term could do without it.
 - **The sweep lists the candidates.** `python3 scripts/sweep_citations.py` lists every
@@ -368,9 +395,12 @@ helper another page has proved is imported and cited with a pointer ("as in III.
   `Elements/BookI/HelpersParallels.lean` if it cites I.28, I.30 or I.31 (`Prop30.meet`,
   `Prop31.parallelogram`); in `Elements/BookII/Rectangles.lean` for Book II's steps that
   cite Book I; in `Elements/BookIII/Squares.lean` for Book III's that cite Books I or II; and
-  in `Elements/BookIII/Circumferences.lean` for those that cite III.20–III.22. A new shared
-  module (stage 2's `Elements/Figure/Sums.lean`, stage 3's placement and arcs) has an owner,
-  and its place in the order is set in the brief.
+  in `Elements/BookIII/Circumferences.lean` for those that cite III.20–III.22; and in
+  `Elements/BookI/OutlineBound.lean`, after I.29, for `outline_bounded`, which cites I.23
+  and uses Postulate 5 (brief 0013). A new shared module (stage 2's
+  `Elements/Figure/Sums.lean`, stage 3's placement and arcs, brief 0013's figures given by
+  their outlines, in `Elements/Figure/` and `Elements/Foundations/Figures.lean`) has an
+  owner, and its place in the order is set in the brief.
 - **Imports.** Import `Elements.Figure.Basics`, the book's ground, every proposition cited,
   and the module of every shared step cited (`Elements.BookI.Helpers`,
   `Elements.BookI.HelpersParallels`). A proof cites an earlier book as `BookI.PropN`, `BookII.PropN`, and does not open
@@ -659,11 +689,11 @@ rest, and these stay open, each example built in Lean 4.35 as written:
   `#check1set_option«debug».byAsSorry true in theorem …` is `#check`, `1` and
   `set_option`, and builds on `sorryAx`, and `#whereaxiom planted : False` is `#where`
   and an axiom, while the scan reads the names `check1set_option` and `whereaxiom`. Those
-  the list above names, `#eval`, `#exit`, `#guard_panic`, `#time`, `#with_exporting` and
-  `#guard`, are refused closed up or not. A fixed list of the rest would not do: which
-  `#` tokens Lean has depends on what the file imports (`#widget` comes with
-  `import Lean`, not with `Init` alone), and a file may declare a longer one, so the list
-  would misread a file that lacks one and could hide the code after it
+  the list above refuses in every form, `#eval`, `#exit`, `#guard_panic`, `#time`,
+  `#with_exporting` and `#guard`, are refused closed up or not. A fixed list of the rest
+  would not do: which `#` tokens Lean has depends on what the file imports (`#widget`
+  comes with `import Lean`, not with `Init` alone), and a file may declare a longer one,
+  so the list would misread a file that lacks one and could hide the code after it
   (`s!"{5#widget'}'"`, where Lean reads `5#widget'` as a bit-vector literal and the `}`
   closes the hole).
 - Lean's other own tokens ([#317](https://github.com/jackChallis/stoicheia/issues/317)).
