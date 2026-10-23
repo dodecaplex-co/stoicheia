@@ -477,11 +477,11 @@ with safe_push's `CHECKS` and the `check` job, and content such as `heath/I/01.m
 decisions page, `docs/briefs/book-I.md`, `docs/program.toml`, `docs/reading.md` and
 `facts.json`, over which they run `check_fidelity.py` and `render.py`; so any change can
 break them, and the next run shows it. They need Git with the whole history and the pinned
-PyYAML, but no Lean and no network. The whole suite has taken 38 to 45 minutes on GitHub's
-runners, and past 60 on a busy one, and the job may take 150; `FullChecks`, the one test
-that needs Lean, is skipped without `STOICHEIA_SLOW_TESTS=1`, there as anywhere. Each of
-the three jobs reads the repository with no other permission, and its checkout keeps no
-token.
+PyYAML, but no Lean and no network. On the cadence the whole suite has taken 72 to 78
+minutes on GitHub's runners, and 137 on a slow one, and the job may take 300; `FullChecks`,
+the one test that needs Lean, is skipped without `STOICHEIA_SLOW_TESTS=1`, there as
+anywhere. Each of the three jobs reads the repository with no other permission, and its
+checkout keeps no token.
 
 `scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on the
 head commit of every pull request of R3 to R5 (section 10), but one: it does not yet run
