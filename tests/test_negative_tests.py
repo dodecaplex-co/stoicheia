@@ -900,12 +900,17 @@ class CommentReaderTests(unittest.TestCase):
                         self.questions.comment_end(text, spans[-1][0])
 
     def test_the_jev_generator_runs_check_fidelity_s_own_reader(self):
-        shared = self.questions.shared_comment_end.__code__
-        own = negative.check_fidelity.comment_end.__code__
-        self.assertEqual(Path(shared.co_filename),
-                         Path(negative.check_fidelity.__file__).resolve())
-        self.assertEqual((shared.co_code, shared.co_consts, shared.co_names),
-                         (own.co_code, own.co_consts, own.co_names))
+        source = b'''raise AssertionError("unrelated top-level code ran")
+
+def comment_end(src, i):
+    return ("controlled reader", src, i)
+'''
+        checked = (REPO / "scripts/check_fidelity.py").resolve()
+        with patch.object(self.questions, "read_no_follow", return_value=source) as read:
+            reader = self.questions.shared_function(*self.questions.READER)
+        read.assert_called_once_with(checked)
+        self.assertEqual(reader("prefix /- comment -/ suffix", 7),
+                         ("controlled reader", "prefix /- comment -/ suffix", 7))
 
     def test_the_jev_generator_delegates_to_check_fidelity_s_reader(self):
         source = "prefix /- comment -/ suffix"
