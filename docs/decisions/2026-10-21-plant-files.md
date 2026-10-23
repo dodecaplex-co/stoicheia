@@ -29,7 +29,7 @@
   that runs no check, or returns before its first; it does not catch one that calls
   `refused` with no check behind it, nor one that drops some of its cases.
 
-  Every one of main's 41 plants is carried over unchanged in behaviour: the same changes
+  Every one of main's 42 plants is carried over unchanged in behaviour: the same changes
   planted and the same refusals expected. Each `plant()`'s syntax tree is its old
   function's, with `nt.` read as the bare name, apart from stale_page's printed refusal,
   which now goes through `refused` in the same words, and ill_typed_proof's docstring,
@@ -41,7 +41,7 @@
   `scratch_plants`, the source scan on a tree of its own and the scratch copy of I.1 that
   the source-scan plants share, and `BOOK_ZERO_SPELLINGS` and `BOOK_ZERO_TEXT`, which the
   tests of the Book Zero rule read. The order departs on
-  purpose from the issue's "by name": the 37 plants that do not run `lake build` go first,
+  purpose from the issue's "by name": the 38 plants that do not run `lake build` go first,
   so that a fault in one shows before the four that do, each of which saves and restores
   `.lake/build`. `BUILDS` only orders the plants, so a wrong value moves a plant and skips
   none.
@@ -74,6 +74,9 @@
   changes to two plants already converted, the four commands added to forbidden_commands'
   list and stale_page's status over the whole worktree, and its two new regressions before
   the plants, the risk classes' and the axiom lock's, which join the list the runner runs.
+  slashed_remark (#206), which landed after that, was converted the same way when
+  origin/main was merged at c9411ece, and main's tests of the comment reader the scripts
+  share join `tests/test_negative_tests.py` as they are.
 
   Two rounds of review then hardened the suite. It compiles each plant from its file's
   text, and, run as a script, registers itself under the name the plants import rather
@@ -136,7 +139,7 @@
   are unchanged. No check, plant or expected value is weakened.
 
   The protected files this changes are `scripts/negative_tests.py` and
-  `tests/test_negative_tests.py`, and the 41 plants, each new:
+  `tests/test_negative_tests.py`, and the 42 plants, each new:
   `scripts/negative/broken_link.py`,
   `scripts/negative/certificate_constructor_counting.py`,
   `scripts/negative/changed_audit_pin.py`, `scripts/negative/changed_word.py`,
@@ -160,4 +163,5 @@
   `scripts/negative/guard_msgs_drop.py`, `scripts/negative/guard_msgs_substring.py`,
   `scripts/negative/queue_repeated_heading.py`,
   `scripts/negative/secret_behind_a_replacement.py` and
-  `scripts/negative/set_option_spellings.py`.
+  `scripts/negative/set_option_spellings.py`. The merge of origin/main at c9411ece adds
+  one more, new: `scripts/negative/slashed_remark.py`.
