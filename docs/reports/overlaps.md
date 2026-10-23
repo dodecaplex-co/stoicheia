@@ -492,8 +492,10 @@ companion `Prop25.of_circle` uses it; III.25's construction is given the fact, a
 sees a circle. Book Zero
 keeps its own three, `Triangle.of_onCircle`, `exists_onCircle_oppositeSidesOf` and
 `exists_onCircle_sameSideOf`, stated for a circle with no centre given, and nothing uses
-them now ([below](#a-separate-piece-of-work)). Nothing is staged now: `Staging/` holds no
-Lean file, so no staged work calls Circle 2 or Circle 3, or any of those three lemmas. The
+them now ([below](#a-separate-piece-of-work)). `Staging/Routes/` contains seven Lean files;
+their theorems rest on neither Circle 2 nor Circle 3
+([checked in the routes report](routes-book-III.md#checks)), and therefore reach none of
+those three Book Zero lemmas. The
 staged III.1's construction called Circle 2 to put D within the circle
 until 19 October 2026, when it moved into `Elements/BookIII/Prop01.lean` as
 `Prop1.construction`, which takes that step by `Prop1.within`; `Staging/Centre/`, which

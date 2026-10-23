@@ -36,10 +36,10 @@ note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart
 
 [review]
 stage = "full"
-commit = "48092431"
+commit = "5176f894"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:8b9ada62bdcb3819"
-run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr4, independent re-read at 48092431"
+lean = "sha256:df27ec018e27a2ab"
+run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr4, independent re-read at 48092431; issue #32, the sweep's cleared parts merged with the figures' promotion (#342): re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the Lean, ship TT, reader TT-swI-r5"
 
 [review.items]
 statement = "pass"

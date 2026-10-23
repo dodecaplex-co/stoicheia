@@ -12,16 +12,66 @@ tags = ["touching-whole-circles"]
 note = "The centres F and G are given, as the enunciation takes them. Touching within is read of the whole circles: a point of ADE is within ABC and no point of ADE is outside ABC, which carries what Heath says Euclid assumes, that touching circles cross nowhere. The point within serves through III.6 to distinguish F and G; the remaining proof uses the condition that none lies outside."
 
 [[passage]]
+at = "For let the two circles ABC, ADE touch one another internally"
+kind = "helper"
+helper = "Prop6"
+note = "Euclid takes F and G as the centres and treats them as different points, so that FG can be joined. The statement supplies the centres, and the Lean proves them different by III.6 (`Prop6`), for which Heath prints no reference here."
+
+[[passage]]
+at = "For suppose it does not, but, if possible, let it fall as FGH"
+kind = "helper"
+helper = "Prop2.within"
+note = "Euclid takes G within ABC before producing FG to H; the Lean places G between A and another point of ADE, then uses `Prop11.not_outside` and `Prop2.within` (III.2, for which Heath prints no reference here). It obtains that point and H from `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, first placing G within ADE by `Tacit.centre_inside`, the rule we assume as System E, Generalities 3."
+
+[[passage]]
 at = "Then, since AG, GF are greater than FA"
 kind = "case"
-note = "A may lie on GF produced beyond F, a case Heath says Euclid would have left to the reader (vol. 2, p. 26). There FAG is no triangle for I.20, and the Lean finds AG, GF greater than FA directly, since AG is AF and FG together."
+note = "A may lie on GF produced beyond F, a case Heath says Euclid would have left to the reader (vol. 2, p. 26). For A on FG, the Lean puts F between A and H by `Tacit.centre_inside` (System E, Generalities 3) and `Tacit.between_of_inside_chord` (System E, Circle 1), both rules we assume, then puts F between A and G by `between_cut`, so AG is AF and FG together and AG, GF exceed FA; off FG it uses `BookI.Prop20`, for which Heath prints no reference here, and `Definition15`, the assumed rule for equal radii, replaces FA by FH in both cases."
+
+[[passage]]
+at = "let FG be subtracted from each"
+kind = "helper"
+helper = "Tacit.len_add_of_between"
+note = "Euclid subtracts FG from FH, taking FH as FG and GH together. The Lean writes that sum using `Tacit.len_add_of_between`, a rule we assume (System E, Diagram-segment 1), with G between F and H."
+
+[[passage]]
+at = "therefore the remainder AG is greater than the remainder GH"
+kind = "helper"
+helper = "Magnitude.lt_of_add_lt_add_left"
+note = "Euclid keeps the strict inequality when the common length FG is taken away. `Magnitude.lt_of_add_lt_add_left` proves this cancellation from the laws of magnitudes."
+
+[[passage]]
+at = "But AG is equal to GD"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid uses AG and GD as equal radii of ADE; the Lean applies `Definition15`, Euclid's definition of a circle, which we assume as a rule. It first obtains D on FG produced beyond G from `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, with G within ADE by `Tacit.centre_inside`, the rule we assume as System E, Generalities 3."
+
+[[passage]]
+at = "the less than the greater"
+kind = "helper"
+helper = "outside_of_len_gt"
+note = "Euclid rules out GD greater than GH because the inner circle cannot extend outside ABC. The Lean places D beyond H by `OnRay.between_of_len_lt`, adds FG to compare FD with FH, and uses `outside_of_len_gt` to put D outside ABC, contrary to internal contact."
+
+[[passage]]
+at = "Therefore the straight line joined from F to G will not fall outside"
+kind = "grouped"
+note = "The Lean's single reductio proves that G lies between F and A. That conclusion carries both closing sentences about FG produced falling on the point of contact."
 
 [figure]
 case = "A off the straight line FG, as in Heath's figure"
 note = "Like Heath's, this figure draws the impossible supposition: FG produced falling as FGH, away from A, so the G drawn is not the centre of ADE."
 
 [review]
-stage = "exceptions"
-commit = "80292b0a"
+stage = "full"
+commit = "e572d5c0"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:a8ffa21d69bc457f"
+run = "brief 0005 stage 5, ship R3 (#29)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

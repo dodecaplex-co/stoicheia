@@ -28,21 +28,21 @@ note = "Euclid takes K where the circles meet without proving they meet; `Prop22
 [[passage]]
 at = "and let KF, KG be joined"
 kind = "carried"
-note = "The Lean joins KF and KG by Postulate 1, as Euclid asks. The later steps use lengths named by their points and do not use either joined line."
+note = "The Lean joins KF and KG by Postulate 1, as Euclid asks. The later proof compares the lengths KF, FG and GK, named by their points, without using the joined lines; they are named here only to carry out this sentence."
 unused = ["KF", "KG"]
 
 [[passage]]
 at = "I say that the triangle KFG has been constructed"
 kind = "carried"
-note = "The Lean checks that KFG is a triangle, K being off DE and F and G on it. No later step uses the fact: the conclusion gives K's side of FE and the three lengths, from which it follows."
+note = "The Lean proves here that K, F and G make a triangle, since K is off DE and F and G are on it; the statement concludes with the three lengths and the side of FE on which K lies, so this is not used again."
 unused = ["this"]
 
 [review]
 stage = "full"
-commit = "0ea9ae62"
+commit = "86e935fe"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:7231552689f848f2"
-run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I22-I24b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at 01e0fe54 (reader RT-x2); axiom wave two (card 119) merged with main at 5e5e51dc: the merged record read whole with the Lean by GPT-6 Astra (Codex), the family that did not write the proof, readers F2-w2m1cx at 84a78856 and F2-w2m1cx2 at 0ea9ae62, after its findings were applied"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I22-I24b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at 01e0fe54 (reader RT-x2); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4"
 
 [review.items]
 statement = "pass"

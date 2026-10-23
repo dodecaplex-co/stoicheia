@@ -22,6 +22,7 @@ note = "Euclid cuts off CE equal to CD, taking for granted a straight line beyon
 at = "and let FC be joined;"
 kind = "carried"
 note = "The Lean joins FC by Postulate 1, as Euclid asks. The later proof compares lengths and angles named by the points, without using the joined line; FC is named here only to carry out this sentence."
+unused = ["FC"]
 
 [[passage]]
 at = "Therefore the straight line CF has been drawn at right angles"
@@ -34,10 +35,10 @@ case = "C between A and B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "b58079e0"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:6aad9ce1223a6e05"
-run = "brief 0005 stage 5, ship F2 wave-two re-read"
+commit = "86e935fe"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:a1b5532a9baeffc0"
+run = "ship Q orders, item (a): the Postulate 1 joins; stage full, independent re-read at 267d8d2f; workflow wf_012f714f-e1a (stoicheia-ship-q); reader run Q-read-p1b, Codex exec session 01a159b0-1bad-73b2-bdef-4d42ed062aad, which wrote only this record's [review] lines and ran review_stamp.py itself; ship Q's lead (Claude Opus 5.5) committed them unchanged; this run text later amended with that provenance, no restamp; issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4"
 
 [review.items]
 statement = "pass"

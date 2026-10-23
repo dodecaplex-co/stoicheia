@@ -67,6 +67,11 @@
 # retirement wave: the generated translation has the 79 laws of wave one with the
 # restricted superposition law and its words, and the lock's vocabulary stays at 208 words.
 #
+# Renewed on 21 October 2026, when 31 more axioms became theorems (the owner's decision of
+# 19 October 2026), merged after the restricted rule: their laws leave the generated
+# translation, and Check/ compares each hand translation with the theorem's type directly;
+# the other 48 axioms and every word are unchanged, byte for byte.
+#
 # Renewed on 21 October 2026, when axiom wave one was merged into train C6a: the lock is
 # main's 79 rules and Tacit.exists_centre, 80 axioms, with 121 words of vocabulary. The
 # generator writes 80 laws, Model/Assembly.lean gathers all 80 with Euclidean.exists_centre
@@ -88,6 +93,13 @@
 # 30. The generator writes 80 laws, the restricted superposition law and exists_centre's
 # among them, and Model/Assembly.lean gathers all 80.
 #
+# Renewed on 21 October 2026, when the second retirement was merged with train C6a (#240):
+# the lock is the second retirement's 48 axioms and Tacit.exists_centre, 49 in all, with
+# 238 words of vocabulary; it is main's lock less the 31 lines of the retired axioms; every
+# other axiom and every word is main's byte for byte, and the header names decision entries
+# as main's `--write-lock` now writes it. The generator writes 49 laws, exists_centre's
+# among them, and Model/Assembly.lean gathers all 49.
+#
 # Renewed on 21 October 2026, when train C6a at 529c93f7 was merged into train C6b: the
 # lock is train C6a's, 80 axioms and 238 words, with train C6b's four words, Foot,
 # Arc.Less, Arc.Semicircle and Arc.Greater, 242 words in all. The 80 axioms are
@@ -105,4 +117,10 @@
 # declares for them. Only those companions use them, so no law of the model changes: the 80
 # axioms and every word already locked are unchanged, byte for byte, and the vocabulary grows
 # from 242 to 262 words.
-1431ed4a2de9c92c99fba0d32aaba0d4905302d9c31b57e9fb074b180584f792  Certificate/axioms.lock
+#
+# Renewed on 22 October 2026, when the second retirement was merged with main at 5e5e51dc,
+# after brief 0013's outline companions: the lock is main's lock less the 31 lines of the
+# retired axioms, 49 axioms with main's 262 words of vocabulary; every other axiom and every
+# word is main's byte for byte. The generator writes 49 laws, exists_centre's among them,
+# and Model/Assembly.lean gathers all 49.
+589b8c3791414d63a8c5b735ba9c4d4adddf1c4f7a271eaef918820c9d844965  Certificate/axioms.lock

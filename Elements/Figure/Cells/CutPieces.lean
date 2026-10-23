@@ -453,7 +453,7 @@ theorem convex_sublist (pre : List Point) {l₁ l₂ : List Point} (hs : l₁.Su
   | cons a hs ih =>
     have hle := hs.length_le
     exact ih pre (convex_erase h (by simp only [List.length_append] at hl ⊢; omega)) hl
-  | cons_cons a hs ih =>
+  | cons_cons a _ ih =>
     have hi := ih (pre ++ [a]) (by simpa using h) (by simpa using hl)
     simpa using hi
 
@@ -529,7 +529,6 @@ theorem form_corner_corner {cs : List Point} (h : ConvexOutline cs) {L : Line} {
   subst he
   have hnd := h.2.1
   have hXY : X ≠ Y := fun e => (List.nodup_cons.mp hnd).1 (by rw [e]; simp)
-  have hclose : X :: (us ++ Y :: vs) ++ [X] = X :: (us ++ Y :: (vs ++ [X])) := by simp
   constructor
   · obtain ⟨f, ws₁, hf⟩ := List.exists_cons_of_ne_nil hus
     obtain ⟨ws₂, l, hl⟩ := split_last us hus
@@ -702,7 +701,7 @@ theorem cut_lists {cs : List Point} (h : ConvexOutline cs) {L : Line} {A B : Poi
   obtain ⟨cB, hcB, hcBB⟩ := strict hAB hA
   obtain ⟨cA, hcA, hcAA⟩ := strict hBA hB
   /- The corners strictly on A's side make one run. -/
-  obtain ⟨pre, post, Ps, Ns, hcs, hrot, hPs, hNs, hPA, hNA⟩ :=
+  obtain ⟨pre, post, Ps, Ns, hcs, hrot, hPs, -, hPA, hNA⟩ :=
     block (fun c => SameSide c A L) cs ⟨cA, hcA, hcAA⟩
       ⟨cB, hcB, fun h' => not_both hAB h' hcBB⟩
       (fun a b c d hs ha hb hc hd => no_alternation h hAB hs ha (half_of_not hAB hb) hc
