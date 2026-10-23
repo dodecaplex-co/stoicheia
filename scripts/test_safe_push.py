@@ -6596,9 +6596,10 @@ class HookEnvironment(unittest.TestCase):
                 env = safe_push.tool_env()
                 rep = safe_push.Report()
                 safe_push.run_step("4", "a check that builds a repository",
-                                   ["sh", "-c", check], inner, rep, logs, 1)
-            # The damage first, so that main's tool_env fails on the incident itself; the
-            # messages name git's variables only, never the rest of the environment.
+                                   ["sh", "-c", check], inner, rep, logs, 1, fail="note")
+            # The damage first, so that main's tool_env fails on the incident itself (a
+            # failing check is noted, not raised, so these run either way); the messages
+            # name git's variables only, never the rest of the environment.
             for name, path in watched.items():
                 self.assertEqual(path.read_bytes(), before[name], name)
             self.assertNotIn("bare = true", (common / "config").read_text())
