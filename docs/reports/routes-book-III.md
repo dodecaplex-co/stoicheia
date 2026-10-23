@@ -1369,7 +1369,8 @@ records the decision and corrects brief 0008 (item 1 of "Changes for later", abo
 - III.17 (`Prop17.lean`) takes E from the rule where it called `Prop1.of_circle`.
 
 Every `--` line and every statement is as it was. None of the five files imports III.1's
-file now; III.1 and `Prop1.of_circle` stay, and no proof in `Elements/` calls either.
+file now; III.1 and `Prop1.of_circle` stay, and no proof in `Elements/` calls either but
+`Prop1.of_circle`'s own call of III.1.
 `lake build Audit` then failed on eleven pins and on no other, and each was renewed from
 Lean's own message: in `Audit/Crossing.lean`, the pins of `Audit.III_5_today`,
 `Audit.III_6_today`, `Audit.III_11_today`, `Audit.III_13_today`, `Audit.cut_point`,
@@ -1391,12 +1392,3 @@ items 1 to 6 are done, but for the reason given for III.2's expectation in
 stands and whose owner is asked to change it. The row for #131 in the opening table,
 "analysis only", and the last sentence of the section on III.8, that its proof takes the
 centre by III.1, are of this report's date.
-
-## Factual correction to the #131 addendum
-
-*23 October 2026.*
-
-The claim above that no proof in `Elements/` calls III.1 or `Prop1.of_circle` is too
-broad. `Prop1.of_circle` itself still calls `Prop1` at
-[Elements/BookIII/Prop01.lean:273](../../Elements/BookIII/Prop01.lean#L273). The five
-targeted proofs, III.2, III.4, III.8, III.14 and III.17, no longer call either theorem.

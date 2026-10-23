@@ -53,9 +53,9 @@
     case does.
 
   No statement changes: no proposition's, porism's or companion's type, no definition, no
-  axiom and no lock. III.1 and `Prop1.of_circle` stay as they are, though no proof in
-  `Elements/` now calls either; III.9 and III.10 still cite III.1's porism, which no
-  longer rests on III.1.
+  axiom and no lock. III.1 and `Prop1.of_circle` stay as they are; no proof in
+  `Elements/` now calls either but `Prop1.of_circle`'s own call of III.1; III.9 and III.10
+  still cite III.1's porism, which no longer rests on III.1.
 
   This entry approves the change to `Elements/BookIII/Prop02.lean`, whose proof takes the
   centre D from `Tacit.exists_centre` in place of III.1, and which no longer imports III.1's
@@ -93,9 +93,3 @@
   names that brief 0008's question 7, as its section 3 corrects it, forbids,
   `Tacit.inside_of_between`, `Tacit.outside_of_between`, `Tacit.centre_unique` and
   `sorryAx`. The pin of `Audit/Centre.lean` holds without change.
-
-  **23 October 2026, factual correction.** The claim above that no proof in `Elements/`
-  calls III.1 or `Prop1.of_circle` is too broad. `Prop1.of_circle` itself still calls
-  `Prop1` at
-  [Elements/BookIII/Prop01.lean:273](../../Elements/BookIII/Prop01.lean#L273). The five
-  targeted proofs, III.2, III.4, III.8, III.14 and III.17, no longer call either theorem.
