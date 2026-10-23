@@ -13,43 +13,44 @@ The last of them say "any number". II.1 cuts a straight line "into any number of
 segments whatever": its points of section are a list, in order along it (`InOrder`),
 and its segments run from each point to the next (`segments`, `endOf`). I.45 and II.14
 take "a given rectilineal figure", of any number of sides: it is given with the
-triangles it is cut into, as the section below says.
+triangles it is cut into, as the section below says, or by its outline alone, in the words
+of `Foundations/Figures.lean`.
 
 None of these is an assumption; they are only abbreviations.
 -/
 
 namespace Elements
 
-/-- `P` and `Q` lie on the same side of the straight line `AB`. -/
+/-- P and Q lie on the same side of the straight line AB. -/
 def SameSideOf (P Q A B : Point) : Prop :=
   A ≠ B ∧ ∀ L : Line, OnLine A L → OnLine B L → SameSide P Q L
 
-/-- `P` and `Q` lie on opposite sides of the straight line `AB`. -/
+/-- P and Q lie on opposite sides of the straight line AB. -/
 def OppositeSidesOf (P Q A B : Point) : Prop :=
   A ≠ B ∧ ∀ L : Line, OnLine A L → OnLine B L → OppositeSides P Q L
 
-/-- `P` lies on the straight line from `A` through `B`, on `B`'s side of `A`
-(it may be `B` itself, or nearer, or beyond). -/
+/-- P lies on the straight line from A through B, on B's side of A
+(it may be B itself, or nearer, or beyond). -/
 def OnRay (P A B : Point) : Prop :=
   A ≠ B ∧ P ≠ A ∧ Collinear A B P ∧ ¬ Between P A B
 
-/-- `D` lies within the triangle `ABC`. -/
+/-- D lies within the triangle ABC. -/
 def InsideTriangle (D A B C : Point) : Prop :=
   SameSideOf D A B C ∧ SameSideOf D B C A ∧ SameSideOf D C A B
 
-/-- The straight lines `AB` and `CD` are parallel (Definition 23). -/
+/-- The straight lines AB and CD are parallel (Definition I.23). -/
 def AreParallel (A B C D : Point) : Prop :=
   A ≠ B ∧ C ≠ D ∧
     ∀ L M : Line, OnLine A L → OnLine B L → OnLine C M → OnLine D M → Parallel L M
 
-/-- The parallelogram `ABCD`, its corners taken in order: `AB` is parallel to
-`CD`, and `BC` to `DA`. Euclid does not define it; he first speaks of
+/-- The parallelogram ABCD, its corners taken in order: AB is parallel to
+CD, and BC to DA. Euclid does not define it; he first speaks of
 "parallelogrammic areas" in I.34. -/
 def Parallelogram (A B C D : Point) : Prop :=
   AreParallel A B C D ∧ AreParallel B C D A
 
-/-- The area of the four-sided figure `ABCD` (corners in order), measured as the
-two triangles into which its diameter `AC` cuts it. -/
+/-- The area of the four-sided figure ABCD (corners in order), measured as the
+two triangles into which its diameter AC cuts it. -/
 noncomputable def quadArea (A B C D : Point) : Area := △ A B C + △ A C D
 
 /-! ## Points in order on a straight line -/
@@ -75,8 +76,8 @@ def segments : List Point → List (Point × Point)
   | p :: q :: rest => (p, q) :: segments (q :: rest)
   | _ => []
 
-/-- **The end** of the straight line that starts at `B` and runs through the points `ps`:
-the last of them, or `B` itself if there are none. `endOf B [D, E, C]` is C. -/
+/-- **The end** of the straight line that starts at B and runs through the points `ps`:
+the last of them, or B itself if there are none. `endOf B [D, E, C]` is C. -/
 def endOf (B : Point) : List Point → Point
   | [] => B
   | p :: ps => endOf p ps
@@ -93,18 +94,23 @@ there only along that side. The figure is the triangles together. Such a figure 
 convex or not, and need have no corner from which the straight lines to the others divide
 it.
 
-**The convention, stated on the page:** the figure comes with its division, and the division
-is checked, as a division supplied with a figure must be. For any division the check is
-`Apart`: no point is inside two of the triangles. For a figure with one boundary it may also
-be `Fitted`: the triangles do not overlap (`Fitted.inside_pairwise`, in Book Zero), and each
-meets the figure already made only along one side, so they make up one figure. Either way
-their sum is what Euclid calls the whole of it. Two things are not stated here. That every
-rectilineal figure can be cut into triangles in these ways is a separate theorem. That two
-divisions of one figure give one sum is the step Euclid takes for granted, which David
-Hilbert proved, for his measure of area; Book I's gap catalogue tells it, under I.45, and no
-statement here assumes it. So "equal to the given rectilineal figure", in I.45 and II.14,
-means equal to the sum of the triangles the figure is given with. The records of I.45 and
-II.14 carry that as the tag `figure-with-dissection`, and their pages show it.
+**The convention, stated on the page:** a figure given in these forms comes with its
+division, and the division is checked, as a division given with a figure must be. For any
+division the check is `Apart`: no point is inside two of the triangles. For a figure with one
+boundary it may also be `Fitted`: the triangles do not overlap (`Fitted.inside_pairwise`, in
+Book Zero), and each meets the figure already made only along one side, so they make up one
+figure. Either way their sum is what Euclid calls the whole of it. No phrase here assumes
+more, and what more is true is proved, in Book Zero, of a figure given by its outline alone
+(`Outline`, in `Foundations/Figures.lean`). Every outline can be divided into triangles that lie
+apart (`division_exists`), and every figure given with such triangles has an outline with
+exactly their region (`apart_has_outline`). Two divisions of one figure give one sum
+(`Apart.area_eq_of_same_region`): the step Euclid takes for granted, which David Hilbert
+proved, for his measure of area, and which Book I's gap catalogue tells under I.45. So the
+sum of the triangles a figure is given with is its area, the same for every division
+(`Outline.area`, `area_eq`), and "equal to the given rectilineal figure", in I.45 and II.14,
+means equal to that area. The companions that take the figure by its outline,
+`Prop45.outline`, `Prop14.outline` and `Prop14.outline_side`, state the propositions in
+general.
 
 **A figure with a hole, or in pieces.** Euclid defines a figure as "that which is contained
 by any boundary or boundaries" (Definition I.14), so a square with a smaller square cut from
@@ -121,24 +127,24 @@ takes. `Fitted` is the figure with one boundary, its triangles fitted together.
 point is within or on a triangle when it is inside it (`InsideTriangle`), on a side between
 two corners (`Between`), or at a corner (`OnOrInsideTriangle`); a point is on a finite
 straight line when it is an end or between the ends (`OnFiniteLine`). The new triangle
-`PQX` meets the earlier triangles only along `PQ` when every point within or on it that is
-within or on one of them is on the finite straight line `PQ`.
+PQX meets the earlier triangles only along PQ when every point within or on it that is
+within or on one of them is on the finite straight line PQ.
 
 Euclid's and Oliver Byrne's division of a figure by the straight lines from one corner is
 one such figure when two conditions hold; `Fitted.fan`, beside I.45, proves it.
 -/
 
-/-- `Y` lies on the finite straight line `PQ`: it is one of the ends, or between them. -/
+/-- Y lies on the finite straight line PQ: it is one of the ends, or between them. -/
 def OnFiniteLine (Y P Q : Point) : Prop := Y = P ∨ Y = Q ∨ Between P Y Q
 
-/-- `Y` lies within the triangle `ABC` or on its boundary: inside it, on one of its sides
+/-- Y lies within the triangle ABC or on its boundary: inside it, on one of its sides
 between two corners, or at a corner. -/
 def OnOrInsideTriangle (Y A B C : Point) : Prop :=
   InsideTriangle Y A B C ∨ Between A Y B ∨ Between B Y C ∨ Between C Y A ∨
     Y = A ∨ Y = B ∨ Y = C
 
-/-- The triangle `t` has the corners `P`, `Q`, `R`: read from some corner, one way round or
-the other, it is `(P, Q, R)`. So `PQ` is one of its sides, and `R` the corner opposite. -/
+/-- The triangle `t` has the corners P, Q, R: read from some corner, one way round or
+the other, it is `(P, Q, R)`. So PQ is one of its sides, and R the corner opposite. -/
 def Corners (t : Point × Point × Point) (P Q R : Point) : Prop :=
   t = (P, Q, R) ∨ t = (Q, R, P) ∨ t = (R, P, Q) ∨ t = (Q, P, R) ∨ t = (P, R, Q) ∨
     t = (R, Q, P)
@@ -154,11 +160,11 @@ def triples : List Point → List (Point × Point × Point)
 /-- **Triangles fitted together into one rectilineal figure**, in the order listed.
 
 * `single`: one triangle is a figure.
-* `glue`: a figure, with a new triangle `PQX` laid against the side `PQ` of one of its
-  triangles `t`, whose third corner is `R`. The new triangle lies across that side, `X` being
-  on the other side of `PQ` from `R`; and it meets the triangles already there only along
-  `PQ`: a point within or on the new triangle, and within or on one of the earlier ones,
-  lies on the finite straight line `PQ`.
+* `glue`: a figure, with a new triangle PQX laid against the side PQ of one of its
+  triangles `t`, whose third corner is R. The new triangle lies across that side, X being
+  on the other side of PQ from R; and it meets the triangles already there only along
+  PQ: a point within or on the new triangle, and within or on one of the earlier ones,
+  lies on the finite straight line PQ.
 
 The new triangle goes at the end of the list. A figure made this way may be convex or not.
 Every figure made this way is bounded by one closed line that neither crosses nor touches
@@ -200,10 +206,10 @@ structure Rectilineal where
   fitted : Fitted pieces
 
 /-- **The area of a rectilineal figure, as given**: the sum of the triangles it is given
-with, which do not overlap (`Fitted.inside_pairwise`) and make up the figure. That another
-division of the same figure gives the same sum is not proved here (Book I's gap catalogue,
-under I.45), so this is the area of the figure with its division, not yet a measure of the
-figure alone. -/
+with, which do not overlap (`Fitted.inside_pairwise`) and make up the figure. Every division
+of the same figure gives the same sum, as Book Zero proves (`Apart.area_eq_of_same_region`,
+for the triangles taken as `Rectilineal.toApart`), so this is a measure of the figure alone:
+the area of its outline (`apart_has_outline`, `area_eq`). -/
 noncomputable def Rectilineal.area (R : Rectilineal) : Area :=
   Magnitude.sum (R.pieces.map fun t => △ t.1 t.2.1 t.2.2)
 
@@ -215,8 +221,10 @@ inside two of them. The figure is the triangles together. It may have a hole, as
 with a smaller square cut from its middle has, may touch itself at a corner, and may be in
 more than one piece. No order of the triangles is asked, and a triangle may lie against part
 of a side of another. A figure given by gluing is one of these, its triangles lying apart by
-`Fitted.inside_pairwise`. That every rectilineal figure, with any boundaries, can be cut
-into triangles that lie apart is not stated in Lean. -/
+`Fitted.inside_pairwise`. That every rectilineal figure given by its outline, with any
+boundaries, can be divided into triangles that lie apart is proved in Book Zero
+(`division_exists`), and every figure given this way has an outline with exactly its region
+(`apart_has_outline`). -/
 structure Apart where
   /-- The triangles the figure is cut into. -/
   pieces : List (Point × Point × Point)
@@ -229,9 +237,9 @@ structure Apart where
     InsideTriangle Y s.1 s.2.1 s.2.2 → ¬ InsideTriangle Y s'.1 s'.2.1 s'.2.2
 
 /-- **The area of a figure given with triangles that lie apart, as given**: the sum of its
-triangles. As with `Rectilineal.area`, that another division of the same figure gives the
-same sum is not proved here (Book I's gap catalogue, under I.45), so this is the area of the
-figure with its division, not yet a measure of the figure alone. -/
+triangles. Every division of the same figure gives the same sum, as Book Zero proves
+(`Apart.area_eq_of_same_region`), so, as with `Rectilineal.area`, this is a measure of the
+figure alone: the area of its outline (`apart_has_outline`, `area_eq`). -/
 noncomputable def Apart.area (R : Apart) : Area :=
   Magnitude.sum (R.pieces.map fun t => △ t.1 t.2.1 t.2.2)
 
