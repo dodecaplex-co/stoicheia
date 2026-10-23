@@ -1348,3 +1348,60 @@ and the runs above that name `Staging/Routes/Prop08.lean` or `Prop27.lean`, are 
 the files as they stood at the revisions given. Both files have since moved into
 `Elements/BookIII/Prop08.lean` and `Prop27.lean`, and the staged copies are gone, so these
 commands reproduce at those revisions only.
+
+## Addendum: the five calls of III.1 dropped (#131)
+
+*22 October 2026.*
+
+#131's own train drops the five calls, by the coordinator's
+[decision entry of that day](../decisions/2026-10-22-iii1-calls-dropped.md), which
+records the decision and corrects brief 0008 (item 1 of "Changes for later", above). In
+`Elements/BookIII/`:
+
+- III.2 (`Prop02.lean`) takes the centre D from `Tacit.exists_centre` where it called
+  III.1;
+- III.4 (`Prop04.lean`) takes F from the rule, and its conditions said of every centre
+  apply to it;
+- III.8 (`Prop08.lean`, Euclid's route since the addendum above) takes M from the rule,
+  and its condition that every centre lies between G and A applies to it;
+- III.14 (`Prop14.lean`) loses its call of III.1 and of `centre_unique`, and takes no
+  centre, for its statement names E;
+- III.17 (`Prop17.lean`) takes E from the rule where it called `Prop1.of_circle`.
+
+Every `--` line and every statement is as it was. None of the five files imports III.1's
+file now; III.1 and `Prop1.of_circle` stay, and no proof in `Elements/` calls either but
+`Prop1.of_circle`'s own call of III.1.
+`lake build Audit` then failed on eleven pins and on no other, and each was renewed from
+Lean's own message: in `Audit/Crossing.lean`, the pins of `Audit.III_5_today`,
+`Audit.III_6_today`, `Audit.III_11_today`, `Audit.III_13_today`, `Audit.cut_point`,
+`Audit.CirclesCut.of_meet` and `Audit.within_point`; in `Audit/Overlaps.lean`, those of
+`Audit.III_26_any`, `Audit.III_27_any`, `Audit.III_24_measure` and
+`Audit.III_30_measure`. Each lost one name, `Tacit.exists_point_same_side`, and gained
+none. The pin of `Audit/Centre.lean` holds unchanged.
+
+The certificate, run again on this train's revision (item 2), measures what the walk
+computed in the second table above: III.2 from 61 rules to 59, III.4 from 61 to 58, III.8
+and its companion from 63 to 62, III.14 and its companion from 70 to 69, III.15
+unchanged at 70, III.17 and its companion from 63 to 61, and III.37 from 73 to 72; 45
+entries on the rule and 43 after; 38 entries changed, 31 of them only by losing
+`exists_point_same_side`; and no entry now cites III.1, where five did. The records of
+III.2, III.4, III.8, III.14 and III.17, and III.15's note, were read again and stamped by
+independent readers. Under Heath's "[III. 1]" in III.2, III.4, III.8 and III.17 the
+centre now comes from the rule, so each of those passages is one argued another way, and
+the routes of III.2, III.4 and III.17 are modified by that one step, as "The policy
+question" foresaw; III.14's passage stays given, for its statement names E. The pages,
+CERTIFICATE.md and GRAPH.md were made afresh. So
+items 1 to 6 are done, but for the reason given for III.2's expectation in
+`tests/certificate_expectations.json` ("III.1, which it cites"), whose pinned value
+stands and whose owner is asked to change it. The row for #131 in the opening table,
+"analysis only", and the last sentence of the section on III.8, that its proof takes the
+centre by III.1, are of this report's date.
+
+## Correction to the #131 addendum
+
+*23 October 2026.*
+
+The #131 addendum's phrase "Euclid's route" for III.8 is too broad. III.8 remains
+modified: it uses Euclid's orders where they apply and I.24 where neither order reaches,
+including points on different circumferences and points of contact. Its centre M now
+comes from `Tacit.exists_centre` under Heath's "[III. 1]".

@@ -5531,3 +5531,61 @@ findings:
   `scripts/heath.py`,
   `scripts/check_fidelity.py`,
   `review/SCHEMA.md`.
+
+- **Which laws' proofs draw: computed, not set by hand (#150, question 4).** Of the two
+  routes #150 offers, the coordinator takes route (b): the hand-set flag `Cited.drawsNothing` is retired,
+  in the content change that follows this one, and the certificate records what each cited
+  law's proof uses. Route (a) would have kept a flag that, under the permissive reading the
+  owner approved on 20 October ("as prototyped"), carries no logical weight, and a check of
+  it would only confirm a classification nothing depends on; the computed record serves both
+  the reader and the second retirement wave, after which four of I.4's seven laws are proved
+  with construction rules. "Construction rule" is now defined in
+  [FORMALIZATION](../FORMALIZATION.md#construction-rules), section 9: an axiom whose
+  conclusion asserts existence once the project's definitions are unfolded, a structure or
+  inductive type read as a word, and only an `∃` written out or given by a definition
+  counted. This check change lands first, under WORKFLOW, section 10.
+  Protected files changed:
+  [`Certificate/Facts.lean`](../../Certificate/Facts.lean) computes the top-level
+  `construction_rules` (21 of the 80 axioms at this revision, the centre rule
+  `Tacit.exists_centre` among them) and, for I.4 and I.8, a
+  `cited_laws` field: each law the entry's own Lean cites, its proofs (name, file and line,
+  from Lean's declarations) and the construction rules beneath them; a law the entry names
+  with no proof found fails the run.
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) documents both fields and the walk.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) gains
+  eight expectations: I.4's seven cited laws and I.8's four, I.7's law carrying Postulate 1,
+  the three laws that stay clean (Metric 3, 4 and 9) with no construction rule in I.4,
+  Metric 3 likewise in I.8, and the construction rules themselves; an expectation may now read one cited law
+  (`law`) or a top-level field (no `ref`). [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py)
+  reads those forms and now refuses an expectation that asks nothing (none of `includes`,
+  `excludes`, `equals` or `count`), which used to pass: a check defect, fixed.
+  [`scripts/safe_push.py`](../../scripts/safe_push.py)'s `kept_expectations` reads an
+  expectation by its `ref`, `field` and `law`, so retargeting one no longer counts as
+  keeping it; only tighter. [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py)
+  tests that. [`scripts/render.py`](../../scripts/render.py) shows the cited laws on I.4's
+  and I.8's pages; [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
+  follows the new field. [`scripts/negative_tests.py`](../../scripts/negative_tests.py)
+  plants a construction rule in two clean laws' proofs with every audit pin rewritten to
+  match, so only the new expectations can catch it, and plants I.7's law removed from I.8's
+  list, which the build refuses. [`tests/test_certificate.py`](../../tests/test_certificate.py),
+  with its fixture `tests/fixtures/CertificateCited.lean`,
+  and [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) test the walk,
+  the expectations' new forms and the plants' restoration. The fixture declares seventeen
+  stand-in axioms: one for each of the sixteen cases of the definition that it lists, and
+  the fixture's own law of I.7. They are compiled only into the test's temporary package,
+  which no library of the edition builds, and the lock is unchanged. A review correction
+  makes the projection reader follow a projection at the head of a structure value, as
+  when a structure is nested in another or a field is a function, and apply the field it
+  names to the projection's arguments. Three of the stand-in axioms exercise it: an
+  inherited order instance, reached through nested structures; a projection reached
+  through nested structures and through a function's arguments; and, beside it, a field of
+  the same structure that asserts no existence and must not be read in its place. A second
+  correction substitutes a `let` at the head of a structure value or of an application
+  into its body, so that a definition given through a `let` is read through it; two more
+  of the stand-in axioms now exercise a `let`-bound structure and a `let` at an
+  application's head. The new expectation on `construction_rules` reads facts.json's top
+  level and so has no `ref`; five lookups, in four places, in `scripts/test_safe_push.py`
+  that picked the lock's III.1 expectations out by `(x["ref"], x["field"])` met it and
+  failed in CI's `safe-push-tests` job with a `KeyError`, so they read the `ref` with
+  `x.get("ref")`, which picks out exactly the entries they picked before.
+  `check_fidelity.py` and `safe_push.py` already read an expectation without a `ref`.
