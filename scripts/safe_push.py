@@ -472,7 +472,7 @@ TAIL = 40                 # lines of a failed step's output to print
 # origin/main for step 4 (check_sequence; docs/decisions/2026-10-22-check-registry.md).
 REGISTRY = "checks"
 REGISTRY_READER = "scripts/registry.py"
-REGISTRY_TIMEOUT = 120    # seconds origin/main's registry.py may take to read its registry
+REGISTRY_TIMEOUT = 120    # seconds a registry.py, origin/main's or the commit's, may take
 # The name of the registry's one `empty` entry, the check that `git status --porcelain`
 # prints nothing; no command may bear it (check_sequence, FRESHNESS).
 EMPTY_CHECK = "git status --porcelain is empty"
@@ -572,8 +572,9 @@ def run(cmd, cwd, *, env=None, input=None, binary=False,
     risk_class runs with a time limit, and the Git read that loads origin/main's
     count-marker reader, both before the main-checks cache is opened. While the cache is
     in use (open_cache), each runs under sandbox-exec with SANDBOX, a profile that may
-    not write the cache: git, the guards' check_fidelity.py and render.py, every step of
-    the full checks, gh. So the commands a flagged run starts cannot write the cache
+    not write the cache: git, the guards' check_fidelity.py and render.py, the readers of
+    the registry of steps 3 and 4 (the commit's own being the commit's code), every step
+    of the full checks, gh. So the commands a flagged run starts cannot write the cache
     directly. The sandbox does not stop a run without the flag (a ship's own dry run
     among them), which starts its commands with no sandbox; nor anything code run as the
     same user does outside a flagged run; nor anything a flagged run's code leaves for a
@@ -3203,7 +3204,7 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path,
 
     # With --main-checks-cache, origin/main's pass is taken from the cache on a hit, and
     # kept for it on a miss; keep_apart then reads its steps as it reads them run.
-    cache = main_checks(ctx, wt, inputs, rep) if CACHE is not None else None
+    cache = main_checks(ctx, wt, inputs, rep, sequence) if CACHE is not None else None
 
     def checks(steps, where: Path, label, fail, excludes, first: int) -> None:
         if label == BASE_PASS and cache is not None and cache.hit:
@@ -3475,9 +3476,11 @@ def environment(repo) -> dict:
     }
 
 
-def main_checks_fields(ctx, wt: Path, inputs) -> tuple[dict | None, str]:
+def main_checks_fields(ctx, wt: Path, inputs, sequence: list[tuple[str, list[str] | None]]
+                       ) -> tuple[dict | None, str]:
     """The fields of the key of origin/main's pass on this commit, computed by the harness
-    and never read from the tree as code; or None, and why there is no key."""
+    and never read from the tree as code; or None, and why there is no key. Its checks are
+    `sequence`, the checks step 4 runs (check_list), and its negative tests NEGATIVE."""
     if HARNESS_BLOB is None:
         return None, "the harness running is not origin/main's"
     lean = toolchain(ctx.repo, ctx.sha, wt)
@@ -3495,7 +3498,7 @@ def main_checks_fields(ctx, wt: Path, inputs) -> tuple[dict | None, str]:
             "harness_blob": HARNESS_BLOB,
             "toolchain": lean,
             "environment": environment(ctx.repo),
-            "checks": [[name, cmd] for name, cmd in CHECKS],
+            "checks": [[name, cmd] for name, cmd in sequence],
             "negative": [[name, cmd] for name, cmd in NEGATIVE],
         }
     except Refusal as e:
@@ -3507,9 +3510,10 @@ ENTRY_FIELDS = frozenset({"key", "written", "steps", "digest"})
 STEP_FIELDS = frozenset({"name", "outcome", "detail", "seconds", "log"})
 
 
-def base_pass_names() -> list[str]:
-    """origin/main's pass of step 4, step by step: CHECKS, then NEGATIVE."""
-    return [name + BASE_PASS for name, _ in [*CHECKS, *NEGATIVE]]
+def base_pass_names(fields: dict) -> list[str]:
+    """origin/main's pass of step 4, step by step, as the key `fields` names it: its checks,
+    then its negative tests."""
+    return [name + BASE_PASS for name, _ in [*fields["checks"], *fields["negative"]]]
 
 
 STEP_SECONDS = 7 * 24 * 3600    # the longest a recorded step may have taken: a week
@@ -3577,7 +3581,7 @@ def entry_problem(entry, key: str, fields: dict) -> str | None:
     if not isinstance(steps, list) or not all(
             isinstance(s, dict) and set(s) == STEP_FIELDS for s in steps):
         return "its steps are not of this format"
-    if [s["name"] for s in steps] != base_pass_names():
+    if [s["name"] for s in steps] != base_pass_names(fields):
         return "its steps are not origin/main's pass, each step once and in order"
     for s in steps:
         if s["outcome"] not in ("ok", "note"):
@@ -3696,7 +3700,7 @@ class MainChecks:
 
     def collect(self, rep: Report, out) -> None:
         """The step origin/main's pass has just run, recorded for the entry."""
-        names = base_pass_names()
+        names = base_pass_names(self.fields)
         s = rep.steps[-1] if rep.steps else None
         if self.spoiled or s is None or len(self.steps) >= len(names) \
                 or s.name != names[len(self.steps)] or s.outcome not in ("ok", "note") \
@@ -3711,7 +3715,7 @@ class MainChecks:
         under the sandbox, by the harness its key names; a note if it cannot be."""
         if self.hit or self.done:
             return
-        if not self.spoiled and len(self.steps) < len(base_pass_names()):
+        if not self.spoiled and len(self.steps) < len(base_pass_names(self.fields)):
             return      # the negative tests' loop is still to run
         self.done = True
         why = self.spoiled or self.unwritable()
@@ -3741,14 +3745,15 @@ class MainChecks:
         return dir_problem(CACHE) or ""
 
 
-def main_checks(ctx, wt: Path, inputs, rep: Report) -> MainChecks | None:
+def main_checks(ctx, wt: Path, inputs, rep: Report,
+                sequence: list[tuple[str, list[str] | None]]) -> MainChecks | None:
     """The cache's answer for origin/main's pass on this commit, reported in one line, for
     the pull request's record: a hit; a miss, and why; or why the cache does not serve."""
     if not inputs:
         rep.add("4", "main-checks cache", "skip", "the commit changes no check input: there "
                 "is no pass with origin/main's copies to reuse")
         return None
-    fields, why = main_checks_fields(ctx, wt, inputs)
+    fields, why = main_checks_fields(ctx, wt, inputs, sequence)
     if fields is None:
         rep.add("4", "main-checks cache", "note", f"not used for this commit: {why}; "
                 "origin/main's checks run in full")

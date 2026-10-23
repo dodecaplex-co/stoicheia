@@ -6820,7 +6820,9 @@ from pathlib import Path  # noqa: E402
 import tempfile  # noqa: E402
 
 sp = safe_push
-sp.CHECKS = [(name, cmd) for name, cmd in ARGS["checks"]]
+# The sequence step 4 runs is given to full_checks, as check_list gives it, and differs
+# from the built-in CHECKS, which the cache's key must not read.
+SEQUENCE = [(name, cmd) for name, cmd in ARGS["checks"]]
 sp.NEGATIVE = [(name, cmd) for name, cmd in ARGS["negative"]]
 sp.SANDBOX_EXEC = ARGS["sandbox_exec"]
 sp.HARNESS_BLOB = sp.blob_id(Path(sp.__file__).read_bytes())
@@ -6835,7 +6837,7 @@ for name in ARGS["forget"]:
 reader = sp.count_markers(ctx.repo, ctx.base)
 if ARGS["apart"]:
     sys.modules.pop("dataclasses", None)
-runs, allow_count, error = {}, None, None
+runs, allow_count, listed, error = {}, None, None, None
 apart = None
 HARNESS.append(sp)
 sp.CACHE, sp.SANDBOX = Path(ARGS["cache"]), "(version 1) (allow default)"
@@ -6851,23 +6853,27 @@ try:
             raise RuntimeError("the sandboxed child did not plant dataclasses.py: "
                                + planted.stderr)
         apart_rep = sp.Report()
-        apart_rep.add("4", sp.CHECKS[0][0] + sp.BASE_PASS, "note", "for the test")
+        apart_rep.add("4", SEQUENCE[0][0] + sp.BASE_PASS, "note", "for the test")
         apart = {"refused": sp.keep_apart(ctx.repo, ctx.base, ctx.sha, apart_rep, "4"),
                  "steps": [[s.name, s.outcome] for s in apart_rep.steps]}
     allow_count = len(sp.load_allowlist(ctx.repo, ctx.base))
+    # origin/main's registry, read as step 4's check list reads it, by its own reader.
+    read = sp.check_sequence(ctx.repo, ctx.base)
+    listed = [[name, cmd] for name, cmd in read.steps]
     for run in ("miss", "hit"):
         rep = sp.Report()
         with tempfile.TemporaryDirectory(dir=ARGS["tmp"]) as tmp:
             with sp.worktree(ctx.repo, ctx.sha, Path(tmp), "check") as wt:
                 sp.full_checks(ctx, wt, Path(tmp), inputs, rep,
-                               Path(os.path.join(ARGS["logs"], run)), sp.CHECKS)
+                               Path(os.path.join(ARGS["logs"], run)), SEQUENCE)
         runs[run] = [[s.name, s.outcome, s.detail] for s in rep.steps]
 except BaseException as e:
     error = type(e).__name__ + ": " + str(e)
 finally:
     sp.SANDBOX = None
 with open(ARGS["out"], "w") as f:
-    json.dump({"seen": SEEN, "runs": runs, "allow_count": allow_count, "error": error,
+    json.dump({"seen": SEEN, "runs": runs, "allow_count": allow_count, "listed": listed,
+               "error": error,
                "reader": reader is not None, "apart": apart,
                "planted": os.path.exists(os.path.join(ARGS["here"], "dataclasses.py")),
                "executed": os.path.exists(ARGS["sentinel"]),
@@ -6958,8 +6964,9 @@ class MainChecksCache(Edge):
 
     def checks(self, sha: str, checks=None, negative=None, stub=None) -> CheckRun:
         """safe_push.full_checks on `sha` in a throwaway worktree, as step 4 runs it, with
-        CHECKS and NEGATIVE the stand-ins unless given, and run_step watched (and stood in
-        for, when `stub` is given)."""
+        the sequence it is given (check_list's) and NEGATIVE the stand-ins unless given,
+        and run_step watched (and stood in for, when `stub` is given). The built-in CHECKS
+        is left as it is, and differs from the sequence, as origin/main's registry may."""
         rep, out, ran = safe_push.Report(), io.StringIO(), []
         ctx = safe_push.Context(WORK, sha, BASE, 1, str(ORIGIN), None, {})
         logs = Path(tempfile.mkdtemp(prefix="logs-", dir=self.root))
@@ -6969,8 +6976,8 @@ class MainChecksCache(Edge):
             ran.append(name)
             return (stub or real)(stage, name, *args, **kwargs)
         refusal = None
+        sequence = self.CHECKS if checks is None else checks
         with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
-                mock.patch.object(safe_push, "CHECKS", self.CHECKS if checks is None else checks), \
                 mock.patch.object(safe_push, "NEGATIVE",
                                   self.NEGATIVE if negative is None else negative), \
                 mock.patch.object(safe_push, "run_step", watched), \
@@ -6979,7 +6986,7 @@ class MainChecksCache(Edge):
             with safe_push.worktree(WORK, sha, parent, "check") as wt:
                 try:
                     safe_push.full_checks(ctx, wt, parent, self.inputs(sha), rep, logs,
-                                          safe_push.CHECKS)
+                                          sequence)
                 except safe_push.Refusal as e:
                     refusal = str(e)
         return CheckRun(refusal, out.getvalue(), rep, ran, logs)
@@ -7077,9 +7084,9 @@ class MainChecksCache(Edge):
             "docs/reading.md": self.text("docs/reading.md") + "\nA line for the test.\n"})
         ctx = safe_push.Context(WORK, sha, BASE, 1, str(ORIGIN), None, {})
 
-        def fields(ctx=ctx, sha=sha) -> dict:
+        def fields(ctx=ctx, sha=sha, sequence=self.CHECKS) -> dict:
             found, why = safe_push.main_checks_fields(ctx._replace(sha=sha), WORK,
-                                                      self.inputs(sha))
+                                                      self.inputs(sha), sequence)
             self.assertIsNotNone(found, why)
             return found
 
@@ -7126,8 +7133,12 @@ class MainChecksCache(Edge):
                                 ("LC_ALL", "C.for-the-test"), ("LC_CTYPE", "C.for-the-test")):
                 with mock.patch.dict(os.environ, {name: value}):
                     moved[f"{name}={value}"] = key()
+            # The checks step 4 runs, origin/main's registry's, and not the built-in CHECKS:
+            # one more check, or the model's job after them, as every real sequence ends.
+            moved["one check more"] = key(sequence=self.CHECKS + [("check four", ["true"])])
+            moved["the model's job"] = key(sequence=self.CHECKS + safe_push.MODEL_JOB)
             with mock.patch.object(safe_push, "CHECKS", self.CHECKS + [("check four", ["true"])]):
-                moved["CHECKS"] = key()
+                self.assertEqual(key(), first, "the built-in CHECKS moved the key")
             with mock.patch.object(safe_push, "NEGATIVE", self.NEGATIVE[:0]):
                 moved["NEGATIVE"] = key()
             for name, value in moved.items():
@@ -7135,10 +7146,12 @@ class MainChecksCache(Edge):
             self.assertEqual(len(set(moved.values())), len(moved), moved)
             # No key without origin/main's harness, or without the toolchain.
             with mock.patch.object(safe_push, "HARNESS_BLOB", None):
-                self.assertEqual(safe_push.main_checks_fields(ctx, WORK, self.inputs(sha)),
+                self.assertEqual(safe_push.main_checks_fields(ctx, WORK, self.inputs(sha),
+                                                              self.CHECKS),
                                  (None, "the harness running is not origin/main's"))
             with mock.patch.object(safe_push, "toolchain", lambda repo, sha, wt: None):
-                self.assertIsNone(safe_push.main_checks_fields(ctx, WORK, self.inputs(sha))[0])
+                self.assertIsNone(safe_push.main_checks_fields(ctx, WORK, self.inputs(sha),
+                                                               self.CHECKS)[0])
 
     def test_a_miss_writes_an_entry_and_a_hit_runs_nothing_of_origin_mains_pass(self):
         sha = self.check_change()
@@ -7180,6 +7193,32 @@ class MainChecksCache(Edge):
         # replacement objects off (#256).
         self.assertIn(f"git {' '.join(safe_push.NO_REPLACE_REFS)} -c core.quotePath=false "
                       "worktree add", self.wrapped.read_text())
+
+    def test_the_key_and_the_entry_follow_the_sequence_step_4_runs(self):
+        # Step 4 runs origin/main's registry, whose sequence ends in the model's job and so
+        # is never the built-in CHECKS: a miss writes that sequence's pass, keyed by it, and
+        # the next run on the same trees replays it (the security review of #229 after
+        # #392, finding 1).
+        sha = self.check_change()
+        sequence = self.CHECKS + safe_push.MODEL_JOB
+        self.assertNotEqual(sequence, safe_push.CHECKS)
+        with self.active():
+            miss = self.checks(sha, checks=sequence, stub=self.stub)
+            (path,) = self.entries()
+            hit = self.checks(sha, checks=sequence, stub=self.stub)
+            # The same trees with another sequence are another key: a miss again.
+            other = self.checks(sha, stub=self.stub)
+        for r in (miss, hit, other):
+            self.assertIsNone(r.refusal, r.out)
+        entry = json.loads(path.read_bytes())
+        self.assertEqual(entry["key"]["checks"], [[n, c] for n, c in sequence])
+        self.assertEqual([s["name"] for s in entry["steps"]],
+                         self.base_names(sequence + self.NEGATIVE))
+        self.assertTrue(self.cache_lines(hit.rep)[0].startswith("hit: "), hit.out)
+        self.assertEqual(hit.ran, self.own_names(sequence) + self.own_names(self.NEGATIVE))
+        self.assertTrue(self.cache_lines(other.rep)[0].startswith("miss (no entry"),
+                        other.out)
+        self.assertEqual(len(self.entries()), 2)
 
     def test_a_valid_written_timestamp_is_reused(self):
         sha = self.check_change()
@@ -7364,8 +7403,7 @@ class MainChecksCache(Edge):
                 self.assertFalse(path.is_symlink())
                 self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
                 fresh = json.loads(path.read_bytes())
-                with mock.patch.object(safe_push, "CHECKS", self.CHECKS), \
-                        mock.patch.object(safe_push, "NEGATIVE", self.NEGATIVE):
+                with mock.patch.object(safe_push, "NEGATIVE", self.NEGATIVE):
                     self.assertIsNone(safe_push.entry_problem(fresh, key, fresh["key"]))
                 self.assertEqual([(s["name"], s["outcome"]) for s in fresh["steps"]],
                                  [(s["name"], s["outcome"]) for s in json.loads(good)["steps"]])
@@ -7831,7 +7869,7 @@ class MainChecksCache(Edge):
                 mock.patch.dict(platform._platform_cache, clear=True):
             inputs = self.inputs(sha)
             with watch_processes(str(self.fake)) as refused:
-                fields, why = safe_push.main_checks_fields(ctx, WORK, inputs)
+                fields, why = safe_push.main_checks_fields(ctx, WORK, inputs, self.CHECKS)
                 miss = self.checks(sha, stub=self.stub)
                 hit = self.checks(sha, stub=self.stub)
         self.assertEqual(refused, [], "a process started outside run(), and so outside "
@@ -7910,6 +7948,11 @@ class MainChecksCache(Edge):
         seen = self.step4_watched(sha, tools, forget=("tomllib",))
         self.assertEqual((seen["seen"], seen["error"]), ([], None), seen["printed"])
         self.assertEqual(seen["allow_count"], len(safe_push.load_allowlist(WORK, BASE)))
+        # origin/main's registry was read there by its own reader, through the sandbox, as
+        # step 4's check list reads it, and gave what it gives unsandboxed.
+        self.assertEqual(seen["listed"], [[n, c] for n, c in
+                                          safe_push.check_sequence(WORK, BASE).steps])
+        self.assertTrue(seen["listed"], seen["printed"])
         cache = {run: [d for name, _, d in steps if name == "main-checks cache"]
                  for run, steps in seen["runs"].items()}
         self.assertTrue(cache["miss"][0].startswith("miss (no entry"), seen["printed"])
@@ -9430,7 +9473,8 @@ class Units(unittest.TestCase):
                 with mock.patch.dict(os.environ, {} if only is None else {"ONLY": only},
                                      clear=True):
                     forwarded = safe_push.tool_env()
-                    fields, why = safe_push.main_checks_fields(ctx, Path("/worktree"), [])
+                    fields, why = safe_push.main_checks_fields(ctx, Path("/worktree"), [],
+                                                               [])
                 self.assertEqual(why, "")
                 variables = dict(fields["environment"]["variables"])
                 if only is None:

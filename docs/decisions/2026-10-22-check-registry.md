@@ -95,14 +95,20 @@
   registry with the commit's own reader, as a later pre-flight will. Each reader runs
   through `run()`, which gains a time limit for it, so that under the main-checks cache's
   sandbox ([#392](https://github.com/jackChallis/stoicheia/pull/392)) it runs sandboxed,
-  as every command does; the commit's own reader is the commit's code.
+  as every command does; the commit's own reader is the commit's code. The cache keys
+  origin/main's pass by the sequence step 4 runs, origin/main's registry's, and checks an
+  entry's steps against that key's checks, not against the built-in list: so the lists of
+  checks its key holds are the checks that ran.
 
   This entry approves `scripts/test_safe_push.py`, whose tests of the sequence now hold
   the registry, section 8's block and the one step of CI's `check` job to one another, pin
   the built-in list to a list of their own, add a check to a copy of the tree with no
   change to the harness, keep every refusal of a skipped, suppressed or overridden step,
   and add a class of tests, `Registry`, beside new cases in `RiskPreflight` and
-  `ProtectedPaths`, step 3's reading of the commit's registry among them.
+  `ProtectedPaths`, step 3's reading of the commit's registry among them; and whose tests
+  of the main-checks cache give step 4 a sequence other than the built-in list, key and
+  replay a sequence that ends in the model's job, and read origin/main's registry under
+  the sandbox's stand-in.
 
   This entry approves `scripts/render.py`, which writes section 8's first command block
   from the registry and refuses a registry its reader refuses.
