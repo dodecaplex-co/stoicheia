@@ -7810,7 +7810,10 @@ class Units(unittest.TestCase):
         # and so does one with a literal before its `:=` that the reader cannot read for
         # certain, so the guard compares more, never less.
         for text in ("{a : Nat} : a = a", "{a : Nat} /- := never closed : a = a := rfl",
-                     "(h : a℃'('x') = a℃'('x') := rfl) : True := trivial"):
+                     "(h : a℃'('x') = a℃'('x') := rfl) : True := trivial",
+                     # A string holding a brace, which the reader may read with holes.
+                     ': "{) := (}" = "{) := (}" := rfl',
+                     '(h : "{)}" = s := rfl) : True := trivial'):
             with self.subTest(text=text):
                 self.assertEqual(safe_push.statement_end(text), len(text))
 

@@ -1354,9 +1354,12 @@ def statement_end(text: str) -> int:
     character, not a bracket. Each «…» name is blanked here too, whole (LEAN_NAME), as
     check_fidelity blanks them, since the reader blanks only a name's `[` and `]`: so a
     `:=` or a bracket within a name is no `:=` and no bracket. Where the reader cannot
-    read a literal for certain before the `:=` it finds, the statement runs to the end of
-    the text, so that the guard compares more of it, never less."""
-    code, unsure = heath.read_lean(text)
+    read a literal for certain before the `:=` it finds, or a string holds a `{`, whose
+    braces the reader may keep as a hole of code, the statement runs to the end of the
+    text, so that the guard compares more of it, never less."""
+    strings: list = []
+    code, unsure = heath.read_lean(text, strings)
+    unsure = unsure + [k for k, s in strings if "{" in s]
     code = LEAN_NAME.sub(lambda m: re.sub(r"[^\n]", " ", m[0]), code)
     n, depth = len(text), 0
     for i, c in enumerate(code):
