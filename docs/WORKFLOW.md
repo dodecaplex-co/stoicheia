@@ -224,27 +224,44 @@ rendered page.
 
 **Review records are tied to a commit.** Every proposition has a record,
 `review/<book>/NN.toml` ([schema](../review/SCHEMA.md)). `scripts/review_stamp.py` stamps it
-with a fingerprint of the statements reviewed, a hash of the Lean file, and the commit whose
-files the record was last confirmed against. When the fingerprint or the hash no longer
-matches, `check_fidelity.py` reports that the statement or the Lean file has changed since
-it was reviewed, and the record is read again. At the stage `exceptions` a record declares
-every departure; at the stage `full` it classifies every substantive passage. The record's
-`reviewer` names who read it; from the stage `full` it names the model or person and the
-role, and `run` names the brief, stage and workflow, so that a reader can tell the reviewer
-from the authors of the proof.
+with a fingerprint of the statements reviewed, a hash of the Lean file, a hash of the
+record's own text without its `[review]` table and fingerprint, and the commit whose files
+the record was last confirmed against. When any of the three no longer matches,
+`check_fidelity.py` reports that the statement, the Lean file or the record has changed
+since it was reviewed, and the record is read again. At the stage `exceptions` a record
+declares every departure; at the stage `full` it classifies every substantive passage. The
+record's `reviewer` names who read it; from the stage `full` it names the model or person
+and the role, and `run` names the brief, stage and workflow, so that a reader can tell the
+reviewer from the authors of the proof.
 
 **Stamps.** A stamp says that a record has been read against the files as they now are.
 
 - The reviewer stamps, after reading, with the commit whose files were read:
   `python3 scripts/review_stamp.py --commit <commit> III.16`. Commit the change first,
-  then stamp; the script checks that the Lean file at that commit is the file as it is now.
+  then stamp; the script checks that the commit is in the history of HEAD, and that the
+  Lean file and the record at that commit are as they are now, the record's `[review]`
+  table and fingerprint aside.
 - The integrator re-stamps only after reading each changed file against its record, and
   then stamps with the commit read. A record the integrator cannot confirm goes back to the
   records' owner.
 - On a contributor's branch, "changed since it was reviewed" is expected whenever a Lean
-  file under a record changes, even by a comment. The contributor lists the records made
-  stale in the handback (form 3, "Records made stale"), and never runs `review_stamp.py` on
-  a record they did not review.
+  file under a record changes, even by a comment, and whenever the record's own text is
+  edited. The contributor lists the records made stale in the handback (form 3, "Records
+  made stale"), and never runs `review_stamp.py` on a record they did not review.
+- The records stamped before the `text` stamp was introduced gain it by
+  `python3 scripts/review_stamp.py --migrate-text`, which writes `text` alone, and only
+  for a record whose own stamp commit is in the history of HEAD and whose text at that
+  commit is its text now: what was read is then what the record says, so it records no
+  new reading. It reads the records' history, so it runs in a full clone. A record whose
+  text it cannot confirm is listed as needing a reader, who reads it and stamps it as
+  above. A stamp commit absent from the clone or abbreviated ambiguously is a problem, and
+  so, for a record without `text`, is one a shallow clone cannot place in the history of
+  HEAD: the command exits 1 without listing that record for a reader. Fetch missing
+  history and run it again; for an ambiguous id, a reader identifies the intended commit
+  without guessing, reads the record and stamps it as above with enough of the id to name
+  that commit alone; then run it again. The migration may be run again at any time, as at
+  landing, after the branches that change records. Until every record carries `text`,
+  `check_fidelity.py` names those without it in a note.
 
 **What a reviewer of the Lean looks for:**
 
@@ -257,6 +274,13 @@ from the authors of the proof.
 - artificial hypothesis uses: `have _ := h…` and the like;
 - helpers that conceal a whole conclusion;
 - later citations, lemma placement, imports, and Book Zero importing no proposition.
+
+`python3 scripts/sweep_citations.py` lists the candidates for the dummy citations, the
+artificial hypothesis uses and the concealing helpers, and marks those the record already
+declares ([FORMALIZATION.md](FORMALIZATION.md), section 5). The reviewer judges each: a
+step a sentence of Euclid's stands over stays, and is declared by naming its binding in
+the `unused` of the passage over it ([review/SCHEMA.md](../review/SCHEMA.md)), which no
+note and no `#` comment can do; any other is fixed, deleted or its part cleared with `-`.
 
 For the page, the reviewer's checklist is in [STYLE.md](STYLE.md), section 8; figures are
 checked as geometry.
@@ -311,6 +335,8 @@ lake build Audit
 lake build Staging
 lake env lean Certificate/Facts.lean
 python3 -I tests/test_certificate.py
+python3 scripts/sweep_citations.py --self-test
+python3 scripts/sweep_citations.py
 python3 scripts/check_kernel.py --self-test
 python3 scripts/heath.py
 python3 scripts/check_fidelity.py
@@ -345,6 +371,7 @@ which class", after the block, and those of `queue-integrity` after that:
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
+python3 -I tests/model/results_check.py   # the `model` job's second step: results/ are current
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
 python3 scripts/check_model_kernel.py --self-test && python3 scripts/check_model_kernel.py
                                        # CI's `formal-model` job: the formal model, with Mathlib,
@@ -475,8 +502,10 @@ the three jobs reads the repository with no other permission, and its checkout k
 token.
 
 `scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on the
-head commit of every pull request of R3 to R5 (section 10), so a change to them is made
-there too, and in the CI workflow; for R0 to R2 it leaves them to CI, which runs those of
+head commit of every pull request of R3 to R5 (section 10), but one: it does not yet run
+`python3 -I tests/model/results_check.py`, which only CI's `model` job runs until the
+command joins safe_push's `CHECKS`. A change to the commands is made there too, and in the
+CI workflow; for R0 to R2 it leaves them to CI, which runs those of
 `check` and `model` on the pull request before the merge. It leaves the `formal-model`
 job to CI on purpose, since it fetches
 Mathlib's prebuilt files ([model/README.md](../model/README.md#the-ci-job)), the
@@ -537,6 +566,33 @@ train and group as unreadable.
   change to an axiom fails the `model` job until the model follows it, in the same pull
   request: [MODEL.md, "Changing the axioms"](../tests/model/MODEL.md#changing-the-axioms),
   says how.
+- **The model's results name their harness.** Each file in `tests/model/results/` names
+  the commit it was written at, with the harness files as committed, and the hash of the
+  harness that wrote it (`HARNESS` in `tests/model/run.py`), and MODEL.md's counts name
+  the same commit. `tests/model/results_check.py`, which is not a file of the harness,
+  fails when the harness now hashes otherwise, when a run read harness files other than
+  its commit's, when the runs' output is what `run.py` refuses to write, or when
+  `summary.txt` and the counts are not what `--write` makes of the runs' output. So a pull
+  request that changes a harness file commits the change, runs
+  `python3 -I tests/model/run.py --full --write` on it (about eight minutes) and commits
+  what it writes, in the same pull request; its decisions entry names each file the run
+  changes. `--write` runs from a copy of the harness taken out of git at the commit, so
+  what it writes is that commit's harness's. Apart from its self-test, which runs `run.py`
+  on a made-up harness of its own, the check runs no harness, so it cannot tell a header
+  written by hand from a run's, and the output records no exit status, which only
+  `--write` sees; the security review, which every change under `tests/` gets, reads the
+  results' diff.
+- **The citation sweep reads the build.** `python3 scripts/sweep_citations.py` elaborates
+  a copy of each file of `Elements/` with Lean's unused-variables linter and its tactic
+  analysis on, and reads every entry's proof term, so it needs `lake build` and
+  facts.json; `Staging` and `Audit` it reads when named, after their builds, though the
+  linter passes over any declaration with a `sorry` in it, even one that never runs, so a
+  staged statement gives no hit until its proof arrives; outside Staging, a file with
+  `sorry` or `admit` in its code is refused. Its `--self-test` plants each kind of hit,
+  and controls that must pass, in Lean outside the tree. CI's `check` job runs both sweep
+  commands for every risk class, after `test_certificate.py` and before the whole-worktree
+  cleanliness check; the sweep there only lists, and the release gate (section 10, step
+  10) runs it with `--fail-on-undeclared`.
 - **Staging builds; it is not proved.** `lake build Staging` checks that the statements
   staged before their proofs (section 2), each with `sorry` where its proof is due, still
   build against the library they import. It builds every file under `Staging/`, whether or
@@ -618,6 +674,11 @@ train and group as unreadable.
   `Elements/BookI/Prop07.lean` among them, whose every header and import it reads.
   `negative_tests.py` runs it after the decision entry regressions, before planting, with
   `--counts-only` too.
+- **The lock is written again as it is committed.** `check_fidelity.py --write-lock`, run
+  on the committed `facts.json`, must give back `Certificate/axioms.lock` byte for byte, its
+  header included, for `model/lock.sha256` and `tests/model/lock.sha256` pin its bytes.
+  `tests/test_axiom_lock.py` tests that without Lean, and `negative_tests.py` runs it after
+  the risk class regressions, before planting, with `--counts-only` too.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that
   branch; if integration changes the mathematics, the dependencies or a public description,
@@ -678,9 +739,7 @@ looked into.
 6. **One voice** (section 7).
 7. **Review records** completed: each record written in step 3 is read again against its
    finished proof (section 6), and every one reaches the stage `full` before acceptance.
-   Books I and II have reached `full` in all their records; Book III's remain at
-   `exceptions` and reach `full` in brief 0005's stage 5, after the moves from Staging
-   into Elements in stages 3 and 4 (#25, #28; the records are #29).
+   Books I, II and III are at `full` in all their records (Book III's are #29).
 8. **The page read-through and the stale-content audit.** Before every release or
    consolidation, readers go through the rendered pages as visitors, as section 7 requires.
    Separately, before every release and at the end of each programme stage, the coordinator
@@ -717,7 +776,9 @@ looked into.
     from the audit fixed in the release's pull request and every Tier 3 record given its
     status note; no open issue labelled `blocks-release`
     (unfinished work, a prototype or a provisional answer may be on main only as such an
-    issue, and holds every release until it closes); and the wiki refreshed, so that it is
+    issue, and holds every release until it closes); the citation sweep, `python3
+    scripts/sweep_citations.py --fail-on-undeclared`, passing on the release candidate,
+    with each hit fixed or declared in its record; and the wiki refreshed, so that it is
     reasonably correct as of its date, as its pages say, and is not expected to be more
     current than that. The hold is checked by `python3 scripts/check_release_gate.py`, by
     the `release-gate` job on the release's pull request, and by `git safe-push --merge`,
@@ -730,8 +791,32 @@ looked into.
     its own. The `release-gate` job runs on the
     pull request's events, not the issues', so once the last blocker closes it is run
     again (or `release` removed and given again) before `--merge`, which counts its failed
-    run on a release pull request. Then the notes are drafted from the generated
-    summaries, the owner approves them, and the tag (`book-I`, `book-II`, …) is made.
+    run on a release pull request. Before that `--merge`, and after every other change the
+    release's pull request carries, two generated accounts are made again at its head, and
+    what they write is committed to it. The model's full run,
+    `python3 -I tests/model/run.py --full --write`, writes `tests/model/results/` and
+    MODEL.md's counts. After `lake build`, the overlap screen,
+    `python3 -I Audit/screen.py OUTDIR --write`, runs on the candidate's statements and
+    rules and writes `Audit/screen-run.toml`. Before it replaces that record, it checks the
+    build again, after every try and retry, and reads the commit and the inputs again; a
+    failed check leaves the record as it was. Checks at the two ends of a run cannot show
+    that nothing changed and changed back in between. Then
+    [overlaps.md](reports/overlaps.md) and the screen's docstring record the revision
+    screened, the number of statements in `facts.json` and what closed. Then
+    `python3 -I tests/model/results_check.py` and
+    `python3 -I Audit/screen.py --check-current` both pass: CI runs the first on every pull
+    request, and the coordinator runs the second on the head that `--merge` merges and
+    again just before the tag, and the pull request quotes the screen's closing lines. The
+    screen's check needs no Lean, but any change to the library makes it fail, and only a
+    run, with Lean and about an hour and a half of processor time, may make it pass again;
+    so it is a release step, not one of CI's. The check reads the record, not the run, so
+    it cannot tell a record written by hand from a run's, and the security review reads the
+    run's closing lines, which the pull request quotes. `Audit/` and `tests/` are
+    protected, so the release's decisions entry names each file the runs and their records
+    change: the ten files of `tests/model/results/`, `tests/model/MODEL.md`,
+    `Audit/screen-run.toml` and `Audit/screen.py`. Then the notes are drafted from the
+    generated summaries, the owner approves them, and the tag (`book-I`, `book-II`, …) is
+    made.
     `python3 scripts/check_release_gate.py` runs once more just before the tag, since the
     hold rests on the labels. PROGRAM.md is brought up to date: the status board, the
     lessons, the costs.
@@ -1459,7 +1544,8 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       does R0 to R2, the full checks run, and a note says why. For R3, R4 and R5, the full
       checks of section 8 in that worktree, and `negative_tests.py` in a
       second, each step timed. The check scripts and what they expect (`scripts/`,
-      `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) are origin/main's
+      `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`, and `checks/`,
+      the registry of checks that #229 brings) are origin/main's
       copies; when the pull request changes any of them, the checks run again with its own
       copies, which must pass. A check that fails with origin/main's copies is noted in
       the pull request for the security review, and refuses the pull request if it also
@@ -1475,9 +1561,10 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       changes an expected count, a new word in the lock, an axiom added):
       `tests/certificate_expectations.json`, `Certificate/axioms.lock`,
       `tests/model/lock.sha256`, the model's law names in `tests/model/laws.toml`, and its
-      account of the laws, `tests/model/MODEL.md` and `tests/model/results/`, which no
-      check reads but for MODEL.md's count markers. A count between count markers
-      ([STYLE](STYLE.md), section 4) in the Markdown of a check input under
+      account of the laws, `tests/model/MODEL.md` and `tests/model/results/`, which
+      `tests/model/results_check.py` holds to the present harness (section 8), as
+      `check_fidelity.py` holds MODEL.md's count markers to what they count. A count
+      between count markers ([STYLE](STYLE.md), section 4) in the Markdown of a check input under
       `Certificate/` or `tests/`, or in `review/SCHEMA.md`, such as
       `Certificate/FIELDS.md`'s count of the lock's words, is such a value too:
       `render.py` generates its value and `check_fidelity.py` refuses a stale one, so a
@@ -1654,6 +1741,7 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
 
 **Protected paths.** `scripts/` (the hook and the launcher included), `.github/`,
 `Certificate/` (the lock included), `tests/`, `review/SCHEMA.md`, `review/terms.toml`,
+`checks/` (the registry of checks that #229 brings, one file per check),
 `.gitattributes`, `.gitignore` (a rule added there hides untracked files from
 `git status`, and so from the check that the generated pages are current), the
 toolchain files (`lakefile.toml`, `lakefile.lean`, which Lake reads in preference to

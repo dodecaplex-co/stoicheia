@@ -334,10 +334,12 @@ GUARDED_DIRS = ("Elements", "heath", "review", "figures", "mishnah")
 # lakefile.lean is here although the repository has none: Lake reads it in preference to
 # lakefile.toml, and runs it. .gitignore is here because an added rule hides untracked
 # files from `git status`, and so from the check that the generated pages are current.
+# checks/ is to be the registry of CI's `check` job, one file per check (#229): a check
+# added, removed, or with its command, job or order changed, is named in a decisions entry.
 # PROTECTED_JUDGED, below, joins them.
 PROTECTED = ("scripts/", ".github/", "Certificate/", "tests/", "review/SCHEMA.md",
              "review/terms.toml", ".gitattributes", ".gitignore", "lakefile.toml",
-             "lakefile.lean", "lean-toolchain", "lake-manifest.json")
+             "lakefile.lean", "lean-toolchain", "lake-manifest.json", "checks/")
 # Protected, and still judged (#96): the audit lemmas of docs/reports/overlaps.md, whose
 # pinned axiom lists (`#guard_msgs`) back the catalogue's claims, and Audit.lean, the root
 # that decides which of them `lake build Audit` checks; the model's Model/Audit.lean and
@@ -352,12 +354,16 @@ PROTECTED_JUDGED = ("Audit/", "Audit.lean", "model/Model/Audit.lean", "model/Mod
                     "model/lakefile.toml", "model/lakefile.lean",
                     "model/lean-toolchain", "model/lake-manifest.json", "model/lock.sha256")
 PROTECTED += PROTECTED_JUDGED
-# The checks and what they expect: origin/main's copies judge the commit (step 4).
-CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "review/terms.toml")
+# The checks and what they expect: origin/main's copies judge the commit (step 4). The
+# registry of checks, checks/ (#229), is to be one of them: a commit that changes it is a
+# check change, kept apart from what the checks judge.
+CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "review/terms.toml",
+                "checks/")
 # Of those, the values pinned to the edition, not code. The lock and the model's hash of it
 # are compared exactly, both ways: check_fidelity.py the lock with facts.json, and the
 # model's run its hash with the lock. The model's page and results are its account of the
-# laws, which no check reads but for the page's count markers. The certificate's
+# laws; `results_check.py` holds them to one commit and the present harness, and
+# `check_fidelity.py` the page's count markers to what they count. The certificate's
 # expectations are checked one way only, each for what it says, so a change to them is a
 # pinned value only while it keeps every expectation origin/main has (kept_expectations).
 # The model's law names are compared with the lock both ways, but a line of them changed
@@ -435,13 +441,17 @@ HEAD_TIMEOUT = 60         # seconds to wait for GitHub to see the branch's new h
 TAIL = 40                 # lines of a failed step's output to print
 
 # The full local check sequence, exactly as docs/WORKFLOW.md, section 8, and CI's `check`
-# job run it, then the `model` job. Change it with them.
+# job run it, then the `model` job, but for the model job's `results_check.py`, which only
+# CI runs until it joins this list (WORKFLOW, section 8). Change it with them.
 CHECKS = [
     ("lake build", ["lake", "build"]),
     ("lake build Audit", ["lake", "build", "Audit"]),
     ("lake build Staging", ["lake", "build", "Staging"]),
     ("lake env lean Certificate/Facts.lean", ["lake", "env", "lean", "Certificate/Facts.lean"]),
     ("python3 -I tests/test_certificate.py", [PY, "-I", "tests/test_certificate.py"]),
+    ("python3 scripts/sweep_citations.py --self-test",
+     [PY, "scripts/sweep_citations.py", "--self-test"]),
+    ("python3 scripts/sweep_citations.py", [PY, "scripts/sweep_citations.py"]),
     ("python3 scripts/check_kernel.py --self-test",
      [PY, "scripts/check_kernel.py", "--self-test"]),
     ("python3 scripts/heath.py", [PY, "scripts/heath.py"]),
@@ -2167,18 +2177,36 @@ def passes(repo, base, wt: Path, changes: list[tuple[str, str]]):
 GUIDES = ("AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "docs/WORKFLOW.md",
           "docs/FORMALIZATION.md", "docs/STYLE.md", "docs/briefs/", "docs/templates/",
           "docs/decisions/")
-# A review record's stamp: its reviewer's reading of a statement and a Lean file, as a
-# change to the certificate's output asks for (WORKFLOW, section 6). Not its stage.
-STAMP_LINE = re.compile(r'(?m)^(?:fingerprint|commit|lean|reviewer)\s*=\s*"[^"]*"[ \t]*$')
+# A review record's stamp: its reviewer's reading of a statement, a Lean file and the
+# record's own text, as a change to the certificate's output asks for (WORKFLOW, section
+# 6). Not its stage. STAMPS: the stamp keys of each section.
+STAMP_LINE = re.compile(r'(?m)^(?:fingerprint|commit|lean|text|reviewer)\s*=\s*"[^"]*"[ \t]*$\n?')
+STAMPS = {"statement": ("fingerprint",), "review": ("commit", "lean", "text", "reviewer")}
 
 
 def stamp_only(repo, base, sha, path: str) -> bool:
-    """Is the change to `path` a review record's stamp alone?"""
+    """Is the change to `path` a review record's stamp alone: stamp lines rewritten, added
+    or moved within their own section, none taken away from it, and nothing else changed,
+    in the lines or in the record as TOML reads it (so a stamp-shaped line inside a
+    multi-line string is no stamp)? A record TOML cannot read is judged."""
     if not re.fullmatch(r"review/[IVX]+/\d+\.toml", path):
         return False
     old, new = show(repo, base, path), show(repo, sha, path)
-    return old is not None and new is not None \
-        and STAMP_LINE.sub("", old) == STAMP_LINE.sub("", new)
+    if old is None or new is None or STAMP_LINE.sub("", old) != STAMP_LINE.sub("", new):
+        return False
+    import tomllib
+    try:
+        before, after = tomllib.loads(old), tomllib.loads(new)
+    except tomllib.TOMLDecodeError:
+        return False
+    for section, keys in STAMPS.items():
+        if isinstance(before.get(section), dict) and isinstance(after.get(section), dict):
+            if any(key in before[section] and key not in after[section] for key in keys):
+                return False
+            for table in (before[section], after[section]):
+                for key in keys:
+                    table.pop(key, None)
+    return before == after
 
 
 def judged_files(repo, base, sha) -> list[str]:
@@ -3447,7 +3475,7 @@ BLOCK = re.compile(r"(?ms)^<!-- safe_push:preflight begin"
 # The train step's row in that summary, as preflight_block writes it when it passed.
 TRAIN_ROW = re.compile(r"(?m)^\| 3\. train \| ok \| [0-9.]* \|[ \t\r]*$")
 PLACEHOLDER = re.compile(r"(?m)^<!-- safe_push: (\w+) -->[ \t\r]*$")
-STAMP_FIELD = re.compile(r'(?m)^(fingerprint|commit|lean)\s*=\s*"([^"]*)"')
+STAMP_FIELD = re.compile(r'(?m)^(fingerprint|commit|lean|text)\s*=\s*"([^"]*)"')
 
 
 def sanitized(text: str) -> str:
@@ -3525,8 +3553,16 @@ def describe(ctx: Context, pre: Preflight) -> dict[str, str]:
             continue
         old = dict(STAMP_FIELD.findall(show(repo, base, path) or ""))
         new = dict(STAMP_FIELD.findall(show(repo, sha, path) or ""))
+        lost = sorted(old.keys() - new.keys())
         if status == "D":
             records.append(f"- `{path}`: deleted")
+        elif lost:
+            records.append(f"- `{path}`: {'a stamp' if len(lost) == 1 else 'stamps'} taken "
+                           f"away ({', '.join(f'`{key}`' for key in lost)})")
+        elif old != new and new.get("commit") and new["commit"] == old.get("commit"):
+            records.append(f"- `{path}`: its stamps written, its commit kept at "
+                           f"`{new['commit'][:12]}`" if stamp_only(repo, base, sha, path)
+                           else f"- `{path}`: touched, not re-stamped")
         elif old != new and new.get("commit"):
             records.append(f"- `{path}`: re-stamped at `{new['commit'][:12]}`")
         else:

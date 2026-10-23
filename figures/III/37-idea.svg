@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.37 at a glance</title>
-  <desc>Let the square on DB (blue) equal the rectangle contained by AD (red and black) and DC (black). Then DB equals DE, drawn touching the circle (blue), so DB too meets the radius FB at right angles (yellow), and touches.</desc>
+  <desc>Let the square on DB (blue) equal the rectangle contained by AD (red and black) and DC (black). Then DB equals DE (blue), drawn touching the circle, so DB too meets the radius FB at right angles (yellow), and touches.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="128.0" cy="150.0" r="84.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M169.4,76.9 L156.6,99.5 A26,26 0 0,0 192.1,89.8 Z" fill="#f2b705"/>

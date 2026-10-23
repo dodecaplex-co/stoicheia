@@ -5123,6 +5123,100 @@ findings:
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py),
   [`docs/FORMALIZATION.md`](../FORMALIZATION.md) and this page.
 
+- **A review stamp covers the record's own text.** A record's stamps went stale when its
+  statements or its Lean file changed, but not when the record itself was edited, so a
+  note, a scope or a passage could change under "Reviewed at" with no one reading it. Two
+  lanes found it on 18 October, the one correcting the errors from Argon's review
+  ([#64](https://github.com/jackChallis/stoicheia/issues/64)) and the fidelity runs
+  ([#61](https://github.com/jackChallis/stoicheia/issues/61)), and we thank them both
+  ([#77](https://github.com/jackChallis/stoicheia/issues/77)). A record now carries a
+  fourth stamp, `text` in `[review]`: `heath.text_hash` of the record as TOML reads it,
+  with `[review]` and `fingerprint` set aside, so that writing a stamp, or moving a record
+  from the stage `exceptions` to `full`, never changes the text it stamps, and with
+  comments and layout aside ([`review/SCHEMA.md`](../../review/SCHEMA.md#stamps), "Stamps",
+  whose two worked examples now carry it as test values).
+  [`scripts/review_stamp.py`](../../scripts/review_stamp.py) writes it with the other
+  stamps, and, whenever `--commit` names a commit, checks that the commit named is in the
+  history of HEAD, and both the Lean file and the record at that commit (before, it checked
+  the Lean file only, and only when the commit changed).
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) fails on a record whose
+  text no longer matches its stamp: "its record has changed since it was reviewed".
+  [`scripts/heath.py`](../../scripts/heath.py) knows the key and checks the examples'
+  values; [`scripts/render.py`](../../scripts/render.py) counts such a record as not
+  current, and writes nothing new; [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
+  is unchanged, and fails P2 on that finding of `check_fidelity.py`'s, as
+  [ACCEPTANCE](../ACCEPTANCE.md), P2, now says;
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants an edited note in
+  I.1's record and expects it caught, and a comment and a moved stamp not;
+  [`scripts/safe_push.py`](../../scripts/safe_push.py) counts a `text` line as a stamp.
+  That widens its `stamp_only` a little: a stamp line added or moved now counts as a stamp
+  alone, where before it was judged, so that the records' `text` stamps travel past
+  `keep_apart` as the other stamps do. Two guards hold it, and
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) tests both: no stamp key
+  is taken away, and the record as TOML reads it, its stamps set aside, is unchanged, so
+  that a line shaped as a stamp inside a multi-line string, which changes the record's
+  words, is judged. Its account of the records in a pull request's body counts `text` as a
+  stamp: a record whose stamps alone change, its commit kept, is listed as "its stamps
+  written, its commit kept at …", which is what the migration below does to it; one that
+  loses a stamp, as "a stamp taken away"; and one whose words change under a kept commit,
+  as "touched, not re-stamped". The required box on the review records
+  in [`.github/pull_request_template.md`](../../.github/pull_request_template.md), and its
+  comment under "Review records", therefore now admit a record that "gained only its
+  `text` stamp from `scripts/review_stamp.py --migrate-text`", so that the migration's
+  pull request can tick that box truly. Once this lands, any pull request open with the
+  box's old words must have that box rewritten in its body before `--merge`, which
+  otherwise refuses it as missing the box's new words. After this lands, an open pull
+  request whose body's records part was written with the old words is refreshed with
+  `git safe-push --branch` before `--merge`, which otherwise fails its body as out of date.
+  This is a check change on its own: it changes no record.
+- **The `text` stamps' migration, and what it does not do.** The existing records are not
+  stamped as read. `review_stamp.py --migrate-text` writes `text` alone, and only where a
+  record's stamp commit is in the history of HEAD and its text at that commit (`git show
+  <commit>:review/<book>/NN.toml`, its `[review]` table and fingerprint aside) is its text
+  now: the hash then records what its reviewer read, and no new reading. It reads the
+  commit by its full id, so a branch or tag named as the commit is never read in its
+  place. A record whose text it cannot confirm is listed as needing a reader, and is never
+  stamped by the migration. A stamp commit that is absent or ambiguous is instead a
+  problem, and so, for a record without `text`, is one that a shallow clone cannot place
+  in the history of HEAD: the command exits 1 without listing that record for a reader.
+  Missing history is fetched, or, for an ambiguous id, a reader identifies the intended
+  commit without guessing, reads the record and stamps it with enough of the id to name
+  that commit alone, before running it again.
+  On main at `756bdbae` it would write 92 records; seven were edited after their stamp
+  commit and need a reader: II.2, II.6, II.7, II.8 and II.10, whose passages name Book I's
+  helpers as `BookI.…` since the renaming of 19 October; III.4, whose notes changed their
+  quotation marks and a word; and III.13, whose `[figure]` note was written after the
+  commit its page names. The migration waits for the branches in flight that re-stamp
+  records, the Book III cascade's re-stamps (ship C7) and axiom wave two, as it waited for
+  train Tw2 (Book I's Postulate 1 joins), landed as
+  [#193](https://github.com/jackChallis/stoicheia/pull/193).
+  It reads each record's own stamp commit, so it treats their stamps as any other, and it
+  runs on main after them, in a records pull request of its own. Then a reader reads and
+  stamps the records it lists, and with them #77's item 3: III.13's `[figure]` note read
+  against [`figures/III/13.svg`](../../figures/III/13.svg) and Heath's figure, and its page
+  re-rendered, so that its "Reviewed" row names the new commit. Then, in a check change of
+  its own, `text` is required like the other stamps: `check_fidelity.py` fails a record
+  without it, in place of its note naming them, and `check_acceptance.py` asks it of a
+  record at P2. That change also takes out every place that lets a record go without
+  `text`, or says "for now": `render.record_current`'s clause counting a record with no
+  `text` as current; `text` in `heath.FIELDS`, which becomes a stamp, with the comment
+  above FIELDS and `validate_review`'s "for now"; `check_fidelity.py`'s docstring, which
+  says a record with no `text` stamp yet is named in a note; SCHEMA's "for now" in the
+  `text` row, and its paragraph on the records stamped before `text`;
+  [WORKFLOW](../WORKFLOW.md), section 6's "Until every record carries `text`"; ACCEPTANCE
+  P2's "once it carries one"; [CONTRIBUTING](../../CONTRIBUTING.md)'s "once it carries its `text` stamp";
+  [PROGRAM](../PROGRAM.md)'s "where a record carries a `text` stamp"; and the template's
+  words for the migration. It also considers covering `[review]`'s `stage` and `items` by
+  `text`: a page words its "Reviewed" row from `stage`, and P11 to P16 count `items`, yet
+  neither is caught by any stamp now (SCHEMA, "Stamps"). Until that change, failing on
+  the records without `text` would stop main, so `check_fidelity.py` names each record
+  without it in a note, and fails only on a `text` that no longer matches. P2's
+  requirement waits too: asked now, it would fail all 99 records, where main passes 62,
+  and the 372 review items of those 62 (P11 to P16) with them; and while every record
+  failed it, the `acceptance` job's ratchet could not catch a regression in those items
+  as the branches above land.
+  The branch carries the work of the lane of 18 October that first built it, with thanks.
+
 - **A figure that draws every case says so
   ([#30](https://github.com/jackChallis/stoicheia/issues/30)).** `figure_note` in
   [`scripts/render.py`](../../scripts/render.py) put a record's `[figure] case` after a
@@ -5157,7 +5251,6 @@ findings:
   `scripts/heath.py`,
   `review/SCHEMA.md`,
   `tests/test_check_style.py`.
-
 - **Train C6b reconciled after axiom wave one.** Train C6b carries III.1's construction
   and porism and stage 4, merged with C6a after axiom wave one, at `4db10cf2`, and again
   at `529c93f7`, which brings main's restricted rule of superposition (#191) and main at
@@ -5242,7 +5335,6 @@ findings:
   since `73b97ab1` are main's, named in main's entries, and change neither the lock nor any
   pin.
   The merge itself writes no statement, check or expected value: each is one train's.
-
 - **III.1's construction guard, brief 0008, step 4.** `Audit/Centre.lean`, imported
   from `Audit.lean`, fixes the frozen type of `Elements.BookIII.Prop1.construction`
   and pins its full axiom list with `#guard_msgs`, read afresh from Lean at `34f2db57`.
@@ -5262,7 +5354,6 @@ findings:
   `centre_unique` is left to the reader of `Prop1.construction` and the lemmas it calls, as
   `Audit/Centre.lean` now says; a pin on the proved rules each entry uses is #168's. The pinned
   list itself is unchanged by the merge.
-
 - **The scaffold follows the restated Book III statements.** The protected file
   [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes [brief
   0008](0008-centre.md), step 6's restated signatures from `b260c826` for III.1, III.2,
@@ -5283,3 +5374,298 @@ findings:
   and `tests/` confirms that no check reads the scaffold's Book III strings. The scaffold
   creates only missing files, so it never rewrites a proof. This change lands before the
   content it describes, in a pull request of its own, since `scripts/` is a check input.
+- **Brief 0008, step 6: a drawn arc needs no centre (19 October 2026).** As
+  [brief 0008](0008-centre.md), section 4, approved, `Arc.Drawn` in the foundations file
+  [`Elements/Foundations/DefinitionsIII.lean`](../../Elements/Foundations/DefinitionsIII.lean)
+  loses its existential centre clause: a drawn arc has its two ends on its circle and its
+  side point off their straight line, and a proof that needs the circle's centre takes it
+  from `Tacit.exists_centre`. [`Certificate/axioms.lock`](../../Certificate/axioms.lock)
+  is rewritten by `python3 scripts/check_fidelity.py --write-lock`; only the word
+  `Arc.Drawn` changes, and the 88 axioms and the other 124 words are byte for byte as
+  before. [`tests/model/lock.sha256`](../../tests/model/lock.sha256) and
+  [`model/lock.sha256`](../../model/lock.sha256) take the new hash with a dated note, and
+  [`model/Model/Laws.lean`](../../model/Model/Laws.lean) is regenerated, changing only
+  in the hash it records; no law changes. In
+  [`Audit/Crossing.lean`](../../Audit/Crossing.lean) and
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) the calls follow the restated
+  propositions; an argument no proof now uses keeps its type under a name beginning with
+  `_`, and every axiom pin stays as Lean prints it.
+- **Brief 0008, step 6, done (19 October 2026).** Every Book III statement, companion
+  and helper that took a circle's centre only to have one now takes it inside its proof:
+  from III.1 where Heath
+  cites it, from `Prop1.of_circle` in III.17, and from `Tacit.exists_centre` at an
+  unbracketed step; the twelve propositions whose statements use their named centre, and
+  the helpers [brief 0008](0008-centre.md), section 4, lists, keep it, as does
+  `Prop1.within`. III.33 returns no centre and III.34 takes its circle. The
+  construction's guard, `Audit/Centre.lean`, is unchanged and passes. `Staging/Centre/` is
+  retired. In [`Audit/Crossing.lean`](../../Audit/Crossing.lean) and
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean), `Audit.III_24_measure` and the
+  crossing bridge's `cut_point`, `CirclesCut.of_meet`, `within_point` and `III_13_today`
+  lose their centre inputs, `III_2` and `III_2_outside` follow III.2's type and keep their
+  own proofs, and every axiom pin is as Lean prints it. The records lose `centre-given`;
+  every Book III record whose text or Lean changed was read in full and stamped by a reader
+  who wrote none of it. No further foundation or lock change is made, and the tag
+  `centre-given` itself leaves `review/terms.toml` in step 7. `Prop30.halves` (#67) is
+  staged in `Staging/Halves/Prop30.lean` with `sorry`, proposed for the owner's approval in
+  [brief 0006](0006-statements.md); its proof is not assigned.
+- **Circle-rule screen after step 6, 19 October 2026.** In the protected file
+  [`Audit/screen.py`](../../Audit/screen.py), which is judged content, the approved rule
+  `Tacit.exists_centre` joins the screened circle rules. Against fresh certificates at
+  `b260c826`, with this addition, the screen ran 57,240 attempts over 135 statements
+  (99 propositions, three porisms and 33 companions). Eleven attempts closed: seven
+  for III.2, three for III.5 and one for III.6. No pair containing `exists_centre`
+  closed, and no closing uses it. This matches the earlier 51,600-attempt run; its
+  uncatalogued candidate route for III.5, from `Tacit.len_lt_of_inside`,
+  `Tacit.lt_trans` and `Tacit.lt_irrefl`, remains for the coordinator to decide.
+  No catalogue row is added. The module's last-run account and the
+  [overlap report](../reports/overlaps.md#how-the-rows-were-found) record the result.
+  Nothing is loosened: the screen's logic, unfolded definitions, heartbeat limit and
+  treatment of unsuccessful attempts are unchanged. The generated certificate is
+  restored after the run.
+- **Train C6c meets the guard, trains C6a and C6b and axiom wave one.** Train C6c, which
+  carries brief 0008's step 6 (every Book III centre taken inside its proof), III.30's
+  halves and the companions of III.24 and III.25, was merged with `lean/centre-guard` at
+  `6b51608a`, which carries train C6b at `12f6fe9d`, train C6a at `529c93f7`,
+  tooling/centre-given-meaning and main at `0a05f96f`: axiom wave one, the restricted rule
+  of superposition (#191), the check train (#192), train Tw2 (#193), Heath's letters
+  upright (#194, #196), the twenty entries out of `REACH_PENDING` (#195) and short hashes
+  read from Git (#198); and again with the guard at `0d77f885`, which brings train C6b's
+  review fixes (III.1's figure note from main, the current overlap row of III.1's centre
+  rule, and the historical row of III.1's corollary as it stood), train C6a at `ba839370`
+  and main at `e7ffaf68` (#199, #201, #202 and #204), and changes neither the lock nor any
+  pin; then with the guard at `82a2894c`, which brings the guard's review fixes, train
+  C6b at `4adcfd95` (its second review's fixes: III.1's page, and a dated update under
+  III.1's corollary), train C6a at `05e27335` (III.10's record read afresh, with Heath's
+  statement under III.5 said truly) and main at `73b97ab1` (#208 and #219), and changes
+  neither the lock nor any pin; and again with the guard at `792458f1`, which brings train
+  C6b at `0a7eddc2`: the owner's words for III.25's segment kinds, the check change
+  tooling/figure-every-case (`752a84fb`, landing before train C6b with its own entry) and
+  III.25's figure of every case, and changes neither the lock nor any pin; with main
+  at `554dfb0f` (#232, the unrun tests in CI, and #239, decision entries one file
+  each), which changes neither the lock nor any pin; then with the guard at
+  `1b5e3f2b`, which brings train C6b after its /no-mistakes run and its readers (III.15
+  and III.25), tooling/figure-every-case at `696181c5` and main at `8674bce2` (#240, train
+  C6a landed) and `af90d71e` (#254), and changes neither the lock nor any pin; then
+  with the guard at `eae7eed9`, which brings train C6b merged with main at `6d06c47b`
+  (#270, the check change tooling/figure-every-case landed, and main's tooling and text
+  trains #271 to #304), and changes neither the lock nor any pin; and last with the guard
+  at `cdb9750e`, which brings train C6b merged with main at `84c71dff` (#309, II.5 and
+  II.14 proving their right angles in place), and changes neither the lock nor any pin.
+  The census of I.13's rule in the overlap catalogue was recounted on the merged 137
+  entries: 14 proofs, each calling the rule itself, and 33 entries in the closure. The
+  restated Book III of this train is kept whole; III.1's record and commentary are this
+  train's, since its statement no longer takes a centre.
+  `Certificate/axioms.lock`, written again by `python3 scripts/check_fidelity.py
+  --write-lock` after `lake build` and `Certificate/Facts.lean`, holds the guard side's 80
+  axioms, of them 74 tacit rules, each byte for byte, and its 242 words, with this train's
+  `Arc.Drawn` without its centre clause; no other word changes. Both
+  [`model/lock.sha256`](../../model/lock.sha256) and
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) keep every dated comment of
+  both sides, gain one for this merge, and hash the lock,
+  `8ecd3bade891a4c222a2c9037357e401bb116f52dc96e90e041f8102be908b5f`.
+  `model/Model/Laws.lean` was written again by `lake lean Check/Write.lean`, its line of
+  the hash alone changing, and [`tests/model/MODEL.md`](../../tests/model/MODEL.md) and
+  the model results by `python3 tests/model/run.py --full --write`: 80 laws, no
+  counterexample in the plane, all 15 mutations caught, and in the hyperbolic plane no
+  counterexample to any axiom but Postulate 5. No pin was renewed: `lake build Audit`
+  passes with every pin of `Audit/Overlaps.lean`, `Audit/Crossing.lean`,
+  `Audit/Centre.lean` and `Audit/Superposition.lean` as written, and `Audit/Centre.lean`'s
+  pin of `Prop1.construction` is Lean's own list, which this train does not change.
+  [`Audit/screen.py`](../../Audit/screen.py) keeps both sides' accounts: this train's
+  `exists_centre` among the screened circle rules, and the guard side's restricted rule of
+  superposition. The paths under `Certificate/`, `Audit/`, `Audit.lean`, `tests/`,
+  `model/`, `scripts/`, `.github/`, `review/SCHEMA.md`, `review/terms.toml`,
+  `lakefile.toml` and `lean-toolchain` that differ from `lean/centre-guard` at
+  `cdb9750e`, each named whole:
+  `Audit/Crossing.lean`,
+  `Audit/Overlaps.lean`,
+  `Audit/screen.py`,
+  `Certificate/axioms.lock`,
+  `model/Model/Laws.lean`,
+  `model/lock.sha256`,
+  `scripts/scaffold_book.py`,
+  `tests/model/MODEL.md`,
+  `tests/model/lock.sha256`,
+  `tests/model/results/angle_check.txt`,
+  `tests/model/results/exhaustive.txt`,
+  `tests/model/results/grid_check.txt`,
+  `tests/model/results/hyperbolic.txt`,
+  `tests/model/results/mutations.txt`,
+  `tests/model/results/search-seed1.txt`,
+  `tests/model/results/search-seed2.txt`,
+  `tests/model/results/search-seed3.txt`,
+  `tests/model/results/structured.txt` and
+  `tests/model/results/summary.txt`.
+  `Audit/Crossing.lean`, `Audit/Overlaps.lean` and `Audit/screen.py` differ by this train's
+  restated calls and its screen account, which its 19 October entries give; the rest by
+  the lock's one changed word and what follows from it. `scripts/scaffold_book.py` differs
+  by tooling/c6c-scaffold's change, its restated Book III signatures, the companions it
+  emits after III.24 and III.25, and its comment, which lands before this train with its
+  own entry. The paths main changed between `73b97ab1` and `84c71dff` are main's, named
+  in main's entries. No statement, check or expected value changes in this merge.
+- **III.30's halves, approved, proved and registered (#67).** The owner approved
+  `Prop30.halves` on 20 October 2026: asked "Also approve the smaller items?
+  Prop30.halves (#67); III.36's corollary layout; ...", the owner answered "Approve all".
+  Its statement, staged in [brief 0006](0006-statements.md) ("Addition, 19
+  October 2026"), is proved with its type unchanged, after `Prop30` in
+  [`Elements/BookIII/Prop30.lean`](../../Elements/BookIII/Prop30.lean), with three
+  helpers of its own, `Prop30.on_chord`, `Prop30.not_within` and `Prop30.not_vertical`.
+  It is registered in [`Elements/Companions.lean`](../../Elements/Companions.lean) as the
+  companion "III.30 halves", which [`review/III/30.toml`](../../review/III/30.toml)
+  lists. The route is the brief's. The equal straight lines AD, DB, which III.30's
+  statement does not give, are recovered from the equal measures by I.6, a step the
+  record's route note discloses. Then come I.17, III.28's congruence clause and
+  `Circumference.add`, and the division point by point by plane separation and III.2.
+  The proof rests on neither Circle 2 nor Circle 3, through any lemma (#152), and adds no
+  axiom.
+  `Staging/Halves/Prop30.lean` and its import in `Staging.lean` are deleted. An
+  independent reader read the record afresh and stamped it at `05b34dc0`.
+- **The citation sweep ([#32](https://github.com/jackChallis/stoicheia/issues/32)).**
+  `scripts/sweep_citations.py`, standard library only, lists the candidates that brief
+  0005's stage 5 names and [FORMALIZATION](../FORMALIZATION.md), section 5, forbids: the
+  bindings of a proof (`have`, `let`, `obtain`, `rcases`, `intro`) that nothing uses, an
+  `obtain` whose whole result is discarded, every `have`, `let` or `obtain` whose name
+  begins with `_`, and helpers that may conceal a whole conclusion. Unused names are
+  Lean's own judgement: each file is elaborated, in parallel and from a copy outside the
+  tree, with the unused-variables linter (Sebastian Ullrich's and Mario Carneiro's, in
+  Lean itself, with our thanks) and `linter.unusedVariables.analyzeTactics`, off by
+  default, switched on, so that a hypothesis `assumption`, `simp_all`, `omega` or
+  `grind` uses without naming it counts as used. A file that sets one of the linter's
+  options itself, as `set_option linter.unusedVariables false in` or its
+  `.analyzeTactics`, in any spelling or spacing (`set_option«linter».unusedVariables`),
+  would silence it there, and so would any `#guard_msgs` but a pin of `#print`, which
+  swallows the linter's report with `(drop warning)`, `(drop all)` or a docstring that
+  expects the warning, as a review found; so would a `sorry` or `admit`, even one that
+  never runs, as `first | rfl | sorry`, since Lean's linter passes over the whole
+  declaration that holds one (its `hasSorry` reads the syntax, not the proof), as a
+  later review found. So the sweep refuses that file, exit 2, by its name and line; a
+  `sorry` or `admit` only outside Staging, whose statements await their proofs. The
+  `#guard_msgs` that Audit and Staging put around `#print axioms`, to pin what a proof
+  rests on, are not refused. The sweep reads the code through `check_fidelity.py`'s
+  reader, which now begins every comment's body at its fourth character, as Lean does:
+  it began a character early, so that in `/--/ " -/` it closed the comment at `/--/` and
+  opened a string at the `"`, and in `/-/- -/` it counted a second opener, which hid the
+  lines after them from the sweep and from check_fidelity's own scan for forbidden
+  commands. Its reading of every Lean file in the repository is unchanged by the fix.
+  The sweep refuses a file that does not elaborate too, since Lean reports the rest of
+  such a file and drops the hits of what fails. The linter cannot see three things: a
+  name that begins with `_`, which it never checks; an anonymous `have`, whose `this` it
+  passes over; and the kept name of an `obtain` whose other parts are cleared or unused,
+  as `obtain ⟨KF, -, -⟩`, because the facts it clears mention KF in the tactic states it
+  reads. In the copy the first two are renamed, lines kept, so that Lean judges them; a
+  `_` name that the proof writes again keeps its name, so that the copy still
+  elaborates, and is listed as used by name. The third is found by a textual pass for
+  exactly that shape, which stands aside where automation that uses a hypothesis without
+  naming it follows in the declaration. A case split, as `rcases h with hp | hq`, is
+  never a discarded result: only Lean's warnings on its names are hits. A statement's
+  own unused hypotheses are not listed: they stay review prompts, tagged
+  `redundant-hypothesis` where that is the truth. A statement ends at its `:=`, or at
+  the first `|` of a proof by equations.
+
+  The helpers are read from Lean's proof terms, in one run with `import Lean`: an entry
+  of facts.json is listed when its proof, past its intros, steps and case splits, comes
+  down in every branch to one helper that none of its own steps feeds, or when it cites a
+  helper stating exactly what it states. The proof is read on through a field of a
+  structure, as a part of a conjunction or either way of an iff, and through a fact
+  turned round (`.2`, `.mp`, `.symm`), to the helper, since Book I's figure helpers give
+  several facts at once (`Prop7.figure` gives four); so a figure of the project's own is
+  named by the helper that gives it, never by its field. A class's law, as
+  `Std.Commutative.comm`, is not read so: it would name the instance, such as Book Zero's
+  for the magnitudes, as the helper, as a review found. It is read on, too, from a step
+  bound to a helper's result, or a part of one taken apart (by a split of one term), that
+  a branch returns as it is, as `have hw := pair h; exact hw.2` or
+  `obtain ⟨-, hL⟩ := pair h; exact hL`, which a review found passing; parts put together
+  again by a constructor make a step of the proof's own, and are not read on. A private
+  helper counts, though Lean marks every private name an internal detail. The foundations
+  (axioms, Common Notions, proved rules) are left to the overlap catalogue.
+
+  One rule declares a hit: its record has a passage whose `at` begins a sentence of the
+  run of `--` lines over it, the runs read as `check_fidelity.py` reads them, and whose
+  `unused`, a key the record's schema gains for the purpose, lists the binding by the
+  name the proof gives it (`FC`, `hCHG_EHC`, or `this` for an anonymous `have`). A first
+  version took any `carried` passage over the run as declaring a hypothesis; on Book I
+  it declared I.45's two unused facts through a passage about where H falls, so it was
+  dropped. A second let a note name a point or straight line, and a `#` comment of the
+  passage's table name any binding; it was dropped on review, since TOML does not read a
+  comment: `unused` is a key, which the records' `text` stamp will cover once
+  [#77](https://github.com/jackChallis/stoicheia/issues/77) lands, while a comment that
+  stamp would never see change. The note went with the comment: a note is prose for
+  readers, which says a hypothesis in words ([STYLE](../STYLE.md), section 1), a word in
+  it that matched a name would declare by accident, and one place to look serves the
+  sweep, the reviewer and the check alike. So train Tw2's notes for the joins of I.5 and
+  I.11 declare nothing; the content train after it adds `unused = ["FC", "GB"]` to I.5's
+  passage and `unused = ["FC"]` to I.11's, with the other declarations. `unused` is
+  checked twice: `heath.py` checks that it lists distinct names, each one Lean identifier
+  or `this`; `check_fidelity.py` reads the Lean beneath the passage's run as plain text
+  (`bound_names`, whose patterns, with their alternatives and an `rcases … with` over
+  line breaks, are read by the reader the sweep now shares) and fails a name that is not
+  bound there, so a declaration cannot outlive its binding. A plain read was chosen over
+  the sweep's, which needs Lean and the build; it finds the binding of every hit that
+  stands under a run, 55 of the 57. render.py reads a passage's `at`, `kind`, `helper`
+  and `note` alone, so no page shows `unused`, though a passage added only to hold it is
+  listed on the page as every passage is. A helper hit is never declared, but fixed:
+  FORMALIZATION, section 5, has a helper supply one step, never a whole conclusion.
+
+  The coordinator's ruling on the joins (#32), recorded by train Tw2, decides what is
+  declared rather than deleted: a step stays where a sentence of Euclid's stands over
+  it, and FORMALIZATION, section 5, allows a checked intermediate fact tied to one.
+  `--self-test` plants every kind of hit in Lean outside the tree, among them a `_` name
+  written again, an `rcases … with` whose pattern, or whose `with`, is on the next line,
+  a case split, a `suffices`, a `have` in a proof by equations, one under
+  `warningAsError`, and a helper behind a whole proof: after a step that feeds it
+  nothing, as a private theorem, in each branch of a case split (of a hypothesis, or by
+  excluded middle), behind a reductio's opening, a cast, a `show` or metadata, through
+  `.1`, `.2` (as Lean's primitive projection too), `.symm`, `.mp` and `.mpr`, as a field
+  of a figure, through a step bound to its result, or a part of it or of one of its
+  parts taken apart, or of it through `id`, fed only by a part of a hypothesis taken
+  apart, and stated exactly. Its controls must pass, among them a binding used later,
+  one used by `assumption` or `simp_all`, a pattern's `_` part, a statement's unused
+  hypothesis, a helper fed by a step, a helper's parts put together again, a part of a
+  helper's result taken apart and its part fed to another helper (once listed: a split
+  of a field of a citation is now the proof's own step, as a split of the citation was),
+  an entry citing an entry, an iff applied to the proof's own step, a case split of that
+  step, a field of a figure the statement gives, an `if` whose other branch is a rule of
+  the foundations, a proved rule of the foundations, and a class's law; a declared join
+  is reported as declared. Its record is read as TOML, and in it a name in a note or a
+  `#` comment, or in the `unused` of a passage over another run, declares nothing, and
+  `check_fidelity.py` must report that last name as unbound; nor does one name declare a
+  hit that keeps two, and no helper hit is declared. The sweep must refuse two files,
+  exit 2: one that silences the linter in eleven ways, seven settings of its options
+  (one behind a `/--/` and one behind a `/-/-`), three `#guard_msgs` and a `sorry` that
+  never runs, naming each line, and one that does not elaborate; it must not refuse a
+  remark that quotes them, nor a `#guard_msgs` around `#print`; and a run of Lean that
+  fails with no error at a line must fail the sweep too, as must one that ends in a
+  signal or an exit but 0 or 1, or exits 1 with anything but the linter's reports, one of
+  them promoted to an error by `warningAsError` (a fault the /no-mistakes review found,
+  with our thanks). Read without Lean, `admit` must
+  be refused as `sorry` is, but not in Staging, and the shared reader must begin every
+  comment's body at its fourth character, as Lean does. The self-test needs the library
+  built. CI's `negative` job runs it after its build, then the sweep over `Elements/` as
+  a report (139 files in 6 to 13 seconds on a 16-core laptop), and safe_push's
+  `NEGATIVE` list runs the same two; the release gate ([WORKFLOW](../WORKFLOW.md),
+  section 10, step 10) runs it with `--fail-on-undeclared` on the release candidate. On
+  main's Lean at `09bc89f3` it lists 57 hits in Books I to III, none declared, as no
+  record lists `unused` yet; the fixes and declarations belong to a content train.
+
+  Some shapes pass it, and [README's table of checks](../../README.md) names them: a
+  binding cleared with `clear h`, or handed to a function that ignores it,
+  `(fun _ => …) h`; a kept name that automation such as `contradiction` or `simpa`
+  follows in its declaration, where the textual pass stands aside; a name an `obtain` or
+  `rcases` keeps that a later binding writes again, which the textual pass counts as
+  naming it; a `_` name inside a pattern or after `intro`; a citation whose result feeds
+  only another idle step, listed by that step alone; a helper fed by one trivial step,
+  unless its statement is the entry's own; and a part of a helper's result returned from
+  a `match` on two or more terms at once. Elements has no `clear`, no `(fun _ => …)`
+  applied and no `_` name in a pattern or after `intro` today; its two entries that split
+  several terms at once, `Prop45.sum` and `Prop14.sum`, split only what their statements
+  bind; and the sweep finds the same 57 hits there with the stand-aside off.
+
+  Open: no negative test plants a stale `unused` in a real record yet, to reach
+  `check_review`'s failure from end to end. It waits for the stamp-text branch (#77),
+  which is editing `scripts/negative_tests.py`. The protected files changed are:
+  `.github/workflows/ci.yml`,
+  `scripts/safe_push.py`,
+  `scripts/sweep_citations.py`,
+  `scripts/heath.py`,
+  `scripts/check_fidelity.py`,
+  `review/SCHEMA.md`.
