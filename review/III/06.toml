@@ -44,10 +44,10 @@ note = "Like Heath's, this figure draws the impossible supposition: F as one cen
 
 [review]
 stage = "full"
-commit = "e572d5c0"
-reviewer = "GPT-6 Astra (Codex), independent reader"
+commit = "f2195c72"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:958b7aa40e178ec7"
-run = "brief 0005 stage 5, ship R3 (#29); the reading of C, the supposition, the radii by Definition15 and their equation, written by Codex, read also by Claude Opus 5.5; line 44 of Prop06.lean, of unknown family, read by both"
+run = "brief 0005 stage 5, ship R3 (#29); the reading of C, the supposition, the radii by Definition15 and their equation, written by Codex, read also by Claude Opus 5.5; line 44 of Prop06.lean, of unknown family, read by both; axiom wave two (card 119) merged with main at 6152394a: the merged record read whole with the Lean by Claude Opus 5.5, a reader of the other family from the Codex lines of the proof, reader F2-w2m2cl at f2195c72"
 
 [review.items]
 statement = "pass"

@@ -201,7 +201,7 @@ corollaries after I.13. The other five retired rules are proved in Book Zero's
 `Circles.lean`. By the owner's decision of 19 October 2026 ("Please do both. 79 is rather large with so
 many books in front of us."), 31 more rules became
 theorems in Book Zero's `RuleBase.lean`, `Incidence.lean`, `AreaRules.lean` and
-`CirclePoints.lean`, proved that day and landed on 21 October. With our own rule that every
+`CirclePoints.lean`, proved that day. With our own rule that every
 circle has a centre, the lock now holds <!-- count:axioms -->49<!-- /count --> axioms, including <!-- count:tacit-rules -->43<!-- /count --> tacit rules.
 
 The stage-5 review will give the hardest formal blocks (I.7, I.35, I.47) a paragraph of
