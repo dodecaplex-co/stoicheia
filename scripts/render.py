@@ -25,8 +25,9 @@ every book in `heath.BOOKS`:
 
 Before it writes anything, the script checks the dated decision entries of
 `docs/decisions/` (`decision_entries`): each is a page of its own, read where it is, and
-nothing is assembled from them. It reads the registry of checks then too, by
-`scripts/registry.py`, which refuses a registry that breaks its rules, naming the file.
+nothing is assembled from them. It computes the inline count updates next, then reads the
+registry of checks by `scripts/registry.py`, which refuses a registry that breaks its
+rules, naming the file. A fault in any of the three leaves every generated file unwritten.
 
 A page of a later book links each proposition it cites from an earlier one, as
 [I.47](../I/47.md) on a page of Book II, and a porism to its anchor, as
