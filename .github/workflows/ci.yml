@@ -121,6 +121,19 @@ jobs:
       - name: Check coincidence steps and module boundaries, rejecting reached Staging.Hidden and Lean.Hidden helpers and allowing unused foreign imports
         run: python3 -I tests/test_certificate.py
 
+      - name: The citation sweep finds a planted unused have, a discarded join, a `have _ :=` and a concealing helper, and passes its controls
+        # Its plants are Lean outside the tree, built against the library above. It reads
+        # the proofs' citations and the bindings records declare in `unused`, which a
+        # proof or a records change can move, so it runs here, for every class, not in
+        # the `negative` job, which checks out only for R3 and above (docs/WORKFLOW.md,
+        # section 8).
+        run: python3 scripts/sweep_citations.py --self-test
+
+      - name: List the candidates for dummy citations, artificial hypothesis uses and concealing helpers in Elements/
+        # Report only, the list in the log: the release gate runs it with
+        # --fail-on-undeclared (docs/WORKFLOW.md, section 10).
+        run: python3 scripts/sweep_citations.py
+
       - name: Check every proof again, by Lean's kernel, and by nanoda admitting only the locked axioms and Lean's three
         # leanchecker --fresh replays the whole environment of Elements, Lean's own
         # included, through Lean's kernel; nanoda, written separately, checks the whole
