@@ -54,9 +54,10 @@ order, and the first that fails stops it with a message saying why:
    finds its repository by its working directory, never by a hook's GIT_DIR (#355). Nor
    does any command safe_push.py runs itself, git's or another's, get a variable that
    ties git to one repository (REPOSITORY_VARIABLES: GIT_DIR, GIT_INDEX_FILE,
-   GIT_WORK_TREE and their kin, as `git rev-parse --local-env-vars` lists them), but
-   GIT_NO_REPLACE_OBJECTS as above: each finds its repository by its working directory
-   too, the hand-over's included (#357).
+   GIT_WORK_TREE and their kin, as `git rev-parse --local-env-vars` lists them) from
+   the caller, but GIT_NO_REPLACE_OBJECTS as above: each finds its repository by its
+   working directory too, the hand-over's included (#357). The harness sets one itself,
+   on purpose: base_tree's temporary GIT_INDEX_FILE, named to run() in `keep`.
 3. Invariant guards against origin/main, in a fresh temporary worktree of the commit. A
    new decision is a dated entry of its own, docs/decisions/<YYYY-MM-DD>-<slug>.md, which
    the push adds (docs/WORKFLOW.md, section 10, "Decision entries"); 0002-decisions.md,
@@ -530,9 +531,10 @@ class NothingToPush(Exception):
 # repository it runs in; left set, they would send safe_push's own commands to that
 # repository and its index: `git worktree add` would check the commit out into a linked
 # worktree's index under a hook's GIT_INDEX_FILE (#357). So no command safe_push runs gets
-# one but GIT_NO_REPLACE_OBJECTS (KEPT_GIT_VARIABLES), and git finds its repository by the
-# working directory each command names. The list is git 2.50's, with
-# GIT_INTERNAL_SUPER_PREFIX, which older git printed too.
+# one of the caller's but GIT_NO_REPLACE_OBJECTS (KEPT_GIT_VARIABLES), and git finds its
+# repository by the working directory each command names; the one the harness sets itself,
+# base_tree's temporary GIT_INDEX_FILE, is named to run() in `keep`. The list is git
+# 2.50's, with GIT_INTERNAL_SUPER_PREFIX, which older git printed too.
 REPOSITORY_VARIABLES = frozenset({
     "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_CONFIG", "GIT_CONFIG_COUNT",
     "GIT_CONFIG_PARAMETERS", "GIT_DIR", "GIT_GRAFT_FILE", "GIT_IMPLICIT_WORK_TREE",
@@ -548,7 +550,7 @@ def own_env(env=None, keep=()) -> dict:
     itself, on purpose (base_tree's temporary GIT_INDEX_FILE)."""
     return {name: value for name, value in (os.environ if env is None else env).items()
             if name not in REPOSITORY_VARIABLES or name in KEPT_GIT_VARIABLES
-            or name in keep}
+            or name in frozenset(keep)}
 
 
 def without_replacements(env=None, keep=()) -> dict:
@@ -593,8 +595,9 @@ def run(cmd, cwd, *, env=None, input=None, binary=False,
     # A push sends the original objects, but git reads a replacement (refs/replace/, or a
     # ref under GIT_REPLACE_REF_BASE) in their place: so git runs here with replacements
     # off, by its environment and by its command line, lest the scan or the hand-over read
-    # a clean stand-in (#256). No command, git's or another's, gets a variable that ties
-    # git to one repository, but GIT_NO_REPLACE_OBJECTS (#357).
+    # a clean stand-in (#256). No command, git's or another's, gets one of the caller's
+    # variables that tie git to one repository, but GIT_NO_REPLACE_OBJECTS; only a name in
+    # `keep`, which the harness sets itself (base_tree's GIT_INDEX_FILE), passes (#357).
     if cmd and os.path.basename(cmd[0]) == "git":
         cmd = [cmd[0], *NO_REPLACE_REFS, *cmd[1:]]
         env = without_replacements(env, keep)
@@ -3219,8 +3222,9 @@ def base_tree(repo, base, sha, changes: list[tuple[str, str]]) -> str:
     commit's, with origin/main's entry for each check input the commit changes, and those
     it adds taken out. Neither the worktree nor the repository's own index is touched."""
     with tempfile.TemporaryDirectory(prefix="stoicheia-index-") as tmp:
-        # The one repository variable the harness sets on purpose, kept by run() (#357):
-        # every other is dropped, a hook's GIT_INDEX_FILE among them.
+        # Besides GIT_NO_REPLACE_OBJECTS, the one repository variable the harness sets on
+        # purpose, kept by run() (#357): every other but GIT_NO_REPLACE_OBJECTS is
+        # dropped, a hook's GIT_INDEX_FILE among them.
         env = dict(own_env(), GIT_INDEX_FILE=str(Path(tmp) / "index"))
 
         def index(*args, input=None) -> str:
