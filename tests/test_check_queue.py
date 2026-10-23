@@ -46,14 +46,17 @@ REVIEW = "Independent reader at"
 CLASSIFIER = (SCRIPTS / "risk.py").read_text(encoding="utf-8")
 
 
-def harness_source(comment, extra=()):
-    """A fixture harness: a comment, and CHECKS and NEGATIVE lists naming the real checks
-    (and any extra ones), as check_queue reads them by ast."""
+def harness_source(comment, extra=(), low=queue.safe_push.LOW_CLASSES):
+    """A fixture harness: a comment, CHECKS and NEGATIVE lists naming the real checks (and
+    any extra ones), and LOW_CLASSES, the classes for which its pre-flight leaves the full
+    checks to CI (none, as before #329, when `low` is None), as check_queue reads them by
+    ast."""
     checks = [name for name, _ in queue.safe_push.CHECKS] + list(extra)
     negative = [name for name, _ in queue.safe_push.NEGATIVE]
     return (f"# {comment}\n"
             + "CHECKS = [\n" + "".join(f"    ({n!r}, None),\n" for n in checks) + "]\n"
-            + "NEGATIVE = [\n" + "".join(f"    ({n!r}, None),\n" for n in negative) + "]\n")
+            + "NEGATIVE = [\n" + "".join(f"    ({n!r}, None),\n" for n in negative) + "]\n"
+            + (f"LOW_CLASSES = {tuple(low)!r}\n" if low is not None else ""))
 
 
 def fixture_environment() -> dict:
@@ -189,13 +192,15 @@ class QueueTests(unittest.TestCase):
                      for name, _ in (*queue.safe_push.CHECKS, *queue.safe_push.NEGATIVE))
         return "\n".join([*lines, "<!-- safe_push:preflight end -->"])
 
-    def light_block(self, head, cls):
-        """A pre-flight that left the full checks to CI for the class `cls`, by safe_push's
-        own writer, with the step 4 its short path writes."""
-        blob = self.git("rev-parse", f"{self.base}:scripts/safe_push.py").strip()
-        return queue.safe_push.preflight_block(head, self.base, {
+    def light_block(self, head, cls, base=None):
+        """A pre-flight against `base`, main by default, by its harness, that left the full
+        checks to CI for the class `cls`, by safe_push's own writer, with the step 4 its
+        short path writes."""
+        base = base or self.base
+        blob = self.git("rev-parse", f"{base}:scripts/safe_push.py").strip()
+        return queue.safe_push.preflight_block(head, base, {
             "short": True, "class": cls, "class_why": "a fixture's class",
-            "harness_sha": self.base, "time": "23 October 2026",
+            "harness_sha": base, "time": "23 October 2026",
             "harness": f"origin/main's `scripts/safe_push.py` (blob `{blob[:12]}`)",
             "steps": [("2", "secrets", "ok", 1.0), ("3", "statements", "ok", 1.0),
                       ("4", "class", "ok", 0.5), ("4", "full local checks", "skip", None)],
@@ -674,12 +679,13 @@ class QueueTests(unittest.TestCase):
                              "CI for the class R3, which only a change of R0 to R2 may")
 
     def test_light_preflight_claiming_a_class_its_paths_lack_refuses(self):
-        # The block says R1, but main's classifier gives the paths a higher class; the
-        # train's own copy of the classifier, which would class it R0, judges nothing.
+        # The block says R1, but main's classifier gives the paths a higher class.
         for path, cls, new in (
                 ("docs/WORKFLOW.md", "R3", "None."), (CHECK, "R3", f"- check: {CHECK}"),
                 ("Elements/Foundations/Sample.lean", "R4",
                  "- foundations: Elements/Foundations/Sample.lean"),
+                # The train's own copy of the classifier, which would class it R0, judges
+                # nothing.
                 ("scripts/risk.py", "R5", "- check: scripts/risk.py")):
             with self.subTest(path=path):
                 group = self.light_group({path: "print('R0 Docs')\n"}, "R1", new=new)
@@ -728,12 +734,83 @@ class QueueTests(unittest.TestCase):
             (original.replace("Risk class R1:", "Risk class R2:"), disagree),
             (original.replace("Risk class R1: a fixture's class.\n", ""), disagree),
             (original.replace(end, "Risk class R1: said twice.\n" + end), disagree),
+            (original.replace(end, "Risk Class R5: said again, in other capitals.\n" + end),
+             disagree),
             (original.replace(end, "Noted: the full checks skipped.\n" + end),
              "full checks skipped"),
         ):
             with self.subTest(message=message, body=body[-200:]):
                 self.set_body(body)
                 self.verdict(self.cli(head=group), 1, message)
+
+    def test_light_preflight_of_a_harness_that_writes_none_refuses(self):
+        # A light block is held to the harness it names, as a full one is to its checks:
+        # that harness must leave the full checks to CI for the block's class, by its
+        # LOW_CLASSES, so a block typed by hand naming a harness from before #329 refuses.
+        for source, message in (
+                (harness_source("A harness from before #329.", low=None),
+                 "the recorded harness has no LOW_CLASSES, so never does"),
+                (harness_source("A harness whose short path is R0's alone.", low=("R0",)),
+                 "for the class R1, which the recorded harness never does (its LOW_CLASSES "
+                 "are R0)"),
+                (harness_source("A harness that names them twice.")
+                 + "LOW_CLASSES = ('R0', 'R1', 'R2', 'R3')\n",
+                 "the recorded harness's LOW_CLASSES could not be read")):
+            with self.subTest(message=message):
+                self.base = self.make([self.base], {"scripts/safe_push.py": source})
+                group = self.light_group({"docs/notes.md": "A note.\n"}, "R1")
+                self.verdict(self.cli(head=group), 1, message)
+
+    def dated(self, when, parents, changes):
+        """A commit made at the time `when`: which of several merge bases `git diff A...B`
+        takes turns on their commit dates."""
+        with patch.dict(os.environ, GIT_AUTHOR_DATE=when, GIT_COMMITTER_DATE=when):
+            return self.make(parents, changes)
+
+    def test_light_preflight_classes_the_change_from_its_base_not_the_group_s(self):
+        # Main runs c0, c1 (an R4 change), then c2, where a branch P, forked at c0 and
+        # committed later, lands. The train merged P before it landed, sits on c1, and sets
+        # c1's change back. The group base's three-dot diff takes P, the newer of the two
+        # merge bases, and sees a note alone; the block's own diff, from c1, sees the R4.
+        foundations = "Elements/Foundations/Sample.lean"
+        c0 = self.make([self.base], {"scripts/risk.py": CLASSIFIER, foundations: "old\n"})
+        p = self.dated("2026-10-21T12:00:00+00:00", [c0], {"docs/p.md": "P's change.\n"})
+        c1 = self.dated("2026-10-20T12:00:00+00:00", [c0], {foundations: "new\n"})
+        c2 = self.merge(c1, p, 9)
+        head = self.make([self.merge(c1, p)], {foundations: "old\n",
+                                               "docs/notes.md": "A note.\n"})
+        self.assertEqual(queue.safe_push.risk_class(self.repo, c2, head, set()).cls, "R0")
+        self.base = c2
+        self.snapshot["main"]["sha"] = c2
+        self.nodes().clear()
+        self.pr(1, head, "content/sample", self.light_block(head, "R0", base=c1))
+        self.verdict(self.cli(head=self.merge(c2, head, 1)), 1, "pre-flight: left the full "
+                     "checks to CI, but the class by main's scripts/risk.py is R4 (",
+                     "), of the change")
+
+    def test_light_preflight_classes_what_the_merge_brings_into_the_group(self):
+        # The block's base, c1, is no merge base of the head with main: the head holds Q,
+        # an R4 change that landed on c1 as c2, and P, which landed on c2 as c3, and sets
+        # Q's change back. The change from the group base and the change from the block's
+        # base are both R0; what the entry's merge brings into the group is R4.
+        foundations = "Elements/Foundations/Sample.lean"
+        c0 = self.make([self.base], {"scripts/risk.py": CLASSIFIER, foundations: "old\n"})
+        p = self.dated("2026-10-22T12:00:00+00:00", [c0], {"docs/p.md": "P's change.\n"})
+        c1 = self.dated("2026-10-20T12:00:00+00:00", [c0], {"docs/c1.md": "c1.\n"})
+        q = self.dated("2026-10-20T13:00:00+00:00", [c1], {foundations: "new\n"})
+        c3 = self.merge(self.merge(c1, q, 8), p, 9)
+        held = self.merge(self.merge(c1, p), q)
+        head = self.make([held], {foundations: "old\n", "docs/notes.md": "A note.\n"})
+        for start in (c3, c1):
+            self.assertEqual(queue.safe_push.risk_class(self.repo, start, head, set()).cls,
+                             "R0")
+        self.base = c3
+        self.snapshot["main"]["sha"] = c3
+        self.nodes().clear()
+        self.pr(1, head, "content/sample", self.light_block(head, "R0", base=c1))
+        self.verdict(self.cli(head=self.merge(c3, head, 1)), 1, "pre-flight: left the full "
+                     "checks to CI, but the class by main's scripts/risk.py is R4 (",
+                     "), of what its merge brings into the group")
 
     def test_preflight_hidden_verdict_or_table_does_not_count(self):
         original = self.body()
@@ -1819,6 +1896,24 @@ class QueueTests(unittest.TestCase):
         self.assertIn("set the queue's status check timeout to 150 minutes", guide)
         # --merge follows an entry through one rebuild behind a group that fails.
         self.assertEqual(queue.safe_push.QUEUE_TIMEOUT, 2 * 150 * 60)
+
+    def test_risk_job_classes_a_merge_group_r5(self):
+        # The judge accepts a light pre-flight only because a merge group's own run is R5,
+        # by the risk job's last case, so every check runs on the group before it merges.
+        steps = self.workflow("ci.yml")["jobs"]["risk"]["steps"]
+        classify = [step for step in steps if step.get("id") == "classify"]
+        self.assertEqual(len(classify), 1)
+        self.assertEqual(classify[0]["env"]["EVENT"], "${{ github.event_name }}")
+        output = self.root / "github-output"
+        env = dict(os.environ, EVENT="merge_group", BASE_REF="", HEAD_SHA="", RELEASE="false",
+                   REF=f"refs/heads/gh-readonly-queue/main/pr-1-{self.head}",
+                   GITHUB_OUTPUT=str(output), RUNNER_TEMP=str(self.root))
+        result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", classify[0]["run"]],
+                                cwd=self.repo, env=env, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("a merge_group event of", result.stdout)
+        self.assertEqual(output.read_text(encoding="utf-8").splitlines(),
+                         ["class=R5", "formal_model=true"])
 
     def test_checkout_must_be_the_group_head(self):
         self.checkout(self.base)
