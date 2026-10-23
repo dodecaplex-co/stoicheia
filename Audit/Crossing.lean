@@ -170,9 +170,9 @@ though the proved rules they use rest on Diagram-segment 2 (below). The bridge t
 and III.8 uses III.2 (`Prop2.within`) to order the points on the straight line through the
 centres, which `cut_point` takes from the rule. None of these lists includes Circle 3, so no
 bridge uses Circle 2 either, which is now proved from Circle 3. All seven bridge lists
-include `exists_centre` through III.1's construction. `centre_unique` is a theorem since
-axiom wave one, so no list here shows a call to it. Nothing in this file enters the
-certificate.
+include `exists_centre`, and none reaches III.1: III.2 and III.8 take their centres from the
+rule (22 October 2026, #131). `centre_unique` is a theorem since axiom wave one, so no list
+here shows a call to it. Nothing in this file enters the certificate.
 -/
 
 /--
