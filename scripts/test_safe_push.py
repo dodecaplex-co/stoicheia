@@ -833,9 +833,9 @@ def hermetic_git() -> None:
     that the runner set and no global or system configuration (#360). Run under a hook,
     the runner's GIT_DIR and GIT_INDEX_FILE named the hook's repository, and the module's
     own git (setUpModule's clone, config and commit among it) acted on that repository;
-    a global core.hooksPath or identity would reach the tests' commits too. Each test that
-    needs a variable of git's (a replacement's GIT_REPLACE_REF_BASE, a hook's GIT_DIR)
-    sets it itself."""
+    a global core.hooksPath could reach them too, running its hooks on the tests' commits
+    and taking install_hooks.sh's hooks where it points. Each test that needs a variable
+    of git's (a replacement's GIT_REPLACE_REF_BASE, a hook's GIT_DIR) sets it itself."""
     for name in [name for name in os.environ if name.startswith("GIT_")]:
         del os.environ[name]
     os.environ["GIT_CONFIG_NOSYSTEM"] = "1"
@@ -6472,14 +6472,10 @@ class FullChecks(Edge):
                          "a temporary worktree was left behind")
 
 
-@unittest.skipUnless((shutil.which("jq") and shutil.which("bash"))
-                     or os.environ.get("GITHUB_ACTIONS") == "true",
-                     "the report step needs bash and jq, as GitHub's runners have (there, a "
-                     "missing one fails the test rather than skipping it)")
 class HermeticModule(unittest.TestCase):
-    """#360: this module, run from a linked worktree under a hook's GIT_DIR and
-    GIT_INDEX_FILE naming that worktree's git directory, leaves the repository as it was:
-    its HEAD, index and files, and the shared configuration."""
+    """#360: one test of this module, its setUpModule with it, run from a linked worktree
+    under a hook's GIT_DIR and GIT_INDEX_FILE naming that worktree's git directory, leaves
+    the repository as it was: its HEAD, index and files, and the shared configuration."""
 
     CHILD = "STOICHEIA_TEST_HERMETIC_CHILD"
 
@@ -6524,6 +6520,10 @@ class HermeticModule(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stderr[-2000:])
 
 
+@unittest.skipUnless((shutil.which("jq") and shutil.which("bash"))
+                     or os.environ.get("GITHUB_ACTIONS") == "true",
+                     "the report step needs bash and jq, as GitHub's runners have (there, a "
+                     "missing one fails the test rather than skipping it)")
 class CadenceReport(unittest.TestCase):
     """The cadence workflow's report step (.github/workflows/safe-push-tests.yml), run as
     GitHub runs it, bash with -e and pipefail, on a log of a thousand long failures, with
