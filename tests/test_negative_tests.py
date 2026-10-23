@@ -899,13 +899,19 @@ class CommentReaderTests(unittest.TestCase):
                     with self.assertRaisesRegex(self.questions.Refusal, "unterminated"):
                         self.questions.comment_end(text, spans[-1][0])
 
-    def test_the_jev_generator_runs_check_fidelity_s_own_reader(self):
-        shared = self.questions.shared_comment_end.__code__
-        own = negative.check_fidelity.comment_end.__code__
-        self.assertEqual(Path(shared.co_filename),
-                         Path(negative.check_fidelity.__file__).resolve())
-        self.assertEqual((shared.co_code, shared.co_consts, shared.co_names),
-                         (own.co_code, own.co_consts, own.co_names))
+    def test_the_jev_generator_delegates_to_check_fidelity_s_reader(self):
+        source = "prefix /- comment -/ suffix"
+        offset = source.index("/-")
+        sentinel = object()
+        with patch.object(self.questions, "shared_comment_end", return_value=sentinel) as shared:
+            self.assertIs(self.questions.comment_end(source, offset), sentinel)
+        shared.assert_called_once_with(source, offset)
+
+        with patch.object(self.questions, "shared_comment_end", return_value=None) as shared:
+            with self.assertRaisesRegex(self.questions.Refusal,
+                                        r"^unterminated Lean comment$"):
+                self.questions.comment_end(source, offset)
+        shared.assert_called_once_with(source, offset)
 
 
 if __name__ == "__main__":
