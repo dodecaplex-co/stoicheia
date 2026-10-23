@@ -34,7 +34,8 @@
   `CommentReaderTests`, the three tests of where the generator found its reader now test
   its copy: that it is `heath.comment_end` by its syntax tree, that it reads as heath's
   does on a corpus of nested blocks, doc comments, strings, character literals and «…»
-  names, and, unchanged, that the generator refuses an unclosed comment through it. Every
+  names, and, unchanged but for its name, that the generator returns its copy's reading
+  and refuses an unclosed comment through it. Every
   reading test is unchanged, and a new test holds that `check_fidelity`'s reader names,
   functions and constants, are `heath`'s own objects and that it binds none of them
   itself. So #206's purpose, one reading of comments, holds, enforced by identity tests on

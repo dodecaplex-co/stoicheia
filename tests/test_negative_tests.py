@@ -789,15 +789,16 @@ class BookZeroImportTests(unittest.TestCase):
 
 
 class CommentReaderTests(unittest.TestCase):
-    """The one reader of Lean comments that the scripts share, check_fidelity's
-    `comment_end`, read through `lean_comments` and `read_lean`, without Lean (#206): the
+    """The one reader of Lean comments that the scripts share, heath's `comment_end`
+    (check_fidelity's until #349), read through `lean_comments` and `read_lean`, without Lean (#206): the
     texts on which a reader that began a block's body at its third character, or read no
     strings or character literals, could read otherwise than Lean 4.35. Each expected
     reading is Lean's: each text was elaborated in Lean 4.35 as written, alone in a scratch
     file outside the tree, where the names after its comments were defined, those within
     them unknown, and each of UNCLOSED refused as an unterminated comment. Then
-    the three readers that call it, check_fidelity's `_blank_remarks`, check_style's
-    `lean_note_spans` and the Jev generator's `comment_end`, each read them so too."""
+    the three readers that call it, or a copy of it, check_fidelity's `_blank_remarks`,
+    check_style's `lean_note_spans` and the Jev generator's `comment_end`, each read them
+    so too."""
 
     # (a text, the comments Lean reads in it, in order, the names it defines and those it
     # does not, which stand within a comment)

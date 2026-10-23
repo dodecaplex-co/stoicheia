@@ -23,8 +23,8 @@ Generation reads no credentials and sends nothing. Every evidence file is compar
 `git show REV:path`; every excerpt records its exact source slice and hash. Failure to read
 the committed evidence, missing evidence, ambiguous names and differences from the revision
 are errors. Evidence paths must be relative, without parent traversal or symlinks, and
-resolve inside the repository. Both helpers' paths and the reader's pass those checks and
-must name regular files; their accepted code is read and compiled before any of it runs.
+resolve inside the repository. Both helpers' paths pass those checks and must name
+regular files; their accepted code is read and compiled before any of it runs.
 Each Lean file's header is read by a small parser following Lean 4.35's grammar, before any
 masking:
 an optional `module`, then imports in the four forms
@@ -172,8 +172,9 @@ def shared_comment_end(src: str, i: int) -> int | None:
     and past the third of any other `/-`, which Lean passes over, so that `/-/- -/` is a
     whole comment and the `-/` of `/--/` closes nothing. `_read_code`, and so
     `read_lean` and `lean_comments`, and check_style's notes call this (#206). It uses
-    nothing else of this file: risk.py and the Jev generator, which cannot import it,
-    each hold a copy, word for word, which their tests hold to this one (#349)."""
+    nothing else of this file, so that a program that cannot import it holds a copy, word
+    for word, which its tests hold to this one: the Jev generator, and risk.py from
+    #349's second train."""
     if src.startswith("--", i):
         end = src.find("\n", i)
         return len(src) if end < 0 else end
