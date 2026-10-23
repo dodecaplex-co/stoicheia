@@ -77,8 +77,9 @@ every file Git tracks to the standard in [WORKFLOW.md](docs/WORKFLOW.md#file-nam
 section 4, "File names"; it reads what you have staged, so `git add` a new file before
 you run it.
 
-If you change a Lean file, its review record goes stale, even for a comment: say so in the
-pull request, and leave the stamp to a reviewer (WORKFLOW.md, section 6).
+If you change a Lean file, its review record goes stale, even for a comment, and so does
+an edit to the record itself, once it carries its `text` stamp: say so in the pull
+request, and leave the stamp to a reviewer (WORKFLOW.md, section 6).
 
 Working alone on a pull request, you are its integrator: commit the regenerated `book/`,
 `CERTIFICATE.md`, `GRAPH.md`, `facts.json`, README.md's rows between the

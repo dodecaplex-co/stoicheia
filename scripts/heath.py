@@ -4,7 +4,8 @@ the small contracts the other scripts share:
 * references: `parse_ref`, `prop_key` ("I.40", "III.1 Por.", "I.40 general");
 * Heath's porisms: `heath_porisms`, `heath_porism`;
 * the main theorem of a Lean file: `theorem_span`;
-* fingerprints of statements and files: `fingerprint`, `review_fingerprint`, `file_hash`;
+* fingerprints of statements, files and records: `fingerprint`, `review_fingerprint`,
+  `file_hash`, `text_hash`;
 * the review records, review/<book>/NN.toml: `load_review`, `validate_review`,
   `load_terms` (the schema is review/SCHEMA.md).
 
@@ -17,6 +18,7 @@ examples in review/SCHEMA.md, review/terms.toml and every review record present.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import sys
 from pathlib import Path
@@ -296,6 +298,26 @@ def file_hash(path) -> str:
     return _sha(Path(path).read_bytes())
 
 
+def text_hash(source: str) -> str:
+    """A review record's `text` stamp: a short hash of what the record says, read from
+    `source`, its TOML. Every section counts but [review], which holds the stamps and the
+    reviewer's account of the reading, and [statement] counts without its `fingerprint`,
+    a stamp of the statements; so writing a stamp never changes the text it stamps.
+    Comments, layout and the order of keys do not count: the record as TOML reads it is
+    written as JSON with its keys sorted, and hashed. Raises ValueError when `source` is
+    not valid TOML."""
+    tomllib = _toml()
+    try:
+        record = tomllib.loads(source)
+    except tomllib.TOMLDecodeError as e:
+        raise ValueError(f"not valid TOML: {e}") from None
+    record.pop("review", None)
+    if isinstance(record.get("statement"), dict):
+        record["statement"].pop("fingerprint", None)
+    return _sha(json.dumps(record, sort_keys=True, ensure_ascii=False, separators=(",", ":"),
+                           default=str).encode())
+
+
 # The review records, review/<book>/NN.toml. review/SCHEMA.md says what each field
 # means; this is the machine's half of it.
 
@@ -318,6 +340,9 @@ BOUND_NAME = re.compile(r"[^\W\d][\w'!?₀-₉]*")
 _STR, _LIST, _TABLE, _NAMES, _BOOL = "string", "list", "table", "names", "boolean"
 # Each section's keys, as (type, required). A "stamp" key is written by
 # scripts/review_stamp.py, and required unless an unstamped record is asked for.
+# [review] `text` is a stamp too, but not yet required: the records stamped before it
+# gain it from `review_stamp.py --migrate-text`, or from a reader (docs/WORKFLOW.md,
+# section 6), and it becomes "stamp" once every record carries it.
 FIELDS = {
     "statement": {"scope": (_STR, True), "hypotheses": (_LIST, False),
                   "omitted": (_LIST, False), "note": (_STR, False),
@@ -333,7 +358,8 @@ FIELDS = {
                 "note": (_STR, False), "unused": (_NAMES, False)},
     "figure": {"case": (_STR, False), "every_case": (_BOOL, False), "note": (_STR, False)},
     "review": {"stage": (_STR, True), "commit": (_STR, "stamp"), "lean": (_STR, "stamp"),
-               "reviewer": (_STR, True), "run": (_STR, False), "items": (_TABLE, False)},
+               "text": (_STR, False), "reviewer": (_STR, True), "run": (_STR, False),
+               "items": (_TABLE, False)},
 }
 REQUIRED = ("statement", "route", "review")
 
@@ -461,10 +487,11 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
     hypotheses, omitted and companions, [coverage]'s three lists, `passage` and
     [review] items, each empty when not given. Raises ReviewError naming every fault.
 
-    With require_stamp=False the stamp keys (fingerprint, commit, lean) may be absent,
-    for scripts/review_stamp.py to write. Whether the stamps are current (the
-    fingerprint against facts.json, `lean` against the file) is check_fidelity's
-    business, not this function's."""
+    With require_stamp=False `fingerprint`, `commit` and `lean` may be absent, for
+    scripts/review_stamp.py to write. `text`, also a stamp, may be absent either way, for
+    now (see FIELDS). Whether the stamps are current (the fingerprint against facts.json,
+    `lean` against the file, `text` against the record) is check_fidelity's business, not
+    this function's."""
     where = where or _rel(review_path(book, n))
     problems = _shape(record, require_stamp)
     if problems:
@@ -621,6 +648,8 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
         bad("[review]: `commit` is a git commit, 7 to 40 lower-case hex digits")
     if "lean" in rv and not HASH.fullmatch(rv["lean"]):
         bad("[review]: `lean` is 'sha256:' and 16 hex digits")
+    if "text" in rv and not HASH.fullmatch(rv["text"]):
+        bad("[review]: `text` is 'sha256:' and 16 hex digits")
     if rv["stage"] == "full" and ("run" not in rv or "," not in rv["reviewer"]):
         bad("[review]: a full review names its `run`, and its `reviewer` with a role, as "
             "'Claude Opus 5.5, records crew', so the reviewer can be told from the authors")
@@ -695,10 +724,16 @@ def _self_test() -> int:
     for book, n, block in _schema_examples():
         examples += 1
         try:
-            validate_review(tomllib.loads(block), book, n,
-                            where=f"review/SCHEMA.md, the example for {book}.{n}")
+            example = validate_review(tomllib.loads(block), book, n,
+                                      where=f"review/SCHEMA.md, the example for {book}.{n}")
         except (ReviewError, tomllib.TOMLDecodeError) as e:
             faults.append(str(e))
+            continue
+        # The examples' `text` stamps are the test values of text_hash.
+        if example["review"].get("text") != text_hash(block):
+            faults.append(f"review/SCHEMA.md, the example for {book}.{n}: its `text` is "
+                          f"{example['review'].get('text', '(none)')}, but text_hash gives "
+                          f"{text_hash(block)}")
     # [overlap] `kind`: required, one of the catalogue's three kinds, and "step" with its
     # note. A record with no kind is rejected, so no page words an overlap by a guess.
     for overlap, ok in [({"rule": "Tacit.circle_eq", "kind": "gives"}, True),
