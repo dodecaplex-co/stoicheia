@@ -160,8 +160,8 @@
   commands a flagged run starts writing the cache directly. It does not stop a run
   without the flag, a ship's own dry run among them, which starts its commands with no
   sandbox, nor a flagged run of a `train/*` branch, which sets none; nor anything code
-  run as the same user does outside a flagged run; nor anything a flagged run's code leaves for a later command to run before its sandbox
-  starts: the launcher in `.git/stoicheia/`, `alias.safe-push` in `.git/config`, a
+  run as the same user does outside a flagged run; nor anything a flagged run's code
+  leaves for a later command to run before its sandbox starts: the launcher in `.git/stoicheia/`, `alias.safe-push` in `.git/config`, a
   program earlier on the `PATH`, the harness copy in `~/.cache/stoicheia/harness/`, a
   module in the harness's own directory, which Python searches first, or in Python's
   standard library (the user's own under Homebrew), or Python's start-up files; since
