@@ -155,6 +155,11 @@
 
   This entry approves `checks/18-check-links.toml`, the check of links and anchors.
 
+  This entry approves `checks/19-sweep-self-test.toml`, the citation sweep's self-test,
+  which runs in the `check` job since #356.
+
+  This entry approves `checks/20-sweep.toml`, the citation sweep's listing of candidates.
+
   On 22 October 2026 the coordinator ruled that WORKFLOW section 8's command block between
   the `<!-- checks -->` markers is generated output, and that a train that changes
   `checks/` commits it regenerated with `render.py`, as for any generated output the train
