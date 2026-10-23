@@ -5355,7 +5355,7 @@ findings:
   plants a construction rule in two clean laws' proofs with every audit pin rewritten to
   match, so only the new expectations can catch it, and plants I.7's law removed from I.8's
   list, which the build refuses. [`tests/test_certificate.py`](../../tests/test_certificate.py),
-  with its fixture [`tests/fixtures/CertificateCited.lean`](../../tests/fixtures/CertificateCited.lean),
+  with its fixture `tests/fixtures/CertificateCited.lean`,
   and [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) test the walk,
   the expectations' new forms and the plants' restoration. The fixture declares seventeen
   stand-in axioms: one for each of the sixteen cases of the definition that it lists, and
