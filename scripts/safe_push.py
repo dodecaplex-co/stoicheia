@@ -510,8 +510,8 @@ def own_env(env=None) -> dict:
 
 def without_replacements(env=None) -> dict:
     """A copy of `env` (os.environ when None) with none of REPOSITORY_VARIABLES but
-    GIT_NO_REPLACE_OBJECTS, set to 1, so no GIT_REPLACE_REF_BASE. Git from 2.19 to 2.41 still lets
-    core.useReplaceRefs=true in config override it, which run() pins off
+    GIT_NO_REPLACE_OBJECTS, set to 1, so no GIT_REPLACE_REF_BASE. Git from 2.19 to 2.41
+    still lets core.useReplaceRefs=true in config override it, which run() pins off
     (NO_REPLACE_REFS)."""
     env = own_env(env)
     env["GIT_NO_REPLACE_OBJECTS"] = "1"

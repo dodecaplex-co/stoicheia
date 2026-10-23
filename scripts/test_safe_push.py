@@ -6565,7 +6565,8 @@ class OwnGitUnderHook(Edge):
         status = git(train, "status", "--porcelain", env=plain)
         self.assertEqual(status, "M  docs/reading.md\n")
         git_dir = Path(git(train, "rev-parse", "--absolute-git-dir", env=plain).strip())
-        watched = {"the train's HEAD": git_dir / "HEAD", "the train's index": git_dir / "index",
+        watched = {"the train's HEAD": git_dir / "HEAD",
+                   "the train's index": git_dir / "index",
                    "the clone's index": WORK / ".git" / "index",
                    "the shared configuration": WORK / ".git" / "config"}
         before = {name: path.read_bytes() for name, path in watched.items()}
@@ -6591,7 +6592,7 @@ class OwnGitUnderHook(Edge):
     def test_with_the_hooks_work_tree_too(self):
         self.dry_run_under_hook(work_tree=True)
 
-    def test_every_variable_git_ties_to_a_repository_is_dropped(self):
+    def test_every_variable_git_ties_to_a_repository_is_listed(self):
         listed = set(git(SOURCE, "rev-parse", "--local-env-vars",
                          env=self.plain_env()).split())
         self.assertIn("GIT_DIR", listed)
@@ -6623,29 +6624,58 @@ class OwnGitUnderHook(Edge):
         # risk.py's launch, the CI watch and the hand-over start their processes without
         # run(): each names an environment built by own_env() or without_replacements(),
         # never the caller's as it is (#357).
+        builders = ("own_env", "without_replacements")
+        # Each way a process is started, and where its environment goes: a keyword, or
+        # the position os's functions take it at. One that takes none (os.system, os.execv
+        # and the like) inherits the caller's, and fails here.
+        positional = {"os.execve": 2, "os.execvpe": 2, "os.posix_spawn": 2,
+                      "os.posix_spawnp": 2, "os.spawnve": 3, "os.spawnvpe": 3,
+                      "os.execle": -1, "os.execlpe": -1, "os.spawnle": -1,
+                      "os.spawnlpe": -1}
+        apis = {*positional, "subprocess.run", "subprocess.Popen", "subprocess.call",
+                "subprocess.check_call", "subprocess.check_output",
+                "subprocess.getoutput", "subprocess.getstatusoutput", "os.system",
+                "os.popen", "os.execv", "os.execvp", "os.execl", "os.execlp", "os.spawnv",
+                "os.spawnvp", "os.spawnl", "os.spawnlp", "pty.spawn",
+                "asyncio.create_subprocess_exec", "asyncio.create_subprocess_shell"}
         tree = ast.parse((SOURCE / "scripts" / "safe_push.py").read_text())
         launches = []
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+        for function in ast.walk(tree):
+            if not isinstance(function, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
-            owner = node.func.value
-            name = f"{owner.id}.{node.func.attr}" if isinstance(owner, ast.Name) else ""
-            if name in ("subprocess.run", "subprocess.Popen", "subprocess.call",
-                        "subprocess.check_call", "subprocess.check_output", "os.execve",
-                        "os.execvpe", "os.spawnve", "os.system", "os.popen"):
-                launches.append((name, node))
-        self.assertEqual(len(launches), 4, [ast.unparse(n) for _, n in launches])
-        for name, node in launches:
-            with self.subTest(launch=ast.unparse(node)[:60]):
-                env = (node.args[2] if name == "os.execve" else
-                       next((k.value for k in node.keywords if k.arg == "env"), None))
-                self.assertIsNotNone(env)
-                if isinstance(env, ast.Name):
-                    # run()'s own, and the hand-over's: each assigned from one of the two.
-                    self.assertEqual(env.id, "env")
+            for node in ast.walk(function):
+                if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                        and isinstance(node.func.value, ast.Name)):
                     continue
-                self.assertIsInstance(env, ast.Call)
-                self.assertIn(ast.unparse(env.func), ("own_env", "without_replacements"))
+                name = f"{node.func.value.id}.{node.func.attr}"
+                if name in apis:
+                    launches.append((function, name, node))
+        self.assertEqual(len(launches), 4, [ast.unparse(n) for _, _, n in launches])
+        for function, name, node in launches:
+            with self.subTest(launch=ast.unparse(node)[:60]):
+                where = f"{name} in {function.name}"
+                if name in positional:
+                    index = positional[name]
+                    fits = len(node.args) > max(index, -index - 1)
+                    env = node.args[index] if fits else None
+                else:
+                    env = next((k.value for k in node.keywords if k.arg == "env"), None)
+                self.assertIsNotNone(env, f"{where} names no environment")
+                if isinstance(env, ast.Name):
+                    # A name (run()'s own env, the hand-over's): every assignment to it in
+                    # the function is a call of one of the builders.
+                    values = [n.value for n in ast.walk(function)
+                              if isinstance(n, ast.Assign)
+                              and any(isinstance(t, ast.Name) and t.id == env.id
+                                      for t in n.targets)]
+                    self.assertTrue(values, f"{where}: {env.id} is never assigned")
+                    for value in values:
+                        shown = ast.unparse(value)
+                        self.assertIsInstance(value, ast.Call, shown)
+                        self.assertIn(ast.unparse(value.func), builders, shown)
+                    continue
+                self.assertIsInstance(env, ast.Call, ast.unparse(env))
+                self.assertIn(ast.unparse(env.func), builders, ast.unparse(env))
 
 
 class HookEnvironment(unittest.TestCase):
@@ -7094,19 +7124,22 @@ class Units(unittest.TestCase):
         # run() gives a git command core.useReplaceRefs=false on its command line, right
         # after the program, and an environment without replacements; another program is
         # run as given, in the caller's environment less the variables that tie git to one
-        # repository (#357). Nothing is spawned.
-        with mock.patch.dict(os.environ, {"GIT_DIR": "/a-hooks-git-dir"}), \
+        # repository, but GIT_NO_REPLACE_OBJECTS (#357). Nothing is spawned.
+        caller = {"GIT_DIR": "/a-hooks-git-dir", "GIT_NO_REPLACE_OBJECTS": "kept-as-given"}
+        with mock.patch.dict(os.environ, caller), \
                 mock.patch.object(safe_push.subprocess, "run") as spawn:
             safe_push.run(["git", "status"], "/nowhere", env={"HOME": "/home"})
             safe_push.run([sys.executable, "-c", "pass"], "/nowhere")
             expected = {name: value for name, value in os.environ.items()
-                        if name not in safe_push.REPOSITORY_VARIABLES}
+                        if name not in safe_push.REPOSITORY_VARIABLES
+                        or name in safe_push.KEPT_GIT_VARIABLES}
         git_call, other_call = spawn.call_args_list
         self.assertEqual(git_call.args[0], ["git", "-c", "core.useReplaceRefs=false", "status"])
         self.assertEqual(git_call.kwargs["env"],
                          {"HOME": "/home", "GIT_NO_REPLACE_OBJECTS": "1"})
         self.assertEqual(other_call.args[0], [sys.executable, "-c", "pass"])
         self.assertNotIn("GIT_DIR", other_call.kwargs["env"])
+        self.assertEqual(other_call.kwargs["env"]["GIT_NO_REPLACE_OBJECTS"], "kept-as-given")
         self.assertEqual(other_call.kwargs["env"], expected)
 
     def test_source_statement(self):

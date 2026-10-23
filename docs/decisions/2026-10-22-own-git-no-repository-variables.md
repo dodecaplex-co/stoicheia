@@ -14,12 +14,14 @@
   it (`GIT_DIR`, `GIT_INDEX_FILE`, `GIT_WORK_TREE`, `GIT_COMMON_DIR`,
   `GIT_OBJECT_DIRECTORY` and the rest), with `GIT_INTERNAL_SUPER_PREFIX`, which older git
   printed too. Each command finds its repository by its working directory, as the checks
-  do; so do origin/main's `risk.py`, which classes the change, `gh pr checks --watch`, and
-  origin/main's harness after a hand-over. `GIT_NO_REPLACE_OBJECTS` stays where it was:
-  every git command gets it set to 1, with the `-c` of the
+  do, and so do origin/main's `risk.py`, which classes the change, and origin/main's
+  harness after a hand-over; `gh pr checks --watch`, which is given its repository by
+  `-R`, gets none of them either. `GIT_NO_REPLACE_OBJECTS` stays where it was: every git
+  command safe_push runs itself gets it set to 1, with the `-c` of the
   [entry for #256](2026-10-21-scan-no-replace.md), whose rules stand, and a check gets it
   as `tool_env()` keeps it, so under the launcher or after a hand-over the checks still
-  have it, as that entry says. The list holds `GIT_CONFIG_PARAMETERS` and
+  have it, as that entry says. origin/main's `risk.py` now always gets it set to 1 too,
+  where it inherited the caller's value. The list holds `GIT_CONFIG_PARAMETERS` and
   `GIT_CONFIG_COUNT` too, so a setting given as `git -c key=value safe-push` (a proxy for
   the fetch, say) no longer reaches safe_push's own git; one is set in the repository's
   configuration instead. Other variables of git's, such as `GIT_SSH_COMMAND` for a push,
@@ -39,9 +41,12 @@
   HEAD, index, staged change and the shared configuration as they were; checks
   `REPOSITORY_VARIABLES` against git's own list; checks with
   `test_run_gives_no_command_a_repository_variable` what `run()` gives a git command,
-  another program and a check started with `tool_env()`; and checks that each launch
-  outside `run()` names an environment built for it. `HookEnvironment`'s planted check
-  now also records the git variables it is started with, which must be
-  `GIT_NO_REPLACE_OBJECTS=1` alone. And the unit test of `run()` now expects a program
-  other than git to get the caller's environment less those variables, where it expected
-  the caller's environment as it was.
+  another program and a check started with `tool_env()`; and checks, reading the source,
+  that each place safe_push starts a process, `run()`'s own among them, gives it an
+  environment built by `own_env()` or `without_replacements()`, directly or by a name
+  every assignment of which is one of those calls, and that none uses a function that
+  takes no environment. `HookEnvironment`'s planted check now also records the git
+  variables it is started with, which must be `GIT_NO_REPLACE_OBJECTS=1` alone. And the unit test of `run()` now expects a program
+  other than git to get the caller's environment less those variables but
+  `GIT_NO_REPLACE_OBJECTS`, which it keeps as given, where it expected the caller's
+  environment as it was.
