@@ -177,6 +177,7 @@ from __future__ import annotations
 import ast
 import base64
 import contextlib
+import copy
 import datetime
 import hashlib
 import io
@@ -6578,6 +6579,59 @@ class Units(unittest.TestCase):
         self.assertEqual(jobs[safe_push.SUITE_REPORT_JOB]["needs"], list(safe_push.SUITE_JOBS))
         self.assertEqual([j["name"] for j in SUITE_JOBS],
                          [*safe_push.SUITE_JOBS, safe_push.SUITE_REPORT_JOB])
+
+    # E2a (#276): a job whose step `lane` reads the change's class does its work only when
+    # that step says to run in full, so every step after it carries this condition (#346).
+    LANE_CONDITION = "steps.lane.outputs.full == 'true'"
+
+    def ungated_after_lane(self, workflow: dict) -> dict[str, list[str]]:
+        """Each job with a step `lane`: the steps after it whose `if:` is not
+        LANE_CONDITION, alone or as ${{ LANE_CONDITION }}, by name or position."""
+        found = {}
+        for job_id, job in (workflow.get("jobs") or {}).items():
+            steps = job.get("steps") or []
+            lane = [i for i, step in enumerate(steps) if step.get("id") == "lane"]
+            if not lane:
+                continue
+            ungated = []
+            for i, step in enumerate(steps[lane[0] + 1:], lane[0] + 2):
+                condition = str(step.get("if", "")).strip()
+                if condition.startswith("${{") and condition.endswith("}}"):
+                    condition = condition[3:-2].strip()
+                if condition != self.LANE_CONDITION:
+                    ungated.append(step.get("name") or step.get("uses") or f"step {i}")
+            found[job_id] = ungated
+        return found
+
+    def test_every_step_after_the_lane_step_carries_its_condition(self):
+        # #339 added steps to CI's negative job without the condition, and every R0 to R2
+        # pull request then failed once it had landed. Now the pull request that adds such
+        # a step fails here. Every workflow is read; CI's negative and formal-model jobs
+        # must have the lane step.
+        workflows = {path.name: yaml.safe_load(path.read_text())
+                     for path in sorted((SOURCE / ".github/workflows").glob("*.y*ml"))}
+        for name, workflow in workflows.items():
+            for job_id, ungated in self.ungated_after_lane(workflow).items():
+                self.assertEqual(ungated, [], f"{name}: job {job_id}")
+        ci = self.ungated_after_lane(workflows["ci.yml"])
+        self.assertTrue({"negative", "formal-model"} <= set(ci), sorted(ci))
+        # Planted: the condition taken from one step of each job, or changed, is found.
+        for job_id in ("negative", "formal-model"):
+            for change in ("removed", "always()", "steps.lane.outputs.full == 'false'"):
+                with self.subTest(job=job_id, change=change):
+                    planted = copy.deepcopy(workflows["ci.yml"])
+                    steps = planted["jobs"][job_id]["steps"]
+                    victim = steps[-1]
+                    if change == "removed":
+                        del victim["if"]
+                    else:
+                        victim["if"] = change
+                    self.assertEqual(self.ungated_after_lane(planted)[job_id],
+                                     [victim.get("name") or victim.get("uses")])
+        wrapped = copy.deepcopy(workflows["ci.yml"])
+        for step in wrapped["jobs"]["negative"]["steps"][1:]:
+            step["if"] = "${{ " + self.LANE_CONDITION + " }}"
+        self.assertEqual(self.ungated_after_lane(wrapped)["negative"], [])
 
     def test_ci_check_job_rejects_skip_and_failure_suppression(self):
         source = (SOURCE / ".github/workflows/ci.yml").read_text()
