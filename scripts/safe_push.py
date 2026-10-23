@@ -1334,35 +1334,20 @@ OPEN, CLOSE = "([{⟨⦃⦗", ")]}⟩⦄⦘"
 def statement_end(text: str) -> int:
     """Where a declaration's statement ends: at its own `:=`, the first one outside
     brackets, comments and strings, so that a binder's default value (`(h : p := by
-    simp)`) or a comment holding `:=` does not end it early. The end of `text` if none."""
-    depth, i, n = 0, 0, len(text)
-    while i < n:
-        if text.startswith("--", i):
-            nl = text.find("\n", i)
-            i = n if nl < 0 else nl
-            continue
-        if text.startswith("/-", i):
-            level, i = 1, i + 2
-            while i < n and level:
-                if text.startswith("/-", i):
-                    level, i = level + 1, i + 2
-                elif text.startswith("-/", i):
-                    level, i = level - 1, i + 2
-                else:
-                    i += 1
-            continue
-        c = text[i]
-        if c == '"':
-            i += 1
-            while i < n and text[i] != '"':
-                i += 2 if text[i] == "\\" else 1
-        elif c in OPEN:
+    simp)`) or a comment holding `:=` does not end it early. The end of `text` if none.
+    Comments, string and character literals and «…» names are read as Lean reads them,
+    by the scripts' one reader (heath.read_lean, #206, #349), which blanks them in place:
+    so `/-/- -/` is a whole comment, and a `'"'` or a `'('` is a character, not a string
+    or a bracket."""
+    code, n = heath.read_lean(text)[0], len(text)
+    depth = 0
+    for i, c in enumerate(code):
+        if c in OPEN:
             depth += 1
         elif c in CLOSE:
             depth = max(0, depth - 1)
-        elif depth == 0 and text.startswith(":=", i):
+        elif depth == 0 and code.startswith(":=", i):
             return i
-        i += 1
     return n
 
 

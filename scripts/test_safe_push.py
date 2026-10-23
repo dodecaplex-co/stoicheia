@@ -7624,6 +7624,29 @@ class Units(unittest.TestCase):
         self.assertTrue(porism.startswith("{A B C D G : Point}"), porism)
         self.assertNotIn(":=", main + porism)
 
+    def test_a_statement_ends_where_lean_ends_it(self):
+        # #349: statement_end reads comments, strings, character literals and «…» names
+        # by the scripts' one reader (heath.read_lean). Read the old way, `/-/- -/` never
+        # closed, a `'"'` opened a string and a `'('` a bracket, and each statement ran to
+        # the end of the text, so a change after its `:=` counted as a statement change.
+        cases = (
+            "{a : Nat} /-/- -/ : a = a := rfl",
+            "(h : x = '\"') : True := trivial",
+            "(c : Char := '(') : True := trivial",
+            "(h : True) -- a remark holding := too\n : True := trivial",
+            "(s : String := \"a := b\") : True := trivial",
+            "(h : «a := b» = 1) : True := trivial",
+            "{n : Nat} (h : n = n := rfl) : n = n := h",
+        )
+        for text in cases:
+            with self.subTest(text=text):
+                end = safe_push.statement_end(text)
+                self.assertEqual(text[end:], text[text.rindex(":= "):])
+        # With no `:=` of its own, a statement runs to the end, an unclosed block among it.
+        for text in ("{a : Nat} : a = a", "{a : Nat} /- := never closed : a = a := rfl"):
+            with self.subTest(text=text):
+                self.assertEqual(safe_push.statement_end(text), len(text))
+
     def test_gates_read_what_github_shows(self):
         # The final review: a box or a heading GitHub does not show (in a comment, or in
         # code by CommonMark's rules) counts for neither gate.
