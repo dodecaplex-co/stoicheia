@@ -13,7 +13,7 @@ review records' claims and remain local, as do provenance, mutations and coverag
 
 Run from anywhere with Python 3.11 or later, using only the standard library, the
 repository's heath.py and jev.py, imported by path, and the comment reader the scripts
-share, `comment_end`, taken alone from the repository's check_fidelity.py:
+share, `comment_end`, taken alone from the repository's heath.py:
 
     python3 scripts/audit/jev_questions.py --commit REV
     python3 scripts/audit/jev_questions.py --commit REV --check
@@ -158,10 +158,9 @@ def helper_modules(helpers: tuple[tuple[str, str], ...]) -> list:
     return _execute_modules(_prepare_modules(helpers))
 
 
-# check_fidelity's reader of where a Lean comment ends, shared with it (#206). The file
-# imports heath and generated_counts by name, which a generator run by path, as with
-# `python3 -I`, cannot import, so the function is taken alone and nothing else of it runs.
-READER = ('jev_questions_reader', 'scripts/check_fidelity.py', 'comment_end')
+# The scripts' one reader of where a Lean comment ends (#206), heath.py's since #349. It
+# is taken alone, from the bytes read, and nothing else of the file runs for it.
+READER = ('jev_questions_reader', 'scripts/heath.py', 'comment_end')
 
 
 def _prepare_function(name: str, path: str, function: str) -> tuple[str, object]:
@@ -341,7 +340,7 @@ KEYWORD_TOKENS = frozenset('''
 
 def comment_end(src: str, i: int) -> int:
     """Return the end of the line comment or nested block comment that starts at i, as Lean
-    reads it (check_fidelity.py's `comment_end`)."""
+    reads it (heath.py's `comment_end`)."""
     end = shared_comment_end(src, i)
     require(end is not None, 'unterminated Lean comment')
     return end

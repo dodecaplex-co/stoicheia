@@ -12,6 +12,7 @@ still lists them. The comment reader the scripts share is fed the texts on which
 could read a Lean comment otherwise than Lean does, each with Lean's own reading.
 """
 
+import ast
 import importlib.util
 import io
 import json
@@ -910,13 +911,13 @@ class CommentReaderTests(unittest.TestCase):
                     with self.assertRaisesRegex(self.questions.Refusal, "unterminated"):
                         self.questions.comment_end(text, spans[-1][0])
 
-    def test_the_jev_generator_runs_check_fidelity_s_own_reader(self):
+    def test_the_jev_generator_runs_heath_s_own_reader(self):
         source = b'''raise AssertionError("unrelated top-level code ran")
 
 def comment_end(src, i):
     return ("controlled reader", src, i)
 '''
-        checked = (REPO / "scripts/check_fidelity.py").resolve()
+        checked = (REPO / "scripts/heath.py").resolve()
         with patch.object(self.questions, "read_no_follow", return_value=source) as read:
             reader = self.questions.shared_function(*self.questions.READER)
         read.assert_called_once_with(checked)
@@ -925,7 +926,7 @@ def comment_end(src, i):
 
     def test_the_jev_generator_prepares_its_reader_before_running_helpers(self):
         invalid = (
-            ("missing", None, r"check_fidelity\.py: helper module is missing"),
+            ("missing", None, r"heath\.py: helper module is missing"),
             ("absent", b"def another_function():\n    pass\n",
              r"defines no single function comment_end"),
             ("duplicate", b"def comment_end(src, i):\n    pass\n\n"
@@ -940,12 +941,13 @@ def comment_end(src, i):
                 audit.mkdir(parents=True)
                 generator = audit / "jev_questions.py"
                 generator.write_bytes((REPO / "scripts/audit/jev_questions.py").read_bytes())
-                (root / "scripts/heath.py").write_text(
-                    'raise AssertionError("heath helper ran")\n', encoding="utf-8")
                 (audit / "jev.py").write_text(
                     'raise AssertionError("Jev helper ran")\n', encoding="utf-8")
                 if reader is not None:
-                    (root / "scripts/check_fidelity.py").write_bytes(reader)
+                    # heath.py is the reader's file and a helper too (#349): the planted
+                    # reader after a line that fails should the helper ever run first.
+                    (root / "scripts/heath.py").write_bytes(
+                        b'raise AssertionError("heath helper ran")\n' + reader)
                 name = f"jev_questions_invalid_reader_{label}"
                 spec = importlib.util.spec_from_file_location(name, generator)
                 module = importlib.util.module_from_spec(spec)
@@ -957,7 +959,7 @@ def comment_end(src, i):
                         spec.loader.exec_module(module)
                     self.assertFalse(helper_names & modules.keys())
 
-    def test_the_jev_generator_delegates_to_check_fidelity_s_reader(self):
+    def test_the_jev_generator_delegates_to_heath_s_reader(self):
         source = "prefix /- comment -/ suffix"
         offset = source.index("/-")
         sentinel = object()
@@ -970,6 +972,27 @@ def comment_end(src, i):
                                         r"^unterminated Lean comment$"):
                 self.questions.comment_end(source, offset)
         shared.assert_called_once_with(source, offset)
+
+    def test_check_fidelity_reads_lean_with_heath_s_reader_alone(self):
+        # #349: the reader is heath's. check_fidelity imports it under the names it had,
+        # the very objects, and defines none of them itself, so that no second reader can
+        # drift apart from it; its own caller, _blank_remarks, reads comments through it.
+        check_fidelity = negative.check_fidelity
+        names = ("read_lean", "without_comments", "lean_comments", "comment_end", "_find",
+                 "closed_up", "_read_code", "_read_string", "_read_interpolated",
+                 "lean_string")
+        for name in names:
+            with self.subTest(name=name):
+                self.assertIs(getattr(check_fidelity, name),
+                              getattr(check_fidelity.heath, name))
+        source = (REPO / "scripts/check_fidelity.py").read_text(encoding="utf-8")
+        defined = {node.name for node in ast.walk(ast.parse(source))
+                   if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
+        self.assertEqual(sorted(defined & set(names)), [])
+        with patch.object(check_fidelity, "lean_comments",
+                          wraps=check_fidelity.lean_comments) as read:
+            check_fidelity._blank_remarks("theorem t : True := trivial -- a remark\n")
+        read.assert_called_once()
 
 
 if __name__ == "__main__":
