@@ -75,7 +75,8 @@
   A search of `scripts/` found five more readers of Lean comments, which read otherwise
   and are not changed here. `statement_end` in `scripts/safe_push.py`, the landing tool,
   begins a block's body at its third character too, and reads no character literals, raw
-  strings or «…» names: its change is left to a card of its own. So is `past_space` in
+  strings or «…» names: its change is left to a card of its own,
+  [#349](https://github.com/jackChallis/stoicheia/issues/349). So is `past_space` in
   `scripts/risk.py`, which reads the header of a Lean file so; after `/-/- -/` it reads no
   import, where Lean reads on. `heath.theorem_span`, and the pattern by which
   `render.load_axiom_docs` and check_style read an axiom's docstring, begin a docstring's
@@ -84,12 +85,12 @@
   checks the docstrings that render shows. And `heath.theorem_span` ends a theorem at
   the first line that begins with `end `, `theorem `, `lemma `, `def `, `structure `,
   `/--`, `/-!` or `@[`, even within a remark. These two are left as they are, and to the
-  same card. A theorem's docstring that heath does not find fails the fidelity check
+  same card, #349. A theorem's docstring that heath does not find fails the fidelity check
   aloud ("no documented `theorem PropN` found"), unless heath finds another: it reads no
   comments, so a `/-- … -/ theorem PropN` written within a remark above the theorem is
   taken for it, and the theorem's own docstring and `--` lines are compared with
   nothing; only the stale review record shows the change. That gap is older than this
-  change, and is left to the same card. An axiom's docstring that render's pattern does
+  change, and is left to #349 too. An axiom's docstring that render's pattern does
   not find would be missing from its page without a failure, but none of the 971
   docstrings under `Elements/` holds a `/-` before its first `-/`, so none is missed
   today.
