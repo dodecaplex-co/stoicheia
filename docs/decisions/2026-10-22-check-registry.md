@@ -92,7 +92,10 @@
   read or whose names it does not hold, keeps its old sequence as the stand-in while
   origin/main has none, and counts `checks/` among its protected paths, its check inputs
   and, for section 8's block, its generated pages; and whose step 3 reads the commit's own
-  registry with the commit's own reader, as a later pre-flight will.
+  registry with the commit's own reader, as a later pre-flight will. Each reader runs
+  through `run()`, which gains a time limit for it, so that under the main-checks cache's
+  sandbox ([#392](https://github.com/jackChallis/stoicheia/pull/392)) it runs sandboxed,
+  as every command does; the commit's own reader is the commit's code.
 
   This entry approves `scripts/test_safe_push.py`, whose tests of the sequence now hold
   the registry, section 8's block and the one step of CI's `check` job to one another, pin

@@ -567,7 +567,7 @@ NO_REPLACE_REFS = ("-c", "core.useReplaceRefs=false")
 
 
 def run(cmd, cwd, *, env=None, input=None, binary=False,
-        capture=True) -> subprocess.CompletedProcess:
+        capture=True, timeout=None) -> subprocess.CompletedProcess:
     """Every command the harness starts starts here, but origin/main's risk.py, which
     risk_class runs with a time limit, and the Git read that loads origin/main's
     count-marker reader, both before the main-checks cache is opened. While the cache is
@@ -600,7 +600,7 @@ def run(cmd, cwd, *, env=None, input=None, binary=False,
     if SANDBOX is not None:
         cmd = [SANDBOX_EXEC, "-p", SANDBOX, *cmd]
     return subprocess.run(cmd, cwd=cwd, env=env, input=input, capture_output=capture,
-                          text=not binary)
+                          text=not binary, timeout=timeout)
 
 
 def git(repo, *args, check=True, binary=False) -> str | bytes:
@@ -3087,18 +3087,21 @@ def check_sequence(repo, base: str, whose: str = "origin/main") -> CheckList:
     with tempfile.TemporaryDirectory(prefix="stoicheia-registry-") as tmp:
         script = Path(tmp) / "registry.py"
         script.write_bytes(source.stdout)
+        # Through run(), so that under the main-checks cache's sandbox it runs sandboxed,
+        # as every command does (#392): read as bytes, decoded leniently, as before.
         try:
-            r = subprocess.run([PY, "-I", str(script), "--rev", base, "--json", str(repo)],
-                               cwd=repo, env=without_replacements(), capture_output=True,
-                               text=True, errors="replace", timeout=REGISTRY_TIMEOUT)
+            r = run([PY, "-I", str(script), "--rev", base, "--json", str(repo)], repo,
+                    env=without_replacements(), binary=True, timeout=REGISTRY_TIMEOUT)
         except (OSError, subprocess.TimeoutExpired) as e:
             refuse(f"its {REGISTRY_READER} could not be run: {type(e).__name__}")
+    out = r.stdout.decode(errors="replace")
+    err = r.stderr.decode(errors="replace")
     if r.returncode != 0:
-        said = (r.stderr.strip().splitlines() or [""])[-1]
+        said = (err.strip().splitlines() or [""])[-1]
         refuse(f"its {REGISTRY_READER} exited {r.returncode}"
                + (f": {printable_text(said)[:300]}" if said else ""))
     try:
-        entries = json.loads(r.stdout)
+        entries = json.loads(out)
     except json.JSONDecodeError:
         entries = None
     if not isinstance(entries, list):
