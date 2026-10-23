@@ -16,22 +16,29 @@ note = "A segment is its circle, the ends of its base and a point naming its sid
 at = "For, if the segment AEB be applied to CFD"
 kind = "helper"
 helper = "placement"
-note = "The application is `placement`: on the equal straight lines AB, CD, the side of AB where E is, with AB itself, is carried onto the side of CD where F is, with CD, keeping every distance, A going to C and B to D. No motion is assumed beyond I.4 and I.8, which give each distance."
+note = "The application is `placement`: on the equal straight lines AB, CD, the side of AB where E is, with AB itself, is carried onto the side of CD where F is, with CD, keeping every distance, A going to C and B to D. No motion is assumed beyond I.4 and I.8: I.22 finds each point's place, or I.3 and I.2 on the straight line AB, I.7 and I.20 make it the only one, and I.8 and I.4 keep every distance, with I.20's order of points on AB; Heath prints no reference here for any of them."
 
 [[passage]]
 at = "the point B will also coincide with the point D"
 kind = "grouped"
+helper = "placement"
 note = "Carried by the placement under the sentence before, which puts B on D because AB is equal to CD; under the next sentence the points of AB go to points of CD, an end to an end and a point between to a point between."
 
 [[passage]]
 at = "the segment AEB will also coincide with CFD"
-kind = "grouped"
-note = "The sentences after it show it; the Lean begins that argument here: a point on E's side of AB goes to a point on F's side of CD, and the angle AB subtends there is the angle CD subtends at its image [I. 8]."
+kind = "helper"
+helper = "BookI.Prop8"
+note = "The sentences after it show the coincidence; the Lean begins that argument here with a step Euclid takes for granted, that the application keeps angles: a point on E's side of AB goes to a point on F's side of CD, and the angle AB subtends there is the angle CD subtends at its image, by I.8 (`BookI.Prop8`), for which Heath prints no reference here."
+
+[[passage]]
+at = "For, if the straight line AB coincide with CD but the segment AEB do not coincide"
+kind = "different"
+note = "Euclid supposes that AB coincides with CD and the segment AEB does not coincide with CFD, so as to refute each way it could fall. The Lean makes no such supposition, and argues directly beneath the next sentence."
 
 [[passage]]
 at = "it will either fall within it, or outside it"
 kind = "different"
-note = "Euclid leaves these two cases to a tacit reference to III.23 (Heath, vol. 2, p. 54), to be refuted. The Lean settles every point directly by III.23's companion `Prop23.point`: on F's side of CD a point is on the circle CFD exactly when CD subtends at it the angle at F, and within it exactly when the angle is greater; so each point of the first circumference maps to the second circumference, and points within the first segment map to points within the second, in both directions."
+note = "Euclid leaves these two cases to a tacit reference to III.23 (Heath, vol. 2, p. 54), to be refuted. The Lean settles every point directly by III.23's companion `Prop23.point`, which uses I.21, III.2 and III.21, with no reference from Heath here to any of these: on F's side of CD a point is on the circle CFD exactly when CD subtends at it the angle at F, and within it exactly when the angle is greater; so each point of the first circumference maps to the second circumference, and points within the first segment map to points within the second, in both directions."
 
 [[passage]]
 at = "or it will fall awry"
@@ -42,14 +49,23 @@ note = "III.10 is not needed: the angles have settled every point of the circumf
 at = "Therefore, if the straight line AB be applied to CD"
 kind = "helper"
 helper = "Prop24.chord_cases"
-note = "On the bases the points are settled by their ends and their order: a point of AB is on the circle exactly when it is an end, and within it exactly when it lies between the ends, by III.2 (`Prop24.chord_cases`), and the placement keeps both."
+note = "On the bases the points are settled by their ends and their order: a point of AB is on the circle exactly when it is an end, and within it exactly when it lies between the ends (`Prop24.chord_cases`), and the placement keeps both. A point between two points of the circle is within it by III.2, for which Heath prints no reference here, so no third point of AB is on the circle (`Prop2.triangle`); and a point of AB within the circle lies between the ends by `Tacit.between_of_inside_chord`, the rule we assume as System E, Circle 1."
 
 [figure]
 case = "segments less than semicircles, as in Heath's figure"
-note = "Like Heath's, this figure draws the last supposition the text refutes: the segment falling awry, as CGD, so that a circle would cut a circle at more points than two."
+note = "Like Heath's, this figure draws the last supposition the text refutes: the segment falling awry, as CGD, so that a circle would cut a circle at more points than two. The figure at a glance draws another case: both segments greater than semicircles, with acute angles at E and F."
 
 [review]
-stage = "exceptions"
-commit = "6b606dc2"
+stage = "full"
+commit = "2f2c3c2f"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:d3c238070470a784"
+run = "brief 0005 stage 5, ship R3 (#29); the companions and helpers half_lt, angle_type, isosceles, equalCircles, image and equalMeasure, written by Codex, read also by Claude Opus 5.5"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
