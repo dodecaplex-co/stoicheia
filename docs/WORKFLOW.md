@@ -1654,9 +1654,10 @@ and closes the fork's with a link to it.
 
 The summary is printed and appended to `~/.cache/stoicheia/pushes.log`, outside the
 repository, with each step's full output beside it in `logs/`, and the pre-flight's record
-in `preflight/`, which `--merge` reads; origin/main's harness, when it runs in place of
-another copy, is written to `harness/`, named by its blobs; and, with
-`--main-checks-cache`, origin/main's pass of step 4 in `main-checks/`. `sh
+in `preflight/`, which `--merge` reads. The harness modules used when origin/main's harness
+runs in place of another copy, or whenever a train check runs, are written to `harness/`,
+in a directory named by their blobs. With `--main-checks-cache`, origin/main's pass of the
+pre-flight's full local checks is written to `main-checks/`. `sh
 scripts/install_hooks.sh` installs the launcher and the pre-push hook: the hook refuses
 every push to main, scans a push to any other branch (its name included) with
 origin/main's copy of the secret scan (`safe_push.py --scan-push`), copied out of git and
