@@ -39,10 +39,13 @@
     reference with no call has precedents in III.24's [III. 10] and I.22's [I. 20].
   - **The consumers.** The five proofs. Their review records, `review/III/02.toml`,
     `review/III/04.toml`, `review/III/08.toml`, `review/III/14.toml` and
-    `review/III/17.toml`, whose Lean stamps the change makes stale, and
-    `review/III/15.toml`, whose note says that III.15 rests on the rule through III.14 and
-    III.2, and does now through III.2 and its corollary `Prop2.within` alone. Their
-    pages, which the integrator makes afresh, with CERTIFICATE.md and GRAPH.md. The commentary that described the calls:
+    `review/III/17.toml`, whose Lean stamps the change makes stale: each of the four
+    centres now taken from the rule under "[III. 1]" is a step argued another way, so the
+    routes of III.2, III.4 and III.17 become modified by that one step (III.8's already
+    was), and III.14's passage stays given. And `review/III/15.toml`, whose note says that
+    III.15 rests on the rule through III.14 and III.2, and does now through III.2 and its
+    corollary `Prop2.within` alone. Their pages, which the integrator makes afresh, with
+    CERTIFICATE.md and GRAPH.md. The commentary that described the calls:
     the mishnah of III.2, III.14 and III.17, Book III's introduction, the gap catalogue
     and the overlap catalogue. The axiom pins downstream of III.2 and III.8 in `Audit/`.
     And [brief 0012](../briefs/0012-book-IV.md), whose plan to find a centre in Book IV by

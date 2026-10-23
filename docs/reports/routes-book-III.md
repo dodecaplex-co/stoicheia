@@ -1386,7 +1386,11 @@ unchanged at 70, III.17 and its companion from 63 to 61, and III.37 from 73 to 7
 entries on the rule and 43 after; 38 entries changed, 31 of them only by losing
 `exists_point_same_side`; and no entry now cites III.1, where five did. The records of
 III.2, III.4, III.8, III.14 and III.17, and III.15's note, were read again and stamped by
-independent readers, and the pages, CERTIFICATE.md and GRAPH.md were made afresh. So
+independent readers. Under Heath's "[III. 1]" in III.2, III.4, III.8 and III.17 the
+centre now comes from the rule, so each of those passages is one argued another way, and
+the routes of III.2, III.4 and III.17 are modified by that one step, as "The policy
+question" foresaw; III.14's passage stays given, for its statement names E. The pages,
+CERTIFICATE.md and GRAPH.md were made afresh. So
 items 1 to 6 are done, but for the reason given for III.2's expectation in
 `tests/certificate_expectations.json` ("III.1, which it cites"), whose pinned value
 stands and whose owner is asked to change it. The row for #131 in the opening table,
