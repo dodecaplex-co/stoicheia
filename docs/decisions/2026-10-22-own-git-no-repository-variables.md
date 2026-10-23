@@ -43,21 +43,20 @@
   temporary `GIT_INDEX_FILE` that `base_tree` names to `run()` in `keep`.
 
   This entry approves the change to `scripts/test_safe_push.py`: its new class
-  `OwnGitUnderHook` runs a dry run from a train's linked worktree under a hook's
-  `GIT_DIR` and `GIT_INDEX_FILE`, and again with `GIT_WORK_TREE`, and finds the train's
-  HEAD, index, staged change and the shared configuration as they were; checks
-  `REPOSITORY_VARIABLES` against git's own list; checks with
-  `test_run_gives_no_command_a_repository_variable` what `run()` gives a git command,
-  another program and a check started with `tool_env()`, and that a variable named in
-  `keep` passes while every other is dropped; checks, reading the source, that only
-  `base_tree` names one in `keep`, its temporary `GIT_INDEX_FILE`; and checks, reading
-  the source, that each place safe_push starts a process, `run()`'s own among them, gives it an
-  environment built by `own_env()` or `without_replacements()`, directly or by a name
-  every binding of which in its function is one of those calls and which nothing there
-  changes afterwards (no item stored or deleted, no `update()` or the like), and that
-  none uses a function that takes no environment. `HookEnvironment`'s planted check now
-  also records the git variables it is started with, which must be
-  `GIT_NO_REPLACE_OBJECTS=1` alone. And the
-  unit test of `run()` now expects a program other than git to get the caller's
-  environment less those variables but `GIT_NO_REPLACE_OBJECTS`, which it keeps as
-  given, where it expected the caller's environment as it was.
+  `OwnGitUnderHook` runs a dry run from a train's linked worktree under a hook's `GIT_DIR`
+  and `GIT_INDEX_FILE`, and again with `GIT_WORK_TREE`, and finds the train's HEAD, index,
+  staged change and the shared configuration as they were; checks `REPOSITORY_VARIABLES`
+  against git's own list; checks with `test_run_gives_no_command_a_repository_variable`
+  what `run()` gives a git command, another program and a check started with `tool_env()`,
+  and that a variable named in `keep` passes while every other is dropped; checks, reading
+  the source, that only `base_tree` names one in `keep`, its temporary `GIT_INDEX_FILE`;
+  and checks, reading the source, that each place safe_push starts a process, `run()`'s
+  own among them, gives it an environment built by `own_env()` or
+  `without_replacements()`, directly or by a name every binding of which in its function
+  is one of those calls and which nothing there changes afterwards (no item stored or
+  deleted, no `update()` or the like), and that none uses a function that takes no
+  environment. `HookEnvironment`'s planted check now also records the git variables it is
+  started with, which must be `GIT_NO_REPLACE_OBJECTS=1` alone. And the unit test of
+  `run()` now expects a program other than git to get the caller's environment less those
+  variables but `GIT_NO_REPLACE_OBJECTS`, which it keeps as given, where it expected the
+  caller's environment as it was.
