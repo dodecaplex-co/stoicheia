@@ -179,7 +179,9 @@ every six hours.
     repository is set up is reported, and the plant stops there. The token is built as
     the plant runs, so this file passes the scan itself. Only item 17's plants run under
     --counts-only; this one runs with the rest, before the plants that build.
-29. Without a build, Book Zero's imports (#200): a new file of Book Zero imports a
+29. A repeated dated heading in the decisions page makes `check_queue.py --tree .`
+    refuse with exit 1.
+30. Without a build, Book Zero's imports (#200): a new file of Book Zero imports a
     proposition in each spelling Lean 4.35 accepts that the rule once passed: two
     spaces, a line break, a remark, a line comment or a nested remark between the words,
     nothing before «…» or a remark, `«Elements»`, `«BookI»` and a second import on one
@@ -507,6 +509,23 @@ def broken_link() -> None:
         expect_failure("a relative link to a missing page",
                        run(sys.executable, "scripts/check_links.py"),
                        f"README.md:{line}: {target}: no such file: {target}")
+    finally:
+        path.write_bytes(saved)
+
+
+def queue_repeated_heading() -> None:
+    """The tree scan must refuse a date heading repeated in the decisions page."""
+    rel = "docs/briefs/0002-decisions.md"
+    path = ROOT / rel
+    saved = path.read_bytes()
+    heading = next(line for line in saved.splitlines() if line.startswith(b"## "))
+    try:
+        path.write_bytes(saved + b"\n" + heading + b"\n")
+        result = run(sys.executable, "scripts/check_queue.py", "--tree", ".")
+        expect_failure("a repeated dated heading in the decisions page", result,
+                       rel, "repeated dated heading")
+        if result.returncode != 1:
+            failures.append(f"queue repeated heading: expected exit 1, got {result.returncode}")
     finally:
         path.write_bytes(saved)
 
@@ -2291,6 +2310,7 @@ def main(argv=()) -> int:
         carriage_return_comment()
         placement_named()
         figure_names_and_arcs()
+        queue_repeated_heading()
         missing_files()
         planted_assumptions()
         for test in (circle_proved, style_error, broken_link, stale_page,
