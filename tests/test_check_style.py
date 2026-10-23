@@ -26,7 +26,10 @@ it, put to the script's own patterns and functions:
   character that would let a letter of one word stand alone is refused; the paragraph
   selection keeps its source offsets and indentation.
 * the wording cases: render.py names the rules of an overlap that a proof leaves unused
-  as "does not use" for one, "neither … nor" for two and "none of" for more, and words
+  as "does not use" for one, "neither … nor" for two and "none of" for more; names each
+  combination of an overlap's `ways`, with the rules the proof rests on, in the line under
+  the enunciation, the Overlap row and the book's summary, beside overlaps worded as
+  before; and words
   III.24's application of one segment to another by `placement` only from what its
   facts.json entry shows, read afresh for each root;
 * the figure cases: render.py's caption under Euclid's figure says "Drawn for one case"
@@ -2294,6 +2297,90 @@ class Wording(unittest.TestCase):
         two = {"rule": "Tacit.a", "also": ["Tacit.b"], "kind": "gives"}
         self.assertEqual(render.overlap_use({"axioms": ["Tacit.b"]}, two),
                          "of these rules, our proof rests on `b` and does not use `a`")
+
+    # III.5's three combinations, as Audit/Overlaps.lean proves them, and what its proof
+    # rests on among their rules (#293).
+    WAYS = {"rule": "Tacit.circle_eq", "also": ["Tacit.inside_not_on"], "kind": "gives",
+            "ways": [["Definition15", "Tacit.inside_not_on", "Tacit.on_circle_of_len_eq"],
+                     ["Definition15", "Tacit.len_lt_of_inside", "Tacit.lt_irrefl"]]}
+    PROOF = {"status": "proved", "axioms": ["Definition15", "Tacit.centre_inside",
+                                            "Tacit.inside_not_on", "Tacit.lt_irrefl"]}
+    EACH = ("in three ways: `circle_eq` and `inside_not_on` together, of which our proof "
+            "rests on `inside_not_on` and does not use `circle_eq`; `Definition15`, "
+            "`inside_not_on` and `on_circle_of_len_eq` together, of which our proof rests on "
+            "`Definition15` and `inside_not_on`, and does not use `on_circle_of_len_eq`; and "
+            "`Definition15`, `len_lt_of_inside` and `lt_irrefl` together, of which our proof "
+            "rests on `Definition15` and `lt_irrefl`, and does not use `len_lt_of_inside`")
+
+    @staticmethod
+    def record(overlap, n=5):
+        return heath.validate_review(
+            {"statement": {"scope": "full"}, "route": {"kind": "euclid"},
+             "overlap": json.loads(json.dumps(overlap)),
+             "review": {"stage": "exceptions", "reviewer": "Claude Opus 5.5"}},
+            "III", n, require_stamp=False, where="a test record")
+
+    def test_overlap_ways_are_each_named_with_their_use(self):
+        """Each combination of `ways`, the first one first, with the rules our proof rests
+        on: all of them, some (each rule used and unused named) or none."""
+        self.assertEqual(render.overlap_contains_ways(self.PROOF, self.WAYS, "it"),
+                         f"our axioms already contain it {self.EACH}")
+        tacit = {"rule": "Tacit.a", "also": ["Tacit.b"], "kind": "states",
+                 "ways": [["Tacit.c"], ["Tacit.a", "Tacit.c", "Tacit.d"]]}
+        for axioms, want in [
+                ([], "our tacit rules contain it too, in three ways: `a` and `b` together, of "
+                     "which our proof uses neither; `c`, which our proof does not use; and `a`, "
+                     "`c` and `d` together, of which our proof uses none"),
+                (["Tacit.a", "Tacit.b", "Tacit.c", "Tacit.d"],
+                 "our tacit rules already contain it in three ways: `a` and `b` together, of "
+                 "which our proof rests on both; `c`, on which our proof rests; and `a`, `c` "
+                 "and `d` together, of which our proof rests on all three"),
+                (["Tacit.c"],
+                 "our tacit rules already contain it in three ways: `a` and `b` together, of "
+                 "which our proof uses neither; `c`, on which our proof rests; and `a`, `c` "
+                 "and `d` together, of which our proof rests on `c` and uses neither `a` nor "
+                 "`d`")]:
+            with self.subTest(axioms=axioms):
+                self.assertEqual(render.overlap_contains_ways({"axioms": axioms}, tacit, "it"),
+                                 want)
+
+    def test_overlap_ways_on_the_page_and_in_the_summary(self):
+        """The line under the enunciation, the Overlap row and the book's summary name every
+        combination; a record with no `ways` is worded as before, beside one that has."""
+        record = self.record(self.WAYS)
+        self.assertTrue(render.in_lean_line(self.PROOF, record, "III", 5).endswith(
+            f" · Euclid's argument · our axioms already contain it {self.EACH} (see Overlap)"))
+        lead = ("Three ways: `circle_eq` and `inside_not_on`; `Definition15`, `inside_not_on` "
+                "and `on_circle_of_len_eq`; and `Definition15`, `len_lt_of_inside` and "
+                "`lt_irrefl`. ")
+        use = (" Of the first way's rules, our proof rests on `inside_not_on` and does not "
+               "use `circle_eq`. Of the second way's rules, our proof rests on `Definition15` "
+               "and `inside_not_on`, and does not use `on_circle_of_len_eq`. Of the third "
+               "way's rules, our proof rests on `Definition15` and `lt_irrefl`, and does not "
+               "use `len_lt_of_inside`. See [the overlap catalogue]"
+               "(../../docs/reports/overlaps.md). |")
+        for note, said in [(None, "Each way's rules together already contain this proposition."),
+                           ("Three short proofs.", "Three short proofs.")]:
+            with self.subTest(note=note):
+                ov = dict(self.WAYS, **({"note": note} if note else {}))
+                table = render.field_table("III", 5, self.PROOF, self.record(ov), [], {})
+                row = next(r for r in table.splitlines() if r.startswith("| Overlap |"))
+                self.assertEqual(row, "| Overlap | " + lead + said + use)
+        records = {"III.2": self.record({"rule": "Tacit.outside_of_between", "kind": "gives"}, 2),
+                   "III.5": record,
+                   "III.6": self.record({"rule": "Tacit.circle_eq", "kind": "gives",
+                                         "also": ["Tacit.centre_inside", "Tacit.inside_not_on"]},
+                                        6)}
+        facts = {"III.2": {"axioms": []}, "III.5": self.PROOF, "III.6": self.PROOF}
+        self.assertEqual(
+            render.overlap_sentences(["III.2", "III.5", "III.6"], facts, records,
+                                     lambda rs: ", ".join(f"[{r}]" for r in rs), ""),
+            "In [III.2] one of our tacit rules contains the proposition too, but our proof "
+            "never uses that rule. "
+            f"In [III.5] our axioms already contain the proposition {self.EACH}. "
+            "In [III.6] three of our tacit rules together already contain the proposition; "
+            "of these rules, our proof rests on `centre_inside` and `inside_not_on`, and does "
+            "not use `circle_eq`. [The overlap catalogue](docs/reports/overlaps.md) gives each.")
 
     @staticmethod
     def facts(direct=(), brings=("I.4", "I.8"), step="BookIII.placement"):

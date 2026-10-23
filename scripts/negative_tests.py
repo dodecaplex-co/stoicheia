@@ -193,6 +193,12 @@ every six hours.
     line, while a file holding the same import only in a comment, a remark, a string and
     a «…» name, beside a Book Zero import of its own, is not named at all. The files are
     read, not built, and removed after.
+30. Without a build, on III.5's review record: a further combination in its [overlap]'s
+    `ways` that `Audit/Overlaps.lean` does not prove III.5 from, the rules of
+    `Audit.III_5_crossing` without Definition I.15, each an axiom in facts.json, is
+    refused by `check_fidelity.py`, naming the record, the combination and the theorems
+    the file proves III.5 by; the record's other combinations are not named. The record is
+    restored after.
 
 The copies of items 16 and 17, and item 13's list of generated outputs, read Git's
 tracked files. One absent from the work tree is named on stdout and passed over: as a
@@ -2230,6 +2236,48 @@ def secret_behind_a_replacement() -> None:
             return
 
 
+# A combination that no theorem of Audit/Overlaps.lean proves III.5 from: the rules of
+# `Audit.III_5_crossing` without the Definition I.15 its proof needs. Each is an axiom in
+# facts.json, so only the audit can refuse it.
+UNPROVED_WAY = ["Tacit.len_lt_of_inside", "Tacit.lt_irrefl"]
+TABLE_HEADER = re.compile(r"^\[\[?[\w.-]+\]\]?[ \t]*$", re.M)
+
+
+def with_way(text: str, way: list[str]) -> tuple[str, int]:
+    """A review record's text with `way` added at the end of its [overlap]'s `ways`, and
+    the number it takes among them. The [overlap] table is written again, a key to a line,
+    each value as JSON writes it, which TOML reads alike; the other tables are kept."""
+    import tomllib
+    start = re.search(r"^\[overlap\][ \t]*$", text, re.M).start()
+    end = (m.start() if (m := TABLE_HEADER.search(text, start + 1)) else len(text))
+    overlap = tomllib.loads(text[start:end])["overlap"]
+    overlap["ways"] = overlap.get("ways", []) + [list(way)]
+    table = "".join(f"{key} = {json.dumps(value, ensure_ascii=False)}\n"
+                    for key, value in overlap.items())
+    return text[:start] + "[overlap]\n" + table + "\n" + text[end:], len(overlap["ways"])
+
+
+def unproved_way() -> None:
+    """III.5's [overlap] given a further combination that Audit/Overlaps.lean does not
+    prove it from (UNPROVED_WAY): check_fidelity refuses it, naming the record, the
+    combination and what the file proves, while the record's other combinations pass and
+    no rule is missing from facts.json."""
+    record = heath.review_path("III", 5)
+    rel = record.relative_to(ROOT).as_posix()
+    saved = record.read_text()
+    planted, k = with_way(saved, UNPROVED_WAY)
+    record.write_text(planted)
+    try:
+        expect_failure("a combination Audit/Overlaps.lean does not prove, in III.5's "
+                       "[overlap]", fidelity(),
+                       f"{rel}: [overlap] `ways` {k} names [{', '.join(UNPROVED_WAY)}] as "
+                       "containing III.5", "(`Audit.III_5_crossing`)",
+                       unwanted=("is not one of the axioms in facts.json",
+                                 "[overlap] `rule` and `also` names"))
+    finally:
+        record.write_text(saved)
+
+
 def main(argv=()) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--counts-only", action="store_true",
@@ -2292,6 +2340,7 @@ def main(argv=()) -> int:
         placement_named()
         figure_names_and_arcs()
         missing_files()
+        unproved_way()
         planted_assumptions()
         for test in (circle_proved, style_error, broken_link, stale_page,
                      changed_audit_pin, corrupt_olean, certificate_constructor_counting,

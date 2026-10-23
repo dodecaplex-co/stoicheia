@@ -100,7 +100,15 @@
      stale when either changes; its passages begin at Euclid's sentences and name
      helpers that exist; and every run of `--` lines with no Lean beneath it before
      the next run, a `/- … -/` remark ending a run and carrying none, is declared as a
-     passage (`uncarried_runs`).
+     passage (`uncarried_runs`);
+   - each rule a record's `[overlap]` names, in `rule`, `also` or `ways`, is an axiom in
+     facts.json; and, needing only `Audit/Overlaps.lean`, each combination of rules that
+     an `[overlap]` of the kind `states` or `gives` says contains the proposition, `rule`
+     with `also` and each of `ways`, is exactly the axioms, less Lean's own three, of a
+     theorem of that file's section "Rules that state a proposition, give it at once, or
+     supply its step" whose type is the proposition's own, as the theorem's `#guard_msgs`
+     pin of `#print axioms` gives them (`overlap_proofs`, read from the file's text, whose
+     pins `lake build Audit` checks).
 7. Inline count markers in tracked Markdown match the exact file-derived counts in
    generated_counts.py, and stand only where that module allows. Unknown and
    malformed markers are refused, as are unsafe paths and a missing or mismatched Git
@@ -1632,6 +1640,105 @@ def helper_exists(book: str, helper: str) -> bool:
     return sum(1 for d in names if d.endswith("." + name)) == 1
 
 
+AUDIT_OVERLAPS = ROOT / "Audit" / "Overlaps.lean"
+# The section of AUDIT_OVERLAPS whose theorems prove propositions from the rules that
+# contain them, each under the proposition's own type.
+AUDIT_SECTION = "Rules that state a proposition, give it at once, or supply its step"
+PROPOSITION_TYPE = re.compile(
+    r"\btheorem\s+([^\s:({\[]+)\s*:\s*type_of%\s*@Elements\.Book([IVX]+)\.Prop(\d+)\s*:=")
+PRINT_AXIOMS = re.compile(r"#guard_msgs\s+in\s+#print\s+axioms\s+(\S+)")
+PINNED_AXIOMS = re.compile(r"/--\s*info: '([^'\s]+)' depends on axioms: \[([^\]]*)\]\s*-/")
+NAMESPACE = re.compile(r"^[ \t]*(namespace|section|end)\b[ \t]*(\S*)", re.M)
+
+
+def overlap_ways(overlap) -> list[tuple[str, list[str]]]:
+    """Each combination of rules an [overlap] names, with its label for a message: its
+    `rule` with `also`, then each of its `ways`."""
+    return [("`rule` and `also`", [overlap["rule"]] + overlap.get("also", []))] + [
+        (f"`ways` {i}", way) for i, way in enumerate(overlap.get("ways", []), 1)]
+
+
+@functools.lru_cache(maxsize=None)
+def overlap_proofs(path: Path) -> tuple[dict, str]:
+    """What the section AUDIT_SECTION of Audit/Overlaps.lean proves: for each proposition,
+    as "III.5", each theorem there whose type is the proposition's own (`type_of%
+    @Elements.BookIII.Prop5`), by its full name, with the axioms that its `#guard_msgs` pin
+    of `#print axioms` gives, named as facts.json names them, without `Elements.` (one
+    outside `Elements` keeps its name after `_root_.`, so it matches none), and without
+    LEAN_FOUNDATIONS. A theorem with no such pin proves nothing here. The pins are read
+    from the file's text, as `read_lean` reads it; `lake build Audit` checks that Lean
+    reports what they say. Returns the map and "", or {} and why the file cannot be read."""
+    if not path.exists():
+        return {}, f"{rel(path)} is missing"
+    src = lean_text(path)
+    code = read_lean(src)[0]
+    marks: list[tuple[str, int, int]] = []
+    _read_code(src, 0, marks)
+    headings = []
+    for kind, i, j in marks:
+        lines = src[i + 3:j - 2].strip().splitlines() if src.startswith("/-!", i) else []
+        if kind == "text" and lines and lines[0].startswith("## "):
+            headings.append((i, j, lines[0][3:].strip()))
+    mine = [k for k, (_, _, title) in enumerate(headings) if title == AUDIT_SECTION]
+    if len(mine) != 1:
+        return {}, (f"{rel(path)} has {'no' if not mine else 'more than one'} section headed "
+                    f"\"## {AUDIT_SECTION}\"")
+    start = headings[mine[0]][1]
+    end = headings[mine[0] + 1][0] if mine[0] + 1 < len(headings) else len(src)
+    pins = {}
+    for m in GUARD_MSGS.finditer(code):
+        printed = PRINT_AXIOMS.match(code, m.start())
+        pinned = PINNED_AXIOMS.fullmatch(guard_docstring(src, code, m.start()))
+        if printed and pinned and pinned[1] == printed[1]:
+            names = [a.strip() for a in pinned[2].split(",") if a.strip()]
+            pins.setdefault(printed[1], frozenset(
+                a.removeprefix("Elements.") if a.startswith("Elements.") else "_root_." + a
+                for a in names if a not in LEAN_FOUNDATIONS))
+    proofs: dict[str, list[tuple[str, frozenset]]] = {}
+    for m in PROPOSITION_TYPE.finditer(code, start, end):
+        stack = []
+        for word, name in NAMESPACE.findall(code, 0, m.start()):
+            if word == "namespace":
+                stack.append(name)
+            elif word == "section":
+                stack.append("")
+            elif stack:
+                stack.pop()
+        full = ".".join([part for part in stack if part] + [m[1]])
+        if full in pins:
+            proofs.setdefault(f"{m[2]}.{int(m[3])}", []).append((full, pins[full]))
+    return proofs, ""
+
+
+def check_overlap_ways(ref: str, where: str, overlap: dict) -> None:
+    """Each combination of rules that an [overlap] of the kind `states` or `gives` says
+    contains the proposition is one that Audit/Overlaps.lean proves it from
+    (`overlap_proofs`): exactly those rules, no more and no fewer (review/SCHEMA.md)."""
+    proofs, problem = overlap_proofs(AUDIT_OVERLAPS)
+    audit = rel(AUDIT_OVERLAPS)
+    if problem:
+        fail(f"{where}: [overlap] says its rules contain {ref}, which {audit} must prove, "
+             f"and {problem}")
+        return
+    proved = proofs.get(ref, [])
+    book, n = ref.split(".")
+    for label, rules in overlap_ways(overlap):
+        if any(axioms == frozenset(rules) for _, axioms in proved):
+            continue
+        found = [f"from [{', '.join(sorted(axioms))}] (`{name}`)" for name, axioms in proved]
+        fail(f"{where}: [overlap] {label} names [{', '.join(rules)}] as containing {ref}, and "
+             f"no theorem of {audit}'s section \"{AUDIT_SECTION}\" proves {ref} from exactly "
+             "those rules, as its `#guard_msgs` pin of `#print axioms` gives them, less "
+             "Lean's own propext, Classical.choice and Quot.sound. "
+             + (f"The file proves {ref} " + (found[0] if len(found) == 1 else
+                                             ", ".join(found[:-1]) + " and " + found[-1])
+                if proved else
+                f"The file has no theorem there of type `type_of% @Elements.Book{book}.Prop{n}` "
+                "with its axioms pinned")
+             + ". Prove the combination there, with its axioms pinned, or take it out of "
+             "the record")
+
+
 def check_reviews(facts, by_ref) -> None:
     """The review records against review/SCHEMA.md, the statements in facts.json (when
     `facts` is given) and the Lean files."""
@@ -1667,9 +1774,14 @@ def check_review(facts, by_ref, book: str, n: int) -> None:
         if facts is not None and c not in by_ref:
             fail(f"{where}: companion {c} has no entry in facts.json")
     if facts is not None and "overlap" in record:
-        for rule in [record["overlap"]["rule"]] + record["overlap"].get("also", []):
+        for rule in dict.fromkeys(r for _, rules in overlap_ways(record["overlap"])
+                                  for r in rules):
             if rule not in facts.get("axiom_modules", {}):
                 fail(f"{where}: [overlap] rule {rule} is not one of the axioms in facts.json")
+    # Every combination of rules said to contain the proposition is proved in
+    # Audit/Overlaps.lean to give it; a rule that only supplies a step is not.
+    if "overlap" in record and record["overlap"]["kind"] in ("states", "gives"):
+        check_overlap_ways(ref, where, record["overlap"])
 
     # The stamps: what the reviewer read is what there is now. (A facts.json with no
     # statements has been reported once already, by check_entries.)

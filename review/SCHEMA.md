@@ -98,6 +98,7 @@ A tag of kind `scope` may appear only when the statement is restricted or partia
 |---|---|---|---|
 | `rule` | string | yes | The axiom, named as facts.json names it: `"Tacit.outside_of_between"`. |
 | `also` | list of strings | no | Any further axioms that contain the proposition, or supply its step, only together with `rule`, as III.6 needs `"Tacit.centre_inside"`. |
+| `ways` | list of lists of strings | no | For `states` and `gives` alone: the further combinations of axioms that contain the proposition, each a list of names as `also` is; `rule` with `also` is the first (below). |
 | `kind` | `"states"`, `"gives"` or `"step"` | yes | The kind of the proposition's row in the catalogue (below). |
 | `note` | string | for `step` | What follows for the page: the proof reconstructs Euclid's reasoning within our foundations, and does not establish the rule. For a step, which step the rule carries, and in which proof. |
 
@@ -114,6 +115,27 @@ kinds, and `kind` names the row's kind in the catalogue's words:
   or a case of it, and does not give the proposition at once (as for I.13, a consequence of
   which, Metric 5, carries a step of I.47's proof).
 
+More than one combination of rules may contain a proposition: `Audit/Overlaps.lean`
+proves III.5 from Diagram-segment 2 with Generalities 4, and twice more from Definition
+I.15 with two other rules. `rule` with `also` names the first combination, and `ways`
+names each further one, as a list of axioms named as facts.json names them:
+
+```toml
+ways = [
+  ["Definition15", "Tacit.inside_not_on", "Tacit.on_circle_of_len_eq"],
+  ["Definition15", "Tacit.len_lt_of_inside", "Tacit.lt_irrefl"],
+]
+```
+
+Only a rule that states the proposition or gives it at once has `ways`, since a rule that
+supplies a step does not contain it. Each combination is a different set of rules from the
+first and from every other, and names no rule twice. For an overlap that states or gives
+the proposition, every combination, the first among them, is one that
+`Audit/Overlaps.lean` proves it from: some theorem of the file's section "Rules that state
+a proposition, give it at once, or supply its step" has the proposition's own type
+(`type_of% @Elements.BookIII.Prop5`), and the `#guard_msgs` pin of its `#print axioms`
+gives exactly those rules, less Lean's own `propext`, `Classical.choice` and `Quot.sound`.
+
 The page words its overlap by the kind, in the line under the enunciation and in the
 book's summary, which also heads the book's index, its section of CERTIFICATE.md and its
 row of README.md. A rule that states the proposition or gives it at once "contains" it;
@@ -123,8 +145,12 @@ rules, from facts.json's `axioms`; when it uses some but not all, each rule used
 each unused is named. The table's Overlap row names the rules and gives the record's
 `note` word for word (with no note, it says by the kind that the rules contain the
 proposition, or supply a step of a proof of it); it adds the account of which rules our
-proof rests on only when the proof uses some but not all. Every `[overlap]` names its
-kind, and one that does not is a fault, so no page words an overlap by a guess.
+proof rests on only when the proof uses some but not all. Where an overlap has `ways`,
+each of these places names every combination, the first one first, and says of each,
+as of a single one, which of its rules our proof rests on: in the line and the summary,
+all, some or none; in the table, for each combination the proof uses only in part, each
+rule used and each unused. Every `[overlap]` names its kind, and one that does not is a
+fault, so no page words an overlap by a guess.
 
 ### `[coverage]`: the clause map
 
@@ -240,6 +266,9 @@ require_stamp=False)` reads a record without them.
 - the sections and keys are known, the required ones present, each of its type;
 - `scope`, `route.kind`, passage `kind`, `[overlap]` `kind` and `stage` take only the
   values above; an `[overlap]` names its `kind`, and one of the kind `step` has a `note`;
+- an `[overlap]`'s `ways` is a list of combinations, each a list of axiom names, in an
+  overlap of the kind `states` or `gives` alone; each combination is a different set of
+  rules from `rule` with `also` and from every other, and names no rule twice;
 - a restricted statement lists `hypotheses` and has no `omitted`; a partial one lists
   `omitted` and has `[coverage]`; a full one has neither; both kinds need a `note`;
 - `note` is one line of at most 160 characters;
@@ -258,7 +287,12 @@ require_stamp=False)` reads a record without them.
 `python3 scripts/heath.py` checks the worked examples below and every record present.
 `scripts/check_fidelity.py` adds what needs facts.json and the Lean files: that every
 proposition has a record, that the stamps are current (if not, "statement changed since
-reviewed"), and that every run of `--` lines with no Lean beneath it is declared.
+reviewed"), and that every run of `--` lines with no Lean beneath it is declared. It
+holds an `[overlap]` to them too: each rule it names, in `rule`, `also` or `ways`, is an
+axiom in facts.json, and, for the kinds `states` and `gives`, each combination is one
+that `Audit/Overlaps.lean` proves the proposition from, as `[overlap]` says above, read
+from the file's text, whose pins `lake build Audit` checks. A fault names the record,
+the combination and the rules that the file proves the proposition from.
 `scripts/render.py` reads a carried passage's `helper` as the porism or a companion
 facts.json attaches to the proposition, and stops, naming the proposition and the helper,
 on any other.

@@ -8,7 +8,9 @@ The negative suite runs these first. Temporary files stand in for Lake outputs;
 simulated builds delete, replace and create them before failing or being interrupted.
 A temporary repository stands in for the pre-flight's pass with origin/main's checks,
 whose work tree lacks the files a commit adds under the check inputs while Git's index
-still lists them.
+still lists them. Small Lean texts, never built, stand in for Audit/Overlaps.lean, for
+check_fidelity's reading of the combinations it proves, which the plant of an unproved
+combination relies on.
 """
 
 import io
@@ -783,6 +785,131 @@ class BookZeroImportTests(unittest.TestCase):
         self.assertEqual(self.findings("import Elements.Figure.Lines\n"), [])
         self.assertEqual(self.findings("import Elements.BookI.Prop01\n",
                                        "Elements/BookI/Prop02.lean"), [])
+
+
+class OverlapWayTests(unittest.TestCase):
+    """check_fidelity's hold of an [overlap]'s combinations to Audit/Overlaps.lean, without
+    Lean (#293): what `overlap_proofs` reads from the file's text, which combinations
+    `check_overlap_ways` refuses, and the record that the plant `unproved_way` writes."""
+
+    SECTION = "/-! ## Rules that state a proposition, give it at once, or supply its step -/"
+
+    @staticmethod
+    def pin(name, *axioms):
+        return (f"/--\ninfo: '{name}' depends on axioms: [{', '.join(axioms)}]\n-/\n"
+                f"#guard_msgs in\n#print axioms {name}\n")
+
+    def setUp(self):
+        self.errors = []
+        self.enterContext(patch.object(negative.check_fidelity, "errors", self.errors))
+        self.root = Path(self.enterContext(tempfile.TemporaryDirectory())).resolve()
+
+    def proofs(self, text):
+        path = self.root / f"Overlaps{len(list(self.root.iterdir()))}.lean"
+        path.write_text(text, encoding="utf-8")
+        return negative.check_fidelity.overlap_proofs(path)
+
+    def test_the_audit_file_proves_main_s_combinations(self):
+        proofs, problem = negative.check_fidelity.overlap_proofs(
+            negative.check_fidelity.AUDIT_OVERLAPS)
+        self.assertEqual(problem, "")
+        found = {ref: sorted(sorted(axioms) for _, axioms in proofs.get(ref, []))
+                 for ref in ("III.2", "III.5", "III.6")}
+        self.assertEqual(found, {
+            "III.2": [["Tacit.outside_of_between"], ["Tacit.outside_of_between"]],
+            "III.5": [["Definition15", "Tacit.inside_not_on", "Tacit.on_circle_of_len_eq"],
+                      ["Definition15", "Tacit.len_lt_of_inside", "Tacit.lt_irrefl"],
+                      ["Tacit.circle_eq", "Tacit.inside_not_on"]],
+            "III.6": [["Tacit.centre_inside", "Tacit.circle_eq", "Tacit.inside_not_on"]]})
+        for ref in ("III.2", "III.5", "III.6"):
+            n = int(ref.split(".")[1])
+            negative.check_fidelity.check_overlap_ways(ref, ref, negative.heath.load_review(
+                "III", n)["overlap"])
+        self.assertEqual(self.errors, [])
+
+    def test_only_a_pinned_theorem_of_the_first_section_of_the_proposition_s_type(self):
+        rule = "Elements.Tacit.circle_eq"
+        text = ("namespace Audit\n" + self.SECTION + "\n"
+                "/-- theorem fake : type_of% @Elements.BookIII.Prop7 := x -/\n"
+                "theorem kept : type_of% @Elements.BookIII.Prop5 := x\n"
+                "theorem nameless : type_of% @Elements.BookIII.Prop5 := x\n"
+                "theorem misnamed : type_of% @Elements.BookIII.Prop5 := x\n"
+                "theorem twice : type_of% @Elements.BookIII.Prop5 := x\n"
+                "theorem companion : type_of% @Elements.BookIII.Prop24.equalCircles := x\n"
+                "theorem fake2 : True := x\n"
+                "end Audit\nnamespace Other\n"
+                "theorem elsewhere : type_of% @Elements.BookIII.Prop6 := x\nend Other\n"
+                "namespace Audit\n/-! ## Hypotheses our measure leaves idle -/\n"
+                "theorem later : type_of% @Elements.BookIII.Prop26 := x\nend Audit\n"
+                + self.pin("Audit.kept", "propext", "Classical.choice", rule, "sorryAx",
+                           "Quot.sound")
+                + self.pin("Audit.fake", rule) + self.pin("Audit.companion", rule)
+                + self.pin("Audit.later", rule) + self.pin("Audit.elsewhere", rule)
+                + "/--\ninfo: 'Audit.other' depends on axioms: [" + rule + "]\n-/\n"
+                "#guard_msgs in\n#print axioms Audit.misnamed\n"
+                + "/--\ninfo: 'Audit.twice' depends on axioms: [" + rule + "]\n---\n"
+                "info: 'Audit.twice' depends on axioms: [" + rule + "]\n-/\n"
+                "#guard_msgs in\n#print axioms Audit.twice\n"
+                + "-- " + self.pin("Audit.nameless", rule).replace("\n", " "))
+        proofs, problem = self.proofs(text)
+        self.assertEqual(problem, "")
+        self.assertEqual(proofs, {"III.5": [("Audit.kept", frozenset(
+            {"Tacit.circle_eq", "_root_.sorryAx"}))]})
+
+    def test_a_file_without_its_first_section_is_named(self):
+        for text, why in (("theorem t : type_of% @Elements.BookIII.Prop5 := x\n", "no"),
+                          (self.SECTION + "\n" + self.SECTION + "\n", "more than one")):
+            with self.subTest(why=why):
+                proofs, problem = self.proofs(text)
+                self.assertEqual(proofs, {})
+                self.assertIn(f"has {why} section headed \"## Rules that state", problem)
+        proofs, problem = negative.check_fidelity.overlap_proofs(self.root / "Missing.lean")
+        self.assertEqual((proofs, problem[-10:]), ({}, "is missing"))
+
+    def test_each_combination_must_be_proved_exactly(self):
+        overlap = {"rule": "Tacit.circle_eq", "also": ["Tacit.inside_not_on"], "kind": "gives",
+                   "ways": [["Definition15", "Tacit.inside_not_on", "Tacit.on_circle_of_len_eq"],
+                            ["Definition15", "Tacit.len_lt_of_inside"],
+                            ["Definition15", "Tacit.len_lt_of_inside", "Tacit.lt_irrefl",
+                             "Tacit.circle_eq"]]}
+        negative.check_fidelity.check_overlap_ways("III.5", "review/III/05.toml", overlap)
+        self.assertEqual([e.split(" names ")[0] for e in self.errors],
+                         ["review/III/05.toml: [overlap] `ways` 2",
+                          "review/III/05.toml: [overlap] `ways` 3"])
+        self.assertIn("The file proves III.5 from [Tacit.circle_eq, Tacit.inside_not_on] "
+                      "(`Audit.III_5`), from [Definition15, Tacit.len_lt_of_inside, "
+                      "Tacit.lt_irrefl] (`Audit.III_5_crossing`) and from [Definition15, "
+                      "Tacit.inside_not_on, Tacit.on_circle_of_len_eq] (`Audit.III_5_radius`).",
+                      self.errors[0])
+        self.errors.clear()
+        negative.check_fidelity.check_overlap_ways(
+            "III.7", "review/III/07.toml", {"rule": "Tacit.circle_eq", "kind": "states"})
+        self.assertEqual(len(self.errors), 1)
+        self.assertIn("The file has no theorem there of type "
+                      "`type_of% @Elements.BookIII.Prop7` with its axioms pinned", self.errors[0])
+
+    def test_the_plant_adds_one_way_and_keeps_the_rest_of_the_record(self):
+        import tomllib
+        text = negative.heath.review_path("III", 5).read_text()
+        before = tomllib.loads(text)
+        planted, k = negative.with_way(text, negative.UNPROVED_WAY)
+        after = tomllib.loads(planted)
+        self.assertEqual(k, len(before["overlap"].get("ways", [])) + 1)
+        self.assertEqual(after["overlap"].pop("ways")[-1], negative.UNPROVED_WAY)
+        before["overlap"].pop("ways", None)
+        self.assertEqual(after, before)
+        # A record that has `ways` already, written across lines, gains the plant's at the end.
+        twice, k = negative.with_way(planted, ["Tacit.circle_eq", "Tacit.centre_inside"])
+        self.assertEqual((k, tomllib.loads(twice)["overlap"]["ways"][-2:]),
+                         (2, [negative.UNPROVED_WAY, ["Tacit.circle_eq", "Tacit.centre_inside"]]))
+        record = negative.heath.validate_review(after | {"overlap": tomllib.loads(planted)[
+            "overlap"]}, "III", 5, require_stamp=False, where="the planted record")
+        negative.check_fidelity.check_overlap_ways("III.5", "the planted record",
+                                                   record["overlap"])
+        self.assertEqual(len(self.errors), 1, self.errors)
+        self.assertTrue(self.errors[0].startswith(
+            f"the planted record: [overlap] `ways` {k - 1} names "
+            "[Tacit.len_lt_of_inside, Tacit.lt_irrefl] as containing III.5"), self.errors[0])
 
 
 if __name__ == "__main__":
