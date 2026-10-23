@@ -22,9 +22,12 @@
 
   What stays the same. The checks, their commands and their order. The negative tests, in
   CI's `negative` job and in the pre-flight's `NEGATIVE`, which the coordinator ruled out
-  of this card's scope. CI's `model` job, whose one command stays a list of the
-  pre-flight's own beside `NEGATIVE`, since the registry holds the `check` job alone: on
-  22 October 2026 the coordinator ruled that it stays built in, as `NEGATIVE` does. Every
+  of this card's scope. CI's `model` job, whose command stays a list of the pre-flight's
+  own beside `NEGATIVE`, since the registry holds the `check` job alone: on 22 October
+  2026 the coordinator ruled that it stays built in, as `NEGATIVE` does. That list leaves
+  out the job's second step, `results_check.py`, which only CI runs until it joins the
+  list ([#378](https://github.com/jackChallis/stoicheia/pull/378)), and the tests name it
+  as the job's one step CI alone runs. Every
   job's name, and so the ruleset's required checks. While origin/main holds no registry,
   as for the train that brings it, the pre-flight runs the sequence built into
   `scripts/safe_push.py`, the one every train was judged by before. The tests pin that

@@ -74,7 +74,6 @@ theorem onRay_iff_sameSide {X Q Y : Point} {ℓ m : Line} (hXQ : X ≠ Q) (hXℓ
     (hQℓ : OnLine Q ℓ) (hXm : OnLine X m) (hQm : ¬ OnLine Q m) (hYℓ : OnLine Y ℓ)
     (hYX : Y ≠ X) : OnRay Y X Q ↔ SameSide Y Q m := by
   have hℓm : m ≠ ℓ := fun e => hQm (e ▸ hQℓ)
-  have hYm : ¬ OnLine Y m := fun hYm => hℓm (line_unique hYX hYm hXm hYℓ hXℓ)
   constructor
   · rintro ⟨-, -, -, hn⟩
     refine Classical.byContradiction fun hs => hn ?_
@@ -180,18 +179,14 @@ theorem side_parity (hXQ : X ≠ Q) (hXR : X ≠ R) (hXℓ : OnLine X ℓ) (hQ�
   · /- Neither straight line is crossed, and the ends agree about both. -/
     have nQ := not_crosses_of_sameSide hXℓ hQℓ hℓ
     have nR := not_crosses_of_sameSide hXm hRm hm
-    have e₁ := eℓ.mp hℓ
-    have e₂ := em.mp hm
     grind
   · /- Only XR is crossed. -/
     obtain ⟨hR', nQ⟩ := one_line_crossed hXR hXm hRm hXℓ hQℓ hRℓ hAm hBm hX hm hℓ
-    have e₁ := eℓ.mp hℓ
     have e₂ : ¬ (SameSide A Q m ↔ SameSide B Q m) := fun e => hm (em.mpr e)
     grind
   · /- Only XQ is crossed. -/
     obtain ⟨hQ', nR⟩ := one_line_crossed hXQ hXℓ hQℓ hXm hRm hQm hAℓ hBℓ hX hℓ hm
     have e₁ : ¬ (SameSide A R ℓ ↔ SameSide B R ℓ) := fun e => hℓ (eℓ.mpr e)
-    have e₂ := em.mp hm
     grind
   · /- Both are crossed, at different points, since AB misses X. -/
     have e₁ : ¬ (SameSide A R ℓ ↔ SameSide B R ℓ) := fun e => hℓ (eℓ.mpr e)

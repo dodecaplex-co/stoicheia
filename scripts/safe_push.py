@@ -359,7 +359,8 @@ CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "revie
 # Of those, the values pinned to the edition, not code. The lock and the model's hash of it
 # are compared exactly, both ways: check_fidelity.py the lock with facts.json, and the
 # model's run its hash with the lock. The model's page and results are its account of the
-# laws, which no check reads but for the page's count markers. The certificate's
+# laws; `results_check.py` holds them to one commit and the present harness, and
+# `check_fidelity.py` the page's count markers to what they count. The certificate's
 # expectations are checked one way only, each for what it says, so a change to them is a
 # pinned value only while it keeps every expectation origin/main has (kept_expectations).
 # The model's law names are compared with the lock both ways, but a line of them changed
@@ -478,7 +479,9 @@ CHECKS = [
     ("python3 scripts/check_links.py", [PY, "scripts/check_links.py"]),
 ]
 # CI's `model` job, run after the `check` job's sequence, in the same worktree. The
-# registry holds the `check` job's checks alone, so this stays here, as NEGATIVE does.
+# registry holds the `check` job's checks alone, so this stays here, as NEGATIVE does. It
+# leaves out the model job's `results_check.py`, which only CI runs until it joins this
+# list (WORKFLOW, section 8).
 MODEL_JOB = [
     ("python3 -I tests/model/run.py --fast", [PY, "-I", "tests/model/run.py", "--fast"]),
 ]

@@ -367,6 +367,9 @@ RENDER_COMMAND = "python3 scripts/render.py"
 # CI's `check` job after its setup: one step, running the registry's checks of the job
 # (#229), each as the pull request's registry lists it.
 RUN_CHECKS = "python3 scripts/run_checks.py --job check"
+# The one step of CI's `model` job that safe_push's MODEL_JOB leaves out, until the
+# command joins it (#378; WORKFLOW, section 8).
+CI_ONLY_MODEL = ["python3 -I tests/model/results_check.py"]
 SETUP_ACTIONS = {"actions/checkout@v5": frozenset(),
                  "actions/setup-python@v5": frozenset({"python-version"})}
 ELAN_INSTALL = (
@@ -7231,11 +7234,13 @@ class Units(unittest.TestCase):
         freshness = checks.index(FRESHNESS_COMMAND)
         self.assertEqual(checks[freshness - 1], RENDER_COMMAND)
         self.assertEqual(entries[freshness].argv(), ["git", "status", "--porcelain"])
-        # And CI's `model` and `negative` jobs run what MODEL_JOB and NEGATIVE run.
+        # And CI's `model` and `negative` jobs run what MODEL_JOB and NEGATIVE run, but for
+        # the model job's results_check.py, which only CI runs until it joins MODEL_JOB
+        # (#378; WORKFLOW, section 8): named here, so that no other step can be CI's alone.
         jobs = yaml.safe_load(ci)["jobs"]
         runs = [line.strip() for step in jobs["model"]["steps"]
                 for line in step.get("run", "").splitlines() if line.strip()]
-        self.assertEqual(runs, [name for name, _ in safe_push.MODEL_JOB])
+        self.assertEqual(runs, [name for name, _ in safe_push.MODEL_JOB] + CI_ONLY_MODEL)
         runs = [line.strip() for step in jobs["negative"]["steps"][1:]
                 for line in step.get("run", "").splitlines() if line.strip()
                 and not step.get("uses") and "elan" not in line]

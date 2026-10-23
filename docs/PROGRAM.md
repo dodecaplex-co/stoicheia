@@ -23,7 +23,7 @@ A book meets the standard when its acceptance checklist (`ACCEPTANCE.md`)
 passes with no failures, an independent audit by a model family that wrote none of it
 agrees, and a cold outside reading passes the gate of the [review rubric](RUBRIC.md). A few
 deliberate limitations are allowed when they are stated plainly where they occur. In Book
-III, every statement has full scope. Its records remain at review stage `exceptions`, and
+III, every statement has full scope. Its records are all at review stage `full`, and
 the overlap catalogue names the places where System E's rules already contain a
 proposition (III.2, and III.5 and III.6 with rules together). I.45 and II.14, restricted
 from 20 October 2026 to a figure given with a checked division into triangles, take
@@ -71,7 +71,7 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 |---|---|---|---|---|---|---|
 | I | 48 of 48 proved, and I.15's porism and ten companion theorems | released (I.45 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
 | II | 14 of 14 proved, and ten companion theorems | released (II.14 for any figure given by its outline, done 22 Oct, #116; next: acceptance, then the consolidation release of Books I–III) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
-| III | 37 of 37 proved, and the porisms of III.1 and III.16 and 18 companion theorems | released (next: centre-rule restatements, #59; full records, #29) | 37 of 37 current: 10 at "full", 27 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
+| III | 37 of 37 proved, and the porisms of III.1 and III.16 and 18 companion theorems | released (next: centre-rule restatements, #59; full records, #29) | 37 of 37 current: 37 at "full", 0 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
 | IV | not stated | brief (draft, awaiting approval) | — | — | — | — |
 | V–XIII | not begun | — | — | — | — | — |
 
@@ -104,7 +104,7 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 2 | I.40 and II.1 general; I.45 and II.14 with supplied divisions | done, 18 Oct: proved in Staging ([#88]), and in the edition with their records ([#19], [#102](https://github.com/jackChallis/stoicheia/pull/102)); I.45 and II.14 restricted from 20 Oct, for figures supplied with a checked division, and full again from 22 Oct, for a figure given by its outline, with the division and the independence of area proved ([#116]) |
 | 3 | Arcs and segments; III.24 | done: proved in Staging ([#89]), and in the edition ([#25]); its meeting fact for an arc is `Prop25.meets` in `Elements/BookIII/Prop25.lean` |
 | 4 | III.14, III.15, III.25 | done: proved in Staging ([#90]), then moved into `Elements/` in train C6b ([#28]) |
-| 5 | Consolidation review of all 99 | Books I and II: all records at `full` ([#115]); Book III: all at `exceptions`, full review after its migrations ([#29]) |
+| 5 | Consolidation review of all 99 | Books I and II: all records at `full` ([#115]); Book III: all at `full` ([#29]) |
 | 6 | Acceptance, then a consolidation release of Books I–III | report exists; acceptance has not passed; CI checks regressions against main ([#148]) |
 
 ### Landed on 18 October
@@ -173,8 +173,7 @@ work lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull reques
   [brief 0008](briefs/0008-centre.md) removes the unused `centre-given` from
   `review/terms.toml`. The construction (step 3), its guard (step 4) and the restatements
   with their records (step 6) are done.
-- **Book III's review records** remain at `exceptions`; they reach `full` after the
-  migrations and review ([#29]). Books I and II's records are already at `full`
+- **Book III's review records** are all at `full` ([#29]), as Books I and II's are
   ([#115]).
 - **Acceptance** still has failing items in its report. CI now checks every pull request
   against main ([#148]); the consolidation release must pass every item.

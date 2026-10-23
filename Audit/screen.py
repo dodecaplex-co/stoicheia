@@ -121,23 +121,82 @@ what the next run will show.
 No run of this screen on the restated statements is recorded here.
 
 usage (from the repository root, after `lake build`):
-    python3 Audit/screen.py OUTDIR [--jobs N]
+    python3 -I Audit/screen.py OUTDIR [--jobs N] [--write]
+    python3 -I Audit/screen.py --check-current
 
 It writes its Lean files and logs to OUTDIR, which must be outside the repository. Each
 job is one Lean process on one thread, so N jobs keep N cores busy. It takes about an hour
 and a half of processor time: some eight minutes with twelve jobs on an idle machine.
+Every try imports what `lake build` built, not the sources. So a run reads the commit and
+its inputs, checks with `lake build --no-build Elements` that the build is current, and
+reads them again before any Lean runs. Before --write records a completed run, it checks
+the build again, after every try and retry, and reads the commit and the inputs again. It
+stops if either build check fails, or if the commit or the inputs changed around one of
+those checks, and a record names what it read first. Checks at the two ends of a run
+cannot show that nothing changed and changed back in between.
 Standard library only. Its cases, which need no Lean, are in tests/test_screen.py.
+
+What a run read. With --write, a run that ends with every known row closed by a rule
+records, in Audit/screen-run.toml (RECORD), the one file it writes in the repository, the
+commit, the number of statements in facts.json, and a sha256 of each part of what decides
+its result, and of them all. That is more than the statements and the rules: every file of
+tries imports Elements, so the library's notation, in which SPECS and CONTROLS are
+written, and its instances count too (`grind`'s AC solver looks for `Std.Associative` and
+`Std.Commutative`, which Elements/Figure/Areas.lean gives the sum of magnitudes). So the
+parts are facts.json's statements (name, reference, kind and statement), its rules
+(modules and statements) and its words (`vocabulary`); every Lean file of the library; the
+toolchain's files; and this file without this docstring, which records the run and so is
+written after it, with any other Python module under Audit/, which a run without -I could
+import in place of a standard one. An ignored file among the input files counts, and the
+inputs are then not a commit's; ignored files outside the input paths and modules
+under __pycache__ do not count. No input file or its directory may be a symbolic link,
+since Git commits the link and the run would read its target. --write records only a run on
+a commit's inputs as committed, and stops before the run otherwise. `--check-current`
+refuses a record that does not name a commit's 40 hex digits in that state, computes the
+parts again, without Lean, and exits 1 when the record is missing, the inputs differ,
+matching inputs are not committed, or an input path is a symbolic link. It names each part
+that changed. The run needs Lean and takes the time above, so this is a release step
+(docs/WORKFLOW.md, section 10, step 10), not one of CI's checks. The record is written only
+by a run, never by hand. `--check-current` reads the record, not the run: a record written
+by hand, or by `write_record` with no run, passes it, and the record holds only hashes. The
+run's closing lines, quoted in the release's pull request, are its evidence.
 """
 
 import argparse
+import ast
+import datetime
+import hashlib
 import itertools
 import json
+import os
 import re
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+
+# What a run read (see "What a run read" above): the record, and the files it pins beside
+# facts.json and this file. Lake reads lakefile.lean in preference to lakefile.toml, so an
+# absent toolchain file is recorded as absent. A module under Audit/, by these endings,
+# could be imported in place of a standard one by a run without -I, so each is pinned too.
+RECORD = ROOT / "Audit" / "screen-run.toml"
+SCREEN = "Audit/screen.py"
+LIBRARY = ("Elements.lean", "Elements")
+TOOLCHAIN = ("lean-toolchain", "lakefile.toml", "lakefile.lean", "lake-manifest.json")
+MODULES = (".py", ".pyc", ".pyd", ".so")
+INPUTS = ("facts.json", *LIBRARY, *TOOLCHAIN, *[f"Audit/*{m}" for m in MODULES])   # for git
+COMMITTED = "inputs as committed"   # the state of a record --check-current accepts
+PARTS = {
+    "statements": "the statements in facts.json",
+    "rules": "the rules in facts.json (axiom_modules and axiom_types)",
+    "words": "the words the statements and the rules reach (facts.json's vocabulary)",
+    "library": "the library's Lean files (Elements.lean and Elements/), which the tries import",
+    "toolchain": f"the toolchain's files ({', '.join(TOOLCHAIN)})",
+    "screen": "Audit/screen.py, apart from its docstring, and any other Python module under "
+              "Audit/",
+}
 
 # Rules that speak of circles: the pairs among these are screened against every statement.
 CIRCLE = """Definition15 Postulate3 Tacit.exists_centre Tacit.centre_inside Tacit.inside_not_on
@@ -517,16 +576,313 @@ def lost(closed: list[str]) -> list[str]:
     return [d for d in KNOWN if ident(d) not in ruled]
 
 
+def sha(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def canonical(value) -> bytes:
+    """A value of facts.json as bytes that do not depend on the order of its keys."""
+    return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()
+
+
+def files_digest(root: Path, paths: list[str], read=Path.read_bytes) -> str:
+    """The sha256 of these files, each by its path and its bytes, or as absent."""
+    h = hashlib.sha256()
+    for rel in paths:
+        p = root / rel
+        data = read(p) if p.is_file() else None
+        h.update(rel.encode() + b"\0"
+                 + (b"absent" if data is None else str(len(data)).encode() + b"\0" + data)
+                 + b"\0")
+    return h.hexdigest()
+
+
+def library_files(root: Path) -> list[str]:
+    """Every Lean file that `import Elements` reads: the root and those under Elements/."""
+    return [LIBRARY[0]] + sorted(p.relative_to(root).as_posix()
+                                 for p in (root / LIBRARY[1]).rglob("*.lean"))
+
+
+def screen_files(root: Path) -> list[str]:
+    """This file, then every other Python module under Audit/, outside __pycache__."""
+    return [SCREEN] + sorted(
+        rel for p in (root / "Audit").rglob("*") if p.suffix in MODULES
+        and "__pycache__" not in p.parts and (rel := p.relative_to(root).as_posix()) != SCREEN)
+
+
+def without_docstring(text: str) -> str:
+    """A Python file's text without its docstring, which the screen's run records, so it is
+    written after the run. Code on the docstring's last line keeps the whole text."""
+    body = ast.parse(text).body
+    if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) \
+            and isinstance(body[0].value.value, str):
+        if len(body) > 1 and body[1].lineno <= body[0].end_lineno:
+            return text
+        lines = text.splitlines(keepends=True)
+        return "".join(lines[:body[0].lineno - 1] + lines[body[0].end_lineno:])
+    return text
+
+
+def inputs(root: Path, facts: dict) -> dict[str, str]:
+    """What decides a run, part by part (PARTS), each as a sha256."""
+    statements = sorted(({k: e.get(k) for k in ("name", "ref", "kind", "statement")}
+                         for e in facts["propositions"]), key=lambda e: e["name"])
+    screen = root / SCREEN
+    return {
+        "statements": sha(canonical(statements)),
+        "rules": sha(canonical({"modules": facts["axiom_modules"],
+                                "types": facts.get("axiom_types")})),
+        "words": sha(canonical(facts.get("vocabulary"))),
+        "library": files_digest(root, library_files(root)),
+        "toolchain": files_digest(root, list(TOOLCHAIN)),
+        "screen": files_digest(root, screen_files(root), lambda p: without_docstring(
+            p.read_text(encoding="utf-8")).encode() if p == screen else p.read_bytes()),
+    }
+
+
+def total(parts: dict[str, str]) -> str:
+    """The sha256 of all the parts together."""
+    return sha(canonical(parts))
+
+
+def git(*args: str, root: Path = ROOT) -> str | None:
+    try:
+        p = subprocess.run(["git", *args], cwd=root, capture_output=True, text=True)
+    except OSError:
+        return None
+    return p.stdout.strip() if p.returncode == 0 else None
+
+
+def input_paths(root: Path) -> list[str]:
+    """The file paths whose contents `inputs` reads when they exist."""
+    return ["facts.json", *library_files(root), *TOOLCHAIN, *screen_files(root)]
+
+
+def input_symlinks(root: Path) -> list[str]:
+    """Symbolic links among input files or their directory components."""
+    found = set()
+    for rel in ("facts.json", LIBRARY[0], LIBRARY[1], *TOOLCHAIN, "Audit", SCREEN):
+        path = root
+        for part in Path(rel).parts:
+            path /= part
+            if path.is_symlink():
+                found.add(path.relative_to(root).as_posix())
+                break
+    for rel, excluded, suffixes in ((LIBRARY[1], set(), {".lean"}),
+                                    ("Audit", {"__pycache__"}, set(MODULES))):
+        base = root / rel
+        if base.is_symlink() or not base.is_dir():
+            continue
+        for directory, dirs, files in os.walk(base, followlinks=False):
+            dirs[:] = [name for name in dirs if name not in excluded]
+            for name in list(dirs):
+                path = Path(directory) / name
+                if path.is_symlink():
+                    found.add(path.relative_to(root).as_posix())
+                    dirs.remove(name)
+            for name in files:
+                path = Path(directory) / name
+                if path.is_symlink() and (not path.exists() or path.suffix in suffixes):
+                    found.add(path.relative_to(root).as_posix())
+    return sorted(found)
+
+
+def revision(root: Path) -> tuple[str, str]:
+    """The commit checked out, and whether the inputs are as it has them (COMMITTED)."""
+    commit = git("rev-parse", "HEAD", root=root) or "unknown"
+    links = input_symlinks(root)
+    if links:
+        return commit, "input paths include symbolic links: " + ", ".join(links)
+    status = git("status", "--porcelain", "--", *INPUTS, root=root)
+    ignored = git("status", "--porcelain", "--ignored=matching", "--untracked-files=all",
+                  "--", *input_paths(root), root=root)
+    state = ("unknown" if status is None or ignored is None else
+             "inputs differ from this commit" if status or ignored else COMMITTED)
+    return commit, state
+
+
+def record_text(parts: dict[str, str], commit: str, state: str, count: int) -> str:
+    """The record of a run, as --write writes it."""
+    return "\n".join([
+        "# What Audit/screen.py last ran on: written by",
+        "# `python3 -I Audit/screen.py OUTDIR --write` when a run ends with every known row",
+        "# closed by a rule, never by hand. `python3 -I Audit/screen.py --check-current`",
+        "# compares it with the inputs now (docs/WORKFLOW.md, section 10).",
+        f'commit = "{commit}"',
+        f'state = "{state}"',
+        f"statements = {count}",
+        f'date = "{datetime.date.today().isoformat()}"',
+        f'inputs = "{total(parts)}"',
+        "",
+        "[parts]",
+        *[f'{k} = "{v}"' for k, v in parts.items()],
+    ]) + "\n"
+
+
+def write_record(root: Path, read: dict[str, str], count: int, path: Path = RECORD, *,
+                 at: tuple[str, str]) -> None:
+    """Record what the run read, at the commit and state `revision` gave when it read them,
+    unless its inputs or that commit changed while it ran, or they are not a commit's;
+    through a new file renamed over the record, which is never a symbolic link."""
+    if links := input_symlinks(root):
+        sys.exit("screen: input paths include symbolic links, so nothing is recorded: "
+                 + ", ".join(links))
+    facts = json.loads((root / "facts.json").read_text(encoding="utf-8"))
+    moved = [k for k, v in inputs(root, facts).items() if read[k] != v]
+    if moved:
+        sys.exit("screen: its inputs changed while it ran, so nothing is recorded: "
+                 + "; ".join(PARTS[k] for k in moved))
+    commit, state = at
+    if revision(root) != at:
+        sys.exit(f"screen: the commit checked out, or the state of its inputs, changed while "
+                 f"it ran (it was {commit[:12]}, {state}, as it read them), so nothing is "
+                 "recorded")
+    if state != COMMITTED or not re.fullmatch(r"[0-9a-f]{40}", commit):
+        sys.exit(f"screen: the inputs are not a commit's ({state}), so nothing is recorded")
+    if path.is_symlink():
+        sys.exit(f"screen: {path.relative_to(root)} is a symbolic link, so nothing is recorded")
+    new = path.with_name(f".{path.name}.{os.getpid()}")
+    with open(new, "x", encoding="utf-8") as f:
+        f.write(record_text(read, commit, state, count))
+    os.replace(new, path)
+    print(f"recorded what this run read in {path.relative_to(root)}: commit {commit[:12]} "
+          f"({state}), {count} statements")
+
+
+def check_current(root: Path = ROOT, path: Path = RECORD) -> tuple[list[str], dict, list[str]]:
+    """(the problems, the record as read, the parts changed since the run it records). The
+    problems are a missing or unreadable record, or one no run on a commit's inputs wrote,
+    and each part of the inputs that differs."""
+    name = path.relative_to(root).as_posix() if root in path.parents else str(path)
+    if path.is_symlink():
+        return [f"{name} is a symbolic link: a run writes the record as a file"], {}, []
+    if not path.is_file():
+        return ([f"there is no record of a run at {name}: run `python3 -I Audit/screen.py "
+                 "OUTDIR --write` on this revision"], {}, [])
+    try:
+        rec = tomllib.loads(path.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError, UnicodeDecodeError) as e:
+        return [f"{name} does not read: {e}"], {}, []
+    parts = rec.get("parts")
+    if not isinstance(parts, dict) or set(parts) != set(PARTS) \
+            or not isinstance(rec.get("statements"), int) or rec.get("inputs") != total(parts):
+        return [f"{name} is not as a run writes it: its parts, its statements or its inputs "
+                "hash do not agree"], rec, []
+    if not re.fullmatch(r"[0-9a-f]{40}", str(rec.get("commit"))) \
+            or rec.get("state") != COMMITTED:
+        return [f"{name} records a run on inputs other than a commit's: --write records only "
+                f'a commit\'s 40 hex digits, with the state "{COMMITTED}"'], rec, []
+    if links := input_symlinks(root):
+        return ["the inputs now include symbolic links: " + ", ".join(links)], rec, []
+    try:
+        facts = json.loads((root / "facts.json").read_text(encoding="utf-8"))
+        now = inputs(root, facts)
+        current_commit, current_state = revision(root)
+    except (OSError, ValueError, KeyError, TypeError, SyntaxError) as e:
+        return [f"the inputs do not read now: {e!r}"], rec, []
+    if parts["statements"] == now["statements"] \
+            and rec["statements"] != len(facts["propositions"]):
+        return [f"{name} is not as a run writes it: it counts {rec['statements']} statements, "
+                f"but the statements it pins are {len(facts['propositions'])}"], rec, []
+    if total(now) == rec["inputs"]:
+        if current_state != COMMITTED or not re.fullmatch(r"[0-9a-f]{40}", current_commit):
+            return [f"the inputs now are not a commit's ({current_state}): matching hashes "
+                    "are current only for committed inputs"], rec, []
+        return [], rec, []
+    changed = [k for k in PARTS if parts[k] != now[k]]
+    problems = []
+    for k in changed:
+        detail = (f" ({rec['statements']} at the run, {len(facts['propositions'])} now)"
+                  if k == "statements" else "")
+        problems.append(f"changed since the run at {str(rec.get('commit'))[:12]}: {PARTS[k]}"
+                        + detail)
+    return problems, rec, changed
+
+
+def since(rec: dict, changed: list[str]) -> list[str]:
+    """What git can say of the parts changed, when it has the commit the record names and
+    the run read that commit's files: the statements added, removed or restated, and the
+    files changed."""
+    commit = str(rec.get("commit", ""))
+    if rec.get("state") != COMMITTED or not re.fullmatch(r"[0-9a-f]{40}", commit):
+        return []
+    notes = []
+    if "statements" in changed and (then := git("show", f"{commit}:facts.json")) is not None:
+        try:
+            old = {e["name"]: e for e in json.loads(then)["propositions"]}
+            now = json.loads((ROOT / "facts.json").read_text(encoding="utf-8"))
+            new = {e["name"]: e for e in now["propositions"]}
+        except (OSError, ValueError, KeyError, TypeError):
+            old = new = {}
+        for label, names in (("added", sorted(set(new) - set(old))),
+                             ("removed", sorted(set(old) - set(new))),
+                             ("restated", sorted(n for n in set(old) & set(new)
+                                                 if any(old[n].get(k) != new[n].get(k)
+                                                        for k in ("ref", "kind", "statement"))))):
+            if names:
+                notes.append(f"statements {label}: {', '.join(names)}")
+    paths = {"library": list(LIBRARY), "toolchain": list(TOOLCHAIN),
+             "screen": [f"Audit/*{m}" for m in MODULES]}
+    files = [p for k in changed if k in paths
+             for p in (git("diff", "--name-only", commit, "--", *paths[k]) or "").split()]
+    if files:
+        notes.append(f"files changed since {commit[:12]}: " + ", ".join(files[:12])
+                     + (f" and {len(files) - 12} more" if len(files) > 12 else ""))
+    return notes
+
+
+def report_current() -> int:
+    """--check-current: 0 when the record names what the screen would read now, else 1."""
+    problems, rec, changed = check_current()
+    if not problems:
+        print(f"screen: current: {RECORD.relative_to(ROOT)} records a run at "
+              f"{str(rec.get('commit'))[:12]} on {rec['statements']} statements, and what "
+              "decides its result is unchanged")
+        return 0
+    print("screen: not current; run it again on this revision with --write "
+          "(docs/WORKFLOW.md, section 10, step 10):")
+    for p in problems + since(rec, changed):
+        print("  " + p)
+    return 1
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("outdir", type=Path)
+    ap.add_argument("outdir", type=Path, nargs="?")
     ap.add_argument("--jobs", type=int, default=12)
+    ap.add_argument("--write", action="store_true",
+                    help=f"record what a run read in {RECORD.relative_to(ROOT)}")
+    ap.add_argument("--check-current", action="store_true",
+                    help="compare that record with the inputs now, without Lean")
     args = ap.parse_args()
+    if args.check_current:
+        if args.outdir or args.write:
+            ap.error("--check-current takes no OUTDIR and no --write")
+        return report_current()
+    if args.outdir is None:
+        ap.error("OUTDIR is required")
     out = args.outdir.resolve()
     if out == ROOT or ROOT in out.parents:
         sys.exit("screen: OUTDIR must be outside the repository")
+    at = revision(ROOT)
+    if args.write and at[1] != COMMITTED:
+        sys.exit(f"screen: --write records only a run on a commit's inputs as committed, and "
+                 f"these are not ({at[1]}): commit them, or run without --write")
+    facts = json.loads((ROOT / "facts.json").read_text(encoding="utf-8"))
+    read = inputs(ROOT, facts)
+    try:
+        built = subprocess.run(["lake", "build", "--no-build", "Elements"], cwd=ROOT,
+                               capture_output=True, text=True).returncode == 0
+    except OSError:
+        sys.exit("screen: there is no `lake` to run (export PATH=$HOME/.elan/bin:$PATH)")
+    if not built:
+        sys.exit("screen: the build of Elements is not current with its sources, and every try "
+                 "imports the build: run `lake build` first")
+    if revision(ROOT) != at or inputs(
+            ROOT, json.loads((ROOT / "facts.json").read_text(encoding="utf-8"))) != read:
+        sys.exit("screen: the commit or the inputs changed while the build was checked, so "
+                 "the build checked may not be theirs: nothing is run")
     out.mkdir(parents=True, exist_ok=True)
-    facts = json.loads((ROOT / "facts.json").read_text())
     kinds: dict[str, int] = {}
     for e in facts["propositions"]:
         kinds[e["kind"]] = kinds.get(e["kind"], 0) + 1
@@ -571,6 +927,17 @@ def main() -> int:
         print(f"screen: the known rows {missing} did not close by a rule; the screen may be "
               "broken")
         return 1
+    if args.write:
+        try:
+            built = subprocess.run(["lake", "build", "--no-build", "Elements"], cwd=ROOT,
+                                   capture_output=True, text=True).returncode == 0
+        except OSError:
+            sys.exit("screen: there is no `lake` to run (export PATH=$HOME/.elan/bin:$PATH)")
+        if not built:
+            sys.exit("screen: the build of Elements changed while the screen ran and is not "
+                     "current with its sources, so nothing is recorded: run `lake build` "
+                     "and the screen again")
+        write_record(ROOT, read, len(facts["propositions"]), RECORD, at=at)
     return 0
 
 
