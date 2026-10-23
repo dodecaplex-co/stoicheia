@@ -1419,6 +1419,9 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       command may write the directory, nor rename or change a directory above it (which
       would carry the cache away), and the harness starts no process but through it and
       imports no module but a builtin, each other it needs being imported when it starts.
+      A `train/*` branch has no cache: its train check loads origin/main's
+      `check_train.py` into the harness after the commit's code has run (#383), so the
+      flag sets no sandbox for it, and the run goes on as without the flag.
       Where the sandbox cannot be had (not macOS, no
       `sandbox-exec`, already inside a sandbox, or a profile that does not stop a write to
       the directory or the one above it), there is no cache that run, and the pre-flight

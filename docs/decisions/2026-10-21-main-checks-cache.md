@@ -53,9 +53,15 @@
     first in the harness's own directory, one a sandboxed command may write. At first,
     `platform.mac_ver()` imported `plistlib`, with `xml.parsers.expat`, when the key was
     first computed, after step 3 had run the commit's code, and the allow-list imported
-    `tomllib` in step 2; both are now imported with the rest at the top. The `tomllib`
-    import is unconditional at module load, so an unsupported interpreter can fail before
-    the harness reaches its controlled version refusal. Tests check this as they run,
+    `tomllib` in step 2; both are now imported with the rest at the top. A `train/*`
+    branch's train check ([#383](https://github.com/jackChallis/stoicheia/pull/383))
+    loads origin/main's `check_train.py` into the harness's own process with
+    `importlib`, after the guards have run the commit's code; so for a train the flag
+    sets no cache and no sandbox, and the run goes on as without it, and the train check
+    refuses to run should a sandbox be set. `importlib` appears nowhere else in the
+    harness, and a test holds both. The `tomllib` import is unconditional at module load,
+    so an unsupported interpreter can fail before the harness reaches its controlled
+    version refusal. Tests check this as they run,
     by Python's own record of each process started and each module imported, any import
     but a builtin's being refused: one over the key and
     origin/main's pass, missed and hit, in the test's own process; one over the same in a

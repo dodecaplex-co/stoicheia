@@ -7347,6 +7347,36 @@ class MainChecksCache(Edge):
                 self.assertEqual(self.step(out, "generated pages"), "ok", out)
         self.assertEqual(self.origin_branch(), git(WORK, "rev-parse", "HEAD").strip())
 
+    def test_the_flag_for_a_train(self):
+        # #383: a train/* branch's train check runs origin/main's check_train.py in the
+        # harness's own process after the guards have run the commit's code, so with the
+        # flag a train gets no cache and no sandbox; and the check refuses to run if one is
+        # set, should a later change call it so.
+        root = self.root / "train"
+        with mock.patch.object(safe_push, "CACHE", None), \
+                mock.patch.object(safe_push, "SANDBOX", None), \
+                mock.patch.object(safe_push, "sandbox_problem",
+                                  side_effect=AssertionError("a sandbox tried")), \
+                mock.patch.dict(os.environ, {"STOICHEIA_PUSH_LOG": str(root / "pushes.log")}), \
+                contextlib.redirect_stdout(io.StringIO()):
+            rep = safe_push.Report()
+            safe_push.open_cache(rep, self.R3, train=True)
+            self.assertIsNone(safe_push.CACHE)
+            self.assertIsNone(safe_push.SANDBOX)
+            self.assertEqual(rep.steps[-1].outcome, "note")
+            self.assertIn("train/* branch", rep.steps[-1].detail)
+        self.assertFalse((root / "main-checks").exists())
+        ctx = safe_push.Context(WORK, BASE, BASE, 1, str(ORIGIN), "train/for-the-test", {})
+        with mock.patch.object(safe_push, "SANDBOX", "(version 1)"), \
+                mock.patch.object(safe_push, "harness_train",
+                                  side_effect=AssertionError("check_train was read")), \
+                contextlib.redirect_stdout(io.StringIO()):
+            rep = safe_push.Report()
+            with self.assertRaises(safe_push.Refusal) as caught:
+                safe_push.train_check(ctx, "A body.", rep)
+        self.assertIn("cannot run once the main-checks cache's sandbox is set",
+                      str(caught.exception))
+
     def test_the_flag_for_a_change_of_r0_to_r2(self):
         # A change of R0 leaves step 4 to CI: there is no pass to reuse, so the flag makes,
         # reads and writes nothing, and sets no sandbox; the run says so.
@@ -7601,8 +7631,17 @@ class MainChecksCache(Edge):
                 if not isinstance(top, (ast.Import, ast.ImportFrom))
                 for node in ast.walk(top) if isinstance(node, (ast.Import, ast.ImportFrom))]
         self.assertEqual(late, [])
-        names = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
-        self.assertFalse({"importlib", "__import__"} & names)
+        # importlib only in train_check, which never runs with the sandbox set: open_cache
+        # sets none for a train/* branch, and train_check refuses if one is set (#383).
+        def names(nodes):
+            return {node.id for node in nodes if isinstance(node, ast.Name)}
+        trains = [node for node in ast.walk(tree)
+                  if isinstance(node, ast.FunctionDef) and node.name == "train_check"]
+        self.assertEqual(len(trains), 1)
+        inside = {id(node) for node in ast.walk(trains[0])}
+        self.assertFalse({"importlib", "__import__"}
+                         & names(n for n in ast.walk(tree) if id(n) not in inside))
+        self.assertNotIn("__import__", names(ast.walk(trains[0])))
         for name in ("plistlib", "tomllib"):
             self.assertIn(f"\nimport {name}", SAFE_PUSH.read_text())
 
@@ -7622,7 +7661,8 @@ class MainChecksCache(Edge):
             self.assertIsNone(safe_push.SANDBOX)
             events.append("count reader")
 
-        def activate(rep, risk):
+        def activate(rep, risk, train=False):
+            self.assertFalse(train)     # the commit is not on a train/* branch
             self.assertEqual(events, ["classification", "count reader"])
             self.assertIsNone(safe_push.SANDBOX)
             events.append("sandbox")
@@ -7637,7 +7677,7 @@ class MainChecksCache(Edge):
             return safe_push.Preflight([], [])
 
         args = mock.Mock(dry_run=True, commit=sha, branch=None, test_mode=True, title=None,
-                         main_checks_cache=True)
+                         main_checks_cache=True, body_file=None)
         with mock.patch.object(safe_push, "CACHE", None), \
                 mock.patch.object(safe_push, "SANDBOX", None), \
                 mock.patch.object(safe_push, "SANDBOX_EXEC", str(self.fake)), \

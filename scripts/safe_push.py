@@ -2239,7 +2239,6 @@ def stamp_only(repo, base, sha, path: str) -> bool:
     old, new = show(repo, base, path), show(repo, sha, path)
     if old is None or new is None or STAMP_LINE.sub("", old) != STAMP_LINE.sub("", new):
         return False
-    import tomllib
     try:
         before, after = tomllib.loads(old), tomllib.loads(new)
     except tomllib.TOMLDecodeError:
@@ -3122,15 +3121,24 @@ def sandbox_problem(profile: str, cache: Path) -> str | None:
     return None
 
 
-def open_cache(rep: Report, risk: Risk) -> None:
+def open_cache(rep: Report, risk: Risk, train: bool = False) -> None:
     """--main-checks-cache, once the change's class is known and before any check runs:
     for R3 to R5, whose pre-flight runs step 4 in full, the cache's directory, beside the
     log (made here, mode 0700, when it is missing), and the sandbox that keeps every
     command this run starts from writing it (run). Without either, the run goes on as it
     would without the flag, and says why. For R0 to R2, which leave step 4 to CI, there is
     no pass to reuse: nothing is read, written or made, and no sandbox is set (should the
-    check inputs overrule the class, short_path, origin/main's pass runs uncached)."""
+    check inputs overrule the class, short_path, origin/main's pass runs uncached). Nor
+    for a train/* branch: its train check runs origin/main's check_train.py in this
+    process after the guards have run the commit's code (train_check), and so after a
+    sandboxed command could have written the harness's directory, from which it and what
+    it imports are read; so a train runs uncached, with no sandbox, as without the flag."""
     global CACHE, SANDBOX
+    if train:
+        rep.add("1", "main-checks cache", "note", "not used this run: a train/* branch's train "
+                "check runs origin/main's check_train.py in this process after the commit's "
+                "code has run, so the run goes on as without --main-checks-cache")
+        return
     if risk.cls in LOW_CLASSES:
         rep.add("1", "main-checks cache", "skip", f"not used this run: the class {risk.cls} "
                 "leaves step 4 to CI, and the cache serves only step 4 run in full (R3 to R5)")
@@ -3798,6 +3806,11 @@ def train_check(ctx: Context, body: str, rep: Report) -> None:
     rep.heading("3. train")
     started = time.time()
     try:
+        if SANDBOX is not None:
+            # open_cache sets none for a train: never run check_train in this process once
+            # the commit's code may have written the harness's directory under the sandbox.
+            raise Refusal("the train check cannot run once the main-checks cache's sandbox "
+                          "is set")
         source = harness_train(ctx.repo, ctx.base)
         if source is None:
             raise Refusal("origin/main has no scripts/check_train.py, so no train can be "
@@ -5550,7 +5563,7 @@ def preflight_main(repo: Path, args) -> int:
         if args.main_checks_cache:
             if risk.cls not in LOW_CLASSES:
                 count_markers(ctx.repo, ctx.base)
-            open_cache(rep, risk)
+            open_cache(rep, risk, train=(ctx.branch or "").startswith("train/"))
         logs = logs_dir(sha)
         body_text = body_input(args)
         pre = check_commit(ctx, rep, logs, args.test_mode, risk,
