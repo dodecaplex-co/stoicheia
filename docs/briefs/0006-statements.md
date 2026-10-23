@@ -13,8 +13,8 @@ rules. No frozen statement changes here.
 [WORKFLOW.md](../WORKFLOW.md), section 2, requires. Each statement below was written with
 `sorry` in the `Staging` library, compiled, read back in plain words, and challenged by
 three readers who did not write it. Every finding that held has been applied; the
-appendix lists them all. The brief is for the coordinator's approval. Once approved it is
-frozen: others write against these statements, and a later change is a revision of this
+appendix lists them all. The coordinator approved and froze the brief on 18 October 2026:
+others write against these statements, and a later change is a revision of this
 brief (WORKFLOW, section 2, "Correcting a frozen brief"), never a quiet edit. The code
 states what we formalized; where the code, this brief, a review record and a page
 disagree, the disagreement is recorded and reconciled ([FORMALIZATION.md](../FORMALIZATION.md),
@@ -119,6 +119,17 @@ companions in one step. No statement's hypotheses or conclusions changed.*
 to a changed lock now have one home, tests/model/MODEL.md, "Changing the axioms", and "No
 new axioms" below points to it in place of the steps it gave. No statement changes.*
 
+**19 October 2026, after the migrations.** All statements of stages 2, 3 and 4 are proved
+and now live in `Elements/`. The staged copies and their folders have been deleted.
+For stage 4, `Foot` is in `Elements/Foundations/DefinitionsIII.lean`, `Foot.exists` and
+`Foot.unique` are in `Elements/BookIII/Squares.lean`, and III.14's and III.15's companions
+and III.25's core and companions are in their proposition files. The arc meeting fact,
+called `Arc.meets` in this brief's plan, is `Prop25.meets` before `Prop25.of_circle` in
+`Elements/BookIII/Prop25.lean`: its proof uses III.2, so it cannot live in Book Zero.
+The route of `Prop15.nearer` is accepted as described under "Routes as proved" and in
+the decisions page. The frozen declarations below stay unchanged; references to staging
+in the original plan describe their former homes.
+
 *Overtaken in part 20 October 2026
 ([issue #116](https://github.com/jackChallis/stoicheia/issues/116)): the records of I.45 and
 II.14 now claim the scope `restricted`, with the limitation `figure-with-dissection`, in
@@ -129,12 +140,20 @@ figure's outline, and show that the area does not depend on the division chosen,
 and reviewed. No statement or companion here changes; only the scope the two records claim
 does (the entry of 20 October 2026 in [the decisions page](0002-decisions.md)).*
 
+*Status, 22 October 2026: the outline proofs are in the edition, and the records of I.45
+and II.14 claim `full` again, through the companions `Prop45.outline`, `Prop14.outline` and
+`Prop14.outline_side`, which take a figure given by its outline alone, and an independent
+reader reads both records again before they land. The tag `figure-with-dissection` stays in the registry
+for the older supplied-division companions, and both records carry it for those companions alone
+([brief 0013](0013-figures.md), section 10, "Promotion, 22 October 2026"). No statement or
+companion here changes.*
+
 Base: the branch was written on main at `1e5b99a`, and has main merged in; the revision of
 18 October was written on main at `f17b427`, and the corrections after Astra's second answer
-on `b48640c`. The statements are in `Staging/`, as committed with this brief.
-`lake build Staging` passes: 102 declarations, of which 37 carry `sorry` and the rest are
-definitions, checks or proofs. Nothing in `Elements/` changes, so main's records, lock and
-CI are untouched.
+on `b48640c`. At that revision the statements were in `Staging/`, as committed with this
+brief. `lake build Staging` passed: 102 declarations, of which 37 carried `sorry` and the
+rest were definitions, checks or proofs. That change left `Elements/`, main's records,
+the lock and CI untouched.
 
 ## The owner's decisions
 
@@ -178,6 +197,11 @@ decided a fourth on 18 October; this brief is written to them:
    **Overtaken in part 20 October 2026:** the scope is `restricted` for now, with the
    limitation `figure-with-dissection`, until #116's outline proofs are proved and reviewed
    (the note at the head of this brief).
+
+   *Status, 22 October 2026:* the outline proofs are promoted, and the scope is `full`
+   again, through the outline companions, with the tag retained for the older supplied-division
+   companions (the status note at the head of
+   this brief).
 2. **III.24 is restated** to conclude that the segments are congruent, by Euclid's route:
    one segment is applied to the other. Today's proof by the radii is kept, as the
    labelled alternative proof, `Prop24.equalCircles`.
@@ -201,8 +225,8 @@ decided a fourth on 18 October; this brief is written to them:
   (`[[lean_lib]] name = "Staging"` in `lakefile.toml`, with a comment like Audit's). It is
   not in `defaultTargets`; `lake build Staging` checks it, `sorry` warnings and all. Most
   of its files import only the modules of `Elements` they need, mirroring their future
-  homes. Three, `Sums.lean`, `Stage2/BookI/Prop40.lean` and `Stage4/Foot.lean`, import all
-  of `Elements`, and the files that import them see it too. So the order of proof, in
+  homes. At the freeze, the sums, I.40 and foot files imported all of `Elements`, and
+  their importers saw it too; all three have since moved to their homes below. The order of proof, in
   which nothing cites a later proposition, is not enforced inside `Staging/`: it is checked
   when each statement moves into `Elements/`, where `check_fidelity.py` refuses a later
   citation. Nothing imports the staged files.
@@ -981,6 +1005,19 @@ division):
   note credits Gérard and F. Schur (1892 and 1898) with like theories and refers to an
   article by O. Stolz (1894)."
 
+**19 October 2026, after brief 0008's step 6.** The original declarations and
+planning notes below remain the record of their freeze; later dated additions stand. The dated notes after the affected
+blocks describe their current forms in `Elements/` at `17987153`. Centre restatements
+are no longer staged. `centre-given` has left the Book III records; the proposed
+`Prop30.halves` remains staged separately, awaiting the owner's approval, with no proof
+or companion registration.
+
+**21 October 2026, a correction to the sentence above.** `Prop30.halves` is no longer
+staged. The owner approved it on 20 October 2026; it is proved in
+`Elements/BookIII/Prop30.lean` and registered as the companion "III.30 halves", and
+`Staging/Halves/Prop30.lean` is deleted. The note after its Addition, under stage 3, gives
+the route.
+
 ## Stage 3: arcs and segments
 
 ### The words
@@ -1030,6 +1067,18 @@ def Arc.Congruent (a b : Arc) : Prop :=
   ∃ f : Point → Point, f a.B = b.B ∧ f a.C = b.C ∧
     Places f (InSegment · a) (InSegment · b) ∧ Places f (OnArc · a) (OnArc · b)
 ```
+
+**19 October 2026, step 6.** `Arc.Drawn` now lives in
+`Elements/Foundations/DefinitionsIII.lean` as:
+
+```lean
+def Arc.Drawn (a : Arc) : Prop :=
+  OnCircle a.B a.circle ∧ OnCircle a.C a.circle ∧ ¬ Collinear a.B a.C a.K
+```
+
+This supersedes the centre clause in the plain-word account below: B and C lie on
+the circle and K is off BC. The centres in `Arc.Less`, `Arc.Semicircle` and `Arc.Greater`
+stay, since their positions distinguish the kinds.
 
 - **In plain words.** An arc (Definition III.6) is a circle, the ends B, C of its base,
   and a point K naming the side, which need not be on the circle. It is drawn when its
@@ -1228,6 +1277,15 @@ theorem Prop23.point {A B E P : Point} {α : Circle} (hα : ∃ O : Point, Centr
     (OnCircle P α ↔ ∠ A P B = ∠ A E B) ∧ (InsideCircle P α ↔ ∠ A E B < ∠ A P B)
 ```
 
+**19 October 2026, step 6.** `Prop23.point` is proved in `Elements/BookIII/`
+with no centre-existence input. Its current declaration is:
+
+```lean
+theorem Prop23.point {A B E P : Point} {α : Circle} (hA : OnCircle A α) (hB : OnCircle B α)
+    (hE : OnCircle E α) (hPE : SameSideOf P E A B) :
+    (OnCircle P α ↔ ∠ A P B = ∠ A E B) ∧ (InsideCircle P α ↔ ∠ A E B < ∠ A P B)
+```
+
 - **In plain words.** On E's side of a chord AB of a circle through E, a point is on the
   circle exactly when the chord subtends at it the angle AEB, and within it exactly when it
   subtends a greater angle. It is III.23's content ("there cannot be constructed two
@@ -1274,6 +1332,16 @@ theorem Circumference.add {B C D K X Y : Point} {α : Circle} (hα : ∃ O : Poi
     circumference α B X C + circumference α C Y D = circumference α B K D
 ```
 
+**19 October 2026, step 6.** `Circumference.add` is proved in `Elements/BookIII/`
+with no centre-existence input. Its current declaration is:
+
+```lean
+theorem Circumference.add {B C D K X Y : Point} {α : Circle} (hB : OnCircle B α)
+    (hC : OnCircle C α) (hD : OnCircle D α) (hCK : SameSideOf C K B D)
+    (hX : OppositeSidesOf X D B C) (hY : OppositeSidesOf Y B C D) :
+    circumference α B X C + circumference α C Y D = circumference α B K D
+```
+
 - **In plain words.** With C on the arc BD on K's side, the circumferences BC and CD make up
   BD. **Plan:** the measures at D and B, the whole at a point beyond BD [III. 21], the angles
   of BCD [I. 32], and the quadrilateral in the circle [III. 22].
@@ -1302,6 +1370,14 @@ theorem Prop24.equalCircles {A B C D E F : Point} {AEB CFD : Circle}
 theorem Prop24.equalMeasure {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
     (h : Arc.Congruent a b) : a.measure = b.measure
 ```
+
+**19 October 2026, step 6.** `Prop24` and `Prop24.equalCircles`, now in
+`Elements/BookIII/Prop24.lean`, each drop `hAEB` and `hCFD`; every other input and
+conclusion in their frozen declarations stays. `Prop24` still concludes congruence,
+while `Prop24.equalCircles` takes its centres internally from `exists_centre` for the
+alternative proof. `Prop24.equalMeasure` keeps its written type but its `Drawn` inputs
+no longer contain centres. The historical comparison with `type_of% @Prop24` was with
+the main theorem before stage 3, not the current congruence statement.
 
 - **In plain words.** Similar segments AEB, CFD on equal bases AB, CD are congruent: one
   map puts A on C and B on D, the segment on the segment and the arc on the arc, keeping
@@ -1447,12 +1523,97 @@ theorem Arc.congruent_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) :
 - These are the bridge theorems for the representation (FORMALIZATION, section 3): they
   say what `circumference` and `Arc.Congruent` mean.
 
+### Addition, 19 October 2026: III.30's halves, proposed for the owner's approval
+
+Proposed for the owner's approval; the proof is not yet assigned. The statement is staged
+in `Staging/Halves/Prop30.lean`, in `Elements.BookIII`. Its proposed final home is immediately
+after `Prop30` in `Elements/BookIII/Prop30.lean`. It has no companion registration or review
+record entry while approval is pending.
+
+```lean
+theorem Prop30.halves {A B D P : Point} {ADB : Circle}
+    (hA : OnCircle A ADB) (hB : OnCircle B ADB)
+    (hD : OnCircle D ADB) (hDP : SameSideOf D P A B)
+    (hequal : standing ADB A B D = standing ADB D A B) :
+    ∃ Q R : Point,
+      OppositeSidesOf Q B A D ∧ OppositeSidesOf R A D B ∧
+      Arc.Drawn ⟨ADB, A, D, Q⟩ ∧ Arc.Drawn ⟨ADB, D, B, R⟩ ∧
+      Arc.Congruent ⟨ADB, A, D, Q⟩ ⟨ADB, D, B, R⟩ ∧
+      circumference ADB A Q D + circumference ADB D R B =
+        circumference ADB A P B ∧
+      (∀ X : Point, OnArc X ⟨ADB, A, B, P⟩ ↔
+        OnArc X ⟨ADB, A, D, Q⟩ ∨ OnArc X ⟨ADB, D, B, R⟩) ∧
+      (∀ X : Point,
+        (OnArc X ⟨ADB, A, D, Q⟩ ∧ OnArc X ⟨ADB, D, B, R⟩) ↔
+          X = D) := by
+  sorry
+```
+
+In plain words, D is fixed before this theorem is applied. For the D returned by III.30,
+the arc AD away from B and the arc DB away from A are drawn and congruent. Their measures
+add to the given arc AB on P's side. Every point of that given arc belongs to at least one
+half, and a point belongs to both halves exactly when it is D. Endpoints are included.
+
+The hypotheses are precisely the endpoints' incidence and III.30's conclusions about D:
+its incidence, its side of AB, and equality of standing measures. The side condition also
+keeps D off AB. Q and R select sides; they need not lie on the circle. Choose Q opposite B
+across AD and R opposite A across DB, using `exists_oppositeSidesOf` on the triangles
+`hDP.triangle.acb` and `hDP.triangle.cba`.
+
+**Proposed route.** The current result does not expose the equal chords proved internally
+by I.4. This interface therefore requires an additional recovery step: recover equal base
+angles from `hequal` by `Circumference.standing` and cancellation, then equal chords by I.6.
+I.17 establishes that the two selected arcs are less than semicircles; III.28's `.2.2`
+congruence clause then supplies their congruence. This I.6 recovery is an addition to the
+construction's route and must remain disclosed in the eventual companion's route note.
+
+For the sum, apply `Circumference.add` with circle points A, D, B and side markers P, Q, R.
+The two membership equivalences need a separate argument from plane separation and circle
+incidence, with III.2 providing the relevant chord facts. Pointwise division is the main
+unproved obligation. The staged `sorry` establishes only that the proposed type elaborates;
+it proves none of these claims. No proof or certificate is assigned before approval.
+
+**21 October 2026: approved, proved and registered.** The owner approved this statement on
+20 October 2026: asked "Also approve the smaller items? Prop30.halves (#67); III.36's
+corollary layout; ...", the owner answered "Approve all". It is proved, with the type above unchanged, in
+`Elements/BookIII/Prop30.lean`, after `Prop30` and the three helpers below, and registered in `Elements/Companions.lean` as the
+companion "III.30 halves", which the record `review/III/30.toml` lists.
+`Staging/Halves/Prop30.lean` and its import in `Staging.lean` are deleted. The route
+taken is the one proposed:
+
+- Q and R as above, by `exists_oppositeSidesOf` on `hDP.triangle.acb` and
+  `hDP.triangle.cba`; the two arcs are drawn, their ends being on the circle and Q, R off
+  AD, DB.
+- **The I.6 recovery.** `Circumference.standing` makes the two standing measures in
+  `hequal` twice the angles ABD and DAB, so those angles are equal
+  (`Magnitude.eq_of_add_self_eq`), and I.6 in the triangle DAB makes DA equal to DB. This
+  step is not in Euclid's route, and the record's route note discloses it.
+- I.17 makes the angles ABD, DAB together less than two right angles, so each arc is less
+  than a semicircle; with `Circumference.whole`, each is the less of the two that its
+  straight line cuts off, and III.28's `.2.2` congruence clause, in one circle
+  (`EqualCircles.refl`), makes them congruent.
+- The sum is `Circumference.add` with circle points A, D, B and side markers P, Q, R.
+- The pointwise statements are argued by plane separation and III.2, with three helpers
+  of the companion. `Prop30.on_chord`: a point of the circle on a straight line joining
+  two others is one of them (`Prop2.triangle`). `Prop30.not_within`: no point of the
+  circle lies within the triangle of three others (Triple incidence 1, then III.2 and
+  `Prop2.within`). `Prop30.not_vertical`: none lies in the angle vertical to the angle
+  of three others at one of them (Pasch 2 and 4, then III.2 and `Prop2.within`). A point
+  of the given circumference on neither half would lie within the triangle ADB; a point
+  of either half across AB from D would lie in the angle vertical to DAB or to DBA; and a
+  point of both halves other than D would be A or B, or lie in the angle vertical to ADB.
+  `Prop28.sides` decides on which side of each straight line a point falls.
+
+The proof cites `Prop2`, `Prop2.triangle` and `Prop2.within`, and neither Circle 2 nor
+Circle 3, `Triangle.of_onCircle`, `exists_onCircle_sameSideOf` nor
+`exists_onCircle_oppositeSidesOf`; `#print axioms` lists no `sorryAx`.
+
 ## Stage 4: III.14, III.15, III.25
 
 ### The foot of the perpendicular
 
-`Staging/Stage4/Foot.lean`: `Foot` for `DefinitionsIII.lean`; `Foot.exists` and
-`Foot.unique` for `Elements/BookIII/Squares.lean`.
+`Foot` is now in `Elements/Foundations/DefinitionsIII.lean`; `Foot.exists` and
+`Foot.unique` are in `Elements/BookIII/Squares.lean`. The staged file is deleted.
 
 ```lean
 def Foot (E A B F : Point) : Prop :=
@@ -1473,7 +1634,7 @@ theorem Foot.unique {E A B F F' : Point} (hF : Foot E A B F) (hF' : Foot E A B F
 
 ### III.14 with diameters
 
-`Staging/Stage4/Prop14.lean`. Companion "III.14 general".
+`Elements/BookIII/Prop14.lean`. Companion "III.14 general"; the staged copy is deleted.
 
 ```lean
 theorem Prop14.general {A B C D E F G : Point} {ABDC : Circle} (hE : Centre E ABDC)
@@ -1496,7 +1657,8 @@ theorem Prop14.general {A B C D E F G : Point} {ABDC : Circle} (hE : Centre E AB
 
 ### III.15, both clauses for every straight line
 
-`Staging/Stage4/Prop15.lean`. Companions "III.15 le_diameter", "III.15 nearer".
+`Elements/BookIII/Prop15.lean`. Companions "III.15 le_diameter", "III.15 nearer";
+the staged copy is deleted.
 
 ```lean
 theorem Prop15.le_diameter {A B C D E : Point} {ABCD : Circle} (hE : Centre E ABCD)
@@ -1524,8 +1686,8 @@ theorem Prop15.nearer {B C E F G H K : Point} {ABCD : Circle} (hE : Centre E ABC
 
 ### III.25 restated: a construction core and its correctness
 
-`Staging/Stage4/Prop25.lean`. The main theorem, with companions "III.25 complete" and
-"III.25 of_circle".
+`Elements/BookIII/Prop25.lean`. The main theorem, with companions "III.25 complete" and
+"III.25 of_circle", and the meeting fact `Prop25.meets`; the staged copy is deleted.
 
 ```lean
 /-- Given a segment of a circle, to describe the complete circle of which it is a segment. -/
@@ -1551,6 +1713,24 @@ theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Cen
       (∠ B A D < ∠ A B D → OppositeSidesOf E B A C) ∧ (∠ A B D = ∠ B A D → E = D) ∧
       (∠ A B D < ∠ B A D → SameSideOf E B A C)
 ```
+
+**19 October 2026, step 6.** `Prop25.complete` in `Elements/BookIII/Prop25.lean`
+drops the point parameter E and both `hα` and `hE`; its current declaration is:
+
+```lean
+theorem Prop25.complete {A C P B : Point} {α γ : Circle} (hA : OnCircle A α)
+    (hC : OnCircle C α) (hB : OnArc B ⟨α, A, C, P⟩) (hBP : SameSideOf B P A C)
+    (hAγ : OnCircle A γ) (hBγ : OnCircle B γ) (hCγ : OnCircle C γ) :
+    γ = α ∧ ∀ X : Point, OnArc X ⟨α, A, C, P⟩ → OnCircle X γ
+```
+
+`Prop25.of_circle` drops only `hABC : ∃ E : Point, Centre E ABC` from the frozen
+declaration above. Any circle through the three points is the segment's circle;
+`complete` takes a centre internally for III.9. `of_circle` is the former whole-circle
+statement with its centre-existence input removed, proved from the construction,
+`Prop25.meets` and `Prop25.complete`. The references to `Arc.meets` and the old
+`type_of% @Prop25` check in the account below record the earlier plan. The meeting fact
+is now `Prop25.meets`; the construction still returns its geometric centre E.
 
 - **In plain words.** The core is given only the segment's base AC, a point P on its side,
   and its points as a predicate S, with the fact Euclid reads off the figure: every ray from
@@ -1583,6 +1763,67 @@ theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Cen
 - **Dependencies.** The core: I.4, I.6, I.10, I.11, I.23, Postulate 3. `complete`: III.9 or
   III.10, `circle_eq`. `of_circle`: the core, `Arc.meets`, `complete`.
 
+#### Addition, 19 October 2026: III.25's segment kinds
+
+**19 October 2026, implementation after step 6.** `Prop25.kind` is proved and
+registered as "III.25 kind" in `Elements/Companions.lean`; fresh `facts.json` at
+`17987153` lists it as proved. III.25's record declares full coverage with `complete`,
+`kind` and `of_circle`. The construction and `kind` retain their geometric centre E;
+`complete` and `of_circle` take no centre input. The approval and plan below are kept
+as history; the record's changed statement and Lean stamps still await renewed review.
+
+Approved by the owner on 19 October 2026, answering "Approve all." to the coordinator's
+list of new statements to approve, which named `Prop25.kind` (III.25's three kinds of
+segment); reviewed unchanged by both first mates.
+Brief 0006 freezes III.25; this is the addition to its frozen statements requested in plan lane 9.
+The construction core and its existing companions keep their statements. The new
+companion lives in `Elements/BookIII/Prop25.lean`, immediately after `Prop25.complete`,
+in `Elements.BookIII`. The reviewed declaration is reproduced unchanged below.
+
+```lean
+theorem Prop25.kind {A B C D E P : Point} {γ : Circle}
+    (hBP : SameSideOf B P A C) (hADC : Between A D C)
+    (hE : Centre E γ) (hAγ : OnCircle A γ) (hCγ : OnCircle C γ)
+    (hless : ∠ B A D < ∠ A B D → OppositeSidesOf E B A C)
+    (hequal : ∠ A B D = ∠ B A D → E = D)
+    (hgreater : ∠ A B D < ∠ B A D → SameSideOf E B A C) :
+    Arc.Drawn ⟨γ, A, C, P⟩ ∧
+      (∠ B A D < ∠ A B D →
+        Arc.Less ⟨γ, A, C, P⟩ ∧
+          circumference γ A P C < ∟ + ∟) ∧
+      (∠ A B D = ∠ B A D →
+        Arc.Semicircle ⟨γ, A, C, P⟩ ∧
+          circumference γ A P C = ∟ + ∟) ∧
+      (∠ A B D < ∠ B A D →
+        Arc.Greater ⟨γ, A, C, P⟩ ∧
+          ∟ + ∟ < circumference γ A P C) := by
+  sorry
+```
+
+**19 October 2026, step 6.** `Prop25.kind` has the written type above in
+`Elements/BookIII/Prop25.lean`, now proved, with `Arc.Drawn` in its new meaning. The
+`by sorry` block records the approved statement before its proof; it is not the
+implementation.
+
+In plain words, take the points and circle returned by III.25’s construction. The arc AC on P’s side is drawn. When ABD exceeds BAD, that arc is less than a semicircle and measures less than two right angles. When the angles are equal, it is a semicircle and measures two right angles. When ABD is smaller, it is greater than a semicircle and measures more than two right angles. The displayed circumference is exactly this arc’s `Arc.measure`.
+
+Every hypothesis is available from the construction:
+
+- `hBP` connects the constructed point B with the given side P. It transfers the centre’s position relative to B to its position relative to P and ensures that P is off AC.
+- `hADC` places D between A and C. Together with `E = D`, it supplies the diameter condition for `Circumference.semicircle`.
+- `hE`, `hAγ` and `hCγ` identify the constructed circle, its centre and the arc’s endpoints.
+- `hless`, `hequal` and `hgreater` are precisely the construction’s three existing centre-position conclusions.
+
+The midpoint equality, perpendicularity and incidence of B on γ need not be repeated as hypotheses of this consequence. They remain available from the core; B’s incidence is used by `Prop25.complete`.
+
+**Connection to the given segment.** For a drawn arc `⟨α, A, C, P⟩`, run the core with `S := OnArc · ⟨α, A, C, P⟩`, using `Prop25.meets` for its meeting hypothesis. Keep its witnesses B, D, E and γ. Apply `Prop25.kind` to their returned properties. Then `Prop25.complete` gives `γ = α`; rewriting by this equality transfers the entire kind-and-measure conclusion to the given arc. Thus the classification concerns the same circle that the construction describes and correctness identifies.
+
+**Coverage, route and certificate.** This supplies the three classifications formerly left `unformalized`, including both meanings requested in lane 9. The proof unfolds the kind definitions and uses `Circumference.lt_semicircle`, `.semicircle` and `.gt_semicircle`.
+
+**`Elements.BookIII.Prop25.kind` is registered as `"III.25 kind"`** through the integrator’s `Elements/Companions.lean`. It is a companion for display and certification, while supplying the steps named by the three `helper` passages. Its certificate exposes its own circumference-lemma dependencies. Neither III.25’s construction nor `Prop25.complete` enters that certificate merely because this lemma consumes their conclusions; their existing entries supply that evidence separately.
+
+The record adds `"III.25 kind"` to its companions and makes all three existing kind passages `kind = "helper"`, `helper = "Prop25.kind"`. Their notes name the corresponding kind and measure comparison and explain the transport through `Prop25.complete`. The construction and correctness companions remain displayed. The record stays unstamped until its independent review.
+
 ## What the spike found
 
 The stage 3 spike (brief 0005's step 0) stated the definitions, `placement` and every case
@@ -1607,6 +1848,10 @@ changed from brief 0005's in these ways:
 - **Five case files,** so that parallel provers never share one, and a policy check over
   the whole `Placement` namespace.
 - **A drawn arc has a centre** (`Arc.Drawn`), because `Prop23.point` needs one.
+
+  **19 October 2026, step 6:** that was the spike's requirement. `Arc.Drawn` now
+  contains only endpoint incidence and the side marker off the base, and `Prop23.point`
+  has no centre input.
 - **III.24 uses only** `placement`, `Prop23.point`, `chord_cases` (proved) and I.8. III.10 is
   not needed.
 - **III.25's interfaces fit:** today's statement follows from the core, `Arc.meets` and
@@ -1793,8 +2038,9 @@ stamped by anyone who did not review it.
 *A correction after the freeze, under [WORKFLOW.md](../WORKFLOW.md), section 2, "Correcting a
 frozen brief": the code and this brief disagree on some routes and dependencies, and
 FORMALIZATION, section 1, asks that such a disagreement be recorded, not settled by a quiet
-edit. No statement, definition or `--` line changes, and nothing above this section is
-edited. The declarations stay as frozen, so each entry gives the discrepancy, what the Lean
+edit. That correction changed no statement, definition or `--` line, and left the preceding
+plan as it stood. The dated migration note and current homes above were added afterwards.
+The declarations stay as frozen, so each entry gives the discrepancy, what the Lean
 does and why the statement stands; the consumers are the records listed at the end.*
 
 The proofs were written against the frozen statements on 18 October 2026, and each was read
@@ -1897,8 +2143,10 @@ stage branches, docstring edits among them, are outside it.
   argument, in today's III.15, and adds only the case of a diameter, by `le_diameter`. Like
   that route, it makes the check of today's III.15 pass through III.15 itself, as III.14
   general's route does for III.14's check, and the II.14 passage counted that against its
-  route; whether it is accepted here is the coordinator's call, recorded in the III.15 record
-  when it is read again.
+  route. The route here is accepted in the stage 4 decisions entry: the existing III.15
+  supplies Euclid's case and `le_diameter` supplies the diameter case. The later example is
+  an interface check, and neither companion depends on it. The III.15 record describes
+  this accepted route.
 
 **Settled by the proofs, and two consequences.**
 
@@ -1916,7 +2164,8 @@ stage branches, docstring edits among them, are outside it.
 **One slip in the plan, not a route as proved.** III.25's "Construction" bullet says "the
 angle ABE equal to BAD [I. 23]". Heath has "let the angle BAE be constructed equal to the
 angle ABD" (`heath/III/25.md`), and so do the `--` lines of today's proof; the bullet is to
-be read so. No statement mentions the angle. III.25's route is recorded when it is proved.
+be read so. No statement mentions the angle. III.25 is now proved: its core follows the
+construction, and `Prop25.complete` carries the III.9 step, as its record describes.
 
 **Helpers the proofs added**, each with a docstring naming the step it supplies, to move
 with its item: fourteen for `Fitted.fan` (`Fitted.fan.part` to `Fitted.fan.sweep`) and
@@ -1957,8 +2206,9 @@ into `Elements/`, each read again then, as "Records made stale" says:
   `Prop23.insideTriangle_of_between` for the one step read off the figure.
 - III.24 (`review/III/24.toml`): as planned; the restated III.24 now rests on no stub, and
   "III.24 equalMeasure" goes through `Prop24.image` (I.8 and `chord_cases`).
-- III.25 (`review/III/25.toml`): not yet proved; the construction reads BAE equal to ABD,
-  and `Arc.meets`, on which "III.25 of_circle" rests, is proved.
+- III.25 (`review/III/25.toml`): proved; the construction reads BAE equal to ABD,
+  `Prop25.complete` carries the III.9 step, and "III.25 of_circle" uses the core,
+  `Prop25.meets` (the plan's `Arc.meets`, now beside III.25) and `Prop25.complete`.
 - III.26 (`review/III/26.toml`): as planned, by the propositions its Dependencies name, with
   the remainders' congruence the planned `different` passage.
 - III.27 (`review/III/27.toml`), and III.30 with it: nothing of their own; their Lean

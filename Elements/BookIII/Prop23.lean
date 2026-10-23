@@ -28,10 +28,10 @@ open Tacit
 
 /-- On the same straight line there cannot be constructed two similar and unequal segments of
 circles on the same side. -/
-theorem Prop23 {A B C D : Point} {ACB ADB : Circle} (hACB : ∃ O : Point, Centre O ACB)
-    (hADB : ∃ O : Point, Centre O ADB) (hA₁ : OnCircle A ACB) (hB₁ : OnCircle B ACB)
-    (hC : OnCircle C ACB) (hA₂ : OnCircle A ADB) (hB₂ : OnCircle B ADB)
-    (hD : OnCircle D ADB) (hCD : SameSideOf C D A B) (hsim : ∠ A C B = ∠ A D B) :
+theorem Prop23 {A B C D : Point} {ACB ADB : Circle} (hA₁ : OnCircle A ACB)
+    (hB₁ : OnCircle B ACB) (hC : OnCircle C ACB) (hA₂ : OnCircle A ADB)
+    (hB₂ : OnCircle B ADB) (hD : OnCircle D ADB) (hCD : SameSideOf C D A B)
+    (hsim : ∠ A C B = ∠ A D B) :
     ACB = ADB := by
   -- For, if possible, on the same straight line AB let two similar and unequal segments of
   -- circles ACB, ADB be constructed on the same side;
@@ -48,7 +48,7 @@ theorem Prop23 {A B C D : Point} {ACB ADB : Circle} (hACB : ∃ O : Point, Centr
      a point P of one segment lies within the other, and AP drawn through meets it at Q,
      where III.21 carries the angle. -/
   have hC₂ : ¬ OnCircle C ADB := fun hC₂ =>
-    hne (Prop10 hACB hADB hA₁ hA₂ hB₁ hB₂ hC hC₂ hAB hABC.ne₁₃ hABC.ne₂₃)
+    hne (Prop10 hA₁ hA₂ hB₁ hB₂ hC hC₂ hAB hABC.ne₁₃ hABC.ne₂₃)
   obtain ⟨P, Q, hAPQ, hP_AB, hangles⟩ : ∃ P Q : Point, Between A P Q ∧ ¬ OnLine P AB ∧
       ((∠ A P B = ∠ A C B ∧ ∠ A Q B = ∠ A D B) ∨
         (∠ A P B = ∠ A D B ∧ ∠ A Q B = ∠ A C B)) := by
@@ -59,14 +59,14 @@ theorem Prop23 {A B C D : Point} {ACB ADB : Circle} (hACB : ∃ O : Point, Centr
         SameSideOf.of_onRay (OnRay.of_beyond (between_symm hD₀CA))
           (SameSideOf.of_line hAB hA_AB hB_AB (same_side_refl hC_AB))
       exact ⟨C, D₀, between_symm hD₀CA, hC_AB,
-        Or.inl ⟨rfl, (Prop21 hADB hD hA₂ hB₂ hD₀ (hCD.symm.trans hD₀C.symm)).symm⟩⟩
+        Or.inl ⟨rfl, (Prop21 hD hA₂ hB₂ hD₀ (hCD.symm.trans hD₀C.symm)).symm⟩⟩
     · obtain ⟨M, hM_AB, hAMB, -⟩ := exists_point_between hA_AB hB_AB hAB []
-      have hM₁ : InsideCircle M ACB := Prop2 hACB hA₁ hB₁ M hAMB
-      have hM₂ : InsideCircle M ADB := Prop2 hADB hA₂ hB₂ M hAMB
+      have hM₁ : InsideCircle M ACB := Prop2 hA₁ hB₁ M hAMB
+      have hM₂ : InsideCircle M ADB := Prop2 hA₂ hB₂ M hAMB
       have hMC : M ≠ C := fun h => hC_AB (h ▸ hM_AB)
       obtain ⟨MC, hM_MC, hC_MC⟩ := Postulate1 M C hMC
       obtain ⟨D₁, hD₁, hD₁_MC, hMD₁C⟩ := line_circle_between hM₂ hM_MC ⟨hin, hC₂⟩ hC_MC
-      have hD₁_in : InsideCircle D₁ ACB := Prop2.within hACB (Or.inl hM₁) (Or.inr hC) hMD₁C
+      have hD₁_in : InsideCircle D₁ ACB := Prop2.within (Or.inl hM₁) (Or.inr hC) hMD₁C
       have hD₁_AB : ¬ OnLine D₁ AB := fun h =>
         hC_AB (line_unique (ne_of_between hMD₁C) hM_MC hD₁_MC hM_AB h ▸ hC_MC)
       have hD₁C : SameSideOf D₁ C A B :=
@@ -78,8 +78,8 @@ theorem Prop23 {A B C D : Point} {ACB ADB : Circle} (hACB : ∃ O : Point, Centr
         SameSideOf.of_onRay (OnRay.of_beyond (between_symm hC₀D₁A))
           (SameSideOf.of_line hAB hA_AB hB_AB (same_side_refl hD₁_AB))
       exact ⟨D₁, C₀, between_symm hC₀D₁A, hD₁_AB, Or.inr
-        ⟨(Prop21 hADB hD hA₂ hB₂ hD₁ (hCD.symm.trans hD₁C.symm)).symm,
-         (Prop21 hACB hC hA₁ hB₁ hC₀ (hD₁C.symm.trans hC₀D₁.symm)).symm⟩⟩
+        ⟨(Prop21 hD hA₂ hB₂ hD₁ (hCD.symm.trans hD₁C.symm)).symm,
+         (Prop21 hC hA₁ hB₁ hC₀ (hD₁C.symm.trans hC₀D₁.symm)).symm⟩⟩
   -- Then, since the segment ACB is similar to the segment ADB,
   -- and similar segments of circles are those which admit equal angles, [III. Def. 11]
   have hPQ : ∠ A P B = ∠ A Q B := by
@@ -125,7 +125,7 @@ theorem Prop23.insideTriangle_of_between {A B M P Q : Point} (hABP : Triangle A 
     hABP.off_line hA_L hB_L (on_line_of_between hMQP hM_L hQ_L)
   exact pasch2 hMQP hM_L hQ_L
 
-/-- **On the circle, by the angle.** Let A, B, E be points of a circle with a centre, and P a
+/-- **On the circle, by the angle.** Let A, B, E be points of a circle, and P a
 point on E's side of AB. Then P is on the circle exactly when the angle APB is equal to the
 angle AEB, and P is within the circle exactly when the angle APB is greater than the angle
 AEB.
@@ -139,19 +139,19 @@ both, Q is on E's side of AB, and the angle AQB is equal to the angle AEB [III. 
 that draws AP on fails when AP touches the circle at A.)
 
 A companion of III.23 ("III.23 point"): its content, point by point. III.24 cites it. -/
-theorem Prop23.point {A B E P : Point} {α : Circle} (hα : ∃ O : Point, Centre O α)
-    (hA : OnCircle A α) (hB : OnCircle B α) (hE : OnCircle E α) (hPE : SameSideOf P E A B) :
+theorem Prop23.point {A B E P : Point} {α : Circle} (hA : OnCircle A α) (hB : OnCircle B α)
+    (hE : OnCircle E α) (hPE : SameSideOf P E A B) :
     (OnCircle P α ↔ ∠ A P B = ∠ A E B) ∧ (InsideCircle P α ↔ ∠ A E B < ∠ A P B) := by
   /- Take M between A and B. It is within the circle [III. 2]. -/
   obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hPE.1
   obtain ⟨M, hM_L, hAMB, -⟩ := exists_point_between hA_L hB_L hPE.1 []
-  have hM_in : InsideCircle M α := Prop2 hα hA hB M hAMB
+  have hM_in : InsideCircle M α := Prop2 hA hB M hAMB
   have hP_L : ¬ OnLine P L := hPE.triangle.off_line hA_L hB_L
   have hMP : M ≠ P := fun e => hP_L (e ▸ hM_L)
   obtain ⟨N, hM_N, hP_N⟩ := Postulate1 M P hMP
   /- On the circle, APB and AEB are angles in the same segment [III. 21]. -/
   have on_angle (hP_on : OnCircle P α) : ∠ A P B = ∠ A E B :=
-    Prop21 hα hP_on hA hB hE hPE
+    Prop21 hP_on hA hB hE hPE
   /- Outside, PM meets the circle at Q between M and P. Q lies within the triangle
      PAB, so the angle AQB is greater than the angle APB [I. 21]. -/
   have outside_angle (hP_out : OutsideCircle P α) : ∠ A P B < ∠ A E B := by
@@ -161,7 +161,7 @@ theorem Prop23.point {A B E P : Point} {α : Circle} (hα : ∃ O : Point, Centr
     have hangle : ∠ A P B < ∠ A Q B := (BookI.Prop21 hPE.triangle.cab hQ_in).2
     /- Q is on E's side of AB, so the angle AQB is equal to the angle AEB [III. 21]. -/
     have hQE : SameSideOf Q E A B := hQ_in.1.trans hPE
-    rw [Prop21 hα hQ_on hA hB hE hQE] at hangle
+    rw [Prop21 hQ_on hA hB hE hQE] at hangle
     exact hangle
   /- Within, MP produced beyond P meets the circle at Q. Q is on P's side of AB, and so
      on E's; P lies within the triangle QAB, so the angle APB is greater than the angle
@@ -175,7 +175,7 @@ theorem Prop23.point {A B E P : Point} {α : Circle} (hα : ∃ O : Point, Centr
       Prop23.insideTriangle_of_between hQE.triangle hAMB (between_symm hQPM)
     have hangle : ∠ A Q B < ∠ A P B := (BookI.Prop21 hQE.triangle.cab hP_triangle).2
     /- The angle AQB is again equal to the angle AEB [III. 21]. -/
-    rw [Prop21 hα hQ_on hA hB hE hQE] at hangle
+    rw [Prop21 hQ_on hA hB hE hQE] at hangle
     exact hangle
   /- P is within the circle, on it, or outside it. Equal angles rule out within and
      outside, and a greater angle rules out on and outside, since no angle is less than

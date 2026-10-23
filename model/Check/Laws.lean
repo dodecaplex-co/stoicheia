@@ -2,6 +2,7 @@ import Elements.Foundations.CommonNotions
 import Elements.Foundations.Definitions
 import Elements.Foundations.DefinitionsII
 import Elements.Foundations.DefinitionsIII
+import Elements.Foundations.Figures
 import Elements.Foundations.Magnitudes
 import Elements.Foundations.Phrases
 import Elements.Foundations.Postulates

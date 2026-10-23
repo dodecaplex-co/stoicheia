@@ -81,19 +81,28 @@ Hypotheses come from the setting-out, conclusions from "I say that".
   Intersections rule lets a proof take a point where they do. Thirty-nine rules are now theorems
   with their existing names and types; [FORMALIZATION](../FORMALIZATION.md#rules-now-proved)
   gives their derivations and homes.
-- **A rectilineal figure** (I.45) is given with its division into triangles, and the division
-  is checked: triangles that lie apart (`Apart`), allowing a figure with a hole;
-  triangles fitted together in a suitable order (`Fitted`, `Rectilineal`), for a figure
-  with one boundary; or Euclid's and Oliver Byrne's triangles from one corner, under two
-  conditions that `Fitted.fan` shows make them fit together. Equal to the figure means equal
-  to those triangles together. The scope is `restricted`: existence of a division from the
-  figure's outline, coverage of its region, and independence of the sum from the division
-  chosen remain unproved ([#116](https://github.com/jackChallis/stoicheia/issues/116)).
-  The last is the step Euclid takes for granted, which David Hilbert proved, for his
-  measure of area ([the gap catalogue](../reports/gaps-book-I.md#i45)).
-  The tag is `figure-with-dissection`. The main theorem keeps Euclid's two triangles ABD and
-  DBC, unchecked: an area-sum theorem, whose checked case is `Prop45.fan` for the corners D,
-  A, B, C.
+- **A rectilineal figure** (I.45) is given by its outline (`Outline`, in
+  `Elements/Foundations/Figures.lean`): finitely many simple closed lines of sides, apart or
+  nested, so that it may have a corner pointing inwards, holes, separate pieces or contacts
+  at corners, its region read from the sides by the parity of a ray's crossings. Equal to the
+  figure means equal to its area (`Outline.area`), the sum that every division of it into
+  triangles that lie apart gives. Book Zero proves that every outline has such a division
+  (`division_exists`), and that any two divisions covering the same points have the same sum
+  (`Apart.area_eq_of_same_region`): the step Euclid takes for granted, which David Hilbert
+  proved, for his measure of area, and whose argument we follow
+  ([the gap catalogue](../reports/gaps-book-I.md#i45), [brief 0013](0013-figures.md)). The
+  general statement is `Prop45.outline`, and the scope is `full`
+  ([#116](https://github.com/jackChallis/stoicheia/issues/116)). The older companions take
+  the figure with its division into triangles, checked: triangles that lie apart (`Apart`),
+  allowing a figure with a hole; triangles fitted together in a suitable order (`Fitted`,
+  `Rectilineal`), for a figure with one boundary; or Euclid's and Oliver Byrne's triangles
+  from one corner, under two conditions that `Fitted.fan` shows make them fit together, into
+  the figure bounded by the closed line through the corners in order
+  (`Prop45.fan_boundary`). Equal to the figure there means equal to those triangles
+  together, which is its area. The tag `figure-with-dissection` names these older forms, and
+  is no longer a limitation. The main theorem keeps Euclid's two triangles ABD and DBC,
+  unchecked: an area-sum theorem, whose checked case is `Prop45.fan` for the corners D, A,
+  B, C.
 
 ## Shared steps
 
@@ -105,23 +114,29 @@ The rule of [FORMALIZATION.md](../FORMALIZATION.md), section 6, as Book I applie
   `Circles.lean`, `Parallels.lean`, `Parallelograms.lean`, `Areas.lean`
   (`area_lt_of_cut`, the strict area comparison in I.39 and I.40), `Sums.lean` (the sums
   of lists, and `InOrder.between_end`) and `Rectilineal.lean` (a fitted figure's triangles
-  lie apart, `Fitted.inside_pairwise`). `Superposition.lean`, imported separately by I.4
-  and I.8, proves the seven geometric laws their placements cite, one theorem each (I.8
-  also cites I.7's, proved in its own file); the certificate lists the construction rules
-  beneath each (`cited_laws`).
+  lie apart, `Fitted.inside_pairwise`); and brief 0013's figures given by their outlines,
+  `Convex/`, `Cells.lean`, `Content.lean`, `Outlines.lean`, `Arrangements.lean`,
+  `Divisions.lean` and `FanBoundary.lean`, with their helpers in the folders of the same
+  names, on the words of `Elements/Foundations/Figures.lean`. `Superposition.lean`,
+  imported separately by I.4 and I.8, proves the seven geometric laws their hypothetical
+  placements cite, one theorem each (I.8 also cites I.7's, proved in I.8's own file); the
+  certificate lists the construction rules beneath each (`cited_laws`).
 - **Shared steps that cite a proposition:** `Elements/BookI/Helpers.lean`, with
   `Prop5.base` (I.5's angles at the base, with the sides produced anywhere); and
   `Elements/BookI/HelpersParallels.lean`, for those that cite I.28, I.30 or I.31, with
   `Prop30.meet` (a straight line meeting one of two parallels meets the other, after
   Proclus: Heath, vol. 1, pp. 207 and 316), `Prop30.parallel`, `Prop31.parallelogram`,
-  `Prop28.interior` and `Prop28.square`.
+  `Prop28.interior` and `Prop28.square`; and `Elements/BookI/OutlineBound.lean`, after
+  I.29, with `outline_bounded` (a figure given by its outline lies within a triangle), which
+  cites I.23 and uses Postulate 5.
 - **Corollaries after their propositions:** `Prop15.porism`, `Prop29.alternate`,
   `Prop29.interior`, `Prop29.exterior`, `Prop31.line`, `Prop34.bisect`, and
   `Prop46.square_eq` with `Prop46.side_eq` (squares on equal straight lines are equal, and
   conversely, as Heath reports Proclus proving under I.46).
 - **Companions after their propositions** (the exceptions, below): I.40's, I.45's and
-  I.47's; and, in `Prop45.lean` before `Prop45.fan`, the bridge `Fitted.fan`, which cites
-  I.13.
+  I.47's; and, in `Prop45.lean`, two bridges: `Fitted.fan`, before `Prop45.fan`, which cites
+  I.13; and `Prop45.fan_boundary`, beside `Prop45.outline`, which joins the checked fan to
+  its outline and cites I.13 through `Fitted.fan`.
 
 19 October 2026: the statement of `Prop47.general` was challenged by an independent reader
 who wrote none of it, and approved as written by the coordinator.
@@ -155,13 +170,13 @@ Each was approved before its voyage, and the reasons are in the first mates' rep
 The review records in `review/I/` are the authority, proposition by proposition. Stage 2 of
 [brief 0006](0006-statements.md) answered I.40 and I.45 with companions. `Prop47.general`
 makes the transfer from outward squares to squares on either side explicit. I.40 and I.47
-have scope `full`; I.45 is `restricted` to a supplied checked division, with outline
-coverage and independence of division still unproved (#116):
+have scope `full`; so does I.45, through `Prop45.outline`, from 22 October 2026, after it
+was `restricted` to a supplied checked division from 20 October (#116):
 
 | Proposition | Scope | Main theorem | Companions | Tag |
 |---|---|---|---|---|
 | I.40 | full | the equal bases meet end to end, as BC and CE | `Prop40.general`, for equal bases anywhere on one straight line; `Prop40.join` and `Prop40.special` | |
-| I.45 | restricted | the figure is two triangles, unchecked | `Prop45.apart`, for a supplied checked division into triangles that lie apart; `Prop45.figure` and `Prop45.fan`, the main companion, beside it; `Prop45.append` and `Prop45.sum`, the construction | `figure-with-dissection` |
+| I.45 | full | the figure is two triangles, unchecked | `Prop45.outline`, the main companion, for any figure given by its outline; `Prop45.apart`, `Prop45.figure` and `Prop45.fan`, for a figure given with a checked division into triangles; `Prop45.append` and `Prop45.sum`, the construction | `figure-with-dissection`, for the older supplied-division companions |
 | I.47 | full | the three squares stand outward from the triangle | `Prop47.general`, for squares independently on either side of each base | |
 
 These main theorems stay as Euclid's worked configuration, with companions extending them

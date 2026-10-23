@@ -1,8 +1,8 @@
 # mutations: 15 deliberately weakened statements
 # command: python3 -I tests/model/mutations.py
 # seeds: none (deterministic)
-# commit: 22252498cb7c5e4cd68caa48b2d5f1205706018e (harness files as committed)
-# harness sha256: 93382ee0c635ff0b9157b415c8511dcf2e8170309ec46cc58af43c0d895008c8
+# commit: df6f901c35ced1d987ae71277b785fed16ce0a27 (harness files as committed)
+# harness sha256: 9ec5d9c4a18dbbef546b8dd2bf2bea4d69a3f1326fb526a0001d62285ea487ac
 # python: 3.14.2 (CPython, Darwin arm64)
 # date: 2026-10-21
 # time: 0.2 s

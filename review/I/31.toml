@@ -23,10 +23,10 @@ note = "Euclid treats EAD and ADC as alternate; `SameSideOf.trans_opposite` puts
 
 [review]
 stage = "full"
-commit = "251129b"
-reviewer = "GPT-6 Astra (Codex), independent reader Aw2-reader-f"
+commit = "01e0fe54"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:664aca971683e75b"
-run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I31b, independent re-read at 6e0cdd27; wave two's text of this record, read in full with the Lean: brief 0005 stage 5, ship A wave-two records re-read, Aw2-reader-f, at 251129b"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I31b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at 01e0fe54 (reader RT-x2)"
 
 [review.items]
 statement = "pass"

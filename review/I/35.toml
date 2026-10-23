@@ -46,10 +46,10 @@ case = "AD and EF apart, with D between A and E, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "9b09c03d"
+commit = "a9b2b80f"
 reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:86706a9a57d0ca53"
-run = "card 220, cross-family sign-off: proof by OpenAI Codex, begun from the Claude first mate's scratch proof T35 (54a08e61) and keeping many of its lines, which GPT-6 Astra (Codex) read at b62518e5; read by Claude Opus 5.5; ship XS, reader XS-r-I35-I48, independent re-read at a557715d; wave two's text of this record, read in full with the Lean: brief 0005 stage 5, ship F2 wave-two re-read, at b58079e0; read again in full after the merge with main, with main's mishnah sentence (a557715d) and this record's note together: ship F2, reader F2-w2i35, independent re-read at 9b09c03d"
+lean = "sha256:eee60b54fb026d66"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, begun from the Claude first mate's scratch proof T35 (54a08e61) and keeping many of its lines, which GPT-6 Astra (Codex) read at b62518e5; read by Claude Opus 5.5; ship XS, reader XS-r-I35-I48, independent re-read at a557715d; #248: re-read whole after its Lean note's Proclus credit was narrowed, independent re-read at a9b2b80f (reader RT-r35b)"
 
 [review.items]
 statement = "pass"
