@@ -765,8 +765,7 @@ the Circle 2 and Circle 3 ban transitively, so no proposition, porism or compani
 depend on either proved rule.
 
 By the owner's decision of 19 October 2026 ("Please do both. 79 is rather large with so
-many books in front of us"), 31 more rules became theorems, proved that day and landed on
-21 October. They were proved against a lock of 79 axioms, which they took to 48; in the
+many books in front of us"), 31 more rules became theorems, proved that day. They were proved against a lock of 79 axioms, which they took to 48; in the
 meantime our own rule that every circle has a centre (`exists_centre`, section 7) had
 joined the lock, so the lock that holds them both went from 80 axioms to 49. Euclid's six
 stay assumptions, and no certificate entry rests on Circle 2 or Circle 3.
