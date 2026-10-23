@@ -1,18 +1,46 @@
 # review/III/03.toml
 [statement]
 scope = "full"
-note = "F is between A and B, as bisecting and cutting a straight line mean, and the converse asks only that the angle AFE be right."
+note = "The centre E is given and FE represents CD. F is between A and B; the converse asks only that AFE be right."
 fingerprint = "sha256:02edb0964e2a267d"
 
 [route]
 kind = "euclid"
 
-[representation]
-tags = ["centre-given"]
-note = "The centre E is given, as Euclid's setting-out takes it, and his straight line CD through the centre is FE, so C and D need no Lean names."
+[[passage]]
+at = "For let the centre of the circle ABC be taken"
+kind = "given"
+note = "The centre E is given, as Euclid's setting-out takes it. FE represents his straight line CD through the centre, so C and D need no Lean names. F is between A and B, as bisecting and cutting a straight line mean."
+
+[[passage]]
+at = "and the base EA is equal to the base EB"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid uses the equality of the radii EA and EB without giving a reason. The Lean obtains their equality from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
+
+[[passage]]
+at = "since EA is equal to EB"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid again uses equal radii without giving a reason. The Lean applies the assumed rule `Definition15` again, now for the converse."
+
+[[passage]]
+at = "But the right angle AFE is equal to the right angle BFE"
+kind = "helper"
+helper = "Tacit.adjacent_eq_of_right"
+note = "Euclid treats both adjacent angles as right; the converse assumes only that AFE is right. The Lean obtains their equality from `Tacit.adjacent_eq_of_right`, proved from I.13 and Common Notion 3, for which Heath gives no reference here."
 
 [review]
-stage = "exceptions"
-commit = "2c3686e"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "f34cfd07"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:7bbd030974eadcab"
+run = "brief 0005 stage 5, ship R3 (#29)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

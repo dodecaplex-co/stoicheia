@@ -1,10 +1,92 @@
 name: CI
 
 on:
+  # Each commit of a pull request runs once, on the pull request's events; a push runs CI
+  # only on main, after each merge, never on another branch as well, where it ran the same
+  # commit twice (docs/decisions/2026-10-22-checks-by-risk.md). A tag runs nothing here.
+  # git safe-push opens or updates the pull request with each push of its branch.
   push:
+    branches: [main]
   pull_request:
 
 jobs:
+  risk:
+    # The change's risk class, R0 to R5 (docs/WORKFLOW.md, section 8), and whether the
+    # formal model must be checked, which the `negative` and `formal-model` jobs read; they
+    # read no label. This job reads one, `release`, and it can only raise the class. Main's
+    # copy of scripts/risk.py, never the change's own, classifies the files the change
+    # brings to main, so a change cannot lower its own class by editing the classifier. A
+    # pull request into main is classified so, exactly, from GitHub's merge commit; one
+    # whose run starts with the `release` label, one into any other branch, a push to main
+    # and every other event are R5, and `negative` and `formal-model` run in full. The label
+    # is read from the event that started the run, and git safe-push adds a pull request's
+    # labels after it pushes, so a label given with that push counts from the next push.
+    # Main's run after the merge runs `negative` and `formal-model` in full (`acceptance`
+    # runs only on a pull request). A release pull request's run need not be R5: the merge
+    # gate holds a release until the full pre-flight has run on its head and a run there
+    # of the safe-push-tests workflow, the head's copy being main's, has passed each of its
+    # three jobs: the safe_push tests, the negative tests in full, and the formal model's
+    # build and kernel re-check (docs/decisions/2026-10-22-checks-by-risk.md).
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    outputs:
+      class: ${{ steps.classify.outputs.class }}
+      formal_model: ${{ steps.classify.outputs.formal_model }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Main's commit and the change's, with what lies between them.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Classify the change by main's scripts/risk.py; a push to main, a pull request whose run starts with the release label and any other event are R5
+        id: classify
+        env:
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          RELEASE: ${{ contains(github.event.pull_request.labels.*.name, 'release') }}
+        run: |
+          set -euo pipefail
+          r5() {
+            echo "$1: R5, negative and formal-model run in full"
+            { echo "class=R5"; echo "formal_model=true"; } >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+          case "$EVENT:$REF" in
+            push:refs/heads/main)
+              r5 "a push to main" ;;
+            pull_request:*)
+              if [ "$RELEASE" = true ]; then r5 "a pull request labelled release"; fi
+              if [ "$BASE_REF" != main ]; then r5 "a pull request into $BASE_REF, not main"; fi
+              # The checkout is the merge commit GitHub made of the pull request into main,
+              # as the acceptance job reads it: its first parent is main, whose workflow
+              # this run follows unless the pull request changes it, and its changes over
+              # that parent are what the pull request brings to main. The first parent is
+              # taken for main only when the commit has two parents and the second is the
+              # pull request's head; anything else is R5.
+              if [ "$(git rev-list --parents -n 1 HEAD | wc -w)" -ne 3 ] ||
+                 [ "$(git rev-parse HEAD^2)" != "$HEAD_SHA" ]; then
+                r5 "a pull request whose checkout is not GitHub's merge of its head, $HEAD_SHA, into main"
+              fi
+              base=$(git rev-parse HEAD^1)
+              head=$(git rev-parse HEAD)
+              what="the pull request" ;;
+            *)
+              r5 "a $EVENT event of $REF" ;;
+          esac
+          git cat-file -e "$base^{commit}"
+          listed=$(git ls-tree --name-only "$base" -- scripts/risk.py)
+          if [ "$listed" != scripts/risk.py ]; then
+            r5 "main, at $base, has no scripts/risk.py to classify $what"
+          fi
+          git show "$base:scripts/risk.py" > "$RUNNER_TEMP/risk.py"
+          echo "main's scripts/risk.py, at $base, classifies $what"
+          python3 -I "$RUNNER_TEMP/risk.py" --diff "$base" "$head" --github-output
+
   check:
     runs-on: ubuntu-latest
     steps:
@@ -38,6 +120,19 @@ jobs:
 
       - name: Check coincidence steps and module boundaries, rejecting reached Staging.Hidden and Lean.Hidden helpers and allowing unused foreign imports
         run: python3 -I tests/test_certificate.py
+
+      - name: The citation sweep finds a planted unused have, a discarded join, a `have _ :=` and a concealing helper, and passes its controls
+        # Its plants are Lean outside the tree, built against the library above. It reads
+        # the proofs' citations and the bindings records declare in `unused`, which a
+        # proof or a records change can move, so it runs here, for every class, not in
+        # the `negative` job, which checks out only for R3 and above (docs/WORKFLOW.md,
+        # section 8).
+        run: python3 scripts/sweep_citations.py --self-test
+
+      - name: List the candidates for dummy citations, artificial hypothesis uses and concealing helpers in Elements/
+        # Report only, the list in the log: the release gate runs it with
+        # --fail-on-undeclared (docs/WORKFLOW.md, section 10).
+        run: python3 scripts/sweep_citations.py
 
       - name: Check every proof again, by Lean's kernel, and by nanoda admitting only the locked axioms and Lean's three
         # leanchecker --fresh replays the whole environment of Elements, Lean's own
@@ -87,39 +182,83 @@ jobs:
         # overlap catalogue among them, so it runs on the built tree, after Audit.
         run: python3 scripts/check_style.py
 
-      - name: Check the generated pages are up to date
-        # `git status` sees new and deleted pages as well as changed ones. README.md and
-        # docs/PROGRAM.md are generated in part: render.py fills README's scope markers
-        # and PROGRAM.md's status table.
+      - name: Check the generated pages are up to date, and that no check left the worktree changed
+        # `git status` sees new and deleted files as well as changed ones, over the whole
+        # worktree, as the pre-flight's step "git status --porcelain is empty" does: the
+        # generated pages (README.md and docs/PROGRAM.md are generated in part: render.py
+        # fills README's scope markers and PROGRAM.md's status table), the count markers
+        # render.py renews in other pages, and any file a step above wrote. The build's
+        # .lake/ and Python's caches are ignored by .gitignore.
         run: |
           python3 scripts/render.py
-          git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md
-          test -z "$(git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md)"
+          git status --porcelain
+          test -z "$(git status --porcelain)"
+
+      - name: Check the decisions page repeats no dated heading
+        run: python3 scripts/check_queue.py --tree .
 
       - name: Check every relative link and anchor
         run: python3 scripts/check_links.py
 
   negative:
-    # Break the project on purpose, and check that every break is caught.
+    # Break the project on purpose, and check that every break is caught: in full for a
+    # change of class R3, R4 or R5, which every push to main is, and every pull request
+    # whose run starts with the `release` label (`risk`); for R0 to R2 the job passes at
+    # once and says why, since main's run after the merge runs the tests in full, and the
+    # cadence (safe-push-tests.yml) runs them on main every six hours
+    # (docs/decisions/2026-10-22-risk-lanes.md). git safe-push's pre-flight runs them as
+    # well for R3 to R5, and for R0 to R2 leaves them out with the rest of its step 4
+    # (docs/decisions/2026-10-22-checks-by-risk.md). The job runs whatever became of
+    # `risk`, and fails unless `risk` succeeded: GitHub accepts a skipped required check,
+    # so a failed or cancelled classification must fail it, never skip it.
+    needs: risk
+    if: always()
     runs-on: ubuntu-latest
     steps:
+      - name: Read the class, and run in full for R3, R4 and R5
+        id: lane
+        env:
+          RESULT: ${{ needs.risk.result }}
+          CLASS: ${{ needs.risk.outputs.class }}
+        run: |
+          if [ "$RESULT" != success ]; then
+            echo "the risk job ended: $RESULT; without its class, the negative tests cannot pass"
+            exit 1
+          fi
+          case "$CLASS" in
+            R3|R4|R5)
+              echo "class $CLASS: the negative tests run in full"
+              echo "full=true" >> "$GITHUB_OUTPUT" ;;
+            R0|R1|R2)
+              echo "class $CLASS: the negative tests run in main's run after the merge and on main on the cadence (docs/decisions/2026-10-22-risk-lanes.md, docs/decisions/2026-10-22-checks-by-risk.md)"
+              echo "full=false" >> "$GITHUB_OUTPUT" ;;
+            *)
+              echo "the risk job gave no class from R0 to R5: '$CLASS'"
+              exit 1 ;;
+          esac
+
       - uses: actions/checkout@v5
+        if: steps.lane.outputs.full == 'true'
 
       - uses: actions/setup-python@v5
+        if: steps.lane.outputs.full == 'true'
         with:
           python-version: "3.12"
 
       - name: Install Lean (elan)
+        if: steps.lane.outputs.full == 'true'
         run: |
           curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
       - name: Build and compute the certificate
+        if: steps.lane.outputs.full == 'true'
         run: |
           lake build
           lake env lean Certificate/Facts.lean
 
       - name: An edited Heath word, wrong radii in I.1, a weakened axiom, a statements' word changed, a primitive no longer opaque, stale and incomplete review records, a native_decide, planted assumptions in I.15's porism and I.16, and a sorry in a complete book
+        if: steps.lane.outputs.full == 'true'
         run: python3 scripts/negative_tests.py
 
   model:
@@ -135,19 +274,68 @@ jobs:
       - name: The axioms hold in the plane, every weakened axiom is caught, and only Postulate 5 fails in the hyperbolic plane
         run: python3 -I tests/model/run.py --fast
 
+      - name: The committed results and the counts in MODEL.md are the present harness's
+        # Reads what a run wrote; apart from its self-test, on a made-up harness of its
+        # own, it runs no harness. So a pull request that changes the harness runs
+        # `run.py --full --write` in the same pull request: generated facts are refused
+        # when stale (docs/WORKFLOW.md, section 10, step 8, Tier 1).
+        run: python3 -I tests/model/results_check.py
+
   formal-model:
     # The formal model in model/ (model/README.md, "The CI job"): a Lake package of its
     # own, with a pinned Mathlib, in which Lean checks that the ordinary plane satisfies
     # the laws translated so far. Not `model`, which is the numerical harness above. Every
-    # Lean step runs in model/: the main package never sees Mathlib.
+    # Lean step runs in model/: the main package never sees Mathlib. In full for a change of
+    # class R4 or R5, which every change to model/, to Certificate/axioms.lock or to
+    # scripts/check_model_kernel.py is, as are every push to main and every pull request
+    # whose run starts with the `release` label, and for a change of any class to a file of
+    # the main package the model imports, directly or through others, which `risk` finds
+    # from the model's import lines (scripts/risk.py, model_inputs). It reads them by a
+    # narrow grammar and fails closed: while a file among them has a header it cannot read
+    # cleanly or an import it cannot resolve, the job runs in full for every change, and
+    # `risk`'s log names the file.
+    # Otherwise the job passes at once and says why: the change touches none of the model's
+    # inputs, and the cadence (safe-push-tests.yml) checks the model on main every six
+    # hours (docs/decisions/2026-10-22-risk-lanes.md).
+    # Like `negative`, it fails unless `risk` succeeded, never skipped.
+    needs: risk
+    if: always()
     runs-on: ubuntu-latest
     # A run takes a few minutes. Without Mathlib's prebuilt files, lake build would compile
     # Mathlib from source for hours, so the job stops long before that.
     timeout-minutes: 30
     steps:
+      - name: Read the class, and run in full for R4 and R5, for a change to a file the model imports, and for every change while one of their headers cannot be read
+        id: lane
+        env:
+          RESULT: ${{ needs.risk.result }}
+          CLASS: ${{ needs.risk.outputs.class }}
+          FORMAL_MODEL: ${{ needs.risk.outputs.formal_model }}
+        run: |
+          if [ "$RESULT" != success ]; then
+            echo "the risk job ended: $RESULT; without its class, the formal model cannot pass"
+            exit 1
+          fi
+          case "$CLASS:$FORMAL_MODEL" in
+            R4:*|R5:*)
+              echo "class $CLASS: the formal model is checked in full"
+              echo "full=true" >> "$GITHUB_OUTPUT" ;;
+            R0:true|R1:true|R2:true|R3:true)
+              echo "class $CLASS, and the change touches a file the formal model imports, or a file among them has a header the classifier cannot read; the risk job's log names it: the formal model is checked in full"
+              echo "full=true" >> "$GITHUB_OUTPUT" ;;
+            R0:false|R1:false|R2:false|R3:false)
+              echo "class $CLASS, and the change touches nothing under model/, nor the axiom lock, the model's kernel check or a file the formal model imports, so the formal model is checked on main on the cadence (docs/decisions/2026-10-22-risk-lanes.md)"
+              echo "full=false" >> "$GITHUB_OUTPUT" ;;
+            *)
+              echo "the risk job gave no class from R0 to R5, with formal_model true or false: '$CLASS', '$FORMAL_MODEL'"
+              exit 1 ;;
+          esac
+
       - uses: actions/checkout@v5
+        if: steps.lane.outputs.full == 'true'
 
       - name: Install Lean (elan)
+        if: steps.lane.outputs.full == 'true'
         run: |
           curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
@@ -157,12 +345,14 @@ jobs:
         # the lock fails here until the hash is renewed, after the model is brought up to
         # date wherever an axiom or a word an axiom reaches changed (model/README.md, "How
         # the lock ties it").
+        if: steps.lane.outputs.full == 'true'
         run: grep -v '^#' model/lock.sha256 | shasum -a 256 -c -
 
       - name: Restore Mathlib, its prebuilt files and their downloads from an earlier run
         # model/.lake/packages holds the pinned clones and the unpacked build (6.6 GB);
         # ~/.cache/mathlib holds what lake exe cache get downloaded (452 MB), which it looks
         # for before downloading again. Both are fixed by model/lake-manifest.json.
+        if: steps.lane.outputs.full == 'true'
         uses: actions/cache@v5
         with:
           path: |
@@ -172,12 +362,14 @@ jobs:
 
       - name: Fetch Mathlib's prebuilt files
         # After a restore it downloads nothing and unpacks nothing.
+        if: steps.lane.outputs.full == 'true'
         working-directory: model
         run: lake exe cache get
 
       - name: Check the proofs in the plane and what they rest on, and each hand translation against the library's declaration
         # Builds Model, with its audit, and Check, with its round trips; any failed check
         # fails the build.
+        if: steps.lane.outputs.full == 'true'
         working-directory: model
         run: lake build
 
@@ -188,6 +380,7 @@ jobs:
         # from nothing (model/README.md, "The CI job"). --self-test runs first and needs
         # no Mathlib: lake build must accept a theorem of False added without the kernel's
         # check, and the replay must reject it, naming it.
+        if: steps.lane.outputs.full == 'true'
         run: |
           python3 scripts/check_model_kernel.py --self-test
           python3 scripts/check_model_kernel.py
@@ -287,3 +480,70 @@ jobs:
         with:
           name: acceptance
           path: ${{ runner.temp }}/acceptance/
+
+  queue-integrity:
+    # The judge of each merge group. It checks out the group, takes scripts/ from the
+    # group's base (main) and runs that check_queue.py, which reads what it judges from
+    # Git's objects and GitHub only, never from the checkout, which it only compares with
+    # the group's head; it builds nothing and renders nothing (the check job renders the
+    # same group). But GitHub runs the group's own copy of this file, so the judge's
+    # verdict, and any evidence check added later, count only while the group's ci.yml
+    # still calls them.
+    # The protection of .github/, scripts/ and tests/, and the authenticity of the
+    # pre-flight's evidence, must be held by something a group cannot change: a ruleset
+    # requiring code-owner review, with a CODEOWNERS file naming the owner for those
+    # paths; a required workflow pinned to main, if the account offers one; or a status
+    # posted by an App running main's code. The queue must not be turned on until one
+    # exists. This workflow does not run on merge_group until the queue lands, so for
+    # now only the offline cases run.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      # An automatic revert's failed run and the open main-red issue that names it.
+      actions: read
+      issues: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the queue tests' pinned YAML parser
+        if: github.event_name != 'merge_group'
+        run: python3 -m pip install -r scripts/requirements-test_safe_push.txt
+
+      - name: Check the queue and train checks, case by case
+        # On pull requests and pushes: the offline cases, which need no network.
+        if: github.event_name != 'merge_group'
+        run: |
+          python3 -I tests/test_check_queue.py
+          python3 -I tests/test_check_train.py
+
+      - name: Check the group with main's copy of check_queue.py
+        if: github.event_name == 'merge_group'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
+          GROUP_BASE: ${{ github.event.merge_group.base_sha }}
+          REPOSITORY: ${{ github.repository }}
+          # The revert App's bot login (a repository variable, the owner's steps): only its
+          # pull requests may stand in a group as automatic reverts.
+          STOICHEIA_REVERT_BOT: ${{ vars.STOICHEIA_REVERT_BOT }}
+        run: |
+          test -n "$GROUP_HEAD"
+          test -n "$GROUP_BASE"
+          test "$(git rev-parse HEAD)" = "$GROUP_HEAD"
+          if ! git cat-file -e "$GROUP_BASE:scripts/check_queue.py"; then
+            echo "The group base has no queue judge."
+            exit 2
+          fi
+          mkdir "$RUNNER_TEMP/judge"
+          git archive --format=tar "$GROUP_BASE:scripts" > "$RUNNER_TEMP/queue-judge.tar"
+          tar -xf "$RUNNER_TEMP/queue-judge.tar" -C "$RUNNER_TEMP/judge"
+          test -f "$RUNNER_TEMP/judge/check_queue.py" || exit 2
+          python3 -I "$RUNNER_TEMP/judge/check_queue.py" --head "$GROUP_HEAD" --base "$GROUP_BASE" --repo "$REPOSITORY"

@@ -13,6 +13,25 @@ at = "Let AB be greater, and let BG be made equal to DE"
 kind = "helper"
 helper = "Prop3"
 note = "Euclid cuts BG equal to DE; Heath gives no reference for the cut. The Lean uses I.3, which also puts G between B and A, and joins GC by Postulate 1."
+unused = ["GC"]
+
+[[passage]]
+at = "therefore the base GC is equal to the base DF"
+kind = "carried"
+note = "The Lean proves that the base GC equals DF here, as Euclid states it; the argument goes on by the angles at C, and does not use it again."
+unused = ["hGC"]
+
+[[passage]]
+at = "and the triangle GBC is equal to the triangle DEF"
+kind = "carried"
+note = "The Lean proves that the triangle GBC equals DEF here, as Euclid states it; the argument goes on by the angles at C, and does not use it again."
+unused = ["this"]
+
+[[passage]]
+at = "and the remaining angles will be equal to the remaining angles, namely those which the equal sides subtend; [I. 4] therefore the angle GCB"
+kind = "carried"
+note = "The Lean states both pairs of remaining angles here, as Euclid does; the next step takes the angles GCB and DFE from I.4 directly, and the pairs are not used again."
+unused = ["this"]
 
 [[passage]]
 at = "the less to the greater"
@@ -23,18 +42,43 @@ note = "Euclid reads BCG as a part of BCA. Since G lies between B and A, `angle_
 [[passage]]
 at = "Therefore AB is not unequal to DE"
 kind = "case"
-note = "Euclid supposes AB greater than DE; the Lean proves his argument once over any letters and applies it again with the triangles exchanged to rule out DE greater than AB. The Lean concludes that AB equals DE by `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E §3.5), not a proof: of two unequal lengths, one is greater."
+note = "Euclid supposes AB greater than DE; the Lean proves his argument once over any letters and applies it again with the triangles exchanged to rule out DE greater than AB. The Lean concludes that AB equals DE by `Tacit.lt_trichotomy`, a tacit rule of magnitude, which we assume (System E §3.5): of two unequal lengths, one is greater."
 
 [[passage]]
 at = "Let BC be greater, if possible, and let BH be made equal to EF"
 kind = "helper"
 helper = "Prop3"
 note = "Euclid cuts BH equal to EF; Heath gives no reference for the cut. The Lean uses I.3, which also puts H between B and C, and joins AH by Postulate 1."
+unused = ["AH"]
+
+[[passage]]
+at = "therefore the base AH is equal to the base DF"
+kind = "carried"
+note = "The Lean proves that the base AH equals DF here, as Euclid states it; the argument goes on by the angles at H, and does not use it again."
+unused = ["hAH"]
+
+[[passage]]
+at = "and the triangle ABH is equal to the triangle DEF"
+kind = "carried"
+note = "The Lean proves that the triangle ABH equals DEF here, as Euclid states it; the argument goes on by the angles at H, and does not use it again."
+unused = ["this"]
+
+[[passage]]
+at = "and the remaining angles will be equal to the remaining angles, namely those which the equal sides subtend; [I. 4] therefore the angle BHA"
+kind = "carried"
+note = "The Lean states both pairs of remaining angles here, as Euclid does; the next step takes the angles BHA and EFD from I.4 directly, and the pairs are not used again."
+unused = ["this"]
 
 [[passage]]
 at = "Therefore BC is not unequal to EF"
 kind = "case"
-note = "Euclid supposes BC greater than EF; the Lean proves his argument once over any letters and applies it again with the triangles exchanged to rule out EF greater than BC. The Lean concludes that BC equals EF by `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E §3.5), not a proof: of two unequal lengths, one is greater."
+note = "Euclid supposes BC greater than EF; the Lean proves his argument once over any letters and applies it again with the triangles exchanged to rule out EF greater than BC. The Lean concludes that BC equals EF by the same rule, `Tacit.lt_trichotomy`."
+
+[[passage]]
+at = "the triangle ABC equal to the triangle DEF"
+kind = "carried"
+note = "The Lean proves that the triangle ABC equals DEF here, as Euclid states it; the statement asks only for the remaining sides and angle, so this is not used again."
+unused = ["this"]
 
 [figure]
 case = "AB supposed greater than DE, with G between B and A, and separately BC supposed greater than EF, with H between B and C; both suppositions appear on one triangle, as in Heath's figure"
@@ -42,10 +86,10 @@ note = "Like Heath's, this figure draws Euclid's impossible suppositions. BG is 
 
 [review]
 stage = "full"
-commit = "6e0cdd27"
+commit = "1e482112"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:a39a56a942144b8d"
-run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-I26-I30, independent re-read at 6e0cdd27"
+run = "card 220, cross-family sign-off: proof by OpenAI Codex, read by Claude Opus 5.5; ship XS, reader XS-r-I26-I30, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 18e4e614 (reader RT-c1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3"
 
 [review.items]
 statement = "pass"

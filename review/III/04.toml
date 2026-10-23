@@ -2,22 +2,42 @@
 [statement]
 scope = "full"
 note = "\"Not through the centre\" is said of every centre of the circle, and B is off AC, so that the two straight lines are really two."
-fingerprint = "sha256:84c2e52c5d72734a"
+fingerprint = "sha256:fed861dbbfcf4968"
 
 [route]
 kind = "euclid"
 
-[representation]
-tags = ["centre-given"]
-note = "The circle comes with a centre, which the proof takes by III.1, as Euclid does."
+[[passage]]
+at = "therefore the angle FEA is equal to the angle FEB"
+kind = "case"
+note = "If B is on A's side of FE, the equal right angles put B on EA; otherwise D is on that side and the angle FED is right, so the same argument puts D on EA. Either would make BD and AC one straight line."
+
+[[passage]]
+at = "which is impossible."
+kind = "helper"
+helper = "onRay_of_angle_eq"
+note = "Euclid rejects equal angles when one is part of the other; `onRay_of_angle_eq` proves, by angle addition and Common Notion 5, that equal angles on the same side of FE put their other arms on one ray. The Lean places B or D on A's side using the assumed rule `Tacit.pasch3` (System E, Pasch 3) and `same_side_of_opposite_sides`, then the assumed rule `Tacit.line_unique` (System E, Generalities 1) would make AC and BD one straight line."
 
 [[passage]]
 at = "Therefore AC, BD do not bisect one another."
 kind = "grouped"
 note = "The reductio's conclusion. The Lean supposed the bisection at the start and has reached the contradiction above, which proves it."
 
+[figure]
+case = "B on A's side of FE, as in Heath's figure"
+note = "Like Heath's, Euclid's figure accompanies the impossible supposition that AC and BD bisect one another; the drawn halves are unequal. At a glance, AC is bisected and D lies on A's side of FE, the other case of the proof."
+
 [review]
-stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:f7ace278349575cf"
+stage = "full"
+commit = "f34cfd07"
+reviewer = "Claude Opus 5.5, independent reader"
+lean = "sha256:39764bc40a45a681"
+run = "brief 0005 stage 5, ship R3 (#29); the closing comparison, written by Claude, read also by GPT-6 Astra (Codex)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

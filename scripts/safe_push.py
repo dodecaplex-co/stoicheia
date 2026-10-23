@@ -25,9 +25,10 @@ order, and the first that fails stops it with a message saying why:
    the commit, so that the merge commit will hold exactly the tree checked; the branch,
    if origin has it, is an ancestor too, for nothing is ever forced; the branch is not
    main; the branch name and the title hold nothing the scan refuses. The harness is
-   origin/main's: when this copy of safe_push.py or heath.py differs from origin/main's,
-   origin/main's replaces this process (os.execve), so that a branch cannot weaken the
-   guards that judge it, and an interruption reaches the copy that pushed.
+   origin/main's: when this copy of safe_push.py or heath.py, or the check_train.py
+   beside it, differs from origin/main's, origin/main's replaces this process
+   (os.execve), so that a branch cannot weaken the guards that judge it, and an
+   interruption reaches the copy that pushed.
 2. A secret scan of every line the push adds, of every file it adds or changes, of its
    commit messages, and of each commit's author and committer, and then of each commit's
    own change, since the push publishes the history: a secret added and taken out again,
@@ -87,8 +88,26 @@ order, and the first that fails stops it with a message saying why:
    each line of an entry that did not count and in which its own reading finds a mention
    of what it asks for, and why (uncounted). That comparison is for entries alone: a
    line added to the page is compared with nothing, and any new line there counts, but
-   its mentions are read by the same rules as an entry's (mention, names_path).
-4. The full check sequence of docs/WORKFLOW.md, section 8, in that worktree, and
+   its mentions are read by the same rules as an entry's (mention, names_path). A
+   branch named train/* requires --body-file, and step "3. train" then runs
+   origin/main's check_train.py on the commit and that body, before the full checks;
+   while origin/main has none, every train is refused, and no commit's own copy runs in
+   its place.
+4. First the change's risk class (risk_class), from R0 to R5, as origin/main's
+   scripts/risk.py gives it for `git diff origin/main...<commit>`: its copy at
+   origin/main, read out of git and run from a temporary directory, never the commit's, so
+   that a change cannot lower its own class by editing the classifier. A pull request
+   labelled release (given with --label, or on the open pull request) is R5, a label only
+   ever raising the class; so is a base with no scripts/risk.py, and any failure to
+   compute the class. The class and why are a step line, and the record's "class". For
+   R0 to R2 the rest of this step is skipped: CI runs the rest of section 8's sequence on
+   the pull request before the merge, and --merge waits for CI green, while the negative
+   tests run on main after the merge and on the cadence
+   (docs/decisions/2026-10-22-checks-by-risk.md); one "skip" line says so. Such a change
+   touches no check input and no protected path but
+   judged content (beyond_low), so keep_apart cannot arise; should origin/main's risk.py
+   ever class one that does R0 to R2, the full checks run. For R3 to R5, the full check
+   sequence of docs/WORKFLOW.md, section 8, in that worktree, and
    `negative_tests.py` in a second one, each step timed. The checks run with
    origin/main's copies of the check scripts and their expected values (CHECK_INPUTS,
    below); when the commit changes any of those, they run again with the commit's own
@@ -125,7 +144,9 @@ order, and the first that fails stops it with a message saying why:
 --merge <n> merges a pull request only when its head passes the secret scan and the
 guards against the current origin/main, run again then (a record of the pre-flight is a
 local file, so it stands in for the full checks alone, and only when origin/main's
-harness made it; else they run again too), CI on that head is green (`gh pr checks`:
+harness made it; a record that left them to CI for its class, only while the class,
+recomputed then by origin/main's risk.py, is still R0 to R2; else step 4 runs again by
+the class too), CI on that head is green (`gh pr checks`:
 check, model, negative, formal-model and acceptance, the ruleset's required checks, each
 pass, a skipped run not counting, and nothing fails or waits), no required box of its
 checklist is unticked (the template's own required boxes included, so deleting one does
@@ -139,8 +160,13 @@ and branch name, which go into main's merge commit, hold nothing the scan refuse
 carries a label for its kind and `security-review` when a protected path changes, and it
 is not a draft; a pull request labelled release waits until no blocks-release issue or
 pull request is open, read from GitHub at the gate, with any unreadable response refusing
-the merge. Malformed labels refuse; the merge and pre-flight watcher ignore a stale
-release-gate job from Release gate only on an ordinary pull request with readable labels.
+the merge, merges only on a record of the full pre-flight of its head (never one that left
+step 4 to CI), and only with a green run of .github/workflows/safe-push-tests.yml at its
+exact head, whose copy of that workflow is origin/main's, with each of the workflow's
+three jobs there and passed, and every job passed but the one that reports a red run on
+main (suite_gate, #301). Malformed labels refuse; the merge and pre-flight watcher ignore
+a stale release-gate job from Release gate only on an ordinary pull request with readable
+labels.
 The pre-flight's notes are shown beside the checklist. Then
 `gh pr merge <n> --merge --delete-branch --match-head-commit <head>` with the merge
 commit's subject and body given (GitHub's own words: the owner GitHub names for the head,
@@ -184,6 +210,7 @@ import contextlib
 import datetime
 import hashlib
 import html
+import importlib.util
 import json
 import math
 import os
@@ -298,10 +325,12 @@ GUARDED_DIRS = ("Elements", "heath", "review", "figures", "mishnah")
 # lakefile.lean is here although the repository has none: Lake reads it in preference to
 # lakefile.toml, and runs it. .gitignore is here because an added rule hides untracked
 # files from `git status`, and so from the check that the generated pages are current.
+# checks/ is to be the registry of CI's `check` job, one file per check (#229): a check
+# added, removed, or with its command, job or order changed, is named in a decisions entry.
 # PROTECTED_JUDGED, below, joins them.
 PROTECTED = ("scripts/", ".github/", "Certificate/", "tests/", "review/SCHEMA.md",
              "review/terms.toml", ".gitattributes", ".gitignore", "lakefile.toml",
-             "lakefile.lean", "lean-toolchain", "lake-manifest.json")
+             "lakefile.lean", "lean-toolchain", "lake-manifest.json", "checks/")
 # Protected, and still judged (#96): the audit lemmas of docs/reports/overlaps.md, whose
 # pinned axiom lists (`#guard_msgs`) back the catalogue's claims, and Audit.lean, the root
 # that decides which of them `lake build Audit` checks; the model's Model/Audit.lean and
@@ -316,12 +345,16 @@ PROTECTED_JUDGED = ("Audit/", "Audit.lean", "model/Model/Audit.lean", "model/Mod
                     "model/lakefile.toml", "model/lakefile.lean",
                     "model/lean-toolchain", "model/lake-manifest.json", "model/lock.sha256")
 PROTECTED += PROTECTED_JUDGED
-# The checks and what they expect: origin/main's copies judge the commit (step 4).
-CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "review/terms.toml")
+# The checks and what they expect: origin/main's copies judge the commit (step 4). The
+# registry of checks, checks/ (#229), is to be one of them: a commit that changes it is a
+# check change, kept apart from what the checks judge.
+CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "review/terms.toml",
+                "checks/")
 # Of those, the values pinned to the edition, not code. The lock and the model's hash of it
 # are compared exactly, both ways: check_fidelity.py the lock with facts.json, and the
 # model's run its hash with the lock. The model's page and results are its account of the
-# laws, which no check reads but for the page's count markers. The certificate's
+# laws; `results_check.py` holds them to one commit and the present harness, and
+# `check_fidelity.py` the page's count markers to what they count. The certificate's
 # expectations are checked one way only, each for what it says, so a change to them is a
 # pinned value only while it keeps every expectation origin/main has (kept_expectations).
 # The model's law names are compared with the lock both ways, but a line of them changed
@@ -370,6 +403,21 @@ KIND_LABELS = ("tooling", "text", "lean", "docs")      # every pull request carr
 assert set(KIND_LABELS) <= set(LABELS)
 # The required status checks of the ruleset on main, in its order (judge_checks).
 REQUIRED_CHECKS = ("check", "model", "negative", "formal-model", "acceptance")
+# The risk classifier (docs/decisions/2026-10-22-risk-lanes.md), whose copy at origin/main,
+# never the commit's, gives the class of the change (risk_class); and the classes whose
+# pre-flight leaves step 4 to CI (docs/decisions/2026-10-22-checks-by-risk.md).
+RISK = "scripts/risk.py"
+LOW_CLASSES = ("R0", "R1", "R2")
+RISK_TIMEOUT = 300        # seconds origin/main's risk.py may take to class a change
+# A release pull request merges only with a green run of this workflow at its exact head
+# (#301), the head's copy of it being origin/main's, since a run at the head runs the
+# head's copy: each of its jobs in SUITE_JOBS there and passed, and every other job too,
+# save the one that reports a red run on main, which a green run skips. SUITE_JOBS are
+# the workflow's jobs but that one (Units holds them to the workflow).
+SUITE_WORKFLOW = "safe-push-tests.yml"
+SUITE_PATH = f".github/workflows/{SUITE_WORKFLOW}"
+SUITE_JOBS = ("safe-push-tests", "negative-tests", "formal-model-kernel")
+SUITE_REPORT_JOB = "report"
 GENERATED = ("facts.json", "book/", "CERTIFICATE.md", "GRAPH.md", "README.md", "docs/PROGRAM.md")
 # Of these, two are generated only between their markers (render.py's SCOPE_MARKERS and
 # STATUS_MARKERS); the rest of each is written by hand.
@@ -384,13 +432,17 @@ HEAD_TIMEOUT = 60         # seconds to wait for GitHub to see the branch's new h
 TAIL = 40                 # lines of a failed step's output to print
 
 # The full local check sequence, exactly as docs/WORKFLOW.md, section 8, and CI's `check`
-# job run it, then the `model` job. Change it with them.
+# job run it, then the `model` job, but for the model job's `results_check.py`, which only
+# CI runs until it joins this list (WORKFLOW, section 8). Change it with them.
 CHECKS = [
     ("lake build", ["lake", "build"]),
     ("lake build Audit", ["lake", "build", "Audit"]),
     ("lake build Staging", ["lake", "build", "Staging"]),
     ("lake env lean Certificate/Facts.lean", ["lake", "env", "lean", "Certificate/Facts.lean"]),
     ("python3 -I tests/test_certificate.py", [PY, "-I", "tests/test_certificate.py"]),
+    ("python3 scripts/sweep_citations.py --self-test",
+     [PY, "scripts/sweep_citations.py", "--self-test"]),
+    ("python3 scripts/sweep_citations.py", [PY, "scripts/sweep_citations.py"]),
     ("python3 scripts/check_kernel.py --self-test",
      [PY, "scripts/check_kernel.py", "--self-test"]),
     ("python3 scripts/heath.py", [PY, "scripts/heath.py"]),
@@ -405,6 +457,7 @@ CHECKS = [
     ("python3 scripts/check_style.py", [PY, "scripts/check_style.py"]),
     ("python3 scripts/render.py", [PY, "scripts/render.py"]),
     ("git status --porcelain is empty", None),
+    ("python3 scripts/check_queue.py --tree .", [PY, "scripts/check_queue.py", "--tree", "."]),
     ("python3 scripts/check_links.py", [PY, "scripts/check_links.py"]),
     ("python3 -I tests/model/run.py --fast", [PY, "-I", "tests/model/run.py", "--fast"]),
 ]
@@ -2115,18 +2168,36 @@ def passes(repo, base, wt: Path, changes: list[tuple[str, str]]):
 GUIDES = ("AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "docs/WORKFLOW.md",
           "docs/FORMALIZATION.md", "docs/STYLE.md", "docs/briefs/", "docs/templates/",
           "docs/decisions/")
-# A review record's stamp: its reviewer's reading of a statement and a Lean file, as a
-# change to the certificate's output asks for (WORKFLOW, section 6). Not its stage.
-STAMP_LINE = re.compile(r'(?m)^(?:fingerprint|commit|lean|reviewer)\s*=\s*"[^"]*"[ \t]*$')
+# A review record's stamp: its reviewer's reading of a statement, a Lean file and the
+# record's own text, as a change to the certificate's output asks for (WORKFLOW, section
+# 6). Not its stage. STAMPS: the stamp keys of each section.
+STAMP_LINE = re.compile(r'(?m)^(?:fingerprint|commit|lean|text|reviewer)\s*=\s*"[^"]*"[ \t]*$\n?')
+STAMPS = {"statement": ("fingerprint",), "review": ("commit", "lean", "text", "reviewer")}
 
 
 def stamp_only(repo, base, sha, path: str) -> bool:
-    """Is the change to `path` a review record's stamp alone?"""
+    """Is the change to `path` a review record's stamp alone: stamp lines rewritten, added
+    or moved within their own section, none taken away from it, and nothing else changed,
+    in the lines or in the record as TOML reads it (so a stamp-shaped line inside a
+    multi-line string is no stamp)? A record TOML cannot read is judged."""
     if not re.fullmatch(r"review/[IVX]+/\d+\.toml", path):
         return False
     old, new = show(repo, base, path), show(repo, sha, path)
-    return old is not None and new is not None \
-        and STAMP_LINE.sub("", old) == STAMP_LINE.sub("", new)
+    if old is None or new is None or STAMP_LINE.sub("", old) != STAMP_LINE.sub("", new):
+        return False
+    import tomllib
+    try:
+        before, after = tomllib.loads(old), tomllib.loads(new)
+    except tomllib.TOMLDecodeError:
+        return False
+    for section, keys in STAMPS.items():
+        if isinstance(before.get(section), dict) and isinstance(after.get(section), dict):
+            if any(key in before[section] and key not in after[section] for key in keys):
+                return False
+            for table in (before[section], after[section]):
+                for key in keys:
+                    table.pop(key, None)
+    return before == after
 
 
 def judged_files(repo, base, sha) -> list[str]:
@@ -2701,6 +2772,93 @@ class Guarded(NamedTuple):
     check_inputs: list[tuple[str, str]]   # check inputs changed: (status, path)
 
 
+# --------------------------------------------------------------------------------------
+# The risk class, by origin/main's scripts/risk.py
+
+
+class Risk(NamedTuple):
+    cls: str                    # R0 to R5
+    why: str                    # how it was found, for the step line and the record
+    seconds: float | None = None
+
+
+CLASS_LINE = re.compile(r"(R[0-5]) (\S.*)")
+PATH_LINE = re.compile(r"  (R[0-5]) (.+)")
+
+
+def risk_class(repo, base: str, sha: str, labels: set[str] | None) -> Risk:
+    """The class of the change `git diff base...sha`, as origin/main's scripts/risk.py
+    gives it (`risk.py --diff`, as CI's risk job runs it): its copy at `base`, read out of
+    git and run from a temporary directory, never the commit's, so that a change cannot
+    lower its own class by editing the classifier. A label can only raise the class: a
+    pull request labelled release is R5, and so is one whose labels cannot be read. A base
+    with no scripts/risk.py is R5, and so is any failure to compute the class (fail
+    closed): Git failing, the script failing or printing no class, a class below that of a
+    file it lists, a timeout."""
+    t = time.time()
+
+    def r5(why: str) -> Risk:
+        return Risk("R5", why, time.time() - t)
+    if labels is None:
+        return r5("the pull request's labels could not be read, so it may be a release")
+    if RELEASE_LABEL in {label.lower() for label in labels}:
+        return r5(f"the pull request is labelled {RELEASE_LABEL}")
+    listed = run(["git", "ls-tree", "-z", base, "--", RISK], repo, binary=True)
+    if listed.returncode != 0:
+        return r5(f"git could not read origin/main {base[:12]}: "
+                  f"{printable_text(listed.stderr.decode(errors='replace').strip())}")
+    if not listed.stdout:
+        return r5(f"origin/main {base[:12]} has no {RISK} to class it")
+    meta = listed.stdout.split(b"\t", 1)[0].split()
+    if len(meta) != 3 or meta[0] not in (b"100644", b"100755") or meta[1] != b"blob":
+        return r5(f"origin/main's {RISK} is not a regular file")
+    source = run(["git", "cat-file", "blob", meta[2].decode()], repo, binary=True)
+    if source.returncode != 0:
+        return r5(f"git could not read origin/main's {RISK}")
+    with tempfile.TemporaryDirectory(prefix="stoicheia-risk-") as tmp:
+        script = Path(tmp) / "risk.py"
+        script.write_bytes(source.stdout)
+        try:
+            r = subprocess.run([PY, "-I", str(script), "--diff", base, sha], cwd=repo,
+                               capture_output=True, text=True, errors="replace",
+                               timeout=RISK_TIMEOUT)
+        except (OSError, subprocess.TimeoutExpired) as e:
+            return r5(f"origin/main's {RISK} could not be run: {type(e).__name__}")
+    if r.returncode != 0:
+        said = (r.stderr.strip().splitlines() or [""])[-1]
+        return r5(f"origin/main's {RISK} could not class it (exit {r.returncode}"
+                  + (f": {printable_text(said)[:300]}" if said else "") + ")")
+    lines = r.stdout.splitlines()
+    m = CLASS_LINE.fullmatch(lines[0]) if lines else None
+    if not m:
+        return r5(f"origin/main's {RISK} printed no class")
+    cls, name = m.groups()
+    # The class is the highest of its files': a class below one of the files it lists is
+    # no class.
+    listed = [(p.group(1), p.group(2)) for line in lines[1:]
+              if (p := PATH_LINE.fullmatch(line))]
+    higher = max(((c, path) for c, path in listed if c > cls), default=None)
+    if higher:
+        return r5(f"origin/main's {RISK} gave {cls}, below the {higher[0]} it gave "
+                  f"{printable_text(higher[1])[:200]}")
+    top = [path for c, path in listed if c == cls]
+    files = ("no file changed" if not top else top[0] if len(top) == 1
+             else f"{top[0]} and {len(top) - 1} more at {cls}")
+    return Risk(cls, f"{name}, by origin/main's {RISK} (blob {meta[2].decode()[:12]}): "
+                     f"{printable_text(files)}", time.time() - t)
+
+
+def beyond_low(repo, base, sha) -> list[str]:
+    """The paths the change touches that no change of R0 to R2 may: the check inputs
+    (CHECK_INPUTS), and the protected paths that are not content the checks judge (the
+    workflows, the hooks and the launcher, the build files, .gitignore and
+    .gitattributes). risk.py classes every one of them R3 or above; should origin/main's
+    copy ever class such a change lower, the full checks run, as for R3 to R5. So
+    keep_apart, which needs a check input changed, cannot arise on the short path."""
+    return sorted(p for _, p in changed_files(repo, base, sha) if under(p, CHECK_INPUTS)
+                  or (is_protected(p) and not under(p, PROTECTED_JUDGED)))
+
+
 def guards(ctx, wt: Path, rep: Report, logs: Path) -> Guarded:
     repo, base, sha = ctx.repo, ctx.base, ctx.sha
     rep.heading(f"3. Invariant guards against origin/main, in {wt}")
@@ -2795,29 +2953,62 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path) ->
 class Preflight(NamedTuple):
     statements: list[str]
     protected: list[str]
+    short: bool = False         # step 4 left to CI for the change's class
 
 
-def check_commit(ctx, rep: Report, logs: Path, test_mode: bool,
-                 checked: dict | None = None) -> Preflight:
+def short_path(ctx, risk: Risk, g: Guarded, rep: Report) -> bool:
+    """Whether step 4 is left to CI: for a change of R0 to R2 by origin/main's risk.py,
+    which changes no check input nor any protected path but judged content (beyond_low).
+    No check input changes, so keep_apart cannot arise. Should the classifier and those
+    lists ever disagree, the full checks run, as for R3 to R5, and it is noted."""
+    if risk.cls not in LOW_CLASSES:
+        return False
+    beyond = sorted(set(beyond_low(ctx.repo, ctx.base, ctx.sha)) | {p for _, p in g.check_inputs})
+    if beyond:
+        shown = ", ".join(beyond[:8]) + (f" and {len(beyond) - 8} more" if len(beyond) > 8
+                                         else "")
+        rep.add("4", "class and check inputs", "note", f"origin/main's {RISK} classes the "
+                f"change {risk.cls}, but it changes {printable_text(shown)}, which no change "
+                "of R0 to R2 may: the full local checks run, as for R3 to R5")
+        return False
+    return True
+
+
+def check_commit(ctx, rep: Report, logs: Path, test_mode: bool, risk: Risk,
+                 checked: dict | None = None, train_body: str | None = None) -> Preflight:
     """Steps 2 to 4 on the commit: the secret scan, the guards and the full checks.
-    `checked`, a record of the full checks of this commit against this origin/main by
-    origin/main's harness, stands in for step 4 alone (--merge); steps 2 and 3 always
-    run."""
+    The class `risk` (risk_class) is reported at the head of step 4: for R0 to R2 the full
+    checks are skipped (short_path), CI running the rest of section 8's sequence before the
+    merge and the negative tests running on main after it and on the cadence; for R3 to R5
+    they run. `checked`, a record of this commit against this origin/main by origin/main's
+    harness, stands in for step 4 alone (--merge; checks_record); steps 2 and 3,
+    including the train check when given, always run."""
     secret_scan(ctx.repo, ctx.base, ctx.sha, rep, allow_rev=ctx.base)
     with tempfile.TemporaryDirectory(prefix="stoicheia-push-") as tmp:
         parent = Path(tmp)
         with worktree(ctx.repo, ctx.sha, parent, "check") as wt:
             g = guards(ctx, wt, rep, logs)
+            if train_body is not None:
+                train_check(ctx, train_body, rep)
             rep.heading("4. The full local checks (docs/WORKFLOW.md, section 8)")
-            if checked is not None:
+            rep.add("4", "class", "ok", f"{risk.cls}, {risk.why}", risk.seconds)
+            short = short_path(ctx, risk, g, rep)
+            if checked is not None and not checked.get("short"):
+                short = False
                 rep.add("4", "full local checks", "skip", f"run on {ctx.sha[:12]} against "
                         f"origin/main {ctx.base[:12]} by {checked.get('harness')}, "
                         f"{checked.get('time')}")
+            elif short:
+                rep.add("4", "full local checks", "skip", f"class {risk.cls}: left to CI, "
+                        "whose check and model jobs run the builds, Facts.lean, the kernel "
+                        "self-test and the rest of section 8 on the pull request before "
+                        "the merge, and --merge waits for them green; the negative tests "
+                        "run on main after the merge and on the cadence")
             elif test_mode:
                 rep.add("4", "full local checks", "skip", "internal test flag, local origin")
             else:
                 full_checks(ctx, wt, parent, g.check_inputs, rep, logs)
-    return Preflight(g.statements, g.protected)
+    return Preflight(g.statements, g.protected, short)
 
 
 # --------------------------------------------------------------------------------------
@@ -2891,14 +3082,32 @@ def check_installed(repo, base: str, rep: Report) -> None:
                     "(sh scripts/install_hooks.sh --force)")
 
 
-def harness_copy(theirs: bytes, theirs_heath: bytes) -> Path:
-    """origin/main's safe_push.py and heath.py, written to a directory named by their
-    blobs, beside the log (~/.cache/stoicheia/harness/<blob>-<blob>/): it needs no
+def harness_train(repo: Path, base: str) -> bytes | None:
+    """origin/main's train module, distinguishing absent from unreadable."""
+    entry = git(repo, "ls-tree", base, "--", "scripts/check_train.py").strip()
+    if not entry:
+        return None
+    if not re.fullmatch(r"100(?:644|755) blob [0-9a-f]{40,64}\tscripts/check_train\.py",
+                        entry):
+        raise Refusal("origin/main's scripts/check_train.py is not a regular file")
+    return git(repo, "cat-file", "blob", f"{base}:scripts/check_train.py", binary=True)
+
+
+def harness_copy(theirs: bytes, theirs_heath: bytes,
+                 theirs_train: bytes | None = None) -> Path:
+    """origin/main's harness modules, written to a directory named by their
+    blobs, beside the log (~/.cache/stoicheia/harness/): it needs no
     cleaning up, since the same harness always lands in the same place, and each file is
     written afresh, through a rename, so that nothing left there earlier is run."""
-    path = log_path().parent / "harness" / f"{blob_id(theirs)}-{blob_id(theirs_heath)}"
+    train_id = blob_id(theirs_train) if theirs_train is not None else "no-train"
+    path = log_path().parent / "harness" / \
+        f"{blob_id(theirs)}-{blob_id(theirs_heath)}-{train_id}"
     path.mkdir(parents=True, exist_ok=True)
-    for name, data in (("safe_push.py", theirs), ("heath.py", theirs_heath)):
+    for name, data in (("safe_push.py", theirs), ("heath.py", theirs_heath),
+                       ("check_train.py", theirs_train)):
+        if data is None:
+            (path / name).unlink(missing_ok=True)
+            continue
         fd, tmp = tempfile.mkstemp(prefix=f".{name}.", dir=path)
         with os.fdopen(fd, "wb") as f:
             f.write(data)
@@ -2907,8 +3116,9 @@ def harness_copy(theirs: bytes, theirs_heath: bytes) -> Path:
 
 
 def harness(repo, base: str, rep: Report) -> None:
-    """origin/main's safe_push.py and heath.py judge the commit. When this copy differs
-    from them, origin/main's replaces this process (os.execve), with the same arguments:
+    """origin/main's safe_push.py, heath.py and optional check_train.py judge the commit.
+    When this copy differs from them, origin/main's replaces this process (os.execve),
+    with the same arguments:
     its signals, its summary and its exit status are the run's own, so an interruption
     after its push is still "pushed; CI not followed". A copy of origin/main's that
     predates the marker is not run: this copy runs, once, while the harness that runs
@@ -2919,14 +3129,20 @@ def harness(repo, base: str, rep: Report) -> None:
     own, own_heath = (here / "safe_push.py").read_bytes(), (here / "heath.py").read_bytes()
     theirs = show_bytes(repo, base, "scripts/safe_push.py")
     theirs_heath = show_bytes(repo, base, "scripts/heath.py")
-    same = (theirs, theirs_heath) == (own, own_heath)
+    theirs_train = harness_train(repo, base)
+    own_train = (here / "check_train.py").read_bytes() if (here / "check_train.py").exists() \
+        else None
+    # Older launchers carry only the first two modules. train_check copies main's train
+    # module afresh before importing it, so an absent local copy needs no hand-over.
+    same = (theirs, theirs_heath) == (own, own_heath) and \
+        (own_train is None or own_train == theirs_train)
     if os.environ.get("STOICHEIA_HARNESS"):
         if not same:
             raise Refusal("STOICHEIA_HARNESS says this is origin/main's harness, but this "
-                          "copy of scripts/safe_push.py or heath.py is not origin/main's "
-                          f"(blob {blob_id(own)[:12]}): origin/main moved since the hand-over, "
-                          "or the variable was set by hand. Run safe_push again, with the "
-                          "variable unset.")
+                          "copy of safe_push.py, heath.py or check_train.py is not "
+                          f"origin/main's (blob {blob_id(own)[:12]}): origin/main moved "
+                          "since the hand-over, or the variable was set by hand. Run "
+                          "safe_push again, with the variable unset.")
         HARNESS = f"origin/main's `scripts/safe_push.py` (blob `{blob_id(own)[:12]}`)"
         HARNESS_BLOB = blob_id(own)
         rep.add("1", "harness", "ok", f"origin/main's scripts/safe_push.py (blob "
@@ -2944,15 +3160,74 @@ def harness(repo, base: str, rep: Report) -> None:
         rep.add("1", "harness", "ok", f"origin/main's scripts/safe_push.py "
                 f"(blob {blob_id(own)[:12]})")
         return
-    print("  this copy of safe_push.py or heath.py differs from origin/main's: running "
-          "origin/main's in its place", flush=True)
-    path = harness_copy(theirs, theirs_heath) / "safe_push.py"
+    print("  this copy of safe_push.py, heath.py or check_train.py differs from "
+          "origin/main's: running origin/main's in its place", flush=True)
+    path = harness_copy(theirs, theirs_heath, theirs_train) / "safe_push.py"
     # GIT_NO_REPLACE_OBJECTS=1, and no GIT_REPLACE_REF_BASE, for its git commands and its
     # checks: so an older harness, whose run() sets neither, has them too (#256).
     env = without_replacements(dict(os.environ, STOICHEIA_HARNESS="origin/main"))
     sys.stdout.flush()
     sys.stderr.flush()
     os.execve(PY, [PY, str(path), *ARGV], env)
+
+
+def body_input(args) -> str | None:
+    """--body-file's text, read once, as UTF-8, before the checks: the train check, the
+    dry run's body and the pull request's body are all that same text."""
+    if not args.body_file:
+        return None
+    try:
+        return Path(args.body_file).read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as e:
+        raise Refusal(f"could not read --body-file: {e}") from e
+
+
+def train_input(ctx: Context, body: str | None) -> str | None:
+    """A train needs an explicit body, including on a dry run or an update."""
+    if not (ctx.branch or "").startswith("train/"):
+        return None
+    if body is None:
+        raise Refusal("a train/* branch requires --body-file")
+    return body
+
+
+def train_check(ctx: Context, body: str, rep: Report) -> None:
+    """Run origin/main's train checker on the commit and the body. While origin/main has
+    none, every train is refused: no commit's own copy ever runs in its place."""
+    rep.heading("3. train")
+    started = time.time()
+    try:
+        source = harness_train(ctx.repo, ctx.base)
+        if source is None:
+            raise Refusal("origin/main has no scripts/check_train.py, so no train can be "
+                          "checked: land the train checker first, then the train")
+        here = Path(__file__).resolve().parent
+        path = harness_copy((here / "safe_push.py").read_bytes(),
+                            (here / "heath.py").read_bytes(), source)
+        spec = importlib.util.spec_from_file_location("check_train", path / "check_train.py")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        problems = module.check_train(ctx.repo, ctx.base, ctx.sha, body)
+        if not isinstance(problems, list) or any(not isinstance(p, str) or not p.strip()
+                                                 for p in problems):
+            raise Refusal("check_train returned an unreadable problem list")
+        if problems:
+            raise Refusal("\n".join(problems))
+    except (Exception, SystemExit) as e:
+        rep.add("3", "train", "FAIL", str(e), time.time() - started)
+        raise Refusal(f"the train check refused: {e}") from e
+    rep.add("3", "train", "ok", "origin/main's check_train passed", time.time() - started)
+
+
+def merge_train_input(ctx: Context, view: dict) -> str | None:
+    """Read a train's current pull request body; an unreadable body cannot skip its check."""
+    if not (ctx.branch or "").startswith("train/"):
+        return None
+    body = view.get("body")
+    if not isinstance(body, str):
+        raise Refusal("could not read the train's current pull request body")
+    return body
 
 
 def gh_command(test_mode: bool) -> tuple:
@@ -3148,11 +3423,12 @@ OWN_PART = re.compile(r"(?ms)^<!-- safe_push:(\w+) begin\b[^\n]*?-->[ \t\r]*$"
                       r"(?:(?!<!-- safe_push:\1 begin).)*?"
                       r"^<!-- safe_push:\1 end -->[ \t\r]*$")
 # The pre-flight's summary, one of those parts, is replaced there.
-BLOCK = re.compile(r"(?ms)^<!-- safe_push:preflight begin(?: sha=(\w+) base=(\w+))? -->"
+BLOCK = re.compile(r"(?ms)^<!-- safe_push:preflight begin"
+                   r"(?: sha=(\w+) base=(\w+)(?: harness=(\w+))?)? -->"
                    r"[ \t\r]*$(?:(?!<!-- safe_push:preflight begin).)*?"
                    r"^<!-- safe_push:preflight end -->[ \t\r]*$")
 PLACEHOLDER = re.compile(r"(?m)^<!-- safe_push: (\w+) -->[ \t\r]*$")
-STAMP_FIELD = re.compile(r'(?m)^(fingerprint|commit|lean)\s*=\s*"([^"]*)"')
+STAMP_FIELD = re.compile(r'(?m)^(fingerprint|commit|lean|text)\s*=\s*"([^"]*)"')
 
 
 def sanitized(text: str) -> str:
@@ -3161,14 +3437,22 @@ def sanitized(text: str) -> str:
 
 
 def preflight_block(sha: str, base: str, record: dict) -> str:
-    lines = [f"<!-- safe_push:preflight begin sha={sha} base={base} -->",
+    if record.get("short"):
+        skipped = (f"; the full local checks left to CI, for the class "
+                   f"{record.get('class')}")
+    else:
+        skipped = "; the full checks skipped (the internal test flag)" \
+            if not record.get("full") else ""
+    harness_sha = record.get("harness_sha", base)
+    lines = [f"<!-- safe_push:preflight begin sha={sha} base={base} harness={harness_sha} -->",
              f"Pre-flight of `{sha[:12]}` against origin/main `{base[:12]}`, "
              f"{record.get('time', '')}, by {record.get('harness', 'safe_push.py')}"
-             + ("; the full checks skipped (the internal test flag)"
-                if not record.get("full") else "") + ".",
-             "",
-             "| Step | Outcome | Seconds |",
-             "|---|---|---|"]
+             + skipped + ".", "", "Verdict: PASS."]
+    if record.get("class"):
+        lines += ["", f"Risk class {record['class']}: {sanitized(record.get('class_why', ''))}."]
+    lines += ["",
+              "| Step | Outcome | Seconds |",
+              "|---|---|---|"]
     for stage, name, outcome, seconds in record.get("steps", []):
         took = f"{seconds:.1f}" if seconds is not None else ""
         lines.append(f"| {stage}. {name} | {outcome} | {took} |")
@@ -3222,8 +3506,16 @@ def describe(ctx: Context, pre: Preflight) -> dict[str, str]:
             continue
         old = dict(STAMP_FIELD.findall(show(repo, base, path) or ""))
         new = dict(STAMP_FIELD.findall(show(repo, sha, path) or ""))
+        lost = sorted(old.keys() - new.keys())
         if status == "D":
             records.append(f"- `{path}`: deleted")
+        elif lost:
+            records.append(f"- `{path}`: {'a stamp' if len(lost) == 1 else 'stamps'} taken "
+                           f"away ({', '.join(f'`{key}`' for key in lost)})")
+        elif old != new and new.get("commit") and new["commit"] == old.get("commit"):
+            records.append(f"- `{path}`: its stamps written, its commit kept at "
+                           f"`{new['commit'][:12]}`" if stamp_only(repo, base, sha, path)
+                           else f"- `{path}`: touched, not re-stamped")
         elif old != new and new.get("commit"):
             records.append(f"- `{path}`: re-stamped at `{new['commit'][:12]}`")
         else:
@@ -3351,40 +3643,46 @@ def pr_labels(value) -> set[str]:
     return {label["name"].lower() for label in value}
 
 
-def check_kind_label(ctx: Context, args, rep: Report) -> None:
+def check_kind_label(ctx: Context, args, rep: Report) -> set[str]:
     """The label for the pull request's kind, given or on the open one, settled before
     the checks, so that a forgotten --label costs no Lean run. A dry run does not ask
-    GitHub, and notes a missing one."""
-    if not kind_problem(args.label):
-        return
+    GitHub, and notes a missing one. Returns the labels the pull request will carry, as
+    far as they are known before the checks: those given, and the open one's, which a dry
+    run does not ask for; `release` among them makes the class R5 (risk_class)."""
+    given = {label.lower() for label in args.label}
     if args.dry_run:
-        rep.add("1", "kind label", "note", f"none given ({kind_problem([])}); enough if "
-                "the open pull request has one")
-        return
+        if kind_problem(args.label):
+            rep.add("1", "kind label", "note", f"none given ({kind_problem([])}); enough if "
+                    "the open pull request has one")
+        return given
     existing = find_own_pr(ctx)
     try:
-        problem = kind_problem(pr_labels(
-            [] if existing is None else existing.get("labels")))
+        theirs = pr_labels([] if existing is None else existing.get("labels"))
     except ValueError as e:
         raise Refusal(str(e)) from None
-    if problem:
-        rep.add("1", "kind label", "FAIL", f"the pull request has {problem}")
-        raise Refusal(f"the pull request has {problem}")
-    rep.add("1", "kind label", "ok", f"on #{existing['number']}")
+    if kind_problem(args.label):
+        problem = kind_problem(theirs)
+        if problem:
+            rep.add("1", "kind label", "FAIL", f"the pull request has {problem}")
+            raise Refusal(f"the pull request has {problem}")
+        rep.add("1", "kind label", "ok", f"on #{existing['number']}")
+    return given | theirs
 
 
-def plan_pr(ctx: Context, pre: Preflight, record: dict, args) -> PRPlan:
+def plan_pr(ctx: Context, pre: Preflight, record: dict, args,
+            body_text: str | None) -> PRPlan:
     """Everything the pull request will carry, settled before the push: our open pull
     request for the branch (never a fork's of the same name), and the body, scanned. A
-    new pull request's body, or --body-file, is known in full; an open one's is fetched."""
+    new pull request's body, or --body-file's text (body_input, read once before the
+    checks), is known in full; an open one's is fetched."""
     labels = set(args.label) | ({SECURITY_LABEL} if pre.protected else set())
     existing = find_own_pr(ctx)
     try:
         pr_labels([] if existing is None else existing.get("labels"))
     except ValueError as e:
         raise Refusal(str(e)) from None
-    if args.body_file:
-        body = fill_body(ctx, pre, record, Path(args.body_file).read_text())
+    if body_text is not None:
+        body = fill_body(ctx, pre, record, body_text)
     elif existing:
         view = gh_json(ctx, "pr", "view", str(existing["number"]), "--json", "body")
         body = put_block(refreshed(view.get("body") or "", describe(ctx, pre)),
@@ -3455,9 +3753,10 @@ def open_pr(ctx: Context, plan: PRPlan, args, rep: Report, logs: Path) -> PR:
 
 def judge_checks(checks: list[dict]) -> tuple[str, str]:
     """("success", …) when check, model, negative, formal-model and acceptance each have
-    a passing run and nothing fails or waits. A skipped run is not a pass: `acceptance`
-    is skipped in the push event's run, so it is the pull request's own run that passes
-    it, and a required check whose every run was skipped is "missing"."""
+    a passing run and nothing fails or waits. A skipped run is not a pass, though GitHub
+    takes one for a required check: `acceptance` runs only on a pull request, so it is the
+    pull request's own run that passes it, and a required check whose every run was
+    skipped is "missing"."""
     buckets: dict[str, list[str]] = {}
     for c in checks:
         buckets.setdefault(str(c.get("name")), []).append(str(c.get("bucket")))
@@ -3551,10 +3850,12 @@ def record_path(sha: str, base: str) -> Path:
     return log_path().parent / "preflight" / f"{sha}-{base}.json"
 
 
-def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool,
+def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool, risk: Risk,
                 checked: dict | None = None) -> dict:
-    """The pre-flight's record. `checked`, the earlier record whose full checks stood in
-    for step 4 (--merge), gives its step 4 and its notes."""
+    """The pre-flight's record. `checked`, the earlier record that stood in for step 4
+    (--merge), gives its step 4 and its notes. "class" is the change's class, by
+    origin/main's risk.py when this record was made, and "short" says that step 4 was left
+    to CI for it; "full", that step 4 ran in full (here or in `checked`)."""
     steps = [[s.stage, s.name, s.outcome, s.seconds] for s in rep.steps
              if s.outcome in ("ok", "FAIL", "skip") and s.stage in ("2", "3", "4")]
     notes = [[s.name, (s.detail.splitlines() or [""])[0]] for s in rep.steps
@@ -3565,7 +3866,8 @@ def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool,
         notes += [list(n) for n in checked.get("notes", []) if list(n) not in notes]
     return {
         "sha": ctx.sha, "base": ctx.base, "branch": ctx.branch,
-        "full": full or bool(checked and checked.get("full")),
+        "full": (full and not pre.short) or bool(checked and checked.get("full")),
+        "class": risk.cls, "class_why": risk.why, "short": pre.short,
         "time": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "harness": HARNESS, "harness_blob": HARNESS_BLOB,
         "steps": steps, "notes": notes,
@@ -3573,16 +3875,26 @@ def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool,
     }
 
 
-def checks_record(record: dict | None, test_mode: bool) -> dict | None:
-    """The record, if its full checks may stand in for step 4 at the merge: they were run
-    (or skipped by the internal test flag, under it) by origin/main's harness, the one
-    running now. The record is a local file anything run as the user could write, so it
-    never stands in for the secret scan or the guards, and CI runs the same checks."""
-    if record is None or HARNESS_BLOB is None:
+def checks_record(record: dict | None, test_mode: bool, risk: Risk) -> dict | None:
+    """The record, if it may stand in for step 4 at the merge: made by origin/main's
+    harness, the one running now, and either of the full checks, run (or skipped by the
+    internal test flag, under it), or of a pre-flight that left them to CI for its class,
+    while the class, `risk`, recomputed now by origin/main's risk.py for that commit
+    against that base, is still R0 to R2. The record is a local file anything run as the
+    user could write, so it never stands in for the secret scan or the guards, and CI runs
+    the same checks."""
+    if record is None or HARNESS_BLOB is None or record.get("harness_blob") != HARNESS_BLOB:
         return None
-    if record.get("harness_blob") != HARNESS_BLOB or not (record.get("full") or test_mode):
-        return None
-    return record
+    if record.get("short"):
+        low = record.get("class") in LOW_CLASSES and risk.cls in LOW_CLASSES
+        return record if low else None
+    return record if record.get("full") or test_mode else None
+
+
+def full_record(record: dict | None, test_mode: bool) -> bool:
+    """Does the record hold step 4 in full: run (or, under the internal test flag, skipped
+    by it), never left to CI for the change's class? A release needs one."""
+    return bool(record) and not record.get("short") and bool(record.get("full") or test_mode)
 
 
 def save_record(record: dict) -> None:
@@ -4095,8 +4407,9 @@ def open_blockers(issues: list[dict]) -> list[dict]:
 
 
 def read_issues(ctx: Context, path: str, *, paginate=False):
-    """Read issues or their repository through ctx.gh directly: gh api has no -R flag.
-    Never accept stdout on failure or print gh's errors, which may contain credentials."""
+    """Read issues, their repository or a workflow's runs and jobs through ctx.gh
+    directly: gh api has no -R flag. Never accept stdout on failure or print gh's errors,
+    which may contain credentials."""
     try:
         r = run([*ctx.gh, "api", *(["--paginate"] if paginate else []), path], ctx.repo)
     except (OSError, UnicodeError):
@@ -4161,6 +4474,109 @@ def release_gate(ctx: Context, labels: set[str] | None) -> tuple[str, str]:
     return "ok", "no open blocks-release issue"
 
 
+def release_needs_full_record(ctx: Context, number: int, labels: set[str] | None,
+                              usable: dict | None, earlier: dict | None, test_mode: bool,
+                              rep: Report) -> None:
+    """A pull request labelled release merges only on a record of the full pre-flight of
+    its head against this origin/main (full_record, by origin/main's harness), never on one
+    that left step 4 to CI for its class, nor on none, with the full checks left for
+    --merge itself to run: refused otherwise, saying to run the pre-flight again, whose
+    class the label makes R5. `usable` is the record that may stand in for step 4
+    (checks_record), `earlier` the record found, for the message."""
+    if labels is None or RELEASE_LABEL not in labels or full_record(usable, test_mode):
+        return
+    if earlier is None:
+        why = f"there is no record of its pre-flight against origin/main {ctx.base[:12]}"
+    elif earlier.get("short"):
+        why = (f"its pre-flight left the full checks to CI, for the class "
+               f"{earlier.get('class')}")
+    else:
+        why = "its record is not of the full checks by origin/main's harness"
+    rep.add("1", "release record", "FAIL", why)
+    raise Refusal(f"#{number} is labelled {RELEASE_LABEL}, and a release merges only on the "
+                  f"full pre-flight of its head, {ctx.sha[:12]}, against origin/main "
+                  f"{ctx.base[:12]}: {why}. Run the pre-flight again (`git safe-push --branch "
+                  f"{ctx.branch}`; with the label on the pull request, or --label "
+                  f"{RELEASE_LABEL}, its class is R5 and the full checks run), then --merge")
+
+
+def suite_gate(ctx: Context, labels: set[str] | None) -> tuple[str, str]:
+    """A release pull request merges only with a green run of the safe-push-tests workflow
+    at its exact head (#301): a completed, successful run of
+    .github/workflows/safe-push-tests.yml whose head is the pull request's, in which each
+    job of SUITE_JOBS is there and passed, and every other job passed too, save `report`,
+    which runs only for a red run on main and so is skipped in a green one. Those jobs are
+    the suite of scripts/test_safe_push.py, the negative tests in full and the formal
+    model's build and kernel re-check, which CI runs on a pull request only by its class.
+    A run at the head runs the head's copy of the workflow, which could drop or empty a
+    job, so the head's copy must be origin/main's: a change to it lands first, in a pull
+    request of its own. An ordinary pull request asks GitHub nothing here; unreadable
+    labels and every unreadable answer hold the merge."""
+    if labels is None:
+        return "FAIL", "the pull request's labels are unreadable"
+    if RELEASE_LABEL not in {label.lower() for label in labels}:
+        return "skip", "not a release pull request"
+
+    def entry(rev: str) -> str | None:
+        """The workflow's tree entry at `rev` (its mode, type and object), "" if absent."""
+        r = run(["git", "ls-tree", "--full-tree", rev, "--", SUITE_PATH], ctx.repo)
+        return r.stdout.strip() if r.returncode == 0 else None
+    mains, ours = entry(ctx.base), entry(ctx.sha)
+    if not mains:
+        return "FAIL", (f"origin/main {ctx.base[:12]} has no {SUITE_PATH}, or Git could not "
+                        "read it: no run can show that the suite passed")
+    if ours is None:
+        return "FAIL", f"Git could not read {SUITE_PATH} at the head {ctx.sha[:12]}"
+    if ours != mains:
+        return "FAIL", (f"the head {ctx.sha[:12]} changes {SUITE_PATH}, and a run at the head "
+                        "runs the head's copy of it, not origin/main's, so no run there can "
+                        "show that main's jobs passed: land that change first, in a pull "
+                        f"request of its own, then merge origin/main into {ctx.branch} and "
+                        "run the workflow at the new head")
+    how = (f"run it at the head (`gh workflow run {SUITE_WORKFLOW} --ref {ctx.branch}`), "
+           "wait for every job to pass, then --merge again")
+    try:
+        found = read_issues(ctx, f"repos/{ctx.github}/actions/workflows/{SUITE_WORKFLOW}/"
+                                 f"runs?head_sha={ctx.sha}&per_page=100")
+        runs = found.get("workflow_runs") if isinstance(found, dict) else None
+        if not isinstance(runs, list) or any(not isinstance(r, dict) for r in runs):
+            raise ValueError("GitHub returned no list of runs")
+        here = [r for r in runs if r.get("head_sha") == ctx.sha]
+        green = [r for r in here if r.get("status") == "completed"
+                 and r.get("conclusion") == "success"]
+        if not green:
+            seen = ", ".join(sorted({f"{r.get('status')}/{r.get('conclusion')}"
+                                     for r in here})) or "none"
+            return "FAIL", (f"no green run of {SUITE_WORKFLOW} at the head {ctx.sha[:12]} "
+                            f"(runs there: {printable_text(seen)[:200]}): {how}")
+        problems = []
+        for r in green:
+            if type(r.get("id")) is not int:
+                raise ValueError("a run has no id")
+            listed = read_issues(ctx, f"repos/{ctx.github}/actions/runs/{r['id']}/"
+                                      "jobs?per_page=100")
+            jobs = listed.get("jobs") if isinstance(listed, dict) else None
+            if not isinstance(jobs, list) or not jobs \
+                    or listed.get("total_count") != len(jobs) \
+                    or any(not isinstance(j, dict) or not isinstance(j.get("name"), str)
+                           for j in jobs):
+                raise ValueError(f"the jobs of run {r['id']} are unreadable")
+            red = [f"{j['name']} {j.get('conclusion')}" for j in jobs
+                   if j.get("conclusion") != "success"
+                   and not (j["name"] == SUITE_REPORT_JOB and j.get("conclusion") == "skipped")]
+            missing = [f"{name} missing" for name in SUITE_JOBS
+                       if name not in {j["name"] for j in jobs}]
+            if not red and not missing:
+                passed = ", ".join(sorted(j["name"] for j in jobs if j["name"] != SUITE_REPORT_JOB))
+                return "ok", (f"run {r['id']} of {SUITE_WORKFLOW} at {ctx.sha[:12]}: "
+                              f"{printable_text(passed)[:300]} passed")
+            problems.append(f"run {r['id']}: " + printable_text(", ".join(red + missing)))
+    except ValueError as e:
+        return "FAIL", f"the runs of {SUITE_WORKFLOW} unreadable: {e}"
+    return "FAIL", (f"no run of {SUITE_WORKFLOW} at the head {ctx.sha[:12]} has every job "
+                    f"green ({'; '.join(problems)[:300]}): {how}")
+
+
 def protected_files(repo, base, sha) -> list[str]:
     return sorted({p for _, p in changed_files(repo, base, sha) if is_protected(p)})
 
@@ -4209,8 +4625,9 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
     names for the head, which the merge commit's subject names (merge_subject); a label
     for its kind, and security-review when a protected path changes; unfinished work
     says None or names issues open with blocks-release; a release pull request has no
-    open blocks-release issues or pull requests, with unreadable GitHub data refusing
-    both gates; CI green on the head. Each is reported; any failure refuses the merge.
+    open blocks-release issues or pull requests, and a green run of safe-push-tests at its
+    head (suite_gate), with unreadable GitHub data refusing those gates; CI green on the
+    head. Each is reported; any failure refuses the merge.
     The template is origin/main's,
     or the head's while origin/main has none (as generated_body reads it): any template
     is stricter than none. The record's notes are shown beside the checklist: a check that
@@ -4274,6 +4691,8 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
         rep.add("G", "labels", "FAIL", str(e))
     verdict, detail = release_gate(ctx, labels)
     rep.add("G", "release", verdict, detail)
+    verdict, detail = suite_gate(ctx, labels)
+    rep.add("G", "safe-push tests", verdict, detail)
     if protected and labels is None:
         rep.add("G", "label", "FAIL", f"protected paths change ({', '.join(protected)}), and "
                 f"#{number}'s labels are unreadable")
@@ -4523,19 +4942,21 @@ def preflight_main(repo: Path, args) -> int:
         ctx = preconditions(repo, args.commit, args.branch, args.dry_run, args.test_mode, rep,
                             title=args.title)
         sha, base = ctx.sha, ctx.base
-        if ctx.branch:
-            check_kind_label(ctx, args, rep)
+        labels = check_kind_label(ctx, args, rep) if ctx.branch else set()
+        risk = risk_class(ctx.repo, ctx.base, ctx.sha, labels)
         logs = logs_dir(sha)
-        pre = check_commit(ctx, rep, logs, args.test_mode)
-        record = make_record(ctx, pre, rep, full=not args.test_mode)
+        body_text = body_input(args)
+        pre = check_commit(ctx, rep, logs, args.test_mode, risk,
+                           train_body=train_input(ctx, body_text))
+        record = make_record(ctx, pre, rep, full=not args.test_mode, risk=risk)
         save_record(record)
         if args.dry_run:
             rep.heading("5. Push")
             where = f"refs/heads/{ctx.branch}, and open or update its pull request" \
                 if ctx.branch else "nowhere: no --branch given"
             if ctx.branch:
-                body = fill_body(ctx, pre, record, Path(args.body_file).read_text()) \
-                    if args.body_file else generated_body(ctx, pre, record)
+                body = fill_body(ctx, pre, record, body_text) \
+                    if body_text is not None else generated_body(ctx, pre, record)
                 check_body(body)
                 (logs / "pr-body.md").write_text(body)
                 print(f"  the body it would post: {logs / 'pr-body.md'}")
@@ -4543,7 +4964,7 @@ def preflight_main(repo: Path, args) -> int:
             result, code = "passed every check (dry run, not pushed)", 0
         else:
             # The pull request is settled, its body scanned, before anything is public.
-            plan = plan_pr(ctx, pre, record, args)
+            plan = plan_pr(ctx, pre, record, args, body_text)
             fresh = push_branch(ctx, rep)
             pushed = True       # from here on, a refusal or an interruption is exit 3
             result = f"pushed to {ctx.branch}"
@@ -4603,8 +5024,17 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
     try:
         ctx, view = merge_preconditions(repo, number, test_mode, rep)
         sha, base = ctx.sha, ctx.base
+        try:
+            labels = pr_labels(view.get("labels"))
+        except ValueError:
+            labels = None       # the gates refuse it; the class is R5 meanwhile
+        # The class, recomputed now by origin/main's risk.py for this head against this
+        # base: a record that left step 4 to CI stands in for it only while that is still
+        # R0 to R2 (checks_record).
+        risk = risk_class(ctx.repo, ctx.base, ctx.sha, labels)
         earlier = load_record(ctx.sha, ctx.base)
-        checked = checks_record(earlier, test_mode)
+        checked = checks_record(earlier, test_mode, risk)
+        release_needs_full_record(ctx, number, labels, checked, earlier, test_mode, rep)
         if checked is None:
             gates(ctx, number, rep)     # before the long checks, so a draft fails at once
         rep.heading("3. The pre-flight of the head")
@@ -4616,21 +5046,39 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
             rep.add("3", "pre-flight", "note", f"none of {ctx.sha[:12]} against origin/main "
                     f"{ctx.base[:12]}: it runs now")
         elif checked is None:
+            again = "they run now" if risk.cls not in LOW_CLASSES else \
+                f"it runs again now, and leaves them to CI for the class {risk.cls}"
             rep.add("3", "pre-flight", "note", f"the record of {ctx.sha[:12]} against "
                     f"origin/main {ctx.base[:12]} is not of the full checks by origin/main's "
-                    "harness: they run now")
+                    f"harness: {again}")
+        elif checked.get("short"):
+            rep.add("3", "pre-flight", "ok", f"{ctx.sha[:12]} checked against origin/main "
+                    f"{ctx.base[:12]} ({checked.get('time')}), its class "
+                    f"{checked.get('class')} then and {risk.cls} now: the secret scan and "
+                    "the guards run again; the full checks stay with CI, as for any change "
+                    "of R0 to R2")
         else:
             rep.add("3", "pre-flight", "ok", f"{ctx.sha[:12]} checked against origin/main "
                     f"{ctx.base[:12]} ({checked.get('time')}): the secret scan and the guards "
                     "run again; the full checks are not repeated")
         logs = logs_dir(ctx.sha)
-        pre = check_commit(ctx, rep, logs, test_mode, checked=checked)
+        train_body = merge_train_input(ctx, view)
+        pre = check_commit(ctx, rep, logs, test_mode, risk, checked=checked,
+                           train_body=train_body)
         record = make_record(ctx, pre, rep, full=not test_mode and checked is None,
-                             checked=checked)
+                             risk=risk, checked=checked)
         save_record(record)
         view = gates(ctx, number, rep, record)
+        if merge_train_input(ctx, view) != train_body:
+            raise Refusal("the train's body changed during the checks: run --merge again")
         labels = pr_labels(view.get("labels"))
-        body = gh_json(ctx, "pr", "view", str(number), "--json", "body").get("body") or ""
+        # A release label given after the class was read: the record must still be full.
+        release_needs_full_record(ctx, number, labels, record, record, test_mode, rep)
+        # The body must already be of this head: --merge never writes it.
+        body_view = gh_json(ctx, "pr", "view", str(number), "--json", "body")
+        if merge_train_input(ctx, body_view) != train_body:
+            raise Refusal("the train's body changed during the checks: run --merge again")
+        body = body_view.get("body") or ""
         template = show(ctx.repo, ctx.base, TEMPLATE) or show(ctx.repo, ctx.sha, TEMPLATE)
         if unfinished_section(body, template) != unfinished_section(view.get("body") or "",
                                                                     template):
@@ -4658,6 +5106,8 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
                           f"({', '.join(sorted(labels)) or 'none'} to "
                           f"{', '.join(sorted(refreshed_labels)) or 'none'}): run --merge again")
         current_view = gates(ctx, number, rep, record)
+        if merge_train_input(ctx, current_view) != train_body:
+            raise Refusal("the train's body changed during the checks: run --merge again")
         current_labels = pr_labels(current_view.get("labels"))
         if current_labels != labels:
             raise Refusal(f"#{number}'s labels changed after the gates read them "

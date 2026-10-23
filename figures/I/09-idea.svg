@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.9 at a glance</title>
-  <desc>Mark equal lengths on the two arms (blue) and build an equilateral triangle on the gap (yellow): the line from the corner to its tip splits the angle into equal halves (red).</desc>
+  <desc>Mark equal lengths on the two arms (blue) and build an equilateral triangle on the gap (yellow): the straight line from the corner to its tip splits the angle into equal halves (red).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M106.9,167.6 L128.4,143.8 A32,32 0 0,1 138.6,163.1 Z" fill="#d0312d"/>
   <path d="M106.9,167.6 L138.6,163.1 A32,32 0 0,1 134.1,184.5 Z" fill="#d0312d"/>

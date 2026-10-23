@@ -63,8 +63,29 @@ that role ([WORKFLOW.md](WORKFLOW.md)).
   off the letters (`hAB : A ≠ B`, `hA_BCD`).
 - Magnitudes are lengths, angles and areas, `‖A B‖`, `∠ A B C`, `△ A B C`, with `∟` the
   right angle and Book II's `rect` and `sq`: they add and compare, and nothing more. "Greater
-  than … by" is an equation (the less with the excess is the greater). No numbers,
-  coordinates or real numbers appear in a statement or a proof.
+  than … by" is an equation (the less with the excess is the greater). In a proposition's
+  statement and the geometric steps of its proof, no coordinates or real numbers appear,
+  and no number measures a length, an angle or an area. Beneath those steps, numbers may
+  serve the machinery and say nothing of a figure: the superposition rule numbers its
+  symbols (`Symbols`, in `Elements/Foundations/Superposition/Soundness.lean`), so I.4 and
+  I.8 number the points and straight lines of their figures beside their proofs
+  (`card := 6`, and `.a => 0` to `.f => 5`;
+  [#312](https://github.com/jackChallis/stoicheia/issues/312) is to take them out), as
+  `valuation_encodes` writes a literal over two numbered symbols (`Fin 2`, in
+  `Elements/Foundations/Superposition/Restriction.lean`); and a tactic may take a count,
+  as `congr 1` does in Book Zero. The zero magnitude is written `0`, in some laws,
+  definitions, helpers and proofs: it stands for no magnitude (no length, no angle, no
+  area), never for a number Euclid uses. So `‖A B‖ ≠ 0` says that AB is not nothing, and
+  `0 < ∠ A C B` that the angle ACB is not nothing. Counts may appear, natural numbers, of
+  a figure's corners and of what they make, since a count is part of what "a figure of n
+  sides" means: the corners of a closed line of sides, or within a triangle, and a
+  corner's place in their list, turned round some number of steps; the sides a ray or a
+  finite straight line crosses (`crossingCount`); the closed lines round a point
+  (`Outline.depth`); and the tiles and triangles of a division, with the sides they share.
+  Counts are added and compared, and two are compared by their remainders on division by
+  two, as `crossing_parity_independent` compares two crossing counts. They are part of how
+  a figure is defined, not of Euclid's argument
+  ([decision of 22 October 2026](decisions/2026-10-22-figures-promoted.md)).
 - Each book's phrases, and how its statements say them, are in its brief.
 
 ### Coverage: does it say what Euclid says?
@@ -130,7 +151,7 @@ the porism by its own name, as Heath's "[III. 1, Por.]" does.
 
 Where a statement is narrower than Euclid's words, the general result is a companion
 theorem beside the unchanged `PropN`, which stays as Euclid's worked configuration under his
-sentences: `Prop40.general`, `Prop45.figure`, `Prop14.square`, and the old statement as a
+sentences: `Prop40.general`, `Prop45.outline`, `Prop14.outline`, and the old statement as a
 corollary (`Prop40.special`) where it helps citers. The fidelity check reads only
 `theorem PropN`, so Heath's sentences stay where they are. A companion is listed in the
 edition's companions list, [`Elements/Companions.lean`](../Elements/Companions.lean)
@@ -226,13 +247,13 @@ The representations Books I–III rest on:
 | a right angle | Definition I.10 as a predicate, and Postulate 4 making every right angle `∟` | | |
 | superposition | `Tacit.superposition`, a restricted inference in System E's style, used directly only in I.4 and I.8 | a checked derivation over symbols exports one equality of lengths, angles or triangles about the given figure; it constructs nothing inside the placement and no exported formula names the placed corners or side ([the rule](../Elements/Foundations/Tacit/Superposition.lean), [Book I's reading](briefs/book-I.md#representations)) | |
 | the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `exists_rect`, `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
-| a rectilineal figure | given with its division into triangles, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | that every figure can be so divided, and that another division gives the same sum, are not proved; Hilbert proved the second, for his measure of area | `figure-with-dissection` |
-| a circle's centre | `exists_centre` gives one for every circle; most statements still supply one as a hypothesis, `∃ O, Centre O α`, or take Postulate 3's | III.1 finds it by Euclid's construction | `centre-given` where the statement supplies it |
+| a rectilineal figure | given by its outline, `Outline`: finitely many simple closed lines of sides, apart or nested, so that a figure may have holes, separate pieces or contacts at corners; its region read from the sides by the parity of a ray's crossings (`Outline.Region`); and equal to the figure meaning equal to its area, `Outline.area`, the sum of every division of it into triangles that lie apart. The older forms take the figure with its division, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | in Book Zero, `division_exists` divides every outline, the content theorem, `Apart.area_eq_of_same_region`, after David Hilbert's theory of content, gives every division of it the same sum (`area_eq`, `area_congr`, `area_of_same_boundary`), and `apart_has_outline` gives every `Apart` an outline with exactly its region; beside I.45, `Prop45.fan_boundary` gives the checked fan its outline, the closed line through its corners in order; and `outline_bounded`, in Book I after I.29, puts every figure within a triangle | `figure-with-dissection`, for the older forms |
+| a circle's centre | `exists_centre` gives one for every circle; named centres remain where other hypotheses or conclusions use them geometrically | III.1 finds it by Euclid's construction; proofs cite III.1 where Heath does, and obtain other centres from the rule or the geometric data | |
 | a circumference | twice the angle standing on it, `circumference`, `standing`, and for an arc `Arc.measure`; no radius; equal circumferences in III.26 and III.28 are equal in measure and congruent, `Arc.Congruent` | proved facts in `Circumferences.lean`; `Arc.measure_eq_iff` and `Arc.congruent_iff`, in `Arcs.lean` after III.29, say what equal measures and congruence come to | `angle-measure`, `redundant-hypothesis` |
 | a segment | its circle, the ends of its base and a point naming its side, `Arc`, with its points, `InSegment`, and its circumference's, `OnArc`; equal segments read through Common Notion 4 as segments that coincide, `Arc.Congruent` | `placement`, from I.4 and I.8, lays one on another in III.24; only III.24 and `Arcs.lean` may cite it | `segment-with-circle` |
 | an angle of a straight line and a circumference | `MixedAngle`, the region it opens near its vertex, compared there with a rectilineal angle | the companions of III.16 and III.31 prove the comparisons; no addition, ratio or motion of mixed angles is claimed | `mixed-angles-local` |
-| circles cutting | `CirclesCut`: meeting at two points, each circle with a point within the other | `CirclesCut.symm` exchanges the circles; the bridge `CirclesCut.of_meet` in `Audit/` derives this reading from two different circles meeting at two points, given their centres, by III.7 and III.8 | |
-| circles touching | meeting without crossing anywhere (the whole-circle reading Heath reports as Todhunter's); contact within has a point of the inner circle within the outer and none outside it; contact without has no point within both | `within_point` in `Audit/`, by III.10, gives the point within for the earlier reading, given centres; these later bridges compare readings, not steps in III.5 or III.6. III.13 still proves uniqueness of contact | `touching-whole-circles` |
+| circles cutting | `CirclesCut`: meeting at two points, each circle with a point within the other | `CirclesCut.symm` exchanges the circles; the bridge `CirclesCut.of_meet` in `Audit/` derives this reading from two different circles meeting at two points, obtaining centres internally, by III.7 and III.8 | |
+| circles touching | meeting without crossing anywhere (the whole-circle reading Heath reports as Todhunter's); contact within has a point of the inner circle within the outer and none outside it; contact without has no point within both | `within_point` in `Audit/`, by III.10, gives the point within for the earlier reading, with no centre input; these later bridges compare readings, not steps in III.5 or III.6. III.13 still proves uniqueness of contact | `touching-whole-circles` |
 
 The details, and the reasons, are in the book briefs.
 
@@ -246,7 +267,8 @@ For a construction, say:
 - which properties show that it solves the problem.
 
 The existence of a background object is not circular. III.1 meaningfully shows that the
-point it constructs is the centre of a circle known to have one.
+point it constructs is the centre of a given circle; `exists_centre` supplies the
+background existence within the proof.
 
 Where a problem recovers an object from partial information, keep apart the construction
 core, which receives only the data the problem gives, and the correctness argument, which may
@@ -290,9 +312,30 @@ construction, its premises, and the diagram fact or lemma it needed.
 - **Unused hypotheses and surprising dependencies are review prompts, not verdicts.** An
   unused hypothesis may mean the route is not Euclid's, or that our representation makes it
   redundant (III.27 holds for any two circles as stated). Say so in the handback;
-  the record tags it `redundant-hypothesis` where that is the truth.
+  the record tags it `redundant-hypothesis` where that is the truth. A hypothesis of
+  Euclid's that goes unused in his own argument as well as ours stays as he states it,
+  with no tag, for the tag marks a redundancy our representation makes
+  ([decisions, 22 October 2026](decisions/2026-10-22-euclids-idle-hypotheses.md)). In
+  III.8, Euclid's proof and ours compare DE with DF on the concave circumference without
+  using that F, the more remote, is on it, and DK with DL on the convex circumference
+  without using that L, the more remote, is on it.
 - A checked intermediate fact tied to a real sentence of Euclid is legitimate, even if the
   final proof term could do without it.
+- **The sweep lists the candidates.** `python3 scripts/sweep_citations.py` lists every
+  binding in a proof that Lean's unused-variables linter, its tactic analysis on, finds
+  unused; every `obtain` whose whole result goes unused, as
+  `obtain ⟨KF, -, -⟩ := Postulate1 …`, which the linter cannot see; every `have`, `let`
+  or `obtain` whose name begins with `_` (`have _ := h…`); and every helper that is a
+  proof's whole conclusion (below).
+  Each hit is fixed, or, where a sentence of Euclid's stands over the step, declared in
+  the record: the passage whose `at` begins a sentence of that run of `--` lines lists
+  the binding, by the name the proof gives it, in its `unused`, as `unused = ["FC", "GB"]`
+  for the joins by Postulate 1 in I.5, or `this` for an anonymous `have`; and
+  `check_fidelity.py` fails a name there that the Lean beneath does not bind
+  ([review/SCHEMA.md](../review/SCHEMA.md);
+  [decisions, 21 October 2026](briefs/0002-decisions.md#21-october-2026)). Nothing else
+  declares a hit, and a helper hit is fixed, never declared. The release waits until each
+  hit is fixed or declared ([WORKFLOW](WORKFLOW.md), section 10).
 - Cite further earlier results when the argument needs them, and say what each does.
 - Prefer local proofs whose facts and cases follow the argument. Automation (`ac_rfl` to
   close a sum of magnitudes, and the like) is fine for a local step it checks.
@@ -324,7 +367,15 @@ A helper supplies one identified step: what Euclid reads off the figure, a case 
 the reader, a fact he takes for granted. Its docstring says which. It never hides the whole
 conclusion behind a name: if `Prop7.figure` proved I.7, the page would show nothing of
 Euclid's argument. I.7 is the example to follow: its helpers settle where D can fall and what
-the figure shows, and the main proof keeps every step of Euclid's reductio.
+the figure shows, and the main proof keeps every step of Euclid's reductio. The sweep above
+reads each proof term and lists a proposition, porism or companion whose proof comes down,
+in every case, to one helper that none of its own steps feeds, or that cites a helper
+stating exactly what it states.
+
+A construction core kept apart under section 4, as III.1's `Prop1.construction`, carries
+Euclid's sentences of construction, not a step he takes for granted; the record shows it as
+a `grouped` passage naming it, and the proposition keeps the correctness argument under his
+sentences.
 
 ## 6. Where lemmas live
 
@@ -344,9 +395,12 @@ helper another page has proved is imported and cited with a pointer ("as in III.
   `Elements/BookI/HelpersParallels.lean` if it cites I.28, I.30 or I.31 (`Prop30.meet`,
   `Prop31.parallelogram`); in `Elements/BookII/Rectangles.lean` for Book II's steps that
   cite Book I; in `Elements/BookIII/Squares.lean` for Book III's that cite Books I or II; and
-  in `Elements/BookIII/Circumferences.lean` for those that cite III.20–III.22. A new shared
-  module (stage 2's `Elements/Figure/Sums.lean`, stage 3's placement and arcs) has an owner,
-  and its place in the order is set in the brief.
+  in `Elements/BookIII/Circumferences.lean` for those that cite III.20–III.22; and in
+  `Elements/BookI/OutlineBound.lean`, after I.29, for `outline_bounded`, which cites I.23
+  and uses Postulate 5 (brief 0013). A new shared module (stage 2's
+  `Elements/Figure/Sums.lean`, stage 3's placement and arcs, brief 0013's figures given by
+  their outlines, in `Elements/Figure/` and `Elements/Foundations/Figures.lean`) has an
+  owner, and its place in the order is set in the brief.
 - **Imports.** Import `Elements.Figure.Basics`, the book's ground, every proposition cited,
   and the module of every shared step cited (`Elements.BookI.Helpers`,
   `Elements.BookI.HelpersParallels`). A proof cites an earlier book as `BookI.PropN`, `BookII.PropN`, and does not open
@@ -394,14 +448,21 @@ dependencies.
   line followed by `Check.Generator.<ident>` or `(Check.Generator.<ident>`, since those
   files run the generator. Every other forbidden command or attribute is still refused
   there, and an `axiom` is refused everywhere under `model/`. `check_fidelity.py` matches
-  each as a whole word, and `#eval`, `#exit` and `#guard_panic` also closed up to the word
-  after them, since Lean reads the longest command it knows (`#evalx` is `#eval x`), in
+  each as a whole word, and `#eval`, `#exit`, `#guard_panic`, `#time`, `#with_exporting`
+  and `#guard` also closed up to the word after them, since Lean reads the longest
+  command it knows (`#evalx` is `#eval x`), in
   the Lean with its comments and the text of its string and character literals taken
   out, read as Lean reads them, raw strings and escapes among them (`native_decide` even
   in a comment or a string). The code in an interpolated string's `{…}` holes is read
   too; a string whose braces Lean could read either as text or as holes of code, one not
   just after `s!`, `m!`, `f!` or `throwError` whose two readings end in different places,
-  is refused, since the scan cannot tell which Lean will do:
+  is refused, since the scan cannot tell which Lean will do. So is a character literal
+  or a raw string closed up to a name or a token that holds a character outside ASCII
+  (`a℃'}'`, Mathlib's `⁻¹'`, `a℃r"\" …"`): Lean may read on through the `'` or the `r`
+  as part of that name or token, and then a `"` or `}` the scan took for a literal's
+  text opens a string or closes a hole, hiding the code after it; an `s!`, `m!`, `f!`
+  or `throwError` so closed up (`a℃s!"{"`) is not taken to begin an interpolated string,
+  so the string after it is refused if its braces could be holes (#234):
   - `native_decide`, `bv_decide` and `bv_check`, and `decide` with its `native` option,
     have the compiler vouch for a proof in the kernel's place; since `decide +native`,
     `decide (native := …)` and a whole configuration given by `(config := …)` all set
@@ -473,6 +534,38 @@ dependencies.
     lemmas' pins do, or that has none, is not refused;
   - `#guard_panic`, which takes every message of the command it wraps out of the build
     once any one holds the word `PANIC`, an error among them;
+  - `#time` and `#with_exporting`, each of which wraps the command after it: Lean reads
+    the longest token it knows, so `#timeaxiom planted : False` is `#time` and an axiom,
+    which a reader of `#` and one name would miss. No file uses either, so both are
+    refused wherever they stand, closed up to a command or not (#234);
+  - `#guard`, which evaluates its test by compiling and running it while the file is
+    built, as `#eval` does. Lean has no token `#guard_x`, so it reads `#guard_x` as
+    `#guard _x`, and the scan refuses `#guard` before anything but the rest of Lean's
+    other `#guard` tokens, `#guard_msgs` and `#guard_expr`, which run nothing and are not
+    refused (`#guard_panic` has its own item). No file uses `#guard`; the coordinator
+    decided its refusal on 22 October 2026, as a tightening (#234);
+  - a token declared in the file and ending in a character a name may hold, or one
+    Python's `\w` takes, a letter, a digit, `_`, `'`, `!`, `?` or `℃` among them, once
+    trimmed of blanks as Lean trims it: after
+    `infixl:65 " +x " => Nat.add`, Lean reads `2 +x1set_option` as `2`, `+x`, `1` and
+    `set_option`, so `2 +x1set_option«debug».byAsSorry true in theorem …` builds on
+    `sorryAx`, while the scan, which does not read a file's tokens, takes `x1set_option`
+    for one name; and the same holds of `" +x' "`, `" +x! "` and `" +x? "`. The
+    coordinator decided the refusal on 22 October 2026 for a token ending in a word
+    character, and widened it the same day to the rest of a name's characters, as
+    tightenings (#234). A token is each string literal of
+    `notation`, `infix`, `infixl`, `infixr`, `prefix`, `postfix`, `syntax`, `macro`,
+    `elab`, `binder_predicate`, `declare_simp_like_tactic` or Mathlib's `notation3`, read
+    as Lean reads it, escapes, gaps and raw strings among them, on any line of the
+    command: from the command's word to its first `=>` outside brackets, or, for a
+    `syntax` or `declare_simp_like_tactic`, which has none and may hold a literal after
+    a spaced precedence (`syntax "a" term :max " +x " : term`), to the next command,
+    known by a word of Lean's own that begins one, by `@[` or by a `#` before a letter.
+    Every literal there is read, a `&"…"`, which declares no token, among them, and a
+    string in the next command too when that command begins with a word of a library,
+    as Mathlib's `lemma`. It is refused in every file the scan reads, with no exception,
+    since none declares one ([the decision entry](decisions/2026-10-22-scan-token-boundaries.md)
+    gives the count);
   - `#exit` stops Lean reading the file, though a reader and the checks here read on.
 - **Superposition** only in I.4 and I.8.
 - **Placement,** Euclid's application of one figure to another, only in III.24 and the
@@ -516,7 +609,14 @@ docstring that pins an error, each in each of its forms, in a scratch copy of I.
 `set_option` closed up to decimal, hexadecimal, scientific and underscore-separated
 numbers, after a projection and after a declared notation ending in `.`, with whitespace
 or a comment beside it, and `axiom` closed up to such a number, with controls that
-preserve ordinary projections;
+preserve ordinary projections; `set_option` and `axiom` closed up to the postfix `⁻¹`,
+and to `#time` and `#with_exporting`, which are refused too before a `def` and alone on
+their line; `#guard` closed up to the word after it; `set_option` closed up to a
+declared token ending in `℃`; a declared token
+ending in a letter, a digit, `_`, `'`, `!` or `?`, after a notation's other token on its
+second line too, with `set_option` closed up to it; a character literal, a raw string and
+an `s!`'s string closed up to a name or token that holds a character outside ASCII, each
+before `set_option`, each in a scratch copy of its own;
 the same pin at a new file beside each file of its allow-list, at each file's name in the
 other's folder, in `Audit/` and in `Staging/`, and a pin whose `error:` ends its line;
 a proposition imported by Book Zero; a `sorry` in a
@@ -537,9 +637,14 @@ caught while one in `model/.lake` is not read, that a link named `.lake`, to a
 directory, a file or nothing, is refused in `model/`, `model/Model/` and `model/Check/`,
 that a `#guard_msgs` that checks its messages or passes them on, one under a docstring
 that pins an info message, `error:` in a theorem's own docstring, a comment or a module
-docstring before a `#guard_msgs`, and the words of each of these commands in a comment
-or a string, are not refused, that the pin passes at each file of its allow-list, and
-that the unplanted tree passes.
+docstring before a `#guard_msgs`, `#guard_msgs` and `#guard_expr` beside `#guard`, a
+declared token ending in a symbol, a string after a notation's `=>`, and the words of
+each of these commands in a comment or a string, are not refused, that the pin passes at
+each file of its allow-list, that the scan reads the literals of a declaration as Lean
+does, over two lines, after a spaced precedence, raw, escaped or with a gap, to the next
+command begun by `@[` or a `#` command, and no string outside one nor a dotted name's
+word, that it marks a literal closed up as above but no other, and that the unplanted
+tree passes.
 They plant source files in place, the `.lake` links and the scratch copy of I.1's file
 in small trees of their own, and copy only `facts.json` and that one copy of I.1, never
 `model/.lake`.
@@ -565,9 +670,50 @@ line feed, as it does for Lean, and reads comments, literals and number endings 
 attribute's brackets, and a word closed up to a number remains visible. An adjacent
 numeric projection stays a projection; where a declared `.` notation makes a longer
 number the competing reading, the longer boundary stays visible too. Whitespace and
-comments end projection adjacency, as they do in Lean. A lone carriage return (a `\r` not
-followed by `\n`) is refused in any scanned file: Lean refuses one between tokens but
-accepts it inside a comment or a literal, where a `--` comment does not end at it, so a
+comments end projection adjacency, as they do in Lean. A name ends where Lean 4.35 ends
+it, made only of the characters its `isIdFirst` and `isIdRest` take, so a letter or digit
+that no name holds, as the `¹` of the postfix `⁻¹`, does not join the word after it
+(`1⁻¹set_option` is `1`, `⁻¹` and `set_option`); and it ends sooner, before any of the 96
+characters a Lean name may hold that Python's `\w` does not take, as `℃`, which no file
+uses, so that a word after a token ending in one, as a library's, is seen to begin
+(`2 +℃1set_option`). Ending a name early, or blanking a character, shows the scan more
+words, and changes nothing else, but where a character literal, a raw string, or an
+`s!`, `m!`, `f!` or `throwError` follows closed up: Lean may read on through it as part
+of the name or a token, so the scan refuses the literal or the raw string, and takes no
+such word to begin an interpolated string (the list above). It refuses a token the file
+declares that ends in a character a name may hold (the list above). It does not read the
+rest, and these stay open, each example built in Lean 4.35 as written:
+- Lean's own tokens that begin with `#`
+  ([#320](https://github.com/jackChallis/stoicheia/issues/320)), which the scan reads as
+  `#` and the name after it. Lean reads the longest token it knows, so
+  `#check1set_option«debug».byAsSorry true in theorem …` is `#check`, `1` and
+  `set_option`, and builds on `sorryAx`, and `#whereaxiom planted : False` is `#where`
+  and an axiom, while the scan reads the names `check1set_option` and `whereaxiom`. Those
+  the list above refuses in every form, `#eval`, `#exit`, `#guard_panic`, `#time`,
+  `#with_exporting` and `#guard`, are refused closed up or not. A fixed list of the rest
+  would not do: which `#` tokens Lean has depends on what the file imports (`#widget`
+  comes with `import Lean`, not with `Init` alone), and a file may declare a longer one,
+  so the list would misread a file that lacks one and could hide the code after it
+  (`s!"{5#widget'}'"`, where Lean reads `5#widget'` as a bit-vector literal and the `}`
+  closes the hole).
+- Lean's other own tokens ([#317](https://github.com/jackChallis/stoicheia/issues/317)).
+  Of those that end in a name's character, four end in `'`, `]'`, `×'`, `Σ'` and `⊕'`;
+  the scan blanks the `Σ` and refuses a literal after it, but
+  takes the `'` of the other three for a character literal's opening, so that
+  `def T : Type := Nat ⊕'"' "`, with a coercion from `String` to `Type`, and
+  `set_option«debug».byAsSorry true in theorem …` on the next line, builds on `sorryAx`
+  while the scan reads the command as a string's text. Three end in `-` or `/`, `<-`,
+  `//` and `\/`, and before a `-` the scan reads a comment where Lean reads none:
+  `def S : Type := {x : Int //-1 < x}` and that `set_option` line build on `sorryAx`.
+- A token the file declares that ends in a symbol, which is allowed
+  ([#317](https://github.com/jackChallis/stoicheia/issues/317)): one that holds a
+  comment's opening or a quote hides the code after it, as `infixl:65 " ⊕-- " => Nat.add`
+  and `def k : Nat := 1 ⊕--2set_option«debug».byAsSorry true in theorem …` do.
+- A token of a library a file imports, as Mathlib's `''` or `#find`, and a token declared
+  by a command the list above does not name: neither is read.
+
+A lone carriage return (a `\r` not followed by `\n`) is refused in any scanned file: Lean
+refuses one between tokens but accepts it inside a comment or a literal, where a `--` comment does not end at it, so a
 reader with universal newlines would end the comment there and let a string open behind
 it that swallows the code, a forbidden command among it. CRLF files are allowed, as Lean
 allows them (it reads `\r\n` as `\n`), and no tracked `.lean` file has a carriage return

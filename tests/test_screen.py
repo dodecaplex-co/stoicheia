@@ -2,7 +2,7 @@
 """The cases of Audit/screen.py, the overlap screen: which tries it makes, and how it reads
 what Lean says of them.
 
-    python3 -I tests/test_screen.py        # well under a second; no Lean, no network
+    python3 -I tests/test_screen.py        # about five seconds; no Lean, no network
 
 The screen has Lean's `grind` try every statement of facts.json from no rule, each rule,
 each family of rules and each pair of them, and reports what closes
@@ -30,6 +30,26 @@ functions to small inputs, each with the answer the screen should give.
   a row is lost.
 * The lists: the definitions unfolded, chosen and left as they are do not overlap; every
   file of tries proves the controls, and unfolds every definition listed.
+* The record of a run (--write) and its check (--check-current), with a stand-in for git:
+  each part of what decides the result is named when it changes (a statement added or
+  restated, a rule, a word, a file of the library or the toolchain, the screen's code, on
+  its docstring's last line too, or another module beside it), and nothing else is (the
+  docstring, what the screen does not read); a record that is missing, does not read, is
+  a symbolic link, disagrees with itself, or is of a run on inputs other than a commit's
+  is refused; no record is written of such a run, through a symbolic link, or of inputs
+  or a commit that moved while it ran; an ignored module that is an actual hashed input
+  cannot receive committed provenance or make a matching record current, while ignored
+  files outside the inputs remain excluded; a symbolic-link input, a linked input directory
+  or a dangling input link is refused before a run, a record or a current verdict; and the
+  real inputs compute, which takes most of the time. The cases that need a real commit
+  make a repository of their own in a temporary directory, with git's environment cleared
+  of GIT_DIR and the like, so that a run under a hook, which names the enclosing
+  repository, neither commits to it nor writes its index.
+* Before any Lean: --check-current takes no OUTDIR and no --write; a stale build, --write
+  on inputs that are not a commit's, or a move to another commit or other inputs after the
+  build checks as current, stops a run. Before a successful --write, an unchanged build is
+  checked again; a build left stale during the main or retry pass stops the run and leaves
+  the existing record in place.
 
 CI's `check` job and safe_push's check sequence run this file (docs/WORKFLOW.md, section 8);
 neither runs the screen itself, which needs Lean. Python 3.11 or later; standard library.
@@ -37,12 +57,21 @@ neither runs the screen itself, which needs Lean. Python 3.11 or later; standard
 
 from __future__ import annotations
 
+import contextlib
+import io
 import itertools
+import json
+import os
+import shutil
+import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "Audit"))
+REPO = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO / "Audit"))
 import screen  # noqa: E402
 
 NAME = "Screen0.lean"
@@ -328,6 +357,572 @@ class Lists(unittest.TestCase):
         for lines in blocks:
             [grind] = [line for line in lines if line.lstrip().startswith("grind [")]
             self.assertEqual(set(given(grind)), set(unfolded()))
+
+
+COMMIT = "a" * 40
+
+
+def git_at(commit: str | None = COMMIT, status: str | None = ""):
+    """The screen's git, as a checkout at `commit` whose inputs show `status`."""
+    def git(*args: str, root: Path = REPO) -> str | None:
+        return {"rev-parse": commit, "status": status}.get(args[0])
+    return mock.patch.object(screen, "git", git)
+
+
+def own_git_environment() -> dict[str, str]:
+    """The environment, for git, of a repository of a test's own: none named by GIT_DIR,
+    GIT_INDEX_FILE or the like, which a hook sets for the enclosing repository, and no
+    configuration but the repository's."""
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    return {**env, "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"}
+
+
+class GitProvenance(unittest.TestCase):
+    def setUp(self):
+        self.tmp = self.enterContext(tempfile.TemporaryDirectory())
+        self.root = Path(self.tmp)
+        # The screen's own git, which these cases run, reads os.environ too.
+        self.enterContext(mock.patch.dict(os.environ, own_git_environment(), clear=True))
+        self.facts = {"propositions": [
+            {"name": "BookI.Prop1", "ref": "I.1", "kind": "proposition", "statement": "P1"}],
+            "axiom_modules": {"Postulate1": "Elements.Foundations.Postulates"},
+            "axiom_types": {"Postulate1": "T1"},
+            "vocabulary": {"Triangle": "def : X := Y"}}
+        self.write(".gitignore", "*.pyc\n*.tmp\n")
+        self.write("facts.json", json.dumps(self.facts))
+        self.write("Elements.lean", "import Elements.Foundations.Words\n")
+        self.write("Elements/Foundations/Words.lean", "def x := 1\n")
+        self.write("lean-toolchain", "leanprover/lean4:v4.35.0\n")
+        self.write("lakefile.toml", 'name = "stoicheia"\n')
+        self.write("lake-manifest.json", "{}\n")
+        (self.root / "Audit").mkdir()
+        shutil.copyfile(REPO / screen.SCREEN, self.root / screen.SCREEN)
+        self.git("init", "-q")
+        self.git("add", ".")
+        self.git("-c", "user.name=Screen test", "-c", "user.email=screen@example.invalid",
+                 "commit", "-qm", "fixture")
+        self.commit = self.git("rev-parse", "HEAD").stdout.strip()
+        self.path = self.root / "Audit" / "screen-run.toml"
+
+    def write(self, rel: str, text: str) -> None:
+        path = self.root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def git(self, *args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(["git", "-C", str(self.root), *args], cwd=self.root,
+                              capture_output=True, text=True, check=True)
+
+    def add_ignored_module(self) -> dict[str, str]:
+        clean = screen.inputs(self.root, self.facts)
+        module = self.root / "Audit" / "datetime.pyc"
+        module.write_bytes(b"ignored bytecode")
+        self.assertEqual(self.git("check-ignore", "Audit/datetime.pyc").stdout.strip(),
+                         "Audit/datetime.pyc")
+        self.assertIn("Audit/datetime.pyc", screen.screen_files(self.root))
+        parts = screen.inputs(self.root, self.facts)
+        self.assertNotEqual(parts["screen"], clean["screen"])
+        return parts
+
+    def commit_paths(self, *paths: str) -> None:
+        self.git("add", *paths)
+        self.git("-c", "user.name=Screen test", "-c", "user.email=screen@example.invalid",
+                 "commit", "-qm", "fixture update")
+        self.commit = self.git("rev-parse", "HEAD").stdout.strip()
+
+    def matching_record_is_refused(self, parts: dict[str, str]) -> None:
+        self.path.write_text(screen.record_text(parts, self.commit, screen.COMMITTED, 1),
+                             encoding="utf-8")
+        problems, _, changed = screen.check_current(self.root, self.path)
+        self.assertEqual(changed, [])
+        self.assertEqual(len(problems), 1)
+        self.assertIn("symbolic link", problems[0])
+
+    def test_a_clean_committed_fixture_can_record_and_check(self):
+        parts = screen.inputs(self.root, self.facts)
+        at = screen.revision(self.root)
+        self.assertEqual(at, (self.commit, screen.COMMITTED))
+        screen.write_record(self.root, parts, 1, self.path, at=at)
+        self.assertEqual(screen.check_current(self.root, self.path)[0], [])
+        (self.root / "Audit" / "__pycache__").mkdir()
+        (self.root / "Audit" / "__pycache__" / "datetime.pyc").write_bytes(b"cache")
+        self.write("Audit/unrelated.tmp", "ignored\n")
+        self.assertEqual(screen.revision(self.root), at)
+        self.assertEqual(screen.check_current(self.root, self.path)[0], [])
+
+    def test_an_ignored_hashed_module_has_no_committed_provenance_or_record(self):
+        parts = self.add_ignored_module()
+        at = screen.revision(self.root)
+        self.assertNotEqual(at[1], screen.COMMITTED)
+        self.path.write_text("existing record\n", encoding="utf-8")
+        before = self.path.read_text(encoding="utf-8")
+        with self.assertRaisesRegex(SystemExit, "not a commit's"):
+            screen.write_record(self.root, parts, 1, self.path, at=at)
+        self.assertEqual(self.path.read_text(encoding="utf-8"), before)
+
+    def test_a_matching_record_with_an_ignored_hashed_module_is_not_current(self):
+        parts = self.add_ignored_module()
+        self.path.write_text(screen.record_text(parts, self.commit, screen.COMMITTED, 1),
+                             encoding="utf-8")
+        problems, _, changed = screen.check_current(self.root, self.path)
+        self.assertEqual(changed, [])
+        self.assertEqual(len(problems), 1)
+        self.assertIn("inputs now are not a commit's", problems[0])
+
+    def test_a_committed_input_symlink_is_refused_before_write_and_recording(self):
+        self.write("docs/Words.lean", "def x := 1\n")
+        link = self.root / "Elements" / "Foundations" / "Words.lean"
+        link.unlink()
+        link.symlink_to("../../docs/Words.lean")
+        self.commit_paths("docs/Words.lean", "Elements/Foundations/Words.lean")
+        self.write("docs/Words.lean", "def x := 2\n")
+        parts = screen.inputs(self.root, self.facts)
+        at = screen.revision(self.root)
+        self.assertNotEqual(at[1], screen.COMMITTED)
+
+        real_run = subprocess.run
+        lake = []
+
+        def command(argv, **kwargs):
+            if argv[0] == "lake":
+                lake.append(argv)
+                return subprocess.CompletedProcess(argv, 0)
+            return real_run(argv, **kwargs)
+
+        with tempfile.TemporaryDirectory() as out, \
+                mock.patch.object(screen, "ROOT", self.root), \
+                mock.patch.object(screen, "RECORD", self.path), \
+                mock.patch.object(screen.subprocess, "run", side_effect=command), \
+                mock.patch.object(sys, "argv", ["screen.py", out, "--write"]), \
+                self.assertRaisesRegex(SystemExit, "symbolic link"):
+            screen.main()
+        self.assertEqual(lake, [])
+
+        self.path.write_text("existing record\n", encoding="utf-8")
+        before = self.path.read_text(encoding="utf-8")
+        with self.assertRaisesRegex(SystemExit, "symbolic link"):
+            screen.write_record(self.root, parts, 1, self.path, at=at)
+        self.assertEqual(self.path.read_text(encoding="utf-8"), before)
+        self.matching_record_is_refused(parts)
+
+    def test_a_symlinked_input_directory_is_refused(self):
+        self.write("outside/Hidden.lean", "def hidden := 1\n")
+        (self.root / "Elements" / "Linked").symlink_to("../outside", target_is_directory=True)
+        self.commit_paths("outside/Hidden.lean", "Elements/Linked")
+        self.write("outside/Hidden.lean", "def hidden := 2\n")
+        parts = screen.inputs(self.root, self.facts)
+        at = screen.revision(self.root)
+        self.assertNotEqual(at[1], screen.COMMITTED)
+        self.matching_record_is_refused(parts)
+
+    def test_a_dangling_input_symlink_is_refused(self):
+        path = self.root / "lakefile.lean"
+        path.symlink_to("missing-lakefile.lean")
+        self.commit_paths("lakefile.lean")
+        parts = screen.inputs(self.root, self.facts)
+        at = screen.revision(self.root)
+        self.assertNotEqual(at[1], screen.COMMITTED)
+        self.matching_record_is_refused(parts)
+
+
+class FixtureIsolation(unittest.TestCase):
+    """GitProvenance's repository is its own. Under a hook, git's environment names the
+    enclosing repository (GIT_DIR, GIT_INDEX_FILE); a fixture that kept it committed its
+    files there, deleting every other file in that commit, and wrote that index."""
+
+    def test_the_fixture_leaves_the_enclosing_repository_as_it_was(self):
+        outer = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        env = own_git_environment()
+
+        def git(*args: str) -> str:
+            return subprocess.run(["git", "-C", str(outer), *args], env=env,
+                                  capture_output=True, text=True, check=True).stdout
+
+        (outer / "kept.txt").write_text("kept\n", encoding="utf-8")
+        git("init", "-q")
+        git("add", "kept.txt")
+        git("-c", "user.name=Screen test", "-c", "user.email=screen@example.invalid",
+            "commit", "-qm", "enclosing")
+        head, index = git("rev-parse", "HEAD"), (outer / ".git" / "index").read_bytes()
+        hook = {"GIT_DIR": str(outer / ".git"), "GIT_INDEX_FILE": str(outer / ".git" / "index")}
+        with mock.patch.dict(os.environ, hook):
+            result = unittest.TestResult()
+            GitProvenance("test_a_clean_committed_fixture_can_record_and_check").run(result)
+        self.assertEqual((result.errors, result.failures), ([], []))
+        self.assertEqual(git("rev-parse", "HEAD"), head)
+        self.assertEqual((outer / ".git" / "index").read_bytes(), index)
+        self.assertEqual(git("status", "--porcelain"), "")
+
+
+class Record(unittest.TestCase):
+    """A run's record names what it read; --check-current names each part that changed. Each
+    case builds a small copy of the inputs, records it as a run would, at a commit given by
+    a stand-in for git, changes one thing, and reads what --check-current says."""
+
+    def setUp(self):
+        self.tmp = self.enterContext(tempfile.TemporaryDirectory())
+        self.root = Path(self.tmp)
+        self.facts = {"propositions": [
+            {"name": "BookI.Prop1", "ref": "I.1", "kind": "proposition", "statement": "P1",
+             "own_axioms": ["Postulate1"]},
+            {"name": "BookI.Prop2", "ref": "I.2", "kind": "proposition", "statement": "P2"}],
+            "axiom_modules": {"Postulate1": "Elements.Foundations.Postulates"},
+            "axiom_types": {"Postulate1": "T1"},
+            "vocabulary": {"Triangle": "def : X := Y"}}
+        self.write("facts.json", json.dumps(self.facts))
+        self.write("Elements.lean", "import Elements.Foundations.Words\n")
+        self.write("Elements/Foundations/Words.lean", "def x := 1\n")
+        self.write("Elements/Figure/Areas.lean", "instance : Foo := bar\n")
+        self.write("lean-toolchain", "leanprover/lean4:v4.35.0\n")
+        self.write("lakefile.toml", 'name = "stoicheia"\n')
+        self.write("lake-manifest.json", "{}\n")
+        (self.root / "Audit").mkdir()
+        shutil.copyfile(REPO / screen.SCREEN, self.root / screen.SCREEN)
+        self.path = self.root / "Audit" / "screen-run.toml"
+        self.enterContext(git_at())
+        self.assertEqual(self.record(),
+                         f"recorded what this run read in Audit/screen-run.toml: commit "
+                         f"{COMMIT[:12]} ({screen.COMMITTED}), 2 statements\n")
+
+    def write(self, rel: str, text: str) -> None:
+        p = self.root / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(text, encoding="utf-8")
+
+    def record(self) -> str:
+        """Record the inputs as a run would; what it prints."""
+        facts = json.loads((self.root / "facts.json").read_text(encoding="utf-8"))
+        read = screen.inputs(self.root, facts)
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            screen.write_record(self.root, read, len(facts["propositions"]), self.path,
+                                at=screen.revision(self.root))
+        return out.getvalue()
+
+    def check(self) -> tuple[list[str], list[str]]:
+        problems, _, changed = screen.check_current(self.root, self.path)
+        return problems, changed
+
+    def changed(self, rel: str, edit) -> list[str]:
+        p = self.root / rel
+        p.write_text(edit(p.read_text(encoding="utf-8")), encoding="utf-8")
+        problems, changed = self.check()
+        self.assertEqual(len(problems), len(changed))
+        return changed
+
+    def facts_changed(self, edit) -> list[str]:
+        facts = json.loads((self.root / "facts.json").read_text(encoding="utf-8"))
+        edit(facts)
+        (self.root / "facts.json").write_text(json.dumps(facts), encoding="utf-8")
+        return self.check()[1]
+
+    def refused(self) -> str:
+        """The one problem --check-current finds, with no part named as changed."""
+        problems, changed = self.check()
+        self.assertEqual((len(problems), changed), (1, []), problems)
+        return problems[0]
+
+    def test_a_fresh_record_is_current(self):
+        self.assertEqual(self.check(), ([], []))
+        text = self.path.read_text(encoding="utf-8")
+        self.assertIn(f'commit = "{COMMIT}"\n', text)
+        self.assertIn(f'state = "{screen.COMMITTED}"\n', text)
+        self.assertIn("statements = 2\n", text)
+        self.assertIn("[parts]\n", text)
+        self.assertEqual(sorted(p.name for p in (self.root / "Audit").iterdir()),
+                         ["screen-run.toml", "screen.py"])
+
+    def test_a_missing_record_is_not_current(self):
+        self.path.unlink()
+        self.assertIn("no record of a run", self.refused())
+
+    def test_an_unreadable_record_is_refused(self):
+        self.path.write_text('commit = "\n[parts\n', encoding="utf-8")
+        self.assertIn("does not read", self.refused())
+
+    def test_a_record_that_raises_permission_error_is_refused(self):
+        with mock.patch.object(Path, "read_text", side_effect=PermissionError("denied")):
+            self.assertIn("does not read", self.refused())
+
+    def test_a_record_whose_parts_and_total_disagree_is_refused(self):
+        self.path.write_text(self.path.read_text(encoding="utf-8").replace(
+            "statements = 2", "statements = 3"), encoding="utf-8")
+        self.assertIn("not as a run writes it", self.refused())
+        self.record()
+        text = self.path.read_text(encoding="utf-8")
+        self.path.write_text(text.replace('screen = "', 'screen = "0', 1), encoding="utf-8")
+        self.assertIn("not as a run writes it", self.refused())
+
+    def test_a_record_of_a_run_on_other_inputs_is_refused(self):
+        text = self.path.read_text(encoding="utf-8")
+        for old, new in ((screen.COMMITTED, "inputs differ from this commit"),
+                         (screen.COMMITTED, "unknown"),
+                         (COMMIT, "unknown"), (COMMIT, "0" * 39), (COMMIT, COMMIT.upper())):
+            with self.subTest(new=new):
+                self.path.write_text(text.replace(f'"{old}"', f'"{new}"', 1), encoding="utf-8")
+                self.assertIn("records a run on inputs other than a commit's", self.refused())
+
+    def test_no_record_is_written_of_a_run_on_other_inputs(self):
+        for commit, status in ((COMMIT, " M facts.json"), (COMMIT, None), (None, None),
+                               ("unknown", "")):
+            with self.subTest(commit=commit, status=status):
+                self.path.unlink()
+                with git_at(commit, status), self.assertRaisesRegex(SystemExit, "not a commit's"):
+                    self.record()
+                self.assertFalse(self.path.exists())
+                self.record()
+
+    def test_a_record_that_is_a_symbolic_link_is_refused_and_not_written_through(self):
+        elsewhere = self.root / "elsewhere.toml"
+        self.path.rename(elsewhere)
+        self.path.symlink_to(elsewhere)
+        self.assertIn("is a symbolic link", self.refused())
+        before = elsewhere.read_text(encoding="utf-8")
+        self.write("Elements/Foundations/Words.lean", "def x := 2\n")
+        with self.assertRaisesRegex(SystemExit, "is a symbolic link"):
+            self.record()
+        self.assertTrue(self.path.is_symlink())
+        self.assertEqual(elsewhere.read_text(encoding="utf-8"), before)
+
+    def test_a_statement_added_or_restated_is_named(self):
+        changed = self.facts_changed(lambda f: f["propositions"].append(
+            {"name": "BookI.Prop3", "ref": "I.3", "kind": "proposition", "statement": "P3"}))
+        self.assertEqual(changed, ["statements"])
+        self.assertIn("2 at the run, 3 now", self.check()[0][0])
+        self.facts_changed(lambda f: f["propositions"].pop())
+        self.assertEqual(self.check(), ([], []))
+        self.assertEqual(self.facts_changed(
+            lambda f: f["propositions"][0].update(statement="P1'")), ["statements"])
+
+    def test_what_the_screen_does_not_read_is_not_an_input(self):
+        """A proof's axioms, or the order of the entries, decide nothing the screen does."""
+        self.assertEqual(self.facts_changed(
+            lambda f: f["propositions"][0].update(own_axioms=["Postulate2"])), [])
+        self.assertEqual(self.facts_changed(lambda f: f["propositions"].reverse()), [])
+
+    def test_a_rule_or_a_word_changed_is_named(self):
+        self.assertEqual(self.facts_changed(
+            lambda f: f["axiom_types"].update(Postulate1="T1'")), ["rules"])
+        self.record()
+        self.assertEqual(self.facts_changed(
+            lambda f: f["axiom_modules"].update(Postulate1="Elements.Foundations.Other")),
+            ["rules"])
+        self.record()
+        self.assertEqual(self.facts_changed(
+            lambda f: f["vocabulary"].update(Triangle="def : X := Z")), ["words"])
+
+    def test_a_library_file_changed_added_or_removed_is_named(self):
+        self.assertEqual(self.changed("Elements/Figure/Areas.lean", lambda t: t + "-- c\n"),
+                         ["library"])
+        self.record()
+        self.write("Elements/Figure/New.lean", "def y := 2\n")
+        self.assertEqual(self.check()[1], ["library"])
+        self.record()
+        (self.root / "Elements/Figure/New.lean").unlink()
+        self.assertEqual(self.check()[1], ["library"])
+        self.record()
+        self.assertEqual(self.changed("Elements.lean", lambda t: t + "import X\n"),
+                         ["library"])
+
+    def test_the_toolchain_is_named_and_a_lakefile_lean_counts(self):
+        self.assertEqual(self.changed("lean-toolchain",
+                                      lambda t: t.replace("4.35.0", "4.36.0")), ["toolchain"])
+        self.record()
+        self.write("lakefile.lean", "import Lake\n")
+        self.assertEqual(self.check()[1], ["toolchain"])
+
+    def test_the_screen_counts_but_its_docstring_does_not(self):
+        self.assertEqual(self.changed(screen.SCREEN, lambda t: t.replace(
+            '"""A mechanical screen', '"""A mechanical screen, run again', 1)), [])
+        self.assertEqual(self.changed(screen.SCREEN,
+                                      lambda t: t.replace("BEATS = 30000", "BEATS = 30001")),
+                         ["screen"])
+
+    def test_code_on_the_docstrings_last_line_counts(self):
+        self.assertEqual(self.changed(screen.SCREEN, lambda t: t.replace(
+            '\n"""\n', '\n"""; KNOWN_EXTRA = 1\n', 1)), ["screen"])
+        for text, kept in (('"""Doc."""; x = 1\ny = 2\n', '"""Doc."""; x = 1\ny = 2\n'),
+                           ('"""Doc,\nlonger."""\nx = 1\n', "x = 1\n"),
+                           ("x = 1\n", "x = 1\n")):
+            self.assertEqual(screen.without_docstring(text), kept)
+
+    def test_a_module_beside_the_screen_counts(self):
+        """Run without -I, a module beside the screen can stand in for a standard one."""
+        self.write("Audit/datetime.py", "print('planted')\n")
+        self.assertEqual(self.check()[1], ["screen"])
+        self.assertEqual(screen.screen_files(self.root), [screen.SCREEN, "Audit/datetime.py"])
+        self.record()
+        self.write("Audit/__pycache__/screen.cpython-311.pyc", "cache")
+        self.write("Audit/Overlaps.lean", "-- the audit lemmas\n")
+        self.assertEqual(self.check(), ([], []))
+        self.write("Audit/helpers/__init__.py", "")
+        self.assertEqual(self.check()[1], ["screen"])
+
+    def test_inputs_moved_during_a_run_are_not_recorded(self):
+        read = screen.inputs(self.root, self.facts)
+        self.write("Elements/Foundations/Words.lean", "def x := 2\n")
+        with self.assertRaisesRegex(SystemExit, "changed while it ran"):
+            screen.write_record(self.root, read, 2, self.path, at=screen.revision(self.root))
+
+    def test_a_commit_moved_during_a_run_is_not_recorded(self):
+        """The inputs as they were, but another commit checked out: the record names the
+        commit the run read its inputs at, or nothing."""
+        before = self.path.read_text(encoding="utf-8")
+        read = screen.inputs(self.root, self.facts)
+        with git_at("b" * 40), self.assertRaisesRegex(SystemExit, "changed while it ran"):
+            screen.write_record(self.root, read, 2, self.path, at=(COMMIT, screen.COMMITTED))
+        self.assertEqual(self.path.read_text(encoding="utf-8"), before)
+
+    def test_a_move_to_clean_b_after_as_build_checks_stops_the_run(self):
+        """A's build checks as current, and then the checkout moves, clean, to commit B,
+        with another library file or none: no Lean runs, and B is not recorded against A's
+        build."""
+        before = self.path.read_text(encoding="utf-8")
+        for library in ("def x := 2\n", None):
+            with self.subTest(library=library):
+                head = {"commit": COMMIT}
+                launched = []
+
+                def git(*args: str, root: Path = REPO) -> str | None:
+                    return {"rev-parse": head["commit"], "status": ""}.get(args[0])
+
+                def lake(argv, **kw):
+                    launched.append(argv)
+                    if library:
+                        self.write("Elements/Foundations/Words.lean", library)
+                    head["commit"] = "b" * 40
+                    return subprocess.CompletedProcess(argv, 0)
+                with tempfile.TemporaryDirectory() as out, \
+                        mock.patch.object(screen, "git", git), \
+                        mock.patch.object(screen, "ROOT", self.root), \
+                        mock.patch.object(screen, "RECORD", self.path), \
+                        mock.patch.object(screen.subprocess, "run", lake), \
+                        mock.patch.object(screen.subprocess, "Popen") as lean, \
+                        mock.patch.object(sys, "argv", ["screen.py", out, "--write"]), \
+                        contextlib.redirect_stdout(io.StringIO()), \
+                        self.assertRaises(SystemExit) as stop:
+                    screen.main()
+                self.assertIn("changed while the build was checked", str(stop.exception.code))
+                self.assertEqual(launched, [["lake", "build", "--no-build", "Elements"]])
+                lean.assert_not_called()
+                self.assertEqual(self.path.read_text(encoding="utf-8"), before)
+
+    def run_with_build_change(self, during_retry: bool) -> tuple[list[list[str]], str]:
+        self.path.write_text("existing record\n", encoding="utf-8")
+        before = self.path.read_text(encoding="utf-8")
+        stale = {"build": False}
+        launched = []
+
+        def lake(argv, **kw):
+            launched.append(argv)
+            return subprocess.CompletedProcess(argv, 3 if stale["build"] else 0)
+
+        def lean(todo, beats, out, prefix, jobs):
+            if during_retry and prefix == "Screen":
+                return 1, [], list(todo), []
+            stale["build"] = True
+            return len(todo), list(todo), [], []
+
+        jobs = [("bare__BookI_Prop1", "BookI.Prop1", [])]
+        with tempfile.TemporaryDirectory() as out, \
+                mock.patch.object(screen, "ROOT", self.root), \
+                mock.patch.object(screen, "RECORD", self.path), \
+                mock.patch.object(screen, "reached"), \
+                mock.patch.object(screen, "attempts", return_value=jobs), \
+                mock.patch.object(screen, "refused", return_value={}), \
+                mock.patch.object(screen, "tries", return_value={
+                    "bare__BookI_Prop1": ("BookI.Prop1", "")}), \
+                mock.patch.object(screen, "run", side_effect=lean), \
+                mock.patch.object(screen, "lost", return_value=[]), \
+                mock.patch.object(screen.subprocess, "run", side_effect=lake), \
+                mock.patch.object(sys, "argv", ["screen.py", out, "--write"]), \
+                contextlib.redirect_stdout(io.StringIO()), \
+                self.assertRaises(SystemExit) as stop:
+            screen.main()
+        self.assertEqual(self.path.read_text(encoding="utf-8"), before)
+        return launched, str(stop.exception.code)
+
+    def test_a_build_left_stale_during_the_main_pass_is_not_recorded(self):
+        launched, stopped = self.run_with_build_change(False)
+        self.assertEqual(launched, 2 * [["lake", "build", "--no-build", "Elements"]])
+        self.assertIn("build of Elements changed while the screen ran", stopped)
+
+    def test_a_build_left_stale_during_the_retry_pass_is_not_recorded(self):
+        launched, stopped = self.run_with_build_change(True)
+        self.assertEqual(launched, 2 * [["lake", "build", "--no-build", "Elements"]])
+        self.assertIn("build of Elements changed while the screen ran", stopped)
+
+    def test_an_unchanged_build_is_checked_again_and_recorded(self):
+        self.path.write_text("existing record\n", encoding="utf-8")
+        launched = []
+
+        def lake(argv, **kw):
+            launched.append(argv)
+            return subprocess.CompletedProcess(argv, 0)
+
+        jobs = [("bare__BookI_Prop1", "BookI.Prop1", [])]
+        with tempfile.TemporaryDirectory() as out, \
+                mock.patch.object(screen, "ROOT", self.root), \
+                mock.patch.object(screen, "RECORD", self.path), \
+                mock.patch.object(screen, "reached"), \
+                mock.patch.object(screen, "attempts", return_value=jobs), \
+                mock.patch.object(screen, "refused", return_value={}), \
+                mock.patch.object(screen, "tries", return_value={
+                    "bare__BookI_Prop1": ("BookI.Prop1", "")}), \
+                mock.patch.object(screen, "run", return_value=(1, [jobs[0][0]], [], [])), \
+                mock.patch.object(screen, "lost", return_value=[]), \
+                mock.patch.object(screen.subprocess, "run", side_effect=lake), \
+                mock.patch.object(sys, "argv", ["screen.py", out, "--write"]), \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(screen.main(), 0)
+        self.assertEqual(launched, 2 * [["lake", "build", "--no-build", "Elements"]])
+        self.assertEqual(screen.check_current(self.root, self.path)[0], [])
+
+    def test_the_repository_inputs_read(self):
+        """The real inputs compute, and every part is present."""
+        facts = json.loads((REPO / "facts.json").read_text(encoding="utf-8"))
+        parts = screen.inputs(REPO, facts)
+        self.assertEqual(set(parts), set(screen.PARTS))
+        self.assertIn("Elements/Figure/Areas.lean", screen.library_files(REPO))
+        self.assertEqual(screen.library_files(REPO)[0], "Elements.lean")
+        self.assertEqual(screen.screen_files(REPO)[0], screen.SCREEN)
+
+
+class Main(unittest.TestCase):
+    """What the screen refuses before it runs any Lean."""
+
+    def main(self, *args: str) -> tuple[int | str | None, str]:
+        """The screen's exit and what it wrote to stderr, given these arguments."""
+        err = io.StringIO()
+        with mock.patch.object(sys, "argv", ["screen.py", *args]), \
+                contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as stop:
+            screen.main()
+        return stop.exception.code, err.getvalue()
+
+    def test_check_current_takes_no_outdir_and_no_write(self):
+        with tempfile.TemporaryDirectory() as out:
+            for args in ((out, "--check-current"), ("--check-current", "--write")):
+                code, err = self.main(*args)
+                self.assertEqual(code, 2)
+                self.assertIn("--check-current takes no OUTDIR and no --write", err)
+
+    def test_a_stale_build_stops_the_run(self):
+        built = []
+
+        def lake(argv, **kw):
+            built.append(argv)
+            return subprocess.CompletedProcess(argv, 3)
+        with tempfile.TemporaryDirectory() as out, git_at(), \
+                mock.patch.object(screen.subprocess, "run", lake):
+            code, _ = self.main(out)
+        self.assertEqual(built, [["lake", "build", "--no-build", "Elements"]])
+        self.assertIn("run `lake build` first", code)
+
+    def test_write_on_inputs_that_are_not_a_commits_stops_the_run(self):
+        with tempfile.TemporaryDirectory() as out, git_at(status=" M facts.json"), \
+                mock.patch.object(screen.subprocess, "run") as lake:
+            code, _ = self.main(out, "--write")
+        lake.assert_not_called()
+        self.assertIn("records only a run on a commit's inputs", code)
 
 
 if __name__ == "__main__":

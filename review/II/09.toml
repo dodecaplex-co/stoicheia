@@ -15,7 +15,7 @@ note = "Euclid's figure puts D between C and B; his hypothesis of unequal segmen
 at = "For let CE be drawn from C at right angles to AB"
 kind = "helper"
 helper = "BookI.Prop11"
-note = "Euclid draws CE perpendicular to AB and equal to AC, without a reference here. The Lean draws the perpendicular by I.11 and sets off the length with `OnRay.exists_len_eq`, which draws a circle about C and takes its meeting with the ray."
+note = "Euclid draws CE perpendicular to AB and equal to AC; Heath gives no reference here. The Lean draws the perpendicular by I.11 and sets off the length with `OnRay.exists_len_eq`, which draws a circle about C and takes its meeting with the ray."
 
 [[passage]]
 at = "let DF be drawn through D parallel to EC"
@@ -34,6 +34,12 @@ at = "the angle EAC is also equal to the angle AEC"
 kind = "helper"
 helper = "BookI.Prop5.base"
 note = "Euclid infers equal angles at A and E from AC equal to CE. The Lean uses I.5 in its base-angle form, `BookI.Prop5.base`; Heath gives no reference here."
+
+[[passage]]
+at = "therefore each of the angles CEA, CAE is half a right angle"
+kind = "carried"
+note = "The Lean proves that each of the angles CEA and CAE is half a right angle, as Euclid states; the later steps use only the half at E, and the angle CAE is not used again."
+unused = ["hhalf_CAE"]
 
 [[passage]]
 at = "therefore the whole angle AEB is right"
@@ -57,23 +63,23 @@ note = "Euclid takes the angles FBD and DFB to be equal because each is half a r
 at = "But the square on EF is equal to the squares on EG, GF"
 kind = "helper"
 helper = "BookI.Prop47.sq"
-note = "Euclid gives the square on EF as the squares on EG and GF together, without a reference here. The Lean applies I.47 to the triangle EGF, whose angle at G has been proved right."
+note = "Euclid gives the square on EF as the squares on EG and GF together; Heath gives no reference here. The Lean applies I.47 to the triangle EGF, whose angle at G has been proved right."
 
 [[passage]]
 at = "But the squares on AD, DF are equal to the square on AF"
 kind = "helper"
 helper = "Tacit.adjacent_eq_of_right"
-note = "Euclid uses the right angle ADF, while the earlier parallel argument made FDB right. The Lean obtains ADF from `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, and then applies I.47."
+note = "Euclid uses the right angle ADF, while the earlier parallel argument made FDB right. The Lean obtains ADF from `Tacit.adjacent_eq_of_right` (I.13) and then applies I.47."
 
 [figure]
 case = "D between C and B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "221ad5c2"
+commit = "1e482112"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:d341a1520792f8c3"
-run = "card 220, cross-family sign-off: original proof by OpenAI Codex, read by Claude Opus 5.5. Later proof edits at 3727c87e rewrite the half-right-angle equality and carry the angles EGF and FDB to Euclid's angle ECB; the commit has a Claude Opus 5.5 co-author trailer but does not identify which writer made them. Those edits were read by GPT-6 Astra (Codex) at f3b45b70 and by Claude Opus 5.5 at 221ad5c2; ship XS, reader XS-r-II09-II14, independent re-read at 221ad5c2"
+run = "card 220, cross-family sign-off: original proof by OpenAI Codex, read by Claude Opus 5.5. Later proof edits at 3727c87e rewrite the half-right-angle equality and carry the angles EGF and FDB to Euclid's angle ECB; the commit has a Claude Opus 5.5 co-author trailer but does not identify which writer made them. Those edits were read by GPT-6 Astra (Codex) at f3b45b70 and by Claude Opus 5.5 at 221ad5c2; ship XS, reader XS-r-II09-II14, independent re-read at 221ad5c2; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at 09b32b47 (reader RT-c5); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r3"
 
 [review.items]
 statement = "pass"

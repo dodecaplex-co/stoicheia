@@ -14,10 +14,10 @@ note = "Euclid takes D to lie on AB between A and B. After I.9 gives a bisector 
 
 [review]
 stage = "full"
-commit = "6e0cdd27"
+commit = "86e935fe"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:724cea2aa4407afd"
-run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I01-I10b, independent re-read at 6e0cdd27"
+lean = "sha256:b1372763d1df1a85"
+run = "card 220, cross-family sign-off: proof by Claude, read by GPT-6 Astra (Codex); ship XS, reader XS-r-I01-I10b, independent re-read at 6e0cdd27; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at 01e0fe54 (reader RT-x1); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4"
 
 [review.items]
 statement = "pass"
