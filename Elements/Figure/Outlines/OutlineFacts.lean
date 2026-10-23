@@ -1124,7 +1124,7 @@ theorem bounded_of_enclosure (F : Outline) {A B C : Point}
     ∀ X : Point, F.Region X → InsideTriangle X A B C := by
   classical
   intro X hX
-  rcases hX with ⟨ps, hps, s, hs, hXs⟩ | ⟨hXb, hodd⟩
+  rcases hX with ⟨ps, hps, s, hs, hXs⟩ | ⟨-, hodd⟩
   · have h₁ := hin ps hps _ (LoopFacts.side_mem hs).1
     have h₂ := hin ps hps _ (LoopFacts.side_mem hs).2
     rcases hXs with e | e | hb
