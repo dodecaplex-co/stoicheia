@@ -96,11 +96,12 @@
      the run of `--` lines its `at` begins in (`unbound_unused`, read from the text by
      `bound_names`), so a declaration for the citation sweep cannot outlive its binding;
    - the review records (`review/SCHEMA.md`): every proposition has one, valid; its
-     stamps match the statements in facts.json and its Lean file, so a record goes
-     stale when either changes; its passages begin at Euclid's sentences and name
-     helpers that exist; and every run of `--` lines with no Lean beneath it before
-     the next run, a `/- … -/` remark ending a run and carrying none, is declared as a
-     passage (`uncarried_runs`).
+     stamps match the statements in facts.json, its Lean file and its own text, so a
+     record goes stale when any of them changes (a record with no `text` stamp yet is
+     named in a note: docs/WORKFLOW.md, section 6); its passages begin at Euclid's
+     sentences and name helpers that exist; and every run of `--` lines with no Lean
+     beneath it before the next run, a `/- … -/` remark ending a run and carrying none,
+     is declared as a passage (`uncarried_runs`).
 7. Inline count markers in tracked Markdown match the exact file-derived counts in
    generated_counts.py, and stand only where that module allows. Unknown and
    malformed markers are refused, as are unsafe paths and a missing or mismatched Git
@@ -303,6 +304,8 @@ QUOTED_NAME = re.compile(r"«[^»]*»")
 PROPOSITIONS = "elements.book"
 
 errors: list[str] = []
+# The records with no `text` stamp yet, named in a note (docs/WORKFLOW.md, section 6).
+untexted: list[str] = []
 
 
 def fail(msg: str) -> None:
@@ -334,8 +337,8 @@ def theorem_block(src: str, n: int):
     span = heath.theorem_span(src, n)
     if span is None:
         return None, None
-    # Drop block comments (our remarks), keep full-line `--` comments (Euclid's words).
-    body = re.sub(r"/-.*?-/", "", src[span.body:span.end], flags=re.S)
+    # Blank block comments (our remarks), keep full-line `--` comments (Euclid's words).
+    body = _blank_remarks(src[span.body:span.end])
     words = [m.group(1) for m in re.finditer(r"^\s*--\s?(.*)$", body, re.M)]
     return span.doc, " ".join(words)
 
@@ -494,6 +497,8 @@ def read_lean(src: str, strings: list | None = None) -> tuple[str, list[int]]:
     _read_code(src, 0, marks)
     out, unsure = list(src), []
     for kind, i, j in marks:
+        if kind == "comment":
+            continue
         if kind == "unsure":
             unsure.append(i)
             continue
@@ -515,6 +520,40 @@ def without_comments(src: str) -> str:
     `read_lean` reads it: what `scripts/render.py` searches for a declaration's uses, so a
     name in a comment, a docstring or a string is no use."""
     return read_lean(src)[0]
+
+
+def lean_comments(src: str) -> list[tuple[int, int]]:
+    """Each comment of the Lean `src`, in order, as `read_lean` reads them: its offset
+    and the offset where it ends (`comment_end`), the end of `src` for a block that no
+    `-/` closes. A comment in an interpolated string's hole is one; a `--` or `/-` within
+    a comment, a string or a character literal begins none."""
+    marks: list[tuple[str, int, int]] = []
+    _read_code(src, 0, marks)
+    return [(i, j) for kind, i, j in marks if kind == "comment"]
+
+
+def comment_end(src: str, i: int) -> int | None:
+    """Where the comment that begins at `i`, with `--` or `/-`, ends, as Lean 4.35 reads
+    it (`whitespace` and `finishCommentBlock` in Lean/Parser/Basic.lean): a `--` comment
+    at the line feed that ends its line, or the end of `src`; a `/- … -/` block,
+    docstrings and nested blocks among them, just past the `-/` that closes it, or None
+    if none does. A block's body begins at its fourth character, after `/--` or `/-!`,
+    and past the third of any other `/-`, which Lean passes over, so that `/-/- -/` is a
+    whole comment and the `-/` of `/--/` closes nothing. `_read_code`, and so
+    `read_lean` and `lean_comments`, check_style's notes and the Jev generator call this
+    (#206); it uses nothing else of this file, for scripts/audit/jev_questions.py takes
+    it alone."""
+    if src.startswith("--", i):
+        end = src.find("\n", i)
+        return len(src) if end < 0 else end
+    j, nested = i + 3, 1
+    while j < len(src):
+        pair = src[j:j + 2]
+        nested += (pair == "/-") - (pair == "-/")
+        j += 2 if pair in ("/-", "-/") else 1
+        if not nested:
+            return j
+    return None
 
 
 def _find(src: str, s: str, i: int) -> int:
@@ -540,28 +579,20 @@ def closed_up(src: str) -> bytes:
 
 def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
     """Read Lean from `i` to the end or, in a hole, to the `}` that closes it, and return
-    that offset. `marks` gains the text of each comment and literal ("text"), each «…»
-    name ("name"), each string, character literal or raw string the scan cannot read for
-    certain ("unsure"), and each string literal, from its opening quote past its closing
-    one ("string"), and raw string's text ("raw")."""
+    that offset. `marks` gains the text of each comment and literal ("text"), each
+    comment again ("comment", `comment_end`), each «…» name ("name"), each string,
+    character literal or raw string the scan cannot read for certain ("unsure"), and each
+    string literal, from its opening quote past its closing one ("string"), and raw
+    string's text ("raw")."""
     depth, previous, can_project, field_dot = 0, "", False, False
     closed = closed_up(src)
     while i < len(src):
         c, j = src[i], i + 1
-        if src.startswith("--", i):
-            j = _find(src, "\n", i)
+        if src.startswith(("--", "/-"), i):
+            end = comment_end(src, i)
+            j = len(src) if end is None else end
             marks.append(("text", i, j))
-            can_project, field_dot = False, False
-        elif src.startswith("/-", i):
-            # a comment's body begins at its fourth character, as Lean reads it: after
-            # `/--` or `/-!`, and past the third character of any other `/-`, which Lean
-            # passes over, so that `/-/- -/` is a whole comment
-            j, nested = min(i + 3, len(src)), 1
-            while j < len(src) and nested:
-                pair = src[j:j + 2]
-                nested += (pair == "/-") - (pair == "-/")
-                j += 2 if pair in ("/-", "-/") else 1
-            marks.append(("text", i, j))
+            marks.append(("comment", i, j))
             can_project, field_dot = False, False
         elif c == '"':
             j, previous = _read_string(src, i, marks, previous in INTERPOLATED), c
@@ -632,7 +663,7 @@ def _read_string(src: str, i: int, marks: list, interpolated: bool) -> int:
     holes: list[tuple[str, int, int]] = []
     end = _read_interpolated(src, i, holes)
     if end == plain or (interpolated and end is not None):
-        marks += holes
+        marks += holes if interpolated else [mark for mark in holes if mark[0] != "comment"]
         return end
     marks.append(("text", i + 1, plain))
     if "{" in src[i:plain]:
@@ -961,6 +992,13 @@ def placement_step(step: dict) -> bool:
 
 # The axiom lock, Certificate/axioms.lock.
 
+# The lock's header, byte for byte as the committed lock has it: everything before its
+# `[axioms]` line, except the last newline, which render_lock's join adds as the blank
+# line. The header is part of the lock's bytes, which model/lock.sha256,
+# tests/model/lock.sha256 and the model's generated files pin by the lock's sha256, so it
+# changes only with the lock itself, as a lock change: with a decision entry, and the
+# model's hashes renewed. tests/test_axiom_lock.py holds the two together: from the
+# committed facts.json, `--write-lock` gives back the committed lock exactly (#260).
 LOCK_HEADER = """\
 # Certificate/axioms.lock
 #
@@ -1308,26 +1346,13 @@ SENTENCE_BREAK = re.compile(r"[.;:?!\]]\s+(?=\S)")
 
 def _blank_remarks(text: str) -> str:
     """`text` with every `/- … -/` remark (nested ones too) made spaces, line breaks
-    kept, and `--` line comments left as they are."""
-    out, depth, i = [], 0, 0
-    while i < len(text):
-        if not depth and text.startswith("--", i):
-            j = text.find("\n", i)
-            j = len(text) if j < 0 else j
-            out.append(text[i:j])
-            i = j
-        elif text.startswith("/-", i):
-            depth, i = depth + 1, i + 2
-            out.append("  ")
-        elif depth and text.startswith("-/", i):
-            depth, i = depth - 1, i + 2
-            out.append("  ")
-        elif depth:
-            out.append("\n" if text[i] == "\n" else " ")
-            i += 1
-        else:
-            out.append(text[i])
-            i += 1
+    kept, and `--` line comments left as they are: the comments as `read_lean` reads
+    them (`lean_comments`), so that a `--` within a remark goes with it, and a `/-`
+    within a `--` comment or a string opens none."""
+    out = list(text)
+    for i, j in lean_comments(text):
+        if text.startswith("/-", i):
+            out[i:j] = ["\n" if ch == "\n" else " " for ch in text[i:j]]
     return "".join(out)
 
 
@@ -1640,6 +1665,7 @@ def check_reviews(facts, by_ref) -> None:
     except RuntimeError as e:
         fail(f"review records: {e}")
         return
+    untexted.clear()
     for book, count in BOOKS.items():
         folder = heath.REVIEW / book
         for path in sorted(folder.glob("*.toml")) if folder.exists() else []:
@@ -1647,6 +1673,20 @@ def check_reviews(facts, by_ref) -> None:
                 fail(f"{rel(path)}: not a proposition of Book {book}")
         for n in range(1, count + 1):
             check_review(facts, by_ref, book, n)
+
+
+def untexted_note() -> str | None:
+    """The note naming the records with no `text` stamp yet, which `main` prints: a note,
+    not a failure, until every record carries one (docs/WORKFLOW.md, section 6)."""
+    if not untexted:
+        return None
+    shown = ", ".join(untexted) if len(untexted) <= 20 else \
+        ", ".join(untexted[:10]) + f" and {len(untexted) - 10} more"
+    return (f"note: {len(untexted)} review record(s) have no `text` stamp yet, so an edit to "
+            f"their text is not yet caught: {shown}. `scripts/review_stamp.py "
+            "--migrate-text` writes it only where a record is unchanged since its stamp "
+            "commit, a commit in the history of HEAD, and a reader stamps the rest "
+            "(WORKFLOW.md, section 6)")
 
 
 def check_review(facts, by_ref, book: str, n: int) -> None:
@@ -1684,6 +1724,13 @@ def check_review(facts, by_ref, book: str, n: int) -> None:
                      f"{st['fingerprint']}, facts.json gives {want}): read the record "
                      "again, then stamp it with scripts/review_stamp.py --commit "
                      "(WORKFLOW.md, section 6)")
+    own = heath.text_hash(heath.review_path(book, n).read_text())
+    if "text" not in rv:
+        untexted.append(ref)
+    elif rv["text"] != own:
+        fail(f"{ref}: its record has changed since it was reviewed ({where} has `text` "
+             f"{rv['text']}, its text now is {own}): read the record again, then stamp it "
+             "with scripts/review_stamp.py --commit (WORKFLOW.md, section 6)")
     lean = heath.lean_path(book, n)
     if not lean.exists():
         return
@@ -1756,6 +1803,9 @@ def main(argv=None) -> int:
     for error in count_errors:
         fail(error)
     check_facts(args.facts)
+    note = untexted_note()
+    if note:
+        print(note)
     if errors:
         print(f"{len(errors)} problem(s):")
         for e in errors:
