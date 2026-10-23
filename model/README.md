@@ -705,20 +705,110 @@ grep -v '^#' model/lock.sha256 | shasum -a 256 -c -
 cd model
 lake exe cache get
 lake build
+cd ..
+python3 scripts/check_model_kernel.py --self-test
+python3 scripts/check_model_kernel.py
 ```
 
 `lake build` builds both libraries, `Model` (with the assembly and the audit) and `Check`
 (with the generator's checks and the round trips), and fails if any check in them fails;
-there is nothing else to run, since the generator runs inside the build. On the machine that
-built this package, from a fresh clone, `lake exe cache get` took about 65 seconds (cloning
-the pinned Mathlib and its dependencies, downloading 9,031 files, 452 MB, and unpacking them
-to 6.6 GB). With the generator, `lake build` took 11 to 13 seconds of wall time in two runs,
-for this package and the library files `Check` reads. Of the modules the generator added,
-`Check/Generator.lean` took about 2 seconds to compile, `Check/Generated.lean` about 1 to run
-the generator and compare its output, `Check/RoundTrip.lean` about 1, `Check/Laws.lean` under
-half a second and `Model/Assembly.lean` 1 to 2, much of it alongside the proofs in the plane;
-a build with nothing changed took a second or so. A runner should expect a few minutes in
-all.
+the generator runs inside the build.
+
+Then [scripts/check_model_kernel.py](../scripts/check_model_kernel.py) checks the compiled
+proofs a second time, apart from the build (#121), in two replays through Lean's kernel by
+Lean's leanchecker, from the pinned toolchain. The first replays every declaration of every
+compiled module of `Model` and `Check`, private declarations included, into the environment
+of the module's imports. It runs as [scripts/check_kernel.py](../scripts/check_kernel.py)
+runs it for `Elements`, but without `--fresh`, so that environment is loaded from the
+compiled files, not replayed. The second runs with `--fresh` on `Check`, which never imports
+Mathlib, and replays every declaration of `Check`'s whole environment from nothing, into an
+empty one: Lean's own library as `Check` loads it (`Init`, `Std` and `Lean`, through
+`Check/Generator.lean`'s `import Lean`), the library's modules that `Check` imports, the
+plain-Lean part of `Model`, and `Check` itself. So `Model`'s modules over Mathlib are
+replayed into an environment loaded with Mathlib's, and `Check`, with all it loads, from
+nothing. The first replay still covers `Check`, since it accounts for every compiled module
+by name: a module compiled but not imported by `Check.lean` is one the second would never
+load.
+
+The declarations of Mathlib, and of the packages it requires, are left to Mathlib's own
+checks, a daily job that replays Mathlib and Batteries from nothing with leanchecker and
+checks Mathlib with nanoda, on Mathlib's master branch rather than the release pinned here.
+Of Lean's own library, everything that `Check` loads is replayed here from nothing, on the
+pinned toolchain: all 1,227 of its `Lean` modules, the 435 that lie outside Mathlib's
+environment among them. All that `Model` loads lies within it but five of `Lake`'s modules,
+which `Model` loads through Mathlib (`Lake.Build.Trace`, `Lake.Config.Glob`,
+`Lake.Util.Date`, `Lake.Util.String` and `Lake.Util.Version`); those lie within Mathlib's
+environment, which Mathlib's daily job replays, on Mathlib's toolchain rather than the one
+pinned here. `Init`, and the library's declarations that `Check` imports, are replayed from
+nothing by `check_kernel.py` too, in the `check` job, from that job's own build.
+
+The script lists the modules from the files, the two roots and every module under `Model/`
+and `Check/`, and walks the package's build folder (`.lake/build/lib/lean`) for every
+compiled module, so a new module is never missed. It compares the list with the modules
+leanchecker reports replaying in the first replay: a source with no compiled file, a module
+compiled outside the two libraries (from a new root or a new library in `lakefile.toml`), a
+build not up to date with its sources, and a compiled module whose source is gone each fail
+it. For the freshness check, every compiled source is an explicit `lake build --no-build`
+target, including a module its library root does not import: an old compiled file cannot
+hide a later edit to that source. Only `Check/Write.lean` is not replayed, by name, since
+`lake build` never compiles it.
+And what is replayed is the package's own compiled files, not a copy of them: each module
+root lies in one folder of Lean's search path, since Lean loads a module from the first
+folder that holds its root. So before either replay the script reads the search path that
+leanchecker gets through `lake env`, and a root (a folder, or an `.olean` file, at the top
+of one of its folders) found in two folders fails the check, naming both: a copy of `Check`
+in the build folder of a package that the model requires, earlier on the path, would
+otherwise be replayed in place of the package's own. Names are compared without case, as
+macOS's file system compares them by default. leanchecker runs the same kernel as
+`lake build`, so the replay catches a declaration that reached a compiled file without the
+kernel's check, not a fault in the kernel; and it replays any axiom it meets, so which
+axioms the proofs rest on stays the audit's check ([above](#what-the-proofs-rest-on)). Its
+self-test, which runs first, needs no Mathlib: in a temporary directory outside the
+repository it builds small packages of the model's shape that import only Lean, adds a
+theorem of `False`, proved by `True.intro`, from a `run_cmd` with the kernel's check
+switched off (`debug.skipKernelTC`), once in a `Check` file and once in a `Model` module,
+and requires that `lake build` accept each and that the check fail, naming the module and
+the declaration. Two more plants lie outside the libraries' names, where leanchecker, given
+the two roots, would never look: in a second root of `Model` and in a third library that
+`Check` imports. The check must fail on each at its walk of the build folder, naming the
+module. Another plant lies in a package of its own that `Check` requires and imports, as
+the model's `Check` requires the edition: the walk and the first replay pass it, and the
+replay from nothing must fail on it, naming the declaration. A last plant, in a `Check`
+file, comes after a copy of `Check`, compiled without it, is put in the build folder of
+such a required package, earlier on the search path: both replays would replay the copy and
+pass it, so the check must fail before them, naming `Check` and both folders. A control, a
+source never compiled and a compiled module without its source are tested the same way. The
+control also compiles a module that its root does not import; an edit to the same source
+without another build must then fail, naming the module. Every command runs in a process
+group of its own. On interruption or termination the script stops that whole group and
+waits for its command before its temporary directory is removed, as it does when the replay
+from nothing reaches its time limit; the self-test times out a command, interrupts an
+untimed one and terminates another, each with a descendant, and requires each descendant to
+stop. We thank Kim Morrison and Sebastian Ullrich warmly for leanchecker, which began as
+Kim Morrison's [lean4checker](https://github.com/leanprover/lean4checker) and now ships
+with Lean.
+
+On the machine that built this package, from a fresh clone, `lake exe cache get` took about
+65 seconds (cloning the pinned Mathlib and its dependencies, downloading 9,031 files, 452 MB,
+and unpacking them to 6.6 GB). With the generator, `lake build` took 11 to 13 seconds of
+wall time in two runs, for this package and the library files `Check` reads. Of the modules
+the generator added, `Check/Generator.lean` took about 2 seconds to compile,
+`Check/Generated.lean` about 1 to run the generator and compare its output,
+`Check/RoundTrip.lean` about 1, `Check/Laws.lean` under half a second and
+`Model/Assembly.lean` 1 to 2, much of it alongside the proofs in the plane; a build with
+nothing changed took a second or so. The first replay, of every compiled module, took about
+a minute (45 and 53 seconds for leanchecker alone, and 58 to 77 for the whole script, before
+it had the second replay, in four runs, on a machine busy with other builds). It replays
+modules in parallel, each loading its imports' environment afresh, Mathlib's for each
+module that imports it: on sixteen threads one run reached a 49 GB footprint, so the script
+runs it on two, where it peaked near 2.6 GB. The replay from nothing of `Check`'s
+environment is one task, which more threads do not speed: it took 95 seconds on two threads
+and 112 on four, with a resident peak of 1.5 GB, on the same machine, busier still. With
+both, the whole script took 205 seconds, and its self-test 162, since its control and its
+plant in a required package each replay Lean's library from nothing. A runner should
+expect several minutes for the step, which the job's limit of 30 minutes leaves room for.
+The script stops the replay from nothing after 15 minutes and fails, asking whether `Check`
+now imports Mathlib, so that the job ends with a named cause rather than at its limit.
 
 Between runs the job caches two directories, keyed on `model/lake-manifest.json`:
 `model/.lake/packages`, which holds the pinned clones and the unpacked build, and
