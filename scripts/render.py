@@ -3037,11 +3037,13 @@ def main() -> None:
     print(f"self-check: the modern figure is placed or refused rightly in {count} cases")
     entries = decision_entries()
     print(f"decision entries: {len(entries)} checked in docs/decisions/")
-    checks = load_checks()
-    print(f"registry of checks: {len(checks)} read from {registry.FOLDER}/")
     changes, errors = generated_counts.updates(ROOT)
     if errors:
         raise SystemExit("count markers: nothing was rendered:\n" + "\n".join(errors))
+    # The registry after the count markers, as each refuses before anything is written:
+    # so a fault in either still renders nothing, and each is reported as it was before.
+    checks = load_checks()
+    print(f"registry of checks: {len(checks)} read from {registry.FOLDER}/")
     facts = load_facts()
     docs = load_axiom_docs()
     records = load_records()
