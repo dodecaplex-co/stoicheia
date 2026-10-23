@@ -433,6 +433,9 @@ CHECKS = [
     ("lake build Staging", ["lake", "build", "Staging"]),
     ("lake env lean Certificate/Facts.lean", ["lake", "env", "lean", "Certificate/Facts.lean"]),
     ("python3 -I tests/test_certificate.py", [PY, "-I", "tests/test_certificate.py"]),
+    ("python3 scripts/sweep_citations.py --self-test",
+     [PY, "scripts/sweep_citations.py", "--self-test"]),
+    ("python3 scripts/sweep_citations.py", [PY, "scripts/sweep_citations.py"]),
     ("python3 scripts/check_kernel.py --self-test",
      [PY, "scripts/check_kernel.py", "--self-test"]),
     ("python3 scripts/heath.py", [PY, "scripts/heath.py"]),
@@ -456,9 +459,6 @@ NEGATIVE = [
     ("negative: lake build", ["lake", "build"]),
     ("negative: lake env lean Certificate/Facts.lean",
      ["lake", "env", "lean", "Certificate/Facts.lean"]),
-    ("negative: python3 scripts/sweep_citations.py --self-test",
-     [PY, "scripts/sweep_citations.py", "--self-test"]),
-    ("negative: python3 scripts/sweep_citations.py", [PY, "scripts/sweep_citations.py"]),
     ("negative: python3 scripts/negative_tests.py", [PY, "scripts/negative_tests.py"]),
 ]
 
