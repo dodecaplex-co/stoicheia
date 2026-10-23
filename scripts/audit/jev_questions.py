@@ -12,8 +12,8 @@ Ten synthetic defect controls change generated rows only. Expectations report th
 review records' claims and remain local, as do provenance, mutations and coverage.
 
 Run from anywhere with Python 3.11 or later, using only the standard library, the
-repository's heath.py and jev.py, imported by path, and the comment reader the scripts
-share, `comment_end`, taken alone from the repository's heath.py:
+repository's heath.py and jev.py, imported by path, and a copy, word for word, of the
+comment reader the scripts share, heath.py's `comment_end`:
 
     python3 scripts/audit/jev_questions.py --commit REV
     python3 scripts/audit/jev_questions.py --commit REV --check
@@ -158,43 +158,38 @@ def helper_modules(helpers: tuple[tuple[str, str], ...]) -> list:
     return _execute_modules(_prepare_modules(helpers))
 
 
-# The scripts' one reader of where a Lean comment ends (#206), heath.py's since #349. It
-# is taken alone, from the bytes read, and nothing else of the file runs for it.
-READER = ('jev_questions_reader', 'scripts/heath.py', 'comment_end')
-
-
-def _prepare_function(name: str, path: str, function: str) -> tuple[str, object]:
-    resolved = evidence_path(path)
-    require(resolved.is_file(), f'{path}: helper module is missing or not a regular file')
-    tree = ast.parse(read_no_follow(resolved), str(resolved))
-    found = [node for node in tree.body
-             if isinstance(node, ast.FunctionDef) and node.name == function]
-    require(len(found) == 1, f'{path}: defines no single function {function}')
-    compiled = compile(ast.Module(found, type_ignores=[]), str(resolved), 'exec',
-                       dont_inherit=True)
-    return name, compiled
-
-
-def _execute_function(prepared: tuple[str, object]):
-    name, compiled = prepared
-    namespace = {'__name__': name}
-    exec(compiled, namespace)
-    functions = [value for value in namespace.values() if callable(value)]
-    require(len(functions) == 1, f'{name}: prepared no single function')
-    return functions[0]
-
-
-def shared_function(name: str, path: str, function: str):
-    """Check a helper's path, then define its top-level `function` alone, from the bytes
-    read."""
-    return _execute_function(_prepare_function(name, path, function))
+# The scripts' one reader of where a Lean comment ends is heath.py's `comment_end`
+# (#206, #349). The generator must read the evidence commit's heath.py as a helper,
+# which at an older commit has no reader, so it holds its own copy, word for word but
+# for the name, which tests/test_negative_tests.py holds to heath's by its source and
+# by what it reads (the coordinator's ruling of 23 October 05:20).
+def shared_comment_end(src: str, i: int) -> int | None:
+    """Where the comment that begins at `i`, with `--` or `/-`, ends, as Lean 4.35 reads
+    it (`whitespace` and `finishCommentBlock` in Lean/Parser/Basic.lean): a `--` comment
+    at the line feed that ends its line, or the end of `src`; a `/- … -/` block,
+    docstrings and nested blocks among them, just past the `-/` that closes it, or None
+    if none does. A block's body begins at its fourth character, after `/--` or `/-!`,
+    and past the third of any other `/-`, which Lean passes over, so that `/-/- -/` is a
+    whole comment and the `-/` of `/--/` closes nothing. `_read_code`, and so
+    `read_lean` and `lean_comments`, and check_style's notes call this (#206). It uses
+    nothing else of this file: risk.py and the Jev generator, which cannot import it,
+    each hold a copy, word for word, which their tests hold to this one (#349)."""
+    if src.startswith("--", i):
+        end = src.find("\n", i)
+        return len(src) if end < 0 else end
+    j, nested = i + 3, 1
+    while j < len(src):
+        pair = src[j:j + 2]
+        nested += (pair == "/-") - (pair == "-/")
+        j += 2 if pair in ("/-", "-/") else 1
+        if not nested:
+            return j
+    return None
 
 
 try:
     prepared_helpers = _prepare_modules(HELPERS)
-    prepared_reader = _prepare_function(*READER)
     heath, jev = _execute_modules(prepared_helpers)
-    shared_comment_end = _execute_function(prepared_reader)
 except (Refusal, OSError) as error:
     if __name__ != '__main__':
         raise
@@ -340,7 +335,7 @@ KEYWORD_TOKENS = frozenset('''
 
 def comment_end(src: str, i: int) -> int:
     """Return the end of the line comment or nested block comment that starts at i, as Lean
-    reads it (heath.py's `comment_end`)."""
+    reads it (`shared_comment_end`, heath.py's `comment_end` word for word)."""
     end = shared_comment_end(src, i)
     require(end is not None, 'unterminated Lean comment')
     return end
