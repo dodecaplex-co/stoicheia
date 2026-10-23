@@ -647,9 +647,7 @@ looked into.
 6. **One voice** (section 7).
 7. **Review records** completed: each record written in step 3 is read again against its
    finished proof (section 6), and every one reaches the stage `full` before acceptance.
-   Books I and II have reached `full` in all their records; Book III's remain at
-   `exceptions` and reach `full` in brief 0005's stage 5, after the moves from Staging
-   into Elements in stages 3 and 4 (#25, #28; the records are #29).
+   Books I, II and III are at `full` in all their records (Book III's are #29).
 8. **The page read-through and the stale-content audit.** Before every release or
    consolidation, readers go through the rendered pages as visitors, as section 7 requires.
    Separately, before every release and at the end of each programme stage, the coordinator
