@@ -6534,6 +6534,85 @@ class CadenceReport(unittest.TestCase):
         self.assertTrue(r.returncode != 0 and body is None, (r.returncode, r.stderr))
 
 
+class OwnGitUnderHook(Edge):
+    """safe_push's own commands under a hook (#357): run from a train's linked worktree
+    with a hook's GIT_DIR and GIT_INDEX_FILE naming that worktree's git directory, a dry
+    run leaves the train's HEAD, its index and the change staged in it as they were."""
+
+    def plain_env(self) -> dict:
+        """clean_env() with no variable of git's, so the test's own git is not the hook's."""
+        return {name: value for name, value in clean_env().items()
+                if not name.startswith("GIT_")}
+
+    def dry_run_under_hook(self, work_tree: bool) -> None:
+        plain = self.plain_env()
+        train = TMP / f"hook-train-{self._testMethodName}"
+        git(WORK, "worktree", "add", "-q", "--detach", str(train), BASE, env=plain)
+        self.addCleanup(git, WORK, "worktree", "prune", env=plain, check=False)
+        self.addCleanup(shutil.rmtree, train, ignore_errors=True)
+        self.addCleanup(git, WORK, "worktree", "remove", "--force", str(train), env=plain,
+                        check=False)
+        reading = train / "docs" / "reading.md"
+        reading.write_text(reading.read_text() + "\nA line for the test.\n")
+        git(train, "add", "docs/reading.md", env=plain)
+        git(train, "commit", "-q", "--no-verify", "-m", "A good commit", env=plain)
+        reading.write_text(reading.read_text() + "\nA staged line.\n")
+        git(train, "add", "docs/reading.md", env=plain)
+        status = git(train, "status", "--porcelain", env=plain)
+        self.assertEqual(status, "M  docs/reading.md\n")
+        git_dir = Path(git(train, "rev-parse", "--absolute-git-dir", env=plain).strip())
+        watched = {"the train's HEAD": git_dir / "HEAD", "the train's index": git_dir / "index",
+                   "the clone's index": WORK / ".git" / "index",
+                   "the shared configuration": WORK / ".git" / "config"}
+        before = {name: path.read_bytes() for name, path in watched.items()}
+        hook = dict(plain, GIT_DIR=str(git_dir), GIT_INDEX_FILE=str(git_dir / "index"))
+        if work_tree:
+            hook["GIT_WORK_TREE"] = str(train)
+        r = subprocess.run([sys.executable, str(SAFE_PUSH), "--_test-skip-checks",
+                            *with_branch(("--dry-run",))], cwd=train, env=hook,
+                           capture_output=True, text=True)
+        out = r.stdout + r.stderr
+        for name, path in watched.items():
+            self.assertTrue(path.read_bytes() == before[name], f"{name} changed:\n{out}")
+        self.assertEqual(git(train, "status", "--porcelain", env=plain), status, out)
+        self.assertEqual(r.returncode, 0, out)
+        self.assertIn("would push", r.stdout)
+
+    def test_a_hooks_git_dir_and_index_leave_the_train_alone(self):
+        # The shape #355's review found: GIT_DIR and GIT_INDEX_FILE alone, naming a linked
+        # worktree's git directory; `git worktree add` then checked the commit out into
+        # the train's index, and its staged change was lost.
+        self.dry_run_under_hook(work_tree=False)
+
+    def test_with_the_hooks_work_tree_too(self):
+        self.dry_run_under_hook(work_tree=True)
+
+    def test_every_variable_git_ties_to_a_repository_is_dropped(self):
+        listed = set(git(SOURCE, "rev-parse", "--local-env-vars",
+                         env=self.plain_env()).split())
+        self.assertIn("GIT_DIR", listed)
+        self.assertEqual(sorted(listed - safe_push.REPOSITORY_VARIABLES), [])
+
+    def test_run_gives_no_command_a_repository_variable(self):
+        planted = {name: "/planted" for name in safe_push.REPOSITORY_VARIABLES}
+        seen = []
+        def record(cmd, **kwargs):
+            seen.append((cmd[0], kwargs["env"]))
+            return subprocess.CompletedProcess(cmd, 0, "", "")
+        with mock.patch.dict(os.environ, planted), \
+                mock.patch.object(safe_push.subprocess, "run", record):
+            safe_push.run(["git", "status"], WORK)
+            safe_push.run(["gh", "pr", "view"], WORK)
+            safe_push.run(["git", "status"], WORK, env=dict(os.environ))
+        self.assertEqual([name for name, _ in seen], ["git", "gh", "git"])
+        for name, env in seen:
+            left = sorted(set(env) & (safe_push.REPOSITORY_VARIABLES
+                                      - {"GIT_NO_REPLACE_OBJECTS"}))
+            self.assertEqual(left, [], name)
+        self.assertEqual([env.get("GIT_NO_REPLACE_OBJECTS") for _, env in seen],
+                         ["1", None, "1"])
+
+
 class HookEnvironment(unittest.TestCase):
     """The checks' environment under a hook (#355): a program the pre-flight runs as a
     check, given a hook's GIT_DIR and GIT_INDEX_FILE naming a linked worktree's git
@@ -6973,16 +7052,21 @@ class Units(unittest.TestCase):
     def test_run_pins_replacements_off_for_git_alone(self):
         # run() gives a git command core.useReplaceRefs=false on its command line, right
         # after the program, and an environment without replacements; another program is
-        # run as given. Nothing is spawned.
-        with mock.patch.object(safe_push.subprocess, "run") as spawn:
+        # run as given, in the caller's environment less the variables that tie git to one
+        # repository (#357). Nothing is spawned.
+        with mock.patch.dict(os.environ, {"GIT_DIR": "/a-hooks-git-dir"}), \
+                mock.patch.object(safe_push.subprocess, "run") as spawn:
             safe_push.run(["git", "status"], "/nowhere", env={"HOME": "/home"})
             safe_push.run([sys.executable, "-c", "pass"], "/nowhere")
+            expected = {name: value for name, value in os.environ.items()
+                        if name not in safe_push.REPOSITORY_VARIABLES}
         git_call, other_call = spawn.call_args_list
         self.assertEqual(git_call.args[0], ["git", "-c", "core.useReplaceRefs=false", "status"])
         self.assertEqual(git_call.kwargs["env"],
                          {"HOME": "/home", "GIT_NO_REPLACE_OBJECTS": "1"})
         self.assertEqual(other_call.args[0], [sys.executable, "-c", "pass"])
-        self.assertIsNone(other_call.kwargs["env"])
+        self.assertNotIn("GIT_DIR", other_call.kwargs["env"])
+        self.assertEqual(other_call.kwargs["env"], expected)
 
     def test_source_statement(self):
         src = (SOURCE / "Elements" / "BookIII" / "Prop01.lean").read_text()

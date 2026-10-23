@@ -50,7 +50,11 @@ order, and the first that fails stops it with a message saying why:
    The programs it runs as checks are not: they keep the environment tool_env() copies,
    which holds GIT_NO_REPLACE_OBJECTS under the launcher or after a hand-over, and
    otherwise only if the caller set it, and no other variable of git's, so that a check
-   finds its repository by its working directory, never by a hook's GIT_DIR (#355).
+   finds its repository by its working directory, never by a hook's GIT_DIR (#355). Nor
+   does any command safe_push.py runs itself, git's or another's, get a variable that
+   ties git to one repository (REPOSITORY_VARIABLES: GIT_DIR, GIT_INDEX_FILE,
+   GIT_WORK_TREE and their kin, as `git rev-parse --local-env-vars` lists them): each
+   finds its repository by its working directory too, the hand-over's included (#357).
 3. Invariant guards against origin/main, in a fresh temporary worktree of the commit. A
    new decision is a dated entry of its own, docs/decisions/<YYYY-MM-DD>-<slug>.md, which
    the push adds (docs/WORKFLOW.md, section 10, "Decision entries"); 0002-decisions.md,
@@ -479,12 +483,32 @@ class NothingToPush(Exception):
 # Running commands
 
 
+# The variables that tie git to one repository, as `git rev-parse --local-env-vars` lists
+# them. A hook sets some of them (GIT_DIR, GIT_INDEX_FILE, GIT_WORK_TREE) for the
+# repository it runs in; left set, they would send safe_push's own commands to that
+# repository and its index: `git worktree add` would check the commit out into a linked
+# worktree's index under a hook's GIT_INDEX_FILE (#357). So no command safe_push runs gets
+# one, and git finds its repository by the working directory each command names.
+REPOSITORY_VARIABLES = frozenset({
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_CONFIG", "GIT_CONFIG_COUNT",
+    "GIT_CONFIG_PARAMETERS", "GIT_DIR", "GIT_GRAFT_FILE", "GIT_IMPLICIT_WORK_TREE",
+    "GIT_INDEX_FILE", "GIT_INTERNAL_SUPER_PREFIX", "GIT_NO_REPLACE_OBJECTS",
+    "GIT_OBJECT_DIRECTORY", "GIT_PREFIX", "GIT_REPLACE_REF_BASE", "GIT_SHALLOW_FILE",
+    "GIT_WORK_TREE"})
+
+
+def own_env(env=None) -> dict:
+    """A copy of `env` (os.environ when None) with none of REPOSITORY_VARIABLES (#357)."""
+    return {name: value for name, value in (os.environ if env is None else env).items()
+            if name not in REPOSITORY_VARIABLES}
+
+
 def without_replacements(env=None) -> dict:
-    """A copy of `env` (os.environ when None) with GIT_NO_REPLACE_OBJECTS=1 and no
-    GIT_REPLACE_REF_BASE. Git from 2.19 to 2.41 still lets core.useReplaceRefs=true in
-    config override it, which run() pins off (NO_REPLACE_REFS)."""
-    env = dict(os.environ if env is None else env)
-    env.pop("GIT_REPLACE_REF_BASE", None)
+    """A copy of `env` (os.environ when None) with none of REPOSITORY_VARIABLES but
+    GIT_NO_REPLACE_OBJECTS=1, so no GIT_REPLACE_REF_BASE. Git from 2.19 to 2.41 still lets
+    core.useReplaceRefs=true in config override it, which run() pins off
+    (NO_REPLACE_REFS)."""
+    env = own_env(env)
     env["GIT_NO_REPLACE_OBJECTS"] = "1"
     return env
 
@@ -498,10 +522,13 @@ def run(cmd, cwd, *, env=None, input=None, binary=False) -> subprocess.Completed
     # A push sends the original objects, but git reads a replacement (refs/replace/, or a
     # ref under GIT_REPLACE_REF_BASE) in their place: so git runs here with replacements
     # off, by its environment and by its command line, lest the scan or the hand-over read
-    # a clean stand-in (#256).
+    # a clean stand-in (#256). No command, git's or another's, gets a variable that ties
+    # git to one repository (#357).
     if cmd and os.path.basename(cmd[0]) == "git":
         cmd = [cmd[0], *NO_REPLACE_REFS, *cmd[1:]]
         env = without_replacements(env)
+    else:
+        env = own_env(env)
     return subprocess.run(cmd, cwd=cwd, env=env, input=input, capture_output=True,
                           text=not binary)
 
@@ -2804,8 +2831,8 @@ def risk_class(repo, base: str, sha: str, labels: set[str] | None) -> Risk:
         script.write_bytes(source.stdout)
         try:
             r = subprocess.run([PY, "-I", str(script), "--diff", base, sha], cwd=repo,
-                               capture_output=True, text=True, errors="replace",
-                               timeout=RISK_TIMEOUT)
+                               env=without_replacements(), capture_output=True, text=True,
+                               errors="replace", timeout=RISK_TIMEOUT)
         except (OSError, subprocess.TimeoutExpired) as e:
             return r5(f"origin/main's {RISK} could not be run: {type(e).__name__}")
     if r.returncode != 0:
@@ -3707,7 +3734,7 @@ def watch_checks(ctx: Context, pr: PR, rep: Report) -> str:
         return "unknown"
     print(f"  following the checks of #{pr.number}: {pr.url}", flush=True)
     subprocess.run([*ctx.gh, "pr", "checks", str(pr.number), "--watch", "--interval",
-                    CI_WATCH_INTERVAL, "-R", ctx.github], cwd=ctx.repo)
+                    CI_WATCH_INTERVAL, "-R", ctx.github], cwd=ctx.repo, env=own_env())
     checks = pr_checks(ctx, pr.number)
     label_problem = None
     try:
