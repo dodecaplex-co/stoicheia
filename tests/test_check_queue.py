@@ -42,6 +42,8 @@ CHECK = "scripts/check_sample.py"
 TEST = "tests/test_check_sample.py"
 BOT = "revert-fixture[bot]"
 REVIEW = "Independent reader at"
+# Main's own classifier, which a fixture's main is given when a light pre-flight is judged.
+CLASSIFIER = (SCRIPTS / "risk.py").read_text(encoding="utf-8")
 
 
 def harness_source(comment, extra=()):
@@ -186,6 +188,30 @@ class QueueTests(unittest.TestCase):
         lines.extend(f"| 4. {name} | ok | 1.0 |"
                      for name, _ in (*queue.safe_push.CHECKS, *queue.safe_push.NEGATIVE))
         return "\n".join([*lines, "<!-- safe_push:preflight end -->"])
+
+    def light_block(self, head, cls):
+        """A pre-flight that left the full checks to CI for the class `cls`, by safe_push's
+        own writer, with the step 4 its short path writes."""
+        blob = self.git("rev-parse", f"{self.base}:scripts/safe_push.py").strip()
+        return queue.safe_push.preflight_block(head, self.base, {
+            "short": True, "class": cls, "class_why": "a fixture's class",
+            "harness_sha": self.base, "time": "23 October 2026",
+            "harness": f"origin/main's `scripts/safe_push.py` (blob `{blob[:12]}`)",
+            "steps": [("2", "secrets", "ok", 1.0), ("3", "statements", "ok", 1.0),
+                      ("4", "class", "ok", 0.5), ("4", "full local checks", "skip", None)],
+        })
+
+    def light_group(self, changes, cls, classifier=CLASSIFIER, labels=None, new="None."):
+        """A group of one train, on a new main whose scripts/risk.py is `classifier` (None:
+        main has none), whose pre-flight left the full checks to CI for the class `cls`."""
+        self.base = self.make([self.base], {"scripts/risk.py": classifier})
+        self.snapshot["main"]["sha"] = self.base
+        self.nodes().clear()
+        one = self.train(1, changes, new=new)
+        self.set_body(queue.PREFLIGHT.sub(self.light_block(one, cls), self.body()))
+        if labels is not None:
+            self.snapshot["pull_requests"]["1"]["labels"] = [{"name": n} for n in labels]
+        return self.merge(self.base, one, 1)
 
     def train(self, number, changes, start=None, new="None."):
         start = start or self.base
@@ -630,6 +656,84 @@ class QueueTests(unittest.TestCase):
             self.set_body(queue.PREFLIGHT.sub(block, self.body(number)), number)
         first = self.merge(self.base, self.one, 1)
         self.verdict(self.cli(head=self.merge(first, self.two, 2)), 0, "queue: PASS")
+
+    def test_light_preflight_of_r0_to_r2_passes(self):
+        # Since #329 a pre-flight of R0 to R2 leaves the full checks to CI (#334): the judge
+        # accepts it while main's classifier, run now, still classes the train so.
+        for cls, path in (("R0", "docs/notes.md"), ("R1", "docs/briefs/sample.md"),
+                          ("R2", "Staging/Sample.lean")):
+            with self.subTest(cls=cls):
+                group = self.light_group({path: "A low change.\n"}, cls)
+                self.verdict(self.cli(head=group), 0, "queue: PASS")
+
+    def test_light_preflight_of_r3_or_above_refuses(self):
+        for path, new in (("docs/WORKFLOW.md", "None."), (CHECK, f"- check: {CHECK}")):
+            with self.subTest(path=path):
+                group = self.light_group({path: "A change to the checks.\n"}, "R3", new=new)
+                self.verdict(self.cli(head=group), 1, "pre-flight: left the full checks to "
+                             "CI for the class R3, which only a change of R0 to R2 may")
+
+    def test_light_preflight_claiming_a_class_its_paths_lack_refuses(self):
+        # The block says R1, but main's classifier gives the paths a higher class; the
+        # train's own copy of the classifier, which would class it R0, judges nothing.
+        for path, cls, new in (
+                ("docs/WORKFLOW.md", "R3", "None."), (CHECK, "R3", f"- check: {CHECK}"),
+                ("Elements/Foundations/Sample.lean", "R4",
+                 "- foundations: Elements/Foundations/Sample.lean"),
+                ("scripts/risk.py", "R5", "- check: scripts/risk.py")):
+            with self.subTest(path=path):
+                group = self.light_group({path: "print('R0 Docs')\n"}, "R1", new=new)
+                self.verdict(self.cli(head=group), 1, "pre-flight: left the full checks to "
+                             f"CI, but the class by main's scripts/risk.py is {cls} (")
+
+    def test_light_preflight_of_a_release_refuses(self):
+        group = self.light_group({"docs/notes.md": "A release's note.\n"}, "R0",
+                                 labels=["docs", "release"])
+        self.verdict(self.cli(head=group), 1, "scripts/risk.py is R5 (the pull request is "
+                     "labelled release)")
+
+    def test_light_preflight_without_main_s_classifier_refuses(self):
+        # No classifier at main, or one that fails, classes every change R5: fail closed.
+        for classifier, why in ((None, "has no scripts/risk.py to class it"),
+                                ("raise SystemExit(3)\n", "could not class it (exit 3)"),
+                                ("print('no class')\n", "printed no class")):
+            with self.subTest(why=why):
+                group = self.light_group({"docs/notes.md": "A note.\n"}, "R0",
+                                         classifier=classifier)
+                self.verdict(self.cli(head=group), 1, "scripts/risk.py is R5 (", why)
+
+    def test_light_preflight_of_a_check_input_refuses_whatever_main_s_class(self):
+        # Should main's classifier ever class a check input low, the judge refuses still,
+        # as safe_push's short path then runs the full checks (beyond_low).
+        group = self.light_group({CHECK: "print('a lowered check')\n"}, "R0",
+                                 classifier="print('R0 Docs')\n", new=f"- check: {CHECK}")
+        self.verdict(self.cli(head=group), 1, "pre-flight: left the full checks to CI, but "
+                     f"the change touches {CHECK}, which no change of R0 to R2 may")
+
+    def test_light_preflight_must_be_as_safe_push_writes_it(self):
+        group = self.light_group({"docs/notes.md": "A note.\n"}, "R1")
+        self.verdict(self.cli(head=group), 0, "queue: PASS")
+        original = self.body()
+        skipped = "| 4. full local checks | skip |  |"
+        step = "its step 4 is not the class, passed, and the full local checks, skipped"
+        disagree = "the record's class R1 and its Risk class line disagree"
+        end = "<!-- safe_push:preflight end -->"
+        for body, message in (
+            (original.replace(skipped + "\n", ""), step),
+            (original.replace("| 4. class | ok |", "| 4. class | skip |"), step),
+            (original.replace(skipped, skipped + "\n| 4. lake build | ok | 1.0 |"), step),
+            (original.replace("| 2. secrets | ok |", "| 2. secrets | FAIL |"),
+             "contains a FAIL row"),
+            (original.replace("Verdict: PASS.", "Verdict: FAIL."), "one passing verdict"),
+            (original.replace("Risk class R1:", "Risk class R2:"), disagree),
+            (original.replace("Risk class R1: a fixture's class.\n", ""), disagree),
+            (original.replace(end, "Risk class R1: said twice.\n" + end), disagree),
+            (original.replace(end, "Noted: the full checks skipped.\n" + end),
+             "full checks skipped"),
+        ):
+            with self.subTest(message=message, body=body[-200:]):
+                self.set_body(body)
+                self.verdict(self.cli(head=group), 1, message)
 
     def test_preflight_hidden_verdict_or_table_does_not_count(self):
         original = self.body()

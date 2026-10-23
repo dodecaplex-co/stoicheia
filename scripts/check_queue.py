@@ -79,7 +79,14 @@ full blob at the pre-flight's harness commit. The block's base must be the newes
 commit of the group base's first-parent chain that the head contains, which is what
 safe_push records, and its harness that base or a later commit of the same chain. Older
 blocks without a harness field use their recorded base as that commit. The summary and
-steps must report a passing verdict and every full check its harness runs. The block
+steps must report a passing verdict and every full check its harness runs, save for a
+pre-flight that left them to CI for its class (safe_push.short_path, since #329): its
+summary and its Risk class line name the same class of R0 to R2, its step 4 is that
+class, passed, and the full local checks, skipped, and nothing else; the class
+recomputed now by the group base's scripts/risk.py, with the entry's labels, is R0 to R2
+too; and the change touches no check input nor any protected path but judged content
+(safe_push.beyond_low). The group's own CI run is R5, so every check still runs on it
+before it merges. The block
 is a declaration that anyone who can edit the pull request body can type: the judge
 checks it for consistency, not as proof that a pre-flight ran.
 
@@ -178,6 +185,11 @@ PREFLIGHT = re.compile(
     r"(?: harness=([0-9a-f]{40}))? -->[ \t\r]*$"
     r"(?:(?!<!-- safe_push:preflight begin).)*?"
     r"^<!-- safe_push:preflight end -->[ \t\r]*$")
+# How safe_push's summary ends when the pre-flight left the full checks to CI for the
+# change's class (short_path, preflight_block); and the step 4 of such a pre-flight, all
+# of it: the class, passed, and the full local checks, skipped.
+LIGHT = re.compile(r"; the full local checks left to CI, for the class (\S+)\.$")
+LIGHT_STEPS = {"4. class": "ok", "4. full local checks": "skip"}
 
 
 class Refused(Exception):
@@ -497,10 +509,12 @@ def harness_check_names(repo: Path, harness_commit: str) -> set[str]:
 
 
 def preflight_steps(inner: str, head: str, base: str,
-                    expected: set[str] | None = None) -> None:
+                    expected: set[str] | None = None, light: str | None = None) -> None:
     """Read one passing verdict and a steps table whose passing rows include every full
     check expected, with no failing row: a record standing in for them does not count.
-    The full checks expected are those of the harness that ran the pre-flight."""
+    The full checks expected are those of the harness that ran the pre-flight. A
+    pre-flight that left them to CI for its class, `light`, runs none: its one Risk class
+    line names that class, and its step 4 is LIGHT_STEPS, exactly."""
     visible = safe_push.visible(inner)
     verdicts = [line.strip().strip("*") for line in visible.splitlines()
                 if re.match(r"(?:\*\*)?(?:Pre-flight )?Verdict:", line.strip(), re.I)]
@@ -525,6 +539,16 @@ def preflight_steps(inner: str, head: str, base: str,
         steps.append((row[0], row[1].casefold()))
     if len({name for name, _ in steps}) != len(steps):
         raise Refused("pre-flight: duplicate steps table row")
+    if light is not None:
+        named = [line.strip() for line in visible.splitlines()
+                 if line.strip().startswith("Risk class")]
+        if len(named) != 1 or not named[0].startswith(f"Risk class {light}: "):
+            raise Refused(f"pre-flight: the record's class {light} and its Risk class line "
+                          "disagree")
+        if {name: outcome for name, outcome in steps if name.startswith("4.")} != LIGHT_STEPS:
+            raise Refused("pre-flight: left the full checks to CI, but its step 4 is not the "
+                          "class, passed, and the full local checks, skipped, alone")
+        return
     if expected is None:
         expected = {f"4. {name}" for name, _ in (*safe_push.CHECKS, *safe_push.NEGATIVE)}
     passed = {name for name, outcome in steps if outcome in {"ok", "pass"}}
@@ -532,6 +556,33 @@ def preflight_steps(inner: str, head: str, base: str,
                    for suffix in ("", " (the commit's checks)"))
     if not complete:
         raise Refused("pre-flight: steps must run the full checks")
+
+
+def light_preflight(repo: Path, base: str, against: str, checked: str, pr: dict,
+                    inner: str, recorded: str) -> None:
+    """Accept a pre-flight that left the full checks to CI for the class it records,
+    `recorded`, as safe_push's --merge accepts its record (checks_record): only while
+    that class and the class recomputed now are both R0 to R2, and only for a change that
+    touches no check input nor any protected path but judged content, as short_path
+    requires (beyond_low). The group's own CI run is R5, so every check runs on it."""
+    if recorded not in safe_push.LOW_CLASSES:
+        raise Refused(f"pre-flight: left the full checks to CI for the class {recorded}, "
+                      "which only a change of R0 to R2 may")
+    preflight_steps(inner, checked, against, light=recorded)
+    # The class is recomputed by the group base's scripts/risk.py, main's, never taken
+    # from the record: the block is a declaration anyone who can edit the body can type,
+    # and main's classifier may since have put the change's paths higher. risk_class reads
+    # that copy out of Git at the base, never the checkout, so a group cannot lower its
+    # own class; a release label, or any failure to compute the class, gives R5.
+    risk = safe_push.risk_class(repo, base, checked, pr["labels"])
+    if risk.cls not in safe_push.LOW_CLASSES:
+        raise Refused("pre-flight: left the full checks to CI, but the class by main's "
+                      f"scripts/risk.py is {risk.cls} ({risk.why})")
+    if beyond := safe_push.beyond_low(repo, against, checked):
+        shown = ", ".join(beyond[:8]) + (f" and {len(beyond) - 8} more" if len(beyond) > 8
+                                         else "")
+        raise Refused("pre-flight: left the full checks to CI, but the change touches "
+                      f"{safe_push.printable_text(shown)}, which no change of R0 to R2 may")
 
 
 def preflight(repo: Path, base: str, pr: dict) -> None:
@@ -590,7 +641,11 @@ def preflight(repo: Path, base: str, pr: dict) -> None:
     if candidates != [actual]:
         raise Refused("pre-flight: harness blob is not the recorded harness commit's "
                       "safe_push.py")
-    preflight_steps(inner, checked, against, harness_check_names(repo, harness_commit))
+    # A pre-flight of R0 to R2 leaves the full checks to CI, and its summary ends saying so.
+    if light := LIGHT.search(summary.rstrip()):
+        light_preflight(repo, base, against, checked, pr, inner, light.group(1))
+    else:
+        preflight_steps(inner, checked, against, harness_check_names(repo, harness_commit))
     if pr["ref"].startswith("train/"):
         try:
             problems = check_train.check_train(repo, base=against, sha=checked, body=body)
