@@ -184,6 +184,7 @@ from __future__ import annotations
 import ast
 import base64
 import contextlib
+import copy
 import datetime
 import hashlib
 import io
@@ -7022,6 +7023,92 @@ class CadenceReport(unittest.TestCase):
         self.assertTrue(r.returncode != 0 and body is None, (r.returncode, r.stderr))
 
 
+class HookEnvironment(unittest.TestCase):
+    """The checks' environment under a hook (#355): a program the pre-flight runs as a
+    check, given a hook's GIT_DIR and GIT_INDEX_FILE naming a linked worktree's git
+    directory, as on 22 October, builds and commits to a repository of its own and leaves
+    the enclosing one as it was: its HEAD, index and files, and the shared configuration,
+    which git init with that GIT_DIR once turned bare."""
+
+    IDENT = ["-c", "user.name=Hook-test", "-c", "user.email=hook@example.invalid",
+             "-c", "commit.gpgsign=false"]
+
+    def setUp(self):
+        # The test's own git reads no variable of git's, no global or system configuration
+        # and no hook of the machine's: it builds its repositories hermetically.
+        tmp = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        for name in ("home", "xdg", "hooks"):
+            (tmp / name).mkdir()
+        self.env = {name: value for name, value in os.environ.items()
+                    if not name.startswith("GIT_")}
+        self.env.update(HOME=str(tmp / "home"), XDG_CONFIG_HOME=str(tmp / "xdg"),
+                        GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
+        self.options = ["-c", f"core.hooksPath={tmp / 'hooks'}",
+                        "-c", f"core.excludesFile={os.devnull}"]
+
+    def clean(self) -> dict:
+        return dict(self.env)
+
+    def git(self, *args) -> str:
+        return subprocess.run(["git", *self.options, *args], env=self.clean(),
+                              capture_output=True, text=True, check=True).stdout
+
+    def check_under_hook(self, extra: dict) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            main, linked, inner, logs = (tmp / "main", tmp / "linked", tmp / "inner",
+                                         tmp / "logs")
+            for folder in (main, inner, logs):
+                folder.mkdir()
+            self.git("init", "-q", str(main))
+            (main / "a.txt").write_text("main\n")
+            self.git("-C", str(main), "add", "a.txt")
+            self.git("-C", str(main), *self.IDENT, "commit", "-q", "--no-verify", "-m", "main")
+            self.git("-C", str(main), "worktree", "add", "-q", "-b", "train", str(linked))
+            git_dir = Path(self.git("-C", str(linked), "rev-parse", "--absolute-git-dir")
+                           .strip())
+            common = main / ".git"
+            watched = {"HEAD": git_dir / "HEAD", "index": git_dir / "index",
+                       "config": common / "config", "a.txt": linked / "a.txt",
+                       "main's a.txt": main / "a.txt"}
+            before = {name: path.read_bytes() for name, path in watched.items()}
+            heads = (self.git("-C", str(main), "rev-parse", "HEAD"),
+                     self.git("-C", str(linked), "rev-parse", "HEAD"))
+            git = shlex.join(["git", *self.options])
+            check = (f"{git} init -q && echo inner > b.txt && {git} add b.txt && "
+                     f"{git} {' '.join(self.IDENT)} commit -q --no-verify -m inner")
+            hook = {"GIT_DIR": str(git_dir), "GIT_INDEX_FILE": str(git_dir / "index"),
+                    "GIT_NO_REPLACE_OBJECTS": "1",
+                    **{name: str(linked) if value == "WORKTREE" else value
+                       for name, value in extra.items()}}
+            with mock.patch.dict(os.environ, {**self.clean(), **hook}, clear=True):
+                env = safe_push.tool_env()
+                rep = safe_push.Report()
+                safe_push.run_step("4", "a check that builds a repository",
+                                   ["sh", "-c", check], inner, rep, logs, 1, fail="note")
+            # The damage first, so that main's tool_env fails on the incident itself (a
+            # failing check is noted, not raised, so these run either way); the messages
+            # name git's variables only, never the rest of the environment.
+            for name, path in watched.items():
+                self.assertEqual(path.read_bytes(), before[name], name)
+            self.assertNotIn("bare = true", (common / "config").read_text())
+            self.assertEqual((self.git("-C", str(main), "rev-parse", "HEAD"),
+                              self.git("-C", str(linked), "rev-parse", "HEAD")), heads)
+            self.assertEqual(sorted(p.name for p in linked.iterdir()), [".git", "a.txt"])
+            self.assertEqual(rep.steps[-1].outcome, "ok", [s.outcome for s in rep.steps])
+            self.assertEqual(self.git("-C", str(inner), "log", "--format=%s"), "inner\n")
+            kept = sorted(name for name in env if name.startswith("GIT_"))
+            self.assertEqual(kept, ["GIT_NO_REPLACE_OBJECTS"])
+            self.assertEqual(env["GIT_NO_REPLACE_OBJECTS"], "1")
+
+    def test_a_hooks_git_dir_and_index_reach_no_check(self):
+        # The incident's shape: GIT_DIR and GIT_INDEX_FILE alone, naming a linked worktree.
+        self.check_under_hook({})
+
+    def test_with_the_hooks_work_tree_too(self):
+        self.check_under_hook({"GIT_WORK_TREE": "WORKTREE"})
+
+
 class Units(unittest.TestCase):
     """The scanner and helpers, with temporary Git only where history is the subject."""
 
@@ -7387,6 +7474,79 @@ class Units(unittest.TestCase):
         self.assertEqual(jobs[safe_push.SUITE_REPORT_JOB]["needs"], list(safe_push.SUITE_JOBS))
         self.assertEqual([j["name"] for j in SUITE_JOBS],
                          [*safe_push.SUITE_JOBS, safe_push.SUITE_REPORT_JOB])
+
+    # E2a (#276): a job whose step `lane` reads the change's class does its work only when
+    # that step says to run in full, so every step after it carries this condition (#346).
+    LANE_CONDITION = "steps.lane.outputs.full == 'true'"
+
+    def ungated_after_lane(self, workflow: dict) -> dict[str, list[str]]:
+        """Each job with a step `lane`: the steps that would run for R0 to R2, by name,
+        action or position. That is each step before the lane step, which must come
+        first, and each step after it whose `if:` is not LANE_CONDITION, alone or as
+        ${{ LANE_CONDITION }}."""
+        found = {}
+        for job_id, job in (workflow.get("jobs") or {}).items():
+            steps = job.get("steps") or []
+            lane = [i for i, step in enumerate(steps) if step.get("id") == "lane"]
+            if not lane:
+                continue
+            def label(step, i):
+                return step.get("name") or step.get("uses") or f"step {i}"
+            ungated = [f"{label(step, i)} (before the lane step)"
+                       for i, step in enumerate(steps[:lane[0]], 1)]
+            for i, step in enumerate(steps[lane[0] + 1:], lane[0] + 2):
+                condition = str(step.get("if", "")).strip()
+                if condition.startswith("${{") and condition.endswith("}}"):
+                    condition = condition[3:-2].strip()
+                if condition != self.LANE_CONDITION:
+                    ungated.append(label(step, i))
+            found[job_id] = ungated
+        return found
+
+    def test_every_step_after_the_lane_step_carries_its_condition(self):
+        # #339 added steps to CI's negative job without the condition, and every R0 to R2
+        # pull request then failed once it had landed. Now this test finds such a step: on
+        # any branch in seconds (Units), and on main within six hours, on the cadence that
+        # runs this suite. (It fails the pull request that adds the step only once it runs
+        # on the pull request's path, #346.) Every workflow is read; CI's negative and
+        # formal-model jobs must have the lane step, first.
+        workflows = {path.name: yaml.safe_load(path.read_text())
+                     for path in sorted((SOURCE / ".github/workflows").glob("*.y*ml"))}
+        for name, workflow in workflows.items():
+            for job_id, ungated in self.ungated_after_lane(workflow).items():
+                self.assertEqual(ungated, [], f"{name}: job {job_id}: the lane step comes "
+                                 f"first, and each step after it needs if: "
+                                 f"{self.LANE_CONDITION}")
+        ci = self.ungated_after_lane(workflows["ci.yml"])
+        self.assertTrue({"negative", "formal-model"} <= set(ci), sorted(ci))
+        # Planted: the condition taken from one step of each job, or changed, is found.
+        for job_id in ("negative", "formal-model"):
+            for change in ("removed", "always()", "steps.lane.outputs.full == 'false'"):
+                with self.subTest(job=job_id, change=change):
+                    planted = copy.deepcopy(workflows["ci.yml"])
+                    steps = planted["jobs"][job_id]["steps"]
+                    victim = steps[-1]
+                    if change == "removed":
+                        del victim["if"]
+                    else:
+                        victim["if"] = change
+                    self.assertEqual(self.ungated_after_lane(planted)[job_id],
+                                     [victim.get("name") or victim.get("uses")])
+        wrapped = copy.deepcopy(workflows["ci.yml"])
+        for step in wrapped["jobs"]["negative"]["steps"][1:]:
+            step["if"] = "${{ " + self.LANE_CONDITION + " }}"
+        self.assertEqual(self.ungated_after_lane(wrapped)["negative"], [])
+        # A step put before the lane step runs for every class, as #339's did.
+        early = copy.deepcopy(workflows["ci.yml"])
+        early["jobs"]["negative"]["steps"].insert(0, {"name": "Too early", "run": "true"})
+        self.assertEqual(self.ungated_after_lane(early)["negative"],
+                         ["Too early (before the lane step)"])
+        # A step with no name is named by its action, and one with neither by its place.
+        unnamed = copy.deepcopy(workflows["ci.yml"])
+        steps = unnamed["jobs"]["negative"]["steps"]
+        steps += [{"uses": "actions/an-action@v1"}, {"run": "true"}]
+        self.assertEqual(self.ungated_after_lane(unnamed)["negative"],
+                         ["actions/an-action@v1", f"step {len(steps)}"])
 
     def test_ci_check_job_rejects_skip_and_failure_suppression(self):
         source = (SOURCE / ".github/workflows/ci.yml").read_text()

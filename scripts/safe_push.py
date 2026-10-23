@@ -50,7 +50,8 @@ order, and the first that fails stops it with a message saying why:
    holds, since a push sends the originals (#256); its `git status` check is one of them.
    The programs it runs as checks are not: they keep the environment tool_env() copies,
    which holds GIT_NO_REPLACE_OBJECTS under the launcher or after a hand-over, and
-   otherwise only if the caller set it.
+   otherwise only if the caller set it, and no other variable of git's, so that a check
+   finds its repository by its working directory, never by a hook's GIT_DIR (#355).
 3. Invariant guards against origin/main, in a fresh temporary worktree of the commit. A
    new decision is a dated entry of its own, docs/decisions/<YYYY-MM-DD>-<slug>.md, which
    the push adds (docs/WORKFLOW.md, section 10, "Decision entries"); 0002-decisions.md,
@@ -545,9 +546,19 @@ def rev_parse(repo, rev: str) -> str | None:
     return r.stdout.strip() if r.returncode == 0 else None
 
 
+# Of git's own variables, the one the checks keep: safe_push sets it on purpose (under the
+# launcher and after a hand-over). Every other GIT_* is dropped, since a hook sets
+# GIT_DIR, GIT_INDEX_FILE and their kin for the repository it runs in, and a check that
+# builds a repository of its own (git init, add, commit) would act on that one (#355).
+KEPT_GIT_VARIABLES = frozenset({"GIT_NO_REPLACE_OBJECTS"})
+
+
 def tool_env() -> dict:
-    """The environment for the checks: elan's lake on the PATH, as CI and AGENTS.md set it."""
-    env = dict(os.environ)
+    """The environment for the checks: elan's lake on the PATH, as CI and AGENTS.md set it,
+    and no variable of git's but those KEPT_GIT_VARIABLES names, so that each check finds
+    its repository by its working directory, never by what a hook left set (#355)."""
+    env = {name: value for name, value in os.environ.items()
+           if not name.startswith("GIT_") or name in KEPT_GIT_VARIABLES}
     elan = str(Path.home() / ".elan" / "bin")
     env["PATH"] = elan + os.pathsep + env.get("PATH", "")
     return env
