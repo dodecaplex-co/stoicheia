@@ -972,6 +972,7 @@ class CommentReaderTests(unittest.TestCase):
             with self.subTest(name=name):
                 self.assertIs(getattr(check_fidelity, name),
                               getattr(check_fidelity.heath, name))
+        self.assertIs(check_fidelity.WORD, check_fidelity.heath.WORD_CHAR)
         # Nor does check_fidelity bind any of them itself, by a def or an assignment.
         source = (REPO / "scripts/check_fidelity.py").read_text(encoding="utf-8")
         defined = set()

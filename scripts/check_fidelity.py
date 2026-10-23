@@ -131,6 +131,7 @@ from heath import (CHAR, ESCAPE, FIELD, FIRST, IDENT, ID_FIRST, ID_REST, INTERPO
                    SUBSCRIPT_ALNUM, read_lean, without_comments, lean_comments,
                    comment_end, _find, closed_up, _read_code, _read_string,
                    _read_interpolated, lean_string)
+from heath import WORD_CHAR as WORD
 import generated_counts
 
 ROOT = heath.ROOT
@@ -379,8 +380,8 @@ def check_fidelity() -> None:
 # Lean's tokens, and #206's one reader of Lean's comments, strings, literals and
 # names, are heath.py's: it travels with the landing tool's harness, so that the harness
 # can read Lean with it too (#349; the coordinator's ruling of 22 October 23:50). They
-# are imported at the top of this file, under the names they had here, but for the
-# reader's WORD, which this file no longer uses and heath.py calls WORD_CHAR.
+# are imported at the top of this file under the names they had here, including the
+# reader's WORD, imported from heath.py's WORD_CHAR so as not to shadow heath.WORD.
 
 # An approximate token-declaration span (#234). Lean reads the longest token it knows, so after
 # `infixl:65 " +x " => Nat.add` it reads `2 +x1set_option` as `2`, `+x`, `1` and
