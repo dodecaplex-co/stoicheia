@@ -586,13 +586,20 @@ every train and group as unreadable.
   prose change are not added. `CommentReaderTests` in `tests/test_negative_tests.py` holds
   the cases for the Lean-comment reader shared by the fidelity check, the style check and
   the Jev question generator; `negative_tests.py` runs that file before it plants faults.
-- **The certificate's coincidence cases need built foundations.**
+- **The certificate's cases need built foundations.**
   `python3 -I tests/test_certificate.py` checks C.N. 4 detection directly, through helpers
   and through transformers, with negative controls for derivations that supply no step,
   while keeping the axiom fields unchanged. It rejects reached helpers from
   `Staging.Hidden`, and from a `Lean.Hidden` compiled outside the Lean toolchain, while
   allowing unused imports from foreign modules and reached declarations of the
-  toolchain's own. It needs the
+  toolchain's own. It reads `construction_rules` from a fixture's own axioms, one for each
+  case of the [definition](FORMALIZATION.md#construction-rules), counted or not as it says,
+  and `cited_laws` from entries that cite laws through one shared theorem or law by law,
+  each law with its proofs and the construction rules beneath them; a proof reached only
+  through another entry is not found, and a law named with no proof found fails the run.
+  Without Lean, it reads the forms of `tests/certificate_expectations.json` as
+  `check_fidelity.py` does, and an expectation that is malformed, unmet or asks nothing
+  fails. It needs the
   foundation modules built by `lake build`, with the Lean tools on `PATH`. CI's `check`
   job and the pre-flight run it immediately after `Certificate/Facts.lean` on the revision
   delivered.
@@ -1365,10 +1372,11 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       are as they were). When they are the only check inputs a pull request changes,
       origin/main's failure is noted, and its own copies must pass. The expectations are
       checked one way only, each for what it says, so they count as pinned values only
-      while every one of origin/main's stays, by its `ref` and `field`, with its
-      `includes` and `excludes` the same or grown and only the values of `count.is` and
-      `equals` changed (new expectations are fine); an expectation dropped or loosened is
-      a check change. A law of the model moves only with its axiom: a line of `laws.toml`,
+      while every one of origin/main's stays, by its `ref`, `field` and `law` (a `ref` or a
+      `law` added or dropped is another expectation), with its `includes` and `excludes`
+      the same or grown and only the values of `count.is` and `equals` changed (new
+      expectations are fine); an expectation dropped or loosened is a check change. A law
+      of the model moves only with its axiom: a line of `laws.toml`,
       and the law's code in `tests/model/search.py` and `tests/model/hyperbolic.py`, the
       two harnesses that check every law, count as pinned values only where the same pull
       request adds, removes or restates that axiom's entry in the lock, the law's code
