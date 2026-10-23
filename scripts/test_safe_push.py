@@ -27,6 +27,9 @@ one commit and runs safe_push.py against that origin:
   GitHub names for the head (issue #41); and believes gh's exit 0 only once GitHub says
   the pull request merged and origin/main holds the merge commit GitHub names, the merge
   state otherwise unknown, with no revert advised (issue #42);
+- trains require a body, read once, and run main's train module; while main has none,
+  every train is refused, one adding its own copy too; a body changed during a merge's
+  checks refuses the merge;
 - unfinished work must be written as None or with issues open and labelled blocks-release;
   closed or unlabelled issues and unreadable replies refuse the merge; a release pull
   request waits for every open blocker, while an ordinary pull request never reads that
@@ -209,6 +212,7 @@ INSTALL_HOOKS = HERE / "install_hooks.sh"
 SOURCE = HERE.parent
 sys.path.insert(0, str(HERE))
 import safe_push  # noqa: E402
+import review_stamp  # noqa: E402
 
 TMP: Path
 ORIGIN: Path
@@ -218,6 +222,7 @@ BASE: str
 GH: Path
 GH_STATE: Path
 UNDER_TEST: Path      # the harness committed at BASE, which DRIVER runs (setUpModule)
+TEST_PATH = os.environ.get("PATH", "")
 BRANCH = "test-pr"
 DECISIONS = "docs/briefs/0002-decisions.md"
 # The files of the harness under test, committed on top of HEAD as origin's main.
@@ -444,7 +449,7 @@ def short_sha(sha: str) -> str:
 def clean_env() -> dict:
     env = dict(os.environ, STOICHEIA_PUSH_LOG=str(LOG), STOICHEIA_TEST_GH=str(GH),
                STOICHEIA_FAKE_GH_STATE=str(GH_STATE), STOICHEIA_FAKE_GH_ORIGIN=str(ORIGIN),
-               STOICHEIA_PYTHON=sys.executable)
+               STOICHEIA_PYTHON=sys.executable, PATH=TEST_PATH)
     for name in ("STOICHEIA_SAFE_PUSH", "STOICHEIA_HARNESS", "STOICHEIA_TAG_PUSH",
                  "STOICHEIA_FAKE_GH_KILL", "STOICHEIA_FAKE_GH_MERGE", "STOICHEIA_TEST_CI_POLL",
                  "STOICHEIA_TEST_CI_APPEAR", "STOICHEIA_TEST_CLOCK",
@@ -833,7 +838,13 @@ def reset_gh() -> None:
 
 
 def setUpModule():
-    global TMP, ORIGIN, WORK, LOG, BASE, GH, GH_STATE, UNDER_TEST
+    global TMP, ORIGIN, WORK, LOG, BASE, GH, GH_STATE, UNDER_TEST, TEST_PATH
+    if sys.platform == "darwin" and shutil.which("git") == "/usr/bin/git":
+        # The system shim leaves xcrun_db in TMPDIR. Use the selected Git directly so
+        # that dry-run cleanup still requires an empty temporary directory.
+        selected = subprocess.run(["xcrun", "--find", "git"], capture_output=True,
+                                  text=True, check=True).stdout.strip()
+        TEST_PATH = str(Path(selected).parent) + os.pathsep + TEST_PATH
     TMP = Path(tempfile.mkdtemp(prefix="stoicheia-safe-push-test-"))
     ORIGIN, WORK, LOG = TMP / "origin.git", TMP / "work", TMP / "cache" / "pushes.log"
     GH, GH_STATE = TMP / "fake-gh", TMP / "fake-gh.json"
@@ -870,6 +881,9 @@ def setUpModule():
         (UNDER_TEST / name).write_bytes(subprocess.run(
             ["git", "show", f"{BASE}:scripts/{name}"], cwd=WORK, capture_output=True,
             check=True).stdout)
+    train = safe_push.show_bytes(WORK, BASE, "scripts/check_train.py")
+    if train is not None:
+        (UNDER_TEST / "check_train.py").write_bytes(train)
     git(WORK, "fetch", "--quiet", "origin")
     r = subprocess.run(["sh", str(INSTALL_HOOKS)], cwd=WORK, capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
@@ -1084,7 +1098,8 @@ class Accepts(Clone):
         self.assertEqual((pr["headRefName"], pr["baseRefName"], pr["title"]),
                          (BRANCH, "main", "A good commit"))
         body = pr["body"]
-        self.assertIn(f"<!-- safe_push:preflight begin sha={sha} base={BASE} -->", body)
+        self.assertIn(f"<!-- safe_push:preflight begin sha={sha} base={BASE} harness={BASE} -->",
+                      body)
         self.assertIn("## Checklist", body)
         self.assertIn("- [ ] **Required:**", body)
         self.assertIn(f"`{short_sha(sha)}` A good commit", body)
@@ -1517,6 +1532,13 @@ def hooks_dir() -> Path:
     return Path(out) if os.path.isabs(out) else WORK / out
 
 
+def with_text(record: str, value: str) -> str:
+    """A review record with `text = "value"` as the first line of its [review] table, so
+    within [review] whether or not [review.items] follows it."""
+    assert record.count("[review]\n") == 1, "a record with one [review] table"
+    return record.replace("[review]\n", f'[review]\ntext = "{value}"\n', 1)
+
+
 class Edge(Clone):
     def flagged(self, out: str, path: str) -> bool:
         """Does the secret scan's report name a finding in `path`: "path: rule",
@@ -1828,6 +1850,14 @@ def guards(*args, **kwargs):
         subprocess.run(["git", "update-ref", "refs/heads/main", target], cwd=origin, check=True)
     elif action == "interrupt":
         raise KeyboardInterrupt("a test interruption")
+    elif action == "edit-train-body":
+        # The pull request's body edited on GitHub while the train check runs.
+        path = os.environ["STOICHEIA_FAKE_GH_STATE"]
+        with open(path) as f:
+            state = json.load(f)
+        state["prs"][0]["body"] += "\nAn edit made during the checks.\n"
+        with open(path, "w") as f:
+            json.dump(state, f, indent=1)
     return result
 def watch_checks(*args, **kwargs):
     if action == "watch-interrupt":
@@ -3571,6 +3601,331 @@ class Merge(Edge):
 
 # --------------------------------------------------------------------------------------
 # B: the review's findings, each with a planted commit
+
+
+class Trains(Edge):
+    """The train checker is main's public function, including through a hand-over."""
+
+    def body_file(self) -> Path:
+        path = TMP / "train-body.md"
+        path.write_text("A train body for the test.\n")
+        return path
+
+    def without_checker(self) -> str:
+        base = self.commit("Main before the train checker", remove=("scripts/check_train.py",))
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{base}:refs/heads/main")
+        return base
+
+    def test_train_requires_body_file(self):
+        self.good_commit()
+        for branch in ("train/tooling-1", "refs/heads/train/tooling-1"):
+            with self.subTest(branch=branch):
+                r = self.safe_push("--branch", branch, "--label", "tooling")
+                self.assertRefused(r, "a train/* branch requires --body-file")
+                self.assertIsNone(self.origin_branch("train/tooling-1"))
+
+    def test_main_without_train_module_refuses(self):
+        if safe_push.show_bytes(WORK, BASE, "scripts/check_train.py") is not None:
+            base = self.commit("Main before the train checker", remove=("scripts/check_train.py",))
+            git(WORK, "push", "--quiet", "--no-verify", "origin", f"{base}:refs/heads/main")
+        self.good_commit()
+        r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
+                           "--body-file", str(self.body_file()), "--dry-run")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.step(out, "train"), "FAIL")
+        self.assertIn("origin/main has no scripts/check_train.py", out)
+        self.assertIsNone(self.origin_branch("train/docs-1"))
+
+    def test_train_adding_its_own_checker_is_refused_while_main_has_none(self):
+        # No bootstrap: a commit's own check_train.py never judges the commit.
+        base = self.without_checker()
+        self.commit("Introduce the train checker", {
+            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
+                                      "    return []\n",
+            **self.decision("scripts/check_train.py: the train checker is introduced.")})
+        r = self.safe_push("--branch", "train/tooling-1", "--label", "tooling",
+                           "--body-file", str(self.body_file()))
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.step(out, "train"), "FAIL", out)
+        self.assertIn("origin/main has no scripts/check_train.py, so no train can be "
+                      "checked", out)
+        self.assertNotIn("bootstrap", out)
+        self.assertNotIn("4. The full local checks", out)
+        self.assertIsNone(self.origin_branch("train/tooling-1"))
+        self.assertEqual(self.origin_main(), base)
+
+    def test_main_checker_refusal_exception_and_early_exit_refuse(self):
+        cases = (("return ['planted refusal']", "planted refusal"),
+                 ("return None", "unreadable problem list"),
+                 ("raise RuntimeError('broken checker')", "broken checker"),
+                 ("raise SystemExit(0)", "train check refused"))
+        for statement, message in cases:
+            with self.subTest(statement=statement):
+                self.setUp()
+                base = self.new_base("Main's train checker", {
+                    "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
+                                              f"    {statement}\n"})
+                self.good_commit()
+                r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
+                                   "--body-file", str(self.body_file()))
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertEqual(self.step(out, "train"), "FAIL", out)
+                self.assertIn(message, out)
+                self.assertNotIn("4. The full local checks", out)
+                self.assertEqual(self.origin_main(), base)
+                self.assertIsNone(self.origin_branch("train/docs-1"))
+
+    def test_merge_checks_current_train_body_with_or_without_record(self):
+        for cached in (False, True):
+            with self.subTest(cached=cached):
+                self.setUp()
+                base = self.new_base("Main's train checker", {
+                    "scripts/check_train.py":
+                        "def check_train(repo, base, sha, body):\n"
+                        "    return [] if 'Good train body.' in body else ['bad body']\n"})
+                sha = self.good_commit()
+                body = self.body_file()
+                body.write_text(self.text(safe_push.TEMPLATE) + "\nGood train body.\n")
+                r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
+                                   "--body-file", str(body), "--ready")
+                self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+                self.set_gh(lambda s: s["prs"][0].update(
+                    body=ticked(s["prs"][0]["body"]).replace("Good train body.", "Bad.")))
+                if not cached:
+                    (LOG.parent / "preflight" / f"{sha}-{base}.json").unlink()
+                r = self.safe_push("--merge", "1")
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertEqual(self.step(out, "train"), "FAIL", out)
+                self.assertIn("bad body", out)
+                self.assertEqual(self.origin_main(), base)
+                self.assertEqual(self.merges(), [])
+
+    def test_renamed_train_without_checker_is_refused_at_merge(self):
+        base = self.without_checker()
+        sha = self.good_commit()
+        r = self.safe_push("--ready")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        git(ORIGIN, "update-ref", "refs/heads/train/docs-1", sha)
+        self.set_gh(lambda s: s["prs"][0].update(
+            headRefName="train/docs-1", body=ticked(s["prs"][0]["body"])))
+        r = self.safe_push("--merge", "1")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.step(out, "train"), "FAIL", out)
+        self.assertIn("origin/main has no scripts/check_train.py", out)
+        self.assertEqual(self.origin_main(), base)
+        self.assertEqual(self.merges(), [])
+
+    def test_renamed_train_adding_its_own_checker_is_refused_at_merge(self):
+        base = self.without_checker()
+        sha = self.commit("Introduce the train checker", {
+            "scripts/check_train.py":
+                "def check_train(repo, base, sha, body):\n"
+                "    return []\n",
+            **self.decision("scripts/check_train.py: the new checker.")})
+        body = self.body_file()
+        body.write_text(self.text(safe_push.TEMPLATE) + "\nGood train body.\n")
+        r = self.safe_push("--label", "tooling", "--body-file", str(body), "--ready")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        git(ORIGIN, "update-ref", "refs/heads/train/tooling-1", sha)
+        self.set_gh(lambda s: s["prs"][0].update(
+            headRefName="train/tooling-1", body=ticked(s["prs"][0]["body"])))
+        r = self.safe_push("--merge", "1")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.step(out, "train"), "FAIL", out)
+        self.assertIn("origin/main has no scripts/check_train.py", out)
+        self.assertEqual(self.origin_main(), base)
+        self.assertEqual(self.merges(), [])
+
+    def test_unreadable_main_train_module_refuses(self):
+        # origin/main's check_train.py as a link is not a regular file: the harness,
+        # which compares it, refuses before anything runs.
+        (WORK / "scripts/check_train.py").unlink()
+        os.symlink("safe_push.py", WORK / "scripts/check_train.py")
+        git(WORK, "add", "--", "scripts/check_train.py")
+        base = self.commit("Main's train module as a link")
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{base}:refs/heads/main")
+        git(WORK, "fetch", "--quiet", "origin")
+        self.good_commit()
+        r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
+                           "--body-file", str(self.body_file()), "--dry-run")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("origin/main's scripts/check_train.py is not a regular file", out)
+        self.assertEqual(self.origin_main(), base)
+
+    def test_only_a_different_train_module_hands_over(self):
+        base = self.new_base("Main's train checker", {
+            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
+                                      "    return ['main checker ran']\n"})
+        self.good_commit()
+        r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
+                           "--body-file", str(self.body_file()), "--dry-run")
+        out = r.stdout + r.stderr
+        self.assertIn("safe_push.py, heath.py or check_train.py differs from origin/main's: "
+                      "running origin/main's in its place", out)
+        self.assertEqual(self.step(out, "harness"), "ok", out)
+        self.assertEqual(self.step(out, "train"), "FAIL", out)
+        self.assertIn("main checker ran", out)
+        self.assertEqual(self.origin_main(), base)
+
+    def test_harness_variable_checks_the_train_module_too(self):
+        self.new_base("Main's train checker", {
+            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
+                                      "    return []\n"})
+        self.good_commit()
+        env = clean_env()
+        env["STOICHEIA_HARNESS"] = "origin/main"
+        r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
+                           "--body-file", str(self.body_file()), "--dry-run", env=env)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("copy of safe_push.py, heath.py or check_train.py is not "
+                      "origin/main's", out)
+
+    def test_unreadable_body_file_refuses_before_the_checks(self):
+        self.new_base("Main's train checker", {
+            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
+                                      "    return []\n"})
+        self.good_commit()
+        body = self.body_file()
+        body.write_bytes(b"Not UTF-8: \xff\n")
+        for branch in ("train/docs-1", "docs/body"):
+            with self.subTest(branch=branch):
+                r = self.safe_push("--branch", branch, "--label", "docs",
+                                   "--body-file", str(body))
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertIn("could not read --body-file", out)
+                self.assertNotIn("4. The full local checks", out)
+                self.assertIsNone(self.origin_branch(branch))
+
+    GOOD_BODY_CHECKER = ("def check_train(repo, base, sha, body):\n"
+                         "    return [] if 'Good train body.' in body else ['bad body']\n")
+
+    def opened_train(self) -> str:
+        """An open, ready train pull request whose body main's checker accepts."""
+        base = self.new_base("Main's train checker",
+                             {"scripts/check_train.py": self.GOOD_BODY_CHECKER})
+        self.good_commit()
+        body = self.body_file()
+        body.write_text(self.text(safe_push.TEMPLATE) + "\nGood train body.\n")
+        r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
+                           "--body-file", str(body), "--ready")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        return base
+
+    def assertMergeRefusedForChangedBody(self, r, base: str) -> None:
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.step(out, "train"), "ok", out)
+        self.assertIn("the train's body changed during the checks: run --merge again", out)
+        self.assertEqual(self.origin_main(), base)
+        self.assertEqual(self.merges(), [])
+
+    def test_body_edited_during_the_merge_checks_refuses(self):
+        # The gates' read after the checks sees an edit made while the train check ran.
+        # The driven harness carries main's train module, so that it is origin/main's
+        # and runs in place, with the driver's stand-ins, rather than handing over.
+        base = self.opened_train()
+        harness = TMP / "harness-with-train"
+        harness.mkdir(exist_ok=True)
+        for name in ("safe_push.py", "heath.py"):
+            shutil.copy2(UNDER_TEST / name, harness / name)
+        (harness / "check_train.py").write_text(self.GOOD_BODY_CHECKER)
+        r = subprocess.run([sys.executable, "-c", DRIVER, str(harness), "edit-train-body",
+                            str(ORIGIN), "", "--_test-skip-checks", "--merge", "1"],
+                           cwd=WORK, env=clean_env(), capture_output=True, text=True)
+        self.assertNotIn("running origin/main's in its place", r.stdout + r.stderr)
+        self.assertMergeRefusedForChangedBody(r, base)
+
+    def test_body_edited_before_the_merge_s_own_read_refuses(self):
+        base = self.opened_train()
+        self.set_gh(lambda s: s.update(reread_body=s["prs"][0]["body"] + "\nAn edit.\n"))
+        self.assertMergeRefusedForChangedBody(self.safe_push("--merge", "1"), base)
+
+    def test_body_edited_before_the_final_gates_refuses(self):
+        base = self.opened_train()
+        self.set_gh(lambda s: s.update(after_body={"prs": [
+            dict(s["prs"][0], body=s["prs"][0]["body"] + "\nAn edit.\n")]}))
+        self.assertMergeRefusedForChangedBody(self.safe_push("--merge", "1"), base)
+
+    def test_origin_train_failure_refuses_even_if_candidate_passes(self):
+        base = self.new_base("Main's train checker", {
+            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
+                                      "    return ['planted train refusal']\n"})
+        self.commit("A candidate checker", {
+            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
+                                      "    return []\n",
+            **self.decision("scripts/check_train.py: the proposed checker.")})
+        r = self.safe_push("--branch", "train/tooling-1", "--label", "tooling",
+                           "--body-file", str(self.body_file()))
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.step(out, "train"), "FAIL")
+        self.assertIn("planted train refusal", out)
+        self.assertEqual(self.origin_main(), base)
+        self.assertIsNone(self.origin_branch("train/tooling-1"))
+        self.assertNotIn("4. The full local checks", out)
+
+    def test_main_train_function_receives_the_checked_commit_and_body(self):
+        base = self.new_base("Main's train checker", {
+            "scripts/check_train.py":
+                "from pathlib import Path\n"
+                "def check_train(repo, base, sha, body):\n"
+                "    if not isinstance(repo, Path) or len(base) != 40 or len(sha) != 40:\n"
+                "        return ['wrong train arguments']\n"
+                "    if body != 'A train body for the test.\\n':\n"
+                "        return ['wrong train body']\n"
+                "    return []\n"})
+        sha = self.good_commit()
+        r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
+                           "--body-file", str(self.body_file()))
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.step(out, "train"), "ok")
+        self.assertEqual(self.origin_main(), base)
+        self.assertEqual(self.origin_branch("train/docs-1"), sha)
+
+    def test_unreadable_train_result_refuses(self):
+        base = self.new_base("An unreadable train checker result", {
+            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
+                                      "    return None\n"})
+        self.good_commit()
+        r = self.safe_push("--branch", "train/docs-1", "--label", "docs",
+                           "--body-file", str(self.body_file()), "--dry-run")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("unreadable problem list", out)
+        self.assertEqual(self.origin_main(), base)
+
+    def test_changed_body_is_checked_again_before_push(self):
+        base = self.new_base("Main's train checker", {
+            "scripts/check_train.py": "def check_train(repo, base, sha, body):\n"
+                                      "    return [] if body == 'Good.\\n' else ['bad body']\n"})
+        sha = self.good_commit()
+        body = self.body_file()
+        body.write_text("Good.\n")
+        args = ("--branch", "train/docs-1", "--label", "docs", "--body-file", str(body))
+        r = self.safe_push(*args, "--dry-run")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        path = LOG.parent / "preflight" / f"{sha}-{base}.json"
+        self.assertTrue(path.is_file())
+        body.write_text("Bad.\n")
+        r = self.safe_push(*args)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.step(out, "train"), "FAIL", out)
+        self.assertIn("bad body", out)
+        self.assertNotIn("4. The full local checks", out)
+        self.assertIsNone(self.origin_branch("train/docs-1"))
+        self.assertEqual(self.origin_main(), base)
 
 
 def in_prose(text: str, change) -> str:
@@ -5696,9 +6051,14 @@ class ProtectedPaths(Edge):
         # a Lean file, and README.md's hand-written part are.
         record = self.text("review/I/01.toml")
         stamped = re.sub(r'(?m)^commit = "[^"]*"', 'commit = "0123456"', record)
+        # A `text` stamp added, or rewritten, on a line of its own in [review] is a stamp
+        # too (review/SCHEMA.md).
+        texted = with_text(re.sub(r'(?m)^text = "[^"]*"\n?', "", self.text("review/I/03.toml")),
+                           "sha256:0123456789abcdef")
         changes = {
             "Certificate/Facts.lean": self.text("Certificate/Facts.lean") + "\n-- for the test\n",
             "review/I/01.toml": stamped,
+            "review/I/03.toml": texted,
             "book/I/01.md": self.text("book/I/01.md") + "\nA generated line.\n",
             "docs/WORKFLOW.md": self.text("docs/WORKFLOW.md") + "\nA line for the test.\n",
             "AGENTS.md": self.text("AGENTS.md") + "\nA line for the test.\n",
@@ -5707,12 +6067,48 @@ class ProtectedPaths(Edge):
         self.assertEqual(safe_push.judged_files(WORK, BASE, sha), [])
         refused, out = self.kept_apart(sha, "python3 scripts/check_fidelity.py")
         self.assertFalse(refused, out)
+        # A stamp taken away is not a stamp: the record is judged.
+        unstamped = re.sub(r'(?m)^lean = "[^"]*"\n', "", self.text("review/I/04.toml"))
+        self.assertNotEqual(unstamped, self.text("review/I/04.toml"))
         sha = self.commit("And the edition", {
             "review/I/02.toml": self.text("review/I/02.toml") + "\n# A line for the test.\n",
+            "review/I/04.toml": unstamped,
             "Elements/BookI/Prop01.lean": self.text("Elements/BookI/Prop01.lean") + "\n-- x\n",
             "README.md": "A hand-written line.\n" + self.text("README.md")})
         self.assertEqual(safe_push.judged_files(WORK, BASE, sha),
-                         ["Elements/BookI/Prop01.lean", "README.md", "review/I/02.toml"])
+                         ["Elements/BookI/Prop01.lean", "README.md", "review/I/02.toml",
+                          "review/I/04.toml"])
+
+    def test_a_stamp_line_inside_a_string_is_no_stamp(self):
+        # A line shaped as a stamp, added inside a multi-line string, changes the note it
+        # is in: the record is judged. The same line added to [review] is a stamp alone.
+        path, line = "review/I/03.toml", 'text = "sha256:0123456789abcdef"'
+        noted = self.replaced(path, 'scope = "full"\n', 'scope = "full"\n'
+                              'note = """\nA note on two lines,\nfor the test."""\n')
+        noted = re.sub(r'(?m)^text = "[^"]*"\n?', "", noted)
+        first = self.commit("A record with a multi-line note", {path: noted})
+        inside = self.commit("A stamp-shaped line inside the note", {
+            path: noted.replace("A note on two lines,\n", f"A note on two lines,\n{line}\n", 1)})
+        self.assertFalse(safe_push.stamp_only(WORK, first, inside, path))
+        git(WORK, "checkout", "--quiet", "--force", "--detach", first)
+        stamped = self.commit("A `text` stamp in [review]", {
+            path: with_text(noted, "sha256:0123456789abcdef")})
+        self.assertTrue(safe_push.stamp_only(WORK, first, stamped, path))
+
+    def test_a_stamp_taken_away_beside_a_stamp_shaped_line_is_judged(self):
+        # The [review] `text` stamp taken away, while a line of its shape stays inside a
+        # multi-line note: a stamp is gone from its section, and the record is judged.
+        path, line = "review/I/03.toml", 'text = "sha256:0123456789abcdef"'
+        record = re.sub(r'(?m)^text = "[^"]*"\n?', "", self.text(path))
+        self.assertEqual(record.count('scope = "full"\n'), 1)
+        noted = record.replace('scope = "full"\n', 'scope = "full"\n'
+                               f'note = """\nA note on two lines,\n{line}\n"""\n')
+        stamped = with_text(noted, "sha256:3333333333333333")
+        first = self.commit("A stamp-shaped line in the note, and a `text` stamp",
+                            {path: stamped})
+        taken = self.commit("The `text` stamp taken away", {path: noted})
+        self.assertFalse(safe_push.stamp_only(WORK, first, taken, path))
+        self.assertIn(path, safe_push.judged_files(WORK, first, taken))
 
     def test_harness_runs_from_origin_main(self):
         # The commit empties its own copy of the secret scan and plants a token; run from
@@ -6627,7 +7023,328 @@ class CadenceReport(unittest.TestCase):
 
 
 class Units(unittest.TestCase):
-    """The scanner and the helpers, without git."""
+    """The scanner and helpers, with temporary Git only where history is the subject."""
+
+    def test_review_stamp_checks_an_unchanged_commit_in_head_history(self):
+        facts = {"propositions": [{"ref": "I.1", "statement": "A test statement."}]}
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            lean = repo / "Elements/BookI/Prop01.lean"
+            source = repo / "heath/I/01.md"
+            record = repo / "review/I/01.toml"
+            for path in (lean, source, record):
+                path.parent.mkdir(parents=True, exist_ok=True)
+            lean.write_text("theorem Prop1 : True := by trivial\n")
+            source.write_text("A test enunciation.\n\nA test proof.\n")
+            fingerprint = review_stamp.heath.review_fingerprint(facts, "I.1")
+            lean_hash = review_stamp.heath.file_hash(lean)
+            text = (f'[statement]\nscope = "full"\nfingerprint = "{fingerprint}"\n\n'
+                    '[route]\nkind = "euclid"\n\n[review]\nstage = "exceptions"\n'
+                    f'reviewer = "Test reader"\nlean = "{lean_hash}"\n'
+                    'text = "sha256:0000000000000000"\n')
+            own = review_stamp.heath.text_hash(text)
+            record.write_text(text.replace("sha256:0000000000000000", own))
+            git(repo, "init", "-q")
+            git(repo, "config", "user.name", "review stamp test")
+            git(repo, "config", "user.email", "review-stamp-test@example.invalid")
+            git(repo, "config", "commit.gpgsign", "false")
+            git(repo, "add", ".")
+            git(repo, "commit", "-q", "-m", "The files read")
+            read_commit = git(repo, "rev-parse", "HEAD").strip()[:12]
+            current = record.read_text().replace("[review]\n",
+                                                 f'[review]\ncommit = "{read_commit}"\n', 1)
+            record.write_text(current)
+            git(repo, "add", "review/I/01.toml")
+            git(repo, "commit", "-q", "-m", "Record the reading")
+            with mock.patch.object(review_stamp, "ROOT", repo), \
+                    mock.patch.object(review_stamp.heath, "ROOT", repo), \
+                    mock.patch.object(review_stamp.heath, "REVIEW", repo / "review"):
+                self.assertEqual(review_stamp.stamp(facts, "I", 1, read_commit, False),
+                                 (False, "I.1: current"))
+                self.assertEqual(record.read_text(), current)
+                git(repo, "checkout", "--quiet", "--orphan", "unrelated")
+                git(repo, "add", ".")
+                git(repo, "commit", "-q", "-m", "The same files on another history")
+                with self.assertRaisesRegex(ValueError, "is not in the history of HEAD"):
+                    review_stamp.stamp(facts, "I", 1, read_commit, False)
+                self.assertEqual(record.read_text(), current)
+
+    def test_review_stamp_ignores_replacement_objects(self):
+        facts = {"propositions": [{"ref": "I.1", "statement": "A test statement."}]}
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            lean = repo / "Elements/BookI/Prop01.lean"
+            source = repo / "heath/I/01.md"
+            record = repo / "review/I/01.toml"
+            for path in (lean, source, record):
+                path.parent.mkdir(parents=True, exist_ok=True)
+            lean.write_text("theorem Prop1 : True := by trivial\n")
+            source.write_text("A test enunciation.\n\nA test proof.\n")
+            fingerprint = review_stamp.heath.review_fingerprint(facts, "I.1")
+            lean_hash = review_stamp.heath.file_hash(lean)
+            old = (f'[statement]\nscope = "full"\nfingerprint = "{fingerprint}"\n\n'
+                   '[route]\nkind = "euclid"\nnote = "The old record text."\n\n'
+                   '[review]\nstage = "exceptions"\nreviewer = "Test reader"\n'
+                   f'lean = "{lean_hash}"\n')
+            record.write_text(old)
+            git(repo, "init", "-q")
+            git(repo, "config", "user.name", "review stamp test")
+            git(repo, "config", "user.email", "review-stamp-test@example.invalid")
+            git(repo, "config", "commit.gpgsign", "false")
+            git(repo, "add", ".")
+            git(repo, "commit", "-q", "-m", "The old record text")
+            read_full = git(repo, "rev-parse", "HEAD").strip()
+            read_commit = read_full[:12]
+            current = old.replace("The old record text.", "The changed record text.")
+            current = current.replace("[review]\n", f'[review]\ncommit = "{read_commit}"\n', 1)
+            record.write_text(current)
+            git(repo, "add", "review/I/01.toml")
+            git(repo, "commit", "-q", "-m", "Change the record text")
+            current_tree = git(repo, "rev-parse", "HEAD^{tree}").strip()
+            unrelated = git(repo, "commit-tree", current_tree, "-m", "An unrelated commit").strip()
+            replacement = git(repo, "commit-tree", current_tree, "-p", unrelated,
+                              "-m", "Replacement contents").strip()
+            git(repo, "replace", read_full, replacement)
+            self.assertEqual(git(repo, "show", f"{read_full}:review/I/01.toml"), current)
+            self.assertEqual(subprocess.run(
+                ["git", "merge-base", "--is-ancestor", unrelated, "HEAD"], cwd=repo,
+                capture_output=True).returncode, 0)
+            # A legacy graft, which --no-replace-objects does not switch off.
+            grafted = git(repo, "commit-tree", current_tree, "-m", "A grafted commit").strip()
+            head = git(repo, "rev-parse", "HEAD").strip()
+            (repo / ".git/info").mkdir(exist_ok=True)
+            (repo / ".git/info/grafts").write_text(f"{head} {read_full} {grafted}\n")
+            self.assertEqual(subprocess.run(
+                ["git", "--no-replace-objects", "merge-base", "--is-ancestor", grafted, "HEAD"],
+                cwd=repo, capture_output=True).returncode, 0)
+            with mock.patch.object(review_stamp, "ROOT", repo), \
+                    mock.patch.object(review_stamp.heath, "ROOT", repo), \
+                    mock.patch.object(review_stamp.heath, "REVIEW", repo / "review"):
+                self.assertFalse(review_stamp.in_history(unrelated))
+                self.assertFalse(review_stamp.in_history(grafted))
+                self.assertEqual(review_stamp.migrate_text("I", 1, False),
+                                 ("reader", f"I.1: edited since its stamp commit {read_commit}"))
+                self.assertEqual(record.read_text(), current)
+                with self.assertRaisesRegex(ValueError,
+                                            "says something other than it says now"):
+                    review_stamp.stamp(facts, "I", 1, read_commit, False)
+                self.assertEqual(record.read_text(), current)
+
+    def test_review_stamp_migration_counts_an_unresolved_commit_a_problem(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            for name, body in {"Elements/BookI/Prop01.lean": "theorem P : True := trivial\n",
+                               "heath/I/01.md": "A test enunciation.\n\nA test proof.\n"}.items():
+                (repo / name).parent.mkdir(parents=True, exist_ok=True)
+                (repo / name).write_text(body)
+            record = repo / "review/I/01.toml"
+            record.parent.mkdir(parents=True)
+            # Its stamp commit is one this clone never fetched, as in a shallow clone.
+            text = ('[statement]\nscope = "full"\nfingerprint = "sha256:0123456789abcdef"\n\n'
+                    '[route]\nkind = "euclid"\n\n[review]\nstage = "exceptions"\n'
+                    'reviewer = "Test reader"\ncommit = "abcdef1"\n'
+                    'lean = "sha256:0123456789abcdef"\n')
+            git(repo, "init", "-q")
+            git(repo, "config", "user.name", "review stamp test")
+            git(repo, "config", "user.email", "review-stamp-test@example.invalid")
+            git(repo, "config", "commit.gpgsign", "false")
+            record.write_text(text)
+            git(repo, "add", ".")
+            git(repo, "commit", "-q", "-m", "A record whose stamp commit is not here")
+            cases = {
+                "without text": text,
+                "matching text": with_text(text, review_stamp.heath.text_hash(text)),
+                "stale text": with_text(text, "sha256:0000000000000000"),
+            }
+            for label, body in cases.items():
+                with self.subTest(label=label):
+                    record.write_text(body)
+                    out = io.StringIO()
+                    with mock.patch.object(review_stamp, "ROOT", repo), \
+                            mock.patch.object(review_stamp.heath, "ROOT", repo), \
+                            mock.patch.object(review_stamp.heath, "REVIEW", repo / "review"), \
+                            contextlib.redirect_stdout(out):
+                        code = review_stamp.migrate([("I", 1)], dry_run=True)
+                    self.assertEqual(code, 1, out.getvalue())
+                    self.assertIn(
+                        f"✗ I.1: its stamp commit abcdef1 {review_stamp.NO_COMMIT}",
+                        out.getvalue())
+                    self.assertNotIn("needs a reader, who reads", out.getvalue())
+                    self.assertIn("0 need(s) a reader; 1 problem(s)", out.getvalue())
+                    self.assertEqual(record.read_text(), body)
+
+    def test_review_stamp_migration_rejects_a_shallow_ancestry_boundary(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo = root / "source"
+            shallow = root / "shallow"
+            git(root, "init", "-q", "-b", "main", str(repo))
+            git(repo, "config", "user.name", "review stamp test")
+            git(repo, "config", "user.email", "review-stamp-test@example.invalid")
+            git(repo, "config", "commit.gpgsign", "false")
+            for name, body in {"Elements/BookI/Prop01.lean": "theorem P : True := trivial\n",
+                               "heath/I/01.md": "A test enunciation.\n\nA test proof.\n"}.items():
+                (repo / name).parent.mkdir(parents=True, exist_ok=True)
+                (repo / name).write_text(body)
+            record = repo / "review/I/01.toml"
+            record.parent.mkdir(parents=True)
+            text = ('[statement]\nscope = "full"\n'
+                    'fingerprint = "sha256:0123456789abcdef"\n\n'
+                    '[route]\nkind = "euclid"\n\n[review]\nstage = "exceptions"\n'
+                    'reviewer = "Test reader"\nlean = "sha256:0123456789abcdef"\n')
+            record.write_text(text)
+            git(repo, "add", ".")
+            git(repo, "commit", "-q", "-m", "The base record")
+            git(repo, "checkout", "-q", "-b", "feature")
+            git(repo, "commit", "-q", "--allow-empty", "-m", "The files read")
+            read_full = git(repo, "rev-parse", "HEAD").strip()
+            read_commit = read_full[:12]
+            stamped = text.replace("[review]\n", f'[review]\ncommit = "{read_commit}"\n', 1)
+            record.write_text(stamped)
+            git(repo, "add", "review/I/01.toml")
+            git(repo, "commit", "-q", "-m", "Record the reading")
+            git(repo, "checkout", "-q", "main")
+            git(repo, "merge", "-q", "--no-ff", "feature", "-m", "Merge the record")
+            for n in range(3):
+                git(repo, "commit", "-q", "--allow-empty", "-m", f"Later change {n + 1}")
+            git(root, "clone", "-q", "--depth", "2", "--no-single-branch", "--branch", "main",
+                repo.as_uri(), str(shallow))
+            self.assertEqual(git(shallow, "cat-file", "-t", read_full).strip(), "commit")
+            self.assertEqual(git(shallow, "rev-parse", "--is-shallow-repository").strip(),
+                             "true")
+            before = (shallow / "review/I/01.toml").read_text()
+            out = io.StringIO()
+            with mock.patch.object(review_stamp, "ROOT", shallow), \
+                    mock.patch.object(review_stamp.heath, "ROOT", shallow), \
+                    mock.patch.object(review_stamp.heath, "REVIEW", shallow / "review"), \
+                    contextlib.redirect_stdout(out):
+                self.assertFalse(review_stamp.in_history(read_full))
+                code = review_stamp.migrate([("I", 1)], dry_run=False)
+            self.assertEqual(code, 1, out.getvalue())
+            self.assertIn("incomplete history of this shallow clone", out.getvalue())
+            self.assertNotIn("needs a reader, who reads", out.getvalue())
+            self.assertIn("0 need(s) a reader; 1 problem(s)", out.getvalue())
+            self.assertEqual((shallow / "review/I/01.toml").read_text(), before)
+            self.assertNotIn('\ntext = "', before)
+            with mock.patch.object(review_stamp, "ROOT", shallow), \
+                    mock.patch.object(review_stamp.heath, "ROOT", shallow), \
+                    mock.patch.object(review_stamp.heath, "REVIEW", shallow / "review"), \
+                    mock.patch.object(review_stamp.heath, "review_fingerprint",
+                                      return_value="sha256:0123456789abcdef"):
+                with self.assertRaisesRegex(ValueError, "cannot be confirmed in the "
+                                            "incomplete history of this shallow clone"):
+                    review_stamp.stamp({}, "I", 1, read_commit, False)
+                self.assertEqual((shallow / "review/I/01.toml").read_text(), before)
+                # A record that already carries a current `text` has nothing to migrate,
+                # so the shallow boundary does not make it a problem.
+                own = review_stamp.heath.text_hash(before)
+                (shallow / "review/I/01.toml").write_text(
+                    before.replace("[review]\n", f'[review]\ntext = "{own}"\n', 1))
+                self.assertEqual(review_stamp.migrate_text("I", 1, True)[0], "current")
+
+    def test_review_stamp_rejects_an_ambiguous_prefix_even_when_a_ref_shadows_it(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            git(repo, "init", "-q", "--object-format=sha1")
+            tree = git(repo, "write-tree").strip()
+            seen = {}
+            collision = None
+            for nonce in range(100_000):
+                stamp = nonce + 1
+                body = (f"tree {tree}\nauthor Test <test@example.invalid> {stamp} +0000\n"
+                        f"committer Test <test@example.invalid> {stamp} +0000\n\n"
+                        f"Commit {nonce}\n").encode()
+                oid = hashlib.sha1(b"commit " + str(len(body)).encode() + b"\0" + body).hexdigest()
+                prefix = oid[:7]
+                if prefix in seen:
+                    collision = (prefix, seen[prefix], (oid, body))
+                    break
+                seen[prefix] = (oid, body)
+            self.assertIsNotNone(collision, "no seven-digit collision in 100,000 commits")
+            prefix, first, second = collision
+            for expected, body in (first, second):
+                written = subprocess.run(
+                    ["git", "hash-object", "-t", "commit", "-w", "--stdin"], cwd=repo,
+                    input=body, capture_output=True, check=True).stdout.decode().strip()
+                self.assertEqual(written, expected)
+            with mock.patch.object(review_stamp, "ROOT", repo):
+                self.assertEqual(review_stamp.resolve(prefix),
+                                 (None, review_stamp.AMBIGUOUS_COMMIT))
+            git(repo, "update-ref", "refs/heads/main", second[0])
+            git(repo, "symbolic-ref", "HEAD", "refs/heads/main")
+            git(repo, "update-ref", f"refs/heads/{prefix}", second[0])
+            for name, body in {"Elements/BookI/Prop01.lean": "theorem P : True := trivial\n",
+                               "heath/I/01.md": "A test enunciation.\n\nA test proof.\n"}.items():
+                (repo / name).parent.mkdir(parents=True, exist_ok=True)
+                (repo / name).write_text(body)
+            record = repo / "review/I/01.toml"
+            record.parent.mkdir(parents=True)
+            text = ('[statement]\nscope = "full"\n'
+                    'fingerprint = "sha256:0123456789abcdef"\n\n'
+                    '[route]\nkind = "euclid"\n\n[review]\nstage = "exceptions"\n'
+                    f'reviewer = "Test reader"\ncommit = "{prefix}"\n'
+                    'lean = "sha256:0123456789abcdef"\n')
+            record.write_text(text)
+            out = io.StringIO()
+            with mock.patch.object(review_stamp, "ROOT", repo), \
+                    mock.patch.object(review_stamp.heath, "ROOT", repo), \
+                    mock.patch.object(review_stamp.heath, "REVIEW", repo / "review"), \
+                    contextlib.redirect_stdout(out):
+                self.assertEqual(review_stamp.resolve(prefix),
+                                 (None, review_stamp.AMBIGUOUS_COMMIT))
+                code = review_stamp.migrate([("I", 1)], dry_run=True)
+            self.assertEqual(code, 1, out.getvalue())
+            self.assertIn(f"its stamp commit {prefix} {review_stamp.AMBIGUOUS_COMMIT}",
+                          out.getvalue())
+            self.assertIn("a reader identifies the intended commit without guessing",
+                          out.getvalue())
+            self.assertIn("0 need(s) a reader; 1 problem(s)", out.getvalue())
+            self.assertEqual(record.read_text(), text)
+
+    def test_describe_distinguishes_review_record_changes(self):
+        commit = "1234567890abcdef"
+        newer = "fedcba0987654321"
+        paths = {
+            "review/I/01.toml": (
+                f'[review]\ncommit = "{commit}"\nlean = "old"\n',
+                f'[review]\ncommit = "{commit}"\nlean = "old"\ntext = "new"\n'),
+            "review/I/02.toml": (
+                f'[review]\ncommit = "{commit}"\nlean = "old"\ntext = "old"\n',
+                f'[review]\ncommit = "{commit}"\nlean = "old"\n'),
+            "review/I/03.toml": (
+                f'[review]\ncommit = "{commit}"\nlean = "old"\ntext = "old"\n',
+                f'[review]\ncommit = "{commit}"\nlean = "new"\ntext = "old"\n'),
+            "review/I/04.toml": (
+                f'[review]\ncommit = "{commit}"\nlean = "old"\ntext = "old"\n',
+                f'[review]\ncommit = "{newer}"\nlean = "new"\ntext = "old"\n'),
+            "review/I/05.toml": (
+                f'note = "old"\n[review]\ncommit = "{commit}"\nlean = "old"\ntext = "old"\n',
+                f'note = "new"\n[review]\ncommit = "{commit}"\nlean = "old"\ntext = "old"\n'),
+            "review/I/06.toml": (
+                f'note = "old"\n[review]\ncommit = "{commit}"\nlean = "old"\ntext = "old"\n',
+                f'note = "new"\n[review]\ncommit = "{commit}"\nlean = "old"\ntext = "new"\n'),
+        }
+        ctx = safe_push.Context(Path("."), "b" * 40, "a" * 40, 1, "", None, {})
+
+        def changed_files(_repo, _base, _sha, prefix=None):
+            return [("M", path) for path in paths] if prefix in (None, "review") else []
+
+        def show(_repo, revision, path):
+            return paths[path][0 if revision == ctx.base else 1]
+
+        with mock.patch.object(safe_push, "changed_files", changed_files), \
+                mock.patch.object(safe_push, "show", show), \
+                mock.patch.object(safe_push, "git", return_value=""):
+            records = safe_push.describe(ctx, safe_push.Preflight([], []))["records"]
+        self.assertIn("`review/I/01.toml`: its stamps written, its commit kept at "
+                      "`1234567890ab`", records)
+        self.assertIn("`review/I/02.toml`: a stamp taken away (`text`)", records)
+        self.assertNotIn("`review/I/02.toml`: its stamps written", records)
+        self.assertIn("`review/I/03.toml`: its stamps written, its commit kept at "
+                      "`1234567890ab`", records)
+        self.assertIn("`review/I/04.toml`: re-stamped at `fedcba098765`", records)
+        self.assertIn("`review/I/05.toml`: touched, not re-stamped", records)
+        self.assertIn("`review/I/06.toml`: touched, not re-stamped", records)
 
     def configured_check_commands(self):
         checks = []
@@ -7177,6 +7894,32 @@ class Units(unittest.TestCase):
         self.assertNotIn(str(Path.home()), block)
         self.assertIn("full output in ~/.cache/stoicheia/logs/x/", block)
         safe_push.check_body(block)
+
+    def test_preflight_block_keeps_harness_distinct_and_reads_older_markers(self):
+        sha, base, harness = (c * 40 for c in "abc")
+        block = safe_push.preflight_block(sha, base, {"full": True, "harness_sha": harness})
+        match = safe_push.BLOCK.fullmatch(block)
+        self.assertIsNotNone(match)
+        self.assertEqual(match.groups(), (sha, base, harness))
+        self.assertIn("Verdict: PASS.", block)
+        older = block.replace(f" harness={harness}", "")
+        match = safe_push.BLOCK.fullmatch(older)
+        self.assertIsNotNone(match)
+        self.assertEqual(match.group(3) or match.group(2), base)
+        for previous in (block, older):
+            self.assertEqual(safe_push.put_block(previous, block), block)
+
+    def test_merge_train_input_refuses_unreadable_body(self):
+        ctx = safe_push.Context(Path("."), "a" * 40, "b" * 40, 1, "", None, {},
+                                branch="train/docs-1")
+        for view in ({}, {"body": None}, {"body": []}, {"body": False}):
+            with self.subTest(view=view):
+                with self.assertRaisesRegex(safe_push.Refusal, "current pull request body"):
+                    safe_push.merge_train_input(ctx, view)
+        self.assertEqual(safe_push.merge_train_input(ctx, {"body": ""}), "")
+        self.assertEqual(safe_push.merge_train_input(ctx, {"body": "Current body."}),
+                         "Current body.")
+        self.assertIsNone(safe_push.merge_train_input(ctx._replace(branch="docs/test"), {}))
 
     def test_own_pull_requests(self):
         # Ours: the head a branch of the base repository itself (isCrossRepository false),
