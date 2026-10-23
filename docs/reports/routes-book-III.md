@@ -783,6 +783,42 @@ verification remain for that train. The second figure of each pair is computed b
 not built from changed Lean. How far the audit pins shrink is inferred, for they are not in
 `facts.json`; `lake build Audit` will tell.
 
+*Note of 22 October 2026, #131's own train:* the five calls are dropped, by the
+coordinator's [decision entry of that day](../decisions/2026-10-22-iii1-calls-dropped.md),
+which records the decision and corrects brief 0008 (item 1). In `Elements/BookIII/`:
+
+- III.2 (`Prop02.lean`) takes the centre D from `Tacit.exists_centre` where it called
+  III.1;
+- III.4 (`Prop04.lean`) takes F from the rule, and its conditions said of every centre
+  apply to it;
+- III.8 (`Prop08.lean`) takes M from the rule, and its condition that every centre lies
+  between G and A applies to it;
+- III.14 (`Prop14.lean`) loses its call of III.1 and of `centre_unique`, and takes no
+  centre, for its statement names E;
+- III.17 (`Prop17.lean`) takes E from the rule where it called `Prop1.of_circle`.
+
+Every `--` line and every statement is as it was. None of the five files imports III.1's
+file now; III.1 and `Prop1.of_circle` stay, and no proof in `Elements/` calls either.
+`lake build Audit` then failed on eleven pins and on no other, and each was renewed from
+Lean's own message: in `Audit/Crossing.lean`, the pins of `Audit.III_5_today`,
+`Audit.III_6_today`, `Audit.III_11_today`, `Audit.III_13_today`, `Audit.cut_point`,
+`Audit.CirclesCut.of_meet` and `Audit.within_point`; in `Audit/Overlaps.lean`, those of
+`Audit.III_26_any`, `Audit.III_27_any`, `Audit.III_24_measure` and
+`Audit.III_30_measure`. Each lost one name, `Tacit.exists_point_same_side`, and gained
+none, so seven pins of the crossing audit shrink, as item 3 foresaw, and four of the
+overlap audit as well. The pin of `Audit/Centre.lean` holds unchanged. The walk's
+figures for the certificate are those of the second table above: III.2 from 61 rules to
+59, III.4 from 61 to 58, III.8 and its companion from 63 to 62, III.14 and its companion
+from 70 to 69, III.15 unchanged at 70, III.17 and its companion from 63 to 61, and III.37
+from 73 to 72; 45 entries on the rule and 43 after; 38 entries changed, 31 of them only
+by losing `exists_point_same_side`; and III.1 beneath 42 entries and then none. The
+certificate is run again on the integrated revision (item 2). Items 1, 3 and 5 are done
+in this train, but for the reason given for III.2's expectation in
+`tests/certificate_expectations.json`, whose owner is asked to change it; items 4 and 6
+remain. Two passages outside this section speak of the state before this train: the row
+for #131 in the opening table, "analysis only", and the last sentence of the section on
+III.8, that its proof takes the centre by III.1.
+
 ## Checks
 
 **On branch lean/promote-routes-332 at 10b9ccee with this train's edits** (22 October 2026,

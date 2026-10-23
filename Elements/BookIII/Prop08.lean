@@ -5,7 +5,6 @@ import Elements.BookI.Prop20
 import Elements.BookI.Prop21
 import Elements.BookI.Prop23
 import Elements.BookI.Prop24
-import Elements.BookIII.Prop01
 import Elements.BookIII.Prop02
 
 /-!
@@ -144,8 +143,8 @@ theorem Prop8 {A D G : Point} {ABC : Circle}
   -- less than the more remote, namely DK than DL, and DL than DH.
   -- For let the centre of the circle ABC be taken [III. 1], and let it be M; let ME, MF, MC,
   -- MK, ML, MH be joined.
+  obtain ⟨M, hM⟩ := exists_centre ABC
   have hAG : A ≠ G := ne_of_between (between_symm hDGA)
-  obtain ⟨M, -, -, -, hM, -⟩ := Prop1 hA hG hAG
   have hGMA : Between G M A := hGA M hM
   have hDGM : Between D G M := between_cut hDGA hGMA
   have hDMA : Between D M A :=

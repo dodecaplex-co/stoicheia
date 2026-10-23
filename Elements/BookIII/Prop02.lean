@@ -4,7 +4,6 @@ import Elements.BookI.Prop05
 import Elements.BookI.Helpers
 import Elements.BookI.Prop16
 import Elements.BookI.Prop19
-import Elements.BookIII.Prop01
 
 /-!
 # Book III, Proposition 2
@@ -53,8 +52,8 @@ theorem Prop2 {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
      the circle. We take up the outside one, and the point F it supplies, below. -/
   -- let the centre of the circle ABC be taken [III. 1], and let it be D; let DA, DB be joined,
   -- and let DFE be drawn through.
+  obtain ⟨D, hD⟩ := exists_centre ABC
   have hAB : A ≠ B := ne_of_between_ends hAEB
-  obtain ⟨D, -, -, -, hD, -⟩ := Prop1 hA hB hAB
   obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hAB
   have hE_L := on_line_of_between_ends hAEB hA_L hB_L
   -- Then, since DA is equal to DB,
