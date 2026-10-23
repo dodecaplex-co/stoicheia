@@ -896,8 +896,12 @@ checkout's, and says so. The launcher and the pre-push hook run Python 3.11 or l
       environment holds (#256), its `git status` check among them. The programs it runs
       as checks are started with no `GIT_*` variable but `GIT_NO_REPLACE_OBJECTS`, which
       is present under the launcher or after a hand-over and otherwise only if the caller
-      set it, so that a check finds its repository by its working directory (#355).
-      `check_acceptance.py`, the only check that reads git's objects for its verdict, is
+      set it, so that a check finds its repository by its working directory (#355). No
+      command `safe_push.py` runs itself, git's or another's, gets a variable that ties
+      git to one repository (`GIT_DIR`, `GIT_INDEX_FILE`, `GIT_WORK_TREE` and the rest
+      that `git rev-parse --local-env-vars` lists), so that a hook's never sends its git
+      to the hook's repository or index: each command finds its repository by its working
+      directory too, the hand-over's included (#357). `check_acceptance.py`, the only check that reads git's objects for its verdict, is
       #237's.
    3. *Invariant guards,* against origin/main, in the temporary worktree:
       - no statement changed (facts.json's `statement`, and the Lean source of the
