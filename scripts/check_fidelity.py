@@ -967,14 +967,7 @@ def placement_step(step: dict) -> bool:
 # tests/model/lock.sha256 and the model's generated files pin by the lock's sha256, so it
 # changes only with the lock itself, as a lock change: with a decision entry, and the
 # model's hashes renewed. tests/test_axiom_lock.py holds the two together: from the
-# committed facts.json, `--write-lock` gives back the committed lock exactly (#260). The
-# header still names docs/briefs/0002-decisions.md as where a decision is recorded, which
-# has been out of date since #239: a new decision is a file of docs/decisions/, as the
-# messages say through DECISION_ENTRY. It is to be renewed by a lock change of its own
-# (#275): LOCK_HEADER and the lock together, both hashes renewed and the
-# model's generated files written again, with its decision entry, and nothing else. A
-# lock change that comes with Lean cannot carry it, for the pre-flight keeps check code
-# apart from what the checks judge.
+# committed facts.json, `--write-lock` gives back the committed lock exactly (#260).
 LOCK_HEADER = """\
 # Certificate/axioms.lock
 #
@@ -988,7 +981,8 @@ LOCK_HEADER = """\
 #
 # scripts/check_fidelity.py compares this file with facts.json in both directions, and
 # takes the number of Euclid's assumptions from it. Change it only with a decision,
-# recorded in docs/briefs/0002-decisions.md, and then only by running
+# recorded in a decision entry of its own, docs/decisions/<YYYY-MM-DD>-<slug>.md
+# (docs/WORKFLOW.md, section 10, "Decision entries"), and then only by running
 #
 #     python3 scripts/check_fidelity.py --write-lock
 """
