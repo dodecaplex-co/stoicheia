@@ -36,7 +36,15 @@ note = "Like Heath's, Euclid's figure accompanies the impossible supposition tha
 
 [review]
 stage = "full"
-commit = "3027a105"
+commit = "bf9c31d1"
 reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:88cc76caa1318b8c"
 run = "card #131, ship ER: re-read after III.1's call was dropped; the closing comparison, written by Claude, read also by GPT-6 Astra (Codex); the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex)"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
