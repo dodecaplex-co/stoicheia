@@ -30,6 +30,12 @@ helper = "Tacit.between_of_between_right"
 note = "Euclid treats F as lying beyond D from A, so that FDC is an exterior angle. The Lean puts D between A and F by `Tacit.between_of_between_right` (System E, Between 5), now proved from collinear orders, length addition and Postulate 2 in `Elements/Figure/Incidence.lean`, and C and B on one side of AD by `AreParallel.sameSideOf` from BC parallel to AD; `Prop29.exterior` then gives FDC equal to DAB, while `OnRay.of_beyond` puts E on the ray from A through D since D lies between A and E, so `angle_onRay_left` identifies DAB with EAB."
 
 [[passage]]
+at = "therefore the base EB is equal to the base FC"
+kind = "carried"
+note = "I.4 gives the base EB equal to the base FC, as Euclid says; the proof goes on from the equal triangles of the next sentence and does not use the bases again."
+unused = ["hEB_FC"]
+
+[[passage]]
 at = "Let DGE be subtracted from each"
 kind = "helper"
 helper = "area_cut"

@@ -41,6 +41,12 @@ kind = "given"
 note = "Our triangles AEG and ADG are named by their corners, so no straight line AG is drawn; it is their common side."
 
 [[passage]]
+at = "therefore each of the angles EAC, AEC is half a right angle"
+kind = "carried"
+note = "I.5 and I.32 make each of the angles EAC, AEC half a right angle, as Euclid says; only the half at AEC is used again, where the angle AEB is made right."
+unused = ["hhalf_EAC"]
+
+[[passage]]
 at = "therefore the angle AEB is right"
 kind = "helper"
 helper = "angle_add_of_between"
