@@ -96,11 +96,12 @@
      the run of `--` lines its `at` begins in (`unbound_unused`, read from the text by
      `bound_names`), so a declaration for the citation sweep cannot outlive its binding;
    - the review records (`review/SCHEMA.md`): every proposition has one, valid; its
-     stamps match the statements in facts.json and its Lean file, so a record goes
-     stale when either changes; its passages begin at Euclid's sentences and name
-     helpers that exist; and every run of `--` lines with no Lean beneath it before
-     the next run, a `/- … -/` remark ending a run and carrying none, is declared as a
-     passage (`uncarried_runs`).
+     stamps match the statements in facts.json, its Lean file and its own text, so a
+     record goes stale when any of them changes (a record with no `text` stamp yet is
+     named in a note: docs/WORKFLOW.md, section 6); its passages begin at Euclid's
+     sentences and name helpers that exist; and every run of `--` lines with no Lean
+     beneath it before the next run, a `/- … -/` remark ending a run and carrying none,
+     is declared as a passage (`uncarried_runs`).
 7. Inline count markers in tracked Markdown match the exact file-derived counts in
    generated_counts.py, and stand only where that module allows. Unknown and
    malformed markers are refused, as are unsafe paths and a missing or mismatched Git
@@ -303,6 +304,8 @@ QUOTED_NAME = re.compile(r"«[^»]*»")
 PROPOSITIONS = "elements.book"
 
 errors: list[str] = []
+# The records with no `text` stamp yet, named in a note (docs/WORKFLOW.md, section 6).
+untexted: list[str] = []
 
 
 def fail(msg: str) -> None:
@@ -1647,6 +1650,7 @@ def check_reviews(facts, by_ref) -> None:
     except RuntimeError as e:
         fail(f"review records: {e}")
         return
+    untexted.clear()
     for book, count in BOOKS.items():
         folder = heath.REVIEW / book
         for path in sorted(folder.glob("*.toml")) if folder.exists() else []:
@@ -1654,6 +1658,20 @@ def check_reviews(facts, by_ref) -> None:
                 fail(f"{rel(path)}: not a proposition of Book {book}")
         for n in range(1, count + 1):
             check_review(facts, by_ref, book, n)
+
+
+def untexted_note() -> str | None:
+    """The note naming the records with no `text` stamp yet, which `main` prints: a note,
+    not a failure, until every record carries one (docs/WORKFLOW.md, section 6)."""
+    if not untexted:
+        return None
+    shown = ", ".join(untexted) if len(untexted) <= 20 else \
+        ", ".join(untexted[:10]) + f" and {len(untexted) - 10} more"
+    return (f"note: {len(untexted)} review record(s) have no `text` stamp yet, so an edit to "
+            f"their text is not yet caught: {shown}. `scripts/review_stamp.py "
+            "--migrate-text` writes it only where a record is unchanged since its stamp "
+            "commit, a commit in the history of HEAD, and a reader stamps the rest "
+            "(WORKFLOW.md, section 6)")
 
 
 def check_review(facts, by_ref, book: str, n: int) -> None:
@@ -1691,6 +1709,13 @@ def check_review(facts, by_ref, book: str, n: int) -> None:
                      f"{st['fingerprint']}, facts.json gives {want}): read the record "
                      "again, then stamp it with scripts/review_stamp.py --commit "
                      "(WORKFLOW.md, section 6)")
+    own = heath.text_hash(heath.review_path(book, n).read_text())
+    if "text" not in rv:
+        untexted.append(ref)
+    elif rv["text"] != own:
+        fail(f"{ref}: its record has changed since it was reviewed ({where} has `text` "
+             f"{rv['text']}, its text now is {own}): read the record again, then stamp it "
+             "with scripts/review_stamp.py --commit (WORKFLOW.md, section 6)")
     lean = heath.lean_path(book, n)
     if not lean.exists():
         return
@@ -1763,6 +1788,9 @@ def main(argv=None) -> int:
     for error in count_errors:
         fail(error)
     check_facts(args.facts)
+    note = untexted_note()
+    if note:
+        print(note)
     if errors:
         print(f"{len(errors)} problem(s):")
         for e in errors:

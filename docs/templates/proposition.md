@@ -99,7 +99,8 @@ Proposed record entries (review/SCHEMA.md):
   departs from Heath's):
 
 Records made stale: the review records whose Lean file or statement this change touched,
-even by a comment; their owner reads and stamps them (WORKFLOW.md, section 6).
+even by a comment, and those whose own text it edited; their owner reads and stamps them
+(WORKFLOW.md, section 6).
 
 Dependencies:
 - Helpers added or changed, with their signatures.
@@ -155,7 +156,7 @@ defect nobody has looked into.
 ### The record
 
 What the review leaves in the repository: `review/<book>/NN.toml`, read by
-`heath.load_review`. The stamps (`fingerprint`, `commit`, `lean`) are written by
+`heath.load_review`. The stamps (`fingerprint`, `commit`, `lean`, `text`) are written by
 `scripts/review_stamp.py`, never by hand. Delete the sections that have nothing to say;
 `[statement]`, `[route]` and `[review]` are always present.
 
@@ -204,6 +205,7 @@ tags = []                      # from review/terms.toml
 stage = "exceptions"           # or "full"
 commit = "…"
 lean = "sha256:…"
+text = "sha256:…"
 reviewer = "…"                 # from stage "full": the model or person, and the role
 # run = "brief …, stage …, workflow …"   # from stage "full"
 # [review.items]               # acceptance (brief 0005, stage 6), in a "full" record

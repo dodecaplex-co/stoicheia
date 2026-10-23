@@ -163,6 +163,11 @@
 
   This entry approves `checks/20-sweep.toml`, the citation sweep's listing of candidates.
 
+  This entry approves `checks/21-check-queue-tree.toml`, the merge queue judge's `--tree`
+  check that the decisions page repeats no dated heading, which
+  [#383](https://github.com/jackChallis/stoicheia/pull/383) put in the check job after the
+  worktree check and before the links check, where its order of 175 keeps it.
+
   On 22 October 2026 the coordinator ruled that WORKFLOW section 8's command block between
   the `<!-- checks -->` markers is generated output, and that a train that changes
   `checks/` commits it regenerated with `render.py`, as for any generated output the train
