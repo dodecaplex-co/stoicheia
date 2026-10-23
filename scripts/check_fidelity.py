@@ -989,6 +989,13 @@ def placement_step(step: dict) -> bool:
 
 # The axiom lock, Certificate/axioms.lock.
 
+# The lock's header, byte for byte as the committed lock has it: everything before its
+# `[axioms]` line, except the last newline, which render_lock's join adds as the blank
+# line. The header is part of the lock's bytes, which model/lock.sha256,
+# tests/model/lock.sha256 and the model's generated files pin by the lock's sha256, so it
+# changes only with the lock itself, as a lock change: with a decision entry, and the
+# model's hashes renewed. tests/test_axiom_lock.py holds the two together: from the
+# committed facts.json, `--write-lock` gives back the committed lock exactly (#260).
 LOCK_HEADER = """\
 # Certificate/axioms.lock
 #
