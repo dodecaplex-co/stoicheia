@@ -50,9 +50,9 @@ case = "A outside the circle, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "bf9c31d1"
+commit = "eed076538"
 reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:67eec83dcef584ab"
+lean = "sha256:d3e631b8a21c8016"
 run = "card #131, ship ER: re-read after III.1's call was dropped; the centre taken from the rule (#131), written by Claude, read also by GPT-6 Astra (Codex)"
 
 [review.items]
