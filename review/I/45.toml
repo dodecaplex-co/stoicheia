@@ -1,21 +1,17 @@
 # review/I/45.toml
 [statement]
-scope = "restricted"
-short = "figures supplied with a checked division into triangles"
-hypotheses = [
-  "A division into non-overlapping triangles is supplied with the figure (`Apart` or `Rectilineal`); existence from an outline is not yet proved."
-]
-note = "`Prop45.apart` constructs a parallelogram equal to a supplied triangle sum; outline coverage and independence of division remain unproved."
-companions = ["I.45 append", "I.45 sum", "I.45 apart", "I.45 figure", "I.45 fan"]
-fingerprint = "sha256:82f17d662afe1ed5"
+scope = "full"
+note = "`Prop45` takes two triangles unchecked; `Prop45.outline` covers any outline; other companions handle checked divisions, sums and adding a triangle."
+companions = ["I.45 outline", "I.45 append", "I.45 sum", "I.45 apart", "I.45 figure", "I.45 fan"]
+fingerprint = "sha256:4bc8a67608702506"
 
 [route]
 kind = "euclid"
-note = "Euclid shows two triangles. The companions repeat his second step for each triangle after the first, as Oliver Byrne draws it for three: `Prop45.append` is the second half of his proof, with the parallelogram so far given in place of the one I.42 makes, and `Prop45.sum` applies it to one triangle after another."
+note = "Euclid shows two triangles. The companions repeat his second step for each triangle after the first, as Oliver Byrne draws it for three: `Prop45.append` is the second half of his proof, with the parallelogram so far given in place of the one I.42 makes, and `Prop45.sum` applies it to one triangle after another, any triangles, which need not make a figure. `Prop45.outline` takes the figure by its boundary alone, represented by an outline, any number of sides, with holes, separate pieces or contacts at corners if it has them: Book Zero divides it into triangles that do not overlap, no point inside two of them (`Figures.division_exists`), `Prop45.apart` makes their parallelogram, and their sum is the figure's area, the same for every division (`Figures.area_eq`, from the content theorem `Figures.Apart.area_eq_of_same_region`, after David Hilbert's theory of content)."
 
 [representation]
 tags = ["figure-with-dissection"]
-note = "A rectilineal figure is given with its division into triangles, and the division is checked: as triangles that lie apart, no point inside two of them, allowing a figure with a hole (`Prop45.apart`); as triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop45.figure`); or as Euclid and Oliver Byrne divide it, from one corner, neighbours on opposite sides of the straight line they share and the angles at that corner together less than four right angles, the triangles then shown to fit together (`Prop45.fan`, by `Fitted.fan`). Equal to the figure means equal to those triangles together. Existence of such a division from the figure's outline, coverage of its region, and independence of the sum from the division chosen remain unproved ([#116](https://github.com/jackChallis/stoicheia/issues/116)); David Hilbert proved the last, for his measure of area. In `Prop45.fan`, `Fitted.fan` proves that the triangles fit together; the Lean does not state that their figure is bounded by the closed line through the corners in order, though this is true in the plane. The construction does not use that the triangles lie apart, which is what makes their sum the figure's: it is `Prop45.sum`'s, for any triangles. The main theorem is an area-sum theorem: it takes ABD and DBC unchecked, and they may overlap. It represents Euclid's pictured division when A and C lie on opposite sides of DB; that checked case is `Prop45.fan` for the corners D, A, B, C. `Prop45.apart` constructs the required parallelogram for a supplied checked division into triangles that lie apart."
+note = "`Prop45.outline` takes the figure by its outline alone (`Figures.Outline`), with no division supplied. The older companions take a figure given with a checked division into triangles, and make the parallelogram equal to those triangles together, which is the figure's area, the same for every division: triangles that lie apart, no point inside two of them (`Prop45.apart`); triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop45.figure`); or Euclid's and Byrne's, from one corner, neighbours on opposite sides of the straight line they share and the angles at that corner together less than four right angles, which `Fitted.fan` shows fit together (`Prop45.fan`); their figure is the one bounded by the closed line through the corners in order (`Prop45.fan_boundary`). The main theorem is an area-sum theorem: it takes ABD and DBC unchecked, and they may overlap. It represents Euclid's pictured division when A and C lie on opposite sides of DB; that checked case is `Prop45.fan` for the corners D, A, B, C."
 
 [[passage]]
 at = "Let DB be joined, and let the parallelogram FH be constructed equal to the triangle ABD"
@@ -26,24 +22,24 @@ note = "I.42 builds FH on half of BD itself, so H falls on D: the Lean writes D 
 at = "Thus, with a straight line GH"
 kind = "helper"
 helper = "SameSideOf.trans_opposite"
-note = "Euclid uses KH and HM on opposite sides of GH to apply I.14. Beneath the first constructions, the Lean requests I.44's parallelogram across GH from K and uses `SameSideOf.trans_opposite` to put M on the other side; I.14 now puts H between K and M, with D for H in the Lean."
+note = "Euclid applies I.14 because KH and HM do not lie on the same side of GH. The Lean makes it so: it applies I.44's parallelogram to GH on the side away from K, and `SameSideOf.trans_opposite` puts M on the other side of GH from K. I.14 then puts H between K and M (D for H in the Lean)."
 
 [[passage]]
 at = "And, since the triangle ABD is equal to the parallelogram FH"
 kind = "helper"
 helper = "quadArea_add_of_parallelograms"
-note = "Euclid takes FH and GM together as KFLM, equal to the two triangles of ABCD. With H between K and M and G between F and L from the two applications of I.14, `quadArea_add_of_parallelograms` joins the areas; the Lean writes D for H and takes ABCD as the given sum of ABD and DBC, as the representation note explains."
+note = "Euclid takes FH and GM together as KFLM, equal to the two triangles of ABCD. With H between K and M and G between F and L from the two applications of I.14, `quadArea_add_of_parallelograms` joins the areas; the Lean writes D for H and takes ABCD as the sum of ABD and DBC, unchecked. For a figure given by its outline, the step from triangles to the whole figure is proved: the figure has a division into triangles that lie apart (`Figures.division_exists`), and every such division gives one sum, its area (`Figures.Apart.area_eq_of_same_region`, `Figures.area_eq`), so `Prop45.outline` makes the parallelogram equal to the figure itself."
 
 [figure]
-case = "Euclid's figure ABCD, cut by DB into the two triangles ABD and DBC"
-note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart."
+case = "Euclid's figure ABCD, divided by DB into the two triangles ABD and DBC"
+note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart, as the figure at a glance does."
 
 [review]
 stage = "full"
-commit = "ef3ca8dd"
-reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:2962833ecb6d5450"
-run = "train Tw2, merge of main at 9bde6758, independent re-read at ef3ca8dd (reader TS-r-tw2)"
+commit = "5176f894"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:df27ec018e27a2ab"
+run = "card 116, promotion of brief 0013's figures: Lean, record, commentary and docs written by Claude writers (ship G2); read by GPT-6 Astra (Codex); ship G2, reader G2-rr4, independent re-read at 48092431; issue #32, the sweep's cleared parts merged with the figures' promotion (#342): re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the Lean, ship TT, reader TT-swI-r5"
 
 [review.items]
 statement = "pass"

@@ -21,7 +21,7 @@ note = "Our triangles ABE and AEC are named by their corners, so no straight lin
 at = "through A let AG be drawn parallel to EC"
 kind = "helper"
 helper = "Prop30.meet"
-note = "Euclid draws the parallel through A and takes F where it meets the arm of the angle at E. The Lean draws the parallel by I.31 and finds F with `Prop30.meet`, using I.30, which Heath does not cite here."
+note = "Euclid draws the parallel through A and takes F where it meets the arm of the angle at E. The Lean draws the parallel by I.31 and finds F with `Prop30.meet`, using I.30, for which Heath gives no reference here."
 
 [[passage]]
 at = "through C let CG be drawn parallel to EF"
@@ -45,10 +45,10 @@ case = "A on FG produced beyond F, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "40d340d"
-reviewer = "Claude Opus 5.5, records review"
+commit = "a91d97b4"
+reviewer = "Claude Opus 5.5, independent reader"
 lean = "sha256:69828f783bc4393e"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "proof by OpenAI Codex; read-through 02 (#34): re-read whole after the read-through's mends, by Claude Opus 5.5, a reader of the family that did not write the original proof (#220), independent re-read at a91d97b4 (reader RT-y9)"
 
 [review.items]
 statement = "pass"

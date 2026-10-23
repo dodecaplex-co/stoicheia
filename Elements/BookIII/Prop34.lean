@@ -20,12 +20,11 @@ namespace Elements.BookIII
 open Tacit
 
 /-- From a given circle to cut off a segment admitting an angle equal to a given rectilineal angle. -/
-theorem Prop34 {D₁ D D₂ : Point} {ABC : Circle} (hABC : ∃ O : Point, Centre O ABC)
-    (hD : Triangle D₁ D D₂) :
+theorem Prop34 {D₁ D D₂ : Point} (ABC : Circle) (hD : Triangle D₁ D D₂) :
     ∃ A B C : Point, OnCircle A ABC ∧ OnCircle B ABC ∧ OnCircle C ABC ∧ Triangle B A C ∧
       ∠ B A C = ∠ D₁ D D₂ := by
   -- Let ABC be the given circle, and the angle at D the given rectilineal angle;
-  obtain ⟨O, hO⟩ := hABC
+  obtain ⟨O, hO⟩ := exists_centre ABC
   -- thus it is required to cut off from the circle ABC a segment admitting an angle equal to
   -- the given rectilineal angle, the angle at D.
   -- Let EF be drawn touching ABC at the point B,
@@ -93,9 +92,9 @@ theorem Prop34 {D₁ D D₂ : Point} {ABC : Circle} (hABC : ∃ O : Point, Centr
   -- and BC has been drawn across from the point of contact at B,
   have hBCF : Triangle B C F := hCC'.triangle.acb
   -- the angle FBC is equal to the angle constructed in the alternate segment BAC. [III. 32]
-  obtain ⟨A, hA, hAF⟩ := Prop2.oppositeSide ⟨O, hO⟩ hB hC hBCF
+  obtain ⟨A, hA, hAF⟩ := Prop2.oppositeSide hB hC hBCF
   have h32 : ∠ F B C = ∠ B A C :=
-    (Prop32 ⟨O, hO⟩ hB hC hCB.symm hEF hEBF).1 A hA hAF
+    (Prop32 hB hC hCB.symm hEF hEBF).1 A hA hAF
   -- But the angle FBC is equal to the angle at D;
   have hFBC : ∠ F B C = ∠ D₁ D D₂ := by
     rw [angle_onRay_right hCray hBF.symm, hcopy]

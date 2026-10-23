@@ -1,0 +1,228 @@
+name: Safe-push tests
+
+# scripts/test_safe_push.py, the tests of the gate every pull request lands through
+# (docs/WORKFLOW.md, sections 8 and 10), run on a cadence rather than on each pull request
+# (the owner, 22 October 2026: "I'm fine that this needs to run on a cadence and blocks
+# release but every run no. And it has to be fast"; the decision entry
+# docs/decisions/2026-10-22-suite-on-cadence.md): every six hours on main, and on demand.
+# Beside them, on the same triggers, run the full negative tests and the formal model's
+# build and kernel re-check, which CI skips on pull requests of the lower risk classes,
+# the formal model only when the change touches none of its inputs
+# (docs/decisions/2026-10-22-risk-lanes.md). A red run of any of the three jobs opens one
+# issue labelled blocks-release, or adds the run to the one already open, so the release
+# waits for it.
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  safe-push-tests:
+    # The tests need Git with the whole history and the pinned YAML parser, but no Lean
+    # and no network: FullChecks, which needs Lean, is skipped without
+    # STOICHEIA_SLOW_TESTS=1, as it is anywhere.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # The whole suite has taken 38 to 45 minutes on GitHub's runners, and more on a busy
+    # day: room to spare.
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # The tests clone this repository.
+          fetch-depth: 0
+          # No token stays in .git/config while the tests run.
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the pinned YAML parser the tests read the workflow with
+        run: python3 -m pip install -r scripts/requirements-test_safe_push.txt
+
+      - name: Check the gate every pull request lands through, guard by guard
+        run: |
+          set -o pipefail
+          python3 scripts/test_safe_push.py 2>&1 | tee "$RUNNER_TEMP/test_safe_push.log"
+
+      - name: Keep the log, for the issue a red run opens
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: test_safe_push-log
+          path: ${{ runner.temp }}/test_safe_push.log
+          retention-days: 35
+          if-no-files-found: ignore
+
+  negative-tests:
+    # The negative tests in full, as CI's `negative` job runs them: break the project on
+    # purpose, and check that every break is caught. CI runs them on every push to main,
+    # and on a pull request of class R3 and above; here they run on main
+    # for what the pull requests of R0 to R2 landed without them. Not named `negative`, so
+    # that a run of this workflow on a pull request's branch posts no check of a required
+    # check's name.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # Room to spare for the build and the tests, some of whose plants rebuild.
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Lean (elan)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Build and compute the certificate
+        run: |
+          lake build
+          lake env lean Certificate/Facts.lean
+
+      - name: Break the project on purpose, and check that every break is caught
+        run: python3 scripts/negative_tests.py
+
+  formal-model-kernel:
+    # The formal model in model/, as CI's `formal-model` job checks it: its build, with the
+    # pinned Mathlib's prebuilt files, then its compiled proofs replayed by Lean's kernel
+    # (model/README.md, "The CI job"). CI runs it on every push to main, and on a pull
+    # request of class R4 and above or that changes a file the model
+    # imports; here it runs on main for what the other pull requests landed without it.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # CI's job stops at 30 minutes; a run takes a few.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Install Lean (elan)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Check the model was last brought up to date against the present lock of the axioms
+        run: grep -v '^#' model/lock.sha256 | shasum -a 256 -c -
+
+      - name: Restore Mathlib, its prebuilt files and their downloads from an earlier run
+        # The same cache as CI's formal-model job, keyed on model/lake-manifest.json.
+        uses: actions/cache@v5
+        with:
+          path: |
+            model/.lake/packages
+            ~/.cache/mathlib
+          key: formal-model-packages-${{ runner.os }}-${{ hashFiles('model/lake-manifest.json') }}
+
+      - name: Fetch Mathlib's prebuilt files
+        working-directory: model
+        run: lake exe cache get
+
+      - name: Build the formal model, whose build runs its checks
+        working-directory: model
+        run: lake build
+
+      - name: Check the model's compiled proofs again, by Lean's kernel, apart from the build
+        run: |
+          python3 scripts/check_model_kernel.py --self-test
+          python3 scripts/check_model_kernel.py
+
+  report:
+    # A red run of main (any of the three jobs failed, cancelled or timed out) opens one
+    # issue labelled blocks-release, or comments on the one already open, with the run's
+    # link, the jobs that were red, and the tests that failed. This job alone may write
+    # issues, and it runs no code of the repository: it reads the log the tests left and
+    # calls gh. The issue's title is the one it had before the second and third jobs
+    # joined, so an issue already open is found.
+    needs: [safe-push-tests, negative-tests, formal-model-kernel]
+    if: >-
+      always() && github.ref == 'refs/heads/main' &&
+      (needs.safe-push-tests.result != 'success' || needs.negative-tests.result != 'success' ||
+      needs.formal-model-kernel.result != 'success')
+    concurrency:
+      group: safe-push-tests-report
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    timeout-minutes: 10
+    steps:
+      - name: Fetch the tests' log
+        continue-on-error: true
+        uses: actions/download-artifact@v5
+        with:
+          name: test_safe_push-log
+          path: ${{ runner.temp }}/log
+
+      - name: Open or update the blocks-release issue
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TESTS: ${{ needs.safe-push-tests.result }}
+          NEGATIVE: ${{ needs.negative-tests.result }}
+          KERNEL: ${{ needs.formal-model-kernel.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SHA: ${{ github.sha }}
+        run: |
+          title="safe-push-tests: the cadence run on main is red"
+          log="$RUNNER_TEMP/log/test_safe_push.log"
+          body="$RUNNER_TEMP/body.md"
+          {
+            echo "The cadence run on main at \`$SHA\` was red in these jobs:"
+            echo
+            [ "$TESTS" = success ] || echo "- \`safe-push-tests\` (\`scripts/test_safe_push.py\`): $TESTS"
+            [ "$NEGATIVE" = success ] || echo "- \`negative-tests\` (\`scripts/negative_tests.py\`, after the build): $NEGATIVE"
+            [ "$KERNEL" = success ] || echo "- \`formal-model-kernel\` (the formal model's build and kernel re-check): $KERNEL"
+            echo
+            echo "Run: $RUN_URL"
+            echo
+            if [ "$TESTS" = success ]; then
+              echo "The tests of \`scripts/test_safe_push.py\` passed; the run's page has the red jobs' logs."
+            elif [ -f "$log" ]; then
+              all=$(grep -E '^(FAIL|ERROR): ' "$log" | sort -u | cut -c1-300 || true)
+              # sed reads all its input, so printf never meets a closed pipe: head would
+              # stop early, printf would take SIGPIPE, and under bash's pipefail the step
+              # would end before the issue opens (#300).
+              failed=$(printf '%s\n' "$all" | sed -n '1,100p')
+              if [ -n "$all" ]; then
+                if [ "$(printf '%s\n' "$all" | wc -l)" -gt 100 ]; then
+                  echo "Tests of \`scripts/test_safe_push.py\` that failed (the first 100):"
+                else
+                  echo "Tests of \`scripts/test_safe_push.py\` that failed:"
+                fi
+                echo
+                echo '```'
+                echo "$failed"
+                echo '```'
+              else
+                echo "No failing test is named in the log (a run cut off or cancelled, say); the run's log says why."
+              fi
+            else
+              echo "The run left no log; the run's page says why."
+            fi
+            echo
+            echo "This issue holds the release until it is closed, with a link to a later run of this workflow on main in which all three jobs are green (docs/WORKFLOW.md, section 8)."
+          } > "$body"
+          number=$(
+            gh api --method GET --paginate --slurp "repos/$GH_REPO/issues" \
+              -f state=open -f labels=blocks-release -f per_page=100 |
+              jq -r --arg title "$title" \
+                '[.[][] | select(has("pull_request") | not) | select(.title == $title) | .number] | first // ""'
+          )
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body-file "$body"
+          else
+            gh issue create --title "$title" --label blocks-release --body-file "$body"
+          fi

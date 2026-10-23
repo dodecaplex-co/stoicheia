@@ -29,15 +29,19 @@
   that runs no check, or returns before its first; it does not catch one that calls
   `refused` with no check behind it, nor one that drops some of its cases.
 
-  Every one of main's 31 plants is carried over unchanged in behaviour: the same changes
+  Every one of main's 41 plants is carried over unchanged in behaviour: the same changes
   planted and the same refusals expected. Each `plant()`'s syntax tree is its old
   function's, with `nt.` read as the bare name, apart from stale_page's printed refusal,
   which now goes through `refused` in the same words, and ill_typed_proof's docstring,
   below; continuation lines were re-aligned, which changes whitespace only. The constants
   and helpers that one plant alone used move into its file with their comments:
-  `PLANTED_COMMANDS`, `PLANTED_FILES` and `BOOK_ZERO` into forbidden_commands,
-  `toml_blocks` into undeclared_run and `rules_in` into lake_links. The order departs on
-  purpose from the issue's "by name": the 27 plants that do not run `lake build` go first,
+  `PLANTED_COMMANDS`, `PLANTED_FILES` and `BOOK_ZERO` into forbidden_commands and
+  `toml_blocks` into undeclared_run, for example. Those that several plants use, or that
+  `tests/test_negative_tests.py` reads, stay in `negative_tests.py`: `rules_in` and
+  `scratch_plants`, the source scan on a tree of its own and the scratch copy of I.1 that
+  the source-scan plants share, and `BOOK_ZERO_SPELLINGS` and `BOOK_ZERO_TEXT`, which the
+  tests of the Book Zero rule read. The order departs on
+  purpose from the issue's "by name": the 37 plants that do not run `lake build` go first,
   so that a fault in one shows before the four that do, each of which saves and restores
   `.lake/build`. `BUILDS` only orders the plants, so a wrong value moves a plant and skips
   none.
@@ -59,7 +63,17 @@
   function's syntax tree, with `nt.` read as the bare name; so has ill_typed_proof's,
   apart from its docstring's pointer to item 15, which no longer exists, now "as
   corrupt_olean restores it". Each, run alone with `--plant`, caught what it planted and
-  left the tree clean.
+  left the tree clean. The ten that landed after those, with #197, #200, #207, #209, #234,
+  #256 and #77, were converted the same way when origin/main was merged at e5028ffc:
+  book_zero_imports, carriage_return_comment, closed_up_commands, edited_note,
+  guard_error_pins, guard_msgs_drop, guard_msgs_substring, queue_repeated_heading,
+  secret_behind_a_replacement and set_option_spellings. Each `plant()`, and each constant
+  and helper that moved into its file, has main's syntax tree, with `nt.` read as the bare
+  name, and each description is its numbered item's text, with "Likewise" written out and
+  a pointer to another item's number now that plant's name. The same merge brought main's
+  changes to two plants already converted, the four commands added to forbidden_commands'
+  list and stale_page's status over the whole worktree, and its two new regressions before
+  the plants, the risk classes' and the axiom lock's, which join the list the runner runs.
 
   Two rounds of review then hardened the suite. It compiles each plant from its file's
   text, and, run as a script, registers itself under the name the plants import rather
@@ -67,7 +81,8 @@
   plant or of the runner. The loader refuses a plants' folder that is, or passes through,
   a symbolic link, which would take every later plant off the protected paths, and passes
   over Finder's `.DS_Store`, naming it. The entry Git status is taken first of all, before
-  the three regressions that precede the plants (restoration, count and decision entry),
+  the regressions that precede the plants (restoration, count, decision entry, risk class
+  and lock),
   since the restoration regressions, `tests/test_negative_tests.py`, load the real plants'
   folder; so a file that a plant's file writes as it loads shows in the closing
   comparison. `--counts-only` keeps no bracket, as before. The names of the runner and of
@@ -121,7 +136,7 @@
   are unchanged. No check, plant or expected value is weakened.
 
   The protected files this changes are `scripts/negative_tests.py` and
-  `tests/test_negative_tests.py`, and the 31 plants, each new:
+  `tests/test_negative_tests.py`, and the 41 plants, each new:
   `scripts/negative/broken_link.py`,
   `scripts/negative/certificate_constructor_counting.py`,
   `scripts/negative/changed_audit_pin.py`, `scripts/negative/changed_word.py`,
@@ -138,4 +153,11 @@
   `scripts/negative/stale_page.py`, `scripts/negative/stale_statement.py`,
   `scripts/negative/style_error.py`, `scripts/negative/symbolic_links.py`,
   `scripts/negative/undeclared_run.py`, `scripts/negative/weakened_postulate.py` and
-  `scripts/negative/wrong_radii.py`.
+  `scripts/negative/wrong_radii.py`. The merge of origin/main at e5028ffc adds ten of
+  those protected files, each new: `scripts/negative/book_zero_imports.py`,
+  `scripts/negative/carriage_return_comment.py`, `scripts/negative/closed_up_commands.py`,
+  `scripts/negative/edited_note.py`, `scripts/negative/guard_error_pins.py`,
+  `scripts/negative/guard_msgs_drop.py`, `scripts/negative/guard_msgs_substring.py`,
+  `scripts/negative/queue_repeated_heading.py`,
+  `scripts/negative/secret_behind_a_replacement.py` and
+  `scripts/negative/set_option_spellings.py`.

@@ -3,7 +3,9 @@
 Each test makes one small change that must be caught, runs the check that should
 catch it, and puts everything back. Run from the repo root after `lake build` and
 `lake env lean Certificate/Facts.lean`, with `Certificate/axioms.lock` and the review
-records current; CI runs it on every push.
+records current. CI's `negative` job runs it on every push to main, and on a pull request
+of class R3 and above (scripts/risk.py); the cadence runs it on main
+every six hours.
 
 Each plant is a file of its own in scripts/negative/, named for the plant: `<name>.py`,
 the name lower-case letters, digits and underscores, beginning with a letter. The file
@@ -151,6 +153,44 @@ ILL_TYPED_LEAN = ("\nopen Lean in\nset_option debug.skipKernelTC true in\n"
                   "run_cmd Elab.Command.liftCoreM <| addDecl <| .thmDecl {\n"
                   f"  name := `{ILL_TYPED}, levelParams := [],\n"
                   "  type := mkConst ``False, value := mkConst ``True.intro }\n")
+
+
+# A proposition imported by Book Zero in each spelling Lean 4.35 accepts; in the five
+# forms that Lean's header allows after `module`, which Lean refuses while the edition's
+# files are not modules, so that the rule is ready for when they are; and in forms Lean
+# may read as one (#200). Each comes with what must be caught besides its file and line.
+# Here, not in scripts/negative/book_zero_imports.py, because tests/test_negative_tests.py
+# reads them.
+BOOK_ZERO_SPELLINGS = (
+    ("two spaces", "import  Elements.BookI.Prop01\n"),
+    ("a line break", "import\n  Elements.BookI.Prop01\n"),
+    ("a remark between", "import /- a remark -/ Elements.BookI.Prop01\n"),
+    ("a line comment between", "import -- a remark\n  Elements.BookI.Prop01\n"),
+    ("a nested remark between", "import /- a /- nested -/ remark -/ Elements.BookI.Prop01\n"),
+    ("nothing before «…»", "import«Elements».BookI.Prop01\n"),
+    ("nothing around a remark", "import/- a remark -/Elements.BookI.Prop01\n"),
+    ("«Elements»", "import «Elements».BookI.Prop01\n"),
+    ("«BookI»", "import Elements.«BookI».Prop01\n"),
+    ("a second import on the line",
+     "import Elements.Figure.Lines import Elements.BookI.Prop01\n"),
+    ("public import", "module\npublic import Elements.BookI.Prop01\n"),
+    ("meta import", "module\nmeta import Elements.BookI.Prop01\n"),
+    ("public meta import", "module\npublic meta import Elements.BookI.Prop01\n"),
+    ("import all", "module\nimport all Elements.BookI.Prop01\n"),
+    ("meta import all", "module\nmeta import all Elements.BookI.Prop01\n"),
+    ("a path in «…»", "import «Elements/BookI».Prop01\n", "cannot read this import for certain"),
+    ("another case", "import elements.booki.Prop01\n"),
+    ("the Kelvin sign", "import Elements.BooKI.Prop01\n"),
+    ("through Elements.Companions", "import Elements.Companions\n",
+     "`Elements.Companions` brings one in: Elements/Companions.lean imports `Elements.Book"),
+)
+# A file of Book Zero with the same import only in text, beside a Book Zero import.
+BOOK_ZERO_TEXT = ("Elements/Figure/PlantedImportText.lean",
+                  "import Elements.Figure.Lines\n"
+                  "-- import Elements.BookI.Prop01\n"
+                  "/- import Elements.BookI.Prop01 -/\n"
+                  'def plantedImportText : String := "import Elements.BookI.Prop01"\n'
+                  "def «import Elements.BookI.Prop01» : Nat := 1\n")
 
 
 def run(*cmd: str) -> subprocess.CompletedProcess:
@@ -338,6 +378,67 @@ def count_source_copy():
             shutil.copy2(ROOT / rel, target)
         yield copy, {**os.environ, "GIT_DIR": git_dir.stdout.strip(),
                      "GIT_WORK_TREE": str(copy)}
+
+
+# The source scan on a tree of its own, and the scratch copy of I.1 the source-scan plants
+# share: here, not in a plant's file, because several plants use them and
+# tests/test_negative_tests.py tests rules_in.
+def rules_in(root: Path) -> subprocess.CompletedProcess:
+    """check_fidelity's source scan, run on the tree at `root` instead of the edition's."""
+    saved_root, saved_errors = check_fidelity.ROOT, list(check_fidelity.errors)
+    check_fidelity.ROOT = root
+    check_fidelity.errors.clear()
+    try:
+        check_fidelity.check_rules()
+        found = list(check_fidelity.errors)
+    finally:
+        check_fidelity.ROOT = saved_root
+        check_fidelity.errors[:] = saved_errors
+    return subprocess.CompletedProcess([], 1 if found else 0, "\n".join(found) + "\n", "")
+
+
+def scratch_plants(name: str, plants: tuple, kept: tuple = (), prohibited: tuple = ()) -> None:
+    """Plant each of `plants`, (word, Lean), and each line of `kept` in a scratch copy of
+    I.1's file, in a temporary tree whose only file it is, and run check_fidelity.py's
+    source scan on that tree (`rules_in`): the edition's own files are never touched. The
+    copy must pass unplanted. Planted, each of `plants` must be refused on the line of its
+    command, `set_option` or `#guard_msgs`, by `word`, or, for a word `literal …`, on the
+    line of that string literal, by the approximate token-declaration-span diagnostic, or,
+    for a plant (finding, Lean, text), by that finding on the line where the text first
+    stands; and no line of `kept` refused, nor any text in `prohibited` reported."""
+    rel = "Elements/BookI/Prop01.lean"
+    marker = "\nend Elements.BookI\n"
+    source = (ROOT / rel).read_text()
+    assert source.count(marker) == 1, f"{rel}: expected one {marker!r}; update this test"
+    planted = source.replace(marker, "\n/-! Planted by scripts/negative_tests.py. -/\n"
+                             + "\n".join([plant[1] for plant in plants] + list(kept)) + "\n"
+                             + marker)
+
+    def line(lean: str, anchor: str) -> int:
+        assert planted.count(lean) == 1, f"{lean!r}: planted more than once; update this test"
+        return planted[:planted.index(lean) + lean.index(anchor)].count("\n") + 1
+
+    command = re.compile(r"#?\w+")
+    wanted = [f"{rel}:{line(lean, at[0])}: {word}" if at else
+              (f"{rel}:{line(lean, word)}: declares an axiom outside "
+               "Elements/Foundations/") if word == "axiom" else
+              (f"{rel}:{line(lean, word[8:])}: finds a string literal whose trimmed text is "
+               f"`{word[8:]}` in an approximate token-declaration span")
+              if word.startswith("literal ") else
+              f"{rel}:{line(lean, command.match(word)[0])}: uses `{word}`"
+              for word, lean, *at in plants]
+    unwanted = prohibited + tuple(f"{rel}:{n}:" for lean in kept
+                                   for n in range(line(lean, lean),
+                                                  line(lean, lean) + lean.count("\n") + 1))
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp).resolve()
+        path = root / rel
+        path.parent.mkdir(parents=True)
+        path.write_text(source)
+        if not expect_success(f"{name}: the unplanted scratch copy of {rel}", rules_in(root)):
+            return
+        path.write_text(planted)
+        expect_failure(name, rules_in(root), *wanted, unwanted=unwanted)
 
 
 class Plant(NamedTuple):
@@ -585,7 +686,9 @@ def close(sources: dict[int, str], ran: int = 0, total: int = 0) -> int:
 
 REGRESSIONS = (("restoration regressions", "tests/test_negative_tests.py"),
                ("count regressions", "tests/test_generated_counts.py"),
-               ("decision entry regressions", "tests/test_decision_entries.py"))
+               ("decision entry regressions", "tests/test_decision_entries.py"),
+               ("risk class regressions", "tests/test_risk.py"),
+               ("lock regressions", "tests/test_axiom_lock.py"))
 
 
 def regressions() -> bool:

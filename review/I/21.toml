@@ -22,32 +22,38 @@ note = "Euclid takes from his figure that BD produced meets AC beyond D; the Lea
 at = "Let EC be added to each"
 kind = "helper"
 helper = "Tacit.add_lt_add_right"
-note = "Euclid adds EC both to the sum of AB and AE and to BE, keeping the first sum greater. The Lean uses `Tacit.add_lt_add_right`, a rule we assume, not a proof (System E §3.5)."
+note = "Euclid adds EC both to the sum of AB and AE and to BE, keeping the first sum greater. The Lean uses `Tacit.add_lt_add_right`, a rule we assume (System E §3.5)."
 
 [[passage]]
 at = "therefore BA, AC are greater than BE, EC"
 kind = "helper"
 helper = "Tacit.len_add_of_between"
-note = "Euclid reads AE and EC together as AC because E lies between A and C. The Lean makes this replacement with `Tacit.len_add_of_between`, a rule we assume, not a proof (System E, Diagram-segment 1)."
+note = "Euclid reads AE and EC together as AC because E lies between A and C. The Lean makes this replacement with `Tacit.len_add_of_between`, a rule we assume (System E, Diagram-segment 1)."
 
 [[passage]]
 at = "let DB be added to each"
 kind = "helper"
 helper = "Tacit.add_lt_add_right"
-note = "Euclid adds DB both to the sum of CE and ED and to CD, keeping the first sum greater. The Lean uses `Tacit.add_lt_add_right`, a rule we assume, not a proof (System E §3.5)."
+note = "Euclid adds DB both to the sum of CE and ED and to CD, keeping the first sum greater. The Lean uses the same rule, `Tacit.add_lt_add_right`, now in the triangle CED."
 
 [[passage]]
 at = "therefore CE, EB are greater than CD, DB"
 kind = "helper"
 helper = "Tacit.len_add_of_between"
-note = "Euclid reads ED and DB together as EB because D lies between E and B. The Lean makes this replacement with `Tacit.len_add_of_between`, a rule we assume, not a proof (System E, Diagram-segment 1)."
+note = "Euclid reads ED and DB together as EB because D lies between E and B. The Lean makes this replacement with `Tacit.len_add_of_between` again, as for AE and EC."
+
+[[passage]]
+at = "But BA, AC were proved greater than BE, EC"
+kind = "carried"
+note = "The Lean restates here that BA, AC are greater than BE, EC, as Euclid recalls it; the next step cites the inequality where it was first proved, and does not use the restatement."
+unused = ["this"]
 
 [review]
 stage = "full"
-commit = "570e6fa"
-reviewer = "GPT-6 Astra (Codex), records re-read"
+commit = "86e935fe"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:043c9336dae4f96b"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "proof by Claude; read-through 02 (#34): re-read whole after the read-through's mends, by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), independent re-read at b7b41f51 (reader RT-y2); issue #32, the sweep's findings in Books I and II, merged with read-through 02: re-read whole by GPT-6 Astra (Codex), a reader of the family that did not write the original proof (#220), ship TT, reader TT-swI-r4"
 
 [review.items]
 statement = "pass"
