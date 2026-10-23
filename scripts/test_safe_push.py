@@ -7953,6 +7953,8 @@ class MainChecksCache(Edge):
         self.assertEqual(seen["listed"], [[n, c] for n, c in
                                           safe_push.check_sequence(WORK, BASE).steps])
         self.assertTrue(seen["listed"], seen["printed"])
+        self.assertIn(f" --rev {BASE} --json {WORK}", self.wrapped.read_text(),
+                      "the registry's reader did not run through the sandbox's stand-in")
         cache = {run: [d for name, _, d in steps if name == "main-checks cache"]
                  for run, steps in seen["runs"].items()}
         self.assertTrue(cache["miss"][0].startswith("miss (no entry"), seen["printed"])

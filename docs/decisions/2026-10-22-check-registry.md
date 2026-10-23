@@ -96,9 +96,10 @@
   through `run()`, which gains a time limit for it, so that under the main-checks cache's
   sandbox ([#392](https://github.com/jackChallis/stoicheia/pull/392)) it runs sandboxed,
   as every command does; the commit's own reader is the commit's code. The cache keys
-  origin/main's pass by the sequence step 4 runs, origin/main's registry's, and checks an
-  entry's steps against that key's checks, not against the built-in list: so the lists of
-  checks its key holds are the checks that ran.
+  origin/main's pass by the sequence step 4 runs, origin/main's registry's, or the
+  built-in one while origin/main holds none, and checks an entry's steps against that
+  key's checks, not against the built-in list: so the lists of checks its key holds are
+  the checks that ran.
 
   This entry approves `scripts/test_safe_push.py`, whose tests of the sequence now hold
   the registry, section 8's block and the one step of CI's `check` job to one another, pin
