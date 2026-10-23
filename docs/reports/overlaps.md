@@ -113,7 +113,7 @@ agreement with Heath's preferred local reading at the contact.
 |---|---|
 | I.7 and Circle 4 (`not_same_side_of_circles_meet`) | I.7, Definition I.15 and `circle_eq`, after I.7 in `Elements/BookI/Prop07.lean`. `Audit.I_7` now reaches I.7 through its own corollary, so it is circular as an independent proof of I.7. |
 | I.13's right-angle case and Diagram-angle 3 (`adjacent_eq_of_right`) | I.13 and Common Notion 3, after I.13 in `Elements/BookI/Prop13.lean`. The later proofs now use that theorem: [14 proofs, each calling it itself](#i13s-rule-in-14-proofs), by the recount of 22 October 2026, after II.5 and II.14 came to prove their right angles in place. III.1, III.1 Por. and III.2 no longer reach it: III.1's helper takes the step by I.13 in its own Lean. |
-| III.1's centre uniqueness and Generalities 2 (`centre_unique`) | The foundations, in `Elements/Figure/Circles.lean`: two supposed centres bisect the same straight line through the circle, and equal doubles have equal halves. III.1 Por. no longer calls it: since 19 October 2026 the porism takes the argument of Euclid's reductio from its given centre, reaches neither III.1 nor the theorem, and rests on 51 tacit rules to III.1's 56 ([facts.json](../../facts.json)). III.14 is the first proposition whose own Lean calls the theorem, and III.36 the only other; [five proofs](#iii1s-corollary) rest on it without passing through another entry. |
+| III.1's centre uniqueness and Generalities 2 (`centre_unique`) | The foundations, in `Elements/Figure/Circles.lean`: two supposed centres bisect the same straight line through the circle, and equal doubles have equal halves. III.1 Por. no longer calls it: since 19 October 2026 the porism takes the argument of Euclid's reductio from its given centre, reaches neither III.1 nor the theorem, and rests on 51 tacit rules to III.1's 56 ([facts.json](../../facts.json)). III.36 is the only proposition whose own Lean calls the theorem, since III.14 no longer does (22 October 2026); [four proofs](#iii1s-corollary) rest on it without passing through another entry. |
 | III.2 and Circle 2 (`inside_of_between`) | Circle 3, in `Elements/Figure/Circles.lean`. The remaining axiom overlap is the Circle 3 row above. |
 | I.2, I.3 and I.23 and existential superposition | The restricted rule exports only an equality about the given figure. The three former audit lemmas returned placed corners, which no exported formula can name, and have been removed. |
 
@@ -215,8 +215,8 @@ I.7 shortcut and the 17-proof right-angle census describe the earlier foundation
 the notes on III.5 and III.6 describe those propositions as they were stated before brief
 0008 restated them ([III.5](#iii5) and [III.6](#iii6) above give them as they are now).
 The later notes under I.2/I.3 and I.23 are dated updates about the retired construction
-shortcuts, and the second paragraph under III.1's corollary is a dated update about the
-rule's first user; their old rows remain here as history.
+shortcuts, and the second and third paragraphs under III.1's corollary are dated updates
+about the rule's first user; their old rows remain here as history.
 
 Stoicheia takes the rules of System E (Jeremy Avigad, Edward Dean and John Mumma, 2009) as
 its axioms, and a few of them already say what Euclid later proves, or give it in a few
@@ -408,6 +408,19 @@ the two calls, and finds three lemmas that call it: Book Zero's `EqualCircles.ra
 entry uses either of the last two. [Former axiom overlaps](#former-axiom-overlaps) gives
 the rule as it is now.
 
+22 October 2026 update (#131): III.14 no longer calls III.1 or the rule, for its
+statement names the centre E, and III.17 takes its centre from `exists_centre` in place of
+`Prop1.of_circle`, by the coordinator's
+[decision of that day](../decisions/2026-10-22-iii1-calls-dropped.md) to drop the calls of
+III.1 that do no work. So III.36 is now the only proof that calls `centre_unique` itself,
+and the rule first enters at III.26. Four proofs use it, III.26, III.28 and III.29
+through `EqualCircles.radii` and III.36 itself, and four more entries rest on it only
+through entries they cite: III.27 through III.26, III.30 and `Prop30.halves` through
+III.28, and III.37 through III.36. III.15, `Prop14.general` and `Prop15.nearer` have
+left with III.14. Walking Lean's proof terms on 22 October 2026 finds the theorem in these
+eight entries and in no other, and searching `Elements/` for the rule's name finds the one
+call, III.36's, beside the three lemmas above.
+
 ##### III.2
 
 Two rules contain III.2, and no proposition rests on either. Circle 2 says it outright, and more,
@@ -419,10 +432,11 @@ I.9 take a point "at random" with Book Zero's `exists_between_nearer`, which kee
 point near enough by the order of the points on the straight line and the adding of
 lengths, not by a rule about circles.
 
-Our III.2 is Euclid's reductio, by I.5, I.16 and I.19, with the centre from III.1, and it
-rests on neither rule. Circle 2 used to reach it through III.1, which called the rule to
-put D, the middle point of AB, within the circle, so that the straight line drawn through
-D at right angles to AB meets the circle on both sides of it: "a fact which Euclid first
+Our III.2 is Euclid's reductio, by I.5, I.16 and I.19, with its centre from
+`exists_centre`, where Heath's reference is III.1, and it rests on neither rule. Circle 2
+used to reach it through III.1, which called the rule to put D, the middle point of AB,
+within the circle, so that the straight line drawn through D at right angles to AB meets
+the circle on both sides of it: "a fact which Euclid first
 demonstrates in III. 2", as Isaac Todhunter observes (Heath, vol. 2, p. 7). III.1's
 helper `Prop1.within` proves it by III.2's own argument, from a centre that III.1's
 construction takes from `exists_centre` and passes to the helper: on AB that centre is
@@ -460,7 +474,7 @@ companion `Prop25.of_circle` uses it; III.25's construction is given the fact, a
 sees a circle. Book Zero
 keeps its own three, `Triangle.of_onCircle`, `exists_onCircle_oppositeSidesOf` and
 `exists_onCircle_sameSideOf`, stated for a circle with no centre given, and nothing uses
-them now ([below](#a-separate-piece-of-work)). `Staging/Routes/` contains seven Lean files;
+them now ([below](#a-separate-piece-of-work)). `Staging/Routes/` contains five Lean files;
 their theorems rest on neither Circle 2 nor Circle 3
 ([checked in the routes report](routes-book-III.md#checks)), and therefore reach none of
 those three Book Zero lemmas. The
