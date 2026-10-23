@@ -1696,6 +1696,13 @@ safe_push.NEGATIVE = [("test negative checks", [sys.executable, "-c", "print('ch
 sys.exit(safe_push.main(sys.argv[2:]))
 """
 
+    def good_commit(self, line: str = "A line for the test.") -> str:
+        # R3 by scripts/risk.py, a line in the guide to the checks, as FullChecks: an R0 to
+        # R2 commit's pre-flight leaves step 4 to CI (RiskPreflight), and these tests pin
+        # what a pre-flight that runs step 4 records.
+        return self.commit("A good commit", {
+            "docs/WORKFLOW.md": self.text("docs/WORKFLOW.md") + f"\n{line}\n"})
+
     def preflight(self, *args):
         return subprocess.run([sys.executable, "-c", self.DRIVER, str(UNDER_TEST),
                                *with_branch(args)], cwd=WORK, env=clean_env(),
