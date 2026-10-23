@@ -6,10 +6,12 @@
   were written again, on the coordinator's orders of 23 October, this train merged them
   and ran `python3 -I tests/model/run.py --full --write` on its own harness, at commit
   `a4031521074f`. Every check of that run passed. Each count it wrote is the count the
-  preparation's harness gave, number for number; only the commit that
-  [MODEL.md](../../tests/model/MODEL.md) and the results name is new, which is evidence
-  that the inlined laws decide each configuration as the laws they replace did. No check,
-  law, test or expected value changes.
+  preparation's harness gave, number for number; only the headers and the timings are new,
+  and in [MODEL.md](../../tests/model/MODEL.md) only the commit. The search and hyperbolic
+  runs are the two that run the inlined laws (the exhaustive and structured runs check the
+  copies in `derived.py`), so their counts are evidence that the inlined laws decide each
+  configuration drawn as the laws they replace did. The run and what it wrote change no
+  check, law, test or expected value.
 
   The files approved here are the ten outputs of that run at `a4031521074f`:
   - for angles, `tests/model/results/angle_check.txt`;
